@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "start": "node run.mjs",
-    "setup": "node run.mjs"
+    "setup": "node run.mjs",
+    "test": "node --test ws/*.test.mjs"
   },
   "dependencies": {
     "boxen": "^8.0.0",

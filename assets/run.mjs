@@ -21,6 +21,9 @@ import inquirer from "inquirer";
 import ora from "ora";
 import { WebSocketServer } from "ws";
 import { sweepOrphans } from "./orphans.mjs";
+import { parseServers, resolveSettings } from "./ws/config.mjs";
+import { makeLogger, createRegionWatcher } from "./ws/region.mjs";
+import { createScheduler, lowPriorityCommand } from "./ws/scheduler.mjs";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -665,14 +668,17 @@ function runDownload({
 	savedir,
 	threads = DEFAULT_THREADS,
 	onProgress,
-	profile
+	profile,
+	priority = null,
 }) {
     const args = ["--server", serverKey, "-d", savedir, "-t", String(threads), "download", "--all"];
     if (profile) args.push("--profile", profile);
+	// `priority` (ws mode only) wraps the binary in nice/ionice; null spawns it bare.
+	const [cmd, cmdArgs] = lowPriorityCommand(DOWNLOADER_BIN, args, priority);
 	return new Promise((resolve, reject) => {
 		const child = spawn(
-			DOWNLOADER_BIN,
-			args,
+			cmd,
+			cmdArgs,
 			{
 				cwd: __dirname,
 				stdio: ["ignore", "pipe", "pipe"],
@@ -784,11 +790,17 @@ function runUnpackOnce({
 	outputDir,
 	jobs = DEFAULT_THREADS,
 	onProgress,
+	priority = null,
 }) {
+	const [cmd, cmdArgs] = lowPriorityCommand(
+		UNPACKER_BIN,
+		["extract", "-i", inputDir, "-o", outputDir, "-j", String(jobs)],
+		priority,
+	);
 	return new Promise((resolve, reject) => {
 		const child = spawn(
-			UNPACKER_BIN,
-			["extract", "-i", inputDir, "-o", outputDir, "-j", String(jobs)],
+			cmd,
+			cmdArgs,
 			{
 				cwd: __dirname,
 				stdio: ["ignore", "pipe", "pipe"],
@@ -1414,650 +1426,212 @@ async function runUpdate() {
 
 // ─── Option 3: WebSocket Server ─────────────────────────────────────────────
 
+// `run.mjs ws` serves one region per process (legacy: `--server`, or WS_SERVER with
+// no WS_SERVERS) or every region from one process (WS_SERVERS / `--servers`, a JSON
+// array of {server, port, profile, startDelayMin}). Both modes build the same
+// region watchers from ws/region.mjs; in the single process they share ONE
+// scheduler, so only one download or extract runs at a time on the box, a manual
+// force_update included. The lockfile (WS_LOCK_FILE, default <savedir>/.watcher.lock)
+// extends that across processes, so a legacy process left running beside the
+// single one waits its turn instead of overlapping.
 async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {}) {
 	if (!binariesExist()) {
 		console.log(chalk.red("\nBinaries not found. Run Setup first.\n"));
 		return;
 	}
 
+	const savedirRoot = cliArgs.savedir ?? process.env.WS_SAVEDIR ?? "./ArkAssets";
+	const outputRoot = cliArgs.output ?? process.env.WS_OUTPUT ?? "./output";
 	const defaults = {
 		serverKey: cliArgs.server ?? process.env.WS_SERVER ?? "en",
-		savedir: cliArgs.savedir ?? process.env.WS_SAVEDIR ?? "./ArkAssets",
-		outputDir: cliArgs.output ?? process.env.WS_OUTPUT ?? "./output",
+		savedir: savedirRoot,
+		outputDir: outputRoot,
 		threads: Number(cliArgs.threads ?? process.env.WS_THREADS ?? DEFAULT_THREADS),
 		profile: cliArgs.profile ?? process.env.WS_PROFILE ?? "full",
 		port: Number(cliArgs.port ?? process.env.WS_PORT ?? 9160),
 		intervalMin: Number(cliArgs.interval ?? process.env.WS_INTERVAL ?? 30),
-		// Minutes to wait before the FIRST check, and so the phase of every check
-		// after it. Two watchers on one box otherwise wake on the same boundary and
-		// their extracts overlap. Default 0 leaves the behaviour as it was.
+		// Minutes past each interval boundary of this region's checks (its PHASE).
 		startDelayMin: Number(
 			cliArgs["start-delay"] ?? process.env.WS_START_DELAY_MIN ?? 0,
 		),
 	};
 
-	const config = nonInteractive
-		? defaults
-		: await inquirer.prompt([
-			{
-				type: "list",
-				name: "serverKey",
-				message: "Server region:",
-				choices: Object.entries(SERVERS).map(([key, s]) => ({
-					name: `${key} — ${s.label}`,
-					value: key,
-				})),
-				default: defaults.serverKey,
-			},
-			{ type: "input", name: "savedir", message: "Asset download directory:", default: defaults.savedir },
-			{ type: "input", name: "outputDir", message: "Extraction output directory:", default: defaults.outputDir },
-			{ type: "number", name: "threads", message: "Concurrent threads (download & unpack):", default: defaults.threads },
-			{ type: "list", name: "profile", message: "Content profile:", choices: [{ name: "full — everything", value: "full" }, { name: "operators — gamedata + operator assets only", value: "operators" }, { name: "stages — stage-viewer level scenes + preview/banner art", value: "stages" }, { name: "gamedata — only the anon/ bundles + .idx", value: "gamedata" }, { name: "release — event / banner / skin-brand art for the Release Planner", value: "release" }], default: defaults.profile },
-			{ type: "number", name: "port", message: "WebSocket port:", default: defaults.port },
-			{ type: "number", name: "intervalMin", message: "Check interval (minutes):", default: defaults.intervalMin },
-		]);
+	// An explicit `--server` always means the legacy single-region mode, whatever
+	// WS_SERVERS says: that is the kill switch back to one process per region.
+	const serversSpec =
+		cliArgs.server === undefined ? (cliArgs.servers ?? process.env.WS_SERVERS) : undefined;
+	const multi = nonInteractive && typeof serversSpec === "string" && serversSpec.trim() !== "";
 
-	if (!SERVERS[config.serverKey]) {
-		console.log(chalk.red(`\nUnknown server: ${config.serverKey}. Valid: ${Object.keys(SERVERS).join(", ")}\n`));
-		return;
+	let regions;
+	if (multi) {
+		try {
+			regions = parseServers(serversSpec, defaults, Object.keys(SERVERS));
+		} catch (err) {
+			console.log(chalk.red(`\n${err.message}\n`));
+			process.exitCode = 1;
+			return;
+		}
+	} else {
+		const config = nonInteractive
+			? { ...defaults }
+			: await inquirer.prompt([
+				{
+					type: "list",
+					name: "serverKey",
+					message: "Server region:",
+					choices: Object.entries(SERVERS).map(([key, s]) => ({
+						name: `${key} — ${s.label}`,
+						value: key,
+					})),
+					default: defaults.serverKey,
+				},
+				{ type: "input", name: "savedir", message: "Asset download directory:", default: defaults.savedir },
+				{ type: "input", name: "outputDir", message: "Extraction output directory:", default: defaults.outputDir },
+				{ type: "number", name: "threads", message: "Concurrent threads (download & unpack):", default: defaults.threads },
+				{ type: "list", name: "profile", message: "Content profile:", choices: [{ name: "full — everything", value: "full" }, { name: "operators — gamedata + operator assets only", value: "operators" }, { name: "stages — stage-viewer level scenes + preview/banner art", value: "stages" }, { name: "gamedata — only the anon/ bundles + .idx", value: "gamedata" }, { name: "release — event / banner / skin-brand art for the Release Planner", value: "release" }], default: defaults.profile },
+				{ type: "number", name: "port", message: "WebSocket port:", default: defaults.port },
+				{ type: "number", name: "intervalMin", message: "Check interval (minutes):", default: defaults.intervalMin },
+			]);
+		if (config.startDelayMin === undefined) config.startDelayMin = defaults.startDelayMin;
+
+		if (!SERVERS[config.serverKey]) {
+			console.log(chalk.red(`\nUnknown server: ${config.serverKey}. Valid: ${Object.keys(SERVERS).join(", ")}\n`));
+			return;
+		}
+		config.savedir = join(config.savedir, config.serverKey);
+		config.outputDir = join(config.outputDir, config.serverKey);
+
+		// Clamped: Number("30m") is NaN, setInterval coerces NaN to 1 ms and the
+		// backoff guard `Date.now() < NaN` never holds, so one typo would spin the
+		// check loop with the backoff disabled. Number("") is 0, the same failure.
+		const rawIntervalMin = Number(config.intervalMin);
+		const effectiveIntervalMin =
+			Number.isFinite(rawIntervalMin) && rawIntervalMin > 0 ? rawIntervalMin : 30;
+		if (effectiveIntervalMin !== rawIntervalMin) {
+			console.log(
+				chalk.yellow(
+					`Check interval "${config.intervalMin}" is not a usable number of minutes; using ${effectiveIntervalMin}`,
+				),
+			);
+		}
+		config.intervalMin = effectiveIntervalMin;
+		regions = [config];
 	}
 
-	config.savedir = join(config.savedir, config.serverKey);
-	config.outputDir = join(config.outputDir, config.serverKey);
+	// The backoff cap (WS_MAX_BACKOFF_MIN, 360 by default, "0" disables it) and the
+	// resource settings; see ws/config.mjs for every variable and its kill switch.
+	// The 6 hour cap is a TRADE: long enough that a wedged box stops driving the
+	// queue, short enough that a new resVersion still lands the same day.
+	const settings = resolveSettings(process.env, {
+		savedirRoot: multi ? savedirRoot : dirname(regions[0].savedir),
+		log: (m) => console.log(chalk.yellow(m)),
+	});
 
-	// Clamped for exactly the reason the backoff cap is, and it matters more now
-	// that the backoff is a multiple of it. Number("30m") is NaN: setInterval
-	// coerces NaN to 1 ms, so the check loop spins, while `Date.now() < NaN` is
-	// always false, so the backoff guard can never hold. One typo'd WS_INTERVAL
-	// would reproduce the original incident and disable the fix for it in the same
-	// stroke. Number("") is 0, which is the same failure with a busier loop.
-	const rawIntervalMin = Number(config.intervalMin);
-	const effectiveIntervalMin =
-		Number.isFinite(rawIntervalMin) && rawIntervalMin > 0 ? rawIntervalMin : 30;
-	if (effectiveIntervalMin !== rawIntervalMin) {
-		console.log(
-			chalk.yellow(
-				`Check interval "${config.intervalMin}" is not a usable number of minutes; using ${effectiveIntervalMin}`,
-			),
-		);
-	}
-	config.intervalMin = effectiveIntervalMin;
-	const intervalMs = effectiveIntervalMin * 60 * 1000;
-	// NaN degrades to 0, which is the previous behaviour, so a garbled value cannot
-	// wedge the watcher in a delay it never leaves.
-	const startDelayMs = Number.isFinite(config.startDelayMin)
-		? config.startDelayMin * 60 * 1000
-		: 0;
+	const scheduler = createScheduler({
+		fileLock: settings.fileLock,
+		guard: settings.guard,
+		deferRetryMs: settings.deferRetryMs,
+		maxDeferMs: settings.maxDeferMs,
+	});
 
-	// A failed update leaves every trigger that caused it STILL TRUE: `.version`
-	// and `.last_extract` are written only on success, so the next tick re-runs the
-	// same download and the same extract. With no backoff that is a full re-download
-	// and re-extract every intervalMin for as long as the failure lasts, which on a
-	// 3-core box against a ~113 GB tree is enough to keep the kernel in writeback
-	// and time out the disk.
-	//
-	// The cap is a TRADE, shipped knowingly, not a derived value: 6 hours is long
-	// enough that a wedged box stops driving the queue and short enough that a
-	// genuinely new resVersion still lands the same day. Ruled out on the way there:
-	// no backoff at all, which is the bug; and a hard attempt cap, which leaves a box
-	// stale with no retry once a human has fixed the cause.
-	//
-	// WS_MAX_BACKOFF_MIN=0 restores the previous behaviour EXACTLY: the delay becomes
-	// 0 ms and the `Date.now() < nextAttemptAt` guard can never hold. Parsed for
-	// finiteness rather than truthiness, because Number("") is 0 and Number("abc") is
-	// NaN, and NaN would silently disable the guard as well.
-	//
-	// An empty value takes the DEFAULT rather than 0. `process.env` holds strings,
-	// so a blanked pm2 entry or a bare `export WS_MAX_BACKOFF_MIN=` reaches
-	// Number("") === 0, which is finite and would turn the whole mechanism off with
-	// no log line saying so. A negative value is rejected the same way: it makes
-	// nextAttemptAt a time in the past, which is 0 wearing a disguise. Only an
-	// explicit "0" disables the backoff, and the resolved cap is logged at startup
-	// so an operator can read what actually took effect instead of inferring it.
-	const rawBackoffMin = process.env.WS_MAX_BACKOFF_MIN;
-	const parsedBackoffMin =
-		rawBackoffMin === undefined || rawBackoffMin.trim() === ""
-			? 360
-			: Number(rawBackoffMin);
-	const backoffCapMin =
-		Number.isFinite(parsedBackoffMin) && parsedBackoffMin >= 0
-			? parsedBackoffMin
-			: 360;
-	if (rawBackoffMin !== undefined && backoffCapMin !== parsedBackoffMin) {
-		console.log(
-			chalk.yellow(
-				`WS_MAX_BACKOFF_MIN="${rawBackoffMin}" is not a usable number of minutes; using ${backoffCapMin}`,
-			),
-		);
-	}
-	const maxBackoffMs = backoffCapMin * 60 * 1000;
+	const deps = {
+		runDownload,
+		runUnpack,
+		fetchServerVersion,
+		fetchHotUpdateList,
+		pruneOrphans,
+		readStoredVersion,
+		writeStoredVersion,
+		unpackerIsNewer,
+		outputMissingOrEmpty,
+		outputLooksTruncated,
+		touchExtractStamp,
+		readBackoffState,
+		writeBackoffState,
+		formatBytes,
+		dirStats,
+	};
 
-	/** Delay before the next attempt, after `failures` consecutive failures. */
-	const backoffMs = (failures) =>
-		Math.min(intervalMs * 2 ** Math.max(0, failures - 1), maxBackoffMs);
-
-	// State
-	let currentState = "idle";
-	let updating = false;
-	let currentVersion = readStoredVersion(config.savedir);
-	// Consecutive failed `performUpdate` runs, and the earliest time the next
-	// attempt may start. Loaded from disk so a pm2 or OOM restart does not clear a
-	// backoff that the restart itself is evidence for. Cleared by a run whose
-	// extract succeeds.
-	const persistedBackoff = readBackoffState(config.savedir);
-	let consecutiveFailures = persistedBackoff.consecutiveFailures;
-	// A stored wait further out than the cap can only come from a clock that moved,
-	// so it is trimmed rather than honoured. Left alone, one bad clock reading
-	// would park a region past any horizon a human would think to look at.
-	let nextAttemptAt = Math.min(
-		persistedBackoff.nextAttemptAt,
-		Date.now() + maxBackoffMs,
+	const watchers = regions.map((config) =>
+		createRegionWatcher({
+			config,
+			deps,
+			scheduler,
+			settings,
+			log: makeLogger(multi ? `[${config.serverKey}]` : ""),
+		}),
 	);
-	// When the scheduler will next call `checkAndUpdate`. Published so a client can
-	// tell a watcher that is between checks from one that has stopped checking.
-	let nextCheckAt = 0;
-	if (consecutiveFailures > 0) {
-		console.log(
-			chalk.yellow(
-				`Resuming backoff from disk: ${consecutiveFailures} consecutive failure(s), next attempt ${
-					nextAttemptAt > Date.now()
-						? `in ${Math.ceil((nextAttemptAt - Date.now()) / 60000)} minute(s)`
-						: "now"
-				}`,
-			),
-		);
-	}
+	const servers = await Promise.all(watchers.map((w) => w.listen()));
 
-	// WebSocket server
-	const wss = new WebSocketServer({ port: config.port });
-
-	// Listen for CTRL+C directly on raw stdin. Libraries like signal-exit
-	// (used by inquirer/ora) patch process.emit and install their own SIGINT
-	// handlers, which can swallow the signal. Reading raw stdin for 0x03 is
-	// the most reliable way to detect CTRL+C regardless of what other
-	// libraries do.
+	// Listen for CTRL+C directly on raw stdin: signal-exit (used by inquirer/ora)
+	// patches process.emit and can swallow SIGINT.
 	if (process.stdin.isTTY && process.stdin.setRawMode) {
 		process.stdin.setRawMode(true);
 		process.stdin.resume();
 		process.stdin.on("data", (key) => {
-			// 0x03 = CTRL+C
-			if (key[0] === 0x03) {
-				shutdown(!updating, wss);
-			}
-		});
-	}
-	const clients = new Set();
-
-	function broadcast(msg) {
-		const data = JSON.stringify(msg);
-		for (const ws of clients) {
-			if (ws.readyState === ws.OPEN) ws.send(data);
-		}
-	}
-
-	function sendTo(ws, msg) {
-		if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(msg));
-	}
-
-	// A watcher in a six-hour backoff was INDISTINGUISHABLE from a healthy one over
-	// this socket: the backoff guard returned before touching `currentState`, so a
-	// client connecting after the one-shot failure broadcast saw `state: "idle"`
-	// and a version read off disk, with no way to learn the watcher would not check
-	// again for hours. The only trace was a line in the pm2 log. For a mechanism
-	// whose whole purpose is to stop work for up to six hours, that state belongs
-	// here, or the first symptom anyone gets is stale assets and a green dashboard.
-	function statusMessage() {
-		return {
-			type: "status",
-			state: currentState,
-			version: { current: currentVersion ?? null },
-			nextCheckAt: nextCheckAt || null,
-			backoff: {
-				consecutiveFailures,
-				nextAttemptAt: nextAttemptAt || null,
-			},
-		};
-	}
-
-	// List resources in output directory
-	async function listResources(ws) {
-		const dir = config.outputDir;
-		if (!existsSync(dir)) {
-			sendTo(ws, { type: "resource_list", files: [], totalSize: 0 });
-			return;
-		}
-
-		const files = [];
-		let totalSize = 0;
-
-		try {
-			const entries = await readdir(dir, { withFileTypes: true });
-			for (const entry of entries) {
-				const fullPath = join(dir, entry.name);
-				const st = await stat(fullPath);
-
-				if (entry.isDirectory()) {
-					// Summarize directory: recursively count every nested file and its bytes.
-					const { size: dirSize, fileCount } = await dirStats(fullPath);
-					files.push({
-						name: entry.name,
-						path: entry.name,
-						size: dirSize,
-						fileCount,
-						modified: st.mtime.toISOString(),
-						created: st.birthtime.toISOString(),
-						type: "directory",
-					});
-					totalSize += dirSize;
-				} else {
-					files.push({
-						name: entry.name,
-						path: entry.name,
-						size: st.size,
-						modified: st.mtime.toISOString(),
-						created: st.birthtime.toISOString(),
-						type: "file",
-					});
-					totalSize += st.size;
-				}
-			}
-		} catch (err) {
-			sendTo(ws, {
-				type: "error",
-				message: `Failed to list resources: ${err.message}`,
-			});
-			return;
-		}
-
-		sendTo(ws, {
-			type: "resource_list",
-			files,
-			totalSize,
-			totalSizeFormatted: formatBytes(totalSize),
+			if (key[0] === 0x03) shutdown(scheduler.busy(), servers);
 		});
 	}
 
-	// Perform download + unpack cycle.
-	//
-	// `knownVer` is the version `checkAndUpdate` already fetched. Fetching it again
-	// after the work is what made a CDN blip expensive: the download can run for
-	// hours and the extract for hours more, and a 503 on a fresh version call at
-	// the END of that threw into the catch, so neither `.version` nor
-	// `.last_extract` was written and the next tick repeated the whole thing. The
-	// manual force_update path passes nothing and still fetches, which is fine: it
-	// has no earlier fetch to reuse.
-	//
-	// `manual` marks an operator-initiated force_update. Such a run DELIBERATELY
-	// ignores `nextAttemptAt`, because an escape hatch is what makes a six-hour cap
-	// tolerable, and its failures do not touch the counter. Sharing one counter
-	// meant an operator debugging a broken CDN pushed the automatic retry out with
-	// every click: five attempts reached backoffMs(5), pinning the scheduled
-	// watcher at the 6 hour cap because a human tried to help, with nothing in the
-	// logs connecting the two. A manual SUCCESS still clears the backoff, because
-	// what the counter counts is failed extracts and that extract did not fail.
-	async function performUpdate(knownVer, { manual = false } = {}) {
-		if (updating) return;
-		updating = true;
-
-		try {
-			// Download phase
-			currentState = "downloading";
-			broadcast(statusMessage());
-			console.log(chalk.blue(`[${new Date().toLocaleTimeString()}] Downloading assets...`));
-
-			const dlStats = await runDownload({
-				serverKey: config.serverKey,
-				savedir: config.savedir,
-				threads: config.threads,
-				profile: config.profile,
-				onProgress: (p) => broadcast({ type: "download_progress", ...p }),
-				onStatus: (msg) =>
-					broadcast({ type: "status", state: "downloading", message: msg }),
-			});
-
-			console.log(chalk.blue(`[${new Date().toLocaleTimeString()}] Download complete: ${dlStats.downloaded} files, ${dlStats.failed} failed, ${formatBytes(dlStats.totalBytes)}`));
-
-			// A partial download must NOT reach the unpacker. The downloader exits 0
-			// whatever its failure count, so this was the only thing standing between a
-			// stalled disk and an extract built from an incomplete bundle set, whose
-			// orphan sweep then deletes every previously-good output the short run did
-			// not re-produce, and whose result is recorded as the new baseline.
-			// Throwing here routes into the existing catch: no unpack, no sweep, no
-			// stamp, and the backoff arms. WS_ALLOW_PARTIAL_DOWNLOAD=1 is the escape
-			// hatch for a region where some bundles are permanently 404.
-			if (dlStats.failed > 0 && process.env.WS_ALLOW_PARTIAL_DOWNLOAD !== "1") {
-				throw new Error(
-					`${dlStats.failed} bundle(s) failed to download; refusing to unpack an incomplete set (WS_ALLOW_PARTIAL_DOWNLOAD=1 to override)`,
-				);
-			}
-			broadcast({
-				type: "download_complete",
-				downloaded: dlStats.downloaded,
-				failed: dlStats.failed,
-				totalBytes: dlStats.totalBytes,
-				totalBytesFormatted: formatBytes(dlStats.totalBytes),
-			});
-
-			// Prune orphans before unpack. Without this, stale .bin bundles from
-			// prior versions sharing a TextAsset m_Name with the current bundle
-			// can clobber the new content via last-write-wins in the unpacker.
-			try {
-				const ver = await fetchServerVersion(config.serverKey);
-				const hotList = await fetchHotUpdateList(config.serverKey, ver.resVersion);
-				const { deleted, freedBytes } = pruneOrphans(config.savedir, hotList);
-				if (deleted > 0) {
-					console.log(
-						chalk.dim(
-							`[${new Date().toLocaleTimeString()}] Pruned ${deleted} orphan file(s), freed ${formatBytes(freedBytes)}`,
-						),
-					);
-				}
-				broadcast({ type: "prune_complete", deleted, freedBytes });
-			} catch (err) {
-				console.warn(
-					chalk.yellow(
-						`[${new Date().toLocaleTimeString()}] Orphan prune skipped: ${err.message}`,
-					),
-				);
-			}
-
-			// Unpack phase
-			currentState = "unpacking";
-			broadcast(statusMessage());
-			console.log(chalk.blue(`[${new Date().toLocaleTimeString()}] Unpacking assets...`));
-
-			const upStats = await runUnpack({
-				inputDir: config.savedir,
-				outputDir: config.outputDir,
-				jobs: config.threads,
-				onProgress: (p) => broadcast({ type: "unpack_progress", ...p }),
-				onNotice: (message) =>
-					broadcast({ type: "status", state: "unpacking", message }),
-			});
-
-			// The extract SUCCEEDED at this point, and everything below is recording
-			// that. None of it may fall into the catch: doing so discards hours of
-			// completed work, leaves every trigger true, and re-runs the whole cycle on
-			// the next tick, which is the loop this whole change exists to close.
-			//
-			// The backoff clears first, before any call that can throw, because it
-			// counts failed extracts and this extract did not fail.
-			consecutiveFailures = 0;
-			nextAttemptAt = 0;
-			writeBackoffState(config.savedir, 0, 0);
-
-			// Update stored version and extraction timestamp
-			let serverVer = knownVer;
-			try {
-				if (!serverVer) serverVer = await fetchServerVersion(config.serverKey);
-				writeStoredVersion(config.savedir, serverVer.resVersion);
-				currentVersion = serverVer.resVersion;
-			} catch (err) {
-				console.log(
-					chalk.yellow(
-						`[${new Date().toLocaleTimeString()}] Extract succeeded but the version could not be recorded: ${err.message}. The next check will see a version mismatch and repeat the download.`,
-					),
-				);
-			}
-			// Written even when the version could not be: it records the tree that is
-			// now on disk, which is true regardless of what the CDN just said.
-			try {
-				touchExtractStamp(config.savedir, upStats.exported, upStats.onDisk);
-			} catch (err) {
-				console.log(
-					chalk.yellow(
-						`[${new Date().toLocaleTimeString()}] Extract succeeded but the stamp could not be written: ${err.message}`,
-					),
-				);
-			}
-
-			currentState = "idle";
-			console.log(chalk.green(`[${new Date().toLocaleTimeString()}] Update complete: v${currentVersion}, ${dlStats.downloaded} downloaded, ${upStats.exported} exported, ${upStats.onDisk} on disk`));
-			broadcast({
-				type: "update_complete",
-				version: currentVersion,
-				downloaded: dlStats.downloaded,
-				failed: dlStats.failed,
-				exported: upStats.exported,
-			});
-			broadcast(statusMessage());
-		} catch (err) {
-			currentState = "idle";
-			console.log(chalk.red(`[${new Date().toLocaleTimeString()}] Update failed: ${err.message}`));
-			if (manual) {
-				console.log(
-					chalk.dim(
-						`[${new Date().toLocaleTimeString()}] Manual update, so the automatic backoff is unchanged (${consecutiveFailures} consecutive failure(s) on record)`,
-					),
-				);
-			} else {
-				consecutiveFailures += 1;
-				const wait = backoffMs(consecutiveFailures);
-				nextAttemptAt = Date.now() + wait;
-				writeBackoffState(config.savedir, consecutiveFailures, nextAttemptAt);
-				console.log(
-					chalk.dim(
-						`[${new Date().toLocaleTimeString()}] Failure ${consecutiveFailures}; next attempt in ${Math.round(wait / 60000)} minute(s)`,
-					),
-				);
-			}
-			broadcast({
-				type: "error",
-				message: `Update failed: ${err.message}`,
-				consecutiveFailures,
-				nextAttemptAt,
-			});
-			broadcast(statusMessage());
-		} finally {
-			updating = false;
-		}
-	}
-
-	// Check for updates and trigger download if needed
-	async function checkAndUpdate() {
-		if (updating) return;
-
-		if (Date.now() < nextAttemptAt) {
-			const mins = Math.ceil((nextAttemptAt - Date.now()) / 60000);
-			console.log(
-				chalk.dim(
-					`[${new Date().toLocaleTimeString()}] Backing off after ${consecutiveFailures} failed update(s); next attempt in ${mins} minute(s)`,
-				),
+	const lines = [chalk.bold.green(multi ? "WebSocket Servers Running (one process)" : "WebSocket Server Running"), ""];
+	for (const c of regions) {
+		if (multi) {
+			lines.push(
+				`${chalk.bold(c.serverKey.padEnd(3))} ws://localhost:${c.port}  ${c.profile}  -t ${c.threads}  every ${c.intervalMin} min at +${c.startDelayMin}`,
 			);
-			currentState = "backing_off";
-			broadcast(statusMessage());
-			return;
-		}
-
-		try {
-			currentState = "checking";
-			broadcast(statusMessage());
-			console.log(chalk.dim(`[${new Date().toLocaleTimeString()}] Checking for updates...`));
-
-			const serverVer = await fetchServerVersion(config.serverKey);
-			const storedVer = readStoredVersion(config.savedir);
-
-			currentState = "idle";
-
-			const needsReextract =
-				unpackerIsNewer(config.savedir) ||
-				outputMissingOrEmpty(config.outputDir) ||
-				(await outputLooksTruncated(config.savedir, config.outputDir));
-			if (storedVer === serverVer.resVersion && !needsReextract) {
-				console.log(chalk.dim(`[${new Date().toLocaleTimeString()}] Up to date (${storedVer})`));
-				broadcast(statusMessage());
-				return;
-			}
-
-			if (needsReextract) {
-				console.log(chalk.yellow(`[${new Date().toLocaleTimeString()}] Re-extraction needed (assets current but output stale)`));
-			} else {
-				console.log(chalk.yellow(`[${new Date().toLocaleTimeString()}] Update available: ${storedVer ?? "(none)"} → ${serverVer.resVersion}`));
-			}
-
-			// Update available (new assets or unpacker rebuild)
-			broadcast({
-				type: "update_available",
-				currentVersion: storedVer ?? null,
-				newVersion: serverVer.resVersion,
-				clientVersion: serverVer.clientVersion,
-			});
-
-			await performUpdate(serverVer);
-		} catch (err) {
-			currentState = "idle";
-			console.log(chalk.red(`[${new Date().toLocaleTimeString()}] Version check failed: ${err.message}`));
-			broadcast({
-				type: "error",
-				message: `Version check failed: ${err.message}`,
-			});
-			broadcast(statusMessage());
+		} else {
+			lines.push(
+				`${chalk.bold("Address:")}  ws://localhost:${c.port}`,
+				`${chalk.bold("Server:")}   ${c.serverKey} — ${SERVERS[c.serverKey].label}`,
+				`${chalk.bold("Profile:")}  ${c.profile}`,
+				`${chalk.bold("Savedir:")}  ${c.savedir}`,
+				`${chalk.bold("Output:")}   ${c.outputDir}`,
+				`${chalk.bold("Threads:")}  ${c.threads}`,
+				`${chalk.bold("Interval:")} ${c.intervalMin} minutes`,
+			);
 		}
 	}
-
-	// Handle client connections
-	wss.on("connection", (ws) => {
-		console.log(chalk.dim(`[${new Date().toLocaleTimeString()}] Client connected (${clients.size + 1} total)`));
-		clients.add(ws);
-		sendTo(ws, statusMessage());
-
-		ws.on("message", async (raw) => {
-			let msg;
-			try {
-				msg = JSON.parse(raw.toString());
-			} catch {
-				sendTo(ws, { type: "error", message: "Invalid JSON" });
-				return;
-			}
-
-			switch (msg.type) {
-				case "force_update":
-					if (updating) {
-						sendTo(ws, {
-							type: "error",
-							message: "Update already in progress",
-						});
-					} else {
-						// Deliberately not gated on `nextAttemptAt`: this is the hatch
-						// out of a long backoff, and a person is asking for it.
-						performUpdate(undefined, { manual: true });
-					}
-					break;
-
-				case "list_resources":
-					await listResources(ws);
-					break;
-
-				default:
-					sendTo(ws, {
-						type: "error",
-						message: `Unknown command: ${msg.type}`,
-					});
-			}
-		});
-
-		ws.on("close", () => {
-			clients.delete(ws);
-			console.log(chalk.dim(`[${new Date().toLocaleTimeString()}] Client disconnected (${clients.size} remaining)`));
-		});
-		ws.on("error", () => clients.delete(ws));
-	});
-
+	const p = settings.priority;
+	lines.push(
+		"",
+		`${chalk.bold("Guard:")}    ${p ? `nice ${p.nice}, ionice class ${p.ioniceClass}` : "normal priority"}; unpack -j cap ${settings.maxUnpackJobs || "none"}; min free ${settings.guard ? `${settings.guard.minFreeMb} MiB` : "off"}; lock ${settings.fileLock?.path ?? "off"}`,
+		"",
+		chalk.dim("Press Ctrl+C to stop"),
+	);
 	console.log(
-		boxen(
-			[
-				chalk.bold.green("WebSocket Server Running"),
-				"",
-				`${chalk.bold("Address:")}  ws://localhost:${config.port}`,
-				`${chalk.bold("Server:")}   ${config.serverKey} — ${SERVERS[config.serverKey].label}`,
-				`${chalk.bold("Profile:")}  ${config.profile}`,
-				`${chalk.bold("Savedir:")}  ${config.savedir}`,
-				`${chalk.bold("Output:")}   ${config.outputDir}`,
-				`${chalk.bold("Threads:")}  ${config.threads}`,
-				`${chalk.bold("Interval:")} ${config.intervalMin} minutes`,
-				"",
-				chalk.dim("Press Ctrl+C to stop"),
-			].join("\n"),
-			{
-				padding: 1,
-				margin: { top: 1, bottom: 0, left: 1, right: 1 },
-				borderStyle: "round",
-				borderColor: "green",
-			},
-		),
+		boxen(lines.join("\n"), {
+			padding: 1,
+			margin: { top: 1, bottom: 0, left: 1, right: 1 },
+			borderStyle: "round",
+			borderColor: "green",
+		}),
 	);
 
-	if (stampBaselineMissing(config.savedir)) {
-		console.log(
-			chalk.yellow(
-				`Truncation check is INERT for this region: .last_extract carries no onDisk baseline, so a truncated tree will not be detected. It re-arms on the next successful extract.`,
-			),
-		);
-	}
-
-	// WS_ALIGN=0 restores the previous scheduling exactly: sleep the stagger, arm
-	// the interval from that moment, check immediately.
-	const alignToClock = process.env.WS_ALIGN !== "0";
-
-	if (!alignToClock) {
-		if (startDelayMs > 0) {
+	for (const c of regions) {
+		if (stampBaselineMissing(c.savedir)) {
 			console.log(
-				chalk.dim(
-					`[${new Date().toLocaleTimeString()}] Staggered start: waiting ${config.startDelayMin} minute(s) before the first check`,
+				chalk.yellow(
+					`${multi ? `[${c.serverKey}] ` : ""}Truncation check is INERT for this region: .last_extract carries no onDisk baseline, so a truncated tree will not be detected. It re-arms on the next successful extract.`,
 				),
 			);
-			await new Promise((resolve) => setTimeout(resolve, startDelayMs));
 		}
-		nextCheckAt = Date.now() + intervalMs;
-		setInterval(() => {
-			nextCheckAt = Date.now() + intervalMs;
-			void checkAndUpdate();
-		}, intervalMs);
-		await checkAndUpdate();
-		return;
 	}
 
-	// Anchored to the WALL clock rather than to process start. A relative offset
-	// only holds while both watchers keep the start times they happened to get:
-	// pm2 restarting one of them re-phases that one to its own restart moment, and
-	// the two drift back onto the same boundary with nothing left to separate
-	// them. Anchored to the clock, en fires at :00 and :30 and cn at :15 and :45
-	// whenever either process last came up, so a restart cannot collide them.
-	//
-	// The TRADE, shipped knowingly: there is no immediate check at startup any
-	// more, so a deploy can wait up to one interval before the new resVersion is
-	// noticed. force_update is how to say "go now" and WS_ALIGN=0 is the way back.
-	// Ruled out on the way here: checking immediately and then aligning, which
-	// reintroduces the collision on the first restart and so buys nothing.
-	const offsetMs = ((startDelayMs % intervalMs) + intervalMs) % intervalMs;
-	const scheduleNext = () => {
-		const now = Date.now();
-		// floor(..) + 1, not ceil(..): a slot landing exactly on `now` must schedule
-		// the NEXT one, or the zero-delay timer re-enters itself forever.
-		nextCheckAt =
-			(Math.floor((now - offsetMs) / intervalMs) + 1) * intervalMs + offsetMs;
-		setTimeout(() => {
-			scheduleNext();
-			void checkAndUpdate();
-		}, nextCheckAt - now);
-	};
-	scheduleNext();
-	console.log(
-		chalk.dim(
-			`[${new Date().toLocaleTimeString()}] Checks aligned to the clock: every ${config.intervalMin} min at offset ${offsetMs / 60000} min; first check at ${new Date(nextCheckAt).toLocaleTimeString()}`,
-		),
-	);
-
-	process.on("SIGTERM", () => shutdown(!updating, wss));
+	// `shutdown`'s first argument means "an update is running". The previous code
+	// passed `!updating`, so an idle SIGTERM logged "during an active update" and
+	// exited 1 while a busy one claimed it was safe; fixed here.
+	process.on("SIGTERM", () => shutdown(scheduler.busy(), servers));
+	await Promise.all(watchers.map((w) => w.startSchedule()));
 }
+
 
 // ─── Global SIGINT ──────────────────────────────────────────────────────────
 // Track active child processes so CTRL+C/SIGTERM/etc. can kill them and exit cleanly
 const activeChildren = new Set();
 
-const shutdown = (graceful, ws_server) => {
-	if (ws_server) {
-		ws_server.close()
+const shutdown = (updateRunning, ws_servers) => {
+	for (const wss of [ws_servers ?? []].flat()) {
+		wss.close();
 	}
 
 	for (const child of activeChildren) {
@@ -2066,7 +1640,7 @@ const shutdown = (graceful, ws_server) => {
 		} catch {}
 	}
 
-	if (graceful) {
+	if (updateRunning) {
 		console.log(chalk.red("Shut down called for during an active update, assets may be incomplete, stale, or corrupted."));
 		process.exit(1);
 	} else {

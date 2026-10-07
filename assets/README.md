@@ -739,7 +739,7 @@ Sent on connection and when state changes.
 ```json
 {
   "type": "status",
-  "state": "idle|checking|downloading|unpacking",
+  "state": "idle|queued|checking|downloading|unpacking|backing_off",
   "version": {
     "current": "1.27.5_08_15_11_51"
   }
@@ -1276,8 +1276,16 @@ it three ways:
 | `asset-tools` | `tools` | One-off jobs: `docker compose run --rm asset-tools download.sh en 4` |
 
 `download.sh` takes `SERVER THREADS [PROFILE]`; `unpack.sh` takes `REGION THREADS`. Outside
-Docker, `ecosystem.config.cjs` runs the same watchers under PM2 as `myrtle-ws-en` and
-`myrtle-ws-cn`. The backend consumes the result through `ASSETS_DIR`, `SERVERS`, and
+Docker, `ecosystem.config.cjs` runs every region from ONE PM2 app, `myrtle-ws`: `WS_SERVERS`
+holds a JSON array of `{server, port, profile, startDelayMin}`, each region keeps its own
+WebSocket port (9160 to 9163) and message shapes, and all of them share one queue, so exactly
+one download or extract runs at a time, a manual `force_update` included. A region whose
+check wakes while another extracts reports `state: "queued"` (with `queue: {position,
+behind}`) until its turn. The old one-process-per-region layout is
+`ecosystem.legacy.config.cjs`, and `run.mjs ws --server en` still runs one region alone;
+an explicit `--server` always ignores `WS_SERVERS`. Both modes take the lockfile
+`<savedir>/.watcher.lock`, so a legacy process left beside the single one waits instead of
+overlapping. `npm test` runs the scheduler tests (`ws/ws.test.mjs`, fakes only). The backend consumes the result through `ASSETS_DIR`, `SERVERS`, and
 `ASSET_WS_URLS`; see the [backend README](../backend/README.md).
 
 ### Environment
@@ -1285,6 +1293,11 @@ Docker, `ecosystem.config.cjs` runs the same watchers under PM2 as `myrtle-ws-en
 | Variable | Applies to | Description |
 |----------|-----------|-------------|
 | `WS_SERVER` · `WS_SAVEDIR` · `WS_OUTPUT` · `WS_THREADS` · `WS_PROFILE` · `WS_PORT` · `WS_INTERVAL` | `run.mjs ws` | Non-interactive WebSocket-mode configuration |
+| `WS_SERVERS` | `run.mjs ws` | JSON array of regions for the single-process mode; unset (or `--server`) = one region per process |
+| `WS_NICE` (10) · `WS_IONICE_CLASS` (2) · `WS_IONICE_LEVEL` (7) | `run.mjs ws` | Downloader and unpacker run under `ionice`/`nice`; `0` turns each off |
+| `WS_MAX_UNPACK_JOBS` (cores-1) | `run.mjs ws` | Cap on the unpacker's `-j`; `0` = no cap |
+| `WS_MIN_FREE_MB` (1536 on Linux, else 0) · `WS_MEM_RETRY_MIN` (2) · `WS_MEM_MAX_DEFER_MIN` (30) · `WS_MEM_WAIT_MIN` (10) | `run.mjs ws` | Memory guard on MemAvailable: defer a job, skip it after the max, and hold an extract after its download; `0` = off |
+| `WS_LOCK` · `WS_LOCK_FILE` | `run.mjs ws` | Cross-process lockfile; `WS_LOCK=0` = off |
 | `DYNCHAR_CARDFIELDS` | unpacker | Override the path to `cardfields.json` |
 | `DYNCHAR_NO_CARDFIELDS` | unpacker | Skip the card-field merge pass |
 | `DYNCHAR_TEX_POOL` | unpacker | Content-addressed texture dedup pool. On by default; `=0` reverts to per-call PNGs |
