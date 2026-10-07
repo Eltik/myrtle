@@ -1,0 +1,744 @@
+//! `/collection`: operator, enemy, stage and story lookups against the public backend.
+//!
+//! Each subcommand autocompletes against the cached lists in `api::gamedata` (the autocomplete
+//! value is the entity id) and also accepts free text, resolved with the same matcher.
+
+use std::collections::HashSet;
+use std::fmt::Write as _;
+use std::sync::Arc;
+
+use ::serenity::builder::{CreateEmbed, CreateEmbedFooter};
+use poise::CreateReply;
+use poise::serenity_prelude as serenity;
+
+use crate::api::gamedata::{Enemy, GameData, Operator, Stage, StageDetail, StoryGroup};
+use crate::search::search;
+use crate::types::{Context, Error};
+use crate::utils::{commafy, ellipsize};
+
+#[allow(clippy::unreadable_literal)]
+const COLOR_INFO: u32 = 0x5865F2;
+#[allow(clippy::unreadable_literal)]
+const COLOR_WARN: u32 = 0xFEE75C;
+#[allow(clippy::unreadable_literal)]
+const COLOR_BAD: u32 = 0xED4245;
+
+/// Discord caps an autocomplete response at 25 choices of at most 100 characters each.
+const AUTOCOMPLETE_MAX: usize = 25;
+const CHOICE_NAME_MAX: usize = 100;
+const TITLE_MAX: usize = 256;
+const FIELD_MAX: usize = 1024;
+/// Enemy descriptions run to a paragraph; the embed keeps the first few lines' worth.
+const DESCRIPTION_MAX: usize = 400;
+
+/// Look up Arknights game data.
+///
+/// Subcommands: `operator`, `enemy`, `stage`, `story`. Pick from the autocomplete list, or type
+/// a name and the closest match is shown.
+#[poise::command(
+    slash_command,
+    subcommands(
+        "collection_operator",
+        "collection_enemy",
+        "collection_stage",
+        "collection_story"
+    ),
+    subcommand_required
+)]
+pub async fn collection(_ctx: Context<'_>) -> Result<(), Error> {
+    Ok(())
+}
+
+/// Show an operator's profile.
+#[poise::command(slash_command, rename = "operator")]
+pub async fn collection_operator(
+    ctx: Context<'_>,
+    #[description = "Operator name"]
+    #[autocomplete = "autocomplete_operator"]
+    query: String,
+) -> Result<(), Error> {
+    let gamedata = begin(ctx).await?;
+    let operators = gamedata.operators().await?;
+    let op = resolve(
+        &operators,
+        &query,
+        |o| o.id.as_str(),
+        operator_names,
+        operator_priority,
+    )
+    .ok_or_else(|| no_match("operator", &query))?;
+    let embed = operator_embed(op, &gamedata, frontend(ctx));
+    ctx.send(CreateReply::default().embed(embed)).await?;
+    Ok(())
+}
+
+/// Show an enemy's handbook entry.
+#[poise::command(slash_command, rename = "enemy")]
+pub async fn collection_enemy(
+    ctx: Context<'_>,
+    #[description = "Enemy name"]
+    #[autocomplete = "autocomplete_enemy"]
+    query: String,
+) -> Result<(), Error> {
+    let gamedata = begin(ctx).await?;
+    let enemies = gamedata.enemies().await?;
+    let enemy = resolve(
+        &enemies,
+        &query,
+        |e| e.id.as_str(),
+        enemy_names,
+        enemy_priority,
+    )
+    .ok_or_else(|| no_match("enemy", &query))?;
+    let embed = enemy_embed(enemy, &gamedata, frontend(ctx));
+    ctx.send(CreateReply::default().embed(embed)).await?;
+    Ok(())
+}
+
+/// Show a stage: zone, sanity, enemies and drops.
+#[poise::command(slash_command, rename = "stage")]
+pub async fn collection_stage(
+    ctx: Context<'_>,
+    #[description = "Stage code or name, e.g. 1-7 or CE-6"]
+    #[autocomplete = "autocomplete_stage"]
+    query: String,
+) -> Result<(), Error> {
+    let gamedata = begin(ctx).await?;
+    let stages = gamedata.stages().await?;
+    let stage = resolve(
+        &stages,
+        &query,
+        |s| s.stage_id.as_str(),
+        stage_names,
+        stage_priority,
+    )
+    .ok_or_else(|| no_match("stage", &query))?;
+    // The detail (enemies, drops, danger level) is a second request: defer so it can't run the
+    // interaction past Discord's 3 s window. A no-match above has already answered ephemerally.
+    ctx.defer().await?;
+    let detail = match gamedata.stage_detail(&stage.stage_id).await {
+        Ok(d) => Some(d),
+        Err(e) => {
+            tracing::warn!("collection: stage detail {}: {e}", stage.stage_id);
+            None
+        }
+    };
+    let embed = stage_embed(stage, detail.as_ref(), &gamedata, frontend(ctx));
+    ctx.send(CreateReply::default().embed(embed)).await?;
+    Ok(())
+}
+
+/// Show a story group: an episode, event story, vignette or operator record.
+#[poise::command(slash_command, rename = "story")]
+pub async fn collection_story(
+    ctx: Context<'_>,
+    #[description = "Story, event or operator name"]
+    #[autocomplete = "autocomplete_story"]
+    query: String,
+) -> Result<(), Error> {
+    let gamedata = begin(ctx).await?;
+    let stories = gamedata.stories().await?;
+    let group = resolve(&stories, &query, |g| g.id.as_str(), story_names, |_| 0)
+        .ok_or_else(|| no_match("story", &query))?;
+    let embed = story_embed(group, &gamedata, frontend(ctx));
+    ctx.send(CreateReply::default().embed(embed)).await?;
+    Ok(())
+}
+
+/// Shared start of every lookup: check the backend is configured and, when a list still has to
+/// be fetched for the first time, defer so the fetch can't time the interaction out.
+///
+/// Deferring is public, so a no-match after a cold start answers publicly too; once the lists
+/// are cached (they are warmed at startup) every no-match is ephemeral.
+async fn begin(ctx: Context<'_>) -> Result<Arc<GameData>, Error> {
+    let gamedata = Arc::clone(&ctx.data().gamedata);
+    gamedata.base()?;
+    if !gamedata.is_warm().await {
+        ctx.defer().await?;
+    }
+    Ok(gamedata)
+}
+
+fn frontend(ctx: Context<'_>) -> &str {
+    ctx.data()
+        .config
+        .endpoints
+        .public_frontend
+        .trim_end_matches('/')
+}
+
+fn no_match(kind: &str, query: &str) -> Error {
+    format!(
+        "No {kind} matches `{}`. Try picking one from the suggestions.",
+        ellipsize(query.trim(), 100)
+    )
+    .into()
+}
+
+/// The item whose id is exactly `query` (an autocomplete pick), else the best name match.
+fn resolve<'a, T>(
+    items: &'a [T],
+    query: &str,
+    id: impl Fn(&'a T) -> &'a str,
+    names: impl Fn(&'a T) -> Vec<&'a str>,
+    priority: impl Fn(&'a T) -> u8,
+) -> Option<&'a T> {
+    let query = query.trim();
+    items
+        .iter()
+        .find(|item| id(item) == query)
+        .or_else(|| search(items, query, 1, names, priority).into_iter().next())
+}
+
+/// Autocomplete choices for `items`: the best matches for `partial`, or the first few items
+/// when nothing has been typed yet.
+fn choices<'a, T>(
+    items: &'a [T],
+    partial: &str,
+    names: impl Fn(&'a T) -> Vec<&'a str>,
+    priority: impl Fn(&'a T) -> u8,
+    choice: impl Fn(&T) -> (String, String),
+) -> Vec<serenity::AutocompleteChoice> {
+    let hits: Vec<&T> = if partial.trim().is_empty() {
+        items.iter().take(AUTOCOMPLETE_MAX).collect()
+    } else {
+        search(items, partial, AUTOCOMPLETE_MAX, names, priority)
+    };
+    hits.into_iter()
+        .map(|item| {
+            let (label, value) = choice(item);
+            serenity::AutocompleteChoice::new(ellipsize(&label, CHOICE_NAME_MAX), value)
+        })
+        .collect()
+}
+
+// ---------------------------------------------------------------------------
+// Operators
+// ---------------------------------------------------------------------------
+
+fn operator_names(op: &Operator) -> Vec<&str> {
+    let mut names = vec![op.name.as_str()];
+    names.extend(op.appellation());
+    names
+}
+
+/// Obtainable operators first: "Sharp" should find the one players can recruit.
+fn operator_priority(op: &Operator) -> u8 {
+    u8::from(op.is_not_obtainable)
+}
+
+async fn autocomplete_operator(
+    ctx: Context<'_>,
+    partial: &str,
+) -> Vec<serenity::AutocompleteChoice> {
+    // Never waits on a fetch: an uncached list answers empty and loads in the background.
+    let Some(operators) = ctx.data().gamedata.cached_operators().await else {
+        return Vec::new();
+    };
+    choices(
+        &operators,
+        partial,
+        operator_names,
+        operator_priority,
+        |op| {
+            (
+                match op.class() {
+                    Some(class) => format!("{} ({}★ {class})", op.name, op.rarity),
+                    None => format!("{} ({}★)", op.name, op.rarity),
+                },
+                op.id.clone(),
+            )
+        },
+    )
+}
+
+fn operator_embed(op: &Operator, gamedata: &GameData, frontend: &str) -> CreateEmbed {
+    let title = match op.appellation() {
+        Some(a) => format!("{} ({a})", op.name),
+        None => op.name.clone(),
+    };
+    let position = title_case(&op.position);
+    let mut parts: Vec<&str> = [op.class(), op.branch()].into_iter().flatten().collect();
+    if !position.is_empty() {
+        parts.push(&position);
+    }
+    let summary = format!(
+        "{}  {}",
+        "★".repeat(usize::from(op.rarity)),
+        parts.join(" · ")
+    );
+    let mut embed = CreateEmbed::new()
+        .title(ellipsize(&title, TITLE_MAX))
+        .description(summary)
+        .colour(rarity_colour(op.rarity))
+        .thumbnail(gamedata.api_url(&format!("/avatar/{}", op.id)))
+        .image(gamedata.api_url(&format!("/charart/{}", op.id)));
+    if !frontend.is_empty() {
+        embed = embed.url(format!("{frontend}/operators/{}", op.id));
+    }
+
+    let factions = op.factions();
+    if !factions.is_empty() {
+        embed = embed.field("Faction", field(&factions.join(" · ")), true);
+    }
+    let birthday = op.date_of_birth.trim();
+    if !birthday.is_empty() {
+        embed = embed.field("Birthday", field(birthday), true);
+    }
+    let tags = names_list(&op.tag_list);
+    if !tags.is_empty() {
+        embed = embed.field("Tags", field(&tags.join(", ")), true);
+    }
+    let artists = names_list(&op.artists);
+    if !artists.is_empty() {
+        let label = if artists.len() == 1 {
+            "Artist"
+        } else {
+            "Artists"
+        };
+        embed = embed.field(label, field(&artists.join(", ")), true);
+    }
+    let voices = names_list(&op.voice_actors);
+    if !voices.is_empty() {
+        embed = embed.field("Voice actors", field(&voices.join(", ")), false);
+    }
+    let footer = if op.is_not_obtainable {
+        format!("{} · not obtainable", op.id)
+    } else {
+        op.id.clone()
+    };
+    embed.footer(CreateEmbedFooter::new(footer))
+}
+
+/// The in-game rarity colours, roughly: grey, green, blue, purple, gold, orange.
+const fn rarity_colour(rarity: u8) -> u32 {
+    match rarity {
+        6 => 0x00FF_7F27,
+        5 => 0x00FF_C90E,
+        4 => 0x00D8_B2FF,
+        3 => 0x0000_B2FF,
+        2 => 0x00DC_E537,
+        _ => 0x00A0_A0A0,
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Enemies
+// ---------------------------------------------------------------------------
+
+fn enemy_names(enemy: &Enemy) -> Vec<&str> {
+    let mut names = vec![enemy.name.as_str()];
+    names.extend(enemy.index.as_deref());
+    names
+}
+
+/// Entries hidden from the in-game handbook (mostly alternate forms) sort after the rest.
+fn enemy_priority(enemy: &Enemy) -> u8 {
+    u8::from(enemy.hide_in_handbook)
+}
+
+async fn autocomplete_enemy(ctx: Context<'_>, partial: &str) -> Vec<serenity::AutocompleteChoice> {
+    // Never waits on a fetch: an uncached list answers empty and loads in the background.
+    let Some(enemies) = ctx.data().gamedata.cached_enemies().await else {
+        return Vec::new();
+    };
+    choices(&enemies, partial, enemy_names, enemy_priority, |e| {
+        let mut tags: Vec<&str> = Vec::new();
+        tags.extend(e.level.as_deref().map(enemy_level_label));
+        tags.extend(e.index.as_deref());
+        let label = if tags.is_empty() {
+            e.name.clone()
+        } else {
+            format!("{} ({})", e.name, tags.join(", "))
+        };
+        (label, e.id.clone())
+    })
+}
+
+fn enemy_embed(enemy: &Enemy, gamedata: &GameData, frontend: &str) -> CreateEmbed {
+    let colour = match enemy.level.as_deref() {
+        Some("BOSS") => COLOR_BAD,
+        Some("ELITE") => COLOR_WARN,
+        _ => COLOR_INFO,
+    };
+    let mut embed = CreateEmbed::new()
+        .title(ellipsize(&enemy.name, TITLE_MAX))
+        .colour(colour)
+        .thumbnail(gamedata.api_url(&format!("/enemy-icon/{}", enemy.id)));
+    if !frontend.is_empty() {
+        embed = embed.url(format!("{frontend}/enemies/{}", enemy.id));
+    }
+    if let Some(description) = enemy.description.as_deref().map(str::trim)
+        && !description.is_empty()
+    {
+        embed = embed.description(ellipsize(&strip_rich_text(description), DESCRIPTION_MAX));
+    }
+
+    if let Some(level) = enemy.level.as_deref() {
+        embed = embed.field("Class", enemy_level_label(level), true);
+    }
+    if let Some(way) = enemy.apply_way.as_deref() {
+        embed = embed.field("Attack", apply_way_label(way), true);
+    }
+    if !enemy.damage_types.is_empty() {
+        let damage: Vec<&str> = enemy
+            .damage_types
+            .iter()
+            .map(|d| damage_type_label(d))
+            .collect();
+        embed = embed.field("Damage", damage.join(" / "), true);
+    }
+    if let Some(s) = enemy.stats {
+        embed = embed.field(
+            "Stats (level 0)",
+            format!(
+                "HP **{}** · ATK **{}** · DEF **{}** · RES **{}**",
+                number(s.hp),
+                number(s.atk),
+                number(s.def),
+                number(s.res)
+            ),
+            false,
+        );
+    }
+    let abilities = enemy
+        .abilities
+        .iter()
+        .map(|(text, format)| {
+            let text = strip_rich_text(text);
+            if format == "TITLE" {
+                format!("**{text}**")
+            } else {
+                format!("• {text}")
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+    if !abilities.is_empty() {
+        embed = embed.field("Abilities", field(&abilities), false);
+    }
+    let footer = match enemy.index.as_deref() {
+        Some(index) => format!("{index} · {}", enemy.id),
+        None => enemy.id.clone(),
+    };
+    embed.footer(CreateEmbedFooter::new(footer))
+}
+
+/// The handbook's labels, as the frontend's English catalog has them.
+fn enemy_level_label(level: &str) -> &str {
+    match level {
+        "NORMAL" => "Normal",
+        "ELITE" => "Elite",
+        "BOSS" => "Boss",
+        other => other,
+    }
+}
+
+fn apply_way_label(way: &str) -> &str {
+    match way {
+        "MELEE" => "Melee",
+        "RANGED" => "Ranged",
+        "ALL" => "Melee and ranged",
+        "NONE" => "None",
+        other => other,
+    }
+}
+
+fn damage_type_label(damage: &str) -> &str {
+    match damage {
+        "PHYSIC" => "Physical",
+        "MAGIC" => "Arts",
+        "HEAL" => "Heal",
+        "NO_DAMAGE" => "No damage",
+        other => other,
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Stages
+// ---------------------------------------------------------------------------
+
+fn stage_names(stage: &Stage) -> Vec<&str> {
+    vec![stage.code.as_str(), stage.name.as_str()]
+}
+
+/// The plain version of a stage beats its Challenge, Story and Adverse variants.
+fn stage_priority(stage: &Stage) -> u8 {
+    u8::from(stage.mode().is_some())
+}
+
+async fn autocomplete_stage(ctx: Context<'_>, partial: &str) -> Vec<serenity::AutocompleteChoice> {
+    // Never waits on a fetch: an uncached list answers empty and loads in the background.
+    let Some(stages) = ctx.data().gamedata.cached_stages().await else {
+        return Vec::new();
+    };
+    choices(&stages, partial, stage_names, stage_priority, |s| {
+        let mut label = format!("{} {}", s.code, s.name);
+        for extra in [s.zone_name.as_deref(), s.mode()].into_iter().flatten() {
+            let _ = write!(label, " · {extra}");
+        }
+        (label, s.stage_id.clone())
+    })
+}
+
+fn stage_embed(
+    stage: &Stage,
+    detail: Option<&StageDetail>,
+    gamedata: &GameData,
+    frontend: &str,
+) -> CreateEmbed {
+    let mut embed = CreateEmbed::new()
+        .title(ellipsize(
+            &format!("{} {}", stage.code, stage.name),
+            TITLE_MAX,
+        ))
+        .colour(COLOR_INFO);
+    if !frontend.is_empty() {
+        embed = embed.url(format!(
+            "{frontend}/stages/{}",
+            crate::api::gamedata::encode_path_segment(&stage.stage_id)
+        ));
+    }
+    if let Some(preview) = stage.preview.as_deref() {
+        embed = embed.image(gamedata.asset_url(preview));
+    }
+
+    // The detail's zone names ("Episode 1 · Evil Time Part 2") say more than the index's.
+    let zone = detail
+        .and_then(|d| d.zone.as_ref())
+        .map(|z| {
+            [z.zone_name_first.as_deref(), z.zone_name_second.as_deref()]
+                .into_iter()
+                .flatten()
+                .filter(|n| !n.trim().is_empty())
+                .collect::<Vec<_>>()
+                .join(" · ")
+        })
+        .filter(|z| !z.is_empty())
+        .or_else(|| stage.zone_name.clone());
+    let mut description: Vec<String> = zone.into_iter().collect();
+    description.extend(stage.mode().map(|m| format!("*{m}*")));
+    if !description.is_empty() {
+        embed = embed.description(description.join("\n"));
+    }
+
+    if let Some(cost) = stage.ap_cost {
+        embed = embed.field("Sanity", cost.to_string(), true);
+    }
+    let Some(detail) = detail else {
+        return embed.footer(CreateEmbedFooter::new(format!(
+            "{} · enemies and drops unavailable",
+            stage.stage_id
+        )));
+    };
+    if let Some(danger) = detail.stage.danger_level.as_deref().map(str::trim)
+        && !danger.is_empty()
+        && danger != "-"
+    {
+        embed = embed.field("Danger", danger, true);
+    }
+
+    let mut seen = HashSet::new();
+    let enemies: Vec<&str> = detail
+        .level_data
+        .iter()
+        .flat_map(|l| l.enemy_db_refs.iter().flatten())
+        .filter(|r| seen.insert(r.id.as_str()))
+        .filter_map(|r| detail.enemies.get(&r.id).map(|e| e.name.as_str()))
+        .collect();
+    if !enemies.is_empty() {
+        embed = embed.field(
+            format!("Enemies ({})", enemies.len()),
+            field(&enemies.join(", ")),
+            false,
+        );
+    }
+
+    let drops = stage_drops(detail);
+    if !drops.is_empty() {
+        embed = embed.field("Drops", field(&drops), false);
+    }
+    embed.footer(CreateEmbedFooter::new(stage.stage_id.clone()))
+}
+
+/// "Regular: Orirock Cube\nExtra: Orirock, Ester", one line per drop kind that has a named
+/// item. First-clear Orundum (`COMPLETE`) and anything missing from `materials` are left out.
+fn stage_drops(detail: &StageDetail) -> String {
+    let Some(info) = detail.stage.stage_drop_info.as_ref() else {
+        return String::new();
+    };
+    let mut lines = Vec::new();
+    for (kind, label) in [
+        ("NORMAL", "Regular"),
+        ("SPECIAL", "Special"),
+        ("ADDITIONAL", "Extra"),
+        ("ONCE", "First clear"),
+    ] {
+        let names: Vec<&str> = info
+            .display_detail_rewards
+            .iter()
+            .filter(|r| r.drop_type == kind)
+            .filter_map(|r| detail.materials.get(&r.id).map(|m| m.name.as_str()))
+            .collect();
+        if !names.is_empty() {
+            lines.push(format!("{label}: {}", names.join(", ")));
+        }
+    }
+    lines.join("\n")
+}
+
+// ---------------------------------------------------------------------------
+// Stories
+// ---------------------------------------------------------------------------
+
+fn story_names(group: &StoryGroup) -> Vec<&str> {
+    let mut names = vec![group.name.as_str()];
+    names.extend(group.operator.as_deref());
+    names
+}
+
+async fn autocomplete_story(ctx: Context<'_>, partial: &str) -> Vec<serenity::AutocompleteChoice> {
+    // Never waits on a fetch: an uncached list answers empty and loads in the background.
+    let Some(stories) = ctx.data().gamedata.cached_stories().await else {
+        return Vec::new();
+    };
+    choices(
+        &stories,
+        partial,
+        story_names,
+        |_| 0,
+        |g| (format!("{} ({})", g.name, story_kind(g)), g.id.clone()),
+    )
+}
+
+/// "Main story", "Side story", "Vignette", or "Operator record: Ifrit".
+fn story_kind(group: &StoryGroup) -> String {
+    let category = match group.category.as_str() {
+        "main" => "Main story",
+        "side" => "Side story",
+        "vignette" => "Vignette",
+        "record" => "Operator record",
+        other => other,
+    };
+    match group.operator.as_deref() {
+        Some(op) => format!("{category}: {op}"),
+        None => category.to_string(),
+    }
+}
+
+fn story_embed(group: &StoryGroup, gamedata: &GameData, frontend: &str) -> CreateEmbed {
+    let mut description = story_kind(group);
+    if let Some(chapter) = group.chapter.as_deref() {
+        let _ = write!(description, " · {chapter}");
+    }
+    let mut embed = CreateEmbed::new()
+        .title(ellipsize(&group.name, TITLE_MAX))
+        .description(description)
+        .colour(COLOR_INFO)
+        .field("Stories", group.stories.len().to_string(), true);
+    if let Some(words) = group.word_count {
+        let words = i32::try_from(words).map_or_else(|_| words.to_string(), commafy);
+        embed = embed.field("Words", words, true);
+    }
+    // The reader has no page per group, so the link opens the group's first story.
+    if !frontend.is_empty()
+        && let Some(first) = group.stories.first()
+    {
+        embed = embed.url(format!(
+            "{frontend}/stories/{}",
+            crate::api::gamedata::encode_path_segment(&first.id)
+        ));
+    }
+    if let Some(art) = group.banner_url.as_deref().or(group.cover_url.as_deref()) {
+        embed = embed.image(gamedata.asset_url(art));
+    }
+    embed.footer(CreateEmbedFooter::new(group.id.clone()))
+}
+
+// ---------------------------------------------------------------------------
+// Formatting
+// ---------------------------------------------------------------------------
+
+/// An embed field value: never empty, never over Discord's 1024 characters.
+fn field(value: &str) -> String {
+    if value.trim().is_empty() {
+        return "-".to_string();
+    }
+    ellipsize(value, FIELD_MAX)
+}
+
+/// The non-blank entries of a profile list, trimmed: the data has stray spaces ("Ruan ").
+fn names_list(items: &[String]) -> Vec<&str> {
+    items
+        .iter()
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty())
+        .collect()
+}
+
+/// "MELEE" -> "Melee".
+fn title_case(s: &str) -> String {
+    let lower = s.to_lowercase();
+    let mut chars = lower.chars();
+    chars.next().map_or_else(String::new, |first| {
+        first.to_uppercase().chain(chars).collect()
+    })
+}
+
+/// A stat as the handbook prints it: whole numbers without a decimal point.
+fn number(n: f64) -> String {
+    if n.fract() == 0.0 && n.abs() < 1e15 {
+        format!("{n:.0}")
+    } else {
+        format!("{n:.1}")
+    }
+}
+
+/// Drop the game's rich-text markup (`<$ba.stun>Stun</>`, `<@lv.item>`) but keep angle-bracket
+/// names that are plain text (`<Frigid>`).
+fn strip_rich_text(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let mut rest = s;
+    while let Some(start) = rest.find('<') {
+        out.push_str(&rest[..start]);
+        let tail = &rest[start..];
+        let is_markup = tail.starts_with("</>") || tail.starts_with("<$") || tail.starts_with("<@");
+        match tail.find('>') {
+            Some(end) if is_markup => rest = &tail[end + 1..],
+            _ => {
+                out.push('<');
+                rest = &tail[1..];
+            }
+        }
+    }
+    out.push_str(rest);
+    out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn strips_markup_but_keeps_names() {
+        assert_eq!(
+            strip_rich_text("Attacks inflict <$ba.dt.neural>Nervous Impairment</>."),
+            "Attacks inflict Nervous Impairment."
+        );
+        assert_eq!(
+            strip_rich_text("Attacks in <Frigid> areas deal Arts damage"),
+            "Attacks in <Frigid> areas deal Arts damage"
+        );
+        assert_eq!(strip_rich_text("a < b"), "a < b");
+    }
+
+    #[test]
+    fn formats_numbers_and_labels() {
+        assert_eq!(number(550.0), "550");
+        assert_eq!(number(45.0), "45");
+        assert_eq!(number(2.5), "2.5");
+        assert_eq!(title_case("RANGED"), "Ranged");
+        assert_eq!(apply_way_label("ALL"), "Melee and ranged");
+        assert_eq!(field(""), "-");
+    }
+}

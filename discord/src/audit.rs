@@ -489,6 +489,46 @@ pub async fn log_member_unban(ctx: &Context, data: &Data, guild_id: GuildId, use
 }
 
 // ---------------------------------------------------------------------------
+// Warnings: issued by the bot, so there is no Discord audit entry to mirror.
+// ---------------------------------------------------------------------------
+
+/// Log a `/warn add`. `count` is the member's warning total including this one, and
+/// `escalation` the outcome line when the guild's policy fired.
+#[allow(clippy::too_many_arguments)]
+pub async fn log_warning(
+    http: &Http,
+    data: &Data,
+    guild_id: GuildId,
+    user: &User,
+    moderator: UserId,
+    warning_id: i64,
+    reason: &str,
+    count: i64,
+    escalation: Option<&str>,
+) {
+    let Some(channel) = audit_channel(data, guild_id, AuditEvent::Warning).await else {
+        return;
+    };
+    let mut embed = CreateEmbed::new()
+        .title("Member warned")
+        .colour(COLOR_MOD)
+        .author(CreateEmbedAuthor::new(user.tag()).icon_url(user.face()))
+        .field("Member", format!("<@{}>", user.id), true)
+        .field("Moderator", format!("<@{moderator}>"), true)
+        .field("Warnings", count.to_string(), true)
+        .field("Reason", truncate(reason, FIELD_LIMIT), false)
+        .timestamp(Timestamp::now())
+        .footer(CreateEmbedFooter::new(format!(
+            "Warning ID: {warning_id} • User ID: {}",
+            user.id
+        )));
+    if let Some(outcome) = escalation {
+        embed = embed.field("Escalation", truncate(outcome, FIELD_LIMIT), false);
+    }
+    dispatch(http, channel, embed, Vec::new()).await;
+}
+
+// ---------------------------------------------------------------------------
 // Audit log entries: the canonical "who did what" source.
 // ---------------------------------------------------------------------------
 

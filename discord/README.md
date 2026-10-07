@@ -9,17 +9,20 @@ The Discord companion for [myrtle.moe](https://myrtle.moe). It moderates guilds,
 [![Discord CI](https://github.com/Eltik/myrtle/actions/workflows/discord-ci.yml/badge.svg)](https://github.com/Eltik/myrtle/actions/workflows/discord-ci.yml)
 [![License](https://img.shields.io/badge/License-TBD-lightgrey)](../README.md)
 
-> **Status: work in progress.** Moderation, asset announcements, and the three `/api` lookups below are implemented and run in production. The wider "game data in Discord" surface - DPS/HPS, recruitment, operator and enemy lookups, tier lists, leaderboards - is planned but not built. See [`TODO.md`](TODO.md) for the backlog.
+> **Status: work in progress.** Moderation, warnings, asset announcements, operator birthday announcements, the three `/api` lookups, and the `/collection` game-data lookups below are implemented. The rest of the "game data in Discord" surface - DPS/HPS, recruitment, tier lists, leaderboards - is planned but not built. See [`TODO.md`](TODO.md) for the backlog.
 
 ## Features
 
 - **Moderation** - ban, unban, kick, and bulk purge, each written to the Discord audit log with a reason.
+- **Warnings** - warn members with a reason, DM them, review or remove warnings, and optionally escalate to a timeout, kick, or ban once a member reaches a threshold.
 - **Mod role** - grant moderation access by role instead of by Discord permission. A command passes for bot owners, for the configured mod role, **or** for the native permission.
 - **Auto role** - assign a role automatically when a member joins.
 - **Reaction roles** - bind emoji reactions on a message to roles.
 - **Anti-spam** - per-guild ping limits over a sliding window, with a configurable action (delete, warn, timeout, kick, or ban) and an exempt role.
 - **Audit logging** - mirror Discord audit events into a channel, with per-category toggles.
-- **Asset announcements** - one WebSocket connection per Arknights region to the asset pipeline, posting to a bound channel when an extraction completes.
+- **Asset announcements** - one WebSocket connection per Arknights region (EN, CN, JP, KR) to the asset pipeline, posting to a bound channel when an extraction completes. Each guild can limit announcements to some regions.
+- **Game-data lookups** - `/collection` shows operators, enemies, stages, and story groups from the public backend, with fuzzy, accent-insensitive autocomplete.
+- **Operator birthdays** - a daily post at the EN reset (04:00 UTC-7) for every operator whose birthday it is, plus `today` and `upcoming` lookups.
 - **Backend lookups** - endpoint reachability and latency, platform statistics, and a rendered player profile card.
 - **Embed builder** - create and edit rich embeds from fields or raw JSON, and read an existing embed back as JSON.
 
@@ -111,6 +114,9 @@ Elevated commands pass for bot owners, for the guild's configured mod role, or f
 | `/unban_user <user> [reason]` | Ban Members | Unban. Autocompletes banned users, or takes a raw ID |
 | `/kick_user <user> [reason]` | Kick Members | Kick with an audit-log reason |
 | `/purge <count>` | Manage Messages | Bulk-delete recent messages |
+| `/warn add <user> <reason>` | Timeout Members | Warn a member: DM them, mirror to the audit-log channel, run the escalation policy |
+| `/warn list` · `remove` · `clear` | Timeout Members | Review a member's warnings, remove one by id, or remove all of them |
+| `/warn policy set` · `show` · `clear` | Manage Guild | Threshold, optional day window, and action (timeout, kick, or ban). No policy means no escalation |
 | `/modrole set` · `show` · `remove` | Manage Guild | Configure the role that substitutes for a permission |
 
 ### Automation
@@ -121,6 +127,7 @@ Elevated commands pass for bot owners, for the guild's configured mod role, or f
 | `/reactionrole add` · `remove` · `list` · `delete` | Manage Roles | Bind emoji reactions to roles |
 | `/antispam set` · `clear` · `show` | Manage Guild | Ping limits, window, action, and exempt role |
 | `/auditlog set` · `clear` · `show` · `enable` · `disable` | Manage Guild | Mirror audit events to a channel, per category |
+| `/birthday channel set` · `clear` · `show` | Manage Guild | Bind the daily operator-birthday post. A channel bound after today's reset starts tomorrow |
 
 ### Platform
 
@@ -129,9 +136,20 @@ Elevated commands pass for bot owners, for the guild's configured mod role, or f
 | `/api status` | - | Reachability and latency for all four configured endpoints |
 | `/api stats` | - | Platform counts from `GET /api/stats` |
 | `/api user <uid>` | - | Player profile card rendered from `GET /api/get-user` |
-| `/assets channel set` · `clear` · `show` | Manage Guild | Bind the asset-announcement channel |
+| `/assets channel set [servers]` · `clear` · `show` | Owner | Bind the asset-announcement channel. `servers` (e.g. `EN,JP`) limits it to some regions; omit for all |
 | `/assets status` | - | Last-known state of each region's asset watcher |
 | `/assets resources` | - | Live `list_resources` round-trip to the asset pipeline |
+
+### Game data
+
+| Command | Permission | Description |
+|---------|------------|-------------|
+| `/collection operator <query>` | - | Rarity, class and branch, faction, tags, birthday, artists, voice actors, art |
+| `/collection enemy <query>` | - | Class, attack and damage type, level-0 HP/ATK/DEF/RES, abilities |
+| `/collection stage <query>` | - | Code and name, zone, sanity, danger level, enemies, drops. Matches codes like `1-7` or `CE-6` |
+| `/collection story <query>` | - | Story group, category, story and word counts, banner art, link to the reader |
+| `/birthday today` | - | Today's birthday operators (the game day turns at 04:00 UTC-7) |
+| `/birthday upcoming [days]` | - | Birthdays over the next 1 to 31 days, 7 by default |
 
 ## Configuration
 
@@ -153,9 +171,9 @@ Every section is optional, and unknown fields are rejected. Copy [`config.exampl
 |-------|-------------|
 | `endpoints.local_backend` | Backend URL used by `/api stats` and `/api user` |
 | `endpoints.local_frontend` | Checked by `/api status` |
-| `endpoints.public_backend` | Checked by `/api status` |
-| `endpoints.public_frontend` | Checked by `/api status` |
-| `assets.servers[]` | One `{ label, ws_url }` per Arknights region, for example EN and CN |
+| `endpoints.public_backend` | Checked by `/api status`. Source of `/collection` and birthday data |
+| `endpoints.public_frontend` | Checked by `/api status`. Base of the links in `/collection` and birthday embeds |
+| `assets.servers[]` | One `{ label, ws_url }` per Arknights region: EN 9160, CN 9161, JP 9162, KR 9163 by default |
 | `assets.reconnect_secs` | WebSocket reconnect backoff. Defaults to `5` |
 
 Omit `assets` entirely and the watcher subsystem stays off. The legacy singular `assets.ws_url` is still honoured and is treated as one server labelled `EN`.
@@ -172,20 +190,33 @@ When the bot runs in Docker against a pipeline on the host, point `ws_url` at `w
 | `/api user` | `GET {local_backend}/api/get-user?uid={id}`, plus `{local_backend}/api/avatar/{id}` for the card |
 | `/api status` | `GET` against each of the four configured endpoint URLs |
 
-`stats` and `user` currently target the local backend only. The public endpoints are reachability-checked but not yet queryable.
+`stats` and `user` currently target the local backend only.
+
+`/collection` and the birthday announcer read the public backend. There is no name-search endpoint, so the bot fetches whole lists and matches locally; each list is cached in memory for 30 minutes and refreshed in the background, keeping the stale copy if a refresh fails:
+
+| Data | Request |
+|------|---------|
+| Operators | `GET {public_backend}/api/operators/index` |
+| Enemies | `GET {public_backend}/api/static/enemies` |
+| Stages | `GET {public_backend}/api/static/stage-index`, plus `/api/stages/{id}/detail` per lookup |
+| Stories | `GET {public_backend}/api/story/index` |
+| Images | `/api/avatar/{id}`, `/api/charart/{id}`, `/api/enemy-icon/{id}`, `/api/assets/{path}` |
 
 ## Database
 
-Three migrations in [`migrations/`](migrations/) are embedded at compile time and applied automatically on startup.
+Six migrations in [`migrations/`](migrations/) are embedded at compile time and applied automatically on startup.
 
 | Table | Purpose |
 |-------|---------|
 | `guild_auto_role` | Role granted to joining members |
 | `guild_reaction_roles` | Emoji-to-role bindings |
-| `guild_asset_channel` | Asset-announcement channel |
+| `guild_asset_channel` | Asset-announcement channel, plus an optional server filter (NULL means every server) |
 | `guild_max_ping` | Anti-spam policy |
 | `guild_audit_log` | Audit-log channel plus a `disabled_events` bitmask |
 | `guild_mod_role` | Mod role. A deleted row means no mod role |
+| `guild_warnings` | One row per warning: member, moderator, reason, time |
+| `guild_warn_policy` | Warning escalation policy. No row means no escalation |
+| `guild_birthday_channel` | Birthday channel plus the last game day posted, so restarts never double-post |
 
 `guild_audit_log` stores the **disabled** event set rather than the enabled one, so new audit categories default to on for guilds that configured logging before those categories existed.
 
@@ -203,8 +234,13 @@ src/
 │   ├── admin.rs      ban, kick, purge, modrole, autorole, antispam, reactionrole
 │   ├── api.rs        /api status, stats, user
 │   ├── assets.rs     /assets channel, status, resources
-│   └── auditlog.rs   /auditlog configuration
-├── api/              Backend HTTP clients (status, stats, user)
+│   ├── auditlog.rs   /auditlog configuration
+│   ├── birthday.rs   /birthday channel, today, upcoming
+│   ├── collection.rs /collection operator, enemy, stage, story
+│   └── warn.rs       /warn add, list, remove, clear, policy
+├── api/              Backend HTTP clients (status, stats, user, cached game data)
+├── birthday.rs       Game-day dates, birthday parsing, the daily announcer
+├── search.rs         Accent- and punctuation-insensitive name matching
 ├── checks.rs         elevated(): owner OR mod role OR native permission
 ├── handler.rs        Gateway event handling
 ├── hooks.rs          Pre- and post-command hooks

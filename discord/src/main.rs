@@ -1,5 +1,6 @@
 use discord::{
-    cmds,
+    api::gamedata::GameData,
+    birthday, cmds,
     config::Config,
     db, handler, hooks,
     types::Data,
@@ -38,6 +39,10 @@ async fn main() {
         .user_agent(concat!("myrtle-discord/", env!("CARGO_PKG_VERSION")))
         .build()
         .expect("Failed to build HTTP client");
+    let gamedata = Arc::new(GameData::new(
+        http_client.clone(),
+        &config.endpoints.public_backend,
+    ));
     // One state + WS watcher per configured asset server (EN, CN, ...).
     let mut assets_states: HashMap<String, Arc<AssetsState>> = HashMap::new();
     let mut assets_watchers: Vec<(String, String, mpsc::UnboundedReceiver<String>)> = Vec::new();
@@ -151,6 +156,24 @@ async fn main() {
                     handler::run_ping_history_sweep(sweep_history, sweep_policies).await;
                 });
 
+                // Fill the game-data cache now, so the first lookups answer from memory.
+                let warm_gamedata = gamedata.clone();
+                tokio::spawn(async move { warm_gamedata.warm().await });
+
+                let birthday_http = ctx.http.clone();
+                let birthday_pool = pool.clone();
+                let birthday_gamedata = gamedata.clone();
+                let birthday_frontend = config.endpoints.public_frontend.clone();
+                tokio::spawn(async move {
+                    birthday::run(
+                        birthday_http,
+                        birthday_pool,
+                        birthday_gamedata,
+                        birthday_frontend,
+                    )
+                    .await;
+                });
+
                 Ok(Data {
                     command_counter: Mutex::default(),
                     config,
@@ -161,6 +184,7 @@ async fn main() {
                     ping_history,
                     antispam_policies,
                     audit_log_settings: Arc::new(RwLock::new(audit_log_settings)),
+                    gamedata,
                 })
             })
         })

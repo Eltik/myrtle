@@ -8,7 +8,9 @@
   "assets": {
     "servers": [
       { "label": "EN", "ws_url": "ws://localhost:9160" },
-      { "label": "CN", "ws_url": "ws://localhost:9161" }
+      { "label": "CN", "ws_url": "ws://localhost:9161" },
+      { "label": "JP", "ws_url": "ws://localhost:9162" },
+      { "label": "KR", "ws_url": "ws://localhost:9163" }
     ],
     "reconnect_secs": 5
   }

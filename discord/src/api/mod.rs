@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+pub mod gamedata;
 pub mod stats;
 pub mod status;
 pub mod user;

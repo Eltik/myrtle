@@ -49,6 +49,10 @@ pub async fn kick_members_check(ctx: Context<'_>) -> Result<bool, Error> {
     elevated(ctx, Permissions::KICK_MEMBERS).await
 }
 
+pub async fn moderate_members_check(ctx: Context<'_>) -> Result<bool, Error> {
+    elevated(ctx, Permissions::MODERATE_MEMBERS).await
+}
+
 /// The gate behind every elevated command: the caller passes if they are a bot owner, if they
 /// hold the guild's mod role, or if they hold `needed` in the invoking channel.
 ///
@@ -56,7 +60,22 @@ pub async fn kick_members_check(ctx: Context<'_>) -> Result<bool, Error> {
 /// in `check_permissions_and_cooldown` *before* any check runs, so a mod-role holder without
 /// the permission would be refused before this function ever executed.
 async fn elevated(ctx: Context<'_>, needed: Permissions) -> Result<bool, Error> {
-    if ctx.framework().options().owners.contains(&ctx.author().id) {
+    if passes_elevated(ctx, needed).await? {
+        return Ok(true);
+    }
+    Err(format!(
+        "You need the {} permission, or this server's mod role, to use this command.",
+        needed.get_permission_names().join(" and ")
+    )
+    .into())
+}
+
+/// Whether the invoker would pass [`elevated`] for `needed`, as an answer, not a check failure.
+///
+/// For commands that act on a second permission partway through, such as `/warn add`
+/// escalating to a kick or ban, so the invoker can't borrow the bot's permission.
+pub async fn passes_elevated(ctx: Context<'_>, needed: Permissions) -> Result<bool, Error> {
+    if is_bot_owner(ctx) {
         return Ok(true);
     }
     let guild = ctx
@@ -70,14 +89,13 @@ async fn elevated(ctx: Context<'_>, needed: Permissions) -> Result<bool, Error> 
     let permissions = author_permissions(ctx)
         .await
         .ok_or("Couldn't read your permissions in this channel.")?;
-    if permissions.contains(needed) {
-        return Ok(true);
-    }
-    Err(format!(
-        "You need the {} permission, or this server's mod role, to use this command.",
-        needed.get_permission_names().join(" and ")
-    )
-    .into())
+    Ok(permissions.contains(needed))
+}
+
+/// Whether the invoker is one of the bot's owners.
+#[must_use]
+pub fn is_bot_owner(ctx: Context<'_>) -> bool {
+    ctx.framework().options().owners.contains(&ctx.author().id)
 }
 
 /// Whether the invoking member holds the guild's configured mod role.
@@ -131,7 +149,7 @@ async fn author_permissions(ctx: Context<'_>) -> Option<Permissions> {
 }
 
 /// The guild's owner id, from cache when it's there and over HTTP when it isn't.
-async fn guild_owner(ctx: Context<'_>, guild: GuildId) -> Result<serenity::UserId, Error> {
+pub async fn guild_owner(ctx: Context<'_>, guild: GuildId) -> Result<serenity::UserId, Error> {
     // Copy the id out before any await - the cache lookup hands back a live map guard.
     let cached = ctx
         .serenity_context()

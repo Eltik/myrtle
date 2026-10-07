@@ -7,6 +7,7 @@ use std::{
 };
 use tokio::sync::{Mutex, RwLock};
 
+use crate::api::gamedata::GameData;
 use crate::config::Config;
 use crate::db::{AntiSpamPolicy, AuditSettings};
 use crate::watcher::AssetsStates;
@@ -39,6 +40,9 @@ pub struct Data {
     pub ping_history: PingHistory,
     pub antispam_policies: AntiSpamPolicies,
     pub audit_log_settings: AuditLogSettings,
+    /// Operator, enemy, stage and story lists from the public backend, cached for
+    /// `/collection` and `/birthday`. Shared with the birthday announcer task.
+    pub gamedata: Arc<GameData>,
 }
 
 pub type Error = Box<dyn std::error::Error + Send + Sync>;

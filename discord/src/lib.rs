@@ -12,12 +12,14 @@
 
 pub mod api;
 pub mod audit;
+pub mod birthday;
 pub mod checks;
 pub mod cmds;
 pub mod config;
 pub mod db;
 pub mod handler;
 pub mod hooks;
+pub mod search;
 pub mod types;
 pub mod utils;
 pub mod watcher;

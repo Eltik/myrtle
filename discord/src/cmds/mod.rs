@@ -4,7 +4,10 @@ pub mod admin;
 pub mod api;
 pub mod assets;
 pub mod auditlog;
+pub mod birthday;
+pub mod collection;
 pub mod general;
+pub mod warn;
 
 #[must_use]
 pub fn all() -> Vec<poise::Command<Data, Error>> {
@@ -23,5 +26,8 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         api::api(),
         assets::assets(),
         auditlog::auditlog(),
+        warn::warn(),
+        collection::collection(),
+        birthday::birthday(),
     ]
 }

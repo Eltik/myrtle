@@ -239,8 +239,9 @@ async fn handle_event(
         }
     };
 
-    for (_guild, channel) in channels {
-        broadcast_one(http, channel, embed.clone()).await;
+    // A guild with a server filter (`/assets channel set servers:`) only hears its own labels.
+    for (_guild, binding) in channels.into_iter().filter(|(_, b)| b.wants(label)) {
+        broadcast_one(http, binding.channel_id, embed.clone()).await;
     }
 }
 
@@ -386,12 +387,14 @@ async fn broadcast_one(http: &Arc<Http>, channel: ChannelId, embed: CreateEmbed)
     }
 }
 
-async fn is_announcement_channel(http: &Arc<Http>, channel: ChannelId) -> bool {
+/// Whether `channel` is an announcement channel, whose messages should be crossposted to
+/// following servers. Also used by the birthday announcer.
+pub async fn is_announcement_channel(http: &Arc<Http>, channel: ChannelId) -> bool {
     match channel.to_channel(http.as_ref()).await {
         Ok(Channel::Guild(c)) => c.kind == ChannelType::News,
         Ok(_) => false,
         Err(e) => {
-            tracing::warn!("assets watcher: fetch channel {channel} for crosspost check: {e}");
+            tracing::warn!("fetch channel {channel} for crosspost check: {e}");
             false
         }
     }

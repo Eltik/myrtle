@@ -31,6 +31,51 @@ fn assets_state_for(ctx: &Context<'_>, server: &str) -> Result<Arc<AssetsState>,
     Err(format!("Unknown server `{server}`. Configured: {list}").into())
 }
 
+/// Autocomplete a server label from the configured asset servers.
+async fn autocomplete_server(ctx: Context<'_>, partial: &str) -> Vec<String> {
+    let mut labels: Vec<String> = ctx
+        .data()
+        .assets
+        .keys()
+        .filter(|l| l.to_lowercase().starts_with(&partial.trim().to_lowercase()))
+        .cloned()
+        .collect();
+    labels.sort_unstable();
+    labels
+}
+
+/// Parse a comma list of server labels ("EN, jp") against the configured servers.
+///
+/// Returns the labels in their configured spelling, deduplicated, in configured-label order.
+/// Errors name the unknown label and list the valid ones.
+fn parse_server_filter(ctx: &Context<'_>, raw: &str) -> Result<Vec<String>, Error> {
+    let mut configured: Vec<&String> = ctx.data().assets.keys().collect();
+    configured.sort_unstable();
+    let mut wanted: Vec<String> = Vec::new();
+    for token in raw.split(',').map(str::trim).filter(|t| !t.is_empty()) {
+        let Some(label) = configured.iter().find(|l| l.eq_ignore_ascii_case(token)) else {
+            let list: Vec<&str> = configured.iter().map(|l| l.as_str()).collect();
+            return Err(format!(
+                "Unknown server `{token}`. Configured: {}",
+                if list.is_empty() {
+                    "(none configured)".to_string()
+                } else {
+                    list.join(", ")
+                }
+            )
+            .into());
+        };
+        if !wanted.contains(label) {
+            wanted.push((*label).clone());
+        }
+    }
+    if wanted.is_empty() {
+        return Err("`servers` needs at least one server label, e.g. `EN,JP`.".into());
+    }
+    wanted.sort_unstable();
+    Ok(wanted)
+}
+
 /// Manage the Arknights asset-pipeline integration.
 ///
 /// Subcommands: `channel`, `status`, `resources`. The `channel` group binds
@@ -68,20 +113,35 @@ pub async fn assets_channel(_ctx: Context<'_>) -> Result<(), Error> {
 }
 
 /// Bind asset announcements to a channel.
+///
+/// `servers` limits the announcements to some regions (comma list, e.g. `EN,JP`). Leave it out
+/// to hear from every configured server; re-running `set` replaces both the channel and the list.
 #[poise::command(slash_command, guild_only, rename = "set")]
 pub async fn assets_channel_set(
     ctx: Context<'_>,
     #[description = "Channel to announce updates in"] channel: serenity::ChannelId,
+    #[description = "Only these servers, comma-separated (e.g. EN,JP). Omit for all."]
+    servers: Option<String>,
 ) -> Result<(), Error> {
     let guild = ctx
         .guild_id()
         .ok_or("This command must be used in a guild.")?;
-    db::set_assets_channel(&ctx.data().pool, guild, channel)
+    let filter = servers
+        .as_deref()
+        .map(|raw| parse_server_filter(&ctx, raw))
+        .transpose()?;
+    db::set_assets_channel(&ctx.data().pool, guild, channel, filter.as_deref())
         .await
         .map_err(|e| format!("Couldn't save assets channel: {e}"))?;
+    let scope = filter.map_or_else(
+        || "every server".to_string(),
+        |f| format!("{} only", f.join(", ")),
+    );
     ctx.send(
         CreateReply::default()
-            .content(format!("Asset announcements will be sent to <#{channel}>."))
+            .content(format!(
+                "Asset announcements will be sent to <#{channel}>, from {scope}."
+            ))
             .ephemeral(true),
     )
     .await?;
@@ -117,7 +177,14 @@ pub async fn assets_channel_show(ctx: Context<'_>) -> Result<(), Error> {
         .await
         .map_err(|e| format!("Couldn't read assets channel: {e}"))?
     {
-        Some(c) => format!("Asset announcements: <#{c}>"),
+        Some(binding) => format!(
+            "Asset announcements: <#{}>, from {}.",
+            binding.channel_id,
+            binding.servers.map_or_else(
+                || "every server".to_string(),
+                |s| format!("{} only", s.join(", "))
+            )
+        ),
         None => "No asset channel configured.".to_string(),
     };
     ctx.send(CreateReply::default().content(content).ephemeral(true))
@@ -129,7 +196,9 @@ pub async fn assets_channel_show(ctx: Context<'_>) -> Result<(), Error> {
 #[poise::command(slash_command, guild_only, rename = "status")]
 pub async fn assets_status(
     ctx: Context<'_>,
-    #[description = "Server label (e.g. EN, CN). Omit for all."] server: Option<String>,
+    #[description = "Server label (EN, CN, JP, KR). Omit for all."]
+    #[autocomplete = "autocomplete_server"]
+    server: Option<String>,
 ) -> Result<(), Error> {
     let states = &ctx.data().assets;
     if states.is_empty() {
@@ -177,7 +246,9 @@ pub async fn assets_status(
 #[poise::command(slash_command, guild_only, rename = "resources")]
 pub async fn assets_resources(
     ctx: Context<'_>,
-    #[description = "Server label (e.g. EN, CN)"] server: String,
+    #[description = "Server label (EN, CN, JP, KR)"]
+    #[autocomplete = "autocomplete_server"]
+    server: String,
 ) -> Result<(), Error> {
     ctx.defer_ephemeral().await?;
     let state = assets_state_for(&ctx, &server)?;
