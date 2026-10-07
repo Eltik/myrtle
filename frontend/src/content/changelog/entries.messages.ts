@@ -11,6 +11,30 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-10-07.title": {
+        text: "New: See which 6★ operators each banner gave you",
+        description: "Title of the 2026-10-07 release note. A 'banner' is a headhunting (gacha) pool; 6★ is the top operator rarity.",
+    },
+    "note.2026-10-07.lead": {
+        text: "In your pull history's banner breakdown, the 6★ count now opens a list of **every 6★ that banner gave you**, newest first, with the date and whether it was the rate-up or an off-banner pull.",
+        description: "Lead paragraph of the 2026-10-07 release note, rendered as Markdown. 'Rate-up' is the featured operator of a banner; 'off-banner' is a 6★ that was not featured.",
+    },
+    "note.2026-10-07.hrefLabel": {
+        text: "Open pull history",
+        description: "Label of the 2026-10-07 release note's call to action, which opens the player's headhunting history.",
+    },
+    "note.2026-10-07.item.1": {
+        text: "The planner never plans a downgrade: anything your operator already has is locked as reached, deleted plans disappear at once, and plan lists load much faster.",
+        description: "Bullet in the 2026-10-07 release note, filed under 'Fixed'.",
+    },
+    "note.2026-10-07.item.2": {
+        text: "About 130 skills that share another skill's icon, such as Jessica's, now show it instead of a broken image.",
+        description: "Bullet in the 2026-10-07 release note, filed under 'Fixed'. Jessica is an operator and keeps the game's name.",
+    },
+    "note.2026-10-07.item.3": {
+        text: "Operator favourites in a profile's Showcase use the same card as the operators page, and blocks placed side by side line up at the bottom.",
+        description: "Bullet in the 2026-10-07 release note, filed under 'Fixed'. 'Showcase' is a profile tab name and must match its translation.",
+    },
     "note.2026-10-06-2.title": {
         text: "New: Make your profile your own",
         description: "Title of the 2026-10-06-2 release note. 'Profile' is a player's public page on the site.",
