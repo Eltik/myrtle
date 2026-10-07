@@ -4448,6 +4448,7 @@
     "tools.planner.delete.title": "{count, plural, one {Delete plan?} other {Delete # plans?}}",
     "tools.planner.deleteFailed": "Failed to delete. Please try again.",
     "tools.planner.deleteSelected": "Delete selected ({count})",
+    "tools.planner.dialog.alreadyReached": "Already reached",
     "tools.planner.dialog.cancel": "Cancel",
     "tools.planner.dialog.create": "Create plan",
     "tools.planner.dialog.createDesc": "Add a new operator target plan to your planner list.",

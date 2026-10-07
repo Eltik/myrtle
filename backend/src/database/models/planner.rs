@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use serde::{Deserialize, Serialize};
 use sqlx::types::{
     Uuid,
@@ -155,6 +157,11 @@ pub struct PlannerResponse {
     pub plans: Vec<OperatorPlanResponse>,
     pub aggregated_requirements: Vec<PlanRequirementItem>,
     pub groups: Vec<PlanGroup>,
+    /// Each counted plan's own requirements, by operator id. Present only when
+    /// the request asked for `by_operator`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub operator_requirements: Option<BTreeMap<String, Vec<PlanRequirementItem>>>,
     /// When the caller's account was last synced to our database. Every
     /// current-state reading behind the plan (roster, inventory, base, stage
     /// clears) is a snapshot as of this moment. Null for an account with no

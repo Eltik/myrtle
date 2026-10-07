@@ -2,7 +2,7 @@ import type { IPresetTarget, IUpsertPlanInput } from "#/lib/api/planner";
 import type { IRosterEntry } from "#/lib/api/user";
 import { rarityToNumber } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
-import { clampModuleTargets, clampSkillTargets, getMaxLevel, isPromotionBelow, MAX_SKILL_LEVEL, type ModuleTargets, maxEliteFor, ownedModuleStage, plannableModules, planTargetPayload, type SkillTargets } from "./planTargets";
+import { clampModuleTargets, clampSkillTargets, getMaxLevel, higherPromotion, isPromotionBelow, MAX_SKILL_LEVEL, type ModuleTargets, maxEliteFor, ownedMastery, ownedModuleStage, plannableModules, planTargetPayload, type SkillTargets } from "./planTargets";
 
 /**
  * The bulk-add rules: one rarity-free target (a preset) applied to many
@@ -141,12 +141,12 @@ export function raiseToRoster(target: IBulkPlanTarget, entry: IRosterEntry | und
     const current = { elite: entry.elite, level: entry.level };
     const wanted = { elite: target.targetElite, level: target.targetLevel };
     const promotionReached = !isPromotionBelow(current, wanted);
-    const promotion = promotionReached ? current : wanted;
+    const promotion = higherPromotion(current, wanted);
 
     const skillReached = entry.skill_level >= target.targetSkillLevel;
-    const ownedMastery = (skillIndex: number) => entry.masteries?.find((m) => m.index === skillIndex)?.mastery ?? 0;
-    const targetSkills = target.targetSkills.map((s) => ({ skill_index: s.skill_index, mastery_level: Math.max(ownedMastery(s.skill_index), s.mastery_level) }));
-    const masteriesReached = target.targetSkills.every((s) => ownedMastery(s.skill_index) >= s.mastery_level);
+    const mastery = (skillIndex: number) => ownedMastery(entry, skillIndex) ?? 0;
+    const targetSkills = target.targetSkills.map((s) => ({ skill_index: s.skill_index, mastery_level: Math.max(mastery(s.skill_index), s.mastery_level) }));
+    const masteriesReached = target.targetSkills.every((s) => mastery(s.skill_index) >= s.mastery_level);
 
     const targetModules = target.targetModules.map((m) => ({ module_id: m.module_id, module_stage: Math.max(ownedModuleStage(entry, m.module_id), m.module_stage) }));
     const modulesReached = target.targetModules.every((m) => ownedModuleStage(entry, m.module_id) >= m.module_stage);

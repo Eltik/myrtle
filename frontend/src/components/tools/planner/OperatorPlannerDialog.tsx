@@ -7,7 +7,7 @@ import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { useAuth } from "#/hooks/use-auth";
 import { useOperatorName } from "#/hooks/use-operator-name";
 import { operatorQueryOptions } from "#/lib/api/operators";
-import { PLANS_QUERY_PREFIX, plansQueryOptions, upsertPlanFn } from "#/lib/api/planner";
+import { invalidatePlanQueries, plansQueryOptions, upsertPlanFn } from "#/lib/api/planner";
 import { userRosterQueryOptions } from "#/lib/api/user";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -95,7 +95,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                     groups: targets.selectedGroups,
                 },
             });
-            queryClient.invalidateQueries({ queryKey: PLANS_QUERY_PREFIX });
+            invalidatePlanQueries(queryClient);
             onOpenChange(false);
         } catch (err) {
             console.error(err);

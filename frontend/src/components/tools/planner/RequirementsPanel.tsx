@@ -1,4 +1,4 @@
-import { useQueries } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ChevronDown, ChevronRight, Info, LayoutList, List, Users } from "lucide-react";
 import * as React from "react";
@@ -314,9 +314,11 @@ interface IByOperatorViewProps {
 
 function ByOperatorView({ plans, maxTier, predicate, collapsedSections, onToggleSection, expandedPaths, onToggleExpand }: IByOperatorViewProps) {
     const t: ReqT = useT("tools");
-    const results = useQueries({
-        queries: plans.map((p) => plansQueryOptions([p.operator_id], maxTier || undefined)),
-    });
+    // One request for every plan's own requirements. This was one full `/plans`
+    // request per active plan, each carrying every plan: 193 plans meant 193
+    // copies of the whole list, all refetched again after any edit or delete.
+    const activeIds = React.useMemo(() => plans.map((p) => p.operator_id), [plans]);
+    const { data, isLoading } = useQuery({ ...plansQueryOptions(activeIds, maxTier || undefined, true), enabled: activeIds.length > 0 });
 
     if (plans.length === 0) {
         return <p className="mt-6 text-center text-muted-foreground text-sm">{t("planner.req.noActivePlans")}</p>;
@@ -324,15 +326,14 @@ function ByOperatorView({ plans, maxTier, predicate, collapsedSections, onToggle
 
     return (
         <div className="mt-3 flex flex-col gap-3">
-            {plans.map((p, i) => {
-                const q = results[i];
+            {plans.map((p) => {
                 return (
                     <ByOperatorSection
                         key={p.operator_id}
                         plan={p}
                         predicate={predicate}
-                        isLoading={q.isLoading}
-                        requirements={q.data?.aggregatedRequirements ?? []}
+                        isLoading={isLoading}
+                        requirements={data?.operatorRequirements?.[p.operator_id] ?? []}
                         collapsed={collapsedSections[p.operator_id] ?? false}
                         onToggle={() => onToggleSection(p.operator_id)}
                         expandedPaths={expandedPaths}

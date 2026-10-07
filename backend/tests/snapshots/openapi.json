@@ -6293,6 +6293,15 @@
               "type": "integer",
               "format": "int32"
             }
+          },
+          {
+            "name": "by_operator",
+            "in": "query",
+            "description": "When true, also return `operatorRequirements`: each counted plan's own requirements, keyed by operator id, flattened the same way. One request in place of one `/plans?active=<id>` per plan.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -19444,6 +19453,22 @@
             "format": "date-time",
             "description": "When the caller's account was last synced to our database. Every\ncurrent-state reading behind the plan (roster, inventory, base, stage\nclears) is a snapshot as of this moment. Null for an account with no\nprofile row."
           },
+          "operatorRequirements": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Each counted plan's own requirements, by operator id. Present only when\nthe request asked for `by_operator`.",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/PlanRequirementItem"
+              }
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
           "plans": {
             "type": "array",
             "items": {
@@ -21383,6 +21408,13 @@
               "id": {
                 "type": "string",
                 "format": "uuid"
+              },
+              "operator_id": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The plan's operator. Deleting a plan and planning the operator\nagain makes a new row with a new id; the block follows the\noperator to it instead of reading as removed. Absent on blocks\nsaved before 2026-10-07, which still match by `id` alone."
               },
               "type": {
                 "type": "string",

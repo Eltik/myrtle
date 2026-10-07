@@ -1,7 +1,7 @@
 //! The plans' combined materials priced against the player's inventory and
 //! crafting, one row per item.
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use super::{EXP_ITEM, LMD_ITEM, progress::get_plan_direct_materials};
 use crate::{
@@ -518,6 +518,12 @@ fn aggregate_requirements(
     build_all_requirements(ctx, combined_materials)
 }
 
+/// Whether the plan for `operator_id` counts toward the requirements: it is
+/// in `active_ids`, or `active_ids` is empty and every plan counts.
+fn is_counted(active_ids: &[String], operator_id: &String) -> bool {
+    active_ids.is_empty() || active_ids.contains(operator_id)
+}
+
 /// The requirement rows for every plan whose operator is in `active_ids`, or
 /// for every plan when `active_ids` is empty.
 pub(super) fn calculate_requirements(
@@ -528,8 +534,7 @@ pub(super) fn calculate_requirements(
 ) -> Result<Vec<PlanRequirementItem>, ApiError> {
     let mut combined_materials = HashMap::new();
     for (plan, operator, roster_entry) in plans_with_ops {
-        let is_active = active_ids.is_empty() || active_ids.contains(&plan.operator_id);
-        if !is_active {
+        if !is_counted(active_ids, &plan.operator_id) {
             continue;
         }
         let plan_materials =
@@ -540,6 +545,28 @@ pub(super) fn calculate_requirements(
     }
 
     Ok(aggregate_requirements(ctx, combined_materials, max_tier))
+}
+
+/// Each counted plan's own requirement rows, by operator id: what
+/// [`calculate_requirements`] gives with that one operator active.
+pub(super) fn requirements_by_operator(
+    ctx: &PlannerCtx,
+    plans_with_ops: &[(OperatorPlan, Operator, Option<&RosterEntry>)],
+    active_ids: &[String],
+    max_tier: Option<i16>,
+) -> Result<BTreeMap<String, Vec<PlanRequirementItem>>, ApiError> {
+    let mut by_id = BTreeMap::new();
+    for (plan, _, _) in plans_with_ops {
+        if !is_counted(active_ids, &plan.operator_id) {
+            continue;
+        }
+        let own = std::slice::from_ref(&plan.operator_id);
+        by_id.insert(
+            plan.operator_id.clone(),
+            calculate_requirements(ctx, plans_with_ops, own, max_tier)?,
+        );
+    }
+    Ok(by_id)
 }
 
 #[cfg(test)]

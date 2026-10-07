@@ -477,7 +477,6 @@ operators.*.skills[*].skillId: string
 operators.*.skills[*].static.Hidden: bool
 operators.*.skills[*].static.IconId: null
 operators.*.skills[*].static.IconId: string
-operators.*.skills[*].static.Image: null
 operators.*.skills[*].static.Image: string
 operators.*.skills[*].static.Levels: array
 operators.*.skills[*].static.Levels[*].blackboard: array

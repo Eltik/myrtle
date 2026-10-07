@@ -1,4 +1,4 @@
-import { queryOptions } from "@tanstack/react-query";
+import { type QueryClient, queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
 import { deepCamelize } from "#/lib/api/operators";
@@ -42,6 +42,37 @@ export type IPresetTarget = PresetTarget;
  * of the plan list has to refetch.
  */
 export const PLANS_QUERY_PREFIX = ["user", "plans"] as const;
+
+/** A player's public plan list, read by the profile Plans tab and the Showcase. */
+export const PUBLIC_PLANS_QUERY_PREFIX = ["user", "public-plans"] as const;
+
+/** The Showcase, whose plan blocks the server marks removed when their plan is gone or hidden. */
+const SHOWCASE_QUERY_PREFIX = ["user", "showcase"] as const;
+
+/** Every cached view of the player's plans, refetched together after a write. */
+const PLAN_VIEW_PREFIXES = [PLANS_QUERY_PREFIX, PUBLIC_PLANS_QUERY_PREFIX, SHOWCASE_QUERY_PREFIX] as const;
+
+/**
+ * Refetches every view of the player's plans after a write: the planner's own
+ * lists, the profile's public list and the Showcase. Invalidating only
+ * `PLANS_QUERY_PREFIX` left the profile serving a deleted or new plan from
+ * cache for up to `STALE_TIME`.
+ */
+export function invalidatePlanQueries(queryClient: QueryClient): Promise<void> {
+    return Promise.all(PLAN_VIEW_PREFIXES.map((queryKey) => queryClient.invalidateQueries({ queryKey }))).then(() => undefined);
+}
+
+/**
+ * Drops deleted plans from every cached planner list at once, before the
+ * refetch lands. Without it a deleted plan stayed listed (and the editor still
+ * found it, so it offered "Save Changes" over "Create Plan") until the list
+ * refetched. Requirement totals stay as cached until then.
+ */
+export function dropPlansFromCache(queryClient: QueryClient, operatorIds: string[]): void {
+    const dropped = new Set(operatorIds);
+    queryClient.setQueriesData<IPlannerResponse>({ queryKey: PLANS_QUERY_PREFIX }, (data) => (data ? { ...data, plans: data.plans.filter((p) => !dropped.has(p.operator_id)) } : data));
+    queryClient.setQueriesData<IOperatorPlanResponse[]>({ queryKey: PUBLIC_PLANS_QUERY_PREFIX }, (data) => data?.filter((p) => !dropped.has(p.operator_id)));
+}
 
 /** Not under `PLANS_QUERY_PREFIX`: saving a plan leaves the presets alone. */
 export const PLAN_PRESETS_QUERY_KEY = ["user", "plan-presets"] as const;
@@ -108,6 +139,8 @@ export interface IPlansQueryInput {
     activeIds?: string[];
     /** Highest material tier to keep; anything above is broken into its recipe ingredients. Unset keeps every tier. */
     maxTier?: number;
+    /** Also return each counted plan's own requirements (`operatorRequirements`), in place of one request per plan. */
+    byOperator?: boolean;
 }
 
 export const getPlansFn = createServerFn({ method: "GET" })
@@ -117,6 +150,7 @@ export const getPlansFn = createServerFn({ method: "GET" })
         const params = new URLSearchParams();
         if (input?.activeIds && input.activeIds.length > 0) params.set("active", input.activeIds.join(","));
         if (input?.maxTier) params.set("max_tier", String(input.maxTier));
+        if (input?.byOperator) params.set("by_operator", "true");
         const query = params.toString();
         const res = await backendFetch(query ? `/plans?${query}` : "/plans", { bearerToken: token });
         if (!res.ok) throw new Error(`Failed to load plans: ${res.status}`);
@@ -125,10 +159,10 @@ export const getPlansFn = createServerFn({ method: "GET" })
         return data;
     });
 
-export function plansQueryOptions(activeIds?: string[], maxTier?: number) {
+export function plansQueryOptions(activeIds?: string[], maxTier?: number, byOperator?: boolean) {
     return queryOptions({
-        queryKey: [...PLANS_QUERY_PREFIX, activeIds?.join(",") || "", maxTier ?? 0],
-        queryFn: () => getPlansFn({ data: { activeIds, maxTier } }),
+        queryKey: [...PLANS_QUERY_PREFIX, activeIds?.join(",") || "", maxTier ?? 0, ...(byOperator ? ["by-operator"] : [])],
+        queryFn: () => getPlansFn({ data: { activeIds, maxTier, byOperator } }),
         staleTime: STALE_TIME,
         gcTime: GC_TIME,
     });

@@ -60,9 +60,25 @@ export function ownedModuleStage(entry: IRosterEntry, moduleId: string): number 
     return owned && !owned.locked ? owned.level : 0;
 }
 
+/** The mastery rank the roster holds for skill `skillIndex`; undefined when it has no row for that skill. */
+export function ownedMastery(entry: IRosterEntry, skillIndex: number): number | undefined {
+    return entry.masteries?.find((m) => m.index === skillIndex)?.mastery;
+}
+
+interface IPromotion {
+    elite: number;
+    level: number;
+}
+
 /** Whether promotion and level `a` sit strictly below `b`. */
-export function isPromotionBelow(a: { elite: number; level: number }, b: { elite: number; level: number }): boolean {
+export function isPromotionBelow(a: IPromotion, b: IPromotion): boolean {
     return a.elite < b.elite || (a.elite === b.elite && a.level < b.level);
+}
+
+/** The higher of two promotion-and-level pairs, as a fresh pair; `a` on a tie. */
+export function higherPromotion(a: IPromotion, b: IPromotion): IPromotion {
+    const higher = isPromotionBelow(a, b) ? b : a;
+    return { elite: higher.elite, level: higher.level };
 }
 
 export function getMaxLevel(rarity: number, elite: number): number {
@@ -151,6 +167,70 @@ function seedModuleTargets(operator: IOperatorListItem, stageOf: (mod: IOperator
     return targets;
 }
 
+/**
+ * The lowest target each field may take: where the player's roster already
+ * is, so a plan never asks to go down. Skill floors use the dialog's step
+ * scale (1-7 shared level, 8-10 mastery of that skill). A module floor of 0
+ * means no floor; "not planned" (stage 0) stays selectable either way.
+ */
+export interface IRosterFloor {
+    elite: number;
+    level: number;
+    skills: SkillTargets;
+    modules: ModuleTargets;
+}
+
+/** No floor: an unowned operator starts at E0 Lv1 with nothing levelled. */
+export const NO_FLOOR: IRosterFloor = { elite: 0, level: 1, skills: {}, modules: {} };
+
+export function rosterFloor(operator: IOperatorListItem, entry: IRosterEntry | undefined): IRosterFloor {
+    if (!entry) return NO_FLOOR;
+    const skills: SkillTargets = {};
+    operator.skills.forEach((_, idx) => {
+        skills[idx] = skillTargetOf(entry.skill_level, ownedMastery(entry, idx));
+    });
+    const modules: ModuleTargets = {};
+    for (const mod of plannableModules(operator)) modules[mod.uniEquipId] = ownedModuleStage(entry, mod.uniEquipId);
+    return { elite: entry.elite, level: entry.level, skills, modules };
+}
+
+/** The lowest level `elite` may take under `floor`: the roster level at the roster's own promotion, else 1. */
+export function minLevelFor(floor: IRosterFloor, elite: number): number {
+    return elite === floor.elite ? floor.level : 1;
+}
+
+/** Whether promotion `elite` sits below the roster. */
+export function isEliteBelowFloor(floor: IRosterFloor, elite: number): boolean {
+    return elite < floor.elite;
+}
+
+/** Whether skill step `value` of skill `skillIdx` sits below the roster. */
+export function isSkillBelowFloor(floor: IRosterFloor, skillIdx: number, value: number): boolean {
+    return value < (floor.skills[skillIdx] ?? 1);
+}
+
+/** Whether module stage `stage` sits below the roster. Stage 0 (not planned) never does. */
+export function isModuleBelowFloor(floor: IRosterFloor, moduleId: string, stage: number): boolean {
+    return stage > 0 && stage < (floor.modules[moduleId] ?? 0);
+}
+
+/**
+ * Raises seeded targets to `floor`, field by field. A module left unplanned
+ * (stage 0) stays unplanned. A plan saved before the editor enforced the
+ * floor (E1 Lv21 planned down to E1 Lv1) opens at the roster instead.
+ */
+export function raiseToFloor(seed: IInitialTargets, floor: IRosterFloor): IInitialTargets {
+    const promotion = higherPromotion(seed, floor);
+    const skills: SkillTargets = { ...seed.skills };
+    for (const [idx, min] of Object.entries(floor.skills)) skills[Number(idx)] = Math.max(skills[Number(idx)] ?? 1, min);
+    const modules: ModuleTargets = { ...seed.modules };
+    for (const [id, min] of Object.entries(floor.modules)) {
+        const stage = modules[id] ?? 0;
+        if (stage > 0) modules[id] = Math.max(stage, min);
+    }
+    return { ...seed, ...promotion, skills, modules };
+}
+
 export interface IInitialTargets {
     elite: number;
     level: number;
@@ -187,7 +267,7 @@ export function initialTargets(operator: IOperatorListItem, plan: IOperatorPlanR
         return {
             elite,
             level: Math.min(rosterEntry.level, getMaxLevel(rarity, elite)),
-            skills: seedSkillTargets(operator, rosterEntry.skill_level, (idx) => rosterEntry.masteries?.find((m) => m.index === idx)?.mastery),
+            skills: seedSkillTargets(operator, rosterEntry.skill_level, (idx) => ownedMastery(rosterEntry, idx)),
             modules: seedModuleTargets(operator, (mod) => ownedModuleStage(rosterEntry, mod.uniEquipId)),
             displayOnProfile: false,
             groups: [],

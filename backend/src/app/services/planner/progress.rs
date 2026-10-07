@@ -8,7 +8,7 @@ use crate::{
     app::error::ApiError,
     core::gamedata::types::{GameData, operator::Operator},
     database::models::{
-        planner::{OperatorPlan, TargetModulePlan, TargetSkillPlan},
+        planner::{OperatorPlan, PlanInput, TargetModulePlan, TargetSkillPlan},
         roster::RosterEntry,
     },
 };
@@ -143,6 +143,45 @@ fn plan_met(plan: &OperatorPlan, targets: &PlanTargets, current: &CurrentState) 
         && current.reaches_skill_level(plan.target_skill_level)
         && targets.skills.iter().all(|t| current.reaches_mastery(t))
         && targets.modules.iter().all(|t| current.reaches_module(t))
+}
+
+/// Raises every target in `input` to where `roster_entry` already is, so a
+/// stored plan never asks to go down: promotion and level as one pair, the
+/// shared skill level, each listed mastery and each planned module stage. A
+/// module left at stage 0 (not planned) stays at 0. The editor floors the same
+/// fields; this holds for any other caller. Every unlock rule only gets easier
+/// as promotion rises, so a raised plan still passes `validate_plan`.
+pub(super) fn raise_to_roster(
+    input: &mut PlanInput,
+    roster_entry: Option<&RosterEntry>,
+) -> Result<(), ApiError> {
+    let Some(entry) = roster_entry else {
+        return Ok(());
+    };
+    let current = CurrentState::from_roster(Some(entry));
+
+    if current.reaches_level(input.target_elite, input.target_level) {
+        input.target_elite = current.elite;
+        input.target_level = current.level;
+    }
+    input.target_skill_level = input.target_skill_level.max(current.skill_level);
+
+    let mut skills = parse_target_skills(&input.target_skills)?;
+    for target in &mut skills {
+        target.mastery_level = target
+            .mastery_level
+            .max(current.mastery(target.skill_index));
+    }
+    let mut modules = parse_target_modules(&input.target_modules)?;
+    for target in modules.iter_mut().filter(|t| t.module_stage > 0) {
+        target.module_stage = target
+            .module_stage
+            .max(current.module_stage(&target.module_id));
+    }
+    input.target_skills = serde_json::to_value(skills).map_err(|e| ApiError::Internal(e.into()))?;
+    input.target_modules =
+        serde_json::to_value(modules).map_err(|e| ApiError::Internal(e.into()))?;
+    Ok(())
 }
 
 /// `plan_met` for a stored plan, reading its own roster entry. A plan whose
@@ -523,5 +562,72 @@ mod tests {
             get_plan_direct_materials(&gamedata, &target, &operator, Some(&unlocked)).unwrap();
         assert!(costs.is_empty());
         assert!(stored_plan_met(&target, Some(&unlocked)));
+    }
+
+    fn input(
+        elite: i16,
+        level: i16,
+        skill_level: i16,
+        skills: serde_json::Value,
+        modules: serde_json::Value,
+    ) -> PlanInput {
+        PlanInput {
+            target_elite: elite,
+            target_level: level,
+            target_skill_level: skill_level,
+            target_skills: skills,
+            target_modules: modules,
+            display_on_profile: false,
+        }
+    }
+
+    #[test]
+    fn raise_to_roster_lifts_a_plan_below_the_roster() {
+        // E1 Lv21 planned down to E1 Lv1, the reported Jessica plan.
+        let entry = roster_entry(
+            2,
+            40,
+            7,
+            serde_json::json!([{ "index": 0, "mastery": 2 }]),
+            serde_json::json!([
+                { "id": "uniequip_a", "level": 2, "locked": false },
+                { "id": "uniequip_b", "level": 3, "locked": false }
+            ]),
+        );
+        let mut plan = input(
+            2,
+            1,
+            4,
+            serde_json::json!([{ "skill_index": 0, "mastery_level": 1 }]),
+            serde_json::json!([
+                { "module_id": "uniequip_a", "module_stage": 1 },
+                { "module_id": "uniequip_b", "module_stage": 0 }
+            ]),
+        );
+        raise_to_roster(&mut plan, Some(&entry)).unwrap();
+        assert_eq!((plan.target_elite, plan.target_level), (2, 40));
+        assert_eq!(plan.target_skill_level, 7);
+        assert_eq!(
+            parse_target_skills(&plan.target_skills).unwrap()[0].mastery_level,
+            2
+        );
+        let modules = parse_target_modules(&plan.target_modules).unwrap();
+        assert_eq!(modules[0].module_stage, 2);
+        assert_eq!(
+            modules[1].module_stage, 0,
+            "an unplanned module stays unplanned"
+        );
+    }
+
+    #[test]
+    fn raise_to_roster_keeps_a_plan_above_the_roster_and_any_plan_without_one() {
+        let entry = roster_entry(1, 70, 7, serde_json::json!([]), serde_json::json!([]));
+        let mut plan = input(2, 1, 7, serde_json::json!([]), serde_json::json!([]));
+        raise_to_roster(&mut plan, Some(&entry)).unwrap();
+        assert_eq!((plan.target_elite, plan.target_level), (2, 1));
+
+        let mut unowned = input(0, 1, 1, serde_json::json!([]), serde_json::json!([]));
+        raise_to_roster(&mut unowned, None).unwrap();
+        assert_eq!((unowned.target_elite, unowned.target_level), (0, 1));
     }
 }

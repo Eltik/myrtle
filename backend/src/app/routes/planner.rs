@@ -28,6 +28,7 @@ use crate::{
 pub struct ListPlansQuery {
     pub active: Option<String>,
     pub max_tier: Option<i16>,
+    pub by_operator: Option<bool>,
 }
 
 #[derive(Deserialize, utoipa::ToSchema)]
@@ -49,7 +50,8 @@ pub struct UpsertPlanRequest {
     tag = "planner",
     params(
         ("active" = Option<String>, Query, description = "Comma-separated operator ids whose plans count toward `aggregatedRequirements`. Absent or empty counts every plan; an id with no plan (e.g. `none`) matches nothing, so `none` counts no plan. `plans` always lists every plan."),
-        ("max_tier" = Option<i16>, Query, description = "1 to 5. Flatten `aggregatedRequirements` so no craftable item above this tier is listed: owned copies are used first, and the rest is replaced by its recipe ingredients and workshop LMD, merged into the matching rows. Absent leaves the requirements unflattened.")
+        ("max_tier" = Option<i16>, Query, description = "1 to 5. Flatten `aggregatedRequirements` so no craftable item above this tier is listed: owned copies are used first, and the rest is replaced by its recipe ingredients and workshop LMD, merged into the matching rows. Absent leaves the requirements unflattened."),
+        ("by_operator" = Option<bool>, Query, description = "When true, also return `operatorRequirements`: each counted plan's own requirements, keyed by operator id, flattened the same way. One request in place of one `/plans?active=<id>` per plan.")
     ),
     security(("bearer_auth" = []), ("service_key" = [])),
     responses(
@@ -83,8 +85,14 @@ pub async fn list(
                 .collect()
         })
         .unwrap_or_default();
-    let response =
-        services::planner::list_plans(&state, user_id, active_ids, query.max_tier).await?;
+    let response = services::planner::list_plans(
+        &state,
+        user_id,
+        active_ids,
+        query.max_tier,
+        query.by_operator.unwrap_or(false),
+    )
+    .await?;
     Ok(Json(response))
 }
 

@@ -19,8 +19,8 @@ pub use requirements::{MAX_FLATTEN_TIER, MIN_FLATTEN_TIER};
 pub(crate) use validation::module_phase_to_int;
 
 use self::{
-    progress::stored_plan_met,
-    requirements::{PlannerCtx, calculate_requirements},
+    progress::{raise_to_roster, stored_plan_met},
+    requirements::{PlannerCtx, calculate_requirements, requirements_by_operator},
 };
 use crate::{
     app::{error::ApiError, services::operators::resolve_operator, state::AppState},
@@ -76,8 +76,55 @@ async fn group_names_by_plan(
     Ok(by_plan)
 }
 
-/// A plan as the API returns it, with the operator's game data tagged with
-/// the server it was resolved from.
+/// Operator fields no plan view reads, emptied from every plan's operator.
+/// The plan card, requirements panel, completed-plans dialog and profile plan
+/// views read names, rarity, class, phases, skill names and icons, mastery
+/// costs and module names and icons; the editor fetches the full operator on
+/// its own. A full operator is 37,526 B (Jessica) to 97,930 B (Exusiai the
+/// New Covenant), so 193 plans shipped about 10 MB per list, twice (backend to
+/// the frontend server, then to the browser).
+const PLAN_OPERATOR_EMPTIED_ARRAYS: [&str; 6] = [
+    "talents",
+    "potentialRanks",
+    "favorKeyFrames",
+    "baseSkills",
+    "audio",
+    "drones",
+];
+const PLAN_OPERATOR_NULLED: [&str; 2] = ["handbook", "profile"];
+
+/// Strips `operator_json` to what a plan view reads: the fields above, every
+/// skill level past the first (the views read only the skill name), and each
+/// module's stat `data` and description.
+fn slim_plan_operator(map: &mut serde_json::Map<String, serde_json::Value>) {
+    use serde_json::Value;
+    for key in PLAN_OPERATOR_EMPTIED_ARRAYS {
+        if map.contains_key(key) {
+            map.insert(key.to_owned(), Value::Array(Vec::new()));
+        }
+    }
+    for key in PLAN_OPERATOR_NULLED {
+        if map.contains_key(key) {
+            map.insert(key.to_owned(), Value::Null);
+        }
+    }
+    if let Some(Value::Array(skills)) = map.get_mut("skills") {
+        for skill in skills {
+            if let Some(Value::Array(levels)) = skill.pointer_mut("/static/Levels") {
+                levels.truncate(1);
+            }
+        }
+    }
+    if let Some(Value::Array(modules)) = map.get_mut("modules") {
+        for module in modules.iter_mut().filter_map(Value::as_object_mut) {
+            module.insert("data".to_owned(), Value::Null);
+            module.insert("uniEquipDesc".to_owned(), Value::String(String::new()));
+        }
+    }
+}
+
+/// A plan as the API returns it, with the operator's game data, slimmed to
+/// what a plan view reads, tagged with the server it was resolved from.
 fn plan_response(
     plan: OperatorPlan,
     groups: Vec<String>,
@@ -88,6 +135,7 @@ fn plan_response(
     let mut operator_json =
         serde_json::to_value(operator).map_err(|e| ApiError::Internal(e.into()))?;
     if let serde_json::Value::Object(map) = &mut operator_json {
+        slim_plan_operator(map);
         map.insert(
             "server".to_string(),
             serde_json::Value::String(server.as_str().to_string()),
@@ -106,6 +154,7 @@ pub async fn list_plans(
     user_id: Uuid,
     active_ids: Vec<String>,
     max_tier: Option<i16>,
+    by_operator: bool,
 ) -> Result<PlannerResponse, ApiError> {
     let plans = queries::list_plans(&state.db, user_id).await?;
     let roster_map = roster_by_operator(state, user_id).await?;
@@ -178,10 +227,14 @@ pub async fn list_plans(
     };
     let aggregated_requirements =
         calculate_requirements(&ctx, &plans_with_ops, &active_ids, max_tier)?;
+    let operator_requirements = by_operator
+        .then(|| requirements_by_operator(&ctx, &plans_with_ops, &active_ids, max_tier))
+        .transpose()?;
 
     Ok(PlannerResponse {
         plans: responses,
         aggregated_requirements,
+        operator_requirements,
         groups,
         last_synced_at: profile.as_ref().map(|p| p.updated_at),
     })
@@ -219,18 +272,22 @@ pub async fn upsert_plan(
     state: &AppState,
     user_id: Uuid,
     operator_id: &str,
-    input: PlanInput,
+    mut input: PlanInput,
     groups: Option<Vec<String>>,
 ) -> Result<OperatorPlanResponse, ApiError> {
     validation::ensure_plannable_id(operator_id)?;
     let (operator, server) =
         resolve_operator(state, state.default_server, operator_id).ok_or(ApiError::NotFound)?;
+
+    // Plans only go up: a target below the roster is raised to it before the
+    // range checks, so the stored plan is what validation passed.
+    let roster_entry = roster_queries::get_operator(&state.db, user_id, operator_id).await?;
+    raise_to_roster(&mut input, roster_entry.as_ref())?;
     validation::validate_plan(&operator, &input)?;
 
     let plan =
         queries::upsert_plan(&state.db, user_id, operator_id, &input, groups.as_deref()).await?;
 
-    let roster_entry = roster_queries::get_operator(&state.db, user_id, operator_id).await?;
     let met = stored_plan_met(&plan, roster_entry.as_ref());
 
     // Read back rather than echo the request: the store sorts and dedups the

@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-07T10:59:57.370Z",
+    "generatedAt": "2026-10-07T11:20:46.728Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -32912,6 +32912,13 @@
             "placeholders": [
                 "count"
             ]
+        },
+        {
+            "key": "tools.planner.dialog.alreadyReached",
+            "namespace": "tools",
+            "source_text": "Already reached",
+            "description": "Tooltip on a promotion, skill or module step below where the player's operator already is. Plans only go up, so these steps cannot be picked.",
+            "placeholders": []
         },
         {
             "key": "tools.planner.dialog.cancel",

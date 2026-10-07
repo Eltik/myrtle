@@ -8,7 +8,7 @@ import { useErrorMessage } from "#/components/ui/error-message";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { useAuth } from "#/hooks/use-auth";
 import { operatorQueryOptions } from "#/lib/api/operators";
-import { type IOperatorPlanResponse, type IPresetTarget, PLANS_QUERY_PREFIX, plansQueryOptions, upsertPlanFn } from "#/lib/api/planner";
+import { type IOperatorPlanResponse, type IPresetTarget, invalidatePlanQueries, plansQueryOptions, upsertPlanFn } from "#/lib/api/planner";
 import { type IRosterEntry, userRosterQueryOptions } from "#/lib/api/user";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -168,7 +168,7 @@ export function BulkPlanDialog({ open, onOpenChange }: IBulkPlanDialogProps): Re
             else nextFailures[id] = errorMessage(result.reason);
         });
 
-        if (savedIds.size > 0) queryClient.invalidateQueries({ queryKey: PLANS_QUERY_PREFIX });
+        if (savedIds.size > 0) invalidatePlanQueries(queryClient);
         setIsSaving(false);
         if (Object.keys(nextFailures).length === 0) {
             onOpenChange(false);

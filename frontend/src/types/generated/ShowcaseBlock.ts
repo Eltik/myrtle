@@ -21,4 +21,14 @@ export type ShowcaseBlock =
       }
     | { type: "grid"; slug: string }
     | { type: "tier_list"; slug: string }
-    | { type: "plan"; id: string };
+    | {
+          type: "plan";
+          id: string;
+          /**
+           * The plan's operator. Deleting a plan and planning the operator
+           * again makes a new row with a new id; the block follows the
+           * operator to it instead of reading as removed. Absent on blocks
+           * saved before 2026-10-07, which still match by `id` alone.
+           */
+          operator_id?: string;
+      };

@@ -12,7 +12,7 @@
 //! after the cache, so the tab a visitor lands on never opens onto blocks that
 //! all vanished since the profile row was cached.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::sync::atomic::Ordering;
 
 use serde::Serialize;
@@ -78,6 +78,8 @@ struct Existing {
     grids: HashSet<String>,
     tier_lists: HashSet<String>,
     plans: HashSet<Uuid>,
+    /// The owner's shown plan for each operator a plan block names.
+    plan_by_operator: HashMap<String, Uuid>,
 }
 
 impl Existing {
@@ -89,11 +91,15 @@ impl Existing {
         let mut grids: Vec<String> = Vec::new();
         let mut tier_lists: Vec<String> = Vec::new();
         let mut plans: Vec<Uuid> = Vec::new();
+        let mut plan_operators: Vec<String> = Vec::new();
         for block in blocks {
             match block {
                 ShowcaseBlock::Grid { slug } => grids.push(slug.clone()),
                 ShowcaseBlock::TierList { slug } => tier_lists.push(slug.clone()),
-                ShowcaseBlock::Plan { id } => plans.push(*id),
+                ShowcaseBlock::Plan { id, operator_id } => {
+                    plans.push(*id);
+                    plan_operators.extend(operator_id.iter().cloned());
+                }
                 ShowcaseBlock::Favourites { .. } => {}
             }
         }
@@ -118,15 +124,20 @@ impl Existing {
             .collect();
         }
         if !plans.is_empty() {
-            out.plans = sqlx::query_scalar::<_, Uuid>(
-                "SELECT id FROM operator_plans WHERE id = ANY($1) AND user_id = $2 AND display_on_profile",
+            let rows = sqlx::query_as::<_, (Uuid, String)>(
+                "SELECT id, operator_id FROM operator_plans \
+                 WHERE user_id = $2 AND display_on_profile \
+                 AND (id = ANY($1) OR operator_id = ANY($3))",
             )
             .bind(&plans)
             .bind(owner)
+            .bind(&plan_operators)
             .fetch_all(&state.db)
-            .await?
-            .into_iter()
-            .collect();
+            .await?;
+            for (id, operator_id) in rows {
+                out.plans.insert(id);
+                out.plan_by_operator.insert(operator_id, id);
+            }
         }
         Ok(out)
     }
@@ -137,9 +148,37 @@ impl Existing {
         match block {
             ShowcaseBlock::Grid { slug } => self.grids.contains(slug),
             ShowcaseBlock::TierList { slug } => self.tier_lists.contains(slug),
-            ShowcaseBlock::Plan { id } => self.plans.contains(id),
+            ShowcaseBlock::Plan { id, operator_id } => {
+                self.live_plan_id(id, operator_id.as_ref()).is_some()
+            }
             ShowcaseBlock::Favourites { .. } => true,
         }
+    }
+
+    /// The plan a plan block shows: its own `id` while that plan is shown,
+    /// else the shown plan of its operator (the operator was planned again
+    /// after the plan was deleted). `None` when neither is.
+    fn live_plan_id(&self, id: &Uuid, operator_id: Option<&String>) -> Option<Uuid> {
+        if self.plans.contains(id) {
+            return Some(*id);
+        }
+        operator_id
+            .and_then(|op| self.plan_by_operator.get(op))
+            .copied()
+    }
+
+    /// `block` pointing at its live referent: a plan block takes
+    /// [`Self::live_plan_id`]. Every other block comes back as it is.
+    fn resolve(&self, block: &ShowcaseBlock) -> ShowcaseBlock {
+        if let ShowcaseBlock::Plan { id, operator_id } = block
+            && let Some(live) = self.live_plan_id(id, operator_id.as_ref())
+        {
+            return ShowcaseBlock::Plan {
+                id: live,
+                operator_id: operator_id.clone(),
+            };
+        }
+        block.clone()
     }
 }
 
@@ -177,7 +216,7 @@ pub async fn validate(
                     "showcase block {n}: no tier list `{slug}`"
                 )));
             }
-            ShowcaseBlock::Plan { id } => {
+            ShowcaseBlock::Plan { id, .. } => {
                 return Err(ApiError::BadRequest(format!(
                     "showcase block {n}: plan `{id}` is not one of your plans shown on your profile"
                 )));
@@ -389,11 +428,14 @@ pub async fn view(
                     entities,
                 }
             }
-            other => ShowcaseBlockView {
-                block: other.clone(),
-                removed: !existing.has(other),
-                entities: Vec::new(),
-            },
+            other => {
+                let block = existing.resolve(other);
+                ShowcaseBlockView {
+                    removed: !existing.has(&block),
+                    block,
+                    entities: Vec::new(),
+                }
+            }
         };
         if own || !view.removed {
             out.push(view);

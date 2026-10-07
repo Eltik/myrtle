@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import type { IRosterEntry } from "#/lib/api/user";
 import type { IOperatorListItem } from "#/types/operators";
-import { clampModuleTargets, clampSkillTargets, isSkillLevelAllowed, planTargetPayload, withSkillTarget } from "./planTargets";
+import { clampModuleTargets, clampSkillTargets, type IInitialTargets, isSkillLevelAllowed, minLevelFor, NO_FLOOR, planTargetPayload, raiseToFloor, rosterFloor, withSkillTarget } from "./planTargets";
 
 const cond = (phase: string, level: number) => ({ unlockCond: { phase, level } });
 
@@ -86,5 +87,44 @@ describe("planTargetPayload", () => {
                 if (payload.targetSkills.some((s) => s.mastery_level > 0)) expect(payload.targetSkillLevel).toBe(7);
             }
         }
+    });
+});
+
+describe("rosterFloor", () => {
+    const roster = (entry: Partial<IRosterEntry>): IRosterEntry => ({ elite: 0, level: 1, skill_level: 1, masteries: [], modules: [], ...entry }) as IRosterEntry;
+
+    it("is no floor for an unowned operator", () => {
+        expect(rosterFloor(operator, undefined)).toBe(NO_FLOOR);
+    });
+
+    it("reads the shared level below 7 and 7 plus each mastery at 7", () => {
+        expect(rosterFloor(operator, roster({ elite: 1, level: 21, skill_level: 5 })).skills).toEqual({ 0: 5, 1: 5 });
+        const floor = rosterFloor(operator, roster({ elite: 2, level: 60, skill_level: 7, masteries: [{ index: 1, mastery: 3 }], modules: [{ id: "mod_x", level: 2, locked: false }] } as Partial<IRosterEntry>));
+        expect(floor.skills).toEqual({ 0: 7, 1: 10 });
+        expect(floor.modules).toEqual({ mod_x: 2 });
+    });
+
+    it("floors the level only at the roster's own promotion", () => {
+        const floor = rosterFloor(operator, roster({ elite: 1, level: 21 }));
+        expect(minLevelFor(floor, 1)).toBe(21);
+        expect(minLevelFor(floor, 2)).toBe(1);
+    });
+});
+
+describe("raiseToFloor", () => {
+    const seed = (over: Partial<IInitialTargets>): IInitialTargets => ({ elite: 1, level: 1, skills: { 0: 7, 1: 7 }, modules: { mod_x: 0 }, displayOnProfile: false, groups: [], ...over });
+    const floor = { elite: 1, level: 21, skills: { 0: 7, 1: 9 }, modules: { mod_x: 2 } };
+
+    it("opens a plan saved below the roster (E1 Lv21 planned to E1 Lv1) at the roster", () => {
+        const raised = raiseToFloor(seed({}), floor);
+        expect([raised.elite, raised.level]).toEqual([1, 21]);
+        expect(raised.skills).toEqual({ 0: 7, 1: 9 });
+    });
+
+    it("keeps a higher promotion at any level, and an unplanned module unplanned", () => {
+        const raised = raiseToFloor(seed({ elite: 2, level: 1, modules: { mod_x: 0 } }), floor);
+        expect([raised.elite, raised.level]).toEqual([2, 1]);
+        expect(raised.modules).toEqual({ mod_x: 0 });
+        expect(raiseToFloor(seed({ elite: 2, modules: { mod_x: 1 } }), floor).modules).toEqual({ mod_x: 2 });
     });
 });

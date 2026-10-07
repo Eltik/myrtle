@@ -1,7 +1,7 @@
 import type { IOperatorPlanResponse } from "#/lib/api/planner";
 import type { IRosterEntry } from "#/lib/api/user";
 import type { IOperatorListItem, IOperatorModule } from "#/types/operators";
-import { type IOperatorSkill, isPromotionBelow, ownedModuleStage, plannableModules, skillTargetOf } from "./planTargets";
+import { type IOperatorSkill, isPromotionBelow, ownedMastery, ownedModuleStage, plannableModules, skillTargetOf } from "./planTargets";
 
 /**
  * Where a plan stands against the roster, field by field: what the operator
@@ -49,7 +49,7 @@ export function planProgress(operator: IOperatorListItem, plan: IOperatorPlanRes
     return {
         promotion: { current, target, isUpgraded: isPromotionBelow(current, target) },
         skills: operator.skills.map((skill, index) => {
-            const currentSkill = rosterEntry ? skillTargetOf(rosterEntry.skill_level, rosterEntry.masteries?.find((m) => m.index === index)?.mastery) : 1;
+            const currentSkill = rosterEntry ? skillTargetOf(rosterEntry.skill_level, ownedMastery(rosterEntry, index)) : 1;
             const targetSkill = skillTargetOf(plan.target_skill_level, plan.target_skills?.find((s) => s.skill_index === index)?.mastery_level);
             return { skill, index, ...step(currentSkill, targetSkill) };
         }),

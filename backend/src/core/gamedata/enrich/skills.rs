@@ -20,7 +20,11 @@ pub fn enrich_all_skills(
     raw_skills
         .into_iter()
         .map(|(id, raw)| {
-            let image = assets.skill_icon_path(&id).map(str::to_owned);
+            // The sprite is named by `iconId` when the skill borrows another's icon
+            // (skchr_jesica_1 -> skcom_powerstrike[2]); keying by the skill id left 130 of
+            // 1630 EN skills without an image.
+            let icon_key = raw.icon_id.as_deref().unwrap_or(&id);
+            let image = assets.skill_icon_path(icon_key).map(str::to_owned);
             let skill = Skill {
                 id: Some(id.clone()),
                 skill_id: raw.skill_id,

@@ -210,6 +210,13 @@ pub enum ShowcaseBlock {
     Plan {
         #[ts(type = "string")]
         id: Uuid,
+        /// The plan's operator. Deleting a plan and planning the operator
+        /// again makes a new row with a new id; the block follows the
+        /// operator to it instead of reading as removed. Absent on blocks
+        /// saved before 2026-10-07, which still match by `id` alone.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        operator_id: Option<String>,
     },
 }
 
@@ -250,6 +257,7 @@ impl ShowcaseBlock {
             "tier_list" => Some(Self::TierList { slug: key("slug")? }),
             "plan" => Some(Self::Plan {
                 id: key("id")?.parse().ok()?,
+                operator_id: key("operator_id"),
             }),
             _ => None,
         }
@@ -262,7 +270,16 @@ impl ShowcaseBlock {
         match (self, other) {
             (Self::Grid { slug: a }, Self::Grid { slug: b })
             | (Self::TierList { slug: a }, Self::TierList { slug: b }) => a == b,
-            (Self::Plan { id: a }, Self::Plan { id: b }) => a == b,
+            (
+                Self::Plan {
+                    id: a,
+                    operator_id: a_op,
+                },
+                Self::Plan {
+                    id: b,
+                    operator_id: b_op,
+                },
+            ) => a == b || (a_op.is_some() && a_op == b_op),
             _ => false,
         }
     }
@@ -911,7 +928,8 @@ mod tests {
         assert_eq!(
             layout.showcase_blocks()[3],
             ShowcaseBlock::Plan {
-                id: PLAN.parse().unwrap()
+                id: PLAN.parse().unwrap(),
+                operator_id: None,
             }
         );
     }

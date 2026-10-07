@@ -633,7 +633,7 @@ function PlanStep({ uid, draft, onAdd }: { uid: string; draft: readonly Showcase
                         <button
                             type="button"
                             disabled={added}
-                            onClick={() => onAdd({ key: draftKey(), removed: false, type: "plan", id: p.id })}
+                            onClick={() => onAdd({ key: draftKey(), removed: false, type: "plan", id: p.id, operatorId: p.operator_id })}
                             className="flex w-full cursor-pointer items-center gap-3 rounded-lg border border-transparent px-2 py-1.5 text-start transition-colors hover:border-border hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:opacity-60 disabled:hover:border-transparent disabled:hover:bg-transparent"
                         >
                             <span aria-hidden="true" className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted/70">

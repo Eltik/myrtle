@@ -33,7 +33,7 @@ interface IDraftBase {
     removed: boolean;
 }
 
-export type ShowcaseDraftBlock = (IDraftBase & { type: "favourites"; kind: TierEntityKind; title: string; entities: IShowcaseEntity[] }) | (IDraftBase & { type: "grid"; slug: string }) | (IDraftBase & { type: "tier_list"; slug: string }) | (IDraftBase & { type: "plan"; id: string });
+export type ShowcaseDraftBlock = (IDraftBase & { type: "favourites"; kind: TierEntityKind; title: string; entities: IShowcaseEntity[] }) | (IDraftBase & { type: "grid"; slug: string }) | (IDraftBase & { type: "tier_list"; slug: string }) | (IDraftBase & { type: "plan"; id: string; operatorId?: string });
 
 let nextKey = 0;
 /** A fresh editor key. */
@@ -61,7 +61,7 @@ export function draftFromView(view: ShowcaseView): ShowcaseDraftBlock[] {
             case "tier_list":
                 return { key, removed, type: "tier_list", slug: block.slug };
             default:
-                return { key, removed, type: "plan", id: block.id };
+                return { key, removed, type: "plan", id: block.id, operatorId: block.operator_id };
         }
     });
 }
@@ -112,7 +112,7 @@ export function blocksForSave(draft: readonly ShowcaseDraftBlock[]): ShowcaseBlo
         const referent = block.type === "plan" ? `plan:${block.id.toLowerCase()}` : `${block.type}:${block.slug}`;
         if (seen.has(referent)) continue;
         seen.add(referent);
-        out.push(block.type === "plan" ? { type: "plan", id: block.id } : { type: block.type, slug: block.slug });
+        out.push(block.type === "plan" ? { type: "plan", id: block.id, operator_id: block.operatorId } : { type: block.type, slug: block.slug });
     }
     return out;
 }

@@ -8,6 +8,11 @@ export type PlannerResponse = {
     aggregatedRequirements: Array<PlanRequirementItem>;
     groups: Array<PlanGroup>;
     /**
+     * Each counted plan's own requirements, by operator id. Present only when
+     * the request asked for `by_operator`.
+     */
+    operatorRequirements?: { [key in string]?: Array<PlanRequirementItem> };
+    /**
      * When the caller's account was last synced to our database. Every
      * current-state reading behind the plan (roster, inventory, base, stage
      * clears) is a snapshot as of this moment. Null for an account with no
