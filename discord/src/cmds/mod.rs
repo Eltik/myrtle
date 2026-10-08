@@ -11,6 +11,7 @@ pub mod birthday;
 pub mod collection;
 pub mod general;
 pub mod operator;
+pub mod tts;
 pub mod warn;
 
 #[must_use]
@@ -33,6 +34,7 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         warn::warn(),
         collection::collection(),
         birthday::birthday(),
+        tts::tts(),
     ]
 }
 

@@ -1,8 +1,10 @@
 FROM rust:1-bookworm AS builder
 WORKDIR /build
 
+# cmake builds the vendored libopus that songbird encodes voice with (opus2 `bundled`).
+# sherpa-onnx needs nothing here: its build script downloads prebuilt static libraries.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    pkg-config libssl-dev
+    pkg-config libssl-dev cmake
 RUN rm -rf /var/lib/apt/lists/*
 
 COPY . .
@@ -20,6 +22,7 @@ WORKDIR /app
 COPY --from=builder /build/target/release/discord ./discord
 COPY --from=builder /build/target/release/commands ./commands
 
-# config.json is mounted at runtime; the SQLite DB lives on a volume (DATABASE_URL).
+# config.json is mounted at runtime; the SQLite DB lives on a volume (DATABASE_URL). The TTS
+# voice is mounted at /app/tts, where the default `tts.model_dir` looks for it.
 ENV DISCORD_CONFIG_PATH=/app/config.json
 CMD ["./discord"]

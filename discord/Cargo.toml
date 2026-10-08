@@ -22,6 +22,21 @@ tokio-tungstenite = { version = "0.29.0", features = ["native-tls"] }
 futures-util = "0.3.32"
 unicode-normalization = "0.1.25"
 
+# Text-to-speech in voice channels. Send only: songbird's `receive` feature stays off, and its
+# default `rustls` is swapped for `native` to match the rest of the bot's TLS stack.
+songbird = { version = "0.6.0", default-features = false, features = [
+  "driver", "gateway", "serenity", "native", "tungstenite"
+] }
+# Songbird leaves symphonia's codecs to the caller; `pcm` decodes the raw f32 samples that
+# `RawAdapter` frames, which is the only format the bot ever plays.
+symphonia = { version = "0.5.5", default-features = false, features = ["pcm"] }
+# Piper voices through sherpa-onnx. `static` links prebuilt static libs (onnxruntime and
+# espeak-ng included) that the build script downloads, so the binary needs no .so at runtime.
+# Songbird's Opus encoder. `bundled` always builds the vendored libopus with CMake and links it
+# statically, instead of whichever system libopus pkg-config happens to find first.
+opus2 = { version = "0.4.0", features = ["bundled"] }
+sherpa-onnx = { version = "1.13.8", default-features = false, features = ["static"] }
+
 [profile.dev]
 debug = 0
 incremental = false

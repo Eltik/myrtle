@@ -45,6 +45,8 @@ pub struct Data {
     pub gamedata: Arc<GameData>,
     /// Which image links the backend 404s, remembered per URL for the operator view.
     pub operator_images: crate::cmds::operator::images::ImageCheck,
+    /// Text-to-speech in voice channels: the voice, live sessions, the per-guild off switch.
+    pub tts: Arc<crate::tts::Tts>,
 }
 
 impl Data {

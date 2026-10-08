@@ -13,5 +13,13 @@
       { "label": "KR", "ws_url": "ws://localhost:9163" }
     ],
     "reconnect_secs": 5
+  },
+  "tts": {
+    "model_dir": "tts/vits-piper-en_US-ljspeech-medium",
+    "max_chars": 300,
+    "idle_secs": 300,
+    "queue_max": 10,
+    "user_cooldown_ms": 2000,
+    "settle_ms": 1500
   }
 }

@@ -1019,3 +1019,48 @@ pub async fn mark_birthday_posted(
         .await?;
     Ok(())
 }
+
+/// Switch TTS off for `guild_id` at unix time `at`. Re-running keeps the original time.
+pub async fn set_tts_disabled(pool: &SqlitePool, guild_id: GuildId, at: i64) -> Result<(), Error> {
+    sqlx::query(
+        "INSERT INTO guild_tts_disabled (guild_id, disabled_at) VALUES (?, ?) \
+         ON CONFLICT(guild_id) DO NOTHING",
+    )
+    .bind(guild_id.get().cast_signed())
+    .bind(at)
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
+/// Switch TTS back on for `guild_id`. Returns whether it was off.
+pub async fn clear_tts_disabled(pool: &SqlitePool, guild_id: GuildId) -> Result<bool, Error> {
+    Ok(delete_guild_rows(
+        pool,
+        "DELETE FROM guild_tts_disabled WHERE guild_id = ?",
+        guild_id,
+    )
+    .await?
+        > 0)
+}
+
+/// When TTS was switched off for `guild_id`, or `None` while it is on.
+pub async fn get_tts_disabled(pool: &SqlitePool, guild_id: GuildId) -> Result<Option<i64>, Error> {
+    let row: Option<(i64,)> =
+        sqlx::query_as("SELECT disabled_at FROM guild_tts_disabled WHERE guild_id = ?")
+            .bind(guild_id.get().cast_signed())
+            .fetch_optional(pool)
+            .await?;
+    Ok(row.map(|(at,)| at))
+}
+
+/// Every guild with TTS switched off. Hydrates the cache the message hot path reads.
+pub async fn list_tts_disabled(pool: &SqlitePool) -> Result<Vec<GuildId>, Error> {
+    let rows: Vec<(i64,)> = sqlx::query_as("SELECT guild_id FROM guild_tts_disabled")
+        .fetch_all(pool)
+        .await?;
+    Ok(rows
+        .into_iter()
+        .map(|(id,)| GuildId::new(id.cast_unsigned()))
+        .collect())
+}

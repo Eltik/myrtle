@@ -3,6 +3,7 @@ use discord::{
     birthday, cmds,
     config::Config,
     db, handler, hooks,
+    tts::Tts,
     types::Data,
     watcher::{self, AssetStatus, AssetsState},
 };
@@ -12,6 +13,7 @@ use std::env;
 use std::sync::Arc;
 
 use serenity::{all::ClientBuilder, cache::Settings, prelude::*};
+use songbird::SerenityInit;
 use tokio::sync::{Mutex as TokioMutex, mpsc};
 
 // Bot bootstrap touches many subsystems (config, db, watcher, framework); splitting it
@@ -67,7 +69,13 @@ async fn main() {
         | GatewayIntents::DIRECT_MESSAGES
         | GatewayIntents::MESSAGE_CONTENT
         | GatewayIntents::GUILD_PRESENCES
-        | GatewayIntents::GUILD_MESSAGE_REACTIONS;
+        | GatewayIntents::GUILD_MESSAGE_REACTIONS
+        // Who is in which voice channel, for text-to-speech; songbird needs it to join, too.
+        | GatewayIntents::GUILD_VOICE_STATES;
+
+    // One voice manager for the client, registered with serenity below and held by `Tts`.
+    let songbird = songbird::Songbird::serenity();
+    let tts = Arc::new(Tts::new(config.tts.clone(), Arc::clone(&songbird)));
 
     let options = poise::FrameworkOptions {
         commands: cmds::all(),
@@ -122,6 +130,10 @@ async fn main() {
                     "Hydrated audit-log bindings for {} guild(s)",
                     audit_log_settings.len()
                 );
+
+                let tts_disabled = db::list_tts_disabled(&pool).await?;
+                tracing::info!("TTS is switched off in {} guild(s)", tts_disabled.len());
+                tts.hydrate_disabled(tts_disabled).await;
 
                 let reconnect_secs = config.assets.reconnect_secs;
                 for (label, ws_url, rx) in assets_watchers {
@@ -184,6 +196,7 @@ async fn main() {
                     audit_log_settings: Arc::new(RwLock::new(audit_log_settings)),
                     gamedata,
                     operator_images: cmds::operator::images::ImageCheck::default(),
+                    tts,
                 })
             })
         })
@@ -195,6 +208,7 @@ async fn main() {
     let mut client = ClientBuilder::new(token, intents)
         .framework(framework)
         .cache_settings(cache_settings)
+        .register_songbird_with(songbird)
         .await
         .expect("Error creating client");
 

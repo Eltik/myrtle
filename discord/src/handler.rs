@@ -15,7 +15,7 @@ use serenity::{
         self, GuildAuditLogEntryCreate, GuildBanAddition, GuildBanRemoval, GuildDelete,
         GuildMemberAddition, GuildMemberRemoval, InteractionCreate, Message as MessageCreate,
         MessageDelete, MessageDeleteBulk, MessageUpdate, ReactionAdd, ReactionRemove,
-        ReactionRemoveAll, ReactionRemoveEmoji,
+        ReactionRemoveAll, ReactionRemoveEmoji, VoiceStateUpdate,
     },
 };
 
@@ -120,12 +120,22 @@ pub async fn event_handler(
             .await;
         }
         MessageCreate { new_message } => {
-            if let Err(e) = handle_message(ctx, data, bot_id, new_message).await {
-                tracing::error!(
-                    "Antispam handler failed for message {}: {e}",
-                    new_message.id
-                );
+            let flagged = handle_message(ctx, data, bot_id, new_message)
+                .await
+                .unwrap_or_else(|e| {
+                    tracing::error!(
+                        "Antispam handler failed for message {}: {e}",
+                        new_message.id
+                    );
+                    false
+                });
+            // A message antispam acted on (deleted, or its author warned or removed) is not read out.
+            if !flagged {
+                crate::tts::on_message(&data.tts, ctx, bot_id, new_message).await;
             }
+        }
+        VoiceStateUpdate { new, .. } => {
+            crate::tts::on_voice_state(&data.tts, ctx, bot_id, new);
         }
         MessageUpdate {
             old_if_available,
@@ -238,6 +248,7 @@ async fn handle_reaction(
 
 /// Run both antispam checks (per-message + rolling window) against `msg` and execute the
 /// configured action on a violation. Silently returns for DMs, bots, and guilds with no policy.
+/// Returns whether an action ran.
 //
 // `significant_drop_tightening` flags the write guard in the rolling-window block, but `entry`
 // borrows from the guard so the suggested rewrite doesn't typecheck. Allow at the fn level
@@ -248,22 +259,22 @@ async fn handle_message(
     data: &Data,
     bot_id: UserId,
     msg: &Message,
-) -> Result<(), Error> {
+) -> Result<bool, Error> {
     if msg.author.bot || msg.author.id == bot_id {
-        return Ok(());
+        return Ok(false);
     }
     let Some(guild_id) = msg.guild_id else {
-        return Ok(());
+        return Ok(false);
     };
     let Some(policy) = data.antispam_policies.read().await.get(&guild_id).cloned() else {
-        return Ok(());
+        return Ok(false);
     };
 
     if let Some(exempt_role) = policy.exempt_role_id
         && let Some(member) = msg.member.as_ref()
         && member.roles.contains(&exempt_role)
     {
-        return Ok(());
+        return Ok(false);
     }
 
     // `msg.mentions` and `msg.mention_roles` are *deduplicated*: pinging the same target
@@ -272,7 +283,7 @@ async fn handle_message(
     // the MESSAGE_CONTENT intent, which is already requested in main.rs.
     let pings = count_mention_tokens(&msg.content);
     if pings == 0 {
-        return Ok(());
+        return Ok(false);
     }
 
     let mut triggered = pings > policy.max_per_message;
@@ -295,7 +306,7 @@ async fn handle_message(
     }
 
     if !triggered {
-        return Ok(());
+        return Ok(false);
     }
 
     tracing::info!(
@@ -306,7 +317,7 @@ async fn handle_message(
         policy.action.as_db_str(),
     );
     execute_action(ctx, &policy, guild_id, msg).await;
-    Ok(())
+    Ok(true)
 }
 
 /// Drop the entries at the front of a user's ping history older than `cutoff` at `now`.
