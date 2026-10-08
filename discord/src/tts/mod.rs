@@ -1,17 +1,21 @@
 //! Text-to-speech in voice channels.
 //!
 //! `/tts join` puts the bot in the invoker's voice channel. From then on, a member in that
-//! channel who types in its built-in text chat is read out there, as "<name> said: <text>". The
-//! bot leaves on `/tts leave`, when the channel has no humans left, or after
-//! [`TtsConfig::idle_secs`] of quiet. It never joins on its own.
+//! channel who types in its built-in text chat is read out there, as "<name> said: <text>", in
+//! the voice they picked with `/tts voice`. The bot leaves on `/tts leave`, when the channel has
+//! no humans left, or after [`TtsConfig::idle_secs`] of quiet. It never joins on its own.
 //!
-//! [`gate`] decides whether a message is spoken, [`text`] turns it into words, [`engine`] makes
-//! the audio, and [`session`] holds the guild's place in the channel.
+//! The audio comes from Google Translate's speech endpoint, so every message read aloud is sent
+//! to Google.
+//!
+//! [`gate`] decides whether a message is spoken, [`text`] turns it into words, [`engine`] fetches
+//! the audio, [`voices`] lists the voices, and [`session`] holds the guild's place in the channel.
 
 pub mod engine;
 pub mod gate;
 pub mod session;
 pub mod text;
+pub mod voices;
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
@@ -23,10 +27,11 @@ use songbird::Songbird;
 use tokio::sync::oneshot;
 
 use crate::config::TtsConfig;
-use engine::{ModelPaths, Synth};
+use engine::Google;
 use gate::{Facts, RateLimiter};
-use session::Session;
+use session::{Session, Utterance};
 use text::{Mention, NameSources};
+use voices::Voice;
 
 /// Least time between two voice joins in one guild, counted from the last join or leave.
 ///
@@ -44,7 +49,7 @@ const PREFIX: &str = "-";
 /// Why `/tts join` didn't start a session.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum JoinRefused {
-    /// The voice is missing or failed to load.
+    /// TTS is switched off in the config.
     Unavailable,
     /// The bot is already reading this channel.
     AlreadyHere,
@@ -54,56 +59,87 @@ pub enum JoinRefused {
     TooSoon,
 }
 
-/// The TTS subsystem: config, the voice, per-guild sessions and TTS nicknames.
+/// The TTS subsystem: config, the Google client, per-guild sessions, TTS nicknames and voices.
 pub struct Tts {
     pub config: TtsConfig,
-    pub synth: Synth,
+    pub google: Google,
+    /// The voice for members who haven't picked one: `tts.default_voice`, or [`voices::FALLBACK`].
+    pub default_voice: Voice,
     songbird: Arc<Songbird>,
     sessions: Mutex<HashMap<GuildId, Arc<Session>>>,
     /// TTS nicknames, mirroring `guild_tts_nicknames`. Hydrated at startup and kept in sync by
     /// `/tts nickname`, so the message hot path never reads `SQLite`.
     nicknames: Mutex<HashMap<(GuildId, UserId), String>>,
+    /// Voice picks, mirroring `user_tts_voice`, kept in sync by `/tts voice`. Global per user.
+    voice_picks: Mutex<HashMap<UserId, String>>,
     joins: Mutex<RateLimiter<GuildId>>,
 }
 
 impl Tts {
-    /// Set TTS up from `config`. Finds the voice's files now, so a missing model is one warning at
-    /// startup; the model itself loads on the first message that needs it.
+    /// Set TTS up from `config`, fetching through the bot's shared `http` client. Warns once
+    /// about deprecated config fields and an unknown default voice.
     #[must_use]
-    pub fn new(config: TtsConfig, songbird: Arc<Songbird>) -> Self {
-        let paths = if config.enabled() {
-            match ModelPaths::resolve(&config) {
-                Ok(paths) => {
-                    tracing::info!(
-                        "TTS voice ({:?}) found at {}",
-                        config.resolved_engine(),
-                        paths.model().display()
-                    );
-                    Some(paths)
-                }
-                Err(e) => {
-                    tracing::warn!("TTS disabled: {e}");
-                    None
-                }
-            }
-        } else {
-            tracing::info!("TTS disabled in config");
-            None
-        };
-        if config.user_cooldown_ms.is_some() {
+    pub fn new(config: TtsConfig, songbird: Arc<Songbird>, http: reqwest::Client) -> Self {
+        let deprecated = config.deprecated_fields();
+        if !deprecated.is_empty() {
             tracing::warn!(
-                "tts.user_cooldown_ms is deprecated and ignored; tts.user_queue_max caps each \
-                 member's waiting messages instead"
+                "Ignoring deprecated tts config field(s): {}. Speech comes from Google Translate \
+                 now; per-member limits are tts.user_queue_max",
+                deprecated.join(", ")
             );
+        }
+        let default_voice = match config.default_voice.as_deref() {
+            None => voices::FALLBACK,
+            Some(id) => voices::find(id).unwrap_or_else(|| {
+                tracing::warn!(
+                    "tts.default_voice {id:?} is not a known voice; using {}",
+                    voices::FALLBACK.id
+                );
+                voices::FALLBACK
+            }),
+        };
+        if !config.enabled() {
+            tracing::info!("TTS disabled in config");
         }
         Self {
             config,
-            synth: Synth::new(paths),
+            google: Google::new(http),
+            default_voice,
             songbird,
             sessions: Mutex::new(HashMap::new()),
             nicknames: Mutex::new(HashMap::new()),
+            voice_picks: Mutex::new(HashMap::new()),
             joins: Mutex::new(RateLimiter::new(JOIN_COOLDOWN)),
         }
+    }
+
+    /// Replace the cached voice picks with `rows`, read from the database at startup.
+    pub fn hydrate_voices(&self, rows: impl IntoIterator<Item = (UserId, String)>) {
+        *lock(&self.voice_picks) = rows.into_iter().collect();
+    }
+
+    /// Mirror a `/tts voice set` (`Some`) or `clear` (`None`).
+    pub fn cache_voice(&self, user: UserId, voice: Option<String>) {
+        let mut picks = lock(&self.voice_picks);
+        match voice {
+            Some(v) => picks.insert(user, v),
+            None => picks.remove(&user),
+        };
+    }
+
+    /// The voice `user` speaks in: their pick if it is still a known voice, else the default.
+    #[must_use]
+    pub fn voice_of(&self, user: UserId) -> Voice {
+        voices::resolve(
+            lock(&self.voice_picks).get(&user).map(String::as_str),
+            self.default_voice,
+        )
+    }
+
+    /// `user`'s stored pick, as stored (it may name a voice that no longer exists).
+    #[must_use]
+    pub fn voice_pick(&self, user: UserId) -> Option<String> {
+        lock(&self.voice_picks).get(&user).cloned()
     }
 
     /// Replace the cached TTS nicknames with `rows`, read from the database at startup.
@@ -139,7 +175,7 @@ impl Tts {
         guild: GuildId,
         channel: ChannelId,
     ) -> Result<(Arc<Session>, oneshot::Receiver<bool>), JoinRefused> {
-        if !self.synth.available() {
+        if !self.config.enabled() {
             return Err(JoinRefused::Unavailable);
         }
         let session = {
@@ -251,7 +287,10 @@ pub fn on_message(tts: &Arc<Tts>, ctx: &Context, bot_id: UserId, msg: &Message) 
             },
             &resolve,
         );
-        text::attributed(&name, &words)
+        Utterance {
+            text: text::attributed(&name, &words),
+            voice: tts.voice_of(msg.author.id),
+        }
     };
 
     if !session.push(msg.author.id, spoken) {

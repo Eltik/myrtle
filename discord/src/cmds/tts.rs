@@ -13,20 +13,22 @@ use serenity::model::permissions::Permissions;
 
 use crate::checks::{passes_elevated, require_guild};
 use crate::db;
-use crate::tts::{self, JoinRefused, session::Session, text};
+use crate::tts::{self, JoinRefused, session::Session, text, voices};
 use crate::types::{Context, Error};
 
 /// The one public line posted in the voice channel's chat when the bot starts reading it.
-const JOINED_NOTICE: &str = "Reading this channel's chat aloud. `/tts leave` to stop.";
+const JOINED_NOTICE: &str =
+    "Reading this channel's chat aloud (voice by Google Translate). `/tts leave` to stop.";
 
 /// Text-to-speech in voice channels.
 ///
 /// `/tts join` while you are in a voice channel, and the bot reads that channel's chat aloud for
-/// the members in it. Subcommands: `join`, `leave`, `skip`, `nickname`.
+/// the members in it, with Google Translate's voices. Subcommands: `join`, `leave`, `skip`,
+/// `nickname`, `voice`.
 #[poise::command(
     slash_command,
     guild_only,
-    subcommands("tts_join", "tts_leave", "tts_skip", "tts_nickname"),
+    subcommands("tts_join", "tts_leave", "tts_skip", "tts_nickname", "tts_voice"),
     subcommand_required
 )]
 pub async fn tts(_ctx: Context<'_>) -> Result<(), Error> {
@@ -51,9 +53,7 @@ pub async fn tts_join(ctx: Context<'_>) -> Result<(), Error> {
             .start_session(guild, channel)
             .map_err(|refused| -> Error {
                 match refused {
-                JoinRefused::Unavailable => {
-                    "Text-to-speech isn't available on this bot right now.".into()
-                }
+                JoinRefused::Unavailable => "Text-to-speech is switched off on this bot.".into(),
                 JoinRefused::AlreadyHere => format!("I'm already reading <#{channel}>.").into(),
                 JoinRefused::Elsewhere(other) => format!(
                     "I'm already reading <#{other}> in this server. Run `/tts leave` there first."
@@ -192,6 +192,95 @@ pub async fn tts_nickname_show(
         None => format!("<@{target}> has no TTS nickname; their display name is read."),
     };
     reply(ctx, &content).await
+}
+
+/// The voice your messages are read in, in every server.
+///
+/// Subcommands: `set`, `show`, `clear`.
+#[poise::command(
+    slash_command,
+    rename = "voice",
+    subcommands("tts_voice_set", "tts_voice_show", "tts_voice_clear"),
+    subcommand_required
+)]
+pub async fn tts_voice(_ctx: Context<'_>) -> Result<(), Error> {
+    Ok(())
+}
+
+/// Pick the voice your messages are read in.
+#[poise::command(slash_command, rename = "set")]
+pub async fn tts_voice_set(
+    ctx: Context<'_>,
+    #[description = "Language and accent"]
+    #[autocomplete = "autocomplete_voice"]
+    voice: String,
+) -> Result<(), Error> {
+    let picked = voices::find(&voice).ok_or_else(|| {
+        format!("There's no voice called {voice:?}. Pick one from the list as you type.")
+    })?;
+    db::set_tts_voice(
+        &ctx.data().pool,
+        ctx.author().id,
+        picked.id,
+        Timestamp::now().unix_timestamp(),
+    )
+    .await
+    .map_err(|e| format!("Couldn't save your voice: {e}"))?;
+    ctx.data()
+        .tts
+        .cache_voice(ctx.author().id, Some(picked.id.to_string()));
+    reply(
+        ctx,
+        &format!("Your messages will be read in {}.", picked.label),
+    )
+    .await
+}
+
+/// Show the voice your messages are read in.
+#[poise::command(slash_command, rename = "show")]
+pub async fn tts_voice_show(ctx: Context<'_>) -> Result<(), Error> {
+    let tts = &ctx.data().tts;
+    let voice = tts.voice_of(ctx.author().id);
+    let content = if tts.voice_pick(ctx.author().id).is_some() && voice != tts.default_voice {
+        format!("Your messages are read in {}.", voice.label)
+    } else {
+        format!(
+            "Your messages are read in {}, the default. `/tts voice set` picks another.",
+            voice.label
+        )
+    };
+    reply(ctx, &content).await
+}
+
+/// Go back to the default voice.
+#[poise::command(slash_command, rename = "clear")]
+pub async fn tts_voice_clear(ctx: Context<'_>) -> Result<(), Error> {
+    let removed = db::clear_tts_voice(&ctx.data().pool, ctx.author().id)
+        .await
+        .map_err(|e| format!("Couldn't clear your voice: {e}"))?;
+    ctx.data().tts.cache_voice(ctx.author().id, None);
+    let default = ctx.data().tts.default_voice.label;
+    let content = if removed {
+        format!("Voice cleared. Your messages are read in {default}, the default.")
+    } else {
+        format!("You hadn't picked a voice; your messages are read in {default}.")
+    };
+    reply(ctx, &content).await
+}
+
+/// Every voice whose id or label contains what has been typed, as `label` -> `id` choices.
+async fn autocomplete_voice(
+    _ctx: Context<'_>,
+    partial: &str,
+) -> Vec<poise::serenity_prelude::AutocompleteChoice> {
+    let needle = partial.trim().to_lowercase();
+    voices::VOICES
+        .iter()
+        .filter(|v| {
+            needle.is_empty() || v.id.contains(&needle) || v.label.to_lowercase().contains(&needle)
+        })
+        .map(|v| poise::serenity_prelude::AutocompleteChoice::new(v.label, v.id))
+        .collect()
 }
 
 /// The member a nickname command acts on: the invoker, or `user` when the invoker may manage

@@ -1078,3 +1078,42 @@ pub async fn list_tts_nicknames(
         })
         .collect())
 }
+
+/// Set `user_id`'s TTS voice, replacing any previous pick.
+pub async fn set_tts_voice(
+    pool: &SqlitePool,
+    user_id: UserId,
+    voice: &str,
+    at: i64,
+) -> Result<(), Error> {
+    sqlx::query(
+        "INSERT INTO user_tts_voice (user_id, voice, set_at) VALUES (?, ?, ?) \
+         ON CONFLICT(user_id) DO UPDATE SET voice = excluded.voice, set_at = excluded.set_at",
+    )
+    .bind(user_id.get().cast_signed())
+    .bind(voice)
+    .bind(at)
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
+/// Remove `user_id`'s TTS voice pick. Returns whether one was set.
+pub async fn clear_tts_voice(pool: &SqlitePool, user_id: UserId) -> Result<bool, Error> {
+    let result = sqlx::query("DELETE FROM user_tts_voice WHERE user_id = ?")
+        .bind(user_id.get().cast_signed())
+        .execute(pool)
+        .await?;
+    Ok(result.rows_affected() > 0)
+}
+
+/// Every TTS voice pick. Hydrates the cache the message hot path reads.
+pub async fn list_tts_voices(pool: &SqlitePool) -> Result<Vec<(UserId, String)>, Error> {
+    let rows: Vec<(i64, String)> = sqlx::query_as("SELECT user_id, voice FROM user_tts_voice")
+        .fetch_all(pool)
+        .await?;
+    Ok(rows
+        .into_iter()
+        .map(|(u, v)| (UserId::new(u.cast_unsigned()), v))
+        .collect())
+}

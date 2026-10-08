@@ -7,9 +7,11 @@
 //! [`TtsConfig::idle_secs`] without speaking. It always ends by leaving the channel and removing
 //! itself.
 //!
-//! A message is spoken a sentence at a time: a producer synthesizes each sentence in turn under
-//! the global permit and hands it to the player, so the first sentence plays while the next is
-//! made. `/tts skip` drops the rest of the message.
+//! A message is spoken a chunk at a time ([`text::chunks`]: sentences, split further to fit
+//! Google's 200-unit limit): a producer fetches each chunk from Google in turn and hands it to
+//! the player, so the first chunk plays while the next is fetched. A chunk whose fetch fails is
+//! skipped with a warning in the log and nothing in chat. `/tts skip` drops the rest of the
+//! message.
 //!
 //! DAVE: songbird 0.6.0 encrypts with the end-to-end session only once that session reports
 //! ready, and sends packets without it until then (`mixer/mod.rs`, the `is_ready()` branch);
@@ -22,45 +24,56 @@
 //! [`TtsConfig::settle_ms`]: crate::config::TtsConfig::settle_ms
 //! [`TtsConfig::idle_secs`]: crate::config::TtsConfig::idle_secs
 
-use std::io::Cursor;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use serenity::model::id::{ChannelId, GuildId, UserId};
 use songbird::error::JoinError;
-use songbird::input::{Input, RawAdapter};
+use songbird::input::Input;
 use songbird::tracks::TrackHandle;
 use songbird::{Call, Event, EventContext, EventHandler, TrackEvent};
 use tokio::sync::{Mutex as TokioMutex, Notify, mpsc, oneshot};
 use tokio::time::Instant;
 
 use super::Tts;
-use super::engine::Speech;
+use super::engine::MAX_UNITS;
 use super::gate::SpeechQueue;
 use super::text;
+use super::voices::Voice;
 
-/// Added to a sentence's playing time before the worker stops waiting for its end event.
+/// Added to a chunk's estimated playing time before the worker stops waiting for its end event.
 const PLAYBACK_SLACK: Duration = Duration::from_secs(5);
+
+/// MP3 bytes per second of Google's speech: 64 kbps CBR mono at 24 kHz (the fixture measures
+/// 15,744 B for 1.968 s). Halved here, so the end-event deadline errs long.
+const MP3_BYTES_PER_SEC_FLOOR: u64 = 4000;
 
 /// Tries at leaving voice, 2 s apart and doubling: 62 s in all, the span of a shard reconnect.
 const LEAVE_ATTEMPTS: u32 = 6;
 
-/// Sentences synthesized ahead of the one playing. One keeps the next ready without holding the
-/// global permit for a whole message while other guilds wait.
-const SENTENCES_AHEAD: usize = 1;
+/// Chunks fetched ahead of the one playing. One keeps the next ready without one guild holding
+/// both of the global request permits for a whole message.
+const CHUNKS_AHEAD: usize = 1;
+
+/// One message waiting to be spoken, in the voice its author picked.
+#[derive(Debug, Clone)]
+pub struct Utterance {
+    pub text: String,
+    pub voice: Voice,
+}
 
 /// A guild's voice session, shared between its worker, the message handler and `/tts`.
 pub struct Session {
     pub guild: GuildId,
     pub channel: ChannelId,
-    queue: Mutex<SpeechQueue>,
+    queue: Mutex<SpeechQueue<Utterance>>,
     wake: Notify,
     stopping: AtomicBool,
     /// Set once `Songbird::join` has returned. Until then the bot's own voice-state updates may be
     /// a late replay from the guild's previous session and are ignored.
     joined: AtomicBool,
-    /// A message is being spoken (synthesizing or playing any of its sentences).
+    /// A message is being spoken (fetching or playing any of its chunks).
     in_message: AtomicBool,
     /// `/tts skip` asked to drop the rest of the message being spoken.
     skip_message: AtomicBool,
@@ -93,11 +106,11 @@ impl Session {
 
     /// Queue `text` from `user`. `false` when the guild's queue is full, `user` already has their
     /// share waiting, or the session is ending; the text is dropped without a reply.
-    pub fn push(&self, user: UserId, text: String) -> bool {
+    pub fn push(&self, user: UserId, utterance: Utterance) -> bool {
         if self.is_stopping() {
             return false;
         }
-        let queued = lock(&self.queue).push(user.get(), text);
+        let queued = lock(&self.queue).push(user.get(), utterance);
         if queued {
             self.wake.notify_one();
         }
@@ -217,31 +230,29 @@ async fn serve(tts: &Tts, session: &Session, call: &TokioMutex<Call>) -> &'stati
     }
 }
 
-/// Speak one message a sentence at a time, synthesizing the next while the current one plays.
-async fn speak_message(tts: &Tts, session: &Session, call: &TokioMutex<Call>, message: &str) {
-    let (tx, mut rx) = mpsc::channel::<Speech>(SENTENCES_AHEAD);
+/// Speak one message a chunk at a time, fetching the next while the current one plays.
+async fn speak_message(tts: &Tts, session: &Session, call: &TokioMutex<Call>, message: &Utterance) {
+    let (tx, mut rx) = mpsc::channel::<Vec<u8>>(CHUNKS_AHEAD);
     let produce = async move {
-        for sentence in text::sentences(message) {
+        for chunk in text::chunks(&message.text, MAX_UNITS) {
             if session.abandoned() {
                 break;
             }
-            let Some(speech) = tts.synth.speak(sentence).await else {
-                if !tts.synth.available() {
-                    session.stop();
-                }
-                break;
+            // A failed chunk is skipped, not the message: the rest may still come through.
+            let Some(mp3) = tts.google.fetch(message.voice, &chunk).await else {
+                continue;
             };
-            if tx.send(speech).await.is_err() {
+            if tx.send(mp3).await.is_err() {
                 break;
             }
         }
     };
     let play = async {
-        while let Some(speech) = rx.recv().await {
+        while let Some(mp3) = rx.recv().await {
             if session.abandoned() {
                 break;
             }
-            play_one(session, call, &speech).await;
+            play_one(session, call, mp3).await;
         }
         // Dropping the receiver stops the producer at its next send.
         drop(rx);
@@ -249,10 +260,11 @@ async fn speak_message(tts: &Tts, session: &Session, call: &TokioMutex<Call>, me
     tokio::join!(produce, play);
 }
 
-/// Play one sentence, returning once it has finished, been skipped, or failed.
-async fn play_one(session: &Session, call: &TokioMutex<Call>, speech: &Speech) {
-    let wait = Duration::from_secs_f64(speech.seconds()) + PLAYBACK_SLACK;
-    let input = speech_input(speech);
+/// Play one chunk's MP3, returning once it has finished, been skipped, or failed.
+async fn play_one(session: &Session, call: &TokioMutex<Call>, mp3: Vec<u8>) {
+    let estimate = u64::try_from(mp3.len()).unwrap_or(u64::MAX) / MP3_BYTES_PER_SEC_FLOOR;
+    let wait = Duration::from_secs(estimate) + PLAYBACK_SLACK;
+    let input = Input::from(mp3);
 
     let done = Arc::new(Notify::new());
     let handle = call.lock().await.play_only_input(input);
@@ -282,17 +294,6 @@ async fn play_one(session: &Session, call: &TokioMutex<Call>, speech: &Speech) {
     lock(&session.current).take();
 }
 
-/// `speech` as a songbird input: little-endian f32 mono behind `RawAdapter`'s header, which
-/// songbird's own probe reads and symphonia's `pcm` codec decodes. Songbird resamples to 48 kHz.
-fn speech_input(speech: &Speech) -> Input {
-    let bytes: Vec<u8> = speech
-        .samples
-        .iter()
-        .flat_map(|s| s.to_le_bytes())
-        .collect();
-    RawAdapter::new(Cursor::new(bytes), speech.sample_rate, 1).into()
-}
-
 /// Wakes the worker when a track ends or fails.
 struct Done(Arc<Notify>);
 
@@ -309,46 +310,58 @@ mod tests {
     use super::*;
     use songbird::input::codecs::{get_codec_registry, get_probe};
 
+    fn said(text: &str) -> Utterance {
+        Utterance {
+            text: text.into(),
+            voice: crate::tts::voices::FALLBACK,
+        }
+    }
+
     /// The live bug: a member's second message, 100 ms after the first, was dropped by a 2 s
     /// per-member cooldown before it reached the queue. Both now queue, in order.
     #[tokio::test]
     async fn back_to_back_messages_from_one_member_both_queue() {
         let session = Session::new(GuildId::new(1), ChannelId::new(2), 10, 3);
         let member = UserId::new(3);
-        assert!(session.push(member, "Amiya said: first".into()));
+        assert!(session.push(member, said("Amiya said: first")));
         tokio::time::sleep(Duration::from_millis(100)).await;
-        assert!(session.push(member, "Amiya said: second".into()));
+        assert!(session.push(member, said("Amiya said: second")));
         assert_eq!(session.queued(), 2);
         let mut queue = lock(&session.queue);
-        assert_eq!(queue.pop().as_deref(), Some("Amiya said: first"));
-        assert_eq!(queue.pop().as_deref(), Some("Amiya said: second"));
+        assert_eq!(
+            queue.pop().map(|u| u.text).as_deref(),
+            Some("Amiya said: first")
+        );
+        assert_eq!(
+            queue.pop().map(|u| u.text).as_deref(),
+            Some("Amiya said: second")
+        );
     }
 
-    /// The format path a spoken message takes, minus Discord: the bytes `speech_input` frames
-    /// must probe as songbird's raw f32 container and decode back to every sample, at the
-    /// voice's rate, mono.
+    /// The format path a spoken chunk takes, minus Discord: a real MP3 fetched from Google
+    /// (`tests/fixtures/hello-en-us.mp3`, "Hello there, Doctor." in en-US) must probe through
+    /// songbird's own registry and decode to 24 kHz mono, 1.968 s long, the length macOS
+    /// `afinfo` reports for the file.
     #[tokio::test]
-    async fn speech_input_decodes_back_to_its_samples() {
-        let samples: Vec<f32> = (0..22_050_u16)
-            .map(|i| (f32::from(i) * 0.05).sin() * 0.5)
-            .collect();
-        let speech = Speech {
-            samples: samples.clone(),
-            sample_rate: 22_050,
-        };
-        let mut input = speech_input(&speech)
+    async fn google_mp3_decodes_through_songbird() {
+        let mp3: &'static [u8] = include_bytes!("../../tests/fixtures/hello-en-us.mp3");
+        let mut input = Input::from(mp3)
             .make_playable_async(get_codec_registry(), get_probe())
             .await
-            .expect("songbird parses the raw container");
+            .expect("songbird probes the MP3");
         let parsed = input.parsed_mut().expect("a playable input is parsed");
 
-        let mut decoded = 0;
+        let mut frames = 0;
+        let mut rate = 0;
         while let Ok(packet) = parsed.format.next_packet() {
-            let audio = parsed.decoder.decode(&packet).expect("pcm decodes");
-            assert_eq!(audio.spec().rate, 22_050);
+            let audio = parsed.decoder.decode(&packet).expect("mp3 decodes");
+            rate = audio.spec().rate;
             assert_eq!(audio.spec().channels.count(), 1);
-            decoded += audio.frames();
+            frames += audio.frames();
         }
-        assert_eq!(decoded, samples.len());
+        assert_eq!(rate, 24_000);
+        let seconds = f64::from(u32::try_from(frames).unwrap()) / f64::from(rate);
+        assert!((seconds - 1.968).abs() < 0.05, "decoded {seconds} s");
+        assert_eq!(mp3.len(), 15_744);
     }
 }

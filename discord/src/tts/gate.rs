@@ -107,13 +107,13 @@ impl<K: Eq + Hash + Copy> RateLimiter<K> {
 /// floods the chat is heard for their first few messages and then not at all until those are
 /// spoken. Keys are user ids.
 #[derive(Debug)]
-pub struct SpeechQueue {
+pub struct SpeechQueue<T> {
     cap: usize,
     per_user: usize,
-    items: VecDeque<(u64, String)>,
+    items: VecDeque<(u64, T)>,
 }
 
-impl SpeechQueue {
+impl<T> SpeechQueue<T> {
     #[must_use]
     pub const fn new(cap: usize, per_user: usize) -> Self {
         Self {
@@ -123,20 +123,20 @@ impl SpeechQueue {
         }
     }
 
-    /// Queue `text` from `user`. Returns `false`, keeping the queue as it was, when the guild's
+    /// Queue `item` from `user`. Returns `false`, keeping the queue as it was, when the guild's
     /// queue is full or `user` already has `per_user` messages waiting.
-    pub fn push(&mut self, user: u64, text: String) -> bool {
+    pub fn push(&mut self, user: u64, item: T) -> bool {
         if self.items.len() >= self.cap
             || self.items.iter().filter(|(u, _)| *u == user).count() >= self.per_user
         {
             return false;
         }
-        self.items.push_back((user, text));
+        self.items.push_back((user, item));
         true
     }
 
-    pub fn pop(&mut self) -> Option<String> {
-        self.items.pop_front().map(|(_, text)| text)
+    pub fn pop(&mut self) -> Option<T> {
+        self.items.pop_front().map(|(_, item)| item)
     }
 
     #[must_use]
@@ -256,7 +256,7 @@ mod tests {
 
     #[test]
     fn queue_caps_and_keeps_order() {
-        let mut q = SpeechQueue::new(10, 10);
+        let mut q = SpeechQueue::<String>::new(10, 10);
         for i in 0..10 {
             assert!(q.push(i, format!("m{i}")));
         }
@@ -272,7 +272,7 @@ mod tests {
 
     #[test]
     fn queue_caps_each_member_keeping_the_oldest() {
-        let mut q = SpeechQueue::new(10, 3);
+        let mut q = SpeechQueue::<String>::new(10, 3);
         assert!(q.push(1, "a1".into()));
         assert!(q.push(1, "a2".into()));
         assert!(q.push(2, "b1".into()));

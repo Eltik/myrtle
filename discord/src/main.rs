@@ -75,7 +75,11 @@ async fn main() {
 
     // One voice manager for the client, registered with serenity below and held by `Tts`.
     let songbird = songbird::Songbird::serenity();
-    let tts = Arc::new(Tts::new(config.tts.clone(), Arc::clone(&songbird)));
+    let tts = Arc::new(Tts::new(
+        config.tts.clone(),
+        Arc::clone(&songbird),
+        http_client.clone(),
+    ));
 
     let options = poise::FrameworkOptions {
         commands: cmds::all(),
@@ -134,6 +138,9 @@ async fn main() {
                 let tts_nicknames = db::list_tts_nicknames(&pool).await?;
                 tracing::info!("Hydrated {} TTS nickname(s)", tts_nicknames.len());
                 tts.hydrate_nicknames(tts_nicknames);
+                let tts_voices = db::list_tts_voices(&pool).await?;
+                tracing::info!("Hydrated {} TTS voice pick(s)", tts_voices.len());
+                tts.hydrate_voices(tts_voices);
 
                 let reconnect_secs = config.assets.reconnect_secs;
                 for (label, ws_url, rx) in assets_watchers {

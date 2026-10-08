@@ -12,6 +12,3 @@ config.json
 .env
 *.sqlite
 *.sqlite-*
-
-# The TTS voice (~80 MB) is downloaded on the host and mounted, never baked into the image
-tts/

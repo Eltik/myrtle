@@ -24,9 +24,9 @@ env:
   # All sqlx queries are runtime (sqlx::query(), no query!/query_as! macros),
   # so no database connection or .sqlx/ cache is needed at compile time.
   SQLX_OFFLINE: "true"
-  # Native code behind voice TTS needs nothing installed beyond the runner image: songbird's
-  # libopus is built from vendored source with CMake (preinstalled on ubuntu-latest), and the
-  # sherpa-onnx build script downloads its prebuilt static libraries from GitHub releases.
+  # Voice TTS needs nothing installed beyond the runner image: songbird's libopus is built from
+  # vendored source with CMake, which ubuntu-latest preinstalls. Speech comes from Google
+  # Translate at runtime, so no model or speech library is built or downloaded.
   # Opt into Node.js 24 for GitHub Actions (avoids Node.js 20 deprecation warnings)
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 

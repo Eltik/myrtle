@@ -354,7 +354,7 @@ const ABBREVIATIONS: &[&str] = &[
     "apr", "jun", "jul", "aug", "sep", "sept", "oct", "nov", "dec",
 ];
 
-/// Split cleaned text into sentences, so the first can be spoken while the rest synthesize.
+/// Split cleaned text into sentences, so the first can be spoken while the rest are fetched.
 ///
 /// A sentence ends at a run of `.`, `!`, `?` or `…` (with any closing quotes or brackets after
 /// it) followed by a space or the end, except after an abbreviation (`Dr.`), an initial
@@ -415,6 +415,78 @@ pub fn sentences(text: &str) -> Vec<String> {
         out.push(rest.trim().to_string());
     }
     out
+}
+
+/// Punctuation after which a run of unspaced text (Chinese, Japanese, Thai) may be split.
+const CJK_BREAKS: &[char] = &['。', '！', '？', '；', '，', '、', '：', '!', '?', ';', ','];
+
+/// Length in UTF-16 code units, the unit Google's limit counts.
+fn units(s: &str) -> usize {
+    s.encode_utf16().count()
+}
+
+/// Split cleaned text into request-sized chunks of at most `max` UTF-16 code units.
+///
+/// Sentences first ([`sentences`]), one chunk each, so the first can play while the next is
+/// fetched. A sentence over `max` is split at spaces, packing whole words. A word over `max`,
+/// which is how unspaced CJK or Thai text arrives, is split after its own punctuation
+/// ([`CJK_BREAKS`]) and only as a last resort at a character boundary.
+#[must_use]
+pub fn chunks(text: &str, max: usize) -> Vec<String> {
+    let mut out = Vec::new();
+    for sentence in sentences(text) {
+        if units(&sentence) <= max {
+            out.push(sentence);
+            continue;
+        }
+        let mut line = String::new();
+        for word in sentence.split_whitespace() {
+            for piece in split_long(word, max) {
+                if !line.is_empty() && units(&line) + 1 + units(&piece) > max {
+                    out.push(std::mem::take(&mut line));
+                }
+                if !line.is_empty() {
+                    line.push(' ');
+                }
+                line.push_str(&piece);
+            }
+        }
+        if !line.is_empty() {
+            out.push(line);
+        }
+    }
+    out
+}
+
+/// `word` in pieces of at most `max` units: after the last break punctuation that fits, else at
+/// the last character that fits.
+fn split_long(word: &str, max: usize) -> Vec<String> {
+    let mut pieces = Vec::new();
+    let mut rest = word;
+    while units(rest) > max {
+        let mut fit = 0;
+        let mut last_break = None;
+        let mut used = 0;
+        for (i, c) in rest.char_indices() {
+            if used + c.len_utf16() > max {
+                break;
+            }
+            used += c.len_utf16();
+            fit = i + c.len_utf8();
+            if CJK_BREAKS.contains(&c) {
+                last_break = Some(fit);
+            }
+        }
+        let cut = last_break
+            .unwrap_or(fit)
+            .max(rest.chars().next().map_or(1, char::len_utf8));
+        pieces.push(rest[..cut].to_string());
+        rest = &rest[cut..];
+    }
+    if !rest.is_empty() {
+        pieces.push(rest.to_string());
+    }
+    pieces
 }
 
 #[cfg(test)]
@@ -696,5 +768,56 @@ mod tests {
         assert!(validate_nickname("www.example.com").is_err());
         assert!(validate_nickname("!!!").is_err(), "nothing speakable");
         assert!(validate_nickname("😀").is_err());
+    }
+
+    #[test]
+    fn chunks_fit_the_limit_without_splitting_words() {
+        // Exactly 200 units is one chunk; 201 splits at a space.
+        let two_hundred = format!("{}abcd", "abcd ".repeat(39));
+        assert_eq!(two_hundred.len(), 199);
+        let at_limit = format!("{two_hundred}e");
+        assert_eq!(chunks(&at_limit, 200), vec![at_limit.clone()]);
+        let over = format!("{at_limit} f");
+        let split = chunks(&over, 200);
+        assert_eq!(split.len(), 2);
+        assert!(split.iter().all(|c| c.encode_utf16().count() <= 200));
+        assert_eq!(split.join(" "), over, "no word lost or cut");
+        // Sentences are chunks of their own.
+        assert_eq!(chunks("One. Two!", 200), vec!["One.", "Two!"]);
+    }
+
+    #[test]
+    fn chunks_split_an_overlong_word_at_characters() {
+        let word = "a".repeat(450);
+        let split = chunks(&format!("x {word} y"), 200);
+        assert!(split.iter().all(|c| c.encode_utf16().count() <= 200));
+        assert_eq!(split.concat().replace(' ', ""), format!("x{word}y"));
+    }
+
+    #[test]
+    fn chunks_split_cjk_after_its_punctuation() {
+        let sentence = "日本語の文章です、".repeat(30);
+        let split = chunks(&sentence, 200);
+        assert!(split.len() >= 2);
+        assert!(split.iter().all(|c| c.encode_utf16().count() <= 200));
+        assert!(
+            split[..split.len() - 1].iter().all(|c| c.ends_with('、')),
+            "cut after 、"
+        );
+        assert_eq!(split.concat(), sentence);
+        // No punctuation at all: cut at a character, never inside one.
+        let bare = "漢".repeat(250);
+        let split = chunks(&bare, 200);
+        assert_eq!(
+            split.iter().map(|c| c.chars().count()).collect::<Vec<_>>(),
+            [200, 50]
+        );
+        // Emoji count two units each, as Google counts them.
+        let emoji = "😀".repeat(101);
+        let split = chunks(&emoji, 200);
+        assert_eq!(
+            split.iter().map(|c| c.chars().count()).collect::<Vec<_>>(),
+            [100, 1]
+        );
     }
 }
