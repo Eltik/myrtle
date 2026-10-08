@@ -1,17 +1,32 @@
 import type { ReactNode } from "react";
 import { DragControllerProvider, EditTierRow } from "frontend";
 
-const op = (id: string, name: string, rarity: number, profession: string, sub: string, position: string, nationId: string | null) => ({
+/**
+ * An operator placement as the API maps it (`toTierEntity`): a resolved
+ * `operator` entity keyed `operator:<id>`, icon an API path. Every id verified
+ * against https://api.myrtle.moe/api/operators/index.
+ */
+const PROFESSION_NAME: Record<string, string> = { PIONEER: "Vanguard", WARRIOR: "Guard", TANK: "Defender", SNIPER: "Sniper", CASTER: "Caster", MEDIC: "Medic", SUPPORT: "Supporter", SPECIAL: "Specialist" };
+const op = (id: string, name: string, rarity: number, profession: string, subProfessionId: string, position: string, nationId: string | null, description: string | null = null) => ({
+    key: `operator:${id}`,
+    kind: "operator" as const,
     id,
     name,
+    icon: `/avatar/${id}`,
+    href: `/operators/${id}`,
+    facets: {},
+    resolved: true as const,
     appellation: null,
-    rarity,
-    profession,
-    subProfessionId: sub,
-    position,
-    nationId,
+    rarity: rarity as 1 | 2 | 3 | 4 | 5 | 6,
+    profession: profession as never,
+    subProfessionId,
+    professionName: PROFESSION_NAME[profession] ?? null,
+    subProfessionName: null,
+    position: position as never,
+    nationId: nationId || null,
+    nationName: null,
     subOrder: 0,
-    description: null,
+    description,
     updatedAt: "2024-05-12T14:05:00.000Z",
 });
 
@@ -26,7 +41,7 @@ const S_PLUS = [
 const BUDGET = [op("char_102_texas", "Texas", 5, "PIONEER", "pioneer", "MELEE", "lungmen"), op("char_128_plosis", "Ptilopsis", 5, "MEDIC", "ringhealer", "RANGED", "columbia"), op("char_151_myrtle", "Myrtle", 4, "PIONEER", "bearer", "MELEE", "rhodes"), op("char_124_kroos", "Kroos", 3, "SNIPER", "fastshot", "RANGED", "rhodes")];
 
 const ALL = [...S_PLUS, ...BUDGET];
-const operatorById = Object.fromEntries(ALL.map((o) => [o.id, o]));
+const entityByKey = Object.fromEntries(ALL.map((o) => [o.key, o]));
 
 // The editor board owns the sizing custom properties every row reads.
 const BOARD_VARS = {
@@ -43,7 +58,7 @@ const BOARD_VARS = {
 const noop = () => {};
 
 const Board = ({ children }: { children: ReactNode }) => (
-    <DragControllerProvider operatorById={operatorById} onPlace={noop} onUnplace={noop}>
+    <DragControllerProvider entityByKey={entityByKey} onPlace={noop} onUnplace={noop}>
         <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs" style={BOARD_VARS}>
             {children}
         </div>
@@ -56,30 +71,30 @@ const rowProps = {
     onOpenSettings: noop,
     onPlace: noop,
     onUnplace: noop,
-    onActivateOperator: noop,
+    onActivateEntity: noop,
 };
 
-const sPlusTier = { id: "tier-s-plus", name: "S+", color: "#dc4d56", description: "Solves a risk category alone.", operatorIds: S_PLUS.map((o) => o.id) };
-const budgetTier = { id: "tier-b", name: "Budget", color: "#5dbf86", description: "", operatorIds: BUDGET.map((o) => o.id) };
-const emptyTier = { id: "tier-c", name: "Situational", color: "#52b9b3", description: "", operatorIds: [] };
+const sPlusTier = { id: "tier-s-plus", name: "S+", color: "#dc4d56", description: "Solves a risk category alone.", entityKeys: S_PLUS.map((o) => o.key) };
+const budgetTier = { id: "tier-b", name: "Budget", color: "#5dbf86", description: "", entityKeys: BUDGET.map((o) => o.key) };
+const emptyTier = { id: "tier-c", name: "Situational", color: "#52b9b3", description: "", entityKeys: [] };
 
-const noted = new Set(["char_1035_wisdel", "char_1028_texas2"]);
+const noted = new Set(["operator:char_1035_wisdel", "operator:char_1028_texas2"]);
 
 export const TopRow = () => (
     <Board>
-        <EditTierRow tier={sPlusTier} operators={S_PLUS} notedOperatorIds={noted} canMoveUp={false} canMoveDown {...rowProps} />
+        <EditTierRow tier={sPlusTier} entities={S_PLUS} notedKeys={noted} canMoveUp={false} canMoveDown {...rowProps} />
     </Board>
 );
 
 export const StackedRows = () => (
     <Board>
-        <EditTierRow tier={sPlusTier} operators={S_PLUS} notedOperatorIds={noted} canMoveUp={false} canMoveDown {...rowProps} />
-        <EditTierRow tier={budgetTier} operators={BUDGET} notedOperatorIds={new Set()} canMoveUp canMoveDown {...rowProps} />
+        <EditTierRow tier={sPlusTier} entities={S_PLUS} notedKeys={noted} canMoveUp={false} canMoveDown {...rowProps} />
+        <EditTierRow tier={budgetTier} entities={BUDGET} notedKeys={new Set()} canMoveUp canMoveDown {...rowProps} />
     </Board>
 );
 
 export const EmptyDropArea = () => (
     <Board>
-        <EditTierRow tier={emptyTier} operators={[]} notedOperatorIds={new Set()} canMoveUp canMoveDown={false} {...rowProps} />
+        <EditTierRow tier={emptyTier} entities={[]} notedKeys={new Set()} canMoveUp canMoveDown={false} {...rowProps} />
     </Board>
 );

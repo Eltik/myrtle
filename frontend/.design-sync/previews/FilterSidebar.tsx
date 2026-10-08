@@ -5,6 +5,18 @@ import { FilterSidebar } from "frontend";
 // unlayered CSS rule (Tailwind utilities live in @layer utilities, so it wins)
 // that pins the rail to its >=1024px appearance - the only state it ever has.
 const DesktopRail = () => <style>{".rail-stage aside{display:flex}"}</style>;
+/** Class code -> the server's own class name, as the page reads it from the operator index. */
+const CLASS_NAMES: ReadonlyMap<string, string> = new Map([
+    ["PIONEER", "Vanguard"],
+    ["WARRIOR", "Guard"],
+    ["TANK", "Defender"],
+    ["SNIPER", "Sniper"],
+    ["CASTER", "Caster"],
+    ["MEDIC", "Medic"],
+    ["SUPPORT", "Supporter"],
+    ["SPECIAL", "Specialist"],
+]);
+
 const NATIONS: [string, string][] = [
     ["columbia", "Columbia"],
     ["higashi", "Higashi"],
@@ -32,20 +44,20 @@ const noop = () => {};
 export const AllOperators = () => (
     <div className="rail-stage w-80">
         <DesktopRail />
-        <FilterSidebar filters={filters("", [], [], [])} onChange={noop} nations={NATIONS} matched={382} total={382} onReset={noop} />
+        <FilterSidebar filters={filters("", [], [], [])} onChange={noop} nations={NATIONS} classNames={CLASS_NAMES} matched={382} total={382} onReset={noop} />
     </div>
 );
 
 export const FiltersApplied = () => (
     <div className="rail-stage w-80">
         <DesktopRail />
-        <FilterSidebar filters={filters("", [6, 5], ["MEDIC", "SUPPORT"], ["columbia"])} onChange={noop} nations={NATIONS} matched={14} total={382} onReset={noop} />
+        <FilterSidebar filters={filters("", [6, 5], ["MEDIC", "SUPPORT"], ["columbia"])} onChange={noop} nations={NATIONS} classNames={CLASS_NAMES} matched={14} total={382} onReset={noop} />
     </div>
 );
 
 export const NoMatches = () => (
     <div className="rail-stage w-80">
         <DesktopRail />
-        <FilterSidebar filters={filters("mlynar", [3], [], [])} onChange={noop} nations={NATIONS} matched={0} total={382} onReset={noop} />
+        <FilterSidebar filters={filters("mlynar", [3], [], [])} onChange={noop} nations={NATIONS} classNames={CLASS_NAMES} matched={0} total={382} onReset={noop} />
     </div>
 );

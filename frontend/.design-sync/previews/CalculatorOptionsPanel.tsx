@@ -1,34 +1,46 @@
 import { CalculatorOptionsPanel } from "frontend";
 
-// The "Options" card of the recruitment calculator: three inclusion switches and
-// the operator sort order. The Select trigger is `w-fit`, so it hugs the label.
+// The "Options" card of the recruitment calculator: three inclusion switches,
+// the operator sort order, the result layout, and the two roster overlays
+// (potentials, next upgrade). Signed out, the roster rows render disabled with a
+// sign-in hint and the roster-backed "potential" sort is not offered.
 
 const noop = () => {};
 
-const options = (over: Record<string, unknown> = {}) => ({
+const settings = (over: Record<string, unknown> = {}) => ({
     includeRobots: true,
     includeTwoStars: true,
     includeThreeStars: true,
-    operatorSortMode: "rarity-desc",
+    operatorSortMode: "rarity-desc" as const,
     ...over,
 });
 
+const handlers = { onChangeSettings: noop, onChangeRosterView: noop, onChangeLayout: noop };
+
+/** Signed out, defaults: roster overlays disabled with the hint. */
 export const Defaults = () => (
     <div className="max-w-sm">
-        <CalculatorOptionsPanel onChangeIncludeRobots={noop} onChangeIncludeThreeStars={noop} onChangeIncludeTwoStars={noop} onChangeSortMode={noop} options={options()} />
+        <CalculatorOptionsPanel settings={settings()} rosterView={{ showPotentials: false, showNextUpgrade: false }} rosterAvailable={false} layout="compact" {...handlers} />
     </div>
 );
 
 // Chasing 4★+ only: the low-rarity fillers are switched off.
 export const HighRarityOnly = () => (
     <div className="max-w-sm">
-        <CalculatorOptionsPanel onChangeIncludeRobots={noop} onChangeIncludeThreeStars={noop} onChangeIncludeTwoStars={noop} onChangeSortMode={noop} options={options({ includeRobots: false, includeTwoStars: false, includeThreeStars: false })} />
+        <CalculatorOptionsPanel settings={settings({ includeRobots: false, includeTwoStars: false, includeThreeStars: false })} rosterView={{ showPotentials: false, showNextUpgrade: false }} rosterAvailable={false} layout="compact" {...handlers} />
     </div>
 );
 
 // Robot-hunting: 2★/3★ stay in, and results lead with the most common pulls.
 export const CommonFirst = () => (
     <div className="max-w-sm">
-        <CalculatorOptionsPanel onChangeIncludeRobots={noop} onChangeIncludeThreeStars={noop} onChangeIncludeTwoStars={noop} onChangeSortMode={noop} options={options({ operatorSortMode: "common-first" })} />
+        <CalculatorOptionsPanel settings={settings({ operatorSortMode: "common-first" })} rosterView={{ showPotentials: false, showNextUpgrade: false }} rosterAvailable={false} layout="detailed" {...handlers} />
+    </div>
+);
+
+/** Signed in: the overlays live, sorted by lowest potential first, detailed cards. */
+export const SignedInRoster = () => (
+    <div className="max-w-sm">
+        <CalculatorOptionsPanel settings={settings({ operatorSortMode: "potential-asc" })} rosterView={{ showPotentials: true, showNextUpgrade: true }} rosterAvailable layout="detailed" {...handlers} />
     </div>
 );

@@ -507,3 +507,138 @@ re-sync and add each new one to `tsconfig.ds.json` above the `#/*` wildcard.
   `build-css.mjs` first or the build ships no CSS.
 - The Tailwind CLI version in `build-css.mjs` is pinned (`4.2.2`) and fetched via
   `bunx`; it should track the repo's `tailwindcss` dependency.
+
+## 2026-10-08 re-sync: what it cost and why
+
+Scope: 111 commits since the 2026-09-13 sync (story reader + library, grids, release/pull
+planner, i18n, profile customization, polymorphic tier lists). 925 cards (713 before):
+211 added, 6 removed, 707 verified-by-upload. One wave of seven Opus agents (~25 min wall
+each) authored 207 previews and repaired 24; 7 new components are floor cards (below).
+
+### Build blockers this time (all in `tsconfig.ds.json` / `stubs/`)
+
+- `#/lib/i18n` is a directory import: exact entry above the wildcard (the existing
+  `#/lib/<dir>` rule). Grep `from "#/lib/` for new dirs on every re-sync, not only `#/routes/`.
+- Root-relative `url()`s in component CSS (`story/reader/reader.css`,
+  `story/library/impl/GroupCard.module.css` -> `/terra-fonts/*`, `/opendyslexic/*`,
+  `/story/*.svg`) fail the esbuild pass. Mapped to `./public/*` in the paths file so they
+  inline as data URLs; esbuild has no `.ttf` loader, so each `.ttf` fallback is an exact
+  entry pointing at its woff2 sibling. A new `public/` asset referenced from CSS needs a row.
+- 🚨 **A raw non-ASCII regex range in the bundle kills EVERY export on a page that is not
+  decoded as UTF-8.** `@react-pdf/hyphenate` (story PDF export) ships `/[...–-‼]/`; read as
+  Latin-1 it is "Range out of order" and `window.MyrtleUI` never forms. Validate's
+  `[BUNDLE_EXPORT]` smoke page has no `<meta charset>`, so it reported 918/918 missing while
+  every card (which has the meta) rendered fine. Fix: `stubs/react-pdf-hyphenate.js`, a copy
+  with the two literals `\u`-escaped. Check for this class with a no-charset page that loads
+  only `_vendor/react*.js` + `_ds_bundle.js` and logs `pageerror`.
+- Playwright's chromium had been evicted from the cache: `cd .ds-sync && npx playwright
+  install chromium` (validate dies at the render check otherwise).
+
+### 🚨 verified-by-upload does NOT mean the card still renders
+
+The anchor keys grades on preview + config sources, not on the component source. 24
+previews graded good in September rendered `root empty` this time because the COMPONENTS
+changed shape underneath them (i18n keys replacing literal strings, polymorphic tier
+entities, `operatorsStatic` -> `operatorsIndex`, new required props). Only the full render
+check (`package-validate.mjs`, ~10 min) caught them; the driver scopes that check, so on a
+re-sync with heavy `src/components` churn run validate unscoped and treat every `bad` on an
+anchored component as a repair item. Shapes the repair used:
+- Data rows carry message KEYS (`textKey`, `labelKey`/`blurbKey`, `titleKey`/`descKey`); a
+  literal where a key is expected throws `reading 'startsWith'` or renders the dotted key.
+  Use real keys from `src/lib/i18n/source-catalog.json`; invented entries cannot resolve.
+- A `t` passed through a context object (`MapTile` `ctx.t`): `useT` is not importable from
+  "frontend"; pass a lookup over the messages file's English strings.
+- Tier entities: `key: "operator:<id>"`, `kind`, `icon`, `href`, `facets`, `resolved: true`
+  (the `toTierEntity` shape); editor tiers hold `entityKeys`; pools need
+  `<DragControllerProvider entityByKey onPlace onUnplace>` or they blank with zero errors.
+- Profile cards take real `/api/operators/index` entries; partial rows throw `not iterable`.
+
+### Floor cards by construction (added to the seven above)
+
+`StoryLibrary`, `CharactersTab` (`useSearch/useNavigate({from:"/stories"})`), `GridView`,
+`GridEditor` (`useSuspenseQuery`), and `LocaleSwitcher`, `LanguageToggle`,
+`GamedataServerSelect`: these three render null because `I18nProvider`
+(`src/lib/i18n/context.tsx`) is not on the bundle, so `useI18n()` has no locales or servers.
+Fix = add that file to `cfg.extraEntries` and wrap their previews in `<I18nProvider>`; it is
+in the global key slice (re-keys every component), so it was deferred.
+
+### The bundle is signed out
+
+`authStore` user is null: signed-in branches (NewGridButton's create dialog, MyGrids list,
+BulkPlanDialog picks, PresetRow presets, ProgressTab overrides, Translations, ShowcaseEditor
+titles) render their signed-out state and were graded on that. A signed-in stub user would
+unlock them but silently restyle already-graded cards (header, profile); a user decision.
+
+### Authoring traps from this wave
+
+- Arbitrary Tailwind values new to a preview (`h-[560px]`, `w-[520px]`, `min-h-[620px]`,
+  `min-h-64`, `size-96`) are NOT compiled: `preview-rebuild` never regenerates
+  `tailwind.css`. `grep -F 'h-\[560px\]'` false-positives on `max-h-[560px]`. Use `style`.
+- Module CSS keyed on `:global(.light)` renders its dark variant (the harness sets neither
+  `.light` nor `.dark`) while `.icon-theme-aware` inverts for light: put `className="light"`
+  on the stage. CSS-module `styles` props can be passed the shipped prefixed names
+  (`BrowseCard_tierRow`).
+- Base UI Combobox ignores `input.click()`: dispatch pointerdown/mousedown/pointerup/
+  mouseup/click on `[data-slot="combobox-trigger"]` after two rAFs. An open list of
+  `OperatorAvatar`s that scrolls hangs capture: cap it to ~5 rows, one overlay per capture.
+- A real streaming `<video>` (Vidstack) makes capture's `page.goto` time out: cutscene
+  previews pass no source. Typewriter text is mid-line at capture: click the stage ~300 ms in.
+- Story stage layers need Stage's box (`[container-type:size]` + `--story-cpx`); TextBox
+  needs a `[data-story-reader]` ancestor. `src/lib/story/__fixtures__/*.json` is a whole
+  script the real engine runs.
+- JumpBar lights its chip from a scroll spy, NowPlayingBar from the player store (click a
+  GroupRow's `button[data-sounding]`), Select popups need ~96 px top padding when open.
+- Pull-planner fixtures are COMPUTED: run `projectIncome()`/`buildPlan()` from
+  `tools/release/impl/pulls/*.ts` under bun and paste the JSON (Float64Array via
+  `Array.from`), so every figure is the product's own arithmetic. Release payloads are dated
+  2025-27: components taking `today` get 2026-09-01, not the frozen clock.
+- `/api/operators/{id}` is PascalCase; fixtures must be the `deepCamelize`d shape.
+- `prop={undefined}` falls back to a destructuring default: use an explicit loading flag.
+- `package-capture` deletes a changed preview's grade; rewrite after every recapture.
+- Agents share the session scratchpad: name helper files per batch.
+- Live fixture endpoints worth reusing: `/api/story/index`, `/api/story/group/{id}/archive`,
+  `/api/story/sprites[/<base>]`, `/api/story/art-gallery/{cg,scene}`, `/api/grids[/<slug>]`,
+  `/api/tier-lists/<slug>`, `/api/tier-lists/catalogue/<kind>`, `/api/skins/index`,
+  `/api/release/*`.
+
+### Source observations from this wave (not sync issues)
+
+11. `CurtainFill` `grad: true` renders solid black (gradient over `bg-black`).
+12. `BacklogDialog` colours speakers with dark-surface hues on a light surface;
+    `speakerColor(name, true)` exists.
+13. Archive news cards print "BY BY ..." (author field already starts with "BY").
+14. `ScheduleDetail` close button overlaps the badge's relative-days text at sm+.
+15. `TYPE_MAINSS` has no tag rule -> raw "MAINSS" chip.
+16. `PullsOdds`/`PullsSimulator` Y-axis labels clipped at the left edge.
+17. `Calcs` with no total renders "-0".
+18. `SkinPopup` cannot tell a failed index load from a missing skin.
+19. `LocalesSection` has no error branch: a failed load reads "No locales configured yet."
+20. `TileGrid` caption `line-clamp-1` + `py-1.5 leading-tight` shows a sliver of line two.
+
+### 🚨 `_ds_bundle.js` is at the 12 MiB upload cap (2026-10-08)
+
+The new code took the unminified bundle from 9.9 MB to 17.0 MB, and `write_files` rejects
+any file over 12 MiB (12,582,912 bytes; `package-build.mjs` prints `[FILE_TOO_LARGE]`).
+`minify: false` is hard-coded in `lib/bundle.mjs`, which must not be forked. Click-only
+code was stubbed through `tsconfig.ds.json`, each stub saying why in its header:
+
+| Stub | Cut | Reached only by |
+|---|---|---|
+| `story-book-pdf.ts` (`#/lib/story/book/pdf`) | ~4 MB: @react-pdf, pdf-lib, fontkit, pdfkit, yoga, brotli, pako | export sheet's PDF click (lazy import in `story/export/run.ts`) |
+| `story-book-epub.ts` (`#/lib/story/book/epub`) | fflate + the EPUB writer | export sheet's EPUB click |
+| `zod.ts` | 582 KB | module-load schema builders + the dev-only `checkSample`; real input schemas run server-side |
+| `mp4-muxer.ts`, `gif.ts` | ~100 KB | chibi recorder's record click |
+| `media-captions.ts` | 62 KB | Vidstack captions; cutscenes load no text tracks |
+| `url.ts` | ~110 KB (qs, object-inspect, get-intrinsic chain) | `@pixi/utils`' deprecated `utils.url` getters |
+| `vidstack-react.tsx`, `vidstack-default-layout.ts` | 826 KB | CutscenePlayer only: a native `<video>` with the same sources and native controls replaces Vidstack's player and skin (VISIBLE: the two cutscene cards lose the Vidstack control bar) |
+| `react-pdf-hyphenate*.js` | n/a | the non-ASCII regex fix above (moot while the PDF stub holds; kept so un-stubbing PDF stays safe) |
+
+The `@ds-bundle` header (component index + source hashes, ~280 KB at 918 components) is
+added AFTER esbuild and counts toward the cap: a probe must add it. Without Vidstack the
+bundle was still 200 KB over once the header landed. Result: ~11.96 MB, **~620 KB of
+headroom**. Measure before a 77-min build: call
+`bundleToIife()` from `.ds-sync/lib/bundle.mjs` on `ds-bundle/.bundle-entry.mjs` into a
+scratch dir (~1 s), and size packages by the `// node_modules/<pkg>` markers in the output.
+Next lever: the pixi.js meta-import (`@pixi/text-html`,
+`@pixi/compressed-textures`, filters). A stub must keep every export its importers name.
+- An inline `zoom` on a preview wrapper does NOT shrink a self-measuring board (GridBoard) in the raw capture; constrain its width (`maxWidth` + `marginInline: auto`) instead. Capture clamps any viewport to 2000x2000: a card taller than that must trim content.

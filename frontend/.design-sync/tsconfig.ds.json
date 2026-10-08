@@ -22,6 +22,15 @@
             "node:crypto": [".design-sync/stubs/node-crypto.ts"],
             "#/env": [".design-sync/stubs/env.ts"],
             "#/hooks/use-auth": [".design-sync/stubs/use-auth.ts"],
+            "mp4-muxer": [".design-sync/stubs/mp4-muxer.ts"],
+            "gif.js": [".design-sync/stubs/gif.ts"],
+            "media-captions": [".design-sync/stubs/media-captions.ts"],
+            "url": [".design-sync/stubs/url.ts"],
+            "@vidstack/react": [".design-sync/stubs/vidstack-react.tsx"],
+            "@vidstack/react/player/layouts/default": [".design-sync/stubs/vidstack-default-layout.ts"],
+            "zod": [".design-sync/stubs/zod.ts"],
+            "@react-pdf/hyphenate/en-us": [".design-sync/stubs/react-pdf-hyphenate-en-us.js"],
+            "@react-pdf/hyphenate": [".design-sync/stubs/react-pdf-hyphenate.js"],
 
             "#/routes/enemies": [".design-sync/stubs/route.ts"],
             "#/routes/operators": [".design-sync/stubs/route.ts"],
@@ -35,6 +44,20 @@
             "#/lib/markdown": ["./src/lib/markdown/index.ts"],
             "#/lib/og": ["./src/lib/og/index.ts"],
             "#/lib/api/admin": ["./src/lib/api/admin/index.ts"],
+            "#/lib/i18n": ["./src/lib/i18n/index.ts"],
+            "#/lib/story/book/epub": [".design-sync/stubs/story-book-epub.ts"],
+            "#/lib/story/book/pdf": [".design-sync/stubs/story-book-pdf.ts"],
+
+            // Root-relative `url()`s in the story reader/library CSS point at
+            // `public/`; resolve them so esbuild inlines them as data URLs.
+            // esbuild has no `.ttf` loader, so each truetype fallback maps to
+            // its woff2 sibling (exact entries above the wildcard).
+            "/terra-fonts/TerraAegir-Regular.ttf": ["./public/terra-fonts/TerraAegir-Regular.woff2"],
+            "/terra-fonts/Sarkaz-EndfieldByButan.ttf": ["./public/terra-fonts/Sarkaz-EndfieldByButan.woff2"],
+            "/terra-fonts/TerraSami-Regular.ttf": ["./public/terra-fonts/TerraSami-Regular.woff2"],
+            "/terra-fonts/*": ["./public/terra-fonts/*"],
+            "/opendyslexic/*": ["./public/opendyslexic/*"],
+            "/story/*": ["./public/story/*"],
 
             "#/*": ["./src/*"],
             "@/*": ["./src/*"]

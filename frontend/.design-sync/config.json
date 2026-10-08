@@ -223,10 +223,6 @@
       "cardMode": "single",
       "primaryStory": "TopTier"
     },
-    "OperatorPool": {
-      "cardMode": "single",
-      "primaryStory": "Default"
-    },
     "TierSettingsDialog": {
       "cardMode": "single",
       "viewport": "900x820"
@@ -1009,9 +1005,6 @@
       "cardMode": "single",
       "primaryStory": "StatsUnavailable"
     },
-    "Browse": {
-      "cardMode": "column"
-    },
     "CreateListDialog": {
       "cardMode": "single",
       "primaryStory": "Default"
@@ -1096,10 +1089,6 @@
       "cardMode": "single",
       "primaryStory": "MaterialDetails"
     },
-    "OperatorDialog": {
-      "cardMode": "single",
-      "primaryStory": "FullyBuilt"
-    },
     "RosterDetailedCard": {
       "cardMode": "single",
       "primaryStory": "CatalogPending"
@@ -1158,6 +1147,377 @@
     "TileTooltip": {
       "cardMode": "single",
       "primaryStory": "OverTile"
+    },
+    "TierListsBrowse": {
+      "cardMode": "column"
+    },
+    "RosterOperatorDialog": {
+      "cardMode": "single",
+      "primaryStory": "FullyBuilt"
+    },
+    "ReaderToolbar": {
+      "viewport": "1200x700"
+    },
+    "PillButton": {
+      "viewport": "1200x700"
+    },
+    "StoryReader": {
+      "cardMode": "single",
+      "primaryStory": "TitleCard"
+    },
+    "ReadingStats": {
+      "viewport": "900x1500",
+      "cardMode": "column"
+    },
+    "ProgressTab": {
+      "viewport": "900x2300",
+      "cardMode": "column"
+    },
+    "ArchivePanel": {
+      "viewport": "900x1400",
+      "cardMode": "column"
+    },
+    "ReadingOrderTab": {
+      "viewport": "900x1800",
+      "cardMode": "column"
+    },
+    "LibraryBrowse": {
+      "viewport": "900x1800",
+      "cardMode": "column"
+    },
+    "ChapterModal": {
+      "viewport": "900x1100",
+      "cardMode": "single",
+      "primaryStory": "Shatterpoint"
+    },
+    "IllustrationsTab": {
+      "viewport": "900x1000",
+      "cardMode": "column"
+    },
+    "GridBoard": {
+      "viewport": "900x1000"
+    },
+    "ExportSheet": {
+      "viewport": "900x900",
+      "cardMode": "single",
+      "primaryStory": "FromAStory"
+    },
+    "GridCellSheet": {
+      "viewport": "430x860",
+      "cardMode": "single",
+      "primaryStory": "FilledCell"
+    },
+    "PullsOdds": {
+      "viewport": "900x1100",
+      "cardMode": "column"
+    },
+    "PullsSimulator": {
+      "viewport": "900x1100",
+      "cardMode": "column"
+    },
+    "PullsBudget": {
+      "viewport": "900x1700",
+      "cardMode": "column"
+    },
+    "PullsBanners": {
+      "viewport": "1000x2400"
+    },
+    "EventShop": {
+      "viewport": "900x1400"
+    },
+    "PlanList": {
+      "viewport": "900x1100"
+    },
+    "BulkPlanDialog": {
+      "viewport": "900x1300",
+      "cardMode": "single",
+      "primaryStory": "Opened"
+    },
+    "OperatorSelector": {
+      "cardMode": "single",
+      "primaryStory": "OpenList"
+    },
+    "OperatorMultiSelector": {
+      "cardMode": "single",
+      "primaryStory": "OpenWithPicks"
+    },
+    "PlanGroupsField": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "RankByPicker": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "StoryPicker": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "OperatorSingleCombobox": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "OperatorMultiCombobox": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "BackgroundEditor": {
+      "cardMode": "single",
+      "viewport": "1000x1100",
+      "primaryStory": "OperatorSaved"
+    },
+    "PreviewStage": {
+      "cardMode": "column"
+    },
+    "ShowcaseEditor": {
+      "cardMode": "column",
+      "viewport": "900x1000"
+    },
+    "AccountPanel": {
+      "viewport": "900x1300"
+    },
+    "PoolKindsDialog": {
+      "viewport": "900x1100",
+      "cardMode": "single",
+      "primaryStory": "MixedList"
+    },
+    "BrowseToolbar": {
+      "cardMode": "column"
+    },
+    "FlatHead": {
+      "cardMode": "column"
+    },
+    "GroupCard": {
+      "cardMode": "column"
+    },
+    "GroupGrid": {
+      "cardMode": "column"
+    },
+    "GroupRow": {
+      "cardMode": "column"
+    },
+    "GroupRowList": {
+      "cardMode": "column"
+    },
+    "JumpBar": {
+      "cardMode": "column"
+    },
+    "KindBadge": {
+      "cardMode": "column"
+    },
+    "LibrarySectionHead": {
+      "cardMode": "column"
+    },
+    "LibraryToolbarButton": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "ResetProgressDialog": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "Row": {
+      "cardMode": "column"
+    },
+    "SettingsFont": {
+      "cardMode": "column"
+    },
+    "SkipDialog": {
+      "cardMode": "single",
+      "primaryStory": "WithSynopsis"
+    },
+    "ToolbarPanel": {
+      "cardMode": "column"
+    },
+    "CompletedPlansDialog": {
+      "cardMode": "single",
+      "primaryStory": "ThreeCompleted"
+    },
+    "CurrencyIcon": {
+      "cardMode": "column"
+    },
+    "GuaranteedBadge": {
+      "cardMode": "column"
+    },
+    "ListRow": {
+      "cardMode": "column"
+    },
+    "PromotionLevelPanel": {
+      "cardMode": "column"
+    },
+    "ReleaseInfoHint": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "ResultCardDetailed": {
+      "cardMode": "column"
+    },
+    "ActiveFilters": {
+      "cardMode": "column"
+    },
+    "CategoryChips": {
+      "cardMode": "column"
+    },
+    "FavouriteTiles": {
+      "cardMode": "column"
+    },
+    "GalleryBar": {
+      "cardMode": "column"
+    },
+    "GalleryResultsHeader": {
+      "cardMode": "column"
+    },
+    "GalleryTiles": {
+      "cardMode": "column"
+    },
+    "RemovedBadge": {
+      "cardMode": "column"
+    },
+    "SearchField": {
+      "cardMode": "column"
+    },
+    "TileGrid": {
+      "cardMode": "column"
+    },
+    "DynamicExportDialog": {
+      "cardMode": "single",
+      "primaryStory": "ExportEnemies"
+    },
+    "AllowedKindsDialog": {
+      "cardMode": "single",
+      "primaryStory": "WithPlacedPicks"
+    },
+    "ConfirmDialog": {
+      "cardMode": "single",
+      "primaryStory": "DeleteGrid"
+    },
+    "DeleteGridButton": {
+      "cardMode": "single",
+      "primaryStory": "Icon"
+    },
+    "EntityPickerDialog": {
+      "cardMode": "single",
+      "primaryStory": "ChangingAPick"
+    },
+    "GridCellViewer": {
+      "cardMode": "single",
+      "primaryStory": "Operator"
+    },
+    "SkinDetailContent": {
+      "cardMode": "single",
+      "primaryStory": "StoreOutfit"
+    },
+    "ArtLightbox": {
+      "cardMode": "single",
+      "primaryStory": "CG"
+    },
+    "BacklogDialog": {
+      "cardMode": "single",
+      "primaryStory": "AtLatest"
+    },
+    "ChapterViewSwitch": {
+      "cardMode": "column"
+    },
+    "CommunityTab": {
+      "cardMode": "column"
+    },
+    "ContinueCard": {
+      "cardMode": "column"
+    },
+    "Entries": {
+      "cardMode": "column"
+    },
+    "IllustrationPanel": {
+      "cardMode": "single",
+      "primaryStory": "Illustrations"
+    },
+    "LibraryHero": {
+      "cardMode": "column"
+    },
+    "LibraryOperatorDialog": {
+      "cardMode": "single",
+      "primaryStory": "ExusiaiRecords"
+    },
+    "MetaRow": {
+      "cardMode": "column"
+    },
+    "NameChip": {
+      "cardMode": "single",
+      "primaryStory": "DetailOpen"
+    },
+    "NowPlayingBar": {
+      "cardMode": "single",
+      "primaryStory": "Playing"
+    },
+    "OperatorsTab": {
+      "cardMode": "column"
+    },
+    "SettingsDialog": {
+      "cardMode": "single",
+      "primaryStory": "Default"
+    },
+    "SpriteSheetDialog": {
+      "cardMode": "single",
+      "primaryStory": "Operator"
+    },
+    "StoryHero": {
+      "cardMode": "column"
+    },
+    "StoryRow": {
+      "cardMode": "column"
+    },
+    "SyncConflict": {
+      "cardMode": "column"
+    },
+    "SyncPolicySelect": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "EntityPool": {
+      "cardMode": "column"
+    },
+    "EntityPreview": {
+      "cardMode": "column"
+    },
+    "KindPool": {
+      "cardMode": "column"
+    },
+    "ThumbTierRow": {
+      "cardMode": "column"
+    },
+    "SkinPopupProvider": {
+      "cardMode": "single",
+      "primaryStory": "Opened"
+    },
+    "SkinTileView": {
+      "cardMode": "column"
+    },
+    "AccountOptimizer": {
+      "cardMode": "column"
+    },
+    "AdjustBar": {
+      "cardMode": "column"
+    },
+    "ArtBrowser": {
+      "cardMode": "column"
+    },
+    "CharacterArt": {
+      "cardMode": "column"
+    },
+    "PlanCard": {
+      "cardMode": "column"
+    },
+    "PreviewFrame": {
+      "cardMode": "column"
+    },
+    "ScopePicker": {
+      "cardMode": "column"
+    },
+    "SearchToolbar": {
+      "cardMode": "column"
+    },
+    "ShowcaseTab": {
+      "cardMode": "column"
     }
   }
 }

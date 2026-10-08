@@ -2,6 +2,18 @@ import { FilterControls } from "frontend";
 
 // The filter form as it sits in the birthday sidebar (a ~300px rail).
 // `filters` is a controlled value object; rarities/professions/nations are Sets.
+/** Class code -> the server's own class name, as the page reads it from the operator index. */
+const CLASS_NAMES: ReadonlyMap<string, string> = new Map([
+    ["PIONEER", "Vanguard"],
+    ["WARRIOR", "Guard"],
+    ["TANK", "Defender"],
+    ["SNIPER", "Sniper"],
+    ["CASTER", "Caster"],
+    ["MEDIC", "Medic"],
+    ["SUPPORT", "Supporter"],
+    ["SPECIAL", "Specialist"],
+]);
+
 const NATIONS: [string, string][] = [
     ["columbia", "Columbia"],
     ["higashi", "Higashi"],
@@ -28,18 +40,18 @@ const noop = () => {};
 
 export const NoFiltersApplied = () => (
     <div className="w-80">
-        <FilterControls filters={filters("", [], [], [])} onChange={noop} nations={NATIONS} />
+        <FilterControls filters={filters("", [], [], [])} onChange={noop} nations={NATIONS} classNames={CLASS_NAMES} />
     </div>
 );
 
 export const RarityAndClassSelected = () => (
     <div className="w-80">
-        <FilterControls filters={filters("", [6, 5], ["MEDIC", "SUPPORT"], [])} onChange={noop} nations={NATIONS} />
+        <FilterControls filters={filters("", [6, 5], ["MEDIC", "SUPPORT"], [])} onChange={noop} nations={NATIONS} classNames={CLASS_NAMES} />
     </div>
 );
 
 export const SearchAndNation = () => (
     <div className="w-80">
-        <FilterControls filters={filters("silence", [], [], ["columbia", "victoria"])} onChange={noop} nations={NATIONS} />
+        <FilterControls filters={filters("silence", [], [], ["columbia", "victoria"])} onChange={noop} nations={NATIONS} classNames={CLASS_NAMES} />
     </div>
 );

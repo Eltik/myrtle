@@ -1,14 +1,29 @@
 import { TierListBoard } from "frontend";
 
-const op = (id: string, name: string, rarity: number, profession: string, sub: string, position: string, nationId: string | null, description: string | null = null) => ({
+/**
+ * An operator placement as the API maps it (`toTierEntity`): a resolved
+ * `operator` entity keyed `operator:<id>`, icon an API path. Every id verified
+ * against https://api.myrtle.moe/api/operators/index.
+ */
+const PROFESSION_NAME: Record<string, string> = { PIONEER: "Vanguard", WARRIOR: "Guard", TANK: "Defender", SNIPER: "Sniper", CASTER: "Caster", MEDIC: "Medic", SUPPORT: "Supporter", SPECIAL: "Specialist" };
+const op = (id: string, name: string, rarity: number, profession: string, subProfessionId: string, position: string, nationId: string | null, description: string | null = null) => ({
+    key: `operator:${id}`,
+    kind: "operator" as const,
     id,
     name,
+    icon: `/avatar/${id}`,
+    href: `/operators/${id}`,
+    facets: {},
+    resolved: true as const,
     appellation: null,
-    rarity,
-    profession,
-    subProfessionId: sub,
-    position,
-    nationId,
+    rarity: rarity as 1 | 2 | 3 | 4 | 5 | 6,
+    profession: profession as never,
+    subProfessionId,
+    professionName: PROFESSION_NAME[profession] ?? null,
+    subProfessionName: null,
+    position: position as never,
+    nationId: nationId || null,
+    nationName: null,
     subOrder: 0,
     description,
     updatedAt: "2024-05-12T14:05:00.000Z",
@@ -21,7 +36,7 @@ const TIERS = [
         displayOrder: 0,
         color: "#dc4d56",
         description: "Solves a whole risk category on their own. Bring them unless the stage locks them out.",
-        operators: [
+        entities: [
             op("char_1035_wisdel", "Wiš'adel", 6, "SNIPER", "bombarder", "RANGED", null, "Deletes the Ritualist wave from off-screen. S3 only; S2 is a trap at this risk level."),
             op("char_4064_mlynar", "Młynar", 6, "WARRIOR", "librator", "MELEE", "kazimierz"),
             op("char_4133_logos", "Logos", 6, "CASTER", "corecaster", "RANGED", "rhodes"),
@@ -35,7 +50,7 @@ const TIERS = [
         displayOrder: 1,
         color: "#e0834a",
         description: "Still stage-defining, but they need a second slot to fully pay off.",
-        operators: [
+        entities: [
             op("char_350_surtr", "Surtr", 6, "WARRIOR", "artsfghter", "MELEE", "rhodes"),
             op("char_1032_excu2", "Executor the Ex Foedere", 6, "WARRIOR", "reaper", "MELEE", "laterano"),
             op("char_311_mudrok", "Mudrock", 6, "TANK", "unyield", "MELEE", "rhodes"),
@@ -51,7 +66,7 @@ const TIERS = [
         displayOrder: 2,
         color: "#d8b54a",
         description: "Comfortable picks that clear without carrying.",
-        operators: [
+        entities: [
             op("char_222_bpipe", "Bagpipe", 6, "PIONEER", "charger", "MELEE", "victoria"),
             op("char_103_angel", "Exusiai", 6, "SNIPER", "fastshot", "RANGED", "lungmen"),
             op("char_1020_reed2", "Reed the Flame Shadow", 6, "MEDIC", "incantationmedic", "RANGED", "victoria"),
@@ -66,7 +81,7 @@ const TIERS = [
         displayOrder: 3,
         color: "#5dbf86",
         description: "Budget answers. Worth raising if the S tier is out of reach.",
-        operators: [
+        entities: [
             op("char_102_texas", "Texas", 5, "PIONEER", "pioneer", "MELEE", "lungmen"),
             op("char_140_whitew", "Lappland", 5, "WARRIOR", "lord", "MELEE", "siracusa"),
             op("char_128_plosis", "Ptilopsis", 5, "MEDIC", "ringhealer", "RANGED", "columbia"),
@@ -85,6 +100,7 @@ const detail = {
     listType: "official" as const,
     createdBy: "u-myrtle",
     isListed: true,
+    entityKinds: ["operator" as const],
     flair: null,
     author: { id: "u-myrtle", uid: "myrtle", nickname: "myrtle.moe", avatarId: "char_151_myrtle" },
     stats: null,
@@ -95,6 +111,6 @@ const detail = {
 
 export const MetaBoard = () => <TierListBoard detail={detail} />;
 
-export const WithEmptyTier = () => <TierListBoard detail={{ ...detail, tiers: [TIERS[0], TIERS[1], { id: "tier-c", name: "C", displayOrder: 2, color: "#8a8a8a", description: "Nothing has fallen this far yet.", operators: [] }] }} />;
+export const WithEmptyTier = () => <TierListBoard detail={{ ...detail, tiers: [TIERS[0], TIERS[1], { id: "tier-c", name: "C", displayOrder: 2, color: "#8a8a8a", description: "Nothing has fallen this far yet.", entities: [] }] }} />;
 
 export const NoTiersYet = () => <TierListBoard detail={{ ...detail, tiers: [] }} />;
