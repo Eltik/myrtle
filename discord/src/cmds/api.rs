@@ -219,3 +219,45 @@ fn format_endpoint(s: &api::status::EndpointStatus) -> String {
         format!("**unreachable**\n<{}>", s.url)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::format_endpoint;
+    use crate::api::status::EndpointStatus;
+
+    #[test]
+    fn reachable_endpoints_show_status_and_latency() {
+        let s = EndpointStatus {
+            url: "https://api.example/health".into(),
+            reachable: true,
+            status_code: Some(200),
+            response_time_ms: Some(87),
+        };
+        assert_eq!(
+            format_endpoint(&s),
+            "**OK 200** - 87 ms\n<https://api.example/health>"
+        );
+    }
+
+    #[test]
+    fn missing_numbers_read_as_zero() {
+        let s = EndpointStatus {
+            url: "u".into(),
+            reachable: true,
+            status_code: None,
+            response_time_ms: None,
+        };
+        assert_eq!(format_endpoint(&s), "**OK 0** - 0 ms\n<u>");
+    }
+
+    #[test]
+    fn unreachable_endpoints_show_only_the_url() {
+        let s = EndpointStatus {
+            url: "u".into(),
+            reachable: false,
+            status_code: Some(500),
+            response_time_ms: Some(3),
+        };
+        assert_eq!(format_endpoint(&s), "**unreachable**\n<u>");
+    }
+}

@@ -1117,3 +1117,50 @@ pub async fn list_tts_voices(pool: &SqlitePool) -> Result<Vec<(UserId, String)>,
         .map(|(u, v)| (UserId::new(u.cast_unsigned()), v))
         .collect())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn u32_from_db_saturates() {
+        assert_eq!(u32_from_db(0), 0);
+        assert_eq!(u32_from_db(42), 42);
+        assert_eq!(u32_from_db(i64::from(u32::MAX)), u32::MAX);
+        assert_eq!(u32_from_db(i64::from(u32::MAX) + 1), u32::MAX);
+        // A negative value also fails `try_into` and saturates high, not low.
+        assert_eq!(u32_from_db(-1), u32::MAX);
+    }
+
+    #[test]
+    fn audit_event_bits_are_distinct_single_bits() {
+        let mut seen = 0u32;
+        for event in AuditEvent::ALL {
+            let bit = event.bit();
+            assert_eq!(bit.count_ones(), 1, "{event:?}");
+            assert_eq!(seen & bit, 0, "{event:?} reuses a bit");
+            seen |= bit;
+        }
+        // Thirteen categories on bits 0..=12.
+        assert_eq!(seen, 0x1FFF);
+    }
+
+    #[test]
+    fn persisted_bits_never_move() {
+        assert_eq!(AuditEvent::MessageEdit.bit(), 1);
+        assert_eq!(AuditEvent::ServerChange.bit(), 1 << 10);
+        assert_eq!(AuditEvent::ReactionClear.bit(), 1 << 11);
+        assert_eq!(AuditEvent::Warning.bit(), 1 << 12);
+    }
+
+    #[test]
+    fn mask_from_db_keeps_only_known_bits() {
+        assert_eq!(mask_from_db(0), 0);
+        assert_eq!(mask_from_db(0b101), 0b101);
+        assert_eq!(mask_from_db(0x1FFF), 0x1FFF);
+        assert_eq!(mask_from_db((1 << 20) | 0b11), 0b11);
+        // Out of u32 range or negative: nothing disabled, logging stays on.
+        assert_eq!(mask_from_db(-1), 0);
+        assert_eq!(mask_from_db(i64::from(u32::MAX) + 1), 0);
+    }
+}

@@ -293,3 +293,28 @@ pub async fn assets_resources(
     ctx.send(reply.ephemeral(true)).await?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{server_scope, unknown_server};
+
+    #[test]
+    fn unknown_server_lists_the_configured_labels() {
+        assert_eq!(
+            unknown_server("XX", &["CN", "EN"]).to_string(),
+            "Unknown server `XX`. Configured: CN, EN"
+        );
+        assert_eq!(
+            unknown_server("XX", &[]).to_string(),
+            "Unknown server `XX`. Configured: (none configured)"
+        );
+    }
+
+    #[test]
+    fn server_scope_reads_every_server_without_a_filter() {
+        assert_eq!(server_scope(None), "every server");
+        let filter = vec!["EN".to_string(), "JP".to_string()];
+        assert_eq!(server_scope(Some(filter.as_slice())), "EN, JP only");
+        assert_eq!(server_scope(Some(&[])), " only");
+    }
+}

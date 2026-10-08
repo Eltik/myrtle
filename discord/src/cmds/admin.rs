@@ -1268,3 +1268,106 @@ fn message_link(guild: Option<GuildId>, channel: ChannelId, message: MessageId) 
         None => format!("https://discord.com/channels/@me/{channel}/{message}"),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{message_link, parse_color, parse_message_ref};
+    use ::serenity::model::id::{ChannelId, GuildId, MessageId};
+
+    fn color(input: &str) -> Option<u32> {
+        parse_color(input).ok().map(|c| c.0)
+    }
+
+    #[test]
+    fn parses_marked_hex_colors() {
+        assert_eq!(color("#5865F2"), Some(0x0058_65F2));
+        assert_eq!(color("0x5865f2"), Some(0x0058_65F2));
+        assert_eq!(color("0XFF0000"), Some(0x00FF_0000));
+        assert_eq!(color("  #00ff00  "), Some(0x0000_FF00));
+    }
+
+    #[test]
+    fn parses_bare_hex_with_letters() {
+        assert_eq!(color("ff0000"), Some(0x00FF_0000));
+        assert_eq!(color("5865F2"), Some(0x0058_65F2));
+    }
+
+    #[test]
+    fn reads_all_digit_input_as_decimal() {
+        assert_eq!(color("16711680"), Some(0x00FF_0000));
+        assert_eq!(color("0"), Some(0));
+        // CURRENT BEHAVIOR, suspected bug: the doc accepts bare `RRGGBB`, but an
+        // all-digit hex code like "112233" parses as decimal 112233 (0x01B669)
+        // instead of 0x112233, so the embed gets a different color than typed.
+        assert_eq!(color("112233"), Some(112_233));
+        assert_eq!(color("#112233"), Some(0x0011_2233));
+    }
+
+    #[test]
+    fn rejects_unparseable_colors_with_a_hint() {
+        for bad in ["", "#", "blue", "#GGGGGG", "-1", "0x1FFFFFFFF"] {
+            let err = parse_color(bad).expect_err(bad).to_string();
+            assert!(err.contains("Use a hex code like #5865F2"), "{bad}: {err}");
+        }
+    }
+
+    #[test]
+    fn parses_message_urls() {
+        assert_eq!(
+            parse_message_ref("https://discord.com/channels/1/22/333"),
+            Some((Some(ChannelId::new(22)), MessageId::new(333)))
+        );
+        assert_eq!(
+            parse_message_ref("https://discord.com/channels/@me/22/333"),
+            Some((Some(ChannelId::new(22)), MessageId::new(333)))
+        );
+        assert_eq!(parse_message_ref("https://discord.com/channels/1/22"), None);
+        assert_eq!(
+            parse_message_ref("https://discord.com/channels/1/x/333"),
+            None
+        );
+    }
+
+    #[test]
+    fn parses_channel_message_pairs_and_bare_ids() {
+        assert_eq!(
+            parse_message_ref("22-333"),
+            Some((Some(ChannelId::new(22)), MessageId::new(333)))
+        );
+        assert_eq!(
+            parse_message_ref(" 22 - 333 "),
+            Some((Some(ChannelId::new(22)), MessageId::new(333)))
+        );
+        assert_eq!(parse_message_ref("333"), Some((None, MessageId::new(333))));
+        for bad in ["", "abc", "22-abc", "-5"] {
+            assert_eq!(parse_message_ref(bad), None, "{bad:?}");
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "MessageId::new with invalid (0) value")]
+    fn a_zero_message_id_panics() {
+        // CURRENT BEHAVIOR, suspected bug: `MessageId::new(0)` panics on zero, so a
+        // pasted "0" (or a URL or pair with a 0 id) panics the command task instead
+        // of being rejected as an invalid reference.
+        let _ = parse_message_ref("0");
+    }
+
+    #[test]
+    #[should_panic(expected = "ChannelId::new with invalid (0) value")]
+    fn a_zero_channel_id_panics() {
+        let _ = parse_message_ref("0-5");
+    }
+
+    #[test]
+    fn builds_guild_and_dm_links() {
+        assert_eq!(
+            message_link(Some(GuildId::new(1)), ChannelId::new(2), MessageId::new(3)),
+            "https://discord.com/channels/1/2/3"
+        );
+        assert_eq!(
+            message_link(None, ChannelId::new(2), MessageId::new(3)),
+            "https://discord.com/channels/@me/2/3"
+        );
+    }
+}

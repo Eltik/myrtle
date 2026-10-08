@@ -449,3 +449,18 @@ async fn handle(
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::is_ours;
+
+    #[test]
+    fn claims_only_its_own_prefix() {
+        assert!(is_ours("op:anything"));
+        assert!(is_ours("op:"));
+        assert!(!is_ours("op"));
+        assert!(!is_ours("opx:1"));
+        assert!(!is_ours("other:op:1"));
+        assert!(!is_ours(""));
+    }
+}

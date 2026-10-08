@@ -408,3 +408,21 @@ fn format_bytes(bytes: u64) -> String {
         format!("{:.2} GB", f / GB as f64)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::format_bytes;
+
+    #[test]
+    fn picks_the_largest_whole_unit() {
+        assert_eq!(format_bytes(0), "0 B");
+        assert_eq!(format_bytes(1023), "1023 B");
+        assert_eq!(format_bytes(1024), "1.0 KB");
+        assert_eq!(format_bytes(1536), "1.5 KB");
+        assert_eq!(format_bytes(1024 * 1024 - 1), "1024.0 KB");
+        assert_eq!(format_bytes(1024 * 1024), "1.0 MB");
+        assert_eq!(format_bytes(5 * 1024 * 1024 + 512 * 1024), "5.5 MB");
+        assert_eq!(format_bytes(1024 * 1024 * 1024), "1.00 GB");
+        assert_eq!(format_bytes(3 * 1024 * 1024 * 1024 / 2), "1.50 GB");
+    }
+}

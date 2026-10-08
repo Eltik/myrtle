@@ -460,3 +460,73 @@ async fn sweep_once(history: &PingHistory, policies: &AntiSpamPolicies) -> usize
     });
     before - hist.len()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{count_mention_tokens, drop_expired};
+    use std::collections::VecDeque;
+    use std::time::{Duration, Instant};
+
+    #[test]
+    fn counts_user_nickname_and_role_mentions() {
+        assert_eq!(count_mention_tokens("<@123>"), 1);
+        assert_eq!(count_mention_tokens("<@!123>"), 1);
+        assert_eq!(count_mention_tokens("<@&456>"), 1);
+        assert_eq!(count_mention_tokens("hi <@1> and <@!2> and <@&3>!"), 3);
+    }
+
+    #[test]
+    fn repeated_mentions_each_count() {
+        assert_eq!(count_mention_tokens("<@1><@1><@1>"), 3);
+        assert_eq!(count_mention_tokens("<@1> <@1> <@1>"), 3);
+    }
+
+    #[test]
+    fn ignores_malformed_tokens() {
+        for text in [
+            "",
+            "<@>",
+            "<@!>",
+            "<@abc>",
+            "<@123",
+            "@123>",
+            "<#123>",
+            "<@ 123>",
+            "<@!&1>",
+            "<:emoji:123>",
+        ] {
+            assert_eq!(count_mention_tokens(text), 0, "{text:?}");
+        }
+    }
+
+    #[test]
+    fn recovers_after_a_broken_token() {
+        assert_eq!(count_mention_tokens("<@<@5>"), 1);
+        assert_eq!(count_mention_tokens("<@12x<@34>"), 1);
+    }
+
+    #[test]
+    fn drop_expired_pops_only_entries_older_than_the_cutoff() {
+        let now = Instant::now();
+        let cutoff = Duration::from_secs(10);
+        let at = |secs_ago: u64| now.checked_sub(Duration::from_secs(secs_ago)).unwrap();
+        let mut entries: VecDeque<(Instant, u32)> =
+            VecDeque::from([(at(30), 1), (at(11), 2), (at(10), 3), (at(2), 4)]);
+        drop_expired(&mut entries, now, cutoff);
+        // Exactly at the cutoff is kept: only strictly older entries go.
+        assert_eq!(entries.iter().map(|e| e.1).collect::<Vec<_>>(), vec![3, 4]);
+    }
+
+    #[test]
+    fn drop_expired_stops_at_the_first_fresh_entry() {
+        let now = Instant::now();
+        let at = |secs_ago: u64| now.checked_sub(Duration::from_secs(secs_ago)).unwrap();
+        // Out-of-order history: an old entry behind a fresh one is not reached.
+        let mut entries: VecDeque<(Instant, u32)> = VecDeque::from([(at(1), 1), (at(60), 2)]);
+        drop_expired(&mut entries, now, Duration::from_secs(10));
+        assert_eq!(entries.len(), 2);
+        let mut empty: VecDeque<(Instant, u32)> = VecDeque::new();
+        drop_expired(&mut empty, now, Duration::from_secs(10));
+        assert!(empty.is_empty());
+    }
+}

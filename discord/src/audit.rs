@@ -957,3 +957,119 @@ fn emoji_image_url(emoji: &ReactionType) -> Option<String> {
         _ => None,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serenity::model::id::EmojiId;
+
+    #[test]
+    fn truncate_cuts_on_a_char_boundary() {
+        assert_eq!(truncate("hello", 10), "hello");
+        assert_eq!(truncate("hello", 5), "hello");
+        assert_eq!(truncate("hello", 3), "hel");
+        // "é" is two bytes: cutting at byte 2 would split it, so the cut backs off.
+        assert_eq!(truncate("aé", 2), "a");
+        assert_eq!(truncate("日本語", 4), "日");
+        assert_eq!(truncate("日本語", 0), "");
+    }
+
+    #[test]
+    fn truncate_oneline_flattens_newlines_and_counts_chars() {
+        assert_eq!(truncate_oneline("a\nb", 10), "a b");
+        assert_eq!(truncate_oneline("abcdef", 3), "abc…");
+        assert_eq!(truncate_oneline("日本語です", 2), "日本…");
+        assert_eq!(truncate_oneline("abc", 3), "abc");
+    }
+
+    #[test]
+    fn value_to_str_renders_json_compactly() {
+        assert_eq!(value_to_str(&serde_json::json!(null)), "null");
+        assert_eq!(value_to_str(&serde_json::json!(true)), "true");
+        assert_eq!(value_to_str(&serde_json::json!(42)), "42");
+        assert_eq!(value_to_str(&serde_json::json!("plain")), "plain");
+        assert_eq!(value_to_str(&serde_json::json!([1, 2])), "[1,2]");
+        assert_eq!(value_to_str(&serde_json::json!({ "a": 1 })), r#"{"a":1}"#);
+        let long = "x".repeat(100);
+        let out = value_to_str(&serde_json::json!(long));
+        assert_eq!(out.chars().count(), 81);
+        assert!(out.ends_with('…'));
+    }
+
+    #[test]
+    fn render_target_picks_a_mention_shape_per_action() {
+        assert_eq!(
+            render_target(Action::Channel(ChannelAction::Create), 5),
+            "<#5> (`5`)"
+        );
+        assert_eq!(
+            render_target(Action::Thread(ThreadAction::Delete), 5),
+            "<#5> (`5`)"
+        );
+        assert_eq!(
+            render_target(Action::Role(RoleAction::Update), 5),
+            "<@&5> (`5`)"
+        );
+        assert_eq!(
+            render_target(Action::Member(MemberAction::Kick), 5),
+            "<@5> (`5`)"
+        );
+        assert_eq!(
+            render_target(Action::Message(MessageAction::Delete), 5),
+            "Message `5`"
+        );
+        assert_eq!(render_target(Action::Emoji(EmojiAction::Create), 5), "`5`");
+    }
+
+    #[test]
+    fn formats_unicode_and_custom_emoji() {
+        assert_eq!(format_emoji(&ReactionType::Unicode("👍".into())), "👍");
+        let custom = ReactionType::Custom {
+            animated: false,
+            id: EmojiId::new(77),
+            name: Some("myrtle".into()),
+        };
+        assert_eq!(format_emoji(&custom), "<:myrtle:77> `:myrtle:` (`77`)");
+        let nameless = ReactionType::Custom {
+            animated: true,
+            id: EmojiId::new(78),
+            name: None,
+        };
+        assert!(format_emoji(&nameless).ends_with("`:unknown:` (`78`)"));
+    }
+
+    #[test]
+    fn custom_emoji_get_a_cdn_image() {
+        let still = ReactionType::Custom {
+            animated: false,
+            id: EmojiId::new(77),
+            name: None,
+        };
+        let animated = ReactionType::Custom {
+            animated: true,
+            id: EmojiId::new(78),
+            name: None,
+        };
+        assert_eq!(
+            emoji_image_url(&still).as_deref(),
+            Some("https://cdn.discordapp.com/emojis/77.png")
+        );
+        assert_eq!(
+            emoji_image_url(&animated).as_deref(),
+            Some("https://cdn.discordapp.com/emojis/78.gif")
+        );
+        assert_eq!(emoji_image_url(&ReactionType::Unicode("👍".into())), None);
+    }
+
+    #[test]
+    fn message_link_matches_the_admin_helper() {
+        assert_eq!(
+            message_link(Some(GuildId::new(1)), ChannelId::new(2), MessageId::new(3)),
+            "https://discord.com/channels/1/2/3"
+        );
+        assert_eq!(
+            message_link(None, ChannelId::new(2), MessageId::new(3)),
+            "https://discord.com/channels/@me/2/3"
+        );
+    }
+}
