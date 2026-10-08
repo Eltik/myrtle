@@ -423,36 +423,34 @@ fn skill_block(slot: &str, level: &SkillLevel, ranges: &HashMap<String, Range>) 
     block
 }
 
-/// "*Offensive recovery · Manual*\nInitial SP 0 · SP cost 30 · Duration 25s".
+/// The skill's header, one fact per line:
+/// "*Offensive Recovery • Manual*\n**Initial SP:** 0\n**SP Cost:** 30\n**Duration:** 25s".
+/// A passive skill has no SP, so it reads "*Passive*" plus its duration if it has one.
 fn skill_stats(level: &SkillLevel) -> String {
     let recovery = match level.sp_data.sp_type.as_str() {
-        "INCREASE_WITH_TIME" => Some("Auto recovery"),
-        "INCREASE_WHEN_ATTACK" => Some("Offensive recovery"),
-        "INCREASE_WHEN_TAKEN_DAMAGE" => Some("Defensive recovery"),
+        "INCREASE_WITH_TIME" => Some("Auto Recovery"),
+        "INCREASE_WHEN_ATTACK" => Some("Offensive Recovery"),
+        "INCREASE_WHEN_TAKEN_DAMAGE" => Some("Defensive Recovery"),
         _ => None,
     };
     let trigger = match level.skill_type.as_str() {
-        "MANUAL" => "Manual trigger",
-        "AUTO" => "Auto trigger",
+        "MANUAL" => "Manual",
+        "AUTO" => "Auto",
         "PASSIVE" => "Passive",
         other => other,
     };
-    let kind = recovery.map_or_else(|| trigger.to_string(), |r| format!("{r} · {trigger}"));
-    let mut numbers = Vec::new();
+    let kind = recovery.map_or_else(|| trigger.to_string(), |r| format!("{r} • {trigger}"));
+    let mut lines = vec![format!("*{kind}*")];
     if recovery.is_some() {
-        numbers.push(format!("Initial SP {}", level.sp_data.init_sp));
-        numbers.push(format!("SP cost {}", level.sp_data.sp_cost));
+        lines.push(format!("**Initial SP:** {}", level.sp_data.init_sp));
+        lines.push(format!("**SP Cost:** {}", level.sp_data.sp_cost));
     }
     if level.duration > 0.0 {
-        numbers.push(format!("Duration {}s", decimal(level.duration)));
+        lines.push(format!("**Duration:** {}s", decimal(level.duration)));
     } else if level.duration_type.as_deref() == Some("AMMO") {
-        numbers.push("Ammo".to_string());
+        lines.push("**Duration:** Ammo".to_string());
     }
-    if numbers.is_empty() {
-        format!("*{kind}*")
-    } else {
-        format!("*{kind}*\n{}", numbers.join(" · "))
-    }
+    lines.join("\n")
 }
 
 // ---------------------------------------------------------------------------
