@@ -1365,7 +1365,6 @@ struct InitMutations {
     modified_fields: std::collections::HashSet<String>, // e.g. {"drone_atk", "trait_damage"}
 }
 
-#[allow(dead_code)]
 fn extract_and_transpile_init_mutations(init_body: &str) -> InitMutations {
     let mut mutations = Vec::new();
     let mut modified_fields = std::collections::HashSet::new();
@@ -1544,7 +1543,6 @@ fn extract_and_transpile_init_mutations(init_body: &str) -> InitMutations {
     }
 }
 
-#[allow(dead_code)]
 fn transpile_init_expr(py_expr: &str) -> String {
     let mut s = py_expr.to_string();
     // Field mappings; order matters, longer/specific prefixes first
