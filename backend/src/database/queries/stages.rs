@@ -12,16 +12,13 @@ pub struct UserStageData {
     pub last_synced_ts: Option<i64>,
 }
 
-/// Returns the set of stage IDs that at least one user on the same server as
-/// `user_id` has appearing in their dungeon JSON.
+/// Stage ids in the dungeon JSON of at least one user on `user_id`'s server.
 ///
-/// The gamedata bundled with the backend can be ahead of the user's actual
-/// server (e.g. EN players grading against CN-era `stage_table`), which leaves
-/// the universe full of stages no one on that server can possibly clear.
-/// Filtering the universe by this set caps each server's universe at content
-/// that's actually live there. Mere key presence (any `state`, including a
-/// `state: 0` "unlocked but not cleared" entry) is intentional here: it lets a
-/// currently-running event count as available even before anyone has cleared it.
+/// Bundled gamedata can be ahead of the user's server (EN players graded
+/// against a CN-era `stage_table`), leaving stages nobody there can clear; this
+/// set caps each server's universe at content live there. Key presence alone
+/// counts (any `state`, `state: 0` "unlocked but not cleared" included), so a
+/// running event is available before anyone has cleared it.
 pub async fn get_known_stage_ids_for_server(
     pool: &PgPool,
     user_id: Uuid,

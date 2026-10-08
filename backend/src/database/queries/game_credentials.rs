@@ -12,9 +12,8 @@ use crate::core::auth::credentials::CredentialKey;
 use crate::core::hypergryph::constants::AuthSession;
 
 /// The durable half of an `AuthSession`: exactly what `refresh_secret` needs to
-/// mint a live session, and nothing else. The short-lived `secret` / `token`
-/// pair is deliberately absent: it is re-derivable, so persisting it would
-/// widen the blast radius of a database leak for no gain.
+/// mint a live session. The short-lived `secret` / `token` pair is left out: it
+/// is re-derivable, so storing it would only widen a database leak.
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct DurableCredential {
     pub yostar_uid: String,
@@ -106,8 +105,8 @@ pub async fn load(
 
 /// Forget a user's durable credentials. Returns whether a row was removed.
 ///
-/// This is the whole of "disconnect": with the row gone we cannot reach the
-/// account again until the user supplies a fresh email code.
+/// This is all of "disconnect": without the row we cannot reach the account
+/// until the user supplies a fresh email code.
 pub async fn delete(pool: &PgPool, user_id: Uuid) -> Result<bool, sqlx::Error> {
     let result = sqlx::query("DELETE FROM user_game_credentials WHERE user_id = $1")
         .bind(user_id)

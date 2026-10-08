@@ -58,9 +58,8 @@ pub async fn set_visibility(
     Ok(())
 }
 
-/// Set a tier list's `list_type` (e.g. `"official"` or `"community"`), which is
-/// what controls whether the list is presented as official. Returns the updated
-/// row, or `None` if no list has that id.
+/// Set a tier list's `list_type` (`"official"` or `"community"`). Returns the
+/// updated row, or `None` if no list has that id.
 pub async fn set_list_type(
     pool: &PgPool,
     tier_list_id: Uuid,
@@ -202,7 +201,7 @@ pub async fn find_by_user(pool: &PgPool, user_id: Uuid) -> Result<Vec<TierList>,
     .fetch_all(pool).await
 }
 
-/// Count tier lists owned by a user (for enforcing limits)
+/// For enforcing the per-user list limit.
 pub async fn count_by_user(pool: &PgPool, user_id: Uuid) -> Result<i64, sqlx::Error> {
     sqlx::query_scalar("SELECT COUNT(*) FROM tier_lists WHERE created_by = $1 AND is_active = true")
         .bind(user_id)

@@ -212,7 +212,6 @@ impl From<Facets> for BTreeMap<String, FacetValue> {
     }
 }
 
-/// `value` unless it is empty.
 fn non_empty(value: &str) -> Option<&str> {
     (!value.is_empty()).then_some(value)
 }
@@ -237,7 +236,6 @@ fn asset_url(path: &str) -> String {
     )
 }
 
-/// The site route of an operator's page.
 fn operator_href(char_id: &str) -> String {
     format!("/operators/{char_id}")
 }

@@ -31,10 +31,9 @@
 //!   - Each table's column list is the intersection of the file's columns and the
 //!     live table's, so an export taken before or after a migration still loads; a
 //!     column the file lacks takes its DEFAULT instead of being forced to NULL.
-//!   - Triggers stay ENABLED. The audit triggers on `users` and `user_scores` then
-//!     record the restore (with a NULL actor), and foreign keys are enforced on the
-//!     way in, which is what we want for a few thousand rows. `--no-triggers`
-//!     suspends both for a silent restore.
+//!   - Triggers stay ENABLED: the audit triggers on `users` and `user_scores`
+//!     record the restore (NULL actor) and foreign keys are enforced, fine for a
+//!     few thousand rows. `--no-triggers` suspends both for a silent restore.
 //!
 //! Safety:
 //!   - `--dry-run` performs the entire import and rolls back, printing the row
@@ -647,10 +646,10 @@ async fn live_columns(tx: &mut Transaction<'_, Postgres>, table: &str) -> Result
 /// The columns to write: present in the live table AND in the file, minus the ones
 /// the database should reassign.
 ///
-/// Intersecting both ways is what makes the format survive a migration in either
-/// direction. A column the file doesn't carry is left out of the INSERT so it takes
-/// its DEFAULT; listing it would force a NULL and trip the NOT NULL the default was
-/// there to satisfy. A column the table has lost is dropped.
+/// Intersecting both ways survives a migration in either direction. A column the
+/// file lacks is left out of the INSERT so it takes its DEFAULT; listing it would
+/// force a NULL and trip the NOT NULL the default was there to satisfy. A column
+/// the table has lost is dropped.
 fn usable_columns(live: &[String], rows: &[Value], regenerate: &[&str]) -> Vec<String> {
     live.iter()
         .filter(|c| !regenerate.contains(&c.as_str()))

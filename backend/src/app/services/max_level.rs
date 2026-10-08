@@ -162,7 +162,7 @@ pub struct MaxLevelCostResponse {
 }
 
 /// LMD the account earns in a day, and the days until `lmd_missing` is
-/// covered - once from the base and mission chests alone, once with every
+/// covered: once from the base and mission chests alone, once with every
 /// day's natural sanity spent on the LMD farming stage.
 #[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
 #[ts(export)]

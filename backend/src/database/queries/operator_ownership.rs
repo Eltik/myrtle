@@ -148,16 +148,13 @@ pub async fn latest_ownership_refresh_at(
 }
 
 /// Recompute the per-server aggregates from scratch and atomically replace all
-/// five tables. Measured at 62.531 ms over 619,706 `user_operators` rows, so
-/// it is cheap, but it still runs only from the background job and never on a
-/// request, because the cost grows with the roster while a request budget does
-/// not.
+/// five tables. 62.531 ms over 619,706 `user_operators` rows, but background
+/// job only: the cost grows with the roster and a request budget does not.
 ///
-/// Only users who opted into stat sharing are counted, for the owner tallies,
-/// the choice distributions and the population denominator alike. The
-/// denominator is the eligible users on each server who have imported a roster,
-/// so percentages reflect the sharing population rather than every registered
-/// account.
+/// Only users who opted into stat sharing count, for the owner tallies, the
+/// choice distributions and the denominator alike. The denominator is eligible
+/// users per server who have imported a roster, so percentages are of the
+/// sharing population, not every registered account.
 pub async fn refresh_build_stats(pool: &PgPool) -> Result<(), sqlx::Error> {
     let mut tx = pool.begin().await?;
 

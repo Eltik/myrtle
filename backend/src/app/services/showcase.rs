@@ -317,7 +317,6 @@ fn has_elite_2(state: &AppState, id: &str) -> bool {
     })
 }
 
-/// Whether `pred` holds for any loaded server.
 fn any_loaded(state: &AppState, pred: impl Fn(&ServerData) -> bool) -> bool {
     state
         .servers

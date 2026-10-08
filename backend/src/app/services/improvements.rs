@@ -164,12 +164,11 @@ pub struct RoguelikeCollectibles {
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Default)]
 pub struct SandboxImprovements {
-    /// Overall RA score (0..1) - the weighted sum of every category below. This
-    /// is the same value the headline percentage is computed from.
+    /// Overall RA score (0..1), the weighted sum of the categories below. The
+    /// headline percentage is computed from it.
     pub total: f64,
-    /// One entry per scored category, in grade-weight order. Each carries its
-    /// weight, its own completion, and the concrete counts behind it - so the
-    /// breakdown fully accounts for the headline percentage.
+    /// One entry per scored category, in grade-weight order, with its weight,
+    /// completion and counts, so the breakdown adds up to the headline.
     pub categories: Vec<SandboxCategory>,
 }
 
@@ -183,7 +182,7 @@ pub struct SandboxCategory {
     pub weight: f64,
     /// This category's own completion (0..1) - what its bar fills to.
     pub score: f64,
-    /// The concrete progress counts that make up this category's score.
+    /// The progress counts behind `score`.
     pub parts: Vec<SandboxPart>,
 }
 
@@ -207,15 +206,14 @@ pub struct MedalImprovements {
     /// Sorted by `end_time` asc (most urgent first).
     pub event_in_window_missing: Vec<MedalGap>,
     /// Medals gated on a collab / one-time operator the player can't reliably
-    /// obtain. These are excluded from medal scoring; surfaced separately so the
-    /// user understands why they're stuck rather than seeing them as earnable.
+    /// obtain. Excluded from medal scoring; listed separately so they don't read
+    /// as earnable.
     pub operator_locked: Vec<MedalGap>,
-    /// Medals whose earnable window has passed and won't reopen: closed-window
-    /// event medals plus finished one-time modes / retired towers. Not
-    /// actionable, but shown so players can tell what's a dead end vs. still
-    /// achievable. Closed-window event medals still contribute to the event pool
-    /// with recency decay; one-time / retired medals stay excluded from scoring
-    /// (see `build_medal_improvements`). Sorted most-recently-closed first.
+    /// Medals whose window has passed for good: closed-window event medals plus
+    /// finished one-time modes / retired towers. Shown so dead ends are visible.
+    /// Closed-window event medals still count toward the event pool with recency
+    /// decay; one-time / retired medals stay out of scoring (see
+    /// `build_medal_improvements`). Most-recently-closed first.
     pub unobtainable_missing: Vec<MedalGap>,
 }
 
@@ -290,10 +288,8 @@ pub struct OperatorGap {
     pub is_support: bool,
     /// Short tags for what's still left, e.g. ["E2", "`MAX_LEVEL`", "M3", "MOD3", "TRUST"].
     pub missing: Vec<&'static str>,
-    /// Per-tag projected score gain if the user completed that milestone.
-    /// One entry per tag in `missing`, in the same order. See `UpgradeDelta`
-    /// for the exact fields - surfaces both the operator-local delta and its
-    /// contribution to the user's subscore + `total_score`.
+    /// Projected gain per tag in `missing`, same order: the operator-local delta
+    /// and its contribution to the subscore and `total_score` (see `UpgradeDelta`).
     pub deltas: Vec<UpgradeDelta>,
     /// Combined `operator_grade_delta` if the user did every available upgrade
     /// path on this operator. ELITE (promote + max level at new phase) and
@@ -310,11 +306,11 @@ pub struct OperatorGap {
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Default)]
 pub struct BaseImprovements {
-    /// The player's CURRENT base exactly as stationed right now - for comparing
-    /// against the optimized assignments.
+    /// The CURRENT base as stationed, to compare against the optimized
+    /// assignments.
     pub current: Option<BaseAssignmentDto>,
-    /// Peak assignment - the highest-efficiency arrangement of the roster across
-    /// the existing rooms. Useful as a "what's possible right now" view.
+    /// Peak assignment: the highest-efficiency arrangement of the roster across
+    /// the existing rooms.
     pub optimal: Option<BaseAssignmentDto>,
     /// Staggered rotation for sustained 24/7 operation: a main staffing plus a
     /// backup pool swapped in one operator at a time. `sustained_efficiency` is
@@ -614,9 +610,8 @@ pub struct ShiftRotationDto {
     pub sustainability: SustainabilityDto,
 }
 
-/// The rotation validated by a time-stepped morale simulation (game-true drain
-/// and dorm-recovery rates): honest evidence the plan survives its own rhythm,
-/// instead of an unchecked recommendation.
+/// The rotation run through a time-stepped morale simulation (game-true drain
+/// and dorm-recovery rates): does the plan survive its own rhythm.
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]

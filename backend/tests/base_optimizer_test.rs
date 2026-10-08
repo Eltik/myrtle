@@ -423,9 +423,9 @@ fn rhine_lab_faction_synergy_boosts_dorothy() {
     let rhine = factory_efficiency(gd, &rhine_team);
     let mixed = factory_efficiency(gd, &mixed_team);
 
-    // Even though the non-Rhine teammates have *higher* flat efficiency (35 vs
-    // 25), Dorothy's faction bonus (+5% × 2 Rhine = +10%) makes the Rhine team
-    // competitive/better. The key assertion: the faction bonus is actually applied.
+    // The non-Rhine teammates have higher flat efficiency (35 vs 25), but
+    // Dorothy's +5% × 2 Rhine = +10% makes the Rhine team competitive. What is
+    // asserted is that the faction bonus applies.
     let mixed_no_dorothy = factory_efficiency(
         gd,
         &[
@@ -6402,9 +6402,8 @@ fn unresolved_buffs_are_zero_and_inventoried() {
 /// operators of the required faction) in the gate's room type. Context-free scoring
 /// credits the gated part 0 (never guess).
 #[test]
-// Exact float equality is intentional: these are deterministic values threaded
-// straight from the same constants/formulas the assignment resolver used, not
-// results of independent floating-point computation.
+// Exact float equality on purpose: the values come straight from the constants
+// the assignment resolver used, not an independent computation.
 #[allow(clippy::float_cmp)]
 fn room_presence_gates_resolve_against_the_deployment() {
     use backend::core::grade::base::assignment::resolve_room_presence;
@@ -7348,9 +7347,8 @@ fn cc_recovery_auras_offset_cc_workers_drain_only() {
 /// points (floored steps, base always on), exactly like the other
 /// deployment-dependent rewrites. Context-free scoring credits the base only.
 #[test]
-// Exact float equality is intentional: these are deterministic values threaded
-// straight from the same constants/formulas the resolver used, not results of
-// independent floating-point computation.
+// Exact float equality on purpose: the values come straight from the constants
+// the resolver used, not an independent computation.
 #[allow(clippy::float_cmp)]
 fn global_pool_consumers_resolve_against_settled_points() {
     use backend::core::grade::base::assignment::resolve_global_pool;

@@ -379,10 +379,9 @@ pub struct OperatorBuildStatsResponse {
     pub computed_at: String,
 }
 
-/// Expand a sparse histogram into the fixed 0..3 strip, filling absent levels
-/// with zero. The aggregate emits a row only where a user sits, so absence is
-/// genuinely zero users rather than unknown, and collapsing the two here keeps
-/// every client from re-deciding it.
+/// A sparse histogram as the fixed 0..3 strip, absent levels zero-filled. The
+/// aggregate emits a row only where a user sits, so absence means zero users,
+/// not unknown; deciding that here keeps every client from re-deciding it.
 fn fill_levels(found: &[LevelBucket]) -> Vec<LevelBucket> {
     (0..=3)
         .map(|level| LevelBucket {

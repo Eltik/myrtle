@@ -102,9 +102,8 @@ fn spawn_shutdown_watchdog() {
     }
 }
 
-// Startup wiring is inherently a long, linear sequence of `.await`s; splitting it into
-// helpers would not make it more readable. Matches the crate-wide allow in `lib.rs`,
-// which does not cover this binary's separate crate root.
+// Startup is one long linear sequence of `.await`s. Matches the crate-wide allow in
+// `lib.rs`, which does not cover this binary's crate root.
 #[allow(clippy::too_many_lines)]
 async fn async_main() {
     dotenv().ok();

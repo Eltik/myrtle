@@ -179,8 +179,8 @@ impl BaseFlows {
     }
 
     /// Realized gold->trade LMD/day: the slower side caps the bars moved. A short
-    /// supply sells at the best-paying posts first - a gold-short player delivers
-    /// the best orders and leaves the rest standing - so a post's unsellable extra
+    /// supply sells at the best-paying posts first (a gold-short player delivers
+    /// the best orders and leaves the rest standing), so a post's unsellable extra
     /// capacity (Proviso's bonus bars on a starved base) never dilutes a premium
     /// post's take.
     pub fn realized_lmd(&self) -> f64 {

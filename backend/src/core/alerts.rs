@@ -1,10 +1,9 @@
 //! Out-of-band alerts for failures that are otherwise silent.
 //!
-//! The motivating case: `load_table_or_warn` catches a deserialization error,
-//! logs one `tracing::warn!` line, and substitutes `T::default()`. The service
-//! then serves an empty table as if it were real data: no error, no failing
-//! health check, and a smoke test that passes. A single unrecognised enum value
-//! in `item_table` is enough to blank every item name and icon on a server.
+//! `load_table_or_warn` catches a deserialization error, logs one warn line and
+//! substitutes `T::default()`, so an empty table gets served as real data: no
+//! error, no failing health check, smoke test passes. One unrecognised enum value
+//! in `item_table` blanks every item name and icon on a server.
 //!
 //! Optional: with `DISCORD_ALERT_WEBHOOK` unset this module does nothing.
 

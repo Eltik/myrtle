@@ -24,7 +24,7 @@ pub enum Metric {
     /// % LMD-per-order, priced by `order_mix`. `pure_gold` = tied to Pure-Gold
     /// orders (Proviso), which Shamare's Precious-Metal shift kills.
     OrderValue { pure_gold: bool },
-    /// Order/capacity-limit points (sign carries polarity - Degenbrecher's -6).
+    /// Order/capacity-limit points (sign carries polarity, e.g. Degenbrecher's -6).
     CapacityLimit,
     /// Power Plant drone-recovery %.
     DroneRecovery,

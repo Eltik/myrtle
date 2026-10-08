@@ -32,7 +32,7 @@ pub const POOL_EPS: f64 = 1e-6;
 enum Source {
     /// Flat / gate-resolved contribution.
     Direct,
-    /// Scales on a facility/room count - survives automation suppression
+    /// Scales on a facility/room count; survives automation suppression
     /// ("excluding productivity granted based on facility count").
     RoomCountScaled,
     /// Emitted by the peer-scaling relaxation.

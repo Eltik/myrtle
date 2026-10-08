@@ -1294,7 +1294,7 @@
           "auth"
         ],
         "summary": "Forget the stored game credentials for the caller's own account.",
-        "description": "The site session stays valid and the already-synced data stays put; what is\nrevoked is our ability to reach Yostar on their behalf. Re-syncing then\nneeds a fresh email code, which is the point.\n\nIdempotent: disconnecting twice is not an error. `removed` reports whether\nthere was anything stored to remove.",
+        "description": "The site session stays valid and the already-synced data stays put; what is\nrevoked is our ability to reach Yostar on their behalf. Re-syncing then\nneeds a fresh email code, which is the point.\n\nIdempotent; `removed` reports whether anything was stored.",
         "operationId": "disconnect",
         "responses": {
           "200": {
@@ -16458,7 +16458,7 @@
       },
       "GameDataHealth": {
         "type": "object",
-        "description": "Tables that fell back to an empty default on the most recent load, per server.\n\nDeliberately does NOT flip the top-level `status`: a degraded table is a data\nproblem, not an availability one, and paging an uptime monitor for a cosmetic\ntable would train everyone to ignore it. Report it, don't alarm on it.",
+        "description": "Tables that fell back to an empty default on the most recent load, per server.\n\nDoes NOT flip the top-level `status`: a degraded table is a data problem, not an\navailability one, and paging an uptime monitor for a cosmetic table would train\neveryone to ignore it.",
         "required": [
           "degraded",
           "tables"
@@ -17465,7 +17465,7 @@
       },
       "LayoutResponse": {
         "type": "object",
-        "description": "The player's real base, every built slot of it.\n\nThis exists because a `BaseAssignment` is deliberately NOT a layout: it\ncarries only the rooms the plan has something to say about (production, plus\na staffed Control Center). Seeding a planner from it silently drops\ndormitories, power plants and every support facility - which then breaks the\npower balance AND the scoring, since dorm levels and facility counts feed\nthe clause engine.",
+        "description": "The player's real base, every built slot of it.\n\nA `BaseAssignment` is deliberately NOT a layout: it carries only the rooms\nthe plan has something to say about (production, plus a staffed Control\nCenter). Seeding a planner from it drops dormitories, power plants and every\nsupport facility, which breaks the power balance AND the scoring (dorm levels\nand facility counts feed the clause engine).",
         "required": [
           "rooms",
           "presets"
@@ -17763,7 +17763,7 @@
       },
       "LmdIncomeDto": {
         "type": "object",
-        "description": "LMD the account earns in a day, and the days until `lmd_missing` is\ncovered - once from the base and mission chests alone, once with every\nday's natural sanity spent on the LMD farming stage.",
+        "description": "LMD the account earns in a day, and the days until `lmd_missing` is\ncovered: once from the base and mission chests alone, once with every\nday's natural sanity spent on the LMD farming stage.",
         "required": [
           "dailies_per_day",
           "farming_stage",
@@ -19383,7 +19383,7 @@
               },
               {
                 "$ref": "#/components/schemas/PlanRecipe",
-                "description": "The crafting recipe, when this item has one.\n\nThis closes a genuine cycle in the data: a recipe's costs are themselves\n`PlanRequirementItem`s, which may in turn be craftable. ts-rs emits\nmutually referencing types and handles it, but utoipa inlines nested\nschemas while collecting them and would recurse until the stack runs\nout, so the cycle is cut here and the schema emits a `$ref` instead.\nRemoving this attribute makes the whole `OpenAPI` document unbuildable,\nwhich takes the server down at startup rather than failing a test."
+                "description": "The crafting recipe, when this item has one.\n\nA cycle: a recipe's costs are `PlanRequirementItem`s, which may be\ncraftable. ts-rs copes, but utoipa inlines nested schemas and would\nrecurse until the stack runs out, so the cycle is cut here as a `$ref`.\nWithout the attribute the `OpenAPI` document cannot be built and the\nserver dies at startup, not in a test."
               }
             ]
           },
@@ -22111,7 +22111,7 @@
       },
       "StatusOk": {
         "type": "object",
-        "description": "The `{\"status\":\"ok\"}` success body for endpoints that return no payload.\n\nThe type IS the documented schema and the serialized body, so there is no\nsecond declaration to keep in agreement. It reached the wire as an untyped\n`serde_json::json!` before, which meant the `OpenAPI` document described it\nfrom a hand-written copy.",
+        "description": "The `{\"status\":\"ok\"}` success body for endpoints that return no payload.\n\nThe type is both the documented schema and the serialized body. It used to be\nan untyped `serde_json::json!`, which the `OpenAPI` document described from a\nhand-written copy.",
         "required": [
           "status"
         ],
@@ -23727,7 +23727,7 @@
       },
       "SustainabilityDto": {
         "type": "object",
-        "description": "The rotation validated by a time-stepped morale simulation (game-true drain\nand dorm-recovery rates): honest evidence the plan survives its own rhythm,\ninstead of an unchecked recommendation.",
+        "description": "The rotation run through a time-stepped morale simulation (game-true drain\nand dorm-recovery rates): does the plan survive its own rhythm.",
         "required": [
           "verdict",
           "horizon_hours",
@@ -24324,7 +24324,7 @@
       },
       "TranslationEntry": {
         "type": "object",
-        "description": "One row of the translation editor: the key and its English source joined to\nthis locale's translation, if any.\n\n`is_stale` is computed in SQL rather than stored - it is true when a\ntranslation exists but was written against an older English source, which\nis the only staleness this system has.\n\n`translated_source_text` is the English that was on screen when the value\nwas saved. It is what turns `is_stale` from a badge into a diff, and it is\n`None` for rows saved before the snapshot column existed.",
+        "description": "One row of the translation editor: the key and its English source joined to\nthis locale's translation, if any.\n\n`is_stale` is computed in SQL, not stored: a translation exists but was\nwritten against an older English source. That is the only staleness there is.\n\n`translated_source_text` is the English on screen when the value was saved,\nwhich turns `is_stale` from a badge into a diff. `None` for rows saved before\nthe snapshot column existed.",
         "required": [
           "key",
           "namespace",
@@ -24830,7 +24830,7 @@
               "type": "integer",
               "format": "int32"
             },
-            "description": "One flag per sign-in **claimed** this month, in claim order: `1` if the\nmonthly-subscription Daily Supply came with that claim, `0` if not.\n\nThis is the game's raw `checkInHistory`, and it is **not** a per-day\ncalendar: a missed day produces no entry at all. Reading `flags[d - 1]`\nas \"day `d` was claimed\" is wrong, and counting the `1`s counts monthly\ncard days, not sign-ins. (Verified against `user_status.monthly_sub_end`\nover the whole user table: the final flag agrees with subscription state\nin 2 193 of 2 219 non-empty rows.) Use [`Self::claimed_this_month`] for\nthe sign-in count."
+            "description": "One flag per sign-in claimed this month, in claim order: `1` if the\nmonthly-subscription Daily Supply came with that claim, `0` if not.\n\nThe game's raw `checkInHistory`, not a per-day calendar: a missed day\nadds no entry, so `flags[d - 1]` is not \"day `d` was claimed\", and the\n`1`s count monthly card days, not sign-ins. (Checked against\n`user_status.monthly_sub_end`: the final flag agrees with subscription\nstate in 2 193 of 2 219 non-empty rows.) Use [`Self::claimed_this_month`]\nfor the sign-in count."
           },
           "register_ts": {
             "type": [
@@ -25206,7 +25206,7 @@
       },
       "VerifySession": {
         "type": "object",
-        "description": "The `/auth/verify` response: the session a token currently represents.\n\nSerialized directly by the handler, so this declaration is the wire format,\nthe `OpenAPI` schema and the generated TypeScript at once.",
+        "description": "The `/auth/verify` response: the session a token currently represents.",
         "required": [
           "valid",
           "userId",
@@ -25261,7 +25261,7 @@
       },
       "ViewRecorded": {
         "type": "object",
-        "description": "Whether a `POST /tier-lists/{slug}/view` counted as a new view.\n\nSerialized directly by the handler, so this declaration is the wire format,\nthe `OpenAPI` schema and the generated TypeScript at once.",
+        "description": "Whether a `POST /tier-lists/{slug}/view` counted as a new view.",
         "required": [
           "unique"
         ],

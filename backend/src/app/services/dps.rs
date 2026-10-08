@@ -38,9 +38,8 @@ pub struct OperatorListEntry {
     pub available_skills: Vec<i32>,
     pub available_modules: Vec<i32>,
     /// `uniEquipId` for each entry of `available_modules`, same index, resolved
-    /// through the same path the simulator uses. Without this the client has
-    /// only a bare integer and has to guess which module it names by counting
-    /// down a list it fetched from a different endpoint.
+    /// through the simulator's path. Without it the client would have to guess
+    /// which module a bare integer names from a list off another endpoint.
     pub available_module_ids: Vec<String>,
     pub default_skill: i32,
     pub default_module: i32,

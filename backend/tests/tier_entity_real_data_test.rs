@@ -474,9 +474,6 @@ fn main_story_is_one_entry_per_episode_in_order() {
     assert!(validate([(gd, &assets)], EntityKind::MainStory, "act17side").is_err());
 }
 
-/// Every kind's catalogue, one pretty-printed JSON file per kind.
-/// Run it before and after a change to `tier_entity` and diff the two
-/// directories: a refactor must leave every file byte-identical.
 /// The operator pool's race, nation and faction facets: the values the
 /// picker's Race, Nation and Faction filters offer and match on. Counted over
 /// the obtainable catalogue on EN 2026-10-08: 409 operators, 26 with no race
@@ -536,6 +533,9 @@ fn operators_carry_race_nation_and_faction_facets() {
     assert!(rhine >= 12, "rhine {rhine}");
 }
 
+/// Every kind's catalogue, one pretty-printed JSON file per kind.
+/// Run it before and after a change to `tier_entity` and diff the two
+/// directories: a refactor must leave every file byte-identical.
 /// `CATALOGUE_DUMP_DIR=/path cargo test --test tier_entity_real_data_test dump_every_catalogue -- --ignored`
 #[test]
 #[ignore = "writes every kind's catalogue as JSON to CATALOGUE_DUMP_DIR"]

@@ -336,19 +336,17 @@ pub async fn refresh(
     )
     .await?;
 
-    // What the game says has been read goes in BEFORE the grade, and the grade
-    // goes off the async runtime. Both halves of that are the 2026-09-24
-    // defect.
-    // `calculate_user_grade` scores INLINE on this task: 40,327 ms standalone in
-    // a debug build, 73,011 ms of the failing request's 75.967 s as
-    // `myrtle_cpu_task_duration_seconds_sum{kind="user_grade"}` measured it. A
-    // task inside inline compute is never polled, so the 30 s handler timeout in
-    // `middleware` could not be OBSERVED until the scoring returned, and
-    // `tokio::time::timeout` polls its inner future first, so it fired at the
-    // first await afterwards and DROPPED everything behind it. That is why the
-    // request answered 5xx at 75.967 s, `user_scores` was written (its INSERT
-    // had been sent) and `user_game_story_read` held 0 rows. The store itself is
-    // 19 ms for 1,365 rows, so it belongs ahead of the scoring, not behind it.
+    // The 2026-09-24 defect, both halves: the game's read marks are stored BEFORE
+    // the grade, and the grade runs off the async runtime.
+    // `calculate_user_grade` scored INLINE on this task: 40,327 ms standalone in a
+    // debug build, 73,011 ms of the failing request's 75.967 s
+    // (`myrtle_cpu_task_duration_seconds_sum{kind="user_grade"}`). A task inside
+    // inline compute is never polled, so the 30 s handler timeout in `middleware`
+    // wasn't OBSERVED until scoring returned; `tokio::time::timeout` polls its inner
+    // future first, so it fired at the next await and DROPPED everything after it.
+    // Hence the 5xx at 75.967 s, `user_scores` written (its INSERT was already sent)
+    // and 0 rows in `user_game_story_read`. The store is 19 ms for 1,365 rows, so it
+    // goes ahead of the scoring.
     let mut import = serde_json::json!({
         "ok": false,
         "error": "the account row was not found after the sync",
@@ -357,37 +355,34 @@ pub async fn refresh(
     if let Some(user) = find_by_uid(&state.db, user_id).await? {
         import = import_game_read(state, user_id, user.id, &game_story).await;
 
-        // The grade on its own task, bounded, and the scoring on the BLOCKING
-        // POOL rather than on a runtime worker.
+        // The grade on its own task, bounded, with the scoring on the BLOCKING POOL
+        // rather than a runtime worker.
         //
         // Its own task was not enough. Measured 2026-09-24: the grade held its
         // admission for 73.620 s
-        // (`myrtle_cpu_task_duration_seconds_sum{kind="user_grade"}`), and this
-        // 12 s budget was not observed until 23:36:36.532, 73.6 s after the
-        // import at 23:35:22.916, so the deadline passed 61.6 s unnoticed. A
-        // `tokio::time::timeout` is only observed when its own task is polled,
-        // and with one worker inside a non-yielding 73 s compute the runtime's
-        // timer was not serviced on time either. `cpu::admit` bounded how many
-        // such computes could run at once; it never took the compute off the
-        // worker, which is exactly the distinction `cpu`'s module doc draws.
-        // Measured offline on the same account, one runtime, the same probe
-        // running `/auth/verify`'s two queries every 100 ms
+        // (`myrtle_cpu_task_duration_seconds_sum{kind="user_grade"}`) and this 12 s
+        // budget was not observed until 23:36:36.532, 73.6 s after the import at
+        // 23:35:22.916: 61.6 s late. A `tokio::time::timeout` is observed only when
+        // its task is polled, and with one worker stuck in a non-yielding 73 s
+        // compute the timer wasn't serviced on time either. `cpu::admit` bounds how
+        // many such computes run at once; it never moved the compute off the worker
+        // (the distinction `cpu`'s module doc draws).
+        // Offline, same account, one runtime, a probe running `/auth/verify`'s two
+        // queries every 100 ms
         // (`sync_stall_test::the_grade_budget_is_observed_on_time_only_off_the_runtime`):
-        // on a worker the budget was observed at 39.604 s and 43.156 s over two
-        // runs, both of them the instant the grade RETURNED (39.603 s,
-        // 43.156 s); off it, 12.003 s and 12.002 s while the grade still took
-        // 40.373 s and 40.908 s. The session probe was never the casualty: its
-        // worst was 0.012 s and 0.021 s on a worker, so nothing in this path
-        // held a lock a user route needed.
+        // on a worker the budget was observed at 39.604 s and 43.156 s, the instant
+        // the grade RETURNED (39.603 s, 43.156 s); off it, 12.003 s and 12.002 s
+        // while the grade still took 40.373 s and 40.908 s. The session probe never
+        // suffered (worst 0.012 s and 0.021 s on a worker), so nothing here held a
+        // lock a user route needed.
         //
-        // `calculate_user_grade` is an `async fn` whose only awaits are the
-        // seven up-front queries, and `core/grade` is another session's file,
-        // so it is not split here into load-then-score. Instead the whole call
-        // is DRIVEN from a blocking-pool thread: `Handle::block_on` inside
-        // `cpu::run` parks that thread on the queries, which stay registered
-        // with this runtime's IO driver, and runs the scoring there. No async
-        // worker is held at any point, so the awaited `JoinHandle` yields and
-        // the budget below fires at 12 s.
+        // `calculate_user_grade` is an `async fn` whose only awaits are its seven
+        // up-front queries, and `core/grade` is another session's file, so it isn't
+        // split into load-then-score here. The whole call is DRIVEN from a
+        // blocking-pool thread: `Handle::block_on` inside `cpu::run` parks that
+        // thread on the queries (still registered with this runtime's IO driver) and
+        // scores there. No async worker is held, so the awaited `JoinHandle` yields
+        // and the budget fires at 12 s.
         let db = state.db.clone();
         let scoring_db = state.db.clone();
         let game_data = state.default_game_data();

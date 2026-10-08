@@ -16,10 +16,9 @@ mod common;
 
 /// No table may fall back to its default.
 ///
-/// A failure here names the table and the serde error, which is normally enough
-/// to spot the culprit: most often an enum missing a variant. The fix is
-/// usually `#[serde(other)] Unknown` on that enum rather than adding the one new
-/// variant, since the next unnamed value would break it again.
+/// A failure names the table and the serde error, most often an enum missing a
+/// variant. Fix with `#[serde(other)] Unknown` on that enum rather than adding the
+/// one new variant, or the next unnamed value breaks it again.
 #[test]
 fn no_table_falls_back_to_default() {
     let gd = common::load_game_data();

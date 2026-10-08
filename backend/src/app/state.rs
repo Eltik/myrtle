@@ -320,9 +320,8 @@ fn parse_asset_ws_urls(default_server: Server) -> HashMap<Server, String> {
 /// Lifted out of `main` so binaries build the same map the server does, with
 /// the same fallbacks: a non-default server that fails to load is inserted as a
 /// placeholder pointing at the default server's data with `loaded = false`, and
-/// Bilibili shares CN's cell so the two hot-reload together. A tool that
-/// rebuilt this by hand would drift from the server the first time either
-/// changed, and would drift silently.
+/// Bilibili shares CN's cell so the two hot-reload together. A hand-built copy
+/// would drift from the server silently.
 ///
 /// `phase` wraps each server's load for startup instrumentation. It returns a
 /// guard the caller drops when the phase ends; pass `|_| ()` from a context

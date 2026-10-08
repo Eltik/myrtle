@@ -33,7 +33,7 @@ pub enum LineDisposition {
     /// Priced strategy, but its gate isn't met by this crew/base.
     Inactive,
     /// Real and unconditional, but a stronger skill of the same non-stacking
-    /// type is already active in this crew - the game's "(only the most
+    /// type is already active in this crew: the game's "(only the most
     /// effective one will take effect)" clause. Zero marginal, not a fault.
     Covered,
     /// A conditional Control-Center skill whose gate IS met by at least one

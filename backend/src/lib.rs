@@ -33,9 +33,8 @@
     clippy::struct_field_names,
     clippy::struct_excessive_bools,
     clippy::too_many_lines,
-    // Floating-point lints: `mul_add`/`ln_1p` are more accurate but change numerical
-    // results, and the DPS/HPS math must match the reference implementation. We keep
-    // the explicit `a * b + c` form and silence the lint rather than alter outputs.
+    // `mul_add`/`ln_1p` are more accurate but change numerical results, and the
+    // DPS/HPS math must match the reference implementation.
     clippy::suboptimal_flops,
     clippy::imprecise_flops
 )]

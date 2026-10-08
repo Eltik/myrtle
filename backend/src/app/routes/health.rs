@@ -28,9 +28,9 @@ struct CacheHealth {
 
 /// Tables that fell back to an empty default on the most recent load, per server.
 ///
-/// Deliberately does NOT flip the top-level `status`: a degraded table is a data
-/// problem, not an availability one, and paging an uptime monitor for a cosmetic
-/// table would train everyone to ignore it. Report it, don't alarm on it.
+/// Does NOT flip the top-level `status`: a degraded table is a data problem, not an
+/// availability one, and paging an uptime monitor for a cosmetic table would train
+/// everyone to ignore it.
 #[derive(Serialize, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 struct GameDataHealth {

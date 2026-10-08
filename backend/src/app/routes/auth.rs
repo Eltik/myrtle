@@ -15,9 +15,6 @@ use crate::database::models::profile_layout::ProfileLayoutPatch;
 use crate::database::queries;
 
 /// The `/auth/verify` response: the session a token currently represents.
-///
-/// Serialized directly by the handler, so this declaration is the wire format,
-/// the `OpenAPI` schema and the generated TypeScript at once.
 #[derive(serde::Serialize, TS, ToSchema)]
 #[ts(export)]
 #[serde(rename_all = "camelCase")]
@@ -454,8 +451,7 @@ pub async fn update_settings(
 /// revoked is our ability to reach Yostar on their behalf. Re-syncing then
 /// needs a fresh email code, which is the point.
 ///
-/// Idempotent: disconnecting twice is not an error. `removed` reports whether
-/// there was anything stored to remove.
+/// Idempotent; `removed` reports whether anything was stored.
 #[utoipa::path(
     post,
     path = "/auth/disconnect",

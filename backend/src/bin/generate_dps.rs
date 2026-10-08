@@ -17,11 +17,9 @@
 //!   cargo run --bin generate-dps -- --healing-transpile   # Only transpile HPS Python -> Rust
 //!   cargo run --bin generate-dps -- --repo <path>         # Custom `ArknightsDpsCompare` path
 
-// This binary is a code generator/transpiler: large emit functions, intentional
-// numeric casts when emitting literals, float comparisons against parsed constants,
-// string-building via `push_str(format!(..))`, and explicit token-mapping match arms
-// are inherent to the job. Silence the pedantic/nursery lints that flag those patterns
-// rather than distort the generator.
+// A transpiler: large emit functions, numeric casts when emitting literals, float
+// comparisons against parsed constants, `push_str(format!(..))` and token-mapping
+// match arms come with the job, so the lints that flag them are silenced.
 #![allow(
     clippy::too_many_lines,
     clippy::trivially_copy_pass_by_ref,
@@ -373,8 +371,7 @@ fn parse_operators(
 
     let mut result = HashMap::new();
     for (i, (start, class_name)) in class_positions.iter().enumerate() {
-        // Skip base classes that aren't real operators. `Healer` extends
-        // `Operator` but is itself just a thin shim used for inheritance.
+        // `Healer` is an inheritance shim, not an operator.
         if class_name == "Healer" {
             continue;
         }
@@ -1704,7 +1701,7 @@ fn transpile_skill_dps(
 
     // Pass 2: transpile lines. No `let mut` in the body, just assignments
     let mut declared_vars: std::collections::HashSet<String> = std::collections::HashSet::new();
-    // Mark everything as already declared so transpile_expressions won't add `let mut`
+    // All pre-declared, so transpile_expressions won't add `let mut`
     declared_vars.extend(builtin_vars.iter().map(std::string::ToString::to_string));
     declared_vars.extend(all_vars.iter().cloned());
 

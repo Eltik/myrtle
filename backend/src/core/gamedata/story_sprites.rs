@@ -10,7 +10,8 @@
 //! The entry's art is the set's default body, picked by the same rule the
 //! story reader uses for a sprite named with no face or body index
 //! (`core::story::assets`, rule 3, else the hub's first sprite as its rules
-//! 2a and 2b do), from the lowest-numbered set that has one. Bodies carry their default face, so the whole plate reads on its own.
+//! 2a and 2b do), from the lowest-numbered set that has one. Bodies carry
+//! their default face, so the whole plate reads on its own.
 //!
 //! Where the face sits comes from the set's `hub.json` (`facePos` and
 //! `faceSize` of the first group, in body pixels from the top-left), so a

@@ -16,11 +16,11 @@ pub enum AssetKind {
     EnemyIcon,    // textures/spritepack/icon_enemies_N/
     ItemIcon,     // textures/arts/ui_item_icons_N/ + arts/items/*_hub/
     MedalIcon,    // textures/spritepack/ui_medal_icons_N/
-    /// `textures/spritepack/ui_home_act_banner_gacha`_{h2,en}_`N/{picLimited_76_0_1}.png`
+    /// `textures/spritepack/ui_home_act_banner_gacha_{h2,en}_N/{picLimited_76_0_1}.png`
     /// Keyed by the NORMALISED stem (lowercase, alphanumerics only): the packs
     /// spell the same pool `picClassicAttain_68_0_2` and `picClassic_Attain_57_0_2`.
     GachaBanner,
-    /// textures/arts/ui/stage/[uc]`homeentry/{act_id}.png`: the home-screen
+    /// `textures/arts/ui/stage/[uc]homeentry/{act_id}.png`: the home-screen
     /// entry card, the event's official key visual. Only that directory: the
     /// `ui_zone_home_theme_{act_id}` spritepacks unpack to the whole atlas
     /// page (1000 or 1024 px square, 33 on CN / 45 on EN), not the card, and
@@ -39,7 +39,7 @@ pub enum AssetKind {
     LoadingIllust,
     /// `textures/spritepack/ui_kv_img_N/{kv_id}.png` (skin brand key visuals)
     BrandKv,
-    /// `textures/spritepack/ui_brand_image_hub_N/brand`_{`brand_id}.png`
+    /// `textures/spritepack/ui_brand_image_hub_N/brand_{brand_id}.png`
     BrandLogo,
     /// `textures/spritepack/fur_icon_N/{furniture_icon_id}.png`: the furniture
     /// catalogue icons, which event shops sell by the piece.

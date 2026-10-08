@@ -93,9 +93,6 @@ fn check_view_rate(ip: &str) -> bool {
 }
 
 /// Whether a `POST /tier-lists/{slug}/view` counted as a new view.
-///
-/// Serialized directly by the handler, so this declaration is the wire format,
-/// the `OpenAPI` schema and the generated TypeScript at once.
 #[derive(serde::Serialize, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct ViewRecorded {

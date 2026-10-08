@@ -194,8 +194,8 @@ fn parse_skin_identity(dir_name: &str) -> (String, String) {
 /// keyed by its file stem. [alpha]/[mask] companion textures are excluded
 /// and any stem missing both atlas+skel is dropped (incomplete set).
 //
-// `name` is lowercased into `lower` before the extension checks below, so those
-// `ends_with` comparisons are already case-insensitive (the lint's concern is moot).
+// `name` is lowercased into `lower` first, so these `ends_with` checks are
+// already case-insensitive.
 #[allow(clippy::case_sensitive_file_extension_comparisons)]
 fn collect_all_spine_sets(dir: &Path, base_url: &str) -> Vec<(String, SpineFiles)> {
     let Ok(entries) = std::fs::read_dir(dir) else {
