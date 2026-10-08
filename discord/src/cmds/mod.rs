@@ -12,6 +12,7 @@ pub mod collection;
 pub mod general;
 pub mod operator;
 pub mod tts;
+pub mod voiceline;
 pub mod warn;
 
 #[must_use]
@@ -35,6 +36,7 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         collection::collection(),
         birthday::birthday(),
         tts::tts(),
+        voiceline::voiceline(),
     ]
 }
 

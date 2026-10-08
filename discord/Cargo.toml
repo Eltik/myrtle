@@ -27,9 +27,9 @@ unicode-normalization = "0.1.25"
 songbird = { version = "0.6.0", default-features = false, features = [
   "driver", "gateway", "serenity", "native", "tungstenite"
 ] }
-# Songbird leaves symphonia's codecs to the caller; `mp3` decodes Google Translate's speech,
-# the only format the bot ever plays.
-symphonia = { version = "0.5.5", default-features = false, features = ["mp3"] }
+# Songbird leaves symphonia's codecs to the caller: `mp3` decodes Google Translate's speech,
+# `ogg` and `vorbis` the operator voice lines `/voiceline` plays.
+symphonia = { version = "0.5.5", default-features = false, features = ["mp3", "ogg", "vorbis"] }
 # Songbird's Opus encoder. `bundled` always builds the vendored libopus with CMake and links it
 # statically, instead of whichever system libopus pkg-config happens to find first.
 opus2 = { version = "0.4.0", features = ["bundled"] }

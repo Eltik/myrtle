@@ -231,7 +231,7 @@ pub async fn collection_story(
     Ok(())
 }
 
-fn no_match(kind: &str, query: &str) -> Error {
+pub(crate) fn no_match(kind: &str, query: &str) -> Error {
     format!(
         "No {kind} matches `{}`. Try picking one from the suggestions.",
         ellipsize(query.trim(), 100)
@@ -240,7 +240,7 @@ fn no_match(kind: &str, query: &str) -> Error {
 }
 
 /// The item whose id is exactly `query` (an autocomplete pick), else the best name match.
-fn resolve<'a, T>(
+pub(crate) fn resolve<'a, T>(
     items: &'a [T],
     query: &str,
     id: impl Fn(&'a T) -> &'a str,
@@ -286,18 +286,18 @@ fn choices<T>(
 // Operators
 // ---------------------------------------------------------------------------
 
-fn operator_names(op: &Operator) -> Vec<&str> {
+pub(crate) fn operator_names(op: &Operator) -> Vec<&str> {
     let mut names = vec![op.name.as_str()];
     names.extend(op.appellation());
     names
 }
 
 /// Obtainable operators first: "Sharp" should find the one players can recruit.
-fn operator_priority(op: &Operator) -> u8 {
+pub(crate) fn operator_priority(op: &Operator) -> u8 {
     u8::from(op.is_not_obtainable)
 }
 
-async fn autocomplete_operator(
+pub(crate) async fn autocomplete_operator(
     ctx: Context<'_>,
     partial: &str,
 ) -> Vec<serenity::AutocompleteChoice> {

@@ -47,23 +47,30 @@ pub async fn tts_join(ctx: Context<'_>) -> Result<(), Error> {
     if stage {
         return Err("Text-to-speech doesn't read stage channels.".into());
     }
-    let (session, joined) =
-        ctx.data()
-            .tts
-            .start_session(guild, channel)
-            .map_err(|refused| -> Error {
-                match refused {
-                JoinRefused::Unavailable => "Text-to-speech is switched off on this bot.".into(),
-                JoinRefused::AlreadyHere => format!("I'm already reading <#{channel}>.").into(),
-                JoinRefused::Elsewhere(other) => format!(
-                    "I'm already reading <#{other}> in this server. Run `/tts leave` there first."
-                )
-                .into(),
-                JoinRefused::TooSoon => {
-                    "I joined or left voice here a moment ago. Try again in a few seconds.".into()
-                }
+    let started = ctx.data().tts.start_session(guild, channel, true);
+    // Already here for `/voiceline`: start reading the chat without rejoining. A session still
+    // joining or already leaving is left alone and answered below.
+    if started.as_ref().err() == Some(&JoinRefused::AlreadyHere)
+        && let Some(session) = ctx.data().tts.session(guild)
+        && session.is_joined()
+        && !session.is_stopping()
+        && session.start_reading_chat()
+    {
+        return announce(ctx, &session).await;
+    }
+    let (session, joined) = started.map_err(|refused| -> Error {
+        match refused {
+            JoinRefused::Unavailable => "Text-to-speech is switched off on this bot.".into(),
+            JoinRefused::AlreadyHere => format!("I'm already reading <#{channel}>.").into(),
+            JoinRefused::Elsewhere(other) => {
+                format!("I'm already in <#{other}> in this server. Run `/tts leave` there first.")
+                    .into()
             }
-            })?;
+            JoinRefused::TooSoon => {
+                "I joined or left voice here a moment ago. Try again in a few seconds.".into()
+            }
+        }
+    })?;
     // Joining waits on Discord's voice server, which can take longer than an interaction allows.
     ctx.defer_ephemeral().await?;
     if !joined.await.unwrap_or(false) {
@@ -73,7 +80,13 @@ pub async fn tts_join(ctx: Context<'_>) -> Result<(), Error> {
         )
         .into());
     }
-    if let Err(e) = session.channel.say(ctx.http(), JOINED_NOTICE).await {
+    announce(ctx, &session).await
+}
+
+/// Post the join notice in the channel's chat and confirm to the invoker.
+async fn announce(ctx: Context<'_>, session: &Session) -> Result<(), Error> {
+    let channel = session.channel;
+    if let Err(e) = channel.say(ctx.http(), JOINED_NOTICE).await {
         tracing::debug!("TTS join notice in {channel} failed: {e}");
     }
     reply(

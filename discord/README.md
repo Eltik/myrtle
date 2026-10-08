@@ -24,6 +24,7 @@ The Discord companion for [myrtle.moe](https://myrtle.moe). It moderates guilds,
 - **Game-data lookups** - `/collection` shows operators, enemies, stages, and story groups from the public backend, with fuzzy, accent-insensitive autocomplete.
 - **Operator birthdays** - a daily post at the EN reset (04:00 UTC-7) for every operator whose birthday it is, plus `today` and `upcoming` lookups.
 - **Text-to-speech** - `/tts join` brings the bot into your voice channel, and members in that channel who type in its chat are read out as "name said: text", in a voice each member picks (25 languages and accents, spoken by Google Translate). See [Text-to-speech](#text-to-speech).
+- **Operator voice lines** - `/voiceline` plays an operator's voice line, in any language it is recorded in, in your voice channel, or posts it as an audio file when you aren't in one. See [Voice lines](#voice-lines).
 - **Backend lookups** - endpoint reachability and latency, and platform statistics.
 - **Embed builder** - create and edit rich embeds from fields or raw JSON, and read an existing embed back as JSON.
 
@@ -39,6 +40,7 @@ The Discord companion for [myrtle.moe](https://myrtle.moe). It moderates guilds,
 | WebSocket | `tokio-tungstenite` 0.29 for the asset-pipeline watcher |
 | Voice | `songbird` 0.6 (send only, DAVE end-to-end encryption), libopus built from vendored source |
 | Speech | Google Translate's `translate_tts` endpoint over `reqwest`; MP3 decoded by symphonia |
+| Voice lines | Ogg Vorbis recordings from the public backend's `/api/assets/audio`, decoded by symphonia |
 | Logging | `tracing` + `tracing-subscriber` (env filter, JSON) |
 
 ## Prerequisites
@@ -162,6 +164,7 @@ Elevated commands pass for bot owners, for the guild's configured mod role, or f
 | `/tts skip` | In the bot's channel, or Move Members | Skip the rest of the message being read out |
 | `/tts nickname set <name> [user]` · `clear [user]` · `show [user]` | Yourself; Manage Nicknames for someone else | How a name is read before its messages, 1 to 32 characters with no mentions or links |
 | `/tts voice set <voice>` · `show` · `clear` | - | The voice your messages are read in, in every server. `voice` autocompletes from the 25 voices |
+| `/voiceline <operator> [line] [language]` | - | Play an operator's voice line in your voice channel, after anything being read out there; outside voice, the reply carries it as an `.ogg` file. `line` autocompletes from the operator's lines (default a random one), `language` from the languages it has (default Japanese). See [Voice lines](#voice-lines) |
 
 ### Operator pages
 
@@ -231,6 +234,18 @@ The name is the member's TTS nickname (`/tts nickname`) if one is set, else thei
 A message is never read when it comes from a bot, a webhook, or the system, starts with the `-` prefix, carries a sticker, or has nothing left after cleanup. Cleanup reads mentions as names, custom emoji as their names (a run of one emoji once), URLs as "link", masked links as their label, and fenced code as "code block"; it drops markdown symbols and timestamps, cuts any character repeated more than three times to three, and caps the text at `max_chars` at a word boundary. Attachments are never read.
 
 Each server has one FIFO queue of `queue_max` messages, and each member may have `user_queue_max` of them waiting; anything past either cap is dropped silently and the older messages are kept. The bot leaves 5 seconds after the last human leaves its channel, after `idle_secs` without speech, when it is moved or disconnected, and on `/tts leave`. A server can join or leave voice at most once per 5 seconds, which holds each server to 24 gateway voice updates a minute against the 120-per-minute limit on the connection.
+
+### Voice lines
+
+`/voiceline` plays one recording from the operator's own voice set, the lines the `/collection` Voice page lists; outfit and dialect sets (Ling's `nian#12`, `CN_TOPOLECT`) aren't offered. The recording comes from the public backend (`/api/voices/<id>` names it, `/api/assets/audio/...` serves it) as Ogg Vorbis, 44.1 kHz mono, about 9 KB a second (Amiya's idle line: 43 to 59 KB across its four languages). Nothing goes to Google.
+
+Where the line plays:
+
+- **The bot is in your voice channel**: the line joins the same queue as chat being read out, and counts against your `user_queue_max`. `/tts skip` skips it.
+- **The bot isn't in voice in this server**: it joins your channel to play the line but does **not** read the channel's chat. It leaves like any session (empty channel, `idle_secs` of quiet, `/tts leave`). A `/tts join` in that channel starts reading the chat without rejoining.
+- **Anywhere else** (you aren't in voice, the bot is in another channel, a stage channel, a full queue, TTS switched off, the 5-second join cooldown): the reply carries the recording as an `.ogg` file Discord plays inline, with one line saying why when it isn't simply that you aren't in voice.
+
+The reply is public: the operator, the line's title and text, the language and the voice actor.
 
 ### Speech from Google Translate
 
@@ -325,6 +340,7 @@ src/
 │   ├── collection.rs /collection operator, enemy, stage, story
 │   ├── operator/     /collection operator: page builders, layout and limits, state in custom_id
 │   ├── tts.rs        /tts join, leave, skip, nickname
+│   ├── voiceline.rs  /voiceline
 │   └── warn.rs       /warn add, list, remove, clear, policy
 ├── api/              Backend HTTP clients (status, stats, cached game data)
 ├── birthday.rs       Game-day dates, birthday parsing, the daily announcer

@@ -8,6 +8,10 @@
 //! The audio comes from Google Translate's speech endpoint, so every message read aloud is sent
 //! to Google.
 //!
+//! `/voiceline` plays an operator's voice line through the same session and queue. Run when the
+//! bot isn't in voice, it joins the invoker's channel without reading its chat; a `/tts join`
+//! there turns reading on.
+//!
 //! [`gate`] decides whether a message is spoken, [`text`] turns it into words, [`engine`] fetches
 //! the audio, [`voices`] lists the voices, and [`session`] holds the guild's place in the channel.
 
@@ -168,12 +172,14 @@ impl Tts {
         lock(&self.sessions).get(&guild).cloned()
     }
 
-    /// Start reading `channel` (`/tts join`). On success the receiver says whether the voice
-    /// connection came up; the session ends itself if it didn't.
+    /// Join `channel`, reading its chat aloud when `reads_chat` (`/tts join`) or only playing
+    /// what is queued (`/voiceline`). On success the receiver says whether the voice connection
+    /// came up; the session ends itself if it didn't.
     pub fn start_session(
         self: &Arc<Self>,
         guild: GuildId,
         channel: ChannelId,
+        reads_chat: bool,
     ) -> Result<(Arc<Session>, oneshot::Receiver<bool>), JoinRefused> {
         if !self.config.enabled() {
             return Err(JoinRefused::Unavailable);
@@ -195,6 +201,7 @@ impl Tts {
                 channel,
                 self.config.queue_max(),
                 self.config.user_queue_max(),
+                reads_chat,
             ));
             sessions.insert(guild, Arc::clone(&session));
             session
@@ -234,7 +241,7 @@ pub fn on_message(tts: &Arc<Tts>, ctx: &Context, bot_id: UserId, msg: &Message) 
         return;
     };
     // The cheapest refusal first: in a guild the bot isn't reading, nothing else is looked at.
-    let Some(session) = tts.session(guild_id) else {
+    let Some(session) = tts.session(guild_id).filter(|s| s.reads_chat()) else {
         return;
     };
     let automated = msg.author.bot
@@ -287,7 +294,7 @@ pub fn on_message(tts: &Arc<Tts>, ctx: &Context, bot_id: UserId, msg: &Message) 
             },
             &resolve,
         );
-        Utterance {
+        Utterance::Speech {
             text: text::attributed(&name, &words),
             voice: tts.voice_of(msg.author.id),
         }

@@ -484,6 +484,9 @@ pub struct VoiceData {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct VoiceLine {
+    /// The line's key in `charWords`: `char_002_amiya_CN_010`.
+    #[serde(default)]
+    pub char_word_id: String,
     /// The voice set: the operator id for the base set, with a skin or dialect suffix for
     /// the others (`char_2023_ling_CN_TOPOLECT`, `char_2023_ling@nian#12`).
     pub word_key: String,
@@ -492,6 +495,23 @@ pub struct VoiceLine {
     pub voice_index: i64,
     /// `HOME_SHOW`, `BATTLE_SKILL_1`, `BIRTHDAY`, ...
     pub place_type: String,
+    /// The line's recordings, one per voice-over language.
+    #[serde(default)]
+    pub data: Vec<VoiceClip>,
+}
+
+/// One recording of a voice line.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VoiceClip {
+    /// Under the backend's `/api/assets/audio`, already percent-encoded:
+    /// `/audio/sound_beta_2/voice_en/char_2023_ling_nian%2312/CN_001.ogg`.
+    pub voice_url: String,
+    /// `JP`, `EN`, `CN_MANDARIN`, `KR`, `CN_TOPOLECT`, `GER`, `ITA`, `RUS`, `FRE`, `SPA`,
+    /// `LINKAGE`.
+    pub language: String,
+    #[serde(default)]
+    pub cv_name: Vec<String>,
 }
 
 /// One entry of `handbookStageData` in `GET /api/static/handbook`: an operator's Paradox

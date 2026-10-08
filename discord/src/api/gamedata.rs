@@ -540,6 +540,9 @@ pub struct GameData {
     /// 25 of 441 have none (Amiya's other forms, the reserve and collab placeholders), and the
     /// Voice page is offered only where there is something to show.
     voice_presence: RwLock<HashMap<String, (Instant, bool)>>,
+    /// The last [`VOICE_CACHE_MAX`] operators' voice lines, for `/voiceline`: its line and
+    /// language autocompletes read them on every keystroke.
+    voice_cache: RwLock<HashMap<String, (Instant, Arc<VoiceData>)>>,
 }
 
 impl GameData {
@@ -557,6 +560,7 @@ impl GameData {
             paradox: Arc::default(),
             skill_table: Arc::default(),
             voice_presence: RwLock::default(),
+            voice_cache: RwLock::default(),
         }
     }
 
@@ -707,6 +711,61 @@ impl GameData {
         Ok(data)
     }
 
+    /// One operator's voice lines, cached for [`LIST_TTL`] across the last [`VOICE_CACHE_MAX`]
+    /// operators asked for.
+    pub async fn voice_lines(&self, id: &str) -> Result<Arc<VoiceData>, Error> {
+        if let Some((at, data)) = self.voice_cache.read().await.get(id)
+            && at.elapsed() < LIST_TTL
+        {
+            return Ok(Arc::clone(data));
+        }
+        let data = Arc::new(self.voices(id).await?);
+        let mut cache = self.voice_cache.write().await;
+        cache.insert(id.to_string(), (Instant::now(), Arc::clone(&data)));
+        while cache.len() > VOICE_CACHE_MAX {
+            let Some(oldest) = cache
+                .iter()
+                .min_by_key(|(_, (at, _))| *at)
+                .map(|(k, _)| k.clone())
+            else {
+                break;
+            };
+            cache.remove(&oldest);
+        }
+        Ok(data)
+    }
+
+    /// The audio of one voice-line recording, by its `voiceUrl`. Refuses anything over
+    /// [`CLIP_MAX_BYTES`] or not Ogg.
+    pub async fn voice_clip(&self, voice_url: &str) -> Result<Vec<u8>, Error> {
+        let url = clip_url(self.base()?, voice_url);
+        let response = self
+            .client
+            .get(&url)
+            .timeout(CLIP_TIMEOUT)
+            .send()
+            .await
+            .map_err(|e| format!("GET {url}: {e}"))?;
+        let status = response.status();
+        if !status.is_success() {
+            return Err(format!("GET {url}: HTTP {status}").into());
+        }
+        if response
+            .content_length()
+            .is_some_and(|n| n > CLIP_MAX_BYTES as u64)
+        {
+            return Err(format!("GET {url}: over {CLIP_MAX_BYTES} B").into());
+        }
+        let body = response
+            .bytes()
+            .await
+            .map_err(|e| format!("GET {url}: body: {e}"))?;
+        if body.len() > CLIP_MAX_BYTES || !body.starts_with(b"OggS") {
+            return Err(format!("GET {url}: not an Ogg file ({} B)", body.len()).into());
+        }
+        Ok(body.to_vec())
+    }
+
     /// Whether the operator has voice lines, if a fetch in the last [`LIST_TTL`] said.
     pub async fn known_voice_presence(&self, id: &str) -> Option<bool> {
         self.voice_presence
@@ -790,6 +849,21 @@ impl GameData {
             tracing::warn!("gamedata: {failed} list(s) failed to load at startup; retrying on use");
         }
     }
+}
+
+/// Operators whose voice lines [`GameData::voice_lines`] keeps. One response parses to a few
+/// hundred KB at most (Ling: 114 lines in three sets, 124 KB of JSON).
+const VOICE_CACHE_MAX: usize = 32;
+/// The largest voice clip fetched: under Discord's 10 MiB upload limit, and far over any line
+/// (Amiya's idle line is 43 to 59 KB in each language).
+pub const CLIP_MAX_BYTES: usize = 8 * 1024 * 1024;
+const CLIP_TIMEOUT: Duration = Duration::from_secs(15);
+
+/// A recording's URL. `voice_url` is already percent-encoded (`nian%2312`), so it is joined
+/// as it is, never encoded again.
+fn clip_url(base: &str, voice_url: &str) -> String {
+    let path = voice_url.trim_start_matches('/');
+    format!("{base}/api/assets/audio/{path}")
 }
 
 const OPERATORS_PATH: &str = "/api/operators/index";
@@ -921,6 +995,20 @@ mod tests {
         assert_eq!(
             data.asset_url("/textures/avg/bg/bg indoor.png"),
             "https://api.example.com/api/assets/textures/avg/bg/bg%20indoor.png"
+        );
+    }
+
+    /// The URL `/api/voices` gives is joined verbatim: the live outfit path is already
+    /// encoded, and the live fetch of this exact shape answered 200 `audio/ogg`.
+    #[test]
+    fn clip_urls_keep_the_backends_encoding() {
+        assert_eq!(
+            clip_url(
+                "https://api.myrtle.moe",
+                "/audio/sound_beta_2/voice_en/char_2023_ling_nian%2312/CN_001.ogg"
+            ),
+            "https://api.myrtle.moe/api/assets/audio/audio/sound_beta_2/voice_en/\
+             char_2023_ling_nian%2312/CN_001.ogg"
         );
     }
 
