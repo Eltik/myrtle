@@ -376,3 +376,36 @@ pub async fn update_settings(
     .await?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_every_server_code() {
+        let cases = [
+            ("en", Server::EN),
+            ("jp", Server::JP),
+            ("kr", Server::KR),
+            ("cn", Server::CN),
+            ("bili", Server::Bilibili),
+            ("tw", Server::TW),
+        ];
+        for (code, server) in cases {
+            assert_eq!(parse_server(code).ok(), Some(server), "{code}");
+        }
+    }
+
+    #[test]
+    fn codes_are_case_sensitive_and_unknown_ones_are_bad_requests() {
+        for code in ["EN", "Bilibili", "us", ""] {
+            match parse_server(code) {
+                Err(ApiError::BadRequest(msg)) => {
+                    assert_eq!(msg, format!("unknown server: {code}"));
+                }
+                Err(other) => panic!("{code}: unexpected error {other:?}"),
+                Ok(server) => panic!("{code}: parsed as {server:?}"),
+            }
+        }
+    }
+}

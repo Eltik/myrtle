@@ -384,3 +384,55 @@ pub async fn get_skins_index(state: &AppState, server: Server) -> Result<CachedJ
     })
     .await
 }
+
+#[cfg(test)]
+mod tests {
+    use super::collect_level_enemy_ids;
+    use serde_json::json;
+    use std::collections::HashSet;
+
+    fn set(ids: &[&str]) -> HashSet<String> {
+        ids.iter().map(|s| (*s).to_string()).collect()
+    }
+
+    #[test]
+    fn unions_db_refs_and_wave_action_keys() {
+        let level = json!({
+            "enemyDbRefs": [
+                { "id": "enemy_1007_slime", "level": 0 },
+                { "id": "enemy_1000_gopro" },
+                { "level": 1 },
+            ],
+            "waves": [
+                { "fragments": [
+                    { "actions": [
+                        { "key": "enemy_1007_slime" },
+                        { "key": "" },
+                        { "key": "enemy_1001_bigbo" },
+                        { "noKey": true },
+                    ]},
+                    { "noActions": true },
+                ]},
+                { "noFragments": true },
+            ],
+        });
+        assert_eq!(
+            collect_level_enemy_ids(&level),
+            set(&["enemy_1007_slime", "enemy_1000_gopro", "enemy_1001_bigbo"])
+        );
+    }
+
+    #[test]
+    fn non_enemy_action_keys_are_kept_too() {
+        // Action keys are not filtered by kind: a trap or token spawn key lands in
+        // the set and simply finds no enemy when looked up.
+        let level = json!({ "waves": [ { "fragments": [ { "actions": [ { "key": "trap_001_crate" } ] } ] } ] });
+        assert_eq!(collect_level_enemy_ids(&level), set(&["trap_001_crate"]));
+    }
+
+    #[test]
+    fn an_empty_level_has_no_enemies() {
+        assert!(collect_level_enemy_ids(&json!({})).is_empty());
+        assert!(collect_level_enemy_ids(&json!({ "enemyDbRefs": {}, "waves": "x" })).is_empty());
+    }
+}

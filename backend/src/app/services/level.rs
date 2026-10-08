@@ -107,3 +107,82 @@ fn camel_key(key: &str) -> String {
         None => String::new(),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn camel_key_lowercases_the_first_char_and_drops_a_trailing_underscore() {
+        assert_eq!(camel_key("MapData"), "mapData");
+        assert_eq!(camel_key("Type_"), "type");
+        assert_eq!(camel_key("alreadyCamel"), "alreadyCamel");
+        assert_eq!(camel_key("ID"), "iD");
+        assert_eq!(camel_key("_"), "");
+        assert_eq!(camel_key(""), "");
+        // Only one trailing underscore is stripped.
+        assert_eq!(camel_key("Key__"), "key_");
+    }
+
+    #[test]
+    fn camelize_keys_recurses_through_objects_and_arrays() {
+        let raw = json!({
+            "Options": { "CharacterLimit": 8, "Type_": "NORMAL" },
+            "Waves": [ { "Fragments": [ { "Actions": [ { "Key": "enemy_1007_slime" } ] } ] } ],
+            "Plain": "Value Stays",
+        });
+        assert_eq!(
+            camelize_keys(raw),
+            json!({
+                "options": { "characterLimit": 8, "type": "NORMAL" },
+                "waves": [ { "fragments": [ { "actions": [ { "key": "enemy_1007_slime" } ] } ] } ],
+                "plain": "Value Stays",
+            })
+        );
+        assert_eq!(camelize_keys(json!([1, "A", null])), json!([1, "A", null]));
+    }
+
+    #[test]
+    fn reshape_turns_the_flat_matrix_into_rows() {
+        let mut level = json!({ "MapData": { "Map": {
+            "Column_size": 3, "Row_size": 2, "Matrix_data": [1, 2, 3, 4, 5, 6],
+        }, "Other": true } });
+        reshape_map_matrix(&mut level);
+        assert_eq!(
+            level,
+            json!({ "MapData": { "Map": [[1, 2, 3], [4, 5, 6]], "Other": true } })
+        );
+    }
+
+    #[test]
+    fn reshape_keeps_a_ragged_tail_row() {
+        let mut level = json!({ "MapData": { "Map": {
+            "Column_size": 3, "Matrix_data": [1, 2, 3, 4],
+        } } });
+        reshape_map_matrix(&mut level);
+        assert_eq!(level, json!({ "MapData": { "Map": [[1, 2, 3], [4]] } }));
+    }
+
+    #[test]
+    fn reshape_without_matrix_data_yields_an_empty_grid() {
+        let mut level = json!({ "MapData": { "Map": { "Column_size": 2 } } });
+        reshape_map_matrix(&mut level);
+        assert_eq!(level, json!({ "MapData": { "Map": [] } }));
+    }
+
+    #[test]
+    fn reshape_is_a_no_op_when_there_is_nothing_to_reshape() {
+        for original in [
+            json!({ "MapData": { "Map": [[0, 1], [1, 0]] } }),
+            json!({ "MapData": { "Map": { "Column_size": 0, "Matrix_data": [1] } } }),
+            json!({ "MapData": { "Map": { "Matrix_data": [1] } } }),
+            json!({ "MapData": "not an object" }),
+            json!({ "Other": 1 }),
+        ] {
+            let mut level = original.clone();
+            reshape_map_matrix(&mut level);
+            assert_eq!(level, original);
+        }
+    }
+}

@@ -401,3 +401,82 @@ pub async fn delete_preset(state: &AppState, user_id: Uuid, name: &str) -> Resul
     queries::delete_preset(&state.db, user_id, name).await?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::slim_plan_operator;
+    use serde_json::{Value, json};
+
+    fn slim(v: Value) -> Value {
+        let Value::Object(mut map) = v else {
+            panic!("fixture must be an object")
+        };
+        slim_plan_operator(&mut map);
+        Value::Object(map)
+    }
+
+    #[test]
+    fn empties_and_nulls_the_unread_fields_that_are_present() {
+        let out = slim(json!({
+            "name": "Amiya",
+            "talents": [{ "x": 1 }],
+            "potentialRanks": [1, 2],
+            "baseSkills": [1],
+            "handbook": { "big": true },
+            "profile": "text",
+        }));
+        assert_eq!(
+            out,
+            json!({
+                "name": "Amiya",
+                "talents": [],
+                "potentialRanks": [],
+                "baseSkills": [],
+                "handbook": null,
+                "profile": null,
+            })
+        );
+    }
+
+    #[test]
+    fn absent_fields_are_not_added() {
+        let out = slim(json!({ "name": "Amiya" }));
+        assert_eq!(out, json!({ "name": "Amiya" }));
+    }
+
+    #[test]
+    fn keeps_only_the_first_skill_level() {
+        let out = slim(json!({ "skills": [
+            { "skillId": "s1", "static": { "Levels": [{ "Name": "L1" }, { "Name": "L2" }, { "Name": "L3" }] } },
+            { "skillId": "s2", "static": { "Levels": [] } },
+            { "skillId": "s3", "static": null },
+            "not an object",
+        ]}));
+        assert_eq!(
+            out,
+            json!({ "skills": [
+                { "skillId": "s1", "static": { "Levels": [{ "Name": "L1" }] } },
+                { "skillId": "s2", "static": { "Levels": [] } },
+                { "skillId": "s3", "static": null },
+                "not an object",
+            ]})
+        );
+    }
+
+    #[test]
+    fn strips_module_data_and_description() {
+        let out = slim(json!({ "modules": [
+            { "uniEquipId": "uniequip_002_amiya", "data": { "phases": [1, 2, 3] }, "uniEquipDesc": "long text" },
+            { "uniEquipId": "uniequip_003_amiya" },
+            7,
+        ]}));
+        assert_eq!(
+            out,
+            json!({ "modules": [
+                { "uniEquipId": "uniequip_002_amiya", "data": null, "uniEquipDesc": "" },
+                { "uniEquipId": "uniequip_003_amiya", "data": null, "uniEquipDesc": "" },
+                7,
+            ]})
+        );
+    }
+}
