@@ -7,8 +7,10 @@ use poise::serenity_prelude as serenity;
 use serde_json::json;
 use tokio::sync::oneshot;
 
+use crate::checks::require_guild;
 use crate::db;
 use crate::types::{Context, Error};
+use crate::ui::CONTENT_MAX;
 use crate::watcher::AssetsState;
 
 /// Resolve a server label (case-insensitive) to its `AssetsState`, or error with
@@ -23,12 +25,25 @@ fn assets_state_for(ctx: &Context<'_>, server: &str) -> Result<Arc<AssetsState>,
     }
     let mut labels: Vec<&str> = states.keys().map(String::as_str).collect();
     labels.sort_unstable();
+    Err(unknown_server(server, &labels))
+}
+
+/// "Unknown server `XX`. Configured: CN, EN", with `labels` already sorted.
+fn unknown_server(server: &str, labels: &[&str]) -> Error {
     let list = if labels.is_empty() {
         "(none configured)".to_string()
     } else {
         labels.join(", ")
     };
-    Err(format!("Unknown server `{server}`. Configured: {list}").into())
+    format!("Unknown server `{server}`. Configured: {list}").into()
+}
+
+/// "every server", or "EN, JP only" for a binding with a server filter.
+fn server_scope(servers: Option<&[String]>) -> String {
+    servers.map_or_else(
+        || "every server".to_string(),
+        |s| format!("{} only", s.join(", ")),
+    )
 }
 
 /// Autocomplete a server label from the configured asset servers.
@@ -55,15 +70,7 @@ fn parse_server_filter(ctx: &Context<'_>, raw: &str) -> Result<Vec<String>, Erro
     for token in raw.split(',').map(str::trim).filter(|t| !t.is_empty()) {
         let Some(label) = configured.iter().find(|l| l.eq_ignore_ascii_case(token)) else {
             let list: Vec<&str> = configured.iter().map(|l| l.as_str()).collect();
-            return Err(format!(
-                "Unknown server `{token}`. Configured: {}",
-                if list.is_empty() {
-                    "(none configured)".to_string()
-                } else {
-                    list.join(", ")
-                }
-            )
-            .into());
+            return Err(unknown_server(token, &list));
         };
         if !wanted.contains(label) {
             wanted.push((*label).clone());
@@ -123,9 +130,7 @@ pub async fn assets_channel_set(
     #[description = "Only these servers, comma-separated (e.g. EN,JP). Omit for all."]
     servers: Option<String>,
 ) -> Result<(), Error> {
-    let guild = ctx
-        .guild_id()
-        .ok_or("This command must be used in a guild.")?;
+    let guild = require_guild(ctx)?;
     let filter = servers
         .as_deref()
         .map(|raw| parse_server_filter(&ctx, raw))
@@ -133,10 +138,7 @@ pub async fn assets_channel_set(
     db::set_assets_channel(&ctx.data().pool, guild, channel, filter.as_deref())
         .await
         .map_err(|e| format!("Couldn't save assets channel: {e}"))?;
-    let scope = filter.map_or_else(
-        || "every server".to_string(),
-        |f| format!("{} only", f.join(", ")),
-    );
+    let scope = server_scope(filter.as_deref());
     ctx.send(
         CreateReply::default()
             .content(format!(
@@ -151,9 +153,7 @@ pub async fn assets_channel_set(
 /// Stop sending asset announcements for this guild.
 #[poise::command(slash_command, guild_only, rename = "clear")]
 pub async fn assets_channel_clear(ctx: Context<'_>) -> Result<(), Error> {
-    let guild = ctx
-        .guild_id()
-        .ok_or("This command must be used in a guild.")?;
+    let guild = require_guild(ctx)?;
     let removed = db::clear_assets_channel(&ctx.data().pool, guild)
         .await
         .map_err(|e| format!("Couldn't clear assets channel: {e}"))?;
@@ -170,9 +170,7 @@ pub async fn assets_channel_clear(ctx: Context<'_>) -> Result<(), Error> {
 /// Show the configured asset-announcements channel for this guild.
 #[poise::command(slash_command, guild_only, rename = "show")]
 pub async fn assets_channel_show(ctx: Context<'_>) -> Result<(), Error> {
-    let guild = ctx
-        .guild_id()
-        .ok_or("This command must be used in a guild.")?;
+    let guild = require_guild(ctx)?;
     let content = match db::get_assets_channel(&ctx.data().pool, guild)
         .await
         .map_err(|e| format!("Couldn't read assets channel: {e}"))?
@@ -180,10 +178,7 @@ pub async fn assets_channel_show(ctx: Context<'_>) -> Result<(), Error> {
         Some(binding) => format!(
             "Asset announcements: <#{}>, from {}.",
             binding.channel_id,
-            binding.servers.map_or_else(
-                || "every server".to_string(),
-                |s| format!("{} only", s.join(", "))
-            )
+            server_scope(binding.servers.as_deref())
         ),
         None => "No asset channel configured.".to_string(),
     };
@@ -287,7 +282,7 @@ pub async fn assets_resources(
         let _ = writeln!(body, "…and {} more", payload.files.len() - 25);
     }
 
-    let reply = if body.len() <= 2000 {
+    let reply = if body.len() <= CONTENT_MAX {
         CreateReply::default().content(body)
     } else {
         CreateReply::default().attachment(serenity::CreateAttachment::bytes(

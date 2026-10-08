@@ -105,21 +105,19 @@ async fn main() {
                     .into_iter()
                     .collect();
 
-                let antispam_policies: std::collections::HashMap<_, _> =
-                    db::list_antispam_policies(&pool)
-                        .await?
-                        .into_iter()
-                        .collect();
+                let antispam_policies: HashMap<_, _> = db::list_antispam_policies(&pool)
+                    .await?
+                    .into_iter()
+                    .collect();
                 tracing::info!(
                     "Hydrated antispam policies for {} guild(s)",
                     antispam_policies.len()
                 );
 
-                let audit_log_settings: std::collections::HashMap<_, _> =
-                    db::list_audit_log_settings(&pool)
-                        .await?
-                        .into_iter()
-                        .collect();
+                let audit_log_settings: HashMap<_, _> = db::list_audit_log_settings(&pool)
+                    .await?
+                    .into_iter()
+                    .collect();
                 tracing::info!(
                     "Hydrated audit-log bindings for {} guild(s)",
                     audit_log_settings.len()
@@ -147,7 +145,7 @@ async fn main() {
                     });
                 }
 
-                let ping_history = Arc::new(RwLock::new(std::collections::HashMap::new()));
+                let ping_history = Arc::new(RwLock::new(HashMap::new()));
                 let antispam_policies = Arc::new(RwLock::new(antispam_policies));
 
                 let sweep_history = ping_history.clone();

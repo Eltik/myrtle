@@ -1,23 +1,14 @@
 use std::fmt::Write as _;
 
-use ::serenity::builder::CreateEmbed;
-use ::serenity::builder::CreateEmbedAuthor;
+use ::serenity::builder::{CreateEmbed, CreateEmbedAuthor};
 use ::serenity::model::Timestamp;
 use poise::CreateReply;
 
 use crate::api;
 use crate::config::EndpointsConfig;
 use crate::types::{Context, Error};
-use crate::utils::commafy;
-use crate::utils::pct;
-
-// Standard Discord brand hex colors; keep them in conventional `0xRRGGBB` form.
-#[allow(clippy::unreadable_literal)]
-const COLOR_OK: u32 = 0x57F287;
-#[allow(clippy::unreadable_literal)]
-const COLOR_WARN: u32 = 0xFEE75C;
-#[allow(clippy::unreadable_literal)]
-const COLOR_BAD: u32 = 0xED4245;
+use crate::ui::{COLOR_BAD, COLOR_OK, COLOR_WARN};
+use crate::utils::{commafy, pct};
 
 /// Which backend to query for subcommands that hit a single backend (health, stats, leaderboard).
 #[derive(Debug, Clone, Copy, poise::ChoiceParameter)]

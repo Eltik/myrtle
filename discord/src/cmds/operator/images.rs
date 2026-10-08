@@ -57,8 +57,9 @@ impl Prober for HttpProber<'_> {
 
 /// The per-URL memo.
 ///
-/// The lock is only ever held to read or write the map, never across a probe. Two views probing the same unknown URL at the same moment both probe it; that costs
-/// one extra HEAD and was not worth a second map of in-flight requests.
+/// The lock is only ever held to read or write the map, never across a probe. Two views
+/// probing the same unknown URL at the same moment both probe it; that costs one extra HEAD
+/// and was not worth a second map of in-flight requests.
 #[derive(Default)]
 pub struct ImageCheck {
     memo: Mutex<HashMap<String, (Instant, bool)>>,

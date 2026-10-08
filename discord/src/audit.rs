@@ -22,32 +22,19 @@ use serenity::model::user::User;
 
 use crate::db::AuditEvent;
 use crate::types::Data;
+use crate::ui::{COLOR_BAD, COLOR_INFO, COLOR_OK, COLOR_PINK, COLOR_WARN, CONTENT_MAX, FIELD_MAX};
 
-#[allow(clippy::unreadable_literal)]
-const COLOR_EDIT: u32 = 0xFEE75C;
-#[allow(clippy::unreadable_literal)]
-const COLOR_DELETE: u32 = 0xED4245;
-#[allow(clippy::unreadable_literal)]
-const COLOR_JOIN: u32 = 0x57F287;
-#[allow(clippy::unreadable_literal)]
-const COLOR_LEAVE: u32 = 0xFEE75C;
-#[allow(clippy::unreadable_literal)]
-const COLOR_BAN: u32 = 0xED4245;
-#[allow(clippy::unreadable_literal)]
-const COLOR_UNBAN: u32 = 0x57F287;
-#[allow(clippy::unreadable_literal)]
-const COLOR_MOD: u32 = 0xEB459E;
-#[allow(clippy::unreadable_literal)]
-const COLOR_STRUCT: u32 = 0x5865F2;
-#[allow(clippy::unreadable_literal)]
-const COLOR_REACT_ADD: u32 = 0x57F287;
-#[allow(clippy::unreadable_literal)]
-const COLOR_REACT_REMOVE: u32 = 0xFEE75C;
+const COLOR_EDIT: u32 = COLOR_WARN;
+const COLOR_DELETE: u32 = COLOR_BAD;
+const COLOR_JOIN: u32 = COLOR_OK;
+const COLOR_LEAVE: u32 = COLOR_WARN;
+const COLOR_BAN: u32 = COLOR_BAD;
+const COLOR_UNBAN: u32 = COLOR_OK;
+const COLOR_MOD: u32 = COLOR_PINK;
+const COLOR_STRUCT: u32 = COLOR_INFO;
+const COLOR_REACT_ADD: u32 = COLOR_OK;
+const COLOR_REACT_REMOVE: u32 = COLOR_WARN;
 
-/// Discord embed field-value limit.
-const FIELD_LIMIT: usize = 1024;
-/// Discord message-content limit (used as a soft cap for the bulk-delete summary).
-const MESSAGE_LIMIT: usize = 2000;
 /// Max cached messages to render inline in a bulk-delete summary before we attach a file.
 const BULK_INLINE_CAP: usize = 25;
 
@@ -168,7 +155,7 @@ pub async fn log_message_delete(
                 .map(|a| format!("`{}` ({} B)", a.filename, a.size))
                 .collect::<Vec<_>>()
                 .join("\n");
-            embed = embed.field("Attachments", truncate(&names, FIELD_LIMIT), false);
+            embed = embed.field("Attachments", truncate(&names, FIELD_MAX), false);
         }
         embed = embed.footer(CreateEmbedFooter::new(format!(
             "Author ID: {} • Message ID: {message_id}",
@@ -245,7 +232,8 @@ pub async fn log_message_bulk_delete(
         )));
 
     let mut attachments: Vec<CreateAttachment> = Vec::new();
-    if body.len() <= MESSAGE_LIMIT && body.len() <= 4000 {
+    // The message-content cap doubles as a soft cap for the bulk-delete summary.
+    if body.len() <= CONTENT_MAX {
         embed = embed.description(body);
     } else {
         embed = embed.description("Summary too large for an embed - see attachment.");
@@ -302,12 +290,12 @@ fn format_content_field(
     if content.is_empty() {
         return ("*(empty)*".to_string(), Vec::new());
     }
-    if content.len() <= FIELD_LIMIT {
+    if content.len() <= FIELD_MAX {
         return (content.to_string(), Vec::new());
     }
     let truncated = format!(
         "{}…\n*(full content attached as `{filename}`)*",
-        truncate(content, FIELD_LIMIT - 64),
+        truncate(content, FIELD_MAX - 64),
     );
     let attach = CreateAttachment::bytes(content.to_owned().into_bytes(), filename);
     (truncated, vec![attach])
@@ -449,7 +437,7 @@ pub async fn log_member_leave(
                 .map(|r| format!("<@&{r}>"))
                 .collect::<Vec<_>>()
                 .join(" ");
-            embed = embed.field("Roles", truncate(&roles, FIELD_LIMIT), false);
+            embed = embed.field("Roles", truncate(&roles, FIELD_MAX), false);
         }
     }
 
@@ -516,14 +504,14 @@ pub async fn log_warning(
         .field("Member", format!("<@{}>", user.id), true)
         .field("Moderator", format!("<@{moderator}>"), true)
         .field("Warnings", count.to_string(), true)
-        .field("Reason", truncate(reason, FIELD_LIMIT), false)
+        .field("Reason", truncate(reason, FIELD_MAX), false)
         .timestamp(Timestamp::now())
         .footer(CreateEmbedFooter::new(format!(
             "Warning ID: {warning_id} • User ID: {}",
             user.id
         )));
     if let Some(outcome) = escalation {
-        embed = embed.field("Escalation", truncate(outcome, FIELD_LIMIT), false);
+        embed = embed.field("Escalation", truncate(outcome, FIELD_MAX), false);
     }
     dispatch(http, channel, embed, Vec::new()).await;
 }
@@ -558,7 +546,7 @@ pub async fn log_audit_entry(ctx: &Context, data: &Data, guild_id: GuildId, entr
     if let Some(reason) = entry.reason.as_deref()
         && !reason.is_empty()
     {
-        embed = embed.field("Reason", truncate(reason, FIELD_LIMIT), false);
+        embed = embed.field("Reason", truncate(reason, FIELD_MAX), false);
     }
 
     if let Some(opts) = entry.options.as_ref() {
@@ -573,7 +561,7 @@ pub async fn log_audit_entry(ctx: &Context, data: &Data, guild_id: GuildId, entr
     {
         let changes_field = render_changes(changes);
         if !changes_field.is_empty() {
-            embed = embed.field("Changes", truncate(&changes_field, FIELD_LIMIT), false);
+            embed = embed.field("Changes", truncate(&changes_field, FIELD_MAX), false);
         }
     }
 
@@ -761,7 +749,7 @@ fn value_to_str(v: &serde_json::Value) -> String {
 ///
 /// `Reaction::member` and `Reaction::message_author_id` are only populated on the add event,
 /// so the remove path falls back to the user and message caches. On a cache miss we render
-/// raw IDs rather than spending an HTTP fetch — reactions fire far more often than the
+/// raw IDs rather than spending an HTTP fetch: reactions fire far more often than the
 /// message events above, and a mention renders fine without the user object.
 pub async fn log_reaction(ctx: &Context, data: &Data, reaction: &Reaction, added: bool) {
     let Some(guild_id) = reaction.guild_id else {

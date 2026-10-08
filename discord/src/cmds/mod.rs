@@ -1,4 +1,7 @@
-use crate::types::{Data, Error};
+use std::sync::Arc;
+
+use crate::api::gamedata::GameData;
+use crate::types::{Context, Data, Error};
 
 pub mod admin;
 pub mod api;
@@ -31,4 +34,20 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         collection::collection(),
         birthday::birthday(),
     ]
+}
+
+/// Shared start of every game-data lookup (`/collection`, `/birthday today` and `upcoming`).
+///
+/// Checks the backend is configured and, when a list still has to be fetched for the first
+/// time, defers so the fetch can't time the interaction out.
+///
+/// Deferring is public, so a no-match after a cold start answers publicly too; once the lists
+/// are cached (they are warmed at startup) every no-match is ephemeral.
+pub async fn begin_lookup(ctx: Context<'_>) -> Result<Arc<GameData>, Error> {
+    let gamedata = Arc::clone(&ctx.data().gamedata);
+    gamedata.base()?;
+    if !gamedata.is_warm().await {
+        ctx.defer().await?;
+    }
+    Ok(gamedata)
 }

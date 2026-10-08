@@ -4,7 +4,6 @@
 //! "whose birthday is it" on demand.
 
 use std::fmt::Write as _;
-use std::sync::Arc;
 
 use ::serenity::builder::CreateEmbed;
 use ::serenity::model::Timestamp;
@@ -13,19 +12,15 @@ use poise::serenity_prelude as serenity;
 
 use crate::api::gamedata::{GameData, Operator};
 use crate::birthday::{
-    Date, MonthDay, birthday_embed, birthday_roster, celebrates, game_day, headline,
-    next_reset_after, reset_instant,
+    COLOR_BIRTHDAY, Date, MonthDay, birthday_embed, birthday_roster, celebrating, game_day,
+    headline, next_reset_after, reset_instant,
 };
+use crate::checks::require_guild;
+use crate::cmds::begin_lookup;
 use crate::db;
 use crate::types::{Context, Error};
+use crate::ui::{DESCRIPTION_MAX, EMBEDS_PER_MESSAGE};
 use crate::utils::ellipsize;
-
-#[allow(clippy::unreadable_literal)]
-const COLOR_BIRTHDAY: u32 = 0xEB459E;
-
-/// Discord's cap on embeds per message.
-const EMBEDS_PER_MESSAGE: usize = 10;
-const DESCRIPTION_MAX: usize = 4096;
 
 /// Operator birthdays.
 ///
@@ -68,9 +63,7 @@ pub async fn birthday_channel_set(
     ctx: Context<'_>,
     #[description = "Channel to post birthdays in"] channel: serenity::ChannelId,
 ) -> Result<(), Error> {
-    let guild = ctx
-        .guild_id()
-        .ok_or("This command must be used in a guild.")?;
+    let guild = require_guild(ctx)?;
     let pool = &ctx.data().pool;
     let existing = db::get_birthday_channel(pool, guild)
         .await
@@ -99,9 +92,7 @@ pub async fn birthday_channel_set(
 /// Stop posting operator birthdays.
 #[poise::command(slash_command, guild_only, rename = "clear")]
 pub async fn birthday_channel_clear(ctx: Context<'_>) -> Result<(), Error> {
-    let guild = ctx
-        .guild_id()
-        .ok_or("This command must be used in a guild.")?;
+    let guild = require_guild(ctx)?;
     let removed = db::clear_birthday_channel(&ctx.data().pool, guild)
         .await
         .map_err(|e| format!("Couldn't clear the birthday channel: {e}"))?;
@@ -118,9 +109,7 @@ pub async fn birthday_channel_clear(ctx: Context<'_>) -> Result<(), Error> {
 /// Show where operator birthdays are posted.
 #[poise::command(slash_command, guild_only, rename = "show")]
 pub async fn birthday_channel_show(ctx: Context<'_>) -> Result<(), Error> {
-    let guild = ctx
-        .guild_id()
-        .ok_or("This command must be used in a guild.")?;
+    let guild = require_guild(ctx)?;
     let content = match db::get_birthday_channel(&ctx.data().pool, guild)
         .await
         .map_err(|e| format!("Couldn't read the birthday channel: {e}"))?
@@ -139,45 +128,13 @@ pub async fn birthday_channel_show(ctx: Context<'_>) -> Result<(), Error> {
 /// Whose birthday is it today? Today is the current game day, which turns at 04:00 UTC-7.
 #[poise::command(slash_command, rename = "today")]
 pub async fn birthday_today(ctx: Context<'_>) -> Result<(), Error> {
-    let gamedata = begin(ctx).await?;
+    let gamedata = begin_lookup(ctx).await?;
     let operators = gamedata.operators().await?;
     let roster = birthday_roster(&operators);
     let today = game_day(Timestamp::now().unix_timestamp());
-    let celebrated = on(&roster, today);
-
-    if celebrated.is_empty() {
-        let next = (1..=366)
-            .map(|i| today.add_days(i))
-            .find_map(|date| {
-                let ops = on(&roster, date);
-                (!ops.is_empty()).then(|| {
-                    let names: Vec<&str> = ops.iter().map(|o| o.name.as_str()).collect();
-                    format!(" Next up, **{}**: {}.", date.short(), names.join(", "))
-                })
-            })
-            .unwrap_or_default();
-        ctx.send(CreateReply::default().content(format!(
-            "No operator birthdays today ({}).{next}",
-            today.short()
-        )))
-        .await?;
-        return Ok(());
-    }
-
     let frontend = &ctx.data().config.endpoints.public_frontend;
-    let mut content = headline(&celebrated);
-    if celebrated.len() > EMBEDS_PER_MESSAGE {
-        let _ = write!(
-            content,
-            " Showing the first {EMBEDS_PER_MESSAGE} of {}.",
-            celebrated.len()
-        );
-    }
-    let mut reply = CreateReply::default().content(content);
-    for op in celebrated.iter().take(EMBEDS_PER_MESSAGE) {
-        reply = reply.embed(birthday_embed(op, &gamedata, frontend));
-    }
-    ctx.send(reply).await?;
+    ctx.send(today_reply(&roster, today, &gamedata, frontend))
+        .await?;
     Ok(())
 }
 
@@ -191,57 +148,89 @@ pub async fn birthday_upcoming(
     days: Option<u32>,
 ) -> Result<(), Error> {
     let days = days.unwrap_or(7).clamp(1, 31);
-    let gamedata = begin(ctx).await?;
+    let gamedata = begin_lookup(ctx).await?;
     let operators = gamedata.operators().await?;
     let roster = birthday_roster(&operators);
     let today = game_day(Timestamp::now().unix_timestamp());
+    ctx.send(CreateReply::default().embed(upcoming_embed(&roster, today, days)))
+        .await?;
+    Ok(())
+}
 
+/// `/birthday today`'s reply: the day's cards, or when nobody celebrates, the next day that has
+/// someone.
+fn today_reply(
+    roster: &[(MonthDay, &Operator)],
+    today: Date,
+    gamedata: &GameData,
+    frontend: &str,
+) -> CreateReply {
+    let celebrated = celebrating(roster, today);
+
+    if celebrated.is_empty() {
+        let next = (1..=366)
+            .map(|i| today.add_days(i))
+            .find_map(|date| {
+                let ops = celebrating(roster, date);
+                (!ops.is_empty())
+                    .then(|| format!(" Next up, **{}**: {}.", date.short(), names(&ops)))
+            })
+            .unwrap_or_default();
+        return CreateReply::default().content(format!(
+            "No operator birthdays today ({}).{next}",
+            today.short()
+        ));
+    }
+
+    let mut content = headline(&celebrated);
+    if celebrated.len() > EMBEDS_PER_MESSAGE {
+        let _ = write!(
+            content,
+            " Showing the first {EMBEDS_PER_MESSAGE} of {}.",
+            celebrated.len()
+        );
+    }
+    let mut reply = CreateReply::default().content(content);
+    for op in celebrated.iter().take(EMBEDS_PER_MESSAGE) {
+        reply = reply.embed(birthday_embed(op, gamedata, frontend));
+    }
+    reply
+}
+
+/// `/birthday upcoming`'s embed: each day in the next `days` that has a birthday.
+fn upcoming_embed(roster: &[(MonthDay, &Operator)], today: Date, days: u32) -> CreateEmbed {
     let mut body = String::new();
     for i in 0..i64::from(days) {
         let date = today.add_days(i);
-        let ops = on(&roster, date);
+        let ops = celebrating(roster, date);
         if ops.is_empty() {
             continue;
         }
-        let names: Vec<&str> = ops.iter().map(|o| o.name.as_str()).collect();
         let when = if i == 0 {
             "today".to_string()
         } else {
             format!("<t:{}:R>", reset_instant(date))
         };
-        let _ = writeln!(body, "**{}** {when}: {}", date.short(), names.join(", "));
+        let _ = writeln!(body, "**{}** {when}: {}", date.short(), names(&ops));
     }
     if body.is_empty() {
         let _ = write!(body, "No operator birthdays in the next {days} day(s).");
     }
 
-    let embed = CreateEmbed::new()
+    CreateEmbed::new()
         .title(if days == 1 {
             "Operator birthdays today".to_string()
         } else {
             format!("Operator birthdays, next {days} days")
         })
         .description(ellipsize(&body, DESCRIPTION_MAX))
-        .colour(COLOR_BIRTHDAY);
-    ctx.send(CreateReply::default().embed(embed)).await?;
-    Ok(())
+        .colour(COLOR_BIRTHDAY)
 }
 
-/// The roster entries celebrating on `date`, by name.
-fn on<'a>(roster: &[(MonthDay, &'a Operator)], date: Date) -> Vec<&'a Operator> {
-    roster
-        .iter()
-        .filter(|(birthday, _)| celebrates(*birthday, date))
-        .map(|(_, op)| *op)
-        .collect()
-}
-
-/// Check the backend is configured, and defer when the operator list hasn't been fetched yet.
-async fn begin(ctx: Context<'_>) -> Result<Arc<GameData>, Error> {
-    let gamedata = Arc::clone(&ctx.data().gamedata);
-    gamedata.base()?;
-    if !gamedata.is_warm().await {
-        ctx.defer().await?;
-    }
-    Ok(gamedata)
+/// "Amiya, Kal'tsit".
+fn names(ops: &[&Operator]) -> String {
+    ops.iter()
+        .map(|o| o.name.as_str())
+        .collect::<Vec<_>>()
+        .join(", ")
 }

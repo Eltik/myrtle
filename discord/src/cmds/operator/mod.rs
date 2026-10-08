@@ -14,7 +14,10 @@ pub mod layout;
 pub mod pages;
 pub mod state;
 
+use std::collections::{HashMap, HashSet};
 use std::fmt::Write as _;
+use std::hash::BuildHasher;
+use std::sync::Arc;
 
 use ::serenity::all::{
     ComponentInteraction, ComponentInteractionDataKind, CreateActionRow, CreateInteractionResponse,
@@ -26,7 +29,7 @@ use poise::CreateReply;
 use poise::serenity_prelude as serenity;
 
 use crate::api::gamedata::{GameData, Operator};
-use crate::api::operator_detail::ParadoxStage;
+use crate::api::operator_detail::{ParadoxEntry, ParadoxStage, SkinData, TableSkill};
 use crate::types::{Data, Error};
 use images::{HttpProber, ImageCheck};
 use layout::{Choice, Parts, capped_choices};
@@ -131,44 +134,21 @@ pub async fn render(
     let mut state = state.clone();
     let note = fall_back(&mut state, &pages, op, paradox.is_some());
 
-    // At most two extras per page, and each is one request: no need to run them together.
-    let want = needs(state.page);
-    let items = if want.items {
-        // Costs and rewards still render without names, by item id.
-        gamedata
-            .materials()
-            .await
-            .inspect_err(|e| tracing::warn!("operator view: item names: {e}"))
-            .ok()
-    } else {
-        None
-    };
-    let skill_table = if want.skill_table {
-        Some(gamedata.skill_table().await?)
-    } else {
-        None
-    };
-    let skins = if want.skins {
-        Some(gamedata.skins(&op.id).await?)
-    } else {
-        None
-    };
-    let paradox_detail = match (want.paradox_stage, entry) {
-        (true, Some(entry)) => Some(paradox_stage(gamedata, &entry.code).await?),
-        _ => None,
-    };
-
+    let extras = Extras::fetch(gamedata, op, state.page, entry).await?;
     let sources = Sources {
         op,
         detail: &detail,
         ranges: &ranges,
         paradox: entry,
-        items: items.as_deref(),
-        skill_table: skill_table.as_deref(),
-        skins: skins.as_ref(),
+        items: extras.items.as_deref(),
+        skill_table: extras.skill_table.as_deref(),
+        skins: extras.skins.as_ref(),
         voices: voices.as_ref(),
-        paradox_stage: paradox_detail.as_ref().map(|(s, _)| s),
-        paradox_preview: paradox_detail.as_ref().and_then(|(_, p)| p.as_deref()),
+        paradox_stage: extras.paradox_stage.as_ref().map(|(s, _)| s),
+        paradox_preview: extras
+            .paradox_stage
+            .as_ref()
+            .and_then(|(_, p)| p.as_deref()),
         urls: gamedata,
         frontend,
     };
@@ -183,6 +163,57 @@ pub async fn render(
         embeds: view.embeds(&missing),
         components: view.components,
     })
+}
+
+/// The responses only some pages read (see [`needs`]), fetched for the page being shown.
+struct Extras {
+    items: Option<Arc<HashMap<String, String>>>,
+    skill_table: Option<Arc<HashMap<String, TableSkill>>>,
+    skins: Option<SkinData>,
+    /// The Paradox stage's detail and preview.
+    paradox_stage: Option<(ParadoxStage, Option<String>)>,
+}
+
+impl Extras {
+    /// At most two extras per page, and each is one request: no need to run them together.
+    async fn fetch(
+        gamedata: &GameData,
+        op: &Operator,
+        page: Page,
+        paradox: Option<&ParadoxEntry>,
+    ) -> Result<Self, Error> {
+        let want = needs(page);
+        let items = if want.items {
+            // Costs and rewards still render without names, by item id.
+            gamedata
+                .materials()
+                .await
+                .inspect_err(|e| tracing::warn!("operator view: item names: {e}"))
+                .ok()
+        } else {
+            None
+        };
+        let skill_table = if want.skill_table {
+            Some(gamedata.skill_table().await?)
+        } else {
+            None
+        };
+        let skins = if want.skins {
+            Some(gamedata.skins(&op.id).await?)
+        } else {
+            None
+        };
+        let paradox_stage = match (want.paradox_stage, paradox) {
+            (true, Some(entry)) => Some(paradox_stage(gamedata, &entry.code).await?),
+            _ => None,
+        };
+        Ok(Self {
+            items,
+            skill_table,
+            skins,
+            paradox_stage,
+        })
+    }
 }
 
 /// Point `state` at the overview when its page isn't one this operator has, and say why.
@@ -245,10 +276,7 @@ impl View {
 
     /// The shown part as embeds, leaving out the images in `missing`.
     #[must_use]
-    pub fn embeds<S: std::hash::BuildHasher>(
-        &self,
-        missing: &std::collections::HashSet<String, S>,
-    ) -> Vec<CreateEmbed> {
+    pub fn embeds<S: BuildHasher>(&self, missing: &HashSet<String, S>) -> Vec<CreateEmbed> {
         self.parts
             .embeds(self.part, self.colour, &self.footer, missing)
     }
@@ -275,11 +303,7 @@ pub fn view(src: &Sources<'_>, pages: &[Page], state: &ViewState) -> Result<View
     let mut components = Vec::new();
     let page_choices: Vec<Choice> = pages
         .iter()
-        .map(|p| {
-            let mut c = Choice::new(p.label(), p.code(), None);
-            c.default = *p == state.page;
-            c
-        })
+        .map(|p| Choice::new(p.label(), p.code(), None).selected(*p == state.page))
         .collect();
     components.push(select(state.custom_id(Control::Page), "Page", page_choices));
     if built.choices.len() > 1 {
@@ -388,12 +412,11 @@ async fn handle(
             .iter()
             .find(|o| o.id == next.op)
             .ok_or("That operator is no longer in the index.")?;
-        let frontend = data.config.endpoints.public_frontend.trim_end_matches('/');
         render(
             &data.gamedata,
             &data.operator_images,
             &data.http_client,
-            frontend,
+            data.frontend(),
             op,
             &next,
         )

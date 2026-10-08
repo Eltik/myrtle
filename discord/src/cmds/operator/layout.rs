@@ -1,28 +1,22 @@
 //! Discord-shaped building blocks for the operator view: embed blocks that split and pack
 //! themselves inside Discord's limits, select options capped at 25, and range grids.
 
+use std::collections::HashSet;
+use std::hash::BuildHasher;
+
 use ::serenity::builder::{CreateEmbed, CreateEmbedFooter};
 
 use crate::api::operator_detail::GridCell;
+use crate::ui::{
+    DESCRIPTION_MAX, EMBEDS_PER_MESSAGE, FIELD_MAX, FIELD_NAME_MAX, FIELDS_PER_EMBED,
+    OPTION_TEXT_MAX, SELECT_MAX, TITLE_MAX,
+};
 use crate::utils::ellipsize;
 
-/// Discord's per-embed limits.
-const TITLE_MAX: usize = 256;
-const DESCRIPTION_MAX: usize = 4096;
-const FIELD_NAME_MAX: usize = 256;
-pub const FIELD_MAX: usize = 1024;
-const FIELDS_PER_EMBED: usize = 25;
-/// Discord's per-message limits: the characters of all embeds together, and the embed count.
-pub const CHARS_PER_MESSAGE: usize = 6000;
-const EMBEDS_PER_MESSAGE: usize = 10;
 /// What one message's blocks may use, leaving room for the footer and the part suffixes.
 const MESSAGE_BUDGET: usize = 5600;
 /// What one block may use before it is split, so it always fits beside a header.
 const BLOCK_BUDGET: usize = 4800;
-/// Discord's cap on a select's options.
-pub const SELECT_MAX: usize = 25;
-/// A select's option label and description cap.
-const OPTION_TEXT_MAX: usize = 100;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Field {
@@ -242,12 +236,12 @@ impl Parts {
     /// Part `index` (clamped) as embeds, with `footer` on the last one and every thumbnail or
     /// image in `missing` left out.
     #[must_use]
-    pub fn embeds<S: std::hash::BuildHasher>(
+    pub fn embeds<S: BuildHasher>(
         &self,
         index: usize,
         colour: u32,
         footer: &str,
-        missing: &std::collections::HashSet<String, S>,
+        missing: &HashSet<String, S>,
     ) -> Vec<CreateEmbed> {
         let Some(part) = self.part(index) else {
             return Vec::new();
@@ -320,9 +314,9 @@ pub struct Choice {
 }
 
 impl Choice {
-    #[must_use]
     /// An option. Discord rejects an empty label, so a blank one reads "Option N" (N from a
     /// numeric value, counted from 1); [`capped_choices`] passes a better fallback of its own.
+    #[must_use]
     pub fn new(label: &str, value: impl Into<String>, description: Option<&str>) -> Self {
         let value = value.into();
         let label = if label.trim().is_empty() {
@@ -342,6 +336,13 @@ impl Choice {
                 .map(|d| ellipsize(d, OPTION_TEXT_MAX)),
             default: false,
         }
+    }
+
+    /// This option, preselected when `default` is true.
+    #[must_use]
+    pub const fn selected(mut self, default: bool) -> Self {
+        self.default = default;
+        self
     }
 }
 
@@ -372,9 +373,7 @@ pub fn capped_choices(
         } else {
             label
         };
-        let mut choice = Choice::new(&label, i.to_string(), description.as_deref());
-        choice.default = i == selected;
-        choice
+        Choice::new(&label, i.to_string(), description.as_deref()).selected(i == selected)
     };
     if count <= SELECT_MAX {
         return (0..count).map(one).collect();
@@ -444,6 +443,7 @@ pub fn range_grid(cells: &[GridCell]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ui::CHARS_PER_MESSAGE;
 
     fn cells(list: &[(i32, i32)]) -> Vec<GridCell> {
         list.iter()

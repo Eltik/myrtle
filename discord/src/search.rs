@@ -1,8 +1,8 @@
 //! Name matching for game-data lookups.
 //!
-//! The backend has no name-search endpoint, so `/collection` and `/birthday` match against the
-//! cached lists locally. Everything goes through [`fold`] first: case, whitespace, punctuation
-//! and diacritics all drop out, so "wis adel" finds "Wiš'adel" and "ce6" finds "CE-6".
+//! The backend has no name-search endpoint, so `/collection` matches against the cached lists
+//! locally. Everything goes through [`fold`] first: case, whitespace, punctuation and
+//! diacritics all drop out, so "wis adel" finds "Wiš'adel" and "ce6" finds "CE-6".
 
 use unicode_normalization::UnicodeNormalization;
 use unicode_normalization::char::is_combining_mark;

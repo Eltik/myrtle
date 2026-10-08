@@ -18,15 +18,7 @@ use tokio::sync::{Mutex, RwLock, mpsc, oneshot};
 use tokio_tungstenite::{connect_async, tungstenite::Message};
 
 use crate::db;
-
-#[allow(clippy::unreadable_literal)]
-const COLOR_OK: u32 = 0x57F287;
-#[allow(clippy::unreadable_literal)]
-const COLOR_WARN: u32 = 0xFEE75C;
-#[allow(clippy::unreadable_literal)]
-const COLOR_BAD: u32 = 0xED4245;
-#[allow(clippy::unreadable_literal)]
-const COLOR_INFO: u32 = 0x5865F2;
+use crate::ui::{COLOR_BAD, COLOR_INFO, COLOR_OK, COLOR_WARN};
 
 /// Shared state owned by both the watcher task and the slash-command handlers.
 ///
@@ -318,7 +310,7 @@ fn build_embed(event: &AssetEvent, pending_new_version: Option<&str>) -> Option<
             total_bytes,
             total_bytes_formatted,
         } => {
-            // Prefer the pipeline's preformatted size — its rounding matches the CLI output.
+            // Prefer the pipeline's preformatted size: its rounding matches the CLI output.
             let size = total_bytes_formatted
                 .clone()
                 .unwrap_or_else(|| format_bytes(*total_bytes));

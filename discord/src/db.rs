@@ -27,6 +27,25 @@ pub async fn init_pool(url: &str) -> Result<SqlitePool, Error> {
     Ok(pool)
 }
 
+/// Run `sql`, a `DELETE ... WHERE guild_id = ?`, for `guild_id`. Returns the rows removed.
+async fn delete_guild_rows(
+    pool: &SqlitePool,
+    sql: &'static str,
+    guild_id: GuildId,
+) -> Result<u64, Error> {
+    let result = sqlx::query(sql)
+        .bind(guild_id.get().cast_signed())
+        .execute(pool)
+        .await?;
+    Ok(result.rows_affected())
+}
+
+/// A stored count or duration back as `u32`, saturating: only hand-editing the DB stores one
+/// out of range.
+fn u32_from_db(v: i64) -> u32 {
+    v.try_into().unwrap_or(u32::MAX)
+}
+
 /// Look up the configured auto-role for `guild_id`, if any.
 pub async fn get_auto_role(pool: &SqlitePool, guild_id: GuildId) -> Result<Option<RoleId>, Error> {
     let row: Option<(Option<i64>,)> =
@@ -101,11 +120,13 @@ pub async fn set_mod_role(
 
 /// Remove the moderator role for `guild_id`. Returns whether a row was removed.
 pub async fn clear_mod_role(pool: &SqlitePool, guild_id: GuildId) -> Result<bool, Error> {
-    let result = sqlx::query("DELETE FROM guild_mod_role WHERE guild_id = ?")
-        .bind(guild_id.get().cast_signed())
-        .execute(pool)
-        .await?;
-    Ok(result.rows_affected() > 0)
+    Ok(delete_guild_rows(
+        pool,
+        "DELETE FROM guild_mod_role WHERE guild_id = ?",
+        guild_id,
+    )
+    .await?
+        > 0)
 }
 
 pub struct ReactionRoleRow {
@@ -176,11 +197,12 @@ pub async fn remove_reaction_roles_for_guild(
     pool: &SqlitePool,
     guild_id: GuildId,
 ) -> Result<u64, Error> {
-    let result = sqlx::query("DELETE FROM guild_reaction_roles WHERE guild_id = ?")
-        .bind(guild_id.get().cast_signed())
-        .execute(pool)
-        .await?;
-    Ok(result.rows_affected())
+    delete_guild_rows(
+        pool,
+        "DELETE FROM guild_reaction_roles WHERE guild_id = ?",
+        guild_id,
+    )
+    .await
 }
 
 /// Resolve a single `(message, emoji)` to the role it grants, if any.
@@ -266,11 +288,12 @@ pub async fn set_assets_channel(
 
 /// Remove the asset-announcement binding for `guild_id`.
 pub async fn clear_assets_channel(pool: &SqlitePool, guild_id: GuildId) -> Result<u64, Error> {
-    let result = sqlx::query("DELETE FROM guild_asset_channel WHERE guild_id = ?")
-        .bind(guild_id.get().cast_signed())
-        .execute(pool)
-        .await?;
-    Ok(result.rows_affected())
+    delete_guild_rows(
+        pool,
+        "DELETE FROM guild_asset_channel WHERE guild_id = ?",
+        guild_id,
+    )
+    .await
 }
 
 /// Look up the asset-announcement binding for `guild_id`, if any.
@@ -325,11 +348,12 @@ pub async fn set_audit_log_channel(
 
 /// Remove the audit-log binding for `guild_id`.
 pub async fn clear_audit_log_channel(pool: &SqlitePool, guild_id: GuildId) -> Result<u64, Error> {
-    let result = sqlx::query("DELETE FROM guild_audit_log WHERE guild_id = ?")
-        .bind(guild_id.get().cast_signed())
-        .execute(pool)
-        .await?;
-    Ok(result.rows_affected())
+    delete_guild_rows(
+        pool,
+        "DELETE FROM guild_audit_log WHERE guild_id = ?",
+        guild_id,
+    )
+    .await
 }
 
 /// Look up the audit-log channel for `guild_id`, if any.
@@ -590,11 +614,11 @@ fn row_to_policy(guild_id: GuildId, row: AntiSpamRow) -> Result<AntiSpamPolicy, 
     let action = AntiSpamAction::from_db_str(&action_str)
         .ok_or_else(|| format!("Invalid action '{action_str}' for guild {guild_id}"))?;
     Ok(AntiSpamPolicy {
-        max_per_message: max_per_message.try_into().unwrap_or(u32::MAX),
-        window_secs: window_secs.map(|v| v.try_into().unwrap_or(u32::MAX)),
-        window_max_pings: window_max_pings.map(|v| v.try_into().unwrap_or(u32::MAX)),
+        max_per_message: u32_from_db(max_per_message),
+        window_secs: window_secs.map(u32_from_db),
+        window_max_pings: window_max_pings.map(u32_from_db),
         action,
-        timeout_secs: timeout_secs.map(|v| v.try_into().unwrap_or(u32::MAX)),
+        timeout_secs: timeout_secs.map(u32_from_db),
         exempt_role_id: exempt_role_id.map(|id| RoleId::new(id.cast_unsigned())),
     })
 }
@@ -630,11 +654,12 @@ pub async fn set_antispam_policy(
 
 /// Drop the antispam policy for `guild_id`. Returns the number of rows removed.
 pub async fn clear_antispam_policy(pool: &SqlitePool, guild_id: GuildId) -> Result<u64, Error> {
-    let res = sqlx::query("DELETE FROM guild_max_ping WHERE guild_id = ?")
-        .bind(guild_id.get().cast_signed())
-        .execute(pool)
-        .await?;
-    Ok(res.rows_affected())
+    delete_guild_rows(
+        pool,
+        "DELETE FROM guild_max_ping WHERE guild_id = ?",
+        guild_id,
+    )
+    .await
 }
 
 /// Look up the antispam policy for `guild_id`, if one is configured.
@@ -889,11 +914,11 @@ pub async fn get_warn_policy(
     .await?;
     row.map(|(threshold, window_days, action, timeout_secs)| {
         Ok(WarnPolicy {
-            threshold: threshold.try_into().unwrap_or(u32::MAX),
-            window_days: window_days.map(|v| v.try_into().unwrap_or(u32::MAX)),
+            threshold: u32_from_db(threshold),
+            window_days: window_days.map(u32_from_db),
             action: WarnAction::from_db_str(&action)
                 .ok_or_else(|| format!("Invalid warn action '{action}' for guild {guild_id}"))?,
-            timeout_secs: timeout_secs.map(|v| v.try_into().unwrap_or(u32::MAX)),
+            timeout_secs: timeout_secs.map(u32_from_db),
         })
     })
     .transpose()
@@ -901,11 +926,12 @@ pub async fn get_warn_policy(
 
 /// Drop the warning policy for `guild_id`. Returns the number of rows removed.
 pub async fn clear_warn_policy(pool: &SqlitePool, guild_id: GuildId) -> Result<u64, Error> {
-    let result = sqlx::query("DELETE FROM guild_warn_policy WHERE guild_id = ?")
-        .bind(guild_id.get().cast_signed())
-        .execute(pool)
-        .await?;
-    Ok(result.rows_affected())
+    delete_guild_rows(
+        pool,
+        "DELETE FROM guild_warn_policy WHERE guild_id = ?",
+        guild_id,
+    )
+    .await
 }
 
 /// Bind birthday announcements for `guild_id` to `channel_id`.
@@ -935,11 +961,12 @@ pub async fn set_birthday_channel(
 
 /// Remove the birthday binding for `guild_id`. Returns the number of rows removed.
 pub async fn clear_birthday_channel(pool: &SqlitePool, guild_id: GuildId) -> Result<u64, Error> {
-    let result = sqlx::query("DELETE FROM guild_birthday_channel WHERE guild_id = ?")
-        .bind(guild_id.get().cast_signed())
-        .execute(pool)
-        .await?;
-    Ok(result.rows_affected())
+    delete_guild_rows(
+        pool,
+        "DELETE FROM guild_birthday_channel WHERE guild_id = ?",
+        guild_id,
+    )
+    .await
 }
 
 /// The birthday channel for `guild_id` and the last game day posted there, if bound.

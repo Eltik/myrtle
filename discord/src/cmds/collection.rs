@@ -11,7 +11,10 @@ use ::serenity::builder::{CreateEmbed, CreateEmbedFooter};
 use poise::CreateReply;
 use poise::serenity_prelude as serenity;
 
-use crate::api::gamedata::{Enemy, GameData, Operator, Stage, StageDetail, StoryGroup};
+use crate::api::gamedata::{
+    Enemy, GameData, Operator, Stage, StageDetail, StoryGroup, encode_path_segment,
+};
+use crate::cmds::begin_lookup;
 use crate::cmds::operator::{
     self,
     state::{Page, ViewState},
@@ -19,22 +22,13 @@ use crate::cmds::operator::{
 use crate::gametext::strip_rich_text;
 use crate::search::search;
 use crate::types::{Context, Error};
-use crate::utils::{commafy, ellipsize};
+use crate::ui::{
+    AUTOCOMPLETE_MAX, CHOICE_NAME_MAX, COLOR_BAD, COLOR_INFO, COLOR_WARN, FIELD_MAX, TITLE_MAX,
+};
+use crate::utils::{commafy, ellipsize, non_blank};
 
-#[allow(clippy::unreadable_literal)]
-const COLOR_INFO: u32 = 0x5865F2;
-#[allow(clippy::unreadable_literal)]
-const COLOR_WARN: u32 = 0xFEE75C;
-#[allow(clippy::unreadable_literal)]
-const COLOR_BAD: u32 = 0xED4245;
-
-/// Discord caps an autocomplete response at 25 choices of at most 100 characters each.
-const AUTOCOMPLETE_MAX: usize = 25;
-const CHOICE_NAME_MAX: usize = 100;
-const TITLE_MAX: usize = 256;
-const FIELD_MAX: usize = 1024;
 /// Enemy descriptions run to a paragraph; the embed keeps the first few lines' worth.
-const DESCRIPTION_MAX: usize = 400;
+const ENEMY_DESCRIPTION_MAX: usize = 400;
 
 /// Look up Arknights game data.
 ///
@@ -105,7 +99,7 @@ pub async fn collection_operator(
     query: String,
     #[description = "Page to open on (default Overview)"] page: Option<PageChoice>,
 ) -> Result<(), Error> {
-    let gamedata = begin(ctx).await?;
+    let gamedata = begin_lookup(ctx).await?;
     // Log the reason; the reply says only that it failed, never a URL or an error chain.
     let operators = gamedata.operators().await.map_err(|e| {
         tracing::warn!("collection: operator list: {e}");
@@ -129,7 +123,7 @@ pub async fn collection_operator(
         &gamedata,
         &ctx.data().operator_images,
         &ctx.data().http_client,
-        frontend(ctx),
+        ctx.data().frontend(),
         op,
         &state,
     )
@@ -164,7 +158,7 @@ pub async fn collection_enemy(
     #[autocomplete = "autocomplete_enemy"]
     query: String,
 ) -> Result<(), Error> {
-    let gamedata = begin(ctx).await?;
+    let gamedata = begin_lookup(ctx).await?;
     let enemies = gamedata.enemies().await?;
     let enemy = resolve(
         &enemies,
@@ -174,7 +168,7 @@ pub async fn collection_enemy(
         enemy_priority,
     )
     .ok_or_else(|| no_match("enemy", &query))?;
-    let embed = enemy_embed(enemy, &gamedata, frontend(ctx));
+    let embed = enemy_embed(enemy, &gamedata, ctx.data().frontend());
     ctx.send(CreateReply::default().embed(embed)).await?;
     Ok(())
 }
@@ -187,7 +181,7 @@ pub async fn collection_stage(
     #[autocomplete = "autocomplete_stage"]
     query: String,
 ) -> Result<(), Error> {
-    let gamedata = begin(ctx).await?;
+    let gamedata = begin_lookup(ctx).await?;
     let stages = gamedata.stages().await?;
     let stage = resolve(
         &stages,
@@ -207,7 +201,7 @@ pub async fn collection_stage(
             None
         }
     };
-    let embed = stage_embed(stage, detail.as_ref(), &gamedata, frontend(ctx));
+    let embed = stage_embed(stage, detail.as_ref(), &gamedata, ctx.data().frontend());
     ctx.send(CreateReply::default().embed(embed)).await?;
     Ok(())
 }
@@ -220,35 +214,13 @@ pub async fn collection_story(
     #[autocomplete = "autocomplete_story"]
     query: String,
 ) -> Result<(), Error> {
-    let gamedata = begin(ctx).await?;
+    let gamedata = begin_lookup(ctx).await?;
     let stories = gamedata.stories().await?;
     let group = resolve(&stories, &query, |g| g.id.as_str(), story_names, |_| 0)
         .ok_or_else(|| no_match("story", &query))?;
-    let embed = story_embed(group, &gamedata, frontend(ctx));
+    let embed = story_embed(group, &gamedata, ctx.data().frontend());
     ctx.send(CreateReply::default().embed(embed)).await?;
     Ok(())
-}
-
-/// Shared start of every lookup: check the backend is configured and, when a list still has to
-/// be fetched for the first time, defer so the fetch can't time the interaction out.
-///
-/// Deferring is public, so a no-match after a cold start answers publicly too; once the lists
-/// are cached (they are warmed at startup) every no-match is ephemeral.
-async fn begin(ctx: Context<'_>) -> Result<Arc<GameData>, Error> {
-    let gamedata = Arc::clone(&ctx.data().gamedata);
-    gamedata.base()?;
-    if !gamedata.is_warm().await {
-        ctx.defer().await?;
-    }
-    Ok(gamedata)
-}
-
-fn frontend(ctx: Context<'_>) -> &str {
-    ctx.data()
-        .config
-        .endpoints
-        .public_frontend
-        .trim_end_matches('/')
 }
 
 fn no_match(kind: &str, query: &str) -> Error {
@@ -276,17 +248,23 @@ fn resolve<'a, T>(
 
 /// Autocomplete choices for `items`: the best matches for `partial`, or the first few items
 /// when nothing has been typed yet.
-fn choices<'a, T>(
-    items: &'a [T],
+///
+/// `items` is the cached list, so autocomplete never waits on a fetch: an uncached list
+/// (`None`) answers empty and loads in the background.
+fn choices<T>(
+    items: Option<Arc<Vec<T>>>,
     partial: &str,
-    names: impl Fn(&'a T) -> Vec<&'a str>,
-    priority: impl Fn(&'a T) -> u8,
+    names: impl for<'a> Fn(&'a T) -> Vec<&'a str>,
+    priority: impl Fn(&T) -> u8,
     choice: impl Fn(&T) -> (String, String),
 ) -> Vec<serenity::AutocompleteChoice> {
+    let Some(items) = items else {
+        return Vec::new();
+    };
     let hits: Vec<&T> = if partial.trim().is_empty() {
         items.iter().take(AUTOCOMPLETE_MAX).collect()
     } else {
-        search(items, partial, AUTOCOMPLETE_MAX, names, priority)
+        search(&items, partial, AUTOCOMPLETE_MAX, names, priority)
     };
     hits.into_iter()
         .map(|item| {
@@ -315,24 +293,23 @@ async fn autocomplete_operator(
     ctx: Context<'_>,
     partial: &str,
 ) -> Vec<serenity::AutocompleteChoice> {
-    // Never waits on a fetch: an uncached list answers empty and loads in the background.
-    let Some(operators) = ctx.data().gamedata.cached_operators().await else {
-        return Vec::new();
-    };
+    let operators = ctx.data().gamedata.cached_operators().await;
     choices(
-        &operators,
+        operators,
         partial,
         operator_names,
         operator_priority,
-        |op| {
-            (
-                match op.class() {
-                    Some(class) => format!("{} ({}★ {class})", op.name, op.rarity),
-                    None => format!("{} ({}★)", op.name, op.rarity),
-                },
-                op.id.clone(),
-            )
+        operator_choice,
+    )
+}
+
+fn operator_choice(op: &Operator) -> (String, String) {
+    (
+        match op.class() {
+            Some(class) => format!("{} ({}★ {class})", op.name, op.rarity),
+            None => format!("{} ({}★)", op.name, op.rarity),
         },
+        op.id.clone(),
     )
 }
 
@@ -352,21 +329,20 @@ fn enemy_priority(enemy: &Enemy) -> u8 {
 }
 
 async fn autocomplete_enemy(ctx: Context<'_>, partial: &str) -> Vec<serenity::AutocompleteChoice> {
-    // Never waits on a fetch: an uncached list answers empty and loads in the background.
-    let Some(enemies) = ctx.data().gamedata.cached_enemies().await else {
-        return Vec::new();
+    let enemies = ctx.data().gamedata.cached_enemies().await;
+    choices(enemies, partial, enemy_names, enemy_priority, enemy_choice)
+}
+
+fn enemy_choice(e: &Enemy) -> (String, String) {
+    let mut tags: Vec<&str> = Vec::new();
+    tags.extend(e.level.as_deref().map(enemy_level_label));
+    tags.extend(e.index.as_deref());
+    let label = if tags.is_empty() {
+        e.name.clone()
+    } else {
+        format!("{} ({})", e.name, tags.join(", "))
     };
-    choices(&enemies, partial, enemy_names, enemy_priority, |e| {
-        let mut tags: Vec<&str> = Vec::new();
-        tags.extend(e.level.as_deref().map(enemy_level_label));
-        tags.extend(e.index.as_deref());
-        let label = if tags.is_empty() {
-            e.name.clone()
-        } else {
-            format!("{} ({})", e.name, tags.join(", "))
-        };
-        (label, e.id.clone())
-    })
+    (label, e.id.clone())
 }
 
 fn enemy_embed(enemy: &Enemy, gamedata: &GameData, frontend: &str) -> CreateEmbed {
@@ -382,10 +358,11 @@ fn enemy_embed(enemy: &Enemy, gamedata: &GameData, frontend: &str) -> CreateEmbe
     if !frontend.is_empty() {
         embed = embed.url(format!("{frontend}/enemies/{}", enemy.id));
     }
-    if let Some(description) = enemy.description.as_deref().map(str::trim)
-        && !description.is_empty()
-    {
-        embed = embed.description(ellipsize(&strip_rich_text(description), DESCRIPTION_MAX));
+    if let Some(description) = non_blank(enemy.description.as_deref()) {
+        embed = embed.description(ellipsize(
+            &strip_rich_text(description),
+            ENEMY_DESCRIPTION_MAX,
+        ));
     }
 
     if let Some(level) = enemy.level.as_deref() {
@@ -482,17 +459,16 @@ fn stage_priority(stage: &Stage) -> u8 {
 }
 
 async fn autocomplete_stage(ctx: Context<'_>, partial: &str) -> Vec<serenity::AutocompleteChoice> {
-    // Never waits on a fetch: an uncached list answers empty and loads in the background.
-    let Some(stages) = ctx.data().gamedata.cached_stages().await else {
-        return Vec::new();
-    };
-    choices(&stages, partial, stage_names, stage_priority, |s| {
-        let mut label = format!("{} {}", s.code, s.name);
-        for extra in [s.zone_name.as_deref(), s.mode()].into_iter().flatten() {
-            let _ = write!(label, " · {extra}");
-        }
-        (label, s.stage_id.clone())
-    })
+    let stages = ctx.data().gamedata.cached_stages().await;
+    choices(stages, partial, stage_names, stage_priority, stage_choice)
+}
+
+fn stage_choice(s: &Stage) -> (String, String) {
+    let mut label = format!("{} {}", s.code, s.name);
+    for extra in [s.zone_name.as_deref(), s.mode()].into_iter().flatten() {
+        let _ = write!(label, " · {extra}");
+    }
+    (label, s.stage_id.clone())
 }
 
 fn stage_embed(
@@ -510,27 +486,14 @@ fn stage_embed(
     if !frontend.is_empty() {
         embed = embed.url(format!(
             "{frontend}/stages/{}",
-            crate::api::gamedata::encode_path_segment(&stage.stage_id)
+            encode_path_segment(&stage.stage_id)
         ));
     }
     if let Some(preview) = stage.preview.as_deref() {
         embed = embed.image(gamedata.asset_url(preview));
     }
 
-    // The detail's zone names ("Episode 1 · Evil Time Part 2") say more than the index's.
-    let zone = detail
-        .and_then(|d| d.zone.as_ref())
-        .map(|z| {
-            [z.zone_name_first.as_deref(), z.zone_name_second.as_deref()]
-                .into_iter()
-                .flatten()
-                .filter(|n| !n.trim().is_empty())
-                .collect::<Vec<_>>()
-                .join(" · ")
-        })
-        .filter(|z| !z.is_empty())
-        .or_else(|| stage.zone_name.clone());
-    let mut description: Vec<String> = zone.into_iter().collect();
+    let mut description: Vec<String> = stage_zone(stage, detail).into_iter().collect();
     description.extend(stage.mode().map(|m| format!("*{m}*")));
     if !description.is_empty() {
         embed = embed.description(description.join("\n"));
@@ -545,8 +508,7 @@ fn stage_embed(
             stage.stage_id
         )));
     };
-    if let Some(danger) = detail.stage.danger_level.as_deref().map(str::trim)
-        && !danger.is_empty()
+    if let Some(danger) = non_blank(detail.stage.danger_level.as_deref())
         && danger != "-"
     {
         embed = embed.field("Danger", danger, true);
@@ -562,14 +524,7 @@ fn stage_embed(
         embed = embed.field(mode, field(&condition), false);
     }
 
-    let mut seen = HashSet::new();
-    let enemies: Vec<&str> = detail
-        .level_data
-        .iter()
-        .flat_map(|l| l.enemy_db_refs.iter().flatten())
-        .filter(|r| seen.insert(r.id.as_str()))
-        .filter_map(|r| detail.enemies.get(&r.id).map(|e| e.name.as_str()))
-        .collect();
+    let enemies = stage_enemies(detail);
     if !enemies.is_empty() {
         embed = embed.field(
             format!("Enemies ({})", enemies.len()),
@@ -583,6 +538,36 @@ fn stage_embed(
         embed = embed.field("Drops", field(&drops), false);
     }
     embed.footer(CreateEmbedFooter::new(stage.stage_id.clone()))
+}
+
+/// The stage's zone. The detail's zone names ("Episode 1 · Evil Time Part 2") say more than the
+/// index's, which is the fallback.
+fn stage_zone(stage: &Stage, detail: Option<&StageDetail>) -> Option<String> {
+    detail
+        .and_then(|d| d.zone.as_ref())
+        .map(|z| {
+            [z.zone_name_first.as_deref(), z.zone_name_second.as_deref()]
+                .into_iter()
+                .flatten()
+                .filter(|n| !n.trim().is_empty())
+                .collect::<Vec<_>>()
+                .join(" · ")
+        })
+        .filter(|z| !z.is_empty())
+        .or_else(|| stage.zone_name.clone())
+}
+
+/// The names of the stage's enemies, each once, in level-file order. A reference the detail's
+/// enemy list doesn't name is left out.
+fn stage_enemies(detail: &StageDetail) -> Vec<&str> {
+    let mut seen = HashSet::new();
+    detail
+        .level_data
+        .iter()
+        .flat_map(|l| l.enemy_db_refs.iter().flatten())
+        .filter(|r| seen.insert(r.id.as_str()))
+        .filter_map(|r| detail.enemies.get(&r.id).map(|e| e.name.as_str()))
+        .collect()
 }
 
 /// The extra rule a stage variant adds, pulled out of its briefing.
@@ -668,17 +653,12 @@ fn story_names(group: &StoryGroup) -> Vec<&str> {
 }
 
 async fn autocomplete_story(ctx: Context<'_>, partial: &str) -> Vec<serenity::AutocompleteChoice> {
-    // Never waits on a fetch: an uncached list answers empty and loads in the background.
-    let Some(stories) = ctx.data().gamedata.cached_stories().await else {
-        return Vec::new();
-    };
-    choices(
-        &stories,
-        partial,
-        story_names,
-        |_| 0,
-        |g| (format!("{} ({})", g.name, story_kind(g)), g.id.clone()),
-    )
+    let stories = ctx.data().gamedata.cached_stories().await;
+    choices(stories, partial, story_names, |_| 0, story_choice)
+}
+
+fn story_choice(g: &StoryGroup) -> (String, String) {
+    (format!("{} ({})", g.name, story_kind(g)), g.id.clone())
 }
 
 /// "Main story", "Side story", "Vignette", or "Operator record: Ifrit".
@@ -716,7 +696,7 @@ fn story_embed(group: &StoryGroup, gamedata: &GameData, frontend: &str) -> Creat
     {
         embed = embed.url(format!(
             "{frontend}/stories/{}",
-            crate::api::gamedata::encode_path_segment(&first.id)
+            encode_path_segment(&first.id)
         ));
     }
     if let Some(art) = group.banner_url.as_deref().or(group.cover_url.as_deref()) {

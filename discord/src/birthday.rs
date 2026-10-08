@@ -21,9 +21,10 @@ use sqlx::SqlitePool;
 
 use crate::api::gamedata::{GameData, Operator};
 use crate::db;
+use crate::ui::{COLOR_PINK, EMBEDS_PER_MESSAGE};
 
-#[allow(clippy::unreadable_literal)]
-const COLOR_BIRTHDAY: u32 = 0xEB459E;
+/// The colour of every birthday embed.
+pub const COLOR_BIRTHDAY: u32 = COLOR_PINK;
 
 /// Seconds after UTC midnight at which the game day turns over (04:00 UTC-7).
 pub const RESET_UTC_SECS: i64 = 11 * 3600;
@@ -33,8 +34,6 @@ const DAY_SECS: i64 = 86_400;
 /// Longest the scheduler sleeps between checks, so a channel bound since the last tick, or a
 /// post that failed transiently, is picked up without waiting a whole day.
 const MAX_SLEEP: Duration = Duration::from_mins(10);
-/// Discord's cap on embeds per message.
-const EMBEDS_PER_MESSAGE: usize = 10;
 
 const MONTHS: [&str; 12] = [
     "january",
@@ -248,10 +247,16 @@ const fn form_rank(op: &Operator) -> (bool, usize, &str) {
 /// The operators whose birthday is `date`, by name.
 #[must_use]
 pub fn birthdays_on(operators: &[Operator], date: Date) -> Vec<&Operator> {
-    birthday_roster(operators)
-        .into_iter()
+    celebrating(&birthday_roster(operators), date)
+}
+
+/// The [`birthday_roster`] entries celebrating on `date`, in roster (name) order.
+#[must_use]
+pub fn celebrating<'a>(roster: &[(MonthDay, &'a Operator)], date: Date) -> Vec<&'a Operator> {
+    roster
+        .iter()
         .filter(|(birthday, _)| celebrates(*birthday, date))
-        .map(|(_, op)| op)
+        .map(|(_, op)| *op)
         .collect()
 }
 

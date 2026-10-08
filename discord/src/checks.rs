@@ -7,7 +7,7 @@ use crate::types::{Context, Error};
 
 /// Bot-owner gate: the accounts listed in the application's owner set.
 pub async fn owner_check(ctx: Context<'_>) -> Result<bool, Error> {
-    Ok(ctx.framework().options().owners.contains(&ctx.author().id))
+    Ok(is_bot_owner(ctx))
 }
 
 /// Guild-owner gate. Bot owners pass too, since they operate the pipeline these commands
@@ -16,12 +16,10 @@ pub async fn owner_check(ctx: Context<'_>) -> Result<bool, Error> {
 /// Attached to the top-level command, this covers every subcommand: poise runs the checks of
 /// each parent in the chain before the invoked one.
 pub async fn guild_owner_check(ctx: Context<'_>) -> Result<bool, Error> {
-    if ctx.framework().options().owners.contains(&ctx.author().id) {
+    if is_bot_owner(ctx) {
         return Ok(true);
     }
-    let guild = ctx
-        .guild_id()
-        .ok_or("This command must be used in a guild.")?;
+    let guild = require_guild(ctx)?;
     if ctx.author().id == guild_owner(ctx, guild).await? {
         Ok(true)
     } else {
@@ -78,9 +76,7 @@ pub async fn passes_elevated(ctx: Context<'_>, needed: Permissions) -> Result<bo
     if is_bot_owner(ctx) {
         return Ok(true);
     }
-    let guild = ctx
-        .guild_id()
-        .ok_or("This command must be used in a guild.")?;
+    let guild = require_guild(ctx)?;
 
     if has_mod_role(ctx, guild).await? {
         return Ok(true);
@@ -92,6 +88,13 @@ pub async fn passes_elevated(ctx: Context<'_>, needed: Permissions) -> Result<bo
     Ok(permissions.contains(needed))
 }
 
+/// The invoking guild, or the error a guild-only command answers with outside one.
+pub fn require_guild(ctx: Context<'_>) -> Result<GuildId, Error> {
+    Ok(ctx
+        .guild_id()
+        .ok_or("This command must be used in a guild.")?)
+}
+
 /// Whether the invoker is one of the bot's owners.
 #[must_use]
 pub fn is_bot_owner(ctx: Context<'_>) -> bool {
@@ -100,8 +103,8 @@ pub fn is_bot_owner(ctx: Context<'_>) -> bool {
 
 /// Whether the invoking member holds the guild's configured mod role.
 ///
-/// Returns `false` when no mod role is set, which is the state every guild starts in - the
-/// permission path below is then the only way through, exactly as it was before.
+/// Returns `false` when no mod role is set, which is the state every guild starts in: the
+/// permission check in [`passes_elevated`] is then the only way through.
 async fn has_mod_role(ctx: Context<'_>, guild: GuildId) -> Result<bool, Error> {
     let Some(mod_role) = db::get_mod_role(&ctx.data().pool, guild)
         .await

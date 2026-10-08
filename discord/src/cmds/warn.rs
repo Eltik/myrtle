@@ -16,13 +16,11 @@ use poise::CreateReply;
 use serenity::all::HttpError;
 
 use crate::audit;
-use crate::checks;
-use crate::db::{self, WarnAction, WarnPolicy};
+use crate::checks::{self, require_guild};
+use crate::db::{self, WarnAction, WarnPolicy, Warning};
 use crate::types::{Context, Error};
+use crate::ui::{COLOR_WARN, TITLE_MAX};
 use crate::utils::ellipsize;
-
-#[allow(clippy::unreadable_literal)]
-const COLOR_WARN: u32 = 0xFEE75C;
 
 /// Longest reason accepted, leaving room under the 1024-character embed field the DM and the
 /// audit-log mirror put it in.
@@ -65,9 +63,7 @@ pub async fn warn_add(
     #[max_length = 1000]
     reason: String,
 ) -> Result<(), Error> {
-    let guild = ctx
-        .guild_id()
-        .ok_or("This command must be used in a guild.")?;
+    let guild = require_guild(ctx)?;
     if user.id == ctx.author().id {
         return Err("You can't warn yourself.".into());
     }
@@ -102,12 +98,7 @@ pub async fn warn_add(
     let guild_name = guild
         .name(ctx.serenity_context())
         .unwrap_or_else(|| "a server".to_string());
-    let dm = CreateEmbed::new()
-        .title(ellipsize(&format!("You were warned in {guild_name}"), 256))
-        .colour(COLOR_WARN)
-        .field("Reason", reason, false)
-        .field("Warnings in this server", total.to_string(), true)
-        .timestamp(Timestamp::now());
+    let dm = dm_embed(&guild_name, reason, total);
     let dm_sent = user
         .direct_message(ctx.http(), CreateMessage::new().embed(dm))
         .await
@@ -305,9 +296,7 @@ pub async fn warn_list(
     ctx: Context<'_>,
     #[description = "Member whose warnings to show"] user: User,
 ) -> Result<(), Error> {
-    let guild = ctx
-        .guild_id()
-        .ok_or("This command must be used in a guild.")?;
+    let guild = require_guild(ctx)?;
     let warnings = db::list_warnings(&ctx.data().pool, guild, user.id)
         .await
         .map_err(|e| format!("Couldn't read warnings: {e}"))?;
@@ -321,9 +310,30 @@ pub async fn warn_list(
         return Ok(());
     }
 
+    let embed = list_embed(&user, &warnings);
+    ctx.send(CreateReply::default().embed(embed).ephemeral(true))
+        .await?;
+    Ok(())
+}
+
+/// The DM a warned member receives.
+fn dm_embed(guild_name: &str, reason: &str, total: i64) -> CreateEmbed {
+    CreateEmbed::new()
+        .title(ellipsize(
+            &format!("You were warned in {guild_name}"),
+            TITLE_MAX,
+        ))
+        .colour(COLOR_WARN)
+        .field("Reason", reason, false)
+        .field("Warnings in this server", total.to_string(), true)
+        .timestamp(Timestamp::now())
+}
+
+/// `/warn list`'s embed: newest first, cut off under the description cap.
+fn list_embed(user: &User, warnings: &[Warning]) -> CreateEmbed {
     let mut body = String::new();
     let mut shown = 0;
-    for w in &warnings {
+    for w in warnings {
         let entry = format!(
             "`#{}` <t:{}:d> by <@{}>\n{}\n",
             w.id,
@@ -345,8 +355,11 @@ pub async fn warn_list(
         );
     }
 
-    let embed = CreateEmbed::new()
-        .title(ellipsize(&format!("Warnings for {}", user.tag()), 256))
+    CreateEmbed::new()
+        .title(ellipsize(
+            &format!("Warnings for {}", user.tag()),
+            TITLE_MAX,
+        ))
         .thumbnail(user.face())
         .description(body)
         .colour(COLOR_WARN)
@@ -354,10 +367,7 @@ pub async fn warn_list(
             "{} warning(s) in total • User ID: {}",
             warnings.len(),
             user.id
-        )));
-    ctx.send(CreateReply::default().embed(embed).ephemeral(true))
-        .await?;
-    Ok(())
+        )))
 }
 
 /// Remove one warning by its id (shown in `/warn list`).
@@ -373,9 +383,7 @@ pub async fn warn_remove(
     #[min = 1]
     id: i64,
 ) -> Result<(), Error> {
-    let guild = ctx
-        .guild_id()
-        .ok_or("This command must be used in a guild.")?;
+    let guild = require_guild(ctx)?;
     let removed = db::remove_warning(&ctx.data().pool, guild, id)
         .await
         .map_err(|e| format!("Couldn't remove the warning: {e}"))?;
@@ -402,9 +410,7 @@ pub async fn warn_clear(
     ctx: Context<'_>,
     #[description = "Member whose warnings to clear"] user: User,
 ) -> Result<(), Error> {
-    let guild = ctx
-        .guild_id()
-        .ok_or("This command must be used in a guild.")?;
+    let guild = require_guild(ctx)?;
     let removed = db::clear_warnings(&ctx.data().pool, guild, user.id)
         .await
         .map_err(|e| format!("Couldn't clear warnings: {e}"))?;
@@ -455,9 +461,7 @@ pub async fn warn_policy_set(
     #[max = 40320]
     timeout_minutes: Option<u32>,
 ) -> Result<(), Error> {
-    let guild = ctx
-        .guild_id()
-        .ok_or("This command must be used in a guild.")?;
+    let guild = require_guild(ctx)?;
     let timeout_secs = match (action, timeout_minutes) {
         (WarnAction::Timeout, None) => {
             return Err("`timeout_minutes` is required when the action is `Timeout user`.".into());
@@ -494,9 +498,7 @@ pub async fn warn_policy_set(
 /// Show the escalation policy.
 #[poise::command(slash_command, guild_only, rename = "show")]
 pub async fn warn_policy_show(ctx: Context<'_>) -> Result<(), Error> {
-    let guild = ctx
-        .guild_id()
-        .ok_or("This command must be used in a guild.")?;
+    let guild = require_guild(ctx)?;
     let content = match db::get_warn_policy(&ctx.data().pool, guild)
         .await
         .map_err(|e| format!("Couldn't read the warning policy: {e}"))?
@@ -512,9 +514,7 @@ pub async fn warn_policy_show(ctx: Context<'_>) -> Result<(), Error> {
 /// Remove the escalation policy. Existing warnings are kept.
 #[poise::command(slash_command, guild_only, rename = "clear")]
 pub async fn warn_policy_clear(ctx: Context<'_>) -> Result<(), Error> {
-    let guild = ctx
-        .guild_id()
-        .ok_or("This command must be used in a guild.")?;
+    let guild = require_guild(ctx)?;
     let removed = db::clear_warn_policy(&ctx.data().pool, guild)
         .await
         .map_err(|e| format!("Couldn't clear the warning policy: {e}"))?;

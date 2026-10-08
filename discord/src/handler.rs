@@ -1,3 +1,4 @@
+use std::collections::{HashMap, VecDeque};
 use std::time::{Duration, Instant};
 
 use crate::audit;
@@ -28,8 +29,6 @@ pub async fn event_handler(
     data: &Data,
 ) -> Result<(), Error> {
     let bot_id = framework.bot_id;
-    // dispatcher grows additional arms over time; keep `match` over `if let`
-    #[allow(clippy::single_match)]
     match event {
         Ready { data_about_bot, .. } => {
             tracing::info!("{} is connected!", data_about_bot.user.name);
@@ -267,7 +266,7 @@ async fn handle_message(
         return Ok(());
     }
 
-    // `msg.mentions` and `msg.mention_roles` are *deduplicated* — pinging the same target
+    // `msg.mentions` and `msg.mention_roles` are *deduplicated*: pinging the same target
     // five times yields one entry. We want the raw token count so the limit reflects what
     // a human reads as "pings in this message", so parse `msg.content` directly. Requires
     // the MESSAGE_CONTENT intent, which is already requested in main.rs.
@@ -282,19 +281,11 @@ async fn handle_message(
         let now = Instant::now();
         let cutoff = Duration::from_secs(u64::from(window_secs));
         let key = (guild_id, msg.author.id);
-        // Scope the write guard so it drops before we run the action. The borrow checker
-        // forces `hist` to live as long as `entry`, so clippy's significant_drop_tightening
-        // suggestion to merge them doesn't typecheck; the block is the tightest we can do.
+        // Scope the write guard so it drops before we run the action.
         let total: u32 = {
             let mut hist = data.ping_history.write().await;
             let entry = hist.entry(key).or_default();
-            while let Some(&(t, _)) = entry.front() {
-                if now.duration_since(t) > cutoff {
-                    entry.pop_front();
-                } else {
-                    break;
-                }
-            }
+            drop_expired(entry, now, cutoff);
             entry.push_back((now, pings));
             entry.iter().map(|(_, p)| *p).sum()
         };
@@ -318,7 +309,18 @@ async fn handle_message(
     Ok(())
 }
 
-/// Count raw mention tokens — `<@123>`, `<@!123>`, `<@&123>` — in `content`. Each occurrence
+/// Drop the entries at the front of a user's ping history older than `cutoff` at `now`.
+fn drop_expired(entries: &mut VecDeque<(Instant, u32)>, now: Instant, cutoff: Duration) {
+    while let Some(&(t, _)) = entries.front() {
+        if now.duration_since(t) > cutoff {
+            entries.pop_front();
+        } else {
+            break;
+        }
+    }
+}
+
+/// Count raw mention tokens (`<@123>`, `<@!123>`, `<@&123>`) in `content`. Each occurrence
 /// counts separately, so `@me @me @me` returns 3 (unlike `msg.mentions.len()` which dedupes).
 const fn count_mention_tokens(content: &str) -> u32 {
     let bytes = content.as_bytes();
@@ -426,7 +428,7 @@ pub async fn run_ping_history_sweep(history: PingHistory, policies: AntiSpamPoli
 /// One pass of the sweep. Returned for tracing; the loop above is the only caller.
 async fn sweep_once(history: &PingHistory, policies: &AntiSpamPolicies) -> usize {
     // Snapshot the policy map so we don't hold both locks at once.
-    let policy_snapshot: std::collections::HashMap<_, _> = policies
+    let policy_snapshot: HashMap<_, _> = policies
         .read()
         .await
         .iter()
@@ -442,14 +444,7 @@ async fn sweep_once(history: &PingHistory, policies: &AntiSpamPolicies) -> usize
         let Some(Some(window_secs)) = policy_snapshot.get(guild_id).copied() else {
             return false;
         };
-        let cutoff = Duration::from_secs(u64::from(window_secs));
-        while let Some(&(t, _)) = entries.front() {
-            if now.duration_since(t) > cutoff {
-                entries.pop_front();
-            } else {
-                break;
-            }
-        }
+        drop_expired(entries, now, Duration::from_secs(u64::from(window_secs)));
         !entries.is_empty()
     });
     before - hist.len()

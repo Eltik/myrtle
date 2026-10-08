@@ -23,6 +23,7 @@ use crate::api::operator_detail::{
     OperatorDetail, ParadoxEntry, ParadoxStage, Range, SkinData, TableSkill, VoiceData,
 };
 use crate::types::Error;
+use crate::utils::non_blank;
 
 /// How long a fetched list counts as fresh. Game data changes on patch days, not by the minute.
 pub const LIST_TTL: Duration = Duration::from_mins(30);
@@ -586,83 +587,119 @@ impl GameData {
         Ok((self.client.clone(), format!("{}{path}", self.base()?)))
     }
 
+    /// The list at `path`, from `slot` or fetched through `load`.
+    async fn list<T, F, Fut>(
+        &self,
+        slot: &Arc<Slot<T>>,
+        path: &str,
+        label: &'static str,
+        load: F,
+    ) -> Result<Arc<T>, Error>
+    where
+        T: Send + Sync + 'static,
+        F: FnOnce(Client, String) -> Fut + Send + 'static,
+        Fut: Future<Output = Result<T, Error>> + Send + 'static,
+    {
+        let (client, url) = self.request(path)?;
+        slot.get(label, move || load(client, url)).await
+    }
+
+    /// The list at `path` if it is cached, for autocomplete: never waits on the network.
+    async fn cached_list<T, F, Fut>(
+        &self,
+        slot: &Arc<Slot<T>>,
+        path: &str,
+        label: &'static str,
+        load: F,
+    ) -> Option<Arc<T>>
+    where
+        T: Send + Sync + 'static,
+        F: FnOnce(Client, String) -> Fut + Send + 'static,
+        Fut: Future<Output = Result<T, Error>> + Send + 'static,
+    {
+        let (client, url) = self.request(path).ok()?;
+        slot.peek(label, move || load(client, url)).await
+    }
+
+    /// `/api/<route>/<id><suffix>`, fetched on demand and not cached.
+    async fn fetch_one<T: DeserializeOwned>(
+        &self,
+        route: &str,
+        id: &str,
+        suffix: &str,
+    ) -> Result<T, Error> {
+        let url = format!(
+            "{}/api/{route}/{}{suffix}",
+            self.base()?,
+            encode_path_segment(id)
+        );
+        fetch_json(self.client.clone(), url).await
+    }
+
     pub async fn operators(&self) -> Result<Arc<Vec<Operator>>, Error> {
-        let (client, url) = self.request(OPERATORS_PATH)?;
-        self.operators
-            .get("operator", move || fetch_json(client, url))
+        self.list(&self.operators, OPERATORS_PATH, "operator", fetch_json)
             .await
     }
 
     pub async fn enemies(&self) -> Result<Arc<Vec<Enemy>>, Error> {
-        let (client, url) = self.request(ENEMIES_PATH)?;
-        self.enemies
-            .get("enemy", move || load_enemies(client, url))
+        self.list(&self.enemies, ENEMIES_PATH, "enemy", load_enemies)
             .await
     }
 
     pub async fn stages(&self) -> Result<Arc<Vec<Stage>>, Error> {
-        let (client, url) = self.request(STAGES_PATH)?;
-        self.stages
-            .get("stage", move || load_stages(client, url))
+        self.list(&self.stages, STAGES_PATH, "stage", load_stages)
             .await
     }
 
     pub async fn stories(&self) -> Result<Arc<Vec<StoryGroup>>, Error> {
-        let (client, url) = self.request(STORIES_PATH)?;
-        self.stories
-            .get("story", move || load_stories(client, url))
+        self.list(&self.stories, STORIES_PATH, "story", load_stories)
             .await
     }
 
-    /// Item names by id. Not part of [`GameData::warm`]: only the full operator card needs it.
+    /// Item names by id. Not part of [`GameData::warm`]: only the operator Costs and Paradox
+    /// Simulation pages need it.
     pub async fn materials(&self) -> Result<Arc<HashMap<String, String>>, Error> {
-        let (client, url) = self.request(MATERIALS_PATH)?;
-        self.materials
-            .get("item", move || load_materials(client, url))
+        self.list(&self.materials, MATERIALS_PATH, "item", load_materials)
             .await
     }
 
     /// Attack ranges by id.
     pub async fn ranges(&self) -> Result<Arc<HashMap<String, Range>>, Error> {
-        let (client, url) = self.request(RANGES_PATH)?;
-        self.ranges
-            .get("range", move || fetch_json(client, url))
+        self.list(&self.ranges, RANGES_PATH, "range", fetch_json)
             .await
     }
 
     /// Paradox Simulations by operator id.
     pub async fn paradox(&self) -> Result<Arc<HashMap<String, ParadoxEntry>>, Error> {
-        let (client, url) = self.request(HANDBOOK_PATH)?;
-        self.paradox
-            .get("Paradox Simulation", move || load_paradox(client, url))
-            .await
+        self.list(
+            &self.paradox,
+            HANDBOOK_PATH,
+            "Paradox Simulation",
+            load_paradox,
+        )
+        .await
     }
 
     /// Every skill by id. Not part of [`GameData::warm`]: only the Summons page needs it.
     pub async fn skill_table(&self) -> Result<Arc<HashMap<String, TableSkill>>, Error> {
-        let (client, url) = self.request(SKILLS_PATH)?;
-        self.skill_table
-            .get("skill", move || fetch_json(client, url))
+        self.list(&self.skill_table, SKILLS_PATH, "skill", fetch_json)
             .await
     }
 
     /// One operator's full record, fetched on demand and not cached.
     pub async fn operator_detail(&self, id: &str) -> Result<OperatorDetail, Error> {
-        let url = format!("{}/api/operators/{}", self.base()?, encode_path_segment(id));
-        fetch_json(self.client.clone(), url).await
+        self.fetch_one("operators", id, "").await
     }
 
     /// One operator's outfits, fetched on demand and not cached.
     pub async fn skins(&self, id: &str) -> Result<SkinData, Error> {
-        let url = format!("{}/api/skins/{}", self.base()?, encode_path_segment(id));
-        fetch_json(self.client.clone(), url).await
+        self.fetch_one("skins", id, "").await
     }
 
     /// One operator's voice lines, fetched on demand and not cached. Remembers whether there
     /// were any, for [`GameData::known_voice_presence`].
     pub async fn voices(&self, id: &str) -> Result<VoiceData, Error> {
-        let url = format!("{}/api/voices/{}", self.base()?, encode_path_segment(id));
-        let data: VoiceData = fetch_json(self.client.clone(), url).await?;
+        let data: VoiceData = self.fetch_one("voices", id, "").await?;
         self.voice_presence.write().await.insert(
             id.to_string(),
             (Instant::now(), !data.char_words.is_empty()),
@@ -682,55 +719,37 @@ impl GameData {
 
     /// A Paradox Simulation stage's enemies and waves, fetched on demand and not cached.
     pub async fn paradox_stage(&self, stage_id: &str) -> Result<ParadoxStage, Error> {
-        let url = format!(
-            "{}/api/stages/{}/detail",
-            self.base()?,
-            encode_path_segment(stage_id)
-        );
-        fetch_json(self.client.clone(), url).await
-    }
-
-    /// The operator list if it is cached, for autocomplete: never waits on the network.
-    pub async fn cached_operators(&self) -> Option<Arc<Vec<Operator>>> {
-        let (client, url) = self.request(OPERATORS_PATH).ok()?;
-        self.operators
-            .peek("operator", move || fetch_json(client, url))
-            .await
-    }
-
-    /// The enemy list if it is cached, for autocomplete: never waits on the network.
-    pub async fn cached_enemies(&self) -> Option<Arc<Vec<Enemy>>> {
-        let (client, url) = self.request(ENEMIES_PATH).ok()?;
-        self.enemies
-            .peek("enemy", move || load_enemies(client, url))
-            .await
-    }
-
-    /// The stage list if it is cached, for autocomplete: never waits on the network.
-    pub async fn cached_stages(&self) -> Option<Arc<Vec<Stage>>> {
-        let (client, url) = self.request(STAGES_PATH).ok()?;
-        self.stages
-            .peek("stage", move || load_stages(client, url))
-            .await
-    }
-
-    /// The story list if it is cached, for autocomplete: never waits on the network.
-    pub async fn cached_stories(&self) -> Option<Arc<Vec<StoryGroup>>> {
-        let (client, url) = self.request(STORIES_PATH).ok()?;
-        self.stories
-            .peek("story", move || load_stories(client, url))
-            .await
+        self.fetch_one("stages", stage_id, "/detail").await
     }
 
     /// One stage's detail, fetched on demand and not cached: it is only read when an embed for
     /// that stage is being built.
     pub async fn stage_detail(&self, stage_id: &str) -> Result<StageDetail, Error> {
-        let url = format!(
-            "{}/api/stages/{}/detail",
-            self.base()?,
-            encode_path_segment(stage_id)
-        );
-        fetch_json(self.client.clone(), url).await
+        self.fetch_one("stages", stage_id, "/detail").await
+    }
+
+    /// The operator list if it is cached, for autocomplete: never waits on the network.
+    pub async fn cached_operators(&self) -> Option<Arc<Vec<Operator>>> {
+        self.cached_list(&self.operators, OPERATORS_PATH, "operator", fetch_json)
+            .await
+    }
+
+    /// The enemy list if it is cached, for autocomplete: never waits on the network.
+    pub async fn cached_enemies(&self) -> Option<Arc<Vec<Enemy>>> {
+        self.cached_list(&self.enemies, ENEMIES_PATH, "enemy", load_enemies)
+            .await
+    }
+
+    /// The stage list if it is cached, for autocomplete: never waits on the network.
+    pub async fn cached_stages(&self) -> Option<Arc<Vec<Stage>>> {
+        self.cached_list(&self.stages, STAGES_PATH, "stage", load_stages)
+            .await
+    }
+
+    /// The story list if it is cached, for autocomplete: never waits on the network.
+    pub async fn cached_stories(&self) -> Option<Arc<Vec<StoryGroup>>> {
+        self.cached_list(&self.stories, STORIES_PATH, "story", load_stories)
+            .await
     }
 
     /// Whether every list has been fetched at least once, so a lookup won't wait on the network.
@@ -855,10 +874,6 @@ async fn load_stories(client: Client, url: String) -> Result<Vec<StoryGroup>, Er
         .collect())
 }
 
-fn non_blank(s: Option<&str>) -> Option<&str> {
-    s.map(str::trim).filter(|s| !s.is_empty())
-}
-
 async fn fetch_json<T: DeserializeOwned>(client: Client, url: String) -> Result<T, Error> {
     let response = client
         .get(&url)
@@ -911,8 +926,8 @@ mod tests {
 
     #[test]
     fn index_fields_decode_from_null() {
-        // Every field the backend types as Option, sent as null. One of these used to fail the
-        // whole operator index.
+        // Every field the backend types as Option, sent as null. Any one of them failing to
+        // decode would fail the whole operator index.
         let ops: Vec<Operator> = serde_json::from_str(
             r#"[{"id":"char_x","name":"X","appellation":" ","rarity":4,
                 "profession":"CASTER","position":"RANGED","tagList":[],

@@ -6,7 +6,7 @@
 use std::collections::HashMap;
 use std::fmt::Write as _;
 
-use crate::api::gamedata::{GameData, Operator};
+use crate::api::gamedata::{GameData, Operator, encode_path_segment};
 use crate::api::operator_detail::{
     Attributes, BoardEntry, BoardEntryPascal, ItemCost, Module, ModuleItemCost, ModulePhase,
     OperatorDetail, ParadoxEntry, ParadoxStage, Range, SkillLevel, Skin, SkinData, TableSkill,
@@ -15,6 +15,7 @@ use crate::api::operator_detail::{
 use crate::cmds::operator::layout::{Block, Choice, capped_choices, range_grid};
 use crate::cmds::operator::state::Page;
 use crate::gametext::{blackboard, plain_text, render, strip_rich_text};
+use crate::utils::{group_thousands, non_blank};
 
 /// Everything a page can read. The first four are fetched for every page, the voice lines
 /// for the Voice page and an operator's first view, the rest only for the page that needs
@@ -238,13 +239,12 @@ fn overview(src: &Sources<'_>, sel: Option<usize>) -> Built {
         .iter()
         .enumerate()
         .map(|(i, p)| {
-            let mut c = Choice::new(
+            Choice::new(
                 &format!("Elite {i}"),
                 i.to_string(),
                 Some(&format!("Max level {}", p.max_level)),
-            );
-            c.default = i == elite;
-            c
+            )
+            .selected(i == elite)
         })
         .collect();
     finish(
@@ -393,11 +393,7 @@ fn skills(src: &Sources<'_>, sel: Option<usize>) -> Built {
     }
     let choices = (0..=top)
         .rev()
-        .map(|i| {
-            let mut c = Choice::new(&level_label(i), i.to_string(), None);
-            c.default = i == level;
-            c
-        })
+        .map(|i| Choice::new(&level_label(i), i.to_string(), None).selected(i == level))
         .collect();
     finish(
         src,
@@ -631,11 +627,7 @@ fn modules(src: &Sources<'_>, sel: Option<usize>) -> Built {
         blocks.push(block);
     }
     let choices = (0..stages)
-        .map(|i| {
-            let mut c = Choice::new(&format!("Stage {}", i + 1), i.to_string(), None);
-            c.default = i == stage;
-            c
-        })
+        .map(|i| Choice::new(&format!("Stage {}", i + 1), i.to_string(), None).selected(i == stage))
         .collect();
     finish(
         src,
@@ -823,78 +815,14 @@ fn costs(src: &Sources<'_>, sel: Option<usize>) -> Built {
     }
     let mut blocks = vec![head];
     match kind {
-        0 => {
-            let mut block = Block::titled("Promotions");
-            for (i, phase) in detail.phases.iter().enumerate().skip(1) {
-                let items = item_lines(phase.evolve_cost.iter().flatten().map(game_cost), names);
-                block.field(format!("Elite {i}"), items, true);
-            }
-            let levelling: Vec<String> = detail
-                .phases
-                .iter()
-                .enumerate()
-                .filter_map(|(i, phase)| {
-                    let line =
-                        item_inline(phase.level_up_cost.iter().flatten().map(game_cost), names);
-                    (!line.is_empty()).then(|| format!("E{i} Lv.1 to {}: {line}", phase.max_level))
-                })
-                .collect();
-            block.field("Levelling", levelling.join("\n"), false);
-            blocks.push(block);
-        }
-        1 => {
-            let mut block = Block::titled("Skill levels");
-            for (i, level) in detail.all_skill_level_up.iter().flatten().enumerate() {
-                let items = item_lines(level.lvl_up_cost.iter().flatten().map(game_cost), names);
-                block.field(format!("Level {}", i + 2), items, true);
-            }
-            blocks.push(block);
-        }
-        2 => {
-            for (i, skill) in detail.skills.iter().enumerate() {
-                let Some(conds) = skill.level_up_cost_cond.as_ref().filter(|c| !c.is_empty())
-                else {
-                    continue;
-                };
-                let name = skill
-                    .static_
-                    .as_ref()
-                    .and_then(|st| st.levels.first())
-                    .map_or(skill.skill_id.as_str(), |l| l.name.trim());
-                let mut block = Block::titled(format!("S{} · {name}", i + 1));
-                if let Some(st) = skill.static_.as_ref() {
-                    block.thumbnail = Some(route(src, "skill-icon", st.icon()));
-                }
-                for (m, cond) in conds.iter().enumerate() {
-                    let items =
-                        item_lines(cond.level_up_cost.iter().flatten().map(game_cost), names);
-                    block.field(format!("Mastery {}", m + 1), items, true);
-                }
-                blocks.push(block);
-            }
-        }
-        _ => {
-            for module in detail.advanced_modules() {
-                let Some(stages) = module.item_cost.as_ref().filter(|c| !c.is_empty()) else {
-                    continue;
-                };
-                let mut block = Block::titled(module_name(module));
-                block.thumbnail = Some(route(src, "module-icon", &module.uni_equip_id));
-                for (stage, cost) in stages {
-                    let items = item_lines(cost.iter().map(module_cost), names);
-                    block.field(format!("Stage {stage}"), items, true);
-                }
-                blocks.push(block);
-            }
-        }
+        0 => blocks.push(promotion_costs(detail, names)),
+        1 => blocks.push(skill_level_costs(detail, names)),
+        2 => blocks.extend(mastery_costs(src, names)),
+        _ => blocks.extend(module_costs(src, names)),
     }
     let choices = kinds
         .iter()
-        .map(|&k| {
-            let mut c = Choice::new(COST_KINDS[k], k.to_string(), None);
-            c.default = k == kind;
-            c
-        })
+        .map(|&k| Choice::new(COST_KINDS[k], k.to_string(), None).selected(k == kind))
         .collect();
     finish(
         src,
@@ -903,6 +831,79 @@ fn costs(src: &Sources<'_>, sel: Option<usize>) -> Built {
         "Cost type",
         Some(COST_KINDS[kind].to_string()),
     )
+}
+
+/// Promotion costs per elite, then the LMD and EXP to level through each phase.
+fn promotion_costs(detail: &OperatorDetail, names: Option<&HashMap<String, String>>) -> Block {
+    let mut block = Block::titled("Promotions");
+    for (i, phase) in detail.phases.iter().enumerate().skip(1) {
+        let items = item_lines(phase.evolve_cost.iter().flatten().map(game_cost), names);
+        block.field(format!("Elite {i}"), items, true);
+    }
+    let levelling: Vec<String> = detail
+        .phases
+        .iter()
+        .enumerate()
+        .filter_map(|(i, phase)| {
+            let line = item_inline(phase.level_up_cost.iter().flatten().map(game_cost), names);
+            (!line.is_empty()).then(|| format!("E{i} Lv.1 to {}: {line}", phase.max_level))
+        })
+        .collect();
+    block.field("Levelling", levelling.join("\n"), false);
+    block
+}
+
+/// The shared skill levels 2 to 7.
+fn skill_level_costs(detail: &OperatorDetail, names: Option<&HashMap<String, String>>) -> Block {
+    let mut block = Block::titled("Skill levels");
+    for (i, level) in detail.all_skill_level_up.iter().flatten().enumerate() {
+        let items = item_lines(level.lvl_up_cost.iter().flatten().map(game_cost), names);
+        block.field(format!("Level {}", i + 2), items, true);
+    }
+    block
+}
+
+/// One block per skill with masteries.
+fn mastery_costs(src: &Sources<'_>, names: Option<&HashMap<String, String>>) -> Vec<Block> {
+    let mut blocks = Vec::new();
+    for (i, skill) in src.detail.skills.iter().enumerate() {
+        let Some(conds) = skill.level_up_cost_cond.as_ref().filter(|c| !c.is_empty()) else {
+            continue;
+        };
+        let name = skill
+            .static_
+            .as_ref()
+            .and_then(|st| st.levels.first())
+            .map_or(skill.skill_id.as_str(), |l| l.name.trim());
+        let mut block = Block::titled(format!("S{} · {name}", i + 1));
+        if let Some(st) = skill.static_.as_ref() {
+            block.thumbnail = Some(route(src, "skill-icon", st.icon()));
+        }
+        for (m, cond) in conds.iter().enumerate() {
+            let items = item_lines(cond.level_up_cost.iter().flatten().map(game_cost), names);
+            block.field(format!("Mastery {}", m + 1), items, true);
+        }
+        blocks.push(block);
+    }
+    blocks
+}
+
+/// One block per advanced module with costs, a field per stage.
+fn module_costs(src: &Sources<'_>, names: Option<&HashMap<String, String>>) -> Vec<Block> {
+    let mut blocks = Vec::new();
+    for module in src.detail.advanced_modules() {
+        let Some(stages) = module.item_cost.as_ref().filter(|c| !c.is_empty()) else {
+            continue;
+        };
+        let mut block = Block::titled(module_name(module));
+        block.thumbnail = Some(route(src, "module-icon", &module.uni_equip_id));
+        for (stage, cost) in stages {
+            let items = item_lines(cost.iter().map(module_cost), names);
+            block.field(format!("Stage {stage}"), items, true);
+        }
+        blocks.push(block);
+    }
+    blocks
 }
 
 const fn game_cost(c: &ItemCost) -> (&str, u64) {
@@ -1253,16 +1254,15 @@ fn voice(src: &Sources<'_>, sel: Option<usize>) -> Result<Built, String> {
                 .iter()
                 .filter(|l| voice_category(&l.place_type) == c)
                 .count();
-            let mut choice = Choice::new(
+            Choice::new(
                 VOICE_CATEGORIES[c],
                 c.to_string(),
                 Some(&format!(
                     "{count} line{}",
                     if count == 1 { "" } else { "s" }
                 )),
-            );
-            choice.default = c == category;
-            choice
+            )
+            .selected(c == category)
         })
         .collect();
     Ok(finish(
@@ -1301,6 +1301,18 @@ fn paradox(src: &Sources<'_>) -> Result<Built, String> {
         block.image = Some(src.urls.asset_url(preview));
     }
 
+    let groups = paradox_enemies(stage);
+    for (label, lines) in ["Normal", "Elite", "Boss"].into_iter().zip(&groups) {
+        block.field(label, lines.join("\n"), false);
+    }
+    let rewards = item_inline(entry.reward_item.iter().map(module_cost), src.items);
+    block.field("Reward", rewards, true);
+    Ok(finish(src, vec![header(src), block], Vec::new(), "", None))
+}
+
+/// The stage's enemies as lines ("B1 Originium Slug (Lv.2) **x4**"), grouped Normal, Elite,
+/// Boss. The count is how many the waves spawn.
+fn paradox_enemies(stage: &ParadoxStage) -> [Vec<String>; 3] {
     let mut spawned: HashMap<&str, u32> = HashMap::new();
     let level = stage.level_data.as_ref();
     for action in level
@@ -1356,12 +1368,7 @@ fn paradox(src: &Sources<'_>) -> Result<Built, String> {
         };
         groups[group].push(line);
     }
-    for (label, lines) in ["Normal", "Elite", "Boss"].into_iter().zip(&groups) {
-        block.field(label, lines.join("\n"), false);
-    }
-    let rewards = item_inline(entry.reward_item.iter().map(module_cost), src.items);
-    block.field("Reward", rewards, true);
-    Ok(finish(src, vec![header(src), block], Vec::new(), "", None))
+    groups
 }
 
 // ---------------------------------------------------------------------------
@@ -1377,10 +1384,8 @@ fn fill<S: std::hash::BuildHasher>(template: &str, board: &HashMap<String, f64, 
 /// A backend image route for `id`, percent-encoded: skill ids carry `[` and `]`
 /// (`skcom_atk_up[2]`), outfit avatars `#`.
 fn route(src: &Sources<'_>, route: &str, id: &str) -> String {
-    src.urls.api_url(&format!(
-        "/{route}/{}",
-        crate::api::gamedata::encode_path_segment(id)
-    ))
+    src.urls
+        .api_url(&format!("/{route}/{}", encode_path_segment(id)))
 }
 
 fn range_of(ranges: &HashMap<String, Range>, id: Option<&str>) -> Option<String> {
@@ -1398,10 +1403,6 @@ fn pascal_board(entries: Option<&[BoardEntryPascal]>) -> HashMap<String, f64> {
 
 fn camel_board(entries: &[BoardEntry]) -> HashMap<String, f64> {
     blackboard(entries.iter().map(|b| (b.key.as_str(), b.value)))
-}
-
-fn non_blank(s: Option<&str>) -> Option<&str> {
-    s.map(str::trim).filter(|s| !s.is_empty())
 }
 
 /// The non-blank entries of a profile list, trimmed: the data has stray spaces ("Ruan ").
@@ -1445,18 +1446,6 @@ fn number(n: f64) -> String {
 fn decimal(n: f64) -> String {
     let text = format!("{n:.2}");
     text.trim_end_matches('0').trim_end_matches('.').to_string()
-}
-
-fn group_thousands(n: u64) -> String {
-    let digits = n.to_string();
-    let mut out = String::with_capacity(digits.len() + digits.len() / 3);
-    for (i, c) in digits.chars().enumerate() {
-        if i > 0 && (digits.len() - i).is_multiple_of(3) {
-            out.push(',');
-        }
-        out.push(c);
-    }
-    out
 }
 
 #[cfg(test)]

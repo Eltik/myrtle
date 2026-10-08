@@ -14,7 +14,7 @@ use crate::watcher::AssetsStates;
 
 /// Per-`(guild, user)` rolling window of recent ping counts, keyed by send time.
 ///
-/// Lives only in memory — antispam doesn't need to survive restarts, and a tiny deque per
+/// Lives only in memory: antispam doesn't need to survive restarts, and a tiny deque per
 /// user is cheaper than another DB roundtrip on every message.
 pub type PingHistory = Arc<RwLock<HashMap<(GuildId, UserId), VecDeque<(Instant, u32)>>>>;
 
@@ -45,6 +45,14 @@ pub struct Data {
     pub gamedata: Arc<GameData>,
     /// Which image links the backend 404s, remembered per URL for the operator view.
     pub operator_images: crate::cmds::operator::images::ImageCheck,
+}
+
+impl Data {
+    /// The public frontend's base URL without a trailing slash; empty when unconfigured.
+    #[must_use]
+    pub fn frontend(&self) -> &str {
+        self.config.endpoints.public_frontend.trim_end_matches('/')
+    }
 }
 
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
