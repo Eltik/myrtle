@@ -47,6 +47,10 @@ pub async fn kick_members_check(ctx: Context<'_>) -> Result<bool, Error> {
     elevated(ctx, Permissions::KICK_MEMBERS).await
 }
 
+pub async fn manage_nicknames_check(ctx: Context<'_>) -> Result<bool, Error> {
+    elevated(ctx, Permissions::MANAGE_NICKNAMES).await
+}
+
 pub async fn moderate_members_check(ctx: Context<'_>) -> Result<bool, Error> {
     elevated(ctx, Permissions::MODERATE_MEMBERS).await
 }

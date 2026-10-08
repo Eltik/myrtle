@@ -23,7 +23,7 @@ The Discord companion for [myrtle.moe](https://myrtle.moe). It moderates guilds,
 - **Asset announcements** - one WebSocket connection per Arknights region (EN, CN, JP, KR) to the asset pipeline, posting to a bound channel when an extraction completes. Each guild can limit announcements to some regions.
 - **Game-data lookups** - `/collection` shows operators, enemies, stages, and story groups from the public backend, with fuzzy, accent-insensitive autocomplete.
 - **Operator birthdays** - a daily post at the EN reset (04:00 UTC-7) for every operator whose birthday it is, plus `today` and `upcoming` lookups.
-- **Text-to-speech** - a member in a voice channel who types in that channel's chat is read out there, by an offline Piper voice. On in every server until a moderator turns it off. See [Text-to-speech](#text-to-speech).
+- **Text-to-speech** - `/tts join` brings the bot into your voice channel, and members in that channel who type in its chat are read out as "name said: text", by an offline voice (Piper, or Kokoro). See [Text-to-speech](#text-to-speech).
 - **Backend lookups** - endpoint reachability and latency, and platform statistics.
 - **Embed builder** - create and edit rich embeds from fields or raw JSON, and read an existing embed back as JSON.
 
@@ -159,9 +159,10 @@ Elevated commands pass for bot owners, for the guild's configured mod role, or f
 
 | Command | Permission | Description |
 |---------|------------|-------------|
-| `/tts enable` · `disable` · `status` | Manage Server | Turn text-to-speech on or off in this server, or see whether it is on and where the bot is speaking. Disabling makes the bot leave voice |
-| `/tts skip` | In the bot's channel, or Move Members | Skip the message being read out |
+| `/tts join` | In a voice channel | Join your voice channel and read its chat aloud. Refused, with the reason, when you aren't in one, the voice isn't installed, or the bot is reading another channel of the server (it names which) |
 | `/tts leave` | In the bot's channel, or Move Members | Make the bot leave its voice channel |
+| `/tts skip` | In the bot's channel, or Move Members | Skip the rest of the message being read out |
+| `/tts nickname set <name> [user]` · `clear [user]` · `show [user]` | Yourself; Manage Nicknames for someone else | How a name is read before its messages, 1 to 32 characters with no mentions or links |
 
 ### Operator pages
 
@@ -208,12 +209,15 @@ Every section is optional, and unknown fields are rejected. Copy [`config.exampl
 | `assets.reconnect_secs` | WebSocket reconnect backoff. Defaults to `5` |
 
 | `tts.enabled` | `false` turns TTS off without the missing-voice warning. Defaults to `true` |
-| `tts.model_dir` | A `vits-piper-*` directory as the release archive unpacks. Defaults to `tts/vits-piper-en_US-ljspeech-medium`, relative to the working directory |
+| `tts.engine` | `"piper"` (default) or `"kokoro"`. When unset, a `model_dir` holding `voices.bin` is Kokoro and any other is Piper |
+| `tts.model_dir` | The voice's directory as its release archive unpacks. Defaults to `tts/vits-piper-en_US-ljspeech-medium` (Piper) or `tts/kokoro-multi-lang-v1_0` (Kokoro), relative to the working directory |
 | `tts.model` · `tokens` · `data_dir` | Override one file: the `.onnx` model (default: the only one in `model_dir`), `tokens.txt`, `espeak-ng-data/` |
-| `tts.max_chars` | Characters spoken per message after cleanup, cut at a word. Defaults to `300` |
+| `tts.voices` · `lexicon` · `speaker` | Kokoro only: `voices.bin`, the lexicons (default `lexicon-us-en.txt`), and the speaker id (default `3`, `af_heart`) |
+| `tts.max_chars` | Characters spoken per message after cleanup, cut at a word, not counting the "name said:" prefix. Defaults to `300` |
 | `tts.idle_secs` | Seconds without speech before the bot leaves. Defaults to `300` |
 | `tts.queue_max` | Messages waiting per server; more are dropped silently. Defaults to `10` |
-| `tts.user_cooldown_ms` | Least time between two spoken messages from one member. Defaults to `2000` |
+| `tts.user_queue_max` | Messages one member may have waiting; more from them are dropped silently until some are read. Defaults to `3` |
+| `tts.user_cooldown_ms` | Deprecated and ignored, with one warning at startup. It dropped a member's second message inside the window |
 | `tts.settle_ms` | Wait after joining before the first playback (see [DAVE](#dave)). Defaults to `1500` |
 
 Omit `assets` entirely and the watcher subsystem stays off. Omit `tts` and TTS looks for the voice at the default path; when it isn't there TTS is off, with one warning at startup. The legacy singular `assets.ws_url` is still honoured and is treated as one server labelled `EN`.
@@ -222,33 +226,39 @@ When the bot runs in Docker against a pipeline on the host, point `ws_url` at `w
 
 ## Text-to-speech
 
-A member who is in voice channel X and types in X's built-in text chat is read out in X. The bot joins X if it is in no other voice channel of that server; while it is in another one, messages elsewhere are ignored without a reply. Stage channels are not read.
+The bot never joins voice on its own. `/tts join`, run by a member who is in a voice channel, brings it into that channel, and it posts one line in the channel's chat saying so. From then on, a message typed in that channel's chat is read aloud when its author is in the channel (from the cache's voice states), as "name said: text". Messages in any other channel are ignored. Stage channels can't be joined.
 
-A message is spoken only when its author is in that very channel (from the cache's voice states), and never when it comes from a bot, a webhook, or the system, starts with the `-` prefix, carries a sticker, or has nothing left after cleanup. Cleanup reads mentions as names, custom emoji as their names (a run of one emoji once), URLs as "link", masked links as their label, and fenced code as "code block"; it drops markdown symbols and timestamps, cuts any character repeated more than three times to three, and caps the result at `max_chars` at a word boundary. Attachments are never read, so an attachment with no text says nothing.
+The name is the member's TTS nickname (`/tts nickname`) if one is set, else their server nickname, else their global display name, else their username. It goes through the same cleanup as the message, capped at 32 characters, and a name with nothing speakable left falls back to the username. Every message carries it.
 
-Each server has one FIFO queue of `queue_max` messages; more are dropped silently. One member is spoken at most once per `user_cooldown_ms`. The bot leaves 5 seconds after the last human leaves its channel, after `idle_secs` without speech, when it is moved or disconnected, and on `/tts leave` or `/tts disable`. A server can join or leave voice at most once per 5 seconds, which holds each server to 24 gateway voice updates a minute against the 120-per-minute limit on the connection.
+A message is never read when it comes from a bot, a webhook, or the system, starts with the `-` prefix, carries a sticker, or has nothing left after cleanup. Cleanup reads mentions as names, custom emoji as their names (a run of one emoji once), URLs as "link", masked links as their label, and fenced code as "code block"; it drops markdown symbols and timestamps, cuts any character repeated more than three times to three, and caps the text at `max_chars` at a word boundary. Attachments are never read.
 
-Synthesis runs one job at a time across all servers, on one thread, on Tokio's blocking pool. The voice loads on the first message that needs it and stays loaded. If its files are missing at startup, or it fails to load, TTS is off with one warning and the rest of the bot is unaffected.
+Each server has one FIFO queue of `queue_max` messages, and each member may have `user_queue_max` of them waiting; anything past either cap is dropped silently and the older messages are kept. A message is spoken a sentence at a time: the next sentence synthesizes while the current one plays, so the first audio comes after sentence one rather than after the whole message, and `/tts skip` drops the rest of the message. The bot leaves 5 seconds after the last human leaves its channel, after `idle_secs` without speech, when it is moved or disconnected, and on `/tts leave`. A server can join or leave voice at most once per 5 seconds, which holds each server to 24 gateway voice updates a minute against the 120-per-minute limit on the connection.
 
-### The voice
+Synthesis runs one sentence at a time across all servers, on one thread, on Tokio's blocking pool. The voice loads on the first message that needs it and stays loaded. If its files are missing at startup, or it fails to load, `/tts join` says so and the rest of the bot is unaffected.
 
-Piper `en_US-ljspeech-medium`, as packaged by sherpa-onnx: one US English female speaker, 22,050 Hz, trained from scratch on [LJ Speech](https://keithito.com/LJ-Speech-Dataset/), which is in the public domain ([model card](https://huggingface.co/rhasspy/piper-voices/blob/main/en/en_US/ljspeech/medium/MODEL_CARD)). Most other English Piper voices are fine-tuned from `lessac`, whose dataset licence is the Blizzard 2013 one, or carry a non-commercial dataset licence (`ryan` is CC BY-NC-SA 4.0), so they were passed over.
+### The voices
 
-The binary links espeak-ng statically (it turns text into phonemes), and espeak-ng is GPL-3.0. Running the bot as a service distributes nothing; handing out the binary, as the CI artifact does, is distribution of a work that includes GPL code.
+**Piper `en_US-ljspeech-medium`** (the default), as packaged by sherpa-onnx: one US English female speaker, 22,050 Hz, trained from scratch on [LJ Speech](https://keithito.com/LJ-Speech-Dataset/), which is in the public domain ([model card](https://huggingface.co/rhasspy/piper-voices/blob/main/en/en_US/ljspeech/medium/MODEL_CARD)). Most other English Piper voices are fine-tuned from `lessac`, whose dataset licence is the Blizzard 2013 one, or carry a non-commercial dataset licence (`ryan` is CC BY-NC-SA 4.0), so they were passed over.
 
-Measured on macOS arm64 (Apple Silicon), one thread, release build. These are not VPS numbers:
+**Kokoro-82M v1.0** (`tts.engine: "kokoro"`), as packaged by sherpa-onnx (`kokoro-multi-lang-v1_0`), speaker `af_heart` (id 3), the voice its author grades highest (A), 24,000 Hz. The weights and voices are Apache-2.0 ([model card](https://huggingface.co/hexgrad/Kokoro-82M); the package ships the Apache-2.0 `LICENSE`). Its training data includes CC BY audio (Koniwa `tnc`, CC BY 3.0, and SIWIS, CC BY 4.0), which the model card credits. It reads more naturally, and costs about ten times Piper's CPU per second of audio.
 
-| Text | Synthesis | Audio | Real-time factor |
-|------|-----------|-------|------------------|
-| 20 chars, 3 words | 0.097 to 0.121 s | 1.149 to 1.277 s | 0.076 to 0.105 |
-| 103 chars, 21 words | 0.473 to 0.484 s | 6.437 to 6.612 s | 0.071 to 0.075 |
-| 289 chars, 55 words | 1.130 to 1.185 s | 16.006 to 16.451 s | 0.071 to 0.072 |
+The binary links espeak-ng statically (both voices use it to turn text into phonemes), and espeak-ng is GPL-3.0. Running the bot as a service distributes nothing; handing out the binary, as the CI artifact does, is distribution of a work that includes GPL code.
 
-Loading takes 386 to 415 ms. Peak resident memory for loading the voice and speaking all three is 388.5 to 396.4 MB, so expect the bot's RSS to rise by roughly that much the first time it speaks. Output length varies by up to 0.4 s between runs because VITS samples noise.
+Measured on macOS arm64 (Apple Silicon), release build, the same three sentences for each voice. These are not VPS numbers. Another session's esbuild held about 130% CPU (load average 9 to 12 on 15 cores) throughout; Piper control runs before, between, and after the Kokoro runs matched the quiet-machine Piper baseline (55-word RTF 0.068 to 0.070, against 0.071 to 0.072 quiet), so the window is taken as valid. "First audio" is the synthesis time of the first sentence, which is when playback can start with sentence chunking.
+
+| Voice, threads | Load | 3 words: synth / audio / RTF | 21 words: synth / audio / RTF | 55 words: synth / audio / RTF | 55 words, first audio | Peak RSS |
+|---|---|---|---|---|---|---|
+| Piper, 1 | 365 to 422 ms | 0.103 to 0.120 s / 1.289 to 1.405 s / 0.074 to 0.093 | 0.434 to 0.463 s / 6.271 to 6.581 s / 0.068 to 0.071 | 1.119 to 1.158 s / 16.329 to 16.600 s / 0.068 to 0.070 | 0.453 to 0.496 s | 444.1 to 477.2 MB |
+| Kokoro fp32, 1 | 464 to 513 ms | 0.984 to 1.016 s / 1.188 s / 0.828 to 0.855 | 3.803 to 5.314 s / 5.808 s / 0.655 to 0.915 | 10.587 to 11.157 s / 15.145 s / 0.699 to 0.737 | 4.553 to 4.638 s | 716.1 to 805.9 MB |
+| Kokoro fp32, 2 | 392 ms | 0.576 s / 1.188 s / 0.484 | 2.107 s / 5.808 s / 0.363 | 6.495 s / 15.141 s / 0.429 | 2.749 s | 763.1 MB |
+
+Piper stays the default because Kokoro at one thread runs at RTF 0.699 to 0.737 on the long sentence. That keeps pace with playback, so a queue doesn't grow without bound, but a 55-word message takes about 4.6 s to start where Piper takes 0.5 s, and it needs about 300 MB more memory. Two threads would bring Kokoro to RTF 0.429 at the backend's expense; the bot stays at one.
+
+Ruled out by measurement: Kokoro's int8 package (`kokoro-int8-multi-lang-v1_0`). At one thread it returned all-zero audio in four runs out of four (peak 0.0000), while two threads gave normal audio. The bot refuses an all-silent synthesis with a warning instead of playing it, and the Kokoro default is the fp32 package.
 
 ### Installing the voice
 
-From `discord/` (the bot's working directory under pm2):
+From `discord/` (the bot's working directory under pm2), the default Piper voice:
 
 ```bash
 mkdir -p tts
@@ -258,7 +268,19 @@ ls tts/vits-piper-en_US-ljspeech-medium
 # en_US-ljspeech-medium.onnx  en_US-ljspeech-medium.onnx.json  espeak-ng-data/  MODEL_CARD  tokens.txt
 ```
 
-The archive is 67.2 MB and unpacks to 82.7 MB on disk (a 63.5 MB model and 18.1 MB of espeak-ng data). `tts/` is git-ignored. Restart the bot afterwards; with no `tts` section in `config.json` it finds the voice at this path.
+The archive is 67.2 MB and unpacks to 82.7 MB on disk (a 63.5 MB model and 18.1 MB of espeak-ng data).
+
+Or Kokoro, then set `"tts": { "engine": "kokoro" }` in `config.json`:
+
+```bash
+mkdir -p tts
+curl -fL https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-multi-lang-v1_0.tar.bz2 \
+  | tar xj -C tts
+ls tts/kokoro-multi-lang-v1_0
+# model.onnx  voices.bin  tokens.txt  lexicon-us-en.txt  espeak-ng-data/  LICENSE  ...
+```
+
+The archive is 349.9 MB and unpacks to 412.5 MB on disk (a 325.6 MB model and 28.2 MB of voices). `tts/` is git-ignored. Restart the bot after either.
 
 ### Building
 
@@ -305,7 +327,7 @@ Discord voice now requires DAVE end-to-end encryption. Songbird 0.6.0 sends audi
 
 ## Database
 
-Seven migrations in [`migrations/`](migrations/) are embedded at compile time and applied automatically on startup.
+Nine migrations in [`migrations/`](migrations/) are embedded at compile time and applied automatically on startup.
 
 | Table | Purpose |
 |-------|---------|
@@ -318,7 +340,9 @@ Seven migrations in [`migrations/`](migrations/) are embedded at compile time an
 | `guild_warnings` | One row per warning: member, moderator, reason, time |
 | `guild_warn_policy` | Warning escalation policy. No row means no escalation |
 | `guild_birthday_channel` | Birthday channel plus the last game day posted, so restarts never double-post |
-| `guild_tts_disabled` | Servers where TTS is off, and since when. No row means on, so a new server needs no setup |
+| `guild_tts_nicknames` | How a member's name is read by TTS in a server, who set it, and when. No row means the display name |
+
+`guild_tts_disabled`, the old per-server TTS off switch, is created by one migration and dropped by the next: TTS no longer joins on its own, so there is nothing to opt out of. Both files stay, because sqlx refuses to start when an applied migration is missing.
 
 `guild_audit_log` stores the **disabled** event set rather than the enabled one, so new audit categories default to on for guilds that configured logging before those categories existed.
 
@@ -340,12 +364,13 @@ src/
 │   ├── birthday.rs   /birthday channel, today, upcoming
 │   ├── collection.rs /collection operator, enemy, stage, story
 │   ├── operator/     /collection operator: page builders, layout and limits, state in custom_id
-│   ├── tts.rs        /tts enable, disable, status, skip, leave
+│   ├── tts.rs        /tts join, leave, skip, nickname
 │   └── warn.rs       /warn add, list, remove, clear, policy
 ├── api/              Backend HTTP clients (status, stats, cached game data)
 ├── birthday.rs       Game-day dates, birthday parsing, the daily announcer
-├── tts/              Text-to-speech: gate.rs (speak or not), text.rs (cleanup),
-│                     engine.rs (Piper via sherpa-onnx), session.rs (join, queue, leave)
+├── tts/              Text-to-speech: gate.rs (speak or not, queue caps), text.rs (cleanup,
+│                     names, sentences), engine.rs (Piper or Kokoro via sherpa-onnx),
+│                     session.rs (join, queue, sentence pipeline, leave)
 ├── search.rs         Accent- and punctuation-insensitive name matching
 ├── gametext.rs       Game markup stripping and `{key:0%}` template interpolation
 ├── checks.rs         elevated(): owner OR mod role OR native permission
@@ -364,7 +389,7 @@ cargo clippy --all-targets -- -D warnings        # Lint
 cargo check --all-targets                        # Type-check
 cargo build --release --bin discord --bin commands
 
-# Time the real voice and write three WAVs (needs the voice on disk)
+# Time a real voice and write three WAVs (needs the voice on disk; TTS_THREADS=2 to compare)
 TTS_MODEL_DIR=tts/vits-piper-en_US-ljspeech-medium TTS_OUT_DIR=/tmp \
   cargo test --release -- --ignored --nocapture synthesize_three_sentences
 ```

@@ -11,10 +11,6 @@ use std::time::{Duration, Instant};
 use serenity::model::id::ChannelId;
 
 /// What the message handler knows about one message when it asks whether to speak it.
-//
-// The bools are independent yes/no facts read off one message, not states of one machine; an
-// enum per flag would only rename `true`.
-#[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Clone)]
 pub struct Facts {
     /// The author is a bot, a webhook, or the message is a system message (joins, pins, boosts).
@@ -23,17 +19,11 @@ pub struct Facts {
     pub prefixed: bool,
     /// The message carries stickers, which have nothing to read.
     pub has_stickers: bool,
-    /// A moderator switched TTS off for the guild.
-    pub guild_disabled: bool,
-    /// The voice engine loaded, or has not been tried yet with its files present.
-    pub engine_available: bool,
     /// The channel the message was sent in.
     pub channel: ChannelId,
-    /// The channel is a voice channel (not a stage, not a text channel).
-    pub channel_is_voice: bool,
     /// The author's current voice channel in this guild, from the cache.
     pub author_voice: Option<ChannelId>,
-    /// The voice channel the bot is speaking in for this guild, if any.
+    /// The voice channel `/tts join` put the bot in for this guild, if any.
     pub bot_voice: Option<ChannelId>,
 }
 
@@ -43,54 +33,26 @@ pub enum Skip {
     Automated,
     Prefixed,
     Stickers,
-    Disabled,
-    EngineUnavailable,
-    NotVoiceChannel,
+    /// The bot is not reading this channel: it is in none, or in another one.
+    NotReadingHere,
     AuthorNotInChannel,
-    BusyElsewhere,
 }
 
-/// The verdict on one message, before cleanup and the rate limit.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Verdict {
-    /// Speak it in the bot's current channel.
-    Speak,
-    /// Speak it, joining the channel first.
-    JoinAndSpeak,
-    Skip(Skip),
-}
-
-/// Decide whether `facts` describe a message the bot speaks.
-///
-/// The author must be in the voice channel whose text chat they typed in, and the bot must be in
-/// that same channel or in none of the guild's. Being in another one is not an error and gets no
-/// reply: a reply per message would be spam in a busy chat.
-#[must_use]
-pub fn decide(facts: &Facts) -> Verdict {
-    let skip = if facts.automated {
-        Some(Skip::Automated)
+/// Decide whether `facts` describe a message the bot speaks: one typed in the chat of the voice
+/// channel the bot was asked to join, by a member who is in that channel now.
+pub fn decide(facts: &Facts) -> Result<(), Skip> {
+    if facts.automated {
+        Err(Skip::Automated)
     } else if facts.prefixed {
-        Some(Skip::Prefixed)
+        Err(Skip::Prefixed)
     } else if facts.has_stickers {
-        Some(Skip::Stickers)
-    } else if !facts.channel_is_voice {
-        Some(Skip::NotVoiceChannel)
+        Err(Skip::Stickers)
+    } else if facts.bot_voice != Some(facts.channel) {
+        Err(Skip::NotReadingHere)
     } else if facts.author_voice != Some(facts.channel) {
-        Some(Skip::AuthorNotInChannel)
-    } else if facts.guild_disabled {
-        Some(Skip::Disabled)
-    } else if !facts.engine_available {
-        Some(Skip::EngineUnavailable)
+        Err(Skip::AuthorNotInChannel)
     } else {
-        None
-    };
-    if let Some(skip) = skip {
-        return Verdict::Skip(skip);
-    }
-    match facts.bot_voice {
-        None => Verdict::JoinAndSpeak,
-        Some(bot) if bot == facts.channel => Verdict::Speak,
-        Some(_) => Verdict::Skip(Skip::BusyElsewhere),
+        Ok(())
     }
 }
 
@@ -139,33 +101,42 @@ impl<K: Eq + Hash + Copy> RateLimiter<K> {
     }
 }
 
-/// A FIFO of text waiting to be spoken, dropping what arrives past `cap`.
+/// A FIFO of text waiting to be spoken, with a cap for the guild and a cap per member.
+///
+/// A message past either cap is dropped and the ones already waiting are kept, so a member who
+/// floods the chat is heard for their first few messages and then not at all until those are
+/// spoken. Keys are user ids.
 #[derive(Debug)]
 pub struct SpeechQueue {
     cap: usize,
-    items: VecDeque<String>,
+    per_user: usize,
+    items: VecDeque<(u64, String)>,
 }
 
 impl SpeechQueue {
     #[must_use]
-    pub const fn new(cap: usize) -> Self {
+    pub const fn new(cap: usize, per_user: usize) -> Self {
         Self {
             cap,
+            per_user,
             items: VecDeque::new(),
         }
     }
 
-    /// Queue `text`. Returns `false`, keeping the queue as it was, when it is already full.
-    pub fn push(&mut self, text: String) -> bool {
-        if self.items.len() >= self.cap {
+    /// Queue `text` from `user`. Returns `false`, keeping the queue as it was, when the guild's
+    /// queue is full or `user` already has `per_user` messages waiting.
+    pub fn push(&mut self, user: u64, text: String) -> bool {
+        if self.items.len() >= self.cap
+            || self.items.iter().filter(|(u, _)| *u == user).count() >= self.per_user
+        {
             return false;
         }
-        self.items.push_back(text);
+        self.items.push_back((user, text));
         true
     }
 
     pub fn pop(&mut self) -> Option<String> {
-        self.items.pop_front()
+        self.items.pop_front().map(|(_, text)| text)
     }
 
     #[must_use]
@@ -186,29 +157,21 @@ mod tests {
     const VC: ChannelId = ChannelId::new(10);
     const OTHER_VC: ChannelId = ChannelId::new(11);
 
-    /// A message a member in `VC` typed in `VC`'s chat, with the bot nowhere.
+    /// A message a member in `VC` typed in `VC`'s chat, with the bot reading `VC`.
     fn speakable() -> Facts {
         Facts {
             automated: false,
             prefixed: false,
             has_stickers: false,
-            guild_disabled: false,
-            engine_available: true,
             channel: VC,
-            channel_is_voice: true,
             author_voice: Some(VC),
-            bot_voice: None,
+            bot_voice: Some(VC),
         }
     }
 
     #[test]
-    fn author_in_channel_joins_then_speaks() {
-        assert_eq!(decide(&speakable()), Verdict::JoinAndSpeak);
-        let here = Facts {
-            bot_voice: Some(VC),
-            ..speakable()
-        };
-        assert_eq!(decide(&here), Verdict::Speak);
+    fn member_in_the_bots_channel_is_spoken() {
+        assert_eq!(decide(&speakable()), Ok(()));
     }
 
     #[test]
@@ -217,21 +180,32 @@ mod tests {
             author_voice: Some(OTHER_VC),
             ..speakable()
         };
-        assert_eq!(decide(&elsewhere), Verdict::Skip(Skip::AuthorNotInChannel));
+        assert_eq!(decide(&elsewhere), Err(Skip::AuthorNotInChannel));
         let nowhere = Facts {
             author_voice: None,
             ..speakable()
         };
-        assert_eq!(decide(&nowhere), Verdict::Skip(Skip::AuthorNotInChannel));
+        assert_eq!(decide(&nowhere), Err(Skip::AuthorNotInChannel));
     }
 
     #[test]
-    fn only_voice_channel_chat() {
-        let text = Facts {
-            channel_is_voice: false,
+    fn nothing_is_read_without_a_join() {
+        let unjoined = Facts {
+            bot_voice: None,
             ..speakable()
         };
-        assert_eq!(decide(&text), Verdict::Skip(Skip::NotVoiceChannel));
+        assert_eq!(decide(&unjoined), Err(Skip::NotReadingHere));
+        let busy = Facts {
+            bot_voice: Some(OTHER_VC),
+            ..speakable()
+        };
+        assert_eq!(decide(&busy), Err(Skip::NotReadingHere));
+        // A text channel's id is never the bot's voice channel.
+        let text = Facts {
+            channel: ChannelId::new(12),
+            ..speakable()
+        };
+        assert_eq!(decide(&text), Err(Skip::NotReadingHere));
     }
 
     #[test]
@@ -240,40 +214,17 @@ mod tests {
             automated: true,
             ..speakable()
         };
-        assert_eq!(decide(&bot), Verdict::Skip(Skip::Automated));
+        assert_eq!(decide(&bot), Err(Skip::Automated));
         let prefixed = Facts {
             prefixed: true,
             ..speakable()
         };
-        assert_eq!(decide(&prefixed), Verdict::Skip(Skip::Prefixed));
+        assert_eq!(decide(&prefixed), Err(Skip::Prefixed));
         let sticker = Facts {
             has_stickers: true,
             ..speakable()
         };
-        assert_eq!(decide(&sticker), Verdict::Skip(Skip::Stickers));
-    }
-
-    #[test]
-    fn disabled_guild_and_missing_engine() {
-        let disabled = Facts {
-            guild_disabled: true,
-            ..speakable()
-        };
-        assert_eq!(decide(&disabled), Verdict::Skip(Skip::Disabled));
-        let no_engine = Facts {
-            engine_available: false,
-            ..speakable()
-        };
-        assert_eq!(decide(&no_engine), Verdict::Skip(Skip::EngineUnavailable));
-    }
-
-    #[test]
-    fn busy_in_another_channel_is_silent() {
-        let busy = Facts {
-            bot_voice: Some(OTHER_VC),
-            ..speakable()
-        };
-        assert_eq!(decide(&busy), Verdict::Skip(Skip::BusyElsewhere));
+        assert_eq!(decide(&sticker), Err(Skip::Stickers));
     }
 
     #[test]
@@ -305,17 +256,35 @@ mod tests {
 
     #[test]
     fn queue_caps_and_keeps_order() {
-        let mut q = SpeechQueue::new(10);
+        let mut q = SpeechQueue::new(10, 10);
         for i in 0..10 {
-            assert!(q.push(format!("m{i}")));
+            assert!(q.push(i, format!("m{i}")));
         }
-        assert!(!q.push("m10".into()), "the eleventh is dropped");
+        assert!(!q.push(10, "m10".into()), "the eleventh is dropped");
         assert_eq!(q.len(), 10);
         assert_eq!(q.pop().as_deref(), Some("m0"));
-        assert!(q.push("m11".into()), "room again after one is spoken");
+        assert!(q.push(11, "m11".into()), "room again after one is spoken");
         let rest: Vec<_> = std::iter::from_fn(|| q.pop()).collect();
         assert_eq!(rest.first().map(String::as_str), Some("m1"));
         assert_eq!(rest.last().map(String::as_str), Some("m11"));
         assert!(q.is_empty());
+    }
+
+    #[test]
+    fn queue_caps_each_member_keeping_the_oldest() {
+        let mut q = SpeechQueue::new(10, 3);
+        assert!(q.push(1, "a1".into()));
+        assert!(q.push(1, "a2".into()));
+        assert!(q.push(2, "b1".into()));
+        assert!(q.push(1, "a3".into()));
+        assert!(
+            !q.push(1, "a4".into()),
+            "a fourth waiting message from one member is dropped"
+        );
+        assert!(q.push(2, "b2".into()), "other members are unaffected");
+        assert_eq!(q.pop().as_deref(), Some("a1"));
+        assert!(q.push(1, "a5".into()), "room again once one is spoken");
+        let rest: Vec<_> = std::iter::from_fn(|| q.pop()).collect();
+        assert_eq!(rest, ["a2", "b1", "a3", "b2", "a5"]);
     }
 }

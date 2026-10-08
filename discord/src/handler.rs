@@ -131,7 +131,7 @@ pub async fn event_handler(
                 });
             // A message antispam acted on (deleted, or its author warned or removed) is not read out.
             if !flagged {
-                crate::tts::on_message(&data.tts, ctx, bot_id, new_message).await;
+                crate::tts::on_message(&data.tts, ctx, bot_id, new_message);
             }
         }
         VoiceStateUpdate { new, .. } => {

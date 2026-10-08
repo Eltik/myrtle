@@ -1,103 +1,98 @@
-//! `/tts`: the per-guild off switch for text-to-speech, and playback controls.
+//! `/tts`: bring the reader into a voice channel, control it, and set how names are read.
 //!
-//! Speech itself needs no command: see `crate::tts`. A member in a voice channel types in its
-//! text chat and the bot reads it out.
+//! Speech itself needs no command once the bot has joined: see `crate::tts`. A member in the
+//! bot's voice channel types in its text chat and the bot reads it out.
+
+use std::sync::Arc;
 
 use ::serenity::model::Timestamp;
 use poise::CreateReply;
-use serenity::model::id::{ChannelId, GuildId};
+use poise::serenity_prelude as serenity;
+use serenity::model::id::GuildId;
 use serenity::model::permissions::Permissions;
 
 use crate::checks::{passes_elevated, require_guild};
 use crate::db;
-use crate::tts::{self, session::Session};
+use crate::tts::{self, JoinRefused, session::Session, text};
 use crate::types::{Context, Error};
+
+/// The one public line posted in the voice channel's chat when the bot starts reading it.
+const JOINED_NOTICE: &str = "Reading this channel's chat aloud. `/tts leave` to stop.";
 
 /// Text-to-speech in voice channels.
 ///
-/// Type in a voice channel's chat while you are in it and the bot reads it out. Subcommands:
-/// `enable`, `disable`, `status` (Manage Server), `skip`, `leave`.
+/// `/tts join` while you are in a voice channel, and the bot reads that channel's chat aloud for
+/// the members in it. Subcommands: `join`, `leave`, `skip`, `nickname`.
 #[poise::command(
     slash_command,
     guild_only,
-    subcommands("tts_enable", "tts_disable", "tts_status", "tts_skip", "tts_leave"),
+    subcommands("tts_join", "tts_leave", "tts_skip", "tts_nickname"),
     subcommand_required
 )]
 pub async fn tts(_ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
-/// Turn text-to-speech back on in this server.
-#[poise::command(
-    slash_command,
-    guild_only,
-    rename = "enable",
-    check = "crate::checks::manage_guild_check"
-)]
-pub async fn tts_enable(ctx: Context<'_>) -> Result<(), Error> {
+/// Join your voice channel and read its chat aloud.
+///
+/// Messages typed in the channel's chat by members in the channel are read as "name said: text".
+/// The bot leaves on `/tts leave`, when the channel empties, or after a few minutes of quiet.
+#[poise::command(slash_command, guild_only, rename = "join")]
+pub async fn tts_join(ctx: Context<'_>) -> Result<(), Error> {
     let guild = require_guild(ctx)?;
-    let was_off = db::clear_tts_disabled(&ctx.data().pool, guild)
-        .await
-        .map_err(|e| format!("Couldn't save the TTS setting: {e}"))?;
-    ctx.data().tts.set_disabled(guild, false).await;
-    let content = if was_off {
-        "Text-to-speech is on. Members in a voice channel are read out when they type in its chat."
-    } else {
-        "Text-to-speech was already on."
-    };
-    reply(ctx, content).await
+    let (channel, stage) = tts::voice_channel_of(ctx.serenity_context(), guild, ctx.author().id)
+        .ok_or("Join a voice channel first, then run `/tts join`.")?;
+    if stage {
+        return Err("Text-to-speech doesn't read stage channels.".into());
+    }
+    let (session, joined) =
+        ctx.data()
+            .tts
+            .start_session(guild, channel)
+            .map_err(|refused| -> Error {
+                match refused {
+                JoinRefused::Unavailable => {
+                    "Text-to-speech isn't available on this bot right now.".into()
+                }
+                JoinRefused::AlreadyHere => format!("I'm already reading <#{channel}>.").into(),
+                JoinRefused::Elsewhere(other) => format!(
+                    "I'm already reading <#{other}> in this server. Run `/tts leave` there first."
+                )
+                .into(),
+                JoinRefused::TooSoon => {
+                    "I joined or left voice here a moment ago. Try again in a few seconds.".into()
+                }
+            }
+            })?;
+    // Joining waits on Discord's voice server, which can take longer than an interaction allows.
+    ctx.defer_ephemeral().await?;
+    if !joined.await.unwrap_or(false) {
+        return Err(format!(
+            "I couldn't join <#{channel}>. Check that I can connect and speak there, and that it \
+             isn't full."
+        )
+        .into());
+    }
+    if let Err(e) = session.channel.say(ctx.http(), JOINED_NOTICE).await {
+        tracing::debug!("TTS join notice in {channel} failed: {e}");
+    }
+    reply(
+        ctx,
+        &format!(
+            "Reading <#{channel}> aloud. Messages typed in its chat by members in the channel \
+             are read as \"name said: text\"."
+        ),
+    )
+    .await
 }
 
-/// Turn text-to-speech off in this server. The bot leaves voice if it is speaking.
-#[poise::command(
-    slash_command,
-    guild_only,
-    rename = "disable",
-    check = "crate::checks::manage_guild_check"
-)]
-pub async fn tts_disable(ctx: Context<'_>) -> Result<(), Error> {
+/// Make the bot leave its voice channel.
+#[poise::command(slash_command, guild_only, rename = "leave")]
+pub async fn tts_leave(ctx: Context<'_>) -> Result<(), Error> {
     let guild = require_guild(ctx)?;
-    let was_off = ctx.data().tts.is_disabled(guild).await;
-    db::set_tts_disabled(&ctx.data().pool, guild, Timestamp::now().unix_timestamp())
-        .await
-        .map_err(|e| format!("Couldn't save the TTS setting: {e}"))?;
-    ctx.data().tts.set_disabled(guild, true).await;
-    let content = if was_off {
-        "Text-to-speech was already off."
-    } else {
-        "Text-to-speech is off. `/tts enable` turns it back on."
-    };
-    reply(ctx, content).await
-}
-
-/// Whether text-to-speech is on here, and where the bot is speaking.
-#[poise::command(
-    slash_command,
-    guild_only,
-    rename = "status",
-    check = "crate::checks::manage_guild_check"
-)]
-pub async fn tts_status(ctx: Context<'_>) -> Result<(), Error> {
-    let guild = require_guild(ctx)?;
-    let data = ctx.data();
-    let disabled_at = db::get_tts_disabled(&data.pool, guild)
-        .await
-        .map_err(|e| format!("Couldn't read the TTS setting: {e}"))?;
-    let mut lines = vec![match disabled_at {
-        Some(at) => format!("Text-to-speech is **off** in this server, since <t:{at}:f>."),
-        None => "Text-to-speech is **on** in this server.".to_string(),
-    }];
-    if !data.tts.synth.available() {
-        lines.push("The voice isn't installed on the bot, so nothing is spoken anywhere.".into());
-    }
-    if let Some(session) = data.tts.session(guild) {
-        lines.push(format!(
-            "Speaking in <#{}>, {} message(s) waiting.",
-            session.channel,
-            session.queued()
-        ));
-    }
-    reply(ctx, &lines.join("\n")).await
+    let session = in_session(ctx, guild).await?;
+    session.stop();
+    reply(ctx, &format!("Leaving <#{}>.", session.channel)).await
 }
 
 /// Skip the message being read out.
@@ -113,25 +108,117 @@ pub async fn tts_skip(ctx: Context<'_>) -> Result<(), Error> {
     reply(ctx, content).await
 }
 
-/// Make the bot leave its voice channel.
-#[poise::command(slash_command, guild_only, rename = "leave")]
-pub async fn tts_leave(ctx: Context<'_>) -> Result<(), Error> {
+/// How your name is read before your messages.
+///
+/// Subcommands: `set`, `clear`, `show`. Setting or clearing someone else's needs Manage
+/// Nicknames or this server's mod role.
+#[poise::command(
+    slash_command,
+    guild_only,
+    rename = "nickname",
+    subcommands("tts_nickname_set", "tts_nickname_clear", "tts_nickname_show"),
+    subcommand_required
+)]
+pub async fn tts_nickname(_ctx: Context<'_>) -> Result<(), Error> {
+    Ok(())
+}
+
+/// Set the name read before your messages (or a member's, as a moderator).
+#[poise::command(slash_command, guild_only, rename = "set")]
+pub async fn tts_nickname_set(
+    ctx: Context<'_>,
+    #[description = "How the name should be read, up to 32 characters"] name: String,
+    #[description = "Whose name (moderators only; default you)"] user: Option<serenity::User>,
+) -> Result<(), Error> {
     let guild = require_guild(ctx)?;
-    let session = in_session(ctx, guild).await?;
-    session.stop();
-    reply(ctx, &format!("Leaving <#{}>.", session.channel)).await
+    let target = target_user(ctx, user.as_ref()).await?;
+    let nickname = text::validate_nickname(&name)?;
+    db::set_tts_nickname(
+        &ctx.data().pool,
+        guild,
+        target,
+        &nickname,
+        ctx.author().id,
+        Timestamp::now().unix_timestamp(),
+    )
+    .await
+    .map_err(|e| format!("Couldn't save the TTS nickname: {e}"))?;
+    ctx.data()
+        .tts
+        .cache_nickname(guild, target, Some(nickname.clone()));
+    let whose = if target == ctx.author().id {
+        "Your messages".to_string()
+    } else {
+        format!("<@{target}>'s messages")
+    };
+    reply(
+        ctx,
+        &format!("{whose} will be read as \"{nickname} said: ...\"."),
+    )
+    .await
+}
+
+/// Go back to reading your display name (or a member's, as a moderator).
+#[poise::command(slash_command, guild_only, rename = "clear")]
+pub async fn tts_nickname_clear(
+    ctx: Context<'_>,
+    #[description = "Whose name (moderators only; default you)"] user: Option<serenity::User>,
+) -> Result<(), Error> {
+    let guild = require_guild(ctx)?;
+    let target = target_user(ctx, user.as_ref()).await?;
+    let removed = db::clear_tts_nickname(&ctx.data().pool, guild, target)
+        .await
+        .map_err(|e| format!("Couldn't clear the TTS nickname: {e}"))?;
+    ctx.data().tts.cache_nickname(guild, target, None);
+    let content = match (removed, target == ctx.author().id) {
+        (true, true) => "TTS nickname cleared. Your display name is read again.".to_string(),
+        (true, false) => format!("<@{target}>'s TTS nickname cleared."),
+        (false, true) => "You have no TTS nickname.".to_string(),
+        (false, false) => format!("<@{target}> has no TTS nickname."),
+    };
+    reply(ctx, &content).await
+}
+
+/// Show the name read before someone's messages.
+#[poise::command(slash_command, guild_only, rename = "show")]
+pub async fn tts_nickname_show(
+    ctx: Context<'_>,
+    #[description = "Whose name (default you)"] user: Option<serenity::User>,
+) -> Result<(), Error> {
+    let guild = require_guild(ctx)?;
+    let target = user.as_ref().map_or_else(|| ctx.author().id, |u| u.id);
+    let content = match ctx.data().tts.nickname(guild, target) {
+        Some(nickname) => format!("<@{target}> is read as \"{nickname}\"."),
+        None => format!("<@{target}> has no TTS nickname; their display name is read."),
+    };
+    reply(ctx, &content).await
+}
+
+/// The member a nickname command acts on: the invoker, or `user` when the invoker may manage
+/// nicknames (Manage Nicknames, or the mod role).
+async fn target_user(
+    ctx: Context<'_>,
+    user: Option<&serenity::User>,
+) -> Result<serenity::UserId, Error> {
+    match user {
+        Some(user) if user.id != ctx.author().id => {
+            crate::checks::manage_nicknames_check(ctx).await?;
+            Ok(user.id)
+        }
+        _ => Ok(ctx.author().id),
+    }
 }
 
 /// The guild's session, if the invoker may control it: they are in its channel, or they could
 /// move members out of voice themselves (Move Members, or the mod role).
-async fn in_session(ctx: Context<'_>, guild: GuildId) -> Result<std::sync::Arc<Session>, Error> {
+async fn in_session(ctx: Context<'_>, guild: GuildId) -> Result<Arc<Session>, Error> {
     let session = ctx
         .data()
         .tts
         .session(guild)
         .ok_or("I'm not in a voice channel in this server.")?;
-    let here: Option<ChannelId> =
-        tts::voice_channel_of(ctx.serenity_context(), guild, ctx.author().id);
+    let here = tts::voice_channel_of(ctx.serenity_context(), guild, ctx.author().id)
+        .map(|(channel, _)| channel);
     if here == Some(session.channel) || passes_elevated(ctx, Permissions::MOVE_MEMBERS).await? {
         Ok(session)
     } else {

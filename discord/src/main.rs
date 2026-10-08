@@ -131,9 +131,9 @@ async fn main() {
                     audit_log_settings.len()
                 );
 
-                let tts_disabled = db::list_tts_disabled(&pool).await?;
-                tracing::info!("TTS is switched off in {} guild(s)", tts_disabled.len());
-                tts.hydrate_disabled(tts_disabled).await;
+                let tts_nicknames = db::list_tts_nicknames(&pool).await?;
+                tracing::info!("Hydrated {} TTS nickname(s)", tts_nicknames.len());
+                tts.hydrate_nicknames(tts_nicknames);
 
                 let reconnect_secs = config.assets.reconnect_secs;
                 for (label, ws_url, rx) in assets_watchers {

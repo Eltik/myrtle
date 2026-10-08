@@ -1,43 +1,54 @@
 //! One guild's stay in a voice channel: join, speak the queue in order, leave.
 //!
-//! A session is created by the first speakable message and owns a worker task for its whole life.
-//! The worker joins, waits [`TtsConfig::settle_ms`](crate::config::TtsConfig) for the voice
+//! A session is created by `/tts join` and owns a worker task for its whole life. The worker
+//! joins, reports the outcome to the command, waits [`TtsConfig::settle_ms`] for the voice
 //! connection to finish its DAVE handshake, then speaks one message at a time until it is stopped
-//! (`/tts leave`, `/tts disable`, the channel emptying, the bot being moved or disconnected) or
-//! goes [`TtsConfig::idle_secs`](crate::config::TtsConfig) without speaking. It always ends by
-//! leaving the channel and removing itself.
+//! (`/tts leave`, the channel emptying, the bot being moved or disconnected) or goes
+//! [`TtsConfig::idle_secs`] without speaking. It always ends by leaving the channel and removing
+//! itself.
+//!
+//! A message is spoken a sentence at a time: a producer synthesizes each sentence in turn under
+//! the global permit and hands it to the player, so the first sentence plays while the next is
+//! made. `/tts skip` drops the rest of the message.
 //!
 //! DAVE: songbird 0.6.0 encrypts with the end-to-end session only once that session reports
 //! ready, and sends packets without it until then (`mixer/mod.rs`, the `is_ready()` branch);
 //! clients discard those (songbird issue #310). Songbird raises no event when the session turns
 //! ready: `CoreEvent` stops at `DriverConnect`, which `Songbird::join` already waits for. The only
-//! lever left is time, so the first playback waits `settle_ms` after the connect. ⚠️ Whether
-//! 1500 ms is enough is unmeasured: it is a guess at one MLS round trip, and a channel whose
-//! first message comes out silent would say it is not. Later messages are unaffected, and a
-//! member joining mid-session triggers a DAVE transition that songbird covers with passthrough.
+//! lever left is time, so the first playback waits `settle_ms` after the connect. ⚠️ TTS is
+//! reported working live at 1500 ms, but whether the first sentence after every join is heard
+//! has not been checked on its own; a silent first sentence would say the wait is too short.
+//!
+//! [`TtsConfig::settle_ms`]: crate::config::TtsConfig::settle_ms
+//! [`TtsConfig::idle_secs`]: crate::config::TtsConfig::idle_secs
 
 use std::io::Cursor;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use serenity::model::id::{ChannelId, GuildId};
+use serenity::model::id::{ChannelId, GuildId, UserId};
 use songbird::error::JoinError;
 use songbird::input::{Input, RawAdapter};
 use songbird::tracks::TrackHandle;
 use songbird::{Call, Event, EventContext, EventHandler, TrackEvent};
-use tokio::sync::{Mutex as TokioMutex, Notify};
+use tokio::sync::{Mutex as TokioMutex, Notify, mpsc, oneshot};
 use tokio::time::Instant;
 
 use super::Tts;
 use super::engine::Speech;
 use super::gate::SpeechQueue;
+use super::text;
 
-/// Added to a message's playing time before the worker stops waiting for its end event.
+/// Added to a sentence's playing time before the worker stops waiting for its end event.
 const PLAYBACK_SLACK: Duration = Duration::from_secs(5);
 
 /// Tries at leaving voice, 2 s apart and doubling: 62 s in all, the span of a shard reconnect.
 const LEAVE_ATTEMPTS: u32 = 6;
+
+/// Sentences synthesized ahead of the one playing. One keeps the next ready without holding the
+/// global permit for a whole message while other guilds wait.
+const SENTENCES_AHEAD: usize = 1;
 
 /// A guild's voice session, shared between its worker, the message handler and `/tts`.
 pub struct Session {
@@ -49,6 +60,10 @@ pub struct Session {
     /// Set once `Songbird::join` has returned. Until then the bot's own voice-state updates may be
     /// a late replay from the guild's previous session and are ignored.
     joined: AtomicBool,
+    /// A message is being spoken (synthesizing or playing any of its sentences).
+    in_message: AtomicBool,
+    /// `/tts skip` asked to drop the rest of the message being spoken.
+    skip_message: AtomicBool,
     current: Mutex<Option<TrackHandle>>,
     /// Set while a "did the channel empty" re-check is pending, so a burst of voice-state updates
     /// schedules one check, not one each.
@@ -56,44 +71,55 @@ pub struct Session {
 }
 
 impl Session {
-    pub(super) fn new(guild: GuildId, channel: ChannelId, queue_max: usize) -> Self {
+    pub(super) fn new(
+        guild: GuildId,
+        channel: ChannelId,
+        queue_max: usize,
+        user_queue_max: usize,
+    ) -> Self {
         Self {
             guild,
             channel,
-            queue: Mutex::new(SpeechQueue::new(queue_max)),
+            queue: Mutex::new(SpeechQueue::new(queue_max, user_queue_max)),
             wake: Notify::new(),
             stopping: AtomicBool::new(false),
             joined: AtomicBool::new(false),
+            in_message: AtomicBool::new(false),
+            skip_message: AtomicBool::new(false),
             current: Mutex::new(None),
             empty_check: AtomicBool::new(false),
         }
     }
 
-    /// Queue `text`. `false` when the queue is full or the session is ending; the text is dropped
-    /// without a reply.
-    pub fn push(&self, text: String) -> bool {
+    /// Queue `text` from `user`. `false` when the guild's queue is full, `user` already has their
+    /// share waiting, or the session is ending; the text is dropped without a reply.
+    pub fn push(&self, user: UserId, text: String) -> bool {
         if self.is_stopping() {
             return false;
         }
-        let queued = lock(&self.queue).push(text);
+        let queued = lock(&self.queue).push(user.get(), text);
         if queued {
             self.wake.notify_one();
         }
         queued
     }
 
-    /// Messages waiting behind the one playing.
+    /// Messages waiting behind the one being spoken.
     #[must_use]
     pub fn queued(&self) -> usize {
         lock(&self.queue).len()
     }
 
-    /// Stop the message playing now. `false` when nothing was playing.
+    /// Drop the rest of the message being spoken. `false` when nothing was being spoken.
     pub fn skip(&self) -> bool {
-        let Some(handle) = lock(&self.current).take() else {
+        if !self.in_message.load(Ordering::SeqCst) {
             return false;
-        };
-        let _ = handle.stop();
+        }
+        self.skip_message.store(true, Ordering::SeqCst);
+        let playing = lock(&self.current).take();
+        if let Some(handle) = playing {
+            let _ = handle.stop();
+        }
         true
     }
 
@@ -113,6 +139,11 @@ impl Session {
     pub fn is_joined(&self) -> bool {
         self.joined.load(Ordering::SeqCst)
     }
+
+    /// The message being spoken should be abandoned: skipped, or the session is ending.
+    fn abandoned(&self) -> bool {
+        self.skip_message.load(Ordering::SeqCst) || self.is_stopping()
+    }
 }
 
 /// A poisoned lock still holds a usable queue or handle; a panic elsewhere shouldn't silence TTS.
@@ -120,18 +151,19 @@ fn lock<T>(m: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
     m.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
 }
 
-/// The worker: join, speak until stopped or idle, leave, deregister.
-pub(super) async fn run(tts: Arc<Tts>, session: Arc<Session>) {
+/// The worker: join, tell `joined` how it went, speak until stopped or idle, leave, deregister.
+pub(super) async fn run(tts: Arc<Tts>, session: Arc<Session>, joined: oneshot::Sender<bool>) {
     let (guild, channel) = (session.guild, session.channel);
     let reason = match tts.songbird.join(guild, channel).await {
         Ok(call) => {
             session.joined.store(true, Ordering::SeqCst);
-            tokio::time::sleep(Duration::from_millis(tts.config.settle_ms)).await;
+            let _ = joined.send(true);
+            tokio::time::sleep(Duration::from_millis(tts.config.settle_ms())).await;
             serve(&tts, &session, &call).await
         }
         Err(e) => {
             tracing::warn!("TTS couldn't join {channel} in guild {guild}: {e}");
-            tts.join_failed(guild, channel);
+            let _ = joined.send(false);
             "join failed"
         }
     };
@@ -163,15 +195,18 @@ async fn leave(tts: &Tts, guild: GuildId) {
 
 /// Speak the queue in order. Returns why the session ended.
 async fn serve(tts: &Tts, session: &Session, call: &TokioMutex<Call>) -> &'static str {
-    let idle = Duration::from_secs(tts.config.idle_secs);
+    let idle = Duration::from_secs(tts.config.idle_secs());
     let mut deadline = Instant::now() + idle;
     loop {
         if session.is_stopping() {
             return "stopped";
         }
         let next = lock(&session.queue).pop();
-        if let Some(text) = next {
-            speak_one(tts, session, call, text).await;
+        if let Some(message) = next {
+            session.skip_message.store(false, Ordering::SeqCst);
+            session.in_message.store(true, Ordering::SeqCst);
+            speak_message(tts, session, call, &message).await;
+            session.in_message.store(false, Ordering::SeqCst);
             deadline = Instant::now() + idle;
             continue;
         }
@@ -182,19 +217,42 @@ async fn serve(tts: &Tts, session: &Session, call: &TokioMutex<Call>) -> &'stati
     }
 }
 
-/// Synthesize `text` and play it, returning once it has finished, been skipped, or failed.
-async fn speak_one(tts: &Tts, session: &Session, call: &TokioMutex<Call>, text: String) {
-    let Some(speech) = tts.synth.speak(text).await else {
-        if !tts.synth.available() {
-            session.stop();
+/// Speak one message a sentence at a time, synthesizing the next while the current one plays.
+async fn speak_message(tts: &Tts, session: &Session, call: &TokioMutex<Call>, message: &str) {
+    let (tx, mut rx) = mpsc::channel::<Speech>(SENTENCES_AHEAD);
+    let produce = async move {
+        for sentence in text::sentences(message) {
+            if session.abandoned() {
+                break;
+            }
+            let Some(speech) = tts.synth.speak(sentence).await else {
+                if !tts.synth.available() {
+                    session.stop();
+                }
+                break;
+            };
+            if tx.send(speech).await.is_err() {
+                break;
+            }
         }
-        return;
     };
-    if session.is_stopping() {
-        return;
-    }
+    let play = async {
+        while let Some(speech) = rx.recv().await {
+            if session.abandoned() {
+                break;
+            }
+            play_one(session, call, &speech).await;
+        }
+        // Dropping the receiver stops the producer at its next send.
+        drop(rx);
+    };
+    tokio::join!(produce, play);
+}
+
+/// Play one sentence, returning once it has finished, been skipped, or failed.
+async fn play_one(session: &Session, call: &TokioMutex<Call>, speech: &Speech) {
     let wait = Duration::from_secs_f64(speech.seconds()) + PLAYBACK_SLACK;
-    let input = speech_input(&speech);
+    let input = speech_input(speech);
 
     let done = Arc::new(Notify::new());
     let handle = call.lock().await.play_only_input(input);
@@ -207,9 +265,9 @@ async fn speak_one(tts: &Tts, session: &Session, call: &TokioMutex<Call>, text: 
         }
     }
     *lock(&session.current) = Some(handle.clone());
-    // A `stop()` between the check above and storing the handle found nothing to skip; it set the
-    // flag first, so it is seen here.
-    if session.is_stopping() {
+    // A skip or stop between the caller's check and storing the handle found nothing to stop; it
+    // set its flag first, so it is seen here.
+    if session.abandoned() {
         let _ = handle.stop();
     }
 
@@ -250,6 +308,21 @@ impl EventHandler for Done {
 mod tests {
     use super::*;
     use songbird::input::codecs::{get_codec_registry, get_probe};
+
+    /// The live bug: a member's second message, 100 ms after the first, was dropped by a 2 s
+    /// per-member cooldown before it reached the queue. Both now queue, in order.
+    #[tokio::test]
+    async fn back_to_back_messages_from_one_member_both_queue() {
+        let session = Session::new(GuildId::new(1), ChannelId::new(2), 10, 3);
+        let member = UserId::new(3);
+        assert!(session.push(member, "Amiya said: first".into()));
+        tokio::time::sleep(Duration::from_millis(100)).await;
+        assert!(session.push(member, "Amiya said: second".into()));
+        assert_eq!(session.queued(), 2);
+        let mut queue = lock(&session.queue);
+        assert_eq!(queue.pop().as_deref(), Some("Amiya said: first"));
+        assert_eq!(queue.pop().as_deref(), Some("Amiya said: second"));
+    }
 
     /// The format path a spoken message takes, minus Discord: the bytes `speech_input` frames
     /// must probe as songbird's raw f32 container and decode back to every sample, at the

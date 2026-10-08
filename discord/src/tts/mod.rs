@@ -1,9 +1,9 @@
 //! Text-to-speech in voice channels.
 //!
-//! A member in voice channel X who types in X's built-in text chat is read out in X: the bot
-//! joins if it is in no other channel of the guild, speaks each message in order, and leaves when
-//! the channel has no humans left or after [`TtsConfig::idle_secs`] of quiet. It is on in every
-//! guild unless a moderator runs `/tts disable`.
+//! `/tts join` puts the bot in the invoker's voice channel. From then on, a member in that
+//! channel who types in its built-in text chat is read out there, as "<name> said: <text>". The
+//! bot leaves on `/tts leave`, when the channel has no humans left, or after
+//! [`TtsConfig::idle_secs`] of quiet. It never joins on its own.
 //!
 //! [`gate`] decides whether a message is spoken, [`text`] turns it into words, [`engine`] makes
 //! the audio, and [`session`] holds the guild's place in the channel.
@@ -13,53 +13,57 @@ pub mod gate;
 pub mod session;
 pub mod text;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use std::time::{Duration, Instant};
 
-use serenity::all::{ChannelType, Context, Guild, Message, MessageType, VoiceState};
+use serenity::all::{Context, Guild, Message, MessageType, VoiceState};
 use serenity::model::id::{ChannelId, GuildId, RoleId, UserId};
 use songbird::Songbird;
-use tokio::sync::RwLock;
+use tokio::sync::oneshot;
 
 use crate::config::TtsConfig;
 use engine::{ModelPaths, Synth};
-use gate::{Facts, RateLimiter, Verdict};
+use gate::{Facts, RateLimiter};
 use session::Session;
-use text::Mention;
+use text::{Mention, NameSources};
 
 /// Least time between two voice joins in one guild, counted from the last join or leave.
 ///
 /// Each join and each leave is one gateway send, and a shard may make 120 of those a minute;
-/// this holds one guild to 12 joins and 12 leaves a minute however its members come and go.
+/// this holds one guild to 12 joins and 12 leaves a minute however often `/tts join` is run.
 pub const JOIN_COOLDOWN: Duration = Duration::from_secs(5);
 
 /// How long the bot's channel must stay without humans before it leaves, so a member dropping
-/// and rejoining doesn't cost a leave and a join.
+/// and rejoining doesn't end the session.
 const EMPTY_GRACE: Duration = Duration::from_secs(5);
-
-/// How long a voice channel the bot failed to join is left alone. A join with no Connect
-/// permission, or into a full channel, is ignored by Discord and only times out after 10 s; without
-/// this every few seconds of chat there would cost a gateway send and a warning.
-const JOIN_FAILURE_BACKOFF: Duration = Duration::from_mins(5);
 
 /// The bot's prefix-command marker; a message starting with it is a command, not speech.
 const PREFIX: &str = "-";
 
-/// The TTS subsystem: config, the voice, per-guild sessions and the per-guild off switch.
+/// Why `/tts join` didn't start a session.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum JoinRefused {
+    /// The voice is missing or failed to load.
+    Unavailable,
+    /// The bot is already reading this channel.
+    AlreadyHere,
+    /// The bot is reading another channel of the guild.
+    Elsewhere(ChannelId),
+    /// The guild joined or left voice less than [`JOIN_COOLDOWN`] ago.
+    TooSoon,
+}
+
+/// The TTS subsystem: config, the voice, per-guild sessions and TTS nicknames.
 pub struct Tts {
     pub config: TtsConfig,
     pub synth: Synth,
     songbird: Arc<Songbird>,
-    /// Guilds where a moderator turned TTS off, mirroring `guild_tts_disabled`. Hydrated at
-    /// startup and kept in sync by `/tts enable` and `/tts disable`, so the message hot path never
-    /// reads `SQLite`.
-    disabled: RwLock<HashSet<GuildId>>,
     sessions: Mutex<HashMap<GuildId, Arc<Session>>>,
-    members: Mutex<RateLimiter<(GuildId, UserId)>>,
+    /// TTS nicknames, mirroring `guild_tts_nicknames`. Hydrated at startup and kept in sync by
+    /// `/tts nickname`, so the message hot path never reads `SQLite`.
+    nicknames: Mutex<HashMap<(GuildId, UserId), String>>,
     joins: Mutex<RateLimiter<GuildId>>,
-    /// The last channel per guild the bot failed to join, and when.
-    failed_joins: Mutex<HashMap<GuildId, (ChannelId, Instant)>>,
 }
 
 impl Tts {
@@ -67,10 +71,14 @@ impl Tts {
     /// startup; the model itself loads on the first message that needs it.
     #[must_use]
     pub fn new(config: TtsConfig, songbird: Arc<Songbird>) -> Self {
-        let paths = if config.enabled {
+        let paths = if config.enabled() {
             match ModelPaths::resolve(&config) {
                 Ok(paths) => {
-                    tracing::info!("TTS voice found at {}", paths.model.display());
+                    tracing::info!(
+                        "TTS voice ({:?}) found at {}",
+                        config.resolved_engine(),
+                        paths.model().display()
+                    );
                     Some(paths)
                 }
                 Err(e) => {
@@ -82,38 +90,40 @@ impl Tts {
             tracing::info!("TTS disabled in config");
             None
         };
-        let cooldown = Duration::from_millis(config.user_cooldown_ms);
+        if config.user_cooldown_ms.is_some() {
+            tracing::warn!(
+                "tts.user_cooldown_ms is deprecated and ignored; tts.user_queue_max caps each \
+                 member's waiting messages instead"
+            );
+        }
         Self {
             config,
             synth: Synth::new(paths),
             songbird,
-            disabled: RwLock::new(HashSet::new()),
             sessions: Mutex::new(HashMap::new()),
-            members: Mutex::new(RateLimiter::new(cooldown)),
+            nicknames: Mutex::new(HashMap::new()),
             joins: Mutex::new(RateLimiter::new(JOIN_COOLDOWN)),
-            failed_joins: Mutex::new(HashMap::new()),
         }
     }
 
-    /// Replace the cached off-switch set with `guilds`, read from the database at startup.
-    pub async fn hydrate_disabled(&self, guilds: impl IntoIterator<Item = GuildId>) {
-        *self.disabled.write().await = guilds.into_iter().collect();
+    /// Replace the cached TTS nicknames with `rows`, read from the database at startup.
+    pub fn hydrate_nicknames(&self, rows: impl IntoIterator<Item = (GuildId, UserId, String)>) {
+        *lock(&self.nicknames) = rows.into_iter().map(|(g, u, n)| ((g, u), n)).collect();
     }
 
-    /// Mirror a `/tts enable` or `/tts disable`. Disabling also ends the guild's session.
-    pub async fn set_disabled(&self, guild: GuildId, disabled: bool) {
-        if disabled {
-            self.disabled.write().await.insert(guild);
-            if let Some(session) = self.session(guild) {
-                session.stop();
-            }
-        } else {
-            self.disabled.write().await.remove(&guild);
-        }
+    /// Mirror a `/tts nickname set` (`Some`) or `clear` (`None`).
+    pub fn cache_nickname(&self, guild: GuildId, user: UserId, nickname: Option<String>) {
+        let mut nicknames = lock(&self.nicknames);
+        match nickname {
+            Some(n) => nicknames.insert((guild, user), n),
+            None => nicknames.remove(&(guild, user)),
+        };
     }
 
-    pub async fn is_disabled(&self, guild: GuildId) -> bool {
-        self.disabled.read().await.contains(&guild)
+    /// `user`'s TTS nickname in `guild`, from the cache.
+    #[must_use]
+    pub fn nickname(&self, guild: GuildId, user: UserId) -> Option<String> {
+        lock(&self.nicknames).get(&(guild, user)).cloned()
     }
 
     /// The guild's live session, if the bot is in (or joining) one of its voice channels.
@@ -122,45 +132,41 @@ impl Tts {
         lock(&self.sessions).get(&guild).cloned()
     }
 
-    /// Start a session in `channel`, unless the guild joined or left too recently or another
-    /// message started one first. Returns the session to queue on, if any.
-    fn start_session(self: &Arc<Self>, guild: GuildId, channel: ChannelId) -> Option<Arc<Session>> {
+    /// Start reading `channel` (`/tts join`). On success the receiver says whether the voice
+    /// connection came up; the session ends itself if it didn't.
+    pub fn start_session(
+        self: &Arc<Self>,
+        guild: GuildId,
+        channel: ChannelId,
+    ) -> Result<(Arc<Session>, oneshot::Receiver<bool>), JoinRefused> {
+        if !self.synth.available() {
+            return Err(JoinRefused::Unavailable);
+        }
         let session = {
             let mut sessions = lock(&self.sessions);
             if let Some(existing) = sessions.get(&guild) {
-                return (existing.channel == channel).then(|| Arc::clone(existing));
-            }
-            // `/tts disable` may have landed since the caller read the set; it holds the write
-            // lock while it runs, which also reads as disabled.
-            if self
-                .disabled
-                .try_read()
-                .map_or(true, |d| d.contains(&guild))
-            {
-                return None;
-            }
-            if lock(&self.failed_joins)
-                .get(&guild)
-                .is_some_and(|&(c, at)| c == channel && at.elapsed() < JOIN_FAILURE_BACKOFF)
-            {
-                return None;
+                return Err(if existing.channel == channel {
+                    JoinRefused::AlreadyHere
+                } else {
+                    JoinRefused::Elsewhere(existing.channel)
+                });
             }
             if !lock(&self.joins).allow(guild, Instant::now()) {
-                tracing::debug!("TTS join in guild {guild} skipped: joined or left too recently");
-                return None;
+                return Err(JoinRefused::TooSoon);
             }
-            let session = Arc::new(Session::new(guild, channel, self.config.queue_max));
+            let session = Arc::new(Session::new(
+                guild,
+                channel,
+                self.config.queue_max(),
+                self.config.user_queue_max(),
+            ));
             sessions.insert(guild, Arc::clone(&session));
             session
         };
         tracing::info!("TTS joining {channel} in guild {guild}");
-        tokio::spawn(session::run(Arc::clone(self), Arc::clone(&session)));
-        Some(session)
-    }
-
-    /// Remember that joining `channel` failed, so it isn't retried for [`JOIN_FAILURE_BACKOFF`].
-    fn join_failed(&self, guild: GuildId, channel: ChannelId) {
-        lock(&self.failed_joins).insert(guild, (channel, Instant::now()));
+        let (tx, rx) = oneshot::channel();
+        tokio::spawn(session::run(Arc::clone(self), Arc::clone(&session), tx));
+        Ok((session, rx))
     }
 
     /// Deregister `session` once its worker has left. A newer session for the guild is kept.
@@ -181,28 +187,25 @@ fn lock<T>(m: &Mutex<T>) -> MutexGuard<'_, T> {
     m.lock().unwrap_or_else(PoisonError::into_inner)
 }
 
-/// Speak `msg` if it was typed in the text chat of the voice channel its author is in.
+/// Speak `msg` if it was typed in the chat of the voice channel the bot is reading, by a member
+/// who is in that channel.
 ///
 /// Every refusal is silent. A message that passes every check but finds the queue full is
 /// dropped, also silently. Order across members holds from the queue on: serenity runs each
 /// event in its own task, so two messages sent milliseconds apart can reach the queue swapped.
-pub async fn on_message(tts: &Arc<Tts>, ctx: &Context, bot_id: UserId, msg: &Message) {
+pub fn on_message(tts: &Arc<Tts>, ctx: &Context, bot_id: UserId, msg: &Message) {
     let Some(guild_id) = msg.guild_id else {
+        return;
+    };
+    // The cheapest refusal first: in a guild the bot isn't reading, nothing else is looked at.
+    let Some(session) = tts.session(guild_id) else {
         return;
     };
     let automated = msg.author.bot
         || msg.author.id == bot_id
         || msg.webhook_id.is_some()
         || !matches!(msg.kind, MessageType::Regular | MessageType::InlineReply);
-    // The cheapest refusals first: most messages are in text channels and never reach the cache.
-    if automated || !tts.synth.available() {
-        return;
-    }
-    let guild_disabled = tts.is_disabled(guild_id).await;
-    let bot_voice = tts.session(guild_id).map(|s| s.channel);
 
-    // Everything read from the cache happens inside this block: the guild handle is a map guard
-    // and must not be held across an await.
     let spoken = {
         let Some(guild) = ctx.cache.guild(guild_id) else {
             return;
@@ -211,48 +214,50 @@ pub async fn on_message(tts: &Arc<Tts>, ctx: &Context, bot_id: UserId, msg: &Mes
             automated,
             prefixed: msg.content.trim_start().starts_with(PREFIX),
             has_stickers: !msg.sticker_items.is_empty(),
-            guild_disabled,
-            engine_available: tts.synth.available(),
             channel: msg.channel_id,
-            channel_is_voice: guild
-                .channels
-                .get(&msg.channel_id)
-                .is_some_and(|c| c.kind == ChannelType::Voice),
             author_voice: guild
                 .voice_states
                 .get(&msg.author.id)
                 .and_then(|v| v.channel_id),
-            bot_voice,
+            bot_voice: Some(session.channel),
         };
-        let verdict = gate::decide(&facts);
-        if let Verdict::Skip(why) = verdict {
-            if facts.channel_is_voice {
+        if let Err(why) = gate::decide(&facts) {
+            if msg.channel_id == session.channel {
                 tracing::trace!("TTS skipped message {}: {why:?}", msg.id);
             }
             return;
         }
         let resolve = |m: Mention| mention_name(&guild, msg, m);
-        let Some(words) = text::clean(&msg.content, &resolve, tts.config.max_chars) else {
+        let Some(words) = text::clean(&msg.content, &resolve, tts.config.max_chars()) else {
             return;
         };
-        (verdict, words)
+        let tts_nickname = tts.nickname(guild_id, msg.author.id);
+        let guild_nick = msg
+            .member
+            .as_ref()
+            .and_then(|m| m.nick.clone())
+            .or_else(|| {
+                guild
+                    .members
+                    .get(&msg.author.id)
+                    .and_then(|m| m.nick.clone())
+            });
+        let name = text::speaker_name(
+            &NameSources {
+                tts_nickname: tts_nickname.as_deref(),
+                guild_nick: guild_nick.as_deref(),
+                global_name: msg.author.global_name.as_deref(),
+                username: &msg.author.name,
+            },
+            &resolve,
+        );
+        text::attributed(&name, &words)
     };
-    let (verdict, words) = spoken;
 
-    if !lock(&tts.members).allow((guild_id, msg.author.id), Instant::now()) {
-        return;
-    }
-    let session = match verdict {
-        Verdict::JoinAndSpeak => tts.start_session(guild_id, msg.channel_id),
-        _ => tts
-            .session(guild_id)
-            .filter(|s| s.channel == msg.channel_id),
-    };
-    if let Some(session) = session
-        && !session.push(words)
-    {
+    if !session.push(msg.author.id, spoken) {
         tracing::debug!(
-            "TTS queue full in guild {guild_id}; dropped message {}",
+            "TTS queue full in guild {guild_id} (or for {}); dropped message {}",
+            msg.author.id,
             msg.id
         );
     }
@@ -347,12 +352,15 @@ fn humans_in(ctx: &Context, guild: GuildId, channel: ChannelId, bot_id: UserId) 
         .count()
 }
 
-/// The voice channel `user` is in, from the cache.
+/// The voice channel `user` is in, and whether it is a stage, from the cache.
 #[must_use]
-pub fn voice_channel_of(ctx: &Context, guild: GuildId, user: UserId) -> Option<ChannelId> {
-    ctx.cache
-        .guild(guild)?
-        .voice_states
-        .get(&user)
-        .and_then(|v| v.channel_id)
+pub fn voice_channel_of(ctx: &Context, guild: GuildId, user: UserId) -> Option<(ChannelId, bool)> {
+    let guild = ctx.cache.guild(guild)?;
+    let channel = guild.voice_states.get(&user)?.channel_id?;
+    let stage = guild
+        .channels
+        .get(&channel)
+        .is_some_and(|c| c.kind == serenity::all::ChannelType::Stage);
+    drop(guild);
+    Some((channel, stage))
 }

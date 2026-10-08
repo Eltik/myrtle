@@ -1,4 +1,4 @@
-//! The Piper voice, run through sherpa-onnx.
+//! The voice, run through sherpa-onnx: Kokoro-82M by default, or a Piper VITS voice.
 //!
 //! The model is loaded once, on the first message that needs it, and kept for the life of the
 //! process. The VPS has three cores shared with the backend, so synthesis is held to one thread
@@ -11,55 +11,100 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Instant;
 
 use sherpa_onnx::{
-    GenerationConfig, OfflineTts, OfflineTtsConfig, OfflineTtsModelConfig,
-    OfflineTtsVitsModelConfig,
+    GenerationConfig, OfflineTts, OfflineTtsConfig, OfflineTtsKokoroModelConfig,
+    OfflineTtsModelConfig, OfflineTtsVitsModelConfig,
 };
 use tokio::sync::{OnceCell, Semaphore};
 
-use crate::config::TtsConfig;
+use crate::config::{DEFAULT_KOKORO_SPEAKER, TtsConfig, TtsEngine};
 use crate::types::Error;
 
-/// Synthesis threads. One: a second core would halve the wait at the backend's expense.
+/// Synthesis threads. One: a second core would cut the wait at the backend's expense.
 const NUM_THREADS: i32 = 1;
 
-/// The three files a `vits-piper-*` voice needs.
+/// Peak below which a whole synthesis counts as silence (about -80 dBFS).
+const SILENCE: f32 = 1e-4;
+
+/// The files a voice needs, by engine.
 #[derive(Debug, Clone)]
-pub struct ModelPaths {
-    pub model: PathBuf,
-    pub tokens: PathBuf,
-    pub data_dir: PathBuf,
+pub enum ModelPaths {
+    Piper {
+        model: PathBuf,
+        tokens: PathBuf,
+        data_dir: PathBuf,
+    },
+    Kokoro {
+        model: PathBuf,
+        voices: PathBuf,
+        tokens: PathBuf,
+        data_dir: PathBuf,
+        /// Comma-separated, as sherpa-onnx takes them.
+        lexicon: String,
+        speaker: i32,
+    },
 }
 
 impl ModelPaths {
     /// Resolve the voice's files from `config`, or say which one is missing.
     pub fn resolve(config: &TtsConfig) -> Result<Self, Error> {
-        let dir = Path::new(&config.model_dir);
+        let dir_name = config.resolved_model_dir();
+        let dir = Path::new(&dir_name);
+        let or_in_dir = |given: &Option<String>, name: &str| {
+            given.as_ref().map_or_else(|| dir.join(name), PathBuf::from)
+        };
+        let tokens = or_in_dir(&config.tokens, "tokens.txt");
+        let data_dir = or_in_dir(&config.data_dir, "espeak-ng-data");
         let model = match &config.model {
             Some(model) => PathBuf::from(model),
             None => only_onnx_in(dir)?,
         };
-        let tokens = config
-            .tokens
-            .as_ref()
-            .map_or_else(|| dir.join("tokens.txt"), PathBuf::from);
-        let data_dir = config
-            .data_dir
-            .as_ref()
-            .map_or_else(|| dir.join("espeak-ng-data"), PathBuf::from);
-        if !model.is_file() {
-            return Err(format!("model {} not found", model.display()).into());
-        }
-        if !tokens.is_file() {
-            return Err(format!("tokens {} not found", tokens.display()).into());
-        }
+        require_file(&model, "model")?;
+        require_file(&tokens, "tokens")?;
         if !data_dir.is_dir() {
             return Err(format!("espeak-ng data {} not found", data_dir.display()).into());
         }
-        Ok(Self {
-            model,
-            tokens,
-            data_dir,
-        })
+        match config.resolved_engine() {
+            TtsEngine::Piper => Ok(Self::Piper {
+                model,
+                tokens,
+                data_dir,
+            }),
+            TtsEngine::Kokoro => {
+                let voices = or_in_dir(&config.voices, "voices.bin");
+                require_file(&voices, "voices")?;
+                let lexicon = if let Some(lexicon) = &config.lexicon {
+                    lexicon.clone()
+                } else {
+                    let us = dir.join("lexicon-us-en.txt");
+                    require_file(&us, "lexicon")?;
+                    us.display().to_string()
+                };
+                Ok(Self::Kokoro {
+                    model,
+                    voices,
+                    tokens,
+                    data_dir,
+                    lexicon,
+                    speaker: config.speaker.unwrap_or(DEFAULT_KOKORO_SPEAKER),
+                })
+            }
+        }
+    }
+
+    /// The model file, for logs.
+    #[must_use]
+    pub fn model(&self) -> &Path {
+        match self {
+            Self::Piper { model, .. } | Self::Kokoro { model, .. } => model,
+        }
+    }
+}
+
+fn require_file(path: &Path, what: &str) -> Result<(), Error> {
+    if path.is_file() {
+        Ok(())
+    } else {
+        Err(format!("{what} {} not found", path.display()).into())
     }
 }
 
@@ -101,29 +146,69 @@ impl Speech {
 /// A loaded voice.
 pub struct Engine {
     tts: OfflineTts,
+    speaker: i32,
 }
 
 impl Engine {
-    /// Load the model. Blocking: run it on the blocking pool.
+    /// Load the model on [`NUM_THREADS`] threads. Blocking: run it on the blocking pool.
     pub fn load(paths: &ModelPaths) -> Result<Self, Error> {
-        let config = OfflineTtsConfig {
-            model: OfflineTtsModelConfig {
-                vits: OfflineTtsVitsModelConfig {
-                    model: Some(paths.model.display().to_string()),
-                    tokens: Some(paths.tokens.display().to_string()),
-                    data_dir: Some(paths.data_dir.display().to_string()),
+        Self::load_with_threads(paths, NUM_THREADS)
+    }
+
+    /// [`Self::load`] on `threads` threads; the benchmark compares counts.
+    pub fn load_with_threads(paths: &ModelPaths, threads: i32) -> Result<Self, Error> {
+        let path = |p: &Path| Some(p.display().to_string());
+        let mut model = OfflineTtsModelConfig {
+            num_threads: threads,
+            provider: Some("cpu".into()),
+            ..Default::default()
+        };
+        let speaker = match paths {
+            ModelPaths::Piper {
+                model: onnx,
+                tokens,
+                data_dir,
+            } => {
+                model.vits = OfflineTtsVitsModelConfig {
+                    model: path(onnx),
+                    tokens: path(tokens),
+                    data_dir: path(data_dir),
                     ..Default::default()
-                },
-                num_threads: NUM_THREADS,
-                provider: Some("cpu".into()),
-                ..Default::default()
-            },
+                };
+                0
+            }
+            ModelPaths::Kokoro {
+                model: onnx,
+                voices,
+                tokens,
+                data_dir,
+                lexicon,
+                speaker,
+            } => {
+                model.kokoro = OfflineTtsKokoroModelConfig {
+                    model: path(onnx),
+                    voices: path(voices),
+                    tokens: path(tokens),
+                    data_dir: path(data_dir),
+                    lexicon: Some(lexicon.clone()),
+                    lang: Some("en-us".into()),
+                    ..Default::default()
+                };
+                *speaker
+            }
+        };
+        let config = OfflineTtsConfig {
+            model,
             max_num_sentences: 1,
             ..Default::default()
         };
-        let tts = OfflineTts::create(&config)
-            .ok_or_else(|| format!("sherpa-onnx refused the model at {}", paths.model.display()))?;
-        Ok(Self { tts })
+        let tts = OfflineTts::create(&config).ok_or_else(|| {
+            format!(
+                "sherpa-onnx refused the model at {}",
+                paths.model().display()
+            )
+        })?;
+        Ok(Self { tts, speaker })
     }
 
     /// Speak `text`. Blocking and CPU-bound: run it on the blocking pool, one at a time.
@@ -135,13 +220,24 @@ impl Engine {
         if text.contains('\0') {
             return None;
         }
-        let audio = self.tts.generate_with_config(
-            text,
-            &GenerationConfig::default(),
-            None::<fn(&[f32], f32) -> bool>,
-        )?;
+        let generation = GenerationConfig {
+            sid: self.speaker,
+            ..GenerationConfig::default()
+        };
+        let audio =
+            self.tts
+                .generate_with_config(text, &generation, None::<fn(&[f32], f32) -> bool>)?;
         let sample_rate = u32::try_from(audio.sample_rate()).ok()?;
         let samples = audio.samples().to_vec();
+        // Kokoro's int8 model returned all-zero audio at one thread on macOS arm64 (four runs out
+        // of four; two threads were fine). Silence is never worth a track, so refuse it loudly.
+        if samples.iter().all(|s| s.abs() < SILENCE) {
+            tracing::warn!(
+                "TTS voice produced silence for {} chars; is this an int8 Kokoro model?",
+                text.chars().count()
+            );
+            return None;
+        }
         (!samples.is_empty()).then_some(Speech {
             samples,
             sample_rate,
@@ -226,25 +322,31 @@ impl Synth {
 mod tests {
     use super::*;
 
-    /// Times the real voice on three sentences and writes them as WAVs.
+    /// Times the real voice on three sentences, whole and split into sentences, and writes WAVs.
     ///
     /// Needs the model on disk, so it is ignored by default:
-    /// `TTS_MODEL_DIR=<vits-piper dir> TTS_OUT_DIR=<dir> cargo test --release -- --ignored
-    /// --nocapture synthesize_three_sentences`.
+    /// `TTS_MODEL_DIR=<voice dir> TTS_OUT_DIR=<dir> [TTS_THREADS=2] cargo test --release --
+    /// --ignored --nocapture synthesize_three_sentences`. The engine is inferred from the
+    /// directory as in production.
     #[test]
-    #[ignore = "needs the Piper model on disk"]
+    #[ignore = "needs a voice on disk"]
     fn synthesize_three_sentences() {
         let dir = std::env::var("TTS_MODEL_DIR").expect("set TTS_MODEL_DIR");
         let out = PathBuf::from(std::env::var("TTS_OUT_DIR").expect("set TTS_OUT_DIR"));
+        let threads: i32 = std::env::var("TTS_THREADS").map_or(1, |t| t.parse().unwrap());
         let config = TtsConfig {
-            model_dir: dir,
+            model_dir: Some(dir),
             ..TtsConfig::default()
         };
+        let engine_name = format!("{:?}", config.resolved_engine()).to_lowercase();
         let paths = ModelPaths::resolve(&config).expect("model files");
 
         let started = Instant::now();
-        let engine = Engine::load(&paths).expect("load");
-        println!("load: {} ms", started.elapsed().as_millis());
+        let engine = Engine::load_with_threads(&paths, threads).expect("load");
+        println!(
+            "{engine_name}, {threads} thread(s): load {} ms",
+            started.elapsed().as_millis()
+        );
 
         let sentences = [
             "Hello there, Doctor.",
@@ -260,16 +362,21 @@ mod tests {
             let speech = engine.synthesize(text).expect("audio");
             let wall = started.elapsed().as_secs_f64();
             let audio = speech.seconds();
+            let first = super::super::text::sentences(text);
+            let started = Instant::now();
+            let _ = engine.synthesize(&first[0]).expect("audio");
+            let first_wall = started.elapsed().as_secs_f64();
             println!(
                 "sentence {}: {} chars, {} words, wall {wall:.3} s, audio {audio:.3} s, \
-                 rtf {:.3}, sample rate {} Hz",
+                 rtf {:.3}, first audio after {first_wall:.3} s ({} chunk(s)), {} Hz",
                 i + 1,
                 text.chars().count(),
                 text.split_whitespace().count(),
                 wall / audio,
+                first.len(),
                 speech.sample_rate
             );
-            let path = out.join(format!("tts-sentence-{}.wav", i + 1));
+            let path = out.join(format!("{engine_name}-t{threads}-sentence-{}.wav", i + 1));
             assert!(sherpa_onnx::write(
                 &path.display().to_string(),
                 &speech.samples,

@@ -284,6 +284,139 @@ fn cap_at_word(s: &str, max: usize) -> String {
     }
 }
 
+/// Characters of a speaker's name, after cleanup, read before each message.
+pub const NAME_MAX: usize = 32;
+
+/// Everything a speaker can be called, most preferred first.
+#[derive(Debug, Clone, Copy)]
+pub struct NameSources<'a> {
+    /// Set with `/tts nickname`, for how the name should sound.
+    pub tts_nickname: Option<&'a str>,
+    /// The member's server nickname.
+    pub guild_nick: Option<&'a str>,
+    /// The account's global display name.
+    pub global_name: Option<&'a str>,
+    pub username: &'a str,
+}
+
+/// The name read before a message: the first source that is set, cleaned and capped.
+///
+/// It goes through the same cleanup as message text and is capped at [`NAME_MAX`], so emoji and
+/// markdown in a display name aren't read out. A name that cleans to nothing falls back to the
+/// username as it is.
+#[must_use]
+pub fn speaker_name(
+    names: &NameSources<'_>,
+    resolve: &dyn Fn(Mention) -> Option<String>,
+) -> String {
+    let chosen = names
+        .tts_nickname
+        .or(names.guild_nick)
+        .or(names.global_name)
+        .unwrap_or(names.username);
+    clean(chosen, resolve, NAME_MAX).unwrap_or_else(|| names.username.to_string())
+}
+
+/// `"<name> said: <text>"`, the form every message is read in.
+#[must_use]
+pub fn attributed(name: &str, words: &str) -> String {
+    format!("{name} said: {words}")
+}
+
+/// Why a `/tts nickname` was refused, as the reply says it.
+pub const NICKNAME_RULES: &str =
+    "A TTS nickname is 1 to 32 characters of speakable text, with no mentions or links.";
+
+/// Check a requested TTS nickname: 1 to [`NAME_MAX`] characters once trimmed, no mention, role,
+/// channel or everyone ping, no URL, and something left to say after cleanup. Returns it trimmed.
+pub fn validate_nickname(raw: &str) -> Result<String, &'static str> {
+    let name = raw.trim();
+    let len = name.chars().count();
+    if len == 0 || len > NAME_MAX {
+        return Err(NICKNAME_RULES);
+    }
+    let lower = name.to_lowercase();
+    let pings = ["<@", "<#", "@everyone", "@here"];
+    let links = ["http://", "https://", "www.", "://"];
+    if pings.iter().chain(&links).any(|p| lower.contains(p)) {
+        return Err(NICKNAME_RULES);
+    }
+    if clean(name, &|_| None, NAME_MAX).is_none() {
+        return Err(NICKNAME_RULES);
+    }
+    Ok(name.to_string())
+}
+
+/// Words that end in a full stop without ending a sentence, lowercased, without the stop.
+const ABBREVIATIONS: &[&str] = &[
+    "mr", "mrs", "ms", "dr", "prof", "sr", "jr", "st", "vs", "etc", "e.g", "i.e", "approx", "no",
+    "fig", "mt", "lt", "col", "gen", "capt", "sgt", "rev", "inc", "ltd", "co", "jan", "feb", "mar",
+    "apr", "jun", "jul", "aug", "sep", "sept", "oct", "nov", "dec",
+];
+
+/// Split cleaned text into sentences, so the first can be spoken while the rest synthesize.
+///
+/// A sentence ends at a run of `.`, `!`, `?` or `…` (with any closing quotes or brackets after
+/// it) followed by a space or the end, except after an abbreviation (`Dr.`), an initial
+/// (`J. R. R.`), or an ellipsis that runs on into a lowercase word (`well... maybe`). A stop with
+/// no space after it, as in `1.5` or `myrtle.moe`, never splits. Text with no sentence end is one
+/// sentence.
+#[must_use]
+pub fn sentences(text: &str) -> Vec<String> {
+    let chars: Vec<char> = text.chars().collect();
+    let mut out = Vec::new();
+    let mut start = 0;
+    let mut i = 0;
+    while i < chars.len() {
+        if !matches!(chars[i], '.' | '!' | '?' | '…') {
+            i += 1;
+            continue;
+        }
+        let run_start = i;
+        while i < chars.len() && matches!(chars[i], '.' | '!' | '?' | '…') {
+            i += 1;
+        }
+        let run: String = chars[run_start..i].iter().collect();
+        while i < chars.len() && matches!(chars[i], '"' | '\'' | ')' | ']' | '”' | '’' | '»') {
+            i += 1;
+        }
+        if i < chars.len() && !chars[i].is_whitespace() {
+            continue;
+        }
+        let word: String = chars[start..run_start]
+            .iter()
+            .rev()
+            .take_while(|c| !c.is_whitespace())
+            .collect::<Vec<_>>()
+            .into_iter()
+            .rev()
+            .collect();
+        let word = word.trim_start_matches(['(', '"', '\'']).to_lowercase();
+        let next = chars[i..].iter().find(|c| !c.is_whitespace());
+        let keeps_going = if run == "." {
+            ABBREVIATIONS.contains(&word.as_str())
+                || (word.chars().count() == 1 && word.chars().all(char::is_alphabetic))
+        } else if run.chars().all(|c| c == '.' || c == '…') {
+            next.is_some_and(|c| c.is_lowercase())
+        } else {
+            false
+        };
+        if keeps_going {
+            continue;
+        }
+        let sentence: String = chars[start..i].iter().collect();
+        if !sentence.trim().is_empty() {
+            out.push(sentence.trim().to_string());
+        }
+        start = i;
+    }
+    let rest: String = chars[start..].iter().collect();
+    if !rest.trim().is_empty() {
+        out.push(rest.trim().to_string());
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -435,5 +568,133 @@ mod tests {
         let capped = clean(&long, &names, 300).unwrap();
         assert!(capped.chars().count() <= 300);
         assert!(capped.ends_with("word"));
+    }
+
+    #[test]
+    fn sentences_split_at_ends() {
+        assert_eq!(
+            sentences("Hi there. How are you? Fine!"),
+            vec!["Hi there.", "How are you?", "Fine!"]
+        );
+        assert_eq!(sentences("What?! No way."), vec!["What?!", "No way."]);
+        assert_eq!(
+            sentences("He said \"stop.\" Then left."),
+            vec!["He said \"stop.\"", "Then left."]
+        );
+    }
+
+    #[test]
+    fn sentences_keep_abbreviations_and_decimals() {
+        assert_eq!(
+            sentences("Dr. Kal'tsit is here. Mr. Smith too."),
+            vec!["Dr. Kal'tsit is here.", "Mr. Smith too."]
+        );
+        assert_eq!(
+            sentences("It costs 1.5 sanity. Cheap."),
+            vec!["It costs 1.5 sanity.", "Cheap."]
+        );
+        assert_eq!(
+            sentences("Visit myrtle.moe today"),
+            vec!["Visit myrtle.moe today"]
+        );
+        assert_eq!(
+            sentences("J. R. R. Tolkien wrote it."),
+            vec!["J. R. R. Tolkien wrote it."]
+        );
+        assert_eq!(
+            sentences("bring snacks, e.g. chips. ok"),
+            vec!["bring snacks, e.g. chips.", "ok"]
+        );
+    }
+
+    #[test]
+    fn sentences_and_ellipses() {
+        assert_eq!(sentences("well... maybe not"), vec!["well... maybe not"]);
+        assert_eq!(
+            sentences("Wait... What was that?"),
+            vec!["Wait...", "What was that?"]
+        );
+        assert_eq!(sentences("hmm… sure"), vec!["hmm… sure"]);
+        assert_eq!(sentences("Done..."), vec!["Done..."]);
+    }
+
+    #[test]
+    fn sentences_without_punctuation_is_one() {
+        assert_eq!(
+            sentences("no punctuation at all here"),
+            vec!["no punctuation at all here"]
+        );
+        assert_eq!(sentences(""), Vec::<String>::new());
+        assert_eq!(sentences("   "), Vec::<String>::new());
+    }
+
+    #[test]
+    fn speaker_name_order() {
+        let all = NameSources {
+            tts_nickname: Some("Ami"),
+            guild_nick: Some("Amiya (Leader)"),
+            global_name: Some("Amiya"),
+            username: "amiya_ri",
+        };
+        assert_eq!(speaker_name(&all, &names), "Ami");
+        let no_tts = NameSources {
+            tts_nickname: None,
+            ..all
+        };
+        assert_eq!(speaker_name(&no_tts, &names), "Amiya (Leader)");
+        let no_nick = NameSources {
+            guild_nick: None,
+            ..no_tts
+        };
+        assert_eq!(speaker_name(&no_nick, &names), "Amiya");
+        let bare = NameSources {
+            global_name: None,
+            ..no_nick
+        };
+        assert_eq!(speaker_name(&bare, &names), "amiya ri");
+    }
+
+    #[test]
+    fn speaker_name_is_cleaned_and_capped() {
+        let fancy = NameSources {
+            tts_nickname: None,
+            guild_nick: Some("**Doc** <:star:1> ~~x~~"),
+            global_name: None,
+            username: "doc",
+        };
+        assert_eq!(speaker_name(&fancy, &names), "Doc star x");
+        let emoji = NameSources {
+            guild_nick: Some("✨✨✨"),
+            ..fancy
+        };
+        assert_eq!(
+            speaker_name(&emoji, &names),
+            "doc",
+            "nothing speakable: the username"
+        );
+        let long = "Name ".repeat(20);
+        let long = NameSources {
+            guild_nick: Some(&long),
+            ..fancy
+        };
+        assert!(speaker_name(&long, &names).chars().count() <= NAME_MAX);
+        assert_eq!(attributed("Doc", "hello"), "Doc said: hello");
+    }
+
+    #[test]
+    fn nickname_validation() {
+        assert_eq!(
+            validate_nickname("  Kal tsit  "),
+            Ok("Kal tsit".to_string())
+        );
+        assert_eq!(validate_nickname(&"a".repeat(32)).map(|n| n.len()), Ok(32));
+        assert!(validate_nickname(&"a".repeat(33)).is_err());
+        assert!(validate_nickname("   ").is_err());
+        assert!(validate_nickname("<@123>").is_err());
+        assert!(validate_nickname("hi @everyone").is_err());
+        assert!(validate_nickname("see https://x.y").is_err());
+        assert!(validate_nickname("www.example.com").is_err());
+        assert!(validate_nickname("!!!").is_err(), "nothing speakable");
+        assert!(validate_nickname("😀").is_err());
     }
 }

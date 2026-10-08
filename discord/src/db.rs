@@ -1020,47 +1020,61 @@ pub async fn mark_birthday_posted(
     Ok(())
 }
 
-/// Switch TTS off for `guild_id` at unix time `at`. Re-running keeps the original time.
-pub async fn set_tts_disabled(pool: &SqlitePool, guild_id: GuildId, at: i64) -> Result<(), Error> {
+/// Set `user_id`'s TTS nickname in `guild_id`, replacing any previous one.
+pub async fn set_tts_nickname(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+    user_id: UserId,
+    nickname: &str,
+    set_by: UserId,
+    at: i64,
+) -> Result<(), Error> {
     sqlx::query(
-        "INSERT INTO guild_tts_disabled (guild_id, disabled_at) VALUES (?, ?) \
-         ON CONFLICT(guild_id) DO NOTHING",
+        "INSERT INTO guild_tts_nicknames (guild_id, user_id, nickname, set_by, set_at) \
+         VALUES (?, ?, ?, ?, ?) \
+         ON CONFLICT(guild_id, user_id) DO UPDATE SET nickname = excluded.nickname, \
+         set_by = excluded.set_by, set_at = excluded.set_at",
     )
     .bind(guild_id.get().cast_signed())
+    .bind(user_id.get().cast_signed())
+    .bind(nickname)
+    .bind(set_by.get().cast_signed())
     .bind(at)
     .execute(pool)
     .await?;
     Ok(())
 }
 
-/// Switch TTS back on for `guild_id`. Returns whether it was off.
-pub async fn clear_tts_disabled(pool: &SqlitePool, guild_id: GuildId) -> Result<bool, Error> {
-    Ok(delete_guild_rows(
-        pool,
-        "DELETE FROM guild_tts_disabled WHERE guild_id = ?",
-        guild_id,
-    )
-    .await?
-        > 0)
-}
-
-/// When TTS was switched off for `guild_id`, or `None` while it is on.
-pub async fn get_tts_disabled(pool: &SqlitePool, guild_id: GuildId) -> Result<Option<i64>, Error> {
-    let row: Option<(i64,)> =
-        sqlx::query_as("SELECT disabled_at FROM guild_tts_disabled WHERE guild_id = ?")
-            .bind(guild_id.get().cast_signed())
-            .fetch_optional(pool)
-            .await?;
-    Ok(row.map(|(at,)| at))
-}
-
-/// Every guild with TTS switched off. Hydrates the cache the message hot path reads.
-pub async fn list_tts_disabled(pool: &SqlitePool) -> Result<Vec<GuildId>, Error> {
-    let rows: Vec<(i64,)> = sqlx::query_as("SELECT guild_id FROM guild_tts_disabled")
-        .fetch_all(pool)
+/// Remove `user_id`'s TTS nickname in `guild_id`. Returns whether one was set.
+pub async fn clear_tts_nickname(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+    user_id: UserId,
+) -> Result<bool, Error> {
+    let result = sqlx::query("DELETE FROM guild_tts_nicknames WHERE guild_id = ? AND user_id = ?")
+        .bind(guild_id.get().cast_signed())
+        .bind(user_id.get().cast_signed())
+        .execute(pool)
         .await?;
+    Ok(result.rows_affected() > 0)
+}
+
+/// Every TTS nickname. Hydrates the cache the message hot path reads.
+pub async fn list_tts_nicknames(
+    pool: &SqlitePool,
+) -> Result<Vec<(GuildId, UserId, String)>, Error> {
+    let rows: Vec<(i64, i64, String)> =
+        sqlx::query_as("SELECT guild_id, user_id, nickname FROM guild_tts_nicknames")
+            .fetch_all(pool)
+            .await?;
     Ok(rows
         .into_iter()
-        .map(|(id,)| GuildId::new(id.cast_unsigned()))
+        .map(|(g, u, n)| {
+            (
+                GuildId::new(g.cast_unsigned()),
+                UserId::new(u.cast_unsigned()),
+                n,
+            )
+        })
         .collect())
 }
