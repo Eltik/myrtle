@@ -732,6 +732,7 @@ impl GameData {
             };
             cache.remove(&oldest);
         }
+        drop(cache);
         Ok(data)
     }
 

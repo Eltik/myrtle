@@ -346,8 +346,14 @@ mod tests {
                 "char_503_rang",
             ]
         );
-        assert_eq!(get_formula("char_1044_hsgma2").map(|f| f.default_skill), Some(3));
-        assert_eq!(get_formula("char_347_jaksel").map(|f| f.default_skill), Some(0));
+        assert_eq!(
+            get_formula("char_1044_hsgma2").map(|f| f.default_skill),
+            Some(3)
+        );
+        assert_eq!(
+            get_formula("char_347_jaksel").map(|f| f.default_skill),
+            Some(0)
+        );
     }
 
     #[test]
