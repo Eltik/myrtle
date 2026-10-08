@@ -18,7 +18,10 @@ use tokio::sync::Semaphore;
 use uuid::Uuid;
 
 const DEFAULT_INTERVAL_SECS: u64 = 86_400; // 24h
-const DEFAULT_CONCURRENCY: usize = 4;
+// At most the CPU permit count (`CPU_TASK_PERMITS`, 2 in production) so a pass
+// never wants more cores than the request path is allowed, and each grade holds
+// about 8 pool connections (`database/pool.rs`), so 2 leaves most of the 40 free.
+const DEFAULT_CONCURRENCY: usize = 2;
 const DEFAULT_PAGE_SIZE: i64 = 500;
 const DEFAULT_STATE_FILE: &str = "regrade_state.json";
 const RETRY_AFTER_ERROR: Duration = Duration::from_hours(1);
@@ -126,12 +129,27 @@ async fn fetch_page(
     }
 }
 
+/// Scores one user and stores the result.
+///
+/// `calculate_user_grade` is an `async fn` whose only awaits are its up-front
+/// queries; the scoring after them never yields and runs for tens of seconds on a
+/// large account (73.6 s measured in production, `app/services/roster.rs`). Awaited
+/// inline on a runtime worker, each concurrent grade pins that worker for the whole
+/// time, and the production box has 3, so a pass could leave the API unable to
+/// answer anything. The whole call is driven from a blocking-pool thread instead,
+/// the same `Handle::block_on` shape the roster refresh uses: the queries still run
+/// on this runtime's IO driver, the scoring happens off the workers.
 async fn regrade_one(
     pool: &PgPool,
     user_id: Uuid,
-    game_data: &GameData,
-) -> Result<String, sqlx::Error> {
-    let grade = calculate_user_grade(pool, user_id, game_data).await?;
+    game_data: Arc<GameData>,
+) -> anyhow::Result<String> {
+    let handle = tokio::runtime::Handle::current();
+    let scoring_pool = pool.clone();
+    let grade = crate::app::cpu::offload("regrade", move || {
+        handle.block_on(calculate_user_grade(&scoring_pool, user_id, &game_data))
+    })
+    .await??;
     let overall = grade.overall.clone();
     let score = UserScore {
         user_id,
@@ -208,7 +226,7 @@ async fn run_pass(state: &AppState, cfg: &Cfg) -> (u64, u64) {
 
             handles.push(tokio::spawn(async move {
                 let _permit = permit;
-                match regrade_one(&pool, user_id, &game_data).await {
+                match regrade_one(&pool, user_id, game_data).await {
                     Ok(grade) => {
                         successes.fetch_add(1, Ordering::Relaxed);
                         tracing::debug!(uid = %uid, user_id = %user_id, grade = %grade, "regraded");
