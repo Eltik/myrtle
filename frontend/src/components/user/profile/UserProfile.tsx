@@ -17,6 +17,7 @@ import type { messages as layoutMessages } from "./impl/components/ProfileLayout
 import { ProfileTabs } from "./impl/components/ProfileTabs";
 import { StatStrip } from "./impl/components/StatStrip";
 import { ScoreTabSkeleton } from "./impl/components/tabs/Score/ScoreTabSkeleton";
+import { rosterAccess } from "./impl/components/tabs/Showcase/favourites";
 import { StatsTab } from "./impl/components/tabs/Stats/StatsTab";
 import { DynamicArtProvider } from "./impl/dynamic-art";
 import { resolveActiveTab, shownTabs, tabMemory } from "./impl/layout";
@@ -190,6 +191,7 @@ export function UserProfile() {
     const canReadRoster = memory === "stored" || shown.includes("roster");
 
     const { data: roster } = useQuery({ ...userRosterQueryOptions(id), enabled: canReadRoster });
+    const showcaseRosterAccess = useMemo(() => rosterAccess(canReadRoster, roster), [canReadRoster, roster]);
     const gamedataServer = useGamedataServer();
     // The default Stats tab reads only the slim index, so the full table (23.9 MB
     // raw) waits for a tab that renders phases, skills or template ids.
@@ -302,7 +304,7 @@ export function UserProfile() {
                         {activeTab === "plans" && <PlansTab uid={id} roster={roster ?? []} />}
                         {activeTab === "enemies" && <EnemiesTab encountered={encounteredEnemies} isLoading={isEnemiesLoading} />}
                         {activeTab === "score" && <ScoreTab score={score} isLoading={isScoreLoading} improvements={improvements} isImprovementsLoading={isImprovementsLoading} uid={id} server={data.server} />}
-                        {activeTab === "showcase" && <ShowcaseTab uid={id} profile={data} isOwner={isOwner} roster={roster ?? []} />}
+                        {activeTab === "showcase" && <ShowcaseTab uid={id} profile={data} isOwner={isOwner} roster={roster ?? []} rosterAccess={showcaseRosterAccess} />}
                         {activeTab === "optimizer" && <OptimizerTab uid={id} roster={roster ?? []} operatorsStatic={operatorsStatic ?? []} />}
                     </Suspense>
                 )}

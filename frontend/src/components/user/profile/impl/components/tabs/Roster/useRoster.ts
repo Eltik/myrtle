@@ -5,7 +5,7 @@ import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { useMediaQuery } from "#/hooks/use-media-query";
 import type { IRosterEntry } from "#/lib/api/user";
 import type { IOperatorIndexEntry, IOperatorListItem } from "#/types/operators";
-import { filterEntries, sortEntries } from "./helpers";
+import { filterEntries, sortEntries, toOwnedEntry } from "./helpers";
 import { type IDisplayEntry, type IRosterFilterState, OWNED_ONLY_SORTS, type ViewMode } from "./types";
 
 const INITIAL: IRosterFilterState = {
@@ -79,18 +79,7 @@ export function useRoster(roster: IRosterEntry[], operatorsIndex: IOperatorIndex
     }, [operatorsStatic]);
 
     const allEntries = useMemo<IDisplayEntry[]>(() => {
-        const owned: IDisplayEntry[] = roster.map((r) => {
-            const meta = indexMap.get(r.operator_id) ?? null;
-            return {
-                ...r,
-                isOwned: true,
-                meta,
-                static: staticMap.get(r.operator_id) ?? null,
-                name: meta?.name ?? r.operator_id,
-                rarity: meta?.rarity ?? 1,
-                voiceActors: meta?.voiceActors ?? [],
-            };
-        });
+        const owned: IDisplayEntry[] = roster.map((r) => toOwnedEntry(r, indexMap.get(r.operator_id) ?? null, staticMap.get(r.operator_id) ?? null));
         if (filters.ownership === "owned") return owned;
 
         const unowned: IDisplayEntry[] = [];

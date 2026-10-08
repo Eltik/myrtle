@@ -5,8 +5,6 @@ import { type CSSProperties, lazy, type ReactNode, Suspense, useLayoutEffect, us
 import { compactGridSize } from "#/components/grids/compact";
 import { GridBoard } from "#/components/grids/GridBoard";
 import { gridToState } from "#/components/grids/state";
-import { CampIcon, ClassIcon } from "#/components/operators/list/impl/components/Icons";
-import { RARITY_BLUR_COLORS, RARITY_COLORS } from "#/components/operators/list/impl/constants";
 import { TierListBoard } from "#/components/tier-lists/detail/TierListBoard";
 import { EntityAvatar, entityAccent, entityShape } from "#/components/tier-lists/entities";
 import { entityPage, useEntityLabels } from "#/components/tier-lists/kinds";
@@ -15,18 +13,22 @@ import { Skeleton } from "#/components/ui/skeleton";
 import { useAuth } from "#/hooks/use-auth";
 import { gridQueryOptions } from "#/lib/api/grids";
 import { publicPlansQueryOptions } from "#/lib/api/planner";
-import { type ITierOperator, isEntityOfKind } from "#/lib/api/tier-entities";
+import { isEntityOfKind } from "#/lib/api/tier-entities";
 import { tierListDetailQueryOptions } from "#/lib/api/tier-lists";
 import type { IRosterEntry } from "#/lib/api/user";
 import { userShowcaseQueryOptions } from "#/lib/api/user";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn, getPortraitById, rarityToNumber } from "#/lib/utils";
+import { cn } from "#/lib/utils";
 import type { ShowcaseBlockView } from "#/types/generated/ShowcaseBlockView";
 import type { IUserProfile } from "#/types/user";
 import { draftFromView, type IShowcaseEntity, type ShowcaseDraftBlock, shownBlocks } from "../../../showcase";
 import { PlanCard } from "../Plans/PlansTab";
 import { CARD_PADDING, Kicker, StatCard } from "../Stats/primitives";
+import { FactionFavouriteDialog, type IShowcasePlayer, OperatorFavouriteDialog, operatorTarget, ShowcasePlayerContext, useShowcasePlayer } from "./FavouriteDialogs";
+import type { messages as favMessages } from "./FavouriteDialogs.messages";
+import type { RosterAccess } from "./favourites";
+import { OperatorFace } from "./OperatorFace";
 import { blockFit, showcaseRows } from "./rows";
 import type { messages } from "./ShowcaseTab.messages";
 
@@ -52,10 +54,15 @@ interface IShowcaseTabProps {
     profile: IUserProfile;
     isOwner: boolean;
     roster: IRosterEntry[];
+    /** Whether the viewer may read the roster, for the build an operator favourite opens. */
+    rosterAccess: RosterAccess;
 }
 
-export function ShowcaseTab({ uid, profile, isOwner, roster }: IShowcaseTabProps) {
+export function ShowcaseTab({ uid, profile, isOwner, roster, rosterAccess }: IShowcaseTabProps) {
     const t: TypedT<typeof messages> = useT("user");
+    const ft: TypedT<typeof favMessages> = useT("user");
+    const playerName = profile.nickname ?? ft("profile.showcase.player", { uid: profile.uid });
+    const player = useMemo<IShowcasePlayer>(() => ({ uid, name: playerName, access: rosterAccess }), [uid, playerName, rosterAccess]);
     const server = useGamedataServer();
     const { user } = useAuth();
     const query = useQuery(userShowcaseQueryOptions(uid, user?.id ?? null, server));
@@ -100,54 +107,56 @@ export function ShowcaseTab({ uid, profile, isOwner, roster }: IShowcaseTabProps
     const rows = showcaseRows(blocks.map((b) => blockFit({ type: b.block.type, removed: b.removed })));
 
     return (
-        <section aria-label={t("profile.showcase.aria")} className="flex flex-col gap-4">
-            {isOwner && (
-                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    {hiddenTab("showcase") ? (
-                        <p className="m-0 flex items-center gap-2 text-muted-foreground text-sm">
-                            <EyeOffIcon aria-hidden="true" className="size-4 shrink-0" />
-                            {t("profile.showcase.tabHidden")}
-                        </p>
-                    ) : (
-                        <span aria-hidden="true" className="hidden sm:block" />
-                    )}
-                    <Button type="button" variant="ghost" size="sm" className="self-end text-muted-foreground hover:text-foreground sm:self-auto" onClick={() => setEditing(true)}>
-                        <PencilIcon />
-                        {t("profile.showcase.edit")}
-                    </Button>
-                </div>
-            )}
-            {rows.map((row) =>
-                // Keyed by the row's first block: a block's place is its identity (two favourites blocks may share a kind and title).
-                row.kind === "full" ? (
-                    <div key={row.index} className="min-w-0">
-                        {card(row.index)}
-                    </div>
-                ) : row.kind === "anchor" ? (
-                    // Side by side, the shorter side's cards grow to the taller side's height.
-                    <div key={row.index} className="flex flex-col gap-4 lg:flex-row">
-                        <div className={cn(FILL_SLOT, "min-w-0 max-w-full lg:shrink-0")}>{card(row.index)}</div>
-                        {row.lane.length > 0 && (
-                            <div className="flex min-w-0 flex-1 flex-col gap-4">
-                                {row.lane.map((i) => (
-                                    <div key={i} className={cn(FILL_SLOT, "min-w-0 flex-1")}>
-                                        {card(i)}
-                                    </div>
-                                ))}
-                            </div>
+        <ShowcasePlayerContext.Provider value={player}>
+            <section aria-label={t("profile.showcase.aria")} className="flex flex-col gap-4">
+                {isOwner && (
+                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        {hiddenTab("showcase") ? (
+                            <p className="m-0 flex items-center gap-2 text-muted-foreground text-sm">
+                                <EyeOffIcon aria-hidden="true" className="size-4 shrink-0" />
+                                {t("profile.showcase.tabHidden")}
+                            </p>
+                        ) : (
+                            <span aria-hidden="true" className="hidden sm:block" />
                         )}
+                        <Button type="button" variant="ghost" size="sm" className="self-end text-muted-foreground hover:text-foreground sm:self-auto" onClick={() => setEditing(true)}>
+                            <PencilIcon />
+                            {t("profile.showcase.edit")}
+                        </Button>
                     </div>
-                ) : (
-                    <div key={row.items[0]} className="flex flex-wrap gap-4">
-                        {row.items.map((i) => (
-                            <div key={i} className={cn(FILL_SLOT, "min-w-0", flowItemClass(blocks[i]))}>
-                                {card(i)}
-                            </div>
-                        ))}
-                    </div>
-                ),
-            )}
-        </section>
+                )}
+                {rows.map((row) =>
+                    // Keyed by the row's first block: a block's place is its identity (two favourites blocks may share a kind and title).
+                    row.kind === "full" ? (
+                        <div key={row.index} className="min-w-0">
+                            {card(row.index)}
+                        </div>
+                    ) : row.kind === "anchor" ? (
+                        // Side by side, the shorter side's cards grow to the taller side's height.
+                        <div key={row.index} className="flex flex-col gap-4 lg:flex-row">
+                            <div className={cn(FILL_SLOT, "min-w-0 max-w-full lg:shrink-0")}>{card(row.index)}</div>
+                            {row.lane.length > 0 && (
+                                <div className="flex min-w-0 flex-1 flex-col gap-4">
+                                    {row.lane.map((i) => (
+                                        <div key={i} className={cn(FILL_SLOT, "min-w-0 flex-1")}>
+                                            {card(i)}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div key={row.items[0]} className="flex flex-wrap gap-4">
+                            {row.items.map((i) => (
+                                <div key={i} className={cn(FILL_SLOT, "min-w-0", flowItemClass(blocks[i]))}>
+                                    {card(i)}
+                                </div>
+                            ))}
+                        </div>
+                    ),
+                )}
+            </section>
+        </ShowcasePlayerContext.Provider>
     );
 }
 
@@ -309,7 +318,10 @@ const TILE_SIZE = {
 
 function FavouriteTile({ item }: { item: IShowcaseEntity }) {
     const t: TypedT<typeof messages> = useT("user");
+    const ft: TypedT<typeof favMessages> = useT("user");
     const labels = useEntityLabels();
+    const player = useShowcasePlayer();
+    const [open, setOpen] = useState(false);
     const entity = item.entity;
     if (!entity) {
         const label = t("profile.showcase.removed.entity", { id: item.id });
@@ -323,6 +335,7 @@ function FavouriteTile({ item }: { item: IShowcaseEntity }) {
     }
     const server = item.server ?? undefined;
     const operator = isEntityOfKind(entity, "operator") ? entity : null;
+    const faction = isEntityOfKind(entity, "faction") ? entity : null;
     const label = labels.tileLabel(entity);
     const page = entityPage(entity);
     const face = operator ? <OperatorFace entity={operator} server={server} /> : <EntityFace entity={entity} server={server} />;
@@ -332,6 +345,20 @@ function FavouriteTile({ item }: { item: IShowcaseEntity }) {
         className: operator ? cn(OPERATOR_TILE_CLASS, TILE_SIZE.portrait) : cn(TILE_CLASS, TILE_SIZE[entityShape(entity)]),
         style: { "--tile-accent": entityAccent(entity) } as CSSProperties,
     };
+    // On a profile, an operator opens the player's build and a faction its operators. The tile keeps its look:
+    // a button's own text alignment and cursor are the only things the element brings, and both are set back.
+    if (player && (operator || faction)) {
+        const name = operator ? ft("profile.showcase.tile.operatorAria", { name: entity.name, player: player.name }) : ft("profile.showcase.tile.factionAria", { name: entity.name });
+        return (
+            <li>
+                <button type="button" {...props} aria-label={name} aria-haspopup="dialog" className={cn(props.className, "cursor-pointer text-start")} onClick={() => setOpen(true)}>
+                    {face}
+                </button>
+                {operator && <OperatorFavouriteDialog operator={operatorTarget(operator, server)} open={open} onOpenChange={setOpen} />}
+                {faction && <FactionFavouriteDialog faction={faction} open={open} onOpenChange={setOpen} />}
+            </li>
+        );
+    }
     return (
         <li>
             {page !== null ? (
@@ -362,30 +389,6 @@ function EntityFace({ entity, server }: { entity: NonNullable<IShowcaseEntity["e
             </span>
         </>
     );
-}
-
-/** The operators page's card in small: the faction mark faint behind the portrait, the name and class on a frosted bar, the rarity line under it. */
-function OperatorFace({ entity, server }: { entity: ITierOperator; server?: string }) {
-    const rarity = rarityToNumber(entity.rarity);
-    return (
-        <>
-            {entity.nationId && <CampIcon groupId={entity.nationId} size={240} className="pointer-events-none absolute -top-3 -left-8 max-w-none opacity-5 transition-opacity group-hover:opacity-10" />}
-            <PortraitArt entity={entity} server={server} />
-            <span aria-hidden="true" className="absolute inset-x-0 bottom-0 z-10 flex h-9 items-end gap-1 bg-background/80 px-1.5 pb-1.5 backdrop-blur-sm">
-                <span className="line-clamp-2 min-w-0 flex-1 font-bold text-[10px] uppercase leading-tight opacity-70 transition-opacity group-hover:opacity-100 sm:text-[11px]">{entity.name}</span>
-                <ClassIcon profession={entity.profession} size={160} className="size-4 shrink-0" />
-            </span>
-            <span aria-hidden="true" className="absolute inset-x-0 bottom-0 z-10 h-0.5" style={{ backgroundColor: RARITY_COLORS[rarity] }} />
-            <span aria-hidden="true" className="absolute inset-x-0 -bottom-0.5 z-10 h-1 blur-sm" style={{ backgroundColor: RARITY_BLUR_COLORS[rarity] }} />
-        </>
-    );
-}
-
-/** An operator's portrait (180 x 360), falling back to the square avatar where the extract has no portrait. */
-function PortraitArt({ entity, server }: { entity: ITierOperator; server?: string }) {
-    const [failed, setFailed] = useState(false);
-    if (failed) return <EntityAvatar entity={entity} face="tile" tone="dark" server={server} />;
-    return <img src={getPortraitById(entity.id, server)} alt="" aria-hidden="true" loading="lazy" decoding="async" draggable={false} onError={() => setFailed(true)} className="absolute inset-0 block h-full w-full object-contain transition-transform duration-150 group-hover:scale-105" />;
 }
 
 function GridBlock({ slug, isOwner }: { slug: string; isOwner: boolean }) {

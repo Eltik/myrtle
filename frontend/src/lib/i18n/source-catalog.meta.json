@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-07T13:30:15.517Z",
+    "generatedAt": "2026-10-08T08:20:29.361Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -27897,6 +27897,27 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.edit.pool.faction",
+            "namespace": "tierLists",
+            "source_text": "Faction",
+            "description": "Label of the operator pool's faction filter: a group or team inside a nation (Rhine Lab, Team Rainbow), the same list the /operators faction filter offers. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.faction.group",
+            "namespace": "tierLists",
+            "source_text": "Filter by faction",
+            "description": "Accessible name of the operator pool's faction dropdown.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.faction.placeholder",
+            "namespace": "tierLists",
+            "source_text": "Any faction",
+            "description": "Prompt inside the operator pool's faction dropdown while no faction is chosen.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.edit.pool.grid.class",
             "namespace": "tierLists",
             "source_text": "Available classes",
@@ -28142,6 +28163,13 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.edit.pool.menu.noMatches",
+            "namespace": "tierLists",
+            "source_text": "No matches",
+            "description": "Shown inside an open pool filter dropdown (nation, faction, race) when the typed text matches no option.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.edit.pool.more",
             "namespace": "tierLists",
             "source_text": "Showing {shown} of {total}. Scroll for more.",
@@ -28150,6 +28178,27 @@
                 "shown",
                 "total"
             ]
+        },
+        {
+            "key": "tierLists.edit.pool.nation",
+            "namespace": "tierLists",
+            "source_text": "Nation",
+            "description": "Label of the operator pool's nation filter (Kjerag, Rhodes Island), a dropdown in the pool dialog and the picker. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.nation.group",
+            "namespace": "tierLists",
+            "source_text": "Filter by nation",
+            "description": "Accessible name of the operator pool's nation dropdown.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.nation.placeholder",
+            "namespace": "tierLists",
+            "source_text": "Any nation",
+            "description": "Prompt inside the operator pool's nation dropdown while no nation is chosen.",
+            "placeholders": []
         },
         {
             "key": "tierLists.edit.pool.nothingPlaced",
@@ -28173,6 +28222,27 @@
             "placeholders": [
                 "count"
             ]
+        },
+        {
+            "key": "tierLists.edit.pool.race",
+            "namespace": "tierLists",
+            "source_text": "Race",
+            "description": "Label of the operator pool's race filter (Sankta, Lupo), from each operator's file. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.race.group",
+            "namespace": "tierLists",
+            "source_text": "Filter by race",
+            "description": "Accessible name of the operator pool's race dropdown.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.race.placeholder",
+            "namespace": "tierLists",
+            "source_text": "Any race",
+            "description": "Prompt inside the operator pool's race dropdown while no race is chosen.",
+            "placeholders": []
         },
         {
             "key": "tierLists.edit.pool.rank",
@@ -43924,6 +43994,151 @@
             "placeholders": []
         },
         {
+            "key": "user.profile.showcase.faction.cardBuild",
+            "namespace": "user",
+            "source_text": "{name}: show {player}'s build",
+            "description": "Accessible name of an owned operator card in the faction dialog; it opens the player's build. {name} is the operator.",
+            "placeholders": [
+                "name",
+                "player"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.faction.cardPage",
+            "namespace": "user",
+            "source_text": "{name}: open operator page",
+            "description": "Accessible name of an operator card in the faction dialog that links to the operator's page.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.faction.count",
+            "namespace": "user",
+            "source_text": "{count, plural, one {# operator} other {# operators}}",
+            "description": "How many operators a faction holds, in the faction dialog of a showcase favourite.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.faction.empty",
+            "namespace": "user",
+            "source_text": "No operator in this server's data belongs to this faction.",
+            "description": "Shown in the faction dialog when the game data the reader uses lists no operator for the faction (a faction whose operators are not released on this server).",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.faction.emptyOwned",
+            "namespace": "user",
+            "source_text": "{player} owns none of these operators.",
+            "description": "Shown in the faction dialog when 'Owned only' is on and the player owns none of the faction's operators.",
+            "placeholders": [
+                "player"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.faction.gridLabel",
+            "namespace": "user",
+            "source_text": "Operators of {name}",
+            "description": "Accessible name of the grid of operator cards in the faction dialog. {name} is the faction.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.faction.owned",
+            "namespace": "user",
+            "source_text": "Owned",
+            "description": "Badge on an operator card in the faction dialog: the player owns this operator.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.faction.ownedCount",
+            "namespace": "user",
+            "source_text": "{owned} of {count} owned",
+            "description": "How many of a faction's operators the player owns, in the faction dialog. {owned} and {count} are numbers.",
+            "placeholders": [
+                "count",
+                "owned"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.faction.ownedOnly",
+            "namespace": "user",
+            "source_text": "Owned only",
+            "description": "Switch in the faction dialog that narrows the list to the operators the player owns.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.faction.private",
+            "namespace": "user",
+            "source_text": "{player}'s roster is private, so ownership isn't shown.",
+            "description": "Note in the faction dialog when the player's Roster tab is hidden from the viewer. {player} is the player's name.",
+            "placeholders": [
+                "player"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.faction.unobtainable",
+            "namespace": "user",
+            "source_text": "Not obtainable",
+            "description": "Badge on an operator card in the faction dialog for a form the game never hands out on its own (an alternate form, a reserve operator).",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.faction.upcoming",
+            "namespace": "user",
+            "source_text": "Upcoming: not yet on this server ({count})",
+            "description": "Heading over the operators of a faction that are out on CN but not yet on the reader's server, the ones /operators lists under Upcoming. {count} is how many.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.faction.upcomingAria",
+            "namespace": "user",
+            "source_text": "{name}: upcoming, open operator page",
+            "description": "Accessible name of an upcoming (not yet released on this server) operator card in the faction dialog. {name} is the operator.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.operator.loading",
+            "namespace": "user",
+            "source_text": "Loading {name}'s build",
+            "description": "Accessible name of the placeholder shown while a player's operator build loads. {name} is the operator.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.operator.notOwned",
+            "namespace": "user",
+            "source_text": "Not in {player}'s roster.",
+            "description": "Dialog text when a player's operator favourite is one they do not own. {player} is the player's name.",
+            "placeholders": [
+                "player"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.operator.openPage",
+            "namespace": "user",
+            "source_text": "Open operator page",
+            "description": "Link in a showcase dialog to the operator's own page on the site.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.operator.private",
+            "namespace": "user",
+            "source_text": "{player}'s roster is private, so their build of this operator isn't shown.",
+            "description": "Dialog text when a visitor opens an operator favourite but the player hid their Roster tab. {player} is the player's name.",
+            "placeholders": [
+                "player"
+            ]
+        },
+        {
             "key": "user.profile.showcase.picker.count",
             "namespace": "user",
             "source_text": "{count} of {max} picked",
@@ -43956,6 +44171,15 @@
             "description": "Title of the picker for a favourites block. {kind} is the plural type name, e.g. 'Operators'.",
             "placeholders": [
                 "kind"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.player",
+            "namespace": "user",
+            "source_text": "Player {uid}",
+            "description": "Stand-in for a player's name in showcase dialogs when the profile has no nickname. {uid} is the game uid.",
+            "placeholders": [
+                "uid"
             ]
         },
         {
@@ -44015,6 +44239,25 @@
             "source_text": "Your Showcase tab is hidden, so visitors don't see it. Show it again from Customize.",
             "description": "Notice on the owner's showcase when they hid the Showcase tab in the tab editor. 'Customize' is the tab editor button's label.",
             "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.tile.factionAria",
+            "namespace": "user",
+            "source_text": "{name}: show its operators",
+            "description": "Accessible name of a faction tile in a showcase favourites block; activating it opens a dialog listing every operator of the faction. {name} is the faction.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.tile.operatorAria",
+            "namespace": "user",
+            "source_text": "{name}: show {player}'s build",
+            "description": "Accessible name of an operator tile in a showcase favourites block; activating it opens a dialog with that player's build of the operator. {name} is the operator, {player} the profile's player name.",
+            "placeholders": [
+                "name",
+                "player"
+            ]
         },
         {
             "key": "user.profile.skins.badge.missing",

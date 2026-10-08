@@ -1,9 +1,24 @@
 import type { FilterSets } from "#/components/operators/list/impl/shared-filters";
 import { hasAnySharedFilter, matchesSharedFilters } from "#/components/operators/list/impl/shared-filters";
+import type { IRosterEntry } from "#/lib/api/user";
 import { compactForSearch } from "#/lib/search/fuzzy";
 import type { ObtainChannel } from "#/types/generated/ObtainChannel";
+import type { IOperatorIndexEntry, IOperatorListItem } from "#/types/operators";
 import { isMaxed, MAX_ELITE_BY_RARITY, MAX_LEVEL_BY_RARITY } from "./helpers.card";
-import type { IDisplayEntry, SortKey, SortOrder, SourceFilter } from "./types";
+import type { IDisplayEntry, IOwnedEntry, SortKey, SortOrder, SourceFilter } from "./types";
+
+/** One roster row as the roster's cards and `OperatorDialog` read it: the row, its index entry and its full table entry, either of which may be missing. */
+export function toOwnedEntry(r: IRosterEntry, meta: IOperatorIndexEntry | null, staticOp: IOperatorListItem | null): IOwnedEntry {
+    return {
+        ...r,
+        isOwned: true,
+        meta,
+        static: staticOp,
+        name: meta?.name ?? r.operator_id,
+        rarity: meta?.rarity ?? 1,
+        voiceActors: meta?.voiceActors ?? [],
+    };
+}
 
 /**
  * Classifies an operator by the server's language-neutral `channel` when the field is present.

@@ -1,3 +1,4 @@
+import { useOperatorFactLabel } from "#/components/operators/OperatorFacts";
 import { type ITierEntity, isEntityOfKind, type TierEntityKind } from "#/lib/api/tier-entities";
 import { type IKindFacet, type IKindPool, kindDefinition, useKindT } from "../kinds";
 
@@ -21,8 +22,9 @@ export interface IPoolKind extends Omit<IKindPool<TierEntityKind>, "facets" | "s
  */
 export function usePoolKind(kind: TierEntityKind, entities: readonly ITierEntity[] = []): IPoolKind {
     const t = useKindT();
+    const fact = useOperatorFactLabel();
     const ofKind = (entity: ITierEntity) => isEntityOfKind(entity, kind);
-    const pool = kindDefinition(kind).pool(t, entities.filter(ofKind));
+    const pool = kindDefinition(kind).pool(t, entities.filter(ofKind), { race: fact.race });
     const { compare } = pool;
     return {
         ...pool,

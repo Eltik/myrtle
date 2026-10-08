@@ -66,8 +66,9 @@ pub struct EntitySummary {
     pub href: Option<String>,
     /// Kind-specific tags the tile and the pool filters read. Operators carry
     /// `rarity`, `profession`, `sub_profession_id`, `position`, and, when set,
-    /// `nation_id`, `appellation`, and the server's own `profession_name`,
-    /// `sub_profession_name` and `nation_name`. Subclasses carry
+    /// `nation_id`, `group_id`, `team_id`, `race`, `appellation`, and the
+    /// server's own `profession_name`, `sub_profession_name`, `nation_name`,
+    /// `group_name` and `team_name`. Subclasses carry
     /// `profession` and the server's `profession_name`; enemies
     /// `enemy_level` and `enemy_index`; events `display_type`, `type`,
     /// `start_time` (unix seconds) and, for a rerun, `rerun`; factions

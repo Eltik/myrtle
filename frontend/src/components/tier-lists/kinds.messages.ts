@@ -289,6 +289,46 @@ export const messages = {
         text: "Team",
         description: "Faction level: a small team, such as Team Rainbow. Used as a pool filter and in hover cards.",
     },
+    "edit.pool.nation": {
+        text: "Nation",
+        description: "Label of the operator pool's nation filter (Kjerag, Rhodes Island), a dropdown in the pool dialog and the picker. Rendered uppercase.",
+    },
+    "edit.pool.nation.group": {
+        text: "Filter by nation",
+        description: "Accessible name of the operator pool's nation dropdown.",
+    },
+    "edit.pool.nation.placeholder": {
+        text: "Any nation",
+        description: "Prompt inside the operator pool's nation dropdown while no nation is chosen.",
+    },
+    "edit.pool.faction": {
+        text: "Faction",
+        description: "Label of the operator pool's faction filter: a group or team inside a nation (Rhine Lab, Team Rainbow), the same list the /operators faction filter offers. Rendered uppercase.",
+    },
+    "edit.pool.faction.group": {
+        text: "Filter by faction",
+        description: "Accessible name of the operator pool's faction dropdown.",
+    },
+    "edit.pool.faction.placeholder": {
+        text: "Any faction",
+        description: "Prompt inside the operator pool's faction dropdown while no faction is chosen.",
+    },
+    "edit.pool.race": {
+        text: "Race",
+        description: "Label of the operator pool's race filter (Sankta, Lupo), from each operator's file. Rendered uppercase.",
+    },
+    "edit.pool.race.group": {
+        text: "Filter by race",
+        description: "Accessible name of the operator pool's race dropdown.",
+    },
+    "edit.pool.race.placeholder": {
+        text: "Any race",
+        description: "Prompt inside the operator pool's race dropdown while no race is chosen.",
+    },
+    "edit.pool.menu.noMatches": {
+        text: "No matches",
+        description: "Shown inside an open pool filter dropdown (nation, faction, race) when the typed text matches no option.",
+    },
     "edit.pool.level": {
         text: "Level",
         description: "Label of the faction-level filter (nation, group, team) in the pool dialog. Rendered uppercase.",

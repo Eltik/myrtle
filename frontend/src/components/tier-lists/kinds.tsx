@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ClassIcon } from "#/components/operators/list/impl/components/Icons";
+import { CampIcon, ClassIcon, TeamIcon } from "#/components/operators/list/impl/components/Icons";
 import { entityOwner, type ITierEntity, type ITierEntityOf, integratedStrategiesNumber, type TierEntityKind } from "#/lib/api/tier-entities";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -7,6 +7,7 @@ import { formatProfession, professionLabel, RARITY_HEX_MUTED } from "#/lib/utils
 import type { FacetValue } from "#/types/generated/FacetValue";
 import type { OperatorProfession } from "#/types/operators";
 import type { messages } from "./kinds.messages";
+import { factionOptions, nationOptions, operatorFaction, raceOptions } from "./operatorFacets";
 
 // How each kind presents: its names, its tile accent and shape, its hover-card
 // detail line, its page, and its pool in the editor. Every tile, pool, dialog
@@ -36,8 +37,10 @@ export interface IKindFacet<K extends TierEntityKind> {
     label: string;
     /** Accessible name of the row of toggles. */
     groupLabel: string;
-    /** `mono` for short tabular values (stars), `text` for words, `icon` for glyph buttons with tooltips. */
-    variant: "mono" | "text" | "icon";
+    /** `mono` for short tabular values (stars), `text` for words, `icon` for glyph buttons with tooltips, `menu` for a long list (19 nations, 37 races) in a searchable dropdown. */
+    variant: "mono" | "text" | "icon" | "menu";
+    /** A `menu` row's prompt while nothing is chosen. */
+    placeholder?: string;
     options: IFacetOption[];
     /** The entity's value for this facet; an entity with none never matches a selection. */
     valueOf: (entity: ITierEntityOf<K>) => string | null;
@@ -71,9 +74,17 @@ export interface IKindDefinition<K extends TierEntityKind> {
     page?: EntityPageRoute;
     /** The hover card's line of what kind of thing this is, e.g. `Elite · B1` or `Side Story · Rerun`. */
     detail: (entity: ITierEntityOf<K>, t: KindT) => string[];
-    /** The editor pool. `catalogue` is the kind's catalogue, read by filters whose options come from the data (skin brands, Integrated Strategies themes). */
-    pool: (t: KindT, catalogue: readonly ITierEntityOf<K>[]) => IKindPool<K>;
+    /** The editor pool. `catalogue` is the kind's catalogue, read by filters whose options come from the data (skin brands, Integrated Strategies themes); `labels` names values whose strings live outside this namespace. */
+    pool: (t: KindT, catalogue: readonly ITierEntityOf<K>[], labels?: IPoolLabels) => IKindPool<K>;
 }
+
+/** Labels a pool reads from another namespace: an operator's race is worded in `operators` (`useOperatorFactLabel`). */
+export interface IPoolLabels {
+    race: (race: string) => string;
+}
+
+/** Without the hook's labels (a test), a race reads as its wire spelling. */
+const RAW_POOL_LABELS: IPoolLabels = { race: (race) => race };
 
 export const NEUTRAL_ACCENT = RARITY_HEX_MUTED[1] as string;
 const LEADER_ACCENT = "#dc4d56";
@@ -223,13 +234,43 @@ export const KIND_DEFINITIONS: { [K in TierEntityKind]: IKindDefinition<K> } = {
         description: (t) => t("edit.kinds.desc.operator"),
         accent: (e) => rarityAccent(e.rarity),
         detail: (e) => [professionLabel(e)],
-        pool: (t) => ({
+        pool: (t, catalogue, labels = RAW_POOL_LABELS) => ({
             kicker: t("edit.pool.kicker"),
             dialogTitle: t("edit.pool.dialogTitle"),
             searchLabel: t("edit.pool.search.label"),
             gridLabel: t("edit.pool.gridLabel"),
             dropArea: t("edit.pool.dropArea"),
-            facets: [rarityFacet(t, (e) => String(e.rarity)), classFacet(t, (e) => e.profession)],
+            facets: [
+                rarityFacet(t, (e) => String(e.rarity)),
+                classFacet(t, (e) => e.profession),
+                {
+                    id: "nation",
+                    label: t("edit.pool.nation"),
+                    groupLabel: t("edit.pool.nation.group"),
+                    variant: "menu",
+                    placeholder: t("edit.pool.nation.placeholder"),
+                    options: nationOptions(catalogue).map((o) => ({ ...o, icon: <TeamIcon teamId={o.value} size={18} /> })),
+                    valueOf: (e) => e.nationId,
+                },
+                {
+                    id: "faction",
+                    label: t("edit.pool.faction"),
+                    groupLabel: t("edit.pool.faction.group"),
+                    variant: "menu",
+                    placeholder: t("edit.pool.faction.placeholder"),
+                    options: factionOptions(catalogue).map((o) => ({ ...o, icon: <CampIcon groupId={o.value} size={18} /> })),
+                    valueOf: operatorFaction,
+                },
+                {
+                    id: "race",
+                    label: t("edit.pool.race"),
+                    groupLabel: t("edit.pool.race.group"),
+                    variant: "menu",
+                    placeholder: t("edit.pool.race.placeholder"),
+                    options: raceOptions(catalogue, labels.race),
+                    valueOf: (e) => e.race,
+                },
+            ],
             searchTexts: (e) => [e.name, e.appellation],
             compare: (a, b) => b.rarity - a.rarity || a.name.localeCompare(b.name),
         }),

@@ -78,6 +78,13 @@ interface IKindFields {
         position: OperatorPosition;
         nationId: string | null;
         nationName: string | null;
+        /** `handbook_team_table` ids under the nation; no operator on EN 2026-10-08 has both. */
+        groupId: string | null;
+        groupName: string | null;
+        teamId: string | null;
+        teamName: string | null;
+        /** The profile's race in the operator index's spelling (`Sankta`); null when the profile says `Unknown`. */
+        race: string | null;
     };
     /** One operator's skill slot, so a shared generic skill is one entry per operator. */
     skill: {
@@ -239,6 +246,11 @@ const KIND_MODELS: { [K in TierEntityKind]: IKindModel<K> } = {
             position: (facet("position") ?? "NONE") as OperatorPosition,
             nationId: facet("nation_id") || null,
             nationName: facet("nation_name") || null,
+            groupId: facet("group_id") || null,
+            groupName: facet("group_name") || null,
+            teamId: facet("team_id") || null,
+            teamName: facet("team_name") || null,
+            race: facet("race") || null,
         }),
     },
     skill: {

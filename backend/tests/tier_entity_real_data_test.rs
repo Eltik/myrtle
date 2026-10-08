@@ -477,6 +477,65 @@ fn main_story_is_one_entry_per_episode_in_order() {
 /// Every kind's catalogue, one pretty-printed JSON file per kind.
 /// Run it before and after a change to `tier_entity` and diff the two
 /// directories: a refactor must leave every file byte-identical.
+/// The operator pool's race, nation and faction facets: the values the
+/// picker's Race, Nation and Faction filters offer and match on. Counted over
+/// the obtainable catalogue on EN 2026-10-08: 409 operators, 26 with no race
+/// (profile `Unknown`), 37 distinct races, Sankta 13, Lupo 18; nations Kjerag
+/// 12 and Rhodes Island 86, group Rhine Lab 12. No operator has both a group
+/// and a team (77 and 54), so the picker's one Faction value per operator
+/// loses nothing. Floors, as above: game updates only add operators.
+#[test]
+fn operators_carry_race_nation_and_faction_facets() {
+    let gd = common::load_game_data();
+    let cat = catalogue(gd, &en_assets(), EntityKind::Operator);
+    let count = |pred: &dyn Fn(&BTreeMap<String, FacetValue>) -> bool| {
+        cat.iter().filter(|s| pred(&s.facets)).count()
+    };
+    let raced = count(&|f| f.contains_key("race"));
+    let races: HashSet<&str> = cat
+        .iter()
+        .filter_map(|s| facet(&s.facets, "race"))
+        .collect();
+    let sankta = count(&|f| facet(f, "race") == Some("Sankta"));
+    let lupo = count(&|f| facet(f, "race") == Some("Lupo"));
+    let kjerag = count(&|f| facet(f, "nation_id") == Some("kjerag"));
+    let rhodes = count(&|f| facet(f, "nation_id") == Some("rhodes"));
+    let rhine =
+        count(&|f| facet(f, "group_id") == Some("rhine") || facet(f, "team_id") == Some("rhine"));
+    let grouped = count(&|f| f.contains_key("group_id"));
+    let teamed = count(&|f| f.contains_key("team_id"));
+    let both = count(&|f| f.contains_key("group_id") && f.contains_key("team_id"));
+    println!(
+        "operators {}: race {raced} ({} distinct, {} none), Sankta {sankta}, Lupo {lupo}, \
+         kjerag {kjerag}, rhodes {rhodes}, rhine {rhine}; group_id {grouped}, team_id {teamed}, both {both}",
+        cat.len(),
+        races.len(),
+        cat.len() - raced,
+    );
+    assert!(
+        races.iter().all(|r| *r != "Unknown"),
+        "Unknown is never sent"
+    );
+    // A group or team id always comes with its name, so a filter has a label.
+    for s in &cat {
+        for (id, name) in [("group_id", "group_name"), ("team_id", "team_name")] {
+            if s.facets.contains_key(id) {
+                assert!(
+                    s.facets.contains_key(name),
+                    "{} has {id} but no {name}",
+                    s.id
+                );
+            }
+        }
+    }
+    assert!(raced >= 383, "race on {raced}");
+    assert!(sankta >= 13, "Sankta {sankta}");
+    assert!(lupo >= 18, "Lupo {lupo}");
+    assert!(kjerag >= 12, "kjerag {kjerag}");
+    assert!(rhodes >= 86, "rhodes {rhodes}");
+    assert!(rhine >= 12, "rhine {rhine}");
+}
+
 /// `CATALOGUE_DUMP_DIR=/path cargo test --test tier_entity_real_data_test dump_every_catalogue -- --ignored`
 #[test]
 #[ignore = "writes every kind's catalogue as JSON to CATALOGUE_DUMP_DIR"]
