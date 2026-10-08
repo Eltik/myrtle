@@ -17,8 +17,39 @@ const FORMULAS_JSON: &str = include_str!("config/operator_formulas.json");
 const HEAL_FORMULAS_JSON: &str = include_str!("config/heal_formulas.json");
 
 pub fn load_formulas() -> HashMap<String, OperatorFormula> {
-    serde_json::from_str(FORMULAS_JSON).expect("Invalid operator_formulas.json")
+    let mut formulas: HashMap<String, OperatorFormula> =
+        serde_json::from_str(FORMULAS_JSON).expect("Invalid operator_formulas.json");
+    for formula in formulas.values_mut() {
+        normalize_default_skill(formula);
+    }
+    formulas
 }
+
+/// Makes `default_skill` one the table can actually compute.
+///
+/// The client opens an operator on `default_skill`, so a default with no formula
+/// shows no DPS until the user picks another skill. Two shapes reach that today:
+/// a default outside `available_skills` (`char_1044_hsgma2` defaults to S2,
+/// but only S1 and S3 are transpiled), which moves to the highest available
+/// skill; and a table with no skills at all (1 and 2 stars, and operators whose
+/// skills were not transpiled), which moves to 0, basic attack, the index the
+/// engine already forces for rarity 2 and below. DPS tables only: `calculate_hps`
+/// never reads the skill map, so the healer defaults are left as shipped.
+fn normalize_default_skill(formula: &mut OperatorFormula) {
+    match formula.available_skills.iter().max() {
+        None => formula.default_skill = 0,
+        Some(&highest) if !formula.available_skills.contains(&formula.default_skill) => {
+            formula.default_skill = highest;
+        }
+        Some(_) => {}
+    }
+}
+
+/// The skill entry for basic attack (`skill_index` 0), which no table carries.
+/// Every entry is the `custom` kind and `calculate_skill_dps` dispatches on the
+/// operator id, so a default entry computes exactly what the operator's function
+/// does with no skill active.
+static BASIC_ATTACK: LazyLock<SkillFormula> = LazyLock::new(SkillFormula::default);
 
 pub fn load_heal_formulas() -> HashMap<String, OperatorFormula> {
     serde_json::from_str(HEAL_FORMULAS_JSON).expect("Invalid heal_formulas.json")
@@ -164,7 +195,11 @@ pub fn calculate_dps(
     let shredded = apply_shreds(enemy, &unit.shreds);
 
     let skill_key = unit.skill_index.to_string();
-    let skill_formula = formula.skills.get(&skill_key)?;
+    let skill_formula = match formula.skills.get(&skill_key) {
+        Some(skill_formula) => skill_formula,
+        None if unit.skill_index == 0 => &BASIC_ATTACK,
+        None => return None,
+    };
 
     // buff_fragile is 0 during skill_dps in the Python reference: the operator never
     // sees external fragile, it is multiplied on after the call.
@@ -286,17 +321,23 @@ mod tests {
     }
 
     #[test]
-    fn default_skills_missing_from_the_dps_skill_map() {
-        // CURRENT BEHAVIOR, suspected bug: `calculate_dps` returns None when
-        // `skills[skill_index]` is absent, so these operators are listed by
-        // `supported_operators` but resolve no DPS for their default skill. Most
-        // have an empty `skills` map; `char_1044_hsgma2` defaults to S2 while only
-        // S1 and S3 carry formulas.
+    fn every_dps_default_skill_is_computable() {
+        // The client opens an operator on its default skill. Every default is
+        // either a skill with a formula or 0, basic attack, which `calculate_dps`
+        // serves without one. Before `normalize_default_skill` these eight had
+        // neither and showed no DPS when first opened.
+        for (id, f) in supported_operators() {
+            assert!(
+                f.default_skill == 0 || f.skills.contains_key(&f.default_skill.to_string()),
+                "{id}: default S{} has no formula",
+                f.default_skill
+            );
+        }
+        let basic_attack_defaults: Vec<String> = default_skill_gaps(supported_operators());
         assert_eq!(
-            default_skill_gaps(supported_operators()),
+            basic_attack_defaults,
             vec![
                 "char_009_12fce",
-                "char_1044_hsgma2",
                 "char_286_cast3",
                 "char_347_jaksel",
                 "char_4000_jnight",
@@ -305,6 +346,27 @@ mod tests {
                 "char_503_rang",
             ]
         );
+        assert_eq!(get_formula("char_1044_hsgma2").map(|f| f.default_skill), Some(3));
+        assert_eq!(get_formula("char_347_jaksel").map(|f| f.default_skill), Some(0));
+    }
+
+    #[test]
+    fn normalize_default_skill_shapes() {
+        let mut f: OperatorFormula = serde_json::from_value(serde_json::json!({
+            "name": "x", "class_name": "x", "available_skills": [1, 3],
+            "available_modules": [], "default_skill": 2, "default_potential": 1,
+            "default_module": 0, "skills": {}, "conditionals": []
+        }))
+        .unwrap();
+        normalize_default_skill(&mut f);
+        assert_eq!(f.default_skill, 3, "outside the list moves to the highest");
+        f.default_skill = 1;
+        normalize_default_skill(&mut f);
+        assert_eq!(f.default_skill, 1, "a listed default is kept");
+        f.available_skills.clear();
+        f.default_skill = 3;
+        normalize_default_skill(&mut f);
+        assert_eq!(f.default_skill, 0, "no skills means basic attack");
     }
 
     #[test]
