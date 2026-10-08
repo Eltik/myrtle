@@ -54,14 +54,14 @@ export function EntityPickerDialog({ target, kinds, onClose, onPick, onClear }: 
 
     return (
         <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-            {/* A phone gets every pixel under the dialog viewport's 3rem top inset: the tiles are what the space is for. */}
-            <DialogPopup className="h-[min(85dvh,760px)] max-sm:h-[calc(100dvh-3rem)] sm:max-w-3xl" initialFocus={searchRef}>
-                <DialogHeader>
+            {/* A phone gets every pixel under the dialog viewport's 3rem top inset, and a short screen (a phone on its side) everything inside the viewport's padding: the tiles are what the space is for. */}
+            <DialogPopup className="h-[min(85dvh,760px)] max-sm:h-[calc(100dvh-3rem)] sm:max-w-3xl [@media(max-height:32rem)]:h-full" initialFocus={searchRef}>
+                <DialogHeader className="[@media(max-height:32rem)]:p-4 [@media(max-height:32rem)]:pe-12">
                     <DialogTitle>{target?.label ? t("picker.titleLabelled", { label: target.label }) : t("picker.title", { row: target?.row ?? 1, col: target?.col ?? 1 })}</DialogTitle>
-                    <DialogDescription className="max-sm:sr-only">{t("picker.description")}</DialogDescription>
+                    <DialogDescription className="max-sm:sr-only [@media(max-height:32rem)]:sr-only">{t("picker.description")}</DialogDescription>
                 </DialogHeader>
                 {target && <EntityPickerBody kinds={kinds} current={target.current} onPick={onPick} searchRef={searchRef} />}
-                <DialogFooter className="justify-between max-sm:flex-row max-sm:py-3 sm:justify-between">
+                <DialogFooter className="justify-between max-sm:flex-row max-sm:py-3 sm:justify-between [@media(max-height:32rem)]:py-2">
                     <Button type="button" variant="ghost" onClick={onClear} disabled={!target?.hasPick}>
                         <Trash2Icon />
                         {t("picker.clear")}
@@ -146,9 +146,10 @@ export function EntityPickerBody({ kinds, current, selected, onPick, searchRef }
     const visible = filtered.slice(0, limit);
 
     return (
-        <div className="flex min-h-0 flex-1 flex-col gap-3 px-6 pb-3">
-            {/* The vertical padding, cancelled by the margin, is room for a tab's 44 px touch area, which the scroller would clip. */}
-            <div ref={tabsFade.ref} style={tabsFade.style} className="-mx-6 -my-1.5 overflow-x-auto px-6 py-1.5 max-sm:[scrollbar-width:none] max-sm:[&::-webkit-scrollbar]:hidden" role="tablist" aria-label={t("picker.kinds")}>
+        // On a short screen the tabs, search and filters can outgrow the dialog, and flex would squeeze the tiles to nothing; there the whole body scrolls and the tiles keep a floor.
+        <div className="flex min-h-0 flex-1 flex-col gap-3 px-6 pb-3 [@media(max-height:32rem)]:overflow-y-auto">
+            {/* The vertical padding, cancelled by the margin, is room for a tab's 44 px touch area, which the scroller would clip. Its horizontal scroller would also let flex shrink it away, hence `shrink-0`. */}
+            <div ref={tabsFade.ref} style={tabsFade.style} className="-mx-6 -my-1.5 shrink-0 overflow-x-auto px-6 py-1.5 max-sm:[scrollbar-width:none] max-sm:[&::-webkit-scrollbar]:hidden" role="tablist" aria-label={t("picker.kinds")}>
                 <div className="flex w-max gap-1.5">
                     {tabs.map((k) => (
                         <button
@@ -195,7 +196,7 @@ export function EntityPickerBody({ kinds, current, selected, onPick, searchRef }
             )}
             {previewTiles.length > 0 && <p className="m-0 -mt-1 font-sans text-muted-foreground text-xs">{t("picker.previewHint", { badge: t("picker.previewBadge") })}</p>}
 
-            <div className="relative min-h-0 flex-1">
+            <div className="relative min-h-0 flex-1 [@media(max-height:32rem)]:min-h-56">
                 {catalogue.status === "pending" ? (
                     <div className="flex h-full items-center justify-center gap-2 font-sans text-muted-foreground text-sm">
                         <Spinner />
