@@ -212,7 +212,7 @@ fn overview(src: &Sources<'_>, sel: Option<usize>) -> Built {
         ));
         stat_fields(&mut head, &top.data, trust.as_ref());
         if let Some(grid) = range_of(src.ranges, phase.range_id.as_deref()) {
-            head.field("Range", grid, true);
+            head.field("Range", grid, false);
         }
     }
     for talent in detail.talents.iter().flatten() {
@@ -557,7 +557,7 @@ fn token_block(src: &Sources<'_>, token: &Token) -> Block {
         ));
         stat_fields(&mut block, &top.data, None);
         if let Some(grid) = range_of(src.ranges, phase.range_id.as_deref()) {
-            block.field("Range", grid, true);
+            block.field("Range", grid, false);
         }
     }
     let elite = token.phases.len().saturating_sub(1);
