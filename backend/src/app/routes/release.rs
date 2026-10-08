@@ -103,7 +103,9 @@ pub async fn lag(State(state): State<AppState>) -> Result<Json<LagResponse>, Api
 )]
 pub async fn list_overrides(
     State(state): State<AppState>,
+    auth: AuthUser,
 ) -> Result<Json<Vec<ReleaseOverride>>, ApiError> {
+    require_super_admin(&auth)?;
     Ok(Json(svc::list_overrides(&state).await?))
 }
 
