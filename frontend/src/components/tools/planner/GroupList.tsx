@@ -13,7 +13,7 @@ import type { IPlannerSelection } from "./usePlannerSelection";
 
 type PlannerT = TypedT<typeof messages>;
 
-/** Group cards toggle on background clicks only - clicks on nested controls must not double-fire. */
+/** Group cards toggle on background clicks only: clicks on nested controls must not double-fire. */
 function isInteractiveGroupChild(target: HTMLElement): boolean {
     return Boolean(target.closest("button") || target.closest("input") || target.closest("[role='checkbox']") || target.closest(".group-plans-list"));
 }
@@ -86,7 +86,6 @@ export function GroupList({ plans, groups, pinDividerAt, isLoading, selection, e
 
 interface IGroupCardProps {
     group: IPlanGroup;
-    /** The plans in this group. */
     plans: IOperatorPlanResponse[];
     isSelected: boolean;
     /** Whether any group is selected, which dims the unselected cards. */

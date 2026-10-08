@@ -28,7 +28,6 @@ type FavT = TypedT<typeof messages>;
 /** Whose showcase this is, for the dialogs its tiles open. Absent (the editor's preview), a tile opens nothing. */
 export interface IShowcasePlayer {
     uid: string;
-    /** The player's name as the profile shows it. */
     name: string;
     access: RosterAccess;
 }
@@ -52,9 +51,6 @@ function LazyDialog({ open, onOpenChange, children }: { open: boolean; onOpenCha
         </Dialog>
     );
 }
-
-// ---------------------------------------------------------------------------
-// Operator: the player's build
 
 export interface IOperatorTarget {
     id: string;
@@ -158,9 +154,6 @@ function OperatorNote({ operator, icon, children }: { operator: IOperatorTarget;
         </DialogContent>
     );
 }
-
-// ---------------------------------------------------------------------------
-// Faction: every operator in it
 
 export function FactionFavouriteDialog({ faction, open, onOpenChange }: { faction: ITierEntityOf<"faction">; open: boolean; onOpenChange: (open: boolean) => void }) {
     return (
@@ -289,7 +282,6 @@ function MemberCard({ op, owned, playerName, onBuild, t }: { op: IOperatorIndexE
     );
 }
 
-/** A favourite operator as the dialog reads it. */
 export function operatorTarget(entity: ITierOperator, server: string | undefined): IOperatorTarget {
     return { id: entity.id, name: entity.name, rarity: entity.rarity, server };
 }

@@ -310,7 +310,6 @@ function EventHeaderRow({ row, onToggle, onDetails }: { row: Extract<FlatRow, { 
 
                 <button type="button" onClick={onToggle} aria-expanded={open} aria-label={open ? t("list.zone.collapse", { title: event.title }) : t("list.zone.expand", { title: event.title })} className="absolute inset-0 cursor-pointer rounded-none ring-inset focus-visible:ring-2 focus-visible:ring-ring/60" />
 
-                {/* Zone thumbnail: opens the enlarged-banner detail dialog. */}
                 <button type="button" onClick={onDetails} aria-haspopup="dialog" aria-label={t("list.zone.about", { title: event.title })} className="group relative z-1 h-10 w-16 flex-none cursor-zoom-in overflow-hidden rounded-md border border-border ring-inset focus-visible:ring-2 focus-visible:ring-ring/60">
                     <PreviewFallback tone={event.tone} group={event.group} iconClassName="h-3.5 w-3.5" />
                     {cover && <StagePreview src={cover} />}

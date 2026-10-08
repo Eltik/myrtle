@@ -63,9 +63,8 @@ export function useI18n(): II18nValue {
 }
 
 /**
- * Resolve one key. The order is the whole fallback story in three lines:
- * the locale's own translation, then the English source bundled with the
- * build.
+ * Resolve one key: the locale's own translation, then the English source
+ * bundled with the build.
  *
  * The database's `en` row reaches this through `messages` - so a copy fix
  * made in the admin panel wins over the bundled source without a rebuild -

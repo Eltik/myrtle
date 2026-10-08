@@ -3,16 +3,16 @@ import type { ProfileTab } from "#/types/generated/ProfileTab";
 import { isTabId, TAB_IDS, type TabId } from "./types";
 
 /**
- * Which tab-memory rule the page runs. `stored` is the rule the profile always had:
- * the last tab opened, remembered per browser across every profile. `visitor` opens a
+ * Which tab-memory rule the page runs. `stored`: the last tab opened, remembered per
+ * browser across every profile. `visitor` opens a
  * customized profile on its owner's first visible tab and remembers a pick only for
  * the visit, so one owner's arrangement never leaks into the next profile read.
  */
 export type TabMemory = "stored" | "visitor";
 
 /**
- * `stored` whenever the owner never customized (`layout` null, the kill switch: the
- * page behaves exactly as before layouts) or the reader is the owner.
+ * `stored` whenever the owner never customized (`layout` null, the kill switch) or
+ * the reader is the owner.
  */
 export function tabMemory(layout: ProfileLayout | null, isOwner: boolean): TabMemory {
     return layout === null || isOwner ? "stored" : "visitor";
@@ -64,8 +64,8 @@ export function normalizeLayout(tabs: readonly { id: string; visible: boolean }[
  * filter only guards against an owner-shaped payload.
  *
  * Showcase is the exception for a visitor: it is a tab only while it has a block. So
- * with no layout (the kill switch) a visitor's bar is exactly the bar before layouts,
- * and the owner's has Showcase first, where they set it up.
+ * with no layout (the kill switch) a visitor's bar has no Showcase, and the owner's has
+ * Showcase first, where they set it up.
  */
 export function shownTabs(layout: ProfileLayout | null, isOwner: boolean): TabId[] {
     const tabs = layout === null ? defaultLayout() : knownTabs(layout.tabs);
@@ -74,7 +74,7 @@ export function shownTabs(layout: ProfileLayout | null, isOwner: boolean): TabId
 }
 
 /**
- * The tab to show. Under the `stored` rule that is the remembered tab, as before.
+ * The tab to show. Under the `stored` rule that is the remembered tab.
  * A visitor gets their pick from this visit, or the owner's first visible tab when
  * they have not picked yet or their pick is not a tab this profile shows. `null`
  * when the profile shows no tab at all.
@@ -116,12 +116,11 @@ export function moveEntry<T>(items: readonly T[], index: number, delta: number):
     return { next, to };
 }
 
-/** `tabs` with the entry at `index` moved by `delta` places, clamped to the ends; an unchanged copy when nothing moves. */
+/** An unchanged copy when nothing moves. */
 export function moveTab<T>(tabs: readonly T[], index: number, delta: number): T[] {
     return moveEntry(tabs, index, delta)?.next ?? [...tabs];
 }
 
-/** `tabs` with `id`'s visibility flipped. */
 export function toggleTab(tabs: readonly ProfileTab[], id: TabId): ProfileTab[] {
     return tabs.map((t) => (t.id === id ? { ...t, visible: !t.visible } : t));
 }

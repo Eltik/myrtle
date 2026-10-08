@@ -56,10 +56,8 @@ export function storyQueryOptions(id: string, server: string = DEFAULT_GAMEDATA_
  * operator's records are split over one or two story sets and have no single
  * group id of their own. The shape is the generated binding, fixed in
  * `docs/story-reader.md` section 2.
- */
-/**
- * A group's illustrations, or `null` when the running backend does not serve
- * the route (404). Null is a first-class answer here: the endpoint shipped
+ *
+ * `null` when the running backend does not serve the route (404). Null is a first-class answer here: the endpoint shipped
  * after this tab did, and a page that threw would take the whole library down
  * with it until a restart.
  */
@@ -83,10 +81,8 @@ export function storyIllustrationsQueryOptions(groupId: string, server: string =
 
 /**
  * One group's ARCHIVE, or `null` when the running backend does not serve the
- * route (404). Null is the same first-class answer the illustrations query
- * gives, and for the same reason: the route shipped after the library did, so
- * a backend that predates it must yield a sheet with no archive segment rather
- * than a page that throws.
+ * route (404): a backend that predates the route yields a sheet with no
+ * archive segment rather than a page that throws.
  *
  * A group that simply kept no archive is NOT a 404: the backend answers 200
  * with an empty `sections`, and 81 of the 87 EN groups look like that.
@@ -111,10 +107,8 @@ export function storyArchiveQueryOptions(groupId: string, server: string = DEFAU
 
 /**
  * What the COMMUNITY has read, or `null` when the running backend does not
- * serve the route (404). It is the same first-class null the archive and the
- * illustrations queries give, and it is not hypothetical: the binary on :3060 can
- * answer 404, so the tab must render its own empty state rather than throw a
- * query error at the page.
+ * serve the route (404). The binary on :3060 can answer 404, so the tab
+ * renders its own empty state rather than throwing a query error at the page.
  *
  * The backend caches the aggregate for 6 hours, so a shorter staleTime here
  * would only re-fetch a document that cannot have changed.
@@ -140,11 +134,9 @@ export function storyCommunityQueryOptions(server: string = DEFAULT_GAMEDATA_SER
 /**
  * The CHARACTER GALLERY's list: every story sprite folder with the names the
  * scripts speak it under, or `null` when the running backend does not serve
- * the route (404). Null is first-class for the same reason it is on the
- * archive and community queries: the route ships after the binary on :3060
- * was built, and a page that threw would take the whole route down until a
- * restart. The backend builds it once per game data load, so an hour of
- * staleness costs nothing.
+ * the route (404): the binary on :3060 can predate the route, and a page that
+ * threw would take the whole route down until a restart. The backend builds it
+ * once per game data load, so an hour of staleness costs nothing.
  */
 export const getStorySpritesFn = createServerFn({ method: "GET" })
     .inputValidator((server: string) => server)

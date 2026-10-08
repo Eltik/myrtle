@@ -3,9 +3,8 @@
 /**
  * The `{"status":"ok"}` success body for endpoints that return no payload.
  *
- * The type IS the documented schema and the serialized body, so there is no
- * second declaration to keep in agreement. It reached the wire as an untyped
- * `serde_json::json!` before, which meant the `OpenAPI` document described it
- * from a hand-written copy.
+ * The type is both the documented schema and the serialized body. It used to be
+ * an untyped `serde_json::json!`, which the `OpenAPI` document described from a
+ * hand-written copy.
  */
 export type StatusOk = { status: string };

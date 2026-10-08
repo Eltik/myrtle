@@ -9,11 +9,10 @@
  * The jump bar is the one piece here that is not pure, and its behaviour (the
  * scroll spy, the click hold, the rail's slide) is in `./jumpBar`.
  *
- * THE SPY LIVES IN THE BAR, NOT IN THE PAGE. It used to sit in `Browse`, so
- * every section change re-rendered the page, every card on it and the
- * toolbar: over the 11.6 s scroll test at 1440 that was 2,534 ms of React work
- * in 44 calls, 16 long tasks and 44% of frames dropped, against ~190 ms of
- * style, layout and paint. The bar owns `active` now, and a section change
+ * THE SPY LIVES IN THE BAR, NOT IN THE PAGE. In `Browse`, every section
+ * change re-rendered the page, every card on it and the toolbar: over the
+ * 11.6 s scroll test at 1440 that was 2,534 ms of React work in 44 calls, 16 long tasks and 44% of frames dropped, against ~190 ms of
+ * style, layout and paint. The bar owns `active`, so a section change
  * re-renders the bar, the phone's picker pill and the two chips whose `on`
  * flipped.
  */
@@ -108,8 +107,8 @@ function chipLabel(chip: IChipModel, t: BrowseT): string {
  *
  * BANNER SIZED DOWN, MONOGRAM UNCHANGED. At 24/32 the banner rendered 84.9 px
  * wide in a chip and 113.2 in a heading against a 22/28 px monogram beside it,
- * so RL, UR and LA read as a lesser mark than the four act banners. Now 70.8 px
- * in a chip and 92.0 in a heading; the monogram is the LARGER by height in both.
+ * so RL, UR and LA read as a lesser mark than the four act banners. At 20/26 it
+ * is 70.8 px in a chip and 92.0 in a heading; the monogram is the LARGER by height in both.
  *
  * A MONOGRAM ALONE IN A CHIP IS 24 PX, not the 22 it is beside a name. A
  * collapsed shelf chip is the logo and nothing else, and at 22 px in a 36 px
@@ -146,13 +145,12 @@ export function SectionGlyph({ chip, place, className, lit, alone = false }: { c
  * A left-aligned heading over a thin rule, the page's only section furniture.
  *
  * THE NAME IS THE HEADING, on every section and not only on the themed
- * shelves. It led with the range instead until two readers said the same thing
- * about the same line: "Shatter of a Vision" is what the section is called and
- * "Main story · Chapters 4 to 8" is what is true about it, and the page had
- * them the wrong way round. Neither is dropped, because many readers know the
- * mainline only as "chapter 8": the range moves to the muted line, where it now
- * sits behind the kind the section is all of and in front of the count,
- * reading "Main story · Ch. 4-8 · 6 chapters".
+ * shelves. Two readers said the same thing about the same line: "Shatter of a
+ * Vision" is what the section is called and "Main story · Chapters 4 to 8" is
+ * what is true about it. Neither is dropped, because many readers know the
+ * mainline only as "chapter 8": the range sits on the muted line, behind the
+ * kind the section is all of and in front of the count, reading
+ * "Main story · Ch. 4-8 · 6 chapters".
  */
 export const SectionHead = memo(function SectionHead({ chip, count, action }: { chip: IChipModel | undefined; count: string; action?: React.ReactNode }): React.ReactElement | null {
     const t: BrowseT = useT("story");
@@ -197,43 +195,42 @@ const FADE = 28;
  * THE PINNED BUDGET. At 390 the bar is 52 px (4 + a 44 px row + 3 + the 1 px
  * rule; a symmetric 4 measured 53), so the
  * site header and the bar pin 109 px where the "SECTION" label over a native
- * select pinned 118. At 640 and up it is the 66 px it was. A section's
- * `scroll-mt` is 128 px under 640 and 144 above, which lands its heading 19
- * and 13 px below the bar's bottom edge; the 128 px it used to be at every
- * width sat 3 px UNDER the desktop bar's 131.
+ * select pinned 118. At 640 and up it is 66 px. A section's `scroll-mt` is
+ * 128 px under 640 and 144 above, which lands its heading 19 and 13 px below
+ * the bar's bottom edge; a flat 128 px would sit 3 px UNDER the desktop bar's
+ * 131.
  *
  * THE BUTTON COSTS THE RAIL 49 PX (a 6 px gap, a 1 px rule, a 6 px gap and the
- * 36 px button), so the scroller is 1,351 px at 1440 where it was 1,400. The
- * chip gap came down from 6 to 4 px to pay for it, 17 gaps x 2 = 34 px, and
- * the eighteen collapsed chips measure 1,325.5 against the 1,351: they still
- * fit, with 25.5 px spare where there were 40.5. The bare chips' 8 px padding
- * was NOT touched; it was the fallback if the gap alone fell short.
+ * 36 px button), so the scroller is 1,351 px at 1440, not 1,400. A 4 px chip
+ * gap rather than 6 pays for it, 17 gaps x 2 = 34 px, and the eighteen
+ * collapsed chips measure 1,325.5 against the 1,351: they fit, with 25.5 px
+ * spare (40.5 on the 1,400 px rail at a 6 px gap). The bare chips' 8 px
+ * padding is the fallback if the gap alone falls short.
  *
- * AN ACTIVE CHIP PUTS THE ROW OVER AT EVERY ONE OF THE 18 SECTIONS, and it
- * did before this bar too: measured at 1440 the active row runs 1,393 (Other
- * events) to 1,525 px against 1,351, median 1,445.5. The same rows at the old
- * 6 px gap and 1,400 px rail were 1,427 to 1,559, so every section overflows by
- * 15 px more than it did. The active chip is centred, which is what makes this
+ * AN ACTIVE CHIP PUTS THE ROW OVER AT EVERY ONE OF THE 18 SECTIONS, with or
+ * without the button: measured at 1440 the active row runs 1,393 (Other
+ * events) to 1,525 px against 1,351, median 1,445.5. The same rows at a 6 px
+ * gap on a 1,400 px rail are 1,427 to 1,559, so the button adds 15 px to every
+ * section's overflow. The active chip is centred, which is what makes this
  * livable.
  *
- * ONE CHIP IS EXPANDED AND SEVENTEEN ARE COLLAPSED. Every chip used to print
- * both its lines and its count, and the row measured 3,411 px of scroll width
- * against a 1,400 px rail at 1440: the bar was a horizontal list nobody could
- * see the end of, and its first line was "Chapters 0 to 3" rather than the
- * name. A collapsed chip now prints one line at most, and on a mainline arc
+ * ONE CHIP IS EXPANDED AND SEVENTEEN ARE COLLAPSED. With every chip printing
+ * both its lines and its count, the row measured 3,411 px of scroll width
+ * against a 1,400 px rail at 1440: a horizontal list nobody could see the end
+ * of, its first line "Chapters 0 to 3" rather than the name. A collapsed chip
+ * prints one line at most, and on a mainline arc
  * that line is the compact range alone because the 184x52 banner beside it
  * reads ACT I; the active chip alone expands to the name over the range and
  * keeps its count. The tooltip carries the unabbreviated pair for every
  * collapsed chip and the `aria-label` carries the name, so nothing the bar
  * stops printing becomes unreachable.
  *
- * THE EIGHTEEN CHIPS FIT THE RAIL AT 1440, which the last pass said was not
- * fixable here: 2,877 px of content -> 1,359.5 against a 1,400 px rail, no
- * horizontal scroll and both fade masks off. The shelf names were the whole of
- * it. Twelve themed chips were 1,881.0 px on their names and are 504.0 px as
- * 42 px monograms, and the two chips the game marks with nothing were 280.1 px
- * as "Other events" and "Operator records" against 139.6 as MISC and REC. The
- * four mainline chips are untouched at 613.9 px. Two of those numbers are
+ * THE EIGHTEEN CHIPS FIT THE RAIL AT 1440: 2,877 px of content -> 1,359.5
+ * against a 1,400 px rail, no horizontal scroll and both fade masks off. The
+ * shelf names were the whole of it. Twelve themed chips are 1,881.0 px on
+ * their names and 504.0 px as 42 px monograms, and the two chips the game
+ * marks with nothing are 280.1 px as "Other events" and "Operator records"
+ * against 139.6 as MISC and REC. The four mainline chips are 613.9 px. Two of those numbers are
  * load-bearing and were measured, not chosen: keeping the two full names is
  * 1,500.0 px and still scrolls, and leaving the bare monogram chips on the
  * 10 px side padding the text chips use is 1,407.5 and still scrolls, which is
@@ -281,7 +278,7 @@ export const JumpBar = memo(function JumpBar({ chips, tools }: { chips: readonly
                             overflow, which the EXPANDED chip decides. At a section boundary the new
                             chip tipped the row over, the bar grew 8 px, the page under it moved the
                             heading back out of the spy's band, the old chip returned and the row
-                            fit again: a flicker loop. The track is now always reserved. */}
+                            fit again: a flicker loop. `scroll` always reserves the track. */}
                         <div ref={scroller} onScroll={measure} className="msv-scroll -my-1 hidden min-w-0 flex-1 gap-1 overflow-x-scroll py-1 sm:flex" style={{ maskImage: fade, WebkitMaskImage: fade }}>
                             {chips.map((chip) => (
                                 <JumpChip key={chip.id} chip={chip} on={active === chip.id} onJump={jump} t={t} />
@@ -298,9 +295,9 @@ export const JumpBar = memo(function JumpBar({ chips, tools }: { chips: readonly
 
 /**
  * The phone's section picker: a pill naming the section the reader is in,
- * which opens a bottom sheet listing every section as a 44 px row. It replaced
- * a "SECTION" label over a native select, which pinned 61 px and read as a
- * stray form control under the site header.
+ * which opens a bottom sheet listing every section as a 44 px row. A
+ * "SECTION" label over a native select pinned 61 px and read as a stray form
+ * control under the site header.
  *
  * THE JUMP WAITS FOR THE SHEET TO CLOSE. The dialog locks the page's scroll
  * while it is open and restores it on close, so a jump started from inside the
@@ -432,8 +429,8 @@ const JumpChip = memo(function JumpChip({ chip, on, onJump, t }: { chip: IChipMo
         </a>
     );
     // The tooltip is DISABLED on the active chip, never unwrapped: returning the
-    // bare link swapped the element tree, so every chip that turned on or off
-    // was remounted and its colour change snapped instead of transitioning.
+    // bare link swaps the element tree, so every chip that turns on or off
+    // remounts and its colour change snaps instead of transitioning.
     return (
         <Tooltip disabled={on}>
             <TooltipTrigger render={link} />

@@ -26,8 +26,7 @@ const SKELETON_CARDS = 12;
  * Browse's bundle does not carry it, and its list query runs only once the
  * tab has been opened.
  *
- * The rules the library's performance passes established, applied here: the
- * controls answer on the immediate state and the grid reads DEFERRED copies
+ * The library's performance rules apply: the controls answer on the immediate state and the grid reads DEFERRED copies
  * (`useDeferredValue`), the haystacks are prepared once per list, cards are
  * memoised with stable keys and a stable `onOpen`, the grid mounts a page of
  * {@link RECORD_PAGE} at a time, the thumbs are lazy and nothing samples a

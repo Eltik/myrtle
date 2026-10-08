@@ -211,9 +211,7 @@ export function sameProgress(a: StoryProgress, b: StoryProgress): boolean {
     return canonical(a) === canonical(b);
 }
 
-// ---------------------------------------------------------------------------
 // Conflicts: the two sides disagree and neither of them is obviously right.
-// ---------------------------------------------------------------------------
 
 /**
  * One side as the merge would read it, alone: stamped v2, with the old

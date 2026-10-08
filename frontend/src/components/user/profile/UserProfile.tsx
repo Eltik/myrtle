@@ -173,14 +173,13 @@ export function UserProfile() {
     // The background editor is open. Its draft lives in the editor, previewed there; the page's header keeps the saved background.
     const [editingBackground, setEditingBackground] = useState(false);
 
-    // Genuinely-global data: the profile record + roster power the hero, stat
-    // strip, and several tab counts, so both stay eager. Everything else is
-    // gated to the tab that needs it and fetched only once that tab first
+    // The profile record and roster power the hero, stat strip and several tab
+    // counts, so both stay eager. Everything else is fetched once its tab first
     // becomes active.
     const { data, isLoading } = useQuery(userQueryOptions(id));
 
-    // With no layout saved (`null`) every line below reduces to the page as it was:
-    // all tabs, the old order, the remembered tab, the roster fetched for everyone.
+    // With no layout saved (`null`) every line below reduces to the default page:
+    // all tabs in canonical order, the remembered tab, the roster fetched for everyone.
     const layout = data?.profile_layout ?? null;
     const isOwner = Boolean(user && data && user.id === data.id);
     const memory = tabMemory(layout, isOwner);

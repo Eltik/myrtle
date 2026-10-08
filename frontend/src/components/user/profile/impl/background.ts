@@ -17,7 +17,6 @@ export const BACKGROUND_KINDS = ["skin", "operator"] as const satisfies readonly
 export const GALLERY_KINDS = ["archive_pic", "story_cg", "story_scene"] as const satisfies readonly ProfileBackgroundKind[];
 export type GalleryKind = (typeof GALLERY_KINDS)[number];
 
-/** Whether a background kind is one of the gallery's landscape pictures. */
 export function isGalleryKind(kind: ProfileBackgroundKind): kind is GalleryKind {
     return (GALLERY_KINDS as readonly ProfileBackgroundKind[]).includes(kind);
 }
@@ -37,7 +36,6 @@ const FOCUS_CENTRE = 50;
 export const SCALE_MIN = 100;
 export const SCALE_MAX = 300;
 
-/** The story-art route's kind for each story Gallery kind. */
 const STORY_ART_KIND = { story_cg: "cg", story_scene: "scene" } as const satisfies Record<Exclude<GalleryKind, "archive_pic">, StoryArtKind>;
 
 /** The servers an art file is looked for on: the default one, then CN, which also has every operator the default has not released yet. */
@@ -104,7 +102,6 @@ function storyArtUrl(kind: StoryArtKind, id: string, size: "thumb" | "header", s
     return `${env.VITE_BACKEND_URL}/api${gamedataPath(server, `/story/art-gallery/${kind}/${encodeURIComponent(id)}/${size}`)}`;
 }
 
-/** Any gallery picture at `size`, through its kind's route. */
 function galleryArtUrl(kind: GalleryKind, id: string, size: "thumb" | "header", server?: string): string {
     if (kind === "archive_pic") return galleryPictureUrl(id, size, server);
     return storyArtUrl(STORY_ART_KIND[kind], id, size, server);
@@ -150,12 +147,10 @@ export function cropAxes(kind: ProfileBackgroundKind, scale?: number): readonly 
     return isGalleryKind(kind) || zoomOf({ scale }) > SCALE_MIN ? ["x", "y"] : ["y"];
 }
 
-/** `background` with its horizontal crop moved to `x`. */
 export function withFocusX(background: ProfileBackground, x: number): ProfileBackground {
     return { ...background, focus_x: clampFocus(x) };
 }
 
-/** `background` with its vertical crop moved to `y`. */
 export function withFocusY(background: ProfileBackground, y: number): ProfileBackground {
     return { ...background, focus_y: clampFocus(y) };
 }
@@ -170,7 +165,7 @@ export function zoomOf(background: Pick<ProfileBackground, "scale">): number {
     return background.scale === undefined || background.scale === null || !Number.isFinite(background.scale) ? SCALE_MIN : clampScale(background.scale);
 }
 
-/** `background` zoomed to `scale`. 100 drops the key, so an unzoomed background keeps the shape it had before zoom existed. */
+/** `background` zoomed to `scale`. 100 drops the key, so an unzoomed background stores no `scale`. */
 export function withScale(background: ProfileBackground, scale: number): ProfileBackground {
     const { scale: _drop, ...rest } = background;
     const next = clampScale(scale);
@@ -179,7 +174,7 @@ export function withScale(background: ProfileBackground, scale: number): Profile
 
 /**
  * The inline style of the header art. Unzoomed (no scale, or 100) it is the
- * `object-position` alone, exactly as before zoom existed: the kill switch.
+ * `object-position` alone: the kill switch.
  *
  * Zoomed, the `cover` box is scaled by `s = scale / 100` about the focus point,
  * the same percentages as `object-position`. That point of the art stays put
@@ -295,8 +290,7 @@ export function resetBackground(background: ProfileBackground): ProfileBackgroun
 
 /**
  * The elite art an operator background shows: its stored choice, else elite 2 where the
- * operator has it (`hasElite2`) and elite 1 where it does not, the header's art before the
- * choice existed. `null` for any other kind.
+ * operator has it (`hasElite2`) and elite 1 where it does not. `null` for any other kind.
  */
 export function shownElite(background: Pick<ProfileBackground, "kind" | "elite">, hasElite2: boolean): 1 | 2 | null {
     if (background.kind !== "operator") return null;
@@ -307,8 +301,7 @@ export function shownElite(background: Pick<ProfileBackground, "kind" | "elite">
 /**
  * `background` drawing elite `elite` art. The key is stored only when it changes what
  * draws: elite 1 of an operator that has elite 2. Elite 2, or elite 1 of an operator
- * without it, is the default art and drops the key, so the background keeps the shape it
- * had before the choice existed. The crop and zoom are kept.
+ * without it, is the default art and drops the key. The crop and zoom are kept.
  */
 export function withElite(background: ProfileBackground, elite: 1 | 2, hasElite2: boolean): ProfileBackground {
     const { elite: _drop, ...rest } = background;

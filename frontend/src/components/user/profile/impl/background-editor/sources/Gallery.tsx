@@ -48,7 +48,7 @@ export function galleryFilterActions(setChosen: (update: (prev: IGalleryFilter) 
     const update = (part: Partial<IGalleryFilter>) => setChosen((prev) => ({ ...prev, ...part }));
     return {
         update,
-        // Toggles the clicked category in the author's own filter, not in the view's `filter`: that one has the categories set aside for another source dropped, and writing it back lost them (`filterForSource`).
+        // Toggles the clicked category in the author's own filter, not in the view's `filter`: that one has the categories set aside for another source dropped, and writing it back would lose them (`filterForSource`).
         toggleCategory: (id: StoryCategory) => setChosen((prev) => ({ ...prev, categories: prev.categories.includes(id) ? prev.categories.filter((c) => c !== id) : [...prev.categories, id] })),
         clear: () => setChosen(() => NO_GALLERY_FILTER),
     };

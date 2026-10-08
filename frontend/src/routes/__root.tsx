@@ -177,9 +177,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     // `lang` drives hyphenation, the CJK font fallback chain, `:lang()` rules and screen reader
     // pronunciation. The whole i18n bootstrap, not just the locale: the provider has to live HERE,
     // not in `RootComponent`, because `SiteChrome` (Header and Footer) is rendered by this shell,
-    // above `RootComponent`. One level lower, header and footer read the default empty context
-    // and fell back to English, and both language switchers saw `available: []` and rendered
-    // nothing.
+    // above `RootComponent`. One level lower, header and footer would read the default empty
+    // context and fall back to English, and both language switchers would see `available: []`
+    // and render nothing.
     const i18n = Route.useRouteContext({ select: (c) => c.i18n });
     const locale = i18n?.locale ?? DEFAULT_LOCALE;
     const alternates = i18n?.available.map((l) => l.code) ?? [];

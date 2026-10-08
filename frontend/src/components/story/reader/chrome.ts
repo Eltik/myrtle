@@ -91,12 +91,12 @@ export function chromeShown(o: ChromeInputs): boolean {
  * How long the PEEK survives the pointer leaving the handle and the pills
  * alike, in milliseconds.
  *
- * Without it the peek was unusable: the handle reveals the toolbar, and the
+ * Without it the peek is unusable: the handle reveals the toolbar, and the
  * pointer then has to cross the gap between the handle and whichever pill it
  * is aiming for. The handle is 64 px wide and centred, the pills sit at the
  * two ends of an `inset-x-2` row, so at 1440 the nearest pill edge is roughly
  * 640 px away and every one of those pixels is STAGE. `pointerleave` on the
- * handle fired the instant the pointer started moving and the bar went with
+ * handle fires the instant the pointer starts moving and the bar goes with
  * it. The peek is held over the UNION of the handle and the pills, and the
  * grace covers the stage between them: 300 ms is a comfortable crossing at any
  * speed a pointer actually travels and short enough that a pointer that left
@@ -121,12 +121,12 @@ export function nextPeek(e: PeekEvent): boolean {
  * Whether this pointer may PEEK at a collapsed toolbar. Only a mouse hovers, so
  * only a mouse peeks; a touch or a pen goes straight to the tap that opens it.
  *
- * Peeking on a touch broke the handle on iOS. A touch's `pointerenter` fires at
- * touchstart, so the peek faded the pills in before the finger lifted, and
+ * Peeking on a touch breaks the handle on iOS. A touch's `pointerenter` fires at
+ * touchstart, so the peek fades the pills in before the finger lifts, and
  * WebKit treats a tap whose hover made content visible as that hover and
- * SWALLOWS the click. The click was the open; without it the finger's
- * `pointerleave` started the grace timer and the peek ran out, so the toolbar
- * appeared for 300 ms and collapsed again on every tap.
+ * SWALLOWS the click. The click is the open; without it the finger's
+ * `pointerleave` starts the grace timer and the peek runs out, so the toolbar
+ * appears for 300 ms and collapses again on every tap.
  */
 export function peeksOn(pointerType: string): boolean {
     return pointerType === "mouse";

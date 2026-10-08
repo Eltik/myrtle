@@ -25,7 +25,7 @@ export function entityShape(entity: ITierEntity): "square" | "wide" {
     return entity.resolved && KIND_DEFINITIONS[entity.kind].shape === "wide" ? "wide" : "square";
 }
 
-/** The attributes that mark a non-operator tile for the grid's kind and wide-shape rules. None on an operator, whose tile predates kinds, or on an unresolved placement. */
+/** The attributes that mark a non-operator tile for the grid's kind and wide-shape rules. None on an operator, whose tile kinds do not touch, or on an unresolved placement. */
 export function kindTileAttributes(entity: ITierEntity): { "data-kind"?: TierEntityKind; "data-shape"?: "square" | "wide" } {
     if (!entity.resolved || entity.kind === "operator") return {};
     return { "data-kind": entity.kind, "data-shape": entityShape(entity) };

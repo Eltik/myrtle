@@ -62,8 +62,8 @@ export function bodyTextureSize(sprite: { bodySize?: unknown }): BodyTextureSize
  * can produce, and Amiya's 1091.7 matches her own bundle's root RectTransform
  * of 1090 to 0.16%. The character's OWN prefab rect wins. It rides the wire as
  * `CharacterSprite.plate` and is read DEFENSIVELY, because the running backend
- * predates the binding: without it the slot template 1024 at (0,203) is what
- * shipped.
+ * predates the binding: without it the fallback is the slot template, 1024 at
+ * (0,203).
  */
 export function bodyPlate(sprite: { plate?: unknown }): BodyPlate {
     const raw = sprite.plate as { x?: unknown; y?: unknown; w?: unknown; h?: unknown } | undefined | null;
@@ -85,7 +85,7 @@ const LAZY_IMAGE = { loading: "lazy", decoding: "async" } as const;
  * the interlude window, which draws a character exactly as a slot does, and
  * for the character gallery, which draws every expression of a folder the
  * same way. `lazy` defers both images until they near the viewport, for a grid
- * of hundreds; the stage never sets it, so its images load exactly as before.
+ * of hundreds; the stage never sets it, so its images load eagerly.
  */
 export function Body({ state, sec, mode, lazy = false }: { state: Pick<SlotState, "sprite" | "name">; sec: number; mode: "in" | "hold" | "out"; lazy?: boolean }): React.ReactElement {
     const face = facePlacement(state.sprite);

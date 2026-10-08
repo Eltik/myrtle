@@ -200,7 +200,7 @@ export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
                 const dt = Math.min((now - lastTick) / 1000, 0.1);
                 lastTick = now;
                 if (!recordingRef.current && spineRef.current) spineRef.current.update(dt);
-                // Rendered while recording too, as PIXI's ticker did: the recorder has moved the
+                // Rendered while recording too: the recorder has moved the
                 // spine onto its own app, so the live canvas shows it gone, not a frozen frame.
                 if (appRef.current?.renderer) appRef.current.renderer.render(appRef.current.stage);
                 animationFrameId = requestAnimationFrame(tick);

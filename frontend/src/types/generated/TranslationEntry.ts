@@ -5,13 +5,12 @@ import type { JsonValue } from "./serde_json/JsonValue";
  * One row of the translation editor: the key and its English source joined to
  * this locale's translation, if any.
  *
- * `is_stale` is computed in SQL rather than stored - it is true when a
- * translation exists but was written against an older English source, which
- * is the only staleness this system has.
+ * `is_stale` is computed in SQL, not stored: a translation exists but was
+ * written against an older English source. That is the only staleness there is.
  *
- * `translated_source_text` is the English that was on screen when the value
- * was saved. It is what turns `is_stale` from a badge into a diff, and it is
- * `None` for rows saved before the snapshot column existed.
+ * `translated_source_text` is the English on screen when the value was saved,
+ * which turns `is_stale` from a badge into a diff. `None` for rows saved before
+ * the snapshot column existed.
  */
 export type TranslationEntry = {
     key: string;

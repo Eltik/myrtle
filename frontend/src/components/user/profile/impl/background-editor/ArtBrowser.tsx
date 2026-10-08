@@ -56,7 +56,7 @@ interface IArtBrowserProps {
  * above the tiles. It opens on the source of the art the draft shows.
  *
  * Memoized on `selected` and `onPick`: the draft changes on every pointer move of a drag,
- * and before this the browser, its 120 mounted tiles or the character picker re-rendered
+ * and unmemoized the browser, its 120 mounted tiles or the character picker re-rendered
  * on each one (10 renders per 10 moves, measured 2026-10-06).
  */
 export const ArtBrowser = memo(function ArtBrowser({ selected, onPick }: IArtBrowserProps) {

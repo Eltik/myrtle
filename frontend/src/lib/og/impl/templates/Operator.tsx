@@ -103,8 +103,8 @@ export function OperatorTemplate(data: IOperatorOgData) {
                 <BrandRow kicker="OPERATOR · COMPANION" />
                 <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "center", marginTop: 40 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                        {/* rarity badge - single inline-SVG star (Inter has no ★ glyph
-                            and the rarity_yellow_N.png assets bake N stars in a row) */}
+                        {/* A single inline-SVG star: Inter has no ★ glyph and the
+                            rarity_yellow_N.png assets bake N stars in a row. */}
                         <div
                             style={{
                                 display: "flex",
@@ -159,7 +159,7 @@ export function OperatorTemplate(data: IOperatorOgData) {
                             </div>
                         ) : null}
                     </div>
-                    {/* name - full canonical name, font size adapts to length so
+                    {/* The full canonical name; the font size adapts to length so
                         "Exusiai the New Covenant" still fits on two lines. */}
                     <div
                         style={{

@@ -49,14 +49,13 @@ export const PUBLIC_PLANS_QUERY_PREFIX = ["user", "public-plans"] as const;
 /** The Showcase, whose plan blocks the server marks removed when their plan is gone or hidden. */
 const SHOWCASE_QUERY_PREFIX = ["user", "showcase"] as const;
 
-/** Every cached view of the player's plans, refetched together after a write. */
 const PLAN_VIEW_PREFIXES = [PLANS_QUERY_PREFIX, PUBLIC_PLANS_QUERY_PREFIX, SHOWCASE_QUERY_PREFIX] as const;
 
 /**
  * Refetches every view of the player's plans after a write: the planner's own
- * lists, the profile's public list and the Showcase. Invalidating only
- * `PLANS_QUERY_PREFIX` left the profile serving a deleted or new plan from
- * cache for up to `STALE_TIME`.
+ * lists, the profile's public list and the Showcase. Invalidating
+ * `PLANS_QUERY_PREFIX` alone leaves the profile serving a deleted or new plan
+ * from cache for up to `STALE_TIME`.
  */
 export function invalidatePlanQueries(queryClient: QueryClient): Promise<void> {
     return Promise.all(PLAN_VIEW_PREFIXES.map((queryKey) => queryClient.invalidateQueries({ queryKey }))).then(() => undefined);
@@ -64,9 +63,9 @@ export function invalidatePlanQueries(queryClient: QueryClient): Promise<void> {
 
 /**
  * Drops deleted plans from every cached planner list at once, before the
- * refetch lands. Without it a deleted plan stayed listed (and the editor still
- * found it, so it offered "Save Changes" over "Create Plan") until the list
- * refetched. Requirement totals stay as cached until then.
+ * refetch lands. Without it a deleted plan stays listed (and the editor still
+ * finds it, so it offers "Save Changes" over "Create Plan") until the list
+ * refetches. Requirement totals stay as cached until then.
  */
 export function dropPlansFromCache(queryClient: QueryClient, operatorIds: string[]): void {
     const dropped = new Set(operatorIds);
@@ -99,8 +98,6 @@ function camelizeOperator(plan: IOperatorPlanResponse): IOperatorPlanResponse {
     if (plan.operator) plan.operator = deepCamelize(plan.operator);
     return plan;
 }
-
-// ---- Plans ----
 
 export interface IUpsertPlanInput {
     operatorId: string;
@@ -213,8 +210,6 @@ export function publicPlansQueryOptions(uid: string) {
     });
 }
 
-// ---- Groups ----
-
 export interface IUpsertGroupInput {
     /** Set to rename that group; unset creates `name`. */
     oldName?: string;
@@ -270,7 +265,6 @@ export const deleteGroupFn = createServerFn({ method: "POST" })
         return { success: true };
     });
 
-// ---- Presets ----
 // Each operator is clamped client-side (`bulkTargets.ts`) before its upsert.
 
 export const getPlanPresetsFn = createServerFn({ method: "GET" }).handler(async () => {

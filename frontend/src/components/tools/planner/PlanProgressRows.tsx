@@ -38,7 +38,7 @@ interface IPlanProgressRowsProps {
     layout?: "stack" | "columns";
 }
 
-/** Current ➔ target rows for a plan's promotion, each skill and each module. The target is highlighted where it is ahead. */
+/** Current -> target rows for a plan's promotion, each skill and each module. The target is highlighted where it is ahead. */
 export function PlanProgressRows({ progress, server, labels, className, layout = "stack" }: IPlanProgressRowsProps): React.ReactElement {
     const { promotion, skills, modules } = progress;
 

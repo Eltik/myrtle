@@ -325,7 +325,7 @@ export function stageKey(stage: OpStage): string {
     return stage.stageId;
 }
 
-/** The code-based key plans were saved under before picks were keyed by id; still read so old picks survive. */
+/** The legacy pick key, by stage code; still read so picks saved under it survive. */
 function legacyStageKey(stage: OpStage): string {
     return stage.challenge ? `${stage.code} CM` : stage.code;
 }

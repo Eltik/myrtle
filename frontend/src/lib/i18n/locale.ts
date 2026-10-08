@@ -17,7 +17,7 @@ export const GAMEDATA_SERVER_COOKIE = "gamedata_server";
  *
  * Deliberately a shape test rather than a list. The set of enabled locales
  * lives in the database, and this has to answer synchronously while the router
- * is being constructed - before anything async can run. A segment matching
+ * is being constructed, before anything async can run. A segment matching
  * this shape is treated as a locale claim and then validated against the
  * manifest, which redirects an unknown one to the default locale.
  *

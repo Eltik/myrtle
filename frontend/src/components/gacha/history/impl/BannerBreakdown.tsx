@@ -58,10 +58,9 @@ function groupByPool(items: IGachaItem[], gachaType: ClientGachaGroup, bannersBy
             if (item.star === "5") existing.fiveStars++;
             if (item.at > existing.lastPullAt) existing.lastPullAt = item.at;
         } else {
-            // Prefer static-data banner name - the Yostar API often echoes a
-            // blank `pool_name`, and old rows persisted before the lookup
-            // existed had to fall back to the raw pool_id (the IDs aren't
-            // user-friendly).
+            // Prefer the static-data banner name: the Yostar API often echoes a
+            // blank `pool_name`, and rows persisted before the lookup carry the
+            // raw pool_id, which is no name to show.
             const banner = bannersById.get(item.poolId);
             const resolvedName = banner?.gachaPoolName || item.poolName || item.poolId;
             map.set(key, {
@@ -86,7 +85,7 @@ function fmtDate(ts: number, f: IFormatters): string {
     return f.date(new Date(ts), { month: "short", day: "numeric", year: "numeric" });
 }
 
-/** Banner table uses unix-seconds (static data); pull records use ms. Convert. */
+/** The banner table (static data) uses unix seconds; pull records use ms. */
 function fmtDateFromSeconds(secs: number, f: IFormatters): string {
     if (!secs) return "-";
     return f.date(new Date(secs * 1000), { month: "short", day: "numeric", year: "numeric" });
@@ -140,8 +139,8 @@ function BannerNameCell({ banner, name, typeColor, typeLabelKey, sixStars, fiveS
     );
 
     if (!banner) {
-        // Banner not present in static data - happens for older retired pools
-        // outside the current gamedata snapshot. Show the name without hover.
+        // Older retired pools fall outside the current gamedata snapshot: the
+        // name shows without a hover.
         return trigger;
     }
 

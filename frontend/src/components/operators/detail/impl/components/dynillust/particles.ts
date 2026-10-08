@@ -3108,7 +3108,7 @@ void main() {
     // illustration shows through. That is measured WRONG - cet 29.172 -> 29.747, and per column
     // at t=8 it helps 630-720 (detail ratio 0.42 -> 0.64) while HURTING 720-810 (0.28 -> 0.20)
     // and the left edge (0.64 -> 0.40), and pushes the full-frame level further from the capture
-    // (77.8 -> 81.1 against 70.9). ⇒ the right-edge ruins are composited ABOVE these planes in
+    // (77.8 -> 81.1 against 70.9). So the right-edge ruins are composited ABOVE these planes in
     // the game, not seen through them.
     col.a *= uAlpha2;
     float dissolveTex = uHasDissolve > 0.5 ? texture2D(uDissolveTex, dsUV).x : 1.0;
@@ -5043,7 +5043,7 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
         // up in the corpus scan: unparented sheets (Wiš'adel's 3522 px `sort: -18`, Siege's
         // 1920 px `sort: -50` and 1050 px `sort: -71`), excluded by requiring a followed BONE;
         // and bone-attached scenery (Nian's six `BG_Screen_*` panels at `sort: -133…-73`),
-        // excluded by the same `sort < characterSort ⇒ scenery` line the mesh path already
+        // excluded by the same `sort < characterSort -> scenery` line the mesh path already
         // draws. What remains is rig decoration pinned to the skeleton and drawn OVER the
         // character - which is what pokes out of a silhouette the game keeps clean.
         const noDynamics = scalarMax(sys.startSpeed) === 0 && scalarMax(sys.gravity) === 0 && (sys.shape?.type ?? "none") === "none" && !sys.velocityOverLife && !sys.sizeOverLife && !sys.colorOverLife && !sys.noise && !sys.rotOverLifeDegPerSec && !sys.trail && !sys.tint;

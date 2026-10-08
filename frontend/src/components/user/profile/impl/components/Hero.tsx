@@ -18,7 +18,7 @@ interface IHeroProps {
     profile: IUserProfile;
     /**
      * The art behind the header: the saved one, or the background editor's draft in its
-     * preview. `null` or absent draws the header exactly as it was before backgrounds existed.
+     * preview. `null` or absent draws the plain header (tint and grid).
      */
     background?: ProfileBackground | null;
     /** Opens the background editor. Passed for the owner alone; absent, no control renders. */
@@ -110,7 +110,6 @@ export function Hero({ profile, background, onChangeBackground }: IHeroProps) {
             )}
             {background ? null : <HeroGrid />}
 
-            {/* Stacked grid on mobile, 3 columns from sm up */}
             <div className="relative grid grid-cols-[auto_1fr] items-start gap-4 px-5 pt-5 pb-5 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-6 sm:px-7 sm:pt-7 sm:pb-6 lg:gap-7 lg:px-8 lg:pt-8 lg:pb-7">
                 <div className="relative">
                     <div
@@ -133,7 +132,6 @@ export function Hero({ profile, background, onChangeBackground }: IHeroProps) {
                     </div>
                 </div>
 
-                {/* Action buttons - shown top-right on mobile via grid placement */}
                 <div className="flex items-center justify-end gap-2 self-start sm:order-3 sm:pt-1">
                     <Button variant="outline" size="sm" onClick={handleShare} className="gap-1.5">
                         <Share2 className="size-3.5" />
@@ -163,7 +161,6 @@ export function Hero({ profile, background, onChangeBackground }: IHeroProps) {
                     )}
                 </div>
 
-                {/* Main info: spans full width on mobile, normal column on sm+ */}
                 <div className="col-span-2 flex min-w-0 flex-col sm:order-2 sm:col-span-1">
                     <div className="mb-1.5 flex flex-wrap items-center gap-2">
                         <span className="font-medium font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-widest">{profile.uid}</span>

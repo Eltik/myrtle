@@ -31,7 +31,7 @@ import { type IUserOgData, type IUserSupportModule, type IUserSupportSkill, type
 export interface IOgHandler<TData> {
     /**
      * Load the template's data. `locale` is the locale the embedding page was
-     * rendered in, read off the request by `ogLocale` - a handler whose text
+     * rendered in, read off the request by `ogLocale`; a handler whose text
      * is all game or user data ignores it.
      */
     fetch: (id: string, locale?: string) => Promise<TData | null>;
@@ -444,7 +444,7 @@ export const DEFAULT_OG_ID = "_root";
 const defaultHandler = /* @__PURE__ */ defineOgHandler<IDefaultOgData>(ogHashers.default, {
     // The only handler whose text is authored rather than fetched, so the only
     // one that needs a catalog. There is no React tree and no router match
-    // here - satori is handed a plain element tree on the server - so the
+    // here (satori is handed a plain element tree on the server), so the
     // locale arrives as a request param and the catalog is fetched for it.
     // `metaSourceForLocale` returns null for the source locale, which resolves
     // every key to the bundled English without a round trip.

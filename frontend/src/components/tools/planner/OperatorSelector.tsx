@@ -54,8 +54,8 @@ export function useOperatorOptions(server: string, searchQuery: string, selected
     const operatorName = useOperatorName();
     // The index, not the full table: the picker reads only names, rarity and
     // tags. The full table is ~40 MB decoded through a server fn, and a slow or
-    // failed fetch of it left the picker on "Loading operators..." with only
-    // the upcoming CN operators listed.
+    // failed fetch of it would leave the picker on "Loading operators..." with
+    // only the upcoming CN operators listed.
     const { data: operators = [], isLoading: isOperatorsLoading } = useQuery(operatorsIndexQueryOptions(server));
     const { data: upcoming = [], isLoading: isUpcomingLoading } = useQuery(upcomingQueryOptions(server));
 

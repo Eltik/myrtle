@@ -3442,7 +3442,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 // duplicate: svash2's ice, Nearl "Relight"'s seated throne - the static's
                 // character peeks beyond the spine silhouette in the scene's open areas, and no
                 // centroid registration lands it exactly when a full scene competes). So: any
-                // scene layer at all ⇒ drop the static. Only spine-only art (Siege - a BARE
+                // scene layer at all -> drop the static. Only spine-only art (Siege - a BARE
                 // `[scene].json`, 0 layers, or no scene) keeps it.
                 const sceneLayerCount = scene ? (scene.background?.children?.length ?? 0) + (scene.foreground?.children?.length ?? 0) : 0;
                 const useStatic = hasBackdrop && !!backdropData && !!backdropFrame && !!vis && sceneLayerCount === 0;

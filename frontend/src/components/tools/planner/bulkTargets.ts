@@ -15,7 +15,6 @@ import { clampModuleTargets, clampSkillTargets, getMaxLevel, higherPromotion, is
 /** Level caps a preset may name at Elite 0, 1 and 2, the highest any rarity reaches. */
 const PRESET_LEVEL_CAPS = [50, 80, 90] as const;
 
-/** The highest level a preset may name at `elite`. */
 export function presetLevelCap(elite: number): number {
     return PRESET_LEVEL_CAPS[elite] ?? 90;
 }
@@ -33,7 +32,6 @@ export const DEFAULT_PRESET_TARGET: IPresetTarget = {
     display_on_profile: false,
 };
 
-/** The promotion, level, skill and module fields of a plan upsert. */
 export type IBulkPlanTarget = Pick<IUpsertPlanInput, "targetElite" | "targetLevel" | "targetSkillLevel" | "targetSkills" | "targetModules">;
 
 /**

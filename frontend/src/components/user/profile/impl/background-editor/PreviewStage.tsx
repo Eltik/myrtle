@@ -15,7 +15,6 @@ interface IPreviewStageProps {
     background: ProfileBackground | null;
     /** The viewport width the header is laid out at (see `previewViewport`). */
     viewportWidth: number;
-    /** The tallest the scaled header may draw. */
     maxHeight: number;
     onChange: (next: ProfileBackground) => void;
     /** Told the dead axis the author just tried to move along (no slack there at this zoom), so the toolbar can say why nothing moved. */

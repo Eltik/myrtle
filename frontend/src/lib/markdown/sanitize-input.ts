@@ -128,7 +128,7 @@ export function truncateCodePoints(s: string, max: number): string {
 function isAllowedLinkTarget(href: string): boolean {
     const trimmed = href.trim();
     if (!trimmed) return false;
-    // Relative URLs, anchors, query-only - always safe.
+    // Relative URLs, anchors, query-only: always safe.
     if (trimmed.startsWith("/") || trimmed.startsWith("#") || trimmed.startsWith("?") || trimmed.startsWith("./") || trimmed.startsWith("../")) return true;
     const schemeMatch = /^([a-z][a-z0-9+.-]*):/i.exec(trimmed);
     if (schemeMatch?.[1]) {

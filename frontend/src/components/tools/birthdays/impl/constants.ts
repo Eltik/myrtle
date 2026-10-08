@@ -19,5 +19,5 @@ export const CALENDAR_SCALES: { id: CalendarScale; labelKey: BirthdayMessageKey 
 /** The eight playable classes, in the game's canonical order. Labels come from `professionLabel`. */
 export const PROFESSIONS: OperatorProfession[] = ["PIONEER", "WARRIOR", "TANK", "SNIPER", "CASTER", "MEDIC", "SUPPORT", "SPECIAL"];
 
-/** Professions excluded from the calendar - summons and map hazards aren't operators. */
+/** Professions excluded from the calendar: summons and map hazards aren't operators. */
 export const NON_OPERATOR_PROFESSIONS = new Set<string>(["TOKEN", "TRAP"]);

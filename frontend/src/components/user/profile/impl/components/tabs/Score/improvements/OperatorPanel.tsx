@@ -269,9 +269,8 @@ function RarityBucket({ rarity, ops, defaultOpen, accent }: IBucketProps) {
 
             {open && (
                 <div className="border-border/30 border-t bg-background/40 p-2 sm:p-2.5">
-                    {/* 1 col by default, 2 at sm+. We don't push to 3 cols - each card
-                       holds avatar + name + meta + a wrapping tag row, and at 3 cols
-                       there isn't enough width to keep the meta line on one line. */}
+                    {/* No 3-col step: a card holds avatar, name, meta and a wrapping
+                       tag row, and at 3 cols the meta line no longer fits on one line. */}
                     <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
                         {visible.map((op) => (
                             <OperatorRow key={op.operator_id} op={op} color={color} accent={accent} />
@@ -328,7 +327,7 @@ const OperatorRow = memo(function OperatorRow({ op, color, accent }: { op: IOper
                 <OperatorAvatar charId={op.operator_id} name={op.name} />
             </span>
 
-            {/* Stack: name + total gain, meta, tags. `min-w-0` is required so the truncate/whitespace-nowrap below actually clips. */}
+            {/* `min-w-0` is required so the truncate/whitespace-nowrap below actually clips. */}
             <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <div className="flex min-w-0 items-baseline gap-1.5">
                     <span className={cn(TEXT_BODY, "min-w-0 flex-1 truncate font-medium")} title={op.name}>

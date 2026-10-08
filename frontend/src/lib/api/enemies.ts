@@ -147,8 +147,8 @@ export function enemyCommunityAverageQueryOptions() {
 
 /**
  * A single enemy's handbook record plus the race lookup needed to resolve its
- * displayed race. Served by `GET /enemies/{id}`; replaces loading the entire
- * enemy handbook to render one enemy.
+ * displayed race. Served by `GET /enemies/{id}`, so one enemy never loads the
+ * entire enemy handbook.
  */
 export interface IEnemyDetail {
     enemy: IEnemy;

@@ -137,7 +137,6 @@ export function ChangelogPage() {
                     </div>
                 </header>
 
-                {/* Surface tabs: curated notes vs the raw commit feed */}
                 <Tabs className="mb-7" onValueChange={(v) => setSurface(v as ChangelogSurface)} value={surface}>
                     <TabsList variant="underline">
                         <TabsTab value="notes">{t("page.tab.notes")}</TabsTab>

@@ -4,8 +4,8 @@ import type { ProfileTabId } from "#/types/generated/ProfileTabId";
 export type TabId = ProfileTabId;
 
 /**
- * Every `TabId`, in canonical order: the order the profile showed before layouts
- * existed with Showcase ahead of it, and the order the backend appends a tab
+ * Every `TabId`, in canonical order: the default profile's order, and the order
+ * the backend appends a tab
  * missing from a saved layout (Showcase excepted: it goes first).
  * Also validates a persisted value before it is trusted.
  */

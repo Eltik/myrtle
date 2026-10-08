@@ -98,11 +98,10 @@ export function useScrollSpy(ids: readonly string[]): string | null {
                 set(list[list.length - 1] ?? null);
                 return;
             }
-            // ABOVE THE FIRST SECTION THE FIRST SECTION IS CURRENT. The spy used
-            // to keep whichever section it last saw, so a reader who scrolled back
-            // to the head found the phone's section pill naming a shelf far down
-            // the page ("The Blessed" over the top of Act 0). A first cut made
-            // "nothing" current up there, and that FLAPPED: the 2026-09-25
+            // ABOVE THE FIRST SECTION THE FIRST SECTION IS CURRENT. Keeping the
+            // section last seen left a reader scrolled back to the head with the
+            // phone's section pill naming a shelf far down the page ("The Blessed"
+            // over the top of Act 0). Making "nothing" current up there FLAPPED: the 2026-09-25
             // recording shows the first chip expanding and collapsing every few
             // frames as the heading crossed the band's lower edge (40% down the
             // viewport, the `-60%` below), each flip re-laying out the whole row.

@@ -36,13 +36,11 @@ interface IDraftBase {
 export type ShowcaseDraftBlock = (IDraftBase & { type: "favourites"; kind: TierEntityKind; title: string; entities: IShowcaseEntity[] }) | (IDraftBase & { type: "grid"; slug: string }) | (IDraftBase & { type: "tier_list"; slug: string }) | (IDraftBase & { type: "plan"; id: string; operatorId?: string });
 
 let nextKey = 0;
-/** A fresh editor key. */
 export function draftKey(): string {
     nextKey += 1;
     return `showcase-${nextKey}`;
 }
 
-/** The view as the editor's working copy. */
 export function draftFromView(view: ShowcaseView): ShowcaseDraftBlock[] {
     return view.blocks.map(({ block, removed, entities }): ShowcaseDraftBlock => {
         const key = draftKey();
@@ -170,7 +168,6 @@ export function slugFromInput(input: string, type: "grid" | "tier_list"): string
     }
 }
 
-/** A new, empty favourites block of `kind`. */
 export function newFavourites(kind: TierEntityKind): ShowcaseDraftBlock {
     return { key: draftKey(), removed: false, type: "favourites", kind, title: "", entities: [] };
 }

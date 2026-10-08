@@ -314,9 +314,9 @@ interface IByOperatorViewProps {
 
 function ByOperatorView({ plans, maxTier, predicate, collapsedSections, onToggleSection, expandedPaths, onToggleExpand }: IByOperatorViewProps) {
     const t: ReqT = useT("tools");
-    // One request for every plan's own requirements. This was one full `/plans`
-    // request per active plan, each carrying every plan: 193 plans meant 193
-    // copies of the whole list, all refetched again after any edit or delete.
+    // One request for every plan's own requirements, not one full `/plans` request
+    // per active plan, each carrying every plan: 193 plans meant 193 copies of the
+    // whole list, all refetched after any edit or delete.
     const activeIds = React.useMemo(() => plans.map((p) => p.operator_id), [plans]);
     const { data, isLoading } = useQuery({ ...plansQueryOptions(activeIds, maxTier || undefined, true), enabled: activeIds.length > 0 });
 

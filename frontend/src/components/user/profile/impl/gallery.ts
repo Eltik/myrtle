@@ -75,7 +75,6 @@ export function filterForSource(tiles: readonly IGalleryTile[], filter: IGallery
     return { ...filter, categories, group };
 }
 
-/** Whether a tile passes the category and group parts of a filter. */
 function passes(tile: IGalleryTile, filter: IGalleryFilter): boolean {
     return (filter.categories.length === 0 || filter.categories.includes(tile.category)) && (filter.group === null || tile.groupId === filter.group);
 }

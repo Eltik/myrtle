@@ -18,7 +18,7 @@ export type ScoreDimension = {
      */
     completion: number;
     /**
-     * `weight_share x completion` - contributions sum to `operator_grade`.
+     * `weight_share x completion`; contributions sum to `operator_grade`.
      */
     contribution: number;
 };

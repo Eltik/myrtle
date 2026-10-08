@@ -2,8 +2,8 @@
  * The header art and the scrim that keeps the header's text on the card.
  *
  * The scrim is mixed from `--card`, the surface the text was designed on, so it is
- * white under light text colors and near-black under dark ones and the contrast the
- * header always had holds in both themes. Under every line of text it is at least
+ * white under light text colors and near-black under dark ones, and the header's text
+ * contrast holds in both themes. Under every line of text it is at least
  * 84% card: on a phone the text runs the full width below the avatar row, so the
  * scrim fills from the top down; from `sm` up the text sits on the left, so the art
  * is confined to the right and the scrim fills from the left.

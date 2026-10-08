@@ -31,7 +31,6 @@ export function nameShare(count: number, total: number): number | null {
     return total > 0 ? count / total : null;
 }
 
-/** What one name's popover shows: the count and share, the stories, the example lines. */
 function NameDetailBody({ name, detail, total, owner }: { name: string; detail: StorySpriteNameDetail | undefined; total: number; owner: string }): React.ReactElement {
     const t: SpritesT = useT("story");
     const f = useFormatters();

@@ -86,12 +86,12 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
     // Playing dynamic art is a global preference (localStorage) set from the
     // Appearance menu, not a per-page toggle. The L2D skeleton frames itself to
     // its own animation bounds (it's a different crop/composition than the static
-    // charart, so the two can't be reliably overlaid - the reference aklive2d
+    // charart, so the two can't be reliably overlaid; the reference aklive2d
     // renderer likewise shows no static). The static image is the load placeholder
     // and fades out once the animation is ready.
     const { dynamicArtwork } = useTheme();
     const dynSkel = dynamicFiles?.skel ?? null;
-    // Which dynamic skin has finished loading - so the static fades only once the
+    // Which dynamic skin has finished loading, so the static fades only once the
     // CURRENT skin's animation is ready (switching skins clears it automatically).
     const [readySkel, setReadySkel] = useState<string | null>(null);
     // The live renderer plays whenever a dynamic scene exists; skins without one
@@ -599,11 +599,11 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
                         style={dynamic ? undefined : { transform: `scale(${baseScale * transform.zoom}) translate(${transform.pan.x / (baseScale * transform.zoom)}px, ${transform.pan.y / (baseScale * transform.zoom)}px)` }}
                     >
                         {dynamic ? (
-                            // Fullscreen L2D with the game's authored (`_adjustes`) framing -
+                            // Fullscreen L2D with the game's authored (`_adjustes`) framing:
                             // the large, roughly-square viewport where the full-scene
                             // composition looks right (unlike the narrow card). It opens on the
                             // `contain` fit, the whole composition: the renderer's `height` default
-                            // under authored framing crops the sides of a wide dialog, which read as
+                            // under authored framing crops the sides of a wide dialog, which reads as
                             // "starts way too zoomed-in".
                             <SceneIllustPlayer files={dynamic.files} server={dynamic.server} framing="authored" fit={DEFAULT_SPINE_FIT} backdrop={imageSrc} onHandle={setHandle} />
                         ) : (

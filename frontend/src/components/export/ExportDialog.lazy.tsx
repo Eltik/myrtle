@@ -5,8 +5,7 @@ import type { ExportDialog, IExportDialogProps } from "./ExportDialog";
 const LazyExportDialog = lazy(() => import("./ExportDialog").then((m) => ({ default: m.ExportDialog }))) as unknown as typeof ExportDialog;
 
 /** Loads the dialog on its first open and keeps it mounted after, so the close animation and
- *  the dialog's own state across reopens behave as before while the exporters stay out of the
- *  list chunks. */
+ *  the dialog's own state survive reopens, while the exporters stay out of the list chunks. */
 export function DynamicExportDialog<T>(props: IExportDialogProps<T>) {
     const [opened, setOpened] = useState(props.open);
     if (props.open && !opened) setOpened(true);

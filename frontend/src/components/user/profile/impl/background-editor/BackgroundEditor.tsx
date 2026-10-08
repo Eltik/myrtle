@@ -20,7 +20,7 @@ import { useBackgroundDraft } from "./useBackgroundDraft";
 
 interface IBackgroundEditorProps {
     profile: IUserProfile;
-    /** The background saved now, `null` for none. */
+    /** The saved background, `null` for none. */
     saved: ProfileBackground | null;
     onClose: () => void;
 }

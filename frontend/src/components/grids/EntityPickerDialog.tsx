@@ -26,9 +26,9 @@ import { type IPickerTarget, initialPickerKind } from "./state";
 /** Tiles rendered at first and per "Show more": the enemy catalogue alone is ~1,540 entries. */
 const PAGE_SIZE = 180;
 /**
- * The tab the author used last, remembered for this page load only. It used
- * to live in localStorage, so a tab from an earlier session decided the first
- * open of a new one; a fresh page now opens on the grid's first allowed type.
+ * The tab the author used last, remembered for this page load only (not in
+ * localStorage), so a fresh page opens on the grid's first allowed type rather
+ * than on a tab from an earlier session.
  */
 let lastKind: TierEntityKind | null = null;
 /** Where the Operators tab finds operators the reader's server has not released yet. */

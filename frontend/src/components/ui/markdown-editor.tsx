@@ -119,7 +119,6 @@ export function MarkdownEditor({ id, name, value, onChange, placeholder, maxLeng
                     )}
                 </div>
 
-                {/* Mobile toolbar gets its own scrollable row, only shown when on Write tab */}
                 {!hideToolbar && isWrite && (
                     <div
                         className="scrollbar-thin -mb-px flex items-center gap-0.5 overflow-x-auto border-border/70 border-b px-1.5 py-1 sm:hidden"

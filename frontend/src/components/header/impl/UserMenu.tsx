@@ -58,10 +58,10 @@ export default function UserMenu({ user, loading, logout }: { user: ISession | n
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     {/* Below `lg` the mobile drawer already carries a GitHub
-                        link under "External", so showing it here as well put
-                        the same destination twice on one screen. The drawer
-                        trigger is `lg:hidden`, so at `lg` and up this menu is
-                        the only place the repo link lives and it stays. */}
+                        link under "External", so this one would put the same
+                        destination twice on one screen. The drawer trigger is
+                        `lg:hidden`, so at `lg` and up this menu is the only
+                        place the repo link lives. */}
                     {/* biome-ignore lint/a11y/useAnchorContent: anchor children are slotted in by DropdownMenuItem via the render prop */}
                     <DropdownMenuItem className="cursor-pointer max-lg:hidden" render={<a href={REPO_URL} target="_blank" rel="noreferrer" />}>
                         <GithubIcon className="h-4 w-4 text-muted-foreground" />

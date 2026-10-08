@@ -63,7 +63,6 @@ export function AdminTopBar({ crumbs, onOpenSidebar }: IAdminTopBarProps): React
                     ))}
                 </nav>
 
-                {/* Mobile breadcrumb: show only current page */}
                 <span className="min-w-0 flex-1 truncate font-medium text-[13.5px] text-foreground sm:hidden">{lastCrumb?.label ?? ""}</span>
 
                 <button

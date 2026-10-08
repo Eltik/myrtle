@@ -72,7 +72,7 @@ function makePath(d: string): SVGPathElement {
 
 /**
  * Reusable pool of PIXI applications. Each chibi needs a WebGL context, and creating/destroying one per
- * chibi exhausts the browser's hard context limit (~16) while scrubbing waves - the browser then
+ * chibi exhausts the browser's hard context limit (~16) while scrubbing waves; the browser then
  * force-loses the oldest contexts, which pixi doesn't restore, leaving blank WHITE canvases flashing
  * where chibis were. Keeping a bounded set of apps alive and reusing them caps the live context count
  * (peak ≈ the on-screen chibi limit) so contexts are never churned or lost.
@@ -128,11 +128,11 @@ function ChibiWalkerSprite({ walker, padY, tilt, onEnemyHover }: { walker: IChib
         if (!mount || !wrap || !hit) return;
 
         // Re-hide on every run: when a route position is reused across spawn groups the effect re-runs
-        // in place (no unmount), and a previous run may have left the wrap visible - which would show
+        // in place (no unmount), and a previous run may have left the wrap visible, which would show
         // the fresh, empty pixi canvas as a white square until the new spine finishes loading.
         wrap.style.visibility = "hidden";
-        // Disarm the hover target until the new spine loads and we know its footprint;
-        // also ensures a failed load never leaves an invisible, full-size box blocking neighbors.
+        // Disarm the hover target until the new spine loads and we know its footprint,
+        // so a failed load never leaves an invisible, full-size box blocking neighbors.
         hit.style.pointerEvents = "none";
 
         let cancelled = false;
@@ -225,7 +225,7 @@ function ChibiWalkerSprite({ walker, padY, tilt, onEnemyHover }: { walker: IChib
                 spine = s;
                 // Tighten the hover hitbox to the chibi's actual rendered footprint (it sits
                 // bottom-center of the sprite). The full SPRITE_W×SPRITE_H wrap is mostly empty
-                // space, so leaving it hoverable made adjacent enemies' boxes overlap badly.
+                // space, and hovering all of it overlaps adjacent enemies' boxes.
                 const footW = Math.min(SPRITE_W, Math.max(b.width * scale + HIT_PAD * 2, TILE_SIZE * 0.7));
                 const footH = Math.min(SPRITE_H, Math.max(b.height * scale + HIT_PAD, TILE_SIZE * 0.9));
                 hit.style.width = `${footW}px`;
@@ -236,7 +236,7 @@ function ChibiWalkerSprite({ walker, padY, tilt, onEnemyHover }: { walker: IChib
                 wrap.style.visibility = "visible";
             })
             .catch(() => {
-                /* missing/failed chibi - silently skip */
+                /* a missing or failed chibi is skipped */
             });
 
         return () => {
@@ -247,7 +247,7 @@ function ChibiWalkerSprite({ walker, padY, tilt, onEnemyHover }: { walker: IChib
                 spine.destroy({ children: true, texture: true, baseTexture: true });
             }
             path.remove();
-            // Return the app (and its WebGL context) to the pool instead of destroying it - see APP_POOL.
+            // Return the app (and its WebGL context) to the pool instead of destroying it (see APP_POOL).
             releaseChibiApp(app);
         };
     }, [walker, padY, tilt]);
@@ -255,7 +255,7 @@ function ChibiWalkerSprite({ walker, padY, tilt, onEnemyHover }: { walker: IChib
     return (
         <div ref={wrapRef} className="absolute top-0 left-0" style={{ width: SPRITE_W, height: SPRITE_H, visibility: "hidden", transformOrigin: "bottom center", transformStyle: "preserve-3d", willChange: "transform", pointerEvents: "none" }}>
             <div ref={mountRef} className="h-full w-full" style={{ pointerEvents: "none" }} />
-            {/* Hover target sized to the chibi's actual footprint (set on load) - kept small so adjacent enemies don't fight over one big rect. */}
+            {/* Hover target sized to the chibi's actual footprint (set on load), kept small so adjacent enemies don't fight over one big rect. */}
             <div
                 ref={hitRef}
                 className="absolute"

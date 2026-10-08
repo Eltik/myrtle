@@ -304,16 +304,13 @@ export function formatMessage(message: string, locale: string, values?: MessageV
     }
 }
 
-// ---------------------------------------------------------------- description
-
 /**
  * One argument of a message, as the translation editor needs to explain it.
  *
- * The editor used to show the declared placeholder names and nothing else, so
- * a translator meeting `{count, plural, one {player} other {players}}` was
- * handed the raw ICU and left to infer the grammar from it. The parser already
- * knows the answer; this is that knowledge exported rather than re-derived by
- * a regex in a component.
+ * With placeholder names alone, a translator meeting
+ * `{count, plural, one {player} other {players}}` gets the raw ICU and has to
+ * infer the grammar. The parser already knows the answer; this exports it
+ * rather than re-deriving it with a regex in a component.
  */
 export interface IMessageArgument {
     name: string;

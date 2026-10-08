@@ -24,7 +24,7 @@ export async function backendFetch(path: string, init: RequestInit & { bearerTok
         });
     } catch (err) {
         // `fetch` only throws when no response came back at all. Undici's
-        // message for that is "fetch failed", which reached login toasts
+        // message for that is "fetch failed", which would reach login toasts
         // verbatim; name the situation and keep the socket code for the report.
         // The raw error stays here in the server log (it names the internal
         // backend address), only the code travels to the browser.

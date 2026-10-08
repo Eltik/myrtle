@@ -12,16 +12,15 @@
  */
 export type UserCheckin = {
     /**
-     * One flag per sign-in **claimed** this month, in claim order: `1` if the
+     * One flag per sign-in claimed this month, in claim order: `1` if the
      * monthly-subscription Daily Supply came with that claim, `0` if not.
      *
-     * This is the game's raw `checkInHistory`, and it is **not** a per-day
-     * calendar: a missed day produces no entry at all. Reading `flags[d - 1]`
-     * as "day `d` was claimed" is wrong, and counting the `1`s counts monthly
-     * card days, not sign-ins. (Verified against `user_status.monthly_sub_end`
-     * over the whole user table: the final flag agrees with subscription state
-     * in 2 193 of 2 219 non-empty rows.) Use [`Self::claimed_this_month`] for
-     * the sign-in count.
+     * The game's raw `checkInHistory`, not a per-day calendar: a missed day
+     * adds no entry, so `flags[d - 1]` is not "day `d` was claimed", and the
+     * `1`s count monthly card days, not sign-ins. (Checked against
+     * `user_status.monthly_sub_end`: the final flag agrees with subscription
+     * state in 2 193 of 2 219 non-empty rows.) Use [`Self::claimed_this_month`]
+     * for the sign-in count.
      */
     monthly_card_flags: Array<number>;
     /**

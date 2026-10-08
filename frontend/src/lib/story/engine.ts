@@ -502,8 +502,8 @@ function build(script: StoryScript, options: EngineOptions, total: number): Engi
                     // `_ProcessSlotWithParam` reads the focus INT: absent or 0
                     // lights both, 1 lights slot 1 and dims slot 2, 2 is the
                     // reverse, -1 is EXACTLY 1 (`orr w8,focus,#2; cmp w8,#2` is
-                    // false for -1), and 3 dims everything. This reader used to
-                    // light both on -1 (3,045 lines) and on 3 (127).
+                    // false for -1), and 3 dims everything. Lighting both on -1
+                    // mislights 3,045 lines, and on 3 another 127.
                     const focus = Math.trunc(num(a.focus, 0));
                     const lit1 = focus !== 2 && focus !== 3;
                     const lit2 = focus === 0 || focus === 2;

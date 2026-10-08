@@ -13,7 +13,7 @@ export type SandboxCategory = {
      */
     score: number;
     /**
-     * The concrete progress counts that make up this category's score.
+     * The progress counts behind `score`.
      */
     parts: Array<SandboxPart>;
 };

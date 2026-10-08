@@ -4,9 +4,8 @@ import type { FacilityOutputDto } from "./FacilityOutputDto";
 import type { MoraleTimelineDto } from "./MoraleTimelineDto";
 
 /**
- * The rotation validated by a time-stepped morale simulation (game-true drain
- * and dorm-recovery rates): honest evidence the plan survives its own rhythm,
- * instead of an unchecked recommendation.
+ * The rotation run through a time-stepped morale simulation (game-true drain
+ * and dorm-recovery rates): does the plan survive its own rhythm.
  */
 export type SustainabilityDto = {
     /**

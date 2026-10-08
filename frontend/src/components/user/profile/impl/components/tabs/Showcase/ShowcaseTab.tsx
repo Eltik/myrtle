@@ -436,9 +436,9 @@ function TierListBlock({ slug, isOwner }: { slug: string; isOwner: boolean }) {
 
 /**
  * A tier list cut to its top tiers. At card width a real list runs 931-949 px
- * (6 tiers / 127 operators, 10 tiers / 61), which used to scroll inside a
- * 640 px card; a scroll box inside a scrolling page is the thing that read
- * wrong. Past the cap the board fades out over a link to the full list.
+ * (6 tiers / 127 operators, 10 tiers / 61), too tall for a 640 px card, and a
+ * scroll box inside a scrolling page reads wrong. Past the cap the board fades
+ * out over a link to the full list.
  */
 function TierListPeek({ slug, children }: { slug: string; children: ReactNode }) {
     const t: TypedT<typeof messages> = useT("user");

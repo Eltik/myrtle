@@ -14,17 +14,16 @@ export type MedalImprovements = {
     event_in_window_missing: Array<MedalGap>;
     /**
      * Medals gated on a collab / one-time operator the player can't reliably
-     * obtain. These are excluded from medal scoring; surfaced separately so the
-     * user understands why they're stuck rather than seeing them as earnable.
+     * obtain. Excluded from medal scoring; listed separately so they don't read
+     * as earnable.
      */
     operator_locked: Array<MedalGap>;
     /**
-     * Medals whose earnable window has passed and won't reopen: closed-window
-     * event medals plus finished one-time modes / retired towers. Not
-     * actionable, but shown so players can tell what's a dead end vs. still
-     * achievable. Closed-window event medals still contribute to the event pool
-     * with recency decay; one-time / retired medals stay excluded from scoring
-     * (see `build_medal_improvements`). Sorted most-recently-closed first.
+     * Medals whose window has passed for good: closed-window event medals plus
+     * finished one-time modes / retired towers. Shown so dead ends are visible.
+     * Closed-window event medals still count toward the event pool with recency
+     * decay; one-time / retired medals stay out of scoring (see
+     * `build_medal_improvements`). Most-recently-closed first.
      */
     unobtainable_missing: Array<MedalGap>;
 };

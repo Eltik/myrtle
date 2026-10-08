@@ -211,8 +211,8 @@ function moduleLadder(reached: number, slots: number): number {
  *
  * Unlike the backend grader, which only scores potential for operators that
  * can't use the general potential token (`potential_matters`), we count it for
- * *every* operator: a P1 operator genuinely isn't "complete", and gating it off
- * made a fully-built P6 alter read below 100% while a P5 standard op read 100%.
+ * *every* operator: a P1 operator isn't "complete", and gating it off would
+ * read a fully-built P6 alter below 100% while a P5 standard op read 100%.
  */
 function maxPotential(op: IOperatorBuildCeilings): number {
     return op.potentialRankCount;

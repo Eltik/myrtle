@@ -105,8 +105,8 @@ export function resolveModule<M extends IModuleRef>(op: { modules?: readonly M[]
 
     // Join on identity: the DPS payload names the `uniEquipId` that each module
     // number resolves to, resolved server-side by the same code the engine
-    // simulates with. Counting positions instead used to answer with whatever
-    // the operator endpoint happened to list at that offset - a different list,
+    // simulates with. Counting positions would answer with whatever the
+    // operator endpoint happens to list at that offset: a different list,
     // in a different order, from a different request.
     const slot = entry?.availableModules?.indexOf(moduleIndex) ?? -1;
     const id = slot >= 0 ? entry?.availableModuleIds?.[slot] : undefined;
@@ -115,8 +115,8 @@ export function resolveModule<M extends IModuleRef>(op: { modules?: readonly M[]
         if (byId) return byId;
     }
 
-    // Backend too old to send ids: fall back to the historical positional
-    // reading rather than showing nothing.
+    // Backend too old to send ids: fall back to the positional reading rather
+    // than showing nothing.
     const optional = (op?.modules ?? []).filter((m) => m.type !== "INITIAL" && m.typeName1?.toUpperCase() !== "ORIGINAL");
     return optional[moduleIndex - 1];
 }

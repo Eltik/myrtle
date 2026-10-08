@@ -13,12 +13,11 @@ type Session = Awaited<ReturnType<typeof getSessionFn>>;
  * it with the session their response carries and logout primes it with null, each before its
  * `router.invalidate()`, and a failed login, a settings save, a roster resync and an account
  * disconnect drop it with `forgetSession()`. A change this client did not make (a sign-out in another
- * tab, an expiry server side) shows within SESSION_MAX_AGE_MS, where it used to show on the
- * next navigation.
+ * tab, an expiry server side) shows within SESSION_MAX_AGE_MS.
  *
  * The bootstrap is keyed on the path locale, but the locale only changes through a full page
  * load (`useLocaleSwitch`), which resets this module anyway. A catalog republished mid-session
- * now shows on the next page load rather than the next navigation.
+ * shows on the next page load rather than the next navigation.
  *
  * SESSION_MAX_AGE_MS = 0 and MEMO_BOOTSTRAP = false restore a fetch on every run.
  */

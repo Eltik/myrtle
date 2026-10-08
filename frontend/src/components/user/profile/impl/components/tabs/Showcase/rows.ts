@@ -2,12 +2,11 @@ import type { ShowcaseDraftBlock } from "../../../showcase";
 
 // How the showcase lays its blocks out, in the owner's order. Blocks size to
 // their content instead of each spanning the page: a grid is as wide as its
-// board, so at 1440 px a 6 x 6 board (457 px) left ~2/3 of a full-width card
+// board, so at 1440 px a 6 x 6 board (457 px) would leave ~2/3 of a full-width card
 // empty. A grid ANCHORS a row and the small blocks after it stack in a lane
 // beside it; a tier list is wide by nature and takes a row to itself; any
 // other run of small blocks wraps in a row of its own.
 
-/** How a block sits in the flow. */
 export type ShowcaseBlockFit = "anchor" | "full" | "flow";
 
 /** A grid anchors; a tier list takes the full width; favourites, plans and removed blocks flow. */
