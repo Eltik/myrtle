@@ -4668,7 +4668,7 @@ fn assign_trading_rooms_by_yield(
         .map(|room| {
             let max_slots = max_stationed_at_level(building_data, &room.room_type, room.level);
             let global = *global_bonuses.get(&room.room_type).unwrap_or(&0.0);
-            enumerate_candidate_teams(
+            let candidates = enumerate_candidate_teams(
                 &room.room_type,
                 room.level,
                 None,
@@ -4688,22 +4688,24 @@ fn assign_trading_rooms_by_yield(
             )
             .into_iter()
             .filter(|c| c.score > 0.0)
-            .take(YIELD_PICK_WIDTH)
-            .map(|team| RoomAssignment {
-                slot_id: room.slot_id.clone(),
-                room_type: room.room_type.clone(),
-                level: room.level,
-                formula_type: None,
-                operators: team.ops,
-                total_efficiency: team.speed + global,
-                order_value: team.value,
-                order_gold: team.gold,
-                order_limit: team.order_limit,
-                locked: false,
-                ledger: Vec::new(),
-                fill: None,
-            })
-            .collect()
+            .collect::<Vec<_>>();
+            diverse_shortlist(candidates, YIELD_PICK_WIDTH)
+                .into_iter()
+                .map(|team| RoomAssignment {
+                    slot_id: room.slot_id.clone(),
+                    room_type: room.room_type.clone(),
+                    level: room.level,
+                    formula_type: None,
+                    operators: team.ops,
+                    total_efficiency: team.speed + global,
+                    order_value: team.value,
+                    order_gold: team.gold,
+                    order_limit: team.order_limit,
+                    locked: false,
+                    ledger: Vec::new(),
+                    fill: None,
+                })
+                .collect()
         })
         .collect();
 
@@ -4745,6 +4747,33 @@ fn assign_trading_rooms_by_yield(
             })
         })
         .collect()
+}
+
+/// A post's shortlist for the joint pick: its best `width` crews by search
+/// score, plus, for every operator in its best crew, the best crew WITHOUT
+/// that operator. The uncoupled score lets one value shape dominate a
+/// three-seat post - on a level-3 post every top-eight crew carried Proviso
+/// (+55% there) - so the joint pick never saw a Proviso-free level-3 crew
+/// and could not seat her at the level-2 post where she pays on every order.
+/// With the exclusion crews present, Shamare/Tequila/Bibeak at the level-3
+/// post beside Proviso/Quartz at the level-2 one is a candidate, and the
+/// coupled value seats her where the community does (user report
+/// 2026-10-08: that arrangement was worth 7% more than the plan's).
+fn diverse_shortlist(candidates: Vec<CandidateTeam>, width: usize) -> Vec<CandidateTeam> {
+    let mut shortlist: Vec<CandidateTeam> = candidates.iter().take(width).cloned().collect();
+    let anchors: Vec<String> = candidates
+        .first()
+        .map(|best| best.ops.clone())
+        .unwrap_or_default();
+    for op in &anchors {
+        if let Some(team) = candidates
+            .iter()
+            .find(|c| !c.ops.contains(op) && !shortlist.iter().any(|s| s.ops == c.ops))
+        {
+            shortlist.push(team.clone());
+        }
+    }
+    shortlist
 }
 
 /// Post combinations whose coupled value is within this fraction of the best

@@ -117,11 +117,12 @@ pub struct BaseFlows {
     pub gold_factories: usize,
     /// Gold bars/day the Trading Posts can sell.
     pub gold_sell_capacity: f64,
-    /// `gold_sell_capacity` weighted by each post's LMD-per-bar multiplier: value
-    /// that pays more per bar without drawing more gold (Tequila's "+500 LMD above 3
-    /// gold"). Proviso's bonus is bars from stock and sits in the capacity instead
-    /// (base expert, 2026-09-08).
-    pub gold_sell_lmd_weight: f64,
+    /// Each post's `(bars/day it can sell, LMD-per-bar multiplier)`. The multiplier
+    /// is value that pays more per bar without drawing more gold (Tequila's "+500 LMD
+    /// above 3 gold"); Proviso's bonus is bars from stock and sits in the capacity
+    /// instead (base expert, 2026-09-08). Per post, so a short supply sells where
+    /// it pays most.
+    pub posts: Vec<(f64, f64)>,
     /// EXP/day produced by `F_EXP` factories.
     pub exp: f64,
     /// Summed drone-recovery % from Power Plant operators. Plants' innate recovery
@@ -158,8 +159,10 @@ impl BaseFlows {
                     * trading_avg_gold_per_order(level)
                     * productivity_mult(gold_pct);
                 self.gold_sell_capacity += bars;
-                self.gold_sell_lmd_weight +=
-                    bars * productivity_mult(value_pct) / productivity_mult(gold_pct);
+                self.posts.push((
+                    bars,
+                    productivity_mult(value_pct) / productivity_mult(gold_pct),
+                ));
             }
             ("MANUFACTURE", Some("F_GOLD")) => {
                 self.gold_factories += 1;
@@ -175,19 +178,32 @@ impl BaseFlows {
         }
     }
 
-    /// Realized gold->trade LMD/day: the slower side caps the bars moved; each bar
-    /// pays the posts' capacity-weighted LMD per bar.
+    /// Realized gold->trade LMD/day: the slower side caps the bars moved. A short
+    /// supply sells at the best-paying posts first - a gold-short player delivers
+    /// the best orders and leaves the rest standing - so a post's unsellable extra
+    /// capacity (Proviso's bonus bars on a starved base) never dilutes a premium
+    /// post's take.
     pub fn realized_lmd(&self) -> f64 {
         if self.gold_sell_capacity <= 0.0 {
             return 0.0;
         }
-        let lmd_per_bar = GOLD_BAR_LMD * self.gold_sell_lmd_weight / self.gold_sell_capacity;
-        let supply = if self.gold_factories == 0 {
+        let mut supply = if self.gold_factories == 0 {
             f64::INFINITY
         } else {
             self.gold_produced
         };
-        supply.min(self.gold_sell_capacity) * lmd_per_bar
+        let mut posts = self.posts.clone();
+        posts.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+        let mut lmd = 0.0;
+        for (bars, per_bar) in posts {
+            let sold = bars.min(supply);
+            lmd += sold * per_bar * GOLD_BAR_LMD;
+            supply -= sold;
+            if supply <= 0.0 {
+                break;
+            }
+        }
+        lmd
     }
 
     pub fn total_value(&self) -> f64 {

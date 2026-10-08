@@ -2619,6 +2619,137 @@ fn a_robot_token_is_parked_dead_when_its_gate_and_an_exclusion_gate_both_pay() {
 }
 
 #[test]
+fn a_dominant_value_shape_does_not_hide_the_proviso_free_level_three_crew() {
+    // Each post shortlists its best crews by uncoupled score. On a three-seat
+    // post every top crew carried Proviso (+55% there), so the joint pick
+    // never saw a Proviso-free level-3 crew and could not seat her at the
+    // level-2 post where she pays on every order. The shortlist now also
+    // keeps, for each operator of a post's best crew, the best crew without
+    // them; the coupled value then seats Shamare/Tequila at the level-3 post
+    // and Proviso at the level-2 one, the way the community runs it - and
+    // the plan is worth at least what that player's own arrangement is
+    // (user report 2026-10-08: their setup out-earned the plan by 7%).
+    use backend::core::grade::base::assignment::{
+        compute_current_assignment, sustained_assignment_value,
+    };
+    use backend::core::grade::base::pools::{optimal_with_bundles, search_economy};
+    const SHAMARE: &str = "char_254_vodfox";
+    const TEQUILA: &str = "char_486_takila";
+    const PROVISO: &str = "char_4032_provs";
+    const QUARTZ: &str = "char_4063_quartz";
+    const BIBEAK: &str = "char_252_bibeak";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let roster: Vec<OperatorBaseProfile> = [
+        SHAMARE,
+        TEQUILA,
+        PROVISO,
+        QUARTZ,
+        "char_300_phenxi",
+        TEXAS,
+        LAPPLAND,
+        EXUSIAI,
+        "char_272_strong",
+        "char_4193_lemuen",
+        BIBEAK,
+        "char_196_sunbr",
+        "char_283_midn",
+        "char_237_gravel",
+        "char_141_nights",
+        "char_240_wyvern",
+        "char_235_jesica",
+        "char_290_vigna",
+        "char_193_frostl",
+        "char_1502_crosly",
+        "char_1032_excu2",
+        "char_123_fang",
+        "char_133_mm",
+        "char_181_flower",
+        "char_128_plosis",
+        "char_002_amiya",
+        "char_2027_wang",
+        "char_107_liskam",
+        "char_285_medic2",
+        "char_1011_lava2",
+        "char_159_peacok",
+        "char_215_mantic",
+    ]
+    .iter()
+    .filter(|id| gd.building.chars.contains_key(**id))
+    .map(|id| profile(gd, id))
+    .collect();
+    let factory = |slot: &str, formula: &str| {
+        let mut r = room(slot, "MANUFACTURE", 3);
+        r.current_formula = Some(formula.into());
+        r
+    };
+    let building = UserBuilding {
+        rooms: vec![
+            room("cc", "CONTROL", 5),
+            room("tp3", "TRADING", 3),
+            room("tp2", "TRADING", 2),
+            factory("mf0", "F_GOLD"),
+            factory("mf1", "F_GOLD"),
+            factory("mf2", "F_EXP"),
+            room("pp0", "POWER", 3),
+            room("d0", "DORMITORY", 5),
+            room("d1", "DORMITORY", 5),
+        ],
+    };
+    let economy = search_economy(&roster, &building, &gd.building, &registry);
+    let plan = optimal_with_bundles(
+        &roster,
+        &building,
+        &gd.building,
+        &registry,
+        &economy.registry,
+        &drains,
+        &economy.pins,
+    )
+    .optimal;
+    let crew = |slot: &str| -> Vec<String> {
+        plan.rooms
+            .iter()
+            .find(|r| r.slot_id == slot)
+            .map(|r| r.operators.clone())
+            .unwrap_or_default()
+    };
+    let (tp3, tp2) = (crew("tp3"), crew("tp2"));
+    assert!(
+        tp2.iter().any(|o| o == PROVISO),
+        "Proviso sells at the level-2 post: tp3 {tp3:?} tp2 {tp2:?}"
+    );
+    assert!(
+        tp3.iter().any(|o| o == SHAMARE) && tp3.iter().any(|o| o == TEQUILA),
+        "Shamare and Tequila sell at the level-3 post: tp3 {tp3:?}"
+    );
+    // The player's own arrangement on the plan's factories: the plan is worth
+    // at least as much.
+    let value = |b: &UserBuilding, a: &backend::core::grade::base::types::BaseAssignment| {
+        sustained_assignment_value(a, &roster, b, &gd.building, &registry, &drains)
+    };
+    let mut theirs = building.clone();
+    for r in &mut theirs.rooms {
+        r.current_operators = match r.slot_id.as_str() {
+            "tp3" => vec![SHAMARE.into(), TEQUILA.into(), BIBEAK.into()],
+            "tp2" => vec![PROVISO.into(), QUARTZ.into()],
+            slot => crew(slot)
+                .into_iter()
+                .filter(|o| ![SHAMARE, TEQUILA, BIBEAK, PROVISO, QUARTZ].contains(&o.as_str()))
+                .collect(),
+        };
+    }
+    let theirs_scored =
+        compute_current_assignment(&roster, &theirs, &gd.building, &registry, &drains, None);
+    let (ours, player) = (value(&building, &plan), value(&theirs, &theirs_scored));
+    assert!(
+        ours >= player * 0.999,
+        "the plan is worth at least the community arrangement: ours {ours:.0} vs theirs {player:.0}"
+    );
+}
+
+#[test]
 fn dead_conditional_cc_operator_is_dropped_after_assignment() {
     // The roster HAS three Kjerag traders, so SilverAsh's gate passes the roster
     // feasibility check and he is initially seated in the CC. But stronger non-Kjerag
