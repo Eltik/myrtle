@@ -13,10 +13,11 @@
 //! would make shorter.
 
 use std::collections::HashMap;
+use std::future::Future;
 use std::sync::Arc;
 use std::time::Duration;
 
-use serenity::all::{ChannelId, CreateEmbed, CreateMessage, Http, HttpError, Timestamp};
+use serenity::all::{ChannelId, CreateEmbed, CreateMessage, GuildId, Http, HttpError, Timestamp};
 use sqlx::SqlitePool;
 
 use crate::api::gamedata::{GameData, Operator};
@@ -335,8 +336,9 @@ fn unix_now() -> i64 {
 /// `last_posted_date`, never from the wake-up itself, so a restart can't double-post and a bot
 /// that was down at 11:00 UTC catches up on its first tick after.
 pub async fn run(http: Arc<Http>, pool: SqlitePool, gamedata: Arc<GameData>, frontend: String) {
+    let mut progress = Progress::new();
     loop {
-        tick(&http, &pool, &gamedata, &frontend).await;
+        tick(&http, &pool, &gamedata, &frontend, &mut progress).await;
         let now = unix_now();
         let until_reset = u64::try_from(next_reset_after(now) - now).unwrap_or(1);
         tokio::time::sleep(
@@ -346,13 +348,30 @@ pub async fn run(http: Arc<Http>, pool: SqlitePool, gamedata: Arc<GameData>, fro
     }
 }
 
-async fn tick(http: &Arc<Http>, pool: &SqlitePool, gamedata: &GameData, frontend: &str) {
+/// How many of the day's messages each guild has already been sent, for a post that failed
+/// partway: the retry resumes after them instead of repeating them.
+///
+/// Held in memory by the scheduler, so a restart between two messages of one post forgets it
+/// and the next tick sends the whole post again. That residual is accepted rather than adding a
+/// column for it. The chunks are rebuilt each tick from the operator list, so an index change
+/// in the middle of a day can also shift them.
+type Progress = HashMap<GuildId, (Date, usize)>;
+
+async fn tick(
+    http: &Arc<Http>,
+    pool: &SqlitePool,
+    gamedata: &GameData,
+    frontend: &str,
+    progress: &mut Progress,
+) {
     let now = unix_now();
     let today = utc7_date(now);
     // Between 07:00 and 11:00 UTC the UTC-7 date has turned but its reset hasn't happened.
     if now < reset_instant(today) {
         return;
     }
+    // A partial post from an earlier day is never resumed.
+    progress.retain(|_, (day, _)| *day == today);
     let date = today.iso();
     let due = match db::list_birthday_channels_due(pool, &date).await {
         Ok(d) => d,
@@ -385,57 +404,89 @@ async fn tick(http: &Arc<Http>, pool: &SqlitePool, gamedata: &GameData, frontend
     );
 
     for (guild, channel) in due {
-        let delivered = if celebrated.is_empty() {
-            true
+        let start = progress.get(&guild).map_or(0, |(_, sent)| *sent);
+        let (done, sent) = if celebrated.is_empty() {
+            (true, 0)
         } else {
-            post(http, channel, &celebrated, gamedata, frontend).await
+            post(http, channel, &celebrated, gamedata, frontend, start).await
         };
-        if delivered && let Err(e) = db::mark_birthday_posted(pool, guild, &date).await {
-            tracing::error!("birthdays: mark {guild} posted for {date}: {e}");
+        if !done {
+            progress.insert(guild, (today, sent));
+            continue;
+        }
+        match db::mark_birthday_posted(pool, guild, &date).await {
+            Ok(()) => {
+                progress.remove(&guild);
+            }
+            Err(e) => {
+                tracing::error!("birthdays: mark {guild} posted for {date}: {e}");
+                // Still due next tick: remember what went out so the retry doesn't repeat it.
+                progress.insert(guild, (today, sent));
+            }
         }
     }
 }
 
-/// Send the day's messages to `channel`. Returns whether the day counts as done for this guild:
-/// true on success, and also when the binding itself is broken (see [`SendFailure::Permanent`]),
-/// so it is not retried every ten minutes. Anything else returns false and the next tick tries
-/// again.
+/// Send the day's messages to `channel`, from message `start` on (the ones before it went out on
+/// an earlier tick). Returns whether the day counts as done for this guild, and how many of the
+/// day's messages have now been sent.
+///
+/// Done is true on success, and also when the binding itself is broken (see
+/// [`SendFailure::Permanent`]), so it is not retried every ten minutes. Anything else is not
+/// done, and the next tick resumes after the messages already sent.
 async fn post(
     http: &Arc<Http>,
     channel: ChannelId,
     operators: &[&Operator],
     gamedata: &GameData,
     frontend: &str,
-) -> bool {
+    start: usize,
+) -> (bool, usize) {
     let announce = crate::watcher::is_announcement_channel(http, channel).await;
-    for msg in birthday_messages(operators, gamedata, frontend) {
-        match channel.send_message(http.as_ref(), msg).await {
-            Ok(sent) => {
-                if announce && let Err(e) = sent.crosspost(http.as_ref()).await {
-                    tracing::warn!("birthdays: crosspost {} in {channel}: {e}", sent.id);
-                }
-            }
-            Err(e) => {
-                return match classify(&e) {
-                    SendFailure::Permanent => {
-                        tracing::warn!("birthdays: {channel} is unusable, skipping today: {e}");
-                        true
-                    }
-                    SendFailure::BadPayload => {
-                        tracing::error!(
-                            "birthdays: Discord rejected the message for {channel}: {e}"
-                        );
-                        false
-                    }
-                    SendFailure::Transient => {
-                        tracing::warn!("birthdays: send to {channel} failed, will retry: {e}");
-                        false
-                    }
-                };
-            }
+    let messages = birthday_messages(operators, gamedata, frontend);
+    let (sent, failure) = send_from(messages, start, |msg| async move {
+        let sent = channel.send_message(http.as_ref(), msg).await?;
+        if announce && let Err(e) = sent.crosspost(http.as_ref()).await {
+            tracing::warn!("birthdays: crosspost {} in {channel}: {e}", sent.id);
         }
+        Ok(())
+    })
+    .await;
+    let Some(e) = failure else {
+        return (true, sent);
+    };
+    let done = match classify(&e) {
+        SendFailure::Permanent => {
+            tracing::warn!("birthdays: {channel} is unusable, skipping today: {e}");
+            true
+        }
+        SendFailure::BadPayload => {
+            tracing::error!("birthdays: Discord rejected the message for {channel}: {e}");
+            false
+        }
+        SendFailure::Transient => {
+            tracing::warn!("birthdays: send to {channel} failed, will retry: {e}");
+            false
+        }
+    };
+    (done, sent)
+}
+
+/// Send `chunks[start..]` in order through `send`, stopping at the first failure. Returns how
+/// many chunks are sent in all (the `start` already sent included) and the failure, if any.
+async fn send_from<T, E, F, Fut>(chunks: Vec<T>, start: usize, mut send: F) -> (usize, Option<E>)
+where
+    F: FnMut(T) -> Fut,
+    Fut: Future<Output = Result<(), E>>,
+{
+    let mut delivered = start.min(chunks.len());
+    for chunk in chunks.into_iter().skip(delivered) {
+        if let Err(e) = send(chunk).await {
+            return (delivered, Some(e));
+        }
+        delivered += 1;
     }
-    true
+    (delivered, None)
 }
 
 /// The operators celebrating on `date`, or `None` when the operator list itself is empty:
@@ -506,6 +557,40 @@ mod tests {
             celebrations(&ops, date.add_days(1)).map(|c| c.len()),
             Some(0)
         );
+    }
+
+    #[tokio::test]
+    async fn a_retry_resumes_after_the_chunks_already_sent() {
+        use std::cell::RefCell;
+
+        let sends = RefCell::new(Vec::new());
+        // Chunks 0..5; the first attempt fails at chunk 2.
+        let attempt = |fail_at: Option<usize>| {
+            let sends = &sends;
+            move |chunk: usize| async move {
+                sends.borrow_mut().push(chunk);
+                if Some(chunk) == fail_at {
+                    Err("transient")
+                } else {
+                    Ok(())
+                }
+            }
+        };
+        let (sent, failure) = send_from((0..5).collect(), 0, attempt(Some(2))).await;
+        assert_eq!((sent, failure), (2, Some("transient")));
+        assert_eq!(*sends.borrow(), vec![0, 1, 2]);
+
+        // The retry sends only 2..5.
+        sends.borrow_mut().clear();
+        let (sent, failure) = send_from((0..5).collect(), sent, attempt(None)).await;
+        assert_eq!((sent, failure), (5, None));
+        assert_eq!(*sends.borrow(), vec![2, 3, 4]);
+
+        // Everything already sent: nothing goes out again.
+        sends.borrow_mut().clear();
+        let (sent, failure) = send_from((0..5).collect(), 5, attempt(None)).await;
+        assert_eq!((sent, failure), (5, None::<&str>));
+        assert!(sends.borrow().is_empty());
     }
 
     #[test]

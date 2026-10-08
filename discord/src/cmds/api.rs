@@ -99,7 +99,7 @@ pub async fn status(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
-/// Shows the public website statistics.
+/// Shows the platform statistics from the local backend.
 #[poise::command(slash_command, guild_only)]
 pub async fn stats(ctx: Context<'_>) -> Result<(), Error> {
     ctx.defer().await?;

@@ -107,7 +107,7 @@ pub async fn assets(_ctx: Context<'_>) -> Result<(), Error> {
 
 /// Configure which channel receives asset announcements for this guild.
 ///
-/// Subcommands: `set`, `clear`, `show`. Server-owner only, via the `/assets` check.
+/// Subcommands: `set`, `clear`, `show`. Bot owners only, via the `/assets` check.
 #[poise::command(
     slash_command,
     guild_only,

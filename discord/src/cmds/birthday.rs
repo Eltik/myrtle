@@ -16,7 +16,7 @@ use crate::birthday::{
     headline, next_reset_after, reset_instant,
 };
 use crate::checks::require_guild;
-use crate::cmds::begin_lookup;
+use crate::cmds::{begin_lookup, list_unavailable};
 use crate::db;
 use crate::types::{Context, Error};
 use crate::ui::{DESCRIPTION_MAX, EMBEDS_PER_MESSAGE};
@@ -129,7 +129,10 @@ pub async fn birthday_channel_show(ctx: Context<'_>) -> Result<(), Error> {
 #[poise::command(slash_command, rename = "today")]
 pub async fn birthday_today(ctx: Context<'_>) -> Result<(), Error> {
     let gamedata = begin_lookup(ctx).await?;
-    let operators = gamedata.operators().await?;
+    let operators = gamedata
+        .operators()
+        .await
+        .map_err(|e| list_unavailable("birthday", "operator", &e))?;
     let roster = birthday_roster(&operators);
     let today = game_day(Timestamp::now().unix_timestamp());
     let frontend = &ctx.data().config.endpoints.public_frontend;
@@ -149,7 +152,10 @@ pub async fn birthday_upcoming(
 ) -> Result<(), Error> {
     let days = days.unwrap_or(7).clamp(1, 31);
     let gamedata = begin_lookup(ctx).await?;
-    let operators = gamedata.operators().await?;
+    let operators = gamedata
+        .operators()
+        .await
+        .map_err(|e| list_unavailable("birthday", "operator", &e))?;
     let roster = birthday_roster(&operators);
     let today = game_day(Timestamp::now().unix_timestamp());
     ctx.send(CreateReply::default().embed(upcoming_embed(&roster, today, days)))

@@ -36,6 +36,16 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
     ]
 }
 
+/// The error a command returns when a game-data list won't load.
+///
+/// The reason goes to the log (`<context>: <list> list: <reason>`); the user gets a plain
+/// sentence with no URL or error chain, because [`crate::hooks::on_error`] shows a command's
+/// error text as it is.
+pub fn list_unavailable(context: &str, list: &str, e: &Error) -> Error {
+    tracing::warn!("{context}: {list} list: {e}");
+    format!("Couldn't load the {list} list right now. Try again in a minute.").into()
+}
+
 /// Shared start of every game-data lookup (`/collection`, `/birthday today` and `upcoming`).
 ///
 /// Checks the backend is configured and, when a list still has to be fetched for the first

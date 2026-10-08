@@ -14,11 +14,11 @@ use poise::serenity_prelude as serenity;
 use crate::api::gamedata::{
     Enemy, GameData, Operator, Stage, StageDetail, StoryGroup, encode_path_segment,
 };
-use crate::cmds::begin_lookup;
 use crate::cmds::operator::{
     self,
     state::{Page, ViewState},
 };
+use crate::cmds::{begin_lookup, list_unavailable};
 use crate::gametext::strip_rich_text;
 use crate::search::search;
 use crate::types::{Context, Error};
@@ -100,11 +100,10 @@ pub async fn collection_operator(
     #[description = "Page to open on (default Overview)"] page: Option<PageChoice>,
 ) -> Result<(), Error> {
     let gamedata = begin_lookup(ctx).await?;
-    // Log the reason; the reply says only that it failed, never a URL or an error chain.
-    let operators = gamedata.operators().await.map_err(|e| {
-        tracing::warn!("collection: operator list: {e}");
-        "Couldn't load the operator list right now. Try again in a minute."
-    })?;
+    let operators = gamedata
+        .operators()
+        .await
+        .map_err(|e| list_unavailable("collection", "operator", &e))?;
     let op = resolve(
         &operators,
         &query,
@@ -159,7 +158,10 @@ pub async fn collection_enemy(
     query: String,
 ) -> Result<(), Error> {
     let gamedata = begin_lookup(ctx).await?;
-    let enemies = gamedata.enemies().await?;
+    let enemies = gamedata
+        .enemies()
+        .await
+        .map_err(|e| list_unavailable("collection", "enemy", &e))?;
     let enemy = resolve(
         &enemies,
         &query,
@@ -182,7 +184,10 @@ pub async fn collection_stage(
     query: String,
 ) -> Result<(), Error> {
     let gamedata = begin_lookup(ctx).await?;
-    let stages = gamedata.stages().await?;
+    let stages = gamedata
+        .stages()
+        .await
+        .map_err(|e| list_unavailable("collection", "stage", &e))?;
     let stage = resolve(
         &stages,
         &query,
@@ -215,7 +220,10 @@ pub async fn collection_story(
     query: String,
 ) -> Result<(), Error> {
     let gamedata = begin_lookup(ctx).await?;
-    let stories = gamedata.stories().await?;
+    let stories = gamedata
+        .stories()
+        .await
+        .map_err(|e| list_unavailable("collection", "story", &e))?;
     let group = resolve(&stories, &query, |g| g.id.as_str(), story_names, |_| 0)
         .ok_or_else(|| no_match("story", &query))?;
     let embed = story_embed(group, &gamedata, ctx.data().frontend());
