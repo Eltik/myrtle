@@ -12,7 +12,10 @@ use poise::CreateReply;
 use poise::serenity_prelude as serenity;
 
 use crate::api::gamedata::{Enemy, GameData, Operator, Stage, StageDetail, StoryGroup};
-use crate::cmds::operator_card;
+use crate::cmds::operator::{
+    self,
+    state::{Page, ViewState},
+};
 use crate::gametext::strip_rich_text;
 use crate::search::search;
 use crate::types::{Context, Error};
@@ -51,20 +54,63 @@ pub async fn collection(_ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
-/// Show an operator's profile.
+/// The pages `/collection operator` can open on. Pages an operator doesn't have fall back to
+/// the overview.
+#[derive(Debug, Clone, Copy, poise::ChoiceParameter)]
+pub enum PageChoice {
+    Overview,
+    Skills,
+    Summons,
+    Modules,
+    #[name = "Base skills"]
+    Base,
+    #[name = "Upgrade costs"]
+    Costs,
+    Outfits,
+    Lore,
+    #[name = "Voice lines"]
+    Voice,
+    #[name = "Paradox Simulation"]
+    Paradox,
+}
+
+impl PageChoice {
+    const fn page(self) -> Page {
+        match self {
+            Self::Overview => Page::Overview,
+            Self::Skills => Page::Skills,
+            Self::Summons => Page::Summons,
+            Self::Modules => Page::Modules,
+            Self::Base => Page::Base,
+            Self::Costs => Page::Costs,
+            Self::Outfits => Page::Outfits,
+            Self::Lore => Page::Lore,
+            Self::Voice => Page::Voice,
+            Self::Paradox => Page::Paradox,
+        }
+    }
+}
+
+/// Show an operator page by page: stats, skills, modules, costs, outfits, lore and more.
 ///
-/// `compact` (default on) is the one-embed card. Turned off, the reply carries everything the
-/// full record has: attributes, trait, talents, skills, modules, base skills, costs, profile.
+/// Pages: Overview, Skills, Summons, Modules, Base skills, Upgrade costs, Outfits, Lore, Voice
+/// lines and Paradox Simulation, each listed only when the operator has it.
+/// Switch pages and levels with the selects under the reply. Only the person who ran the
+/// command moves the public reply; anyone else gets their own private copy.
 #[poise::command(slash_command, rename = "operator")]
 pub async fn collection_operator(
     ctx: Context<'_>,
     #[description = "Operator name"]
     #[autocomplete = "autocomplete_operator"]
     query: String,
-    #[description = "Show the short card (default on)"] compact: Option<bool>,
+    #[description = "Page to open on (default Overview)"] page: Option<PageChoice>,
 ) -> Result<(), Error> {
     let gamedata = begin(ctx).await?;
-    let operators = gamedata.operators().await?;
+    // Log the reason; the reply says only that it failed, never a URL or an error chain.
+    let operators = gamedata.operators().await.map_err(|e| {
+        tracing::warn!("collection: operator list: {e}");
+        "Couldn't load the operator list right now. Try again in a minute."
+    })?;
     let op = resolve(
         &operators,
         &query,
@@ -73,44 +119,39 @@ pub async fn collection_operator(
         operator_priority,
     )
     .ok_or_else(|| no_match("operator", &query))?;
-    let embed = operator_embed(op, &gamedata, frontend(ctx));
-    if compact.unwrap_or(true) {
-        ctx.send(CreateReply::default().embed(embed)).await?;
-        return Ok(());
-    }
-
-    // Two more requests (the record, and item names for costs): defer past the 3 s window.
+    // The record and the page's extras are more requests: defer past the 3 s window.
     ctx.defer().await?;
-    let (detail, items) = tokio::join!(gamedata.operator_detail(&op.id), gamedata.materials());
-    let detail = match detail {
-        Ok(d) => d,
+    let page = page.map_or(Page::Overview, PageChoice::page);
+    let state = ViewState::new(ctx.author().id.get(), &op.id, page);
+    // After the public defer every failure is answered here, in public and in plain words, so
+    // nothing reaches `hooks::on_error` with the deferred response still open.
+    let sent = match operator::render(
+        &gamedata,
+        &ctx.data().operator_images,
+        &ctx.data().http_client,
+        frontend(ctx),
+        op,
+        &state,
+    )
+    .await
+    {
+        Ok(view) => ctx
+            .send(view.into_reply())
+            .await
+            .map_err(|e| tracing::error!("collection: sending operator {}: {e}", op.id)),
         Err(e) => {
-            tracing::warn!("collection: operator detail {}: {e}", op.id);
-            ctx.send(
-                CreateReply::default()
-                    .content("The full record is unavailable right now; here is the short card.")
-                    .embed(embed),
-            )
-            .await?;
-            return Ok(());
+            tracing::warn!("collection: rendering operator {}: {e}", op.id);
+            Err(())
         }
     };
-    // Without names, costs fall back to item ids rather than failing the card.
-    let items = items.unwrap_or_default();
-    let card = operator_card::full_card(embed, &detail, &items, rarity_colour(op.rarity));
-    if !card.unresolved.is_empty() {
-        tracing::debug!(
-            "collection: {} has unresolved templates: {:?}",
-            op.id,
-            card.unresolved
+    if sent.is_err() {
+        let notice = format!(
+            "Couldn't load {} right now. Try again in a minute.",
+            op.name
         );
-    }
-    for embeds in card.messages {
-        let mut reply = CreateReply::default();
-        for embed in embeds {
-            reply = reply.embed(embed);
+        if let Err(e) = ctx.send(CreateReply::default().content(notice)).await {
+            tracing::error!("collection: operator {} failure notice: {e}", op.id);
         }
-        ctx.send(reply).await?;
     }
     Ok(())
 }
@@ -293,76 +334,6 @@ async fn autocomplete_operator(
             )
         },
     )
-}
-
-fn operator_embed(op: &Operator, gamedata: &GameData, frontend: &str) -> CreateEmbed {
-    let title = match op.appellation() {
-        Some(a) => format!("{} ({a})", op.name),
-        None => op.name.clone(),
-    };
-    let position = title_case(&op.position);
-    let mut parts: Vec<&str> = [op.class(), op.branch()].into_iter().flatten().collect();
-    if !position.is_empty() {
-        parts.push(&position);
-    }
-    let summary = format!(
-        "{}  {}",
-        "★".repeat(usize::from(op.rarity)),
-        parts.join(" · ")
-    );
-    let mut embed = CreateEmbed::new()
-        .title(ellipsize(&title, TITLE_MAX))
-        .description(summary)
-        .colour(rarity_colour(op.rarity))
-        .thumbnail(gamedata.api_url(&format!("/avatar/{}", op.id)))
-        .image(gamedata.api_url(&format!("/charart/{}", op.id)));
-    if !frontend.is_empty() {
-        embed = embed.url(format!("{frontend}/operators/{}", op.id));
-    }
-
-    let factions = op.factions();
-    if !factions.is_empty() {
-        embed = embed.field("Faction", field(&factions.join(" · ")), true);
-    }
-    let birthday = op.date_of_birth.trim();
-    if !birthday.is_empty() {
-        embed = embed.field("Birthday", field(birthday), true);
-    }
-    let tags = names_list(&op.tag_list);
-    if !tags.is_empty() {
-        embed = embed.field("Tags", field(&tags.join(", ")), true);
-    }
-    let artists = names_list(&op.artists);
-    if !artists.is_empty() {
-        let label = if artists.len() == 1 {
-            "Artist"
-        } else {
-            "Artists"
-        };
-        embed = embed.field(label, field(&artists.join(", ")), true);
-    }
-    let voices = names_list(&op.voice_actors);
-    if !voices.is_empty() {
-        embed = embed.field("Voice actors", field(&voices.join(", ")), false);
-    }
-    let footer = if op.is_not_obtainable {
-        format!("{} · not obtainable", op.id)
-    } else {
-        op.id.clone()
-    };
-    embed.footer(CreateEmbedFooter::new(footer))
-}
-
-/// The in-game rarity colours, roughly: grey, green, blue, purple, gold, orange.
-const fn rarity_colour(rarity: u8) -> u32 {
-    match rarity {
-        6 => 0x00FF_7F27,
-        5 => 0x00FF_C90E,
-        4 => 0x00D8_B2FF,
-        3 => 0x0000_B2FF,
-        2 => 0x00DC_E537,
-        _ => 0x00A0_A0A0,
-    }
 }
 
 // ---------------------------------------------------------------------------
@@ -766,24 +737,6 @@ fn field(value: &str) -> String {
     ellipsize(value, FIELD_MAX)
 }
 
-/// The non-blank entries of a profile list, trimmed: the data has stray spaces ("Ruan ").
-fn names_list(items: &[String]) -> Vec<&str> {
-    items
-        .iter()
-        .map(|s| s.trim())
-        .filter(|s| !s.is_empty())
-        .collect()
-}
-
-/// "MELEE" -> "Melee".
-fn title_case(s: &str) -> String {
-    let lower = s.to_lowercase();
-    let mut chars = lower.chars();
-    chars.next().map_or_else(String::new, |first| {
-        first.to_uppercase().chain(chars).collect()
-    })
-}
-
 /// A stat as the handbook prints it: whole numbers without a decimal point.
 fn number(n: f64) -> String {
     if n.fract() == 0.0 && n.abs() < 1e15 {
@@ -857,7 +810,6 @@ mod tests {
         assert_eq!(number(550.0), "550");
         assert_eq!(number(45.0), "45");
         assert_eq!(number(2.5), "2.5");
-        assert_eq!(title_case("RANGED"), "Ranged");
         assert_eq!(apply_way_label("ALL"), "Melee and ranged");
         assert_eq!(field(""), "-");
     }

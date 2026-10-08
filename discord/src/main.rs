@@ -185,6 +185,7 @@ async fn main() {
                     antispam_policies,
                     audit_log_settings: Arc::new(RwLock::new(audit_log_settings)),
                     gamedata,
+                    operator_images: cmds::operator::images::ImageCheck::default(),
                 })
             })
         })

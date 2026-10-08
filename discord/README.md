@@ -142,12 +142,31 @@ Elevated commands pass for bot owners, for the guild's configured mod role, or f
 
 | Command | Permission | Description |
 |---------|------------|-------------|
-| `/collection operator <query> [compact]` | - | Rarity, class and branch, faction, tags, birthday, artists, voice actors, art. `compact:false` adds attributes, trait, talents, potentials, skills at max level, modules, base skills, costs, and profile, over as many embeds as it takes |
+| `/collection operator <query> [page]` | - | One operator, a page at a time, switched by a select under the reply. A second select picks within the page; a third appears only when a page runs past one message. Pages are listed only when the operator has them; `page` opens on one (default Overview). See [Operator pages](#operator-pages) |
 | `/collection enemy <query>` | - | Class, attack and damage type, level-0 HP/ATK/DEF/RES, abilities |
 | `/collection stage <query>` | - | Code and name, zone, sanity, danger level, the Challenge Mode / Extreme / Adverse condition, enemies, drops. Matches codes like `1-7` or `CE-6` |
 | `/collection story <query>` | - | Story group, category, story and word counts, banner art, link to the reader |
 | `/birthday today` | - | Today's birthday operators (the game day turns at 04:00 UTC-7) |
 | `/birthday upcoming [days]` | - | Birthdays over the next 1 to 31 days, 7 by default |
+
+### Operator pages
+
+| Page | Shows | Its select |
+|------|-------|------------|
+| Overview | Rarity, class, branch, position, trait, stats with the max trust bonus, attack range, talents as they stand at that promotion, potentials, faction, tags, art | Elite 0 to 2 |
+| Skills | Every skill: SP recovery and trigger, initial SP, cost, duration, description, and the skill's own range when it has one | Level 1 to 7, Mastery 1 to 3 |
+| Summons | The skill that brings the summon, the summon's trait, stats, range and talents, and its skill | Each summon, with each skill it comes with |
+| Modules | Per module: unlock, stat bonus, trait change, talent upgrade, range, summon stat bonus | Stage 1 to 3 |
+| Base skills | Name, room, unlock, description | - |
+| Upgrade costs | Promotions (LMD included, plus levelling LMD and EXP), skill levels, masteries, module stages | Cost type |
+| Outfits | Group and name, description, artists, designers, how it is obtained, release date, full art | Each outfit; past 25, "Earlier" and "More" options page through them |
+| Lore | Recruitment blurb, then each archive file with its unlock condition | Each file |
+| Voice lines | Voice actors, then the lines of one group, as the site groups them | Greetings, Conversations, Promotions, Battle, Dorm, Special, Other |
+| Paradox Simulation | Stage name, unlock, description, enemies by class with spawn counts, reward, map preview | - |
+
+Every select carries the whole view in its `custom_id` (`op:<owner>:<operator>:<page>:<choice>:<part>:<control>`), so a control never expires and nothing is stored. The controls belong to whoever ran the command: anyone else who uses one gets the view they picked as a private copy whose controls are theirs, and the public reply stays as it was. A failure is always answered privately with the reason.
+
+Embeds rather than Components V2: Serenity 0.12.5, the version in `Cargo.lock`, has no Components V2 builders.
 
 ## Configuration
 
@@ -196,9 +215,9 @@ When the bot runs in Docker against a pipeline on the host, point `ws_url` at `w
 | Operators | `GET {public_backend}/api/operators/index` |
 | Enemies | `GET {public_backend}/api/static/enemies` |
 | Stages | `GET {public_backend}/api/static/stage-index`, plus `/api/stages/{id}/detail` per lookup |
-| Full operator card | `GET {public_backend}/api/operators/{id}` per lookup, plus `/api/static/materials` (cached) for item names |
+| Operator pages | `GET {public_backend}/api/operators/{id}` per view, plus `/api/static/ranges` and `/api/static/handbook` (Paradox Simulations; both cached, loaded at startup). Per page: `/api/static/materials` (cached; costs and rewards), `/api/static/skills` (cached; summon skills), `/api/skins/{id}` (outfits), `/api/voices/{id}` (voice lines, and once per operator to learn whether it has any), `/api/stages/{id}/detail` (Paradox) |
 | Stories | `GET {public_backend}/api/story/index` |
-| Images | `/api/avatar/{id}`, `/api/charart/{id}`, `/api/enemy-icon/{id}`, `/api/assets/{path}` |
+| Images | `/api/avatar/{id}`, `/api/charart/{id}`, `/api/skill-icon/{id}`, `/api/module-icon/{id}`, `/api/enemy-icon/{id}`, `/api/assets/{path}` |
 
 ## Database
 
@@ -235,14 +254,14 @@ src/
 │   ├── auditlog.rs   /auditlog configuration
 │   ├── birthday.rs   /birthday channel, today, upcoming
 │   ├── collection.rs /collection operator, enemy, stage, story
-│   ├── operator_card.rs  The full operator card (`compact:false`)
+│   ├── operator/     /collection operator: page builders, layout and limits, state in custom_id
 │   └── warn.rs       /warn add, list, remove, clear, policy
 ├── api/              Backend HTTP clients (status, stats, cached game data)
 ├── birthday.rs       Game-day dates, birthday parsing, the daily announcer
 ├── search.rs         Accent- and punctuation-insensitive name matching
 ├── gametext.rs       Game markup stripping and `{key:0%}` template interpolation
 ├── checks.rs         elevated(): owner OR mod role OR native permission
-├── handler.rs        Gateway event handling
+├── handler.rs        Gateway event handling, including the operator view's selects
 ├── hooks.rs          Pre- and post-command hooks
 ├── audit.rs          Audit-event mirroring
 ├── config.rs         config.json parsing

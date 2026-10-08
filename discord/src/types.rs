@@ -43,6 +43,8 @@ pub struct Data {
     /// Operator, enemy, stage and story lists from the public backend, cached for
     /// `/collection` and `/birthday`. Shared with the birthday announcer task.
     pub gamedata: Arc<GameData>,
+    /// Which image links the backend 404s, remembered per URL for the operator view.
+    pub operator_images: crate::cmds::operator::images::ImageCheck,
 }
 
 pub type Error = Box<dyn std::error::Error + Send + Sync>;

@@ -19,7 +19,9 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Deserializer};
 use tokio::sync::{Mutex, RwLock};
 
-use crate::api::operator_detail::OperatorDetail;
+use crate::api::operator_detail::{
+    OperatorDetail, ParadoxEntry, ParadoxStage, Range, SkinData, TableSkill, VoiceData,
+};
 use crate::types::Error;
 
 /// How long a fetched list counts as fresh. Game data changes on patch days, not by the minute.
@@ -522,9 +524,21 @@ pub struct GameData {
     enemies: Arc<Slot<Vec<Enemy>>>,
     stages: Arc<Slot<Vec<Stage>>>,
     stories: Arc<Slot<Vec<StoryGroup>>>,
-    /// Item id to display name, from `GET /api/static/materials`. Only the full operator card
+    /// Item id to display name, from `GET /api/static/materials`. Only the operator Costs page
     /// reads it (promotion and skill costs carry ids, not names).
     materials: Arc<Slot<HashMap<String, String>>>,
+    /// Attack ranges by id, from `GET /api/static/ranges`: every Overview draws one.
+    ranges: Arc<Slot<HashMap<String, Range>>>,
+    /// Paradox Simulations by operator id, from `handbookStageData` in
+    /// `GET /api/static/handbook`. Every operator view reads it to know whether to offer the page.
+    paradox: Arc<Slot<HashMap<String, ParadoxEntry>>>,
+    /// The whole skill table, from `GET /api/static/skills`. Only the Summons page reads it:
+    /// a summon's skills arrive as bare ids.
+    skill_table: Arc<Slot<HashMap<String, TableSkill>>>,
+    /// Whether each operator has voice lines, learned from its first `/api/voices/{id}` fetch.
+    /// 25 of 441 have none (Amiya's other forms, the reserve and collab placeholders), and the
+    /// Voice page is offered only where there is something to show.
+    voice_presence: RwLock<HashMap<String, (Instant, bool)>>,
 }
 
 impl GameData {
@@ -538,6 +552,10 @@ impl GameData {
             stages: Arc::default(),
             stories: Arc::default(),
             materials: Arc::default(),
+            ranges: Arc::default(),
+            paradox: Arc::default(),
+            skill_table: Arc::default(),
+            voice_presence: RwLock::default(),
         }
     }
 
@@ -604,9 +622,71 @@ impl GameData {
             .await
     }
 
+    /// Attack ranges by id.
+    pub async fn ranges(&self) -> Result<Arc<HashMap<String, Range>>, Error> {
+        let (client, url) = self.request(RANGES_PATH)?;
+        self.ranges
+            .get("range", move || fetch_json(client, url))
+            .await
+    }
+
+    /// Paradox Simulations by operator id.
+    pub async fn paradox(&self) -> Result<Arc<HashMap<String, ParadoxEntry>>, Error> {
+        let (client, url) = self.request(HANDBOOK_PATH)?;
+        self.paradox
+            .get("Paradox Simulation", move || load_paradox(client, url))
+            .await
+    }
+
+    /// Every skill by id. Not part of [`GameData::warm`]: only the Summons page needs it.
+    pub async fn skill_table(&self) -> Result<Arc<HashMap<String, TableSkill>>, Error> {
+        let (client, url) = self.request(SKILLS_PATH)?;
+        self.skill_table
+            .get("skill", move || fetch_json(client, url))
+            .await
+    }
+
     /// One operator's full record, fetched on demand and not cached.
     pub async fn operator_detail(&self, id: &str) -> Result<OperatorDetail, Error> {
         let url = format!("{}/api/operators/{}", self.base()?, encode_path_segment(id));
+        fetch_json(self.client.clone(), url).await
+    }
+
+    /// One operator's outfits, fetched on demand and not cached.
+    pub async fn skins(&self, id: &str) -> Result<SkinData, Error> {
+        let url = format!("{}/api/skins/{}", self.base()?, encode_path_segment(id));
+        fetch_json(self.client.clone(), url).await
+    }
+
+    /// One operator's voice lines, fetched on demand and not cached. Remembers whether there
+    /// were any, for [`GameData::known_voice_presence`].
+    pub async fn voices(&self, id: &str) -> Result<VoiceData, Error> {
+        let url = format!("{}/api/voices/{}", self.base()?, encode_path_segment(id));
+        let data: VoiceData = fetch_json(self.client.clone(), url).await?;
+        self.voice_presence.write().await.insert(
+            id.to_string(),
+            (Instant::now(), !data.char_words.is_empty()),
+        );
+        Ok(data)
+    }
+
+    /// Whether the operator has voice lines, if a fetch in the last [`LIST_TTL`] said.
+    pub async fn known_voice_presence(&self, id: &str) -> Option<bool> {
+        self.voice_presence
+            .read()
+            .await
+            .get(id)
+            .filter(|(at, _)| at.elapsed() < LIST_TTL)
+            .map(|(_, has)| *has)
+    }
+
+    /// A Paradox Simulation stage's enemies and waves, fetched on demand and not cached.
+    pub async fn paradox_stage(&self, stage_id: &str) -> Result<ParadoxStage, Error> {
+        let url = format!(
+            "{}/api/stages/{}/detail",
+            self.base()?,
+            encode_path_segment(stage_id)
+        );
         fetch_json(self.client.clone(), url).await
     }
 
@@ -666,16 +746,25 @@ impl GameData {
         if self.base.is_empty() {
             return;
         }
-        let (o, e, s, t) = tokio::join!(
+        let (ops, enemies, stages, stories, ranges, paradox) = tokio::join!(
             self.operators(),
             self.enemies(),
             self.stages(),
-            self.stories()
+            self.stories(),
+            self.ranges(),
+            self.paradox()
         );
-        let failed = [o.is_err(), e.is_err(), s.is_err(), t.is_err()]
-            .iter()
-            .filter(|f| **f)
-            .count();
+        let failed = [
+            ops.is_err(),
+            enemies.is_err(),
+            stages.is_err(),
+            stories.is_err(),
+            ranges.is_err(),
+            paradox.is_err(),
+        ]
+        .iter()
+        .filter(|f| **f)
+        .count();
         if failed == 0 {
             tracing::info!("gamedata: all lists cached");
         } else {
@@ -689,6 +778,21 @@ const ENEMIES_PATH: &str = "/api/static/enemies";
 const STAGES_PATH: &str = "/api/static/stage-index";
 const STORIES_PATH: &str = "/api/story/index";
 const MATERIALS_PATH: &str = "/api/static/materials";
+const RANGES_PATH: &str = "/api/static/ranges";
+const HANDBOOK_PATH: &str = "/api/static/handbook";
+const SKILLS_PATH: &str = "/api/static/skills";
+
+/// Only `handbookStageData` is decoded; serde skips the rest of the 4.7 MB table.
+#[derive(Deserialize)]
+struct HandbookTable {
+    #[serde(rename = "handbookStageData", default)]
+    stage_data: HashMap<String, ParadoxEntry>,
+}
+
+async fn load_paradox(client: Client, url: String) -> Result<HashMap<String, ParadoxEntry>, Error> {
+    let table: HandbookTable = fetch_json(client, url).await?;
+    Ok(table.stage_data)
+}
 
 #[derive(Deserialize)]
 struct MaterialsTable {

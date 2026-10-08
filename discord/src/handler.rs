@@ -4,7 +4,7 @@ use crate::audit;
 use crate::db::{self, AntiSpamAction, AntiSpamPolicy};
 use crate::types::{AntiSpamPolicies, Data, Error, PingHistory};
 use poise::{FrameworkContext, serenity_prelude::FullEvent::Ready};
-use serenity::all::EditMember;
+use serenity::all::{EditMember, Interaction};
 use serenity::model::Timestamp;
 use serenity::model::channel::{Message, Reaction};
 use serenity::model::id::{GuildId, UserId};
@@ -12,9 +12,9 @@ use serenity::{
     all::prelude::Context,
     client::FullEvent::{
         self, GuildAuditLogEntryCreate, GuildBanAddition, GuildBanRemoval, GuildDelete,
-        GuildMemberAddition, GuildMemberRemoval, Message as MessageCreate, MessageDelete,
-        MessageDeleteBulk, MessageUpdate, ReactionAdd, ReactionRemove, ReactionRemoveAll,
-        ReactionRemoveEmoji,
+        GuildMemberAddition, GuildMemberRemoval, InteractionCreate, Message as MessageCreate,
+        MessageDelete, MessageDeleteBulk, MessageUpdate, ReactionAdd, ReactionRemove,
+        ReactionRemoveAll, ReactionRemoveEmoji,
     },
 };
 
@@ -33,6 +33,13 @@ pub async fn event_handler(
     match event {
         Ready { data_about_bot, .. } => {
             tracing::info!("{} is connected!", data_about_bot.user.name);
+        }
+        // Poise answers commands and autocomplete; select menus come through here, routed by
+        // their custom_id prefix.
+        InteractionCreate {
+            interaction: Interaction::Component(component),
+        } if crate::cmds::operator::is_ours(&component.data.custom_id) => {
+            crate::cmds::operator::handle_component(ctx, data, component).await;
         }
         GuildMemberAddition { new_member, .. } => {
             match db::get_auto_role(&data.pool, new_member.guild_id).await {

@@ -30,6 +30,41 @@ pub fn strip_rich_text(s: &str) -> String {
     out
 }
 
+/// Archive, outfit and voice text as plain Discord text.
+///
+/// `<i>` becomes Discord italics, `<color ...>` and `</color>` drop, `{@nickname}` reads
+/// "Doctor" (the frontend's default nickname), and the game's own `<@...>` markup goes as in
+/// [`strip_rich_text`]. Those are the only tags the 441 EN records carry in these tables
+/// (surveyed 2026-10-08).
+#[must_use]
+pub fn plain_text(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let mut rest = s;
+    while let Some(start) = rest.find(['<', '{']) {
+        out.push_str(&rest[..start]);
+        let tail = &rest[start..];
+        let lower = tail.get(..11).unwrap_or(tail).to_ascii_lowercase();
+        if tail.starts_with("<i>") || tail.starts_with("</i>") {
+            out.push('*');
+            rest = &tail[tail.find('>').map_or(1, |e| e + 1)..];
+        } else if let Some(after) = tail.strip_prefix("</color>") {
+            rest = after;
+        } else if tail.starts_with("<color")
+            && let Some(end) = tail.find('>')
+        {
+            rest = &tail[end + 1..];
+        } else if lower == "{@nickname}" {
+            out.push_str("Doctor");
+            rest = &tail["{@nickname}".len()..];
+        } else {
+            out.push_str(&tail[..1]);
+            rest = &tail[1..];
+        }
+    }
+    out.push_str(rest);
+    strip_rich_text(&out)
+}
+
 /// A blackboard keyed by lowercased key: the game matches template keys case-insensitively
 /// (`{ATK}` and `{atk}` read the same entry).
 #[must_use]
@@ -191,6 +226,17 @@ mod tests {
         assert_eq!(render("{interval:0.0}", &b).0, "0.5");
         assert_eq!(render("{cost}", &b).0, "2");
         assert_eq!(render("{peacok_s_1[crit].prob:0%}", &b).0, "25%");
+    }
+
+    #[test]
+    fn plain_text_handles_archive_markup() {
+        assert_eq!(
+            plain_text("<color name=#ffffff>Brand Series/Outfit.</color> Worn <i>often</i>."),
+            "Brand Series/Outfit. Worn *often*."
+        );
+        assert_eq!(plain_text("Morning, {@nickname}."), "Morning, Doctor.");
+        assert_eq!(plain_text("{@Nickname}! {x}"), "Doctor! {x}");
+        assert_eq!(plain_text("<Frigid> <@ba.kw>kw</>"), "<Frigid> kw");
     }
 
     #[test]
