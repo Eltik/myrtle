@@ -7,6 +7,7 @@ pub mod auditlog;
 pub mod birthday;
 pub mod collection;
 pub mod general;
+pub mod operator_card;
 pub mod warn;
 
 #[must_use]

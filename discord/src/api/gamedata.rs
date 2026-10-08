@@ -19,6 +19,7 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Deserializer};
 use tokio::sync::{Mutex, RwLock};
 
+use crate::api::operator_detail::OperatorDetail;
 use crate::types::Error;
 
 /// How long a fetched list counts as fresh. Game data changes on patch days, not by the minute.
@@ -269,6 +270,9 @@ pub struct StageDetail {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StageDetailStage {
+    /// Briefing text with game markup. On a Challenge Mode, Extreme or Adverse Environment
+    /// variant it carries the extra rule after a "Condition:" header.
+    pub description: Option<String>,
     /// "LV.10", "Elite 2 Lv. 20", or "-" when the stage has none.
     pub danger_level: Option<String>,
     pub stage_drop_info: Option<StageDropInfo>,
@@ -518,6 +522,9 @@ pub struct GameData {
     enemies: Arc<Slot<Vec<Enemy>>>,
     stages: Arc<Slot<Vec<Stage>>>,
     stories: Arc<Slot<Vec<StoryGroup>>>,
+    /// Item id to display name, from `GET /api/static/materials`. Only the full operator card
+    /// reads it (promotion and skill costs carry ids, not names).
+    materials: Arc<Slot<HashMap<String, String>>>,
 }
 
 impl GameData {
@@ -530,6 +537,7 @@ impl GameData {
             enemies: Arc::default(),
             stages: Arc::default(),
             stories: Arc::default(),
+            materials: Arc::default(),
         }
     }
 
@@ -586,6 +594,20 @@ impl GameData {
         self.stories
             .get("story", move || load_stories(client, url))
             .await
+    }
+
+    /// Item names by id. Not part of [`GameData::warm`]: only the full operator card needs it.
+    pub async fn materials(&self) -> Result<Arc<HashMap<String, String>>, Error> {
+        let (client, url) = self.request(MATERIALS_PATH)?;
+        self.materials
+            .get("item", move || load_materials(client, url))
+            .await
+    }
+
+    /// One operator's full record, fetched on demand and not cached.
+    pub async fn operator_detail(&self, id: &str) -> Result<OperatorDetail, Error> {
+        let url = format!("{}/api/operators/{}", self.base()?, encode_path_segment(id));
+        fetch_json(self.client.clone(), url).await
     }
 
     /// The operator list if it is cached, for autocomplete: never waits on the network.
@@ -666,6 +688,27 @@ const OPERATORS_PATH: &str = "/api/operators/index";
 const ENEMIES_PATH: &str = "/api/static/enemies";
 const STAGES_PATH: &str = "/api/static/stage-index";
 const STORIES_PATH: &str = "/api/story/index";
+const MATERIALS_PATH: &str = "/api/static/materials";
+
+#[derive(Deserialize)]
+struct MaterialsTable {
+    #[serde(default)]
+    items: HashMap<String, MaterialItem>,
+}
+
+#[derive(Deserialize)]
+struct MaterialItem {
+    name: Option<String>,
+}
+
+async fn load_materials(client: Client, url: String) -> Result<HashMap<String, String>, Error> {
+    let table: MaterialsTable = fetch_json(client, url).await?;
+    Ok(table
+        .items
+        .into_iter()
+        .filter_map(|(id, item)| item.name.map(|name| (id, name)))
+        .collect())
+}
 
 async fn load_enemies(client: Client, url: String) -> Result<Vec<Enemy>, Error> {
     let table: EnemyTable = fetch_json(client, url).await?;

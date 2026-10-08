@@ -12,6 +12,8 @@ use poise::CreateReply;
 use poise::serenity_prelude as serenity;
 
 use crate::api::gamedata::{Enemy, GameData, Operator, Stage, StageDetail, StoryGroup};
+use crate::cmds::operator_card;
+use crate::gametext::strip_rich_text;
 use crate::search::search;
 use crate::types::{Context, Error};
 use crate::utils::{commafy, ellipsize};
@@ -50,12 +52,16 @@ pub async fn collection(_ctx: Context<'_>) -> Result<(), Error> {
 }
 
 /// Show an operator's profile.
+///
+/// `compact` (default on) is the one-embed card. Turned off, the reply carries everything the
+/// full record has: attributes, trait, talents, skills, modules, base skills, costs, profile.
 #[poise::command(slash_command, rename = "operator")]
 pub async fn collection_operator(
     ctx: Context<'_>,
     #[description = "Operator name"]
     #[autocomplete = "autocomplete_operator"]
     query: String,
+    #[description = "Show the short card (default on)"] compact: Option<bool>,
 ) -> Result<(), Error> {
     let gamedata = begin(ctx).await?;
     let operators = gamedata.operators().await?;
@@ -68,7 +74,44 @@ pub async fn collection_operator(
     )
     .ok_or_else(|| no_match("operator", &query))?;
     let embed = operator_embed(op, &gamedata, frontend(ctx));
-    ctx.send(CreateReply::default().embed(embed)).await?;
+    if compact.unwrap_or(true) {
+        ctx.send(CreateReply::default().embed(embed)).await?;
+        return Ok(());
+    }
+
+    // Two more requests (the record, and item names for costs): defer past the 3 s window.
+    ctx.defer().await?;
+    let (detail, items) = tokio::join!(gamedata.operator_detail(&op.id), gamedata.materials());
+    let detail = match detail {
+        Ok(d) => d,
+        Err(e) => {
+            tracing::warn!("collection: operator detail {}: {e}", op.id);
+            ctx.send(
+                CreateReply::default()
+                    .content("The full record is unavailable right now; here is the short card.")
+                    .embed(embed),
+            )
+            .await?;
+            return Ok(());
+        }
+    };
+    // Without names, costs fall back to item ids rather than failing the card.
+    let items = items.unwrap_or_default();
+    let card = operator_card::full_card(embed, &detail, &items, rarity_colour(op.rarity));
+    if !card.unresolved.is_empty() {
+        tracing::debug!(
+            "collection: {} has unresolved templates: {:?}",
+            op.id,
+            card.unresolved
+        );
+    }
+    for embeds in card.messages {
+        let mut reply = CreateReply::default();
+        for embed in embeds {
+            reply = reply.embed(embed);
+        }
+        ctx.send(reply).await?;
+    }
     Ok(())
 }
 
@@ -537,6 +580,16 @@ fn stage_embed(
     {
         embed = embed.field("Danger", danger, true);
     }
+    // A variant's extra rule, under the variant's own name ("Challenge Mode", "Extreme"...).
+    if let Some(mode) = stage.mode()
+        && let Some(condition) = detail
+            .stage
+            .description
+            .as_deref()
+            .and_then(stage_condition)
+    {
+        embed = embed.field(mode, field(&condition), false);
+    }
 
     let mut seen = HashSet::new();
     let enemies: Vec<&str> = detail
@@ -559,6 +612,52 @@ fn stage_embed(
         embed = embed.field("Drops", field(&drops), false);
     }
     embed.footer(CreateEmbedFooter::new(stage.stage_id.clone()))
+}
+
+/// The extra rule a stage variant adds, pulled out of its briefing.
+///
+/// Every Challenge Mode, Extreme and Adverse Environment stage in the index (854 of 854)
+/// carries it the same way: a header line whose text starts with "Condition" ("Condition:",
+/// "Conditions:", "Environmental Conditions:"), then the rule on the following lines. The
+/// header's markup varies (`<@lv.fs>`, `<@lv.mhfs>`, an empty `<@lv.fs></>` before it) and
+/// some put the rule on the header line itself, so this works on the markup-stripped lines.
+/// The rule ends at a time-limit line, or at a map-object line once a rule line has been read
+/// (a rule may itself start with an object name, like "<Turrets> damage increased").
+fn stage_condition(raw: &str) -> Option<String> {
+    let mut found = false;
+    let mut rule: Vec<String> = Vec::new();
+    for line in raw.lines() {
+        let text = strip_rich_text(line);
+        let text = text.trim();
+        if !found {
+            let Some(at) = text.find("Condition") else {
+                continue;
+            };
+            if at != 0 && text[..at].trim() != "Environmental" {
+                continue;
+            }
+            found = true;
+            let rest = text[at + "Condition".len()..].trim_start_matches('s');
+            let rest = rest.trim_start().trim_start_matches(':').trim();
+            if !rest.is_empty() {
+                rule.push(rest.to_string());
+            }
+            continue;
+        }
+        let markup = line.trim_start();
+        if markup.starts_with("<@act.timeLimit>") {
+            break;
+        }
+        if !rule.is_empty()
+            && (markup.starts_with("<@lv.item>") || markup.starts_with("<@lv.mhitem>"))
+        {
+            break;
+        }
+        if !text.is_empty() {
+            rule.push(text.to_string());
+        }
+    }
+    (!rule.is_empty()).then(|| rule.join("\n"))
 }
 
 /// "Regular: Orirock Cube\nExtra: Orirock, Ester", one line per drop kind that has a named
@@ -694,42 +793,63 @@ fn number(n: f64) -> String {
     }
 }
 
-/// Drop the game's rich-text markup (`<$ba.stun>Stun</>`, `<@lv.item>`) but keep angle-bracket
-/// names that are plain text (`<Frigid>`).
-fn strip_rich_text(s: &str) -> String {
-    let mut out = String::with_capacity(s.len());
-    let mut rest = s;
-    while let Some(start) = rest.find('<') {
-        out.push_str(&rest[..start]);
-        let tail = &rest[start..];
-        let is_markup = tail.starts_with("</>") || tail.starts_with("<$") || tail.starts_with("<@");
-        match tail.find('>') {
-            Some(end) if is_markup => rest = &tail[end + 1..],
-            _ => {
-                out.push('<');
-                rest = &tail[1..];
-            }
-        }
-    }
-    out.push_str(rest);
-    out
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn strips_markup_but_keeps_names() {
-        assert_eq!(
-            strip_rich_text("Attacks inflict <$ba.dt.neural>Nervous Impairment</>."),
-            "Attacks inflict Nervous Impairment."
-        );
-        assert_eq!(
-            strip_rich_text("Attacks in <Frigid> areas deal Arts damage"),
-            "Attacks in <Frigid> areas deal Arts damage"
-        );
-        assert_eq!(strip_rich_text("a < b"), "a < b");
+    fn extracts_stage_conditions() {
+        // Real briefings from /api/stages/{id}/detail, `stage.description`.
+        let cases = [
+            (
+                "<@lv.fs>Condition:</>\nDeployment Points recover at half the normal rate.",
+                Some("Deployment Points recover at half the normal rate."),
+            ),
+            (
+                "<@lv.fs></>Condition: \n<Originiutant Puppets> will spawn more \
+                 <Originiutant Excrescences> when defeated.",
+                Some(
+                    "<Originiutant Puppets> will spawn more <Originiutant Excrescences> when \
+                     defeated.",
+                ),
+            ),
+            (
+                "<@lv.mhtx>Only heroes who reach the apex will be able to pass this test.</>\n\
+                 <@lv.mhfs>Condition:</><@lv.mhtx>8 tiles are no longer deployable, and more \
+                 enemies will appear.</>\n",
+                Some("8 tiles are no longer deployable, and more enemies will appear."),
+            ),
+            (
+                "<@lv.fs>Condition: </>\n<@lv.item><Turrets></> damage increased.",
+                Some("<Turrets> damage increased."),
+            ),
+            (
+                "You realize that under such sight, you never had anywhere to hide. \n\
+                 <@lv.item><Londinium Secondary Defense Artillery></> Once fully charged, deals \
+                 area True damage.\n<@lv.fs>Environmental Conditions: </>\nSarkaz Requisitioned \
+                 Engineering Drones charge the Artillery at increased speed.",
+                Some(
+                    "Sarkaz Requisitioned Engineering Drones charge the Artillery at increased speed.",
+                ),
+            ),
+            (
+                "<@lv.fs>Condition:</>\nBig Bob's HP is greatly increased.\n\
+                 <@act.timeLimit>Stage available from 7/29 10:00 A.M. to 8/12 3:59 A.M.</>",
+                Some("Big Bob's HP is greatly increased."),
+            ),
+            (
+                "<@lv.mhfs>Condition:</>\n<@lv.mhtx>Enemies have lowered ASPD.</>\n\
+                 <@lv.mhitem><Heat Pump Passage></> <@lv.mhtx>Periodically deals damage.</>",
+                Some("Enemies have lowered ASPD."),
+            ),
+            (
+                "Please combine your Operators' firepower with the Stun Generator.",
+                None,
+            ),
+        ];
+        for (raw, want) in cases {
+            assert_eq!(stage_condition(raw).as_deref(), want, "{raw:?}");
+        }
     }
 
     #[test]

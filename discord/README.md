@@ -9,7 +9,7 @@ The Discord companion for [myrtle.moe](https://myrtle.moe). It moderates guilds,
 [![Discord CI](https://github.com/Eltik/myrtle/actions/workflows/discord-ci.yml/badge.svg)](https://github.com/Eltik/myrtle/actions/workflows/discord-ci.yml)
 [![License](https://img.shields.io/badge/License-TBD-lightgrey)](../README.md)
 
-> **Status: work in progress.** Moderation, warnings, asset announcements, operator birthday announcements, the three `/api` lookups, and the `/collection` game-data lookups below are implemented. The rest of the "game data in Discord" surface - DPS/HPS, recruitment, tier lists, leaderboards - is planned but not built. See [`TODO.md`](TODO.md) for the backlog.
+> **Status: work in progress.** Moderation, warnings, asset announcements, operator birthday announcements, the two `/api` lookups, and the `/collection` game-data lookups below are implemented. The rest of the "game data in Discord" surface - DPS/HPS, recruitment, tier lists, leaderboards - is planned but not built. See [`TODO.md`](TODO.md) for the backlog.
 
 ## Features
 
@@ -23,7 +23,7 @@ The Discord companion for [myrtle.moe](https://myrtle.moe). It moderates guilds,
 - **Asset announcements** - one WebSocket connection per Arknights region (EN, CN, JP, KR) to the asset pipeline, posting to a bound channel when an extraction completes. Each guild can limit announcements to some regions.
 - **Game-data lookups** - `/collection` shows operators, enemies, stages, and story groups from the public backend, with fuzzy, accent-insensitive autocomplete.
 - **Operator birthdays** - a daily post at the EN reset (04:00 UTC-7) for every operator whose birthday it is, plus `today` and `upcoming` lookups.
-- **Backend lookups** - endpoint reachability and latency, platform statistics, and a rendered player profile card.
+- **Backend lookups** - endpoint reachability and latency, and platform statistics.
 - **Embed builder** - create and edit rich embeds from fields or raw JSON, and read an existing embed back as JSON.
 
 ## Tech Stack
@@ -36,7 +36,6 @@ The Discord companion for [myrtle.moe](https://myrtle.moe). It moderates guilds,
 | Database | SQLite via `sqlx` 0.9 (runtime queries, embedded migrations) |
 | HTTP | `reqwest` 0.13 for backend API calls |
 | WebSocket | `tokio-tungstenite` 0.29 for the asset-pipeline watcher |
-| Rendering | `resvg` 0.47 (profile card SVG to PNG) |
 | Logging | `tracing` + `tracing-subscriber` (env filter, JSON) |
 
 ## Prerequisites
@@ -135,7 +134,6 @@ Elevated commands pass for bot owners, for the guild's configured mod role, or f
 |---------|------------|-------------|
 | `/api status` | - | Reachability and latency for all four configured endpoints |
 | `/api stats` | - | Platform counts from `GET /api/stats` |
-| `/api user <uid>` | - | Player profile card rendered from `GET /api/get-user` |
 | `/assets channel set [servers]` · `clear` · `show` | Owner | Bind the asset-announcement channel. `servers` (e.g. `EN,JP`) limits it to some regions; omit for all |
 | `/assets status` | - | Last-known state of each region's asset watcher |
 | `/assets resources` | - | Live `list_resources` round-trip to the asset pipeline |
@@ -144,9 +142,9 @@ Elevated commands pass for bot owners, for the guild's configured mod role, or f
 
 | Command | Permission | Description |
 |---------|------------|-------------|
-| `/collection operator <query>` | - | Rarity, class and branch, faction, tags, birthday, artists, voice actors, art |
+| `/collection operator <query> [compact]` | - | Rarity, class and branch, faction, tags, birthday, artists, voice actors, art. `compact:false` adds attributes, trait, talents, potentials, skills at max level, modules, base skills, costs, and profile, over as many embeds as it takes |
 | `/collection enemy <query>` | - | Class, attack and damage type, level-0 HP/ATK/DEF/RES, abilities |
-| `/collection stage <query>` | - | Code and name, zone, sanity, danger level, enemies, drops. Matches codes like `1-7` or `CE-6` |
+| `/collection stage <query>` | - | Code and name, zone, sanity, danger level, the Challenge Mode / Extreme / Adverse condition, enemies, drops. Matches codes like `1-7` or `CE-6` |
 | `/collection story <query>` | - | Story group, category, story and word counts, banner art, link to the reader |
 | `/birthday today` | - | Today's birthday operators (the game day turns at 04:00 UTC-7) |
 | `/birthday upcoming [days]` | - | Birthdays over the next 1 to 31 days, 7 by default |
@@ -169,7 +167,7 @@ Every section is optional, and unknown fields are rejected. Copy [`config.exampl
 
 | Field | Description |
 |-------|-------------|
-| `endpoints.local_backend` | Backend URL used by `/api stats` and `/api user` |
+| `endpoints.local_backend` | Backend URL used by `/api stats` |
 | `endpoints.local_frontend` | Checked by `/api status` |
 | `endpoints.public_backend` | Checked by `/api status`. Source of `/collection` and birthday data |
 | `endpoints.public_frontend` | Checked by `/api status`. Base of the links in `/collection` and birthday embeds |
@@ -187,10 +185,9 @@ When the bot runs in Docker against a pipeline on the host, point `ws_url` at `w
 | Command | Request |
 |---------|---------|
 | `/api stats` | `GET {local_backend}/api/stats` |
-| `/api user` | `GET {local_backend}/api/get-user?uid={id}`, plus `{local_backend}/api/avatar/{id}` for the card |
 | `/api status` | `GET` against each of the four configured endpoint URLs |
 
-`stats` and `user` currently target the local backend only.
+`stats` currently targets the local backend only.
 
 `/collection` and the birthday announcer read the public backend. There is no name-search endpoint, so the bot fetches whole lists and matches locally; each list is cached in memory for 30 minutes and refreshed in the background, keeping the stale copy if a refresh fails:
 
@@ -199,6 +196,7 @@ When the bot runs in Docker against a pipeline on the host, point `ws_url` at `w
 | Operators | `GET {public_backend}/api/operators/index` |
 | Enemies | `GET {public_backend}/api/static/enemies` |
 | Stages | `GET {public_backend}/api/static/stage-index`, plus `/api/stages/{id}/detail` per lookup |
+| Full operator card | `GET {public_backend}/api/operators/{id}` per lookup, plus `/api/static/materials` (cached) for item names |
 | Stories | `GET {public_backend}/api/story/index` |
 | Images | `/api/avatar/{id}`, `/api/charart/{id}`, `/api/enemy-icon/{id}`, `/api/assets/{path}` |
 
@@ -232,15 +230,17 @@ src/
 ├── cmds/             Command implementations
 │   ├── general.rs    ping, say, embed
 │   ├── admin.rs      ban, kick, purge, modrole, autorole, antispam, reactionrole
-│   ├── api.rs        /api status, stats, user
+│   ├── api.rs        /api status, stats
 │   ├── assets.rs     /assets channel, status, resources
 │   ├── auditlog.rs   /auditlog configuration
 │   ├── birthday.rs   /birthday channel, today, upcoming
 │   ├── collection.rs /collection operator, enemy, stage, story
+│   ├── operator_card.rs  The full operator card (`compact:false`)
 │   └── warn.rs       /warn add, list, remove, clear, policy
-├── api/              Backend HTTP clients (status, stats, user, cached game data)
+├── api/              Backend HTTP clients (status, stats, cached game data)
 ├── birthday.rs       Game-day dates, birthday parsing, the daily announcer
 ├── search.rs         Accent- and punctuation-insensitive name matching
+├── gametext.rs       Game markup stripping and `{key:0%}` template interpolation
 ├── checks.rs         elevated(): owner OR mod role OR native permission
 ├── handler.rs        Gateway event handling
 ├── hooks.rs          Pre- and post-command hooks
