@@ -7,6 +7,7 @@ pub mod grids;
 pub mod i18n;
 pub mod item_leaderboard;
 pub mod items;
+pub mod like;
 pub mod medal_ownership;
 pub mod medals;
 pub mod operator_notes;

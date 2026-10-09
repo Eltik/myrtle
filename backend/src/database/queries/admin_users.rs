@@ -15,6 +15,7 @@ use sqlx::{PgPool, Postgres, QueryBuilder};
 
 use crate::core::hypergryph::constants::Server;
 use crate::database::models::user::AdminUserEntry;
+use crate::database::queries::like::escape_like;
 
 /// The People tab's role filter.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -63,7 +64,8 @@ impl AdminUserSearch<'_> {
         qb.push(" FROM users u WHERE true");
         if let Some(q) = self.q {
             // The same nickname match the public search runs, plus the UID:
-            // a prefix, so a full UID is an exact hit.
+            // a prefix, so a full UID is an exact hit. Neither may read a typed
+            // `%` or `_` as a wildcard.
             let escaped = escape_like(q);
             qb.push(" AND (u.nickname ILIKE ");
             qb.push_bind(format!("%{escaped}%"));
@@ -144,19 +146,6 @@ fn push_order_keys(qb: &mut QueryBuilder<'_, Postgres>, q: Option<&str>) {
     );
 }
 
-/// Neither the nickname substring nor the UID prefix may read a typed `%` or
-/// `_` as a wildcard. Paired with an explicit `ESCAPE '\'` on both sides.
-fn escape_like(s: &str) -> String {
-    let mut out = String::with_capacity(s.len());
-    for c in s.chars() {
-        if matches!(c, '\\' | '%' | '_') {
-            out.push('\\');
-        }
-        out.push(c);
-    }
-    out
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -183,11 +172,5 @@ mod tests {
         assert!(!staff.contains(&"translator"));
         assert!(!staff.contains(&"user"));
         assert_eq!(AdminUserRole::All.roles(), None);
-    }
-
-    #[test]
-    fn like_wildcards_are_escaped() {
-        assert_eq!(escape_like("123"), "123");
-        assert_eq!(escape_like("1%_\\"), "1\\%\\_\\\\");
     }
 }

@@ -5,6 +5,7 @@ use sqlx::types::Uuid;
 use crate::database::models::score::{
     LeaderboardEntry, LeaderboardMover, PlayerStanding, ScoreHistoryPoint, ServerShare, UserScore,
 };
+use crate::database::queries::like::contains_pattern;
 
 /// Full score row for one user by `uid` (external 10-digit id); `None` if never scored.
 pub async fn get_score_by_uid(pool: &PgPool, uid: &str) -> Result<Option<UserScore>, sqlx::Error> {
@@ -60,7 +61,7 @@ pub async fn get_leaderboard(
     offset: i64,
 ) -> Result<Vec<LeaderboardEntry>, sqlx::Error> {
     let sort_col = sort_column(sort_by);
-    let pattern = q.map(|s| format!("%{s}%"));
+    let pattern = q.map(contains_pattern);
 
     let Some(interval) = movement_interval else {
         // Param order: [server], [pattern], limit, offset
@@ -77,7 +78,9 @@ pub async fn get_leaderboard(
         let q_idx = if pattern.is_some() {
             let i = next_idx;
             next_idx += 1;
-            clauses.push(format!("(nickname ILIKE ${i} OR uid ILIKE ${i})"));
+            clauses.push(format!(
+                "(nickname ILIKE ${i} ESCAPE '\\' OR uid ILIKE ${i} ESCAPE '\\')"
+            ));
             Some(i)
         } else {
             None
@@ -113,7 +116,7 @@ pub async fn get_leaderboard(
     }
     if pattern.is_some() {
         extra_clauses.push(format!(
-            "AND (v.nickname ILIKE ${next_idx} OR v.uid ILIKE ${next_idx})"
+            "AND (v.nickname ILIKE ${next_idx} ESCAPE '\\' OR v.uid ILIKE ${next_idx} ESCAPE '\\')"
         ));
         next_idx += 1;
     }
@@ -167,7 +170,7 @@ pub async fn count_leaderboard(
     movement_only: bool,
     q: Option<&str>,
 ) -> Result<i64, sqlx::Error> {
-    let pattern = q.map(|s| format!("%{s}%"));
+    let pattern = q.map(contains_pattern);
 
     if !movement_only || movement_interval.is_none() {
         let mut clauses: Vec<String> = Vec::new();
@@ -178,7 +181,7 @@ pub async fn count_leaderboard(
         }
         if pattern.is_some() {
             clauses.push(format!(
-                "(nickname ILIKE ${next_idx} OR uid ILIKE ${next_idx})"
+                "(nickname ILIKE ${next_idx} ESCAPE '\\' OR uid ILIKE ${next_idx} ESCAPE '\\')"
             ));
         }
         let where_sql = if clauses.is_empty() {
@@ -206,7 +209,7 @@ pub async fn count_leaderboard(
     }
     if pattern.is_some() {
         extra_clauses.push(format!(
-            "AND (v.nickname ILIKE ${next_idx} OR v.uid ILIKE ${next_idx})"
+            "AND (v.nickname ILIKE ${next_idx} ESCAPE '\\' OR v.uid ILIKE ${next_idx} ESCAPE '\\')"
         ));
     }
     let extra_sql = extra_clauses.join("\n          ");

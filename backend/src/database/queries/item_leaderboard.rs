@@ -18,6 +18,7 @@ use sqlx::PgPool;
 use crate::database::models::item_leaderboard::{
     HoldingTotals, ItemHoldingSummary, ItemLeaderboardEntry, ItemStanding,
 };
+use crate::database::queries::like::contains_pattern;
 
 /// Game item id -> `user_status` column. `orundum_shard` is deliberately
 /// absent: `extract_status` writes it as a constant 0, so it ranks nothing.
@@ -156,9 +157,9 @@ impl Filters {
             let idx = first + params.len();
             let _ = write!(
                 sql,
-                " AND ({nick_col} ILIKE ${idx} OR {uid_col} ILIKE ${idx})"
+                " AND ({nick_col} ILIKE ${idx} ESCAPE '\\' OR {uid_col} ILIKE ${idx} ESCAPE '\\')"
             );
-            params.push(format!("%{q}%"));
+            params.push(contains_pattern(q));
         }
         let next_param = first + params.len();
         Self {
@@ -382,12 +383,25 @@ pub async fn get_item_standing(
 
 #[cfg(test)]
 mod tests {
-    use super::VISIBLE;
+    use super::{Filters, VISIBLE};
     use crate::database::models::profile_layout::ProfileTabId;
 
     #[test]
     fn visible_gate_hides_private_inventories() {
         assert!(VISIBLE.contains(&ProfileTabId::Inventory.visible_sql("us.profile_layout")));
         assert!(VISIBLE.contains("us.public_profile"));
+    }
+
+    #[test]
+    fn search_text_is_literal_in_the_filter() {
+        let f = Filters::new(3, Some("en"), Some("a_b%"), ("s", "n", "u"));
+        assert_eq!(f.params, vec!["en".to_owned(), r"%a\_b\%%".to_owned()]);
+        assert_eq!(f.next_param, 5);
+        assert!(
+            f.sql
+                .contains(r"n ILIKE $4 ESCAPE '\' OR u ILIKE $4 ESCAPE '\'"),
+            "{}",
+            f.sql
+        );
     }
 }

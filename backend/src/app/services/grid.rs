@@ -523,16 +523,7 @@ fn title_pattern(q: &str) -> Option<String> {
     if q.is_empty() {
         return None;
     }
-    let mut pattern = String::with_capacity(q.len() + 2);
-    pattern.push('%');
-    for c in q.chars() {
-        if matches!(c, '\\' | '%' | '_') {
-            pattern.push('\\');
-        }
-        pattern.push(c);
-    }
-    pattern.push('%');
-    Some(pattern)
+    Some(crate::database::queries::like::contains_pattern(q))
 }
 
 fn slug_for(title: &str) -> String {

@@ -12,6 +12,7 @@ use sqlx::{PgPool, Postgres, QueryBuilder};
 
 use crate::database::models::profile_layout::ProfileTabId;
 use crate::database::models::user::SearchEntry;
+use crate::database::queries::like::contains_pattern;
 
 /// How the page is ranked. Each variant names one aggregate; `Score` is the
 /// view's own `total_score`, the order the search always had.
@@ -219,7 +220,8 @@ impl UserSearch<'_> {
         }
         if let Some(q) = self.q {
             qb.push(" AND p.nickname ILIKE ");
-            qb.push_bind(format!("%{q}%"));
+            qb.push_bind(contains_pattern(q));
+            qb.push(" ESCAPE '\\'");
         }
         if !self.has.is_empty() {
             qb.push(
