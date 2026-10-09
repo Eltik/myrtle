@@ -389,26 +389,6 @@ pub fn farm_stages_by_activity(
 
 pub const FARM_ARCHIVE: &str = "derived/farm-stages.json";
 
-/// Write `bytes` to `path` without ever truncating the existing file in place.
-///
-/// The farm archive is irreplaceable, so a torn write is worse than no write. The
-/// temp file is removed if either step fails, and the caller logs. No fsync: this
-/// guarantees "never a half-written archive", not durability across a crash.
-fn write_atomic_archive(path: &std::path::Path, bytes: &[u8]) -> std::io::Result<()> {
-    let mut tmp_name = path.as_os_str().to_os_string();
-    tmp_name.push(".tmp");
-    let tmp = std::path::PathBuf::from(tmp_name);
-    if let Err(e) = std::fs::write(&tmp, bytes) {
-        let _ = std::fs::remove_file(&tmp);
-        return Err(e);
-    }
-    if let Err(e) = std::fs::rename(&tmp, path) {
-        let _ = std::fs::remove_file(&tmp);
-        return Err(e);
-    }
-    Ok(())
-}
-
 /// The client strips a stage's drop table once its event closes, so the
 /// farming stages seen on any load are kept in `derived/farm-stages.json`
 /// next to the extract and read back for events the current table no
@@ -464,9 +444,10 @@ pub fn merge_farm_archive(
     {
         // Temp-then-rename, checked. `std::fs::write` truncates at open, so a
         // stalled write left a zero-length archive that the next load read as
-        // "no events" and overwrote again. The error used to be discarded too.
-        if let Err(e) =
-            std::fs::create_dir_all(dir).and_then(|()| write_atomic_archive(&path, json.as_bytes()))
+        // "no events" and overwrote again. The temp file and the directory are
+        // fsynced, so a power loss cannot persist the rename before the data.
+        if let Err(e) = std::fs::create_dir_all(dir)
+            .and_then(|()| crate::utils::fs::write_durable(&path, json.as_bytes()))
         {
             tracing::error!(
                 path = %path.display(),
