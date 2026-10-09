@@ -114,6 +114,9 @@ validator = { version = "0.20.0", features = ["derive"] }
 walkdir = "2.5.0"
 zip = "8.6.0"
 
+[dev-dependencies]
+tower = { version = "0.5.3", features = ["util"] }
+
 [profile.release]
 lto = "thin"
 codegen-units = 1
