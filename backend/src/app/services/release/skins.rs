@@ -363,12 +363,32 @@ fn reruns(
             });
         }
     }
+    one_guess_per_group(&mut out);
     out.sort_by(|a, b| {
         resolved_start(&a.next)
             .cmp(&resolved_start(&b.next))
             .then(a.skin_group_id.cmp(&b.skin_group_id))
     });
     out
+}
+
+/// Each pending CN window yields a forecast, so a group whose older CN rerun
+/// EN already sold (dated by cadence) and whose newer one is still pending
+/// came out twice, and the planner sold the same outfits on two cards. A
+/// cadence date only stands in for a group nothing else dates: it yields to
+/// any listing-dated forecast, and a group keeps one of them at most.
+fn one_guess_per_group(out: &mut Vec<RerunForecast>) {
+    let is_guess = |f: &RerunForecast| matches!(f.basis, RerunBasis::Cadence { .. });
+    let dated: HashSet<String> = out
+        .iter()
+        .filter(|f| !is_guess(f) && !matches!(f.next, Resolution::Unlisted))
+        .map(|f| f.skin_group_id.clone())
+        .collect();
+    let mut guessed: HashSet<String> = HashSet::new();
+    out.retain(|f| {
+        !is_guess(f)
+            || (!dated.contains(&f.skin_group_id) && guessed.insert(f.skin_group_id.clone()))
+    });
 }
 
 fn review_pool(p: &Planner, names: &Names<'_>) -> Vec<ReviewOutfit> {
@@ -459,5 +479,94 @@ fn build(p: &Planner) -> SkinsResponse {
         group_art: art.map,
         model: p.models.general.clone(),
         yearly: p.models.yearly.clone(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn forecast(group: &str, next: Resolution, basis: RerunBasis) -> RerunForecast {
+        RerunForecast {
+            skin_group_id: group.to_string(),
+            skin_group_name: group.to_string(),
+            skin_ids: vec![],
+            skins: vec![],
+            windows: vec![],
+            last_seen: 0,
+            next,
+            basis,
+        }
+    }
+
+    fn cadence() -> RerunBasis {
+        RerunBasis::Cadence {
+            en_last: 0,
+            n: 1,
+            median_days: 343.0,
+            p25_days: 182.0,
+            p75_days: 362.0,
+            own_gap_days: None,
+        }
+    }
+
+    fn listing() -> RerunBasis {
+        RerunBasis::CnListing {
+            cn_start: 0,
+            cn_end: 0,
+            anchor: None,
+        }
+    }
+
+    fn estimated(en_start: i64) -> Resolution {
+        Resolution::Estimated {
+            en_start,
+            lo: en_start,
+            hi: en_start,
+        }
+    }
+
+    fn kinds(out: &[RerunForecast]) -> Vec<(&str, bool)> {
+        out.iter()
+            .map(|f| {
+                (
+                    f.skin_group_id.as_str(),
+                    matches!(f.basis, RerunBasis::Cadence { .. }),
+                )
+            })
+            .collect()
+    }
+
+    #[test]
+    fn cadence_yields_to_a_listing_dated_forecast() {
+        // Achievement Star/III on 2026-10-09: cadence put it on a Mar 2 store
+        // sale, the CN listing on the Feb 25 event, and Leizi sold twice.
+        let mut out = vec![
+            forecast("2024#game", estimated(1_803_992_400), cadence()),
+            forecast("2024#game", estimated(1_804_107_600), listing()),
+            forecast("2025#game", estimated(1_816_862_400), cadence()),
+        ];
+        one_guess_per_group(&mut out);
+        assert_eq!(kinds(&out), vec![("2024#game", false), ("2025#game", true)]);
+    }
+
+    #[test]
+    fn a_group_keeps_one_cadence_guess() {
+        let mut out = vec![
+            forecast("g", estimated(1), cadence()),
+            forecast("g", estimated(1), cadence()),
+        ];
+        one_guess_per_group(&mut out);
+        assert_eq!(kinds(&out), vec![("g", true)]);
+    }
+
+    #[test]
+    fn an_unlisted_forecast_does_not_drop_the_guess() {
+        let mut out = vec![
+            forecast("g", Resolution::Unlisted, listing()),
+            forecast("g", estimated(1), cadence()),
+        ];
+        one_guess_per_group(&mut out);
+        assert_eq!(kinds(&out), vec![("g", false), ("g", true)]);
     }
 }
