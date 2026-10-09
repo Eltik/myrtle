@@ -263,6 +263,10 @@ pub async fn ban_user(
     if user.id == ctx.framework().bot_id {
         return Err("I can't ban myself.".into());
     }
+    // The owner, member and role lookups are several round-trips; don't race the 3 s
+    // interaction window.
+    ctx.defer_ephemeral().await?;
+    crate::checks::check_hierarchy(ctx, guild, user.id, "ban").await?;
 
     let dmd = delete_message_days.unwrap_or(0);
     if dmd > 7 {
@@ -388,6 +392,10 @@ pub async fn kick_user(
     if user.id == ctx.framework().bot_id {
         return Err("I can't kick myself.".into());
     }
+    // The owner, member and role lookups are several round-trips; don't race the 3 s
+    // interaction window.
+    ctx.defer_ephemeral().await?;
+    crate::checks::check_hierarchy(ctx, guild, user.id, "kick").await?;
 
     match reason.as_deref() {
         Some(r) => guild
