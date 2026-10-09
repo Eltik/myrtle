@@ -32,7 +32,7 @@ pub fn parse_server(s: &str) -> Result<Server, ApiError> {
 pub async fn send_code(state: &AppState, email: &str, server: Server) -> Result<(), ApiError> {
     if let Err(e) = yostar::send_code(&state.http_client, email, server).await {
         tracing::warn!(
-            email = %email,
+            email = %mask_identifier(email),
             server = server.as_str(),
             error = ?e,
             "yostar send_code failed"
@@ -118,7 +118,7 @@ pub async fn login(
         Ok(r) => r,
         Err(e) => {
             tracing::warn!(
-                email = %email,
+                email = %mask_identifier(email),
                 server = server.as_str(),
                 error = ?e,
                 "yostar login failed"
