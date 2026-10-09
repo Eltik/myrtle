@@ -467,6 +467,7 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
     const onDownload = useCallback(async () => {
         try {
             const res = await fetch(imageSrc);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const blob = await res.blob();
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");

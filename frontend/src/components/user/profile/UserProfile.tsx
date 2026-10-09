@@ -204,7 +204,11 @@ export function UserProfile() {
     const loadTabChunk = useCallback((tab: TabId) => {
         const load = TAB_CHUNKS[tab];
         if (!load) return;
-        void load().then(() => setLoadedChunks((prev) => (prev.has(tab) ? prev : new Set(prev).add(tab))));
+        // A failed chunk is only logged here: the rendered tab's own lazy() import rejects too
+        // and reaches the error boundary, so this prefetch must not add an unhandled rejection.
+        void load()
+            .then(() => setLoadedChunks((prev) => (prev.has(tab) ? prev : new Set(prev).add(tab))))
+            .catch((e) => console.error("Failed to load profile tab chunk", tab, e));
     }, []);
     useEffect(() => {
         if (activeTab) loadTabChunk(activeTab);
