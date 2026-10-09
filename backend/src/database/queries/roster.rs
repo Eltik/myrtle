@@ -52,6 +52,9 @@ pub async fn sync_user_data(
     nick_number: Option<&str>,
     enemies: &serde_json::Value,
 ) -> Result<(), sqlx::Error> {
+    // One sync, one transaction: the procedure and the originite update land
+    // together or not at all (an early `?` drops `tx`, which rolls back).
+    let mut tx = pool.begin().await?;
     sqlx::query(
         "CALL sp_sync_user_data($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)"
     )
@@ -78,7 +81,7 @@ pub async fn sync_user_data(
     .bind(supports)
     .bind(nick_number)
     .bind(enemies)
-    .execute(pool)
+    .execute(&mut *tx)
     .await?;
     sqlx::query(
         "UPDATE user_status SET originite = $3 WHERE user_id = (SELECT id FROM users WHERE uid = $1 AND server_id = $2)",
@@ -91,8 +94,9 @@ pub async fn sync_user_data(
             .and_then(serde_json::Value::as_i64)
             .map(|v| v as i32),
     )
-    .execute(pool)
+    .execute(&mut *tx)
     .await?;
+    tx.commit().await?;
     Ok(())
 }
 
