@@ -538,6 +538,7 @@ Tier-list operations use a 4-level hierarchy - **View → Edit → Publish → A
 
 | Variable | Default | Description |
 |----------|---------|-------------|
+| `HOST` | `0.0.0.0` | Bind interface. Set `127.0.0.1` to keep a local dev backend off the network |
 | `PORT` | `3060` | Bind port |
 | `ASSETS_DIR` | `../assets/output` | Extracted assets root; game data is `{ASSETS_DIR}/{server}` |
 | `SERVERS` | `en` | Comma-separated servers to load. The first is the default |

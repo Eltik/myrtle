@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use axum::Router;
 use axum::body::Bytes;
 use axum::extract::State;
@@ -90,8 +90,13 @@ pub async fn run(state: AppState) -> Result<()> {
         .ok()
         .and_then(|p| p.parse::<u16>().ok())
         .unwrap_or(3060);
-    let listener = tokio::net::TcpListener::bind(("0.0.0.0", port)).await?;
+    let host_var = std::env::var("HOST").ok();
+    let host = bind_host(host_var.as_deref());
+    let listener = tokio::net::TcpListener::bind((host, port))
+        .await
+        .with_context(|| format!("binding {host}:{port}"))?;
     tracing::info!(
+        host,
         port,
         cpu_permits = cpu::permits(),
         "listening; metrics on /metrics, docs on /docs"
@@ -122,6 +127,20 @@ pub async fn run(state: AppState) -> Result<()> {
     Ok(())
 }
 
+/// The interface the listener binds when `HOST` is unset: every interface, which
+/// is what the server always bound and what a container needs to be reachable.
+const DEFAULT_HOST: &str = "0.0.0.0";
+
+/// The bind host from the raw `HOST` value. Unset or blank -> [`DEFAULT_HOST`].
+/// Anything else is handed to the bind as written (an IP or a resolvable name),
+/// so a bad value fails startup instead of quietly widening to every interface.
+fn bind_host(raw: Option<&str>) -> &str {
+    match raw.map(str::trim) {
+        Some(host) if !host.is_empty() => host,
+        _ => DEFAULT_HOST,
+    }
+}
+
 /// How long the graceful drain may run past the shutdown signal.
 const SHUTDOWN_GRACE: std::time::Duration = std::time::Duration::from_secs(5);
 
@@ -146,5 +165,35 @@ async fn shutdown_signal() {
     tokio::select! {
         () = ctrl_c => tracing::info!("received Ctrl+C, shutting down"),
         () = terminate => tracing::info!("received SIGTERM, shutting down"),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{DEFAULT_HOST, bind_host};
+
+    #[test]
+    fn unset_or_blank_host_binds_every_interface() {
+        assert_eq!(DEFAULT_HOST, "0.0.0.0");
+        assert_eq!(bind_host(None), "0.0.0.0");
+        assert_eq!(bind_host(Some("")), "0.0.0.0");
+        assert_eq!(bind_host(Some("  ")), "0.0.0.0");
+    }
+
+    #[test]
+    fn a_set_host_is_used_as_written() {
+        assert_eq!(bind_host(Some("127.0.0.1")), "127.0.0.1");
+        assert_eq!(bind_host(Some(" 127.0.0.1 ")), "127.0.0.1");
+        assert_eq!(bind_host(Some("::1")), "::1");
+        assert_eq!(bind_host(Some("localhost")), "localhost");
+    }
+
+    #[tokio::test]
+    async fn a_loopback_host_binds_only_loopback() {
+        let listener = tokio::net::TcpListener::bind((bind_host(Some("127.0.0.1")), 0))
+            .await
+            .expect("bind loopback");
+        let addr = listener.local_addr().expect("local addr");
+        assert!(addr.ip().is_loopback(), "{addr}");
     }
 }
