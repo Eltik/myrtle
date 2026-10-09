@@ -207,6 +207,9 @@ pub struct AppConfig {
     /// pipeline runs its own WS (typically a distinct port), so reloads are
     /// routed to the matching [`ServerData`].
     pub asset_ws_urls: HashMap<Server, String>,
+    /// Role gates re-read the caller's stored role (`RoleCheckedUser`). On
+    /// unless `DISABLE_ROLE_RECHECK` is set, which restores claim-only gates.
+    pub role_recheck: bool,
 }
 
 impl AppConfig {
@@ -238,6 +241,8 @@ impl AppConfig {
             servers,
             default_server,
             asset_ws_urls: parse_asset_ws_urls(default_server),
+            role_recheck: !std::env::var("DISABLE_ROLE_RECHECK")
+                .is_ok_and(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "yes")),
         }
     }
 }

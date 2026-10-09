@@ -4,7 +4,7 @@ use axum::http::StatusCode;
 use serde::Deserialize;
 
 use crate::app::error::ApiError;
-use crate::app::extractors::auth::{AuthUser, MaybeAuthUser};
+use crate::app::extractors::auth::{AuthUser, MaybeRoleCheckedUser, RoleCheckedUser};
 use crate::app::routes::tier_lists::ServerQuery;
 use crate::app::services::grid::{self, Grid, GridInput, GridListResponse, GridSummary};
 use crate::app::state::AppState;
@@ -108,7 +108,7 @@ pub async fn mine(
 )]
 pub async fn get(
     State(state): State<AppState>,
-    auth: MaybeAuthUser,
+    auth: MaybeRoleCheckedUser,
     Path(slug): Path<String>,
     Query(query): Query<ServerQuery>,
 ) -> Result<Json<Grid>, ApiError> {
@@ -144,7 +144,7 @@ pub async fn get(
 )]
 pub async fn create(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Query(query): Query<ServerQuery>,
     Json(body): Json<GridInput>,
 ) -> Result<(StatusCode, Json<Grid>), ApiError> {
@@ -186,7 +186,7 @@ pub async fn create(
 )]
 pub async fn update(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path(slug): Path<String>,
     Query(query): Query<ServerQuery>,
     Json(body): Json<GridInput>,
@@ -226,7 +226,7 @@ pub async fn update(
 )]
 pub async fn delete(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path(slug): Path<String>,
 ) -> Result<StatusCode, ApiError> {
     grid::delete(&state, &slug, auth.user_uuid()?, auth.role).await?;
@@ -258,7 +258,7 @@ pub async fn delete(
 )]
 pub async fn fork(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path(slug): Path<String>,
     Query(query): Query<ServerQuery>,
 ) -> Result<(StatusCode, Json<Grid>), ApiError> {

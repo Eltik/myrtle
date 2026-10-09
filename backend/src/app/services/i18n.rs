@@ -8,7 +8,7 @@ use uuid::Uuid;
 use crate::app::cache::keys::CacheKey;
 use crate::app::cache::{CachedJson, cached_json};
 use crate::app::error::{ApiError, FieldError};
-use crate::app::extractors::auth::AuthUser;
+use crate::app::extractors::auth::{AuthUser, RoleCheckedUser};
 use crate::app::state::AppState;
 use crate::core::auth::permissions::Permission;
 use crate::database::models::i18n::{
@@ -168,10 +168,10 @@ pub async fn get_catalog(
 
 /// Super-admins pass; anyone else needs a `translation_permissions` row for the
 /// locale that grants `required`. Read per request, so a new grant works on the
-/// next call, unlike `users.role`, which rides the JWT.
+/// next call, unlike a promotion in `users.role`, which waits for the next login.
 pub async fn assert_can_write(
     state: &AppState,
-    auth: &AuthUser,
+    auth: &RoleCheckedUser,
     locale: &str,
     required: Permission,
 ) -> Result<Uuid, ApiError> {
@@ -202,7 +202,10 @@ pub async fn assert_can_write(
 /// Whether the caller may open the admin translation surface: a staff role, or any
 /// single grant (otherwise its holder couldn't reach the screen that spends it).
 /// Read per request from the database, like the grants.
-pub async fn can_access_admin_panel(state: &AppState, auth: &AuthUser) -> Result<bool, ApiError> {
+pub async fn can_access_admin_panel(
+    state: &AppState,
+    auth: &RoleCheckedUser,
+) -> Result<bool, ApiError> {
     if auth.role.can_access_admin_panel() {
         return Ok(true);
     }
@@ -214,7 +217,10 @@ pub async fn can_access_admin_panel(state: &AppState, auth: &AuthUser) -> Result
 
 /// The locales this caller may edit, for the admin UI's locale picker. A
 /// super-admin gets every locale; anyone else gets exactly their grants.
-pub async fn writable_locales(state: &AppState, auth: &AuthUser) -> Result<Vec<String>, ApiError> {
+pub async fn writable_locales(
+    state: &AppState,
+    auth: &RoleCheckedUser,
+) -> Result<Vec<String>, ApiError> {
     if auth.role.is_super_admin() {
         return Ok(queries::list_locales(&state.db, false)
             .await?
@@ -752,7 +758,7 @@ pub async fn sync_source_catalog(
 /// else sees just their own rows.
 pub async fn list_permissions(
     state: &AppState,
-    auth: &AuthUser,
+    auth: &RoleCheckedUser,
     locale: Option<&str>,
 ) -> Result<Vec<TranslationGrant>, ApiError> {
     let only = if auth.role.is_tier_list_admin() {

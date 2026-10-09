@@ -4,7 +4,7 @@ use axum::{
 };
 use serde::Deserialize;
 
-use crate::app::extractors::auth::{AuthUser, MaybeAuthUser};
+use crate::app::extractors::auth::{MaybeAuthUser, RoleCheckedUser};
 use crate::app::routes::{
     StatusOk, ensure_tab_visible, resolve_public_profile, resolve_uid_for_tab,
 };
@@ -199,9 +199,11 @@ pub struct SetRoleRequest {
 /// Super-admin only, and it refuses to change a super-admin's own row: an
 /// accidental self-demotion here would need the CLI to undo.
 ///
-/// The role reaches `AuthUser` from the JWT, so the target keeps their old
-/// privileges until their token refreshes. Per-locale translation grants are
-/// read from the database per request and take effect immediately.
+/// Role gates act on the lower of the token's role claim and this row, so a
+/// demotion takes effect on the target's next request, while a promotion waits
+/// for their next login (with `DISABLE_ROLE_RECHECK` set, both wait). Per-locale
+/// translation grants are read from the database per request and take effect
+/// immediately.
 #[utoipa::path(
     put,
     path = "/admin/users/{user_id}/role",
@@ -224,7 +226,7 @@ pub struct SetRoleRequest {
 )]
 pub async fn set_user_role(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     axum::extract::Path(user_id): axum::extract::Path<uuid::Uuid>,
     Json(body): Json<SetRoleRequest>,
 ) -> Result<Json<StatusOk>, ApiError> {
@@ -318,7 +320,7 @@ pub struct AdminUsersPage {
 )]
 pub async fn list_users(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Query(params): Query<AdminUsersParams>,
 ) -> Result<Json<AdminUsersPage>, ApiError> {
     use crate::database::queries::admin_users::{AdminUserRole, AdminUserSearch};

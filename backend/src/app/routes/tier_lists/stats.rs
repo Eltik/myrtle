@@ -13,8 +13,8 @@ use sha2::Sha256;
 use uuid::Uuid;
 
 use crate::app::error::ApiError;
-use crate::app::extractors::auth::AuthUser;
 use crate::app::extractors::auth::MaybeAuthUser;
+use crate::app::extractors::auth::{AuthUser, RoleCheckedUser};
 use crate::app::routes::{StatusOk, ok_status};
 use crate::app::services::tier_list::check_permission;
 use crate::app::services::tier_list::invalidate_detail;
@@ -285,7 +285,7 @@ pub struct SetFlairRequest {
 )]
 pub async fn set_flair(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path(slug): Path<String>,
     Json(body): Json<SetFlairRequest>,
 ) -> Result<Json<StatusOk>, ApiError> {
@@ -345,7 +345,7 @@ pub struct SetVisibilityRequest {
 )]
 pub async fn set_visibility(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path(slug): Path<String>,
     Json(body): Json<SetVisibilityRequest>,
 ) -> Result<Json<VisibilityState>, ApiError> {
@@ -387,7 +387,7 @@ pub struct CreateFlairRequest {
 )]
 pub async fn create_flair(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Json(body): Json<CreateFlairRequest>,
 ) -> Result<Json<TierListFlair>, ApiError> {
     if !auth.role.is_tier_list_admin() {

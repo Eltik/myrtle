@@ -326,15 +326,12 @@ pub async fn verify(
     // the extractor already validated the token; the role is re-read because
     // the JWT claim froze it at login (see the fn doc).
     let db_role: Option<String> = if let Ok(uuid) = uuid::Uuid::parse_str(&auth.user_id) {
-        sqlx::query_scalar::<_, String>("SELECT role FROM users WHERE id = $1")
-            .bind(uuid)
-            .fetch_optional(&state.db)
-            .await?
+        queries::users::find_role(&state.db, uuid).await?
     } else {
         None
     };
 
-    let role = db_role.unwrap_or_else(|| auth.role.to_string());
+    let role = db_role.unwrap_or_else(|| auth.token_role.to_string());
 
     // Same gate as the `/admin` route tree, so the two can't disagree. Uses the DB
     // role (the JWT claim freezes at login), OR any translation grant: a grant is

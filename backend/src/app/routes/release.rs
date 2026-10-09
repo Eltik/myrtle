@@ -6,7 +6,7 @@ use axum::{
 use crate::{
     app::{
         error::ApiError,
-        extractors::auth::AuthUser,
+        extractors::auth::{AuthUser, RoleCheckedUser},
         routes::{StatusOk, ok_status},
         services::release as svc,
         state::AppState,
@@ -103,13 +103,13 @@ pub async fn lag(State(state): State<AppState>) -> Result<Json<LagResponse>, Api
 )]
 pub async fn list_overrides(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
 ) -> Result<Json<Vec<ReleaseOverride>>, ApiError> {
     require_super_admin(&auth)?;
     Ok(Json(svc::list_overrides(&state).await?))
 }
 
-fn require_super_admin(auth: &AuthUser) -> Result<(), ApiError> {
+fn require_super_admin(auth: &RoleCheckedUser) -> Result<(), ApiError> {
     if auth.role == GlobalRole::SuperAdmin {
         Ok(())
     } else {
@@ -137,7 +137,7 @@ fn require_super_admin(auth: &AuthUser) -> Result<(), ApiError> {
 )]
 pub async fn put_override(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Json(body): Json<PutOverride>,
 ) -> Result<Json<ReleaseOverride>, ApiError> {
     require_super_admin(&auth)?;
@@ -168,7 +168,7 @@ pub async fn put_override(
 )]
 pub async fn delete_override(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path((kind, cn_id)): Path<(String, String)>,
 ) -> Result<Json<StatusOk>, ApiError> {
     require_super_admin(&auth)?;

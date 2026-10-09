@@ -4,7 +4,7 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::app::error::ApiError;
-use crate::app::extractors::auth::AuthUser;
+use crate::app::extractors::auth::{AuthUser, RoleCheckedUser};
 use crate::app::routes::{StatusOk, ok_status};
 use crate::app::state::AppState;
 use crate::database::models::tier_list::{GrantedTierList, TierListGrant, TierListPermission};
@@ -38,7 +38,7 @@ use crate::database::queries::tier_lists::revoke_permission;
 )]
 pub async fn list(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path(slug): Path<String>,
 ) -> Result<Json<Vec<TierListPermission>>, ApiError> {
     if !auth.role.is_tier_list_admin() {
@@ -82,7 +82,7 @@ pub struct GrantRequest {
 )]
 pub async fn grant(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path(slug): Path<String>,
     Json(body): Json<GrantRequest>,
 ) -> Result<Json<StatusOk>, ApiError> {
@@ -129,7 +129,7 @@ pub async fn grant(
 )]
 pub async fn revoke(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path((slug, target_user_id, permission)): Path<(String, Uuid, String)>,
 ) -> Result<Json<StatusOk>, ApiError> {
     if !auth.role.is_tier_list_admin() {
@@ -170,7 +170,7 @@ pub struct AllGrantsQuery {
 )]
 pub async fn list_all(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Query(params): Query<AllGrantsQuery>,
 ) -> Result<Json<Vec<TierListGrant>>, ApiError> {
     if !auth.role.is_tier_list_admin() {

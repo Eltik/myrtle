@@ -3,7 +3,7 @@ use axum::extract::{Query, State};
 use serde::Deserialize;
 
 use crate::app::error::ApiError;
-use crate::app::extractors::auth::AuthUser;
+use crate::app::extractors::auth::RoleCheckedUser;
 use crate::app::routes::{StatusOk, ok_status};
 use crate::app::services::i18n as service;
 use crate::app::state::AppState;
@@ -15,7 +15,7 @@ use crate::database::models::i18n::{
 /// Reading the translation workspace: any staff role (so a tier-list admin can watch
 /// progress without a locale grant), or any grant holder whatever their global
 /// role. Writes are gated per locale in the service.
-async fn assert_can_read(state: &AppState, auth: &AuthUser) -> Result<(), ApiError> {
+async fn assert_can_read(state: &AppState, auth: &RoleCheckedUser) -> Result<(), ApiError> {
     if service::can_access_admin_panel(state, auth).await? {
         Ok(())
     } else {
@@ -42,7 +42,7 @@ async fn assert_can_read(state: &AppState, auth: &AuthUser) -> Result<(), ApiErr
 )]
 pub async fn list_locales(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
 ) -> Result<Json<Vec<Locale>>, ApiError> {
     assert_can_read(&state, &auth).await?;
     Ok(Json(service::list_locales(&state, false).await?))
@@ -67,7 +67,7 @@ pub async fn list_locales(
 )]
 pub async fn writable_locales(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
 ) -> Result<Json<Vec<String>>, ApiError> {
     assert_can_read(&state, &auth).await?;
     Ok(Json(service::writable_locales(&state, &auth).await?))
@@ -106,7 +106,7 @@ pub struct UpsertLocaleRequest {
 )]
 pub async fn upsert_locale(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Json(body): Json<UpsertLocaleRequest>,
 ) -> Result<Json<Locale>, ApiError> {
     if !auth.role.is_super_admin() {
@@ -171,7 +171,7 @@ pub struct ListMessagesQuery {
 )]
 pub async fn list_messages(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Query(params): Query<ListMessagesQuery>,
 ) -> Result<Json<service::TranslationListResponse>, ApiError> {
     assert_can_read(&state, &auth).await?;
@@ -225,7 +225,7 @@ pub struct UpdateMessageRequest {
 )]
 pub async fn update_message(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Json(body): Json<UpdateMessageRequest>,
 ) -> Result<Json<TranslationEntry>, ApiError> {
     let user_id = service::assert_can_write(&state, &auth, &body.locale, Permission::Edit).await?;
@@ -262,7 +262,7 @@ pub struct ClearMessageRequest {
 )]
 pub async fn clear_message(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Json(body): Json<ClearMessageRequest>,
 ) -> Result<Json<StatusOk>, ApiError> {
     let user_id = service::assert_can_write(&state, &auth, &body.locale, Permission::Edit).await?;
@@ -288,7 +288,7 @@ pub async fn clear_message(
 )]
 pub async fn namespaces(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
 ) -> Result<Json<Vec<String>>, ApiError> {
     assert_can_read(&state, &auth).await?;
     Ok(Json(service::list_namespaces(&state).await?))
@@ -311,7 +311,7 @@ pub async fn namespaces(
 )]
 pub async fn progress(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
 ) -> Result<Json<Vec<service::LocaleProgress>>, ApiError> {
     assert_can_read(&state, &auth).await?;
     Ok(Json(service::locale_progress(&state).await?))
@@ -351,7 +351,7 @@ pub struct AuditQuery {
 )]
 pub async fn audit_log(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Query(params): Query<AuditQuery>,
 ) -> Result<Json<service::TranslationAuditResponse>, ApiError> {
     assert_can_read(&state, &auth).await?;
@@ -395,7 +395,7 @@ pub struct EntryAuditQuery {
 )]
 pub async fn entry_audit_log(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Query(params): Query<EntryAuditQuery>,
 ) -> Result<Json<Vec<UiMessageAuditEntry>>, ApiError> {
     assert_can_read(&state, &auth).await?;
@@ -434,7 +434,7 @@ pub struct SyncRequest {
 )]
 pub async fn sync(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Json(body): Json<SyncRequest>,
 ) -> Result<Json<service::SyncResult>, ApiError> {
     if !auth.role.is_super_admin() {
@@ -475,7 +475,7 @@ pub struct OverridesQuery {
 )]
 pub async fn list_overrides(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Query(params): Query<OverridesQuery>,
 ) -> Result<Json<Vec<GamedataOverride>>, ApiError> {
     assert_can_read(&state, &auth).await?;
@@ -514,7 +514,7 @@ pub struct UpsertOverrideRequest {
 )]
 pub async fn put_override(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Json(body): Json<UpsertOverrideRequest>,
 ) -> Result<Json<StatusOk>, ApiError> {
     let user_id = service::assert_can_write(&state, &auth, &body.locale, Permission::Edit).await?;
@@ -564,7 +564,7 @@ pub struct DeleteOverrideRequest {
 )]
 pub async fn delete_override(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Json(body): Json<DeleteOverrideRequest>,
 ) -> Result<Json<StatusOk>, ApiError> {
     service::assert_can_write(&state, &auth, &body.locale, Permission::Edit).await?;

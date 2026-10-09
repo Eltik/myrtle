@@ -6,7 +6,7 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::app::error::ApiError;
-use crate::app::extractors::auth::AuthUser;
+use crate::app::extractors::auth::{AuthUser, RoleCheckedUser};
 use crate::app::routes::{StatusOk, ok_status};
 use crate::app::services::i18n as service;
 use crate::app::state::AppState;
@@ -18,7 +18,7 @@ use crate::database::models::i18n::TranslationGrant;
 /// grants live in a table.
 async fn assert_can_manage(
     state: &AppState,
-    auth: &AuthUser,
+    auth: &RoleCheckedUser,
     locale: &str,
 ) -> Result<Uuid, ApiError> {
     service::assert_can_write(state, auth, locale, Permission::Admin).await
@@ -55,7 +55,7 @@ pub struct ListQuery {
 )]
 pub async fn list(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Query(params): Query<ListQuery>,
 ) -> Result<Json<Vec<TranslationGrant>>, ApiError> {
     if !service::can_access_admin_panel(&state, &auth).await? {
@@ -119,7 +119,7 @@ pub struct GrantRequest {
 )]
 pub async fn grant(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Json(body): Json<GrantRequest>,
 ) -> Result<Json<StatusOk>, ApiError> {
     let granted_by = assert_can_manage(&state, &auth, &body.locale).await?;
@@ -148,7 +148,7 @@ pub async fn grant(
 )]
 pub async fn revoke(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Json(body): Json<GrantRequest>,
 ) -> Result<Json<StatusOk>, ApiError> {
     assert_can_manage(&state, &auth, &body.locale).await?;

@@ -3,7 +3,7 @@ use axum::extract::{Path, Query, State};
 use serde::Deserialize;
 
 use crate::app::error::ApiError;
-use crate::app::extractors::auth::AuthUser;
+use crate::app::extractors::auth::RoleCheckedUser;
 use crate::app::services;
 use crate::app::services::operator_notes::GlobalAuditLogResponse;
 use crate::app::services::operator_notes::get_all;
@@ -105,7 +105,10 @@ pub struct GlobalAuditQuery {
 /// Whose rows the global audit returns: `None` for everyone's. A tier list
 /// admin reads anyone's; a tier list editor reads only their own, so their
 /// `actor` defaults to themselves and naming anyone else is 403.
-fn audit_actor_scope(auth: &AuthUser, actor: Option<&str>) -> Result<Option<uuid::Uuid>, ApiError> {
+fn audit_actor_scope(
+    auth: &RoleCheckedUser,
+    actor: Option<&str>,
+) -> Result<Option<uuid::Uuid>, ApiError> {
     if !auth.role.is_any_admin_role() {
         return Err(ApiError::Forbidden);
     }
@@ -153,7 +156,7 @@ fn audit_actor_scope(auth: &AuthUser, actor: Option<&str>) -> Result<Option<uuid
 )]
 pub async fn global_audit_log(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Query(params): Query<GlobalAuditQuery>,
 ) -> Result<Json<GlobalAuditLogResponse>, ApiError> {
     let actor = audit_actor_scope(&auth, params.actor.as_deref())?;
@@ -198,7 +201,7 @@ pub struct UpdateNoteRequest {
 )]
 pub async fn update(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path(operator_id): Path<String>,
     Json(body): Json<UpdateNoteRequest>,
 ) -> Result<Json<OperatorNote>, ApiError> {
@@ -228,18 +231,22 @@ pub async fn update(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::app::extractors::auth::AuthUser;
     use crate::core::auth::permissions::GlobalRole;
 
     const ME: &str = "00000000-0000-0000-0000-000000000001";
     const OTHER: &str = "00000000-0000-0000-0000-000000000002";
 
-    fn auth(role: GlobalRole) -> AuthUser {
-        AuthUser {
-            user_id: ME.to_owned(),
-            uid: "1".to_owned(),
-            server: "en".to_owned(),
+    fn auth(role: GlobalRole) -> RoleCheckedUser {
+        RoleCheckedUser::checked_for_test(
+            AuthUser {
+                user_id: ME.to_owned(),
+                uid: "1".to_owned(),
+                server: "en".to_owned(),
+                token_role: role,
+            },
             role,
-        }
+        )
     }
 
     fn id(s: &str) -> uuid::Uuid {

@@ -1394,7 +1394,7 @@
           "admin"
         ],
         "summary": "`PUT /admin/users/{user_id}/role`",
-        "description": "The admin panel could display a role but never assign one; this is that\nroute (the Translator grant needs it).\n\nSuper-admin only, and it refuses to change a super-admin's own row: an\naccidental self-demotion here would need the CLI to undo.\n\nThe role reaches `AuthUser` from the JWT, so the target keeps their old\nprivileges until their token refreshes. Per-locale translation grants are\nread from the database per request and take effect immediately.",
+        "description": "The admin panel could display a role but never assign one; this is that\nroute (the Translator grant needs it).\n\nSuper-admin only, and it refuses to change a super-admin's own row: an\naccidental self-demotion here would need the CLI to undo.\n\nRole gates act on the lower of the token's role claim and this row, so a\ndemotion takes effect on the target's next request, while a promotion waits\nfor their next login (with `DISABLE_ROLE_RECHECK` set, both wait). Per-locale\ntranslation grants are read from the database per request and take effect\nimmediately.",
         "operationId": "set_user_role",
         "parameters": [
           {

@@ -1777,6 +1777,7 @@ fn test_state_on(dir: &Path, database_url: &str) -> backend::app::state::AppStat
         servers: vec![Server::EN],
         default_server: Server::EN,
         asset_ws_urls: HashMap::new(),
+        role_recheck: true,
     };
     AppState::new(
         sqlx::postgres::PgPoolOptions::new()

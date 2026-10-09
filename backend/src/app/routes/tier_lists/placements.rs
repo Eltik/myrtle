@@ -4,7 +4,7 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::app::error::ApiError;
-use crate::app::extractors::auth::AuthUser;
+use crate::app::extractors::auth::RoleCheckedUser;
 use crate::app::routes::{StatusOk, ok_status};
 use crate::app::services::tier_list::find_and_authorize;
 use crate::app::services::tier_list::invalidate_detail;
@@ -57,7 +57,7 @@ pub struct AddPlacementRequest {
 )]
 pub async fn add(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path(slug): Path<String>,
     Json(body): Json<AddPlacementRequest>,
 ) -> Result<Json<TierPlacement>, ApiError> {
@@ -123,7 +123,7 @@ pub struct UpdateDescriptionRequest {
 )]
 pub async fn update_description(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path((slug, kind, id)): Path<(String, EntityKind, String)>,
     Json(body): Json<UpdateDescriptionRequest>,
 ) -> Result<Json<TierPlacement>, ApiError> {
@@ -172,7 +172,7 @@ pub async fn update_description(
 )]
 pub async fn remove(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path((slug, kind, id)): Path<(String, EntityKind, String)>,
 ) -> Result<Json<StatusOk>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;
@@ -226,7 +226,7 @@ pub struct MovePlacementRequest {
 )]
 pub async fn move_to(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path((slug, kind, id)): Path<(String, EntityKind, String)>,
     Json(body): Json<MovePlacementRequest>,
 ) -> Result<Json<TierPlacement>, ApiError> {
