@@ -63,7 +63,8 @@ export const updateOperatorNoteFn = createServerFn({ method: "POST" })
 export const getOperatorNoteAuditLogFn = createServerFn({ method: "GET" })
     .inputValidator((operatorId: string) => operatorId)
     .handler(async ({ data: operatorId }): Promise<IOperatorNoteAuditEntry[]> => {
-        const res = await backendFetch(`/operator-notes/${encodeURIComponent(operatorId)}/audit`);
+        const token = requireSiteToken();
+        const res = await backendFetch(`/operator-notes/${encodeURIComponent(operatorId)}/audit`, { bearerToken: token });
         if (!res.ok) throw await parseError(res);
         return (await res.json()) as IOperatorNoteAuditEntry[];
     });

@@ -5751,6 +5751,7 @@
           "notes"
         ],
         "summary": "Edit history for one operator's note.",
+        "description": "The entries name each editor's account id and nickname, so reading them\ntakes the same admin role as the global audit.",
         "operationId": "operator_note_audit_log",
         "parameters": [
           {
@@ -5777,6 +5778,12 @@
               }
             }
           },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
@@ -5789,7 +5796,15 @@
           "503": {
             "$ref": "#/components/responses/ServiceUnavailable"
           }
-        }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {
+            "service_key": []
+          }
+        ]
       }
     },
     "/api/operators/index": {

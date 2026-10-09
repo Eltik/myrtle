@@ -57,6 +57,9 @@ pub async fn get(
 }
 
 /// Edit history for one operator's note.
+///
+/// The entries name each editor's account id and nickname, so reading them
+/// takes the same admin role as the global audit.
 #[utoipa::path(
     get,
     path = "/operator-notes/{operator_id}/audit",
@@ -65,8 +68,11 @@ pub async fn get(
     params(
         ("operator_id" = String, Path, description = "Operator id.")
     ),
+    security(("bearer_auth" = []), ("service_key" = [])),
     responses(
         (status = 200, description = "Audit entries, newest first.", body = Vec<OperatorNoteAuditEntry>),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 403, response = crate::app::openapi::responses::Forbidden),
         (status = 404, response = crate::app::openapi::responses::NotFound),
         (status = 429, response = crate::app::openapi::responses::RateLimited),
         (status = 500, response = crate::app::openapi::responses::InternalError),
@@ -75,8 +81,12 @@ pub async fn get(
 )]
 pub async fn audit_log(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(operator_id): Path<String>,
 ) -> Result<Json<Vec<OperatorNoteAuditEntry>>, ApiError> {
+    if !auth.role.is_any_admin_role() {
+        return Err(ApiError::Forbidden);
+    }
     let log = get_audit_log(&state, &operator_id).await?;
     Ok(Json(log))
 }
