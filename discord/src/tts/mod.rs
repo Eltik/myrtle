@@ -314,7 +314,7 @@ pub fn on_message(tts: &Arc<Tts>, ctx: &Context, bot_id: UserId, msg: &Message) 
 fn mention_name(guild: &Guild, msg: &Message, m: Mention) -> Option<String> {
     match m {
         Mention::User(id) => {
-            let id = UserId::new(id);
+            let id = UserId::from(id);
             if let Some(member) = guild.members.get(&id) {
                 return Some(member.display_name().to_string());
             }
@@ -326,10 +326,10 @@ fn mention_name(guild: &Guild, msg: &Message, m: Mention) -> Option<String> {
                     .unwrap_or_else(|| user.display_name().to_string()),
             )
         }
-        Mention::Role(id) => guild.roles.get(&RoleId::new(id)).map(|r| r.name.clone()),
+        Mention::Role(id) => guild.roles.get(&RoleId::from(id)).map(|r| r.name.clone()),
         Mention::Channel(id) => guild
             .channels
-            .get(&ChannelId::new(id))
+            .get(&ChannelId::from(id))
             .map(|c| c.name.clone()),
     }
 }

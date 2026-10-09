@@ -5,12 +5,17 @@
 //! insides would otherwise be read as markdown), then `<...>` tokens (mentions, emoji, timestamps,
 //! bracketed links), then masked links, then bare URLs, then markdown symbols, then repeats.
 
+use std::num::NonZeroU64;
+
 /// A `<...>` mention the caller resolves to a spoken name.
+///
+/// The id is non-zero by construction: serenity's `*Id::new` panics on 0, and `<@0>` is
+/// something any member can type.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mention {
-    User(u64),
-    Role(u64),
-    Channel(u64),
+    User(NonZeroU64),
+    Role(NonZeroU64),
+    Channel(NonZeroU64),
 }
 
 /// The word spoken in place of every URL.
@@ -117,20 +122,24 @@ fn angle_token(inner: &str, resolve: &dyn Fn(Mention) -> Option<String>) -> Opti
             .then(|| digits.parse().ok())
             .flatten()
     };
-    let named = |m: Mention| Some(Token::Text(resolve(m).unwrap_or_default()));
+    // A zero id names nothing, so it is dropped like a mention the resolver can't name.
+    let named = |id: u64, mention: fn(NonZeroU64) -> Mention| {
+        let name = NonZeroU64::new(id).and_then(|id| resolve(mention(id)));
+        Some(Token::Text(name.unwrap_or_default()))
+    };
 
     if inner.starts_with("http://") || inner.starts_with("https://") {
         return (!inner.contains(char::is_whitespace)).then(|| Token::Text(LINK_WORD.into()));
     }
     if let Some(rest) = inner.strip_prefix("@&") {
-        return named(Mention::Role(id(rest)?));
+        return named(id(rest)?, Mention::Role);
     }
     if let Some(rest) = inner.strip_prefix('@') {
         let rest = rest.strip_prefix('!').unwrap_or(rest);
-        return named(Mention::User(id(rest)?));
+        return named(id(rest)?, Mention::User);
     }
     if let Some(rest) = inner.strip_prefix('#') {
-        return named(Mention::Channel(id(rest)?));
+        return named(id(rest)?, Mention::Channel);
     }
     if let Some(rest) = inner.strip_prefix("t:") {
         let stamp = rest.split_once(':').map_or(rest, |(t, _)| t);
@@ -495,9 +504,9 @@ mod tests {
 
     fn names(m: Mention) -> Option<String> {
         match m {
-            Mention::User(1) => Some("Amiya".into()),
-            Mention::Role(2) => Some("Doctors".into()),
-            Mention::Channel(3) => Some("general".into()),
+            Mention::User(id) if id.get() == 1 => Some("Amiya".into()),
+            Mention::Role(id) if id.get() == 2 => Some("Doctors".into()),
+            Mention::Channel(id) if id.get() == 3 => Some("general".into()),
             _ => None,
         }
     }
@@ -519,6 +528,23 @@ mod tests {
         // An id the resolver can't name is dropped, never read as digits.
         assert_eq!(say("hey <@999> come").as_deref(), Some("hey come"));
         assert_eq!(say("<@999>"), None);
+    }
+
+    #[test]
+    fn zero_mentions_are_dropped_without_resolving() {
+        let never = |m: Mention| -> Option<String> { panic!("resolver called with {m:?}") };
+        assert_eq!(
+            clean("hi <@0> <@!0> <@&0> <#0> there", &never, 300).as_deref(),
+            Some("hi there")
+        );
+        assert_eq!(clean("<@0>", &never, 300), None);
+        let nick = NameSources {
+            tts_nickname: None,
+            guild_nick: Some("<@0> Doc"),
+            global_name: None,
+            username: "doc",
+        };
+        assert_eq!(speaker_name(&nick, &never), "Doc");
     }
 
     #[test]

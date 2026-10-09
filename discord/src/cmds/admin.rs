@@ -1,4 +1,5 @@
 use std::fmt::Write as _;
+use std::num::NonZeroU64;
 
 use crate::db;
 use crate::types::{Context, Data, Error};
@@ -1233,7 +1234,8 @@ fn parse_color(input: &str) -> Result<Colour, Error> {
 /// Resolve a message reference into an optional channel and a message id.
 ///
 /// Accepts a full message URL (`.../channels/<guild>/<channel>/<message>`), a `channel-message`
-/// id pair, or a bare message id (channel inferred by the caller).
+/// id pair, or a bare message id (channel inferred by the caller). A zero channel or message id
+/// is rejected: serenity ids can't be zero and `*Id::new(0)` panics.
 fn parse_message_ref(input: &str) -> Option<(Option<ChannelId>, MessageId)> {
     let input = input.trim();
 
@@ -1241,24 +1243,26 @@ fn parse_message_ref(input: &str) -> Option<(Option<ChannelId>, MessageId)> {
         let segments: Vec<&str> = input[idx + "/channels/".len()..].split('/').collect();
         // [guild, channel, message]
         if segments.len() >= 3 {
-            let channel = segments[1].parse::<u64>().ok()?;
-            let message = segments[2].parse::<u64>().ok()?;
-            return Some((Some(ChannelId::new(channel)), MessageId::new(message)));
+            let channel = segments[1].parse::<NonZeroU64>().ok()?;
+            let message = segments[2].parse::<NonZeroU64>().ok()?;
+            return Some((Some(ChannelId::from(channel)), MessageId::from(message)));
         }
         return None;
     }
 
     if let Some((channel, message)) = input.split_once('-')
-        && let (Ok(channel), Ok(message)) =
-            (channel.trim().parse::<u64>(), message.trim().parse::<u64>())
+        && let (Ok(channel), Ok(message)) = (
+            channel.trim().parse::<NonZeroU64>(),
+            message.trim().parse::<NonZeroU64>(),
+        )
     {
-        return Some((Some(ChannelId::new(channel)), MessageId::new(message)));
+        return Some((Some(ChannelId::from(channel)), MessageId::from(message)));
     }
 
     input
-        .parse::<u64>()
+        .parse::<NonZeroU64>()
         .ok()
-        .map(|id| (None, MessageId::new(id)))
+        .map(|id| (None, MessageId::from(id)))
 }
 
 /// Build a clickable jump link to a message.
@@ -1345,18 +1349,22 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "MessageId::new with invalid (0) value")]
-    fn a_zero_message_id_panics() {
-        // CURRENT BEHAVIOR, suspected bug: `MessageId::new(0)` panics on zero, so a
-        // pasted "0" (or a URL or pair with a 0 id) panics the command task instead
-        // of being rejected as an invalid reference.
-        let _ = parse_message_ref("0");
-    }
-
-    #[test]
-    #[should_panic(expected = "ChannelId::new with invalid (0) value")]
-    fn a_zero_channel_id_panics() {
-        let _ = parse_message_ref("0-5");
+    fn zero_ids_are_rejected() {
+        for bad in [
+            "0",
+            "0-5",
+            "5-0",
+            "0-0",
+            "https://discord.com/channels/1/0/333",
+            "https://discord.com/channels/1/22/0",
+        ] {
+            assert_eq!(parse_message_ref(bad), None, "{bad:?}");
+        }
+        // The guild segment is not read, so a zero there changes nothing.
+        assert_eq!(
+            parse_message_ref("https://discord.com/channels/0/22/333"),
+            Some((Some(ChannelId::new(22)), MessageId::new(333)))
+        );
     }
 
     #[test]
