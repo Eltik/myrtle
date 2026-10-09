@@ -1019,14 +1019,14 @@ pub const ENUM_MIN_ENUM__TORAPPU_BUILDING_DATA_ROOM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_BUILDING_DATA_ROOM_TYPE: i32 = 8191;
+pub const ENUM_MAX_ENUM__TORAPPU_BUILDING_DATA_ROOM_TYPE: i32 = 16383;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
 pub const ENUM_VALUES_ENUM__TORAPPU_BUILDING_DATA_ROOM_TYPE: [enum__Torappu_BuildingData_RoomType;
-    16] = [
+    17] = [
     enum__Torappu_BuildingData_RoomType::NONE,
     enum__Torappu_BuildingData_RoomType::CONTROL,
     enum__Torappu_BuildingData_RoomType::POWER,
@@ -1040,8 +1040,9 @@ pub const ENUM_VALUES_ENUM__TORAPPU_BUILDING_DATA_ROOM_TYPE: [enum__Torappu_Buil
     enum__Torappu_BuildingData_RoomType::TRADING,
     enum__Torappu_BuildingData_RoomType::WORKSHOP,
     enum__Torappu_BuildingData_RoomType::TRAINING,
-    enum__Torappu_BuildingData_RoomType::FUNCTIONAL,
     enum__Torappu_BuildingData_RoomType::PRIVATE,
+    enum__Torappu_BuildingData_RoomType::RECYCLE,
+    enum__Torappu_BuildingData_RoomType::FUNCTIONAL,
     enum__Torappu_BuildingData_RoomType::ALL,
 ];
 
@@ -1063,12 +1064,13 @@ impl enum__Torappu_BuildingData_RoomType {
     pub const TRADING: Self = Self(512);
     pub const WORKSHOP: Self = Self(1024);
     pub const TRAINING: Self = Self(2048);
-    pub const FUNCTIONAL: Self = Self(3710);
     pub const PRIVATE: Self = Self(4096);
-    pub const ALL: Self = Self(8191);
+    pub const RECYCLE: Self = Self(8192);
+    pub const FUNCTIONAL: Self = Self(11902);
+    pub const ALL: Self = Self(16383);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 8191;
+    pub const ENUM_MAX: i32 = 16383;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CONTROL,
@@ -1083,8 +1085,9 @@ impl enum__Torappu_BuildingData_RoomType {
         Self::TRADING,
         Self::WORKSHOP,
         Self::TRAINING,
-        Self::FUNCTIONAL,
         Self::PRIVATE,
+        Self::RECYCLE,
+        Self::FUNCTIONAL,
         Self::ALL,
     ];
     /// Returns the variant's name or "" if unknown.
@@ -1103,8 +1106,9 @@ impl enum__Torappu_BuildingData_RoomType {
             Self::TRADING => Some("TRADING"),
             Self::WORKSHOP => Some("WORKSHOP"),
             Self::TRAINING => Some("TRAINING"),
-            Self::FUNCTIONAL => Some("FUNCTIONAL"),
             Self::PRIVATE => Some("PRIVATE"),
+            Self::RECYCLE => Some("RECYCLE"),
+            Self::FUNCTIONAL => Some("FUNCTIONAL"),
             Self::ALL => Some("ALL"),
             _ => None,
         }

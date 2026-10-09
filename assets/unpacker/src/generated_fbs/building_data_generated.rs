@@ -13,14 +13,14 @@ pub const ENUM_MIN_ENUM__TORAPPU_BUILDING_DATA_ROOM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_BUILDING_DATA_ROOM_TYPE: i32 = 8191;
+pub const ENUM_MAX_ENUM__TORAPPU_BUILDING_DATA_ROOM_TYPE: i32 = 16383;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
 pub const ENUM_VALUES_ENUM__TORAPPU_BUILDING_DATA_ROOM_TYPE: [enum__Torappu_BuildingData_RoomType;
-    16] = [
+    17] = [
     enum__Torappu_BuildingData_RoomType::NONE,
     enum__Torappu_BuildingData_RoomType::CONTROL,
     enum__Torappu_BuildingData_RoomType::POWER,
@@ -34,8 +34,9 @@ pub const ENUM_VALUES_ENUM__TORAPPU_BUILDING_DATA_ROOM_TYPE: [enum__Torappu_Buil
     enum__Torappu_BuildingData_RoomType::TRADING,
     enum__Torappu_BuildingData_RoomType::WORKSHOP,
     enum__Torappu_BuildingData_RoomType::TRAINING,
-    enum__Torappu_BuildingData_RoomType::FUNCTIONAL,
     enum__Torappu_BuildingData_RoomType::PRIVATE,
+    enum__Torappu_BuildingData_RoomType::RECYCLE,
+    enum__Torappu_BuildingData_RoomType::FUNCTIONAL,
     enum__Torappu_BuildingData_RoomType::ALL,
 ];
 
@@ -57,12 +58,13 @@ impl enum__Torappu_BuildingData_RoomType {
     pub const TRADING: Self = Self(512);
     pub const WORKSHOP: Self = Self(1024);
     pub const TRAINING: Self = Self(2048);
-    pub const FUNCTIONAL: Self = Self(3710);
     pub const PRIVATE: Self = Self(4096);
-    pub const ALL: Self = Self(8191);
+    pub const RECYCLE: Self = Self(8192);
+    pub const FUNCTIONAL: Self = Self(11902);
+    pub const ALL: Self = Self(16383);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 8191;
+    pub const ENUM_MAX: i32 = 16383;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CONTROL,
@@ -77,8 +79,9 @@ impl enum__Torappu_BuildingData_RoomType {
         Self::TRADING,
         Self::WORKSHOP,
         Self::TRAINING,
-        Self::FUNCTIONAL,
         Self::PRIVATE,
+        Self::RECYCLE,
+        Self::FUNCTIONAL,
         Self::ALL,
     ];
     /// Returns the variant's name or "" if unknown.
@@ -97,8 +100,9 @@ impl enum__Torappu_BuildingData_RoomType {
             Self::TRADING => Some("TRADING"),
             Self::WORKSHOP => Some("WORKSHOP"),
             Self::TRAINING => Some("TRAINING"),
-            Self::FUNCTIONAL => Some("FUNCTIONAL"),
             Self::PRIVATE => Some("PRIVATE"),
+            Self::RECYCLE => Some("RECYCLE"),
+            Self::FUNCTIONAL => Some("FUNCTIONAL"),
             Self::ALL => Some("ALL"),
             _ => None,
         }
@@ -12744,6 +12748,414 @@ impl clz_Torappu_BuildingData_PowerRoomBeanT {
         clz_Torappu_BuildingData_PowerRoomBean::create(
             _fbb,
             &clz_Torappu_BuildingData_PowerRoomBeanArgs {
+                basicSpeedBuff,
+                phases,
+            },
+        )
+    }
+}
+pub enum clz_Torappu_BuildingData_RecyclePhaseOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_BuildingData_RecyclePhase<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_BuildingData_RecyclePhase<'a> {
+    type Inner = clz_Torappu_BuildingData_RecyclePhase<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_BuildingData_RecyclePhase<'a> {
+    pub const VT_RECYCLECAPACITY: ::flatbuffers::VOffsetT = 4;
+    pub const VT_RECYCLESPEED: ::flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_BuildingData_RecyclePhase { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_BuildingData_RecyclePhaseArgs,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecyclePhase<'bldr>> {
+        let mut builder = clz_Torappu_BuildingData_RecyclePhaseBuilder::new(_fbb);
+        builder.add_recycleSpeed(args.recycleSpeed);
+        builder.add_recycleCapacity(args.recycleCapacity);
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_BuildingData_RecyclePhaseT {
+        let recycleCapacity = self.recycleCapacity();
+        let recycleSpeed = self.recycleSpeed();
+        clz_Torappu_BuildingData_RecyclePhaseT {
+            recycleCapacity,
+            recycleSpeed,
+        }
+    }
+
+    #[inline]
+    pub fn recycleCapacity(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_BuildingData_RecyclePhase::VT_RECYCLECAPACITY,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn recycleSpeed(&self) -> f32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<f32>(
+                    clz_Torappu_BuildingData_RecyclePhase::VT_RECYCLESPEED,
+                    Some(0.0),
+                )
+                .unwrap()
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_BuildingData_RecyclePhase<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<i32>("recycleCapacity", Self::VT_RECYCLECAPACITY, false)?
+            .visit_field::<f32>("recycleSpeed", Self::VT_RECYCLESPEED, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_BuildingData_RecyclePhaseArgs {
+    pub recycleCapacity: i32,
+    pub recycleSpeed: f32,
+}
+impl<'a> Default for clz_Torappu_BuildingData_RecyclePhaseArgs {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_BuildingData_RecyclePhaseArgs {
+            recycleCapacity: 0,
+            recycleSpeed: 0.0,
+        }
+    }
+}
+
+pub struct clz_Torappu_BuildingData_RecyclePhaseBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_BuildingData_RecyclePhaseBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_recycleCapacity(&mut self, recycleCapacity: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_BuildingData_RecyclePhase::VT_RECYCLECAPACITY,
+            recycleCapacity,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_recycleSpeed(&mut self, recycleSpeed: f32) {
+        self.fbb_.push_slot::<f32>(
+            clz_Torappu_BuildingData_RecyclePhase::VT_RECYCLESPEED,
+            recycleSpeed,
+            0.0,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_BuildingData_RecyclePhaseBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_BuildingData_RecyclePhaseBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecyclePhase<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_BuildingData_RecyclePhase<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_BuildingData_RecyclePhase");
+        ds.field("recycleCapacity", &self.recycleCapacity());
+        ds.field("recycleSpeed", &self.recycleSpeed());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_BuildingData_RecyclePhaseT {
+    pub recycleCapacity: i32,
+    pub recycleSpeed: f32,
+}
+impl Default for clz_Torappu_BuildingData_RecyclePhaseT {
+    fn default() -> Self {
+        Self {
+            recycleCapacity: 0,
+            recycleSpeed: 0.0,
+        }
+    }
+}
+impl clz_Torappu_BuildingData_RecyclePhaseT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecyclePhase<'b>> {
+        let recycleCapacity = self.recycleCapacity;
+        let recycleSpeed = self.recycleSpeed;
+        clz_Torappu_BuildingData_RecyclePhase::create(
+            _fbb,
+            &clz_Torappu_BuildingData_RecyclePhaseArgs {
+                recycleCapacity,
+                recycleSpeed,
+            },
+        )
+    }
+}
+pub enum clz_Torappu_BuildingData_RecycleBeanOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_BuildingData_RecycleBean<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_BuildingData_RecycleBean<'a> {
+    type Inner = clz_Torappu_BuildingData_RecycleBean<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_BuildingData_RecycleBean<'a> {
+    pub const VT_BASICSPEEDBUFF: ::flatbuffers::VOffsetT = 4;
+    pub const VT_PHASES: ::flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_BuildingData_RecycleBean { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_BuildingData_RecycleBeanArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleBean<'bldr>> {
+        let mut builder = clz_Torappu_BuildingData_RecycleBeanBuilder::new(_fbb);
+        if let Some(x) = args.phases {
+            builder.add_phases(x);
+        }
+        builder.add_basicSpeedBuff(args.basicSpeedBuff);
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_BuildingData_RecycleBeanT {
+        let basicSpeedBuff = self.basicSpeedBuff();
+        let phases = self
+            .phases()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_BuildingData_RecycleBeanT {
+            basicSpeedBuff,
+            phases,
+        }
+    }
+
+    #[inline]
+    pub fn basicSpeedBuff(&self) -> f32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<f32>(
+                    clz_Torappu_BuildingData_RecycleBean::VT_BASICSPEEDBUFF,
+                    Some(0.0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn phases(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<clz_Torappu_BuildingData_RecyclePhase<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_BuildingData_RecyclePhase>,
+                >,
+            >>(clz_Torappu_BuildingData_RecycleBean::VT_PHASES, None)
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_BuildingData_RecycleBean<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<f32>("basicSpeedBuff", Self::VT_BASICSPEEDBUFF, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_BuildingData_RecyclePhase>,
+                >,
+            >>("phases", Self::VT_PHASES, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_BuildingData_RecycleBeanArgs<'a> {
+    pub basicSpeedBuff: f32,
+    pub phases: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_BuildingData_RecyclePhase<'a>>,
+            >,
+        >,
+    >,
+}
+impl<'a> Default for clz_Torappu_BuildingData_RecycleBeanArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_BuildingData_RecycleBeanArgs {
+            basicSpeedBuff: 0.0,
+            phases: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_BuildingData_RecycleBeanBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+{
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_BuildingData_RecycleBeanBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_basicSpeedBuff(&mut self, basicSpeedBuff: f32) {
+        self.fbb_.push_slot::<f32>(
+            clz_Torappu_BuildingData_RecycleBean::VT_BASICSPEEDBUFF,
+            basicSpeedBuff,
+            0.0,
+        );
+    }
+    #[inline]
+    pub fn add_phases(
+        &mut self,
+        phases: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_BuildingData_RecyclePhase<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_BuildingData_RecycleBean::VT_PHASES,
+            phases,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_BuildingData_RecycleBeanBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_BuildingData_RecycleBeanBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleBean<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_BuildingData_RecycleBean<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_BuildingData_RecycleBean");
+        ds.field("basicSpeedBuff", &self.basicSpeedBuff());
+        ds.field("phases", &self.phases());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_BuildingData_RecycleBeanT {
+    pub basicSpeedBuff: f32,
+    pub phases: Option<alloc::vec::Vec<clz_Torappu_BuildingData_RecyclePhaseT>>,
+}
+impl Default for clz_Torappu_BuildingData_RecycleBeanT {
+    fn default() -> Self {
+        Self {
+            basicSpeedBuff: 0.0,
+            phases: None,
+        }
+    }
+}
+impl clz_Torappu_BuildingData_RecycleBeanT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleBean<'b>> {
+        let basicSpeedBuff = self.basicSpeedBuff;
+        let phases = self.phases.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_BuildingData_RecycleBean::create(
+            _fbb,
+            &clz_Torappu_BuildingData_RecycleBeanArgs {
                 basicSpeedBuff,
                 phases,
             },
@@ -30484,6 +30896,2119 @@ impl clz_Torappu_BuildingData_TradingRoomInfoDataT {
         )
     }
 }
+pub enum clz_Torappu_BuildingData_RecycleRoomOutputPoolDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_BuildingData_RecycleRoomOutputPoolData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_BuildingData_RecycleRoomOutputPoolData<'a> {
+    type Inner = clz_Torappu_BuildingData_RecycleRoomOutputPoolData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_BuildingData_RecycleRoomOutputPoolData<'a> {
+    pub const VT_ITEMPOOLID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_ITEMPOOLSTARTTIME: ::flatbuffers::VOffsetT = 6;
+    pub const VT_ITEMPOOLENDTIME: ::flatbuffers::VOffsetT = 8;
+    pub const VT_EXTRAPOOLID: ::flatbuffers::VOffsetT = 10;
+    pub const VT_EXTRAPOOLREQUIREMENT: ::flatbuffers::VOffsetT = 12;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_BuildingData_RecycleRoomOutputPoolData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_BuildingData_RecycleRoomOutputPoolDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleRoomOutputPoolData<'bldr>> {
+        let mut builder = clz_Torappu_BuildingData_RecycleRoomOutputPoolDataBuilder::new(_fbb);
+        builder.add_itemPoolEndTime(args.itemPoolEndTime);
+        builder.add_itemPoolStartTime(args.itemPoolStartTime);
+        builder.add_extraPoolRequirement(args.extraPoolRequirement);
+        if let Some(x) = args.extraPoolId {
+            builder.add_extraPoolId(x);
+        }
+        if let Some(x) = args.itemPoolId {
+            builder.add_itemPoolId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_BuildingData_RecycleRoomOutputPoolDataT {
+        let itemPoolId = self
+            .itemPoolId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let itemPoolStartTime = self.itemPoolStartTime();
+        let itemPoolEndTime = self.itemPoolEndTime();
+        let extraPoolId = self
+            .extraPoolId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let extraPoolRequirement = self.extraPoolRequirement();
+        clz_Torappu_BuildingData_RecycleRoomOutputPoolDataT {
+            itemPoolId,
+            itemPoolStartTime,
+            itemPoolEndTime,
+            extraPoolId,
+            extraPoolRequirement,
+        }
+    }
+
+    #[inline]
+    pub fn itemPoolId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_BuildingData_RecycleRoomOutputPoolData::VT_ITEMPOOLID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn itemPoolStartTime(&self) -> i64 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i64>(
+                    clz_Torappu_BuildingData_RecycleRoomOutputPoolData::VT_ITEMPOOLSTARTTIME,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn itemPoolEndTime(&self) -> i64 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i64>(
+                    clz_Torappu_BuildingData_RecycleRoomOutputPoolData::VT_ITEMPOOLENDTIME,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn extraPoolId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_BuildingData_RecycleRoomOutputPoolData::VT_EXTRAPOOLID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn extraPoolRequirement(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_BuildingData_RecycleRoomOutputPoolData::VT_EXTRAPOOLREQUIREMENT,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_BuildingData_RecycleRoomOutputPoolData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "itemPoolId",
+                Self::VT_ITEMPOOLID,
+                false,
+            )?
+            .visit_field::<i64>("itemPoolStartTime", Self::VT_ITEMPOOLSTARTTIME, false)?
+            .visit_field::<i64>("itemPoolEndTime", Self::VT_ITEMPOOLENDTIME, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "extraPoolId",
+                Self::VT_EXTRAPOOLID,
+                false,
+            )?
+            .visit_field::<i32>("extraPoolRequirement", Self::VT_EXTRAPOOLREQUIREMENT, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_BuildingData_RecycleRoomOutputPoolDataArgs<'a> {
+    pub itemPoolId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub itemPoolStartTime: i64,
+    pub itemPoolEndTime: i64,
+    pub extraPoolId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub extraPoolRequirement: i32,
+}
+impl<'a> Default for clz_Torappu_BuildingData_RecycleRoomOutputPoolDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_BuildingData_RecycleRoomOutputPoolDataArgs {
+            itemPoolId: None,
+            itemPoolStartTime: 0,
+            itemPoolEndTime: 0,
+            extraPoolId: None,
+            extraPoolRequirement: 0,
+        }
+    }
+}
+
+pub struct clz_Torappu_BuildingData_RecycleRoomOutputPoolDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_BuildingData_RecycleRoomOutputPoolDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_itemPoolId(&mut self, itemPoolId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_BuildingData_RecycleRoomOutputPoolData::VT_ITEMPOOLID,
+            itemPoolId,
+        );
+    }
+    #[inline]
+    pub fn add_itemPoolStartTime(&mut self, itemPoolStartTime: i64) {
+        self.fbb_.push_slot::<i64>(
+            clz_Torappu_BuildingData_RecycleRoomOutputPoolData::VT_ITEMPOOLSTARTTIME,
+            itemPoolStartTime,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_itemPoolEndTime(&mut self, itemPoolEndTime: i64) {
+        self.fbb_.push_slot::<i64>(
+            clz_Torappu_BuildingData_RecycleRoomOutputPoolData::VT_ITEMPOOLENDTIME,
+            itemPoolEndTime,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_extraPoolId(&mut self, extraPoolId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_BuildingData_RecycleRoomOutputPoolData::VT_EXTRAPOOLID,
+            extraPoolId,
+        );
+    }
+    #[inline]
+    pub fn add_extraPoolRequirement(&mut self, extraPoolRequirement: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_BuildingData_RecycleRoomOutputPoolData::VT_EXTRAPOOLREQUIREMENT,
+            extraPoolRequirement,
+            0,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_BuildingData_RecycleRoomOutputPoolDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_BuildingData_RecycleRoomOutputPoolDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleRoomOutputPoolData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_BuildingData_RecycleRoomOutputPoolData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_BuildingData_RecycleRoomOutputPoolData");
+        ds.field("itemPoolId", &self.itemPoolId());
+        ds.field("itemPoolStartTime", &self.itemPoolStartTime());
+        ds.field("itemPoolEndTime", &self.itemPoolEndTime());
+        ds.field("extraPoolId", &self.extraPoolId());
+        ds.field("extraPoolRequirement", &self.extraPoolRequirement());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_BuildingData_RecycleRoomOutputPoolDataT {
+    pub itemPoolId: Option<alloc::string::String>,
+    pub itemPoolStartTime: i64,
+    pub itemPoolEndTime: i64,
+    pub extraPoolId: Option<alloc::string::String>,
+    pub extraPoolRequirement: i32,
+}
+impl Default for clz_Torappu_BuildingData_RecycleRoomOutputPoolDataT {
+    fn default() -> Self {
+        Self {
+            itemPoolId: None,
+            itemPoolStartTime: 0,
+            itemPoolEndTime: 0,
+            extraPoolId: None,
+            extraPoolRequirement: 0,
+        }
+    }
+}
+impl clz_Torappu_BuildingData_RecycleRoomOutputPoolDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleRoomOutputPoolData<'b>> {
+        let itemPoolId = self.itemPoolId.as_ref().map(|x| _fbb.create_string(x));
+        let itemPoolStartTime = self.itemPoolStartTime;
+        let itemPoolEndTime = self.itemPoolEndTime;
+        let extraPoolId = self.extraPoolId.as_ref().map(|x| _fbb.create_string(x));
+        let extraPoolRequirement = self.extraPoolRequirement;
+        clz_Torappu_BuildingData_RecycleRoomOutputPoolData::create(
+            _fbb,
+            &clz_Torappu_BuildingData_RecycleRoomOutputPoolDataArgs {
+                itemPoolId,
+                itemPoolStartTime,
+                itemPoolEndTime,
+                extraPoolId,
+                extraPoolRequirement,
+            },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a>
+    for dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolData<'a>
+{
+    type Inner = dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolData<'a> {
+    pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<
+        dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolData<'bldr>,
+    > {
+        let mut builder =
+            dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolDataT {
+        let key = {
+            let x = self.key();
+            alloc::string::ToString::to_string(x)
+        };
+        let value = self.value().map(|x| alloc::boxed::Box::new(x.unpack()));
+        dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(
+        &self,
+        o: &dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolData,
+    ) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_BuildingData_RecycleRoomOutputPoolData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                clz_Torappu_BuildingData_RecycleRoomOutputPoolData,
+            >>(
+                dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolData::VT_VALUE,
+                None,
+            )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable
+    for dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolData<'_>
+{
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_BuildingData_RecycleRoomOutputPoolData>>("value", Self::VT_VALUE, false)?
+     .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolDataArgs<'a> {
+    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub value:
+        Option<::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleRoomOutputPoolData<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleRoomOutputPoolData<'b>>,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleRoomOutputPoolData>>(dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolData::VT_VALUE, value);
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<
+        dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolData<'a>,
+    > {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolData::VT_KEY,
+            "key",
+        );
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds =
+            f.debug_struct("dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolDataT {
+    pub key: alloc::string::String,
+    pub value: Option<alloc::boxed::Box<clz_Torappu_BuildingData_RecycleRoomOutputPoolDataT>>,
+}
+impl Default for dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolDataT {
+    fn default() -> Self {
+        Self {
+            key: alloc::string::ToString::to_string(""),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<
+        dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolData<'b>,
+    > {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolData::create(
+            _fbb,
+            &dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolDataArgs { key, value },
+        )
+    }
+}
+pub enum clz_Torappu_BuildingData_RecycleRoomOutputPoolItemDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData<'a> {
+    type Inner = clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData<'a> {
+    pub const VT_ITEMID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_TARGETTAGS: ::flatbuffers::VOffsetT = 6;
+    pub const VT_WEIGHT: ::flatbuffers::VOffsetT = 8;
+    pub const VT_COUNT: ::flatbuffers::VOffsetT = 10;
+    pub const VT_EXTRAPOOLVALUECHANGE: ::flatbuffers::VOffsetT = 12;
+    pub const VT_ISNEW: ::flatbuffers::VOffsetT = 14;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_BuildingData_RecycleRoomOutputPoolItemDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData<'bldr>>
+    {
+        let mut builder = clz_Torappu_BuildingData_RecycleRoomOutputPoolItemDataBuilder::new(_fbb);
+        builder.add_extraPoolValueChange(args.extraPoolValueChange);
+        builder.add_count(args.count);
+        builder.add_weight(args.weight);
+        if let Some(x) = args.targetTags {
+            builder.add_targetTags(x);
+        }
+        if let Some(x) = args.itemId {
+            builder.add_itemId(x);
+        }
+        builder.add_isNew(args.isNew);
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_BuildingData_RecycleRoomOutputPoolItemDataT {
+        let itemId = self.itemId().map(|x| alloc::string::ToString::to_string(x));
+        let targetTags = self.targetTags().map(|x| {
+            x.iter()
+                .map(|s| alloc::string::ToString::to_string(s))
+                .collect()
+        });
+        let weight = self.weight();
+        let count = self.count();
+        let extraPoolValueChange = self.extraPoolValueChange();
+        let isNew = self.isNew();
+        clz_Torappu_BuildingData_RecycleRoomOutputPoolItemDataT {
+            itemId,
+            targetTags,
+            weight,
+            count,
+            extraPoolValueChange,
+            isNew,
+        }
+    }
+
+    #[inline]
+    pub fn itemId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData::VT_ITEMID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn targetTags(
+        &self,
+    ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+            >>(
+                clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData::VT_TARGETTAGS,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn weight(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData::VT_WEIGHT,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn count(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData::VT_COUNT,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn extraPoolValueChange(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData::VT_EXTRAPOOLVALUECHANGE,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn isNew(&self) -> bool {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<bool>(
+                    clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData::VT_ISNEW,
+                    Some(false),
+                )
+                .unwrap()
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("itemId", Self::VT_ITEMID, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>,
+            >>("targetTags", Self::VT_TARGETTAGS, false)?
+            .visit_field::<i32>("weight", Self::VT_WEIGHT, false)?
+            .visit_field::<i32>("count", Self::VT_COUNT, false)?
+            .visit_field::<i32>("extraPoolValueChange", Self::VT_EXTRAPOOLVALUECHANGE, false)?
+            .visit_field::<bool>("isNew", Self::VT_ISNEW, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_BuildingData_RecycleRoomOutputPoolItemDataArgs<'a> {
+    pub itemId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub targetTags: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+        >,
+    >,
+    pub weight: i32,
+    pub count: i32,
+    pub extraPoolValueChange: i32,
+    pub isNew: bool,
+}
+impl<'a> Default for clz_Torappu_BuildingData_RecycleRoomOutputPoolItemDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_BuildingData_RecycleRoomOutputPoolItemDataArgs {
+            itemId: None,
+            targetTags: None,
+            weight: 0,
+            count: 0,
+            extraPoolValueChange: 0,
+            isNew: false,
+        }
+    }
+}
+
+pub struct clz_Torappu_BuildingData_RecycleRoomOutputPoolItemDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_BuildingData_RecycleRoomOutputPoolItemDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_itemId(&mut self, itemId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData::VT_ITEMID,
+            itemId,
+        );
+    }
+    #[inline]
+    pub fn add_targetTags(
+        &mut self,
+        targetTags: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'b, ::flatbuffers::ForwardsUOffset<&'b str>>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData::VT_TARGETTAGS,
+            targetTags,
+        );
+    }
+    #[inline]
+    pub fn add_weight(&mut self, weight: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData::VT_WEIGHT,
+            weight,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_count(&mut self, count: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData::VT_COUNT,
+            count,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_extraPoolValueChange(&mut self, extraPoolValueChange: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData::VT_EXTRAPOOLVALUECHANGE,
+            extraPoolValueChange,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_isNew(&mut self, isNew: bool) {
+        self.fbb_.push_slot::<bool>(
+            clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData::VT_ISNEW,
+            isNew,
+            false,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_BuildingData_RecycleRoomOutputPoolItemDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_BuildingData_RecycleRoomOutputPoolItemDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData");
+        ds.field("itemId", &self.itemId());
+        ds.field("targetTags", &self.targetTags());
+        ds.field("weight", &self.weight());
+        ds.field("count", &self.count());
+        ds.field("extraPoolValueChange", &self.extraPoolValueChange());
+        ds.field("isNew", &self.isNew());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_BuildingData_RecycleRoomOutputPoolItemDataT {
+    pub itemId: Option<alloc::string::String>,
+    pub targetTags: Option<alloc::vec::Vec<alloc::string::String>>,
+    pub weight: i32,
+    pub count: i32,
+    pub extraPoolValueChange: i32,
+    pub isNew: bool,
+}
+impl Default for clz_Torappu_BuildingData_RecycleRoomOutputPoolItemDataT {
+    fn default() -> Self {
+        Self {
+            itemId: None,
+            targetTags: None,
+            weight: 0,
+            count: 0,
+            extraPoolValueChange: 0,
+            isNew: false,
+        }
+    }
+}
+impl clz_Torappu_BuildingData_RecycleRoomOutputPoolItemDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData<'b>> {
+        let itemId = self.itemId.as_ref().map(|x| _fbb.create_string(x));
+        let targetTags = self.targetTags.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let weight = self.weight;
+        let count = self.count;
+        let extraPoolValueChange = self.extraPoolValueChange;
+        let isNew = self.isNew;
+        clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData::create(
+            _fbb,
+            &clz_Torappu_BuildingData_RecycleRoomOutputPoolItemDataArgs {
+                itemId,
+                targetTags,
+                weight,
+                count,
+                extraPoolValueChange,
+                isNew,
+            },
+        )
+    }
+}
+pub enum clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a>
+    for clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData<'a>
+{
+    type Inner = clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData<'a> {
+    pub const VT_ITEMS: ::flatbuffers::VOffsetT = 4;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData<'bldr>>
+    {
+        let mut builder =
+            clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataBuilder::new(_fbb);
+        if let Some(x) = args.items {
+            builder.add_items(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataT {
+        let items = self.items().map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataT { items }
+    }
+
+    #[inline]
+    pub fn items(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<
+                clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData<'a>,
+            >,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<
+                        clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData,
+                    >,
+                >,
+            >>(
+                clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData::VT_ITEMS,
+                None,
+            )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<
+                        clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData,
+                    >,
+                >,
+            >>("items", Self::VT_ITEMS, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataArgs<'a> {
+    pub items: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<
+                    clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData<'a>,
+                >,
+            >,
+        >,
+    >,
+}
+impl<'a> Default for clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataArgs { items: None }
+    }
+}
+
+pub struct clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_items(
+        &mut self,
+        items: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<
+                    clz_Torappu_BuildingData_RecycleRoomOutputPoolItemData<'b>,
+                >,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData::VT_ITEMS,
+            items,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData<'a>>
+    {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData");
+        ds.field("items", &self.items());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataT {
+    pub items: Option<alloc::vec::Vec<clz_Torappu_BuildingData_RecycleRoomOutputPoolItemDataT>>,
+}
+impl Default for clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataT {
+    fn default() -> Self {
+        Self { items: None }
+    }
+}
+impl clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData<'b>>
+    {
+        let items = self.items.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData::create(
+            _fbb,
+            &clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataArgs { items },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a>
+    for dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData<'a>
+{
+    type Inner = dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData<'a> {
+    pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataArgs<
+            'args,
+        >,
+    ) -> ::flatbuffers::WIPOffset<
+        dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData<'bldr>,
+    > {
+        let mut builder =
+            dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataBuilder::new(
+                _fbb,
+            );
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(
+        &self,
+    ) -> dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataT {
+        let key = {
+            let x = self.key();
+            alloc::string::ToString::to_string(x)
+        };
+        let value = self.value().map(|x| alloc::boxed::Box::new(x.unpack()));
+        dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(
+        &self,
+        o: &dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData,
+    ) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData,
+            >>(
+                dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData::VT_VALUE,
+                None,
+            )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable
+    for dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData<'_>
+{
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData,
+            >>("value", Self::VT_VALUE, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataArgs<'a> {
+    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<
+        ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData<'a>>,
+    >,
+}
+impl<'a> Default
+    for dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataArgs<'a>
+{
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: ::flatbuffers::WIPOffset<
+            clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData<'b>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<
+            clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData,
+        >>(
+            dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData::VT_VALUE,
+            value,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataBuilder<'a, 'b, A>
+    {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<
+        dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData<'a>,
+    > {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData::VT_KEY,
+            "key",
+        );
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug
+    for dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData<'_>
+{
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct(
+            "dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData",
+        );
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataT {
+    pub key: alloc::string::String,
+    pub value:
+        Option<alloc::boxed::Box<clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataT>>,
+}
+impl Default for dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataT {
+    fn default() -> Self {
+        Self {
+            key: alloc::string::ToString::to_string(""),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<
+        dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData<'b>,
+    > {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData::create(
+            _fbb,
+            &dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataArgs {
+                key,
+                value,
+            },
+        )
+    }
+}
+pub enum clz_Torappu_BuildingData_RecycleRoomInputItemDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_BuildingData_RecycleRoomInputItemData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_BuildingData_RecycleRoomInputItemData<'a> {
+    type Inner = clz_Torappu_BuildingData_RecycleRoomInputItemData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_BuildingData_RecycleRoomInputItemData<'a> {
+    pub const VT_ITEMID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_ADDEDTIME: ::flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_BuildingData_RecycleRoomInputItemData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_BuildingData_RecycleRoomInputItemDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleRoomInputItemData<'bldr>> {
+        let mut builder = clz_Torappu_BuildingData_RecycleRoomInputItemDataBuilder::new(_fbb);
+        builder.add_addedTime(args.addedTime);
+        if let Some(x) = args.itemId {
+            builder.add_itemId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_BuildingData_RecycleRoomInputItemDataT {
+        let itemId = self.itemId().map(|x| alloc::string::ToString::to_string(x));
+        let addedTime = self.addedTime();
+        clz_Torappu_BuildingData_RecycleRoomInputItemDataT { itemId, addedTime }
+    }
+
+    #[inline]
+    pub fn itemId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_BuildingData_RecycleRoomInputItemData::VT_ITEMID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn addedTime(&self) -> i64 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i64>(
+                    clz_Torappu_BuildingData_RecycleRoomInputItemData::VT_ADDEDTIME,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_BuildingData_RecycleRoomInputItemData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("itemId", Self::VT_ITEMID, false)?
+            .visit_field::<i64>("addedTime", Self::VT_ADDEDTIME, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_BuildingData_RecycleRoomInputItemDataArgs<'a> {
+    pub itemId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub addedTime: i64,
+}
+impl<'a> Default for clz_Torappu_BuildingData_RecycleRoomInputItemDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_BuildingData_RecycleRoomInputItemDataArgs {
+            itemId: None,
+            addedTime: 0,
+        }
+    }
+}
+
+pub struct clz_Torappu_BuildingData_RecycleRoomInputItemDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_BuildingData_RecycleRoomInputItemDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_itemId(&mut self, itemId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_BuildingData_RecycleRoomInputItemData::VT_ITEMID,
+            itemId,
+        );
+    }
+    #[inline]
+    pub fn add_addedTime(&mut self, addedTime: i64) {
+        self.fbb_.push_slot::<i64>(
+            clz_Torappu_BuildingData_RecycleRoomInputItemData::VT_ADDEDTIME,
+            addedTime,
+            0,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_BuildingData_RecycleRoomInputItemDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_BuildingData_RecycleRoomInputItemDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleRoomInputItemData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_BuildingData_RecycleRoomInputItemData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_BuildingData_RecycleRoomInputItemData");
+        ds.field("itemId", &self.itemId());
+        ds.field("addedTime", &self.addedTime());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_BuildingData_RecycleRoomInputItemDataT {
+    pub itemId: Option<alloc::string::String>,
+    pub addedTime: i64,
+}
+impl Default for clz_Torappu_BuildingData_RecycleRoomInputItemDataT {
+    fn default() -> Self {
+        Self {
+            itemId: None,
+            addedTime: 0,
+        }
+    }
+}
+impl clz_Torappu_BuildingData_RecycleRoomInputItemDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleRoomInputItemData<'b>> {
+        let itemId = self.itemId.as_ref().map(|x| _fbb.create_string(x));
+        let addedTime = self.addedTime;
+        clz_Torappu_BuildingData_RecycleRoomInputItemData::create(
+            _fbb,
+            &clz_Torappu_BuildingData_RecycleRoomInputItemDataArgs { itemId, addedTime },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a>
+    for dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemData<'a>
+{
+    type Inner = dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemData<'a> {
+    pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<
+        dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemData<'bldr>,
+    > {
+        let mut builder =
+            dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemDataT {
+        let key = {
+            let x = self.key();
+            alloc::string::ToString::to_string(x)
+        };
+        let value = self.value().map(|x| alloc::boxed::Box::new(x.unpack()));
+        dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(
+        &self,
+        o: &dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemData,
+    ) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_BuildingData_RecycleRoomInputItemData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                clz_Torappu_BuildingData_RecycleRoomInputItemData,
+            >>(
+                dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemData::VT_VALUE,
+                None,
+            )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable
+    for dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemData<'_>
+{
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_BuildingData_RecycleRoomInputItemData>>("value", Self::VT_VALUE, false)?
+     .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemDataArgs<'a> {
+    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub value:
+        Option<::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleRoomInputItemData<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleRoomInputItemData<'b>>,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleRoomInputItemData>>(dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemData::VT_VALUE, value);
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemData<'a>>
+    {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemData::VT_KEY,
+            "key",
+        );
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds =
+            f.debug_struct("dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemDataT {
+    pub key: alloc::string::String,
+    pub value: Option<alloc::boxed::Box<clz_Torappu_BuildingData_RecycleRoomInputItemDataT>>,
+}
+impl Default for dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemDataT {
+    fn default() -> Self {
+        Self {
+            key: alloc::string::ToString::to_string(""),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemData<'b>>
+    {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemData::create(
+            _fbb,
+            &dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemDataArgs { key, value },
+        )
+    }
+}
+pub enum clz_Torappu_BuildingData_RecycleRoomConstsOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_BuildingData_RecycleRoomConsts<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_BuildingData_RecycleRoomConsts<'a> {
+    type Inner = clz_Torappu_BuildingData_RecycleRoomConsts<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_BuildingData_RecycleRoomConsts<'a> {
+    pub const VT_RECYCLETIMEREQUIREMENT: ::flatbuffers::VOffsetT = 4;
+    pub const VT_RECYCLEBASECAPACITY: ::flatbuffers::VOffsetT = 6;
+    pub const VT_RECYCLEBOOSTSPEED: ::flatbuffers::VOffsetT = 8;
+    pub const VT_RECYCLEBOOSTLIMIT: ::flatbuffers::VOffsetT = 10;
+    pub const VT_RECYCLEBOOSTLIMITPROTECT: ::flatbuffers::VOffsetT = 12;
+    pub const VT_RECYCLESPEEDUPUNLOCKLEVEL: ::flatbuffers::VOffsetT = 14;
+    pub const VT_RECYCLETWOPERSONUNLOCKLEVEL: ::flatbuffers::VOffsetT = 16;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_BuildingData_RecycleRoomConsts { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_BuildingData_RecycleRoomConstsArgs,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleRoomConsts<'bldr>> {
+        let mut builder = clz_Torappu_BuildingData_RecycleRoomConstsBuilder::new(_fbb);
+        builder.add_recycleBoostLimitProtect(args.recycleBoostLimitProtect);
+        builder.add_recycleBoostLimit(args.recycleBoostLimit);
+        builder.add_recycleTimeRequirement(args.recycleTimeRequirement);
+        builder.add_recycleTwoPersonUnlockLevel(args.recycleTwoPersonUnlockLevel);
+        builder.add_recycleSpeedUpUnlockLevel(args.recycleSpeedUpUnlockLevel);
+        builder.add_recycleBoostSpeed(args.recycleBoostSpeed);
+        builder.add_recycleBaseCapacity(args.recycleBaseCapacity);
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_BuildingData_RecycleRoomConstsT {
+        let recycleTimeRequirement = self.recycleTimeRequirement();
+        let recycleBaseCapacity = self.recycleBaseCapacity();
+        let recycleBoostSpeed = self.recycleBoostSpeed();
+        let recycleBoostLimit = self.recycleBoostLimit();
+        let recycleBoostLimitProtect = self.recycleBoostLimitProtect();
+        let recycleSpeedUpUnlockLevel = self.recycleSpeedUpUnlockLevel();
+        let recycleTwoPersonUnlockLevel = self.recycleTwoPersonUnlockLevel();
+        clz_Torappu_BuildingData_RecycleRoomConstsT {
+            recycleTimeRequirement,
+            recycleBaseCapacity,
+            recycleBoostSpeed,
+            recycleBoostLimit,
+            recycleBoostLimitProtect,
+            recycleSpeedUpUnlockLevel,
+            recycleTwoPersonUnlockLevel,
+        }
+    }
+
+    #[inline]
+    pub fn recycleTimeRequirement(&self) -> i64 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i64>(
+                    clz_Torappu_BuildingData_RecycleRoomConsts::VT_RECYCLETIMEREQUIREMENT,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn recycleBaseCapacity(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_BuildingData_RecycleRoomConsts::VT_RECYCLEBASECAPACITY,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn recycleBoostSpeed(&self) -> f32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<f32>(
+                    clz_Torappu_BuildingData_RecycleRoomConsts::VT_RECYCLEBOOSTSPEED,
+                    Some(0.0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn recycleBoostLimit(&self) -> i64 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i64>(
+                    clz_Torappu_BuildingData_RecycleRoomConsts::VT_RECYCLEBOOSTLIMIT,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn recycleBoostLimitProtect(&self) -> i64 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i64>(
+                    clz_Torappu_BuildingData_RecycleRoomConsts::VT_RECYCLEBOOSTLIMITPROTECT,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn recycleSpeedUpUnlockLevel(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_BuildingData_RecycleRoomConsts::VT_RECYCLESPEEDUPUNLOCKLEVEL,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn recycleTwoPersonUnlockLevel(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_BuildingData_RecycleRoomConsts::VT_RECYCLETWOPERSONUNLOCKLEVEL,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_BuildingData_RecycleRoomConsts<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<i64>(
+                "recycleTimeRequirement",
+                Self::VT_RECYCLETIMEREQUIREMENT,
+                false,
+            )?
+            .visit_field::<i32>("recycleBaseCapacity", Self::VT_RECYCLEBASECAPACITY, false)?
+            .visit_field::<f32>("recycleBoostSpeed", Self::VT_RECYCLEBOOSTSPEED, false)?
+            .visit_field::<i64>("recycleBoostLimit", Self::VT_RECYCLEBOOSTLIMIT, false)?
+            .visit_field::<i64>(
+                "recycleBoostLimitProtect",
+                Self::VT_RECYCLEBOOSTLIMITPROTECT,
+                false,
+            )?
+            .visit_field::<i32>(
+                "recycleSpeedUpUnlockLevel",
+                Self::VT_RECYCLESPEEDUPUNLOCKLEVEL,
+                false,
+            )?
+            .visit_field::<i32>(
+                "recycleTwoPersonUnlockLevel",
+                Self::VT_RECYCLETWOPERSONUNLOCKLEVEL,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_BuildingData_RecycleRoomConstsArgs {
+    pub recycleTimeRequirement: i64,
+    pub recycleBaseCapacity: i32,
+    pub recycleBoostSpeed: f32,
+    pub recycleBoostLimit: i64,
+    pub recycleBoostLimitProtect: i64,
+    pub recycleSpeedUpUnlockLevel: i32,
+    pub recycleTwoPersonUnlockLevel: i32,
+}
+impl<'a> Default for clz_Torappu_BuildingData_RecycleRoomConstsArgs {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_BuildingData_RecycleRoomConstsArgs {
+            recycleTimeRequirement: 0,
+            recycleBaseCapacity: 0,
+            recycleBoostSpeed: 0.0,
+            recycleBoostLimit: 0,
+            recycleBoostLimitProtect: 0,
+            recycleSpeedUpUnlockLevel: 0,
+            recycleTwoPersonUnlockLevel: 0,
+        }
+    }
+}
+
+pub struct clz_Torappu_BuildingData_RecycleRoomConstsBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_BuildingData_RecycleRoomConstsBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_recycleTimeRequirement(&mut self, recycleTimeRequirement: i64) {
+        self.fbb_.push_slot::<i64>(
+            clz_Torappu_BuildingData_RecycleRoomConsts::VT_RECYCLETIMEREQUIREMENT,
+            recycleTimeRequirement,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_recycleBaseCapacity(&mut self, recycleBaseCapacity: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_BuildingData_RecycleRoomConsts::VT_RECYCLEBASECAPACITY,
+            recycleBaseCapacity,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_recycleBoostSpeed(&mut self, recycleBoostSpeed: f32) {
+        self.fbb_.push_slot::<f32>(
+            clz_Torappu_BuildingData_RecycleRoomConsts::VT_RECYCLEBOOSTSPEED,
+            recycleBoostSpeed,
+            0.0,
+        );
+    }
+    #[inline]
+    pub fn add_recycleBoostLimit(&mut self, recycleBoostLimit: i64) {
+        self.fbb_.push_slot::<i64>(
+            clz_Torappu_BuildingData_RecycleRoomConsts::VT_RECYCLEBOOSTLIMIT,
+            recycleBoostLimit,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_recycleBoostLimitProtect(&mut self, recycleBoostLimitProtect: i64) {
+        self.fbb_.push_slot::<i64>(
+            clz_Torappu_BuildingData_RecycleRoomConsts::VT_RECYCLEBOOSTLIMITPROTECT,
+            recycleBoostLimitProtect,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_recycleSpeedUpUnlockLevel(&mut self, recycleSpeedUpUnlockLevel: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_BuildingData_RecycleRoomConsts::VT_RECYCLESPEEDUPUNLOCKLEVEL,
+            recycleSpeedUpUnlockLevel,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_recycleTwoPersonUnlockLevel(&mut self, recycleTwoPersonUnlockLevel: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_BuildingData_RecycleRoomConsts::VT_RECYCLETWOPERSONUNLOCKLEVEL,
+            recycleTwoPersonUnlockLevel,
+            0,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_BuildingData_RecycleRoomConstsBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_BuildingData_RecycleRoomConstsBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleRoomConsts<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_BuildingData_RecycleRoomConsts<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_BuildingData_RecycleRoomConsts");
+        ds.field("recycleTimeRequirement", &self.recycleTimeRequirement());
+        ds.field("recycleBaseCapacity", &self.recycleBaseCapacity());
+        ds.field("recycleBoostSpeed", &self.recycleBoostSpeed());
+        ds.field("recycleBoostLimit", &self.recycleBoostLimit());
+        ds.field("recycleBoostLimitProtect", &self.recycleBoostLimitProtect());
+        ds.field(
+            "recycleSpeedUpUnlockLevel",
+            &self.recycleSpeedUpUnlockLevel(),
+        );
+        ds.field(
+            "recycleTwoPersonUnlockLevel",
+            &self.recycleTwoPersonUnlockLevel(),
+        );
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_BuildingData_RecycleRoomConstsT {
+    pub recycleTimeRequirement: i64,
+    pub recycleBaseCapacity: i32,
+    pub recycleBoostSpeed: f32,
+    pub recycleBoostLimit: i64,
+    pub recycleBoostLimitProtect: i64,
+    pub recycleSpeedUpUnlockLevel: i32,
+    pub recycleTwoPersonUnlockLevel: i32,
+}
+impl Default for clz_Torappu_BuildingData_RecycleRoomConstsT {
+    fn default() -> Self {
+        Self {
+            recycleTimeRequirement: 0,
+            recycleBaseCapacity: 0,
+            recycleBoostSpeed: 0.0,
+            recycleBoostLimit: 0,
+            recycleBoostLimitProtect: 0,
+            recycleSpeedUpUnlockLevel: 0,
+            recycleTwoPersonUnlockLevel: 0,
+        }
+    }
+}
+impl clz_Torappu_BuildingData_RecycleRoomConstsT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleRoomConsts<'b>> {
+        let recycleTimeRequirement = self.recycleTimeRequirement;
+        let recycleBaseCapacity = self.recycleBaseCapacity;
+        let recycleBoostSpeed = self.recycleBoostSpeed;
+        let recycleBoostLimit = self.recycleBoostLimit;
+        let recycleBoostLimitProtect = self.recycleBoostLimitProtect;
+        let recycleSpeedUpUnlockLevel = self.recycleSpeedUpUnlockLevel;
+        let recycleTwoPersonUnlockLevel = self.recycleTwoPersonUnlockLevel;
+        clz_Torappu_BuildingData_RecycleRoomConsts::create(
+            _fbb,
+            &clz_Torappu_BuildingData_RecycleRoomConstsArgs {
+                recycleTimeRequirement,
+                recycleBaseCapacity,
+                recycleBoostSpeed,
+                recycleBoostLimit,
+                recycleBoostLimitProtect,
+                recycleSpeedUpUnlockLevel,
+                recycleTwoPersonUnlockLevel,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_BuildingDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -30562,29 +33087,34 @@ impl<'a> clz_Torappu_BuildingData<'a> {
     pub const VT_WORKSHOPDATA: ::flatbuffers::VOffsetT = 118;
     pub const VT_TRAININGDATA: ::flatbuffers::VOffsetT = 120;
     pub const VT_POWERDATA: ::flatbuffers::VOffsetT = 122;
-    pub const VT_CHARS: ::flatbuffers::VOffsetT = 124;
-    pub const VT_BUFFS: ::flatbuffers::VOffsetT = 126;
-    pub const VT_WORKSHOPBONUS: ::flatbuffers::VOffsetT = 128;
-    pub const VT_CUSTOMDATA: ::flatbuffers::VOffsetT = 130;
-    pub const VT_MANUFACTFORMULAS: ::flatbuffers::VOffsetT = 132;
-    pub const VT_SHOPFORMULAS: ::flatbuffers::VOffsetT = 134;
-    pub const VT_WORKSHOPFORMULAS: ::flatbuffers::VOffsetT = 136;
-    pub const VT_CREDITFORMULA: ::flatbuffers::VOffsetT = 138;
-    pub const VT_GOLDITEMS: ::flatbuffers::VOffsetT = 140;
-    pub const VT_ASSISTANTUNLOCK: ::flatbuffers::VOffsetT = 142;
-    pub const VT_WORKSHOPRARITIES: ::flatbuffers::VOffsetT = 144;
-    pub const VT_TODOITEMSORTPRIORITYDICT: ::flatbuffers::VOffsetT = 146;
-    pub const VT_SLOTPREQUEDATAS: ::flatbuffers::VOffsetT = 148;
-    pub const VT_DORMITORYPREQUEDATAS: ::flatbuffers::VOffsetT = 150;
-    pub const VT_WORKSHOPTARGETDESDICT: ::flatbuffers::VOffsetT = 152;
-    pub const VT_TRADINGORDERDESDICT: ::flatbuffers::VOffsetT = 154;
-    pub const VT_STATIONMANAGECONSTDATA: ::flatbuffers::VOffsetT = 156;
-    pub const VT_STATIONMANAGEFILTERINFOS: ::flatbuffers::VOffsetT = 158;
-    pub const VT_MUSICDATA: ::flatbuffers::VOffsetT = 160;
-    pub const VT_EMOJIS: ::flatbuffers::VOffsetT = 162;
-    pub const VT_CATEGORYNAMES: ::flatbuffers::VOffsetT = 164;
-    pub const VT_BUFFSORTDATA: ::flatbuffers::VOffsetT = 166;
-    pub const VT_TRADINGROOMINFODATA: ::flatbuffers::VOffsetT = 168;
+    pub const VT_RECYCLEDATA: ::flatbuffers::VOffsetT = 124;
+    pub const VT_CHARS: ::flatbuffers::VOffsetT = 126;
+    pub const VT_BUFFS: ::flatbuffers::VOffsetT = 128;
+    pub const VT_WORKSHOPBONUS: ::flatbuffers::VOffsetT = 130;
+    pub const VT_CUSTOMDATA: ::flatbuffers::VOffsetT = 132;
+    pub const VT_MANUFACTFORMULAS: ::flatbuffers::VOffsetT = 134;
+    pub const VT_SHOPFORMULAS: ::flatbuffers::VOffsetT = 136;
+    pub const VT_WORKSHOPFORMULAS: ::flatbuffers::VOffsetT = 138;
+    pub const VT_CREDITFORMULA: ::flatbuffers::VOffsetT = 140;
+    pub const VT_GOLDITEMS: ::flatbuffers::VOffsetT = 142;
+    pub const VT_ASSISTANTUNLOCK: ::flatbuffers::VOffsetT = 144;
+    pub const VT_WORKSHOPRARITIES: ::flatbuffers::VOffsetT = 146;
+    pub const VT_TODOITEMSORTPRIORITYDICT: ::flatbuffers::VOffsetT = 148;
+    pub const VT_SLOTPREQUEDATAS: ::flatbuffers::VOffsetT = 150;
+    pub const VT_DORMITORYPREQUEDATAS: ::flatbuffers::VOffsetT = 152;
+    pub const VT_WORKSHOPTARGETDESDICT: ::flatbuffers::VOffsetT = 154;
+    pub const VT_TRADINGORDERDESDICT: ::flatbuffers::VOffsetT = 156;
+    pub const VT_STATIONMANAGECONSTDATA: ::flatbuffers::VOffsetT = 158;
+    pub const VT_STATIONMANAGEFILTERINFOS: ::flatbuffers::VOffsetT = 160;
+    pub const VT_MUSICDATA: ::flatbuffers::VOffsetT = 162;
+    pub const VT_EMOJIS: ::flatbuffers::VOffsetT = 164;
+    pub const VT_CATEGORYNAMES: ::flatbuffers::VOffsetT = 166;
+    pub const VT_BUFFSORTDATA: ::flatbuffers::VOffsetT = 168;
+    pub const VT_TRADINGROOMINFODATA: ::flatbuffers::VOffsetT = 170;
+    pub const VT_RECYCLEROOMOUTPUTPOOLDATAS: ::flatbuffers::VOffsetT = 172;
+    pub const VT_RECYCLEROOMOUTPUTPOOLCONTENTDATAS: ::flatbuffers::VOffsetT = 174;
+    pub const VT_RECYCLEROOMINPUTITEMDATAS: ::flatbuffers::VOffsetT = 176;
+    pub const VT_RECYCLEROOMCONSTS: ::flatbuffers::VOffsetT = 178;
 
     #[inline]
     pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -30605,6 +33135,18 @@ impl<'a> clz_Torappu_BuildingData<'a> {
         builder.add_betaRemoveTime(args.betaRemoveTime);
         builder.add_assistFavorReport(args.assistFavorReport);
         builder.add_tiredApThreshold(args.tiredApThreshold);
+        if let Some(x) = args.recycleRoomConsts {
+            builder.add_recycleRoomConsts(x);
+        }
+        if let Some(x) = args.recycleRoomInputItemDatas {
+            builder.add_recycleRoomInputItemDatas(x);
+        }
+        if let Some(x) = args.recycleRoomOutputPoolContentDatas {
+            builder.add_recycleRoomOutputPoolContentDatas(x);
+        }
+        if let Some(x) = args.recycleRoomOutputPoolDatas {
+            builder.add_recycleRoomOutputPoolDatas(x);
+        }
         if let Some(x) = args.tradingRoomInfoData {
             builder.add_tradingRoomInfoData(x);
         }
@@ -30673,6 +33215,9 @@ impl<'a> clz_Torappu_BuildingData<'a> {
         }
         if let Some(x) = args.chars {
             builder.add_chars(x);
+        }
+        if let Some(x) = args.recycleData {
+            builder.add_recycleData(x);
         }
         if let Some(x) = args.powerData {
             builder.add_powerData(x);
@@ -30890,6 +33435,9 @@ impl<'a> clz_Torappu_BuildingData<'a> {
             .trainingData()
             .map(|x| alloc::boxed::Box::new(x.unpack()));
         let powerData = self.powerData().map(|x| alloc::boxed::Box::new(x.unpack()));
+        let recycleData = self
+            .recycleData()
+            .map(|x| alloc::boxed::Box::new(x.unpack()));
         let chars = self.chars().map(|x| x.iter().map(|t| t.unpack()).collect());
         let buffs = self.buffs().map(|x| x.iter().map(|t| t.unpack()).collect());
         let workshopBonus = self
@@ -30953,6 +33501,18 @@ impl<'a> clz_Torappu_BuildingData<'a> {
         let tradingRoomInfoData = self
             .tradingRoomInfoData()
             .map(|x| alloc::boxed::Box::new(x.unpack()));
+        let recycleRoomOutputPoolDatas = self
+            .recycleRoomOutputPoolDatas()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let recycleRoomOutputPoolContentDatas = self
+            .recycleRoomOutputPoolContentDatas()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let recycleRoomInputItemDatas = self
+            .recycleRoomInputItemDatas()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let recycleRoomConsts = self
+            .recycleRoomConsts()
+            .map(|x| alloc::boxed::Box::new(x.unpack()));
         clz_Torappu_BuildingDataT {
             controlSlotId,
             meetingSlotId,
@@ -31014,6 +33574,7 @@ impl<'a> clz_Torappu_BuildingData<'a> {
             workshopData,
             trainingData,
             powerData,
+            recycleData,
             chars,
             buffs,
             workshopBonus,
@@ -31037,6 +33598,10 @@ impl<'a> clz_Torappu_BuildingData<'a> {
             categoryNames,
             buffSortData,
             tradingRoomInfoData,
+            recycleRoomOutputPoolDatas,
+            recycleRoomOutputPoolContentDatas,
+            recycleRoomInputItemDatas,
+            recycleRoomConsts,
         }
     }
 
@@ -31799,6 +34364,19 @@ impl<'a> clz_Torappu_BuildingData<'a> {
         }
     }
     #[inline]
+    pub fn recycleData(&self) -> Option<clz_Torappu_BuildingData_RecycleBean<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<clz_Torappu_BuildingData_RecycleBean>>(
+                    clz_Torappu_BuildingData::VT_RECYCLEDATA,
+                    None,
+                )
+        }
+    }
+    #[inline]
     pub fn chars(
         &self,
     ) -> Option<
@@ -32213,6 +34791,100 @@ impl<'a> clz_Torappu_BuildingData<'a> {
             self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_BuildingData_TradingRoomInfoData>>(clz_Torappu_BuildingData::VT_TRADINGROOMINFODATA, None)
         }
     }
+    #[inline]
+    pub fn recycleRoomOutputPoolDatas(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<
+                dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolData<'a>,
+            >,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<
+                        dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolData,
+                    >,
+                >,
+            >>(
+                clz_Torappu_BuildingData::VT_RECYCLEROOMOUTPUTPOOLDATAS,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn recycleRoomOutputPoolContentDatas(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<
+                dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData<'a>,
+            >,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<
+                        dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData,
+                    >,
+                >,
+            >>(
+                clz_Torappu_BuildingData::VT_RECYCLEROOMOUTPUTPOOLCONTENTDATAS,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn recycleRoomInputItemDatas(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<
+                dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemData<'a>,
+            >,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<
+                        dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemData,
+                    >,
+                >,
+            >>(clz_Torappu_BuildingData::VT_RECYCLEROOMINPUTITEMDATAS, None)
+        }
+    }
+    #[inline]
+    pub fn recycleRoomConsts(&self) -> Option<clz_Torappu_BuildingData_RecycleRoomConsts<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<clz_Torappu_BuildingData_RecycleRoomConsts>>(
+                    clz_Torappu_BuildingData::VT_RECYCLEROOMCONSTS,
+                    None,
+                )
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_BuildingData<'_> {
@@ -32282,6 +34954,7 @@ impl ::flatbuffers::Verifiable for clz_Torappu_BuildingData<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_BuildingData_RoomBean_1_Torappu_BuildingData_WorkshopPhase_>>("workshopData", Self::VT_WORKSHOPDATA, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_BuildingData_TrainingBean>>("trainingData", Self::VT_TRAININGDATA, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_BuildingData_PowerRoomBean>>("powerData", Self::VT_POWERDATA, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_BuildingData_RecycleBean>>("recycleData", Self::VT_RECYCLEDATA, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_BuildingData_BuildingCharacter>>>>("chars", Self::VT_CHARS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_BuildingData_BuildingBuff>>>>("buffs", Self::VT_BUFFS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__list_string>>>>("workshopBonus", Self::VT_WORKSHOPBONUS, false)?
@@ -32305,6 +34978,10 @@ impl ::flatbuffers::Verifiable for clz_Torappu_BuildingData<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__string>>>>("categoryNames", Self::VT_CATEGORYNAMES, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_BuildingData_BuildingRoomTypeBuffSortData>>>>("buffSortData", Self::VT_BUFFSORTDATA, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_BuildingData_TradingRoomInfoData>>("tradingRoomInfoData", Self::VT_TRADINGROOMINFODATA, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolData>>>>("recycleRoomOutputPoolDatas", Self::VT_RECYCLEROOMOUTPUTPOOLDATAS, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData>>>>("recycleRoomOutputPoolContentDatas", Self::VT_RECYCLEROOMOUTPUTPOOLCONTENTDATAS, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemData>>>>("recycleRoomInputItemDatas", Self::VT_RECYCLEROOMINPUTITEMDATAS, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_BuildingData_RecycleRoomConsts>>("recycleRoomConsts", Self::VT_RECYCLEROOMCONSTS, false)?
      .finish();
         Ok(())
     }
@@ -32434,6 +35111,7 @@ pub struct clz_Torappu_BuildingDataArgs<'a> {
     >,
     pub trainingData: Option<::flatbuffers::WIPOffset<clz_Torappu_BuildingData_TrainingBean<'a>>>,
     pub powerData: Option<::flatbuffers::WIPOffset<clz_Torappu_BuildingData_PowerRoomBean<'a>>>,
+    pub recycleData: Option<::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleBean<'a>>>,
     pub chars: Option<
         ::flatbuffers::WIPOffset<
             ::flatbuffers::Vector<
@@ -32578,6 +35256,38 @@ pub struct clz_Torappu_BuildingDataArgs<'a> {
     >,
     pub tradingRoomInfoData:
         Option<::flatbuffers::WIPOffset<clz_Torappu_BuildingData_TradingRoomInfoData<'a>>>,
+    pub recycleRoomOutputPoolDatas: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolData<'a>,
+                >,
+            >,
+        >,
+    >,
+    pub recycleRoomOutputPoolContentDatas: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData<'a>,
+                >,
+            >,
+        >,
+    >,
+    pub recycleRoomInputItemDatas: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemData<'a>,
+                >,
+            >,
+        >,
+    >,
+    pub recycleRoomConsts:
+        Option<::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleRoomConsts<'a>>>,
 }
 impl<'a> Default for clz_Torappu_BuildingDataArgs<'a> {
     #[inline]
@@ -32643,6 +35353,7 @@ impl<'a> Default for clz_Torappu_BuildingDataArgs<'a> {
             workshopData: None,
             trainingData: None,
             powerData: None,
+            recycleData: None,
             chars: None,
             buffs: None,
             workshopBonus: None,
@@ -32666,6 +35377,10 @@ impl<'a> Default for clz_Torappu_BuildingDataArgs<'a> {
             categoryNames: None,
             buffSortData: None,
             tradingRoomInfoData: None,
+            recycleRoomOutputPoolDatas: None,
+            recycleRoomOutputPoolContentDatas: None,
+            recycleRoomInputItemDatas: None,
+            recycleRoomConsts: None,
         }
     }
 }
@@ -33226,6 +35941,17 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_BuildingDataBuild
             );
     }
     #[inline]
+    pub fn add_recycleData(
+        &mut self,
+        recycleData: ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleBean<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleBean>>(
+                clz_Torappu_BuildingData::VT_RECYCLEDATA,
+                recycleData,
+            );
+    }
+    #[inline]
     pub fn add_chars(
         &mut self,
         chars: ::flatbuffers::WIPOffset<
@@ -33542,6 +36268,64 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_BuildingDataBuild
         self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_BuildingData_TradingRoomInfoData>>(clz_Torappu_BuildingData::VT_TRADINGROOMINFODATA, tradingRoomInfoData);
     }
     #[inline]
+    pub fn add_recycleRoomOutputPoolDatas(
+        &mut self,
+        recycleRoomOutputPoolDatas: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolData<'b>,
+                >,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_BuildingData::VT_RECYCLEROOMOUTPUTPOOLDATAS,
+            recycleRoomOutputPoolDatas,
+        );
+    }
+    #[inline]
+    pub fn add_recycleRoomOutputPoolContentDatas(
+        &mut self,
+        recycleRoomOutputPoolContentDatas: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentData<'b>,
+                >,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_BuildingData::VT_RECYCLEROOMOUTPUTPOOLCONTENTDATAS,
+            recycleRoomOutputPoolContentDatas,
+        );
+    }
+    #[inline]
+    pub fn add_recycleRoomInputItemDatas(
+        &mut self,
+        recycleRoomInputItemDatas: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemData<'b>,
+                >,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_BuildingData::VT_RECYCLEROOMINPUTITEMDATAS,
+            recycleRoomInputItemDatas,
+        );
+    }
+    #[inline]
+    pub fn add_recycleRoomConsts(
+        &mut self,
+        recycleRoomConsts: ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleRoomConsts<'b>>,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_BuildingData_RecycleRoomConsts>>(clz_Torappu_BuildingData::VT_RECYCLEROOMCONSTS, recycleRoomConsts);
+    }
+    #[inline]
     pub fn new(
         _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
     ) -> clz_Torappu_BuildingDataBuilder<'a, 'b, A> {
@@ -33636,6 +36420,7 @@ impl ::core::fmt::Debug for clz_Torappu_BuildingData<'_> {
         ds.field("workshopData", &self.workshopData());
         ds.field("trainingData", &self.trainingData());
         ds.field("powerData", &self.powerData());
+        ds.field("recycleData", &self.recycleData());
         ds.field("chars", &self.chars());
         ds.field("buffs", &self.buffs());
         ds.field("workshopBonus", &self.workshopBonus());
@@ -33659,6 +36444,19 @@ impl ::core::fmt::Debug for clz_Torappu_BuildingData<'_> {
         ds.field("categoryNames", &self.categoryNames());
         ds.field("buffSortData", &self.buffSortData());
         ds.field("tradingRoomInfoData", &self.tradingRoomInfoData());
+        ds.field(
+            "recycleRoomOutputPoolDatas",
+            &self.recycleRoomOutputPoolDatas(),
+        );
+        ds.field(
+            "recycleRoomOutputPoolContentDatas",
+            &self.recycleRoomOutputPoolContentDatas(),
+        );
+        ds.field(
+            "recycleRoomInputItemDatas",
+            &self.recycleRoomInputItemDatas(),
+        );
+        ds.field("recycleRoomConsts", &self.recycleRoomConsts());
         ds.finish()
     }
 }
@@ -33734,6 +36532,7 @@ pub struct clz_Torappu_BuildingDataT {
     >,
     pub trainingData: Option<alloc::boxed::Box<clz_Torappu_BuildingData_TrainingBeanT>>,
     pub powerData: Option<alloc::boxed::Box<clz_Torappu_BuildingData_PowerRoomBeanT>>,
+    pub recycleData: Option<alloc::boxed::Box<clz_Torappu_BuildingData_RecycleBeanT>>,
     pub chars: Option<alloc::vec::Vec<dict__string__clz_Torappu_BuildingData_BuildingCharacterT>>,
     pub buffs: Option<alloc::vec::Vec<dict__string__clz_Torappu_BuildingData_BuildingBuffT>>,
     pub workshopBonus: Option<alloc::vec::Vec<dict__string__list_stringT>>,
@@ -33766,6 +36565,14 @@ pub struct clz_Torappu_BuildingDataT {
     >,
     pub tradingRoomInfoData:
         Option<alloc::boxed::Box<clz_Torappu_BuildingData_TradingRoomInfoDataT>>,
+    pub recycleRoomOutputPoolDatas:
+        Option<alloc::vec::Vec<dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolDataT>>,
+    pub recycleRoomOutputPoolContentDatas: Option<
+        alloc::vec::Vec<dict__string__clz_Torappu_BuildingData_RecycleRoomOutputPoolContentDataT>,
+    >,
+    pub recycleRoomInputItemDatas:
+        Option<alloc::vec::Vec<dict__string__clz_Torappu_BuildingData_RecycleRoomInputItemDataT>>,
+    pub recycleRoomConsts: Option<alloc::boxed::Box<clz_Torappu_BuildingData_RecycleRoomConstsT>>,
 }
 impl Default for clz_Torappu_BuildingDataT {
     fn default() -> Self {
@@ -33830,6 +36637,7 @@ impl Default for clz_Torappu_BuildingDataT {
             workshopData: None,
             trainingData: None,
             powerData: None,
+            recycleData: None,
             chars: None,
             buffs: None,
             workshopBonus: None,
@@ -33853,6 +36661,10 @@ impl Default for clz_Torappu_BuildingDataT {
             categoryNames: None,
             buffSortData: None,
             tradingRoomInfoData: None,
+            recycleRoomOutputPoolDatas: None,
+            recycleRoomOutputPoolContentDatas: None,
+            recycleRoomInputItemDatas: None,
+            recycleRoomConsts: None,
         }
     }
 }
@@ -33957,6 +36769,7 @@ impl clz_Torappu_BuildingDataT {
         let workshopData = self.workshopData.as_ref().map(|x| x.pack(_fbb));
         let trainingData = self.trainingData.as_ref().map(|x| x.pack(_fbb));
         let powerData = self.powerData.as_ref().map(|x| x.pack(_fbb));
+        let recycleData = self.recycleData.as_ref().map(|x| x.pack(_fbb));
         let chars = self.chars.as_ref().map(|x| {
             let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
             _fbb.create_vector(&w)
@@ -34031,6 +36844,20 @@ impl clz_Torappu_BuildingDataT {
             _fbb.create_vector(&w)
         });
         let tradingRoomInfoData = self.tradingRoomInfoData.as_ref().map(|x| x.pack(_fbb));
+        let recycleRoomOutputPoolDatas = self.recycleRoomOutputPoolDatas.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let recycleRoomOutputPoolContentDatas =
+            self.recycleRoomOutputPoolContentDatas.as_ref().map(|x| {
+                let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+                _fbb.create_vector(&w)
+            });
+        let recycleRoomInputItemDatas = self.recycleRoomInputItemDatas.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let recycleRoomConsts = self.recycleRoomConsts.as_ref().map(|x| x.pack(_fbb));
         clz_Torappu_BuildingData::create(
             _fbb,
             &clz_Torappu_BuildingDataArgs {
@@ -34094,6 +36921,7 @@ impl clz_Torappu_BuildingDataT {
                 workshopData,
                 trainingData,
                 powerData,
+                recycleData,
                 chars,
                 buffs,
                 workshopBonus,
@@ -34117,6 +36945,10 @@ impl clz_Torappu_BuildingDataT {
                 categoryNames,
                 buffSortData,
                 tradingRoomInfoData,
+                recycleRoomOutputPoolDatas,
+                recycleRoomOutputPoolContentDatas,
+                recycleRoomInputItemDatas,
+                recycleRoomConsts,
             },
         )
     }

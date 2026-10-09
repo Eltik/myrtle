@@ -1,0 +1,206 @@
+name: Schema Watch
+
+# A game patch that changes a FlatBuffer schema makes the affected gamedata tables verify
+# under no schema. The unpacker then skips them and keeps the previous extraction, so the
+# site serves stale tables until the schemas are regenerated (CN 2.7.81 on 2026-10-09:
+# activity_table, building_data, roguelike_topic_table; the release planner went dark).
+#
+# This job closes that gap without a human in the loop up to the PR:
+#   1. download the live gamedata bundles of every server and run `unpacker verify`;
+#   2. if a table verifies under no schema, or upstream OpenArknightsFBS has moved past the
+#      pinned commit, bump the submodule, run generate-fbs and rebuild;
+#   3. verify again and extract CN gamedata as a smoke test;
+#   4. open (or update) a PR with the before/after matrix.
+# Merging the PR and running `vps-update.sh` rebuilds the unpacker on the VPS (it rebuilds on
+# any assets/OpenArknightsFBS change), and the watcher re-extracts because the new binary is
+# newer than `.last_extract`.
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Regenerate even if every table verifies and upstream has not moved"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: schema-watch
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  # Must match the flatbuffers crate in assets/unpacker/Cargo.toml; generated code from a
+  # different flatc differs line for line.
+  FLATC_VERSION: "25.12.19"
+  SERVERS: "cn en jp kr"
+
+jobs:
+  watch:
+    name: Detect schema drift and regenerate
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: true
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            assets/downloader -> target
+            assets/unpacker -> target
+          key: schema-watch
+
+      - name: Build downloader + unpacker
+        run: |
+          cargo build --release --manifest-path assets/downloader/Cargo.toml
+          cargo build --release --manifest-path assets/unpacker/Cargo.toml --bin unpacker
+
+      - name: Download live gamedata
+        run: |
+          for s in $SERVERS; do
+            assets/downloader/target/release/downloader download --all -s "$s" \
+              --profile gamedata -d "$RUNNER_TEMP/ark/$s"
+          done
+
+      - name: Verify with the pinned schemas
+        id: before
+        run: |
+          mkdir -p "$RUNNER_TEMP/verify/before"
+          broken=0
+          for s in $SERVERS; do
+            out="$RUNNER_TEMP/verify/before/$s.txt"
+            assets/unpacker/target/release/unpacker verify -i "$RUNNER_TEMP/ark/$s" > "$out" 2>&1
+            n=$(grep -c 'chosen: none' "$out" || true)
+            echo "$s: $n table(s) verify under no schema"
+            grep 'chosen: none' "$out" || true
+            broken=$((broken + n))
+          done
+          echo "broken=$broken" >> "$GITHUB_OUTPUT"
+
+      - name: Check upstream schemas
+        id: upstream
+        working-directory: assets/OpenArknightsFBS
+        run: |
+          git fetch --quiet origin main
+          pinned=$(git rev-parse HEAD)
+          latest=$(git rev-parse FETCH_HEAD)
+          echo "pinned=$pinned" >> "$GITHUB_OUTPUT"
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "subject=$(git log -1 --format=%s FETCH_HEAD)" >> "$GITHUB_OUTPUT"
+          if [ "$pinned" = "$latest" ]; then echo "moved=false" >> "$GITHUB_OUTPUT"; else echo "moved=true" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Decide
+        id: decide
+        run: |
+          if [ "${{ steps.before.outputs.broken }}" != "0" ] || [ "${{ steps.upstream.outputs.moved }}" = "true" ] || [ "${{ inputs.force }}" = "true" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Every table verifies and upstream is at the pinned commit; nothing to do."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install flatc ${{ env.FLATC_VERSION }}
+        if: steps.decide.outputs.run == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          asset=$(gh api "repos/google/flatbuffers/releases/tags/v$FLATC_VERSION" \
+            --jq '[.assets[].name | select(startswith("Linux.flatc.binary"))][0]')
+          test -n "$asset" || { echo "no Linux flatc asset for v$FLATC_VERSION"; exit 1; }
+          gh release download "v$FLATC_VERSION" -R google/flatbuffers -p "$asset" -D "$RUNNER_TEMP/flatc"
+          unzip -q "$RUNNER_TEMP/flatc/$asset" -d "$RUNNER_TEMP/flatc"
+          chmod +x "$RUNNER_TEMP/flatc/flatc"
+          echo "$RUNNER_TEMP/flatc" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/flatc/flatc" --version | grep -q "$FLATC_VERSION"
+
+      - name: Bump schemas and regenerate
+        if: steps.decide.outputs.run == 'true'
+        run: |
+          git -C assets/OpenArknightsFBS checkout --quiet "${{ steps.upstream.outputs.latest }}"
+          cargo run --release --manifest-path assets/unpacker/Cargo.toml --bin generate-fbs
+          cargo fmt --manifest-path assets/unpacker/Cargo.toml
+          cargo build --release --manifest-path assets/unpacker/Cargo.toml --bin unpacker
+
+      - name: Verify with the regenerated schemas
+        if: steps.decide.outputs.run == 'true'
+        run: |
+          mkdir -p "$RUNNER_TEMP/verify/after"
+          broken=0
+          for s in $SERVERS; do
+            out="$RUNNER_TEMP/verify/after/$s.txt"
+            assets/unpacker/target/release/unpacker verify -i "$RUNNER_TEMP/ark/$s" > "$out" 2>&1
+            n=$(grep -c 'chosen: none' "$out" || true)
+            echo "$s: $n table(s) verify under no schema"
+            grep 'chosen: none' "$out" || true
+            broken=$((broken + n))
+          done
+          if [ "$broken" != "0" ]; then
+            echo "::error::$broken table(s) still verify under no schema after regenerating from upstream ${{ steps.upstream.outputs.latest }}. Upstream has not caught up with the live client yet; the VPS keeps serving the previous extraction meanwhile."
+            exit 1
+          fi
+
+      - name: Smoke-extract CN gamedata
+        if: steps.decide.outputs.run == 'true'
+        run: |
+          idx=$(ls "$RUNNER_TEMP"/ark/cn/*.idx | head -1)
+          assets/unpacker/target/release/unpacker extract -i "$RUNNER_TEMP/ark/cn" \
+            -o "$RUNNER_TEMP/out/cn" --gamedata --idx "$idx"
+          python3 -I - "$RUNNER_TEMP/out/cn/gamedata/excel" <<'PY'
+          import json, pathlib, sys
+          d = pathlib.Path(sys.argv[1])
+          files = sorted(d.glob("*.json"))
+          bad = []
+          for f in files:
+              text = f.read_text(encoding="utf-8")
+              json.loads(text)
+              if "\\u0000" in text:
+                  bad.append(f.name)
+          print(f"{len(files)} tables parse as JSON")
+          for need in ("activity_table", "building_data", "roguelike_topic_table", "character_table"):
+              if not (d / f"{need}.json").exists():
+                  sys.exit(f"missing {need}.json")
+          if bad:
+              sys.exit(f"escaped NULs (a misaligned decode) in: {', '.join(bad)}")
+          PY
+
+      - name: Summarise
+        if: steps.decide.outputs.run == 'true'
+        run: |
+          {
+            echo "Upstream OpenArknightsFBS: \`${{ steps.upstream.outputs.pinned }}\` -> \`${{ steps.upstream.outputs.latest }}\` (${{ steps.upstream.outputs.subject }})"
+            echo
+            echo "Tables that verified under no schema before regenerating:"
+            echo
+            echo '```'
+            cat "$RUNNER_TEMP"/verify/before/*.txt | grep 'chosen: none' || echo "(none)"
+            echo '```'
+            echo
+            echo "After regenerating, every table on $SERVERS verifies, and a CN gamedata extract parses as JSON with no escaped NULs."
+            echo
+            echo "After merging, run \`vps-update.sh\` on the VPS: it rebuilds the unpacker, and the watcher re-extracts because the binary is newer than \`.last_extract\`."
+          } > "$RUNNER_TEMP/pr-body.md"
+          cat "$RUNNER_TEMP/pr-body.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Open PR
+        if: steps.decide.outputs.run == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: schema-watch/fbs-bump
+          title: "chore(unpacker): regenerate FlatBuffer schemas (${{ steps.upstream.outputs.subject }})"
+          commit-message: "chore(unpacker): regenerate FlatBuffer schemas (${{ steps.upstream.outputs.subject }})"
+          body-path: ${{ runner.temp }}/pr-body.md
+          add-paths: |
+            assets/OpenArknightsFBS
+            assets/unpacker/src
+          delete-branch: true

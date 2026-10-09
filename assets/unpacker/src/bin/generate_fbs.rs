@@ -72,7 +72,7 @@ fn fetch_cn_schemas(script_dir: &Path) -> Result<PathBuf, Box<dyn std::error::Er
                 "clone",
                 "--depth",
                 "1",
-                "https://github.com/Eltik/OpenArknightsFBS.git",
+                "https://github.com/MooncellWiki/OpenArknightsFBS.git",
                 fbs_dir.parent().unwrap().to_str().unwrap(),
             ])
             .current_dir(parent)

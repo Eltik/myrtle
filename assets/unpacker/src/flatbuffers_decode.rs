@@ -171,6 +171,8 @@ fn has_yostar_schema(schema_type: &str) -> bool {
             | "building_data"
             | "campaign_table"
             | "char_meta_table"
+            | "char_patch_table"
+            | "character_table"
             | "charm_table"
             | "charword_table"
             | "checkin_table"
@@ -181,6 +183,7 @@ fn has_yostar_schema(schema_type: &str) -> bool {
             | "display_meta_table"
             | "enemy_database"
             | "gacha_table"
+            | "gamedata_const"
             | "handbook_info_table"
             | "item_table"
             | "medal_table"
@@ -194,6 +197,7 @@ fn has_yostar_schema(schema_type: &str) -> bool {
             | "story_review_meta_table"
             | "story_review_table"
             | "story_table"
+            | "token_table"
             | "uniequip_table"
             | "zone_table"
     )
@@ -324,7 +328,16 @@ fn verify_schemas(
                 use crate::generated_fbs::character_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_with_opts;
                 root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_with_opts(&opts, data).err().map(|e| first_line(&e))
             };
-            (cn_err, YostarVerdict::NotRun)
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, YostarVerdict::NotRun);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::character_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_with_opts;
+                root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, yostar_err.into())
         }
         "char_master_table" => {
             let cn_err = {
@@ -354,7 +367,16 @@ fn verify_schemas(
                 use crate::generated_fbs::char_patch_table_generated::root_as_clz_torappu_char_patch_data_with_opts;
                 root_as_clz_torappu_char_patch_data_with_opts(&opts, data).err().map(|e| first_line(&e))
             };
-            (cn_err, YostarVerdict::NotRun)
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, YostarVerdict::NotRun);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::char_patch_table_generated::root_as_clz_torappu_char_patch_data_with_opts;
+                root_as_clz_torappu_char_patch_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, yostar_err.into())
         }
         "charword_table" => {
             let cn_err = {
@@ -705,7 +727,16 @@ fn verify_schemas(
                 use crate::generated_fbs::gamedata_const_generated::root_as_clz_torappu_game_data_consts_with_opts;
                 root_as_clz_torappu_game_data_consts_with_opts(&opts, data).err().map(|e| first_line(&e))
             };
-            (cn_err, YostarVerdict::NotRun)
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, YostarVerdict::NotRun);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::gamedata_const_generated::root_as_clz_torappu_game_data_consts_with_opts;
+                root_as_clz_torappu_game_data_consts_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, yostar_err.into())
         }
         "hotupdate_meta_table" => {
             let cn_err = {
@@ -981,7 +1012,16 @@ fn verify_schemas(
                 use crate::generated_fbs::token_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_with_opts;
                 root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_with_opts(&opts, data).err().map(|e| first_line(&e))
             };
-            (cn_err, YostarVerdict::NotRun)
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, YostarVerdict::NotRun);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::token_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_with_opts;
+                root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, yostar_err.into())
         }
         "level_data" => {
             let cn_err = {
@@ -1126,6 +1166,18 @@ fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value, Str
                 let root = unsafe { root_as_clz_torappu_char_meta_table_unchecked(data) };
                 Ok(root.to_json())
             }
+            "char_patch_table" => {
+                use crate::generated_fbs_yostar::char_patch_table_generated::root_as_clz_torappu_char_patch_data_unchecked;
+                let root = unsafe { root_as_clz_torappu_char_patch_data_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "character_table" => {
+                use crate::generated_fbs_yostar::character_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked;
+                let root = unsafe {
+                    root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked(data)
+                };
+                Ok(root.to_json())
+            }
             "charm_table" => {
                 use crate::generated_fbs_yostar::charm_table_generated::root_as_clz_torappu_charm_data_unchecked;
                 let root = unsafe { root_as_clz_torappu_charm_data_unchecked(data) };
@@ -1176,6 +1228,11 @@ fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value, Str
             "gacha_table" => {
                 use crate::generated_fbs_yostar::gacha_table_generated::root_as_clz_torappu_gacha_data_unchecked;
                 let root = unsafe { root_as_clz_torappu_gacha_data_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "gamedata_const" => {
+                use crate::generated_fbs_yostar::gamedata_const_generated::root_as_clz_torappu_game_data_consts_unchecked;
+                let root = unsafe { root_as_clz_torappu_game_data_consts_unchecked(data) };
                 Ok(root.to_json())
             }
             "handbook_info_table" => {
@@ -1248,6 +1305,13 @@ fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value, Str
                 use crate::generated_fbs_yostar::story_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_story_data_unchecked;
                 let root = unsafe {
                     root_as_clz_torappu_simple_kvtable_clz_torappu_story_data_unchecked(data)
+                };
+                Ok(root.to_json())
+            }
+            "token_table" => {
+                use crate::generated_fbs_yostar::token_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked;
+                let root = unsafe {
+                    root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked(data)
                 };
                 Ok(root.to_json())
             }

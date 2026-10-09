@@ -2719,8 +2719,6 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
     pub const VT_ISBIRTHDAYFUNCENABLED: ::flatbuffers::VOffsetT = 248;
     pub const VT_ISSOCHARENABLED: ::flatbuffers::VOffsetT = 250;
     pub const VT_AVGREADERMODEDEFAULTSETTING: ::flatbuffers::VOffsetT = 252;
-    pub const VT_FRIENDADDUIDLIMIT: ::flatbuffers::VOffsetT = 254;
-    pub const VT_FRIENDURLFORMAT: ::flatbuffers::VOffsetT = 256;
 
     #[inline]
     pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -2749,10 +2747,6 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
         builder.add_charRotationPresetTrackTs(args.charRotationPresetTrackTs);
         builder.add_rejectSpCharMission(args.rejectSpCharMission);
         builder.add_friendStarEditTrackTs(args.friendStarEditTrackTs);
-        if let Some(x) = args.friendUrlFormat {
-            builder.add_friendUrlFormat(x);
-        }
-        builder.add_friendAddUidLimit(args.friendAddUidLimit);
         if let Some(x) = args.avgReaderModeDefaultSetting {
             builder.add_avgReaderModeDefaultSetting(x);
         }
@@ -3199,10 +3193,6 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
         let avgReaderModeDefaultSetting = self
             .avgReaderModeDefaultSetting()
             .map(|x| alloc::boxed::Box::new(x.unpack()));
-        let friendAddUidLimit = self.friendAddUidLimit();
-        let friendUrlFormat = self
-            .friendUrlFormat()
-            .map(|x| alloc::string::ToString::to_string(x));
         clz_Torappu_GameDataConstsT {
             maxPlayerLevel,
             playerExpMap,
@@ -3329,8 +3319,6 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
             isBirthdayFuncEnabled,
             isSoCharEnabled,
             avgReaderModeDefaultSetting,
-            friendAddUidLimit,
-            friendUrlFormat,
         }
     }
 
@@ -4933,29 +4921,6 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
             )
         }
     }
-    #[inline]
-    pub fn friendAddUidLimit(&self) -> i32 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i32>(clz_Torappu_GameDataConsts::VT_FRIENDADDUIDLIMIT, Some(0))
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn friendUrlFormat(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_GameDataConsts::VT_FRIENDURLFORMAT,
-                None,
-            )
-        }
-    }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_GameDataConsts<'_> {
@@ -5090,8 +5055,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_GameDataConsts<'_> {
      .visit_field::<bool>("isBirthdayFuncEnabled", Self::VT_ISBIRTHDAYFUNCENABLED, false)?
      .visit_field::<bool>("isSoCharEnabled", Self::VT_ISSOCHARENABLED, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting>>("avgReaderModeDefaultSetting", Self::VT_AVGREADERMODEDEFAULTSETTING, false)?
-     .visit_field::<i32>("friendAddUidLimit", Self::VT_FRIENDADDUIDLIMIT, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("friendUrlFormat", Self::VT_FRIENDURLFORMAT, false)?
      .finish();
         Ok(())
     }
@@ -5298,8 +5261,6 @@ pub struct clz_Torappu_GameDataConstsArgs<'a> {
     pub avgReaderModeDefaultSetting: Option<
         ::flatbuffers::WIPOffset<clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'a>>,
     >,
-    pub friendAddUidLimit: i32,
-    pub friendUrlFormat: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
 impl<'a> Default for clz_Torappu_GameDataConstsArgs<'a> {
     #[inline]
@@ -5430,8 +5391,6 @@ impl<'a> Default for clz_Torappu_GameDataConstsArgs<'a> {
             isBirthdayFuncEnabled: false,
             isSoCharEnabled: false,
             avgReaderModeDefaultSetting: None,
-            friendAddUidLimit: 0,
-            friendUrlFormat: None,
         }
     }
 }
@@ -6536,21 +6495,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_GameDataConstsBui
         self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting>>(clz_Torappu_GameDataConsts::VT_AVGREADERMODEDEFAULTSETTING, avgReaderModeDefaultSetting);
     }
     #[inline]
-    pub fn add_friendAddUidLimit(&mut self, friendAddUidLimit: i32) {
-        self.fbb_.push_slot::<i32>(
-            clz_Torappu_GameDataConsts::VT_FRIENDADDUIDLIMIT,
-            friendAddUidLimit,
-            0,
-        );
-    }
-    #[inline]
-    pub fn add_friendUrlFormat(&mut self, friendUrlFormat: ::flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
-            clz_Torappu_GameDataConsts::VT_FRIENDURLFORMAT,
-            friendUrlFormat,
-        );
-    }
-    #[inline]
     pub fn new(
         _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
     ) -> clz_Torappu_GameDataConstsBuilder<'a, 'b, A> {
@@ -6773,8 +6717,6 @@ impl ::core::fmt::Debug for clz_Torappu_GameDataConsts<'_> {
             "avgReaderModeDefaultSetting",
             &self.avgReaderModeDefaultSetting(),
         );
-        ds.field("friendAddUidLimit", &self.friendAddUidLimit());
-        ds.field("friendUrlFormat", &self.friendUrlFormat());
         ds.finish()
     }
 }
@@ -6910,8 +6852,6 @@ pub struct clz_Torappu_GameDataConstsT {
     pub isSoCharEnabled: bool,
     pub avgReaderModeDefaultSetting:
         Option<alloc::boxed::Box<clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingT>>,
-    pub friendAddUidLimit: i32,
-    pub friendUrlFormat: Option<alloc::string::String>,
 }
 impl Default for clz_Torappu_GameDataConstsT {
     fn default() -> Self {
@@ -7041,8 +6981,6 @@ impl Default for clz_Torappu_GameDataConstsT {
             isBirthdayFuncEnabled: false,
             isSoCharEnabled: false,
             avgReaderModeDefaultSetting: None,
-            friendAddUidLimit: 0,
-            friendUrlFormat: None,
         }
     }
 }
@@ -7296,8 +7234,6 @@ impl clz_Torappu_GameDataConstsT {
             .avgReaderModeDefaultSetting
             .as_ref()
             .map(|x| x.pack(_fbb));
-        let friendAddUidLimit = self.friendAddUidLimit;
-        let friendUrlFormat = self.friendUrlFormat.as_ref().map(|x| _fbb.create_string(x));
         clz_Torappu_GameDataConsts::create(
             _fbb,
             &clz_Torappu_GameDataConstsArgs {
@@ -7426,8 +7362,6 @@ impl clz_Torappu_GameDataConstsT {
                 isBirthdayFuncEnabled,
                 isSoCharEnabled,
                 avgReaderModeDefaultSetting,
-                friendAddUidLimit,
-                friendUrlFormat,
             },
         )
     }

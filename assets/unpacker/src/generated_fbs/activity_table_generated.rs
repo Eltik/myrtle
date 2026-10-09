@@ -13,13 +13,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ACTIVITY_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ACTIVITY_TYPE: i32 = 67;
+pub const ENUM_MAX_ENUM__TORAPPU_ACTIVITY_TYPE: i32 = 68;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ACTIVITY_TYPE: [enum__Torappu_ActivityType; 68] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ACTIVITY_TYPE: [enum__Torappu_ActivityType; 69] = [
     enum__Torappu_ActivityType::DEFAULT,
     enum__Torappu_ActivityType::MISSION_ONLY,
     enum__Torappu_ActivityType::CHECKIN_ONLY,
@@ -87,6 +87,7 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ACTIVITY_TYPE: [enum__Torappu_ActivityType; 
     enum__Torappu_ActivityType::TYPE_ACT53SIDE,
     enum__Torappu_ActivityType::TYPE_ACT54SIDE,
     enum__Torappu_ActivityType::ACT_DP,
+    enum__Torappu_ActivityType::REWARD_ONLY,
     enum__Torappu_ActivityType::ENUM,
 ];
 
@@ -162,10 +163,11 @@ impl enum__Torappu_ActivityType {
     pub const TYPE_ACT53SIDE: Self = Self(64);
     pub const TYPE_ACT54SIDE: Self = Self(65);
     pub const ACT_DP: Self = Self(66);
-    pub const ENUM: Self = Self(67);
+    pub const REWARD_ONLY: Self = Self(67);
+    pub const ENUM: Self = Self(68);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 67;
+    pub const ENUM_MAX: i32 = 68;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::DEFAULT,
         Self::MISSION_ONLY,
@@ -234,6 +236,7 @@ impl enum__Torappu_ActivityType {
         Self::TYPE_ACT53SIDE,
         Self::TYPE_ACT54SIDE,
         Self::ACT_DP,
+        Self::REWARD_ONLY,
         Self::ENUM,
     ];
     /// Returns the variant's name or "" if unknown.
@@ -306,6 +309,7 @@ impl enum__Torappu_ActivityType {
             Self::TYPE_ACT53SIDE => Some("TYPE_ACT53SIDE"),
             Self::TYPE_ACT54SIDE => Some("TYPE_ACT54SIDE"),
             Self::ACT_DP => Some("ACT_DP"),
+            Self::REWARD_ONLY => Some("REWARD_ONLY"),
             Self::ENUM => Some("ENUM"),
             _ => None,
         }
@@ -7319,19 +7323,20 @@ pub const ENUM_MIN_ENUM__TORAPPU_ACT_ARCADE_DATA_SUB_MODE_TYPE: i32 = -1;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ACT_ARCADE_DATA_SUB_MODE_TYPE: i32 = 4;
+pub const ENUM_MAX_ENUM__TORAPPU_ACT_ARCADE_DATA_SUB_MODE_TYPE: i32 = 5;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
 pub const ENUM_VALUES_ENUM__TORAPPU_ACT_ARCADE_DATA_SUB_MODE_TYPE:
-    [enum__Torappu_ActArcadeData_SubModeType; 6] = [
+    [enum__Torappu_ActArcadeData_SubModeType; 7] = [
     enum__Torappu_ActArcadeData_SubModeType::IGNORE,
     enum__Torappu_ActArcadeData_SubModeType::MINER,
     enum__Torappu_ActArcadeData_SubModeType::DRAW,
     enum__Torappu_ActArcadeData_SubModeType::LINE,
     enum__Torappu_ActArcadeData_SubModeType::CAR,
+    enum__Torappu_ActArcadeData_SubModeType::FISH,
     enum__Torappu_ActArcadeData_SubModeType::E_NUM,
 ];
 
@@ -7345,16 +7350,18 @@ impl enum__Torappu_ActArcadeData_SubModeType {
     pub const DRAW: Self = Self(1);
     pub const LINE: Self = Self(2);
     pub const CAR: Self = Self(3);
-    pub const E_NUM: Self = Self(4);
+    pub const FISH: Self = Self(4);
+    pub const E_NUM: Self = Self(5);
 
     pub const ENUM_MIN: i32 = -1;
-    pub const ENUM_MAX: i32 = 4;
+    pub const ENUM_MAX: i32 = 5;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::IGNORE,
         Self::MINER,
         Self::DRAW,
         Self::LINE,
         Self::CAR,
+        Self::FISH,
         Self::E_NUM,
     ];
     /// Returns the variant's name or "" if unknown.
@@ -7365,6 +7372,7 @@ impl enum__Torappu_ActArcadeData_SubModeType {
             Self::DRAW => Some("DRAW"),
             Self::LINE => Some("LINE"),
             Self::CAR => Some("CAR"),
+            Self::FISH => Some("FISH"),
             Self::E_NUM => Some("E_NUM"),
             _ => None,
         }
@@ -155833,13 +155841,11 @@ impl<'a> clz_Torappu_ActArcadeData_ArcadeZoneAdditionalData<'a> {
     pub const VT_ZONEID: ::flatbuffers::VOffsetT = 4;
     pub const VT_SORTID: ::flatbuffers::VOffsetT = 6;
     pub const VT_ZONENAME: ::flatbuffers::VOffsetT = 8;
-    pub const VT_ZONEENTRYPICID: ::flatbuffers::VOffsetT = 10;
-    pub const VT_STAGEINFOPREFABID: ::flatbuffers::VOffsetT = 12;
-    pub const VT_STARTTS: ::flatbuffers::VOffsetT = 14;
-    pub const VT_ENDTS: ::flatbuffers::VOffsetT = 16;
-    pub const VT_STAGES: ::flatbuffers::VOffsetT = 18;
-    pub const VT_SUBMODETYPE: ::flatbuffers::VOffsetT = 20;
-    pub const VT_ZONEDESC: ::flatbuffers::VOffsetT = 22;
+    pub const VT_STARTTS: ::flatbuffers::VOffsetT = 10;
+    pub const VT_ENDTS: ::flatbuffers::VOffsetT = 12;
+    pub const VT_STAGES: ::flatbuffers::VOffsetT = 14;
+    pub const VT_SUBMODETYPE: ::flatbuffers::VOffsetT = 16;
+    pub const VT_ZONEDESC: ::flatbuffers::VOffsetT = 18;
 
     #[inline]
     pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -155865,12 +155871,6 @@ impl<'a> clz_Torappu_ActArcadeData_ArcadeZoneAdditionalData<'a> {
         if let Some(x) = args.stages {
             builder.add_stages(x);
         }
-        if let Some(x) = args.stageInfoPrefabId {
-            builder.add_stageInfoPrefabId(x);
-        }
-        if let Some(x) = args.zoneEntryPicId {
-            builder.add_zoneEntryPicId(x);
-        }
         if let Some(x) = args.zoneName {
             builder.add_zoneName(x);
         }
@@ -155887,12 +155887,6 @@ impl<'a> clz_Torappu_ActArcadeData_ArcadeZoneAdditionalData<'a> {
         let zoneName = self
             .zoneName()
             .map(|x| alloc::string::ToString::to_string(x));
-        let zoneEntryPicId = self
-            .zoneEntryPicId()
-            .map(|x| alloc::string::ToString::to_string(x));
-        let stageInfoPrefabId = self
-            .stageInfoPrefabId()
-            .map(|x| alloc::string::ToString::to_string(x));
         let startTs = self.startTs();
         let endTs = self.endTs();
         let stages = self.stages().map(|x| {
@@ -155908,8 +155902,6 @@ impl<'a> clz_Torappu_ActArcadeData_ArcadeZoneAdditionalData<'a> {
             zoneId,
             sortId,
             zoneName,
-            zoneEntryPicId,
-            stageInfoPrefabId,
             startTs,
             endTs,
             stages,
@@ -155952,30 +155944,6 @@ impl<'a> clz_Torappu_ActArcadeData_ArcadeZoneAdditionalData<'a> {
         unsafe {
             self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
                 clz_Torappu_ActArcadeData_ArcadeZoneAdditionalData::VT_ZONENAME,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn zoneEntryPicId(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ActArcadeData_ArcadeZoneAdditionalData::VT_ZONEENTRYPICID,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn stageInfoPrefabId(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ActArcadeData_ArcadeZoneAdditionalData::VT_STAGEINFOPREFABID,
                 None,
             )
         }
@@ -156066,16 +156034,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_ActArcadeData_ArcadeZoneAdditiona
                 Self::VT_ZONENAME,
                 false,
             )?
-            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
-                "zoneEntryPicId",
-                Self::VT_ZONEENTRYPICID,
-                false,
-            )?
-            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
-                "stageInfoPrefabId",
-                Self::VT_STAGEINFOPREFABID,
-                false,
-            )?
             .visit_field::<i64>("startTs", Self::VT_STARTTS, false)?
             .visit_field::<i64>("endTs", Self::VT_ENDTS, false)?
             .visit_field::<::flatbuffers::ForwardsUOffset<
@@ -156099,8 +156057,6 @@ pub struct clz_Torappu_ActArcadeData_ArcadeZoneAdditionalDataArgs<'a> {
     pub zoneId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub sortId: i32,
     pub zoneName: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub zoneEntryPicId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub stageInfoPrefabId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub startTs: i64,
     pub endTs: i64,
     pub stages: Option<
@@ -156118,8 +156074,6 @@ impl<'a> Default for clz_Torappu_ActArcadeData_ArcadeZoneAdditionalDataArgs<'a> 
             zoneId: None,
             sortId: 0,
             zoneName: None,
-            zoneEntryPicId: None,
-            stageInfoPrefabId: None,
             startTs: 0,
             endTs: 0,
             stages: None,
@@ -156160,20 +156114,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
             clz_Torappu_ActArcadeData_ArcadeZoneAdditionalData::VT_ZONENAME,
             zoneName,
-        );
-    }
-    #[inline]
-    pub fn add_zoneEntryPicId(&mut self, zoneEntryPicId: ::flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ActArcadeData_ArcadeZoneAdditionalData::VT_ZONEENTRYPICID,
-            zoneEntryPicId,
-        );
-    }
-    #[inline]
-    pub fn add_stageInfoPrefabId(&mut self, stageInfoPrefabId: ::flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ActArcadeData_ArcadeZoneAdditionalData::VT_STAGEINFOPREFABID,
-            stageInfoPrefabId,
         );
     }
     #[inline]
@@ -156245,8 +156185,6 @@ impl ::core::fmt::Debug for clz_Torappu_ActArcadeData_ArcadeZoneAdditionalData<'
         ds.field("zoneId", &self.zoneId());
         ds.field("sortId", &self.sortId());
         ds.field("zoneName", &self.zoneName());
-        ds.field("zoneEntryPicId", &self.zoneEntryPicId());
-        ds.field("stageInfoPrefabId", &self.stageInfoPrefabId());
         ds.field("startTs", &self.startTs());
         ds.field("endTs", &self.endTs());
         ds.field("stages", &self.stages());
@@ -156261,8 +156199,6 @@ pub struct clz_Torappu_ActArcadeData_ArcadeZoneAdditionalDataT {
     pub zoneId: Option<alloc::string::String>,
     pub sortId: i32,
     pub zoneName: Option<alloc::string::String>,
-    pub zoneEntryPicId: Option<alloc::string::String>,
-    pub stageInfoPrefabId: Option<alloc::string::String>,
     pub startTs: i64,
     pub endTs: i64,
     pub stages: Option<alloc::vec::Vec<alloc::string::String>>,
@@ -156275,8 +156211,6 @@ impl Default for clz_Torappu_ActArcadeData_ArcadeZoneAdditionalDataT {
             zoneId: None,
             sortId: 0,
             zoneName: None,
-            zoneEntryPicId: None,
-            stageInfoPrefabId: None,
             startTs: 0,
             endTs: 0,
             stages: None,
@@ -156293,11 +156227,6 @@ impl clz_Torappu_ActArcadeData_ArcadeZoneAdditionalDataT {
         let zoneId = self.zoneId.as_ref().map(|x| _fbb.create_string(x));
         let sortId = self.sortId;
         let zoneName = self.zoneName.as_ref().map(|x| _fbb.create_string(x));
-        let zoneEntryPicId = self.zoneEntryPicId.as_ref().map(|x| _fbb.create_string(x));
-        let stageInfoPrefabId = self
-            .stageInfoPrefabId
-            .as_ref()
-            .map(|x| _fbb.create_string(x));
         let startTs = self.startTs;
         let endTs = self.endTs;
         let stages = self.stages.as_ref().map(|x| {
@@ -156312,8 +156241,6 @@ impl clz_Torappu_ActArcadeData_ArcadeZoneAdditionalDataT {
                 zoneId,
                 sortId,
                 zoneName,
-                zoneEntryPicId,
-                stageInfoPrefabId,
                 startTs,
                 endTs,
                 stages,
@@ -158712,16 +158639,18 @@ impl<'a> clz_Torappu_ActArcadeData_ArcadeConstData<'a> {
     pub const VT_REWARDHOMETHEMETEXT: ::flatbuffers::VOffsetT = 12;
     pub const VT_REWARDAVATARID: ::flatbuffers::VOffsetT = 14;
     pub const VT_REWARDAVATARTEXT: ::flatbuffers::VOffsetT = 16;
-    pub const VT_BADGECOLLECTIONNAME: ::flatbuffers::VOffsetT = 18;
-    pub const VT_COLLECTIONENTRYRELATEDBADGE: ::flatbuffers::VOffsetT = 20;
-    pub const VT_ZONEENTRYUNLOCKTOAST: ::flatbuffers::VOffsetT = 22;
-    pub const VT_ZONEENTRYENDTEXT: ::flatbuffers::VOffsetT = 24;
-    pub const VT_ZONEENTRYENDTOAST: ::flatbuffers::VOffsetT = 26;
-    pub const VT_RANKUNLOCKNEXTSTAGE: ::flatbuffers::VOffsetT = 28;
-    pub const VT_STAGESCOREDISPLAYLIMIT: ::flatbuffers::VOffsetT = 30;
-    pub const VT_ZONEULTISCOREDISPLAYLIMIT: ::flatbuffers::VOffsetT = 32;
-    pub const VT_ENEMYHUDSCORE: ::flatbuffers::VOffsetT = 34;
-    pub const VT_TRAPNOTBUILDABLEINREST: ::flatbuffers::VOffsetT = 36;
+    pub const VT_REWARDBACKGROUNDID: ::flatbuffers::VOffsetT = 18;
+    pub const VT_REWARDBACKGROUNDTEXT: ::flatbuffers::VOffsetT = 20;
+    pub const VT_BADGECOLLECTIONNAME: ::flatbuffers::VOffsetT = 22;
+    pub const VT_COLLECTIONENTRYRELATEDBADGE: ::flatbuffers::VOffsetT = 24;
+    pub const VT_ZONEENTRYUNLOCKTOAST: ::flatbuffers::VOffsetT = 26;
+    pub const VT_ZONEENTRYENDTEXT: ::flatbuffers::VOffsetT = 28;
+    pub const VT_ZONEENTRYENDTOAST: ::flatbuffers::VOffsetT = 30;
+    pub const VT_RANKUNLOCKNEXTSTAGE: ::flatbuffers::VOffsetT = 32;
+    pub const VT_STAGESCOREDISPLAYLIMIT: ::flatbuffers::VOffsetT = 34;
+    pub const VT_ZONEULTISCOREDISPLAYLIMIT: ::flatbuffers::VOffsetT = 36;
+    pub const VT_ENEMYHUDSCORE: ::flatbuffers::VOffsetT = 38;
+    pub const VT_TRAPNOTBUILDABLEINREST: ::flatbuffers::VOffsetT = 40;
 
     #[inline]
     pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -158763,6 +158692,12 @@ impl<'a> clz_Torappu_ActArcadeData_ArcadeConstData<'a> {
         }
         if let Some(x) = args.badgeCollectionName {
             builder.add_badgeCollectionName(x);
+        }
+        if let Some(x) = args.rewardBackgroundText {
+            builder.add_rewardBackgroundText(x);
+        }
+        if let Some(x) = args.rewardBackgroundId {
+            builder.add_rewardBackgroundId(x);
         }
         if let Some(x) = args.rewardAvatarText {
             builder.add_rewardAvatarText(x);
@@ -158810,6 +158745,12 @@ impl<'a> clz_Torappu_ActArcadeData_ArcadeConstData<'a> {
         let rewardAvatarText = self
             .rewardAvatarText()
             .map(|x| alloc::string::ToString::to_string(x));
+        let rewardBackgroundId = self
+            .rewardBackgroundId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let rewardBackgroundText = self
+            .rewardBackgroundText()
+            .map(|x| alloc::string::ToString::to_string(x));
         let badgeCollectionName = self
             .badgeCollectionName()
             .map(|x| alloc::string::ToString::to_string(x));
@@ -158848,6 +158789,8 @@ impl<'a> clz_Torappu_ActArcadeData_ArcadeConstData<'a> {
             rewardHomeThemeText,
             rewardAvatarId,
             rewardAvatarText,
+            rewardBackgroundId,
+            rewardBackgroundText,
             badgeCollectionName,
             collectionEntryRelatedBadge,
             zoneEntryUnlockToast,
@@ -158941,6 +158884,30 @@ impl<'a> clz_Torappu_ActArcadeData_ArcadeConstData<'a> {
         unsafe {
             self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
                 clz_Torappu_ActArcadeData_ArcadeConstData::VT_REWARDAVATARTEXT,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn rewardBackgroundId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ActArcadeData_ArcadeConstData::VT_REWARDBACKGROUNDID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn rewardBackgroundText(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ActArcadeData_ArcadeConstData::VT_REWARDBACKGROUNDTEXT,
                 None,
             )
         }
@@ -159122,6 +159089,16 @@ impl ::flatbuffers::Verifiable for clz_Torappu_ActArcadeData_ArcadeConstData<'_>
                 false,
             )?
             .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "rewardBackgroundId",
+                Self::VT_REWARDBACKGROUNDID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "rewardBackgroundText",
+                Self::VT_REWARDBACKGROUNDTEXT,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
                 "badgeCollectionName",
                 Self::VT_BADGECOLLECTIONNAME,
                 false,
@@ -159183,6 +159160,8 @@ pub struct clz_Torappu_ActArcadeData_ArcadeConstDataArgs<'a> {
     pub rewardHomeThemeText: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub rewardAvatarId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub rewardAvatarText: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub rewardBackgroundId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub rewardBackgroundText: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub badgeCollectionName: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub collectionEntryRelatedBadge: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub zoneEntryUnlockToast: Option<::flatbuffers::WIPOffset<&'a str>>,
@@ -159213,6 +159192,8 @@ impl<'a> Default for clz_Torappu_ActArcadeData_ArcadeConstDataArgs<'a> {
             rewardHomeThemeText: None,
             rewardAvatarId: None,
             rewardAvatarText: None,
+            rewardBackgroundId: None,
+            rewardBackgroundText: None,
             badgeCollectionName: None,
             collectionEntryRelatedBadge: None,
             zoneEntryUnlockToast: None,
@@ -159288,6 +159269,26 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
             clz_Torappu_ActArcadeData_ArcadeConstData::VT_REWARDAVATARTEXT,
             rewardAvatarText,
+        );
+    }
+    #[inline]
+    pub fn add_rewardBackgroundId(
+        &mut self,
+        rewardBackgroundId: ::flatbuffers::WIPOffset<&'b str>,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ActArcadeData_ArcadeConstData::VT_REWARDBACKGROUNDID,
+            rewardBackgroundId,
+        );
+    }
+    #[inline]
+    pub fn add_rewardBackgroundText(
+        &mut self,
+        rewardBackgroundText: ::flatbuffers::WIPOffset<&'b str>,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ActArcadeData_ArcadeConstData::VT_REWARDBACKGROUNDTEXT,
+            rewardBackgroundText,
         );
     }
     #[inline]
@@ -159411,6 +159412,8 @@ impl ::core::fmt::Debug for clz_Torappu_ActArcadeData_ArcadeConstData<'_> {
         ds.field("rewardHomeThemeText", &self.rewardHomeThemeText());
         ds.field("rewardAvatarId", &self.rewardAvatarId());
         ds.field("rewardAvatarText", &self.rewardAvatarText());
+        ds.field("rewardBackgroundId", &self.rewardBackgroundId());
+        ds.field("rewardBackgroundText", &self.rewardBackgroundText());
         ds.field("badgeCollectionName", &self.badgeCollectionName());
         ds.field(
             "collectionEntryRelatedBadge",
@@ -159440,6 +159443,8 @@ pub struct clz_Torappu_ActArcadeData_ArcadeConstDataT {
     pub rewardHomeThemeText: Option<alloc::string::String>,
     pub rewardAvatarId: Option<alloc::string::String>,
     pub rewardAvatarText: Option<alloc::string::String>,
+    pub rewardBackgroundId: Option<alloc::string::String>,
+    pub rewardBackgroundText: Option<alloc::string::String>,
     pub badgeCollectionName: Option<alloc::string::String>,
     pub collectionEntryRelatedBadge: Option<alloc::string::String>,
     pub zoneEntryUnlockToast: Option<alloc::string::String>,
@@ -159461,6 +159466,8 @@ impl Default for clz_Torappu_ActArcadeData_ArcadeConstDataT {
             rewardHomeThemeText: None,
             rewardAvatarId: None,
             rewardAvatarText: None,
+            rewardBackgroundId: None,
+            rewardBackgroundText: None,
             badgeCollectionName: None,
             collectionEntryRelatedBadge: None,
             zoneEntryUnlockToast: None,
@@ -159493,6 +159500,14 @@ impl clz_Torappu_ActArcadeData_ArcadeConstDataT {
         let rewardAvatarId = self.rewardAvatarId.as_ref().map(|x| _fbb.create_string(x));
         let rewardAvatarText = self
             .rewardAvatarText
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let rewardBackgroundId = self
+            .rewardBackgroundId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let rewardBackgroundText = self
+            .rewardBackgroundText
             .as_ref()
             .map(|x| _fbb.create_string(x));
         let badgeCollectionName = self
@@ -159539,6 +159554,8 @@ impl clz_Torappu_ActArcadeData_ArcadeConstDataT {
                 rewardHomeThemeText,
                 rewardAvatarId,
                 rewardAvatarText,
+                rewardBackgroundId,
+                rewardBackgroundText,
                 badgeCollectionName,
                 collectionEntryRelatedBadge,
                 zoneEntryUnlockToast,

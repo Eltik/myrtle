@@ -115,8 +115,24 @@ pub fn export_gamedata(
                 if let Some(fb) = crate::export::text_asset::flatbuffer_payload(&val)
                     && let Some(table) = crate::flatbuffers_decode::unverified_table(&fb, file_stem)
                 {
+                    // Keeping the file is not enough: `run.mjs` sweeps every file in a
+                    // written subtree whose mtime predates the extract, so an untouched
+                    // stale table is deleted as an orphan. That is how CN 2.7.81 lost
+                    // activity_table, building_data and roguelike_topic_table on the VPS
+                    // (2026-10-09) and the release planner with them.
+                    let kept = out_parent.join(format!("{file_stem}.json"));
+                    let touched = std::fs::OpenOptions::new()
+                        .write(true)
+                        .open(&kept)
+                        .and_then(|f| f.set_modified(std::time::SystemTime::now()))
+                        .is_ok();
                     eprintln!(
-                        "schema: {table} verifies under no schema, skipped (previous output kept)"
+                        "schema: {table} verifies under no schema, skipped ({})",
+                        if touched {
+                            "previous output kept"
+                        } else {
+                            "no previous output"
+                        }
                     );
                     continue;
                 }
