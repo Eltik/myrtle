@@ -3264,7 +3264,7 @@
           {
             "name": "top_n",
             "in": "query",
-            "description": "How many operators to include. Also accepted as `topN`.",
+            "description": "How many operators to include: 10, 20 (the default) or 50. Other values round up to the next of these, and anything above 50 is 50. Also accepted as `topN`.",
             "required": false,
             "schema": {
               "type": "integer",
