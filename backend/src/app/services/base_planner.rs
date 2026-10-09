@@ -842,15 +842,23 @@ pub async fn evaluate(
     };
 
     // Scores rooms exactly as stationed, which is what "score this draft" means.
-    let assignment = compute_live_assignment(
-        &ctx.profiles,
-        &building,
-        &game_data.building,
-        &ctx.registry,
-        &ctx.morale_drains,
-        None,
-        &synced_bars,
-    );
+    // CPU-bound, so it runs on the blocking pool where it cannot stall the async
+    // worker's other futures (see `cpu::offload`); the context and the building
+    // move in and come back, so nothing is cloned.
+    let gd = std::sync::Arc::clone(&game_data);
+    let (ctx, building, assignment) = cpu::offload("base_evaluate", move || {
+        let assignment = compute_live_assignment(
+            &ctx.profiles,
+            &building,
+            &gd.building,
+            &ctx.registry,
+            &ctx.morale_drains,
+            None,
+            &synced_bars,
+        );
+        (ctx, building, assignment)
+    })
+    .await?;
 
     let assignment_dto =
         base_assignment_to_dto(&assignment, &game_data, &ctx.profiles, &ctx.registry);
