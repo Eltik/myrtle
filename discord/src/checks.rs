@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt;
 
 use ::serenity::all::HttpError;
 use poise::serenity_prelude as serenity;
@@ -215,13 +216,7 @@ pub async fn check_hierarchy(
         .author_member()
         .await
         .ok_or("Couldn't read your roles in this server.")?;
-    let positions: HashMap<RoleId, u16> = guild
-        .roles(ctx.http())
-        .await
-        .map_err(|e| format!("Couldn't read this server's roles: {e}"))?
-        .into_iter()
-        .map(|(id, role)| (id, role.position))
-        .collect();
+    let positions = role_positions(ctx, guild).await?;
     if highest_position(&target_member.roles, &positions)
         >= highest_position(&author_member.roles, &positions)
     {
@@ -230,6 +225,116 @@ pub async fn check_hierarchy(
         );
     }
     Ok(())
+}
+
+/// Every role's position in `guild`, fetched once so all comparisons use one snapshot.
+async fn role_positions(ctx: Context<'_>, guild: GuildId) -> Result<HashMap<RoleId, u16>, Error> {
+    Ok(guild
+        .roles(ctx.http())
+        .await
+        .map_err(|e| format!("Couldn't read this server's roles: {e}"))?
+        .into_iter()
+        .map(|(id, role)| (id, role.position))
+        .collect())
+}
+
+/// Permissions a role bound by `/autorole set` or `/reactionrole add` may not carry. Either
+/// binding hands the role to anyone who joins or reacts, so one of these would let any member
+/// take over, reconfigure or moderate the server.
+const UNBINDABLE: Permissions = Permissions::ADMINISTRATOR
+    .union(Permissions::MANAGE_GUILD)
+    .union(Permissions::MANAGE_ROLES)
+    .union(Permissions::BAN_MEMBERS)
+    .union(Permissions::KICK_MEMBERS);
+
+/// Why a role can't be bound to joining or to a reaction.
+#[derive(Debug, PartialEq, Eq)]
+enum RoleBindRefusal {
+    /// The role carries these permissions from [`UNBINDABLE`].
+    Dangerous(Permissions),
+    /// The role sits at or above the invoker's highest role.
+    NotBelowInvoker,
+    /// The role sits at or above the bot's highest role, so Discord would refuse the grant.
+    NotBelowBot,
+}
+
+impl fmt::Display for RoleBindRefusal {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Dangerous(perms) => write!(
+                f,
+                "That role carries {}, which a binding would hand to anyone who joins or reacts. \
+                 Pick a role without it.",
+                perms.get_permission_names().join(", ")
+            ),
+            Self::NotBelowInvoker => {
+                f.write_str("You can only bind a role that sits below your highest role.")
+            }
+            Self::NotBelowBot => f.write_str(
+                "That role sits at or above my highest role, so Discord won't let me grant it. \
+                 Move my role above it first.",
+            ),
+        }
+    }
+}
+
+/// The decision behind [`check_role_binding`], kept free of Discord so it can be tested.
+///
+/// `invoker_top` is `None` for an invoker exempt from the hierarchy rule (the server owner or a
+/// bot owner). The permission rule applies to everyone, since the role reaches every member who
+/// joins or reacts no matter who set the binding up.
+fn role_binding_refusal(
+    role_position: u16,
+    role_permissions: Permissions,
+    invoker_top: Option<u16>,
+    bot_top: u16,
+) -> Option<RoleBindRefusal> {
+    let dangerous = role_permissions & UNBINDABLE;
+    if !dangerous.is_empty() {
+        return Some(RoleBindRefusal::Dangerous(dangerous));
+    }
+    if invoker_top.is_some_and(|top| role_position >= top) {
+        return Some(RoleBindRefusal::NotBelowInvoker);
+    }
+    if role_position >= bot_top {
+        return Some(RoleBindRefusal::NotBelowBot);
+    }
+    None
+}
+
+/// Refuse to bind `role` to joining (`/autorole set`) or to a reaction (`/reactionrole add`)
+/// unless the invoker could grant it themselves.
+///
+/// The role must carry none of [`UNBINDABLE`], must sit strictly below the invoker's highest
+/// role (the server owner and bot owners are exempt from that rule, as in [`check_hierarchy`]),
+/// and must sit strictly below the bot's highest role. Without this, a holder of the mod role,
+/// which passes `manage_roles_check` with no permission of its own, could bind a role above
+/// their own, such as an Administrator role, to a reaction and grant it to themselves.
+pub async fn check_role_binding(
+    ctx: Context<'_>,
+    guild: GuildId,
+    role: &serenity::Role,
+) -> Result<(), Error> {
+    let positions = role_positions(ctx, guild).await?;
+    let role_position = positions.get(&role.id).copied().unwrap_or(role.position);
+    let invoker_top = if is_bot_owner(ctx) || ctx.author().id == guild_owner(ctx, guild).await? {
+        None
+    } else {
+        let author_member = ctx
+            .author_member()
+            .await
+            .ok_or("Couldn't read your roles in this server.")?;
+        Some(highest_position(&author_member.roles, &positions))
+    };
+    let bot_member = guild
+        .member(ctx, ctx.framework().bot_id)
+        .await
+        .map_err(|e| format!("Couldn't read my roles in this server: {e}"))?;
+    let bot_top = highest_position(&bot_member.roles, &positions);
+    match role_binding_refusal(role_position, role.permissions, invoker_top, bot_top) {
+        Some(refusal) => Err(refusal.to_string().into()),
+        None => Ok(()),
+    }
 }
 
 /// The highest position among `roles`; 0 (the `@everyone` position) for a member with none.
@@ -252,5 +357,64 @@ mod tests {
         assert_eq!(highest_position(&[low, high, gone], &positions), 9);
         assert_eq!(highest_position(&[gone], &positions), 0);
         assert_eq!(highest_position(&[], &positions), 0);
+    }
+
+    #[test]
+    fn role_binding_needs_a_role_strictly_below_the_invoker() {
+        let none = Permissions::empty();
+        assert_eq!(role_binding_refusal(4, none, Some(5), 10), None);
+        assert_eq!(
+            role_binding_refusal(5, none, Some(5), 10),
+            Some(RoleBindRefusal::NotBelowInvoker)
+        );
+        assert_eq!(
+            role_binding_refusal(7, none, Some(5), 10),
+            Some(RoleBindRefusal::NotBelowInvoker)
+        );
+    }
+
+    #[test]
+    fn role_binding_exempt_invoker_still_needs_a_role_below_the_bot() {
+        let none = Permissions::empty();
+        assert_eq!(role_binding_refusal(9, none, None, 10), None);
+        assert_eq!(
+            role_binding_refusal(10, none, None, 10),
+            Some(RoleBindRefusal::NotBelowBot)
+        );
+        assert_eq!(
+            role_binding_refusal(4, none, Some(5), 4),
+            Some(RoleBindRefusal::NotBelowBot)
+        );
+    }
+
+    #[test]
+    fn role_binding_refuses_dangerous_permissions_for_everyone() {
+        let perms = Permissions::ADMINISTRATOR | Permissions::SEND_MESSAGES;
+        assert_eq!(
+            role_binding_refusal(1, perms, None, 10),
+            Some(RoleBindRefusal::Dangerous(Permissions::ADMINISTRATOR))
+        );
+        for p in [
+            Permissions::MANAGE_GUILD,
+            Permissions::MANAGE_ROLES,
+            Permissions::BAN_MEMBERS,
+            Permissions::KICK_MEMBERS,
+        ] {
+            assert_eq!(
+                role_binding_refusal(1, p, Some(5), 10),
+                Some(RoleBindRefusal::Dangerous(p))
+            );
+        }
+        let ordinary =
+            Permissions::SEND_MESSAGES | Permissions::ADD_REACTIONS | Permissions::CHANGE_NICKNAME;
+        assert_eq!(role_binding_refusal(1, ordinary, Some(5), 10), None);
+    }
+
+    #[test]
+    fn role_binding_refusal_names_the_dangerous_permissions() {
+        let msg = RoleBindRefusal::Dangerous(Permissions::ADMINISTRATOR | Permissions::BAN_MEMBERS)
+            .to_string();
+        assert!(msg.contains("Administrator"), "{msg}");
+        assert!(msg.contains("Ban Members"), "{msg}");
     }
 }

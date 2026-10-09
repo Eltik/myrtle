@@ -722,6 +722,10 @@ pub async fn autorole_set(
     let guild = ctx
         .guild_id()
         .ok_or("This command must be used in a guild.")?;
+    // The owner, member and role lookups are several round-trips; don't race the 3 s
+    // interaction window.
+    ctx.defer_ephemeral().await?;
+    crate::checks::check_role_binding(ctx, guild, &role).await?;
     db::set_auto_role(&ctx.data().pool, guild, role.id)
         .await
         .map_err(|e| format!("Couldn't save auto-role: {e}"))?;
@@ -960,6 +964,10 @@ pub async fn reactionrole_add(
     let guild = ctx
         .guild_id()
         .ok_or("This command must be used in a guild.")?;
+    // The owner, member and role lookups are several round-trips; don't race the 3 s
+    // interaction window.
+    ctx.defer_ephemeral().await?;
+    crate::checks::check_role_binding(ctx, guild, &role).await?;
     let (link_channel, message_id) = parse_message_ref(&message)
         .ok_or("Couldn't parse that message reference. Use a message link, `channel-message` id, or message id.")?;
     let target = channel.or(link_channel).unwrap_or_else(|| ctx.channel_id());
