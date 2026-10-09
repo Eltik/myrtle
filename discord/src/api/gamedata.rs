@@ -757,14 +757,11 @@ impl GameData {
         {
             return Err(format!("GET {url}: over {CLIP_MAX_BYTES} B").into());
         }
-        let body = response
-            .bytes()
-            .await
-            .map_err(|e| format!("GET {url}: body: {e}"))?;
-        if body.len() > CLIP_MAX_BYTES || !body.starts_with(b"OggS") {
+        let body = read_capped(response, &url).await?;
+        if !body.starts_with(b"OggS") {
             return Err(format!("GET {url}: not an Ogg file ({} B)", body.len()).into());
         }
-        Ok(body.to_vec())
+        Ok(body)
     }
 
     /// Whether the operator has voice lines, if a fetch in the last [`LIST_TTL`] said.
@@ -859,6 +856,24 @@ const VOICE_CACHE_MAX: usize = 32;
 /// (Amiya's idle line is 43 to 59 KB in each language).
 pub const CLIP_MAX_BYTES: usize = 8 * 1024 * 1024;
 const CLIP_TIMEOUT: Duration = Duration::from_secs(15);
+
+/// The body of `response`, read chunk by chunk and abandoned as soon as it passes
+/// [`CLIP_MAX_BYTES`]. A chunked response has no `Content-Length` to check up front, so the
+/// cap has to hold while reading: `bytes()` would buffer all of it first.
+async fn read_capped(mut response: reqwest::Response, url: &str) -> Result<Vec<u8>, Error> {
+    let mut body = Vec::new();
+    while let Some(chunk) = response
+        .chunk()
+        .await
+        .map_err(|e| format!("GET {url}: body: {e}"))?
+    {
+        if body.len() + chunk.len() > CLIP_MAX_BYTES {
+            return Err(format!("GET {url}: over {CLIP_MAX_BYTES} B").into());
+        }
+        body.extend_from_slice(&chunk);
+    }
+    Ok(body)
+}
 
 /// A recording's URL. `voice_url` is already percent-encoded (`nian%2312`), so it is joined
 /// as it is, never encoded again.
@@ -1011,6 +1026,54 @@ mod tests {
             "https://api.myrtle.moe/api/assets/audio/audio/sound_beta_2/voice_en/\
              char_2023_ling_nian%2312/CN_001.ogg"
         );
+    }
+
+    /// Serves one chunked (no `Content-Length`) response of `total` bytes starting with `OggS`
+    /// on a local port, and returns the backend base URL to reach it.
+    fn serve_chunked_clip(total: usize) -> String {
+        use std::io::{Read, Write};
+
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let base = format!("http://{}", listener.local_addr().unwrap());
+        std::thread::spawn(move || {
+            let (mut stream, _) = listener.accept().unwrap();
+            let mut request = [0_u8; 4096];
+            let _ = stream.read(&mut request);
+            let mut body = vec![0_u8; total];
+            body[..4].copy_from_slice(b"OggS");
+            let _ = stream.write_all(b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n");
+            // The client hangs up mid-body when it refuses the clip; write errors are expected.
+            for chunk in body.chunks(256 * 1024) {
+                let head = format!("{:x}\r\n", chunk.len());
+                if stream.write_all(head.as_bytes()).is_err()
+                    || stream.write_all(chunk).is_err()
+                    || stream.write_all(b"\r\n").is_err()
+                {
+                    return;
+                }
+            }
+            let _ = stream.write_all(b"0\r\n\r\n");
+        });
+        base
+    }
+
+    fn local_client() -> Client {
+        Client::builder().no_proxy().build().unwrap()
+    }
+
+    #[tokio::test]
+    async fn chunked_clip_over_the_cap_is_refused() {
+        let data = GameData::new(local_client(), &serve_chunked_clip(CLIP_MAX_BYTES + 1));
+        let err = data.voice_clip("/a/b.ogg").await.unwrap_err().to_string();
+        assert!(err.ends_with(&format!("over {CLIP_MAX_BYTES} B")), "{err}");
+    }
+
+    #[tokio::test]
+    async fn chunked_clip_at_the_cap_is_kept() {
+        let data = GameData::new(local_client(), &serve_chunked_clip(CLIP_MAX_BYTES));
+        let clip = data.voice_clip("/a/b.ogg").await.unwrap();
+        assert_eq!(clip.len(), CLIP_MAX_BYTES);
+        assert!(clip.starts_with(b"OggS"));
     }
 
     #[test]
