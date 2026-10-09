@@ -210,7 +210,7 @@ pub struct SetRoleRequest {
         ("user_id" = String, Path, description = "Target account id (UUID).")
     ),
     request_body = SetRoleRequest,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The role was set.", body = StatusOk),
         (status = 400, response = crate::app::openapi::responses::BadRequest),

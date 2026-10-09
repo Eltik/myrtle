@@ -49,7 +49,7 @@ fn validate_tier_body(body: &CreateTierRequest) -> Result<(), ApiError> {
         ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
     ),
     request_body = CreateTierRequest,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The created tier.", body = Tier),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
@@ -99,7 +99,7 @@ pub async fn create(
         ("tier_id" = String, Path, description = "Tier id (UUID).")
     ),
     request_body = CreateTierRequest,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The tier as stored.", body = Tier),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
@@ -153,7 +153,7 @@ pub async fn update(
         ("slug" = String, Path, description = "Tier list slug, as it appears in its URL."),
         ("tier_id" = String, Path, description = "Tier id (UUID).")
     ),
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The tier is gone.", body = crate::app::routes::StatusOk),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),

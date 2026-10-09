@@ -68,7 +68,7 @@ pub struct GrantRequest {
         ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
     ),
     request_body = GrantRequest,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The grant was recorded.", body = crate::app::routes::StatusOk),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
@@ -188,7 +188,7 @@ pub async fn list_all(
     get,
     path = "/tier-lists/granted",
     tag = "tier-lists",
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "Granted lists, by title.", body = Vec<GrantedTierList>),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),

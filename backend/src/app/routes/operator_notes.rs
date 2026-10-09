@@ -174,7 +174,7 @@ pub struct UpdateNoteRequest {
         ("operator_id" = String, Path, description = "Operator id.")
     ),
     request_body = UpdateNoteRequest,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The stored note.", body = OperatorNote),
         (status = 400, response = crate::app::openapi::responses::BadRequest),

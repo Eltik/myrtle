@@ -397,7 +397,7 @@ where
     operation_id = "auth_update_settings",
     tag = "auth",
     request_body = UpdateSettingsRequest,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "Settings saved and the profile cache invalidated.", body = StatusOk),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
@@ -456,7 +456,7 @@ pub async fn update_settings(
     post,
     path = "/auth/disconnect",
     tag = "auth",
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "Any stored credentials were removed.", body = DisconnectResult),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),

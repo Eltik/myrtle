@@ -281,11 +281,8 @@ pub async fn get_catalog(State(state): State<AppState>) -> Json<CatalogResponse>
     put,
     path = "/base/facts",
     tag = "base",
-    params(
-        ("uid" = Option<String>, Query, description = "Whose roster to plan with. Omitted means the caller's own, which then requires a token.")
-    ),
     request_body = AccountFactsReq,
-    security(("bearer_auth" = []), ()),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The facts as stored.", body = AccountFactsReq),
         (status = 400, response = crate::app::openapi::responses::BadRequest),

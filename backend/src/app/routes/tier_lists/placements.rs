@@ -42,7 +42,7 @@ pub struct AddPlacementRequest {
         ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
     ),
     request_body = AddPlacementRequest,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The placement.", body = TierPlacement),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
@@ -109,7 +109,7 @@ pub struct UpdateDescriptionRequest {
         ("id" = String, Path, description = "Entity id in that kind's space, e.g. `char_002_amiya`.")
     ),
     request_body = UpdateDescriptionRequest,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The placement as stored.", body = TierPlacement),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
@@ -159,7 +159,7 @@ pub async fn update_description(
         ("kind" = EntityKind, Path, description = "Entity kind, e.g. `operator`."),
         ("id" = String, Path, description = "Entity id in that kind's space, e.g. `char_002_amiya`.")
     ),
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The placement is gone.", body = crate::app::routes::StatusOk),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
@@ -212,7 +212,7 @@ pub struct MovePlacementRequest {
         ("id" = String, Path, description = "Entity id in that kind's space, e.g. `char_002_amiya`.")
     ),
     request_body = MovePlacementRequest,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The placement in its new position.", body = TierPlacement),
         (status = 400, response = crate::app::openapi::responses::BadRequest),

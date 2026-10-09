@@ -1453,9 +1453,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -1566,9 +1563,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -1620,9 +1614,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -1909,17 +1900,6 @@
         ],
         "summary": "The signed-in user saving their OWN account facts (recruit slots etc.).\nFacts always attach to the caller's profile - there is no setting another\nplayer's facts; viewers get per-request overrides instead.\nWith no declaration the never-guess default stands and the dependent skills\nprice at zero.",
         "operationId": "put_facts",
-        "parameters": [
-          {
-            "name": "uid",
-            "in": "query",
-            "description": "Whose roster to plan with. Omitted means the caller's own, which then requires a token.",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1966,8 +1946,7 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {}
+          }
         ]
       }
     },
@@ -2925,11 +2904,11 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -2944,9 +2923,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -3096,9 +3072,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -3151,9 +3124,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -3192,9 +3162,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       },
@@ -3244,9 +3211,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -3285,9 +3249,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -3411,9 +3372,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -3860,9 +3818,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -3915,9 +3870,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -3972,7 +3924,13 @@
           "503": {
             "$ref": "#/components/responses/ServiceUnavailable"
           }
-        }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {}
+        ]
       },
       "put": {
         "tags": [
@@ -4049,9 +4007,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       },
@@ -4098,9 +4053,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -4165,9 +4117,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -5792,9 +5741,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -6105,9 +6051,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -6176,9 +6119,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       },
@@ -6229,9 +6169,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -6286,9 +6223,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -6338,9 +6272,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -6382,9 +6313,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -6450,9 +6378,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       },
@@ -6500,9 +6425,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -6571,9 +6493,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -6628,9 +6547,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -7120,7 +7036,7 @@
         "tags": [
           "release"
         ],
-        "summary": "The editorial release plan, or null when none is stored.",
+        "summary": "The caller's own release plan, or null when they have not saved one.",
         "operationId": "get_plan",
         "responses": {
           "200": {
@@ -7143,9 +7059,6 @@
           "401": {
             "$ref": "#/components/responses/Unauthorized"
           },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
           "429": {
             "$ref": "#/components/responses/RateLimited"
           },
@@ -7159,9 +7072,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       },
@@ -7169,7 +7079,7 @@
         "tags": [
           "release"
         ],
-        "summary": "Replace the editorial release plan.",
+        "summary": "Replace the caller's own release plan.",
         "operationId": "put_plan",
         "requestBody": {
           "content": {
@@ -7198,9 +7108,6 @@
           "401": {
             "$ref": "#/components/responses/Unauthorized"
           },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
           "429": {
             "$ref": "#/components/responses/RateLimited"
           },
@@ -7214,9 +7121,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -8724,9 +8628,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -8878,9 +8779,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -8923,9 +8821,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -8967,9 +8862,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -9092,9 +8984,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       },
@@ -9149,9 +9038,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -9204,9 +9090,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       },
@@ -9257,9 +9140,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -9328,9 +9208,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -9460,9 +9337,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -9611,9 +9485,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -9687,9 +9558,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       },
@@ -9774,9 +9642,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -9863,9 +9728,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -9934,9 +9796,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -10052,9 +9911,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -10135,9 +9991,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       },
@@ -10200,9 +10053,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }
@@ -10380,9 +10230,6 @@
         "security": [
           {
             "bearer_auth": []
-          },
-          {
-            "service_key": []
           }
         ]
       }

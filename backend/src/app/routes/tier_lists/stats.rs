@@ -200,7 +200,7 @@ pub async fn get_stats(
     params(
         ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
     ),
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The favourite state after the toggle.", body = FavoriteState),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
@@ -236,7 +236,7 @@ pub async fn toggle_favorite(
     params(
         ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
     ),
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The caller's favourite state.", body = FavoriteState),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
@@ -271,7 +271,7 @@ pub struct SetFlairRequest {
         ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
     ),
     request_body = SetFlairRequest,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The flair was set.", body = crate::app::routes::StatusOk),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
@@ -331,7 +331,7 @@ pub struct SetVisibilityRequest {
         ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
     ),
     request_body = SetVisibilityRequest,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The visibility as stored.", body = VisibilityState),
         (status = 400, response = crate::app::openapi::responses::BadRequest),

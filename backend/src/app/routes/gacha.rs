@@ -52,11 +52,11 @@ pub struct HistoryParams {
     post,
     path = "/gacha/fetch",
     tag = "gacha",
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "What the sync found and stored.", body = crate::app::services::gacha::FetchResult),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
-        (status = 403, response = crate::app::openapi::responses::Forbidden),
         (status = 429, response = crate::app::openapi::responses::RateLimited),
         (status = 500, response = crate::app::openapi::responses::InternalError),
         (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
@@ -158,7 +158,7 @@ pub async fn per_banner_stats(
         ("limit" = Option<u32>, Query, description = "Page size. Defaults to 20, capped at 100."),
         ("offset" = Option<u32>, Query, description = "Rows to skip. Defaults to 0.")
     ),
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "One page of pulls, plus the totals for the filter.", body = crate::app::services::gacha::GachaHistoryEnvelopeDto),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
@@ -198,7 +198,7 @@ pub async fn history(
     params(
         ("char_id" = String, Path, description = "Operator id.")
     ),
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The caller's pulls of that operator.", body = Vec<crate::app::services::gacha::GachaRecordEntryDto>),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
@@ -222,7 +222,7 @@ pub async fn history_by_char(
     get,
     path = "/gacha/stored-records",
     tag = "gacha",
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "Stored records.", body = crate::app::services::gacha::GachaRecordsDto),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
@@ -246,7 +246,7 @@ pub async fn stored_records(
     path = "/gacha/stats",
     operation_id = "gacha_stats",
     tag = "gacha",
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The caller's statistics.", body = GachaStats),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
@@ -269,7 +269,7 @@ pub async fn stats(
     get,
     path = "/gacha/settings",
     tag = "gacha",
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "Current settings.", body = crate::app::services::gacha::GachaSettingsDto),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
@@ -301,7 +301,7 @@ pub struct UpdateSettingsBody {
     operation_id = "gacha_update_settings",
     tag = "gacha",
     request_body = UpdateSettingsBody,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The settings as stored.", body = crate::app::services::gacha::GachaSettingsDto),
         (status = 400, response = crate::app::openapi::responses::BadRequest),

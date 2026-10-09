@@ -176,16 +176,15 @@ pub async fn delete_override(
     Ok(ok_status())
 }
 
-/// The editorial release plan, or null when none is stored.
+/// The caller's own release plan, or null when they have not saved one.
 #[utoipa::path(
     get,
     path = "/release/plan",
     tag = "release",
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The plan, or null.", body = Option<ReleasePlan>),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
-        (status = 403, response = crate::app::openapi::responses::Forbidden),
         (status = 429, response = crate::app::openapi::responses::RateLimited),
         (status = 500, response = crate::app::openapi::responses::InternalError),
         (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
@@ -198,18 +197,17 @@ pub async fn get_plan(
     Ok(Json(svc::get_plan(&state, auth.user_uuid()?).await?))
 }
 
-/// Replace the editorial release plan.
+/// Replace the caller's own release plan.
 #[utoipa::path(
     put,
     path = "/release/plan",
     tag = "release",
     request_body = PutReleasePlan,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The plan as stored.", body = ReleasePlan),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
-        (status = 403, response = crate::app::openapi::responses::Forbidden),
         (status = 429, response = crate::app::openapi::responses::RateLimited),
         (status = 500, response = crate::app::openapi::responses::InternalError),
         (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)

@@ -68,7 +68,7 @@ pub async fn list(
     params(
         ("server" = Option<String>, Query, description = "Game server whose data resolves each preview icon. Defaults to the deployment's default server.")
     ),
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The caller's grids.", body = Vec<GridSummary>),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
@@ -97,6 +97,7 @@ pub async fn mine(
         ("slug" = String, Path, description = "Grid slug, as it appears in its URL."),
         ("server" = Option<String>, Query, description = "Game server whose data resolves each cell's `entity`. Defaults to the deployment's default server.")
     ),
+    security(("bearer_auth" = []), ()),
     responses(
         (status = 200, description = "The grid. `can_edit` is true for its owner and site admins.", body = Grid),
         (status = 404, response = crate::app::openapi::responses::NotFound),
@@ -129,7 +130,7 @@ pub async fn get(
         ("server" = Option<String>, Query, description = "Game server whose data resolves each cell's `entity` in the response. Defaults to the deployment's default server.")
     ),
     request_body = GridInput,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 201, description = "The created grid.", body = Grid),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
@@ -170,7 +171,7 @@ pub async fn create(
         ("server" = Option<String>, Query, description = "Game server whose data resolves each cell's `entity` in the response. Defaults to the deployment's default server.")
     ),
     request_body = GridInput,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The grid as stored.", body = Grid),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
@@ -212,7 +213,7 @@ pub async fn update(
     params(
         ("slug" = String, Path, description = "Grid slug, as it appears in its URL.")
     ),
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 204, description = "The grid is gone."),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
@@ -244,7 +245,7 @@ pub async fn delete(
         ("slug" = String, Path, description = "Slug of the grid to copy."),
         ("server" = Option<String>, Query, description = "Game server whose data resolves the response. Defaults to the deployment's default server.")
     ),
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 201, description = "The new grid.", body = Grid),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),

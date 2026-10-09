@@ -80,7 +80,7 @@ pub struct PublishRequest {
         ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
     ),
     request_body = PublishRequest,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The published version.", body = TierListVersion),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
