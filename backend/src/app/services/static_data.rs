@@ -174,8 +174,22 @@ pub async fn get_stage_detail(
             }
         }
 
-        // `get_level` caches on its own; `None` when the stage has no level file.
-        let level_data = get_level(state, server, stage_id).await.ok();
+        // `get_level` caches on its own. NotFound is the expected "this stage has
+        // no level file" case; any other error (a level file that does not parse)
+        // still serves the stage without its map, but is logged so it is seen.
+        let level_data = match get_level(state, server, stage_id).await {
+            Ok(level) => Some(level),
+            Err(ApiError::NotFound) => None,
+            Err(e) => {
+                tracing::warn!(
+                    server = server.as_str(),
+                    stage_id,
+                    error = %level_error_detail(&e),
+                    "stage level data failed to load; serving the stage without it"
+                );
+                None
+            }
+        };
 
         let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
         let gd = sd.game_data.load_full();
@@ -385,9 +399,20 @@ pub async fn get_skins_index(state: &AppState, server: Server) -> Result<CachedJ
     .await
 }
 
+/// The log text for a level that failed to load. `ApiError::Internal` displays
+/// as the bare "internal error", so its anyhow chain is printed with `{:#}`
+/// instead (`context: cause`, one line); every other variant keeps its Display.
+fn level_error_detail(e: &ApiError) -> String {
+    match e {
+        ApiError::Internal(inner) => format!("{inner:#}"),
+        other => other.to_string(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::collect_level_enemy_ids;
+    use super::{collect_level_enemy_ids, level_error_detail};
+    use crate::app::error::ApiError;
     use serde_json::json;
     use std::collections::HashSet;
 
@@ -434,5 +459,18 @@ mod tests {
     fn an_empty_level_has_no_enemies() {
         assert!(collect_level_enemy_ids(&json!({})).is_empty());
         assert!(collect_level_enemy_ids(&json!({ "enemyDbRefs": {}, "waves": "x" })).is_empty());
+    }
+
+    #[test]
+    fn level_error_detail_prints_the_internal_cause_chain() {
+        let parse = serde_json::from_slice::<serde_json::Value>(b"{not json").unwrap_err();
+        let parse_msg = parse.to_string();
+        let e = ApiError::Internal(anyhow::Error::from(parse).context("level_main_01-07.json"));
+        assert_eq!(e.to_string(), "internal error");
+        assert_eq!(
+            level_error_detail(&e),
+            format!("level_main_01-07.json: {parse_msg}")
+        );
+        assert_eq!(level_error_detail(&ApiError::NotFound), "not found");
     }
 }
