@@ -568,7 +568,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                             </Badge>
                                         )}
                                     </div>
-                                    <DescriptionDiff {...change} baseLabel="Base Talent" />
+                                    <DescriptionDiff {...change} baseLabel={t("info.baseTalent")} />
                                 </div>
                             );
                         })}
@@ -644,6 +644,7 @@ const DIFF_LABEL_CLASS = "mb-0.5 font-medium text-[10px] text-muted-foreground u
 
 /** A description a module changed, shown as the faded base above the marked-up new text. */
 function DescriptionDiff({ html, baseHtml, baseLabel, prefix }: IDescriptionDiffProps) {
+    const t: InfoT = useT("operators");
     return (
         <>
             {baseHtml && (
@@ -657,7 +658,7 @@ function DescriptionDiff({ html, baseHtml, baseLabel, prefix }: IDescriptionDiff
                     />
                 </div>
             )}
-            {baseHtml && <div className={DIFF_LABEL_CLASS}>Changes</div>}
+            {baseHtml && <div className={DIFF_LABEL_CLASS}>{t("info.changes")}</div>}
             {prefix}
             <span
                 className="text-muted-foreground text-xs"
@@ -719,7 +720,7 @@ function ModuleTalentChanges({ operator, phase, showDiff }: { operator: IOperato
                 return (
                     // biome-ignore lint/suspicious/noArrayIndexKey: candidate order is determined by module phase data
                     <div className="rounded-md bg-secondary/20 px-2 py-1" key={`tc-${cIdx}-${c.name ?? ""}`}>
-                        <DescriptionDiff {...rendered} baseLabel="Base Talent" prefix={name} />
+                        <DescriptionDiff {...rendered} baseLabel={t("info.baseTalent")} prefix={name} />
                     </div>
                 );
             })}
