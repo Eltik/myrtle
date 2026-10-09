@@ -70,7 +70,21 @@ pub fn session_path(server: Server) -> PathBuf {
 /// the durable token pair that makes unattended refresh possible.
 pub fn read_session_file(path: &Path) -> Option<AuthSession> {
     let raw = std::fs::read_to_string(path).ok()?;
-    let session: AuthSession = serde_json::from_str(&raw).ok()?;
+    let session: AuthSession = match serde_json::from_str(&raw) {
+        Ok(session) => session,
+        Err(e) => {
+            // Position and category only: serde's message can quote a value
+            // from the file, and the file holds credentials.
+            tracing::warn!(
+                path = %path.display(),
+                category = ?e.classify(),
+                line = e.line(),
+                column = e.column(),
+                "session file does not parse; re-run `set-session`"
+            );
+            return None;
+        }
+    };
     if session.yostar_uid.is_empty() || session.yostar_token.is_empty() {
         tracing::warn!(
             path = %path.display(),

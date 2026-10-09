@@ -106,7 +106,11 @@ impl CacheStore {
                     .set_ex(key_str, value, ttl.as_secs())
                     .await
                     .inspect_err(|e| {
-                        tracing::debug!(key = %key_str, error = %e, "cache set failed");
+                        // A failed write means every later read of this key
+                        // misses and rebuilds; that should be visible.
+                        tracing::warn!(key = %key_str, error = %e, "cache set failed");
+                        let class = key_str.split(':').next().unwrap_or("unknown");
+                        METRICS.record_cache(class, CacheOutcome::WriteError);
                     });
             }
             Self::Memory { entries } => {

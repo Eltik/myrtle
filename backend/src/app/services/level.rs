@@ -41,9 +41,7 @@ pub async fn get_level(
     // under `gamedata/levels/`.
     let rel = level_id.to_lowercase().replace('\\', "/");
     let path = format!("{}/gamedata/levels/{rel}.json", server_data.assets_dir);
-    let bytes = tokio::fs::read(&path)
-        .await
-        .map_err(|_| ApiError::NotFound)?;
+    let bytes = tokio::fs::read(&path).await.map_err(read_error)?;
 
     let mut raw: Value =
         serde_json::from_slice(&bytes).map_err(|e| ApiError::Internal(e.into()))?;
@@ -52,6 +50,18 @@ pub async fn get_level(
 
     state.cache.set(&key, &value).await;
     Ok(value)
+}
+
+/// A level file that is not there is a 404; any other read failure
+/// (permissions, I/O) is the server's fault and reaches the error log.
+fn read_error(e: std::io::Error) -> ApiError {
+    if e.kind() == std::io::ErrorKind::NotFound {
+        ApiError::NotFound
+    } else {
+        // `{e}` inline: the error handler logs with `%`, which prints only
+        // the outermost context of an `anyhow::Error`.
+        ApiError::Internal(anyhow::anyhow!("reading level file: {e}"))
+    }
 }
 
 /// Rewrite `MapData.Map` from the EN/Yostar flattened `{Column_size, Row_size,
@@ -112,6 +122,14 @@ fn camel_key(key: &str) -> String {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn only_a_missing_level_file_is_not_found() {
+        let missing = std::io::Error::from(std::io::ErrorKind::NotFound);
+        assert!(matches!(read_error(missing), ApiError::NotFound));
+        let denied = std::io::Error::from(std::io::ErrorKind::PermissionDenied);
+        assert!(matches!(read_error(denied), ApiError::Internal(_)));
+    }
 
     #[test]
     fn camel_key_lowercases_the_first_char_and_drops_a_trailing_underscore() {

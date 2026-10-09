@@ -57,6 +57,9 @@ struct CacheStats {
     hit: AtomicU64,
     miss: AtomicU64,
     error: AtomicU64,
+    /// Writes the backend refused. Kept apart from `error` (failed reads) so
+    /// the hit/miss/error triple still describes lookups only.
+    write_error: AtomicU64,
 }
 
 #[derive(Default)]
@@ -132,6 +135,7 @@ impl Metrics {
             CacheOutcome::Hit => &stats.hit,
             CacheOutcome::Miss => &stats.miss,
             CacheOutcome::Error => &stats.error,
+            CacheOutcome::WriteError => &stats.write_error,
         }
         .fetch_add(1, Ordering::Relaxed);
     }
@@ -257,7 +261,9 @@ impl Metrics {
             );
         }
 
-        out.push_str("# HELP myrtle_cache_events_total Cache lookups by key class.\n");
+        out.push_str(
+            "# HELP myrtle_cache_events_total Cache lookups and failed writes by key class.\n",
+        );
         out.push_str("# TYPE myrtle_cache_events_total counter\n");
         for entry in &self.cache {
             let class = escape(entry.key());
@@ -265,6 +271,7 @@ impl Metrics {
                 ("hit", &entry.hit),
                 ("miss", &entry.miss),
                 ("error", &entry.error),
+                ("write_error", &entry.write_error),
             ] {
                 let _ = writeln!(
                     out,
@@ -368,6 +375,8 @@ pub enum CacheOutcome {
     Hit,
     Miss,
     Error,
+    /// A write the backend refused.
+    WriteError,
 }
 
 /// Prometheus label values escape backslash, double-quote and newline.
@@ -451,6 +460,7 @@ mod tests {
         m.record_cache("roster", CacheOutcome::Hit);
         m.record_cache("roster", CacheOutcome::Hit);
         m.record_cache("roster", CacheOutcome::Miss);
+        m.record_cache("roster", CacheOutcome::WriteError);
         let text = m.render(None);
         assert!(
             text.contains(r#"key_class="roster",result="hit"} 2"#),
@@ -458,6 +468,15 @@ mod tests {
         );
         assert!(
             text.contains(r#"key_class="roster",result="miss"} 1"#),
+            "{text}"
+        );
+        // A failed write is not a failed read.
+        assert!(
+            text.contains(r#"key_class="roster",result="error"} 0"#),
+            "{text}"
+        );
+        assert!(
+            text.contains(r#"key_class="roster",result="write_error"} 1"#),
             "{text}"
         );
     }
