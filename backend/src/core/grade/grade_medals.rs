@@ -236,13 +236,22 @@ mod tests {
 
     #[test]
     fn a_missing_close_time_is_not_decayed() {
-        // CURRENT BEHAVIOR, suspected bug: `MedalData::obtainability` returns
-        // `proxy_close_ts: 0` for an unknown medal with the comment "End-ts in the
-        // deep past forces full decay", but a close of 0 here means full weight.
-        // Unreachable from `grade_medals` today (it only walks known medals), and an
-        // open-ended active TEMP window also uses 0 to mean "no decay".
+        // 0 means an ongoing event with no scheduled close (`Obtainability::Event`
+        // docs), which an open-ended active TEMP window relies on.
         assert!(close(recency_weight(0, NOW), 1.0));
         assert!(close(recency_weight(-5, NOW), 1.0));
+    }
+
+    #[test]
+    fn an_unknown_medal_is_a_closed_event_at_the_recency_floor() {
+        // Unreachable from `grade_medals` today (it only walks known medals); this
+        // pins what `obtainability` promises for an id the catalogue lacks.
+        let unknown = MedalData::default().obtainability("medal_not_in_table", NOW);
+        assert_eq!(unknown, Obtainability::Event { proxy_close_ts: 1 });
+        let Obtainability::Event { proxy_close_ts } = unknown else {
+            unreachable!()
+        };
+        assert!(close(recency_weight(proxy_close_ts, NOW), RECENY_FLOOR));
     }
 
     #[test]
