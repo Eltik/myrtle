@@ -10,6 +10,7 @@ path = "src/bin/generate_fbs.rs"
 
 [dependencies]
 aes = "0.8.4"
+anyhow = { version = "1.0.104", features = ["backtrace"] }
 base64 = "0.22.1"
 cbc = "0.1.2"
 cipher = "0.4"
