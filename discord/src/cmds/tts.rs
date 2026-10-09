@@ -61,7 +61,10 @@ pub async fn tts_join(ctx: Context<'_>) -> Result<(), Error> {
     let (session, joined) = started.map_err(|refused| -> Error {
         match refused {
             JoinRefused::Unavailable => "Text-to-speech is switched off on this bot.".into(),
-            JoinRefused::AlreadyHere => format!("I'm already reading <#{channel}>.").into(),
+            JoinRefused::AlreadyHere => {
+                already_here_reply(channel, Busy::of(ctx.data().tts.session(guild).as_deref()))
+                    .into()
+            }
             JoinRefused::Elsewhere(other) => {
                 format!("I'm already in <#{other}> in this server. Run `/tts leave` there first.")
                     .into()
@@ -81,6 +84,48 @@ pub async fn tts_join(ctx: Context<'_>) -> Result<(), Error> {
         .into());
     }
     announce(ctx, &session).await
+}
+
+/// Where a session for the invoker's channel stands when `/tts join` couldn't turn reading on.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Busy {
+    /// Still waiting on Discord's voice server; `reads_chat` is false for a `/voiceline` join.
+    Joining { reads_chat: bool },
+    /// Stopped and leaving, which can take up to 62 s of retries; or already gone.
+    Leaving,
+    /// Joined and reading the chat.
+    Reading,
+}
+
+impl Busy {
+    fn of(session: Option<&Session>) -> Self {
+        match session {
+            None => Self::Leaving,
+            Some(s) if s.is_stopping() => Self::Leaving,
+            Some(s) if !s.is_joined() => Self::Joining {
+                reads_chat: s.reads_chat(),
+            },
+            Some(_) => Self::Reading,
+        }
+    }
+}
+
+/// The refusal for a `/tts join` in the channel the bot already has a session for. Only a
+/// session that is joined and reading is "already reading"; in the other states nothing is read,
+/// and saying it is would leave the invoker waiting for speech that never comes.
+fn already_here_reply(channel: serenity::ChannelId, busy: Busy) -> String {
+    match busy {
+        Busy::Joining { reads_chat: true } => {
+            format!("I'm still joining <#{channel}>. I'll start reading once I'm in.")
+        }
+        Busy::Joining { reads_chat: false } => format!(
+            "I'm still joining <#{channel}> for a voice line. Run `/tts join` again once I'm in."
+        ),
+        Busy::Leaving => {
+            format!("I'm leaving <#{channel}>. Run `/tts join` again once I've left.")
+        }
+        Busy::Reading => format!("I'm already reading <#{channel}>."),
+    }
 }
 
 /// Post the join notice in the channel's chat and confirm to the invoker.
@@ -336,4 +381,30 @@ async fn reply(ctx: Context<'_>, content: &str) -> Result<(), Error> {
     ctx.send(CreateReply::default().content(content).ephemeral(true))
         .await?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Busy, already_here_reply};
+    use poise::serenity_prelude::ChannelId;
+
+    #[test]
+    fn only_a_reading_session_says_already_reading() {
+        let c = ChannelId::new(7);
+        assert_eq!(
+            already_here_reply(c, Busy::Reading),
+            "I'm already reading <#7>."
+        );
+        for busy in [
+            Busy::Joining { reads_chat: true },
+            Busy::Joining { reads_chat: false },
+            Busy::Leaving,
+        ] {
+            let reply = already_here_reply(c, busy);
+            assert!(!reply.contains("already reading"), "{busy:?}: {reply}");
+            assert!(reply.contains("<#7>"), "{busy:?}: {reply}");
+        }
+        assert!(already_here_reply(c, Busy::Leaving).contains("leaving"));
+        assert!(already_here_reply(c, Busy::Joining { reads_chat: false }).contains("voice line"));
+    }
 }
