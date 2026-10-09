@@ -5,6 +5,7 @@ use crate::database::models::i18n::{
     GamedataOverride, Locale, TranslationEntry, TranslationGrant, TranslationPermission,
     UiDocument, UiMessageAuditEntry, UiMessageAuditEntryWithContext,
 };
+use crate::database::queries::like::escape_like;
 
 pub async fn list_locales(pool: &PgPool, enabled_only: bool) -> Result<Vec<Locale>, sqlx::Error> {
     let sql = if enabled_only {
@@ -206,7 +207,7 @@ const ENTRY_SELECT: &str = r"
     LEFT JOIN locales l ON l.code = $1
     WHERE k.is_active
       AND ($2 = '' OR k.namespace = $2)
-      AND ($3 = '' OR k.key ILIKE '%' || $3 || '%' OR k.source_text ILIKE '%' || $3 || '%')
+      AND ($3 = '' OR k.key ILIKE '%' || $3 || '%' ESCAPE '\' OR k.source_text ILIKE '%' || $3 || '%' ESCAPE '\')
 ";
 
 /// `filter` is one of `all`, `untranslated`, `stale`, `todo` (untranslated or
@@ -249,7 +250,7 @@ pub async fn list_entries(
     sqlx::query_as::<_, TranslationEntry>(&sql)
         .bind(locale)
         .bind(namespace)
-        .bind(search)
+        .bind(escape_like(search))
         .bind(limit)
         .bind(offset)
         .fetch_all(pool)
@@ -270,7 +271,7 @@ pub async fn count_entries(
     let (count,): (i64,) = sqlx::query_as(&sql)
         .bind(locale)
         .bind(namespace)
-        .bind(search)
+        .bind(escape_like(search))
         .fetch_one(pool)
         .await?;
     Ok(count)
@@ -678,4 +679,26 @@ pub async fn upsert_document(
     .execute(pool)
     .await?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{ENTRY_SELECT, escape_like};
+
+    #[test]
+    fn search_ilikes_declare_the_backslash_escape() {
+        // `$3` is bound as `escape_like(search)`, so both ILIKEs must read `\`
+        // as the escape character or an escaped `_` stops matching itself.
+        assert_eq!(
+            ENTRY_SELECT
+                .matches(r"ILIKE '%' || $3 || '%' ESCAPE '\'")
+                .count(),
+            2
+        );
+        assert_eq!(ENTRY_SELECT.matches("ILIKE").count(), 2);
+        // An empty search still binds '' and so still takes the `$3 = ''` branch.
+        assert!(ENTRY_SELECT.contains("$3 = ''"));
+        assert_eq!(escape_like(""), "");
+        assert_eq!(escape_like("ui_"), r"ui\_");
+    }
 }
