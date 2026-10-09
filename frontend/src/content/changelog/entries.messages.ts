@@ -11,6 +11,34 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-10-09.title": {
+        text: "New: Tap a Showcase to see a player's build",
+        description: "Title of the 2026-10-09 release note. 'Showcase' is a profile tab name and must match its translation; a 'build' is how a player has raised an operator.",
+    },
+    "note.2026-10-09.lead": {
+        text: "Operators in a profile's Showcase now open **that player's build** when tapped, and a faction opens its operators. The operator picker in tier lists, grids and the Showcase can also filter by race, nation and faction.",
+        description: "Lead paragraph of the 2026-10-09 release note, rendered as Markdown. 'Showcase' is a profile tab name and must match its translation.",
+    },
+    "note.2026-10-09.item.1": {
+        text: "The Myrtle Discord bot can show every page of an operator (skills, modules, costs, outfits, lore, voice lines and more), play voice lines and read voice-channel chat aloud, and lists Challenge Mode conditions on stages.",
+        description: "Bullet in the 2026-10-09 release note, filed under 'New'. Myrtle is the site's name; Challenge Mode is a stage variant and keeps the game's name.",
+    },
+    "note.2026-10-09.item.2": {
+        text: "The base optimizer no longer moves Proviso to the level-3 trading post when Shamare and Tequila there earn more.",
+        description: "Bullet in the 2026-10-09 release note, filed under 'Fixed'. Proviso, Shamare and Tequila are operators and keep the game's names; a trading post is an RIIC room.",
+    },
+    "note.2026-10-09.item.3": {
+        text: "The pull planner no longer lists the same outfits on two cards and charges for them twice.",
+        description: "Bullet in the 2026-10-09 release note, filed under 'Fixed'.",
+    },
+    "note.2026-10-09.item.4": {
+        text: "Eight operators that showed no damage when first opened in the DPS calculator now open on a skill it can compute.",
+        description: "Bullet in the 2026-10-09 release note, filed under 'Fixed'. DPS is the damage calculator tool.",
+    },
+    "note.2026-10-09.item.5": {
+        text: "The grid cell picker keeps its tabs and tiles on a phone held sideways.",
+        description: "Bullet in the 2026-10-09 release note, filed under 'Fixed'.",
+    },
     "note.2026-10-07.title": {
         text: "New: See which 6★ operators each banner gave you",
         description: "Title of the 2026-10-07 release note. A 'banner' is a headhunting (gacha) pool; 6★ is the top operator rarity.",
