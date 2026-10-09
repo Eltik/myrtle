@@ -1,5 +1,5 @@
 import { ChevronDownIcon, ChevronUpIcon, SettingsIcon, XIcon } from "lucide-react";
-import { Fragment, useCallback, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "#/components/ui/button";
 import type { ITierEntity } from "#/lib/api/tier-entities";
 import { useT } from "#/lib/i18n";
@@ -38,6 +38,14 @@ export function EditTierRow({ tier, entities, notedKeys, canMoveUp, canMoveDown,
 
     const pendingIdxRef = useRef<number | null>(null);
     const rafRef = useRef<number | null>(null);
+
+    // A drag can end with a frame still queued; it would set state on an unmounted row.
+    useEffect(
+        () => () => {
+            if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+        },
+        [],
+    );
 
     const flushIdx = useCallback(() => {
         rafRef.current = null;

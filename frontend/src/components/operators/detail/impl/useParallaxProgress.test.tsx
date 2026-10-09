@@ -95,6 +95,22 @@ describe("useParallaxProgress", () => {
         expect(hero.style.getPropertyValue("--parallax-progress")).toBe("0.5000");
     });
 
+    it("cancels a frame still pending at unmount", () => {
+        const cancel = vi.fn();
+        vi.stubGlobal(
+            "requestAnimationFrame",
+            vi.fn(() => 7),
+        );
+        vi.stubGlobal("cancelAnimationFrame", cancel);
+        const view = render(<Probe />);
+        observed[0].enter();
+        window.dispatchEvent(new Event("scroll"));
+
+        view.unmount();
+
+        expect(cancel).toHaveBeenCalledWith(7);
+    });
+
     it("drops both listeners on unmount", () => {
         const root = document.createElement("div");
         document.body.appendChild(root);

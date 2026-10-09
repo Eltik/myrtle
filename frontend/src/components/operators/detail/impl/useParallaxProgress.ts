@@ -33,6 +33,9 @@ export function useParallaxProgress<T extends HTMLElement>(cssVar = "--parallax-
 
         let ticking = false;
         let isVisible = false;
+        // Kept so cleanup can cancel a frame still queued at unmount, which would
+        // otherwise measure and write to a detached element.
+        let frame = 0;
 
         const update = () => {
             ticking = false;
@@ -45,7 +48,7 @@ export function useParallaxProgress<T extends HTMLElement>(cssVar = "--parallax-
         const onScroll = () => {
             if (!isVisible || ticking) return;
             ticking = true;
-            requestAnimationFrame(update);
+            frame = requestAnimationFrame(update);
         };
 
         const io = new IntersectionObserver(
@@ -62,6 +65,7 @@ export function useParallaxProgress<T extends HTMLElement>(cssVar = "--parallax-
         update();
 
         return () => {
+            cancelAnimationFrame(frame);
             io.disconnect();
             target.removeEventListener("scroll", onScroll);
             window.removeEventListener("resize", onScroll);
