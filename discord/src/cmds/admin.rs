@@ -135,6 +135,7 @@ pub async fn edit(
     let (link_channel, message_id) = parse_message_ref(&message)
         .ok_or("Couldn't parse that message reference. Use a message link, `channel-message` id, or message id.")?;
     let target = channel.or(link_channel).unwrap_or_else(|| ctx.channel_id());
+    ensure_in_this_guild(ctx, &message, target).await?;
 
     let msg = target
         .message(ctx.http(), message_id)
@@ -207,6 +208,7 @@ pub async fn source(
     let (link_channel, message_id) = parse_message_ref(&message)
         .ok_or("Couldn't parse that message reference. Use a message link, `channel-message` id, or message id.")?;
     let target = channel.or(link_channel).unwrap_or_else(|| ctx.channel_id());
+    ensure_in_this_guild(ctx, &message, target).await?;
 
     let msg = target
         .message(ctx.http(), message_id)
@@ -953,6 +955,7 @@ pub async fn reactionrole_add(
     let (link_channel, message_id) = parse_message_ref(&message)
         .ok_or("Couldn't parse that message reference. Use a message link, `channel-message` id, or message id.")?;
     let target = channel.or(link_channel).unwrap_or_else(|| ctx.channel_id());
+    ensure_in_this_guild(ctx, &message, target).await?;
 
     target
         .message(ctx.http(), message_id)
@@ -1269,6 +1272,54 @@ fn parse_message_ref(input: &str) -> Option<(Option<ChannelId>, MessageId)> {
         .map(|id| (None, MessageId::from(id)))
 }
 
+/// Refuse a message reference that points outside the guild the command runs in.
+///
+/// Discord's message routes take only a channel id, so a link or `channel-message` pair can name
+/// a channel in any guild the bot is in, while the invoker's permission was checked only here.
+/// The link's guild segment is checked first for a clear reply; the target channel's own guild
+/// is what decides, since a hand-edited link can pair this guild's id with a foreign channel.
+async fn ensure_in_this_guild(
+    ctx: Context<'_>,
+    reference: &str,
+    target: ChannelId,
+) -> Result<(), Error> {
+    let here = ctx
+        .guild_id()
+        .ok_or("This command must be used in a guild.")?;
+    if let Some(why) = link_guild_mismatch(reference, here) {
+        return Err(why.into());
+    }
+    if target == ctx.channel_id() {
+        return Ok(());
+    }
+    let channel_guild = target
+        .to_channel(ctx)
+        .await
+        .map_err(|_| format!("Couldn't find channel <#{target}>."))?
+        .guild()
+        .map(|c| c.guild_id);
+    if channel_guild == Some(here) {
+        Ok(())
+    } else {
+        Err(NOT_THIS_GUILD.into())
+    }
+}
+
+/// The reply when a message reference resolves outside the invoking guild.
+const NOT_THIS_GUILD: &str =
+    "That message isn't in this server. I can only work with messages here.";
+
+/// Why a message link's guild segment rules it out from `here`, or `None` when it names `here`
+/// or `reference` is not a link (a `channel-message` pair or a bare id carries no guild).
+fn link_guild_mismatch(reference: &str, here: GuildId) -> Option<&'static str> {
+    let idx = reference.find("/channels/")?;
+    let guild = reference[idx + "/channels/".len()..].split('/').next()?;
+    if guild == "@me" {
+        return Some("That link points to a DM. I can only work with messages in this server.");
+    }
+    (guild.parse::<u64>().ok() != Some(here.get())).then_some(NOT_THIS_GUILD)
+}
+
 /// Build a clickable jump link to a message.
 fn message_link(guild: Option<GuildId>, channel: ChannelId, message: MessageId) -> String {
     match guild {
@@ -1279,7 +1330,9 @@ fn message_link(guild: Option<GuildId>, channel: ChannelId, message: MessageId) 
 
 #[cfg(test)]
 mod tests {
-    use super::{message_link, parse_color, parse_message_ref};
+    use super::{
+        NOT_THIS_GUILD, link_guild_mismatch, message_link, parse_color, parse_message_ref,
+    };
     use ::serenity::model::id::{ChannelId, GuildId, MessageId};
 
     fn color(input: &str) -> Option<u32> {
@@ -1368,6 +1421,31 @@ mod tests {
             parse_message_ref("https://discord.com/channels/0/22/333"),
             Some((Some(ChannelId::new(22)), MessageId::new(333)))
         );
+    }
+
+    #[test]
+    fn links_into_other_guilds_or_dms_are_refused() {
+        let here = GuildId::new(1);
+        assert_eq!(
+            link_guild_mismatch("https://discord.com/channels/1/22/333", here),
+            None
+        );
+        assert_eq!(
+            link_guild_mismatch("https://discord.com/channels/2/22/333", here),
+            Some(NOT_THIS_GUILD)
+        );
+        assert_eq!(
+            link_guild_mismatch("https://discord.com/channels/x/22/333", here),
+            Some(NOT_THIS_GUILD)
+        );
+        assert!(
+            link_guild_mismatch("https://discord.com/channels/@me/22/333", here)
+                .is_some_and(|why| why.contains("DM"))
+        );
+        // A pair or a bare id carries no guild; the target channel's guild decides those.
+        for no_guild in ["22-333", "333"] {
+            assert_eq!(link_guild_mismatch(no_guild, here), None, "{no_guild:?}");
+        }
     }
 
     #[test]
