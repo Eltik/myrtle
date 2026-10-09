@@ -102,8 +102,12 @@ jobs:
 
       - name: Decide
         id: decide
+        env:
+          BROKEN: ${{ steps.before.outputs.broken }}
+          MOVED: ${{ steps.upstream.outputs.moved }}
+          FORCE: ${{ inputs.force }}
         run: |
-          if [ "${{ steps.before.outputs.broken }}" != "0" ] || [ "${{ steps.upstream.outputs.moved }}" = "true" ] || [ "${{ inputs.force }}" = "true" ]; then
+          if [ "$BROKEN" != "0" ] || [ "$MOVED" = "true" ] || [ "$FORCE" = "true" ]; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "Every table verifies and upstream is at the pinned commit; nothing to do."
@@ -126,14 +130,18 @@ jobs:
 
       - name: Bump schemas and regenerate
         if: steps.decide.outputs.run == 'true'
+        env:
+          LATEST: ${{ steps.upstream.outputs.latest }}
         run: |
-          git -C assets/OpenArknightsFBS checkout --quiet "${{ steps.upstream.outputs.latest }}"
+          git -C assets/OpenArknightsFBS checkout --quiet "$LATEST"
           cargo run --release --manifest-path assets/unpacker/Cargo.toml --bin generate-fbs
           cargo fmt --manifest-path assets/unpacker/Cargo.toml
           cargo build --release --manifest-path assets/unpacker/Cargo.toml --bin unpacker
 
       - name: Verify with the regenerated schemas
         if: steps.decide.outputs.run == 'true'
+        env:
+          LATEST: ${{ steps.upstream.outputs.latest }}
         run: |
           mkdir -p "$RUNNER_TEMP/verify/after"
           broken=0
@@ -146,7 +154,7 @@ jobs:
             broken=$((broken + n))
           done
           if [ "$broken" != "0" ]; then
-            echo "::error::$broken table(s) still verify under no schema after regenerating from upstream ${{ steps.upstream.outputs.latest }}. Upstream has not caught up with the live client yet; the VPS keeps serving the previous extraction meanwhile."
+            echo "::error::$broken table(s) still verify under no schema after regenerating from upstream $LATEST. Upstream has not caught up with the live client yet; the VPS keeps serving the previous extraction meanwhile."
             exit 1
           fi
 
@@ -176,9 +184,16 @@ jobs:
 
       - name: Summarise
         if: steps.decide.outputs.run == 'true'
+        # The subject is the latest commit title of a third-party repository. Expanding it as
+        # an expression inside the script would let that title run as shell with this job's
+        # write token, so every step output reaches the script through env and is quoted.
+        env:
+          PINNED: ${{ steps.upstream.outputs.pinned }}
+          LATEST: ${{ steps.upstream.outputs.latest }}
+          SUBJECT: ${{ steps.upstream.outputs.subject }}
         run: |
           {
-            echo "Upstream OpenArknightsFBS: \`${{ steps.upstream.outputs.pinned }}\` -> \`${{ steps.upstream.outputs.latest }}\` (${{ steps.upstream.outputs.subject }})"
+            echo "Upstream OpenArknightsFBS: \`$PINNED\` -> \`$LATEST\` ($SUBJECT)"
             echo
             echo "Tables that verified under no schema before regenerating:"
             echo
