@@ -60,8 +60,10 @@ describe("operator ids", () => {
         expect(parseOperatorId(7)).toBe("");
     });
 
-    it("has no length cap, unlike the backend's 50-character check", () => {
-        expect(parseOperatorId("a".repeat(60))).toBe("a".repeat(60));
+    it("drops ids past the backend's 50-character cap", () => {
+        expect(parseOperatorId("a".repeat(50))).toBe("a".repeat(50));
+        expect(parseOperatorId("a".repeat(51))).toBe("");
+        expect(splitOperatorIds(`char_a,${"a".repeat(51)},char_b`)).toEqual(["char_a", "char_b"]);
     });
 
     it("splits, trims, drops malformed ids and dedupes in first-seen order", () => {

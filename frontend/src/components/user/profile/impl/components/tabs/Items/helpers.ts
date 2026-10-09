@@ -70,7 +70,7 @@ export function categorizeItem(meta: IMaterialItem | null, expIds: Set<string>):
     if (meta.classifyType === "CONSUME") return "consume";
     const t = (meta.itemType || "").toUpperCase();
     if (t.includes("EXP")) return "exp";
-    if (t === "GOLD" || t === "DIAMOND" || t === "DIAMOND_SHD" || t === "LMD" || t === "ETH" || t === "EPGS" || t === "VOUCHER_PRTS" || t === "CARD_EXP" || t === "ACTIVITY_COIN") return "lmd";
+    if (t === "GOLD" || t === "DIAMOND" || t === "DIAMOND_SHD" || t === "LMD" || t === "ETH" || t === "EPGS" || t === "VOUCHER_PRTS" || t === "ACTIVITY_COIN") return "lmd";
     if (t.includes("MOD_")) return "module";
     if (t.includes("CHIP") || t.includes("CLASS_TOKEN")) return "chip";
     if (t.includes("FURN")) return "furniture";

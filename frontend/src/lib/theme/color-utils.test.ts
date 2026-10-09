@@ -73,12 +73,13 @@ describe("generateAccentColors", () => {
         expect(bad.primaryForeground).toBe(LIGHT_FG);
     });
 
-    it("parses a hex with a stray non-hex digit by its leading digits", () => {
-        // CURRENT BEHAVIOR, suspected bug: `hexToRgb` relies on `parseInt`, which
-        // stops at the first non-hex character instead of rejecting the input, so
-        // "#12345g" reads as 0x12345 rather than as invalid. Only reachable for a
-        // custom accent that bypassed `parseAccent`'s #rrggbb check.
-        expect(generateAccentColors({ type: "custom", hex: "#12345g" }, true).glowPrimary).toBe("rgb(1 35 69 / 0.5)");
+    it("treats a hex with a stray non-hex digit as unreadable", () => {
+        // `parseInt` alone would stop at the "g" and read 0x12345. Only reachable
+        // for a custom accent that bypassed `parseAccent`'s #rrggbb check.
+        const bad = generateAccentColors({ type: "custom", hex: "#12345g" }, true);
+        expect(bad.glowPrimary).toBe("#12345g");
+        expect(bad.primaryForeground).toBe(LIGHT_FG);
+        expect(generateAccentColors({ type: "custom", hex: "#fg0" }, true).glowPrimary).toBe("#fg0");
     });
 });
 

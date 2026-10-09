@@ -79,9 +79,8 @@ describe("categorizeItem", () => {
     });
 
     it("files Battle Records under exp", () => {
-        // CURRENT BEHAVIOR, suspected bug: "CARD_EXP" is also listed in the lmd
-        // branch, but `includes("EXP")` claims it first, so that part of the lmd
-        // check is dead code.
+        // `includes("EXP")` claims every *EXP item type before the lmd branch,
+        // so Battle Records can never land under lmd.
         expect(categorizeItem(item({ itemType: "CARD_EXP" }), NO_EXP)).toBe("exp");
     });
 

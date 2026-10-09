@@ -152,8 +152,9 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
                   .map((c) => c + c)
                   .join("")
             : cleaned;
+    // parseInt stops at the first non-hex character, so "12345g" would read as 0x12345.
+    if (!/^[0-9a-f]{6}$/i.test(expanded)) return null;
     const n = Number.parseInt(expanded, 16);
-    if (Number.isNaN(n)) return null;
     return {
         r: ((n >> 16) & 0xff) / 255,
         g: ((n >> 8) & 0xff) / 255,
