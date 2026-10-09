@@ -297,7 +297,10 @@ impl Bucket {
         ) {
             return Self::Expensive;
         }
-        if matches!(route, "/api/gacha/fetch" | "/api/refresh") {
+        if matches!(
+            route,
+            "/api/gacha/fetch" | "/api/refresh" | "/api/friends" | "/api/players/search"
+        ) {
             return Self::Upstream;
         }
         Self::Default
@@ -447,6 +450,13 @@ mod tests {
             Bucket::Expensive
         ));
         assert!(matches!(Bucket::of("/api/gacha/fetch"), Bucket::Upstream));
+        assert!(matches!(Bucket::of("/api/refresh"), Bucket::Upstream));
+        // Both call Hypergryph with the caller's game session on every request.
+        assert!(matches!(Bucket::of("/api/friends"), Bucket::Upstream));
+        assert!(matches!(
+            Bucket::of("/api/players/search"),
+            Bucket::Upstream
+        ));
         assert!(matches!(
             Bucket::of("/api/operators/index"),
             Bucket::Default
