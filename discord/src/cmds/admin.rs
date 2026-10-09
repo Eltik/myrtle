@@ -1211,7 +1211,11 @@ fn parse_embed_json(input: &str) -> Result<CreateEmbed, Error> {
     Ok(CreateEmbed::from(embed))
 }
 
-/// Parse a color string: `#RRGGBB`, `RRGGBB`, `0xRRGGBB`, or a decimal value.
+/// Parse a color string: `#RRGGBB`, `0xRRGGBB`, a decimal value, or bare `RRGGBB`.
+///
+/// Input made only of digits is decimal by design, so a bare hex code is read as hex only when
+/// it has a letter in it (`ff0000`). An all-digit hex code needs its marker: `112233` is the
+/// decimal 112233 (0x01B669), `#112233` is 0x112233.
 fn parse_color(input: &str) -> Result<Colour, Error> {
     let trimmed = input.trim();
     let hex = trimmed
@@ -1300,9 +1304,8 @@ mod tests {
     fn reads_all_digit_input_as_decimal() {
         assert_eq!(color("16711680"), Some(0x00FF_0000));
         assert_eq!(color("0"), Some(0));
-        // CURRENT BEHAVIOR, suspected bug: the doc accepts bare `RRGGBB`, but an
-        // all-digit hex code like "112233" parses as decimal 112233 (0x01B669)
-        // instead of 0x112233, so the embed gets a different color than typed.
+        // By design: all-digit input is decimal, so "112233" is 0x01B669 and the
+        // hex code needs its marker (see `parse_color`).
         assert_eq!(color("112233"), Some(112_233));
         assert_eq!(color("#112233"), Some(0x0011_2233));
     }
