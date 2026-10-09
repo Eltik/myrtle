@@ -39,6 +39,7 @@ async fn main() {
         .expect("Failed to initialize database");
     let http_client = reqwest::Client::builder()
         .user_agent(concat!("myrtle-discord/", env!("CARGO_PKG_VERSION")))
+        .timeout(discord::api::CLIENT_TIMEOUT)
         .build()
         .expect("Failed to build HTTP client");
     let gamedata = Arc::new(GameData::new(
