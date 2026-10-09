@@ -7,5 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /src
 ENV NODE_ENV=development
+# The source is bind-mounted from the host, so file events are unreliable: poll instead.
+ENV VITE_USE_POLLING=1
 EXPOSE 3000
 CMD ["sh", "-c", "bun install && bun run dev --host 0.0.0.0"]

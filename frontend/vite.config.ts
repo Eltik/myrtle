@@ -82,10 +82,10 @@ function altAssetRoot(): Plugin {
 
 const config = defineConfig({
     server: {
-        watch: {
-            usePolling: true,
-            interval: 100,
-        },
+        // Polling is for the Docker dev container (Dockerfile.dev sets VITE_USE_POLLING=1), where a
+        // bind mount from the host does not reliably deliver file events. A native run gets FSEvents
+        // or inotify instead, while polling stats every watched file each 100 ms and burns most of a core at idle.
+        watch: process.env.VITE_USE_POLLING === "1" ? { usePolling: true, interval: 100 } : {},
     },
     plugins: [externalizeResvg(), altAssetRoot(), devtools(), tailwindcss(), tanstackStart(), nitro(), viteReact(), tsconfigPaths()],
     optimizeDeps: { exclude: ["@resvg/resvg-js"] },
