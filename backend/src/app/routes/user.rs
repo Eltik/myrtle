@@ -265,3 +265,95 @@ pub async fn set_user_role(
 
     Ok(crate::app::routes::ok_status())
 }
+
+#[derive(Deserialize)]
+pub struct AdminUsersParams {
+    /// Nickname substring or UID prefix.
+    pub q: Option<String>,
+    /// `all` (default), `staff`, `translators` or `players`.
+    pub role: Option<String>,
+    pub server: Option<Server>,
+    #[serde(flatten)]
+    pub pagination: crate::app::extractors::pagination::Pagination,
+}
+
+/// The page size for [`list_users`] when the caller names none, and its cap.
+const ADMIN_USERS_DEFAULT_LIMIT: u32 = 50;
+const ADMIN_USERS_MAX_LIMIT: u32 = 200;
+
+/// One page of the admin people list, and how many accounts the filters admit.
+#[derive(serde::Serialize, ts_rs::TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct AdminUsersPage {
+    pub users: Vec<crate::database::models::user::AdminUserEntry>,
+    #[ts(type = "number")]
+    pub total: i64,
+}
+
+/// Every account, private profiles included, for the admin panel's People tab.
+///
+/// Tier list admin or super-admin. Not cached: a role change must show on the
+/// next read.
+#[utoipa::path(
+    get,
+    path = "/admin/users",
+    tag = "admin",
+    params(
+        ("q" = Option<String>, Query, description = "Nickname substring (case-insensitive) or UID prefix. An exact UID match sorts first."),
+        ("role" = Option<String>, Query, description = "`all` (default), `staff` (super-admins, tier list admins and editors), `translators` or `players` (no panel role)."),
+        ("server" = Option<String>, Query, description = "Server code: `en`, `jp`, `kr`, `cn`, `bili` or `tw`. Absent means every server."),
+        ("limit" = Option<u32>, Query, description = "Page size. Defaults to 50, capped at 200."),
+        ("offset" = Option<u32>, Query, description = "Rows to skip. Defaults to 0.")
+    ),
+    security(("bearer_auth" = []), ("service_key" = [])),
+    responses(
+        (status = 200, description = "One page of accounts, most privileged roles first, then by nickname.", body = AdminUsersPage),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 403, response = crate::app::openapi::responses::Forbidden),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn list_users(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Query(params): Query<AdminUsersParams>,
+) -> Result<Json<AdminUsersPage>, ApiError> {
+    use crate::database::queries::admin_users::{AdminUserRole, AdminUserSearch};
+
+    if !auth.role.is_tier_list_admin() {
+        return Err(ApiError::Forbidden);
+    }
+    let role = match params
+        .role
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+    {
+        None => AdminUserRole::All,
+        Some(token) => AdminUserRole::parse(token).ok_or_else(|| {
+            ApiError::BadRequest(format!(
+                "role must be `all`, `staff`, `translators` or `players`, got `{token}`"
+            ))
+        })?,
+    };
+    let q = params.q.as_deref().map(str::trim).filter(|s| !s.is_empty());
+    let search = AdminUserSearch {
+        q,
+        role,
+        server: params.server,
+    };
+    let limit = params
+        .pagination
+        .limit
+        .unwrap_or(ADMIN_USERS_DEFAULT_LIMIT)
+        .clamp(1, ADMIN_USERS_MAX_LIMIT);
+    let offset = params.pagination.offset();
+    let (users, total) = tokio::try_join!(
+        search.fetch_page(&state.db, i64::from(limit), i64::from(offset)),
+        search.count(&state.db),
+    )?;
+    Ok(Json(AdminUsersPage { users, total }))
+}

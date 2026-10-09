@@ -100,6 +100,39 @@ pub struct SearchEntry {
     pub metric: Option<i64>,
 }
 
+/// One row of the admin panel's people list (`GET /admin/users`): the
+/// account, its public-profile flag and score, and its roster counts.
+/// Private profiles are included; only staff can read this.
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+pub struct AdminUserEntry {
+    pub id: Uuid,
+    pub uid: String,
+    /// `servers.code`, e.g. `EN`.
+    pub server: String,
+    pub nickname: Option<String>,
+    pub nick_number: Option<String>,
+    pub level: Option<i16>,
+    pub role: String,
+    pub avatar_id: Option<String>,
+    pub secretary: Option<String>,
+    pub secretary_skin_id: Option<String>,
+    /// `false` when the account never saved settings: the profile gate reads
+    /// a missing row as private.
+    pub public_profile: bool,
+    pub total_score: Option<f64>,
+    pub grade: Option<String>,
+    #[ts(type = "number")]
+    pub operator_count: i64,
+    #[ts(type = "number")]
+    pub item_count: i64,
+    #[ts(type = "number")]
+    pub skin_count: i64,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
 /// users table
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]

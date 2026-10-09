@@ -134,7 +134,7 @@ pub struct ListMessagesQuery {
     pub namespace: Option<String>,
     #[serde(default)]
     pub search: Option<String>,
-    /// `all` | `untranslated` | `stale` | `translated`
+    /// `all` | `untranslated` | `stale` | `todo` (untranslated or stale) | `translated`
     #[serde(default)]
     pub filter: Option<String>,
     #[serde(default)]
@@ -154,7 +154,7 @@ pub struct ListMessagesQuery {
         ("locale" = String, Query, description = "Locale to read."),
         ("namespace" = Option<String>, Query, description = "Restrict to one namespace."),
         ("search" = Option<String>, Query, description = "Free-text filter over key and value."),
-        ("filter" = Option<String>, Query, description = "`all`, `untranslated`, `stale` or `translated`."),
+        ("filter" = Option<String>, Query, description = "`all`, `untranslated`, `stale`, `todo` (untranslated or stale) or `translated`."),
         ("limit" = Option<u32>, Query, description = "Page size."),
         ("offset" = Option<u32>, Query, description = "Rows to skip.")
     ),

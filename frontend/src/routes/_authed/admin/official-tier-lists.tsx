@@ -1,15 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { AdminShell } from "#/components/admin/AdminShell";
-import { OfficialTierLists } from "#/components/admin/screens/OfficialTierLists";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
+// Legacy URL: official lists are the Tier lists section's Lists tab.
 export const Route = createFileRoute("/_authed/admin/official-tier-lists")({
-    component: AdminOfficialRoute,
+    beforeLoad: () => {
+        throw redirect({ to: "/admin/tier-lists", replace: true });
+    },
 });
-
-function AdminOfficialRoute(): React.ReactElement {
-    return (
-        <AdminShell crumbs={[{ label: "myrtle.moe", to: "/" }, { label: "admin", to: "/admin" }, { label: "Official tier lists" }]}>
-            <OfficialTierLists />
-        </AdminShell>
-    );
-}

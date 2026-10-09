@@ -143,11 +143,16 @@ function SiteChrome({ children }: { children: React.ReactNode }) {
     const pathname = useRouterState({ select: (s) => s.location.pathname });
     const isAdmin = pathname.startsWith("/admin");
 
+    // The admin panel sits under the site header (its own section bar renders
+    // below it) but has no footer: it is a working surface, not a page to scroll past.
     if (isAdmin) {
         return (
-            <ToastProvider>
-                <AnchoredToastProvider>{children}</AnchoredToastProvider>
-            </ToastProvider>
+            <>
+                <Header />
+                <ToastProvider>
+                    <AnchoredToastProvider>{children}</AnchoredToastProvider>
+                </ToastProvider>
+            </>
         );
     }
 

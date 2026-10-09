@@ -2,6 +2,11 @@ import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { backendFetch } from "#/lib/fetch";
 import { sanitizeMarkdownForStorage, sanitizePlainName } from "#/lib/markdown/sanitize-input";
+import type { AuditLogActor } from "#/types/generated/AuditLogActor";
+import type { GlobalAuditLogResponse } from "#/types/generated/GlobalAuditLogResponse";
+import type { OperatorNoteAuditActor } from "#/types/generated/OperatorNoteAuditActor";
+import type { OperatorNoteAuditEntry } from "#/types/generated/OperatorNoteAuditEntry";
+import type { OperatorNoteAuditLogEntry } from "#/types/generated/OperatorNoteAuditLogEntry";
 import { parseError } from "../_shared";
 import { requireSiteToken } from "../_shared.server";
 import type { IOperatorNote } from "../operator-notes";
@@ -23,15 +28,8 @@ export interface IUpdateOperatorNoteInput {
     tags?: unknown;
 }
 
-export interface IOperatorNoteAuditEntry {
-    id: number;
-    note_id: string;
-    field_name: string;
-    old_value: string | null;
-    new_value: string | null;
-    changed_by: string;
-    changed_at: string;
-}
+export type IOperatorNoteAuditEntry = OperatorNoteAuditEntry;
+export type IOperatorNoteAuditActor = OperatorNoteAuditActor;
 
 export const updateOperatorNoteFn = createServerFn({ method: "POST" })
     .inputValidator((data: IUpdateOperatorNoteInput) => data)
@@ -79,33 +77,19 @@ export function operatorNoteAuditLogQueryOptions(operatorId: string) {
     });
 }
 
-export interface IAuditLogActor {
-    user_id: string;
-    uid: string | null;
-    nickname: string | null;
-    secretary: string | null;
-    secretary_skin_id: string | null;
-}
-
-export interface IAuditLogEntry {
-    id: number;
-    note_id: string;
-    operator_id: string;
-    field_name: string;
-    old_value: string | null;
-    new_value: string | null;
-    changed_at: string;
-    actor: IAuditLogActor;
-}
-
-export interface IGlobalAuditLogResponse {
-    entries: IAuditLogEntry[];
-    total: number;
-}
+export type IAuditLogActor = AuditLogActor;
+export type IAuditLogEntry = OperatorNoteAuditLogEntry;
+export type IGlobalAuditLogResponse = GlobalAuditLogResponse;
 
 export interface IGlobalAuditLogInput {
     limit?: number;
     before?: string;
+    /**
+     * `"me"` or an account id: only that account's edits. A tier list editor
+     * always gets their own rows (naming anyone else is 403), so editors may
+     * call this too; admins get everyone's when it is absent.
+     */
+    actor?: string;
 }
 
 export const getGlobalAuditLogFn = createServerFn({ method: "GET" })
@@ -115,15 +99,20 @@ export const getGlobalAuditLogFn = createServerFn({ method: "GET" })
         const params = new URLSearchParams();
         if (data.limit !== undefined) params.set("limit", String(data.limit));
         if (data.before) params.set("before", data.before);
+        if (data.actor) params.set("actor", data.actor);
         const query = params.toString();
         const res = await backendFetch(`/admin/operator-notes/audit${query ? `?${query}` : ""}`, { bearerToken: token });
         if (!res.ok) throw await parseError(res);
         return (await res.json()) as IGlobalAuditLogResponse;
     });
 
-export function globalAuditLogQueryOptions(input: IGlobalAuditLogInput = {}) {
+/**
+ * `viewerId` identifies whose rows `actor: "me"` resolved to, so two accounts
+ * in one tab never share a cache entry. Optional for older callers.
+ */
+export function globalAuditLogQueryOptions(input: IGlobalAuditLogInput = {}, viewerId?: string | null) {
     return queryOptions({
-        queryKey: ["admin", "operator-notes", "audit", "global", input],
+        queryKey: ["admin", "operator-notes", "audit", "global", input, input.actor === "me" ? (viewerId ?? null) : null],
         queryFn: () => getGlobalAuditLogFn({ data: input }),
         staleTime: 30 * 1000,
         gcTime: 5 * 60 * 1000,

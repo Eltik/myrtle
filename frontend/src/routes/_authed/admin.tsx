@@ -1,4 +1,5 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { AdminLayout } from "#/components/admin/shell/AdminLayout";
 import { metaT } from "#/lib/meta";
 import { seo } from "#/lib/seo";
 
@@ -11,7 +12,7 @@ export const Route = createFileRoute("/_authed/admin")({
         // cannot disagree with the ones the admin routes apply.
         if (!context.user.canAccessAdminPanel) throw redirect({ to: "/" });
     },
-    component: AdminLayout,
+    component: AdminLayoutRoute,
     head: ({ match }) => {
         const t = metaT(match.context.i18n);
         const { meta, links } = seo({
@@ -26,6 +27,10 @@ export const Route = createFileRoute("/_authed/admin")({
     },
 });
 
-function AdminLayout(): React.ReactElement {
-    return <Outlet />;
+function AdminLayoutRoute(): React.ReactElement {
+    return (
+        <AdminLayout>
+            <Outlet />
+        </AdminLayout>
+    );
 }

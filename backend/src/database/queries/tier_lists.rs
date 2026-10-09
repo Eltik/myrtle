@@ -2,8 +2,8 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::database::models::tier_list::{
-    EntityRef, Tier, TierList, TierListFlair, TierListPermission, TierListStats, TierListVersion,
-    TierPlacement, TierPlacementRow,
+    EntityRef, GrantedTierList, Tier, TierList, TierListFlair, TierListGrant, TierListPermission,
+    TierListStats, TierListVersion, TierPlacement, TierPlacementRow,
 };
 
 pub async fn find_by_slug(pool: &PgPool, slug: &str) -> Result<Option<TierList>, sqlx::Error> {
@@ -462,13 +462,83 @@ pub async fn get_permissions(
     .await
 }
 
+/// Every grant on an active list, optionally for one grantee, newest first.
+pub async fn get_all_grants(
+    pool: &PgPool,
+    user_id: Option<Uuid>,
+) -> Result<Vec<TierListGrant>, sqlx::Error> {
+    sqlx::query_as::<_, TierListGrant>(
+        r"
+        SELECT p.tier_list_id,
+               t.slug,
+               t.name AS title,
+               t.list_type,
+               p.user_id,
+               u.uid AS user_uid,
+               u.nickname AS user_nickname,
+               p.permission,
+               p.granted_by,
+               g.nickname AS granted_by_nickname,
+               p.granted_at
+        FROM tier_list_permissions p
+        JOIN tier_lists t ON t.id = p.tier_list_id AND t.is_active
+        JOIN users u ON u.id = p.user_id
+        LEFT JOIN users g ON g.id = p.granted_by
+        WHERE ($1::uuid IS NULL OR p.user_id = $1)
+        ORDER BY p.granted_at DESC, t.slug, p.user_id, p.permission
+        ",
+    )
+    .bind(user_id)
+    .fetch_all(pool)
+    .await
+}
+
+/// The active lists `user_id` holds a grant on, one row per list at the
+/// highest level they hold there (`admin` > `publish` > `edit` > `view`).
+pub async fn get_granted_lists(
+    pool: &PgPool,
+    user_id: Uuid,
+) -> Result<Vec<GrantedTierList>, sqlx::Error> {
+    sqlx::query_as::<_, GrantedTierList>(
+        r"
+        SELECT * FROM (
+            SELECT DISTINCT ON (t.id)
+                   t.id AS tier_list_id,
+                   t.slug,
+                   t.name AS title,
+                   t.list_type,
+                   p.permission
+            FROM tier_list_permissions p
+            JOIN tier_lists t ON t.id = p.tier_list_id AND t.is_active
+            WHERE p.user_id = $1
+            ORDER BY t.id,
+                     CASE p.permission WHEN 'admin' THEN 0 WHEN 'publish' THEN 1
+                                       WHEN 'edit' THEN 2 ELSE 3 END
+        ) g
+        ORDER BY lower(g.title), g.slug
+        ",
+    )
+    .bind(user_id)
+    .fetch_all(pool)
+    .await
+}
+
+/// The highest level `user_id` holds on one list (`admin` > `publish` >
+/// `edit` > `view`). A user can hold several level rows for the same list, so
+/// without the ordering the row Postgres happened to return first decided.
 pub async fn get_user_permission(
     pool: &PgPool,
     tier_list_id: Uuid,
     user_id: Uuid,
 ) -> Result<Option<TierListPermission>, sqlx::Error> {
     sqlx::query_as::<_, TierListPermission>(
-        "SELECT * FROM tier_list_permissions WHERE tier_list_id = $1 AND user_id = $2",
+        r"
+        SELECT * FROM tier_list_permissions
+        WHERE tier_list_id = $1 AND user_id = $2
+        ORDER BY CASE permission WHEN 'admin' THEN 0 WHEN 'publish' THEN 1
+                                 WHEN 'edit' THEN 2 ELSE 3 END
+        LIMIT 1
+        ",
     )
     .bind(tier_list_id)
     .bind(user_id)

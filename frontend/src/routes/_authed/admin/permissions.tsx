@@ -1,15 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { AdminShell } from "#/components/admin/AdminShell";
-import { Permissions } from "#/components/admin/screens/TierLists";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
+// Legacy URL: tier-list grants are the Tier lists section's Access tab.
 export const Route = createFileRoute("/_authed/admin/permissions")({
-    component: AdminPermissionsRoute,
+    beforeLoad: () => {
+        throw redirect({ to: "/admin/tier-lists", search: { tab: "access" }, replace: true });
+    },
 });
-
-function AdminPermissionsRoute(): React.ReactElement {
-    return (
-        <AdminShell crumbs={[{ label: "myrtle.moe", to: "/" }, { label: "admin", to: "/admin" }, { label: "Tier Lists" }]}>
-            <Permissions />
-        </AdminShell>
-    );
-}

@@ -1,7 +1,7 @@
-import { BookOpenIcon, CheckIcon, ChevronDownIcon, FilterXIcon, SearchIcon, XIcon } from "lucide-react";
+import { BookOpenIcon, CheckIcon, ChevronDownIcon, FilterXIcon, XIcon } from "lucide-react";
 import { useMemo, useState } from "react";
+import { SearchField } from "#/components/SearchField";
 import { Button } from "#/components/ui/button";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -60,27 +60,6 @@ interface IStoryPickerProps {
     /** How many tiles "All stories" leaves. */
     total: number;
     onChoose: (group: string | null) => void;
-}
-
-interface ISearchFieldProps {
-    value: string;
-    onChange: (value: string) => void;
-    placeholder: string;
-    /** The input's accessible label. */
-    label: string;
-    className?: string;
-}
-
-/** A search box: the magnifier, then the input. The gallery's search and both story searches are this. */
-export function SearchField({ value, onChange, placeholder, label, className }: ISearchFieldProps) {
-    return (
-        <InputGroup className={className}>
-            <InputGroupAddon>
-                <SearchIcon aria-hidden="true" />
-            </InputGroupAddon>
-            <InputGroupInput value={value} onChange={(e) => onChange((e.target as HTMLInputElement).value)} placeholder={placeholder} type="search" aria-label={label} />
-        </InputGroup>
-    );
 }
 
 const storyRow = (active: boolean) =>

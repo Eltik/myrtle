@@ -12,7 +12,7 @@ use crate::app::extractors::auth::AuthUser;
 use crate::app::state::AppState;
 use crate::core::auth::permissions::Permission;
 use crate::database::models::i18n::{
-    GamedataOverride, Locale, TranslationEntry, TranslationPermission, UiMessageAuditEntry,
+    GamedataOverride, Locale, TranslationEntry, TranslationGrant, UiMessageAuditEntry,
 };
 use crate::database::queries::i18n as queries;
 
@@ -747,11 +747,31 @@ pub async fn sync_source_catalog(
     })
 }
 
+/// Translation grants, optionally for one locale. Every grantee's name and UID
+/// (private profiles included) goes to tier-list admins and up only; anyone
+/// else sees just their own rows.
 pub async fn list_permissions(
     state: &AppState,
+    auth: &AuthUser,
     locale: Option<&str>,
-) -> Result<Vec<TranslationPermission>, ApiError> {
-    queries::list_permissions(&state.db, locale)
+) -> Result<Vec<TranslationGrant>, ApiError> {
+    let only = if auth.role.is_tier_list_admin() {
+        None
+    } else {
+        Some(auth.user_uuid()?)
+    };
+    queries::list_permissions(&state.db, locale, only)
+        .await
+        .map_err(std::convert::Into::into)
+}
+
+/// The caller's own translation grants, whatever their role.
+pub async fn my_permissions(
+    state: &AppState,
+    auth: &AuthUser,
+) -> Result<Vec<TranslationGrant>, ApiError> {
+    let user_id = auth.user_uuid()?;
+    queries::list_permissions(&state.db, None, Some(user_id))
         .await
         .map_err(std::convert::Into::into)
 }

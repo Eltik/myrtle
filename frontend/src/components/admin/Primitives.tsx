@@ -1,26 +1,6 @@
 import type * as React from "react";
-import { useT } from "#/lib/i18n";
-import type { TypedT } from "#/lib/i18n/messages";
+import { Skeleton } from "#/components/ui/skeleton";
 import { cn } from "#/lib/utils";
-import type { messages } from "./Primitives.messages";
-
-// Server-coded gradient (used as avatar background tint).
-export const SERVER_TINT: Record<string, string> = {
-    EN: "linear-gradient(135deg, oklch(0.58 0.22 25), oklch(0.85 0.12 25))",
-    JP: "linear-gradient(135deg, oklch(0.55 0.15 184), oklch(0.7 0.12 200))",
-    KR: "linear-gradient(135deg, oklch(0.7 0.16 84), oklch(0.85 0.10 100))",
-    CN: "linear-gradient(135deg, oklch(0.45 0.18 350), oklch(0.65 0.12 320))",
-};
-
-// Rarity color swatches (pulled from styles.css :root --rarity-N tokens).
-export const RARITY_BG: Record<number, string> = {
-    6: "var(--rarity-6)",
-    5: "var(--rarity-5)",
-    4: "var(--rarity-4)",
-    3: "var(--rarity-3)",
-    2: "var(--rarity-2)",
-    1: "var(--rarity-1)",
-};
 
 interface IStatTileProps {
     label: string;
@@ -75,124 +55,37 @@ export function StatusDot({ state = "green", pulse = false, children }: IStatusD
     );
 }
 
-interface IHitBarProps {
-    value: number;
-    width?: number;
+/**
+ * Pins a table's last (row actions) column to the right edge of its scroller,
+ * so the actions stay reachable when a narrow screen scrolls the table
+ * sideways. The cell paints the card under it and repeats the row's hover and
+ * selected tints (the same mixes `TableRow` uses), so it does not read as a
+ * separate block.
+ */
+export const stickyActionsCell =
+    "sticky right-0 z-1 bg-card shadow-[-8px_0_8px_-8px_var(--border)] [tr:hover>&]:bg-[color-mix(in_srgb,var(--background),var(--color-black)_2%)] [tr[data-state=selected]>&]:bg-[color-mix(in_srgb,var(--background),var(--color-black)_4%)] dark:[tr:hover>&]:bg-[color-mix(in_srgb,var(--background),var(--color-white)_2%)] dark:[tr[data-state=selected]>&]:bg-[color-mix(in_srgb,var(--background),var(--color-white)_4%)]";
+
+/** The search-and-filters row across the top of a table card. */
+export function AdminToolbar({ children }: { children?: React.ReactNode }): React.ReactElement {
+    return <div className="flex flex-wrap items-center gap-3 border-border border-b p-3.5">{children}</div>;
 }
 
-export function HitBar({ value, width = 60 }: IHitBarProps): React.ReactElement {
-    const color = value >= 95 ? "#10b981" : value >= 85 ? "#f59e0b" : "oklch(0.577 0.245 27.325)";
-    return (
-        <span className="inline-flex items-center gap-2">
-            <span className="inline-block h-1.5 overflow-hidden rounded-[3px] bg-muted" style={{ width }}>
-                <span className="block h-full" style={{ width: `${value}%`, background: color }} />
-            </span>
-            <span className="font-medium font-mono text-[11.5px] text-muted-foreground tabular-nums">{value}%</span>
-        </span>
-    );
+/**
+ * A centred muted line standing in for a panel's content (loading, empty,
+ * failed). `className` carries the padding and leads the class list.
+ */
+export function PanelMessage({ className, children }: { className: string; children?: React.ReactNode }): React.ReactElement {
+    return <div className={`${className} text-center text-[14px] text-muted-foreground`}>{children}</div>;
 }
 
-interface ICardKVProps {
-    k: string;
-    v: React.ReactNode;
+/** `count` loading placeholders of one shape. */
+export function skeletons(count: number, className: string): React.ReactElement[] {
+    return Array.from({ length: count }, (_, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: static placeholders
+        <Skeleton key={i} className={className} />
+    ));
 }
 
-export function CardKV({ k, v }: ICardKVProps): React.ReactElement {
-    return (
-        <div className="flex items-center justify-between border-border border-b py-2 last:border-0">
-            <span className="font-mono text-[12.5px]">{k}</span>
-            <span className="font-mono text-[12.5px] text-muted-foreground">{v}</span>
-        </div>
-    );
-}
-
-export function Kicker({ children }: { children: React.ReactNode }): React.ReactElement {
-    return <span className="font-bold text-[11px] text-primary uppercase tracking-[0.22em]">{children}</span>;
-}
-
-export function MonoSection({ children }: { children: React.ReactNode }): React.ReactElement {
-    return <span className="font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-widest">{children}</span>;
-}
-
-interface IRoleBadgeProps {
-    role: string;
-}
-
-export function RoleBadge({ role }: IRoleBadgeProps): React.ReactElement {
-    const t: TypedT<typeof messages> = useT("admin");
-    if (role === "super_admin") return <span className="inline-flex h-4.5 items-center rounded-sm bg-primary px-1.5 font-medium text-[11px] text-primary-foreground leading-none">{t("role.superAdmin")}</span>;
-    if (role === "tier_list_admin")
-        return (
-            <span className="inline-flex h-4.5 items-center gap-1 rounded-sm bg-success/8 px-1.5 font-medium text-[11px] text-success-foreground leading-none">
-                <span className="size-1.5 rounded-full bg-success-foreground/85" />
-                {t("role.tierListAdmin")}
-            </span>
-        );
-    if (role === "tier_list_editor")
-        return (
-            <span className="inline-flex h-4.5 items-center gap-1 rounded-sm bg-info/8 px-1.5 font-medium text-[11px] text-info-foreground leading-none">
-                <span className="size-1.5 rounded-full bg-info-foreground/85" />
-                {t("role.tierListEditor")}
-            </span>
-        );
-    if (role === "translator")
-        return (
-            <span className="inline-flex h-4.5 items-center gap-1 rounded-sm bg-[oklch(0.62_0.17_305/0.1)] px-1.5 font-medium text-[11px] text-[oklch(0.45_0.17_305)] leading-none dark:bg-[oklch(0.62_0.17_305/0.18)] dark:text-[oklch(0.82_0.11_305)]">
-                <span className="size-1.5 rounded-full bg-current/85" />
-                {t("role.translator")}
-            </span>
-        );
-    return <span className="font-mono text-[12px] text-muted-foreground">{t("role.user")}</span>;
-}
-
-interface ILevelBadgeProps {
-    level: "View" | "Edit" | "Publish" | "Admin";
-}
-
-export function LevelBadge({ level }: ILevelBadgeProps): React.ReactElement {
-    const t: TypedT<typeof messages> = useT("admin");
-    if (level === "Admin") return <span className="inline-flex h-4.5 items-center rounded-sm bg-primary px-1.5 font-medium text-[11px] text-primary-foreground leading-none">{t("level.admin")}</span>;
-    if (level === "Publish")
-        return (
-            <span className="inline-flex h-4.5 items-center gap-1 rounded-sm bg-success/8 px-1.5 font-medium text-[11px] text-success-foreground leading-none">
-                <span className="size-1.5 rounded-full bg-success-foreground/85" />
-                {t("level.publish")}
-            </span>
-        );
-    if (level === "Edit")
-        return (
-            <span className="inline-flex h-4.5 items-center gap-1 rounded-sm bg-info/8 px-1.5 font-medium text-[11px] text-info-foreground leading-none">
-                <span className="size-1.5 rounded-full bg-info-foreground/85" />
-                {t("level.edit")}
-            </span>
-        );
-    return <span className="inline-flex h-4.5 items-center rounded-sm border border-input bg-background px-1.5 font-medium text-[11px] text-foreground leading-none">{t("level.view")}</span>;
-}
-
-interface ITimelineProps {
-    items: ITimelineItem[];
-}
-
-export interface ITimelineItem {
-    when: string;
-    what: React.ReactNode;
-    who?: React.ReactNode;
-    muted?: boolean;
-}
-
-export function Timeline({ items }: ITimelineProps): React.ReactElement {
-    return (
-        <div className="relative pl-4.5">
-            <div className="absolute top-1 bottom-1 left-1 w-0.5 rounded bg-border" />
-            {items.map((it, i) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: timeline items are append-only and positional
-                <div key={i} className="relative pb-3.5 last:pb-0">
-                    <span className={cn("absolute top-1 -left-4.5 size-2.5 rounded-full border-2 bg-card shadow-[0_0_0_3px_var(--background)]", it.muted ? "border-border" : "border-primary")} />
-                    <div className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.06em]">{it.when}</div>
-                    <div className="mt-1 font-medium text-[13px] leading-[1.4]">{it.what}</div>
-                    {it.who ? <div className="mt-0.5 text-[12px] text-muted-foreground leading-[1.4]">{it.who}</div> : null}
-                </div>
-            ))}
-        </div>
-    );
-}
+/** A card header that stacks its action under the title on phones (`stackedCardAction` goes on the `CardAction`). */
+export const stackedCardHeader = "max-sm:grid-cols-1!";
+export const stackedCardAction = "max-sm:col-start-1 max-sm:row-span-1 max-sm:row-start-3 max-sm:mt-2 max-sm:justify-self-start";

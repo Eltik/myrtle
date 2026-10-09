@@ -8,6 +8,7 @@ import { backendFetch } from "#/lib/fetch";
 import { sanitizeMarkdownForStorage, sanitizePlainName } from "#/lib/markdown/sanitize-input";
 import { formatRelative } from "#/lib/utils";
 import type { EntitySummary } from "#/types/generated/EntitySummary";
+import type { GrantedTierList } from "#/types/generated/GrantedTierList";
 import type { PlacementDetail } from "#/types/generated/PlacementDetail";
 import type { JsonValue } from "#/types/generated/serde_json/JsonValue";
 // The `IBackend*` types are the WIRE shapes, generated from
@@ -24,6 +25,7 @@ import type { TierPlacement } from "#/types/generated/TierPlacement";
 import type { OperatorProfession } from "#/types/operators";
 import { type IBackendStatus, parseError } from "./_shared";
 import { requireSiteToken } from "./_shared.server";
+import type { TierListPermissionLevel } from "./admin/types";
 import { DEFAULT_GAMEDATA_SERVER, gamedataKey, resolveGamedataServer } from "./gamedata";
 import { DEFAULT_ENTITY_KINDS, entityArtFit, type ITierEntity, isOperatorEntity, type TierEntityKind, toTierEntity } from "./tier-entities";
 
@@ -696,6 +698,45 @@ export function myTierListsQueryOptions(authed: boolean) {
     });
 }
 
+/** A list the signed-in user holds a grant on, at their highest level on it. */
+export interface IGrantedTierList {
+    tierListId: string;
+    slug: string;
+    title: string;
+    listType: TierListType;
+    permission: TierListPermissionLevel;
+}
+
+export const getGrantedTierListsFn = createServerFn({ method: "GET" }).handler(async (): Promise<IGrantedTierList[]> => {
+    const token = getCookie("site_token");
+    if (!token) return [];
+    const res = await backendFetch("/tier-lists/granted", { bearerToken: token });
+    if (res.status === 401) return [];
+    if (!res.ok) throw await parseError(res);
+    const raw = (await res.json()) as GrantedTierList[];
+    return raw.map((g) => ({
+        tierListId: g.tier_list_id,
+        slug: g.slug,
+        title: g.title,
+        listType: g.list_type === "official" ? "official" : "community",
+        permission: g.permission as IGrantedTierList["permission"],
+    }));
+});
+
+/**
+ * The lists granted to the signed-in user (`GET /tier-lists/granted`), not the
+ * ones they created (that is `myTierListsQueryOptions`). Any signed-in role.
+ */
+export function grantedTierListsQueryOptions(authed: boolean) {
+    return queryOptions({
+        queryKey: ["tier-lists", "granted", authed ? "auth" : "anon"],
+        queryFn: () => (authed ? getGrantedTierListsFn() : Promise.resolve([] as IGrantedTierList[])),
+        enabled: authed,
+        staleTime: 30 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+}
+
 export const getFavoritedTierListsFn = createServerFn({ method: "GET" })
     .inputValidator((server: string | undefined) => server)
     .handler(async ({ data: server }): Promise<ITierListBrowseItem[]> => {
@@ -969,5 +1010,5 @@ export function tierEntityCatalogueQueryOptions(kind: TierEntityKind, server: st
 }
 
 // Per-list tier-list permission management lives in `./admin/permissions`.
-// See `getTierListPermissionsFn`, `grantTierListPermissionFn`,
+// See `allTierListGrantsQueryOptions`, `grantTierListPermissionFn`,
 // `revokeTierListPermissionFn` in `#/lib/api/admin`.

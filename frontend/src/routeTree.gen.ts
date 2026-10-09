@@ -53,6 +53,8 @@ import { Route as AuthedTierListsMyRouteImport } from './routes/_authed/tier-lis
 import { Route as AuthedGridsMyRouteImport } from './routes/_authed/grids_.my'
 import { Route as AuthedAdminUsersRouteImport } from './routes/_authed/admin/users'
 import { Route as AuthedAdminTranslationsRouteImport } from './routes/_authed/admin/translations'
+import { Route as AuthedAdminTierListsRouteImport } from './routes/_authed/admin/tier-lists'
+import { Route as AuthedAdminSystemRouteImport } from './routes/_authed/admin/system'
 import { Route as AuthedAdminSettingsRouteImport } from './routes/_authed/admin/settings'
 import { Route as AuthedAdminPermissionsRouteImport } from './routes/_authed/admin/permissions'
 import { Route as AuthedAdminOperatorNotesRouteImport } from './routes/_authed/admin/operator-notes'
@@ -284,6 +286,16 @@ const AuthedAdminTranslationsRoute = AuthedAdminTranslationsRouteImport.update({
   path: '/translations',
   getParentRoute: () => AuthedAdminRoute,
 } as any)
+const AuthedAdminTierListsRoute = AuthedAdminTierListsRouteImport.update({
+  id: '/tier-lists',
+  path: '/tier-lists',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
+const AuthedAdminSystemRoute = AuthedAdminSystemRouteImport.update({
+  id: '/system',
+  path: '/system',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
 const AuthedAdminSettingsRoute = AuthedAdminSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -385,6 +397,8 @@ export interface FileRoutesByFullPath {
   '/admin/operator-notes': typeof AuthedAdminOperatorNotesRoute
   '/admin/permissions': typeof AuthedAdminPermissionsRoute
   '/admin/settings': typeof AuthedAdminSettingsRoute
+  '/admin/system': typeof AuthedAdminSystemRoute
+  '/admin/tier-lists': typeof AuthedAdminTierListsRoute
   '/admin/translations': typeof AuthedAdminTranslationsRoute
   '/admin/users': typeof AuthedAdminUsersRoute
   '/grids/my': typeof AuthedGridsMyRoute
@@ -440,6 +454,8 @@ export interface FileRoutesByTo {
   '/admin/operator-notes': typeof AuthedAdminOperatorNotesRoute
   '/admin/permissions': typeof AuthedAdminPermissionsRoute
   '/admin/settings': typeof AuthedAdminSettingsRoute
+  '/admin/system': typeof AuthedAdminSystemRoute
+  '/admin/tier-lists': typeof AuthedAdminTierListsRoute
   '/admin/translations': typeof AuthedAdminTranslationsRoute
   '/admin/users': typeof AuthedAdminUsersRoute
   '/grids/my': typeof AuthedGridsMyRoute
@@ -498,6 +514,8 @@ export interface FileRoutesById {
   '/_authed/admin/operator-notes': typeof AuthedAdminOperatorNotesRoute
   '/_authed/admin/permissions': typeof AuthedAdminPermissionsRoute
   '/_authed/admin/settings': typeof AuthedAdminSettingsRoute
+  '/_authed/admin/system': typeof AuthedAdminSystemRoute
+  '/_authed/admin/tier-lists': typeof AuthedAdminTierListsRoute
   '/_authed/admin/translations': typeof AuthedAdminTranslationsRoute
   '/_authed/admin/users': typeof AuthedAdminUsersRoute
   '/_authed/grids_/my': typeof AuthedGridsMyRoute
@@ -556,6 +574,8 @@ export interface FileRouteTypes {
     | '/admin/operator-notes'
     | '/admin/permissions'
     | '/admin/settings'
+    | '/admin/system'
+    | '/admin/tier-lists'
     | '/admin/translations'
     | '/admin/users'
     | '/grids/my'
@@ -611,6 +631,8 @@ export interface FileRouteTypes {
     | '/admin/operator-notes'
     | '/admin/permissions'
     | '/admin/settings'
+    | '/admin/system'
+    | '/admin/tier-lists'
     | '/admin/translations'
     | '/admin/users'
     | '/grids/my'
@@ -668,6 +690,8 @@ export interface FileRouteTypes {
     | '/_authed/admin/operator-notes'
     | '/_authed/admin/permissions'
     | '/_authed/admin/settings'
+    | '/_authed/admin/system'
+    | '/_authed/admin/tier-lists'
     | '/_authed/admin/translations'
     | '/_authed/admin/users'
     | '/_authed/grids_/my'
@@ -1036,6 +1060,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedAdminTranslationsRouteImport
       parentRoute: typeof AuthedAdminRoute
     }
+    '/_authed/admin/tier-lists': {
+      id: '/_authed/admin/tier-lists'
+      path: '/tier-lists'
+      fullPath: '/admin/tier-lists'
+      preLoaderRoute: typeof AuthedAdminTierListsRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/system': {
+      id: '/_authed/admin/system'
+      path: '/system'
+      fullPath: '/admin/system'
+      preLoaderRoute: typeof AuthedAdminSystemRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
     '/_authed/admin/settings': {
       id: '/_authed/admin/settings'
       path: '/settings'
@@ -1123,6 +1161,8 @@ interface AuthedAdminRouteChildren {
   AuthedAdminOperatorNotesRoute: typeof AuthedAdminOperatorNotesRoute
   AuthedAdminPermissionsRoute: typeof AuthedAdminPermissionsRoute
   AuthedAdminSettingsRoute: typeof AuthedAdminSettingsRoute
+  AuthedAdminSystemRoute: typeof AuthedAdminSystemRoute
+  AuthedAdminTierListsRoute: typeof AuthedAdminTierListsRoute
   AuthedAdminTranslationsRoute: typeof AuthedAdminTranslationsRoute
   AuthedAdminUsersRoute: typeof AuthedAdminUsersRoute
   AuthedAdminIndexRoute: typeof AuthedAdminIndexRoute
@@ -1135,6 +1175,8 @@ const AuthedAdminRouteChildren: AuthedAdminRouteChildren = {
   AuthedAdminOperatorNotesRoute: AuthedAdminOperatorNotesRoute,
   AuthedAdminPermissionsRoute: AuthedAdminPermissionsRoute,
   AuthedAdminSettingsRoute: AuthedAdminSettingsRoute,
+  AuthedAdminSystemRoute: AuthedAdminSystemRoute,
+  AuthedAdminTierListsRoute: AuthedAdminTierListsRoute,
   AuthedAdminTranslationsRoute: AuthedAdminTranslationsRoute,
   AuthedAdminUsersRoute: AuthedAdminUsersRoute,
   AuthedAdminIndexRoute: AuthedAdminIndexRoute,

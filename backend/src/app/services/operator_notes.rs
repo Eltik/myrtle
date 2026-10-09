@@ -75,11 +75,12 @@ pub async fn get_global_audit_log(
     state: &AppState,
     limit: i64,
     before: Option<chrono::DateTime<chrono::Utc>>,
+    actor: Option<Uuid>,
 ) -> Result<GlobalAuditLogResponse, ApiError> {
     let capped_limit = limit.clamp(1, 500);
     let (rows, total) = tokio::try_join!(
-        get_audit_log_global(&state.db, capped_limit, before),
-        count_audit_log(&state.db),
+        get_audit_log_global(&state.db, capped_limit, before, actor),
+        count_audit_log(&state.db, actor),
     )?;
 
     let entries = rows

@@ -5,15 +5,15 @@ import type { Locale } from "#/types/generated/Locale";
 import type { LocaleProgress } from "#/types/generated/LocaleProgress";
 import type { TranslationAuditResponse } from "#/types/generated/TranslationAuditResponse";
 import type { TranslationEntry } from "#/types/generated/TranslationEntry";
+import type { TranslationGrant } from "#/types/generated/TranslationGrant";
 import type { TranslationListResponse } from "#/types/generated/TranslationListResponse";
-import type { TranslationPermission } from "#/types/generated/TranslationPermission";
 import type { UiMessageAuditEntry } from "#/types/generated/UiMessageAuditEntry";
 import { type IBackendStatus, parseError } from "../_shared";
 import { requireSiteToken } from "../_shared.server";
 import type { TierListPermissionLevel, UserRole } from "./types";
 
-/** `all` | `untranslated` | `stale` | `translated` - mirrors the backend's filter. */
-export type TranslationFilter = "all" | "untranslated" | "stale" | "translated";
+/** `all` | `untranslated` | `stale` | `todo` (untranslated or stale) | `translated` - mirrors the backend's filter. */
+export type TranslationFilter = "all" | "untranslated" | "stale" | "todo" | "translated";
 
 export interface IListTranslationsInput {
     locale: string;
@@ -127,24 +127,6 @@ export const upsertLocaleFn = createServerFn({ method: "POST" })
         if (!res.ok) throw await parseError(res);
         return (await res.json()) as Locale;
     });
-
-/** The locale codes this caller may actually write, for the editor's picker. */
-export const getWritableLocalesFn = createServerFn({ method: "GET" }).handler(async (): Promise<string[]> => {
-    const token = requireSiteToken();
-    const res = await backendFetch("/admin/i18n/writable-locales", { bearerToken: token });
-    if (!res.ok) throw await parseError(res);
-    return (await res.json()) as string[];
-});
-
-export function writableLocalesQueryOptions(authed: boolean) {
-    return queryOptions({
-        queryKey: ["admin", "i18n", "writable-locales", authed ? "auth" : "anon"],
-        queryFn: () => getWritableLocalesFn(),
-        enabled: authed,
-        staleTime: 60 * 1000,
-        gcTime: 5 * 60 * 1000,
-    });
-}
 
 export const listTranslationsFn = createServerFn({ method: "GET" })
     .inputValidator((data: IListTranslationsInput) => data)
@@ -298,19 +280,44 @@ export function translationEntryAuditQueryOptions(input: IEntryAuditInput, authe
 
 export const getTranslationPermissionsFn = createServerFn({ method: "GET" })
     .inputValidator((locale: string | undefined) => locale)
-    .handler(async ({ data: locale }): Promise<TranslationPermission[]> => {
+    .handler(async ({ data: locale }): Promise<TranslationGrant[]> => {
         const token = requireSiteToken();
         const query = locale ? `?locale=${encodeURIComponent(locale)}` : "";
         const res = await backendFetch(`/admin/i18n/permissions${query}`, { bearerToken: token });
         if (!res.ok) throw await parseError(res);
-        return (await res.json()) as TranslationPermission[];
+        return (await res.json()) as TranslationGrant[];
     });
 
-export function translationPermissionsQueryOptions(locale: string | undefined, authed: boolean) {
+/**
+ * Every grant for a tier-list admin or higher; any other caller gets only
+ * their own rows, so the key carries `viewerId` (optional for older callers).
+ */
+export function translationPermissionsQueryOptions(locale: string | undefined, authed: boolean, viewerId?: string | null) {
     return queryOptions({
-        queryKey: ["admin", "i18n", "permissions", locale ?? "all", authed ? "auth" : "anon"],
+        queryKey: ["admin", "i18n", "permissions", locale ?? "all", authed ? "auth" : "anon", viewerId ?? null],
         queryFn: () => getTranslationPermissionsFn({ data: locale }),
         enabled: authed,
+        staleTime: 30 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+}
+
+export const getMyTranslationPermissionsFn = createServerFn({ method: "GET" }).handler(async (): Promise<TranslationGrant[]> => {
+    const token = requireSiteToken();
+    const res = await backendFetch("/admin/i18n/permissions/me", { bearerToken: token });
+    if (!res.ok) throw await parseError(res);
+    return (await res.json()) as TranslationGrant[];
+});
+
+/**
+ * The signed-in user's own translation grants (`/admin/i18n/permissions/me`),
+ * for any role. Keyed by `viewerId`: the rows are that user's.
+ */
+export function myTranslationPermissionsQueryOptions(viewerId: string | null) {
+    return queryOptions({
+        queryKey: ["admin", "i18n", "permissions", "me", viewerId],
+        queryFn: () => getMyTranslationPermissionsFn(),
+        enabled: viewerId != null,
         staleTime: 30 * 1000,
         gcTime: 5 * 60 * 1000,
     });

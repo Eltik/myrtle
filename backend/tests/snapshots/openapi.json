@@ -437,7 +437,7 @@
           {
             "name": "filter",
             "in": "query",
-            "description": "`all`, `untranslated`, `stale` or `translated`.",
+            "description": "`all`, `untranslated`, `stale`, `todo` (untranslated or stale) or `translated`.",
             "required": false,
             "schema": {
               "type": "string"
@@ -739,6 +739,7 @@
           "i18n-admin"
         ],
         "summary": "Who holds which translation grant.",
+        "description": "Tier-list admins and up see every grant. Anyone else who may open the\nadmin panel sees only their own rows: the list names every grantee,\nprivate profiles included.",
         "operationId": "i18n_permissions_list",
         "parameters": [
           {
@@ -759,7 +760,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/TranslationPermission"
+                    "$ref": "#/components/schemas/TranslationGrant"
                   }
                 }
               }
@@ -826,6 +827,50 @@
           },
           "403": {
             "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {
+            "service_key": []
+          }
+        ]
+      }
+    },
+    "/api/admin/i18n/permissions/me": {
+      "get": {
+        "tags": [
+          "i18n-admin"
+        ],
+        "summary": "The caller's own translation grants, for any signed-in role. Empty when\nthey hold none.",
+        "operationId": "i18n_permissions_mine",
+        "responses": {
+          "200": {
+            "description": "The caller's grants.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TranslationGrant"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -1066,7 +1111,38 @@
           "admin"
         ],
         "summary": "Edit history across every operator note.",
+        "description": "Tier list admins read every account's edits. A tier list editor reads\nonly their own: `actor` defaults to them, and naming anyone else is 403.",
         "operationId": "global_audit_log",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Page size. Defaults to 100, clamped to 1..=500.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "description": "RFC 3339 timestamp: only edits strictly older, for paging.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "actor",
+            "in": "query",
+            "description": "`me` or an account id (UUID): only that account's edits. Editors always get their own.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Audit entries, newest first.",
@@ -1077,6 +1153,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
@@ -1121,6 +1200,167 @@
                 }
               }
             }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {
+            "service_key": []
+          }
+        ]
+      }
+    },
+    "/api/admin/tier-lists/permissions": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Every grant on every active list, with the list, grantee and granter named.",
+        "description": "Tier list admin or super-admin.",
+        "operationId": "list_all",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "description": "Only this account's grants (UUID).",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Grants, newest first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TierListGrant"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {
+            "service_key": []
+          }
+        ]
+      }
+    },
+    "/api/admin/users": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Every account, private profiles included, for the admin panel's People tab.",
+        "description": "Tier list admin or super-admin. Not cached: a role change must show on the\nnext read.",
+        "operationId": "list_users",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Nickname substring (case-insensitive) or UID prefix. An exact UID match sorts first.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "description": "`all` (default), `staff` (super-admins, tier list admins and editors), `translators` or `players` (no panel role).",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "description": "Server code: `en`, `jp`, `kr`, `cn`, `bili` or `tw`. Absent means every server.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Page size. Defaults to 50, capped at 200.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Rows to skip. Defaults to 0.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One page of accounts, most privileged roles first, then by nickname.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUsersPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
@@ -8645,6 +8885,51 @@
         ]
       }
     },
+    "/api/tier-lists/granted": {
+      "get": {
+        "tags": [
+          "tier-lists"
+        ],
+        "summary": "The lists the caller holds a grant on, at their highest level on each.",
+        "description": "Any signed-in account. Lists the caller created but holds no grant on are\nnot here; `/tier-lists/mine` has those.",
+        "operationId": "granted",
+        "responses": {
+          "200": {
+            "description": "Granted lists, by title.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GrantedTierList"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {
+            "service_key": []
+          }
+        ]
+      }
+    },
     "/api/tier-lists/mine": {
       "get": {
         "tags": [
@@ -13258,6 +13543,132 @@
           }
         ]
       },
+      "AdminUserEntry": {
+        "type": "object",
+        "description": "One row of the admin panel's people list (`GET /admin/users`): the\naccount, its public-profile flag and score, and its roster counts.\nPrivate profiles are included; only staff can read this.",
+        "required": [
+          "id",
+          "uid",
+          "server",
+          "role",
+          "public_profile",
+          "operator_count",
+          "item_count",
+          "skin_count",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "avatar_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "grade": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "item_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "level": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "nick_number": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nickname": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "operator_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "public_profile": {
+            "type": "boolean",
+            "description": "`false` when the account never saved settings: the profile gate reads\na missing row as private."
+          },
+          "role": {
+            "type": "string"
+          },
+          "secretary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "secretary_skin_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "server": {
+            "type": "string",
+            "description": "`servers.code`, e.g. `EN`."
+          },
+          "skin_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total_score": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AdminUsersPage": {
+        "type": "object",
+        "description": "One page of the admin people list, and how many accounts the filters admit.",
+        "required": [
+          "users",
+          "total"
+        ],
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminUserEntry"
+            }
+          }
+        }
+      },
       "AlignMethod": {
         "type": "string",
         "enum": [
@@ -16619,6 +17030,35 @@
           }
         }
       },
+      "GrantedTierList": {
+        "type": "object",
+        "description": "A list the caller holds a grant on, at their highest level on it. Read by\n`GET /tier-lists/granted`.",
+        "required": [
+          "tier_list_id",
+          "slug",
+          "title",
+          "list_type",
+          "permission"
+        ],
+        "properties": {
+          "list_type": {
+            "type": "string"
+          },
+          "permission": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "tier_list_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
       "Grid": {
         "type": "object",
         "required": [
@@ -18749,6 +19189,25 @@
           }
         }
       },
+      "OperatorNoteAuditActor": {
+        "type": "object",
+        "description": "The author of one per-operator revision. `nickname` is `None` once the\naccount is gone or never synced a name.",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nickname": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "OperatorNoteAuditEntry": {
         "type": "object",
         "required": [
@@ -18756,9 +19215,14 @@
           "note_id",
           "field_name",
           "changed_by",
-          "changed_at"
+          "changed_at",
+          "actor"
         ],
         "properties": {
+          "actor": {
+            "$ref": "#/components/schemas/OperatorNoteAuditActor",
+            "description": "Who `changed_by` is, so a revision list can name its author without a\nuser lookup per row."
+          },
           "changed_at": {
             "type": "string",
             "format": "date-time"
@@ -24054,6 +24518,69 @@
           }
         }
       },
+      "TierListGrant": {
+        "type": "object",
+        "description": "One grant row with the names the admin panel shows beside it: the list,\nthe grantee and the granter. Read by `GET /admin/tier-lists/permissions`.",
+        "required": [
+          "tier_list_id",
+          "slug",
+          "title",
+          "list_type",
+          "user_id",
+          "user_uid",
+          "permission",
+          "granted_at"
+        ],
+        "properties": {
+          "granted_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "granted_by": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "`None` for grants written before the column existed or by the CLI."
+          },
+          "granted_by_nickname": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "list_type": {
+            "type": "string"
+          },
+          "permission": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "tier_list_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "user_nickname": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "user_uid": {
+            "type": "string"
+          }
+        }
+      },
       "TierListPermission": {
         "type": "object",
         "required": [
@@ -24390,6 +24917,58 @@
           }
         }
       },
+      "TranslationGrant": {
+        "type": "object",
+        "description": "One translation grant with the names the admin panel shows beside it: the\ngrantee and the granter. Read by `GET /admin/i18n/permissions`; mirrors\n`TierListGrant`. The names are `None` once the account is gone.",
+        "required": [
+          "locale",
+          "user_id",
+          "permission",
+          "granted_at"
+        ],
+        "properties": {
+          "granted_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "granted_by": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "`None` for grants written by the CLI or whose granter was deleted."
+          },
+          "granted_by_nickname": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "locale": {
+            "type": "string"
+          },
+          "permission": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "user_nickname": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "user_uid": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "TranslationListResponse": {
         "type": "object",
         "required": [
@@ -24409,36 +24988,22 @@
           }
         }
       },
-      "TranslationPermission": {
+      "UiMessageAuditActor": {
         "type": "object",
-        "description": "`translation_permissions` row. Shape-identical to a tier-list permission.",
+        "description": "The author of one translation revision. `nickname` is `None` once the\naccount is gone or never synced a name.",
         "required": [
-          "locale",
-          "user_id",
-          "permission",
-          "granted_at"
+          "id"
         ],
         "properties": {
-          "granted_at": {
+          "id": {
             "type": "string",
-            "format": "date-time"
+            "format": "uuid"
           },
-          "granted_by": {
+          "nickname": {
             "type": [
               "string",
               "null"
-            ],
-            "format": "uuid"
-          },
-          "locale": {
-            "type": "string"
-          },
-          "permission": {
-            "type": "string"
-          },
-          "user_id": {
-            "type": "string",
-            "format": "uuid"
+            ]
           }
         }
       },
@@ -24450,9 +25015,14 @@
           "message_key",
           "locale",
           "changed_by",
-          "changed_at"
+          "changed_at",
+          "actor"
         ],
         "properties": {
+          "actor": {
+            "$ref": "#/components/schemas/UiMessageAuditActor",
+            "description": "Who `changed_by` is, so the history can name its author without a user\nlookup per row."
+          },
           "changed_at": {
             "type": "string",
             "format": "date-time"

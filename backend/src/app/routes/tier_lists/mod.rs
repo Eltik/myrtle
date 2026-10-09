@@ -53,6 +53,8 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(versions::publish))
         .routes(routes!(permissions::list, permissions::grant))
         .routes(routes!(permissions::revoke))
+        .routes(routes!(permissions::list_all))
+        .routes(routes!(permissions::granted))
         .routes(routes!(stats::record_view))
         .routes(routes!(stats::get_stats))
         .routes(routes!(stats::get_favorite, stats::toggle_favorite))

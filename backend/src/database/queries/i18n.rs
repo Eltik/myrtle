@@ -2,8 +2,8 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::database::models::i18n::{
-    GamedataOverride, Locale, TranslationEntry, TranslationPermission, UiDocument,
-    UiMessageAuditEntry, UiMessageAuditEntryWithContext,
+    GamedataOverride, Locale, TranslationEntry, TranslationGrant, TranslationPermission,
+    UiDocument, UiMessageAuditEntry, UiMessageAuditEntryWithContext,
 };
 
 pub async fn list_locales(pool: &PgPool, enabled_only: bool) -> Result<Vec<Locale>, sqlx::Error> {
@@ -209,9 +209,9 @@ const ENTRY_SELECT: &str = r"
       AND ($3 = '' OR k.key ILIKE '%' || $3 || '%' OR k.source_text ILIKE '%' || $3 || '%')
 ";
 
-/// `filter` is one of `all`, `untranslated`, `stale`, `translated`. Unknown
-/// values fall through to `all` rather than erroring, because this is a UI
-/// affordance and not a contract.
+/// `filter` is one of `all`, `untranslated`, `stale`, `todo` (untranslated or
+/// stale) and `translated`. Unknown values fall through to `all` rather than
+/// erroring, because this is a UI affordance and not a contract.
 fn filter_clause(filter: &str) -> &'static str {
     // Each clause carries the same source-locale guard as the projection
     // above, so the filters and the rows they return cannot disagree: for the
@@ -221,6 +221,10 @@ fn filter_clause(filter: &str) -> &'static str {
         "untranslated" => " AND NOT COALESCE(l.is_source, false) AND m.value IS NULL",
         "stale" => {
             " AND NOT COALESCE(l.is_source, false) AND m.source_hash IS NOT NULL AND m.source_hash <> k.source_hash"
+        }
+        // What a translator still owes: untranslated or stale, in one list.
+        "todo" => {
+            " AND NOT COALESCE(l.is_source, false) AND (m.value IS NULL OR (m.source_hash IS NOT NULL AND m.source_hash <> k.source_hash))"
         }
         "translated" => {
             " AND (COALESCE(l.is_source, false) OR (m.value IS NOT NULL AND m.source_hash = k.source_hash))"
@@ -356,8 +360,16 @@ pub async fn get_audit_log(
     message_key: &str,
     locale: &str,
 ) -> Result<Vec<UiMessageAuditEntry>, sqlx::Error> {
+    // LEFT JOIN users so a deleted actor still leaves its row, nameless.
     sqlx::query_as::<_, UiMessageAuditEntry>(
-        "SELECT * FROM ui_message_audit_log WHERE message_key = $1 AND locale = $2 ORDER BY changed_at DESC LIMIT 100",
+        r"
+        SELECT a.*, a.changed_by AS actor_id, u.nickname AS actor_nickname
+        FROM ui_message_audit_log a
+        LEFT JOIN users u ON u.id = a.changed_by
+        WHERE a.message_key = $1 AND a.locale = $2
+        ORDER BY a.changed_at DESC
+        LIMIT 100
+        ",
     )
     .bind(message_key)
     .bind(locale)
@@ -473,14 +485,35 @@ pub async fn locale_progress(pool: &PgPool) -> Result<Vec<(String, i64, i64, i64
     .await
 }
 
+/// Every translation grant, optionally on one locale, with the grantee's and
+/// granter's names. LEFT JOINs so a missing account reads as `None`.
+/// Translation grants with both names, optionally narrowed to one locale
+/// and/or one grantee (`user_id`, for a caller who may only see their own).
 pub async fn list_permissions(
     pool: &PgPool,
     locale: Option<&str>,
-) -> Result<Vec<TranslationPermission>, sqlx::Error> {
-    sqlx::query_as::<_, TranslationPermission>(
-        "SELECT * FROM translation_permissions WHERE ($1::varchar IS NULL OR locale = $1) ORDER BY locale, granted_at",
+    user_id: Option<Uuid>,
+) -> Result<Vec<TranslationGrant>, sqlx::Error> {
+    sqlx::query_as::<_, TranslationGrant>(
+        r"
+        SELECT p.locale,
+               p.user_id,
+               u.uid AS user_uid,
+               u.nickname AS user_nickname,
+               p.permission,
+               p.granted_by,
+               g.nickname AS granted_by_nickname,
+               p.granted_at
+        FROM translation_permissions p
+        LEFT JOIN users u ON u.id = p.user_id
+        LEFT JOIN users g ON g.id = p.granted_by
+        WHERE ($1::varchar IS NULL OR p.locale = $1)
+          AND ($2::uuid IS NULL OR p.user_id = $2)
+        ORDER BY p.locale, p.granted_at
+        ",
     )
     .bind(locale)
+    .bind(user_id)
     .fetch_all(pool)
     .await
 }

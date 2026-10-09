@@ -1,23 +1,12 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { AdminShell } from "#/components/admin/AdminShell";
-import { Dashboard } from "#/components/admin/screens/Dashboard";
-import { isAnyAdminRole } from "#/lib/api/admin";
+import { createFileRoute } from "@tanstack/react-router";
+import Home from "#/components/admin/sections/Home/Home";
 
+// Every role that reaches the panel has a Home ("Inbox" for staff, "My work"
+// otherwise), so there is no role redirect here.
 export const Route = createFileRoute("/_authed/admin/")({
-    // The parent gate admits translators, who reach the panel on a locale grant
-    // rather than a staff role - and the dashboard is the one screen they are
-    // guaranteed to be refused. Land them on the screen their grant is for
-    // instead of on a 403.
-    beforeLoad: ({ context }) => {
-        if (!isAnyAdminRole(context.user?.role)) throw redirect({ to: "/admin/translations" });
-    },
-    component: AdminDashboardRoute,
+    component: AdminHomeRoute,
 });
 
-function AdminDashboardRoute(): React.ReactElement {
-    return (
-        <AdminShell crumbs={[{ label: "myrtle.moe", to: "/" }, { label: "admin", to: "/admin" }, { label: "Dashboard" }]}>
-            <Dashboard />
-        </AdminShell>
-    );
+function AdminHomeRoute(): React.ReactElement {
+    return <Home search={Route.useSearch()} />;
 }

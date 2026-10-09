@@ -85,8 +85,10 @@ pub async fn get_audit_log(
 ) -> Result<Vec<OperatorNoteAuditEntry>, sqlx::Error> {
     sqlx::query_as::<_, OperatorNoteAuditEntry>(
         r"
-        SELECT a.* FROM operator_notes_audit_log a
+        SELECT a.*, a.changed_by AS actor_id, u.nickname AS actor_nickname
+        FROM operator_notes_audit_log a
         JOIN operator_notes n ON n.id = a.note_id
+        LEFT JOIN users u ON u.id = a.changed_by
         WHERE n.operator_id = $1
         ORDER BY a.changed_at DESC
         ",
@@ -96,13 +98,17 @@ pub async fn get_audit_log(
     .await
 }
 
+/// The audit log across every note, newest first. `actor` keeps only one
+/// account's rows; `before` pages by `changed_at`.
 pub async fn get_audit_log_global(
     pool: &PgPool,
     limit: i64,
     before: Option<chrono::DateTime<chrono::Utc>>,
+    actor: Option<Uuid>,
 ) -> Result<Vec<OperatorNoteAuditEntryWithContext>, sqlx::Error> {
     // LEFT JOIN users so audit rows survive a hard-deleted user.
-    const SELECT: &str = r"
+    sqlx::query_as::<_, OperatorNoteAuditEntryWithContext>(
+        r"
         SELECT
             a.id,
             a.note_id,
@@ -119,29 +125,26 @@ pub async fn get_audit_log_global(
         FROM operator_notes_audit_log a
         JOIN operator_notes n ON n.id = a.note_id
         LEFT JOIN users u ON u.id = a.changed_by
-    ";
-
-    if let Some(before) = before {
-        sqlx::query_as::<_, OperatorNoteAuditEntryWithContext>(&format!(
-            "{SELECT} WHERE a.changed_at < $1 ORDER BY a.changed_at DESC LIMIT $2"
-        ))
-        .bind(before)
-        .bind(limit)
-        .fetch_all(pool)
-        .await
-    } else {
-        sqlx::query_as::<_, OperatorNoteAuditEntryWithContext>(&format!(
-            "{SELECT} ORDER BY a.changed_at DESC LIMIT $1"
-        ))
-        .bind(limit)
-        .fetch_all(pool)
-        .await
-    }
+        WHERE ($2::timestamptz IS NULL OR a.changed_at < $2)
+          AND ($3::uuid IS NULL OR a.changed_by = $3)
+        ORDER BY a.changed_at DESC
+        LIMIT $1
+        ",
+    )
+    .bind(limit)
+    .bind(before)
+    .bind(actor)
+    .fetch_all(pool)
+    .await
 }
 
-pub async fn count_audit_log(pool: &PgPool) -> Result<i64, sqlx::Error> {
-    let (count,): (i64,) = sqlx::query_as("SELECT COUNT(*) FROM operator_notes_audit_log")
-        .fetch_one(pool)
-        .await?;
+/// Rows in the audit log, or only `actor`'s.
+pub async fn count_audit_log(pool: &PgPool, actor: Option<Uuid>) -> Result<i64, sqlx::Error> {
+    let (count,): (i64,) = sqlx::query_as(
+        "SELECT COUNT(*) FROM operator_notes_audit_log WHERE ($1::uuid IS NULL OR changed_by = $1)",
+    )
+    .bind(actor)
+    .fetch_one(pool)
+    .await?;
     Ok(count)
 }

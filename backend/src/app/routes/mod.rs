@@ -292,6 +292,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(stats::stats))
         .routes(routes!(stats::admin_stats))
         .routes(routes!(user::set_user_role))
+        .routes(routes!(user::list_users))
         .routes(routes!(operators::index))
         .routes(routes!(operators::ownership))
         .routes(routes!(operators::recruitment))

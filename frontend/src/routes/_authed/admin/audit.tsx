@@ -1,15 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { AdminShell } from "#/components/admin/AdminShell";
-import { Audit } from "#/components/admin/screens/Audit";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
+// Legacy URL: the audit log is the System section's Edit history tab.
 export const Route = createFileRoute("/_authed/admin/audit")({
-    component: AdminAuditRoute,
+    beforeLoad: () => {
+        throw redirect({ to: "/admin/system", search: { tab: "audit" }, replace: true });
+    },
 });
-
-function AdminAuditRoute(): React.ReactElement {
-    return (
-        <AdminShell crumbs={[{ label: "myrtle.moe", to: "/" }, { label: "admin", to: "/admin" }, { label: "Audit log" }]}>
-            <Audit />
-        </AdminShell>
-    );
-}

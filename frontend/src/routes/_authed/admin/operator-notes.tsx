@@ -1,15 +1,16 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { AdminShell } from "#/components/admin/AdminShell";
-import { OperatorNotes } from "#/components/admin/screens/OperatorNotes";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import OperatorNotes from "#/components/admin/sections/OperatorNotes/OperatorNotes";
+import { roleMayReachSection } from "#/components/admin/shell/model";
+import { parseNotesSearch } from "#/components/admin/shell/search";
 
 export const Route = createFileRoute("/_authed/admin/operator-notes")({
-    component: AdminNotesRoute,
+    validateSearch: parseNotesSearch,
+    beforeLoad: ({ context }) => {
+        if (!roleMayReachSection("notes", context.user?.role)) throw redirect({ to: "/admin" });
+    },
+    component: AdminOperatorNotesRoute,
 });
 
-function AdminNotesRoute(): React.ReactElement {
-    return (
-        <AdminShell crumbs={[{ label: "myrtle.moe", to: "/" }, { label: "admin", to: "/admin" }, { label: "Operator notes" }]}>
-            <OperatorNotes />
-        </AdminShell>
-    );
+function AdminOperatorNotesRoute(): React.ReactElement {
+    return <OperatorNotes search={Route.useSearch()} />;
 }
