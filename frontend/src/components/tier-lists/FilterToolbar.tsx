@@ -5,24 +5,12 @@ import { useMediaQuery } from "#/hooks/use-media-query";
 import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import { SORT_OPTIONS, type TierListSort, type TierListType } from "./FilterToolbar.constants";
 import type { messages } from "./FilterToolbar.messages";
 
 type FilterToolbarT = TypedT<typeof messages>;
 type FilterToolbarRichT = TypedRichT<typeof messages>;
 type FilterToolbarMessageKey = keyof typeof messages & string;
-
-export type TierListType = "all" | "official" | "community" | "favorites";
-
-export type TierListSort = "trending" | "recent" | "newest" | "views" | "favorites" | "shares";
-
-export const SORT_OPTIONS: Array<{ value: TierListSort; labelKey: FilterToolbarMessageKey; hintKey: FilterToolbarMessageKey }> = [
-    { value: "trending", labelKey: "browse.sort.trending", hintKey: "browse.sort.trending.hint" },
-    { value: "recent", labelKey: "browse.sort.recent", hintKey: "browse.sort.recent.hint" },
-    { value: "newest", labelKey: "browse.sort.newest", hintKey: "browse.sort.newest.hint" },
-    { value: "views", labelKey: "browse.sort.views", hintKey: "browse.sort.views.hint" },
-    { value: "favorites", labelKey: "browse.sort.favorites", hintKey: "browse.sort.favorites.hint" },
-    { value: "shares", labelKey: "browse.sort.shares", hintKey: "browse.sort.shares.hint" },
-];
 
 export interface IFlairOption {
     code: string;

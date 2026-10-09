@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { isLibraryTab, type LibraryTab, StoryLibrary } from "#/components/story/library/StoryLibrary";
+import { StoryLibrary } from "#/components/story/library/StoryLibrary";
+import { isLibraryTab, type LibraryTab } from "#/components/story/library/StoryLibrary.constants";
 import { storyIndexQueryOptions, storySpriteQueryOptions } from "#/lib/api/story";
 import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";

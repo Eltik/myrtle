@@ -1,6 +1,6 @@
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { Browse } from "#/components/tier-lists/Browse";
-import { SORT_OPTIONS, type TierListSort, type TierListType } from "#/components/tier-lists/FilterToolbar";
+import { SORT_OPTIONS, type TierListSort, type TierListType } from "#/components/tier-lists/FilterToolbar.constants";
 import { browseTierListsQueryOptions, tierListFlairsQueryOptions } from "#/lib/api/tier-lists";
 import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";

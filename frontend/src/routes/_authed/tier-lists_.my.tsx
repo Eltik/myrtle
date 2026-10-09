@@ -1,7 +1,7 @@
 import { createFileRoute, redirect, stripSearchParams } from "@tanstack/react-router";
 import { useCallback } from "react";
 import { MyTierLists } from "#/components/tier-lists/my/MyTierLists";
-import { MY_SORT_OPTIONS, type MyListSort, type MyListTypeFilter, type MyViewMode } from "#/components/tier-lists/my/MyToolbar";
+import { MY_SORT_OPTIONS, type MyListSort, type MyListTypeFilter, type MyViewMode } from "#/components/tier-lists/my/MyToolbar.constants";
 import { myTierListsDetailedQueryOptions } from "#/lib/api/tier-lists";
 import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";

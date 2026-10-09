@@ -23,15 +23,8 @@ import { NowPlayingBar } from "./impl/NowPlayingBar";
 import { ProgressTab } from "./impl/ProgressTab";
 import { useLibraryPlayerLifetime } from "./impl/player";
 import { ReadingOrderTab } from "./impl/ReadingOrderTab";
+import { isLibraryTab, type LibraryTab } from "./StoryLibrary.constants";
 import type { messages } from "./StoryLibrary.messages";
-
-/** The library's tabs, in strip order. `browse` is the default and never written to the URL. */
-export const LIBRARY_TABS = ["browse", "reading", "illustrations", "progress", "community", "characters"] as const;
-export type LibraryTab = (typeof LIBRARY_TABS)[number];
-
-export function isLibraryTab(value: unknown): value is LibraryTab {
-    return typeof value === "string" && (LIBRARY_TABS as readonly string[]).includes(value);
-}
 
 // The Characters tab is its own chunk: Browse's bundle and first load do not
 // carry the gallery, and nothing of it is fetched until the tab is opened.
