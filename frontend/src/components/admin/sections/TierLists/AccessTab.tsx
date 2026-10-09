@@ -19,7 +19,7 @@ import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
 import { cn } from "#/lib/utils";
 import { GrantDialog, type IGrantListOption } from "./GrantDialog";
 import { type TierListsT, useLevelLabel } from "./labels";
-import { levelChangePlan } from "./model";
+import { type ILevelChangePlan, levelChangePlan } from "./model";
 
 /** Staff only (the parent renders it for staff alone, and its query is gated the same way). */
 export function AccessTab({ query }: { query: UseQueryResult<ITierListGrant[]> }): React.ReactElement {
@@ -102,13 +102,15 @@ function GrantRow({ grant }: { grant: ITierListGrant }): React.ReactElement {
         onError: (err: unknown) => toastError("tier-lists-revoke-failed", t("tierLists.access.toast.revokeFailed"), describeError(err)),
     });
 
-    // A grant row is keyed by its level, so a change grants the new row first, then drops the old one:
-    // a failure in between leaves the player with both levels rather than none.
+    // Two writes in the order `levelChangePlan` picks (upgrade grants first, downgrade revokes first);
+    // a failed step throws and skips the rest, so a half-done change never holds more than the higher level.
     const changeLevel = useMutation({
-        mutationFn: async (plan: { grant: TierListPermissionLevel; revoke: TierListPermissionLevel }) => {
-            await grantTierListPermissionFn({ data: { ...target, permission: plan.grant } });
-            await revokeTierListPermissionFn({ data: { ...target, permission: plan.revoke } });
-            return plan.grant;
+        mutationFn: async (plan: ILevelChangePlan) => {
+            for (const step of plan.steps) {
+                const fn = step.op === "grant" ? grantTierListPermissionFn : revokeTierListPermissionFn;
+                await fn({ data: { ...target, permission: step.level } });
+            }
+            return plan.level;
         },
         onSuccess: (level) => {
             toastSuccess("tier-lists-level", t("tierLists.access.toast.levelChanged"), t("tierLists.access.toast.levelDesc", { name, level: levelLabel(level), title: grant.title }));

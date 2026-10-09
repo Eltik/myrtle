@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { levelVariant } from "#/components/admin/shell/model";
+import { GRANT_LEVELS, levelRank, levelVariant } from "#/components/admin/shell/model";
 import { canDeleteList, canEditList, canPublishList, canSetFlair, filterCounts, filterRows, grantedRows, type IBrowseListLike, levelChangePlan, matchesQuery, nextVersionNumber, staffRows } from "./model";
 
 function list(slug: string, over: Partial<IBrowseListLike> = {}): IBrowseListLike {
@@ -102,8 +102,45 @@ describe("nextVersionNumber", () => {
 });
 
 describe("levelChangePlan", () => {
-    it("grants the new level before revoking the old one, and skips a no-op", () => {
-        expect(levelChangePlan("edit", "publish")).toEqual({ grant: "publish", revoke: "edit" });
+    it("grants the new level before revoking the old one on an upgrade", () => {
+        expect(levelChangePlan("edit", "publish")).toEqual({
+            level: "publish",
+            steps: [
+                { op: "grant", level: "publish" },
+                { op: "revoke", level: "edit" },
+            ],
+        });
+        expect(levelChangePlan("view", "admin")?.steps[0]).toEqual({ op: "grant", level: "admin" });
+    });
+
+    it("revokes the old level before granting the new one on a downgrade", () => {
+        expect(levelChangePlan("admin", "view")).toEqual({
+            level: "view",
+            steps: [
+                { op: "revoke", level: "admin" },
+                { op: "grant", level: "view" },
+            ],
+        });
+        expect(levelChangePlan("publish", "edit")?.steps[0]).toEqual({ op: "revoke", level: "publish" });
+    });
+
+    it("never holds more than the higher endpoint after only the first step", () => {
+        for (const from of GRANT_LEVELS) {
+            for (const to of GRANT_LEVELS) {
+                const plan = levelChangePlan(from, to);
+                if (!plan) continue;
+                const held = new Set<string>([from]);
+                const [first] = plan.steps;
+                if (first.op === "grant") held.add(first.level);
+                else held.delete(first.level);
+                const effective = Math.max(-1, ...[...held].map(levelRank));
+                expect(effective).toBeLessThanOrEqual(Math.max(levelRank(from), levelRank(to)));
+                if (levelRank(to) < levelRank(from)) expect(effective).toBeLessThan(levelRank(from));
+            }
+        }
+    });
+
+    it("skips a no-op", () => {
         expect(levelChangePlan("edit", "edit")).toBeNull();
     });
 });

@@ -3,7 +3,7 @@
  * how the toolbar filters them, and what each level allows. No React, no
  * session, so the tests import it directly.
  */
-import { atLeast } from "#/components/admin/shell/model";
+import { atLeast, levelRank } from "#/components/admin/shell/model";
 import type { AdminTierListsFilter } from "#/components/admin/shell/search";
 import type { TierListPermissionLevel } from "#/lib/api/admin/types";
 import type { TierListType } from "#/lib/api/tier-lists";
@@ -132,11 +132,31 @@ export function nextVersionNumber(versions: readonly { version: number }[]): num
     return versions.reduce((max, v) => Math.max(max, v.version), 0) + 1;
 }
 
+/** One write in a level change: grant or revoke the row at `level`. */
+export interface ILevelChangeStep {
+    op: "grant" | "revoke";
+    level: TierListPermissionLevel;
+}
+
+/** A level change: the level it ends at and its two writes, in order. */
+export interface ILevelChangePlan {
+    level: TierListPermissionLevel;
+    steps: readonly [ILevelChangeStep, ILevelChangeStep];
+}
+
 /**
- * Changing a grant's level. Grants are rows keyed by (list, user, level), and
- * a grant POST never replaces an existing row, so a change is a grant of the
- * new level followed by a revoke of the old one. `null` = nothing to do.
+ * Changing a grant's level. Grants are rows keyed by (list, user, level), a
+ * grant POST never replaces an existing row, and the highest held row wins.
+ * So a change is two writes, ordered so a failure between them never leaves
+ * more access than either endpoint: an upgrade grants the new level first (a
+ * failed revoke leaves the higher row, which is the target), a downgrade
+ * revokes the old level first (a failed grant leaves less, never the old
+ * higher row). The caller runs the steps in order and stops at the first
+ * failure. `null` = nothing to do.
  */
-export function levelChangePlan(from: TierListPermissionLevel, to: TierListPermissionLevel): { grant: TierListPermissionLevel; revoke: TierListPermissionLevel } | null {
-    return from === to ? null : { grant: to, revoke: from };
+export function levelChangePlan(from: TierListPermissionLevel, to: TierListPermissionLevel): ILevelChangePlan | null {
+    if (from === to) return null;
+    const grant: ILevelChangeStep = { op: "grant", level: to };
+    const revoke: ILevelChangeStep = { op: "revoke", level: from };
+    return { level: to, steps: levelRank(to) > levelRank(from) ? [grant, revoke] : [revoke, grant] };
 }
