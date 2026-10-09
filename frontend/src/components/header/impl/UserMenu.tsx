@@ -10,7 +10,7 @@ import { REPO_URL } from "#/lib/constants";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { getAvatarSkinId } from "#/lib/utils";
-import { AuthDialog } from "./AuthDialog";
+import { LazyAuthDialog } from "./LazyAuthDialog";
 import type { messages } from "./UserMenu.messages";
 
 export default function UserMenu({ user, loading, logout }: { user: ISession | null; loading: boolean; logout: () => Promise<void> }) {
@@ -87,5 +87,5 @@ export default function UserMenu({ user, loading, logout }: { user: ISession | n
         );
     }
 
-    return <AuthDialog trigger={<Button>{t("userMenu.login")}</Button>} />;
+    return <LazyAuthDialog trigger={<Button>{t("userMenu.login")}</Button>} />;
 }

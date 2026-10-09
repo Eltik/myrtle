@@ -16,7 +16,7 @@ import { useI18n, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, getAvatarSkinId } from "#/lib/utils";
 import { ActiveIndicator } from "./ActiveIndicator";
-import { AuthDialog } from "./AuthDialog";
+import { LazyAuthDialog } from "./LazyAuthDialog";
 import type { INavItem } from "./MainNav";
 import type { messages } from "./MobileNav.messages";
 
@@ -188,7 +188,7 @@ export function MobileNav({ items }: IMobileNavProps) {
                                         <Cog className="mr-2 h-4 w-4 text-muted-foreground" />
                                         {t("mobileNav.settings")}
                                     </DrawerMenuItem>
-                                    <AuthDialog
+                                    <LazyAuthDialog
                                         trigger={
                                             <DrawerMenuItem>
                                                 <UserIcon className="mr-2 h-4 w-4 text-muted-foreground" />

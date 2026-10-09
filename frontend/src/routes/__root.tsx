@@ -3,7 +3,7 @@ import { createRootRouteWithContext, HeadContent, Outlet, redirect, Scripts, use
 import { useSelector } from "@tanstack/react-store";
 import { lazy, Suspense, useEffect, useRef } from "react";
 import { ReleaseNoteDialog } from "#/components/changelog/ReleaseNoteDialog";
-import { AuthDialog } from "#/components/header/impl/AuthDialog";
+import { LazyAuthDialog } from "#/components/header/impl/LazyAuthDialog";
 import { AnchoredToastProvider, ToastProvider } from "#/components/ui/toast";
 import { getSessionFn } from "#/lib/auth/server";
 import { authActions, authStore } from "#/lib/auth/store";
@@ -136,7 +136,7 @@ function GlobalAuthDialog() {
         }
     }, [user, router]);
 
-    return <AuthDialog open={dialogOpen} onOpenChange={authActions.setDialogOpen} />;
+    return <LazyAuthDialog open={dialogOpen} onOpenChange={authActions.setDialogOpen} />;
 }
 
 function SiteChrome({ children }: { children: React.ReactNode }) {
