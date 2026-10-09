@@ -233,11 +233,11 @@ pub async fn refresh(
     game_session::save(state, user_id, &session).await;
     dump_sync_data(user_id, server, &text);
 
-    let data: SyncDataResponse =
-        serde_json::from_str(&text).map_err(|e| ApiError::Internal(e.into()))?;
-
+    // syncData is the whole account (megabytes for a mature one): parse the text
+    // once and build the typed view from the tree.
     let raw: std::sync::Arc<serde_json::Value> =
         std::sync::Arc::new(serde_json::from_str(&text).map_err(|e| ApiError::Internal(e.into()))?);
+    let data = SyncDataResponse::deserialize(&*raw).map_err(|e| ApiError::Internal(e.into()))?;
 
     let game_story = game_story_read(state, user_id, server, &raw).await;
     log_story_block(user_id, &raw, &game_story);
@@ -1365,5 +1365,52 @@ mod tests {
             0,
             "a zero counter is not a row"
         );
+    }
+
+    /// The refresh builds `SyncDataResponse` from the parsed tree, not from the
+    /// text; both routes must read the same values.
+    #[test]
+    fn sync_data_reads_the_same_from_text_and_from_the_tree() {
+        let text = r#"{
+            "result": 0,
+            "user": {
+                "status": {"nickName": "Doctor", "level": 120, "diamondShard": 4321,
+                           "avatar": {"id": "avatar_def_01"}, "registerTs": 1600000000},
+                "troop": {"chars": {"1": {"charId": "char_002_amiya", "level": 90}}},
+                "inventory": {"30012": 7},
+                "skin": {"characterSkins": {"char_002_amiya@winter#1": {"obtainedAt": 1}}},
+                "checkIn": {"checkInHistory": [1, 0, 1], "canCheckIn": 1},
+                "social": {"assistCharList": [null, {"charInstId": 1, "skillIndex": 2}]}
+            }
+        }"#;
+        let from_text: SyncDataResponse = serde_json::from_str(text).unwrap();
+        let tree: serde_json::Value = serde_json::from_str(text).unwrap();
+        let from_tree = SyncDataResponse::deserialize(&tree).unwrap();
+        let view = |d: &SyncDataResponse| {
+            let user = d.user.as_ref().unwrap();
+            let status = user.status.as_ref().unwrap();
+            let social = user.social.as_ref().unwrap();
+            (
+                d.result,
+                status.nick_name.clone(),
+                status.level,
+                status.orundum,
+                status.register_ts,
+                status.avatar.as_ref().and_then(|a| a.id.clone()),
+                user.troop.as_ref().and_then(|t| t.chars.clone()),
+                user.inventory.clone(),
+                user.skin.as_ref().and_then(|s| s.character_skins.clone()),
+                user.checkin.as_ref().and_then(|c| c.history.clone()),
+                user.checkin.as_ref().and_then(|c| c.can_check_in),
+                social.assist_char_list.as_ref().map(|l| {
+                    l.iter()
+                        .map(|a| a.as_ref().map(|a| (a.char_inst_id, a.skill_index)))
+                        .collect::<Vec<_>>()
+                }),
+            )
+        };
+        assert_eq!(view(&from_text), view(&from_tree));
+        assert_eq!(view(&from_tree).3, Some(4321));
+        assert_eq!(view(&from_tree).9, Some(vec![1, 0, 1]));
     }
 }
