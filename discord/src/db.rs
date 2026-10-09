@@ -137,10 +137,13 @@ pub struct ReactionRoleRow {
     pub role_id: RoleId,
 }
 
-/// Insert or replace the role assigned when `emoji` is reacted on `message`.
+/// Insert or replace the role assigned when `emoji` is reacted on `message`. Returns whether a
+/// row was written.
 ///
 /// Re-running with the same `(message, emoji)` swaps the role rather than erroring, so admins
-/// can rebind an emoji without first removing the old mapping.
+/// can rebind an emoji without first removing the old mapping. The swap only applies to a
+/// binding `guild_id` owns: a `(message, emoji)` already bound by another guild is left as it
+/// is and `false` comes back.
 pub async fn add_reaction_role(
     pool: &SqlitePool,
     guild_id: GuildId,
@@ -148,11 +151,12 @@ pub async fn add_reaction_role(
     message_id: MessageId,
     emoji: &str,
     role_id: RoleId,
-) -> Result<(), Error> {
-    sqlx::query(
+) -> Result<bool, Error> {
+    let result = sqlx::query(
         "INSERT INTO guild_reaction_roles (guild_id, channel_id, message_id, emoji, role_id) \
          VALUES (?, ?, ?, ?, ?) \
-         ON CONFLICT(message_id, emoji) DO UPDATE SET role_id = excluded.role_id",
+         ON CONFLICT(message_id, emoji) DO UPDATE SET role_id = excluded.role_id \
+         WHERE guild_reaction_roles.guild_id = excluded.guild_id",
     )
     .bind(guild_id.get().cast_signed())
     .bind(channel_id.get().cast_signed())
@@ -161,25 +165,49 @@ pub async fn add_reaction_role(
     .bind(role_id.get().cast_signed())
     .execute(pool)
     .await?;
-    Ok(())
-}
-
-/// Delete a single `(message, emoji)` mapping. Returns whether a row was removed.
-pub async fn remove_reaction_role(
-    pool: &SqlitePool,
-    message_id: MessageId,
-    emoji: &str,
-) -> Result<bool, Error> {
-    let result = sqlx::query("DELETE FROM guild_reaction_roles WHERE message_id = ? AND emoji = ?")
-        .bind(message_id.get().cast_signed())
-        .bind(emoji)
-        .execute(pool)
-        .await?;
     Ok(result.rows_affected() > 0)
 }
 
-/// Delete every mapping attached to `message_id`. Used for `/reactionrole delete <message>`
-/// and as the response to a `MessageDelete` event for a tracked message.
+/// Delete `guild_id`'s single `(message, emoji)` mapping. Returns whether a row was removed.
+///
+/// Scoped to the guild: a moderator naming another server's message id removes nothing.
+pub async fn remove_reaction_role(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+    message_id: MessageId,
+    emoji: &str,
+) -> Result<bool, Error> {
+    let result = sqlx::query(
+        "DELETE FROM guild_reaction_roles WHERE guild_id = ? AND message_id = ? AND emoji = ?",
+    )
+    .bind(guild_id.get().cast_signed())
+    .bind(message_id.get().cast_signed())
+    .bind(emoji)
+    .execute(pool)
+    .await?;
+    Ok(result.rows_affected() > 0)
+}
+
+/// Delete every mapping `guild_id` has on `message_id`. Used for `/reactionrole delete
+/// <message>`; scoped to the guild so a moderator cannot clear another server's bindings by
+/// message id.
+pub async fn remove_guild_reaction_message(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+    message_id: MessageId,
+) -> Result<u64, Error> {
+    let result =
+        sqlx::query("DELETE FROM guild_reaction_roles WHERE guild_id = ? AND message_id = ?")
+            .bind(guild_id.get().cast_signed())
+            .bind(message_id.get().cast_signed())
+            .execute(pool)
+            .await?;
+    Ok(result.rows_affected())
+}
+
+/// Delete every mapping attached to `message_id`, whatever guild owns it. The response to a
+/// `MessageDelete` event for a tracked message: once the message is gone, no binding on it can
+/// fire.
 pub async fn remove_reaction_message(
     pool: &SqlitePool,
     message_id: MessageId,
@@ -1121,6 +1149,147 @@ pub async fn list_tts_voices(pool: &SqlitePool) -> Result<Vec<(UserId, String)>,
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A fresh in-memory database with every migration applied. One connection, kept for the
+    /// pool's lifetime: each `SQLite` `:memory:` connection is its own database.
+    async fn memory_pool() -> SqlitePool {
+        let pool = sqlx::sqlite::SqlitePoolOptions::new()
+            .max_connections(1)
+            .idle_timeout(None)
+            .max_lifetime(None)
+            .connect("sqlite::memory:")
+            .await
+            .expect("open in-memory sqlite");
+        sqlx::migrate!("./migrations")
+            .run(&pool)
+            .await
+            .expect("run migrations");
+        pool
+    }
+
+    const GUILD_A: GuildId = GuildId::new(111);
+    const GUILD_B: GuildId = GuildId::new(222);
+    const CHANNEL_B: ChannelId = ChannelId::new(2_000);
+    const MESSAGE_B: MessageId = MessageId::new(20_000);
+
+    /// Guild B binds two emojis on its own message.
+    async fn bind_two_in_guild_b(pool: &SqlitePool) {
+        for (emoji, role) in [("🟥", 501), ("🟦", 502)] {
+            assert!(
+                add_reaction_role(
+                    pool,
+                    GUILD_B,
+                    CHANNEL_B,
+                    MESSAGE_B,
+                    emoji,
+                    RoleId::new(role)
+                )
+                .await
+                .unwrap()
+            );
+        }
+    }
+
+    async fn role_on_b(pool: &SqlitePool, emoji: &str) -> Option<RoleId> {
+        get_role_for_reaction(pool, MESSAGE_B, emoji).await.unwrap()
+    }
+
+    #[tokio::test]
+    async fn remove_reaction_role_is_scoped_to_the_guild() {
+        let pool = memory_pool().await;
+        bind_two_in_guild_b(&pool).await;
+
+        assert!(
+            !remove_reaction_role(&pool, GUILD_A, MESSAGE_B, "🟥")
+                .await
+                .unwrap()
+        );
+        assert_eq!(role_on_b(&pool, "🟥").await, Some(RoleId::new(501)));
+
+        assert!(
+            remove_reaction_role(&pool, GUILD_B, MESSAGE_B, "🟥")
+                .await
+                .unwrap()
+        );
+        assert_eq!(role_on_b(&pool, "🟥").await, None);
+        assert_eq!(role_on_b(&pool, "🟦").await, Some(RoleId::new(502)));
+    }
+
+    #[tokio::test]
+    async fn remove_guild_reaction_message_is_scoped_to_the_guild() {
+        let pool = memory_pool().await;
+        bind_two_in_guild_b(&pool).await;
+
+        assert_eq!(
+            remove_guild_reaction_message(&pool, GUILD_A, MESSAGE_B)
+                .await
+                .unwrap(),
+            0
+        );
+        assert_eq!(
+            list_reaction_roles_for_guild(&pool, GUILD_B)
+                .await
+                .unwrap()
+                .len(),
+            2
+        );
+
+        assert_eq!(
+            remove_guild_reaction_message(&pool, GUILD_B, MESSAGE_B)
+                .await
+                .unwrap(),
+            2
+        );
+        assert!(
+            list_reaction_roles_for_guild(&pool, GUILD_B)
+                .await
+                .unwrap()
+                .is_empty()
+        );
+    }
+
+    #[tokio::test]
+    async fn a_deleted_message_drops_its_bindings_in_any_guild() {
+        let pool = memory_pool().await;
+        bind_two_in_guild_b(&pool).await;
+
+        assert_eq!(remove_reaction_message(&pool, MESSAGE_B).await.unwrap(), 2);
+        assert!(list_tracked_message_ids(&pool).await.unwrap().is_empty());
+    }
+
+    #[tokio::test]
+    async fn add_reaction_role_rebinds_only_its_own_guild() {
+        let pool = memory_pool().await;
+        bind_two_in_guild_b(&pool).await;
+
+        let other_channel = ChannelId::new(1_000);
+        assert!(
+            !add_reaction_role(
+                &pool,
+                GUILD_A,
+                other_channel,
+                MESSAGE_B,
+                "🟥",
+                RoleId::new(901)
+            )
+            .await
+            .unwrap()
+        );
+        assert_eq!(role_on_b(&pool, "🟥").await, Some(RoleId::new(501)));
+        assert!(
+            list_reaction_roles_for_guild(&pool, GUILD_A)
+                .await
+                .unwrap()
+                .is_empty()
+        );
+
+        assert!(
+            add_reaction_role(&pool, GUILD_B, CHANNEL_B, MESSAGE_B, "🟥", RoleId::new(503))
+                .await
+                .unwrap()
+        );
+        assert_eq!(role_on_b(&pool, "🟥").await, Some(RoleId::new(503)));
+    }
 
     #[test]
     fn u32_from_db_saturates() {

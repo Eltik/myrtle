@@ -976,9 +976,12 @@ pub async fn reactionrole_add(
         .map_err(|_| format!("Couldn't parse '{emoji}' as an emoji."))?;
     let key = reaction.to_string();
 
-    db::add_reaction_role(&ctx.data().pool, guild, target, message_id, &key, role.id)
+    let saved = db::add_reaction_role(&ctx.data().pool, guild, target, message_id, &key, role.id)
         .await
         .map_err(|e| format!("Couldn't save reaction-role: {e}"))?;
+    if !saved {
+        return Err(format!("{key} on that message is already bound by another server.").into());
+    }
     ctx.data().tracked_messages.write().await.insert(message_id);
 
     let warning = match target
@@ -1017,7 +1020,8 @@ pub async fn reactionrole_remove(
         ChannelId,
     >,
 ) -> Result<(), Error> {
-    ctx.guild_id()
+    let guild = ctx
+        .guild_id()
         .ok_or("This command must be used in a guild.")?;
     let (link_channel, message_id) = parse_message_ref(&message)
         .ok_or("Couldn't parse that message reference. Use a message link, `channel-message` id, or message id.")?;
@@ -1029,7 +1033,7 @@ pub async fn reactionrole_remove(
         .map_err(|_| format!("Couldn't parse '{emoji}' as an emoji."))?;
     let key = reaction.to_string();
 
-    let removed = db::remove_reaction_role(&ctx.data().pool, message_id, &key)
+    let removed = db::remove_reaction_role(&ctx.data().pool, guild, message_id, &key)
         .await
         .map_err(|e| format!("Couldn't remove reaction-role: {e}"))?;
     if !removed {
@@ -1113,23 +1117,21 @@ pub async fn reactionrole_delete(
         ChannelId,
     >,
 ) -> Result<(), Error> {
-    ctx.guild_id()
+    let guild = ctx
+        .guild_id()
         .ok_or("This command must be used in a guild.")?;
     let (link_channel, message_id) = parse_message_ref(&message)
         .ok_or("Couldn't parse that message reference. Use a message link, `channel-message` id, or message id.")?;
     let target = channel.or(link_channel).unwrap_or_else(|| ctx.channel_id());
 
-    let n = db::remove_reaction_message(&ctx.data().pool, message_id)
+    let n = db::remove_guild_reaction_message(&ctx.data().pool, guild, message_id)
         .await
         .map_err(|e| format!("Couldn't delete reaction-roles: {e}"))?;
     if n == 0 {
         return Err("That message has no reaction-role bindings.".into());
     }
-    ctx.data()
-        .tracked_messages
-        .write()
-        .await
-        .remove(&message_id);
+    // Rebuilt rather than dropping `message_id`: another guild may still hold a binding on it.
+    sync_tracked_cache(ctx.data()).await?;
 
     let link = message_link(ctx.guild_id(), target, message_id);
     ctx.send(
