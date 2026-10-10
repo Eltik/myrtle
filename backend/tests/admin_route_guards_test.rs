@@ -397,13 +397,12 @@ const GUARDED: &[Guarded] = &[
         "/api/admin/i18n/permissions/me",
         None,
     ),
-    // Public on purpose or not, it is public: it answers without a token and,
-    // since f77bc0bd, names every editor by nickname. Pinned so that changing
-    // either is a visible decision (2026-10-09 audit, A10).
+    // Public until note-audit-auth: it names every editor by nickname, so it
+    // now takes the same admin role as the global audit (2026-10-09 audit, A10).
     row(
         "GET",
         "/api/operator-notes/{operator_id}/audit",
-        Gate::Public,
+        Gate::Staff,
         Doc::Silent,
         "/api/operator-notes/char_002_amiya/audit",
         None,
@@ -752,7 +751,7 @@ fn every_admin_and_staff_route_has_a_row() {
          Guarded or under /api/admin but no row: {missing:#?}\n\
          A row but neither: {extra:#?}"
     );
-    assert_eq!(listed.len(), GUARDED.len() - 1, "a route is listed twice");
+    assert_eq!(listed.len(), GUARDED.len(), "a route is listed twice");
 }
 
 #[test]
