@@ -796,7 +796,7 @@
           "i18n-admin"
         ],
         "summary": "Give an account a translation grant on one locale.",
-        "description": "Holding any grant is on its own enough to open the admin panel, since a\ngrant would be unusable otherwise. A locale that is not in the locale\ntable is a 404.",
+        "description": "Holding any grant is on its own enough to open the admin panel, since a\ngrant would be unusable otherwise. A locale that is not in the locale\ntable is a 404, and so is a user id with no account.",
         "operationId": "i18n_permission_grant",
         "requestBody": {
           "content": {

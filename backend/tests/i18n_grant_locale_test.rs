@@ -1,6 +1,8 @@
 //! `POST /api/admin/i18n/permissions` answers 404 for a locale that is not in
 //! the `locales` table, the way the catalog route does, instead of letting the
-//! insert hit `translation_permissions_locale_fkey` (a 500).
+//! insert hit `translation_permissions_locale_fkey` (a 500). A user id with no
+//! account is a 404 the same way, instead of a violation of the grant's user
+//! foreign key.
 //!
 //! Reads the local Postgres and writes nothing (the request is refused before
 //! the insert, and before the fix the insert failed), so it is ignored by
@@ -114,6 +116,50 @@ async fn a_grant_on_an_unknown_locale_is_a_404_and_writes_nothing() {
     let app = app(pool.clone());
     assert_eq!(
         grant(&app, &target.to_string(), unknown, target).await,
+        StatusCode::NOT_FOUND
+    );
+    assert_eq!(count().await, before);
+}
+
+#[tokio::test]
+#[ignore = "reads the local Postgres"]
+async fn a_grant_for_an_unknown_user_is_a_404_and_writes_nothing() {
+    let url = std::env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "postgres://postgres:password@127.0.0.1:5432/postgres".into());
+    let pool = sqlx::postgres::PgPoolOptions::new()
+        .max_connections(2)
+        .connect(&url)
+        .await
+        .expect("local Postgres with real data");
+
+    let locale: String = sqlx::query_scalar("SELECT code FROM locales ORDER BY code LIMIT 1")
+        .fetch_one(&pool)
+        .await
+        .expect("at least one locale");
+    let nobody = uuid::Uuid::new_v4();
+    let exists: bool = sqlx::query_scalar("SELECT EXISTS (SELECT 1 FROM users WHERE id = $1)")
+        .bind(nobody)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert!(!exists, "{nobody} must not be an account");
+    let count = || async {
+        sqlx::query_scalar::<_, i64>("SELECT count(*) FROM translation_permissions")
+            .fetch_one(&pool)
+            .await
+            .unwrap()
+    };
+    let before = count().await;
+
+    // The caller is a real account and a super-admin by claim (role_recheck
+    // is off), so the target is the only unknown id.
+    let caller: uuid::Uuid = sqlx::query_scalar("SELECT id FROM users ORDER BY id LIMIT 1")
+        .fetch_one(&pool)
+        .await
+        .expect("at least one account");
+    let app = app(pool.clone());
+    assert_eq!(
+        grant(&app, &caller.to_string(), &locale, nobody).await,
         StatusCode::NOT_FOUND
     );
     assert_eq!(count().await, before);

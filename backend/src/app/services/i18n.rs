@@ -783,8 +783,8 @@ pub async fn my_permissions(
 }
 
 /// Record a grant. A locale missing from `locales` is a 404, like an unknown
-/// locale on the catalog route, instead of the foreign-key violation (a 500)
-/// the insert would otherwise raise.
+/// locale on the catalog route, and so is a user id with no account, instead
+/// of the foreign-key violation (a 500) the insert would otherwise raise.
 pub async fn grant_permission(
     state: &AppState,
     locale: &str,
@@ -793,6 +793,12 @@ pub async fn grant_permission(
     granted_by: Uuid,
 ) -> Result<(), ApiError> {
     if queries::get_locale(&state.db, locale).await?.is_none() {
+        return Err(ApiError::NotFound);
+    }
+    if crate::database::queries::users::find_role(&state.db, user_id)
+        .await?
+        .is_none()
+    {
         return Err(ApiError::NotFound);
     }
     queries::grant_permission(

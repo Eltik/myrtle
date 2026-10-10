@@ -104,7 +104,7 @@ pub struct TranslationGrantRequest {
 ///
 /// Holding any grant is on its own enough to open the admin panel, since a
 /// grant would be unusable otherwise. A locale that is not in the locale
-/// table is a 404.
+/// table is a 404, and so is a user id with no account.
 #[utoipa::path(
     post,
     path = "/admin/i18n/permissions",
