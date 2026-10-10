@@ -68,7 +68,7 @@ export function ListView({ items, today }: IListViewProps): React.ReactElement {
                         </h3>
                         {days.map(([day, ops]) => {
                             const dayIsToday = isTodayMonthDay(today, month, day);
-                            const weekday = f.date(new Date(today.getFullYear(), month - 1, day), { weekday: "short" });
+                            const weekday = f.calendarDay(new Date(today.getFullYear(), month - 1, day), { weekday: "short" });
                             return (
                                 <div key={day} className="grid grid-cols-[64px_1fr] gap-4 border-border border-t py-2 first-of-type:border-t-0">
                                     <div className="flex flex-col items-start">

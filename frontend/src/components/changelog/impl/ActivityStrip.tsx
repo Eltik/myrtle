@@ -22,7 +22,7 @@ export function ActivityStrip({ commits, days }: { commits: IChangelogCommit[]; 
         const start = today.getTime() - (days - 1) * DAY_MS;
         const out: IBucket[] = Array.from({ length: days }, (_, i) => {
             const d = new Date(start + i * DAY_MS);
-            return { label: f.date(d, { month: "short", day: "numeric" }), count: 0 };
+            return { label: f.calendarDay(d, { month: "short", day: "numeric" }), count: 0 };
         });
         for (const c of commits) {
             const t = new Date(c.date).getTime();

@@ -143,7 +143,7 @@ export function SignInCalendarCard({ checkin, server }: ICardProps) {
     const { sync, year, month, daysInMonth, claimed, elapsed, behind } = monthState(checkin, server);
 
     const monthAnchor = new Date(year, month, 1);
-    const monthLabel = f.date(monthAnchor, MONTH_LONG);
+    const monthLabel = f.calendarDay(monthAnchor, MONTH_LONG);
     const syncAbsolute = f.date(sync, DATE_SHORT);
 
     // The next slot the player can take - the one the game highlights.

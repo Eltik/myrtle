@@ -53,7 +53,7 @@ export function UpcomingView({ items, today }: IUpcomingViewProps): React.ReactE
                 const isToday = isTodayMonthDay(today, month, day);
                 const until = daysUntil(month, day, today);
                 const when = isToday ? t("birthdays.upcoming.today") : until === 1 ? t("birthdays.upcoming.tomorrow") : t("birthdays.upcoming.inDays", { count: until });
-                const weekday = f.date(new Date(today.getFullYear(), month - 1, day), { weekday: "long" });
+                const weekday = f.calendarDay(new Date(today.getFullYear(), month - 1, day), { weekday: "long" });
 
                 return (
                     <div key={dayKey(month, day)} className={cn("flex flex-col gap-2.5 rounded-[14px] border bg-card p-4 shadow-xs/5", isToday ? "border-primary/50 bg-primary/6" : "border-border")}>

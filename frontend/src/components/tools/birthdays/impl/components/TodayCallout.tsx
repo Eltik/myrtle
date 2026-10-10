@@ -19,7 +19,7 @@ export function TodayCallout({ ops, today }: ITodayCalloutProps): React.ReactEle
     const f = useFormatters();
     if (ops.length === 0) return null;
 
-    const dateLabel = f.date(today, { month: "long", day: "numeric", weekday: "long" });
+    const dateLabel = f.calendarDay(today, { month: "long", day: "numeric", weekday: "long" });
 
     return (
         <div className="relative mt-5.5 overflow-hidden rounded-[18px] border border-primary/20 bg-[linear-gradient(90deg,color-mix(in_oklab,var(--primary),transparent_92%)_0%,transparent_55%)] bg-card p-5 shadow-xs/5">

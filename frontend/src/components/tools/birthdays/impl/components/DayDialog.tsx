@@ -24,7 +24,7 @@ export function DayDialog({ open, onOpenChange, date, ops, today }: IDayDialogPr
     const f = useFormatters();
     if (!date) return null;
 
-    const weekday = f.date(new Date(date.year, date.month - 1, date.day), { weekday: "long" });
+    const weekday = f.calendarDay(new Date(date.year, date.month - 1, date.day), { weekday: "long" });
     const isTodayDate = isToday(today, date.year, date.month, date.day);
 
     return (

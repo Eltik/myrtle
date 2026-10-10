@@ -73,7 +73,7 @@ export function CalendarTab({ today }: ICalendarTabProps): React.ReactElement {
     if (schedule.isPending) return <ReleaseLoading />;
     if (schedule.error) return <ReleaseError error={schedule.error} onRetry={schedule.refetch} />;
 
-    const month = f.date(cursor, { month: "long" });
+    const month = f.calendarDay(cursor, { month: "long" });
     return (
         <div className="flex flex-col gap-3">
             {/* Pinned below the site header (64px, itself `sticky top-0`). The
