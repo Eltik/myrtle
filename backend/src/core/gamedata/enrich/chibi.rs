@@ -74,7 +74,9 @@ pub fn init_chibi_data(assets_dir: &Path) -> ChibiData {
         }
     }
 
-    let characters_arc: Vec<Arc<ChibiCharacter>> = characters.into_values().map(Arc::new).collect();
+    let mut characters: Vec<ChibiCharacter> = characters.into_values().collect();
+    sort_characters(&mut characters);
+    let characters_arc: Vec<Arc<ChibiCharacter>> = characters.into_iter().map(Arc::new).collect();
     let by_operator: HashMap<String, Arc<ChibiCharacter>> = characters_arc
         .iter()
         .map(|c| (c.operator_code.clone(), Arc::clone(c)))
@@ -134,7 +136,9 @@ pub fn init_enemy_chibi_data(assets_dir: &Path, enemies: &EnemyHandbook) -> Chib
         }
     }
 
-    let characters_arc: Vec<Arc<ChibiCharacter>> = characters.into_values().map(Arc::new).collect();
+    let mut characters: Vec<ChibiCharacter> = characters.into_values().collect();
+    sort_characters(&mut characters);
+    let characters_arc: Vec<Arc<ChibiCharacter>> = characters.into_iter().map(Arc::new).collect();
     let by_operator: HashMap<String, Arc<ChibiCharacter>> = characters_arc
         .iter()
         .map(|c| (c.operator_code.clone(), Arc::clone(c)))
@@ -144,6 +148,19 @@ pub fn init_enemy_chibi_data(assets_dir: &Path, enemies: &EnemyHandbook) -> Chib
         raw_items: Vec::new(),
         characters: characters_arc,
         by_operator,
+    }
+}
+
+/// Characters by operator code, each one's skins with `default` first and the
+/// rest by name. Both are gathered through hash maps and directory listings, so
+/// without this the served arrays changed order from one boot to the next, and
+/// a client that falls back to `skins[0]` got a different skin per boot.
+fn sort_characters(characters: &mut [ChibiCharacter]) {
+    characters.sort_by(|a, b| a.operator_code.cmp(&b.operator_code));
+    for character in characters {
+        character
+            .skins
+            .sort_by(|a, b| (a.name != "default", &a.name).cmp(&(b.name != "default", &b.name)));
     }
 }
 

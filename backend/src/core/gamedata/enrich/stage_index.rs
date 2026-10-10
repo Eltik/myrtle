@@ -426,6 +426,9 @@ pub fn build_stage_index(
         out.push(entry);
     }
 
+    // `stages` is a HashMap, so the loop above visits it in a per-process
+    // order; sorting makes the served array the same on every boot.
+    out.sort_by(|a, b| a.stage_id.cmp(&b.stage_id));
     (out, mode_levels)
 }
 

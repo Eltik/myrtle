@@ -9,14 +9,20 @@ use crate::core::gamedata::{
 pub fn get_artists(char_id: &str, skins: &SkinData) -> Vec<String> {
     // Amiya's skins all carry the base `char_id`; `tmpl_id` names the form. Match on
     // tmpl_id when set, else char_id.
-    let mut seen = std::collections::HashSet::new();
-    skins
+    // Skins in id order (`char_x#1` sorts before `char_x@...`, so the default
+    // outfit's artist comes first): `char_skins` is a HashMap, and walking it
+    // as is gave a per-process artist order.
+    let mut own: Vec<&Skin> = skins
         .char_skins
         .values()
         .filter(|skin| match skin.tmpl_id.as_deref() {
             Some(tmpl) => tmpl == char_id,
             None => skin.char_id == char_id,
         })
+        .collect();
+    own.sort_by(|a, b| a.skin_id.cmp(&b.skin_id));
+    let mut seen = std::collections::HashSet::new();
+    own.into_iter()
         .flat_map(|skin| &skin.display_skin.drawer_list)
         .filter(|artist| seen.insert((*artist).clone()))
         .cloned()

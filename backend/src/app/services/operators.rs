@@ -242,7 +242,12 @@ pub async fn get_index(
         .iter()
         .map(|(id, op)| to_index_entry(id, op, &gd.voices))
         .collect();
-    entries.sort_by(|a, b| b.rarity.cmp(&a.rarity).then_with(|| a.name.cmp(&b.name)));
+    entries.sort_by(|a, b| {
+        b.rarity
+            .cmp(&a.rarity)
+            .then_with(|| a.name.cmp(&b.name))
+            .then_with(|| a.id.cmp(&b.id))
+    });
 
     state.cache.set(&key, &entries).await;
     Ok(entries)
@@ -623,7 +628,12 @@ pub async fn get_upcoming(
         .filter(|(id, _)| !base_ids.contains(id.as_str()))
         .map(|(id, op)| to_index_entry(id, op, &src.voices))
         .collect();
-    entries.sort_by(|a, b| b.rarity.cmp(&a.rarity).then_with(|| a.name.cmp(&b.name)));
+    entries.sort_by(|a, b| {
+        b.rarity
+            .cmp(&a.rarity)
+            .then_with(|| a.name.cmp(&b.name))
+            .then_with(|| a.id.cmp(&b.id))
+    });
 
     state.cache.set(&key, &entries).await;
     Ok(entries)
