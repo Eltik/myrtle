@@ -26,11 +26,13 @@
     clippy::literal_string_with_formatting_args
 )]
 
+use anyhow::{Context, bail};
+use rayon::prelude::*;
 use regex::Regex;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Command, Stdio};
 
 #[allow(dead_code)]
 struct Field {
@@ -51,45 +53,59 @@ struct ParsedStruct {
     root_fn_name: Option<String>, // e.g. "root_as_clz_torappu_stage_table_unchecked"
 }
 
-fn fetch_cn_schemas(script_dir: &Path) -> Result<PathBuf, Box<dyn std::error::Error>> {
-    let fbs_dir = script_dir
-        .parent()
-        .ok_or("no parent dir")?
-        .join("OpenArknightsFBS/FBS");
+fn is_folder_a_git_repo(p: &Path) -> anyhow::Result<bool> {
+    Ok(Command::new("git")
+        .args(["rev-parse", "--is-inside-work-tree"])
+        .current_dir(p)
+        .status()?
+        .success())
+}
 
-    if fbs_dir.exists() {
+fn cn_schema_paths(script_dir: &Path) -> anyhow::Result<(PathBuf, PathBuf)> {
+    let repo_dir = script_dir
+        .parent()
+        .context("no parent dir")?
+        .join("OpenArknightsFBS");
+    let fbs_dir = repo_dir.join("FBS");
+
+    Ok((repo_dir, fbs_dir))
+}
+
+fn fetch_cn_schemas(repo_dir: &Path, fbs_dir: &Path) -> anyhow::Result<()> {
+    let status = if repo_dir.exists() && is_folder_a_git_repo(repo_dir)? {
         println!("Updating OpenArknightsFBS...");
-        let _ = Command::new("git")
+        Command::new("git")
             .args(["pull", "--rebase"])
-            .current_dir(fbs_dir.parent().unwrap())
-            .status();
+            .current_dir(repo_dir)
+            .status()?
     } else {
         // Try cloning it
-        let parent = fbs_dir.parent().unwrap().parent().unwrap();
         println!("Cloning OpenArknightsFBS...");
-        let status = Command::new("git")
+        Command::new("git")
             .args([
                 "clone",
                 "--depth",
                 "1",
                 "https://github.com/MooncellWiki/OpenArknightsFBS.git",
-                fbs_dir.parent().unwrap().to_str().unwrap(),
+                repo_dir.to_str().unwrap(),
             ])
-            .current_dir(parent)
-            .status()?;
-        if !status.success() {
-            return Err("Failed to clone OpenArknightsFBS".into());
-        }
+            .current_dir(repo_dir.parent().unwrap())
+            .status()?
+    };
+
+    if !status.success() {
+        bail!("Failed to clone OpenArknightsFBS");
     }
 
     if !fbs_dir.exists() {
-        return Err(format!("FBS directory not found: {}", fbs_dir.display()).into());
+        bail!("FBS directory not found: {}", fbs_dir.display());
     }
 
-    patch_schemas(&fbs_dir);
+    patch_schemas(fbs_dir);
 
     println!("CN schemas: {}", fbs_dir.display());
-    Ok(fbs_dir)
+
+    Ok(())
 }
 
 /// Apply known fixes to upstream FBS schemas before running flatc.
@@ -259,10 +275,7 @@ fn normalize_fbs(src: &str) -> String {
 /// time either upstream moves, and the failure mode is silent — a table whose
 /// EN layout has just diverged keeps decoding to garbage because nobody added
 /// it. The computed set cannot go stale.
-fn compute_yostar_schemas(
-    cn_fbs_dir: &Path,
-    yostar_fbs_dir: &Path,
-) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+fn compute_yostar_schemas(cn_fbs_dir: &Path, yostar_fbs_dir: &Path) -> anyhow::Result<Vec<String>> {
     let mut differ = Vec::new();
     let mut identical = Vec::new();
     let mut orphan = Vec::new();
@@ -310,7 +323,7 @@ fn compute_yostar_schemas(
 /// Removes stale generated modules so a table that no longer needs a Yostar
 /// variant stops being compiled in (and stops being listed by
 /// `has_yostar_schema`).
-fn clear_generated_dir(dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
+fn clear_generated_dir(dir: &Path) -> anyhow::Result<()> {
     if !dir.exists() {
         return Ok(());
     }
@@ -323,25 +336,29 @@ fn clear_generated_dir(dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-/// Clones next to `OpenArknightsFBS` (gitignored), not into `/tmp`: `/tmp` is
-/// wiped on reboot and empty in every container build, so the clone was
-/// redone on almost every run.
-fn fetch_yostar_schemas(script_dir: &Path) -> Result<PathBuf, Box<dyn std::error::Error>> {
+fn yostar_schema_paths(script_dir: &Path) -> anyhow::Result<(PathBuf, PathBuf)> {
     let repo_dir = script_dir
         .parent()
-        .ok_or("no parent dir")?
+        .context("no parent dir")?
         .join("ArknightsFlatbuffers");
     let fbs_dir = repo_dir.join("yostar");
 
-    if repo_dir.exists() {
+    Ok((repo_dir, fbs_dir))
+}
+
+/// Clones next to `OpenArknightsFBS` (gitignored), not into `/tmp`: `/tmp` is
+/// wiped on reboot and empty in every container build, so the clone was
+/// redone on almost every run.
+fn fetch_yostar_schemas(repo_dir: &Path, fbs_dir: &Path) -> anyhow::Result<()> {
+    let status = if repo_dir.exists() && is_folder_a_git_repo(repo_dir)? {
         println!("Updating ArknightsFlatbuffers...");
-        let _ = Command::new("git")
+        Command::new("git")
             .args(["pull", "--rebase"])
-            .current_dir(&repo_dir)
-            .status();
+            .current_dir(repo_dir)
+            .status()?
     } else {
         println!("Cloning ArknightsFlatbuffers...");
-        let status = Command::new("git")
+        Command::new("git")
             .args([
                 "clone",
                 "--depth",
@@ -349,19 +366,24 @@ fn fetch_yostar_schemas(script_dir: &Path) -> Result<PathBuf, Box<dyn std::error
                 "https://github.com/ArknightsAssets/ArknightsFlatbuffers.git",
                 repo_dir.to_str().unwrap(),
             ])
-            .status()?;
-        if !status.success() {
-            return Err("Failed to clone ArknightsFlatbuffers".into());
-        }
+            .status()?
+    };
+
+    if !status.success() {
+        bail!("Failed to clone ArknightsFlatbuffers");
     }
 
     println!("Yostar schemas: {}", fbs_dir.display());
-    Ok(fbs_dir)
+
+    Ok(())
 }
 
-fn run_flatc(fbs_path: &Path, output_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
+fn run_flatc(fbs_path: &Path, output_dir: &Path) -> anyhow::Result<()> {
     let name = fbs_path.file_stem().unwrap().to_str().unwrap();
     println!("  flatc: {name}");
+
+    let log_file_stdout = std::fs::File::create(output_dir.join(format!("{name}.log")))?;
+    let log_file_stderr = log_file_stdout.try_clone()?; // .stdout/.stderr take ownership
 
     let status = Command::new("flatc")
         .args([
@@ -372,71 +394,61 @@ fn run_flatc(fbs_path: &Path, output_dir: &Path) -> Result<(), Box<dyn std::erro
             output_dir.to_str().unwrap(),
             fbs_path.to_str().unwrap(),
         ])
+        .stdout(Stdio::from(log_file_stdout))
+        .stderr(Stdio::from(log_file_stderr))
         .status()?;
 
     if !status.success() {
         eprintln!("  warning: flatc failed for {name}");
     }
+
     Ok(())
 }
 
-fn run_flatc_all(fbs_dir: &Path, output_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
+fn run_flatc_all(fbs_dir: &Path, output_dir: &Path) -> anyhow::Result<()> {
+    println!("Running flatc on all schemas...");
+
     let mut entries: Vec<_> = fs::read_dir(fbs_dir)?
-        .filter_map(std::result::Result::ok)
+        .filter_map(Result::ok)
         .filter(|e| e.path().extension().is_some_and(|ext| ext == "fbs"))
         .collect();
     entries.sort_by_key(std::fs::DirEntry::path);
 
     println!("Running flatc on {} schemas...", entries.len());
-    for entry in &entries {
-        run_flatc(&entry.path(), output_dir)?;
-    }
+    entries
+        .par_iter()
+        .try_for_each(|entry| run_flatc(&entry.path(), output_dir))?;
     Ok(())
 }
 
-fn strip_serialize_impls(dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
+fn strip_serialize_impls(dir: &Path) -> anyhow::Result<()> {
     let serde_import_re = Regex::new(r"^use (?:self::)?serde(?:::ser)?::\{.*?\};$")?;
+    let entries = fs::read_dir(dir)?
+        .filter_map(Result::ok)
+        .collect::<Vec<_>>();
 
-    for entry in fs::read_dir(dir)? {
-        let entry = entry?;
-        let path = entry.path();
-        if path.extension().is_none_or(|ext| ext != "rs") {
-            continue;
-        }
-        if path.file_name().is_some_and(|n| n == "mod.rs") {
-            continue;
-        }
+    entries
+        .par_iter()
+        .try_for_each(|entry| -> anyhow::Result<()> {
+            let path = entry.path();
+            if path.extension().is_none_or(|ext| ext != "rs") {
+                return Ok(());
+            }
+            if path.file_name().is_some_and(|n| n == "mod.rs") {
+                return Ok(());
+            }
 
-        let content = fs::read_to_string(&path)?;
-        let mut output = String::with_capacity(content.len());
-        let mut skip = false;
-        let mut brace_depth = 0i32;
-        let mut changed = false;
+            let content = fs::read_to_string(&path)?;
+            let mut output = String::with_capacity(content.len());
+            let mut skip = false;
+            let mut brace_depth = 0i32;
+            let mut changed = false;
 
-        for line in content.lines() {
-            let trimmed = line.trim();
+            for line in content.lines() {
+                let trimmed = line.trim();
 
-            if skip {
-                // Inside a Serialize impl block — count braces
-                for ch in line.chars() {
-                    match ch {
-                        '{' => brace_depth += 1,
-                        '}' => brace_depth -= 1,
-                        _ => {}
-                    }
-                }
-                if brace_depth <= 0 {
-                    skip = false;
-                }
-            } else {
-                // Detect start of impl Serialize block
-                if trimmed.starts_with("impl Serialize for ")
-                    || trimmed.starts_with("impl<'a> Serialize for ")
-                {
-                    skip = true;
-                    brace_depth = 0;
-                    changed = true;
-                    // Count braces on this line
+                if skip {
+                    // Inside a Serialize impl block — count braces
                     for ch in line.chars() {
                         match ch {
                             '{' => brace_depth += 1,
@@ -445,38 +457,60 @@ fn strip_serialize_impls(dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     if brace_depth <= 0 {
-                        skip = false; // Single-line impl (unlikely but safe)
+                        skip = false;
                     }
-                    continue;
-                }
+                } else {
+                    // Detect start of impl Serialize block
+                    if trimmed.starts_with("impl Serialize for ")
+                        || trimmed.starts_with("impl<'a> Serialize for ")
+                    {
+                        skip = true;
+                        brace_depth = 0;
+                        changed = true;
+                        // Count braces on this line
+                        for ch in line.chars() {
+                            match ch {
+                                '{' => brace_depth += 1,
+                                '}' => brace_depth -= 1,
+                                _ => {}
+                            }
+                        }
+                        if brace_depth <= 0 {
+                            skip = false; // Single-line impl (unlikely but safe)
+                        }
+                        return Ok(());
+                    }
 
-                // Strip serde imports
-                if serde_import_re.is_match(trimmed) {
-                    changed = true;
-                    continue;
-                }
+                    // Strip serde imports
+                    if serde_import_re.is_match(trimmed) {
+                        changed = true;
+                        return Ok(());
+                    }
 
-                // Strip trailing whitespace flatc emits (e.g. `#[must_use] `),
-                // which rustfmt on stable rejects ("left behind trailing whitespace").
-                let stripped = line.trim_end();
-                if stripped.len() != line.len() {
-                    changed = true;
+                    // Strip trailing whitespace flatc emits (e.g. `#[must_use] `),
+                    // which rustfmt on stable rejects ("left behind trailing whitespace").
+                    let stripped = line.trim_end();
+                    if stripped.len() != line.len() {
+                        changed = true;
+                    }
+                    output.push_str(stripped);
+                    output.push('\n');
                 }
-                output.push_str(stripped);
-                output.push('\n');
             }
-        }
 
-        if changed {
-            let name = path.file_name().unwrap().to_str().unwrap();
-            println!("  stripped serde from {name}");
-            fs::write(&path, &output)?;
-        }
-    }
+            if changed {
+                let name = path.file_name().unwrap().to_str().unwrap();
+                println!("  stripped serde from {name}");
+                fs::write(&path, &output)?;
+            }
+
+            Ok(())
+        })?;
+
     Ok(())
 }
 
-fn generate_mod_rs(dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
+fn generate_mod_rs(dir: &Path) -> anyhow::Result<()> {
     let mut modules: Vec<String> = Vec::new();
 
     for entry in fs::read_dir(dir)? {
@@ -506,9 +540,7 @@ fn generate_mod_rs(dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn parse_all_generated(
-    dir: &Path,
-) -> Result<HashMap<String, Vec<ParsedStruct>>, Box<dyn std::error::Error>> {
+fn parse_all_generated(dir: &Path) -> anyhow::Result<HashMap<String, Vec<ParsedStruct>>> {
     let mut result = HashMap::new();
     let method_re = Regex::new(r"pub fn (\w+)\(&self\)\s*->\s*([^{]+?)\s*\{").unwrap();
     let inner_re = Regex::new(r"ForwardsUOffset<([^>]+)>").unwrap();
@@ -537,7 +569,7 @@ fn parse_all_generated(
     Ok(result)
 }
 
-fn parse_all_enums(dir: &Path) -> Result<HashMap<String, Vec<String>>, Box<dyn std::error::Error>> {
+fn parse_all_enums(dir: &Path) -> anyhow::Result<HashMap<String, Vec<String>>> {
     let mut result = HashMap::new();
 
     // Matches: pub struct enum__SomeName(pub i32) or (pub u8)
@@ -752,7 +784,7 @@ fn generate_fb_json_auto(
     structs: &HashMap<String, Vec<ParsedStruct>>,
     enums: &HashMap<String, Vec<String>>,
     module_prefix: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> anyhow::Result<()> {
     let mut out = String::new();
 
     out.push_str("//! Auto-generated FlatBufferToJson implementations\n");
@@ -1367,7 +1399,7 @@ fn generate_decode_dispatch(
     output_path: &Path,
     cn_structs: &HashMap<String, Vec<ParsedStruct>>,
     yostar_structs: &HashMap<String, Vec<ParsedStruct>>,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> anyhow::Result<()> {
     let mut out = String::new();
 
     out.push_str("//! Auto-generated `FlatBuffer` decode dispatch\n");
@@ -1822,12 +1854,23 @@ fn build_schema_to_module_map() -> Vec<(&'static str, &'static str)> {
         ("level_script_table", "level_script_table_generated"),
     ]
 }
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> anyhow::Result<()> {
     let script_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let src_dir = script_dir.join("src");
 
-    let cn_fbs_dir = fetch_cn_schemas(&script_dir)?;
-    let yostar_fbs_dir = fetch_yostar_schemas(&script_dir)?;
+    let (cn_repo_dir, cn_fbs_dir) = cn_schema_paths(&script_dir)?;
+    let (yostar_repo_dir, yostar_fbs_dir) = yostar_schema_paths(&script_dir)?;
+
+    println!("{:?}", yostar_fbs_dir);
+
+    if std::env::var("SKIP_FETCH")
+        .is_ok_and(|val| matches!(val.to_lowercase().as_str(), "1" | "true" | "yes"))
+    {
+        println!("skipping submodule fetch because SKIP_FETCH=true");
+    } else {
+        fetch_cn_schemas(&cn_repo_dir, &cn_fbs_dir)?;
+        fetch_yostar_schemas(&yostar_repo_dir, &yostar_fbs_dir)?;
+    }
 
     let cn_output = src_dir.join("generated_fbs");
     let yostar_output = src_dir.join("generated_fbs_yostar");
@@ -1840,7 +1883,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // when its Yostar .fbs differs from the CN one. See `compute_yostar_schemas`.
     // The output dir is cleared first so a table that stops differing stops
     // being compiled in.
-    let yostar_schemas = compute_yostar_schemas(&cn_fbs_dir, &yostar_fbs_dir)?;
+    let yostar_schemas = compute_yostar_schemas(&cn_fbs_dir, &yostar_fbs_dir).unwrap();
     clear_generated_dir(&yostar_output)?;
     for name in &yostar_schemas {
         let fbs = yostar_fbs_dir.join(format!("{name}.fbs"));
