@@ -25,8 +25,9 @@ export function toAvatarStem(id: string): string {
         // Skin: char_X@winter#1 -> char_X_winter#1
         return encodeURIComponent(id.replaceAll("@", "_"));
     }
-    // Base art: char_X#1 -> char_X, char_X#2 -> char_X_2
-    const stem = id.endsWith("#1") ? id.slice(0, -2) : id.replace(/#(\d+)$/, "_$1");
+    // Base art: char_X#1 -> char_X, char_X#2 -> char_X_2, and Amiya's char_002_amiya#1+
+    // (the avatar the backend serves as char_002_amiya_1+) -> char_002_amiya_1+
+    const stem = id.endsWith("#1") ? id.slice(0, -2) : id.replace(/#(\d+\+?)$/, "_$1");
     return encodeURIComponent(stem);
 }
 
