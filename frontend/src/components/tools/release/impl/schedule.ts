@@ -127,7 +127,7 @@ export function eventArtIndex(events: ReleaseEvent[]): IEventArt {
 }
 
 export function bannerItem(b: ReleaseBanner, eventArt?: IEventArt, eventTied = true): IScheduleItem | null {
-    if (b.standing) return null;
+    if (b.returning) return null;
     const w = window(b.resolution, b.cnOpen, b.cnEnd);
     if (!w) return null;
     const imagePath = b.imagePath ?? (eventTied ? ((b.anchorActivity ? eventArt?.byId.get(b.anchorActivity) : undefined) ?? eventArt?.byDay.get(cnDay(b.cnOpen))) : undefined) ?? null;

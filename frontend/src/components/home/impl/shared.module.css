@@ -1,0 +1,77 @@
+/* Pieces every home section shares: the reveal-on-scroll state, the section
+   rhythm, the mono eyebrow, the "see all" link and the small uppercase tag. */
+
+.reveal {
+    transition:
+        opacity 0.6s ease var(--reveal-delay, 0ms),
+        translate 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) var(--reveal-delay, 0ms);
+}
+.reveal[data-reveal="pending"] {
+    opacity: 0;
+    translate: 0 8px;
+}
+/* No JavaScript, or no motion wanted: never hide anything. */
+@media (scripting: none) {
+    .reveal[data-reveal="pending"] {
+        opacity: 1;
+        translate: none;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .reveal,
+    .reveal[data-reveal="pending"] {
+        opacity: 1;
+        translate: none;
+        transition: none;
+    }
+}
+
+.container {
+    width: min(1080px, calc(100% - 2rem));
+    margin: 0 auto;
+}
+
+.eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--primary);
+}
+
+.moreLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    /* A 44px tap target that takes the text's own height in the layout. */
+    min-height: 44px;
+    margin-block: -12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted-foreground);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+.moreLink:hover {
+    color: var(--foreground);
+}
+
+.tag {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    border-radius: 4px;
+    background: var(--muted);
+    padding: 2px 6px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+}

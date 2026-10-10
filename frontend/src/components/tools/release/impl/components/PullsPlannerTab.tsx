@@ -50,6 +50,8 @@ export function PullsPlannerTab({ today }: IPullsPlannerTabProps): React.ReactEl
     // before any of it is converted, so a pick there is a step down in pulls here.
     const days = React.useMemo(() => projectIncome(deferred, today, horizon, skins.originite), [deferred, today, horizon, skins.originite]);
 
+    const sharedPity = React.useMemo(() => ({ standard: deferred.standardPity, kernel: deferred.kernelPity }), [deferred.standardPity, deferred.kernelPity]);
+
     const plan = React.useMemo(
         () =>
             buildPlan({
@@ -57,13 +59,14 @@ export function PullsPlannerTab({ today }: IPullsPlannerTabProps): React.ReactEl
                 days,
                 model: banners.data?.model ?? null,
                 today,
-                pity: deferred.pity,
+                standardPity: deferred.standardPity,
+                kernelPity: deferred.kernelPity,
                 allocations: deferred.allocations,
                 targets: deferred.targets,
                 spendOriginite: deferred.spendOriginite,
                 countFreePulls: deferred.countFreePulls,
             }),
-        [banners.data, days, today, deferred.pity, deferred.allocations, deferred.targets, deferred.spendOriginite, deferred.countFreePulls],
+        [banners.data, days, today, deferred.standardPity, deferred.kernelPity, deferred.allocations, deferred.targets, deferred.spendOriginite, deferred.countFreePulls],
     );
 
     const allocate = React.useCallback(
@@ -206,8 +209,8 @@ export function PullsPlannerTab({ today }: IPullsPlannerTabProps): React.ReactEl
             {banners.isPending ? <ReleaseLoading /> : <PullsBanners rows={plan.rows} totals={plan.totals} lookup={lookup} charNames={banners.data?.charNames ?? {}} today={today} onAllocate={allocate} onPreset={preset} onSetTarget={setTarget} onClearRow={clearRow} onReset={resetPlan} onExport={exportPlan} />}
 
             <div className="grid grid-cols-1 gap-3 xl:grid-cols-2 xl:items-start">
-                <PullsOdds budget={uncommitted} pity={deferred.pity} />
-                <PullsSimulator budget={uncommitted} pity={deferred.pity} />
+                <PullsOdds budget={uncommitted} pity={sharedPity} />
+                <PullsSimulator budget={uncommitted} pity={sharedPity} />
             </div>
         </div>
     );

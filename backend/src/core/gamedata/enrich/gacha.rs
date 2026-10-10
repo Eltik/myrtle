@@ -33,6 +33,8 @@
 //! entirely by the blobs, so replacing would lose data. See
 //! [`GachaPoolDetail`] for why.
 
+use std::collections::HashSet;
+
 use base64::Engine;
 use bson::Bson;
 
@@ -57,6 +59,16 @@ pub fn enrich_banners(pools: &mut [GachaPoolClient], details: Option<&PoolDetail
         if let Some(detail) = details.and_then(|d| d.pools.get(&pool.gacha_pool_id)) {
             overlay_pool_detail(pool, detail);
         }
+    }
+}
+
+/// Flag the pools a returning-player tier grants (see
+/// [`OpenServerTableFile::returning_pool_ids`]).
+///
+/// [`OpenServerTableFile::returning_pool_ids`]: crate::core::gamedata::types::open_server::OpenServerTableFile::returning_pool_ids
+pub fn mark_returning_pools(pools: &mut [GachaPoolClient], returning: &HashSet<String>) {
+    for pool in pools {
+        pool.returning = returning.contains(&pool.gacha_pool_id);
     }
 }
 
@@ -211,6 +223,19 @@ mod tests {
         let mut f = PoolDetailFile::default();
         f.pools.insert(id.to_owned(), detail);
         f
+    }
+
+    #[test]
+    fn only_granted_pools_are_returning() {
+        let mut pools = vec![
+            pool("RETURN_EN_41_0_1", "BACKFLOW", None),
+            pool("NORM_EN_41_0_1", "NORMAL", None),
+        ];
+        let granted = std::iter::once("RETURN_EN_41_0_1".to_owned()).collect();
+        mark_returning_pools(&mut pools, &granted);
+
+        assert!(pools[0].returning);
+        assert!(!pools[1].returning);
     }
 
     /// Without a sidecar, behaviour is exactly the pre-existing blob decode.

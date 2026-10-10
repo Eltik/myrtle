@@ -92,7 +92,13 @@ export interface IBannerModel {
  */
 const LIMITED_SHARE_POOL_IDS = new Set(["NORM_EN_6_0_6", "NORM_6_0_4"]);
 
-const STANDARD_RULES = new Set(["NORMAL", "SINGLE", "DOUBLE", "BACKFLOW"]);
+/**
+ * BACKFLOW ("Returning Headhunting") is deliberately NOT here, so it falls through
+ * to isolated. Its own pool detail (`RETURN_EN_41_0_1`) says its rolls "will not be
+ * accumulated or applied to any other banner, and will remain separate from any
+ * accumulated rolls on other banners", and are "reset to 0" when the banner ends.
+ */
+const STANDARD_RULES = new Set(["NORMAL", "SINGLE", "DOUBLE"]);
 /**
  * CLASSIC_ATTAIN is deliberately NOT here despite the CLASSIC prefix. Its own rule
  * text says the cumulative rolls "do not carry over between different
@@ -101,10 +107,43 @@ const STANDARD_RULES = new Set(["NORMAL", "SINGLE", "DOUBLE", "BACKFLOW"]);
  */
 const KERNEL_RULES = new Set(["CLASSIC", "CLASSIC_DOUBLE", "FESCLASSIC"]);
 
-function scopeFor(ruleType: string): PityScope {
+/**
+ * Everything else is isolated: the rolls count only on that one banner and are gone
+ * when it closes. Two members of that set are rulings rather than readings:
+ *
+ * SPECIAL (Orienteering) is isolated BY THE USER'S RULING (2026-10-10), which
+ * overrides its own pool text. `SPECIAL_EN_40_0_6` says "In any [Standard
+ * Headhunting], this rate increase will be accumulated and will not be cleared at the
+ * end of the [Standard Headhunting]. The rate up from headhunting attempts will carry
+ * over to subsequent [Standard Headhunting]", which read literally would make it
+ * standard. The ruling is that each Orienteering banner carries its own pity.
+ * MEASURED AGAINST THE RULING (local Postgres, 874 users, 2026-10-10): the Standard
+ * chain WITHOUT SPECIAL holds 16 pulls at or past roll 99 with no 6* (longest run 113),
+ * which hard pity makes impossible; WITH SPECIAL chained in, 0 such pulls (longest 96).
+ * Chaining ATTAIN in instead raises them to 35, and CLASSIC_ATTAIN into Kernel to 33
+ * (Kernel alone: 0), which confirms those two as isolated. Moving "SPECIAL" into
+ * STANDARD_RULES is the one-line reversal if the ruling is revisited.
+ *
+ * ATTAIN matches its text: "the number of rolls without obtaining a 6-star Operator
+ * will not be accumulated or applied to any other banner".
+ */
+export function scopeFor(ruleType: string): PityScope {
     if (STANDARD_RULES.has(ruleType)) return "standard";
     if (KERNEL_RULES.has(ruleType)) return "kernel";
     return "isolated";
+}
+
+/** The user's pity on each shared counter. Standard and Kernel are separate counters. */
+export interface ISharedPity {
+    standard: number;
+    kernel: number;
+}
+
+/** The rolls a banner of this model starts on: its own counter's, or 0 when isolated. */
+export function startPityFor(model: IBannerModel, pity: ISharedPity): number {
+    if (model.scope === "standard") return pity.standard;
+    if (model.scope === "kernel") return pity.kernel;
+    return 0;
 }
 
 /**

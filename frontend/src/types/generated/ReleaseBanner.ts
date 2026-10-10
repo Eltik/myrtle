@@ -9,7 +9,11 @@ export type ReleaseBanner = {
     nameCn: string;
     cnOpen: number;
     cnEnd: number;
-    standing: boolean;
+    /**
+     * Shown only to returning players (`GachaPoolClient::returning`). Its
+     * `cn_end` is the table's placeholder years out, not a real end date.
+     */
+    returning: boolean;
     featured6: Array<string>;
     featured5: Array<string>;
     debutChars: Array<string>;

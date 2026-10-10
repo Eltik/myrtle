@@ -8,7 +8,7 @@ function carriedPity(dist: Float64Array | null): number {
 }
 
 import { buildPlan, goalEstimateFor, type IPlanInput, maxPotFor, planTargets, planToCsv } from "./plan";
-import { bannerModel, freePullsFor } from "./rates";
+import { bannerModel, freePullsFor, startPityFor } from "./rates";
 
 const DAY = 86_400;
 
@@ -28,7 +28,7 @@ function banner(id: string, ruleType: string, daysOut: number, featured: string[
         nameCn: id,
         cnOpen: enStart,
         cnEnd: enStart + 14 * DAY,
-        standing: false,
+        returning: false,
         featured6: featured,
         featured5: [],
         debutChars: [],
@@ -67,7 +67,8 @@ function plan(over: Partial<IPlanInput> = {}, orundum = 60_000) {
         days,
         model: null,
         today: TODAY,
-        pity: 0,
+        standardPity: 0,
+        kernelPity: 0,
         allocations: {},
         targets: {},
         spendOriginite: false,
@@ -77,6 +78,12 @@ function plan(over: Partial<IPlanInput> = {}, orundum = 60_000) {
 }
 
 describe("the ledger", () => {
+    it("leaves out a returning-players-only pool", () => {
+        const returning = { ...banner("R", "BACKFLOW", 5), returning: true };
+        const { rows } = plan({ banners: [returning, banner("A", "LIMITED", 10)] });
+        expect(rows.map((r) => r.banner.cnPoolId)).toEqual(["A"]);
+    });
+
     it("shows the whole bank on the first banner when nothing is committed", () => {
         const { rows, totals } = plan();
         expect(rows).toHaveLength(3);
@@ -176,15 +183,16 @@ describe("pity carried between banners", () => {
         const rows = plan({
             banners: [banner("S1", "SINGLE", 10, ["char_c"]), banner("L1", "LIMITED", 40)],
             allocations: { S1: 40 },
-            pity: 30,
+            standardPity: 30,
+            kernelPity: 30,
         }).rows;
         expect(rows[1].model.carryOver).toBe(false);
         expect(carriedPity(rows[1].pityDist)).toBe(0);
     });
 
     it("seeds the first shared banner from the user's own counter", () => {
-        const warm = plan({ banners: [banner("S1", "SINGLE", 10, ["char_c"])], allocations: { S1: 10 }, pity: 60 }).rows;
-        const cold = plan({ banners: [banner("S1", "SINGLE", 10, ["char_c"])], allocations: { S1: 10 }, pity: 0 }).rows;
+        const warm = plan({ banners: [banner("S1", "SINGLE", 10, ["char_c"])], allocations: { S1: 10 }, standardPity: 60 }).rows;
+        const cold = plan({ banners: [banner("S1", "SINGLE", 10, ["char_c"])], allocations: { S1: 10 }, standardPity: 0 }).rows;
         expect(warm[0].odds.specific).toBeGreaterThan(cold[0].odds.specific * 2);
     });
 
@@ -192,7 +200,8 @@ describe("pity carried between banners", () => {
         const rows = plan({
             banners: [banner("S1", "SINGLE", 10, ["char_c"]), banner("K1", "CLASSIC", 40), banner("S2", "SINGLE", 70, ["char_d"])],
             allocations: { S1: 40, K1: 40 },
-            pity: 0,
+            standardPity: 0,
+            kernelPity: 0,
         }).rows;
         // The kernel banner starts cold despite 40 rolls spent on standard first.
         expect(carriedPity(rows[1].pityDist)).toBe(0);
@@ -201,6 +210,111 @@ describe("pity carried between banners", () => {
         expect(carriedPity(rows[2].pityDist)).toBeLessThan(80);
     });
 
+    it("carries Kernel pity across Kernel banners by the same rule as standard", () => {
+        // Both families' pool details say the rolls "carry over to subsequent" banners
+        // of the same family; neither text says the two families share one counter.
+        const rows = plan({
+            banners: [banner("K1", "CLASSIC", 10), banner("K2", "CLASSIC_DOUBLE", 40)],
+            allocations: { K1: 40 },
+        }).rows;
+        expect(rows[1].model.carryOver).toBe(true);
+        expect(carriedPity(rows[1].pityDist)).toBeGreaterThan(0);
+    });
+
+    it("never feeds a Returning Headhunting pool into the standard counter", () => {
+        // Even if one reached the plan, its rolls would not move the standard counter.
+        const returning = { ...banner("R1", "BACKFLOW", 20, ["char_r"]), returning: false } as IPlanInput["banners"][number];
+        const rows = plan({
+            banners: [banner("S1", "SINGLE", 10, ["char_c"]), returning, banner("S2", "SINGLE", 40, ["char_d"])],
+            allocations: { S1: 40, R1: 60 },
+        }).rows;
+        expect(rows[1].model.scope).toBe("isolated");
+        expect(rows[1].pityDist).toBeNull();
+        expect(rows[2].pityDist).toBe(rows[0].odds.endPity);
+    });
+});
+
+describe("a skipped banner leaves the shared counter untouched", () => {
+    it("carries standard pity past a skipped standard banner as the same distribution", () => {
+        const rows = plan({
+            banners: [banner("S1", "SINGLE", 10, ["char_c"]), banner("S2", "DOUBLE", 25), banner("S3", "SINGLE", 40, ["char_d"])],
+            allocations: { S1: 40 },
+        }).rows;
+        expect(rows[1].totalPulls).toBe(0);
+        expect(rows[1].pityDist).toBe(rows[0].odds.endPity);
+        expect(rows[2].pityDist).toBe(rows[1].pityDist);
+    });
+
+    it("carries the user's own counter past a skipped first banner unchanged", () => {
+        const rows = plan({
+            banners: [banner("S1", "NORMAL", 10, ["char_c"]), banner("S2", "SINGLE", 40, ["char_d"])],
+            allocations: {},
+            standardPity: 30,
+        }).rows;
+        expect(Array.from(nn(rows[1].pityDist))).toEqual(Array.from(pityAt(30)));
+        expect(rows[1].pityDist).toBe(rows[0].pityDist);
+    });
+
+    it("carries Kernel pity past a skipped Kernel banner, and standard pity past it too", () => {
+        const rows = plan({
+            banners: [banner("K1", "CLASSIC", 10), banner("S1", "SINGLE", 15, ["char_c"]), banner("K2", "FESCLASSIC", 25), banner("K3", "CLASSIC", 40), banner("S2", "SINGLE", 55, ["char_d"])],
+            allocations: { K1: 30, S1: 45 },
+        }).rows;
+        expect(rows[2].totalPulls).toBe(0);
+        expect(rows[2].pityDist).toBe(rows[0].odds.endPity);
+        expect(rows[3].pityDist).toBe(rows[0].odds.endPity);
+        expect(rows[4].pityDist).toBe(rows[1].odds.endPity);
+    });
+
+    it("carries standard pity past a returning pool the plan leaves out", () => {
+        const returning = { ...banner("R1", "BACKFLOW", 20, ["char_r"]), returning: true } as IPlanInput["banners"][number];
+        const withIt = plan({
+            banners: [banner("S1", "SINGLE", 10, ["char_c"]), returning, banner("S2", "SINGLE", 40, ["char_d"])],
+            allocations: { S1: 40, R1: 60 },
+        }).rows;
+        const without = plan({
+            banners: [banner("S1", "SINGLE", 10, ["char_c"]), banner("S2", "SINGLE", 40, ["char_d"])],
+            allocations: { S1: 40 },
+        }).rows;
+        expect(withIt.map((r) => r.key)).toEqual(["S1", "S2"]);
+        expect(withIt[1].pityDist).toBe(withIt[0].odds.endPity);
+        expect(Array.from(nn(withIt[1].pityDist))).toEqual(Array.from(nn(without[1].pityDist)));
+    });
+});
+
+describe("pity scope per rule type", () => {
+    it("scopes every rule type the way its pool detail text does", () => {
+        const scope = (ruleType: string) => {
+            const m = bannerModel({ ruleType, featuredCount: 2 });
+            return `${m.scope}/${m.carryOver}`;
+        };
+        expect(["NORMAL", "SINGLE", "DOUBLE"].map(scope)).toEqual(["standard/true", "standard/true", "standard/true"]);
+        expect(["CLASSIC", "CLASSIC_DOUBLE", "FESCLASSIC"].map(scope)).toEqual(["kernel/true", "kernel/true", "kernel/true"]);
+        // SPECIAL (Orienteering) is isolated by the user's ruling, against its own text.
+        const isolated = ["SPECIAL", "ATTAIN", "CLASSIC_ATTAIN", "BACKFLOW", "LIMITED", "LINKAGE"];
+        expect(isolated.map(scope)).toEqual(isolated.map(() => "isolated/false"));
+    });
+
+    it("seeds Standard and Kernel from their own counters", () => {
+        const rows = plan({
+            banners: [banner("S1", "SINGLE", 10, ["char_c"]), banner("K1", "CLASSIC", 40), banner("O1", "SPECIAL", 50), banner("A1", "ATTAIN", 60, ["char_e"])],
+            standardPity: 30,
+            kernelPity: 70,
+        }).rows;
+        expect(Array.from(nn(rows[0].pityDist))).toEqual(Array.from(pityAt(30)));
+        expect(Array.from(nn(rows[1].pityDist))).toEqual(Array.from(pityAt(70)));
+        expect(rows[2].pityDist).toBeNull();
+        expect(rows[3].pityDist).toBeNull();
+    });
+
+    it("starts the odds and simulator archetypes on the right counter", () => {
+        const pity = { standard: 30, kernel: 70 };
+        const start = (ruleType: string) => startPityFor(bannerModel({ ruleType, featuredCount: 2 }), pity);
+        expect(["NORMAL", "DOUBLE", "CLASSIC", "SPECIAL", "ATTAIN", "LIMITED", "LINKAGE"].map(start)).toEqual([30, 30, 70, 0, 0, 0, 0]);
+    });
+});
+
+describe("a distribution handed between banners", () => {
     it("hands back a normalised distribution that means what pityAt means", () => {
         const fresh = pullOdds(bannerModel({ ruleType: "SINGLE", featuredCount: 1 }), 0, { startPityDist: pityAt(25) });
         expect(meanPity(fresh.endPity)).toBeCloseTo(25, 9);

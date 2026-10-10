@@ -1,43 +1,25 @@
 import { Link } from "@tanstack/react-router";
-import { Home, Search } from "lucide-react";
 import type * as React from "react";
 import { Button } from "#/components/ui/button";
-import { useCommand } from "#/lib/command-context";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { messages } from "./NotFound.messages";
 
 export function NotFound(): React.ReactElement {
-    const { open: openCmd } = useCommand();
     const t: TypedT<typeof messages> = useT("common");
 
     return (
-        <section className="relative flex min-h-[60vh] flex-col items-center justify-center overflow-hidden py-16 text-center">
-            <div className="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
-                <div className="absolute top-1/2 left-1/2 h-87.5 w-150 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.08] blur-[80px]" style={{ background: "radial-gradient(circle, var(--primary) 0%, transparent 70%)" }} />
-                <div className="absolute top-1/2 left-1/2 h-50 w-75 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.05] blur-2xl" style={{ background: "radial-gradient(circle, var(--chart-2) 0%, transparent 70%)" }} />
+        <section className="flex min-h-[calc(100svh-var(--site-header-height))] flex-1 flex-col items-center justify-center gap-7 px-4 py-12">
+            <h1 className="m-0 flex select-none items-center justify-center font-black text-[clamp(120px,20vw,220px)] text-foreground leading-[0.8] tracking-[-0.06em]" aria-label="404">
+                <span aria-hidden="true">4</span>
+                <img src="/home/myrtle_fall.png" alt={t("notFound.imageAlt")} width={300} height={300} className="mx-[-0.04em] block size-[0.95em]" />
+                <span aria-hidden="true">4</span>
+            </h1>
+            <div className="flex max-w-110 flex-col gap-1.5 text-center">
+                <p className="m-0 font-semibold text-[18px] text-foreground">{t("notFound.title")}</p>
+                <p className="m-0 text-[15px] text-muted-foreground">{t("notFound.description")}</p>
             </div>
-
-            <div className="relative z-10 mx-auto flex max-w-lg flex-col items-center px-4">
-                <div className="mb-6 inline-flex size-20 items-center justify-center rounded-2xl border border-border bg-muted/30 shadow-inner">
-                    <span className="select-none font-bold font-mono text-[28px] text-primary tracking-tight [text-shadow:0_0_20px_var(--glow-primary)]">404</span>
-                </div>
-
-                <h1 className="m-0 mb-3 font-bold font-sans text-[32px] text-foreground leading-none tracking-tight sm:text-[40px]">{t("notFound.title")}</h1>
-
-                <p className="m-0 mb-8 font-sans text-[16px] text-muted-foreground leading-[1.6]">{t("notFound.description")}</p>
-
-                <div className="flex flex-col gap-3 sm:flex-row">
-                    <Button variant="default" size="lg" render={<Link to="/" />}>
-                        <Home className="size-4.5" />
-                        {t("notFound.returnHome")}
-                    </Button>
-                    <Button variant="outline" size="lg" onClick={openCmd}>
-                        <Search className="size-4.5" />
-                        {t("notFound.searchOperators")}
-                    </Button>
-                </div>
-            </div>
+            <Button render={<Link to="/" />}>{t("notFound.returnHome")}</Button>
         </section>
     );
 }

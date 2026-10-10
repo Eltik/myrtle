@@ -6,7 +6,7 @@ use crate::core::gamedata::{
         audio::build_operator_audio,
         chibi::{init_chibi_data, init_enemy_chibi_data},
         enemy_stages::build_enemy_stage_index,
-        gacha::enrich_banners,
+        gacha::{enrich_banners, mark_returning_pools},
         modules::enrich_modules_global,
         operators::{EnrichCtx, enrich_all_operators, extract_all_drones},
         skills::enrich_all_skills,
@@ -129,6 +129,7 @@ const BOOT_TABLES: &[&str] = &[
     "favor_table",
     "range_table",
     "gacha_table",
+    "open_server_table",
     "zone_table",
     "stage_table",
     "medal_table",
@@ -252,6 +253,8 @@ pub fn init_game_data_with_art(
     let favor: Favor = load_table_or_warn(data_dir, "favor_table", &mut warnings);
     let ranges: Ranges = load_table_or_warn(data_dir, "range_table", &mut warnings);
     let gacha_file: GachaTableFile = load_table_or_warn(data_dir, "gacha_table", &mut warnings);
+    let open_server_file: crate::core::gamedata::types::open_server::OpenServerTableFile =
+        load_table_or_warn(data_dir, "open_server_table", &mut warnings);
     let zone_file: ZoneTableFile = load_table_or_warn(data_dir, "zone_table", &mut warnings);
     let stage_file: StageTableFile = load_table_or_warn(data_dir, "stage_table", &mut warnings);
     let medal_file: MedalTableFile = load_table_or_warn(data_dir, "medal_table", &mut warnings);
@@ -328,6 +331,10 @@ pub fn init_game_data_with_art(
     let mut gacha = gacha_file.into_gacha_data();
     let profession_names = crate::core::gamedata::types::gacha::profession_names(&gacha.gacha_tags);
     enrich_banners(&mut gacha.gacha_pool_client, pool_details.as_ref());
+    mark_returning_pools(
+        &mut gacha.gacha_pool_client,
+        &open_server_file.returning_pool_ids(),
+    );
     let zones = zone_file.zones;
     let mut zone_chapters: std::collections::HashMap<String, String> =
         std::collections::HashMap::new();

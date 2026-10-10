@@ -1086,6 +1086,7 @@ gacha.gachaPoolClient[*].lmtgsid: null
 gacha.gachaPoolClient[*].lmtgsid: string
 gacha.gachaPoolClient[*].openTime: number
 gacha.gachaPoolClient[*].pickup6: array
+gacha.gachaPoolClient[*].returning: bool
 gacha.gachaPoolClient[*].weightUp: array
 gacha.gachaPoolClient[*]: object
 gacha.gachaTags: array
@@ -1170,6 +1171,7 @@ banners[*].lmtgsid: null
 banners[*].lmtgsid: string
 banners[*].openTime: number
 banners[*].pickup6: array
+banners[*].returning: bool
 banners[*].weightUp: array
 banners[*]: object
 voices.charDefaultTypeDict: object

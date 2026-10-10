@@ -3,61 +3,33 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "home";
 
 export const messages = {
-    "hero.changelog": {
-        text: "changelog →",
-        description: "Link in the version pill at the top of the landing hero. The arrow is part of the label.",
+    "hero.eyebrow": {
+        text: "myrtle.moe",
+        description: "Small uppercase label above the home page headline. It is the site's own name; keep it as-is unless the site is known by another name in this language.",
     },
     "hero.title": {
-        text: "The {game} companion.",
-        description: "Hero headline. {game} is the game's title from `hero.game`, rendered in the accent colour; move it wherever the sentence needs it, and translate the title itself under that key rather than here.",
+        text: "Everything Arknights.",
+        description: "Home page headline. Use the name the game is published under in this language (明日方舟 in Chinese, アークナイツ in Japanese, 명일방주 in Korean).",
     },
-    "hero.game": {
-        text: "Arknights",
-        description: "The game's own title, shown inside the hero headline in the accent colour. Use the name the game is published under in this language - 明日方舟 in Chinese, アークナイツ in Japanese, 명일방주 in Korean - or leave it as 'Arknights' where players use the English title.",
-    },
-    "hero.gameNickname": {
-        text: "Arknights",
-        description: "Easter egg. A community nickname for the game, shown as a hover tooltip on the game title in the hero headline. Vietnamese players call it 'Hòm bia ngày mai' (the grave of tomorrow). Leave it identical to `hero.game` where there is none; no tooltip is rendered then.",
-    },
-    "hero.blurb": {
-        text: "400+ operators, complete stats, community tier lists, and live roster sync.",
-        description: "Landing-page subheading. 'Operators' are the game's playable characters.",
+    "hero.lead": {
+        text: "Share your roster, plan pulls and skins, see what’s coming to EN, and check tier lists and leaderboards — all in one place.",
+        description: "Paragraph under the home page headline. A 'roster' is a player's own operator collection; 'pulls' are gacha rolls; 'EN' is the English game server.",
     },
     "hero.hint": {
         text: "Hit {keys} to jump anywhere.",
-        description: "Keyboard hint under the hero blurb. {keys} is the pair of key caps, '⌘ K' on a Mac and 'Ctrl K' elsewhere; move it wherever the sentence needs it.",
+        description: "Keyboard hint under the hero paragraph; clicking it opens the search palette. {keys} is the pair of key caps, '⌘ K' on a Mac and 'Ctrl K' elsewhere; move it wherever the sentence needs it.",
     },
-    "hero.search": {
-        text: "Search operators",
-        description: "Primary hero button; opens the search command palette.",
+    "hero.myrtleAlt": {
+        text: "Myrtle, asleep under a blanket",
+        description: "Alt text for the chibi of Myrtle (an operator, the site's mascot) beside the home page headline.",
     },
-    "hero.searchIcon": {
-        text: "Search",
-        description: "Accessible name of the magnifier icon inside the hero's search button.",
+    "hero.cue.title": {
+        text: "Want to know some of Myrtle's functions?",
+        description: "Button at the bottom of the home page hero that scrolls down to the live events. Myrtle is the site's mascot operator speaking playfully.",
     },
-    "hero.arrowIcon": {
-        text: "Right arrow",
-        description: "Accessible name of the decorative arrow icon at the end of a hero button.",
-    },
-    "hero.viewProfile": {
-        text: "View profile",
-        description: "Secondary hero button shown to a signed-in visitor; opens their own profile.",
-    },
-    "hero.linkYostar": {
-        text: "Link Yostar account",
-        description: "Secondary hero button shown to a signed-out visitor. 'Yostar' is the game publisher's account system and stays as-is.",
-    },
-    "hero.stat.operators": {
-        text: "operators",
-        description: "Caption under the operator count in the hero's stat row. Rendered uppercase by CSS. Always plural.",
-    },
-    "hero.stat.tierLists": {
-        text: "tier lists",
-        description: "Caption under the active-tier-list count in the hero's stat row. Rendered uppercase by CSS. Always plural.",
-    },
-    "hero.stat.rosters": {
-        text: "rosters synced",
-        description: "Caption under the synced-roster count in the hero's stat row. A roster is a player's own operator collection. Rendered uppercase by CSS.",
+    "hero.cue.subtitle": {
+        text: "See what's happening now",
+        description: "Second line of the scroll-down button in the home page hero; the section below lists the events and banners running now.",
     },
 } satisfies MessageMap;
 

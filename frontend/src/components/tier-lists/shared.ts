@@ -1,5 +1,4 @@
-import type { IOperator } from "#/components/home/impl/data";
-import type { ITierListBrowseItem } from "#/lib/api/tier-lists";
+import type { IOperator, ITierListBrowseItem } from "#/lib/api/tier-lists";
 import { stripMarkdown } from "#/lib/markdown";
 import { normalizeForSearch } from "#/lib/search/fuzzy";
 import { FALLBACK_TIER_COLORS } from "#/lib/utils";

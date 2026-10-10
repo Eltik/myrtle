@@ -6,7 +6,7 @@ import { type ClientGachaGroup, classifyBannerGroup, type IBanner, type IBannerP
 import { type IFormatters, type TypedRichT, useFormatters, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { IOperatorIndexEntry } from "#/types/operators";
-import { BANNER_GROUP_LABEL_KEYS, BANNER_STATUS_LABEL_KEYS, type BannerStatus } from "../../constants";
+import { BANNER_GROUP_LABEL_KEYS, BANNER_STATUS_COLOR, BANNER_STATUS_LABEL_KEYS, type BannerStatus, bannerStatus } from "../../constants";
 import type { messages as gachaConstantsMessages } from "../../constants.messages";
 import type { messages } from "./BannerRunsPanel.messages";
 
@@ -37,27 +37,18 @@ interface IBannerWithStatus {
     status: Status;
 }
 
-function statusOf(banner: IBanner, nowSec: number): Status {
-    if (nowSec < banner.openTime) return "upcoming";
-    if (nowSec > banner.endTime) return "ended";
-    return "active";
-}
-
-function fmtDateRange(openSec: number, endSec: number, f: IFormatters, t: RunsT): string {
+function fmtDateRange(banner: IBanner, f: IFormatters, t: RunsT): string {
+    // A returning pool's `endTime` is a placeholder years out, not a date to show.
+    if (banner.returning) return t("banner.window.returning");
+    const [openSec, endSec] = [banner.openTime, banner.endTime];
     const fmt = (s: number) => f.date(new Date(s * 1000), { month: "short", day: "numeric", year: "numeric" });
     return t("community.runs.dateRange", { open: fmt(openSec), close: fmt(endSec) });
 }
 
-const STATUS_COLOR: Record<Status, string> = {
-    active: "oklch(0.78 0.18 145)",
-    upcoming: "oklch(0.78 0.16 220)",
-    ended: "var(--muted-foreground)",
-};
-
 function StatusPill({ status }: { status: Status }) {
     const t: RunsT = useT("gacha");
     return (
-        <span className="inline-flex items-center gap-1.5 font-mono text-[9.5px] uppercase leading-none tracking-[0.14em]" style={{ color: STATUS_COLOR[status] }}>
+        <span className="inline-flex items-center gap-1.5 font-mono text-[9.5px] uppercase leading-none tracking-[0.14em]" style={{ color: BANNER_STATUS_COLOR[status] }}>
             <span className="block h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
             {t(BANNER_STATUS_LABEL_KEYS[status])}
         </span>
@@ -134,7 +125,7 @@ function BannerCard({ entry, operatorsById, stat, rank, rankTitle }: { entry: IB
                         </div>
                         <div className="min-w-0">
                             <div className="line-clamp-2 font-sans font-semibold text-[14px] text-foreground leading-snug">{banner.gachaPoolName}</div>
-                            <div className="mt-0.5 font-mono text-[10.5px] text-muted-foreground tabular-nums">{fmtDateRange(banner.openTime, banner.endTime, f, t)}</div>
+                            <div className="mt-0.5 font-mono text-[10.5px] text-muted-foreground tabular-nums">{fmtDateRange(banner, f, t)}</div>
                         </div>
                         <CommunityPullsLine stat={stat} />
                         {banner.featured6.length > 0 ? <FeaturedAvatars ids={banner.featured6} operatorsById={operatorsById} ringColor="oklch(0.78 0.18 80)" cap={5} /> : null}
@@ -148,11 +139,12 @@ function BannerCard({ entry, operatorsById, stat, rank, rankTitle }: { entry: IB
                             {t(BANNER_GROUP_LABEL_KEYS[group])} · {banner.gachaRuleType}
                         </span>
                         <span className="font-sans font-semibold text-[14px] text-foreground leading-snug">{banner.gachaPoolName}</span>
-                        {banner.gachaPoolSummary && banner.gachaPoolSummary !== "-" ? <span className="font-sans text-[12px] text-muted-foreground leading-snug">{banner.gachaPoolSummary}</span> : null}
+                        {/* A returning pool's summary is the runtime template "Ends at {0}", filled in per player by the client. */}
+                        {banner.gachaPoolSummary && banner.gachaPoolSummary !== "-" && !banner.returning ? <span className="font-sans text-[12px] text-muted-foreground leading-snug">{banner.gachaPoolSummary}</span> : null}
                     </div>
 
                     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                        <span className="font-sans text-[12px] text-foreground tabular-nums leading-none">{fmtDateRange(banner.openTime, banner.endTime, f, t)}</span>
+                        <span className="font-sans text-[12px] text-foreground tabular-nums leading-none">{fmtDateRange(banner, f, t)}</span>
                         <StatusPill status={status} />
                     </div>
 
@@ -262,10 +254,10 @@ export function BannerRunsPanel({ banners, operatorsById, statsById, isLoading }
         // far-future entries. Newest-first.
         return banners
             .filter((b) => b.endTime >= nowSec - PAST_WINDOW_SECS)
-            .map<IBannerWithStatus>((b) => ({ banner: b, group: classifyBannerGroup(b), status: statusOf(b, nowSec) }))
+            .map<IBannerWithStatus>((b) => ({ banner: b, group: classifyBannerGroup(b), status: bannerStatus(b, nowSec) }))
             .sort((a, b) => {
-                // Active first, then upcoming, then most-recently-ended.
-                const order: Record<Status, number> = { active: 0, upcoming: 1, ended: 2 };
+                // Active first, then upcoming, then returning-only, then most-recently-ended.
+                const order: Record<Status, number> = { active: 0, upcoming: 1, returning: 2, ended: 3 };
                 if (order[a.status] !== order[b.status]) return order[a.status] - order[b.status];
                 if (a.status === "ended") return b.banner.endTime - a.banner.endTime;
                 return a.banner.openTime - b.banner.openTime;
@@ -312,7 +304,7 @@ export function BannerRunsPanel({ banners, operatorsById, statsById, isLoading }
 
     if (isLoading) {
         return (
-            <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
+            <section id="banner-runs" className="flex scroll-mt-24 flex-col gap-4 rounded-[14px] border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
                 <div className="h-4 w-32 animate-pulse rounded bg-muted" />
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {Array.from({ length: 6 }).map((_, i) => (
@@ -329,7 +321,7 @@ export function BannerRunsPanel({ banners, operatorsById, statsById, isLoading }
     }
 
     return (
-        <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
+        <section id="banner-runs" className="flex scroll-mt-24 flex-col gap-4 rounded-[14px] border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
             <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
                 <div>
                     <Kicker className="mb-1.5">{t("community.runs.kicker")}</Kicker>

@@ -111,6 +111,8 @@ function buildBannerBands(rows: IDatePullData[], banners: IBanner[]): { byTrack:
     if (daySecs.length === 0) return { byTrack, nonEmptyTracks: [], daySecs };
 
     for (const b of banners) {
+        // A returning-players-only pool has no shared run: its table window is years long.
+        if (b.returning) continue;
         if (b.endTime < firstSec || b.openTime > lastSec) continue;
         const startIdx = lowerBoundIdx(daySecs, b.openTime);
         const endIdx = upperBoundIdx(daySecs, b.endTime);

@@ -2,7 +2,6 @@ import { randomBytes } from "node:crypto";
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { getCookie, getRequestIP, setCookie } from "@tanstack/react-start/server";
-import type { IOperator, ITierEntry, ITierList } from "#/components/home/impl/data";
 import { env } from "#/env";
 import { backendFetch } from "#/lib/fetch";
 import { sanitizeMarkdownForStorage, sanitizePlainName } from "#/lib/markdown/sanitize-input";
@@ -27,9 +26,46 @@ import { type IBackendStatus, parseError } from "./_shared";
 import { requireSiteToken } from "./_shared.server";
 import type { TierListPermissionLevel } from "./admin/types";
 import { DEFAULT_GAMEDATA_SERVER, gamedataKey, resolveGamedataServer } from "./gamedata";
-import { DEFAULT_ENTITY_KINDS, entityArtFit, type ITierEntity, isOperatorEntity, type TierEntityKind, toTierEntity } from "./tier-entities";
+import { type ArtFit, DEFAULT_ENTITY_KINDS, entityArtFit, type ITierEntity, isOperatorEntity, type TierEntityKind, toTierEntity } from "./tier-entities";
 
 export type { ITierEntity, ITierOperator, TierEntityKind } from "./tier-entities";
+
+/** A card preview's tile, the view model `toCardOperator` builds. */
+export interface IOperator {
+    id: string;
+    name: string;
+    rarity: number;
+    role: string;
+    arch: string;
+    /** Set for a non-operator placement (an enemy, an event...); absent for an operator. */
+    kind?: Exclude<TierEntityKind, "operator">;
+    /** The non-operator's resolved icon path, `null` when the extract has no art. */
+    icon?: string | null;
+    /** How the non-operator's art sits in its tile, see `entityArtFit`. */
+    fit?: ArtFit;
+}
+
+export interface ITierEntry {
+    name: string;
+    operators: IOperator[];
+    color?: string | null;
+}
+
+export interface ITierList {
+    id: string;
+    slug: string;
+    title: string;
+    tag: string;
+    stage: string;
+    author: { name: string; avatarId: string | null };
+    updated: string;
+    votes: number;
+    views: number;
+    comments: number;
+    hot?: boolean;
+    accent: string;
+    tiers: ITierEntry[];
+}
 
 const VIEW_SESSION_COOKIE = "mtl_sid";
 
@@ -64,7 +100,6 @@ type IBackendFlair = TierListFlair;
 
 type IBackendTierListDetail = TierListDetail;
 
-const HOME_TIER_LIST_LIMIT = 6;
 const BROWSE_TIER_LIST_LIMIT = 200;
 
 const PROFESSION_TO_ROLE: Record<OperatorProfession, string> = {
@@ -185,22 +220,6 @@ async function fetchTierListDetails(limit: number, server?: string): Promise<IBa
     const detailsRes = await backendFetch(`/tier-lists/details?limit=${limit}&${serverQuery(server)}`);
     if (!detailsRes.ok) throw new Error(`Failed to load tier lists: ${detailsRes.status}`);
     return (await detailsRes.json()) as IBackendTierListDetail[];
-}
-
-export const getHomeTierListsFn = createServerFn({ method: "GET" })
-    .inputValidator((server: string | undefined) => server)
-    .handler(async ({ data: server }): Promise<ITierList[]> => {
-        const details = await fetchTierListDetails(HOME_TIER_LIST_LIMIT, server);
-        return details.map((detail, i) => mapDetail(detail, i));
-    });
-
-export function homeTierListsQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
-    return queryOptions({
-        queryKey: ["tier-lists", "home", ...gamedataKey(server)],
-        queryFn: () => getHomeTierListsFn({ data: resolveGamedataServer(server) }),
-        staleTime: 5 * 60 * 1000,
-        gcTime: 60 * 60 * 1000,
-    });
 }
 
 export type TierListType = "official" | "community";

@@ -427,13 +427,19 @@ pre code {
    These live in `components`, not `utilities`, so an ordinary Tailwind utility
    on the same element still wins: `sm:mx-0` has to be able to switch
    `page-bleed` off, and a page has to be able to override the rhythm. */
+/* The sticky site header's full height, its 1px bottom border included. The
+   header sets its own height from this, so anything that has to clear the
+   header (the home scroll cue, the 404's fill) reads the same number instead
+   of restating 56 or 64 and drifting off the real 57 / 65. */
 :root {
     --page-gutter: 0.75rem;
+    --site-header-height: calc(3.5rem + 1px);
 }
 
 @media (width >= 40rem) {
     :root {
         --page-gutter: 1rem;
+        --site-header-height: calc(4rem + 1px);
     }
 }
 

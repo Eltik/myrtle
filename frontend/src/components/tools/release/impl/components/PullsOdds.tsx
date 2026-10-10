@@ -5,7 +5,7 @@ import { Card } from "#/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { useFormatters, useT } from "#/lib/i18n";
 import { oddsCurve, pullOdds } from "../pulls/odds";
-import { bannerModel, type IBannerModel } from "../pulls/rates";
+import { bannerModel, type IBannerModel, type ISharedPity, startPityFor } from "../pulls/rates";
 import { type BannerArchetype, BannerModelNote, PullsNumber, type PullsT, Stat, useBannerLabel, usePct } from "./PullsShared";
 import { SectionTitle } from "./shared";
 
@@ -29,7 +29,8 @@ const MAX_COPIES = 6;
 interface IPullsOddsProps {
     /** Rolls the projection expects at the horizon, offered as a shortcut. */
     budget: number;
-    pity: number;
+    /** The user's pity on the Standard and Kernel counters, which are separate. */
+    pity: ISharedPity;
 }
 
 export function PullsOdds({ budget, pity }: IPullsOddsProps): React.ReactElement {
@@ -47,7 +48,7 @@ export function PullsOdds({ budget, pity }: IPullsOddsProps): React.ReactElement
         return bannerModel({ ruleType: a.ruleType, featuredCount: a.featuredCount });
     }, [ruleType]);
 
-    const startPity = model.carryOver ? pity : 0;
+    const startPity = startPityFor(model, pity);
     const result = React.useMemo(() => pullOdds(model, pulls, { startPity, maxCopies: MAX_COPIES }), [model, pulls, startPity]);
     const curve = React.useMemo(() => oddsCurve(model, Math.max(pulls, 300), { startPity }), [model, pulls, startPity]);
     const chartRows = React.useMemo(() => curve.filter((_, i) => i % 2 === 0).map((p) => ({ pulls: p.pulls, specific: p.specific * 100, any: p.any * 100 })), [curve]);

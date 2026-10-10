@@ -121,9 +121,17 @@ export const messages = {
         text: "Kernel Special Headhunting",
         description: "Banner category: a guaranteed-pick banner drawn from the older-operator pool.",
     },
+    "release.tag.banner.classicDouble": {
+        text: "Kernel double rate-up",
+        description: "Banner category: two boosted 6-stars drawn from the older-operator (Kernel) pool. 'Kernel' is the game's own English name for that pool; 'rate-up' is its term for a boosted pull chance.",
+    },
     "release.tag.banner.fesClassic": {
         text: "Anniversary Kernel",
         description: "Banner category: the anniversary run of the older-operator pool.",
+    },
+    "release.tag.banner.backflow": {
+        text: "Returning Headhunting",
+        description: "Banner category: the recruitment banner offered only to players coming back after a long absence. The game's own English name.",
     },
 } satisfies MessageMap;
 

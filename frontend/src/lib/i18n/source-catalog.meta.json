@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-09T12:57:43.497Z",
+    "generatedAt": "2026-10-10T00:11:50.226Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -6679,29 +6679,29 @@
         {
             "key": "common.notFound.description",
             "namespace": "common",
-            "source_text": "The page you are looking for does not exist, has been moved, or is temporarily unavailable.",
-            "description": "Body copy of the 404 page.",
+            "source_text": "There's nothing here right now.",
+            "description": "Second line of the 404 page, under the heading: the page the visitor asked for does not exist.",
+            "placeholders": []
+        },
+        {
+            "key": "common.notFound.imageAlt",
+            "namespace": "common",
+            "source_text": "Myrtle, face-down after dropping her snacks",
+            "description": "Alt text for the chibi of Myrtle that stands in for the 0 of the giant 404.",
             "placeholders": []
         },
         {
             "key": "common.notFound.returnHome",
             "namespace": "common",
-            "source_text": "Return Home",
-            "description": "Primary 404 action: navigates to the site root.",
-            "placeholders": []
-        },
-        {
-            "key": "common.notFound.searchOperators",
-            "namespace": "common",
-            "source_text": "Search operators",
-            "description": "Secondary 404 action: opens the command palette.",
+            "source_text": "Take me home",
+            "description": "The only 404 action: navigates to the site root.",
             "placeholders": []
         },
         {
             "key": "common.notFound.title",
             "namespace": "common",
-            "source_text": "Lost in the Wastes",
-            "description": "Heading of the 404 page. A Terra-flavoured 'page not found'; a literal translation is fine if the setting has no equivalent.",
+            "source_text": "We're counting on you again today, little apple.",
+            "description": "Heading line of the 404 page, a line Myrtle says in-game. Keep it warm and in character rather than literal.",
             "placeholders": []
         },
         {
@@ -8003,6 +8003,13 @@
             "placeholders": []
         },
         {
+            "key": "gacha.banner.rule.backflow",
+            "namespace": "gacha",
+            "source_text": "Returning Headhunting",
+            "description": "Readable name for a banner's rule type: the recruitment banner offered only to players coming back after a long absence. The game's own English name.",
+            "placeholders": []
+        },
+        {
             "key": "gacha.banner.rule.classic",
             "namespace": "gacha",
             "source_text": "Kernel headhunting",
@@ -8087,10 +8094,24 @@
             "placeholders": []
         },
         {
+            "key": "gacha.banner.status.returning",
+            "namespace": "gacha",
+            "source_text": "Returning Doctors only",
+            "description": "Banner status pill: the banner is offered only to players coming back after a long absence, each on their own schedule, so it has no shared run window. 'Doctor' is how the game addresses the player.",
+            "placeholders": []
+        },
+        {
             "key": "gacha.banner.status.upcoming",
             "namespace": "gacha",
             "source_text": "Upcoming",
             "description": "Banner status pill: the banner has been announced but has not opened yet.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.banner.window.returning",
+            "namespace": "gacha",
+            "source_text": "No fixed dates, opens for each Doctor on their return",
+            "description": "Shown in place of a banner's date range when the game times it per player. 'Doctor' is how the game addresses the player.",
             "placeholders": []
         },
         {
@@ -10783,377 +10804,229 @@
             ]
         },
         {
-            "key": "home.card.arrowIcon",
+            "key": "home.hero.cue.subtitle",
             "namespace": "home",
-            "source_text": "Right arrow",
-            "description": "Accessible name of the decorative arrow icon after the 'Open' call to action.",
+            "source_text": "See what's happening now",
+            "description": "Second line of the scroll-down button in the home page hero; the section below lists the events and banners running now.",
             "placeholders": []
         },
         {
-            "key": "home.card.favorites",
+            "key": "home.hero.cue.title",
             "namespace": "home",
-            "source_text": "{count} favorites",
-            "description": "Hover title of the favourite counter on a tier-list card. Always plural in the source, and {count} is rendered unformatted.",
-            "placeholders": [
-                "count"
-            ]
-        },
-        {
-            "key": "home.card.ghost",
-            "namespace": "home",
-            "source_text": "+ {names}{extra} {count, plural, one {tier} other {tiers}}",
-            "description": "Summary of the tiers below the top one on a tier-list card, e.g. '+ B, C, D +2 tiers'. {names} is a comma-joined list of tier names from the data, {extra} is an already-formatted ' +N' overflow marker or empty, and {count} is the total number of remaining tiers.",
-            "placeholders": [
-                "count",
-                "extra",
-                "names"
-            ]
-        },
-        {
-            "key": "home.card.opTitle",
-            "namespace": "home",
-            "source_text": "{name} · {role}",
-            "description": "Hover title of an operator chip on a tier-list card. Both values come from the game data and are not translated.",
-            "placeholders": [
-                "name",
-                "role"
-            ]
-        },
-        {
-            "key": "home.card.open",
-            "namespace": "home",
-            "source_text": "Open",
-            "description": "Call to action in the footer of a tier-list card. A verb: it opens the full list.",
+            "source_text": "Want to know some of Myrtle's functions?",
+            "description": "Button at the bottom of the home page hero that scrolls down to the live events. Myrtle is the site's mascot operator speaking playfully.",
             "placeholders": []
         },
         {
-            "key": "home.card.picks",
+            "key": "home.hero.eyebrow",
             "namespace": "home",
-            "source_text": "{count, plural, one {# pick} other {# picks}}",
-            "description": "How many operators sit in the card's top tier. Shown to the right of the tier name.",
-            "placeholders": [
-                "count"
-            ]
-        },
-        {
-            "key": "home.card.trending",
-            "namespace": "home",
-            "source_text": "· trending",
-            "description": "Suffix appended to a tier-list card's tag pill when the list is trending. The leading middle dot is a separator and part of the label.",
-            "placeholders": []
-        },
-        {
-            "key": "home.card.views",
-            "namespace": "home",
-            "source_text": "{count} views",
-            "description": "Hover title of the view counter on a tier-list card. Always plural in the source, and {count} is rendered unformatted to match the number shown next to it.",
-            "placeholders": [
-                "count"
-            ]
-        },
-        {
-            "key": "home.card.viewsIcon",
-            "namespace": "home",
-            "source_text": "Views",
-            "description": "Accessible name of the eye icon in front of a tier-list card's view count.",
-            "placeholders": []
-        },
-        {
-            "key": "home.card.votesIcon",
-            "namespace": "home",
-            "source_text": "Votes",
-            "description": "Accessible name of the chevron icon in front of a tier-list card's favourite count.",
-            "placeholders": []
-        },
-        {
-            "key": "home.cmd.group.operators",
-            "namespace": "home",
-            "source_text": "Operators",
-            "description": "Group heading above the sample operators (playable characters) in the command-palette mockup.",
-            "placeholders": []
-        },
-        {
-            "key": "home.cmd.group.tools",
-            "namespace": "home",
-            "source_text": "Tools",
-            "description": "Group heading above the sample tools (calculators, planners) in the command-palette mockup.",
-            "placeholders": []
-        },
-        {
-            "key": "home.cmd.helpMe",
-            "namespace": "home",
-            "source_text": "Help Me",
-            "description": "Small link at the end of the command-palette mockup footer, after the COSS UI attribution. Opens the deliberately ugly joke page that begs for UI design help.",
-            "placeholders": []
-        },
-        {
-            "key": "home.cmd.open",
-            "namespace": "home",
-            "source_text": "Open command palette",
-            "description": "Accessible name of the fake search field in the landing-page command-palette mockup; clicking it opens the real palette.",
-            "placeholders": []
-        },
-        {
-            "key": "home.cmd.poweredBy",
-            "namespace": "home",
-            "source_text": "powered by COSS UI",
-            "description": "Attribution in the command-palette mockup footer. 'COSS UI' is a product name and stays as-is.",
-            "placeholders": []
-        },
-        {
-            "key": "home.cmd.searchIcon",
-            "namespace": "home",
-            "source_text": "Search",
-            "description": "Accessible name of the magnifier icon in the command-palette mockup.",
-            "placeholders": []
-        },
-        {
-            "key": "home.cmd.toNavigate",
-            "namespace": "home",
-            "source_text": "to navigate",
-            "description": "Footer hint in the command-palette mockup, read after the up and down arrow key caps: 'up down to navigate'.",
-            "placeholders": []
-        },
-        {
-            "key": "home.cmd.toSelect",
-            "namespace": "home",
-            "source_text": "to select",
-            "description": "Footer hint in the command-palette mockup, read after the enter key cap: 'enter to select'.",
-            "placeholders": []
-        },
-        {
-            "key": "home.feature.arrowIcon",
-            "namespace": "home",
-            "source_text": "Right arrow",
-            "description": "Accessible name of the decorative arrow icon after the 'Explore' link.",
-            "placeholders": []
-        },
-        {
-            "key": "home.feature.data.desc",
-            "namespace": "home",
-            "source_text": "Skills, talents, modules, skins, voice lines. Filter by faction, archetype, or tag.",
-            "description": "Body of the first landing-page feature card. Every noun here is a game concept; 'archetype' is an operator's sub-class.",
-            "placeholders": []
-        },
-        {
-            "key": "home.feature.data.kicker",
-            "namespace": "home",
-            "source_text": "Live data",
-            "description": "Eyebrow label on the first landing-page feature card. Rendered uppercase.",
-            "placeholders": []
-        },
-        {
-            "key": "home.feature.data.title",
-            "namespace": "home",
-            "source_text": "400+ operators, instant search",
-            "description": "Headline of the first landing-page feature card. 'Operators' are the game's playable characters.",
-            "placeholders": []
-        },
-        {
-            "key": "home.feature.explore",
-            "namespace": "home",
-            "source_text": "Explore",
-            "description": "Link at the foot of every landing-page feature card, followed by an arrow icon. A verb.",
-            "placeholders": []
-        },
-        {
-            "key": "home.feature.sync.desc",
-            "namespace": "home",
-            "source_text": "Link a Yostar account and see your live box, E2 progress, base layout in real time.",
-            "description": "Body of the second landing-page feature card. 'Yostar' is the publisher's account system, 'box' is community slang for the operators a player owns, and 'E2' is the game's second promotion tier - all three stay as-is.",
-            "placeholders": []
-        },
-        {
-            "key": "home.feature.sync.kicker",
-            "namespace": "home",
-            "source_text": "Roster sync",
-            "description": "Eyebrow label on the second landing-page feature card. A roster is a player's own operator collection. Rendered uppercase.",
-            "placeholders": []
-        },
-        {
-            "key": "home.feature.sync.title",
-            "namespace": "home",
-            "source_text": "Your account, mirrored",
-            "description": "Headline of the second landing-page feature card.",
-            "placeholders": []
-        },
-        {
-            "key": "home.feature.tools.desc",
-            "namespace": "home",
-            "source_text": "Interactive calculators and community-maintained tier lists for every stage meta.",
-            "description": "Body of the third landing-page feature card. 'Stage' is a game level and 'meta' is community shorthand for the prevailing strategy.",
-            "placeholders": []
-        },
-        {
-            "key": "home.feature.tools.kicker",
-            "namespace": "home",
-            "source_text": "Tools",
-            "description": "Eyebrow label on the third landing-page feature card. Rendered uppercase.",
-            "placeholders": []
-        },
-        {
-            "key": "home.feature.tools.title",
-            "namespace": "home",
-            "source_text": "DPS, recruit, randomizer",
-            "description": "Headline of the third landing-page feature card, naming three calculators. 'DPS' is damage per second.",
-            "placeholders": []
-        },
-        {
-            "key": "home.hero.arrowIcon",
-            "namespace": "home",
-            "source_text": "Right arrow",
-            "description": "Accessible name of the decorative arrow icon at the end of a hero button.",
-            "placeholders": []
-        },
-        {
-            "key": "home.hero.blurb",
-            "namespace": "home",
-            "source_text": "400+ operators, complete stats, community tier lists, and live roster sync.",
-            "description": "Landing-page subheading. 'Operators' are the game's playable characters.",
-            "placeholders": []
-        },
-        {
-            "key": "home.hero.changelog",
-            "namespace": "home",
-            "source_text": "changelog →",
-            "description": "Link in the version pill at the top of the landing hero. The arrow is part of the label.",
-            "placeholders": []
-        },
-        {
-            "key": "home.hero.game",
-            "namespace": "home",
-            "source_text": "Arknights",
-            "description": "The game's own title, shown inside the hero headline in the accent colour. Use the name the game is published under in this language - 明日方舟 in Chinese, アークナイツ in Japanese, 명일방주 in Korean - or leave it as 'Arknights' where players use the English title.",
-            "placeholders": []
-        },
-        {
-            "key": "home.hero.gameNickname",
-            "namespace": "home",
-            "source_text": "Arknights",
-            "description": "Easter egg. A community nickname for the game, shown as a hover tooltip on the game title in the hero headline. Vietnamese players call it 'Hòm bia ngày mai' (the grave of tomorrow). Leave it identical to `hero.game` where there is none; no tooltip is rendered then.",
+            "source_text": "myrtle.moe",
+            "description": "Small uppercase label above the home page headline. It is the site's own name; keep it as-is unless the site is known by another name in this language.",
             "placeholders": []
         },
         {
             "key": "home.hero.hint",
             "namespace": "home",
             "source_text": "Hit {keys} to jump anywhere.",
-            "description": "Keyboard hint under the hero blurb. {keys} is the pair of key caps, '⌘ K' on a Mac and 'Ctrl K' elsewhere; move it wherever the sentence needs it.",
+            "description": "Keyboard hint under the hero paragraph; clicking it opens the search palette. {keys} is the pair of key caps, '⌘ K' on a Mac and 'Ctrl K' elsewhere; move it wherever the sentence needs it.",
             "placeholders": [
                 "keys"
             ]
         },
         {
-            "key": "home.hero.linkYostar",
+            "key": "home.hero.lead",
             "namespace": "home",
-            "source_text": "Link Yostar account",
-            "description": "Secondary hero button shown to a signed-out visitor. 'Yostar' is the game publisher's account system and stays as-is.",
+            "source_text": "Share your roster, plan pulls and skins, see what’s coming to EN, and check tier lists and leaderboards — all in one place.",
+            "description": "Paragraph under the home page headline. A 'roster' is a player's own operator collection; 'pulls' are gacha rolls; 'EN' is the English game server.",
             "placeholders": []
         },
         {
-            "key": "home.hero.search",
+            "key": "home.hero.myrtleAlt",
             "namespace": "home",
-            "source_text": "Search operators",
-            "description": "Primary hero button; opens the search command palette.",
-            "placeholders": []
-        },
-        {
-            "key": "home.hero.searchIcon",
-            "namespace": "home",
-            "source_text": "Search",
-            "description": "Accessible name of the magnifier icon inside the hero's search button.",
-            "placeholders": []
-        },
-        {
-            "key": "home.hero.stat.operators",
-            "namespace": "home",
-            "source_text": "operators",
-            "description": "Caption under the operator count in the hero's stat row. Rendered uppercase by CSS. Always plural.",
-            "placeholders": []
-        },
-        {
-            "key": "home.hero.stat.rosters",
-            "namespace": "home",
-            "source_text": "rosters synced",
-            "description": "Caption under the synced-roster count in the hero's stat row. A roster is a player's own operator collection. Rendered uppercase by CSS.",
-            "placeholders": []
-        },
-        {
-            "key": "home.hero.stat.tierLists",
-            "namespace": "home",
-            "source_text": "tier lists",
-            "description": "Caption under the active-tier-list count in the hero's stat row. Rendered uppercase by CSS. Always plural.",
+            "source_text": "Myrtle, asleep under a blanket",
+            "description": "Alt text for the chibi of Myrtle (an operator, the site's mascot) beside the home page headline.",
             "placeholders": []
         },
         {
             "key": "home.hero.title",
             "namespace": "home",
-            "source_text": "The {game} companion.",
-            "description": "Hero headline. {game} is the game's title from `hero.game`, rendered in the accent colour; move it wherever the sentence needs it, and translate the title itself under that key rather than here.",
+            "source_text": "Everything Arknights.",
+            "description": "Home page headline. Use the name the game is published under in this language (明日方舟 in Chinese, アークナイツ in Japanese, 명일방주 in Korean).",
+            "placeholders": []
+        },
+        {
+            "key": "home.leaders.empty",
+            "namespace": "home",
+            "source_text": "No ranked players yet.",
+            "description": "Shown in the home page's top-five panel when the leaderboard is empty.",
+            "placeholders": []
+        },
+        {
+            "key": "home.leaders.error",
+            "namespace": "home",
+            "source_text": "Couldn't load the leaderboard.",
+            "description": "Shown in the home page's top-five panel when the leaderboard failed to load.",
+            "placeholders": []
+        },
+        {
+            "key": "home.leaders.eyebrow",
+            "namespace": "home",
+            "source_text": "Leaderboard",
+            "description": "Small uppercase label above the home page's top-five player panel.",
+            "placeholders": []
+        },
+        {
+            "key": "home.leaders.meta",
+            "namespace": "home",
+            "source_text": "{server} · Lv {level}",
+            "description": "Second line of a player row on the home page leaderboard. {server} is a game server code such as 'EN' or 'CN'; {level} is the player's account level.",
             "placeholders": [
-                "game"
+                "level",
+                "server"
             ]
         },
         {
-            "key": "home.hero.viewProfile",
+            "key": "home.leaders.seeAll",
             "namespace": "home",
-            "source_text": "View profile",
-            "description": "Secondary hero button shown to a signed-in visitor; opens their own profile.",
+            "source_text": "Full leaderboard →",
+            "description": "Link from the home page's top-five panel to the full leaderboard. The arrow is part of the label.",
             "placeholders": []
         },
         {
-            "key": "home.tierLists.arrowIcon",
+            "key": "home.leaders.title",
             "namespace": "home",
-            "source_text": "Right arrow",
-            "description": "Accessible name of the decorative arrow icon in the 'Browse all tier lists' link.",
+            "source_text": "Top Doctors",
+            "description": "Heading of the home page's top-five player panel. 'Doctor' is what the game calls the player; use the game's own term.",
             "placeholders": []
         },
         {
-            "key": "home.tierLists.blurb",
+            "key": "home.leaders.viewProfile",
             "namespace": "home",
-            "source_text": "Previews from the most-watched community lists. Click any card to open the full ranking.",
-            "description": "Caption under the tier-list section heading on the landing page.",
+            "source_text": "View {nickname}'s profile",
+            "description": "Accessible name of a player row on the home page leaderboard, which opens that player's profile.",
+            "placeholders": [
+                "nickname"
+            ]
+        },
+        {
+            "key": "home.live.bannerKind",
+            "namespace": "home",
+            "source_text": "{kind} banner",
+            "description": "Tag on a running banner's card on the home page. {kind} is the banner type, such as 'Limited' or 'Kernel'. A banner is a gacha pool.",
+            "placeholders": [
+                "kind"
+            ]
+        },
+        {
+            "key": "home.live.bannerMore",
+            "namespace": "home",
+            "source_text": "{names} +{count} more",
+            "description": "A banner's featured operators when there are more than three: {names} is the first two, comma-separated, and {count} is how many are left out.",
+            "placeholders": [
+                "count",
+                "names"
+            ]
+        },
+        {
+            "key": "home.live.bannerUnlisted",
+            "namespace": "home",
+            "source_text": "Rate-up operators not listed",
+            "description": "Second line of a running banner's card on the home page when the game data names no boosted operators for it and has no art for it. 'Rate-up' is the game's term for a boosted pull chance.",
             "placeholders": []
         },
         {
-            "key": "home.tierLists.browseAll",
+            "key": "home.live.countdown",
             "namespace": "home",
-            "source_text": "Browse all tier lists",
-            "description": "Link under the tier-list previews; opens the full tier-list index.",
+            "source_text": "{days}d {clock}",
+            "description": "Time left before an event or banner closes, ticking every second. {days} is whole days; {clock} is hours, minutes and seconds as HH:MM:SS. Keep it short.",
+            "placeholders": [
+                "clock",
+                "days"
+            ]
+        },
+        {
+            "key": "home.live.empty",
+            "namespace": "home",
+            "source_text": "Nothing running on {server} right now.",
+            "description": "Shown in the home page's live section when no event or banner is open. {server} is the game server's region name, such as 'Global' or 'China'.",
+            "placeholders": [
+                "server"
+            ]
+        },
+        {
+            "key": "home.live.ended",
+            "namespace": "home",
+            "source_text": "ended",
+            "description": "Shown in place of the countdown once an event or banner has closed.",
             "placeholders": []
         },
         {
-            "key": "home.tierLists.empty",
+            "key": "home.live.error",
             "namespace": "home",
-            "source_text": "No tier lists yet. Be the first to publish one.",
-            "description": "Empty state shown when no community tier list has been published.",
+            "source_text": "Couldn't load what's running on {server}.",
+            "description": "Shown in the home page's live section when the event or banner data failed to load. {server} is the game server's region name, such as 'Global' or 'China'.",
+            "placeholders": [
+                "server"
+            ]
+        },
+        {
+            "key": "home.live.eventDetail",
+            "namespace": "home",
+            "source_text": "Event · ends {date}",
+            "description": "Second line of a running event's card on the home page. {date} is a short month and day, such as 'Oct 7'.",
+            "placeholders": [
+                "date"
+            ]
+        },
+        {
+            "key": "home.live.eyebrow",
+            "namespace": "home",
+            "source_text": "Happening now · {server}",
+            "description": "Small uppercase label above the home page's list of running events and banners. {server} is the game server the reader picked, by region name, such as 'Global' or 'China'.",
+            "placeholders": [
+                "server"
+            ]
+        },
+        {
+            "key": "home.live.seeAll",
+            "namespace": "home",
+            "source_text": "All current banners →",
+            "description": "Link from the home page's live section to the community gacha page, which lists every banner open right now on the reader's game server. The arrow is part of the label.",
             "placeholders": []
         },
         {
-            "key": "home.tierLists.error",
+            "key": "home.live.title",
             "namespace": "home",
-            "source_text": "Failed to load tier lists. Try refreshing the page.",
-            "description": "Shown in place of the tier-list cards when their request failed.",
+            "source_text": "Ending soonest",
+            "description": "Heading of the home page section listing the running events and banners that close first.",
             "placeholders": []
         },
         {
-            "key": "home.tierLists.filter.all",
+            "key": "home.live.upcoming",
             "namespace": "home",
-            "source_text": "All",
-            "description": "First tab of the tier-list tag filter, meaning 'no tag filter'. The other tabs are tag names from the data and are not translated.",
+            "source_text": "See what's coming next →",
+            "description": "Link under the empty message in the home page's live section, to the release planner, which forecasts upcoming events and banners. Shown only on the server the planner forecasts. The arrow is part of the label.",
             "placeholders": []
         },
         {
-            "key": "home.tierLists.kicker",
+            "key": "home.updates.eyebrow",
             "namespace": "home",
-            "source_text": "Community",
-            "description": "Eyebrow label above the tier-list preview section on the landing page. Rendered uppercase.",
+            "source_text": "What’s new",
+            "description": "Small uppercase label above the home page's latest release notes panel.",
             "placeholders": []
         },
         {
-            "key": "home.tierLists.title",
+            "key": "home.updates.seeAll",
             "namespace": "home",
-            "source_text": "Tier lists, at a glance.",
-            "description": "Heading of the tier-list preview section on the landing page. A tier list ranks operators into named tiers.",
+            "source_text": "Changelog →",
+            "description": "Link from the home page's latest-updates panel to the full changelog page. The arrow is part of the label.",
+            "placeholders": []
+        },
+        {
+            "key": "home.updates.title",
+            "namespace": "home",
+            "source_text": "Latest updates",
+            "description": "Heading of the home page panel listing the newest release notes.",
             "placeholders": []
         },
         {
@@ -36030,19 +35903,17 @@
             ]
         },
         {
-            "key": "tools.release.badge.since",
+            "key": "tools.release.badge.returning",
             "namespace": "tools",
-            "source_text": "since {date}",
-            "description": "Shown in place of a date range for a pool that opened once and never closed.",
-            "placeholders": [
-                "date"
-            ]
+            "source_text": "Returning Doctors only",
+            "description": "Shown in place of a date for the Returning Headhunting banner, which the game offers only to players coming back after a long absence. 'Doctor' is how the game addresses the player.",
+            "placeholders": []
         },
         {
-            "key": "tools.release.badge.standing",
+            "key": "tools.release.badge.returning.title",
             "namespace": "tools",
-            "source_text": "standing pool",
-            "description": "Shown in place of a relative day for a banner that is permanently available. 'Standing' means always open.",
+            "source_text": "Offered only to Doctors returning after a long absence. Each one gets their own window, so there is no calendar date.",
+            "description": "Tooltip on 'Returning Doctors only'. 'Doctor' is how the game addresses the player.",
             "placeholders": []
         },
         {
@@ -36213,15 +36084,6 @@
             "source_text": "Show past",
             "description": "Switch label: also list banners whose window has already closed.",
             "placeholders": []
-        },
-        {
-            "key": "tools.release.banners.since",
-            "namespace": "tools",
-            "source_text": "since {date}",
-            "description": "Shown in place of a date for a pool that opened once and never closed.",
-            "placeholders": [
-                "date"
-            ]
         },
         {
             "key": "tools.release.banners.with",
@@ -38252,31 +38114,52 @@
             "placeholders": []
         },
         {
-            "key": "tools.release.pulls.resources.pity",
+            "key": "tools.release.pulls.resources.pityKernel",
             "namespace": "tools",
-            "source_text": "Pulls since last 6★",
-            "description": "Input label for the pity counter: how many draws since the last six-star operator.",
+            "source_text": "Kernel pity",
+            "description": "Input label for the Kernel pity counter: how many draws on Kernel banners since the last six-star operator. 'Kernel' is an Arknights banner family.",
             "placeholders": []
         },
         {
-            "key": "tools.release.pulls.resources.pityHint",
+            "key": "tools.release.pulls.resources.pityKernelHint",
             "namespace": "tools",
-            "source_text": "Counts on Standard and Kernel banners, which share a counter. Limited and collab banners always start you at zero.",
-            "description": "Explanation in the info popover beside the pity input. 'Standard', 'Kernel', 'Limited' and collab are Arknights banner families.",
+            "source_text": "Pulls since your last 6★ on Kernel banners, a separate counter from Standard. Every other banner keeps its own count and starts you at zero.",
+            "description": "Explanation in the info popover beside the Kernel pity input. 'Kernel' and 'Standard' are Arknights banner families.",
             "placeholders": []
         },
         {
-            "key": "tools.release.pulls.resources.pityHint.aria",
+            "key": "tools.release.pulls.resources.pityKernelHint.aria",
             "namespace": "tools",
-            "source_text": "About the pity counter",
-            "description": "Accessible name of the info button beside the pity input that opens the explanation.",
+            "source_text": "About the Kernel pity counter",
+            "description": "Accessible name of the info button beside the Kernel pity input that opens the explanation.",
             "placeholders": []
         },
         {
             "key": "tools.release.pulls.resources.pityManual",
             "namespace": "tools",
-            "source_text": "Type this one in yourself: the game does not report it, so it is the one figure your account cannot fill.",
-            "description": "Note under the resource inputs saying the pity counter is not synced from the account, unlike the boxes beside it.",
+            "source_text": "Type the two pity counts in yourself: the game does not report them, so they are the figures your account cannot fill.",
+            "description": "Note under the resource inputs saying the two pity counters are not synced from the account, unlike the boxes beside them.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.resources.pityStandard",
+            "namespace": "tools",
+            "source_text": "Standard pity",
+            "description": "Input label for the Standard pity counter: how many draws on Standard banners since the last six-star operator. 'Standard' is an Arknights banner family.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.resources.pityStandardHint",
+            "namespace": "tools",
+            "source_text": "Pulls since your last 6★ on Standard banners. It carries from one Standard banner to the next and nowhere else.",
+            "description": "Explanation in the info popover beside the Standard pity input.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.resources.pityStandardHint.aria",
+            "namespace": "tools",
+            "source_text": "About the Standard pity counter",
+            "description": "Accessible name of the info button beside the Standard pity input that opens the explanation.",
             "placeholders": []
         },
         {
@@ -38738,6 +38621,13 @@
             "placeholders": []
         },
         {
+            "key": "tools.release.tag.banner.backflow",
+            "namespace": "tools",
+            "source_text": "Returning Headhunting",
+            "description": "Banner category: the recruitment banner offered only to players coming back after a long absence. The game's own English name.",
+            "placeholders": []
+        },
+        {
             "key": "tools.release.tag.banner.classic",
             "namespace": "tools",
             "source_text": "Kernel",
@@ -38749,6 +38639,13 @@
             "namespace": "tools",
             "source_text": "Kernel Special Headhunting",
             "description": "Banner category: a guaranteed-pick banner drawn from the older-operator pool.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.banner.classicDouble",
+            "namespace": "tools",
+            "source_text": "Kernel double rate-up",
+            "description": "Banner category: two boosted 6-stars drawn from the older-operator (Kernel) pool. 'Kernel' is the game's own English name for that pool; 'rate-up' is its term for a boosted pull chance.",
             "placeholders": []
         },
         {

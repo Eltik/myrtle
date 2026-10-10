@@ -170,8 +170,10 @@ export interface IPlanInput {
     days: IProjectedDay[];
     model: LagModel | null;
     today: Date;
-    /** Rolls since the user's last 6* on the shared counters, at the start. */
-    pity: number;
+    /** Rolls since the user's last 6* on the Standard counter, at the start. */
+    standardPity: number;
+    /** Rolls since the user's last 6* on the Kernel counter, at the start. A separate counter. */
+    kernelPity: number;
     /** Rolls committed per banner key. Absent means nothing committed. */
     allocations: Record<string, number | undefined>;
     /** Copies wanted per operator, per banner key. Absent means none picked. */
@@ -212,10 +214,10 @@ function bankAt(days: IProjectedDay[], at: number, spendOriginite: boolean): num
     return spendOriginite ? day.pullsWithOriginite : day.pulls;
 }
 
-export function buildPlan({ banners, days, model, today, pity, allocations, targets, spendOriginite, countFreePulls, limit = 40 }: IPlanInput): IPlan {
+export function buildPlan({ banners, days, model, today, standardPity, kernelPity, allocations, targets, spendOriginite, countFreePulls, limit = 40 }: IPlanInput): IPlan {
     const upcoming: { banner: ReleaseBanner; enStart: number }[] = [];
     for (const banner of banners) {
-        if (banner.standing) continue;
+        if (banner.returning) continue;
         if (isPast(sortKey(banner.resolution, banner.cnOpen, model), today)) continue;
         const enStart = resolvedEnStart(banner.resolution);
         if (enStart === null) continue;
@@ -227,8 +229,8 @@ export function buildPlan({ banners, days, model, today, pity, allocations, targ
     // One carried counter per shared scope. An isolated banner reads neither and
     // writes neither, which is the whole content of "cleared at the end".
     const carried: Record<Exclude<PityScope, "isolated">, Float64Array> = {
-        standard: pityAt(pity),
-        kernel: pityAt(pity),
+        standard: pityAt(standardPity),
+        kernel: pityAt(kernelPity),
     };
 
     /**
@@ -291,8 +293,11 @@ export function buildPlan({ banners, days, model, today, pity, allocations, targ
             estimates.set(estimateKey, estimate);
         }
 
-        // Only a shared counter keeps what this banner did to it.
-        if (shared) carried[bm.scope === "kernel" ? "kernel" : "standard"] = odds.endPity;
+        // Only a shared counter keeps what this banner did to it, and a banner the
+        // player skips (no rolls at all) did nothing to it: the counter carries past
+        // it as the SAME array, neither reset nor accumulated. Writing back the
+        // zero-roll `endPity` would hand over a renormalised copy instead.
+        if (shared && totalPulls > 0) carried[bm.scope === "kernel" ? "kernel" : "standard"] = odds.endPity;
 
         committed += spent;
         totalAllocated += allocated;

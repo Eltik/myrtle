@@ -36,21 +36,33 @@ export const messages = {
         text: "Originite Prime",
         description: "Input label. Originite Prime is the premium currency; do not translate.",
     },
-    "release.pulls.resources.pity": {
-        text: "Pulls since last 6★",
-        description: "Input label for the pity counter: how many draws since the last six-star operator.",
+    "release.pulls.resources.pityStandard": {
+        text: "Standard pity",
+        description: "Input label for the Standard pity counter: how many draws on Standard banners since the last six-star operator. 'Standard' is an Arknights banner family.",
     },
-    "release.pulls.resources.pityHint": {
-        text: "Counts on Standard and Kernel banners, which share a counter. Limited and collab banners always start you at zero.",
-        description: "Explanation in the info popover beside the pity input. 'Standard', 'Kernel', 'Limited' and collab are Arknights banner families.",
+    "release.pulls.resources.pityStandardHint": {
+        text: "Pulls since your last 6★ on Standard banners. It carries from one Standard banner to the next and nowhere else.",
+        description: "Explanation in the info popover beside the Standard pity input.",
     },
-    "release.pulls.resources.pityHint.aria": {
-        text: "About the pity counter",
-        description: "Accessible name of the info button beside the pity input that opens the explanation.",
+    "release.pulls.resources.pityStandardHint.aria": {
+        text: "About the Standard pity counter",
+        description: "Accessible name of the info button beside the Standard pity input that opens the explanation.",
+    },
+    "release.pulls.resources.pityKernel": {
+        text: "Kernel pity",
+        description: "Input label for the Kernel pity counter: how many draws on Kernel banners since the last six-star operator. 'Kernel' is an Arknights banner family.",
+    },
+    "release.pulls.resources.pityKernelHint": {
+        text: "Pulls since your last 6★ on Kernel banners, a separate counter from Standard. Every other banner keeps its own count and starts you at zero.",
+        description: "Explanation in the info popover beside the Kernel pity input. 'Kernel' and 'Standard' are Arknights banner families.",
+    },
+    "release.pulls.resources.pityKernelHint.aria": {
+        text: "About the Kernel pity counter",
+        description: "Accessible name of the info button beside the Kernel pity input that opens the explanation.",
     },
     "release.pulls.resources.pityManual": {
-        text: "Type this one in yourself: the game does not report it, so it is the one figure your account cannot fill.",
-        description: "Note under the resource inputs saying the pity counter is not synced from the account, unlike the boxes beside it.",
+        text: "Type the two pity counts in yourself: the game does not report them, so they are the figures your account cannot fill.",
+        description: "Note under the resource inputs saying the two pity counters are not synced from the account, unlike the boxes beside them.",
     },
     "release.pulls.resources.sync": {
         text: "Use my account's data",

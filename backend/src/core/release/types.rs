@@ -232,8 +232,6 @@ pub struct PoolAlignment {
     pub method: AlignMethod,
 }
 
-pub const STANDING_POOL_SECS: i64 = 365 * 86_400;
-
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
@@ -245,7 +243,9 @@ pub struct ReleaseBanner {
     pub cn_open: i64,
     #[ts(type = "number")]
     pub cn_end: i64,
-    pub standing: bool,
+    /// Shown only to returning players (`GachaPoolClient::returning`). Its
+    /// `cn_end` is the table's placeholder years out, not a real end date.
+    pub returning: bool,
     pub featured6: Vec<String>,
     pub featured5: Vec<String>,
     pub debut_chars: Vec<String>,

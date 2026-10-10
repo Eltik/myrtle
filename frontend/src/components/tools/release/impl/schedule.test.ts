@@ -38,7 +38,7 @@ function banner(partial: Partial<ReleaseBanner>): ReleaseBanner {
         nameCn: "寻访",
         cnOpen: CN_START,
         cnEnd: CN_END,
-        standing: false,
+        returning: false,
         featured6: [],
         featured5: [],
         debutChars: [],
@@ -96,8 +96,8 @@ describe("eventItem", () => {
 });
 
 describe("bannerItem", () => {
-    it("skips standing pools", () => {
-        expect(bannerItem(banner({ standing: true }))).toBeNull();
+    it("skips returning-players-only pools", () => {
+        expect(bannerItem(banner({ returning: true }))).toBeNull();
     });
 
     it("dedupes featured characters in EN, CN, override, debut order", () => {

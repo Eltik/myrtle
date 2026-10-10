@@ -52,7 +52,9 @@ export function useReleaseTagLabel(): (raw: string | null | undefined) => string
         bannerClassic: t("release.tag.banner.classic"),
         bannerAttain: t("release.tag.banner.attain"),
         bannerClassicAttain: t("release.tag.banner.classicAttain"),
+        bannerClassicDouble: t("release.tag.banner.classicDouble"),
         bannerFesClassic: t("release.tag.banner.fesClassic"),
+        bannerBackflow: t("release.tag.banner.backflow"),
     };
 
     return (raw) => {
@@ -74,8 +76,10 @@ export function useReleaseTagLabel(): (raw: string | null | undefined) => string
             CLASSIC: L.bannerClassic,
             ATTAIN: L.bannerAttain,
             CLASSIC_ATTAIN: L.bannerClassicAttain,
+            CLASSIC_DOUBLE: L.bannerClassicDouble,
             FESCLASSIC: L.bannerFesClassic,
             SPECIAL: L.bannerAttain,
+            BACKFLOW: L.bannerBackflow,
             NEW_SKINS: L.newSkins,
             FASHION_REVIEW: L.fashionReview,
             RERUN: L.rerun,
@@ -103,6 +107,22 @@ export function useReleaseTagLabel(): (raw: string | null | undefined) => string
             FIREWORK: L.minigame,
             PRAY_ONLY: L.campaign,
             APRIL_FOOL: L.minigame,
+            // Read off the activity table, 2026-10-10. `MAINSS` (act2mainss "Dissociative
+            // Recombination", act3mainss "Abnormal Spectrum") is the event that opens a main
+            // episode: its missions are "Clear 15-3" and "Clear 16-…". `YEAR_5_GENERAL` is
+            // one event, act1mainss "Absolved Will Be the Seekers", which ZoneToActivity
+            // ties to main_14.
+            MAINSS: L.mainStory,
+            YEAR_5_GENERAL: L.mainStory,
+            // Three legacy events (1stact, act38d1, act1sandbox) whose own `displayType`
+            // is SIDESTORY on EN, CN, JP and KR. act1sandbox is the first Reclamation
+            // Algorithm, so this is the game's category, not a perfect one.
+            DEFAULT: L.sideStory,
+            // CN only so far: act1dp (an amusement-park stage gimmick), act1football and
+            // act1arkhub (a creature-collecting lobby). None is a story event.
+            ACT_DP: L.minigame,
+            ACT_FOOTBALL: L.minigame,
+            ARK_HUB: L.minigame,
         };
         const hit = exact[key];
         if (hit) return hit;

@@ -23,6 +23,7 @@ pub mod mission;
 pub mod mission_archive;
 pub mod module;
 pub mod obtain;
+pub mod open_server;
 pub mod operator;
 pub mod range;
 pub mod retro;

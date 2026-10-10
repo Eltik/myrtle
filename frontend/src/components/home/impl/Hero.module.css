@@ -1,214 +1,319 @@
-.heroAmbient {
-    content: "";
-    position: fixed;
-    inset: -10% -20% auto auto;
-    width: 70%;
-    height: 80%;
-    pointer-events: none;
-    z-index: 0;
-    background: radial-gradient(closest-side, color-mix(in oklab, var(--primary) 10%, transparent), transparent 72%), radial-gradient(closest-side at 20% 40%, color-mix(in oklab, var(--primary) 8%, transparent), transparent 70%);
-    filter: blur(12px);
-}
-
 .hero {
     position: relative;
-    padding: 88px 0 72px;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
-    min-height: 660px;
-}
-.heroBg {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    background: radial-gradient(ellipse 80% 60% at 60% 40%, color-mix(in oklab, var(--primary) 7%, transparent), transparent 70%), radial-gradient(ellipse 60% 80% at 80% 20%, oklch(0.696 0.17 162 / 0.06), transparent 70%);
-}
-.heroGlow {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 1;
-    background: radial-gradient(500px 240px at 15% 18%, color-mix(in oklab, var(--primary) 8%, transparent), transparent 70%);
-}
-.heroGrid {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 2;
-    opacity: 0.06;
-    background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
-    background-size: 44px 44px;
-    mask-image: radial-gradient(ellipse 60% 50% at 30% 50%, black 0%, transparent 80%);
-    -webkit-mask-image: radial-gradient(ellipse 60% 50% at 30% 50%, black 0%, transparent 80%);
-}
-@media (max-width: 900px) {
-    .hero {
-        min-height: 540px;
-        padding: 60px 0 48px;
-    }
 }
 
-.dotPulse {
-    width: 7px;
-    height: 7px;
-    border-radius: 999px;
-    background: oklch(0.75 0.17 155);
-    box-shadow: 0 0 0 0 oklch(0.75 0.17 155 / 0.6);
-    animation: dot-pulse 1.8s ease-out infinite;
-}
-@keyframes dot-pulse {
-    0% {
-        box-shadow: 0 0 0 0 oklch(0.75 0.17 155 / 0.6);
-    }
-    100% {
-        box-shadow: 0 0 0 8px oklch(0.75 0.17 155 / 0);
-    }
-}
-
-.heroPanel {
-    perspective: 1400px;
-    position: relative;
-    --tilt-x: 6deg;
-    --tilt-y: -4deg;
-    --tilt-z: 0px;
-}
-
-.cmdPopup {
-    position: relative;
-    z-index: 1;
-    background: var(--popover);
-    border: 1px solid var(--border);
-    border-radius: 14px;
+/* The key art sits behind the hero copy and fades into the page background. */
+.art {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    /* The small viewport height, so mobile Safari's collapsing toolbar never resizes the art. */
+    height: min(100%, max(78svh, 52vw));
     overflow: hidden;
-    box-shadow:
-        inset 0 1px 0 oklch(1 0 0 / 0.06),
-        0 30px 60px oklch(0 0 0 / 0.35),
-        0 8px 18px oklch(0 0 0 / 0.2),
-        0 0 0 1px oklch(0 0 0 / 0.06);
-    transform: rotateX(var(--tilt-x, 6deg)) rotateY(var(--tilt-y, -4deg)) translateZ(var(--tilt-z, 0px));
-    transform-style: preserve-3d;
-    transition:
-        transform 420ms cubic-bezier(0.16, 1, 0.3, 1),
-        box-shadow 240ms ease;
+    pointer-events: none;
+}
+.artLayer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -8%;
+    height: 116%;
     will-change: transform;
 }
-.heroPanel[data-tilting] .cmdPopup {
-    transition: none;
+.artLayer img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 30%;
+}
+.artFade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to bottom,
+        color-mix(in oklab, var(--background) 10%, transparent) 0%,
+        transparent 18%,
+        color-mix(in oklab, var(--background) 18%, transparent) 42%,
+        color-mix(in oklab, var(--background) 55%, transparent) 62%,
+        color-mix(in oklab, var(--background) 85%, transparent) 80%,
+        var(--background) 100%
+    );
+}
+.spacer {
+    height: clamp(120px, min(34vw, 46svh), 440px);
 }
 
-.cmdHead {
+.body {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    align-items: end;
+    gap: 4px 56px;
+}
+/* Two columns, Myrtle beside the copy, from where both fit at 300px plus the gap. */
+@media (min-width: 688px) {
+    .body {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.myrtle {
+    position: relative;
+    /* Above the copy's wash, which may reach into the gap. */
+    z-index: 1;
     display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--border);
-    width: 100%;
-    background: transparent;
-    border-top: none;
-    border-left: none;
-    border-right: none;
-    color: inherit;
-    text-align: left;
-    cursor: text;
-    font: inherit;
+    justify-content: center;
 }
-.cmdHead:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--primary) 60%, transparent);
-    outline-offset: -2px;
+.myrtleGlow {
+    position: absolute;
+    inset: 12% 10%;
+    border-radius: 999px;
+    background: radial-gradient(closest-side, var(--glow-primary), transparent);
+    filter: blur(24px);
+    opacity: 0.55;
 }
-.cmdSearchIcon {
-    width: 16px;
-    height: 16px;
-    color: var(--muted-foreground);
-    flex-shrink: 0;
+.myrtleImg {
+    position: relative;
+    display: block;
+    /* Capped by height too, so a landscape phone keeps the copy near the first screen. */
+    width: clamp(120px, min(26vw, 40svh), 300px);
+    height: auto;
+    filter: drop-shadow(0 18px 22px oklch(0 0 0 / 0.18));
+    animation: float 7s ease-in-out infinite;
 }
-.cmdInputFake {
-    flex: 1;
-    font: 400 14px / 1 var(--font-sans);
-    color: var(--foreground);
-    padding: 0;
+
+.copy {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 520px;
+    padding-bottom: 8px;
 }
-.cmdPanel {
-    padding: 10px 8px;
-    max-height: 340px;
-    overflow: auto;
+/* A wash of the page background behind the copy, so the text reads on any part of the
+   art: 86% holds every glyph at WCAG AA over the art's lightest and darkest pixels in
+   both themes. */
+.copy::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    pointer-events: none;
 }
-.cmdGroup {
-    padding: 6px 0;
+/* One column: a full-bleed scrim, like two columns below, but with a longer eased
+   ramp (smooth at both ends, so no band shows) that finishes at the copy's top edge,
+   so the eyebrow already sits on the hold. */
+@media (max-width: 687.98px) {
+    .copy::before {
+        inset: -144px -100vw -50vh;
+        background: linear-gradient(
+            to bottom,
+            transparent 0,
+            color-mix(in oklab, var(--background) 6%, transparent) 24px,
+            color-mix(in oklab, var(--background) 24%, transparent) 48px,
+            color-mix(in oklab, var(--background) 48%, transparent) 72px,
+            color-mix(in oklab, var(--background) 68%, transparent) 96px,
+            color-mix(in oklab, var(--background) 80%, transparent) 120px,
+            color-mix(in oklab, var(--background) 86%, transparent) 144px
+        );
+    }
 }
-.cmdGroupLabel {
-    font: 500 10.5px / 1 var(--font-mono);
-    color: var(--muted-foreground);
+/* Two columns: the copy is one column, so a feathered patch would read as a panel.
+   Instead a full-bleed bottom scrim that ramps in over the 96px above the copy and
+   holds to the hero's bottom; the hero's overflow clips it, so it has no edges. */
+@media (min-width: 688px) {
+    .copy::before {
+        inset: -96px -100vw -50vh;
+        background: linear-gradient(to bottom, transparent, color-mix(in oklab, var(--background) 86%, transparent) 96px);
+    }
+}
+.intro {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.eyebrow {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
-    padding: 6px 12px 8px;
+    /* Pulled toward the foreground: the light theme's primary alone is 4.6:1 on bare background, with no room for the art. */
+    color: color-mix(in oklab, var(--primary) 65%, var(--foreground));
 }
-.cmdItem {
+.title {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: clamp(32px, 5.2vw, 52px);
+    line-height: 1.02;
+    letter-spacing: -0.04em;
+    color: var(--foreground);
+    text-wrap: balance;
+}
+.lead {
+    margin: 0;
+    font-size: clamp(15px, 2vw, 17px);
+    line-height: 1.6;
+    color: color-mix(in oklab, var(--muted-foreground) 60%, var(--foreground));
+    text-wrap: pretty;
+}
+
+/* The ⌘K hint is a real button: clicking it opens the palette it describes. */
+.hint {
+    all: unset;
+    cursor: pointer;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    width: max-content;
+    max-width: 100%;
+    border-radius: 6px;
+    font-size: 14px;
+    color: var(--muted-foreground);
+    transition: color 0.15s;
+}
+.hint:hover {
+    color: var(--foreground);
+}
+.hint:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 4px;
+}
+/* A coarse pointer means no physical keyboard, where a key hint is meaningless. */
+@media (pointer: coarse) {
+    .hint {
+        display: none;
+    }
+}
+
+.cue {
+    all: unset;
+    /* Positioned so it paints above the absolutely placed art, which reaches this far down on narrow screens. */
+    position: relative;
+    cursor: pointer;
+    align-self: center;
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 8px 10px;
+    max-width: calc(100% - 2rem);
+    margin: clamp(24px, 5vw, 48px) 0 clamp(16px, 3vw, 28px);
+    padding: 4px;
     border-radius: 8px;
-    font: 400 13px / 1 var(--font-sans);
-    color: var(--foreground);
-    text-decoration: none;
-    cursor: pointer;
-    transition: background-color 120ms ease;
-}
-.cmdItem:hover,
-.cmdItem:focus-visible {
-    background: color-mix(in srgb, var(--primary) 12%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 25%, transparent);
-    outline: none;
-}
-.cmdItem > svg {
-    width: 15px;
-    height: 15px;
     color: var(--muted-foreground);
+    transition: color 0.15s;
+}
+.cue:hover {
+    color: var(--foreground);
+}
+.cue:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 4px;
+}
+.cueImg {
+    display: block;
     flex-shrink: 0;
+    width: 52px;
+    height: 52px;
 }
-.cmdPrimary {
-    flex: 1;
-    font-weight: 500;
-}
-.cmdMeta {
-    font: 400 12px / 1 var(--font-sans);
-    color: var(--muted-foreground);
-    margin-right: 8px;
-}
-.cmdSep {
-    height: 1px;
-    background: var(--border);
-    margin: 4px 10px;
-}
-.cmdFooter {
+.cueText {
     display: flex;
-    gap: 14px;
-    align-items: center;
-    padding: 10px 14px;
-    border-top: 1px solid var(--border);
-    background: color-mix(in srgb, var(--background) 40%, transparent);
-    font: 400 11.5px / 1 var(--font-sans);
-    color: var(--muted-foreground);
+    flex-direction: column;
+    gap: 2px;
+    text-align: left;
 }
-.cmdFooter span {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-}
-.cmdFooter .right {
-    margin-left: auto;
-    font: 500 10.5px / 1 var(--font-mono);
-    letter-spacing: 0.04em;
-    color: var(--muted-foreground);
-    opacity: 0.7;
-}
-.cmdFooterLink {
-    color: inherit;
-    text-decoration: none;
-}
-.cmdFooterLink:hover {
+.cueTitle {
+    font-size: 14px;
+    font-weight: 600;
     color: var(--foreground);
-    text-decoration: underline;
-    text-underline-offset: 2px;
+    text-wrap: balance;
+}
+.cueSub {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+}
+.cueChevron {
+    animation: bob 1.6s ease-in-out infinite;
+}
+
+/* One column: Myrtle tucks in beside the headline, off the art's subject and onto the
+   copy's wash where she reads; the copy starts higher, so the next section shows on
+   the first screen; the crop centres the art's subject in the space above the copy. */
+@media (max-width: 687.98px) {
+    .spacer {
+        height: clamp(136px, 26svh, 240px);
+    }
+    .body {
+        --chibi: clamp(88px, 26vw, 112px);
+    }
+    .myrtle {
+        position: absolute;
+        top: 0;
+        inset-inline-end: 0;
+        width: var(--chibi);
+    }
+    .myrtleImg {
+        width: var(--chibi);
+    }
+    .eyebrow,
+    .title {
+        padding-inline-end: calc(var(--chibi) + 8px);
+    }
+    /* Myrtle spans the eyebrow, its 14px gap and the headline; a one-line headline leaves her room. */
+    .title {
+        min-height: calc(var(--chibi) - 32px);
+    }
+    .artLayer img {
+        object-position: 42% 30%;
+    }
+}
+/* A landscape phone: the art stays behind the copy, but the headline makes the first screen. */
+@media (max-height: 480px) and (orientation: landscape) {
+    .spacer {
+        height: 48px;
+    }
+}
+@media (max-width: 359.98px) {
+    .cueImg {
+        width: 44px;
+        height: 44px;
+    }
+}
+
+@keyframes float {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+}
+@keyframes bob {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(6px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .myrtleImg,
+    .cueChevron {
+        animation: none;
+    }
+    .artLayer {
+        will-change: auto;
+    }
 }

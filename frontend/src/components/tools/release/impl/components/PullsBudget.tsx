@@ -200,15 +200,28 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
                     {/* The note hangs off the field it is about. At the bottom of the
                         card it read as a note about the whole card. */}
                     <PullsNumber
-                        id="pulls-pity"
+                        id="pulls-pity-standard"
                         label={
                             <span className="inline-flex items-center gap-1.5">
-                                {t("release.pulls.resources.pity")}
-                                <InfoHint label={t("release.pulls.resources.pityHint.aria")}>{t("release.pulls.resources.pityHint")}</InfoHint>
+                                {t("release.pulls.resources.pityStandard")}
+                                <InfoHint label={t("release.pulls.resources.pityStandardHint.aria")}>{t("release.pulls.resources.pityStandardHint")}</InfoHint>
                             </span>
                         }
-                        value={settings.pity}
-                        onChange={(v) => set("pity", v)}
+                        value={settings.standardPity}
+                        onChange={(v) => set("standardPity", v)}
+                        max={98}
+                        className="w-20"
+                    />
+                    <PullsNumber
+                        id="pulls-pity-kernel"
+                        label={
+                            <span className="inline-flex items-center gap-1.5">
+                                {t("release.pulls.resources.pityKernel")}
+                                <InfoHint label={t("release.pulls.resources.pityKernelHint.aria")}>{t("release.pulls.resources.pityKernelHint")}</InfoHint>
+                            </span>
+                        }
+                        value={settings.kernelPity}
+                        onChange={(v) => set("kernelPity", v)}
                         max={98}
                         className="w-20"
                     />

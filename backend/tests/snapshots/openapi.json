@@ -20483,7 +20483,7 @@
           "nameCn",
           "cnOpen",
           "cnEnd",
-          "standing",
+          "returning",
           "featured6",
           "featured5",
           "debutChars",
@@ -20565,11 +20565,12 @@
           "resolution": {
             "$ref": "#/components/schemas/Resolution"
           },
+          "returning": {
+            "type": "boolean",
+            "description": "Shown only to returning players (`GachaPoolClient::returning`). Its\n`cn_end` is the table's placeholder years out, not a real end date."
+          },
           "ruleType": {
             "type": "string"
-          },
-          "standing": {
-            "type": "boolean"
           }
         }
       },

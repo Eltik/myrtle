@@ -6,7 +6,7 @@ import { Card } from "#/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { useFormatters, useT } from "#/lib/i18n";
 import { cn } from "#/lib/utils";
-import { bannerModel, type IBannerModel, ORUNDUM_PER_PULL } from "../pulls/rates";
+import { bannerModel, type IBannerModel, type ISharedPity, ORUNDUM_PER_PULL, startPityFor } from "../pulls/rates";
 import { createPuller, type IPuller, type IPullOutcome, type ITargetStats, simulateToTarget } from "../pulls/simulate";
 import { type BannerArchetype, BannerModelNote, type PullsT, Stat, useBannerLabel, usePct } from "./PullsShared";
 import { SectionTitle } from "./shared";
@@ -40,7 +40,8 @@ const RARITY_COLOR: Record<number, string> = {
 
 interface IPullsSimulatorProps {
     budget: number;
-    pity: number;
+    /** The user's pity on the Standard and Kernel counters, which are separate. */
+    pity: ISharedPity;
 }
 
 export function PullsSimulator({ budget, pity }: IPullsSimulatorProps): React.ReactElement {
@@ -57,7 +58,7 @@ export function PullsSimulator({ budget, pity }: IPullsSimulatorProps): React.Re
         const a = ARCHETYPES.find((x) => x.ruleType === ruleType) ?? ARCHETYPES[0];
         return bannerModel({ ruleType: a.ruleType, featuredCount: a.featuredCount });
     }, [ruleType]);
-    const startPity = model.carryOver ? pity : 0;
+    const startPity = startPityFor(model, pity);
 
     /**
      * The puller IS the run: one mutable object holding pity, copies and the

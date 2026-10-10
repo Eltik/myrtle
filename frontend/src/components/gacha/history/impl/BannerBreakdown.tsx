@@ -8,7 +8,7 @@ import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { rarityStarColor } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
-import { BANNER_GROUP_LABEL_KEYS, BANNER_RULE_TYPE_LABEL_KEYS, BANNER_STATUS_LABEL_KEYS, type GachaMessageKey } from "../../constants";
+import { BANNER_GROUP_LABEL_KEYS, BANNER_RULE_TYPE_LABEL_KEYS, BANNER_STATUS_COLOR, BANNER_STATUS_LABEL_KEYS, bannerStatus, type GachaMessageKey } from "../../constants";
 import type { messages as gachaConstantsMessages } from "../../constants.messages";
 import type { messages } from "./BannerBreakdown.messages";
 
@@ -146,9 +146,7 @@ function BannerNameCell({ banner, name, typeColor, typeLabelKey, sixStars, fiveS
 
     const ruleMessageKey = BANNER_RULE_TYPE_LABEL_KEYS[banner.gachaRuleType];
     const ruleLabel = ruleMessageKey ? t(ruleMessageKey) : banner.gachaRuleType;
-    const now = Date.now() / 1000;
-    const isActive = banner.openTime <= now && now <= banner.endTime;
-    const isUpcoming = now < banner.openTime;
+    const status = bannerStatus(banner, Date.now() / 1000);
 
     return (
         <HoverCard>
@@ -160,14 +158,15 @@ function BannerNameCell({ banner, name, typeColor, typeLabelKey, sixStars, fiveS
                             {t(typeLabelKey)} · {ruleLabel}
                         </span>
                         <span className="font-sans font-semibold text-[14px] text-foreground leading-snug">{banner.gachaPoolName}</span>
-                        {banner.gachaPoolSummary && banner.gachaPoolSummary !== "-" ? <span className="font-sans text-[12px] text-muted-foreground leading-snug">{banner.gachaPoolSummary}</span> : null}
+                        {/* A returning pool's summary is the runtime template "Ends at {0}", filled in per player by the client. */}
+                        {banner.gachaPoolSummary && banner.gachaPoolSummary !== "-" && !banner.returning ? <span className="font-sans text-[12px] text-muted-foreground leading-snug">{banner.gachaPoolSummary}</span> : null}
                     </div>
 
                     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                        <span className="font-sans text-[12px] text-foreground tabular-nums leading-none">{t("history.breakdown.dateRange", { open: fmtDateFromSeconds(banner.openTime, f), close: fmtDateFromSeconds(banner.endTime, f) })}</span>
-                        <span className="inline-flex items-center gap-1.5 font-mono text-[9.5px] uppercase leading-none tracking-[0.14em]" style={{ color: isActive ? "oklch(0.78 0.18 145)" : isUpcoming ? "oklch(0.78 0.16 220)" : "var(--muted-foreground)" }}>
+                        <span className="font-sans text-[12px] text-foreground tabular-nums leading-none">{banner.returning ? t("banner.window.returning") : t("history.breakdown.dateRange", { open: fmtDateFromSeconds(banner.openTime, f), close: fmtDateFromSeconds(banner.endTime, f) })}</span>
+                        <span className="inline-flex items-center gap-1.5 font-mono text-[9.5px] uppercase leading-none tracking-[0.14em]" style={{ color: BANNER_STATUS_COLOR[status] }}>
                             <span className="block h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
-                            {t(BANNER_STATUS_LABEL_KEYS[isActive ? "active" : isUpcoming ? "upcoming" : "ended"])}
+                            {t(BANNER_STATUS_LABEL_KEYS[status])}
                         </span>
                     </div>
 

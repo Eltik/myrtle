@@ -60,8 +60,8 @@ export default function Header() {
     }, [t, user]);
 
     return (
-        <header className="sticky top-0 z-50 w-full border-border border-b bg-background/80 backdrop-blur-lg backdrop-saturate-150 supports-backdrop-filter:bg-background/60">
-            <div className="flex h-14 items-center gap-2 px-3 sm:h-16 sm:gap-3.5 sm:px-4">
+        <header className="sticky top-0 z-50 h-(--site-header-height) w-full border-border border-b bg-background/80 backdrop-blur-lg backdrop-saturate-150 supports-backdrop-filter:bg-background/60">
+            <div className="flex h-full items-center gap-2 px-3 sm:gap-3.5 sm:px-4">
                 <div className="flex flex-1 items-center gap-2 sm:gap-4">
                     <MobileNav items={navItems} />
                     <Link to="/" className="flex min-w-0 shrink items-center gap-2 text-foreground no-underline">

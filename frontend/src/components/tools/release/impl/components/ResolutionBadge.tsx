@@ -17,7 +17,8 @@ interface IResolutionBadgeProps {
     today: Date;
     note?: string | null;
     caption?: React.ReactNode;
-    standing?: boolean;
+    /** A returning-players-only pool: its window is per player, so no calendar date is shown. */
+    returning?: boolean;
     className?: string;
 }
 
@@ -33,9 +34,21 @@ function undated(status: "unmodelled" | "independent" | "unlisted", t: BadgeT): 
     }
 }
 
-export function ResolutionBadge({ resolution, today, note, caption, standing, className }: IResolutionBadgeProps): React.ReactElement {
+export function ResolutionBadge({ resolution, today, note, caption, returning, className }: IResolutionBadgeProps): React.ReactElement {
     const t: BadgeT = useT("tools");
     const locale = useLocale();
+    // Its table window is a placeholder years long (the game times it per player), so
+    // neither the EN date nor the CN-derived status says anything a reader can plan on.
+    if (returning) {
+        return (
+            <div className={cn("flex flex-col items-start gap-0.5 sm:items-end", className)}>
+                <Badge variant="secondary" title={t("release.badge.returning.title")}>
+                    {t("release.badge.returning")}
+                </Badge>
+                {note && <span className="font-sans text-[11px] text-muted-foreground">{note}</span>}
+            </div>
+        );
+    }
     if (resolution.status === "unmodelled" || resolution.status === "independent" || resolution.status === "unlisted") {
         const { label, hint } = undated(resolution.status, t);
         return (
@@ -87,8 +100,8 @@ export function ResolutionBadge({ resolution, today, note, caption, standing, cl
         <div className={cn("flex min-w-0 flex-col items-start gap-0.5 sm:items-end", className)} title={title}>
             <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
                 {chip}
-                <span className="font-medium font-sans text-[13px] text-foreground tabular-nums">{standing ? t("release.badge.since", { date: formatDate(resolution.enStart, locale) }) : dateText}</span>
-                <span className="font-sans text-[11px] text-muted-foreground">{standing ? t("release.badge.standing") : rel}</span>
+                <span className="font-medium font-sans text-[13px] text-foreground tabular-nums">{dateText}</span>
+                <span className="font-sans text-[11px] text-muted-foreground">{rel}</span>
             </div>
             {sub}
             {caption && <span className="font-sans text-[11px] text-muted-foreground">{caption}</span>}

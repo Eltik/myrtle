@@ -143,12 +143,12 @@ function BannerRow({ banner, lookup, charNames, eventNames, eventsByDay, eventTi
     const faces = art.src ? [] : [...banner.enFeatured6, ...banner.featured6, ...banner.overrideFeatured, ...banner.debutChars].filter((id, i, all) => all.indexOf(id) === i).slice(0, 3);
     const visual = art.src ? <RowImage src={art.src} alt={alt} title={artIsEvent && eventArtName ? t("release.banners.eventArt", { event: eventArtName }) : undefined} onError={art.onError} wide /> : faces.length > 0 ? <FaceStrip ids={faces} lookup={lookup} alt={alt} t={t} /> : null;
     return (
-        <ListRow visual={visual} wide badge={<ResolutionBadge resolution={banner.resolution} today={today} standing={banner.standing} />}>
+        <ListRow visual={visual} wide badge={<ResolutionBadge resolution={banner.resolution} today={today} returning={banner.returning} />}>
             <CnName cn={banner.nameCn} auto={banner.nameEnAuto} primaryClassName="font-sans font-semibold text-[13.5px] text-foreground">
                 <Tag>{tagLabel(banner.ruleType)}</Tag>
                 <span className="font-mono text-[11.5px] text-muted-foreground tabular-nums">
                     <span className="mr-1 uppercase tracking-[0.06em]">{t("release.banners.cn")}</span>
-                    {banner.standing ? t("release.banners.since", { date: formatDate(banner.cnOpen, locale) }) : formatDate(banner.cnOpen, locale)}
+                    {formatDate(banner.cnOpen, locale)}
                 </span>
             </CnName>
             {rosters.length > 0 && (

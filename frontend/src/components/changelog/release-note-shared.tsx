@@ -23,10 +23,10 @@ export const KIND_DOT: Record<ReleaseNoteKind, string> = {
 };
 
 /** Parses at LOCAL midnight. `new Date("2026-09-10")` is UTC and renders as the 9th west of Greenwich. */
-export function formatNoteDate(iso: string, locale?: string): string {
+export function formatNoteDate(iso: string, locale?: string, options: Intl.DateTimeFormatOptions = { year: "numeric", month: "long", day: "numeric" }): string {
     const parsed = new Date(`${iso}T00:00:00`);
     if (Number.isNaN(parsed.getTime())) return iso;
-    return parsed.toLocaleDateString(locale, { year: "numeric", month: "long", day: "numeric" });
+    return parsed.toLocaleDateString(locale, options);
 }
 
 export function ReleaseNoteItems({ items }: { items: IReleaseNoteItem[] }): React.ReactElement {

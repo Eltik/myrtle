@@ -4,20 +4,20 @@ export const namespace = "common";
 
 export const messages = {
     "notFound.title": {
-        text: "Lost in the Wastes",
-        description: "Heading of the 404 page. A Terra-flavoured 'page not found'; a literal translation is fine if the setting has no equivalent.",
+        text: "We're counting on you again today, little apple.",
+        description: "Heading line of the 404 page, a line Myrtle says in-game. Keep it warm and in character rather than literal.",
     },
     "notFound.description": {
-        text: "The page you are looking for does not exist, has been moved, or is temporarily unavailable.",
-        description: "Body copy of the 404 page.",
+        text: "There's nothing here right now.",
+        description: "Second line of the 404 page, under the heading: the page the visitor asked for does not exist.",
     },
     "notFound.returnHome": {
-        text: "Return Home",
-        description: "Primary 404 action: navigates to the site root.",
+        text: "Take me home",
+        description: "The only 404 action: navigates to the site root.",
     },
-    "notFound.searchOperators": {
-        text: "Search operators",
-        description: "Secondary 404 action: opens the command palette.",
+    "notFound.imageAlt": {
+        text: "Myrtle, face-down after dropping her snacks",
+        description: "Alt text for the chibi of Myrtle that stands in for the 0 of the giant 404.",
     },
 } satisfies MessageMap;
 
