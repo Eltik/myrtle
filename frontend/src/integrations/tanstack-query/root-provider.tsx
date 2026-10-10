@@ -23,8 +23,8 @@ export function getContext() {
         //
         // Load-bearing: this monkey-patch depends on TanStack Query internals (the shape
         // of `defaultQueryOptions`), verified on 5.100.1. Min-clamp (not force 0) so SSR
-        // queries survive long enough to dehydrate; `queryClient.clear()` on render finish
-        // (router.tsx) remains the primary OOM defense.
+        // queries survive long enough to dehydrate; the SSR query integration's
+        // `queryClient.clear()` when the response is done (router.tsx) remains the primary OOM defense.
         const resolve = queryClient.defaultQueryOptions.bind(queryClient);
         queryClient.defaultQueryOptions = ((options?: unknown) => {
             const resolved = resolve(options as never);

@@ -13,14 +13,16 @@ export const Route = createFileRoute("/_authed/tier-lists_/my_/$id/edit")({
     },
     loader: ({ context, params }) => {
         const server = context.i18n.gamedataServer;
-        // Warm the default kinds at once, then whatever else the list offers once its detail arrives. Not awaited: the editor suspends on the detail itself.
+        // Not awaited: the editor suspends on the detail itself.
+        const detail = context.queryClient.ensureQueryData(tierListDetailQueryOptions(params.id, server)).catch(() => undefined);
+        // Catalogue warm-ups run in the browser only. On the server nothing awaits them, so they
+        // reached the browser before hydration while the server HTML still showed an empty pool.
+        if (typeof window === "undefined") return;
+        // Warm the default kinds at once, then whatever else the list offers once its detail arrives.
         for (const kind of DEFAULT_ENTITY_KINDS) void context.queryClient.prefetchQuery(tierEntityCatalogueQueryOptions(kind, server));
-        void context.queryClient
-            .ensureQueryData(tierListDetailQueryOptions(params.id, server))
-            .then((detail) => {
-                for (const kind of detail?.entityKinds ?? []) void context.queryClient.prefetchQuery(tierEntityCatalogueQueryOptions(kind, server));
-            })
-            .catch(() => undefined);
+        void detail.then((d) => {
+            for (const kind of d?.entityKinds ?? []) void context.queryClient.prefetchQuery(tierEntityCatalogueQueryOptions(kind, server));
+        });
     },
     component: RouteComponent,
     head: ({ match, params }) => {

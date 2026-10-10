@@ -83,12 +83,16 @@ export const Route = createFileRoute("/tier-lists_/$id")({
     },
     search: { middlewares: [stripSearchParams(DETAIL_SEARCH_DEFAULTS)] },
     loader: async ({ context, params }) => {
-        const detail = await context.queryClient.ensureQueryData(tierListDetailQueryOptions(params.id, context.i18n.gamedataServer));
+        // Versions and the favorite flag load beside the detail and are awaited with it, so SSR
+        // renders them. Left in flight, they landed in the browser before hydration while the
+        // server HTML still showed them loading: a hydration mismatch. `prefetchQuery` never
+        // throws, so either one failing leaves its own control in an error state, not the page.
+        const [detail] = await Promise.all([
+            context.queryClient.ensureQueryData(tierListDetailQueryOptions(params.id, context.i18n.gamedataServer)),
+            context.queryClient.prefetchQuery(tierListVersionsQueryOptions(params.id, context.i18n.gamedataServer)),
+            context.user ? context.queryClient.prefetchQuery(myTierListFavoriteQueryOptions(params.id, true)) : undefined,
+        ]);
         if (!detail) throw notFound();
-        if (context.user) {
-            void context.queryClient.prefetchQuery(myTierListFavoriteQueryOptions(params.id, true));
-        }
-        void context.queryClient.prefetchQuery(tierListVersionsQueryOptions(params.id, context.i18n.gamedataServer));
         warmOg("tier-list", detail.slug, buildOgData(detail, context.i18n.gamedataServer));
         return detail;
     },

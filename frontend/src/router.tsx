@@ -63,17 +63,11 @@ function createAppRouter() {
         defaultNotFoundComponent: NotFound,
     });
 
+    // The integration clears the server QueryClient itself once the response is done (its SSR
+    // cleanup teardown, which left 0 queries per request when measured). Clearing earlier, on
+    // render finish, cancelled every query still in flight that the stream had already sent as
+    // pending, and the browser received each one as an uncaught `Error: redacted`.
     setupRouterSsrQueryIntegration({ router, queryClient: context.queryClient });
-    if (typeof window === "undefined") {
-        const dehydrate = router.options.dehydrate;
-        router.options.dehydrate = async () => {
-            const dehydrated = await dehydrate?.();
-            router.serverSsr?.onRenderFinished(() => {
-                context.queryClient.clear();
-            });
-            return dehydrated;
-        };
-    }
 
     return router;
 }
