@@ -89,8 +89,12 @@ pub async fn mine(
     Ok(Json(service::my_permissions(&state, &auth).await?))
 }
 
+// Not named `GrantRequest`: the tier-list permission body has that name, and
+// OpenAPI schemas are keyed by bare type name, so one replaced the other in
+// the document (tests/openapi_schema_names_test.rs).
+/// One translation grant: a permission on a locale for an account.
 #[derive(Deserialize, utoipa::ToSchema)]
-pub struct GrantRequest {
+pub struct TranslationGrantRequest {
     pub locale: String,
     pub user_id: Uuid,
     pub permission: String,
@@ -106,7 +110,7 @@ pub struct GrantRequest {
     path = "/admin/i18n/permissions",
     operation_id = "i18n_permission_grant",
     tag = "i18n-admin",
-    request_body = GrantRequest,
+    request_body = TranslationGrantRequest,
     security(("bearer_auth" = []), ("service_key" = [])),
     responses(
         (status = 200, description = "The grant was recorded.", body = crate::app::routes::StatusOk),
@@ -122,7 +126,7 @@ pub struct GrantRequest {
 pub async fn grant(
     State(state): State<AppState>,
     auth: RoleCheckedUser,
-    Json(body): Json<GrantRequest>,
+    Json(body): Json<TranslationGrantRequest>,
 ) -> Result<Json<StatusOk>, ApiError> {
     let granted_by = assert_can_manage(&state, &auth, &body.locale).await?;
     let permission = Permission::from_str(&body.permission).map_err(ApiError::BadRequest)?;
@@ -136,7 +140,7 @@ pub async fn grant(
     path = "/admin/i18n/permissions/revoke",
     operation_id = "i18n_permission_revoke",
     tag = "i18n-admin",
-    request_body = GrantRequest,
+    request_body = TranslationGrantRequest,
     security(("bearer_auth" = []), ("service_key" = [])),
     responses(
         (status = 200, description = "The grant is gone.", body = crate::app::routes::StatusOk),
@@ -151,7 +155,7 @@ pub async fn grant(
 pub async fn revoke(
     State(state): State<AppState>,
     auth: RoleCheckedUser,
-    Json(body): Json<GrantRequest>,
+    Json(body): Json<TranslationGrantRequest>,
 ) -> Result<Json<StatusOk>, ApiError> {
     assert_can_manage(&state, &auth, &body.locale).await?;
     let permission = Permission::from_str(&body.permission).map_err(ApiError::BadRequest)?;

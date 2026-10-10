@@ -802,7 +802,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/GrantRequest"
+                "$ref": "#/components/schemas/TranslationGrantRequest"
               }
             }
           },
@@ -906,7 +906,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/GrantRequest"
+                "$ref": "#/components/schemas/TranslationGrantRequest"
               }
             }
           },
@@ -24849,6 +24849,27 @@
               "string",
               "null"
             ]
+          }
+        }
+      },
+      "TranslationGrantRequest": {
+        "type": "object",
+        "description": "One translation grant: a permission on a locale for an account.",
+        "required": [
+          "locale",
+          "user_id",
+          "permission"
+        ],
+        "properties": {
+          "locale": {
+            "type": "string"
+          },
+          "permission": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },
