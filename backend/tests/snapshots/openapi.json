@@ -28235,7 +28235,7 @@
             "$ref": "#/components/schemas/RostersStats"
           },
           "tierLists": {
-            "$ref": "#/components/schemas/TierListStats"
+            "$ref": "#/components/schemas/TierListSiteStats"
           },
           "users": {
             "$ref": "#/components/schemas/UserStats"
@@ -30671,7 +30671,7 @@
           }
         }
       },
-      "TierListStats": {
+      "TierListSiteStats": {
         "type": "object",
         "required": [
           "total",
@@ -30695,6 +30695,69 @@
           "totalVersions": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "TierListStats": {
+        "type": "object",
+        "required": [
+          "tier_list_id",
+          "view_count",
+          "unique_view_count",
+          "favorite_count",
+          "share_count",
+          "is_trending",
+          "trending_score",
+          "views_last_24h",
+          "views_last_7d",
+          "stats_updated_at"
+        ],
+        "properties": {
+          "favorite_count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "is_trending": {
+            "type": "boolean"
+          },
+          "last_viewed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "share_count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "stats_updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "tier_list_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "trending_score": {
+            "type": "number",
+            "format": "double"
+          },
+          "unique_view_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "view_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "views_last_24h": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "views_last_7d": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

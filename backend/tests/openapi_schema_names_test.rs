@@ -23,10 +23,6 @@ const KNOWN: &[(&str, &[&str])] = &[
         &["app/services/grid.rs", "core/gamedata/types/range.rs"],
     ),
     (
-        "TierListStats",
-        &["app/services/stats.rs", "database/models/tier_list.rs"],
-    ),
-    (
         "UnlockCondition",
         &[
             "core/gamedata/types/operator.rs",
@@ -161,4 +157,30 @@ fn the_translation_grant_body_documents_its_locale() {
             "{path}"
         );
     }
+}
+
+#[test]
+fn tier_list_stats_documents_the_engagement_counters() {
+    let (_router, api) = backend::app::server::api_parts();
+    let json = serde_json::to_value(&api).expect("the document serializes");
+    let schemas = &json["components"]["schemas"];
+    let required = |name: &str| -> Vec<String> {
+        serde_json::from_value(schemas[name]["required"].clone()).unwrap_or_default()
+    };
+    // `GET /tier-lists/{slug}/stats` and `TierListDetail.stats` serve the
+    // per-list row; the site-wide counters in `StatsResponse` are their own schema.
+    assert!(required("TierListStats").contains(&"view_count".to_owned()));
+    assert_eq!(
+        required("TierListSiteStats"),
+        ["total", "active", "totalVersions", "totalPlacements"]
+    );
+    assert_eq!(
+        json["paths"]["/api/tier-lists/{slug}/stats"]["get"]["responses"]["200"]["content"]["application/json"]
+            ["schema"]["$ref"],
+        "#/components/schemas/TierListStats"
+    );
+    assert_eq!(
+        schemas["StatsResponse"]["properties"]["tierLists"]["$ref"],
+        "#/components/schemas/TierListSiteStats"
+    );
 }
