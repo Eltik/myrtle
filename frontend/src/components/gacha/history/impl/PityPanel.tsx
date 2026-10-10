@@ -31,8 +31,9 @@ interface IBannerPity {
 
 const BANNER_CONFIGS: { key: ClientGachaGroup; labelKey: GachaMessageKey; softPityAt: number; hardPityAt: number; color: string }[] = [
     { key: "limited", labelKey: BANNER_GROUP_LABEL_KEYS.limited, softPityAt: 50, hardPityAt: 99, color: "oklch(0.85 0.18 80)" },
-    // Collab/joint operation banners: separate pity from limited, hard guarantee at 120 pulls.
-    { key: "linkage", labelKey: BANNER_GROUP_LABEL_KEYS.linkage, softPityAt: 50, hardPityAt: 120, color: "oklch(0.78 0.16 320)" },
+    // Collab banners: their own pity, same 50/99 curve. The "within 120 attempts" in their
+    // text is a once-per-banner guarantee of the featured operator, not 6* pity.
+    { key: "linkage", labelKey: BANNER_GROUP_LABEL_KEYS.linkage, softPityAt: 50, hardPityAt: 99, color: "oklch(0.78 0.16 320)" },
     { key: "regular", labelKey: BANNER_GROUP_LABEL_KEYS.regular, softPityAt: 50, hardPityAt: 99, color: "#bcabdb" },
     { key: "special", labelKey: BANNER_GROUP_LABEL_KEYS.special, softPityAt: 50, hardPityAt: 99, color: "#88c8e3" },
 ];

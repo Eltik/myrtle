@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { IBanner, IGachaItem } from "#/lib/api/gacha";
-import { isIsolatedPull, sharedPity } from "./pity";
+import { isIsolatedPull, pityWithLimitedReset, sharedPity } from "./pity";
 
 function pull(poolId: string, at: number, star: "3" | "4" | "5" | "6" = "3"): IGachaItem {
     return { charId: "char_x", charName: "", star, color: "", poolId, poolName: "", typeName: "normal", at, atStr: "" } as IGachaItem;
@@ -65,5 +65,19 @@ describe("classifying a pull's pool", () => {
 
     it("counts every pull when no isolated pool is in the history", () => {
         expect(sharedPity([pull("SINGLE_EN_1", 1, "6"), pull("SINGLE_EN_1", 2), pull("SINGLE_EN_1", 3)], BANNERS)).toBe(2);
+    });
+});
+
+describe("Limited and Collab pity", () => {
+    const limited = (id: string, endTime: number) => [id, { gachaPoolId: id, gachaRuleType: "LIMITED", endTime, gachaPoolName: id, returning: false } as unknown as IBanner] as const;
+    const banners = new Map<string, IBanner>([limited("LIMITED_A", 100), limited("LIMITED_B", 300)]);
+
+    it("counts only the newest pull's banner", () => {
+        const items = [pull("LIMITED_A", 1), pull("LIMITED_A", 2), pull("LIMITED_A", 3), pull("LIMITED_B", 4), pull("LIMITED_B", 5)];
+        expect(pityWithLimitedReset(items, banners, 200)).toEqual({ pity: 2, reset: false });
+    });
+
+    it("is 0 once that banner has ended", () => {
+        expect(pityWithLimitedReset([pull("LIMITED_B", 4)], banners, 400)).toEqual({ pity: 0, reset: true, resetReason: "LIMITED_B" });
     });
 });

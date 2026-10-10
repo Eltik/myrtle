@@ -44,10 +44,9 @@ export function sharedPity(items: IGachaItem[], bannersById: Map<string, IBanner
 }
 
 /**
- * Limited and Collab pity does NOT carry between banners in-game - each
- * pool has its own independent pity counter that vanishes when the banner
- * closes. So if the user's most recent pull on a Limited/Collab bucket was
- * on a banner that has now ended, treat the bucket's pity as 0.
+ * Limited and Collab pity does NOT carry between banners in-game: each pool has
+ * its own counter that vanishes when the banner closes. So the bucket's pity is
+ * the newest pull's banner alone, and 0 once that banner has ended.
  */
 export function pityWithLimitedReset(items: IGachaItem[], bannersById: Map<string, IBanner>, nowSec: number): { pity: number; reset: boolean; resetReason?: string } {
     if (items.length === 0) return { pity: 0, reset: false };
@@ -58,5 +57,5 @@ export function pityWithLimitedReset(items: IGachaItem[], bannersById: Map<strin
     if (banner && banner.endTime > 0 && nowSec > banner.endTime) {
         return { pity: 0, reset: true, resetReason: banner.gachaPoolName };
     }
-    return { pity: computePity(items), reset: false };
+    return { pity: computePity(items.filter((item) => item.poolId === lastPullPoolId)), reset: false };
 }
