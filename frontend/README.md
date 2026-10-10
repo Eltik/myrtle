@@ -6,7 +6,7 @@ The web client for [myrtle.moe](https://myrtle.moe) - an Arknights companion pla
 [![TanStack Start](https://img.shields.io/badge/TanStack-Start-ff4154)](https://tanstack.com/start)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-38bdf8?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-[![Bun](https://img.shields.io/badge/Bun-1.3.12-000000?logo=bun&logoColor=white)](https://bun.sh/)
+[![Bun](https://img.shields.io/badge/Bun-1.4.2-000000?logo=bun&logoColor=white)](https://bun.sh/)
 [![Biome](https://img.shields.io/badge/Biome-2.4-60a5fa?logo=biome&logoColor=white)](https://biomejs.dev/)
 [![Frontend CI](https://github.com/Eltik/myrtle/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/Eltik/myrtle/actions/workflows/frontend-ci.yml)
 [![License](https://img.shields.io/badge/License-TBD-lightgrey)](../README.md)
@@ -47,7 +47,7 @@ The web client for [myrtle.moe](https://myrtle.moe) - an Arknights companion pla
 | Validation     | Zod v4, T3Env for typed environment variables                       |
 | Graphics       | PixiJS 7 + pixi-spine (chibis and L2D), gif.js + mp4-muxer (export) |
 | Charts         | Recharts                                                            |
-| Tooling        | Bun 1.3.12, Biome (lint + format)                                   |
+| Tooling        | Bun 1.4.2, Biome (lint + format)                                    |
 
 TanStack packages track the `latest` tag rather than a pinned version.
 
@@ -55,7 +55,7 @@ TanStack packages track the `latest` tag rather than a pinned version.
 
 | Tool   | Version  | Notes                                              |
 |--------|----------|----------------------------------------------------|
-| Bun    | 1.3.12   | Package manager and runtime, pinned via `packageManager` |
+| Bun    | 1.4.2    | Package manager and runtime, pinned via `packageManager` |
 | Backend| -        | A running [Myrtle backend](../backend/README.md), or point at `https://api.myrtle.moe` |
 
 Rust is only needed if you regenerate the API types (see [Generated Types](#generated-types)).

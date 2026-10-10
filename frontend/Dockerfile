@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM oven/bun:1.3.12-debian AS builder
+FROM oven/bun:1.4.2-debian AS builder
 WORKDIR /build
 
 RUN apt-get update \
@@ -21,7 +21,7 @@ ENV VITE_SITE_URL=$VITE_SITE_URL
 
 RUN bun run build
 
-FROM oven/bun:1.3.12-debian AS runner
+FROM oven/bun:1.4.2-debian AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
