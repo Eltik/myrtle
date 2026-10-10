@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 use crate::{
     app::{error::ApiError, state::AppState},
@@ -60,7 +60,7 @@ pub async fn get_banners(state: &AppState) -> Result<BannersResponse, ApiError> 
         .map(String::as_str)
         .collect();
     let anchors = align::anchors(&cn.gacha.gacha_pool_client, cn, &shared);
-    let mut char_names: HashMap<String, AutoName> = HashMap::new();
+    let mut char_names: BTreeMap<String, AutoName> = BTreeMap::new();
     let mut name_char = |id: &str| {
         if !char_names.contains_key(id)
             && let Some(n) = translate::operator_name(cn, en, id)

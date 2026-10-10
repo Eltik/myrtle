@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -275,7 +275,9 @@ pub struct BannersResponse {
     pub model: LagModel,
     pub yearly: YearlyModel,
     pub banners: Vec<ReleaseBanner>,
-    pub char_names: HashMap<String, AutoName>,
+    // A BTreeMap, so a response read back from the cache serializes in the
+    // same key order as the one that filled it.
+    pub char_names: BTreeMap<String, AutoName>,
     pub rule_independence: Vec<crate::core::release::align::RuleIndependence>,
 }
 
@@ -410,7 +412,8 @@ pub struct SkinsResponse {
     pub rerun_forecasts: Vec<RerunForecast>,
     pub reviews: Vec<ReviewWindow>,
     pub review_pool: Vec<ReviewOutfit>,
-    pub group_art: HashMap<String, SkinGroupArt>,
+    // A BTreeMap for the same reason as `BannersResponse::char_names`.
+    pub group_art: BTreeMap<String, SkinGroupArt>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]

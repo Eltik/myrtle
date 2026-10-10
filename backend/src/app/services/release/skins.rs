@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 use crate::{
     app::{error::ApiError, state::AppState},
@@ -83,7 +83,7 @@ fn tiles(p: &Planner, names: &Names<'_>, g: &GroupHistory) -> Vec<SkinTile> {
 
 struct GroupArt<'a> {
     ctx: &'a super::ctx::Ctx,
-    map: HashMap<String, SkinGroupArt>,
+    map: BTreeMap<String, SkinGroupArt>,
 }
 
 impl GroupArt<'_> {
@@ -449,7 +449,7 @@ fn build(p: &Planner) -> SkinsResponse {
     let names = Names::new(p, TranslationMemory::build(cn, en, &HashMap::new()));
     let mut art = GroupArt {
         ctx: &p.ctx,
-        map: HashMap::new(),
+        map: BTreeMap::new(),
     };
     let (en_groups, en_batches) = skins::group_histories(en, &skins::batch_families(en, cn));
     let cn_families = skins::batch_families(cn, en);
