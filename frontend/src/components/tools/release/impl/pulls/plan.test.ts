@@ -288,10 +288,9 @@ describe("pity scope per rule type", () => {
             const m = bannerModel({ ruleType, featuredCount: 2 });
             return `${m.scope}/${m.carryOver}`;
         };
-        expect(["NORMAL", "SINGLE", "DOUBLE"].map(scope)).toEqual(["standard/true", "standard/true", "standard/true"]);
+        expect(["NORMAL", "SINGLE", "DOUBLE", "SPECIAL"].map(scope)).toEqual(["standard/true", "standard/true", "standard/true", "standard/true"]);
         expect(["CLASSIC", "CLASSIC_DOUBLE", "FESCLASSIC"].map(scope)).toEqual(["kernel/true", "kernel/true", "kernel/true"]);
-        // SPECIAL (Orienteering) is isolated by the user's ruling, against its own text.
-        const isolated = ["SPECIAL", "ATTAIN", "CLASSIC_ATTAIN", "BACKFLOW", "LIMITED", "LINKAGE"];
+        const isolated = ["ATTAIN", "CLASSIC_ATTAIN", "BACKFLOW", "LIMITED", "LINKAGE"];
         expect(isolated.map(scope)).toEqual(isolated.map(() => "isolated/false"));
     });
 
@@ -303,14 +302,14 @@ describe("pity scope per rule type", () => {
         }).rows;
         expect(Array.from(nn(rows[0].pityDist))).toEqual(Array.from(pityAt(30)));
         expect(Array.from(nn(rows[1].pityDist))).toEqual(Array.from(pityAt(70)));
-        expect(rows[2].pityDist).toBeNull();
+        expect(rows[2].pityDist).not.toBeNull();
         expect(rows[3].pityDist).toBeNull();
     });
 
     it("starts the odds and simulator archetypes on the right counter", () => {
         const pity = { standard: 30, kernel: 70 };
         const start = (ruleType: string) => startPityFor(bannerModel({ ruleType, featuredCount: 2 }), pity);
-        expect(["NORMAL", "DOUBLE", "CLASSIC", "SPECIAL", "ATTAIN", "LIMITED", "LINKAGE"].map(start)).toEqual([30, 30, 70, 0, 0, 0, 0]);
+        expect(["NORMAL", "DOUBLE", "CLASSIC", "SPECIAL", "ATTAIN", "LIMITED", "LINKAGE"].map(start)).toEqual([30, 30, 70, 30, 0, 0, 0]);
     });
 });
 

@@ -9,16 +9,16 @@ import type { IBanner, IGachaItem } from "#/lib/api/gacha";
  * (they live in `NewbeeGachaPoolClient`), and match no prefix here, so they keep
  * counting in the Kernel bucket as before.
  */
-const ISOLATED_PREFIXES = ["RETURN_", "SPECIAL_", "ATTAIN_", "CLASSIC_ATTAIN_"];
+const ISOLATED_PREFIXES = ["RETURN_", "ATTAIN_", "CLASSIC_ATTAIN_"];
 
 /**
  * Whether a pull was made on a pool whose pity is its own, so it must neither
  * accumulate nor reset the Standard or Kernel counter.
  *
  * Measured on local Postgres (2026-10-10), these land in the shared buckets today:
- * SPECIAL (Orienteering, 21,113 rows) and ATTAIN (7,329) in Standard, because their
- * wire `typeName` is "normal"; CLASSIC_ATTAIN (4,841) in Kernel, by its `CLASSIC_`
- * prefix; BACKFLOW (210) in Standard. The banner's rule type decides through the
+ * ATTAIN (7,329 rows) in Standard, because its wire `typeName` is "normal";
+ * CLASSIC_ATTAIN (4,841) in Kernel, by its `CLASSIC_` prefix; BACKFLOW (210) in
+ * Standard. SPECIAL (Orienteering) is Standard Headhunting and counts. The banner's rule type decides through the
  * planner's own `scopeFor`, plus the pool's `returning` flag.
  */
 export function isIsolatedPull(item: IGachaItem, bannersById: Map<string, IBanner>): boolean {

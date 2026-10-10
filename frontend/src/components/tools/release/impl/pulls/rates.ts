@@ -93,12 +93,19 @@ export interface IBannerModel {
 const LIMITED_SHARE_POOL_IDS = new Set(["NORM_EN_6_0_6", "NORM_6_0_4"]);
 
 /**
+ * SPECIAL (Orienteering) is Standard Headhunting by its own pool text: every EN and
+ * CN SPECIAL pool carries the Standard pity paragraph ("The rate up from headhunting
+ * attempts will carry over to subsequent [Standard Headhunting]"), and CN says outright
+ * 该寻访为【标准寻访】. Pull history agrees (local Postgres, 874 users, 2026-10-10):
+ * a Standard chain without SPECIAL holds 16 pulls at or past roll 99 with no 6*, which
+ * hard pity makes impossible; with SPECIAL chained in, none (longest run 96).
+ *
  * BACKFLOW ("Returning Headhunting") is deliberately NOT here, so it falls through
  * to isolated. Its own pool detail (`RETURN_EN_41_0_1`) says its rolls "will not be
  * accumulated or applied to any other banner, and will remain separate from any
  * accumulated rolls on other banners", and are "reset to 0" when the banner ends.
  */
-const STANDARD_RULES = new Set(["NORMAL", "SINGLE", "DOUBLE"]);
+const STANDARD_RULES = new Set(["NORMAL", "SINGLE", "DOUBLE", "SPECIAL"]);
 /**
  * CLASSIC_ATTAIN is deliberately NOT here despite the CLASSIC prefix. Its own rule
  * text says the cumulative rolls "do not carry over between different
@@ -109,23 +116,10 @@ const KERNEL_RULES = new Set(["CLASSIC", "CLASSIC_DOUBLE", "FESCLASSIC"]);
 
 /**
  * Everything else is isolated: the rolls count only on that one banner and are gone
- * when it closes. Two members of that set are rulings rather than readings:
- *
- * SPECIAL (Orienteering) is isolated BY THE USER'S RULING (2026-10-10), which
- * overrides its own pool text. `SPECIAL_EN_40_0_6` says "In any [Standard
- * Headhunting], this rate increase will be accumulated and will not be cleared at the
- * end of the [Standard Headhunting]. The rate up from headhunting attempts will carry
- * over to subsequent [Standard Headhunting]", which read literally would make it
- * standard. The ruling is that each Orienteering banner carries its own pity.
- * MEASURED AGAINST THE RULING (local Postgres, 874 users, 2026-10-10): the Standard
- * chain WITHOUT SPECIAL holds 16 pulls at or past roll 99 with no 6* (longest run 113),
- * which hard pity makes impossible; WITH SPECIAL chained in, 0 such pulls (longest 96).
- * Chaining ATTAIN in instead raises them to 35, and CLASSIC_ATTAIN into Kernel to 33
- * (Kernel alone: 0), which confirms those two as isolated. Moving "SPECIAL" into
- * STANDARD_RULES is the one-line reversal if the ruling is revisited.
- *
- * ATTAIN matches its text: "the number of rolls without obtaining a 6-star Operator
- * will not be accumulated or applied to any other banner".
+ * when it closes. ATTAIN matches its text: "the number of rolls without obtaining a
+ * 6-star Operator will not be accumulated or applied to any other banner". Pull history
+ * confirms ATTAIN and CLASSIC_ATTAIN: chaining either into its family's counter adds
+ * 35 and 33 pulls at or past roll 99 (Kernel alone: 0).
  */
 export function scopeFor(ruleType: string): PityScope {
     if (STANDARD_RULES.has(ruleType)) return "standard";

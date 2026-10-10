@@ -34,7 +34,7 @@ const BANNER_CONFIGS: { key: ClientGachaGroup; labelKey: GachaMessageKey; softPi
     // Collab/joint operation banners: separate pity from limited, hard guarantee at 120 pulls.
     { key: "linkage", labelKey: BANNER_GROUP_LABEL_KEYS.linkage, softPityAt: 50, hardPityAt: 120, color: "oklch(0.78 0.16 320)" },
     { key: "regular", labelKey: BANNER_GROUP_LABEL_KEYS.regular, softPityAt: 50, hardPityAt: 99, color: "#bcabdb" },
-    { key: "special", labelKey: BANNER_GROUP_LABEL_KEYS.special, softPityAt: 45, hardPityAt: 80, color: "#88c8e3" },
+    { key: "special", labelKey: BANNER_GROUP_LABEL_KEYS.special, softPityAt: 50, hardPityAt: 99, color: "#88c8e3" },
 ];
 
 function PityMeter({ pity, softPityAt, hardPityAt, color }: { pity: number; softPityAt: number; hardPityAt: number; color: string }) {

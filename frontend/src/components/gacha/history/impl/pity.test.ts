@@ -25,15 +25,23 @@ function interleaved(home: string, isolated: string): IGachaItem[] {
 }
 
 describe("the Standard counter in pull history", () => {
-    for (const isolated of ["RETURN_EN_41_0_1", "SPECIAL_EN_40_0_6", "ATTAIN_EN_40_0_2"]) {
+    for (const isolated of ["RETURN_EN_41_0_1", "ATTAIN_EN_40_0_2"]) {
         it(`is neither accumulated nor reset by ${isolated}`, () => {
             expect(sharedPity(interleaved("SINGLE_EN_1", isolated), BANNERS)).toBe(3);
         });
     }
 });
 
+describe("Orienteering in pull history", () => {
+    it("accumulates and resets the Standard counter", () => {
+        const items = [pull("SINGLE_EN_1", 1, "6"), pull("SPECIAL_EN_40_0_6", 2), pull("SINGLE_EN_1", 3)];
+        expect(sharedPity(items, BANNERS)).toBe(2);
+        expect(sharedPity([...items, pull("SPECIAL_EN_40_0_6", 4, "6"), pull("SINGLE_EN_1", 5)], BANNERS)).toBe(1);
+    });
+});
+
 describe("the Kernel counter in pull history", () => {
-    for (const isolated of ["CLASSIC_ATTAIN_EN_40_0_1", "SPECIAL_EN_40_0_6", "ATTAIN_EN_40_0_2"]) {
+    for (const isolated of ["CLASSIC_ATTAIN_EN_40_0_1", "ATTAIN_EN_40_0_2"]) {
         it(`is neither accumulated nor reset by ${isolated}`, () => {
             expect(sharedPity(interleaved("CLASSIC_EN_1", isolated), BANNERS)).toBe(3);
         });
@@ -42,16 +50,17 @@ describe("the Kernel counter in pull history", () => {
 
 describe("classifying a pull's pool", () => {
     it("reads the rule type from the banner list", () => {
-        expect(isIsolatedPull(pull("SPECIAL_EN_40_0_6", 1), BANNERS)).toBe(true);
+        expect(isIsolatedPull(pull("ATTAIN_EN_40_0_2", 1), BANNERS)).toBe(true);
         expect(isIsolatedPull(pull("CLASSIC_ATTAIN_EN_40_0_1", 1), BANNERS)).toBe(true);
+        expect(isIsolatedPull(pull("SPECIAL_EN_40_0_6", 1), BANNERS)).toBe(false);
         expect(isIsolatedPull(pull("SINGLE_EN_1", 1), BANNERS)).toBe(false);
         expect(isIsolatedPull(pull("CLASSIC_EN_1", 1), BANNERS)).toBe(false);
     });
 
     it("falls back to the pool id while the banner list is empty", () => {
         const empty = new Map<string, IBanner>();
-        for (const id of ["RETURN_71_0_1", "SPECIAL_EN_40_0_6", "ATTAIN_EN_40_0_2", "CLASSIC_ATTAIN_EN_40_0_1"]) expect(isIsolatedPull(pull(id, 1), empty)).toBe(true);
-        for (const id of ["NORM_EN_41_0_3", "CLASSIC_DOUBLE_EN_41_0_2", "FESCLASSIC_EN_40_0_3", "BOOT_0_1_1"]) expect(isIsolatedPull(pull(id, 1), empty)).toBe(false);
+        for (const id of ["RETURN_71_0_1", "ATTAIN_EN_40_0_2", "CLASSIC_ATTAIN_EN_40_0_1"]) expect(isIsolatedPull(pull(id, 1), empty)).toBe(true);
+        for (const id of ["NORM_EN_41_0_3", "SPECIAL_EN_40_0_6", "CLASSIC_DOUBLE_EN_41_0_2", "FESCLASSIC_EN_40_0_3", "BOOT_0_1_1"]) expect(isIsolatedPull(pull(id, 1), empty)).toBe(false);
     });
 
     it("counts every pull when no isolated pool is in the history", () => {
