@@ -44,7 +44,8 @@ export interface IOperatorDetail {
 export function useOperatorDetail(entry: IOperatorListEntry | undefined): IOperatorDetail {
     const { data: op } = useQuery({ ...operatorQueryOptions(entry?.id ?? "", useGamedataServer()), enabled: !!entry });
     const t: DetailT = useT("tools");
-    return useMemo(() => buildDetail(op, entry, t), [op, entry, t]);
+    // An unknown id resolves to `null`; the detail treats it like one not loaded yet.
+    return useMemo(() => buildDetail(op ?? undefined, entry, t), [op, entry, t]);
 }
 
 function buildDetail(op: IOperatorListItem | undefined, entry: IOperatorListEntry | undefined, t: DetailT): IOperatorDetail {

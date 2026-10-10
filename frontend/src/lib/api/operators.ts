@@ -194,9 +194,11 @@ export function operatorOwnershipQueryOptions(server: string = DEFAULT_GAMEDATA_
 
 export const getOperatorFn = createServerFn({ method: "GET" })
     .inputValidator((data: { id: string; server?: string }) => data)
-    .handler(async ({ data: { id, server } }) => {
+    .handler(async ({ data: { id, server } }): Promise<IOperatorListItem | null> => {
         const res = await backendFetch(gamedataPath(server, `/operators/${encodeURIComponent(id)}`));
-        if (res.status === 404) return undefined;
+        // `null`, not `undefined`: TanStack Query rejects a query whose data is
+        // undefined, which turned an unknown id into a 500 instead of a 404.
+        if (res.status === 404) return null;
         if (!res.ok) throw new Error(`Failed to load operator: ${res.status}`);
         return deepCamelize(await res.json()) as IOperatorListItem;
     });
