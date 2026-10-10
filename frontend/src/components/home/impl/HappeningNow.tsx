@@ -9,7 +9,7 @@ import { useReleaseTagLabel } from "#/components/tools/release/impl/labels";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { DEFAULT_GAMEDATA_SERVER, resolveGamedataServer } from "#/lib/api/gamedata";
 import { liveFeedQueryOptions } from "#/lib/api/live";
-import { useGamedataServer, useLocale, useT } from "#/lib/i18n";
+import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { languageOf } from "#/lib/story/book/book";
 import type { messages } from "./HappeningNow.messages";
@@ -99,7 +99,7 @@ interface ILiveCardProps {
 
 function LiveCard({ item, index, now, server, names: featuredNames }: ILiveCardProps): React.ReactElement {
     const t: LiveT = useT("home");
-    const locale = useLocale();
+    const f = useFormatters();
     const tagLabel = useReleaseTagLabel();
     const reveal = useReveal<HTMLAnchorElement>((index % CARD_STAGGER_PERIOD) * CARD_STAGGER_MS);
     // Each art path in turn, then the faces: a rerun's own art, then its side story's.
@@ -114,7 +114,9 @@ function LiveCard({ item, index, now, server, names: featuredNames }: ILiveCardP
 
     if (item.kind === "event") {
         kind = tagLabel(item.type);
-        detail = t("live.eventDetail", { date: fromUnix(item.end).toLocaleDateString(locale, { month: "short", day: "numeric" }) });
+        // `f.date`, not `toLocaleDateString`: the home page renders on the server, and an end date
+        // printed in the server's zone hydrated against the browser's.
+        detail = t("live.eventDetail", { date: f.date(fromUnix(item.end), { month: "short", day: "numeric" }) });
     } else {
         kind = t("live.bannerKind", { kind: tagLabel(item.type) });
         // A pool with no 6★ rate-up still has its 5★ ones worth naming.

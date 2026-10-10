@@ -12,7 +12,7 @@ import { useLocale, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, getAvatarById } from "#/lib/utils";
 import { useAutoTranslate } from "../autoTranslate";
-import { formatDate } from "../helpers";
+import { formatDate, useReleaseTimeZone } from "../helpers";
 import type { messages as helperMessages } from "../helpers.messages";
 import { balances, EMPTY_STATE, type IPlanRow, type IPlanSkin, type IPlanState, type IRowBalance, planGroups, rowDeviates, rowExpense, rowIncome, rowPotential, type StageClears, type StageStatus, stageKey, stageOn, stageStatus, usePlanData } from "../plan";
 import type { messages as planMessages } from "../plan.messages";
@@ -43,6 +43,7 @@ const HEADER_PX = 80;
 export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
     const t: PlannerT = useT("tools");
     const locale = useLocale();
+    const timeZone = useReleaseTimeZone();
     const [showPast, setShowPast] = React.useState(false);
     // On by default: a signed-in planner opens with the outfits you already own filtered out.
     const [hideOwned, setHideOwned] = React.useState(true);
@@ -117,7 +118,7 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
                 <ToggleField id="planner-show-past" label={t("release.planner.showPast")} checked={showPast} onChange={setShowPast} />
                 {uid && <ToggleField id="planner-hide-owned" label={t("release.planner.hideOwned")} checked={hideOwned} onChange={setHideOwned} />}
                 <span className="font-sans text-[11px] text-muted-foreground">
-                    {t("release.planner.blurb")} {uid ? (sync.saving ? t("release.planner.saving") : sync.savedAt ? t("release.planner.saved", { date: formatDate(sync.savedAt, locale) }) : t("release.planner.autosave")) : t("release.planner.signedOut")}
+                    {t("release.planner.blurb")} {uid ? (sync.saving ? t("release.planner.saving") : sync.savedAt ? t("release.planner.saved", { date: formatDate(sync.savedAt, locale, timeZone) }) : t("release.planner.autosave")) : t("release.planner.signedOut")}
                 </span>
             </div>
             {data.rows.length === 0 ? (
@@ -165,7 +166,7 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
                                                 {t("release.planner.useAccount", { count: accountPrimes })}
                                             </button>
                                         ) : (
-                                            `${t("release.planner.fromAccount")}${profile.data?.updated_at ? t("release.planner.fromAccountSynced", { date: formatDate(Date.parse(profile.data.updated_at) / 1000, locale) }) : ""}`
+                                            `${t("release.planner.fromAccount")}${profile.data?.updated_at ? t("release.planner.fromAccountSynced", { date: formatDate(Date.parse(profile.data.updated_at) / 1000, locale, timeZone) }) : ""}`
                                         )}
                                     </span>
                                 )}
@@ -204,6 +205,7 @@ function rowTag(row: IPlanRow, t: PlannerT): string {
 
 function EventCard({ row, total, state, hidden, active, onOpen, t, locale }: { row: IPlanRow; total: IRowBalance | undefined; state: IPlanState; hidden: ReadonlySet<string>; active: boolean; onOpen: () => void; t: PlannerT; locale: string }): React.ReactElement {
     const art = useArt(row.imagePath);
+    const timeZone = useReleaseTimeZone();
     const picked = row.skins.filter((s) => state.picks[s.skinId]).length;
     const outfits = row.skins.filter((s) => !hidden.has(s.skinId)).length;
     return (
@@ -213,7 +215,7 @@ function EventCard({ row, total, state, hidden, active, onOpen, t, locale }: { r
                     <Tag className={row.kind === "listing" ? "text-fuchsia-400" : row.kind === "review" ? "text-teal-400" : undefined}>{rowTag(row, t)}</Tag>
                 </CnName>
                 <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">
-                    {row.resolution.status === "unlisted" ? t("release.planner.card.unlisted", { date: formatDate(row.enStart, locale) }) : formatDate(row.enStart, locale)}
+                    {row.resolution.status === "unlisted" ? t("release.planner.card.unlisted", { date: formatDate(row.enStart, locale, timeZone) }) : formatDate(row.enStart, locale, timeZone)}
                     {isOverdue(row.resolution) ? t("release.planner.card.overdue") : row.resolution.status === "estimated" ? t("release.planner.card.estimated") : ""}
                     {outfits > 0 ? t("release.planner.card.outfits", { count: outfits }) : ""}
                     {picked > 0 ? t("release.planner.card.picked", { count: picked }) : ""}
@@ -372,6 +374,7 @@ interface ISummaryProps {
 
 function Summary({ rows, state, clears, totals, lookup, onRemove, t, locale }: ISummaryProps): React.ReactElement {
     const autoOn = useAutoTranslate();
+    const timeZone = useReleaseTimeZone();
     const income = rows.reduce((sum, row) => sum + rowIncome(row, state, clears), 0);
     const expense = rows.reduce((sum, row) => sum + rowExpense(row, state), 0);
     const tail = rows.at(-1);
@@ -396,7 +399,7 @@ function Summary({ rows, state, clears, totals, lookup, onRemove, t, locale }: I
             </div>
             {short && (
                 <p className="m-0 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 font-sans text-[12px] text-destructive-foreground">
-                    {t("release.planner.summary.short", { count: -(totals.get(short.key)?.balance ?? 0), event: resolveName(short.nameCn, short.nameEn, short.nameAuto, autoOn).text, date: formatDate(short.enStart, locale) })}
+                    {t("release.planner.summary.short", { count: -(totals.get(short.key)?.balance ?? 0), event: resolveName(short.nameCn, short.nameEn, short.nameAuto, autoOn).text, date: formatDate(short.enStart, locale, timeZone) })}
                 </p>
             )}
             {picked.length === 0 ? (
@@ -406,7 +409,7 @@ function Summary({ rows, state, clears, totals, lookup, onRemove, t, locale }: I
                     <section key={row.key} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-2 border-border/60 border-t pt-3">
                         <div className="flex min-w-0 flex-col gap-2">
                             <CnName cn={row.nameCn} en={row.nameEn} auto={row.nameAuto} compact primaryClassName="font-sans font-semibold text-[13px] text-foreground">
-                                <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{formatDate(row.enStart, locale)}</span>
+                                <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{formatDate(row.enStart, locale, timeZone)}</span>
                             </CnName>
                             <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-1.5 p-0">
                                 {skins.map((s) => (

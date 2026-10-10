@@ -4,7 +4,7 @@ import { useLocale, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { Resolution } from "#/types/generated/Resolution";
-import { daysFromToday, formatDate, formatDateRange, relativeDays } from "../helpers";
+import { daysFromToday, formatDate, formatDateRange, relativeDays, useReleaseTimeZone } from "../helpers";
 import type { messages as helperMessages } from "../helpers.messages";
 import { isOverdue } from "../resolution";
 import type { messages } from "./ResolutionBadge.messages";
@@ -37,6 +37,7 @@ function undated(status: "unmodelled" | "independent" | "unlisted", t: BadgeT): 
 export function ResolutionBadge({ resolution, today, note, caption, returning, className }: IResolutionBadgeProps): React.ReactElement {
     const t: BadgeT = useT("tools");
     const locale = useLocale();
+    const timeZone = useReleaseTimeZone();
     // Its table window is a placeholder years long (the game times it per player), so
     // neither the EN date nor the CN-derived status says anything a reader can plan on.
     if (returning) {
@@ -70,7 +71,7 @@ export function ResolutionBadge({ resolution, today, note, caption, returning, c
     switch (resolution.status) {
         case "confirmed":
             chip = <Badge variant="success">{t("release.badge.confirmed")}</Badge>;
-            dateText = formatDateRange(resolution.enStart, resolution.enEnd, locale, t);
+            dateText = formatDateRange(resolution.enStart, resolution.enEnd, locale, t, timeZone);
             break;
         case "override":
             title = resolution.note ? t("release.badge.overrideTitle", { source: resolution.source, note: resolution.note }) : resolution.source;
@@ -79,20 +80,20 @@ export function ResolutionBadge({ resolution, today, note, caption, returning, c
                     {t("release.badge.announced")}
                 </Badge>
             );
-            dateText = formatDateRange(resolution.enStart, resolution.enEnd, locale, t);
+            dateText = formatDateRange(resolution.enStart, resolution.enEnd, locale, t, timeZone);
             sub = <span className="truncate font-sans text-[11px] text-muted-foreground">{t("release.badge.per", { source: resolution.source })}</span>;
             break;
         case "estimated":
             if (isOverdue(resolution)) {
                 title = t("release.badge.overdue.title");
                 chip = <Badge variant="warning">{t("release.badge.overdue")}</Badge>;
-                dateText = t("release.badge.overdue.was", { date: formatDate(resolution.estimatedStart, locale) });
+                dateText = t("release.badge.overdue.was", { date: formatDate(resolution.estimatedStart, locale, timeZone) });
                 rel = relativeDays(daysFromToday(resolution.estimatedStart, today), t);
                 break;
             }
             chip = <Badge variant="outline">{t("release.badge.estimated")}</Badge>;
-            dateText = formatDate(resolution.enStart, locale);
-            sub = <span className="font-mono text-[11px] text-muted-foreground">{t("release.badge.range", { lo: formatDate(resolution.lo, locale), hi: formatDate(resolution.hi, locale) })}</span>;
+            dateText = formatDate(resolution.enStart, locale, timeZone);
+            sub = <span className="font-mono text-[11px] text-muted-foreground">{t("release.badge.range", { lo: formatDate(resolution.lo, locale, timeZone), hi: formatDate(resolution.hi, locale, timeZone) })}</span>;
             break;
     }
 

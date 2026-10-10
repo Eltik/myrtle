@@ -10,7 +10,10 @@ export interface IFormatters {
     compact: (n: number | null | undefined) => string;
     /** A fraction in [0, 1] as a percentage. */
     percent: (fraction: number) => string;
-    /** "5m ago", "yesterday": the narrow style, for dense UI. */
+    /**
+     * "5m ago", "yesterday": the narrow style, for dense UI. Like the other two relative forms,
+     * prints the date (UTC) until hydration ends: the clock moves in between.
+     */
     relative: (iso: string | null | undefined) => string;
     /**
      * "3 weeks ago", "yesterday": the long style, for places with room for the
@@ -51,9 +54,9 @@ export function useFormatters(): IFormatters {
             number: (n) => formatNumber(n, locale),
             compact: (n) => formatNumberCompact(n, locale),
             percent: (fraction) => formatSharePct(fraction, locale),
-            relative: (iso) => formatRelative(iso, locale),
-            relativeLong: (iso) => formatRelative(iso, locale, "long"),
-            relativeShort: (input) => formatRelativeShort(input, locale),
+            relative: (iso) => (!hydrated && untilHydrated(iso, locale)) || formatRelative(iso, locale),
+            relativeLong: (iso) => (!hydrated && untilHydrated(iso, locale)) || formatRelative(iso, locale, "long"),
+            relativeShort: (input) => (!hydrated && untilHydrated(input, locale)) || formatRelativeShort(input, locale),
             date: (value, options) => new Intl.DateTimeFormat(locale, zoned(options ?? { dateStyle: "medium" }, hydrated)).format(value instanceof Date ? value : new Date(value)),
             time: (value, options) => new Intl.DateTimeFormat(locale, zoned(options ?? { timeStyle: "short" }, hydrated)).format(value instanceof Date ? value : new Date(value)),
             calendarDay: (value, options) => new Intl.DateTimeFormat(locale, options ?? { dateStyle: "medium" }).format(value),
@@ -72,4 +75,18 @@ export function useFormatters(): IFormatters {
  */
 function zoned(options: Intl.DateTimeFormatOptions, hydrated: boolean): Intl.DateTimeFormatOptions {
     return hydrated || options.timeZone ? options : { ...options, timeZone: "UTC" };
+}
+
+/**
+ * What `relative`, `relativeLong` and `relativeShort` print until hydration ends: the date, in
+ * UTC like `date`. The relative forms read the clock, and the server's render and the hydrating
+ * one run at different moments, so "just now" in the HTML could hydrate as "1m ago". The relative
+ * form takes over on the render after. `null` (no usable timestamp) leaves the input to the
+ * relative formatter, which prints its own placeholder without reading the clock.
+ */
+function untilHydrated(input: string | number | null | undefined, locale: string): string | null {
+    if (input == null) return null;
+    // `formatRelativeShort` takes epoch seconds or milliseconds; the others take ISO strings.
+    const ms = typeof input === "number" ? (input > 1e12 ? input : input * 1000) : Date.parse(input);
+    return Number.isFinite(ms) ? new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(ms) : null;
 }

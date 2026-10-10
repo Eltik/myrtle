@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { assetUrl, daysFromToday, formatDateRange, formatDays, formatPercent, fromUnix, humanizeTag, relativeDays, weekdayNames } from "./helpers";
+import { afterEach, describe, expect, it } from "vitest";
+import { assetUrl, daysFromToday, formatDate, formatDateRange, formatDays, formatPercent, fromUnix, humanizeTag, relativeDays, weekdayNames } from "./helpers";
 
 /** Unix seconds at local noon, so a local-date rendering never straddles midnight. */
 const localNoon = (y: number, m: number, d: number) => new Date(y, m, d, 12).getTime() / 1000;
@@ -80,5 +80,27 @@ describe("fromUnix and assetUrl", () => {
         expect(assetUrl("")).toBeNull();
         expect(assetUrl("/upk/arts/a b#1.png")?.endsWith("/api/upk/arts/a%20b%231.png")).toBe(true);
         expect(assetUrl("upk/x.png")?.endsWith("/api/upk/x.png")).toBe(true);
+    });
+});
+
+describe("formatDate and formatDateRange in UTC", () => {
+    // 20:00 UTC on Dec 31, 2021 is already Jan 1, 2022 in Tokyo.
+    const AT = Date.UTC(2021, 11, 31, 20) / 1000;
+    const zone = process.env.TZ;
+    afterEach(() => {
+        if (zone === undefined) delete process.env.TZ;
+        else process.env.TZ = zone;
+    });
+
+    it("prints the UTC day whatever the process's zone, and the local day without it", () => {
+        process.env.TZ = "Asia/Tokyo";
+        expect(formatDate(AT, "en-US", "UTC")).toBe("Dec 31, 2021");
+        expect(formatDate(AT, "en-US")).toBe("Jan 1, 2022");
+    });
+
+    it("compares a range's years in the zone it prints", () => {
+        process.env.TZ = "Asia/Tokyo";
+        const end = AT + 2 * 86_400;
+        expect(formatDateRange(AT, end, "en-US", undefined, "UTC")).toBe("Dec 31, 2021 to Jan 2, 2022");
     });
 });

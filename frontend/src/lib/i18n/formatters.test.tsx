@@ -16,6 +16,11 @@ function Registered() {
     return <b>{f.date(AT, OPTIONS)}</b>;
 }
 
+function Ago() {
+    const f = useFormatters();
+    return <b>{f.relative(new Date(AT).toISOString())}</b>;
+}
+
 function Day() {
     const f = useFormatters();
     return <b>{f.calendarDay(new Date(2022, 4, 30), OPTIONS)}</b>;
@@ -59,5 +64,17 @@ describe("useFormatters().date across hydration", () => {
     it("keeps a calendar day built from local parts on its own day", () => {
         // Tokyo's local midnight on May 30 is still May 29 in UTC.
         expect(renderToString(tree(<Day />))).toContain("May 30, 2022");
+    });
+
+    it("prints a relative time as its UTC date until hydration, then relative", async () => {
+        const container = document.createElement("div");
+        container.innerHTML = renderToString(tree(<Ago />));
+        expect(container.textContent).toBe("May 29, 2022");
+        const errors: unknown[] = [];
+        await act(async () => {
+            hydrateRoot(container, tree(<Ago />), { onRecoverableError: (error) => errors.push(error) });
+        });
+        expect(errors).toEqual([]);
+        expect(container.textContent).toMatch(/ago$/);
     });
 });

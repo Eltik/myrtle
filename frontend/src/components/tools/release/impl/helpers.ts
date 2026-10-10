@@ -1,4 +1,5 @@
 import { env } from "#/env";
+import { useHydrated } from "#/hooks/use-hydrated";
 import { DEFAULT_LOCALE, formatMessage, sourceMessage } from "#/lib/i18n";
 import { fullMessageKey, type TypedT } from "#/lib/i18n/messages";
 import type { LagModel } from "#/types/generated/LagModel";
@@ -34,21 +35,29 @@ export function fromUnix(seconds: number): Date {
     return new Date(seconds * 1000);
 }
 
+/**
+ * The `timeZone` the date helpers below take from a component that renders during SSR: "UTC" on
+ * the server and through hydration, then the reader's own zone, the rule `useFormatters().date`
+ * follows. In the server's zone, a date near midnight hydrated against the browser's.
+ */
+export function useReleaseTimeZone(): "UTC" | undefined {
+    return useHydrated() ? undefined : "UTC";
+}
+
 /** The locale is an argument rather than a hook so non-React callers can use it. */
-export function formatDate(seconds: number, locale?: string): string {
-    return fromUnix(seconds).toLocaleDateString(locale ?? "en-US", { month: "short", day: "numeric", year: "numeric" });
+export function formatDate(seconds: number, locale?: string, timeZone?: "UTC"): string {
+    return fromUnix(seconds).toLocaleDateString(locale ?? "en-US", { month: "short", day: "numeric", year: "numeric", timeZone });
 }
 
-function formatMonthDay(seconds: number, locale?: string): string {
-    return fromUnix(seconds).toLocaleDateString(locale ?? "en-US", { month: "short", day: "numeric" });
+function formatMonthDay(seconds: number, locale?: string, timeZone?: "UTC"): string {
+    return fromUnix(seconds).toLocaleDateString(locale ?? "en-US", { month: "short", day: "numeric", timeZone });
 }
 
-export function formatDateRange(start: number, end: number | null | undefined, locale?: string, t: ReleaseHelperT = sourceT): string {
-    if (!end || end <= start) return formatDate(start, locale);
-    const a = fromUnix(start);
-    const b = fromUnix(end);
-    if (a.getFullYear() === b.getFullYear()) return t("release.dateRange", { start: formatMonthDay(start, locale), end: formatDate(end, locale) });
-    return t("release.dateRange", { start: formatDate(start, locale), end: formatDate(end, locale) });
+export function formatDateRange(start: number, end: number | null | undefined, locale?: string, t: ReleaseHelperT = sourceT, timeZone?: "UTC"): string {
+    if (!end || end <= start) return formatDate(start, locale, timeZone);
+    const year = (d: Date) => (timeZone ? d.getUTCFullYear() : d.getFullYear());
+    if (year(fromUnix(start)) === year(fromUnix(end))) return t("release.dateRange", { start: formatMonthDay(start, locale, timeZone), end: formatDate(end, locale, timeZone) });
+    return t("release.dateRange", { start: formatDate(start, locale, timeZone), end: formatDate(end, locale, timeZone) });
 }
 
 export function daysFromToday(seconds: number, today: Date): number {
