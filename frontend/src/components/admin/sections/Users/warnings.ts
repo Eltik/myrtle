@@ -82,16 +82,20 @@ export type AccessSummary = { kind: "everything" } | { kind: "allLists"; locales
  * `localeName` maps a locale code to the name the column shows. Only Edit and
  * above count; a View grant changes nothing anyone can edit. A super-admin
  * already reaches every language, so their grants add nothing.
+ *
+ * A grant is one row per level, so one account can hold Edit and Admin on the
+ * same language or list. Each language and each list is named once.
  */
 export function accessSummary(role: string, grants: IPersonGrants, localeName: (code: string) => string): AccessSummary {
-    const locales = grants.locales.filter((g) => atLeast(g.permission, "edit")).map((g) => localeName(g.locale));
+    const localeCodes = new Set(grants.locales.filter((g) => atLeast(g.permission, "edit")).map((g) => g.locale));
+    const locales = [...localeCodes].map(localeName);
     switch (role) {
         case "super_admin":
             return { kind: "everything" };
         case "tier_list_admin":
             return { kind: "allLists", locales };
         case "tier_list_editor":
-            return { kind: "editor", lists: grants.tierLists.map((g) => g.title), locales };
+            return { kind: "editor", lists: [...new Map(grants.tierLists.map((g) => [g.slug, g.title])).values()], locales };
         case "translator":
             return { kind: "translator", locales };
         default:

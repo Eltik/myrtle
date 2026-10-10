@@ -61,6 +61,13 @@ describe("accessSummary", () => {
         expect(accessSummary("super_admin", french, name)).toEqual({ kind: "everything" });
     });
 
+    it("names a language or list once when the account holds several levels on it", () => {
+        const twoLevels = { tierLists: [tl("a", "meta", "admin"), tl("a", "meta", "view"), tl("a", "meta", "edit"), tl("a", "other")], locales: [loc("a", "fr", "admin"), loc("a", "ja", "admin"), loc("a", "ja", "edit"), loc("a", "ko", "view")] };
+        expect(accessSummary("tier_list_admin", twoLevels, name)).toEqual({ kind: "allLists", locales: ["French", "Japanese"] });
+        expect(accessSummary("tier_list_editor", twoLevels, name)).toEqual({ kind: "editor", lists: ["META", "OTHER"], locales: ["French", "Japanese"] });
+        expect(accessSummary("translator", twoLevels, name)).toEqual({ kind: "translator", locales: ["French", "Japanese"] });
+    });
+
     it("gives a Player with no language grant nothing, whatever lists they hold", () => {
         expect(accessSummary("user", { tierLists: [tl("a", "x")], locales: [] }, name)).toEqual({ kind: "player", locales: [] });
     });
