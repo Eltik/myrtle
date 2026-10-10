@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
+import { noRetryOnServer } from "#/integrations/tanstack-query/root-provider";
 import { backendFetch, backendJsonOrNull } from "#/lib/fetch";
 import type { OperatorBuildStatsResponse } from "#/types/generated/OperatorBuildStatsResponse";
 import type { OperatorOwnershipResponse } from "#/types/generated/OperatorOwnershipResponse";
@@ -204,6 +205,8 @@ export function operatorBuildStatsQueryOptions(id: string, server: string = DEFA
         queryFn: () => getOperatorBuildStatsFn({ data: { id, server: resolveGamedataServer(server) } }),
         staleTime: 30 * 60 * 1000,
         gcTime: 60 * 60 * 1000,
+        // The operator page's loader awaits this during SSR.
+        ...noRetryOnServer(),
     });
 }
 

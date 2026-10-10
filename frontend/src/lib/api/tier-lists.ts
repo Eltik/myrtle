@@ -3,6 +3,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { getCookie, getRequestIP, setCookie } from "@tanstack/react-start/server";
 import { env } from "#/env";
+import { noRetryOnServer } from "#/integrations/tanstack-query/root-provider";
 import { backendFetch } from "#/lib/fetch";
 import { sanitizeMarkdownForStorage, sanitizePlainName } from "#/lib/markdown/sanitize-input";
 import { formatRelative } from "#/lib/utils";
@@ -448,6 +449,8 @@ export function myTierListFavoriteQueryOptions(slug: string, authed: boolean) {
         enabled: authed,
         staleTime: 60 * 1000,
         gcTime: 5 * 60 * 1000,
+        // The tier-list page's loader awaits this during SSR.
+        ...noRetryOnServer(),
     });
 }
 
@@ -1006,6 +1009,8 @@ export function tierListVersionsQueryOptions(slug: string, server: string = DEFA
         queryFn: () => getTierListVersionsFn({ data: { slug, server: resolveGamedataServer(server) } }),
         staleTime: 60 * 1000,
         gcTime: 5 * 60 * 1000,
+        // The tier-list page's loader awaits this during SSR.
+        ...noRetryOnServer(),
     });
 }
 

@@ -37,4 +37,14 @@ export function getContext() {
         queryClient,
     };
 }
+/**
+ * Spread into the options of a query an SSR loader awaits. On the server such a query fails at
+ * once: the default `retry: 1` waits a second and asks again, and the page's whole render waits
+ * with it, so a backend 500 cost that page about 2 s of SSR. In the browser it adds nothing, so
+ * the default above still applies there.
+ */
+export function noRetryOnServer(): { retry?: 0 } {
+    return typeof window === "undefined" ? { retry: 0 } : {};
+}
+
 export default function TanstackQueryProvider() {}
