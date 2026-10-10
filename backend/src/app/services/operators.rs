@@ -253,6 +253,67 @@ pub async fn get_index(
     Ok(entries)
 }
 
+/// The `/static/operators` fields the profile Roster and Optimizer tabs read, by their wire
+/// names. `OPERATOR_ROSTER_FIELDS` in `frontend/src/lib/api/operators.ts` lists the same 15.
+pub const ROSTER_FIELDS: [&str; 15] = [
+    "id",
+    "name",
+    "profession",
+    "professionName",
+    "phases",
+    "skills",
+    "modules",
+    "potentialRanks",
+    "favorKeyFrames",
+    "baseSkills",
+    "skin",
+    "portrait",
+    "itemObtainApproach",
+    "obtainChannel",
+    "tmplDefault",
+];
+
+/// One operator as `/static/operators` serializes it, reduced to [`ROSTER_FIELDS`].
+fn roster_row(op: &Operator) -> Result<serde_json::Value, serde_json::Error> {
+    let mut row = serde_json::to_value(op)?;
+    if let serde_json::Value::Object(fields) = &mut row {
+        fields.retain(|key, _| ROSTER_FIELDS.contains(&key.as_str()));
+    }
+    Ok(row)
+}
+
+/// Every operator's roster row, sorted by table key: `HashMap` order would change the
+/// body, and so the `ETag`, per process.
+fn roster_rows(
+    operators: &HashMap<String, Operator>,
+) -> Result<Vec<serde_json::Value>, serde_json::Error> {
+    let mut keyed = operators
+        .iter()
+        .map(|(id, op)| roster_row(op).map(|row| (id, row)))
+        .collect::<Result<Vec<_>, _>>()?;
+    keyed.sort_unstable_by(|a, b| a.0.cmp(b.0));
+    Ok(keyed.into_iter().map(|(_, row)| row).collect())
+}
+
+/// The roster rows of one server's operator table, cached as JSON with an `ETag`. About two
+/// thirds of `/static/operators`: the handbook, talents, audio, level-up costs and drones are
+/// left out.
+pub async fn get_roster(state: &AppState, server: Server) -> Result<CachedJson, ApiError> {
+    let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let key = CacheKey::StaticData {
+        resource: "operators_roster",
+        server: server.as_str(),
+        fields_hash: 0,
+        page: 0,
+    };
+    cached_json(state, &key, move || async move {
+        let gd = sd.game_data.load_full();
+        let rows = roster_rows(&gd.operators).map_err(|e| ApiError::Internal(e.into()))?;
+        serde_json::to_string(&rows).map_err(|e| ApiError::Internal(e.into()))
+    })
+    .await
+}
+
 /// One operator's community counts. Struct-valued rather than a bare owner
 /// tally so the next statistic is a field here instead of a fourth map
 /// travelling alongside in the response.
@@ -809,7 +870,8 @@ pub const fn rarity_to_stars(rarity: &OperatorRarity) -> u8 {
 mod tests {
     use std::collections::HashMap;
 
-    use super::voice_actors;
+    use super::{ROSTER_FIELDS, roster_rows, voice_actors};
+    use crate::core::gamedata::types::operator::Operator;
     use crate::core::gamedata::types::voice::{LangType, VoiceLang, VoiceLangDictEntry, Voices};
 
     fn lang(voice_lang_type: LangType, cv_name: &[&str]) -> VoiceLangDictEntry {
@@ -852,5 +914,40 @@ mod tests {
             ["Hanazawa Kana", "Wang Yaxin", "Li Jiaxin", "Kana Hanazawa"]
         );
         assert!(voice_actors(&voices, "char_999_none").is_empty());
+    }
+
+    fn operator(id: &str, tmpl_default: Option<&str>) -> Operator {
+        Operator {
+            id: Some(id.to_string()),
+            name: id.to_uppercase(),
+            tmpl_default: tmpl_default.map(str::to_string),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn roster_rows_keep_exactly_the_roster_fields_in_table_key_order() {
+        let table = HashMap::from([
+            ("char_b".to_string(), operator("char_b", None)),
+            ("char_a".to_string(), operator("char_a", Some("char_a"))),
+        ]);
+        let rows = roster_rows(&table).unwrap();
+        let ids: Vec<&str> = rows.iter().map(|r| r["id"].as_str().unwrap()).collect();
+        assert_eq!(ids, ["char_a", "char_b"]);
+
+        // With `tmplDefault` set, every roster field is on the wire and nothing else is.
+        let mut keys: Vec<&str> = rows[0]
+            .as_object()
+            .unwrap()
+            .keys()
+            .map(String::as_str)
+            .collect();
+        keys.sort_unstable();
+        let mut expected = ROSTER_FIELDS.to_vec();
+        expected.sort_unstable();
+        assert_eq!(keys, expected);
+        // `tmplDefault` is skipped when unset, as in `/static/operators`.
+        assert!(rows[1].get("tmplDefault").is_none());
+        assert_eq!(rows[1].as_object().unwrap().len(), ROSTER_FIELDS.len() - 1);
     }
 }

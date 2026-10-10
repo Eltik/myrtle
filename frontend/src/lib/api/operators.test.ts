@@ -61,11 +61,11 @@ describe("toRosterItems", () => {
     it("gives the same rows as camelizing the whole table and picking the roster fields", () => {
         const whole = Object.values(deepCamelize(RAW)) as unknown as Record<string, unknown>[];
         const picked = whole.map((op) => Object.fromEntries(FIELDS.filter((f) => f in op).map((f) => [f, op[f]])));
-        expect(toRosterItems(RAW)).toEqual(picked);
+        expect(toRosterItems(Object.values(RAW))).toEqual(picked);
     });
 
     it("drops what the tabs never read and camelizes nested keys", () => {
-        const [a, b] = toRosterItems(RAW) as unknown as Record<string, unknown>[];
+        const [a, b] = toRosterItems(Object.values(RAW)) as unknown as Record<string, unknown>[];
         expect(Object.keys(a)).not.toContain("handbook");
         expect(Object.keys(a)).not.toContain("talents");
         expect(Object.keys(b)).not.toContain("drones");
@@ -77,16 +77,17 @@ describe("toRosterItems", () => {
 describe("operatorsRosterQueryOptions", () => {
     beforeEach(() => backendFetch.mockReset());
 
-    it("reads the table from the backend, unprefixed for the default server", async () => {
-        backendFetch.mockResolvedValue(new Response(JSON.stringify(RAW), { status: 200 }));
+    it("reads the roster rows from the backend, unprefixed for the default server", async () => {
+        const served = toRosterItems(Object.values(RAW));
+        backendFetch.mockResolvedValue(new Response(JSON.stringify(Object.values(RAW)), { status: 200 }));
         const rows = await (operatorsRosterQueryOptions().queryFn as () => Promise<unknown[]>)();
-        expect(backendFetch).toHaveBeenCalledWith("/static/operators");
-        expect(rows).toHaveLength(2);
+        expect(backendFetch).toHaveBeenCalledWith("/operators/roster");
+        expect(rows).toEqual(served);
     });
 
     it("prefixes another server and rejects a failed response", async () => {
         backendFetch.mockResolvedValue(new Response("{}", { status: 503 }));
         await expect((operatorsRosterQueryOptions("jp").queryFn as () => Promise<unknown>)()).rejects.toThrow("503");
-        expect(backendFetch).toHaveBeenCalledWith("/jp/static/operators");
+        expect(backendFetch).toHaveBeenCalledWith("/jp/operators/roster");
     });
 });

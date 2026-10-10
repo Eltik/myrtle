@@ -133,12 +133,13 @@ export type IOperatorRosterItem = Pick<IOperatorListItem, (typeof OPERATOR_ROSTE
 const ROSTER_FIELD_SET: ReadonlySet<string> = new Set(OPERATOR_ROSTER_FIELDS);
 
 /**
- * Keeps the roster fields of each raw `/static/operators` row and camelizes only those, which
- * gives the same rows as `deepCamelize` of the whole table followed by a pick, without
- * walking the handbook, talents, audio and drones the tabs never read.
+ * Keeps the roster fields of each raw row and camelizes only those. For `/static/operators`
+ * rows that gives the same result as `deepCamelize` of the whole table followed by a pick;
+ * the backend's `/operators/roster` rows already carry just these fields, so there it only
+ * camelizes.
  */
-export function toRosterItems(raw: IOperatorsStaticMap): IOperatorRosterItem[] {
-    return Object.values(raw).map((op) => {
+export function toRosterItems(rows: Iterable<unknown>): IOperatorRosterItem[] {
+    return Array.from(rows, (op) => {
         const out: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(op as Record<string, unknown>)) {
             const name = normalizeKey(key);
@@ -149,16 +150,17 @@ export function toRosterItems(raw: IOperatorsStaticMap): IOperatorRosterItem[] {
 }
 
 /**
- * The roster rows, read by the browser straight from the backend. The tabs only query this
- * on the client, after a tab opens. It used to go through a server function, but the
- * projection serialized to about 28 MB of seroval, 16 % under the 32 MiB a server function
- * may return, and reached the browser uncompressed. The backend serves the table compressed,
- * with an ETag and `Cache-Control: public, max-age=300`, and has no size cliff.
+ * The roster rows, read by the browser straight from the backend's `/operators/roster`,
+ * which serves the `/static/operators` table reduced to these fields (about two thirds of
+ * it), compressed, with an ETag and `Cache-Control: public, max-age=300`. The tabs only query
+ * this on the client, after a tab opens. It used to go through a server function, whose
+ * result serialized to about 28 MB of seroval, 16 % under the 32 MiB a server function may
+ * return, and reached the browser uncompressed.
  */
 async function fetchOperatorsRoster(server: string): Promise<IOperatorRosterItem[]> {
-    const res = await backendFetch(gamedataPath(server, "/static/operators"));
+    const res = await backendFetch(gamedataPath(server, "/operators/roster"));
     if (!res.ok) throw new Error(`Failed to load operators: ${res.status}`);
-    return toRosterItems((await res.json()) as IOperatorsStaticMap);
+    return toRosterItems((await res.json()) as unknown[]);
 }
 
 export function operatorsRosterQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
