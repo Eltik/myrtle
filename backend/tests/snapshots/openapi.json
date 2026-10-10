@@ -796,7 +796,7 @@
           "i18n-admin"
         ],
         "summary": "Give an account a translation grant on one locale.",
-        "description": "Holding any grant is on its own enough to open the admin panel, since a\ngrant would be unusable otherwise.",
+        "description": "Holding any grant is on its own enough to open the admin panel, since a\ngrant would be unusable otherwise. A locale that is not in the locale\ntable is a 404.",
         "operationId": "i18n_permission_grant",
         "requestBody": {
           "content": {
@@ -827,6 +827,9 @@
           },
           "403": {
             "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"

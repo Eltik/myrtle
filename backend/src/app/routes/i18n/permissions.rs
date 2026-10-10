@@ -99,7 +99,8 @@ pub struct GrantRequest {
 /// Give an account a translation grant on one locale.
 ///
 /// Holding any grant is on its own enough to open the admin panel, since a
-/// grant would be unusable otherwise.
+/// grant would be unusable otherwise. A locale that is not in the locale
+/// table is a 404.
 #[utoipa::path(
     post,
     path = "/admin/i18n/permissions",
@@ -112,6 +113,7 @@ pub struct GrantRequest {
         (status = 400, response = crate::app::openapi::responses::BadRequest),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
         (status = 403, response = crate::app::openapi::responses::Forbidden),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
         (status = 429, response = crate::app::openapi::responses::RateLimited),
         (status = 500, response = crate::app::openapi::responses::InternalError),
         (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
