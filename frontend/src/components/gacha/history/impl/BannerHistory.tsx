@@ -30,6 +30,7 @@ const TABS: { key: ClientGachaGroup; labelKey: GachaMessageKey }[] = [
     { key: "linkage", labelKey: BANNER_GROUP_LABEL_KEYS.linkage },
     { key: "regular", labelKey: BANNER_GROUP_LABEL_KEYS.regular },
     { key: "special", labelKey: BANNER_GROUP_LABEL_KEYS.special },
+    { key: "boot", labelKey: BANNER_GROUP_LABEL_KEYS.boot },
 ];
 
 const RARITY_FILTERS = [6, 5, 4, 3] as const;
@@ -191,7 +192,7 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
     /**
      * What each tab's badge shows: pulls in that tab that survive the rarity
      * filter, so the badge always matches the rows the tab would render. Summing
-     * the table above is 4 tabs x 4 rarities regardless of history size.
+     * the table above is 5 tabs x 4 rarities regardless of history size.
      */
     const filteredTabCounts = useMemo(() => {
         const totals = new Map<ClientGachaGroup, number>();
@@ -300,7 +301,8 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
             <output className="sr-only">{isFiltered ? t("history.banners.status.filtered", { rarities: rarityFilterLabel, shown: f.number(visibleCount), total: f.number(activeTabTotal), tab: activeTabLabel }) : t("history.banners.status.all")}</output>
 
             <div className="-mx-1 flex gap-0.5 overflow-x-auto overflow-y-hidden border-border border-b px-1 [scrollbar-width:none] sm:gap-1 [&::-webkit-scrollbar]:hidden">
-                {TABS.map((tab) => {
+                {/* Starter Headhunting is a one-time pool most accounts never pulled on; its tab shows only when it holds pulls. */}
+                {TABS.filter((tab) => tab.key !== "boot" || (records?.boot.total ?? 0) > 0).map((tab) => {
                     const count = filteredTabCounts.get(tab.key) ?? 0;
                     const isActive = activeTab === tab.key;
                     return (

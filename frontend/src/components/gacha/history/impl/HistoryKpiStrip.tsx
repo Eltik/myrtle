@@ -36,11 +36,13 @@ function Kpi({ label, value, meta, featured }: IKpiProps) {
 }
 
 function allItems(records: IClientGachaRecords): IGachaItem[] {
-    return [...records.limited.records, ...records.linkage.records, ...records.regular.records, ...records.special.records];
+    return [...records.limited.records, ...records.linkage.records, ...records.regular.records, ...records.special.records, ...records.boot.records];
 }
 
 // Headhunting cost per pull; free/discounted pulls make the total an estimate.
 const ORUNDUM_PER_PULL = 600;
+// Starter Headhunting's price per pull: `GachaPrice` of every `BOOT_` pool in gacha_table's `NewbeeGachaPoolClient`.
+const ORUNDUM_PER_STARTER_PULL = 380;
 
 export function HistoryKpiStrip({ records, isLoading }: IHistoryKpiStripProps) {
     const t: TypedT<typeof messages> = useT("gacha");
@@ -64,7 +66,11 @@ export function HistoryKpiStrip({ records, isLoading }: IHistoryKpiStripProps) {
 
     const items = allItems(records);
     const total = items.length;
-    const bannerTypeCount = [records.limited, records.linkage, records.regular, records.special].filter((g) => g.total > 0).length;
+    const bannerTypeCount = [records.limited, records.linkage, records.regular, records.special, records.boot].filter((g) => g.total > 0).length;
+    const starterPulls = records.boot.total;
+    const fullPricePulls = total - starterPulls;
+    const orundum = fullPricePulls * ORUNDUM_PER_PULL + starterPulls * ORUNDUM_PER_STARTER_PULL;
+    const orundumTitle = starterPulls > 0 ? t("history.kpi.orundum.titleStarter", { pulls: f.number(fullPricePulls), rate: ORUNDUM_PER_PULL, starterPulls: f.number(starterPulls), starterRate: ORUNDUM_PER_STARTER_PULL }) : t("history.kpi.orundum.title", { pulls: f.number(total), rate: ORUNDUM_PER_PULL });
     const sixStars = items.filter((i) => i.star === "6").length;
     const fiveStars = items.filter((i) => i.star === "5").length;
     const sixRate = total > 0 ? (sixStars / total) * 100 : 0;
@@ -79,7 +85,7 @@ export function HistoryKpiStrip({ records, isLoading }: IHistoryKpiStripProps) {
                 meta={
                     <>
                         <span>{t("history.kpi.bannerTypes", { count: bannerTypeCount })}</span>
-                        {total > 0 ? <span title={t("history.kpi.orundum.title", { pulls: f.number(total), rate: ORUNDUM_PER_PULL })}>{t("history.kpi.orundum", { count: f.number(total * ORUNDUM_PER_PULL) })}</span> : null}
+                        {total > 0 ? <span title={orundumTitle}>{t("history.kpi.orundum", { count: f.number(orundum) })}</span> : null}
                     </>
                 }
             />

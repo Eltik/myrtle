@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { IBanner, IGachaItem } from "#/lib/api/gacha";
+import { classifyClientGachaGroup, type IBanner, type IGachaItem } from "#/lib/api/gacha";
 import { isIsolatedPull, pityWithLimitedReset, sharedPity } from "./pity";
 
 function pull(poolId: string, at: number, star: "3" | "4" | "5" | "6" = "3"): IGachaItem {
@@ -48,6 +48,26 @@ describe("the Kernel counter in pull history", () => {
     }
 });
 
+describe("Starter Headhunting in pull history", () => {
+    it("neither accumulates nor resets the Kernel counter", () => {
+        expect(sharedPity(interleaved("CLASSIC_EN_1", "BOOT_0_1_1"), BANNERS)).toBe(3);
+    });
+
+    it("is isolated whether or not the banner list has loaded", () => {
+        // BOOT_ pools are never in the banner list: they live in `NewbeeGachaPoolClient`.
+        expect(isIsolatedPull(pull("BOOT_0_1_2", 1), BANNERS)).toBe(true);
+        expect(isIsolatedPull(pull("BOOT_0_1_3", 1), new Map())).toBe(true);
+    });
+
+    it("gets its own bucket, never Kernel", () => {
+        expect(classifyClientGachaGroup({ poolId: "BOOT_0_1_1", typeName: "boot" })).toBe("boot");
+        // Older rows stored BOOT pulls under the "regular" wire type; the pool id still decides.
+        expect(classifyClientGachaGroup({ poolId: "BOOT_0_1_1", typeName: "regular" })).toBe("boot");
+        expect(classifyClientGachaGroup({ poolId: "", typeName: "boot" })).toBe("boot");
+        expect(classifyClientGachaGroup({ poolId: "CLASSIC_EN_1", typeName: "classic" })).toBe("special");
+    });
+});
+
 describe("classifying a pull's pool", () => {
     it("reads the rule type from the banner list", () => {
         expect(isIsolatedPull(pull("ATTAIN_EN_40_0_2", 1), BANNERS)).toBe(true);
@@ -60,7 +80,7 @@ describe("classifying a pull's pool", () => {
     it("falls back to the pool id while the banner list is empty", () => {
         const empty = new Map<string, IBanner>();
         for (const id of ["RETURN_71_0_1", "ATTAIN_EN_40_0_2", "CLASSIC_ATTAIN_EN_40_0_1"]) expect(isIsolatedPull(pull(id, 1), empty)).toBe(true);
-        for (const id of ["NORM_EN_41_0_3", "SPECIAL_EN_40_0_6", "CLASSIC_DOUBLE_EN_41_0_2", "FESCLASSIC_EN_40_0_3", "BOOT_0_1_1"]) expect(isIsolatedPull(pull(id, 1), empty)).toBe(false);
+        for (const id of ["NORM_EN_41_0_3", "SPECIAL_EN_40_0_6", "CLASSIC_DOUBLE_EN_41_0_2", "FESCLASSIC_EN_40_0_3"]) expect(isIsolatedPull(pull(id, 1), empty)).toBe(false);
     });
 
     it("counts every pull when no isolated pool is in the history", () => {

@@ -45,7 +45,7 @@ export function TopOperators({ records, operatorsById, isLoading }: ITopOperator
 
     const allItems = useMemo<IGachaItem[]>(() => {
         if (!records) return [];
-        return [...records.limited.records, ...records.linkage.records, ...records.regular.records, ...records.special.records];
+        return [...records.limited.records, ...records.linkage.records, ...records.regular.records, ...records.special.records, ...records.boot.records];
     }, [records]);
 
     const tallies = useMemo(() => tallyOperators(allItems), [allItems]);

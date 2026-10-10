@@ -5,11 +5,19 @@ import type { IBanner, IGachaItem } from "#/lib/api/gacha";
  * Pool-id prefixes of the isolated pools that land in the Standard or Kernel bucket,
  * used ONLY when the banner list cannot answer. It cannot in two cases: while the
  * `/static/banners` query is loading or has failed (the map is empty), and for a pool
- * newer than the static data. The newbie BOOT_ pools are also absent from the list
- * (they live in `NewbeeGachaPoolClient`), and match no prefix here, so they keep
- * counting in the Kernel bucket as before.
+ * newer than the static data.
  */
 const ISOLATED_PREFIXES = ["RETURN_", "ATTAIN_", "CLASSIC_ATTAIN_"];
+
+/**
+ * Starter Headhunting. Its pools are absent from the banner list (they live in
+ * gacha_table's `NewbeeGachaPoolClient`), so the prefix always decides. Each pool
+ * is 21 pulls at 380 Orundum (`GachaTimes`, `GachaPrice`) and its own text says
+ * "All events guarantee at least 1 6★ Operator": the 6* it hands out is that
+ * guarantee, not a Kernel pity reset. Measured on local Postgres (2026-10-10),
+ * counting these in the Kernel bucket changed 76 users' Kernel pity.
+ */
+const STARTER_PREFIX = "BOOT_";
 
 /**
  * Whether a pull was made on a pool whose pity is its own, so it must neither
@@ -22,6 +30,7 @@ const ISOLATED_PREFIXES = ["RETURN_", "ATTAIN_", "CLASSIC_ATTAIN_"];
  * planner's own `scopeFor`, plus the pool's `returning` flag.
  */
 export function isIsolatedPull(item: IGachaItem, bannersById: Map<string, IBanner>): boolean {
+    if (item.poolId.startsWith(STARTER_PREFIX)) return true;
     const banner = bannersById.get(item.poolId);
     if (banner) return banner.returning || scopeFor(banner.gachaRuleType) === "isolated";
     return ISOLATED_PREFIXES.some((prefix) => item.poolId.startsWith(prefix));

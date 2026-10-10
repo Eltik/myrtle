@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { certPurchases, GREEN_PHASE1_BUYOUT, originiteWarning, projectIncome } from "./income";
-import { longRunSixStar, oddsCurve, pityAt, pullOdds, pullsToTarget } from "./odds";
-import { bannerModel, HARD_PITY_PULL, sixStarRate } from "./rates";
+import { longRunSixStar, oddsCurve, pityAt, pullOdds, pullsToGoal, pullsToMaxPot, pullsToTarget } from "./odds";
+import { bannerModel, HARD_PITY_PULL, type IBannerModel, LIMITED_BONUS_AT, sixStarRate } from "./rates";
 import { createPuller, simulateToTarget } from "./simulate";
 
 /** Deterministic generator so the sampling assertions cannot flake. */
@@ -97,6 +97,17 @@ describe("rate-up shares come out of the gamedata split", () => {
         expect(declared.inferred).toBe(false);
         expect(double.inferred).toBe(true);
     });
+
+    it("never lets a declared share override Orienteering's picks or a banner with no rate-up", () => {
+        const special = bannerModel({ ruleType: "SPECIAL", featuredCount: 6, declaredShareEach: 0.5 });
+        expect(special.shareEach).toBeCloseTo(1 / 3, 12);
+        expect(special.featuredCount).toBe(3);
+        for (const ruleType of ["ATTAIN", "CLASSIC_ATTAIN"]) {
+            const m = bannerModel({ ruleType, featuredCount: 1, declaredShareEach: 0.5 });
+            expect(m.rateUp).toBe("none");
+            expect(m.shareEach).toBe(0);
+        }
+    });
 });
 
 describe("pity scope follows the game's own rule text", () => {
@@ -127,8 +138,10 @@ describe("exact odds reproduce an independent implementation", () => {
         expect(pullOdds(single, 3).specific * 100).toBeCloseTo(2.9701, 4);
     });
 
-    it("matches the limited banner at 300 rolls to within 0.08 points", () => {
-        const r = pullOdds(limited, 300);
+    it("matches the limited banner's rolled odds on the last roll before the bonus copy", () => {
+        // That table predates the 300-roll bonus copy; roll 299 is the last its rolled
+        // figures still describe, and they move by under 0.05 points from 299 to 300.
+        const r = pullOdds(limited, 299);
         expect(r.any * 100).toBeCloseTo(99.98, 1);
         expect(r.specific * 100).toBeCloseTo(96.38, 0);
         expect(r.both * 100).toBeCloseTo(92.79, 0);
@@ -264,9 +277,11 @@ describe("banner guarantees actually bind", () => {
         expect(pullOdds(double, 200).any).toBeGreaterThan(pullOdds(plain, 200).any);
     });
 
-    it("spends the first 6* off-rate on an attain banner, ONCE", () => {
-        const attain = bannerModel({ ruleType: "ATTAIN", featuredCount: 1 });
+    it("spends the first 6* off-rate under the attain rule, ONCE", () => {
+        // ATTAIN itself has no rate-up (below), so the walk's once-only flag is checked
+        // on a rate-up model carrying the same guarantee.
         const plain = bannerModel({ ruleType: "SINGLE", featuredCount: 1 });
+        const attain: IBannerModel = { ...plain, guarantee: { kind: "attain" } };
         // Keying the guarantee off "no copies yet" rather than a spent flag makes it
         // re-fire on every 6* and pins the featured operator at zero forever. That
         // shipped once; a strictly-less-than assertion could not see it, because
@@ -293,11 +308,114 @@ describe("banner guarantees actually bind", () => {
     });
 
     it("leaves LIMITED without a forced rate-up, because its text has none", () => {
-        // The limited 300 is the Data Contract exchange, a currency mechanism, not a
-        // redirected roll. Modelling it as pity would overstate the banner.
+        // Its 300 is a bonus copy on top of the rolls, not a redirected 6*.
         expect(limited.guarantee.kind).toBe("none");
-        expect(limited.spark).toBe(300);
-        expect(pullOdds(limited, 300).specific).toBeLessThan(0.97);
+        expect(limited.spark).toBe(LIMITED_BONUS_AT);
+        expect(pullOdds(limited, 299).specific).toBeLessThan(0.97);
+    });
+
+    it("hands over the limited operator's bonus copy on roll 300, once, without touching pity", () => {
+        // "you will get the limited Operator: X after a total of 300 rolls (once only)
+        // ... does not affect your chance to get your next 6-star Operator".
+        const noBonus: IBannerModel = { ...limited, spark: null };
+        const at300 = pullOdds(limited, 300, { maxCopies: 6 });
+        expect(at300.specific).toBeCloseTo(1, 12);
+        expect(pullOdds(noBonus, 300).specific).toBeLessThan(0.97);
+        // Exactly one copy more, and only of the limited operator.
+        // (A cap well past anything reachable, so the cap cannot swallow the extra copy.)
+        const wide = { maxCopies: 20 };
+        expect(pullOdds(limited, 300, wide).expectedCopies - pullOdds(noBonus, 300, wide).expectedCopies).toBeCloseTo(1, 5);
+        expect(at300.both).toBeCloseTo(pullOdds(noBonus, 300).any - pullOdds(noBonus, 300).specific + pullOdds(noBonus, 300).both, 12);
+        // Pity is exactly what the rolls left it at.
+        const a = pullOdds(limited, 300).endPity;
+        const b = pullOdds(noBonus, 300).endPity;
+        for (let i = 0; i < a.length; i++) expect(a[i]).toBeCloseTo(b[i], 14);
+        // Once: no second gift at 600.
+        expect(pullOdds(limited, 600, wide).expectedCopies - pullOdds(noBonus, 600, wide).expectedCopies).toBeCloseTo(1, 5);
+        // Rolls already on the banner count toward the 300.
+        expect(pullOdds(limited, 50, { spentOnBanner: 250 }).specific).toBeCloseTo(1, 12);
+        // And the cost of the goals reflects it: two copies of the limited operator.
+        expect(pullsToGoal(limited, { copiesA: 1, copiesB: 0 }).p90).toBeLessThanOrEqual(LIMITED_BONUS_AT);
+        expect(pullsToMaxPot(limited).p50).toBeLessThan(pullsToMaxPot(noBonus).p50);
+    });
+
+    it("gives ATTAIN and CLASSIC_ATTAIN no rate-up, so no specific chance at all", () => {
+        // `upCharInfo` is empty on every ATTAIN and CLASSIC_ATTAIN pool on both servers;
+        // the only promise is an unowned first 6*.
+        for (const ruleType of ["ATTAIN", "CLASSIC_ATTAIN"]) {
+            const m = bannerModel({ ruleType, featuredCount: 4 });
+            expect(m.rateUp).toBe("none");
+            expect(m.featuredCount).toBe(0);
+            expect(m.shareTotal).toBe(0);
+            expect(m.guarantee.kind).toBe("attain");
+            expect(m.inferred).toBe(false);
+            const r = pullOdds(m, 600);
+            expect(r.specific).toBe(0);
+            expect(r.any).toBe(0);
+            // Six-stars still drop at the ordinary rate.
+            expect(r.expectedSix).toBeCloseTo(pullOdds(bannerModel({ ruleType: "NORMAL", featuredCount: 2 }), 600).expectedSix, 10);
+        }
+    });
+
+    it("gives each Orienteering pick a third of the 6* band, however long the candidate list", () => {
+        // SpecialGachaPercentDict {5: 1.0, 4: 0.6}: the three picks hold all of the 6* band.
+        for (const n of [1, 3, 6]) {
+            const m = bannerModel({ ruleType: "SPECIAL", featuredCount: n });
+            expect(m.rateUp).toBe("picked");
+            expect(m.featuredCount).toBe(3);
+            expect(m.shareEach).toBeCloseTo(1 / 3, 12);
+            expect(m.shareTotal).toBe(1);
+            expect(m.inferred).toBe(false);
+        }
+        const m = bannerModel({ ruleType: "SPECIAL", featuredCount: 6 });
+        // Every 6* is a pick, so "any pick" is just "any 6*".
+        const r = pullOdds(m, 100);
+        expect(r.any).toBeCloseTo(1 - (1 - pullOdds(bannerModel({ ruleType: "NORMAL", featuredCount: 1, declaredShareEach: 1 }), 100).specific), 12);
+        // A goal on a second NAMED pick prices it at its own third, not the other two's two-thirds.
+        const one = pullsToGoal(m, { copiesA: 1, copiesB: 0 });
+        const other = pullsToGoal(m, { copiesA: 0, copiesB: 1 });
+        expect(other.p50).toBe(one.p50);
+        expect(other.mean).toBeCloseTo(one.mean, 6);
+    });
+
+    it("repeats the collab handover every 120 rolls on the looping pools", () => {
+        // LINKAGE_74_0_1: "每120次寻访必定能获得干员【X】，每次获得干员【X】后重新累计次数".
+        const loop = bannerModel({ ruleType: "LINKAGE", featuredCount: 1, linkageLoopAt: 120 });
+        expect(loop.guarantee.repeat).toBe(true);
+        expect(linkage.guarantee.repeat).toBeUndefined();
+        // The cycle length is the data's, and only a collab reads it.
+        expect(bannerModel({ ruleType: "LINKAGE", featuredCount: 1, linkageLoopAt: 90 }).guarantee).toEqual({ kind: "linkage", at: 90, repeat: true });
+        expect(bannerModel({ ruleType: "LINKAGE", featuredCount: 1, linkageLoopAt: null }).guarantee).toEqual({ kind: "linkage", at: 120 });
+        expect(bannerModel({ ruleType: "SINGLE", featuredCount: 1, linkageLoopAt: 120 }).guarantee.repeat).toBeUndefined();
+        // A second guaranteed copy by 240; the once-only pool is still short.
+        expect(pullOdds(loop, 240, { maxCopies: 2 }).copiesTail).toBeCloseTo(1, 12);
+        expect(pullOdds(linkage, 240, { maxCopies: 2 }).copiesTail).toBeLessThan(0.95);
+        expect(pullOdds(loop, 239, { maxCopies: 2 }).copiesTail).toBeLessThan(1);
+        // Six copies by 720 at the latest.
+        expect(pullOdds(loop, 720, { maxCopies: 6 }).copiesTail).toBeCloseTo(1, 12);
+        // The first copy is the same either way.
+        expect(pullOdds(loop, 120).specific).toBeCloseTo(pullOdds(linkage, 120).specific, 12);
+    });
+
+    it("prices the looping handover's goals exactly as the full walk does", () => {
+        // The goal walks take a renewal shortcut; it must be the same model.
+        const loop = bannerModel({ ruleType: "LINKAGE", featuredCount: 1, linkageLoopAt: 120 });
+        const curve = oddsCurve(loop, 720, { maxCopies: 6 });
+        let mean = 0;
+        let p50 = 0;
+        for (let n = 0; n < curve.length; n++) {
+            if (p50 === 0 && curve[n].copiesTail >= 0.5) p50 = n;
+            if (n < curve.length - 1) mean += 1 - curve[n].copiesTail;
+        }
+        const fast = pullsToMaxPot(loop, { horizon: 720 });
+        expect(fast.p50).toBe(p50);
+        expect(fast.mean).toBeCloseTo(mean, 8);
+        const opts = { startPity: 30, spentOnBanner: 50, horizon: 400 };
+        const walked = oddsCurve(loop, 400, opts);
+        let walkedMean = 0;
+        for (let n = 0; n < walked.length - 1; n++) walkedMean += 1 - walked[n].specific;
+        expect(pullsToTarget(loop, opts).specific.mean).toBeCloseTo(walkedMean, 8);
+        expect(pullsToMaxPot(loop).p50).toBeLessThan(pullsToMaxPot(linkage).p50);
     });
 
     it("keeps a single-rate-up DOUBLE pool moving past roll 300", () => {
@@ -338,6 +456,51 @@ describe("sampling agrees with the exact answer", () => {
         expect(s.p75).toBeLessThanOrEqual(s.p90);
         expect(s.p90).toBeLessThanOrEqual(s.p95);
         expect(s.success).toBeGreaterThan(0.99);
+    });
+
+    it("hands the bonus copy over on roll 300 in the simulator too, and only then", () => {
+        const p = createPuller(limited, 0, 0, mulberry32(3));
+        const rolls = p.pullMany(600);
+        const bonuses = rolls.filter((o) => o.bonus);
+        expect(bonuses).toHaveLength(1);
+        expect(bonuses[0].index).toBe(LIMITED_BONUS_AT);
+        // Every copy accounted for: the drawn ones plus the gift.
+        expect(p.state.copiesA).toBe(rolls.filter((o) => o.slot === "featuredA").length + 1);
+        expect(simulateToTarget(limited, { runs: 2000, maxPulls: 300, rng: mulberry32(9) }).success).toBe(1);
+        // And the copy counts agree with the exact walk once it is in play.
+        const exact = pullOdds(limited, 320, { maxCopies: 2 }).copiesTail;
+        const sampled = simulateToTarget(limited, { runs: 20_000, copies: 2, maxPulls: 320, rng: mulberry32(12345) }).success;
+        expect(Math.abs(exact - sampled)).toBeLessThan(0.015);
+    });
+
+    it("repeats the looping collab handover in the simulator", () => {
+        const loop = bannerModel({ ruleType: "LINKAGE", featuredCount: 1, linkageLoopAt: 120 });
+        expect(simulateToTarget(loop, { runs: 2000, copies: 2, maxPulls: 240, rng: mulberry32(5) }).success).toBe(1);
+        expect(simulateToTarget(linkage, { runs: 2000, copies: 2, maxPulls: 240, rng: mulberry32(5) }).success).toBeLessThan(0.97);
+        const exact = pullOdds(loop, 200, { maxCopies: 2 }).copiesTail;
+        const sampled = simulateToTarget(loop, { runs: 20_000, copies: 2, maxPulls: 200, rng: mulberry32(12345) }).success;
+        expect(Math.abs(exact - sampled)).toBeLessThan(0.015);
+    });
+
+    it("forces a 5* only inside the banner's first ten rolls", () => {
+        // "A 5-star and above operator is guaranteed within the first 10 headhunting
+        // attempts": Guarantee5Count 10, once per banner, not every ten in a row.
+        let longestDry = 0;
+        for (let seed = 1; seed <= 200; seed++) {
+            const rolls = createPuller(single, 0, 0, mulberry32(seed)).pullMany(200);
+            expect(rolls.slice(0, 10).some((o) => o.rarity >= 5)).toBe(true);
+            for (const o of rolls) if (o.guaranteed && o.rarity === 5) expect(o.index).toBe(10);
+            let dry = 0;
+            for (const o of rolls.slice(10)) {
+                dry = o.rarity >= 5 ? 0 : dry + 1;
+                longestDry = Math.max(longestDry, dry);
+            }
+        }
+        // After the first ten, dry streaks past ten happen at the base rate (0.9^10 ~ 35%).
+        expect(longestDry).toBeGreaterThan(10);
+        // A banner already past its first ten owes nothing.
+        const resumed = createPuller(single, 0, 10, mulberry32(1)).pullMany(200);
+        expect(resumed.some((o) => o.guaranteed && o.rarity === 5)).toBe(false);
     });
 });
 

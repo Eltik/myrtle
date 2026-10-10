@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useAuth } from "#/hooks/use-auth";
-import { bannersQueryOptions, gachaEnhancedStatsQueryOptions, type IBanner, type IBannerPullStat, myGachaStatsQueryOptions, perBannerStatsQueryOptions } from "#/lib/api/gacha";
+import { bannersQueryOptions, gachaEnhancedStatsQueryOptions, type IBanner, type IBannerPullStat, myGachaStatsQueryOptions, PULLS_GAMEDATA_SERVER, perBannerStatsQueryOptions } from "#/lib/api/gacha";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -20,7 +20,9 @@ export function CommunityPage() {
     const enhanced = useQuery(gachaEnhancedStatsQueryOptions({ topN: 20, includeTiming: true }));
     const server = useGamedataServer();
     const operators = useQuery(operatorsIndexQueryOptions(server));
-    const banners = useQuery(bannersQueryOptions(server));
+    // Community pulls are every account's, all imported from the Global client: banners come from
+    // that table, not the reader's text pick, or no pool id would resolve.
+    const banners = useQuery(bannersQueryOptions(PULLS_GAMEDATA_SERVER));
     const perBannerStats = useQuery(perBannerStatsQueryOptions());
     const { isAuthenticated } = useAuth();
     const myStats = useQuery(myGachaStatsQueryOptions(isAuthenticated));

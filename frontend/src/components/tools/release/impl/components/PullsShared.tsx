@@ -199,7 +199,11 @@ export function Stat({ label, value, sub, icon, hint, className }: { label: Reac
 /** The plain-language reading of a banner's model, so a number is never unexplained. */
 export function BannerModelNote({ model, className }: { model: IBannerModel; className?: string }): React.ReactElement {
     const t: PullsT = useT("tools");
-    const lines: string[] = [t("release.pulls.rule.share", { percent: Math.round(model.shareTotal * 100), count: model.featuredCount })];
+    // All three resolved, then chosen between, for the same extractor reason as below.
+    const share = t("release.pulls.rule.share", { percent: Math.round(model.shareTotal * 100), count: model.featuredCount });
+    const picked = t("release.pulls.rule.sharePicked", { count: model.featuredCount, each: Math.round(model.shareEach * 100) });
+    const none = t("release.pulls.rule.noRateUp");
+    const lines: string[] = [model.rateUp === "none" ? none : model.rateUp === "picked" ? picked : share];
 
     // Both scope names are resolved unconditionally and then chosen between. A
     // ternary INSIDE the t() call would read fine and extract as a dead key, because
@@ -210,8 +214,11 @@ export function BannerModelNote({ model, className }: { model: IBannerModel; cla
     else lines.push(t("release.pulls.rule.isolated"));
 
     const g = model.guarantee;
-    if (g.kind === "linkage" && g.at !== undefined) lines.push(t("release.pulls.rule.guarantee.linkage", { at: g.at }));
+    if (g.kind === "linkage" && g.at !== undefined && !g.repeat) lines.push(t("release.pulls.rule.guarantee.linkage", { at: g.at }));
+    if (g.kind === "linkage" && g.at !== undefined && g.repeat) lines.push(t("release.pulls.rule.guarantee.linkageRepeat", { at: g.at }));
     if (g.kind === "selection" && g.first !== undefined && g.second !== undefined) lines.push(t("release.pulls.rule.guarantee.selection", { first: g.first, second: g.second }));
+    // SINGLE's Focused Selection: one threshold, because there is no other rate-up to force.
+    if (g.kind === "selection" && g.first !== undefined && g.second === undefined) lines.push(t("release.pulls.rule.guarantee.selectionSingle", { first: g.first }));
     if (g.kind === "attain") lines.push(t("release.pulls.rule.guarantee.attain"));
     if (model.spark !== null) lines.push(t("release.pulls.rule.spark", { count: model.spark }));
 

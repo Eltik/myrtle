@@ -32,7 +32,7 @@ import type { PullRates } from "#/types/generated/PullRates";
 import type { PullTimingData } from "#/types/generated/PullTimingData";
 import type { RarityRate } from "#/types/generated/RarityRate";
 import type { WeightUpChar } from "#/types/generated/WeightUpChar";
-import { DEFAULT_GAMEDATA_SERVER, gamedataKey, gamedataPath, resolveGamedataServer } from "./gamedata";
+import { DEFAULT_GAMEDATA_SERVER, type GamedataServer, gamedataKey, gamedataPath, isGamedataServer, resolveGamedataServer } from "./gamedata";
 
 export type IBanner = GachaPoolClient;
 export type IWeightUpChar = WeightUpChar;
@@ -45,6 +45,25 @@ export const getBannersFn = createServerFn({ method: "GET" })
         if (!res.ok) throw new Error(`Failed to load banners: ${res.status}`);
         return (await res.json()) as IBanner[];
     });
+
+/**
+ * The game server whose banner table names and classifies imported pulls. The
+ * importer reads Yostar's Global account portal (`account.yo-star.com`): every
+ * account with stored pulls is EN (874 of 874 on local Postgres, 2026-10-10), and
+ * most of their pool ids exist in no other server's table. So the gacha pages
+ * look banners up here, not in the game-TEXT server the reader picked.
+ */
+export const PULLS_GAMEDATA_SERVER: GamedataServer = "en";
+
+/**
+ * The server an account's pulls came from: its own game server when it is one
+ * the backend routes, else {@link PULLS_GAMEDATA_SERVER}. Profiles carry the
+ * code uppercase (`"EN"`).
+ */
+export function pullsGamedataServer(accountServer: string | null | undefined): GamedataServer {
+    const server = accountServer?.toLowerCase();
+    return isGamedataServer(server) ? server : PULLS_GAMEDATA_SERVER;
+}
 
 export function bannersQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
@@ -167,14 +186,19 @@ export type IGachaTypeRecords = GachaTypeRecordsDto;
 export type IGachaRecords = GachaRecordsDto;
 
 /**
- * Client-side 4-bucket grouping derived from `IGachaItem.typeName`.
+ * Client-side 5-bucket grouping derived from `IGachaItem.typeName`.
  *
  * Backend merges `limited`+`linkage` into the wire-level "limited" bucket and
  * `single`+`boot` into "special", but they have meaningfully different pity rules
  * and rate-up semantics (e.g. linkage has a 120-pull hard guarantee), so the UI
  * separates them.
+ *
+ * `boot` is Starter Headhunting (`BOOT_` pools, `NewbeeGachaPoolClient` in
+ * gacha_table): 21 pulls at 380 Orundum with their own 6* guarantee, so they are
+ * neither Kernel pulls nor part of the Kernel counter. They are absent from
+ * `/static/banners`, so no banner ever classifies into it.
  */
-export type ClientGachaGroup = "limited" | "linkage" | "regular" | "special";
+export type ClientGachaGroup = "limited" | "linkage" | "regular" | "special" | "boot";
 
 export interface IClientGachaTypeRecords {
     gacha_type: ClientGachaGroup;
@@ -187,6 +211,7 @@ export interface IClientGachaRecords {
     linkage: IClientGachaTypeRecords;
     regular: IClientGachaTypeRecords;
     special: IClientGachaTypeRecords;
+    boot: IClientGachaTypeRecords;
 }
 
 /**
@@ -198,8 +223,9 @@ export function classifyClientGachaGroup(item: { poolId: string; typeName: strin
     const id = item.poolId ?? "";
     if (id.startsWith("LIMITED_")) return "limited";
     if (id.startsWith("LINKAGE_")) return "linkage";
-    // FESCLASSIC_ is the festival/anniversary kernel banner - same pool as CLASSIC_/BOOT_.
-    if (id.startsWith("FESCLASSIC_") || id.startsWith("CLASSIC_") || id.startsWith("BOOT_")) return "special";
+    if (id.startsWith("BOOT_")) return "boot";
+    // FESCLASSIC_ is the festival/anniversary kernel banner - same pool as CLASSIC_.
+    if (id.startsWith("FESCLASSIC_") || id.startsWith("CLASSIC_")) return "special";
     if (id.startsWith("SINGLE_") || id.startsWith("NORM_")) return "regular";
 
     switch (item.typeName) {
@@ -208,8 +234,9 @@ export function classifyClientGachaGroup(item: { poolId: string; typeName: strin
         case "linkage":
             return "linkage";
         case "classic":
-        case "boot":
             return "special";
+        case "boot":
+            return "boot";
         default:
             // "single" (debut/rerun rate-up) and "normal" (standard headhunting) both belong here.
             return "regular";
@@ -217,7 +244,7 @@ export function classifyClientGachaGroup(item: { poolId: string; typeName: strin
 }
 
 /**
- * Classify a banner-pool entry (from `/static/banners`) into the same 4-bucket
+ * Classify a banner-pool entry (from `/static/banners`) into the same 5-bucket
  * UI grouping used for pull records. Mirrors {@link classifyClientGachaGroup}
  * but keyed off the banner's `gachaRuleType` (and `gachaPoolId` prefix as a
  * fallback) since static banner metadata doesn't carry a `typeName`.
@@ -243,7 +270,8 @@ export function classifyBannerGroup(banner: { gachaRuleType: string; gachaPoolId
             const id = banner.gachaPoolId ?? "";
             if (id.startsWith("LIMITED_")) return "limited";
             if (id.startsWith("LINKAGE_")) return "linkage";
-            if (id.startsWith("FESCLASSIC_") || id.startsWith("CLASSIC_") || id.startsWith("BOOT_")) return "special";
+            if (id.startsWith("BOOT_")) return "boot";
+            if (id.startsWith("FESCLASSIC_") || id.startsWith("CLASSIC_")) return "special";
             return "regular";
         }
     }
@@ -255,6 +283,7 @@ export function deriveClientGachaRecords(records: IGachaRecords): IClientGachaRe
         linkage: [],
         regular: [],
         special: [],
+        boot: [],
     };
 
     for (const item of [...records.limited.records, ...records.regular.records, ...records.special.records]) {
@@ -266,6 +295,7 @@ export function deriveClientGachaRecords(records: IGachaRecords): IClientGachaRe
         linkage: { gacha_type: "linkage", records: buckets.linkage, total: buckets.linkage.length },
         regular: { gacha_type: "regular", records: buckets.regular, total: buckets.regular.length },
         special: { gacha_type: "special", records: buckets.special, total: buckets.special.length },
+        boot: { gacha_type: "boot", records: buckets.boot, total: buckets.boot.length },
     };
 }
 

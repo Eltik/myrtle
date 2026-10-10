@@ -21,6 +21,11 @@ export interface IPullOutcome {
     pityAt: number;
     /** True when a banner guarantee, not the base odds, decided this outcome. */
     guaranteed: boolean;
+    /**
+     * True when this roll took the banner to its bonus total and a free copy of the
+     * limited operator came with it, on top of whatever the roll itself drew.
+     */
+    bonus: boolean;
 }
 
 export interface IPuller {
@@ -44,7 +49,10 @@ const LOWER_TOTAL = BASE_FIVE_RATE + BASE_FOUR_RATE + BASE_THREE_RATE;
 export function createPuller(model: IBannerModel, startPity = 0, spentOnBanner = 0, rng: Rng = Math.random): IPuller {
     let pity = Math.max(0, Math.floor(startPity));
     let pulls = Math.max(0, Math.floor(spentOnBanner));
-    let sinceFive = 0;
+    // "A 5-star and above operator is guaranteed within the first 10 headhunting
+    // attempts": once per banner, so it is owed only while the banner is inside its
+    // first ten rolls and has not yet drawn a 5* or better.
+    let fiveOwed = pulls < GUARANTEE_FIVE_COUNT;
     let copiesA = 0;
     let copiesB = 0;
     let sixStars = 0;
@@ -52,6 +60,9 @@ export function createPuller(model: IBannerModel, startPity = 0, spentOnBanner =
     const twoFeatured = model.featuredCount >= 2;
     const g = model.guarantee;
     let attainSpent = false;
+    // Rolls since the last copy of the collab operator, for the looping handover.
+    const loop = g.kind === "linkage" && g.repeat === true && g.at !== undefined && g.at > 0 ? g.at : 0;
+    let sinceA = loop > 0 ? Math.min(pulls, loop - 1) : 0;
 
     function resolveSix(onBanner: number): { slot: PullSlot; guaranteed: boolean } {
         if (g.kind === "selection") {
@@ -75,38 +86,42 @@ export function createPuller(model: IBannerModel, startPity = 0, spentOnBanner =
         return { slot: "offRate", guaranteed: false };
     }
 
-    function pull(): IPullOutcome {
+    function roll(): IPullOutcome {
         pulls += 1;
         const pityAt = pity + 1;
         const p6 = sixStarRate(pityAt);
 
-        // The collab handover lands on its roll regardless of what that roll rolled.
-        if (g.kind === "linkage" && copiesA === 0 && pulls === (g.at ?? -1)) {
+        // The collab handover lands on its roll regardless of what that roll rolled:
+        // once on roll 120, or on the looping pools every 120th roll without a copy.
+        if (loop > 0 ? sinceA + 1 >= loop : g.kind === "linkage" && copiesA === 0 && pulls === (g.at ?? -1)) {
             pity = 0;
-            sinceFive = 0;
+            fiveOwed = false;
+            sinceA = 0;
             sixStars += 1;
             copiesA += 1;
-            return { index: pulls, rarity: 6, slot: "featuredA", pityAt, guaranteed: true };
+            return { index: pulls, rarity: 6, slot: "featuredA", pityAt, guaranteed: true, bonus: false };
         }
+        sinceA += 1;
 
         if (rng() < p6) {
             pity = 0;
-            sinceFive = 0;
+            fiveOwed = false;
             sixStars += 1;
             const { slot, guaranteed } = resolveSix(pulls);
-            if (slot === "featuredA") copiesA += 1;
-            else if (slot === "featuredB") copiesB += 1;
-            return { index: pulls, rarity: 6, slot, pityAt, guaranteed };
+            if (slot === "featuredA") {
+                copiesA += 1;
+                sinceA = 0;
+            } else if (slot === "featuredB") copiesB += 1;
+            return { index: pulls, rarity: 6, slot, pityAt, guaranteed, bonus: false };
         }
 
         pity = pityAt;
-        sinceFive += 1;
-        // Every pool ships Guarantee5Avail 1 / Guarantee5Count 10: a 5* or better
-        // must appear within any ten rolls.
-        if (sinceFive >= GUARANTEE_FIVE_COUNT) {
-            sinceFive = 0;
+        // Every pool ships Guarantee5Avail 1 / Guarantee5Count 10, and the text makes
+        // it the banner's FIRST ten rolls, not any ten in a row.
+        if (fiveOwed && pulls >= GUARANTEE_FIVE_COUNT) {
+            fiveOwed = false;
             fiveStars += 1;
-            return { index: pulls, rarity: 5, slot: "five", pityAt, guaranteed: true };
+            return { index: pulls, rarity: 5, slot: "five", pityAt, guaranteed: true, bonus: false };
         }
 
         const rest = 1 - p6;
@@ -114,12 +129,23 @@ export function createPuller(model: IBannerModel, startPity = 0, spentOnBanner =
         const five = (BASE_FIVE_RATE / LOWER_TOTAL) * rest;
         const four = (BASE_FOUR_RATE / LOWER_TOTAL) * rest;
         if (r < five) {
-            sinceFive = 0;
+            fiveOwed = false;
             fiveStars += 1;
-            return { index: pulls, rarity: 5, slot: "five", pityAt, guaranteed: false };
+            return { index: pulls, rarity: 5, slot: "five", pityAt, guaranteed: false, bonus: false };
         }
-        if (r < five + four) return { index: pulls, rarity: 4, slot: "four", pityAt, guaranteed: false };
-        return { index: pulls, rarity: 3, slot: "three", pityAt, guaranteed: false };
+        if (r < five + four) return { index: pulls, rarity: 4, slot: "four", pityAt, guaranteed: false, bonus: false };
+        return { index: pulls, rarity: 3, slot: "three", pityAt, guaranteed: false, bonus: false };
+    }
+
+    function pull(): IPullOutcome {
+        const outcome = roll();
+        // The Limited bonus copy rides on the roll that reaches the total. It is a gift,
+        // not a 6* drawn, so pity is left exactly where the roll put it.
+        if (model.spark !== null && pulls === model.spark) {
+            copiesA += 1;
+            outcome.bonus = true;
+        }
+        return outcome;
     }
 
     return {
@@ -180,7 +206,9 @@ export function simulateToTarget(model: IBannerModel, opts: { runs?: number; cop
         // iteration: that getter builds a fresh six-field object per call, which at
         // six copies over ten thousand runs is millions of throwaway allocations.
         while (spent < maxPulls && got < copies) {
-            if (puller.pull().slot === "featuredA") got += 1;
+            const o = puller.pull();
+            if (o.slot === "featuredA") got += 1;
+            if (o.bonus) got += 1;
             spent += 1;
         }
         if (got >= copies) {

@@ -42,6 +42,7 @@ const TYPE_COLORS: Record<ClientGachaGroup, string> = {
     linkage: "oklch(0.78 0.16 320)",
     regular: "#bcabdb",
     special: "#88c8e3",
+    boot: "oklch(0.8 0.12 160)",
 };
 
 function groupByPool(items: IGachaItem[], gachaType: ClientGachaGroup, bannersById: Map<string, IBanner>): IBannerStat[] {
@@ -270,7 +271,13 @@ export function BannerBreakdown({ records, bannersById, operatorsById, isLoading
         });
     const banners = useMemo<IBannerStat[]>(() => {
         if (!records) return [];
-        return [...groupByPool(records.limited.records, "limited", bannersById), ...groupByPool(records.linkage.records, "linkage", bannersById), ...groupByPool(records.regular.records, "regular", bannersById), ...groupByPool(records.special.records, "special", bannersById)].sort((a, b) => b.lastPullAt - a.lastPullAt);
+        return [
+            ...groupByPool(records.limited.records, "limited", bannersById),
+            ...groupByPool(records.linkage.records, "linkage", bannersById),
+            ...groupByPool(records.regular.records, "regular", bannersById),
+            ...groupByPool(records.special.records, "special", bannersById),
+            ...groupByPool(records.boot.records, "boot", bannersById),
+        ].sort((a, b) => b.lastPullAt - a.lastPullAt);
     }, [records, bannersById]);
 
     if (isLoading) {

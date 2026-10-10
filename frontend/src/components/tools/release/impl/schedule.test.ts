@@ -49,6 +49,8 @@ function banner(partial: Partial<ReleaseBanner>): ReleaseBanner {
         nameEnAuto: null,
         imagePath: null,
         resolution: estimated,
+        declaredShareEach: null,
+        linkageLoopAt: null,
         ...partial,
     };
 }

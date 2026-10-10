@@ -146,6 +146,10 @@ pub async fn get_banners(state: &AppState) -> Result<BannersResponse, ApiError> 
                     &pool.gacha_pool_id,
                 ),
                 resolution,
+                declared_share_each: en_pool
+                    .and_then(|e| e.declared_share6)
+                    .or(pool.declared_share6),
+                linkage_loop_at: en_pool.map_or(pool.linkage_loop_at, |e| e.linkage_loop_at),
             }
         })
         .collect();

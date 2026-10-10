@@ -28,6 +28,10 @@ export const messages = {
         text: "Kernel",
         description: "Banner bucket: the pool of older operators. 'Kernel' is the game's own name for it.",
     },
+    "banner.group.boot": {
+        text: "Starter Headhunting",
+        description: "Banner bucket: the discounted headhunting a new account gets, with its own guaranteed 6-star. 'Starter Headhunting' is the game's own name for it.",
+    },
     "banner.status.active": {
         text: "Active",
         description: "Banner status pill: the banner is running right now.",

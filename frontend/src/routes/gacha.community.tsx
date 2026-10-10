@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CommunityPage } from "#/components/gacha/community/CommunityPage";
-import { bannersQueryOptions, gachaEnhancedStatsQueryOptions, perBannerStatsQueryOptions } from "#/lib/api/gacha";
+import { bannersQueryOptions, gachaEnhancedStatsQueryOptions, PULLS_GAMEDATA_SERVER, perBannerStatsQueryOptions } from "#/lib/api/gacha";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
@@ -12,7 +12,7 @@ export const Route = createFileRoute("/gacha/community")({
         await Promise.all([
             queryClient.prefetchQuery(gachaEnhancedStatsQueryOptions({ topN: 20, includeTiming: true })),
             queryClient.prefetchQuery(operatorsIndexQueryOptions(i18n.gamedataServer)),
-            queryClient.prefetchQuery(bannersQueryOptions(i18n.gamedataServer)),
+            queryClient.prefetchQuery(bannersQueryOptions(PULLS_GAMEDATA_SERVER)),
             queryClient.prefetchQuery(perBannerStatsQueryOptions()),
         ]);
     },

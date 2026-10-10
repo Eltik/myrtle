@@ -20,7 +20,7 @@ function nn<T>(v: T | null): T {
 const TODAY = new Date(Date.UTC(2026, 8, 16));
 
 /** A forecast banner, reduced to the fields the ledger reads. */
-function banner(id: string, ruleType: string, daysOut: number, featured: string[] = ["char_a", "char_b"]) {
+function banner(id: string, ruleType: string, daysOut: number, featured: string[] = ["char_a", "char_b"], over: { declaredShareEach?: number; linkageLoopAt?: number } = {}) {
     const enStart = Math.floor(Date.UTC(2026, 8, 16) / 1000) + daysOut * DAY;
     return {
         cnPoolId: id,
@@ -39,6 +39,8 @@ function banner(id: string, ruleType: string, daysOut: number, featured: string[
         nameEnAuto: null,
         imagePath: null,
         resolution: { status: "confirmed", enId: id, enStart, enEnd: enStart + 14 * DAY },
+        declaredShareEach: over.declaredShareEach ?? null,
+        linkageLoopAt: over.linkageLoopAt ?? null,
     } as unknown as IPlanInput["banners"][number];
 }
 
@@ -436,7 +438,8 @@ describe("maximum potential", () => {
     });
 
     it("reports the measured medians per banner type", () => {
-        expect(maxPotFor(bannerModel({ ruleType: "LIMITED", featuredCount: 2 })).p50).toBe(565);
+        // 565 before the 300-roll bonus copy was counted.
+        expect(maxPotFor(bannerModel({ ruleType: "LIMITED", featuredCount: 2 })).p50).toBe(467);
         expect(maxPotFor(bannerModel({ ruleType: "DOUBLE", featuredCount: 2 })).p50).toBe(783);
         expect(maxPotFor(bannerModel({ ruleType: "SINGLE", featuredCount: 1 })).p50).toBe(397);
     });
@@ -453,6 +456,59 @@ describe("maximum potential", () => {
     it("returns the cached instance for the same banner model", () => {
         const m = bannerModel({ ruleType: "LIMITED", featuredCount: 2 });
         expect(maxPotFor(m)).toBe(maxPotFor(bannerModel({ ruleType: "LIMITED", featuredCount: 2 })));
+    });
+});
+
+describe("rule details carried onto the rows", () => {
+    it("makes the limited operator certain once the banner reaches 300, free pulls included", () => {
+        const rich = plan({ allocations: { A: 276 }, countFreePulls: true }, 200_000);
+        expect(rich.rows[0].totalPulls).toBe(300);
+        expect(rich.rows[0].odds.specific).toBeCloseTo(1, 12);
+        const short = plan({ allocations: { A: 275 }, countFreePulls: true }, 200_000);
+        expect(short.rows[0].odds.specific).toBeLessThan(0.97);
+    });
+
+    it("reads the banner's declared share, and Orienteering keeps its three picks", () => {
+        const p = plan({ banners: [banner("N", "NORMAL", 10, ["char_a", "char_b"], { declaredShareEach: 0.35 }), banner("S", "SPECIAL", 20, ["c1", "c2", "c3"], { declaredShareEach: 0.5 })] });
+        const [normal, special] = p.rows;
+        expect(normal.model.shareEach).toBeCloseTo(0.35, 12);
+        expect(normal.model.inferred).toBe(false);
+        expect(special.model.shareEach).toBeCloseTo(1 / 3, 12);
+    });
+
+    it("splits Orienteering over three picks, not over the six candidates listed", () => {
+        const six = ["c1", "c2", "c3", "c4", "c5", "c6"];
+        const p = plan({ banners: [banner("S", "SPECIAL", 10, six)], allocations: { S: 100 } });
+        const row = p.rows[0];
+        expect(row.model.shareEach).toBeCloseTo(1 / 3, 12);
+        expect(row.model.featuredCount).toBe(3);
+        expect(row.model.inferred).toBe(false);
+        // A third each: 28.43% at 50 pulls and 60.89% at 100 (8.00% and 19.60% at the old twelfth).
+        expect(row.odds.specific).toBeCloseTo(0.6089, 4);
+        expect(pullOdds(row.model, 50).specific).toBeCloseTo(0.2843, 4);
+    });
+
+    it("gives an ATTAIN row no goals and drops potentials aimed at it", () => {
+        const p = plan({ banners: [banner("T", "ATTAIN", 10)], allocations: { T: 100 }, targets: { T: { char_a: 2 } } });
+        const row = p.rows[0];
+        expect(row.model.rateUp).toBe("none");
+        expect(row.odds.specific).toBe(0);
+        expect(row.totalCopies).toBe(0);
+        expect(row.goalEstimate).toBeNull();
+        expect(row.estimate.both).toBeNull();
+        expect(row.maxPot.unresolved).toBe(1);
+        expect(row.model.inferred).toBe(false);
+        expect(planTargets(row).guarantee).toBeNull();
+    });
+
+    it("keeps a looping collab's estimates apart from a once-only one's", () => {
+        const p = plan({ banners: [banner("LINKAGE_74_0_1", "LINKAGE", 10, ["char_x"], { linkageLoopAt: 120 }), banner("L", "LINKAGE", 40, ["char_y"])], targets: { LINKAGE_74_0_1: { char_x: 2 }, L: { char_y: 2 } } });
+        const [loop, once] = p.rows;
+        expect(loop.model.guarantee.repeat).toBe(true);
+        expect(once.model.guarantee.repeat).toBeUndefined();
+        expect(nn(loop.goalEstimate).p90).toBeLessThanOrEqual(240);
+        expect(nn(once.goalEstimate).p90).toBeGreaterThan(nn(loop.goalEstimate).p90);
+        expect(loop.maxPot.p50).toBeLessThan(once.maxPot.p50);
     });
 });
 
@@ -495,7 +551,7 @@ describe("free pulls a banner gives away", () => {
     });
 
     it("counts free pulls toward the spark, because the game does", () => {
-        // 276 committed plus the banner's own 24 reaches the 300-roll exchange, so a
+        // 276 committed plus the banner's own 24 reaches the 300-roll bonus copy, so a
         // bank that can actually pay 276 is needed for the case to mean anything.
         const rich = plan({ allocations: { A: 276 }, countFreePulls: true }, 200_000);
         expect(rich.rows[0].spent).toBe(276);
@@ -523,7 +579,7 @@ describe("free pulls a banner gives away", () => {
 describe("the one-click presets", () => {
     it("asks for the spark less what the banner gives away", () => {
         // The ledger above already settles the arithmetic: 276 committed plus this
-        // banner's own 24 free rolls is the 300 the exchange wants. The preset used to
+        // banner's own 24 free rolls is the 300 the bonus copy wants. The preset used to
         // offer a flat 300 and so bought 24 rolls of nothing.
         const rich = plan({ countFreePulls: true }, 200_000);
         const limited = rich.rows[0];

@@ -17,6 +17,7 @@ export const BANNER_GROUP_LABEL_KEYS: Record<ClientGachaGroup, GachaMessageKey> 
     linkage: "banner.group.linkage",
     regular: "banner.group.regular",
     special: "banner.group.special",
+    boot: "banner.group.boot",
 };
 
 export const BANNER_STATUS_LABEL_KEYS: Record<BannerStatus, GachaMessageKey> = {

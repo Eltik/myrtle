@@ -25,6 +25,7 @@ const TYPE_COLORS: Record<ClientGachaGroup, string> = {
     linkage: "oklch(0.78 0.16 320)",
     regular: "#bcabdb",
     special: "#88c8e3",
+    boot: "oklch(0.8 0.12 160)",
 };
 
 // Track render order - top row down. Same order as the rest of the UI.
@@ -106,7 +107,7 @@ function buildBannerBands(rows: IDatePullData[], banners: IBanner[]): { byTrack:
     const firstSec = daySecs[0];
     const lastSec = daySecs[daySecs.length - 1];
 
-    const byTrack: Record<ClientGachaGroup, IBannerBand[]> = { limited: [], linkage: [], regular: [], special: [] };
+    const byTrack: Record<ClientGachaGroup, IBannerBand[]> = { limited: [], linkage: [], regular: [], special: [], boot: [] };
 
     if (daySecs.length === 0) return { byTrack, nonEmptyTracks: [], daySecs };
 

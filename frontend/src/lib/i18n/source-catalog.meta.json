@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-10T00:11:50.226Z",
+    "generatedAt": "2026-10-10T13:27:28.028Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -7968,6 +7968,13 @@
             "placeholders": []
         },
         {
+            "key": "gacha.banner.group.boot",
+            "namespace": "gacha",
+            "source_text": "Starter Headhunting",
+            "description": "Banner bucket: the discounted headhunting a new account gets, with its own guaranteed 6-star. 'Starter Headhunting' is the game's own name for it.",
+            "placeholders": []
+        },
+        {
             "key": "gacha.banner.group.limited",
             "namespace": "gacha",
             "source_text": "Limited",
@@ -9147,7 +9154,7 @@
             "key": "gacha.history.kpi.bannerTypes",
             "namespace": "gacha",
             "source_text": "across {count, plural, one {# banner type} other {# banner types}}",
-            "description": "Under the total pull count: how many of the four banner buckets the player has pulled on. Lowercase; it starts a fragment, not a sentence.",
+            "description": "Under the total pull count: how many of the five banner buckets the player has pulled on. Lowercase; it starts a fragment, not a sentence.",
             "placeholders": [
                 "count"
             ]
@@ -9176,6 +9183,18 @@
             "placeholders": [
                 "pulls",
                 "rate"
+            ]
+        },
+        {
+            "key": "gacha.history.kpi.orundum.titleStarter",
+            "namespace": "gacha",
+            "source_text": "{pulls} pulls x {rate} Orundum + {starterPulls} Starter Headhunting pulls x {starterRate} Orundum; free and discounted pulls make this an upper estimate",
+            "description": "Tooltip explaining the Orundum estimate when the player also pulled on Starter Headhunting, which costs less per pull. Orundum is the game's currency and keeps its name; the x is a plain multiplication.",
+            "placeholders": [
+                "pulls",
+                "rate",
+                "starterPulls",
+                "starterRate"
             ]
         },
         {
@@ -37312,8 +37331,8 @@
         {
             "key": "tools.release.pulls.banners.sparkMet",
             "namespace": "tools",
-            "source_text": "Clears the {spark}-pull guarantee",
-            "description": "Note that the projected budget reaches a Limited banner's outright exchange.",
+            "source_text": "Reaches the {spark}-pull bonus copy",
+            "description": "Note that the pulls planned on a Limited banner reach the total at which it gives a free extra copy of its limited operator.",
             "placeholders": [
                 "spark"
             ]
@@ -37900,6 +37919,13 @@
             ]
         },
         {
+            "key": "tools.release.pulls.plan.noRateUp",
+            "namespace": "tools",
+            "source_text": "No rate-up on this banner, so there is no operator to aim for. The first 6★ it gives is one you do not own.",
+            "description": "Shown in place of the pull targets on a Special Headhunting banner, which boosts no six-star operator.",
+            "placeholders": []
+        },
+        {
             "key": "tools.release.pulls.plan.overrun",
             "namespace": "tools",
             "source_text": "{count, plural, one {# banner} other {# banners}} over budget",
@@ -38000,7 +38026,7 @@
             "key": "tools.release.pulls.plan.spark",
             "namespace": "tools",
             "source_text": "Spark {count}",
-            "description": "Button committing exactly the pulls needed for a Limited banner's outright exchange.",
+            "description": "Button committing exactly the pulls needed for a Limited banner's 300-pull bonus copy of its limited operator. 'Spark' is the players' term for that threshold.",
             "placeholders": [
                 "count"
             ]
@@ -38008,8 +38034,8 @@
         {
             "key": "tools.release.pulls.plan.sparkTitle",
             "namespace": "tools",
-            "source_text": "Commit enough to reach the {spark}-pull exchange. This banner gives {free} free pulls, so {count} of your own get you there.",
-            "description": "Tooltip on the Spark preset when the banner hands out free pulls. The exchange trades a fixed number of pulls for the operator outright.",
+            "source_text": "Commit enough to reach {spark} pulls, where the limited operator comes as a free bonus copy. This banner gives {free} free pulls, so {count} of your own get you there.",
+            "description": "Tooltip on the Spark preset when the banner hands out free pulls. At that many total pulls a Limited banner gives one extra copy of its limited operator, once, without affecting pity.",
             "placeholders": [
                 "count",
                 "free",
@@ -38019,7 +38045,7 @@
         {
             "key": "tools.release.pulls.plan.sparkTitlePlain",
             "namespace": "tools",
-            "source_text": "Commit enough to reach the {spark}-pull exchange.",
+            "source_text": "Commit enough to reach {spark} pulls, where the limited operator comes as a free bonus copy.",
             "description": "Tooltip on the Spark preset when the banner hands out no free pulls.",
             "placeholders": [
                 "spark"
@@ -38230,6 +38256,15 @@
             ]
         },
         {
+            "key": "tools.release.pulls.rule.guarantee.linkageRepeat",
+            "namespace": "tools",
+            "source_text": "Every {at, number} pulls without the collab operator hand one over, and the count restarts after each copy",
+            "description": "Describes the newer collaboration banners whose guarantee repeats: each run of that many pulls without the operator ends with one.",
+            "placeholders": [
+                "at"
+            ]
+        },
+        {
             "key": "tools.release.pulls.rule.guarantee.selection",
             "namespace": "tools",
             "source_text": "Past {first, plural, one {# pull} other {# pulls}} the next 6★ is forced on-rate, and past {second} it is the other one",
@@ -38240,10 +38275,26 @@
             ]
         },
         {
+            "key": "tools.release.pulls.rule.guarantee.selectionSingle",
+            "namespace": "tools",
+            "source_text": "Past {first, plural, one {# pull} other {# pulls}} without the rate-up, the next 6★ is the rate-up",
+            "description": "Describes the Focused Selection guarantee on a one-rate-up banner.",
+            "placeholders": [
+                "first"
+            ]
+        },
+        {
             "key": "tools.release.pulls.rule.isolated",
             "namespace": "tools",
             "source_text": "Pity starts at zero and is cleared when the banner ends",
             "description": "Note that a banner tracks pity on its own.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.rule.noRateUp",
+            "namespace": "tools",
+            "source_text": "No rate-up: no 6★ is boosted on this banner",
+            "description": "Describes a Special Headhunting banner, which has no featured six-star operator.",
             "placeholders": []
         },
         {
@@ -38271,10 +38322,20 @@
             ]
         },
         {
+            "key": "tools.release.pulls.rule.sharePicked",
+            "namespace": "tools",
+            "source_text": "Every 6★ is one of the {count} operators you pick, {each}% each",
+            "description": "Describes an Orienteering banner, where the player locks in three six-star operators and they take the whole six-star rate between them.",
+            "placeholders": [
+                "count",
+                "each"
+            ]
+        },
+        {
             "key": "tools.release.pulls.rule.spark",
             "namespace": "tools",
-            "source_text": "{count, plural, one {# pull exchanges} other {# pulls exchange}} for the featured operator outright",
-            "description": "Describes the Limited banner's certificate exchange.",
+            "source_text": "At {count, plural, one {# pull} other {# pulls}} the limited operator comes once more as a free bonus copy, without touching pity",
+            "description": "Describes the Limited banner's one-time gift: after that many total pulls the player receives an extra copy of the limited operator, which does not reset or advance the six-star pity counter.",
             "placeholders": [
                 "count"
             ]

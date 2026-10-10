@@ -36,6 +36,7 @@ const BANNER_CONFIGS: { key: ClientGachaGroup; labelKey: GachaMessageKey; softPi
     { key: "linkage", labelKey: BANNER_GROUP_LABEL_KEYS.linkage, softPityAt: 50, hardPityAt: 99, color: "oklch(0.78 0.16 320)" },
     { key: "regular", labelKey: BANNER_GROUP_LABEL_KEYS.regular, softPityAt: 50, hardPityAt: 99, color: "#bcabdb" },
     { key: "special", labelKey: BANNER_GROUP_LABEL_KEYS.special, softPityAt: 50, hardPityAt: 99, color: "#88c8e3" },
+    // No Starter Headhunting card: its 21 pulls end on their own guaranteed 6*, so there is no counter to carry.
 ];
 
 function PityMeter({ pity, softPityAt, hardPityAt, color }: { pity: number; softPityAt: number; hardPityAt: number; color: string }) {

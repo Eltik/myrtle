@@ -55,6 +55,7 @@ pub fn enrich_banners(pools: &mut [GachaPoolClient], details: Option<&PoolDetail
         pool.featured6 = f6;
         pool.featured5 = f5;
         pool.featured_source = "static".to_owned();
+        pool.linkage_loop_at = linkage_loop_at(pool);
 
         if let Some(detail) = details.and_then(|d| d.pools.get(&pool.gacha_pool_id)) {
             overlay_pool_detail(pool, detail);
@@ -80,6 +81,11 @@ fn overlay_pool_detail(pool: &mut GachaPoolClient, detail: &GachaPoolDetail) {
     // The rate-ups proper. Union, not replace: the blob-derived entry is a subset
     // here, and empty on the rule types the blobs own outright.
     if let Some(up) = info.up_char_info.as_ref() {
+        pool.declared_share6 = up
+            .per_char_list
+            .iter()
+            .find(|e| e.rarity_rank == RARITY_RANK_6 && !e.char_id_list.is_empty())
+            .and_then(|e| share_fraction(e.percent));
         for entry in &up.per_char_list {
             let target = match entry.rarity_rank {
                 RARITY_RANK_6 => &mut pool.featured6,
@@ -175,6 +181,31 @@ fn extract_featured(pool: &GachaPoolClient) -> (Vec<String>, Vec<String>) {
     }
 
     (f6, f5)
+}
+
+/// A `perCharList` percent as a 0..1 fraction. Every pool on both servers ships
+/// a fraction (0.25 / 0.35 / 0.5); a value above 1 is read as a percentage so
+/// a format change cannot hand the planner a share of 35.
+fn share_fraction(percent: f64) -> Option<f64> {
+    let share = if percent > 1.0 {
+        percent / 100.0
+    } else {
+        percent
+    };
+    (share.is_finite() && share > 0.0 && share <= 1.0).then_some(share)
+}
+
+/// `LinkageParam.Base64` decodes to `{loopTarget6Count, guaranteeTarget6Char}`
+/// on the repeating `LINKAGE_LOOP6_NEW5` collabs and to `{guaranteeTarget6Count}`
+/// on the once-only ones, so the loop key alone tells them apart.
+fn linkage_loop_at(pool: &GachaPoolClient) -> Option<u32> {
+    let doc = pool.linkage_param.as_ref().and_then(decode_blob)?;
+    let n = match doc.get("loopTarget6Count")? {
+        Bson::Int32(n) => i64::from(*n),
+        Bson::Int64(n) => *n,
+        _ => return None,
+    };
+    u32::try_from(n).ok().filter(|n| *n > 0)
 }
 
 fn decode_blob(value: &serde_json::Value) -> Option<bson::Document> {
@@ -301,6 +332,7 @@ mod tests {
 
         assert!(p.pickup6.is_empty(), "not a pickup banner");
         assert_eq!(p.featured_source, "static+api");
+        assert_eq!(p.declared_share6, Some(0.35), "per operator, not per band");
     }
 
     /// FESCLASSIC returns an EMPTY `upCharInfo`; the blobs own this rule type.
@@ -382,5 +414,35 @@ mod tests {
 
         assert_eq!(pools[0].featured6, vec!["char_1045_svash2"]);
         assert_eq!(pools[0].featured_source, "static");
+    }
+
+    /// `LINKAGE_74_0_1`'s `LinkageParam` (`loopTarget6Count: 120`) against
+    /// `LINKAGE_17_0_1`'s (`guaranteeTarget6Count: 120`, once only).
+    #[test]
+    fn only_the_loop_rule_repeats_the_collab_handover() {
+        let blob = |b: &str| Some(serde_json::json!({ "Base64": b }));
+        let mut looping = pool("LINKAGE_74_0_1", "LINKAGE", None);
+        looping.linkage_param = blob(
+            "SgAAABJsb29wVGFyZ2V0NkNvdW50AHgAAAAAAAAAAmd1YXJhbnRlZVRhcmdldDZDaGFyABEAAABjaGFyXzEwNDhfb3JjaGQyAAA=",
+        );
+        let mut once = pool("LINKAGE_17_0_1", "LINKAGE", None);
+        once.linkage_param = blob("JAAAABJndWFyYW50ZWVUYXJnZXQ2Q291bnQAeAAAAAAAAAAA");
+        let mut pools = vec![looping, once];
+        enrich_banners(&mut pools, None);
+
+        assert_eq!(pools[0].linkage_loop_at, Some(120));
+        assert_eq!(pools[1].linkage_loop_at, None);
+        assert_eq!(
+            pools[0].declared_share6, None,
+            "no sidecar, no declared share"
+        );
+    }
+
+    #[test]
+    fn a_percentage_share_is_read_as_a_fraction() {
+        assert_eq!(share_fraction(0.35), Some(0.35));
+        assert_eq!(share_fraction(35.0), Some(0.35));
+        assert_eq!(share_fraction(0.0), None);
+        assert_eq!(share_fraction(f64::NAN), None);
     }
 }

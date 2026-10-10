@@ -4,7 +4,7 @@ import { Lock, RefreshCw } from "lucide-react";
 import { useMemo } from "react";
 import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
-import { bannersQueryOptions, deriveClientGachaRecords, fetchMyGachaRecordsFn, type IBanner, myGachaStoredRecordsQueryOptions } from "#/lib/api/gacha";
+import { bannersQueryOptions, deriveClientGachaRecords, fetchMyGachaRecordsFn, type IBanner, myGachaStoredRecordsQueryOptions, pullsGamedataServer } from "#/lib/api/gacha";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { authActions } from "#/lib/auth/store";
 import { type TypedRichT, useGamedataServer, useRichT, useT } from "#/lib/i18n";
@@ -57,13 +57,15 @@ function NoDataState() {
 
 export function HistoryPage() {
     const t: TypedT<typeof messages> = useT("gacha");
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, user } = useAuth();
     const queryClient = useQueryClient();
 
     const recordsQuery = useQuery(myGachaStoredRecordsQueryOptions(isAuthenticated));
     const server = useGamedataServer();
     const operatorsQuery = useQuery(operatorsIndexQueryOptions(server));
-    const bannersQuery = useQuery(bannersQueryOptions(server));
+    // Operator names follow the reader's text pick; banners follow the account the pulls came from,
+    // since pool ids only resolve in that server's table.
+    const bannersQuery = useQuery(bannersQueryOptions(pullsGamedataServer(user?.server)));
 
     const refreshMutation = useMutation({
         mutationFn: () => fetchMyGachaRecordsFn(),
@@ -103,7 +105,7 @@ export function HistoryPage() {
 
     const records = useMemo(() => (rawRecords ? deriveClientGachaRecords(rawRecords) : null), [rawRecords]);
 
-    const hasRecords = records != null && (records.limited.total > 0 || records.linkage.total > 0 || records.regular.total > 0 || records.special.total > 0);
+    const hasRecords = records != null && (records.limited.total > 0 || records.linkage.total > 0 || records.regular.total > 0 || records.special.total > 0 || records.boot.total > 0);
 
     return (
         <>

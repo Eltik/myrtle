@@ -110,6 +110,11 @@ function Estimated({ row, t, onPreset, onAllocate }: { row: IPlanRow; t: PullsT;
     const f = useFormatters();
     const pct = usePct();
     const { estimate, maxPot, goalEstimate } = row;
+    /* ATTAIN and CLASSIC_ATTAIN boost no 6*, so every goal below would be "never". Their one
+       promise, an unowned first 6*, is what the panel says instead. */
+    if (row.model.rateUp === "none") {
+        return <p className="m-0 w-full min-w-0 rounded-lg border border-border bg-muted/20 px-2.5 py-2 font-sans text-[12px] text-muted-foreground leading-normal">{t("release.pulls.plan.noRateUp")}</p>;
+    }
     const worstTail = Math.max(estimate.specific.unresolved, estimate.both?.unresolved ?? 0, maxPot.unresolved, goalEstimate?.unresolved ?? 0);
 
     /**
@@ -388,7 +393,8 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onPreset, onSet
                     </div>
                 )}
 
-                {row.featured.length > 0 && (
+                {/* No steppers on a banner with no rate-up: its operators are not a target. */}
+                {row.featured.length > 0 && model.rateUp !== "none" && (
                     <div className="flex flex-wrap gap-1">
                         {row.featured.map((id) => (
                             <OperatorPot key={id} id={id} lookup={lookup} name={charNames[id] ?? null} copies={row.targets[id] ?? 0} onSet={(copies) => onSetTarget(row.key, id, copies)} t={t} />
@@ -428,7 +434,7 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onPreset, onSet
                             statistic, not a button. */}
                         {/* Label and first button travel together: as wrap siblings they separate
                             at narrow widths, leaving a bare number. */}
-                        {/* Each preset says what it IS (the bank, the exchange, the
+                        {/* Each preset says what it IS (the bank, the bonus copy, the
                             guarantee), not just what it equals: three bare numbers under a
                             "SET TO" kicker read as unexplained ("the numbers seem random"). */}
                         <span className="inline-flex items-center gap-1">

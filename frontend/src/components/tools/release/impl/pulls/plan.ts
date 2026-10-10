@@ -78,7 +78,7 @@ export interface IPlanRow {
      * the plan, which is what the potential stepper needs on a click.
      */
     pityDist: Float64Array | null;
-    /** Whether this banner reaches its outright exchange, when it has one. */
+    /** Whether this banner reaches its bonus copy of the limited operator, when it has one. */
     sparkMet: boolean;
 }
 
@@ -91,6 +91,19 @@ export interface IPlanRow {
  * forty expensive walks into about five, once.
  */
 const MAX_POT_CACHE = new Map<string, IGoalEstimate>();
+
+/**
+ * Everything about a model that changes a walk's answer, as a cache key. Two collab
+ * pools differ only in whether the handover repeats, and two keys that drop that
+ * would hand one pool the other's estimate.
+ */
+function modelKey(model: IBannerModel): string {
+    const g = model.guarantee;
+    return `${model.ruleType}|${model.rateUp}|${model.featuredCount}|${model.shareEach}|${g.kind}|${g.repeat ? "loop" : ""}|${model.spark ?? ""}`;
+}
+
+/** The answer for a goal that cannot be reached: a banner with no rate-up has no operator to aim at. */
+const UNREACHABLE: IGoalEstimate = { p50: 0, p90: 0, mean: 0, unresolved: 1 };
 
 /**
  * A pity distribution's CONTENT, as a string.
@@ -130,7 +143,7 @@ const GOAL_CACHE_MAX = 512;
  * from 2 to 3 and back to 2 costs one walk rather than four.
  */
 export function goalEstimateFor(model: IBannerModel, request: { copiesA: number; copiesB: number }, dist: Float64Array | null): IGoalEstimate {
-    const key = `${model.ruleType}|${model.featuredCount}|${model.shareEach}|${model.guarantee.kind}|${model.spark ?? ""}|${request.copiesA}|${request.copiesB}|${distKey(dist)}`;
+    const key = `${modelKey(model)}|${request.copiesA}|${request.copiesB}|${distKey(dist)}`;
     let hit = GOAL_CACHE.get(key);
     if (hit === undefined) {
         hit = pullsToGoal(model, request, { startPityDist: dist, startPity: 0 });
@@ -141,7 +154,8 @@ export function goalEstimateFor(model: IBannerModel, request: { copiesA: number;
 }
 
 export function maxPotFor(model: IBannerModel): IGoalEstimate {
-    const key = `${model.ruleType}|${model.featuredCount}|${model.shareEach}|${model.guarantee.kind}|${model.spark ?? ""}`;
+    if (model.rateUp === "none") return UNREACHABLE;
+    const key = modelKey(model);
     let hit = MAX_POT_CACHE.get(key);
     if (hit === undefined) {
         hit = pullsToMaxPot(model, { copies: MAX_POT_COPIES });
@@ -260,14 +274,23 @@ export function buildPlan({ banners, days, model, today, standardPity, kernelPit
 
     for (const { banner, enStart } of window) {
         const featured = featuredOf(banner);
+        // The published share and loop come off the pool's own data; without them the share
+        // is inferred from the rule type. Orienteering and ATTAIN keep their own split.
+        const bm = bannerModel({
+            ruleType: banner.ruleType,
+            featuredCount: Math.max(1, featured.length),
+            poolId: banner.cnPoolId,
+            declaredShareEach: banner.declaredShareEach ?? undefined,
+            linkageLoopAt: banner.linkageLoopAt ?? undefined,
+        });
         // A pick only counts while the operator is still on the banner, so a roster
         // correction cannot leave a stale id steering the estimate.
         const picked: Record<string, number> = {};
-        for (const [id, n] of Object.entries(targets[banner.cnPoolId] ?? {})) {
+        // A banner with no rate-up has no operator a potential could be aimed at.
+        for (const [id, n] of Object.entries(bm.rateUp === "none" ? {} : (targets[banner.cnPoolId] ?? {}))) {
             if (featured.includes(id) && n > 0) picked[id] = Math.min(MAX_POT_COPIES, Math.floor(n));
         }
         const totalCopies = Object.values(picked).reduce((sum, n) => sum + n, 0);
-        const bm = bannerModel({ ruleType: banner.ruleType, featuredCount: Math.max(1, featured.length), poolId: banner.cnPoolId });
 
         const available = Math.max(0, bankAt(days, enStart, spendOriginite) - committed);
         const allocated = Math.max(0, Math.floor(allocations[banner.cnPoolId] ?? 0));
@@ -286,10 +309,10 @@ export function buildPlan({ banners, days, model, today, standardPity, kernelPit
         });
         // What the banner is expected to COST, measured from the same place the
         // odds start, so a banner inheriting deep pity honestly reads cheaper.
-        const estimateKey = `${bm.ruleType}|${bm.featuredCount}|${bm.shareEach}|${idOf(shared)}`;
+        const estimateKey = `${modelKey(bm)}|${idOf(shared)}`;
         let estimate = estimates.get(estimateKey);
         if (estimate === undefined) {
-            estimate = pullsToTarget(bm, { startPityDist: shared, startPity: 0, horizon: ESTIMATE_HORIZON });
+            estimate = bm.rateUp === "none" ? { horizon: ESTIMATE_HORIZON, specific: UNREACHABLE, any: UNREACHABLE, both: null } : pullsToTarget(bm, { startPityDist: shared, startPity: 0, horizon: ESTIMATE_HORIZON });
             estimates.set(estimateKey, estimate);
         }
 
@@ -330,7 +353,11 @@ export function buildPlan({ banners, days, model, today, standardPity, kernelPit
                           bm,
                           {
                               // Slot A is the banner's first featured operator and slot B
-                              // its second, which is the pairing the grid tracks.
+                              // its second, which is the pairing the grid tracks. On a
+                              // LIMITED pool slot A is also the one the 300-roll bonus
+                              // copy goes to: the backend lists `limitParam.limitedCharId`
+                              // first, and the sidecar's `limitedChar` is
+                              // `upCharInfo.charIdList[0]` on all 24 EN and 26 CN pools.
                               copiesA: picked[featured[0]] ?? 0,
                               copiesB: featured.length > 1 ? (picked[featured[1]] ?? 0) : 0,
                           },
@@ -359,13 +386,13 @@ export function buildPlan({ banners, days, model, today, standardPity, kernelPit
 
 /**
  * The sensible commitments for a banner, offered as one-click targets.
- * `spark` is the outright exchange where one exists, `guarantee` the roll at which a
- * forced rate-up binds, and `max` everything still in the bank.
+ * `spark` is the roll that brings the Limited bonus copy where there is one, `guarantee`
+ * the roll at which a forced rate-up binds, and `max` everything still in the bank.
  *
  * Both thresholds count every roll made on the banner, free ones included: `sparkMet` above
  * tests `spent + freePulls >= spark`, and the odds are read at `totalPulls`. What the player
  * has to COMMIT is the threshold less what the banner gives them (a LIMITED banner with 24
- * free rolls would otherwise offer "Spark 300" and spend 324 against a 300-roll exchange).
+ * free rolls would otherwise offer "Spark 300" and spend 324 against a 300-roll bonus).
  */
 export function planTargets(row: IPlanRow): { spark: number | null; guarantee: number | null; max: number } {
     const g = row.model.guarantee;

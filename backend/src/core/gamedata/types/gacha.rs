@@ -85,6 +85,20 @@ pub struct GachaPoolClient {
     /// "running now for everyone" and its `end_time` is not a real end date.
     #[serde(default, skip_deserializing)]
     pub returning: bool,
+    /// The 6★ rate-up share each featured operator takes, as a 0..1 fraction of
+    /// the 6★ band: the sidecar's `upCharInfo.perCharList[rarityRank=5].percent`,
+    /// which is already per operator (LIMITED reads 0.35 with `count: 2`). `None`
+    /// without a sidecar entry or a 6★ rate-up in it. Internal: the release
+    /// planner reads it, the static banner endpoint does not ship it.
+    #[serde(skip)]
+    #[ts(skip)]
+    pub declared_share6: Option<f64>,
+    /// Rolls per cycle of a REPEATING collab handover, from `LinkageParam`'s
+    /// `loopTarget6Count` (the `LINKAGE_LOOP6_NEW5` rule). `None` on once-only
+    /// collabs, which carry `guaranteeTarget6Count` instead, and on everything else.
+    #[serde(skip)]
+    #[ts(skip)]
+    pub linkage_loop_at: Option<u32>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

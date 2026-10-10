@@ -232,7 +232,7 @@ pub struct PoolAlignment {
     pub method: AlignMethod,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct ReleaseBanner {
@@ -256,6 +256,16 @@ pub struct ReleaseBanner {
     pub name_en_auto: Option<AutoName>,
     pub image_path: Option<String>,
     pub resolution: Resolution,
+    /// The 6★ rate-up share each featured operator takes, a 0..1 fraction of the
+    /// 6★ band, as the pool detail publishes it (`GachaPoolClient::declared_share6`).
+    /// Read from the aligned EN pool when it has one, else the CN pool. `None` when
+    /// neither sidecar covers the pool or it has no 6★ rate-up; the planner then
+    /// infers the share from the rule type.
+    pub declared_share_each: Option<f64>,
+    /// Rolls per cycle when the collab handover REPEATS (`LINKAGE_LOOP6_NEW5`),
+    /// `None` on a once-only collab and every other rule type. The aligned EN pool's
+    /// table decides when there is one, else the CN pool's.
+    pub linkage_loop_at: Option<u32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, utoipa::ToSchema)]

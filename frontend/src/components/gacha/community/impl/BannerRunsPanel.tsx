@@ -27,6 +27,7 @@ const TYPE_COLORS: Record<ClientGachaGroup, string> = {
     linkage: "oklch(0.78 0.16 320)",
     regular: "#bcabdb",
     special: "#88c8e3",
+    boot: "oklch(0.8 0.12 160)",
 };
 
 type Status = BannerStatus;

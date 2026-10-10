@@ -20519,6 +20519,14 @@
               "type": "string"
             }
           },
+          "declaredShareEach": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "The 6★ rate-up share each featured operator takes, a 0..1 fraction of the\n6★ band, as the pool detail publishes it (`GachaPoolClient::declared_share6`).\nRead from the aligned EN pool when it has one, else the CN pool. `None` when\nneither sidecar covers the pool or it has no 6★ rate-up; the planner then\ninfers the share from the rule type."
+          },
           "enFeatured6": {
             "type": "array",
             "items": {
@@ -20542,6 +20550,15 @@
               "string",
               "null"
             ]
+          },
+          "linkageLoopAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Rolls per cycle when the collab handover REPEATS (`LINKAGE_LOOP6_NEW5`),\n`None` on a once-only collab and every other rule type. The aligned EN pool's\ntable decides when there is one, else the CN pool's.",
+            "minimum": 0
           },
           "nameCn": {
             "type": "string"
