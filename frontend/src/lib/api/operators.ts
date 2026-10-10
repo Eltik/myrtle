@@ -93,8 +93,8 @@ function pickFields<K extends keyof IOperatorListItem>(list: IOperatorListItem[]
  *
  * Do not query it from the browser: its serialized result is one ~40 MB record, above the
  * 32 MiB a server function may return, so a browser call fails with a 500. A browser caller
- * gets a projection that carries only the fields it reads, as the export and the profile
- * tabs do below.
+ * gets a projection that carries only the fields it reads, as the export does below, or reads
+ * the backend directly, as the profile tabs do.
  */
 export const getOperatorsListFn = createServerFn({ method: "GET" })
     .inputValidator((server: string | undefined) => server)
@@ -124,22 +124,47 @@ export function operatorsExportFieldsQueryOptions(server: string = DEFAULT_GAMED
 /**
  * The full-table fields the profile Roster and Optimizer tabs read: phases, skills, modules,
  * potential and trust for the cards and stats, base skills for the optimizer, art, the source
- * filter and the alternate-form template. Most of the table's weight (handbook, talents,
- * audio, skill level-up costs, drones) is left out, which brings the serialized result from
- * about 39.9 MB to 28.1 MB, under the 32 MiB a server function may return.
+ * filter and the alternate-form template.
  */
 const OPERATOR_ROSTER_FIELDS = ["id", "name", "profession", "professionName", "phases", "skills", "modules", "potentialRanks", "favorKeyFrames", "baseSkills", "skin", "portrait", "itemObtainApproach", "obtainChannel", "tmplDefault"] as const;
 
 export type IOperatorRosterItem = Pick<IOperatorListItem, (typeof OPERATOR_ROSTER_FIELDS)[number]>;
 
-export const getOperatorsRosterFn = createServerFn({ method: "GET" })
-    .inputValidator((server: string | undefined) => server)
-    .handler(async ({ data: server }) => pickFields(await cachedOperatorsList(server), OPERATOR_ROSTER_FIELDS));
+const ROSTER_FIELD_SET: ReadonlySet<string> = new Set(OPERATOR_ROSTER_FIELDS);
+
+/**
+ * Keeps the roster fields of each raw `/static/operators` row and camelizes only those, which
+ * gives the same rows as `deepCamelize` of the whole table followed by a pick, without
+ * walking the handbook, talents, audio and drones the tabs never read.
+ */
+export function toRosterItems(raw: IOperatorsStaticMap): IOperatorRosterItem[] {
+    return Object.values(raw).map((op) => {
+        const out: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(op as Record<string, unknown>)) {
+            const name = normalizeKey(key);
+            if (ROSTER_FIELD_SET.has(name)) out[name] = deepCamelize(value);
+        }
+        return out as IOperatorRosterItem;
+    });
+}
+
+/**
+ * The roster rows, read by the browser straight from the backend. The tabs only query this
+ * on the client, after a tab opens. It used to go through a server function, but the
+ * projection serialized to about 28 MB of seroval, 16 % under the 32 MiB a server function
+ * may return, and reached the browser uncompressed. The backend serves the table compressed,
+ * with an ETag and `Cache-Control: public, max-age=300`, and has no size cliff.
+ */
+async function fetchOperatorsRoster(server: string): Promise<IOperatorRosterItem[]> {
+    const res = await backendFetch(gamedataPath(server, "/static/operators"));
+    if (!res.ok) throw new Error(`Failed to load operators: ${res.status}`);
+    return toRosterItems((await res.json()) as IOperatorsStaticMap);
+}
 
 export function operatorsRosterQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
         queryKey: ["operators", "roster-fields", ...gamedataKey(server)],
-        queryFn: () => getOperatorsRosterFn({ data: resolveGamedataServer(server) }),
+        queryFn: () => fetchOperatorsRoster(resolveGamedataServer(server)),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });
