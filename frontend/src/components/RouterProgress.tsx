@@ -8,7 +8,7 @@ const FINISH_MS = 220;
 
 export function RouterProgress() {
     const isLoading = useRouterState({
-        select: (s) => s.isLoading || s.isTransitioning,
+        select: (s) => s.isLoading || s.status === "pending",
     });
 
     const [visible, setVisible] = useState(false);

@@ -62,7 +62,7 @@ export function FilterPanel(props: IFilterPanelProps) {
     const style = props.stickyOffset === undefined ? undefined : ({ "--filter-sidebar-offset": `${props.stickyOffset}px` } as CSSProperties);
 
     return (
-        <aside className={cn(styles.filterSidebar, props.collapsed && styles.filterSidebarCollapsed)} style={style} aria-label={props.ariaLabel} aria-hidden={props.collapsed || undefined} {...(props.collapsed ? { inert: "" as unknown as boolean } : {})}>
+        <aside className={cn(styles.filterSidebar, props.collapsed && styles.filterSidebarCollapsed)} style={style} aria-label={props.ariaLabel} aria-hidden={props.collapsed || undefined} inert={props.collapsed}>
             <div className={styles.filterSidebarInner}>
                 <div className={styles.fpHead}>
                     <h3>
