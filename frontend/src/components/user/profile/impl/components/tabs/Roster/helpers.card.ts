@@ -1,9 +1,10 @@
 import { asset } from "#/components/operators/detail/impl/assets";
+import type { IOperatorRosterItem } from "#/lib/api/operators";
 import type { IRosterEntry } from "#/lib/api/user";
 import { DEFAULT_LOCALE, formatMessage, sourceMessage } from "#/lib/i18n";
 import { fullMessageKey, type TypedT } from "#/lib/i18n/messages";
 import { getAvatarById, lerpByLevel } from "#/lib/utils";
-import type { IAttributeKeyFrame, IModule, IOperatorIndexEntry, IOperatorIndexModule, IOperatorListItem, IPotentialRank } from "#/types/operators";
+import type { IAttributeKeyFrame, IModule, IOperatorIndexEntry, IOperatorIndexModule, IPotentialRank } from "#/types/operators";
 import type { messages as cardMessages } from "./helpers.card.messages";
 import type { IOwnedEntry } from "./types";
 
@@ -432,7 +433,7 @@ interface IModuleBonus {
 
 const NO_MODULE_BONUS: IModuleBonus = { maxHp: 0, atk: 0, def: 0, magicResistance: 0, cost: 0, attackSpeed: 0, blockCnt: 0 };
 
-function statsFromModule(op: IOperatorListItem, currentEquip: string | null, rosterModules: IRosterEntry["modules"]): IModuleBonus {
+function statsFromModule(op: IOperatorRosterItem, currentEquip: string | null, rosterModules: IRosterEntry["modules"]): IModuleBonus {
     if (!currentEquip) return NO_MODULE_BONUS;
     const equipped = op.modules.find((m) => m.uniEquipId === currentEquip);
     if (!equipped?.data?.phases) return NO_MODULE_BONUS;
@@ -471,7 +472,7 @@ function statsFromModule(op: IOperatorListItem, currentEquip: string | null, ros
     return out;
 }
 
-export function getAttributeStats(entry: IOwnedEntry, op: IOperatorListItem): IDerivedStats | null {
+export function getAttributeStats(entry: IOwnedEntry, op: IOperatorRosterItem): IDerivedStats | null {
     const phase = op.phases?.[entry.elite];
     const frames = phase?.attributesKeyFrames;
     if (!frames || frames.length === 0) return null;

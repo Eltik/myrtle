@@ -3,8 +3,9 @@ import { buildFilterOptions, countSharedFilters, EMPTY_SHARED_FILTERS, toFilterS
 import type { ArrayFilterKey, ISharedFilters } from "#/components/operators/list/impl/types";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { useMediaQuery } from "#/hooks/use-media-query";
+import type { IOperatorRosterItem } from "#/lib/api/operators";
 import type { IRosterEntry } from "#/lib/api/user";
-import type { IOperatorIndexEntry, IOperatorListItem } from "#/types/operators";
+import type { IOperatorIndexEntry } from "#/types/operators";
 import { filterEntries, sortEntries, toOwnedEntry } from "./helpers";
 import { type IDisplayEntry, type IRosterFilterState, OWNED_ONLY_SORTS, type ViewMode } from "./types";
 
@@ -20,7 +21,7 @@ const INITIAL: IRosterFilterState = {
 
 const PAGE_SIZE: Record<ViewMode, number> = { detailed: 24, compact: 48 };
 
-export function useRoster(roster: IRosterEntry[], operatorsIndex: IOperatorIndexEntry[], operatorsStatic: IOperatorListItem[]) {
+export function useRoster(roster: IRosterEntry[], operatorsIndex: IOperatorIndexEntry[], operatorsStatic: IOperatorRosterItem[]) {
     // This key predates classes and subclasses, so the merge prevents missing arrays
     // from throwing when returning visitors use the new filters.
     // `hadStoredViewMode` records whether the visitor has ever chosen a view
@@ -73,7 +74,7 @@ export function useRoster(roster: IRosterEntry[], operatorsIndex: IOperatorIndex
     const ownedIds = useMemo(() => new Set(roster.map((r) => r.operator_id)), [roster]);
 
     const staticMap = useMemo(() => {
-        const m = new Map<string, IOperatorListItem>();
+        const m = new Map<string, IOperatorRosterItem>();
         for (const op of operatorsStatic) if (op.id) m.set(op.id, op);
         return m;
     }, [operatorsStatic]);

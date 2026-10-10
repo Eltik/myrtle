@@ -93,20 +93,12 @@ function pickFields<K extends keyof IOperatorListItem>(list: IOperatorListItem[]
  *
  * Do not query it from the browser: its serialized result is one ~40 MB record, above the
  * 32 MiB a server function may return, so a browser call fails with a 500. A browser caller
- * gets a projection that carries only the fields it reads, as the export does below.
+ * gets a projection that carries only the fields it reads, as the export and the profile
+ * tabs do below.
  */
 export const getOperatorsListFn = createServerFn({ method: "GET" })
     .inputValidator((server: string | undefined) => server)
     .handler(async ({ data: server }) => cachedOperatorsList(server));
-
-export function operatorsListQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
-    return queryOptions({
-        queryKey: ["operators", "list", ...gamedataKey(server)],
-        queryFn: () => getOperatorsListFn({ data: resolveGamedataServer(server) }),
-        staleTime: 60 * 60 * 1000,
-        gcTime: 24 * 60 * 60 * 1000,
-    });
-}
 
 /**
  * The full-table fields the operators export adds to each index row, keyed by `id`. The
@@ -124,6 +116,30 @@ export function operatorsExportFieldsQueryOptions(server: string = DEFAULT_GAMED
     return queryOptions({
         queryKey: ["operators", "export-fields", ...gamedataKey(server)],
         queryFn: () => getOperatorsExportFieldsFn({ data: resolveGamedataServer(server) }),
+        staleTime: 60 * 60 * 1000,
+        gcTime: 24 * 60 * 60 * 1000,
+    });
+}
+
+/**
+ * The full-table fields the profile Roster and Optimizer tabs read: phases, skills, modules,
+ * potential and trust for the cards and stats, base skills for the optimizer, art, the source
+ * filter and the alternate-form template. Most of the table's weight (handbook, talents,
+ * audio, skill level-up costs, drones) is left out, which brings the serialized result from
+ * about 39.9 MB to 28.1 MB, under the 32 MiB a server function may return.
+ */
+const OPERATOR_ROSTER_FIELDS = ["id", "name", "profession", "professionName", "phases", "skills", "modules", "potentialRanks", "favorKeyFrames", "baseSkills", "skin", "portrait", "itemObtainApproach", "obtainChannel", "tmplDefault"] as const;
+
+export type IOperatorRosterItem = Pick<IOperatorListItem, (typeof OPERATOR_ROSTER_FIELDS)[number]>;
+
+export const getOperatorsRosterFn = createServerFn({ method: "GET" })
+    .inputValidator((server: string | undefined) => server)
+    .handler(async ({ data: server }) => pickFields(await cachedOperatorsList(server), OPERATOR_ROSTER_FIELDS));
+
+export function operatorsRosterQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
+    return queryOptions({
+        queryKey: ["operators", "roster-fields", ...gamedataKey(server)],
+        queryFn: () => getOperatorsRosterFn({ data: resolveGamedataServer(server) }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });

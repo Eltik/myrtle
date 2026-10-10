@@ -1,5 +1,6 @@
+import type { IOperatorRosterItem } from "#/lib/api/operators";
 import type { IRosterEntry } from "#/lib/api/user";
-import type { IOperatorBaseSkill, IOperatorListItem } from "#/types/operators";
+import type { IOperatorBaseSkill } from "#/types/operators";
 
 /** A base skill plus whether this operator's promotion actually grants it. */
 export interface IRosterSkill extends IOperatorBaseSkill {
@@ -37,8 +38,8 @@ function tierRank(skill: IOperatorBaseSkill): number {
  * `live: false`, so the board can label them "replaced" without needing a
  * ledger line to infer it from.
  */
-export function toRosterOptions(roster: IRosterEntry[], operatorsStatic: IOperatorListItem[], ignorePromotion = false): IRosterOption[] {
-    const staticById = new Map<string, IOperatorListItem>();
+export function toRosterOptions(roster: IRosterEntry[], operatorsStatic: IOperatorRosterItem[], ignorePromotion = false): IRosterOption[] {
+    const staticById = new Map<string, IOperatorRosterItem>();
     for (const op of operatorsStatic) {
         if (op.id) staticById.set(op.id, op);
     }

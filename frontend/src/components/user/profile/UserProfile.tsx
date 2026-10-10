@@ -6,7 +6,7 @@ import { Button } from "#/components/ui/button";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useAuth } from "#/hooks/use-auth";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
-import { operatorsIndexQueryOptions, operatorsListQueryOptions } from "#/lib/api/operators";
+import { operatorsIndexQueryOptions, operatorsRosterQueryOptions } from "#/lib/api/operators";
 import { publicPlansQueryOptions } from "#/lib/api/planner";
 import { userEncounteredEnemiesQueryOptions, userImprovementsQueryOptions, userInventoryQueryOptions, userQueryOptions, userRosterQueryOptions, userScoreQueryOptions } from "#/lib/api/user";
 import { type TypedRichT, useGamedataServer, useRichT, useT } from "#/lib/i18n";
@@ -66,7 +66,7 @@ const TAB_CHUNKS: Partial<Record<TabId, () => Promise<unknown>>> = {
     showcase: loadShowcaseTab,
 };
 
-/** Tabs that render phases, skills or template ids and so need the full operator table. */
+/** Tabs that render phases, skills or template ids and so need the roster fields of the operator table. */
 const FULL_TABLE_TABS: ReadonlySet<TabId> = new Set<TabId>(["roster", "optimizer"]);
 
 function GridSkeleton() {
@@ -224,7 +224,7 @@ export function UserProfile() {
     const { data: score, isLoading: isScoreLoading } = useQuery({ ...userScoreQueryOptions(id), enabled: activeTab === "score" });
     const { data: publicPlans } = useQuery({ ...publicPlansQueryOptions(id), enabled: activeTab === "plans" });
     const { data: operatorsStatic } = useQuery({
-        ...operatorsListQueryOptions(gamedataServer),
+        ...operatorsRosterQueryOptions(gamedataServer),
         enabled: activeTab !== null && FULL_TABLE_TABS.has(activeTab) && loadedChunks.has(activeTab),
     });
     // Improvements only fire while the Score tab is mounted - it's a heavier
