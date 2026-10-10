@@ -49,7 +49,7 @@ The web client for [myrtle.moe](https://myrtle.moe) - an Arknights companion pla
 | Charts         | Recharts                                                            |
 | Tooling        | Bun 1.4.2, Biome (lint + format)                                    |
 
-TanStack packages track the `latest` tag rather than a pinned version.
+TanStack packages use caret ranges at the versions bun.lock resolves, like every other dependency.
 
 ## Prerequisites
 
