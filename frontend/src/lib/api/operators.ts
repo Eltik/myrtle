@@ -66,27 +66,64 @@ async function loadOperatorsList(server: string | undefined): Promise<IOperatorL
     return Object.values(normalized) as IOperatorListItem[];
 }
 
+/** The whole operator table for one game server, read through `operatorsListCache`. */
+function cachedOperatorsList(server: string | undefined): Promise<IOperatorListItem[]> {
+    const resolved = resolveGamedataServer(server);
+    const now = Date.now();
+    const hit = operatorsListCache.get(resolved);
+    if (hit && now < hit.expiresAt) return hit.promise;
+    const promise = loadOperatorsList(resolved);
+    operatorsListCache.set(resolved, { promise, expiresAt: now + OPERATORS_LIST_TTL_MS });
+    promise.catch(() => {
+        if (operatorsListCache.get(resolved)?.promise === promise) operatorsListCache.delete(resolved);
+    });
+    return promise;
+}
+
+function pickFields<K extends keyof IOperatorListItem>(list: IOperatorListItem[], fields: readonly K[]): Pick<IOperatorListItem, K>[] {
+    return list.map((op) => {
+        const out = {} as Pick<IOperatorListItem, K>;
+        for (const field of fields) out[field] = op[field];
+        return out;
+    });
+}
+
+/**
+ * The whole table, for server-side callers only (the OG renderer calls it in process).
+ *
+ * Do not query it from the browser: its serialized result is one ~40 MB record, above the
+ * 32 MiB a server function may return, so a browser call fails with a 500. A browser caller
+ * gets a projection that carries only the fields it reads, as the export does below.
+ */
 export const getOperatorsListFn = createServerFn({ method: "GET" })
     .inputValidator((server: string | undefined) => server)
-    .handler(async ({ data: server }) => {
-        const resolved = resolveGamedataServer(server);
-        const now = Date.now();
-        const hit = operatorsListCache.get(resolved);
-        if (!hit || now >= hit.expiresAt) {
-            const promise = loadOperatorsList(resolved);
-            operatorsListCache.set(resolved, { promise, expiresAt: now + OPERATORS_LIST_TTL_MS });
-            promise.catch(() => {
-                if (operatorsListCache.get(resolved)?.promise === promise) operatorsListCache.delete(resolved);
-            });
-            return promise;
-        }
-        return hit.promise;
-    });
+    .handler(async ({ data: server }) => cachedOperatorsList(server));
 
 export function operatorsListQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
         queryKey: ["operators", "list", ...gamedataKey(server)],
         queryFn: () => getOperatorsListFn({ data: resolveGamedataServer(server) }),
+        staleTime: 60 * 60 * 1000,
+        gcTime: 24 * 60 * 60 * 1000,
+    });
+}
+
+/**
+ * The full-table fields the operators export adds to each index row, keyed by `id`. The
+ * export dialog's columns come from these and the index; nothing else of the table is read.
+ */
+const OPERATOR_EXPORT_FIELDS = ["id", "displayNumber", "description", "itemUsage", "itemDesc", "itemObtainApproach", "isSpChar", "maxPotentialLevel", "skin"] as const;
+
+export type IOperatorExportFields = Pick<IOperatorListItem, (typeof OPERATOR_EXPORT_FIELDS)[number]>;
+
+export const getOperatorsExportFieldsFn = createServerFn({ method: "GET" })
+    .inputValidator((server: string | undefined) => server)
+    .handler(async ({ data: server }) => pickFields(await cachedOperatorsList(server), OPERATOR_EXPORT_FIELDS));
+
+export function operatorsExportFieldsQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
+    return queryOptions({
+        queryKey: ["operators", "export-fields", ...gamedataKey(server)],
+        queryFn: () => getOperatorsExportFieldsFn({ data: resolveGamedataServer(server) }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });

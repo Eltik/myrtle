@@ -7,14 +7,14 @@ import { PageHeader } from "#/components/ui/page-header";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { useOperatorName } from "#/hooks/use-operator-name";
 import { noteHasContent, operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
-import { operatorOwnershipQueryOptions, operatorsIndexQueryOptions, operatorsListQueryOptions } from "#/lib/api/operators";
+import { type IOperatorExportFields, operatorOwnershipQueryOptions, operatorsExportFieldsQueryOptions, operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { upcomingQueryOptions } from "#/lib/api/upcoming";
 import { operatorsExportSchema } from "#/lib/export";
 import { type TypedRichT, useGamedataServer, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { compactForSearch } from "#/lib/search/fuzzy";
 import { Route } from "#/routes/operators";
-import type { IOperatorListItem, OperatorRarityTier } from "#/types/operators";
+import type { OperatorRarityTier } from "#/types/operators";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 import { Skeleton } from "../../ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../../ui/tooltip";
@@ -185,12 +185,12 @@ export function OperatorsList() {
     const [exportOpen, setExportOpen] = useState(false);
 
     // The export dialog offers full-table-only fields (descriptions, item usage,
-    // skin art, etc.) that the slim operators index doesn't carry. Fetch the full
-    // operator table lazily - only once the dialog is opened - and merge those
-    // fields onto the rows we hand the dialog.
-    const { data: fullOperators } = useQuery({ ...operatorsListQueryOptions(server), enabled: exportOpen });
+    // skin art, etc.) that the slim operators index doesn't carry. Fetch just those
+    // fields lazily - only once the dialog is opened - and merge them onto the rows
+    // we hand the dialog. The whole table is too large to return to the browser.
+    const { data: fullOperators } = useQuery({ ...operatorsExportFieldsQueryOptions(server), enabled: exportOpen });
     const fullById = useMemo(() => {
-        const map = new Map<string, IOperatorListItem>();
+        const map = new Map<string, IOperatorExportFields>();
         for (const op of fullOperators ?? []) if (op.id) map.set(op.id, op);
         return map;
     }, [fullOperators]);
