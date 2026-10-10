@@ -31,10 +31,11 @@ use std::time::Duration;
 
 use axum::Router;
 use axum::body::Body;
+use axum::extract::FromRequestParts;
 use axum::http::{Request, StatusCode, header};
 use backend::app::cache::store::CacheStore;
 use backend::app::error::ApiError;
-use backend::app::extractors::auth::AuthUser;
+use backend::app::extractors::auth::RoleCheckedUser;
 use backend::app::server::api_parts;
 use backend::app::services::i18n;
 use backend::app::state::{AppConfig, AppState};
@@ -518,6 +519,9 @@ fn satisfies(outcome: Outcome, status: StatusCode) -> bool {
 
 /// An `AppState` with no game data and a pool that cannot connect. The short
 /// acquire timeout bounds how long a query keeps retrying the refused port.
+/// The role recheck is off, so a gate acts on the token's claim alone and a
+/// refusal stays a 403 instead of a failed read of the stored role;
+/// `role_recheck_test` covers the recheck itself.
 fn state() -> AppState {
     let db = sqlx::postgres::PgPoolOptions::new()
         .acquire_timeout(Duration::from_millis(300))
@@ -532,6 +536,7 @@ fn state() -> AppState {
         servers: vec![Server::EN],
         default_server: Server::EN,
         asset_ws_urls: HashMap::new(),
+        role_recheck: false,
     };
     AppState::new(
         db,
@@ -899,12 +904,15 @@ async fn translation_guards_admit_by_role_only_where_expected() {
     let state = state();
 
     for role in GlobalRole::all() {
-        let auth = AuthUser {
-            user_id: SUBJECT.to_owned(),
-            uid: "1".to_owned(),
-            server: "en".to_owned(),
-            role: *role,
-        };
+        let bearer = format!("Bearer {}", token(JWT_SECRET, *role));
+        let (mut parts, ()) = Request::builder()
+            .header(header::AUTHORIZATION, bearer)
+            .body(())
+            .expect("request builds")
+            .into_parts();
+        let auth = RoleCheckedUser::from_request_parts(&mut parts, &state)
+            .await
+            .expect("a valid token");
 
         let write = i18n::assert_can_write(&state, &auth, "ja", Permission::Edit).await;
         let write_ok = if *role == GlobalRole::SuperAdmin {

@@ -81,7 +81,7 @@ pub async fn get(
 )]
 pub async fn audit_log(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path(operator_id): Path<String>,
 ) -> Result<Json<Vec<OperatorNoteAuditEntry>>, ApiError> {
     if !auth.role.is_any_admin_role() {
