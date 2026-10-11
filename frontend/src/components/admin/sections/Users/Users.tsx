@@ -54,7 +54,7 @@ function accessText(t: UsersT, summary: AccessSummary): string {
     }
 }
 
-/** People (spec 2.2): every account, filterable by role and server, with a detail sheet per person. */
+/** Every account, filterable by role and server, with a detail sheet per person. */
 export default function Users({ search }: IUsersProps): React.ReactElement {
     const t: UsersT = useT("admin");
     const f = useFormatters();

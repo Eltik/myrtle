@@ -1,8 +1,6 @@
 /**
  * ONE CHAPTER AS A SHEET, headed by the picture the game itself draws for it.
  *
- * Replaces a letterboxed banner strip, a "MAIN STORY" eyebrow, a 26 px
- * "CHAPTER 1 · EVIL TIME PART 2" heading and one 10%-tinted row per story.
  * Title is the LOGOTYPE (`art.titleSource`, authored per event, on the wire for
  * 81 of the 87 non-record groups). A row is an OPERATION rather than a script
  * (`derive.groupOperations`, 523 of 525 repeated codes merge), because the table

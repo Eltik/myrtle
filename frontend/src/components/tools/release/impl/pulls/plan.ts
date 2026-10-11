@@ -205,8 +205,8 @@ export interface IPlan {
 }
 
 /**
- * `enFeatured6` is the EN-server roster once it is known; `featured6` is the CN one.
- * The EN list wins when present because it is what the player will actually see.
+ * The EN roster (`enFeatured6`) once it is known, since it is what the player will
+ * actually see; else the manual `overrideFeatured`; else the CN `featured6`.
  */
 export function featuredOf(banner: ReleaseBanner): string[] {
     if (banner.enFeatured6.length > 0) return banner.enFeatured6;

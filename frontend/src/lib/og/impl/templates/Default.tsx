@@ -4,7 +4,7 @@ import { AccentStrip, BrandRow, FG, FG_06, FG_08, FG_55, FootRow } from "./Frame
 export interface IDefaultOgData {
     title: string;
     subtitle?: string;
-    /** A chip id from `DEFAULT_OG_TAGS`, not a label - see `tagLabels`. */
+    /** A chip id from `DEFAULT_OG_TAGS`, not a label (see `tagLabels`). */
     activeTag?: string;
     /**
      * Chip id -> the label to draw, for the active locale. Satori renders this

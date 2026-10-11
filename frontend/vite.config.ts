@@ -21,21 +21,12 @@ function externalizeResvg(): Plugin {
     };
 }
 
-/** DEV ONLY: serve an ALTERNATE export root at `/altassets/`.
+/** Dev only: serve an alternate export root at `/altassets/` so an exporter change can be
+ *  scored without installing over the tree the backend serves. Same path shape as the
+ *  backend (`/spine/DynIllust/...`).
  *
- *  Scoring an EXPORTER change used to mean installing the new export over the tree the
- *  backend serves, which is not ours to write, so exporter gates shipped unmeasured. This
- *  serves a second, read-only export root straight off the dev server instead, under the
- *  same relative path shape the backend uses (`/spine/DynIllust/...`), so a scratch export
- *  can be scored without the deployed tree being touched at all.
- *
- *  Set `DYNCHAR_ALT_ROOT` to an export directory (the one CONTAINING `spine/`) and pass
- *  `?assetroot=/altassets` to the renderer. Absent either, nothing changes: the plugin
- *  registers no middleware and `chibiAssetURL` resolves to the backend exactly as before.
- *  `apply: "serve"` keeps it out of any production build.
- *
- *  Read-only and path-guarded: it resolves under the root and refuses anything that escapes,
- *  and it never writes. */
+ *  Set `DYNCHAR_ALT_ROOT` to the directory containing `spine/` and pass
+ *  `?assetroot=/altassets` to the renderer; without either, nothing changes. Read-only. */
 function altAssetRoot(): Plugin {
     return {
         name: "myrtle:alt-asset-root",

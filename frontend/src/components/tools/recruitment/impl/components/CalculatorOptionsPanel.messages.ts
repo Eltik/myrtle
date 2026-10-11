@@ -62,6 +62,5 @@ export const messages = {
 } satisfies MessageMap;
 
 // `dynamic`: the sort-order and layout keys are stored on a constants entry and resolved as
-// `t(mode.labelKey)`, so the
-// extractor has no literal call site to match them against.
+// `t(mode.labelKey)`, so the extractor has no literal call site to match them against.
 export const { keys } = defineMessages({ namespace, messages, dynamic: true });

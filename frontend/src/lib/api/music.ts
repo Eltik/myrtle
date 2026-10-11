@@ -13,10 +13,6 @@ import { parseError } from "./_shared";
 import { requireSiteToken } from "./_shared.server";
 import { DEFAULT_GAMEDATA_SERVER, gamedataKey, gamedataPath, resolveGamedataServer } from "./gamedata";
 
-// ---------------------------------------------------------------------------
-// In-game music index
-// ---------------------------------------------------------------------------
-
 /**
  * Every piece of music the game names, with its clips and where it plays.
  * `null` when the running backend predates the route (404), so the page can
@@ -43,10 +39,6 @@ export function musicIndexQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER)
         gcTime: 24 * 60 * 60 * 1000,
     });
 }
-
-// ---------------------------------------------------------------------------
-// Monster Siren Records
-// ---------------------------------------------------------------------------
 
 /** The response body of a successful request; the backend's error otherwise. */
 async function readJSON<T>(res: Response): Promise<T> {
@@ -105,10 +97,6 @@ export function sirenStreamUrl(cid: string): string {
 export function sirenLyricsUrl(cid: string): string {
     return `${env.VITE_BACKEND_URL ?? ""}/api/music/siren/songs/${encodeURIComponent(cid)}/lyrics`;
 }
-
-// ---------------------------------------------------------------------------
-// The account's library
-// ---------------------------------------------------------------------------
 
 /** `null` when signed out or when the running backend predates the route. */
 export const getMusicLibraryFn = createServerFn({ method: "GET" }).handler(async (): Promise<MusicLibrary | null> => {

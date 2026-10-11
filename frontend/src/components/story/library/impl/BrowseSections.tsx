@@ -226,7 +226,8 @@ const FADE = 28;
  * stops printing becomes unreachable.
  *
  * THE EIGHTEEN CHIPS FIT THE RAIL AT 1440: 2,877 px of content -> 1,359.5
- * against a 1,400 px rail, no horizontal scroll and both fade masks off. The
+ * against the pre-button 1,400 px rail at a 6 px gap (1,325.5 on today's
+ * 1,351 at 4 px), no horizontal scroll and both fade masks off. The
  * shelf names were the whole of it. Twelve themed chips are 1,881.0 px on
  * their names and 504.0 px as 42 px monograms, and the two chips the game
  * marks with nothing are 280.1 px as "Other events" and "Operator records"
@@ -335,8 +336,6 @@ const SectionPicker = memo(function SectionPicker({ chips, current, t }: { chips
                     <SheetTitle>{t("browse.jump.sheetTitle")}</SheetTitle>
                 </SheetHeader>
                 <SheetPanel className="px-3 pb-4">
-                    {/* The same wording rule as a heading, in one row: the NAME first,
-                        then the compact range, then how many chapters are under it. */}
                     <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
                         {chips.map((chip) => {
                             const on = chip.id === current.id;

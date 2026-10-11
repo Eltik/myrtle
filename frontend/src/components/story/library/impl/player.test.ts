@@ -158,12 +158,7 @@ describe("volume", () => {
     });
 });
 
-/**
- * WHERE THE CUE IS, which is the half of the state the bar's seek slider
- * reads. The channel's own clock is the spy's three numbers here; what is
- * being tested is that the store reads them at the right moment and hands the
- * right second back to the channel.
- */
+/** The seek slider's state: the spy's clock stands in for the channel's; the store must read it at the right time and seek to the right second. */
 describe("position", () => {
     it("samples the channel's timeline only while something sounds", () => {
         const channel = playThenSample("act13side", { position: 41.5, intro: 9.2, length: 186.4 });

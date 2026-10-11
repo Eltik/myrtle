@@ -30,8 +30,6 @@ export interface IChipContext {
     onHoverSeat: (seat: number | null) => void;
 }
 
-// ---------------------------------------------------------------- panel
-
 interface IPanelShellProps {
     title: string;
     question: string;
@@ -81,8 +79,6 @@ export function PanelShell({ title, question, state, collapsed, onToggle, stale 
     );
 }
 
-// ----------------------------------------------------------------- chips
-
 interface IOpChipProps {
     charId: string;
     seat: number;
@@ -118,8 +114,6 @@ export function OpChip({ charId, seat, ctx, why, support = false, className }: I
         </Link>
     );
 }
-
-// ------------------------------------------------------------- bits
 
 export type PillTone = "muted" | "accent" | "outline";
 
@@ -175,8 +169,6 @@ export function Segmented<T extends string>({ label, value, options, onChange }:
         </fieldset>
     );
 }
-
-// ------------------------------------------------------------ helpers
 
 /** Where a fact came from, as the chip title words it. */
 export function sourceLabel(why: SourceRef, t: SharedT): string {

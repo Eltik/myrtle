@@ -1,56 +1,38 @@
 /*
- * The story ticket. The SILHOUETTE is the reference page's at
- * tools.adachurch.com: a 500x272 shape masked out of two halves, torn at 79%
- * along a scalloped perforation, with the picture turned on its side in the
- * stub. What is printed INSIDE it is the game's own card, read out of
- * `ui/[uc]mixstory.ab` and not guessed: the key visual cover-fitted over the
- * whole card with the authored 516x260 title logotype contained on top of it.
+ * Story ticket. Silhouette from tools.adachurch.com: 500x272, two halves torn at
+ * 79% along a scalloped perforation, picture turned sideways in the stub. The
+ * contents are the game's own card from `ui/[uc]mixstory.ab`: key visual
+ * cover-fitted, 516x260 logotype contained on top.
  *
- * The ticket is dark ART in both themes, so the values inside it are literal
- * and do NOT follow --background / --card. Two exceptions, both deliberate:
- * the list row's surface and furniture are themed, and so is the kind badge,
- * which is the one element that must be legible before it is decorative.
+ * Dark art in both themes, so colours here are literal, not --background /
+ * --card. Exceptions: the list row and the kind badge, which has to be legible.
  *
- * No tape band: it printed all three sampled inks as five hard stripes and read as a palette
- * swatch stapled to the art. The inks survive on the spec row's dot and the progress fill only;
- * --ticket-c3 is not drawn at all. No ring blob either: it was legible over a flat gradient and
- * is noise over a photograph.
+ * No tape band (five hard stripes of the sampled inks read as a palette swatch
+ * on the art) and no ring blob (noise over a photograph). The inks survive only
+ * on the spec dot and the progress fill.
  */
 
-/* THE SHELF IS A CONTACT SHEET, not four posters: as small as the skin planner's card,
-   177 px wide on a 12 px
-   gap; the track here bottoms out at 200 on a 12 px gap, which lands six
-   223.3 x 121.5 tickets across the 1,400 px column at 1440 (223 / 224 x 121
-   on whole pixels, see below) (7 would need
-   1,472), three 237.3 x 129.1 at 768 (a 736 column; 4 would need 836) and,
-   under 640, two 178.0 x 96.8 across the 366 px column at 390 on a 160 px
-   track. The 300 px track it replaces gave 4 / 2 / 1.
-
-   `min(..., 100%)` rather than a bare length, because a bare one is a FLOOR on
-   the track and not on the card: at a 320 px viewport the content column is 296
-   and a bare 300 px track sat every ticket 4 px out into the right gutter. The
-   same column takes ONE 296 px ticket under the 160 px track, since two need
-   330. */
-
 /*
- * THE SHELF SITS ON WHOLE PIXELS (2026-09-30). The track above was
- * `repeat(auto-fill, minmax(min(200px, 100%), 1fr))`, which splits 1,340 px
- * six ways into 223.333 px and puts the tickets at x = 255.328, 490.664, ...
- * and 121.484 px tall. That costs nothing while the page is one layer, but
- * it is why a promoted ticket could not be pixel-identical: a composited
- * layer is placed on a whole device pixel and the fraction is thrown away
- * (third perf pass, 407,934 px changed under `will-change: transform`).
+ * Contact sheet, not posters, about the skin planner's 177 px card: a 200 px
+ * minimum column on a 12 px gap (160 / 10 under 640). Six 223.3 x 121.5 tickets
+ * across the 1,400 px column at 1440 (223 / 224 x 121 on whole pixels; 7 would
+ * need 1,472), three 237.3 x 129.1 at 768 (a 736 column; 4 would need 836), and
+ * under 640 two 178.0 x 96.8 across the 366 px column at 390 (178 x 97 whole).
+ * The old 300 px track gave 4 / 2 / 1.
  *
- * So the grid now computes the same layout on integers. `--cols` is what
- * auto-fill would have picked (a column fits when n x 200 + (n - 1) x 12 is
- * at most the width, 160 and 10 under 640), read off the shelf's own width by
- * a container query; column k ends at round(k x inner / cols), so every
- * boundary is within half a pixel of where 1fr put it and the widths come
- * out 223 / 224 at 1440 (178 at 390). The ticket's height is the average
- * column width x 272 / 500, rounded, the same for every card in a grid
- * (121 at 1440, 97 at 390), so a row is still one height. The page column
- * is capped at 1,400 px (`--page-max`), so six columns is the most it can
- * hold; a seventh rule would never match.
+ * The old track used `min(..., 100%)`, not a bare length, because a bare one
+ * floors the track and not the card: at a 320 px viewport the column is 296 and
+ * a bare 300 px track put every ticket 4 px into the right gutter. That column
+ * takes one 296 px ticket under the 160 px track, since two need 330.
+ *
+ * Whole pixels (2026-09-30): `repeat(auto-fill, minmax(min(200px, 100%), 1fr))`
+ * split 1,340 px six ways into 223.333 px columns, tickets at x = 255.328,
+ * 490.664, ... and 121.484 px tall, and a composited ticket snaps to a whole
+ * device pixel (407,934 px changed under `will-change: transform`). So `--cols` is what
+ * auto-fill would pick (n x 200 + (n - 1) x 12 fits), via container query, and
+ * column k ends at round(k x inner / cols), within half a pixel of 1fr. Height
+ * is the average column x 272 / 500, rounded, so a row stays one height.
+ * `--page-max` caps the column at 1,400 px, so six is the most.
  */
 @property --story-tile-h {
     syntax: "auto | <length>";
@@ -227,21 +209,15 @@
 }
 
 /*
- * THE KEY VISUAL IS THE CARD. The game's own card draws it at 113.0% of the
- * size that would just cover (`image_ss_kv` 282x204 on a 240x180 card,
- * `image_collect_kv` 237x204), centred, so the oversize is copied here rather
- * than invented: a 113% box, object-fit cover inside it, centred on the card.
- * The vertical bias is the one thing that varies and it comes down from
- * `impl/art.ts` as `object-position`, because the 17 mainline key visuals are
- * posters with the chapter title typeset into them.
+ * 113.0% oversize, copied from the game's card (`image_ss_kv` 282x204 on a 240x180
+ * card, `image_collect_kv` 237x204). The vertical bias comes from `impl/art.ts`
+ * as `object-position`, since the 17 mainline key visuals have the title
+ * typeset in.
  *
- * `max-width: none` is LOAD-BEARING, not tidying. Tailwind's preflight sets
- * `img { max-width: 100% }`, which silently capped this box at the card's own
- * width: measured on the Shatterpoint card the image box came back 336.5 x
- * 206.9 instead of 380.2 x 206.9, so the crop was 61.5% of the poster's height
- * instead of 54.4% and reached row 0.657, which is where SHATTERPOINT is
- * typeset. The stray title at the foot of four mainline cards was that cap,
- * not the bias.
+ * `max-width: none` is load-bearing: preflight's `img { max-width: 100% }`
+ * capped Shatterpoint's box at 336.5 x 206.9 instead of 380.2 x 206.9, so the
+ * crop was 61.5% of the poster's height instead of 54.4% and reached row 0.657,
+ * where SHATTERPOINT is typeset (the stray titles on four mainline cards).
  */
 .kv {
     position: absolute;
@@ -255,20 +231,12 @@
 }
 
 /*
- * The scrim, over the TEXT CORNER and nowhere else.
+ * Scrim over the bottom-left text corner only. A whole-card ramp (100deg, 88%
+ * black to nothing at 92%, plus a 72% bottom band) read as a dark card with a
+ * faint picture behind it.
  *
- * The gradients are anchored at the BOTTOM LEFT corner, where the logotype and the spec row sit;
- * the top right two thirds of the art is untouched. A whole-card ramp (100deg, 88% black at the
- * left to nothing at 92%, plus a bottom band at 72%) read as a dark card with a picture faintly
- * behind it, which is not the game's card. The badge needs none of it: it is an opaque pill with
- * its own ground.
- *
- * No blur has ever been applied to the card art and none is applied now:
- * `filter` and `backdrop-filter` compute `none` on the key visual, the scrim
- * and the body. The only blur radius anywhere near the ticket is the
- * drop-shadow's, 10 px at rest and 28 px on hover, which is the card's SHADOW
- * and not its picture. What reads as softness is the key visual's own authored
- * vignette, which feathers every plate to transparent at its edges.
+ * The art is not blurred; the softness is the key visual's own authored edge
+ * vignette. The only blur here is the drop-shadow (10 px, 28 px on hover).
  */
 .scrim {
     position: absolute;
@@ -307,29 +275,20 @@
 }
 
 /*
- * THE QUARTER TURN IS rotate(90), not rotate(-90): the whole fix for the rotated wordmark.
- * Recipe is 190% cover, a quarter turn, the 21% masked stub.
- *
- * Why -90 was wrong: at 190% cover the stub samples a narrow band of the source
- * running from 78.0% to 98.4% across the rotated image, and under rotate(-90)
- * the screen's right edge is the image's BOTTOM. On a 632x456 event plate that
- * is source rows 0.711..0.865 and on a 432x432 mainline poster rows
- * 0.652..0.763, which on `kv_stormwatch.png` is exactly where STORMWATCH is
- * typeset. Under rotate(90) the same band is the image's TOP instead, rows
- * 0.135..0.289 and 0.237..0.348, which is art on all 81 plates.
- *
- * The key visuals do NOT carry a burnt-in wordmark. The 64 event plates
- * (632x456 and 532x456) are paintings with a feathered vignette and no type in
- * them at all; only the 17 mainline 432x432 posters are typeset, and those are
- * the ones the old sign was reading.
+ * rotate(90), not -90. Recipe: 190% cover, a quarter turn, the 21% masked stub,
+ * which samples 78.0..98.4% across the rotated image. Under -90 that is the
+ * image's bottom: rows 0.711..0.865 on a 632x456 event plate and 0.652..0.763 on
+ * a 432x432 mainline poster, where `kv_stormwatch.png` typesets STORMWATCH.
+ * Under 90 it is the top, rows 0.135..0.289 and 0.237..0.348, art on all 81
+ * plates. Only the 17 mainline posters carry type; the 64 event plates (632x456
+ * and 532x456) have none.
  */
 .stubImage {
     position: absolute;
     top: 50%;
     left: 50%;
     width: 190%;
-    /* The same preflight cap: the stub has been drawing a 336.5 x 347.8 box, not
-       the 639.4 x 347.8 the recipe asks for, since the ticket shipped. */
+    /* Same preflight cap: without this the box is 336.5 x 347.8, not 639.4 x 347.8. */
     max-width: none;
     height: 190%;
     object-fit: cover;
@@ -356,15 +315,10 @@
 }
 
 /*
- * ONE PILL, EVERY KIND, BOTH SURFACES. `.badge` is the ticket's and
- * `.kindBadge` the themed surfaces' (the chapter modal, the reading order, the
- * illustrations panel); they are the same pill and differ only in that the
- * ticket's carries a hairline, because a near-black pill in dark mode sits on
- * dark art and would otherwise have no edge.
- *
- * Measured: black on white is 21.00:1 and white on #0b0d12 is 19.35:1. The
- * tinted pills these replace ranged from 4.31:1 (MAIN STORY on Stormwatch's
- * sampled #4a4a26) upward, and changed with every card's art.
+ * One pill for every kind. `.kindBadge` is the themed surfaces' (chapter modal,
+ * reading order, illustrations panel); the ticket's `.badge` adds a hairline so
+ * the dark-mode pill has an edge on dark art. 21.00:1 and 19.35:1; the tinted
+ * pills they replaced went down to 4.31:1 (MAIN STORY on Stormwatch's #4a4a26).
  */
 .badge,
 .kindBadge {
@@ -398,29 +352,19 @@
 }
 
 /*
- * THE TITLE IS THE GAME'S LOGOTYPE: the 516x260 plate is authored per event, so its typography
- * already is the event's.
+ * The title is the game's per-event 516x260 logotype.
  *
- * SIZE. The caps are 72% of the card's width and 60% of its height, against
- * the game's 82.1% and 57.2% (`image_title` 197x103 on a 240x180 card). The
- * first cut at 62% by 52% rendered every plate 188.9 x 95.2 and took a reader
- * a few seconds to make out; at 72% by 60% the same plate is 237.2 x 119.5,
- * which is 70.5% of the card's width. The 516x260 plate's aspect is 1.985 and
- * the box's is 2.028, so every one of the 81 is bound by HEIGHT and they all
- * render at one size. The height cap is written in cqw because a container
- * query unit for the block axis needs a sized container: the card's
- * aspect-ratio is 500/272, so 60% of its height is 60 * 272 / 500 = 32.64 cqw.
+ * Caps 72% x 60% of the card (the game's `image_title` 197x103 on a 240x180 card
+ * is 82.1% x 57.2%). The first cut, 62% by 52%, drew every plate 188.9 x 95.2
+ * and was hard to read; at 72% by 60% the same plate is 237.2 x 119.5, 70.5% of
+ * the card's width. The plate's aspect (1.985) is under the box's (2.028), so
+ * all 81 are height-bound and render at one size. Height cap in cqw because a
+ * block-axis container unit needs a sized container: 60 * 272 / 500 = 32.64cqw.
  *
- * SEPARATION FROM THE ART IS A HALO, NOT A DARKER CARD. Two stacked
- * drop-shadows follow the logotype's own alpha, so the ink gets a dark ground
- * exactly where it sits and the picture 20 px away is untouched. That is the
- * opposite trade from the first cut, which bought the same legibility by
- * putting an 88% black ramp over the whole left of the card.
+ * Separation is a drop-shadow halo on the logotype's alpha, leaving the art 20 px
+ * away untouched, instead of the first cut's 88% black ramp over the card's left.
  *
- * PLACE. Bottom left, 14 px above the spec row, where the game puts it low and
- * right of centre. Ours goes left because the badge and the spec row own the
- * card's left column and the stub owns its right; that is the one layout
- * deviation and it is forced by the silhouette.
+ * Bottom left, not the game's low right of centre, because the stub owns the right.
  */
 .logotype {
     /* The cap is the content box, not 72cqw of the card: at 23% + 10 px the box
@@ -433,23 +377,16 @@
     margin-top: auto;
     object-fit: contain;
     object-position: left center;
-    /* A 1 px edge under the soft halo: the halo alone gave the ink a dark
-       ground but no OUTLINE, and thin strokes (the small caps of a subtitle)
-       still met light art at their own edge.
-       TWO SHADOWS, NOT FOUR (2026-09-30). The four-shadow halo (two 1 px
-       edges, a 6 px ground, an 18 px glow) was the GPU cost of scrolling the
-       library: every ticket entering the viewport re-blurs its logotype four
-       times, the 18 px pass the dearest. Measured with all four off: GPU per
-       wheel scroll 602.6 -> 229.7 ms, GPU-bound dropped frames 44.3 -> 20.7%.
-       This keeps one edge and the 6 px ground, which is the outline and the
-       dark ground; the second edge only doubled the first and the 18 px glow
-       was a faint darkening of art 20 px out. */
+    /* 1 px edge for thin strokes on light art, plus a 6 px dark ground.
+       Two shadows, not four (2026-09-30): each ticket entering the viewport
+       re-blurs its logotype per shadow. With all four (two 1 px edges, 6 px,
+       18 px glow) off: GPU per wheel scroll 602.6 -> 229.7 ms, GPU-bound
+       dropped frames 44.3 -> 20.7%. */
     filter: drop-shadow(rgba(0, 0, 0, 1) 0 0 1px) drop-shadow(rgba(0, 0, 0, 0.9) 0 2px 6px);
 }
 
-/* The 6 groups with no logotype set their name instead, at the size impl/titleFit.ts
-   measured for it, stepped up with the logotype from 28/18 px to 32/21 px. No
-   ellipsis and no clamp: every line here is whole words. */
+/* Groups with no logotype set their name at the size impl/titleFit.ts fits.
+   No ellipsis or clamp: every line is whole words. */
 .title {
     display: flex;
     flex-direction: column;
@@ -463,8 +400,7 @@
     color: #fff;
     text-transform: uppercase;
     overflow-wrap: var(--title-wrap, normal);
-    /* The same halo the logotype gets, as a text shadow: the edge and the
-       6 px ground (the two-shadow rule above). */
+    /* Same two-shadow halo as the logotype. */
     text-shadow:
         rgba(0, 0, 0, 1) 0 0 1px,
         rgba(0, 0, 0, 0.9) 0 2px 6px;
@@ -474,31 +410,23 @@
     display: block;
 }
 
-/* NO DECO GLYPH HERE, and that is measured twice over. The chapter deco is a
-   two-line numeral, not an ornament: `deco_stormwatch.png` is EP stacked over
-   09 on a 56x68 plate, and at the 13.00 and 14.00 px this row can give it, it
-   is one white blob. The game does show it large, 51x64 on a 240x180 card,
-   which is 21.3% by 35.6% and would be 71.6 x 65.2 on ours, but the game can
-   afford that because `variant_mainline` draws NO logotype: the deco is its
-   title. Ours draws the logotype on all 87, and 71.6 px beside a 62%-wide
-   logotype and a 21% stub leaves 17% of the card. The deco keeps the two
-   surfaces where it has room: the chapter modal's header at 29.64 x 36.00, and
-   the list row's blank plate. */
+/* No deco glyph on the ticket. It is a two-line numeral (`deco_stormwatch.png`:
+   EP over 09 on 56x68), one white blob at the 13.00 and 14.00 px this row can
+   give it. The game draws it 51x64 on a 240x180 card, 21.3% by 35.6% (71.6 x
+   65.2 on ours), only because `variant_mainline` has no logotype; beside the
+   then 62%-wide logotype and a 21% stub it left 17% of the card. It stays on
+   the chapter modal header (29.64 x 36.00) and the list row's blank plate. */
 /*
- * THE STAMP IS A CAPTION UNDER THE TICKET NOW, and that is measured, not taste.
- * Kept inside the art at the 11 px floor the reader set, on the 223.3 px card
- * at 1440 it took two lines on 86 of the 87 tickets and squeezed the logotype
- * to 0.0 .. 49.7 px tall (it was 119.5 on the 336.5 card); on the 178 px phone
- * card 62 of 87 took three lines, the logotype got at most 25.0 px and 6
- * children ran out of the content box. No tracking or wording fixes that:
- * "ACT18MINI · 2025 · 6 entries · 1h 52m" is wider than any content box the
- * small ticket has. Under the ticket it has the card's whole width, so the art
- * keeps the logotype at the same 32.64cqw cap it always had.
+ * Caption under the ticket, not inside it. Inside at the 11 px floor, on the
+ * 223.3 px card at 1440 it took two lines on 86 of 87 tickets and squeezed the
+ * logotype to 0.0..49.7 px tall (it was 119.5 on the 336.5 card); on the 178 px
+ * phone card 62 of 87 took three lines, the logotype got at most 25.0 px and 6
+ * children ran out of the content box. "ACT18MINI · 2025 · 6 entries · 1h 52m"
+ * is wider than any content box the small ticket has; under the ticket it gets
+ * the card's whole width, so the logotype keeps its 32.64cqw cap.
  *
- * THE SITE'S SANS, sentence case, no tracking. It was Geist Mono at 9 px,
- * uppercase and letter-spaced, and the reader's word for it was "looks like
- * claude": a monospace run is how the site spells a CODE (1-4, GT-1) and this
- * line is prose about a chapter. Tabular figures keep 12 and 14 entries aligned.
+ * Sans, not the old 9 px uppercase mono: mono is how the site writes codes
+ * (1-4, GT-1). Tabular figures keep 12 and 14 entries aligned.
  */
 .spec {
     display: flex;
@@ -514,8 +442,7 @@
     line-height: 16px;
 }
 
-/* One of the two survivors of the sampled triad, and the one the reviewer named.
-   Centred on the FIRST line, because the caption may take two. */
+/* Centred on the first line; the caption can wrap. */
 .dot {
     flex-shrink: 0;
     width: 6px;
@@ -559,7 +486,6 @@
     background: rgba(0, 0, 0, 0.45);
 }
 
-/* The other survivor. */
 .progressFill {
     display: block;
     height: 100%;
@@ -567,17 +493,10 @@
     transition: width 0.3s;
 }
 
-/* WHAT THE BOOKMARK'S COLOUR MEANS, declared once because two surfaces print
-   it. A reader asked "bookmark thingies look funny with the different colors,
-   what do they signify?", which is the right question: the ticket printed
-   amber and green and nothing on the page said which was which. The colours
-   stay and the read-state pills wear the same glyph in the same ink, so the
-   control that filters by read state IS the legend. Unread is the theme's own
-   muted ink rather than a third saturated colour, and an untouched ticket
-   still wears no bookmark at all: on a signed-out page that is most of the 87
-   EN groups, and a grey tab on every one of them is chrome carrying nothing.
-   So the grey tab is the legend's word for "no tab", which is the one place
-   the pill row and the ticket do not match shape for shape. */
+/* Shared by the ticket and the read-state pills, so the filter pills are the
+   legend for the bookmark colours. Unread is muted ink in the pills, but an
+   untouched ticket gets no bookmark at all: signed out that is most of the 87
+   EN groups. */
 :root {
     --story-mark-progress: rgb(240, 196, 25);
     --story-mark-done: rgb(79, 209, 122);
@@ -772,12 +691,10 @@
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
 }
 
-/* NO ELLIPSIS. A row title wraps to two whole-word lines instead of losing its
-   last word: GRANI AND THE KNIGHTS'... was the reviewer's case, and it was
-   this rule, not the ticket's. Measured over the 87 groups, the widest title
-   is 38 characters and the widest single word Zwillingstürme at 14, against a
-   text column of about 1,062 px at 1554 and 168 px at 375, so 2 lines is
-   enough at both and no word is ever broken. */
+/* Two whole-word lines, no ellipsis (GRANI AND THE KNIGHTS'... lost its last
+   word). Over the 87 groups the longest title is 38 chars and the longest word
+   Zwillingstürme (14), against a ~1,062 px column at 1554 and 168 px at 375,
+   so 2 lines always fit. */
 .rowTitle {
     font-family: var(--font-heading);
     font-weight: 800;
@@ -890,18 +807,11 @@
 }
 
 /*
- * THE THEME GLYPH IS A SIBLING OF THE CARD, never a child of it.
- *
- * A button inside a button is invalid markup and a nested control is not
- * reachable by keyboard in the order a reader expects, so the ticket and the
- * row keep their own single <button> and the glyph sits over it in a wrapper.
- * The wrapper is the only new box in the grid: it has no size of its own and
- * the card still sets the cell's height, so nothing reflows.
- *
- * It is revealed on hover and on focus where a pointer CAN hover, and it is
- * always on where one cannot, because a phone has no hover to reveal it with.
- * A glyph whose own theme is sounding stays on either way, which is how a
- * reader finds the card the bar at the foot of the page is talking about.
+ * The theme glyph is a sibling of the card button, not a child: nested buttons
+ * are invalid and break tab order. The wrapper has no size of its own, so
+ * nothing reflows. Shown on hover/focus where the pointer can hover, always
+ * where it can't, and always while its theme plays so the reader can find the
+ * card the bottom bar refers to.
  */
 .cardWrap {
     position: relative;
@@ -940,12 +850,10 @@
         color 0.2s;
 }
 
-/* ON THE STUB, not over the badge. At 34 px in the top left it sat on the kind
-   badge whenever it showed, and on a 97 px phone ticket the 44 px touch glyph
-   covered the badge outright. The stub is the one part of the ticket that
-   carries no text, so the glyph is a 28 px disc centred on it (the stub is 21%
-   wide and the ticket 54.4cqw tall), and the ::before below keeps a 44 px
-   target on a coarse pointer. */
+/* On the stub, the only text-free part: at 34 px in the top left it sat on the
+   kind badge, and on a 97 px phone ticket the 44 px touch glyph covered it
+   outright. A 28 px disc centred on the stub (21% wide, ticket 54.4cqw tall);
+   the ::before below keeps a 44 px target on a coarse pointer. */
 .cardPlay {
     right: calc(10.5cqw - 14px);
     top: calc(27.2cqw - 14px);
@@ -955,14 +863,9 @@
     background: rgba(0, 0, 0, 0.5);
     color: #fff;
     opacity: 0;
-    /* THE BLUR IS ON ONLY WHILE THE DISC CAN BE SEEN. A backdrop-filter is a
-       compositor effect, so every glyph carried its own layer even at opacity
-       0: 100 layers on the page at 1440 against 14 without them, all of them
-       layerized and committed on every frame of a scroll. At rest the disc is
-       invisible, so the blur is too; it switches on the moment the fade in
-       starts and switches off only when the 0.2 s fade out has ended (the
-       delayed 0 s transition holds the old value through the delay), so no
-       frame of the fade looks different. */
+    /* Blur only while visible: backdrop-filter layerizes even at opacity 0
+       (100 layers at 1440 vs 14, committed every scroll frame). The delayed
+       0 s transition keeps the blur until the 0.2 s fade out ends. */
     transition:
         opacity 0.2s,
         background 0.2s,
@@ -1020,11 +923,9 @@
     margin-right: 52px;
 }
 
-/* A touch target is 44 px, and a surface with no hover has to show the control
-   outright. The WIDTH is a second door into the same rule and not a duplicate
-   of it: `hover: none` describes the pointer and says nothing about the
-   viewport, so a 390 px window driven by a mouse got a 34 px glyph that
-   appeared only on hover. Either condition now opens the touch treatment. */
+/* 44 px target, always shown. The width query is not redundant: `hover: none`
+   is about the pointer, so a 390 px window with a mouse got a 34 px glyph that
+   appeared only on hover. */
 @media (hover: none), (max-width: 640px) {
     .cardPlay {
         opacity: 1;

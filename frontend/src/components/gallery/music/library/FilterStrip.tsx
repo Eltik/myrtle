@@ -33,11 +33,6 @@ export interface IFilterStripProps {
     onReset: () => void;
 }
 
-/**
- * THE LIBRARY'S FILTER STRIP: sort direction and sort order on the left, the
- * search box and the Filters toggle on the right, and the filters row under
- * it when open. Filters apply as they change.
- */
 export function FilterStrip(props: IFilterStripProps): React.ReactElement {
     const t: MusicT = useT("gallery");
     const { mode, query, onQuery, reversed, onReversed } = props;

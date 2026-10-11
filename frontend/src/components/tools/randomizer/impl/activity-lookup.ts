@@ -12,7 +12,6 @@ export interface IPermanentEvent {
 }
 
 export interface IActivityLookup {
-    /** activityId -> IActivity */
     activityById: Map<string, IActivity>;
     /** "permanent_sidestory_1" -> retro act */
     retroByZonePrefix: Map<string, IRetroAct>;

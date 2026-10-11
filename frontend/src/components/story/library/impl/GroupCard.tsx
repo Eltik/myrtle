@@ -22,12 +22,9 @@ type BrowseT = TypedT<typeof messages>;
 type ThemeT = TypedT<typeof archiveMessages>;
 
 /**
- * ONE NEUTRAL PILL FOR EVERY KIND. It was tinted per kind on themed surfaces and
- * printed in the cover's own sampled ink on a ticket, so the most legible label
- * changed with its art: Stormwatch's c1 came back #4a4a26 and MAIN STORY on it
- * read poorly. A label that names a taxonomy has no business carrying a
- * per-card colour: black on white in light mode, white on near-black in dark,
- * the two highest contrast ratios the page has.
+ * One neutral pill for every kind. Tinting it per kind or in the cover's
+ * sampled ink made legibility depend on the art (MAIN STORY on Stormwatch's
+ * #4a4a26).
  */
 export function KindBadge({ kind, className }: { kind: StoryKind; className?: string }): React.ReactElement {
     const t: BrowseT = useT("story");
@@ -35,13 +32,8 @@ export function KindBadge({ kind, className }: { kind: StoryKind; className?: st
 }
 
 /**
- * The bookmark at legend size, for the read-state filter pills.
- *
- * It is the one place the ticket's colour code is spelled out: the pills name
- * the three states in words and wear the tab in each state's own ink, so a
- * reader who wonders what an amber tab means finds the answer in the control
- * they are already using. Decorative here, because the pill's own label says
- * the same thing.
+ * The bookmark at legend size, so the read-state pills double as the legend
+ * for the ticket's tab colours. Decorative: the pill's label says the same.
  */
 export function ReadMark({ state, className }: { state: ReadFilter; className?: string }): React.ReactElement | null {
     // An UNREAD ticket wears no tab, so its pill wears none either: a grey tab
@@ -50,12 +42,7 @@ export function ReadMark({ state, className }: { state: ReadFilter; className?: 
     return <span aria-hidden="true" className={cn(styles.mark, state === "progress" && styles.markProgress, state === "done" && styles.markDone, className)} />;
 }
 
-/**
- * The card grid: what `auto-fill, minmax(200px, 1fr)` at a 12 px gap would
- * lay out, on whole pixels (six 223 / 224 x 121 tickets across the 1,400 px
- * column at 1440; under 640 a 160 px track, two 178 x 97 across a phone). The
- * outer box is the container the column count is read from; see `.grid`.
- */
+/** `auto-fill, minmax(200px, 1fr)` on whole pixels; the outer box is the container `.grid` reads its column count from. */
 export function GroupGrid({ children }: { children: React.ReactNode }): React.ReactElement {
     return (
         <div className={styles.shelf}>
@@ -67,19 +54,14 @@ export function GroupGrid({ children }: { children: React.ReactNode }): React.Re
 /** The page header's class for the whole-pixel title line; see `.shelfHead`. */
 export const SHELF_HEAD = styles.shelfHead;
 
-/** The list-mode stack. */
 export function GroupRowList({ children }: { children: React.ReactNode }): React.ReactElement {
     return <div className={styles.rows}>{children}</div>;
 }
 
 /**
- * THE CARD RECEIVES ITS FRACTION, it does not walk its stories for one. The
- * browse page already computes every group's fraction once per progress change
- * (the read filter and the read sorts need it), and a card that took
- * `progress` and `gameRead` instead recomputed it on every render. The props
- * are all stable between renders that change nothing on the card, which is
- * what lets `memo` skip it: a section change or a keystroke that leaves a card
- * in place no longer re-renders it.
+ * The card takes its fraction instead of `progress` and `gameRead`: the browse
+ * page already computes it per progress change for the read filter and sorts,
+ * and stable props let `memo` skip cards a keystroke or section change left alone.
  */
 export interface IGroupCardProps {
     group: LibGroup;
@@ -90,36 +72,15 @@ export interface IGroupCardProps {
     index?: number;
 }
 
-/**
- * The inks, as inline custom properties the module's rules read.
- *
- * ONLY TWO THINGS ARE INKED. The tape band that printed all three across the top
- * of every card is gone: chrome carrying a swatch, not information. What
- * survives is the spec row's DOT and the progress fill, and nothing else on the
- * card reads `--ticket-c*`.
- */
-// The list row carries its inks on the button, because the row's own left
-// rule reads `--ticket-c1`. The ticket does not: see `InkDot`.
+/** Row inks go on the button because the row's left rule reads `--ticket-c1`; the ticket's live on `InkDot` / `InkFill`. */
 function inkVars(palette: ITicketPalette, index: number): React.CSSProperties {
     return { "--ticket-c1": palette.c1, "--ticket-c2": palette.c2, "--i": index } as React.CSSProperties;
 }
 
 /**
- * THE CHAPTER'S THEME, ONE PRESS FROM THE SHELF.
- *
- * 86 of the 87 EN groups carry a theme and until now the only way to hear one
- * was to open its sheet, which is two presses and a dialog to start a piece of
- * music. The glyph starts it in place; the bar at the foot of the page is
- * where it is then governed, so this control does one thing and shows one
- * state.
- *
- * It is a SIBLING of the card's button, positioned over it by the wrapper,
- * because a nested button is invalid markup. `stopPropagation` is not enough
- * on its own here and is not used: the two controls never overlap in the DOM,
- * so a press on the glyph was never a press on the card.
- *
- * Memoised: its props are the group and a class name, and a card re-rendering
- * for its palette or its fraction has nothing new to tell it.
+ * Plays the chapter theme from the shelf (86 of 87 EN groups have one); the
+ * bar at the foot of the page controls it after that. A sibling of the card
+ * button since nested buttons are invalid, so no stopPropagation is needed.
  */
 const ThemeGlyph = memo(function ThemeGlyph({ group, className }: { group: LibGroup; className: string }): React.ReactElement | null {
     const t: ThemeT = useT("story");
@@ -136,17 +97,11 @@ const ThemeGlyph = memo(function ThemeGlyph({ group, className }: { group: LibGr
 });
 
 /**
- * THE TICKET'S INKS LIVE ON THE TWO LEAVES THAT DRAW THEM, and each leaf reads
- * the palette itself.
- *
- * On the button, a custom property is inherited, so a palette landing there
- * restyled all ~39 elements of the card: on load that was one 3,374-element
- * style recalc (89.1 ms at 1440, dev) for 85 dots and 85 fills. And the card
- * held the palette state, so its arrival re-rendered all 85 cards in one
- * commit (49.4 to 54.4 ms in the harness, 168.7 ms under the DevTools MCP,
- * dev). Now the arrival re-renders these two spans per card and restyles two
- * elements. The DOM, the variables and the rules that read them are the
- * same; a card with no art never samples and keeps the fallback ink.
+ * The ticket's inks live on the two leaves that draw them, each reading the
+ * palette itself. On the button the inherited property restyled all ~39
+ * elements per card (one 3,374-element recalc, 89.1 ms at 1440, dev), and a
+ * palette held by the card re-rendered all 85 cards in one commit (49.4-54.4 ms
+ * in the harness, 168.7 ms under the DevTools MCP, dev).
  */
 function InkDot({ art }: { art: string | null }): React.ReactElement {
     const palette = useTicketPalette(art);
@@ -161,13 +116,7 @@ function InkFill({ art, pct }: { art: string | null; pct: number }): React.React
 /** The stub's blank face, drawn only on a card with no art, whose palette is always the fallback. */
 const NO_ART_INK = { "--ticket-c1": FALLBACK_PALETTE.c1 } as React.CSSProperties;
 
-/**
- * The set name, for the 6 groups with no logotype. It is its OWN component so
- * the measurement hooks run on those 6 cards only: in the card they ran on all
- * 87, and each of the 81 logotype cards paid a media-query subscription, a
- * canvas measurement and a state update (two, once the webfont landed) for a
- * title it never draws.
- */
+/** Own component so the fit hooks (media query, canvas measure, state updates) run on the 6 logotype-less cards, not all 87. */
 function FittedTitle({ name }: { name: string }): React.ReactElement {
     const phone = useMediaQuery("max-sm");
     const fit = useTitleFit(name, phone ? TICKET_FIT_PHONE : TICKET_FIT);
@@ -183,27 +132,16 @@ function FittedTitle({ name }: { name: string }): React.ReactElement {
 }
 
 /**
- * One chapter as a ticket. The silhouette, the tear at 79%, the notches, the
- * stub's hover tear-away and the drop shadow are the reference page's; what is
- * inside them is the GAME's card.
- *
- * `ui/[uc]mixstory.ab` draws a story set as its KEY VISUAL cover-fitted over
- * the whole card (`stage_mix_story_overall_group_item_view`: a 282x204 image
- * on a 240x180 card, centred, which is 113.0% of the size that would just
- * cover) with the authored 516x260 TITLE LOGOTYPE contained on top of it
- * (197x103, 82.1% of the card's width and 57.2% of its height). So the card is
- * a picture with a logotype on it, and that is what this is.
- *
- * The ticket does not follow the site theme. It is dark art in light mode and
- * in dark mode alike; only the page around it, and the badge, change.
+ * One chapter as a ticket. Silhouette, 79% tear, notches, stub tear-away and
+ * shadow are the reference page's; the contents copy the game's
+ * `stage_mix_story_overall_group_item_view` (`ui/[uc]mixstory.ab`): key visual
+ * cover-fitted at 113%, 516x260 logotype on top. Dark in both themes.
  */
 export const GroupCard = memo(function GroupCard({ group, fraction, onOpen, index = 0 }: IGroupCardProps): React.ReactElement {
     const t: BrowseT = useT("story");
     const { wpm } = useReadingSpeed();
-    // The KEY VISUAL is the picture, and the cover is only its fallback. The
-    // background, the stub and the inks read the SAME choice: a chapter that
-    // opens on a fade derives a black cover, and sampling that gives a card
-    // with no colour in it at all.
+    // Key visual first, cover as fallback, and the inks sample the same pick:
+    // a chapter that opens on a fade derives a black cover with no colour in it.
     const plate = plateSource(group);
     const art = plate.kind === "none" ? null : asset(plate.url);
     const title = titleSource(group);
@@ -229,11 +167,8 @@ export const GroupCard = memo(function GroupCard({ group, fraction, onOpen, inde
                     <span aria-hidden="true" className={styles.stub}>
                         <span className={cn(styles.half, styles.stubFace)}>{art ? <img src={art} alt="" crossOrigin="anonymous" loading="lazy" decoding="async" className={styles.stubImage} /> : <span className={styles.stubBlank} style={NO_ART_INK} />}</span>
                     </span>
-                    {/* The bookmark is amber part-read and green finished, so it needs a
-                        name and a number: `role="img"` plus the fraction gives it one, and
-                        the native `title` shows the same words on hover. The card's own
-                        `aria-label` already carries the fraction, so this adds no tab stop
-                        and no second announcement of the same number. */}
+                    {/* role="img" + title give the colour a name; the card's aria-label
+                        already carries the fraction, so no extra tab stop. */}
                     {pct > 0 ? <span role="img" aria-label={t("chapter.readFraction", { read: fraction.read, total: fraction.total })} title={t("chapter.readFraction", { read: fraction.read, total: fraction.total })} className={cn(styles.bookmark, fraction.done && styles.bookmarkDone)} /> : null}
                 </span>
                 <span className={styles.spec}>
@@ -253,15 +188,9 @@ export const GroupCard = memo(function GroupCard({ group, fraction, onOpen, inde
 });
 
 /**
- * The spec line under a card or a row title. A main story chapter prints its
- * NUMBER, which is the only handle a reader has on it; an event prints the
- * operation code it is known by plus the year it ran.
- *
- * The READING TIME closes the line when the wire counts the group's words,
- * because "39 entries" says how many things there are and nothing about how
- * long an evening it is. It is the reader's own words-per-minute setting
- * applied to the group's count, so a card and the sheet behind it always quote
- * the same span. A group with no count simply ends a field earlier.
+ * Main story prints its chapter number, an event its code and year. Reading
+ * time (the reader's wpm over the group's word count) is appended when the wire
+ * has a count, so card and sheet quote the same span.
  */
 function specParts(group: LibGroup, t: BrowseT, wpm: number): string[] {
     const model = specModel(group, cardCode(group));
@@ -272,15 +201,7 @@ function specParts(group: LibGroup, t: BrowseT, wpm: number): string[] {
     return parts;
 }
 
-/**
- * One chapter as a list row: a 172x92 key visual with the chapter mark burnt
- * into it, a left rule in the cover's dominant ink, badge, title, spec line,
- * the read fraction as a NUMBER, and a chevron.
- *
- * The row title is the group's NAME and never a logotype, because a 516x260
- * plate in an 18.9 px line box is unreadable. It is no longer clipped with an
- * ellipsis either: it wraps to two whole-word lines.
- */
+/** One chapter as a list row. Title is the name, never the logotype: a 516x260 plate in an 18.9 px line is unreadable. */
 export const GroupRow = memo(function GroupRow({ group, fraction, onOpen, index = 0 }: IGroupCardProps): React.ReactElement {
     const t: BrowseT = useT("story");
     const { wpm } = useReadingSpeed();

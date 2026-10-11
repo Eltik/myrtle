@@ -10,8 +10,7 @@ interface IOwnershipBadgeProps {
     /** Which community number to show. `owned` is the share of all sharing
      *  players; `e2` is the share OF OWNERS who promoted to E2. */
     metric: StatMetric;
-    /** Accent color. The percentage text carries the meaning, so color is
-     *  decorative - it never encodes the value on its own. */
+    /** Accent color. Decorative: the percentage text carries the value. */
     color: string;
     className?: string;
 }

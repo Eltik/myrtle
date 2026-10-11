@@ -2,9 +2,6 @@ import { EMPTY_SHARED_FILTERS, matchesSharedFilters, toFilterSets } from "#/comp
 import type { IRosterEntry } from "#/lib/api/user";
 import type { IOperatorIndexEntry } from "#/types/operators";
 
-// What a clicked favourite tile shows: whose roster the viewer may read, and
-// which operators a faction holds.
-
 /**
  * Whether the viewer may read this player's roster. `private`: the owner hid the
  * Roster tab (the profile never asks), or the backend refused or found none
@@ -35,7 +32,6 @@ export function factionMembers(index: readonly IOperatorIndexEntry[], faction: I
     return index.filter((op) => matchesSharedFilters(op, sets)).sort((a, b) => b.rarity - a.rarity || a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
 }
 
-/** The player's row for each operator they own, by operator id. */
 export function rosterById(roster: readonly IRosterEntry[]): ReadonlyMap<string, IRosterEntry> {
     return new Map(roster.map((r) => [r.operator_id, r]));
 }

@@ -1,11 +1,7 @@
 /**
- * Color utilities for accent customization.
- *
- * Two flavors of accent:
- *  - "preset": stored as a hue (0-360); rendered with the OKLch formula so the
- *    accent adapts to light/dark mode (matching the stylesheet defaults).
- *  - "custom": stored as a raw sRGB hex; applied exactly as picked, with a
- *    luminance-derived foreground so text on the accent stays legible.
+ * Accent colours. A "preset" is a stored hue (0-360) rendered through OKLch, so
+ * it shifts with light/dark like the stylesheet defaults. A "custom" is a raw
+ * sRGB hex applied as picked, with its foreground chosen by luminance.
  */
 
 export const DEFAULT_PRIMARY_HUE = 25;
@@ -83,7 +79,6 @@ function generateFromHex(hex: string): IThemeColorSet {
     };
 }
 
-/** Pick the appropriate foreground (light vs dark) based on the accent's luminance. */
 function pickForeground(hex: string): string {
     const rgb = hexToRgb(hex);
     if (!rgb) return LIGHT_FG;
@@ -131,11 +126,7 @@ export function clearAccentColors(root: HTMLElement): void {
     }
 }
 
-/**
- * Render the accent as the literal hex it produces on screen for a given
- * theme - used for the preset swatches and to pre-fill the native color input
- * so both track the live state.
- */
+/** The hex an accent actually renders as in the given theme, for the preset swatches and the native colour input. */
 export function accentToRenderedHex(accent: Accent | null, isDark: boolean): string {
     if (accent?.type === "custom") return accent.hex;
     const { l, c } = PRESET_OKLCH[isDark ? "dark" : "light"];

@@ -5,7 +5,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 interface IOptions<T> {
     /** Convert a stored string into T. Return `undefined` to keep the initial value. */
     parse?: (raw: string) => T | undefined;
-    /** Convert T into the string written to localStorage. */
     serialize?: (value: T) => string;
 }
 

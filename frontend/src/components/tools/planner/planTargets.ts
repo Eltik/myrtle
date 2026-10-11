@@ -38,7 +38,7 @@ export type ModuleTargets = Record<string, number>;
 
 export type IOperatorSkill = IOperatorListItem["skills"][number];
 
-/** The mastery rank a skill target names, or 0 below mastery. */
+/** The mastery rank a skill target names. Only meaningful above 7; below mastery it is negative. */
 export function masteryOf(skillTarget: number): number {
     return skillTarget - MAX_SKILL_LEVEL;
 }
@@ -199,7 +199,6 @@ export function minLevelFor(floor: IRosterFloor, elite: number): number {
     return elite === floor.elite ? floor.level : 1;
 }
 
-/** Whether promotion `elite` sits below the roster. */
 export function isEliteBelowFloor(floor: IRosterFloor, elite: number): boolean {
     return elite < floor.elite;
 }

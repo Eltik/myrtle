@@ -16,7 +16,7 @@
  * different option is a divergence and the rows after it go.
  *
  * Pure, so the rule is tested without a script or a DOM; `useStoryPlayer`
- * calls these at each place the log used to be filtered.
+ * calls these wherever it updates the log.
  */
 
 export interface BacklogEntry {

@@ -23,11 +23,12 @@ const STARTER_PREFIX = "BOOT_";
  * Whether a pull was made on a pool whose pity is its own, so it must neither
  * accumulate nor reset the Standard or Kernel counter.
  *
- * Measured on local Postgres (2026-10-10), these land in the shared buckets today:
- * ATTAIN (7,329 rows) in Standard, because its wire `typeName` is "normal";
- * CLASSIC_ATTAIN (4,841) in Kernel, by its `CLASSIC_` prefix; BACKFLOW (210) in
- * Standard. SPECIAL (Orienteering) is Standard Headhunting and counts. The banner's rule type decides through the
- * planner's own `scopeFor`, plus the pool's `returning` flag.
+ * Measured on local Postgres (2026-10-10), these would otherwise land in the
+ * shared buckets: ATTAIN (7,329 rows) in Standard, because its wire `typeName`
+ * is "normal"; CLASSIC_ATTAIN (4,841) in Kernel, by its `CLASSIC_` prefix;
+ * BACKFLOW (210) in Standard. SPECIAL (Orienteering) is Standard Headhunting
+ * and counts. The banner's rule type decides through the planner's own
+ * `scopeFor`, plus the pool's `returning` flag.
  */
 export function isIsolatedPull(item: IGachaItem, bannersById: Map<string, IBanner>): boolean {
     if (item.poolId.startsWith(STARTER_PREFIX)) return true;

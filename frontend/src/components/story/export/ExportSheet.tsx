@@ -1,11 +1,12 @@
 /**
- * THE EXPORT SHEET: one story, the chapter, or a hand-picked set of its
- * stories, as an EPUB, Markdown or plain text, with the size estimated before
- * anything is fetched and per-story progress while it is built.
+ * THE EXPORT SHEET: one story, the chapter, a hand-picked set of its stories,
+ * an arc, a storyline or a range, as an EPUB, PDF, Markdown or plain text, with
+ * the size estimated before anything is fetched and per-story progress while
+ * it is built.
  *
  * A Dialog above 640 px and a bottom Sheet under it, the rule the chapter
- * sheet and the operator panel use. The format, pictures, branches and
- * typeface choices persist per browser under `myrtle.story.export.*`; the
+ * sheet and the operator panel use. The format, pictures, branches, typeface
+ * and paper choices persist per browser under `myrtle.story.export.*`; the
  * scope does not, because it is a fact about where the sheet was opened from.
  * The Doctor's name starts from the reader's own setting every time.
  *

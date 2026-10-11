@@ -60,8 +60,6 @@ export function SynergyPanel({ state, stale, collapsed, onToggle, synergy, seatO
     );
 }
 
-// ---------------------------------------------------------------- source
-
 function BySource({ items, seatOps, ctx, t }: { items: SynergyItem[]; seatOps: ReadonlyMap<number, ISeatOperator>; ctx: IChipContext; t: SynergyT }): React.ReactElement {
     return (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -119,8 +117,6 @@ function SourceItem({ item, seatOps, ctx, t }: { item: SynergyItem; seatOps: Rea
     );
 }
 
-// -------------------------------------------------------------- receiver
-
 /** The items that reach a seat, placement-bound ones left to the footer. */
 function itemsReaching(items: ReadonlyArray<SynergyItem>, seat: number): SynergyItem[] {
     return items.filter((i) => i.group !== "place" && i.cond !== "near" && i.seat !== seat && (i.to.includes(seat) || i.to_all));
@@ -174,8 +170,6 @@ function ByReceiver({ items, seatOps, onOpenInDps, ctx, t }: { items: SynergyIte
         </div>
     );
 }
-
-// ---------------------------------------------------------------- text
 
 function sectionText(g: SynergyGroup, t: SynergyT): { title: string; hint: string; empty: string } {
     switch (g) {

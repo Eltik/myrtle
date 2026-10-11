@@ -102,10 +102,10 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
     /**
      * Which boxes the fill writes, shown rather than described.
      *
-     * Reported in #ui-ux: it was not obvious that "Pulls since last 6*" is NOT filled
-     * from the account, so a player who pressed the button read a stale zero there as
-     * their real counter. The four boxes it does write ring for a moment on the press,
-     * which leaves the fifth visibly untouched.
+     * Reported in #ui-ux: it wasn't obvious the pity counters are NOT filled from the
+     * account, so a player who pressed the button read a stale zero there as their real
+     * counter. The four boxes it does write ring for a moment on the press, which leaves
+     * the two pity boxes visibly untouched.
      */
     const [flash, setFlash] = React.useState(false);
     React.useEffect(() => {
@@ -338,9 +338,6 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
 
             <Card className="flex flex-col gap-4 p-4">
                 <div className="flex flex-wrap items-start gap-x-8 gap-y-4">
-                    {/* The "with Originite Prime" sub-lines and the weekly Orundum figure
-                        get icons: the currency sits in front of its number instead of
-                        being spelled out in words. */}
                     <Stat
                         label={t("release.pulls.summary.now")}
                         value={f.number(first?.pulls ?? 0)}

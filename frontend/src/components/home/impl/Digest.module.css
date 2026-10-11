@@ -76,7 +76,6 @@
     outline-offset: 0;
 }
 
-/* Leaderboard rows. */
 .leader {
     display: grid;
     grid-template-columns: 22px 32px minmax(0, 1fr) auto;

@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { cn } from "#/lib/utils";
 import { COUNT } from "./chips";
 
-/** A rail row that picks one thing: its icon, its name and its muted count at the end. */
 export function RailRow({ active, onClick, name, count, title, icon }: { active: boolean; onClick: () => void; name: string; count?: number | string | null; title?: string; icon?: ReactNode }) {
     return (
         <button
@@ -22,7 +21,6 @@ export function RailRow({ active, onClick, name, count, title, icon }: { active:
     );
 }
 
-/** A quiet label over a group of the rail: small, muted, no heavy heading. */
 export function RailLabel({ children }: { children: ReactNode }) {
     return <p className="m-0 mb-1.5 px-2 font-medium font-sans text-[11px] text-muted-foreground/80">{children}</p>;
 }

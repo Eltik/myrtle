@@ -8,8 +8,8 @@ import type { messages as helperMessages } from "./helpers.messages";
 export type HelperT = TypedT<typeof helperMessages>;
 
 /**
- * Default `t` for a caller that is not inside an `I18nProvider` - today only
- * the planner dialog, which reads these labels from outside this feature. It
+ * Default `t` for a caller that is not inside an `I18nProvider` (today only
+ * the planner dialog, which reads these labels from outside this feature). It
  * resolves against the bundled source catalog, so the English is the same one
  * the components render and this file carries no second copy of the text.
  */

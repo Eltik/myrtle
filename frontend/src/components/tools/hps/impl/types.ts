@@ -3,7 +3,7 @@ import type { ICalcBuffs, IInstance, ISweepRange } from "#/components/tools/shar
 
 /**
  * Healing ignores enemy DEF/RES, so the chart sweeps a team-buff or target
- * dimension instead. `targets` is the default - single-target vs. AoE healers
+ * dimension instead. `targets` is the default: single-target and AoE healers
  * diverge and cross there, the healing analog of the DPS DEF/RES crossover.
  */
 export type HpsXAxis = "targets" | "atk" | "aspd";

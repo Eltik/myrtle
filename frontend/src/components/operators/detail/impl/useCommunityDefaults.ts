@@ -119,9 +119,9 @@ export function useCommunityDefaults(operator: IOperatorListItem): ICommunityDef
         const rawOwnSkill = own?.elite === 2 ? own.default_skill : null;
         const ownSkillIndex = typeof rawOwnSkill === "number" && rawOwnSkill >= 0 && rawOwnSkill < skills.length ? rawOwnSkill : null;
 
-        // A null current_equip and a `uniequip_001_*` id both mean "no module
-        // chosen" - 72.75% and 13.62% of roster rows respectively. Only a module
-        // this operator actually has counts.
+        // A null current_equip (72.75% of roster rows) and a `uniequip_001_*` id
+        // (13.62%) both mean "no module chosen". Only a module this operator
+        // actually has counts.
         //
         // No elite gate here, unlike the skill above: a module cannot be
         // equipped before E2, and the data agrees with the rule. Zero of the
@@ -160,9 +160,7 @@ export function useCommunityDefaults(operator: IOperatorListItem): ICommunityDef
         const communityIdx = topSkill ? skills.findIndex((s) => s.skillId === topSkill.id) : -1;
         const communityModuleId = topModule && modules.some((m) => m.uniEquipId === topModule.id) ? topModule.id : null;
 
-        // The backend withholds a distribution entirely below its floor, so an
-        // entry existing already means it is reportable. Ranks come from array
-        // position because the ordering is the backend's tie-broken one.
+        // Rank is array position: the backend's order is already tie-broken.
         const toShares = (choices: BuildChoice[] | undefined, total: number): ReadonlyMap<string, IChoiceShare> => {
             const out = new Map<string, IChoiceShare>();
             if (!choices || total <= 0) return out;

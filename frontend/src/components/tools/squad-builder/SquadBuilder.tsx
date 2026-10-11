@@ -100,7 +100,6 @@ export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): Re
     const [state, dispatch] = React.useReducer(squadReducer, INITIAL_STATE);
     const [ready, setReady] = React.useState(false);
 
-    // ---------------------------------------------------------------- storage
     // Storage is read in an effect so the server render and the first client render agree.
     React.useEffect(() => {
         dispatch({ type: "HYDRATE", ...readHydration() });
@@ -126,7 +125,6 @@ export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): Re
         if (ready) safeWrite(COMPACT_KEY, state.compact);
     }, [ready, state.compact]);
 
-    // ------------------------------------------------------------------- data
     const { data: operatorList } = useQuery(operatorsIndexQueryOptions(server));
     const operators = React.useMemo(() => new Map((operatorList ?? []).map((o) => [o.id, o])), [operatorList]);
     const { data: rosterRows } = useQuery({ ...userRosterQueryOptions(uid ?? ""), enabled: uid !== null });
@@ -146,7 +144,6 @@ export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): Re
     const supportOp = draft.support ? operators.get(draft.support.char_id) : undefined;
     const supportSeat = React.useMemo(() => (draft.support && supportOp ? resolveSeat(draft.support, supportOp, undefined, true) : null), [draft.support, supportOp]);
 
-    // ------------------------------------------------------------------ stage
     const stageId = draft.stageId;
     const stageQuery = useQuery({ ...stageDetailQueryOptions(stageId ?? "", server), enabled: stageId !== null });
     const { data: rules } = useQuery(squadRulesQueryOptions(server));
@@ -174,7 +171,6 @@ export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): Re
         dispatch({ type: "SET_START_DP", startDp: state.startDp, from: { kind: "page" } });
     };
 
-    // --------------------------------------------------------------- analysis
     const filled = filledSeats(draft);
     const request = React.useMemo(() => (filled > 0 && operators.size > 0 ? toAnalyzeRequest(seats, supportSeat, { startDp: state.startDp, deployLimit: stageContext?.deployLimit ?? null, dub: null }) : null), [filled, operators.size, seats, supportSeat, state.startDp, stageContext?.deployLimit]);
     // Debounced once, here: the panels and the hand-off read this one query, so a dragged DP
@@ -185,7 +181,6 @@ export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): Re
     const handoff = analysis?.handoff ?? [];
     const [hoverSeat, setHoverSeat] = React.useState<number | null>(null);
 
-    // ------------------------------------------------------------------ focus
     const [focus, setFocus] = React.useState<number | null>(null);
     const [labOpen, setLabOpen] = React.useState(false);
     const panelRef = React.useRef<HTMLDivElement>(null);
@@ -244,7 +239,6 @@ export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): Re
         return out;
     }, [draft.members, draft.support]);
 
-    // ------------------------------------------------------------- output lab
     const squadmates = React.useMemo((): ISquadmateOption[] => {
         if (focus === null) return [];
         const givers = new Set((handoff.find((h) => h.seat === focus)?.counted ?? []).map((c) => c.from_seat));
@@ -273,7 +267,6 @@ export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): Re
         setLabOpen(true);
     };
 
-    // ------------------------------------------------------------ load / save
     const dirty = !readOnlyShare && isDirty(state);
     const [pendingLoad, setPendingLoad] = React.useState<(() => void) | null>(null);
     const guard = (load: () => void) => {
@@ -333,7 +326,6 @@ export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): Re
         else saveMutation.mutate({ slot: state.slot, squad: draft });
     };
 
-    // ------------------------------------------------------------------ render
     return (
         <div className="page-shell [--page-max:1400px]">
             <PageHeader breadcrumbLabel={t("squad.breadcrumbLabel")} breadcrumb={[t("squad.breadcrumb.tools"), t("squad.title")]} title={t("squad.title")} description={t("squad.intro", { seats: SQUAD_SIZE })} />

@@ -20,8 +20,7 @@
  * (SINGLE 0.000230, LIMITED 0.000313, DOUBLE 0.000632, LINKAGE 0.000000,
  * ATTAIN 0.000069).
  *
- * WHERE THIS IS STILL APPROXIMATE, because the header above should not read as more
- * confident than the model is:
+ * WHERE THIS IS STILL APPROXIMATE:
  *
  *   - On a banner featuring three or more rate-up 6*, the second slot aggregates
  *     "any featured operator other than the primary one". `specific` is exact;
@@ -615,12 +614,12 @@ export interface IGoalRequest {
  * one. Expected rolls per copy are `1 / (realised 6* rate * that operator's share)`,
  * and the budget is `perCopy * (3 * copies + 6)`.
  *
- * The constant 6 is the part that matters and it is not decoration. A flat multiple
- * of the expectation truncates SMALL requests badly, because one copy has a long
- * right tail that many copies average away: budgeting one copy at three times its
- * expectation leaves 3.704% of runs unresolved and understates the mean by 3 rolls,
- * while the same multiple on six copies leaves 0.009%. The additive term buys the
- * small requests the room they need without making the large ones pay for it.
+ * The +6 is what matters. A flat multiple of the expectation truncates SMALL
+ * requests badly, because one copy has a long right tail that many copies average
+ * away: budgeting one copy at three times its expectation leaves 3.704% of runs
+ * unresolved and understates the mean by 3 rolls, while the same multiple on six
+ * copies leaves 0.009%. The additive term gives small requests room without making
+ * large ones pay for it.
  */
 export function pullsToGoal(model: IBannerModel, request: IGoalRequest, options?: IOddsOptions & { horizon?: number }): IGoalEstimate {
     const capA = Math.max(0, Math.min(MAX_POT_COPIES, Math.floor(request.copiesA)));

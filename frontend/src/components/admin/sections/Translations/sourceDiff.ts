@@ -26,9 +26,8 @@ function tokenize(text: string): string[] {
 /**
  * Longest common subsequence over tokens.
  *
- * Source strings in this catalogue are UI copy - a few dozen tokens at the
- * outside - so the O(n*m) table is the right trade against the complexity of a
- * Myers implementation. The guard below is what keeps that true: a pathological
+ * Source strings here are UI copy, a few dozen tokens at most, so the O(n*m)
+ * table beats writing Myers. The guard below keeps that true: a pathological
  * pair degrades to a plain replace rather than allocating a huge matrix.
  */
 const MAX_TOKENS = 400;

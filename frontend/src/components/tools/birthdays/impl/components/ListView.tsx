@@ -15,7 +15,6 @@ interface IListViewProps {
     today: Date;
 }
 
-/** Chronological list of every known birthday, months ordered starting from the current one. */
 export function ListView({ items, today }: IListViewProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("tools");
     const locale = useLocale();

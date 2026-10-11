@@ -35,7 +35,7 @@ function roomMessageKey(roomType: string): BaseSkillMessageKey {
 }
 
 function formatTarget(target: string): string {
-    // Targets look like "F_GOLD" / "F_EXP" / "F_ASC" - strip the F_ prefix and title-case.
+    // Targets look like "F_GOLD" / "F_EXP" / "F_ASC".
     const trimmed = target.replace(/^F_/, "").toLowerCase();
     return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
 }
@@ -46,7 +46,6 @@ export function BaseSkillsSection({ skills, server }: IBaseSkillsSectionProps) {
 
     if (!skills || skills.length === 0) return null;
 
-    // Sort by unlock order: elite ASC, then level ASC.
     const sorted = [...skills].sort((a, b) => a.unlockElite - b.unlockElite || a.unlockLevel - b.unlockLevel);
 
     return (

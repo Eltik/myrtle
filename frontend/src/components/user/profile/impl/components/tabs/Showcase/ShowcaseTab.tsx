@@ -239,7 +239,6 @@ function RemovedBlock({ type }: { type: ShowcaseDraftBlock["type"] }) {
     );
 }
 
-/** A block's header row: the kicker, an optional title and a trailing slot. */
 function BlockHeader({ icon, kicker, title, end }: { icon: typeof HeartIcon; kicker: string; title?: string | null; end?: ReactNode }) {
     return (
         <div className="flex items-start justify-between gap-3">
@@ -252,7 +251,6 @@ function BlockHeader({ icon, kicker, title, end }: { icon: typeof HeartIcon; kic
     );
 }
 
-/** The header's link to a grid's or tier list's own page. */
 function OpenLink({ to, slug, title }: { to: "/grids/$slug" | "/tier-lists/$id"; slug: string; title: string }) {
     const t: TypedT<typeof messages> = useT("user");
     const className = "-mr-1.5 inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 font-medium text-muted-foreground text-xs no-underline transition-colors hover:bg-accent hover:text-foreground";
@@ -477,7 +475,6 @@ function PlanBlock({ id, uid, roster, isOwner, plansHidden }: { id: string; uid:
     if (isPending) return <Skeleton className="h-40 rounded-2xl" />;
     const plan = plans?.find((p) => p.id === id);
     if (!plan) return isOwner ? <RemovedBlock type="plan" /> : null;
-    // One card like every other block: the kicker inside, the plan's body drawn on the card itself.
     return (
         <StatCard color={BLOCK_ACCENT.plan}>
             <div className={cn(CARD_PADDING, "flex flex-col gap-3.5")}>

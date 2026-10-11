@@ -104,7 +104,7 @@ export function sectionChapters(groups: readonly (Pick<LibGroup, "id" | "categor
 
 /** The two claims a section's chapter numbers can make. At most one is ever non-null. */
 export interface ISectionChapters {
-    /** The run the section IS, printed as its primary label over the section's name. */
+    /** The run the section IS, printed on the muted line under the section's name. */
     primary: IChapterRange | null;
     /** The mainline chapters the section HOLDS while not being a run of them, printed as a muted secondary under its name. */
     includes: IChapterRange | null;
@@ -188,12 +188,12 @@ export function splitActOrdinal(name: string): { ordinal: string | null; name: s
  * once a section is the one they are in, and the form the tooltip shows on
  * hover for every collapsed chip.
  *
- * A THEMED SHELF COLLAPSES TO ITS MONOGRAM TOO. Keeping its name in both forms
- * on the grounds that a 108x108 logo is a monogram
- * (RL, UR, LA) and names nothing, and that left the twelve EN shelves printing
- * 1,881.0 px of names inside a 2,877 px rail against a 1,400 px viewport at
- * 1440. The name is not dropped, it moves to the tooltip and to the chip's
- * `aria-label`, and the shelf the reader is in prints it again.
+ * A THEMED SHELF COLLAPSES TO ITS MONOGRAM TOO. It used to keep its name in
+ * both forms, on the grounds that a 108x108 logo is a monogram (RL, UR, LA)
+ * and names nothing, and that left the twelve EN shelves printing 1,881.0 px
+ * of names inside 2,877 px of chips against a 1,400 px rail at 1440. The name
+ * is not dropped, it moves to the tooltip and to the chip's `aria-label`, and
+ * the shelf the reader is in prints it again.
  *
  * The two sections the game marks with nothing, Other events and Operator
  * records, have no monogram to collapse to, so they collapse to a mono

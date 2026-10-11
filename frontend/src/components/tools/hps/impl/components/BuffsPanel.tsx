@@ -24,9 +24,8 @@ interface IBuffsPanelProps {
 
 export function BuffsPanel({ buffs, hydrationToken, onChangeBuffs, onChangeBuffValues }: IBuffsPanelProps): React.ReactElement {
     const t: BuffsT = useT("tools");
-    // Bumped each time a preset is applied so the uncontrolled NumberFields
-    // remount with new defaultValues. Manual edits don't change this counter,
-    // so typing/incrementing keeps focus.
+    // Bumped per preset so the uncontrolled NumberFields remount with new defaults;
+    // manual edits leave it alone so typing keeps focus.
     const [presetVersion, setPresetVersion] = React.useState(0);
 
     const atkPct = Math.round((buffs.buffs.atk ?? 0) * 100);

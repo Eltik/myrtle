@@ -55,8 +55,6 @@ function normalizeDraftForCompare(d: ISquadDraft) {
     return { name: d.name.trim(), members: normalizeMembers(d.members), support: d.support, stageId: d.stageId };
 }
 
-// ----------------------------------------------------------------- roster
-
 /** One roster row as `model.ts` reads it: the view's jsonb columns typed. */
 export interface IRosterBuild {
     elite: number;
@@ -96,8 +94,6 @@ export function rosterModuleRanks(op: Pick<IOperatorIndexEntry, "modules">, buil
     }
     return out;
 }
-
-// ------------------------------------------------------------------ caps
 
 /** `maxLevel` of the given promotion, from the index entry's `phaseMaxLevels`. */
 export function levelCap(op: Pick<IOperatorIndexEntry, "phaseMaxLevels">, phase: number): number {
@@ -187,8 +183,6 @@ export function clampBuild(op: IRulesOp, build: SquadBuild, member: Pick<SquadMe
     return { phase, level, potential, skill_level, mastery, module_level };
 }
 
-// --------------------------------------------------------------- resolve
-
 export type BuildSource = "roster" | "hand" | "full" | "support";
 
 export interface IResolvedSeat {
@@ -260,8 +254,6 @@ export function toAnalyzeRequest(members: ReadonlyArray<IResolvedSeat | null>, s
         dub: inputs.dub,
     };
 }
-
-// ------------------------------------------------------------- share link
 
 /**
  * The squad in the URL, nothing stored on our side. Search params:
@@ -346,8 +338,6 @@ export function hasShare(search: Record<string, unknown>): boolean {
     return typeof search.s === "string";
 }
 
-// --------------------------------------------------------------- hand-off
-
 /**
  * `?import=` on `/tools/dps`: up to four operators with their builds and the
  * flat buffs the squad gives each one, so the DPS calculator can open with
@@ -395,13 +385,10 @@ export function decodeDpsImport(text: string): IDpsImport | null {
     }
 }
 
-// ---------------------------------------------------------- stage context
-
 /**
  * What a picked stage asks of the squad. Derived client-side from
- * `stageDetailQueryOptions` (level options plus the enemy tally); the
- * thresholds behind each threat live in `stage.ts` and are a trade, not a
- * game rule, and say so there.
+ * `stageDetailQueryOptions` (level options plus the enemy tally); the threat
+ * thresholds are the game's enemy grade bands from `GET /squads/rules`.
  */
 export type StageThreatKey = "high_res" | "high_def" | "aerial" | "invisible" | "multi_life" | "fast";
 

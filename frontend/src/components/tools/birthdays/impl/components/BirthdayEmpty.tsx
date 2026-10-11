@@ -6,11 +6,9 @@ interface IBirthdayEmptyProps {
     icon: React.ReactNode;
     title: string;
     description: string;
-    /** Override padding for tighter layouts. */
     className?: string;
 }
 
-/** Shared empty state for the birthday tool. */
 export function BirthdayEmpty({ icon, title, description, className }: IBirthdayEmptyProps): React.ReactElement {
     return (
         <Empty className={cn(className)}>

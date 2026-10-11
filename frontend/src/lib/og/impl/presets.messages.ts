@@ -6,8 +6,8 @@ export const namespace = "meta";
  * Text rasterised into the default social card, one entry per page in
  * `presets.ts`, plus the section chips the card always draws.
  *
- * These are page metadata like the `seo()` titles - same namespace - but they
- * are a separate surface with its own budget: the card gives the title one
+ * These are page metadata like the `seo()` titles, in the same namespace, but
+ * they are a separate surface with its own budget: the card gives the title one
  * 96px line and the subtitle two at 28px, so an OG subtitle is usually a
  * shorter rewrite of the page's meta description rather than the same
  * sentence. They get their own keys so the two can be tuned apart.

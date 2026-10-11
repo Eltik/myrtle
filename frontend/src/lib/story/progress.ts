@@ -21,11 +21,10 @@ export interface StoryPosition {
 }
 
 /**
- * `v` is what the merge needs to tell a document's PROVENANCE apart, not a
- * format number: v1 and v2 have the same fields. In a v1 document `read` also
- * carries whatever the game's first import baked into it, and in a v2 document
- * `read` is the reader's own marks and nothing else. Everything this client
- * writes is v2; a v1 value only ever arrives from storage or from the account.
+ * `v` records PROVENANCE, not a format: v1 and v2 have the same fields. A v1
+ * document's `read` may carry what the game's first import baked into it.
+ * Everything this client writes is v2; a v1 value only arrives from storage or
+ * from the account.
  */
 export interface StoryProgress {
     v: 1 | 2;
@@ -86,11 +85,7 @@ function coercePosition(v: unknown): StoryPosition | null {
  * Coerce anything into a valid `StoryProgress`; unknown or malformed input
  * yields an empty one.
  *
- * The incoming `v` is KEPT when it is 1, and anything else reads as 2. A v1
- * document is one the game's import may have written marks into, and the merge
- * withdraws those once; a document with no `v` at all is a hand-edited or
- * restored file whose marks nobody baked, so it is v2 and nothing is withdrawn
- * from it.
+ * The incoming `v` is KEPT when it is 1, and anything else reads as 2.
  */
 export function coerceProgress(raw: unknown): StoryProgress {
     const out = emptyProgress();
@@ -225,11 +220,7 @@ export function withPosition(p: StoryProgress, storyId: string, pos: Omit<StoryP
     return { ...p, pos: { ...p.pos, [storyId]: { ...pos, ts: now } }, last: storyId };
 }
 
-/**
- * Mark a story read. The document's `v` is carried through UNCHANGED: a v1
- * document that the reader adds a mark to is still one the game's import wrote
- * into, and upgrading it here would leave those baked marks beyond withdrawal.
- */
+/** Mark a story read. `v` is carried through unchanged; the merge does the upgrade. */
 export function withRead(p: StoryProgress, storyId: string, now: number = Date.now()): StoryProgress {
     if (p.read[storyId] !== undefined && p.unread?.[storyId] === undefined) return p;
     // Never 1: that value is the legacy, withdrawable mark.
@@ -242,11 +233,6 @@ export function withRead(p: StoryProgress, storyId: string, now: number = Date.n
     return out;
 }
 
-/**
- * Mark a story UNREAD by hand: the reader's own mark goes, and an `unread`
- * entry outranks the game's verdict until the story is marked read again.
- * Idempotent on a story that is already neither marked nor game-read.
- */
 /**
  * The stories the reader cleared by hand that the game says were read: the
  * hand clear OUTRANKS the game's verdict, so these stay unread until the
@@ -273,6 +259,10 @@ export function trustingGame(progress: StoryProgress, gameRead: ReadonlySet<stri
     return out;
 }
 
+/**
+ * Mark a story UNREAD by hand: the reader's own mark goes, and an `unread`
+ * entry outranks the game's verdict until the story is marked read again.
+ */
 export function withUnread(p: StoryProgress, storyId: string, now: number = Date.now()): StoryProgress {
     const { [storyId]: _dropped, ...read } = p.read;
     const unread = { ...(p.unread ?? {}), [storyId]: Math.max(1, Math.floor(now)) };

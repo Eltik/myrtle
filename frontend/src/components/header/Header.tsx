@@ -70,15 +70,10 @@ export default function Header() {
                     <MobileNav items={navItems} />
                     <Link to="/" className="flex min-w-0 shrink items-center gap-2 text-foreground no-underline">
                         <img src="/logo/bust_128.png" alt="" width={28} height={28} className="h-7 w-7 shrink-0 object-contain" />
-                        {/* The wordmark yields below `sm`, not any control.
-                            The action cluster is five tap targets on a phone
-                            (search, language, theme, what's new, account) and
-                            a signed-out visitor's "Login" is a text button,
-                            which together overran a 390px bar and pushed Login
-                            off-screen. This span is ~82px of the ~40px deficit
-                            and the only element whose loss costs no function:
-                            the bust stays as the brand mark, and the drawer
-                            header still carries the full wordmark. */}
+                        {/* The wordmark goes below `sm`: five tap targets plus the text
+                            "Login" overran a 390px bar by ~40px and pushed Login off-screen.
+                            The wordmark is ~82px and the only thing that costs no function
+                            (the bust stays, and the drawer header has the full wordmark). */}
                         <span className="hidden font-semibold text-[15px] tracking-tight sm:inline">myrtle.moe</span>
                         <span className="hidden rounded-[5px] border border-border bg-muted/60 px-1.5 py-0.75 font-medium font-mono text-[10.5px] text-muted-foreground leading-none sm:inline-block">v3</span>
                     </Link>

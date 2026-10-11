@@ -27,8 +27,8 @@ interface IProps {
 export function ImprovementsPanel({ sub, improvements, isLoading, score }: IProps) {
     const t: TypedT<typeof messages> = useT("user");
 
-    // The base panel reads the stored score row, not the improvements query -
-    // render it immediately instead of waiting on the shared fetch.
+    // The base panel reads the stored score row, not the improvements query,
+    // so it renders without waiting on the shared fetch.
     if (sub.key === "base_score") return <BasePanel score={score} accent={sub.color} />;
     if (isLoading && !improvements) return <PanelSkeleton />;
     if (!improvements) {

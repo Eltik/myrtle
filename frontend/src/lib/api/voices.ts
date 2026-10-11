@@ -24,7 +24,7 @@ export function voicesQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
     });
 }
 
-/// One operator's voice lines (KB) instead of the whole voices table.
+/** One operator's voice lines (KB) instead of the whole voices table. */
 export const getOperatorVoicesFn = createServerFn({ method: "GET" })
     .inputValidator((data: { id: string; server: string }) => data)
     .handler(async ({ data: { id, server } }) => {

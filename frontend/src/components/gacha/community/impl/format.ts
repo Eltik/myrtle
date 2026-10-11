@@ -6,10 +6,9 @@ import type { messages as formatMessages } from "./format.messages";
 export type GachaFormatT = TypedT<typeof formatMessages>;
 
 /**
- * Default `t` for a caller that is not inside an `I18nProvider` - today only
- * the stats page header, which reads `fmtRelative` from outside this feature.
- * It resolves against the bundled source catalog, so the English is the same
- * one the gacha components render and this file carries no second copy of it.
+ * Default `t` for a caller outside an `I18nProvider` (today only the stats page
+ * header, via `fmtRelative`). Resolves against the bundled source catalog, so
+ * this file carries no second copy of the English.
  */
 const sourceT: GachaFormatT = (key, values) => formatMessage(sourceMessage(fullMessageKey("gacha", key)) ?? key, DEFAULT_LOCALE, values);
 
@@ -18,9 +17,9 @@ export function fmtPct(frac: number, digits = 2): string {
 }
 
 /**
- * Compares an observed rate against a baseline (expected/advertised, or community avg)
- * using *percentage of baseline* - not point subtraction. A 6★ rate of 4% with an
- * expected of 2% reads as "200% of expected" (i.e. double), not "above by 2%".
+ * Observed rate against a baseline (expected/advertised, or community avg) as a
+ * percentage of the baseline, not point subtraction: 4% against an expected 2%
+ * reads "200% of expected", not "above by 2%".
  */
 export interface IRateComparison {
     /** observed / baseline. 1.0 = on target. 0.5 = half. 2.0 = double. */
@@ -31,7 +30,6 @@ export interface IRateComparison {
     deviationLabel: string;
     /** Numeric (ratio - 1) signed deviation from baseline. */
     deviation: number;
-    /** "below" | "above" | "on" - for color coding. */
     direction: "below" | "above" | "on";
 }
 

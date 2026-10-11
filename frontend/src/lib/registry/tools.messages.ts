@@ -1,7 +1,7 @@
 import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 
 /**
- * The registry modules are plain `.ts` - no React, so no `useT()`. Their
+ * The registry modules are plain `.ts` with no React, so no `useT()`. Their
  * entries therefore carry message KEYS (`labelKey`, `descKey`) and the
  * consuming component resolves them with `t()`. The English lives here, in
  * the `nav` namespace the header and the command palette already use.

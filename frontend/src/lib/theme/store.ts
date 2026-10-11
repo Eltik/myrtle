@@ -40,27 +40,23 @@ function getInitialMode(): ThemeMode {
 }
 
 function getInitialDynamicArtwork(): boolean {
-    // On by default; only an explicit opt-out ("false") disables it.
     if (typeof window === "undefined") return true;
     const stored = window.localStorage.getItem(DYNAMIC_ART_STORAGE_KEY);
     return stored === null ? true : stored === "true";
 }
 
 function getInitialLatinNames(): boolean {
-    // On by default; only an explicit opt-out ("false") disables it.
     if (typeof window === "undefined") return true;
     const stored = window.localStorage.getItem(LATIN_NAMES_STORAGE_KEY);
     return stored === null ? true : stored === "true";
 }
 
 function getInitialSpoilers(): boolean {
-    // Off by default; only an explicit opt-in ("true") enables it.
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem(SPOILERS_STORAGE_KEY) === "true";
 }
 
 function getInitialMaintenanceCountdown(): boolean {
-    // On by default; only an explicit opt-out ("false") disables it.
     if (typeof window === "undefined") return true;
     const stored = window.localStorage.getItem(MAINTENANCE_COUNTDOWN_STORAGE_KEY);
     return stored === null ? true : stored === "true";

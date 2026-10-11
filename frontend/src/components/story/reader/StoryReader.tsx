@@ -388,11 +388,6 @@ export function StoryReader({ script, entry, groupName, exportGroup = null, cate
                 {haltIndex}
             </span>
 
-            {/* The STAGE spans the viewport edge to edge; the CANVAS inside it
-                is the largest 16:9 box, centred, which is what the client's
-                `BLACK_MASK` makes. Outside that box the stage extends the
-                background blurred, or paints the client's black under
-                the "Letterbox like the game" setting. */}
             <div className="relative w-full">
                 <Stage frame={frame} shake={shake} fill={settings.letterbox ? "mask" : "extend"} onClick={onStageClick} onContextMenu={onContextMenu} label={t("reader.stage.label")} className="h-[var(--story-avail)]">
                     {settings.progressBar ? (

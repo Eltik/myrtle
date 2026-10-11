@@ -17,7 +17,6 @@ export function playFrom(list: readonly ITrack[], track: ITrack, source: IQueueS
     playQueue(playable, Math.max(0, playable.indexOf(track)), source);
 }
 
-/** A random index into a list of `length`; 0 for an empty list. */
 export function randomIndex(length: number): number {
     return length > 0 ? Math.floor(Math.random() * length) : 0;
 }

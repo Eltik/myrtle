@@ -173,7 +173,6 @@ type EntityOfKind<K extends TierEntityKind> = ITierEntityBase & { kind: K; resol
 /** Every resolved kind, one member each. */
 export type ITierResolvedEntity = { [K in TierEntityKind]: EntityOfKind<K> }[TierEntityKind];
 
-/** The resolved entity of one kind. */
 export type ITierEntityOf<K extends TierEntityKind> = Extract<ITierResolvedEntity, { kind: K }>;
 
 /** A placed operator the served game data knows. */

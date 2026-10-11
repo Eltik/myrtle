@@ -108,10 +108,9 @@ function productLabel(room: { room_type: string; formula_type: string | null }, 
 }
 
 /**
- * The deep dive: check-in economics (when to log in, what a lazier cadence
- * loses), per-facility output with buffer fill times, and the rotation
- * simulation's depletion events. Everything here is server-scored - this
- * panel only formats it.
+ * Check-in economics (when to log in, what a lazier cadence loses),
+ * per-facility output with buffer fill times, and the rotation simulation's
+ * depletion events. All server-scored; this panel only formats.
  */
 export function DeepDive() {
     const t: DeepT = useT("user");

@@ -57,9 +57,8 @@ export function storyQueryOptions(id: string, server: string = DEFAULT_GAMEDATA_
  * group id of their own. The shape is the generated binding, fixed in
  * `docs/story-reader.md` section 2.
  *
- * `null` when the running backend does not serve the route (404). Null is a first-class answer here: the endpoint shipped
- * after this tab did, and a page that threw would take the whole library down
- * with it until a restart.
+ * `null` when the running backend does not serve the route (404): a backend
+ * that predates it must not take the whole library down until a restart.
  */
 export const getStoryIllustrationsFn = createServerFn({ method: "GET" })
     .inputValidator((data: { groupId: string; server: string }) => data)

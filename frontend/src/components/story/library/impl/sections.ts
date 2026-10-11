@@ -132,8 +132,8 @@ export const RECORDS_ID = "operator-records";
 
 /**
  * The page's sections in the game's own order: the mainline shelf's four arcs,
- * then the twelve side shelves, then the groups no shelf lists, then the
- * operator records.
+ * then the side shelves, then the groups no shelf lists, then the operator
+ * records.
  *
  * Each group lands ONCE, under the first shelf that lists it in `sort` order,
  * and within the mainline shelf under the first arc that lists it.

@@ -5,8 +5,8 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
  * category tables in `helpers.ts` are plain constants, so they carry message
  * KEYS and whichever card renders one resolves it with `t()`.
  *
- * These are this site's groupings, not the game's item names - the names come
- * from the material data. `formatItemType` and `formatVoucherId` are left out
+ * These are this site's groupings, not the game's item names (those come from
+ * the material data). `formatItemType` and `formatVoucherId` are left out
  * on purpose: both mechanically title-case a raw API code.
  */
 export const namespace = "user";

@@ -58,12 +58,11 @@ const SKIP_FILES = new Set(["routeTree.gen.ts"]);
 /**
  * The ICU argument names a source string references.
  *
- * This mirrors `format.ts`'s parser deliberately closely - same quoting rules,
- * same tolerance of malformed braces, same set of recognised types - because
- * the backend rejects a translation that drops a declared placeholder or
- * invents one. A list that disagreed with what the formatter actually
- * substitutes would either block a valid translation or let a broken one
- * through.
+ * Mirrors `format.ts`'s parser closely (same quoting rules, same tolerance of
+ * malformed braces, same recognised types) because the backend rejects a
+ * translation that drops a declared placeholder or invents one. A list that
+ * disagreed with what the formatter substitutes would block a valid
+ * translation or let a broken one through.
  */
 function placeholdersOf(message) {
     const found = new Set();
@@ -85,13 +84,12 @@ function scanNodes(src, start, nested, out) {
             //   '{ '} '# '|   -> opens a quoted run, closed by the next '
             //   ' anywhere else -> a plain apostrophe, not a quote
             //
-            // The last clause is the one this file was missing. Skipping to
-            // the next quote on ANY apostrophe walked straight past the
-            // argument in strings like "Couldn't load permissions for {slug}."
-            // and "You've reached the cap ({max})", so those keys were
-            // published declaring NO placeholders - and the backend then
-            // rejected any translation that kept them, including the English
-            // source pasted verbatim. 14 keys were untranslatable this way.
+            // Skipping to the next quote on ANY apostrophe walked past the
+            // argument in "Couldn't load permissions for {slug}." and "You've
+            // reached the cap ({max})", so those keys shipped with NO
+            // placeholders and the backend rejected every translation that
+            // kept them, the English pasted verbatim included. 14 keys were
+            // untranslatable this way.
             if (src[i + 1] === "'") {
                 i += 2;
                 continue;
@@ -400,8 +398,8 @@ function keyFromArgument(node) {
  *
  * Bindings are collected per file rather than per lexical scope. A component
  * file has one `useT` per component and never rebinds the name to something
- * else, and the alternative - a full type-checked program over ~1000 files -
- * costs seconds per run for an answer that is the same.
+ * else, and the alternative, a full type-checked program over ~1000 files,
+ * costs seconds per run for the same answer.
  */
 function readUsage(file, problems) {
     const sourceFile = parseFile(file);
@@ -416,12 +414,12 @@ function readUsage(file, problems) {
             if (init && ts.isCallExpression(init)) {
                 const callee = init.expression;
                 const name = ts.isIdentifier(callee) ? callee.text : ts.isPropertyAccessExpression(callee) ? callee.name.text : null;
-                // `useRichT` is the same contract as `useT` - same namespace
-                // prefixing, same keys - it just returns a ReactNode so a
-                // sentence containing markup can stay one message. Its call
-                // sites have to count as usage, or every sentence collapsed
-                // out of `.before`/`.after` fragments reports as a dead key
-                // and the missing-key check stops covering them.
+                // `useRichT` has the same contract as `useT` (same namespace
+                // prefixing, same keys) but returns a ReactNode, so a sentence
+                // with markup stays one message. Its call sites must count as
+                // usage, or every sentence collapsed out of `.before`/`.after`
+                // fragments reports as a dead key and the missing-key check
+                // stops covering them.
                 if (name === "useT" || name === "useRichT") {
                     const arg = init.arguments[0];
                     if (!arg) {
@@ -561,9 +559,9 @@ async function sync(entries) {
 
     // Authenticate with the backend's existing SERVICE_KEY rather than a user
     // token. `extractors/auth.rs` accepts `x-service-key` and grants that
-    // request `GlobalRole::SuperAdmin`, which is exactly what the sync route
-    // requires - so this needs no new secret, and unlike a JWT it does not
-    // expire out from under a deploy script.
+    // request `GlobalRole::SuperAdmin`, which is what the sync route requires,
+    // so this needs no new secret, and unlike a JWT it does not expire out
+    // from under a deploy script.
     //
     // A service-key caller deliberately cannot author translations: every
     // write route resolves `auth.user_uuid()` for the audit row, and the

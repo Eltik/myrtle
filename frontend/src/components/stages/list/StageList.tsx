@@ -110,7 +110,7 @@ export function StageList() {
 
             {empty && <div className="rounded-[14px] border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">{t("list.empty")}</div>}
 
-            {/* Timeline spine - decoration only above sm; phones get the full width back. */}
+            {/* Timeline spine: decoration only above sm, so phones get the full width back. */}
             <div className="relative sm:pl-6.5">
                 <div className="absolute top-2 bottom-2.5 left-0.75 hidden w-px sm:block" style={{ background: "linear-gradient(180deg,var(--border),color-mix(in oklch,var(--border) 25%,transparent))" }} />
                 <VirtualStageTree groups={visibleGroups} searching={searching} open={open} closedSections={closedSections} onToggleSection={toggleSection} onToggleZone={toggle} onDetails={setDetailEvent} scrollZone={scrollZone} onScrolled={() => setScrollZone(null)} />

@@ -3,7 +3,6 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "gallery";
 
 export const messages = {
-    // --- Bar -----------------------------------------------------------------
     "music.player.region": { text: "Music player", description: "Accessible name of the player bar fixed to the bottom of the music page." },
     "music.player.kicker.none": { text: "Now playing", description: "Small label above the track title in the player bar when the queue has no named source." },
     "music.player.kicker.album": { text: "Playing from album {name}", description: "Small label above the track title when the queue came from an album. {name} is the album name." },
@@ -43,7 +42,6 @@ export const messages = {
         description: "Toast when several tracks in a row failed to load and the player stopped. {count} is how many.",
     },
 
-    // --- Lyrics panel --------------------------------------------------------
     "music.lyrics.title": { text: "Lyrics", description: "Heading of the lyrics side panel." },
     "music.lyrics.nothing": { text: "Nothing playing.", description: "Lyrics panel text when no track is loaded." },
     "music.lyrics.none": { text: "No lyrics for this track.", description: "Lyrics panel text for a track without lyrics." },
@@ -52,7 +50,6 @@ export const messages = {
     "music.lyrics.failed": { text: "Couldn't load lyrics.", description: "Lyrics panel text when the lyrics file failed to load." },
     "music.lyrics.jump": { text: "Jump to {time}: {line}", description: "Accessible name of a lyric line, which seeks to it. {time} is like 1:05, {line} is the lyric text." },
 
-    // --- Queue panel ---------------------------------------------------------
     "music.queue.title": { text: "Queue", description: "Heading of the queue side panel." },
     "music.queue.empty": { text: "Queue is empty.", description: "Queue panel text when nothing is queued." },
     "music.queue.save": { text: "Save queue as a playlist", description: "Button in the queue panel that saves the queue as a new playlist." },
@@ -78,7 +75,6 @@ export const messages = {
     },
     "music.queue.grip": { text: "Drag to reorder", description: "Tooltip on the drag handle of a queue row." },
 
-    // --- Settings dialog -----------------------------------------------------
     "music.settings.title": { text: "Music settings", description: "Title of the music settings dialog." },
     "music.settings.section.transitions": { text: "Track transitions", description: "Section heading in the music settings dialog." },
     "music.settings.crossfade": { text: "Crossfade", description: "Switch label: fade from one track into the next." },
@@ -114,7 +110,6 @@ export const messages = {
     "music.settings.keyboardHint": { text: "Press ? to see the shortcuts", description: "Line in the Keyboard section of the music settings dialog." },
     "music.settings.show": { text: "Show", description: "Button that opens the keyboard shortcuts dialog." },
 
-    // --- Shortcuts dialog ----------------------------------------------------
     "music.shortcut.title": { text: "Keyboard shortcuts", description: "Title of the keyboard shortcuts dialog on the music page." },
     "music.shortcut.action": { text: "Action", description: "Column heading in the keyboard shortcuts table." },
     "music.shortcut.keys": { text: "Keys", description: "Column heading in the keyboard shortcuts table." },

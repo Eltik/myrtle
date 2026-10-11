@@ -33,8 +33,8 @@ const SIGNIN = PALETTE.signin;
  */
 function monthState(checkin: IUserCheckin, server: string) {
     const sync = new Date(checkin.updated_at);
-    // The snapshot belongs to the game day it was taken on, which lives in
-    // SERVER time (04:00 reset) - the viewer's local date may be a day ahead.
+    // The snapshot belongs to the game day it was taken on, in SERVER time
+    // (04:00 reset); the viewer's local date may be a day ahead.
     const { year, month, day } = gameDate(Math.floor(sync.getTime() / 1000), server);
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const claimed = Math.max(0, Math.min(checkin.claimed_this_month, daysInMonth));
@@ -55,10 +55,8 @@ function humanAge(days: number, t: CardT): string {
 
 /** "3 weeks ago", "yesterday", etc., in the page's locale. */
 function relativeTime(date: Date, f: IFormatters): string {
-    // `relativeLong`, not `relative`: this card's wording is the DEFAULT (long)
-    // `Intl.RelativeTimeFormat` style, so it reads
-    // "3 weeks ago". The shared `relative` is the narrow style used in dense
-    // UI ("3 wk. ago"), which would have silently reworded this card.
+    // `relativeLong`, not `relative`: this card reads in the DEFAULT long style
+    // ("3 weeks ago"); the shared `relative` is the narrow one ("3 wk. ago").
     return f.relativeLong(date.toISOString());
 }
 
@@ -129,8 +127,8 @@ function LegendSwatch({ state }: { state: SlotState }) {
 /**
  * Right card: the current month's sign-in progress (snapshot as of last sync).
  *
- * The cells are the month's reward SLOTS, claimed front-to-back - the same
- * thing the game itself draws. They are not dates, so there is no weekday
+ * The cells are the month's reward SLOTS, claimed front-to-back, which is what
+ * the game itself draws. They are not dates, so there is no weekday
  * header and no "you missed the 4th": being behind shows up as open slots at
  * the end of the claimed run.
  */

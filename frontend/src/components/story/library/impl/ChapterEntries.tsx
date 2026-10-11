@@ -28,7 +28,6 @@ import type { messages as storiesMessages } from "./StoriesTab.messages";
 type BrowseT = TypedT<typeof messages>;
 type StoriesT = TypedT<typeof storiesMessages>;
 
-/** The chapter's operations, in the table's own order. */
 export const Entries = memo(function Entries({ group, progress, gameRead }: { group: LibGroup; progress: StoryProgress; gameRead: ReadonlySet<string> }): React.ReactElement {
     const rows = useMemo(() => groupOperations(group.stories), [group.stories]);
     // A row that skips a render keeps the document it last rendered with, so a
@@ -75,7 +74,7 @@ function sameRow(a: IOperationRowProps, b: IOperationRowProps): boolean {
 /**
  * ONE OPERATION. A merged row is not a link: its two halves are, each with its
  * own tick, because they are two different places to go. A lone entry has one
- * place to go and the whole row is that link, which is the larger target and
+ * place to go and the whole row is that link, the larger target.
  */
 const OperationRow = memo(function OperationRow({ row, progress, gameRead, current }: IOperationRowProps): React.ReactElement {
     const t: BrowseT = useT("story");

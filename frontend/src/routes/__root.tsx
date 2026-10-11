@@ -54,8 +54,7 @@ export const Route = createRootRouteWithContext<IMyRouterContext>()({
         return { user, i18n };
     },
     head: ({ match }) => {
-        // `head()` is not a component, so there is no `useT()` here, but the match's context
-        // already carries the `i18n` bootstrap `beforeLoad` above loaded. See `lib/meta.ts`.
+        // No `useT()` in `head()`; the context already has the bootstrap. See `lib/meta.ts`.
         const t = metaT(match.context.i18n);
         const { meta, links } = seo({
             title: t("root.title"),
@@ -174,34 +173,27 @@ function SiteChrome({ children }: { children: React.ReactNode }) {
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-    // `/dyntest` is the dynchar parity MEASUREMENT harness: its canvas is scored pixel-for-pixel
-    // against in-game captures. The devtools launcher paints a 56×56 badge over its bottom-right,
-    // and hiding it from the DOM does not work: `visibility: hidden !important` over every
-    // element, a second pass after a settle, and hiding whatever `elementsFromPoint` reports
-    // there all left the frame byte-identical, the button still computing `visibility: visible`.
-    // It reached scored frames (Virtuosa t=2, Mlynar t=4, Skadi t=3), lifting the affected beat
-    // by 0.34-0.79 MAD and each skin's mean by 0.043-0.113 MADC. Not mounting it on that one
-    // route is the only reliable fix; the page has no UI to inspect and other routes keep theirs.
+    // `/dyntest` is the dynchar parity harness, scored pixel-for-pixel against in-game captures.
+    // The devtools launcher paints a 56×56 badge bottom-right that CSS can't hide
+    // (`visibility: hidden !important` everywhere, a second pass after settle, and hiding
+    // whatever `elementsFromPoint` reports all left the frame byte-identical). It hit scored
+    // frames (Virtuosa t=2, Mlynar t=4, Skadi t=3): +0.34-0.79 MAD per beat, +0.043-0.113 MADC
+    // per skin mean. So it isn't mounted on that route.
     const devtoolsPath = useRouterState({ select: (s) => s.location.pathname });
     const showDevtools = TanStackDevtoolsRoot !== null && !devtoolsPath.startsWith("/dyntest");
 
     // `lang` drives hyphenation, the CJK font fallback chain, `:lang()` rules and screen reader
-    // pronunciation. The whole i18n bootstrap, not just the locale: the provider has to live HERE,
-    // not in `RootComponent`, because `SiteChrome` (Header and Footer) is rendered by this shell,
-    // above `RootComponent`. One level lower, header and footer would read the default empty
-    // context and fall back to English, and both language switchers would see `available: []`
-    // and render nothing.
+    // pronunciation. The provider lives in the shell, not `RootComponent`, because `SiteChrome`
+    // renders here, above it. One level lower, Header and Footer read the empty default context:
+    // English text and language switchers with `available: []`.
     const i18n = Route.useRouteContext({ select: (c) => c.i18n });
     const locale = i18n?.locale ?? DEFAULT_LOCALE;
     const alternates = i18n?.available.map((l) => l.code) ?? [];
     const pathname = useRouterState({ select: (s) => s.location.pathname });
 
-    // One canonical, one og:url and the whole hreflang set for every route.
-    //
-    // Lives here, not in each route's `seo()`, because only the shell knows the locale (a
-    // route's `head()` has no access to it) and one missed call site would declare the English
-    // page as a translation's canonical, so the translated site never gets indexed. `pathname`
-    // is the router's internal path with the locale prefix already stripped by the rewrite.
+    // Canonical, og:url and hreflang for every route, here because a route's `head()` doesn't
+    // know the locale, and one missed call site would make the English page a translation's
+    // canonical. `pathname` already has the locale prefix stripped by the rewrite.
     const canonical = absolute(localizedPath(pathname, locale));
 
     return (

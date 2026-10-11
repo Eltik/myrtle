@@ -13,7 +13,6 @@ import { statsOf } from "./stats";
 
 type MusicT = TypedT<typeof messages>;
 
-/** "Your Stats": totals, listening time, first play, and the top tracks, artists and albums. */
 export function StatsView({ catalog }: { catalog: ICatalog }): React.ReactElement {
     const t: MusicT = useT("gallery");
     const f = useFormatters();

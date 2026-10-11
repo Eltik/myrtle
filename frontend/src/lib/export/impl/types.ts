@@ -9,7 +9,7 @@ export type JsonIndent = "0" | "2" | "4" | "tab";
 export type ArrayJoinMode = "join" | "json";
 
 export interface IExportField<T> {
-    /** Stable identifier - used in column selection state and as the default header. */
+    /** Stable id: what the column selection stores and orders by. */
     id: string;
     /** Human-readable column label (used as the header in CSV/Markdown, and as the key in JSON/XML). */
     label: string;
@@ -21,7 +21,7 @@ export interface IExportField<T> {
 }
 
 export interface IExportSchema<T> {
-    /** Schema identifier (e.g. "operators") - used as the localStorage namespace and default XML element. */
+    /** Schema id (e.g. "operators"), the namespace of the dialog's saved options in localStorage. */
     id: string;
     /** Singular item label for the XML row element & UI copy (e.g. "operator"). */
     itemName: string;

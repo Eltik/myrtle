@@ -118,8 +118,7 @@ export function PullsSimulator({ budget, pity }: IPullsSimulatorProps): React.Re
         const drawn = puller.pullMany(n);
         setHistory((h) => [...drawn].reverse().concat(h).slice(0, 60));
     };
-    // Bumping the run id is what rebuilds the puller, because the memo is the only
-    // thing holding the run's state and a new identity is the only way to clear it.
+    // A new run id changes the signature, which is the only thing that rebuilds the puller.
     const reset = () => setRunId((n) => n + 1);
 
     return (

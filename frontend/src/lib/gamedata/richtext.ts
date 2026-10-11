@@ -24,8 +24,8 @@ const TAG_NAME = String.raw`[@$][A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*`;
 /**
  * One scan of the markup. Alternatives, in order: a game opener (group 1,
  * sigil included), the universal closer (2), a Unity inline opener (3) or
- * closer (4) that is real HTML, and the Unity tags the browser silently drops
- * today (no group - matched only so they stay dropped).
+ * closer (4) that is real HTML, and the Unity tags that render as nothing
+ * (no group: matched only so they stay dropped).
  *
  * Anything else angle-bracketed is TEXT, not markup. The game writes stage and
  * enemy item names that way - `<@lv.item><Roadblock></>`, `<Substitute>`,
@@ -60,7 +60,7 @@ const DESCRIPTION_COLORS = {
 
 export function colorForTag(tag: string): string {
     if (tag.startsWith("$")) return DESCRIPTION_COLORS.skillTooltip;
-    // Trailing tag fragment after `@<scope>.` - `ba` is combat, `cc` is base/RIIC.
+    // The fragment after `@<scope>.`; `ba` is combat, `cc` is base/RIIC.
     const suffix = tag.includes(".") ? tag.slice(tag.indexOf(".") + 1) : tag;
     if (suffix === "vup") return DESCRIPTION_COLORS.valueUp;
     if (suffix === "vdown") return DESCRIPTION_COLORS.valueDown;

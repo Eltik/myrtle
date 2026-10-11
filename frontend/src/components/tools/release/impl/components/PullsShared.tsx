@@ -143,9 +143,7 @@ export function PullsNumber({ id, label, flash, value, onChange, min = 0, max, s
                 value={value}
                 onChange={(e) => {
                     const next = Number(e.target.value);
-                    // `Number("")` is 0 and finite, so an empty box reads as zero
-                    // rather than NaN. That is the wanted behaviour here, but it
-                    // has to be deliberate: never trust a falsy check.
+                    // `Number("")` is 0 and finite, so clearing the box writes zero. Deliberate.
                     if (!Number.isFinite(next)) return;
                     onChange(Math.min(max ?? Number.MAX_SAFE_INTEGER, Math.max(min, next)));
                 }}

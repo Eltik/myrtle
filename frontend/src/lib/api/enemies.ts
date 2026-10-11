@@ -6,7 +6,7 @@ import { values } from "#/lib/records";
 import type { StageGroupKey } from "#/lib/registry/stage-groups";
 // Generated from `backend/src/core/gamedata/types/{enemy,enemy_stages}.rs` and
 // `backend/src/app/routes/enemies.rs`. To change a field, edit the Rust struct
-// and run `bun run gen:types` - do not redeclare it here.
+// and run `bun run gen:types`; never redeclare it here.
 import type { AbilityInfo } from "#/types/generated/AbilityInfo";
 import type { CommunityEnemyAverageResponse } from "#/types/generated/CommunityEnemyAverageResponse";
 import type { DamageType } from "#/types/generated/DamageType";

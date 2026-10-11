@@ -15,7 +15,7 @@ type RosterT = TypedT<typeof messages>;
 type RosterRichT = TypedRichT<typeof messages>;
 
 interface IRosterPickerProps {
-    /** Complete operator list - needed so "select all visible" doesn't drop hidden operators from the explicit set. */
+    /** Every operator, so "select all visible" doesn't drop hidden ones from the explicit set. */
     allOperators: IRandomizerOperator[];
     /** Operators that pass the operator-tab filters (class / rarity / hide unplayable). */
     visibleOperators: IRandomizerOperator[];

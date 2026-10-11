@@ -133,7 +133,7 @@ export interface StoryAudio {
     /** The script's `[musicvolume]`: scales the current cue, not the settings volume. */
     setCueVolume(volume: number, fadeSec: number): void;
     playSound(url: string, req: SoundRequest): void;
-    /** `[stopsound]`: bare stops every voice, `ch=` stops that channel only, over `fadeSec`. */
+    /** `[stopsound]`: bare stops every voice, `channel=` stops that channel only, over `fadeSec`. */
     stopSounds(channel?: string, fadeSec?: number): void;
     /**
      * `[soundvolume]`: the script's own SFX level for ONE channel, under the

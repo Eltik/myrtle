@@ -121,8 +121,7 @@ describe("pity scope follows the game's own rule text", () => {
     });
 
     it("puts kernel banners on the same 50 / 99 schedule as standard", () => {
-        // PityPanel.tsx currently hardcodes 45 / 80 for the kernel bucket. The
-        // game's Kernel Headhunting text is byte-for-byte the standard text.
+        // The game's Kernel Headhunting text is byte-for-byte the standard text.
         const kernel = bannerModel({ ruleType: "CLASSIC", featuredCount: 2 });
         expect(kernel.scope).toBe("kernel");
         expect(pullOdds(kernel, 99).expectedSix).toBeGreaterThan(1);

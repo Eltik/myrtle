@@ -31,9 +31,9 @@ export function DeletePlansDialog({ target, onOpenChange, onConfirm, isSubmittin
     const rt: TypedRichT<typeof messages> = useRichT("tools");
     const open = target !== null;
 
-    // The target goes null the moment the dialog starts closing, but the close
-    // animation keeps it visible for a few frames - keep rendering the last
-    // real target so the copy doesn't collapse to "Delete 0 plans" mid-fade.
+    // The target goes null the moment the dialog starts closing, while the close
+    // animation still shows it for a few frames, so the last real target keeps
+    // rendering and the copy doesn't collapse to "Delete 0 plans" mid-fade.
     const [lastTarget, setLastTarget] = useState<IDeletePlansTarget | null>(null);
     if (target !== null && target !== lastTarget) setLastTarget(target);
     const shown = target ?? lastTarget;

@@ -1,8 +1,7 @@
 /** Type contracts for the operator-build calculators. */
 
-// The two response shapes are generated from `backend/src/app/services/dps.rs`.
-// The request/config types below have no Rust counterpart - they are
-// deserialize-only on the backend - so they stay hand-written.
+// Response shapes are generated from `backend/src/app/services/dps.rs`; the
+// request types are deserialize-only on the backend, so no binding is exported.
 import type { ConditionalInfo } from "#/types/generated/ConditionalInfo";
 import type { OperatorListEntry } from "#/types/generated/OperatorListEntry";
 
@@ -16,7 +15,6 @@ export type IOperatorListEntry = OperatorListEntry;
 export interface ICalcBuffs {
     /** ATK% buff as a decimal (0.4 = +40%). */
     atk?: number;
-    /** Flat ATK buff. */
     flatAtk?: number;
     /** ASPD buff in points. */
     aspd?: number;

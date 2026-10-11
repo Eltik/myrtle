@@ -89,7 +89,6 @@ function restoreSpine(spine: Spine, snapshot: ISpineSnapshot, liveApp: PIXI.Appl
     if (spine.parent) {
         spine.parent.removeChild(spine);
     }
-    // Prefer the stage we were originally attached to; fall back to liveApp.
     const target = snapshot.parent ?? liveApp?.stage ?? null;
     target?.addChild(spine);
 
@@ -194,8 +193,8 @@ export async function recordAsGif(options: IRecordingOptions): Promise<IRecordin
     const settings: IExportSettings = { ...DEFAULT_EXPORT_SETTINGS, ...options.settings };
 
     // GIF delays are quantized to 10ms (min 20ms for browser compatibility).
-    // frameDelta MUST match frameDelayMs - otherwise the captured spine
-    // state and the GIF playback timeline drift apart.
+    // frameDelta MUST match frameDelayMs, or the captured spine state and the
+    // GIF playback timeline drift apart.
     const frameDelayMs = gifFrameDelayMs(settings.fps);
     const frameDelta = frameDelayMs / 1000;
 

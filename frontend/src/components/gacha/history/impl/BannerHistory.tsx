@@ -61,17 +61,12 @@ function PullTable({ items, operatorsById, bannersById, total, emptyMessage, onC
     const pageItems = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
     if (sorted.length === 0) {
-        // `onClearFilter` is only passed when a filter is what emptied the table, so
-        // the way out is reachable from inside the empty state - including the case
-        // where the chip that would undo it has a 0 count on this tab.
+        // `onClearFilter` is only passed when a filter emptied the table, so the way
+        // out is here even when the chip that would undo it reads 0 on this tab.
         return (
             <div className="flex flex-col items-center gap-3 py-10 text-center">
                 <p className="m-0 font-sans text-muted-foreground text-sm">{emptyMessage ?? t("history.banners.empty")}</p>
-                {/*
-                 * `min-h-10` gives a mouse a 40px target, and `Button`'s own
-                 * pointer-coarse rule takes the hit area to 44px on touch. Neither is
-                 * keyed to a width breakpoint, so both hold at any size and any zoom.
-                 */}
+                {/* min-h-10 is a 40px mouse target; Button's pointer-coarse rule makes it 44px on touch, at any width or zoom. */}
                 {onClearFilter ? (
                     <Button className="min-h-10" variant="outline" onClick={onClearFilter}>
                         {t("history.banners.showAllRarities")}
@@ -171,10 +166,9 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
     const activeRecords = useMemo(() => (records ? records[activeTab].records : EMPTY_RECORDS), [records, activeTab]);
 
     /**
-     * Every tab's pull count broken down by rarity, in one pass over the whole
-     * history. The page holds all records (`/gacha/stored-records` is unpaginated),
-     * so this is the only place that has to walk them - it is keyed on `records`
-     * alone, so toggling a rarity or switching tabs does not re-walk anything.
+     * Pull counts per tab per rarity, one pass over the whole history
+     * (`/gacha/stored-records` is unpaginated). Keyed on `records` alone, so a
+     * rarity toggle or a tab switch never re-walks it.
      */
     const countsByTabRarity = useMemo(() => {
         const byTab = new Map<ClientGachaGroup, Map<number, number>>();
@@ -291,13 +285,7 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
                 <h2 className="m-0 font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">{t("history.banners.title")}</h2>
             </header>
 
-            {/*
-             * No visible summary: the rarity chips already show which rarities are
-             * on and what each holds. This is the same state for screen readers,
-             * which cannot see the chips' pressed styling at a glance - it is
-             * always mounted so the region exists before its text changes, and
-             * sr-only keeps it out of flex flow entirely, costing no space.
-             */}
+            {/* Screen-reader copy of what the chips show. Always mounted so the live region exists before its text changes. */}
             <output className="sr-only">{isFiltered ? t("history.banners.status.filtered", { rarities: rarityFilterLabel, shown: f.number(visibleCount), total: f.number(activeTabTotal), tab: activeTabLabel }) : t("history.banners.status.all")}</output>
 
             <div className="-mx-1 flex gap-0.5 overflow-x-auto overflow-y-hidden border-border border-b px-1 [scrollbar-width:none] sm:gap-1 [&::-webkit-scrollbar]:hidden">
@@ -322,13 +310,7 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
 
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                 <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-[0.14em]">{t("history.banners.rarityLabel")}</span>
-                {/*
-                 * `flex-wrap` is inert while the four chips fit on one line, which
-                 * is every width above roughly 320px. Below that the group would
-                 * otherwise be an unbreakable inline-flex row and the last chip
-                 * would be clipped out of reach - the chips are the only filter
-                 * control, so one has to be able to reach all of them.
-                 */}
+                {/* flex-wrap only matters below ~320px, where an unbreakable row would clip the last chip out of reach. */}
                 <div ref={rarityGroupRef} className="inline-flex flex-wrap gap-0.75 rounded-[9px] border border-border bg-muted p-0.75">
                     {RARITY_FILTERS.map((rarity) => {
                         const isActive = activeRarities.has(rarity);

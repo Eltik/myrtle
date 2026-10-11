@@ -32,8 +32,8 @@ export interface EpubFont {
 }
 
 export interface EpubDeps {
-    /** Fetch and prepare one asset path; null leaves the picture out. */
-    /** A `thumb` is a scene background at <= 600 px; a `full` image is a CG at <= 1,200 px. */
+    /** Fetch and prepare one asset path; null leaves the picture out. A `thumb` is a
+     *  scene background at <= 600 px; a `full` image is a CG at <= 1,200 px. */
     loadImage: (path: string, signal?: AbortSignal, variant?: ImageVariant) => Promise<EpubImage | null>;
     loadFont: (typeface: Exclude<Typeface, "device">, signal?: AbortSignal) => Promise<EpubFont | null>;
     /** The composed cover, or null for a book without one. */
@@ -128,7 +128,6 @@ function xhtml(lang: string, title: string, body: XNode[], bodyType?: string): s
     return xmlDocument(el("html", { xmlns: XHTML_NS, "xmlns:epub": OPS_NS, "xml:lang": lang, lang }, el("head", {}, el("meta", { charset: "UTF-8" }), el("title", {}, title), el("link", { rel: "stylesheet", type: "text/css", href: "../css/book.css" })), el("body", { "epub:type": bodyType }, body)), "<!DOCTYPE html>");
 }
 
-/** A toc entry: a label, a target, and children. */
 interface TocNode {
     label: string;
     href: string;
@@ -179,7 +178,7 @@ function depth(nodes: TocNode[]): number {
     return nodes.length === 0 ? 0 : 1 + Math.max(...nodes.map((n) => depth(n.children)));
 }
 
-/** A file name inside the book for a story id: ASCII word characters only. */
+/** A file name inside the book for a story id: ASCII letters, digits, `_` and `-` only. */
 function safeName(id: string): string {
     return id.replace(/[^A-Za-z0-9_-]/g, "_");
 }

@@ -69,7 +69,6 @@ export const messages = {
     },
 } satisfies MessageMap;
 
-// `dynamic`: the drop-rate keys are stored in a lookup table and resolved as
-// `t(OCC_LABEL_KEYS[occ])`, so the
+// `dynamic`: the drop-rate keys are resolved as `t(OCC_LABEL_KEYS[occ])`, so the
 // extractor has no literal call site to match them against.
 export const { keys } = defineMessages({ namespace, messages, dynamic: true });

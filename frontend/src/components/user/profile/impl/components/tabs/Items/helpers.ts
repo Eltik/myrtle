@@ -46,8 +46,8 @@ export function rarityTierToNumber(tier: string | null | undefined): number {
 }
 
 // `formatItemType` and `formatVoucherId` title-case a raw API code
-// (`SKILL_SUMMARY` -> `Skill Summary`), so what they return is the code itself,
-// not prose - which is why neither goes through the catalog.
+// (`SKILL_SUMMARY` -> `Skill Summary`); the result is the code, not prose, so
+// neither goes through the catalog.
 export function formatItemType(itemType: string | null | undefined): string {
     if (!itemType || itemType === "UNKNOWN" || itemType === "NONE") return "Item";
     return itemType

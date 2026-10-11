@@ -76,8 +76,8 @@ export async function ogResponse({ kind, fetchId, version, locale, cacheId = fet
             await writeCache(kind, cacheId, cacheVersion, png);
         } catch (err) {
             if (err instanceof OgRenderUnavailableError) {
-                // Overloaded/wedged render pipeline - degrade to a retryable 503
-                // rather than a 500 so callers (and CDNs) treat it as transient.
+                // Overloaded or wedged render pipeline: a retryable 503, not a 500,
+                // so callers (and CDNs) treat it as transient.
                 console.warn(`[og] render unavailable for ${kind}/${cacheId}:`, err);
                 return new Response("Render unavailable", { status: 503, headers: { "Retry-After": "5" } });
             }

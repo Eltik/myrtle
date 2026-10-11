@@ -31,7 +31,7 @@ export function speakerColor(name: string, light = false): string {
     return light ? SPEAKER_HUES_LIGHT[i] : SPEAKER_HUES[i];
 }
 
-/** Render nodes with a character budget: the typewriter reveals `limit` characters. */
+/** Render nodes up to `budget.left` characters, the typewriter's reveal so far. */
 function renderNodes(nodes: TextNode[], budget: { left: number }, keyPrefix: string): React.ReactNode[] {
     const out: React.ReactNode[] = [];
     for (let i = 0; i < nodes.length; i++) {
@@ -96,17 +96,11 @@ export interface ITextBoxProps {
 }
 
 /**
- * The reveal progress, stamped with the line it belongs to.
- *
- * Stamped because a bare `shown` counter is STALE for one render every time
- * the line changes: `text` (and so `total`) is new while `shown` is still the
- * previous line's, and the effect that notifies completion ran against that
- * pair. Where the previous line was the longer one that read as "already
- * complete", so the notification fired for a line that had not started, and
- * the ref that guards it was spent; the real completion then never notified,
- * `revealDone` stayed false in the reader, and every click only re-sent the
- * complete signal. That was the reader STALLING at halt 6 of the tutorial.
- * Deriving `shown` from the stamp removes the stale render entirely.
+ * Reveal progress, stamped with its line. A bare `shown` is STALE for one
+ * render per line change: new `total`, old `shown`. When the previous line was
+ * longer that read as complete, the notification fired early and spent its
+ * guard ref, the real completion never notified, and the reader STALLED at
+ * halt 6 of the tutorial. Deriving `shown` from the stamp removes that render.
  */
 interface Reveal {
     key: number;
@@ -290,15 +284,12 @@ export function TextBox({ speaker, text, isNarration, revealKey, armed, settings
                 onPointerMove={onDragMove}
                 onPointerUp={onDragEnd}
                 onPointerCancel={onDragEnd}
-                // The game's message column is 924.598 canvas px wide, which is
-                // 72.234% of the stage. The `ch` slider still narrows the box;
-                // the canvas number is the CEILING it can never pass, and at
-                // 1440 the default 70ch (706.56 px) is well inside it. The
-                // margin is the HORIZONTAL position: its percentage resolves
-                // against the wrapper's content box, so `(1 + x) / 2` of the
-                // room left over walks the panel from the left margin to the
-                // right one. `max(0px, ...)` is the guard for a box the width
-                // slider has already filled the stage with.
+                // The game's message column is 924.598 canvas px, 72.234% of the
+                // stage: the CEILING for the `ch` slider (default 70ch is 706.56
+                // px at 1440). The margin is the horizontal position, a % of the
+                // wrapper's content box, so `(1 + x) / 2` of the leftover room
+                // walks left to right. `max(0px, ...)` guards a box the width
+                // slider has already made stage-wide.
                 style={{
                     maxWidth: panelWidth,
                     ...(centred ? {} : { marginInlineStart: `max(0px, calc(${(1 + position.x) / 2} * (100% - ${panelWidth})))` }),

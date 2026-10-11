@@ -71,7 +71,7 @@ function labelParts(code: string, name: string | null | undefined): { badge: str
     const nm = name ?? "";
     if (codeLike(code)) return { badge: code, title: nm || code };
     if (codeLike(nm)) return { badge: nm, title: code };
-    // Neither is a code - prefer the more descriptive (spaced) string as title.
+    // Neither is a code: the spaced (more descriptive) string is the title.
     const title = /\s/.test(nm) ? nm : /\s/.test(code) ? code : nm || code;
     return { badge: null, title };
 }
@@ -146,10 +146,9 @@ export function buildStageTree(entries: IStageIndexEntry[]): IStageTree {
         } else if (!zone.banner && e.banner) {
             zone.banner = e.banner;
         }
-        // Dedupe the same code across variants. Some chapters carry a retired
-        // "Story mode" (easy_*) stage with the same code as the Standard one but
-        // no level file - prefer the viewable, then NORMAL, variant so the card
-        // links to a playable stage.
+        // Some chapters carry a retired "Story mode" (easy_*) stage with the
+        // Standard one's code but no level file, so prefer the viewable, then
+        // NORMAL, variant and the card links to a playable stage.
         const key = e.code || e.stageId;
         const existing = zone.byCode.get(key);
         if (!existing) {

@@ -498,7 +498,7 @@ export async function toPdf(book: Book, opts: PdfOptions, deps: PdfDeps): Promis
             ),
         ),
     );
-    // 2. The contents' LENGTH, which every later page number depends on.
+    // The contents' LENGTH, which every later page number depends on.
     const contentsPages = (await PDFDocument.load(await render(() => contents(null)))).getPageCount();
     let next = 1 + contentsPages + 1; // the 1-based number of the next page to be written
     const numbers = new Map<string, number>();

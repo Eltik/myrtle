@@ -187,7 +187,7 @@ export const getUserEncounteredEnemiesFn = createServerFn({ method: "GET" })
         const token = bearerToken ?? optionalSiteToken();
         const res = await backendFetch(`/encountered-enemies?uid=${encodeURIComponent(uid)}`, { bearerToken: token });
         if (!res.ok) {
-            // 403 = private profile, 404 = no such user - treat both as "unavailable".
+            // 403 = private profile, 404 = no such user: both are "unavailable".
             if (res.status === 404 || res.status === 403) return null;
             throw new Error(`Failed to load encountered enemies: ${res.status}`);
         }
@@ -345,8 +345,7 @@ export type IShift = ShiftDto;
 
 export type IShiftRotation = ShiftRotationDto;
 
-/** The rotation validated by a time-stepped morale simulation: honest evidence the
- *  plan survives its own rhythm instead of an unchecked recommendation. */
+/** The rotation run through a time-stepped morale simulation, so the plan is checked against its own rhythm. */
 export type ISustainability = SustainabilityDto;
 
 /** One production room's simulated totals over the sim horizon. */
@@ -375,7 +374,7 @@ export const getUserImprovementsFn = createServerFn({ method: "GET" })
         const token = bearerToken ?? optionalSiteToken();
         const res = await backendFetch(`/user/improvements?uid=${encodeURIComponent(uid)}`, { bearerToken: token });
         if (!res.ok) {
-            // 403 = private profile, 404 = no such user - treat both as "unavailable".
+            // 403 = private profile, 404 = no such user: both are "unavailable".
             if (res.status === 404 || res.status === 403) return null;
             throw new Error(`Failed to load improvements: ${res.status}`);
         }
@@ -446,7 +445,7 @@ export type ILeaderboardPage = LeaderboardPage;
 export interface ILeaderboardInput {
     sort?: string;
     server?: string;
-    /** "1 day" | "7 days" | "30 days" - when set, each entry receives `rank_delta`. */
+    /** "1 day" | "7 days" | "30 days"; when set, each entry carries `rank_delta`. */
     movement_interval?: string;
     /** When true (requires `movement_interval`), only users with non-zero movement are returned. */
     movement_only?: boolean;

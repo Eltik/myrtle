@@ -6,7 +6,7 @@ import type { TranslationAuditEntry } from "#/types/generated/TranslationAuditEn
 /** Which log a timeline row came from. */
 export type AuditSource = "notes" | "translations";
 
-/** The design's All / Operator notes / Translations switch. */
+/** The All / Operator notes / Translations switch. */
 export type AuditSourceFilter = "all" | AuditSource;
 
 /** `"all"`, one note field, or `"text"` (a translation's only field). */

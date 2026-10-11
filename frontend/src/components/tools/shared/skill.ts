@@ -27,7 +27,6 @@ export const MAX_SKILL_RANK = 10;
 /** Ranks 8/9/10 represent masteries M1/M2/M3. */
 export const FIRST_MASTERY_RANK = 8;
 
-/** Highest selectable skill rank at a given elite (promotion) phase. */
 export function maxSkillRankForElite(elite: number): number {
     if (elite >= 2) return 10;
     if (elite >= 1) return 7;
@@ -48,7 +47,6 @@ export function skillRankShort(rank: number, t: SkillT = sourceT): string {
     return isMasteryRank(rank) ? t("calc.skillRank.masteryShort", { mastery: rank - 7 }) : t("calc.skillRank.levelShort", { rank });
 }
 
-/** Clamp a rank into the range a given elite allows. */
 export function clampRankToElite(rank: number, elite: number): number {
     return Math.min(Math.max(1, rank), maxSkillRankForElite(elite));
 }

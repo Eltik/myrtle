@@ -96,7 +96,6 @@ interface ITargetRowProps {
     meta: React.ReactNode;
     metaClassName?: string;
     stepsClassName: string;
-    /** The row's step buttons. */
     children: React.ReactNode;
 }
 

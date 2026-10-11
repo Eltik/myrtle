@@ -397,7 +397,6 @@ export function pushStoryProgressNow(doc: StoryProgress): void {
     void push(doc);
 }
 
-/** Pull, merge and push. The manual "Sync now" button and every mount call this. */
 /**
  * The "Sync now" button. It is a RE-DERIVATION, not a refresh: the backend
  * rebuilds the game's verdict from the marks and stage records it stored on
@@ -486,7 +485,7 @@ export function useStoryProgressSync(): { state: SyncState; syncNow: () => void 
     return { state: current, syncNow: syncStoryProgressNow };
 }
 
-/** What happens the next time the two sides disagree. `ask` until the reader says otherwise. */
+/** What happens the next time the two sides disagree. `merge` until the reader says otherwise. */
 export function useStorySyncPolicy(): SyncPolicy {
     return useSyncExternalStore(subscribeState, getPolicy, getServerPolicy);
 }
@@ -562,7 +561,6 @@ export function __storyGameReadForTests(): ReadonlySet<string> {
     return gameRead;
 }
 
-/** Pull once and wait for it. Tests only. */
 /** The "Sync now" pull, the one that re-derives first. Tests only. */
 export function __reverdictStorySyncForTests(): Promise<void> {
     return pull(true);

@@ -125,8 +125,6 @@ function EconomyBody({ economy, startDp, onStartDpChange, startDpFrom, stage, ha
     );
 }
 
-// ---------------------------------------------------------------- stepper
-
 function DpStepper({ value, onChange, t }: { value: number; onChange: (n: number) => void; t: EconomyT }): React.ReactElement {
     const [draft, setDraft] = React.useState(String(value));
     React.useEffect(() => setDraft(String(value)), [value]);
@@ -161,8 +159,6 @@ function DpStepper({ value, onChange, t }: { value: number; onChange: (n: number
         </span>
     );
 }
-
-// ----------------------------------------------------------------- ladder
 
 interface ICostLadderProps {
     seats: EconomySeat[];
@@ -272,8 +268,6 @@ function CostLadder({ seats, lineDp, bonus, onStartDpChange, giverOf, ctx, t }: 
         </div>
     );
 }
-
-// ---------------------------------------------------------------- text
 
 function cutLabel(cut: Cut, giver: string | null, t: EconomyT): string {
     const input = cutLabelInput(cut, giver);

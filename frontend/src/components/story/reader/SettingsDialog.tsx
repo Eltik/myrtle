@@ -70,12 +70,11 @@ export function SettingsDialog({ open, onOpenChange, settings, onChange, onExpor
                         <DialogTitle>{t("settings.title")}</DialogTitle>
                     </DialogHeader>
                     <DialogPanel className="flex max-h-[70dvh] flex-col gap-4 overflow-y-auto">
-                        {/* THE READING STYLE, first because it writes the five rows
-                        under it in one click. "Custom" is not a choice a reader
-                        makes: it is what the select reads back once one of those
-                        five has been edited, so it is in the list to be SHOWN
-                        and disabled to stop it being picked, which would mean
-                        nothing. */}
+                        {/* First, because one pick writes five fields: font, text
+                        size, line width, line height and letter spacing.
+                        "Custom" is what the select reads back once one of them
+                        is edited, so it is listed to be SHOWN and disabled so it
+                        cannot be picked. */}
                         <Row label={t("settings.style")} hint={t("settings.styleHint")}>
                             <Select value={style} onValueChange={(v: string | null) => v && v !== "custom" && apply(applyReadingStyle(settings, v as ReadingPreset))}>
                                 <SelectTrigger className="max-sm:h-11" data-story-reading-style>

@@ -30,9 +30,8 @@ export interface IIllustrationPanelProps {
  *
  * `GET /story/group/{id}/illustrations` takes a story group id AND an operator
  * `charId` on the same route, so the record cards need no second query. A 404
- * is a FIRST-CLASS answer rather than a throw: the endpoint shipped after this
- * tab, so a backend that predates it gets a panel that says so and a page that
- * keeps working.
+ * is an answer, not a throw: a backend that predates the route gets a panel
+ * that says so and a page that keeps working.
  */
 export function IllustrationPanel({ group, kind, onClose }: IIllustrationPanelProps): React.ReactElement | null {
     const t: ArtT = useT("story");

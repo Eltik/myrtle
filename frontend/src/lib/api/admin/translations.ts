@@ -12,7 +12,7 @@ import { type IBackendStatus, parseError } from "../_shared";
 import { requireSiteToken } from "../_shared.server";
 import type { TierListPermissionLevel, UserRole } from "./types";
 
-/** `all` | `untranslated` | `stale` | `todo` (untranslated or stale) | `translated` - mirrors the backend's filter. */
+/** Mirrors the backend's filter; `todo` is untranslated or stale. */
 export type TranslationFilter = "all" | "untranslated" | "stale" | "todo" | "translated";
 
 export interface IListTranslationsInput {
@@ -64,11 +64,10 @@ export interface ITranslationFieldError {
 }
 
 /**
- * The outcome of a translation write. A placeholder mismatch is not an
- * exceptional condition here - it is the editor's main feedback loop, and the
- * `details[]` it carries have to reach the field rather than a toast. Server
- * function rejections cross the boundary as bare messages, so the 422 comes
- * back as a value and every other status still throws.
+ * The outcome of a translation write. A placeholder mismatch is the editor's
+ * main feedback loop, and its `details[]` have to reach the field rather than
+ * a toast. Server function rejections cross the boundary as bare messages, so
+ * the 422 comes back as a value and every other status still throws.
  */
 export type ITranslationSaveResult = { ok: true; entry: TranslationEntry } | { ok: false; message: string; details: ITranslationFieldError[] };
 
@@ -190,9 +189,8 @@ export const clearTranslationFn = createServerFn({ method: "POST" })
 
 /**
  * `GET /admin/i18n/namespaces`. The whole namespace list, read from
- * `ui_message_keys` and independent of paging - a namespace list derived from
- * the rows on screen can only ever offer the namespaces the reader already
- * paged onto, which is the opposite of what the filter is for.
+ * `ui_message_keys` and independent of paging: a list derived from the rows on
+ * screen only offers namespaces the reader already paged onto.
  */
 export const getTranslationNamespacesFn = createServerFn({ method: "GET" }).handler(async (): Promise<string[]> => {
     const token = requireSiteToken();

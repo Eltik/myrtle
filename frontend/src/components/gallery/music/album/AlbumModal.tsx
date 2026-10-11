@@ -90,7 +90,6 @@ function AlbumBody({ album, catalog }: { album: IAlbum; catalog: ICatalog }): Re
 
     return (
         <div className="relative flex min-h-0 flex-1 flex-col sm:flex-row">
-            {/* The cover as a faint watermark over the right side. */}
             <img referrerPolicy="no-referrer" src={album.coverUrl} alt="" aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 hidden h-full w-[64%] object-cover opacity-5 sm:block" style={{ maskImage: "linear-gradient(to left, #000 40%, transparent)" }} />
             <aside className="relative hidden w-[300px] shrink-0 flex-col gap-5 border-border border-r p-6 sm:flex">
                 <Sleeve coverUrl={album.coverUrl} alt={album.name} spinning={playing} />

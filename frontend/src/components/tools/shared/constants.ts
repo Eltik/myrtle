@@ -1,6 +1,6 @@
 import type { ISweepRange } from "./types";
 
-/** Shared chart line colors for DPS, HPS, and any future calculator tool. */
+/** Chart line colours shared by the DPS and HPS tools. */
 export const CHART_PALETTE: readonly string[] = ["oklch(0.65 0.20 30)", "oklch(0.62 0.18 220)", "oklch(0.62 0.18 145)", "oklch(0.62 0.18 305)", "oklch(0.70 0.16 65)", "oklch(0.60 0.20 0)", "oklch(0.62 0.16 190)", "oklch(0.55 0.20 270)"];
 
 export function getInstanceColor(index: number): string {

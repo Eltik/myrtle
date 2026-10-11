@@ -1,16 +1,10 @@
 /**
- * Pure derivations for the operator dialog's four shelves: the handbook Files,
- * the Modules, the Voice Lines, and the counts their tab labels carry.
+ * Pure derivations for the operator dialog's shelves (Files, Modules, Voice
+ * Lines) and their tab counts. Inputs are `null` while a query hasn't run.
  *
- * Nothing here fetches or renders. The dialog hands each function whatever the
- * wire gave it, `null` while a query has not run, and gets back a list plus a
- * word count, so the counting is testable without a browser.
- *
- * A word is a whitespace-separated token of the TAG-FREE text: `plainText`
- * strips the game's rich-text spans first, because `<@ba.vup>12</>` is one word
- * to a reader and four to a naive split. The story tree is EN-only (section 1
- * of `docs/story-reader.md`), so a whitespace split is the right measure; a CJK
- * tree would need a segmenter and this would undercount it badly.
+ * Words are whitespace tokens of the tag-free text: `<@ba.vup>12</>` is one word,
+ * not four. The story tree is EN-only (section 1 of `docs/story-reader.md`); a
+ * CJK tree would need a segmenter.
  */
 
 import { plainText } from "#/lib/gamedata/richtext";
@@ -88,11 +82,8 @@ export interface IModuleSection {
 }
 
 /**
- * One row per module that carries description text, in the game's equip order.
- * The INITIAL module is KEPT: it is the operator's original gear and its
- * `uniEquipDesc` is a paragraph of story like any other, which is why the
- * reference site lists it. A module with an empty description is dropped rather
- * than drawn as an empty card.
+ * Modules with description text, in equip order. INITIAL is kept: its
+ * `uniEquipDesc` is story like any other (the reference site lists it too).
  */
 export function moduleSections(modules: readonly IModuleSource[] | null | undefined): IModuleSection[] {
     if (!modules) return [];
@@ -204,12 +195,9 @@ function sumWords(rows: readonly { words: number }[]): number {
 }
 
 /**
- * The four tab descriptors, counts and all.
- *
- * `null` is the honest answer for a shelf whose query has not run: the tab is
- * lazy, so a zero would claim the operator has no files when nobody has looked
- * yet. Records has no word count of its own, because a record's words live in
- * its script and the index does not carry them on this backend.
+ * `null` for a shelf whose lazy query hasn't run, so it doesn't read as zero.
+ * Records has no word count: the words live in the script, which the index
+ * doesn't carry.
  */
 export function operatorTabs(input: ITabInput): IOperatorTab[] {
     return [

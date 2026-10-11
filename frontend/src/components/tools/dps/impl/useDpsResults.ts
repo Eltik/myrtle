@@ -5,7 +5,7 @@ import { dpsCalculateQueryOptions } from "#/lib/api/dps";
 import { instanceToRequest } from "./state";
 import type { IDpsInstance, IEnemyConfig } from "./types";
 
-/** Per-instance snapshot at the current enemy DEF/RES - powers the KPI panel. */
+/** Per-instance snapshot at the current enemy DEF/RES, for the KPI panel. */
 export function useDpsResults(instances: IDpsInstance[], enemy: IEnemyConfig): IInstanceSnapshot[] {
     const queryConfigs = useMemo(() => instances.map((inst) => dpsCalculateQueryOptions(instanceToRequest(inst, enemy))), [instances, enemy]);
     const queries = useQueries({ queries: queryConfigs });

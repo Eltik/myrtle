@@ -78,8 +78,7 @@ export function Randomizer(): React.ReactElement {
     const settings = React.useMemo(() => applyProfileGate(migrateSettings(persisted), { hasProfile, hasStageClears }), [persisted, hasProfile, hasStageClears]);
     const updateSettings = React.useCallback((next: Partial<IRandomizerSettings>) => setPersisted((prev) => ({ ...migrateSettings(prev), ...next, _version: SETTINGS_VERSION })), [setPersisted]);
 
-    // Roster selection: `null` means "user hasn't pruned the roster yet" -> treat as all
-    // operators. Any array (even empty) is an explicit choice the user made.
+    // `null` = never pruned, so every operator; any array (even empty) is the user's pick.
     const [rosterStored, setRosterStored] = useLocalStorageState<string[] | null>(ROSTER_STORAGE_KEY, null, { parse: parseRosterSelection });
     const effectiveRosterSet = React.useMemo(() => {
         if (rosterStored === null) return new Set(randomizerOperators.map((op) => op.id));
@@ -88,8 +87,7 @@ export function Randomizer(): React.ReactElement {
     const setRosterSelection = React.useCallback((next: Set<string>) => setRosterStored(Array.from(next)), [setRosterStored]);
     const resetRosterSelection = React.useCallback(() => setRosterStored(null), [setRosterStored]);
 
-    // The roster picker mirrors every operator-tab constraint, so flipping a setting
-    // immediately prunes the roster view to match what the randomizer can actually draw.
+    // Mirrors every operator-tab constraint, so the roster picker only lists what can be drawn.
     const rosterPickerOperators = React.useMemo(() => selectAvailableOperators(randomizerOperators, settings, rosterIndex), [randomizerOperators, settings, rosterIndex]);
     const availableOperators = React.useMemo(() => rosterPickerOperators.filter((op) => effectiveRosterSet.has(op.id)), [rosterPickerOperators, effectiveRosterSet]);
 
@@ -105,7 +103,6 @@ export function Randomizer(): React.ReactElement {
     const hasResult = rolledStage !== null || rolledSquad.length > 0 || rolledChallenge !== null;
     const canRoll = availableOperators.length > 0 && availableStages.length > 0;
 
-    /** The squad pool under `challenge`: a SQUAD_FILTER narrows the available operators. */
     const resolveSquadPool = React.useCallback(
         (challenge: IChallenge | null): IRandomizerOperator[] => {
             if (!challenge || challenge.type !== "SQUAD_FILTER") return availableOperators;
@@ -123,7 +120,6 @@ export function Randomizer(): React.ReactElement {
         if (!rolledStage) return;
         const picked = pickRandomChallenge({ stage: rolledStage, operators: availableOperators, squadSize: settings.squadSize });
         setRolledChallenge(picked?.challenge ?? null);
-        // If the new challenge restricts the pool, reroll the squad to honour it.
         if (picked?.challenge.type === "SQUAD_FILTER") {
             setRolledSquad(pickRandomSquad(resolveSquadPool(picked.challenge), settings.squadSize, settings.allowDuplicates));
         }

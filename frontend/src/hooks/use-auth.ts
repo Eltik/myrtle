@@ -28,8 +28,8 @@ export function useAuth() {
         try {
             const u = await loginFn({ data });
             authActions.setUser(u);
-            // Drop any cached anon views - server fns now auto-attach the session
-            // token, so the next fetch should return owner-scoped data.
+            // Drop cached anon views: server fns now attach the session token, so
+            // the next fetch returns owner-scoped data.
             queryClient.removeQueries({ queryKey: ["user"] });
             // The login response is the session, built as a page load builds it. Priming with
             // it rather than refetching keeps a cookie the browser has not committed yet from

@@ -10,14 +10,14 @@ export interface IFormatters {
     compact: (n: number | null | undefined) => string;
     /** A fraction in [0, 1] as a percentage. */
     percent: (fraction: number) => string;
-    /** "5m ago", "yesterday" - the narrow style this site uses in dense UI. */
+    /** "5m ago", "yesterday": the narrow style, for dense UI. */
     relative: (iso: string | null | undefined) => string;
     /**
-     * "3 weeks ago", "yesterday" - the long style, for places that had room
-     * for the full words before i18n and must keep them.
+     * "3 weeks ago", "yesterday": the long style, for places with room for the
+     * full words.
      */
     relativeLong: (iso: string | null | undefined) => string;
-    /** The verbose admin-dashboard variant. */
+    /** "5 min ago", "2 d ago", a date past 30 days; also takes a unix epoch. Admin and settings pages. */
     relativeShort: (input: string | number | null | undefined) => string;
     /** A timestamp. Prints in UTC until hydration ends, then in the reader's time zone. */
     date: (value: string | number | Date, options?: Intl.DateTimeFormatOptions) => string;

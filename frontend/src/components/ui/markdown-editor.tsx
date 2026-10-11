@@ -22,7 +22,6 @@ export interface IMarkdownEditorProps {
     autoFocus?: boolean;
     className?: string;
     textareaClassName?: string;
-    /** Hide the formatting toolbar. */
     hideToolbar?: boolean;
     /** Visual density of the textarea. */
     size?: "sm" | "default";
@@ -147,7 +146,7 @@ export function MarkdownEditor({ id, name, value, onChange, placeholder, maxLeng
                         aria-invalid={ariaInvalid || undefined}
                         spellCheck
                         className={cn(
-                            // Base: 16px on mobile prevents iOS Safari auto-zoom on focus
+                            // 16px on mobile: iOS Safari zooms on focus below that.
                             "w-full resize-y bg-transparent px-3 py-2.5 font-sans text-[16px] text-foreground outline-none sm:text-sm",
                             "field-sizing-content min-h-32 sm:min-h-24",
                             size === "sm" && "px-2.5 py-2 sm:text-[13px]",
@@ -217,7 +216,7 @@ function FormatButton({ label, onClick, disabled, mobile = false, children }: { 
     return (
         <button
             type="button"
-            // onMouseDown prevents the textarea from losing focus (and thus losing the selection) when the button is clicked.
+            // Keep focus (and the selection) in the textarea.
             onMouseDown={(e) => e.preventDefault()}
             onClick={onClick}
             disabled={disabled}
@@ -228,7 +227,7 @@ function FormatButton({ label, onClick, disabled, mobile = false, children }: { 
                 "hover:bg-accent hover:text-foreground active:bg-accent",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 "disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent",
-                // 44pt tap target on touch devices (via invisible ::after extension)
+                // 44 px touch target via ::after.
                 "touch-manipulation pointer-coarse:after:absolute pointer-coarse:after:size-full pointer-coarse:after:min-h-11 pointer-coarse:after:min-w-11",
                 mobile ? "size-9" : "size-7",
             )}
@@ -283,7 +282,7 @@ function transform(ta: HTMLTextAreaElement, action: ToolbarAction, value: string
 
 function wrap(before: string, middle: string, after: string, opener: string, closer: string, placeholder: string): ITransformResult {
     if (middle) {
-        // Toggle: if selection is already wrapped, unwrap it
+        // Already wrapped: unwrap.
         if (before.endsWith(opener) && after.startsWith(closer)) {
             const value = `${before.slice(0, -opener.length)}${middle}${after.slice(closer.length)}`;
             const selStart = before.length - opener.length;

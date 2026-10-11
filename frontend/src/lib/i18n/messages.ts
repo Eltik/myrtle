@@ -76,23 +76,19 @@ export interface IDefinedMessages<TMessages extends MessageMap> {
 /**
  * A `TFunction` narrowed to the keys one module declares.
  *
- * `const t: TypedT<typeof messages> = useT("common")` is assignable - a
- * function taking any `string` key satisfies one taking a narrower union - and
- * it buys autocomplete on the literal plus a compile error on a typo, while
- * leaving the call site as the plain `t("pagination.previous")` that the
- * extractor reads.
+ * `const t: TypedT<typeof messages> = useT("common")` is assignable (a function
+ * taking any `string` key satisfies one taking a narrower union), and it buys
+ * autocomplete plus a compile error on a typo while the call site stays the
+ * plain `t("pagination.previous")` the extractor reads.
  */
 export type TypedT<TMessages extends MessageMap> = (key: keyof TMessages & string, values?: MessageValues) => string;
 
 /**
- * Declare a module's messages.
- *
- * This is deliberately almost a no-op at runtime: the value it returns is only
- * the key map and the namespace, because the text itself is never read from
- * here at render time - it is extracted into `source-catalog.json` at build
- * time and served from the database at run time. Keeping it a plain function
- * over a plain object literal is what lets the extractor read these modules
- * with the TypeScript parser instead of importing and executing them.
+ * Almost a no-op at runtime: it returns only the key map and the namespace.
+ * The text is never read from here at render time; it is extracted into
+ * `source-catalog.json` at build time and served from the database. A plain
+ * function over a plain object literal is what lets the extractor read these
+ * modules with the TypeScript parser instead of executing them.
  */
 export function defineMessages<TMessages extends MessageMap>({ namespace, messages, dynamic }: IDefineMessagesInput<TMessages>): IDefinedMessages<TMessages> {
     const keys = Object.fromEntries(Object.keys(messages).map((key) => [key, key])) as MessageKeyMap<TMessages>;

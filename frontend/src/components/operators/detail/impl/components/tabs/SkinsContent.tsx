@@ -330,7 +330,6 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
     const [fit, setFit] = useState<{ zoom: number; panX: number; panY: number; width: number; height: number } | null>(null);
     const fitRef = useRef(fit);
     fitRef.current = fit;
-    /** The transform with its pan clamped to the container the content is shown in. */
     const clamped = useCallback((t: ITransform): ITransform => {
         const el = containerElRef.current;
         if (!el) return t;

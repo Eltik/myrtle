@@ -135,7 +135,6 @@ export interface ILocaleProgress {
 
 type ProgressCounts = Pick<ILocaleProgress, "total" | "translated" | "stale">;
 
-/** Untranslated strings in a locale: everything not yet translated. */
 export function missingCount(p: ProgressCounts): number {
     return Math.max(0, p.total - p.translated);
 }

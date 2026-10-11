@@ -33,7 +33,6 @@ import { fade, joinFilters } from "./stageFx";
  */
 export type StageFill = "extend" | "mask";
 
-/** The extend fill's blur radius and brightness. 24 px at 45% of the plate's own light. */
 const EXTEND_FILTER = "blur(24px) brightness(0.45)";
 
 export interface IStageProps {
@@ -51,11 +50,6 @@ export interface IStageProps {
 }
 
 /**
- * The stage OUTSIDE the canvas box, under our `extend` trade: the background
- * the scene is showing, cover-scaled across the whole stage, blurred and
- * darkened so it reads as a continuation rather than a second picture. The
- * client fills this region with pure black and the letterbox setting does the same.
- *
  * The 4% overscale is not decoration: a 24 px blur samples past the plate's own
  * edges and would fade to transparent against the black stage without it.
  */
@@ -119,13 +113,6 @@ function useCameraShake(ref: React.RefObject<HTMLDivElement | null>, shake: { se
  * below is the largest 16:9 rectangle that fits the stage, centred, everything
  * the script places lives inside it, and one canvas pixel is that box's width
  * over 1280 rather than the stage's.
- *
- * What the stage does with the region OUTSIDE the box is the one place this
- * reader knowingly departs from the client, and the trade is named: the client
- * paints it black, `fill="extend"` redraws the background across it blurred and
- * darkened so a wide screen sees a continuation, and `fill="mask"` (the
- * "Letterbox like the game" setting) gives the client's black back. On a
- * 16:9 stage the box is the stage and the two are the same picture.
  *
  * The reader's own chrome, the toolbar and the text box, is `children` and
  * stays OUTSIDE the box against the stage, which is what keeps the text box's

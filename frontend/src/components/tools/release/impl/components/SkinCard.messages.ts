@@ -66,6 +66,6 @@ export const messages = {
 } satisfies MessageMap;
 
 // `dynamic`: the obtain-method keys are stored in a lookup table and resolved as
-// `t(OBTAIN_SHORT_KEYS[obtain])`, so the
-// extractor has no literal call site to match them against.
+// `t(OBTAIN_SHORT_KEYS[obtain])`, so the extractor has no literal call site to
+// match them against.
 export const { keys } = defineMessages({ namespace, messages, dynamic: true });

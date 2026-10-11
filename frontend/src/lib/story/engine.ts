@@ -21,13 +21,14 @@
  * string into a number or a slot in `args.ts`, and the DOTween curve table in
  * `ease.ts`.
  *
- * The switch itself is ONE function on purpose. Its thirty-eight arms share
- * eleven pieces of walk state (`state`, `pc`, `skipping`, `currentSounds`,
- * `sfxLevels`, the two sequence counters and the four closures `frame`, `hold`,
- * `finish` and `unhandled`), so cutting it into per-kind modules would mean
- * threading a context object through every arm: more surface, the same logic,
- * and a behaviour risk the tests cannot see. It is long because the game has
- * thirty-eight commands, not because two things are tangled in it.
+ * The walk is ONE function on purpose. Its 39 command kinds (37 switch arms
+ * plus `predicate` and `decision` ahead of the switch) share eleven pieces of
+ * walk state (`state`, `pc`, `skipping`, `currentSounds`, `sfxLevels`, the two
+ * sequence counters and the four closures `frame`, `hold`, `finish` and
+ * `unhandled`), so per-kind modules would thread a context object through
+ * every arm: more surface, the same logic, and a behaviour risk the tests
+ * cannot see. It is long because there are 39 kinds, not because two things
+ * are tangled in it.
  */
 import type { StoryCommand } from "#/types/generated/StoryCommand";
 import type { StoryScript } from "#/types/generated/StoryScript";

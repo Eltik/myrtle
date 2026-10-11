@@ -6,17 +6,15 @@ import { cn } from "#/lib/utils";
 
 export const PANEL_PADDING = "px-4 pb-4 sm:px-5 sm:pb-5";
 
-// One scale across every improvement panel. Keep these in sync; new sizes
-// don't go inline - extend the scale here.
+// One type scale for every improvement panel; add sizes here, not inline.
 
-/** XS mono - tiny chips, level/state indicators, badges. */
+/** Chips, level/state indicators, badges. */
 export const TEXT_BADGE = "font-mono text-[10px] tabular-nums";
-/** XS uppercase kicker - section headers, button labels, tag captions. */
 /** The same eyebrow as the Stats cards; see the `.kicker` rule in `styles.css`. */
 export const TEXT_KICKER = "kicker";
-/** SM - secondary descriptive text, subtitles. */
+/** Secondary text, subtitles. */
 export const TEXT_META = "text-[10.5px] leading-snug";
-/** Body - list rows, descriptions, default content size. */
+/** List rows, descriptions. */
 export const TEXT_BODY = "text-[11.5px] leading-tight";
 
 // Shared rarity scheme so the Operator and Medal panels read with the same
@@ -24,7 +22,7 @@ export const TEXT_BODY = "text-[11.5px] leading-tight";
 // (gold -> purple -> blue -> gray).
 
 const RARITY_HUE = {
-    /** Highest tier - gold. */
+    /** 6★ / T3D5. */
     apex: "oklch(0.78 0.16 80)",
     /** Gold (5★ / T2.5 / T3). */
     gold: "oklch(0.74 0.16 80)",
@@ -79,11 +77,7 @@ export function SectionHeader({ title, count, accent }: { title: string; count?:
     );
 }
 
-/**
- * A collapsible section with the same chrome as `SectionHeader` (kicker +
- * optional count badge) plus a chevron - for secondary sections that should
- * stay one click away instead of stretching the panel.
- */
+/** `SectionHeader` plus a chevron, for secondary sections that stay one click away instead of stretching the panel. */
 export function CollapsibleSection({ title, count, accent, defaultOpen = false, children }: { title: string; count?: ReactNode; accent: string; defaultOpen?: boolean; children: ReactNode }) {
     const [open, setOpen] = useState(defaultOpen);
     return (
@@ -149,9 +143,6 @@ export function Pill({ children, color, className }: IPillProps) {
     );
 }
 
-/**
- * Show-more / show-less toggle styled to match the rest of the panel chrome.
- */
 export function ShowMoreButton({ onClick, label }: { onClick: () => void; label: string }) {
     return (
         <button type="button" onClick={onClick} className={cn("self-start", TEXT_KICKER, "text-muted-foreground transition-colors hover:text-foreground")}>
@@ -161,12 +152,8 @@ export function ShowMoreButton({ onClick, label }: { onClick: () => void; label:
 }
 
 /**
- * Stat tile: small card with a big number, a label below, optional sub-line.
- * Used for top-of-panel summary breakdowns.
- *
- * - Centered content (numbers + labels read as one stacked unit).
- * - `min-h` keeps every tile in a row the same height even if one sub-label wraps.
- * - Non-interactive tiles (no `onClick`) render dimmed so "0" doesn't look clickable.
+ * Top-of-panel summary tile. `min-h` keeps a row level when one sub-label
+ * wraps; tiles without `onClick` render dimmed so a "0" doesn't look clickable.
  */
 export function StatTile({ value, label, sub, accent, active, onClick }: { value: ReactNode; label: string; sub?: ReactNode; accent: string; active?: boolean; onClick?: () => void }) {
     const interactive = onClick !== undefined;

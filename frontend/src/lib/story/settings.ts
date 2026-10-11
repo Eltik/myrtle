@@ -146,16 +146,11 @@ export interface StorySettings {
      */
     speakerTint: SpeakerTint;
     /**
-     * Where the text box sits on the stage, on TWO axes.
-     *
-     * `boxY` is the lift, 0..1 of `MAX_BOX_LIFT` percent of the STAGE HEIGHT:
-     * 0 is the default and resolves to `bottom: 0%`, which is the `bottom-0`
-     * the box shipped with, and 1 lifts it 40% of the stage. `boxX` is the
-     * horizontal shift over the free space the box does not occupy, -1 flush
-     * against the left side margin, 0 centred (the shipped position, and the
-     * only value that keeps the flex centring the box shipped with) and 1
-     * flush right. The side and bottom margin sliders are untouched and keep
-     * their own defaults.
+     * Text box position. `boxY` is the lift, 0..1 of `MAX_BOX_LIFT` percent of
+     * the STAGE HEIGHT; 0 resolves to the shipped `bottom-0`. `boxX` shifts it
+     * over the free space: -1 flush left of the side margin, 0 centred (the only
+     * value that keeps the shipped flex centring), 1 flush right. The margin
+     * sliders are independent of both.
      */
     boxY: number;
     boxX: number;
@@ -307,11 +302,10 @@ function clampNumber(v: unknown, min: number, max: number, fallback: number): nu
 /**
  * Read a settings object back, EVERY field coerced.
  *
- * The reading style is the one field that is not read at face value. It names
- * a bundle of five other fields, so a stored `style` that disagrees with them
- * is a lie a hand-edit, an older shape or another tab can all write; the name
- * is reconciled against the values here and the select is handed `custom`
- * rather than a preset whose numbers are not on screen.
+ * `style` is not read at face value: it names a bundle of five fields, and a
+ * hand-edit, an older shape or another tab can leave it disagreeing with them.
+ * It is reconciled against the values, so the select shows `custom` rather
+ * than a preset whose numbers are not on screen.
  */
 export function coerceSettings(raw: unknown): StorySettings {
     if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return { ...DEFAULT_SETTINGS };

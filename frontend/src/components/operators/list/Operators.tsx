@@ -165,10 +165,9 @@ export function OperatorsList() {
         [navigate],
     );
 
-    // Arriving with no page in the URL - the breadcrumb out of an operator, the
-    // nav link - resumes the page you were last on, the way the filters and the
-    // view mode already resume. A page in the URL is explicit and always wins,
-    // which is what keeps browser back landing exactly where it left.
+    // No page in the URL (the breadcrumb out of an operator, the nav link)
+    // resumes the last page, like the filters and view mode do. A page in the
+    // URL always wins, which keeps browser back landing where it left.
     const pageRestoredRef = useRef(false);
     useEffect(() => {
         if (pageRestoredRef.current) return;
@@ -185,9 +184,8 @@ export function OperatorsList() {
     const [exportOpen, setExportOpen] = useState(false);
 
     // The export dialog offers full-table-only fields (descriptions, item usage,
-    // skin art, etc.) that the slim operators index doesn't carry. Fetch just those
-    // fields lazily - only once the dialog is opened - and merge them onto the rows
-    // we hand the dialog. The whole table is too large to return to the browser.
+    // skin art) the slim index lacks. Fetched only once the dialog opens; the
+    // whole table is too large to return to the browser.
     const { data: fullOperators } = useQuery({ ...operatorsExportFieldsQueryOptions(server), enabled: exportOpen });
     const fullById = useMemo(() => {
         const map = new Map<string, IOperatorExportFields>();
@@ -242,8 +240,8 @@ export function OperatorsList() {
         return chips;
     }, [filters, filterOptions.labels, removeFrom, setHasNotes, t]);
 
-    // Only the export dialog consumes these, and the full-table merge (toExportRow)
-    // is empty until it opens - so skip the row rebuild entirely while it's closed.
+    // Only the export dialog reads these, and `toExportRow`'s merge is empty until
+    // it opens, so skip the rebuild while it's closed.
     const exportAllRows = useMemo(() => (exportOpen ? enriched.map(toExportRow) : EMPTY_EXPORT_ROWS), [exportOpen, enriched, toExportRow]);
     const exportFilteredRows = useMemo(() => (exportOpen ? filteredOperators.map(toExportRow) : EMPTY_EXPORT_ROWS), [exportOpen, filteredOperators, toExportRow]);
     const exportPageRows = useMemo(() => (exportOpen ? paginated.map(toExportRow) : EMPTY_EXPORT_ROWS), [exportOpen, paginated, toExportRow]);

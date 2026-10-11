@@ -92,12 +92,7 @@ function StoryRows({ groups, query, chosen, total, onChoose }: Omit<IStoryPicker
     );
 }
 
-/**
- * The story filter: a button naming the chosen story that opens a bounded panel with its
- * own search (through `fuzzy.ts`), "All stories" first, then each story with its count.
- * The search sits on an opaque bar above the list, never over it; the list scrolls inside
- * the panel and fades at both edges.
- */
+/** The story filter as a popover. The search bar sits outside the scroll so rows never show through it. */
 export function StoryPicker({ groups, chosen, chosenName, total, onChoose }: IStoryPickerProps) {
     const t: T = useT("user");
     const [open, setOpen] = useState(false);
@@ -127,12 +122,7 @@ export function StoryPicker({ groups, chosen, chosenName, total, onChoose }: ISt
     );
 }
 
-/**
- * The rail's story filter, a bounded panel of its own: its search on an opaque bar at the
- * top, outside the scroll, so no row ever shows through it; under it "All stories", then
- * each story with its muted count, scrolling inside the panel and fading at both edges.
- * It fills whatever height the rail leaves it.
- */
+/** {@link StoryPicker} inline for the rail, filling whatever height the rail leaves it. */
 export function StoryPanel({ groups, chosen, total, onChoose }: Omit<IStoryPickerProps, "chosenName">) {
     const t: T = useT("user");
     const [query, setQuery] = useState("");

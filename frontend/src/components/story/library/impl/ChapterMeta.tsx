@@ -1,11 +1,7 @@
 /**
- * WHAT THE CHAPTER IS AND WHERE THE READER IS IN IT, then the one thing they
- * came to do.
- *
- * Two rows of facts and one row of actions, and every number on them is derived
- * rather than stored: the counts come from `derive.ts`, the word spans from
- * `stats.ts` and the read verdict from `isStoryRead`, which is the one
- * predicate the whole library decides that with.
+ * Chapter sheet facts and actions. Every number is derived, not stored: counts
+ * from `derive.ts`, word spans from `stats.ts`, read verdict from `isStoryRead`
+ * (the library's one read predicate).
  */
 import { Link } from "@tanstack/react-router";
 import type React from "react";
@@ -32,13 +28,8 @@ type ExportT = TypedT<typeof exportMessages>;
 const ExportSheet = lazy(() => import("#/components/story/export/ExportSheet").then((m) => ({ default: m.ExportSheet })));
 
 /**
- * WHAT THE CHAPTER IS AND WHERE THE READER IS IN IT, then the one thing they
- * came to do.
- *
- * ONE primary. "Continue" opens the first story with no read mark, or the last
- * story once every one of them has one, and "Start from the beginning" only
- * appears when it would land somewhere else: on an untouched chapter the two
- * are the same story and a second button offering the same link is noise.
+ * "Continue" opens the first unread story, or the last once all are read.
+ * "Start from the beginning" only shows when it would land somewhere else.
  */
 export const MetaRow = memo(function MetaRow({ group, progress, gameRead }: { group: LibGroup; progress: StoryProgress; gameRead: ReadonlySet<string> }): React.ReactElement {
     const t: BrowseT = useT("story");
@@ -97,8 +88,6 @@ export const MetaRow = memo(function MetaRow({ group, progress, gameRead }: { gr
                 </div>
             ) : null}
 
-            {/* ONE ROW: the reading actions lead, the mark actions sit at the
-                right end of the same line, and on a phone the row wraps. */}
             <div className="flex flex-wrap items-center gap-2">
                 {resume ? (
                     <>
@@ -122,17 +111,10 @@ export const MetaRow = memo(function MetaRow({ group, progress, gameRead }: { gr
 });
 
 /**
- * MARK THE WHOLE CHAPTER, in one press.
- *
- * "Mark all read" is not confirmed: it is additive, every tick it fills can be
- * emptied again, and a dialog in front of it would cost more than the mistake.
- * "Clear all" IS confirmed, once, inline, because it withdraws marks the reader
- * may have spent an evening making and some of them may be the game's own
- * verdict rather than theirs. The confirmation quotes the COUNT, so a misfire
- * on a 39-entry chapter says what it would take.
- *
- * It is not `window.confirm`: a native dialog blocks the page, cannot be
- * styled, and reads in the browser's language rather than the site's.
+ * "Mark all read" is additive and undoable, so unconfirmed. "Clear all"
+ * confirms inline with the count, since some marks may be the game's own
+ * verdict. Not `window.confirm`: it blocks, can't be styled, and speaks the
+ * browser's language, not the site's.
  */
 function MarkActions({ group, progress, gameRead }: { group: LibGroup; progress: StoryProgress; gameRead: ReadonlySet<string> }): React.ReactElement | null {
     const t: MarksT = useT("story");
@@ -175,11 +157,7 @@ function MarkActions({ group, progress, gameRead }: { group: LibGroup; progress:
     );
 }
 
-/**
- * SAVE THE CHAPTER TO READ OFFLINE. The sheet is mounted only while open, so
- * a closed chapter sheet pays nothing for it. Absent on a chapter with no
- * script to export.
- */
+/** Hidden when no story has a script. The sheet mounts only while open. */
 function ExportAction({ group }: { group: LibGroup }): React.ReactElement | null {
     const t: ExportT = useT("story");
     const [open, setOpen] = useState(false);
@@ -203,12 +181,7 @@ function Rule(): React.ReactElement {
     return <span aria-hidden="true" className="h-3 w-px bg-border" />;
 }
 
-/**
- * The chapter's handle, as its ticket prints it: "Chapter 0" for the mainline
- * and the operation code for everything else. `cardCode` is not used here: for
- * the mainline it is the zone's own third name, EPISODE 00, capitals in the data
- * itself, and the ticket already calls it Chapter 0.
- */
+/** As the ticket prints it: "Chapter 0" for mainline (not the data's EPISODE 00), else the operation code. */
 function sheetCode(group: LibGroup, t: BrowseT): string {
     const model = specModel(group, cardCode(group));
     return model.kind === "chapter" ? t("browse.card.chapter", { n: model.chapter }) : model.code;

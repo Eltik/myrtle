@@ -68,14 +68,12 @@ export interface ISquadFilterChallenge extends IChallengeBase {
 /** A challenge that only applies when the rolled stage matches a predicate. */
 export interface IStageChallenge extends IChallengeBase {
     type: "STAGE";
-    /** Return true if this challenge should be eligible for the given rolled stage. */
     match: (stage: IStage) => boolean;
 }
 
 export type IChallenge = IPlainChallenge | ISquadFilterChallenge | IStageChallenge;
 
 export interface IRosterIndex {
-    /** Set of operator IDs the user owns. */
     owned: Set<string>;
     /** Subset of owned operators with elite ≥ 2. */
     e2: Set<string>;

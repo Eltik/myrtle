@@ -7,7 +7,6 @@ export type IOperatorBirthday = { operator: IBirthdayOperator; known: false; raw
 
 export type BirthdayView = "calendar" | "list" | "upcoming";
 
-/** Zoom level for the calendar view. */
 export type CalendarScale = "day" | "3day" | "week" | "month";
 
 export interface IBirthdayFilters {

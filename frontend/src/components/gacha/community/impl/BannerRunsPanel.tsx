@@ -84,9 +84,7 @@ function FeaturedAvatars({ ids, operatorsById, ringColor, cap }: { ids: string[]
 function CommunityPullsLine({ stat }: { stat: IBannerPullStat | undefined }) {
     const t: RunsT = useT("gacha");
     const f = useFormatters();
-    // Banner had zero community contribution (no opted-in user pulled here yet).
-    // Still useful to show explicitly so users know the panel is keyed off
-    // shared data rather than something we couldn't fetch.
+    // No opted-in user has pulled here yet. Said outright so it doesn't read as a failed fetch.
     if (!stat || stat.pullCount === 0) {
         return <div className="font-mono text-[10.5px] text-muted-foreground/70 uppercase tracking-[0.12em]">{t("community.runs.noPulls")}</div>;
     }
@@ -179,7 +177,6 @@ type Filter = (typeof FILTERS)[number]["key"];
 const SORTS: ReadonlyArray<{ key: "timeline" | "pulls" | "popularity"; labelKey: RunsMessageKey }> = [
     // Default: status-grouped chronological order (active -> upcoming -> recently ended).
     { key: "timeline", labelKey: "community.runs.sort.timeline" },
-    // Metric sorts rank by shared community data, highest first.
     { key: "pulls", labelKey: "community.runs.sort.pulls" },
     { key: "popularity", labelKey: "community.runs.sort.popularity" },
 ];
@@ -190,11 +187,8 @@ const SORT_METRIC_LABEL_KEYS: Record<Exclude<Sort, "timeline">, RunsMessageKey> 
     popularity: "community.runs.metric.popularity",
 };
 
-/** Small segmented pill group, shared by the filter and sort controls. */
 function Segmented<T extends string>({ label, options, value, onChange }: { label: string; options: ReadonlyArray<{ key: T; label: string }>; value: T; onChange: (key: T) => void }) {
     return (
-        // Mobile: label stacked above a full-width, equal-column control. ≥sm:
-        // compact inline row.
         <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2">
             <span className="font-mono text-[9.5px] text-muted-foreground/70 uppercase tracking-[0.14em]">{label}</span>
             <div className="grid auto-cols-fr grid-flow-col gap-1 rounded-lg border border-border bg-muted p-0.75 sm:inline-flex sm:gap-1.5 sm:rounded-[10px]">
@@ -217,7 +211,6 @@ function Segmented<T extends string>({ label, options, value, onChange }: { labe
     );
 }
 
-/** Rank badge shown on cards while a metric sort is active. Top 3 get an accent. */
 function RankChip({ rank, title }: { rank: number; title: string }) {
     const top = rank <= 3;
     return (
@@ -236,10 +229,9 @@ function RankChip({ rank, title }: { rank: number; title: string }) {
 }
 
 const PAGE_SIZE = 12;
-// Banner runs panel only displays banners from the past N seconds and into the
-// future. Older entries are dropped - they crowd the panel and the community
-// dataset rarely has pulls that far back anyway.
-const PAST_WINDOW_SECS = 180 * 86_400; // 180 days
+// Banners that ended longer ago than this are dropped: they crowd the panel and
+// the community data rarely has pulls that far back.
+const PAST_WINDOW_SECS = 180 * 86_400;
 
 export function BannerRunsPanel({ banners, operatorsById, statsById, isLoading }: IBannerRunsPanelProps) {
     const t: RunsT = useT("gacha");
@@ -251,8 +243,6 @@ export function BannerRunsPanel({ banners, operatorsById, statsById, isLoading }
     const nowSec = useMemo(() => Math.floor(Date.now() / 1000), []);
 
     const entries = useMemo<IBannerWithStatus[]>(() => {
-        // Pre-window: ignore very old retired banners and very speculative
-        // far-future entries. Newest-first.
         return banners
             .filter((b) => b.endTime >= nowSec - PAST_WINDOW_SECS)
             .map<IBannerWithStatus>((b) => ({ banner: b, group: classifyBannerGroup(b), status: bannerStatus(b, nowSec) }))
@@ -287,7 +277,7 @@ export function BannerRunsPanel({ banners, operatorsById, statsById, isLoading }
         const arr = [...filtered].sort((a, b) => {
             const diff = metricOf(b) - metricOf(a);
             if (diff !== 0) return diff;
-            // Tie-break by recency so equal-metric banners stay in a stable, sensible order.
+            // Ties: most recently ended first.
             return b.banner.endTime - a.banner.endTime;
         });
 

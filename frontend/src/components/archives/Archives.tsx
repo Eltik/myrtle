@@ -20,10 +20,9 @@ const NumbersTab = lazy(() => loadNumbersTab().then((m) => ({ default: m.Numbers
 const PersonnelSheet = lazy(() => import("./impl/PersonnelSheet").then((m) => ({ default: m.PersonnelSheet })));
 
 /**
- * The Archives: the game's network chart, every operator's file, the roster
- * counted up and, behind the spoilers setting, the hidden factions. The
- * setting lives in localStorage, so SSR and the first client render read it
- * as off and the hidden tab arrives after hydration, never as a mismatch.
+ * The spoilers setting lives in localStorage, so SSR and the first client render
+ * read it as off and the hidden-factions tab arrives after hydration, never as a
+ * mismatch.
  */
 export function Archives(): React.ReactElement {
     const t = useArchivesT();

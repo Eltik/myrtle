@@ -3,7 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { backendFetch } from "#/lib/fetch";
 import type { Range } from "#/types/generated/Range";
 // Generated from `backend/src/core/gamedata/types/range.rs`. To change a field,
-// edit the Rust struct and run `bun run gen:types` - do not redeclare it here.
+// edit the Rust struct and run `bun run gen:types`; never redeclare it here.
 import type { RangeGrid } from "#/types/generated/RangeGrid";
 import { DEFAULT_GAMEDATA_SERVER, gamedataKey, gamedataPath, resolveGamedataServer } from "./gamedata";
 

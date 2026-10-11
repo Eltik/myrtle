@@ -9,10 +9,8 @@ interface IOperatorAvatarProps {
 }
 
 /**
- * Inner content for an operator avatar chip. Renders an <img> that covers its
- * parent container, falling back to the operator's initial letter on 404 or
- * when no charId is supplied. Drop it inside any sized/styled wrapper
- * (e.g. .op-chip, .tl-chip-initials, .drawer-initials).
+ * Fills a sized wrapper (e.g. `.op-chip`) with the avatar, or the operator's
+ * initial on a 404 or with no charId.
  */
 export function OperatorAvatar({ charId, name, className, server }: IOperatorAvatarProps) {
     const [failed, setFailed] = useState(false);

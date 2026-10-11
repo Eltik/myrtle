@@ -24,9 +24,9 @@ const EMPTY_LOCATIONS: IEnemyLocationIndex = { zonesByEnemy: new Map(), stagesBy
 const NARROWING_KEYS: ReadonlySet<keyof IFilterState> = new Set(["q", "levels", "damageTypes", "attackTypes", "races", "appearsIn"]);
 
 /**
- * `onNarrow` fires only from these setters, never from the hydration that loads
- * the stored filters on mount - which is why the page counter can be rewound
- * here without discarding a page restored from the URL a moment earlier.
+ * `onNarrow` fires only from the setters, never from the mount-time hydration of
+ * stored filters, so rewinding the page here can't discard a page just restored
+ * from the URL.
  */
 export function useEnemyFilters(data: IEnemyView[], locations: IEnemyLocationIndex = EMPTY_LOCATIONS, onNarrow?: () => void): IUseEnemyFiltersReturn {
     const [filters, setFilters] = useLocalStorageState<IFilterState>(FILTERS_KEY, initialState, {

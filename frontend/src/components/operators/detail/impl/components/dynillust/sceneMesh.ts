@@ -53,17 +53,17 @@ export interface ISceneRam {
      *  threshold, exported only under `DYNCHAR_AMOUNT_CURVE`; replayed at the entrance track
      *  time under `?amountcurve=1` (see `amountCurveOn` in `SceneIllust.tsx`). */
     amountCurve?: [number, number][] | null;
-    /** How far a disturb sample displaces the lookups, and which lookups it reaches. */
-    /** `_AnchorU`/`_AnchorV` - the zero point the disturb sample is measured against.
-     *  The `Disturb Anchor` family displaces by `(sample - anchor) * intensity`; absent/0
-     *  reproduces the plain `sample * intensity` every `Ram/` layer shipped with. */
     /** `_Rotation0..3` as DEGREES, `[main, dissolve, ram, disturb]` - a per-lookup UV rotation
      *  about the (0.5, 0.5) texel centre, applied BETWEEN the lookup's ST and its scroll.
      *  Written at runtime by a UV-rotation component, never serialized on the material; see the
      *  exporter's `SceneRam::uv_rot`. */
     uvRot?: [number, number, number, number];
+    /** `_AnchorU`/`_AnchorV` - the zero point the disturb sample is measured against.
+     *  The `Disturb Anchor` family displaces by `(sample - anchor) * intensity`; absent/0
+     *  reproduces the plain `sample * intensity` every `Ram/` layer shipped with. */
     anchorU?: number;
     anchorV?: number;
+    /** How far a disturb sample displaces the lookups, and which lookups it reaches. */
     intensityU: number;
     intensityV: number;
     disturbInfluenceDissolveUV: number;
@@ -168,11 +168,11 @@ export interface ISceneLayer {
          *  admitted by its interact window. Never drawn outside a replay, switch or no switch. */
         restHidden?: boolean;
     } | null;
-    /** ENTRANCE uniform-scale MULTIPLIER keyframes `[t, mult]` over the baked prefab pose
+    /** ENTRANCE scale MULTIPLIER keyframes `[t, sx, sy]` over the baked prefab pose
      *  (1.0 = unchanged), from the `_Start` clips. Present only where the clip animates this
-     *  layer's transform (or an ancestor's) - 3 layers across 2 composites corpus-wide. */
-    /** `[t, sx, sy]`. Two axes, because a host can scale x and y differently (Kal'tsit's
-     *  `st` is 2.967 against 2.659) and averaging them would be a fitted constant. */
+     *  layer's transform (or an ancestor's) - 3 layers across 2 composites corpus-wide. Two
+     *  axes, because a host can scale x and y differently (Kal'tsit's `st` is 2.967 against
+     *  2.659) and averaging them would be a fitted constant. */
     scaleCurve?: [number, number, number][] | null;
     /** Fixed point of `scaleCurve` in authored px (Y-up), exported from the animated owner. */
     scalePivot?: [number, number] | null;
@@ -243,14 +243,14 @@ export interface ISceneData {
      *  depth the game gives each submesh; a layer sorted BETWEEN two parts is drawn in that
      *  gap rather than over the whole skeleton. */
     separatorPartSorts?: number[] | null;
-    /** ENTRANCE (`_Start`) cinematic total length in seconds (director `_params.duration`).
-     *  Present only on `_Start` scenes. */
     /** `m_StopTime` of the entrance CAMERA clip - where the cinematic's authored content
      *  actually ends, which can PRECEDE the director's nominal `entranceDuration` (Executor
      *  6.100 vs 6.500; Mlynar 15.967 vs 16.500). The end-of-entrance screen fade is anchored
      *  here, not at `entranceDuration`. Absent when the skin's camera clip is unidentifiable
      *  (Civilight Eterna's camera never moves) - fall back to the duration. */
     entranceClipStop?: number | null;
+    /** ENTRANCE (`_Start`) cinematic total length in seconds (director `_params.duration`).
+     *  Present only on `_Start` scenes. */
     entranceDuration?: number | null;
     /** Straight RGBA (0..1) of the director's end-of-entrance screen fade (`_params.fadeColor`).
      *  The client fades the whole view to this colour as the entrance ends, swaps to the settled
@@ -273,11 +273,6 @@ export interface ISceneData {
      *  measured in (the gamedata root and the spine's vis origin don't coincide), so framing
      *  centres on the character's own measured body instead. */
     entranceCamOffsetPx?: [number, number] | null;
-    /** ENTRANCE camera dolly ZOOM - the game's actual data-driven camera motion, extracted from
-     *  the `_Start` clip that animates the Main Camera's orthographic size: `[t_seconds, ortho]`
-     *  keyframes (Virtuosa 1.87 hold -> 1.50 zoom-in on the transform -> 1.91 out). There is NO
-     *  positional pan. The frontend replays it as a RELATIVE zoom (ratio to the t=0 value) on the
-     *  entrance frame, so no world↔authored unit conversion is needed. `_Start` scenes only. */
     /** ENTRANCE post-process: the `pp` PostProcessVolume's effect, its intensity, and the
      *  volume WEIGHT curve the `_Start` clip animates. Null when the skin ships none. */
     entrancePostFx?: {
@@ -289,6 +284,11 @@ export interface ISceneData {
          *  `blurDegree` / `blurSpread` / `quality` / `resMode`. */
         params?: Record<string, number> | null;
     } | null;
+    /** ENTRANCE camera dolly ZOOM - the game's actual data-driven camera motion, extracted from
+     *  the `_Start` clip that animates the Main Camera's orthographic size: `[t_seconds, ortho]`
+     *  keyframes (Virtuosa 1.87 hold -> 1.50 zoom-in on the transform -> 1.91 out). There is NO
+     *  positional pan. The frontend replays it as a RELATIVE zoom (ratio to the t=0 value) on the
+     *  entrance frame, so no world↔authored unit conversion is needed. `_Start` scenes only. */
     entranceOrthoCurve?: [number, number][] | null;
     /** Is the `_Start` camera PERSPECTIVE? Then {@link entranceOrthoCurve} carries dolly
      *  DISTANCES, not ortho sizes, so `2*curve[0]/skeletonScale` is NOT a view extent and
@@ -432,17 +432,6 @@ interface IRamSceneTex {
     white: PIXI.Texture;
 }
 
-/** `?ramtex=0` stubs the `_RamTex` multiply out of the Ram scene compositor (diagnostic).
- *
- *  ⚠️ This is NOT a revert to the pre-ramp build, and must not be read as one. Adding the slot
- *  also moved RAMP-ONLY layers onto the Ram compositor for the first time (they carried no `ram`
- *  block at all before, so they took the plain path). Running that compositor with the multiply
- *  stubbed out is a THIRD configuration that exists in neither build, and it is badly wrong:
- *  Civilight Eterna scores 48.646 that way against 17.921 shipped and 17.908 before. To compare
- *  against the old renderer, check out the old renderer. */
-/** `?erase=0` restores the previous behaviour for `ISceneLayer.erase` layers, which was not
- *  to receive them at all (the exporter dropped them as grab-pass maps). Read by checking
- *  for the explicit string, never a falsy coercion. */
 /** `?disturb2=0` drops the second noise lookup of {@link ISceneRam.disturb2}, which leaves a
  *  Disturb2 layer warped by its first noise alone (the export before 2026-09-07 drew it as a
  *  plain quad, which `DYNCHAR_DISTURB2=0` restores on the exporter). Explicit string. */
@@ -457,10 +446,21 @@ function maskNpmOn(): boolean {
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("masknpm") !== "0";
 }
+/** `?erase=0` restores the previous behaviour for `ISceneLayer.erase` layers, which was not
+ *  to receive them at all (the exporter dropped them as grab-pass maps). Read by checking
+ *  for the explicit string, never a falsy coercion. */
 function eraseMasksOn(): boolean {
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("erase") !== "0";
 }
+/** `?ramtex=0` stubs the `_RamTex` multiply out of the Ram scene compositor (diagnostic).
+ *
+ *  ⚠️ This is NOT a revert to the pre-ramp build, and must not be read as one. Adding the slot
+ *  also moved RAMP-ONLY layers onto the Ram compositor for the first time (they carried no `ram`
+ *  block at all before, so they took the plain path). Running that compositor with the multiply
+ *  stubbed out is a THIRD configuration that exists in neither build, and it is badly wrong:
+ *  Civilight Eterna scores 48.646 that way against 17.921 shipped and 17.908 before. To compare
+ *  against the old renderer, check out the old renderer. */
 function ramTexOn(): boolean {
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("ramtex") !== "0";
@@ -623,9 +623,6 @@ function loadTexture(url: string, signal?: AbortSignal): Promise<ISceneTex> {
     });
 }
 
-/** Attenuation for caustic / light-dome OVERLAY layers (a small texture stretched
- *  over a large mesh) - approximates the engine's absent HDR tonemap so they read
- *  as a faint ripple, not a bold white swirl over the scene. */
 /** `?bgglow=1` promotes white non-opaque BACKGROUND glow sheets to additive (diagnostic). */
 function bgGlowAdditive(): boolean {
     if (typeof window === "undefined") return false;
@@ -690,8 +687,8 @@ function layerColorScales(): Map<number, [number, number, number]> {
  *  is worth 0.211 MADC, and the winning ratio is exactly what gamma-encoding that tint gives
  *  (R x1.62, G x1.52, B x1.00). A neutral tint is a fixed point under any exponent, so this
  *  only moves layers the author actually coloured. Distinct from the REFUTED linear-space
- *  COMPOSITE (see memory `dynchar-linear-compositing-refuted`) - that changed every blend;
- *  this changes only how an authored tint is interpreted. 1 = no-op.
+ *  COMPOSITE, which changed every blend; this changes only how an authored tint is
+ *  interpreted. 1 = no-op.
  *
  *  MEASURED AND REFUTED as a general rule. Optimum sits at ~1.4, NOT the 2.2 a real sRGB/linear
  *  mismatch would imply, and it is two-signed across skins:
@@ -713,6 +710,9 @@ function encodeTint(t: readonly number[]): [number, number, number, number] {
     return [t[0] ** e, t[1] ** e, t[2] ** e, t[3]];
 }
 
+/** Attenuation for caustic / light-dome OVERLAY layers (a small texture stretched
+ *  over a large mesh) - approximates the engine's absent HDR tonemap so they read
+ *  as a faint ripple, not a bold white swirl over the scene. */
 const EFFECT_SCENE_GAIN = 0.3;
 /** {@link EFFECT_SCENE_GAIN} tames ADDITIVE layers ONLY. `?gainadd=0` restores the old
  *  behaviour, which tamed normal-blend layers too.
@@ -720,7 +720,7 @@ const EFFECT_SCENE_GAIN = 0.3;
  *  The taming exists because an ADDITIVE overlay SUMS light and blows out where the engine
  *  tonemaps it. A NORMAL-blend layer cannot blow out - its alpha is COVERAGE, not intensity -
  *  so damping it only reveals whatever sits behind, dimming art the game draws at full
- *  strength. This is the same distinction the duplicate-quad rule above already makes.
+ *  strength. Same distinction as `isPaintedSurface` (see SURFACE_OPAQUE_MIN).
  *
  *  Measured: a skin's response to full gain tracks the ADDITIVE FRACTION of its tamed layers
  *  almost exactly. eyja (0/4 additive) and mue (0/137) both WANT full gain; ska (6/6),
@@ -774,20 +774,6 @@ function effectStretchMin(): number {
     const v = parseFloat(new URLSearchParams(window.location.search).get("stretchmin") ?? "");
     return Number.isFinite(v) && v >= 0 ? v : EFFECT_STRETCH_MIN;
 }
-/** Does this layer TILE its texture - i.e. do its UVs span more than one full repeat on
- *  either axis?
- *
- *  This separates the two populations `isEffect` currently conflates. That rule's stated
- *  intent is "a SMALL texture STRETCHED over a large mesh" (a caustic / light dome), but it
- *  tests texture size ALONE, so a repeating PATTERN drawn at native scale - a striped light
- *  curtain, a rain sheet, a music-staff overlay - is tamed like a caustic even though it is
- *  ordinary painted coverage. A tiled layer is by construction NOT stretched: it repeats to
- *  fill the mesh at its authored density.
- *
- *  Measured on Virtuosa, whose backdrop is a tiled vertical curtain: the game's stripe
- *  pattern is in exact horizontal PHASE with ours (0 px shift at every scored beat) and at
- *  the same frequency, but 1.4x-5x our amplitude - right pattern, right place, too weak.
- *  53 of her 98 layers are tiled. */
 /** Exempt tiled layers from `EFFECT_SCENE_GAIN`? **DISABLED - MEASURED AND REJECTED.**
  *
  *  The reasoning was sound and the symptom is real: Virtuosa's backdrop stripes are in exact
@@ -852,6 +838,20 @@ function paintedSheetWhitenessMin(): number {
     return Number.isFinite(v) && v >= 0 ? v : PAINTED_SHEET_WHITENESS_MIN;
 }
 
+/** Does this layer TILE its texture - i.e. do its UVs span more than one full repeat on
+ *  either axis?
+ *
+ *  This separates the two populations `isEffect` currently conflates. That rule's stated
+ *  intent is "a SMALL texture STRETCHED over a large mesh" (a caustic / light dome), but it
+ *  tests texture size ALONE, so a repeating PATTERN drawn at native scale - a striped light
+ *  curtain, a rain sheet, a music-staff overlay - is tamed like a caustic even though it is
+ *  ordinary painted coverage. A tiled layer is by construction NOT stretched: it repeats to
+ *  fill the mesh at its authored density.
+ *
+ *  Measured on Virtuosa, whose backdrop is a tiled vertical curtain: the game's stripe
+ *  pattern is in exact horizontal PHASE with ours (0 px shift at every scored beat) and at
+ *  the same frequency, but 1.4x-5x our amplitude - right pattern, right place, too weak.
+ *  53 of her 98 layers are tiled. */
 function isTiledLayer(layer: ISceneLayer): boolean {
     const uv = layer.uv;
     if (!uv || uv.length < 4) return false;
@@ -925,6 +925,32 @@ function spanOf(layer: ISceneLayer, axis: 0 | 1): number {
     return hi > lo ? hi - lo : 0;
 }
 
+/** `?noveil=1` turns the veil demotion off outright (diagnostic, see its use in loadSceneMeshes). */
+function veilDisabled(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("noveil") === "1";
+}
+/** A foreground layer whose texture saturation reaches this is NOT a white veil, whatever its
+ *  whiteness measures. `?veilsat=0` restores the old whiteness-only rule.
+ *
+ *  {@link VEIL_WHITENESS_MIN} keys on whiteness ALONE, and a warm COLOURED overlay can clear it:
+ *  fugue's campfire flame is `rgbMean [210,124,125]` - sat 0.276, whiteness **0.693** - so it was
+ *  demoted behind the spine and the character art occluded it ENTIRELY. Freeing its
+ *  `EFFECT_SCENE_GAIN` changed 0 pixels there precisely because it was drawing behind her. The
+ *  doc on VEIL_WHITENESS_MIN already says coloured fx (red halftones/slashes) must stay in
+ *  front; whiteness alone cannot express that, and this is the missing term.
+ *
+ *  Threshold placed on measurement, not taste: every veil-classified layer across the eight
+ *  reference skins has sat **< 0.10** (the corpus is bit-identical at `?veilsat=0.10`, 0.25 and
+ *  0.15 alike), while the flame sits at 0.276. 0.25 is the conservative end of that gap - it
+ *  exempts as few layers as possible while still clearing the flame. fugue 14.081 -> 13.617;
+ *  corpus unchanged at 11.759. */
+const VEIL_SAT_MAX = 0.25;
+function veilSatMin(): number {
+    if (typeof window === "undefined") return VEIL_SAT_MAX;
+    const v = parseFloat(new URLSearchParams(window.location.search).get("veilsat") ?? "");
+    return Number.isFinite(v) && v >= 0 ? v : VEIL_SAT_MAX;
+}
 /** Exempt full-frame layers from the `isVeil` demotion? **DISABLED - MEASURED AND REJECTED.**
  *
  *  The reasoning was sound and the mis-classification is real: `isEffect` measures a layer's
@@ -955,31 +981,6 @@ function spanOf(layer: ISceneLayer, axis: 0 | 1): number {
  *  affected skins to calibrate against - the corpus scan counts layers, not consequences.
  *
  *  `?veilcover=1` re-enables it for a re-test. */
-function veilDisabled(): boolean {
-    if (typeof window === "undefined") return false;
-    return new URLSearchParams(window.location.search).get("noveil") === "1";
-}
-/** A foreground layer whose texture saturation reaches this is NOT a white veil, whatever its
- *  whiteness measures. `?veilsat=0` restores the old whiteness-only rule.
- *
- *  {@link VEIL_WHITENESS_MIN} keys on whiteness ALONE, and a warm COLOURED overlay can clear it:
- *  fugue's campfire flame is `rgbMean [210,124,125]` - sat 0.276, whiteness **0.693** - so it was
- *  demoted behind the spine and the character art occluded it ENTIRELY. Freeing its
- *  `EFFECT_SCENE_GAIN` changed 0 pixels there precisely because it was drawing behind her. The
- *  doc on VEIL_WHITENESS_MIN already says coloured fx (red halftones/slashes) must stay in
- *  front; whiteness alone cannot express that, and this is the missing term.
- *
- *  Threshold placed on measurement, not taste: every veil-classified layer across the eight
- *  reference skins has sat **< 0.10** (the corpus is bit-identical at `?veilsat=0.10`, 0.25 and
- *  0.15 alike), while the flame sits at 0.276. 0.25 is the conservative end of that gap - it
- *  exempts as few layers as possible while still clearing the flame. fugue 14.081 -> 13.617;
- *  corpus unchanged at 11.759. */
-const VEIL_SAT_MAX = 0.25;
-function veilSatMin(): number {
-    if (typeof window === "undefined") return VEIL_SAT_MAX;
-    const v = parseFloat(new URLSearchParams(window.location.search).get("veilsat") ?? "");
-    return Number.isFinite(v) && v >= 0 ? v : VEIL_SAT_MAX;
-}
 function veilFrameCoverExempt(): boolean {
     if (typeof window === "undefined") return false;
     return new URLSearchParams(window.location.search).get("veilcover") === "1";
@@ -989,15 +990,14 @@ function veilFrameCoverExempt(): boolean {
  *  outside it is side comic-fx (left normal). Spine root is at x=0. */
 const CHAR_COLUMN_HALF = 300;
 
-/** A small, VERY bright, VERY desaturated, NON-solid scene sprite is a Unity additive
- *  LIGHT-GLOW sheet (Virtuosa's mirror-world white facet glows: tex 64–128px, whiteness
- *  0.73–0.95, sat ≤0.11, opaqueFrac ≤0.6). Exported normal-blend, a stack of them
- *  MULTIPLIES the bright painted backdrop down to a dim blue (game keeps it high-key
- *  white). Rendered ADDITIVE they ADD light instead - restoring the game's bright
- *  mirror-world. The tight gate excludes: solid white walls (Wišʼadel's studio wall,
- *  opaqueFrac ≥0.9), coloured comic-fx (saturated), the mid-white haze VEILS that must
- *  stay demoted (whiteness ≤~0.6, below the 0.7 floor), and the 1024px painted
- *  backdrops (not effect-sized). Property-driven - no per-skin constant. */
+/** A small, VERY bright, VERY desaturated, NON-solid scene sprite is a LIGHT-GLOW sheet
+ *  (Virtuosa's mirror-world white facet glows: tex 64–128px, whiteness 0.73–0.95,
+ *  sat ≤0.11, opaqueFrac ≤0.6). It keeps its authored blend at FULL gain; promoting it to
+ *  additive stacked ~34 copies into a milky wash (see the V-b note in loadSceneMeshes).
+ *  The tight gate excludes: solid white walls (Wišʼadel's studio wall, opaqueFrac ≥0.9),
+ *  coloured comic-fx (saturated), the mid-white haze VEILS that must stay demoted
+ *  (whiteness ≤~0.6, below the 0.7 floor), and the 1024px painted backdrops (not
+ *  effect-sized). Property-driven - no per-skin constant. */
 const LIGHT_GLOW_WHITENESS = 0.7;
 const LIGHT_GLOW_SAT_MAX = 0.15;
 const LIGHT_GLOW_OPAQUE_MAX = 0.6;
@@ -1072,10 +1072,10 @@ export interface ISceneLayerRuntime {
     /** Capability B: a copy of the layer's RAW mesh UVs in UNITY space (un-flipped), so the ST
      *  curve is applied in Unity space and V is flipped once at write time. */
     __stBaseUnity?: Float32Array | null;
-    /** Ram masking: each mask's UV/second scroll, re-applied to the shader every frame
-     *  by {@link applySceneLayerRamScroll}. Absent unless the layer carries {@link ISceneRam}. */
     /** Entrance `_Amount` replay (`?amountcurve=1`): the curve, absent for layers without one. */
     __amountCurve?: [number, number][] | null;
+    /** Ram masking: each mask's UV/second scroll, re-applied to the shader every frame
+     *  by {@link applySceneLayerRamScroll}. Absent unless the layer carries {@link ISceneRam}. */
     __ramSpeed?: { dissolve: [number, number]; disturb: [number, number]; disturb2?: [number, number] | null } | null;
     /** Bone attachment (see {@link ISceneLayer.followBone}): the followed bone name, its
      *  `followBoneRotation` flag, and the follower's BAKED world pose (origin + rotation
@@ -1672,10 +1672,6 @@ function layerUvRectPx(layer: ISceneLayer, tex: ISceneTex): { w: number; h: numb
     return { w: (uMax - uMin) * tex.raw.width, h: (vMax - vMin) * tex.raw.height };
 }
 
-/**
- * Build a Pixi mesh for one layer. Y is flipped (authored Y-up -> Pixi Y-down)
- * and V is flipped (Unity -> Pixi UV), matching the exporter's coordinate note.
- */
 /** Authored XY bounds `[minX, minY, maxX, maxY]` of a layer's mesh, from its flat
  *  `[x0,y0,x1,y1,…]` position array. Used to tell whether a demoted layer actually
  *  COVERS another one - see the order-preserving demotion pass. */
@@ -1693,6 +1689,10 @@ function boundsOf(pos: number[]): [number, number, number, number] {
     return [minX, minY, maxX, maxY];
 }
 
+/**
+ * Build a Pixi mesh for one layer. Y is flipped (authored Y-up -> Pixi Y-down)
+ * and V is flipped (Unity -> Pixi UV), matching the exporter's coordinate note.
+ */
 function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex | null, forceAdditive = false, fullGain = false, temperLargeAdditive = false): PIXI.Mesh | null {
     const vertexCount = layer.pos.length / 2;
     if (vertexCount < 3 || layer.idx.length < 3) return null;
@@ -1716,7 +1716,7 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex
     const effRect = layerUvRectPx(layer, tex);
     const isEffect = effRect.w <= EFFECT_TEX_MAX && effRect.h <= EFFECT_TEX_MAX && layerStretch(layer, effRect) >= effectStretchMin();
     // `EFFECT_SCENE_GAIN` tames small caustic overlays (they'd otherwise over-cover);
-    // but an additive LIGHT-GLOW sheet (fullGain) must contribute its full energy - the
+    // but a LIGHT-GLOW sheet (fullGain) must contribute its full energy - the
     // HDR float target + tonemap handle the peaks - else it can't lift the backdrop.
     // A LARGE (non-effect) additive layer, otherwise full-gain (1), is tamed too
     // (`temperLargeAdditive`, from the scene-level `hasDarkBackdrop` flag below), else it sums
@@ -1728,12 +1728,10 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex
     // SURFACE_OPAQUE_MIN): its alpha carries coverage, not intensity, so scaling it only
     // reveals the void behind.
     const isPaintedSurface = !additive && tex.opaqueFrac >= SURFACE_OPAQUE_MIN && tex.sat >= SURFACE_SAT_MIN;
-    // A TILED layer is exempt from the taming (see isTiledLayer): it is repeating painted
-    // coverage, not a small texture stretched into a caustic, so scaling it only dims art the
-    // game draws at full strength. Applied to the GAIN decision ONLY - `isEffect` also feeds
-    // `hasDarkBackdrop` detection and the `isVeil` re-sort, and gating all three at once
-    // reconfigures the whole scene (it previously drove Virtuosa to 25.294). `?tiled=0`
-    // restores the old behaviour for an A/B.
+    // TILED-layer exemption from the taming (see isTiledLayer), measured and rejected, so OFF
+    // unless `?tiled=1` (see tiledExemptEnabled). Applied to the GAIN decision ONLY - `isEffect`
+    // also feeds `hasDarkBackdrop` detection and the `isVeil` re-sort, and gating all three at
+    // once reconfigures the whole scene (it previously drove Virtuosa to 25.294).
     const tiledExempt = isTiledLayer(layer) && tiledExemptEnabled();
     // A painted light SHEET keeps its full energy - see PAINTED_SHEET_WHITENESS_MIN. Distinct
     // from `isLightGlowSheet`, which needs >=0.70 whiteness and <=0.15 sat and deliberately
@@ -1796,25 +1794,18 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex
     const et = encodeTint(layer.tint);
     const rgb: [number, number, number, number] = additive ? [et[0] * gain, et[1] * gain, et[2] * gain, et[3]] : et;
     const alpha = additive ? et[3] : et[3] * gain;
-    // A layer whose SHAPE is a vertex-alpha gradient (soft light sheet over a
-    // flat texture) needs per-vertex colour, or it stamps a hard opaque block.
     const stashRuntime = (m: PIXI.DisplayObject) => {
         const rt = m as unknown as ISceneLayerRuntime;
         // Visibility window = the clip-authored reveal AND the cross-root prefab
         // activation (whichever is later). `isRevealOverlay` above deliberately keys
         // on the clip window alone - a root-revealed layer is scenery, not an overlay.
         const from = layer.activeFrom ?? null;
-        // DIAGNOSTIC (`?rrf=0`): ignore the cross-root activation beat, restoring the older
-        // "union always-on" behaviour. Tests whether the idle prefab's copy of the scene is
-        // being withheld during a window where the game already shows it.
-        // DIAGNOSTIC (`?rrf=0`): ignore the cross-root activation beat entirely. Tests whether
-        // the idle prefab's copy of the scene is being withheld during a window where the game
-        // already shows it. (`?rrfbg=1`, background-only, is applied in `buildScene` where
-        // `characterSort` is in scope.)
-        // DIAGNOSTIC (`?rrf=0` off entirely, `?rrft=<seconds>` override the beat). Sweeping the
-        // beat is what separates "the gate is wrong" from "its time is wrong" - on Wiš'adel the
-        // sweep came back cleanly MONOTONE with the shipped 12.0 optimal and every earlier value
-        // worse, which closed the cross-root avenue for her.
+        // DIAGNOSTIC (`?rrf=0` ignores the cross-root activation beat, restoring the older
+        // "union always-on" behaviour; `?rrft=<seconds>` overrides the beat). Tests whether the
+        // idle prefab's copy of the scene is withheld during a window where the game already
+        // shows it. Sweeping the beat separates "the gate is wrong" from "its time is wrong" -
+        // on Wiš'adel the sweep came back cleanly MONOTONE with the shipped 12.0 optimal and
+        // every earlier value worse, which closed the cross-root avenue for her.
         const q0 = typeof window === "undefined" ? null : new URLSearchParams(window.location.search);
         const rrfOn = !q0 || q0.get("rrf") !== "0";
         const rrfT = q0 ? parseFloat(q0.get("rrft") ?? "") : Number.NaN;
@@ -1855,9 +1846,6 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex
             rt.__stBaseUnity = Float32Array.from(layer.uv);
             if (layer.uvScroll && (layer.uvScroll[0] !== 0 || layer.uvScroll[1] !== 0)) rt.__uvScroll = layer.uvScroll;
         }
-        // Bone attachment: reduce the follower's baked world frame to a Y-DOWN origin and
-        // rotation angle. `followBasis` is row-major Y-up `[m00, m01, m10, m11]`, so its
-        // first column is `(m00, m10)` and the Y flip negates both the angle and origin Y.
         if (ramTex && layer.ram?.amountCurve?.length) rt.__amountCurve = layer.ram.amountCurve;
         if (layer.interact) {
             rt.__interact = layer.interact;
@@ -1879,12 +1867,17 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex
             };
         }
         if (ramTex && layer.ram) rt.__ramSpeed = { dissolve: layer.ram.dissolveSpeed, disturb: layer.ram.disturbSpeed, disturb2: layer.ram.disturb2 ? [layer.ram.disturb2[1], 0] : null };
+        // Bone attachment: reduce the follower's baked world frame to a Y-DOWN origin and
+        // rotation angle. `followBasis` is row-major Y-up `[m00, m01, m10, m11]`, so its
+        // first column is `(m00, m10)` and the Y flip negates both the angle and origin Y.
         if (layer.followBone && layer.followOrigin && layer.followBasis) {
             const [m00, , m10] = layer.followBasis;
             const [ox, oy] = layer.followOrigin;
             rt.__follow = { bone: layer.followBone, rot: layer.followBoneRot !== false, x: ox, y: -oy, angle: -Math.atan2(m10, m00) };
         }
     };
+    // A layer whose SHAPE is a vertex-alpha gradient (soft light sheet over a
+    // flat texture) needs per-vertex colour, or it stamps a hard opaque block.
     const hasVertexColor = !!layer.col && layer.col.length >= vertexCount * 4;
     if (hasVertexColor || isOverbrightLayer(layer) || ramTex) {
         const vmesh = buildVColorMesh(layer, base, rgb, alpha, hasVertexColor ? (layer.col ?? null) : null, ramTex);
@@ -2130,11 +2123,6 @@ function sceneAperture(data: ISceneData, bases: ISceneTex[]): ISceneAperture | n
     return null;
 }
 
-/**
- * Fetch and build the background/foreground mesh containers for a scene.
- * Returns null when there is no scene JSON (the common case - the skin's scene
- * is fully in the spine), so callers fall back to spine-only rendering.
- */
 /** The URL of texture `i`: the JSON's `textures` table resolved against the SKIN directory
  *  (the texture base URL minus its own `<name>[scene]/` or `<name>[particles]/` segment,
  *  which is the last one) when the exporter's pool wrote the table, else the legacy
@@ -2147,8 +2135,11 @@ export function pooledTextureURL(textureBaseURL: string, textures: string[] | un
     return skinBase + rel.split("/").map(encodeURIComponent).join("/");
 }
 
-/** `signal` aborts the scene JSON and every texture fetch when the caller's run is superseded;
- *  the abort propagates (an aborted run must not read as "no scene"). */
+/** Fetch and build the background/foreground mesh containers for a scene. Null when there is
+ *  no scene JSON (the common case: the skin's scene is fully in the spine), so callers fall
+ *  back to spine-only rendering. `signal` aborts the scene JSON and every texture fetch when
+ *  the caller's run is superseded; the abort propagates (an aborted run must not read as
+ *  "no scene"). */
 export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, bust = "", signal?: AbortSignal): Promise<ILoadedScene | null> {
     let data: ISceneData;
     try {
@@ -2213,14 +2204,6 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
 
     const background = new PIXI.Container();
     const foreground = new PIXI.Container();
-    // Solid painted BACKDROPS (large + near-fully-opaque, e.g. Wiš'adel's white
-    // studio wall) must sit at the very back: an opaque panel occludes everything
-    // Unity authored behind it (the red "WISADEL" graffiti at a lower sort), so
-    // those layers never render. Moving the backdrop to the back only REVEALS those
-    // previously-dead layers (never hides a visible one). Added to `background`
-    // first so it renders behind the rest.
-    /** Background-bound meshes carry their authored sort so the final order can be rebuilt
-     *  after the order-preserving demotion pass below. */
     // GAP CONTAINERS. The game splits the skeleton at `separatorSlots` and gives each part its
     // own sorting order, so a scene layer sorted BETWEEN two parts is drawn in that gap - over
     // the earlier part, under the later one. Drawing it in `foreground` puts it over the whole
@@ -2249,20 +2232,17 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
     // evidence class as STATE_ONLY. `?gaplayers=1` still force-seats every gap (the old
     // arm); `?gapbg=0` reverts the BG rule to the previous no-seating default exactly.
     const slotNames = data.separatorSlots ?? [];
-    // MEASURED 2026-09-02 and left OPT-IN (`?gapbg=1`), not default. The rule fixes the shu
-    // family decisively (shu_nian#11 occlusion 54.1 -> 4.5%, row -10.6 -> +0.2; shu_2
-    // 82.1 -> 16.8%, +5.5) and helps ling_nian#12 (+32.2 -> +12.9) and pepe_2
-    // (-18.3 -> -6.0), with ska/cel/wis controls unmoved. But chyue's ENTRANCE goes
-    // 15.253 -> 18.307 (r .945 -> .915, a sign-agreeing regression: her BG_A_Back gap
-    // bounds NEGATIVE sorts -25..-10, nothing the class's occlusion definition covers) and
-    // wang_2's settled reads -7.0 -> -17.9 against a stale baseline. Corpus-green blocks
-    // the default. The recorded refinement path: seat only gaps whose layers sort at or
-    // above characterSort (the only layers that can occlude the character), re-A/B against
-    // FRESH no-rule baselines, and re-arbitrate wang_2 against a capture before any default.
-    // DEFAULT ON since the sort-scoped A/B (2026-09-03): chyue's entrance returned to
-    // 15.253 r .945 exactly (arm byte-identical at the checked beat), shu_nian#11 held
-    // +0.2 at 4.5% occlusion, shu_2 16.8%, ling_nian#12 +31.2 -> +12.9, controls
-    // ska/cel/exc/wis byte-stable, and the only mover left is whitw2 +0.020 with r
+    // First A/B 2026-09-02, before the sort scope: the rule fixed the shu family decisively
+    // (shu_nian#11 occlusion 54.1 -> 4.5%, row -10.6 -> +0.2; shu_2 82.1 -> 16.8%, +5.5) and
+    // helped ling_nian#12 (+32.2 -> +12.9) and pepe_2 (-18.3 -> -6.0), with ska/cel/wis
+    // controls unmoved. But chyue's ENTRANCE went 15.253 -> 18.307 (r .945 -> .915, a
+    // sign-agreeing regression: her BG_A_Back gap bounds NEGATIVE sorts -25..-10, nothing the
+    // class's occlusion definition covers) and wang_2's settled read -7.0 -> -17.9 against a
+    // stale baseline, so it stayed opt-in.
+    // DEFAULT ON since the sort-scoped A/B (2026-09-03, SORT SCOPE in `gapSeats`): chyue's
+    // entrance returned to 15.253 r .945 exactly (arm byte-identical at the checked beat),
+    // shu_nian#11 held +0.2 at 4.5% occlusion, shu_2 16.8%, ling_nian#12 +31.2 -> +12.9,
+    // controls ska/cel/exc/wis byte-stable, and the only mover left is whitw2 +0.020 with r
     // unchanged. `?gapbg=0` restores the unseated behaviour exactly.
     const bgRuleOn = typeof window === "undefined" || new URLSearchParams(window.location.search).get("gapbg") !== "0";
     // OCCLUSION ADMISSION (2026-09-05, Degenbrecher "The Shadow of the Dark Moon"). Her two
@@ -2314,6 +2294,14 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
     const anyGapOccludes = partSorts.length >= 2 && Array.from({ length: partSorts.length - 1 }, (_, j) => partSorts[j] >= data.characterSort && gapOccludes(j)).some(Boolean);
     const gapsOn = partSorts.length >= 2 && (gapLayersEnabled() || (bgRuleOn && (slotNames.some((s) => typeof s === "string" && s.startsWith("BG_")) || anyGapOccludes)));
     const gapMeshes: { mesh: PIXI.Mesh; sort: number }[][] = Array.from({ length: Math.max(0, partSorts.length - 1) }, () => []);
+    // Solid painted BACKDROPS (large + near-fully-opaque, e.g. Wiš'adel's white
+    // studio wall) must sit at the very back: an opaque panel occludes everything
+    // Unity authored behind it (the red "WISADEL" graffiti at a lower sort), so
+    // those layers never render. Moving the backdrop to the back only REVEALS those
+    // previously-dead layers (never hides a visible one). Added to `background`
+    // first so it renders behind the rest.
+    /** Background-bound meshes carry their authored sort so the final order can be rebuilt
+     *  after the order-preserving demotion pass below. */
     const backdropMeshes: { mesh: PIXI.Mesh; sort: number }[] = [];
     const otherBg: { mesh: PIXI.Mesh; sort: number }[] = [];
     /** Foreground candidates, bucketed only once the demoted set is known. */
@@ -2454,9 +2442,8 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
             cxMax = Math.max(cxMax, layer.pos[i]);
         }
         const overCharacter = Math.abs((cxMin + cxMax) / 2) < CHAR_COLUMN_HALF;
-        // Bright desaturated non-solid light-glow sheets -> additive (un-darken the
-        // high-key mirror-world backdrop). Applies wherever they sit (fg or demoted bg),
-        // since additive light brightens from any depth. See LIGHT_GLOW_* above.
+        // Bright desaturated non-solid light-glow sheets keep their authored blend at full
+        // gain (see LIGHT_GLOW_* above and the V-b note below).
         const isLightGlowSheet = !layer.additive && isEffect && base.whiteness >= LIGHT_GLOW_WHITENESS && base.sat <= LIGHT_GLOW_SAT_MAX && base.opaqueFrac <= LIGHT_GLOW_OPAQUE_MAX;
         // V-b: these bright, desaturated, non-solid sheets (Virtuosa's Ram lattice/
         // cross-hatch, authored `additive:0` with TRANSPARENT fields) were force-promoted
@@ -2506,7 +2493,7 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
             runtime.__camLocked = true;
             if (layer.camLockViewPx) runtime.__camLockView = layer.camLockViewPx;
         }
-        // Same knob for layers with NO colour curve, which the runtime replay never visits.
+        // `?lcolor=` for layers with NO colour curve, which the runtime replay never visits.
         {
             const ls = layerColorScales().get(srcIndexOf.get(layer) ?? -1);
             const sh = (mesh as unknown as { shader?: PIXI.Shader }).shader;

@@ -287,17 +287,6 @@ function InterludeWindow({ channel, panel: p, sec }: { channel: string; panel: I
     );
 }
 
-/**
- * A face patch. `facePos` is the patch's TOP-LEFT corner in BODY TEXTURE
- * pixels and `w`/`h` the on-body size the 128 px face texture is scaled into
- * (Haak: 512,120,51,71). Body texture pixels are NOT canvas pixels: the plate
- * is 1024 canvas px whatever the texture measures, so the fraction of the
- * plate is `facePos / bodySize` and Haak's 1024 body was right only by
- * coincidence. Read defensively: the running backend predates the binding and
- * sends no `facePos` at all, and the legacy hubs write the sentinels (-1,-1)
- * and (0,0).
- */
-
 export function OverlayText({ overlay, kind }: { overlay: Overlay; kind: "subtitle" | "sticker" }): React.ReactElement {
     return (
         <div

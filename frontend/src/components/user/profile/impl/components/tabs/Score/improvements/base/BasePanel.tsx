@@ -9,8 +9,8 @@ import type { messages } from "./BasePanel.messages";
 /** A key in `BasePanel.messages.ts`; resolved by the panel below. */
 type MessageKey = keyof typeof messages & string;
 
-// Mirrors the backend's UTILIZATION_WEIGHT / INFRASTRUCTURE_WEIGHT constants
-// in `backend/src/core/grade/base/score.rs` - change both together.
+// Mirrors UTILIZATION_WEIGHT / INFRASTRUCTURE_WEIGHT in
+// `backend/src/core/grade/base/score.rs`; change both together.
 const COMPONENTS = [
     {
         key: "base_utilization",
@@ -32,10 +32,9 @@ interface IProps {
 }
 
 /**
- * The Base subscore's inline panel: the grade's two stored components -
- * stationing utilization (75%) and infrastructure completeness (25%). The
- * full plan, layout and rotation tooling live in the Optimizer tab, so this
- * panel stays a pure "which term drags my score" readout.
+ * The grade's two stored components, stationing utilization (75%) and
+ * infrastructure completeness (25%). Plans and rotations live in the
+ * Optimizer tab; this only answers "which term drags my score".
  */
 export function BasePanel({ score, accent }: IProps) {
     const t: TypedT<typeof messages> = useT("user");

@@ -33,8 +33,8 @@ const CharactersTab = lazy(() => import("../sprites/CharactersTab"));
 /**
  * The library at `/stories`: a page head, a compact continue row, one mode row,
  * and then a single continuous browse surface cut into the game's own storyline
- * sections. Reading Order, Illustrations and Progress are the other modes;
- * operator records are the browse surface's own last section.
+ * sections. Reading Order, Illustrations, Progress, Community and Characters are
+ * the other modes; operator records are the browse surface's own last section.
  *
  * Progress lives in localStorage, which the server does not have. The first
  * render on BOTH sides uses an empty progress and an effect swaps in the real

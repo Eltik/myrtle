@@ -48,7 +48,7 @@ function occLabel(occ: string, t: ScheduleSharedT): string {
  * every pill and overflow it.
  *
  * `swatch` is what the legend uses: the pill's own tint inside the pill's own border. A fully
- * opaque `dot` square beside 12% pills is the same hue and visibly a different colour.
+ * opaque `dot` square beside the tinted pills is the same hue and visibly a different colour.
  */
 export const KIND_STYLE: Record<ScheduleKind, { pill: string; swatch: string; dot: string; text: string }> = {
     event: {

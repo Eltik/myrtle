@@ -2,7 +2,7 @@
  * --filter-sidebar-offset is the bottom edge of whatever sticky chrome the page
  * keeps above the panel. The site header alone is 64px; a page that stacks more
  * (the profile's tab bar) raises it through FilterPanel's stickyOffset prop.
- * The 16px gap and the 96px (= offset + 32) viewport reservation stay fixed.
+ * The 16px gap and the extra 32px the max-height reserves past the offset stay fixed.
  */
 .filterSidebar {
     position: sticky;

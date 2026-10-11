@@ -241,11 +241,9 @@ const SPECIAL_SHARE_TOTAL = 1;
 const NO_RATE_UP_RULES = new Set(["ATTAIN", "CLASSIC_ATTAIN"]);
 
 /**
- * The share of the 6* band the featured operators take together.
- *
- * Read from the pool detail when it is present. The sidecar lags brand-new pools
- * (41 of 401 EN pools had no entry at the time of writing), so the rule type is the
- * fallback and the result is flagged `inferred` when that path is taken.
+ * The rule type's share of the 6* band for all featured operators together, used
+ * when the sidecar declares none. The sidecar lags brand-new pools (41 of 401 EN
+ * pools had no entry at the time of writing); `bannerModel` flags this path `inferred`.
  */
 function shareTotalFor(ruleType: string, poolId: string | null): number {
     if (poolId !== null && LIMITED_SHARE_POOL_IDS.has(poolId)) return 0.7;

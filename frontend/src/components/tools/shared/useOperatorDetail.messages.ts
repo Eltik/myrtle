@@ -3,8 +3,8 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 /**
  * The build-summary labels `useOperatorDetail` derives. Skill, module and
  * potential NAMES come from the game data and are never translated here; only
- * the chrome around them - the "no skill selected" wording, the designator
- * fallbacks, and the separator that joins a designator to a name - lives here.
+ * the chrome around them (the "no skill selected" wording, the designator
+ * fallbacks, the separator joining a designator to a name) lives here.
  */
 export const namespace = "tools";
 

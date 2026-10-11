@@ -57,7 +57,6 @@ export function Rail({ selection }: { selection: LibrarySelection }): React.Reac
 
     return (
         <>
-            {/* Phones: a select over the same list. */}
             <div className="flex items-center gap-2 md:hidden">
                 <Select
                     value={active}

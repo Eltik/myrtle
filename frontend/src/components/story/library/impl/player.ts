@@ -64,15 +64,13 @@ const INITIAL: IPlayerState = { track: null, paused: false, volume: DEFAULT_SETT
  * route, so the library is unmounted while a story is open and each side reads
  * the document fresh on mount.
  *
- * PAUSE IS A STOP THAT REMEMBERS ITS SECOND. `AudioBufferSourceNode` still
- * cannot be resumed, so a pause is still a stop, but the position is read off
- * the audio clock before the sources die and the resume starts new ones that
- * far into the cue, which the listener hears as a continuation rather than the
- * replay from the intro this used to be. The seek slider is the same
- * mechanism pointed anywhere on the timeline. What it costs: the join is
+ * PAUSE IS A STOP THAT REMEMBERS ITS SECOND. An `AudioBufferSourceNode` cannot
+ * be resumed, so the position is read off the audio clock before the sources
+ * die and the resume starts new ones that far into the cue. The seek slider is
+ * the same mechanism pointed anywhere on the timeline. The cost: the join is
  * rebuilt each time, and a channel whose decode fell back to a media element
- * reports no timeline at all, so there it remains a replay from the top and
- * the bar shows no slider.
+ * reports no timeline, so there a resume replays from the top and the bar
+ * shows no slider.
  */
 let audio: StoryAudio | null = null;
 let state: IPlayerState = INITIAL;

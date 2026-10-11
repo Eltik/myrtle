@@ -14,7 +14,7 @@
  * would look like a frozen reader. The rejection shows a Play button instead.
  *
  * Three layers draw the same clip, chosen by `cutscenePlayer`. `simple` is the
- * element this file has always rendered, controls and all absent. `native`
+ * bare element with no controls. `native`
  * hands the browser's own control bar the same element. `vidstack` is a
  * separate module behind `React.lazy`, so the player, its layout and its two
  * stylesheets are fetched by the READER THAT MEETS A CUTSCENE and by no other.
@@ -55,7 +55,7 @@ export interface ICutsceneProps {
      */
     volume: number;
     muted: boolean;
-    /** Which controls the clip carries. `simple` is the layer that shipped. */
+    /** Which controls the clip carries; `simple` carries none. */
     player: CutscenePlayer;
     /**
      * The player's OWN volume control moved: the reader's music level and mute

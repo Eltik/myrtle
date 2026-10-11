@@ -104,8 +104,8 @@ export function formatNumberCompact(n: number | null | undefined, locale: string
 export function formatSharePct(fraction: number, locale: string = DEFAULT_LOCALE): string {
     const p = fraction * 100;
     const digits = p >= 10 ? 0 : p >= 1 ? 1 : p > 0 ? 2 : 0;
-    // `style: "percent"` would re-multiply and, more importantly, moves the
-    // sign for locales that write it differently, which is the point.
+    // `style: "percent"` takes the fraction, not `p`, and places the sign the
+    // way each locale writes it.
     return new Intl.NumberFormat(locale, {
         style: "percent",
         minimumFractionDigits: digits,

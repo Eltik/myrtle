@@ -13,9 +13,8 @@ export interface II18nValue {
     /**
      * The game-data server this render reads operator/skill/stage text from
      * (`en`, `jp`, `kr`, `cn`, `tw`, `bili`): the visitor's pick, else the
-     * locale's. Read it with
-     * {@link useGamedataServer} and pass it to the `lib/api` game-data
-     * fetchers - it is part of their query keys.
+     * locale's. Read it with {@link useGamedataServer} and pass it to the
+     * `lib/api` game-data fetchers; it is part of their query keys.
      */
     gamedataServer: string;
     /** The server this locale reads when the visitor has not picked one. */
@@ -66,10 +65,9 @@ export function useI18n(): II18nValue {
  * Resolve one key: the locale's own translation, then the English source
  * bundled with the build.
  *
- * The database's `en` row reaches this through `messages` - so a copy fix
- * made in the admin panel wins over the bundled source without a rebuild -
- * and the bundled source is what keeps a brand-new or un-synced key from
- * rendering as a raw dotted identifier.
+ * The database's `en` row reaches this through `messages`, so an admin-panel
+ * copy fix wins over the bundled source without a rebuild; the bundled source
+ * keeps a brand-new or un-synced key from rendering as a raw dotted id.
  */
 function resolve(messages: Catalog, key: string): string {
     return messages[key] ?? SOURCE_CATALOG[key] ?? key;
@@ -98,11 +96,7 @@ export function useT(namespace?: string): TFunction {
     }, [locale, messages, namespace]);
 }
 
-/**
- * A formatter bound to the active locale, for the places that format numbers
- * and dates rather than messages. The formatters in `lib/utils.ts` take their
- * locale from here instead of hardcoding `en-US`.
- */
+/** The active locale, for code that formats numbers and dates rather than messages (the `lib/utils.ts` formatters, instead of hardcoding `en-US`). */
 export function useLocale(): string {
     return useI18n().locale;
 }

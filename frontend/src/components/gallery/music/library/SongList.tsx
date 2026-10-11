@@ -46,16 +46,12 @@ const CHECK_HIT = "pointer-coarse:after:absolute pointer-coarse:after:-inset-[15
 const GRID = "grid grid-cols-[28px_minmax(0,1fr)_32px_32px] items-center gap-x-2 sm:grid-cols-[28px_minmax(0,1fr)_minmax(0,22%)_minmax(0,18%)_32px_32px]";
 
 /**
- * THE SONG LIST All Songs, Liked, Recently Played, an artist and a playlist
- * share. Playback starts only from a row's number, cover or title, so a row
- * can be selected or its album opened without playing anything. A page of
- * rows mounts at a time behind "Show more".
+ * Shared by All Songs, Liked, Recently Played, artists and playlists. Only a
+ * row's number, cover or title plays it, so selecting a row or opening its
+ * album doesn't. Rows mount a page at a time behind "Show more".
  *
- * A long list stays cheap to scroll: off-screen rows skip style, layout and
- * paint (`content-visibility: auto` with a 48 px estimate, a row's desktop
- * height; `auto` remembers the real one once drawn), row covers decode off
- * the main thread, and rows are memoised with stable callbacks, so selecting
- * or dragging re-renders only the rows that changed.
+ * Scroll cost: `content-visibility: auto` with a 48 px estimate (desktop row
+ * height), async cover decode, and memoised rows with stable callbacks.
  */
 export function SongList({ tracks, source, houseArtist, playlist, pageKey }: ISongListProps): React.ReactElement {
     const t: MusicT = useT("gallery");

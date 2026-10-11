@@ -6,9 +6,9 @@ type FontInput = NonNullable<SatoriOptions["fonts"]>[number];
 const FONT_BASE = `${OG_CONFIG.siteURL.replace(/\/$/, "")}/fonts`;
 
 // Order matters: satori resolves each glyph against these in turn, so the Latin
-// faces stay first and the wider-coverage ones act as fallbacks. Operator names
-// come straight from gamedata, so a CN-only operator's name is Han (and a few
-// are Cyrillic) -- without these the card renders tofu boxes where the name goes.
+// faces stay first and the wider-coverage ones act as fallbacks. A CN-only
+// operator's name is Han (a few are Cyrillic), and without these the card
+// renders tofu boxes where the name goes.
 const FONTS = [
     {
         name: "Inter",

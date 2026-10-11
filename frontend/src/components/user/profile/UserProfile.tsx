@@ -173,9 +173,9 @@ export function UserProfile() {
     // The background editor is open. Its draft lives in the editor, previewed there; the page's header keeps the saved background.
     const [editingBackground, setEditingBackground] = useState(false);
 
-    // The profile record and roster power the hero, stat strip and several tab
-    // counts, so both stay eager. Everything else is fetched once its tab first
-    // becomes active.
+    // The profile record and roster feed the hero, stat strip and several tab
+    // counts, so they load up front (the roster unless its tab is hidden).
+    // Everything else waits for its tab.
     const { data, isLoading } = useQuery(userQueryOptions(id));
 
     // With no layout saved (`null`) every line below reduces to the default page:
@@ -227,8 +227,7 @@ export function UserProfile() {
         ...operatorsRosterQueryOptions(gamedataServer),
         enabled: activeTab !== null && FULL_TABLE_TABS.has(activeTab) && loadedChunks.has(activeTab),
     });
-    // Improvements only fire while the Score tab is mounted - it's a heavier
-    // payload than the headline score, so don't pay for it on every profile view.
+    // Score tab only: a heavier payload than the headline score.
     const { data: improvements, isLoading: isImprovementsLoading } = useQuery({
         ...userImprovementsQueryOptions(id),
         enabled: activeTab === "score",

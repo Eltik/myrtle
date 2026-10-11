@@ -29,10 +29,6 @@ import { CROSSFADE_MAX, CROSSFADE_MIN, DEFAULT_SETTINGS, type ILyricLine, type I
  * audio elements survive a client-side navigation away and back.
  */
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
 const SESSION_KEY = "myrtle.music.session";
 const SETTINGS_KEY = "myrtle.music.settings";
 const VOLUME_KEY = "myrtle.music.volume";
@@ -69,10 +65,6 @@ const LOOP_PASSES = 2;
  */
 const LEVELING_ON = { threshold: -24, knee: 6, ratio: 4, attack: 0.003, release: 0.25 } as const;
 const LEVELING_OFF = { threshold: 0, knee: 0, ratio: 1, attack: 0.003, release: 0.25 } as const;
-
-// ---------------------------------------------------------------------------
-// Stores
-// ---------------------------------------------------------------------------
 
 const INITIAL: IPlayerState = {
     queue: [],
@@ -130,10 +122,6 @@ export const SHORTCUTS: readonly IShortcut[] = [
     { id: "music.shortcut.close", keys: ["Esc"] },
 ];
 
-// ---------------------------------------------------------------------------
-// Module state
-// ---------------------------------------------------------------------------
-
 let catalog: ICatalog | null = null;
 /** The saved session, read once, held until the catalogue can resolve it. `undefined` = not read yet. */
 let pendingSession: ISession | null | undefined;
@@ -159,10 +147,6 @@ function notify(n: INotice): void {
     notifier?.(n);
 }
 
-// ---------------------------------------------------------------------------
-// Playhead
-// ---------------------------------------------------------------------------
-
 let lastPlayheadAt = 0;
 let lastPositionStateAt = 0;
 
@@ -180,10 +164,6 @@ function publishPlayhead(next: Partial<IPlayhead>, force = false): void {
         mediaPositionState();
     }
 }
-
-// ---------------------------------------------------------------------------
-// Listening time and play logging
-// ---------------------------------------------------------------------------
 
 interface IListen {
     trackId: string | null;
@@ -231,9 +211,7 @@ function finalizeListen(): void {
     beginListen(null);
 }
 
-// ---------------------------------------------------------------------------
-// Stream transport: two media elements and a lazily built Web Audio graph
-// ---------------------------------------------------------------------------
+// Stream transport: two media elements and a lazily built Web Audio graph.
 
 interface IDeck {
     el: HTMLAudioElement;
@@ -531,8 +509,6 @@ function unloadDecks(): void {
     }
 }
 
-// --- Preload ---------------------------------------------------------------
-
 function preloadEnabled(choice: PreloadChoice): boolean {
     if (choice === "on") return true;
     if (choice === "off") return false;
@@ -573,8 +549,6 @@ function schedulePreload(): void {
     idle.preloaded = true;
     idle.retried = false;
 }
-
-// --- Crossfade -------------------------------------------------------------
 
 function maybeCrossfade(deck: IDeck): void {
     const s = state();
@@ -656,9 +630,7 @@ function cancelFade(): void {
     endFade();
 }
 
-// ---------------------------------------------------------------------------
-// Loop transport: in-game tracks on the story engine
-// ---------------------------------------------------------------------------
+// Loop transport: in-game tracks on the story engine.
 
 interface ILoop {
     trackId: string;
@@ -853,10 +825,6 @@ function seekLoop(seconds: number): void {
     publishPlayhead({ position: to }, true);
 }
 
-// ---------------------------------------------------------------------------
-// Duration probe: the length of a track that is current but not playing
-// ---------------------------------------------------------------------------
-
 /**
  * A restored session, or an in-game track made current while paused, has no
  * transport that knows its length: a label track's deck is not loaded yet and
@@ -920,10 +888,6 @@ function probeLength(track: ITrack): void {
         if (token === probeToken) publishProbed(track.id, r);
     });
 }
-
-// ---------------------------------------------------------------------------
-// Track lifecycle
-// ---------------------------------------------------------------------------
 
 function startTrack(track: ITrack, offset: number, autoplay: boolean): void {
     const kind = trackSource(track).kind;
@@ -1033,10 +997,6 @@ function armAudio(): void {
     ensureStory().arm();
     armed = true;
 }
-
-// ---------------------------------------------------------------------------
-// Public actions
-// ---------------------------------------------------------------------------
 
 /** The page hands over the latest catalogue: radio reads it, and a saved session waits for it. */
 export function setCatalog(next: ICatalog | null): void {
@@ -1355,10 +1315,6 @@ export function setShortcutsOpen(open: boolean): void {
     set({ shortcutsOpen: open });
 }
 
-// ---------------------------------------------------------------------------
-// Persistence: settings, volume, session
-// ---------------------------------------------------------------------------
-
 interface ISession {
     trackIds: string[];
     index: number;
@@ -1476,10 +1432,6 @@ function saveSession(): void {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Lyrics
-// ---------------------------------------------------------------------------
-
 const lyricsCache = new Map<string, ILyricLine[]>();
 let lyricsAbort: AbortController | null = null;
 
@@ -1522,10 +1474,6 @@ function loadLyrics(track: ITrack | null): void {
             if (state().current?.id === track.id) set({ lyrics: { trackId: track.id, status: "failed", lines: [] } });
         });
 }
-
-// ---------------------------------------------------------------------------
-// Media Session
-// ---------------------------------------------------------------------------
 
 function mediaSession(): MediaSession | null {
     if (typeof navigator === "undefined") return null;
@@ -1609,9 +1557,7 @@ function bindMediaSession(): () => void {
     };
 }
 
-// ---------------------------------------------------------------------------
-// Store watcher: lyrics, metadata and the session follow the state
-// ---------------------------------------------------------------------------
+// Lyrics, Media Session metadata and the saved session follow the store.
 
 let watchedTrackId: string | null = null;
 let watched: Pick<IPlayerState, "queue" | "index" | "order" | "shuffle" | "repeat" | "source" | "status"> | null = null;
@@ -1639,10 +1585,6 @@ playerStore.subscribe((s: IPlayerState) => {
         saveSessionSoon();
     }
 });
-
-// ---------------------------------------------------------------------------
-// Keyboard
-// ---------------------------------------------------------------------------
 
 function isTypingTarget(target: EventTarget | null): boolean {
     const el = target as HTMLElement | null;
@@ -1698,10 +1640,6 @@ export function handleKeydown(e: KeyboardEvent): void {
     else handled = false;
     if (handled) e.preventDefault();
 }
-
-// ---------------------------------------------------------------------------
-// Hooks
-// ---------------------------------------------------------------------------
 
 export function usePlayer<T>(selector: (s: IPlayerState) => T): T {
     return useStore(playerStore, selector);

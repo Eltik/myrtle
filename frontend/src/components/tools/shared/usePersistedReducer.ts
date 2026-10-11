@@ -36,7 +36,7 @@ export function usePersistedReducer<S, A extends { type: string }>(storageKey: s
             const merged = merge(parsed);
             if (merged) dispatch(hydrateAction(merged));
         } catch {
-            // Malformed stored value - ignore and fall back to the default state.
+            // Malformed stored value: keep the default state.
         }
         hydratedRef.current = true;
         setHydrationToken((t) => t + 1);
@@ -47,7 +47,7 @@ export function usePersistedReducer<S, A extends { type: string }>(storageKey: s
         try {
             window.localStorage.setItem(storageKey, JSON.stringify(state));
         } catch {
-            // Storage quota exhausted or other failure - silently ignore.
+            // Quota or a blocked store: the state just isn't saved this time.
         }
     }, [storageKey, state]);
 

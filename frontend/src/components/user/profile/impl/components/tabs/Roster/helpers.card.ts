@@ -99,9 +99,8 @@ export function isMaxed(entry: IOwnedEntry): boolean {
     if (entry.rarity > 2 && entry.skill_level !== 7) return false;
 
     if (maxElite === 2) {
-        // 4★+ operators at E2 should have at least one mastery row recorded
-        // (even at mastery=0). An empty array means the data is missing/never
-        // synced - treat that as not-maxed instead of vacuously true.
+        // An E2 4★+ always has mastery rows (even at mastery=0); an empty array
+        // means it never synced, so not maxed rather than vacuously true.
         if (entry.rarity >= 4 && entry.masteries.length === 0) return false;
         if (!entry.masteries.every((m) => m.mastery === 3)) return false;
 
@@ -155,7 +154,7 @@ function levelWeight(rarity: number): number {
     }
 }
 
-/** ln(1+t)/ln(2) - log compression of a 0..1 ratio (`log_curve_ratio`). */
+/** ln(1+t)/ln(2): log compression of a 0..1 ratio (`log_curve_ratio`). */
 function logCurveRatio(t: number): number {
     return Math.log(1 + t) / Math.LN2;
 }
@@ -219,7 +218,7 @@ function maxPotential(op: IOperatorBuildCeilings): number {
     return op.potentialRankCount;
 }
 
-/** Advanced (non-default) modules - the only ones that count (`advanced_modules`). */
+/** Only advanced (non-default) modules count (`advanced_modules`). */
 function advancedModules(op: IOperatorBuildCeilings) {
     return op.modules.filter((m) => m.type === "ADVANCED");
 }
@@ -233,8 +232,8 @@ function advancedModuleLevels(entry: IRosterEntry, advanced: IOperatorIndexModul
 type Dimension = [weight: number, score: number];
 
 /**
- * Build the applicable (weight, score) dimensions for an operator - the same
- * shape as the backend `build_dimensions`.
+ * The applicable (weight, score) dimensions for an operator, same shape as the
+ * backend `build_dimensions`.
  *
  * Differences vs. the server: the elite and level weights are this card's own
  * (the server's are 35 and 25/40); potential is counted for every operator
@@ -281,8 +280,8 @@ function operatorDimensions(entry: IRosterEntry, op: IOperatorBuildCeilings, rar
 }
 
 /**
- * How "complete" an owned operator is, as a 0..1 fraction - the weight-normalized
- * average of its applicable investment dimensions. Follows the backend's
+ * How "complete" an owned operator is, 0..1: the weight-normalized average of
+ * its applicable investment dimensions. Follows the backend's
  * `grade_operator` (same milestone curves and log-compressed leveling; see
  * {@link operatorDimensions} for where the weights differ). Dimensions that
  * don't apply are skipped (a 3★ has no E2/mastery/module), so a fully-built

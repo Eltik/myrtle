@@ -21,7 +21,7 @@
   --font-heading: "Inter Variable", ui-sans-serif, system-ui, var(--font-cjk), sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, var(--font-cjk), monospace;
   --font-display: "Fraunces", Georgia, var(--font-cjk), serif;
-  /* Squared-off technical numerals - RIIC readouts, not body copy. */
+  /* Squared-off technical numerals for RIIC readouts, not body copy. */
   --font-techno: "Orbitron Variable", var(--font-mono);
 }
 
@@ -482,7 +482,7 @@ pre code {
    Uppercase and 0.12em tracking are Latin typographic devices. Hangul, kana
    and Han are syllable blocks: `text-transform` does nothing to them, and the
    tracking pushes the blocks apart into something that reads as broken rather
-   than as styled - which is what the Korean profile screenshot showed. Those
+   than as styled, which is what the Korean profile screenshot showed. Those
    locales get the sans face at a heavier weight, which is the same emphasis
    the tracking was buying in Latin. */
 @layer components {

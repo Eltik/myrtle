@@ -56,7 +56,6 @@ export function ShareDialog({ open, onOpenChange, draft, seats, support, operato
         }
     };
 
-    // ---- image
     const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
     const [preview, setPreview] = React.useState<string | null>(null);
     const [failed, setFailed] = React.useState(false);

@@ -141,7 +141,6 @@ export function searchGroups(groups: readonly IGroupOption[], query: string): IG
     return searchAndRank(query, groups, (group) => ({ name: group.name, extra: group.id })).map((scored) => scored.item);
 }
 
-/** Whether any part of a filter narrows the tiles. */
 export function anyGalleryFilter(filter: IGalleryFilter): boolean {
     return filter.categories.length > 0 || filter.group !== null || filter.query.trim().length > 0;
 }

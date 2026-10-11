@@ -38,11 +38,9 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
         [setFilters],
     );
 
-    // Build the option-lists for the sidebar from the full dataset.
     const filterOptions = useMemo(() => buildFilterOptions(data), [data]);
 
-    // Filter first, then sort - separating the two memos means changing sort
-    // doesn't rerun the (more expensive) filter pass.
+    // Separate memos so a sort change doesn't rerun the more expensive filter pass.
     const filtered = useMemo(() => {
         const query = compactForSearch(filters.searchQuery.trim());
         const sets = toFilterSets({

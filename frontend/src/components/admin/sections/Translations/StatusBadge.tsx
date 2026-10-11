@@ -4,7 +4,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import type { EntryStatus } from "./model";
 import type { messages } from "./Translations.messages";
 
-/** Done (success) / Out of date (warning) / Missing (outline), as in the design's `ST` table. */
+/** Done (success) / Out of date (warning) / Missing (outline). */
 export function StatusBadge({ status, size }: { status: EntryStatus; size?: "sm" }): React.ReactElement {
     const t: TypedT<typeof messages> = useT("admin");
     switch (status) {

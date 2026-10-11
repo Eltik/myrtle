@@ -1,7 +1,7 @@
 /**
- * Stage group taxonomy shared across enemy-stage UIs (and a future stage
- * viewer). The keys mirror the backend's `EnemyStageRef.group`, which is the
- * single source of truth - the frontend never re-derives a group from ids.
+ * Stage group taxonomy shared by the enemy-stage UIs and the Stage Viewer. The
+ * keys mirror the backend's `EnemyStageRef.group`, the single source of truth:
+ * the frontend never re-derives a group from ids.
  */
 
 import type { messages as stageGroupMessages } from "#/lib/registry/stage-groups.messages";

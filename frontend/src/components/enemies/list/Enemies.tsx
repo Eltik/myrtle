@@ -105,10 +105,9 @@ export function EnemiesList() {
         [navigate],
     );
 
-    // Arriving with no page in the URL - the breadcrumb out of an enemy, the nav
-    // link - resumes the page you were last on, the way the filters and the view
-    // mode already resume. A page in the URL is explicit and always wins, which
-    // is what keeps browser back landing exactly where it left.
+    // Arriving with no page in the URL (the breadcrumb out of an enemy, the nav
+    // link) resumes the page you were last on, like the filters and view mode do.
+    // A page in the URL always wins, so browser back lands exactly where it left.
     const pageRestoredRef = useRef(false);
     useEffect(() => {
         if (pageRestoredRef.current) return;

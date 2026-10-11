@@ -2,10 +2,8 @@ import { type IPreparedTarget, prepareQuery, prepareTarget, scorePrepared } from
 import type { IAlbum, IArtist, ITrack } from "../impl/model";
 
 /**
- * THE LIBRARY'S SEARCH, through the site's fuzzy scorer. A song is found by
- * its title (the name tier), its artists and its album (aliases); an album by
- * its name; an artist by their name. A blank query keeps everything in the
- * order given.
+ * Library search via the site's fuzzy scorer. Songs match on title (name tier),
+ * artists and album (aliases); albums and artists on their name.
  */
 export interface IPreparedList<T> {
     items: readonly T[];

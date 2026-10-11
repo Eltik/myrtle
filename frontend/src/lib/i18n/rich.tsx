@@ -13,9 +13,8 @@ export type RichValues = Record<string, ReactNode | MessageValues[string]>;
 /**
  * Sentinels marking where a React node goes in the formatted string.
  *
- * These are Unicode Private Use Area characters, which by definition carry no
- * meaning in any language and cannot appear in real translated text - so a
- * translator cannot accidentally produce one and split their own sentence.
+ * Unicode Private Use Area characters: they never appear in real translated
+ * text, so a translator cannot produce one and split their own sentence.
  */
 const OPEN = "";
 const CLOSE = "";
@@ -31,14 +30,13 @@ function isNode(value: unknown): value is ReactNode {
 /**
  * Format a message whose arguments may be React elements.
  *
- * The trick is ordering: node arguments are swapped for sentinel strings
- * FIRST, so the whole message still goes through the normal ICU formatter with
- * its scalar arguments intact. Plural selection, `#`, number and date
- * formatting all behave exactly as they do in a plain message. Only afterwards
- * is the formatted string split on the sentinels and the nodes interleaved.
+ * Node arguments are swapped for sentinel strings FIRST, so the message still
+ * goes through the normal ICU formatter with its scalars intact (plural, `#`,
+ * number and date formatting unchanged). Only then is the result split on the
+ * sentinels and the nodes interleaved.
  *
  * So `{count, plural, one {# result for {query}} other {# results for {query}}}`
- * works with `query` as a `<mark>` element - the plural category is still
+ * works with `query` as a `<mark>` element: the plural category is still
  * chosen by `Intl.PluralRules` on the real number.
  */
 function formatRich(message: string, locale: string, values?: RichValues): ReactNode {
@@ -76,11 +74,9 @@ export type RichTFunction = (key: string, values?: RichValues) => ReactNode;
 /**
  * `useT` for a sentence that contains markup.
  *
- * This exists to kill the `.before` / `.link` / `.after` pattern. Splitting one
- * sentence into three keys around an inline `<a>` looks harmless in English,
- * where the fragments happen to sit in the right order - but a translator
- * cannot move the link, and Japanese and German routinely need it somewhere
- * else in the sentence. Three fragments is three untranslatable half-sentences.
+ * Replaces the `.before` / `.link` / `.after` pattern. Three keys around an
+ * inline `<a>` only work where English word order happens to fit; a translator
+ * cannot move the link, and Japanese and German routinely need it elsewhere.
  *
  * Instead the sentence stays one message with a `{link}` argument:
  *
@@ -92,8 +88,8 @@ export type RichTFunction = (key: string, values?: RichValues) => ReactNode;
  * ```
  *
  * with the message `"…our code is open source on {link}, so you can review our
- * security practices."` - one unit, reorderable, and the placeholder validator
- * on the backend enforces that `{link}` survives translation.
+ * security practices."`: one unit, reorderable, and the backend's placeholder
+ * validator enforces that `{link}` survives translation.
  */
 export function useRichT(namespace?: string): RichTFunction {
     const { locale, messages } = useI18n();

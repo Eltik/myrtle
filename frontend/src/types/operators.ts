@@ -164,7 +164,7 @@ export interface IOperatorIndexEntry {
     isNotObtainable: boolean;
     groupId: string | null;
     teamId: string | null;
-    /** The server's own localized names for the ids above; null when no id or not in that server's table. Optional: a cached response from before these fields may lack them for up to 24 h. */
+    // The server's own localized names for the ids above; null when no id or not in that server's table. Optional: a cached response from before these fields may lack them for up to 24 h.
     /** The server's own class name (its gacha class tag) for `profession`. */
     professionName?: string | null;
     subProfessionName?: string | null;
@@ -174,7 +174,7 @@ export interface IOperatorIndexEntry {
     /** Language-neutral acquisition category; absent in an old cached response. */
     obtainChannel?: ObtainChannel | null;
     artists: string[];
-    /** Small portrait image (headshot) - /upk/arts/charportraits/{pack}/{id}_{1|2}.png */
+    /** Small portrait (headshot): /upk/arts/charportraits/{pack}/{id}_{1|2}.png */
     portrait: string | null;
     /** "Male" / "Female" / etc.; empty string when unknown. */
     gender: string;

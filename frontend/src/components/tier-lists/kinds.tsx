@@ -97,7 +97,6 @@ const EVENT_TYPES = ["SIDESTORY", "MINISTORY", "BRANCHLINE", "NONE"];
 /** The Integrated Strategies item types in the order the type filter lists them; a type the data adds later follows these. */
 const IS_ITEM_ORDER = ["theme", "band", "relic", "active_tool", "explore_tool", "capsule", "totem", "fragment", "wrath", "copper"];
 
-/** The non-empty values among `parts`. */
 function present(...parts: (string | null | undefined)[]): string[] {
     return parts.filter((part): part is string => Boolean(part));
 }

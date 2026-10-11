@@ -1,8 +1,7 @@
 /**
- * Re-exports the ticket sampler, moved to `#/lib/story/palette` on 2026-09-23 because the reader
- * samples a story SPRITE with the same quantiser. The card still imports `useTicketPalette` from
- * here and `palette.test.ts` beside it drives the same functions. Three cards' `--ticket-c1` are
- * byte-identical before and after the move (`docs/story-reader.md`, the reader UI paragraphs).
+ * The ticket sampler moved to `#/lib/story/palette` on 2026-09-23 so the reader can sample a
+ * story SPRITE with the same quantiser. The card and `palette.test.ts` still import from here.
+ * Three cards' `--ticket-c1` are byte-identical across the move (`docs/story-reader.md`).
  */
 
 export {

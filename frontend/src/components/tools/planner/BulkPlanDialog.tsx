@@ -243,7 +243,6 @@ export function BulkPlanDialog({ open, onOpenChange }: IBulkPlanDialogProps): Re
 
 interface IPreviewRowProps {
     row: IPreviewRow;
-    /** The save error for this operator, if its last save failed. */
     failure: string | undefined;
     onRemove: () => void;
 }

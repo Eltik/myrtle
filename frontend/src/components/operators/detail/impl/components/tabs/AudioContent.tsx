@@ -248,12 +248,10 @@ function VolumeControl({ volume, setVolume, isMuted, setIsMuted }: { volume: num
     );
 }
 
-/** Small uppercase status/category badge. */
 function Pill({ children, className }: { children: ReactNode; className?: string }) {
     return <span className={cn("rounded bg-secondary/60 px-1.5 py-0.5 text-[10px] text-muted-foreground uppercase tracking-wide", className)}>{children}</span>;
 }
 
-/** Centered placeholder shown when a list has no items / matches. */
 function EmptyState({ children }: { children: ReactNode }) {
     return <div className="py-12 text-center text-muted-foreground text-sm">{children}</div>;
 }

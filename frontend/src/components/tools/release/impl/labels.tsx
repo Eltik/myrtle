@@ -10,7 +10,7 @@ type LabelsT = TypedT<typeof messages>;
  *
  * The planner shows three vocabularies through one `<Tag>`: an event's `activityType`, a
  * banner's `ruleType`, and the calendar's own literal tags. `humanizeTag` alone only
- * lowercases and swaps underscores ("TYPE ACTIVITYSIDESTORY", "TYPE ACT9D0", "MULTIPLAY V3").
+ * swaps underscores and sentence-cases ("Type activitysidestory", "Type act9d0", "Multiplay v3").
  *
  * Event types are the hard half: per-event codes (`TYPE_ACT46SIDE`, `TYPE_ACT9D0`) name a
  * content TEMPLATE, one per event, so no table can enumerate them. They are classified by the
@@ -59,8 +59,7 @@ export function useReleaseTagLabel(): (raw: string | null | undefined) => string
 
     return (raw) => {
         if (!raw) return "";
-        // `TYPE_` is a gamedata prefix on every activity type and carries no
-        // information: it is the single largest contributor to the noise.
+        // `TYPE_` prefixes every activity type and carries nothing.
         const key = raw
             .trim()
             .toUpperCase()

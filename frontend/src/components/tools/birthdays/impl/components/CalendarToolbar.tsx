@@ -9,7 +9,7 @@ import type { messages as birthdayConstantsMessages } from "../constants.message
 import type { CalendarScale } from "../types";
 import type { messages } from "./CalendarToolbar.messages";
 
-/** This toolbar renders its own chrome plus the zoom-level labels from `constants.ts`. */
+/** Also renders the zoom-level labels from `constants.ts`. */
 type ToolbarT = TypedT<typeof messages & typeof birthdayConstantsMessages>;
 
 interface ICalendarToolbarProps {
@@ -23,7 +23,6 @@ interface ICalendarToolbarProps {
     onToday: () => void;
 }
 
-/** Calendar header: Today + range stepper on the left, scale switcher on the right. */
 export function CalendarToolbar({ title, titleShort, scale, onScaleChange, onPrev, onNext, onToday }: ICalendarToolbarProps): React.ReactElement {
     const t: ToolbarT = useT("tools");
     return (

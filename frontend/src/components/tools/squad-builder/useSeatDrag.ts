@@ -21,7 +21,6 @@ interface IPress {
     lifted: boolean;
 }
 
-/** The seat a point is over: any element carrying `data-seat`. */
 function seatAt(x: number, y: number): number | null {
     const el = document.elementFromPoint(x, y)?.closest<HTMLElement>("[data-seat]");
     if (!el) return null;

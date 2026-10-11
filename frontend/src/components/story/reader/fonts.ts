@@ -63,9 +63,8 @@ const DYSLEXIC_FAMILY = '"OpenDyslexic"';
 /** The site's own families, by token. `preset` and `custom` are resolved separately. */
 const TOKEN_FAMILY: Partial<Record<StoryFont, string>> = {
     sans: "var(--font-sans)",
-    // The fallback behind it is not decoration: OpenDyslexic carries Latin,
-    // and a CJK or Cyrillic line drops to the reader's default face rather
-    // than to a browser serif.
+    // OpenDyslexic carries Latin only, so a CJK or Cyrillic line drops to the
+    // reader's default face rather than to a browser serif.
     dyslexic: `${DYSLEXIC_FAMILY}, ${PRESET_FONT_FAMILY}`,
     heading: "var(--font-heading)",
     display: "var(--font-display)",

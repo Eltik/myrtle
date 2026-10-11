@@ -65,8 +65,7 @@ const DIM_LABEL: Record<string, MessageKey> = {
 };
 
 // These read mid-sentence, after the axis name, so their English is declared
-// lowercase rather than lowercased at the call site - `toLowerCase()` on a
-// translated string is wrong in several locales.
+// lowercase: `toLowerCase()` on a translated string is wrong in several locales.
 const DIM_TOOLTIP: Record<string, MessageKey> = {
     elite: "score.improvements.operator.dim.elite.tooltip",
     level: "score.improvements.operator.dim.level.tooltip",
@@ -79,9 +78,7 @@ const DIM_TOOLTIP: Record<string, MessageKey> = {
 
 const INITIAL_VISIBLE = 18;
 
-// Below this we treat the delta as effectively zero and render a muted "·" in
-// place of a number. Avoids cluttering the row with "+0.00%" stamps from tiny
-// ops that don't move the needle.
+// Below this a delta renders as a muted "·" instead of a "+0.00" stamp.
 const SHOW_DELTA_THRESHOLD_PCT = 0.005;
 
 export function OperatorPanel({ improvements, accent }: IProps) {
@@ -90,7 +87,6 @@ export function OperatorPanel({ improvements, accent }: IProps) {
     const ops = improvements.operators.below_milestone;
     const [activeFilter, setActiveFilter] = useState<Tag | null>(null);
 
-    // Counts per upgrade type - drives the breakdown summary and the filter chips.
     const tagCounts = useMemo(() => {
         const counts: Record<Tag, number> = { ELITE: 0, MAX_LEVEL: 0, M3: 0, SL7: 0, MOD3: 0, POT6: 0, TRUST: 0 };
         for (const op of ops) {
@@ -101,8 +97,7 @@ export function OperatorPanel({ improvements, accent }: IProps) {
         return counts;
     }, [ops]);
 
-    // Aggregate subscore-points available per tag across the whole roster. Lets
-    // the user spot e.g. "M3 alone is +6.2pts to my Operators score" at a glance.
+    // Subscore points each tag would add across the whole roster.
     const tagGains = useMemo(() => {
         const gains: Record<Tag, number> = { ELITE: 0, MAX_LEVEL: 0, M3: 0, SL7: 0, MOD3: 0, POT6: 0, TRUST: 0 };
         for (const op of ops) {
@@ -124,11 +119,9 @@ export function OperatorPanel({ improvements, accent }: IProps) {
         return [...byRarity.entries()].sort(([a], [b]) => b - a);
     }, [ops, activeFilter]);
 
-    // Two roll-ups across every owned op (ELITE/MAX_LEVEL deduped by the backend):
-    //   - subscore headroom: how far this section's % could climb (sums toward 100%).
-    //   - overall-grade gain: what completing everything adds to the headline score,
-    //     i.e. the subscore headroom already scaled by this section's weight. This is
-    //     the figure tied to the user's actual grade, so it leads the header.
+    // Both roll up every owned op (ELITE/MAX_LEVEL deduped by the backend). The
+    // overall gain is the subscore headroom already scaled by this section's
+    // weight, so it is the figure tied to the user's grade and leads the header.
     const totalSubscoreGainPct = useMemo(() => ops.reduce((acc, op) => acc + op.subscore_potential_gain * 100, 0), [ops]);
     const totalOverallGainPct = useMemo(() => ops.reduce((acc, op) => acc + op.total_potential_gain * 100, 0), [ops]);
 
@@ -180,9 +173,9 @@ export function OperatorPanel({ improvements, accent }: IProps) {
 }
 
 /**
- * "Where your score comes from" - decomposes the current Operators subscore
- * into its investment axes. Each row shows earned vs. available (both in %
- * of this section); the earned figures sum to the section score on the card.
+ * "Where your score comes from": the Operators subscore split into its
+ * investment axes, earned vs available per row (both in % of this section).
+ * The earned figures sum to the section score on the card.
  */
 function ScoreBreakdown({ dims, accent }: { dims: IScoreDimension[] | undefined; accent: string }) {
     const t: TypedT<typeof messages> = useT("user");
@@ -244,8 +237,6 @@ function RarityBucket({ rarity, ops, defaultOpen, accent }: IBucketProps) {
     const visible = useMemo(() => (showAll ? ops : ops.slice(0, INITIAL_VISIBLE)), [showAll, ops]);
     const remaining = ops.length - visible.length;
 
-    // Roll-up of subscore pts available in this rarity bucket. Lets the user
-    // see at a glance e.g. "6★s alone hold +4.1 pts of room to grow."
     const bucketGain = useMemo(() => ops.reduce((acc, op) => acc + op.subscore_potential_gain * 100, 0), [ops]);
 
     return (
@@ -309,9 +300,8 @@ const OperatorRow = memo(function OperatorRow({ op, color, accent }: { op: IOper
     const t: TypedT<typeof messages> = useT("user");
     const sortedTags = TAG_ORDER.filter((t) => op.missing.includes(t));
 
-    // Map tag -> delta so the tag chip can show the projected gain inline. The
-    // backend guarantees one delta per tag in `missing`, but build the lookup
-    // defensively in case of mismatch.
+    // The backend sends one delta per tag in `missing`; a tag without one shows
+    // its plain description.
     const deltaByTag = useMemo(() => {
         const map: Record<string, IUpgradeDelta> = {};
         for (const d of op.deltas) map[d.tag] = d;

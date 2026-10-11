@@ -34,8 +34,7 @@ export function ClassBreakdownCard({ professions }: { professions: IProfession[]
     const t: TypedT<typeof messages> = useT("user");
     const colors = useMemo(() => professions.map((p) => PALETTE.classes[p.profession] ?? PALETTE.collection), [professions]);
 
-    // Pre-compute the longest short name across all sub-professions so the
-    // expanded sub-rows align in a grid.
+    // Longest short sub-name, so expanded sub-rows share one column width.
     const maxSubNameLen = useMemo(() => {
         let max = 0;
         for (const prof of professions) {

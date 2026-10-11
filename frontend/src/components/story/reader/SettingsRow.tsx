@@ -1,10 +1,10 @@
 /**
- * THE SHELL EVERY SETTINGS SECTION IS BUILT OUT OF: one row, and the four class
+ * THE SHELL EVERY SETTINGS SECTION IS BUILT OUT OF: one row, and the five class
  * strings that make its controls touchable.
  *
- * It sits apart from `SettingsDialog.tsx` because four files now render rows
- * into that dialog, and a row's layout is a decision about the DIALOG, not
- * about any one setting in it.
+ * Kept apart from `SettingsDialog.tsx` because four files render rows into that
+ * dialog, and a row's layout is a decision about the DIALOG, not about any one
+ * setting in it.
  */
 import type React from "react";
 

@@ -330,5 +330,4 @@
 }
 
 /* NOTE: `effect_shallowwater` (tile_shallowwater in tile-defs.ts) has NO rule in the source
- * stylesheet: it renders unstyled, same as the original. If you want it to look like shallow
- * water, alias it here (e.g. copy .effect_deepwater with a lighter color). */
+ * stylesheet, so it renders unstyled, as in the original. */

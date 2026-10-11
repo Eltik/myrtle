@@ -474,7 +474,7 @@ export function tierListFlairsQueryOptions() {
     });
 }
 
-/** Plain JSON value - used for tier list version snapshots. */
+/** Tier list version snapshots. */
 export type TierListJsonValue = JsonValue;
 
 export interface ICreateTierListInput {
@@ -1028,6 +1028,5 @@ export function tierEntityCatalogueQueryOptions(kind: TierEntityKind, server: st
     });
 }
 
-// Per-list tier-list permission management lives in `./admin/permissions`.
-// See `allTierListGrantsQueryOptions`, `grantTierListPermissionFn`,
-// `revokeTierListPermissionFn` in `#/lib/api/admin`.
+// Per-list grants (`allTierListGrantsQueryOptions`, `grantTierListPermissionFn`,
+// `revokeTierListPermissionFn`) live in `./admin/permissions`.

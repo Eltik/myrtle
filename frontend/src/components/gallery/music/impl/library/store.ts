@@ -19,7 +19,6 @@ import type { MusicPlayTotal } from "#/types/generated/MusicPlayTotal";
  * signing in shows the account's library, signing out the browser's.
  */
 
-/** The browser-side library. */
 export const LOCAL_KEY = "myrtle.music.library";
 /** Plays the browser keeps when signed out; the totals are computed from them. */
 const LOCAL_HISTORY_MAX = 2000;
@@ -67,10 +66,6 @@ const EMPTY: ILibraryState = {
 };
 
 export const libraryStore = new Store<ILibraryState>(EMPTY);
-
-// ---------------------------------------------------------------------------
-// Local document
-// ---------------------------------------------------------------------------
 
 function readLocal(): ILocalDocument {
     return readStoredValue<ILocalDocument>(LOCAL_KEY, { likes: {}, history: [], playlists: [] }, (raw) => {
@@ -158,10 +153,6 @@ let localPlaylistSeq = 0;
 function nowIso(): string {
     return new Date().toISOString();
 }
-
-// ---------------------------------------------------------------------------
-// Actions
-// ---------------------------------------------------------------------------
 
 export function isLiked(trackId: string): boolean {
     return trackId in libraryStore.state.likes;
@@ -310,10 +301,6 @@ export function deletePlaylist(id: string): void {
     if (libraryStore.state.mode === "server") serverWrite(() => deletePlaylistFn({ data: id }));
     else writeLocal();
 }
-
-// ---------------------------------------------------------------------------
-// Hooks
-// ---------------------------------------------------------------------------
 
 export function useLibrary<T>(selector: (s: ILibraryState) => T): T {
     return useStore(libraryStore, selector);

@@ -7,8 +7,8 @@
  * servers. Nothing caught it: the payload arrives through an unchecked cast, the
  * field is nullable, and every consumer guards with `if (!url) return`.
  *
- * The `I`-prefixed aliases are kept so existing imports are unaffected. Do not
- * add fields here - change the Rust struct and re-run:
+ * The `I`-prefixed aliases are kept so existing imports are unaffected. Never
+ * add fields here; change the Rust struct and re-run:
  *   cd backend && cargo test export_bindings
  *
  * Note the `/static/voices` and `/voices/:id` endpoints are consumed RAW, with

@@ -31,9 +31,9 @@ export interface IOperatorOgData {
     factionLogoURL?: string;
     professionIconURL?: string;
     stats?: IOperatorStat[];
-    /** Asset tree the card was rendered against. Not drawn -- it takes part in
-     *  the cache hash so a CN operator's card is re-rendered once it lands on
-     *  Global and its art moves to the default tree. */
+    /** Asset tree the card was rendered against. Not drawn: it is in the cache
+     *  hash so a CN operator's card re-renders once it lands on Global and its
+     *  art moves to the default tree. */
     server?: "en" | "cn";
 }
 
@@ -42,12 +42,9 @@ export function OperatorTemplate(data: IOperatorOgData) {
     const rarityColor = RARITY_COLOR[rarity] ?? RARITY_COLOR[6];
     const tags = [position, subProfession, nationId].filter(Boolean);
 
-    // Render the full operator name. Many operators have descriptive suffixes
-    // ("Exusiai the New Covenant", "Reed the Flame Shadow") that are part of
-    // their canonical name - splitting them off looks worse than letting the
-    // size adapt to fit. Appellation is only meaningful when it's a foreign-
-    // language alt name; the EN-only data ships it as `" "` (single space),
-    // which we filter out with a trim check.
+    // Suffixes like "Exusiai the New Covenant" are part of the canonical name;
+    // splitting them off looked worse than shrinking the size to fit. EN data
+    // ships an absent appellation as `" "`, hence the trim.
     const altName = appellation.trim();
 
     return (

@@ -23,9 +23,9 @@ export interface IChibiWalker {
 const SPRITE_W = TILE_SIZE * 2.4;
 const SPRITE_H = TILE_SIZE * 2.6;
 /**
- * Global spine->board scale. A single constant (rather than normalizing every
- * chibi to one height) preserves each enemy's authored relative size, so small
- * enemies like Originium Slugs stay small and bosses stay large.
+ * Global spine->board scale. One constant rather than normalising every chibi
+ * to one height keeps authored relative sizes (slugs small, bosses large); only
+ * a chibi taller than the sprite box is shrunk to fit.
  */
 const CHIBI_SCALE = 0.16;
 /** Lift toward the camera so chibis render in front of raised/high-ground tiles. */
@@ -247,7 +247,6 @@ function ChibiWalkerSprite({ walker, padY, tilt, onEnemyHover }: { walker: IChib
                 spine.destroy({ children: true, texture: true, baseTexture: true });
             }
             path.remove();
-            // Return the app (and its WebGL context) to the pool instead of destroying it (see APP_POOL).
             releaseChibiApp(app);
         };
     }, [walker, padY, tilt]);
@@ -255,7 +254,6 @@ function ChibiWalkerSprite({ walker, padY, tilt, onEnemyHover }: { walker: IChib
     return (
         <div ref={wrapRef} className="absolute top-0 left-0" style={{ width: SPRITE_W, height: SPRITE_H, visibility: "hidden", transformOrigin: "bottom center", transformStyle: "preserve-3d", willChange: "transform", pointerEvents: "none" }}>
             <div ref={mountRef} className="h-full w-full" style={{ pointerEvents: "none" }} />
-            {/* Hover target sized to the chibi's actual footprint (set on load), kept small so adjacent enemies don't fight over one big rect. */}
             <div
                 ref={hitRef}
                 className="absolute"

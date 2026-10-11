@@ -84,16 +84,12 @@ export const DEFAULT_SYNC_POLICY: SyncPolicy = "merge";
  * browser that pulled, and the ids it should never have marked are exactly
  * `gameUnread`: stories the game's Archive lists that nothing ever played.
  *
- * Withdrawing them is VERSIONED rather than heuristic, and it has to be.
- * Finishing a story deletes its position, so a story the reader read to the end
- * carries a read mark and no other evidence, byte for byte what a baked mark
- * looks like. The only thing that separates them is which client wrote the
- * document: a v1 document is one the old bake could have touched, so every
- * `gameUnread` id is dropped from its `read` once; a v2 document was written by
- * a client that never baked, so it is left alone and a reader who really did
- * mark one of those stories keeps it. The result is always v2, which is why
- * `canonical` carries `v`: the upgrade of a v1 document that loses no ids is
- * still a change, and it has to reach the account.
+ * Withdrawing them is keyed on the MARK (see {@link upgraded}): a legacy `1`
+ * on a `gameUnread` id can only have come from the first import and is
+ * dropped; a timestamped mark is the reader's own and stays. The result is
+ * always v2, which is why `canonical` carries `v`: the upgrade of a v1
+ * document that loses no ids is still a change, and it has to reach the
+ * account.
  *
  * `pos` is per story, and the entry with the larger `ts` wins. A tie keeps the
  * LOCAL entry, because a tie is the same write seen twice and the local copy is
@@ -210,8 +206,6 @@ export function canonical(p: StoryProgress): string {
 export function sameProgress(a: StoryProgress, b: StoryProgress): boolean {
     return canonical(a) === canonical(b);
 }
-
-// Conflicts: the two sides disagree and neither of them is obviously right.
 
 /**
  * One side as the merge would read it, alone: stamped v2, with the old

@@ -20,7 +20,6 @@ type PickerT = TypedT<typeof messages>;
 /** Grid columns below and from the `sm` breakpoint; keep in step with the row's `grid-cols-*` classes. */
 const COLS_NARROW = 2;
 const COLS_WIDE = 3;
-/** Rows rendered past each edge of the visible window. */
 const ROW_OVERSCAN = 3;
 /** First-paint row height before a row is measured; a 16:9 map plus two text lines at the wide layout. */
 const ROW_ESTIMATE_PX = 170;

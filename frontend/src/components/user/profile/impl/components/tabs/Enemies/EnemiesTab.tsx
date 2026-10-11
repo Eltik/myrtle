@@ -155,7 +155,6 @@ function VirtualizedEnemyGrid({ rows }: { rows: IEnemyRow[] }) {
     // browser zoom and container resizes reflow the grid continuously.
     const cols = getColumnCount(width);
 
-    // Track container width.
     useEffect(() => {
         const el = parentRef.current;
         if (!el) return;
@@ -266,7 +265,6 @@ function ProgressHeader({ seen, total, pct, avg, avgPct }: { seen: number; total
                                 <div className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out motion-reduce:transition-none" style={{ width: `${pct}%` }} />
                             </div>
                             {avgPct != null && avgLabel != null && (
-                                // Community-average marker drawn on the same scale as the fill.
                                 <div className="pointer-events-none absolute top-1/2 z-10 -translate-x-1/2 -translate-y-1/2" style={{ left: `${avgPct}%` }}>
                                     <div className="h-3.5 w-0.5 rounded-full bg-foreground/70 shadow-[0_0_0_1.5px_var(--card)]" />
                                 </div>
@@ -317,7 +315,6 @@ const EnemyHandbookCard = memo(function EnemyHandbookCard({ enemy, seen }: IEnem
         >
             <div className="relative aspect-square w-full bg-[color-mix(in_oklch,var(--muted)_50%,transparent)]">
                 {hasPortrait && portraitSrc ? (
-                    // Not-yet-encountered enemies are desaturated/dimmed, but still visible.
                     <img alt={t("profile.enemies.card.portraitAlt", { name: enemy.name })} className="block h-full w-full object-contain" decoding="async" loading="lazy" onError={() => setImgError(true)} src={portraitSrc} style={seen ? undefined : { filter: "grayscale(1)", opacity: 0.5 }} />
                 ) : (
                     <EnemyPlaceholder className="h-full w-full p-4" />

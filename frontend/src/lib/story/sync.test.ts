@@ -280,7 +280,7 @@ describe("the sync engine", () => {
     // The game answers out of TWO records and the response names both counts:
     // `gameRead` is their union and `gameArchived` is the Archive half of it.
     // The mainline lives only in the other half, which is why the union is the
-    // number that reaches `read` and the Archive count is only ever quoted.
+    // read set and the Archive count is only ever quoted.
     it("takes the union of both game sources and keeps the Archive count beside it", async () => {
         const archive = ["1stact_level_a001_01_beg", "1stact_level_a001_01_end"];
         const played = ["main_0_level_main_00-01_beg", "main_0_level_main_00-01_end", "main_0_level_main_00-02_beg"];
@@ -392,7 +392,7 @@ describe("a conflict between the browser and the account", () => {
         __resetStorySyncForTests();
         __enableStorySyncForTests();
         // The shipped default is `merge`, so a prompt is something a reader
-        // has to ASK for. Every test below but the first two sets it.
+        // has to ASK for. The first test below clears it again.
         setStorySyncPolicy("ask");
     });
 

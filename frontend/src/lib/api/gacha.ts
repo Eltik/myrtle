@@ -13,12 +13,7 @@ import type { GachaEnhancedStats } from "#/types/generated/GachaEnhancedStats";
 import type { GachaHistoryEnvelopeDto } from "#/types/generated/GachaHistoryEnvelopeDto";
 import type { GachaItemDto } from "#/types/generated/GachaItemDto";
 import type { GachaPaginationInfoDto } from "#/types/generated/GachaPaginationInfoDto";
-/**
- * Banner metadata sourced from the static `gacha_table.json` -> `GachaPoolClient`.
- *
- * Generated from `backend/src/core/gamedata/types/gacha.rs`. Times are **unix
- * seconds** (not ms); pull records, by contrast, use unix ms.
- */
+// GachaPoolClient (gacha_table.json, `IBanner` below): times are unix SECONDS; pull records use ms.
 import type { GachaPoolClient } from "#/types/generated/GachaPoolClient";
 import type { GachaRecordEntryDto } from "#/types/generated/GachaRecordEntryDto";
 import type { GachaRecordsDto } from "#/types/generated/GachaRecordsDto";
@@ -115,8 +110,6 @@ export function perBannerStatsQueryOptions() {
 }
 
 export type IGachaEnhancedStats = GachaEnhancedStats;
-
-// Alias kept for the optional field above (name matches the server type).
 
 export const getGachaGlobalStatsFn = createServerFn({ method: "GET" }).handler(async () => {
     const res = await backendFetch("/gacha/global-stats");
@@ -224,7 +217,7 @@ export function classifyClientGachaGroup(item: { poolId: string; typeName: strin
     if (id.startsWith("LIMITED_")) return "limited";
     if (id.startsWith("LINKAGE_")) return "linkage";
     if (id.startsWith("BOOT_")) return "boot";
-    // FESCLASSIC_ is the festival/anniversary kernel banner - same pool as CLASSIC_.
+    // FESCLASSIC_ is the festival/anniversary kernel banner, the same pool as CLASSIC_.
     if (id.startsWith("FESCLASSIC_") || id.startsWith("CLASSIC_")) return "special";
     if (id.startsWith("SINGLE_") || id.startsWith("NORM_")) return "regular";
 

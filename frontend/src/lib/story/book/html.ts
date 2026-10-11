@@ -1,7 +1,6 @@
 /**
  * THE BOOK AS ONE HTML DOCUMENT: the same blocks and the same stylesheet the
- * EPUB uses, in a single page with a table of contents. It is what a "read as
- * document" view and a print stylesheet will be built on (plan 3.2).
+ * EPUB uses, in a single page with a table of contents, plus the print sheet.
  */
 import { storyLabel } from "./book";
 import { bookCss, type FontFaces } from "./css";

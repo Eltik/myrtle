@@ -129,7 +129,7 @@ function groupLabel(key: CoverageGroupKey, t: CoverageT): string {
     }
 }
 
-/** The `ROW_TEXT` map: each row's label and the hint under it, by `CoverageRowKey`. */
+/** Each coverage row's label and the hint under it. */
 function rowText(key: CoverageRowKey, t: CoverageT): { label: string; hint: string | null } {
     switch (key) {
         case "dp_gen":

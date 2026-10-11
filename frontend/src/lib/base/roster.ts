@@ -48,7 +48,6 @@ export function toRosterOptions(roster: IRosterEntry[], operatorsStatic: IOperat
         .map((entry) => {
             const op = staticById.get(entry.operator_id);
             const all = op?.baseSkills ?? [];
-            // The live tier per slot: highest-ranked tier that counts.
             const liveBySlot = new Map<number, string>();
             for (const skill of all) {
                 if (!(ignorePromotion || isUnlocked(skill, entry))) continue;

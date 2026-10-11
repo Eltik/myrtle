@@ -7,12 +7,12 @@
  * state · sort]; under 640 it is ONE row, [search · Filters], and the Filters
  * button opens a bottom sheet holding category, read state, sort and layout.
  *
- * THE PHONE'S LAYOUT TOGGLE LIVES IN THE SHEET: the obvious shape missed its budget.
- * [search · layout] over
- * a Filters row measured a 653.6 px head at 390 against a 600 px target; the
- * Filters row was 44 px plus a 12 px gap of it. One row with the toggle in the
- * sheet is 56 px shorter, keeps the word "Filters" on the button, and leaves the
- * search box 258 px where [search · Filters icon · layout] would have left 210.
+ * THE PHONE'S LAYOUT TOGGLE LIVES IN THE SHEET: the obvious shape missed its
+ * budget. [search · layout] over a Filters row measured a 653.6 px head at 390
+ * against a 600 px target; the Filters row was 44 px plus a 12 px gap of it.
+ * One row with the toggle in the sheet is 56 px shorter, keeps the word
+ * "Filters" on the button, and leaves the search box 258 px where
+ * [search · Filters icon · layout] would have left 210.
  *
  * THE ONE-ROW BREAKPOINT IS 1280, NOT 1024, and that was measured rather than
  * chosen. The four fixed controls are 1,013 px wide on one row at 1440 (pills

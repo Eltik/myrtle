@@ -51,7 +51,6 @@ export function PlayerBar(): React.ReactElement | null {
                         {status === "playing" ? t("music.player.nowPlaying", { title }) : ""}
                     </span>
                     <div className="mx-auto grid max-w-350 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 px-3 pt-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:px-6">
-                        {/* Left: like, cover, what is playing. */}
                         <div className="relative flex min-w-0 items-center gap-2.5">
                             <LikeButton t={t} trackId={current.id} />
                             <div className="relative size-11 shrink-0 overflow-hidden rounded-md border border-border bg-secondary/50">
@@ -66,7 +65,6 @@ export function PlayerBar(): React.ReactElement | null {
                             <button aria-label={t("music.player.openQueue")} className="absolute inset-0 cursor-pointer rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/40 sm:hidden" onClick={() => openPanel("queue")} type="button" />
                         </div>
 
-                        {/* Centre: the transport. */}
                         <div className="flex items-center justify-center gap-0.5 sm:gap-1">
                             <IconButton className="max-sm:hidden" label={shuffle ? t("music.player.shuffle.on") : t("music.player.shuffle.off")} onClick={toggleShuffle} pressed={shuffle}>
                                 <ShuffleIcon aria-hidden="true" />
@@ -93,7 +91,6 @@ export function PlayerBar(): React.ReactElement | null {
                             </IconButton>
                         </div>
 
-                        {/* Right: panels, settings, levels, time, close. */}
                         <div className="hidden min-w-0 items-center justify-end gap-1 sm:flex">
                             <IconButton className="max-lg:hidden" label={t("music.player.lyrics")} onClick={() => togglePanel("lyrics")} pressed={panel === "lyrics"}>
                                 <MicVocalIcon aria-hidden="true" />

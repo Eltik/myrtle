@@ -33,9 +33,8 @@ export function CommunityPage() {
         return map;
     }, [operators.data]);
 
-    // Banners sorted oldest-first by openTime. Useful for the timing-chart
-    // overlay (chronological) and the banner-runs list (which sorts by status
-    // and recency itself but takes a stable input).
+    // Oldest first: the timing chart wants chronological order, and the runs
+    // list re-sorts by status but needs a stable input.
     const bannersSorted = useMemo<IBanner[]>(() => {
         const list = banners.data ?? [];
         return [...list].sort((a, b) => a.openTime - b.openTime);
@@ -53,9 +52,8 @@ export function CommunityPage() {
         const six = s.six_star_count ?? 0;
         const five = s.five_star_count ?? 0;
         const four = s.four_star_count ?? 0;
-        // The v_gacha_stats view doesn't return a 3★ count, so derive it from the
-        // total. Anything outside the 3-6 range (shouldn't exist in current data)
-        // would fold into this bucket - that's acceptable until the view is widened.
+        // v_gacha_stats has no 3★ count, so it comes off the total. Anything
+        // outside 3-6 (none in current data) folds in here until the view is widened.
         const three = Math.max(0, s.total_pulls - six - five - four);
         return {
             totalPulls: s.total_pulls,
