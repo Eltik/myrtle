@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-11T13:57:13.279Z",
+    "generatedAt": "2026-10-11T21:22:32.762Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -18070,7 +18070,7 @@
             "key": "nav.header.collection",
             "namespace": "nav",
             "source_text": "Collection",
-            "description": "Top-level nav menu grouping the reference browsers (operators, enemies, stages).",
+            "description": "Top-level nav menu grouping the reference browsers: game data (operators, enemies, stages), story and lore, music and news.",
             "placeholders": []
         },
         {
@@ -18141,6 +18141,27 @@
             "namespace": "nav",
             "source_text": "Operators",
             "description": "Collection menu entry for the operator (playable character) browser.",
+            "placeholders": []
+        },
+        {
+            "key": "nav.header.collection.section.data",
+            "namespace": "nav",
+            "source_text": "Game Data",
+            "description": "Section heading in the Collection menu over the combat reference browsers: operators, enemies and stages.",
+            "placeholders": []
+        },
+        {
+            "key": "nav.header.collection.section.lore",
+            "namespace": "nav",
+            "source_text": "Story & Lore",
+            "description": "Section heading in the Collection menu over the story reader and the Archives (personnel files, factions).",
+            "placeholders": []
+        },
+        {
+            "key": "nav.header.collection.section.media",
+            "namespace": "nav",
+            "source_text": "Media & News",
+            "description": "Section heading in the Collection menu over the in-game music gallery and the game news page.",
             "placeholders": []
         },
         {

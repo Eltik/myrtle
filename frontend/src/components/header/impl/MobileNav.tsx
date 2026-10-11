@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ChevronDown, Cog, ExternalLinkIcon, Heart, LayoutList, LogOut, MenuIcon, UserIcon } from "lucide-react";
+import { Fragment, useId } from "react";
 import { useGamedataServerChoice, useGamedataServerOptions, useGamedataServerSwitch } from "#/components/GamedataServerSwitcher";
 import type { messages as gamedataServerMessages } from "#/components/GamedataServerSwitcher.messages";
 import { LocaleOptionLabel, useLocaleSwitch } from "#/components/LocaleSwitcher";
@@ -35,6 +36,13 @@ export function MobileNav({ items }: IMobileNavProps) {
     const serverOptions = useGamedataServerOptions();
     const serverChoice = useGamedataServerChoice();
     const switchServer = useGamedataServerSwitch();
+    const groupIdBase = useId();
+
+    const renderSubItem = (subItem: INavItem) => (
+        <DrawerMenuItem key={subItem.href} className="h-9 text-muted-foreground text-sm hover:text-foreground" render={<DrawerClose nativeButton={false} render={<Link to={subItem.href} />}></DrawerClose>}>
+            {subItem.label}
+        </DrawerMenuItem>
+    );
 
     const renderNavItem = (item: INavItem) => {
         const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
@@ -47,11 +55,22 @@ export function MobileNav({ items }: IMobileNavProps) {
                         <ChevronDown className="h-4 w-4 opacity-50 transition-transform duration-200 group-data-panel-open:rotate-180" />
                     </CollapsibleTrigger>
                     <CollapsiblePanel className="mt-1 ml-4 flex flex-col gap-1 border-border border-l">
-                        {item.items.map((subItem) => (
-                            <DrawerMenuItem key={subItem.href} className="h-9 text-muted-foreground text-sm hover:text-foreground" render={<DrawerClose nativeButton={false} render={<Link to={subItem.href} />}></DrawerClose>}>
-                                {subItem.label}
-                            </DrawerMenuItem>
-                        ))}
+                        {/* The same sections the desktop dropdown shows, with the
+                            drawer's own group label and separator. */}
+                        {item.sections && item.sections.length > 1
+                            ? item.sections.map((section, i) => {
+                                  const labelId = `${groupIdBase}-${item.href}-${i}`;
+                                  return (
+                                      <Fragment key={section.title}>
+                                          {i > 0 && <DrawerMenuSeparator className="my-0" />}
+                                          <DrawerMenuGroup role="group" aria-labelledby={labelId} className="gap-1">
+                                              <DrawerMenuGroupLabel id={labelId}>{section.title}</DrawerMenuGroupLabel>
+                                              {section.items.map(renderSubItem)}
+                                          </DrawerMenuGroup>
+                                      </Fragment>
+                                  );
+                              })
+                            : item.items.map(renderSubItem)}
                     </CollapsiblePanel>
                 </Collapsible>
             );

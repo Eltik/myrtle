@@ -10,7 +10,7 @@ export const messages = {
     },
     "header.collection": {
         text: "Collection",
-        description: "Top-level nav menu grouping the reference browsers (operators, enemies, stages).",
+        description: "Top-level nav menu grouping the reference browsers: game data (operators, enemies, stages), story and lore, music and news.",
     },
     "header.tools": {
         text: "Tools",
@@ -27,6 +27,18 @@ export const messages = {
     "header.players": {
         text: "Players",
         description: "Top-level nav menu for other people's profiles, search and the leaderboard.",
+    },
+    "header.collection.section.data": {
+        text: "Game Data",
+        description: "Section heading in the Collection menu over the combat reference browsers: operators, enemies and stages.",
+    },
+    "header.collection.section.lore": {
+        text: "Story & Lore",
+        description: "Section heading in the Collection menu over the story reader and the Archives (personnel files, factions).",
+    },
+    "header.collection.section.media": {
+        text: "Media & News",
+        description: "Section heading in the Collection menu over the in-game music gallery and the game news page.",
     },
     "header.collection.operators.label": {
         text: "Operators",

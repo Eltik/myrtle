@@ -35,15 +35,35 @@ export default function Header() {
             items: tools.map((tool) => ({ href: tool.href, label: t(tool.labelKey), desc: t(tool.descKey), icon: tool.icon })),
         }));
         const toolItems: INavItem[] = toolSections.flatMap((s) => s.items);
-        const collectionItems: INavItem[] = [
-            { href: "/operators", label: t("header.collection.operators.label"), desc: t("header.collection.operators.desc"), icon: "shield" },
-            { href: "/enemies", label: t("header.collection.enemies.label"), desc: t("header.collection.enemies.desc"), icon: "crosshair" },
-            { href: "/stages", label: t("header.collection.stages.label"), desc: t("header.collection.stages.desc"), icon: "map" },
-            { href: "/stories", label: t("header.collection.stories.label"), desc: t("header.collection.stories.desc"), icon: "book" },
-            { href: "/gallery/music", label: t("header.collection.music.label"), desc: t("header.collection.music.desc"), icon: "music" },
-            { href: "/archives", label: t("header.collection.archives.label"), desc: t("header.collection.archives.desc"), icon: "users" },
-            { href: "/announcements", label: t("header.collection.news.label"), desc: t("header.collection.news.desc"), icon: "newspaper" },
+        // Seven entries read as one undifferentiated list, so the menu groups
+        // them by what a visitor came to do: look up combat data, read the
+        // lore, or browse media and notices. Order inside a group is the old
+        // flat order; only Archives moves, up beside Stories.
+        const collectionSections: INavSection[] = [
+            {
+                title: t("header.collection.section.data"),
+                items: [
+                    { href: "/operators", label: t("header.collection.operators.label"), desc: t("header.collection.operators.desc"), icon: "shield" },
+                    { href: "/enemies", label: t("header.collection.enemies.label"), desc: t("header.collection.enemies.desc"), icon: "crosshair" },
+                    { href: "/stages", label: t("header.collection.stages.label"), desc: t("header.collection.stages.desc"), icon: "map" },
+                ],
+            },
+            {
+                title: t("header.collection.section.lore"),
+                items: [
+                    { href: "/stories", label: t("header.collection.stories.label"), desc: t("header.collection.stories.desc"), icon: "book" },
+                    { href: "/archives", label: t("header.collection.archives.label"), desc: t("header.collection.archives.desc"), icon: "users" },
+                ],
+            },
+            {
+                title: t("header.collection.section.media"),
+                items: [
+                    { href: "/gallery/music", label: t("header.collection.music.label"), desc: t("header.collection.music.desc"), icon: "music" },
+                    { href: "/announcements", label: t("header.collection.news.label"), desc: t("header.collection.news.desc"), icon: "newspaper" },
+                ],
+            },
         ];
+        const collectionItems: INavItem[] = collectionSections.flatMap((s) => s.items);
         const gachaItems: INavItem[] = [
             { href: "/gacha/community", label: t("header.gacha.community.label"), desc: t("header.gacha.community.desc"), icon: "users" },
             { href: "/gacha/history", label: t("header.gacha.history.label"), desc: t("header.gacha.history.desc"), icon: "history" },
@@ -55,7 +75,7 @@ export default function Header() {
         ];
         return [
             { href: "/", label: t("header.home") },
-            { href: "/operators", label: t("header.collection"), items: collectionItems },
+            { href: "/operators", label: t("header.collection"), items: collectionItems, sections: collectionSections },
             { href: "/tools", label: t("header.tools"), items: toolItems, sections: toolSections },
             { href: "/gacha", label: t("header.gacha"), items: gachaItems },
             { href: "/tier-lists", label: t("header.tierLists") },
