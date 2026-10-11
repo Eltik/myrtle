@@ -23,6 +23,7 @@ import { Route as HelpMeRouteImport } from './routes/help-me'
 import { Route as OperatorsRouteImport } from './routes/operators'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StagesRouteImport } from './routes/stages'
 import { Route as StatsRouteImport } from './routes/stats'
 import { Route as StoriesRouteImport } from './routes/stories'
@@ -138,6 +139,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StagesRoute = StagesRouteImport.update({
@@ -392,6 +398,7 @@ export interface FileRoutesByFullPath {
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stages': typeof StagesRoute
   '/stats': typeof StatsRoute
   '/stories': typeof StoriesRoute
@@ -454,6 +461,7 @@ export interface FileRoutesByTo {
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stages': typeof StagesRoute
   '/stats': typeof StatsRoute
   '/stories': typeof StoriesRoute
@@ -517,6 +525,7 @@ export interface FileRoutesById {
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stages': typeof StagesRoute
   '/stats': typeof StatsRoute
   '/stories': typeof StoriesRoute
@@ -581,6 +590,7 @@ export interface FileRouteTypes {
     | '/operators'
     | '/privacy'
     | '/settings'
+    | '/sitemap.xml'
     | '/stages'
     | '/stats'
     | '/stories'
@@ -643,6 +653,7 @@ export interface FileRouteTypes {
     | '/operators'
     | '/privacy'
     | '/settings'
+    | '/sitemap.xml'
     | '/stages'
     | '/stats'
     | '/stories'
@@ -705,6 +716,7 @@ export interface FileRouteTypes {
     | '/operators'
     | '/privacy'
     | '/settings'
+    | '/sitemap.xml'
     | '/stages'
     | '/stats'
     | '/stories'
@@ -769,6 +781,7 @@ export interface RootRouteChildren {
   OperatorsRoute: typeof OperatorsRoute
   PrivacyRoute: typeof PrivacyRoute
   SettingsRoute: typeof SettingsRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StagesRoute: typeof StagesRoute
   StatsRoute: typeof StatsRoute
   StoriesRoute: typeof StoriesRoute
@@ -900,6 +913,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stages': {
@@ -1300,6 +1320,7 @@ const rootRouteChildren: RootRouteChildren = {
   OperatorsRoute: OperatorsRoute,
   PrivacyRoute: PrivacyRoute,
   SettingsRoute: SettingsRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   StagesRoute: StagesRoute,
   StatsRoute: StatsRoute,
   StoriesRoute: StoriesRoute,
