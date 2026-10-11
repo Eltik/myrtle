@@ -24,7 +24,7 @@ use std::{
 use ammonia::{Builder, Url, UrlRelative};
 use regex::Regex;
 
-use crate::core::maintenance::parse::html_to_text;
+use crate::core::maintenance::parse::head_title;
 
 /// What one notice page holds, ready to serve.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -38,9 +38,6 @@ pub struct PageParts {
     pub body_html: String,
 }
 
-static RE_HEAD_TITLE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"(?is)class="head-title"[^>]*>(.*?)</"#).expect("title regex compiles")
-});
 static RE_IMG: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?is)<img\b[^>]*>").expect("img regex compiles"));
 static RE_SRC: LazyLock<Regex> =
@@ -180,10 +177,7 @@ fn absolute(src: &str, base: Option<&Url>) -> Option<String> {
 /// Cut `html`, fetched from `page_url`, into its parts.
 pub fn extract(html: &str, page_url: &str) -> PageParts {
     let base = Url::parse(page_url).ok();
-    let headline = RE_HEAD_TITLE
-        .captures(html)
-        .map(|c| html_to_text(&c[1]).replace('\n', " "))
-        .filter(|t| !t.is_empty());
+    let headline = head_title(html).filter(|t| !t.is_empty());
     let banner_url = banner(html, base.as_ref());
     let body_html = RE_CONTENT_OPEN.find(html).map_or_else(String::new, |open| {
         let rest = &html[open.end()..];

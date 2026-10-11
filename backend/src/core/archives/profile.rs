@@ -634,7 +634,8 @@ fn split_label(line: &str) -> Option<(&str, &str)> {
     (!label.is_empty()).then(|| (label, line[end + close.len_utf8()..].trim()))
 }
 
-fn some(value: &str) -> Option<String> {
+/// `value` trimmed, `None` when nothing is left.
+pub(super) fn trimmed(value: &str) -> Option<String> {
     let v = value.trim();
     (!v.is_empty()).then(|| v.to_owned())
 }
@@ -643,34 +644,34 @@ fn read_basic(w: &Vocab, p: &mut ArchiveProfile, text: &str) {
     for (label, value) in bracketed(text) {
         let is = |labels: &[&str]| labels.contains(&label.as_str());
         if is(w.code_name) {
-            p.code_name = some(&value);
+            p.code_name = trimmed(&value);
         } else if is(w.gender) {
             // Arene's file reads `Male]`: the game's own stray bracket.
-            p.gender = some(value.trim_end_matches(']'));
+            p.gender = trimmed(value.trim_end_matches(']'));
         } else if is(w.combat) {
             p.combat_years = combat_years(w, &value);
-            p.combat_experience = some(&value);
+            p.combat_experience = trimmed(&value);
         } else if is(w.birthplace) {
-            p.birthplace = some(&value);
+            p.birthplace = trimmed(&value);
         } else if is(w.birthday) {
             if let Some((m, d)) = birthday(w, &value) {
                 p.birth_month = Some(m);
                 p.birth_day = Some(d);
             }
-            p.birthday = some(&value);
+            p.birthday = trimmed(&value);
         } else if is(w.race) {
-            p.race = some(&value);
+            p.race = trimmed(&value);
         } else if is(w.height) {
             p.height_cm = height_cm(w, &value);
-            p.height = some(&value);
+            p.height = trimmed(&value);
         } else if is(w.infection) {
             // Wind Chimes repeats the label; the first one stands.
             if p.infection.is_none() {
                 p.infection_state = infection_state(w, &value);
-                p.infection = some(&value);
+                p.infection = trimmed(&value);
             }
         } else if is(w.manufacturer) {
-            p.manufacturer = some(&value);
+            p.manufacturer = trimmed(&value);
         } else if label.chars().count() <= MAX_EXTRA_LABEL && !value.is_empty() {
             p.extra.push(ProfileField { label, value });
         }
@@ -737,7 +738,7 @@ fn read_clinical(w: &Vocab, p: &mut ArchiveProfile, text: &str) {
         if p.blood_density.is_none() && blood {
             // `char_1030_noirc2` drops the unit's `u` (`0.29/L`).
             p.blood_density_ul = number_before(&value, w.density, w.bounds);
-            p.blood_density = some(&value);
+            p.blood_density = trimmed(&value);
         }
         // EN: `Cell-Originium Assimilation`, `Cell-Originium Fusion Rate` and
         // the `Somatic` forms. Machine and exoskeleton rates are not cells.
@@ -748,7 +749,7 @@ fn read_clinical(w: &Vocab, p: &mut ArchiveProfile, text: &str) {
         };
         if p.assimilation.is_none() && cells {
             p.assimilation_pct = number_before(&value, w.percent, w.bounds);
-            p.assimilation = some(&value);
+            p.assimilation = trimmed(&value);
         }
     }
 }

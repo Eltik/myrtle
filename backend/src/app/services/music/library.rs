@@ -53,11 +53,36 @@ pub fn check_track_id(id: &str) -> Result<(), ApiError> {
     Ok(())
 }
 
+/// `400`: a playlist would pass [`PLAYLIST_TRACKS_MAX`].
+fn playlist_full() -> ApiError {
+    ApiError::BadRequest(format!(
+        "a playlist holds at most {PLAYLIST_TRACKS_MAX} tracks"
+    ))
+}
+
+/// `404` when a write touched no row of the caller's.
+const fn found(touched: bool) -> Result<(), ApiError> {
+    if touched {
+        Ok(())
+    } else {
+        Err(ApiError::NotFound)
+    }
+}
+
+/// The caller's playlist, `404` when it is someone else's or gone.
+async fn owned_playlist(
+    conn: &mut sqlx::PgConnection,
+    user_id: Uuid,
+    id: Uuid,
+) -> Result<MusicPlaylistRow, ApiError> {
+    queries::get_playlist(conn, user_id, id)
+        .await?
+        .ok_or(ApiError::NotFound)
+}
+
 fn check_track_ids(ids: &[String]) -> Result<Vec<String>, ApiError> {
     if ids.len() > PLAYLIST_TRACKS_MAX {
-        return Err(ApiError::BadRequest(format!(
-            "a playlist holds at most {PLAYLIST_TRACKS_MAX} tracks"
-        )));
+        return Err(playlist_full());
     }
     let mut out: Vec<String> = Vec::with_capacity(ids.len());
     for id in ids {
@@ -136,11 +161,7 @@ pub async fn like(state: &AppState, user_id: Uuid, track_id: &str) -> Result<(),
 pub async fn unlike(state: &AppState, user_id: Uuid, track_id: &str) -> Result<(), ApiError> {
     check_track_id(track_id)?;
     let mut conn = state.db.acquire().await?;
-    if queries::unset_like(&mut conn, user_id, track_id).await? {
-        Ok(())
-    } else {
-        Err(ApiError::NotFound)
-    }
+    found(queries::unset_like(&mut conn, user_id, track_id).await?)
 }
 
 /// Log a play.
@@ -171,11 +192,7 @@ pub async fn update_play(
 ) -> Result<(), ApiError> {
     let listened = check_listened(input.listened_seconds)?;
     let mut conn = state.db.acquire().await?;
-    if queries::update_play(&mut conn, user_id, id, listened).await? {
-        Ok(())
-    } else {
-        Err(ApiError::NotFound)
-    }
+    found(queries::update_play(&mut conn, user_id, id, listened).await?)
 }
 
 async fn with_tracks(
@@ -227,9 +244,7 @@ pub async fn patch_playlist(
         .map(check_track_ids)
         .transpose()?;
     let mut tx = state.db.begin().await?;
-    let mut row = queries::get_playlist(&mut tx, user_id, id)
-        .await?
-        .ok_or(ApiError::NotFound)?;
+    let mut row = owned_playlist(&mut tx, user_id, id).await?;
     if let Some(name) = name {
         row = queries::rename_playlist(&mut tx, user_id, id, &name)
             .await?
@@ -237,9 +252,7 @@ pub async fn patch_playlist(
     }
     if let Some(ids) = ids {
         queries::replace_playlist_tracks(&mut tx, id, &ids).await?;
-        row = queries::get_playlist(&mut tx, user_id, id)
-            .await?
-            .ok_or(ApiError::NotFound)?;
+        row = owned_playlist(&mut tx, user_id, id).await?;
     }
     let out = with_tracks(&mut tx, row).await?;
     tx.commit().await?;
@@ -250,11 +263,7 @@ pub async fn patch_playlist(
 /// `404` when the playlist is not the caller's.
 pub async fn delete_playlist(state: &AppState, user_id: Uuid, id: Uuid) -> Result<(), ApiError> {
     let mut conn = state.db.acquire().await?;
-    if queries::delete_playlist(&mut conn, user_id, id).await? {
-        Ok(())
-    } else {
-        Err(ApiError::NotFound)
-    }
+    found(queries::delete_playlist(&mut conn, user_id, id).await?)
 }
 
 /// Append tracks, skipping those already in.
@@ -270,15 +279,11 @@ pub async fn add_tracks(
 ) -> Result<MusicPlaylist, ApiError> {
     let ids = check_track_ids(&input.track_ids)?;
     let mut tx = state.db.begin().await?;
-    let row = queries::get_playlist(&mut tx, user_id, id)
-        .await?
-        .ok_or(ApiError::NotFound)?;
+    let row = owned_playlist(&mut tx, user_id, id).await?;
     let current = queries::playlist_track_ids(&mut tx, id).await?;
     let new = ids.iter().filter(|t| !current.contains(t)).count();
     if current.len() + new > PLAYLIST_TRACKS_MAX {
-        return Err(ApiError::BadRequest(format!(
-            "a playlist holds at most {PLAYLIST_TRACKS_MAX} tracks"
-        )));
+        return Err(playlist_full());
     }
     if new > 0 {
         queries::append_playlist_tracks(&mut tx, id, &ids).await?;
@@ -300,15 +305,11 @@ pub async fn remove_track(
     track_id: &str,
 ) -> Result<MusicPlaylist, ApiError> {
     let mut tx = state.db.begin().await?;
-    queries::get_playlist(&mut tx, user_id, id)
-        .await?
-        .ok_or(ApiError::NotFound)?;
+    owned_playlist(&mut tx, user_id, id).await?;
     if !queries::remove_playlist_track(&mut tx, id, track_id).await? {
         return Err(ApiError::NotFound);
     }
-    let row = queries::get_playlist(&mut tx, user_id, id)
-        .await?
-        .ok_or(ApiError::NotFound)?;
+    let row = owned_playlist(&mut tx, user_id, id).await?;
     let out = with_tracks(&mut tx, row).await?;
     tx.commit().await?;
     Ok(out)

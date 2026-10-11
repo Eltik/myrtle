@@ -112,7 +112,7 @@ pub fn compute(seats: &[Seat<'_>]) -> Readiness {
                 }
             }
             if let Some(u) = &module_unlock
-                && (b.phase < u.phase || (b.phase == u.phase && b.level < u.level))
+                && !reached(u, b.phase, b.level)
             {
                 flags.push(flag(
                     ReadinessFlagKind::ModuleLocked,

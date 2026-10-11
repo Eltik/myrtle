@@ -164,12 +164,23 @@ fn enemy_debuff(facts: Option<&TextFacts>, board: &Board) -> bool {
         && facts.is_some_and(|f| f.names_enemy)
 }
 
-const fn src(kind: SourceKind) -> SourceRef {
-    SourceRef {
-        kind,
-        name: None,
-        skill_index: None,
-    }
+/// A skill or talent `block_cnt` bonus that lifts the seat's base block to
+/// `BLOCK_ROW_MIN`.
+fn block_bonus_reaches(board: &Board, base_block: i32) -> bool {
+    bb(board, "block_cnt")
+        .is_some_and(|d| d > 0.0 && f64::from(base_block) + d >= f64::from(BLOCK_ROW_MIN))
+}
+
+/// A non-zero `force`, which moves enemies.
+fn board_shifts(board: &Board) -> bool {
+    ["force", "attack@force"]
+        .iter()
+        .any(|k| bb(board, k).is_some_and(|v| v != 0.0))
+}
+
+/// An Elemental heal key (`ep_heal...`).
+fn board_heals_elemental(board: &Board) -> bool {
+    board.iter().any(|(k, _)| k.starts_with("ep_heal"))
 }
 
 /// Every (row, source) one seat earns; the caller keeps the first source per
@@ -187,7 +198,7 @@ fn seat_hits(ctx: &Ctx<'_>, s: &Seat<'_>, economy: &Economy) -> Vec<(CoverageRow
     let says = |f: fn(&TextFacts) -> bool| tf.is_some_and(f);
 
     // ---- trait
-    let mut tr = |row: R| hits.push((row, src(SourceKind::Trait)));
+    let mut tr = |row: R| hits.push((row, SourceRef::bare(SourceKind::Trait)));
     // DP per kill: a positive trait `cost` with no `interval` (Chargers, the
     // only branch with that shape; Merchants pay `cost` < 0 per `interval`).
     if bb(tb, "cost").is_some_and(|c| c > 0.0) && bb(tb, "interval").is_none() {
@@ -253,13 +264,11 @@ fn seat_hits(ctx: &Ctx<'_>, s: &Seat<'_>, economy: &Economy) -> Vec<(CoverageRow
         tr(R::Summons);
     }
 
+    let base_block = s.key_frame().map_or(0, |k| k.block_cnt);
+
     // ---- skill
     if let Some(sk) = &s.skill {
-        let r = SourceRef {
-            kind: SourceKind::Skill,
-            name: Some(sk.level.name.clone()),
-            skill_index: i32::try_from(sk.index).ok(),
-        };
+        let r = sk.source();
         let b = &sk.board;
         let f = ctx.facts(&sk.key);
         let says = |g: fn(&TextFacts) -> bool| f.is_some_and(g);
@@ -267,10 +276,7 @@ fn seat_hits(ctx: &Ctx<'_>, s: &Seat<'_>, economy: &Economy) -> Vec<(CoverageRow
         if skill_dp(b).is_some() {
             add(R::DpGen);
         }
-        let base_block = s.key_frame().map_or(0, |k| k.block_cnt);
-        if bb(b, "block_cnt")
-            .is_some_and(|d| d > 0.0 && f64::from(base_block) + d >= f64::from(BLOCK_ROW_MIN))
-        {
+        if block_bonus_reaches(b, base_block) {
             add(R::Block3);
         }
         let heal = board_any_gt(b, &["heal_scale", "attack@heal_scale"], 0.0);
@@ -280,7 +286,7 @@ fn seat_hits(ctx: &Ctx<'_>, s: &Seat<'_>, economy: &Economy) -> Vec<(CoverageRow
         if heal && says(|g| g.heal_area_words) {
             add(R::HealArea);
         }
-        if b.iter().any(|(k, _)| k.starts_with("ep_heal")) {
+        if board_heals_elemental(b) {
             add(R::HealElemental);
         }
         if says(|g| g.arts_damage) {
@@ -303,10 +309,7 @@ fn seat_hits(ctx: &Ctx<'_>, s: &Seat<'_>, economy: &Economy) -> Vec<(CoverageRow
         if board_has_cc(b) {
             add(R::Cc);
         }
-        if ["force", "attack@force"]
-            .iter()
-            .any(|k| bb(b, k).is_some_and(|v| v != 0.0))
-        {
+        if board_shifts(b) {
             add(R::Shift);
         }
         if enemy_debuff(f, b) {
@@ -328,24 +331,17 @@ fn seat_hits(ctx: &Ctx<'_>, s: &Seat<'_>, economy: &Economy) -> Vec<(CoverageRow
 
     // ---- talents
     for t in &s.talents {
-        let r = SourceRef {
-            kind: SourceKind::Talent,
-            name: Some(t.name.clone()),
-            skill_index: None,
-        };
+        let r = t.source();
         let b = &t.board;
         let f = ctx.facts(&t.key);
         let mut add = |row: R| hits.push((row, r.clone()));
         if f.is_some_and(|f| talent_gains_dp(f, b)) {
             add(R::DpGen);
         }
-        let base_block = s.key_frame().map_or(0, |k| k.block_cnt);
-        if bb(b, "block_cnt")
-            .is_some_and(|d| d > 0.0 && f64::from(base_block) + d >= f64::from(BLOCK_ROW_MIN))
-        {
+        if block_bonus_reaches(b, base_block) {
             add(R::Block3);
         }
-        if b.iter().any(|(k, _)| k.starts_with("ep_heal")) {
+        if board_heals_elemental(b) {
             add(R::HealElemental);
         }
         if true_elemental(f, b) {
@@ -354,10 +350,7 @@ fn seat_hits(ctx: &Ctx<'_>, s: &Seat<'_>, economy: &Economy) -> Vec<(CoverageRow
         if board_has_cc(b) {
             add(R::Cc);
         }
-        if ["force", "attack@force"]
-            .iter()
-            .any(|k| bb(b, k).is_some_and(|v| v != 0.0))
-        {
+        if board_shifts(b) {
             add(R::Shift);
         }
         if enemy_debuff(f, b) {
@@ -375,20 +368,20 @@ fn seat_hits(ctx: &Ctx<'_>, s: &Seat<'_>, economy: &Economy) -> Vec<(CoverageRow
     let eco = economy.seats.iter().find(|e| e.seat == s.seat);
     if let Some(e) = eco {
         if e.cost <= economy.start_dp {
-            hits.push((R::Openers, src(SourceKind::Stats)));
+            hits.push((R::Openers, SourceRef::bare(SourceKind::Stats)));
         }
         if e.respawn <= FAST_REDEPLOY_SECS {
-            hits.push((R::FastRedeploy, src(SourceKind::Stats)));
+            hits.push((R::FastRedeploy, SourceRef::bare(SourceKind::Stats)));
         }
     }
     if s.key_frame().is_some_and(|k| k.block_cnt >= BLOCK_ROW_MIN) {
-        hits.push((R::Block3, src(SourceKind::Stats)));
+        hits.push((R::Block3, SourceRef::bare(SourceKind::Stats)));
     }
 
     // ---- recruitment tags, the fallback, by tag id on the seat's server
     for (tag, row) in TAG_FALLBACK {
         if s.tag_ids.contains(tag) {
-            hits.push((*row, src(SourceKind::Tag)));
+            hits.push((*row, SourceRef::bare(SourceKind::Tag)));
         }
     }
     hits

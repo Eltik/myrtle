@@ -30,7 +30,7 @@ use std::sync::LazyLock;
 use regex::Regex;
 
 use crate::core::gamedata::types::GameData;
-use crate::core::gamedata::types::gacha::PROFESSION_TAG_IDS;
+use crate::core::gamedata::types::gacha::{MELEE_TAG_ID, PROFESSION_TAG_IDS, RANGED_TAG_ID};
 use crate::core::gamedata::types::operator::{Operator, OperatorPosition};
 
 use super::build::Seat;
@@ -72,7 +72,7 @@ const SKILL_WORDS: &[&str] = &[
 /// The recruitment tags that name a position, by `GachaTags` `TagId`. The
 /// pairing of tag id to `position` is not in any table (the same residue as
 /// `gacha::PROFESSION_TAG_IDS`); the words are each server's `TagName`.
-pub const POSITION_TAG_IDS: [(&str, i32); 2] = [("MELEE", 9), ("RANGED", 10)];
+pub const POSITION_TAG_IDS: [(&str, i32); 2] = [("MELEE", MELEE_TAG_ID), ("RANGED", RANGED_TAG_ID)];
 
 /// One allied unit the game picks (Haruka "Fleeting Foam": "an allied unit
 /// within range gains a bubble"), only with a granting verb after it.

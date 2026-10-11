@@ -12,7 +12,7 @@
 use std::collections::HashMap;
 
 use super::Ctx;
-use super::build::{Board, LiveTalent, Seat, bb};
+use super::build::{Board, Seat, bb};
 use super::index::{StatScale, TalentText, TextFacts};
 use super::targets::fits;
 use super::types::{
@@ -27,11 +27,54 @@ pub struct EconomyOut {
     pub cost_by_seat: HashMap<i32, i32>,
 }
 
-fn talent_ref(t: &LiveTalent) -> SourceRef {
-    SourceRef {
-        kind: SourceKind::Talent,
-        name: Some(t.name.clone()),
-        skill_index: None,
+/// One cut; `change` is `(amount, ratio)` as `respawn_change` returns it.
+const fn cut(
+    kind: CutKind,
+    name: Option<String>,
+    from_seat: Option<i32>,
+    (amount, ratio): (f64, Option<f64>),
+) -> Cut {
+    Cut {
+        kind,
+        name,
+        from_seat,
+        amount,
+        ratio,
+    }
+}
+
+/// A squad talent's cut, added to each receiving seat's `cuts` or
+/// `respawn_cuts` (`list`).
+fn give_cut(
+    rows: &mut [EconomySeat],
+    receivers: &[i32],
+    list: fn(&mut EconomySeat) -> &mut Vec<Cut>,
+    c: &Cut,
+) {
+    for r in receivers {
+        if let Some(row) = rows.iter_mut().find(|x| x.seat == *r) {
+            list(row).push(c.clone());
+        }
+    }
+}
+
+/// A DP source from `s` with every optional field empty.
+fn dp_source(s: &Seat<'_>, source: SourceRef, amount: f64) -> DpSource {
+    DpSource {
+        seat: s.seat,
+        char_id: s.char_id.clone(),
+        support: s.support,
+        source,
+        amount,
+        per_kill: false,
+        refund: false,
+        duration: None,
+        interval: None,
+        sp_cost: None,
+        sp_init: None,
+        first_ready: None,
+        charges_on_attack: false,
+        auto: false,
     }
 }
 
@@ -39,7 +82,7 @@ fn talent_ref(t: &LiveTalent) -> SourceRef {
 /// opens with the stat ("DP Cost -1", "Redeployment Time -30 seconds") or it
 /// names no other target. Gravel's "DP Cost -1; All units that cost 10 or
 /// less DP gain DEF" names a target for the DEF half only.
-fn is_self(t: &TalentText) -> bool {
+const fn is_self(t: &TalentText) -> bool {
     t.opens_with_own_stat || t.target.is_none()
 }
 
@@ -123,6 +166,11 @@ fn apply(base: f64, cuts: &[Cut]) -> f64 {
     ((base + sum) * mult).max(0.0)
 }
 
+/// A seat's DP cost after `cuts`, truncated to whole DP.
+fn cost_after(base_cost: i32, cuts: &[Cut]) -> i32 {
+    apply(f64::from(base_cost), cuts).trunc() as i32
+}
+
 #[allow(clippy::too_many_lines)] // one pass over the seats, kept in order
 pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> EconomyOut {
     let mut rows: Vec<EconomySeat> = Vec::new();
@@ -156,22 +204,10 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
             }
         }
         if pot_cost != 0.0 {
-            cuts.push(Cut {
-                kind: CutKind::Potential,
-                name: None,
-                from_seat: None,
-                amount: pot_cost,
-                ratio: None,
-            });
+            cuts.push(cut(CutKind::Potential, None, None, (pot_cost, None)));
         }
         if pot_resp != 0.0 {
-            respawn_cuts.push(Cut {
-                kind: CutKind::Potential,
-                name: None,
-                from_seat: None,
-                amount: pot_resp,
-                ratio: None,
-            });
+            respawn_cuts.push(cut(CutKind::Potential, None, None, (pot_resp, None)));
         }
 
         for t in &s.talents {
@@ -187,47 +223,31 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
                 // Swire the Elegant Wit's `cost` -5 is DP spent, not a DP Cost
                 // cut; the cut talents all say "DP Cost".
                 if tt.says_dp_cost {
-                    cuts.push(Cut {
-                        kind: CutKind::Talent,
-                        name: Some(t.name.clone()),
-                        from_seat: None,
-                        amount: c,
-                        ratio: None,
-                    });
+                    cuts.push(cut(CutKind::Talent, Some(t.name.clone()), None, (c, None)));
                 }
             }
             if let Some(v) = bb(&t.board, "respawn_time").filter(|v| *v != 0.0) {
-                let (amount, ratio) = respawn_change(v, Some(tt));
-                respawn_cuts.push(Cut {
-                    kind: CutKind::Talent,
-                    name: Some(t.name.clone()),
-                    from_seat: None,
-                    amount,
-                    ratio,
-                });
+                respawn_cuts.push(cut(
+                    CutKind::Talent,
+                    Some(t.name.clone()),
+                    None,
+                    respawn_change(v, Some(tt)),
+                ));
             }
         }
 
         if let Some(mp) = s.module_phase {
             for b in &mp.attribute_blackboard {
                 match b.key.as_str() {
-                    "cost" if b.value != 0.0 => cuts.push(Cut {
-                        kind: CutKind::Module,
-                        name: s.module_name(),
-                        from_seat: None,
-                        amount: b.value,
-                        ratio: None,
-                    }),
-                    "respawn_time" if b.value != 0.0 => {
-                        let (amount, ratio) = respawn_change(b.value, None);
-                        respawn_cuts.push(Cut {
-                            kind: CutKind::Module,
-                            name: s.module_name(),
-                            from_seat: None,
-                            amount,
-                            ratio,
-                        });
+                    "cost" if b.value != 0.0 => {
+                        cuts.push(cut(CutKind::Module, s.module_name(), None, (b.value, None)));
                     }
+                    "respawn_time" if b.value != 0.0 => respawn_cuts.push(cut(
+                        CutKind::Module,
+                        s.module_name(),
+                        None,
+                        respawn_change(b.value, None),
+                    )),
                     _ => {}
                 }
             }
@@ -249,12 +269,7 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
     // Own costs, for "DP Cost no more than N" receivers of squad effects.
     let own_cost: HashMap<i32, i32> = rows
         .iter()
-        .map(|r| {
-            (
-                r.seat,
-                apply(f64::from(r.base_cost), &r.cuts).trunc() as i32,
-            )
-        })
+        .map(|r| (r.seat, cost_after(r.base_cost, &r.cuts)))
         .collect();
 
     // SP bonuses from squad talents, keyed by receiving seat.
@@ -318,17 +333,13 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
 
             if let Some(c) = bb(&t.board, "cost").filter(|c| *c < 0.0) {
                 if cond == SynergyCond::Squad {
-                    for r in &receivers {
-                        if let Some(row) = rows.iter_mut().find(|x| x.seat == *r) {
-                            row.cuts.push(Cut {
-                                kind: CutKind::Squad,
-                                name: Some(t.name.clone()),
-                                from_seat: Some(g.seat),
-                                amount: c,
-                                ratio: None,
-                            });
-                        }
-                    }
+                    let given = cut(
+                        CutKind::Squad,
+                        Some(t.name.clone()),
+                        Some(g.seat),
+                        (c, None),
+                    );
+                    give_cut(&mut rows, &receivers, |r| &mut r.cuts, &given);
                     if !receivers.is_empty() {
                         counted.push(note(EconomyNoteKind::CostCut, g, &t.name, Some(c)));
                     }
@@ -337,19 +348,14 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
                 }
             }
             if let Some(v) = bb(&t.board, "respawn_time").filter(|v| *v != 0.0) {
-                let (amount, ratio) = respawn_change(v, Some(tt));
                 if cond == SynergyCond::Squad {
-                    for r in &receivers {
-                        if let Some(row) = rows.iter_mut().find(|x| x.seat == *r) {
-                            row.respawn_cuts.push(Cut {
-                                kind: CutKind::Squad,
-                                name: Some(t.name.clone()),
-                                from_seat: Some(g.seat),
-                                amount,
-                                ratio,
-                            });
-                        }
-                    }
+                    let given = cut(
+                        CutKind::Squad,
+                        Some(t.name.clone()),
+                        Some(g.seat),
+                        respawn_change(v, Some(tt)),
+                    );
+                    give_cut(&mut rows, &receivers, |r| &mut r.respawn_cuts, &given);
                     if !receivers.is_empty() {
                         counted.push(note(EconomyNoteKind::RedeployCut, g, &t.name, Some(v)));
                     }
@@ -388,24 +394,9 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
             && let Some(c) = trait_cost.filter(|c| *c > 0.0)
         {
             sources.push(DpSource {
-                seat: s.seat,
-                char_id: s.char_id.clone(),
-                support: s.support,
-                source: SourceRef {
-                    kind: SourceKind::Trait,
-                    name: None,
-                    skill_index: None,
-                },
-                amount: c,
                 per_kill: true,
                 refund: trait_refund,
-                duration: None,
-                interval: None,
-                sp_cost: None,
-                sp_init: None,
-                first_ready: None,
-                charges_on_attack: false,
-                auto: false,
+                ..dp_source(s, SourceRef::bare(SourceKind::Trait), c)
             });
         }
         if let (Some(c), Some(interval)) = (trait_cost.filter(|c| *c < 0.0), trait_interval) {
@@ -433,17 +424,6 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
                     .map(|(_, v)| *v)
             });
             sources.push(DpSource {
-                seat: s.seat,
-                char_id: s.char_id.clone(),
-                support: s.support,
-                source: SourceRef {
-                    kind: SourceKind::Skill,
-                    name: Some(sk.level.name.clone()),
-                    skill_index: i32::try_from(sk.index).ok(),
-                },
-                amount,
-                per_kill: false,
-                refund: false,
                 duration: (sk.level.duration > 0.0).then_some(sk.level.duration),
                 interval,
                 sp_cost: Some(sp.sp_cost),
@@ -451,6 +431,7 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
                 first_ready: time.then(|| ((f64::from(sp.sp_cost) - sp_init) / inc).max(0.0)),
                 charges_on_attack: sp.sp_type == "INCREASE_WHEN_ATTACK",
                 auto: sk.level.skill_type == "AUTO",
+                ..dp_source(s, sk.source(), amount)
             });
         }
         for t in &s.talents {
@@ -462,20 +443,9 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
                 continue;
             };
             sources.push(DpSource {
-                seat: s.seat,
-                char_id: s.char_id.clone(),
-                support: s.support,
-                source: talent_ref(t),
-                amount: bb(&t.board, "cost").unwrap_or(0.0),
                 per_kill: tt.on_defeat,
-                refund: false,
-                duration: None,
                 interval: bb(&t.board, "interval"),
-                sp_cost: None,
-                sp_init: None,
-                first_ready: None,
-                charges_on_attack: false,
-                auto: false,
+                ..dp_source(s, t.source(), bb(&t.board, "cost").unwrap_or(0.0))
             });
             if tt.conditional {
                 notes.push(note(
@@ -498,7 +468,7 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
 
     let mut cost_by_seat = HashMap::new();
     for r in &mut rows {
-        r.cost = apply(f64::from(r.base_cost), &r.cuts).trunc() as i32;
+        r.cost = cost_after(r.base_cost, &r.cuts);
         r.respawn = apply(r.base_respawn, &r.respawn_cuts);
         cost_by_seat.insert(r.seat, r.cost);
     }

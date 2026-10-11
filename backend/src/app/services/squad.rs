@@ -23,7 +23,7 @@ use crate::core::squad::policy::{
     BUILD_FIELD_MAX, DEPLOY_LIMIT_MAX, NAME_MAX_CHARS, SLOT_LIMIT, SQUAD_SIZE, STAGE_ID_MAX,
     START_DP_MAX,
 };
-use crate::core::squad::rules::SkillRules;
+use crate::core::squad::rules::{SkillRules, module_ranks};
 use crate::core::squad::{
     self,
     types::{SquadAnalysis, SquadAnalyzeRequest, SquadMemberBuild},
@@ -141,20 +141,11 @@ pub async fn analyze(
     request: SquadAnalyzeRequest,
     server: Server,
 ) -> Result<SquadAnalysis, ApiError> {
-    if request.members.len() > SQUAD_SIZE {
-        return Err(ApiError::BadRequest(format!(
-            "members: at most {SQUAD_SIZE} seats, got {}",
-            request.members.len()
-        )));
-    }
-    for (i, member) in request.members.iter().enumerate() {
-        if let Some(member) = member {
-            check_member_build(&format!("members[{i}]"), member)?;
-        }
-    }
-    if let Some(support) = &request.support {
-        check_member_build("support", support)?;
-    }
+    check_seats(
+        &request.members,
+        request.support.as_ref(),
+        check_member_build,
+    )?;
     range("start_dp", request.start_dp, 0, START_DP_MAX)?;
     if let Some(limit) = request.deploy_limit {
         range("deploy_limit", limit, 0, DEPLOY_LIMIT_MAX)?;
@@ -203,20 +194,9 @@ fn checked(data: &GameData, slot: i16, input: SavedSquadInput) -> Result<Checked
         name.to_owned()
     };
 
-    if input.members.len() > SQUAD_SIZE {
-        return Err(ApiError::BadRequest(format!(
-            "members: at most {SQUAD_SIZE} seats, got {}",
-            input.members.len()
-        )));
-    }
-    for (i, member) in input.members.iter().enumerate() {
-        if let Some(member) = member {
-            check_member(data, &format!("members[{i}]"), member)?;
-        }
-    }
-    if let Some(support) = &input.support {
-        check_member(data, "support", support)?;
-    }
+    check_seats(&input.members, input.support.as_ref(), |field, member| {
+        check_member(data, field, member)
+    })?;
     let mut members = input.members;
     members.resize_with(SQUAD_SIZE, || None);
 
@@ -242,6 +222,30 @@ fn checked(data: &GameData, slot: i16, input: SavedSquadInput) -> Result<Checked
         support: input.support,
         stage_id,
     })
+}
+
+/// At most twelve seats, then `check` on each filled seat (`members[i]`) and
+/// the support, in that order.
+fn check_seats<T>(
+    members: &[Option<T>],
+    support: Option<&T>,
+    check: impl Fn(&str, &T) -> Result<(), ApiError>,
+) -> Result<(), ApiError> {
+    if members.len() > SQUAD_SIZE {
+        return Err(ApiError::BadRequest(format!(
+            "members: at most {SQUAD_SIZE} seats, got {}",
+            members.len()
+        )));
+    }
+    for (i, member) in members.iter().enumerate() {
+        if let Some(member) = member {
+            check(&format!("members[{i}]"), member)?;
+        }
+    }
+    if let Some(support) = support {
+        check("support", support)?;
+    }
+    Ok(())
 }
 
 /// A seat's operator must be a playable operator in `data`, its skill one the
@@ -312,18 +316,13 @@ fn check_member(data: &GameData, field: &str, member: &SquadMember) -> Result<()
             1,
             rules.max_rank(),
         )?;
-        let max_mastery = if build.skill_level == rules.max_rank() {
-            rules.max_mastery(skill)
-        } else {
-            0
-        };
         range(
             &format!("{field}.build.mastery"),
             build.mastery,
             0,
-            max_mastery,
+            rules.mastery_cap(skill, build.skill_level),
         )?;
-        let module_max = module.map_or(0, |m| i32::try_from(m.data.phases.len()).unwrap_or(0));
+        let module_max = module.map_or(0, module_ranks);
         range(
             &format!("{field}.build.module_level"),
             build.module_level,
@@ -358,5 +357,112 @@ fn range(field: &str, value: i32, min: i32, max: i32) -> Result<(), ApiError> {
         Err(ApiError::BadRequest(format!(
             "{field} must be {min} to {max}, got {value}"
         )))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn build(value: i32) -> SquadMemberBuild {
+        SquadMemberBuild {
+            char_id: "char_002_amiya".into(),
+            phase: value,
+            level: value,
+            potential: value,
+            skill_index: value,
+            skill_level: value,
+            mastery: value,
+            module_id: None,
+            module_level: value,
+        }
+    }
+
+    fn member(char_id: &str) -> SquadMember {
+        SquadMember {
+            char_id: char_id.into(),
+            skill_index: 0,
+            module_id: None,
+            build: None,
+        }
+    }
+
+    fn input(members: Vec<Option<SquadMember>>, stage_id: Option<&str>) -> SavedSquadInput {
+        SavedSquadInput {
+            name: "  ".into(),
+            members,
+            support: None,
+            stage_id: stage_id.map(str::to_string),
+        }
+    }
+
+    fn message<T>(r: Result<T, ApiError>) -> String {
+        match r {
+            Err(ApiError::BadRequest(m)) => m,
+            Err(e) => panic!("expected a 400, got {e:?}"),
+            Ok(_) => panic!("expected a 400, got Ok"),
+        }
+    }
+
+    #[test]
+    fn slot_and_range_messages() {
+        assert_eq!(checked_slot(1).unwrap(), 1);
+        assert_eq!(checked_slot(4).unwrap(), 4);
+        assert_eq!(message(checked_slot(0)), "slot must be 1 to 4, got 0");
+        assert_eq!(message(checked_slot(5)), "slot must be 1 to 4, got 5");
+        assert!(range("x", 3, 0, 3).is_ok());
+        assert_eq!(message(range("x", -1, 0, 3)), "x must be 0 to 3, got -1");
+    }
+
+    #[test]
+    fn analyze_build_caps() {
+        assert!(check_member_build("members[0]", &build(999)).is_ok());
+        assert_eq!(
+            message(check_member_build("members[0]", &build(1000))),
+            "members[0].phase must be 0 to 999, got 1000"
+        );
+        let mut b = build(1);
+        b.mastery = -1;
+        assert_eq!(
+            message(check_member_build("support", &b)),
+            "support.mastery must be 0 to 999, got -1"
+        );
+    }
+
+    #[test]
+    fn saved_squad_checks() {
+        let data = GameData::default();
+        let ok = checked(&data, 2, input(Vec::new(), Some(" main_01-07 "))).unwrap();
+        assert_eq!(ok.name, "Squad 2");
+        assert_eq!(ok.members.len(), SQUAD_SIZE);
+        assert_eq!(ok.stage_id.as_deref(), Some("main_01-07"));
+        assert_eq!(
+            checked(&data, 1, input(Vec::new(), Some("   ")))
+                .unwrap()
+                .stage_id,
+            None
+        );
+        assert_eq!(
+            message(checked(&data, 1, input(vec![None; 13], None))),
+            "members: at most 12 seats, got 13"
+        );
+        assert_eq!(
+            message(checked(
+                &data,
+                1,
+                input(vec![None, Some(member("char_x"))], None)
+            )),
+            "members[1]: unknown operator `char_x`"
+        );
+        let mut with_support = input(Vec::new(), None);
+        with_support.support = Some(member("char_y"));
+        assert_eq!(
+            message(checked(&data, 1, with_support)),
+            "support: unknown operator `char_y`"
+        );
+        assert_eq!(
+            message(checked(&data, 1, input(Vec::new(), Some("a b")))),
+            "stage_id may hold only letters, digits, `_`, `#` and `-`"
+        );
     }
 }

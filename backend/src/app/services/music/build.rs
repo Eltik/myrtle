@@ -276,16 +276,64 @@ impl Registry {
         Some(key)
     }
 
+    /// [`Self::pair`], answering the track itself.
+    fn pair_mut(&mut self, loop_path: &str, intro: Option<&str>) -> Option<&mut TrackAcc> {
+        let key = self.pair(loop_path, intro)?;
+        self.tracks.get_mut(&key)
+    }
+
     fn bank(&self, name: &str) -> Option<&String> {
-        self.bank_track
-            .get(name)
+        self.own_bank(name)
             .or_else(|| self.bank_track.get(self.alias.get(name)?))
+    }
+
+    /// The track of a bank of that name, never through an alias.
+    fn own_bank(&self, name: &str) -> Option<&String> {
+        self.bank_track.get(name)
     }
 
     fn track_mut(&mut self, name: &str) -> Option<&mut TrackAcc> {
         let key = self.bank(name)?.clone();
         self.tracks.get_mut(&key)
     }
+}
+
+/// The track ids already claimed, by the first table that names an origin.
+#[derive(Default)]
+struct Origins(HashMap<String, String>);
+
+impl Origins {
+    /// The first claim on a track wins.
+    fn claim(&mut self, key: Option<&String>, name: Option<String>) {
+        if let (Some(key), Some(name)) = (key, name) {
+            self.0.entry(key.clone()).or_insert(name);
+        }
+    }
+}
+
+/// `audio_data.Musics` rows by id, as the bank each plays through.
+struct MusicRows<'a>(HashMap<&'a str, &'a str>);
+
+impl MusicRows<'_> {
+    /// The track a `Musics` row id plays.
+    fn track(&self, reg: &Registry, id: &str) -> Option<String> {
+        reg.bank(self.0.get(id)?).cloned()
+    }
+}
+
+/// The battle bank a level or a table names by its suffix.
+fn battle_bank(event: &str) -> String {
+    format!("battle.ON_GAME_READY.{event}")
+}
+
+/// A `sys.*` bank as its event and, when it has one, its entity.
+fn sys_parts(bank: &str) -> Option<(&str, Option<&str>)> {
+    let mut parts = bank.split('.');
+    if parts.next()? != "sys" {
+        return None;
+    }
+    let event = parts.next()?;
+    Some((event, parts.next()))
 }
 
 /// Every `.ogg` under a tree's music and anonymous-bundle audio, by lowercase
@@ -385,15 +433,21 @@ impl<T> Default for KeyedOrMap<T> {
 }
 
 impl<T> KeyedOrMap<T> {
+    /// The values in table order (a plain object's in map order).
+    fn values(&self) -> Vec<&T> {
+        match self {
+            Self::Keyed(v) => v.iter().map(|k| &k.value).collect(),
+            Self::Map(m) => m.values().collect(),
+        }
+    }
+
     fn into_values(self) -> Vec<T> {
         match self {
             Self::Keyed(v) => v.into_iter().map(|k| k.value).collect(),
             Self::Map(m) => m.into_values().collect(),
         }
     }
-}
 
-impl<T> KeyedOrMap<T> {
     /// `(key, value)` in table order (a plain object has none, so sorted).
     fn into_pairs(self) -> Vec<(String, T)> {
         match self {
@@ -837,12 +891,8 @@ impl Chronology {
     /// The start and name of the event, season, theme or run a `sys.*` menu
     /// bank belongs to.
     fn menu(&self, names: &Names<'_>, bank: &str) -> Option<(i64, String)> {
-        let mut parts = bank.split('.');
-        if parts.next()? != "sys" {
-            return None;
-        }
-        let event = parts.next()?;
-        let entity = parts.next()?;
+        let (event, entity) = sys_parts(bank)?;
+        let entity = entity?;
         match event {
             "ON_ACTIVITY_LOADED" | "ON_ACT_CAMP_SELECT" | "ACTIVITY_ACTIVE_TRACKS" => {
                 self.activity(names, entity)
@@ -874,12 +924,7 @@ fn sys_place(
     bank: &str,
     map_banks: &HashSet<String>,
 ) -> Option<(MusicPlaceKind, Option<String>, Option<MusicRole>)> {
-    let mut parts = bank.split('.');
-    if parts.next()? != "sys" {
-        return None;
-    }
-    let event = parts.next()?;
-    let entity = parts.next();
+    let (event, entity) = sys_parts(bank)?;
     let place = match event {
         // The home backgrounds, the jukebox and the furniture reach
         // `ON_MUSIC` banks through their `Musics` rows.
@@ -954,30 +999,108 @@ fn script_music<'a>(text: &'a str, vars: &'a StoryVariables) -> Vec<(String, Opt
     out
 }
 
-/// Build the index for one server.
-#[must_use]
-#[allow(clippy::too_many_lines)]
-pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
-    let excel = src.assets_dir.join("gamedata/excel");
-    let story_dir = src.assets_dir.join("gamedata/story");
-    let vars = StoryVariables::load(&src.assets_dir);
+/// A Contingency Contract season from either crisis table, with the banks it
+/// names as its own.
+struct SeasonRow {
+    id: String,
+    name: String,
+    start: i64,
+    main: Option<String>,
+    challenge: Option<String>,
+}
 
-    let crisis: CrisisTable = read_table(&excel, "crisis_table");
-    let crisis_v2: CrisisV2Table = read_table(&excel, "crisis_v2_table");
+/// Every season: `crisis_table` in table order, then `crisis_v2_table` by
+/// season id.
+fn read_seasons(excel: &Path) -> Vec<SeasonRow> {
+    let crisis: CrisisTable = read_table(excel, "crisis_table");
+    let crisis_v2: CrisisV2Table = read_table(excel, "crisis_v2_table");
     let mut v2_seasons = crisis_v2.season_info_data_map.into_values();
     v2_seasons.sort_by(|a, b| a.season_id.cmp(&b.season_id));
-    let mut seasons = HashMap::new();
-    let mut season_starts = HashMap::new();
-    for s in &crisis.season_info {
-        season_starts.insert(s.season_id.clone(), s.start_ts);
-        if let Some(n) = trimmed(&s.name) {
-            seasons.insert(s.season_id.clone(), n);
+    let v1 = crisis.season_info.into_iter().map(|s| SeasonRow {
+        id: s.season_id,
+        name: s.name,
+        start: s.start_ts,
+        main: s.perm_bgm,
+        challenge: s.perm_bgm_hard,
+    });
+    let v2 = v2_seasons.into_iter().map(|s| SeasonRow {
+        id: s.season_id,
+        name: s.name,
+        start: s.start_ts,
+        main: s.season_bgm,
+        challenge: s.season_bgm_challenge,
+    });
+    v1.chain(v2).collect()
+}
+
+/// Every map signal the topic table names, as the bank it plays through.
+fn rogue_map_banks(rogue: &[(String, RoguelikeDetail)]) -> HashSet<String> {
+    rogue
+        .iter()
+        .flat_map(|(theme, d)| {
+            d.zones
+                .values()
+                .into_iter()
+                .flat_map(|z| [z.bgm_signal.clone(), z.bgm_signal_with_low_san.clone()])
+                .chain(
+                    d.variation_data
+                        .values()
+                        .into_iter()
+                        .map(|v| v.sound.clone()),
+                )
+                .flatten()
+                .map(move |sig| format!("sys.{sig}.{theme}"))
+                .collect::<Vec<_>>()
+        })
+        .collect()
+}
+
+/// A rerun's activity id -> its original: the first activity of the
+/// `retro_table.RetroActList[].LinkedActId` that lists the rerun.
+fn rerun_originals(gd: &GameData) -> HashMap<String, String> {
+    let mut reruns: Vec<_> = gd.retro_acts.values().collect();
+    reruns.sort_by_key(|r| r.index);
+    let mut original = HashMap::new();
+    for r in reruns {
+        if let Some((first, rest)) = r.linked_act_id.split_first() {
+            for rerun in rest {
+                original
+                    .entry(rerun.clone())
+                    .or_insert_with(|| first.clone());
+            }
         }
     }
-    for s in &v2_seasons {
-        season_starts.insert(s.season_id.clone(), s.start_ts);
+    original
+}
+
+/// A zone's name: the stage index's, else the zone table's.
+fn zone_name(gd: &GameData, zone: &str) -> Option<String> {
+    gd.stage_index
+        .iter()
+        .find(|e| e.zone_id == zone)
+        .and_then(|e| e.zone_name.clone())
+        .or_else(|| {
+            let z = gd.zones.get(zone)?;
+            z.zone_name_second
+                .as_deref()
+                .and_then(trimmed)
+                .or_else(|| z.zone_name_first.as_deref().and_then(trimmed))
+        })
+}
+
+/// Build the index for one server.
+#[must_use]
+pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
+    let excel = src.assets_dir.join("gamedata/excel");
+    let vars = StoryVariables::load(&src.assets_dir);
+
+    let seasons = read_seasons(&excel);
+    let mut season_names = HashMap::new();
+    let mut season_starts = HashMap::new();
+    for s in &seasons {
+        season_starts.insert(s.id.clone(), s.start);
         if let Some(n) = trimmed(&s.name) {
-            seasons.insert(s.season_id.clone(), n);
+            season_names.insert(s.id.clone(), n);
         }
     }
     let sandbox: SandboxPerm = read_table(&excel, "sandbox_perm_table");
@@ -989,7 +1112,7 @@ pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
         .collect();
     let names = Names {
         gd,
-        seasons,
+        seasons: season_names,
         sandboxes,
     };
     let RoguelikeTopics {
@@ -1002,29 +1125,87 @@ pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
         .into_iter()
         .map(|(id, t)| (id, t.start_time))
         .collect();
-    // Every map signal the topic table names, as the bank it plays through.
-    let map_banks: HashSet<String> = rogue
-        .iter()
-        .flat_map(|(theme, d)| {
-            let zones = match &d.zones {
-                KeyedOrMap::Keyed(v) => v.iter().map(|k| &k.value).collect::<Vec<_>>(),
-                KeyedOrMap::Map(m) => m.values().collect(),
-            };
-            let variations = match &d.variation_data {
-                KeyedOrMap::Keyed(v) => v.iter().map(|k| &k.value).collect::<Vec<_>>(),
-                KeyedOrMap::Map(m) => m.values().collect(),
-            };
-            zones
-                .into_iter()
-                .flat_map(|z| [z.bgm_signal.clone(), z.bgm_signal_with_low_san.clone()])
-                .chain(variations.into_iter().map(|v| v.sound.clone()))
-                .flatten()
-                .map(move |sig| format!("sys.{sig}.{theme}"))
-                .collect::<Vec<_>>()
-        })
-        .collect();
+    let map_banks = rogue_map_banks(&rogue);
 
-    // 1. Banks. Sorted so the first intro a loop meets is the same every build.
+    // 1. Banks.
+    let (mut reg, named_banks) = register_banks(gd);
+
+    // What each track was MADE for, as the tables say it. The first claim
+    // wins, in this order: an event's archive jukebox
+    // (`story_review_meta_table.ActArchiveData`), a Reclamation Algorithm run
+    // (`sandbox_perm_table`), a Contingency Contract season's own bank, an
+    // Integrated Strategies theme's map signal (`roguelike_topic_table`), a
+    // Story Collection event set (`stage_table.StorylineStorySets`).
+    // Ruled out by measurement: an original event's own menu bank
+    // (`sys.ON_ACTIVITY_LOADED.{act}`) as the first claim moved 10 more EN
+    // origins than the order above (and put 2 back): 5 to the right event
+    // ("Heart of Surging Flame" for its rerun's name), 5 to a later event
+    // that reuses the theme as its menu (`m_sys_w` "Preluding Lights" for
+    // "Darknights Memoir").
+    let mut origins = Origins::default();
+    place_banks(&mut reg, &names, &named_banks, &map_banks);
+
+    let rows = MusicRows(
+        gd.music
+            .musics()
+            .map(|m| (m.id.as_str(), m.bank.as_str()))
+            .collect(),
+    );
+
+    // 2. Titles, chapter themes and the lobby, all through `Musics` rows.
+    let ZoneMusicTable {
+        mainline_addition_info,
+        mainline_zone_id_list,
+    } = read_table(&excel, "zone_table");
+    let mut chron = Chronology {
+        original: rerun_originals(gd),
+        seasons: season_starts,
+        themes: theme_starts,
+        mainline: mainline_zone_id_list
+            .into_iter()
+            .zip(0_i64..)
+            .map(|(zone, at)| {
+                let open = gd.zone_open_times.get(&zone).copied();
+                (zone, open.unwrap_or(i64::MIN / 2 + at))
+            })
+            .collect(),
+    };
+    let story_sets: StorySetTable = read_table(&excel, "stage_table");
+    let story_sets = story_sets.storyline_story_sets.into_pairs();
+    let chapter_zone = chapter_zones(gd, mainline_addition_info, &story_sets, &mut chron.mainline);
+    place_titles_and_chapters(gd, &mut reg, &chapter_zone);
+    place_lobby(&excel, &mut reg, &rows, &named_banks);
+    claim_archives(gd, &reg, &names, &rows, &mut origins);
+
+    // 3. Reclamation Algorithm, seasons, Integrated Strategies, the Story
+    // Collection and the activity table, claiming in that order.
+    place_sandbox_runs(&mut reg, &mut origins, &names, &rows, &sandbox.detail);
+    place_seasons(&mut reg, &mut origins, &names, seasons);
+    place_rogue(&mut reg, &mut origins, &names, rogue);
+    claim_story_sets(&reg, &mut origins, &names, &rows, &story_sets);
+    place_activity_music(&excel, &mut reg, &mut origins, &names, &rows, &named_banks);
+
+    // 4. Stages, through each level's `BgmEvent`.
+    place_stages(gd, &src.level_dirs, &mut reg);
+
+    // 5. Story scenes: every listed story, then the scripts the table skips.
+    let listed = place_listed_stories(gd, &src.assets_dir, &vars, &mut reg);
+    place_unlisted_stories(
+        &src.assets_dir.join("gamedata/story"),
+        &listed,
+        &vars,
+        &mut reg,
+        &names,
+    );
+
+    // 6. Clips, origin and the wire shape.
+    assemble(reg, origins, &names, &chron, &src.clip_trees)
+}
+
+/// Every bank's loop and intro as a track, sorted so the first intro a loop
+/// meets is the same every build, and every bank or alias name that reaches
+/// one, sorted.
+fn register_banks(gd: &GameData) -> (Registry, Vec<String>) {
     let mut reg = Registry {
         alias: gd
             .music
@@ -1046,29 +1227,20 @@ pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
     let mut named_banks: Vec<String> = reg.bank_track.keys().cloned().collect();
     named_banks.extend(reg.alias.keys().filter(|a| reg.bank(a).is_some()).cloned());
     named_banks.sort();
+    (reg, named_banks)
+}
 
-    // What each track was MADE for, as the tables say it. The first claim
-    // wins, in this order: an event's archive jukebox
-    // (`story_review_meta_table.ActArchiveData`), a Reclamation Algorithm run
-    // (`sandbox_perm_table`), a Contingency Contract season's own bank, an
-    // Integrated Strategies theme's map signal (`roguelike_topic_table`), a
-    // Story Collection event set (`stage_table.StorylineStorySets`).
-    // Ruled out by measurement: an original event's own menu bank
-    // (`sys.ON_ACTIVITY_LOADED.{act}`) as the first claim moved 10 more EN
-    // origins than the order above (and put 2 back): 5 to the right event
-    // ("Heart of Surging Flame" for its rerun's name), 5 to a later event
-    // that reuses the theme as its menu (`m_sys_w` "Preluding Lights" for
-    // "Darknights Memoir").
-    let mut origins: HashMap<String, String> = HashMap::new();
-    let claim =
-        |origins: &mut HashMap<String, String>, key: Option<&String>, name: Option<String>| {
-            if let (Some(key), Some(name)) = (key, name) {
-                origins.entry(key.clone()).or_insert(name);
-            }
-        };
-    for bank in &named_banks {
-        let kind = bank_kind(bank, &map_banks);
-        let place = sys_place(&names, bank, &map_banks);
+/// Each bank on its track, with the kind its name says and the place its
+/// `sys.*` entity names.
+fn place_banks(
+    reg: &mut Registry,
+    names: &Names<'_>,
+    named_banks: &[String],
+    map_banks: &HashSet<String>,
+) {
+    for bank in named_banks {
+        let kind = bank_kind(bank, map_banks);
+        let place = sys_place(names, bank, map_banks);
         if let Some(acc) = reg.track_mut(bank) {
             acc.banks.insert(bank.clone());
             if let Some(k) = kind {
@@ -1079,54 +1251,24 @@ pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
             }
         }
     }
+}
 
-    let music_bank: HashMap<&str, &str> = gd
-        .music
-        .musics()
-        .map(|m| (m.id.as_str(), m.bank.as_str()))
-        .collect();
-    let music_key =
-        |reg: &Registry, id: &str| -> Option<String> { reg.bank(music_bank.get(id)?).cloned() };
-
-    // 2. Titles, chapter themes and the lobby, all through `Musics` rows.
-    let mut zone_music: ZoneMusicTable = read_table(&excel, "zone_table");
-    let mut reruns: Vec<_> = gd.retro_acts.values().collect();
-    reruns.sort_by_key(|r| r.index);
-    let mut original = HashMap::new();
-    for r in reruns {
-        if let Some((first, rest)) = r.linked_act_id.split_first() {
-            for rerun in rest {
-                original
-                    .entry(rerun.clone())
-                    .or_insert_with(|| first.clone());
-            }
-        }
-    }
-    let mut chron = Chronology {
-        original,
-        seasons: season_starts,
-        themes: theme_starts,
-        mainline: std::mem::take(&mut zone_music.mainline_zone_id_list)
-            .into_iter()
-            .zip(0_i64..)
-            .map(|(zone, at)| {
-                let open = gd.zone_open_times.get(&zone).copied();
-                (zone, open.unwrap_or(i64::MIN / 2 + at))
-            })
-            .collect(),
-    };
-    let story_sets: StorySetTable = read_table(&excel, "stage_table");
-    let story_sets = story_sets.storyline_story_sets.into_pairs();
-    // Music id -> main story zone: the zone table, then the Story Collection.
+/// Music id -> main story zone: the zone table, then the Story Collection.
+/// Each zone the zone table names is dated into `mainline` on the way.
+fn chapter_zones(
+    gd: &GameData,
+    additions: KeyedOrMap<MainlineAddition>,
+    story_sets: &[(String, StorySetMusic)],
+    mainline: &mut HashMap<String, i64>,
+) -> HashMap<String, String> {
     let mut chapter_zone: HashMap<String, String> = HashMap::new();
-    for info in zone_music.mainline_addition_info.into_values() {
+    for info in additions.into_values() {
         // A main zone outside `MainlineZoneIdList` (`act2mainss_zone1`, the
         // side chapters after Episode 14) dates by its `ZoneOpenTime` or not
         // at all.
         if !info.zone_id.is_empty() {
             let open = gd.zone_open_times.get(&info.zone_id).copied();
-            chron
-                .mainline
+            mainline
                 .entry(info.zone_id.clone())
                 .or_insert(open.unwrap_or(UNDATED));
         }
@@ -1136,7 +1278,7 @@ pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
                 .or_insert(info.zone_id);
         }
     }
-    for (_, set) in &story_sets {
+    for (_, set) in story_sets {
         if let Some(zone) = set.mainline_data.as_ref().and_then(|m| m.zone_id.clone())
             && !set.game_music_id.is_empty()
         {
@@ -1145,27 +1287,22 @@ pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
                 .or_insert(zone);
         }
     }
-    let zone_name = |zone: &str| -> Option<String> {
-        gd.stage_index
-            .iter()
-            .find(|e| e.zone_id == zone)
-            .and_then(|e| e.zone_name.clone())
-            .or_else(|| {
-                let z = gd.zones.get(zone)?;
-                z.zone_name_second
-                    .as_deref()
-                    .and_then(trimmed)
-                    .or_else(|| z.zone_name_first.as_deref().and_then(trimmed))
-            })
-    };
+    chapter_zone
+}
+
+/// Each `Musics` row's title onto its track, and the chapter whose theme it
+/// is.
+fn place_titles_and_chapters(
+    gd: &GameData,
+    reg: &mut Registry,
+    chapter_zone: &HashMap<String, String>,
+) {
     let mut musics: Vec<_> = gd.music.musics().collect();
     musics.sort_by(|a, b| a.id.cmp(&b.id));
-    let mut music_track: HashMap<&str, String> = HashMap::new();
     for m in &musics {
         let Some(key) = reg.bank(&m.bank).cloned() else {
             continue;
         };
-        music_track.insert(m.id.as_str(), key.clone());
         let Some(acc) = reg.tracks.get_mut(&key) else {
             continue;
         };
@@ -1176,18 +1313,23 @@ pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
             acc.chapters.insert(zone.clone());
             acc.place(
                 MusicPlaceKind::Chapter,
-                zone_name(zone),
+                zone_name(gd, zone),
                 Some(MusicRole::Menu),
             );
         }
     }
-    let display: DisplayMeta = read_table(&excel, "display_meta_table");
+}
+
+/// The lobby: the home backgrounds, the base jukebox (a title where the
+/// `Musics` row has none) and the furniture that plays music.
+fn place_lobby(excel: &Path, reg: &mut Registry, rows: &MusicRows<'_>, named_banks: &[String]) {
+    let display: DisplayMeta = read_table(excel, "display_meta_table");
     for bg in &display.home_background_data.home_bg_data_list {
         for form in &bg.multi_form_list {
-            let Some(key) = music_track.get(form.bg_music_id.as_str()) else {
+            let Some(key) = rows.track(reg, &form.bg_music_id) else {
                 continue;
             };
-            if let Some(acc) = reg.tracks.get_mut(key) {
+            if let Some(acc) = reg.tracks.get_mut(&key) {
                 acc.place(
                     MusicPlaceKind::Lobby,
                     trimmed(&bg.bg_name),
@@ -1196,14 +1338,14 @@ pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
             }
         }
     }
-    let building: BuildingMusic = read_table(&excel, "building_data");
+    let building: BuildingMusic = read_table(excel, "building_data");
     let mut jukebox = building.music_data.music_datas.into_values();
     jukebox.sort_by_key(|j| j.bgm_sort_id);
     for entry in &jukebox {
-        let Some(key) = music_track.get(entry.game_music_id.as_str()) else {
+        let Some(key) = rows.track(reg, &entry.game_music_id) else {
             continue;
         };
-        if let Some(acc) = reg.tracks.get_mut(key) {
+        if let Some(acc) = reg.tracks.get_mut(&key) {
             if acc.title.is_none() {
                 acc.title = trimmed(&entry.bgm_name);
             }
@@ -1215,11 +1357,11 @@ pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
         let Some(key) = furniture
             .music_id
             .as_deref()
-            .and_then(|id| music_track.get(id))
+            .and_then(|id| rows.track(reg, id))
         else {
             continue;
         };
-        if let Some(acc) = reg.tracks.get_mut(key) {
+        if let Some(acc) = reg.tracks.get_mut(&key) {
             acc.place(
                 MusicPlaceKind::Lobby,
                 trimmed(&furniture.name),
@@ -1230,7 +1372,7 @@ pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
     // FALLBACK: a `sys.ON_MUSIC.furniture_*` bank no furniture row names
     // (EN: `furniture_audioPlayer`, 1 track) is still furniture, read off the
     // bank name, with no name of its own.
-    for bank in &named_banks {
+    for bank in named_banks {
         let is_furniture = bank
             .strip_prefix("sys.ON_MUSIC.")
             .is_some_and(|e| e.starts_with("furniture_"));
@@ -1243,9 +1385,17 @@ pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
             acc.place(MusicPlaceKind::Lobby, None, Some(MusicRole::Furniture));
         }
     }
+}
 
-    // The event archives' jukeboxes. An original run claims before its
-    // rerun (`act13side` before `act13sre`, which lists the same tracks).
+/// The event archives' jukeboxes. An original run claims before its rerun
+/// (`act13side` before `act13sre`, which lists the same tracks).
+fn claim_archives(
+    gd: &GameData,
+    reg: &Registry,
+    names: &Names<'_>,
+    rows: &MusicRows<'_>,
+    origins: &mut Origins,
+) {
     let mut archives: Vec<_> = gd
         .story_archives
         .act_archive_data
@@ -1263,28 +1413,24 @@ pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
     for (id, component) in archives {
         let owner = names.archive_owner(id);
         for item in component.music.iter().flat_map(|m| &m.items) {
-            claim(
-                &mut origins,
-                music_key(&reg, &item.value.id).as_ref(),
-                owner.clone(),
-            );
+            origins.claim(rows.track(reg, &item.value.id).as_ref(), owner.clone());
         }
     }
+}
 
-    // 3. Reclamation Algorithm: the run's archive jukebox, then its fight and
-    // build-mode banks.
-    for run in &sandbox.detail.sandbox_v2 {
+/// Reclamation Algorithm: the run's archive jukebox, then its fight and
+/// build-mode banks.
+fn place_sandbox_runs(
+    reg: &mut Registry,
+    origins: &mut Origins,
+    names: &Names<'_>,
+    rows: &MusicRows<'_>,
+    detail: &SandboxDetail,
+) {
+    for run in &detail.sandbox_v2 {
         let name = names.sandbox(&run.key);
-        let archive = match &run.value.archive_music_unlock_data {
-            KeyedOrMap::Keyed(v) => v.iter().map(|k| &k.value).collect::<Vec<_>>(),
-            KeyedOrMap::Map(m) => m.values().collect(),
-        };
-        for music in archive {
-            claim(
-                &mut origins,
-                music_key(&reg, &music.music_id).as_ref(),
-                name.clone(),
-            );
+        for music in run.value.archive_music_unlock_data.values() {
+            origins.claim(rows.track(reg, &music.music_id).as_ref(), name.clone());
         }
         let mut consts: Vec<_> = run.value.basic_const.iter().collect();
         consts.sort_by(|a, b| a.0.cmp(b.0));
@@ -1299,50 +1445,50 @@ pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
             } else {
                 continue;
             };
-            let bank = format!("battle.ON_GAME_READY.{bgm}");
-            claim(&mut origins, reg.bank_track.get(&bank), name.clone());
+            let bank = battle_bank(&bgm);
+            origins.claim(reg.own_bank(&bank), name.clone());
             if let Some(acc) = reg.track_mut(&bank) {
                 acc.place(MusicPlaceKind::Map, name.clone(), Some(role));
             }
         }
     }
+}
 
-    // Contingency Contract seasons. A season claims a track only through a
-    // bank of its own: `rune_season_3_1_main` is an alias of `m_bat_katzdale`,
-    // which the season borrows.
-    let mut season_banks: Vec<(String, Option<String>, Option<String>)> = Vec::new();
-    for s in &crisis.season_info {
-        season_banks.push((
-            s.season_id.clone(),
-            s.perm_bgm.clone(),
-            s.perm_bgm_hard.clone(),
-        ));
-    }
-    for s in &v2_seasons {
-        season_banks.push((
-            s.season_id.clone(),
-            s.season_bgm.clone(),
-            s.season_bgm_challenge.clone(),
-        ));
-    }
-    for (id, main, challenge) in season_banks {
-        let name = names.seasons.get(&id).cloned();
-        let main = main.and_then(|m| trimmed(&m));
-        let challenge = challenge
+/// Contingency Contract seasons. A season claims a track only through a bank
+/// of its own: `rune_season_3_1_main` is an alias of `m_bat_katzdale`, which
+/// the season borrows.
+fn place_seasons(
+    reg: &mut Registry,
+    origins: &mut Origins,
+    names: &Names<'_>,
+    seasons: Vec<SeasonRow>,
+) {
+    for s in seasons {
+        let name = names.seasons.get(&s.id).cloned();
+        let main = s.main.and_then(|m| trimmed(&m));
+        let challenge = s
+            .challenge
             .and_then(|c| trimmed(&c))
             .filter(|c| Some(c) != main.as_ref());
         for (bgm, role) in [(main, MusicRole::Battle), (challenge, MusicRole::Challenge)] {
             let Some(bgm) = bgm else { continue };
-            let bank = format!("battle.ON_GAME_READY.{bgm}");
-            claim(&mut origins, reg.bank_track.get(&bank), name.clone());
+            let bank = battle_bank(&bgm);
+            origins.claim(reg.own_bank(&bank), name.clone());
             if let Some(acc) = reg.track_mut(&bank) {
                 acc.place(MusicPlaceKind::Season, name.clone(), Some(role));
             }
         }
     }
+}
 
-    // Integrated Strategies: each floor's map music, the floor named; each
-    // variation's; the special-zone shop's.
+/// Integrated Strategies: each floor's map music, the floor named; each
+/// variation's; the special-zone shop's.
+fn place_rogue(
+    reg: &mut Registry,
+    origins: &mut Origins,
+    names: &Names<'_>,
+    rogue: Vec<(String, RoguelikeDetail)>,
+) {
     for (theme, detail) in rogue {
         let name = names.theme(&theme);
         let mut spots: Vec<(String, MusicRole, Option<String>)> = Vec::new();
@@ -1364,7 +1510,7 @@ pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
         }
         for (sig, role, spot) in spots {
             let bank = format!("sys.{sig}.{theme}");
-            claim(&mut origins, reg.bank(&bank), name.clone());
+            origins.claim(reg.bank(&bank), name.clone());
             if let Some(acc) = reg.track_mut(&bank) {
                 let place = acc.place(MusicPlaceKind::Map, name.clone(), Some(role));
                 if spot.is_some() {
@@ -1373,31 +1519,48 @@ pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
             }
         }
     }
+}
 
-    // The Story Collection's event sets name the event's theme.
-    for (_, set) in &story_sets {
+/// The Story Collection's event sets name the event's theme.
+fn claim_story_sets(
+    reg: &Registry,
+    origins: &mut Origins,
+    names: &Names<'_>,
+    rows: &MusicRows<'_>,
+    story_sets: &[(String, StorySetMusic)],
+) {
+    for (_, set) in story_sets {
         let Some(act) = set.relevant_activity_id.as_deref() else {
             continue;
         };
-        claim(
-            &mut origins,
-            music_key(&reg, &set.game_music_id).as_ref(),
+        origins.claim(
+            rows.track(reg, &set.game_music_id).as_ref(),
             names.activity(act),
         );
     }
+}
 
-    // The activity table's own music fields, the last claims: a minigame's
-    // tracks (`MusicDataMap`, `ProductGroupDataMap[].DefaultBgmSignal`), the
-    // event menu (`ConstData.EntryMusicId`) and a boss's entrance
-    // (`ConstData.BossEnterBgmKey`, the entity of its bank). A rerun is
-    // skipped: it repeats its original's rows (`act29sre` lists the same 17
-    // `MusicDataMap` tracks as `act29side`), and naming it would add a second
-    // event place to tracks the original already names. EN 2026-10-11: one
-    // track gains a place (`m_boss_act1vhalfidle`, "Rebuilding Mandate",
-    // Boss), Event places 121 -> 122 tracks, tracks with no place 32 -> 31;
-    // the act29side and act45side tracks already had these places through
-    // their `sys.*` banks, and no origin moves (554 named before and after).
-    let activity_music: ActivityTable = read_table(&excel, "activity_table");
+/// The activity table's own music fields, the last claims: a minigame's
+/// tracks (`MusicDataMap`, `ProductGroupDataMap[].DefaultBgmSignal`), the
+/// event menu (`ConstData.EntryMusicId`) and a boss's entrance
+/// (`ConstData.BossEnterBgmKey`, the entity of its bank). A rerun is
+/// skipped: it repeats its original's rows (`act29sre` lists the same 17
+/// `MusicDataMap` tracks as `act29side`), and naming it would add a second
+/// event place to tracks the original already names. EN 2026-10-11: one
+/// track gains a place (`m_boss_act1vhalfidle`, "Rebuilding Mandate",
+/// Boss), Event places 121 -> 122 tracks, tracks with no place 32 -> 31;
+/// the act29side and act45side tracks already had these places through
+/// their `sys.*` banks, and no origin moves (554 named before and after).
+fn place_activity_music(
+    excel: &Path,
+    reg: &mut Registry,
+    origins: &mut Origins,
+    names: &Names<'_>,
+    rows: &MusicRows<'_>,
+    named_banks: &[String],
+) {
+    let gd = names.gd;
+    let activity_music: ActivityTable = read_table(excel, "activity_table");
     let mut act_rows: Vec<&Keyed<ActivityMusic>> = activity_music
         .activity
         .values()
@@ -1416,16 +1579,16 @@ pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
         let name = names.activity(&row.key);
         let mut spots: Vec<(Option<String>, MusicRole)> = Vec::new();
         for m in &row.value.music_data_map {
-            spots.push((music_key(&reg, &m.music_id), MusicRole::Minigame));
+            spots.push((rows.track(reg, &m.music_id), MusicRole::Minigame));
         }
         for group in &row.value.product_group_data_map {
             if let Some(id) = group.value.default_bgm_signal.as_deref() {
-                spots.push((music_key(&reg, id), MusicRole::Minigame));
+                spots.push((rows.track(reg, id), MusicRole::Minigame));
             }
         }
         if let Some(c) = &row.value.const_data {
             if let Some(id) = c.entry_music_id.as_deref() {
-                spots.push((music_key(&reg, id), MusicRole::Menu));
+                spots.push((rows.track(reg, id), MusicRole::Menu));
             }
             if let Some(entity) = c.boss_enter_bgm_key.as_deref().and_then(trimmed) {
                 let bank = named_banks
@@ -1436,14 +1599,17 @@ pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
         }
         for (key, role) in spots {
             let Some(key) = key else { continue };
-            claim(&mut origins, Some(&key), name.clone());
+            origins.claim(Some(&key), name.clone());
             if let Some(acc) = reg.tracks.get_mut(&key) {
                 acc.place(MusicPlaceKind::Event, name.clone(), Some(role));
             }
         }
     }
+}
 
-    // 4. Stages, through each level's `BgmEvent`.
+/// Each stage on the track its level's `BgmEvent` names, the level read from
+/// the first of `level_dirs` that has it.
+fn place_stages(gd: &GameData, level_dirs: &[PathBuf], reg: &mut Registry) {
     let mut events: HashMap<String, Option<String>> = HashMap::new();
     for entry in &gd.stage_index {
         let Some(level) = entry.level_id.as_deref() else {
@@ -1453,13 +1619,13 @@ pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
         let event = events
             .entry(level.clone())
             .or_insert_with(|| {
-                src.level_dirs
+                level_dirs
                     .iter()
                     .find_map(|dir| read_bgm_event(&dir.join(format!("{level}.json"))))
             })
             .clone();
         let Some(event) = event else { continue };
-        let bank = format!("battle.ON_GAME_READY.{event}");
+        let bank = battle_bank(&event);
         let Some(key) = reg.bank(&bank).or_else(|| reg.bank(&event)).cloned() else {
             continue;
         };
@@ -1473,8 +1639,17 @@ pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
             );
         }
     }
+}
 
-    // 5. Story scenes: every listed story, then the scripts the table skips.
+/// Every story `story_review_table` lists, in group start order. Answers the
+/// scripts it read, lowercase and without the extension, so the unlisted pass
+/// skips them.
+fn place_listed_stories(
+    gd: &GameData,
+    assets_dir: &Path,
+    vars: &StoryVariables,
+    reg: &mut Registry,
+) -> HashSet<String> {
     let mut groups: Vec<_> = gd.story_reviews.values().collect();
     groups.sort_by(|a, b| {
         a.start_time
@@ -1490,29 +1665,38 @@ pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
                 continue;
             }
             listed.insert(story.story_txt.trim().to_ascii_lowercase());
-            let Ok(text) = crate::core::story::load_script(&src.assets_dir, &story.story_txt)
-            else {
+            let Ok(text) = crate::core::story::load_script(assets_dir, &story.story_txt) else {
                 continue;
             };
-            for (loop_path, intro) in script_music(&text, &vars) {
-                let Some(key) = reg.pair(&loop_path, intro.as_deref()) else {
+            for (loop_path, intro) in script_music(&text, vars) {
+                let Some(acc) = reg.pair_mut(&loop_path, intro.as_deref()) else {
                     continue;
                 };
-                if let Some(acc) = reg.tracks.get_mut(&key) {
-                    if group.act_type != "NONE" {
-                        *acc.story_plays.entry(group.id.clone()).or_default() += 1;
-                    }
-                    acc.place(MusicPlaceKind::Story, trimmed(&group.name), None)
-                        .item(
-                            Some(story.story_id.clone()),
-                            story.story_code.as_deref().and_then(trimmed),
-                            trimmed(&story.story_name),
-                        );
+                if group.act_type != "NONE" {
+                    *acc.story_plays.entry(group.id.clone()).or_default() += 1;
                 }
+                acc.place(MusicPlaceKind::Story, trimmed(&group.name), None)
+                    .item(
+                        Some(story.story_id.clone()),
+                        story.story_code.as_deref().and_then(trimmed),
+                        trimmed(&story.story_name),
+                    );
             }
         }
     }
-    let mut unlisted: Vec<PathBuf> = walkdir::WalkDir::new(&story_dir)
+    listed
+}
+
+/// The scripts on disk the table does not list, each named by the theme or
+/// run its path names and itemised by file name.
+fn place_unlisted_stories(
+    story_dir: &Path,
+    listed: &HashSet<String>,
+    vars: &StoryVariables,
+    reg: &mut Registry,
+    names: &Names<'_>,
+) {
+    let mut unlisted: Vec<PathBuf> = walkdir::WalkDir::new(story_dir)
         .into_iter()
         .flatten()
         .filter(|e| e.file_type().is_file())
@@ -1521,7 +1705,7 @@ pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
         .collect();
     unlisted.sort();
     for path in unlisted {
-        let Ok(rel) = path.strip_prefix(&story_dir) else {
+        let Ok(rel) = path.strip_prefix(story_dir) else {
             continue;
         };
         let rel = rel
@@ -1538,7 +1722,7 @@ pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
         let Ok(text) = std::fs::read_to_string(&path) else {
             continue;
         };
-        let found = script_music(&text, &vars);
+        let found = script_music(&text, vars);
         if found.is_empty() {
             continue;
         }
@@ -1553,10 +1737,7 @@ pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
         });
         let file = txt.rsplit('/').next().map(str::to_owned);
         for (loop_path, intro) in found {
-            let Some(key) = reg.pair(&loop_path, intro.as_deref()) else {
-                continue;
-            };
-            if let Some(acc) = reg.tracks.get_mut(&key) {
+            if let Some(acc) = reg.pair_mut(&loop_path, intro.as_deref()) {
                 acc.place(MusicPlaceKind::Story, group.clone(), None).item(
                     None,
                     None,
@@ -1565,10 +1746,18 @@ pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
             }
         }
     }
+}
 
-    // 6. Clips, origin and the wire shape.
-    let trees: Vec<(Option<String>, HashMap<String, String>)> = src
-        .clip_trees
+/// The wire shape: each track by id with its clips from the first tree that
+/// holds its loop, its origin, its places by kind, and the totals.
+fn assemble(
+    mut reg: Registry,
+    mut origins: Origins,
+    names: &Names<'_>,
+    chron: &Chronology,
+    clip_trees: &[(Option<String>, PathBuf)],
+) -> MusicIndex {
+    let trees: Vec<(Option<String>, HashMap<String, String>)> = clip_trees
         .iter()
         .map(|(server, dir)| (server.clone(), clip_index(dir)))
         .collect();
@@ -1606,7 +1795,7 @@ pub fn build_music_index(gd: &GameData, src: &MusicSources) -> MusicIndex {
             ),
             None => (None, None, None),
         };
-        let origin = origin_of(&acc, origins.remove(&key), &names, &chron, &zone_name);
+        let origin = origin_of(&acc, origins.0.remove(&key), names, chron);
         let mut places: Vec<PlaceAcc> = std::mem::take(&mut acc.places);
         places.sort_by_key(|p| p.kind);
         totals.tracks += 1;
@@ -1681,11 +1870,10 @@ fn origin_of(
     claimed: Option<String>,
     names: &Names<'_>,
     chron: &Chronology,
-    zone_name: &dyn Fn(&str) -> Option<String>,
 ) -> Option<String> {
     let dated_zone = |zone: &str| -> Option<(i64, String)> {
         match chron.mainline.get(zone) {
-            Some(&at) => Some((at, zone_name(zone)?)),
+            Some(&at) => Some((at, zone_name(names.gd, zone)?)),
             None => chron.activity(names, zone),
         }
     };
@@ -1725,7 +1913,7 @@ fn origin_of(
                         });
                 let name = names
                     .activity(group)
-                    .or_else(|| zone_name(group))
+                    .or_else(|| zone_name(names.gd, group))
                     .or_else(|| trimmed(&review.name))?;
                 Some((std::cmp::Reverse(plays), start, name))
             })

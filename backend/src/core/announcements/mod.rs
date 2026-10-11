@@ -224,18 +224,18 @@ pub fn publish(server: Server, notices: Vec<Announcement>, checked_at: i64) {
     let Ok(mut boards) = BOARDS.write() else {
         return;
     };
+    let list = serialize(&list_body(server, &notices, Some(checked_at)));
     if let Some(board) = boards.get_mut(&server)
         && board.notices == notices
     {
         board.checked_at = checked_at;
-        board.list = serialize(&list_body(server, &notices, Some(checked_at)));
+        board.list = list;
         return;
     }
     let details = notices
         .iter()
         .map(|n| (n.summary.id.clone(), serialize(n)))
         .collect();
-    let list = serialize(&list_body(server, &notices, Some(checked_at)));
     boards.insert(
         server,
         Board {

@@ -444,6 +444,36 @@ async fn publish_board(server: Server, board: &[(MetaItem, Page)], now: i64) {
     }
 }
 
+/// Whether the login-screen notice beside `meta_url` is live. A failed read
+/// counts as not live.
+async fn prean_active(client: &reqwest::Client, meta_url: &str) -> bool {
+    let Some(url) = prean_url(meta_url) else {
+        return false;
+    };
+    match get_text(client, &url).await {
+        Ok(raw) => serde_json::from_str::<PreAnnounceMeta>(&raw).is_ok_and(|p| p.actived),
+        Err(e) => {
+            tracing::debug!(error = %e, "maintenance: pre-announcement fetch failed");
+            false
+        }
+    }
+}
+
+/// One EN service-account login: `Some((down, at))`, or `None` when there is
+/// no account or its answer says nothing about the game.
+async fn probe_game(state: &AppState) -> Option<(bool, i64)> {
+    let account = state.service_accounts.get(Server::EN)?;
+    match account.probe(&state.http_client).await {
+        Ok(()) => Some((false, now_secs())),
+        // A dead durable token says nothing about the game.
+        Err(FetchError::NotLoggedIn) => None,
+        Err(e) => {
+            tracing::info!(error = ?e, "maintenance: EN login refused, still down");
+            Some((true, now_secs()))
+        }
+    }
+}
+
 async fn poll(state: &AppState, caches: &mut HashMap<Server, PageCache>) -> anyhow::Result<()> {
     let client = &state.http_client;
     let now = now_secs();
@@ -474,30 +504,9 @@ async fn poll(state: &AppState, caches: &mut HashMap<Server, PageCache>) -> anyh
         })
         .collect();
 
-    let prean_active = match prean_url(&meta_url) {
-        Some(url) => match get_text(client, &url).await {
-            Ok(raw) => serde_json::from_str::<PreAnnounceMeta>(&raw).is_ok_and(|p| p.actived),
-            Err(e) => {
-                tracing::debug!(error = %e, "maintenance: pre-announcement fetch failed");
-                false
-            }
-        },
-        None => false,
-    };
-
+    let prean_active = prean_active(client, &meta_url).await;
     let probe = if wants_probe(&notices, now) {
-        match state.service_accounts.get(Server::EN) {
-            Some(account) => match account.probe(client).await {
-                Ok(()) => Some((false, now_secs())),
-                // A dead durable token says nothing about the game.
-                Err(FetchError::NotLoggedIn) => None,
-                Err(e) => {
-                    tracing::info!(error = ?e, "maintenance: EN login refused, still down");
-                    Some((true, now_secs()))
-                }
-            },
-            None => None,
-        }
+        probe_game(state).await
     } else {
         None
     };

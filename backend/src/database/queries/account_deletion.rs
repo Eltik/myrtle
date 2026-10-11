@@ -55,6 +55,15 @@ pub struct DeletedAccount {
     pub tier_list_slugs: Vec<String>,
 }
 
+/// The by-hand statements the module docs list, each bound to the account id
+/// as `$1`, run in this order before `DELETE FROM users`.
+const BEFORE_DELETE: [&str; 4] = [
+    "UPDATE tier_list_permissions SET granted_by = NULL WHERE granted_by = $1",
+    "DELETE FROM operator_notes_audit_log WHERE changed_by = $1",
+    "UPDATE audit_log SET changed_by = NULL WHERE changed_by = $1",
+    "UPDATE release_overrides SET updated_by = NULL WHERE updated_by = $1",
+];
+
 /// Delete `user_id` and everything that is theirs. `None` when no such account
 /// exists. Runs every statement on `conn`, so the caller owns the transaction:
 /// the route commits it, the test rolls it back.
@@ -90,22 +99,9 @@ pub async fn delete_account(
         .bind(&list_ids)
         .execute(&mut *conn)
         .await?;
-    sqlx::query("UPDATE tier_list_permissions SET granted_by = NULL WHERE granted_by = $1")
-        .bind(user_id)
-        .execute(&mut *conn)
-        .await?;
-    sqlx::query("DELETE FROM operator_notes_audit_log WHERE changed_by = $1")
-        .bind(user_id)
-        .execute(&mut *conn)
-        .await?;
-    sqlx::query("UPDATE audit_log SET changed_by = NULL WHERE changed_by = $1")
-        .bind(user_id)
-        .execute(&mut *conn)
-        .await?;
-    sqlx::query("UPDATE release_overrides SET updated_by = NULL WHERE updated_by = $1")
-        .bind(user_id)
-        .execute(&mut *conn)
-        .await?;
+    for sql in BEFORE_DELETE {
+        sqlx::query(sql).bind(user_id).execute(&mut *conn).await?;
+    }
 
     sqlx::query("DELETE FROM users WHERE id = $1")
         .bind(user_id)

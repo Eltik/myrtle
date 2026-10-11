@@ -105,7 +105,13 @@ fn without_instrumental_mark(name: &str) -> String {
     strip().unwrap_or_else(|| name.to_owned())
 }
 
-fn trimmed(list: &[String]) -> Vec<String> {
+/// A count as the `i32` the wire carries, saturating.
+fn count_i32(n: usize) -> i32 {
+    i32::try_from(n).unwrap_or(i32::MAX)
+}
+
+/// Artist names trimmed, blanks and repeats dropped, first spelling kept.
+fn clean_artists(list: &[String]) -> Vec<String> {
     let mut out: Vec<String> = Vec::with_capacity(list.len());
     for a in list {
         let a = a.trim();
@@ -122,7 +128,7 @@ fn song_dto(row: &SirenSongRow) -> SirenSong {
         name: row.name.trim().to_owned(),
         title: without_instrumental_mark(&row.name),
         album_cid: row.album_cid.clone(),
-        artists: trimmed(&row.artists),
+        artists: clean_artists(&row.artists),
         has_lyrics: row.lyric_url.is_some(),
         instrumental: is_instrumental(&row.name),
         has_mv: row.mv_url.is_some(),
@@ -170,7 +176,7 @@ fn build_snapshot(
     album_rows.sort_by_key(|a| a.list_order);
     for row in album_rows {
         let tracks = by_album.remove(&row.cid).unwrap_or_default();
-        let artists = trimmed(&row.artists);
+        let artists = clean_artists(&row.artists);
         let added_on = cdn_day(&row.cover_url);
         albums.push(SirenAlbum {
             cid: row.cid.clone(),
@@ -178,11 +184,9 @@ fn build_snapshot(
             cover_url: row.cover_url.clone(),
             artists: artists.clone(),
             list_order: row.list_order,
-            track_count: i32::try_from(tracks.len()).unwrap_or(i32::MAX),
-            lyrics_count: i32::try_from(tracks.iter().filter(|s| s.has_lyrics).count())
-                .unwrap_or(i32::MAX),
-            instrumental_count: i32::try_from(tracks.iter().filter(|s| s.instrumental).count())
-                .unwrap_or(i32::MAX),
+            track_count: count_i32(tracks.len()),
+            lyrics_count: count_i32(tracks.iter().filter(|s| s.has_lyrics).count()),
+            instrumental_count: count_i32(tracks.iter().filter(|s| s.instrumental).count()),
             added_on,
         });
         songs.extend(tracks.iter().cloned());
@@ -250,6 +254,16 @@ async fn snapshot(state: &AppState) -> Result<Option<Arc<Snapshot>>, ApiError> {
         return Ok(None);
     }
     Ok(Some(s))
+}
+
+/// The snapshot, or `503` with a sync started when the database holds no
+/// catalogue yet.
+async fn ready_snapshot(state: &AppState) -> Result<Arc<Snapshot>, ApiError> {
+    let Some(snap) = snapshot(state).await? else {
+        kick_sync(state);
+        return Err(ApiError::ServiceUnavailable);
+    };
+    Ok(snap)
 }
 
 /// Start a sync in the background unless one is running.
@@ -320,70 +334,47 @@ pub async fn sync(state: &AppState) -> anyhow::Result<String> {
         // pool slot the request path needs.
         for (order, a) in albums.iter().enumerate() {
             let mut conn = state.db.acquire().await?;
-            let list_order = i32::try_from(order).unwrap_or(i32::MAX);
-            let artists = trimmed(&a.artistes);
+            let list_order = count_i32(order);
+            let artists = clean_artists(&a.artistes);
+            let mut detail = None;
             if albums_to_fetch.contains(&a.cid) {
                 tokio::time::sleep(DETAIL_SPACING).await;
                 match fetch_with_retry(|| client.album_detail(&a.cid)).await {
-                    Ok(detail) => {
+                    Ok(d) => {
                         fetched_albums += 1;
-                        for (i, s) in detail.songs.iter().enumerate() {
-                            track_orders
-                                .insert(s.cid.clone(), i32::try_from(i).unwrap_or(i32::MAX));
+                        for (i, s) in d.songs.iter().enumerate() {
+                            track_orders.insert(s.cid.clone(), count_i32(i));
                         }
-                        queries::upsert_album(
-                            &mut conn,
-                            queries::AlbumUpsert {
-                                cid: &a.cid,
-                                name: a.name.trim(),
-                                intro: detail.intro.trim(),
-                                belong: detail.belong.trim(),
-                                cover_url: &a.cover_url,
-                                cover_de_url: detail.cover_de_url.as_deref(),
-                                artists: &artists,
-                                list_order,
-                            },
-                        )
-                        .await?;
-                        continue;
+                        detail = Some(d);
                     }
                     Err(e) => {
                         failed_albums += 1;
                         tracing::warn!(cid = %a.cid, error = %e, "monster siren album detail failed");
-                        if !known_albums.contains_key(&a.cid) {
-                            // Listed but never detailed: store the listing so
-                            // its tracks have an album, with an empty blurb.
-                            queries::upsert_album(
-                                &mut conn,
-                                queries::AlbumUpsert {
-                                    cid: &a.cid,
-                                    name: a.name.trim(),
-                                    intro: "",
-                                    belong: "",
-                                    cover_url: &a.cover_url,
-                                    cover_de_url: None,
-                                    artists: &artists,
-                                    list_order,
-                                },
-                            )
-                            .await?;
-                            continue;
-                        }
                     }
                 }
             }
-            let Some(known) = known_albums.get(&a.cid) else {
-                continue;
+            // The detail fields come from the call just made, else from the
+            // row already held. A release listed but never detailed is stored
+            // from its listing with an empty blurb, so its tracks have an album.
+            let (intro, belong, cover_de_url) = match (&detail, known_albums.get(&a.cid)) {
+                (Some(d), _) => (d.intro.trim(), d.belong.trim(), d.cover_de_url.as_deref()),
+                (None, Some(known)) => (
+                    known.intro.as_str(),
+                    known.belong.as_str(),
+                    known.cover_de_url.as_deref(),
+                ),
+                (None, None) if albums_to_fetch.contains(&a.cid) => ("", "", None),
+                (None, None) => continue,
             };
             queries::upsert_album(
                 &mut conn,
                 queries::AlbumUpsert {
                     cid: &a.cid,
                     name: a.name.trim(),
-                    intro: &known.intro,
-                    belong: &known.belong,
+                    intro,
+                    belong,
                     cover_url: &a.cover_url,
-                    cover_de_url: known.cover_de_url.as_deref(),
+                    cover_de_url,
                     artists: &artists,
                     list_order,
                 },
@@ -400,28 +391,17 @@ pub async fn sync(state: &AppState) -> anyhow::Result<String> {
             if known_songs.contains(&s.cid) {
                 // Listing fields may move (a rename, an album move); the
                 // detail fields stay as fetched.
-                if let Some(order) = track_orders.get(&s.cid) {
-                    sqlx::query(
-                        "UPDATE siren_songs SET name = $2, album_cid = $3, artists = $4, track_order = $5 WHERE cid = $1",
-                    )
-                    .bind(&s.cid)
-                    .bind(s.name.trim())
-                    .bind(&s.album_cid)
-                    .bind(trimmed(&s.artists))
-                    .bind(order)
-                    .execute(&mut *conn)
-                    .await?;
-                } else {
-                    sqlx::query(
-                        "UPDATE siren_songs SET name = $2, album_cid = $3, artists = $4 WHERE cid = $1",
-                    )
-                    .bind(&s.cid)
-                    .bind(s.name.trim())
-                    .bind(&s.album_cid)
-                    .bind(trimmed(&s.artists))
-                    .execute(&mut *conn)
-                    .await?;
-                }
+                queries::update_song_listing(
+                    &mut conn,
+                    queries::SongListing {
+                        cid: &s.cid,
+                        album_cid: &s.album_cid,
+                        name: s.name.trim(),
+                        artists: &clean_artists(&s.artists),
+                        track_order: track_orders.get(&s.cid).copied(),
+                    },
+                )
+                .await?;
                 continue;
             }
             tokio::time::sleep(DETAIL_SPACING).await;
@@ -435,7 +415,7 @@ pub async fn sync(state: &AppState) -> anyhow::Result<String> {
                             cid: &s.cid,
                             album_cid: &s.album_cid,
                             name: s.name.trim(),
-                            artists: &trimmed(&s.artists),
+                            artists: &clean_artists(&s.artists),
                             lyric_url: d.lyric_url.as_deref(),
                             mv_url: d.mv_url.as_deref(),
                             mv_cover_url: d.mv_cover_url.as_deref(),
@@ -532,13 +512,7 @@ pub fn spawn(state: AppState) {
 /// # Errors
 /// `503` while the first sync has not finished: the call starts it.
 pub async fn catalog(state: &AppState) -> Result<Bytes, ApiError> {
-    match snapshot(state).await? {
-        Some(s) => Ok(s.json.clone()),
-        None => {
-            kick_sync(state);
-            Err(ApiError::ServiceUnavailable)
-        }
-    }
+    Ok(ready_snapshot(state).await?.json.clone())
 }
 
 /// One release with its tracks.
@@ -546,10 +520,7 @@ pub async fn catalog(state: &AppState) -> Result<Bytes, ApiError> {
 /// # Errors
 /// `404` for an unknown cid, `503` before the first sync.
 pub async fn album(state: &AppState, cid: &str) -> Result<SirenAlbumDetail, ApiError> {
-    let Some(snap) = snapshot(state).await? else {
-        kick_sync(state);
-        return Err(ApiError::ServiceUnavailable);
-    };
+    let snap = ready_snapshot(state).await?;
     snap.albums.get(cid).cloned().ok_or(ApiError::NotFound)
 }
 
@@ -560,10 +531,7 @@ pub async fn album(state: &AppState, cid: &str) -> Result<SirenAlbumDetail, ApiE
 /// `404` for a cid the catalogue does not list (so a guessed id never reaches
 /// the label), `503` when the label does not answer.
 pub async fn stream_url(state: &AppState, cid: &str) -> Result<String, ApiError> {
-    let Some(snap) = snapshot(state).await? else {
-        kick_sync(state);
-        return Err(ApiError::ServiceUnavailable);
-    };
+    let snap = ready_snapshot(state).await?;
     if !snap.songs.contains_key(cid) {
         return Err(ApiError::NotFound);
     }
@@ -594,10 +562,7 @@ pub async fn lyrics(state: &AppState, cid: &str) -> Result<Arc<str>, ApiError> {
     if let Some(hit) = LYRICS.get(cid) {
         return Ok(Arc::clone(&hit));
     }
-    let Some(snap) = snapshot(state).await? else {
-        kick_sync(state);
-        return Err(ApiError::ServiceUnavailable);
-    };
+    let snap = ready_snapshot(state).await?;
     let row = snap.songs.get(cid).ok_or(ApiError::NotFound)?;
     let url = row.lyric_url.as_deref().ok_or(ApiError::NotFound)?;
     let mut conn = state.db.acquire().await?;
@@ -644,7 +609,7 @@ mod tests {
 
     #[test]
     fn artists_are_trimmed_and_deduplicated() {
-        let got = trimmed(&[
+        let got = clean_artists(&[
             " Emperor".into(),
             "Emperor".into(),
             "".into(),

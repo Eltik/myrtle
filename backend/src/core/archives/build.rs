@@ -6,6 +6,7 @@
 //! attributed by the story reader's speaker walk.
 
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::hash::Hash;
 
 use super::dto::{
     ArchiveAppearance, ArchiveBlock, ArchiveBucket, ArchiveCell, ArchiveChartRef, ArchiveCount,
@@ -20,6 +21,7 @@ use super::dto::{
 use super::network::{RawConnection, RawNetwork, Vec2};
 use super::profile::{
     ArchiveGender, ArchiveProfile, ExamAxis, ExamStep, InfectionState, Lang, parse_archive_profile,
+    trimmed,
 };
 use crate::core::gamedata::types::GameData;
 use crate::core::gamedata::types::handbook_team::{HandbookTeam, NO_FACTION};
@@ -136,7 +138,7 @@ impl Ctx<'_> {
             return ArchivePerson {
                 id: id.to_owned(),
                 name: op.name.clone(),
-                number: some_str(&op.display_number),
+                number: trimmed(&op.display_number),
                 rarity: u8::try_from(op.rarity.to_star_int()).ok(),
                 profession: Some(op.profession.to_raw_str().to_owned()),
                 npc: false,
@@ -147,7 +149,7 @@ impl Ctx<'_> {
             return ArchivePerson {
                 id: id.to_owned(),
                 name: npc.name.clone(),
-                number: some_str(&npc.display_number),
+                number: trimmed(&npc.display_number),
                 rarity: None,
                 profession: None,
                 npc: true,
@@ -173,11 +175,6 @@ impl Ctx<'_> {
         let set: BTreeSet<&String> = ids.into_iter().collect();
         set.into_iter().map(|id| self.person(id)).collect()
     }
-}
-
-fn some_str(s: &str) -> Option<String> {
-    let s = s.trim();
-    (!s.is_empty()).then(|| s.to_owned())
 }
 
 /// The letters a personnel number leads with (`PL02` -> `PL`).
@@ -251,37 +248,30 @@ pub fn build_archive(
             .get(id.as_str())
             .map(|s| fold_npc_twins(&ctx, s))
             .unwrap_or_default();
-        let records: Vec<ArchiveRecord> = gd
-            .handbook
-            .handbook_dict
-            .get(id)
-            .map(|h| {
-                h.handbook_avg_list
-                    .iter()
-                    .map(|r| ArchiveRecord {
-                        id: r.story_set_id.clone(),
-                        name: r.story_set_name.clone(),
-                    })
-                    .collect()
-            })
-            .unwrap_or_default();
+        let records = records(gd, id);
         let shares = mates.get(id.as_str()).cloned().unwrap_or_default();
-        let faction_id = ctx.card_faction(op);
+        let rarity = u8::try_from(op.rarity.to_star_int()).unwrap_or(0);
+        let profession = op.profession.to_raw_str().to_owned();
+        let nation = real(Some(op.nation_id.as_str())).map(|f| ctx.faction_ref(f));
+        let affiliations: Vec<ArchiveFactionRef> =
+            [real(op.group_id.as_deref()), real(op.team_id.as_deref())]
+                .into_iter()
+                .flatten()
+                .map(|f| ctx.faction_ref(f))
+                .collect();
+        // Nation first, then group and team.
+        let factions = nation.iter().chain(&affiliations).cloned().collect();
         let p = profile.clone().unwrap_or_default();
         dossiers.push(ArchiveDossier {
             id: id.clone(),
             name: op.name.clone(),
-            rarity: u8::try_from(op.rarity.to_star_int()).unwrap_or(0),
-            profession: op.profession.to_raw_str().to_owned(),
+            rarity,
+            profession: profession.clone(),
             sub_profession_id: op.sub_profession_id.clone(),
             sub_profession_name: op.sub_profession_name.clone(),
-            faction_id: faction_id.clone(),
-            nation: real(Some(op.nation_id.as_str())).map(|f| ctx.faction_ref(f)),
-            affiliations: [real(op.group_id.as_deref()), real(op.team_id.as_deref())]
-                .into_iter()
-                .flatten()
-                .map(|f| ctx.faction_ref(f))
-                .collect(),
+            faction_id: ctx.card_faction(op),
+            nation,
+            affiliations,
             gender_key: lang.and_then(|l| ArchiveGender::read(l.vocab(), p.gender.as_deref()?)),
             gender: p.gender,
             race: p.race,
@@ -297,33 +287,15 @@ pub fn build_archive(
             record_count: count_u32(records.len()),
             link_count: count_u32(linked.len()),
         });
-        let number = number_prefix(&op.display_number).map(|prefix| {
-            let row = prefixes.iter().find(|p| p.prefix == prefix);
-            ArchiveNumber {
-                display: op.display_number.clone(),
-                holders: row.map_or(0, |r| count_u32(r.holders.len())),
-                faction: row.and_then(|r| r.faction.clone()),
-                faction_holders: row.map_or(0, |r| r.faction_holders),
-                prefix,
-            }
-        });
-        let factions = [
-            real(Some(op.nation_id.as_str())),
-            real(op.group_id.as_deref()),
-            real(op.team_id.as_deref()),
-        ]
-        .into_iter()
-        .flatten()
-        .map(|f| ctx.faction_ref(f))
-        .collect();
+        let number = personnel_number(op, &prefixes);
         let people = ctx.people(shares.iter().map(|m| &m.char_id).chain(linked.iter()));
         operators.insert(
             id.clone(),
             ArchiveOperator {
                 id: id.clone(),
                 name: op.name.clone(),
-                rarity: u8::try_from(op.rarity.to_star_int()).unwrap_or(0),
-                profession: op.profession.to_raw_str().to_owned(),
+                rarity,
+                profession,
                 sub_profession_id: op.sub_profession_id.clone(),
                 sub_profession_name: op.sub_profession_name.clone(),
                 number,
@@ -351,6 +323,37 @@ pub fn build_archive(
         hidden,
         operators,
     }
+}
+
+/// The operator's records (`handbook_avg_list`), in table order.
+fn records(gd: &GameData, id: &str) -> Vec<ArchiveRecord> {
+    gd.handbook
+        .handbook_dict
+        .get(id)
+        .map(|h| {
+            h.handbook_avg_list
+                .iter()
+                .map(|r| ArchiveRecord {
+                    id: r.story_set_id.clone(),
+                    name: r.story_set_name.clone(),
+                })
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// The operator's personnel number with its prefix row counted in.
+fn personnel_number(op: &Operator, prefixes: &[ArchivePrefix]) -> Option<ArchiveNumber> {
+    number_prefix(&op.display_number).map(|prefix| {
+        let row = prefixes.iter().find(|p| p.prefix == prefix);
+        ArchiveNumber {
+            display: op.display_number.clone(),
+            holders: row.map_or(0, |r| count_u32(r.holders.len())),
+            faction: row.and_then(|r| r.faction.clone()),
+            faction_holders: row.map_or(0, |r| r.faction_holders),
+            prefix,
+        }
+    })
 }
 
 fn count_u32(n: usize) -> u32 {
@@ -392,11 +395,12 @@ fn build_network(ctx: &Ctx, raw: &RawNetwork) -> ArchiveNetwork {
                     members: b.char_list.clone(),
                 })
                 .collect();
+            // The home block a cell sits in, else the first one.
             let block_of = |char_id: &str| {
-                let mut found = blocks
+                let all: Vec<&ArchiveBlock> = blocks
                     .iter()
-                    .filter(|b| b.members.iter().any(|m| m == char_id));
-                let all: Vec<&ArchiveBlock> = found.by_ref().collect();
+                    .filter(|b| b.members.iter().any(|m| m == char_id))
+                    .collect();
                 all.iter()
                     .find(|b| b.home)
                     .or_else(|| all.first())
@@ -714,18 +718,9 @@ fn build_prefixes(ctx: &Ctx, ids: &[String]) -> Vec<ArchivePrefix> {
                     .cmp(&b.0.number)
                     .then_with(|| a.0.char_id.cmp(&b.0.char_id))
             });
-            let mut counts: BTreeMap<&str, u32> = BTreeMap::new();
-            for (_, f) in &list {
-                if let Some(f) = f {
-                    *counts.entry(f.as_str()).or_default() += 1;
-                }
-            }
-            // Most holders wins; a tie goes to the smaller id, so the answer
-            // does not depend on map order.
-            let top = counts
-                .iter()
-                .max_by(|a, b| a.1.cmp(b.1).then_with(|| b.0.cmp(a.0)))
-                .map(|(f, n)| ((*f).to_owned(), *n));
+            // Most holders wins; a tie goes to the smaller id.
+            let top = modal(tally(list.iter().filter_map(|(_, f)| f.as_deref())))
+                .map(|(f, n)| (f.to_owned(), n));
             ArchivePrefix {
                 prefix,
                 faction: top.as_ref().map(|(f, _)| ctx.faction_ref(f)),
@@ -759,16 +754,40 @@ fn facet<'a>(values: impl Iterator<Item = &'a str>) -> Vec<ArchiveCount> {
         .into_values()
         .map(|spellings| {
             let count = spellings.values().sum();
-            let value = spellings
-                .into_iter()
-                .max_by(|a, b| a.1.cmp(&b.1).then_with(|| b.0.cmp(a.0)))
+            let value = modal(spellings)
                 .map(|(s, _)| s.to_owned())
                 .unwrap_or_default();
             ArchiveCount { value, count }
         })
         .collect();
-    out.sort_by(|a, b| b.count.cmp(&a.count).then_with(|| a.value.cmp(&b.value)));
+    most_first(&mut out, |c| (c.count, &c.value));
     out
+}
+
+/// How often each item occurs.
+fn tally<K: Eq + Hash>(items: impl IntoIterator<Item = K>) -> HashMap<K, u32> {
+    let mut counts = HashMap::new();
+    for k in items {
+        *counts.entry(k).or_default() += 1;
+    }
+    counts
+}
+
+/// The entry with the highest count; a tie goes to the smaller key, so the
+/// answer does not depend on map order.
+fn modal<K: Ord>(counts: impl IntoIterator<Item = (K, u32)>) -> Option<(K, u32)> {
+    counts
+        .into_iter()
+        .max_by(|a, b| a.1.cmp(&b.1).then_with(|| b.0.cmp(&a.0)))
+}
+
+/// Sort a count list most first, then by value.
+fn most_first<T>(list: &mut [T], key: impl Fn(&T) -> (u32, &str)) {
+    list.sort_by(|a, b| {
+        let (ac, av) = key(a);
+        let (bc, bv) = key(b);
+        bc.cmp(&ac).then_with(|| av.cmp(bv))
+    });
 }
 
 fn round2(x: f64) -> f64 {
@@ -867,14 +886,7 @@ fn state_name(s: InfectionState) -> &'static str {
 /// The spelling most `words` use; a tie goes to the smaller string, so the
 /// answer does not depend on map order.
 fn most_common<'a>(words: impl Iterator<Item = &'a str>) -> Option<String> {
-    let mut counts: HashMap<&str, u32> = HashMap::new();
-    for w in words {
-        *counts.entry(w).or_default() += 1;
-    }
-    counts
-        .into_iter()
-        .max_by(|a, b| a.1.cmp(&b.1).then_with(|| b.0.cmp(a.0)))
-        .map(|(w, _)| w.to_owned())
+    modal(tally(words)).map(|(w, _)| w.to_owned())
 }
 
 /// One bar per gender key, named by this server's most common spelling;
@@ -905,7 +917,7 @@ fn gender_counts(lang: Option<Lang>, raws: &[&str]) -> Vec<ArchiveGenderCount> {
                 count: c.count,
             }),
     );
-    out.sort_by(|a, b| b.count.cmp(&a.count).then_with(|| a.value.cmp(&b.value)));
+    most_first(&mut out, |c| (c.count, &c.value));
     out
 }
 
@@ -992,18 +1004,15 @@ fn build_demographics(
             .then_with(|| (a.month, a.day).cmp(&(b.month, b.day)))
     });
 
-    let mut infection: HashMap<&str, u32> = HashMap::new();
-    for (_, p) in &files {
-        *infection.entry(state_name(p.infection_state)).or_default() += 1;
-    }
-    let mut infection: Vec<ArchiveCount> = infection
-        .into_iter()
-        .map(|(v, count)| ArchiveCount {
-            value: v.to_owned(),
-            count,
-        })
-        .collect();
-    infection.sort_by(|a, b| b.count.cmp(&a.count).then_with(|| a.value.cmp(&b.value)));
+    let mut infection: Vec<ArchiveCount> =
+        tally(files.iter().map(|(_, p)| state_name(p.infection_state)))
+            .into_iter()
+            .map(|(v, count)| ArchiveCount {
+                value: v.to_owned(),
+                count,
+            })
+            .collect();
+    most_first(&mut infection, |c| (c.count, &c.value));
 
     let height = distribution(&num(|p| p.height_cm));
     let combat = distribution(&num(|p| p.combat_years));

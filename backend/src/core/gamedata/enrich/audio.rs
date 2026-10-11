@@ -8,6 +8,7 @@ use crate::core::gamedata::{
     types::{
         audio::{
             AudioCategory, AudioSound, EnemyAudio, EnemyAudioCategory, OperatorAudio, RawAudioData,
+            RawSoundFxBank,
         },
         voice::LangType,
     },
@@ -20,6 +21,26 @@ static CHAR_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"char_\d+_[a-z0-9
 static SK_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?:skchr|tachr)_([a-z0-9]+)_(\d+)").unwrap());
 
+/// The codename of a char id: its third `_`-segment (`sora` in
+/// `char_101_sora`).
+fn codename(id: &str) -> Option<&str> {
+    id.splitn(3, '_').nth(2)
+}
+
+/// A bank's clips that resolve to at least one URL, in bank order.
+fn playable_sounds(bank: &RawSoundFxBank, assets: &AssetIndex) -> Vec<AudioSound> {
+    bank.sounds
+        .iter()
+        .filter_map(|sound| {
+            let urls = assets.resolve_audio(&sound.asset);
+            (!urls.is_empty()).then(|| AudioSound {
+                asset: sound.asset.clone(),
+                urls,
+            })
+        })
+        .collect()
+}
+
 /// Resolve every operator-linked `SoundFX` bank to playable clips, keyed by char id.
 ///
 /// A bank links to an operator either directly (`char_<id>_<code>`) or by
@@ -31,10 +52,9 @@ pub fn build_operator_audio(
     op_ids: &HashSet<&str>,
     assets: &AssetIndex,
 ) -> HashMap<String, Vec<OperatorAudio>> {
-    // codename (3rd `_`-segment of the char id) -> char id
     let code2char: HashMap<&str, &str> = op_ids
         .iter()
-        .filter_map(|id| id.splitn(3, '_').nth(2).map(|code| (code, *id)))
+        .filter_map(|id| codename(id).map(|code| (code, *id)))
         .collect();
 
     let mut by_char: HashMap<String, Vec<OperatorAudio>> = HashMap::new();
@@ -59,22 +79,11 @@ pub fn build_operator_audio(
         };
         let Some(char_id) = char_id else { continue };
 
-        let mut sounds: Vec<AudioSound> = Vec::new();
-        let mut any_voice = false;
-        for sound in &bank.sounds {
-            let urls = assets.resolve_audio(&sound.asset);
-            if urls.is_empty() {
-                continue;
-            }
-            any_voice |= is_voice_asset(&sound.asset);
-            sounds.push(AudioSound {
-                asset: sound.asset.clone(),
-                urls,
-            });
-        }
+        let sounds = playable_sounds(bank, assets);
         if sounds.is_empty() {
             continue;
         }
+        let any_voice = sounds.iter().any(|s| is_voice_asset(&s.asset));
 
         let parts: Vec<&str> = base_name.split('.').collect();
         let event = parts.get(1).copied().unwrap_or("").to_owned();
@@ -139,10 +148,7 @@ pub fn build_enemy_audio<'a>(
     op_ids: &HashSet<&str>,
     assets: &AssetIndex,
 ) -> HashMap<String, Vec<EnemyAudio>> {
-    let op_codes: HashSet<&str> = op_ids
-        .iter()
-        .filter_map(|id| id.splitn(3, '_').nth(2))
-        .collect();
+    let op_codes: HashSet<&str> = op_ids.iter().filter_map(|id| codename(id)).collect();
 
     // entity key (own id or prefab key) -> enemy ids, and codename -> enemy ids
     let mut by_key: HashMap<&str, Vec<&str>> = HashMap::new();
@@ -209,17 +215,7 @@ pub fn build_enemy_audio<'a>(
             (ids, Some(entity.to_owned()), is_projectile)
         };
 
-        let sounds: Vec<AudioSound> = bank
-            .sounds
-            .iter()
-            .filter_map(|sound| {
-                let urls = assets.resolve_audio(&sound.asset);
-                (!urls.is_empty()).then(|| AudioSound {
-                    asset: sound.asset.clone(),
-                    urls,
-                })
-            })
-            .collect();
+        let sounds = playable_sounds(bank, assets);
         if sounds.is_empty() {
             continue;
         }

@@ -13,7 +13,9 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-use serde::Deserialize;
+use serde::{Deserialize, de::DeserializeOwned};
+
+use crate::core::gamedata::types::serde_helpers::deserialize_null_default;
 
 #[derive(Debug, Clone, Copy, Default, Deserialize)]
 pub struct Vec2 {
@@ -54,9 +56,11 @@ pub struct RawForce {
     pub force_id: String,
     #[serde(default)]
     pub force_index: i32,
-    #[serde(default, deserialize_with = "nullable")]
+    #[serde(default, deserialize_with = "deserialize_null_default")]
     pub color: String,
-    #[serde(default, deserialize_with = "nullable")]
+    /// `null` on 32 of EN's 41 forces. Every `deserialize_null_default`
+    /// string here reads a `null` as empty.
+    #[serde(default, deserialize_with = "deserialize_null_default")]
     pub card_color: String,
     #[serde(default)]
     pub card_pos: Vec2,
@@ -123,12 +127,6 @@ pub struct RawCell {
     pub scale: f64,
 }
 
-/// A string the table may write as `null` (32 of EN's 41 forces have a null
-/// `cardColor`), read as empty.
-fn nullable<'de, D: serde::Deserializer<'de>>(d: D) -> Result<String, D::Error> {
-    Ok(Option::<String>::deserialize(d)?.unwrap_or_default())
-}
-
 const fn one() -> f64 {
     1.0
 }
@@ -138,7 +136,7 @@ const fn one() -> f64 {
 pub struct RawBlock {
     #[serde(default)]
     pub char_list: Vec<String>,
-    #[serde(default, deserialize_with = "nullable")]
+    #[serde(default, deserialize_with = "deserialize_null_default")]
     pub color: String,
     #[serde(default)]
     pub color_blocks: Vec<RawColorBlock>,
@@ -156,13 +154,13 @@ pub struct RawBlock {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RawColorBlock {
-    #[serde(default, deserialize_with = "nullable")]
+    #[serde(default, deserialize_with = "deserialize_null_default")]
     pub color: String,
     #[serde(default)]
     pub connection_list: Vec<RawConnection>,
-    #[serde(default, deserialize_with = "nullable")]
+    #[serde(default, deserialize_with = "deserialize_null_default")]
     pub force_id: String,
-    #[serde(default, deserialize_with = "nullable")]
+    #[serde(default, deserialize_with = "deserialize_null_default")]
     pub id: String,
     pub pos: Vec2,
 }
@@ -188,15 +186,16 @@ pub struct RawNetwork {
 #[must_use]
 pub fn load_network(root: &Path) -> Option<RawNetwork> {
     let dir = root.join("gamedata/art");
-    let read = |name: &str| std::fs::read(dir.join(name)).ok();
-    let force_map = serde_json::from_slice(&read("handbook_force_map_table.json.json")?)
-        .map_err(|e| tracing::warn!(error = %e, "handbook_force_map_table did not parse"))
-        .ok()?;
-    let positions = serde_json::from_slice(&read("handbookpos_table.json.json")?)
-        .map_err(|e| tracing::warn!(error = %e, "handbookpos_table did not parse"))
-        .ok()?;
     Some(RawNetwork {
-        force_map,
-        positions,
+        force_map: read_table(&dir, "handbook_force_map_table")?,
+        positions: read_table(&dir, "handbookpos_table")?,
     })
+}
+
+/// `{dir}/{name}.json.json`; `None` when missing, logged when it does not parse.
+fn read_table<T: DeserializeOwned>(dir: &Path, name: &str) -> Option<T> {
+    let bytes = std::fs::read(dir.join(format!("{name}.json.json"))).ok()?;
+    serde_json::from_slice(&bytes)
+        .map_err(|e| tracing::warn!(error = %e, "{name} did not parse"))
+        .ok()
 }

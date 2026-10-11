@@ -172,6 +172,17 @@ pub struct SourceRef {
     pub skill_index: Option<i32>,
 }
 
+impl SourceRef {
+    /// A source with no name: a trait, stats or a tag.
+    pub const fn bare(kind: SourceKind) -> Self {
+        Self {
+            kind,
+            name: None,
+            skill_index: None,
+        }
+    }
+}
+
 // ----------------------------------------------------------------- economy
 
 #[derive(TS, ToSchema)]

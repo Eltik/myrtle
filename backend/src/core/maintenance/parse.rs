@@ -35,25 +35,27 @@ pub struct NoticeWindow {
 const MONTHS: &str = "January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sept|Sep|Oct|Nov|Dec";
 const ZONE: &str = r"(?:UTC|GMT)\s*[+\-−]\s*\d{1,2}(?::?\d{2})?|UTC|GMT|PDT|PST|JST|KST";
 
-fn date_time(prefix: &str, year_required: bool) -> String {
-    let year = if year_required {
-        format!(r"(?P<{prefix}y>\d{{4}}),?\s*")
-    } else {
-        format!(r"(?:(?P<{prefix}y>\d{{4}}),?\s*)?")
-    };
+/// `Month day[,] [year,] `: groups `{prefix}mon`, `{prefix}d` and an optional
+/// `{prefix}y`.
+fn date(prefix: &str) -> String {
     format!(
-        r"(?P<{prefix}mon>{MONTHS})\.?\s+(?P<{prefix}d>\d{{1,2}})(?:st|nd|rd|th)?,?\s*{year}(?P<{prefix}h>\d{{1,2}}):(?P<{prefix}mi>\d{{2}})"
+        r"(?P<{prefix}mon>{MONTHS})\.?\s+(?P<{prefix}d>\d{{1,2}})(?:st|nd|rd|th)?,?\s*(?:(?P<{prefix}y>\d{{4}}),?\s*)?"
     )
+}
+
+/// `HH:MM`: groups `{prefix}h` and `{prefix}mi`.
+fn clock(prefix: &str) -> String {
+    format!(r"(?P<{prefix}h>\d{{1,2}}):(?P<{prefix}mi>\d{{2}})")
 }
 
 /// `<date>, HH:MM - [<date>,] HH:MM (zone)`.
 static RE_RANGE: LazyLock<Regex> = LazyLock::new(|| {
-    let end_date = format!(
-        r"(?:(?P<emon>{MONTHS})\.?\s+(?P<ed>\d{{1,2}})(?:st|nd|rd|th)?,?\s*(?:(?P<ey>\d{{4}}),?\s*)?)?"
-    );
     Regex::new(&format!(
-        r"(?i){start}\s*(?:-|\x{{2013}}|\x{{2014}}|~|to)\s*{end_date}(?P<eh>\d{{1,2}}):(?P<emi>\d{{2}})\s*\(?\s*(?P<tz>{ZONE})\s*\)?",
-        start = date_time("s", false),
+        r"(?i){start_date}{start_clock}\s*(?:-|\x{{2013}}|\x{{2014}}|~|to)\s*(?:{end_date})?{end_clock}\s*\(?\s*(?P<tz>{ZONE})\s*\)?",
+        start_date = date("s"),
+        start_clock = clock("s"),
+        end_date = date("e"),
+        end_clock = clock("e"),
     ))
     .expect("range regex compiles")
 });
@@ -61,8 +63,9 @@ static RE_RANGE: LazyLock<Regex> = LazyLock::new(|| {
 /// `<date>, HH:MM (zone)`, a single instant.
 static RE_INSTANT: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(&format!(
-        r"(?i){start}\s*\(?\s*(?P<tz>{ZONE})\s*\)?",
-        start = date_time("s", false)
+        r"(?i){start_date}{start_clock}\s*\(?\s*(?P<tz>{ZONE})\s*\)?",
+        start_date = date("s"),
+        start_clock = clock("s"),
     ))
     .expect("instant regex compiles")
 });
@@ -72,6 +75,7 @@ static RE_EXTENDED: LazyLock<Regex> = LazyLock::new(|| {
         .expect("extension regex compiles")
 });
 
+/// The `head-title` element every notice page carries; see `head_title`.
 static RE_HEAD_TITLE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r#"(?is)class="head-title"[^>]*>(.*?)</"#).expect("title regex compiles")
 });
@@ -107,6 +111,15 @@ pub fn html_to_text(html: &str) -> String {
         .filter(|l| !l.is_empty())
         .collect::<Vec<_>>()
         .join("\n")
+}
+
+/// The page's `head-title` as one line of text, `None` when the page has no
+/// such element. Can be empty: a cover-only notice prints the element bare.
+pub fn head_title(html: &str) -> Option<String> {
+    RE_HEAD_TITLE
+        .captures(html)
+        .and_then(|c| c.get(1))
+        .map(|m| html_to_text(m.as_str()).replace('\n', " "))
 }
 
 fn decode_entities(s: &str) -> String {
@@ -302,11 +315,7 @@ fn find_instant(text: &str, reference: i64) -> Option<i64> {
 /// maintenance notice no time could be read from. `reference` (unix seconds)
 /// settles a missing year.
 pub fn parse_notice(html: &str, reference: i64) -> Option<NoticeWindow> {
-    let title = RE_HEAD_TITLE
-        .captures(html)
-        .and_then(|c| c.get(1))
-        .map(|m| html_to_text(m.as_str()).replace('\n', " "))
-        .unwrap_or_default();
+    let title = head_title(html).unwrap_or_default();
     let body_html = RE_CONTENT
         .captures(html)
         .and_then(|c| c.get(1))
@@ -329,18 +338,19 @@ pub fn parse_notice(html: &str, reference: i64) -> Option<NoticeWindow> {
         .to_ascii_lowercase()
         .find("maintenance date and time")
         .map(|i| &body[i..]);
-    let range = heading_tail
-        .and_then(|t| find_range(t, reference))
-        .or_else(|| find_range(&body, reference))
-        .or_else(|| find_range(&title, reference));
+    let sources = [heading_tail, Some(body.as_str()), Some(title.as_str())];
+    let range = sources
+        .iter()
+        .flatten()
+        .find_map(|t| find_range(t, reference));
 
     let (starts_at, planned_end) = match range {
         Some((s, e)) => (s, Some(e)),
         None => {
-            let start = heading_tail
-                .and_then(|t| find_instant(t, reference))
-                .or_else(|| find_instant(&body, reference))
-                .or_else(|| find_instant(&title, reference))?;
+            let start = sources
+                .iter()
+                .flatten()
+                .find_map(|t| find_instant(t, reference))?;
             (start, None)
         }
     };

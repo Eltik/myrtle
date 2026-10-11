@@ -440,6 +440,11 @@ fn read_operator(
     }
 }
 
+/// A playable operator a player can own: what the per-server tallies count.
+fn obtainable_playable(op: &Operator) -> bool {
+    playable(op) && !op.is_not_obtainable
+}
+
 /// An operator a squad can field: not a token or a trap.
 pub fn playable(op: &Operator) -> bool {
     !matches!(
@@ -548,15 +553,11 @@ impl SquadIndex {
         let present: Vec<&OperatorProfession> = data
             .operators
             .values()
-            .filter(|op| playable(op) && !op.is_not_obtainable)
+            .filter(|op| obtainable_playable(op))
             .map(|op| &op.profession)
             .collect();
         let mut branch_tokens: HashMap<&str, (usize, usize)> = HashMap::new();
-        for op in data
-            .operators
-            .values()
-            .filter(|op| playable(op) && !op.is_not_obtainable)
-        {
+        for op in data.operators.values().filter(|op| obtainable_playable(op)) {
             let e = branch_tokens
                 .entry(op.sub_profession_id.as_str())
                 .or_default();
@@ -570,7 +571,7 @@ impl SquadIndex {
         let top_rarity = data
             .operators
             .values()
-            .filter(|op| playable(op) && !op.is_not_obtainable)
+            .filter(|op| obtainable_playable(op))
             .map(|op| op.rarity.to_star_int())
             .max()
             .unwrap_or_default();

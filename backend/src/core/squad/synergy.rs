@@ -13,8 +13,8 @@ use super::Ctx;
 use super::build::Seat;
 use super::targets::{Target, fits};
 use super::types::{
-    SourceKind, SourceRef, Synergy, SynergyCond, SynergyCounts, SynergyGroup, SynergyItem,
-    SynergyNeed, SynergyReason, SynergyTarget, SynergyTargetKind,
+    Synergy, SynergyCond, SynergyCounts, SynergyGroup, SynergyItem, SynergyNeed, SynergyReason,
+    SynergyTarget, SynergyTargetKind,
 };
 
 /// The target in the reader's server's words where its tables name it.
@@ -48,11 +48,7 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], cost_by_seat: &HashMap<i32, i3
     let cost = |s: &Seat<'_>| cost_by_seat.get(&s.seat).copied().unwrap_or(0);
     for g in seats.iter().filter(|s| !s.support) {
         for t in &g.talents {
-            let source = SourceRef {
-                kind: SourceKind::Talent,
-                name: Some(t.name.clone()),
-                skill_index: None,
-            };
+            let source = t.source();
             let Some(tt) = ctx.facts(&t.key).map(|f| f.talent.as_ref()) else {
                 items.push(SynergyItem {
                     seat: g.seat,

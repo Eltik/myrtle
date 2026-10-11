@@ -4,19 +4,55 @@
 //! `Seat`, so the build rules live here once.
 
 use crate::core::gamedata::types::GameData;
-use crate::core::gamedata::types::module::{ModulePhase, ModuleTarget, ModuleType};
-use crate::core::gamedata::types::operator::{
-    Operator, OperatorModule, OperatorPhase, UnlockCondition,
+use crate::core::gamedata::types::module::{
+    ModuleBlackboard, ModulePhase, ModuleTarget, ModuleType,
 };
-use crate::core::gamedata::types::skill::SkillLevel;
+use crate::core::gamedata::types::operator::{
+    AttributeData, Blackboard, Operator, OperatorModule, UnlockCondition,
+};
+use crate::core::gamedata::types::skill::{SkillBlackboard, SkillLevel};
 
 use super::index::TextKey;
-use super::rules::SkillRules;
-use super::types::{SUPPORT_SEAT, SquadMemberBuild};
+use super::rules::{SkillRules, module_ranks, reached, unlock_of};
+use super::types::{SUPPORT_SEAT, SourceKind, SourceRef, SquadMemberBuild};
 
 /// A blackboard flattened to `(key, value)`, keys lowercased so a rule can
 /// name `hp_recovery_per_sec_by_max_hp_ratio` whatever the table's casing.
 pub type Board = Vec<(String, f64)>;
+
+/// One blackboard entry of any table's shape.
+trait BoardEntry {
+    fn entry(&self) -> (&str, f64);
+}
+
+impl BoardEntry for Blackboard {
+    fn entry(&self) -> (&str, f64) {
+        (&self.key, self.value)
+    }
+}
+
+impl BoardEntry for SkillBlackboard {
+    fn entry(&self) -> (&str, f64) {
+        (&self.key, self.value)
+    }
+}
+
+impl BoardEntry for ModuleBlackboard {
+    fn entry(&self) -> (&str, f64) {
+        (&self.key, self.value)
+    }
+}
+
+/// A table's blackboard as a `Board`, keys lowercased.
+fn board<T: BoardEntry>(entries: &[T]) -> Board {
+    entries
+        .iter()
+        .map(|e| {
+            let (k, v) = e.entry();
+            (k.to_lowercase(), v)
+        })
+        .collect()
+}
 
 /// The value of `key` on `board`, if present.
 pub fn bb(board: &Board, key: &str) -> Option<f64> {
@@ -51,6 +87,17 @@ pub struct LiveTalent {
     pub key: TextKey,
 }
 
+impl LiveTalent {
+    /// The talent as a fact's source.
+    pub fn source(&self) -> SourceRef {
+        SourceRef {
+            kind: SourceKind::Talent,
+            name: Some(self.name.clone()),
+            skill_index: None,
+        }
+    }
+}
+
 /// The chosen skill at the chosen rank.
 #[derive(Debug, Clone)]
 pub struct LiveSkill<'a> {
@@ -59,6 +106,17 @@ pub struct LiveSkill<'a> {
     pub board: Board,
     /// Where the rank's description sits, for the English text rules.
     pub key: TextKey,
+}
+
+impl LiveSkill<'_> {
+    /// The skill as a fact's source.
+    pub fn source(&self) -> SourceRef {
+        SourceRef {
+            kind: SourceKind::Skill,
+            name: Some(self.level.name.clone()),
+            skill_index: i32::try_from(self.index).ok(),
+        }
+    }
 }
 
 /// A filled seat.
@@ -94,7 +152,7 @@ pub struct Seat<'a> {
 impl Seat<'_> {
     /// The live key frame data of the build's promotion (constant within a
     /// promotion for cost, block and redeploy, so key frame 0 is enough).
-    pub fn key_frame(&self) -> Option<&crate::core::gamedata::types::operator::AttributeData> {
+    pub fn key_frame(&self) -> Option<&AttributeData> {
         self.op
             .phases
             .get(self.phase)
@@ -107,14 +165,6 @@ impl Seat<'_> {
     }
 }
 
-pub const fn phase_num(p: &OperatorPhase) -> i32 {
-    match p {
-        OperatorPhase::Elite0 => 0,
-        OperatorPhase::Elite1 => 1,
-        OperatorPhase::Elite2 => 2,
-    }
-}
-
 /// `"PHASE_2"` (module tables keep the phase as text) to 2.
 pub fn phase_text_num(p: &str) -> i32 {
     p.strip_prefix("PHASE_")
@@ -122,15 +172,15 @@ pub fn phase_text_num(p: &str) -> i32 {
         .unwrap_or(0)
 }
 
-/// Whether an unlock condition is met at `phase`/`level`.
-pub const fn unlocked(cond: &UnlockCondition, phase: i32, level: i32) -> bool {
-    let p = phase_num(&cond.phase);
-    p < phase || (p == phase && cond.level <= level)
+/// Whether a talent or trait candidate is live at the build: its unlock
+/// condition met and its `required_potential_rank` within the potential.
+const fn live(cond: &UnlockCondition, required_potential: i32, b: &SquadMemberBuild) -> bool {
+    reached(&unlock_of(cond), b.phase, b.level) && required_potential <= b.potential
 }
 
-/// The rank count of a module: `battle_equip_table` `Phases` length.
-pub fn module_ranks(m: &OperatorModule) -> i32 {
-    i32::try_from(m.data.phases.len()).unwrap_or(0)
+/// The operator's module `id`, if it has one.
+fn find_module<'a>(op: &'a Operator, id: &str) -> Option<&'a OperatorModule> {
+    op.modules.iter().find(|m| m.module.uni_equip_id == id)
 }
 
 /// The request's build clamped to what the operator has: its promotions and
@@ -149,15 +199,11 @@ fn clamp_build(op: &Operator, rules: &SkillRules, b: &SquadMemberBuild) -> Squad
         .clamp(0, i32::try_from(skill_max).unwrap_or(0));
     let max_rank = rules.max_rank();
     let skill_level = b.skill_level.clamp(1, max_rank);
-    let max_mastery = if skill_level == max_rank {
-        rules.max_mastery(usize::try_from(skill_index).unwrap_or(0))
-    } else {
-        0
-    };
+    let max_mastery = rules.mastery_cap(usize::try_from(skill_index).unwrap_or(0), skill_level);
     let module_max = b
         .module_id
-        .as_ref()
-        .and_then(|id| op.modules.iter().find(|m| &m.module.uni_equip_id == id))
+        .as_deref()
+        .and_then(|id| find_module(op, id))
         .map_or(1, |m| module_ranks(m).max(1));
     SquadMemberBuild {
         char_id: b.char_id.clone(),
@@ -178,10 +224,11 @@ fn clamp_build(op: &Operator, rules: &SkillRules, b: &SquadMemberBuild) -> Squad
 fn live_talents(char_id: &str, op: &Operator, b: &SquadMemberBuild) -> Vec<LiveTalent> {
     let mut out = Vec::new();
     for (index, t) in op.talents.iter().enumerate() {
-        let pick = t.candidates.iter().enumerate().rfind(|(_, c)| {
-            unlocked(&c.unlock_condition, b.phase, b.level)
-                && c.required_potential_rank <= b.potential
-        });
+        let pick = t
+            .candidates
+            .iter()
+            .enumerate()
+            .rfind(|(_, c)| live(&c.unlock_condition, c.required_potential_rank, b));
         let Some((cand, c)) = pick else { continue };
         if c.is_hide_talent == Some(true) {
             continue;
@@ -190,11 +237,7 @@ fn live_talents(char_id: &str, op: &Operator, b: &SquadMemberBuild) -> Vec<LiveT
             index,
             name: c.name.clone().unwrap_or_default(),
             description: c.description.clone().unwrap_or_default(),
-            board: c
-                .blackboard
-                .iter()
-                .map(|x| (x.key.to_lowercase(), x.value))
-                .collect(),
+            board: board(&c.blackboard),
             token_key: c.token_key.clone().filter(|k| !k.is_empty()),
             module: None,
             key: TextKey::Talent {
@@ -241,11 +284,7 @@ pub fn resolve<'a>(data: &'a GameData, seat: i32, b: &SquadMemberBuild) -> Optio
                     level: idx,
                 },
                 level,
-                board: level
-                    .blackboard
-                    .iter()
-                    .map(|x| (x.key.to_lowercase(), x.value))
-                    .collect(),
+                board: board(&level.blackboard),
             })
         });
 
@@ -256,16 +295,13 @@ pub fn resolve<'a>(data: &'a GameData, seat: i32, b: &SquadMemberBuild) -> Optio
     }];
     let mut trait_board: Board = Vec::new();
     if let Some(t) = &op.trait_data
-        && let Some((cand, c)) = t.candidates.iter().enumerate().rfind(|(_, c)| {
-            unlocked(&c.unlock_condition, build.phase, build.level)
-                && c.required_potential_rank <= build.potential
-        })
-    {
-        trait_board = c
-            .blackboard
+        && let Some((cand, c)) = t
+            .candidates
             .iter()
-            .map(|x| (x.key.to_lowercase(), x.value))
-            .collect();
+            .enumerate()
+            .rfind(|(_, c)| live(&c.unlock_condition, c.required_potential_rank, &build))
+    {
+        trait_board = board(&c.blackboard);
         if let Some(d) = c.override_description.as_ref().filter(|d| !d.is_empty()) {
             trait_text.clone_from(d);
             trait_keys = vec![TextKey::TraitCandidate {
@@ -280,8 +316,8 @@ pub fn resolve<'a>(data: &'a GameData, seat: i32, b: &SquadMemberBuild) -> Optio
 
     let module = build
         .module_id
-        .as_ref()
-        .and_then(|id| op.modules.iter().find(|m| &m.module.uni_equip_id == id));
+        .as_deref()
+        .and_then(|id| find_module(op, id));
     let module_phase_index = module.map(|m| {
         usize::try_from(build.module_level - 1)
             .unwrap_or(0)
@@ -319,11 +355,7 @@ pub fn resolve<'a>(data: &'a GameData, seat: i32, b: &SquadMemberBuild) -> Optio
                         continue;
                     }
                     let index = usize::try_from(c.talent_index).unwrap_or(0);
-                    let board: Board = c
-                        .blackboard
-                        .iter()
-                        .map(|x| (x.key.to_lowercase(), x.value))
-                        .collect();
+                    let part_board = board(&c.blackboard);
                     if let Some(t) = talents.iter_mut().find(|t| t.index == index) {
                         if !c.name.is_empty() {
                             t.name.clone_from(&c.name);
@@ -332,7 +364,7 @@ pub fn resolve<'a>(data: &'a GameData, seat: i32, b: &SquadMemberBuild) -> Optio
                             t.description.clone_from(&c.upgrade_description);
                             t.key = key;
                         }
-                        merge(&mut t.board, board);
+                        merge(&mut t.board, part_board);
                         t.module = Some(mname.clone());
                     } else if !c.name.is_empty() {
                         talents.push(LiveTalent {
@@ -343,7 +375,7 @@ pub fn resolve<'a>(data: &'a GameData, seat: i32, b: &SquadMemberBuild) -> Optio
                             } else {
                                 c.upgrade_description.clone()
                             },
-                            board,
+                            board: part_board,
                             token_key: c.token_key.clone().filter(|k| !k.is_empty()),
                             module: Some(mname.clone()),
                             key,
@@ -368,13 +400,7 @@ pub fn resolve<'a>(data: &'a GameData, seat: i32, b: &SquadMemberBuild) -> Optio
                         cand: cand_i,
                         additional,
                     };
-                    merge(
-                        &mut trait_board,
-                        c.blackboard
-                            .iter()
-                            .map(|x| (x.key.to_lowercase(), x.value))
-                            .collect(),
-                    );
+                    merge(&mut trait_board, board(&c.blackboard));
                     if let Some(d) = c.override_description.as_ref().filter(|d| !d.is_empty()) {
                         trait_text.clone_from(d);
                         trait_keys = vec![key(false)];

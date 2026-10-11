@@ -25,28 +25,23 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], synergy: &Synergy) -> Vec<Seat
             let mut counted = Vec::new();
             let mut left_out = Vec::new();
             for item in &synergy.items {
-                // A buff to an ally the game picks ("a random ally") may land
-                // on any other seat: listed as Conditional, never counted.
-                let random = item.reason == Some(SynergyReason::Unseen)
-                    && item.target.kind == SynergyTargetKind::Everyone;
-                if item.seat != s.seat && random {
-                    left_out.push(HandoffLeftOut {
-                        from_seat: item.seat,
-                        char_id: item.char_id.clone(),
-                        name: item.name.clone(),
-                        reason: HandoffLeftOutReason::Conditional,
-                    });
-                    continue;
-                }
-                if item.seat == s.seat || !(item.to_all || item.to.contains(&s.seat)) {
-                    continue;
-                }
                 let left = |reason| HandoffLeftOut {
                     from_seat: item.seat,
                     char_id: item.char_id.clone(),
                     name: item.name.clone(),
                     reason,
                 };
+                // A buff to an ally the game picks ("a random ally") may land
+                // on any other seat: listed as Conditional, never counted.
+                let random = item.reason == Some(SynergyReason::Unseen)
+                    && item.target.kind == SynergyTargetKind::Everyone;
+                if item.seat != s.seat && random {
+                    left_out.push(left(HandoffLeftOutReason::Conditional));
+                    continue;
+                }
+                if item.seat == s.seat || !(item.to_all || item.to.contains(&s.seat)) {
+                    continue;
+                }
                 if item.need.as_ref().is_some_and(|n| n.have < n.count) {
                     left_out.push(left(HandoffLeftOutReason::Conditional));
                     continue;

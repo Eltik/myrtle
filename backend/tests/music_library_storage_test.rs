@@ -333,3 +333,99 @@ async fn siren_rows_keep_lyrics_until_the_url_moves() {
 
     tx.rollback().await.expect("rollback");
 }
+
+#[tokio::test]
+#[ignore = "writes the local Postgres inside a rolled-back transaction"]
+async fn siren_listing_refresh_keeps_the_detail_fields() {
+    let mut conn = PgConnection::connect(DATABASE_URL)
+        .await
+        .expect("local postgres");
+    let mut tx = conn.begin().await.expect("begin");
+    setup(&mut tx).await;
+
+    let artists = vec!["塞壬唱片-MSR".to_owned()];
+    for cid in ["8913", "8914"] {
+        q::upsert_album(
+            &mut tx,
+            q::AlbumUpsert {
+                cid,
+                name: "昨日海OST",
+                intro: "",
+                belong: "",
+                cover_url: "https://web.hycdn.cn/siren/pic/20261010/a.jpg",
+                cover_de_url: None,
+                artists: &artists,
+                list_order: 0,
+            },
+        )
+        .await
+        .expect("album");
+    }
+    q::upsert_song(
+        &mut tx,
+        q::SongUpsert {
+            cid: "048756",
+            album_cid: "8913",
+            name: "Song of the Nameless",
+            artists: &artists,
+            lyric_url: Some("https://web.hycdn.cn/siren/lyric/x.lrc"),
+            mv_url: Some("https://web.hycdn.cn/siren/mv/x.mp4"),
+            mv_cover_url: None,
+            track_order: 4,
+        },
+    )
+    .await
+    .expect("song");
+    let song = |rows: Vec<backend::database::models::music::SirenSongRow>| {
+        rows.into_iter()
+            .find(|s| s.cid == "048756")
+            .expect("listed")
+    };
+
+    let renamed = vec!["Emperor".to_owned()];
+    q::update_song_listing(
+        &mut tx,
+        q::SongListing {
+            cid: "048756",
+            album_cid: "8914",
+            name: "Song of the Named",
+            artists: &renamed,
+            track_order: None,
+        },
+    )
+    .await
+    .expect("refresh without an order");
+    let row = song(q::list_songs(&mut tx).await.expect("songs"));
+    assert_eq!(
+        (
+            row.name.as_str(),
+            row.album_cid.as_str(),
+            row.artists.clone()
+        ),
+        ("Song of the Named", "8914", renamed.clone())
+    );
+    assert_eq!(row.track_order, 4, "no order keeps the stored one");
+    assert_eq!(
+        row.lyric_url.as_deref(),
+        Some("https://web.hycdn.cn/siren/lyric/x.lrc"),
+        "the detail fields stay"
+    );
+    assert!(row.mv_url.is_some());
+
+    q::update_song_listing(
+        &mut tx,
+        q::SongListing {
+            cid: "048756",
+            album_cid: "8914",
+            name: "Song of the Named",
+            artists: &renamed,
+            track_order: Some(1),
+        },
+    )
+    .await
+    .expect("refresh with an order");
+    let row = song(q::list_songs(&mut tx).await.expect("songs"));
+    assert_eq!(row.track_order, 1, "an order read this sync replaces it");
+
+    tx.rollback().await.expect("rollback");
+}

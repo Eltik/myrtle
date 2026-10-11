@@ -3,15 +3,23 @@
 //! account's likes, history and playlists.
 
 use axum::{
+    Json,
     extract::{Path, State},
-    http::{HeaderMap, header},
+    http::{HeaderMap, StatusCode, header},
     response::{IntoResponse, Response},
 };
+use utoipa_axum::router::OpenApiRouter;
+use utoipa_axum::routes;
 
+use crate::app::extractors::auth::AuthUser;
 use crate::app::routes::static_data::shared_json_response;
-use crate::app::services::music::get_music_index;
+use crate::app::services::music::{get_music_index, library, siren};
 use crate::app::{error::ApiError, state::AppState};
 use crate::core::hypergryph::constants::Server;
+use crate::database::models::music::{
+    MusicLibrary, MusicPlay, MusicPlayInput, MusicPlayUpdate, MusicPlaylist, MusicPlaylistAdd,
+    MusicPlaylistCreate, MusicPlaylistPatch,
+};
 
 /// The index with its `ETag` and `Cache-Control: public, max-age=300`; a
 /// matching `If-None-Match` gets a 304 and no body.
@@ -81,19 +89,6 @@ pub async fn music_srv(
 // ---------------------------------------------------------------------------
 // Monster Siren Records
 // ---------------------------------------------------------------------------
-
-use axum::Json;
-use axum::http::StatusCode;
-use utoipa_axum::router::OpenApiRouter;
-use utoipa_axum::routes;
-
-use crate::app::extractors::auth::AuthUser;
-use crate::app::services::music::library;
-use crate::app::services::music::siren;
-use crate::database::models::music::{
-    MusicLibrary, MusicPlay, MusicPlayInput, MusicPlayUpdate, MusicPlaylist, MusicPlaylistAdd,
-    MusicPlaylistCreate, MusicPlaylistPatch,
-};
 
 /// The catalogue is kept this long by a browser or a proxy; a sync lands at
 /// most this late.

@@ -1,7 +1,8 @@
 //! What an operator's skills allow, read off `character_table`: when each
 //! skill unlocks (`Skills[i].UnlockCond`), when each shared skill rank
 //! unlocks (`AllSkillLvlup[r - 2].UnlockCond`) and how many masteries each
-//! skill has and when (`Skills[i].LevelUpCostCond[m - 1].UnlockCond`).
+//! skill has and when (`Skills[i].LevelUpCostCond[m - 1].UnlockCond`), and
+//! how many ranks a module has.
 //!
 //! The one source for the analysis (`build`, `readiness`), the save checks
 //! (`services::squad`) and the page (`skillRules` on the operator index
@@ -13,7 +14,9 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 use utoipa::ToSchema;
 
-use crate::core::gamedata::types::operator::{Operator, OperatorPhase, UnlockCondition};
+use crate::core::gamedata::types::operator::{
+    Operator, OperatorModule, OperatorPhase, UnlockCondition,
+};
 
 use super::types::Unlock;
 
@@ -43,7 +46,8 @@ pub struct SkillRules {
     pub skills: Vec<SkillRule>,
 }
 
-const fn phase_num(p: &OperatorPhase) -> i32 {
+/// `PHASE_2` to 2.
+pub const fn phase_num(p: &OperatorPhase) -> i32 {
     match p {
         OperatorPhase::Elite0 => 0,
         OperatorPhase::Elite1 => 1,
@@ -51,7 +55,7 @@ const fn phase_num(p: &OperatorPhase) -> i32 {
     }
 }
 
-const fn unlock_of(c: &UnlockCondition) -> Unlock {
+pub const fn unlock_of(c: &UnlockCondition) -> Unlock {
     Unlock {
         phase: phase_num(&c.phase),
         level: c.level,
@@ -97,6 +101,16 @@ impl SkillRules {
             .map_or(0, |s| i32::try_from(s.mastery_unlocks.len()).unwrap_or(0))
     }
 
+    /// The highest mastery skill `index` takes at `skill_level`: its mastery
+    /// count at the top rank, 0 below it.
+    pub fn mastery_cap(&self, index: usize, skill_level: i32) -> i32 {
+        if skill_level == self.max_rank() {
+            self.max_mastery(index)
+        } else {
+            0
+        }
+    }
+
     /// What rank `rank` needs; `None` for rank 1 or a rank past the top.
     pub fn rank_unlock(&self, rank: i32) -> Option<Unlock> {
         let i = usize::try_from(rank - 2).ok()?;
@@ -117,4 +131,9 @@ impl SkillRules {
 /// Whether a build at `phase`/`level` has reached `u`.
 pub const fn reached(u: &Unlock, phase: i32, level: i32) -> bool {
     u.phase < phase || (u.phase == phase && u.level <= level)
+}
+
+/// The rank count of a module: `battle_equip_table` `Phases` length.
+pub fn module_ranks(m: &OperatorModule) -> i32 {
+    i32::try_from(m.data.phases.len()).unwrap_or(0)
 }

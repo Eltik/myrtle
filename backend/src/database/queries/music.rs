@@ -115,6 +115,49 @@ pub async fn upsert_song(conn: &mut PgConnection, s: SongUpsert<'_>) -> Result<(
     Ok(())
 }
 
+/// A known track's listing fields, as the sync refreshes them.
+#[derive(Debug, Clone, Copy)]
+pub struct SongListing<'a> {
+    pub cid: &'a str,
+    pub album_cid: &'a str,
+    pub name: &'a str,
+    pub artists: &'a [String],
+    /// The album detail's position, when this sync read the album; `None`
+    /// keeps the stored one.
+    pub track_order: Option<i32>,
+}
+
+/// Refresh a known track's listing fields. The detail fields (lyrics, music
+/// video) stay as fetched.
+pub async fn update_song_listing(
+    conn: &mut PgConnection,
+    s: SongListing<'_>,
+) -> Result<(), sqlx::Error> {
+    if let Some(order) = s.track_order {
+        sqlx::query(
+            "UPDATE siren_songs SET name = $2, album_cid = $3, artists = $4, track_order = $5 WHERE cid = $1",
+        )
+        .bind(s.cid)
+        .bind(s.name)
+        .bind(s.album_cid)
+        .bind(s.artists)
+        .bind(order)
+        .execute(conn)
+        .await?;
+    } else {
+        sqlx::query(
+            "UPDATE siren_songs SET name = $2, album_cid = $3, artists = $4 WHERE cid = $1",
+        )
+        .bind(s.cid)
+        .bind(s.name)
+        .bind(s.album_cid)
+        .bind(s.artists)
+        .execute(conn)
+        .await?;
+    }
+    Ok(())
+}
+
 /// Drop the releases and tracks the label no longer lists. Returns (albums,
 /// songs) removed.
 pub async fn prune_unlisted(
@@ -414,19 +457,13 @@ pub async fn replace_playlist_tracks(
     .bind(track_ids)
     .execute(&mut *conn)
     .await?;
-    let positions: Vec<i32> = (0..track_ids.len())
-        .map(|i| i32::try_from(i).unwrap_or(i32::MAX))
-        .collect();
-    sqlx::query(
-        "INSERT INTO music_playlist_tracks (playlist_id, track_id, position)
-         SELECT $1, t.track_id, t.position
-         FROM UNNEST($2::text[], $3::int4[]) AS t(track_id, position)
-         ON CONFLICT (playlist_id, track_id) DO UPDATE SET position = EXCLUDED.position",
+    insert_tracks(
+        conn,
+        playlist_id,
+        track_ids,
+        0,
+        "DO UPDATE SET position = EXCLUDED.position",
     )
-    .bind(playlist_id)
-    .bind(track_ids)
-    .bind(&positions)
-    .execute(&mut *conn)
     .await?;
     touch_playlist(conn, playlist_id).await
 }
@@ -444,21 +481,35 @@ pub async fn append_playlist_tracks(
     .fetch_one(&mut *conn)
     .await?
     .map_or(0, |p| p.saturating_add(1));
+    insert_tracks(conn, playlist_id, track_ids, next, "DO NOTHING").await?;
+    touch_playlist(conn, playlist_id).await
+}
+
+/// Insert `track_ids` at consecutive positions from `first`, resolving a
+/// track already in the playlist by `on_conflict` (the SQL after
+/// `ON CONFLICT (playlist_id, track_id)`).
+async fn insert_tracks(
+    conn: &mut PgConnection,
+    playlist_id: Uuid,
+    track_ids: &[String],
+    first: i32,
+    on_conflict: &'static str,
+) -> Result<(), sqlx::Error> {
     let positions: Vec<i32> = (0..track_ids.len())
-        .map(|i| next.saturating_add(i32::try_from(i).unwrap_or(i32::MAX)))
+        .map(|i| first.saturating_add(i32::try_from(i).unwrap_or(i32::MAX)))
         .collect();
-    sqlx::query(
+    sqlx::query(&format!(
         "INSERT INTO music_playlist_tracks (playlist_id, track_id, position)
          SELECT $1, t.track_id, t.position
          FROM UNNEST($2::text[], $3::int4[]) AS t(track_id, position)
-         ON CONFLICT (playlist_id, track_id) DO NOTHING",
-    )
+         ON CONFLICT (playlist_id, track_id) {on_conflict}"
+    ))
     .bind(playlist_id)
     .bind(track_ids)
     .bind(&positions)
-    .execute(&mut *conn)
+    .execute(conn)
     .await?;
-    touch_playlist(conn, playlist_id).await
+    Ok(())
 }
 
 /// `true` when the track was in the playlist.

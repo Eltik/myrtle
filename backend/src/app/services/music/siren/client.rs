@@ -20,7 +20,7 @@
 use std::time::Duration;
 
 use anyhow::{Context, anyhow};
-use reqwest::Client;
+use reqwest::{Client, RequestBuilder, Response};
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
 
@@ -119,19 +119,22 @@ impl<'a> SirenClient<'a> {
         }
     }
 
-    async fn get<T: DeserializeOwned>(&self, path: &str) -> anyhow::Result<T> {
-        let url = format!("{}{path}", self.base);
-        let resp = self
-            .http
-            .get(&url)
+    /// A GET to `url` with the sync's timeout and user agent.
+    fn request(&self, url: &str) -> RequestBuilder {
+        self.http
+            .get(url)
             .timeout(TIMEOUT)
             .header(reqwest::header::USER_AGENT, USER_AGENT)
-            .header(reqwest::header::ACCEPT, "application/json")
-            .send()
-            .await
-            .with_context(|| format!("GET {url}"))?
-            .error_for_status()
-            .with_context(|| format!("GET {url}"))?;
+    }
+
+    async fn get<T: DeserializeOwned>(&self, path: &str) -> anyhow::Result<T> {
+        let url = format!("{}{path}", self.base);
+        let resp = send(
+            &url,
+            self.request(&url)
+                .header(reqwest::header::ACCEPT, "application/json"),
+        )
+        .await?;
         let env: Envelope<T> = resp.json().await.with_context(|| format!("decode {url}"))?;
         if env.code != 0 {
             return Err(anyhow!("{url}: code {} {}", env.code, env.msg));
@@ -159,19 +162,19 @@ impl<'a> SirenClient<'a> {
 
     /// A file on the label's CDN (an LRC lyrics file), as text.
     pub async fn text(&self, url: &str) -> anyhow::Result<String> {
-        let resp = self
-            .http
-            .get(url)
-            .timeout(TIMEOUT)
-            .header(reqwest::header::USER_AGENT, USER_AGENT)
-            .send()
-            .await
-            .with_context(|| format!("GET {url}"))?
-            .error_for_status()
-            .with_context(|| format!("GET {url}"))?;
+        let resp = send(url, self.request(url)).await?;
         let bytes = resp.bytes().await.with_context(|| format!("read {url}"))?;
         Ok(String::from_utf8_lossy(&bytes).into_owned())
     }
+}
+
+/// Send `req`, a non-2xx status an error naming `url`.
+async fn send(url: &str, req: RequestBuilder) -> anyhow::Result<Response> {
+    req.send()
+        .await
+        .with_context(|| format!("GET {url}"))?
+        .error_for_status()
+        .with_context(|| format!("GET {url}"))
 }
 
 /// The unix second a signed stream URL stops working, read from its second

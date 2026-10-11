@@ -407,17 +407,12 @@ pub async fn delete_account(state: &AppState, user_id: Uuid) -> Result<(), ApiEr
     // the account for up to 15 minutes; deletions are rare enough to flush them
     // whole. The global stats and ownership tables are aggregates rebuilt by
     // `refresh-stats` and hold no row of the account.
-    cache.invalidate_by_prefix("leaderboard:").await;
-    cache.invalidate_by_prefix("search:").await;
-    cache
-        .invalidate_by_prefix(&format!("improvements:{uid}:"))
-        .await;
-    cache
-        .invalidate_by_prefix(&format!("base:rotation:{uid}:"))
-        .await;
-    cache
-        .invalidate_by_prefix(&format!("base:optimize:{uid}:"))
-        .await;
+    for prefix in ["leaderboard:", "search:"] {
+        cache.invalidate_by_prefix(prefix).await;
+    }
+    for scope in ["improvements", "base:rotation", "base:optimize"] {
+        cache.invalidate_by_prefix(&format!("{scope}:{uid}:")).await;
+    }
 
     tracing::info!(
         uid = %mask_identifier(uid),
