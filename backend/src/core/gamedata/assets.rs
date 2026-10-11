@@ -14,7 +14,7 @@ pub enum AssetKind {
     ModuleIcon,   // textures/spritepack/ui_equip_small_img_hub_N/
     ModuleBig,    // textures/spritepack/ui_equip_big_img_hub_N/
     EnemyIcon,    // textures/spritepack/icon_enemies_N/
-    ItemIcon,     // textures/arts/ui_item_icons_N/ + arts/items/*_hub/
+    ItemIcon,     // textures/arts/ui_item_icons_N/ + arts/items/*_hub/ + activity/commonassets/
     MedalIcon,    // textures/spritepack/ui_medal_icons_N/
     /// `textures/spritepack/ui_home_act_banner_gacha_{h2,en}_N/{picLimited_76_0_1}.png`
     /// Keyed by the NORMALISED stem (lowercase, alphanumerics only): the packs
@@ -186,6 +186,18 @@ impl AssetIndex {
             } else if grandparent_name(path) == Some("rglktopic") {
                 idx.map
                     .get_mut(&AssetKind::RoguelikeItem)
+                    .unwrap()
+                    .entry(stem.to_owned())
+                    .or_insert_with(|| rel_path.clone());
+            } else if parent == "commonassets" && grandparent_name(path) == Some("activity") {
+                // `textures/activity/commonassets/`: the event currency and
+                // token icons (`act12side_token_key01`, `clue_EDM_1`), which
+                // `item_table` names as `iconId` but no `ui_item_icons_N`
+                // pack carries: 221 of 1414 EN items, 231 of 1564 CN. The
+                // dedicated item packs still win a clash, whichever the walk
+                // reaches first.
+                idx.map
+                    .get_mut(&AssetKind::ItemIcon)
                     .unwrap()
                     .entry(stem.to_owned())
                     .or_insert_with(|| rel_path.clone());
@@ -554,4 +566,45 @@ fn png_stem(entry: &std::fs::DirEntry) -> Option<String> {
     let name = entry.file_name();
     let s = name.to_str()?;
     s.strip_suffix(".png").map(String::from)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn touch(root: &Path, rel: &str) {
+        let p = root.join(rel);
+        std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+        std::fs::write(p, b"png").unwrap();
+    }
+
+    #[test]
+    fn item_icons_include_activity_common_assets_without_overriding_item_packs() {
+        let root = std::env::temp_dir().join(format!("myrtle_item_icons_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        touch(&root, "textures/arts/ui_item_icons_0/MTL_SL_IRON3.png");
+        touch(&root, "textures/arts/ui_item_icons_0/SHARED_ICON.png");
+        touch(
+            &root,
+            "textures/activity/commonassets/act12side_token_key01.png",
+        );
+        touch(&root, "textures/activity/commonassets/SHARED_ICON.png");
+        touch(&root, "textures/ui/commonassets/not_an_item.png");
+
+        let idx = AssetIndex::build(&root);
+        assert_eq!(
+            idx.path(AssetKind::ItemIcon, "MTL_SL_IRON3"),
+            Some("/textures/arts/ui_item_icons_0/MTL_SL_IRON3.png")
+        );
+        assert_eq!(
+            idx.path(AssetKind::ItemIcon, "act12side_token_key01"),
+            Some("/textures/activity/commonassets/act12side_token_key01.png")
+        );
+        assert_eq!(
+            idx.path(AssetKind::ItemIcon, "SHARED_ICON"),
+            Some("/textures/arts/ui_item_icons_0/SHARED_ICON.png")
+        );
+        assert_eq!(idx.path(AssetKind::ItemIcon, "not_an_item"), None);
+        let _ = std::fs::remove_dir_all(&root);
+    }
 }

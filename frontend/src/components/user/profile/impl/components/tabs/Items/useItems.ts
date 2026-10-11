@@ -16,7 +16,12 @@ const INITIAL: IItemFilterState = {
     viewMode: "detailed",
 };
 
-export function useItems(inventory: IInventoryItem[], materials: IMaterials | undefined) {
+/**
+ * `materialsPending` holds the icons back while the item table loads: an
+ * entry's icon is the table's `iconId`, and the inventory id is only a last
+ * resort once the table has answered (or failed) without that item.
+ */
+export function useItems(inventory: IInventoryItem[], materials: IMaterials | undefined, materialsPending = false) {
     const [filters, setFilters] = useLocalStorageState<IItemFilterState>("user:items:filters", INITIAL);
     const isDesktop = useMediaQuery("(min-width: 768px)");
 
@@ -42,11 +47,11 @@ export function useItems(inventory: IInventoryItem[], materials: IMaterials | un
                 name: meta?.name ?? item.item_id,
                 rarityNum: rarityTierToNumber(meta?.rarity),
                 category: categorizeItem(meta, expIds),
-                iconId: meta?.iconId ?? null,
+                iconId: meta?.iconId ?? (materialsPending ? null : item.item_id),
                 expValue: materials?.expItems[item.item_id]?.gainExp ?? null,
             };
         });
-    }, [inventory, materials, expIds]);
+    }, [inventory, materials, materialsPending, expIds]);
 
     const categoryCounts = useMemo(() => {
         const map = new Map<string, number>();
