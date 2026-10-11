@@ -191,8 +191,9 @@ export const getOperatorBuildStatsFn = createServerFn({ method: "GET" })
         const res = await backendFetch(gamedataPath(server, `/operators/${encodeURIComponent(id)}/build-stats`));
         // An operator nobody has built is not an error, and neither is a
         // backend that predates this route. The detail page falls back to its
-        // own default, so `undefined` is a usable answer.
-        if (res.status === 404) return undefined;
+        // own default. `null`, not `undefined`: React Query rejects a query
+        // that resolves `undefined`, so the page fetched it again and failed.
+        if (res.status === 404) return null;
         if (!res.ok) throw new Error(`Failed to load operator build stats: ${res.status}`);
         return (await res.json()) as IOperatorBuildStats;
     });
