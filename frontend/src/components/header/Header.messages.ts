@@ -60,6 +60,30 @@ export const messages = {
         text: "Read every story in the game, with your progress synced.",
         description: "Blurb under the Stories entry in the Collection menu.",
     },
+    "header.collection.music.label": {
+        text: "In-Game Music",
+        description: "Collection menu entry for the gallery page that lists every piece of music in the game.",
+    },
+    "header.collection.music.desc": {
+        text: "Every track in the game, where it plays, and a player that loops it like the game does.",
+        description: "Blurb under the In-Game Music entry in the Collection menu.",
+    },
+    "header.collection.news.label": {
+        text: "News",
+        description: "Collection menu entry for the game news page, which mirrors the in-game notice board.",
+    },
+    "header.collection.news.desc": {
+        text: "The in-game notice board",
+        description: "Blurb under the News entry in the Collection menu.",
+    },
+    "header.collection.archives.label": {
+        text: "Archives",
+        description: "Collection menu entry for the Archives: personnel files, the faction network and roster statistics.",
+    },
+    "header.collection.archives.desc": {
+        text: "Personnel files, the faction network and the roster counted up.",
+        description: "Blurb under the Archives entry in the Collection menu.",
+    },
     "header.gacha.community.label": {
         text: "Community",
         description: "Gacha menu entry for community-wide pull statistics.",

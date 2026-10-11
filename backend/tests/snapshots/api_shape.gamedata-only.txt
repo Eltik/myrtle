@@ -489,6 +489,9 @@ operators.*.skills[*].static.Levels[*].spData: object
 operators.*.skills[*].static.Levels[*]: object
 operators.*.skills[*].static.SkillId: string
 operators.*.skills[*].static: object
+operators.*.skills[*].unlockCond.Level: number
+operators.*.skills[*].unlockCond.Phase: string
+operators.*.skills[*].unlockCond: object
 operators.*.skills[*]: object
 operators.*.skin: null
 operators.*.subPower: array

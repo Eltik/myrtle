@@ -136,6 +136,9 @@ pub struct GameData {
     pub medals: MedalData,
     pub roguelike: RoguelikeGameData,
     pub enemies: EnemyHandbook,
+    /// Enemy-linked battle sounds keyed by handbook enemy id, see
+    /// [`crate::core::gamedata::enrich::audio::build_enemy_audio`].
+    pub enemy_audio: HashMap<String, Vec<audio::EnemyAudio>>,
     pub enemy_stage_index: EnemyStageIndex,
     pub stage_index: StageIndex,
     pub mode_levels: HashMap<String, String>,
@@ -156,6 +159,9 @@ pub struct GameData {
     pub factions: HashMap<String, handbook_team::HandbookTeam>,
     /// Stronghold Protocol bonds, keyed by bond id, see [`autochess`].
     pub autochess_bonds: HashMap<String, autochess::AutoChessBond>,
+    /// The Squad Builder's load-time tables (text rule readings, tag ids,
+    /// enemy grade bands), see [`crate::core::squad::index`].
+    pub squad: crate::core::squad::index::SquadIndex,
     /// Tables that failed to deserialize and fell back to `T::default()`.
     /// One entry per table, `"<table>: <error>"`. Empty on a clean load.
     ///

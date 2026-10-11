@@ -64,6 +64,14 @@ export const messages = {
         description: "Meta description of an enemy page that has no description text of its own. `{index}` is the in-game enemy code, e.g. `B1`.",
     },
 
+    "archives.title": {
+        text: "Archives",
+        description: "Document title of the Archives page: personnel files, the faction network and roster statistics.",
+    },
+    "archives.description": {
+        text: "Arknights personnel files, the faction network the game draws, and the whole roster counted up: races, birthplaces, heights, infection and more.",
+        description: "Meta description of the Archives page.",
+    },
     "stories.title": {
         text: "Stories",
         description: "Document title of the story library (the Archives reader).",
@@ -71,6 +79,14 @@ export const messages = {
     "stories.description": {
         text: "Read every Arknights story: main chapters, events and operator records.",
         description: "Meta description of the story library.",
+    },
+    "music.title": {
+        text: "In-Game Music",
+        description: "Document title of the gallery page that lists every piece of music in the game.",
+    },
+    "music.description": {
+        text: "Every Arknights track: battle themes, lobby music, story scenes and map music, with where each one plays and a player that loops it like the game.",
+        description: "Meta description of the In-Game Music gallery page.",
     },
     "story.title": {
         text: "{name} - Story",
@@ -223,6 +239,15 @@ export const messages = {
         description: "Meta description of the changelog.",
     },
 
+    "announcements.title": {
+        text: "Game news",
+        description: "Document title of the page that mirrors the in-game notice board.",
+    },
+    "announcements.description": {
+        text: "The Arknights in-game notice board, straight from the official servers: events, banners and maintenance, checked every few minutes.",
+        description: "Meta description of the game news page.",
+    },
+
     "settings.title": {
         text: "Settings",
         description: "Document title of account settings.",
@@ -264,6 +289,14 @@ export const messages = {
     "toolsHps.description": {
         text: "Compare Arknights healer HPS across target counts and team buffs. Configure skills, modules, buffs, and conditionals.",
         description: "Meta description of the HPS calculator.",
+    },
+    "toolsSquadBuilder.title": {
+        text: "Squad Builder",
+        description: "Document title of the squad builder tool.",
+    },
+    "toolsSquadBuilder.description": {
+        text: "Build an Arknights squad of 12 plus a support, check its coverage, DP and synergies, save up to four squads and share a link.",
+        description: "Meta description of the squad builder tool.",
     },
     "toolsRecruitment.title": {
         text: "Recruitment Calculator",

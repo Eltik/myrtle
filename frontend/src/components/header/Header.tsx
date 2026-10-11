@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Heart, Settings } from "lucide-react";
 import { useMemo } from "react";
 import { WhatsNewButton } from "#/components/changelog/WhatsNewButton";
+import { MaintenancePill } from "#/components/maintenance/MaintenanceCountdown";
 import { Button } from "#/components/ui/button";
 import { Separator } from "#/components/ui/separator";
 import { useAuth } from "#/hooks/use-auth";
@@ -39,6 +40,9 @@ export default function Header() {
             { href: "/enemies", label: t("header.collection.enemies.label"), desc: t("header.collection.enemies.desc"), icon: "crosshair" },
             { href: "/stages", label: t("header.collection.stages.label"), desc: t("header.collection.stages.desc"), icon: "map" },
             { href: "/stories", label: t("header.collection.stories.label"), desc: t("header.collection.stories.desc"), icon: "book" },
+            { href: "/gallery/music", label: t("header.collection.music.label"), desc: t("header.collection.music.desc"), icon: "music" },
+            { href: "/archives", label: t("header.collection.archives.label"), desc: t("header.collection.archives.desc"), icon: "users" },
+            { href: "/announcements", label: t("header.collection.news.label"), desc: t("header.collection.news.desc"), icon: "newspaper" },
         ];
         const gachaItems: INavItem[] = [
             { href: "/gacha/community", label: t("header.gacha.community.label"), desc: t("header.gacha.community.desc"), icon: "users" },
@@ -99,6 +103,8 @@ export default function Header() {
                                 <path d="m21 21-4.35-4.35" />
                             </svg>
                         </Button>
+
+                        <MaintenancePill />
 
                         <Separator orientation="vertical" className="mx-1 hidden h-5 sm:block" />
 

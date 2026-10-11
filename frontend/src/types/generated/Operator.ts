@@ -4,6 +4,7 @@ import type { AttributeKeyFrame } from "./AttributeKeyFrame";
 import type { Drone } from "./Drone";
 import type { EnrichedSkill } from "./EnrichedSkill";
 import type { HandbookItem } from "./HandbookItem";
+import type { HiddenFaction } from "./HiddenFaction";
 import type { ObtainChannel } from "./ObtainChannel";
 import type { OperatorAudio } from "./OperatorAudio";
 import type { OperatorBaseSkill } from "./OperatorBaseSkill";
@@ -48,6 +49,11 @@ export type Operator = {
     nationName: string | null;
     groupName: string | null;
     teamName: string | null;
+    /**
+     * `sub_power` minus the `main_power` ids, in table order, named. The site
+     * shows these only behind the reader's spoiler setting.
+     */
+    hiddenFactions: Array<HiddenFaction>;
     displayNumber: string;
     appellation: string;
     position: OperatorPosition;

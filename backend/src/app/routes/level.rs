@@ -2,6 +2,7 @@ use axum::Json;
 use axum::extract::{Path, State};
 use axum::http::header;
 
+use crate::app::routes::static_data::GAMEDATA_CACHE_CONTROL;
 use crate::app::services::level::get_level;
 use crate::app::{error::ApiError, state::AppState};
 use crate::core::hypergryph::constants::Server;
@@ -36,7 +37,7 @@ pub async fn get_level_map(
 > {
     let value = get_level(&state, state.default_server, &stage_id).await?;
     Ok((
-        [(header::CACHE_CONTROL, "public, max-age=300")],
+        [(header::CACHE_CONTROL, GAMEDATA_CACHE_CONTROL)],
         Json(value),
     ))
 }
@@ -72,7 +73,7 @@ pub async fn get_level_map_srv(
 > {
     let value = get_level(&state, server, &stage_id).await?;
     Ok((
-        [(header::CACHE_CONTROL, "public, max-age=300")],
+        [(header::CACHE_CONTROL, GAMEDATA_CACHE_CONTROL)],
         Json(value),
     ))
 }

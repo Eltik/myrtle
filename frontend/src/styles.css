@@ -126,6 +126,13 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* The music player bar is fixed to the viewport foot: while it is mounted, the
+   page ends that much (and the home-indicator inset) lower, so the footer
+   scrolls clear of it. See `PlayerBar`. */
+body:has([data-music-player-bar]) {
+  padding-bottom: calc(72px + env(safe-area-inset-bottom));
+}
+
 code {
   font-size: 0.9em;
   border: 1px solid var(--border);

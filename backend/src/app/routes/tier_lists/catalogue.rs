@@ -3,13 +3,13 @@ use axum::extract::{Path, Query, State};
 use axum::http::header;
 
 use crate::app::error::ApiError;
+use crate::app::routes::static_data::GAMEDATA_CACHE_CONTROL;
 use crate::app::services::tier_entity::{EntitySummary, catalogue};
 use crate::app::state::AppState;
 use crate::database::models::tier_list::EntityKind;
 
-/// The catalogue changes only on a game-data reload; five minutes bounds how
-/// long a browser keeps the old one.
-const CACHE_CONTROL: &str = "public, max-age=300";
+/// The catalogue changes only on a game-data reload, like every game-data body.
+const CACHE_CONTROL: &str = GAMEDATA_CACHE_CONTROL;
 
 /// Everything of one kind a tier list editor may place, in pool order.
 /// Static game data: the same for every list and every caller.

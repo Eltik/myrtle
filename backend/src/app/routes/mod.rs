@@ -165,6 +165,8 @@ async fn own_uid(state: &AppState, auth: &MaybeAuthUser) -> Result<String, ApiEr
 }
 
 pub mod account;
+pub mod announcements;
+pub mod archives;
 pub mod assets;
 pub mod auth;
 pub mod base;
@@ -180,6 +182,8 @@ pub mod inventory;
 pub mod item_leaderboard;
 pub mod leaderboard;
 pub mod level;
+pub mod maintenance;
+pub mod music;
 pub mod operator_notes;
 pub mod operators;
 pub mod planner;
@@ -188,6 +192,7 @@ pub mod roster;
 pub mod search;
 pub mod skins;
 pub mod social;
+pub mod squads;
 pub mod stages;
 pub mod static_data;
 pub mod stats;
@@ -209,6 +214,9 @@ pub mod user;
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         .routes(routes!(health::health))
+        .routes(routes!(maintenance::maintenance))
+        .routes(routes!(announcements::list))
+        .routes(routes!(announcements::detail))
         .routes(routes!(user::get_user))
         .routes(routes!(user::get_user_score))
         .routes(routes!(user::get_user_checkin))
@@ -250,6 +258,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(auth::verify))
         .routes(routes!(auth::update_settings))
         .routes(routes!(auth::disconnect))
+        .routes(routes!(auth::delete_account))
         .routes(routes!(release::events))
         .routes(routes!(release::banners))
         .routes(routes!(release::skins))
@@ -327,6 +336,16 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(operators::build_stats))
         .routes(routes!(operators::voices_detail))
         .routes(routes!(operators::voices_detail_srv))
+        .routes(routes!(archives::network))
+        .routes(routes!(archives::dossiers))
+        .routes(routes!(archives::demographics))
+        .routes(routes!(archives::hidden_factions))
+        .routes(routes!(archives::operator))
+        .routes(routes!(archives::network_srv))
+        .routes(routes!(archives::dossiers_srv))
+        .routes(routes!(archives::demographics_srv))
+        .routes(routes!(archives::hidden_factions_srv))
+        .routes(routes!(archives::operator_srv))
         .routes(routes!(story::community))
         .routes(routes!(story::index))
         .routes(routes!(story::illustrations))
@@ -335,6 +354,8 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(story::sprite_detail))
         .routes(routes!(story::sprite_variant_thumb))
         .routes(routes!(story::gallery))
+        .routes(routes!(music::music))
+        .routes(routes!(music::music_srv))
         .routes(routes!(story::gallery_picture))
         .routes(routes!(story::art_gallery))
         .routes(routes!(story::art_picture))
@@ -384,5 +405,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(assets::generic_srv))
         .merge(tier_lists::router())
         .merge(grids::router())
+        .merge(squads::router())
+        .merge(music::router())
         .merge(i18n::router())
 }

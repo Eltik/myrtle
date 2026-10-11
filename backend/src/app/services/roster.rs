@@ -6,6 +6,7 @@ use crate::database::queries::score::update_score;
 use crate::database::queries::users::find_by_uid;
 use crate::{
     app::{error::ApiError, services::game_session, state::AppState},
+    core::gamedata::types::module::{ModuleType, Modules},
     core::{
         gamedata::types::{
             campaign::CampaignRotations,
@@ -13,8 +14,9 @@ use crate::{
         },
         grade::calculate::calculate_user_grade,
         hypergryph::{constants::Server, yostar::sync_data_raw},
+        maintenance,
     },
-    database::models::score::UserScore,
+    database::models::{score::UserScore, squad::SQUAD_SIZE},
 };
 
 #[derive(Deserialize)]
@@ -111,6 +113,28 @@ pub struct Avatar {
 #[derive(Deserialize)]
 pub struct Troop {
     pub chars: Option<serde_json::Map<String, serde_json::Value>>,
+    /// The in-game squads keyed by `squadId`, each a [`TroopSquad`]. Kept raw
+    /// so one malformed squad drops alone instead of failing the sync.
+    pub squads: Option<serde_json::Map<String, serde_json::Value>>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TroopSquad {
+    pub squad_id: Option<String>,
+    pub name: Option<String>,
+    /// Twelve entries, `null` for an empty seat.
+    pub slots: Option<Vec<Option<TroopSquadSlot>>>,
+}
+
+/// One squad seat. Points at a troop slot by `charInstId`, like
+/// [`AssistChar`].
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TroopSquadSlot {
+    pub char_inst_id: Option<i64>,
+    pub skill_index: Option<i64>,
+    pub current_equip: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -215,10 +239,22 @@ pub async fn refresh(
     user_id: &str,
     server: Server,
 ) -> Result<serde_json::Value, ApiError> {
+    // Inside an announced window (or an overrun of one) the game refuses the
+    // sync anyway; say why instead of surfacing whatever error it picks.
+    if let Some(window) = maintenance::blocking_window(server) {
+        return Err(ApiError::GameMaintenance {
+            ends_at: window.ends_at,
+        });
+    }
+
     let mut session = game_session::ensure_fresh(state, user_id, server).await?;
 
     let text = match sync_data_raw(&state.http_client, &mut session, server).await {
         Ok(t) => t,
+        Err(e) if maintenance::is_maintenance_error(&e) => {
+            tracing::info!(uid = %user_id, server = server.as_str(), error = ?e, "account/syncData refused for maintenance");
+            return Err(ApiError::GameMaintenance { ends_at: None });
+        }
         Err(e) => {
             tracing::warn!(
                 uid = %user_id,
@@ -285,6 +321,7 @@ pub async fn refresh(
     status_json["originite"] =
         extract_originite(&raw).map_or(serde_json::Value::Null, |op| serde_json::json!(op));
     let supports = extract_supports(&user.troop, &user.social);
+    let game_squads = extract_game_squads(&user.troop, &state.game_data(server).modules);
     let mut stages = user
         .dungeon
         .as_ref()
@@ -333,6 +370,7 @@ pub async fn refresh(
         &supports,
         nick_number,
         &enemies,
+        &game_squads,
     )
     .await?;
 
@@ -1066,6 +1104,86 @@ fn extract_supports(troop: &Option<Troop>, social: &Option<Social>) -> serde_jso
     serde_json::to_value(entries).unwrap_or_default()
 }
 
+/// The in-game squads as `user_game_squads` rows: a JSON array of
+/// `{index, name, slots}` where `slots` is exactly twelve entries, each `null`
+/// or `{char_id, skill_index, module_id}`.
+///
+/// `index` is the `squadId` as a number, else the squad's position in the map;
+/// the set of squads is whatever the payload carries (the game's squad count
+/// is in no table). A seat whose `charInstId` does not resolve to a troop char
+/// becomes `null` rather than a guessed operator. An equip whose
+/// `uniequip_table` `Type_` is `INITIAL` is the default badge, which the game
+/// reports for an operator with no module on, so it is stored as no module.
+fn extract_game_squads(troop: &Option<Troop>, modules: &Modules) -> serde_json::Value {
+    let Some(troop) = troop.as_ref() else {
+        return serde_json::json!([]);
+    };
+    let Some(squads) = troop.squads.as_ref() else {
+        return serde_json::json!([]);
+    };
+    // `instId` -> `charId`, read once: only the id is needed, so the rest of
+    // each troop char is never deserialized.
+    let char_ids: std::collections::HashMap<&str, &str> = troop
+        .chars
+        .iter()
+        .flatten()
+        .filter_map(|(inst, entry)| {
+            let id = entry.get("charId")?.as_str().filter(|id| !id.is_empty())?;
+            Some((inst.as_str(), id))
+        })
+        .collect();
+    let initial = |id: &str| {
+        modules
+            .equip_dict
+            .get(id)
+            .is_some_and(|m| m.module_type == ModuleType::Initial)
+    };
+
+    let entries: Vec<serde_json::Value> = squads
+        .values()
+        .enumerate()
+        .filter_map(|(position, raw)| {
+            let squad: TroopSquad = serde_json::from_value(raw.clone()).ok()?;
+            let index = squad
+                .squad_id
+                .as_deref()
+                .and_then(|id| id.parse::<i16>().ok())
+                .or_else(|| i16::try_from(position).ok())?;
+            let mut slots: Vec<serde_json::Value> = squad
+                .slots
+                .unwrap_or_default()
+                .into_iter()
+                .take(SQUAD_SIZE)
+                .map(|slot| {
+                    let Some(slot) = slot else {
+                        return serde_json::Value::Null;
+                    };
+                    let Some(char_id) = slot
+                        .char_inst_id
+                        .and_then(|inst| char_ids.get(inst.to_string().as_str()).copied())
+                    else {
+                        return serde_json::Value::Null;
+                    };
+                    let module_id = slot.current_equip.filter(|e| !e.is_empty() && !initial(e));
+                    serde_json::json!({
+                        "char_id": char_id,
+                        "skill_index": slot.skill_index.unwrap_or(0),
+                        "module_id": module_id,
+                    })
+                })
+                .collect();
+            slots.resize(SQUAD_SIZE, serde_json::Value::Null);
+            Some(serde_json::json!({
+                "index": index,
+                "name": squad.name.unwrap_or_default(),
+                "slots": slots,
+            }))
+        })
+        .collect();
+
+    serde_json::Value::Array(entries)
+}
+
 /// Annihilation progress lives at `user.campaignsV2.instances` (top level, not
 /// under `user.dungeon`) and counts kills, with no `state` flag. Merged into the
 /// stages object with a synthesized `state` (kill target reached -> 3, partial
@@ -1412,5 +1530,53 @@ mod tests {
         assert_eq!(view(&from_text), view(&from_tree));
         assert_eq!(view(&from_tree).3, Some(4321));
         assert_eq!(view(&from_tree).9, Some(vec![1, 0, 1]));
+    }
+
+    #[test]
+    fn game_squads_resolve_seats_and_pad_to_twelve() {
+        let troop: Troop = serde_json::from_value(serde_json::json!({
+            "chars": {
+                "305": {"instId": 305, "charId": "char_4080_lin"},
+                "12": {"instId": 12, "charId": "char_002_amiya"}
+            },
+            "squads": {
+                "3": {
+                    "squadId": "3",
+                    "name": "Lin",
+                    "slots": [
+                        {"charInstId": 305, "skillIndex": 1, "currentEquip": "uniequip_002_lin"},
+                        null,
+                        {"charInstId": 999, "skillIndex": 2, "currentEquip": null},
+                        {"charInstId": 12, "skillIndex": null, "currentEquip": "uniequip_001_amiya"}
+                    ]
+                },
+                "7": {"squadId": "7", "name": "A fifth squad", "slots": []}
+            }
+        }))
+        .unwrap();
+        let mut modules = Modules::default();
+        for (id, kind) in [
+            ("uniequip_001_amiya", ModuleType::Initial),
+            ("uniequip_002_lin", ModuleType::Advanced),
+        ] {
+            let m = crate::core::gamedata::types::module::Module {
+                module_type: kind,
+                ..Default::default()
+            };
+            modules.equip_dict.insert(id.to_string(), m);
+        }
+        let mut slots = vec![serde_json::Value::Null; 12];
+        slots[0] = serde_json::json!({"char_id": "char_4080_lin", "skill_index": 1, "module_id": "uniequip_002_lin"});
+        slots[3] =
+            serde_json::json!({"char_id": "char_002_amiya", "skill_index": 0, "module_id": null});
+        // Squad 7 is kept: the payload decides how many squads there are.
+        assert_eq!(
+            extract_game_squads(&Some(troop), &modules),
+            serde_json::json!([
+                {"index": 3, "name": "Lin", "slots": slots},
+                {"index": 7, "name": "A fifth squad", "slots": vec![serde_json::Value::Null; 12]}
+            ])
+        );
+        assert_eq!(extract_game_squads(&None, &modules), serde_json::json!([]));
     }
 }

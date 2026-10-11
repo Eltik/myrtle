@@ -81,6 +81,14 @@ export const messages = {
         text: "When CN events, skins, and banners land on EN",
         description: "One-line blurb under the release planner. 'CN' and 'EN' are the Chinese and English game servers and stay as-is.",
     },
+    "tool.squadBuilder.label": {
+        text: "Squad Builder",
+        description: "Name of the tool for putting together a 12-operator squad and checking what it covers.",
+    },
+    "tool.squadBuilder.desc": {
+        text: "Build a squad, see what it covers",
+        description: "One-line blurb under the squad builder. 'Covers' means which roles and answers the squad has.",
+    },
 } satisfies MessageMap;
 
 // `dynamic`: these keys are stored on a registry/constants entry and resolved

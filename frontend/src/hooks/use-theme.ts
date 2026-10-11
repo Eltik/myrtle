@@ -8,6 +8,8 @@ export function useTheme() {
     const accent = useSelector(themeStore, (s) => s.accent);
     const dynamicArtwork = useSelector(themeStore, (s) => s.dynamicArtwork);
     const latinNames = useSelector(themeStore, (s) => s.latinNames);
+    const spoilers = useSelector(themeStore, (s) => s.spoilers);
+    const maintenanceCountdown = useSelector(themeStore, (s) => s.maintenanceCountdown);
     const hydrated = useSelector(themeStore, (s) => s.hydrated);
 
     useEffect(() => {
@@ -21,6 +23,8 @@ export function useTheme() {
         accent,
         dynamicArtwork,
         latinNames,
+        spoilers,
+        maintenanceCountdown,
         hydrated,
         setMode: themeActions.setMode,
         setPresetHue: themeActions.setPresetHue,
@@ -28,6 +32,8 @@ export function useTheme() {
         resetAccent: themeActions.resetAccent,
         setDynamicArtwork: themeActions.setDynamicArtwork,
         setLatinNames: themeActions.setLatinNames,
+        setSpoilers: themeActions.setSpoilers,
+        setMaintenanceCountdown: themeActions.setMaintenanceCountdown,
         isDefaultAccent: accent === null,
     };
 }

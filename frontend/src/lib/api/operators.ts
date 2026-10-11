@@ -30,18 +30,22 @@ export function deepCamelize<T>(value: T): T {
     return value;
 }
 
-export const getOperatorsIndexFn = createServerFn({ method: "GET" })
-    .inputValidator((server: string | undefined) => server)
-    .handler(async ({ data: server }) => {
-        const res = await backendFetch(gamedataPath(server, "/operators/index"));
-        if (!res.ok) throw new Error(`Failed to load operators index: ${res.status}`);
-        return (await res.json()) as IOperatorIndexEntry[];
-    });
+/**
+ * Read by the browser straight from the backend (`backendFetch`), as
+ * `fetchOperatorsRoster` is. Through a server function the 645,037-byte index
+ * reached the browser as 1,543,898 bytes of uncompressed seroval; the backend
+ * answers 45,034 bytes of brotli.
+ */
+async function fetchOperatorsIndex(server: string): Promise<IOperatorIndexEntry[]> {
+    const res = await backendFetch(gamedataPath(server, "/operators/index"));
+    if (!res.ok) throw new Error(`Failed to load operators index: ${res.status}`);
+    return (await res.json()) as IOperatorIndexEntry[];
+}
 
 export function operatorsIndexQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
         queryKey: ["operators", "index", ...gamedataKey(server)],
-        queryFn: () => getOperatorsIndexFn({ data: resolveGamedataServer(server) }),
+        queryFn: () => fetchOperatorsIndex(resolveGamedataServer(server)),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });
@@ -219,21 +223,26 @@ export function operatorOwnershipQueryOptions(server: string = DEFAULT_GAMEDATA_
     });
 }
 
-export const getOperatorFn = createServerFn({ method: "GET" })
-    .inputValidator((data: { id: string; server?: string }) => data)
-    .handler(async ({ data: { id, server } }): Promise<IOperatorListItem | null> => {
-        const res = await backendFetch(gamedataPath(server, `/operators/${encodeURIComponent(id)}`));
-        // `null`, not `undefined`: TanStack Query rejects a query whose data is
-        // undefined, which turned an unknown id into a 500 instead of a 404.
-        if (res.status === 404) return null;
-        if (!res.ok) throw new Error(`Failed to load operator: ${res.status}`);
-        return deepCamelize(await res.json()) as IOperatorListItem;
-    });
+/**
+ * One operator, read by the browser straight from the backend (cached there
+ * with an `ETag` and `Cache-Control: public, max-age=300`). Through a server
+ * function Amiya's 56,828-byte record arrived as 94,213 bytes of uncompressed
+ * seroval; the backend answers 10,270 bytes of brotli. The Squad Builder reads
+ * one per seat.
+ */
+async function fetchOperator(id: string, server: string): Promise<IOperatorListItem | null> {
+    const res = await backendFetch(gamedataPath(server, `/operators/${encodeURIComponent(id)}`));
+    // `null`, not `undefined`: TanStack Query rejects a query whose data is
+    // undefined, which turned an unknown id into a 500 instead of a 404.
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error(`Failed to load operator: ${res.status}`);
+    return deepCamelize(await res.json()) as IOperatorListItem;
+}
 
 export function operatorQueryOptions(id: string, server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
         queryKey: ["operators", "detail", id, ...gamedataKey(server)],
-        queryFn: () => getOperatorFn({ data: { id, server: resolveGamedataServer(server) } }),
+        queryFn: () => fetchOperator(id, resolveGamedataServer(server)),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });

@@ -16,12 +16,21 @@ interface IThemeState {
      * English, and nobody types 予愿安洁莉娜 to find Angelina.
      */
     latinNames: boolean;
+    /**
+     * Show the hidden factions (`SubPower` ids the card never shows) on
+     * operator pages. Off by default: some of them are story spoilers.
+     */
+    spoilers: boolean;
+    /** Show the game maintenance countdown in the top bar. On by default. */
+    maintenanceCountdown: boolean;
     hydrated: boolean;
 }
 
 const THEME_MODE_STORAGE_KEY = "theme";
 const DYNAMIC_ART_STORAGE_KEY = "myrtle-dynamic-art";
 const LATIN_NAMES_STORAGE_KEY = "myrtle-latin-names";
+const SPOILERS_STORAGE_KEY = "myrtle-spoilers";
+const MAINTENANCE_COUNTDOWN_STORAGE_KEY = "myrtle-maintenance-countdown";
 
 function getInitialMode(): ThemeMode {
     if (typeof window === "undefined") return "auto";
@@ -44,6 +53,19 @@ function getInitialLatinNames(): boolean {
     return stored === null ? true : stored === "true";
 }
 
+function getInitialSpoilers(): boolean {
+    // Off by default; only an explicit opt-in ("true") enables it.
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(SPOILERS_STORAGE_KEY) === "true";
+}
+
+function getInitialMaintenanceCountdown(): boolean {
+    // On by default; only an explicit opt-out ("false") disables it.
+    if (typeof window === "undefined") return true;
+    const stored = window.localStorage.getItem(MAINTENANCE_COUNTDOWN_STORAGE_KEY);
+    return stored === null ? true : stored === "true";
+}
+
 function getSystemResolved(): ResolvedTheme {
     if (typeof window === "undefined") return "dark";
     return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
@@ -59,6 +81,8 @@ export const themeStore = new Store<IThemeState>({
     accent: null,
     dynamicArtwork: true,
     latinNames: true,
+    spoilers: false,
+    maintenanceCountdown: true,
     hydrated: false,
 });
 
@@ -96,7 +120,7 @@ export function hydrateTheme(): void {
     const accent = getStoredAccent();
     const resolved = applyMode(mode);
     applyAccent(accent, resolved);
-    themeStore.setState(() => ({ mode, resolved, accent, dynamicArtwork: getInitialDynamicArtwork(), latinNames: getInitialLatinNames(), hydrated: true }));
+    themeStore.setState(() => ({ mode, resolved, accent, dynamicArtwork: getInitialDynamicArtwork(), latinNames: getInitialLatinNames(), spoilers: getInitialSpoilers(), maintenanceCountdown: getInitialMaintenanceCountdown(), hydrated: true }));
 }
 
 let systemMediaQuery: MediaQueryList | null = null;
@@ -159,6 +183,19 @@ export const themeActions = {
         themeStore.setState((s) => ({ ...s, latinNames: enabled }));
         if (typeof window !== "undefined") {
             window.localStorage.setItem(LATIN_NAMES_STORAGE_KEY, String(enabled));
+        }
+    },
+    setSpoilers(enabled: boolean): void {
+        themeStore.setState((s) => ({ ...s, spoilers: enabled }));
+        if (typeof window !== "undefined") {
+            window.localStorage.setItem(SPOILERS_STORAGE_KEY, String(enabled));
+        }
+    },
+
+    setMaintenanceCountdown(enabled: boolean): void {
+        themeStore.setState((s) => ({ ...s, maintenanceCountdown: enabled }));
+        if (typeof window !== "undefined") {
+            window.localStorage.setItem(MAINTENANCE_COUNTDOWN_STORAGE_KEY, String(enabled));
         }
     },
 };

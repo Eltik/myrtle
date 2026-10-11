@@ -10,6 +10,7 @@ use crate::app::error::ApiError;
 use crate::app::services::level::get_level;
 use crate::app::state::AppState;
 use crate::core::gamedata::types::GameData;
+use crate::core::gamedata::types::audio::EnemyAudio;
 use crate::core::gamedata::types::chibi::ChibiCharacter;
 use crate::core::gamedata::types::enemy::{Enemy, RaceData};
 use crate::core::gamedata::types::enemy_stages::{EnemyStageRef, EnemyStageTable};
@@ -252,6 +253,8 @@ struct EnemyDetailResponse<'a> {
     /// The full (small) race table; the page resolves the race name from
     /// `enemyTags` against it, as the old client join did.
     race_data: &'a HashMap<String, RaceData>,
+    /// The enemy's battle sounds (empty when none link to it).
+    audio: &'a [EnemyAudio],
 }
 
 pub async fn get_enemy_detail(
@@ -270,6 +273,7 @@ pub async fn get_enemy_detail(
         serde_json::to_string(&EnemyDetailResponse {
             enemy,
             race_data: &gd.enemies.race_data,
+            audio: gd.enemy_audio.get(id).map_or(&[], Vec::as_slice),
         })
         .map_err(|e| ApiError::Internal(e.into()))
     })

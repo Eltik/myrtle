@@ -17,7 +17,7 @@ import type { messages } from "./AppearancePanel.messages";
 import { SectionLabel, SettingRow } from "./SettingsShell";
 
 export function AppearancePanel() {
-    const { mode, resolved, accent, isDefaultAccent, dynamicArtwork, latinNames, setMode, setPresetHue, setCustomHex, resetAccent, setDynamicArtwork, setLatinNames } = useTheme();
+    const { mode, resolved, accent, isDefaultAccent, dynamicArtwork, latinNames, spoilers, maintenanceCountdown, setMode, setPresetHue, setCustomHex, resetAccent, setDynamicArtwork, setLatinNames, setSpoilers, setMaintenanceCountdown } = useTheme();
     const customInputId = useId();
     const t: TypedT<typeof messages> = useT("settings");
 
@@ -103,6 +103,25 @@ export function AppearancePanel() {
                 </CardContent>
             </Card>
 
+            <Card>
+                <CardHeader>
+                    <CardTitle>{t("appearance.spoilers.title")}</CardTitle>
+                    <CardDescription>{t("appearance.spoilers.desc")}</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-0">
+                    <SettingRow layout="inline" title={t("appearance.spoilers.rowTitle")} description={t("appearance.spoilers.rowDesc")} control={<Switch checked={spoilers} onCheckedChange={setSpoilers} aria-label={t("appearance.spoilers.rowTitle")} />} />
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>{t("appearance.topBar.title")}</CardTitle>
+                    <CardDescription>{t("appearance.topBar.desc")}</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-0">
+                    <SettingRow layout="inline" title={t("appearance.topBar.maintenance.rowTitle")} description={t("appearance.topBar.maintenance.rowDesc")} control={<Switch checked={maintenanceCountdown} onCheckedChange={setMaintenanceCountdown} aria-label={t("appearance.topBar.maintenance.rowTitle")} />} />
+                </CardContent>
+            </Card>
             <LanguageCard />
         </div>
     );

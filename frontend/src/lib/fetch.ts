@@ -16,7 +16,10 @@ export async function backendFetch(path: string, init: RequestInit & { bearerTok
         return await fetch(`${base}/api${path}`, {
             ...rest,
             headers: {
-                "Content-Type": "application/json",
+                // Only a request with a body names its type. A bodiless browser GET then stays a
+                // CORS "simple" request: with the header, every direct read of the backend
+                // (cross-origin through `VITE_BACKEND_URL`) paid an OPTIONS preflight first.
+                ...(rest.body != null ? { "Content-Type": "application/json" } : {}),
                 ...(identity ? { "Accept-Encoding": "identity" } : {}),
                 ...(bearerToken ? { Authorization: `Bearer ${bearerToken}` } : {}),
                 ...headers,

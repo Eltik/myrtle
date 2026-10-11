@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthedRouteImport } from './routes/_authed'
+import { Route as AnnouncementsRouteImport } from './routes/announcements'
+import { Route as ArchivesRouteImport } from './routes/archives'
 import { Route as ChangelogRouteImport } from './routes/changelog'
 import { Route as DiscordRouteImport } from './routes/discord'
 import { Route as DonateRouteImport } from './routes/donate'
@@ -30,6 +32,7 @@ import { Route as AuthedAdminRouteImport } from './routes/_authed/admin'
 import { Route as EnemiesIdRouteImport } from './routes/enemies_.$id'
 import { Route as GachaCommunityRouteImport } from './routes/gacha.community'
 import { Route as GachaHistoryRouteImport } from './routes/gacha.history'
+import { Route as GalleryMusicRouteImport } from './routes/gallery.music'
 import { Route as GridsSlugRouteImport } from './routes/grids_.$slug'
 import { Route as OperatorsIdRouteImport } from './routes/operators_.$id'
 import { Route as StagesStageIdRouteImport } from './routes/stages_.$stageId'
@@ -43,6 +46,7 @@ import { Route as ToolsPlannerRouteImport } from './routes/tools.planner'
 import { Route as ToolsRandomizerRouteImport } from './routes/tools.randomizer'
 import { Route as ToolsRecruitmentRouteImport } from './routes/tools.recruitment'
 import { Route as ToolsReleaseRouteImport } from './routes/tools.release'
+import { Route as ToolsSquadBuilderRouteImport } from './routes/tools.squad-builder'
 import { Route as UserIdRouteImport } from './routes/user.$id'
 import { Route as UserLeaderboardRouteImport } from './routes/user.leaderboard'
 import { Route as UserSearchRouteImport } from './routes/user.search'
@@ -74,6 +78,16 @@ const IndexRoute = IndexRouteImport.update({
 } as any)
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnnouncementsRoute = AnnouncementsRouteImport.update({
+  id: '/announcements',
+  path: '/announcements',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArchivesRoute = ArchivesRouteImport.update({
+  id: '/archives',
+  path: '/archives',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChangelogRoute = ChangelogRouteImport.update({
@@ -171,6 +185,11 @@ const GachaHistoryRoute = GachaHistoryRouteImport.update({
   path: '/gacha/history',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GalleryMusicRoute = GalleryMusicRouteImport.update({
+  id: '/gallery/music',
+  path: '/gallery/music',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GridsSlugRoute = GridsSlugRouteImport.update({
   id: '/grids_/$slug',
   path: '/grids/$slug',
@@ -234,6 +253,11 @@ const ToolsRecruitmentRoute = ToolsRecruitmentRouteImport.update({
 const ToolsReleaseRoute = ToolsReleaseRouteImport.update({
   id: '/tools/release',
   path: '/tools/release',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsSquadBuilderRoute = ToolsSquadBuilderRouteImport.update({
+  id: '/tools/squad-builder',
+  path: '/tools/squad-builder',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UserIdRoute = UserIdRouteImport.update({
@@ -356,6 +380,8 @@ const AuthedTierListsMyIdEditRoute = AuthedTierListsMyIdEditRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/announcements': typeof AnnouncementsRoute
+  '/archives': typeof ArchivesRoute
   '/changelog': typeof ChangelogRoute
   '/discord': typeof DiscordRoute
   '/donate': typeof DonateRoute
@@ -375,6 +401,7 @@ export interface FileRoutesByFullPath {
   '/enemies/$id': typeof EnemiesIdRoute
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
+  '/gallery/music': typeof GalleryMusicRoute
   '/grids/$slug': typeof GridsSlugRoute
   '/operators/$id': typeof OperatorsIdRoute
   '/stages/$stageId': typeof StagesStageIdRoute
@@ -388,6 +415,7 @@ export interface FileRoutesByFullPath {
   '/tools/randomizer': typeof ToolsRandomizerRoute
   '/tools/recruitment': typeof ToolsRecruitmentRoute
   '/tools/release': typeof ToolsReleaseRoute
+  '/tools/squad-builder': typeof ToolsSquadBuilderRoute
   '/user/$id': typeof UserIdRoute
   '/user/leaderboard': typeof UserLeaderboardRoute
   '/user/search': typeof UserSearchRoute
@@ -414,6 +442,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/announcements': typeof AnnouncementsRoute
+  '/archives': typeof ArchivesRoute
   '/changelog': typeof ChangelogRoute
   '/discord': typeof DiscordRoute
   '/donate': typeof DonateRoute
@@ -432,6 +462,7 @@ export interface FileRoutesByTo {
   '/enemies/$id': typeof EnemiesIdRoute
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
+  '/gallery/music': typeof GalleryMusicRoute
   '/grids/$slug': typeof GridsSlugRoute
   '/operators/$id': typeof OperatorsIdRoute
   '/stages/$stageId': typeof StagesStageIdRoute
@@ -445,6 +476,7 @@ export interface FileRoutesByTo {
   '/tools/randomizer': typeof ToolsRandomizerRoute
   '/tools/recruitment': typeof ToolsRecruitmentRoute
   '/tools/release': typeof ToolsReleaseRoute
+  '/tools/squad-builder': typeof ToolsSquadBuilderRoute
   '/user/$id': typeof UserIdRoute
   '/user/leaderboard': typeof UserLeaderboardRoute
   '/user/search': typeof UserSearchRoute
@@ -473,6 +505,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
+  '/announcements': typeof AnnouncementsRoute
+  '/archives': typeof ArchivesRoute
   '/changelog': typeof ChangelogRoute
   '/discord': typeof DiscordRoute
   '/donate': typeof DonateRoute
@@ -492,6 +526,7 @@ export interface FileRoutesById {
   '/enemies_/$id': typeof EnemiesIdRoute
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
+  '/gallery/music': typeof GalleryMusicRoute
   '/grids_/$slug': typeof GridsSlugRoute
   '/operators_/$id': typeof OperatorsIdRoute
   '/stages_/$stageId': typeof StagesStageIdRoute
@@ -505,6 +540,7 @@ export interface FileRoutesById {
   '/tools/randomizer': typeof ToolsRandomizerRoute
   '/tools/recruitment': typeof ToolsRecruitmentRoute
   '/tools/release': typeof ToolsReleaseRoute
+  '/tools/squad-builder': typeof ToolsSquadBuilderRoute
   '/user/$id': typeof UserIdRoute
   '/user/leaderboard': typeof UserLeaderboardRoute
   '/user/search': typeof UserSearchRoute
@@ -533,6 +569,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/announcements'
+    | '/archives'
     | '/changelog'
     | '/discord'
     | '/donate'
@@ -552,6 +590,7 @@ export interface FileRouteTypes {
     | '/enemies/$id'
     | '/gacha/community'
     | '/gacha/history'
+    | '/gallery/music'
     | '/grids/$slug'
     | '/operators/$id'
     | '/stages/$stageId'
@@ -565,6 +604,7 @@ export interface FileRouteTypes {
     | '/tools/randomizer'
     | '/tools/recruitment'
     | '/tools/release'
+    | '/tools/squad-builder'
     | '/user/$id'
     | '/user/leaderboard'
     | '/user/search'
@@ -591,6 +631,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/announcements'
+    | '/archives'
     | '/changelog'
     | '/discord'
     | '/donate'
@@ -609,6 +651,7 @@ export interface FileRouteTypes {
     | '/enemies/$id'
     | '/gacha/community'
     | '/gacha/history'
+    | '/gallery/music'
     | '/grids/$slug'
     | '/operators/$id'
     | '/stages/$stageId'
@@ -622,6 +665,7 @@ export interface FileRouteTypes {
     | '/tools/randomizer'
     | '/tools/recruitment'
     | '/tools/release'
+    | '/tools/squad-builder'
     | '/user/$id'
     | '/user/leaderboard'
     | '/user/search'
@@ -649,6 +693,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authed'
+    | '/announcements'
+    | '/archives'
     | '/changelog'
     | '/discord'
     | '/donate'
@@ -668,6 +714,7 @@ export interface FileRouteTypes {
     | '/enemies_/$id'
     | '/gacha/community'
     | '/gacha/history'
+    | '/gallery/music'
     | '/grids_/$slug'
     | '/operators_/$id'
     | '/stages_/$stageId'
@@ -681,6 +728,7 @@ export interface FileRouteTypes {
     | '/tools/randomizer'
     | '/tools/recruitment'
     | '/tools/release'
+    | '/tools/squad-builder'
     | '/user/$id'
     | '/user/leaderboard'
     | '/user/search'
@@ -709,6 +757,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
+  AnnouncementsRoute: typeof AnnouncementsRoute
+  ArchivesRoute: typeof ArchivesRoute
   ChangelogRoute: typeof ChangelogRoute
   DiscordRoute: typeof DiscordRoute
   DonateRoute: typeof DonateRoute
@@ -727,6 +777,7 @@ export interface RootRouteChildren {
   EnemiesIdRoute: typeof EnemiesIdRoute
   GachaCommunityRoute: typeof GachaCommunityRoute
   GachaHistoryRoute: typeof GachaHistoryRoute
+  GalleryMusicRoute: typeof GalleryMusicRoute
   GridsSlugRoute: typeof GridsSlugRoute
   OperatorsIdRoute: typeof OperatorsIdRoute
   StagesStageIdRoute: typeof StagesStageIdRoute
@@ -740,6 +791,7 @@ export interface RootRouteChildren {
   ToolsRandomizerRoute: typeof ToolsRandomizerRoute
   ToolsRecruitmentRoute: typeof ToolsRecruitmentRoute
   ToolsReleaseRoute: typeof ToolsReleaseRoute
+  ToolsSquadBuilderRoute: typeof ToolsSquadBuilderRoute
   UserIdRoute: typeof UserIdRoute
   UserLeaderboardRoute: typeof UserLeaderboardRoute
   UserSearchRoute: typeof UserSearchRoute
@@ -764,6 +816,20 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/announcements': {
+      id: '/announcements'
+      path: '/announcements'
+      fullPath: '/announcements'
+      preLoaderRoute: typeof AnnouncementsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/archives': {
+      id: '/archives'
+      path: '/archives'
+      fullPath: '/archives'
+      preLoaderRoute: typeof ArchivesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/changelog': {
@@ -899,6 +965,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GachaHistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/gallery/music': {
+      id: '/gallery/music'
+      path: '/gallery/music'
+      fullPath: '/gallery/music'
+      preLoaderRoute: typeof GalleryMusicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/grids_/$slug': {
       id: '/grids_/$slug'
       path: '/grids/$slug'
@@ -988,6 +1061,13 @@ declare module '@tanstack/react-router' {
       path: '/tools/release'
       fullPath: '/tools/release'
       preLoaderRoute: typeof ToolsReleaseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/squad-builder': {
+      id: '/tools/squad-builder'
+      path: '/tools/squad-builder'
+      fullPath: '/tools/squad-builder'
+      preLoaderRoute: typeof ToolsSquadBuilderRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/user/$id': {
@@ -1208,6 +1288,8 @@ const AuthedRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
+  AnnouncementsRoute: AnnouncementsRoute,
+  ArchivesRoute: ArchivesRoute,
   ChangelogRoute: ChangelogRoute,
   DiscordRoute: DiscordRoute,
   DonateRoute: DonateRoute,
@@ -1226,6 +1308,7 @@ const rootRouteChildren: RootRouteChildren = {
   EnemiesIdRoute: EnemiesIdRoute,
   GachaCommunityRoute: GachaCommunityRoute,
   GachaHistoryRoute: GachaHistoryRoute,
+  GalleryMusicRoute: GalleryMusicRoute,
   GridsSlugRoute: GridsSlugRoute,
   OperatorsIdRoute: OperatorsIdRoute,
   StagesStageIdRoute: StagesStageIdRoute,
@@ -1239,6 +1322,7 @@ const rootRouteChildren: RootRouteChildren = {
   ToolsRandomizerRoute: ToolsRandomizerRoute,
   ToolsRecruitmentRoute: ToolsRecruitmentRoute,
   ToolsReleaseRoute: ToolsReleaseRoute,
+  ToolsSquadBuilderRoute: ToolsSquadBuilderRoute,
   UserIdRoute: UserIdRoute,
   UserLeaderboardRoute: UserLeaderboardRoute,
   UserSearchRoute: UserSearchRoute,

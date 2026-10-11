@@ -65,7 +65,9 @@ string in the namespace of the screen it appears on.
 | `tierLists` | `components/tier-lists/**` |
 | `stages` | `components/stages/**` |
 | `story` | `components/story/**` (the reader and the story library) |
+| `gallery` | `components/gallery/**` (In-Game Music) |
 | `enemies` | `components/enemies/**` |
+| `archives` | `components/archives/**` (the Archives: network, dossiers, statistics) |
 | `gacha` | `components/gacha/**` |
 | `stats` | `components/stats/**` |
 | `changelog` | `components/changelog/**` |

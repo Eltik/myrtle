@@ -1,9 +1,12 @@
-use std::{collections::HashMap, path::Path};
+use std::{
+    collections::{HashMap, HashSet},
+    path::Path,
+};
 
 use crate::core::gamedata::{
     assets::AssetIndex,
     enrich::{
-        audio::build_operator_audio,
+        audio::{build_enemy_audio, build_operator_audio},
         chibi::{init_chibi_data, init_enemy_chibi_data},
         enemy_stages::build_enemy_stage_index,
         gacha::{enrich_banners, mark_returning_pools},
@@ -173,6 +176,7 @@ pub fn boot_steps(data_dir: &Path) -> Vec<startup::StepSpec> {
             "battle audio",
             "operators",
             "enemies",
+            "enemy audio",
             "stage classifier",
             "enemy index · scan",
             "enemy index · parse",
@@ -422,17 +426,56 @@ pub fn init_game_data_with_art(
     // Enemy database lives outside excel/, in the levels directory
     startup::step("enemies");
     let enemy_db_path = assets_dir.join("gamedata/levels/enemydata/enemy_database.json");
+    // Enemy id -> the distinct prefab keys its levels use, which name the
+    // enemy in its sound banks when they differ from the id.
+    let mut enemy_prefab_keys: HashMap<String, Vec<String>> = HashMap::new();
+    // Enemy id -> its `Skills[].PrefabKey`s at any level, lowercased with a
+    // `[tag]` suffix dropped: a sound bank naming one is that skill's.
+    let mut enemy_skill_keys: HashMap<String, HashSet<String>> = HashMap::new();
     let enemies = if let Ok(enemy_db) = std::fs::File::open(&enemy_db_path)
         .map_err(|e| e.to_string())
         .and_then(|f| {
             serde_json::from_reader::<_, EnemyDatabaseFile>(std::io::BufReader::new(f))
                 .map_err(|e| e.to_string())
         }) {
+        for entry in &enemy_db.enemies {
+            let mut keys: Vec<String> = Vec::new();
+            for level in &entry.value {
+                for skill in &level.enemy_data.skills {
+                    let key = skill.prefab_key.split('[').next().unwrap_or_default();
+                    if !key.is_empty() {
+                        enemy_skill_keys
+                            .entry(entry.key.clone())
+                            .or_default()
+                            .insert(key.to_ascii_lowercase());
+                    }
+                }
+                if let Some(key) = level.enemy_data.prefab_key.get()
+                    && *key != entry.key
+                    && !keys.contains(key)
+                {
+                    keys.push(key.clone());
+                }
+            }
+            if !keys.is_empty() {
+                enemy_prefab_keys.insert(entry.key.clone(), keys);
+            }
+        }
         enrich::enemies::enrich_enemies(enemy_file, &enemy_db, &assets)
     } else {
         warnings.push("enemy_database: file not found or parse error".into());
         EnemyHandbook::from(enemy_file) // fallback without stats
     };
+
+    startup::step("enemy audio");
+    let enemy_audio = build_enemy_audio(
+        &audio_file,
+        enemies.enemy_data.keys().map(String::as_str),
+        &enemy_prefab_keys,
+        &enemy_skill_keys,
+        &op_ids,
+        &assets,
+    );
 
     medals.link_operator_locks(&operators);
     // Drive seasonal/event medal availability from the authoritative schedules
@@ -482,59 +525,61 @@ pub fn init_game_data_with_art(
         tracing::warn!("{w}");
     }
 
-    Ok((
-        GameData {
-            table_warnings: warnings,
-            operators,
-            skills,
-            materials,
-            modules,
-            skins,
-            handbook,
-            ranges,
-            favor,
-            voices,
-            gacha,
-            chibis,
-            enemy_chibis,
-            zones,
-            stages,
-            activities: activity_file.basic_info,
-            retro_acts: retro_file.retro_act_list,
-            story_reviews: story_review_file.story_reviews,
-            story_archives,
-            mission_archives,
-            music: crate::core::gamedata::types::audio::MusicBanks::from_raw(&audio_file),
-            chapters: chapter_file.chapters,
-            zone_chapters,
-            zone_open_times,
-            storylines,
-            storyline_story_sets,
-            activity_op_stages,
-            activity_farm_stages,
-            activity_mission_tokens,
-            event_shops,
-            activity_skin_refs,
-            skin_listings: shop_file.into_skin_listings(),
-            recommend_tags: shop_file.recommend_tags(),
-            skin_windows: shop_file.into_skin_windows(),
-            medals,
-            roguelike,
-            enemies,
-            enemy_stage_index,
-            stage_index,
-            mode_levels,
-            building: building_file,
-            stage_universe,
-            stage_evidence,
-            sandbox_universe,
-            campaign_rotations,
-            consts,
-            missions,
-            factions: team_file.teams,
-            profession_names,
-            autochess_bonds,
-        },
-        assets,
-    ))
+    let mut data = GameData {
+        table_warnings: warnings,
+        operators,
+        skills,
+        materials,
+        modules,
+        skins,
+        handbook,
+        ranges,
+        favor,
+        voices,
+        gacha,
+        chibis,
+        enemy_chibis,
+        zones,
+        stages,
+        activities: activity_file.basic_info,
+        retro_acts: retro_file.retro_act_list,
+        story_reviews: story_review_file.story_reviews,
+        story_archives,
+        mission_archives,
+        music: crate::core::gamedata::types::audio::MusicBanks::from_raw(&audio_file),
+        chapters: chapter_file.chapters,
+        zone_chapters,
+        zone_open_times,
+        storylines,
+        storyline_story_sets,
+        activity_op_stages,
+        activity_farm_stages,
+        activity_mission_tokens,
+        event_shops,
+        activity_skin_refs,
+        skin_listings: shop_file.into_skin_listings(),
+        recommend_tags: shop_file.recommend_tags(),
+        skin_windows: shop_file.into_skin_windows(),
+        medals,
+        roguelike,
+        enemies,
+        enemy_audio,
+        enemy_stage_index,
+        stage_index,
+        mode_levels,
+        building: building_file,
+        stage_universe,
+        stage_evidence,
+        sandbox_universe,
+        campaign_rotations,
+        consts,
+        missions,
+        factions: team_file.teams,
+        profession_names,
+        autochess_bonds,
+        squad: Default::default(),
+    };
+    startup::step("squad index");
+    data.squad = crate::core::squad::index::SquadIndex::build(&data);
+    Ok((data, assets))
 }
