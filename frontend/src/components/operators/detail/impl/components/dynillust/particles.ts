@@ -1523,12 +1523,12 @@ function driftWithBone(container: PIXI.Container, chain: string[] | undefined, p
 
 /** Mutable state {@link holdWorldSpace} keeps between frames (the emitter container's
  *  transform as of the previous frame). One per emitter. */
-interface IWorldSpaceState {
+export interface IWorldSpaceState {
     prev: PIXI.Matrix | null;
 }
 
 /** The minimum a particle must expose to be carried by {@link holdWorldSpace}. */
-interface IDriftable {
+export interface IDriftable {
     x: number;
     y: number;
     vx: number;
@@ -1551,7 +1551,7 @@ interface IDriftable {
  *  falling apple sheds sparks (`rateOverDistance`) all the way down its plunge instead of
  *  dragging the whole cloud with it as a tight blob. No-op - the early return - for a static
  *  emitter, which is most of them, and never reached by a `local` system. */
-function holdWorldSpace(container: PIXI.Container, st: IWorldSpaceState, particles: readonly IDriftable[]): void {
+export function holdWorldSpace(container: PIXI.Container, st: IWorldSpaceState, particles: readonly IDriftable[]): void {
     container.transform.updateLocalTransform();
     const now = container.transform.localTransform;
     const prev = st.prev;
@@ -1571,7 +1571,8 @@ function holdWorldSpace(container: PIXI.Container, st: IWorldSpaceState, particl
         p.vx = vx;
         p.vy = -vy;
         if (p.hist) {
-            for (let i = 0; i + 1 < p.hist.length; i += 2) {
+            // `[x, y, age]` triples: step 3 and leave the age slot alone.
+            for (let i = 0; i + 1 < p.hist.length; i += 3) {
                 const hx = delta.a * p.hist[i] + delta.c * -p.hist[i + 1] + delta.tx;
                 const hy = delta.b * p.hist[i] + delta.d * -p.hist[i + 1] + delta.ty;
                 p.hist[i] = hx;
