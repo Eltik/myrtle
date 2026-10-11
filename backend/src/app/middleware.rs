@@ -10,7 +10,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 
 use axum::extract::{ConnectInfo, MatchedPath, Request, State};
-use axum::http::{HeaderValue, StatusCode};
+use axum::http::{HeaderMap, HeaderValue, StatusCode, header};
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
 use dashmap::DashMap;
@@ -19,6 +19,7 @@ use tracing::Instrument;
 
 use crate::app::metrics::METRICS;
 use crate::app::state::AppState;
+use crate::core::auth::jwt::verify_token;
 
 /// Header carrying the id that ties a log line to a response.
 const REQUEST_ID: &str = "x-request-id";
@@ -327,6 +328,34 @@ impl Bucket {
     }
 }
 
+/// The bucket a request counts against.
+///
+/// Every `Upstream` route takes `AuthUser`, which refuses a request without a
+/// valid bearer token (401) before the handler can call upstream. Such a
+/// request is a cheap rejection, so it counts in `Default`. Counted in
+/// `Upstream`, anonymous calls from an address spent that address's 6 upstream
+/// calls a minute, so they could lock a signed-in user on the same address out
+/// of their roster refresh. A caller with a valid token counts in `Upstream` as
+/// before, whatever its handler then does. (The service key skips the limiter
+/// before this is asked.)
+fn bucket_for(route: &str, headers: &HeaderMap, jwt_secret: &str) -> Bucket {
+    let bucket = Bucket::of(route);
+    if bucket == Bucket::Upstream && !carries_valid_token(headers, jwt_secret) {
+        return Bucket::Default;
+    }
+    bucket
+}
+
+/// The same check `AuthUser` makes: a `Bearer` token this process signed and
+/// that has not expired. One HMAC, and only on the `Upstream` routes.
+fn carries_valid_token(headers: &HeaderMap, jwt_secret: &str) -> bool {
+    headers
+        .get(header::AUTHORIZATION)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.strip_prefix("Bearer "))
+        .is_some_and(|token| verify_token(jwt_secret, token).is_ok())
+}
+
 struct Window {
     /// Index of the 60-second window this count belongs to.
     window: AtomicU64,
@@ -361,7 +390,6 @@ fn is_service_call(req: &Request, state: &AppState) -> bool {
 
 pub async fn rate_limit(State(state): State<AppState>, req: Request, next: Next) -> Response {
     let route = classify_path(&req);
-    let bucket = Bucket::of(&route);
 
     if is_service_call(&req, &state) {
         return next.run(req).await;
@@ -380,6 +408,7 @@ pub async fn rate_limit(State(state): State<AppState>, req: Request, next: Next)
         return next.run(req).await;
     }
 
+    let bucket = bucket_for(&route, req.headers(), &state.config.jwt_secret);
     let window = now_secs() / 60;
     let allowance = bucket.allowance(state.config.rate_limit_rpm);
     maybe_sweep(window);
@@ -433,7 +462,71 @@ fn rate_limited_response() -> Response {
 
 #[cfg(test)]
 mod tests {
-    use super::{Bucket, Cidr, is_exempt};
+    use super::{Bucket, Cidr, bucket_for, is_exempt};
+    use crate::core::auth::jwt::create_token;
+    use axum::http::{HeaderMap, HeaderValue, header};
+
+    const SECRET: &str = "bucket-test-secret";
+    const UPSTREAM: [&str; 4] = [
+        "/api/gacha/fetch",
+        "/api/refresh",
+        "/api/friends",
+        "/api/players/search",
+    ];
+
+    fn bearer(token: &str) -> HeaderMap {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(&format!("Bearer {token}")).expect("header value"),
+        );
+        headers
+    }
+
+    fn token(secret: &str) -> String {
+        create_token(
+            secret,
+            "00000000-0000-4000-8000-000000000001",
+            "1",
+            "en",
+            "user",
+            1,
+        )
+        .expect("token")
+    }
+
+    #[test]
+    fn only_a_caller_the_handler_admits_spends_the_upstream_allowance() {
+        let signed_in = bearer(&token(SECRET));
+        let foreign = bearer(&token("some-other-secret"));
+        let garbage = bearer("not-a-jwt");
+        for route in UPSTREAM {
+            assert!(
+                matches!(bucket_for(route, &signed_in, SECRET), Bucket::Upstream),
+                "{route}"
+            );
+            // Each of these is a 401 from `AuthUser` before any upstream call.
+            for headers in [&HeaderMap::new(), &foreign, &garbage] {
+                assert!(
+                    matches!(bucket_for(route, headers, SECRET), Bucket::Default),
+                    "{route}"
+                );
+            }
+        }
+        // The other buckets do not depend on the caller.
+        assert!(matches!(
+            bucket_for("/api/login/send-code", &HeaderMap::new(), SECRET),
+            Bucket::Auth
+        ));
+        assert!(matches!(
+            bucket_for("/api/dps/calculate", &HeaderMap::new(), SECRET),
+            Bucket::Expensive
+        ));
+        assert!(matches!(
+            bucket_for("/api/operators/index", &signed_in, SECRET),
+            Bucket::Default
+        ));
+    }
 
     #[test]
     fn routes_land_in_the_bucket_that_matches_their_cost() {
