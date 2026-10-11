@@ -14,12 +14,12 @@ describe("entryStatus", () => {
 
 describe("localeStats", () => {
     it("counts stale strings as not done and floors to one decimal", () => {
-        expect(localeStats({ total: 2480, translated: 2400, stale: 30 })).toEqual({ total: 2480, stale: 30, missing: 80, todo: 110, pct: 95.5 });
+        expect(localeStats({ total: 2480, translated: 2400, stale: 30 })).toEqual({ total: 2480, stale: 30, missing: 80, todo: 110, done: 2370, pct: 95.5 });
     });
 
     it("treats an empty catalog as complete and a missing row as nothing", () => {
         expect(localeStats({ total: 0, translated: 0, stale: 0 }).pct).toBe(100);
-        expect(localeStats(undefined)).toEqual({ total: 0, stale: 0, missing: 0, todo: 0, pct: 0 });
+        expect(localeStats(undefined)).toEqual({ total: 0, stale: 0, missing: 0, todo: 0, done: 0, pct: 0 });
     });
 });
 

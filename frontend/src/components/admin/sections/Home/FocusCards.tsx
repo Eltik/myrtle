@@ -33,11 +33,12 @@ export function FocusCards({ access }: { access: IAdminAccess }): React.ReactEle
     const navigate = useNavigate();
     const levelLabel = useLevelLabel();
     const { isAuthenticated } = useAuth();
-    const isTranslator = access.role === "translator";
+    // Any role can hold a language grant, so the grants (not the `translator` role) decide this.
+    const translates = access.myLoc.length > 0;
     const isEditor = access.role === "tier_list_editor";
 
-    const progressQuery = useQuery({ ...translationProgressQueryOptions(isAuthenticated), enabled: isAuthenticated && isTranslator && access.myLoc.length > 0 });
-    const locales = useAdminLocales(isTranslator);
+    const progressQuery = useQuery({ ...translationProgressQueryOptions(isAuthenticated), enabled: isAuthenticated && translates });
+    const locales = useAdminLocales(translates);
     const empty = useEmptyOperators(isAuthenticated && isEditor);
     const grantedQuery = useQuery({ ...grantedTierListsQueryOptions(isAuthenticated), enabled: isAuthenticated && isEditor });
     const browseQuery = useQuery({ ...browseTierListsQueryOptions(useGamedataServer()), enabled: isEditor && (grantedQuery.data?.length ?? 0) > 0 });
@@ -62,7 +63,7 @@ export function FocusCards({ access }: { access: IAdminAccess }): React.ReactEle
         return [...access.myLoc].sort((a, b) => (order.get(a.code) ?? 999) - (order.get(b.code) ?? 999));
     }, [access.myLoc, locales.list]);
 
-    const loading = access.grantsLoading || (isTranslator && access.myLoc.length > 0 && (!progressQuery.data || !locales.loaded)) || (isEditor && (!empty || !grantedQuery.data));
+    const loading = access.grantsLoading || (translates && (!progressQuery.data || !locales.loaded)) || (isEditor && (!empty || !grantedQuery.data));
 
     if (loading) return <div className="rounded-2xl border border-border border-dashed p-7 text-[14px] text-muted-foreground">{t("home.focus.loading")}</div>;
 

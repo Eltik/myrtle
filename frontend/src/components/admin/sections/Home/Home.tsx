@@ -21,7 +21,7 @@ export default function Home(_props: IHomeProps): React.ReactElement {
     const { user } = useAuth();
     const access = useAdminAccess();
     const { staff } = access;
-    const sub = access.role === "translator" ? t("home.head.sub.translator") : access.role === "tier_list_editor" ? t("home.head.sub.tierListEditor") : undefined;
+    const sub = access.role === "tier_list_editor" ? t("home.head.sub.tierListEditor") : access.myLoc.length > 0 ? t("home.head.sub.translator") : undefined;
 
     return (
         <>

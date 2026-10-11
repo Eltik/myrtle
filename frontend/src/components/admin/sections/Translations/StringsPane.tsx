@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon, SearchIcon } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { AdminTranslationsFilter, IAdminTranslationsSearch } from "#/components/admin/shell/search";
 import { useScrollTopOnOpen } from "#/components/admin/shell/useScrollTopOnOpen";
 import { Button } from "#/components/ui/button";
@@ -28,6 +28,39 @@ const PAGE_SIZE = 40;
 const SEARCH_DEBOUNCE_MS = 260;
 /** The Area select's value for "every namespace"; the URL carries it as no `ns` at all. */
 const ALL_AREAS = "*";
+/** The list's floor from lg up, so a tall language picker never squeezes it below a usable height. */
+const MIN_LIST_HEIGHT = 360;
+/** Room left under the list: the page's bottom padding. */
+const LIST_BOTTOM_GAP = 24;
+
+/**
+ * From lg up the list card ends at the viewport's bottom on first paint. It used to be one
+ * viewport tall wherever it started, so under the page head and language cards it ran most of a
+ * screen past the bottom until the page was scrolled to where it sticks. Measured off the pane
+ * (which never sticks) and capped by the CSS height that fits once stuck, so scrolling never
+ * outgrows it. Re-measured when the language cards above change height.
+ */
+function useListHeight(): [React.RefObject<HTMLDivElement | null>, number | undefined] {
+    const paneRef = useRef<HTMLDivElement | null>(null);
+    const [height, setHeight] = useState<number | undefined>(undefined);
+    useLayoutEffect(() => {
+        const pane = paneRef.current;
+        if (!pane) return;
+        const measure = () => {
+            const top = pane.getBoundingClientRect().top + window.scrollY;
+            setHeight(Math.max(MIN_LIST_HEIGHT, Math.round(window.innerHeight - top - LIST_BOTTOM_GAP)));
+        };
+        measure();
+        window.addEventListener("resize", measure);
+        const observer = new ResizeObserver(measure);
+        if (pane.parentElement) observer.observe(pane.parentElement);
+        return () => {
+            window.removeEventListener("resize", measure);
+            observer.disconnect();
+        };
+    }, []);
+    return [paneRef, height];
+}
 
 interface IStringsPaneProps {
     search: IAdminTranslationsSearch;
@@ -104,6 +137,8 @@ export function StringsPane({ search, locale, canEdit, filter, stats, statsReady
     };
 
     const narrowed = Boolean(search.q || search.ns);
+    // An empty "Done" list means nothing is finished yet, not that the backlog is cleared.
+    const emptyMeansNoMatch = filter === "all" || filter === "translated" || narrowed;
     const showAll = () => {
         setSearch({ filter: "all", ns: undefined, key: undefined });
     };
@@ -116,14 +151,16 @@ export function StringsPane({ search, locale, canEdit, filter, stats, statsReady
         { id: "todo", label: t("translations.filter.todo"), count: statsReady ? stats.todo : null },
         { id: "stale", label: t("translations.filter.stale"), count: statsReady ? stats.stale : null },
         { id: "untranslated", label: t("translations.filter.untranslated"), count: statsReady ? stats.missing : null },
+        { id: "translated", label: t("translations.filter.translated"), count: statsReady ? stats.done : null },
         { id: "all", label: t("translations.filter.all"), count: null },
     ];
     const current = filters.find((f) => f.id === filter) ?? filters[0];
+    const [paneRef, listHeight] = useListHeight();
     const sortedNamespaces = useMemo(() => [...(namespaces ?? [])].sort((a, b) => a.localeCompare(b)), [namespaces]);
 
     return (
-        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[400px_minmax(0,1fr)]">
-            <Card ref={listRef} className={cn("overflow-hidden lg:sticky lg:top-20 lg:h-[calc(100dvh-6rem)]", detail && "max-lg:hidden")}>
+        <div ref={paneRef} style={listHeight === undefined ? undefined : ({ "--list-h": `${listHeight}px` } as React.CSSProperties)} className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[400px_minmax(0,1fr)]">
+            <Card ref={listRef} className={cn("overflow-hidden lg:sticky lg:top-20 lg:h-[min(var(--list-h,100dvh),calc(100dvh-6rem))]", detail && "max-lg:hidden")}>
                 <div className="@container flex flex-wrap gap-2 border-border border-b p-3">
                     <InputGroup className="min-w-0 flex-[1_1_5rem]">
                         <InputGroupAddon>
@@ -174,7 +211,7 @@ export function StringsPane({ search, locale, canEdit, filter, stats, statsReady
                     pending={listQuery.isPending}
                     error={listQuery.isError && entries.length === 0}
                     onRetry={() => void listQuery.refetch()}
-                    emptyText={filter === "all" || narrowed ? t("translations.list.emptyAll") : t("translations.list.emptyFiltered", { language: locale.english_name })}
+                    emptyText={emptyMeansNoMatch ? t("translations.list.emptyAll") : t("translations.list.emptyFiltered", { language: locale.english_name })}
                     hasMore={listQuery.hasNextPage}
                     loadingMore={listQuery.isFetchingNextPage}
                     onLoadMore={() => void listQuery.fetchNextPage()}
@@ -196,7 +233,7 @@ export function StringsPane({ search, locale, canEdit, filter, stats, statsReady
                                 {t("translations.editor.back")}
                             </Button>
                         </div>
-                        {filter === "all" || narrowed ? (
+                        {emptyMeansNoMatch ? (
                             <Empty>
                                 <EmptyHeader>
                                     <EmptyTitle>{t("translations.noMatch.title")}</EmptyTitle>

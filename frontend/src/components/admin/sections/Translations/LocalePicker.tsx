@@ -69,7 +69,11 @@ export function LocaleCard({ locale, progress, progressPending, viewOnly, select
                     {progress ? <span className="ml-auto shrink-0 font-semibold text-[13px] tabular-nums">{t("translations.locale.pct", { pct: fmt.number(stats.pct) })}</span> : null}
                 </div>
                 <Progress value={progress ? stats.pct : null} aria-label={locale.english_name} />
-                {progress ? <span className="text-[12.5px] text-muted-foreground">{stats.todo > 0 ? t("translations.locale.line", { stale: fmt.number(stats.stale), missing: fmt.number(stats.missing) }) : t("translations.locale.complete")}</span> : progressPending ? <Skeleton className="h-4 w-40" /> : null}
+                {progress ? (
+                    <span className="text-[12.5px] text-muted-foreground">{stats.todo > 0 ? t("translations.locale.line", { done: fmt.number(stats.done), stale: fmt.number(stats.stale), missing: fmt.number(stats.missing) }) : t("translations.locale.complete")}</span>
+                ) : progressPending ? (
+                    <Skeleton className="h-4 w-40" />
+                ) : null}
             </Card>
         </button>
     );

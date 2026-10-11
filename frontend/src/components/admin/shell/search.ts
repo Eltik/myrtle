@@ -76,7 +76,7 @@ export function parseNotesSearch(search: Raw): IAdminNotesSearch {
     return compact({ op: str(search.op), status: oneOf(search.status, NOTES_STATUSES), q: str(search.q) });
 }
 
-export const TRANSLATIONS_FILTERS = ["todo", "stale", "untranslated", "all"] as const;
+export const TRANSLATIONS_FILTERS = ["todo", "stale", "untranslated", "translated", "all"] as const;
 export type AdminTranslationsFilter = (typeof TRANSLATIONS_FILTERS)[number];
 
 export interface IAdminTranslationsSearch {

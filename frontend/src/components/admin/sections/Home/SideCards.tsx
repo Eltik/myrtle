@@ -34,7 +34,7 @@ export function AccessCard({ access }: { access: IAdminAccess }): React.ReactEle
     const { isAuthenticated } = useAuth();
     const role = access.role ?? "user";
     const grantedQuery = useQuery({ ...grantedTierListsQueryOptions(isAuthenticated), enabled: isAuthenticated && !access.staff });
-    const locales = useAdminLocales(role === "translator");
+    const locales = useAdminLocales(access.myLoc.length > 0);
 
     const note = role === "super_admin" ? t("home.access.note.superAdmin") : role === "tier_list_admin" ? t("home.access.note.tierListAdmin") : role === "tier_list_editor" ? t("home.access.note.tierListEditor") : role === "translator" ? t("home.access.note.translator") : null;
 
@@ -75,11 +75,11 @@ export function RecentCard({ access }: { access: IAdminAccess }): React.ReactEle
     const fieldLabel = useNoteFieldLabel();
     const { user: me, isAuthenticated } = useAuth();
     const isEditor = access.role === "tier_list_editor";
-    const isTranslator = access.role === "translator";
     // The notes audit is admin-role only (an editor reads their own rows); the
-    // translation audit is any panel role, but only roles that translate need it.
+    // translation audit is any panel role, but only people who translate need
+    // it, and a language grant (held by any role) is what makes a translator.
     const wantNotes = isAuthenticated && (access.staff || isEditor);
-    const wantTranslations = isAuthenticated && (access.staff || isTranslator);
+    const wantTranslations = isAuthenticated && (access.staff || access.myLoc.length > 0);
 
     const notesQuery = useQuery({ ...globalAuditLogQueryOptions(access.staff ? { limit: RECENT_LIMIT } : { limit: RECENT_LIMIT, actor: "me" }, me?.id), enabled: wantNotes });
     const i18nQuery = useQuery({ ...translationAuditLogQueryOptions({ limit: access.staff ? RECENT_LIMIT : OWN_TRANSLATION_WINDOW }, isAuthenticated), enabled: wantTranslations });

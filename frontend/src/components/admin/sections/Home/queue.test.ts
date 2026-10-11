@@ -103,6 +103,13 @@ describe("buildFocusCards", () => {
         ]);
     });
 
+    // A player holding a language grant opened Home to "Nothing is waiting on you" (2026-10-11):
+    // the cards were keyed on the `translator` role, which they do not have.
+    it("gives a plain player holding a language grant the same locale card", () => {
+        const cards = buildFocusCards({ role: "user", localeGrants: [{ code: "ja", level: "admin" }], progress, emptyOps: [], totalOps: 0, tierLists: [] });
+        expect(cards).toEqual([{ kind: "locale", code: "ja", level: "admin", editable: true, stale: 5, missing: 10, percent: 85 }]);
+    });
+
     it("gives an editor a notes card then one card per granted list", () => {
         const cards = buildFocusCards({
             role: "tier_list_editor",

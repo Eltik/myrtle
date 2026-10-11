@@ -30,26 +30,25 @@ export interface IFocusInput {
     tierLists: readonly IFocusTierList[];
 }
 
-/** What a translator or editor opens Home to find (design `focusCards`). */
+/**
+ * What a translator or editor opens Home to find (design `focusCards`). The
+ * locale cards follow the grants, not the role: a plain player or an editor
+ * can hold a language grant too, and gets the same card a translator does.
+ */
 export function buildFocusCards(input: IFocusInput): FocusCard[] {
-    if (input.role === "translator") {
-        const cards: FocusCard[] = [];
-        for (const g of input.localeGrants) {
-            const p = input.progress.find((row) => row.locale === g.code);
-            if (!p) continue;
-            cards.push({ kind: "locale", code: g.code, level: g.level, editable: atLeast(g.level, "edit"), stale: p.stale, missing: missingCount(p), percent: currentPercent(p) });
-        }
-        return cards;
+    const cards: FocusCard[] = [];
+    for (const g of input.localeGrants) {
+        const p = input.progress.find((row) => row.locale === g.code);
+        if (!p) continue;
+        cards.push({ kind: "locale", code: g.code, level: g.level, editable: atLeast(g.level, "edit"), stale: p.stale, missing: missingCount(p), percent: currentPercent(p) });
     }
     if (input.role === "tier_list_editor") {
-        const cards: FocusCard[] = [];
         if (input.emptyOps.length > 0) {
             cards.push({ kind: "notes", empty: input.emptyOps.length, total: input.totalOps, sixStarNames: input.emptyOps.filter((o) => o.rarity === 6).map((o) => o.name), firstOperatorId: input.emptyOps[0].id });
         }
         for (const list of input.tierLists) cards.push({ kind: "tierList", list, canPublish: atLeast(list.permission, "publish") });
-        return cards;
     }
-    return [];
+    return cards;
 }
 
 /** At most `max` names; the rest is a count the caller words. */

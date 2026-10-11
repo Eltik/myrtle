@@ -29,8 +29,8 @@ export const messages = {
         description: "Share of a language's strings that are translated and up to date, on its card. {pct} is an already-formatted number such as '95.5'.",
     },
     "translations.locale.line": {
-        text: "{stale} out of date · {missing} missing",
-        description: "Line under a language's progress bar. {stale} and {missing} are formatted numbers. Keep the middle dot.",
+        text: "{done} done · {stale} out of date · {missing} missing",
+        description: "Line under a language's progress bar. {done}, {stale} and {missing} are formatted numbers. Keep the middle dots.",
     },
     "translations.locale.complete": {
         text: "Complete",
@@ -64,6 +64,10 @@ export const messages = {
     "translations.filter.untranslated": {
         text: "Missing",
         description: "Status dropdown option: strings with no translation. A count is shown next to it.",
+    },
+    "translations.filter.translated": {
+        text: "Done",
+        description: "Status dropdown option that lists only strings translated and up to date. Same word as the 'Done' badge.",
     },
     "translations.filter.all": {
         text: "All",
@@ -145,8 +149,12 @@ export const messages = {
         description: "Bold label before the developer's note on where and how the string is used.",
     },
     "translations.editor.keep": {
-        text: "Keep these exactly as written:",
-        description: "Label before the chips listing the placeholders the translation must keep unchanged.",
+        text: "Keep these exactly as written. Click one to insert it:",
+        description: "Label before the chips listing the placeholders the translation must keep unchanged. Clicking a chip types it into the translation box at the cursor.",
+    },
+    "translations.editor.insertArg": {
+        text: "Insert {placeholder} at the cursor",
+        description: "Tooltip on a placeholder chip. {placeholder} is the placeholder itself in braces, for example {count}.",
     },
     "translations.editor.forms": {
         text: "Wordings",

@@ -21,6 +21,8 @@ export interface ILocaleStats {
     missing: number;
     /** Out of date plus missing: what the "To do" filter lists. */
     todo: number;
+    /** Translated and current: what the "Done" filter lists. */
+    done: number;
     /** Share of strings translated and current, floored to one decimal (design `pct`). */
     pct: number;
 }
@@ -31,11 +33,11 @@ export interface ILocaleStats {
  * translation agree again. An empty catalog counts as complete.
  */
 export function localeStats(progress: { total: number; translated: number; stale: number } | undefined): ILocaleStats {
-    if (!progress) return { total: 0, stale: 0, missing: 0, todo: 0, pct: 0 };
+    if (!progress) return { total: 0, stale: 0, missing: 0, todo: 0, done: 0, pct: 0 };
     const missing = missingCount(progress);
     const stale = Math.max(0, progress.stale);
     const pct = currentPercent({ total: progress.total, translated: progress.translated, stale });
-    return { total: progress.total, stale, missing, todo: stale + missing, pct };
+    return { total: progress.total, stale, missing, todo: stale + missing, done: Math.max(0, progress.total - stale - missing), pct };
 }
 
 /** The filter a missing `filter` param means: work through the backlog if you can edit, else browse everything. */

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeftIcon, EraserIcon, HistoryIcon, MoreHorizontalIcon, RotateCcwIcon } from "lucide-react";
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { invalidateTranslationQueries } from "#/components/admin/shell/invalidate";
 import { toastError, toastSuccess } from "#/components/admin/shell/toast";
 import { Button } from "#/components/ui/button";
@@ -54,6 +54,7 @@ export function Editor({ entry, locale, canEdit, position, nextKey, skipKey, onG
     const queryClient = useQueryClient();
     const { isAuthenticated } = useAuth();
     const fieldId = useId();
+    const textRef = useRef<HTMLTextAreaElement | null>(null);
 
     const saved = entry.value ?? "";
     const [draft, setDraft] = useState(saved);
@@ -107,6 +108,35 @@ export function Editor({ entry, locale, canEdit, position, nextKey, skipKey, onG
         },
         onError: (err: unknown) => toastError("translations-clear-err", t("translations.toast.clearFailed"), describeError(err)),
     });
+
+    // Selecting a string (a click in the list, Save & next, Skip) puts the caret in the box, so a
+    // keyboard translator never tabs through the header to reach it. Not below lg, where focusing
+    // raises the on-screen keyboard over the English, and never out of a field the user is typing in
+    // (a search that changes the first row remounts this editor).
+    useEffect(() => {
+        const box = textRef.current;
+        if (!canEdit || !box || !window.matchMedia("(min-width: 64rem)").matches) return;
+        const active = document.activeElement;
+        if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement || active?.getAttribute("role") === "combobox") return;
+        box.focus({ preventScroll: true });
+        box.setSelectionRange(box.value.length, box.value.length);
+    }, [canEdit]);
+
+    /**
+     * Types `text` at the caret, replacing any selection. `insertText` goes through the browser's
+     * own editing path, so Ctrl+Z undoes it like typing and React sees an ordinary change.
+     */
+    const insertAtCaret = (text: string) => {
+        const box = textRef.current;
+        if (!box) return;
+        box.focus();
+        if (!document.execCommand("insertText", false, text)) {
+            const start = box.selectionStart;
+            const next = draft.slice(0, start) + text + draft.slice(box.selectionEnd);
+            setDraft(next);
+            requestAnimationFrame(() => box.setSelectionRange(start + text.length, start + text.length));
+        }
+    };
 
     const saveNext = () => {
         if (!canSave || save.isPending) return;
@@ -193,10 +223,29 @@ export function Editor({ entry, locale, canEdit, position, nextKey, skipKey, onG
                             <span className="mr-1 text-[12.5px] text-muted-foreground">{t("translations.editor.keep")}</span>
                             {names.map((name) => {
                                 const ok = !missing.includes(name);
+                                const braced = `{${name}}`;
+                                // An empty box is missing every argument, which is not news; once typing starts, a missing one turns orange.
+                                const tone = ok ? "bg-[color-mix(in_oklch,var(--success)_14%,transparent)] text-success-foreground" : started ? "bg-warning/16 text-warning-foreground" : "bg-muted text-muted-foreground";
+                                if (!canEdit) {
+                                    return (
+                                        <span key={name} className={cn("rounded-md px-2 py-0.5 font-mono text-[12px]", tone)}>
+                                            {braced}
+                                        </span>
+                                    );
+                                }
                                 return (
-                                    <span key={name} className={cn("rounded-md px-2 py-0.5 font-mono text-[12px]", ok ? "bg-[color-mix(in_oklch,var(--success)_14%,transparent)] text-success-foreground" : "bg-muted text-muted-foreground")}>
-                                        {`{${name}}`}
-                                    </span>
+                                    <button
+                                        key={name}
+                                        type="button"
+                                        title={t("translations.editor.insertArg", { placeholder: braced })}
+                                        aria-label={t("translations.editor.insertArg", { placeholder: braced })}
+                                        // Keep the caret (and any selection) in the box through the click.
+                                        onMouseDown={(e) => e.preventDefault()}
+                                        onClick={() => insertAtCaret(braced)}
+                                        className={cn("cursor-pointer rounded-md px-2 py-0.5 font-mono text-[12px] outline-none transition-[filter] hover:brightness-125 focus-visible:ring-2 focus-visible:ring-ring", tone)}
+                                    >
+                                        {braced}
+                                    </button>
                                 );
                             })}
                         </div>
@@ -216,6 +265,7 @@ export function Editor({ entry, locale, canEdit, position, nextKey, skipKey, onG
                     <div className="flex flex-col gap-1.5">
                         <Label htmlFor={fieldId}>{t("translations.editor.translation")}</Label>
                         <Textarea
+                            ref={textRef}
                             id={fieldId}
                             rows={4}
                             lang={locale.code}
@@ -234,7 +284,7 @@ export function Editor({ entry, locale, canEdit, position, nextKey, skipKey, onG
                                 }
                             }}
                         />
-                        {canEdit && started && missing.length > 0 ? <span className="text-[12.5px] text-destructive-foreground">{t("translations.editor.missing", { count: missing.length, names: missingList })}</span> : null}
+                        {canEdit && started && missing.length > 0 ? <span className="text-[12.5px] text-warning-foreground">{t("translations.editor.missing", { count: missing.length, names: missingList })}</span> : null}
                         {fieldErrors.length > 0 ? (
                             <ul className="flex flex-col gap-1">
                                 {fieldErrors.map((fe) => (

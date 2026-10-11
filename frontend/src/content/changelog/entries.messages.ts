@@ -508,8 +508,8 @@ export const messages = {
         description: "Bullet in the second 2026-09-19 release note, filed under 'Fixed'. Originium Prime is the game's paid currency and keeps its name.",
     },
     "note.2026-09-19-2.item.8": {
-        text: "Angelina's the Mellow Wish no longer renders her Elite 2 art with a flat sheet across the eyes and mouth.",
-        description: "Bullet in the second 2026-09-19 release note, filed under 'Fixed'. 'the Mellow Wish' is the outfit's own name and Elite 2 is the operator's second promotion; both keep the game's wording.",
+        text: "Angelina the Mellow Wish no longer renders her Elite 2 art with a flat sheet across the eyes and mouth.",
+        description: "Bullet in the second 2026-09-19 release note, filed under 'Fixed'. 'Angelina the Mellow Wish' is one operator's full name (a separate operator from Angelina) and Elite 2 is the operator's second promotion; both keep the game's wording.",
     },
     "note.2026-09-19-2.item.9": {
         text: "The release note panel no longer cuts a line of text in half on a phone, and it shows a shadow at its edge while there is more to scroll to.",
