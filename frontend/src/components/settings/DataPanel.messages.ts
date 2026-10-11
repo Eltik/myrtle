@@ -15,6 +15,14 @@ export const messages = {
         text: "Re-sync game data",
         description: "Label of the row holding the re-sync button.",
     },
+    "data.sync.paused": {
+        text: "Syncing is paused while the game is down for maintenance. Back in {time}.",
+        description: "Caption under the re-sync button while the game server is down for maintenance. {time} is a short span like '42m' until the announced end.",
+    },
+    "data.sync.pausedNoEnd": {
+        text: "Syncing is paused while the game is down for maintenance.",
+        description: "Caption under the re-sync button while the game server is down for maintenance and its end has passed or was never announced.",
+    },
     "data.sync.rowDesc": {
         text: "Operators, stage progress, IS/RA, base, medals, inventory.",
         description: "Caption listing what a re-sync fetches. 'IS' is Integrated Strategies, 'RA' is Reclamation Algorithm and 'base' the player's home installation - all in-game systems.",

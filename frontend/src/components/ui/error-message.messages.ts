@@ -46,6 +46,14 @@ export const messages = {
         text: "Signed in, but the first roster sync failed ({status}). Reload the page: your account is connected, and you can sync again from your profile.",
         description: "Error toast body after a successful sign-in whose immediate roster download failed. {status} is the HTTP status number.",
     },
+    "errorMessage.gameMaintenance": {
+        text: "Arknights is down for maintenance, so syncing is paused. Try again once it's back.",
+        description: "Error toast body when a sync is refused because the game server is down for maintenance and no end time is known. 'Arknights' is the game's name.",
+    },
+    "errorMessage.gameMaintenanceUntil": {
+        text: "Arknights is down for maintenance until {time}, so syncing is paused. Try again after that.",
+        description: "Error toast body when a sync is refused because the game server is down for maintenance. {time} is the announced end, a date with a time like 'Oct 14, 8:00 AM'. 'Arknights' is the game's name.",
+    },
     "errorMessage.gameLoginRequired": {
         text: "Your Yostar login has expired. Sign out, then sign back in with a new email code.",
         description: "Error toast body when the site no longer holds the visitor's game login (it expired, or they chose not to keep it), so a game action cannot run. 'Yostar' is the game's publisher; 'email code' is the one-time code Yostar emails at sign-in.",

@@ -1,3 +1,4 @@
+import { MaintenanceBanner } from "#/components/maintenance/MaintenanceCountdown";
 import { useCommand } from "#/lib/command-context";
 import styles from "./impl/Digest.module.css";
 import HappeningNow from "./impl/HappeningNow";
@@ -15,6 +16,8 @@ export default function Home() {
     return (
         <main className="relative flex flex-1 flex-col">
             <Hero onOpenCommand={openCmd} scrollTargetId={LIVE_SECTION_ID} />
+            {/* Renders nothing unless a maintenance is announced or running. */}
+            <MaintenanceBanner className={`${shared.container} mb-4`} />
             <HappeningNow id={LIVE_SECTION_ID} />
             <section className={`${shared.container} ${styles.section}`}>
                 <TopDoctors />

@@ -35,6 +35,11 @@ pub enum ApiError {
     Internal(#[from] anyhow::Error),
     #[error("service unavailable")]
     ServiceUnavailable,
+    /// The game server is down for maintenance, so nothing can be synced from
+    /// it. 503 with code `GAME_MAINTENANCE`; `ends_at` is the announced end
+    /// (unix seconds) when one is known.
+    #[error("the game is down for maintenance")]
+    GameMaintenance { ends_at: Option<i64> },
 }
 
 impl ApiError {
@@ -55,6 +60,7 @@ impl ApiError {
             Self::ValidationFailed(errors) => Self::ValidationFailed(errors.clone()),
             Self::Internal(e) => Self::Internal(anyhow::anyhow!("{e:#}")),
             Self::ServiceUnavailable => Self::ServiceUnavailable,
+            Self::GameMaintenance { ends_at } => Self::GameMaintenance { ends_at: *ends_at },
         }
     }
 }
@@ -89,6 +95,10 @@ pub struct ErrorDetail {
     /// Present only on `VALIDATION_FAILED` (422).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub details: Option<Vec<FieldError>>,
+    /// Present only on `GAME_MAINTENANCE` (503) when the announced end is
+    /// known: unix seconds.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ends_at: Option<i64>,
 }
 
 impl IntoResponse for ApiError {
@@ -113,6 +123,13 @@ impl IntoResponse for ApiError {
             Self::ServiceUnavailable => {
                 (StatusCode::SERVICE_UNAVAILABLE, "SERVICE_UNAVAILABLE", None)
             }
+            Self::GameMaintenance { .. } => {
+                (StatusCode::SERVICE_UNAVAILABLE, "GAME_MAINTENANCE", None)
+            }
+        };
+        let ends_at = match &self {
+            Self::GameMaintenance { ends_at } => *ends_at,
+            _ => None,
         };
 
         let body = ErrorBody {
@@ -120,6 +137,7 @@ impl IntoResponse for ApiError {
                 code,
                 message: self.to_string(),
                 details,
+                ends_at,
             },
         };
 

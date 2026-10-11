@@ -280,6 +280,15 @@ impl ServiceAccount {
         .map(drop)
     }
 
+    /// Re-mint the `secret` and nothing else: u8 token, then `account/login` on
+    /// the game server. The cheapest round-trip that needs the game up, which
+    /// is what [`crate::core::maintenance`] asks once a planned window has
+    /// passed.
+    pub async fn probe(&self, client: &Client) -> Result<(), FetchError> {
+        let mut guard = self.inner.lock().await;
+        self.refresh(client, &mut guard).await
+    }
+
     async fn refresh(&self, client: &Client, inner: &mut Inner) -> Result<(), FetchError> {
         refresh_secret(client, &mut inner.session, self.server).await?;
         inner.refreshed_at = Some(Instant::now());
