@@ -104,6 +104,11 @@ export const DEFAULT_OG_PRESETS = {
         subtitleKey: "og.toolsHps.subtitle",
         activeTag: "Tools",
     },
+    "tools-squad-builder": {
+        titleKey: "og.toolsSquadBuilder.title",
+        subtitleKey: "og.toolsSquadBuilder.subtitle",
+        activeTag: "Tools",
+    },
     "tools-recruitment": {
         titleKey: "og.toolsRecruitment.title",
         subtitleKey: "og.toolsRecruitment.subtitle",

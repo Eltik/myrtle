@@ -78,6 +78,10 @@ pub struct OperatorIndexEntry {
     pub skill_count: usize,
     pub potential_rank_count: usize,
     pub modules: Vec<OperatorIndexModule>,
+    /// When each skill, skill rank and mastery unlocks, from `Skills[i]
+    /// .UnlockCond`, `AllSkillLvlup` and `LevelUpCostCond`: the Squad
+    /// Builder's caps and locks, the same rules its analysis reads.
+    pub skill_rules: crate::core::squad::rules::SkillRules,
     /// The profile's `dateOfBirth` verbatim (e.g. "October 4"), empty when the
     /// operator has no profile. A plain string rather than an `Option` so a
     /// cached index from before this field fails to deserialize and is rebuilt.
@@ -94,6 +98,8 @@ pub struct OperatorIndexModule {
     pub type_name2: Option<String>,
     #[serde(rename = "type")]
     pub module_type: ModuleType,
+    /// Module ranks: the `battle_equip_table` phase count.
+    pub rank_count: usize,
 }
 
 /// Flattened final-phase base stats for the operators list sorters.
@@ -215,8 +221,10 @@ fn to_index_entry(id: &str, op: &Operator, voices: &Voices) -> OperatorIndexEntr
                 type_name1: m.module.type_name1.clone(),
                 type_name2: m.module.type_name2.clone(),
                 module_type: m.module.module_type.clone(),
+                rank_count: m.data.phases.len(),
             })
             .collect(),
+        skill_rules: crate::core::squad::rules::SkillRules::of(op),
         date_of_birth,
     }
 }

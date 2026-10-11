@@ -18,9 +18,10 @@ const FOLDER_VARIANTS = ["", "_a", "_b", "_c", "_d", "_1", "_2", "_3"] as const;
 /**
  * Stage IDs that might point at the same map preview. Stages reuse the same
  * map across Normal / CM / Hard / Challenge variants; this walks common aliases
- * so the consumer can try them in order until one loads.
+ * so the consumer can try them in order until one loads. Takes a stage index
+ * entry too, which carries no main/hard links.
  */
-export function stagePreviewCandidates(stage: IStage): string[] {
+export function stagePreviewCandidates(stage: Pick<IStage, "stageId" | "difficulty"> & Partial<Pick<IStage, "mainStageId" | "hardStagedId">>): string[] {
     const out: string[] = [];
     const push = (id: string | null | undefined) => {
         if (!id) return;

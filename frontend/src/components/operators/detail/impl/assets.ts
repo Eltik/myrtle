@@ -1,7 +1,8 @@
 import { env } from "#/env";
+import type { GamedataServer } from "#/lib/api/gamedata";
 import type { IEnrichedSkill, IModule } from "#/types/operators";
 
-type AssetServer = "en" | "cn" | undefined;
+type AssetServer = GamedataServer | undefined;
 
 export function asset(path: string | null | undefined, server?: AssetServer): string {
     if (!path) return "";

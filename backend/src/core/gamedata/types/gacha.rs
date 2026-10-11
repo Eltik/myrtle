@@ -171,6 +171,19 @@ pub const PROFESSION_TAG_IDS: [(&str, i32); 8] = [
     ("PIONEER", 8),
 ];
 
+/// The gacha tag ids of the two positions and the two handbook genders, so a
+/// position or gender reads in the server's own `TagName` (EN Melee/Ranged/
+/// Male/Female, CN 近战位/远程位/男性干员/女性干员, JP 近距離/遠距離/男性/女性,
+/// KR 근거리/원거리/남성/여성, checked 2026-10-11). Named because no table
+/// links them: `TagGroup` equals `TagId` on all 31 EN tags, so no group field
+/// sets them apart, and neither `character_table` `Position` nor the
+/// handbook gender carries a tag id. The frontend recruitment tool names the
+/// same ids (`MELEE_TAG_ID`, `HIDDEN_TAG_IDS`).
+pub const MELEE_TAG_ID: i32 = 9;
+pub const RANGED_TAG_ID: i32 = 10;
+pub const MALE_TAG_ID: i32 = 1012;
+pub const FEMALE_TAG_ID: i32 = 1013;
+
 /// Profession code -> the server's own class name, read off its gacha tags
 /// verbatim (CN's 干员 and JP's タイプ suffixes are the game's wording, kept).
 /// A tag id the list lacks, or an empty name, leaves that class out.

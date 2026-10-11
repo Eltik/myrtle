@@ -56,6 +56,20 @@ export const STAGE_GROUP_DESCRIPTION_KEY: Record<StageGroupKey, StageGroupMessag
     other: "stageGroup.other.desc",
 };
 
+/** The localised name of each group, a message key resolved with `t()` in the `nav` namespace. `label` above stays the English fallback for consumers not yet moved. */
+export const STAGE_GROUP_LABEL_KEY: Record<StageGroupKey, StageGroupMessageKey> = {
+    story: "stageGroup.story.label",
+    events: "stageGroup.events.label",
+    annihilation: "stageGroup.annihilation.label",
+    is: "stageGroup.is.label",
+    ra: "stageGroup.ra.label",
+    sss: "stageGroup.sss.label",
+    paradox: "stageGroup.paradox.label",
+    cc: "stageGroup.cc.label",
+    supplies: "stageGroup.supplies.label",
+    other: "stageGroup.other.label",
+};
+
 /** Index of a group key in display order (unknown keys sort last). */
 export function stageGroupOrder(key: string): number {
     const i = STAGE_GROUPS.findIndex((g) => g.key === key);

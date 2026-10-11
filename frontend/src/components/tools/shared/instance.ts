@@ -42,8 +42,9 @@ export function defaultBuildConfig(op: IOperatorListEntry): IBuildConfig {
     };
 }
 
-export function createInstance(op: IOperatorListEntry, color: string): IInstance {
-    return { uid: newInstanceId(), op, color, visible: true, collapsed: false, config: defaultBuildConfig(op) };
+/** `config` overrides the defaults field by field; the Squad Builder hand-off passes a build this way. */
+export function createInstance(op: IOperatorListEntry, color: string, config?: Partial<IBuildConfig>): IInstance {
+    return { uid: newInstanceId(), op, color, visible: true, collapsed: false, config: { ...defaultBuildConfig(op), ...config } };
 }
 
 /** Strip zero/undefined numeric entries; returns undefined when nothing is set. */
@@ -79,7 +80,7 @@ export function conditionalKey(cond: IConditionalInfo): keyof ICalcConditionals 
 
 /** Actions that mutate the `instances` array; apply them via {@link reduceInstances}. */
 export type InstanceAction =
-    | { type: "ADD_INSTANCE"; op: IOperatorListEntry }
+    | { type: "ADD_INSTANCE"; op: IOperatorListEntry; config?: Partial<IBuildConfig> }
     | { type: "DUPLICATE_INSTANCE"; uid: string }
     | { type: "REMOVE_INSTANCE"; uid: string }
     | { type: "UPDATE_CONFIG"; uid: string; patch: Partial<IBuildConfig> }
@@ -97,7 +98,7 @@ export function reduceInstances(instances: IInstance[], action: InstanceAction):
     switch (action.type) {
         case "ADD_INSTANCE": {
             const used = new Set(instances.map((i) => i.color));
-            return [...instances, createInstance(action.op, pickAvailableColor(used, instances.length))];
+            return [...instances, createInstance(action.op, pickAvailableColor(used, instances.length), action.config)];
         }
         case "DUPLICATE_INSTANCE": {
             const src = instances.find((i) => i.uid === action.uid);

@@ -139,6 +139,15 @@ export const messages = {
         description: "Subtitle on the healing calculator social card.",
     },
 
+    "og.toolsSquadBuilder.title": {
+        text: "Squad Builder",
+        description: "Headline on the squad builder social card.",
+    },
+    "og.toolsSquadBuilder.subtitle": {
+        text: "Build an Arknights squad and see what it covers.",
+        description: "Subtitle on the squad builder social card.",
+    },
+
     "og.toolsRecruitment.title": {
         text: "Recruitment Calculator",
         description: "Headline on the recruitment tag calculator social card.",

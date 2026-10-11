@@ -65,6 +65,7 @@ pub fn enrich_operator_skills(
                 override_prefab_key: skill_ref.override_prefab_key.clone(),
                 override_token_key: skill_ref.override_token_key.clone(),
                 level_up_cost_cond,
+                unlock_cond: skill_ref.unlock_cond.clone(),
                 static_data,
             })
         })

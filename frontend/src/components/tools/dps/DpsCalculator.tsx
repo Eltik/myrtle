@@ -26,6 +26,7 @@ import { METRIC_COLUMNS, X_AXIS_INPUT, X_AXIS_LABEL_KEYS, X_AXIS_SHORT_KEYS, Y_M
 import type { messages as dpsConstantsMessages } from "./impl/constants.messages";
 import type { XAxisKind, YMetric } from "./impl/types";
 import { useDpsCurves } from "./impl/useDpsCurves";
+import { useDpsImport } from "./impl/useDpsImport";
 import { useDpsResults } from "./impl/useDpsResults";
 import { useDpsState } from "./impl/useDpsState";
 
@@ -36,11 +37,12 @@ type DpsRichT = TypedRichT<typeof messages>;
 
 const AXIS_ORDER: readonly XAxisKind[] = ["defense", "res"];
 
-export function DpsCalculator(): React.ReactElement {
+export function DpsCalculator({ importParam, onImportConsumed }: { importParam?: string; onImportConsumed?: () => void }): React.ReactElement {
     const t: DpsT = useT("tools");
     const rt: DpsRichT = useRichT("tools");
     const locale = useLocale();
     const { state, dispatch, hydrationToken } = useDpsState();
+    useDpsImport(importParam, hydrationToken, dispatch, onImportConsumed);
 
     const axes = React.useMemo(() => AXIS_ORDER.map((a) => ({ value: a, label: t(X_AXIS_LABEL_KEYS[a]), short: t(X_AXIS_SHORT_KEYS[a]) })), [t]);
     const metrics = React.useMemo(() => (Object.keys(Y_METRIC_LABEL_KEYS) as YMetric[]).map((k) => ({ value: k, label: t(Y_METRIC_LABEL_KEYS[k]) })), [t]);
