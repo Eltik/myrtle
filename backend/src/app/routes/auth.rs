@@ -304,7 +304,9 @@ pub async fn login_cn(
 /// Check the caller's token and report the session it represents.
 ///
 /// The role is re-read from the database rather than taken from the token's
-/// frozen claim, so a promotion or demotion takes effect on the next call.
+/// frozen claim, so a promotion or demotion takes effect on the next call. A
+/// token for an account that no longer exists is 401, as it is on every
+/// role-gated route.
 #[utoipa::path(
     get,
     path = "/auth/verify",
@@ -331,7 +333,18 @@ pub async fn verify(
         None
     };
 
-    let role = db_role.unwrap_or_else(|| auth.token_role.to_string());
+    let role = match db_role {
+        Some(role) => role,
+        // An account id with no row: the account is gone, so the token is
+        // dead, the same 401 every role-gated route gives it. Answering 200
+        // with the token's frozen role told the panel gate a deleted admin was
+        // still one. The service principal has no row by design and keeps the
+        // fallback, as does every token under `DISABLE_ROLE_RECHECK=1`.
+        None if state.config.role_recheck && auth.user_uuid().is_ok() => {
+            return Err(ApiError::Unauthorized);
+        }
+        None => auth.token_role.to_string(),
+    };
 
     // Same gate as the `/admin` route tree, so the two can't disagree. Uses the DB
     // role (the JWT claim freezes at login), OR any translation grant: a grant is

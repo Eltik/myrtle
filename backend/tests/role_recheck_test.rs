@@ -82,6 +82,44 @@ async fn get(app: &Router, subject: &str, role: GlobalRole) -> StatusCode {
 
 const SUBJECT: &str = "00000000-0000-4000-8000-000000000001";
 
+/// `/auth/verify` for a bearer token, status and body.
+async fn verify(app: &Router, subject: &str, role: GlobalRole) -> (StatusCode, serde_json::Value) {
+    let token = create_token(JWT_SECRET, subject, "1", "en", &role.to_string(), 1).expect("token");
+    let request = Request::builder()
+        .uri("/api/auth/verify")
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .body(Body::empty())
+        .expect("request builds");
+    let response = app
+        .clone()
+        .oneshot(request)
+        .await
+        .expect("the router is infallible");
+    let status = response.status();
+    let bytes = axum::body::to_bytes(response.into_body(), 1 << 20)
+        .await
+        .expect("body");
+    (status, serde_json::from_slice(&bytes).unwrap_or_default())
+}
+
+/// The service principal has no account row by design: `/auth/verify` keeps
+/// answering for it from the key, with the switch on, and reads nothing (the
+/// pool is closed, so a read would be a 5xx).
+#[tokio::test]
+async fn verify_still_answers_for_the_service_principal() {
+    let app = app(closed_pool(), true);
+    let request = Request::builder()
+        .uri("/api/auth/verify")
+        .header("x-service-key", "role-recheck-service-key")
+        .body(Body::empty())
+        .expect("request builds");
+    let response = app
+        .oneshot(request)
+        .await
+        .expect("the router is infallible");
+    assert_eq!(response.status(), StatusCode::OK);
+}
+
 #[tokio::test]
 async fn with_the_switch_off_the_gate_reads_only_the_claim() {
     let app = app(closed_pool(), false);
@@ -124,8 +162,9 @@ fn rust_files(dir: &Path, out: &mut Vec<PathBuf>) {
 }
 
 /// `AuthUser::token_role` is the claim as minted, up to 7 days stale. Outside
-/// the extractor only `/auth/verify` reads it, as its fallback when the row is
-/// gone; a gate reading it would reopen the window `RoleCheckedUser` closes.
+/// the extractor only `/auth/verify` reads it, as its fallback for the service
+/// principal and under the kill switch; a gate reading it would reopen the
+/// window `RoleCheckedUser` closes.
 #[test]
 fn only_the_extractor_and_verify_read_the_token_claim() {
     let src = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("src");
@@ -202,6 +241,23 @@ async fn a_demoted_or_deleted_account_loses_the_gate_on_its_next_request() {
         get(&off, &gone.to_string(), super_admin).await,
         StatusCode::OK
     );
+
+    // `/auth/verify` agrees with the gates: a deleted account is 401 whatever
+    // its claim (plain `user` included, which the gates never read), a demoted
+    // one reports its stored role, and the switch restores the claim fallback.
+    for role in [super_admin, GlobalRole::User] {
+        assert_eq!(
+            verify(&on, &gone.to_string(), role).await.0,
+            StatusCode::UNAUTHORIZED,
+            "{role}"
+        );
+        let (status, body) = verify(&off, &gone.to_string(), role).await;
+        assert_eq!(status, StatusCode::OK, "{role}");
+        assert_eq!(body["role"], role.to_string());
+    }
+    let (status, body) = verify(&on, &plain.to_string(), super_admin).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body["role"], "user");
 
     // A stored super-admin still gets in, when one exists locally.
     let admin: Option<uuid::Uuid> =

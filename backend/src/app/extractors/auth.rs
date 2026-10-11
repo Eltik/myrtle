@@ -18,7 +18,8 @@ pub struct AuthUser {
     pub server: String,
     /// The role claim as minted at login, up to 7 days stale. Gates read
     /// [`RoleCheckedUser::role`] instead; only `/auth/verify` reads this, as
-    /// the fallback when the account row is gone.
+    /// the fallback for the service principal (which has no row) and for
+    /// every token under `DISABLE_ROLE_RECHECK=1`.
     pub token_role: GlobalRole,
 }
 
