@@ -7357,7 +7357,7 @@
     "user.search.empty.none.desc": "Public profiles will appear here as players opt in.",
     "user.search.empty.none.title": "No public profiles yet",
     "user.search.input.label": "Search doctors",
-    "user.search.input.placeholder": "Search by nickname…",
+    "user.search.input.placeholder": "Search by nickname or UID…",
     "user.search.operatorPicker.empty": "No matching operators.",
     "user.search.operatorPicker.loading": "Loading operators…",
     "user.search.operatorPicker.rarity": "{rarity}★",
@@ -7398,5 +7398,6 @@
     "user.search.toolbar.rankBy.group.metric": "Roster metric",
     "user.search.toolbar.rankBy.group.scope": "Operators of a class",
     "user.search.toolbar.support.label": "Support unit has",
-    "user.search.toolbar.support.placeholder": "Pick an operator…"
+    "user.search.toolbar.support.placeholder": "Pick an operator…",
+    "user.search.uid.open": "Open this UID's profile"
 }

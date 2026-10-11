@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-11T14:15:11.607Z",
+    "generatedAt": "2026-10-11T13:57:13.279Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -54929,7 +54929,7 @@
         {
             "key": "user.search.input.placeholder",
             "namespace": "user",
-            "source_text": "Search by nickname…",
+            "source_text": "Search by nickname or UID…",
             "description": "Placeholder in the search box. Keep the single-character ellipsis.",
             "placeholders": []
         },
@@ -55226,6 +55226,13 @@
             "namespace": "user",
             "source_text": "Pick an operator…",
             "description": "Placeholder in the 'support unit has' picker while it is empty. Keep the single-character ellipsis.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.uid.open",
+            "namespace": "user",
+            "source_text": "Open this UID's profile",
+            "description": "Label of the link shown under the search box when the typed text looks like a player UID (a plain number). The UID itself is shown beneath it.",
             "placeholders": []
         }
     ]
