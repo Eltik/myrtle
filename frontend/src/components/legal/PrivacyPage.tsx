@@ -186,6 +186,7 @@ export function PrivacyPage() {
                     <p className="m-0 mt-4 font-sans text-[14px] text-muted-foreground leading-[1.6]">
                         {rt("privacy.yostar.revoke.body", {
                             path: <strong className="text-foreground">{t("privacy.yostar.revoke.path")}</strong>,
+                            deletePath: <strong className="text-foreground">{t("privacy.deletePath")}</strong>,
                             email: <A href={CONTACT_MAILTO}>{CONTACT_EMAIL}</A>,
                         })}
                     </p>
@@ -349,7 +350,7 @@ export function PrivacyPage() {
                     <Disclosure summary={t("privacy.rights.access.summary")}>{t("privacy.rights.access.body")}</Disclosure>
                     <Disclosure summary={t("privacy.rights.correction.summary")}>{t("privacy.rights.correction.body")}</Disclosure>
                     <Disclosure summary={t("privacy.rights.visibility.summary")}>{t("privacy.rights.visibility.body")}</Disclosure>
-                    <Disclosure summary={t("privacy.rights.deletion.summary")}>{rt("privacy.rights.deletion.body", { email: <A href={CONTACT_MAILTO}>{CONTACT_EMAIL}</A> })}</Disclosure>
+                    <Disclosure summary={t("privacy.rights.deletion.summary")}>{rt("privacy.rights.deletion.body", { deletePath: <strong className="text-foreground">{t("privacy.deletePath")}</strong>, email: <A href={CONTACT_MAILTO}>{CONTACT_EMAIL}</A> })}</Disclosure>
                 </div>
             </Section>
 

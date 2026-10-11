@@ -488,6 +488,37 @@ pub async fn disconnect(
     }))
 }
 
+/// Delete the caller's account and everything that is theirs.
+///
+/// Removes the profile, synced game data, scores, gacha history, plans, grids,
+/// community tier lists and stored game credentials in one transaction. Shared
+/// content the account touched (official tier lists, translations, audit
+/// trails of other people's rows) stays with the account's name removed. Not
+/// undoable; signing in again later starts a fresh, empty account.
+///
+/// Counts against the `auth` rate limit (10 a minute).
+#[utoipa::path(
+    post,
+    path = "/auth/delete-account",
+    tag = "auth",
+    security(("bearer_auth" = [])),
+    responses(
+        (status = 200, description = "The account and its data are gone; the token now names no account.", body = StatusOk),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn delete_account(
+    State(state): State<AppState>,
+    auth: AuthUser,
+) -> Result<Json<StatusOk>, ApiError> {
+    services::auth::delete_account(&state, auth.user_uuid()?).await?;
+    Ok(ok_status())
+}
+
 /// Re-sync the caller's roster and account data from the game servers.
 ///
 /// Needs stored game credentials; a player who has disconnected must log in
