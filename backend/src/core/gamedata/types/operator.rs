@@ -515,6 +515,9 @@ pub struct EnrichedSkill {
     pub override_prefab_key: Option<String>,
     pub override_token_key: Option<String>,
     pub level_up_cost_cond: Vec<LevelUpCostCond>,
+    /// `Skills[i].UnlockCond`: the promotion and level the skill unlocks at.
+    #[serde(default)]
+    pub unlock_cond: Option<UnlockCondition>,
     #[serde(rename = "static")]
     pub static_data: Option<SkillStatic>,
 }
@@ -533,6 +536,23 @@ pub struct PowerAffiliation {
     pub group_id: Option<String>,
     #[serde(default, alias = "TeamId")]
     pub team_id: Option<String>,
+}
+
+/// A faction the operator belongs to that the game never puts on their card:
+/// a `SubPower` id that is not one of the `MainPower` ids. Texas the Omertosa
+/// carries `siracusa` here, W carries `rhodes`. On the EN tree of 2026-10-11,
+/// 78 `character_table` operators have at least one (80 with Amiya's two
+/// patch forms).
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct HiddenFaction {
+    /// `handbook_team_table` power id, also the `logo_{id}` camp logo name.
+    pub id: String,
+    /// The table's name for it in the server's own language, `None` when the
+    /// table does not name the id.
+    pub name: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -568,6 +588,10 @@ pub struct Operator {
     pub group_name: Option<String>,
     #[serde(default)]
     pub team_name: Option<String>,
+    /// `sub_power` minus the `main_power` ids, in table order, named. The site
+    /// shows these only behind the reader's spoiler setting.
+    #[serde(default)]
+    pub hidden_factions: Vec<HiddenFaction>,
     pub display_number: String,
     pub appellation: String,
     pub position: OperatorPosition,

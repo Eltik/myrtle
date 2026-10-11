@@ -1,9 +1,13 @@
 import { Link } from "@tanstack/react-router";
+import { useSelector } from "@tanstack/react-store";
+import { EyeOffIcon } from "lucide-react";
+import { useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "#/components/ui/breadcrumb";
 import { useOperatorName } from "#/hooks/use-operator-name";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import { themeStore } from "#/lib/theme/store";
 import { cn, nationLabel, professionLabel, rarityToNumber, subProfessionLabel } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 import { campLogo, operatorHero } from "../assets";
@@ -77,6 +81,7 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
                                     {nationLabel(operator)}
                                 </Badge>
                             )}
+                            <HiddenFactionBadges operator={operator} />
                         </div>
                     </div>
                 </div>
@@ -128,6 +133,7 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
                                             {nationLabel(operator)}
                                         </Badge>
                                     )}
+                                    <HiddenFactionBadges operator={operator} />
                                 </div>
                             </div>
 
@@ -144,4 +150,37 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
             </div>
         </div>
     );
+}
+
+/**
+ * The factions an operator belongs to that the game never puts on their card
+ * (`hiddenFactions`, the `SubPower` ids outside `MainPower`), behind the
+ * reader's spoiler setting. The setting lives in localStorage, so SSR and the
+ * first client render both read it as off and the badges arrive after
+ * hydration, never as a mismatch.
+ */
+function HiddenFactionBadges({ operator }: { operator: IOperatorListItem }) {
+    const t: TypedT<typeof messages> = useT("operators");
+    const spoilers = useSelector(themeStore, (s) => s.spoilers);
+    const factions = operator.hiddenFactions ?? [];
+    if (!spoilers || factions.length === 0) return null;
+    return factions.map((faction) => (
+        <Badge key={faction.id} variant="outline" className="gap-1.5 border-amber-500/50 border-dashed bg-amber-500/10 text-amber-700 dark:text-amber-300" title={t("hero.hiddenFaction.tooltip")}>
+            <EyeOffIcon aria-hidden className="size-3" />
+            <CampLogo id={faction.id} server={operator.server} />
+            <span className="sr-only">{t("hero.hiddenFaction.srLabel")}</span>
+            {faction.name ?? faction.id}
+        </Badge>
+    ));
+}
+
+/**
+ * Not every faction has a camp logo, and a few logo files are capitalised
+ * (`logo_Laterano`), so a logo that fails to load is dropped instead of
+ * leaving a broken image in the badge.
+ */
+function CampLogo({ id, server }: { id: string; server: IOperatorListItem["server"] }) {
+    const [failed, setFailed] = useState(false);
+    if (failed) return null;
+    return <img alt="" className="size-3.5 object-contain" decoding="async" loading="lazy" onError={() => setFailed(true)} src={campLogo(id, server)} />;
 }
