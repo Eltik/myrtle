@@ -1,11 +1,12 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { AdminLayout } from "#/components/admin/shell/AdminLayout";
+import { signInSearch } from "#/lib/auth/search";
 import { metaT } from "#/lib/meta";
 import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/_authed/admin")({
     beforeLoad: ({ context, location }) => {
-        if (!context.user) throw redirect({ to: "/", search: { auth: "1", next: location.href } });
+        if (!context.user) throw redirect({ to: "/", search: signInSearch(location.href) });
         // The server's answer, not a role string reinterpreted here: it is
         // resolved from the database role AND from `translation_permissions`,
         // so a translator holding only a locale grant gets in, and this gate

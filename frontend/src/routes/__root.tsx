@@ -5,6 +5,7 @@ import { lazy, Suspense, useEffect, useRef } from "react";
 import { ReleaseNoteDialog } from "#/components/changelog/ReleaseNoteDialog";
 import { LazyAuthDialog } from "#/components/header/impl/LazyAuthDialog";
 import { AnchoredToastProvider, ToastProvider } from "#/components/ui/toast";
+import { isSignInPrompt } from "#/lib/auth/search";
 import { getSessionFn } from "#/lib/auth/server";
 import { authActions, authStore } from "#/lib/auth/store";
 import { CommandProvider } from "#/lib/command-context";
@@ -93,6 +94,10 @@ function RootComponent() {
 function GlobalAuthDialog() {
     const dialogOpen = useSelector(authStore, (s) => s.dialogOpen);
     const user = useSelector(authStore, (s) => s.user);
+    // The store learns the session from `RootComponent`'s effect, which runs
+    // AFTER this child's effects on the first render, so on a hydrating page
+    // the store still says signed out. The route context already knows.
+    const routeUser = Route.useRouteContext({ select: (c) => c.user });
     const navigate = useNavigate();
     const router = useRouter();
     const search = useRouterState({ select: (s) => s.location.search as Record<string, unknown> });
@@ -101,8 +106,9 @@ function GlobalAuthDialog() {
     const lastUserRef = useRef(user);
 
     useEffect(() => {
-        const authParam = search.auth;
-        if (authParam !== "1") {
+        // `?auth=1` parses as the number 1, the app's older redirects sent the
+        // string "1" (`?auth=%221%22`): `isSignInPrompt` takes every spelling.
+        if (!isSignInPrompt(search.auth)) {
             promptedRef.current = null;
             return;
         }
@@ -111,7 +117,7 @@ function GlobalAuthDialog() {
         promptedRef.current = key;
 
         const nextParam = typeof search.next === "string" ? search.next : null;
-        if (!user) {
+        if (!user && !routeUser) {
             authActions.openLoginDialog(nextParam);
         }
 
@@ -119,7 +125,7 @@ function GlobalAuthDialog() {
         delete cleaned.auth;
         delete cleaned.next;
         navigate({ to: pathname, search: cleaned, replace: true });
-    }, [search, pathname, user, navigate]);
+    }, [search, pathname, user, routeUser, navigate]);
 
     useEffect(() => {
         const previous = lastUserRef.current;

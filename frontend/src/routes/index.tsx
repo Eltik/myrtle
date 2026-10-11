@@ -3,19 +3,21 @@ import Home from "#/components/home/Home";
 import { TOP_DOCTORS_QUERY } from "#/components/home/impl/TopDoctors";
 import { liveFeedQueryOptions } from "#/lib/api/live";
 import { leaderboardQueryOptions } from "#/lib/api/user";
+import { isSignInPrompt, SIGN_IN_PROMPT } from "#/lib/auth/search";
 import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
 interface IHomeSearch {
-    auth?: "1";
+    auth?: typeof SIGN_IN_PROMPT;
     next?: string;
 }
 
 export const Route = createFileRoute("/")({
     component: Home,
     validateSearch: (search: Record<string, unknown>): IHomeSearch => {
-        const auth = search.auth === "1" ? "1" : undefined;
+        // Normalized to the number, so a redirect here serializes as `?auth=1`.
+        const auth = isSignInPrompt(search.auth) ? SIGN_IN_PROMPT : undefined;
         const next = typeof search.next === "string" ? search.next : undefined;
         return { auth, next };
     },

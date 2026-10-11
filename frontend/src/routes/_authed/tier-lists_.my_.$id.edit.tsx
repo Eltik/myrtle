@@ -4,12 +4,13 @@ import { TierListEditor } from "#/components/tier-lists/edit/TierListEditor";
 import { Spinner } from "#/components/ui/spinner";
 import { DEFAULT_ENTITY_KINDS } from "#/lib/api/tier-entities";
 import { tierEntityCatalogueQueryOptions, tierListDetailQueryOptions } from "#/lib/api/tier-lists";
+import { signInSearch } from "#/lib/auth/search";
 import { metaT } from "#/lib/meta";
 import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/_authed/tier-lists_/my_/$id/edit")({
     beforeLoad: ({ context, location }) => {
-        if (!context.user) throw redirect({ to: "/", search: { auth: "1", next: location.href } });
+        if (!context.user) throw redirect({ to: "/", search: signInSearch(location.href) });
     },
     loader: ({ context, params }) => {
         const server = context.i18n.gamedataServer;

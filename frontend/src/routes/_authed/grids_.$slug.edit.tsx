@@ -4,12 +4,13 @@ import { GridEditor } from "#/components/grids/GridEditor";
 import { Spinner } from "#/components/ui/spinner";
 import { gridQueryOptions } from "#/lib/api/grids";
 import { tierEntityCatalogueQueryOptions } from "#/lib/api/tier-lists";
+import { signInSearch } from "#/lib/auth/search";
 import { metaT } from "#/lib/meta";
 import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/_authed/grids_/$slug/edit")({
     beforeLoad: ({ context, location }) => {
-        if (!context.user) throw redirect({ to: "/", search: { auth: "1", next: location.href } });
+        if (!context.user) throw redirect({ to: "/", search: signInSearch(location.href) });
     },
     loader: ({ context, params }) => {
         const server = context.i18n.gamedataServer;

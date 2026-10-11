@@ -3,6 +3,7 @@ import { useCallback } from "react";
 import { MyTierLists } from "#/components/tier-lists/my/MyTierLists";
 import { MY_SORT_OPTIONS, type MyListSort, type MyListTypeFilter, type MyViewMode } from "#/components/tier-lists/my/MyToolbar.constants";
 import { myTierListsDetailedQueryOptions } from "#/lib/api/tier-lists";
+import { signInSearch } from "#/lib/auth/search";
 import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
@@ -22,7 +23,7 @@ const VALID_VIEWS = new Set<MyViewMode>(["grid", "list"]);
 
 export const Route = createFileRoute("/_authed/tier-lists_/my")({
     beforeLoad: ({ context, location }) => {
-        if (!context.user) throw redirect({ to: "/", search: { auth: "1", next: location.href } });
+        if (!context.user) throw redirect({ to: "/", search: signInSearch(location.href) });
     },
     component: RouteComponent,
     loader: ({ context }) => context.queryClient.ensureQueryData(myTierListsDetailedQueryOptions(Boolean(context.user), context.i18n.gamedataServer)),

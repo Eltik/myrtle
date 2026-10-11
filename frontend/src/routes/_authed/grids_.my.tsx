@@ -1,13 +1,14 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { MyGrids } from "#/components/grids/MyGrids";
 import { myGridsQueryOptions } from "#/lib/api/grids";
+import { signInSearch } from "#/lib/auth/search";
 import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/_authed/grids_/my")({
     beforeLoad: ({ context, location }) => {
-        if (!context.user) throw redirect({ to: "/", search: { auth: "1", next: location.href } });
+        if (!context.user) throw redirect({ to: "/", search: signInSearch(location.href) });
     },
     component: MyGrids,
     loader: ({ context }) => context.queryClient.ensureQueryData(myGridsQueryOptions(context.user?.id ?? null, context.i18n.gamedataServer)),
