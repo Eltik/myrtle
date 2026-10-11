@@ -3,10 +3,6 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "home";
 
 export const messages = {
-    "updates.eyebrow": {
-        text: "What’s new",
-        description: "Small uppercase label above the home page's latest release notes panel.",
-    },
     "updates.title": {
         text: "Latest updates",
         description: "Heading of the home page panel listing the newest release notes.",

@@ -46,7 +46,6 @@ export default function Hero({ onOpenCommand, scrollTargetId }: { onOpenCommand:
                 </div>
                 <div className={styles.copy}>
                     <div {...revealIntro} className={`${shared.reveal} ${styles.intro}`}>
-                        <p className={styles.eyebrow}>{t("hero.eyebrow")}</p>
                         <h1 className={styles.title}>{t("hero.title")}</h1>
                         <p className={styles.lead}>{t("hero.lead")}</p>
                     </div>

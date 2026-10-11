@@ -27,7 +27,6 @@ export default function LatestUpdates() {
         <div {...reveal} className={`${shared.reveal} ${styles.panel}`}>
             <div className={styles.head}>
                 <div className={styles.headText}>
-                    <span className={shared.eyebrow}>{t("updates.eyebrow")}</span>
                     <h2 className={styles.title}>{t("updates.title")}</h2>
                 </div>
                 <Link to="/changelog" className={shared.moreLink}>

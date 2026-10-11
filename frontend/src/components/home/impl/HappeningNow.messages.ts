@@ -3,13 +3,9 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "home";
 
 export const messages = {
-    "live.eyebrow": {
-        text: "Happening now · {server}",
-        description: "Small uppercase label above the home page's list of running events and banners. {server} is the game server the reader picked, by region name, such as 'Global' or 'China'.",
-    },
     "live.title": {
-        text: "Ending soonest",
-        description: "Heading of the home page section listing the running events and banners that close first.",
+        text: "Ending soon",
+        description: "Heading of the home page section listing the running events and banners, the ones closing first at the top.",
     },
     "live.seeAll": {
         text: "All current banners →",

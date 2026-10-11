@@ -107,7 +107,7 @@
 }
 /* One column: a full-bleed scrim, like two columns below, but with a longer eased
    ramp (smooth at both ends, so no band shows) that finishes at the copy's top edge,
-   so the eyebrow already sits on the hold. */
+   so the headline already sits on the hold. */
 @media (max-width: 687.98px) {
     .copy::before {
         inset: -144px -100vw -50vh;
@@ -136,16 +136,6 @@
     display: flex;
     flex-direction: column;
     gap: 14px;
-}
-.eyebrow {
-    margin: 0;
-    font-family: var(--font-mono);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    /* Pulled toward the foreground: the light theme's primary alone is 4.6:1 on bare background, with no room for the art. */
-    color: color-mix(in oklab, var(--primary) 65%, var(--foreground));
 }
 .title {
     margin: 0;
@@ -264,13 +254,10 @@
     .myrtleImg {
         width: var(--chibi);
     }
-    .eyebrow,
+    /* Myrtle sits beside the headline; a one-line headline still leaves her room. */
     .title {
         padding-inline-end: calc(var(--chibi) + 8px);
-    }
-    /* Myrtle spans the eyebrow, its 14px gap and the headline; a one-line headline leaves her room. */
-    .title {
-        min-height: calc(var(--chibi) - 32px);
+        min-height: var(--chibi);
     }
     .artLayer img {
         object-position: 42% 30%;

@@ -3,10 +3,6 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "home";
 
 export const messages = {
-    "leaders.eyebrow": {
-        text: "Leaderboard",
-        description: "Small uppercase label above the home page's top-five player panel.",
-    },
     "leaders.title": {
         text: "Top Doctors",
         description: "Heading of the home page's top-five player panel. 'Doctor' is what the game calls the player; use the game's own term.",

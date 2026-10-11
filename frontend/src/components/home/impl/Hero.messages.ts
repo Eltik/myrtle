@@ -3,20 +3,16 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "home";
 
 export const messages = {
-    "hero.eyebrow": {
-        text: "myrtle.moe",
-        description: "Small uppercase label above the home page headline. It is the site's own name; keep it as-is unless the site is known by another name in this language.",
-    },
     "hero.title": {
-        text: "Everything Arknights.",
-        description: "Home page headline. Use the name the game is published under in this language (明日方舟 in Chinese, アークナイツ in Japanese, 명일방주 in Korean).",
+        text: "myrtle.moe",
+        description: "Home page headline. It is the site's own name; keep it as-is unless the site is known by another name in this language.",
     },
     "hero.lead": {
-        text: "Share your roster, plan pulls and skins, see what’s coming to EN, and check tier lists and leaderboards — all in one place.",
+        text: "Show off your roster, plan your pulls and skins, see what’s coming to EN, and check the tier lists and leaderboards.",
         description: "Paragraph under the home page headline. A 'roster' is a player's own operator collection; 'pulls' are gacha rolls; 'EN' is the English game server.",
     },
     "hero.hint": {
-        text: "Hit {keys} to jump anywhere.",
+        text: "Press {keys} to search.",
         description: "Keyboard hint under the hero paragraph; clicking it opens the search palette. {keys} is the pair of key caps, '⌘ K' on a Mac and 'Ctrl K' elsewhere; move it wherever the sentence needs it.",
     },
     "hero.myrtleAlt": {

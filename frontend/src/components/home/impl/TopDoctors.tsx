@@ -28,7 +28,6 @@ export default function TopDoctors() {
         <div {...reveal} className={`${shared.reveal} ${styles.panel}`}>
             <div className={styles.head}>
                 <div className={styles.headText}>
-                    <span className={shared.eyebrow}>{t("leaders.eyebrow")}</span>
                     <h2 className={styles.title}>{t("leaders.title")}</h2>
                 </div>
                 <Link to={LEADERBOARD_HREF} className={shared.moreLink}>

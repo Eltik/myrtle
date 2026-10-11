@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-11T05:50:32.325Z",
+    "generatedAt": "2026-10-11T06:11:21.501Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -10903,16 +10903,9 @@
             "placeholders": []
         },
         {
-            "key": "home.hero.eyebrow",
-            "namespace": "home",
-            "source_text": "myrtle.moe",
-            "description": "Small uppercase label above the home page headline. It is the site's own name; keep it as-is unless the site is known by another name in this language.",
-            "placeholders": []
-        },
-        {
             "key": "home.hero.hint",
             "namespace": "home",
-            "source_text": "Hit {keys} to jump anywhere.",
+            "source_text": "Press {keys} to search.",
             "description": "Keyboard hint under the hero paragraph; clicking it opens the search palette. {keys} is the pair of key caps, '⌘ K' on a Mac and 'Ctrl K' elsewhere; move it wherever the sentence needs it.",
             "placeholders": [
                 "keys"
@@ -10921,7 +10914,7 @@
         {
             "key": "home.hero.lead",
             "namespace": "home",
-            "source_text": "Share your roster, plan pulls and skins, see what’s coming to EN, and check tier lists and leaderboards — all in one place.",
+            "source_text": "Show off your roster, plan your pulls and skins, see what’s coming to EN, and check the tier lists and leaderboards.",
             "description": "Paragraph under the home page headline. A 'roster' is a player's own operator collection; 'pulls' are gacha rolls; 'EN' is the English game server.",
             "placeholders": []
         },
@@ -10935,8 +10928,8 @@
         {
             "key": "home.hero.title",
             "namespace": "home",
-            "source_text": "Everything Arknights.",
-            "description": "Home page headline. Use the name the game is published under in this language (明日方舟 in Chinese, アークナイツ in Japanese, 명일방주 in Korean).",
+            "source_text": "myrtle.moe",
+            "description": "Home page headline. It is the site's own name; keep it as-is unless the site is known by another name in this language.",
             "placeholders": []
         },
         {
@@ -10951,13 +10944,6 @@
             "namespace": "home",
             "source_text": "Couldn't load the leaderboard.",
             "description": "Shown in the home page's top-five panel when the leaderboard failed to load.",
-            "placeholders": []
-        },
-        {
-            "key": "home.leaders.eyebrow",
-            "namespace": "home",
-            "source_text": "Leaderboard",
-            "description": "Small uppercase label above the home page's top-five player panel.",
             "placeholders": []
         },
         {
@@ -11064,15 +11050,6 @@
             ]
         },
         {
-            "key": "home.live.eyebrow",
-            "namespace": "home",
-            "source_text": "Happening now · {server}",
-            "description": "Small uppercase label above the home page's list of running events and banners. {server} is the game server the reader picked, by region name, such as 'Global' or 'China'.",
-            "placeholders": [
-                "server"
-            ]
-        },
-        {
             "key": "home.live.seeAll",
             "namespace": "home",
             "source_text": "All current banners →",
@@ -11082,8 +11059,8 @@
         {
             "key": "home.live.title",
             "namespace": "home",
-            "source_text": "Ending soonest",
-            "description": "Heading of the home page section listing the running events and banners that close first.",
+            "source_text": "Ending soon",
+            "description": "Heading of the home page section listing the running events and banners, the ones closing first at the top.",
             "placeholders": []
         },
         {
@@ -11091,13 +11068,6 @@
             "namespace": "home",
             "source_text": "See what's coming next →",
             "description": "Link under the empty message in the home page's live section, to the release planner, which forecasts upcoming events and banners. Shown only on the server the planner forecasts. The arrow is part of the label.",
-            "placeholders": []
-        },
-        {
-            "key": "home.updates.eyebrow",
-            "namespace": "home",
-            "source_text": "What’s new",
-            "description": "Small uppercase label above the home page's latest release notes panel.",
             "placeholders": []
         },
         {

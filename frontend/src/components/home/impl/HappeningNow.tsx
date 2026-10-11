@@ -62,7 +62,6 @@ export default function HappeningNow({ id }: { id: string }) {
         <section id={id} className={`${shared.container} ${styles.section}`}>
             <div {...revealHead} className={`${shared.reveal} ${styles.head}`}>
                 <div className={styles.headText}>
-                    <span className={shared.eyebrow}>{t("live.eyebrow", { server: serverName })}</span>
                     <h2 className={styles.title}>{t("live.title")}</h2>
                 </div>
                 {/* The community page's banner list opens on "Active" and reads the same server. */}

@@ -1,5 +1,5 @@
 /* Pieces every home section shares: the reveal-on-scroll state, the section
-   rhythm, the mono eyebrow, the "see all" link and the small uppercase tag. */
+   rhythm, the "see all" link and the small uppercase tag. */
 
 .reveal {
     transition:
@@ -29,19 +29,6 @@
 .container {
     width: min(1080px, calc(100% - 2rem));
     margin: 0 auto;
-}
-
-.eyebrow {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 0;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--primary);
 }
 
 .moreLink {

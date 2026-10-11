@@ -3,7 +3,8 @@
 .section {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
-    align-items: start;
+    /* Side by side, the panels share one height; the shorter one's rows spread to fill it. */
+    align-items: stretch;
     gap: 12px;
     padding-bottom: clamp(56px, 8vw, 96px);
 }
@@ -47,6 +48,7 @@
 }
 .list {
     display: flex;
+    flex: 1;
     flex-direction: column;
 }
 .note {
@@ -79,6 +81,7 @@
     display: grid;
     grid-template-columns: 22px 32px minmax(0, 1fr) auto;
     align-items: center;
+    flex: 1 0 auto;
     gap: 10px;
     padding: 8px 6px;
 }
