@@ -21,7 +21,7 @@ pub struct AccountParams {
 /// `GET /user/max-level-cost`: the EXP and LMD still needed to bring every
 /// owned operator to its target, the level cap or the level its modules
 /// unlock at, against what the account holds. A roster walk over static
-/// tables - milliseconds, no admission needed.
+/// tables, milliseconds, so no CPU admission.
 /// Runs the shared privacy gate: another player's data is readable only when
 /// their profile is public, and a player always sees their own.
 #[utoipa::path(

@@ -261,8 +261,8 @@ async fn real_data_invariants() {
     assert!(en.len() <= catalog.len());
 
     // The population is the same gate the holder counts use, so no item is
-    // held by more players than exist: LMD, which every synced account has,
-    // is the tightest check.
+    // held by more players than exist. The most-held item (LMD, which every
+    // synced account has) is the tightest check.
     let population = count_visible_players(&pool, None).await.unwrap();
     let en_population = count_visible_players(&pool, Some("EN")).await.unwrap();
     eprintln!("population: {population} (EN {en_population})");

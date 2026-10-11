@@ -175,16 +175,12 @@ fn modified(path: &Path) -> Option<SystemTime> {
     std::fs::metadata(path).and_then(|m| m.modified()).ok()
 }
 
-/// Make sure `assets_dir`'s thumbnail of `id` exists and is no older than its
-/// source body, rendering it when it is missing or stale. Returns the path to
-/// serve, relative to `assets_dir`.
+/// Render `id`'s thumbnail if it is missing or older than its body; returns the
+/// path to serve, relative to `assets_dir`. `body_rel` is the body PNG under
+/// `assets_dir` (`/textures/avg/...`); each format caches separately.
 ///
-/// `body_rel` is the body PNG relative to `assets_dir` (`/textures/avg/...`).
-/// Each format is its own cached file, rendered from the body on its first
-/// request.
-/// The file is written to a temporary name and renamed into place, so a
-/// reader never sees a half-written thumbnail and two racing renders of the
-/// same id both leave a whole one.
+/// Written to a temp name and renamed, so a reader never sees a partial file
+/// and two racing renders of one id both leave a whole one.
 pub async fn ensure(
     assets_dir: &str,
     id: &str,
@@ -216,8 +212,8 @@ pub async fn ensure(
     if fresh(&target) {
         return Ok(rel);
     }
-    // Unique per process and request thread, so racing renders never share
-    // a temporary file.
+    // Process + worker thread id: two renders of one id on the same tokio
+    // worker can still share this name.
     let tmp_name = format!(
         "{id}.{}.{}.{:?}.tmp",
         format.ext(),

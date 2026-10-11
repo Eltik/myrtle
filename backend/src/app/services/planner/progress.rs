@@ -583,7 +583,7 @@ mod tests {
 
     #[test]
     fn raise_to_roster_lifts_a_plan_below_the_roster() {
-        // E1 Lv21 planned down to E1 Lv1, the reported Jessica plan.
+        // Same shape as the reported Jessica plan (E1 Lv21 planned down to E1 Lv1), at E2.
         let entry = roster_entry(
             2,
             40,

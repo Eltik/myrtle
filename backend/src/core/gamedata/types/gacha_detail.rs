@@ -6,8 +6,8 @@
 //! [`super::super::enrich::gacha`]). The client fills the rest in from
 //! a second request, `POST {gs}/gacha/getPoolDetail` with `{"poolId": "..."}`.
 //!
-//! The two sources are **complementary, not redundant**, and which one carries
-//! a banner's rate-ups depends on its rule type:
+//! Neither source is complete alone; which one carries a banner's rate-ups
+//! depends on its rule type:
 //!
 //! | rule type        | `upCharInfo.perCharList` | authoritative source            |
 //! |------------------|--------------------------|---------------------------------|

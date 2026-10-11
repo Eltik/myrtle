@@ -240,7 +240,7 @@ impl SkinTableFile {
         }
         SkinData {
             char_skins: self.char_skins,
-            buildin_evolve_map: HashMap::new(), // Raw Value -> structured conversion skipped
+            buildin_evolve_map: HashMap::new(), // not converted from the raw Value
             buildin_patch_map: HashMap::new(),
             brand_list: self.brand_list,
             special_skin_info_list: self.special_skin_info_list,

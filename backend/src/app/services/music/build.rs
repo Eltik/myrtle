@@ -782,16 +782,16 @@ impl Names<'_> {
             .or_else(|| self.sandbox(id))
     }
 
-    /// FALLBACK, last resort: what a clip's folder (`act27side`) says the
-    /// track was made for, matched against the activity ids, used only when
-    /// no chapter or table claims the track. It names 238 of 569 EN tracks
-    /// (measured 2026-10-11; 242 before the chapter step went first, 386 as
-    /// the first source; CN 266 of 637 and 429 then, not re-measured). The guesses it used to make are gone: `sandbox_N` as the
-    /// event `actNsandbox` (wrong: `sandbox_1` is "Tales Within the Sand",
-    /// `act1sandbox` the separate 2023 event), `act1crisisv2_N` as season
-    /// `crisis_v2_season_N_1`, `rogue_N` as a theme; the tables now name all
-    /// 79 EN tracks in those folders (75 by a claim, 4 through their season
-    /// page bank).
+    /// FALLBACK, last resort: the event a clip's folder (`act27side`) names,
+    /// matched against the activity ids, used only when no chapter or table
+    /// claims the track. Names 238 of 569 EN tracks (measured 2026-10-11; 242
+    /// before the chapter step went first, 386 as the first source; CN 266 of
+    /// 637 and 429 then, not re-measured).
+    /// Dropped guesses: `sandbox_N` as event `actNsandbox` (wrong: `sandbox_1`
+    /// is "Tales Within the Sand", `act1sandbox` a separate 2023 event),
+    /// `act1crisisv2_N` as season `crisis_v2_season_N_1`, `rogue_N` as a
+    /// theme. The tables now name all 79 EN tracks in those folders (75 by a
+    /// claim, 4 through their season page bank).
     fn folder(&self, folder: &str) -> Option<String> {
         if !folder.starts_with("act") {
             return None;

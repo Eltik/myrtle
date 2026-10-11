@@ -105,8 +105,7 @@ pub struct SlotPresetsDto {
     pub shifts: Vec<Vec<String>>,
 }
 
-/// The serialized twin of [`DraftRoom`] - what the client sends back on every
-/// evaluate/optimize call.
+/// [`DraftRoom`] as the client posts it back on every evaluate/optimize call.
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
@@ -158,14 +157,14 @@ pub struct EvaluateResponse {
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub claim: Option<ClaimDto>,
-    /// The drafted crews simulated with NO rotation at all - "if you never
-    /// swap". `None` when nothing is staffed. Seeded with PROJECTED live
-    /// morale, so its clock starts now, not at a hypothetical full bar.
+    /// The drafted crews simulated with no rotation ("if you never swap").
+    /// `None` when nothing is staffed. Seeded with PROJECTED live morale, so
+    /// its clock starts now, not at a full bar.
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub unrotated: Option<crate::app::services::improvements::SustainabilityDto>,
-    /// Hours since the newest morale write in the sync - how stale the
-    /// "current bar" data is. `None` when the sync carries no morale.
+    /// Hours since the sync's newest morale write, i.e. how stale the current
+    /// bars are. `None` when the sync carries no morale.
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub morale_synced_hours_ago: Option<f64>,
@@ -207,8 +206,8 @@ pub struct DronesDto {
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct ClaimDto {
-    /// Hours (from an empty buffer, i.e. from a claim now) until the FIRST
-    /// production room's buffer is full - log in before this to lose nothing.
+    /// Hours from a claim now until the FIRST production room's buffer is
+    /// full. Log in before this to lose nothing.
     pub next_full_hours: f64,
     /// Steady-state losses at each check-in cadence.
     pub intervals: Vec<ClaimIntervalDto>,
@@ -224,23 +223,23 @@ pub struct ClaimIntervalDto {
     pub lost_exp_per_day: f64,
 }
 
-/// The dormitories' contribution. They produce nothing, so they never appear in
-/// a `BaseAssignment` - but they set how fast workers recover and how many can
-/// rest at once, which is what decides whether a staffing survives its own
-/// rhythm. Surfaced separately so "no yield" doesn't read as "not accounted for".
+/// The dorms. They produce nothing, so no `BaseAssignment` lists them, but they
+/// set recovery speed and how many can rest at once, which decides whether a
+/// staffing survives its own rhythm. Listed apart so no yield doesn't read as
+/// unaccounted.
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct DormsDto {
     pub count: usize,
-    /// Sum of dorm levels - the `&dorm&lv` scaling the clause engine reads.
+    /// Sum of dorm levels (the clause engine's `&dorm&lv`).
     pub total_levels: i32,
     /// Operators the base can rest at once.
     pub total_capacity: i32,
     /// Morale restored per hour to a resting operator, scaled by dorm levels.
     pub recovery_per_hour: f64,
-    /// Each dormitory, BEST FIRST - the order resters fill them. A 2/5/2's
-    /// under-leveled dorms show up here as the slower rates they are.
+    /// Each dorm, best first (the order resters fill them), so a 2/5/2's
+    /// low dorms show their slower rates.
     pub per_dorm: Vec<DormDto>,
 }
 
@@ -300,8 +299,8 @@ pub struct PowerDto {
     pub net: i32,
 }
 
-/// A rotation is whole-base by construction (a shift covers every room at
-/// once), so unlike optimize there is no `scope` - only who must stay put.
+/// No `scope`, unlike optimize: a shift covers every room at once, so the only
+/// input is who must stay put.
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -468,9 +467,8 @@ pub struct RotationResponse {
 pub struct OptimizeResponse {
     /// The proposed layout, scored.
     pub proposal: BaseAssignmentDto,
-    /// The draft as submitted, scored the same way - the honest before-picture
-    /// the UI diffs against. Computed here rather than trusted from the client
-    /// so both sides of the comparison come from one engine run.
+    /// The draft as submitted, scored here rather than trusted from the
+    /// client, so both sides of the UI's diff come from one engine run.
     pub baseline: BaseAssignmentDto,
     /// Only the rooms whose crew actually changed.
     pub room_diffs: Vec<RoomDiffDto>,
@@ -498,13 +496,12 @@ pub struct RoomDiffDto {
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct CatalogResponse {
-    /// Shifts in a base day. A game constant, not a property of any one
-    /// player - a base whose rooms only queue two presets still runs three
-    /// shifts, alternating across them.
+    /// Shifts in a base day. A game constant: a base whose rooms queue only
+    /// two presets still runs three shifts, alternating across them.
     pub shift_count: usize,
     pub rooms: Vec<CatalogRoomDto>,
     pub formulas: Vec<CatalogFormulaDto>,
-    /// The floorplan every base shares - what the client draws the board from.
+    /// The floorplan every base shares.
     pub slots: Vec<CatalogSlotDto>,
     pub storeys: Vec<CatalogStoreyDto>,
 }
@@ -524,8 +521,7 @@ pub struct CatalogSlotDto {
     pub category: String,
     pub storey_id: String,
     pub offset_col: i32,
-    /// Absolute - the storey's Y-offset is already applied. Counts up from the
-    /// bottom of the base, so B4 is 0.
+    /// Absolute (storey Y-offset applied), counted up from the bottom: B4 is 0.
     pub offset_row: i32,
     pub size_col: i32,
     pub size_row: i32,
@@ -841,10 +837,8 @@ pub async fn evaluate(
             .collect(),
     };
 
-    // Scores rooms exactly as stationed, which is what "score this draft" means.
-    // CPU-bound, so it runs on the blocking pool where it cannot stall the async
-    // worker's other futures (see `cpu::offload`); the context and the building
-    // move in and come back, so nothing is cloned.
+    // Scored as stationed. CPU-bound, so on the blocking pool (`cpu::offload`);
+    // context and building move in and back out, nothing is cloned.
     let gd = std::sync::Arc::clone(&game_data);
     let (ctx, building, assignment) = cpu::offload("base_evaluate", move || {
         let assignment = compute_live_assignment(
@@ -1146,9 +1140,8 @@ pub async fn optimize(
         }
     }
     let search_registry = economy.registry;
-    // The two searches are CPU-bound; on the blocking pool they cannot stall
-    // the async worker's other futures (see `cpu::offload`). The context and
-    // the building move in and come back, so nothing is cloned.
+    // Both searches are CPU-bound, so blocking pool as in `evaluate`; context
+    // and building move in and back, nothing is cloned.
     let gd = std::sync::Arc::clone(&game_data);
     let scope: HashSet<String> = req.scope.iter().cloned().collect();
     let (ctx, building, baseline, proposal) = cpu::offload("base_optimize", move || {

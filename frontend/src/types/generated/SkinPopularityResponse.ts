@@ -2,8 +2,8 @@
 
 export type SkinPopularityResponse = {
     /**
-     * Number of users counted in the denominator - every user that has any
-     * skin record (i.e. has imported their data at least once).
+     * The denominator: every user with any skin record, so anyone who has
+     * imported at least once.
      */
     totalUsers: number;
     /**

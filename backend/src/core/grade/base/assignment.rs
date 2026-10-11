@@ -1362,7 +1362,7 @@ fn cc_morale_boost(
 }
 
 /// An operator's total morale drain per hour (base + its skills' modifiers).
-/// Lower = works longer before resting = better for sustained rotation.
+/// Lower is better: longer on shift before resting.
 fn op_morale_drain(op: &OperatorBaseProfile, morale_drains: &HashMap<String, f64>) -> f64 {
     let modifier: f64 = op
         .available_buffs
@@ -2317,8 +2317,8 @@ pub fn compute_live_assignment(
         });
     }
 
-    // built AFTER the production rooms so its ledger can say whether each
-    // conditional skill actually fires in one of them
+    // Built after the production rooms so its ledger can tell whether each
+    // conditional skill fires in one of them.
     if let Some(cc) = control_room
         && !cc_ops.is_empty()
     {
@@ -5854,8 +5854,8 @@ pub(crate) fn compute_team_totals(
     morale_drains: &HashMap<String, f64>,
     cc_conditions: &[CcCondition],
 ) -> super::ledger::RoomTotals {
-    // the clause LEDGER is the scoring engine (see ledger.rs). It replaced the strategy walk
-    // after a shadow assert proved the two bit-identical across the suite and a captured real base.
+    // The clause ledger scores (ledger.rs). It replaced the strategy walk once a shadow assert
+    // proved the two bit-identical across the suite and a captured real base.
     let _ = morale_drains;
     super::ledger::score_room(&super::ledger::RoomEval {
         member_ids,

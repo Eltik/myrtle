@@ -20,7 +20,7 @@ pub struct EnemyStageRef {
     /// Alliance", "Annihilation"). `None` falls back to `zone_id` in the UI.
     pub zone_name: Option<String>,
     /// Coarse UI bucket: `"stages"` (main story), `"events"` (side stories /
-    /// activities), or `"modes"` (permanent game modes - IS, RA, S.S.S., CC,
+    /// activities), or `"modes"` (permanent modes: IS, RA, S.S.S., CC,
     /// Annihilation).
     pub category: String,
     /// Fine group key (`story` / `events` / `annihilation` / `is` / `ra` /

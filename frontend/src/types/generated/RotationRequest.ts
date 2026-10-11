@@ -3,8 +3,8 @@ import type { AccountFactsReq } from "./AccountFactsReq";
 import type { DraftRoom } from "./DraftRoom";
 
 /**
- * A rotation is whole-base by construction (a shift covers every room at
- * once), so unlike optimize there is no `scope` - only who must stay put.
+ * No `scope`, unlike optimize: a shift covers every room at once, so the only
+ * input is who must stay put.
  */
 export type RotationRequest = {
     layout: Array<DraftRoom>;

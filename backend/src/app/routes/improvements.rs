@@ -17,8 +17,8 @@ pub struct ImprovementsParams {
 }
 
 /// Ranked suggestions for what would raise this player's score most.
-/// Runs the shared privacy gate: another player's data is readable only when
-/// their profile is public, and a player always sees their own.
+/// Gated on the Score tab: another player's suggestions are readable only when
+/// their profile shows that tab to the viewer; a player always sees their own.
 #[utoipa::path(
     get,
     path = "/user/improvements",

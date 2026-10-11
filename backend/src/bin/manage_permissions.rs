@@ -37,8 +37,7 @@ async fn main() -> Result<()> {
         .context("failed to connect to database")?;
     println!("Connected to database.\n");
 
-    // Stamped onto grants so audit_log shows who ran the tool; a missing or unknown
-    // UID becomes NULL.
+    // Becomes `granted_by` on grants; a missing or unknown UID records NULL.
     let operator = if let Some(uid) = std::env::var("ADMIN_UID").ok().filter(|s| !s.is_empty()) {
         if let Some(u) = find_user_by_id_or_uid(&pool, &uid).await? {
             println!("Operating as: {} ({})\n", u.uid, display_name(&u));
@@ -544,8 +543,7 @@ const fn yesno(b: bool) -> &'static str {
     if b { "Yes" } else { "No" }
 }
 
-// All four user-lookup statements parse into `UserRow`, so they share the
-// same projection. Each is a single literal so sqlx can statically validate.
+// All four lookups map to `UserRow`, so they share one projection.
 const USER_SELECT_BY_ID: &str = "SELECT u.id, u.uid, s.code AS server, u.nickname, u.role \
                                  FROM users u JOIN servers s ON s.id = u.server_id \
                                  WHERE u.id = $1";

@@ -9,9 +9,8 @@ export type OptimizeResponse = {
      */
     proposal: BaseAssignmentDto;
     /**
-     * The draft as submitted, scored the same way - the honest before-picture
-     * the UI diffs against. Computed here rather than trusted from the client
-     * so both sides of the comparison come from one engine run.
+     * The draft as submitted, scored here rather than trusted from the
+     * client, so both sides of the UI's diff come from one engine run.
      */
     baseline: BaseAssignmentDto;
     /**

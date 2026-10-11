@@ -44,10 +44,9 @@ pub struct ActivityBasicInfo {
     #[serde(alias = "IsReplicate", default)]
     pub is_replicate: bool,
 
-    /// Activity category (e.g. `TYPE_ACT46SIDE`, `MULTIPLAY_V3`, `BOSS_RUSH`).
-    /// Used by the stage universe to filter out one-time competitive events
-    /// (Contingency Contract, Boss Rush, Vector Breakthrough, etc.) that can't
-    /// be cleared after they end and aren't rebroadcast.
+    /// Activity category (`TYPE_ACT46SIDE`, `MULTIPLAY_V3`, `BOSS_RUSH`). One-time
+    /// competitive events (CC, Boss Rush, Vector Breakthrough) can't be cleared
+    /// after they end, so the stage universe drops them by this.
     #[serde(alias = "Type_", rename = "type", default)]
     pub activity_type: String,
 

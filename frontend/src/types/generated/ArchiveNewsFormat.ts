@@ -4,7 +4,7 @@ export type ArchiveNewsFormat = {
     typeId: string;
     typeName: string;
     /**
-     * The small masthead glyph, and the big one the story is headed with.
+     * The small masthead glyph; `mainLogoUrl` is the big one heading the story.
      */
     logoUrl?: string;
     mainLogoUrl?: string;

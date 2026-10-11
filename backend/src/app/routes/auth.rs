@@ -88,7 +88,8 @@ pub struct LoginRequest {
     pub email: String,
     pub code: String,
     pub server: String,
-    /// See the module note on `save_credentials`.
+    /// "Remember this login". Defaults to true; false stores nothing and clears
+    /// what a previous login left.
     #[serde(default = "default_true")]
     pub save_credentials: bool,
 }
@@ -130,7 +131,8 @@ pub async fn login(
 pub struct BilibiliLoginRequest {
     pub username: String,
     pub password: String,
-    /// See the module note on `save_credentials`.
+    /// "Remember this login". Defaults to true; false stores nothing and clears
+    /// what a previous login left.
     #[serde(default = "default_true")]
     pub save_credentials: bool,
 }
@@ -197,7 +199,8 @@ pub async fn send_bilibili_sms(
 pub struct BilibiliSmsLoginRequest {
     pub phone: String,
     pub code: String,
-    /// See the module note on `save_credentials`.
+    /// "Remember this login". Defaults to true; false stores nothing and clears
+    /// what a previous login left.
     #[serde(default = "default_true")]
     pub save_credentials: bool,
 }
@@ -265,7 +268,8 @@ pub struct CnLoginRequest {
     pub password: Option<String>,
     #[serde(default)]
     pub code: Option<String>,
-    /// See the module note on `save_credentials`.
+    /// "Remember this login". Defaults to true; false stores nothing and clears
+    /// what a previous login left.
     #[serde(default = "default_true")]
     pub save_credentials: bool,
 }
@@ -325,8 +329,7 @@ pub async fn verify(
     State(state): State<AppState>,
     auth: AuthUser,
 ) -> Result<Json<VerifySession>, ApiError> {
-    // the extractor already validated the token; the role is re-read because
-    // the JWT claim froze it at login (see the fn doc).
+    // Role re-read: the JWT claim froze it at login.
     let db_role: Option<String> = if let Ok(uuid) = uuid::Uuid::parse_str(&auth.user_id) {
         queries::users::find_role(&state.db, uuid).await?
     } else {

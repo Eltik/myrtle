@@ -276,8 +276,7 @@ pub async fn check_permission(
     }
 }
 
-/// Load the tier list by `slug` (404 if absent) and confirm `user_id`/`role` may
-/// perform `required` on it (403 otherwise), returning the authorized list.
+/// The list at `slug`: 404 if absent, 403 unless [`check_permission`] admits `required`.
 pub async fn find_and_authorize(
     state: &AppState,
     slug: &str,

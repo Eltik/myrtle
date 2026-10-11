@@ -361,7 +361,7 @@ pub struct RotationSet {
 pub struct RotationSetRoom {
     pub slot_id: String,
     pub room_type: String,
-    /// Resting main swapped out for the backup.
+    /// This set's crew, the backup in the resting main's seat.
     pub working: Vec<String>,
     /// The main resting this set (whom `working` covers via the backup), if any.
     pub resting: Option<String>,

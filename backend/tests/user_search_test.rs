@@ -579,8 +579,8 @@ type IdentityRow = (
     Option<i64>,
 );
 
-/// Everything the oracle needs, in five queries that touch the raw tables
-/// rather than `v_user_profile`'s own aggregates.
+/// Everything the oracle needs, in seven queries on the raw tables rather
+/// than `v_user_profile`'s own aggregates.
 async fn load_oracle(pool: &PgPool) -> Vec<OracleUser> {
     let rows: Vec<IdentityRow> =
         sqlx::query_as(
@@ -867,9 +867,9 @@ async fn every_combination_matches_an_independent_oracle() {
                             expected.iter().skip(offset).take(24).collect();
                         assert_eq!(page.len(), want.len(), "{label}: page {offset} length");
                         for (row, expect) in page.iter().zip(want.iter()) {
-                            // Ties are real: several players share a metric and
-                            // a score, so a row is checked on its value and its
-                            // identity only where the order is determined.
+                            // Many players tie on metric and score; the uid
+                            // tiebreak makes the order total, so identity is
+                            // checked on every row.
                             assert_eq!(
                                 row.metric,
                                 expect.metric(rank),

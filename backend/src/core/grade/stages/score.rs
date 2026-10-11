@@ -34,9 +34,8 @@ pub async fn grade_stages_detail(
     user_id: Uuid,
     game_data: &GameData,
 ) -> Result<StageGradeDetail, sqlx::Error> {
-    // Clears plus the per-server set of stages this server actually ships, in
-    // parallel. Bundled gamedata can be ahead of a server (EN players on CN-era
-    // tables); a stage no user on the server has seen is treated as unreleased there.
+    // Bundled gamedata can be ahead of a server (EN players on CN-era tables),
+    // so a stage no user on the server has seen counts as unreleased there.
     let (data, known_stage_ids) = tokio::try_join!(
         get_user_stage_clears(pool, user_id),
         get_known_stage_ids_for_server(pool, user_id),

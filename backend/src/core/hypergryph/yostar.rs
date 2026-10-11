@@ -514,9 +514,9 @@ pub async fn get_battle_replay(
 /// so concurrent calls on one `AuthSession` race and invalidate it. Sessions are
 /// separate rate-limit buckets, so run one task per player.
 ///
-/// `interval` defaults to 100ms. The server tolerates back-to-back requests; the
-/// pause mostly keeps a runaway loop from starving tokio. `Duration::ZERO` for max
-/// throughput.
+/// The delay is a random 80..180 ms (`min_interval`..`max_interval`). The server
+/// tolerates back-to-back requests; the pause mostly keeps a runaway loop from
+/// starving tokio. Set both to `Duration::ZERO` for max throughput.
 ///
 /// Build targets from `account/syncData`, not every gamedata stage. The live
 /// client only asks for stages with a saved replay; a stream of 5516 misses is
@@ -658,8 +658,7 @@ fn collect_replay_flags(
 }
 
 /// Discover via syncData, then harvest only saved replays: no 5516 misses, and
-/// the traffic matches the live client. One task per session behind a
-/// Semaphore(64).
+/// the traffic matches the live client. One task per session.
 pub async fn collect_player_replays<F>(
     client: &Client,
     session: &mut AuthSession,

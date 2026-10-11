@@ -574,9 +574,9 @@ pub struct Operator {
     /// Primary affiliation (mirrors the top-level nation/group ids).
     #[serde(default)]
     pub main_power: Option<PowerAffiliation>,
-    /// Secondary affiliations - the game's multi-power system. RIIC faction
-    /// tags COUNT these: Texas is nation `lungmen` but `SubPower` `siracusa`,
-    /// and Umiri's "all Siracusa Operators" buff reaches her in-game.
+    /// Secondary affiliations. RIIC faction tags count these: Texas is nation
+    /// `lungmen` but `SubPower` `siracusa`, and Umiri's "all Siracusa
+    /// Operators" buff reaches her in-game.
     #[serde(default)]
     pub sub_power: Option<Vec<PowerAffiliation>>,
     /// `handbook_team_table` names of `nation_id`, `group_id` and `team_id`
@@ -644,11 +644,10 @@ pub struct Operator {
     /// Full illustration: /upk/chararts/{id}/{id}_{1|2}.png. `None` if absent
     /// (portrait is the fallback).
     pub skin: Option<String>,
-    /// All template ids for operators that have alternate forms (Amiya only,
-    /// at time of writing). `None` for normal operators. Each id in this list
-    /// is itself a fully-enriched entry in `GameData.operators`. The list is
-    /// populated on *every* form in the group, with `default` indicating the
-    /// canonical base id.
+    /// Every template id of an operator with alternate forms (only Amiya so
+    /// far), set on each form in the group; each id is its own entry in
+    /// `GameData.operators`. `None` for everyone else. `tmpl_default` names
+    /// the base id.
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tmpl_ids: Option<Vec<String>>,
@@ -803,10 +802,9 @@ pub struct OperatorBaseSkill {
     /// Elite phase required to unlock (0, 1, or 2)
     pub unlock_elite: i32,
     pub unlock_level: i32,
-    /// Index of this skill's slot in the operator's kit (`BuffChar` order).
-    /// Tiers of one slot REPLACE each other on promotion - only the highest
-    /// tier the operator has unlocked is live, exactly as
-    /// `OperatorBaseProfile::build` picks it. Group by this to tell a
+    /// Slot index in the operator's kit (`BuffChar` order). Tiers of one slot
+    /// replace each other on promotion: only the highest unlocked tier is live,
+    /// as `OperatorBaseProfile::build` picks it. Group by this to tell a
     /// superseded tier from a second skill.
     #[serde(default)]
     pub slot: usize,

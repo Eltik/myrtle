@@ -14,7 +14,6 @@ use serde::{Deserialize, Serialize};
 
 use super::serde_helpers::deserialize_fb_map_or_default;
 
-/// The game's LMD item id.
 pub const LMD_ITEM_ID: &str = "4001";
 
 #[derive(Debug, Clone, Default, Deserialize)]

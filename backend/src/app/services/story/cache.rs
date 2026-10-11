@@ -208,7 +208,7 @@ pub async fn cached_index(
 /// Build the library index for `server` OFF the request path: at startup and
 /// after every hot reload, so the first reader does not pay the parse. The
 /// lazy path in [`cached_index`] stays the fallback, so a request that
-/// arrives before the warm lands simply builds it itself.
+/// arrives before the warm lands builds it itself.
 pub fn spawn_warm(state: AppState, server: Server) {
     tokio::spawn(async move {
         let started = Instant::now();
@@ -238,8 +238,8 @@ pub async fn get_story_index(state: &AppState, server: Server) -> Result<StoryIn
 mod tests {
     use super::*;
 
-    /// A build that records that it ran and answers with the value it was told
-    /// to, so a test can tell a hit from a build without a real index.
+    /// A build that answers `n`, so a test tells a hit from a build by the
+    /// value, without a real index.
     async fn built(n: u32) -> Result<Arc<u32>, ApiError> {
         Ok(Arc::new(n))
     }

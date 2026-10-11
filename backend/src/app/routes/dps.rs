@@ -39,8 +39,9 @@ pub async fn operators(
 
 /// Hash a request body into a cache key component.
 ///
-/// `DefaultHasher` is seeded deterministically in Rust, so the value is stable
-/// across processes and safe to share through Redis. `RandomState` would not be.
+/// `DefaultHasher::new()` uses fixed keys, so the value is stable across
+/// processes and safe to share through Redis; `RandomState` would not be.
+/// Not guaranteed across Rust releases, where a bump only cold-starts the cache.
 fn body_hash(body: &services::dps::CalculateRequest) -> u64 {
     use std::hash::{Hash, Hasher};
     let mut hasher = std::collections::hash_map::DefaultHasher::new();
@@ -50,9 +51,10 @@ fn body_hash(body: &services::dps::CalculateRequest) -> u64 {
     hasher.finish()
 }
 
-/// The simulation is pure CPU on an unauthenticated route, so the body is
-/// bounds-checked first and the work then runs on the blocking pool under
-/// admission control.
+/// Simulate damage per second for one operator configuration.
+///
+/// Pure CPU on an unauthenticated route, so the body is bounds-checked first
+/// and the work runs on the blocking pool under admission control.
 ///
 /// Memoised: the result is a pure function of the body and the loaded game
 /// data (no clock, no RNG, no user scoping), so two people posting the same

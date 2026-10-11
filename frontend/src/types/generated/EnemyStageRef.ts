@@ -17,7 +17,7 @@ export type EnemyStageRef = {
     zoneName: string | null;
     /**
      * Coarse UI bucket: `"stages"` (main story), `"events"` (side stories /
-     * activities), or `"modes"` (permanent game modes - IS, RA, S.S.S., CC,
+     * activities), or `"modes"` (permanent modes: IS, RA, S.S.S., CC,
      * Annihilation).
      */
     category: string;

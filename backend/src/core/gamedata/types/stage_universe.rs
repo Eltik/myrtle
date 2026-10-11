@@ -143,7 +143,6 @@ impl StageUniverse {
                     live_only: is_live_only,
                 });
             } else {
-                // Activity zones: event pool.
                 // Vignette stages in a mainline zone only carry the activity id on the
                 // stage id, so fall back to it when the zone resolves nothing.
                 let activity = resolve_activity(&stage.zone_id, &sorted_activities)
@@ -267,6 +266,3 @@ fn resolve_activity<'a>(
         .find(|act| !act.id.is_empty() && zone_id.starts_with(&act.id))
         .copied()
 }
-
-// One-time competitive content is filtered by
-// `ActivityBasicInfo::is_one_time_competitive`, shared with medal scoring.

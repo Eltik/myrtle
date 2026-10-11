@@ -1289,8 +1289,7 @@ fn parse_range(value: &str, size: u64) -> Option<(u64, u64)> {
     } else {
         end_s.parse::<u64>().ok()?.min(size.saturating_sub(1))
     };
-    // Reject reversed/inverted ranges; per RFC 7233 these are unsatisfiable
-    // and the server may ignore the header (we fall back to a full 200).
+    // Reversed range: RFC 7233 lets the server ignore the header.
     if start > end {
         return None;
     }

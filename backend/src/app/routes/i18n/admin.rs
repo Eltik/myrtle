@@ -48,9 +48,8 @@ pub async fn list_locales(
     Ok(Json(service::list_locales(&state, false).await?))
 }
 
-/// The locales this caller may actually write, for the editor's locale picker.
-///
-/// The workspace uses this to decide what to render read-only.
+/// The locales this caller may write. The editor's locale picker reads it, and
+/// the workspace renders every other locale read-only.
 #[utoipa::path(
     get,
     path = "/admin/i18n/writable-locales",
@@ -197,7 +196,7 @@ pub struct UpdateMessageRequest {
     pub value: String,
 }
 
-/// `PUT /admin/i18n/message`
+/// Set one UI message's translation.
 ///
 /// The key travels in the body rather than the path: message keys are dotted
 /// and arbitrary, and path-encoding them buys nothing.
@@ -270,8 +269,8 @@ pub async fn clear_message(
     Ok(ok_status())
 }
 
-/// `GET /admin/i18n/namespaces` - the full namespace list, independent of
-/// whatever page of messages the editor happens to be showing.
+/// Every message namespace, independent of the page of messages the editor
+/// shows.
 #[utoipa::path(
     get,
     path = "/admin/i18n/namespaces",
@@ -409,9 +408,9 @@ pub struct SyncRequest {
     pub entries: Vec<service::SourceEntry>,
 }
 
-/// `POST /admin/i18n/sync` - the extractor's output becomes the truth about
-/// which keys exist and what their English source is. Super-admin only: it can
-/// deactivate every key in the catalog.
+/// Make the extractor's output the truth about which keys exist and what their
+/// English source is. Super-admin only: it can deactivate every key in the
+/// catalog.
 ///
 /// New keys are added, changed source marks its translations stale, and keys
 /// the frontend dropped are retired.

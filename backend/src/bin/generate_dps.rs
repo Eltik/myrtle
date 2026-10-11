@@ -187,9 +187,8 @@ enum OutputShape {
 /// Healers whose body uses constructs the transpiler can't handle; emit `None` stubs.
 const HEAL_FALLBACKS: &[&str] = &["AmiyaMedic", "ReedAlter"];
 
-/// Locate a Python interpreter that supports the 3.10+ `match` statement
-/// (required by upstream `damage_formulas.py`). Honors `PYTHON_BIN` env var
-/// for explicit override; otherwise probes common names in priority order.
+/// A Python with 3.10+ `match` (upstream `damage_formulas.py` uses it).
+/// `PYTHON_BIN` overrides; otherwise probes the common names in order.
 fn python_command() -> String {
     if let Ok(explicit) = std::env::var("PYTHON_BIN") {
         return explicit;
@@ -1186,7 +1185,6 @@ const RUST_KEYWORDS: &[(&str, &str)] = &[
     ("unsafe", "unsafe_val"),
 ];
 
-/// Pre-compiled regexes used across the transpilation functions.
 struct TranspileRegexes {
     // transpile_skill_dps
     assign_var_re: Regex,

@@ -1254,7 +1254,6 @@ fn rotation_core(
     let team_letter = |ordinal: usize| -> String {
         char::from(b'A' + u8::try_from(ordinal % 26).unwrap_or(0)).to_string()
     };
-    // Crew efficiency (speed incl. Squad-1 globals) for production/power cells.
     let crew_efficiency = |crew: &[String], room_type: &str, formula: Option<&str>| -> f64 {
         let (speed, _) = compute_team_efficiency(
             crew,

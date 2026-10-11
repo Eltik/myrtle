@@ -69,7 +69,8 @@ pub struct FacilityOutput {
     pub idle_hours: f64,
 }
 
-/// Morale sampled at every 12h block boundary (`samples[0]` = t=0, full bar).
+/// Morale sampled at every 12h block boundary. `samples[0]` is t=0: a full bar,
+/// or the live bar when `simulate_rotation_from` is seeded.
 #[derive(Debug, Clone)]
 pub struct OperatorMoraleTimeline {
     pub char_id: String,
@@ -466,7 +467,7 @@ pub fn simulate_rotation_from(
         .collect();
     let mut depleted: Vec<DepletedOperator> = Vec::new();
     let mut dorm_overflow = 0usize;
-    // Sampled at every block boundary (t=0 is full).
+    // Sampled at every block boundary; t=0 is the starting bar, seeded or full.
     let mut samples: HashMap<String, Vec<f64>> = schedules
         .keys()
         .map(|id| {

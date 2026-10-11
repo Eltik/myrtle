@@ -322,9 +322,8 @@ pub async fn get_roster(state: &AppState, server: Server) -> Result<CachedJson, 
     .await
 }
 
-/// One operator's community counts. Struct-valued rather than a bare owner
-/// tally so the next statistic is a field here instead of a fourth map
-/// travelling alongside in the response.
+/// One operator's community counts. A struct, not a bare owner tally, so the
+/// next statistic is a field here rather than another map in the response.
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -91,12 +91,9 @@ async fn run_loop(state: AppState, interval_secs: u64) {
     }
 }
 
-/// Refresh every server that has a service account, concurrently.
-/// One pass, shared by the loop and by `core::refresh`.
-///
-/// `refresh_all` reports per-server outcomes through tracing and never fails as
-/// a whole, because one unreachable server must not stop the others; this
-/// wrapper exists so the task registry sees the same uniform shape as the rest.
+/// [`refresh_all`] for `core::refresh`'s task registry. `refresh_all` only
+/// logs per-server outcomes and never fails as a whole (one unreachable server
+/// must not stop the others); this gives it the registry's uniform shape.
 pub async fn refresh_once(state: &AppState) -> anyhow::Result<String> {
     refresh_all(state).await;
     Ok("gacha pool details refreshed for every configured server".to_owned())

@@ -380,8 +380,8 @@ async fn run_import(args: ImportArgs) -> Result<()> {
 
     if let Some(id) = existing {
         let rows = count_existing(&mut tx, id, export.includes_credentials).await?;
-        // A dry run always rolls back, so it needs no permission to overwrite; gating it
-        // would make the very command this error recommends impossible to run.
+        // A dry run rolls back, so it needs no --replace; gating it would block
+        // the very command the error suggests.
         if rows > 0 && !args.replace && !args.dry_run {
             bail!(
                 "user uid={uid} server_id={server_id} already exists (id={id}) with {rows} rows. \

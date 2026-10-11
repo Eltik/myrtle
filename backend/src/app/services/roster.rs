@@ -217,9 +217,8 @@ pub struct CheckIn {
     /// bare `history` key does not exist on this object.
     #[serde(rename = "checkInHistory")]
     pub history: Option<Vec<i16>>,
-    /// Lifetime cumulative sign-in days, the "X / 1000 total days of sign-ins"
-    /// counter shown on the daily sign-in carousel's milestone page. Distinct
-    /// from `history`, which is only the current month's calendar.
+    /// Lifetime sign-in days, the "X / 1000 total days of sign-ins" counter on
+    /// the sign-in carousel's milestone page. `history` covers only this month.
     #[serde(rename = "showCount")]
     pub show_count: Option<i64>,
     /// Identifier of the active monthly sign-in series (e.g. `signin<N>`).
@@ -285,10 +284,8 @@ pub async fn refresh(
     let status = user.status.as_ref();
 
     let nickname = status.and_then(|s| s.nick_name.as_deref()).unwrap_or("");
-    // nickNumber comes from Hypergryph as either a string ("1234") or an
-    // integer (1234) depending on server/version, and may live on
-    // `status` or as a sibling of it. Probe both paths and accept either
-    // type. Stored as string so leading zeros survive.
+    // nickNumber is a string or an int depending on server, on `status` or
+    // beside it. Kept as a string so leading zeros survive.
     let nick_number_owned = extract_nick_number(&raw);
     let nick_number = nick_number_owned.as_deref();
     let level = status.and_then(|s| s.level).unwrap_or(0) as i16;
@@ -415,12 +412,11 @@ pub async fn refresh(
         // lock a user route needed.
         //
         // `calculate_user_grade` is an `async fn` whose only awaits are its seven
-        // up-front queries, and `core/grade` is another session's file, so it isn't
-        // split into load-then-score here. The whole call is DRIVEN from a
-        // blocking-pool thread: `Handle::block_on` inside `cpu::run` parks that
-        // thread on the queries (still registered with this runtime's IO driver) and
-        // scores there. No async worker is held, so the awaited `JoinHandle` yields
-        // and the budget fires at 12 s.
+        // up-front queries, so rather than split it into load-then-score the whole
+        // call is DRIVEN from a blocking-pool thread: `Handle::block_on` inside
+        // `cpu::run` parks that thread on the queries (still registered with this
+        // runtime's IO driver) and scores there. No async worker is held, so the
+        // awaited `JoinHandle` yields and the budget fires at 12 s.
         let db = state.db.clone();
         let scoring_db = state.db.clone();
         let game_data = state.default_game_data();

@@ -17,7 +17,7 @@ use crate::core::gamedata::types::roguelike::RoguelikeTopicTableFile;
 use crate::core::gamedata::types::stage::{Stage, StageDifficulty};
 use crate::core::gamedata::types::zone::{Zone, ZoneType};
 
-/// Canonical, display-ready info for one stage / level.
+/// Display info for one stage or level file.
 pub struct StageInfo {
     /// Short per-stage label (in-game stage code, IS/RA node name, etc.).
     pub code: String,
@@ -379,8 +379,7 @@ const fn mode_type_label(zone_type: Option<&ZoneType>) -> Option<&'static str> {
     }
 }
 
-/// Holds the gamedata tables needed to classify any stage/level. Build once,
-/// then call `classify_level` / `classify_stage_id` per item.
+/// Build once per load, then `classify_level` / `classify_stage_id` per item.
 pub struct StageClassifier<'a> {
     stages: &'a HashMap<String, Stage>,
     zones: &'a HashMap<String, Zone>,

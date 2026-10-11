@@ -1,15 +1,14 @@
 //! Build the flat Stage List catalogue ([`StageIndex`]).
 //!
-//! Combines two sources, both classified through the single-source-of-truth
-//! [`StageClassifier`]:
+//! Two sources, both classified by [`StageClassifier`]:
 //!  1. Every `stage_table` stage (story, events, SSS, Annihilation, supplies).
 //!  2. The procedural-mode level files whose stages are *not* in `stage_table`
 //!     (Integrated Strategies, Reclamation Algorithm, Contingency Contract,
 //!     Paradox Simulation), walked off disk under `gamedata/levels/`.
 //!
-//! Map-preview and banner art paths are resolved against disk once at load
-//! (indexed by filename), so the frontend gets a single verified URL per stage
-//! instead of guessing folder variants and 404-ing on the client.
+//! Map-preview and banner paths are resolved against disk once at load,
+//! indexed by filename, so the client gets one URL that exists instead of
+//! guessing folder variants and hitting 404s.
 //!
 //! Deduping of code / difficulty variants is left to the frontend, which needs
 //! the difficulty to pick the canonical card.

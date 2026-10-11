@@ -1,13 +1,9 @@
 //! Watches the upstream DPS reference repository and reports when it moves.
 //!
-//! Report-only by design. It does not fetch, check out, regenerate or rebuild
-//! anything, and it never restarts the process: regenerating
-//! `dps/custom/generated.rs` from a third party's commit is a reviewed change
-//! belonging in CI and a normal deploy, not something a server does to itself
-//! while serving.
-//!
-//! The contract is narrow: notice the upstream commit, say so once, back off when
-//! the API is unavailable.
+//! Report-only: it never fetches, regenerates, rebuilds or restarts.
+//! Regenerating `dps/custom/generated.rs` from a third party's commit is a
+//! reviewed change for CI and a normal deploy, not something a server does to
+//! itself. It logs a new upstream commit once and backs off while the API is down.
 
 use std::time::Duration;
 
@@ -71,13 +67,10 @@ enum CheckResult {
     NewCommit { sha: String },
 }
 
-/// Poll the upstream default branch for its newest commit.
-///
-/// The returned `ETag` is the one to send next time. On any non-success status
-/// the previous etag is carried forward rather than replaced: an error response
-/// carries no useful validator, and discarding the good one would turn every
-/// later poll into a full response against the same rate limit that just
-/// rejected this one.
+/// Newest commit on the upstream branch, plus the `ETag` to send next time.
+/// A non-success keeps the previous etag: an error carries no validator, and
+/// dropping the good one makes every later poll a full response against the
+/// rate limit that just refused us.
 async fn check_upstream(
     client: &reqwest::Client,
     config: &DpsWatcherConfig,
@@ -225,7 +218,6 @@ pub fn spawn(state: AppState) {
         return;
     };
 
-    // No local checkout is involved, so there is nothing to verify here.
     tokio::spawn(async move {
         poll_loop(config, state).await;
     });

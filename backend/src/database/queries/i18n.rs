@@ -486,10 +486,9 @@ pub async fn locale_progress(pool: &PgPool) -> Result<Vec<(String, i64, i64, i64
     .await
 }
 
-/// Every translation grant, optionally on one locale, with the grantee's and
-/// granter's names. LEFT JOINs so a missing account reads as `None`.
-/// Translation grants with both names, optionally narrowed to one locale
-/// and/or one grantee (`user_id`, for a caller who may only see their own).
+/// Translation grants with the grantee's and granter's names, optionally for
+/// one locale and/or one grantee (`user_id`, for a caller who may only see
+/// their own). LEFT JOINs, so a missing account reads as `None`.
 pub async fn list_permissions(
     pool: &PgPool,
     locale: Option<&str>,

@@ -272,9 +272,8 @@ pub async fn get_catalog(State(state): State<AppState>) -> Json<CatalogResponse>
     Json(catalog(&state))
 }
 
-/// The signed-in user saving their OWN account facts (recruit slots etc.).
-/// Facts always attach to the caller's profile - there is no setting another
-/// player's facts; viewers get per-request overrides instead.
+/// Save the caller's OWN account facts (recruit slots etc.). Another player's
+/// facts cannot be set; viewers pass per-request overrides instead.
 /// With no declaration the never-guess default stands and the dependent skills
 /// price at zero.
 #[utoipa::path(

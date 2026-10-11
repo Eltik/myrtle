@@ -1317,7 +1317,6 @@ mod tests {
         for n_rooms in 1..=4 {
             let cells = tile_group(n_rooms);
             let teams = teams_for_rooms(n_rooms);
-            // Every cell is covered by a valid team index.
             let mut count = vec![0usize; teams];
             for room in &cells {
                 for &t in room {

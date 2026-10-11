@@ -3,8 +3,8 @@
 //! named-teammate conditional synergies, Control Center stacking and faction
 //! buffs, the staggered rotation, and the high-level grade.
 
-// Test-local `const CHAR: &str = "..."` declarations next to their assertions, and small numeric
-// casts on counts, are intentional here - pedantic/nursery lints not worth reshaping test code over.
+// Test-local `const CHAR: &str = "..."` next to the assertions and small numeric casts on
+// counts are deliberate: pedantic/nursery lints not worth reshaping test code over.
 #![allow(
     clippy::items_after_statements,
     clippy::cast_possible_truncation,
@@ -1267,7 +1267,7 @@ fn viviana_knight_buff_reaches_pinus_knights_like_wild_mane() {
     };
     const VIVIANA: &str = "char_4098_vvana";
     const WILD_MANE: &str = "char_496_wildmn";
-    const VERMEIL: &str = "char_190_clour"; // Siracusa - not a Knight
+    const VERMEIL: &str = "char_190_clour"; // Siracusa, not a Knight
 
     let knight_with = factory_eff(&[VIVIANA], &[WILD_MANE]);
     let knight_without = factory_eff(&[], &[WILD_MANE]);
@@ -2626,7 +2626,7 @@ fn a_dominant_value_shape_does_not_hide_the_proviso_free_level_three_crew() {
     // level-2 post where she pays on every order. The shortlist now also
     // keeps, for each operator of a post's best crew, the best crew without
     // them; the coupled value then seats Shamare/Tequila at the level-3 post
-    // and Proviso at the level-2 one, the way the community runs it - and
+    // and Proviso at the level-2 one, the way the community runs it, and
     // the plan is worth at least what that player's own arrangement is
     // (user report 2026-10-08: their setup out-earned the plan by 7%).
     use backend::core::grade::base::assignment::{
@@ -8691,13 +8691,14 @@ fn reference_parity_252() {
 /// whole room's drain ("-0.1/hr to all Operators in the Trading Post") and a
 /// Control-Center aura lifting every dormitory sleeper's recovery both change
 /// the week's morale arithmetic. With L2 dorms (+1.7/hr), a 24h block drains
-/// 24 but a 12h rest recovers only 20.4: operators leak and deplete; the
-/// room aura cuts the block's drain to 21.6, which the rest covers.
+/// 24 but a 12h rest recovers only 20.4: operators leak and deplete. The
+/// room aura cuts the block's drain to 21.6, still short, so fewer deplete
+/// and later.
 #[test]
 fn morale_auras_change_the_sustainability_arithmetic() {
     use backend::core::grade::base::shift_rotation::{Shift, ShiftRoom, ShiftRotation};
     use backend::core::grade::base::sustain_sim::{Verdict, simulate_rotation};
-    const AURA: &str = "char_4171_wulfen"; // Warm-Up owner? resolved below
+    const AURA: &str = "char_4171_wulfen"; // unused; the owner is looked up below
     let gd = load_game_data();
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);

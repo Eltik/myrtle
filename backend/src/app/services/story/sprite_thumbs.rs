@@ -318,7 +318,7 @@ mod tests {
 
     #[test]
     fn the_face_lands_at_face_pos_in_texture_pixels() {
-        // A 200 px transparent body declared as a 400 px texture: the patch at
+        // A 200 px body declared as a 400 px texture: the patch at
         // (100, 40, 50, 50) texture px lands at (50, 20, 25, 25) decoded px.
         let body = RgbaImage::from_pixel(200, 200, image::Rgba([0, 0, 255, 255]));
         let face = RgbaImage::from_pixel(64, 64, image::Rgba([255, 0, 0, 255]));

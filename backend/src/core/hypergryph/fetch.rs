@@ -42,7 +42,8 @@ impl std::fmt::Display for UpstreamError {
 
 pub mod upstream_code {
     pub const STAGE_NO_REPLAY: i64 = 5516;
-    /// `templateShop/getGoodList` for an activity that has no token shop.
+    /// `templateShop/getGoodList` for an activity with no token shop, and for
+    /// every shop id before the session's first `account/syncData` (CN, 2026-09-15).
     pub const INVALID_SHOP_ID: i64 = 5681;
 }
 

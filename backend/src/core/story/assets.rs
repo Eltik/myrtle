@@ -1,7 +1,8 @@
 //! Story asset resolution: a script's raw names -> served URLs.
 //!
 //! Built once per server on first use (see [`StoryAssetIndex::for_dirs`]) from
-//! four walks under the server's art root:
+//! these walks under the server's art root (plus the `spritepack` avatar and
+//! cutin folders):
 //!
 //! * `textures/avg/bg/**/*.png`: backgrounds, keyed by lowercase stem (946 on EN).
 //! * `textures/avg/imgs/**/*.png` and `textures/avg/items/**/*.png`: CGs and
@@ -55,7 +56,7 @@
 //! `facePos {x,y,w,h}` in body pixels, and the sprite list is what `@alias`
 //! and an index whose file name the rules above miss resolve through. A
 //! folder with no `hub.json` resolves exactly as it did before, by file name
-//! alone, and simply carries no `facePos`.
+//! alone, and carries no `facePos`.
 //!
 //! `facePos` is measured in the BODY TEXTURE's own pixels, which are NOT the
 //! 1024 canvas px the stage draws a body into: `avg_1037_amiya3_1$1` is a
@@ -583,9 +584,8 @@ fn image_size(meta: Option<&SpriteMetaFile>, path: &Path) -> Option<ImageSize> {
 }
 
 impl StoryAssetIndex {
-    /// Build the index for a server's assets root, art and text from the same
-    /// tree. Walks four trees; on EN the whole thing is one pass over ~17k PNGs
-    /// and ~73k OGGs.
+    /// Art and text from the same tree. On EN one build is a pass over ~17k
+    /// PNGs and ~73k OGGs.
     #[must_use]
     pub fn build(server_assets_dir: &Path) -> Self {
         Self::build_split(server_assets_dir, server_assets_dir)

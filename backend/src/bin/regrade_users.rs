@@ -12,8 +12,7 @@
 //!   cargo run --release --bin regrade-users -- --dry-run                # compute, don't write
 //!   cargo run --release --bin regrade-users -- --fail-fast               # stop on first error
 
-// CLI tool: a long top-level `main` and intentional numeric casts on counters/indices
-// (which would only gain noise from `try_from` + error handling) are expected here.
+// CLI: the long `main` and the counter casts are deliberate; `try_from` would only add noise.
 #![allow(
     clippy::too_many_lines,
     clippy::cast_possible_truncation,

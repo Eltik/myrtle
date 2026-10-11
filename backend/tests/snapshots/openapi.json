@@ -280,7 +280,7 @@
         "tags": [
           "i18n-admin"
         ],
-        "summary": "`PUT /admin/i18n/message`",
+        "summary": "Set one UI message's translation.",
         "description": "The key travels in the body rather than the path: message keys are dotted\nand arbitrary, and path-encoding them buys nothing.\n\nDirect edit with no review step; every write lands in the audit log.\nNeeds a translation grant on the locale, or a role that can open the admin\npanel.",
         "operationId": "update_message",
         "requestBody": {
@@ -511,7 +511,7 @@
         "tags": [
           "i18n-admin"
         ],
-        "summary": "`GET /admin/i18n/namespaces` - the full namespace list, independent of\nwhatever page of messages the editor happens to be showing.",
+        "summary": "Every message namespace, independent of the page of messages the editor\nshows.",
         "operationId": "namespaces",
         "responses": {
           "200": {
@@ -1004,7 +1004,7 @@
         "tags": [
           "i18n-admin"
         ],
-        "summary": "`POST /admin/i18n/sync` - the extractor's output becomes the truth about\nwhich keys exist and what their English source is. Super-admin only: it can\ndeactivate every key in the catalog.",
+        "summary": "Make the extractor's output the truth about which keys exist and what their\nEnglish source is. Super-admin only: it can deactivate every key in the\ncatalog.",
         "description": "New keys are added, changed source marks its translations stale, and keys\nthe frontend dropped are retired.",
         "operationId": "sync",
         "requestBody": {
@@ -1065,8 +1065,7 @@
         "tags": [
           "i18n-admin"
         ],
-        "summary": "The locales this caller may actually write, for the editor's locale picker.",
-        "description": "The workspace uses this to decide what to render read-only.",
+        "summary": "The locales this caller may write. The editor's locale picker reads it, and\nthe workspace renders every other locale read-only.",
         "operationId": "writable_locales",
         "responses": {
           "200": {
@@ -2296,7 +2295,7 @@
         "tags": [
           "base"
         ],
-        "summary": "The signed-in user saving their OWN account facts (recruit slots etc.).\nFacts always attach to the caller's profile - there is no setting another\nplayer's facts; viewers get per-request overrides instead.\nWith no declaration the never-guess default stands and the dependent skills\nprice at zero.",
+        "summary": "Save the caller's OWN account facts (recruit slots etc.). Another player's\nfacts cannot be set; viewers pass per-request overrides instead.\nWith no declaration the never-guess default stands and the dependent skills\nprice at zero.",
         "operationId": "put_facts",
         "requestBody": {
           "content": {
@@ -2824,8 +2823,8 @@
         "tags": [
           "dps"
         ],
-        "summary": "The simulation is pure CPU on an unauthenticated route, so the body is\nbounds-checked first and the work then runs on the blocking pool under\nadmission control.",
-        "description": "Memoised: the result is a pure function of the body and the loaded game\ndata (no clock, no RNG, no user scoping), so two people posting the same\nconfiguration get the same three floats. The UI compares configurations by\nfiring a burst of these at once, which was filling the admission queue; a\nburst of repeats costs one simulation.\n\nValidation stays AHEAD of the cache read so an out-of-range body is rejected\nrather than keyed, and the cache read sits ahead of `cpu::run` so a hit never\nconsumes a permit.",
+        "summary": "Simulate damage per second for one operator configuration.",
+        "description": "Pure CPU on an unauthenticated route, so the body is bounds-checked first\nand the work runs on the blocking pool under admission control.\n\nMemoised: the result is a pure function of the body and the loaded game\ndata (no clock, no RNG, no user scoping), so two people posting the same\nconfiguration get the same three floats. The UI compares configurations by\nfiring a burst of these at once, which was filling the admission queue; a\nburst of repeats costs one simulation.\n\nValidation stays AHEAD of the cache read so an out-of-range body is rejected\nrather than keyed, and the cache read sits ahead of `cpu::run` so a hit never\nconsumes a permit.",
         "operationId": "calculate",
         "requestBody": {
           "content": {
@@ -5085,8 +5084,8 @@
         "tags": [
           "leaderboard"
         ],
-        "summary": "A user's score/rank across every leaderboard snapshot, oldest first - the\nScore tab's history chart.",
-        "description": "Takes the same privacy gate as every other by-uid endpoint: a public\nprofile's history is public, a private one's is not, and a player always\nsees their own.",
+        "summary": "A user's score and rank across every leaderboard snapshot, oldest first.",
+        "description": "Feeds the Score tab's history chart. Same privacy gate as every other\nby-uid endpoint: a private profile, or a private Score tab, is visible\nonly to its owner.",
         "operationId": "score_history",
         "parameters": [
           {
@@ -5227,7 +5226,7 @@
         "tags": [
           "leaderboard"
         ],
-        "summary": "Every item at least one visible player holds, with the holder count, the\nlargest single holding and the summed holdings, ordered by holders, most\nfirst; and the visible population those counts are taken over.",
+        "summary": "Every item at least one visible player holds: holder count, largest holding\nand total held, most holders first, plus the visible population.",
         "operationId": "item_catalog",
         "parameters": [
           {
@@ -11834,7 +11833,7 @@
         "tags": [
           "player"
         ],
-        "summary": "Ranked suggestions for what would raise this player's score most.\nRuns the shared privacy gate: another player's data is readable only when\ntheir profile is public, and a player always sees their own.",
+        "summary": "Ranked suggestions for what would raise this player's score most.\nGated on the Score tab: another player's suggestions are readable only when\ntheir profile shows that tab to the viewer; a player always sees their own.",
         "operationId": "get_user_improvements",
         "parameters": [
           {
@@ -11901,7 +11900,7 @@
         "tags": [
           "player"
         ],
-        "summary": "`GET /user/max-level-cost`: the EXP and LMD still needed to bring every\nowned operator to its target, the level cap or the level its modules\nunlock at, against what the account holds. A roster walk over static\ntables - milliseconds, no admission needed.\nRuns the shared privacy gate: another player's data is readable only when\ntheir profile is public, and a player always sees their own.",
+        "summary": "`GET /user/max-level-cost`: the EXP and LMD still needed to bring every\nowned operator to its target, the level cap or the level its modules\nunlock at, against what the account holds. A roster walk over static\ntables, milliseconds, so no CPU admission.\nRuns the shared privacy gate: another player's data is readable only when\ntheir profile is public, and a player always sees their own.",
         "operationId": "get_max_level_cost",
         "parameters": [
           {
@@ -16832,7 +16831,7 @@
               "string",
               "null"
             ],
-            "description": "The small masthead glyph, and the big one the story is headed with."
+            "description": "The small masthead glyph; `mainLogoUrl` is the big one heading the story."
           },
           "mainLogoUrl": {
             "type": [
@@ -17870,7 +17869,7 @@
           },
           "save_credentials": {
             "type": "boolean",
-            "description": "See the module note on `save_credentials`."
+            "description": "\"Remember this login\". Defaults to true; false stores nothing and clears\nwhat a previous login left."
           },
           "username": {
             "type": "string"
@@ -17903,7 +17902,7 @@
           },
           "save_credentials": {
             "type": "boolean",
-            "description": "See the module note on `save_credentials`."
+            "description": "\"Remember this login\". Defaults to true; false stores nothing and clears\nwhat a previous login left."
           }
         }
       },
@@ -18256,7 +18255,7 @@
           },
           "shift_count": {
             "type": "integer",
-            "description": "Shifts in a base day. A game constant, not a property of any one\nplayer - a base whose rooms only queue two presets still runs three\nshifts, alternating across them.",
+            "description": "Shifts in a base day. A game constant: a base whose rooms queue only\ntwo presets still runs three shifts, alternating across them.",
             "minimum": 0
           },
           "slots": {
@@ -18264,7 +18263,7 @@
             "items": {
               "$ref": "#/components/schemas/CatalogSlotDto"
             },
-            "description": "The floorplan every base shares - what the client draws the board from."
+            "description": "The floorplan every base shares."
           },
           "storeys": {
             "type": "array",
@@ -18341,7 +18340,7 @@
           "offset_row": {
             "type": "integer",
             "format": "int32",
-            "description": "Absolute - the storey's Y-offset is already applied. Counts up from the\nbottom of the base, so B4 is 0."
+            "description": "Absolute (storey Y-offset applied), counted up from the bottom: B4 is 0."
           },
           "size_col": {
             "type": "integer",
@@ -18485,7 +18484,7 @@
           "next_full_hours": {
             "type": "number",
             "format": "double",
-            "description": "Hours (from an empty buffer, i.e. from a claim now) until the FIRST\nproduction room's buffer is full - log in before this to lose nothing."
+            "description": "Hours from a claim now until the FIRST production room's buffer is\nfull. Log in before this to lose nothing."
           }
         }
       },
@@ -18554,7 +18553,7 @@
           },
           "save_credentials": {
             "type": "boolean",
-            "description": "See the module note on `save_credentials`."
+            "description": "\"Remember this login\". Defaults to true; false stores nothing and clears\nwhat a previous login left."
           }
         }
       },
@@ -19192,7 +19191,7 @@
       },
       "DormsDto": {
         "type": "object",
-        "description": "The dormitories' contribution. They produce nothing, so they never appear in\na `BaseAssignment` - but they set how fast workers recover and how many can\nrest at once, which is what decides whether a staffing survives its own\nrhythm. Surfaced separately so \"no yield\" doesn't read as \"not accounted for\".",
+        "description": "The dorms. They produce nothing, so no `BaseAssignment` lists them, but they\nset recovery speed and how many can rest at once, which decides whether a\nstaffing survives its own rhythm. Listed apart so no yield doesn't read as\nunaccounted.",
         "required": [
           "count",
           "total_levels",
@@ -19210,7 +19209,7 @@
             "items": {
               "$ref": "#/components/schemas/DormDto"
             },
-            "description": "Each dormitory, BEST FIRST - the order resters fill them. A 2/5/2's\nunder-leveled dorms show up here as the slower rates they are."
+            "description": "Each dorm, best first (the order resters fill them), so a 2/5/2's\nlow dorms show their slower rates."
           },
           "recovery_per_hour": {
             "type": "number",
@@ -19225,7 +19224,7 @@
           "total_levels": {
             "type": "integer",
             "format": "int32",
-            "description": "Sum of dorm levels - the `&dorm&lv` scaling the clause engine reads."
+            "description": "Sum of dorm levels (the clause engine's `&dorm&lv`)."
           }
         }
       },
@@ -19378,7 +19377,7 @@
       },
       "DraftRoomDto": {
         "type": "object",
-        "description": "The serialized twin of [`DraftRoom`] - what the client sends back on every\nevaluate/optimize call.",
+        "description": "[`DraftRoom`] as the client posts it back on every evaluate/optimize call.",
         "required": [
           "slot_id",
           "room_type",
@@ -19904,7 +19903,7 @@
               "null"
             ],
             "format": "double",
-            "description": "Hours since the newest morale write in the sync - how stale the\n\"current bar\" data is. `None` when the sync carries no morale."
+            "description": "Hours since the sync's newest morale write, i.e. how stale the current\nbars are. `None` when the sync carries no morale."
           },
           "power": {
             "$ref": "#/components/schemas/PowerDto",
@@ -19931,7 +19930,7 @@
               },
               {
                 "$ref": "#/components/schemas/SustainabilityDto",
-                "description": "The drafted crews simulated with NO rotation at all - \"if you never\nswap\". `None` when nothing is staffed. Seeded with PROJECTED live\nmorale, so its clock starts now, not at a hypothetical full bar."
+                "description": "The drafted crews simulated with no rotation (\"if you never swap\").\n`None` when nothing is staffed. Seeded with PROJECTED live morale, so\nits clock starts now, not at a full bar."
               }
             ]
           }
@@ -22463,7 +22462,7 @@
           },
           "save_credentials": {
             "type": "boolean",
-            "description": "See the module note on `save_credentials`."
+            "description": "\"Remember this login\". Defaults to true; false stores nothing and clears\nwhat a previous login left."
           },
           "server": {
             "type": "string"
@@ -23959,7 +23958,7 @@
       },
       "OperatorOwnershipCounts": {
         "type": "object",
-        "description": "One operator's community counts. Struct-valued rather than a bare owner\ntally so the next statistic is a field here instead of a fourth map\ntravelling alongside in the response.",
+        "description": "One operator's community counts. A struct, not a bare owner tally, so the\nnext statistic is a field here rather than another map in the response.",
         "required": [
           "owners",
           "e2Owners"
@@ -26391,7 +26390,7 @@
       },
       "RotationRequest": {
         "type": "object",
-        "description": "A rotation is whole-base by construction (a shift covers every room at\nonce), so unlike optimize there is no `scope` - only who must stay put.",
+        "description": "No `scope`, unlike optimize: a shift covers every room at once, so the only\ninput is who must stay put.",
         "required": [
           "layout"
         ],
@@ -26578,7 +26577,7 @@
       },
       "ScoreHistoryPoint": {
         "type": "object",
-        "description": "One point of a user's leaderboard history - a snapshot they appeared in.",
+        "description": "One point of a user's leaderboard history: a snapshot they appeared in.",
         "required": [
           "taken_at",
           "rank_global",
@@ -27593,7 +27592,7 @@
           "totalUsers": {
             "type": "integer",
             "format": "int64",
-            "description": "Number of users counted in the denominator - every user that has any\nskin record (i.e. has imported their data at least once)."
+            "description": "The denominator: every user with any skin record, so anyone who has\nimported at least once."
           }
         }
       },
@@ -28853,7 +28852,7 @@
               "null"
             ],
             "format": "int32",
-            "description": "0 through 16 on the 17 mainline chapters, absent everywhere else. Read\noff the ZONE (`zone_table.ZoneNameTitleCurrent`, the \"00\"..\"16\" the\nclient prints under `EPISODE`), falling back to the `main_N` id. It is\nwhat a reader actually knows a chapter by, where `name` is an arc\ntitle nobody remembers.",
+            "description": "0 through 16 on the 17 mainline chapters, absent everywhere else. Read\noff the ZONE (`zone_table.ZoneNameTitleCurrent`, the \"00\"..\"16\" the\nclient prints under `EPISODE`), falling back to the `main_N` id. Readers\nknow a chapter by this number, not by its `name`.",
             "minimum": 0
           },
           "coverKind": {
@@ -28922,7 +28921,7 @@
           "startTime": {
             "type": "integer",
             "format": "int64",
-            "description": "Unix release time, `-1` when nothing dates the group. It is the\ngroup's own `StartTime`, except on a MAINLINE group, where every one of\nthe 17 EN rows writes -1 and the date is the zone's\n`zone_table.MainlineAdditionInfo.ZoneOpenTime` instead (5 of 17 carry\none: `main_10` 1666180800 through `main_14` 1730394000). No field says\nwhich source answered, because a release date is a release date and the\nconsumer renders one line either way."
+            "description": "Unix release time, `-1` when nothing dates the group. It is the\ngroup's own `StartTime`, except on a MAINLINE group, where every one of\nthe 17 EN rows writes -1 and the date is the zone's\n`zone_table.MainlineAdditionInfo.ZoneOpenTime` instead (5 of 17 carry\none: `main_10` 1666180800 through `main_14` 1730394000). Which source\nanswered is not exposed; the consumer renders one date either way."
           },
           "stories": {
             "type": "array",
@@ -28974,12 +28973,12 @@
               "format": "int32",
               "minimum": 0
             },
-            "description": "Readers per story, in the group's own story order: the \"how far people\nget\" curve. It is the same number `stories[]` carries for each id,\narranged so a consumer can draw the curve without a join.\n\nABSENT on an operator's records, and only there. Carrying it for all\n766 groups put the document at 153,950 bytes, over the 150 KB the wire\ncontract allows; dropping it from the 315 record groups, which hold 367\none-story-deep curves that say nothing their `readers` count does not,\nbrings it to 150,066. That is 3,534 bytes under the ceiling and about 70\nmore stories, which is a THIN margin: the real-data test asserts the\nceiling, so the next EN batch that crosses it says so before the wire\ndoes, and the fix then is to drop the curve everywhere and let the\nconsumer join it. A consumer that wants a record's curve reads\n`stories[]`, which is where every one of these numbers came from."
+            "description": "Readers per story in the group's story order (the \"how far people get\"\ncurve): the same numbers as `stories[]`, pre-joined.\n\nAbsent only on operator records. On all 766 groups the document was\n153,950 bytes, over the 150 KB wire limit; dropping it from the 315\nrecord groups (367 one-story curves that add nothing over `readers`)\ngives 150,066, 3,534 bytes (about 70 stories) under. The real-data test\nasserts the ceiling; when it trips, drop the curve everywhere and join\nclient-side."
           },
           "finished": {
             "type": "integer",
             "format": "int32",
-            "description": "Accounts that have read every GATED story in the group, the stories\nthe stage records can speak for. A group with no gated story counts 0,\nand the tab prints that as not measurable rather than as nobody:\n494 EN stories carry no gate (every operator record, 20 mini vignettes,\n`main_0`'s two Prologue guide entries), and 2,313 of 2,576 accounts are\nknown only through their stage records, so \"every scripted story\"\nwould have made chapter 0 finished by 0 of its 2,314 readers.",
+            "description": "Accounts that read every GATED story in the group (the ones stage\nrecords can speak for). 0 on a group with no gated story; the tab shows\nthat as unmeasurable, not as nobody. 494 EN stories have no gate (every\noperator record, 20 mini vignettes, `main_0`'s two Prologue guide\nentries) and 2,313 of 2,576 accounts are known only from stage records,\nso \"every scripted story\" made chapter 0 finished by 0 of 2,314 readers.",
             "minimum": 0
           },
           "id": {
@@ -29759,7 +29758,7 @@
               "null"
             ],
             "format": "int32",
-            "description": "Joined from `user_operators` - null if the support refers to an op the\nplayer no longer owns (shouldn't happen, but the FK is soft)."
+            "description": "Joined from `user_operators`: null if the support names an operator the\nplayer no longer owns (shouldn't happen, but the FK is soft)."
           },
           "favor_point": {
             "type": [
