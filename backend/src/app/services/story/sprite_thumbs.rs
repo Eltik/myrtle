@@ -220,12 +220,7 @@ pub async fn ensure(
     if fresh(&target) {
         return Ok(rel);
     }
-    let tmp_name = format!(
-        "{}.{}.{:?}.tmp",
-        variant_file_stem(&variant.key),
-        std::process::id(),
-        std::thread::current().id()
-    );
+    let tmp_name = crate::utils::fs::unique_tmp_name(&variant_file_stem(&variant.key));
     let v = variant.clone();
     crate::app::cpu::run(
         "story_sprite_variant_thumb",
@@ -268,8 +263,10 @@ pub(super) fn write_atomically(target: &Path, tmp_name: &str, bytes: &[u8]) -> a
         |c: char| !c.is_ascii_alphanumeric() && c != '.' && c != '_',
         "",
     ));
-    std::fs::write(&tmp, bytes)?;
-    std::fs::rename(&tmp, target)?;
+    if let Err(e) = std::fs::write(&tmp, bytes).and_then(|()| std::fs::rename(&tmp, target)) {
+        let _ = std::fs::remove_file(&tmp);
+        return Err(e.into());
+    }
     Ok(())
 }
 

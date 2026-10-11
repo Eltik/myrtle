@@ -3,6 +3,25 @@
 
 use std::io::Write;
 use std::path::Path;
+use std::sync::atomic::{AtomicU64, Ordering};
+
+/// A temp-file name for `stem` that no other writer in this process is using.
+///
+/// Process id plus a process-wide sequence number. A thread id is not enough:
+/// tokio polls many requests on one worker thread, so two renders of one file
+/// that both missed the cache minted the same name there, the second writer
+/// truncated the first one's temp file, and the loser's rename found it already
+/// moved and answered 404 (33 of 80 renders in
+/// `story_sprite_thumb::tests::concurrent_renders_of_one_id_on_one_thread_all_succeed`
+/// before this).
+pub fn unique_tmp_name(stem: &str) -> String {
+    static SEQ: AtomicU64 = AtomicU64::new(0);
+    format!(
+        "{stem}.{}.{}.tmp",
+        std::process::id(),
+        SEQ.fetch_add(1, Ordering::Relaxed)
+    )
+}
 
 /// Replace `path` with `bytes` so that a reader, or the next run after a crash,
 /// sees either the old file or the whole new one, never a prefix.
@@ -39,7 +58,18 @@ pub fn write_durable(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::write_durable;
+    use super::{unique_tmp_name, write_durable};
+
+    #[test]
+    fn two_temp_names_minted_on_one_thread_differ() {
+        let a = unique_tmp_name("avg_npc_1.webp");
+        let b = unique_tmp_name("avg_npc_1.webp");
+        assert_ne!(a, b);
+        assert!(
+            a.starts_with("avg_npc_1.webp.") && a.ends_with(".tmp"),
+            "{a}"
+        );
+    }
 
     fn scratch(name: &str) -> std::path::PathBuf {
         let dir = std::env::temp_dir().join(format!(

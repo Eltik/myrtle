@@ -332,12 +332,7 @@ pub(super) async fn ensure_variant(
     if fresh(&target) {
         return Ok((art_dir, rel));
     }
-    let tmp_name = format!(
-        "{}.{}.{:?}.tmp",
-        size.as_str(),
-        std::process::id(),
-        std::thread::current().id()
-    );
+    let tmp_name = crate::utils::fs::unique_tmp_name(size.as_str());
     let width = size.width();
     let rendered = cpu::run("story_gallery_variant", move || -> anyhow::Result<()> {
         let png = std::fs::read(&source)?;
