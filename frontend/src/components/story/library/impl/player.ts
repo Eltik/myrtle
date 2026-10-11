@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { asset } from "#/components/operators/detail/impl/assets";
+import type { GamedataServer } from "#/lib/api/gamedata";
 import { createStoryAudio, type StoryAudio } from "#/lib/story/audio";
 import { clamp01 } from "#/lib/story/num";
 import { DEFAULT_SETTINGS, loadSettings, updateSettings } from "#/lib/story/settings";
@@ -9,6 +10,8 @@ import type { StoryMusic } from "#/types/generated/StoryMusic";
 export interface IThemeCue {
     intro?: string;
     loop: string;
+    /** The server whose tree holds both clips, when it is not the default one. Absent for every story theme. */
+    server?: GamedataServer;
 }
 
 /** What is sounding, named well enough for a bar at the foot of the page to say so. */
@@ -126,7 +129,7 @@ function start(track: IPlayerTrack, offsetSeconds: number | null): void {
     // it is a fade-IN the reader hears as a slow start. A seek is neither: the
     // two ends are the same track, so a crossfade there is the track over itself.
     const crossfade = offsetSeconds === null && state.track !== null && !state.paused ? FADE_SEC : 0;
-    const req = { intro: track.cue.intro ? asset(track.cue.intro) : undefined, loop: asset(track.cue.loop), volume: 1, crossfade };
+    const req = { intro: track.cue.intro ? asset(track.cue.intro, track.cue.server) : undefined, loop: asset(track.cue.loop, track.cue.server), volume: 1, crossfade };
     if (offsetSeconds === null) audio.playMusic(req);
     else audio.playMusicAt(req, offsetSeconds);
     // The length survives a seek within one cue and is unknown for a new one,
