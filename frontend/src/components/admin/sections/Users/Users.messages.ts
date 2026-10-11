@@ -303,8 +303,8 @@ export const messages = {
         description: "Body of the detail panel when the account in the link is not in the loaded list.",
     },
     "users.sheet.footer": {
-        text: "Role changes apply the next time their session refreshes.",
-        description: "Footer note in a person's detail panel.",
+        text: "Demotions apply on their next request. Promotions wait until they sign in again.",
+        description: "Footer note in a person's detail panel: when a role change takes effect. A lower role is enforced at once; a higher one needs a new sign-in.",
     },
     "users.sheet.profile": {
         text: "Public profile",

@@ -561,7 +561,7 @@
     "admin.users.server.all": "All",
     "admin.users.server.label": "Filter by server",
     "admin.users.sheet.deleted.body": "This account was deleted. Its leftover language grants can be removed from Home.",
-    "admin.users.sheet.footer": "Role changes apply the next time their session refreshes.",
+    "admin.users.sheet.footer": "Demotions apply on their next request. Promotions wait until they sign in again.",
     "admin.users.sheet.grade": "Grade {grade}",
     "admin.users.sheet.grant": "+ Grant",
     "admin.users.sheet.grantedAt": "Granted {when}",
