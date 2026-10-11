@@ -12,6 +12,7 @@ import { CommandProvider } from "#/lib/command-context";
 import type { IBootstrap } from "#/lib/i18n";
 import { DEFAULT_LOCALE, directionForLocale, I18nProvider } from "#/lib/i18n";
 import { getI18nBootstrapFn } from "#/lib/i18n/server";
+import { legacyRedirect } from "#/lib/legacy-routes";
 import { metaT } from "#/lib/meta";
 import { memoBootstrap, memoSession, seedRootContext } from "#/lib/root-context";
 import { absolute, localizedPath, seo } from "#/lib/seo";
@@ -39,7 +40,12 @@ else if(raw.indexOf('c:')===0){var hex=raw.slice(2);if(/^#[0-9a-fA-F]{6}$/.test(
 }}catch(e){}})();`;
 
 export const Route = createRootRouteWithContext<IMyRouterContext>()({
-    beforeLoad: async (): Promise<{ user: Awaited<ReturnType<typeof getSessionFn>> } & IRootContext> => {
+    beforeLoad: async ({ location }): Promise<{ user: Awaited<ReturnType<typeof getSessionFn>> } & IRootContext> => {
+        // A URL an earlier version of the site served, before the session and catalog
+        // round trip it does not need. 301 so search engines move the page's rank too.
+        const legacy = legacyRedirect(location.pathname, location.search as Record<string, unknown>);
+        if (legacy) throw redirect({ href: legacy, statusCode: 301 });
+
         // One round trip, not two: the catalog is needed for the very first
         // painted character, so it must not queue behind the session. Both are
         // memoized on the client, where this runs on every navigation and every
