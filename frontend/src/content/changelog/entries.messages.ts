@@ -10,6 +10,50 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-10-12.title": {
+        text: "New: Music, Archives and a Squad Builder",
+        description: "Title of the 2026-10-12 release note. 'Archives' and 'Squad Builder' are page names and must match their translations.",
+    },
+    "note.2026-10-12.lead": {
+        text: "Three new pages. **In-Game Music** puts every game track and Monster Siren song in one library, with lyrics, a queue and playlists. **Archives** maps the factions, their territories and their people. The **Squad Builder** plans a squad from your synced roster and checks its coverage, economy and synergy.",
+        description: "Lead paragraph of the 2026-10-12 release note, rendered as Markdown. 'In-Game Music', 'Archives' and 'Squad Builder' are page names and must match their translations; Monster Siren is the game's record label and keeps its name.",
+    },
+    "note.2026-10-12.hrefLabel": {
+        text: "Open the music library",
+        description: "Label of the 2026-10-12 release note's call to action, which opens the In-Game Music page.",
+    },
+    "note.2026-10-12.item.1": {
+        text: "A News page lists the official notices, and the header counts down to the end of maintenance.",
+        description: "Bullet in the 2026-10-12 release note, filed under 'New'. 'News' is a page name and must match its translation.",
+    },
+    "note.2026-10-12.item.2": {
+        text: "Enemy pages play the sounds each enemy makes in battle.",
+        description: "Bullet in the 2026-10-12 release note, filed under 'New'.",
+    },
+    "note.2026-10-12.item.3": {
+        text: "The chibi viewer can pause and step one frame at a time.",
+        description: "Bullet in the 2026-10-12 release note, filed under 'New'. A chibi is an operator's or enemy's small battle sprite.",
+    },
+    "note.2026-10-12.item.4": {
+        text: "With Enable Spoilers on in Settings, operator pages show the factions an operator belongs to that their card leaves out.",
+        description: "Bullet in the 2026-10-12 release note, filed under 'New'. 'Enable Spoilers' and 'Settings' are UI labels and must match their translations.",
+    },
+    "note.2026-10-12.item.5": {
+        text: "You can delete your account from Settings.",
+        description: "Bullet in the 2026-10-12 release note, filed under 'New'. 'Settings' is a page name and must match its translation.",
+    },
+    "note.2026-10-12.item.6": {
+        text: "Typing a UID into player search opens that player's profile.",
+        description: "Bullet in the 2026-10-12 release note, filed under 'Improved'. A UID is a player's in-game account number.",
+    },
+    "note.2026-10-12.item.7": {
+        text: "Links from the old site, such as /dps-calculator, open the right page instead of Not Found.",
+        description: "Bullet in the 2026-10-12 release note, filed under 'Fixed'. '/dps-calculator' is a URL path and stays as written.",
+    },
+    "note.2026-10-12.item.8": {
+        text: "Inventory items no longer get stuck showing initials instead of their icons.",
+        description: "Bullet in the 2026-10-12 release note, filed under 'Fixed'.",
+    },
     "note.2026-10-11.title": {
         text: "New: A redesigned homepage",
         description: "Title of the 2026-10-11 release note.",
