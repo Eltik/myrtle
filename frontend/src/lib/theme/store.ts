@@ -26,6 +26,8 @@ interface IThemeState {
     hydrated: boolean;
 }
 
+type ToggleField = "dynamicArtwork" | "latinNames" | "spoilers" | "maintenanceCountdown";
+
 const THEME_MODE_STORAGE_KEY = "theme";
 const DYNAMIC_ART_STORAGE_KEY = "myrtle-dynamic-art";
 const LATIN_NAMES_STORAGE_KEY = "myrtle-latin-names";
@@ -39,27 +41,22 @@ function getInitialMode(): ThemeMode {
     return "auto";
 }
 
-function getInitialDynamicArtwork(): boolean {
-    if (typeof window === "undefined") return true;
-    const stored = window.localStorage.getItem(DYNAMIC_ART_STORAGE_KEY);
-    return stored === null ? true : stored === "true";
+/**
+ * A stored on/off toggle: `fallback` when nothing is stored (or off the client), else on only
+ * for the exact string "true".
+ */
+function readToggle(key: string, fallback: boolean): boolean {
+    if (typeof window === "undefined") return fallback;
+    const stored = window.localStorage.getItem(key);
+    return stored === null ? fallback : stored === "true";
 }
 
-function getInitialLatinNames(): boolean {
-    if (typeof window === "undefined") return true;
-    const stored = window.localStorage.getItem(LATIN_NAMES_STORAGE_KEY);
-    return stored === null ? true : stored === "true";
-}
-
-function getInitialSpoilers(): boolean {
-    if (typeof window === "undefined") return false;
-    return window.localStorage.getItem(SPOILERS_STORAGE_KEY) === "true";
-}
-
-function getInitialMaintenanceCountdown(): boolean {
-    if (typeof window === "undefined") return true;
-    const stored = window.localStorage.getItem(MAINTENANCE_COUNTDOWN_STORAGE_KEY);
-    return stored === null ? true : stored === "true";
+/** Sets one toggle in the store and keeps it in localStorage under `key`. */
+function writeToggle(field: ToggleField, key: string, enabled: boolean): void {
+    themeStore.setState((s) => ({ ...s, [field]: enabled }));
+    if (typeof window !== "undefined") {
+        window.localStorage.setItem(key, String(enabled));
+    }
 }
 
 function getSystemResolved(): ResolvedTheme {
@@ -116,7 +113,17 @@ export function hydrateTheme(): void {
     const accent = getStoredAccent();
     const resolved = applyMode(mode);
     applyAccent(accent, resolved);
-    themeStore.setState(() => ({ mode, resolved, accent, dynamicArtwork: getInitialDynamicArtwork(), latinNames: getInitialLatinNames(), spoilers: getInitialSpoilers(), maintenanceCountdown: getInitialMaintenanceCountdown(), hydrated: true }));
+    themeStore.setState(() => ({
+        mode,
+        resolved,
+        accent,
+        dynamicArtwork: readToggle(DYNAMIC_ART_STORAGE_KEY, true),
+        latinNames: readToggle(LATIN_NAMES_STORAGE_KEY, true),
+        // Off by default: only an explicit opt-in shows spoilers.
+        spoilers: readToggle(SPOILERS_STORAGE_KEY, false),
+        maintenanceCountdown: readToggle(MAINTENANCE_COUNTDOWN_STORAGE_KEY, true),
+        hydrated: true,
+    }));
 }
 
 let systemMediaQuery: MediaQueryList | null = null;
@@ -170,28 +177,15 @@ export const themeActions = {
         setStoredAccent(null);
     },
     setDynamicArtwork(enabled: boolean): void {
-        themeStore.setState((s) => ({ ...s, dynamicArtwork: enabled }));
-        if (typeof window !== "undefined") {
-            window.localStorage.setItem(DYNAMIC_ART_STORAGE_KEY, String(enabled));
-        }
+        writeToggle("dynamicArtwork", DYNAMIC_ART_STORAGE_KEY, enabled);
     },
     setLatinNames(enabled: boolean): void {
-        themeStore.setState((s) => ({ ...s, latinNames: enabled }));
-        if (typeof window !== "undefined") {
-            window.localStorage.setItem(LATIN_NAMES_STORAGE_KEY, String(enabled));
-        }
+        writeToggle("latinNames", LATIN_NAMES_STORAGE_KEY, enabled);
     },
     setSpoilers(enabled: boolean): void {
-        themeStore.setState((s) => ({ ...s, spoilers: enabled }));
-        if (typeof window !== "undefined") {
-            window.localStorage.setItem(SPOILERS_STORAGE_KEY, String(enabled));
-        }
+        writeToggle("spoilers", SPOILERS_STORAGE_KEY, enabled);
     },
-
     setMaintenanceCountdown(enabled: boolean): void {
-        themeStore.setState((s) => ({ ...s, maintenanceCountdown: enabled }));
-        if (typeof window !== "undefined") {
-            window.localStorage.setItem(MAINTENANCE_COUNTDOWN_STORAGE_KEY, String(enabled));
-        }
+        writeToggle("maintenanceCountdown", MAINTENANCE_COUNTDOWN_STORAGE_KEY, enabled);
     },
 };

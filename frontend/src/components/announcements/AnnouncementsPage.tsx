@@ -11,7 +11,7 @@ import { cn } from "#/lib/utils";
 import type { messages } from "./Announcements.messages";
 import { AnnouncementDetail, DetailPlaceholder } from "./impl/AnnouncementDetail";
 import { AnnouncementList } from "./impl/AnnouncementList";
-import { AnnouncementsError } from "./impl/AnnouncementsError";
+import { AnnouncementsError, retryOf } from "./impl/AnnouncementsError";
 
 /**
  * The in-game notice board. Two panes from `lg` up (list beside the open notice), one below it:
@@ -90,7 +90,7 @@ export function AnnouncementsPage() {
                     ) : query.isError ? (
                         // The list column shows this on wide screens; a phone with a notice open has only this column.
                         <div className="lg:hidden">
-                            <AnnouncementsError onRetry={() => void query.refetch()} retrying={query.isFetching} />
+                            <AnnouncementsError {...retryOf(query)} />
                         </div>
                     ) : (
                         <DetailPlaceholder loading={query.isPending} />

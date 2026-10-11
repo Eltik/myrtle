@@ -4,7 +4,7 @@ import { useTheme } from "#/hooks/use-theme";
 import { useT } from "#/lib/i18n";
 import { useFormatters } from "#/lib/i18n/formatters";
 import type { TypedT } from "#/lib/i18n/messages";
-import { formatSpan } from "#/lib/maintenance";
+import { formatSpan, isGameDown } from "#/lib/maintenance";
 import { cn } from "#/lib/utils";
 import type { messages } from "./Maintenance.messages";
 
@@ -51,7 +51,7 @@ export function MaintenancePill() {
             className="relative inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-border bg-muted/60 px-2 font-medium text-[12px] text-foreground tabular-nums no-underline transition-colors pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:-inset-y-1.5 hover:bg-muted"
         >
             <WrenchIcon className="size-3.5 text-muted-foreground" aria-hidden="true" />
-            <StatusDot down={m.stage !== "upcoming"} />
+            <StatusDot down={isGameDown(m.stage)} />
             <span className="hidden whitespace-nowrap md:inline">{label}</span>
         </a>
     );
@@ -87,7 +87,7 @@ export function MaintenanceBanner({ className }: { className?: string }) {
     return (
         <div className={cn("flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[14px] border border-border bg-card px-4 py-3", className)}>
             <WrenchIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-            <StatusDot down={m.stage !== "upcoming"} />
+            <StatusDot down={isGameDown(m.stage)} />
             <span className="font-semibold text-[14px] text-foreground tabular-nums">{shortLabel(m, t)}</span>
             <span className="text-[13px] text-muted-foreground">{detail}</span>
             <a href={m.window.notice_url} target="_blank" rel="noopener noreferrer" className="pointer-coarse:-my-3 ml-auto pointer-coarse:py-3 text-[13px] text-primary underline-offset-4 hover:underline">

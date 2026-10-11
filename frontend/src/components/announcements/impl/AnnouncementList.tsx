@@ -1,6 +1,6 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Newspaper, RotateCw, Search, SearchX } from "lucide-react";
+import { Newspaper, Search, SearchX } from "lucide-react";
 import { Button } from "#/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
 import { FilterChip } from "#/components/ui/filter-chip";
@@ -13,7 +13,7 @@ import { cn } from "#/lib/utils";
 import type { AnnouncementList as Board } from "#/types/generated/AnnouncementList";
 import type { AnnouncementSummary } from "#/types/generated/AnnouncementSummary";
 import type { messages } from "../Announcements.messages";
-import { AnnouncementsError } from "./AnnouncementsError";
+import { AnnouncementsError, RetryButton, retryOf } from "./AnnouncementsError";
 import { useGroupLabel } from "./group-label";
 
 interface IAnnouncementListProps {
@@ -38,7 +38,7 @@ export function AnnouncementList({ query, server, all, shown, groups, group, onG
     const groupLabel = useGroupLabel();
 
     if (query.isPending) return <ListSkeleton />;
-    if (query.isError) return <AnnouncementsError onRetry={() => void query.refetch()} retrying={query.isFetching} />;
+    if (query.isError) return <AnnouncementsError {...retryOf(query)} />;
 
     const unreadCount = all.filter((a) => unreadIds.has(a.id)).length;
 
@@ -78,10 +78,7 @@ export function AnnouncementList({ query, server, all, shown, groups, group, onG
                         <EmptyDescription>{t("empty.body")}</EmptyDescription>
                     </EmptyHeader>
                     <EmptyContent>
-                        <Button variant="outline" onClick={() => void query.refetch()} disabled={query.isFetching} className="max-lg:h-11!">
-                            <RotateCw className={cn("size-4", query.isFetching && "animate-spin")} aria-hidden="true" />
-                            {t("error.retry")}
-                        </Button>
+                        <RetryButton {...retryOf(query)} />
                     </EmptyContent>
                 </Empty>
             ) : shown.length === 0 ? (

@@ -1,8 +1,5 @@
 import { DiscIcon } from "lucide-react";
 import type React from "react";
-import { useState } from "react";
-import { pageOf, RECORD_PAGE } from "#/components/story/library/impl/paging";
-import { Button } from "#/components/ui/button";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
@@ -11,6 +8,7 @@ import type { IAlbum } from "../impl/model";
 import { useMusicNav } from "../impl/nav";
 import type { messages } from "../MusicGallery.messages";
 import { usePlayer } from "../player/engine";
+import { NOTICE_CLASS, ShowMore, usePagedList } from "./paging";
 
 type MusicT = TypedT<typeof messages>;
 
@@ -27,17 +25,14 @@ export function AlbumsGrid({ albums, pageKey }: { albums: readonly IAlbum[]; pag
     const t: MusicT = useT("gallery");
     const nav = useMusicNav();
     const playingAlbum = usePlayer((s) => s.current?.albumId ?? null);
-    const [raised, setRaised] = useState<{ key: string; limit: number }>({ key: pageKey, limit: RECORD_PAGE });
-    const limit = raised.key === pageKey ? raised.limit : RECORD_PAGE;
-    const { shown, hidden } = pageOf(albums, limit);
-    const more = Math.min(RECORD_PAGE, hidden);
+    const page = usePagedList(albums, pageKey);
 
-    if (albums.length === 0) return <p className="rounded-xl border border-border border-dashed p-10 text-center font-sans text-[13px] text-muted-foreground">{t("music.list.noAlbums")}</p>;
+    if (albums.length === 0) return <p className={NOTICE_CLASS}>{t("music.list.noAlbums")}</p>;
 
     return (
         <div>
             <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3.5 p-0 sm:grid-cols-[repeat(auto-fill,minmax(170px,1fr))]">
-                {shown.map((album) => (
+                {page.shown.map((album) => (
                     <li key={album.id}>
                         <button
                             type="button"
@@ -57,13 +52,7 @@ export function AlbumsGrid({ albums, pageKey }: { albums: readonly IAlbum[]; pag
                     </li>
                 ))}
             </ul>
-            {hidden > 0 ? (
-                <div className="mt-4 flex justify-center">
-                    <Button variant="outline" className="max-sm:min-h-11" onClick={() => setRaised({ key: pageKey, limit: limit + more })}>
-                        {t("music.showMore", { count: more, remaining: hidden })}
-                    </Button>
-                </div>
-            ) : null}
+            <ShowMore page={page} />
         </div>
     );
 }

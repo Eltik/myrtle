@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type IQueue, identityOrder, insertEnd, insertNext, moveItem, nextIndex, previousIndex, removeAt, shuffledOrder, validOrder } from "./queue";
+import { type IQueue, identityOrder, insertEnd, insertNext, moveItem, nextIndex, playOrder, previousIndex, removeAt, shuffledOrder, validOrder } from "./queue";
 
 function q(items: string[], index: number, order: number[] = identityOrder(items.length)): IQueue<string> {
     return { items, index, order };
@@ -25,6 +25,16 @@ describe("queue arithmetic", () => {
         expect(previousIndex({ ...x, index: 0 }, "all")).toBe(2);
         expect(nextIndex(x, "one", true)).toBe(2);
         expect(nextIndex({ ...x, index: 0 }, "one", false)).toBe(1);
+    });
+
+    it("a fresh play order is the list order, or the seeded shuffle with the first item in front", () => {
+        expect(playOrder(4, 2, false)).toEqual([0, 1, 2, 3]);
+        const seeded = () => {
+            let n = 0;
+            return () => [0.7, 0.1, 0.4][n++ % 3] as number;
+        };
+        expect(playOrder(4, 2, true, seeded())).toEqual(shuffledOrder(4, 2, seeded()));
+        expect(playOrder(0, 0, true)).toEqual([]);
     });
 
     it("a shuffled order puts the current item first and names every index once", () => {

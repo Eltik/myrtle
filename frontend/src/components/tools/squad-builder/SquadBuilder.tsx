@@ -8,7 +8,6 @@ import { useErrorMessage } from "#/components/ui/error-message";
 import { PageHeader } from "#/components/ui/page-header";
 import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
-import { readStoredValue, writeStoredValue } from "#/hooks/use-local-storage-state";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { deleteSquadFn, SQUADS_QUERY_KEY, saveSquadFn, squadAnalysisQueryOptions, squadRulesQueryOptions, squadsQueryOptions } from "#/lib/api/squads";
 import { stageDetailQueryOptions } from "#/lib/api/stages";
@@ -33,46 +32,13 @@ import { SlotChooser } from "./impl/SlotChooser";
 import { SquadToolbar } from "./impl/SquadToolbar";
 import { StageCard } from "./impl/StageCard";
 import { StagePicker } from "./impl/StagePicker";
-import { advancedModules, decodeShare, emptyDraft, encodeDpsImport, filledSeats, type IRosterBuild, type IShareSearch, type ISquadDraft, memberFromRoster, normalizeMembers, resolveSeat, rosterBuildOf, SQUAD_SIZE, SUPPORT_SEAT, toAnalyzeRequest } from "./model";
+import { advancedModules, decodeShare, emptyDraft, encodeDpsImport, filledSeats, type IRosterBuild, type IShareSearch, type ISquadDraft, memberFromRoster, normalizeMembers, resolveSeat, rosterBuildOf, SQUAD_SIZE, SUPPORT_SEAT, seatAt, toAnalyzeRequest } from "./model";
+import { COMPACT_KEY, DRAFT_KEY, readHydration, START_DP_KEY, safeWrite } from "./persist";
 import type { messages } from "./SquadBuilder.messages";
 import { deriveStageContext, normalStageId } from "./stage";
-import { DEFAULT_START_DP, draftFromSaved, INITIAL_STATE, isDirty, nextEmptySeat, parseStoredDraft, type StartDpFrom, squadReducer } from "./state";
+import { draftFromSaved, INITIAL_STATE, isDirty, nextEmptySeat, squadReducer } from "./state";
 
 type PageT = TypedT<typeof messages>;
-
-const DRAFT_KEY = "squad-builder:draft-v1";
-const START_DP_KEY = "squad-builder:start-dp-v1";
-const COMPACT_KEY = "squad-builder:compact-v1";
-
-interface IStoredDraft {
-    draft: unknown;
-    slot: unknown;
-    savedBaseline: unknown;
-}
-
-function safeWrite(key: string, value: unknown): void {
-    try {
-        writeStoredValue(key, value);
-    } catch {
-        // Storage full or blocked: the page still works, it just will not remember.
-    }
-}
-
-function readHydration() {
-    const stored = readStoredValue<IStoredDraft | null>(DRAFT_KEY, null);
-    const dp = readStoredValue<{ startDp?: unknown; from?: unknown } | null>(START_DP_KEY, null);
-    const compact = readStoredValue<unknown>(COMPACT_KEY, false);
-    const slot = typeof stored?.slot === "number" && stored.slot >= 1 && stored.slot <= 4 ? stored.slot : null;
-    const from = dp?.from as StartDpFrom | undefined;
-    return {
-        draft: parseStoredDraft(stored?.draft) ?? emptyDraft(),
-        slot,
-        savedBaseline: slot !== null ? parseStoredDraft(stored?.savedBaseline) : null,
-        startDp: typeof dp?.startDp === "number" && Number.isFinite(dp.startDp) && dp.startDp >= 0 ? dp.startDp : DEFAULT_START_DP,
-        startDpFrom: from && from.kind === "stage" && typeof from.code === "string" ? from : ({ kind: "page" } as const),
-        compact: compact === true,
-    };
-}
 
 /** A new seat's skill and module: the roster's choice when owned, else the top skill and first advanced module, the way a full build is usually run. */
 function newMember(op: IOperatorIndexEntry | undefined, charId: string, roster: IRosterBuild | undefined): SquadMember {
@@ -188,15 +154,20 @@ export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): Re
         if (focus !== null) panelRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
     }, [focus]);
 
-    const focusedMember = focus === null ? null : focus === SUPPORT_SEAT ? draft.support : (draft.members[focus] ?? null);
-    const focusedResolved = focus === null ? null : focus === SUPPORT_SEAT ? supportSeat : (seats[focus] ?? null);
+    const focusedMember = focus === null ? null : seatAt(draft.members, draft.support, focus);
+    const focusedResolved = focus === null ? null : seatAt(seats, supportSeat, focus);
     const focusedOp = focusedMember ? operators.get(focusedMember.char_id) : undefined;
 
     const onFocus = (seat: number) => {
-        const member = seat === SUPPORT_SEAT ? draft.support : draft.members[seat];
-        if (readOnlyShare && !member) return;
+        if (readOnlyShare && !seatAt(draft.members, draft.support, seat)) return;
         setLabOpen(false);
         setFocus((f) => (f === seat ? null : seat));
+    };
+
+    /** Seat `member`, or empty the seat with `null`; the support at `SUPPORT_SEAT`. */
+    const setSeatMember = (seat: number, member: SquadMember | null) => {
+        if (seat === SUPPORT_SEAT) dispatch({ type: "SET_SUPPORT", member });
+        else dispatch({ type: "SET_MEMBER", seat, member });
     };
 
     const onPick = (charId: string) => {
@@ -219,15 +190,12 @@ export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): Re
     };
 
     const onRemove = (seat: number) => {
-        if (seat === SUPPORT_SEAT) dispatch({ type: "SET_SUPPORT", member: null });
-        else dispatch({ type: "SET_MEMBER", seat, member: null });
+        setSeatMember(seat, null);
         setFocus((f) => (f === seat ? null : f));
     };
 
     const onChangeMember = (member: SquadMember) => {
-        if (focus === null) return;
-        if (focus === SUPPORT_SEAT) dispatch({ type: "SET_SUPPORT", member });
-        else dispatch({ type: "SET_MEMBER", seat: focus, member });
+        if (focus !== null) setSeatMember(focus, member);
     };
 
     const seated = React.useMemo(() => {
@@ -332,34 +300,16 @@ export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): Re
 
             <div className="mt-6 flex flex-col gap-4">
                 {readOnlyShare ? (
-                    <section className="flex flex-col gap-3 rounded-xl border border-primary/40 bg-primary/5 p-4 sm:flex-row sm:items-center">
-                        <Share2 className="size-5 shrink-0 text-primary" aria-hidden="true" />
-                        <div className="min-w-0 flex-1">
-                            <h2 className="font-semibold text-[14px]">{t("squad.shared.title")}</h2>
-                            <p className="text-[12.5px] text-muted-foreground">{t("squad.shared.desc")}</p>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            {signedIn ? (
-                                <Button size="sm" onClick={() => setChooser("share")}>
-                                    {t("squad.shared.copy")}
-                                </Button>
-                            ) : (
-                                <Button size="sm" onClick={() => dispatch({ type: "KEEP_SHARE" })}>
-                                    {t("squad.shared.editCopy")}
-                                </Button>
-                            )}
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                    dispatch({ type: "CLOSE_SHARE" });
-                                    setFocus(null);
-                                }}
-                            >
-                                {t("squad.shared.close")}
-                            </Button>
-                        </div>
-                    </section>
+                    <SharedBanner
+                        signedIn={signedIn}
+                        onCopy={() => setChooser("share")}
+                        onEditCopy={() => dispatch({ type: "KEEP_SHARE" })}
+                        onClose={() => {
+                            dispatch({ type: "CLOSE_SHARE" });
+                            setFocus(null);
+                        }}
+                        t={t}
+                    />
                 ) : (
                     <SlotBar signedIn={signedIn} isLoading={squadsLoading} saved={saved} synced={squads?.synced ?? []} activeSlot={state.slot} dirty={dirty} onLoadSlot={loadSlot} onLoadGame={loadGame} onSignIn={() => authActions.openLoginDialog()} />
                 )}
@@ -460,31 +410,60 @@ export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): Re
                 }
             />
 
-            <AlertDialog open={pendingLoad !== null} onOpenChange={(open) => !open && setPendingLoad(null)}>
-                <AlertDialogPopup>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>{t("squad.leave.title")}</AlertDialogTitle>
-                        <AlertDialogDescription>{t("squad.leave.desc")}</AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogClose render={(p) => <Button {...p} variant="outline" />}>{t("squad.leave.keep")}</AlertDialogClose>
-                        <AlertDialogClose
-                            render={(p) => (
-                                <Button
-                                    {...p}
-                                    variant="destructive"
-                                    onClick={() => {
-                                        pendingLoad?.();
-                                        setPendingLoad(null);
-                                    }}
-                                />
-                            )}
-                        >
-                            {t("squad.leave.discard")}
-                        </AlertDialogClose>
-                    </AlertDialogFooter>
-                </AlertDialogPopup>
-            </AlertDialog>
+            <LeaveDialog
+                open={pendingLoad !== null}
+                onCancel={() => setPendingLoad(null)}
+                onDiscard={() => {
+                    pendingLoad?.();
+                    setPendingLoad(null);
+                }}
+                t={t}
+            />
         </div>
+    );
+}
+
+/** Over a shared squad, read only: keep a copy (saved or not) or go back to the working copy. */
+function SharedBanner({ signedIn, onCopy, onEditCopy, onClose, t }: { signedIn: boolean; onCopy: () => void; onEditCopy: () => void; onClose: () => void; t: PageT }): React.ReactElement {
+    return (
+        <section className="flex flex-col gap-3 rounded-xl border border-primary/40 bg-primary/5 p-4 sm:flex-row sm:items-center">
+            <Share2 className="size-5 shrink-0 text-primary" aria-hidden="true" />
+            <div className="min-w-0 flex-1">
+                <h2 className="font-semibold text-[14px]">{t("squad.shared.title")}</h2>
+                <p className="text-[12.5px] text-muted-foreground">{t("squad.shared.desc")}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+                {signedIn ? (
+                    <Button size="sm" onClick={onCopy}>
+                        {t("squad.shared.copy")}
+                    </Button>
+                ) : (
+                    <Button size="sm" onClick={onEditCopy}>
+                        {t("squad.shared.editCopy")}
+                    </Button>
+                )}
+                <Button size="sm" variant="outline" onClick={onClose}>
+                    {t("squad.shared.close")}
+                </Button>
+            </div>
+        </section>
+    );
+}
+
+/** Asks before a load replaces unsaved changes. */
+function LeaveDialog({ open, onCancel, onDiscard, t }: { open: boolean; onCancel: () => void; onDiscard: () => void; t: PageT }): React.ReactElement {
+    return (
+        <AlertDialog open={open} onOpenChange={(next) => !next && onCancel()}>
+            <AlertDialogPopup>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>{t("squad.leave.title")}</AlertDialogTitle>
+                    <AlertDialogDescription>{t("squad.leave.desc")}</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogClose render={(p) => <Button {...p} variant="outline" />}>{t("squad.leave.keep")}</AlertDialogClose>
+                    <AlertDialogClose render={(p) => <Button {...p} variant="destructive" onClick={onDiscard} />}>{t("squad.leave.discard")}</AlertDialogClose>
+                </AlertDialogFooter>
+            </AlertDialogPopup>
+        </AlertDialog>
     );
 }

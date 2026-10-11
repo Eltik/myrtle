@@ -15,7 +15,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { cn, getAvatarById, getPortraitById, parseOperatorName, rarityStarColor, subProfessionLabel } from "#/lib/utils";
 import type { SquadMember } from "#/types/generated/SquadMember";
 import type { IOperatorIndexEntry } from "#/types/operators";
-import { type IResolvedSeat, SQUAD_SIZE, SUPPORT_SEAT } from "../model";
+import { type IResolvedSeat, moduleTypeLabel, SQUAD_SIZE, SUPPORT_SEAT } from "../model";
 import { useSeatDrag } from "../useSeatDrag";
 import styles from "./SeatCard.module.css";
 import type { messages } from "./SeatGrid.messages";
@@ -447,7 +447,7 @@ function SeatLoadout({ resolved, op, t }: { resolved: IResolvedSeat; op: IOperat
     const skillName = skill?.static?.levels?.[0]?.name ?? t("squad.grid.skillAria", { skill: member.skill_index + 1 });
     const skillRank = build.mastery > 0 ? t("squad.grid.masteryAria", { mastery: build.mastery }) : t("squad.grid.skillLevelAria", { level: build.skill_level });
     const indexModule = member.module_id ? op.modules.find((m) => m.uniEquipId === member.module_id) : undefined;
-    const moduleLabel = indexModule ? [indexModule.typeName1, indexModule.typeName2].filter(Boolean).join("-") : "";
+    const moduleLabel = indexModule ? moduleTypeLabel(indexModule) : "";
     const mod = member.module_id ? detail?.modules?.find((m) => m.uniEquipId === member.module_id) : undefined;
     const moduleRank = t("squad.grid.moduleRank", { rank: build.module_level });
 

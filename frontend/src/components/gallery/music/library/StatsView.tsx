@@ -9,6 +9,7 @@ import { displayArtists, type ICatalog } from "../impl/model";
 import { useMusicNav } from "../impl/nav";
 import { playFrom } from "../impl/playback";
 import type { messages } from "../MusicGallery.messages";
+import { NOTICE_CLASS } from "./paging";
 import { statsOf } from "./stats";
 
 type MusicT = TypedT<typeof messages>;
@@ -29,7 +30,7 @@ export function StatsView({ catalog }: { catalog: ICatalog }): React.ReactElemen
     return (
         <div className="flex flex-col gap-5">
             {stats.plays === 0 ? (
-                <p className="rounded-xl border border-border border-dashed p-10 text-center font-sans text-[13px] text-muted-foreground">{t("music.stats.empty")}</p>
+                <p className={NOTICE_CLASS}>{t("music.stats.empty")}</p>
             ) : (
                 <>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">

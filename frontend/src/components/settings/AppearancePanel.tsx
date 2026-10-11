@@ -93,37 +93,28 @@ export function AppearancePanel() {
                 </CardContent>
             </Card>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>{t("appearance.latinNames.title")}</CardTitle>
-                    <CardDescription>{t("appearance.latinNames.desc")}</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                    <SettingRow layout="inline" title={t("appearance.latinNames.rowTitle")} description={t("appearance.latinNames.rowDesc")} control={<Switch checked={latinNames} onCheckedChange={setLatinNames} aria-label={t("appearance.latinNames.rowTitle")} />} />
-                </CardContent>
-            </Card>
+            <ToggleCard title={t("appearance.latinNames.title")} description={t("appearance.latinNames.desc")} rowTitle={t("appearance.latinNames.rowTitle")} rowDescription={t("appearance.latinNames.rowDesc")} checked={latinNames} onCheckedChange={setLatinNames} />
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>{t("appearance.spoilers.title")}</CardTitle>
-                    <CardDescription>{t("appearance.spoilers.desc")}</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                    <SettingRow layout="inline" title={t("appearance.spoilers.rowTitle")} description={t("appearance.spoilers.rowDesc")} control={<Switch checked={spoilers} onCheckedChange={setSpoilers} aria-label={t("appearance.spoilers.rowTitle")} />} />
-                </CardContent>
-            </Card>
+            <ToggleCard title={t("appearance.spoilers.title")} description={t("appearance.spoilers.desc")} rowTitle={t("appearance.spoilers.rowTitle")} rowDescription={t("appearance.spoilers.rowDesc")} checked={spoilers} onCheckedChange={setSpoilers} />
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>{t("appearance.topBar.title")}</CardTitle>
-                    <CardDescription>{t("appearance.topBar.desc")}</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                    <SettingRow layout="inline" title={t("appearance.topBar.maintenance.rowTitle")} description={t("appearance.topBar.maintenance.rowDesc")} control={<Switch checked={maintenanceCountdown} onCheckedChange={setMaintenanceCountdown} aria-label={t("appearance.topBar.maintenance.rowTitle")} />} />
-                </CardContent>
-            </Card>
+            <ToggleCard title={t("appearance.topBar.title")} description={t("appearance.topBar.desc")} rowTitle={t("appearance.topBar.maintenance.rowTitle")} rowDescription={t("appearance.topBar.maintenance.rowDesc")} checked={maintenanceCountdown} onCheckedChange={setMaintenanceCountdown} />
             <LanguageCard />
         </div>
+    );
+}
+
+/** A card holding one on/off setting: the card names the area, the row names the switch. */
+function ToggleCard({ title, description, rowTitle, rowDescription, checked, onCheckedChange }: { title: string; description: string; rowTitle: string; rowDescription: string; checked: boolean; onCheckedChange: (checked: boolean) => void }) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>{title}</CardTitle>
+                <CardDescription>{description}</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+                <SettingRow layout="inline" title={rowTitle} description={rowDescription} control={<Switch checked={checked} onCheckedChange={onCheckedChange} aria-label={rowTitle} />} />
+            </CardContent>
+        </Card>
     );
 }
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { IOperatorIndexEntry } from "#/types/operators";
-import { clampBuild, decodeDpsImport, decodeShare, emptyDraft, encodeDpsImport, encodeShare, fullBuild, levelCap, maxMastery, maxSkillLevel, memberFromRoster, resolveSeat, rosterModuleRanks } from "./model";
+import { clampBuild, decodeDpsImport, decodeShare, emptyDraft, encodeDpsImport, encodeShare, fullBuild, levelCap, maxMastery, maxSkillLevel, memberFromRoster, moduleTypeLabel, parseShareSearch, resolveSeat, rosterModuleRanks, SUPPORT_SEAT, seatAt } from "./model";
 
 const u = (phase: number, level = 1) => ({ phase, level });
 /** Archetto's rules as `character_table` has them: ranks 2-4 at E0, 5-7 at E1, three masteries per skill at E2. */
@@ -160,5 +160,29 @@ describe("dps import", () => {
         expect(text).not.toMatch(/[+/=]/);
         expect(decodeDpsImport(text)).toEqual(data);
         expect(decodeDpsImport("%%%")).toBeNull();
+    });
+});
+
+describe("share search", () => {
+    it("takes primitives back as text and drops the rest", () => {
+        expect(JSON.stringify(parseShareSearch({ st: "main_01-07", n: 123, s: "a|b", sup: true, x: 1 }))).toBe('{"s":"a|b","sup":"true","n":"123","st":"main_01-07"}');
+        expect(parseShareSearch({ s: { a: 1 }, n: null })).toEqual({});
+    });
+});
+
+describe("seat helpers", () => {
+    it("reads a seat or the support", () => {
+        const members = ["a", null, "c"];
+        expect(seatAt(members, "s", 0)).toBe("a");
+        expect(seatAt(members, "s", 1)).toBeNull();
+        expect(seatAt(members, "s", 7)).toBeNull();
+        expect(seatAt(members, "s", SUPPORT_SEAT)).toBe("s");
+        expect(seatAt(members, null, SUPPORT_SEAT)).toBeNull();
+    });
+
+    it("tags a module the way the game prints it", () => {
+        expect(moduleTypeLabel({ typeName1: "MAR", typeName2: "X" })).toBe("MAR-X");
+        expect(moduleTypeLabel({ typeName1: "ORIGINAL", typeName2: null })).toBe("ORIGINAL");
+        expect(moduleTypeLabel({ typeName1: "", typeName2: "Y" } as never)).toBe("Y");
     });
 });

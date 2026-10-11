@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { backendFetch } from "#/lib/fetch";
+import { backendFetch, backendJsonOrNull } from "#/lib/fetch";
 // Generated from `backend/src/core/archives/dto.rs`.
 // To change a field, edit the Rust struct and run `bun run gen:types`.
 import type { ArchiveDemographics } from "#/types/generated/ArchiveDemographics";
@@ -28,11 +28,8 @@ async function getJson<T>(server: string, path: string): Promise<T> {
 }
 
 /** One personnel file, or `null` for an id with no file (404). */
-async function getArchiveOperator(id: string, server: string): Promise<ArchiveOperator | null> {
-    const res = await backendFetch(gamedataPath(server, `/archives/operator/${encodeURIComponent(id)}`));
-    if (res.status === 404) return null;
-    if (!res.ok) throw new Error(`Failed to load personnel file: ${res.status}`);
-    return (await res.json()) as ArchiveOperator;
+function getArchiveOperator(id: string, server: string): Promise<ArchiveOperator | null> {
+    return backendJsonOrNull<ArchiveOperator>(gamedataPath(server, `/archives/operator/${encodeURIComponent(id)}`), "personnel file");
 }
 
 export function archiveNetworkQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {

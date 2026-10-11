@@ -34,23 +34,18 @@ export function PersonnelSheet({ id, onClose, onOpenFile, onOpenChart, fromDossi
     return (
         <Sheet open={Boolean(id)} onOpenChange={(open) => !open && onClose()}>
             <SheetPopup side="right" className="w-[min(460px,100vw)] sm:max-w-115">
-                {isLoading ? (
-                    <SheetHeader>
-                        <SheetTitle>{t("page.loading")}</SheetTitle>
-                    </SheetHeader>
-                ) : isError ? (
-                    <SheetHeader>
-                        <SheetTitle>{t("page.error")}</SheetTitle>
-                    </SheetHeader>
-                ) : data ? (
-                    <FileBody op={data} t={t} server={server} onOpenFile={onOpenFile} onOpenChart={onOpenChart} fromDossiers={fromDossiers} />
-                ) : (
-                    <SheetHeader>
-                        <SheetTitle>{t("file.missing")}</SheetTitle>
-                    </SheetHeader>
-                )}
+                {isLoading ? <TitleOnly>{t("page.loading")}</TitleOnly> : isError ? <TitleOnly>{t("page.error")}</TitleOnly> : data ? <FileBody op={data} t={t} server={server} onOpenFile={onOpenFile} onOpenChart={onOpenChart} fromDossiers={fromDossiers} /> : <TitleOnly>{t("file.missing")}</TitleOnly>}
             </SheetPopup>
         </Sheet>
+    );
+}
+
+/** The sheet with no file to show: a title saying why. */
+function TitleOnly({ children }: { children: React.ReactNode }): React.ReactElement {
+    return (
+        <SheetHeader>
+            <SheetTitle>{children}</SheetTitle>
+        </SheetHeader>
     );
 }
 

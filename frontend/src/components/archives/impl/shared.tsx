@@ -159,3 +159,44 @@ export function Panel({ title, children, className, footer }: { title?: React.Re
 export function peopleById(people: readonly ArchivePerson[] | undefined): Map<string, ArchivePerson> {
     return new Map((people ?? []).map((p) => [p.id, p]));
 }
+
+/** A tab's loading or error line, in place of its body. */
+export function TabMessage({ children }: { children: React.ReactNode }): React.ReactElement {
+    return <p className="text-muted-foreground text-sm">{children}</p>;
+}
+
+/** The headline figures under a tab's lede: four cells, two per row on a phone. */
+export function StatStrip({ children }: { children: React.ReactNode }): React.ReactElement {
+    return <div className="grid grid-cols-4 overflow-hidden rounded-[14px] border border-border bg-card max-[760px]:grid-cols-2">{children}</div>;
+}
+
+/** One {@link StatStrip} cell. `grow` sets the figure larger from `sm` up. */
+export function BigStat({ label, value, grow }: { label: string; value: string; grow?: boolean }): React.ReactElement {
+    return (
+        <div className="flex flex-col gap-1.5 border-border not-last:border-r px-4 py-3.5 max-[760px]:nth-[2n]:border-r-0">
+            <span className={cn("font-bold text-[28px] text-foreground tabular-nums leading-none tracking-tight", grow && "sm:text-[34px]")}>{value}</span>
+            <span className="font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{label}</span>
+        </div>
+    );
+}
+
+/** A tab section's heading row: its index, its title, a line on what it shows. */
+export function SectionHead({ index, title, blurb }: { index: string; title: string; blurb: string }): React.ReactElement {
+    return (
+        <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-border border-b pb-2">
+            <span className="font-bold font-mono text-primary text-sm">{index}</span>
+            <h2 className="m-0 font-semibold text-[20px] text-foreground tracking-tight">{title}</h2>
+            <p className="m-0 text-[13px] text-muted-foreground">{blurb}</p>
+        </header>
+    );
+}
+
+/** Pointer and focus both set the hover, so a keyboard reader lights the same things a mouse does. */
+export function hoverProps<T>(onHover: (value: T | null) => void, value: T) {
+    return {
+        onPointerEnter: () => onHover(value),
+        onPointerLeave: () => onHover(null),
+        onFocus: () => onHover(value),
+        onBlur: () => onHover(null),
+    };
+}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { MaintenanceWindow } from "#/types/generated/MaintenanceWindow";
-import { formatSpan, maintenanceAppliesTo, maintenanceView } from "./maintenance";
+import { formatSpan, isGameDown, maintenanceAppliesTo, maintenanceView } from "./maintenance";
 
 const START = 1_800_000_000;
 const window = (over: Partial<MaintenanceWindow> = {}): MaintenanceWindow => ({
@@ -53,5 +53,11 @@ describe("maintenanceAppliesTo", () => {
         expect(maintenanceAppliesTo("en", null)).toBe(true);
         expect(maintenanceAppliesTo("en", "en")).toBe(true);
         expect(maintenanceAppliesTo("en", "cn")).toBe(false);
+    });
+});
+
+describe("isGameDown", () => {
+    it("is false only before the window starts", () => {
+        expect((["upcoming", "ongoing", "extended", "overrun", "openEnded"] as const).map(isGameDown)).toEqual([false, true, true, true, true]);
     });
 });

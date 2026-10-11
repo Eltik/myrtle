@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle } from "lucide-react";
 import * as React from "react";
-import { hasShare, type IShareSearch } from "#/components/tools/squad-builder/model";
+import { hasShare, type IShareSearch, parseShareSearch } from "#/components/tools/squad-builder/model";
 import { SquadBuilder } from "#/components/tools/squad-builder/SquadBuilder";
 import { Button } from "#/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
@@ -11,33 +11,12 @@ import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
-/**
- * The router parses every search value as JSON first, so a squad named "123"
- * arrives as a number: take any primitive back as text.
- */
-function text(raw: unknown): string | undefined {
-    if (typeof raw === "string") return raw;
-    if (typeof raw === "number" || typeof raw === "boolean") return String(raw);
-    return undefined;
-}
-
 export const Route = createFileRoute("/tools/squad-builder")({
     component: RouteComponent,
     errorComponent: SquadBuilderErrorComponent,
     // The share link (`encodeShare`). The page reads it once and drops it with
     // a replace, so a reload does not reopen the shared squad over the player's own.
-    validateSearch: (search: Record<string, unknown>): IShareSearch => {
-        const out: IShareSearch = {};
-        const s = text(search.s);
-        if (s !== undefined) out.s = s;
-        const sup = text(search.sup);
-        if (sup !== undefined) out.sup = sup;
-        const n = text(search.n);
-        if (n !== undefined) out.n = n;
-        const st = text(search.st);
-        if (st !== undefined) out.st = st;
-        return out;
-    },
+    validateSearch: (search: Record<string, unknown>): IShareSearch => parseShareSearch(search),
     // Started in the browser and not awaited: on a link hover (the router preloads on
     // intent) or alongside the route chunk. Awaited on the server, the 645,037-byte index
     // was dehydrated into the HTML, a 785,265-byte document for a page whose first view

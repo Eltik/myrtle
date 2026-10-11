@@ -101,8 +101,11 @@ export function zoomBox(box: IBox, factor: number, anchor: IPoint): IBox {
     return { x: anchor.x - (anchor.x - box.x) * factor, y: anchor.y - (anchor.y - box.y) * factor, w, h };
 }
 
+/** The grey drawn for a faction whose table row gives no colour. */
+export const NEUTRAL_HEX = "#8a8f98";
+
 /** `#rrggbb` from the tables' bare hex, falling back when the table leaves it blank. */
-export function hexColor(raw: string | null | undefined, fallback = "#8a8f98"): string {
+export function hexColor(raw: string | null | undefined, fallback = NEUTRAL_HEX): string {
     const v = (raw ?? "").trim().replace(/^#/, "");
     return /^[0-9a-fA-F]{6}$/.test(v) ? `#${v}` : fallback;
 }

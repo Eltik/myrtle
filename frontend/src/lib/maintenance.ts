@@ -25,6 +25,11 @@ export function maintenanceView(w: MaintenanceWindow, nowSec: number): IMaintena
     return { stage: w.phase === "extended" ? "extended" : "ongoing", secondsLeft: w.ends_at - nowSec };
 }
 
+/** Every stage but `upcoming` means the game is down now: a sync would be refused. */
+export function isGameDown(stage: MaintenanceStage): boolean {
+    return stage !== "upcoming";
+}
+
 /**
  * A short span: `3d 4h`, `2h 14m`, `14m`, `45s`. Two units at most, the larger first; minutes
  * round up so a countdown never reads `0m` while time is left.

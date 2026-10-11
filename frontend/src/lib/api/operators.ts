@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
-import { backendFetch } from "#/lib/fetch";
+import { backendFetch, backendJsonOrNull } from "#/lib/fetch";
 import type { OperatorBuildStatsResponse } from "#/types/generated/OperatorBuildStatsResponse";
 import type { OperatorOwnershipResponse } from "#/types/generated/OperatorOwnershipResponse";
 import type { IOperatorIndexEntry, IOperatorListItem, IOperatorsStaticMap } from "#/types/operators";
@@ -231,12 +231,10 @@ export function operatorOwnershipQueryOptions(server: string = DEFAULT_GAMEDATA_
  * one per seat.
  */
 async function fetchOperator(id: string, server: string): Promise<IOperatorListItem | null> {
-    const res = await backendFetch(gamedataPath(server, `/operators/${encodeURIComponent(id)}`));
     // `null`, not `undefined`: TanStack Query rejects a query whose data is
     // undefined, which turned an unknown id into a 500 instead of a 404.
-    if (res.status === 404) return null;
-    if (!res.ok) throw new Error(`Failed to load operator: ${res.status}`);
-    return deepCamelize(await res.json()) as IOperatorListItem;
+    const raw = await backendJsonOrNull<unknown>(gamedataPath(server, `/operators/${encodeURIComponent(id)}`), "operator");
+    return raw === null ? null : (deepCamelize(raw) as IOperatorListItem);
 }
 
 export function operatorQueryOptions(id: string, server: string = DEFAULT_GAMEDATA_SERVER) {

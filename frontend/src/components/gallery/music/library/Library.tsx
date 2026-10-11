@@ -16,6 +16,7 @@ import { FilterStrip, type StripMode } from "./FilterStrip";
 import { filterPrepared, filterSongs, prepareAlbums, prepareArtists, prepareSongs } from "./filters";
 import { GameTracks, type IGameIndexState } from "./GameTracks";
 import { PlaylistHeader } from "./PlaylistView";
+import { NOTICE_CLASS } from "./paging";
 import { Rail } from "./Rail";
 import { SongList } from "./SongList";
 import { StatsView } from "./StatsView";
@@ -175,7 +176,7 @@ export function Library({ catalog, selection, sirenStatus, gameState, collator }
 }
 
 function Notice({ text }: { text: string }): React.ReactElement {
-    return <div className="rounded-xl border border-border border-dashed p-10 text-center font-sans text-[13px] text-muted-foreground">{text}</div>;
+    return <div className={NOTICE_CLASS}>{text}</div>;
 }
 
 function ListSkeleton(): React.ReactElement {

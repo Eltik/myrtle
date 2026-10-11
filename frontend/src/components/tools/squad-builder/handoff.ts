@@ -7,7 +7,7 @@
 
 import type { SeatHandoff } from "#/types/generated/SeatHandoff";
 import { DPS_SQUADMATE_LIMIT } from "./constants";
-import { type IDpsImport, type IDpsImportSeat, type IResolvedSeat, SUPPORT_SEAT } from "./model";
+import { type IDpsImport, type IDpsImportSeat, type IResolvedSeat, seatAt, toMemberBuild } from "./model";
 
 export { DPS_SQUADMATE_LIMIT } from "./constants";
 
@@ -29,23 +29,25 @@ export function seatBuffs(handoff: SeatHandoff | undefined, sentSeats: ReadonlyS
  * by seat; the support, when sent, is `SUPPORT_SEAT`.
  */
 export function buildDpsImport(seat: number, picked: readonly number[], seats: ReadonlyArray<IResolvedSeat | null>, support: IResolvedSeat | null, handoff: readonly SeatHandoff[]): IDpsImport {
-    const at = (i: number): IResolvedSeat | null => (i === SUPPORT_SEAT ? support : (seats[i] ?? null));
+    const at = (i: number): IResolvedSeat | null => seatAt(seats, support, i);
     const order = [seat, ...[...new Set(picked)].filter((i) => i !== seat && at(i) !== null).sort((a, b) => a - b)].slice(0, DPS_SQUADMATE_LIMIT + 1);
     const sent = new Set(order);
     const out: IDpsImportSeat[] = [];
     for (const i of order) {
         const r = at(i);
         if (!r) continue;
+        // The analysis body's build, renamed field by field; this order is the `?import=` JSON's.
+        const b = toMemberBuild(r);
         out.push({
-            charId: r.member.char_id,
-            phase: r.build.phase,
-            level: r.build.level,
-            potential: r.build.potential,
-            skillIndex: r.member.skill_index,
-            skillLevel: r.build.skill_level,
-            mastery: r.build.mastery,
-            moduleId: r.member.module_id,
-            moduleLevel: r.member.module_id ? r.build.module_level : 0,
+            charId: b.char_id,
+            phase: b.phase,
+            level: b.level,
+            potential: b.potential,
+            skillIndex: b.skill_index,
+            skillLevel: b.skill_level,
+            mastery: b.mastery,
+            moduleId: b.module_id,
+            moduleLevel: b.module_level,
             buffs: seatBuffs(
                 handoff.find((h) => h.seat === i),
                 sent,

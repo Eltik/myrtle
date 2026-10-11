@@ -51,9 +51,8 @@ export function SlotBar({ signedIn, isLoading, saved, synced, activeSlot, dirty,
                     </div>
                 ) : (
                     <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                        {Array.from({ length: SLOT_LIMIT }, (_, i) => {
-                            const slot = i + 1;
-                            const squad = saved[i] ?? null;
+                        {SLOT_NUMBERS.map((slot) => {
+                            const squad = saved[slot - 1] ?? null;
                             const active = activeSlot === slot;
                             const count = squad ? squad.members.filter((m) => m !== null).length : 0;
                             return (

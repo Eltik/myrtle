@@ -12,25 +12,21 @@ import type { Economy } from "#/types/generated/Economy";
 import type { EconomyNote } from "#/types/generated/EconomyNote";
 import type { EconomySeat } from "#/types/generated/EconomySeat";
 import type { IStageContext } from "../model";
+import type { StartDpFrom } from "../state";
 import type { messages } from "./EconomyPanel.messages";
 import { baseDpFromLine, clampStartDp, cutAmountText, cutLabelInput, dpFromPointer, fractionOf, ladderScale, respawnRange, START_DP_MAX, START_DP_MIN, squadRespawnCut, startBonusTotal } from "./economyMath";
-import { type IChipContext, opName, PanelShell, type PanelState, SectionHeading, StatCell, StatStrip, sourceLabel } from "./shared";
+import { type IChipContext, type IPanelBaseProps, opName, PanelShell, SectionHeading, StatCell, StatStrip, sourceLabel } from "./shared";
 import type { messages as sharedMessages } from "./shared.messages";
 
 type EconomyT = TypedT<typeof messages & typeof sharedMessages>;
 
-interface IEconomyPanelProps {
-    state: PanelState;
-    stale: boolean;
-    collapsed: boolean;
-    onToggle: () => void;
+interface IEconomyPanelProps extends IPanelBaseProps {
     economy: Economy | undefined;
     startDp: number;
     onStartDpChange: (startDp: number) => void;
-    startDpFrom: { kind: "stage"; code: string } | { kind: "page" };
+    startDpFrom: StartDpFrom;
     stage: IStageContext | null;
     hasSupport: boolean;
-    ctx: IChipContext;
 }
 
 export function EconomyPanel({ state, stale, collapsed, onToggle, economy, startDp, onStartDpChange, startDpFrom, stage, hasSupport, ctx }: IEconomyPanelProps): React.ReactElement {

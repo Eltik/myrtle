@@ -12,10 +12,10 @@ import { cn, getAvatarById } from "#/lib/utils";
 import type { ArchiveGroup } from "#/types/generated/ArchiveGroup";
 import type { ArchiveNetwork } from "#/types/generated/ArchiveNetwork";
 import type { ArchivePerson } from "#/types/generated/ArchivePerson";
-import { bounds, CELL_R, centroid, directionVector, hexColor, hexPoints, type IPoint, outlineSegments, TERRITORY_R, toSvg } from "./geometry";
+import { bounds, CELL_R, centroid, directionVector, hexColor, hexPoints, type IPoint, NEUTRAL_HEX, outlineSegments, TERRITORY_R, toSvg } from "./geometry";
 import { declutter, type ILabelBox, type IView, placeLabel, project } from "./labels";
 import { type IInsets, type IPanZoomHandle, PanZoom } from "./PanZoom";
-import { type ArchivesT, FactionLogo, FactionLogoSvg, PersonChip, peopleById, rarityColor, useArchivesT } from "./shared";
+import { type ArchivesT, FactionLogo, FactionLogoSvg, hoverProps, PersonChip, peopleById, rarityColor, TabMessage, useArchivesT } from "./shared";
 
 /** Space kept between the overlaid controls and the fitted content, in screen pixels. */
 const CONTROL_GAP = 8;
@@ -29,6 +29,11 @@ const STAGE_MARGIN = 6;
 /** The game's `card_scale` at and above which a faction gets the larger label (Rhodes Island, the nations). */
 const BIG_CARD = 0.8;
 
+/** Drops out of full screen, when in it, so a drawer opened next shows over the page. */
+function leaveFullscreen(): void {
+    if (document.fullscreenElement) void document.exitFullscreen();
+}
+
 interface INetworkTabProps {
     chart: string | undefined;
     onChart: (chart: string | undefined) => void;
@@ -39,7 +44,7 @@ export function NetworkTab({ chart, onChart, onOpenFile }: INetworkTabProps): Re
     const t = useArchivesT();
     const server = useGamedataServer();
     const { data, isLoading, isError } = useQuery(archiveNetworkQueryOptions(server));
-    if (isError) return <p className="text-muted-foreground text-sm">{t("page.error")}</p>;
+    if (isError) return <TabMessage>{t("page.error")}</TabMessage>;
     if (isLoading || !data) return <div className="h-[min(70vh,560px)] animate-pulse rounded-[14px] border border-border bg-muted/40" />;
     if (!data.imported) return <p className="rounded-[14px] border border-border bg-card p-5 text-muted-foreground text-sm">{t("network.notImported")}</p>;
     return <Network data={data} chart={chart} onChart={onChart} onOpenFile={onOpenFile} server={server} t={t} />;
@@ -111,7 +116,7 @@ function Network({ data, chart, onChart, onOpenFile, server, t }: INetworkTabPro
     // The file drawer and the rosters render outside the map, so leave full screen first.
     const openFile = useCallback(
         (id: string) => {
-            if (document.fullscreenElement) void document.exitFullscreen();
+            leaveFullscreen();
             onOpenFile(id);
         },
         [onOpenFile],
@@ -195,7 +200,7 @@ function Network({ data, chart, onChart, onOpenFile, server, t }: INetworkTabPro
                             variant="outline"
                             className="bg-background/85 backdrop-blur"
                             onClick={() => {
-                                if (document.fullscreenElement) void document.exitFullscreen();
+                                leaveFullscreen();
                                 setRosters(true);
                             }}
                             title={t("network.rostersHint")}
@@ -262,10 +267,7 @@ function TerritoriesLayer({ data, t, hover, onHover, onPick }: { data: ArchiveNe
                         aria-label={label}
                         className="cursor-pointer outline-none [&:focus-visible_line]:stroke-[4]"
                         onClick={() => onPick(fo.groupId)}
-                        onPointerEnter={() => onHover(fo.id)}
-                        onPointerLeave={() => onHover(null)}
-                        onFocus={() => onHover(fo.id)}
-                        onBlur={() => onHover(null)}
+                        {...hoverProps(onHover, fo.id)}
                         onKeyDown={(e) => {
                             if (e.key === "Enter" || e.key === " ") onPick(fo.groupId);
                         }}
@@ -389,7 +391,7 @@ function ChartLayer({ group, people, server, picked, onOpenFile }: { group: Arch
                 </clipPath>
             </defs>
             {group.fillers.map((x) => x.edges.map((e) => <Bridge key={`${x.id}-${e.direction}-${e.charId ?? e.forceId}`} from={toSvg(x.pos)} direction={e.direction} length={bridge * 2} color={hexColor(x.color, colorOf.get(x.forceId))} />))}
-            {group.cells.map((c) => c.edges.map((e) => <Bridge key={`${c.charId}-${e.direction}-${e.charId ?? e.forceId}`} from={toSvg(c)} direction={e.direction} length={e.forceId ? bridge * 2 : bridge * c.scale} color={colorOf.get(c.forceId ?? "") ?? "#8a8f98"} />))}
+            {group.cells.map((c) => c.edges.map((e) => <Bridge key={`${c.charId}-${e.direction}-${e.charId ?? e.forceId}`} from={toSvg(c)} direction={e.direction} length={e.forceId ? bridge * 2 : bridge * c.scale} color={colorOf.get(c.forceId ?? "") ?? NEUTRAL_HEX} />))}
             {group.lines.map((l) => {
                 const a = cellAt.get(l.a);
                 const b = cellAt.get(l.b);
@@ -420,7 +422,7 @@ function ChartLayer({ group, people, server, picked, onOpenFile }: { group: Arch
                 const p = toSvg(c);
                 const r = CELL_R * CELL_INSET * c.scale;
                 const person = people.get(c.charId);
-                const color = colorOf.get(c.forceId ?? "") ?? "#8a8f98";
+                const color = colorOf.get(c.forceId ?? "") ?? NEUTRAL_HEX;
                 const img = r * 1.25;
                 const open = person && !person.npc ? () => onOpenFile(c.charId) : undefined;
                 const name = person?.name ?? c.charId;

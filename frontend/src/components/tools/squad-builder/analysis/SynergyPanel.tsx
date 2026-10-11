@@ -8,7 +8,7 @@ import type { Synergy } from "#/types/generated/Synergy";
 import type { SynergyGroup } from "#/types/generated/SynergyGroup";
 import type { SynergyItem } from "#/types/generated/SynergyItem";
 import type { messages } from "./SynergyPanel.messages";
-import { type IChipContext, type ISeatOperator, OpChip, opName, PanelShell, type PanelState, Pill, SectionHeading, Segmented } from "./shared";
+import { type IChipContext, type IPanelBaseProps, type ISeatOperator, OpChip, opName, PanelShell, Pill, SectionHeading, Segmented } from "./shared";
 import type { messages as sharedMessages } from "./shared.messages";
 
 type SynergyT = TypedT<typeof messages & typeof sharedMessages>;
@@ -16,16 +16,11 @@ type View = "source" | "receiver";
 
 const GROUPS: readonly SynergyGroup[] = ["check", "squad", "field", "place"];
 
-interface ISynergyPanelProps {
-    state: PanelState;
-    stale: boolean;
-    collapsed: boolean;
-    onToggle: () => void;
+interface ISynergyPanelProps extends IPanelBaseProps {
     synergy: Synergy | undefined;
     /** Filled seats by index, support included, as the response has them. */
     seatOps: ReadonlyMap<number, ISeatOperator>;
     onOpenInDps: (seat: number) => void;
-    ctx: IChipContext;
     className?: string;
 }
 

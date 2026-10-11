@@ -91,6 +91,12 @@ export interface IDossierOptions {
     experience: Range;
 }
 
+/** An option's label by its value, the value itself when no option carries it. */
+export function optionLabel(options: readonly IOption[]): (value: string) => string {
+    const labels = new Map(options.map((o) => [o.value, o.label]));
+    return (value) => labels.get(value) ?? value;
+}
+
 function tally(rows: readonly ArchiveDossier[], pick: (d: ArchiveDossier) => readonly { value: string; label: string }[]): IOption[] {
     const seen = new Map<string, { labels: Map<string, number>; count: number }>();
     for (const d of rows) {

@@ -8,19 +8,14 @@ import type { CoverageRowKey } from "#/types/generated/CoverageRowKey";
 import type { IStageContext, IStageThreat, StageThreatKey } from "../model";
 import type { messages } from "./CoveragePanel.messages";
 import { type CoverageFilter, filterCoverage, neededRows } from "./coverageFilter";
-import { type IChipContext, OpChip, PanelShell, type PanelState, Pill, Segmented, sourceLabel } from "./shared";
+import { type IPanelBaseProps, OpChip, PanelShell, Pill, Segmented, sourceLabel } from "./shared";
 import type { messages as sharedMessages } from "./shared.messages";
 
 type CoverageT = TypedT<typeof messages & typeof sharedMessages>;
 
-interface ICoveragePanelProps {
-    state: PanelState;
-    stale: boolean;
-    collapsed: boolean;
-    onToggle: () => void;
+interface ICoveragePanelProps extends IPanelBaseProps {
     coverage: ReadonlyArray<CoverageGroup> | undefined;
     stage: IStageContext | null;
-    ctx: IChipContext;
 }
 
 export function CoveragePanel({ state, stale, collapsed, onToggle, coverage, stage, ctx }: ICoveragePanelProps): React.ReactElement {

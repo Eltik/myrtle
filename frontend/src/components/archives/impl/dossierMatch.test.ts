@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ArchiveDossier } from "#/types/generated/ArchiveDossier";
-import { buildDossierOptions, countDossierFilters, EMPTY_DOSSIER_FILTERS, matchesDossier } from "./dossierMatch";
+import { buildDossierOptions, countDossierFilters, EMPTY_DOSSIER_FILTERS, matchesDossier, optionLabel } from "./dossierMatch";
 
 const row = (over: Partial<ArchiveDossier>): ArchiveDossier => ({
     id: "char_x",
@@ -58,5 +58,15 @@ describe("dossier filters", () => {
         expect(o.nations).toEqual([{ value: "rhodes", label: "Rhodes Island", count: 1 }]);
         expect(o.height).toEqual([142, 170]);
         expect(o.races.map((r) => r.value)).toEqual(["Cautus"]);
+    });
+});
+
+describe("optionLabel", () => {
+    it("names a value by its option, else returns the value", () => {
+        const label = optionLabel([
+            { value: "female", label: "Female", count: 3 },
+            { value: "rhodes", label: "Rhodes Island", count: 1 },
+        ]);
+        expect(["female", "rhodes", "Conviction", ""].map(label)).toEqual(["Female", "Rhodes Island", "Conviction", ""]);
     });
 });

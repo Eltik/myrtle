@@ -30,6 +30,15 @@ export interface IChipContext {
     onHoverSeat: (seat: number | null) => void;
 }
 
+/** The props every analysis panel takes from `SquadAnalysisPanels`. */
+export interface IPanelBaseProps {
+    state: PanelState;
+    stale: boolean;
+    collapsed: boolean;
+    onToggle: () => void;
+    ctx: IChipContext;
+}
+
 interface IPanelShellProps {
     title: string;
     question: string;
@@ -93,7 +102,7 @@ interface IOpChipProps {
 export function OpChip({ charId, seat, ctx, why, support = false, className }: IOpChipProps): React.ReactElement {
     const t: SharedT = useT("tools");
     const op = ctx.operators.get(charId);
-    const name = op?.name ?? charId;
+    const name = opName(ctx.operators, charId);
     return (
         <Link
             to="/operators/$id"

@@ -8,7 +8,7 @@ import { useMaintenance } from "#/hooks/use-maintenance";
 import { formatServerWithPublisher } from "#/lib/auth/login";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { formatSpan } from "#/lib/maintenance";
+import { formatSpan, isGameDown } from "#/lib/maintenance";
 import { formatRelativeShort } from "#/lib/utils";
 import type { IUserProfile } from "#/types/user";
 import type { messages as dataMessages } from "./DataPanel.messages";
@@ -41,7 +41,7 @@ export function AccountPanel({ user, onResync, syncing, onSignOut, signingOut, o
     const nickNum = user.nick_number ? `#${user.nick_number}` : "";
     // While the game is down a sync would only be refused; say so instead of offering it.
     const maintenance = useMaintenance();
-    const paused = maintenance !== null && maintenance.stage !== "upcoming";
+    const paused = maintenance !== null && isGameDown(maintenance.stage);
     const pausedNote = !paused ? null : maintenance.secondsLeft !== null ? t("data.sync.paused", { time: formatSpan(maintenance.secondsLeft) }) : t("data.sync.pausedNoEnd");
 
     return (

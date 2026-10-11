@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import { capitalize } from "#/lib/utils";
 import type { messages } from "../Announcements.messages";
 
 /**
@@ -18,7 +19,7 @@ export function useGroupLabel(): (group: string) => string {
                 case "SYSTEM":
                     return t("group.system");
                 default:
-                    return group.charAt(0).toUpperCase() + group.slice(1).toLowerCase();
+                    return capitalize(group);
             }
         },
         [t],

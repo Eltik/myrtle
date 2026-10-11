@@ -6,11 +6,12 @@ import type { SquadAnalysis } from "#/types/generated/SquadAnalysis";
 import type { SquadAnalyzeRequest } from "#/types/generated/SquadAnalyzeRequest";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import type { IResolvedSeat, IStageContext } from "../model";
+import type { StartDpFrom } from "../state";
 import { CoveragePanel } from "./CoveragePanel";
 import { EconomyPanel } from "./EconomyPanel";
 import { ReadinessPanel } from "./ReadinessPanel";
 import { SynergyPanel } from "./SynergyPanel";
-import type { IChipContext, ISeatOperator, PanelState } from "./shared";
+import { type IChipContext, type ISeatOperator, opName, type PanelState } from "./shared";
 import type { messages as sharedMessages } from "./shared.messages";
 import { ThemesPanel } from "./ThemesPanel";
 
@@ -35,7 +36,7 @@ export interface ISquadAnalysisPanelsProps {
     /** The Economy stepper and the draggable starting-DP line call this. */
     onStartDpChange: (startDp: number) => void;
     /** Where the starting DP came from: the stage card or the page itself. */
-    startDpFrom: { kind: "stage"; code: string } | { kind: "page" };
+    startDpFrom: StartDpFrom;
     stage: IStageContext | null;
     /** Readiness rows and Synergy chips highlight a seat card on hover. */
     onHoverSeat: (seat: number | null) => void;
@@ -77,7 +78,7 @@ export function SquadAnalysisPanels({ request, analysis: query, support, operato
     const unread = (data?.unread_seats ?? []).map((seat) => seatOps.get(seat)).filter((o): o is ISeatOperator => o !== undefined);
     return (
         <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
-            {state === "ready" && unread.length > 0 && <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-[12.5px] text-muted-foreground lg:col-span-2">{t("squad.analysis.unread", { names: unread.map((o) => operators.get(o.charId)?.name ?? o.charId).join(", ") })}</p>}
+            {state === "ready" && unread.length > 0 && <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-[12.5px] text-muted-foreground lg:col-span-2">{t("squad.analysis.unread", { names: unread.map((o) => opName(operators, o.charId)).join(", ") })}</p>}
             <CoveragePanel {...common} collapsed={isCollapsed("coverage")} onToggle={toggle("coverage")} coverage={data?.coverage} stage={stage} ctx={ctx} />
             <EconomyPanel {...common} collapsed={isCollapsed("economy")} onToggle={toggle("economy")} economy={data?.economy} startDp={startDp} onStartDpChange={onStartDpChange} startDpFrom={startDpFrom} stage={stage} hasSupport={support !== null} ctx={ctx} />
             <SynergyPanel {...common} className="lg:col-span-2" collapsed={isCollapsed("synergy")} onToggle={toggle("synergy")} synergy={data?.synergy} seatOps={seatOps} onOpenInDps={onOpenInDps} ctx={ctx} />

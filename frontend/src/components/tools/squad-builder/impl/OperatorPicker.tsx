@@ -74,10 +74,12 @@ export function OperatorPicker({ seat, operators, roster, seated, onPick, onClos
         return [...pool].sort((a, b) => b.rarity - a.rarity || collator.compare(a.name, b.name));
     }, [pool, query, collator]);
 
+    const title = isSupport ? t("squad.picker.supportTitle") : t("squad.picker.title", { seat: seat + 1 });
+
     return (
-        <section aria-label={isSupport ? t("squad.picker.supportTitle") : t("squad.picker.title", { seat: seat + 1 })} className="rounded-xl border border-border bg-card p-4">
+        <section aria-label={title} className="rounded-xl border border-border bg-card p-4">
             <div className="mb-3 flex items-center justify-between gap-2">
-                <h3 className="font-semibold text-[15px]">{isSupport ? t("squad.picker.supportTitle") : t("squad.picker.title", { seat: seat + 1 })}</h3>
+                <h3 className="font-semibold text-[15px]">{title}</h3>
                 <Button variant="ghost" size="icon-sm" aria-label={t("squad.picker.close")} onClick={onClose}>
                     <X />
                 </Button>

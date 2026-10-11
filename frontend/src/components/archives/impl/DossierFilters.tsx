@@ -9,7 +9,7 @@ import { Slider } from "#/components/ui/slider";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, professionLabel, rarityToNumber, subProfessionToProfession } from "#/lib/utils";
-import { type DossierListKey, type IDossierFilters, type IDossierOptions, INFECTION_ORDER, type IOption, type Range } from "./dossierMatch";
+import { type DossierListKey, type IDossierFilters, type IDossierOptions, INFECTION_ORDER, type IOption, optionLabel, type Range } from "./dossierMatch";
 import { type ArchivesT, FactionLogo, INFECTION_KEY } from "./shared";
 
 const STARS = RARITIES.map((r) => rarityToNumber(r));
@@ -31,12 +31,8 @@ interface IDossierFilterFieldsProps {
  */
 export function DossierFilterFields({ filters, options, infectionCounts, onChange, t }: IDossierFilterFieldsProps): React.ReactElement {
     const ft: TypedT<typeof fieldMessages> = useT("operators");
-    const labelOf = (list: IOption[]) => {
-        const m = new Map(list.map((o) => [o.value, o.label]));
-        return (v: string) => m.get(v) ?? v;
-    };
     const dropdown = (key: DossierListKey & ("subclasses" | "nations" | "factions" | "races" | "birthplaces"), label: string, placeholder: string, list: IOption[], extra?: Partial<React.ComponentProps<typeof FilterDropdown>>) =>
-        list.length === 0 ? null : <FilterDropdown label={label} placeholder={placeholder} options={list.map((o) => o.value)} selected={filters[key]} onChange={(v) => onChange(key, v)} formatOption={labelOf(list)} {...extra} />;
+        list.length === 0 ? null : <FilterDropdown label={label} placeholder={placeholder} options={list.map((o) => o.value)} selected={filters[key]} onChange={(v) => onChange(key, v)} formatOption={optionLabel(list)} {...extra} />;
 
     return (
         <div className="flex flex-col gap-4.5">
@@ -76,11 +72,15 @@ export function DossierFilterFields({ filters, options, infectionCounts, onChang
                     formatGroup: (p) => professionLabel({ profession: p }),
                     renderOptionIcon: (v) => <SubProfessionIcon subProfession={v} size={18} />,
                 })}
-                {dropdown("nations", ft("filters.nation"), ft("filters.nation.placeholder"), options.nations, { renderOptionIcon: (v) => <FactionLogo id={v} className="size-4.5 text-foreground" /> })}
-                {dropdown("factions", ft("filters.faction"), ft("filters.faction.placeholder"), options.factions, { renderOptionIcon: (v) => <FactionLogo id={v} className="size-4.5 text-foreground" /> })}
+                {dropdown("nations", ft("filters.nation"), ft("filters.nation.placeholder"), options.nations, { renderOptionIcon: factionIcon })}
+                {dropdown("factions", ft("filters.faction"), ft("filters.faction.placeholder"), options.factions, { renderOptionIcon: factionIcon })}
             </div>
         </div>
     );
+}
+
+function factionIcon(id: string): React.ReactElement {
+    return <FactionLogo id={id} className="size-4.5 text-foreground" />;
 }
 
 function SectionHead({ label }: { label: string }): React.ReactElement {

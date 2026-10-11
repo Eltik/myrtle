@@ -15,8 +15,8 @@ import { searchAndRank } from "#/lib/search/fuzzy";
 import { cn, professionLabel } from "#/lib/utils";
 import type { ArchiveDossier } from "#/types/generated/ArchiveDossier";
 import { DossierFilterFields } from "./DossierFilters";
-import { buildDossierOptions, countDossierFilters, type DossierListKey, EMPTY_DOSSIER_FILTERS, type IDossierFilters, INFECTION_ORDER, matchesDossier } from "./dossierMatch";
-import { type ArchivesT, INFECTION_KEY, rarityColor, useArchivesT } from "./shared";
+import { buildDossierOptions, countDossierFilters, type DossierListKey, EMPTY_DOSSIER_FILTERS, type IDossierFilters, INFECTION_ORDER, matchesDossier, optionLabel } from "./dossierMatch";
+import { type ArchivesT, INFECTION_KEY, rarityColor, TabMessage, useArchivesT } from "./shared";
 
 type SortKey = "name" | "race" | "birthplace" | "height" | "experience" | "infection" | "assimilation" | "stories" | "records" | "links";
 
@@ -101,7 +101,7 @@ export function DossiersTab({ onOpenFile }: { onOpenFile: (id: string) => void }
         return [...list].sort((a, b) => compare(a, b, sort.key, sort.desc) || a.name.localeCompare(b.name));
     }, [all, filters, deferred, sort]);
 
-    if (isError) return <p className="text-muted-foreground text-sm">{t("page.error")}</p>;
+    if (isError) return <TabMessage>{t("page.error")}</TabMessage>;
 
     const header = (key: SortKey, label: string, className?: string) => {
         const active = sort.key === key;
@@ -136,7 +136,7 @@ export function DossiersTab({ onOpenFile }: { onOpenFile: (id: string) => void }
                 <ActiveFilterChips chips={chips} onClearAll={clearFilters} />
 
                 {isLoading ? (
-                    <p className="text-muted-foreground text-sm">{t("page.loading")}</p>
+                    <TabMessage>{t("page.loading")}</TabMessage>
                 ) : (
                     <div className="overflow-x-auto rounded-[14px] border border-border bg-card">
                         <Table className="min-w-[880px]">
@@ -203,16 +203,15 @@ function dossierChips(f: IDossierFilters, o: ReturnType<typeof buildDossierOptio
             chips.push({ key: `${key}-${v}`, label: label(v), onRemove: () => set(key, picked.filter((x) => x !== v) as IDossierFilters[K]) });
         }
     };
-    const named = (opts: { value: string; label: string }[]) => (v: string) => opts.find((x) => x.value === v)?.label ?? v;
     list("classes", (v) => professionLabel({ profession: v }));
     list("rarities", (v) => `${v}★`);
     list("infection", (v) => t(INFECTION_KEY[v]));
-    list("genders", named(o.genders));
+    list("genders", optionLabel(o.genders));
     list("races", (v) => v);
     list("birthplaces", (v) => v);
-    list("subclasses", named(o.subclasses));
-    list("nations", named(o.nations));
-    list("factions", named(o.factions));
+    list("subclasses", optionLabel(o.subclasses));
+    list("nations", optionLabel(o.nations));
+    list("factions", optionLabel(o.factions));
     if (f.height) chips.push({ key: "height", label: t("dossiers.chip.height", { min: f.height[0], max: f.height[1] }), onRemove: () => set("height", null) });
     if (f.experience) chips.push({ key: "experience", label: t("dossiers.chip.experience", { min: f.experience[0], max: f.experience[1] }), onRemove: () => set("experience", null) });
     return chips;

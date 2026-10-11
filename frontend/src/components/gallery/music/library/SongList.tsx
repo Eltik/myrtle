@@ -1,7 +1,6 @@
 import { GripVerticalIcon, HeartIcon, MicIcon, MinusIcon, PauseIcon, PlayIcon, PlusIcon } from "lucide-react";
 import type React from "react";
 import { memo, useMemo, useRef, useState } from "react";
-import { pageOf, RECORD_PAGE } from "#/components/story/library/impl/paging";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Checkbox } from "#/components/ui/checkbox";
@@ -18,6 +17,7 @@ import type { messages } from "../MusicGallery.messages";
 import { useIsCurrent, usePlayer } from "../player/engine";
 import type { IQueueSource } from "../player/types";
 import { AddMenu } from "./AddMenu";
+import { NOTICE_CLASS, ShowMore, usePagedList } from "./paging";
 import { moveTrack } from "./reorder";
 
 type MusicT = TypedT<typeof messages>;
@@ -57,10 +57,8 @@ export function SongList({ tracks, source, houseArtist, playlist, pageKey }: ISo
     const t: MusicT = useT("gallery");
     const [selected, setSelected] = useState<ReadonlySet<string>>(() => new Set());
     const anchor = useRef<number | null>(null);
-    const [raised, setRaised] = useState<{ key: string; limit: number }>({ key: pageKey, limit: RECORD_PAGE });
-    const limit = raised.key === pageKey ? raised.limit : RECORD_PAGE;
-    const { shown, hidden } = pageOf(tracks, limit);
-    const more = Math.min(RECORD_PAGE, hidden);
+    const page = usePagedList(tracks, pageKey);
+    const { shown } = page;
     const [drag, setDrag] = useState<{ from: number; over: number } | null>(null);
     // Rows are memoised, so they get callbacks that never change identity and call the latest closures.
     const latest = useRef<{ select: (index: number, range: boolean) => void; reorder: IReorder | undefined }>({ select: () => {}, reorder: undefined });
@@ -128,7 +126,7 @@ export function SongList({ tracks, source, houseArtist, playlist, pageKey }: ISo
 
     latest.current = { select: onSelect, reorder };
 
-    if (tracks.length === 0) return <p className="rounded-xl border border-border border-dashed p-10 text-center font-sans text-[13px] text-muted-foreground">{t("music.list.empty")}</p>;
+    if (tracks.length === 0) return <p className={NOTICE_CLASS}>{t("music.list.empty")}</p>;
 
     return (
         <div>
@@ -162,13 +160,7 @@ export function SongList({ tracks, source, houseArtist, playlist, pageKey }: ISo
                     />
                 ))}
             </ul>
-            {hidden > 0 ? (
-                <div className="mt-4 flex justify-center">
-                    <Button variant="outline" className="max-sm:min-h-11" onClick={() => setRaised({ key: pageKey, limit: limit + more })}>
-                        {t("music.showMore", { count: more, remaining: hidden })}
-                    </Button>
-                </div>
-            ) : null}
+            <ShowMore page={page} />
             {selectedTracks.length > 0 ? (
                 <div className="sticky bottom-24 z-20 mx-auto mt-4 flex w-fit items-center gap-2 rounded-xl border border-border bg-popover px-3 py-2 shadow-lg/10">
                     <span className="font-sans font-semibold text-[13px] tabular-nums">{t("music.list.selected", { count: selectedTracks.length })}</span>

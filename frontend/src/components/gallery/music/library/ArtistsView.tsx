@@ -4,6 +4,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import type { IArtist } from "../impl/model";
 import { useMusicNav } from "../impl/nav";
 import type { messages } from "../MusicGallery.messages";
+import { NOTICE_CLASS } from "./paging";
 
 type MusicT = TypedT<typeof messages>;
 
@@ -11,7 +12,7 @@ type MusicT = TypedT<typeof messages>;
 export function ArtistsView({ artists }: { artists: readonly IArtist[] }): React.ReactElement {
     const t: MusicT = useT("gallery");
     const nav = useMusicNav();
-    if (artists.length === 0) return <p className="rounded-xl border border-border border-dashed p-10 text-center font-sans text-[13px] text-muted-foreground">{t("music.list.noArtists")}</p>;
+    if (artists.length === 0) return <p className={NOTICE_CLASS}>{t("music.list.noArtists")}</p>;
     return (
         <ul className="m-0 list-none divide-y divide-border p-0">
             {artists.map((a) => (

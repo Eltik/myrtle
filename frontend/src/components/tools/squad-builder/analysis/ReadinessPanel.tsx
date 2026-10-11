@@ -9,18 +9,13 @@ import type { ReadinessFlag } from "#/types/generated/ReadinessFlag";
 import type { ReadinessRow } from "#/types/generated/ReadinessRow";
 import type { IOperatorListItem } from "#/types/operators";
 import type { messages } from "./ReadinessPanel.messages";
-import { type IChipContext, OpChip, PanelShell, type PanelState, Pill, StatCell, StatStrip } from "./shared";
+import { type IChipContext, type IPanelBaseProps, OpChip, PanelShell, Pill, StatCell, StatStrip } from "./shared";
 import type { messages as sharedMessages } from "./shared.messages";
 
 type ReadinessT = TypedT<typeof messages & typeof sharedMessages>;
 
-interface IReadinessPanelProps {
-    state: PanelState;
-    stale: boolean;
-    collapsed: boolean;
-    onToggle: () => void;
+interface IReadinessPanelProps extends IPanelBaseProps {
     readiness: Readiness | undefined;
-    ctx: IChipContext;
 }
 
 export function ReadinessPanel({ state, stale, collapsed, onToggle, readiness, ctx }: IReadinessPanelProps): React.ReactElement {

@@ -35,3 +35,14 @@ export async function backendFetch(path: string, init: RequestInit & { bearerTok
         throw new BackendUnreachableError(err);
     }
 }
+
+/**
+ * `path`'s JSON from the backend, or `null` for a 404 (an id with no record). Any other failure
+ * throws `Failed to load ${what}: ${status}`.
+ */
+export async function backendJsonOrNull<T>(path: string, what: string): Promise<T | null> {
+    const res = await backendFetch(path);
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error(`Failed to load ${what}: ${res.status}`);
+    return (await res.json()) as T;
+}

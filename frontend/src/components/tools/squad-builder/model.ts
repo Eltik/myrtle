@@ -18,7 +18,7 @@ import type { SquadMember } from "#/types/generated/SquadMember";
 import type { SquadMemberBuild } from "#/types/generated/SquadMemberBuild";
 import type { Unlock } from "#/types/generated/Unlock";
 import type { IOperatorIndexEntry } from "#/types/operators";
-import { DPS_SQUADMATE_LIMIT, NAME_MAX_CHARS, SQUAD_SIZE } from "./constants";
+import { DPS_SQUADMATE_LIMIT, NAME_MAX_CHARS, SQUAD_SIZE, SUPPORT_SEAT } from "./constants";
 
 export { NAME_MAX_CHARS, SLOT_LIMIT, SQUAD_SIZE, SUPPORT_SEAT } from "./constants";
 
@@ -35,11 +35,16 @@ export function emptyDraft(name = ""): ISquadDraft {
     return { name, members: Array.from({ length: SQUAD_SIZE }, () => null), support: null, stageId: null };
 }
 
-/** Pad or trim a member list to exactly `SQUAD_SIZE` seats. */
-export function normalizeMembers(members: ReadonlyArray<SquadMember | null | undefined>): Array<SquadMember | null> {
-    const out: Array<SquadMember | null> = [];
+/** Pad or trim a seat list to exactly `SQUAD_SIZE` seats. */
+export function normalizeMembers<T = SquadMember>(members: ReadonlyArray<T | null | undefined>): Array<T | null> {
+    const out: Array<T | null> = [];
     for (let i = 0; i < SQUAD_SIZE; i++) out.push(members[i] ?? null);
     return out;
+}
+
+/** What sits at `seat` in a squad's seats, the support at `SUPPORT_SEAT`; `null` for an empty seat. */
+export function seatAt<T>(members: ReadonlyArray<T | null>, support: T | null, seat: number): T | null {
+    return seat === SUPPORT_SEAT ? support : (members[seat] ?? null);
 }
 
 export function filledSeats(draft: ISquadDraft): number {
@@ -55,6 +60,12 @@ function normalizeDraftForCompare(d: ISquadDraft) {
     return { name: d.name.trim(), members: normalizeMembers(d.members), support: d.support, stageId: d.stageId };
 }
 
+// Type aliases, not interfaces: a `JsonValue[]` casts to an object type literal, which has an implicit index signature.
+/** One entry of a roster row's `masteries` jsonb column. */
+type IRosterMastery = { index: number; mastery: number };
+/** One entry of a roster row's `modules` jsonb column. */
+type IRosterModule = { id: string; level: number; locked: boolean | number };
+
 /** One roster row as `model.ts` reads it: the view's jsonb columns typed. */
 export interface IRosterBuild {
     elite: number;
@@ -64,14 +75,14 @@ export interface IRosterBuild {
     skill_level: number;
     default_skill: number | null;
     current_equip: string | null;
-    masteries: Array<{ index: number; mastery: number }>;
-    modules: Array<{ id: string; level: number; locked: boolean | number }>;
+    masteries: IRosterMastery[];
+    modules: IRosterModule[];
 }
 
 /** Narrow a `RosterEntry` to the fields a build needs; tolerant of a malformed jsonb column. */
 export function rosterBuildOf(entry: RosterEntry): IRosterBuild {
-    const masteries = Array.isArray(entry.masteries) ? (entry.masteries as Array<{ index: number; mastery: number }>) : [];
-    const modules = Array.isArray(entry.modules) ? (entry.modules as Array<{ id: string; level: number; locked: boolean | number }>) : [];
+    const masteries = Array.isArray(entry.masteries) ? (entry.masteries as IRosterMastery[]) : [];
+    const modules = Array.isArray(entry.modules) ? (entry.modules as IRosterModule[]) : [];
     return {
         elite: entry.elite,
         level: entry.level,
@@ -150,6 +161,11 @@ export function advancedModules(op: Pick<IOperatorIndexEntry, "modules">): IOper
     return op.modules.filter((m) => m.type !== "INITIAL");
 }
 
+/** A module's type tag as the game prints it, `typeName1-typeName2` ("MAR-X"), either half left out when empty. */
+export function moduleTypeLabel(m: Pick<IOperatorIndexEntry["modules"][number], "typeName1" | "typeName2">): string {
+    return [m.typeName1, m.typeName2].filter(Boolean).join("-");
+}
+
 /** A module's rank count (`battle_equip_table` phases); 0 for no module. */
 export function moduleRankCount(op: Pick<IOperatorIndexEntry, "modules">, moduleId: string | null): number {
     if (!moduleId) return 0;
@@ -171,15 +187,20 @@ export function fullBuild(op: IRulesOp, member: Pick<SquadMember, "skill_index" 
     };
 }
 
+/** `value` held to `[lo, hi]`; `lo` wins when `hi` is below it. */
+function clamp(value: number, lo: number, hi: number): number {
+    return Math.max(lo, Math.min(hi, value));
+}
+
 /** Clamp every field of a build into what the operator, the chosen skill and the module allow at its promotion and level. */
 export function clampBuild(op: IRulesOp, build: SquadBuild, member: Pick<SquadMember, "skill_index" | "module_id">): SquadBuild {
-    const phase = Math.max(0, Math.min(maxPhase(op), build.phase));
-    const level = Math.max(1, Math.min(levelCap(op, phase), build.level));
-    const potential = Math.max(0, Math.min(op.potentialRankCount, build.potential));
-    const skill_level = Math.max(1, Math.min(maxSkillLevel(op, phase, level), build.skill_level));
-    const mastery = Math.max(0, Math.min(maxMastery(op, member.skill_index, phase, level, skill_level), build.mastery));
+    const phase = clamp(build.phase, 0, maxPhase(op));
+    const level = clamp(build.level, 1, levelCap(op, phase));
+    const potential = clamp(build.potential, 0, op.potentialRankCount);
+    const skill_level = clamp(build.skill_level, 1, maxSkillLevel(op, phase, level));
+    const mastery = clamp(build.mastery, 0, maxMastery(op, member.skill_index, phase, level, skill_level));
     const ranks = moduleRankCount(op, member.module_id);
-    const module_level = ranks > 0 ? Math.max(1, Math.min(ranks, build.module_level || 1)) : 0;
+    const module_level = ranks > 0 ? clamp(build.module_level || 1, 1, ranks) : 0;
     return { phase, level, potential, skill_level, mastery, module_level };
 }
 
@@ -247,7 +268,7 @@ export interface IAnalyzeInputs {
 /** The `POST /squads/analyze` body for a draft whose seats are resolved. */
 export function toAnalyzeRequest(members: ReadonlyArray<IResolvedSeat | null>, support: IResolvedSeat | null, inputs: IAnalyzeInputs): SquadAnalyzeRequest {
     return {
-        members: normalizeMembers(members.map((s) => (s ? toMemberBuild(s) : null)) as never[]).map((m) => m as SquadMemberBuild | null),
+        members: normalizeMembers(members.map((s) => (s ? toMemberBuild(s) : null))),
         support: support ? toMemberBuild(support) : null,
         start_dp: inputs.startDp,
         deploy_limit: inputs.deployLimit,
@@ -336,6 +357,23 @@ export function decodeShare(search: IShareSearch): ISquadDraft | null {
 
 export function hasShare(search: Record<string, unknown>): boolean {
     return typeof search.s === "string";
+}
+
+const SHARE_PARAMS = ["s", "sup", "n", "st"] as const satisfies ReadonlyArray<keyof IShareSearch>;
+
+/**
+ * The share params out of the router's parsed search. The router parses every
+ * value as JSON first, so a squad named "123" arrives as a number: any
+ * primitive is taken back as text, anything else dropped.
+ */
+export function parseShareSearch(search: Record<string, unknown>): IShareSearch {
+    const out: IShareSearch = {};
+    for (const key of SHARE_PARAMS) {
+        const raw = search[key];
+        if (typeof raw === "string") out[key] = raw;
+        else if (typeof raw === "number" || typeof raw === "boolean") out[key] = String(raw);
+    }
+    return out;
 }
 
 /**

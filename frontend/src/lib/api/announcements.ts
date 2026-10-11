@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { backendFetch } from "#/lib/fetch";
+import { backendFetch, backendJsonOrNull } from "#/lib/fetch";
 // Generated from `backend/src/core/announcements/mod.rs`.
 // To change a field, edit the Rust struct and run `bun run gen:types`.
 import type { Announcement } from "#/types/generated/Announcement";
@@ -26,11 +26,8 @@ async function getBoard(server: string | undefined): Promise<AnnouncementList> {
 }
 
 /** One notice, or `null` when the board no longer lists it (404). */
-async function getAnnouncement(id: string, server: string): Promise<Announcement | null> {
-    const res = await backendFetch(`/announcements/${encodeURIComponent(id)}?server=${encodeURIComponent(server)}`);
-    if (res.status === 404) return null;
-    if (!res.ok) throw new Error(`Failed to load announcement: ${res.status}`);
-    return (await res.json()) as Announcement;
+function getAnnouncement(id: string, server: string): Promise<Announcement | null> {
+    return backendJsonOrNull<Announcement>(`/announcements/${encodeURIComponent(id)}?server=${encodeURIComponent(server)}`, "announcement");
 }
 
 export function announcementsQueryOptions(server: string | undefined) {

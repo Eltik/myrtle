@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { SeatHandoff } from "#/types/generated/SeatHandoff";
 import type { SquadMember } from "#/types/generated/SquadMember";
 import { buildDpsImport, seatBuffs } from "./handoff";
-import { emptyDraft, type IResolvedSeat, SUPPORT_SEAT } from "./model";
+import { emptyDraft, encodeDpsImport, type IResolvedSeat, SUPPORT_SEAT, toAnalyzeRequest } from "./model";
 import { INITIAL_STATE, isDirty, nextEmptySeat, squadReducer, swapSeats } from "./state";
 
 const m = (id: string): SquadMember => ({ char_id: id, skill_index: 0, module_id: null, build: null });
@@ -124,5 +124,43 @@ describe("DPS calculator hand-off", () => {
     it("can send the support", () => {
         const out = buildDpsImport(0, [SUPPORT_SEAT], [resolved("char_a")], resolved("char_s"), []);
         expect(out.seats.map((s) => s.charId)).toEqual(["char_a", "char_s"]);
+    });
+});
+
+describe("wire bodies keep their shape", () => {
+    // Pinned as JSON text, so the field order of the bodies, and with it the
+    // `?import=` string and the analysis query key, stays what it was.
+    const r = (id: string, moduleId: string | null, moduleLevel: number): IResolvedSeat => ({
+        member: { char_id: id, skill_index: 1, module_id: moduleId, build: null },
+        build: { phase: 2, level: 80, potential: 3, skill_level: 7, mastery: 2, module_level: moduleLevel },
+        source: "roster",
+    });
+    const seats = [r("char_a", "uniequip_002_a", 2), null, r("char_c", null, 3)];
+    const support = r("char_s", "uniequip_003_s", 1);
+    const handoff: SeatHandoff[] = [
+        {
+            seat: 0,
+            char_id: "char_a",
+            buffs: { atk: 0, flat_atk: 0, aspd: 0 },
+            counted: [
+                { from_seat: 2, char_id: "char_c", name: "C", cond: "squad", atk: 0.1, flat_atk: 5, aspd: 3 },
+                { from_seat: SUPPORT_SEAT, char_id: "char_s", name: "S", cond: "squad", atk: 0.2, flat_atk: 0, aspd: 0 },
+            ],
+            left_out: [],
+        },
+    ];
+
+    it("builds the analyze request", () => {
+        const body = toAnalyzeRequest(seats, support, { startDp: 12, deployLimit: 8, dub: null });
+        const seat = (id: string, moduleId: string | null, moduleLevel: number) => `{"char_id":"${id}","phase":2,"level":80,"potential":3,"skill_index":1,"skill_level":7,"mastery":2,"module_id":${moduleId ? `"${moduleId}"` : "null"},"module_level":${moduleLevel}}`;
+        const members = [seat("char_a", "uniequip_002_a", 2), "null", seat("char_c", null, 0), ...Array(9).fill("null")].join(",");
+        expect(JSON.stringify(body)).toBe(`{"members":[${members}],"support":${seat("char_s", "uniequip_003_s", 1)},"start_dp":12,"deploy_limit":8,"dub":null}`);
+    });
+
+    it("builds the DPS import payload", () => {
+        const data = buildDpsImport(0, [SUPPORT_SEAT, 2], seats, support, handoff);
+        expect(encodeDpsImport(data)).toBe(
+            "eyJzZWF0cyI6W3siY2hhcklkIjoiY2hhcl9hIiwicGhhc2UiOjIsImxldmVsIjo4MCwicG90ZW50aWFsIjozLCJza2lsbEluZGV4IjoxLCJza2lsbExldmVsIjo3LCJtYXN0ZXJ5IjoyLCJtb2R1bGVJZCI6InVuaWVxdWlwXzAwMl9hIiwibW9kdWxlTGV2ZWwiOjIsImJ1ZmZzIjp7ImF0ayI6MC4zLCJmbGF0QXRrIjo1LCJhc3BkIjozfX0seyJjaGFySWQiOiJjaGFyX2MiLCJwaGFzZSI6MiwibGV2ZWwiOjgwLCJwb3RlbnRpYWwiOjMsInNraWxsSW5kZXgiOjEsInNraWxsTGV2ZWwiOjcsIm1hc3RlcnkiOjIsIm1vZHVsZUlkIjpudWxsLCJtb2R1bGVMZXZlbCI6MCwiYnVmZnMiOnsiYXRrIjowLCJmbGF0QXRrIjowLCJhc3BkIjowfX0seyJjaGFySWQiOiJjaGFyX3MiLCJwaGFzZSI6MiwibGV2ZWwiOjgwLCJwb3RlbnRpYWwiOjMsInNraWxsSW5kZXgiOjEsInNraWxsTGV2ZWwiOjcsIm1hc3RlcnkiOjIsIm1vZHVsZUlkIjoidW5pZXF1aXBfMDAzX3MiLCJtb2R1bGVMZXZlbCI6MSwiYnVmZnMiOnsiYXRrIjowLCJmbGF0QXRrIjowLCJhc3BkIjowfX1dfQ",
+        );
     });
 });

@@ -10,7 +10,7 @@ import { announcementQueryOptions } from "#/lib/api/announcements";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { messages } from "../Announcements.messages";
-import { AnnouncementsError } from "./AnnouncementsError";
+import { AnnouncementsError, retryOf } from "./AnnouncementsError";
 import { useGroupLabel } from "./group-label";
 import styles from "./NoticeBody.module.css";
 
@@ -65,7 +65,7 @@ export function AnnouncementDetail({ server, id }: { server: string; id: string 
         return (
             <div className="flex flex-col gap-3">
                 <BackLink server={server} />
-                <AnnouncementsError onRetry={() => void query.refetch()} retrying={query.isFetching} />
+                <AnnouncementsError {...retryOf(query)} />
             </div>
         );
     }

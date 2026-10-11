@@ -100,17 +100,26 @@ export function FrameStepper({ paused, onPausedChange, onStep, getPosition, scop
 
     return (
         <div className={cn("flex items-center gap-1 pointer-coarse:gap-4", className)}>
-            <Button aria-label={t("frameStepper.back")} disabled={disabled} onClick={() => step(-1)} size="icon-xs" title={t("frameStepper.back")} variant="ghost">
+            <ControlButton disabled={disabled} label={t("frameStepper.back")} onClick={() => step(-1)}>
                 <StepBackIcon />
-            </Button>
-            <Button aria-label={paused ? t("frameStepper.play") : t("frameStepper.pause")} disabled={disabled} onClick={() => onPausedChange(!paused)} size="icon-xs" title={paused ? t("frameStepper.play") : t("frameStepper.pause")} variant="ghost">
+            </ControlButton>
+            <ControlButton disabled={disabled} label={paused ? t("frameStepper.play") : t("frameStepper.pause")} onClick={() => onPausedChange(!paused)}>
                 {paused ? <PlayIcon /> : <PauseIcon />}
-            </Button>
-            <Button aria-label={t("frameStepper.forward")} disabled={disabled} onClick={() => step(1)} size="icon-xs" title={t("frameStepper.forward")} variant="ghost">
+            </ControlButton>
+            <ControlButton disabled={disabled} label={t("frameStepper.forward")} onClick={() => step(1)}>
                 <StepForwardIcon />
-            </Button>
+            </ControlButton>
             <span className="ml-1 text-muted-foreground text-xs tabular-nums" ref={readoutRef} />
         </div>
+    );
+}
+
+/** An icon button named by `label`, as its accessible name and its tooltip both. */
+function ControlButton({ label, disabled, onClick, children }: { label: string; disabled: boolean | undefined; onClick: () => void; children: React.ReactNode }): React.ReactElement {
+    return (
+        <Button aria-label={label} disabled={disabled} onClick={onClick} size="icon-xs" title={label} variant="ghost">
+            {children}
+        </Button>
     );
 }
 

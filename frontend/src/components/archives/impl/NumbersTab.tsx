@@ -14,7 +14,7 @@ import type { ArchiveDistribution } from "#/types/generated/ArchiveDistribution"
 import type { ArchiveInfectionRow } from "#/types/generated/ArchiveInfectionRow";
 import type { ArchivePerson } from "#/types/generated/ArchivePerson";
 import type { ArchiveScaleStep } from "#/types/generated/ArchiveScaleStep";
-import { type ArchivesT, AXIS_KEY, CLEAR_COLOR, INFECTED_COLOR, INFECTION_KEY, Panel, PersonChip, peopleById, STEP_KEY, useArchivesT } from "./shared";
+import { type ArchivesT, AXIS_KEY, BigStat, CLEAR_COLOR, INFECTED_COLOR, INFECTION_KEY, Panel, PersonChip, peopleById, SectionHead, STEP_KEY, StatStrip, TabMessage, useArchivesT } from "./shared";
 
 /** Rows a long list shows before "Show all". */
 const LIST_SHOWN = 14;
@@ -30,8 +30,8 @@ export function NumbersTab({ onOpenFile }: { onOpenFile: (id: string) => void })
     const f = useFormatters();
     const server = useGamedataServer();
     const { data, isLoading, isError } = useQuery(archiveDemographicsQueryOptions(server));
-    if (isError) return <p className="text-muted-foreground text-sm">{t("page.error")}</p>;
-    if (isLoading || !data) return <p className="text-muted-foreground text-sm">{t("page.loading")}</p>;
+    if (isError) return <TabMessage>{t("page.error")}</TabMessage>;
+    if (isLoading || !data) return <TabMessage>{t("page.loading")}</TabMessage>;
     return <Numbers d={data} t={t} f={f} onOpenFile={onOpenFile} />;
 }
 
@@ -50,18 +50,19 @@ function Numbers({ d, t, f, onOpenFile }: { d: ArchiveDemographics; t: ArchivesT
         ul: (v: number) => `${f.number(v)}u/L`,
         pct: (v: number) => `${f.number(v)}%`,
     };
+    const manufactured = sumCounts(d.manufactured);
 
     return (
         <div className="flex flex-col gap-6">
             <header className="flex flex-col gap-3">
                 <Kicker className="mb-0">{t("numbers.kicker")}</Kicker>
                 <p className="m-0 max-w-3xl text-[13.5px] text-muted-foreground leading-normal">{t("numbers.lede", { total: f.number(d.total) })}</p>
-                <div className="grid grid-cols-4 overflow-hidden rounded-[14px] border border-border bg-card max-[760px]:grid-cols-2">
-                    <BigStat label={t("numbers.stat.files")} value={f.number(d.total)} />
-                    <BigStat label={t("numbers.stat.races")} value={f.number(d.race.length)} />
-                    <BigStat label={t("numbers.stat.birthplaces")} value={f.number(d.birthplace.length)} />
-                    <BigStat label={t("numbers.stat.prefixes")} value={f.number(d.prefixes.length)} />
-                </div>
+                <StatStrip>
+                    <BigStat label={t("numbers.stat.files")} value={f.number(d.total)} grow />
+                    <BigStat label={t("numbers.stat.races")} value={f.number(d.race.length)} grow />
+                    <BigStat label={t("numbers.stat.birthplaces")} value={f.number(d.birthplace.length)} grow />
+                    <BigStat label={t("numbers.stat.prefixes")} value={f.number(d.prefixes.length)} grow />
+                </StatStrip>
                 <nav aria-label={t("numbers.jump")} className="flex flex-wrap gap-1.5">
                     {sections.map((s, i) => (
                         <a key={s.id} href={`#${s.id}`} className="inline-flex pointer-coarse:min-h-11 items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1 text-[12px] text-foreground no-underline hover:bg-accent">
@@ -129,10 +130,10 @@ function Numbers({ d, t, f, onOpenFile }: { d: ArchiveDemographics; t: ArchivesT
                     </Panel>
                     <Panel title={t("numbers.manufactured")}>
                         <div className="flex items-baseline gap-2">
-                            <span className="font-bold text-[34px] text-foreground tabular-nums leading-none">{f.number(d.manufactured.reduce((s, m) => s + m.count, 0))}</span>
+                            <span className="font-bold text-[34px] text-foreground tabular-nums leading-none">{f.number(manufactured)}</span>
                             <span className="text-[12px] text-muted-foreground">{t("numbers.manufacturedTotal", { total: f.number(d.total) })}</span>
                         </div>
-                        <BarList rows={d.manufactured} total={d.manufactured.reduce((s, m) => s + m.count, 0)} t={t} f={f} />
+                        <BarList rows={d.manufactured} total={manufactured} t={t} f={f} />
                     </Panel>
                 </div>
                 <Prefixes d={d} people={people} t={t} f={f} onOpenFile={onOpenFile} />
@@ -151,36 +152,52 @@ function stepWord(step: ArchiveScaleStep, t: ArchivesT): string {
     return step.word ?? t(STEP_KEY[step.key]);
 }
 
-function withNotRecorded(rows: ArchiveCount[], total: number, t: ArchivesT): ArchiveCount[] {
-    const missing = total - rows.reduce((s, r) => s + r.count, 0);
-    return missing > 0 ? [...rows, { value: t("numbers.notRecorded"), count: missing }].sort((a, b) => b.count - a.count) : rows;
+function sumCounts(rows: readonly ArchiveCount[]): number {
+    return rows.reduce((s, r) => s + r.count, 0);
 }
 
-function BigStat({ label, value }: { label: string; value: string }): React.ReactElement {
-    return (
-        <div className="flex flex-col gap-1.5 border-border not-last:border-r px-4 py-3.5 max-[760px]:nth-[2n]:border-r-0">
-            <span className="font-bold text-[28px] text-foreground tabular-nums leading-none tracking-tight sm:text-[34px]">{value}</span>
-            <span className="font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{label}</span>
-        </div>
-    );
+function withNotRecorded(rows: ArchiveCount[], total: number, t: ArchivesT): ArchiveCount[] {
+    const missing = total - sumCounts(rows);
+    return missing > 0 ? [...rows, { value: t("numbers.notRecorded"), count: missing }].sort((a, b) => b.count - a.count) : rows;
 }
 
 function Section({ id, index, title, blurb, children }: { id: string; index: number; title: string; blurb: string; children: React.ReactNode }): React.ReactElement {
     return (
         <section id={id} className="flex scroll-mt-20 flex-col gap-4">
-            <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-border border-b pb-2">
-                <span className="font-bold font-mono text-primary text-sm">{ROMAN[index]}</span>
-                <h2 className="m-0 font-semibold text-[20px] text-foreground tracking-tight">{title}</h2>
-                <p className="m-0 text-[13px] text-muted-foreground">{blurb}</p>
-            </header>
+            <SectionHead index={ROMAN[index]} title={title} blurb={blurb} />
             {children}
         </section>
     );
 }
 
-function BarList({ rows, total, t, f }: { rows: ArchiveCount[]; total: number; t: ArchivesT; f: IFormatters }): React.ReactElement {
+/** The first {@link LIST_SHOWN} of `rows` until the reader asks for all of them. */
+function useShowAll<T>(rows: readonly T[]): { shown: readonly T[]; all: boolean; toggle: () => void } {
     const [all, setAll] = useState(false);
-    const shown = all ? rows : rows.slice(0, LIST_SHOWN);
+    return { shown: all ? rows : rows.slice(0, LIST_SHOWN), all, toggle: () => setAll((v) => !v) };
+}
+
+/** "Show all N" / "Show fewer" under a list longer than {@link LIST_SHOWN}; nothing for a shorter one. */
+function ShowAllButton({ count, all, onToggle, t }: { count: number; all: boolean; onToggle: () => void; t: ArchivesT }): React.ReactElement | null {
+    if (count <= LIST_SHOWN) return null;
+    return (
+        <Button size="xs" variant="ghost" className="self-start" onClick={onToggle}>
+            {all ? t("numbers.showFewer") : t("numbers.showAll", { count })}
+        </Button>
+    );
+}
+
+/** A colour key entry: a small square, then its label. */
+function Swatch({ color, className, children }: { color?: string; className?: string; children: React.ReactNode }): React.ReactElement {
+    return (
+        <span className="inline-flex items-center gap-1">
+            <span className={cn("size-2 rounded-sm", className)} style={color ? { background: color } : undefined} />
+            {children}
+        </span>
+    );
+}
+
+function BarList({ rows, total, t, f }: { rows: ArchiveCount[]; total: number; t: ArchivesT; f: IFormatters }): React.ReactElement {
+    const { shown, all, toggle } = useShowAll(rows);
     const max = Math.max(1, ...rows.map((r) => r.count));
     return (
         <div className="flex flex-col gap-1">
@@ -196,11 +213,7 @@ function BarList({ rows, total, t, f }: { rows: ArchiveCount[]; total: number; t
                     <span className="text-right text-muted-foreground tabular-nums">{total > 0 ? f.percent(r.count / total) : ""}</span>
                 </div>
             ))}
-            {rows.length > LIST_SHOWN ? (
-                <Button size="xs" variant="ghost" className="self-start" onClick={() => setAll((v) => !v)}>
-                    {all ? t("numbers.showFewer") : t("numbers.showAll", { count: rows.length })}
-                </Button>
-            ) : null}
+            <ShowAllButton count={rows.length} all={all} onToggle={toggle} t={t} />
         </div>
     );
 }
@@ -281,19 +294,12 @@ function HeightByRace({ d, t, f, format }: { d: ArchiveDemographics; t: Archives
 }
 
 function InfectionBars({ rows, t, f }: { rows: ArchiveInfectionRow[]; t: ArchivesT; f: IFormatters }): React.ReactElement {
-    const [all, setAll] = useState(false);
-    const shown = all ? rows : rows.slice(0, LIST_SHOWN);
+    const { shown, all, toggle } = useShowAll(rows);
     return (
         <div className="flex flex-col gap-1">
             <div className="mb-1 flex gap-3 text-[11px] text-muted-foreground">
-                <span className="inline-flex items-center gap-1">
-                    <span className="size-2 rounded-sm" style={{ background: INFECTED_COLOR }} />
-                    {t("infection.infected")}
-                </span>
-                <span className="inline-flex items-center gap-1">
-                    <span className="size-2 rounded-sm" style={{ background: CLEAR_COLOR }} />
-                    {t("infection.clear")}
-                </span>
+                <Swatch color={INFECTED_COLOR}>{t("infection.infected")}</Swatch>
+                <Swatch color={CLEAR_COLOR}>{t("infection.clear")}</Swatch>
             </div>
             {shown.map((r) => (
                 <div key={r.value} className="grid grid-cols-[minmax(0,6.5rem)_1fr_auto_3rem] items-center gap-2 text-[12.5px]">
@@ -309,11 +315,7 @@ function InfectionBars({ rows, t, f }: { rows: ArchiveInfectionRow[]; t: Archive
                     <span className="text-right text-foreground tabular-nums">{f.percent(r.infected / r.total)}</span>
                 </div>
             ))}
-            {rows.length > LIST_SHOWN ? (
-                <Button size="xs" variant="ghost" className="self-start" onClick={() => setAll((v) => !v)}>
-                    {all ? t("numbers.showFewer") : t("numbers.showAll", { count: rows.length })}
-                </Button>
-            ) : null}
+            <ShowAllButton count={rows.length} all={all} onToggle={toggle} t={t} />
         </div>
     );
 }
@@ -345,15 +347,11 @@ function ExamCard({ d, t, f }: { d: ArchiveDemographics; t: ArchivesT; f: IForma
             </div>
             <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
                 {d.scale.map((step, i) => (
-                    <span key={step.key} className="inline-flex items-center gap-1">
-                        <span className="size-2 rounded-sm" style={{ background: stepShade(i, d.scale.length) }} />
+                    <Swatch key={step.key} color={stepShade(i, d.scale.length)}>
                         {stepWord(step, t)}
-                    </span>
+                    </Swatch>
                 ))}
-                <span className="inline-flex items-center gap-1">
-                    <span className="size-2 rounded-sm bg-muted" />
-                    {t("numbers.unrecorded")}
-                </span>
+                <Swatch className="bg-muted">{t("numbers.unrecorded")}</Swatch>
             </div>
         </Panel>
     );
@@ -382,10 +380,9 @@ function RatingsCard({ d, t, f }: { d: ArchiveDemographics; t: ArchivesT; f: IFo
 }
 
 function Prefixes({ d, people, t, f, onOpenFile }: { d: ArchiveDemographics; people: Map<string, ArchivePerson>; t: ArchivesT; f: IFormatters; onOpenFile: (id: string) => void }): React.ReactElement {
-    const [all, setAll] = useState(false);
+    const { shown, all, toggle } = useShowAll(d.prefixes);
     const [open, setOpen] = useState<string | null>(null);
     const counted = d.prefixes.reduce((s, p) => s + p.holders.length, 0);
-    const shown = all ? d.prefixes : d.prefixes.slice(0, LIST_SHOWN);
     return (
         <Panel title={t("numbers.prefixes")} footer={t("numbers.prefixNote")}>
             <div className="flex flex-col">
@@ -417,11 +414,7 @@ function Prefixes({ d, people, t, f, onOpenFile }: { d: ArchiveDemographics; peo
                     );
                 })}
             </div>
-            {d.prefixes.length > LIST_SHOWN ? (
-                <Button size="xs" variant="ghost" className="self-start" onClick={() => setAll((v) => !v)}>
-                    {all ? t("numbers.showFewer") : t("numbers.showAll", { count: d.prefixes.length })}
-                </Button>
-            ) : null}
+            <ShowAllButton count={d.prefixes.length} all={all} onToggle={toggle} t={t} />
         </Panel>
     );
 }

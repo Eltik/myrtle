@@ -18,7 +18,7 @@ import type { SquadBuild } from "#/types/generated/SquadBuild";
 import type { SquadMember } from "#/types/generated/SquadMember";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { DPS_SQUADMATE_LIMIT } from "../handoff";
-import { advancedModules, clampBuild, type IResolvedSeat, type IRosterBuild, levelCap, maxMastery, maxPhase, maxSkillLevel, moduleRankCount, reached, SUPPORT_SEAT, skillUnlock, topRank } from "../model";
+import { advancedModules, clampBuild, type IResolvedSeat, type IRosterBuild, levelCap, maxMastery, maxPhase, maxSkillLevel, moduleRankCount, moduleTypeLabel, reached, SUPPORT_SEAT, skillUnlock, topRank } from "../model";
 import type { messages } from "./SeatEditor.messages";
 
 type EditorT = TypedT<typeof messages>;
@@ -44,6 +44,16 @@ export interface ISeatEditorProps {
     onChange: (member: SquadMember) => void;
     onRemove: () => void;
     onClose: () => void;
+}
+
+/** A toggle tile's border: ringed when pressed, a hover hint when not. */
+function pressedClass(pressed: boolean): string {
+    return pressed ? "border-primary ring-2 ring-primary/40" : "border-border hover:border-primary/50";
+}
+
+/** The slider reports one thumb as a number or a one-entry list. */
+function sliderValue(v: number | readonly number[]): number {
+    return Array.isArray(v) ? (v[0] ?? 1) : (v as number);
 }
 
 /** "PHASE_2" -> 2. */
@@ -85,7 +95,7 @@ export function SeatEditor({ seat, resolved, op, roster, readOnly, squadmates, l
     const skillLocked = isLocked(member.skill_index) ? skillUnlock(op, member.skill_index) : null;
     const chosenModule = member.module_id ? detail?.modules?.find((m) => m.uniEquipId === member.module_id) : undefined;
     const moduleUnlock = chosenModule ? { phase: phaseNumber(chosenModule.unlockEvolvePhase), level: chosenModule.unlockLevel } : null;
-    const moduleLocked = moduleUnlock !== null && (build.phase < moduleUnlock.phase || (build.phase === moduleUnlock.phase && build.level < moduleUnlock.level));
+    const moduleLocked = moduleUnlock !== null && !reached(moduleUnlock, build.phase, build.level);
     const rosterDiffers = source === "hand" && roster !== undefined && (roster.elite !== build.phase || roster.level !== build.level);
 
     const sourceLabel = { roster: t("squad.editor.source.roster"), hand: t("squad.editor.source.hand"), full: t("squad.editor.source.full"), support: t("squad.editor.source.support") }[source];
@@ -130,11 +140,7 @@ export function SeatEditor({ seat, resolved, op, roster, readOnly, squadmates, l
                                                 onClick={() => onChange({ ...member, skill_index: i })}
                                                 aria-label={name}
                                                 aria-pressed={member.skill_index === i}
-                                                className={cn(
-                                                    "flex size-12 cursor-pointer items-center justify-center overflow-hidden rounded-md border bg-background/40 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
-                                                    member.skill_index === i ? "border-primary ring-2 ring-primary/40" : "border-border hover:border-primary/50",
-                                                    isLocked(i) && "opacity-60",
-                                                )}
+                                                className={cn("flex size-12 cursor-pointer items-center justify-center overflow-hidden rounded-md border bg-background/40 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring", pressedClass(member.skill_index === i), isLocked(i) && "opacity-60")}
                                             >
                                                 {skill ? <img alt="" src={skillIconURL(skill)} className="size-full object-contain" /> : <span className="font-mono text-[11px] text-muted-foreground">S{i + 1}</span>}
                                             </button>
@@ -155,7 +161,7 @@ export function SeatEditor({ seat, resolved, op, roster, readOnly, squadmates, l
                         step={1}
                         value={[Math.min(rank, maxRank)]}
                         onValueChange={(v) => {
-                            const r = Array.isArray(v) ? (v[0] ?? 1) : v;
+                            const r = sliderValue(v);
                             setBuild({ skill_level: Math.min(top, r), mastery: Math.max(0, r - top) });
                         }}
                     />
@@ -168,16 +174,13 @@ export function SeatEditor({ seat, resolved, op, roster, readOnly, squadmates, l
                                 type="button"
                                 onClick={() => setModule(null)}
                                 aria-pressed={member.module_id === null}
-                                className={cn(
-                                    "flex h-12 min-w-14 cursor-pointer items-center justify-center rounded-md border bg-background/40 px-2 font-medium text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                                    member.module_id === null ? "border-primary ring-2 ring-primary/40" : "border-border hover:border-primary/50",
-                                )}
+                                className={cn("flex h-12 min-w-14 cursor-pointer items-center justify-center rounded-md border bg-background/40 px-2 font-medium text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-ring", pressedClass(member.module_id === null))}
                             >
                                 {t("squad.editor.noModule")}
                             </button>
                             {modules.map((m) => {
                                 const full = detail?.modules?.find((d) => d.uniEquipId === m.uniEquipId);
-                                const label = [m.typeName1, m.typeName2].filter(Boolean).join("-");
+                                const label = moduleTypeLabel(m);
                                 return (
                                     <Tooltip key={m.uniEquipId}>
                                         <TooltipTrigger
@@ -188,10 +191,7 @@ export function SeatEditor({ seat, resolved, op, roster, readOnly, squadmates, l
                                                     onClick={() => setModule(m.uniEquipId)}
                                                     aria-pressed={member.module_id === m.uniEquipId}
                                                     aria-label={label}
-                                                    className={cn(
-                                                        "flex h-12 cursor-pointer items-center gap-1.5 rounded-md border bg-background/40 px-1.5 outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                                                        member.module_id === m.uniEquipId ? "border-primary ring-2 ring-primary/40" : "border-border hover:border-primary/50",
-                                                    )}
+                                                    className={cn("flex h-12 cursor-pointer items-center gap-1.5 rounded-md border bg-background/40 px-1.5 outline-none focus-visible:ring-2 focus-visible:ring-ring", pressedClass(member.module_id === m.uniEquipId))}
                                                 >
                                                     {full ? <img alt="" src={moduleIconURL(full)} className="size-9 object-contain" /> : null}
                                                     <span className="font-medium font-mono text-[11px]">{label}</span>
@@ -224,7 +224,7 @@ export function SeatEditor({ seat, resolved, op, roster, readOnly, squadmates, l
                                 aria-pressed={build.phase === p}
                                 className={cn(
                                     "flex h-10 pointer-coarse:h-11 min-w-14 cursor-pointer items-center justify-center gap-1 rounded-md border bg-background/40 px-2 font-medium font-mono text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-40",
-                                    build.phase === p ? "border-primary ring-2 ring-primary/40" : "border-border hover:border-primary/50",
+                                    pressedClass(build.phase === p),
                                 )}
                             >
                                 <img alt="" src={eliteIcon(p)} className="icon-theme-aware size-5 object-contain" />E{p}
@@ -234,7 +234,7 @@ export function SeatEditor({ seat, resolved, op, roster, readOnly, squadmates, l
                 </Field>
 
                 <Field label={t("squad.editor.level")} value={`${build.level} / ${cap}`}>
-                    <Slider min={1} max={cap} step={1} value={[build.level]} onValueChange={(v) => setBuild({ level: Array.isArray(v) ? (v[0] ?? 1) : v })} />
+                    <Slider min={1} max={cap} step={1} value={[build.level]} onValueChange={(v) => setBuild({ level: sliderValue(v) })} />
                 </Field>
 
                 <Field label={t("squad.editor.potential")}>
@@ -246,10 +246,7 @@ export function SeatEditor({ seat, resolved, op, roster, readOnly, squadmates, l
                                 onClick={() => setBuild({ potential: i })}
                                 aria-pressed={build.potential === i}
                                 aria-label={t("squad.editor.potentialAria", { rank: i + 1 })}
-                                className={cn(
-                                    "flex pointer-coarse:size-11 size-9 cursor-pointer items-center justify-center rounded-md border bg-background/40 outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                                    build.potential === i ? "border-primary ring-2 ring-primary/40" : "border-border hover:border-primary/50",
-                                )}
+                                className={cn("flex pointer-coarse:size-11 size-9 cursor-pointer items-center justify-center rounded-md border bg-background/40 outline-none focus-visible:ring-2 focus-visible:ring-ring", pressedClass(build.potential === i))}
                             >
                                 <img alt="" src={potentialIcon(i)} className="icon-theme-aware size-5 object-contain" />
                             </button>
@@ -365,10 +362,7 @@ function Segmented({ options, value, onChange, render }: { options: number[]; va
                     type="button"
                     onClick={() => onChange(o)}
                     aria-pressed={value === o}
-                    className={cn(
-                        "flex h-9 min-w-10 cursor-pointer items-center justify-center rounded-md border bg-background/40 px-2 font-medium font-mono text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                        value === o ? "border-primary ring-2 ring-primary/40" : "border-border hover:border-primary/50",
-                    )}
+                    className={cn("flex h-9 min-w-10 cursor-pointer items-center justify-center rounded-md border bg-background/40 px-2 font-medium font-mono text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-ring", pressedClass(value === o))}
                 >
                     {render(o)}
                 </button>

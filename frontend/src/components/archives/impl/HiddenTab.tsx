@@ -13,7 +13,7 @@ import type { ArchiveHiddenFactions } from "#/types/generated/ArchiveHiddenFacti
 import type { ArchivePerson } from "#/types/generated/ArchivePerson";
 import type { ArchiveSecret } from "#/types/generated/ArchiveSecret";
 import { FLOW_GAP, type IFlowNode, layoutFlow } from "./flow";
-import { FactionLogo, Panel, PersonChip, peopleById, useArchivesT } from "./shared";
+import { BigStat, FactionLogo, hoverProps, Panel, PersonChip, peopleById, SectionHead, StatStrip, TabMessage, useArchivesT } from "./shared";
 
 type Pick = { kind: "shown"; id: string } | { kind: "hidden"; id: string } | { kind: "band"; shown: string; hidden: string };
 
@@ -37,8 +37,8 @@ export function HiddenTab({ onOpenFile }: { onOpenFile: (id: string) => void }):
     const t = useArchivesT();
     const server = useGamedataServer();
     const { data, isLoading, isError } = useQuery(archiveHiddenFactionsQueryOptions(server));
-    if (isError) return <p className="text-muted-foreground text-sm">{t("page.error")}</p>;
-    if (isLoading || !data) return <p className="text-muted-foreground text-sm">{t("page.loading")}</p>;
+    if (isError) return <TabMessage>{t("page.error")}</TabMessage>;
+    if (isLoading || !data) return <TabMessage>{t("page.loading")}</TabMessage>;
     return <Hidden data={data} onOpenFile={onOpenFile} server={server} />;
 }
 
@@ -74,12 +74,12 @@ function Hidden({ data, onOpenFile, server }: { data: ArchiveHiddenFactions; onO
             <header className="flex flex-col gap-3">
                 <Kicker className="mb-0">{t("hidden.kicker")}</Kicker>
                 <p className="m-0 max-w-3xl text-[13.5px] text-muted-foreground leading-normal">{t("hidden.lede")}</p>
-                <div className="grid grid-cols-4 overflow-hidden rounded-[14px] border border-border bg-card max-[760px]:grid-cols-2">
-                    <Stat label={t("hidden.stat.factions")} value={f.number(hiddenFactions)} />
-                    <Stat label={t("hidden.stat.operators")} value={f.number(operators)} />
-                    <Stat label={t("hidden.stat.links")} value={f.number(data.secret.length)} />
-                    <Stat label={t("hidden.stat.nations")} value={f.number(data.nations.length)} />
-                </div>
+                <StatStrip>
+                    <BigStat label={t("hidden.stat.factions")} value={f.number(hiddenFactions)} />
+                    <BigStat label={t("hidden.stat.operators")} value={f.number(operators)} />
+                    <BigStat label={t("hidden.stat.links")} value={f.number(data.secret.length)} />
+                    <BigStat label={t("hidden.stat.nations")} value={f.number(data.nations.length)} />
+                </StatStrip>
             </header>
 
             <section className="flex flex-col gap-3">
@@ -190,10 +190,7 @@ function FlowChart({ secret, shownName, hiddenName, pick, onPick, lit }: { secre
                     aria-label={t("hidden.nodeLabel", { name, count: node.count })}
                     title={t("hidden.nodeLabel", { name, count: node.count })}
                     onClick={() => onPick(p)}
-                    onPointerEnter={() => setHover(p)}
-                    onPointerLeave={() => setHover(null)}
-                    onFocus={() => setHover(p)}
-                    onBlur={() => setHover(null)}
+                    {...hoverProps(setHover, p)}
                     className={cn(
                         "inline-flex h-6 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-md px-2 text-[12px] outline-none transition-[opacity,color,background-color] focus-visible:ring-2 focus-visible:ring-ring",
                         left ? "flex-row" : "flex-row-reverse",
@@ -296,10 +293,7 @@ function FlowChart({ secret, shownName, hiddenName, pick, onPick, lit }: { secre
                                                 className="cursor-pointer outline-none transition-[stroke-opacity]"
                                                 style={{ pointerEvents: "stroke" }}
                                                 onClick={() => onPick(p)}
-                                                onPointerEnter={() => setHover(p)}
-                                                onPointerLeave={() => setHover(null)}
-                                                onFocus={() => setHover(p)}
-                                                onBlur={() => setHover(null)}
+                                                {...hoverProps(setHover, p)}
                                                 onKeyDown={(e) => {
                                                     if (e.key === "Enter" || e.key === " ") {
                                                         e.preventDefault();
@@ -431,24 +425,5 @@ function PickList({
         <div aria-live="polite" className="flex min-h-14 flex-col gap-3 border-border border-t pt-3 max-sm:sticky max-sm:top-14 max-sm:z-1 max-sm:order-first max-sm:max-h-[40dvh] max-sm:overflow-y-auto max-sm:border-t-0 max-sm:border-b max-sm:bg-card max-sm:pt-0 max-sm:pb-3">
             {body}
         </div>
-    );
-}
-
-function Stat({ label, value }: { label: string; value: string }): React.ReactElement {
-    return (
-        <div className="flex flex-col gap-1.5 border-border not-last:border-r px-4 py-3.5 max-[760px]:nth-[2n]:border-r-0">
-            <span className="font-bold text-[28px] text-foreground tabular-nums leading-none tracking-tight">{value}</span>
-            <span className="font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{label}</span>
-        </div>
-    );
-}
-
-function SectionHead({ index, title, blurb }: { index: string; title: string; blurb: string }): React.ReactElement {
-    return (
-        <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-border border-b pb-2">
-            <span className="font-bold font-mono text-primary text-sm">{index}</span>
-            <h2 className="m-0 font-semibold text-[20px] text-foreground tracking-tight">{title}</h2>
-            <p className="m-0 text-[13px] text-muted-foreground">{blurb}</p>
-        </header>
     );
 }

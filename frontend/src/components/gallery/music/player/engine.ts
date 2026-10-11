@@ -7,11 +7,12 @@ import { sirenLyricsUrl } from "#/lib/api/music";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { createStoryAudio, type MusicRequest, type StoryAudio } from "#/lib/story/audio";
+import { clamp, clamp01 } from "#/lib/story/num";
 import { logPlay, toggleLike, updatePlay } from "../impl/library/store";
 import { displayArtists, type ICatalog, type ITrack, radioFor, trackSource } from "../impl/model";
 import { parseLrc } from "./lrc";
 import type { messages } from "./Player.messages";
-import { type IQueue, identityOrder, insertEnd, insertNext, moveItem, nextIndex, previousIndex, removeAt, shuffledOrder, validOrder } from "./queue";
+import { type IQueue, identityOrder, insertEnd, insertNext, moveItem, nextIndex, playOrder, previousIndex, removeAt, validOrder } from "./queue";
 import { CROSSFADE_MAX, CROSSFADE_MIN, DEFAULT_SETTINGS, type ILyricLine, type IPlayerSettings, type IPlayerState, type IPlayhead, type IQueueSource, type IShortcut, type PanelName, type PreloadChoice, type RepeatMode, type SleepMinutes } from "./types";
 
 /**
@@ -66,6 +67,8 @@ const LOOP_PASSES = 2;
 const LEVELING_ON = { threshold: -24, knee: 6, ratio: 4, attack: 0.003, release: 0.25 } as const;
 const LEVELING_OFF = { threshold: 0, knee: 0, ratio: 1, attack: 0.003, release: 0.25 } as const;
 
+const NO_LYRICS: IPlayerState["lyrics"] = { trackId: null, status: "none", lines: [] };
+
 const INITIAL: IPlayerState = {
     queue: [],
     index: -1,
@@ -82,7 +85,7 @@ const INITIAL: IPlayerState = {
     panel: null,
     settingsOpen: false,
     shortcutsOpen: false,
-    lyrics: { trackId: null, status: "none", lines: [] },
+    lyrics: NO_LYRICS,
     failures: 0,
     restored: false,
     houseArtist: null,
@@ -103,6 +106,22 @@ function state(): IPlayerState {
 
 function queueOf(s: IPlayerState): IQueue<ITrack> {
     return { items: s.queue, index: s.index, order: s.order };
+}
+
+/** The index after the current one, or the first radio track appended when the queue has run out. */
+function nextOrRadio(s: IPlayerState, auto: boolean): number | null {
+    return nextIndex(queueOf(s), s.repeat, auto) ?? extendWithRadio();
+}
+
+/** Playing, or about to: what a pause would interrupt. */
+function wantsPlay(): boolean {
+    const st = state().status;
+    return st === "playing" || st === "loading";
+}
+
+/** `err.name` for a thrown value of any shape. */
+function errorName(err: unknown): string | undefined {
+    return (err as { name?: string } | null)?.name;
 }
 
 /** The shortcuts the engine binds, in the order the dialog lists them. `alt` is a second binding for the same action. */
@@ -329,13 +348,23 @@ function userLevel(): number {
 function deckLevel(i: number, factor: number): void {
     const deck = decks?.[i];
     if (!deck) return;
-    const v = Math.max(0, Math.min(1, userLevel() * factor));
+    const v = clamp01(userLevel() * factor);
     if (deck.gain) {
         deck.gain.gain.value = v;
         deck.el.volume = 1;
     } else {
         deck.el.volume = v;
     }
+}
+
+/** An element's duration, or 0 while it is not a finite number (NaN before metadata). */
+function knownDuration(el: HTMLAudioElement): number {
+    return Number.isFinite(el.duration) ? el.duration : 0;
+}
+
+/** The deck already holds `trackId`, loaded ahead and without an error, so a start can use it as is. */
+function holdsPreload(deck: IDeck, trackId: string): boolean {
+    return deck.trackId === trackId && deck.preloaded && !deck.el.error;
 }
 
 function freshSrc(track: ITrack): string | null {
@@ -363,7 +392,7 @@ function playDeck(i: number, factor = 1): void {
 
 function onPlayRejected(i: number, err: unknown, token: number): void {
     if (i !== active || token !== loadToken || transport !== "stream") return;
-    const name = (err as { name?: string } | null)?.name;
+    const name = errorName(err);
     if (name === "AbortError") return;
     if (name === "NotAllowedError") {
         // Autoplay blocked: wait for the listener to press play.
@@ -384,7 +413,7 @@ function startStream(track: ITrack, offset: number, autoplay: boolean): void {
     cancelFade();
     const idle = 1 - active;
     const idleDeck = d[idle];
-    const usePreload = idleDeck.trackId === track.id && idleDeck.preloaded && !idleDeck.el.error;
+    const usePreload = holdsPreload(idleDeck, track.id);
     const i = usePreload ? idle : active;
     d[1 - i].el.pause();
     active = i;
@@ -408,7 +437,7 @@ function startStream(track: ITrack, offset: number, autoplay: boolean): void {
     transport = "stream";
     loadedId = track.id;
     deckLevel(i, 1);
-    publishPlayhead({ position: offset, duration: Number.isFinite(deck.el.duration) ? deck.el.duration : 0, loopAt: null, buffered: 0 }, true);
+    publishPlayhead({ position: offset, duration: knownDuration(deck.el), loopAt: null, buffered: 0 }, true);
     if (autoplay) {
         set({ status: "loading" });
         playDeck(i);
@@ -424,8 +453,7 @@ function onDeckMeta(i: number): void {
         deck.pendingSeek = null;
     }
     if (i !== active || transport !== "stream") return;
-    const duration = Number.isFinite(deck.el.duration) ? deck.el.duration : 0;
-    publishPlayhead({ duration }, true);
+    publishPlayhead({ duration: knownDuration(deck.el) }, true);
 }
 
 function onDeckProgress(i: number): void {
@@ -455,8 +483,7 @@ function onDeckTime(i: number): void {
     const dt = t - deck.lastTime;
     deck.lastTime = t;
     if (!deck.el.paused && dt > 0 && dt < MAX_HEARD_STEP_S) addHeard(dt);
-    const duration = Number.isFinite(deck.el.duration) ? deck.el.duration : 0;
-    publishPlayhead({ position: t, duration, loopAt: null });
+    publishPlayhead({ position: t, duration: knownDuration(deck.el), loopAt: null });
     maybeCrossfade(deck);
 }
 
@@ -480,7 +507,7 @@ function onDeckError(i: number): void {
             const at = deck.el.currentTime;
             deck.el.src = src;
             if (at > 0) deck.pendingSeek = at;
-            if (s.status === "playing" || s.status === "loading") playDeck(i);
+            if (wantsPlay()) playDeck(i);
             return;
         }
     }
@@ -559,8 +586,7 @@ function maybeCrossfade(deck: IDeck): void {
     const remaining = duration - deck.el.currentTime;
     // A track shorter than two fades switches instead: there is no middle to keep.
     if (remaining > seconds || duration < seconds * 2) return;
-    let ni = nextIndex(queueOf(s), s.repeat, true);
-    if (ni === null) ni = extendWithRadio();
+    const ni = nextOrRadio(s, true);
     if (ni === null) return;
     const track = state().queue[ni];
     if (!track || trackSource(track).kind !== "stream") return;
@@ -577,7 +603,7 @@ function startCrossfade(ni: number, seconds: number): void {
     const from = active;
     const to = 1 - active;
     const next = d[to];
-    if (!(next.trackId === track.id && next.preloaded && !next.el.error)) {
+    if (!holdsPreload(next, track.id)) {
         next.el.src = src;
         next.trackId = track.id;
     } else if (next.el.currentTime > 0) next.el.currentTime = 0;
@@ -590,7 +616,7 @@ function startCrossfade(ni: number, seconds: number): void {
     loadedId = track.id;
     set({ index: ni, current: track, status: "loading" });
     beginListen(track.id);
-    publishPlayhead({ position: 0, duration: Number.isFinite(next.el.duration) ? next.el.duration : 0, loopAt: null, buffered: 0 }, true);
+    publishPlayhead({ position: 0, duration: knownDuration(next.el), loopAt: null, buffered: 0 }, true);
     playDeck(to, 0);
     fade = { from, to, start: now(), duration: seconds * 1000, raf: null };
     const loop = () => {
@@ -673,6 +699,11 @@ function loopsForever(): boolean {
     return nextIndex(queueOf(s), s.repeat, true) === null;
 }
 
+/** The length the bar shows for an in-game track: the intro, then the loop `LOOP_PASSES` times. */
+function loopSpan(intro: number, loopLength: number): number {
+    return intro + LOOP_PASSES * loopLength;
+}
+
 function seedPasses(l: ILoop, offset: number): void {
     if (l.loopLength > 0 && offset > l.intro) {
         l.passes = Math.floor((offset - l.intro) / l.loopLength);
@@ -727,7 +758,7 @@ function startLoop(track: ITrack, offset: number, autoplay: boolean): void {
     loopState = l;
     transport = "loop";
     loadedId = track.id;
-    const total = l.loopLength > 0 ? l.intro + LOOP_PASSES * l.loopLength : 0;
+    const total = l.loopLength > 0 ? loopSpan(l.intro, l.loopLength) : 0;
     publishPlayhead({ position: offset, duration: total, loopAt: l.intro > 0 && total > 0 ? l.intro : null, buffered: 0 }, true);
     if (autoplay) soundLoop(l, offset);
     else {
@@ -799,7 +830,7 @@ function tickLoop(force: boolean): void {
     const dt = virtual - l.virtual;
     if (dt > 0 && dt < MAX_HEARD_STEP_S) addHeard(dt);
     l.virtual = virtual;
-    const total = intro + LOOP_PASSES * loopLength;
+    const total = loopSpan(intro, loopLength);
     const forever = loopsForever();
     if (!forever && virtual >= total && !force) {
         advance(true);
@@ -813,15 +844,11 @@ function tickLoop(force: boolean): void {
 function seekLoop(seconds: number): void {
     const l = loopState;
     if (!l) return;
-    const total = l.loopLength > 0 ? l.intro + LOOP_PASSES * l.loopLength : Number.POSITIVE_INFINITY;
+    const total = l.loopLength > 0 ? loopSpan(l.intro, l.loopLength) : Number.POSITIVE_INFINITY;
     const to = Math.max(0, Math.min(seconds, total - 0.25));
-    if (l.sounding && story) {
-        story.playMusicAt(l.req, to);
-        seedPasses(l, to);
-    } else {
-        l.offset = to;
-        seedPasses(l, to);
-    }
+    if (l.sounding && story) story.playMusicAt(l.req, to);
+    else l.offset = to;
+    seedPasses(l, to);
     publishPlayhead({ position: to }, true);
 }
 
@@ -880,7 +907,7 @@ function probeLength(track: ITrack): void {
     const token = ++probeToken;
     let found: Promise<{ duration: number; loopAt: number | null } | null>;
     if (src.kind === "stream") found = mediaDuration(src.src).then((d) => (d > 0 ? { duration: d, loopAt: null } : null));
-    else if (src.kind === "loop") found = Promise.all([src.intro ? mediaDuration(src.intro) : Promise.resolve(0), mediaDuration(src.loop)]).then(([intro, loop]) => (loop > 0 ? { duration: intro + LOOP_PASSES * loop, loopAt: intro > 0 ? intro : null } : null));
+    else if (src.kind === "loop") found = Promise.all([src.intro ? mediaDuration(src.intro) : Promise.resolve(0), mediaDuration(src.loop)]).then(([intro, loop]) => (loop > 0 ? { duration: loopSpan(intro, loop), loopAt: intro > 0 ? intro : null } : null));
     else return;
     void found.then((r) => {
         if (!r) return;
@@ -912,11 +939,6 @@ function startIndex(i: number, autoplay: boolean, offset = 0): void {
     startTrack(track, offset, autoplay);
 }
 
-function wantsPlay(): boolean {
-    const st = state().status;
-    return st === "playing" || st === "loading";
-}
-
 /** The queue ran out: append radio tracks when Radio is on, and return the index to play next. */
 function extendWithRadio(): number | null {
     const s = state();
@@ -933,8 +955,7 @@ function extendWithRadio(): number | null {
 /** Move on: `auto` is the track ending by itself (repeat-one holds it), otherwise a press of Next. */
 function advance(auto: boolean): void {
     const s = state();
-    let ni = nextIndex(queueOf(s), s.repeat, auto);
-    if (ni === null) ni = extendWithRadio();
+    const ni = nextOrRadio(s, auto);
     if (ni === null) {
         endOfQueue();
         return;
@@ -973,8 +994,7 @@ function trackFailed(): void {
     }
     set({ failures });
     if (track) notify({ kind: "skip", title: track.title });
-    let ni = nextIndex(queueOf(s), s.repeat, false);
-    if (ni === null) ni = extendWithRadio();
+    const ni = nextOrRadio(s, false);
     if (ni === null || ni === s.index) {
         pauseTransports();
         set({ status: "error" });
@@ -1009,9 +1029,8 @@ export function setCatalog(next: ICatalog | null): void {
 export function playQueue(tracks: readonly ITrack[], from: number, source: IQueueSource): void {
     if (tracks.length === 0) return;
     const items = [...tracks];
-    const start = Math.max(0, Math.min(items.length - 1, Math.floor(from) || 0));
-    const s = state();
-    const order = s.shuffle ? shuffledOrder(items.length, start) : identityOrder(items.length);
+    const start = clamp(Math.floor(from) || 0, 0, items.length - 1);
+    const order = playOrder(items.length, start, state().shuffle);
     set({ queue: items, order, index: start, source, failures: 0, restored: true });
     startIndex(start, true);
 }
@@ -1036,8 +1055,7 @@ export function playAt(queueIndex: number): void {
 /** Into an empty queue, enqueued tracks are selected but not played. */
 function seedQueue(tracks: readonly ITrack[]): void {
     const items = [...tracks];
-    const s = state();
-    set({ queue: items, order: s.shuffle ? shuffledOrder(items.length, 0) : identityOrder(items.length), index: 0, current: items[0] ?? null, status: "paused", source: { kind: "none" }, restored: true });
+    set({ queue: items, order: playOrder(items.length, 0, state().shuffle), index: 0, current: items[0] ?? null, status: "paused", source: { kind: "none" }, restored: true });
     loadedId = null;
     pendingOffset = 0;
     publishPlayhead({ ...EMPTY_PLAYHEAD }, true);
@@ -1104,7 +1122,7 @@ export function clearQueue(): void {
     loadedId = null;
     pendingOffset = 0;
     loadToken += 1;
-    set({ queue: [], order: [], index: -1, current: null, status: "idle", source: { kind: "none" }, failures: 0, panel: null, lyrics: { trackId: null, status: "none", lines: [] } });
+    set({ queue: [], order: [], index: -1, current: null, status: "idle", source: { kind: "none" }, failures: 0, panel: null, lyrics: NO_LYRICS });
     publishPlayhead({ ...EMPTY_PLAYHEAD }, true);
     saveSession();
     mediaClear();
@@ -1210,10 +1228,6 @@ function applyLevels(): void {
     applyStoryLevels();
 }
 
-function clamp01(v: number): number {
-    return Math.max(0, Math.min(1, v));
-}
-
 export function setVolume(volume: number): void {
     if (!Number.isFinite(volume)) return;
     set({ volume: clamp01(volume), muted: false });
@@ -1239,7 +1253,7 @@ export function toggleShuffle(): void {
     const s = state();
     const shuffle = !s.shuffle;
     const n = s.queue.length;
-    set({ shuffle, order: shuffle ? shuffledOrder(n, s.index) : identityOrder(n) });
+    set({ shuffle, order: playOrder(n, s.index, shuffle) });
     schedulePreload();
 }
 
@@ -1256,7 +1270,7 @@ export function setRepeat(mode: RepeatMode): void {
 function cleanSettings(raw: Partial<IPlayerSettings> | null | undefined): IPlayerSettings {
     const v = raw && typeof raw === "object" ? raw : {};
     const bool = (x: unknown, d: boolean) => (typeof x === "boolean" ? x : d);
-    const seconds = typeof v.crossfadeSeconds === "number" && Number.isFinite(v.crossfadeSeconds) ? Math.round(Math.max(CROSSFADE_MIN, Math.min(CROSSFADE_MAX, v.crossfadeSeconds))) : DEFAULT_SETTINGS.crossfadeSeconds;
+    const seconds = typeof v.crossfadeSeconds === "number" && Number.isFinite(v.crossfadeSeconds) ? Math.round(clamp(v.crossfadeSeconds, CROSSFADE_MIN, CROSSFADE_MAX)) : DEFAULT_SETTINGS.crossfadeSeconds;
     const preload: PreloadChoice = v.preload === "on" || v.preload === "off" || v.preload === "auto" ? v.preload : DEFAULT_SETTINGS.preload;
     return {
         crossfadeOn: bool(v.crossfadeOn, DEFAULT_SETTINGS.crossfadeOn),
@@ -1278,11 +1292,13 @@ export function updateSettings(patch: Partial<IPlayerSettings>): void {
 
 let sleepClock: ReturnType<typeof setInterval> | null = null;
 
+function stopSleepClock(): void {
+    if (sleepClock !== null) clearInterval(sleepClock);
+    sleepClock = null;
+}
+
 export function setSleepTimer(minutes: SleepMinutes): void {
-    if (sleepClock !== null) {
-        clearInterval(sleepClock);
-        sleepClock = null;
-    }
+    stopSleepClock();
     if (!minutes) {
         set({ sleepEndsAt: null });
         return;
@@ -1292,8 +1308,7 @@ export function setSleepTimer(minutes: SleepMinutes): void {
     sleepClock = setInterval(() => {
         const ends = state().sleepEndsAt;
         if (ends === null || Date.now() < ends) return;
-        if (sleepClock !== null) clearInterval(sleepClock);
-        sleepClock = null;
+        stopSleepClock();
         set({ sleepEndsAt: null });
         pause();
     }, 1000);
@@ -1400,7 +1415,7 @@ function tryRestore(): void {
     let order = oldOrder ? oldOrder.filter((i) => newIndexOf.has(i)).map((i) => newIndexOf.get(i) as number) : null;
     const keptCurrent = newIndexOf.get(session.index);
     const index = keptCurrent ?? 0;
-    if (!order || validOrder(order, items.length) === null) order = session.shuffle ? shuffledOrder(items.length, index) : identityOrder(items.length);
+    if (!order || validOrder(order, items.length) === null) order = playOrder(items.length, index, session.shuffle);
     if (!session.shuffle) order = identityOrder(items.length);
     const position = keptCurrent !== undefined && state().settings.resumePosition ? session.position : 0;
     loadedId = null;
@@ -1435,6 +1450,11 @@ function saveSession(): void {
 const lyricsCache = new Map<string, ILyricLine[]>();
 let lyricsAbort: AbortController | null = null;
 
+/** The lyrics state for `trackId` once its lines are in: an LRC with no timed line reads as empty. */
+function lyricsOf(trackId: string, lines: ILyricLine[]): IPlayerState["lyrics"] {
+    return { trackId, status: lines.length > 0 ? "ready" : "empty", lines };
+}
+
 function cacheLyrics(id: string, lines: ILyricLine[]): void {
     lyricsCache.delete(id);
     lyricsCache.set(id, lines);
@@ -1455,7 +1475,7 @@ function loadLyrics(track: ITrack | null): void {
     const cached = lyricsCache.get(track.id);
     if (cached) {
         cacheLyrics(track.id, cached);
-        set({ lyrics: { trackId: track.id, status: cached.length > 0 ? "ready" : "empty", lines: cached } });
+        set({ lyrics: lyricsOf(track.id, cached) });
         return;
     }
     if (typeof fetch !== "function") return;
@@ -1467,10 +1487,10 @@ function loadLyrics(track: ITrack | null): void {
             if (!res.ok) throw new Error(`lyrics ${res.status}`);
             const lines = parseLrc(await res.text());
             cacheLyrics(track.id, lines);
-            if (state().current?.id === track.id) set({ lyrics: { trackId: track.id, status: lines.length > 0 ? "ready" : "empty", lines } });
+            if (state().current?.id === track.id) set({ lyrics: lyricsOf(track.id, lines) });
         })
         .catch((err: unknown) => {
-            if ((err as { name?: string } | null)?.name === "AbortError") return;
+            if (errorName(err) === "AbortError") return;
             if (state().current?.id === track.id) set({ lyrics: { trackId: track.id, status: "failed", lines: [] } });
         });
 }
@@ -1503,8 +1523,7 @@ function mediaPlaybackState(): void {
     const ms = mediaSession();
     if (!ms) return;
     try {
-        const st = state().status;
-        ms.playbackState = st === "playing" || st === "loading" ? "playing" : state().current ? "paused" : "none";
+        ms.playbackState = wantsPlay() ? "playing" : state().current ? "paused" : "none";
     } catch {
         // Ignored where unsupported.
     }
@@ -1713,8 +1732,7 @@ export function useMusicPlayerLifetime(): void {
 export function resetPlayerForTests(): void {
     clearQueue();
     stopLoopClock();
-    if (sleepClock !== null) clearInterval(sleepClock);
-    sleepClock = null;
+    stopSleepClock();
     if (saveTimer !== null) clearTimeout(saveTimer);
     saveTimer = null;
     catalog = null;

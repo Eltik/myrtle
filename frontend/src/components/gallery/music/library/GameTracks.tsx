@@ -1,7 +1,5 @@
 import type React from "react";
-import { useCallback, useMemo, useState } from "react";
-import { pageOf, RECORD_PAGE } from "#/components/story/library/impl/paging";
-import { Button } from "#/components/ui/button";
+import { useCallback, useMemo } from "react";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -10,6 +8,7 @@ import { playFrom } from "../impl/playback";
 import { TrackRow } from "../impl/TrackRow";
 import { filterTracks, type MusicKindFilter, prepareMusicSearch } from "../impl/tracks";
 import type { messages } from "../MusicGallery.messages";
+import { NOTICE_CLASS, ShowMore, usePagedList } from "./paging";
 
 type MusicT = TypedT<typeof messages>;
 
@@ -48,12 +47,9 @@ export function GameTracks({ catalog, query, kind, collator, state }: { catalog:
     // The page limit is remembered against the controls it was raised under,
     // so a new search starts from one page without an effect.
     const pageKey = `${query}\u0000${kind}`;
-    const [raised, setRaised] = useState<{ key: string; limit: number }>({ key: pageKey, limit: RECORD_PAGE });
-    const limit = raised.key === pageKey ? raised.limit : RECORD_PAGE;
-    const { shown, hidden } = pageOf(visible, limit);
-    const more = Math.min(RECORD_PAGE, hidden);
+    const page = usePagedList(visible, pageKey);
 
-    if (state.unavailable) return <div className="rounded-xl border border-border border-dashed p-10 text-center font-sans text-[13px] text-muted-foreground">{t("music.unavailableRoute")}</div>;
+    if (state.unavailable) return <div className={NOTICE_CLASS}>{t("music.unavailableRoute")}</div>;
     if (state.failed) return <p className="py-10 text-center font-sans text-[13px] text-muted-foreground">{t("music.failed")}</p>;
     if (state.loading || !records) {
         return (
@@ -76,15 +72,9 @@ export function GameTracks({ catalog, query, kind, collator, state }: { catalog:
             {visible.length === 0 ? (
                 <div className="rounded-[14px] border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">{t("music.empty")}</div>
             ) : (
-                <ul className="m-0 flex list-none flex-col gap-2 p-0">{shown.map((track) => (track.game ? <TrackRow key={track.id} track={track} record={track.game} onPlay={onPlay} /> : null))}</ul>
+                <ul className="m-0 flex list-none flex-col gap-2 p-0">{page.shown.map((track) => (track.game ? <TrackRow key={track.id} track={track} record={track.game} onPlay={onPlay} /> : null))}</ul>
             )}
-            {hidden > 0 ? (
-                <div className="mt-4 flex justify-center">
-                    <Button variant="outline" className="max-sm:min-h-11" onClick={() => setRaised({ key: pageKey, limit: limit + more })}>
-                        {t("music.showMore", { count: more, remaining: hidden })}
-                    </Button>
-                </div>
-            ) : null}
+            <ShowMore page={page} />
         </div>
     );
 }

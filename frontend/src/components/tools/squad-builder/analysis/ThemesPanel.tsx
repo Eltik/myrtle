@@ -7,20 +7,15 @@ import type { ThemeKind } from "#/types/generated/ThemeKind";
 import type { ThemeShare } from "#/types/generated/ThemeShare";
 import type { Themes } from "#/types/generated/Themes";
 import type { OperatorProfession } from "#/types/operators";
-import { type IChipContext, type ISeatOperator, OpChip, PanelShell, type PanelState, SectionHeading, StatCell, StatStrip } from "./shared";
+import { type IChipContext, type IPanelBaseProps, type ISeatOperator, OpChip, PanelShell, SectionHeading, StatCell, StatStrip } from "./shared";
 import type { messages as sharedMessages } from "./shared.messages";
 import type { messages } from "./ThemesPanel.messages";
 
 type ThemesT = TypedT<typeof messages & typeof sharedMessages>;
 
-interface IThemesPanelProps {
-    state: PanelState;
-    stale: boolean;
-    collapsed: boolean;
-    onToggle: () => void;
+interface IThemesPanelProps extends IPanelBaseProps {
     themes: Themes | undefined;
     seatOps: ReadonlyMap<number, ISeatOperator>;
-    ctx: IChipContext;
 }
 
 export function ThemesPanel({ state, stale, collapsed, onToggle, themes, seatOps, ctx }: IThemesPanelProps): React.ReactElement {

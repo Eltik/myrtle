@@ -90,12 +90,16 @@ export function sirenAlbumQueryOptions(cid: string) {
  * redirect to the label's CDN, so an `<audio>` element loads it directly; the
  * lyrics are a plain text LRC file.
  */
+function sirenSongUrl(cid: string, leaf: "stream" | "lyrics"): string {
+    return `${env.VITE_BACKEND_URL ?? ""}/api/music/siren/songs/${encodeURIComponent(cid)}/${leaf}`;
+}
+
 export function sirenStreamUrl(cid: string): string {
-    return `${env.VITE_BACKEND_URL ?? ""}/api/music/siren/songs/${encodeURIComponent(cid)}/stream`;
+    return sirenSongUrl(cid, "stream");
 }
 
 export function sirenLyricsUrl(cid: string): string {
-    return `${env.VITE_BACKEND_URL ?? ""}/api/music/siren/songs/${encodeURIComponent(cid)}/lyrics`;
+    return sirenSongUrl(cid, "lyrics");
 }
 
 /** `null` when signed out or when the running backend predates the route. */

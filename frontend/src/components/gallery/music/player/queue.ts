@@ -32,6 +32,11 @@ export function shuffledOrder(n: number, first: number, rng: Rng = Math.random):
     return first >= 0 && first < n ? [first, ...rest] : rest;
 }
 
+/** The play order a fresh queue of `n` gets: shuffled with `first` at the front, or in list order. */
+export function playOrder(n: number, first: number, shuffle: boolean, rng: Rng = Math.random): number[] {
+    return shuffle ? shuffledOrder(n, first, rng) : identityOrder(n);
+}
+
 /** A play order that names every index exactly once, or `null` when `order` does not. */
 export function validOrder(order: readonly unknown[] | undefined, n: number): number[] | null {
     if (!Array.isArray(order) || order.length !== n) return null;
