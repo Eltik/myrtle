@@ -47,6 +47,10 @@ export const messages = {
         text: "Chibi",
         description: "Tab label: the enemy's animated sprite. 'Chibi' is the game community's word for it.",
     },
+    "detail.tab.sounds": {
+        text: "Sounds",
+        description: "Tab label: the enemy's battle sound effects (attacks, skills, death), which the reader can play. Only shown when the enemy has any.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

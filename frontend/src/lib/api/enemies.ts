@@ -12,6 +12,8 @@ import type { CommunityEnemyAverageResponse } from "#/types/generated/CommunityE
 import type { DamageType } from "#/types/generated/DamageType";
 import type { Enemy } from "#/types/generated/Enemy";
 import type { EnemyAttributes } from "#/types/generated/EnemyAttributes";
+import type { EnemyAudio } from "#/types/generated/EnemyAudio";
+import type { EnemyAudioCategory } from "#/types/generated/EnemyAudioCategory";
 import type { EnemyHandbook } from "#/types/generated/EnemyHandbook";
 import type { EnemyInfoList } from "#/types/generated/EnemyInfoList";
 import type { EnemyLevel } from "#/types/generated/EnemyLevel";
@@ -40,6 +42,8 @@ export type IEnemyLevelStats = EnemyLevelStats;
 export type IEnemyStats = EnemyStats;
 export type IEnemy = Enemy;
 export type IEnemyHandbook = EnemyHandbook;
+export type IEnemyAudio = EnemyAudio;
+export type IEnemyAudioCategory = EnemyAudioCategory;
 
 /** Backend-served square icon for an enemy, keyed by `enemyId`. */
 export function enemyIconURL(enemyId: string, server: string = DEFAULT_GAMEDATA_SERVER): string {
@@ -153,6 +157,8 @@ export function enemyCommunityAverageQueryOptions() {
 export interface IEnemyDetail {
     enemy: IEnemy;
     raceData: Record<string, IEnemyRaceData>;
+    /** The enemy's battle sounds; empty (or absent from an older backend) when none link to it. */
+    audio?: IEnemyAudio[];
 }
 
 export const getEnemyDetailFn = createServerFn({ method: "GET" })

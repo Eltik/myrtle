@@ -152,6 +152,21 @@ impl MusicBanks {
             .or_else(|| self.banks.get(self.alias.get(name)?))
     }
 
+    /// Every named-track row, in no particular order.
+    pub fn musics(&self) -> impl Iterator<Item = &RawMusic> {
+        self.by_id.values()
+    }
+
+    /// Every bank, in no particular order.
+    pub fn banks(&self) -> impl Iterator<Item = &RawBgmBank> {
+        self.banks.values()
+    }
+
+    /// Every alias as `(variant, target)`, in no particular order.
+    pub fn aliases(&self) -> impl Iterator<Item = (&str, &str)> {
+        self.alias.iter().map(|(k, v)| (k.as_str(), v.as_str()))
+    }
+
     #[must_use]
     pub fn counts(&self) -> (usize, usize, usize) {
         (self.by_id.len(), self.banks.len(), self.alias.len())
@@ -230,6 +245,53 @@ pub struct OperatorAudio {
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub language: Option<LangType>,
+    pub sounds: Vec<AudioSound>,
+}
+
+/// What an enemy-linked bank plays on, derived from its event and ability
+/// segment so the enemy page can group clips without parsing bank names.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+pub enum EnemyAudioCategory {
+    /// `ON_UNIT_BORN` or `ON_BOSS_ENTER`.
+    Spawn,
+    /// The basic attack: the `combat` (melee) or `attack` (ranged) ability.
+    Attack,
+    /// Any other ability (`IceBurst`, `T.AppearMode`, ...) or an
+    /// enemy-specific buff (`ON_BUFF_*`).
+    Skill,
+    /// A projectile bank (`projectile_*`), linked by codename.
+    Projectile,
+    /// `ON_UNIT_DEAD`.
+    Death,
+    /// Spine events, custom triggers and anything else.
+    #[default]
+    Other,
+}
+
+/// A single enemy-linked `SoundFX` bank, resolved to playable URLs.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct EnemyAudio {
+    /// Full bank name, e.g. `battle.ON_ABILITY_HIT.enemy_1007_slime.combat`.
+    pub bank_name: String,
+    /// Event segment of the bank name, e.g. `ON_ABILITY_HIT`.
+    pub event: String,
+    pub category: EnemyAudioCategory,
+    /// Everything after the entity segment, e.g. `combat`, `IceBurst` or
+    /// `T.over_energy`; absent on banks like `ON_UNIT_DEAD.<enemy>`.
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ability: Option<String>,
+    /// The entity segment, when it is not the enemy itself: a projectile
+    /// (`projectile_frstar`) or a buff (`enemy_sfsui_doom1`).
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub via: Option<String>,
     pub sounds: Vec<AudioSound>,
 }
 
