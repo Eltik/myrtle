@@ -1,4 +1,5 @@
 use std::sync::LazyLock;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 
 use axum::http::HeaderMap;
@@ -77,8 +78,21 @@ fn client_ip(headers: &HeaderMap) -> Option<String> {
 
 static VIEW_RATE_BUCKETS: LazyLock<DashMap<String, (Instant, u32)>> = LazyLock::new(DashMap::new);
 
+/// Calls between sweeps of [`VIEW_RATE_BUCKETS`]. Without the sweep every key
+/// stayed for the life of the process, and the key is the leftmost
+/// `X-Forwarded-For` entry, which the client writes.
+const VIEW_RATE_SWEEP_EVERY: u64 = 1_000;
+static VIEW_RATE_CALLS: AtomicU64 = AtomicU64::new(0);
+
 fn check_view_rate(ip: &str) -> bool {
     let now = Instant::now();
+    // Before `entry`, which holds a shard lock `retain` would wait on.
+    if VIEW_RATE_CALLS
+        .fetch_add(1, Ordering::Relaxed)
+        .is_multiple_of(VIEW_RATE_SWEEP_EVERY)
+    {
+        VIEW_RATE_BUCKETS.retain(|_, (start, _)| now.duration_since(*start) < VIEW_RATE_WINDOW);
+    }
     let mut entry = VIEW_RATE_BUCKETS.entry(ip.to_owned()).or_insert((now, 0));
     let (window_start, count) = *entry;
     if now.duration_since(window_start) >= VIEW_RATE_WINDOW {
@@ -403,4 +417,29 @@ pub async fn create_flair(
     )
     .await?;
     Ok(Json(flair))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// An address that stopped calling leaves the view limiter's map once its
+    /// window is over. Every key used to stay for the life of the process, and
+    /// the key is the leftmost `X-Forwarded-For` entry, which the client writes,
+    /// so a client rotating that header grew the map one entry per call.
+    #[test]
+    fn an_idle_address_leaves_the_view_rate_map() {
+        let stale = "view-rate-test-stale".to_owned();
+        let Some(long_ago) = Instant::now().checked_sub(VIEW_RATE_WINDOW * 2) else {
+            return;
+        };
+        VIEW_RATE_BUCKETS.insert(stale.clone(), (long_ago, 1));
+        for i in 0..20_000 {
+            check_view_rate(&format!("view-rate-test-{i}"));
+        }
+        assert!(
+            !VIEW_RATE_BUCKETS.contains_key(&stale),
+            "an address idle for two windows is still held"
+        );
+    }
 }
