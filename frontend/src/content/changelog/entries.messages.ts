@@ -11,6 +11,34 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-10-11.title": {
+        text: "New: A redesigned homepage",
+        description: "Title of the 2026-10-11 release note.",
+    },
+    "note.2026-10-11.lead": {
+        text: "The homepage now opens on **what's happening now**: the current events and banners from your selected game server, ending soonest first, next to the top Doctors and the latest site updates.",
+        description: "Lead paragraph of the 2026-10-11 release note, rendered as Markdown. 'Doctors' is the game's name for players; a 'banner' is a headhunting (gacha) pool.",
+    },
+    "note.2026-10-11.item.1": {
+        text: "The pull planner takes your Standard and Kernel pity separately, and its odds now count the free limited operator at 300 rolls and the three picks of an Orienteering banner. Saved plans carry over unchanged.",
+        description: "Bullet in the 2026-10-11 release note, filed under 'Improved'. Standard, Kernel and Orienteering are headhunting banner types and keep the game's names; 'pity' is the guaranteed-6★ counter.",
+    },
+    "note.2026-10-11.item.2": {
+        text: "Pull history counts pity the way each banner does: Standard and Kernel keep separate counters, Orienteering counts toward Standard, Limited and Collab pity starts over on each new banner, and Starter Headhunting has its own tab.",
+        description: "Bullet in the 2026-10-11 release note, filed under 'Fixed'. Standard, Kernel, Orienteering, Limited, Collab and Starter Headhunting are banner types and keep the game's names.",
+    },
+    "note.2026-10-11.item.3": {
+        text: "The banner for returning Doctors is no longer shown as an active banner, and the release planner marks it as for returning Doctors only.",
+        description: "Bullet in the 2026-10-11 release note, filed under 'Fixed'. 'Doctors' is the game's name for players.",
+    },
+    "note.2026-10-11.item.4": {
+        text: "Voice lines for Passenger, Ling, Chongyue and Lappland the Decadenza no longer switch between their base and outfit voice sets.",
+        description: "Bullet in the 2026-10-11 release note, filed under 'Fixed'. The four names are operators and keep the game's names.",
+    },
+    "note.2026-10-11.item.5": {
+        text: "Players with Amiya's alternate art as their assistant see her avatar in the header again.",
+        description: "Bullet in the 2026-10-11 release note, filed under 'Fixed'. Amiya is an operator and keeps the game's name; the assistant is the operator a player displays on their profile.",
+    },
     "note.2026-10-09.title": {
         text: "New: Tap a Showcase to see a player's build",
         description: "Title of the 2026-10-09 release note. 'Showcase' is a profile tab name and must match its translation; a 'build' is how a player has raised an operator.",
