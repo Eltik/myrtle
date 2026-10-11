@@ -1,13 +1,16 @@
 use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 
 use serde::Serialize;
 use serde_json::Value;
 
 use crate::app::cache::keys::CacheKey;
-use crate::app::cache::{CachedJson, cached_json};
+use crate::app::cache::{CachedJson, SharedJson, cached_json};
+use crate::app::cpu;
 use crate::app::error::ApiError;
 use crate::app::services::level::get_level;
+use crate::app::services::story::ServerCache;
 use crate::app::state::AppState;
 use crate::core::gamedata::types::GameData;
 use crate::core::gamedata::types::audio::EnemyAudio;
@@ -22,18 +25,79 @@ use crate::core::gamedata::types::stage_index::StageIndexEntry;
 use crate::core::gamedata::types::zone::{Zone, ZoneType};
 use crate::core::hypergryph::constants::Server;
 
+/// Every table [`serialize_resource`] serves; a slot's index is its place in
+/// [`TABLES`]. Keep in step with that match (and `tests/api_shape_test.rs`).
+const RESOURCES: [&str; 21] = [
+    "operators",
+    "skills",
+    "modules",
+    "skins",
+    "materials",
+    "stages",
+    "zones",
+    "activities",
+    "retro_acts",
+    "enemies",
+    "enemy-stages",
+    "enemy-stage-table",
+    "stage-index",
+    "gacha",
+    "banners",
+    "voices",
+    "handbook",
+    "chibis",
+    "enemy-chibis",
+    "trust",
+    "ranges",
+];
+
+/// One per-server, per-game-data cache per table, so a CN `operators` build
+/// does not hold an EN `skins` reader. Keyed on the `GameData` allocation: a
+/// hot reload swaps it, and the next reader rebuilds.
+static TABLES: [ServerCache<SharedJson>; RESOURCES.len()] =
+    [const { ServerCache::new() }; RESOURCES.len()];
+
+/// One whole game-data table as JSON, serialized, hashed and brotli-encoded
+/// once per game data load (the music index's [`SharedJson`]).
+///
+/// Before, every request cloned the cached JSON-of-JSON, parsed it back and
+/// let the compression layer re-encode the body: for `operators` (23,831,684
+/// bytes) 191.7 ms of brotli plus 24.7 ms of decode per request in release.
+///
+/// # Errors
+/// `404` for an unknown table or a server that is not loaded, `500` when the
+/// table does not serialize, `503` when the CPU pool sheds.
 pub async fn get_resource(
     state: &AppState,
     server: Server,
     resource: &str,
-) -> Result<CachedJson, ApiError> {
-    let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
-    let key = cache_key(resource, server);
-    cached_json(state, &key, move || async move {
-        let gd = server_data.game_data.load_full();
-        serialize_resource(&gd, resource)
-    })
-    .await
+) -> Result<SharedJson, ApiError> {
+    let slot = RESOURCES
+        .iter()
+        .position(|name| *name == resource)
+        .ok_or(ApiError::NotFound)?;
+    let name = RESOURCES[slot];
+    let gd = state
+        .try_server_data(server)
+        .ok_or(ApiError::NotFound)?
+        .game_data
+        .load_full();
+    let build_gd = Arc::clone(&gd);
+    let json = TABLES[slot]
+        .get_or_build(
+            server,
+            gd,
+            |_| true,
+            || async move {
+                cpu::run("static_resource", move || {
+                    let body = serialize_resource(&build_gd, name)?;
+                    Ok::<_, ApiError>(Arc::new(SharedJson::new(body.into_bytes())))
+                })
+                .await?
+            },
+        )
+        .await?;
+    Ok(SharedJson::clone(&json))
 }
 
 fn serialize_resource(data: &GameData, resource: &str) -> Result<String, ApiError> {
@@ -415,13 +479,27 @@ fn level_error_detail(e: &ApiError) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{collect_level_enemy_ids, level_error_detail};
+    use super::{RESOURCES, collect_level_enemy_ids, level_error_detail, serialize_resource};
     use crate::app::error::ApiError;
     use serde_json::json;
     use std::collections::HashSet;
 
     fn set(ids: &[&str]) -> HashSet<String> {
         ids.iter().map(|s| (*s).to_string()).collect()
+    }
+
+    /// Every cached slot names a table `serialize_resource` serves, so no slot
+    /// answers 404 and no table goes uncached.
+    #[test]
+    fn every_cached_table_serializes() {
+        let gd = crate::core::gamedata::types::GameData::default();
+        for name in RESOURCES {
+            assert!(serialize_resource(&gd, name).is_ok(), "{name}");
+        }
+        assert!(matches!(
+            serialize_resource(&gd, "nope"),
+            Err(ApiError::NotFound)
+        ));
     }
 
     #[test]

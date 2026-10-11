@@ -137,7 +137,7 @@ pub async fn get_static(
     Path(resource): Path<String>,
 ) -> Result<Response, ApiError> {
     let body = get_resource(&state, state.default_server, &resource).await?;
-    Ok(json_response(body, &headers))
+    Ok(shared_json_response(&body, &headers))
 }
 
 /// `GET /{server}/static/{resource}` - per-server game-data table.
@@ -167,7 +167,7 @@ pub async fn get_static_srv(
     Path((server, resource)): Path<(Server, String)>,
 ) -> Result<Response, ApiError> {
     let body = get_resource(&state, server, &resource).await?;
-    Ok(json_response(body, &headers))
+    Ok(shared_json_response(&body, &headers))
 }
 
 #[cfg(test)]
