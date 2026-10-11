@@ -156,9 +156,7 @@ impl TrackAcc {
         name: Option<String>,
         role: Option<MusicRole>,
     ) -> &mut PlaceAcc {
-        if let Some(k) = place_kind_music(kind, role) {
-            self.kinds.insert(k);
-        }
+        self.kinds.insert(place_kind_music(kind, role));
         let key = (kind, name.clone(), role);
         let at = *self.place_at.entry(key).or_insert_with(|| {
             self.places.push(PlaceAcc {
@@ -182,23 +180,21 @@ impl PlaceAcc {
 }
 
 /// What a place says the track is for.
-const fn place_kind_music(kind: MusicPlaceKind, role: Option<MusicRole>) -> Option<MusicKind> {
+const fn place_kind_music(kind: MusicPlaceKind, role: Option<MusicRole>) -> MusicKind {
     match kind {
-        MusicPlaceKind::Stage => Some(MusicKind::Battle),
-        MusicPlaceKind::Story => Some(MusicKind::Story),
+        MusicPlaceKind::Stage => MusicKind::Battle,
+        MusicPlaceKind::Story => MusicKind::Story,
         MusicPlaceKind::Season => match role {
-            Some(MusicRole::Battle | MusicRole::Challenge) => Some(MusicKind::Battle),
-            _ => Some(MusicKind::Lobby),
+            Some(MusicRole::Battle | MusicRole::Challenge) => MusicKind::Battle,
+            _ => MusicKind::Lobby,
         },
         MusicPlaceKind::Map => match role {
-            Some(MusicRole::Map | MusicRole::Boss) => Some(MusicKind::Map),
-            Some(MusicRole::Battle) => Some(MusicKind::Battle),
-            _ => Some(MusicKind::Lobby),
+            Some(MusicRole::Map | MusicRole::Boss) => MusicKind::Map,
+            Some(MusicRole::Battle) => MusicKind::Battle,
+            _ => MusicKind::Lobby,
         },
-        MusicPlaceKind::Event if matches!(role, Some(MusicRole::Boss)) => Some(MusicKind::Battle),
-        MusicPlaceKind::Event | MusicPlaceKind::Chapter | MusicPlaceKind::Lobby => {
-            Some(MusicKind::Lobby)
-        }
+        MusicPlaceKind::Event if matches!(role, Some(MusicRole::Boss)) => MusicKind::Battle,
+        MusicPlaceKind::Event | MusicPlaceKind::Chapter | MusicPlaceKind::Lobby => MusicKind::Lobby,
     }
 }
 
@@ -1270,7 +1266,7 @@ fn chapter_zones(
             let open = gd.zone_open_times.get(&info.zone_id).copied();
             mainline
                 .entry(info.zone_id.clone())
-                .or_insert(open.unwrap_or(UNDATED));
+                .or_insert_with(|| open.unwrap_or(UNDATED));
         }
         if !info.game_music_id.is_empty() && !info.zone_id.is_empty() {
             chapter_zone

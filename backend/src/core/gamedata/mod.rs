@@ -577,7 +577,7 @@ pub fn init_game_data_with_art(
         factions: team_file.teams,
         profession_names,
         autochess_bonds,
-        squad: Default::default(),
+        squad: crate::core::squad::index::SquadIndex::default(),
     };
     startup::step("squad index");
     data.squad = crate::core::squad::index::SquadIndex::build(&data);

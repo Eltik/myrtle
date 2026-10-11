@@ -13,9 +13,10 @@ use crate::app::error::ApiError;
 use crate::app::state::AppState;
 use crate::app::validation::validate_length;
 use crate::database::models::music::{
-    HISTORY_LIMIT, MusicLibrary, MusicPlay, MusicPlayInput, MusicPlayUpdate, MusicPlaylist,
-    MusicPlaylistAdd, MusicPlaylistCreate, MusicPlaylistPatch, MusicPlaylistRow, PLAYLIST_LIMIT,
-    PLAYLIST_NAME_MAX_CHARS, PLAYLIST_TRACKS_MAX,
+    HISTORY_LIMIT, MusicLibrary, MusicLikeRow, MusicPlay, MusicPlayInput, MusicPlayRow,
+    MusicPlayTotalRow, MusicPlayUpdate, MusicPlaylist, MusicPlaylistAdd, MusicPlaylistCreate,
+    MusicPlaylistPatch, MusicPlaylistRow, PLAYLIST_LIMIT, PLAYLIST_NAME_MAX_CHARS,
+    PLAYLIST_TRACKS_MAX,
 };
 use crate::database::queries::music as queries;
 
@@ -130,10 +131,13 @@ pub async fn get(state: &AppState, user_id: Uuid) -> Result<MusicLibrary, ApiErr
             .push(t.track_id);
     }
     Ok(MusicLibrary {
-        likes: likes.into_iter().map(|r| r.into_like()).collect(),
-        history: history.into_iter().map(|r| r.into_play()).collect(),
+        likes: likes.into_iter().map(MusicLikeRow::into_like).collect(),
+        history: history.into_iter().map(MusicPlayRow::into_play).collect(),
         history_limit: HISTORY_LIMIT,
-        totals: totals.into_iter().map(|r| r.into_total()).collect(),
+        totals: totals
+            .into_iter()
+            .map(MusicPlayTotalRow::into_total)
+            .collect(),
         first_played_at,
         playlists: playlists
             .into_iter()

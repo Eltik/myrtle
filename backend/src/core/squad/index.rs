@@ -441,12 +441,12 @@ fn read_operator(
 }
 
 /// A playable operator a player can own: what the per-server tallies count.
-fn obtainable_playable(op: &Operator) -> bool {
+const fn obtainable_playable(op: &Operator) -> bool {
     playable(op) && !op.is_not_obtainable
 }
 
 /// An operator a squad can field: not a token or a trap.
-pub fn playable(op: &Operator) -> bool {
+pub const fn playable(op: &Operator) -> bool {
     !matches!(
         op.profession,
         OperatorProfession::Token | OperatorProfession::Trap

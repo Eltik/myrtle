@@ -8,7 +8,7 @@ use super::profile::{ArchiveGender, ArchiveProfile, ExamAxis, ExamStep, Infectio
 use crate::core::gamedata::types::operator::HiddenFaction;
 
 /// Anyone the Archives name: an operator, or an NPC the network places.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
@@ -584,7 +584,7 @@ pub struct ArchiveNationBehind {
     pub members: Vec<ArchiveShownMember>,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]

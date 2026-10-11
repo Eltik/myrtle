@@ -360,7 +360,7 @@ fn count_u32(n: usize) -> u32 {
     u32::try_from(n).unwrap_or(u32::MAX)
 }
 
-fn point(v: Vec2) -> ArchivePoint {
+const fn point(v: Vec2) -> ArchivePoint {
     ArchivePoint { x: v.x, y: v.y }
 }
 
@@ -874,7 +874,7 @@ fn infection_rows<'a>(
     out
 }
 
-fn state_name(s: InfectionState) -> &'static str {
+const fn state_name(s: InfectionState) -> &'static str {
     match s {
         InfectionState::Infected => "infected",
         InfectionState::Clear => "clear",

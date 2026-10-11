@@ -243,12 +243,12 @@ impl Vocab {
 }
 
 /// A parsed target. Every value is an id, so it fits on any server.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Target {
     pub kind: SynergyTargetKind,
     /// Class: the profession code. Faction: the best-matching power id. Tag:
-    /// the `TagId`. SpType: the SP type. Position: `MELEE`/`RANGED`.
-    /// CostAtMost: the bound. Otherwise `None`.
+    /// the `TagId`. `SpType`: the SP type. Position: `MELEE`/`RANGED`.
+    /// `CostAtMost`: the bound. Otherwise `None`.
     pub value: Option<String>,
     /// Faction: every power id the name matches, which `fits` reads.
     pub powers: Vec<String>,
@@ -263,7 +263,7 @@ pub struct Target {
 }
 
 impl Target {
-    fn new(kind: SynergyTargetKind, value: Option<String>, label: String) -> Self {
+    const fn new(kind: SynergyTargetKind, value: Option<String>, label: String) -> Self {
         Self {
             kind,
             value,

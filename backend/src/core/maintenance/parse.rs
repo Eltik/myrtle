@@ -344,15 +344,14 @@ pub fn parse_notice(html: &str, reference: i64) -> Option<NoticeWindow> {
         .flatten()
         .find_map(|t| find_range(t, reference));
 
-    let (starts_at, planned_end) = match range {
-        Some((s, e)) => (s, Some(e)),
-        None => {
-            let start = sources
-                .iter()
-                .flatten()
-                .find_map(|t| find_instant(t, reference))?;
-            (start, None)
-        }
+    let (starts_at, planned_end) = if let Some((s, e)) = range {
+        (s, Some(e))
+    } else {
+        let start = sources
+            .iter()
+            .flatten()
+            .find_map(|t| find_instant(t, reference))?;
+        (start, None)
     };
 
     let (ends_at, extended) = match extension_end {

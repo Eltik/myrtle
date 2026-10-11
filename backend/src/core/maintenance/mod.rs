@@ -485,7 +485,7 @@ async fn poll(state: &AppState, caches: &mut HashMap<Server, PageCache>) -> anyh
         match read_board(client, server, pages, now).await {
             Ok((_, board)) => publish_board(server, &board, now).await,
             Err(e) => {
-                tracing::warn!(server = server.as_str(), error = %e, "announcements: board read failed")
+                tracing::warn!(server = server.as_str(), error = %e, "announcements: board read failed");
             }
         }
     }

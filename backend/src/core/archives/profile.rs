@@ -725,7 +725,7 @@ pub fn exam_step(w: &Vocab, value: &str) -> Option<u8> {
 fn read_clinical(w: &Vocab, p: &mut ArchiveProfile, text: &str) {
     // EN spells the clinical labels many ways and is read by keyword; the
     // other languages list their exact labels.
-    let english = std::ptr::eq(w, &EN);
+    let english = std::ptr::eq(w, &raw const EN);
     for (label, value) in bracketed(text) {
         let l = label.to_lowercase();
         // EN: `Blood Originium-Crystal Density`, `Blood Crystal Density`.
@@ -852,13 +852,14 @@ pub fn combat_years(w: &Vocab, value: &str) -> Option<f64> {
     }
     let (amount, rest) = match first_number(&v) {
         Some((start, end, n)) if v[..start].trim().is_empty() => (n, v[end..].trim_start()),
-        _ => match kanji_number(&v).filter(|_| w.kanji_numbers) {
-            Some((n, len)) => (n, v[len..].trim_start()),
-            None => {
+        _ => {
+            if let Some((n, len)) = kanji_number(&v).filter(|_| w.kanji_numbers) {
+                (n, v[len..].trim_start())
+            } else {
                 let (word, n) = w.number_words.iter().find(|(k, _)| v.starts_with(k))?;
                 (*n, v[word.len()..].trim_start())
             }
-        },
+        }
     };
     if w.years.iter().any(|k| rest.starts_with(k)) {
         Some(amount)

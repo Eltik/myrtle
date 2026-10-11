@@ -566,17 +566,16 @@ pub async fn lyrics(state: &AppState, cid: &str) -> Result<Arc<str>, ApiError> {
     let row = snap.songs.get(cid).ok_or(ApiError::NotFound)?;
     let url = row.lyric_url.as_deref().ok_or(ApiError::NotFound)?;
     let mut conn = state.db.acquire().await?;
-    let text = match queries::lyric_text(&mut conn, cid).await? {
-        Some(t) => t,
-        None => {
-            let client = SirenClient::new(&state.http_client);
-            let t = client.text(url).await.map_err(|e| {
-                tracing::warn!(cid, error = %e, "monster siren lyrics fetch failed");
-                ApiError::ServiceUnavailable
-            })?;
-            queries::set_lyric_text(&mut conn, cid, &t).await?;
-            t
-        }
+    let text = if let Some(t) = queries::lyric_text(&mut conn, cid).await? {
+        t
+    } else {
+        let client = SirenClient::new(&state.http_client);
+        let t = client.text(url).await.map_err(|e| {
+            tracing::warn!(cid, error = %e, "monster siren lyrics fetch failed");
+            ApiError::ServiceUnavailable
+        })?;
+        queries::set_lyric_text(&mut conn, cid, &t).await?;
+        t
     };
     let text: Arc<str> = Arc::from(text);
     LYRICS.insert(cid.to_owned(), Arc::clone(&text));
