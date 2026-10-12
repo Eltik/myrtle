@@ -1,9 +1,13 @@
+import { DownloadIcon, Repeat1Icon, RepeatIcon, ShuffleIcon } from "lucide-react";
 import type React from "react";
+import { Spinner } from "#/components/ui/spinner";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
-import { useT } from "#/lib/i18n";
+import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import { isDownloadable, useDownload, useTrackDownload } from "../impl/download";
 import { displayArtists, type ITrack } from "../impl/model";
+import { cycleRepeat, toggleShuffle, usePlayer } from "./engine";
 import type { messages } from "./Player.messages";
 import type { IQueueSource } from "./types";
 
@@ -40,6 +44,15 @@ export function subLine(track: ITrack, houseArtist: string | null): string {
     return track.albumName ?? "";
 }
 
+/** One line that clips with an ellipsis and carries its full text as a hover hint. */
+export function ClippedText({ text, className }: { text: string; className: string }): React.ReactElement {
+    return (
+        <span className={cn("truncate", className)} title={text}>
+            {text}
+        </span>
+    );
+}
+
 /**
  * A round icon button with a tooltip naming it. The name is also the
  * accessible name, so the tooltip and a screen reader say the same thing.
@@ -68,5 +81,39 @@ export function IconButton({ label, onClick, children, pressed, className, disab
             <TooltipTrigger render={(p) => button(p as React.ComponentProps<"button">)} />
             <TooltipPopup>{label}</TooltipPopup>
         </Tooltip>
+    );
+}
+
+/** Save the playing track; while it downloads, a spinner and the progress in its name. */
+export function DownloadCurrent({ track, t, className, tooltip }: { track: ITrack; t: PlayerT; className?: string; tooltip?: boolean }): React.ReactElement {
+    const f = useFormatters();
+    const download = useTrackDownload();
+    const running = useDownload(track.id);
+    const label = running ? (running.total ? t("music.player.downloadingPercent", { percent: f.percent(running.received / running.total) }) : t("music.player.downloading")) : t("music.player.download");
+    return (
+        <IconButton className={className} label={label} onClick={() => download(track)} disabled={running !== null || !isDownloadable(track)} tooltip={tooltip}>
+            {running ? <Spinner aria-hidden="true" /> : <DownloadIcon aria-hidden="true" />}
+        </IconButton>
+    );
+}
+
+/** Shuffle on and off; the bar and the queue sheet both carry it. */
+export function ShuffleButton({ t, className, tooltip }: { t: PlayerT; className?: string; tooltip?: boolean }): React.ReactElement {
+    const shuffle = usePlayer((s) => s.shuffle);
+    return (
+        <IconButton className={className} label={shuffle ? t("music.player.shuffle.on") : t("music.player.shuffle.off")} onClick={toggleShuffle} pressed={shuffle} tooltip={tooltip}>
+            <ShuffleIcon aria-hidden="true" />
+        </IconButton>
+    );
+}
+
+/** Repeat off, all, one; the bar and the queue sheet both carry it. */
+export function RepeatButton({ t, className, tooltip }: { t: PlayerT; className?: string; tooltip?: boolean }): React.ReactElement {
+    const repeat = usePlayer((s) => s.repeat);
+    const label = repeat === "one" ? t("music.player.repeat.one") : repeat === "all" ? t("music.player.repeat.all") : t("music.player.repeat.off");
+    return (
+        <IconButton className={className} label={label} onClick={cycleRepeat} pressed={repeat !== "off"} tooltip={tooltip}>
+            {repeat === "one" ? <Repeat1Icon aria-hidden="true" /> : <RepeatIcon aria-hidden="true" />}
+        </IconButton>
     );
 }

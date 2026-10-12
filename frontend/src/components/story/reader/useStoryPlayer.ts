@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { pauseSiteMusic, registerOtherMusic } from "#/components/gallery/music/player/presence";
 import { asset } from "#/components/operators/detail/impl/assets";
 import type { StoryAudio } from "#/lib/story/audio";
 import { type CameraShake, createEngine, type Effect, type Engine, type Halt, type StepResult, type UnresolvedAsset } from "#/lib/story/engine";
@@ -154,10 +155,16 @@ export function useStoryPlayer({ script, storyId, nickname, audio, initialHalt, 
     // every cue 404s against the dev server's own origin.
     const playMusicEffect = useCallback(
         (e: { intro?: string; loop?: string; volume: number; crossfade: number }) => {
+            // The story's own music pauses the site's music player rather than sounding over it.
+            pauseSiteMusic();
             audio.playMusic({ intro: e.intro ? asset(e.intro) : undefined, loop: e.loop ? asset(e.loop) : undefined, volume: e.volume, crossfade: e.crossfade });
         },
         [audio],
     );
+
+    // The music player starting stops the scene's music, as a cue starting pauses the player.
+    // The script's next cue brings music back.
+    useEffect(() => registerOtherMusic(() => audio.stopMusic(0.5)), [audio]);
 
     const fire = useCallback(
         (effects: Effect[]) => {

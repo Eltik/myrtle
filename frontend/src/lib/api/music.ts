@@ -5,12 +5,18 @@ import { env } from "#/env";
 import { backendFetch } from "#/lib/fetch";
 import type { MusicIndex } from "#/types/generated/MusicIndex";
 import type { MusicLibrary } from "#/types/generated/MusicLibrary";
+import type { MusicListenerPage } from "#/types/generated/MusicListenerPage";
+import type { MusicListenerSort } from "#/types/generated/MusicListenerSort";
 import type { MusicPlay } from "#/types/generated/MusicPlay";
 import type { MusicPlaylist } from "#/types/generated/MusicPlaylist";
+import type { MusicStatRecorded } from "#/types/generated/MusicStatRecorded";
+import type { MusicStatsCatalog } from "#/types/generated/MusicStatsCatalog";
+import type { MusicStatWindow } from "#/types/generated/MusicStatWindow";
+import type { MusicTopTracks } from "#/types/generated/MusicTopTracks";
 import type { SirenAlbumDetail } from "#/types/generated/SirenAlbumDetail";
 import type { SirenCatalog } from "#/types/generated/SirenCatalog";
 import { parseError } from "./_shared";
-import { requireSiteToken } from "./_shared.server";
+import { optionalSiteToken, requireSiteToken } from "./_shared.server";
 import { DEFAULT_GAMEDATA_SERVER, gamedataKey, gamedataPath, resolveGamedataServer } from "./gamedata";
 
 /**
@@ -46,6 +52,12 @@ async function readJSON<T>(res: Response): Promise<T> {
     return (await res.json()) as T;
 }
 
+/** `null` for a 404, a backend that predates the route; `readJSON` otherwise. */
+async function readJSONOrNull<T>(res: Response): Promise<T | null> {
+    if (res.status === 404) return null;
+    return readJSON<T>(res);
+}
+
 /**
  * The label's whole catalogue. `null` when the running backend predates the
  * route (404). A 503 means the backend's first sync is still running: the
@@ -55,8 +67,7 @@ async function readJSON<T>(res: Response): Promise<T> {
  */
 async function fetchSirenCatalog(): Promise<SirenCatalog | null> {
     const res = await backendFetch("/music/siren");
-    if (res.status === 404) return null;
-    return readJSON<SirenCatalog>(res);
+    return readJSONOrNull<SirenCatalog>(res);
 }
 
 export function sirenCatalogQueryOptions() {
@@ -72,8 +83,7 @@ export function sirenCatalogQueryOptions() {
 
 async function fetchSirenAlbum(cid: string): Promise<SirenAlbumDetail | null> {
     const res = await backendFetch(`/music/siren/albums/${encodeURIComponent(cid)}`);
-    if (res.status === 404) return null;
-    return readJSON<SirenAlbumDetail>(res);
+    return readJSONOrNull<SirenAlbumDetail>(res);
 }
 
 export function sirenAlbumQueryOptions(cid: string) {
@@ -188,4 +198,107 @@ export const removePlaylistTrackFn = createServerFn({ method: "POST" })
         const token = requireSiteToken();
         const res = await backendFetch(`/music/playlists/${encodeURIComponent(id)}/tracks/${encodeURIComponent(trackId)}`, { method: "DELETE", bearerToken: token });
         return readJSON<MusicPlaylist>(res);
+    });
+
+// ---------------------------------------------------------------------------
+// Community stats
+// ---------------------------------------------------------------------------
+
+/**
+ * Every track's all-time listens and downloads, read by the browser straight
+ * from the backend (one small JSON for the whole catalogue, cached 60 s
+ * there). `null` when the running backend predates the route.
+ */
+async function fetchMusicStats(): Promise<MusicStatsCatalog | null> {
+    const res = await backendFetch("/music/stats");
+    return readJSONOrNull<MusicStatsCatalog>(res);
+}
+
+export function musicStatsQueryOptions() {
+    return queryOptions({
+        queryKey: ["music", "stats", "catalog"],
+        queryFn: () => fetchMusicStats(),
+        staleTime: 60 * 1000,
+        gcTime: 30 * 60 * 1000,
+        retry: 1,
+    });
+}
+
+async function fetchTopTracks(window: MusicStatWindow, limit: number): Promise<MusicTopTracks | null> {
+    const res = await backendFetch(`/music/stats/top-tracks?window=${window}&limit=${limit}`);
+    return readJSONOrNull<MusicTopTracks>(res);
+}
+
+export function musicTopTracksQueryOptions(window: MusicStatWindow, limit = 50) {
+    return queryOptions({
+        queryKey: ["music", "stats", "top-tracks", window, limit],
+        queryFn: () => fetchTopTracks(window, limit),
+        staleTime: 60 * 1000,
+        retry: 1,
+    });
+}
+
+/**
+ * Signed-in listeners ranked over a window, site-wide or for one track.
+ * `null` when the running backend predates the route (or, for a track, does
+ * not know it).
+ */
+async function fetchListeners(trackId: string | null, window: MusicStatWindow, sort: MusicListenerSort, limit: number, offset: number): Promise<MusicListenerPage | null> {
+    const base = trackId ? `/music/stats/tracks/${encodeURIComponent(trackId)}/listeners` : "/music/stats/top-listeners";
+    const res = await backendFetch(`${base}?window=${window}&sort=${sort}&limit=${limit}&offset=${offset}`);
+    return readJSONOrNull<MusicListenerPage>(res);
+}
+
+export function musicListenersQueryOptions(trackId: string | null, window: MusicStatWindow, sort: MusicListenerSort, limit = 20, offset = 0) {
+    return queryOptions({
+        queryKey: ["music", "stats", "listeners", trackId ?? "all", window, sort, limit, offset],
+        queryFn: () => fetchListeners(trackId, window, sort, limit, offset),
+        staleTime: 60 * 1000,
+        retry: 1,
+    });
+}
+
+export type MusicStatKind = "listen" | "download";
+
+/**
+ * Count a listen or a download as THIS BROWSER, straight to the backend and
+ * never through a server function: the backend dedupes an anonymous caller by
+ * its address, and through the SSR server every caller would share the
+ * server's. No cookie travels (the session is an httpOnly cookie on the
+ * site's origin), so the backend counts it against the address, not an
+ * account. `keepalive` lets a report made just before the tab closes land.
+ * Never throws; `null` when nothing answered.
+ */
+export async function reportMusicStat(kind: MusicStatKind, trackId: string): Promise<MusicStatRecorded | null> {
+    const init: RequestInit = { method: "POST", body: JSON.stringify({ trackId }) };
+    try {
+        let res: Response;
+        try {
+            res = await backendFetch(`/music/stats/${kind}`, { ...init, keepalive: true });
+        } catch {
+            // Older engines refuse a keepalive request that needs a CORS preflight; the server
+            // dedupes, so a second try can only count once.
+            res = await backendFetch(`/music/stats/${kind}`, init);
+        }
+        if (!res.ok) return null;
+        return (await res.json()) as MusicStatRecorded;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Count a download against the signed-in account (the session cookie becomes
+ * the bearer here, so the server's address never identifies anyone). `null`
+ * when there is no session, so the caller can report it from the browser.
+ */
+export const recordMusicDownloadFn = createServerFn({ method: "POST" })
+    .inputValidator((trackId: string) => trackId)
+    .handler(async ({ data: trackId }): Promise<MusicStatRecorded | null> => {
+        const token = optionalSiteToken();
+        if (!token) return null;
+        const res = await backendFetch("/music/stats/download", { method: "POST", bearerToken: token, body: JSON.stringify({ trackId }) });
+        // A lapsed session is a 401 here; the caller then counts it as the browser.
+        if (res.status === 401) return null;
+        return readJSON<MusicStatRecorded>(res);
     });

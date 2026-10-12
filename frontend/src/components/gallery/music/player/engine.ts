@@ -1,17 +1,19 @@
 import { useStore } from "@tanstack/react-store";
 import { Store } from "@tanstack/store";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { toastManager } from "#/components/ui/toast";
 import { readStoredValue, writeStoredValue } from "#/hooks/use-local-storage-state";
 import { sirenLyricsUrl } from "#/lib/api/music";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { createStoryAudio, type MusicRequest, type StoryAudio } from "#/lib/story/audio";
+import { audioContextConstructor } from "#/lib/story/audioContext";
 import { clamp, clamp01 } from "#/lib/story/num";
 import { logPlay, toggleLike, updatePlay } from "../impl/library/store";
 import { displayArtists, type ICatalog, type ITrack, radioFor, trackSource } from "../impl/model";
 import { parseLrc } from "./lrc";
 import type { messages } from "./Player.messages";
+import { registerMusicPauser, setMusicLive, silenceOtherMusic } from "./presence";
 import { type IQueue, identityOrder, insertEnd, insertNext, moveItem, nextIndex, playOrder, previousIndex, removeAt, validOrder } from "./queue";
 import { CROSSFADE_MAX, CROSSFADE_MIN, DEFAULT_SETTINGS, type ILyricLine, type IPlayerSettings, type IPlayerState, type IPlayhead, type IQueueSource, type IShortcut, type PanelName, type PreloadChoice, type RepeatMode, type SleepMinutes } from "./types";
 
@@ -293,7 +295,7 @@ function ensureContext(): AudioContext | null {
     if (graphBroken || typeof window === "undefined") return null;
     if (!ctx) {
         try {
-            const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+            const Ctor = audioContextConstructor();
             if (!Ctor) {
                 graphBroken = true;
                 return null;
@@ -789,6 +791,14 @@ function pauseLoop(): void {
     stopLoopClock();
 }
 
+/** The story engine could not sound the track: silence it and fail it like a stream that errored. */
+function loopFailed(l: ILoop): void {
+    l.sounding = false;
+    story?.stopMusic(0);
+    stopLoopClock();
+    trackFailed();
+}
+
 function startLoopClock(): void {
     if (loopClock !== null || typeof window === "undefined") return;
     loopClock = setInterval(() => tickLoop(false), PLAYHEAD_MS);
@@ -808,7 +818,12 @@ function tickLoop(force: boolean): void {
     const length = a.musicLength;
     if (length <= 0) {
         // Still decoding, or the engine fell back to a media element, which keeps no timeline.
-        if (a.lastFallback && state().status === "loading") set({ status: "playing", failures: 0 });
+        // Only a fallback whose play() resolved counts as playing; one that rejected (iOS
+        // refuses it outside the gesture) or found nothing to decode is a failed track, where
+        // the sticky `lastFallback` used to show "playing" over silence.
+        const heard = a.musicStatus;
+        if (heard === "failed") loopFailed(l);
+        else if (heard === "playing" && state().status === "loading") set({ status: "playing", failures: 0 });
         return;
     }
     const intro = a.musicIntroSeconds;
@@ -935,7 +950,10 @@ function startIndex(i: number, autoplay: boolean, offset = 0): void {
     pendingOffset = 0;
     set({ index: i, current: track, status: autoplay ? "loading" : "paused" });
     beginListen(track.id);
-    if (autoplay) armAudio();
+    if (autoplay) {
+        armAudio();
+        silenceOtherMusic();
+    }
     startTrack(track, offset, autoplay);
 }
 
@@ -1035,17 +1053,6 @@ export function playQueue(tracks: readonly ITrack[], from: number, source: IQueu
     startIndex(start, true);
 }
 
-export function playNow(track: ITrack, source?: IQueueSource): void {
-    const s = state();
-    if (s.queue.length === 0 || s.index < 0) {
-        playQueue([track], 0, source ?? { kind: "none" });
-        return;
-    }
-    const q = insertNext(queueOf(s), [track]);
-    set({ queue: q.items, order: q.order, ...(source ? { source } : {}), failures: 0 });
-    startIndex(s.index + 1, true);
-}
-
 export function playAt(queueIndex: number): void {
     if (!state().queue[queueIndex]) return;
     set({ failures: 0 });
@@ -1137,6 +1144,8 @@ export function play(): void {
     const s = state();
     if (s.queue.length === 0) return;
     armAudio();
+    // One music at a time: a story theme paused the player, and the player resuming stops it.
+    silenceOtherMusic();
     if (!s.current || s.index < 0) {
         startIndex(s.order[0] ?? 0, true);
         return;
@@ -1590,7 +1599,13 @@ function saveSessionSoon(): void {
     }, 200);
 }
 
+/** Asked to sound since the queue last emptied: what makes the player bar follow the visitor off the music page. */
+let engaged = false;
+
 playerStore.subscribe((s: IPlayerState) => {
+    if (s.current === null) engaged = false;
+    else if (s.status === "loading" || s.status === "playing") engaged = true;
+    setMusicLive(engaged);
     const id = s.current?.id ?? null;
     if (id !== watchedTrackId) {
         watchedTrackId = id;
@@ -1675,56 +1690,90 @@ export function useIsCurrent(trackId: string | null): boolean {
 
 type PlayerT = TypedT<typeof messages>;
 
-/** Mount once on the music page: restores the session, binds the keyboard and the Media Session, releases on unmount. */
-export function useMusicPlayerLifetime(): void {
+// A story's music pauses the player rather than sounding over it (see `./presence`).
+registerMusicPauser(pause);
+
+/** How many mounted views hold the site-wide lifetime: the music page and the root's dock host. */
+let lifetimeHolders = 0;
+let releaseLifetime: (() => void) | null = null;
+/** The newest `t` a holder rendered with, for the toasts. */
+let noticeT: PlayerT | null = null;
+
+/** Bind what playback needs for as long as anything holds it, whichever page is showing. */
+function installLifetime(): () => void {
+    hydrate();
+    tryRestore();
+    notifier = (n) => {
+        // Named `t` so the i18n extractor counts these keys as used.
+        const t = noticeT;
+        if (!t) return;
+        if (n.kind === "skip") toastManager.add({ title: t("music.player.error.skip", { title: n.title ?? "" }), type: "error" });
+        else toastManager.add({ title: t("music.player.error.stopped", { count: n.count ?? MAX_FAILURES }), type: "error" });
+    };
+    const unbindMedia = bindMediaSession();
+    mediaMetadata(state().current);
+    mediaPlaybackState();
+    // Both audio contexts are created and resumed inside the first gesture, so a later
+    // automatic start (the next track, a crossfade) is allowed to sound.
+    const onGesture = () => {
+        if (armed) return;
+        armAudio();
+    };
+    const onHide = () => {
+        flushListen();
+        saveSession();
+    };
+    const onVisibility = () => {
+        if (document.visibilityState === "hidden") onHide();
+    };
+    window.addEventListener("pointerdown", onGesture, { once: false, passive: true });
+    window.addEventListener("pagehide", onHide);
+    document.addEventListener("visibilitychange", onVisibility);
+    const saver = setInterval(() => {
+        if (wantsPlay()) saveSession();
+    }, SESSION_SAVE_MS);
+    return () => {
+        window.removeEventListener("pointerdown", onGesture);
+        window.removeEventListener("pagehide", onHide);
+        document.removeEventListener("visibilitychange", onVisibility);
+        clearInterval(saver);
+        unbindMedia();
+        notifier = null;
+        saveSession();
+    };
+}
+
+/**
+ * The site-wide half of the player's lifetime: the session restore, the Media
+ * Session, gesture arming, saving on hide, the error toasts. Held by the music
+ * page and by the root's dock host, so it outlives a navigation away
+ * from the page and is released only when neither is mounted. It never
+ * pauses: leaving the page keeps the music playing.
+ */
+export function useMusicSessionLifetime(): void {
     const t: PlayerT = useT("gallery");
-    const tRef = useRef(t);
-    tRef.current = t;
+    useEffect(() => {
+        noticeT = t;
+    }, [t]);
 
     useEffect(() => {
-        hydrate();
-        tryRestore();
-        notifier = (n) => {
-            // Named `t` so the i18n extractor counts these keys as used.
-            const t = tRef.current;
-            if (n.kind === "skip") toastManager.add({ title: t("music.player.error.skip", { title: n.title ?? "" }), type: "error" });
-            else toastManager.add({ title: t("music.player.error.stopped", { count: n.count ?? MAX_FAILURES }), type: "error" });
-        };
-        const unbindMedia = bindMediaSession();
-        mediaMetadata(state().current);
-        mediaPlaybackState();
-        // Both audio contexts are created and resumed inside the first gesture, so a later
-        // automatic start (the next track, a crossfade) is allowed to sound.
-        const onGesture = () => {
-            if (armed) return;
-            armAudio();
-        };
-        const onHide = () => {
-            flushListen();
-            saveSession();
-        };
-        const onVisibility = () => {
-            if (document.visibilityState === "hidden") onHide();
-        };
-        window.addEventListener("keydown", handleKeydown);
-        window.addEventListener("pointerdown", onGesture, { once: false, passive: true });
-        window.addEventListener("pagehide", onHide);
-        document.addEventListener("visibilitychange", onVisibility);
-        const saver = setInterval(() => {
-            if (wantsPlay()) saveSession();
-        }, SESSION_SAVE_MS);
+        lifetimeHolders += 1;
+        if (lifetimeHolders === 1) releaseLifetime = installLifetime();
         return () => {
-            window.removeEventListener("keydown", handleKeydown);
-            window.removeEventListener("pointerdown", onGesture);
-            window.removeEventListener("pagehide", onHide);
-            document.removeEventListener("visibilitychange", onVisibility);
-            clearInterval(saver);
-            unbindMedia();
-            notifier = null;
-            // Leaving the page pauses: the story library has its own channel, and the two must not overlap.
-            pause();
-            saveSession();
+            lifetimeHolders -= 1;
+            if (lifetimeHolders > 0) return;
+            releaseLifetime?.();
+            releaseLifetime = null;
         };
+    }, []);
+}
+
+/** Mount once on the music page: the site-wide lifetime plus the page's keyboard shortcuts. */
+export function useMusicPlayerLifetime(): void {
+    useMusicSessionLifetime();
+    useEffect(() => {
+        window.addEventListener("keydown", handleKeydown);
+        return () => window.removeEventListener("keydown", handleKeydown);
     }, []);
 }
 
@@ -1738,6 +1787,7 @@ export function resetPlayerForTests(): void {
     catalog = null;
     pendingSession = undefined;
     hydrated = false;
+    engaged = false;
     armed = false;
     decks = null;
     active = 0;

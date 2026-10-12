@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-12T12:47:01.699Z",
+    "generatedAt": "2026-10-12T21:54:41.360Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -11728,6 +11728,208 @@
             "placeholders": []
         },
         {
+            "key": "gallery.music.charts.failed",
+            "namespace": "gallery",
+            "source_text": "Couldn't load the charts. Try again in a bit.",
+            "description": "Shown in place of a ranking when its request failed.",
+            "placeholders": []
+        },
+        {
+            "key": "gallery.music.charts.level",
+            "namespace": "gallery",
+            "source_text": "Lv. {level}",
+            "description": "A listener's game account level beside their name. Keep it short.",
+            "placeholders": [
+                "level"
+            ]
+        },
+        {
+            "key": "gallery.music.charts.listens",
+            "namespace": "gallery",
+            "source_text": "{count, plural, one {# play} other {# plays}}",
+            "description": "How many plays counted for a track or a listener.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "gallery.music.charts.more",
+            "namespace": "gallery",
+            "source_text": "Show more",
+            "description": "Button under a ranking that loads more rows.",
+            "placeholders": []
+        },
+        {
+            "key": "gallery.music.charts.noTracks",
+            "namespace": "gallery",
+            "source_text": "Nothing has been played in this span yet.",
+            "description": "Shown in place of the top tracks when the span has no counted plays.",
+            "placeholders": []
+        },
+        {
+            "key": "gallery.music.charts.nobody",
+            "namespace": "gallery",
+            "source_text": "No signed-in listener in this span yet.",
+            "description": "Shown in place of the top listeners when nobody ranks in the span.",
+            "placeholders": []
+        },
+        {
+            "key": "gallery.music.charts.profile",
+            "namespace": "gallery",
+            "source_text": "{rank}. {name}, {listens}, {time}. Open profile",
+            "description": "Accessible name of a ranked listener row, which links to the profile. {listens} is a play count, {time} a listening time.",
+            "placeholders": [
+                "listens",
+                "name",
+                "rank",
+                "time"
+            ]
+        },
+        {
+            "key": "gallery.music.charts.publicNote",
+            "namespace": "gallery",
+            "source_text": "Only signed-in listeners with a public profile are ranked.",
+            "description": "Note under a listener ranking.",
+            "placeholders": []
+        },
+        {
+            "key": "gallery.music.charts.ranked",
+            "namespace": "gallery",
+            "source_text": "{count, plural, one {# listener ranked} other {# listeners ranked}}",
+            "description": "Under the top listeners: how many listeners the ranking covers in the span.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "gallery.music.charts.rules",
+            "namespace": "gallery",
+            "source_text": "A play counts after 30 seconds, or half of a shorter track, at most once per listener and track every 30 minutes. A download counts at most once a day.",
+            "description": "Note under the charts explaining when a play or a download counts.",
+            "placeholders": []
+        },
+        {
+            "key": "gallery.music.charts.sort.listens",
+            "namespace": "gallery",
+            "source_text": "Plays",
+            "description": "Button that ranks listeners by how many plays counted.",
+            "placeholders": []
+        },
+        {
+            "key": "gallery.music.charts.sort.time",
+            "namespace": "gallery",
+            "source_text": "Time",
+            "description": "Button that ranks listeners by how long they listened.",
+            "placeholders": []
+        },
+        {
+            "key": "gallery.music.charts.sortAria",
+            "namespace": "gallery",
+            "source_text": "Rank listeners by",
+            "description": "Accessible name of the buttons that pick what the listener ranking orders by.",
+            "placeholders": []
+        },
+        {
+            "key": "gallery.music.charts.topListeners",
+            "namespace": "gallery",
+            "source_text": "Top listeners",
+            "description": "Charts column heading: the signed-in listeners who played the most.",
+            "placeholders": []
+        },
+        {
+            "key": "gallery.music.charts.topTracks",
+            "namespace": "gallery",
+            "source_text": "Top tracks",
+            "description": "Charts column heading: the most played tracks across the site. Also the queue source name when playing from it.",
+            "placeholders": []
+        },
+        {
+            "key": "gallery.music.charts.trackAria",
+            "namespace": "gallery",
+            "source_text": "{rank}. Play {name}, {listens}",
+            "description": "Accessible name of a top track row, which plays the chart from that track. {listens} is a play count.",
+            "placeholders": [
+                "listens",
+                "name",
+                "rank"
+            ]
+        },
+        {
+            "key": "gallery.music.charts.trackKicker",
+            "namespace": "gallery",
+            "source_text": "Top listeners",
+            "description": "Small label above the track title in the dialog listing one track's top listeners.",
+            "placeholders": []
+        },
+        {
+            "key": "gallery.music.charts.trackListeners",
+            "namespace": "gallery",
+            "source_text": "Top listeners",
+            "description": "Tooltip of the button on a top track row that opens the track's top listeners.",
+            "placeholders": []
+        },
+        {
+            "key": "gallery.music.charts.trackListenersOf",
+            "namespace": "gallery",
+            "source_text": "Top listeners of {name}",
+            "description": "Accessible name of that button. {name} is the track title.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "gallery.music.charts.trackNobody",
+            "namespace": "gallery",
+            "source_text": "No signed-in listener has played this in that span yet.",
+            "description": "Shown in the top listeners dialog when nobody ranks for the track in the span.",
+            "placeholders": []
+        },
+        {
+            "key": "gallery.music.charts.trackTotals",
+            "namespace": "gallery",
+            "source_text": "{listens, plural, one {# play} other {# plays}} and {downloads, plural, one {# download} other {# downloads}} of all time",
+            "description": "Line under the track title in the top listeners dialog: the track's community totals.",
+            "placeholders": [
+                "downloads",
+                "listens"
+            ]
+        },
+        {
+            "key": "gallery.music.charts.unavailable",
+            "namespace": "gallery",
+            "source_text": "Charts aren't available yet.",
+            "description": "Shown in place of a ranking when the backend has no charts (it predates them).",
+            "placeholders": []
+        },
+        {
+            "key": "gallery.music.charts.window.all",
+            "namespace": "gallery",
+            "source_text": "All time",
+            "description": "Charts span button: every play ever counted.",
+            "placeholders": []
+        },
+        {
+            "key": "gallery.music.charts.window.month",
+            "namespace": "gallery",
+            "source_text": "This month",
+            "description": "Charts span button: the last 30 days.",
+            "placeholders": []
+        },
+        {
+            "key": "gallery.music.charts.window.week",
+            "namespace": "gallery",
+            "source_text": "This week",
+            "description": "Charts span button: the last 7 days.",
+            "placeholders": []
+        },
+        {
+            "key": "gallery.music.charts.windowAria",
+            "namespace": "gallery",
+            "source_text": "Time span",
+            "description": "Accessible name of the buttons that pick the span a chart covers.",
+            "placeholders": []
+        },
+        {
             "key": "gallery.music.counts",
             "namespace": "gallery",
             "source_text": "{albums, plural, one {# album or EP} other {# albums and EPs}} from Monster Siren Records, plus {tracks, plural, one {# track} other {# tracks}} from the game",
@@ -11735,6 +11937,16 @@
             "placeholders": [
                 "albums",
                 "tracks"
+            ]
+        },
+        {
+            "key": "gallery.music.counts.exact",
+            "namespace": "gallery",
+            "source_text": "{listens, plural, one {# play} other {# plays}} · {downloads, plural, one {# download} other {# downloads}}",
+            "description": "Tooltip on a track's compact play count: the exact community plays and downloads of all time.",
+            "placeholders": [
+                "downloads",
+                "listens"
             ]
         },
         {
@@ -11844,11 +12056,29 @@
             "placeholders": []
         },
         {
+            "key": "gallery.music.download.busy",
+            "namespace": "gallery",
+            "source_text": "Downloading {name}",
+            "description": "Title of the toast while a track downloads. {name} is the track title.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
             "key": "gallery.music.download.failed",
             "namespace": "gallery",
             "source_text": "Download failed",
             "description": "Shown on a download button when fetching the clip failed.",
             "placeholders": []
+        },
+        {
+            "key": "gallery.music.download.failedTrack",
+            "namespace": "gallery",
+            "source_text": "Couldn't download {name}. Try again in a bit.",
+            "description": "Error toast when a track download failed. {name} is the track title.",
+            "placeholders": [
+                "name"
+            ]
         },
         {
             "key": "gallery.music.download.intro",
@@ -11888,6 +12118,40 @@
             "placeholders": [
                 "name"
             ]
+        },
+        {
+            "key": "gallery.music.download.progress",
+            "namespace": "gallery",
+            "source_text": "{percent} done",
+            "description": "Toast line with a download's progress. {percent} is a formatted percentage.",
+            "placeholders": [
+                "percent"
+            ]
+        },
+        {
+            "key": "gallery.music.download.received",
+            "namespace": "gallery",
+            "source_text": "{size} MB so far",
+            "description": "Toast line with a download's progress when its full size is unknown. {size} is megabytes received, already formatted with one decimal.",
+            "placeholders": [
+                "size"
+            ]
+        },
+        {
+            "key": "gallery.music.download.saved",
+            "namespace": "gallery",
+            "source_text": "Saved {name}",
+            "description": "Toast after a track was written to the file the listener picked. {name} is the track title.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "gallery.music.download.starting",
+            "namespace": "gallery",
+            "source_text": "Starting",
+            "description": "Toast line before the first bytes of a download arrive.",
+            "placeholders": []
         },
         {
             "key": "gallery.music.empty",
@@ -12130,6 +12394,13 @@
             "placeholders": [
                 "name"
             ]
+        },
+        {
+            "key": "gallery.music.list.listens",
+            "namespace": "gallery",
+            "source_text": "Plays",
+            "description": "Column heading over each track's community play count in a song list.",
+            "placeholders": []
         },
         {
             "key": "gallery.music.list.missing",
@@ -12376,6 +12647,36 @@
             ]
         },
         {
+            "key": "gallery.music.menu.download",
+            "namespace": "gallery",
+            "source_text": "Download",
+            "description": "Track menu item that saves the track's audio file.",
+            "placeholders": []
+        },
+        {
+            "key": "gallery.music.menu.downloading",
+            "namespace": "gallery",
+            "source_text": "Downloading",
+            "description": "Track menu item, disabled, while the track downloads and its size is unknown.",
+            "placeholders": []
+        },
+        {
+            "key": "gallery.music.menu.downloadingPercent",
+            "namespace": "gallery",
+            "source_text": "Downloading {percent}",
+            "description": "Track menu item, disabled, while the track downloads. {percent} is a formatted percentage.",
+            "placeholders": [
+                "percent"
+            ]
+        },
+        {
+            "key": "gallery.music.menu.listeners",
+            "namespace": "gallery",
+            "source_text": "Top listeners",
+            "description": "Track menu item that opens the signed-in listeners who played the track most.",
+            "placeholders": []
+        },
+        {
             "key": "gallery.music.menu.newPlaylist",
             "namespace": "gallery",
             "source_text": "New playlist…",
@@ -12450,6 +12751,29 @@
             "namespace": "gallery",
             "source_text": "Volume {percent}, click to change",
             "description": "Volume icon button that cycles 100%, 40% and silent. {percent} is the current level, formatted.",
+            "placeholders": [
+                "percent"
+            ]
+        },
+        {
+            "key": "gallery.music.player.download",
+            "namespace": "gallery",
+            "source_text": "Download this track",
+            "description": "Player bar button that saves the playing track's audio file.",
+            "placeholders": []
+        },
+        {
+            "key": "gallery.music.player.downloading",
+            "namespace": "gallery",
+            "source_text": "Downloading",
+            "description": "Name of that button, disabled, while the track downloads and its size is unknown.",
+            "placeholders": []
+        },
+        {
+            "key": "gallery.music.player.downloadingPercent",
+            "namespace": "gallery",
+            "source_text": "Downloading, {percent}",
+            "description": "Name of that button, disabled, while the track downloads. {percent} is a formatted percentage.",
             "placeholders": [
                 "percent"
             ]
@@ -12583,6 +12907,13 @@
             "placeholders": [
                 "title"
             ]
+        },
+        {
+            "key": "gallery.music.player.openPage",
+            "namespace": "gallery",
+            "source_text": "Open the music page",
+            "description": "Accessible name of the cover in the player bar on pages other than the music page, which goes to the music page.",
+            "placeholders": []
         },
         {
             "key": "gallery.music.player.openQueue",
@@ -12979,6 +13310,13 @@
             "namespace": "gallery",
             "source_text": "Artists",
             "description": "Library section: guest artists.",
+            "placeholders": []
+        },
+        {
+            "key": "gallery.music.rail.charts",
+            "namespace": "gallery",
+            "source_text": "Charts",
+            "description": "Library rail entry for the community charts: the most played tracks and the top listeners across the site.",
             "placeholders": []
         },
         {

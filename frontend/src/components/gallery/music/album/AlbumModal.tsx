@@ -20,6 +20,7 @@ import { displayArtists, type IAlbum, type ICatalog, type ITrack, isPlayable, si
 import { playFrom, randomIndex } from "../impl/playback";
 import { AddMenu } from "../library/AddMenu";
 import type { SirenStatus } from "../library/Library";
+import { TrackCount } from "../library/TrackCount";
 import type { messages } from "../MusicGallery.messages";
 import { playerStore, playQueue, togglePlay, toggleShuffle, useIsCurrent, usePlayer } from "../player/engine";
 import type { IQueueSource } from "../player/types";
@@ -50,7 +51,7 @@ export function AlbumModal({ cid, catalog, sirenStatus, onClose }: { cid: string
                 if (!open) onClose();
             }}
         >
-            <DialogPopup className="overflow-hidden max-sm:h-[92dvh] sm:h-[min(640px,84vh)] sm:max-w-[min(900px,92vw)]">
+            <DialogPopup className="overflow-hidden max-sm:h-[92dvh] sm:h-[min(640px,84dvh)] sm:max-w-[min(900px,92vw)]">
                 {album ? (
                     <AlbumBody album={album} catalog={catalog} />
                 ) : (
@@ -92,7 +93,8 @@ function AlbumBody({ album, catalog }: { album: IAlbum; catalog: ICatalog }): Re
     return (
         <div className="relative flex min-h-0 flex-1 flex-col sm:flex-row">
             <img referrerPolicy="no-referrer" src={album.coverUrl} alt="" aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 hidden h-full w-[64%] object-cover opacity-5 sm:block" style={{ maskImage: "linear-gradient(to left, #000 40%, transparent)" }} />
-            <aside className="relative hidden w-[300px] shrink-0 flex-col gap-5 border-border border-r p-6 sm:flex">
+            {/* Scrolls on its own: a phone held sideways leaves the dialog 328 px tall, under the sleeve and its details. */}
+            <aside className="relative hidden w-[300px] shrink-0 flex-col gap-5 overflow-y-auto border-border border-r p-6 sm:flex">
                 <Sleeve coverUrl={album.coverUrl} alt={album.name} spinning={playing} />
                 <dl className="m-0 flex flex-col font-sans text-[12px]">
                     <Detail label={t("music.album.artist")} value={artistText} />
@@ -259,6 +261,7 @@ const AlbumTrack = memo(function AlbumTrack({ track, index, tracks, source, hous
                     </Tooltip>
                 ) : null}
             </button>
+            <TrackCount trackId={track.id} />
             <span className="flex shrink-0 items-center gap-0.5 transition-opacity sm:opacity-0 sm:group-hover/track:opacity-100 sm:group-focus-within/track:opacity-100">
                 {showArtist ? <span className="max-w-40 truncate px-1 font-sans text-[11.5px] text-muted-foreground max-sm:hidden">{displayArtists(track, houseArtist).join(", ")}</span> : null}
                 <Button size="icon-sm" variant="ghost" onClick={() => toggleLike(track.id)} aria-pressed={liked} aria-label={liked ? t("music.list.unlike", { name: title }) : t("music.list.likeTrack", { name: title })} className={cn(liked && "text-primary")}>

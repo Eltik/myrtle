@@ -33,6 +33,9 @@ pub enum Command {
     /// and `.mp4` in an existing output tree (the same step `extract` runs
     /// last)
     BackfillVideo(BackfillVideoArgs),
+    /// Write an AAC `.m4a` beside every in-game music `.ogg` in an existing
+    /// output tree (the same step `extract` runs after the audio export)
+    BackfillMusic(BackfillMusicArgs),
 }
 
 #[derive(Parser)]
@@ -244,6 +247,24 @@ pub struct BackfillVideoArgs {
     pub output: PathBuf,
 
     /// Transcode every clip even when its outputs are newer than the `.usm`
+    #[arg(long)]
+    pub force: bool,
+}
+
+/// `unpacker backfill-music`: the music step of an extract on its own. It has
+/// `ffmpeg` write `<clip>.m4a` (AAC-LC 192k, source rate, `+faststart`) beside
+/// every `.ogg` under `audio/audio/sound_beta_2/music/` and every `m_*.ogg`
+/// under `audio/anon/`, for browsers without a Vorbis decoder. A clip whose
+/// `.m4a` is newer than its `.ogg`, or whose `.ogg` matches the fingerprint in
+/// `audio/m4a_sources.json`, is skipped. Exits 1 when `ffmpeg` is missing or a
+/// clip fails, where `extract` only warns.
+#[derive(Parser)]
+pub struct BackfillMusicArgs {
+    /// Output tree for one server (the directory holding `audio/`)
+    #[arg(short, long)]
+    pub output: PathBuf,
+
+    /// Transcode every clip even when its `.m4a` is current
     #[arg(long)]
     pub force: bool,
 }

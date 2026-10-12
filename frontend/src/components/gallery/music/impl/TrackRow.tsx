@@ -5,6 +5,7 @@ import { memo, useCallback, useId, useState } from "react";
 import { asset } from "#/components/operators/detail/impl/assets";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
+import { useAuth } from "#/hooks/use-auth";
 import { isGamedataServer } from "#/lib/api/gamedata";
 import { GameText } from "#/lib/gamedata/GameText";
 import { useT } from "#/lib/i18n";
@@ -14,8 +15,10 @@ import type { MusicPlace } from "#/types/generated/MusicPlace";
 import type { MusicPlaceItem } from "#/types/generated/MusicPlaceItem";
 import type { MusicTrack } from "#/types/generated/MusicTrack";
 import { AddMenu } from "../library/AddMenu";
+import { TrackCount } from "../library/TrackCount";
 import type { messages } from "../MusicGallery.messages";
 import { useIsCurrent, usePlayer } from "../player/engine";
+import { countDownload } from "./download";
 import { toggleLike, useIsLiked } from "./library/store";
 import type { ITrack } from "./model";
 import { clipFileName, displayName } from "./tracks";
@@ -66,6 +69,7 @@ export const TrackRow = memo(function TrackRow({ track, record, onPlay }: { trac
                     )}
                     <ChevronDown aria-hidden="true" className={cn("size-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")} />
                 </button>
+                <TrackCount trackId={track.id} className="max-sm:hidden" />
                 <Button size="icon-sm" variant="ghost" onClick={() => toggleLike(track.id)} aria-pressed={liked} aria-label={liked ? t("music.list.unlike", { name }) : t("music.list.likeTrack", { name })} className={cn("max-sm:min-h-11 max-sm:min-w-11", liked && "text-primary")}>
                     <HeartIcon className={cn(liked && "fill-current")} aria-hidden="true" />
                 </Button>
@@ -78,20 +82,20 @@ export const TrackRow = memo(function TrackRow({ track, record, onPlay }: { trac
                     }
                 />
             </div>
-            {open ? <TrackDetails id={panelId} track={record} name={name} /> : null}
+            {open ? <TrackDetails id={panelId} trackId={track.id} track={record} name={name} /> : null}
         </li>
     );
 });
 
-function TrackDetails({ id, track, name }: { id: string; track: MusicTrack; name: string }): React.ReactElement {
+function TrackDetails({ id, trackId, track, name }: { id: string; trackId: string; track: MusicTrack; name: string }): React.ReactElement {
     const t: MusicT = useT("gallery");
     return (
         <div id={id} className="border-border border-t px-3 pt-2.5 pb-3 sm:pl-16">
             {track.loopUrl ? (
                 <div className="mb-3 flex flex-wrap items-center gap-2">
                     <span className="font-sans text-[11.5px] text-muted-foreground">{t("music.download.label")}</span>
-                    {track.introUrl ? <DownloadButton url={track.introUrl} server={track.server} label={t("music.download.intro")} aria={t("music.download.introAria", { name })} /> : null}
-                    <DownloadButton url={track.loopUrl} server={track.server} label={t("music.download.loop")} aria={t("music.download.loopAria", { name })} />
+                    {track.introUrl ? <DownloadButton trackId={trackId} url={track.introUrl} server={track.server} label={t("music.download.intro")} aria={t("music.download.introAria", { name })} /> : null}
+                    <DownloadButton trackId={trackId} url={track.loopUrl} server={track.server} label={t("music.download.loop")} aria={t("music.download.loopAria", { name })} />
                     {track.server ? <span className="font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.06em]">{t("music.row.otherServer", { server: track.server.toUpperCase() })}</span> : null}
                 </div>
             ) : (
@@ -190,16 +194,20 @@ function PlaceItem({ kind, item }: { kind: MusicPlace["kind"]; item: MusicPlaceI
 /**
  * A clip saved under its own file name. The audio sits on the backend's
  * origin, where a plain `download` attribute is ignored, so the clip is
- * fetched and handed over as a blob.
+ * fetched and handed over as a blob. It counts as the track's download once
+ * the clip answered (the server keeps one a day per listener, so the intro
+ * and the loop count once together).
  */
-function DownloadButton({ url, server, label, aria }: { url: string; server?: string; label: string; aria: string }): React.ReactElement {
+function DownloadButton({ trackId, url, server, label, aria }: { trackId: string; url: string; server?: string; label: string; aria: string }): React.ReactElement {
     const t: MusicT = useT("gallery");
+    const signedIn = useAuth().user != null;
     const [state, setState] = useState<"idle" | "busy" | "failed">("idle");
     const onClick = useCallback(async () => {
         setState("busy");
         try {
             const res = await fetch(asset(url, server && isGamedataServer(server) ? server : undefined));
             if (!res.ok) throw new Error(String(res.status));
+            countDownload(trackId, signedIn);
             const blob = await res.blob();
             const href = URL.createObjectURL(blob);
             const a = document.createElement("a");
@@ -213,7 +221,7 @@ function DownloadButton({ url, server, label, aria }: { url: string; server?: st
         } catch {
             setState("failed");
         }
-    }, [url, server]);
+    }, [trackId, url, server, signedIn]);
     return (
         <Button size="sm" variant="outline" className="max-sm:min-h-11" disabled={state === "busy"} onClick={onClick} aria-label={aria}>
             <DownloadIcon aria-hidden="true" />

@@ -10,7 +10,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 
 use axum::extract::{ConnectInfo, MatchedPath, Request, State};
-use axum::http::{HeaderMap, HeaderValue, StatusCode, header};
+use axum::http::{Extensions, HeaderMap, HeaderValue, StatusCode, header};
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
 use dashmap::DashMap;
@@ -149,9 +149,15 @@ static TRUSTED_PROXY_HOPS: LazyLock<usize> = LazyLock::new(|| {
 });
 
 fn client_ip(req: &Request) -> Option<IpAddr> {
+    peer_ip(req.headers(), req.extensions())
+}
+
+/// The client address the rate limiter keys on: the `X-Forwarded-For` entry
+/// `TRUSTED_PROXY_HOPS` points at, else the socket peer.
+pub(crate) fn peer_ip(headers: &HeaderMap, extensions: &Extensions) -> Option<IpAddr> {
     let hops = *TRUSTED_PROXY_HOPS;
     if hops > 0
-        && let Some(forwarded) = req.headers().get("x-forwarded-for")
+        && let Some(forwarded) = headers.get("x-forwarded-for")
         && let Ok(list) = forwarded.to_str()
     {
         let entries: Vec<&str> = list.split(',').map(str::trim).collect();
@@ -164,7 +170,7 @@ fn client_ip(req: &Request) -> Option<IpAddr> {
         }
     }
 
-    req.extensions()
+    extensions
         .get::<ConnectInfo<SocketAddr>>()
         .map(|ConnectInfo(addr)| addr.ip())
 }

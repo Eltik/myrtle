@@ -12,6 +12,7 @@ pub mod like;
 pub mod medal_ownership;
 pub mod medals;
 pub mod music;
+pub mod music_stats;
 pub mod operator_notes;
 pub mod operator_ownership;
 pub mod planner;

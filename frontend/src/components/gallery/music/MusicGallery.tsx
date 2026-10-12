@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { ListMusicIcon, MicIcon } from "lucide-react";
 import type React from "react";
-import { lazy, Suspense, useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { Button } from "#/components/ui/button";
 import { PageHeader } from "#/components/ui/page-header";
 import { Skeleton } from "#/components/ui/skeleton";
@@ -20,12 +20,11 @@ import { type IMusicNav, MusicNavContext } from "./impl/nav";
 import { type IMusicSearch, type LibrarySelection, type MusicTab, searchFor, selectionOf, tabOf } from "./impl/route";
 import type { IGameIndexState } from "./library/GameTracks";
 import { Library, SirenNotice, type SirenStatus } from "./library/Library";
+import { TrackListenersDialog } from "./library/TrackListenersDialog";
 import type { messages } from "./MusicGallery.messages";
 import { setCatalog, togglePanel, useMusicPlayerLifetime, usePlayer } from "./player/engine";
 
 type MusicT = TypedT<typeof messages>;
-
-const MusicPlayerDock = lazy(() => import("./player/MusicPlayerDock").then((m) => ({ default: m.MusicPlayerDock })));
 
 /**
  * THE MUSIC PAGE at `/gallery/music`: Monster Siren Records' releases and the
@@ -39,7 +38,7 @@ const MusicPlayerDock = lazy(() => import("./player/MusicPlayerDock").then((m) =
  *
  * The URL is the navigation state (see `impl/route.ts`), so every view and
  * album has a link. Playback lives in `player/engine.ts` and outlives the
- * views; the dock mounts last.
+ * views; the dock is mounted once by the root layout (`routes/__root.tsx`).
  */
 export function MusicGallery(): React.ReactElement {
     const t: MusicT = useT("gallery");
@@ -119,9 +118,7 @@ export function MusicGallery(): React.ReactElement {
                 )}
             </div>
             <AlbumModal cid={search.album ?? null} catalog={catalog} sirenStatus={sirenStatus} onClose={() => go((prev) => ({ ...prev, album: undefined }), true)} />
-            <Suspense fallback={null}>
-                <MusicPlayerDock />
-            </Suspense>
+            <TrackListenersDialog />
         </MusicNavContext.Provider>
     );
 }

@@ -76,8 +76,8 @@ function LyricsBody({ t }: { t: PlayerT }): React.ReactElement {
 
     return (
         // biome-ignore lint/a11y/noStaticElementInteractions: passive listeners that only pause auto-follow; they activate nothing.
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-[40vh]" onKeyDown={touched} onPointerDown={touched} onTouchStart={touched} onWheel={touched} ref={scroller}>
-            <ol className="flex flex-col pt-[20vh] text-sm leading-loose">
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-[40dvh]" onKeyDown={touched} onPointerDown={touched} onTouchStart={touched} onWheel={touched} ref={scroller}>
+            <ol className="flex flex-col pt-[20dvh] text-sm leading-loose">
                 {lines.map((line, i) => (
                     // Lines can share a time and a text (a repeated chorus), so the index is part of the key.
                     // biome-ignore lint/suspicious/noArrayIndexKey: lines are static per track and never reorder.

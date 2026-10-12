@@ -9,6 +9,7 @@ pub mod fx_textures;
 pub mod gamedata;
 pub mod manifest;
 pub mod mesh;
+pub mod music_m4a;
 pub mod particles;
 pub mod portrait;
 pub mod shader_map;

@@ -12,9 +12,11 @@ vi.mock("#/lib/api/music", () => ({
     deletePlaylistFn: vi.fn(),
     addPlaylistTracksFn: vi.fn(),
     removePlaylistTrackFn: vi.fn(),
+    reportMusicStat: vi.fn(() => Promise.resolve({ counted: true })),
 }));
 
 const store = await import("./store");
+const api = await import("#/lib/api/music");
 
 function doc(): { likes: Record<string, string>; history: unknown[]; playlists: { id: string; name: string; trackIds: string[] }[] } {
     return JSON.parse(window.localStorage.getItem(store.LOCAL_KEY) ?? "{}");
@@ -45,6 +47,30 @@ describe("the signed-out library", () => {
         expect(s.totals).toEqual([{ trackId: "siren:1", plays: 1, seconds: 30, lastPlayedAt: s.history[0]?.playedAt }]);
         expect(s.firstPlayedAt).toBe(s.history[0]?.playedAt);
         expect(doc().history).toHaveLength(1);
+    });
+
+    it("a browser play reports the community listen from the browser", async () => {
+        vi.mocked(api.reportMusicStat).mockClear();
+        await store.logPlay("siren:7", 30);
+        expect(api.reportMusicStat).toHaveBeenCalledExactlyOnceWith("listen", "siren:7");
+    });
+
+    it("a server play counts through the history log alone", async () => {
+        vi.mocked(api.reportMusicStat).mockClear();
+        vi.mocked(api.logPlayFn).mockResolvedValueOnce({ id: 5, trackId: "siren:7", listenedSeconds: 30, playedAt: "2026-10-13T00:00:00Z" });
+        store.libraryStore.setState((s) => ({ ...s, mode: "server", viewerId: "u1" }));
+        await store.logPlay("siren:7", 30);
+        expect(api.logPlayFn).toHaveBeenCalledOnce();
+        expect(api.reportMusicStat).not.toHaveBeenCalled();
+    });
+
+    it("a failed server log reports nothing, since it may have landed", async () => {
+        vi.mocked(api.reportMusicStat).mockClear();
+        vi.mocked(api.logPlayFn).mockRejectedValueOnce(new Error("offline"));
+        vi.mocked(api.getMusicLibraryFn).mockResolvedValue(null);
+        store.libraryStore.setState((s) => ({ ...s, mode: "server", viewerId: "u1" }));
+        expect(await store.logPlay("siren:7", 30)).toBeNaN();
+        expect(api.reportMusicStat).not.toHaveBeenCalled();
     });
 
     it("totals rank by plays then seconds", () => {

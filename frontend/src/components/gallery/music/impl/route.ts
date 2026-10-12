@@ -7,7 +7,7 @@
 export const MUSIC_TABS = ["discovery", "library"] as const;
 export type MusicTab = (typeof MUSIC_TABS)[number];
 
-export const LIBRARY_VIEWS = ["albums", "songs", "artists", "liked", "history", "stats", "game"] as const;
+export const LIBRARY_VIEWS = ["albums", "songs", "artists", "liked", "history", "stats", "charts", "game"] as const;
 export type LibraryView = (typeof LIBRARY_VIEWS)[number];
 
 export interface IMusicSearch {

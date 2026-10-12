@@ -10,7 +10,9 @@ mod build;
 mod dto;
 pub mod library;
 pub mod siren;
+pub mod stats;
 
+use std::collections::HashSet;
 use std::path::PathBuf;
 use std::sync::{Arc, Weak};
 
@@ -31,6 +33,9 @@ struct Cached {
     /// The index serialized once, with its `ETag`: every request answers with
     /// these bytes, and a revalidation that matches gets a 304.
     json: SharedJson,
+    /// Every track id in the index, for checking a `game:` id without
+    /// parsing the JSON back.
+    ids: Arc<HashSet<String>>,
     assets: Weak<AssetIndex>,
 }
 
@@ -73,6 +78,22 @@ fn sources(state: &AppState, server: Server) -> Option<MusicSources> {
 /// `404` for a server that is not loaded, `500` when the index does not
 /// serialize, `503` when the CPU pool sheds.
 pub async fn get_music_index(state: &AppState, server: Server) -> Result<SharedJson, ApiError> {
+    Ok(cached(state, server).await?.json.clone())
+}
+
+/// Every track id in `server`'s index (the part after `game:`), from the
+/// same build as [`get_music_index`].
+///
+/// # Errors
+/// As [`get_music_index`].
+pub async fn game_track_ids(
+    state: &AppState,
+    server: Server,
+) -> Result<Arc<HashSet<String>>, ApiError> {
+    Ok(Arc::clone(&cached(state, server).await?.ids))
+}
+
+async fn cached(state: &AppState, server: Server) -> Result<Arc<Cached>, ApiError> {
     let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
     let gd = sd.game_data.load_full();
     let live = sd.asset_index.load_full();
@@ -99,8 +120,10 @@ pub async fn get_music_index(state: &AppState, server: Server) -> Result<SharedJ
                     );
                     let json =
                         serde_json::to_vec(&index).map_err(|e| ApiError::Internal(e.into()))?;
+                    let ids = index.tracks.iter().map(|t| t.id.clone()).collect();
                     Ok::<_, ApiError>(Arc::new(Cached {
                         json: SharedJson::new(json),
+                        ids: Arc::new(ids),
                         assets: Arc::downgrade(&build_live),
                     }))
                 })
@@ -108,5 +131,5 @@ pub async fn get_music_index(state: &AppState, server: Server) -> Result<SharedJ
             },
         )
         .await?;
-    Ok(cached.json.clone())
+    Ok(cached)
 }

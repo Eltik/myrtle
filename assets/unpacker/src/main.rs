@@ -47,6 +47,7 @@ use export::alpha_merge;
 use export::audio::export_audio;
 use export::avg_hub;
 use export::avg_sprites;
+use export::music_m4a;
 use export::portrait;
 use export::spine;
 use export::stage_preview;
@@ -70,6 +71,7 @@ fn main() {
         Command::BackfillSprites(args) => cmd_backfill_sprites(&args),
         Command::BackfillStoryArt(args) => cmd_backfill_story_art(&args),
         Command::BackfillVideo(args) => cmd_backfill_video(&args),
+        Command::BackfillMusic(args) => cmd_backfill_music(&args),
     }
 }
 
@@ -88,6 +90,21 @@ fn cmd_backfill_video(args: &cli::BackfillVideoArgs) {
             std::process::exit(1);
         }
         Err(video::TreeSkip::NoFfmpeg) => std::process::exit(1),
+    }
+}
+
+/// Write the `.m4a` beside every music `.ogg` in an existing output tree without re-extracting
+/// anything. The same pass runs inside an `extract` that exports audio; here a missing `ffmpeg`
+/// or a failed clip is an error, because transcoding is the whole job.
+fn cmd_backfill_music(args: &cli::BackfillMusicArgs) {
+    match music_m4a::transcode_tree(&args.output, args.force) {
+        Ok(report) if report.failed == 0 => {}
+        Ok(_) => std::process::exit(1),
+        Err(music_m4a::TreeSkip::NoMusicDir) => {
+            eprintln!("error: no music .ogg under {}/audio", args.output.display());
+            std::process::exit(1);
+        }
+        Err(music_m4a::TreeSkip::NoFfmpeg) => std::process::exit(1),
     }
 }
 
@@ -978,6 +995,18 @@ fn cmd_extract(args: &cli::ExtractArgs) {
         );
         for line in folded {
             println!("  {line}");
+        }
+    }
+    if extract_audio {
+        // The `.m4a` beside each music `.ogg`, for browsers without Vorbis. After the audio
+        // export, so it reads this run's `.ogg`s, and never fatal for the same reasons as the
+        // cutscenes below: a missing ffmpeg warns once, a failed clip is reported on its row.
+        // Every kept `.m4a` is written or touched here, so the orphan sweep keeps it.
+        match music_m4a::transcode_tree(&args.output, false) {
+            Ok(_) | Err(music_m4a::TreeSkip::NoFfmpeg) => {}
+            Err(music_m4a::TreeSkip::NoMusicDir) => {
+                println!("music: no music .ogg under the output, nothing to transcode");
+            }
         }
     }
     if args.extract_all() {

@@ -20,6 +20,7 @@ import type { IQueueSource } from "../player/types";
 import { AddMenu } from "./AddMenu";
 import { NOTICE_CLASS, ShowMore, usePagedList } from "./paging";
 import { moveTrack } from "./reorder";
+import { TrackCount } from "./TrackCount";
 
 type MusicT = TypedT<typeof messages>;
 
@@ -44,7 +45,13 @@ interface ISongListProps {
 /** An 18 px box takes a 44 px touch target on a coarse pointer, centred on the box. */
 const CHECK_HIT = "pointer-coarse:after:absolute pointer-coarse:after:-inset-[15px]";
 
-const GRID = "grid grid-cols-[28px_minmax(0,1fr)_32px_32px] items-center gap-x-2 sm:grid-cols-[28px_minmax(0,1fr)_minmax(0,22%)_minmax(0,18%)_32px_32px]";
+/**
+ * Columns follow the list's own width, not the viewport's: beside the rail at
+ * 768 px the list is 516 px wide, and the album, artist and plays columns left
+ * the title 30 px. Under 448 px a row is the title (with the artist under it)
+ * and its buttons; plays join at 448, album and artist at 672.
+ */
+const GRID = "grid grid-cols-[28px_minmax(0,1fr)_32px_32px] items-center gap-x-2 @md:grid-cols-[28px_minmax(0,1fr)_56px_32px_32px] @2xl:grid-cols-[28px_minmax(0,1fr)_minmax(0,22%)_minmax(0,18%)_56px_32px_32px]";
 
 /**
  * Shared by All Songs, Liked, Recently Played, artists and playlists. Only a
@@ -130,7 +137,7 @@ export function SongList({ tracks, source, houseArtist, playlist, pageKey }: ISo
     if (tracks.length === 0) return <p className={NOTICE_CLASS}>{t("music.list.empty")}</p>;
 
     return (
-        <div>
+        <div className="@container">
             <div className={cn(GRID, "border-border border-b px-2 pb-1.5 font-mono text-[10px] text-muted-foreground uppercase tracking-[0.12em]")}>
                 <Checkbox checked={allShownSelected} indeterminate={!allShownSelected && selectedTracks.length > 0} onCheckedChange={(checked) => setSelected(checked ? new Set(shown.map((tr) => tr.id)) : new Set())} aria-label={t("music.list.selectAll")} className={cn("justify-self-center", CHECK_HIT)} />
                 <span className="flex items-center gap-2">
@@ -138,8 +145,9 @@ export function SongList({ tracks, source, houseArtist, playlist, pageKey }: ISo
                     <span className="w-7" aria-hidden="true" />
                     {t("music.list.title")}
                 </span>
-                <span className="max-sm:hidden">{t("music.list.album")}</span>
-                <span className="max-sm:hidden">{t("music.list.artist")}</span>
+                <span className="@max-2xl:hidden">{t("music.list.album")}</span>
+                <span className="@max-2xl:hidden">{t("music.list.artist")}</span>
+                <span className="@max-md:hidden text-right">{t("music.list.listens")}</span>
                 <span className="sr-only">{t("music.list.like")}</span>
                 <span className="sr-only">{playlist ? t("music.list.remove") : t("music.list.add")}</span>
             </div>
@@ -298,10 +306,10 @@ const SongRow = memo(function SongRow({ index, track, tracks, source, houseArtis
                             </Tooltip>
                         ) : null}
                     </span>
-                    <span className="truncate font-sans text-[11.5px] text-muted-foreground sm:hidden">{artists.join(", ") || track.albumName}</span>
+                    <span className="@2xl:hidden truncate font-sans text-[11.5px] text-muted-foreground">{artists.join(", ") || track.albumName}</span>
                 </span>
             </button>
-            <span className="min-w-0 max-sm:hidden">
+            <span className="@max-2xl:hidden min-w-0">
                 {albumId ? (
                     <button type="button" onClick={() => nav.openAlbum(albumId)} title={track.albumName ?? undefined} className="pointer-coarse:-my-[13px] block max-w-full cursor-pointer truncate pointer-coarse:py-[13px] text-left font-sans text-[12.5px] text-muted-foreground hover:text-foreground hover:underline">
                         {track.albumName}
@@ -312,7 +320,7 @@ const SongRow = memo(function SongRow({ index, track, tracks, source, houseArtis
                     </span>
                 )}
             </span>
-            <span className="min-w-0 truncate font-sans text-[12.5px] text-muted-foreground max-sm:hidden" title={artists.join(", ")}>
+            <span className="@max-2xl:hidden min-w-0 truncate font-sans text-[12.5px] text-muted-foreground" title={artists.join(", ")}>
                 {artists.map((name, i) => (
                     <span key={name}>
                         {i > 0 ? ", " : null}
@@ -326,6 +334,7 @@ const SongRow = memo(function SongRow({ index, track, tracks, source, houseArtis
                     </span>
                 ))}
             </span>
+            <TrackCount trackId={track.id} className="@max-md:hidden" />
             <Button
                 size="icon-sm"
                 variant="ghost"

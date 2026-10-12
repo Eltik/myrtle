@@ -4,21 +4,28 @@
 
 use axum::{
     Json,
-    extract::{Path, State},
-    http::{HeaderMap, StatusCode, header},
+    extract::{FromRequestParts, Path, Query, State},
+    http::{HeaderMap, StatusCode, header, request::Parts},
     response::{IntoResponse, Response},
 };
+use serde::Deserialize;
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
 
 use crate::app::extractors::auth::AuthUser;
+use crate::app::extractors::pagination::Pagination;
 use crate::app::routes::static_data::shared_json_response;
+use crate::app::services::music::stats::{self, StatClient};
 use crate::app::services::music::{get_music_index, library, siren};
 use crate::app::{error::ApiError, state::AppState};
 use crate::core::hypergryph::constants::Server;
 use crate::database::models::music::{
     MusicLibrary, MusicPlay, MusicPlayInput, MusicPlayUpdate, MusicPlaylist, MusicPlaylistAdd,
     MusicPlaylistCreate, MusicPlaylistPatch,
+};
+use crate::database::models::music_stats::{
+    MusicListenerPage, MusicListenerSort, MusicStatInput, MusicStatKind, MusicStatRecorded,
+    MusicStatWindow, MusicStatsCatalog, MusicTopTracks,
 };
 
 /// The index with its `ETag` and `Cache-Control: public, max-age=300`; a
@@ -503,9 +510,259 @@ pub async fn playlist_remove_track(
     ))
 }
 
-/// The Monster Siren catalogue and the account's library. The in-game index
-/// (`music`, `music_srv`) is registered by the caller next to the other
-/// game-data routes.
+// ---------------------------------------------------------------------------
+// Community stats
+// ---------------------------------------------------------------------------
+
+/// The community counters are kept this long by a browser or a proxy.
+const STATS_CACHE: &str = "public, max-age=60";
+
+/// Who an ingest call counts against: the account when the caller is signed
+/// in, else an HMAC of their address. `None` when neither can be told (no
+/// usable address), in which case the call counts nothing.
+///
+/// A call that presents credentials which fail (an expired or forged bearer)
+/// is 401, not anonymous. `MaybeAuthUser` would count it against the address,
+/// and the one caller that sends a bearer is the SSR server, whose address is
+/// every visitor's: the 401 sends `recordMusicDownloadFn`'s caller back to the
+/// browser, which reports from its own address.
+pub struct StatCaller(Option<StatClient>);
+
+impl FromRequestParts<AppState> for StatCaller {
+    type Rejection = ApiError;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
+        if parts.headers.contains_key(header::AUTHORIZATION) {
+            let auth = AuthUser::from_request_parts(parts, state).await?;
+            return Ok(Self(Some(StatClient::User(auth.user_uuid()?))));
+        }
+        let client = stats::client_addr(&parts.headers, &parts.extensions)
+            .map(|ip| stats::anonymous_client(&state.config.jwt_secret, ip));
+        Ok(Self(client))
+    }
+}
+
+async fn ingest(
+    state: &AppState,
+    caller: StatCaller,
+    kind: MusicStatKind,
+    body: &MusicStatInput,
+) -> Result<Json<MusicStatRecorded>, ApiError> {
+    let counted = match caller.0 {
+        Some(client) => stats::record(state, kind, &body.track_id, &client).await?,
+        None => {
+            // Still answer a bad id as one, so a client bug shows.
+            if !stats::is_known_track(state, &body.track_id).await? {
+                return Err(ApiError::NotFound);
+            }
+            false
+        }
+    };
+    Ok(Json(MusicStatRecorded { counted }))
+}
+
+/// Count a listen. Open to everyone: a signed-in caller counts by account,
+/// anyone else by an HMAC of their address (never stored raw). The same
+/// caller counts at most once per track every 30 minutes, so a page may call
+/// this on every play that passes its listen rule. A signed-in play logged
+/// with `POST /music/history` already counts here; calling both for one
+/// play still counts once.
+#[utoipa::path(
+    post,
+    path = "/music/stats/listen",
+    operation_id = "music_stats_listen",
+    tag = "music",
+    request_body = MusicStatInput,
+    security(("bearer_auth" = []), ()),
+    responses(
+        (status = 200, description = "Whether this call counted.", body = MusicStatRecorded),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 404, description = "The catalogue lists no such track.", body = crate::app::error::ErrorBody),
+        (status = 422, response = crate::app::openapi::responses::ValidationFailed),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn stats_listen(
+    State(state): State<AppState>,
+    caller: StatCaller,
+    Json(body): Json<MusicStatInput>,
+) -> Result<Json<MusicStatRecorded>, ApiError> {
+    ingest(&state, caller, MusicStatKind::Listen, &body).await
+}
+
+/// Count a download. As `POST /music/stats/listen`, with a 24 hour window.
+#[utoipa::path(
+    post,
+    path = "/music/stats/download",
+    operation_id = "music_stats_download",
+    tag = "music",
+    request_body = MusicStatInput,
+    security(("bearer_auth" = []), ()),
+    responses(
+        (status = 200, description = "Whether this call counted.", body = MusicStatRecorded),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 404, description = "The catalogue lists no such track.", body = crate::app::error::ErrorBody),
+        (status = 422, response = crate::app::openapi::responses::ValidationFailed),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn stats_download(
+    State(state): State<AppState>,
+    caller: StatCaller,
+    Json(body): Json<MusicStatInput>,
+) -> Result<Json<MusicStatRecorded>, ApiError> {
+    ingest(&state, caller, MusicStatKind::Download, &body).await
+}
+
+/// All-time listens and downloads for every track that has any, keyed by
+/// track id: one call covers the whole catalogue.
+#[utoipa::path(
+    get,
+    path = "/music/stats",
+    operation_id = "music_stats",
+    tag = "music",
+    responses(
+        (status = 200, description = "Every counted track. Cached for a minute.", body = MusicStatsCatalog),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn stats_catalog(State(state): State<AppState>) -> Result<Response, ApiError> {
+    let catalog = stats::catalog(&state).await?;
+    Ok(([(header::CACHE_CONTROL, STATS_CACHE)], Json(catalog)).into_response())
+}
+
+#[derive(Deserialize)]
+pub struct TopTracksParams {
+    #[serde(default)]
+    pub window: MusicStatWindow,
+    pub limit: Option<u32>,
+}
+
+/// The most listened tracks over a window, everyone's listens counted.
+#[utoipa::path(
+    get,
+    path = "/music/stats/top-tracks",
+    operation_id = "music_stats_top_tracks",
+    tag = "music",
+    params(
+        ("window" = Option<MusicStatWindow>, Query, description = "`week` (default, the last 7 days), `month` (the last 30) or `all`."),
+        ("limit" = Option<u32>, Query, description = "How many tracks. Defaults to 50, capped at 100.")
+    ),
+    responses(
+        (status = 200, description = "Tracks by listens, most first. Ties share a rank.", body = MusicTopTracks),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn stats_top_tracks(
+    State(state): State<AppState>,
+    Query(params): Query<TopTracksParams>,
+) -> Result<Json<MusicTopTracks>, ApiError> {
+    let limit = params.limit.unwrap_or(stats::TOP_TRACKS_DEFAULT);
+    Ok(Json(stats::top_tracks(&state, params.window, limit).await?))
+}
+
+#[derive(Deserialize)]
+pub struct ListenersParams {
+    #[serde(default)]
+    pub window: MusicStatWindow,
+    #[serde(default)]
+    pub sort: MusicListenerSort,
+    #[serde(flatten)]
+    pub pagination: Pagination,
+}
+
+/// One page of listeners for either listener route.
+async fn listener_page(
+    state: &AppState,
+    params: &ListenersParams,
+    track_id: Option<&str>,
+) -> Result<Json<MusicListenerPage>, ApiError> {
+    Ok(Json(
+        stats::listeners(
+            state,
+            params.window,
+            params.sort,
+            track_id,
+            params.pagination.limit(),
+            params.pagination.offset(),
+        )
+        .await?,
+    ))
+}
+
+/// Signed-in listeners ranked by counted listens or by time heard over a
+/// window. Only public profiles are ranked, as on every user leaderboard;
+/// ranks close over the hidden ones.
+#[utoipa::path(
+    get,
+    path = "/music/stats/top-listeners",
+    operation_id = "music_stats_top_listeners",
+    tag = "music",
+    params(
+        ("window" = Option<MusicStatWindow>, Query, description = "`week` (default, the last 7 days), `month` (the last 30) or `all`."),
+        ("sort" = Option<MusicListenerSort>, Query, description = "`listens` (default) or `time` (seconds heard)."),
+        ("limit" = Option<u32>, Query, description = "Page size. Defaults to 20, capped at 100."),
+        ("offset" = Option<u32>, Query, description = "Rows to skip. Defaults to 0.")
+    ),
+    responses(
+        (status = 200, description = "A page of listeners and how many there are.", body = MusicListenerPage),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn stats_top_listeners(
+    State(state): State<AppState>,
+    Query(params): Query<ListenersParams>,
+) -> Result<Json<MusicListenerPage>, ApiError> {
+    listener_page(&state, &params, None).await
+}
+
+/// One track's signed-in listeners, ranked as `/music/stats/top-listeners`.
+#[utoipa::path(
+    get,
+    path = "/music/stats/tracks/{track_id}/listeners",
+    operation_id = "music_stats_track_listeners",
+    tag = "music",
+    params(
+        ("track_id" = String, Path, description = "`siren:<cid>` or `game:<track id>`."),
+        ("window" = Option<MusicStatWindow>, Query, description = "`week` (default, the last 7 days), `month` (the last 30) or `all`."),
+        ("sort" = Option<MusicListenerSort>, Query, description = "`listens` (default) or `time` (seconds heard)."),
+        ("limit" = Option<u32>, Query, description = "Page size. Defaults to 20, capped at 100."),
+        ("offset" = Option<u32>, Query, description = "Rows to skip. Defaults to 0.")
+    ),
+    responses(
+        (status = 200, description = "A page of the track's listeners and how many there are.", body = MusicListenerPage),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn stats_track_listeners(
+    State(state): State<AppState>,
+    Path(track_id): Path<String>,
+    Query(params): Query<ListenersParams>,
+) -> Result<Json<MusicListenerPage>, ApiError> {
+    listener_page(&state, &params, Some(&track_id)).await
+}
+
+/// The Monster Siren catalogue, the account's library and the community
+/// stats. The in-game index (`music`, `music_srv`) is registered by the
+/// caller next to the other game-data routes.
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         .routes(routes!(siren_catalog))
@@ -520,4 +777,10 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(playlist_patch, playlist_delete))
         .routes(routes!(playlist_add_tracks))
         .routes(routes!(playlist_remove_track))
+        .routes(routes!(stats_listen))
+        .routes(routes!(stats_download))
+        .routes(routes!(stats_catalog))
+        .routes(routes!(stats_top_tracks))
+        .routes(routes!(stats_top_listeners))
+        .routes(routes!(stats_track_listeners))
 }

@@ -4,6 +4,7 @@ pub mod grid;
 pub mod i18n;
 pub mod item_leaderboard;
 pub mod music;
+pub mod music_stats;
 pub mod operator_notes;
 pub mod planner;
 pub mod profile_layout;

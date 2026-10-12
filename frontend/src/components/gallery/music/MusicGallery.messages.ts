@@ -755,6 +755,162 @@ export const messages = {
         text: "You're not signed in, so likes, playlists and stats live in this browser only.",
         description: "Note under the stats for a signed-out listener.",
     },
+    "music.rail.charts": {
+        text: "Charts",
+        description: "Library rail entry for the community charts: the most played tracks and the top listeners across the site.",
+    },
+    "music.list.listens": {
+        text: "Plays",
+        description: "Column heading over each track's community play count in a song list.",
+    },
+    "music.counts.exact": {
+        text: "{listens, plural, one {# play} other {# plays}} · {downloads, plural, one {# download} other {# downloads}}",
+        description: "Tooltip on a track's compact play count: the exact community plays and downloads of all time.",
+    },
+    "music.download.busy": {
+        text: "Downloading {name}",
+        description: "Title of the toast while a track downloads. {name} is the track title.",
+    },
+    "music.download.starting": {
+        text: "Starting",
+        description: "Toast line before the first bytes of a download arrive.",
+    },
+    "music.download.progress": {
+        text: "{percent} done",
+        description: "Toast line with a download's progress. {percent} is a formatted percentage.",
+    },
+    "music.download.received": {
+        text: "{size} MB so far",
+        description: "Toast line with a download's progress when its full size is unknown. {size} is megabytes received, already formatted with one decimal.",
+    },
+    "music.download.saved": {
+        text: "Saved {name}",
+        description: "Toast after a track was written to the file the listener picked. {name} is the track title.",
+    },
+    "music.download.failedTrack": {
+        text: "Couldn't download {name}. Try again in a bit.",
+        description: "Error toast when a track download failed. {name} is the track title.",
+    },
+    "music.menu.download": {
+        text: "Download",
+        description: "Track menu item that saves the track's audio file.",
+    },
+    "music.menu.downloading": {
+        text: "Downloading",
+        description: "Track menu item, disabled, while the track downloads and its size is unknown.",
+    },
+    "music.menu.downloadingPercent": {
+        text: "Downloading {percent}",
+        description: "Track menu item, disabled, while the track downloads. {percent} is a formatted percentage.",
+    },
+    "music.menu.listeners": {
+        text: "Top listeners",
+        description: "Track menu item that opens the signed-in listeners who played the track most.",
+    },
+    "music.charts.window.week": {
+        text: "This week",
+        description: "Charts span button: the last 7 days.",
+    },
+    "music.charts.window.month": {
+        text: "This month",
+        description: "Charts span button: the last 30 days.",
+    },
+    "music.charts.window.all": {
+        text: "All time",
+        description: "Charts span button: every play ever counted.",
+    },
+    "music.charts.windowAria": {
+        text: "Time span",
+        description: "Accessible name of the buttons that pick the span a chart covers.",
+    },
+    "music.charts.sort.listens": {
+        text: "Plays",
+        description: "Button that ranks listeners by how many plays counted.",
+    },
+    "music.charts.sort.time": {
+        text: "Time",
+        description: "Button that ranks listeners by how long they listened.",
+    },
+    "music.charts.sortAria": {
+        text: "Rank listeners by",
+        description: "Accessible name of the buttons that pick what the listener ranking orders by.",
+    },
+    "music.charts.topTracks": {
+        text: "Top tracks",
+        description: "Charts column heading: the most played tracks across the site. Also the queue source name when playing from it.",
+    },
+    "music.charts.topListeners": {
+        text: "Top listeners",
+        description: "Charts column heading: the signed-in listeners who played the most.",
+    },
+    "music.charts.listens": {
+        text: "{count, plural, one {# play} other {# plays}}",
+        description: "How many plays counted for a track or a listener.",
+    },
+    "music.charts.level": {
+        text: "Lv. {level}",
+        description: "A listener's game account level beside their name. Keep it short.",
+    },
+    "music.charts.profile": {
+        text: "{rank}. {name}, {listens}, {time}. Open profile",
+        description: "Accessible name of a ranked listener row, which links to the profile. {listens} is a play count, {time} a listening time.",
+    },
+    "music.charts.trackAria": {
+        text: "{rank}. Play {name}, {listens}",
+        description: "Accessible name of a top track row, which plays the chart from that track. {listens} is a play count.",
+    },
+    "music.charts.trackListeners": {
+        text: "Top listeners",
+        description: "Tooltip of the button on a top track row that opens the track's top listeners.",
+    },
+    "music.charts.trackListenersOf": {
+        text: "Top listeners of {name}",
+        description: "Accessible name of that button. {name} is the track title.",
+    },
+    "music.charts.trackKicker": {
+        text: "Top listeners",
+        description: "Small label above the track title in the dialog listing one track's top listeners.",
+    },
+    "music.charts.trackTotals": {
+        text: "{listens, plural, one {# play} other {# plays}} and {downloads, plural, one {# download} other {# downloads}} of all time",
+        description: "Line under the track title in the top listeners dialog: the track's community totals.",
+    },
+    "music.charts.failed": {
+        text: "Couldn't load the charts. Try again in a bit.",
+        description: "Shown in place of a ranking when its request failed.",
+    },
+    "music.charts.unavailable": {
+        text: "Charts aren't available yet.",
+        description: "Shown in place of a ranking when the backend has no charts (it predates them).",
+    },
+    "music.charts.noTracks": {
+        text: "Nothing has been played in this span yet.",
+        description: "Shown in place of the top tracks when the span has no counted plays.",
+    },
+    "music.charts.nobody": {
+        text: "No signed-in listener in this span yet.",
+        description: "Shown in place of the top listeners when nobody ranks in the span.",
+    },
+    "music.charts.trackNobody": {
+        text: "No signed-in listener has played this in that span yet.",
+        description: "Shown in the top listeners dialog when nobody ranks for the track in the span.",
+    },
+    "music.charts.more": {
+        text: "Show more",
+        description: "Button under a ranking that loads more rows.",
+    },
+    "music.charts.ranked": {
+        text: "{count, plural, one {# listener ranked} other {# listeners ranked}}",
+        description: "Under the top listeners: how many listeners the ranking covers in the span.",
+    },
+    "music.charts.publicNote": {
+        text: "Only signed-in listeners with a public profile are ranked.",
+        description: "Note under a listener ranking.",
+    },
+    "music.charts.rules": {
+        text: "A play counts after 30 seconds, or half of a shorter track, at most once per listener and track every 30 minutes. A download counts at most once a day.",
+        description: "Note under the charts explaining when a play or a download counts.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages, dynamic: true });

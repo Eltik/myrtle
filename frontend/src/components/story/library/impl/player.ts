@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useSyncExternalStore } from "react";
+import { pauseSiteMusic, registerOtherMusic } from "#/components/gallery/music/player/presence";
 import { asset } from "#/components/operators/detail/impl/assets";
 import type { GamedataServer } from "#/lib/api/gamedata";
 import { createStoryAudio, type StoryAudio } from "#/lib/story/audio";
@@ -121,6 +122,8 @@ function start(track: IPlayerTrack, offsetSeconds: number | null): void {
     const settings = loadSettings();
     audio ??= createStoryAudio();
     if (!audio.arm()) return;
+    // The music player has its own channel; a theme pauses it rather than sounding over it.
+    pauseSiteMusic();
     audio.setMasterMusic(settings.musicVolume);
     audio.setMuted(settings.muted);
     // A crossfade only makes sense over something that is sounding. Over silence
@@ -331,6 +334,11 @@ export function useNowPlayingClock(running: boolean): void {
 export function useLibraryPlayerLifetime(): void {
     useEffect(() => {
         hydrate();
-        return dispose;
+        // The music player starting pauses this channel, as a theme starting pauses the player.
+        const unregister = registerOtherMusic(pause);
+        return () => {
+            unregister();
+            dispose();
+        };
     }, []);
 }

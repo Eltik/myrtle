@@ -16,6 +16,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createStoryAudio } from "./audio";
 
+/** jsdom plays every type, so a test that needs iOS's `.m4a`-first order sets this. */
+const order = vi.hoisted(() => ({ m4aFirst: false }));
+vi.mock("./audioBuffers", async (importOriginal) => {
+    const actual = await importOriginal<typeof import("./audioBuffers")>();
+    return { ...actual, candidatesFor: (url: string) => actual.candidatesFor(url, order.m4aFirst) };
+});
+
 class FakeParam {
     value = 1;
     /** The last `linearRampToValueAtTime` target, which is what a fade asks for. */
@@ -553,5 +560,41 @@ describe("the music timeline", () => {
         expect(ctx.sources).toHaveLength(3);
         expect(ctx.sources.at(-1)?.offset).toBeCloseTo(90.8, 6);
         audio.dispose();
+    });
+});
+
+describe("the media-element fallback", () => {
+    it("plays the first url this browser can play, not the .ogg the cue names", async () => {
+        install();
+        FakeAudioContext.gestureSeen = true;
+        order.m4aFirst = true;
+        vi.stubGlobal("fetch", async () => ({ ok: false, arrayBuffer: async () => new ArrayBuffer(0) }));
+        const made: string[] = [];
+        vi.stubGlobal(
+            "Audio",
+            class {
+                loop = false;
+                volume = 1;
+                constructor(src: string) {
+                    made.push(src);
+                }
+                play() {
+                    return Promise.resolve();
+                }
+                pause() {}
+                addEventListener() {}
+                removeEventListener() {}
+            },
+        );
+        try {
+            const audio = createStoryAudio();
+            audio.arm();
+            audio.playMusic({ loop: "/a/sound_beta_2/music/m_sys_title_loop.ogg", volume: 1, crossfade: 0 });
+            await ctxUnderTest?.settle();
+            expect(made).toEqual(["/a/sound_beta_2/music/m_sys_title_loop.m4a"]);
+            audio.dispose();
+        } finally {
+            order.m4aFirst = false;
+        }
     });
 });

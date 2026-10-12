@@ -1,15 +1,17 @@
-import { CheckIcon, ListEndIcon, ListPlusIcon, ListStartIcon, PlusIcon } from "lucide-react";
+import { CheckIcon, DownloadIcon, ListEndIcon, ListPlusIcon, ListStartIcon, PlusIcon, UsersIcon } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { Menu, MenuItem, MenuPopup, MenuSeparator, MenuTrigger } from "#/components/ui/menu";
 import { toastManager } from "#/components/ui/toast";
-import { useT } from "#/lib/i18n";
+import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import { isDownloadable, useDownload, useTrackDownload } from "../impl/download";
 import { addToPlaylist, createPlaylist, useLibrary } from "../impl/library/store";
 import type { ITrack } from "../impl/model";
 import type { messages } from "../MusicGallery.messages";
-import { enqueueEnd, enqueueNext } from "../player/engine";
+import { enqueueEnd, enqueueNext, usePlayer } from "../player/engine";
 import { PlaylistNameDialog } from "./PlaylistNameDialog";
+import { openTrackListeners } from "./TrackListenersDialog";
 
 type MusicT = TypedT<typeof messages>;
 
@@ -17,7 +19,8 @@ type MusicT = TypedT<typeof messages>;
  * THE ADD MENU every row, the bulk bar and the album modal share: play next,
  * add to the queue, add to a playlist (checked when every track is already
  * in it), or a new playlist with the tracks in it. With several tracks each
- * item says `(all N)`.
+ * item says `(all N)`. For one track it also saves the file and opens the
+ * track's top listeners.
  */
 export function AddMenu({ tracks, trigger, align = "end" }: { tracks: readonly ITrack[]; trigger: React.ReactElement; align?: "start" | "center" | "end" }): React.ReactElement {
     const t: MusicT = useT("gallery");
@@ -60,6 +63,7 @@ export function AddMenu({ tracks, trigger, align = "end" }: { tracks: readonly I
                         <PlusIcon />
                         {t("music.menu.newPlaylist")}
                     </MenuItem>
+                    {tracks.length === 1 && tracks[0] ? <OneTrackItems track={tracks[0]} /> : null}
                 </MenuPopup>
             </Menu>
             <PlaylistNameDialog
@@ -73,6 +77,28 @@ export function AddMenu({ tracks, trigger, align = "end" }: { tracks: readonly I
                     });
                 }}
             />
+        </>
+    );
+}
+
+/** Download and Top listeners, the items that only make sense for one track. */
+function OneTrackItems({ track }: { track: ITrack }): React.ReactElement {
+    const t: MusicT = useT("gallery");
+    const f = useFormatters();
+    const download = useTrackDownload();
+    const running = useDownload(track.id);
+    const houseArtist = usePlayer((s) => s.houseArtist);
+    return (
+        <>
+            <MenuSeparator />
+            <MenuItem disabled={!isDownloadable(track) || running !== null} onClick={() => download(track)}>
+                <DownloadIcon />
+                {running ? (running.total ? t("music.menu.downloadingPercent", { percent: f.percent(running.received / running.total) }) : t("music.menu.downloading")) : t("music.menu.download")}
+            </MenuItem>
+            <MenuItem onClick={() => openTrackListeners(track, houseArtist)}>
+                <UsersIcon />
+                {t("music.menu.listeners")}
+            </MenuItem>
         </>
     );
 }

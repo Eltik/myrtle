@@ -12,6 +12,7 @@ import type { messages } from "../MusicGallery.messages";
 import type { IQueueSource } from "../player/types";
 import { AlbumsGrid } from "./AlbumsGrid";
 import { ArtistsView } from "./ArtistsView";
+import { ChartsView } from "./ChartsView";
 import { FilterStrip, type StripMode } from "./FilterStrip";
 import { filterPrepared, filterSongs, prepareAlbums, prepareArtists, prepareSongs } from "./filters";
 import { GameTracks, type IGameIndexState } from "./GameTracks";
@@ -134,6 +135,7 @@ export function Library({ catalog, selection, sirenStatus, gameState, collator }
     else if (view === "albums") body = <AlbumsGrid albums={albums} pageKey={pageKey} />;
     else if (view === "artists") body = <ArtistsView artists={artists} />;
     else if (view === "stats") body = <StatsView catalog={catalog} />;
+    else if (view === "charts") body = <ChartsView catalog={catalog} waiting={{ siren: sirenStatus === "loading" || sirenStatus === "syncing", game: gameState.loading }} />;
     else if (view === "game") body = <GameTracks catalog={catalog} query={query} kind={kind} collator={collator} state={gameState} />;
     else if (selection.kind === "playlist" && !playlist) body = libraryLoaded ? <Notice text={t("music.playlist.gone")} /> : <ListSkeleton />;
     else {
@@ -151,7 +153,7 @@ export function Library({ catalog, selection, sirenStatus, gameState, collator }
             <Rail selection={selection} />
             <div className="min-w-0">
                 {playlist ? <PlaylistHeader id={playlist.id} name={playlist.name} tracks={base?.tracks ?? []} totalIds={playlist.trackIds.length} source={source} /> : title ? <h2 className="mt-0 mb-3 font-sans font-semibold text-[18px] text-foreground">{title}</h2> : null}
-                {view !== "stats" && !(selection.kind === "playlist" && !playlist) ? (
+                {view !== "stats" && view !== "charts" && !(selection.kind === "playlist" && !playlist) ? (
                     <FilterStrip
                         mode={mode}
                         query={rawQuery}

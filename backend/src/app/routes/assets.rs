@@ -1202,9 +1202,18 @@ async fn serve_file_tagged(
             .into_response());
     }
 
-    let mime = mime_guess::from_path(&full_path)
-        .first_or_octet_stream()
-        .to_string();
+    // mime_guess 2.0.5 maps `.m4a` to `audio/m4a`, which is not a registered type; the music
+    // `.m4a` fallbacks (AAC in MP4, for browsers without Vorbis) go out as `audio/mp4`.
+    let mime = if full_path
+        .extension()
+        .is_some_and(|e| e.eq_ignore_ascii_case("m4a"))
+    {
+        "audio/mp4".to_string()
+    } else {
+        mime_guess::from_path(&full_path)
+            .first_or_octet_stream()
+            .to_string()
+    };
 
     let range = request_headers
         .get(header::RANGE)
@@ -1308,6 +1317,9 @@ mod tests {
         assert!(is_public_asset_path("spine/x/y[scene].json"));
         assert!(is_public_asset_path("./textures/chararts/a/a_2.png"));
         assert!(is_public_asset_path("/audio/audio/sound_beta_2/x.ogg"));
+        assert!(is_public_asset_path(
+            "/audio/audio/sound_beta_2/music/a/m_a/m_a_loop.m4a"
+        ));
         assert!(is_public_asset_path("/video/main_10/main_10_enter.mp4"));
         assert!(is_public_asset_path("/portraits/char_002_amiya_1.png"));
     }

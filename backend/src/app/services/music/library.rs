@@ -7,9 +7,11 @@
 
 use std::collections::HashMap;
 
+use chrono::Utc;
 use uuid::Uuid;
 
 use crate::app::error::ApiError;
+use crate::app::services::music::stats::{self, StatClient};
 use crate::app::state::AppState;
 use crate::app::validation::validate_length;
 use crate::database::models::music::{
@@ -18,6 +20,7 @@ use crate::database::models::music::{
     MusicPlaylistPatch, MusicPlaylistRow, PLAYLIST_LIMIT, PLAYLIST_NAME_MAX_CHARS,
     PLAYLIST_TRACKS_MAX,
 };
+use crate::database::models::music_stats::MusicStatKind;
 use crate::database::queries::music as queries;
 
 /// The prefixes a track id may carry.
@@ -168,7 +171,12 @@ pub async fn unlike(state: &AppState, user_id: Uuid, track_id: &str) -> Result<(
     found(queries::unset_like(&mut conn, user_id, track_id).await?)
 }
 
-/// Log a play.
+/// Log a play, and count it as a community listen.
+///
+/// The listen is keyed by account, the same slot `POST /music/stats/listen`
+/// uses for a signed-in caller, so a play the page reports both ways counts
+/// once; see `stats`. A track the catalogue does not list (or cannot be
+/// checked right now) is still logged here, it just adds no listen.
 ///
 /// # Errors
 /// `400` for a bad id or a negative time.
@@ -179,8 +187,30 @@ pub async fn log_play(
 ) -> Result<MusicPlay, ApiError> {
     check_track_id(&input.track_id)?;
     let listened = check_listened(input.listened_seconds)?;
-    let mut conn = state.db.acquire().await?;
-    let row = queries::insert_play(&mut conn, user_id, &input.track_id, listened).await?;
+    let known = stats::is_known_track(state, &input.track_id)
+        .await
+        .unwrap_or_else(|e| {
+            tracing::warn!(error = %e, track = %input.track_id, "music stats: track check failed");
+            false
+        });
+    let mut tx = state.db.begin().await?;
+    let row = queries::insert_play(&mut tx, user_id, &input.track_id, listened).await?;
+    let counted = if known {
+        stats::record_on(
+            &mut tx,
+            MusicStatKind::Listen,
+            &input.track_id,
+            &StatClient::User(user_id),
+            Utc::now(),
+        )
+        .await?
+    } else {
+        false
+    };
+    tx.commit().await?;
+    if counted {
+        stats::note_counted(state);
+    }
     Ok(row.into_play())
 }
 

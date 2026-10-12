@@ -18,6 +18,7 @@
 //! Anonymized (`ON DELETE SET NULL`), because the row is shared content other
 //! people keep reading: `tier_lists.created_by` on official lists,
 //! `tier_list_versions.published_by`, `tier_list_view_events.user_id`,
+//! `music_stat_events.user_id` (a listen still counts for the track),
 //! `translation_permissions.granted_by`, `ui_messages.updated_by`,
 //! `ui_documents.updated_by` and `gamedata_overrides.updated_by`.
 //!

@@ -32,6 +32,7 @@ vi.mock("#/lib/api/music", () => ({ sirenStreamUrl: (cid: string) => `/stream/${
 vi.mock("../impl/library/store", () => ({ logPlay: vi.fn(async () => 1), updatePlay: vi.fn(), toggleLike: vi.fn(() => true) }));
 
 const engine = await import("./engine");
+const presence = await import("./presence");
 
 function siren(cid: string): ITrack {
     return { id: `siren:${cid}`, kind: "siren", key: cid, title: `Song ${cid}`, artists: ["House"], albumId: "siren:a1", albumName: "Album", coverUrl: null, instrumental: false, hasLyrics: false, trackOrder: 1 };
@@ -214,6 +215,23 @@ describe("player engine", () => {
         expect(channel.playMusic).not.toHaveBeenCalled();
         hook.unmount();
         vi.unstubAllGlobals();
+    });
+
+    it("leaving the music page keeps playing, and the site sees the music until the queue is closed", () => {
+        const wrapper = ({ children }: { children: React.ReactNode }) => createElement(I18nProvider, { locale: "en", available: [{ code: "en", nativeName: "English" }], messages: {}, children });
+        const page = renderHook(() => engine.useMusicPlayerLifetime(), { wrapper });
+        const host = renderHook(() => engine.useMusicSessionLifetime(), { wrapper });
+        const live = renderHook(() => presence.useMusicLive());
+        expect(live.result.current).toBe(false);
+        engine.playQueue([A, B, C], 0, { kind: "none" });
+        live.rerender();
+        expect(live.result.current).toBe(true);
+        page.unmount();
+        expect(engine.playerStore.state.status).not.toBe("paused");
+        engine.clearQueue();
+        live.rerender();
+        expect(live.result.current).toBe(false);
+        host.unmount();
     });
 
     it("the keyboard toggles shuffle and opens the shortcuts with ? even on an empty queue", () => {

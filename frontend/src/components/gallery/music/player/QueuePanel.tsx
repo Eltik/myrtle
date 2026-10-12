@@ -1,4 +1,4 @@
-import { Disc3Icon, GripVerticalIcon, ListPlusIcon, Repeat1Icon, RepeatIcon, Settings2Icon, ShuffleIcon, SkipBackIcon, Trash2Icon, XIcon } from "lucide-react";
+import { Disc3Icon, GripVerticalIcon, ListPlusIcon, Settings2Icon, SkipBackIcon, Trash2Icon, XIcon } from "lucide-react";
 import type React from "react";
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Button } from "#/components/ui/button";
@@ -12,8 +12,8 @@ import { cn } from "#/lib/utils";
 import { sizedCover } from "../impl/cover";
 import { createPlaylist } from "../impl/library/store";
 import type { ITrack } from "../impl/model";
-import { clearQueue, cycleRepeat, openPanel, playAt, playerStore, previous, removeFromQueue, reorderQueue, setSettingsOpen, toggleShuffle, usePlayer } from "./engine";
-import { IconButton, type PlayerT, subLine, useKicker } from "./parts";
+import { clearQueue, openPanel, playAt, playerStore, previous, removeFromQueue, reorderQueue, setSettingsOpen, usePlayer } from "./engine";
+import { ClippedText, DownloadCurrent, IconButton, type PlayerT, RepeatButton, ShuffleButton, subLine, useKicker } from "./parts";
 import { moveItem } from "./queue";
 
 /** Near the list's top or bottom edge a drag scrolls the list, this many pixels from the edge, this far per move. */
@@ -58,25 +58,21 @@ export function QueuePanel(): React.ReactElement {
 }
 
 /**
- * The controls the bar drops under 640 px (shuffle, previous, repeat,
- * settings), so a phone still reaches them: the bar's track area opens this
- * sheet. Hidden from 640 px up, where the bar shows them itself.
+ * The controls the bar drops under 768 px (shuffle, repeat, download,
+ * settings, and previous under 640), so a phone or a narrow window still
+ * reaches them: the bar's track area opens this sheet. Hidden from 768 px up,
+ * where the bar shows them itself.
  */
 function PhoneTransport({ t }: { t: PlayerT }): React.ReactElement {
-    const shuffle = usePlayer((s) => s.shuffle);
-    const repeat = usePlayer((s) => s.repeat);
-    const repeatLabel = repeat === "one" ? t("music.player.repeat.one") : repeat === "all" ? t("music.player.repeat.all") : t("music.player.repeat.off");
+    const current = usePlayer((s) => s.current);
     return (
-        <div className="-ml-2.5 flex items-center gap-1 sm:hidden">
-            <IconButton label={shuffle ? t("music.player.shuffle.on") : t("music.player.shuffle.off")} onClick={toggleShuffle} pressed={shuffle} tooltip={false}>
-                <ShuffleIcon aria-hidden="true" />
-            </IconButton>
+        <div className="-ml-2.5 flex items-center gap-1 md:hidden">
+            <ShuffleButton t={t} tooltip={false} />
             <IconButton label={t("music.player.previous")} onClick={previous} tooltip={false}>
                 <SkipBackIcon aria-hidden="true" />
             </IconButton>
-            <IconButton label={repeatLabel} onClick={cycleRepeat} pressed={repeat !== "off"} tooltip={false}>
-                {repeat === "one" ? <Repeat1Icon aria-hidden="true" /> : <RepeatIcon aria-hidden="true" />}
-            </IconButton>
+            <RepeatButton t={t} tooltip={false} />
+            {current ? <DownloadCurrent t={t} track={current} tooltip={false} /> : null}
             <IconButton label={t("music.player.settings")} onClick={() => setSettingsOpen(true)} tooltip={false}>
                 <Settings2Icon aria-hidden="true" />
             </IconButton>
@@ -174,7 +170,7 @@ function QueueList({ t }: { t: PlayerT }): React.ReactElement {
     latest.current = { down: startDrag, move: moveDrag, up: endDrag, key: onRowKey };
 
     return (
-        <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4" ref={scrollRef}>
+        <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-[max(1rem,env(safe-area-inset-bottom))]" ref={scrollRef}>
             <ol className="flex flex-col" ref={listRef}>
                 {shown.map(({ tr, i }, at) => (
                     <QueueRow current={i === index} houseArtist={houseArtist} index={i} key={`${tr.id}-${i}`} lifted={drag?.from === i} onGripDown={handlers.down} onGripMove={handlers.move} onGripUp={handlers.up} onKey={handlers.key} position={at} t={t} total={queue.length} track={tr} />
@@ -250,8 +246,8 @@ const QueueRow = memo(function QueueRow({
                     {track.coverUrl ? <img referrerPolicy="no-referrer" alt="" className="size-full object-cover" decoding="async" loading="lazy" src={sizedCover(track.coverUrl, 40)} /> : <Disc3Icon aria-hidden="true" className="absolute inset-0 m-auto size-5 text-muted-foreground" />}
                 </span>
                 <span className="flex min-w-0 flex-col leading-tight">
-                    <span className={cn("truncate text-[13px]", current ? "font-semibold text-primary" : "text-foreground")}>{title}</span>
-                    <span className="truncate text-[11.5px] text-muted-foreground">{subLine(track, houseArtist)}</span>
+                    <ClippedText className={cn("text-[13px]", current ? "font-semibold text-primary" : "text-foreground")} text={title} />
+                    <ClippedText className="text-[11.5px] text-muted-foreground" text={subLine(track, houseArtist)} />
                 </span>
             </button>
             <button

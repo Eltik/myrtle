@@ -3,8 +3,10 @@ import { createRootRouteWithContext, HeadContent, Outlet, redirect, Scripts, use
 import { useSelector } from "@tanstack/react-store";
 import { lazy, Suspense, useEffect, useRef } from "react";
 import { ReleaseNoteDialog } from "#/components/changelog/ReleaseNoteDialog";
+import { useMusicLive } from "#/components/gallery/music/player/presence";
 import { LazyAuthDialog } from "#/components/header/impl/LazyAuthDialog";
 import { AnchoredToastProvider, ToastProvider } from "#/components/ui/toast";
+import { useHydrated } from "#/hooks/use-hydrated";
 import { isSignInPrompt } from "#/lib/auth/search";
 import { getSessionFn } from "#/lib/auth/server";
 import { authActions, authStore } from "#/lib/auth/store";
@@ -29,6 +31,8 @@ interface IMyRouterContext {
 interface IRootContext {
     i18n: IBootstrap;
 }
+
+const MusicHost = lazy(() => import("#/components/gallery/music/player/MusicPlayerDock").then((m) => ({ default: m.MusicHost })));
 
 const TanStackDevtoolsRoot = import.meta.env.DEV ? lazy(() => import("../integrations/tanstack-query/devtools")) : null;
 
@@ -92,7 +96,32 @@ function RootComponent() {
             <Outlet />
             <GlobalAuthDialog />
             <ReleaseNoteDialog />
+            <SiteMusic />
         </>
+    );
+}
+
+/**
+ * The music player, one instance for the whole site. It mounts on the music
+ * page, and on every other route once the player has sounded in this page
+ * load (`presence.ts` has no engine in it), so a visitor who never plays music
+ * never downloads the player. The dynchar harness is scored pixel for pixel,
+ * so it never gets the bar.
+ */
+function SiteMusic() {
+    const live = useMusicLive();
+    const hydrated = useHydrated();
+    const pathname = useRouterState({ select: (s) => s.location.pathname });
+    const onMusicPage = pathname.startsWith("/gallery/music");
+    // Client only: the player's store is the browser's (the music page fills
+    // it from localStorage), and `@tanstack/react-store` hands hydration the
+    // live store as its server snapshot, so a server-rendered dock mismatched
+    // the HTML. The server never had a track, so it drew no bar to keep.
+    if (!hydrated || (!live && !onMusicPage) || pathname.startsWith("/dyntest")) return null;
+    return (
+        <Suspense fallback={null}>
+            <MusicHost offPage={!onMusicPage} />
+        </Suspense>
     );
 }
 

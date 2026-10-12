@@ -1,4 +1,4 @@
-import { ChartColumnIcon, DiscIcon, Gamepad2Icon, HeartIcon, HistoryIcon, LibraryIcon, ListMusicIcon, MicVocalIcon, PlusIcon } from "lucide-react";
+import { ChartColumnIcon, DiscIcon, Gamepad2Icon, HeartIcon, HistoryIcon, LibraryIcon, ListMusicIcon, MicVocalIcon, PlusIcon, TrophyIcon } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
@@ -23,6 +23,7 @@ const ICONS: Record<LibraryView, React.ComponentType<{ className?: string; "aria
     liked: HeartIcon,
     history: HistoryIcon,
     stats: ChartColumnIcon,
+    charts: TrophyIcon,
     game: Gamepad2Icon,
 };
 

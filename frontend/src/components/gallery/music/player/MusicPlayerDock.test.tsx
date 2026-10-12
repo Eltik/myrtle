@@ -14,7 +14,8 @@ vi.mock("#/lib/story/audio", () => ({
 }));
 vi.mock("#/components/operators/detail/impl/assets", () => ({ asset: (path: string) => `ASSET${path}` }));
 vi.mock("#/lib/api/gamedata", () => ({ isGamedataServer: () => false }));
-vi.mock("#/lib/api/music", () => ({ sirenStreamUrl: (cid: string) => `/stream/${cid}`, sirenLyricsUrl: (cid: string) => `/lyrics/${cid}` }));
+vi.mock("#/lib/api/music", () => ({ sirenStreamUrl: (cid: string) => `/stream/${cid}`, sirenLyricsUrl: (cid: string) => `/lyrics/${cid}`, reportMusicStat: vi.fn(), recordMusicDownloadFn: vi.fn() }));
+vi.mock("#/hooks/use-auth", () => ({ useAuth: () => ({ user: null }) }));
 vi.mock("../impl/library/store", () => ({ logPlay: vi.fn(async () => 1), updatePlay: vi.fn(), toggleLike: vi.fn(() => true), useIsLiked: () => false, createPlaylist: vi.fn(async () => null) }));
 
 const engine = await import("./engine");

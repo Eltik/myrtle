@@ -1,4 +1,5 @@
-import { Disc3Icon, HeartIcon, ListMusicIcon, MicVocalIcon, PauseIcon, PlayIcon, Repeat1Icon, RepeatIcon, Settings2Icon, ShuffleIcon, SkipBackIcon, SkipForwardIcon, SquareIcon, Volume1Icon, Volume2Icon, VolumeXIcon, XIcon } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Disc3Icon, HeartIcon, ListMusicIcon, MicVocalIcon, PauseIcon, PlayIcon, Settings2Icon, SkipBackIcon, SkipForwardIcon, SquareIcon, Volume1Icon, Volume2Icon, VolumeXIcon, XIcon } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { Slider, SliderPrimitive } from "#/components/ui/slider";
@@ -9,14 +10,20 @@ import { sliderValue } from "#/lib/story/settings";
 import { cn } from "#/lib/utils";
 import { sizedCover } from "../impl/cover";
 import { toggleLike, useIsLiked } from "../impl/library/store";
-import { clearQueue, cycleRepeat, cycleVolume, next, openPanel, previous, seek, setSettingsOpen, setVolume, stop, togglePanel, togglePlay, toggleShuffle, usePlayer, usePlayhead } from "./engine";
-import { IconButton, type PlayerT, subLine, useKicker } from "./parts";
+import { clearQueue, cycleVolume, next, openPanel, previous, seek, setSettingsOpen, setVolume, stop, togglePanel, togglePlay, usePlayer, usePlayhead } from "./engine";
+import { ClippedText, DownloadCurrent, IconButton, type PlayerT, RepeatButton, ShuffleButton, subLine, useKicker } from "./parts";
 
 /**
- * THE BAR at the foot of the music page: a seek line across its top edge,
- * the track on the left, the transport in the middle, and levels, panels
- * and settings on the right. On a phone it keeps the cover, the title, play
- * and next; the title opens the queue.
+ * THE BAR at the foot of the music page, and of every page once music has
+ * played: a seek line across its top edge, the track on the left, the
+ * transport in the middle, and levels, panels and settings on the right. On a
+ * phone it keeps the cover, the title, play and next; the title opens the
+ * queue. Between 640 and 768 px it drops shuffle, stop, repeat, download and
+ * settings as well (the queue sheet carries them), and until 1280 px the
+ * transport sits beside the levels instead of centred: a centred transport
+ * with two equal side columns ran the right-hand buttons under it (48 px of
+ * overlap at 768, 41 at 1024). Off the music page (`offPage`) the cover links
+ * back to it.
  *
  * It is fixed, not sticky. Its height (plus the home-indicator inset) is
  * reserved as padding at the foot of the body (`data-music-player-bar` in
@@ -25,21 +32,18 @@ import { IconButton, type PlayerT, subLine, useKicker } from "./parts";
  * spacer inside the page reserved it above the footer, and the bar covered
  * the footer's last 63 px at 375 px wide.
  */
-export function PlayerBar(): React.ReactElement | null {
+export function PlayerBar({ offPage = false }: { offPage?: boolean }): React.ReactElement | null {
     const t: PlayerT = useT("gallery");
     const current = usePlayer((s) => s.current);
     const status = usePlayer((s) => s.status);
     const source = usePlayer((s) => s.source);
     const houseArtist = usePlayer((s) => s.houseArtist);
-    const shuffle = usePlayer((s) => s.shuffle);
-    const repeat = usePlayer((s) => s.repeat);
     const panel = usePlayer((s) => s.panel);
     const kicker = useKicker(source);
     if (!current) return null;
 
     const title = current.title;
     const playing = status === "playing" || status === "loading";
-    const repeatLabel = repeat === "one" ? t("music.player.repeat.one") : repeat === "all" ? t("music.player.repeat.all") : t("music.player.repeat.off");
 
     return (
         <>
@@ -50,29 +54,34 @@ export function PlayerBar(): React.ReactElement | null {
                     <span aria-live="polite" className="sr-only">
                         {status === "playing" ? t("music.player.nowPlaying", { title }) : ""}
                     </span>
-                    <div className="mx-auto grid max-w-350 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 px-3 pt-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:px-6">
+                    <div className="mx-auto grid max-w-350 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 px-3 pt-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:px-6 xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
                         <div className="relative flex min-w-0 items-center gap-2.5">
                             <LikeButton t={t} trackId={current.id} />
-                            <div className="relative size-11 shrink-0 overflow-hidden rounded-md border border-border bg-secondary/50">
-                                {current.coverUrl ? <img referrerPolicy="no-referrer" alt="" className="size-full object-cover" decoding="async" key={current.coverUrl} src={sizedCover(current.coverUrl, 44)} /> : <Disc3Icon aria-hidden="true" className="absolute inset-0 m-auto size-6 text-muted-foreground" />}
-                            </div>
+                            {offPage ? (
+                                // Off the music page the cover is the way back to it.
+                                <Link aria-label={t("music.player.openPage")} className="relative z-10 size-11 shrink-0 overflow-hidden rounded-md border border-border bg-secondary/50 outline-none transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring/40" to="/gallery/music">
+                                    <Cover url={current.coverUrl} />
+                                </Link>
+                            ) : (
+                                <div className="relative size-11 shrink-0 overflow-hidden rounded-md border border-border bg-secondary/50">
+                                    <Cover url={current.coverUrl} />
+                                </div>
+                            )}
                             <div className="flex min-w-0 flex-col leading-tight">
                                 <span className="truncate font-mono text-[9.5px] text-primary/80 uppercase tracking-[0.14em]">{kicker}</span>
-                                <span className="truncate font-sans font-semibold text-[13.5px] text-foreground">{title}</span>
-                                <span className="truncate text-[11.5px] text-muted-foreground">{subLine(current, houseArtist)}</span>
+                                <ClippedText className="font-sans font-semibold text-[13.5px] text-foreground" text={title} />
+                                <ClippedText className="text-[11.5px] text-muted-foreground" text={subLine(current, houseArtist)} />
                             </div>
                             {/* On a phone the whole track area opens the queue. */}
                             <button aria-label={t("music.player.openQueue")} className="absolute inset-0 cursor-pointer rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/40 sm:hidden" onClick={() => openPanel("queue")} type="button" />
                         </div>
 
                         <div className="flex items-center justify-center gap-0.5 sm:gap-1">
-                            <IconButton className="max-sm:hidden" label={shuffle ? t("music.player.shuffle.on") : t("music.player.shuffle.off")} onClick={toggleShuffle} pressed={shuffle}>
-                                <ShuffleIcon aria-hidden="true" />
-                            </IconButton>
+                            <ShuffleButton className="max-md:hidden" t={t} />
                             <IconButton className="max-sm:hidden" label={t("music.player.previous")} onClick={previous}>
                                 <SkipBackIcon aria-hidden="true" />
                             </IconButton>
-                            <IconButton className="max-sm:hidden" label={t("music.player.stop")} onClick={stop}>
+                            <IconButton className="max-md:hidden" label={t("music.player.stop")} onClick={stop}>
                                 <SquareIcon aria-hidden="true" className="size-3.5!" />
                             </IconButton>
                             <button
@@ -86,9 +95,7 @@ export function PlayerBar(): React.ReactElement | null {
                             <IconButton label={t("music.player.next")} onClick={next}>
                                 <SkipForwardIcon aria-hidden="true" />
                             </IconButton>
-                            <IconButton className="max-sm:hidden" label={repeatLabel} onClick={cycleRepeat} pressed={repeat !== "off"}>
-                                {repeat === "one" ? <Repeat1Icon aria-hidden="true" /> : <RepeatIcon aria-hidden="true" />}
-                            </IconButton>
+                            <RepeatButton className="max-md:hidden" t={t} />
                         </div>
 
                         <div className="hidden min-w-0 items-center justify-end gap-1 sm:flex">
@@ -98,7 +105,8 @@ export function PlayerBar(): React.ReactElement | null {
                             <IconButton label={t("music.player.queue")} onClick={() => togglePanel("queue")} pressed={panel === "queue"}>
                                 <ListMusicIcon aria-hidden="true" />
                             </IconButton>
-                            <IconButton label={t("music.player.settings")} onClick={() => setSettingsOpen(true)}>
+                            <DownloadCurrent className="max-md:hidden" t={t} track={current} />
+                            <IconButton className="max-md:hidden" label={t("music.player.settings")} onClick={() => setSettingsOpen(true)}>
                                 <Settings2Icon aria-hidden="true" />
                             </IconButton>
                             <Volume t={t} />
@@ -112,6 +120,10 @@ export function PlayerBar(): React.ReactElement | null {
             </div>
         </>
     );
+}
+
+function Cover({ url }: { url: string | null }): React.ReactElement {
+    return url ? <img referrerPolicy="no-referrer" alt="" className="size-full object-cover" decoding="async" key={url} src={sizedCover(url, 44)} /> : <Disc3Icon aria-hidden="true" className="absolute inset-0 m-auto size-6 text-muted-foreground" />;
 }
 
 function LikeButton({ trackId, t }: { trackId: string; t: PlayerT }): React.ReactElement {
@@ -134,7 +146,7 @@ function Volume({ t }: { t: PlayerT }): React.ReactElement {
             <IconButton label={t("music.player.cycleVolume", { percent: f.percent(level) })} onClick={cycleVolume}>
                 <Icon aria-hidden="true" />
             </IconButton>
-            <div className="w-20 max-md:hidden">
+            <div className="w-20 max-lg:hidden">
                 <Slider className="[&_[data-slot=slider-control]]:min-w-0" max={1} min={0} onValueChange={(v) => setVolume(sliderValue(v, level))} step={0.01} value={[level]}>
                     <SliderPrimitive.Label className="sr-only">{t("music.player.volume")}</SliderPrimitive.Label>
                 </Slider>

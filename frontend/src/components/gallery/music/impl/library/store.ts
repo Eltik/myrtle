@@ -4,7 +4,7 @@ import { Store } from "@tanstack/store";
 import { useEffect } from "react";
 import { useAuth } from "#/hooks/use-auth";
 import { readStoredValue, writeStoredValue } from "#/hooks/use-local-storage-state";
-import { addPlaylistTracksFn, createPlaylistFn, deletePlaylistFn, getMusicLibraryFn, likeTrackFn, logPlayFn, musicLibraryQueryOptions, patchPlaylistFn, removePlaylistTrackFn, updatePlayFn } from "#/lib/api/music";
+import { addPlaylistTracksFn, createPlaylistFn, deletePlaylistFn, getMusicLibraryFn, likeTrackFn, logPlayFn, musicLibraryQueryOptions, patchPlaylistFn, removePlaylistTrackFn, reportMusicStat, updatePlayFn } from "#/lib/api/music";
 import type { MusicLibrary } from "#/types/generated/MusicLibrary";
 import type { MusicPlay } from "#/types/generated/MusicPlay";
 import type { MusicPlaylist } from "#/types/generated/MusicPlaylist";
@@ -175,6 +175,12 @@ export function toggleLike(trackId: string): boolean {
 /**
  * Log a play once the listener has heard enough of it; the returned id names
  * it for `updatePlay`. Local plays get a negative id.
+ *
+ * The same moment counts the community listen. A server play already does
+ * (`POST /music/history` writes the account's listen), so only a play kept
+ * in this browser reports one, from the browser, counted by address. A play
+ * goes one way or the other, never both, so no listen counts twice; a server
+ * log that fails reports nothing, since it may have landed.
  */
 export async function logPlay(trackId: string, listenedSeconds: number): Promise<number> {
     const s = libraryStore.state;
@@ -188,6 +194,7 @@ export async function logPlay(trackId: string, listenedSeconds: number): Promise
             return Number.NaN;
         }
     }
+    void reportMusicStat("listen", trackId);
     const play: MusicPlay = { id: localPlayId--, trackId, listenedSeconds, playedAt: nowIso() };
     libraryStore.setState((st) => {
         const history = [play, ...st.history].slice(0, LOCAL_HISTORY_MAX);

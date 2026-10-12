@@ -58,6 +58,10 @@ pub const TABLES: &[&str] = &[
     "music_history",
     "music_playlists",
     "music_playlist_tracks",
+    // `music_stat_dedupe` (v037) is not here: an UNLOGGED day of dedupe
+    // slots, worthless once restored.
+    "music_track_stats",
+    "music_stat_events",
     "locales",
     "ui_message_keys",
     "ui_messages",
@@ -92,6 +96,7 @@ pub const SERIAL_COLUMNS: &[(&str, &str)] = &[
     ("ui_message_audit_log", "id"),
     ("audit_log", "id"),
     ("music_history", "id"),
+    ("music_stat_events", "id"),
 ];
 
 /// Every (child, parent) foreign-key edge between two different public

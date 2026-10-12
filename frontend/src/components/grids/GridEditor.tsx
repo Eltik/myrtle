@@ -362,7 +362,7 @@ function MobileSaveBar({ actionsRef, dirty, titleValid, saving, onSave, onDiscar
     }, [actionsRef]);
     if (!dirty || rowVisible) return null;
     return (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-border border-t bg-background/92 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] backdrop-blur-md lg:hidden">
+        <div data-claims-bottom="" className="fixed inset-x-0 bottom-0 z-40 border-border border-t bg-background/92 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] backdrop-blur-md lg:hidden">
             <div className="mx-auto flex max-w-[1180px] items-center gap-2">
                 <span className="min-w-0 flex-1 truncate font-bold font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{t("edit.unsaved")}</span>
                 <DiscardButton onDiscard={onDiscard} disabled={saving} />

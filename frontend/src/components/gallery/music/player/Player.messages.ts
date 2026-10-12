@@ -35,6 +35,7 @@ export const messages = {
     "music.player.seekValue": { text: "{elapsed} of {total}", description: "Spoken value of the position slider. Both are times like 1:05." },
     "music.player.loopPoint": { text: "The loop starts here", description: "Tooltip on the tick in the position bar where an in-game track starts looping." },
     "music.player.close": { text: "Stop and close", description: "Round button at the right end of the player bar that stops playback and empties the queue." },
+    "music.player.openPage": { text: "Open the music page", description: "Accessible name of the cover in the player bar on pages other than the music page, which goes to the music page." },
     "music.player.openQueue": { text: "Open the queue", description: "Accessible name of the track title area on phones, which opens the queue panel." },
     "music.player.error.skip": { text: 'Couldn\'t play "{title}". Skipping.', description: "Toast when a track fails to load and the player moves on. {title} is the track title." },
     "music.player.error.stopped": {
@@ -114,6 +115,9 @@ export const messages = {
     "music.shortcut.action": { text: "Action", description: "Column heading in the keyboard shortcuts table." },
     "music.shortcut.keys": { text: "Keys", description: "Column heading in the keyboard shortcuts table." },
     "music.shortcut.or": { text: "or", description: "Word between two alternative keys in the shortcuts table, as in Space or K." },
+    "music.player.download": { text: "Download this track", description: "Player bar button that saves the playing track's audio file." },
+    "music.player.downloading": { text: "Downloading", description: "Name of that button, disabled, while the track downloads and its size is unknown." },
+    "music.player.downloadingPercent": { text: "Downloading, {percent}", description: "Name of that button, disabled, while the track downloads. {percent} is a formatted percentage." },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

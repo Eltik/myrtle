@@ -6784,6 +6784,374 @@
         }
       }
     },
+    "/api/music/stats": {
+      "get": {
+        "tags": [
+          "music"
+        ],
+        "summary": "All-time listens and downloads for every track that has any, keyed by\ntrack id: one call covers the whole catalogue.",
+        "operationId": "music_stats",
+        "responses": {
+          "200": {
+            "description": "Every counted track. Cached for a minute.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MusicStatsCatalog"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/music/stats/download": {
+      "post": {
+        "tags": [
+          "music"
+        ],
+        "summary": "Count a download. As `POST /music/stats/listen`, with a 24 hour window.",
+        "operationId": "music_stats_download",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MusicStatInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Whether this call counted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MusicStatRecorded"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "description": "The catalogue lists no such track.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {}
+        ]
+      }
+    },
+    "/api/music/stats/listen": {
+      "post": {
+        "tags": [
+          "music"
+        ],
+        "summary": "Count a listen. Open to everyone: a signed-in caller counts by account,\nanyone else by an HMAC of their address (never stored raw). The same\ncaller counts at most once per track every 30 minutes, so a page may call\nthis on every play that passes its listen rule. A signed-in play logged\nwith `POST /music/history` already counts here; calling both for one\nplay still counts once.",
+        "operationId": "music_stats_listen",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MusicStatInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Whether this call counted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MusicStatRecorded"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "description": "The catalogue lists no such track.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {}
+        ]
+      }
+    },
+    "/api/music/stats/top-listeners": {
+      "get": {
+        "tags": [
+          "music"
+        ],
+        "summary": "Signed-in listeners ranked by counted listens or by time heard over a\nwindow. Only public profiles are ranked, as on every user leaderboard;\nranks close over the hidden ones.",
+        "operationId": "music_stats_top_listeners",
+        "parameters": [
+          {
+            "name": "window",
+            "in": "query",
+            "description": "`week` (default, the last 7 days), `month` (the last 30) or `all`.",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/MusicStatWindow"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "`listens` (default) or `time` (seconds heard).",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/MusicListenerSort"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Page size. Defaults to 20, capped at 100.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Rows to skip. Defaults to 0.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of listeners and how many there are.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MusicListenerPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/music/stats/top-tracks": {
+      "get": {
+        "tags": [
+          "music"
+        ],
+        "summary": "The most listened tracks over a window, everyone's listens counted.",
+        "operationId": "music_stats_top_tracks",
+        "parameters": [
+          {
+            "name": "window",
+            "in": "query",
+            "description": "`week` (default, the last 7 days), `month` (the last 30) or `all`.",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/MusicStatWindow"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "How many tracks. Defaults to 50, capped at 100.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tracks by listens, most first. Ties share a rank.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MusicTopTracks"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/music/stats/tracks/{track_id}/listeners": {
+      "get": {
+        "tags": [
+          "music"
+        ],
+        "summary": "One track's signed-in listeners, ranked as `/music/stats/top-listeners`.",
+        "operationId": "music_stats_track_listeners",
+        "parameters": [
+          {
+            "name": "track_id",
+            "in": "path",
+            "description": "`siren:<cid>` or `game:<track id>`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "window",
+            "in": "query",
+            "description": "`week` (default, the last 7 days), `month` (the last 30) or `all`.",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/MusicStatWindow"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "`listens` (default) or `time` (seconds heard).",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/MusicListenerSort"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Page size. Defaults to 20, capped at 100.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Rows to skip. Defaults to 0.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of the track's listeners and how many there are.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MusicListenerPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
     "/api/operator-notes": {
       "get": {
         "tags": [
@@ -22914,6 +23282,109 @@
           }
         }
       },
+      "MusicListenerEntry": {
+        "type": "object",
+        "description": "One ranked listener. Identity fields mirror the score and inventory\nleaderboards' rows.",
+        "required": [
+          "rank",
+          "uid",
+          "server",
+          "listens",
+          "listenedSeconds"
+        ],
+        "properties": {
+          "avatarId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "level": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "listenedSeconds": {
+            "type": "number",
+            "format": "double",
+            "description": "Seconds heard inside the window, summed from the account's plays."
+          },
+          "listens": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Counted listens inside the window."
+          },
+          "nickNumber": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nickname": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rank": {
+            "type": "integer",
+            "format": "int64",
+            "description": "`rank()` over the sort: ties share a rank."
+          },
+          "server": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        }
+      },
+      "MusicListenerPage": {
+        "type": "object",
+        "description": "`GET /music/stats/top-listeners`, and one track's listeners from\n`GET /music/stats/tracks/{track_id}/listeners` (`trackId` set).",
+        "required": [
+          "window",
+          "sort",
+          "entries",
+          "total"
+        ],
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MusicListenerEntry"
+            }
+          },
+          "sort": {
+            "$ref": "#/components/schemas/MusicListenerSort"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Visible listeners in the window: the population the page is cut from."
+          },
+          "trackId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The track ranked over, absent for the site-wide ranking."
+          },
+          "window": {
+            "$ref": "#/components/schemas/MusicStatWindow"
+          }
+        }
+      },
+      "MusicListenerSort": {
+        "type": "string",
+        "description": "What a listener ranking orders by: counted listens, or seconds heard as\nthe account's play history records them. Each row carries both.",
+        "enum": [
+          "listens",
+          "time"
+        ]
+      },
       "MusicPlace": {
         "type": "object",
         "description": "One place a track plays.",
@@ -23186,6 +23657,103 @@
           "encounter"
         ]
       },
+      "MusicStatInput": {
+        "type": "object",
+        "description": "`POST /music/stats/listen` and `POST /music/stats/download`.",
+        "required": [
+          "trackId"
+        ],
+        "properties": {
+          "trackId": {
+            "type": "string",
+            "description": "`siren:<cid>` or `game:<track id>`, a track the catalogue lists."
+          }
+        }
+      },
+      "MusicStatRecorded": {
+        "type": "object",
+        "description": "Whether an ingest call counted.",
+        "required": [
+          "counted"
+        ],
+        "properties": {
+          "counted": {
+            "type": "boolean",
+            "description": "False when the same caller already counted for this track inside the\nwindow (30 minutes for a listen, 24 hours for a download). A client\nmay call on every play or download; the server decides."
+          }
+        }
+      },
+      "MusicStatWindow": {
+        "type": "string",
+        "description": "The span a ranking covers, ending now. `week` is the last 7 days and\n`month` the last 30, both rolling; `all` is every event kept.",
+        "enum": [
+          "week",
+          "month",
+          "all"
+        ]
+      },
+      "MusicStatsCatalog": {
+        "type": "object",
+        "description": "`GET /music/stats`: every track anyone has listened to or downloaded.",
+        "required": [
+          "tracks"
+        ],
+        "properties": {
+          "tracks": {
+            "type": "object",
+            "description": "Track id to its counts. A track absent here has none of either.",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/MusicTrackCounts"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "MusicTopTrack": {
+        "type": "object",
+        "description": "One row of the top tracks.",
+        "required": [
+          "rank",
+          "trackId",
+          "listens"
+        ],
+        "properties": {
+          "listens": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Counted listens inside the window, signed in or not."
+          },
+          "rank": {
+            "type": "integer",
+            "format": "int64",
+            "description": "`rank()` over listens: ties share a rank."
+          },
+          "trackId": {
+            "type": "string"
+          }
+        }
+      },
+      "MusicTopTracks": {
+        "type": "object",
+        "description": "`GET /music/stats/top-tracks`.",
+        "required": [
+          "window",
+          "entries"
+        ],
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MusicTopTrack"
+            }
+          },
+          "window": {
+            "$ref": "#/components/schemas/MusicStatWindow"
+          }
+        }
+      },
       "MusicTotals": {
         "type": "object",
         "required": [
@@ -23294,6 +23862,24 @@
               "null"
             ],
             "description": "The title the game gives it: a `Musics` row's `Name`, or the base\njukebox's `BgmName` where no `Musics` row names it. Absent for most\ntracks: the game titles only the ones a player can pick or collect."
+          }
+        }
+      },
+      "MusicTrackCounts": {
+        "type": "object",
+        "description": "One track's all-time community counts.",
+        "required": [
+          "listens",
+          "downloads"
+        ],
+        "properties": {
+          "downloads": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "listens": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
