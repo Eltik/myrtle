@@ -2,6 +2,7 @@ import { Check, ChevronDown, FilterX, Info, RotateCcw, Search, X } from "lucide-
 import * as React from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { compactForSearch } from "#/lib/search/fuzzy";
@@ -145,10 +146,13 @@ export function RosterPicker({ allOperators, visibleOperators, selected, isExpli
                         {t("randomizer.roster.none")}
                     </Button>
                     {isExplicit && (
-                        <Button onClick={onReset} size="xs" variant="ghost" title={t("randomizer.roster.reset.title")}>
-                            <RotateCcw aria-hidden="true" className="size-3" />
-                            {t("randomizer.roster.reset")}
-                        </Button>
+                        <Tooltip>
+                            <TooltipTrigger render={<Button onClick={onReset} size="xs" variant="ghost" />}>
+                                <RotateCcw aria-hidden="true" className="size-3" />
+                                {t("randomizer.roster.reset")}
+                            </TooltipTrigger>
+                            <TooltipPopup>{t("randomizer.roster.reset.title")}</TooltipPopup>
+                        </Tooltip>
                     )}
                     {hasProfile && rosterIndex.owned.size > 0 && (
                         <Button onClick={onSyncProfile} size="xs" variant="outline">
@@ -261,31 +265,37 @@ function EmptyRoster({ query, hasActiveFilters, onReset, isExplicit }: { query: 
 
 function RosterChip({ op, selected, onToggle }: { op: IRandomizerOperator; selected: boolean; onToggle: () => void }) {
     return (
-        <button
-            type="button"
-            onClick={onToggle}
-            aria-pressed={selected}
-            className={cn("group relative aspect-square overflow-hidden rounded-md border bg-secondary/40 outline-none transition-all duration-150", "focus-visible:ring-2 focus-visible:ring-ring", selected ? "border-primary/80 shadow-primary/20 shadow-sm" : "border-border/50 opacity-60 hover:opacity-95")}
-            title={op.name}
-        >
-            <img
-                src={getAvatarById(op.id)}
-                alt=""
-                aria-hidden="true"
-                loading="lazy"
-                decoding="async"
-                className="absolute inset-0 h-full w-full object-cover"
-                onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                }}
-            />
-            <div className="absolute inset-x-0 bottom-0 h-1" style={{ background: `var(--rarity-${op.rarity})` }} />
-            {selected && (
-                <div className="absolute top-0.5 right-0.5 inline-flex size-4 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                    <Check className="size-2.5" />
-                </div>
-            )}
-            <span className="sr-only">{op.name}</span>
-        </button>
+        <Tooltip>
+            <TooltipTrigger
+                render={
+                    <button
+                        type="button"
+                        onClick={onToggle}
+                        aria-pressed={selected}
+                        className={cn("group relative aspect-square overflow-hidden rounded-md border bg-secondary/40 outline-none transition-all duration-150", "focus-visible:ring-2 focus-visible:ring-ring", selected ? "border-primary/80 shadow-primary/20 shadow-sm" : "border-border/50 opacity-60 hover:opacity-95")}
+                    />
+                }
+            >
+                <img
+                    src={getAvatarById(op.id)}
+                    alt=""
+                    aria-hidden="true"
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute inset-0 h-full w-full object-cover"
+                    onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                    }}
+                />
+                <div className="absolute inset-x-0 bottom-0 h-1" style={{ background: `var(--rarity-${op.rarity})` }} />
+                {selected && (
+                    <div className="absolute top-0.5 right-0.5 inline-flex size-4 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                        <Check className="size-2.5" />
+                    </div>
+                )}
+                <span className="sr-only">{op.name}</span>
+            </TooltipTrigger>
+            <TooltipPopup>{op.name}</TooltipPopup>
+        </Tooltip>
     );
 }

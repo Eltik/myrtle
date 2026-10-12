@@ -10,6 +10,7 @@ import { Kbd } from "#/components/ui/kbd";
 import { Label } from "#/components/ui/label";
 import { Menu, MenuItem, MenuPopup, MenuSeparator, MenuTrigger } from "#/components/ui/menu";
 import { Textarea } from "#/components/ui/textarea";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useAuth } from "#/hooks/use-auth";
 import { useIsMac } from "#/hooks/use-is-mac";
 import { clearTranslationFn, type ITranslationFieldError, type IUpdateTranslationInput, translationEntryAuditQueryOptions, updateTranslationFn } from "#/lib/api/admin";
@@ -234,18 +235,23 @@ export function Editor({ entry, locale, canEdit, position, nextKey, skipKey, onG
                                     );
                                 }
                                 return (
-                                    <button
-                                        key={name}
-                                        type="button"
-                                        title={t("translations.editor.insertArg", { placeholder: braced })}
-                                        aria-label={t("translations.editor.insertArg", { placeholder: braced })}
-                                        // Keep the caret (and any selection) in the box through the click.
-                                        onMouseDown={(e) => e.preventDefault()}
-                                        onClick={() => insertAtCaret(braced)}
-                                        className={cn("cursor-pointer rounded-md px-2 py-0.5 font-mono text-[12px] outline-none transition-[filter] hover:brightness-125 focus-visible:ring-2 focus-visible:ring-ring", tone)}
-                                    >
-                                        {braced}
-                                    </button>
+                                    <Tooltip key={name}>
+                                        <TooltipTrigger
+                                            render={
+                                                <button
+                                                    type="button"
+                                                    aria-label={t("translations.editor.insertArg", { placeholder: braced })}
+                                                    // Keep the caret (and any selection) in the box through the click.
+                                                    onMouseDown={(e) => e.preventDefault()}
+                                                    onClick={() => insertAtCaret(braced)}
+                                                    className={cn("cursor-pointer rounded-md px-2 py-0.5 font-mono text-[12px] outline-none transition-[filter] hover:brightness-125 focus-visible:ring-2 focus-visible:ring-ring", tone)}
+                                                />
+                                            }
+                                        >
+                                            {braced}
+                                        </TooltipTrigger>
+                                        <TooltipPopup>{t("translations.editor.insertArg", { placeholder: braced })}</TooltipPopup>
+                                    </Tooltip>
                                 );
                             })}
                         </div>

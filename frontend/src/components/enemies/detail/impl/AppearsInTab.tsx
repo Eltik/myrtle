@@ -3,6 +3,7 @@ import { ChevronDown } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Skeleton } from "#/components/ui/skeleton";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { enemyAppearsInQueryOptions, type IEnemyStageRef } from "#/lib/api/enemies";
 import { zonesQueryOptions } from "#/lib/api/stages";
 import { type TypedRichT, useGamedataServer, useRichT, useT } from "#/lib/i18n";
@@ -231,10 +232,13 @@ function StageChip({ stage }: { stage: IEnemyStageRef }) {
     // stage's harder variant, so they stay with the game-data vocabulary.
     const title = [stage.stageName, stage.isHard ? "(Adverse)" : null, stage.count > 0 ? t("appears.chip.spawns", { count: stage.count }) : t("appears.chip.conditional")].filter(Boolean).join(" · ");
     return (
-        <span title={title} className="inline-flex items-center gap-1.5 rounded-md border bg-card px-2 py-1 font-medium font-mono text-[11.5px] text-foreground leading-none" style={{ borderColor: stage.isHard ? "color-mix(in oklch, var(--destructive) 45%, var(--border))" : "var(--border)" }}>
-            <span className="tabular-nums">{stage.code || stage.stageId}</span>
-            {stage.isHard && <span className="rounded-[3px] bg-[color-mix(in_oklch,var(--destructive)_18%,transparent)] px-1 py-px font-mono text-[8.5px] text-destructive uppercase leading-none tracking-[0.08em]">Adv</span>}
-            {stage.count > 0 && <span className="text-muted-foreground tabular-nums">×{stage.count}</span>}
-        </span>
+        <Tooltip>
+            <TooltipTrigger render={<span className="inline-flex items-center gap-1.5 rounded-md border bg-card px-2 py-1 font-medium font-mono text-[11.5px] text-foreground leading-none" style={{ borderColor: stage.isHard ? "color-mix(in oklch, var(--destructive) 45%, var(--border))" : "var(--border)" }} />}>
+                <span className="tabular-nums">{stage.code || stage.stageId}</span>
+                {stage.isHard && <span className="rounded-[3px] bg-[color-mix(in_oklch,var(--destructive)_18%,transparent)] px-1 py-px font-mono text-[8.5px] text-destructive uppercase leading-none tracking-[0.08em]">Adv</span>}
+                {stage.count > 0 && <span className="text-muted-foreground tabular-nums">×{stage.count}</span>}
+            </TooltipTrigger>
+            <TooltipPopup>{title}</TooltipPopup>
+        </Tooltip>
     );
 }

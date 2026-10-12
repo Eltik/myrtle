@@ -26,7 +26,7 @@ export function ClassPicker({ selected, onChange, labels }: { selected: string[]
                         <Tooltip key={`tooltip-${cls}`}>
                             <TooltipTrigger
                                 render={
-                                    <button key={cls} type="button" title={name} className={cn(styles.classBtn, on && styles.on)} onClick={() => onChange(toggle(selected, cls))} aria-pressed={on}>
+                                    <button key={cls} type="button" aria-label={name} className={cn(styles.classBtn, on && styles.on)} onClick={() => onChange(toggle(selected, cls))} aria-pressed={on}>
                                         <ClassIcon profession={cls} size={20} />
                                     </button>
                                 }

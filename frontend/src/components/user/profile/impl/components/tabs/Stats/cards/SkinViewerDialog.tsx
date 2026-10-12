@@ -5,6 +5,7 @@ import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useSta
 import { DetailRow, type ISkinPrice, SkinDetailContent } from "#/components/skins/SkinDetailDialog";
 import { Dialog, DialogContent, DialogTitle } from "#/components/ui/dialog";
 import { ScrollArea } from "#/components/ui/scroll-area";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { type ISkinIndexEntry, skinPopularityQueryOptions } from "#/lib/api/skins";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -398,18 +399,22 @@ const PopularityChip = memo(function PopularityChip({ info, color }: { info: ISk
     const pct = info.pct ?? 0;
     const label = f.percent(pct);
     return (
-        <span className="flex items-center gap-0.5 rounded-full bg-background/85 px-1.5 py-px font-mono font-semibold text-[9px] uppercase tabular-nums tracking-wider shadow-sm" style={{ color }} title={t("profile.skins.popularity.tooltip", { owners: f.number(info.owners), pct: (pct * 100).toFixed(2) })}>
-            {label}
-        </span>
+        <Tooltip>
+            <TooltipTrigger render={<span className="flex items-center gap-0.5 rounded-full bg-background/85 px-1.5 py-px font-mono font-semibold text-[9px] uppercase tabular-nums tracking-wider shadow-sm" style={{ color }} />}>{label}</TooltipTrigger>
+            <TooltipPopup>{t("profile.skins.popularity.tooltip", { owners: f.number(info.owners), pct: (pct * 100).toFixed(2) })}</TooltipPopup>
+        </Tooltip>
     );
 });
 
 const PriceChip = memo(function PriceChip({ price }: { price: ISkinPrice }) {
     const isFree = price.kind === "free";
     return (
-        <span className={cn("flex items-center gap-0.5 rounded-full px-1.5 py-px font-mono font-semibold text-[9px] uppercase tracking-wider shadow-sm", isFree ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-background/85 text-foreground")} title={price.tooltip ?? undefined}>
-            {price.label}
-        </span>
+        <Tooltip disabled={!price.tooltip}>
+            <TooltipTrigger render={<span className={cn("flex items-center gap-0.5 rounded-full px-1.5 py-px font-mono font-semibold text-[9px] uppercase tracking-wider shadow-sm", isFree ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-background/85 text-foreground")} />}>
+                {price.label}
+            </TooltipTrigger>
+            <TooltipPopup>{price.tooltip}</TooltipPopup>
+        </Tooltip>
     );
 });
 

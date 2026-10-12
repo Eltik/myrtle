@@ -15,6 +15,7 @@ import { FilmIcon } from "lucide-react";
 import type React from "react";
 import { memo, useCallback, useMemo, useRef } from "react";
 import { Badge } from "#/components/ui/badge";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { isStoryRead, type StoryProgress } from "#/lib/story/progress";
@@ -169,9 +170,10 @@ function PhaseSegment({ segment, title, progress, gameRead, current }: { segment
 
     if (!segment.entry.hasScript)
         return (
-            <span className={cn(shell, "border-border border-dashed text-muted-foreground/70")} title={ts("stories.panel.notExtracted")}>
-                {label}
-            </span>
+            <Tooltip>
+                <TooltipTrigger render={<span className={cn(shell, "border-border border-dashed text-muted-foreground/70")} />}>{label}</TooltipTrigger>
+                <TooltipPopup>{ts("stories.panel.notExtracted")}</TooltipPopup>
+            </Tooltip>
         );
 
     return (

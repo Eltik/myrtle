@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { GitForkIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { FIT_CLASS } from "#/components/tier-lists/entities";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { env } from "#/env";
 import type { IGridSummary } from "#/lib/api/grids";
 import { entityIconURL } from "#/lib/api/tier-entities";
@@ -38,10 +39,13 @@ export function GridCard({ grid, badge, actions }: IGridCardProps) {
                         <span className="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-[10.5px] text-foreground tabular-nums">{gridSizeLabel(grid.rows, grid.cols)}</span>
                         {badge}
                         <span className="min-w-0 truncate">{t("card.by", { name: grid.owner.name })}</span>
-                        <span className="ml-auto inline-flex shrink-0 items-center gap-1 tabular-nums" title={t("card.forks", { count: forks, formatted: f.number(forks) })}>
-                            <GitForkIcon className="h-3 w-3" aria-hidden="true" />
-                            {f.compact(forks)}
-                        </span>
+                        <Tooltip>
+                            <TooltipTrigger render={<span className="ml-auto inline-flex shrink-0 items-center gap-1 tabular-nums" />}>
+                                <GitForkIcon className="h-3 w-3" aria-hidden="true" />
+                                {f.compact(forks)}
+                            </TooltipTrigger>
+                            <TooltipPopup>{t("card.forks", { count: forks, formatted: f.number(forks) })}</TooltipPopup>
+                        </Tooltip>
                     </div>
                     <KindChips kinds={grid.entity_kinds} max={3} className="mt-0.5" />
                 </div>

@@ -108,19 +108,23 @@ function PlannerRequirementRow({ item, depth, path, expandedPaths, onToggleExpan
                                 <TooltipPopup className="max-w-xs">{item.craftReason}</TooltipPopup>
                             </Tooltip>
                         </div>
+                    ) : item.craftReason ? (
+                        <Tooltip>
+                            <TooltipTrigger render={<span className="cursor-help text-muted-foreground/50" />}>-</TooltipTrigger>
+                            <TooltipPopup className="max-w-xs">{item.craftReason}</TooltipPopup>
+                        </Tooltip>
                     ) : (
-                        <span className="text-muted-foreground/50" title={item.craftReason}>
-                            -
-                        </span>
+                        <span className="text-muted-foreground/50">-</span>
                     )}
                 </td>
                 <td className="py-2.5 pl-2 text-right text-xs tabular-nums">
                     {status === "missing" ? (
                         <span className="font-semibold text-red-400 text-xs">{f.number(item.missingCount)}</span>
                     ) : needsCrafting ? (
-                        <span className="font-semibold text-amber-400 text-xs" title={t("planner.req.craftTitle", { have: f.number(item.inventoryCount), required: f.number(item.requiredCount), shortfall: f.number(shortfall) })}>
-                            {t("planner.req.craft", { count: f.number(shortfall) })}
-                        </span>
+                        <Tooltip>
+                            <TooltipTrigger render={<span className="font-semibold text-amber-400 text-xs" />}>{t("planner.req.craft", { count: f.number(shortfall) })}</TooltipTrigger>
+                            <TooltipPopup>{t("planner.req.craftTitle", { have: f.number(item.inventoryCount), required: f.number(item.requiredCount), shortfall: f.number(shortfall) })}</TooltipPopup>
+                        </Tooltip>
                     ) : (
                         <span className="font-semibold text-emerald-400">✓</span>
                     )}
@@ -404,9 +408,10 @@ export function RequirementsPanel({ aggregatedRequirements, isLoading, activePla
                 <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                     <h2 className="font-semibold text-foreground text-sm">{t("planner.req.title")}</h2>
                     {lastSyncedAt && (
-                        <time dateTime={lastSyncedAt} title={f.date(lastSyncedAt, { dateStyle: "medium", timeStyle: "short" })} className="text-muted-foreground text-xs">
-                            {t("planner.req.lastSynced", { time: f.relativeLong(lastSyncedAt) })}
-                        </time>
+                        <Tooltip>
+                            <TooltipTrigger render={<time dateTime={lastSyncedAt} className="text-muted-foreground text-xs" />}>{t("planner.req.lastSynced", { time: f.relativeLong(lastSyncedAt) })}</TooltipTrigger>
+                            <TooltipPopup>{f.date(lastSyncedAt, { dateStyle: "medium", timeStyle: "short" })}</TooltipPopup>
+                        </Tooltip>
                     )}
                 </div>
                 {hasRequirements && (
@@ -421,15 +426,24 @@ export function RequirementsPanel({ aggregatedRequirements, isLoading, activePla
                                 if (next) setSettings((prev) => ({ ...prev, view: next }));
                             }}
                         >
-                            <ToggleGroupItem value="grouped" aria-label={t("planner.req.view.grouped.aria")} title={t("planner.req.view.grouped")}>
-                                <LayoutList />
-                            </ToggleGroupItem>
-                            <ToggleGroupItem value="flat" aria-label={t("planner.req.view.flat.aria")} title={t("planner.req.view.flat")}>
-                                <List />
-                            </ToggleGroupItem>
-                            <ToggleGroupItem value="by-operator" aria-label={t("planner.req.view.byOperator.aria")} title={t("planner.req.view.byOperator")}>
-                                <Users />
-                            </ToggleGroupItem>
+                            <Tooltip>
+                                <TooltipTrigger render={<ToggleGroupItem value="grouped" aria-label={t("planner.req.view.grouped.aria")} />}>
+                                    <LayoutList />
+                                </TooltipTrigger>
+                                <TooltipPopup>{t("planner.req.view.grouped")}</TooltipPopup>
+                            </Tooltip>
+                            <Tooltip>
+                                <TooltipTrigger render={<ToggleGroupItem value="flat" aria-label={t("planner.req.view.flat.aria")} />}>
+                                    <List />
+                                </TooltipTrigger>
+                                <TooltipPopup>{t("planner.req.view.flat")}</TooltipPopup>
+                            </Tooltip>
+                            <Tooltip>
+                                <TooltipTrigger render={<ToggleGroupItem value="by-operator" aria-label={t("planner.req.view.byOperator.aria")} />}>
+                                    <Users />
+                                </TooltipTrigger>
+                                <TooltipPopup>{t("planner.req.view.byOperator")}</TooltipPopup>
+                            </Tooltip>
                         </ToggleGroup>
                     </div>
                 )}

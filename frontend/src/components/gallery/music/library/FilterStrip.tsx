@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Switch } from "#/components/ui/switch";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
@@ -44,9 +45,12 @@ export function FilterStrip(props: IFilterStripProps): React.ReactElement {
             <div className="flex flex-wrap items-center gap-2">
                 {sortable ? (
                     <>
-                        <Button size="icon" variant="outline" className="max-sm:size-11" onClick={() => onReversed(!reversed)} aria-pressed={reversed} aria-label={t("music.filter.reverse")} title={t("music.filter.reverse")}>
-                            {reversed ? <ArrowUpNarrowWideIcon aria-hidden="true" /> : <ArrowDownWideNarrowIcon aria-hidden="true" />}
-                        </Button>
+                        <Tooltip>
+                            <TooltipTrigger render={<Button size="icon" variant="outline" className="max-sm:size-11" onClick={() => onReversed(!reversed)} aria-pressed={reversed} aria-label={t("music.filter.reverse")} />}>
+                                {reversed ? <ArrowUpNarrowWideIcon aria-hidden="true" /> : <ArrowDownWideNarrowIcon aria-hidden="true" />}
+                            </TooltipTrigger>
+                            <TooltipPopup>{t("music.filter.reverse")}</TooltipPopup>
+                        </Tooltip>
                         {mode === "albums" ? (
                             <SortSelect value={props.albumSort} options={ALBUM_SORTS} onChange={props.onAlbumSort} render={(s) => t(`music.filter.sort.album.${s}`)} />
                         ) : (

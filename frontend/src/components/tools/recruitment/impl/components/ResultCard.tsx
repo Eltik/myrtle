@@ -3,6 +3,7 @@ import { potentialIcon } from "#/components/operators/detail/impl/assets";
 import { Badge } from "#/components/ui/badge";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, RARITY_HEX_MUTED } from "#/lib/utils";
@@ -71,10 +72,13 @@ export function GuaranteedBadge({ result, layout }: { result: ITagCombinationRes
     }
 
     return (
-        <span className={cn("inline-flex h-5.5 shrink-0 items-center gap-1 whitespace-nowrap px-0.5 font-medium text-xs sm:h-4.5 sm:text-[11px]", layout === "compact" ? "max-sm:ml-auto" : "ml-auto")} title={t("recruit.result.minTitle", { floor: floorLabel(floor, t) })}>
-            <span className="text-muted-foreground">{t("recruit.result.min")}</span>
-            <span className={cn("font-mono", colors?.text)}>{floorLabel(floor, t)}</span>
-        </span>
+        <Tooltip>
+            <TooltipTrigger render={<span className={cn("inline-flex h-5.5 shrink-0 items-center gap-1 whitespace-nowrap px-0.5 font-medium text-xs sm:h-4.5 sm:text-[11px]", layout === "compact" ? "max-sm:ml-auto" : "ml-auto")} />}>
+                <span className="text-muted-foreground">{t("recruit.result.min")}</span>
+                <span className={cn("font-mono", colors?.text)}>{floorLabel(floor, t)}</span>
+            </TooltipTrigger>
+            <TooltipPopup>{t("recruit.result.minTitle", { floor: floorLabel(floor, t) })}</TooltipPopup>
+        </Tooltip>
     );
 }
 

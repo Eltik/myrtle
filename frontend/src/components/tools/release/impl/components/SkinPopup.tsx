@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import * as React from "react";
 import { SkinDetailContent } from "#/components/skins/SkinDetailDialog";
 import { Dialog, DialogContent, DialogTitle } from "#/components/ui/dialog";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { DynamicArtProvider } from "#/components/user/profile/impl/dynamic-art";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { type ISkinIndexEntry, skinsIndexQueryOptions } from "#/lib/api/skins";
@@ -108,16 +109,18 @@ export function SkinTileView({ skinId, charId, charName, skinName, skinNameEn, s
         </>
     );
     const className = "block w-22 shrink-0 sm:w-27.5";
-    if (charId) {
-        return (
-            <button type="button" onClick={() => openPopup({ charId, skinId, skinName, charName })} className={cn(className, "cursor-pointer rounded-md text-left hover:opacity-90")} title={title}>
-                {body}
-            </button>
-        );
-    }
-    return (
-        <span className={className} title={title}>
+    const tile = charId ? (
+        <button type="button" onClick={() => openPopup({ charId, skinId, skinName, charName })} className={cn(className, "cursor-pointer rounded-md text-left hover:opacity-90")}>
             {body}
-        </span>
+        </button>
+    ) : (
+        <span className={className}>{body}</span>
+    );
+    if (!title) return tile;
+    return (
+        <Tooltip>
+            <TooltipTrigger render={tile} />
+            <TooltipPopup>{title}</TooltipPopup>
+        </Tooltip>
     );
 }

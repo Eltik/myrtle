@@ -99,10 +99,13 @@ function KpiRow({ inst, snap, index, isLeader, leaderValue, leaderKey, columns, 
                                 <TooltipPopup className="max-w-64">{snap.error.message || t("calc.kpi.failed")}</TooltipPopup>
                             </Tooltip>
                         ) : isLeader ? (
-                            <span className="inline-flex items-center gap-0.5 rounded bg-primary/12 px-1.5 py-0.5 font-medium text-[10px] text-primary" title={t("calc.kpi.leader")}>
-                                <Crown className="size-3" />
-                                {t("calc.kpi.top")}
-                            </span>
+                            <Tooltip>
+                                <TooltipTrigger render={<span className="inline-flex items-center gap-0.5 rounded bg-primary/12 px-1.5 py-0.5 font-medium text-[10px] text-primary" />}>
+                                    <Crown className="size-3" />
+                                    {t("calc.kpi.top")}
+                                </TooltipTrigger>
+                                <TooltipPopup>{t("calc.kpi.leader")}</TooltipPopup>
+                            </Tooltip>
                         ) : (
                             relative !== null && (
                                 <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">

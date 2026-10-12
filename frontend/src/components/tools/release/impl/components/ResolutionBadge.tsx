@@ -1,5 +1,6 @@
 import type * as React from "react";
 import { Badge } from "#/components/ui/badge";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useLocale, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
@@ -43,9 +44,10 @@ export function ResolutionBadge({ resolution, today, note, caption, returning, c
     if (returning) {
         return (
             <div className={cn("flex flex-col items-start gap-0.5 sm:items-end", className)}>
-                <Badge variant="secondary" title={t("release.badge.returning.title")}>
-                    {t("release.badge.returning")}
-                </Badge>
+                <Tooltip>
+                    <TooltipTrigger render={<Badge variant="secondary" />}>{t("release.badge.returning")}</TooltipTrigger>
+                    <TooltipPopup className="max-w-xs">{t("release.badge.returning.title")}</TooltipPopup>
+                </Tooltip>
                 {note && <span className="font-sans text-[11px] text-muted-foreground">{note}</span>}
             </div>
         );
@@ -54,9 +56,16 @@ export function ResolutionBadge({ resolution, today, note, caption, returning, c
         const { label, hint } = undated(resolution.status, t);
         return (
             <div className={cn("flex flex-col items-start gap-0.5 sm:items-end", className)}>
-                <Badge variant="secondary" className="text-muted-foreground" title={hint}>
-                    {label}
-                </Badge>
+                {hint ? (
+                    <Tooltip>
+                        <TooltipTrigger render={<Badge variant="secondary" className="text-muted-foreground" />}>{label}</TooltipTrigger>
+                        <TooltipPopup className="max-w-xs">{hint}</TooltipPopup>
+                    </Tooltip>
+                ) : (
+                    <Badge variant="secondary" className="text-muted-foreground">
+                        {label}
+                    </Badge>
+                )}
                 {note && <span className="font-sans text-[11px] text-muted-foreground">{note}</span>}
             </div>
         );
@@ -75,11 +84,8 @@ export function ResolutionBadge({ resolution, today, note, caption, returning, c
             break;
         case "override":
             title = resolution.note ? t("release.badge.overrideTitle", { source: resolution.source, note: resolution.note }) : resolution.source;
-            chip = (
-                <Badge variant="info" title={title}>
-                    {t("release.badge.announced")}
-                </Badge>
-            );
+            // The whole block below is the tooltip trigger for `title`, so the chip carries none of its own.
+            chip = <Badge variant="info">{t("release.badge.announced")}</Badge>;
             dateText = formatDateRange(resolution.enStart, resolution.enEnd, locale, t, timeZone);
             sub = <span className="truncate font-sans text-[11px] text-muted-foreground">{t("release.badge.per", { source: resolution.source })}</span>;
             break;
@@ -97,8 +103,9 @@ export function ResolutionBadge({ resolution, today, note, caption, returning, c
             break;
     }
 
-    return (
-        <div className={cn("flex min-w-0 flex-col items-start gap-0.5 sm:items-end", className)} title={title}>
+    const blockClassName = cn("flex min-w-0 flex-col items-start gap-0.5 sm:items-end", className);
+    const body = (
+        <>
             <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
                 {chip}
                 <span className="font-medium font-sans text-[13px] text-foreground tabular-nums">{dateText}</span>
@@ -107,6 +114,13 @@ export function ResolutionBadge({ resolution, today, note, caption, returning, c
             {sub}
             {caption && <span className="font-sans text-[11px] text-muted-foreground">{caption}</span>}
             {note && <span className="font-sans font-semibold text-[11px] text-warning-foreground">{note}</span>}
-        </div>
+        </>
+    );
+    if (!title) return <div className={blockClassName}>{body}</div>;
+    return (
+        <Tooltip>
+            <TooltipTrigger render={<div className={blockClassName} />}>{body}</TooltipTrigger>
+            <TooltipPopup className="max-w-xs">{title}</TooltipPopup>
+        </Tooltip>
     );
 }

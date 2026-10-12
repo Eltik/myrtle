@@ -540,13 +540,10 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
                     <ToolButton onClick={() => zoomBy(-ZOOM_STEP)} disabled={transform.zoom <= minZoom} label={t("outfits.zoomOut")}>
                         <ZoomOut className="h-4 w-4" />
                     </ToolButton>
-                    <span
-                        className="min-w-12 select-none text-center font-mono text-muted-foreground text-xs"
-                        title={fit ? t("outfits.zoomTitle", { camera: (fit.zoom * baseScale).toFixed(3), width: Math.round(fit.width * baseScale), height: Math.round(fit.height * baseScale) }) : undefined}
-                        data-camera={dynamic ? `${transform.zoom},${Math.round(transform.pan.x)},${Math.round(transform.pan.y)}` : undefined}
-                    >
-                        {Math.round(transform.zoom * 100)}%
-                    </span>
+                    <Tooltip disabled={!fit}>
+                        <TooltipTrigger render={<span className="min-w-12 select-none text-center font-mono text-muted-foreground text-xs" data-camera={dynamic ? `${transform.zoom},${Math.round(transform.pan.x)},${Math.round(transform.pan.y)}` : undefined} />}>{Math.round(transform.zoom * 100)}%</TooltipTrigger>
+                        <TooltipPopup>{fit ? t("outfits.zoomTitle", { camera: (fit.zoom * baseScale).toFixed(3), width: Math.round(fit.width * baseScale), height: Math.round(fit.height * baseScale) }) : null}</TooltipPopup>
+                    </Tooltip>
                     <ToolButton onClick={() => zoomBy(ZOOM_STEP)} disabled={transform.zoom >= MAX_ZOOM} label={t("outfits.zoomIn")}>
                         <ZoomIn className="h-4 w-4" />
                     </ToolButton>

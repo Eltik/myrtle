@@ -69,9 +69,10 @@ function EconomyBody({ economy, startDp, onStartDpChange, startDpFrom, stage, ha
                         economy.start_bonus.length > 0 && (
                             <div className="mt-0.5 space-y-0.5">
                                 {economy.start_bonus.map((b) => (
-                                    <div key={`${b.seat}-${b.name}`} className="text-[11px] text-primary leading-snug" title={b.name}>
-                                        {t("squad.analysis.economy.startDp.bonus", { amount: f.number(b.amount), name: opName(ctx.operators, b.char_id) })}
-                                    </div>
+                                    <Tooltip key={`${b.seat}-${b.name}`}>
+                                        <TooltipTrigger render={<div className="text-[11px] text-primary leading-snug" />}>{t("squad.analysis.economy.startDp.bonus", { amount: f.number(b.amount), name: opName(ctx.operators, b.char_id) })}</TooltipTrigger>
+                                        <TooltipPopup>{b.name}</TooltipPopup>
+                                    </Tooltip>
                                 ))}
                             </div>
                         )

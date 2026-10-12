@@ -3,6 +3,7 @@ import type React from "react";
 import { useState } from "react";
 import { AlertDialog, AlertDialogClose, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogPopup, AlertDialogTitle } from "#/components/ui/alert-dialog";
 import { Button } from "#/components/ui/button";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { deletePlaylist, renamePlaylist } from "../impl/library/store";
@@ -49,10 +50,13 @@ export function PlaylistHeader({ id, name, tracks, totalIds, source }: { id: str
                 )}
             </div>
             <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <button type="button" onClick={() => setRenaming(true)} title={t("music.playlist.rename")} className="group/name flex min-w-0 cursor-pointer items-center gap-2 text-left max-sm:min-h-11">
-                    <h2 className="m-0 truncate font-sans font-semibold text-[22px] text-foreground">{name}</h2>
-                    <PencilIcon aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/name:opacity-100" />
-                </button>
+                <Tooltip>
+                    <TooltipTrigger render={<button type="button" onClick={() => setRenaming(true)} className="group/name flex min-w-0 cursor-pointer items-center gap-2 text-left max-sm:min-h-11" />}>
+                        <h2 className="m-0 truncate font-sans font-semibold text-[22px] text-foreground">{name}</h2>
+                        <PencilIcon aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/name:opacity-100" />
+                    </TooltipTrigger>
+                    <TooltipPopup>{t("music.playlist.rename")}</TooltipPopup>
+                </Tooltip>
                 <span className="font-sans text-[12.5px] text-muted-foreground">{t("music.list.trackCount", { count: totalIds })}</span>
                 <div className="mt-1 flex flex-wrap gap-2">
                     <Button size="sm" className="max-sm:min-h-11" disabled={playable.length === 0} onClick={() => play(false)}>

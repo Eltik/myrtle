@@ -2,6 +2,7 @@ import type React from "react";
 import { ClassIcon } from "#/components/operators/list/impl/components/Icons";
 import { Slider } from "#/components/ui/slider";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { OperatorProfession, OperatorRarity } from "#/types/operators";
@@ -23,9 +24,12 @@ export function OperatorFiltersPanel({ settings, onChange, hasProfile }: IOperat
             <FieldGroup label={t("randomizer.ops.class")}>
                 <ToggleGroup aria-label={t("randomizer.ops.class.aria")} multiple value={settings.allowedClasses} onValueChange={(next) => onChange({ allowedClasses: (next as OperatorProfession[]) ?? [] })} variant="outline" size="lg" className="flex-wrap">
                     {ALL_CLASSES.map((cls) => (
-                        <ToggleGroupItem key={cls} value={cls} aria-label={CLASS_LABEL[cls]} title={CLASS_LABEL[cls]} className="px-2 [&:not([data-pressed])]:bg-input/64 [&:not([data-pressed])]:before:shadow-none! dark:[&:not([data-pressed])]:bg-input [&:not([data-pressed])_img]:opacity-35">
-                            <ClassIcon profession={cls} size={24} className="size-6!" />
-                        </ToggleGroupItem>
+                        <Tooltip key={cls}>
+                            <TooltipTrigger render={<ToggleGroupItem value={cls} aria-label={CLASS_LABEL[cls]} className="px-2 [&:not([data-pressed])]:bg-input/64 [&:not([data-pressed])]:before:shadow-none! dark:[&:not([data-pressed])]:bg-input [&:not([data-pressed])_img]:opacity-35" />}>
+                                <ClassIcon profession={cls} size={24} className="size-6!" />
+                            </TooltipTrigger>
+                            <TooltipPopup>{CLASS_LABEL[cls]}</TooltipPopup>
+                        </Tooltip>
                     ))}
                 </ToggleGroup>
             </FieldGroup>

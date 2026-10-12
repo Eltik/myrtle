@@ -8,6 +8,7 @@ import { Label } from "#/components/ui/label";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Tabs, TabsList, TabsTab } from "#/components/ui/tabs";
 import { Textarea } from "#/components/ui/textarea";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { type IOperatorNoteAuditEntry, operatorNoteAuditLogQueryOptions } from "#/lib/api/admin";
 import { useFormatters, useLocale, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -155,21 +156,26 @@ export function NoteEditor({ row, enabled, saving, onSave }: INoteEditorProps): 
                             <Label htmlFor={`${ids}-tag`}>{t("notes.form.tags")}</Label>
                             <div className="flex flex-wrap items-center gap-1.5">
                                 {draft.tags.map((tag) => (
-                                    <button
-                                        key={tag}
-                                        type="button"
-                                        title={t("notes.form.removeTag")}
-                                        aria-label={t("notes.form.removeTagNamed", { tag })}
-                                        onClick={() =>
-                                            set(
-                                                "tags",
-                                                draft.tags.filter((x) => x !== tag),
-                                            )
-                                        }
-                                        className="flex h-[26px] pointer-coarse:h-9 cursor-pointer items-center gap-1.5 pointer-coarse:rounded-[18px] rounded-[13px] border border-border bg-card pointer-coarse:pr-3 pr-2 pl-2.5 pointer-coarse:pl-3.5 text-[12.5px] transition-colors hover:border-destructive"
-                                    >
-                                        {tag} <span className="text-muted-foreground">×</span>
-                                    </button>
+                                    <Tooltip key={tag}>
+                                        <TooltipTrigger
+                                            render={
+                                                <button
+                                                    type="button"
+                                                    aria-label={t("notes.form.removeTagNamed", { tag })}
+                                                    onClick={() =>
+                                                        set(
+                                                            "tags",
+                                                            draft.tags.filter((x) => x !== tag),
+                                                        )
+                                                    }
+                                                    className="flex h-[26px] pointer-coarse:h-9 cursor-pointer items-center gap-1.5 pointer-coarse:rounded-[18px] rounded-[13px] border border-border bg-card pointer-coarse:pr-3 pr-2 pl-2.5 pointer-coarse:pl-3.5 text-[12.5px] transition-colors hover:border-destructive"
+                                                />
+                                            }
+                                        >
+                                            {tag} <span className="text-muted-foreground">×</span>
+                                        </TooltipTrigger>
+                                        <TooltipPopup>{t("notes.form.removeTag")}</TooltipPopup>
+                                    </Tooltip>
                                 ))}
                                 <div className="w-[180px]">
                                     <Input

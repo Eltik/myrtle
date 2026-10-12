@@ -1,4 +1,5 @@
 import { Eye, Flame, Heart, Share2, UserRound } from "lucide-react";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { ITierListDetail } from "#/lib/api/tier-lists";
 import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -50,13 +51,16 @@ export function TierListStatsPanel({ detail }: ITierListStatsPanelProps) {
                         {rows.map((row) => {
                             const Icon = row.icon;
                             return (
-                                <div key={row.label} className="flex items-center justify-between gap-3 px-4 py-2.5" title={row.title}>
-                                    <dt className="inline-flex items-center gap-2 font-sans text-[12.5px] text-muted-foreground">
-                                        <Icon className="h-3.5 w-3.5 opacity-70" aria-hidden="true" />
-                                        {row.label}
-                                    </dt>
-                                    <dd className={`m-0 font-mono font-semibold text-[13.5px] tabular-nums ${row.accent ? "text-primary" : "text-foreground"}`}>{row.value}</dd>
-                                </div>
+                                <Tooltip key={row.label}>
+                                    <TooltipTrigger render={<div className="flex items-center justify-between gap-3 px-4 py-2.5" />}>
+                                        <dt className="inline-flex items-center gap-2 font-sans text-[12.5px] text-muted-foreground">
+                                            <Icon className="h-3.5 w-3.5 opacity-70" aria-hidden="true" />
+                                            {row.label}
+                                        </dt>
+                                        <dd className={`m-0 font-mono font-semibold text-[13.5px] tabular-nums ${row.accent ? "text-primary" : "text-foreground"}`}>{row.value}</dd>
+                                    </TooltipTrigger>
+                                    <TooltipPopup>{row.title}</TooltipPopup>
+                                </Tooltip>
                             );
                         })}
                     </dl>

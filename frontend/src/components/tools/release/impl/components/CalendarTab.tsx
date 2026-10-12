@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import * as React from "react";
 import { Button } from "#/components/ui/button";
 import { Card } from "#/components/ui/card";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useFormatters, useLocale, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
@@ -192,23 +193,28 @@ function CalendarWeek({ weekStart, monthFrom, monthTo, todayDay, items, selected
                     const name = itemName(it, autoOn);
                     const isSel = it.key === selected;
                     return (
-                        <button
-                            key={it.key}
-                            type="button"
-                            onClick={() => onSelect(isSel ? null : it.key)}
-                            title={t("release.calendar.pillTitle", { name, dates: formatDateRange(it.start, it.end, locale, t) })}
-                            className={cn(
-                                "z-1 my-0.5 flex min-w-0 cursor-pointer items-center gap-1.5 px-1.5 text-left font-medium font-sans text-[11.5px] leading-[18px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
-                                style.pill,
-                                continuesLeft ? "ml-0 rounded-l-none" : "ml-1 rounded-l-md",
-                                continuesRight ? "mr-0 rounded-r-none" : "mr-1 rounded-r-md",
-                                isSel && "ring-2 ring-foreground/60",
-                            )}
-                            style={{ gridColumn: `${col} / span ${span}`, gridRow: lane + 2 }}
-                        >
-                            {!continuesLeft && <span aria-hidden="true" className={cn("size-2 shrink-0 rounded-full", it.estimated ? "border-[1.5px] border-current bg-transparent" : style.dot)} />}
-                            <span className="truncate">{name}</span>
-                        </button>
+                        <Tooltip key={it.key}>
+                            <TooltipTrigger
+                                render={
+                                    <button
+                                        type="button"
+                                        onClick={() => onSelect(isSel ? null : it.key)}
+                                        className={cn(
+                                            "z-1 my-0.5 flex min-w-0 cursor-pointer items-center gap-1.5 px-1.5 text-left font-medium font-sans text-[11.5px] leading-[18px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+                                            style.pill,
+                                            continuesLeft ? "ml-0 rounded-l-none" : "ml-1 rounded-l-md",
+                                            continuesRight ? "mr-0 rounded-r-none" : "mr-1 rounded-r-md",
+                                            isSel && "ring-2 ring-foreground/60",
+                                        )}
+                                        style={{ gridColumn: `${col} / span ${span}`, gridRow: lane + 2 }}
+                                    />
+                                }
+                            >
+                                {!continuesLeft && <span aria-hidden="true" className={cn("size-2 shrink-0 rounded-full", it.estimated ? "border-[1.5px] border-current bg-transparent" : style.dot)} />}
+                                <span className="truncate">{name}</span>
+                            </TooltipTrigger>
+                            <TooltipPopup>{t("release.calendar.pillTitle", { name, dates: formatDateRange(it.start, it.end, locale, t) })}</TooltipPopup>
+                        </Tooltip>
                     );
                 })}
             {hiddenPerDay.map((hidden, i) =>

@@ -3,6 +3,7 @@ import { Fragment, useMemo, useState } from "react";
 import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { ClientGachaGroup, IBanner, IClientGachaRecords, IGachaItem } from "#/lib/api/gacha";
 import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -109,18 +110,22 @@ function FeaturedRow({ ids, star, operatorsById }: { ids: string[]; star: number
                     const op = operatorsById.get(charId);
                     const opName = op?.name ?? charId;
                     return (
-                        <span key={charId} className="flex flex-col items-center gap-0.5" title={opName}>
-                            <span className="relative inline-flex h-8 w-8 shrink-0 overflow-hidden rounded-md ring-1" style={{ background: "var(--muted)", boxShadow: `inset 0 0 0 1px color-mix(in oklch, ${ringColor} 60%, transparent)` }}>
-                                <OperatorAvatar charId={charId} name={opName} className="block h-full w-full object-cover" />
-                            </span>
-                            <span className="max-w-12 truncate text-center font-mono text-[9px] text-muted-foreground leading-none">{opName.split(" ")[0]}</span>
-                        </span>
+                        <Tooltip key={charId}>
+                            <TooltipTrigger render={<span className="flex flex-col items-center gap-0.5" />}>
+                                <span className="relative inline-flex h-8 w-8 shrink-0 overflow-hidden rounded-md ring-1" style={{ background: "var(--muted)", boxShadow: `inset 0 0 0 1px color-mix(in oklch, ${ringColor} 60%, transparent)` }}>
+                                    <OperatorAvatar charId={charId} name={opName} className="block h-full w-full object-cover" />
+                                </span>
+                                <span className="max-w-12 truncate text-center font-mono text-[9px] text-muted-foreground leading-none">{opName.split(" ")[0]}</span>
+                            </TooltipTrigger>
+                            <TooltipPopup>{opName}</TooltipPopup>
+                        </Tooltip>
                     );
                 })}
                 {extra > 0 ? (
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted font-mono text-[10px] text-muted-foreground tabular-nums" title={t("history.breakdown.moreOperators", { count: extra })}>
-                        +{extra}
-                    </span>
+                    <Tooltip>
+                        <TooltipTrigger render={<span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted font-mono text-[10px] text-muted-foreground tabular-nums" />}>+{extra}</TooltipTrigger>
+                        <TooltipPopup>{t("history.breakdown.moreOperators", { count: extra })}</TooltipPopup>
+                    </Tooltip>
                 ) : null}
             </div>
         </div>

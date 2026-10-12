@@ -2,9 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronDownIcon } from "lucide-react";
 import type * as React from "react";
 import { useMemo, useState } from "react";
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
+import { Bar, BarChart, Tooltip as ChartTooltip, ResponsiveContainer, XAxis } from "recharts";
 import { Button } from "#/components/ui/button";
 import { Kicker } from "#/components/ui/kicker";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { archiveDemographicsQueryOptions } from "#/lib/api/archives";
 import { type IFormatters, useFormatters, useGamedataServer } from "#/lib/i18n";
 import { cn } from "#/lib/utils";
@@ -233,9 +234,10 @@ function DistributionCard({ title, dist, people, format, t, f, onOpenFile }: { t
             {ids.length === 1 ? (
                 <PersonChip person={people.get(ids[0])} onOpen={onOpenFile} className="self-start" />
             ) : ids.length > 1 ? (
-                <span className="truncate text-[12px] text-muted-foreground" title={ids.map((id) => people.get(id)?.name ?? id).join(", ")}>
-                    {names(ids, people, t)}
-                </span>
+                <Tooltip>
+                    <TooltipTrigger render={<span className="truncate text-[12px] text-muted-foreground" />}>{names(ids, people, t)}</TooltipTrigger>
+                    <TooltipPopup className="max-w-80">{ids.map((id) => people.get(id)?.name ?? id).join(", ")}</TooltipPopup>
+                </Tooltip>
             ) : null}
         </div>
     );
@@ -245,7 +247,7 @@ function DistributionCard({ title, dist, people, format, t, f, onOpenFile }: { t
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={data} margin={{ top: 4, right: 0, bottom: 0, left: 0 }} barCategoryGap={1}>
                         <XAxis dataKey="label" interval="preserveStartEnd" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} tickLine={false} axisLine={{ stroke: "var(--border)" }} />
-                        <Tooltip
+                        <ChartTooltip
                             cursor={{ fill: "var(--accent)" }}
                             content={({ active, payload }) => {
                                 const row = active ? (payload?.[0]?.payload as (typeof data)[number] | undefined) : undefined;
@@ -336,7 +338,14 @@ function ExamCard({ d, t, f }: { d: ArchiveDemographics; t: ArchivesT; f: IForma
                         <div key={col.axis} className="grid grid-cols-[5.5rem_1fr_auto] items-center gap-2 text-[12.5px]">
                             <span className="text-foreground">{t(AXIS_KEY[col.axis])}</span>
                             <span className="flex h-3 overflow-hidden rounded-sm bg-muted">
-                                {col.steps.map((n, i) => (n > 0 && d.scale[i] ? <span key={d.scale[i].key} title={`${stepWord(d.scale[i], t)}: ${f.number(n)}`} className="block h-full" style={{ width: `${(n / d.total) * 100}%`, background: stepShade(i, d.scale.length) }} /> : null))}
+                                {col.steps.map((n, i) =>
+                                    n > 0 && d.scale[i] ? (
+                                        <Tooltip key={d.scale[i].key}>
+                                            <TooltipTrigger render={<span className="block h-full" style={{ width: `${(n / d.total) * 100}%`, background: stepShade(i, d.scale.length) }} />} />
+                                            <TooltipPopup>{`${stepWord(d.scale[i], t)}: ${f.number(n)}`}</TooltipPopup>
+                                        </Tooltip>
+                                    ) : null,
+                                )}
                             </span>
                             <span className="text-right text-muted-foreground tabular-nums">
                                 {d.scale[top] ? stepWord(d.scale[top], t) : ""} {f.percent(col.steps[top] / d.total)}

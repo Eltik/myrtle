@@ -7,6 +7,7 @@ import { useArt } from "#/components/tools/release/impl/components/shared";
 import { fromUnix } from "#/components/tools/release/impl/helpers";
 import { useReleaseTagLabel } from "#/components/tools/release/impl/labels";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { DEFAULT_GAMEDATA_SERVER, resolveGamedataServer } from "#/lib/api/gamedata";
 import { liveFeedQueryOptions } from "#/lib/api/live";
 import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
@@ -151,9 +152,12 @@ function LiveCard({ item, index, now, server, names: featuredNames }: ILiveCardP
             ) : (
                 <div className={styles.faces} style={{ "--faces": faces.length } as React.CSSProperties}>
                     {faces.map((face) => (
-                        <span key={face.id} className={styles.face} title={face.name}>
-                            <OperatorAvatar charId={face.id} name={face.name} server={server} />
-                        </span>
+                        <Tooltip key={face.id}>
+                            <TooltipTrigger render={<span className={styles.face} />}>
+                                <OperatorAvatar charId={face.id} name={face.name} server={server} />
+                            </TooltipTrigger>
+                            <TooltipPopup>{face.name}</TooltipPopup>
+                        </Tooltip>
                     ))}
                 </div>
             )}

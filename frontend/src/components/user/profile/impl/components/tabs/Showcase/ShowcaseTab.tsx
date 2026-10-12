@@ -10,6 +10,7 @@ import { EntityAvatar, entityAccent, entityShape } from "#/components/tier-lists
 import { entityPage, useEntityLabels } from "#/components/tier-lists/kinds";
 import { Button } from "#/components/ui/button";
 import { Skeleton } from "#/components/ui/skeleton";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useAuth } from "#/hooks/use-auth";
 import { gridQueryOptions } from "#/lib/api/grids";
 import { publicPlansQueryOptions } from "#/lib/api/planner";
@@ -325,9 +326,12 @@ function FavouriteTile({ item }: { item: IShowcaseEntity }) {
         const label = t("profile.showcase.removed.entity", { id: item.id });
         return (
             <li>
-                <span role="img" aria-label={label} title={label} className={cn(TILE_CLASS, TILE_SIZE.square, "border-border border-dashed bg-muted/30 bg-none text-muted-foreground hover:translate-y-0")}>
-                    <span className="line-clamp-3 break-all px-1 text-center font-mono text-[9px] leading-tight">{item.id}</span>
-                </span>
+                <Tooltip>
+                    <TooltipTrigger render={<span role="img" aria-label={label} className={cn(TILE_CLASS, TILE_SIZE.square, "border-border border-dashed bg-muted/30 bg-none text-muted-foreground hover:translate-y-0")} />}>
+                        <span className="line-clamp-3 break-all px-1 text-center font-mono text-[9px] leading-tight">{item.id}</span>
+                    </TooltipTrigger>
+                    <TooltipPopup>{label}</TooltipPopup>
+                </Tooltip>
             </li>
         );
     }

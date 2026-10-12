@@ -1,7 +1,9 @@
 import { ChevronDown, Search, TrendingUp, X } from "lucide-react";
+import type React from "react";
 import { Button } from "#/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "#/components/ui/menu";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IMaterials } from "#/lib/api/materials";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -90,11 +92,13 @@ export function Toolbar({ ranking, onRanking, catalog, materials, scope, onScope
                     </DropdownMenuContent>
                 </DropdownMenu>
                 <DropdownMenu>
-                    <DropdownMenuTrigger className={FILTER} aria-label={t("leaderboard.toolbar.intervalLabel")} disabled={!movementAvailable} title={movementHint}>
-                        <span className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{t("leaderboard.toolbar.interval")}</span>
-                        <span className="font-semibold text-foreground tabular-nums">{t(intervalShortKey)}</span>
-                        <ChevronDown className="size-3 opacity-70" />
-                    </DropdownMenuTrigger>
+                    <HintWrap hint={movementHint}>
+                        <DropdownMenuTrigger className={FILTER} aria-label={t("leaderboard.toolbar.intervalLabel")} disabled={!movementAvailable}>
+                            <span className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{t("leaderboard.toolbar.interval")}</span>
+                            <span className="font-semibold text-foreground tabular-nums">{t(intervalShortKey)}</span>
+                            <ChevronDown className="size-3 opacity-70" />
+                        </DropdownMenuTrigger>
+                    </HintWrap>
                     <DropdownMenuContent align="start" className="min-w-44">
                         {INTERVALS.map((opt) => (
                             <DropdownMenuItem key={opt.value} onClick={() => onInterval(opt.value)} className={cn("cursor-pointer", interval === opt.value && "font-semibold text-primary")}>
@@ -103,21 +107,22 @@ export function Toolbar({ ranking, onRanking, catalog, materials, scope, onScope
                         ))}
                     </DropdownMenuContent>
                 </DropdownMenu>
-                <button
-                    type="button"
-                    role="switch"
-                    aria-checked={movementOnly}
-                    disabled={!movementAvailable}
-                    onClick={() => onMovementOnly(!movementOnly)}
-                    title={movementHint ?? (movementOnly ? t("leaderboard.toolbar.movementOnly.on") : t("leaderboard.toolbar.movementOnly.off"))}
-                    className={cn(
-                        "inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 font-medium font-sans text-xs leading-none transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:h-8",
-                        movementOnly && movementAvailable ? "border-primary/40 bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] text-primary hover:bg-[color-mix(in_srgb,var(--primary)_14%,transparent)]" : "border-input bg-card text-foreground hover:border-foreground/20 disabled:hover:border-input",
-                    )}
-                >
-                    <TrendingUp className={cn("size-3.5", movementOnly && movementAvailable ? "opacity-100" : "opacity-70")} aria-hidden />
-                    <span>{t("leaderboard.toolbar.movementOnly")}</span>
-                </button>
+                <HintWrap hint={movementHint ?? (movementOnly ? t("leaderboard.toolbar.movementOnly.on") : t("leaderboard.toolbar.movementOnly.off"))}>
+                    <button
+                        type="button"
+                        role="switch"
+                        aria-checked={movementOnly}
+                        disabled={!movementAvailable}
+                        onClick={() => onMovementOnly(!movementOnly)}
+                        className={cn(
+                            "inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 font-medium font-sans text-xs leading-none transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:h-8",
+                            movementOnly && movementAvailable ? "border-primary/40 bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] text-primary hover:bg-[color-mix(in_srgb,var(--primary)_14%,transparent)]" : "border-input bg-card text-foreground hover:border-foreground/20 disabled:hover:border-input",
+                        )}
+                    >
+                        <TrendingUp className={cn("size-3.5", movementOnly && movementAvailable ? "opacity-100" : "opacity-70")} aria-hidden />
+                        <span>{t("leaderboard.toolbar.movementOnly")}</span>
+                    </button>
+                </HintWrap>
             </div>
         </div>
     );
@@ -136,20 +141,38 @@ function Segmented<T extends string>({ value, onChange, options }: { value: T; o
             {options.map((opt) => {
                 const isActive = opt.value === value;
                 return (
-                    <button
-                        key={opt.value}
-                        type="button"
-                        role="tab"
-                        aria-selected={isActive}
-                        disabled={opt.disabled}
-                        title={opt.hint}
-                        onClick={() => !opt.disabled && onChange(opt.value)}
-                        className={cn("inline-flex h-full items-center rounded-md px-3 font-medium font-sans text-xs leading-none transition-colors", isActive ? "bg-card text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.06)]" : "text-muted-foreground hover:text-foreground", opt.disabled && "cursor-not-allowed opacity-60")}
-                    >
-                        {opt.label}
-                    </button>
+                    <HintWrap key={opt.value} hint={opt.hint} className="h-full">
+                        <button
+                            type="button"
+                            role="tab"
+                            aria-selected={isActive}
+                            disabled={opt.disabled}
+                            onClick={() => !opt.disabled && onChange(opt.value)}
+                            className={cn(
+                                "inline-flex h-full items-center rounded-md px-3 font-medium font-sans text-xs leading-none transition-colors",
+                                isActive ? "bg-card text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.06)]" : "text-muted-foreground hover:text-foreground",
+                                opt.disabled && "cursor-not-allowed opacity-60",
+                            )}
+                        >
+                            {opt.label}
+                        </button>
+                    </HintWrap>
                 );
             })}
         </div>
+    );
+}
+
+/**
+ * Shows `hint` as a tooltip over a control that may be disabled. A disabled button never fires
+ * hover, so the trigger is an inline wrapper around it; with no hint the control renders bare.
+ */
+function HintWrap({ hint, className, children }: { hint: string | undefined; className?: string; children: React.ReactElement }) {
+    if (!hint) return children;
+    return (
+        <Tooltip>
+            <TooltipTrigger render={<span className={cn("inline-flex", className)} />}>{children}</TooltipTrigger>
+            <TooltipPopup>{hint}</TooltipPopup>
+        </Tooltip>
     );
 }

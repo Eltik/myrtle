@@ -2,6 +2,7 @@ import { PauseIcon, PlayIcon, StepBackIcon, StepForwardIcon } from "lucide-react
 import type React from "react";
 import { useEffect, useRef } from "react";
 import { Button } from "#/components/ui/button";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
@@ -117,9 +118,10 @@ export function FrameStepper({ paused, onPausedChange, onStep, getPosition, scop
 /** An icon button named by `label`, as its accessible name and its tooltip both. */
 function ControlButton({ label, disabled, onClick, children }: { label: string; disabled: boolean | undefined; onClick: () => void; children: React.ReactNode }): React.ReactElement {
     return (
-        <Button aria-label={label} disabled={disabled} onClick={onClick} size="icon-xs" title={label} variant="ghost">
-            {children}
-        </Button>
+        <Tooltip>
+            <TooltipTrigger render={<Button aria-label={label} disabled={disabled} onClick={onClick} size="icon-xs" variant="ghost" />}>{children}</TooltipTrigger>
+            <TooltipPopup>{label}</TooltipPopup>
+        </Tooltip>
     );
 }
 

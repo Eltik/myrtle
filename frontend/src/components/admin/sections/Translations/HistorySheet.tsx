@@ -6,6 +6,7 @@ import { Button } from "#/components/ui/button";
 import { useErrorMessage } from "#/components/ui/error-message";
 import { Sheet, SheetDescription, SheetHeader, SheetPanel, SheetPopup, SheetTitle } from "#/components/ui/sheet";
 import { Skeleton } from "#/components/ui/skeleton";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { type ITranslationFieldError, type IUpdateTranslationInput, updateTranslationFn } from "#/lib/api/admin";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -75,9 +76,10 @@ export function HistorySheet({ open, onOpenChange, locale, messageKey, currentVa
                             {revisions.map((rev) => (
                                 <li key={rev.id} className="flex flex-col gap-1.5">
                                     <div className="text-[12.5px] text-muted-foreground">
-                                        <time dateTime={rev.changed_at} title={fmt.date(rev.changed_at, { dateStyle: "medium", timeStyle: "short" })}>
-                                            {fmt.relativeShort(rev.changed_at)}
-                                        </time>{" "}
+                                        <Tooltip>
+                                            <TooltipTrigger render={<time dateTime={rev.changed_at} />}>{fmt.relativeShort(rev.changed_at)}</TooltipTrigger>
+                                            <TooltipPopup>{fmt.date(rev.changed_at, { dateStyle: "medium", timeStyle: "short" })}</TooltipPopup>
+                                        </Tooltip>{" "}
                                         · {t("translations.history.by", { actor: rev.actor.nickname ?? t("translations.history.deletedAccount") })}
                                     </div>
                                     <div className="flex flex-col gap-1 rounded-[10px] bg-muted px-3 py-2 text-[13px] leading-normal" lang={locale.code}>

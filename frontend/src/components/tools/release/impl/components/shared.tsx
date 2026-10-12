@@ -8,6 +8,7 @@ import { Label } from "#/components/ui/label";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Switch } from "#/components/ui/switch";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, parseOperatorName, rarityToNumber } from "#/lib/utils";
@@ -35,9 +36,10 @@ export function AutoTag({ source, className }: { source: AutoNameSource; classNa
     const label = t(AUTO_TAG_KEYS[source].label);
     const title = t(AUTO_TAG_KEYS[source].title);
     return (
-        <span className={cn("inline-flex shrink-0 cursor-help items-center rounded-sm border border-border/60 px-1 py-px font-sans text-[9.5px] text-muted-foreground/80 leading-[1.3]", className)} title={title} translate="no">
-            {label}
-        </span>
+        <Tooltip>
+            <TooltipTrigger render={<span className={cn("inline-flex shrink-0 cursor-help items-center rounded-sm border border-border/60 px-1 py-px font-sans text-[9.5px] text-muted-foreground/80 leading-[1.3]", className)} translate="no" />}>{label}</TooltipTrigger>
+            <TooltipPopup className="max-w-xs">{title}</TooltipPopup>
+        </Tooltip>
     );
 }
 
@@ -75,11 +77,18 @@ export function CnName({ cn: cnText, en, auto, className, primaryClassName, comp
     );
     if (compact) {
         const tip = [name.original, name.auto ? t(AUTO_TAG_KEYS[name.auto.source].label) : null].filter(Boolean).join(" \u00b7 ");
-        return (
-            <span className={cn("flex min-w-0 items-center gap-1", className)} title={tip || undefined}>
+        const row = (
+            <span className={cn("flex min-w-0 items-center gap-1", className)}>
                 {primary}
                 {children}
             </span>
+        );
+        if (!tip) return row;
+        return (
+            <Tooltip>
+                <TooltipTrigger render={row} />
+                <TooltipPopup>{tip}</TooltipPopup>
+            </Tooltip>
         );
     }
     return (
@@ -244,5 +253,12 @@ export function ListRow({ visual, wide = false, badge, children }: IListRowProps
 }
 
 export function RowImage({ src, alt, title, onError, wide = false }: { src: string; alt: string; title?: string; onError: () => void; wide?: boolean }): React.ReactElement {
-    return <img src={src} alt={alt} title={title} loading="lazy" onError={onError} className={cn("w-full rounded-md bg-muted object-cover", wide ? "aspect-[5/2] sm:w-60" : "aspect-video sm:w-40")} />;
+    const img = <img src={src} alt={alt} loading="lazy" onError={onError} className={cn("w-full rounded-md bg-muted object-cover", wide ? "aspect-[5/2] sm:w-60" : "aspect-video sm:w-40")} />;
+    if (!title) return img;
+    return (
+        <Tooltip>
+            <TooltipTrigger render={img} />
+            <TooltipPopup>{title}</TooltipPopup>
+        </Tooltip>
+    );
 }

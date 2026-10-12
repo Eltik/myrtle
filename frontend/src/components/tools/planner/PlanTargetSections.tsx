@@ -38,17 +38,21 @@ export function PromotionLevelPanel({ targets }: IPromotionLevelPanelProps): Rea
                 <div className="mt-1 flex items-center gap-2">
                     {ELITE_PHASES.filter((e) => e <= maxElite).map((e) => {
                         const isReached = isEliteBelowFloor(floor, e);
+                        const icon = <img src={eliteIcon(e)} alt={t("planner.dialog.elite", { elite: e })} className="icon-theme-aware size-7 object-contain" />;
+                        // A reached phase is a disabled button, which fires no pointer events, so its tooltip trigger is a wrapping span.
                         return (
-                            <button
-                                key={e}
-                                type="button"
-                                disabled={isReached}
-                                onClick={() => changeElite(e)}
-                                className={cn("relative flex size-12 items-center justify-center rounded-lg border transition-all", isReached ? "cursor-not-allowed border-border/40 bg-muted/20 opacity-20" : cn("cursor-pointer", stepStateClass(elite === e)))}
-                                title={isReached ? t("planner.dialog.alreadyReached") : t("planner.dialog.elite", { elite: e })}
-                            >
-                                <img src={eliteIcon(e)} alt={t("planner.dialog.elite", { elite: e })} className="icon-theme-aware size-7 object-contain" />
-                            </button>
+                            <Tooltip key={e}>
+                                {isReached ? (
+                                    <TooltipTrigger render={<span className="inline-flex cursor-not-allowed" />}>
+                                        <button type="button" disabled className="relative flex size-12 cursor-not-allowed items-center justify-center rounded-lg border border-border/40 bg-muted/20 opacity-20 transition-all">
+                                            {icon}
+                                        </button>
+                                    </TooltipTrigger>
+                                ) : (
+                                    <TooltipTrigger render={<button type="button" onClick={() => changeElite(e)} className={cn("relative flex size-12 cursor-pointer items-center justify-center rounded-lg border transition-all", stepStateClass(elite === e))} />}>{icon}</TooltipTrigger>
+                                )}
+                                <TooltipPopup>{isReached ? t("planner.dialog.alreadyReached") : t("planner.dialog.elite", { elite: e })}</TooltipPopup>
+                            </Tooltip>
                         );
                     })}
                 </div>
@@ -139,7 +143,7 @@ function TargetStepButton({ isActive, lockedReason, title, sizeClassName, onSele
                 <TooltipTrigger
                     render={(props) => (
                         <span {...props} className={cn("flex shrink-0 cursor-help", sizeClassName)}>
-                            <button type="button" disabled className="flex h-full w-full cursor-help items-center justify-center rounded-md border border-border/40 bg-muted/20 opacity-20 transition-all" title={title}>
+                            <button type="button" disabled className="flex h-full w-full cursor-help items-center justify-center rounded-md border border-border/40 bg-muted/20 opacity-20 transition-all" aria-label={title}>
                                 {children}
                             </button>
                         </span>
@@ -151,9 +155,10 @@ function TargetStepButton({ isActive, lockedReason, title, sizeClassName, onSele
     }
 
     return (
-        <button type="button" onClick={onSelect} className={cn("flex shrink-0 cursor-pointer items-center justify-center rounded-md border transition-all", sizeClassName, stepStateClass(isActive))} title={title}>
-            {children}
-        </button>
+        <Tooltip>
+            <TooltipTrigger render={<button type="button" onClick={onSelect} aria-label={title} className={cn("flex shrink-0 cursor-pointer items-center justify-center rounded-md border transition-all", sizeClassName, stepStateClass(isActive))} />}>{children}</TooltipTrigger>
+            <TooltipPopup>{title}</TooltipPopup>
+        </Tooltip>
     );
 }
 

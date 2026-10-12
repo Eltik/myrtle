@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ClassIcon } from "#/components/operators/list/impl/components/Icons";
 import { Dialog, DialogPopup } from "#/components/ui/dialog";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { ITierEntryFull } from "#/lib/api/tier-lists";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -138,9 +139,12 @@ function TierHoverCard({ tier, color, totalOps, hasDescription, onOpen }: IHover
                     <>
                         <div className="flex items-center -space-x-1.5">
                             {previewOps.map((op) => (
-                                <span key={op.key} className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-popover bg-muted font-semibold text-[10px] text-foreground" title={op.name}>
-                                    <EntityAvatar entity={op} />
-                                </span>
+                                <Tooltip key={op.key}>
+                                    <TooltipTrigger render={<span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-popover bg-muted font-semibold text-[10px] text-foreground" />}>
+                                        <EntityAvatar entity={op} />
+                                    </TooltipTrigger>
+                                    <TooltipPopup>{op.name}</TooltipPopup>
+                                </Tooltip>
                             ))}
                             {remaining > 0 && <span className="flex h-7 shrink-0 items-center justify-center rounded-full border-2 border-popover bg-muted px-2 font-bold font-mono text-[10.5px] text-muted-foreground tabular-nums">+{remaining}</span>}
                         </div>
@@ -148,14 +152,13 @@ function TierHoverCard({ tier, color, totalOps, hasDescription, onOpen }: IHover
                         {stats.profession.length > 0 && (
                             <div className="flex flex-wrap items-center gap-1.5">
                                 {stats.profession.slice(0, 4).map(({ profession, professionName, count }) => (
-                                    <span
-                                        key={profession}
-                                        className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/50 px-1.5 py-1 font-sans font-semibold text-[11.5px] text-foreground leading-none"
-                                        title={t("detail.tier.classCount", { count, profession: professionLabel({ profession, professionName }) })}
-                                    >
-                                        <ClassIcon profession={profession} size={12} />
-                                        <span className="font-bold font-mono text-muted-foreground tabular-nums">{count}</span>
-                                    </span>
+                                    <Tooltip key={profession}>
+                                        <TooltipTrigger render={<span className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/50 px-1.5 py-1 font-sans font-semibold text-[11.5px] text-foreground leading-none" />}>
+                                            <ClassIcon profession={profession} size={12} />
+                                            <span className="font-bold font-mono text-muted-foreground tabular-nums">{count}</span>
+                                        </TooltipTrigger>
+                                        <TooltipPopup>{t("detail.tier.classCount", { count, profession: professionLabel({ profession, professionName }) })}</TooltipPopup>
+                                    </Tooltip>
                                 ))}
                                 {stats.profession.length > 4 && <span className="font-mono font-semibold text-[10.5px] text-muted-foreground">+{stats.profession.length - 4}</span>}
                             </div>

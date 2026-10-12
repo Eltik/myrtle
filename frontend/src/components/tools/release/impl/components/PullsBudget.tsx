@@ -6,6 +6,7 @@ import { Button } from "#/components/ui/button";
 import { Card } from "#/components/ui/card";
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
+import { Tooltip as HintTooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useAuth } from "#/hooks/use-auth";
 import { useResyncRoster } from "#/hooks/use-resync-roster";
 import { userQueryOptions } from "#/lib/api/user";
@@ -184,9 +185,12 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
                             {/* An unlabelled circular arrow beside a labelled button is a
                                 second unexplained control; it re-reads the account from the
                                 game rather than re-reading the page's copy of it. */}
-                            <Button size="sm" variant="ghost" disabled={resync.isPending} onClick={() => resync.mutate()} aria-label={t("release.pulls.resources.resync")} title={t("release.pulls.resources.resync")}>
-                                <RefreshCw className={resync.isPending ? "size-4 animate-spin" : "size-4"} />
-                            </Button>
+                            <HintTooltip>
+                                <TooltipTrigger render={<Button size="sm" variant="ghost" disabled={resync.isPending} onClick={() => resync.mutate()} aria-label={t("release.pulls.resources.resync")} />}>
+                                    <RefreshCw className={resync.isPending ? "size-4 animate-spin" : "size-4"} />
+                                </TooltipTrigger>
+                                <TooltipPopup>{t("release.pulls.resources.resync")}</TooltipPopup>
+                            </HintTooltip>
                         </div>
                     ) : (
                         <span className={HINT_TEXT}>{t("release.pulls.resources.signedOut")}</span>

@@ -1,4 +1,5 @@
 import { PieChart } from "lucide-react";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IUserScore } from "#/lib/api/user";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -34,9 +35,12 @@ export function ContributionCard({ score }: IProps) {
                 <Kicker icon={PieChart} label={t("score.contribution.title")} />
                 <div className="flex h-3 w-full overflow-hidden rounded-full border border-border/40 bg-muted/25">
                     {rows.map(({ sub, share, earned }) => (
-                        <div key={sub.key} className="relative h-full border-background/60 border-r last:border-r-0" style={{ width: `${share}%` }} title={t("score.contribution.segment", { label: t(sub.labelKey), earned: earned.toFixed(1), share: share.toFixed(1) })}>
-                            <div className="absolute inset-y-0 left-0" style={{ width: `${(earned / share) * 100}%`, background: sub.color, opacity: 0.85 }} />
-                        </div>
+                        <Tooltip key={sub.key}>
+                            <TooltipTrigger render={<div className="relative h-full border-background/60 border-r last:border-r-0" style={{ width: `${share}%` }} />}>
+                                <div className="absolute inset-y-0 left-0" style={{ width: `${(earned / share) * 100}%`, background: sub.color, opacity: 0.85 }} />
+                            </TooltipTrigger>
+                            <TooltipPopup>{t("score.contribution.segment", { label: t(sub.labelKey), earned: earned.toFixed(1), share: share.toFixed(1) })}</TooltipPopup>
+                        </Tooltip>
                     ))}
                 </div>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-3">

@@ -78,7 +78,6 @@ export function PillButton({
             aria-pressed={active}
             disabled={disabled}
             data-story-nav={hook}
-            title={compact ? undefined : label}
             onClick={onClick}
             render={render}
             className={cn("h-8 min-w-9 justify-center gap-1.5 px-1.5 text-white/85 hover:bg-white/10 hover:text-white max-sm:min-w-8 lg:px-2", TOUCH_TARGET, DARK_FOCUS, active && "bg-white/20 text-white", disabled && "pointer-events-none opacity-35", className)}
@@ -94,11 +93,13 @@ export function PillButton({
             )}
         </Button>
     );
-    if (!compact && !iconOnly) return button;
     return (
         <Tooltip>
             <TooltipTrigger render={button} />
-            <TooltipPopup side="bottom">{state ? `${label} · ${state}` : label}</TooltipPopup>
+            {/* With the label drawn (from lg, unless icon-only) the tip would only repeat it. */}
+            <TooltipPopup side="bottom" className={!compact && !iconOnly ? "lg:hidden" : undefined}>
+                {state ? `${label} · ${state}` : label}
+            </TooltipPopup>
         </Tooltip>
     );
 }
@@ -223,18 +224,24 @@ export function ReaderToolbar(p: IReaderToolbarProps): React.ReactElement {
                 {/* Playback speed, the 1x/2x half of the setting. It only exists
                     at 1024 and up, where the two pills have the room for it; the
                     slider in Settings is still the full control. */}
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    data-story-speed
-                    aria-label={t("reader.toolbar.speed")}
-                    aria-pressed={p.animateRatio === FAST_RATIO}
-                    title={t("reader.toolbar.speed")}
-                    onClick={p.onSpeed}
-                    className={cn("hidden h-8 min-w-9 justify-center px-2 font-mono text-white/85 text-xs tabular-nums hover:bg-white/10 hover:text-white lg:inline-flex", DARK_FOCUS, p.animateRatio === FAST_RATIO && "bg-white/20 text-white")}
-                >
-                    {t("settings.multiplier", { value: formatRatio(p.animateRatio) })}
-                </Button>
+                <Tooltip>
+                    <TooltipTrigger
+                        render={
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                data-story-speed
+                                aria-label={t("reader.toolbar.speed")}
+                                aria-pressed={p.animateRatio === FAST_RATIO}
+                                onClick={p.onSpeed}
+                                className={cn("hidden h-8 min-w-9 justify-center px-2 font-mono text-white/85 text-xs tabular-nums hover:bg-white/10 hover:text-white lg:inline-flex", DARK_FOCUS, p.animateRatio === FAST_RATIO && "bg-white/20 text-white")}
+                            />
+                        }
+                    >
+                        {t("settings.multiplier", { value: formatRatio(p.animateRatio) })}
+                    </TooltipTrigger>
+                    <TooltipPopup side="bottom">{t("reader.toolbar.speed")}</TooltipPopup>
+                </Tooltip>
                 <PillButton compact={compact} label={t("reader.toolbar.skip")} active={p.skipping} disabled={p.skipDisabled} hook="skip" onClick={p.onSkip}>
                     <FastForwardIcon />
                 </PillButton>

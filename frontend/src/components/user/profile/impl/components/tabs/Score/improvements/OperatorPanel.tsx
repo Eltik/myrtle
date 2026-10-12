@@ -1,6 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import { memo, useMemo, useState } from "react";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IImprovementsResponse, IOperatorGap, IScoreDimension, IUpgradeDelta } from "#/lib/api/user";
 import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -198,21 +199,24 @@ function ScoreBreakdown({ dims, accent }: { dims: IScoreDimension[] | undefined;
                     const detailKey = DIM_TOOLTIP[d.kind];
                     const titleValues = { label, share: sharePct.toFixed(1), completion: completionPct.toFixed(0), earned: earnedPct.toFixed(1) };
                     return (
-                        <div key={d.kind} className="grid grid-cols-[5.5rem_1fr_auto] items-center gap-2.5" title={detailKey ? t("score.improvements.operator.dim.rowTitleDetail", { ...titleValues, detail: t(detailKey) }) : t("score.improvements.operator.dim.rowTitle", titleValues)}>
-                            <span className={cn(TEXT_BADGE, "truncate text-muted-foreground")}>{label}</span>
-                            <div className="h-1 w-full overflow-hidden rounded-full bg-muted/40">
-                                <div
-                                    className="h-full rounded-full transition-[width] duration-500 ease-out"
-                                    style={{
-                                        width: `${completionPct}%`,
-                                        background: `linear-gradient(to right, color-mix(in oklch, ${accent} 55%, transparent), ${accent})`,
-                                    }}
-                                />
-                            </div>
-                            <span className={cn(TEXT_BADGE, "text-foreground/85")}>
-                                {earnedPct.toFixed(1)} <span className="text-muted-foreground/70">/ {sharePct.toFixed(1)}%</span>
-                            </span>
-                        </div>
+                        <Tooltip key={d.kind}>
+                            <TooltipTrigger render={<div className="grid grid-cols-[5.5rem_1fr_auto] items-center gap-2.5" />}>
+                                <span className={cn(TEXT_BADGE, "truncate text-muted-foreground")}>{label}</span>
+                                <div className="h-1 w-full overflow-hidden rounded-full bg-muted/40">
+                                    <div
+                                        className="h-full rounded-full transition-[width] duration-500 ease-out"
+                                        style={{
+                                            width: `${completionPct}%`,
+                                            background: `linear-gradient(to right, color-mix(in oklch, ${accent} 55%, transparent), ${accent})`,
+                                        }}
+                                    />
+                                </div>
+                                <span className={cn(TEXT_BADGE, "text-foreground/85")}>
+                                    {earnedPct.toFixed(1)} <span className="text-muted-foreground/70">/ {sharePct.toFixed(1)}%</span>
+                                </span>
+                            </TooltipTrigger>
+                            <TooltipPopup>{detailKey ? t("score.improvements.operator.dim.rowTitleDetail", { ...titleValues, detail: t(detailKey) }) : t("score.improvements.operator.dim.rowTitle", titleValues)}</TooltipPopup>
+                        </Tooltip>
                     );
                 })}
             </div>
@@ -248,9 +252,10 @@ function RarityBucket({ rarity, ops, defaultOpen, accent }: IBucketProps) {
                 <span className={cn(TEXT_BADGE, "text-foreground/85")}>{ops.length}</span>
                 <span className={cn(TEXT_KICKER, "text-muted-foreground/65")}>{t("score.improvements.operator.bucket.toUpgrade")}</span>
                 {bucketGain > 0.01 && (
-                    <span className={cn(TEXT_BADGE, "rounded-sm border border-border/40 bg-background px-1 py-px font-semibold tabular-nums")} style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }} title={t("score.improvements.operator.bucket.gainTitle", { rarity, gain: bucketGain.toFixed(1) })}>
-                        +{bucketGain.toFixed(1)}%
-                    </span>
+                    <Tooltip>
+                        <TooltipTrigger render={<span className={cn(TEXT_BADGE, "rounded-sm border border-border/40 bg-background px-1 py-px font-semibold tabular-nums")} style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }} />}>+{bucketGain.toFixed(1)}%</TooltipTrigger>
+                        <TooltipPopup>{t("score.improvements.operator.bucket.gainTitle", { rarity, gain: bucketGain.toFixed(1) })}</TooltipPopup>
+                    </Tooltip>
                 )}
                 <span className="ml-auto flex items-center gap-2">
                     <PreviewStrip ops={ops.slice(0, 5)} color={color} dim={open} />
@@ -324,13 +329,10 @@ const OperatorRow = memo(function OperatorRow({ op, color, accent }: { op: IOper
                         {op.name}
                     </span>
                     {subscoreGainPct >= SHOW_DELTA_THRESHOLD_PCT && (
-                        <span
-                            className={cn(TEXT_BADGE, "shrink-0 rounded-sm border border-border/40 bg-background px-1 py-px font-semibold tabular-nums")}
-                            style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }}
-                            title={t("score.improvements.operator.row.gainTitle", { name: op.name, section: subscoreGainPct.toFixed(2), overall: totalScoreGainPct.toFixed(2) })}
-                        >
-                            +{subscoreGainPct.toFixed(2)}
-                        </span>
+                        <Tooltip>
+                            <TooltipTrigger render={<span className={cn(TEXT_BADGE, "shrink-0 rounded-sm border border-border/40 bg-background px-1 py-px font-semibold tabular-nums")} style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }} />}>+{subscoreGainPct.toFixed(2)}</TooltipTrigger>
+                            <TooltipPopup>{t("score.improvements.operator.row.gainTitle", { name: op.name, section: subscoreGainPct.toFixed(2), overall: totalScoreGainPct.toFixed(2) })}</TooltipPopup>
+                        </Tooltip>
                     )}
                 </div>
                 {/* `whitespace-nowrap truncate` together prevent the char-by-char wrap and let ellipsis kick in when the card is narrow. */}
@@ -355,10 +357,13 @@ const OperatorRow = memo(function OperatorRow({ op, color, accent }: { op: IOper
                                   })
                                 : t(TAG_DESC[tag]);
                             return (
-                                <span key={tag} className={cn("rounded-sm border border-border/40 bg-background px-1 py-px font-semibold", TEXT_BADGE)} style={{ color: `color-mix(in oklch, ${color} 65%, var(--foreground))` }} title={tooltip}>
-                                    {t(TAG_LABEL[tag])}
-                                    {showNumber ? <span className="ml-1 font-mono text-muted-foreground/85">+{tagDeltaPct.toFixed(2)}</span> : <span className="ml-1 text-muted-foreground/45">·</span>}
-                                </span>
+                                <Tooltip key={tag}>
+                                    <TooltipTrigger render={<span className={cn("rounded-sm border border-border/40 bg-background px-1 py-px font-semibold", TEXT_BADGE)} style={{ color: `color-mix(in oklch, ${color} 65%, var(--foreground))` }} />}>
+                                        {t(TAG_LABEL[tag])}
+                                        {showNumber ? <span className="ml-1 font-mono text-muted-foreground/85">+{tagDeltaPct.toFixed(2)}</span> : <span className="ml-1 text-muted-foreground/45">·</span>}
+                                    </TooltipTrigger>
+                                    <TooltipPopup>{tooltip}</TooltipPopup>
+                                </Tooltip>
                             );
                         })}
                     </span>

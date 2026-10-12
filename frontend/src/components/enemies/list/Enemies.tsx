@@ -190,7 +190,7 @@ export function EnemiesList() {
                             <Tooltip>
                                 <TooltipTrigger
                                     render={
-                                        <button type="button" title={t("list.viewMode.grid")} data-on={viewMode === "grid" || undefined} onClick={() => setViewMode("grid")} aria-pressed={viewMode === "grid"}>
+                                        <button type="button" aria-label={t("list.viewMode.grid")} data-on={viewMode === "grid" || undefined} onClick={() => setViewMode("grid")} aria-pressed={viewMode === "grid"}>
                                             <LayoutGrid className="h-3.5 w-3.5" aria-hidden="true" />
                                         </button>
                                     }
@@ -202,7 +202,7 @@ export function EnemiesList() {
                             <Tooltip>
                                 <TooltipTrigger
                                     render={
-                                        <button type="button" title={t("list.viewMode.list")} data-on={viewMode === "list" || undefined} onClick={() => setViewMode("list")} aria-pressed={viewMode === "list"}>
+                                        <button type="button" aria-label={t("list.viewMode.list")} data-on={viewMode === "list" || undefined} onClick={() => setViewMode("list")} aria-pressed={viewMode === "list"}>
                                             <LayoutList className="h-3.5 w-3.5" aria-hidden="true" />
                                         </button>
                                     }
@@ -232,15 +232,23 @@ export function EnemiesList() {
                                     ))}
                                 </SelectContent>
                             </Select>
-                            <button
-                                type="button"
-                                className="inline-flex h-7.5 w-7.5 cursor-pointer appearance-none items-center justify-center rounded-md border-0 bg-transparent p-0 text-muted-foreground transition-[background-color,color] duration-150 hover:bg-secondary hover:text-foreground"
-                                title={filters.sortOrder === "asc" ? t("list.sort.asc") : t("list.sort.desc")}
-                                onClick={() => setSortOrder((filters.sortOrder === "asc" ? "desc" : "asc") as SortOrder)}
-                                aria-label={t("list.sort.toggle")}
-                            >
-                                {filters.sortOrder === "asc" ? <ArrowUp className="h-3 w-3" aria-hidden="true" /> : <ArrowDown className="h-3 w-3" aria-hidden="true" />}
-                            </button>
+                            <Tooltip>
+                                <TooltipTrigger
+                                    render={
+                                        <button
+                                            type="button"
+                                            className="inline-flex h-7.5 w-7.5 cursor-pointer appearance-none items-center justify-center rounded-md border-0 bg-transparent p-0 text-muted-foreground transition-[background-color,color] duration-150 hover:bg-secondary hover:text-foreground"
+                                            onClick={() => setSortOrder((filters.sortOrder === "asc" ? "desc" : "asc") as SortOrder)}
+                                            aria-label={t("list.sort.toggle")}
+                                        />
+                                    }
+                                >
+                                    {filters.sortOrder === "asc" ? <ArrowUp className="h-3 w-3" aria-hidden="true" /> : <ArrowDown className="h-3 w-3" aria-hidden="true" />}
+                                </TooltipTrigger>
+                                <TooltipPopup side="top" sideOffset={8}>
+                                    {filters.sortOrder === "asc" ? t("list.sort.asc") : t("list.sort.desc")}
+                                </TooltipPopup>
+                            </Tooltip>
                         </div>
 
                         <div className="inline-flex h-9.5 items-center rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_50%,transparent)] p-0.75">

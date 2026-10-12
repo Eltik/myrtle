@@ -22,6 +22,7 @@ import { Input } from "#/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Slider } from "#/components/ui/slider";
 import { Switch } from "#/components/ui/switch";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { applyReadingStyle, CUTSCENE_PLAYERS, type CutscenePlayer, clampBoxPosition, DEFAULT_NICKNAME, NICKNAME_MAX, READING_STYLES, type ReadingPreset, readingStyleOf, SPEAKER_TINTS, type SpeakerTint, type StorySettings, sliderValue } from "#/lib/story/settings";
@@ -161,36 +162,53 @@ export function SettingsDialog({ open, onOpenChange, settings, onChange, onExpor
                         <SettingsFont open={open} settings={settings} onChange={onChange} apply={apply} />
                         <Row label={t("settings.textColor")} hint={t("settings.textColorHint")}>
                             <div className="flex flex-wrap items-center gap-1.5">
-                                <button
-                                    type="button"
-                                    aria-label={t("settings.textColor.default")}
-                                    title={t("settings.textColor.default")}
-                                    aria-pressed={settings.textColor === ""}
-                                    onClick={() => set("textColor", "")}
-                                    className={cn("size-7 rounded-full border bg-linear-to-br from-white to-neutral-900 max-sm:size-11", settings.textColor === "" && "ring-2 ring-ring ring-offset-2 ring-offset-background")}
-                                />
-                                {TEXT_SWATCHES.map((sw, i) => (
-                                    <button
-                                        key={sw.id}
-                                        type="button"
-                                        data-story-swatch={sw.id}
-                                        aria-label={t("settings.textColor.swatch", { number: i + 1 })}
-                                        title={t("settings.textColor.swatch", { number: i + 1 })}
-                                        aria-pressed={settings.textColor === sw.id}
-                                        onClick={() => set("textColor", sw.id)}
-                                        className={cn("size-7 rounded-full border border-black/20 max-sm:size-11", settings.textColor === sw.id && "ring-2 ring-ring ring-offset-2 ring-offset-background")}
-                                        style={{ backgroundColor: swatchColor(sw, settings.lightBox) }}
+                                <Tooltip>
+                                    <TooltipTrigger
+                                        render={
+                                            <button
+                                                type="button"
+                                                aria-label={t("settings.textColor.default")}
+                                                aria-pressed={settings.textColor === ""}
+                                                onClick={() => set("textColor", "")}
+                                                className={cn("size-7 rounded-full border bg-linear-to-br from-white to-neutral-900 max-sm:size-11", settings.textColor === "" && "ring-2 ring-ring ring-offset-2 ring-offset-background")}
+                                            />
+                                        }
                                     />
+                                    <TooltipPopup>{t("settings.textColor.default")}</TooltipPopup>
+                                </Tooltip>
+                                {TEXT_SWATCHES.map((sw, i) => (
+                                    <Tooltip key={sw.id}>
+                                        <TooltipTrigger
+                                            render={
+                                                <button
+                                                    type="button"
+                                                    data-story-swatch={sw.id}
+                                                    aria-label={t("settings.textColor.swatch", { number: i + 1 })}
+                                                    aria-pressed={settings.textColor === sw.id}
+                                                    onClick={() => set("textColor", sw.id)}
+                                                    className={cn("size-7 rounded-full border border-black/20 max-sm:size-11", settings.textColor === sw.id && "ring-2 ring-ring ring-offset-2 ring-offset-background")}
+                                                    style={{ backgroundColor: swatchColor(sw, settings.lightBox) }}
+                                                />
+                                            }
+                                        />
+                                        <TooltipPopup>{t("settings.textColor.swatch", { number: i + 1 })}</TooltipPopup>
+                                    </Tooltip>
                                 ))}
-                                <input
-                                    type="color"
-                                    aria-label={t("settings.textColor.custom")}
-                                    title={t("settings.textColor.custom")}
-                                    data-story-color-input
-                                    value={isHexColor(settings.textColor) ? settings.textColor : swatchColor(TEXT_SWATCHES[0], settings.lightBox)}
-                                    onChange={(e) => set("textColor", e.target.value)}
-                                    className="size-7 cursor-pointer rounded-full border bg-transparent p-0 max-sm:size-11"
-                                />
+                                <Tooltip>
+                                    <TooltipTrigger
+                                        render={
+                                            <input
+                                                type="color"
+                                                aria-label={t("settings.textColor.custom")}
+                                                data-story-color-input
+                                                value={isHexColor(settings.textColor) ? settings.textColor : swatchColor(TEXT_SWATCHES[0], settings.lightBox)}
+                                                onChange={(e) => set("textColor", e.target.value)}
+                                                className="size-7 cursor-pointer rounded-full border bg-transparent p-0 max-sm:size-11"
+                                            />
+                                        }
+                                    />
+                                    <TooltipPopup>{t("settings.textColor.custom")}</TooltipPopup>
+                                </Tooltip>
                             </div>
                         </Row>
                         <Row label={t("settings.speakerTint")} hint={t("settings.speakerTintHint")}>

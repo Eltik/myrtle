@@ -4,6 +4,7 @@ import { type KeyboardEvent, type PointerEvent, useRef } from "react";
 import { entityAccent } from "#/components/tier-lists/entities";
 import { useEntityLabels } from "#/components/tier-lists/kinds";
 import { Dialog, DialogBackdrop, DialogDescription, DialogPortal, DialogPrimitive, DialogTitle } from "#/components/ui/dialog";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
@@ -117,14 +118,20 @@ function ViewerContent({ t, cell, index, cols, order, prev, next, onGo, onPointe
     const place = order.indexOf(index);
 
     const prevButton = (
-        <button type="button" className={NAV_BUTTON} onClick={() => onGo(prev)} disabled={prev === null} aria-label={t("viewer.prev")} title={t("viewer.prev")}>
-            <ChevronLeftIcon className="size-5" aria-hidden="true" />
-        </button>
+        <Tooltip>
+            <TooltipTrigger render={<button type="button" className={NAV_BUTTON} onClick={() => onGo(prev)} disabled={prev === null} aria-label={t("viewer.prev")} />}>
+                <ChevronLeftIcon className="size-5" aria-hidden="true" />
+            </TooltipTrigger>
+            <TooltipPopup>{t("viewer.prev")}</TooltipPopup>
+        </Tooltip>
     );
     const nextButton = (
-        <button type="button" className={NAV_BUTTON} onClick={() => onGo(next)} disabled={next === null} aria-label={t("viewer.next")} title={t("viewer.next")}>
-            <ChevronRightIcon className="size-5" aria-hidden="true" />
-        </button>
+        <Tooltip>
+            <TooltipTrigger render={<button type="button" className={NAV_BUTTON} onClick={() => onGo(next)} disabled={next === null} aria-label={t("viewer.next")} />}>
+                <ChevronRightIcon className="size-5" aria-hidden="true" />
+            </TooltipTrigger>
+            <TooltipPopup>{t("viewer.next")}</TooltipPopup>
+        </Tooltip>
     );
 
     return (

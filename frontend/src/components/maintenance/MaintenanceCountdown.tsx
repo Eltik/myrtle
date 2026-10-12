@@ -1,4 +1,5 @@
 import { WrenchIcon } from "lucide-react";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { type IMaintenanceState, useMaintenance } from "#/hooks/use-maintenance";
 import { useTheme } from "#/hooks/use-theme";
 import { useT } from "#/lib/i18n";
@@ -42,18 +43,26 @@ export function MaintenancePill() {
     if (!m || !maintenanceCountdown) return null;
     const label = shortLabel(m, t);
     return (
-        <a
-            href={m.window.notice_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            title={label}
-            aria-label={`${label}. ${t("maintenance.pillLabel")}`}
-            className="relative inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-border bg-muted/60 px-2 font-medium text-[12px] text-foreground tabular-nums no-underline transition-colors pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:-inset-y-1.5 hover:bg-muted"
-        >
-            <WrenchIcon className="size-3.5 text-muted-foreground" aria-hidden="true" />
-            <StatusDot down={isGameDown(m.stage)} />
-            <span className="hidden whitespace-nowrap md:inline">{label}</span>
-        </a>
+        <Tooltip>
+            <TooltipTrigger
+                render={
+                    // biome-ignore lint/a11y/useAnchorContent: the content arrives as TooltipTrigger children, and the aria-label names it
+                    <a
+                        href={m.window.notice_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${label}. ${t("maintenance.pillLabel")}`}
+                        className="relative inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-border bg-muted/60 px-2 font-medium text-[12px] text-foreground tabular-nums no-underline transition-colors pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:-inset-y-1.5 hover:bg-muted"
+                    />
+                }
+            >
+                <WrenchIcon className="size-3.5 text-muted-foreground" aria-hidden="true" />
+                <StatusDot down={isGameDown(m.stage)} />
+                <span className="hidden whitespace-nowrap md:inline">{label}</span>
+            </TooltipTrigger>
+            {/* The pill shows the label itself from md up; below that it is icon-only. */}
+            <TooltipPopup className="md:hidden">{label}</TooltipPopup>
+        </Tooltip>
     );
 }
 

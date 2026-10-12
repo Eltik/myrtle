@@ -5,6 +5,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { SearchField } from "#/components/SearchField";
 import { Button } from "#/components/ui/button";
 import { Sheet, SheetHeader, SheetPanel, SheetPopup, SheetTitle } from "#/components/ui/sheet";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { archiveNetworkQueryOptions } from "#/lib/api/archives";
 import { useFormatters, useGamedataServer } from "#/lib/i18n";
 import { searchAndRank } from "#/lib/search/fuzzy";
@@ -195,35 +196,63 @@ function Network({ data, chart, onChart, onOpenFile, server, t }: INetworkTabPro
                 </div>
                 <div className="pointer-events-auto flex items-center gap-1.5">
                     {group ? (
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="bg-background/85 backdrop-blur"
-                            onClick={() => {
-                                leaveFullscreen();
-                                setRosters(true);
-                            }}
-                            title={t("network.rostersHint")}
-                        >
-                            <UsersIcon aria-hidden className="size-3.5" />
-                            {t("network.rosters")}
-                        </Button>
+                        <Tooltip>
+                            <TooltipTrigger
+                                render={
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="bg-background/85 backdrop-blur"
+                                        onClick={() => {
+                                            leaveFullscreen();
+                                            setRosters(true);
+                                        }}
+                                    />
+                                }
+                            >
+                                <UsersIcon aria-hidden className="size-3.5" />
+                                {t("network.rosters")}
+                            </TooltipTrigger>
+                            <TooltipPopup side="bottom" portalProps={{ container: wrapRef }}>
+                                {t("network.rostersHint")}
+                            </TooltipPopup>
+                        </Tooltip>
                     ) : null}
                     <div className="flex items-center rounded-md border border-border bg-background/85 backdrop-blur">
-                        <Button size="icon-xs" variant="ghost" aria-label={t("network.zoomOut")} title={t("network.zoomOut")} onClick={() => panRef.current?.zoomBy(1.25)}>
-                            <MinusIcon aria-hidden />
-                        </Button>
+                        <Tooltip>
+                            <TooltipTrigger render={<Button size="icon-xs" variant="ghost" aria-label={t("network.zoomOut")} onClick={() => panRef.current?.zoomBy(1.25)} />}>
+                                <MinusIcon aria-hidden />
+                            </TooltipTrigger>
+                            <TooltipPopup side="bottom" portalProps={{ container: wrapRef }}>
+                                {t("network.zoomOut")}
+                            </TooltipPopup>
+                        </Tooltip>
                         <span className="min-w-12 text-center font-mono text-[11px] text-foreground tabular-nums">{f.percent(zoom)}</span>
-                        <Button size="icon-xs" variant="ghost" aria-label={t("network.zoomIn")} title={t("network.zoomIn")} onClick={() => panRef.current?.zoomBy(0.8)}>
-                            <PlusIcon aria-hidden />
-                        </Button>
+                        <Tooltip>
+                            <TooltipTrigger render={<Button size="icon-xs" variant="ghost" aria-label={t("network.zoomIn")} onClick={() => panRef.current?.zoomBy(0.8)} />}>
+                                <PlusIcon aria-hidden />
+                            </TooltipTrigger>
+                            <TooltipPopup side="bottom" portalProps={{ container: wrapRef }}>
+                                {t("network.zoomIn")}
+                            </TooltipPopup>
+                        </Tooltip>
                     </div>
-                    <Button size="icon-sm" variant="outline" className="bg-background/85 backdrop-blur" aria-label={t("network.fit")} title={t("network.fit")} onClick={() => panRef.current?.fit()}>
-                        <LocateFixedIcon aria-hidden />
-                    </Button>
-                    <Button size="icon-sm" variant="outline" className="bg-background/85 backdrop-blur" aria-label={fullscreen ? t("network.exitFullscreen") : t("network.fullscreen")} title={fullscreen ? t("network.exitFullscreen") : t("network.fullscreen")} onClick={toggleFullscreen}>
-                        {fullscreen ? <MinimizeIcon aria-hidden /> : <MaximizeIcon aria-hidden />}
-                    </Button>
+                    <Tooltip>
+                        <TooltipTrigger render={<Button size="icon-sm" variant="outline" className="bg-background/85 backdrop-blur" aria-label={t("network.fit")} onClick={() => panRef.current?.fit()} />}>
+                            <LocateFixedIcon aria-hidden />
+                        </TooltipTrigger>
+                        <TooltipPopup side="bottom" portalProps={{ container: wrapRef }}>
+                            {t("network.fit")}
+                        </TooltipPopup>
+                    </Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger render={<Button size="icon-sm" variant="outline" className="bg-background/85 backdrop-blur" aria-label={fullscreen ? t("network.exitFullscreen") : t("network.fullscreen")} onClick={toggleFullscreen} />}>
+                            {fullscreen ? <MinimizeIcon aria-hidden /> : <MaximizeIcon aria-hidden />}
+                        </TooltipTrigger>
+                        <TooltipPopup side="bottom" portalProps={{ container: wrapRef }}>
+                            {fullscreen ? t("network.exitFullscreen") : t("network.fullscreen")}
+                        </TooltipPopup>
+                    </Tooltip>
                 </div>
             </div>
 

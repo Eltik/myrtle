@@ -1,5 +1,6 @@
 import type * as React from "react";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { cn } from "#/lib/utils";
 import { operatorRarity, rarityVar } from "../helpers";
 import type { IBirthdayOperator } from "../types";
@@ -22,12 +23,18 @@ interface IOpChipProps {
 /** Rarity-tinted operator tile: shows the portrait once loaded, else the operator's initial. */
 export function OpChip({ operator, size = "default", className }: IOpChipProps): React.ReactElement {
     return (
-        <span
-            className={cn("relative inline-flex shrink-0 items-center justify-center overflow-hidden font-bold font-sans text-white leading-none tracking-[-0.01em] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.25),inset_0_-1px_0_rgba(0,0,0,0.2)]", SIZE_CLASS[size], className)}
-            style={{ backgroundColor: rarityVar(operatorRarity(operator)) }}
-            title={operator.name}
-        >
-            <OperatorAvatar charId={operator.id} name={operator.name} />
-        </span>
+        <Tooltip>
+            <TooltipTrigger
+                render={
+                    <span
+                        className={cn("relative inline-flex shrink-0 items-center justify-center overflow-hidden font-bold font-sans text-white leading-none tracking-[-0.01em] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.25),inset_0_-1px_0_rgba(0,0,0,0.2)]", SIZE_CLASS[size], className)}
+                        style={{ backgroundColor: rarityVar(operatorRarity(operator)) }}
+                    />
+                }
+            >
+                <OperatorAvatar charId={operator.id} name={operator.name} />
+            </TooltipTrigger>
+            <TooltipPopup>{operator.name}</TooltipPopup>
+        </Tooltip>
     );
 }

@@ -3,6 +3,7 @@ import { ListChecks, RotateCcw, X } from "lucide-react";
 import * as React from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useAuth } from "#/hooks/use-auth";
 import { useResyncRoster } from "#/hooks/use-resync-roster";
 import { userSkinsQueryOptions } from "#/lib/api/skins";
@@ -284,24 +285,32 @@ function EventDetail({ row, state, clears, hidden, total, today, lookup, onPick,
                         <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
                             {t("release.planner.stages.income", { income, potential })} <OpIcon className="size-3.5" />
                         </span>
-                        {onRecord > 0 && (
-                            <span className="font-sans text-[11px] text-muted-foreground" title={tally.unknown > 0 ? t("release.planner.stages.unknownTitle", { count: tally.unknown }) : undefined}>
-                                {[
+                        {onRecord > 0 &&
+                            (() => {
+                                const tallyText = [
                                     tally.claimed > 0 && t("release.planner.stages.claimed", { count: tally.claimed }),
                                     tally.open > 0 && (row.ended ? t("release.planner.stages.missed", { count: tally.open }) : t("release.planner.stages.open", { count: tally.open })),
                                     tally.unrated > 0 && t("release.planner.stages.unrated", { count: tally.unrated }),
                                     tally.unknown > 0 && t("release.planner.stages.unknown", { count: tally.unknown }),
                                 ]
                                     .filter(Boolean)
-                                    .join(t("release.planner.stages.tallyJoin"))}
-                            </span>
-                        )}
+                                    .join(t("release.planner.stages.tallyJoin"));
+                                return tally.unknown > 0 ? (
+                                    <Tooltip>
+                                        <TooltipTrigger render={<span className="cursor-help font-sans text-[11px] text-muted-foreground" />}>{tallyText}</TooltipTrigger>
+                                        <TooltipPopup className="max-w-xs">{t("release.planner.stages.unknownTitle", { count: tally.unknown })}</TooltipPopup>
+                                    </Tooltip>
+                                ) : (
+                                    <span className="font-sans text-[11px] text-muted-foreground">{tallyText}</span>
+                                );
+                            })()}
                         {row.ended ? (
                             <span className="font-sans text-[11.5px] text-muted-foreground">{t("release.planner.stages.ended")}</span>
                         ) : deviates ? (
-                            <button type="button" onClick={() => onResetStages(row)} title={clears ? t("release.planner.stages.resetAccount") : t("release.planner.stages.resetDefaults")} className="cursor-pointer font-sans text-[11.5px] text-primary hover:underline">
-                                {t("release.planner.stages.resetAll")}
-                            </button>
+                            <Tooltip>
+                                <TooltipTrigger render={<button type="button" onClick={() => onResetStages(row)} className="cursor-pointer font-sans text-[11.5px] text-primary hover:underline" />}>{t("release.planner.stages.resetAll")}</TooltipTrigger>
+                                <TooltipPopup>{clears ? t("release.planner.stages.resetAccount") : t("release.planner.stages.resetDefaults")}</TooltipPopup>
+                            </Tooltip>
                         ) : (
                             <button type="button" onClick={() => onAllStages(row, !allOn)} className="cursor-pointer font-sans text-[11.5px] text-primary hover:underline">
                                 {allOn ? t("release.planner.stages.clearAll") : t("release.planner.stages.selectAll")}
@@ -314,14 +323,13 @@ function EventDetail({ row, state, clears, hidden, total, today, lookup, onPick,
                             const status = stageStatus(st, clears);
                             const missed = row.ended && status !== "claimed";
                             const titleKey = missed ? "release.planner.status.ended" : STATUS_TITLE_KEYS[status];
-                            return (
+                            const stageButton = (
                                 <button
                                     key={stageKey(st)}
                                     type="button"
                                     aria-pressed={on}
                                     disabled={row.ended}
                                     onClick={() => onStage(row, stageKey(st), !on)}
-                                    title={titleKey ? t(titleKey) : undefined}
                                     className={cn(
                                         "inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-2 py-1 font-mono text-[11px] transition-colors disabled:cursor-default",
                                         on ? "border-primary/50 bg-primary/10 text-foreground" : "border-border/60 bg-muted/30 text-muted-foreground",
@@ -334,6 +342,15 @@ function EventDetail({ row, state, clears, hidden, total, today, lookup, onPick,
                                     {st.challenge ? t("release.planner.stages.cm") : ""}
                                     {st.op !== 1 ? t("release.planner.stages.multiplier", { count: st.op }) : ""}
                                 </button>
+                            );
+                            // The trigger is a wrapping span: an ended event disables the button, and a disabled button fires no pointer events.
+                            return titleKey ? (
+                                <Tooltip key={stageKey(st)}>
+                                    <TooltipTrigger render={<span className="inline-flex" />}>{stageButton}</TooltipTrigger>
+                                    <TooltipPopup className="max-w-xs">{t(titleKey)}</TooltipPopup>
+                                </Tooltip>
+                            ) : (
+                                <React.Fragment key={stageKey(st)}>{stageButton}</React.Fragment>
                             );
                         })}
                     </div>
@@ -440,9 +457,12 @@ function SummarySkin({ skin, lookup, autoOn, onRemove, removeLabel }: { skin: IP
                 <span className="truncate font-sans text-[11.5px] text-muted-foreground">{skinName}</span>
             </span>
             <Op value={skin.price.price} className="shrink-0 text-[11.5px] text-foreground" />
-            <button type="button" onClick={() => onRemove(skin)} aria-label={removeLabel} title={removeLabel} className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
-                <X className="size-3.5" aria-hidden="true" />
-            </button>
+            <Tooltip>
+                <TooltipTrigger render={<button type="button" onClick={() => onRemove(skin)} aria-label={removeLabel} className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground" />}>
+                    <X className="size-3.5" aria-hidden="true" />
+                </TooltipTrigger>
+                <TooltipPopup>{removeLabel}</TooltipPopup>
+            </Tooltip>
         </li>
     );
 }

@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart } from "recharts";
 import { Button } from "#/components/ui/button";
 import { Sheet, SheetDescription, SheetHeader, SheetPanel, SheetPopup, SheetTitle } from "#/components/ui/sheet";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { archiveOperatorQueryOptions } from "#/lib/api/archives";
 import { useFormatters, useGamedataServer } from "#/lib/i18n";
 import { themeStore } from "#/lib/theme/store";
@@ -202,10 +203,13 @@ function FileBody({ op, t, server, onOpenFile, onOpenChart, fromDossiers }: { op
                             {stories.map((a) => (
                                 <li key={a.storyId} className="contents">
                                     <span className="font-mono text-muted-foreground tabular-nums">{a.code ?? ""}</span>
-                                    <span className="truncate text-foreground" title={`${a.groupName}: ${a.name}${a.tag ? ` (${a.tag})` : ""}`}>
-                                        {a.name}
-                                        {a.tag ? <span className="text-muted-foreground"> · {a.tag}</span> : null}
-                                    </span>
+                                    <Tooltip>
+                                        <TooltipTrigger render={<span className="truncate text-foreground" />}>
+                                            {a.name}
+                                            {a.tag ? <span className="text-muted-foreground"> · {a.tag}</span> : null}
+                                        </TooltipTrigger>
+                                        <TooltipPopup>{`${a.groupName}: ${a.name}${a.tag ? ` (${a.tag})` : ""}`}</TooltipPopup>
+                                    </Tooltip>
                                 </li>
                             ))}
                         </ul>

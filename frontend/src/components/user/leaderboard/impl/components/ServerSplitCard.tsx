@@ -1,3 +1,4 @@
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IServerShare } from "#/lib/api/user";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -30,7 +31,12 @@ export function ServerSplitCard({ shares }: { shares: IServerShare[] }) {
                     SERVERS.map((code) => {
                         const count = byServer.get(code) ?? 0;
                         const pct = (count / total) * 100;
-                        return <span key={code} title={`${code}: ${count}`} className="block h-full" style={{ width: `${pct}%`, background: SERVER_BAR_COLORS[code] }} />;
+                        return (
+                            <Tooltip key={code}>
+                                <TooltipTrigger render={<span className="block h-full" style={{ width: `${pct}%`, background: SERVER_BAR_COLORS[code] }} />} />
+                                <TooltipPopup>{`${code}: ${count}`}</TooltipPopup>
+                            </Tooltip>
+                        );
                     })
                 )}
             </div>

@@ -3,6 +3,7 @@ import * as React from "react";
 
 import { Checkbox } from "#/components/ui/checkbox";
 import { Skeleton } from "#/components/ui/skeleton";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IOperatorPlanResponse, IPlanGroup } from "#/lib/api/planner";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -132,16 +133,22 @@ function GroupCard({ group, plans, isSelected, isFilterEngaged, isExpanded, onTo
                     <span className="font-semibold text-foreground text-sm">{group.name}</span>
                 </div>
                 <div className="flex items-center gap-1">
-                    <button
-                        type="button"
-                        aria-label={pinLabel}
-                        aria-pressed={group.pinned}
-                        title={pinLabel}
-                        onClick={onTogglePin}
-                        className={cn(iconButton, group.pinned ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/15" : "border-border bg-muted/40 text-muted-foreground hover:border-border/80 hover:bg-muted hover:text-foreground")}
-                    >
-                        <Pin className={cn("size-3.5", group.pinned && "fill-current")} />
-                    </button>
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <button
+                                    type="button"
+                                    aria-label={pinLabel}
+                                    aria-pressed={group.pinned}
+                                    onClick={onTogglePin}
+                                    className={cn(iconButton, group.pinned ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/15" : "border-border bg-muted/40 text-muted-foreground hover:border-border/80 hover:bg-muted hover:text-foreground")}
+                                />
+                            }
+                        >
+                            <Pin className={cn("size-3.5", group.pinned && "fill-current")} />
+                        </TooltipTrigger>
+                        <TooltipPopup>{pinLabel}</TooltipPopup>
+                    </Tooltip>
                     <button type="button" onClick={onToggleExpanded} className={cn(iconButton, neutralButton)}>
                         <ChevronDown className={cn("size-3.5 transition-transform", isExpanded && "rotate-180")} />
                     </button>

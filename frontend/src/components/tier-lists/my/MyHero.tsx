@@ -1,6 +1,7 @@
 import { PlusIcon } from "lucide-react";
 import { Button } from "#/components/ui/button";
 import { Kicker } from "#/components/ui/kicker";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { type TypedRichT, useFormatters, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { messages } from "./MyHero.messages";
@@ -47,10 +48,16 @@ export function MyHero({ total, communityCount, communityQuota, officialCount, t
                     <p className="mt-2 max-w-130 font-sans text-muted-foreground text-sm leading-relaxed">{total > 0 ? rt("my.hero.blurb", { total: <span className="font-mono text-foreground tabular-nums">{f.number(total)}</span>, count: total }) : t("my.hero.blurbEmpty")}</p>
                 </div>
 
-                <Button onClick={onCreate} disabled={atQuota} title={atQuota ? t("my.hero.quotaReached", { max: communityQuota }) : undefined}>
-                    <PlusIcon />
-                    <span>{t("my.hero.create")}</span>
-                </Button>
+                {/* The span takes the hover: a disabled button fires no pointer events. */}
+                <Tooltip disabled={!atQuota}>
+                    <TooltipTrigger render={<span className="inline-flex" />}>
+                        <Button onClick={onCreate} disabled={atQuota}>
+                            <PlusIcon />
+                            <span>{t("my.hero.create")}</span>
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipPopup>{t("my.hero.quotaReached", { max: communityQuota })}</TooltipPopup>
+                </Tooltip>
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">

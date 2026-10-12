@@ -2,6 +2,7 @@ import { Search } from "lucide-react";
 import type * as React from "react";
 import { asset } from "#/components/operators/detail/impl/assets";
 import { ClassIcon } from "#/components/operators/list/impl/components/Icons";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, parseOperatorName, rarityToNumber } from "#/lib/utils";
@@ -69,24 +70,25 @@ export function SkinCard({ skin, on, lookup, onPick }: { skin: IPlanSkin; on: bo
     const skinName = resolveName(skin.skinName, skin.skinNameEn, skin.skinNameAuto, autoOn).text;
     return (
         <div className={cn(styles.card, on && styles.selected)} style={cardVars(skin.colors)}>
-            <button
-                type="button"
-                aria-pressed={on}
-                aria-label={on ? t("release.card.remove", { operator: opName, skin: skinName }) : t("release.card.add", { operator: opName, skin: skinName })}
-                title={t("release.card.title", { operator: opName, skin: skinName })}
-                onClick={() => onPick(skin, !on)}
-                className="absolute inset-0 z-2 cursor-pointer bg-transparent"
-            />
+            <Tooltip>
+                <TooltipTrigger
+                    render={<button type="button" aria-pressed={on} aria-label={on ? t("release.card.remove", { operator: opName, skin: skinName }) : t("release.card.add", { operator: opName, skin: skinName })} onClick={() => onPick(skin, !on)} className="absolute inset-0 z-2 cursor-pointer bg-transparent" />}
+                />
+                <TooltipPopup>{t("release.card.title", { operator: opName, skin: skinName })}</TooltipPopup>
+            </Tooltip>
             {art.src ? <img src={art.src} alt="" loading="lazy" onError={art.onError} className={styles.portrait} /> : <span className={cn(styles.portrait, "flex items-center justify-center font-bold text-[40px] text-white/30")}>{opName.charAt(0)}</span>}
             <span className={styles.shine} />
-            <span className={styles.price} title={priceTitle(skin.price, t)}>
-                <span className={cn(styles.priceNumber, !skin.price.store && styles.priceLabel)}>{skin.price.store ? skin.price.price : obtainShort(skin.price.obtain, t)}</span>
-                {entry && (
-                    <span className={styles.priceClass}>
-                        <ClassIcon profession={entry.profession} size={28} />
-                    </span>
-                )}
-            </span>
+            <Tooltip>
+                <TooltipTrigger render={<span className={styles.price} />}>
+                    <span className={cn(styles.priceNumber, !skin.price.store && styles.priceLabel)}>{skin.price.store ? skin.price.price : obtainShort(skin.price.obtain, t)}</span>
+                    {entry && (
+                        <span className={styles.priceClass}>
+                            <ClassIcon profession={entry.profession} size={28} />
+                        </span>
+                    )}
+                </TooltipTrigger>
+                <TooltipPopup>{priceTitle(skin.price, t)}</TooltipPopup>
+            </Tooltip>
             {rarity > 0 && <span className={styles.stars}>{"★".repeat(rarity)}</span>}
             <button
                 type="button"

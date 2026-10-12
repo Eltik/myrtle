@@ -6,6 +6,7 @@ import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Dialog, DialogPopup, DialogTitle } from "#/components/ui/dialog";
 import { Skeleton } from "#/components/ui/skeleton";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useLastDefined } from "#/hooks/use-last-defined";
 import { useMediaQuery } from "#/hooks/use-media-query";
 import { sirenAlbumQueryOptions } from "#/lib/api/music";
@@ -205,9 +206,10 @@ function ShareButton({ cid, name }: { cid: string; name: string }): React.ReactE
     };
     const label = copied ? t("music.album.copied") : t("music.album.copyLink");
     return (
-        <Button size="icon" variant="outline" className="max-sm:size-11" onClick={onClick} aria-label={label} title={label}>
-            {copied ? <CheckIcon aria-hidden="true" /> : <LinkIcon aria-hidden="true" />}
-        </Button>
+        <Tooltip>
+            <TooltipTrigger render={<Button size="icon" variant="outline" className="max-sm:size-11" onClick={onClick} aria-label={label} />}>{copied ? <CheckIcon aria-hidden="true" /> : <LinkIcon aria-hidden="true" />}</TooltipTrigger>
+            <TooltipPopup>{label}</TooltipPopup>
+        </Tooltip>
     );
 }
 
@@ -249,9 +251,12 @@ const AlbumTrack = memo(function AlbumTrack({ track, index, tracks, source, hous
                     </Badge>
                 ) : null}
                 {track.hasLyrics ? (
-                    <span title={t("music.list.hasLyrics")} className="inline-flex shrink-0">
-                        <MicIcon className="size-3 text-muted-foreground" aria-label={t("music.list.hasLyrics")} />
-                    </span>
+                    <Tooltip>
+                        <TooltipTrigger render={<span className="inline-flex shrink-0" />}>
+                            <MicIcon className="size-3 text-muted-foreground" aria-label={t("music.list.hasLyrics")} />
+                        </TooltipTrigger>
+                        <TooltipPopup>{t("music.list.hasLyrics")}</TooltipPopup>
+                    </Tooltip>
                 ) : null}
             </button>
             <span className="flex shrink-0 items-center gap-0.5 transition-opacity sm:opacity-0 sm:group-hover/track:opacity-100 sm:group-focus-within/track:opacity-100">

@@ -1,3 +1,4 @@
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IClientGachaRecords, IGachaItem } from "#/lib/api/gacha";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -85,7 +86,12 @@ export function HistoryKpiStrip({ records, isLoading }: IHistoryKpiStripProps) {
                 meta={
                     <>
                         <span>{t("history.kpi.bannerTypes", { count: bannerTypeCount })}</span>
-                        {total > 0 ? <span title={orundumTitle}>{t("history.kpi.orundum", { count: f.number(orundum) })}</span> : null}
+                        {total > 0 ? (
+                            <Tooltip>
+                                <TooltipTrigger render={<span />}>{t("history.kpi.orundum", { count: f.number(orundum) })}</TooltipTrigger>
+                                <TooltipPopup className="max-w-72">{orundumTitle}</TooltipPopup>
+                            </Tooltip>
+                        ) : null}
                     </>
                 }
             />

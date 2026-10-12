@@ -2,6 +2,7 @@ import { ChevronRightIcon, PauseIcon, PlayIcon } from "lucide-react";
 import type React from "react";
 import { memo, useMemo } from "react";
 import { asset } from "#/components/operators/detail/impl/assets";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useMediaQuery } from "#/hooks/use-media-query";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -167,9 +168,14 @@ export const GroupCard = memo(function GroupCard({ group, fraction, onOpen, inde
                     <span aria-hidden="true" className={styles.stub}>
                         <span className={cn(styles.half, styles.stubFace)}>{art ? <img src={art} alt="" crossOrigin="anonymous" loading="lazy" decoding="async" className={styles.stubImage} /> : <span className={styles.stubBlank} style={NO_ART_INK} />}</span>
                     </span>
-                    {/* role="img" + title give the colour a name; the card's aria-label
+                    {/* role="img" + the tooltip give the colour a name; the card's aria-label
                         already carries the fraction, so no extra tab stop. */}
-                    {pct > 0 ? <span role="img" aria-label={t("chapter.readFraction", { read: fraction.read, total: fraction.total })} title={t("chapter.readFraction", { read: fraction.read, total: fraction.total })} className={cn(styles.bookmark, fraction.done && styles.bookmarkDone)} /> : null}
+                    {pct > 0 ? (
+                        <Tooltip>
+                            <TooltipTrigger render={<span role="img" aria-label={t("chapter.readFraction", { read: fraction.read, total: fraction.total })} className={cn(styles.bookmark, fraction.done && styles.bookmarkDone)} />} />
+                            <TooltipPopup>{t("chapter.readFraction", { read: fraction.read, total: fraction.total })}</TooltipPopup>
+                        </Tooltip>
+                    ) : null}
                 </span>
                 <span className={styles.spec}>
                     <InkDot art={art} />

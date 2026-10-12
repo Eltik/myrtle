@@ -6,6 +6,7 @@ import { Card } from "#/components/ui/card";
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Input } from "#/components/ui/input";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { releaseEventsQueryOptions } from "#/lib/api/release";
 import { useFormatters, useLocale, useT } from "#/lib/i18n";
 import { cn, getAvatarById, rarityToNumber } from "#/lib/utils";
@@ -408,39 +409,33 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onPreset, onSet
                             is (bank, bonus copy, guarantee): bare numbers read as random stats. */}
                         <span className="inline-flex items-center gap-1">
                             <span className="font-sans text-[11.5px] text-muted-foreground uppercase tracking-[0.06em]">{t("release.pulls.plan.setTo")}</span>
-                            <Button size="sm" variant="outline" className="h-7 px-2 font-mono text-[12px]" onClick={() => onPreset(row.key, targets.max)} disabled={targets.max === 0} aria-label={t("release.pulls.plan.max")} title={t("release.pulls.plan.maxTitle", { count: f.number(targets.max) })}>
-                                {t("release.pulls.plan.maxLabel", { count: f.number(targets.max) })}
-                            </Button>
+                            <Tooltip>
+                                <TooltipTrigger render={<Button size="sm" variant="outline" className="h-7 px-2 font-mono text-[12px]" onClick={() => onPreset(row.key, targets.max)} disabled={targets.max === 0} aria-label={t("release.pulls.plan.max")} />}>
+                                    {t("release.pulls.plan.maxLabel", { count: f.number(targets.max) })}
+                                </TooltipTrigger>
+                                <TooltipPopup className="max-w-xs">{t("release.pulls.plan.maxTitle", { count: f.number(targets.max) })}</TooltipPopup>
+                            </Tooltip>
                         </span>
                         {targets.spark !== null && model.spark !== null && (
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-7 px-2 font-mono text-[12px]"
-                                onClick={() => onPreset(row.key, targets.spark ?? 0)}
-                                title={row.freePulls > 0 ? t("release.pulls.plan.sparkTitle", { spark: f.number(model.spark), free: f.number(row.freePulls), count: f.number(targets.spark) }) : t("release.pulls.plan.sparkTitlePlain", { spark: f.number(model.spark) })}
-                            >
-                                {t("release.pulls.plan.spark", { count: targets.spark })}
-                            </Button>
+                            <Tooltip>
+                                <TooltipTrigger render={<Button size="sm" variant="outline" className="h-7 px-2 font-mono text-[12px]" onClick={() => onPreset(row.key, targets.spark ?? 0)} />}>{t("release.pulls.plan.spark", { count: targets.spark })}</TooltipTrigger>
+                                <TooltipPopup className="max-w-xs">{row.freePulls > 0 ? t("release.pulls.plan.sparkTitle", { spark: f.number(model.spark), free: f.number(row.freePulls), count: f.number(targets.spark) }) : t("release.pulls.plan.sparkTitlePlain", { spark: f.number(model.spark) })}</TooltipPopup>
+                            </Tooltip>
                         )}
                         {targets.guarantee !== null && rawGuarantee !== null && (
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-7 px-2 font-mono text-[12px]"
-                                onClick={() => onPreset(row.key, targets.guarantee ?? 0)}
-                                title={row.freePulls > 0 ? t("release.pulls.plan.guaranteeTitle", { at: f.number(rawGuarantee), free: f.number(row.freePulls), count: f.number(targets.guarantee) }) : t("release.pulls.plan.guaranteeTitlePlain", { at: f.number(rawGuarantee) })}
-                            >
-                                {t("release.pulls.plan.guarantee", { count: targets.guarantee })}
-                            </Button>
+                            <Tooltip>
+                                <TooltipTrigger render={<Button size="sm" variant="outline" className="h-7 px-2 font-mono text-[12px]" onClick={() => onPreset(row.key, targets.guarantee ?? 0)} />}>{t("release.pulls.plan.guarantee", { count: targets.guarantee })}</TooltipTrigger>
+                                <TooltipPopup className="max-w-xs">{row.freePulls > 0 ? t("release.pulls.plan.guaranteeTitle", { at: f.number(rawGuarantee), free: f.number(row.freePulls), count: f.number(targets.guarantee) }) : t("release.pulls.plan.guaranteeTitlePlain", { at: f.number(rawGuarantee) })}</TooltipPopup>
+                            </Tooltip>
                         )}
                         {/* Clears the potential picks too, else operators stay marked P6 with
                             nothing committed and the next rebuild prices that goal and restores
                             the count. */}
                         {(row.allocated > 0 || row.totalCopies > 0) && (
-                            <Button size="sm" variant="ghost" className="h-7 px-2 font-mono text-[12px]" onClick={() => onClearRow(row.key)} title={t("release.pulls.plan.clearTitle")}>
-                                {t("release.pulls.plan.clear")}
-                            </Button>
+                            <Tooltip>
+                                <TooltipTrigger render={<Button size="sm" variant="ghost" className="h-7 px-2 font-mono text-[12px]" onClick={() => onClearRow(row.key)} />}>{t("release.pulls.plan.clear")}</TooltipTrigger>
+                                <TooltipPopup className="max-w-xs">{t("release.pulls.plan.clearTitle")}</TooltipPopup>
+                            </Tooltip>
                         )}
                     </div>
                 </div>

@@ -830,18 +830,23 @@ function SfxRow({ item, player, operatorName, showCategory }: { item: ISfxItem; 
                     {item.languages.map((track) => {
                         const active = track.lang === selectedLang;
                         return (
-                            <button
-                                key={track.lang}
-                                type="button"
-                                title={languageLabel(track.lang, t)}
-                                onClick={() => {
-                                    setSelectedLang(track.lang);
-                                    setVariantIndex(0);
-                                }}
-                                className={cn("rounded px-2 py-0.5 font-medium text-[11px] transition-colors", active ? "bg-primary text-primary-foreground" : "bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground")}
-                            >
-                                {VOICE_LANGUAGE_SHORT_KEY[track.lang] ? t(VOICE_LANGUAGE_SHORT_KEY[track.lang]) : track.lang}
-                            </button>
+                            <Tooltip key={track.lang}>
+                                <TooltipTrigger
+                                    render={
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setSelectedLang(track.lang);
+                                                setVariantIndex(0);
+                                            }}
+                                            className={cn("rounded px-2 py-0.5 font-medium text-[11px] transition-colors", active ? "bg-primary text-primary-foreground" : "bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground")}
+                                        />
+                                    }
+                                >
+                                    {VOICE_LANGUAGE_SHORT_KEY[track.lang] ? t(VOICE_LANGUAGE_SHORT_KEY[track.lang]) : track.lang}
+                                </TooltipTrigger>
+                                <TooltipPopup>{languageLabel(track.lang, t)}</TooltipPopup>
+                            </Tooltip>
                         );
                     })}
                 </div>

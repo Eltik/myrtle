@@ -4,6 +4,7 @@ import { EyeOffIcon } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "#/components/ui/breadcrumb";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useOperatorName } from "#/hooks/use-operator-name";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -165,12 +166,15 @@ function HiddenFactionBadges({ operator }: { operator: IOperatorListItem }) {
     const factions = operator.hiddenFactions ?? [];
     if (!spoilers || factions.length === 0) return null;
     return factions.map((faction) => (
-        <Badge key={faction.id} variant="outline" className="gap-1.5 border-amber-500/50 border-dashed bg-amber-500/10 text-amber-700 dark:text-amber-300" title={t("hero.hiddenFaction.tooltip")}>
-            <EyeOffIcon aria-hidden className="size-3" />
-            <CampLogo id={faction.id} server={operator.server} />
-            <span className="sr-only">{t("hero.hiddenFaction.srLabel")}</span>
-            {faction.name ?? faction.id}
-        </Badge>
+        <Tooltip key={faction.id}>
+            <TooltipTrigger render={<Badge variant="outline" className="gap-1.5 border-amber-500/50 border-dashed bg-amber-500/10 text-amber-700 dark:text-amber-300" />}>
+                <EyeOffIcon aria-hidden className="size-3" />
+                <CampLogo id={faction.id} server={operator.server} />
+                <span className="sr-only">{t("hero.hiddenFaction.srLabel")}</span>
+                {faction.name ?? faction.id}
+            </TooltipTrigger>
+            <TooltipPopup>{t("hero.hiddenFaction.tooltip")}</TooltipPopup>
+        </Tooltip>
     ));
 }
 

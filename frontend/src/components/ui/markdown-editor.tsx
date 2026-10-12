@@ -4,6 +4,7 @@ import { BoldIcon, CodeIcon, EyeIcon, ItalicIcon, LinkIcon, ListIcon, ListOrdere
 import type React from "react";
 import { useCallback, useId, useRef, useState } from "react";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "#/components/ui/tabs";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { Markdown } from "#/lib/markdown";
@@ -214,26 +215,32 @@ function ToolbarButtons({ apply, disabled, mobile = false }: { apply: (a: Toolba
 
 function FormatButton({ label, onClick, disabled, mobile = false, children }: { label: string; onClick: () => void; disabled?: boolean; mobile?: boolean; children: React.ReactNode }) {
     return (
-        <button
-            type="button"
-            // Keep focus (and the selection) in the textarea.
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={onClick}
-            disabled={disabled}
-            title={label}
-            aria-label={label}
-            className={cn(
-                "relative inline-flex shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors",
-                "hover:bg-accent hover:text-foreground active:bg-accent",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                "disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent",
-                // 44 px touch target via ::after.
-                "touch-manipulation pointer-coarse:after:absolute pointer-coarse:after:size-full pointer-coarse:after:min-h-11 pointer-coarse:after:min-w-11",
-                mobile ? "size-9" : "size-7",
-            )}
-        >
-            {children}
-        </button>
+        <Tooltip>
+            <TooltipTrigger
+                render={
+                    <button
+                        type="button"
+                        // Keep focus (and the selection) in the textarea.
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={onClick}
+                        disabled={disabled}
+                        aria-label={label}
+                        className={cn(
+                            "relative inline-flex shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors",
+                            "hover:bg-accent hover:text-foreground active:bg-accent",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            "disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent",
+                            // 44 px touch target via ::after.
+                            "touch-manipulation pointer-coarse:after:absolute pointer-coarse:after:size-full pointer-coarse:after:min-h-11 pointer-coarse:after:min-w-11",
+                            mobile ? "size-9" : "size-7",
+                        )}
+                    />
+                }
+            >
+                {children}
+            </TooltipTrigger>
+            <TooltipPopup>{label}</TooltipPopup>
+        </Tooltip>
     );
 }
 

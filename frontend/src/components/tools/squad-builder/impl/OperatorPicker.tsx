@@ -8,6 +8,7 @@ import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
 import { Switch } from "#/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { searchAndRank } from "#/lib/search/fuzzy";
@@ -107,9 +108,12 @@ export function OperatorPicker({ seat, operators, roster, seated, onPick, onClos
                             {t("squad.picker.all")}
                         </ToggleGroupItem>
                         {PROFESSION_ORDER.map((p) => (
-                            <ToggleGroupItem key={p} value={p} aria-label={formatProfession(p)} title={formatProfession(p)} className={cn("px-1.5", TOUCH_ITEM)}>
-                                <ClassIcon profession={p} size={18} className="size-4.5!" />
-                            </ToggleGroupItem>
+                            <Tooltip key={p}>
+                                <TooltipTrigger render={<ToggleGroupItem value={p} aria-label={formatProfession(p)} className={cn("px-1.5", TOUCH_ITEM)} />}>
+                                    <ClassIcon profession={p} size={18} className="size-4.5!" />
+                                </TooltipTrigger>
+                                <TooltipPopup>{formatProfession(p)}</TooltipPopup>
+                            </Tooltip>
                         ))}
                     </ToggleGroup>
                     <ToggleGroup aria-label={t("squad.picker.rarity")} value={[rarity]} onValueChange={(next) => setRarity((next[0] as string | undefined) ?? "all")} variant="outline" size="sm" className="flex-wrap">

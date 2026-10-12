@@ -1,6 +1,7 @@
 import { BookImageIcon, ClapperboardIcon, MountainIcon, UserRoundIcon } from "lucide-react";
 import { memo, useMemo, useState } from "react";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useMediaQuery } from "#/hooks/use-media-query";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -93,15 +94,18 @@ export const ArtBrowser = memo(function ArtBrowser({ selected, onPick }: IArtBro
 
     const sizeControl = (
         <ToggleGroup value={[tileSize]} onValueChange={(next) => next[0] && setTileSize(next[0] as TileSize)} variant="outline" size="sm" aria-label={t("profile.background.tileSize")} className="shrink-0 max-sm:hidden">
-            <ToggleGroupItem className={SEGMENT_ITEM} value="s" aria-label={t("profile.background.tileSize.s")} title={t("profile.background.tileSize.s")}>
-                S
-            </ToggleGroupItem>
-            <ToggleGroupItem className={SEGMENT_ITEM} value="m" aria-label={t("profile.background.tileSize.m")} title={t("profile.background.tileSize.m")}>
-                M
-            </ToggleGroupItem>
-            <ToggleGroupItem className={SEGMENT_ITEM} value="l" aria-label={t("profile.background.tileSize.l")} title={t("profile.background.tileSize.l")}>
-                L
-            </ToggleGroupItem>
+            <Tooltip>
+                <TooltipTrigger render={<ToggleGroupItem className={SEGMENT_ITEM} value="s" aria-label={t("profile.background.tileSize.s")} />}>S</TooltipTrigger>
+                <TooltipPopup>{t("profile.background.tileSize.s")}</TooltipPopup>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger render={<ToggleGroupItem className={SEGMENT_ITEM} value="m" aria-label={t("profile.background.tileSize.m")} />}>M</TooltipTrigger>
+                <TooltipPopup>{t("profile.background.tileSize.m")}</TooltipPopup>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger render={<ToggleGroupItem className={SEGMENT_ITEM} value="l" aria-label={t("profile.background.tileSize.l")} />}>L</TooltipTrigger>
+                <TooltipPopup>{t("profile.background.tileSize.l")}</TooltipPopup>
+            </Tooltip>
         </ToggleGroup>
     );
     const tiles = <GalleryTiles view={view} selected={gallerySelected} onPick={onPick} minTile={TILE_SIZES[tileSize]} />;

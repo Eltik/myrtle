@@ -1,6 +1,7 @@
 import { useQueries } from "@tanstack/react-query";
 import type * as React from "react";
 import { eliteIcon, moduleIconURL, potentialIcon, skillIconURL, specializedIcon } from "#/components/tools/shared/icons";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { operatorQueryOptions } from "#/lib/api/operators";
 import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -70,22 +71,34 @@ function ReadinessRowView({ row, detail, ctx, t }: { row: ReadinessRow; detail: 
                     <OpChip charId={row.char_id} seat={row.seat} support={row.support} ctx={ctx} />
                 </div>
                 <div className="flex flex-wrap items-center gap-2.5">
-                    <img alt="" title={t("squad.analysis.readiness.elite", { n: row.phase })} className="icon-theme-aware size-6 object-contain" decoding="async" loading="lazy" src={eliteIcon(row.phase)} />
+                    <Tooltip>
+                        <TooltipTrigger render={<img alt={t("squad.analysis.readiness.elite", { n: row.phase })} className="icon-theme-aware size-6 object-contain" decoding="async" loading="lazy" src={eliteIcon(row.phase)} />} />
+                        <TooltipPopup>{t("squad.analysis.readiness.elite", { n: row.phase })}</TooltipPopup>
+                    </Tooltip>
                     <LevelRing level={row.level} cap={row.level_cap} t={t} />
-                    <span className="flex items-center gap-1" title={skillTitle}>
-                        {skill ? <img alt="" className="size-6 rounded-sm object-contain" decoding="async" loading="lazy" src={skillIconURL(skill)} /> : <span className="flex size-6 items-center justify-center rounded-sm bg-muted font-mono text-[10px] text-muted-foreground">S{row.skill_index + 1}</span>}
-                        {row.mastery > 0 ? <img alt="" className="icon-theme-aware size-5 object-contain" decoding="async" loading="lazy" src={specializedIcon(row.mastery)} /> : <span className="font-mono text-[11px] text-muted-foreground">{row.skill_level}</span>}
-                    </span>
+                    <Tooltip>
+                        <TooltipTrigger render={<span className="flex items-center gap-1" />}>
+                            {skill ? <img alt="" className="size-6 rounded-sm object-contain" decoding="async" loading="lazy" src={skillIconURL(skill)} /> : <span className="flex size-6 items-center justify-center rounded-sm bg-muted font-mono text-[10px] text-muted-foreground">S{row.skill_index + 1}</span>}
+                            {row.mastery > 0 ? <img alt="" className="icon-theme-aware size-5 object-contain" decoding="async" loading="lazy" src={specializedIcon(row.mastery)} /> : <span className="font-mono text-[11px] text-muted-foreground">{row.skill_level}</span>}
+                        </TooltipTrigger>
+                        <TooltipPopup>{skillTitle}</TooltipPopup>
+                    </Tooltip>
                     {row.module_id ? (
-                        <span className="flex items-center gap-1" title={mod?.uniEquipName}>
-                            {mod && <img alt="" className="size-6 object-contain" decoding="async" loading="lazy" src={moduleIconURL(mod)} />}
-                            {modType && <Pill tone="outline">{modType}</Pill>}
-                            <span className="font-mono text-[11px] text-foreground">{t("squad.analysis.readiness.moduleRank", { level: row.module_level })}</span>
-                        </span>
+                        <Tooltip disabled={!mod?.uniEquipName}>
+                            <TooltipTrigger render={<span className="flex items-center gap-1" />}>
+                                {mod && <img alt="" className="size-6 object-contain" decoding="async" loading="lazy" src={moduleIconURL(mod)} />}
+                                {modType && <Pill tone="outline">{modType}</Pill>}
+                                <span className="font-mono text-[11px] text-foreground">{t("squad.analysis.readiness.moduleRank", { level: row.module_level })}</span>
+                            </TooltipTrigger>
+                            <TooltipPopup>{mod?.uniEquipName}</TooltipPopup>
+                        </Tooltip>
                     ) : (
                         <span className="text-[11px] text-muted-foreground">{t("squad.analysis.readiness.noModule")}</span>
                     )}
-                    <img alt="" title={t("squad.analysis.readiness.potential", { n: row.potential + 1 })} className="icon-theme-aware size-5 object-contain" decoding="async" loading="lazy" src={potentialIcon(row.potential)} />
+                    <Tooltip>
+                        <TooltipTrigger render={<img alt={t("squad.analysis.readiness.potential", { n: row.potential + 1 })} className="icon-theme-aware size-5 object-contain" decoding="async" loading="lazy" src={potentialIcon(row.potential)} />} />
+                        <TooltipPopup>{t("squad.analysis.readiness.potential", { n: row.potential + 1 })}</TooltipPopup>
+                    </Tooltip>
                 </div>
             </div>
             {row.flags.length > 0 && (
@@ -107,13 +120,16 @@ function LevelRing({ level, cap, t }: { level: number; cap: number; t: Readiness
     const c = 2 * Math.PI * r;
     const frac = cap > 0 ? Math.max(0, Math.min(1, level / cap)) : 0;
     return (
-        <span className="flex items-center gap-1" title={t("squad.analysis.readiness.levelOf", { level, cap })}>
-            <svg viewBox="0 0 24 24" className="size-6 -rotate-90" aria-hidden="true">
-                <circle cx="12" cy="12" r={r} fill="none" strokeWidth="3" className="stroke-muted" />
-                <circle cx="12" cy="12" r={r} fill="none" strokeWidth="3" strokeLinecap="round" className="stroke-primary" strokeDasharray={`${frac * c} ${c}`} />
-            </svg>
-            <span className="font-mono text-[11px] text-foreground tabular-nums">{t("squad.analysis.readiness.level", { level })}</span>
-        </span>
+        <Tooltip>
+            <TooltipTrigger render={<span className="flex items-center gap-1" />}>
+                <svg viewBox="0 0 24 24" className="size-6 -rotate-90" aria-hidden="true">
+                    <circle cx="12" cy="12" r={r} fill="none" strokeWidth="3" className="stroke-muted" />
+                    <circle cx="12" cy="12" r={r} fill="none" strokeWidth="3" strokeLinecap="round" className="stroke-primary" strokeDasharray={`${frac * c} ${c}`} />
+                </svg>
+                <span className="font-mono text-[11px] text-foreground tabular-nums">{t("squad.analysis.readiness.level", { level })}</span>
+            </TooltipTrigger>
+            <TooltipPopup>{t("squad.analysis.readiness.levelOf", { level, cap })}</TooltipPopup>
+        </Tooltip>
     );
 }
 

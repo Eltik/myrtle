@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Select, SelectContent, SelectGroup, SelectGroupLabel, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { toastManager } from "#/components/ui/toast";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
@@ -47,10 +48,16 @@ export function Rail({ selection }: { selection: LibrarySelection }): React.Reac
             else toastManager.add({ title: t("music.playlist.createFailed"), type: "error" });
         });
     };
+    // The span is the trigger so the hint still shows once the limit disables the button.
     const newButton = (
-        <Button size="icon-sm" variant="ghost" className="max-sm:size-11" disabled={playlists.length >= playlistLimit} onClick={() => setNaming(true)} aria-label={t("music.playlist.new")} title={t("music.playlist.new")}>
-            <PlusIcon aria-hidden="true" />
-        </Button>
+        <Tooltip>
+            <TooltipTrigger render={<span className="inline-flex" />}>
+                <Button size="icon-sm" variant="ghost" className="max-sm:size-11" disabled={playlists.length >= playlistLimit} onClick={() => setNaming(true)} aria-label={t("music.playlist.new")}>
+                    <PlusIcon aria-hidden="true" />
+                </Button>
+            </TooltipTrigger>
+            <TooltipPopup>{t("music.playlist.new")}</TooltipPopup>
+        </Tooltip>
     );
     const label = (v: LibraryView) => t(`music.rail.${v}`);
     const current = selection.kind === "view" ? label(selection.view) : selection.kind === "artist" ? t("music.rail.artistView", { name: selection.name }) : (playlists.find((p) => p.id === selection.id)?.name ?? t("music.rail.playlists"));

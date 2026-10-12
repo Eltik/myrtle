@@ -1,5 +1,6 @@
 import { CheckIcon, Gamepad2Icon } from "lucide-react";
 import type React from "react";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { isStoryRead, readSourceOf, type StoryProgress, saveProgress } from "#/lib/story/progress";
@@ -49,29 +50,35 @@ export function ReadToggle({ story, progress, gameRead, label, size = "sm", clas
     const tip = source === "game" ? t("marks.source.game") : source === "cleared" ? t("marks.source.cleared") : source === "own" ? t("marks.source.own") : undefined;
 
     return (
-        <button
-            type="button"
-            aria-pressed={read}
-            aria-label={read ? t("marks.markUnread", { story: name }) : t("marks.markRead", { story: name })}
-            title={tip}
-            onClick={(event) => {
-                // The tick is a sibling of a link and, in a reading-order row,
-                // sits inside a surface that opens on click. Neither should
-                // fire when the tick is what was hit.
-                event.preventDefault();
-                event.stopPropagation();
-                saveProgress(toggleRead(current ? current() : progress, story.id, read));
-            }}
-            className={cn(
-                "flex pointer-coarse:size-11 size-11 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
-                size === "sm" ? "sm:size-8" : size === "md" ? "sm:size-9" : "sm:pointer-fine:size-10",
-                className,
-            )}
-        >
-            <span className="relative flex size-4 items-center justify-center">
-                {read ? <CheckIcon className="size-4 text-primary" aria-hidden="true" /> : <span aria-hidden="true" className={cn("size-4 rounded-full border", source === "cleared" ? "border-primary/45 border-dashed" : "border-border")} />}
-                {source === "game" ? <Gamepad2Icon className="absolute -right-1 -bottom-1 size-2.5 text-muted-foreground" aria-hidden="true" /> : null}
-            </span>
-        </button>
+        <Tooltip disabled={!tip}>
+            <TooltipTrigger
+                render={
+                    <button
+                        type="button"
+                        aria-pressed={read}
+                        aria-label={read ? t("marks.markUnread", { story: name }) : t("marks.markRead", { story: name })}
+                        onClick={(event) => {
+                            // The tick is a sibling of a link and, in a reading-order row,
+                            // sits inside a surface that opens on click. Neither should
+                            // fire when the tick is what was hit.
+                            event.preventDefault();
+                            event.stopPropagation();
+                            saveProgress(toggleRead(current ? current() : progress, story.id, read));
+                        }}
+                        className={cn(
+                            "flex pointer-coarse:size-11 size-11 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
+                            size === "sm" ? "sm:size-8" : size === "md" ? "sm:size-9" : "sm:pointer-fine:size-10",
+                            className,
+                        )}
+                    />
+                }
+            >
+                <span className="relative flex size-4 items-center justify-center">
+                    {read ? <CheckIcon className="size-4 text-primary" aria-hidden="true" /> : <span aria-hidden="true" className={cn("size-4 rounded-full border", source === "cleared" ? "border-primary/45 border-dashed" : "border-border")} />}
+                    {source === "game" ? <Gamepad2Icon className="absolute -right-1 -bottom-1 size-2.5 text-muted-foreground" aria-hidden="true" /> : null}
+                </span>
+            </TooltipTrigger>
+            <TooltipPopup>{tip}</TooltipPopup>
+        </Tooltip>
     );
 }

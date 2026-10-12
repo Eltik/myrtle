@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { useErrorMessage } from "#/components/ui/error-message";
 import { toastManager } from "#/components/ui/toast";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { deleteGridFn, type IGridSummary } from "#/lib/api/grids";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -60,9 +61,12 @@ export function DeleteGridButton({ grid, variant = "icon", collapse = false, dis
     return (
         <>
             {variant === "icon" ? (
-                <Button type="button" variant="ghost" size="icon-sm" aria-label={named} title={named} disabled={disabled} className={className} onClick={openDialog}>
-                    <Trash2Icon />
-                </Button>
+                <Tooltip>
+                    <TooltipTrigger render={<Button type="button" variant="ghost" size="icon-sm" aria-label={named} disabled={disabled} className={className} onClick={openDialog} />}>
+                        <Trash2Icon />
+                    </TooltipTrigger>
+                    <TooltipPopup>{named}</TooltipPopup>
+                </Tooltip>
             ) : (
                 <Button type="button" variant="destructive-outline" aria-label={collapse ? t("delete.action") : undefined} title={named} disabled={disabled} className={className} onClick={openDialog}>
                     <Trash2Icon />

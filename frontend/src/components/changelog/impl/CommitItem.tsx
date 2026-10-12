@@ -1,4 +1,5 @@
 import { ChevronDown, GitCommitHorizontal } from "lucide-react";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IChangelogCommit } from "#/lib/api/changelog";
 import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -81,18 +82,26 @@ export function CommitItem({ commit }: { commit: IChangelogCommit }) {
                     <span aria-hidden="true" className="text-border">
                         ·
                     </span>
-                    <time dateTime={commit.date} title={absoluteDate(commit.date, f)} className="tabular-nums">
-                        {f.relative(commit.date)}
-                    </time>
-                    <a
-                        href={commit.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="ml-auto inline-flex items-center gap-1 rounded-md bg-muted/60 px-1.5 py-0.5 font-medium font-mono text-[11.5px] text-muted-foreground no-underline transition-colors hover:bg-muted hover:text-foreground"
-                        title={t("commit.viewOnGitHub", { sha: commit.shortSha })}
-                    >
-                        {commit.shortSha}
-                    </a>
+                    <Tooltip>
+                        <TooltipTrigger render={<time dateTime={commit.date} className="tabular-nums" />}>{f.relative(commit.date)}</TooltipTrigger>
+                        <TooltipPopup>{absoluteDate(commit.date, f)}</TooltipPopup>
+                    </Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <a
+                                    href={commit.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    aria-label={t("commit.viewOnGitHub", { sha: commit.shortSha })}
+                                    className="ml-auto inline-flex items-center gap-1 rounded-md bg-muted/60 px-1.5 py-0.5 font-medium font-mono text-[11.5px] text-muted-foreground no-underline transition-colors hover:bg-muted hover:text-foreground"
+                                >
+                                    {commit.shortSha}
+                                </a>
+                            }
+                        />
+                        <TooltipPopup>{t("commit.viewOnGitHub", { sha: commit.shortSha })}</TooltipPopup>
+                    </Tooltip>
                 </div>
             </div>
         </li>

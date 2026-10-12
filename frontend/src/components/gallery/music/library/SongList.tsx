@@ -4,6 +4,7 @@ import { memo, useMemo, useRef, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Checkbox } from "#/components/ui/checkbox";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
@@ -289,9 +290,12 @@ const SongRow = memo(function SongRow({ index, track, tracks, source, houseArtis
                             </Badge>
                         ) : null}
                         {track.hasLyrics ? (
-                            <span title={t("music.list.hasLyrics")} className="inline-flex shrink-0">
-                                <MicIcon className="size-3 text-muted-foreground" aria-label={t("music.list.hasLyrics")} />
-                            </span>
+                            <Tooltip>
+                                <TooltipTrigger render={<span className="inline-flex shrink-0" />}>
+                                    <MicIcon className="size-3 text-muted-foreground" aria-label={t("music.list.hasLyrics")} />
+                                </TooltipTrigger>
+                                <TooltipPopup>{t("music.list.hasLyrics")}</TooltipPopup>
+                            </Tooltip>
                         ) : null}
                     </span>
                     <span className="truncate font-sans text-[11.5px] text-muted-foreground sm:hidden">{artists.join(", ") || track.albumName}</span>
@@ -333,9 +337,12 @@ const SongRow = memo(function SongRow({ index, track, tracks, source, houseArtis
                 <HeartIcon className={cn(liked && "fill-current")} aria-hidden="true" />
             </Button>
             {playlistId ? (
-                <Button size="icon-sm" variant="ghost" onClick={() => removeFromPlaylist(playlistId, track.id)} aria-label={t("music.list.removeTrack", { name: title })} title={t("music.list.remove")}>
-                    <MinusIcon aria-hidden="true" />
-                </Button>
+                <Tooltip>
+                    <TooltipTrigger render={<Button size="icon-sm" variant="ghost" onClick={() => removeFromPlaylist(playlistId, track.id)} aria-label={t("music.list.removeTrack", { name: title })} />}>
+                        <MinusIcon aria-hidden="true" />
+                    </TooltipTrigger>
+                    <TooltipPopup>{t("music.list.remove")}</TooltipPopup>
+                </Tooltip>
             ) : (
                 <AddMenu
                     tracks={[track]}

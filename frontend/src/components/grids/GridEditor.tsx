@@ -10,6 +10,7 @@ import { Kicker } from "#/components/ui/kicker";
 import { NumberField, NumberFieldDecrement, NumberFieldGroup, NumberFieldIncrement, NumberFieldInput } from "#/components/ui/number-field";
 import { Switch } from "#/components/ui/switch";
 import { Textarea } from "#/components/ui/textarea";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useAuth } from "#/hooks/use-auth";
 import { useMediaQuery } from "#/hooks/use-media-query";
 import { gridQueryOptions, type IGrid } from "#/lib/api/grids";
@@ -317,9 +318,12 @@ function EditorHeader({ slug, state, dirty, titleValid, saving, saveError, onTit
                         <div ref={actionsRef} className="flex items-center gap-1.5">
                             <SaveButton onSave={onSave} disabled={!dirty || saving || !titleValid} saving={saving} className="flex-1" />
                             <DiscardButton onDiscard={onDiscard} disabled={!dirty || saving} />
-                            <Button type="button" variant="ghost" render={<Link to="/grids/$slug" params={{ slug }} target="_blank" rel="noreferrer" />} size="icon" aria-label={t("edit.openPublic")} title={t("edit.openPublic")}>
-                                <ExternalLinkIcon />
-                            </Button>
+                            <Tooltip>
+                                <TooltipTrigger render={<Button type="button" variant="ghost" render={<Link to="/grids/$slug" params={{ slug }} target="_blank" rel="noreferrer" />} size="icon" aria-label={t("edit.openPublic")} />}>
+                                    <ExternalLinkIcon />
+                                </TooltipTrigger>
+                                <TooltipPopup>{t("edit.openPublic")}</TooltipPopup>
+                            </Tooltip>
                             <DeleteGridButton grid={{ slug, title: savedTitle }} variant="labelled" collapse disabled={saving} onDeleted={onDeleted} />
                         </div>
                     </div>
@@ -383,9 +387,12 @@ function SaveButton({ onSave, disabled, saving, className }: { onSave: () => voi
 function DiscardButton({ onDiscard, disabled }: { onDiscard: () => void; disabled: boolean }) {
     const t: EditorT = useT("grids");
     return (
-        <Button type="button" variant="outline" onClick={onDiscard} disabled={disabled} size="icon" aria-label={t("edit.discard")} title={t("edit.discard")}>
-            <RotateCcwIcon />
-        </Button>
+        <Tooltip>
+            <TooltipTrigger render={<Button type="button" variant="outline" onClick={onDiscard} disabled={disabled} size="icon" aria-label={t("edit.discard")} />}>
+                <RotateCcwIcon />
+            </TooltipTrigger>
+            <TooltipPopup>{t("edit.discard")}</TooltipPopup>
+        </Tooltip>
     );
 }
 

@@ -3,6 +3,7 @@ import type * as React from "react";
 import { itemIcon } from "#/components/operators/detail/impl/assets";
 import { Card } from "#/components/ui/card";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { type TypedRichT, useLocale, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
@@ -137,15 +138,18 @@ export function AnchorCaption({ anchor }: { anchor: EventAnchor }): React.ReactE
     const autoOn = useAutoTranslate();
     const name = resolveName(anchor.nameCn, anchor.nameEn, anchor.nameEnAuto, autoOn);
     return (
-        <span title={t("release.anchor.title", { event: anchor.cnId })}>
-            {rt("release.anchor.with", {
-                event: (
-                    <span className="text-foreground/80" lang={name.untranslated ? "zh-CN" : undefined} translate={name.untranslated ? "yes" : undefined}>
-                        {name.text}
-                    </span>
-                ),
-            })}
-        </span>
+        <Tooltip>
+            <TooltipTrigger render={<span />}>
+                {rt("release.anchor.with", {
+                    event: (
+                        <span className="text-foreground/80" lang={name.untranslated ? "zh-CN" : undefined} translate={name.untranslated ? "yes" : undefined}>
+                            {name.text}
+                        </span>
+                    ),
+                })}
+            </TooltipTrigger>
+            <TooltipPopup className="max-w-xs">{t("release.anchor.title", { event: anchor.cnId })}</TooltipPopup>
+        </Tooltip>
     );
 }
 
@@ -227,17 +231,20 @@ export function FarmStages({ stages, compact = false }: { stages: FarmStage[]; c
                         <span className="font-mono text-[10px] text-muted-foreground tabular-nums">{t("release.farm.ap", { ap: st.apCost })}</span>
                     </span>
                     {st.drops.map((d) => (
-                        <span key={d.itemId} className="flex items-center gap-1" title={t("release.farm.dropTitle", { item: d.nameEn ?? d.name, rate: occLabel(d.occ, t) })}>
-                            <img src={itemIcon(d.itemId, d.iconId, null, d.nameEn ? undefined : "cn")} alt="" loading="lazy" className={cn("rounded-full bg-black/40 object-contain", compact ? "size-7" : "size-9")} />
-                            {!compact && (
-                                <span className="flex flex-col leading-tight">
-                                    <span className="max-w-36 truncate font-sans text-[11.5px] text-foreground" lang={d.nameEn ? undefined : "zh-CN"} translate={d.nameEn ? undefined : "yes"}>
-                                        {d.nameEn ?? d.name}
+                        <Tooltip key={d.itemId}>
+                            <TooltipTrigger render={<span className="flex items-center gap-1" />}>
+                                <img src={itemIcon(d.itemId, d.iconId, null, d.nameEn ? undefined : "cn")} alt="" loading="lazy" className={cn("rounded-full bg-black/40 object-contain", compact ? "size-7" : "size-9")} />
+                                {!compact && (
+                                    <span className="flex flex-col leading-tight">
+                                        <span className="max-w-36 truncate font-sans text-[11.5px] text-foreground" lang={d.nameEn ? undefined : "zh-CN"} translate={d.nameEn ? undefined : "yes"}>
+                                            {d.nameEn ?? d.name}
+                                        </span>
+                                        <span className="font-sans text-[10px] text-muted-foreground">{occLabel(d.occ, t)}</span>
                                     </span>
-                                    <span className="font-sans text-[10px] text-muted-foreground">{occLabel(d.occ, t)}</span>
-                                </span>
-                            )}
-                        </span>
+                                )}
+                            </TooltipTrigger>
+                            <TooltipPopup>{t("release.farm.dropTitle", { item: d.nameEn ?? d.name, rate: occLabel(d.occ, t) })}</TooltipPopup>
+                        </Tooltip>
                     ))}
                 </div>
             ))}

@@ -13,6 +13,7 @@ import { useErrorMessage } from "#/components/ui/error-message";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "#/components/ui/table";
 import { Tabs, TabsList, TabsTab } from "#/components/ui/tabs";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { getGlobalAuditLogFn, getTranslationAuditLogFn, localesQueryOptions } from "#/lib/api/admin";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
@@ -218,9 +219,10 @@ function AuditRow({ row, target }: { row: IAuditRow; target: string }): React.Re
     const preview = previewValue(row.oldValue, row.newValue);
     const fullPreview = previewValue(row.oldValue, row.newValue, Number.POSITIVE_INFINITY);
     const when = (
-        <span className="text-muted-foreground" title={f.date(row.changedAt, { dateStyle: "medium", timeStyle: "short" })}>
-            {f.relativeShort(row.changedAt)}
-        </span>
+        <Tooltip>
+            <TooltipTrigger render={<span className="text-muted-foreground" />}>{f.relativeShort(row.changedAt)}</TooltipTrigger>
+            <TooltipPopup>{f.date(row.changedAt, { dateStyle: "medium", timeStyle: "short" })}</TooltipPopup>
+        </Tooltip>
     );
     const change = (
         <>

@@ -8,6 +8,7 @@ import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Switch } from "#/components/ui/switch";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useTheme } from "#/hooks/use-theme";
 import { useI18n, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -52,16 +53,21 @@ export function AppearancePanel() {
                             const selected = accent?.type === "preset" && Math.abs(accent.hue - preset.hue) < PRESET_MATCH_TOLERANCE;
                             const swatch = accentToRenderedHex({ type: "preset", hue: preset.hue }, resolved === "dark");
                             return (
-                                <button
-                                    key={preset.name}
-                                    type="button"
-                                    onClick={() => setPresetHue(preset.hue)}
-                                    title={preset.name}
-                                    aria-label={t("appearance.accent.setTo", { name: preset.name })}
-                                    aria-pressed={selected}
-                                    className={cn("relative aspect-square w-full cursor-pointer rounded-full border-2 border-background outline-none ring-1 ring-border transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-ring", selected && "ring-2 ring-foreground")}
-                                    style={{ backgroundColor: swatch }}
-                                />
+                                <Tooltip key={preset.name}>
+                                    <TooltipTrigger
+                                        render={
+                                            <button
+                                                type="button"
+                                                onClick={() => setPresetHue(preset.hue)}
+                                                aria-label={t("appearance.accent.setTo", { name: preset.name })}
+                                                aria-pressed={selected}
+                                                className={cn("relative aspect-square w-full cursor-pointer rounded-full border-2 border-background outline-none ring-1 ring-border transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-ring", selected && "ring-2 ring-foreground")}
+                                                style={{ backgroundColor: swatch }}
+                                            />
+                                        }
+                                    />
+                                    <TooltipPopup>{preset.name}</TooltipPopup>
+                                </Tooltip>
                             );
                         })}
                     </div>

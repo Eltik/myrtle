@@ -5,6 +5,7 @@ import { Button } from "#/components/ui/button";
 import { Card, CardAction, CardDescription, CardHeader, CardPanel, CardTitle } from "#/components/ui/card";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Skeleton } from "#/components/ui/skeleton";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { segmentedControlItemVariants, segmentedControlRootClassName } from "#/lib/segmented-control";
@@ -104,36 +105,42 @@ export function OpChip({ charId, seat, ctx, why, support = false, className }: I
     const op = ctx.operators.get(charId);
     const name = opName(ctx.operators, charId);
     return (
-        <Link
-            to="/operators/$id"
-            params={{ id: charId }}
-            title={why ? t("squad.analysis.chip.title", { name, why }) : name}
-            onMouseEnter={() => ctx.onHoverSeat(seat)}
-            onMouseLeave={() => ctx.onHoverSeat(null)}
-            onFocus={() => ctx.onHoverSeat(seat)}
-            onBlur={() => ctx.onHoverSeat(null)}
-            className={cn("inline-flex pointer-coarse:min-h-11 max-w-full items-center gap-1.5 rounded-md border border-border/70 border-l-2 bg-secondary/40 py-0.5 pr-2 pl-0.5 font-medium text-[12px] text-foreground transition-colors hover:bg-accent/60", className)}
-            style={{ borderLeftColor: rarityStarColor(op?.rarity ?? 1) }}
-        >
-            <span aria-hidden="true" className="inline-flex size-5 shrink-0 items-center justify-center overflow-hidden rounded bg-muted text-[9px]">
-                <OperatorAvatar charId={charId} name={name} />
-            </span>
-            <span className="truncate">{name}</span>
-            {support && <span className="shrink-0 rounded bg-muted px-1 text-[10px] text-muted-foreground">{t("squad.analysis.chip.support")}</span>}
-        </Link>
+        <Tooltip>
+            <TooltipTrigger
+                render={
+                    <Link
+                        to="/operators/$id"
+                        params={{ id: charId }}
+                        onMouseEnter={() => ctx.onHoverSeat(seat)}
+                        onMouseLeave={() => ctx.onHoverSeat(null)}
+                        onFocus={() => ctx.onHoverSeat(seat)}
+                        onBlur={() => ctx.onHoverSeat(null)}
+                        className={cn("inline-flex pointer-coarse:min-h-11 max-w-full items-center gap-1.5 rounded-md border border-border/70 border-l-2 bg-secondary/40 py-0.5 pr-2 pl-0.5 font-medium text-[12px] text-foreground transition-colors hover:bg-accent/60", className)}
+                        style={{ borderLeftColor: rarityStarColor(op?.rarity ?? 1) }}
+                    />
+                }
+            >
+                <span aria-hidden="true" className="inline-flex size-5 shrink-0 items-center justify-center overflow-hidden rounded bg-muted text-[9px]">
+                    <OperatorAvatar charId={charId} name={name} />
+                </span>
+                <span className="truncate">{name}</span>
+                {support && <span className="shrink-0 rounded bg-muted px-1 text-[10px] text-muted-foreground">{t("squad.analysis.chip.support")}</span>}
+            </TooltipTrigger>
+            <TooltipPopup>{why ? t("squad.analysis.chip.title", { name, why }) : name}</TooltipPopup>
+        </Tooltip>
     );
 }
 
 export type PillTone = "muted" | "accent" | "outline";
 
 export function Pill({ tone = "muted", className, children, title }: { tone?: PillTone; className?: string; children: React.ReactNode; title?: string }): React.ReactElement {
+    const pillClassName = cn("inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 font-medium text-[11px] leading-tight", tone === "muted" && "bg-muted text-muted-foreground", tone === "accent" && "bg-primary/12 text-primary", tone === "outline" && "border border-border text-muted-foreground", className);
+    if (!title) return <span className={pillClassName}>{children}</span>;
     return (
-        <span
-            title={title}
-            className={cn("inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 font-medium text-[11px] leading-tight", tone === "muted" && "bg-muted text-muted-foreground", tone === "accent" && "bg-primary/12 text-primary", tone === "outline" && "border border-border text-muted-foreground", className)}
-        >
-            {children}
-        </span>
+        <Tooltip>
+            <TooltipTrigger render={<span className={pillClassName} />}>{children}</TooltipTrigger>
+            <TooltipPopup>{title}</TooltipPopup>
+        </Tooltip>
     );
 }
 

@@ -6,6 +6,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo } from "react";
 import { Button } from "#/components/ui/button";
 import { PageHeader } from "#/components/ui/page-header";
 import { Skeleton } from "#/components/ui/skeleton";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { musicIndexQueryOptions, sirenCatalogQueryOptions } from "#/lib/api/music";
 import { useGamedataServer, useLocale, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -156,14 +157,20 @@ function Toolbar({ tab, onTab }: { tab: MusicTab; onTab: (tab: MusicTab) => void
                 ))}
             </fieldset>
             <div className="flex gap-1.5">
-                <Button variant={panel === "lyrics" ? "default" : "outline"} className="max-sm:min-h-11" aria-pressed={panel === "lyrics"} title={t("music.tab.lyricsTitle")} onClick={() => togglePanel("lyrics")}>
-                    <MicIcon aria-hidden="true" />
-                    {t("music.tab.lyrics")}
-                </Button>
-                <Button variant={panel === "queue" ? "default" : "outline"} className="max-sm:min-h-11" aria-pressed={panel === "queue"} title={t("music.tab.queueTitle")} onClick={() => togglePanel("queue")}>
-                    <ListMusicIcon aria-hidden="true" />
-                    {t("music.tab.queue")}
-                </Button>
+                <Tooltip>
+                    <TooltipTrigger render={<Button variant={panel === "lyrics" ? "default" : "outline"} className="max-sm:min-h-11" aria-pressed={panel === "lyrics"} onClick={() => togglePanel("lyrics")} />}>
+                        <MicIcon aria-hidden="true" />
+                        {t("music.tab.lyrics")}
+                    </TooltipTrigger>
+                    <TooltipPopup>{t("music.tab.lyricsTitle")}</TooltipPopup>
+                </Tooltip>
+                <Tooltip>
+                    <TooltipTrigger render={<Button variant={panel === "queue" ? "default" : "outline"} className="max-sm:min-h-11" aria-pressed={panel === "queue"} onClick={() => togglePanel("queue")} />}>
+                        <ListMusicIcon aria-hidden="true" />
+                        {t("music.tab.queue")}
+                    </TooltipTrigger>
+                    <TooltipPopup>{t("music.tab.queueTitle")}</TooltipPopup>
+                </Tooltip>
             </div>
         </div>
     );
