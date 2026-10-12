@@ -5,10 +5,12 @@ import { hasShare, type IShareSearch, parseShareSearch } from "#/components/tool
 import { SquadBuilder } from "#/components/tools/squad-builder/SquadBuilder";
 import { Button } from "#/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
+import { resolveGamedataServer } from "#/lib/api/gamedata";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { squadRulesQueryOptions } from "#/lib/api/squads";
 import { metaT } from "#/lib/meta";
-import { defaultOgURL } from "#/lib/og";
+import { defaultOgURL, ogURL } from "#/lib/og";
+import { buildSquadOgData, parseSquadOgId, squadOgId } from "#/lib/og/impl/squad";
 import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/tools/squad-builder")({
@@ -28,11 +30,17 @@ export const Route = createFileRoute("/tools/squad-builder")({
     },
     head: ({ match }) => {
         const t = metaT(match.context.i18n);
+        // A share link unfurls as that squad, redrawn from the id alone (`squadOgId`);
+        // no seat, or a link too long to carry, is the tool's preset card.
+        const server = resolveGamedataServer(match.context.i18n.gamedataServer);
+        const id = squadOgId(match.search, server);
+        const parsed = id ? parseSquadOgId(id) : null;
+        const image = id && parsed ? ogURL("squad", id, buildSquadOgData(parsed.draft, server)) : defaultOgURL("tools-squad-builder", match.context.i18n);
         const { meta, links } = seo({
             title: t("toolsSquadBuilder.title"),
             description: t("toolsSquadBuilder.description"),
             path: "/tools/squad-builder",
-            image: defaultOgURL("tools-squad-builder", match.context.i18n),
+            image,
             locale: match.context.i18n?.locale,
         });
         return {

@@ -31,7 +31,7 @@ export const Route = createFileRoute("/stories")({
             title: t("stories.title"),
             description: t("stories.description"),
             path: "/stories",
-            image: defaultOgURL("stages", match.context.i18n),
+            image: defaultOgURL("stories", match.context.i18n),
             locale: match.context.i18n?.locale,
         });
         return {

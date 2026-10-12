@@ -1,8 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { EnemyDetail } from "#/components/enemies/detail/Enemies";
 import { enemyDetailQueryOptions } from "#/lib/api/enemies";
+import { resolveGamedataServer } from "#/lib/api/gamedata";
 import { metaT } from "#/lib/meta";
-import { defaultOgURL } from "#/lib/og";
+import { ogURL } from "#/lib/og";
+import { buildEnemyOgData } from "#/lib/og/impl/enemy";
+import { serverScopedOgId } from "#/lib/og/impl/ids";
 import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/enemies_/$id")({
@@ -19,12 +22,13 @@ export const Route = createFileRoute("/enemies_/$id")({
         if (!enemy) return seo({ title: t("enemy.fallbackTitle"), path: `/enemies/${params.id}`, locale });
         // The enemy's own code and blurb come from game data, which ships its
         // own per-region text; only the no-blurb fallback is a message.
+        const server = resolveGamedataServer(match.context.i18n.gamedataServer);
         const desc = [enemy.enemyIndex, enemy.description].filter(Boolean).join(" - ") || t("enemy.descriptionFallback", { index: enemy.enemyIndex });
         const { meta, links } = seo({
             title: enemy.name,
             description: desc,
             path: `/enemies/${params.id}`,
-            image: defaultOgURL("enemies", match.context.i18n),
+            image: ogURL("enemy", serverScopedOgId(enemy.enemyId, server), buildEnemyOgData(enemy, server)),
             type: "article",
             locale,
         });

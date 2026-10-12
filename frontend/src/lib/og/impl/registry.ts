@@ -1,32 +1,52 @@
 import type { ReactNode } from "react";
+import { backgroundSources, DEFAULT_FOCUS_Y, objectPosition, zoomOf } from "#/components/user/profile/impl/background";
 import { env } from "#/env";
-import { gamedataPath } from "#/lib/api/gamedata";
-import { deepCamelize, getOperatorsListFn } from "#/lib/api/operators";
+import { DEFAULT_GAMEDATA_SERVER, gamedataPath } from "#/lib/api/gamedata";
+import { cachedOperatorsList, deepCamelize } from "#/lib/api/operators";
+import { loadRecruitmentData } from "#/lib/api/recruitment";
 import { stagePreviewAssetPaths } from "#/lib/api/stages";
 import type { IRosterEntry } from "#/lib/api/user";
 import { backendFetch } from "#/lib/fetch";
 import { metaSourceForLocale } from "#/lib/meta";
-import { formatNumber, groupLabel, nationLabel, rarityToNumber, teamLabel, toAvatarStem } from "#/lib/utils";
+import { DEFAULT_AVATAR_ID, formatNumber, groupLabel, nationLabel, rarityToNumber, teamLabel, toAvatarStem } from "#/lib/utils";
+import type { ArchiveOperator } from "#/types/generated/ArchiveOperator";
+import type { Enemy } from "#/types/generated/Enemy";
 import type { Grid } from "#/types/generated/Grid";
 import type { PlacementDetail } from "#/types/generated/PlacementDetail";
+import type { ProfileBackground } from "#/types/generated/ProfileBackground";
+import type { SirenAlbumDetail } from "#/types/generated/SirenAlbumDetail";
 import type { StoryIndex } from "#/types/generated/StoryIndex";
-import type { IOperatorListItem } from "#/types/operators";
+import type { SupportUnit } from "#/types/generated/SupportUnit";
+import type { IOperatorIndexEntry, IOperatorListItem } from "#/types/operators";
 import type { IStage, IZone } from "#/types/stages";
 import type { IUserProfile } from "#/types/user";
+import { buildArchiveOgData, clampExcerpt, firstProseRecord, type IArchiveOgData } from "./archive";
 import { fetchToDataURI, inlineArt, ogEntityIconURL } from "./art";
+import { buildEnemyOgData, type IEnemyOgData } from "./enemy";
 import { buildGridImageData, type IGridImageData, parseGridOgId } from "./grid";
 import { type IOgHasher, type OgData, type OgKind, ogHashers } from "./hashers";
-import { defaultOgPreset, defaultOgTagLabels, resolveDefaultOgPreset } from "./presets";
+import { parseServerScopedOgId } from "./ids";
+import { buildMusicOgData, type IMusicOgData, isMusicAlbumId, sirenCoverAt } from "./music";
+import { DEFAULT_OG_PRESETS, type DefaultOgPresetSlug, defaultOgPreset, literalDefaultOgData, resolveDefaultOgPreset } from "./presets";
+import { type IRecruitmentOgData, parseRecruitmentOgId } from "./recruitment";
+import { buildRecruitmentOgData } from "./recruitment.build";
 import type { IRenderDimensions } from "./render";
+import { buildSquadOgData, type ISquadOgData, type ISquadOgSeat, parseSquadOgId } from "./squad";
 import { buildStoryOgData, type IStoryOgData, parseStoryOgId } from "./story";
+import { ArchiveTemplate } from "./templates/Archive";
 import { DefaultTemplate, type IDefaultOgData } from "./templates/Default";
+import { EnemyTemplate } from "./templates/Enemy";
 import { GridImageTemplate, gridImageDimensions } from "./templates/GridImage";
+import { MusicTemplate } from "./templates/Music";
 import { type IOperatorOgData, OperatorTemplate } from "./templates/Operator";
+import { RecruitmentTemplate } from "./templates/Recruitment";
+import { SquadTemplate } from "./templates/Squad";
 import { buildStageOgData, type IStageOgData, StageTemplate } from "./templates/Stage";
 import { StoryTemplate } from "./templates/Story";
 import { type ITierListOgData, type ITierListOperatorPreview, type ITierListTierPreview, TierListTemplate } from "./templates/TierList";
 import { type ITierListBoardImageData, type ITierListBoardImageOperator, type ITierListBoardImageTier, TierListBoardImageTemplate, tierListBoardImageDimensions } from "./templates/TierListBoardImage";
-import { type IUserOgData, type IUserSupportModule, type IUserSupportSkill, type IUserSupportUnit, UserTemplate } from "./templates/User";
+import { UserTemplate } from "./templates/User";
+import { buildUserOgData, type IUserOgArt, type IUserOgData, type IUserOgTile } from "./user";
 
 export interface IOgHandler<TData> {
     /**
@@ -88,20 +108,7 @@ function skillIconURL(iconId: string): string {
     return `${base}/api/skill-icon/${encodeURIComponent(iconId)}`;
 }
 
-const charartURL = (operatorId: string, server?: AssetServer) => assetURL(`/textures/chararts/${operatorId}/${operatorId}_2.png`, server);
-const skinpackURL = (operatorId: string, skinId: string) => {
-    const owner = skinId.split("@")[0] || operatorId;
-    return assetURL(`/textures/skinpack/${owner}/${skinId.replaceAll("@", "_").replaceAll("#", "%23")}.png`);
-};
 const campLogoURL = (id: string, server?: AssetServer) => assetURL(`/textures/spritepack/ui_camp_logo_0/logo_${id.toLowerCase()}.png`, server);
-const moduleIconURL = (uniEquipIcon: string) => assetURL(`/textures/spritepack/ui_equip_big_img_hub_0/${uniEquipIcon}.png`);
-const masteryIconURL = (mastery: number) => assetURL(`/textures/arts/specialized_hub/specialized_${mastery}.png`);
-const secretaryArtURL = (operatorId: string, skinId: string | null, op?: IOperatorListItem): string => {
-    if (skinId?.includes("@")) return skinpackURL(operatorId, skinId);
-    if (op?.skin) return assetURL(op.skin);
-    if (op?.portrait) return assetURL(op.portrait);
-    return charartURL(operatorId);
-};
 const professionIconURL = (profession: string, server?: AssetServer) => assetURL(`/textures/arts/ui/%5Buc%5Dcharcommon/icon_profession_${profession.toLowerCase()}.png`, server);
 
 const operatorHandler = /* @__PURE__ */ defineOgHandler<IOperatorOgData>(ogHashers.operator, {
@@ -150,168 +157,111 @@ const operatorHandler = /* @__PURE__ */ defineOgHandler<IOperatorOgData>(ogHashe
     template: (data) => OperatorTemplate(data),
 });
 
-interface ISupportUnitResponse {
-    slot: number;
-    operator_id: string;
-    skin_id: string | null;
-    skill_index: number;
-    current_equip: string | null;
-    elite: number | null;
-    level: number | null;
-    potential: number | null;
-    skill_level: number | null;
-    favor_point: number | null;
-    specialize_level: number;
+/** `url` with the browser-facing backend origin swapped for the server's own (`BACKEND_URL`, a local hop in production). The profile helpers build URLs for the browser. */
+function serverSideURL(url: string): string {
+    const publicBase = (env.VITE_BACKEND_URL ?? "").replace(/\/$/, "");
+    const base = backendBaseURL();
+    return publicBase && base && url.startsWith(publicBase) ? `${base}${url.slice(publicBase.length)}` : url;
 }
 
-function buildSupportUnit(args: { id: string; elite: number; level: number; skinId?: string | null; op: IOperatorListItem; rosterEntry?: IRosterEntry }): IUserSupportUnit {
-    const { id, elite, level, skinId, op, rosterEntry } = args;
-    const masteryByIndex = new Map<number, number>((rosterEntry?.masteries ?? []).map((m) => [m.index, m.mastery]));
-    const moduleStateById = new Map<string, { level: number; locked: boolean }>((rosterEntry?.modules ?? []).map((m) => [m.id, { level: m.level, locked: m.locked }]));
+/** The first of `urls` that inlines, tried in order: each is a fallback for the one before. */
+async function firstDataURI(urls: readonly string[]): Promise<string | undefined> {
+    for (const url of urls) {
+        const uri = await fetchToDataURI(serverSideURL(url));
+        if (uri) return uri;
+    }
+    return undefined;
+}
 
-    const skills: IUserSupportSkill[] = (op.skills ?? []).map((sk, idx) => {
-        const iconId = sk.static?.iconId ?? sk.static?.skillId ?? sk.skillId;
-        const iconURL = sk.static?.image ? assetURL(sk.static.image) : iconId ? skillIconURL(iconId) : undefined;
-        const mastery = masteryByIndex.get(idx) ?? 0;
-        return {
-            iconURL,
-            mastery,
-            skillLevel: rosterEntry?.skill_level ?? 7,
-            masteryIconURL: mastery >= 1 ? masteryIconURL(mastery) : undefined,
-        };
-    });
+/** The hero art's candidates: the profile's chosen background, else the secretary's art read the same way (`#1` outfits are elite 1 art). */
+function heroBackground(data: IUserOgData): ProfileBackground | null {
+    if (data.background) return data.background;
+    if (!data.secretary) return null;
+    const skin = data.secretarySkinId;
+    if (skin?.includes("@")) return { kind: "skin", id: skin };
+    return { kind: "operator", id: data.secretary, ...(skin?.endsWith("#1") ? { elite: 1 } : {}) };
+}
 
-    const modules: IUserSupportModule[] = (op.modules ?? [])
-        .filter((m) => m.typeName1 !== "ORIGINAL")
+function skillIconFor(op: IOperatorListItem, index: number | null | undefined): string | undefined {
+    const sk = index != null && index >= 0 ? op.skills?.[index] : undefined;
+    if (!sk) return undefined;
+    if (sk.static?.image) return assetURL(sk.static.image);
+    const iconId = sk.static?.iconId ?? sk.static?.skillId ?? sk.skillId;
+    return iconId ? skillIconURL(iconId) : undefined;
+}
+
+/** The best three of the roster when the player set no supports: highest elite, then level, then rarity. */
+function topRosterTiles(roster: readonly IRosterEntry[], opById: Map<string, IOperatorListItem>): IUserOgTile[] {
+    return roster
+        .flatMap((entry) => {
+            const op = opById.get(entry.operator_id);
+            return op ? [{ entry, op, rarity: rarityToNumber(op.rarity) }] : [];
+        })
+        .sort((a, b) => b.entry.elite - a.entry.elite || b.entry.level - a.entry.level || b.rarity - a.rarity)
         .slice(0, 3)
-        .map((m) => ({
-            iconURL: m.image ? assetURL(m.image) : moduleIconURL(m.uniEquipIcon),
-            level: moduleStateById.get(m.uniEquipId)?.level ?? 0,
+        .map(({ entry, op, rarity }) => ({
+            rarity,
+            elite: entry.elite,
+            level: entry.level,
+            avatarURL: avatarURL(entry.skin_id || entry.operator_id),
+            skillIconURL: skillIconFor(op, entry.default_skill),
+            mastery: (entry.masteries ?? []).find((m) => m.index === entry.default_skill)?.mastery ?? 0,
         }));
+}
+
+/** Everything the template draws beyond the hashed fields, art inlined as data URIs. */
+async function resolveUserOgArt(data: IUserOgData, roster: readonly IRosterEntry[], operators: readonly IOperatorListItem[]): Promise<IUserOgArt> {
+    const opById = new Map(operators.flatMap((op) => (op.id ? [[op.id, op] as const] : [])));
+
+    const supportTiles: IUserOgTile[] = data.supports.flatMap((s) => {
+        const op = opById.get(s.id);
+        if (!op) return [];
+        return [{ rarity: rarityToNumber(op.rarity), elite: s.elite, level: s.level, avatarURL: avatarURL(s.skinId || s.id), skillIconURL: skillIconFor(op, s.skillIndex), mastery: s.specializeLevel }];
+    });
+    const tilesKind = supportTiles.length > 0 ? "supports" : "roster";
+    const tiles = (supportTiles.length > 0 ? supportTiles : topRosterTiles(roster, opById)).slice(0, 3);
+
+    const rarityCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+    for (const entry of roster) {
+        const op = opById.get(entry.operator_id);
+        if (op) rarityCounts[rarityToNumber(op.rarity)]++;
+    }
+
+    const hero = heroBackground(data);
+    const [avatar, heroURL, tileArt] = await Promise.all([fetchToDataURI(avatarURL(data.avatarId || DEFAULT_AVATAR_ID)), hero ? firstDataURI(backgroundSources(hero)) : Promise.resolve(undefined), inlineArt(tiles.flatMap((t) => [t.avatarURL, t.skillIconURL]))]);
 
     return {
-        id,
-        name: op.name,
-        rarity: rarityToNumber(op.rarity),
-        elite,
-        level,
-        avatarURL: avatarURL(skinId || id),
-        skills,
-        modules,
+        avatarURL: avatar,
+        heroURL,
+        // A chosen background keeps its own crop and zoom; the secretary fallback starts
+        // where a fresh pick of that art would, near the face.
+        heroPosition: data.background ? objectPosition(data.background) : `50% ${DEFAULT_FOCUS_Y}%`,
+        heroZoom: data.background ? zoomOf(data.background) : 100,
+        tiles: tiles.map((t) => ({ ...t, avatarURL: t.avatarURL ? tileArt.get(t.avatarURL) : undefined, skillIconURL: t.skillIconURL ? tileArt.get(t.skillIconURL) : undefined })),
+        tilesKind,
+        rarityCounts: Object.values(rarityCounts).some((n) => n > 0) ? rarityCounts : undefined,
     };
 }
 
-interface IRosterIndex {
-    byId: Map<string, IRosterEntry>;
-    rarityCounts: Record<number, number>;
-}
-
-function indexRoster(roster: IRosterEntry[], opByIdMap: Map<string, IOperatorListItem>): IRosterIndex {
-    const byId = new Map<string, IRosterEntry>();
-    const rarityCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
-    for (const entry of roster) {
-        byId.set(entry.operator_id, entry);
-        const op = opByIdMap.get(entry.operator_id);
-        if (!op) continue;
-        const rarity = rarityToNumber(op.rarity);
-        rarityCounts[rarity]++;
-    }
-    return { byId, rarityCounts };
-}
-
-function topRosterPicks(roster: IRosterEntry[], opByIdMap: Map<string, IOperatorListItem>, limit = 3): IUserSupportUnit[] {
-    return roster
-        .map((entry) => {
-            const op = opByIdMap.get(entry.operator_id);
-            return op ? { entry, op, rarity: rarityToNumber(op.rarity) } : null;
-        })
-        .filter((x) => x !== null)
-        .sort((a, b) => {
-            if (b.entry.elite !== a.entry.elite) return b.entry.elite - a.entry.elite;
-            if (b.entry.level !== a.entry.level) return b.entry.level - a.entry.level;
-            return b.rarity - a.rarity;
-        })
-        .slice(0, limit)
-        .map(({ entry, op }) =>
-            buildSupportUnit({
-                id: entry.operator_id,
-                elite: entry.elite,
-                level: entry.level,
-                skinId: entry.skin_id,
-                op,
-                rosterEntry: entry,
-            }),
-        );
+async function jsonArrayOrNull<T>(res: Response): Promise<T[] | null> {
+    if (!res.ok) return null;
+    const body = await res.json().catch(() => null);
+    return Array.isArray(body) ? (body as T[]) : null;
 }
 
 const userHandler = /* @__PURE__ */ defineOgHandler<IUserOgData>(ogHashers.user, {
+    // Read anonymously, so the card is a visitor's view: a private profile is
+    // 403 here (no card), a private Roster tab 403s `/roster`, and `/get-user`
+    // leaves out the score and grade behind a private Score tab.
     fetch: async (uid) => {
         const enc = encodeURIComponent(uid);
-        const [userRes, supportsRes, rosterRes, operators] = await Promise.all([backendFetch(`/get-user?uid=${enc}`), backendFetch(`/get-user-supports?uid=${enc}`), backendFetch(`/roster?uid=${enc}`), getOperatorsListFn().catch(() => [] as IOperatorListItem[])]);
+        const [userRes, supportsRes, rosterRes, operators] = await Promise.all([backendFetch(`/get-user?uid=${enc}`), backendFetch(`/get-user-supports?uid=${enc}`), backendFetch(`/roster?uid=${enc}`), cachedOperatorsList(undefined).catch(() => [] as IOperatorListItem[])]);
         if (!userRes.ok) return null;
-        const u = (await userRes.json()) as IUserProfile;
-
-        const opByIdMap = new Map<string, IOperatorListItem>();
-        for (const op of operators) {
-            if (op.id) opByIdMap.set(op.id, op);
-        }
-
-        const roster = rosterRes.ok ? ((await rosterRes.json()) as IRosterEntry[]) : [];
-        const { byId: rosterByIdMap, rarityCounts } = indexRoster(roster, opByIdMap);
-
-        let supportUnits: IUserSupportUnit[] | undefined;
-        let supportUnitsKind: "supports" | "roster" = "roster";
-
-        if (supportsRes.ok) {
-            try {
-                const list = (await supportsRes.json()) as ISupportUnitResponse[];
-                if (Array.isArray(list) && list.length > 0) {
-                    const built = list
-                        .map((s) => {
-                            const op = opByIdMap.get(s.operator_id);
-                            if (!op) return null;
-                            return buildSupportUnit({
-                                id: s.operator_id,
-                                elite: s.elite ?? 0,
-                                level: s.level ?? 1,
-                                skinId: s.skin_id,
-                                op,
-                                rosterEntry: rosterByIdMap.get(s.operator_id),
-                            });
-                        })
-                        .filter((x): x is IUserSupportUnit => x !== null);
-                    if (built.length > 0) {
-                        supportUnits = built;
-                        supportUnitsKind = "supports";
-                    }
-                }
-            } catch (err) {
-                console.warn(`[og] /get-user-supports parse failed for ${uid}, falling back to roster:`, err);
-            }
-        }
-
-        if (!supportUnits && roster.length > 0 && opByIdMap.size > 0) {
-            supportUnits = topRosterPicks(roster, opByIdMap);
-        }
-
-        const hasRarityCounts = Object.values(rarityCounts).some((n) => n > 0);
-
-        return {
-            nickname: u.nickname ?? "Player",
-            nickNumber: u.nick_number,
-            uid: u.uid ?? uid,
-            level: u.level,
-            grade: u.grade,
-            totalScore: u.total_score,
-            operatorCount: u.operator_count ?? 0,
-            skinCount: u.skin_count ?? 0,
-            itemCount: u.item_count ?? 0,
-            lmd: u.lmd ?? 0,
-            secretaryArtURL: u.secretary ? secretaryArtURL(u.secretary, u.secretary_skin_id, opByIdMap.get(u.secretary)) : undefined,
-            supportUnits,
-            supportUnitsKind,
-            rarityCounts: hasRarityCounts ? rarityCounts : undefined,
-        };
+        const profile = (await userRes.json()) as IUserProfile;
+        const [supports, roster] = await Promise.all([jsonArrayOrNull<SupportUnit>(supportsRes), jsonArrayOrNull<IRosterEntry>(rosterRes)]);
+        const data = buildUserOgData(profile, supports, roster);
+        const visibleRoster = data.rosterDigest ? (roster ?? []) : [];
+        return { ...data, art: await resolveUserOgArt(data, visibleRoster, operators) };
     },
     template: (data) => UserTemplate(data),
 });
@@ -453,7 +403,7 @@ const defaultHandler = /* @__PURE__ */ defineOgHandler<IDefaultOgData>(ogHashers
         const preset = defaultOgPreset(id);
         if (preset) return resolveDefaultOgPreset(preset, source);
         // Not a registered slug: the id IS the title, for one-off pages.
-        return { title: decodeURIComponent(id), tagLabels: defaultOgTagLabels(source) };
+        return literalDefaultOgData(decodeURIComponent(id), source);
     },
     template: (data) => DefaultTemplate(data),
 });
@@ -623,6 +573,110 @@ const storyHandler = /* @__PURE__ */ defineOgHandler<IStoryOgData>(ogHashers.sto
     template: (data) => StoryTemplate(data),
 });
 
+const recruitmentHandler = /* @__PURE__ */ defineOgHandler<IRecruitmentOgData>(ogHashers.recruitment, {
+    // Tag ids the server does not offer are dropped; when none is left the card
+    // is the calculator's preset, so a mangled link still unfurls as the tool.
+    fetch: async (id, locale) => {
+        const { server, tagIds } = parseRecruitmentOgId(id);
+        const recruitment = await loadRecruitmentData(server).catch(() => null);
+        const data = recruitment && tagIds.length > 0 ? buildRecruitmentOgData(tagIds, recruitment, server) : null;
+        if (!data) {
+            const preset = defaultOgPreset("tools-recruitment");
+            return preset ? { server, tags: [], best: null, preset: resolveDefaultOgPreset(preset, await metaSourceForLocale(locale)) } : null;
+        }
+        if (!data.best) return data;
+        const art = await inlineArt(data.best.operators.map((op) => avatarURL(op.id)));
+        return { ...data, best: { ...data.best, operators: data.best.operators.map((op) => ({ ...op, avatarURL: art.get(avatarURL(op.id)) })) } };
+    },
+    template: (data) => RecruitmentTemplate(data),
+});
+
+const enemyHandler = /* @__PURE__ */ defineOgHandler<IEnemyOgData>(ogHashers.enemy, {
+    fetch: async (raw) => {
+        const { server, id } = parseServerScopedOgId(raw);
+        const res = await backendFetch(gamedataPath(server, `/enemies/${encodeURIComponent(id)}`));
+        if (!res.ok) return null;
+        const detail = (await res.json()) as { enemy?: Enemy };
+        if (!detail.enemy) return null;
+        const data = buildEnemyOgData(detail.enemy, server);
+        // The icon route serves a 158 px PNG; it is the only enemy art the backend has.
+        const prefix = server === DEFAULT_GAMEDATA_SERVER ? "" : `/${server}`;
+        return { ...data, iconURL: await fetchToDataURI(`${backendBaseURL()}/api${prefix}/enemy-icon/${encodeURIComponent(id)}`) };
+    },
+    template: (data) => EnemyTemplate(data),
+});
+
+async function presetData(slug: DefaultOgPresetSlug, locale?: string): Promise<IDefaultOgData> {
+    return resolveDefaultOgPreset(DEFAULT_OG_PRESETS[slug], await metaSourceForLocale(locale));
+}
+
+const squadHandler = /* @__PURE__ */ defineOgHandler<ISquadOgData>(ogHashers.squad, {
+    // An id that does not decode, is over the cap, or holds no seat draws the
+    // tool's preset, so a mangled link still unfurls as the tool.
+    fetch: async (raw, locale) => {
+        const parsed = parseSquadOgId(raw);
+        if (!parsed) return { server: DEFAULT_GAMEDATA_SERVER, share: "", name: "", stageId: null, seats: [], support: null, preset: await presetData("tools-squad-builder", locale) };
+        const { server, draft } = parsed;
+        const data = buildSquadOgData(draft, server);
+        const [index, stageRes] = await Promise.all([
+            backendFetch(gamedataPath(server, "/operators/index"))
+                .then((r) => (r.ok ? (r.json() as Promise<IOperatorIndexEntry[]>) : []))
+                .catch(() => [] as IOperatorIndexEntry[]),
+            data.stageId ? backendFetch(gamedataPath(server, `/stages/${encodeURIComponent(data.stageId)}/detail`)).catch(() => null) : Promise.resolve(null),
+        ]);
+        const rarity = new Map(index.map((op) => [op.id, op.rarity] as const));
+        const stage = stageRes?.ok ? ((await stageRes.json()) as { stage?: { code?: string; name?: string | null } }).stage : undefined;
+        const seats = [...data.seats, data.support];
+        const prefix = server === DEFAULT_GAMEDATA_SERVER ? "" : `/${server}`;
+        const avatar = (id: string) => `${backendBaseURL()}/api${prefix}/avatar/${toAvatarStem(id)}`;
+        const art = await inlineArt(seats.flatMap((s) => (s ? [avatar(s.id)] : [])));
+        const resolve = (s: ISquadOgSeat | null): ISquadOgSeat | null => (s ? { ...s, rarity: rarity.get(s.id), avatarURL: art.get(avatar(s.id)) } : null);
+        return {
+            ...data,
+            seats: data.seats.map(resolve),
+            support: resolve(data.support),
+            stage: stage?.code ? { code: stage.code, name: stage.name ?? "" } : undefined,
+        };
+    },
+    template: (data) => SquadTemplate(data),
+});
+
+interface IHandbookResponse {
+    skin?: string | null;
+    portrait?: string | null;
+    handbook?: { storyTextAudio?: { stories: { storyText: string }[] }[] } | null;
+}
+
+const archiveHandler = /* @__PURE__ */ defineOgHandler<IArchiveOgData>(ogHashers.archive, {
+    fetch: async (raw) => {
+        const { server, id } = parseServerScopedOgId(raw);
+        const enc = encodeURIComponent(id);
+        const [fileRes, opRes] = await Promise.all([backendFetch(gamedataPath(server, `/archives/operator/${enc}`)), backendFetch(gamedataPath(server, `/operators/${enc}`)).catch(() => null)]);
+        if (!fileRes.ok) return null;
+        const data = buildArchiveOgData((await fileRes.json()) as ArchiveOperator, server);
+        const op = opRes?.ok ? ((await opRes.json()) as IHandbookResponse) : null;
+        const prose = firstProseRecord(op?.handbook?.storyTextAudio ?? []);
+        // Elite 1 art, the file photo: the operator card draws the elite 2 art, so
+        // the two cards of one operator never show the same picture.
+        const artURL = await firstDataURI(backgroundSources({ kind: "operator", id, elite: 1 }));
+        return { ...data, excerpt: prose ? clampExcerpt(prose, /[\u3040-\u9fff]/.test(prose) ? 66 : 160) : undefined, artURL };
+    },
+    template: (data) => ArchiveTemplate(data),
+});
+
+const musicHandler = /* @__PURE__ */ defineOgHandler<IMusicOgData>(ogHashers.music, {
+    fetch: async (cid) => {
+        if (!isMusicAlbumId(cid)) return null;
+        const res = await backendFetch(`/music/siren/albums/${encodeURIComponent(cid)}`);
+        if (!res.ok) return null;
+        const data = buildMusicOgData((await res.json()) as SirenAlbumDetail);
+        const tiny = sirenCoverAt(data.coverSource, 8);
+        const [coverURL, backdropURL] = await Promise.all([fetchToDataURI(data.coverSource), tiny ? fetchToDataURI(tiny) : Promise.resolve(undefined)]);
+        return { ...data, coverURL, backdropURL };
+    },
+    template: (data) => MusicTemplate(data),
+});
+
 export const ogRegistry: { [K in OgKind]: IOgHandler<OgData<K>> } = {
     operator: operatorHandler,
     user: userHandler,
@@ -631,6 +685,11 @@ export const ogRegistry: { [K in OgKind]: IOgHandler<OgData<K>> } = {
     "grid-image": gridImageHandler,
     stage: stageHandler,
     story: storyHandler,
+    recruitment: recruitmentHandler,
+    enemy: enemyHandler,
+    squad: squadHandler,
+    archive: archiveHandler,
+    music: musicHandler,
     default: defaultHandler,
 };
 

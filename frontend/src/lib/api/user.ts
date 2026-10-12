@@ -63,6 +63,7 @@ import type { SkillLineDto } from "#/types/generated/SkillLineDto";
 import type { StageGap } from "#/types/generated/StageGap";
 import type { StageImprovements } from "#/types/generated/StageImprovements";
 import type { StagePoolImprovements } from "#/types/generated/StagePoolImprovements";
+import type { SupportUnit } from "#/types/generated/SupportUnit";
 import type { SustainabilityDto } from "#/types/generated/SustainabilityDto";
 import type { UpgradeDelta } from "#/types/generated/UpgradeDelta";
 import type { UserScore } from "#/types/generated/UserScore";
@@ -129,6 +130,28 @@ export function userRosterQueryOptions(uid: string, bearerToken?: string) {
     return queryOptions({
         queryKey: ["user", "roster", uid, bearerToken ? "auth" : "anon"],
         queryFn: () => getUserRosterFn({ data: { uid, bearerToken } }),
+        staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+}
+
+/** A player's support units (`/get-user-supports`). Gated like the profile itself, never by tab; `null` for a profile the caller may not read. */
+export const getUserSupportsFn = createServerFn({ method: "GET" })
+    .inputValidator((data: { uid: string; bearerToken?: string }) => data)
+    .handler(async ({ data: { uid, bearerToken } }) => {
+        const token = bearerToken ?? optionalSiteToken();
+        const res = await backendFetch(`/get-user-supports?uid=${encodeURIComponent(uid)}`, { bearerToken: token });
+        if (!res.ok) {
+            if (res.status === 404 || res.status === 403) return null;
+            throw new Error(`Failed to load supports: ${res.status}`);
+        }
+        return (await res.json()) as SupportUnit[];
+    });
+
+export function userSupportsQueryOptions(uid: string, bearerToken?: string) {
+    return queryOptions({
+        queryKey: ["user", "supports", uid, bearerToken ? "auth" : "anon"],
+        queryFn: () => getUserSupportsFn({ data: { uid, bearerToken } }),
         staleTime: 60 * 1000,
         gcTime: 5 * 60 * 1000,
     });

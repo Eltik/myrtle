@@ -89,7 +89,7 @@ export const Route = createFileRoute("/stories_/$storyId")({
             title: t("story.title", { name }),
             description: t("story.description", { name }),
             path: `/stories/${params.storyId}`,
-            image: loaderData?.og ? localizedOgURL("story", storyOgId(params.storyId, loaderData.server), loaderData.og, match.context.i18n?.locale) : defaultOgURL("stages", match.context.i18n),
+            image: loaderData?.og ? localizedOgURL("story", storyOgId(params.storyId, loaderData.server), loaderData.og, match.context.i18n?.locale) : defaultOgURL("stories", match.context.i18n),
             type: loaderData?.og ? "article" : undefined,
             locale: match.context.i18n?.locale,
         });

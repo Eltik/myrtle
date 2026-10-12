@@ -71,8 +71,8 @@ async function loadOperatorsList(server: string | undefined): Promise<IOperatorL
     return Object.values(normalized) as IOperatorListItem[];
 }
 
-/** The whole operator table for one game server, read through `operatorsListCache`. */
-function cachedOperatorsList(server: string | undefined): Promise<IOperatorListItem[]> {
+/** The whole operator table for one game server, read through `operatorsListCache`. Server-side only; the OG renderer calls it directly, outside any server function. */
+export function cachedOperatorsList(server: string | undefined): Promise<IOperatorListItem[]> {
     const resolved = resolveGamedataServer(server);
     const now = Date.now();
     const hit = operatorsListCache.get(resolved);

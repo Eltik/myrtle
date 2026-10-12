@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-11T22:44:20.915Z",
+    "generatedAt": "2026-10-12T00:39:58.813Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -17116,6 +17116,20 @@
             "placeholders": []
         },
         {
+            "key": "meta.og.archives.subtitle",
+            "namespace": "meta",
+            "source_text": "Operator files, records and voice lines from the Rhodes Island archives.",
+            "description": "Subtitle on the operator archives social card.",
+            "placeholders": []
+        },
+        {
+            "key": "meta.og.archives.title",
+            "namespace": "meta",
+            "source_text": "Archives",
+            "description": "Headline on the operator archives social card: profiles, records and lore.",
+            "placeholders": []
+        },
+        {
             "key": "meta.og.changelog.subtitle",
             "namespace": "meta",
             "source_text": "Every commit and change shipped to myrtle.moe.",
@@ -17214,6 +17228,20 @@
             "placeholders": []
         },
         {
+            "key": "meta.og.music.subtitle",
+            "namespace": "meta",
+            "source_text": "Every Monster Siren album, with covers, artists and a player.",
+            "description": "Subtitle on the music gallery social card.",
+            "placeholders": []
+        },
+        {
+            "key": "meta.og.music.title",
+            "namespace": "meta",
+            "source_text": "Music",
+            "description": "Headline on the music gallery social card.",
+            "placeholders": []
+        },
+        {
             "key": "meta.og.operators.subtitle",
             "namespace": "meta",
             "source_text": "Every operator released in Arknights.",
@@ -17291,6 +17319,20 @@
             "placeholders": []
         },
         {
+            "key": "meta.og.stories.subtitle",
+            "namespace": "meta",
+            "source_text": "Read every main story, event and operator record as the game stages it.",
+            "description": "Subtitle on the story library social card.",
+            "placeholders": []
+        },
+        {
+            "key": "meta.og.stories.title",
+            "namespace": "meta",
+            "source_text": "Story Reader",
+            "description": "Headline on the story library social card.",
+            "placeholders": []
+        },
+        {
             "key": "meta.og.story.cutscene",
             "namespace": "meta",
             "source_text": "Cutscene",
@@ -17326,38 +17368,66 @@
             "placeholders": []
         },
         {
+            "key": "meta.og.tag.account",
+            "namespace": "meta",
+            "source_text": "Account",
+            "description": "Section kicker on the default social card, above the headline. Drawn uppercase in a small monospace face with wide tracking: keep it to one short word. Covers sign-in and settings.",
+            "placeholders": []
+        },
+        {
             "key": "meta.og.tag.collection",
             "namespace": "meta",
             "source_text": "Collection",
-            "description": "Section chip on the default social card covering operators, enemies and stages. Drawn uppercase, at 13px, in a row of five - keep it to one short word.",
+            "description": "Section kicker on the default social card, above the headline. Drawn uppercase in a small monospace face with wide tracking: keep it to one short word. Covers operators, enemies, stages, stories, archives and music.",
+            "placeholders": []
+        },
+        {
+            "key": "meta.og.tag.community",
+            "namespace": "meta",
+            "source_text": "Community",
+            "description": "Section kicker on the default social card, above the headline. Drawn uppercase in a small monospace face with wide tracking: keep it to one short word. Covers tier lists and grids made by players.",
             "placeholders": []
         },
         {
             "key": "meta.og.tag.gacha",
             "namespace": "meta",
             "source_text": "Gacha",
-            "description": "Section chip on the default social card. `Gacha` is the standard loanword for the game's randomised pulls. Drawn uppercase, at 13px, in a row of five - keep it to one short word.",
+            "description": "Section kicker on the default social card, above the headline. Drawn uppercase in a small monospace face with wide tracking: keep it to one short word. `Gacha` is the standard loanword for the game's randomised pulls.",
             "placeholders": []
         },
         {
             "key": "meta.og.tag.home",
             "namespace": "meta",
             "source_text": "Home",
-            "description": "Section chip on the default social card. Drawn uppercase, at 13px, in a row of five - keep it to one short word.",
+            "description": "Section kicker on the default social card, above the headline. Drawn uppercase in a small monospace face with wide tracking: keep it to one short word.",
+            "placeholders": []
+        },
+        {
+            "key": "meta.og.tag.legal",
+            "namespace": "meta",
+            "source_text": "Legal",
+            "description": "Section kicker on the default social card, above the headline. Drawn uppercase in a small monospace face with wide tracking: keep it to one short word. Covers the terms of service and privacy policy.",
             "placeholders": []
         },
         {
             "key": "meta.og.tag.players",
             "namespace": "meta",
             "source_text": "Players",
-            "description": "Section chip on the default social card covering profiles, search and the leaderboard. Drawn uppercase, at 13px, in a row of five - keep it to one short word.",
+            "description": "Section kicker on the default social card, above the headline. Drawn uppercase in a small monospace face with wide tracking: keep it to one short word. Covers profiles, search and the leaderboard.",
+            "placeholders": []
+        },
+        {
+            "key": "meta.og.tag.stats",
+            "namespace": "meta",
+            "source_text": "Stats",
+            "description": "Section kicker on the default social card, above the headline. Drawn uppercase in a small monospace face with wide tracking: keep it to one short word. Covers the site-wide index counts.",
             "placeholders": []
         },
         {
             "key": "meta.og.tag.tools",
             "namespace": "meta",
             "source_text": "Tools",
-            "description": "Section chip on the default social card covering the calculators and planners. Drawn uppercase, at 13px, in a row of five - keep it to one short word.",
+            "description": "Section kicker on the default social card, above the headline. Drawn uppercase in a small monospace face with wide tracking: keep it to one short word. Covers the calculators and planners.",
             "placeholders": []
         },
         {
