@@ -10,6 +10,34 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-10-13.title": {
+        text: "Improved: Link previews for more pages",
+        description: "Title of the 2026-10-13 release note. A 'link preview' is the card a chat app such as Discord shows under a pasted link.",
+    },
+    "note.2026-10-13.lead": {
+        text: "Links to **profiles, enemies, Archives, music albums, recruitment tags and squads** now show their own preview card when you paste them into Discord or another chat. A profile's card shows the background its owner picked.",
+        description: "Lead paragraph of the 2026-10-13 release note, rendered as Markdown. 'Archives' is a page name and must match its translation.",
+    },
+    "note.2026-10-13.item.1": {
+        text: "Hover hints across the site use the site's own tooltip, and they now show in the fullscreen story reader too.",
+        description: "Bullet in the 2026-10-13 release note, filed under 'Improved'.",
+    },
+    "note.2026-10-13.item.2": {
+        text: "The music page's cover wheel glides smoothly when you scroll it.",
+        description: "Bullet in the 2026-10-13 release note, filed under 'Improved'.",
+    },
+    "note.2026-10-13.item.3": {
+        text: "In the profile background picker, the Archive pictures from Near Light, Stultifera Navis and Lone Trail sit with their story's CGs.",
+        description: "Bullet in the 2026-10-13 release note, filed under 'Improved'. Near Light, Stultifera Navis and Lone Trail are game events and keep the game's names; CGs are story illustrations.",
+    },
+    "note.2026-10-13.item.4": {
+        text: "The pull planner's What you earn section can be collapsed.",
+        description: "Bullet in the 2026-10-13 release note, filed under 'Improved'. 'What you earn' is a section title and must match its translation.",
+    },
+    "note.2026-10-13.item.5": {
+        text: "On phones, the homepage headline no longer leaves a gap above the text below it.",
+        description: "Bullet in the 2026-10-13 release note, filed under 'Fixed'.",
+    },
     "note.2026-10-12.title": {
         text: "New: Music, Archives and a Squad Builder",
         description: "Title of the 2026-10-12 release note. 'Archives' and 'Squad Builder' are page names and must match their translations.",

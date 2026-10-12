@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-12T21:54:41.360Z",
+    "generatedAt": "2026-10-12T23:16:19.904Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -7808,6 +7808,55 @@
             "namespace": "changelog",
             "source_text": "New: Music, Archives and a Squad Builder",
             "description": "Title of the 2026-10-12 release note. 'Archives' and 'Squad Builder' are page names and must match their translations.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-13.item.1",
+            "namespace": "changelog",
+            "source_text": "Hover hints across the site use the site's own tooltip, and they now show in the fullscreen story reader too.",
+            "description": "Bullet in the 2026-10-13 release note, filed under 'Improved'.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-13.item.2",
+            "namespace": "changelog",
+            "source_text": "The music page's cover wheel glides smoothly when you scroll it.",
+            "description": "Bullet in the 2026-10-13 release note, filed under 'Improved'.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-13.item.3",
+            "namespace": "changelog",
+            "source_text": "In the profile background picker, the Archive pictures from Near Light, Stultifera Navis and Lone Trail sit with their story's CGs.",
+            "description": "Bullet in the 2026-10-13 release note, filed under 'Improved'. Near Light, Stultifera Navis and Lone Trail are game events and keep the game's names; CGs are story illustrations.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-13.item.4",
+            "namespace": "changelog",
+            "source_text": "The pull planner's What you earn section can be collapsed.",
+            "description": "Bullet in the 2026-10-13 release note, filed under 'Improved'. 'What you earn' is a section title and must match its translation.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-13.item.5",
+            "namespace": "changelog",
+            "source_text": "On phones, the homepage headline no longer leaves a gap above the text below it.",
+            "description": "Bullet in the 2026-10-13 release note, filed under 'Fixed'.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-13.lead",
+            "namespace": "changelog",
+            "source_text": "Links to **profiles, enemies, Archives, music albums, recruitment tags and squads** now show their own preview card when you paste them into Discord or another chat. A profile's card shows the background its owner picked.",
+            "description": "Lead paragraph of the 2026-10-13 release note, rendered as Markdown. 'Archives' is a page name and must match its translation.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-13.title",
+            "namespace": "changelog",
+            "source_text": "Improved: Link previews for more pages",
+            "description": "Title of the 2026-10-13 release note. A 'link preview' is the card a chat app such as Discord shows under a pasted link.",
             "placeholders": []
         },
         {
