@@ -11,7 +11,7 @@ import type { IAlbum } from "../impl/model";
 import type { messages } from "../MusicGallery.messages";
 import { usePlayer } from "../player/engine";
 import { JumpPalette } from "./JumpPalette";
-import { BASE_COVER, CLICK_SLOP, clampIndex, coverPose, DRAG_PER_COVER, type ISample, KEY_FIRST_REPEAT_MS, MOMENTUM_DECAY, poseTransform, repeatDelay, rubberBand, STOP_SPEED, velocityOf, visibleRadius, WHEEL_IDLE_MS, WHEEL_PER_COVER } from "./physics";
+import { BASE_COVER, CLICK_SLOP, clampIndex, coverPose, DRAG_PER_COVER, type ISample, KEY_FIRST_REPEAT_MS, MOMENTUM_DECAY, poseTransform, repeatDelay, rubberBand, STOP_SPEED, velocityOf, visibleRadius, WHEEL_FOLLOW, WHEEL_IDLE_MS, WHEEL_PER_COVER } from "./physics";
 
 type MusicT = TypedT<typeof messages>;
 
@@ -128,6 +128,11 @@ export function Coverflow({ albums, onOpen }: { albums: readonly IAlbum[]; onOpe
             const dt = Math.min(0.05, Math.max(0, (now - s.last) / 1000));
             s.last = now;
             const last = Math.max(0, live.current.albums.length - 1);
+            if (s.mode === "wheel") {
+                // The wheel moves a goal and the covers glide after it, so one notch is a
+                // slide across frames, not a jump in one.
+                s.pos += (rubberBand(s.wheelRaw, last) - s.pos) * Math.min(WHEEL_FOLLOW * dt, 1);
+            }
             if (s.mode === "coast") {
                 s.pos += s.vel * dt;
                 s.vel *= MOMENTUM_DECAY ** dt;
@@ -146,10 +151,12 @@ export function Coverflow({ albums, onOpen }: { albums: readonly IAlbum[]; onOpe
                 if (Math.abs(s.target - s.pos) < SNAP_EPSILON) {
                     s.pos = s.target;
                     s.mode = "idle";
+                    // The wheel held the hover lift off while the covers moved under a still cursor.
+                    if (stageRef.current) delete stageRef.current.dataset.dragging;
                 }
             }
             applyFrame();
-            s.raf = s.mode === "coast" || s.mode === "snap" ? requestAnimationFrame(tick) : 0;
+            s.raf = s.mode === "wheel" || s.mode === "coast" || s.mode === "snap" ? requestAnimationFrame(tick) : 0;
         },
         [applyFrame],
     );
@@ -262,24 +269,34 @@ export function Coverflow({ albums, onOpen }: { albums: readonly IAlbum[]; onOpe
             const delta = e.deltaMode === 1 ? raw * 40 : e.deltaMode === 2 ? raw * 800 : raw;
             const s = sim.current;
             const last = Math.max(0, live.current.albums.length - 1);
-            if (s.mode !== "wheel") {
-                halt();
-                s.mode = "wheel";
-                s.wheelRaw = s.pos;
-                s.samples = [];
+            if (live.current.reduced) {
+                // No glide: each event lands where the wheel says, and the idle snap settles it.
+                if (s.mode !== "wheel") {
+                    halt();
+                    s.mode = "wheel";
+                    s.wheelRaw = s.pos;
+                }
+                s.wheelRaw += delta / WHEEL_PER_COVER;
+                s.pos = rubberBand(s.wheelRaw, last);
+                requestFrame();
+            } else {
+                if (s.mode !== "wheel") {
+                    // A notch during a snap counts from where the snap is headed, so it is never swallowed.
+                    s.wheelRaw = s.mode === "snap" ? s.target : s.pos;
+                    s.mode = "wheel";
+                    s.vel = 0;
+                    el.dataset.dragging = "";
+                }
+                s.wheelRaw += delta / WHEEL_PER_COVER;
+                run();
             }
-            s.wheelRaw += delta / WHEEL_PER_COVER;
-            s.pos = rubberBand(s.wheelRaw, last);
-            const now = performance.now();
-            s.samples.push({ t: now, pos: s.pos });
-            if (s.samples.length > MAX_SAMPLES) s.samples.shift();
-            requestFrame();
             if (s.wheelTimer) clearTimeout(s.wheelTimer);
+            // The wheel goal is already moving the covers, so the snap takes over from the
+            // glide in place; there is no momentum to measure, and no pause to wait out.
             s.wheelTimer = setTimeout(() => {
                 s.wheelTimer = null;
                 if (s.mode !== "wheel") return;
-                const lastSample = s.samples[s.samples.length - 1];
-                release(lastSample ? velocityOf(s.samples, lastSample.t) : 0);
+                goTo(Math.round(s.wheelRaw));
             }, WHEEL_IDLE_MS);
         };
         el.addEventListener("wheel", onWheel, { passive: false });
@@ -288,7 +305,7 @@ export function Coverflow({ albums, onOpen }: { albums: readonly IAlbum[]; onOpe
             const timer = sim.current.wheelTimer;
             if (timer) clearTimeout(timer);
         };
-    }, [requestFrame, halt, release]);
+    }, [requestFrame, halt, run, goTo]);
 
     // Arrow keys and Enter, document-level while Discovery is on screen.
     useEffect(() => {

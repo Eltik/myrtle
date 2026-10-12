@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-12T00:39:58.813Z",
+    "generatedAt": "2026-10-12T12:47:01.699Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -48335,8 +48335,8 @@
         {
             "key": "user.profile.background.gallery.source.archive_pic",
             "namespace": "user",
-            "source_text": "Archives",
-            "description": "Gallery source button: the Archives gallery pictures events and Integrated Strategies collect.",
+            "source_text": "Integrated Strategies",
+            "description": "Gallery source button: the pictures collected in the Integrated Strategies themes' in-game archives. 'Integrated Strategies' is the game mode's official name; keep the game's own name for it.",
             "placeholders": []
         },
         {
@@ -53570,13 +53570,6 @@
             "placeholders": []
         },
         {
-            "key": "user.profile.strip.items.sub",
-            "namespace": "user",
-            "source_text": "Inventory entries",
-            "description": "Caption under the item count.",
-            "placeholders": []
-        },
-        {
             "key": "user.profile.strip.operators.kicker",
             "namespace": "user",
             "source_text": "Operators",
@@ -53584,38 +53577,10 @@
             "placeholders": []
         },
         {
-            "key": "user.profile.strip.operators.sub",
-            "namespace": "user",
-            "source_text": "Unique units in roster",
-            "description": "Caption under the operator count.",
-            "placeholders": []
-        },
-        {
-            "key": "user.profile.strip.originite.sub",
-            "namespace": "user",
-            "source_text": "Originite Prime Available",
-            "description": "Caption under the Originite Prime balance. 'Originite Prime' is the game's premium currency; keep its official name.",
-            "placeholders": []
-        },
-        {
-            "key": "user.profile.strip.orundum.sub",
-            "namespace": "user",
-            "source_text": "Orundum Available",
-            "description": "Caption under the Orundum balance. 'Orundum' is an in-game currency; keep the game's own name for it.",
-            "placeholders": []
-        },
-        {
             "key": "user.profile.strip.skins.kicker",
             "namespace": "user",
             "source_text": "Skins",
             "description": "Label of the tile counting the outfits this account owns.",
-            "placeholders": []
-        },
-        {
-            "key": "user.profile.strip.skins.sub",
-            "namespace": "user",
-            "source_text": "Outfits collected",
-            "description": "Caption under the skin count.",
             "placeholders": []
         },
         {

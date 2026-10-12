@@ -30,8 +30,10 @@ export const MOMENTUM_DECAY = 0.08;
 export const STOP_SPEED = 0.05;
 /** A pointer that moved less than this is a click, px. */
 export const CLICK_SLOP = 10;
-/** The wheel coasts once no event arrived for this long, ms. */
-export const WHEEL_IDLE_MS = 120;
+/** The wheel snaps to a cover once no event arrived for this long, ms. Short, because the covers keep gliding meanwhile. */
+export const WHEEL_IDLE_MS = 60;
+/** How fast the covers close on the wheel's goal: this share of the gap per second, like the snap's. */
+export const WHEEL_FOLLOW = 10;
 /** Held arrow keys: the first repeat after this, ms. */
 export const KEY_FIRST_REPEAT_MS = 280;
 /** Held arrow keys: the fastest repeat, ms. */

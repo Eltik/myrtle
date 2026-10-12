@@ -6,7 +6,7 @@ import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { ProfileBackgroundKind } from "#/types/generated/ProfileBackgroundKind";
 import { GALLERY_KINDS, type GalleryKind, isGalleryKind } from "../background";
-import { type IGalleryFilter, NO_GALLERY_FILTER } from "../gallery";
+import { archivePictureCategory, type IGalleryFilter, NO_GALLERY_FILTER } from "../gallery";
 import type { messages } from "./ArtBrowser.messages";
 import { COUNT, SEGMENT_ITEM, sourceTab } from "./chips";
 import { RailLabel, RailRow } from "./rail";
@@ -63,7 +63,8 @@ export const ArtBrowser = memo(function ArtBrowser({ selected, onPick }: IArtBro
     const t: TypedT<typeof messages> = useT("user");
     const wide = useMediaQuery("md");
     const catalog = useGalleryCatalog();
-    const [source, setSource] = useState<Source>(() => (selected && isGalleryKind(selected.kind) ? selected.kind : "characters"));
+    // An event's archive picture is listed under Story CGs (see `foldArchiveIntoStories`), so it opens there.
+    const [source, setSource] = useState<Source>(() => (selected && isGalleryKind(selected.kind) ? (selected.kind === "archive_pic" && archivePictureCategory(selected.id) === "side" ? "story_cg" : selected.kind) : "characters"));
     const [chosen, setChosen] = useState<IGalleryFilter>(NO_GALLERY_FILTER);
     const [tileSize, setTileSize] = useTileSize();
     const galleryKind: GalleryKind = source === "characters" ? "archive_pic" : source;

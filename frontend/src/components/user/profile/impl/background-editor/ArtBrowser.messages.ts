@@ -84,8 +84,8 @@ export const messages = {
         description: "Accessible label and tooltip of one story CG or story scene tile, which has no title of its own. {group} is the story (main story chapter, event or vignette) whose scripts first show it.",
     },
     "profile.background.gallery.source.archive_pic": {
-        text: "Archives",
-        description: "Gallery source button: the Archives gallery pictures events and Integrated Strategies collect.",
+        text: "Integrated Strategies",
+        description: "Gallery source button: the pictures collected in the Integrated Strategies themes' in-game archives. 'Integrated Strategies' is the game mode's official name; keep the game's own name for it.",
     },
     "profile.background.gallery.source.story_cg": {
         text: "Story CGs",

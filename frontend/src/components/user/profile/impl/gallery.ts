@@ -37,6 +37,47 @@ export function archiveCategory(groupId: string): StoryCategory {
     return /^rogue_\d+$/.test(groupId) ? "is" : "side";
 }
 
+/**
+ * The Archives category of a picture from its id alone, for a saved background, which
+ * keeps no group: a theme's picture ids carry the theme (`pic_rogue_2_KV1`), an event's
+ * do not (`act13side_pic_0`).
+ */
+export function archivePictureCategory(id: string): StoryCategory {
+    return /(^|_)rogue_\d+(_|$)/.test(id) ? "is" : "side";
+}
+
+/**
+ * The Archives split for the picker: an event's archive pictures belong to that event's
+ * story, so they join the story CGs under the same group (the archive group id IS the
+ * story group id, `act13side` for Near Light), after its CGs; a story the CG catalogue
+ * does not list gets its own group at the end. The Archives keep the Integrated
+ * Strategies themes. Each tile keeps its kind, so it loads and saves as an archive picture.
+ */
+export function foldArchiveIntoStories(archive: readonly IGalleryTile[], cgs: readonly IGalleryTile[]): { archive: IGalleryTile[]; cgs: IGalleryTile[] } {
+    const kept = archive.filter((tile) => tile.category === "is");
+    const moved = new Map<string, IGalleryTile[]>();
+    for (const tile of archive) {
+        if (tile.category === "is") continue;
+        const list = moved.get(tile.groupId);
+        if (list) list.push(tile);
+        else moved.set(tile.groupId, [tile]);
+    }
+    if (moved.size === 0) return { archive: kept, cgs: [...cgs] };
+    const out: IGalleryTile[] = [];
+    cgs.forEach((tile, i) => {
+        out.push(tile);
+        const next = cgs[i + 1];
+        if (next?.groupId === tile.groupId) return;
+        const extra = moved.get(tile.groupId);
+        if (!extra) return;
+        // Filed under the story's own name and category, as its CGs are.
+        for (const pic of extra) out.push({ ...pic, groupName: tile.groupName, category: tile.category });
+        moved.delete(tile.groupId);
+    });
+    for (const extra of moved.values()) out.push(...extra);
+    return { archive: kept, cgs: out };
+}
+
 /** The Archives gallery's tiles, in the archive's own order. */
 export function archiveTiles(gallery: StoryGallery): IGalleryTile[] {
     return gallery.groups.flatMap((group) => group.pictures.map((picture) => ({ kind: "archive_pic" as const, id: picture.id, title: picture.title, groupId: group.id, groupName: group.name, category: archiveCategory(group.id), picture })));

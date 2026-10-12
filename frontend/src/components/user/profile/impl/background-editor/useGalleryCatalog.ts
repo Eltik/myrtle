@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { storyArtGalleryQueryOptions, storyGalleryQueryOptions } from "#/lib/api/story";
 import type { GalleryKind } from "../background";
-import { archiveTiles, type IGalleryTile, storyArtTiles } from "../gallery";
+import { archiveTiles, foldArchiveIntoStories, type IGalleryTile, storyArtTiles } from "../gallery";
 
 /** One gallery source's catalogue: its tiles once loaded, and how its load went. */
 export interface IGallerySource {
@@ -21,8 +21,10 @@ export function useGalleryCatalog(): Record<GalleryKind, IGallerySource> {
     const archive = useQuery(storyGalleryQueryOptions());
     const cgs = useQuery(storyArtGalleryQueryOptions("cg"));
     const scenes = useQuery(storyArtGalleryQueryOptions("scene"));
-    const archiveList = useMemo(() => (archive.data ? archiveTiles(archive.data) : []), [archive.data]);
-    const cgList = useMemo(() => (cgs.data ? storyArtTiles(cgs.data) : []), [cgs.data]);
+    // An event's archive pictures sit with its story's CGs; the Archives keep the IS themes.
+    const folded = useMemo(() => foldArchiveIntoStories(archive.data ? archiveTiles(archive.data) : [], cgs.data ? storyArtTiles(cgs.data) : []), [archive.data, cgs.data]);
+    const archiveList = folded.archive;
+    const cgList = folded.cgs;
     const sceneList = useMemo(() => (scenes.data ? storyArtTiles(scenes.data) : []), [scenes.data]);
     // A query that answered with no catalogue (`null`) is an error to the picker, as a failed one is.
     const status = (q: { status: "pending" | "error" | "success"; data: unknown }) => (q.status === "success" && q.data == null ? "error" : q.status);

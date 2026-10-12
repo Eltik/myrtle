@@ -254,8 +254,12 @@
     .myrtleImg {
         width: var(--chibi);
     }
-    /* Myrtle sits beside the headline; a one-line headline still leaves her room. */
+    /* Myrtle sits beside the headline; a one-line headline still leaves her room, and
+       sits at the foot of that room, right above the lead, as it does on desktop. */
     .title {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
         padding-inline-end: calc(var(--chibi) + 8px);
         min-height: var(--chibi);
     }
