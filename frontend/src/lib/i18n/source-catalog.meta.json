@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-13T01:10:28.258Z",
+    "generatedAt": "2026-10-13T06:42:45.758Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -9068,6 +9068,13 @@
             "placeholders": []
         },
         {
+            "key": "enemies.chips.immune",
+            "namespace": "enemies",
+            "source_text": "Immune to",
+            "description": "Label before the status-effect filter chips (Stun, Sleep, ...). Selecting several shows only enemies immune to ALL of them. Short uppercase label on the chip rail.",
+            "placeholders": []
+        },
+        {
             "key": "enemies.chips.race",
             "namespace": "enemies",
             "source_text": "Race",
@@ -9200,6 +9207,69 @@
             "namespace": "enemies",
             "source_text": "Stats",
             "description": "Tab label: the enemy's stat blocks and status immunities.",
+            "placeholders": []
+        },
+        {
+            "key": "enemies.immunity.fear",
+            "namespace": "enemies",
+            "source_text": "Fear",
+            "description": "Filter chip under 'Immune to': status effect; the target cannot act and moves erratically. The game's own term for it.",
+            "placeholders": []
+        },
+        {
+            "key": "enemies.immunity.frozen",
+            "namespace": "enemies",
+            "source_text": "Frozen",
+            "description": "Filter chip under 'Immune to': status effect. The game's own term for it.",
+            "placeholders": []
+        },
+        {
+            "key": "enemies.immunity.levitate",
+            "namespace": "enemies",
+            "source_text": "Levitate",
+            "description": "Filter chip under 'Immune to': status effect that lifts the target off the ground. The game's own term for it.",
+            "placeholders": []
+        },
+        {
+            "key": "enemies.immunity.lure",
+            "namespace": "enemies",
+            "source_text": "Lure",
+            "description": "Filter chip under 'Immune to': status effect that pulls the target toward a point. The game's own term for it.",
+            "placeholders": []
+        },
+        {
+            "key": "enemies.immunity.paralysis",
+            "namespace": "enemies",
+            "source_text": "Paralysis",
+            "description": "Filter chip under 'Immune to': status effect that periodically stops the target in place. The game's own term for it.",
+            "placeholders": []
+        },
+        {
+            "key": "enemies.immunity.silence",
+            "namespace": "enemies",
+            "source_text": "Silence",
+            "description": "Filter chip under 'Immune to': status effect that blocks skills. The game's own term for it.",
+            "placeholders": []
+        },
+        {
+            "key": "enemies.immunity.sleep",
+            "namespace": "enemies",
+            "source_text": "Sleep",
+            "description": "Filter chip under 'Immune to': status effect. The game's own term for it.",
+            "placeholders": []
+        },
+        {
+            "key": "enemies.immunity.stun",
+            "namespace": "enemies",
+            "source_text": "Stun",
+            "description": "Filter chip under 'Immune to': status effect. The game's own term for it.",
+            "placeholders": []
+        },
+        {
+            "key": "enemies.immunity.tremble",
+            "namespace": "enemies",
+            "source_text": "Frighten",
+            "description": "Filter chip under 'Immune to': status effect; the target cannot make normal attacks while blocked. The game's own term for it.",
             "placeholders": []
         },
         {
@@ -9985,6 +10055,13 @@
             ]
         },
         {
+            "key": "enemies.stats.immunity.fear",
+            "namespace": "enemies",
+            "source_text": "Fear",
+            "description": "Status effect in the immunity table: the target cannot act and moves erratically. The game's own term for it.",
+            "placeholders": []
+        },
+        {
             "key": "enemies.stats.immunity.frozen",
             "namespace": "enemies",
             "source_text": "Frozen",
@@ -9996,6 +10073,20 @@
             "namespace": "enemies",
             "source_text": "Levitate",
             "description": "Status effect in the immunity table: lifted off the ground. The game's own term for it.",
+            "placeholders": []
+        },
+        {
+            "key": "enemies.stats.immunity.lure",
+            "namespace": "enemies",
+            "source_text": "Lure",
+            "description": "Status effect in the immunity table: the target is pulled toward a point. The game's own term for it.",
+            "placeholders": []
+        },
+        {
+            "key": "enemies.stats.immunity.paralysis",
+            "namespace": "enemies",
+            "source_text": "Paralysis",
+            "description": "Status effect in the immunity table: the target is periodically stopped in place. The game's own term for it.",
             "placeholders": []
         },
         {
@@ -10024,6 +10115,13 @@
             "namespace": "enemies",
             "source_text": "Stun",
             "description": "Status effect in the immunity table. The game's own term for it.",
+            "placeholders": []
+        },
+        {
+            "key": "enemies.stats.immunity.tremble",
+            "namespace": "enemies",
+            "source_text": "Frighten",
+            "description": "Status effect in the immunity table: the target cannot make normal attacks while blocked. The game's own term for it.",
             "placeholders": []
         },
         {

@@ -29,6 +29,10 @@ const FIELDS: IExportField<IEnemyView>[] = [
     { id: "imm_sleep", label: "sleepImmune", group: "Immunities", accessor: (e) => e.immunities.sleep },
     { id: "imm_frozen", label: "frozenImmune", group: "Immunities", accessor: (e) => e.immunities.frozen },
     { id: "imm_levitate", label: "levitateImmune", group: "Immunities", accessor: (e) => e.immunities.levitate },
+    { id: "imm_fear", label: "fearImmune", group: "Immunities", accessor: (e) => e.immunities.fear },
+    { id: "imm_paralysis", label: "paralysisImmune", group: "Immunities", accessor: (e) => e.immunities.paralysis },
+    { id: "imm_tremble", label: "trembleImmune", group: "Immunities", accessor: (e) => e.immunities.tremble },
+    { id: "imm_lure", label: "lureImmune", group: "Immunities", accessor: (e) => e.immunities.lure },
 
     { id: "description", label: "description", group: "Description", accessor: (e) => e.description },
     { id: "ability", label: "ability", group: "Description", accessor: (e) => e.ability },

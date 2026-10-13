@@ -238,6 +238,10 @@ const IMMUNITY_ROWS: { labelKey: SectionsMessageKey; pick: (a: IEnemyAttributes)
     { labelKey: "stats.immunity.sleep", pick: (a) => !!a.sleepImmune },
     { labelKey: "stats.immunity.frozen", pick: (a) => !!a.frozenImmune },
     { labelKey: "stats.immunity.levitate", pick: (a) => !!a.levitateImmune },
+    { labelKey: "stats.immunity.fear", pick: (a) => !!a.fearImmune },
+    { labelKey: "stats.immunity.paralysis", pick: (a) => !!a.paralysisImmune },
+    { labelKey: "stats.immunity.tremble", pick: (a) => !!a.trembleImmune },
+    { labelKey: "stats.immunity.lure", pick: (a) => !!a.lureImmune },
 ];
 
 function PhaseStatsBlock({ phase, label }: { phase: IEnemyLevelStats; label: string }) {

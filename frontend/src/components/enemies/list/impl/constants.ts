@@ -1,6 +1,6 @@
 import type { IEnemyDamageType, IEnemyLevel } from "#/lib/api/enemies";
 import type { messages as listConstantsMessages } from "./constants.messages";
-import type { ApplyWay, SortOption, ViewMode } from "./types";
+import type { ApplyWay, IEnemyImmunities, SortOption, ViewMode } from "./types";
 
 /** A key in `constants.messages.ts`; resolved by whichever component renders it. */
 export type EnemyListMessageKey = keyof typeof listConstantsMessages & string;
@@ -49,6 +49,21 @@ export const APPLY_WAY_LABEL_KEY: Record<ApplyWay, EnemyListMessageKey> = {
     MELEE: "applyWay.MELEE",
     RANGED: "applyWay.RANGED",
     NONE: "applyWay.NONE",
+};
+
+/** Filter chip order for "Immune to"; matches the detail page's immunity table. */
+export const IMMUNITY_KEYS: readonly (keyof IEnemyImmunities)[] = ["stun", "silence", "sleep", "frozen", "levitate", "fear", "paralysis", "tremble", "lure"] as const;
+
+export const IMMUNITY_LABEL_KEY: Record<keyof IEnemyImmunities, EnemyListMessageKey> = {
+    stun: "immunity.stun",
+    silence: "immunity.silence",
+    sleep: "immunity.sleep",
+    frozen: "immunity.frozen",
+    levitate: "immunity.levitate",
+    fear: "immunity.fear",
+    paralysis: "immunity.paralysis",
+    tremble: "immunity.tremble",
+    lure: "immunity.lure",
 };
 
 export const LIST_GRID_COLS = "56px 1fr 90px 144px 110px";

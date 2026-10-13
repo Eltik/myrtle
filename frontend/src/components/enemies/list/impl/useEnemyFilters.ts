@@ -10,6 +10,7 @@ const initialState: IFilterState = {
     attackTypes: [],
     races: [],
     appearsIn: [],
+    immunities: [],
     sortBy: "index",
     sortOrder: "asc",
 };
@@ -21,7 +22,7 @@ const EMPTY_LOCATIONS: IEnemyLocationIndex = { zonesByEnemy: new Map(), stagesBy
  * invalidates whatever page you were on, so it fires `onNarrow`; changing a sort
  * key leaves the row count alone and does not.
  */
-const NARROWING_KEYS: ReadonlySet<keyof IFilterState> = new Set(["q", "levels", "damageTypes", "attackTypes", "races", "appearsIn"]);
+const NARROWING_KEYS: ReadonlySet<keyof IFilterState> = new Set(["q", "levels", "damageTypes", "attackTypes", "races", "appearsIn", "immunities"]);
 
 /**
  * `onNarrow` fires only from the setters, never from the mount-time hydration of
@@ -58,6 +59,9 @@ export function useEnemyFilters(data: IEnemyView[], locations: IEnemyLocationInd
         // selected token is in its zone set or stage set.
         const wantLocations = filters.appearsIn;
         const hasLocationFilter = wantLocations.length > 0;
+        // Immunities are AND, unlike the OR filters above: "immune to stun and
+        // sleep" means both, so every selected status must be immune.
+        const wantImmunities = filters.immunities;
 
         return data.filter((e) => {
             if (e.hideInHandbook) return false;
@@ -76,13 +80,14 @@ export function useEnemyFilters(data: IEnemyView[], locations: IEnemyLocationInd
                 const hit = wantLocations.some((t) => zones?.has(t) || stages?.has(t));
                 if (!hit) return false;
             }
+            if (wantImmunities.length && !wantImmunities.every((k) => e.immunities[k])) return false;
             if (query) {
                 const haystack = `${e.name} ${e.enemyIndex} ${e.race ?? ""} ${e.description ?? ""}`.toLowerCase();
                 if (!haystack.includes(query)) return false;
             }
             return true;
         });
-    }, [data, locations, filters.q, filters.levels, filters.damageTypes, filters.attackTypes, filters.races, filters.appearsIn]);
+    }, [data, locations, filters.q, filters.levels, filters.damageTypes, filters.attackTypes, filters.races, filters.appearsIn, filters.immunities]);
 
     const { sortBy, sortOrder } = filters;
     const filteredEnemies = useMemo(() => {
@@ -111,11 +116,11 @@ export function useEnemyFilters(data: IEnemyView[], locations: IEnemyLocationInd
     }, [filtered, sortBy, sortOrder]);
 
     const clearFilters = useCallback(() => {
-        setFilters((prev) => ({ ...prev, levels: [], damageTypes: [], attackTypes: [], races: [], appearsIn: [], q: "" }));
+        setFilters((prev) => ({ ...prev, levels: [], damageTypes: [], attackTypes: [], races: [], appearsIn: [], immunities: [], q: "" }));
         onNarrow?.();
     }, [setFilters, onNarrow]);
 
-    const activeFilterCount = filters.levels.length + filters.damageTypes.length + filters.attackTypes.length + filters.races.length + filters.appearsIn.length + (filters.q ? 1 : 0);
+    const activeFilterCount = filters.levels.length + filters.damageTypes.length + filters.attackTypes.length + filters.races.length + filters.appearsIn.length + filters.immunities.length + (filters.q ? 1 : 0);
 
     const setters = useMemo(
         () => ({
@@ -125,6 +130,7 @@ export function useEnemyFilters(data: IEnemyView[], locations: IEnemyLocationInd
             setAttackTypes: (v: IFilterState["attackTypes"]) => set("attackTypes", v),
             setRaces: (v: IFilterState["races"]) => set("races", v),
             setAppearsIn: (v: IFilterState["appearsIn"]) => set("appearsIn", v),
+            setImmunities: (v: IFilterState["immunities"]) => set("immunities", v),
             setSortBy: (v: IFilterState["sortBy"]) => set("sortBy", v),
             setSortOrder: (v: IFilterState["sortOrder"]) => set("sortOrder", v),
         }),

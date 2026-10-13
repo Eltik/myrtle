@@ -15,4 +15,8 @@ export type EnemyAttributes = {
     sleepImmune: boolean;
     frozenImmune: boolean;
     levitateImmune: boolean;
+    fearImmune: boolean;
+    paralysisImmune: boolean;
+    trembleImmune: boolean;
+    lureImmune: boolean;
 };

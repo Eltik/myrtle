@@ -131,6 +131,22 @@ export const messages = {
         text: "Levitate",
         description: "Status effect in the immunity table: lifted off the ground. The game's own term for it.",
     },
+    "stats.immunity.fear": {
+        text: "Fear",
+        description: "Status effect in the immunity table: the target cannot act and moves erratically. The game's own term for it.",
+    },
+    "stats.immunity.paralysis": {
+        text: "Paralysis",
+        description: "Status effect in the immunity table: the target is periodically stopped in place. The game's own term for it.",
+    },
+    "stats.immunity.tremble": {
+        text: "Frighten",
+        description: "Status effect in the immunity table: the target cannot make normal attacks while blocked. The game's own term for it.",
+    },
+    "stats.immunity.lure": {
+        text: "Lure",
+        description: "Status effect in the immunity table: the target is pulled toward a point. The game's own term for it.",
+    },
     "stats.immunity.aria.immune": {
         text: "{status} immune in {phase}",
         description: "Accessible name of a tick in the immunity table. {status} is a status effect and {phase} the stat block's heading.",

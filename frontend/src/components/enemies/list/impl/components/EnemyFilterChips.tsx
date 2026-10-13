@@ -2,10 +2,10 @@ import type React from "react";
 import type { IEnemyDamageType, IEnemyLevel } from "#/lib/api/enemies";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { APPLY_WAY_LABEL_KEY, APPLY_WAYS, DAMAGE_TYPES, ENEMY_LEVEL_LABEL_KEY, ENEMY_LEVELS } from "../constants";
+import { APPLY_WAY_LABEL_KEY, APPLY_WAYS, DAMAGE_TYPES, ENEMY_LEVEL_LABEL_KEY, ENEMY_LEVELS, IMMUNITY_KEYS, IMMUNITY_LABEL_KEY } from "../constants";
 import type { messages as listConstantsMessages } from "../constants.messages";
 import { DAMAGE_TOKENS, LEVEL_TOKENS } from "../tokens";
-import type { ApplyWay, IFilterState } from "../types";
+import type { ApplyWay, IEnemyImmunities, IFilterState } from "../types";
 import type { messages } from "./EnemyFilterChips.messages";
 
 interface IChipProps {
@@ -79,10 +79,11 @@ interface IEnemyFilterChipsProps {
     setDamageTypes: (v: IEnemyDamageType[]) => void;
     setAttackTypes: (v: ApplyWay[]) => void;
     setRaces: (v: string[]) => void;
+    setImmunities: (v: (keyof IEnemyImmunities)[]) => void;
     races: IRaceOption[];
 }
 
-export function EnemyFilterChips({ filters, setLevels, setDamageTypes, setAttackTypes, setRaces, races }: IEnemyFilterChipsProps) {
+export function EnemyFilterChips({ filters, setLevels, setDamageTypes, setAttackTypes, setRaces, setImmunities, races }: IEnemyFilterChipsProps) {
     const t: TypedT<typeof messages> = useT("enemies");
     const tConst: TypedT<typeof listConstantsMessages> = useT("enemies");
     return (
@@ -112,6 +113,17 @@ export function EnemyFilterChips({ filters, setLevels, setDamageTypes, setAttack
                 {APPLY_WAYS.map((a) => (
                     <Chip key={a} on={filters.attackTypes.includes(a)} onClick={() => setAttackTypes(toggleArray(filters.attackTypes, a))}>
                         {tConst(APPLY_WAY_LABEL_KEY[a])}
+                    </Chip>
+                ))}
+            </ChipGroup>
+
+            <ChipDivider />
+
+            {/* AND, unlike the other groups: several picks keep only enemies immune to all of them. */}
+            <ChipGroup label={t("chips.immune")}>
+                {IMMUNITY_KEYS.map((k) => (
+                    <Chip key={k} on={filters.immunities.includes(k)} onClick={() => setImmunities(toggleArray(filters.immunities, k))}>
+                        {tConst(IMMUNITY_LABEL_KEY[k])}
                     </Chip>
                 ))}
             </ChipGroup>

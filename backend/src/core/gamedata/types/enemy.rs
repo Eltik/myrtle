@@ -155,6 +155,8 @@ pub struct RawEnemyAttributes {
     pub levitate_immune: MaybeValue<bool>,
     pub palsy_immune: MaybeValue<bool>,
     pub feared_immune: MaybeValue<bool>,
+    pub disarmed_combat_immune: MaybeValue<bool>,
+    pub attract_immune: MaybeValue<bool>,
     pub ep_damage_resistance: MaybeValue<f64>,
     pub ep_resistance: MaybeValue<f64>,
 }
@@ -240,6 +242,10 @@ pub struct EnemyAttributes {
     pub sleep_immune: bool,
     pub frozen_immune: bool,
     pub levitate_immune: bool,
+    pub fear_immune: bool,
+    pub paralysis_immune: bool,
+    pub tremble_immune: bool,
+    pub lure_immune: bool,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

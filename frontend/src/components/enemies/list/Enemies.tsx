@@ -122,7 +122,7 @@ export function EnemiesList() {
     const handlePageChange = useCallback((next: number) => goToPage(next, true), [goToPage]);
     const resetPage = useCallback(() => goToPage(1, false), [goToPage]);
 
-    const { filters, filteredEnemies, setSearchQuery, setLevels, setDamageTypes, setAttackTypes, setRaces, setAppearsIn, setSortBy, setSortOrder, clearFilters, activeFilterCount } = useEnemyFilters(enriched, locationIndex, resetPage);
+    const { filters, filteredEnemies, setSearchQuery, setLevels, setDamageTypes, setAttackTypes, setRaces, setImmunities, setAppearsIn, setSortBy, setSortOrder, clearFilters, activeFilterCount } = useEnemyFilters(enriched, locationIndex, resetPage);
     // A restored "Appears In" filter matches nothing until the stage table arrives,
     // so the counter and the grid show loading rather than a result of zero.
     const locationsPending = stageTable === undefined && filters.appearsIn.length > 0;
@@ -163,7 +163,7 @@ export function EnemiesList() {
             <PageHeader className="pb-1.5" breadcrumbLabel={t("list.breadcrumb")} breadcrumb={[t("list.breadcrumb.collection"), t("list.breadcrumb.enemies")]} title={t("list.title")} description={rt("list.blurb", { count: <strong className="text-foreground">{visibleCount}</strong> })} />
 
             <main className="flex min-w-0 flex-col gap-5.5 pt-5" aria-label={t("list.results.aria")}>
-                <EnemyFilterChips filters={filters} setLevels={setLevels} setDamageTypes={setDamageTypes} setAttackTypes={setAttackTypes} setRaces={setRaces} races={availableRaces} />
+                <EnemyFilterChips filters={filters} setLevels={setLevels} setDamageTypes={setDamageTypes} setAttackTypes={setAttackTypes} setRaces={setRaces} setImmunities={setImmunities} races={availableRaces} />
 
                 {locationTree.length > 0 && <EnemyLocationFilter tree={locationTree} selected={filters.appearsIn} onChange={setAppearsIn} />}
 
