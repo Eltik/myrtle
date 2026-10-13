@@ -10,6 +10,30 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-10-13-2.title": {
+        text: "New: Choose what visitors see on your profile",
+        description: "Title of the second 2026-10-13 release note.",
+    },
+    "note.2026-10-13-2.lead": {
+        text: "You can now **hide your currencies, level, join date, sign-in days and roster counts** from visitors, and pick which stat cards your profile header shows. Anything you hide is also left out of leaderboards and player search.",
+        description: "Lead paragraph of the second 2026-10-13 release note, rendered as Markdown.",
+    },
+    "note.2026-10-13-2.item.1": {
+        text: "Music keeps playing while you browse the rest of the site. The music page adds charts of the most played tracks and top listeners, and every track can be downloaded.",
+        description: "Bullet in the second 2026-10-13 release note, filed under 'New'.",
+    },
+    "note.2026-10-13-2.item.2": {
+        text: "The enemy list can filter by immunity, such as stun, silence, sleep or freeze, and enemy pages list what each enemy is immune to.",
+        description: "Bullet in the second 2026-10-13 release note, filed under 'New'. Stun, silence, sleep and freeze are the game's status effects and must match their in-game translations.",
+    },
+    "note.2026-10-13-2.item.3": {
+        text: "The Stats page has Field notes: how many enemies are immune to each status, the most owned and rarest 6★ operators, and how many enemies the average Doctor has met.",
+        description: "Bullet in the second 2026-10-13 release note, filed under 'New'. 'Stats' and 'Field notes' are UI labels and must match their translations; 'Doctor' is the game's name for a player.",
+    },
+    "note.2026-10-13-2.item.4": {
+        text: "On phones, language and theme moved into the menu, so the top bar has room to breathe.",
+        description: "Bullet in the second 2026-10-13 release note, filed under 'Improved'.",
+    },
     "note.2026-10-13.title": {
         text: "Improved: Link previews for more pages",
         description: "Title of the 2026-10-13 release note. A 'link preview' is the card a chat app such as Discord shows under a pasted link.",
