@@ -3829,7 +3829,7 @@
           "player"
         ],
         "summary": "A player's profile. `UserProfile` carries currency, sanity, subscription\nexpiry, last-online time and the account's role, so the `uid` goes through\nthe shared privacy gate: the caller's own profile or a public one, 403\notherwise.",
-        "description": "Never gated by tab: the row feeds the page header, which every visible tab\nsits under. A visitor gets the layout with the private tabs left out, and\nno `total_score` or `grade` while the Score tab is private, as\n`/get-user-score` refuses that tab's data to them.",
+        "description": "Never gated by tab: the row feeds the page header, which every visible tab\nsits under. A visitor gets the layout with the private tabs left out, no\n`total_score` or `grade` while the Score tab is private, as\n`/get-user-score` refuses that tab's data to them, and `null` for every\nheader number the owner hid (`profile_layout.header.hidden`).",
         "operationId": "get_user",
         "parameters": [
           {
@@ -3883,7 +3883,7 @@
           "player"
         ],
         "summary": "A player's monthly sign-in state.",
-        "description": "Null when the player has no stored check-in row.\nRuns the shared privacy gate: another player's data is readable only when\ntheir profile is public, and a player always sees their own.",
+        "description": "Null when the player has no stored check-in row.\nRuns the shared privacy gate: another player's data is readable only when\ntheir profile is public, and a player always sees their own. A visitor gets\nno `cumulative_signin` or `register_ts` when the owner hid them from their\nheader, as `/get-user` nulls the same numbers.",
         "operationId": "get_user_checkin",
         "parameters": [
           {
@@ -4812,7 +4812,7 @@
         "tags": [
           "player"
         ],
-        "summary": "A player's item inventory.\nRuns the shared privacy gate: another player's data is readable only when\ntheir profile is public, and a player always sees their own.",
+        "summary": "A player's item inventory.\nRuns the shared privacy gate: another player's data is readable only when\ntheir profile is public, and a player always sees their own. A visitor\ngets no row for a currency the owner hid from their profile header.",
         "operationId": "get_inventory",
         "parameters": [
           {
@@ -22726,7 +22726,7 @@
               "null"
             ],
             "format": "int64",
-            "description": "Days until the shortfall is earned from the base and dailies: 0 when\nnothing is missing, `None` when nothing is earned."
+            "description": "Days until the shortfall is earned from the base and dailies: 0 when\nnothing is missing or the balance is hidden, `None` when nothing is\nearned."
           },
           "farming_per_day": {
             "type": "number",
@@ -22941,9 +22941,7 @@
           "promotion_lmd_needed",
           "lmd_needed",
           "exp_owned",
-          "lmd_owned",
           "exp_missing",
-          "lmd_missing",
           "operators",
           "income"
         ],
@@ -22971,8 +22969,12 @@
             "format": "int64"
           },
           "lmd_missing": {
-            "type": "integer",
-            "format": "int64"
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "`None` exactly when `lmd_owned` is, since it would give the balance\nback."
           },
           "lmd_needed": {
             "type": "integer",
@@ -22980,9 +22982,12 @@
             "description": "`level_lmd_needed + promotion_lmd_needed`."
           },
           "lmd_owned": {
-            "type": "integer",
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int64",
-            "description": "The synced LMD balance; 0 when the profile carries none."
+            "description": "The synced LMD balance; 0 when the profile carries none. `None` for a\nvisitor when the owner hid LMD from their profile header."
           },
           "operators": {
             "type": "array",
@@ -25466,9 +25471,52 @@
           }
         }
       },
+      "ProfileHeader": {
+        "type": "object",
+        "description": "`profile_layout.header`: which header numbers visitors receive, and which\nfill the stat strip. Absent, the header and strip render exactly as they did\nbefore this existed.",
+        "required": [
+          "hidden"
+        ],
+        "properties": {
+          "hidden": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileHeaderField"
+            },
+            "description": "Fields a visitor does not receive, in canonical order, each once. The\nowner still sees them, marked."
+          },
+          "strip": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ProfileHeaderField"
+            },
+            "description": "The strip's cards, in display order, at most [`HEADER_STRIP_MAX`], each\nonce, strip cards only. `None` is [`ProfileHeaderField::DEFAULT_STRIP`];\nan empty list is no strip at all."
+          }
+        }
+      },
+      "ProfileHeaderField": {
+        "type": "string",
+        "description": "One number the profile header shows. The variants are the allow-list of\nwhat an owner may hide from visitors, and their declaration order is the\ncanonical order a stored `hidden` list is kept in.\n\nIdentity is not on the list: the uid is the profile's URL and the nickname\nis what search matches, so neither can be hidden from the page that is\nreached through them, and the server and avatar say nothing a visitor\ncould not read off the uid and the page.",
+        "enum": [
+          "level",
+          "registered",
+          "sign_in",
+          "operators",
+          "skins",
+          "items",
+          "orundum",
+          "originite",
+          "lmd",
+          "headhunting_permits",
+          "ten_pull_permits"
+        ]
+      },
       "ProfileLayout": {
         "type": "object",
-        "description": "How the owner arranged their profile, `user_settings.profile_layout`.\n\nStored as a jsonb object of three keys: `tabs` (the order and visibility\nof every tab), `showcase` (the Showcase tab's blocks) and `background` (the\nheader art); a save sets only the keys it sends. Deserializing goes\nthrough [`ProfileLayout::normalize`], so every value that reaches the\ncode, from the database, the cache or a request body, holds each known tab\nexactly once.\n\nWhat a visitor receives is [`ProfileLayout::visible_only`]: a private tab is\nabsent from it, not present with `visible: false`.",
+        "description": "How the owner arranged their profile, `user_settings.profile_layout`.\n\nStored as a jsonb object of four keys: `tabs` (the order and visibility\nof every tab), `showcase` (the Showcase tab's blocks), `background` (the\nheader art) and `header` (the header numbers visitors receive and the stat\nstrip's cards); a save sets only the keys it sends. Deserializing goes\nthrough [`ProfileLayout::normalize`], so every value that reaches the\ncode, from the database, the cache or a request body, holds each known tab\nexactly once.\n\nWhat a visitor receives is [`ProfileLayout::visible_only`]: a private tab is\nabsent from it, not present with `visible: false`.",
         "required": [
           "tabs"
         ],
@@ -25481,6 +25529,17 @@
               {
                 "$ref": "#/components/schemas/ProfileBackground",
                 "description": "The art behind the profile header. `None` when the stored layout has\nnone, which renders the header exactly as before backgrounds existed.\nNot gated by any tab: the header is the profile itself."
+              }
+            ]
+          },
+          "header": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ProfileHeader",
+                "description": "Which header numbers a visitor receives and which fill the stat strip.\n`None` when the stored layout has none, which renders the header and\nstrip exactly as before this existed, every number shown. Like the\nbackground, not gated by any tab."
               }
             ]
           },
@@ -25506,7 +25565,7 @@
       },
       "ProfileLayoutPatch": {
         "type": "object",
-        "description": "A save of `profile_layout`: only the keys the request carried, each\nnormalized as [`ProfileLayout::normalize`] reads it. A key left out keeps\nthe stored value, so the tab editor sends only `tabs`, the showcase editor\nonly `showcase` and the background picker only `background`, and none can\nwipe another's work (see `queries::users::update_settings`). The one save\nthat clears the whole layout is the tab editor's explicit Reset, which\nsends `null` instead of a patch.\n\n`tabs` is present when the request carried a `tabs` array, `showcase` when\nit carried a `showcase` object. `background` is present whenever the key\nis: `null`, or a value that does not normalize, clears it.",
+        "description": "A save of `profile_layout`: only the keys the request carried, each\nnormalized as [`ProfileLayout::normalize`] reads it. A key left out keeps\nthe stored value, so the tab editor sends only `tabs`, the showcase editor\nonly `showcase`, the background picker only `background` and the header\neditor only `header`, and none can wipe another's work (see\n`queries::users::update_settings`). The one save that clears the whole\nlayout is the tab editor's explicit Reset, which sends `null` instead of a\npatch.\n\n`tabs` is present when the request carried a `tabs` array, `showcase` when\nit carried a `showcase` object. `background` and `header` are present\nwhenever their key is: `null`, or a value that does not normalize, clears\nit.",
         "properties": {
           "background": {
             "oneOf": [
@@ -25515,6 +25574,16 @@
               },
               {
                 "$ref": "#/components/schemas/ProfileBackground"
+              }
+            ]
+          },
+          "header": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ProfileHeader"
               }
             ]
           },
@@ -31966,7 +32035,7 @@
               },
               {
                 "$ref": "#/components/schemas/ProfileLayoutPatch",
-                "description": "Absent leaves the saved layout alone, `null` resets it to the default\n(today's order, every tab visible, no showcase, no background). An\nobject sets the keys it carries and keeps the rest: `tabs` replaces the\ntab list, `showcase` the blocks, `background` the header art (`null`\nremoves it). Normalized before it is stored: unknown tab ids and\nrepeats are dropped, missing tabs appended visible."
+                "description": "Absent leaves the saved layout alone, `null` resets it to the default\n(today's order, every tab visible, no showcase, no background, every\nheader number shown). An object sets the keys it carries and keeps the\nrest: `tabs` replaces the tab list, `showcase` the blocks, `background`\nthe header art and `header` the hidden numbers and the strip (`null`\nremoves either of the last two). Normalized before it is stored: unknown tab ids and\nrepeats are dropped, missing tabs appended visible."
               }
             ]
           },
@@ -32103,7 +32172,6 @@
         "required": [
           "monthly_card_flags",
           "claimed_this_month",
-          "cumulative_signin",
           "reward_index",
           "can_check_in",
           "updated_at"
@@ -32126,9 +32194,12 @@
             "description": "Sign-ins claimed in the current month's series: the length of\n`monthly_card_flags`, derived in SQL so no client re-derives it."
           },
           "cumulative_signin": {
-            "type": "integer",
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int32",
-            "description": "Lifetime cumulative sign-in days (the \"total days of sign-ins\" counter)."
+            "description": "Lifetime cumulative sign-in days (the \"total days of sign-ins\" counter).\n`None` only for a visitor when the owner hid it from their header\n([`UserCheckin::hide_private`])."
           },
           "last_online_ts": {
             "type": [
@@ -32311,7 +32382,7 @@
               },
               {
                 "$ref": "#/components/schemas/ProfileLayout",
-                "description": "The owner's tab order and visibility, normalized on read. `None` when\nthey never customized, which the client renders exactly as before\nlayouts existed. A visitor receives [`UserProfile::hide_private_tabs`]'s\nprojection, which lists only the visible tabs."
+                "description": "The owner's tab order and visibility, showcase, header art and header\nnumbers, normalized on read. `None` when they never customized, which\nthe client renders exactly as before layouts existed. A visitor\nreceives [`UserProfile::hide_private`]'s projection, which lists only\nthe visible tabs and nulls the header numbers the owner hid."
               }
             ]
           },

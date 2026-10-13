@@ -48,10 +48,11 @@ export type SearchEntry = {
      */
     originite: number | null;
     /**
-     * The owner's tab order and visibility, normalized on read. `None` when
-     * they never customized, which the client renders exactly as before
-     * layouts existed. A visitor receives [`UserProfile::hide_private_tabs`]'s
-     * projection, which lists only the visible tabs.
+     * The owner's tab order and visibility, showcase, header art and header
+     * numbers, normalized on read. `None` when they never customized, which
+     * the client renders exactly as before layouts existed. A visitor
+     * receives [`UserProfile::hide_private`]'s projection, which lists only
+     * the visible tabs and nulls the header numbers the owner hid.
      */
     profile_layout: ProfileLayout | null;
 };

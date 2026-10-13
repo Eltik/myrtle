@@ -5,7 +5,7 @@ use sqlx::types::{
 };
 use ts_rs::TS;
 
-use crate::database::models::profile_layout::{ProfileLayout, ProfileTabId};
+use crate::database::models::profile_layout::{ProfileHeaderField, ProfileLayout, ProfileTabId};
 
 /// `v_user_profile` view
 #[derive(TS, utoipa::ToSchema)]
@@ -59,10 +59,11 @@ pub struct UserProfile {
     pub updated_at: DateTime<Utc>,
     /// Originite Prime on the account (paid and free pools summed) as of the last sync.
     pub originite: Option<i32>,
-    /// The owner's tab order and visibility, normalized on read. `None` when
-    /// they never customized, which the client renders exactly as before
-    /// layouts existed. A visitor receives [`UserProfile::hide_private_tabs`]'s
-    /// projection, which lists only the visible tabs.
+    /// The owner's tab order and visibility, showcase, header art and header
+    /// numbers, normalized on read. `None` when they never customized, which
+    /// the client renders exactly as before layouts existed. A visitor
+    /// receives [`UserProfile::hide_private`]'s projection, which lists only
+    /// the visible tabs and nulls the header numbers the owner hid.
     #[sqlx(json(nullable))]
     pub profile_layout: Option<ProfileLayout>,
 }
@@ -71,16 +72,43 @@ impl UserProfile {
     /// The profile as someone other than its owner may see it: private tabs
     /// are dropped from the layout, and `total_score` and `grade` go when the
     /// Score tab is private, since they are that tab's headline and
-    /// `/get-user-score` refuses it to a visitor. The rest of the row feeds
-    /// the header, which every visible tab sits under, so it stays.
-    pub fn hide_private_tabs(&mut self) {
-        if let Some(layout) = &mut self.profile_layout {
-            if !layout.is_visible(ProfileTabId::Score) {
-                self.total_score = None;
-                self.grade = None;
-            }
-            *layout = layout.visible_only();
+    /// `/get-user-score` refuses it to a visitor. Each header number the
+    /// owner hid is `None`, and the layout's strip loses its card. The rest of
+    /// the row feeds the header, which every visible tab sits under, so it
+    /// stays. A NULL layout changes nothing.
+    pub fn hide_private(&mut self) {
+        let Some(layout) = &mut self.profile_layout else {
+            return;
+        };
+        if !layout.is_visible(ProfileTabId::Score) {
+            self.total_score = None;
+            self.grade = None;
         }
+        for field in ProfileHeaderField::ALL {
+            if layout.header_shows(field) {
+                continue;
+            }
+            match field {
+                ProfileHeaderField::Level => {
+                    self.level = None;
+                    self.exp = None;
+                }
+                ProfileHeaderField::Registered => self.register_ts = None,
+                ProfileHeaderField::SignIn => self.cumulative_signin = None,
+                ProfileHeaderField::Operators => self.operator_count = None,
+                ProfileHeaderField::Skins => {
+                    self.skin_count = None;
+                    self.non_default_skin_count = None;
+                }
+                ProfileHeaderField::Items => self.item_count = None,
+                ProfileHeaderField::Orundum => self.orundum = None,
+                ProfileHeaderField::Originite => self.originite = None,
+                ProfileHeaderField::Lmd => self.lmd = None,
+                ProfileHeaderField::HeadhuntingPermits => self.gacha_tickets = None,
+                ProfileHeaderField::TenPullPermits => self.ten_pull_tickets = None,
+            }
+        }
+        *layout = layout.visible_only();
     }
 }
 
@@ -192,7 +220,9 @@ pub struct UserCheckin {
     /// `monthly_card_flags`, derived in SQL so no client re-derives it.
     pub claimed_this_month: i32,
     /// Lifetime cumulative sign-in days (the "total days of sign-ins" counter).
-    pub cumulative_signin: i32,
+    /// `None` only for a visitor when the owner hid it from their header
+    /// ([`UserCheckin::hide_private`]).
+    pub cumulative_signin: Option<i32>,
     /// Active monthly sign-in series id (e.g. `signin<N>`).
     pub checkin_group_id: Option<String>,
     /// The game's raw `checkInRewardIndex`: a 0-based pointer into the month's
@@ -213,4 +243,202 @@ pub struct UserCheckin {
     /// as of this moment, which may be days/weeks before "now", so the month
     /// the calendar belongs to is this timestamp's month, not today's.
     pub updated_at: DateTime<Utc>,
+}
+
+impl UserCheckin {
+    /// The row as a visitor may see it under the owner's `layout`: the
+    /// sign-in total and the registration date go when the header hides them,
+    /// as `/get-user` nulls the same numbers. The month's slots stay: they are
+    /// the Stats tab's own calendar, not a header number.
+    pub fn hide_private(&mut self, layout: &ProfileLayout) {
+        if !layout.header_shows(ProfileHeaderField::SignIn) {
+            self.cumulative_signin = None;
+        }
+        if !layout.header_shows(ProfileHeaderField::Registered) {
+            self.register_ts = None;
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::{Value, json};
+
+    /// A synced, public profile with every header number set.
+    fn profile(layout: Option<Value>) -> UserProfile {
+        UserProfile {
+            id: Uuid::nil(),
+            uid: "123456".into(),
+            nickname: Some("Doctor".into()),
+            nick_number: Some("1234".into()),
+            level: Some(120),
+            avatar_id: Some("avatar_def_01".into()),
+            secretary: None,
+            secretary_skin_id: None,
+            resume_id: None,
+            role: "user".into(),
+            server: "EN".into(),
+            total_score: Some(9_876.5),
+            grade: Some("S".into()),
+            public_profile: Some(true),
+            store_gacha: Some(true),
+            share_stats: Some(true),
+            exp: Some(0),
+            orundum: Some(54_321),
+            lmd: Some(9_000_000),
+            sanity: Some(100),
+            max_sanity: Some(135),
+            gacha_tickets: Some(12),
+            ten_pull_tickets: Some(3),
+            monthly_sub_end: Some(1_700_000_000),
+            register_ts: Some(1_600_000_000),
+            last_online_ts: Some(1_760_000_000),
+            resume: Some("hi".into()),
+            friend_num_limit: Some(50),
+            cumulative_signin: Some(1_024),
+            operator_count: Some(300),
+            item_count: Some(250),
+            skin_count: Some(400),
+            non_default_skin_count: Some(120),
+            updated_at: DateTime::<Utc>::from_timestamp(1_760_000_000, 0).unwrap(),
+            originite: Some(777),
+            profile_layout: layout.map(ProfileLayout::from),
+        }
+    }
+
+    fn visitor(layout: Option<Value>) -> Value {
+        let mut p = profile(layout);
+        p.hide_private();
+        serde_json::to_value(p).unwrap()
+    }
+
+    /// `hide_private_tabs` as it stood before header layouts, verbatim, to
+    /// prove the kill switch against.
+    fn before_headers(layout: Option<Value>) -> Value {
+        let mut p = profile(layout);
+        if let Some(layout) = &mut p.profile_layout {
+            if !layout.is_visible(ProfileTabId::Score) {
+                p.total_score = None;
+                p.grade = None;
+            }
+            *layout = layout.visible_only();
+        }
+        serde_json::to_value(p).unwrap()
+    }
+
+    #[test]
+    fn a_null_layout_reaches_a_visitor_byte_identical() {
+        let owner = serde_json::to_string(&profile(None)).unwrap();
+        let mut projected = profile(None);
+        projected.hide_private();
+        assert_eq!(serde_json::to_string(&projected).unwrap(), owner);
+        assert_eq!(visitor(None), before_headers(None));
+    }
+
+    #[test]
+    fn a_layout_without_a_header_projects_exactly_as_before() {
+        for layout in [
+            json!({ "tabs": [] }),
+            json!({ "tabs": [{ "id": "score", "visible": false }, { "id": "roster", "visible": false }] }),
+            json!({ "background": { "kind": "operator", "id": "char_003_kalts" } }),
+            json!({ "header": null }),
+            json!({ "header": "originite" }),
+        ] {
+            assert_eq!(
+                serde_json::to_string(&visitor(Some(layout.clone()))).unwrap(),
+                serde_json::to_string(&before_headers(Some(layout.clone()))).unwrap(),
+                "{layout}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_hidden_field_is_null_for_a_visitor_and_its_card_leaves_the_strip() {
+        let got = visitor(Some(json!({ "header": { "hidden": ["originite"] } })));
+        let full = serde_json::to_value(profile(None)).unwrap();
+        assert_eq!(got["originite"], Value::Null);
+        assert_eq!(
+            got["profile_layout"]["header"],
+            json!({ "hidden": ["originite"], "strip": ["operators", "skins", "items", "orundum"] })
+        );
+        // Nothing else on the row moves.
+        for (key, value) in full.as_object().unwrap() {
+            if key != "originite" && key != "profile_layout" {
+                assert_eq!(&got[key], value, "{key}");
+            }
+        }
+    }
+
+    #[test]
+    fn every_hideable_field_nulls_its_columns() {
+        let columns: [(&str, &[&str]); 11] = [
+            ("level", &["level", "exp"]),
+            ("registered", &["register_ts"]),
+            ("sign_in", &["cumulative_signin"]),
+            ("operators", &["operator_count"]),
+            ("skins", &["skin_count", "non_default_skin_count"]),
+            ("items", &["item_count"]),
+            ("orundum", &["orundum"]),
+            ("originite", &["originite"]),
+            ("lmd", &["lmd"]),
+            ("headhunting_permits", &["gacha_tickets"]),
+            ("ten_pull_permits", &["ten_pull_tickets"]),
+        ];
+        assert_eq!(columns.len(), ProfileHeaderField::ALL.len());
+        let full = serde_json::to_value(profile(None)).unwrap();
+        for (id, nulled) in columns {
+            let got = visitor(Some(json!({ "header": { "hidden": [id] } })));
+            for (key, value) in full.as_object().unwrap() {
+                if key == "profile_layout" {
+                    continue;
+                }
+                if nulled.contains(&key.as_str()) {
+                    assert_eq!(got[key], Value::Null, "{id}: {key}");
+                } else {
+                    assert_eq!(&got[key], value, "{id}: {key}");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn the_owner_row_is_untouched_by_a_header() {
+        // `/get-user` projects only for a visitor; the owner's row is the
+        // stored one, header and all.
+        let owner = profile(Some(
+            json!({ "header": { "hidden": ["originite", "lmd"], "strip": ["lmd"] } }),
+        ));
+        assert_eq!(owner.originite, Some(777));
+        assert_eq!(owner.lmd, Some(9_000_000));
+        let header = owner.profile_layout.and_then(|l| l.header).unwrap();
+        assert_eq!(header.strip, Some(vec![ProfileHeaderField::Lmd]));
+    }
+
+    #[test]
+    fn the_checkin_row_follows_the_header() {
+        let checkin = || UserCheckin {
+            monthly_card_flags: vec![1, 0],
+            claimed_this_month: 2,
+            cumulative_signin: Some(1_024),
+            checkin_group_id: None,
+            reward_index: 1,
+            can_check_in: false,
+            register_ts: Some(1_600_000_000),
+            last_online_ts: Some(1_760_000_000),
+            updated_at: DateTime::<Utc>::from_timestamp(1_760_000_000, 0).unwrap(),
+        };
+        let mut kept = checkin();
+        kept.hide_private(&ProfileLayout::normalize(&json!({ "tabs": [] })));
+        assert_eq!(
+            serde_json::to_value(&kept).unwrap(),
+            serde_json::to_value(checkin()).unwrap()
+        );
+        let mut hidden = checkin();
+        hidden.hide_private(&ProfileLayout::normalize(
+            &json!({ "header": { "hidden": ["sign_in", "registered"] } }),
+        ));
+        assert_eq!((hidden.cumulative_signin, hidden.register_ts), (None, None));
+        assert_eq!(hidden.claimed_this_month, 2);
+    }
 }

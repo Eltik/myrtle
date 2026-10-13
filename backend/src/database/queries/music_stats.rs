@@ -10,6 +10,7 @@ use uuid::Uuid;
 use crate::database::models::music_stats::{
     MusicListenerEntry, MusicListenerSort, MusicStatKind, MusicTopTrack, MusicTrackCountsRow,
 };
+use crate::database::models::profile_layout::ProfileHeaderField;
 
 /// Claims the dedupe slot for `(kind, client, track_id)` at `at`. True when
 /// the call counts: the client never counted for the track, or last counted
@@ -215,7 +216,7 @@ pub async fn listeners(
         r"
         {cte}
         SELECT rank() OVER (ORDER BY {order}) AS rank,
-               u.uid, u.nickname, u.nick_number, u.level, u.avatar_id,
+               u.uid, u.nickname, u.nick_number, {level} AS level, u.avatar_id,
                s.code AS server, l.listens, l.seconds AS listened_seconds
         FROM listeners l
         JOIN users u ON u.id = l.user_id
@@ -225,6 +226,8 @@ pub async fn listeners(
         LIMIT ${limit_idx} OFFSET ${offset_idx}
         ",
         offset_idx = limit_idx + 1,
+        // A level the player hid from their profile header is not shown here.
+        level = ProfileHeaderField::Level.shown_sql("u.id", "u.level"),
     );
     let mut q = sqlx::query_as::<_, MusicListenerEntry>(&sql).bind(since);
     if let Some(track) = track_id {

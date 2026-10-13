@@ -1,4 +1,4 @@
-import { Copy, ImageIcon, Share2 } from "lucide-react";
+import { Copy, HashIcon, ImageIcon, Share2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { toastManager } from "#/components/ui/toast";
@@ -10,8 +10,10 @@ import { countGameDays } from "#/lib/registry/server-time";
 import { DEFAULT_AVATAR_ID, getAvatarById } from "#/lib/utils";
 import type { ProfileBackground } from "#/types/generated/ProfileBackground";
 import type { IUserProfile } from "#/types/user";
+import { isHidden } from "../header";
 import type { messages } from "./Hero.messages";
 import { HeroArt } from "./HeroArt";
+import { HiddenMarker } from "./HiddenMarker";
 import shared from "./shared.module.css";
 
 interface IHeroProps {
@@ -23,6 +25,10 @@ interface IHeroProps {
     background?: ProfileBackground | null;
     /** Opens the background editor. Passed for the owner alone; absent, no control renders. */
     onChangeBackground?: () => void;
+    /** Opens the header numbers editor. Passed for the owner alone, like `onChangeBackground`. */
+    onEditHeader?: () => void;
+    /** The reader owns the profile: the numbers they hid render for them, marked. */
+    isOwner?: boolean;
 }
 
 /** The header's tint, half of its plain look. */
@@ -71,7 +77,7 @@ async function copyToClipboard(text: string, successTitle: string, successDescri
     }
 }
 
-export function Hero({ profile, background, onChangeBackground }: IHeroProps) {
+export function Hero({ profile, background, onChangeBackground, onEditHeader, isOwner = false }: IHeroProps) {
     const t: TypedT<typeof messages> = useT("user");
     const f = useFormatters();
     const [avatarErrored, setAvatarErrored] = useState(false);
@@ -90,6 +96,16 @@ export function Hero({ profile, background, onChangeBackground }: IHeroProps) {
     const handleCopyUsername = () => copyToClipboard(usernameWithDiscriminator, t("profile.hero.username.copied.title"), t("profile.hero.copied.desc", { value: usernameWithDiscriminator }), t("profile.hero.username.failed.title"), copyFailed);
 
     const totalSigninDays = profile.register_ts && profile.last_online_ts ? countGameDays(profile.register_ts, profile.last_online_ts, profile.server) : 0;
+
+    // What the owner hid. A visitor was sent `null` for each of these and the same list, so
+    // a hidden piece is absent for them; the owner sees it with a marker. With no layout
+    // (the kill switch) every flag is false and the header renders as before.
+    const layout = profile.profile_layout ?? null;
+    const levelHidden = isHidden(layout, "level");
+    const registeredHidden = isHidden(layout, "registered");
+    const signInHidden = isHidden(layout, "sign_in");
+    const showRegistered = isOwner || !registeredHidden;
+    const showSignIn = typeof profile.cumulative_signin === "number" && profile.cumulative_signin > 0;
 
     return (
         <section className="relative overflow-hidden rounded-2xl border border-[oklch(0.28_0.005_285)] bg-card shadow-sm sm:rounded-3xl">
@@ -147,6 +163,18 @@ export function Hero({ profile, background, onChangeBackground }: IHeroProps) {
                         />
                         <TooltipPopup>{t("profile.hero.copyUid")}</TooltipPopup>
                     </Tooltip>
+                    {onEditHeader && (
+                        <Tooltip>
+                            <TooltipTrigger
+                                render={(triggerProps) => (
+                                    <Button {...triggerProps} variant="outline" size="icon" onClick={onEditHeader} aria-label={t("profile.hero.editHeader")} className="size-8">
+                                        <HashIcon className="size-3.5" />
+                                    </Button>
+                                )}
+                            />
+                            <TooltipPopup>{t("profile.hero.editHeader")}</TooltipPopup>
+                        </Tooltip>
+                    )}
                     {onChangeBackground && (
                         <Tooltip>
                             <TooltipTrigger
@@ -180,41 +208,55 @@ export function Hero({ profile, background, onChangeBackground }: IHeroProps) {
                         </Tooltip>
                     </h1>
                     {profile.resume && <p className="mb-3.5 max-w-prose font-normal font-sans text-muted-foreground text-sm leading-normal sm:text-[14.5px] lg:max-w-135">{profile.resume}</p>}
-                    {levelProgress && <LevelProgressBar progress={levelProgress} />}
-                    <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 font-medium font-sans text-muted-foreground text-xs leading-none">
-                        <span className="inline-flex items-center gap-2">
-                            <span className={shared.dotPulse} aria-hidden="true" />
-                            <span>
-                                {t("profile.hero.registered")}{" "}
-                                <b>
-                                    {f.date(new Date((profile.register_ts ?? 0) * 1000), {
-                                        month: "short",
-                                        day: "numeric",
-                                        year: "numeric",
-                                    })}
-                                </b>
-                            </span>
-                        </span>
-                        {typeof profile.cumulative_signin === "number" && profile.cumulative_signin > 0 && (
-                            <span className="inline-flex items-center gap-2">
-                                <span aria-hidden="true" className="size-1.5 rounded-full bg-muted-foreground/40" />
-                                <span>
-                                    {t("profile.hero.signedIn")}{" "}
-                                    <b className="text-foreground tabular-nums">
-                                        {f.number(profile.cumulative_signin)}/{f.number(totalSigninDays)}
-                                    </b>{" "}
-                                    {t("profile.hero.days")}
+                    {levelProgress && <LevelProgressBar progress={levelProgress} marked={isOwner && levelHidden} />}
+                    {(showRegistered || showSignIn) && (
+                        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 font-medium font-sans text-muted-foreground text-xs leading-none">
+                            {showRegistered && (
+                                <span className="inline-flex items-center gap-2">
+                                    <span className={shared.dotPulse} aria-hidden="true" />
+                                    <span>
+                                        {t("profile.hero.registered")}{" "}
+                                        <b>
+                                            {f.date(new Date((profile.register_ts ?? 0) * 1000), {
+                                                month: "short",
+                                                day: "numeric",
+                                                year: "numeric",
+                                            })}
+                                        </b>
+                                    </span>
+                                    {isOwner && registeredHidden && <HiddenMarker />}
                                 </span>
-                            </span>
-                        )}
-                    </div>
+                            )}
+                            {showSignIn && (
+                                <span className="inline-flex items-center gap-2">
+                                    {/* The separator belongs between two pieces, so it goes when the date is hidden. */}
+                                    {showRegistered && <span aria-hidden="true" className="size-1.5 rounded-full bg-muted-foreground/40" />}
+                                    <span>
+                                        {t("profile.hero.signedIn")}{" "}
+                                        <b className="text-foreground tabular-nums">
+                                            {f.number(profile.cumulative_signin ?? 0)}
+                                            {/* The total needs the registration date, which a visitor may not have been sent. */}
+                                            {profile.register_ts ? (
+                                                <>
+                                                    {"/"}
+                                                    {f.number(totalSigninDays)}
+                                                </>
+                                            ) : null}
+                                        </b>{" "}
+                                        {t("profile.hero.days")}
+                                    </span>
+                                    {isOwner && signInHidden && <HiddenMarker />}
+                                </span>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </section>
     );
 }
 
-function LevelProgressBar({ progress }: { progress: ILevelProgress }) {
+function LevelProgressBar({ progress, marked }: { progress: ILevelProgress; marked?: boolean }) {
     const t: TypedT<typeof messages> = useT("user");
     const f: IFormatters = useFormatters();
     const { level, isMax, currentExp, requiredExp, ratio } = progress;
@@ -232,6 +274,7 @@ function LevelProgressBar({ progress }: { progress: ILevelProgress }) {
                             <span className="text-foreground tabular-nums">120</span>
                         </>
                     )}
+                    {marked && <HiddenMarker className="ml-2 align-middle" />}
                 </span>
                 <span className="tabular-nums">{isMax ? t("profile.hero.level.max", { max: MAX_PLAYER_LEVEL }) : t("profile.hero.level.exp", { current: f.number(currentExp), required: f.number(requiredExp) })}</span>
             </div>

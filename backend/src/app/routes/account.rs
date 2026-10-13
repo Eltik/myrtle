@@ -5,10 +5,11 @@ use serde::Deserialize;
 
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
-use crate::app::routes::resolve_uid_for_tab;
+use crate::app::routes::resolve_user_id_for_tab_as_viewer;
 use crate::app::services::max_level::{LevelTarget, MaxLevelCostResponse, max_level_costs};
 use crate::app::state::AppState;
-use crate::database::models::profile_layout::ProfileTabId;
+use crate::database::models::profile_layout::{ProfileHeaderField, ProfileTabId};
+use crate::database::queries::users::find_by_id;
 
 #[derive(Deserialize)]
 pub struct AccountParams {
@@ -48,12 +49,22 @@ pub async fn get_max_level_cost(
     auth: MaybeAuthUser,
     Query(params): Query<AccountParams>,
 ) -> Result<Json<MaxLevelCostResponse>, ApiError> {
-    let uid = resolve_uid_for_tab(
+    let (user_id, visitor_layout) = resolve_user_id_for_tab_as_viewer(
         &state,
         &auth,
         params.uid.as_deref(),
         ProfileTabId::Optimizer,
     )
     .await?;
-    Ok(Json(max_level_costs(&state, &uid, params.target).await?))
+    let uid = find_by_id(&state.db, user_id)
+        .await?
+        .ok_or(ApiError::NotFound)?
+        .uid;
+    // The balance is a header number: a visitor gets it only while shown.
+    let hide_lmd = visitor_layout
+        .as_ref()
+        .is_some_and(|layout| !layout.header_shows(ProfileHeaderField::Lmd));
+    Ok(Json(
+        max_level_costs(&state, &uid, params.target, hide_lmd).await?,
+    ))
 }

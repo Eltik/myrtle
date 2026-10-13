@@ -83,8 +83,9 @@ export function SignInOverviewCard({ checkin, server }: ICardProps) {
 
     const ageDays = register_ts ? countGameDays(register_ts, last_online_ts ?? Math.floor(Date.now() / 1000), server) : null;
     // Floor (not round) so e.g. 915/919 reads 99%, never a misleading 100%.
-    const rate = ageDays !== null ? Math.min(100, Math.floor((cumulative_signin / ageDays) * 100)) : null;
-    const missed = ageDays !== null ? Math.max(0, ageDays - cumulative_signin) : null;
+    // `cumulative_signin` and `register_ts` are `null` to a visitor when the owner hid them from their header.
+    const rate = ageDays !== null && cumulative_signin !== null ? Math.min(100, Math.floor((cumulative_signin / ageDays) * 100)) : null;
+    const missed = ageDays !== null && cumulative_signin !== null ? Math.max(0, ageDays - cumulative_signin) : null;
     const { claimed, elapsed } = monthState(checkin, server);
 
     return (
@@ -93,7 +94,7 @@ export function SignInOverviewCard({ checkin, server }: ICardProps) {
                 <Kicker icon={CalendarDays} label={t("profile.stats.signin.record.title")} />
 
                 <div className="grid grid-cols-2 gap-3">
-                    <Tile color={SIGNIN} sub={t("profile.stats.signin.total")} tooltip={t("profile.stats.signin.total.tooltip")} value={f.number(cumulative_signin)} />
+                    {cumulative_signin !== null && <Tile color={SIGNIN} sub={t("profile.stats.signin.total")} tooltip={t("profile.stats.signin.total.tooltip")} value={f.number(cumulative_signin)} />}
                     {ageDays !== null && <Tile color={SIGNIN} sub={t("profile.stats.signin.age")} value={f.number(ageDays)} />}
                 </div>
 

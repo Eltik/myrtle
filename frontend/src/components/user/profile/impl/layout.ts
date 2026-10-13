@@ -95,10 +95,10 @@ export function isDefaultLayout(tabs: readonly ProfileTab[]): boolean {
  * stored showcase and header background are kept as they are (a block that has since
  * gone dangling would otherwise fail the save). `null`, "no layout", only after the
  * owner pressed Reset (`reset`) and only when it loses nothing: canonical tabs, no
- * showcase block and no background in `layout`, the owner's stored layout.
+ * showcase block, no background and no header in `layout`, the owner's stored layout.
  */
 export function tabsForSave(tabs: readonly ProfileTab[], reset: boolean, layout: ProfileLayout | null): { tabs: ProfileTab[] } | null {
-    if (reset && isDefaultLayout(tabs) && showcaseBlockCount(layout) === 0 && !layout?.background) return null;
+    if (reset && isDefaultLayout(tabs) && showcaseBlockCount(layout) === 0 && !layout?.background && !layout?.header) return null;
     return { tabs: [...tabs] };
 }
 

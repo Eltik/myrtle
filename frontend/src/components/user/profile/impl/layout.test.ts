@@ -172,6 +172,8 @@ describe("saving", () => {
         // A block or a background is something to keep: Reset then sends the tabs alone.
         expect(tabsForSave(defaultLayout(), true, { tabs: defaultLayout(), showcase: { blocks: [GRID] } })).toEqual({ tabs: defaultLayout() });
         expect(tabsForSave(defaultLayout(), true, { tabs: defaultLayout(), background: BACKGROUND })).toEqual({ tabs: defaultLayout() });
+        // A header the owner set is kept by a tab Reset too: the header editor owns it.
+        expect(tabsForSave(defaultLayout(), true, { tabs: defaultLayout(), header: { hidden: ["originite"] } })).toEqual({ tabs: defaultLayout() });
         // Reset, then a change: not the canonical layout, so the tabs.
         const moved = moveTab(defaultLayout(), 1, 1);
         expect(tabsForSave(moved, true, null)).toEqual({ tabs: moved });

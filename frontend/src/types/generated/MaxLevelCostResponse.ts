@@ -23,14 +23,19 @@ export type MaxLevelCostResponse = {
      */
     exp_owned: number;
     /**
-     * The synced LMD balance; 0 when the profile carries none.
+     * The synced LMD balance; 0 when the profile carries none. `None` for a
+     * visitor when the owner hid LMD from their profile header.
      */
-    lmd_owned: number;
+    lmd_owned: number | null;
     /**
      * Needed minus owned, floored at 0.
      */
     exp_missing: number;
-    lmd_missing: number;
+    /**
+     * `None` exactly when `lmd_owned` is, since it would give the balance
+     * back.
+     */
+    lmd_missing: number | null;
     /**
      * Every remaining operator, most expensive first.
      */

@@ -25,6 +25,7 @@
 
 import type { IRosterEntry } from "#/lib/api/user";
 import type { ProfileBackground } from "#/types/generated/ProfileBackground";
+import type { ProfileHeaderField } from "#/types/generated/ProfileHeaderField";
 import type { ProfileLayout } from "#/types/generated/ProfileLayout";
 import type { ProfileTabId } from "#/types/generated/ProfileTabId";
 import type { SupportUnit } from "#/types/generated/SupportUnit";
@@ -117,24 +118,35 @@ function toSupport(s: SupportUnit): IUserOgSupport {
     };
 }
 
-/** The card's data from the three documents, projected to what a visitor may see. `supports` and `roster` are `null` when they could not be read. */
+/** Whether a visitor receives the header number `field`. No layout, or no header in it, hides nothing. */
+export function userHeaderShows(layout: ProfileLayout | null | undefined, field: ProfileHeaderField): boolean {
+    return !(layout?.header?.hidden.includes(field) ?? false);
+}
+
+/**
+ * The card's data from the three documents, projected to what a visitor may see: an
+ * owner's own profile carries the numbers they hid, so each is dropped here as `/get-user`
+ * drops it for a visitor. `supports` and `roster` are `null` when they could not be read.
+ */
 export function buildUserOgData(profile: IUserProfile, supports: readonly SupportUnit[] | null | undefined, roster: readonly IRosterEntry[] | null | undefined): IUserOgData {
     const layout = profile.profile_layout;
     const scoreVisible = userTabVisible(layout, "score");
     const inventoryVisible = userTabVisible(layout, "inventory");
     const rosterVisible = userTabVisible(layout, "roster");
+    const shows = (field: ProfileHeaderField) => userHeaderShows(layout, field);
     return {
         uid: profile.uid,
         nickname: profile.nickname?.trim() || "Player",
         nickNumber: profile.nick_number,
         server: profile.server,
-        level: profile.level,
+        level: shows("level") ? profile.level : null,
         grade: scoreVisible ? profile.grade : null,
         totalScore: scoreVisible ? profile.total_score : null,
         avatarId: profile.avatar_id,
-        operatorCount: profile.operator_count,
-        skinCount: profile.non_default_skin_count ?? profile.skin_count,
-        extraStat: inventoryVisible ? { kind: "lmd", value: profile.lmd } : { kind: "items", value: profile.item_count },
+        operatorCount: shows("operators") ? profile.operator_count : null,
+        skinCount: shows("skins") ? (profile.non_default_skin_count ?? profile.skin_count) : null,
+        // A hidden LMD balance falls back to the item count, as a private Inventory tab does.
+        extraStat: inventoryVisible && shows("lmd") ? { kind: "lmd", value: profile.lmd } : { kind: "items", value: shows("items") ? profile.item_count : null },
         secretary: profile.secretary,
         secretarySkinId: profile.secretary_skin_id,
         background: layout?.background ?? null,

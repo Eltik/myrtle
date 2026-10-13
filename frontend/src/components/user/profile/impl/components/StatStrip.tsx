@@ -5,10 +5,14 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 
 import type { IUserProfile } from "#/types/user";
+import { type HeaderField, isHidden, stripCards, stripGridClass } from "../header";
+import { HiddenMarker } from "./HiddenMarker";
 import type { messages } from "./StatStrip.messages";
 
 interface IStatCardProps {
     kicker: string;
+    /** The owner hid this number from visitors: they alone see the card, marked. */
+    hidden?: boolean;
     value: string | number | null;
     accent?: boolean;
     live?: boolean;
@@ -33,7 +37,7 @@ function formatCompact(value: string | number | null) {
     return `${sign}${abs}`;
 }
 
-function StatCard({ kicker, value, accent, live, compactOnMobile, unformatted, onClick }: IStatCardProps) {
+function StatCard({ kicker, hidden, value, accent, live, compactOnMobile, unformatted, onClick }: IStatCardProps) {
     const f = useFormatters();
     const interactive = typeof onClick === "function";
     const className = cn(
@@ -57,7 +61,7 @@ function StatCard({ kicker, value, accent, live, compactOnMobile, unformatted, o
                     </span>
                 )}
                 <span
-                    className="truncate font-medium font-mono text-muted-foreground uppercase tracking-wider sm:tracking-widest"
+                    className={cn("truncate font-medium font-mono text-muted-foreground uppercase tracking-wider sm:tracking-widest", hidden && "pr-5")}
                     style={{
                         fontSize: "clamp(0.625rem, 0.25vw + 0.55rem, 0.6875rem)",
                         lineHeight: 1.2,
@@ -87,16 +91,24 @@ function StatCard({ kicker, value, accent, live, compactOnMobile, unformatted, o
         </>
     );
 
-    if (interactive) {
-        return (
-            <button className={className} onClick={onClick} style={style} type="button">
-                {inner}
-            </button>
-        );
-    }
-    return (
+    const card = interactive ? (
+        <button className={className} onClick={onClick} style={style} type="button">
+            {inner}
+        </button>
+    ) : (
         <div className={className} style={style}>
             {inner}
+        </div>
+    );
+    if (!hidden) return card;
+    // A sibling of the card, not inside it: the card may be a button, and the marker
+    // carries its own tooltip and accessible name.
+    return (
+        <div className="relative grid">
+            {card}
+            <span className="absolute" style={{ top: style.padding, right: style.padding }}>
+                <HiddenMarker />
+            </span>
         </div>
     );
 }
@@ -104,21 +116,60 @@ function StatCard({ kicker, value, accent, live, compactOnMobile, unformatted, o
 interface IStatStripProps {
     profile: IUserProfile;
     rosterCount?: number;
+    /** The reader owns the profile: their hidden cards render, marked. */
+    isOwner?: boolean;
 }
 
-export function StatStrip({ profile, rosterCount }: IStatStripProps) {
+/** Cards whose value reads compact on a phone until tapped, so large balances fit. */
+type CompactCard = "orundum" | "originite" | "lmd";
+
+export function StatStrip({ profile, rosterCount, isOwner = false }: IStatStripProps) {
     const t: TypedT<typeof messages> = useT("user");
-    const [orundumRaw, setOrundumRaw] = useState(false);
-    const [originiteRaw, setOriginiteRaw] = useState(false);
+    const [raw, setRaw] = useState<ReadonlySet<CompactCard>>(() => new Set());
+    const layout = profile.profile_layout ?? null;
+    const cards = stripCards(layout, isOwner);
+    if (cards.length === 0) return null;
+
+    const compact = (card: CompactCard) => ({
+        compactOnMobile: !raw.has(card),
+        unformatted: raw.has(card),
+        onClick: () =>
+            setRaw((prev) => {
+                const next = new Set(prev);
+                if (!next.delete(card)) next.add(card);
+                return next;
+            }),
+    });
+
+    const render = (card: HeaderField) => {
+        const hidden = isOwner && isHidden(layout, card);
+        switch (card) {
+            case "operators":
+                return <StatCard key={card} hidden={hidden} kicker={t("profile.strip.operators.kicker")} value={rosterCount ?? profile.operator_count} live />;
+            case "skins":
+                return <StatCard key={card} hidden={hidden} kicker={t("profile.strip.skins.kicker")} value={profile.non_default_skin_count} />;
+            case "items":
+                return <StatCard key={card} hidden={hidden} kicker={t("profile.strip.items.kicker")} value={profile.item_count} />;
+            // The currency names below are the game's own and stay as game vocabulary.
+            case "orundum":
+                return <StatCard key={card} hidden={hidden} kicker="Orundum" value={profile.orundum} {...compact(card)} />;
+            // `null` until the account syncs again: the field arrived on 2026-09-15 and is filled per refresh.
+            case "originite":
+                return <StatCard key={card} hidden={hidden} kicker="Originite Prime" value={profile.originite} {...compact(card)} />;
+            case "lmd":
+                return <StatCard key={card} hidden={hidden} kicker="LMD" value={profile.lmd} {...compact(card)} />;
+            case "headhunting_permits":
+                return <StatCard key={card} hidden={hidden} kicker="Headhunting Permits" value={profile.gacha_tickets} />;
+            case "ten_pull_permits":
+                return <StatCard key={card} hidden={hidden} kicker="Ten-roll Permits" value={profile.ten_pull_tickets} />;
+            default:
+                return null;
+        }
+    };
+
     return (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5" style={{ gap: "clamp(0.5rem, 0.6vw + 0.375rem, 0.875rem)" }}>
-            <StatCard kicker={t("profile.strip.operators.kicker")} value={rosterCount ?? profile.operator_count} live />
-            <StatCard kicker={t("profile.strip.skins.kicker")} value={profile.non_default_skin_count} />
-            <StatCard kicker={t("profile.strip.items.kicker")} value={profile.item_count} />
-            {/* "Orundum" is the in-game currency's own name and stays as game vocabulary. */}
-            <StatCard kicker="Orundum" value={profile.orundum} compactOnMobile={!orundumRaw} unformatted={orundumRaw} onClick={() => setOrundumRaw((v) => !v)} />
-            {/* "Originite Prime" is game vocabulary too. `null` until the account syncs again: the field arrived on 2026-09-15 and is filled per refresh. */}
-            <StatCard kicker="Originite Prime" value={profile.originite} compactOnMobile={!originiteRaw} unformatted={originiteRaw} onClick={() => setOriginiteRaw((v) => !v)} />
+        <div className={cn("grid", stripGridClass(cards.length))} style={{ gap: "clamp(0.5rem, 0.6vw + 0.375rem, 0.875rem)" }}>
+            {cards.map(render)}
         </div>
     );
 }

@@ -382,10 +382,11 @@ pub struct UpdateSettingsRequest {
     pub store_gacha: Option<bool>,
     pub share_stats: Option<bool>,
     /// Absent leaves the saved layout alone, `null` resets it to the default
-    /// (today's order, every tab visible, no showcase, no background). An
-    /// object sets the keys it carries and keeps the rest: `tabs` replaces the
-    /// tab list, `showcase` the blocks, `background` the header art (`null`
-    /// removes it). Normalized before it is stored: unknown tab ids and
+    /// (today's order, every tab visible, no showcase, no background, every
+    /// header number shown). An object sets the keys it carries and keeps the
+    /// rest: `tabs` replaces the tab list, `showcase` the blocks, `background`
+    /// the header art and `header` the hidden numbers and the strip (`null`
+    /// removes either of the last two). Normalized before it is stored: unknown tab ids and
     /// repeats are dropped, missing tabs appended visible.
     #[serde(default, deserialize_with = "present")]
     #[schema(value_type = Option<ProfileLayoutPatch>, required = false)]
@@ -426,11 +427,12 @@ pub async fn update_settings(
     Json(body): Json<UpdateSettingsRequest>,
 ) -> Result<Json<StatusOk>, ApiError> {
     let user_id: uuid::Uuid = auth.user_uuid()?;
-    // Only tabs gate search and the leaderboards: a reset or a tabs save.
-    let tabs_changed = match &body.profile_layout {
+    // Tabs and hidden header numbers gate search and the leaderboards: a
+    // reset, a tabs save or a header save.
+    let ranking_changed = match &body.profile_layout {
         None => false,
         Some(None) => true,
-        Some(Some(patch)) => patch.tabs.is_some(),
+        Some(Some(patch)) => patch.tabs.is_some() || patch.header.is_some(),
     };
     services::auth::update_settings(
         &state,
@@ -447,13 +449,18 @@ pub async fn update_settings(
         .cache
         .invalidate(&CacheKey::User { uid: &auth.uid })
         .await;
-    // Search and every leaderboard drop a player by tab, and their pages are
-    // cached for up to 15 minutes: without this a tab just made private would
-    // keep ranking its owner until the TTL ran out. Layout saves are rare, so
+    // Search and every leaderboard drop a player by tab or hidden number, and
+    // their pages are cached for up to 15 minutes: without this a tab just
+    // made private would keep ranking its owner until the TTL ran out. The
+    // music listener pages carry the level. Layout saves are rare, so
     // flushing every page costs a few rebuilt pages, not a steady load.
-    if tabs_changed {
+    if ranking_changed {
         state.cache.invalidate_by_prefix("search:").await;
         state.cache.invalidate_by_prefix("leaderboard:").await;
+        state
+            .cache
+            .invalidate_by_prefix("music:stats:listeners:")
+            .await;
     }
     Ok(ok_status())
 }

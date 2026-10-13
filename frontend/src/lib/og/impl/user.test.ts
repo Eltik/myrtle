@@ -67,4 +67,19 @@ describe("user card hash", () => {
         expect(card.rosterDigest).toBe("");
         expect(card.extraStat).toEqual({ kind: "items", value: 300 });
     });
+
+    it("drops the header numbers the owner hid, and hashes as before without a header", () => {
+        const withTabs = { ...PROFILE, profile_layout: { tabs: [{ id: "inventory", visible: true }] } } as unknown as IUserProfile;
+        expect(hash([], null, withTabs)).toBe(hash([], null, { ...PROFILE, profile_layout: { ...withTabs.profile_layout, header: { hidden: [] } } } as unknown as IUserProfile));
+        const hidden = { ...withTabs, profile_layout: { ...withTabs.profile_layout, header: { hidden: ["level", "operators", "lmd"] } } } as unknown as IUserProfile;
+        const card = buildUserOgData(hidden, [], null);
+        expect(card.level).toBeNull();
+        expect(card.operatorCount).toBeNull();
+        expect(card.skinCount).toBe(100);
+        expect(card.extraStat).toEqual({ kind: "items", value: 300 });
+        const both = { ...withTabs, profile_layout: { ...withTabs.profile_layout, header: { hidden: ["lmd", "items"] } } } as unknown as IUserProfile;
+        expect(buildUserOgData(both, [], null).extraStat).toEqual({ kind: "items", value: null });
+        // A visitor's copy (nulls from the backend) draws the same card as the owner's projected one.
+        expect(ogHashers.user.hash(card)).toBe(ogHashers.user.hash(buildUserOgData({ ...hidden, level: null, operator_count: null, lmd: null } as unknown as IUserProfile, [], null)));
+    });
 });

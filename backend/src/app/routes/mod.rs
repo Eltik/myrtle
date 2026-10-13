@@ -7,7 +7,7 @@ use uuid::Uuid;
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
 use crate::app::state::AppState;
-use crate::database::models::profile_layout::ProfileTabId;
+use crate::database::models::profile_layout::{ProfileLayout, ProfileTabId};
 use crate::database::models::user::UserProfile;
 use crate::database::queries::users::{find_by_id, find_by_uid};
 
@@ -150,6 +150,30 @@ pub(crate) async fn resolve_uid_for_tab(
             .await?
             .uid),
         None => own_uid(state, auth).await,
+    }
+}
+
+/// As [`resolve_user_id_for_tab`], with the layout that limits what the
+/// caller may read of the tab: `None` for the owner, who reads everything,
+/// the stored layout for a visitor (itself `None` when the owner never
+/// customized, which hides nothing).
+pub(crate) async fn resolve_user_id_for_tab_as_viewer(
+    state: &AppState,
+    auth: &MaybeAuthUser,
+    uid_param: Option<&str>,
+    tab: ProfileTabId,
+) -> Result<(Uuid, Option<ProfileLayout>), ApiError> {
+    match uid_param {
+        Some(uid) => {
+            let (profile, own) = resolve_public_profile(state, auth, uid).await?;
+            ensure_tab_visible(&profile, own, tab)?;
+            let layout = if own { None } else { profile.profile_layout };
+            Ok((profile.id, layout))
+        }
+        None => Ok((
+            auth.0.as_ref().ok_or(ApiError::Unauthorized)?.user_uuid()?,
+            None,
+        )),
     }
 }
 

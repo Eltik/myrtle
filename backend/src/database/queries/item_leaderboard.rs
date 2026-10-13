@@ -18,6 +18,7 @@ use sqlx::PgPool;
 use crate::database::models::item_leaderboard::{
     HoldingTotals, ItemHoldingSummary, ItemLeaderboardEntry, ItemStanding,
 };
+use crate::database::models::profile_layout::ProfileHeaderField;
 use crate::database::queries::like::contains_pattern;
 
 /// Game item id -> `user_status` column. `orundum_shard` is deliberately
@@ -52,6 +53,42 @@ pub fn currency_values_sql() -> String {
         .join(", ")
 }
 
+/// The profile header number a currency column is, for the five the header
+/// can show: a player who hid it is no holder of it here, and the catalog
+/// leaves their balance out.
+fn header_field(column: &str) -> Option<ProfileHeaderField> {
+    match column {
+        "lmd" => Some(ProfileHeaderField::Lmd),
+        "originite" => Some(ProfileHeaderField::Originite),
+        "orundum" => Some(ProfileHeaderField::Orundum),
+        "gacha_tickets" => Some(ProfileHeaderField::HeadhuntingPermits),
+        "ten_pull_tickets" => Some(ProfileHeaderField::TenPullPermits),
+        _ => None,
+    }
+}
+
+/// [`currency_values_sql`] for the catalog: a currency the player hid from
+/// their header reads NULL, which no holder count or sum takes in.
+fn visible_currency_values_sql() -> String {
+    CURRENCY_COLUMNS
+        .iter()
+        .map(|(id, col)| {
+            let value = format!("st.{col}::bigint");
+            match header_field(col) {
+                Some(field) => format!("('{id}', {})", field.shown_sql("st.user_id", &value)),
+                None => format!("('{id}', {value})"),
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+/// The profile header number `item_id` is, for the five currencies the
+/// header shows: what a visitor's `/inventory` drops when it is hidden.
+pub fn currency_header_field(item_id: &str) -> Option<ProfileHeaderField> {
+    currency_column(item_id).and_then(header_field)
+}
+
 pub fn currency_column(item_id: &str) -> Option<&'static str> {
     CURRENCY_COLUMNS
         .iter()
@@ -81,12 +118,17 @@ struct Holding {
 impl Holding {
     fn of(item_id: &str) -> Self {
         match currency_column(item_id) {
-            Some(col) => Self {
-                cte: format!(
-                    "SELECT st.user_id, st.{col}::bigint AS quantity FROM user_status st WHERE st.{col} > 0"
-                ),
-                binds_item: false,
-            },
+            Some(col) => {
+                let hidden = header_field(col).map_or(String::new(), |field| {
+                    format!(" AND {}", field.visible_for_sql("st.user_id"))
+                });
+                Self {
+                    cte: format!(
+                        "SELECT st.user_id, st.{col}::bigint AS quantity FROM user_status st WHERE st.{col} > 0{hidden}"
+                    ),
+                    binds_item: false,
+                }
+            }
             None => Self {
                 cte: "SELECT ui.user_id, ui.quantity::bigint AS quantity FROM user_items ui WHERE ui.item_id = $1 AND ui.quantity > 0".to_owned(),
                 binds_item: true,
@@ -233,7 +275,7 @@ pub async fn get_item_leaderboard(
         ranked AS (
             SELECT
                 rank() OVER (ORDER BY h.quantity DESC) AS rank,
-                u.uid, u.nickname, u.nick_number, u.level, u.avatar_id,
+                u.uid, u.nickname, u.nick_number, {level} AS level, u.avatar_id,
                 s.code AS server, sc.grade,
                 h.quantity
             {HOLDERS_JOIN}
@@ -247,6 +289,7 @@ pub async fn get_item_leaderboard(
         ",
         cte = query.holding.cte,
         tail = query.filters.sql,
+        level = ProfileHeaderField::Level.shown_sql("u.id", "u.level"),
     );
     let mut qry = sqlx::query_as::<_, ItemLeaderboardEntry>(&sql);
     for p in query.binds() {
@@ -291,7 +334,7 @@ pub async fn get_item_catalog(
     server: Option<&str>,
 ) -> Result<Vec<ItemHoldingSummary>, sqlx::Error> {
     let visible = visible_players_sql(server);
-    let currency_values = currency_values_sql();
+    let currency_values = visible_currency_values_sql();
     let sql = format!(
         r"
         WITH visible AS ({visible})
@@ -383,8 +426,40 @@ pub async fn get_item_standing(
 
 #[cfg(test)]
 mod tests {
-    use super::{Filters, VISIBLE};
-    use crate::database::models::profile_layout::ProfileTabId;
+    use super::{Filters, Holding, VISIBLE, currency_values_sql, visible_currency_values_sql};
+    use crate::database::models::profile_layout::{ProfileHeaderField, ProfileTabId};
+
+    #[test]
+    fn a_hidden_header_currency_is_no_holding_and_other_items_are_untouched() {
+        let originite = Holding::of("4002").cte;
+        assert!(originite.contains(&ProfileHeaderField::Originite.visible_for_sql("st.user_id")));
+        for (id, field) in [
+            ("4001", ProfileHeaderField::Lmd),
+            ("4003", ProfileHeaderField::Orundum),
+            ("7003", ProfileHeaderField::HeadhuntingPermits),
+            ("7004", ProfileHeaderField::TenPullPermits),
+        ] {
+            assert!(
+                Holding::of(id)
+                    .cte
+                    .contains(&field.visible_for_sql("st.user_id")),
+                "{id}"
+            );
+        }
+        // A currency the header never shows, and every user_items row, are
+        // ranked exactly as before.
+        assert_eq!(
+            Holding::of("4004").cte,
+            "SELECT st.user_id, st.hgg_shard::bigint AS quantity FROM user_status st WHERE st.hgg_shard > 0"
+        );
+        assert!(!Holding::of("30012").cte.contains("header"));
+        // The catalog masks the same five and no other.
+        let values = visible_currency_values_sql();
+        assert_eq!(values.matches("'header'").count(), 5);
+        assert!(values.contains("('4004', st.hgg_shard::bigint)"));
+        // The inventory endpoint's list is unmasked: the owner reads it.
+        assert!(!currency_values_sql().contains("header"));
+    }
 
     #[test]
     fn visible_gate_hides_private_inventories() {

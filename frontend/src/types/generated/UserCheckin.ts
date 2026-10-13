@@ -30,8 +30,10 @@ export type UserCheckin = {
     claimed_this_month: number;
     /**
      * Lifetime cumulative sign-in days (the "total days of sign-ins" counter).
+     * `None` only for a visitor when the owner hid it from their header
+     * ([`UserCheckin::hide_private`]).
      */
-    cumulative_signin: number;
+    cumulative_signin: number | null;
     /**
      * Active monthly sign-in series id (e.g. `signin<N>`).
      */

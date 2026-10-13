@@ -27,9 +27,10 @@ pub struct GetUserParams {
 /// otherwise.
 ///
 /// Never gated by tab: the row feeds the page header, which every visible tab
-/// sits under. A visitor gets the layout with the private tabs left out, and
-/// no `total_score` or `grade` while the Score tab is private, as
-/// `/get-user-score` refuses that tab's data to them.
+/// sits under. A visitor gets the layout with the private tabs left out, no
+/// `total_score` or `grade` while the Score tab is private, as
+/// `/get-user-score` refuses that tab's data to them, and `null` for every
+/// header number the owner hid (`profile_layout.header.hidden`).
 #[utoipa::path(
     get,
     path = "/get-user",
@@ -60,7 +61,7 @@ pub async fn get_user(
     profile.profile_layout = gate.profile_layout;
     // Projected per caller after the cache read: the cached row is the owner's.
     if !own {
-        profile.hide_private_tabs();
+        profile.hide_private();
         // A block whose grid, tier list or plan is gone is no block to a
         // visitor, so an emptied showcase is no tab either.
         if let Some(layout) = profile.profile_layout.as_mut() {
@@ -157,7 +158,9 @@ pub async fn get_user_score(
 ///
 /// Null when the player has no stored check-in row.
 /// Runs the shared privacy gate: another player's data is readable only when
-/// their profile is public, and a player always sees their own.
+/// their profile is public, and a player always sees their own. A visitor gets
+/// no `cumulative_signin` or `register_ts` when the owner hid them from their
+/// header, as `/get-user` nulls the same numbers.
 #[utoipa::path(
     get,
     path = "/get-user-checkin",
@@ -180,9 +183,13 @@ pub async fn get_user_checkin(
     auth: MaybeAuthUser,
     Query(params): Query<GetUserParams>,
 ) -> Result<Json<Option<UserCheckin>>, ApiError> {
+    let (profile, own) = resolve_public_profile(&state, &auth, &params.uid).await?;
+    ensure_tab_visible(&profile, own, ProfileTabId::Stats)?;
     // `null` until the user has synced once.
-    let uid = resolve_uid_for_tab(&state, &auth, Some(&params.uid), ProfileTabId::Stats).await?;
-    let checkin = get_checkin_by_uid(&state.db, &uid).await?;
+    let mut checkin = get_checkin_by_uid(&state.db, &profile.uid).await?;
+    if let (false, Some(layout), Some(checkin)) = (own, &profile.profile_layout, &mut checkin) {
+        checkin.hide_private(layout);
+    }
     Ok(Json(checkin))
 }
 

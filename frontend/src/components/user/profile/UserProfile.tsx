@@ -12,6 +12,7 @@ import { userEncounteredEnemiesQueryOptions, userImprovementsQueryOptions, userI
 import { type TypedRichT, useGamedataServer, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { Hero } from "./impl/components/Hero";
+import { ProfileHeaderEditor } from "./impl/components/ProfileHeaderEditor";
 import { ProfileLayoutEditor } from "./impl/components/ProfileLayoutEditor";
 import type { messages as layoutMessages } from "./impl/components/ProfileLayoutEditor.messages";
 import { ProfileTabs } from "./impl/components/ProfileTabs";
@@ -20,6 +21,7 @@ import { ScoreTabSkeleton } from "./impl/components/tabs/Score/ScoreTabSkeleton"
 import { rosterAccess } from "./impl/components/tabs/Showcase/favourites";
 import { StatsTab } from "./impl/components/tabs/Stats/StatsTab";
 import { DynamicArtProvider } from "./impl/dynamic-art";
+import { type IHeaderDraft, previewHeader } from "./impl/header";
 import { resolveActiveTab, shownTabs, tabMemory } from "./impl/layout";
 import { isTabId, type TabId } from "./impl/types";
 import type { messages } from "./UserProfile.messages";
@@ -172,6 +174,9 @@ export function UserProfile() {
     const [editingLayout, setEditingLayout] = useState(false);
     // The background editor is open. Its draft lives in the editor, previewed there; the page's header keeps the saved background.
     const [editingBackground, setEditingBackground] = useState(false);
+    // The header editor is open, and its latest draft, which the header and strip preview.
+    const [editingHeader, setEditingHeader] = useState(false);
+    const [headerPreview, setHeaderPreview] = useState<IHeaderDraft | null>(null);
 
     // The profile record and roster feed the hero, stat strip and several tab
     // counts, so they load up front (the roster unless its tab is hidden).
@@ -262,16 +267,29 @@ export function UserProfile() {
     if (isLoading) return <ProfileSkeleton />;
     if (!data) return <ProfileNotFound id={id} />;
 
+    // The owner's header and strip show the open editor's draft; everyone else, the saved one.
+    const headerProfile = isOwner && editingHeader && headerPreview ? previewHeader(data, headerPreview) : data;
+
     return (
         <DynamicArtProvider server={data.server}>
             <main className="page-shell flex flex-1 flex-col gap-7 [--page-max:1440px]">
-                <Hero profile={data} background={layout?.background ?? null} onChangeBackground={isOwner ? () => setEditingBackground(true) : undefined} />
+                <Hero profile={headerProfile} background={layout?.background ?? null} isOwner={isOwner} onChangeBackground={isOwner ? () => setEditingBackground(true) : undefined} onEditHeader={isOwner ? () => setEditingHeader(true) : undefined} />
                 {isOwner && editingBackground && (
                     <Suspense fallback={null}>
                         <BackgroundEditor profile={data} saved={layout?.background ?? null} onClose={() => setEditingBackground(false)} />
                     </Suspense>
                 )}
-                <StatStrip profile={data} rosterCount={roster?.length} />
+                <StatStrip profile={headerProfile} rosterCount={roster?.length} isOwner={isOwner} />
+                {isOwner && editingHeader && (
+                    <ProfileHeaderEditor
+                        profile={data}
+                        onDraft={setHeaderPreview}
+                        onClose={() => {
+                            setEditingHeader(false);
+                            setHeaderPreview(null);
+                        }}
+                    />
+                )}
                 {editingLayout && isOwner ? (
                     <ProfileLayoutEditor profile={data} labels={labels} onClose={() => setEditingLayout(false)} />
                 ) : (

@@ -147,14 +147,17 @@ pub struct MaxLevelCostResponse {
     /// EXP held as cards (every EXP item times its EXP value).
     #[ts(type = "number")]
     pub exp_owned: i64,
-    /// The synced LMD balance; 0 when the profile carries none.
-    #[ts(type = "number")]
-    pub lmd_owned: i64,
+    /// The synced LMD balance; 0 when the profile carries none. `None` for a
+    /// visitor when the owner hid LMD from their profile header.
+    #[ts(type = "number | null")]
+    pub lmd_owned: Option<i64>,
     /// Needed minus owned, floored at 0.
     #[ts(type = "number")]
     pub exp_missing: i64,
-    #[ts(type = "number")]
-    pub lmd_missing: i64,
+    /// `None` exactly when `lmd_owned` is, since it would give the balance
+    /// back.
+    #[ts(type = "number | null")]
+    pub lmd_missing: Option<i64>,
     /// Every remaining operator, most expensive first.
     pub operators: Vec<MaxLevelOperatorDto>,
     /// What the account earns in a day and how long the LMD shortfall takes.
@@ -181,7 +184,8 @@ pub struct LmdIncomeDto {
     /// LMD those runs pay.
     pub farming_per_day: f64,
     /// Days until the shortfall is earned from the base and dailies: 0 when
-    /// nothing is missing, `None` when nothing is earned.
+    /// nothing is missing or the balance is hidden, `None` when nothing is
+    /// earned.
     #[ts(type = "number | null")]
     pub days_without_farming: Option<i64>,
     /// The same with the farming stage's LMD added.
@@ -194,10 +198,13 @@ const FARMING_STAGE_CODE: &str = "CE-6";
 /// Minutes in a day, for sanity regeneration.
 const MINUTES_PER_DAY: f64 = 1440.0;
 
+/// `hide_lmd` answers a visitor whose owner hid LMD from their header: no
+/// balance and no shortfall, which would give the balance back.
 pub async fn max_level_costs(
     state: &AppState,
     uid: &str,
     target: LevelTarget,
+    hide_lmd: bool,
 ) -> Result<MaxLevelCostResponse, ApiError> {
     let user = users_queries::find_by_uid(&state.db, uid)
         .await?
@@ -293,7 +300,19 @@ pub async fn max_level_costs(
     let promotion_lmd_needed: i64 = operators.iter().map(|o| o.promotion_lmd).sum();
     let lmd_needed = level_lmd_needed + promotion_lmd_needed;
     let lmd_missing = (lmd_needed - lmd_owned).max(0);
-    let income = lmd_income(state, user.id, &roster, &gamedata, lmd_missing).await?;
+    let income = lmd_income(
+        state,
+        user.id,
+        &roster,
+        &gamedata,
+        if hide_lmd { 0 } else { lmd_missing },
+    )
+    .await?;
+    let (lmd_owned, lmd_missing) = if hide_lmd {
+        (None, None)
+    } else {
+        (Some(lmd_owned), Some(lmd_missing))
+    };
     Ok(MaxLevelCostResponse {
         operators_total,
         operators_remaining: operators.len(),

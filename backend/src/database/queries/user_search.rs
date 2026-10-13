@@ -10,7 +10,7 @@
 
 use sqlx::{PgPool, Postgres, QueryBuilder};
 
-use crate::database::models::profile_layout::ProfileTabId;
+use crate::database::models::profile_layout::{ProfileHeaderField, ProfileTabId};
 use crate::database::models::user::SearchEntry;
 use crate::database::queries::like::contains_pattern;
 
@@ -39,6 +39,18 @@ pub enum Rank<'a> {
 }
 
 impl Rank<'_> {
+    /// The profile header number this rank orders by and returns as
+    /// `metric`, `None` when it is none of them: the join date, and the
+    /// operator and skin counts the header strip shows.
+    const fn header_field(&self) -> Option<ProfileHeaderField> {
+        match self {
+            Self::Joined => Some(ProfileHeaderField::Registered),
+            Self::Operators => Some(ProfileHeaderField::Operators),
+            Self::Skins => Some(ProfileHeaderField::Skins),
+            _ => None,
+        }
+    }
+
     /// Whether the rank is an aggregate with a `metric` CTE, or reads a
     /// profile column directly.
     const fn has_cte(&self) -> bool {
@@ -217,6 +229,12 @@ impl UserSearch<'_> {
         for tab in self.tabs_read() {
             qb.push(" AND ");
             qb.push(tab.visible_sql("p.profile_layout"));
+        }
+        // The same for a header number the rank is: a player who hid it from
+        // their profile is not ranked by it either.
+        if let Some(field) = self.rank.header_field() {
+            qb.push(" AND ");
+            qb.push(field.visible_sql("p.profile_layout"));
         }
         if let Some(q) = self.q {
             qb.push(" AND p.nickname ILIKE ");
