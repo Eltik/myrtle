@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IImprovementsResponse, IStageGap, IStagePoolImprovements } from "#/lib/api/user";
@@ -126,7 +127,7 @@ function StageChip({ stage, accent, locked = false }: { stage: IStageGap; accent
     const secondary = leadWithName ? stage.code : stage.name;
     return (
         <Tooltip>
-            <TooltipTrigger render={<span className={cn("group flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/15 px-2 py-1 transition-colors hover:border-border/70 hover:bg-muted/30", locked && "opacity-55")} />}>
+            <TooltipTrigger render={<Link to="/stages/$stageId" params={{ stageId: stage.stage_id }} className={cn("group flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/15 px-2 py-1 transition-colors hover:border-border/70 hover:bg-muted/30", locked && "opacity-55")} />}>
                 <span className={`size-1.5 shrink-0 rounded-full ${stateDot}`} aria-hidden />
                 <span className={cn(TEXT_BADGE, "max-w-[22ch] truncate font-semibold")} style={{ color: `color-mix(in oklch, ${accent} 55%, var(--foreground))` }}>
                     {primary}
