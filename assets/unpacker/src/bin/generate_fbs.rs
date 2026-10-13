@@ -427,28 +427,45 @@ fn strip_serialize_impls(dir: &Path) -> anyhow::Result<()> {
         .filter_map(Result::ok)
         .collect::<Vec<_>>();
 
-    entries
-        .par_iter()
-        .try_for_each(|entry| -> anyhow::Result<()> {
-            let path = entry.path();
-            if path.extension().is_none_or(|ext| ext != "rs") {
-                return Ok(());
-            }
-            if path.file_name().is_some_and(|n| n == "mod.rs") {
-                return Ok(());
-            }
+    for entry in entries {
+        let path = entry.path();
+        if path.extension().is_none_or(|ext| ext != "rs") {
+            continue;
+        }
+        if path.file_name().is_some_and(|n| n == "mod.rs") {
+            continue;
+        }
 
-            let content = fs::read_to_string(&path)?;
-            let mut output = String::with_capacity(content.len());
-            let mut skip = false;
-            let mut brace_depth = 0i32;
-            let mut changed = false;
+        let content = fs::read_to_string(&path)?;
+        let mut output = String::with_capacity(content.len());
+        let mut skip = false;
+        let mut brace_depth = 0i32;
+        let mut changed = false;
 
-            for line in content.lines() {
-                let trimmed = line.trim();
+        for line in content.lines() {
+            let trimmed = line.trim();
 
-                if skip {
-                    // Inside a Serialize impl block — count braces
+            if skip {
+                // Inside a Serialize impl block — count braces
+                for ch in line.chars() {
+                    match ch {
+                        '{' => brace_depth += 1,
+                        '}' => brace_depth -= 1,
+                        _ => {}
+                    }
+                }
+                if brace_depth <= 0 {
+                    skip = false;
+                }
+            } else {
+                // Detect start of impl Serialize block
+                if trimmed.starts_with("impl Serialize for ")
+                    || trimmed.starts_with("impl<'a> Serialize for ")
+                {
+                    skip = true;
+                    brace_depth = 0;
+                    changed = true;
+                    // Count braces on this line
                     for ch in line.chars() {
                         match ch {
                             '{' => brace_depth += 1,
@@ -457,55 +474,34 @@ fn strip_serialize_impls(dir: &Path) -> anyhow::Result<()> {
                         }
                     }
                     if brace_depth <= 0 {
-                        skip = false;
+                        skip = false; // Single-line impl (unlikely but safe)
                     }
-                } else {
-                    // Detect start of impl Serialize block
-                    if trimmed.starts_with("impl Serialize for ")
-                        || trimmed.starts_with("impl<'a> Serialize for ")
-                    {
-                        skip = true;
-                        brace_depth = 0;
-                        changed = true;
-                        // Count braces on this line
-                        for ch in line.chars() {
-                            match ch {
-                                '{' => brace_depth += 1,
-                                '}' => brace_depth -= 1,
-                                _ => {}
-                            }
-                        }
-                        if brace_depth <= 0 {
-                            skip = false; // Single-line impl (unlikely but safe)
-                        }
-                        return Ok(());
-                    }
-
-                    // Strip serde imports
-                    if serde_import_re.is_match(trimmed) {
-                        changed = true;
-                        return Ok(());
-                    }
-
-                    // Strip trailing whitespace flatc emits (e.g. `#[must_use] `),
-                    // which rustfmt on stable rejects ("left behind trailing whitespace").
-                    let stripped = line.trim_end();
-                    if stripped.len() != line.len() {
-                        changed = true;
-                    }
-                    output.push_str(stripped);
-                    output.push('\n');
+                    continue;
                 }
-            }
 
-            if changed {
-                let name = path.file_name().unwrap().to_str().unwrap();
-                println!("  stripped serde from {name}");
-                fs::write(&path, &output)?;
-            }
+                // Strip serde imports
+                if serde_import_re.is_match(trimmed) {
+                    changed = true;
+                    continue;
+                }
 
-            Ok(())
-        })?;
+                // Strip trailing whitespace flatc emits (e.g. `#[must_use] `),
+                // which rustfmt on stable rejects ("left behind trailing whitespace").
+                let stripped = line.trim_end();
+                if stripped.len() != line.len() {
+                    changed = true;
+                }
+                output.push_str(stripped);
+                output.push('\n');
+            }
+        }
+
+        if changed {
+            let name = path.file_name().unwrap().to_str().unwrap();
+            println!("  stripped serde from {name}");
+            fs::write(&path, &output)?;
+        }
+    }
 
     Ok(())
 }
