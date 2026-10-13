@@ -49,8 +49,9 @@ export function formatSpan(seconds: number): string {
 /**
  * Whether a visitor should see a window for `server`. Signed out (`undefined`/`null`) sees it:
  * the notices are Yostar's global ones. A player on another server does not.
+ * Case-blind: a profile carries `servers.code` (`EN`), a window its lowercase id (`en`).
  */
 export function maintenanceAppliesTo(windowServer: string, userServer: string | null | undefined): boolean {
     if (!userServer) return true;
-    return userServer === windowServer;
+    return userServer.toLowerCase() === windowServer.toLowerCase();
 }

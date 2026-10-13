@@ -10,10 +10,8 @@ import type { messages } from "./LanguageToggle.messages";
 
 /**
  * The active language's code in the top bar, not a row in the appearance
- * popover: language is the one setting people hunt for. Visible at every
- * width; the hamburger drawer carries the same choice as a second path. The
- * room comes from the wordmark, which `Header` hides below `sm`, so a new
- * button in this cluster takes its space from something else.
+ * popover: language is the one setting people hunt for. From `sm` up; below
+ * that `Header` drops it and the hamburger drawer carries the same choice.
  *
  * The game-text picker shares this menu because it defaults to the language:
  * one decision ("what am I reading") with an override. Renders nothing with

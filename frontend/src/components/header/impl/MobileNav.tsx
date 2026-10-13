@@ -12,6 +12,7 @@ import { Drawer, DrawerClose, DrawerHeader, DrawerMenu, DrawerMenuGroup, DrawerM
 import { GithubIcon } from "#/components/ui/github-icon";
 import { Spinner } from "#/components/ui/spinner";
 import { useAuth } from "#/hooks/use-auth";
+import { useTheme } from "#/hooks/use-theme";
 import { REPO_URL } from "#/lib/constants";
 import { useI18n, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -20,6 +21,7 @@ import { ActiveIndicator } from "./ActiveIndicator";
 import { LazyAuthDialog } from "./LazyAuthDialog";
 import type { INavItem } from "./MainNav";
 import type { messages } from "./MobileNav.messages";
+import type { messages as themeMessages } from "./ThemeToggle.messages";
 
 interface IMobileNavProps {
     items: INavItem[];
@@ -36,6 +38,8 @@ export function MobileNav({ items }: IMobileNavProps) {
     const serverOptions = useGamedataServerOptions();
     const serverChoice = useGamedataServerChoice();
     const switchServer = useGamedataServerSwitch();
+    const { mode, setMode } = useTheme();
+    const tTheme: TypedT<typeof themeMessages> = useT("nav");
     const groupIdBase = useId();
 
     const renderSubItem = (subItem: INavItem) => (
@@ -121,12 +125,10 @@ export function MobileNav({ items }: IMobileNavProps) {
                             </DrawerMenuItem>
                         </DrawerMenuGroup>
 
-                        {/* A second path to the same choice, not the only
-                            one: the header's language code is visible at every
-                            width. Kept because the drawer is where a phone
-                            visitor looks for settings, and it can spell the
-                            group out ("Language") where the bar only has room
-                            for a two-letter code. */}
+                        {/* Below `sm` this is the only path: the header drops its
+                            language and theme toggles there. From `sm` up it is a
+                            second path that spells the group out ("Language")
+                            where the bar has room for a two-letter code. */}
                         {available.length > 1 ? (
                             <>
                                 <DrawerMenuSeparator />
@@ -168,6 +170,22 @@ export function MobileNav({ items }: IMobileNavProps) {
                                 </DrawerMenuGroup>
                             </>
                         ) : null}
+
+                        {/* Mode only; accent and dynamic art stay in Settings > Appearance. */}
+                        <DrawerMenuSeparator />
+                        <DrawerMenuGroup>
+                            <DrawerMenuGroupLabel>{tTheme("themeToggle.appearance")}</DrawerMenuGroupLabel>
+                            <DrawerMenuRadioGroup
+                                value={mode}
+                                onValueChange={(next: string) => {
+                                    if (next === "light" || next === "dark" || next === "auto") setMode(next);
+                                }}
+                            >
+                                <DrawerMenuRadioItem value="light">{tTheme("themeToggle.light")}</DrawerMenuRadioItem>
+                                <DrawerMenuRadioItem value="dark">{tTheme("themeToggle.dark")}</DrawerMenuRadioItem>
+                                <DrawerMenuRadioItem value="auto">{tTheme("themeToggle.auto")}</DrawerMenuRadioItem>
+                            </DrawerMenuRadioGroup>
+                        </DrawerMenuGroup>
 
                         <DrawerMenuSeparator />
                         <DrawerMenuGroup>

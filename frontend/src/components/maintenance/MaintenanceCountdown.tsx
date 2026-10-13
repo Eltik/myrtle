@@ -28,13 +28,14 @@ function shortLabel(m: IMaintenanceState, t: T): string {
 }
 
 /** A dot that says "down right now" without shouting: amber while down, muted before. */
-function StatusDot({ down }: { down: boolean }) {
-    return <span aria-hidden="true" className={cn("size-1.5 shrink-0 rounded-full", down ? "bg-amber-500" : "bg-muted-foreground/60")} />;
+function StatusDot({ down, className }: { down: boolean; className?: string }) {
+    return <span aria-hidden="true" className={cn("size-1.5 shrink-0 rounded-full", down ? "bg-amber-500" : "bg-muted-foreground/60", className)} />;
 }
 
 /**
  * The top-bar pill. Links to Yostar's own notice. Hidden when Settings > Top Bar turns it off.
- * Below `md` only the icon shows: the bar has about 40px to spare on a phone.
+ * Below `md` it is a 32px icon square with the dot pinned to its corner: the bar has no room
+ * to spare on a phone.
  */
 export function MaintenancePill() {
     const m = useMaintenance();
@@ -52,12 +53,12 @@ export function MaintenancePill() {
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label={`${label}. ${t("maintenance.pillLabel")}`}
-                        className="relative inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-border bg-muted/60 px-2 font-medium text-[12px] text-foreground tabular-nums no-underline transition-colors pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:-inset-y-1.5 hover:bg-muted"
+                        className="relative inline-flex size-8 shrink-0 items-center justify-center gap-1.5 rounded-md border border-border bg-muted/60 font-medium text-[12px] text-foreground tabular-nums no-underline transition-colors pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:-inset-y-1.5 hover:bg-muted md:w-auto md:px-2"
                     />
                 }
             >
                 <WrenchIcon className="size-3.5 text-muted-foreground" aria-hidden="true" />
-                <StatusDot down={isGameDown(m.stage)} />
+                <StatusDot down={isGameDown(m.stage)} className="max-md:absolute max-md:top-1.5 max-md:right-1.5" />
                 <span className="hidden whitespace-nowrap md:inline">{label}</span>
             </TooltipTrigger>
             {/* The pill shows the label itself from md up; below that it is icon-only. */}

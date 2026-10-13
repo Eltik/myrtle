@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-13T06:42:45.758Z",
+    "generatedAt": "2026-10-13T07:21:56.878Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -26247,6 +26247,140 @@
             "description": "Sub-line under the tier-list tile. A placement is one operator placed on one tier. {count} is an already-formatted compact number and the label is always plural in the source.",
             "placeholders": [
                 "count"
+            ]
+        },
+        {
+            "key": "stats.fieldNotes.immune.label",
+            "namespace": "stats",
+            "source_text": "Enemy immunity",
+            "description": "Fact tile label, rendered uppercase: the share of enemies immune to the picked status.",
+            "placeholders": []
+        },
+        {
+            "key": "stats.fieldNotes.immune.levels",
+            "namespace": "stats",
+            "source_text": "Boss {boss} · Elite {elite} · Normal {normal}",
+            "description": "Per-grade split of the immunity share. Boss, Elite and Normal are the game's enemy grades; each placeholder is an already-formatted percentage or '-'.",
+            "placeholders": [
+                "boss",
+                "elite",
+                "normal"
+            ]
+        },
+        {
+            "key": "stats.fieldNotes.immune.sentence",
+            "namespace": "stats",
+            "source_text": "of enemies are immune to {status, select, stun {stun} silence {silence} sleep {sleep} frozen {freeze} levitate {levitation} other {{status}}}",
+            "description": "Sentence that follows a big percentage, e.g. '12% / of enemies are immune to stun'. {status} is one of stun, silence, sleep, frozen, levitate: the game's crowd-control statuses.",
+            "placeholders": [
+                "status"
+            ]
+        },
+        {
+            "key": "stats.fieldNotes.inflict.label",
+            "namespace": "stats",
+            "source_text": "Inflicted by",
+            "description": "Fact tile label, rendered uppercase: the share of operators with a skill that applies the picked status.",
+            "placeholders": []
+        },
+        {
+            "key": "stats.fieldNotes.inflict.sentence",
+            "namespace": "stats",
+            "source_text": "of operators have a skill that inflicts {status, select, stun {stun} silence {silence} sleep {sleep} frozen {freeze} levitate {levitation} other {{status}}}",
+            "description": "Sentence that follows a big percentage. It says SKILL on purpose: talents are not counted. {status} is one of stun, silence, sleep, frozen, levitate: the game's crowd-control statuses.",
+            "placeholders": [
+                "status"
+            ]
+        },
+        {
+            "key": "stats.fieldNotes.kicker",
+            "namespace": "stats",
+            "source_text": "Field notes",
+            "description": "Small uppercase heading over a row of miscellaneous facts drawn from the game data and synced players.",
+            "placeholders": []
+        },
+        {
+            "key": "stats.fieldNotes.mostOwned.label",
+            "namespace": "stats",
+            "source_text": "Most owned 6★",
+            "description": "Fact tile label, rendered uppercase: the 6-star operator the most synced players own. ★ is the rarity star.",
+            "placeholders": []
+        },
+        {
+            "key": "stats.fieldNotes.mostOwned.sentence",
+            "namespace": "stats",
+            "source_text": "of synced doctors own {name}",
+            "description": "Sentence that follows a big percentage, e.g. '76% / of synced doctors own Gladiia'. {name} is the operator's name. 'Doctor' is the game's word for the player.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "stats.fieldNotes.picker",
+            "namespace": "stats",
+            "source_text": "Status",
+            "description": "Accessible name of the chip row that picks which crowd-control status the first two facts are about.",
+            "placeholders": []
+        },
+        {
+            "key": "stats.fieldNotes.progress.label",
+            "namespace": "stats",
+            "source_text": "Handbook progress",
+            "description": "Fact tile label, rendered uppercase: how much of the enemy handbook the average player has met.",
+            "placeholders": []
+        },
+        {
+            "key": "stats.fieldNotes.progress.meta",
+            "namespace": "stats",
+            "source_text": "across {count} doctors",
+            "description": "Meta line: how many players the average is taken over. {count} is an already-formatted number.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "stats.fieldNotes.progress.sentence",
+            "namespace": "stats",
+            "source_text": "The average doctor has met {met} of {total} enemies",
+            "description": "Sentence under a percentage. {met} and {total} are already-formatted numbers; {total} is always large, so the label is always plural. 'Doctor' is the game's word for the player.",
+            "placeholders": [
+                "met",
+                "total"
+            ]
+        },
+        {
+            "key": "stats.fieldNotes.rarest.label",
+            "namespace": "stats",
+            "source_text": "Rarest 6★",
+            "description": "Fact tile label, rendered uppercase: the six-star operator the fewest synced players own. Keep the star symbol.",
+            "placeholders": []
+        },
+        {
+            "key": "stats.fieldNotes.rarest.sentence",
+            "namespace": "stats",
+            "source_text": "of synced doctors own {name}, the rarest 6★",
+            "description": "Sentence that follows a big percentage, e.g. '7.1% / of synced doctors own Bellone, the rarest 6★'. Keep the star symbol. {name} is the operator's name. 'Doctor' is the game's word for the player.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "stats.fieldNotes.ratio",
+            "namespace": "stats",
+            "source_text": "{n} of {total}",
+            "description": "Numerator over denominator under a percentage, e.g. '179 of 1,541'. Both are already-formatted numbers.",
+            "placeholders": [
+                "n",
+                "total"
+            ]
+        },
+        {
+            "key": "stats.fieldNotes.status",
+            "namespace": "stats",
+            "source_text": "{status, select, stun {Stun} silence {Silence} sleep {Sleep} frozen {Freeze} levitate {Levitate} other {{status}}}",
+            "description": "A chip label naming one status, title case. {status} is one of stun, silence, sleep, frozen, levitate: the game's crowd-control statuses. Use the game's own term for each.",
+            "placeholders": [
+                "status"
             ]
         },
         {

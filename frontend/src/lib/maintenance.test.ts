@@ -54,6 +54,11 @@ describe("maintenanceAppliesTo", () => {
         expect(maintenanceAppliesTo("en", "en")).toBe(true);
         expect(maintenanceAppliesTo("en", "cn")).toBe(false);
     });
+
+    it("matches a profile's uppercase server code against the window's lowercase id", () => {
+        expect(maintenanceAppliesTo("en", "EN")).toBe(true);
+        expect(maintenanceAppliesTo("en", "CN")).toBe(false);
+    });
 });
 
 describe("isGameDown", () => {

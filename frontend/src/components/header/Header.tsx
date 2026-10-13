@@ -123,8 +123,13 @@ export default function Header() {
 
                         <Separator orientation="vertical" className="mx-1 hidden h-5 sm:block" />
 
-                        <LanguageToggle />
-                        <ThemeToggle />
+                        {/* Below `sm` language and theme live in the hamburger drawer: a phone
+                            bar of search, maintenance pill, two toggles, the bell and the avatar
+                            read as clutter and overran 320px. The bell stays for its unread dot. */}
+                        <div className="hidden sm:contents">
+                            <LanguageToggle />
+                            <ThemeToggle />
+                        </div>
                         <WhatsNewButton />
                         {/* Signed-out visitors have no avatar menu, so the two
                             outbound links stay in the bar for them. Signed-in
