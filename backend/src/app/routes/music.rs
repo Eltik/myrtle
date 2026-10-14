@@ -551,7 +551,9 @@ async fn ingest(
     kind: MusicStatKind,
     body: &MusicStatInput,
 ) -> Result<Json<MusicStatRecorded>, ApiError> {
-    let counted = if let Some(client) = caller.0 { stats::record(state, kind, &body.track_id, &client).await? } else {
+    let counted = if let Some(client) = caller.0 {
+        stats::record(state, kind, &body.track_id, &client).await?
+    } else {
         // Still answer a bad id as one, so a client bug shows.
         if !stats::is_known_track(state, &body.track_id).await? {
             return Err(ApiError::NotFound);

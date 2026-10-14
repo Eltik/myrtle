@@ -103,10 +103,14 @@ pub fn client_addr(headers: &HeaderMap, extensions: &Extensions) -> Option<IpAdd
 pub fn normalize_addr(ip: IpAddr) -> String {
     match ip {
         IpAddr::V4(v4) => v4.to_string(),
-        IpAddr::V6(v6) => if let Some(v4) = v6.to_ipv4_mapped() { v4.to_string() } else {
-            let s = v6.segments();
-            format!("{:x}:{:x}:{:x}:{:x}::/64", s[0], s[1], s[2], s[3])
-        },
+        IpAddr::V6(v6) => {
+            if let Some(v4) = v6.to_ipv4_mapped() {
+                v4.to_string()
+            } else {
+                let s = v6.segments();
+                format!("{:x}:{:x}:{:x}:{:x}::/64", s[0], s[1], s[2], s[3])
+            }
+        }
     }
 }
 
