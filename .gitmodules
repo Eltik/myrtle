@@ -4,3 +4,6 @@
 [submodule "assets/OpenArknightsFBS"]
 	path = assets/OpenArknightsFBS
 	url = https://github.com/MooncellWiki/OpenArknightsFBS.git
+[submodule "assets/ArknightsFlatbuffers"]
+	path = assets/ArknightsFlatbuffers
+	url = https://github.com/ArknightsAssets/ArknightsFlatbuffers.git
