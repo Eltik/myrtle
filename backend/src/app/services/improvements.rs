@@ -1966,10 +1966,29 @@ pub fn shift_rotation_to_dto(
     let op_index_ledger = crate::core::grade::base::assignment::build_op_index(profiles);
     // Layout-counted branches (Wang) read the layout alone; the deployment
     // gates below read each shift's seats.
+    // Wang's branch reads the effective plant count the ROTATION establishes
+    // (its parked tokens and enablers), the same count the shift ledgers read.
+    let rotation_seats: HashMap<String, String> = rotation
+        .shifts
+        .iter()
+        .flat_map(|s| s.rooms.iter().filter(|r| r.active))
+        .flat_map(|r| {
+            r.recommended
+                .iter()
+                .map(move |op| (op.clone(), r.room_type.clone()))
+        })
+        .collect();
     let layout_registry = crate::core::grade::base::assignment::resolve_layout_branches(
         registry,
         building,
         &game_data.building,
+        &crate::core::grade::base::assignment::effective_facility_counts(
+            building,
+            profiles,
+            registry,
+            &game_data.building,
+            &rotation_seats,
+        ),
     );
 
     let mut shift_dtos = Vec::with_capacity(rotation.shifts.len());

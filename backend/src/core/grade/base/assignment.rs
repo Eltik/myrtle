@@ -367,14 +367,23 @@ pub fn resolve_layout_branches(
     registry: &HashMap<String, BuffResolutionStrategy>,
     building: &UserBuilding,
     building_data: &BuildingDataFile,
+    facility_counts: &HashMap<String, usize>,
 ) -> HashMap<String, BuffResolutionStrategy> {
+    // A term counts EFFECTIVE facilities: Eunectes' "+2 Power Plants" and
+    // Greyy the Lightningbearer's "+1" raise Influence in the game (a player
+    // with both read Wang's +7% on the posts where we gave +2% to the
+    // factories, 2026-10-14). `facility_counts` carries those modifiers; a
+    // room type it does not list counts its rooms.
     let count_of = |term: &str| -> usize {
         building_data.layout_terms.get(term).map_or(0, |rooms| {
-            building
-                .rooms
+            rooms
                 .iter()
-                .filter(|r| rooms.iter().any(|t| t == &r.room_type))
-                .count()
+                .map(|rt| {
+                    facility_counts.get(rt).copied().unwrap_or_else(|| {
+                        building.rooms.iter().filter(|r| &r.room_type == rt).count()
+                    })
+                })
+                .sum()
         })
     };
     registry
@@ -472,9 +481,13 @@ fn optimal_inner(
             &pinned_seats,
         );
     }
-    // Layout-counted branches (Wang) depend only on the building: resolve
-    // them once, before both passes.
-    let layout_registry = resolve_layout_branches(registry, building, building_data);
+    // Layout-counted branches (Wang) read the effective facility counts the
+    // pins establish (a pinned Eunectes and Lancet-2 raise the plant count):
+    // resolve them once, before both passes.
+    let pinned_counts =
+        effective_facility_counts(building, operators, registry, building_data, &pinned_seats);
+    let layout_registry =
+        resolve_layout_branches(registry, building, building_data, &pinned_counts);
     let registry = &layout_registry;
     // Pass 1: bonuses off, to learn who actually ends up deployed where.
     let empty_rooms = HashMap::new();
@@ -2082,7 +2095,15 @@ pub fn compute_live_assignment(
     // the recommendation. The deployment is fixed, so one pass. Pool-scaled CC globals
     // (Sakiko) resolve against the settled pools the scorer reads; layout-counted branches
     // (Wang) resolve on every path since the layout is always known.
-    let layout_registry = resolve_layout_branches(registry, building, building_data);
+    let live_counts = effective_facility_counts_with_inert(
+        building,
+        operators,
+        registry,
+        building_data,
+        &stationed_seats(building, shift),
+        &inert,
+    );
+    let layout_registry = resolve_layout_branches(registry, building, building_data, &live_counts);
     let registry = &layout_registry;
     let needs_presence =
         base_wide_relevant(operators, registry) || room_presence_relevant(operators, registry);

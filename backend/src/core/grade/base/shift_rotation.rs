@@ -2,14 +2,19 @@
 //!
 //! It follows the login rhythm players run:
 //!
-//! - **Production groups** (gold factories, EXP factories, posts) get
-//!   `ceil(3N/2)` teams (3 for a pair of rooms) tiled as 24h blocks: two
-//!   consecutive shifts on (wrapping), one off, and ONE team per group swaps at
-//!   each 12h login:
+//! - **Production groups** (gold factories, EXP factories, posts) get one team
+//!   per room per shift (`3N` teams): every room changes crew at every 12h
+//!   login, each team works 12h and rests 24h. That is the only rhythm the
+//!   game's global Rotate can express as presets - a room whose next formation
+//!   is its working crew reads "No Available Presets" (user recording
+//!   2026-10-14). A roster too small to staff `3N` full crews, or a base
+//!   with fewer dormitory beds than production seats, falls back to
+//!   `ceil(3N/2)` teams as 24h blocks (`Tiling::Blocks`), rotated every 24h:
 //!
 //!   ```text
-//!     room 1:  Team A   Team A   Team B
-//!     room 2:  Team B   Team C   Team C
+//!     shifts:  room 1:  Team A   Team B   Team C
+//!     blocks:  room 1:  Team A   Team A   Team B
+//!              room 2:  Team B   Team C   Team C
 //!   ```
 //!
 //! - **Power, Office, Reception, Control Center** alternate two squads: Squad 1
@@ -38,7 +43,7 @@ use super::{
         room_presence_relevant, room_search_score, rotation_cc_plan,
     },
     buff_registry::BuffResolutionStrategy,
-    team_select::{PlannedGroup, plan_production_groups, tiled_objective},
+    team_select::{PlannedGroup, Tiling, plan_production_groups, tiled_objective},
     types::{OperatorBaseProfile, UserBuilding},
     util::{is_production_room, max_stationed_at_level},
 };
@@ -85,7 +90,8 @@ pub struct ShiftRoom {
     /// Crew efficiency % (speed incl. Squad-1 globals) for production and power
     /// cells, to show how output is distributed.
     pub efficiency: Option<f64>,
-    /// Same id across the two shift columns a production team's 24h block covers,
+    /// Stable identity of the team staffing this cell (under the 24h-block
+    /// fallback the same id spans the two shift columns a block covers),
     /// so the frontend can tie them together.
     pub team_id: Option<String>,
     /// Display label: "Team A/B/C" for production blocks, "Squad 1/2" elsewhere.
@@ -378,8 +384,12 @@ pub fn recommend_shift_rotation(
             &pinned_seats,
         );
     }
-    let layout_registry =
-        super::assignment::resolve_layout_branches(registry, building, building_data);
+    let layout_registry = super::assignment::resolve_layout_branches(
+        registry,
+        building,
+        building_data,
+        &effective_facility_counts(building, operators, registry, building_data, &pinned_seats),
+    );
     let registry = &layout_registry;
     let pass1_registry = resolve_room_presence(
         &resolve_base_wide(registry, &HashSet::new(), &HashSet::new()),
@@ -460,6 +470,32 @@ fn rotation_core(
     pins: &[(String, String)],
     seats: &HashMap<String, String>,
 ) -> ShiftRotation {
+    rotation_core_tiled(
+        operators,
+        building,
+        building_data,
+        registry,
+        morale_drains,
+        pins,
+        seats,
+        Tiling::Shifts,
+    )
+}
+
+/// [`rotation_core`] under one tiling. `Shifts` is tried first; a production
+/// team the roster cannot fill sends the whole plan back through `Blocks`
+/// (an unstaffed production room is never right).
+#[allow(clippy::too_many_arguments)]
+fn rotation_core_tiled(
+    operators: &[OperatorBaseProfile],
+    building: &UserBuilding,
+    building_data: &BuildingDataFile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    morale_drains: &HashMap<String, f64>,
+    pins: &[(String, String)],
+    seats: &HashMap<String, String>,
+    tiling: Tiling,
+) -> ShiftRotation {
     let facility_counts =
         effective_facility_counts(building, operators, registry, building_data, seats);
     let parked = super::assignment::parked_tokens(seats, operators, registry);
@@ -529,6 +565,7 @@ fn rotation_core(
                 &HashMap::new(),
                 &HashMap::new(),
                 &memo,
+                tiling,
             )
         },
     );
@@ -617,6 +654,7 @@ fn rotation_core(
                             &reserved,
                             &HashMap::new(),
                             &memo,
+                            tiling,
                         );
                         let unseated = tiled_objective(&pinned_plan, &cc_plan.global_bonuses);
                         seat_pinned_operator(
@@ -696,12 +734,12 @@ fn rotation_core(
     let mut sustained_label: Vec<String> = kept_by_room.values().flatten().cloned().collect();
     sustained_label.sort();
     sustained_label.dedup();
-    // Every production team works a 24h block ([A,A,B] / [B,C,C]), so a member
-    // whose drain outruns a full bar (Aroma's "+0.25 Morale per hour" rider) runs
-    // dry mid-block. They leave the pool unless the manager sustains them or a plan
-    // pins them; the morale sim reports on what remains.
+    // Under 24h blocks a member whose drain outruns a full bar (Aroma's "+0.25
+    // Morale per hour" rider) runs dry mid-block, so they leave the pool unless
+    // the manager sustains them or a plan pins them; a 12h shift any bar lasts.
     let heavy: Vec<String> = operators
         .iter()
+        .filter(|_| tiling == Tiling::Blocks)
         .filter(|op| !super::sustain_sim::sustains_24h_block(op, morale_drains))
         .filter(|op| !sustained_label.contains(&op.char_id) && !pinned_ids.contains(&op.char_id))
         .map(|op| op.char_id.clone())
@@ -727,6 +765,7 @@ fn rotation_core(
             &HashMap::new(),
             &kept_by_room,
             &memo,
+            tiling,
         );
     }
 
@@ -1552,6 +1591,40 @@ fn rotation_core(
         }
     }
 
+    // The 12h-shift tiling needs `3N` full crews. A production cell the
+    // roster could not fill to its seats sends the whole plan back through
+    // the 24h blocks, which need half the crews (an understaffed production
+    // room is never right).
+    if tiling == Tiling::Shifts {
+        let seats_of = |slot: &str| -> usize {
+            building
+                .rooms
+                .iter()
+                .find(|r| r.slot_id == slot)
+                .map_or(0, |r| {
+                    max_stationed_at_level(building_data, &r.room_type, r.level).max(0) as usize
+                })
+        };
+        let short = shifts.iter().any(|s| {
+            s.rooms.iter().any(|r| {
+                is_production_room(&r.room_type)
+                    && r.active
+                    && r.recommended.len() < seats_of(&r.slot_id)
+            })
+        });
+        if short {
+            return rotation_core_tiled(
+                operators,
+                building,
+                building_data,
+                registry,
+                morale_drains,
+                pins,
+                seats,
+                Tiling::Blocks,
+            );
+        }
+    }
     ShiftRotation {
         shifts,
         sustained: sustained_label,

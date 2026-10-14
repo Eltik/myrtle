@@ -73,6 +73,8 @@ export interface IOptimizerAPI {
 interface IPersisted {
     layout: IDraftRoom[];
     ignorePromotion?: boolean;
+    /** Identity of the synced layout the draft was seeded from. A newer sync re-seeds the draft. */
+    synced?: string;
 }
 
 const EMPTY_SLOTS: ICatalogSlot[] = [];
@@ -111,9 +113,16 @@ export function useOptimizer(uid: string): IOptimizerAPI {
         layout: [],
     });
 
+    // The draft lives in localStorage and used to be seeded from the synced
+    // layout once, then never again: after a re-sync the board's "Stationed
+    // now" kept showing the old draft's crews while the shift views (read
+    // from the fresh presets) were right, and the score dropped with it. A
+    // sync with a different identity re-seeds the draft; an unchanged sync
+    // leaves the player's edits alone.
     useEffect(() => {
         if (realLayout.length === 0 || catalog.size === 0) return;
-        setPersisted((prev) => (prev.layout.length === 0 ? { ...prev, layout: realLayout } : prev));
+        const synced = layoutIdentity(realLayout);
+        setPersisted((prev) => (prev.layout.length === 0 || prev.synced !== synced ? { ...prev, layout: realLayout, synced } : prev));
     }, [realLayout, catalog, setPersisted]);
 
     const layout = persisted.layout;
@@ -182,7 +191,7 @@ export function useOptimizer(uid: string): IOptimizerAPI {
     const runOptimize = useCallback((scope: string[]) => optimizeMutation.mutate(scope), [optimizeMutation]);
 
     const reset = useCallback(() => {
-        setPersisted({ layout: realLayout });
+        setPersisted((prev) => ({ ...prev, layout: realLayout, synced: layoutIdentity(realLayout) }));
         setProposal(null);
     }, [setPersisted, realLayout]);
 
