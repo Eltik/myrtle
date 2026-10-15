@@ -162,6 +162,37 @@ describe("player engine", () => {
         expect(engine.playerStore.state.current?.kind).toBe("game");
     });
 
+    it("off iOS a label track plays on the decks, not the story engine", () => {
+        engine.playQueue([A, B], 0, { kind: "none" });
+        expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();
+        expect(channel.playMusic).not.toHaveBeenCalled();
+    });
+
+    it("on iOS a label track plays once on the story engine and moves on at its end", () => {
+        // iOS reads a media element's volume back as 1 whatever was set.
+        vi.spyOn(HTMLMediaElement.prototype, "volume", "get").mockReturnValue(1);
+        vi.useFakeTimers();
+        try {
+            engine.playQueue([A, B], 0, { kind: "none" });
+            expect(channel.playMusic).toHaveBeenCalledWith({ intro: "/stream/a", loop: undefined, volume: 1, crossfade: 0 });
+            expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled();
+
+            Object.assign(channel, { musicLength: 200, musicIntroSeconds: 200, musicPosition: 60 });
+            vi.advanceTimersByTime(500);
+            expect(engine.playerStore.state.status).toBe("playing");
+            expect(engine.playheadStore.state).toMatchObject({ position: 60, duration: 200, loopAt: null });
+
+            // The intro-only cue holds at its end; the player moves on rather than waiting for a loop.
+            channel.musicPosition = 200;
+            vi.advanceTimersByTime(500);
+            expect(engine.playerStore.state.current?.id).toBe(B.id);
+            expect(channel.playMusic).toHaveBeenLastCalledWith({ intro: "/stream/b", loop: undefined, volume: 1, crossfade: 0 });
+        } finally {
+            Object.assign(channel, { musicLength: 0, musicIntroSeconds: 0, musicPosition: 0 });
+            vi.useRealTimers();
+        }
+    });
+
     it("saves the session to localStorage after a change", async () => {
         engine.playQueue([A, B, C], 2, { kind: "playlist", name: "Mine", id: "p1" });
         await new Promise((r) => setTimeout(r, 260));

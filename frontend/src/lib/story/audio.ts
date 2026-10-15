@@ -74,8 +74,10 @@ interface MusicVoice {
  * `loading` until the sources are scheduled or the media element's `play()`
  * resolves; `failed` when every decode lost and the element refused too, which
  * on iOS is a `play()` rejected outside the gesture or a type it cannot play.
+ * `ended` when a fallback element playing a cue with no loop reached its end,
+ * which is the only end a cue without a timeline can report.
  */
-export type MusicStatus = "idle" | "loading" | "playing" | "failed";
+export type MusicStatus = "idle" | "loading" | "playing" | "failed" | "ended";
 
 /** What `[playsound]` asks for, past the url. */
 export interface SoundRequest {
@@ -461,7 +463,11 @@ export function createStoryAudio(): StoryAudio {
                     return;
                 }
                 const el = new Audio(candidatesFor(src)[0] ?? src);
-                el.loop = true;
+                // An intro with no loop plays once, as the decoded path does.
+                el.loop = req.loop !== undefined;
+                el.onended = () => {
+                    if (voice.status === "playing") voice.status = "ended";
+                };
                 el.volume = Math.min(1, voice.cueVolume * (muted || musicDucked ? 0 : masterMusic));
                 voice.fallback = el;
                 voice.started = true;

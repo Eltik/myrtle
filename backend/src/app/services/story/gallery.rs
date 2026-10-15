@@ -290,14 +290,11 @@ pub async fn ensure_picture(
     Err(ApiError::NotFound)
 }
 
-/// `server`, then the default server when that is another: the order a
-/// variant route tries.
+/// `server`, then the default server when that is another, then CN: the order
+/// a variant route tries, shared with the asset routes
+/// ([`AppState::asset_servers`]).
 pub fn with_default_fallback(state: &AppState, server: Server) -> Vec<Server> {
-    let mut servers = vec![server];
-    if server != state.default_server {
-        servers.push(state.default_server);
-    }
-    servers
+    state.asset_servers(server)
 }
 
 /// The variant at `rel` (under `art_dir`) of the PNG a wire `url` names,

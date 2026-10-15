@@ -100,9 +100,10 @@ fn canonical_base_dir(base_dir: &Path) -> Result<PathBuf, ApiError> {
     Ok(canonical)
 }
 
-/// Serves from `server`, falling back to the default server when it has no index
-/// entry or isn't loaded. `resolve` maps an index to a relative path, tried per
-/// server.
+/// Serves from the first server in [`AppState::asset_servers`] order (`server`,
+/// the default, then CN) whose index has an entry and whose file serves.
+/// `resolve` maps an index to a relative path, tried per server. The last
+/// server's error is returned, else a 404.
 async fn serve_resolved<F>(
     state: &AppState,
     server: Server,
@@ -112,19 +113,20 @@ async fn serve_resolved<F>(
 where
     F: Fn(&AssetIndex) -> Option<String>,
 {
-    if let Some(sd) = state.try_server_data(server)
-        && let Some(rel) = resolve(&sd.asset_index.load())
-        && let Ok(resp) = serve_file(&sd.art_dir, &rel, headers).await
-    {
-        return Ok(resp);
+    let mut last = ApiError::NotFound;
+    for srv in state.asset_servers(server) {
+        let Some(sd) = state.try_server_data(srv) else {
+            continue;
+        };
+        let Some(rel) = resolve(&sd.asset_index.load()) else {
+            continue;
+        };
+        match serve_file(&sd.art_dir, &rel, headers).await {
+            Ok(resp) => return Ok(resp),
+            Err(e) => last = e,
+        }
     }
-    if server != state.default_server
-        && let Some(sd) = state.try_server_data(state.default_server)
-        && let Some(rel) = resolve(&sd.asset_index.load())
-    {
-        return serve_file(&sd.art_dir, &rel, headers).await;
-    }
-    Err(ApiError::NotFound)
+    Err(last)
 }
 
 async fn portrait_impl(
@@ -1051,17 +1053,18 @@ async fn generic_impl(
     if !allow_all_dirs() && !is_public_asset_path(asset_path) {
         return Err(ApiError::NotFound);
     }
-    if let Some(sd) = state.try_server_data(server)
-        && let Ok(resp) = serve_file(&sd.assets_dir, asset_path, headers).await
-    {
-        return Ok(resp);
+    // `server`'s own tree, then the default's, then CN's: see `asset_servers`.
+    let mut last = ApiError::NotFound;
+    for srv in state.asset_servers(server) {
+        let Some(sd) = state.try_server_data(srv) else {
+            continue;
+        };
+        match serve_file(&sd.assets_dir, asset_path, headers).await {
+            Ok(resp) => return Ok(resp),
+            Err(e) => last = e,
+        }
     }
-    if server != state.default_server
-        && let Some(sd) = state.try_server_data(state.default_server)
-    {
-        return serve_file(&sd.assets_dir, asset_path, headers).await;
-    }
-    Err(ApiError::NotFound)
+    Err(last)
 }
 
 /// Any asset by its path under the server's assets directory.

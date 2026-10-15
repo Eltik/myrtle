@@ -1,9 +1,9 @@
 import { useCallback, useMemo } from "react";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
-import { compactForSearch } from "#/lib/search/fuzzy";
 import { rarityToNumber } from "#/lib/utils";
 import { CLASS_SORT_ORDER } from "./constants";
-import { buildFilterOptions, countSharedFilters, matchesSharedFilters, toFilterSets } from "./shared-filters";
+import { operatorFilterPredicate } from "./matchFilters";
+import { buildFilterOptions, countSharedFilters } from "./shared-filters";
 import type { ArrayFilterKey, IFilterState, IOperatorView, IUseOperatorFiltersReturn } from "./types";
 
 const initialState: IFilterState = {
@@ -41,32 +41,26 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
     const filterOptions = useMemo(() => buildFilterOptions(data), [data]);
 
     // Separate memos so a sort change doesn't rerun the more expensive filter pass.
-    const filtered = useMemo(() => {
-        const query = compactForSearch(filters.searchQuery.trim());
-        const sets = toFilterSets({
-            classes: filters.classes,
-            subclasses: filters.subclasses,
-            rarities: filters.rarities,
-            genders: filters.genders,
-            nations: filters.nations,
-            factions: filters.factions,
-            races: filters.races,
-            birthPlaces: filters.birthPlaces,
-            artists: filters.artists,
-            voiceActors: filters.voiceActors,
-        });
-
-        return data.filter((op) => {
-            if (query) {
-                const haystack = compactForSearch(`${op.name} ${op.appellation ?? ""} ${op.subProfessionId}`);
-                if (!haystack.includes(query)) return false;
-            }
-            if (!matchesSharedFilters(op, sets)) return false;
-            if (filters.hasNotes === "yes" && !op.hasNotes) return false;
-            if (filters.hasNotes === "no" && op.hasNotes) return false;
-            return true;
-        });
-    }, [data, filters.searchQuery, filters.classes, filters.subclasses, filters.rarities, filters.genders, filters.nations, filters.factions, filters.races, filters.birthPlaces, filters.artists, filters.voiceActors, filters.hasNotes]);
+    const filtered = useMemo(
+        () =>
+            data.filter(
+                operatorFilterPredicate({
+                    searchQuery: filters.searchQuery,
+                    classes: filters.classes,
+                    subclasses: filters.subclasses,
+                    rarities: filters.rarities,
+                    genders: filters.genders,
+                    nations: filters.nations,
+                    factions: filters.factions,
+                    races: filters.races,
+                    birthPlaces: filters.birthPlaces,
+                    artists: filters.artists,
+                    voiceActors: filters.voiceActors,
+                    hasNotes: filters.hasNotes,
+                }),
+            ),
+        [data, filters.searchQuery, filters.classes, filters.subclasses, filters.rarities, filters.genders, filters.nations, filters.factions, filters.races, filters.birthPlaces, filters.artists, filters.voiceActors, filters.hasNotes],
+    );
 
     const filteredOperators = useMemo(() => {
         const { sortBy, sortOrder } = filters;

@@ -25,6 +25,7 @@ import { CROSSFADE_MAX, CROSSFADE_MIN, DEFAULT_SETTINGS, type ILyricLine, type I
  * crossfade is the two playing at once with their gains ramped. In-game
  * tracks (`"loop"`) play on the story engine (`#/lib/story/audio`), which is
  * what joins an intro to its loop without a gap; a media element cannot.
+ * On iOS label tracks play there too, once through (`elementVolumeFixed`).
  * Only one transport sounds at a time and a change of transport is a switch,
  * never a fade.
  *
@@ -254,6 +255,34 @@ let active = 0;
 let ctx: AudioContext | null = null;
 /** The graph could not be built (no AudioContext, or it threw): elements play directly. */
 let graphBroken = false;
+/** Cached `elementVolumeFixed()`; null until first asked. */
+let volumeFixed: boolean | null = null;
+
+/**
+ * Whether this browser ignores a media element's `volume`, which is iOS and
+ * iPadOS (every browser there is WebKit): Apple documents the property as not
+ * settable and always reading 1. Feature-detected, not sniffed.
+ *
+ * There a label track does not play on the decks at all but on the loop
+ * transport, as a one-shot cue (`cueSource`): the decks route their elements
+ * through `createMediaElementSource`, which iOS does not play reliably, while
+ * the story engine fetches and decodes into buffers, which is how the in-game
+ * tracks already play there. Crossfade and preload are deck features and do
+ * not apply on that path.
+ */
+function elementVolumeFixed(): boolean {
+    if (volumeFixed !== null) return volumeFixed;
+    volumeFixed = false;
+    if (typeof Audio === "undefined") return volumeFixed;
+    try {
+        const probe = new Audio();
+        probe.volume = 0.5;
+        volumeFixed = Math.abs(probe.volume - 0.5) > 0.01;
+    } catch {
+        // A browser that throws on the probe keeps the graph.
+    }
+    return volumeFixed;
+}
 
 interface IFade {
     from: number;
@@ -693,6 +722,18 @@ function applyStoryLevels(): void {
     story.setMuted(s.muted);
 }
 
+/**
+ * What the loop transport sounds for a track: an in-game track's intro and
+ * loop, or, on iOS, a label track's stream as an intro with no loop, which the
+ * story engine plays once and holds at its end (`tickLoop` moves on there).
+ */
+function cueSource(track: ITrack): { intro: string | undefined; loop: string | undefined } | null {
+    const src = trackSource(track);
+    if (src.kind === "loop") return { intro: src.intro, loop: src.loop };
+    if (src.kind === "stream" && elementVolumeFixed()) return { intro: src.src, loop: undefined };
+    return null;
+}
+
 /** Whether the current in-game track loops until stopped rather than moving on after two passes. */
 function loopsForever(): boolean {
     const s = state();
@@ -738,8 +779,8 @@ function soundLoop(l: ILoop, offset: number): void {
 }
 
 function startLoop(track: ITrack, offset: number, autoplay: boolean): void {
-    const src = trackSource(track);
-    if (src.kind !== "loop") {
+    const src = cueSource(track);
+    if (!src) {
         trackFailed();
         return;
     }
@@ -760,8 +801,8 @@ function startLoop(track: ITrack, offset: number, autoplay: boolean): void {
     loopState = l;
     transport = "loop";
     loadedId = track.id;
-    const total = l.loopLength > 0 ? loopSpan(l.intro, l.loopLength) : 0;
-    publishPlayhead({ position: offset, duration: total, loopAt: l.intro > 0 && total > 0 ? l.intro : null, buffered: 0 }, true);
+    const total = l.intro + l.loopLength > 0 ? loopSpan(l.intro, l.loopLength) : 0;
+    publishPlayhead({ position: offset, duration: total, loopAt: l.intro > 0 && l.loopLength > 0 ? l.intro : null, buffered: 0 }, true);
     if (autoplay) soundLoop(l, offset);
     else {
         set({ status: "paused" });
@@ -810,7 +851,7 @@ function stopLoopClock(): void {
     loopClock = null;
 }
 
-/** One reading of the story engine's clock: heard time, the virtual position, and the advance after two passes. */
+/** One reading of the story engine's clock: heard time, the virtual position, and the advance after two passes (or at a one-shot's end). */
 function tickLoop(force: boolean): void {
     const l = loopState;
     const a = story;
@@ -823,6 +864,7 @@ function tickLoop(force: boolean): void {
         // the sticky `lastFallback` used to show "playing" over silence.
         const heard = a.musicStatus;
         if (heard === "failed") loopFailed(l);
+        else if (heard === "ended" && !force) advance(true);
         else if (heard === "playing" && state().status === "loading") set({ status: "playing", failures: 0 });
         return;
     }
@@ -846,20 +888,21 @@ function tickLoop(force: boolean): void {
     if (dt > 0 && dt < MAX_HEARD_STEP_S) addHeard(dt);
     l.virtual = virtual;
     const total = loopSpan(intro, loopLength);
-    const forever = loopsForever();
+    // A one-shot cue has nothing to loop: it moves on at its end whatever comes next, like a deck's `ended`.
+    const forever = loopLength > 0 && loopsForever();
     if (!forever && virtual >= total && !force) {
         advance(true);
         return;
     }
     // Looping until stopped: the bar wraps within the same intro-plus-two-passes span.
     const shown = forever && virtual >= intro && loopLength > 0 ? intro + ((virtual - intro) % (LOOP_PASSES * loopLength)) : Math.min(virtual, total);
-    publishPlayhead({ position: shown, duration: total, loopAt: intro > 0 ? intro : null, buffered: 0 }, force);
+    publishPlayhead({ position: shown, duration: total, loopAt: intro > 0 && loopLength > 0 ? intro : null, buffered: 0 }, force);
 }
 
 function seekLoop(seconds: number): void {
     const l = loopState;
     if (!l) return;
-    const total = l.loopLength > 0 ? loopSpan(l.intro, l.loopLength) : Number.POSITIVE_INFINITY;
+    const total = l.intro + l.loopLength > 0 ? loopSpan(l.intro, l.loopLength) : Number.POSITIVE_INFINITY;
     const to = Math.max(0, Math.min(seconds, total - 0.25));
     if (l.sounding && story) story.playMusicAt(l.req, to);
     else l.offset = to;
@@ -933,8 +976,8 @@ function probeLength(track: ITrack): void {
 
 function startTrack(track: ITrack, offset: number, autoplay: boolean): void {
     const kind = trackSource(track).kind;
-    if (kind === "stream") startStream(track, offset, autoplay);
-    else if (kind === "loop") startLoop(track, offset, autoplay);
+    if (kind === "stream" && !elementVolumeFixed()) startStream(track, offset, autoplay);
+    else if (kind !== "none") startLoop(track, offset, autoplay);
     else {
         loadedId = null;
         trackFailed();
@@ -1793,6 +1836,7 @@ export function resetPlayerForTests(): void {
     active = 0;
     ctx = null;
     graphBroken = false;
+    volumeFixed = null;
     story = null;
     lyricsCache.clear();
     probedLength.clear();

@@ -74,6 +74,10 @@ const OPEN_ENDED_LIMIT_SECS: i64 = 24 * 60 * 60;
 const UPCOMING_HORIZON_SECS: i64 = 14 * 24 * 60 * 60;
 /// Two notices whose windows start this close are one window restated.
 const SAME_WINDOW_SLACK_SECS: i64 = 60 * 60;
+/// A notice pulled from the board this close to its start, or after it, is
+/// the board being swapped for the update, not a cancellation; see
+/// [`carry_over`].
+const PULLED_NOTICE_GRACE_SECS: i64 = 60 * 60;
 
 /// Where a maintenance window stands.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
@@ -255,6 +259,34 @@ fn wants_probe(notices: &[Notice], now: i64) -> bool {
                 None => now - m.starts_at < OPEN_ENDED_LIMIT_SECS * 2,
             }
     })
+}
+
+/// The board as read now, plus every notice the last read had that is gone
+/// from it but whose window is about to start or still running.
+///
+/// Yostar takes the maintenance notice off the board around the time the
+/// maintenance starts (EN 2026-10-14: the board was rebuilt with
+/// `?t=1791990000`, holds no SYSTEM notice afterwards, and id 1628, between
+/// live ids, answers 404), and a rebuilt board re-fetches every page, so a
+/// failed fetch drops the notice for that tick too. Replacing the list wholesale made the top-bar window
+/// vanish the moment it started. A notice pulled well before its start is
+/// still dropped: that reads as a cancellation.
+fn carry_over(previous: &[Notice], mut fresh: Vec<Notice>, now: i64) -> Vec<Notice> {
+    let kept: Vec<Notice> = previous
+        .iter()
+        .filter(|old| !fresh.iter().any(|n| n.id == old.id))
+        .filter(|old| {
+            let w = &old.window;
+            now + PULLED_NOTICE_GRACE_SECS >= w.starts_at
+                && match w.ends_at {
+                    Some(end) => now - end < OVERRUN_LIMIT_SECS,
+                    None => now - w.starts_at < OPEN_ENDED_LIMIT_SECS * 2,
+                }
+        })
+        .cloned()
+        .collect();
+    fresh.extend(kept);
+    fresh
 }
 
 fn now_secs() -> i64 {
@@ -503,6 +535,11 @@ async fn poll(state: &AppState, caches: &mut HashMap<Server, PageCache>) -> anyh
             })
         })
         .collect();
+    let previous = SNAPSHOT
+        .read()
+        .map(|s| s.notices.clone())
+        .unwrap_or_default();
+    let notices = carry_over(&previous, notices, now);
 
     let prean_active = prean_active(client, &meta_url).await;
     let probe = if wants_probe(&notices, now) {
@@ -701,6 +738,32 @@ mod tests {
         };
         assert!(resolve(&n, T0 + H, up).is_none());
         assert!(resolve(&n, T0 + OPEN_ENDED_LIMIT_SECS, Signals::default()).is_none());
+    }
+
+    #[test]
+    fn a_running_window_outlives_its_notice_leaving_the_board() {
+        let previous = [notice(1628, T0, Some(T0 + 4 * H), false)];
+        let none = Signals::default();
+        // The board drops the notice at the start: still shown until the end.
+        let kept = carry_over(&previous, Vec::new(), T0 + H);
+        assert_eq!(
+            resolve(&kept, T0 + H, none).map(|w| w.phase),
+            Some(MaintenancePhase::Ongoing)
+        );
+        // Pulled minutes before the start: the board swap, kept.
+        assert_eq!(carry_over(&previous, Vec::new(), T0 - H / 2).len(), 1);
+        // Pulled days before: a cancellation, dropped.
+        assert!(carry_over(&previous, Vec::new(), T0 - 24 * H).is_empty());
+        // Past the end with no overrun signal: kept, but resolves to nothing.
+        let after = carry_over(&previous, Vec::new(), T0 + 5 * H);
+        assert!(resolve(&after, T0 + 5 * H, none).is_none());
+        // Forgotten once even an overrun could no longer show it.
+        assert!(carry_over(&previous, Vec::new(), T0 + 4 * H + OVERRUN_LIMIT_SECS).is_empty());
+        // Still on the board: the fresh copy wins, no duplicate.
+        let fresh = vec![notice(1628, T0, Some(T0 + 5 * H), true)];
+        let both = carry_over(&previous, fresh, T0 + H);
+        assert_eq!(both.len(), 1);
+        assert_eq!(both[0].window.ends_at, Some(T0 + 5 * H));
     }
 
     #[test]

@@ -12,9 +12,7 @@ import { upcomingQueryOptions } from "#/lib/api/upcoming";
 import { operatorsExportSchema } from "#/lib/export";
 import { type TypedRichT, useGamedataServer, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { compactForSearch } from "#/lib/search/fuzzy";
 import { Route } from "#/routes/operators";
-import type { OperatorRarityTier } from "#/types/operators";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 import { Skeleton } from "../../ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../../ui/tooltip";
@@ -29,6 +27,7 @@ import { Pagination, PaginationCompact } from "./impl/components/Pagination";
 import { FILTERS_VISIBLE_KEY, HAS_NOTES_LABEL_KEY, ITEMS_PER_PAGE, ITEMS_PER_PAGE_KEY, ITEMS_PER_PAGE_OPTIONS, type ItemsPerPage, LIST_GRID_COLS, MIN_RARITY_FOR_E2, PAGE_KEY, SORT_OPTIONS, STAT_METRIC_KEY, STAT_METRICS, VIEW_MODE_KEY, VIEW_MODES } from "./impl/constants";
 import type { messages as listConstantsMessages } from "./impl/constants.messages";
 import { enrichOperators } from "./impl/enrich";
+import { operatorFilterPredicate } from "./impl/matchFilters";
 import { buildSharedChips } from "./impl/shared-filters";
 import type { IOperatorExportRow, IOperatorOwnershipInfo, IOperatorView, SortOption, SortOrder, StatMetric, ViewMode } from "./impl/types";
 import { useOperatorFilters } from "./impl/useOperatorFilters";
@@ -104,23 +103,11 @@ export function OperatorsList() {
     const operatorName = useOperatorName();
     const isUpcoming = filters.availability === "upcoming";
 
-    const upcomingFiltered = useMemo(() => {
-        const query = compactForSearch(filters.searchQuery.trim());
-        const classes = new Set(filters.classes);
-        const subclasses = new Set(filters.subclasses);
-        const rarities = new Set(filters.rarities);
-        const nations = new Set(filters.nations);
-        return upcoming
-            .filter((op) => {
-                if (query && !compactForSearch(`${op.name} ${op.appellation ?? ""} ${op.subProfessionId}`).includes(query)) return false;
-                if (classes.size && !classes.has(op.profession)) return false;
-                if (subclasses.size && !subclasses.has(op.subProfessionId)) return false;
-                if (rarities.size && !rarities.has(`TIER_${op.rarity}` as OperatorRarityTier)) return false;
-                if (nations.size && !nations.has(op.nationId)) return false;
-                return true;
-            })
-            .sort((a, b) => b.rarity - a.rarity || operatorName(a).localeCompare(operatorName(b)));
-    }, [upcoming, filters.searchQuery, filters.classes, filters.subclasses, filters.rarities, filters.nations, operatorName]);
+    // The CN-only list runs the same predicate as the Global one. It used to apply only search, class,
+    // subclass, rarity and nation, so a race, faction, gender, birthplace, artist, CV or notes filter
+    // showed every upcoming operator under a "Showing N of N" that read as a filtered result.
+    const enrichedUpcoming = useMemo(() => enrichOperators(upcoming, notedIds, undefined), [upcoming, notedIds]);
+    const upcomingFiltered = useMemo(() => enrichedUpcoming.filter(operatorFilterPredicate(filters)).sort((a, b) => b.rarity - a.rarity || operatorName(a).localeCompare(operatorName(b))), [enrichedUpcoming, filters, operatorName]);
 
     const [viewMode, setViewMode] = useLocalStorageState<ViewMode>(VIEW_MODE_KEY, "grid", {
         parse: (raw) => (VIEW_MODES.has(raw as ViewMode) ? (raw as ViewMode) : undefined),
