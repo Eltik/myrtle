@@ -99,9 +99,14 @@ async fn load_cipher(client: &Client) -> Result<CipherResponse, FetchError> {
     })
 }
 
-/// Device id in arkprts's nine-segment shape (longer than a UUID). Client-side
-/// only; nothing suggests the server checks the shape, just presence and
-/// per-attempt uniqueness.
+/// Device id in arkprts's nine-segment shape (longer than a UUID). One per
+/// process, so retries within a run come from one device rather than reading
+/// as a new device each time, which is what risk control flags.
+fn bd_id() -> &'static str {
+    static BD_ID: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+    BD_ID.get_or_init(random_bd_id)
+}
+
 fn random_bd_id() -> String {
     const SEGMENT_LENGTHS: [usize; 9] = [8, 4, 4, 4, 12, 8, 4, 4, 4];
     let mut rng = rand::rng();
@@ -139,14 +144,33 @@ use rsa::RsaPublicKey;
 
 /// `{"code": 500002, "message": "PWD_INVALID", ...}` for a wrong password or an
 /// unknown account (indistinguishable).
+///
+/// `code` arrives as a number or a string (`"200007"`); `need_captch` is `"1"`
+/// on `200007` "trigger account secondary verify", the SDK's risk control.
+/// `start_captcha/v3` does issue a Geetest v3 challenge, but a solved one sent
+/// back with the login (as `ctoken`/`gt_user_id`, `challenge`, `validate`,
+/// `seccode`, from a stable `bd_id`) still drew `200007` twice on 2026-10-15,
+/// so the flag needs whatever the real client does, not a captcha.
 #[derive(Deserialize)]
 struct BilibiliError {
-    #[serde(default)]
-    code: i64,
+    #[serde(default, deserialize_with = "string_or_integer")]
+    code: String,
     #[serde(default)]
     message: String,
     #[serde(default)]
     server_message: Option<String>,
+    #[serde(default, deserialize_with = "string_or_integer")]
+    need_captch: String,
+}
+
+impl BilibiliError {
+    fn is_error(&self) -> bool {
+        !self.code.is_empty() && self.code != "0"
+    }
+
+    fn needs_captcha(&self) -> bool {
+        self.need_captch == "1"
+    }
 }
 
 #[derive(Deserialize)]
@@ -187,7 +211,7 @@ pub async fn login(
         ("server_id", SERVER_ID.to_owned()),
         ("version", VERSION.to_owned()),
         ("timestamp", unix_timestamp()),
-        ("bd_id", random_bd_id()),
+        ("bd_id", bd_id().to_owned()),
         ("user_id", username.to_owned()),
         ("pwd", pwd),
     ]);
@@ -213,8 +237,17 @@ pub async fn login(
     }
 
     if let Ok(err) = serde_json::from_str::<BilibiliError>(&text)
-        && err.code != 0
+        && err.is_error()
     {
+        if err.needs_captcha() {
+            return Err(FetchError::ParseError(format!(
+                "bilibili::login: account under risk control (code {}): {}. A \
+                 solved captcha does not clear it (tried 2026-10-15); wait days \
+                 and retry, use another account, or `set-session --import` an \
+                 access_key from the real client",
+                err.code, err.message
+            )));
+        }
         return Err(FetchError::ParseError(format!(
             "bilibili::login: upstream refused (code {}): {}{}",
             err.code,
@@ -290,7 +323,7 @@ pub async fn login_sms(
         ("server_id", SERVER_ID.to_owned()),
         ("version", VERSION.to_owned()),
         ("timestamp", unix_timestamp()),
-        ("bd_id", random_bd_id()),
+        ("bd_id", bd_id().to_owned()),
         ("user_id", phone.to_owned()),
         ("sms_code", sms_code.to_owned()),
     ]);
@@ -343,5 +376,21 @@ mod tests {
         let s: BilibiliLoginResult =
             serde_json::from_str(r#"{"uid":"123456","access_key":"k"}"#).unwrap();
         assert_eq!(s.uid, "123456");
+    }
+
+    #[test]
+    fn risk_control_reads_as_a_captcha_demand() {
+        let e: BilibiliError = serde_json::from_str(
+            r#"{"code":"200007","need_captch":"1","message":"trigger account secondary verify"}"#,
+        )
+        .unwrap();
+        assert!(e.is_error() && e.needs_captcha());
+
+        let wrong_pwd: BilibiliError =
+            serde_json::from_str(r#"{"code":500002,"message":"PWD_INVALID"}"#).unwrap();
+        assert!(wrong_pwd.is_error() && !wrong_pwd.needs_captcha());
+
+        let ok: BilibiliError = serde_json::from_str(r#"{"code":0,"uid":1}"#).unwrap();
+        assert!(!ok.is_error());
     }
 }

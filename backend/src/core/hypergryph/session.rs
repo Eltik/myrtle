@@ -407,12 +407,38 @@ pub async fn refresh_secret(
     session: &mut AuthSession,
     server: Server,
 ) -> Result<(), FetchError> {
+    refresh_secret_by_step(client, session, server)
+        .await
+        .map_err(|(_, e)| e)
+}
+
+/// Which half of [`refresh_secret`] failed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RefreshStep {
+    /// u8 `getToken`: the durable Yostar token was refused.
+    Token,
+    /// Game server `account/login`: the token was good, the game said no.
+    Login,
+}
+
+/// [`refresh_secret`] that names the failing step. A refusal at
+/// [`RefreshStep::Token`] means the credential is dead; one at
+/// [`RefreshStep::Login`] is about the game (maintenance included).
+pub async fn refresh_secret_by_step(
+    client: &Client,
+    session: &mut AuthSession,
+    server: Server,
+) -> Result<(), (RefreshStep, FetchError)> {
     if session.yostar_uid.is_empty() || session.yostar_token.is_empty() {
-        return Err(FetchError::NotLoggedIn);
+        return Err((RefreshStep::Token, FetchError::NotLoggedIn));
     }
 
-    let u8_data = get_u8_token(client, &session.yostar_uid, &session.yostar_token, server).await?;
-    let secret = get_secret(client, &u8_data.uid, &u8_data.token, server).await?;
+    let u8_data = get_u8_token(client, &session.yostar_uid, &session.yostar_token, server)
+        .await
+        .map_err(|e| (RefreshStep::Token, e))?;
+    let secret = get_secret(client, &u8_data.uid, &u8_data.token, server)
+        .await
+        .map_err(|e| (RefreshStep::Login, e))?;
 
     session.uid = u8_data.uid.into();
     session.token = u8_data.token.into();
