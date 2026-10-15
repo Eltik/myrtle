@@ -2867,6 +2867,69 @@ fn every_production_room_changes_crew_at_every_rotate_on_a_full_roster() {
 }
 
 #[test]
+fn presets_set_to_the_recommended_rotation_read_as_its_value() {
+    // "i set the shifts exactly how the optimizer suggested but it keeps saying
+    // that i havent optimized the exp production" (2026-10-15): the Optimizer tab
+    // compared the PEAK single staffing with the shift stationed right now, which
+    // a rotating base never equals. Rotation against rotation closes: saving the
+    // recommended shifts as presets values exactly what the recommendation
+    // values, and every production cell reads as a match.
+    use backend::core::grade::base::rotation_value::{
+        presets_value, rotation_value, usable_preset_shifts,
+    };
+    use backend::core::grade::base::shift_rotation::{SHIFT_COUNT, recommend_shift_rotation};
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let roster = full_roster(gd);
+    let mut building = generic_base();
+    // Two gold and two EXP lines, so both yields are live in the comparison.
+    for (i, room) in building
+        .rooms
+        .iter_mut()
+        .filter(|r| r.room_type == "MANUFACTURE")
+        .enumerate()
+    {
+        room.current_formula = Some(if i < 2 { "F_GOLD" } else { "F_EXP" }.into());
+    }
+    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &[]);
+    let recommended = rotation_value(&rot, &roster, &building, &gd.building, &registry, &drains)
+        .expect("a rotation has shifts");
+    assert!(recommended.exp_per_day > 0.0 && recommended.lmd_per_day > 0.0);
+    assert!(
+        presets_value(&roster, &building, &gd.building, &registry, &drains).is_none(),
+        "no presets, no preset value"
+    );
+
+    // The player saves every room's crew of each shift as that preset (the
+    // game keeps presets per room, the Control Center and dorms included).
+    for room in &mut building.rooms {
+        room.preset_shifts = rot
+            .shifts
+            .iter()
+            .map(|s| {
+                s.rooms
+                    .iter()
+                    .find(|r| r.slot_id == room.slot_id && r.active)
+                    .map(|r| r.recommended.clone())
+                    .unwrap_or_default()
+            })
+            .collect();
+    }
+    assert_eq!(usable_preset_shifts(&building).len(), SHIFT_COUNT);
+    let presets = presets_value(&roster, &building, &gd.building, &registry, &drains)
+        .expect("three usable presets");
+    // Every room is stationed identically shift by shift on both sides, so the
+    // two valuations agree exactly.
+    assert!(
+        (presets.exp_per_day - recommended.exp_per_day).abs() < 1e-6
+            && (presets.lmd_per_day - recommended.lmd_per_day).abs() < 1e-6
+            && (presets.production_efficiency - recommended.production_efficiency).abs() < 1e-6,
+        "presets {presets:?} vs recommended {recommended:?}"
+    );
+}
+
+#[test]
 fn a_small_roster_falls_back_to_the_24h_blocks() {
     // Three teams per production room need `3N` crews; a roster that cannot
     // fill them keeps every room staffed by running the 24h blocks instead,

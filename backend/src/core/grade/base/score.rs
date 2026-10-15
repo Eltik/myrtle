@@ -107,27 +107,7 @@ pub fn grade_base(
     // in it. An unset third preset is stored as `-1` seats and would read as dark
     // rooms (00980819: two posts and a factory dark in "shift 3", average fell to
     // 78% of a base running at 98%).
-    let usable_shifts: Vec<usize> = {
-        let with_presets: Vec<&super::types::UserRoom> = user_building
-            .rooms
-            .iter()
-            .filter(|r| {
-                super::util::is_production_room(&r.room_type) && !r.preset_shifts.is_empty()
-            })
-            .collect();
-        let most = with_presets
-            .iter()
-            .map(|r| r.preset_shifts.len())
-            .max()
-            .unwrap_or(0);
-        (0..most)
-            .filter(|&i| {
-                with_presets
-                    .iter()
-                    .all(|r| r.preset_shifts.get(i).is_some_and(|crew| !crew.is_empty()))
-            })
-            .collect()
-    };
+    let usable_shifts = super::rotation_value::usable_preset_shifts(&user_building);
     let actual = if usable_shifts.len() >= 2 {
         #[allow(clippy::cast_precision_loss)]
         let n = usable_shifts.len() as f64;

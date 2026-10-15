@@ -16,7 +16,8 @@ use ts_rs::TS;
 use crate::app::cpu;
 use crate::app::error::ApiError;
 use crate::app::services::improvements::{
-    BaseAssignmentDto, ShiftRotationDto, base_assignment_to_dto, shift_rotation_to_dto,
+    BaseAssignmentDto, ShiftRoomDto, ShiftRotationDto, base_assignment_to_dto,
+    shift_rotation_to_dto,
 };
 use crate::app::state::AppState;
 use crate::core::gamedata::types::GameData;
@@ -25,12 +26,14 @@ use crate::core::grade::base::assignment::{
 };
 use crate::core::grade::base::context::BaseContext;
 use crate::core::grade::base::pools::{AcceptedEconomy, optimal_with_bundles, search_economy};
+use crate::core::grade::base::rotation_value::{StaffingValue, presets_value, rotation_value};
 use crate::core::grade::base::scope::settle_scoped_proposal;
 use crate::core::grade::base::shift_rotation::{SHIFT_COUNT, recommend_shift_rotation};
 use crate::core::grade::base::sustain_sim::game_morale_drain;
 use crate::core::grade::base::types::{
     BaseAssignment, OperatorBaseProfile, RoomAssignment, UserBuilding, UserRoom,
 };
+use crate::core::grade::base::util::is_production_room;
 use crate::core::grade::base::yield_model::room_yield;
 use crate::database::models::user::UserProfile;
 use crate::database::queries::building::get_building;
@@ -459,6 +462,52 @@ pub struct RotationResponse {
     pub rotation: ShiftRotationDto,
     /// Shifts per day the rotation assumes, so the UI never hardcodes it.
     pub shift_count: usize,
+    /// The recommended rotation against the player's saved presets, both valued
+    /// the way the grade values a base (each shift stationed and scored, averaged).
+    pub comparison: RotationComparisonDto,
+}
+
+/// Rotation against rotation. The Optimize proposal is the PEAK single staffing;
+/// a player running the recommended rotation stations one shift of it at a
+/// time, so the peak always reads above their base and "optimized vs your base"
+/// could never close for them. This is the comparison that can.
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+#[derive(Debug, Clone, Serialize)]
+pub struct RotationComparisonDto {
+    /// The recommended rotation, averaged over its shifts.
+    pub recommended: RotationValueDto,
+    /// The player's saved presets averaged over the shifts the grade counts
+    /// (every production room with presets has a crew in them). `None` without
+    /// usable presets.
+    pub presets: Option<RotationValueDto>,
+    /// Production room-shift cells of the presets that match the recommendation
+    /// (same crew, or an equivalent one within the leniency band).
+    pub matching_cells: usize,
+    /// Production room-shift cells in the recommended rotation.
+    pub production_cells: usize,
+}
+
+/// Daily figures of a rotation, averaged over its shifts.
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+#[derive(Debug, Clone, Serialize)]
+pub struct RotationValueDto {
+    pub production_efficiency: f64,
+    pub lmd_per_day: f64,
+    pub exp_per_day: f64,
+    pub total_value: f64,
+}
+
+impl From<StaffingValue> for RotationValueDto {
+    fn from(v: StaffingValue) -> Self {
+        Self {
+            production_efficiency: v.production_efficiency,
+            lmd_per_day: v.lmd_per_day,
+            exp_per_day: v.exp_per_day,
+            total_value: v.total_value,
+        }
+    }
 }
 
 #[derive(TS, utoipa::ToSchema)]
@@ -1316,7 +1365,7 @@ pub async fn rotation(
     let mut ctx = context_for(state, uid, viewer_id, &game_data, req.ignore_promotion).await?;
     let facts = effective_facts(state, uid, req.facts).await;
     apply_account_facts(&mut ctx, &game_data, &facts);
-    let building = UserBuilding {
+    let mut building = UserBuilding {
         rooms: req
             .layout
             .iter()
@@ -1324,6 +1373,20 @@ pub async fn rotation(
             .map(DraftRoom::into_user_room)
             .collect(),
     };
+    // The draft carries no presets. The player's saved shifts come from the synced
+    // base, so the shift views can diff against them and the rotation aligns its
+    // phases to them, as the Score tab's rotation does.
+    if let Some(real) = synced_building(state, uid).await? {
+        for room in &mut building.rooms {
+            if let Some(saved) = real
+                .rooms
+                .iter()
+                .find(|r| r.slot_id == room.slot_id && r.room_type == room.room_type)
+            {
+                room.preset_shifts.clone_from(&saved.preset_shifts);
+            }
+        }
+    }
 
     let mut pins = build_pins(&req.layout, &[], &req.locked);
     let candidates = ctx.profiles_excluding(&req.excluded);
@@ -1348,43 +1411,92 @@ pub async fn rotation(
         req.ignore_promotion,
         &facts,
     );
-    let (ctx, building, candidates, plan) = cpu::offload("base_rotation", move || {
-        // The rotation plans with the economy the bundle trials accepted
-        // (registry and pins), exactly as the Score tab's rotation does.
-        let accepted = cached_plan(plan_key, || {
-            optimal_with_bundles(
+    let (ctx, building, candidates, plan, recommended, presets) =
+        cpu::offload("base_rotation", move || {
+            // The rotation plans with the economy the bundle trials accepted
+            // (registry and pins), exactly as the Score tab's rotation does.
+            let accepted = cached_plan(plan_key, || {
+                optimal_with_bundles(
+                    &candidates,
+                    &building,
+                    &gd.building,
+                    &ctx.registry,
+                    &search_registry,
+                    &ctx.morale_drains,
+                    &pins,
+                )
+            });
+            let plan = recommend_shift_rotation(
                 &candidates,
                 &building,
                 &gd.building,
-                &ctx.registry,
-                &search_registry,
+                &accepted.registry,
                 &ctx.morale_drains,
-                &pins,
+                &accepted.pins,
+            );
+            // Both sides valued on the full roster through the live path, so an
+            // excluded operator sitting in a saved preset still prices.
+            let recommended = rotation_value(
+                &plan,
+                &ctx.profiles,
+                &building,
+                &gd.building,
+                &ctx.registry,
+                &ctx.morale_drains,
             )
-        });
-        let plan = recommend_shift_rotation(
-            &candidates,
-            &building,
-            &gd.building,
-            &accepted.registry,
-            &ctx.morale_drains,
-            &accepted.pins,
-        );
-        (ctx, building, candidates, plan)
-    })
-    .await?;
+            .unwrap_or_default();
+            let presets = presets_value(
+                &ctx.profiles,
+                &building,
+                &gd.building,
+                &ctx.registry,
+                &ctx.morale_drains,
+            );
+            (ctx, building, candidates, plan, recommended, presets)
+        })
+        .await?;
+
+    let rotation = shift_rotation_to_dto(
+        &plan,
+        &game_data,
+        &candidates,
+        &building,
+        &ctx.registry,
+        &ctx.morale_drains,
+    );
+    let production_cells: Vec<&ShiftRoomDto> = rotation
+        .shifts
+        .iter()
+        .flat_map(|shift| shift.rooms.iter())
+        .filter(|r| r.active && is_production_room(&r.room_type))
+        .collect();
+    let matching_cells = production_cells
+        .iter()
+        .filter(|r| r.matches || r.equivalent)
+        .count();
+    let production_cells = production_cells.len();
 
     Ok(RotationResponse {
-        rotation: shift_rotation_to_dto(
-            &plan,
-            &game_data,
-            &candidates,
-            &building,
-            &ctx.registry,
-            &ctx.morale_drains,
-        ),
+        rotation,
         shift_count: SHIFT_COUNT,
+        comparison: RotationComparisonDto {
+            recommended: recommended.into(),
+            presets: presets.map(Into::into),
+            matching_cells,
+            production_cells,
+        },
     })
+}
+
+/// The player's synced base, when they have one. Privacy was settled by the
+/// caller's `context_for` on the same uid.
+async fn synced_building(state: &AppState, uid: &str) -> Result<Option<UserBuilding>, ApiError> {
+    let Some(user) = find_by_uid(&state.db, uid).await? else {
+        return Ok(None);
+    };
+    Ok(get_building(&state.db, user.id)
+        .await?
+        .map(|json| UserBuilding::from_json(&json)))
 }
 
 /// The `(char_id, room_type)` pins a planner run must respect: rooms outside

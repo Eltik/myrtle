@@ -92,8 +92,24 @@ export const messages = {
         description: "Row label: the operators the rotation never swaps out. 'Fiammetta' is the operator whose base skill makes it possible; keep the game's name.",
     },
     "profile.base.nerds.comparison": {
-        text: "Optimized vs your base",
-        description: "Section heading over the before-and-after figures. Rendered uppercase by CSS.",
+        text: "Peak staffing vs stationed now",
+        description: "Section heading over the before-and-after figures of the single best staffing against the crews stationed right now. Rendered uppercase by CSS.",
+    },
+    "profile.base.nerds.comparison.note": {
+        text: "The peak staffing is one crew per room. A rotation spreads those operators over shifts, so a base running the recommended rotation reads below the peak by design; compare rotations above.",
+        description: "Note under the peak-vs-stationed section explaining why a player who runs the recommended rotation still sees a gap here.",
+    },
+    "profile.base.nerds.rotationComparison": {
+        text: "Recommended rotation vs your presets",
+        description: "Section heading: the recommended three-shift rotation valued against the player's saved in-game presets, both averaged over shifts. Rendered uppercase by CSS.",
+    },
+    "profile.base.nerds.shiftsMatching": {
+        text: "Shift cells matching the plan",
+        description: "Row label: how many production room-shift cells of the player's presets already match the recommendation, out of all of them.",
+    },
+    "profile.base.nerds.presetsMatch": {
+        text: "Your presets match the recommended rotation.",
+        description: "Shown when every production cell of the player's presets matches the recommendation.",
     },
     "profile.base.nerds.roomsRestaffed": {
         text: "Rooms restaffed",
