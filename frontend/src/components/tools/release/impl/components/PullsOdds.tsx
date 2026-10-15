@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#
 import { useFormatters, useT } from "#/lib/i18n";
 import { oddsCurve, pullOdds } from "../pulls/odds";
 import { bannerModel, type IBannerModel, type ISharedPity, startPityFor } from "../pulls/rates";
-import { type BannerArchetype, BannerModelNote, PullsNumber, type PullsT, Stat, useBannerLabel, usePct } from "./PullsShared";
+import { categoryTicks, noVerticalGridLines } from "../pulls/ticks";
+import { type BannerArchetype, BannerModelNote, PullsNumber, type PullsT, renderAxisTick, Stat, useBannerLabel, useChartWidth, usePct } from "./PullsShared";
 import { SectionTitle } from "./shared";
 
 /**
@@ -54,6 +55,15 @@ export function PullsOdds({ budget, pity }: IPullsOddsProps): React.ReactElement
     const result = React.useMemo(() => pullOdds(model, pulls, { startPity, maxCopies: MAX_COPIES }), [model, pulls, startPity]);
     const curve = React.useMemo(() => oddsCurve(model, Math.max(pulls, 300), { startPity }), [model, pulls, startPity]);
     const chartRows = React.useMemo(() => curve.filter((_, i) => i % 2 === 0).map((p) => ({ pulls: p.pulls, specific: p.specific * 100, any: p.any * 100 })), [curve]);
+    const [chartRef, chartWidth] = useChartWidth();
+    const xTicks = React.useMemo(
+        () =>
+            categoryTicks(
+                chartRows.map((r) => r.pulls),
+                chartWidth,
+            ),
+        [chartRows, chartWidth],
+    );
 
     return (
         <Card className="flex flex-col gap-4 p-4">
@@ -94,7 +104,7 @@ export function PullsOdds({ budget, pity }: IPullsOddsProps): React.ReactElement
             </div>
 
             {hasRateUp && (
-                <div className="h-52 w-full sm:h-60" role="img" aria-label={t("release.pulls.a11y.chartOdds", { max: Math.max(pulls, 300) })}>
+                <div ref={chartRef} className="h-52 w-full sm:h-60" role="img" aria-label={t("release.pulls.a11y.chartOdds", { max: Math.max(pulls, 300) })}>
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={chartRows} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
                             <defs>
@@ -103,9 +113,9 @@ export function PullsOdds({ budget, pity }: IPullsOddsProps): React.ReactElement
                                     <stop offset="100%" stopColor="#bcabdb" stopOpacity={0.02} />
                                 </linearGradient>
                             </defs>
-                            <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="pulls" tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} stroke="var(--border)" minTickGap={30} />
-                            <YAxis domain={[0, 100]} tickFormatter={(v: number) => pct(v / 100, 0)} tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} stroke="var(--border)" width={44} />
+                            <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} verticalCoordinatesGenerator={noVerticalGridLines} />
+                            <XAxis dataKey="pulls" ticks={xTicks} interval={0} tick={renderAxisTick} stroke="var(--border)" />
+                            <YAxis interval={0} domain={[0, 100]} tickFormatter={(v: number) => pct(v / 100, 0)} tick={renderAxisTick} stroke="var(--border)" width={44} />
                             <Tooltip
                                 contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
                                 labelStyle={{ color: "var(--muted-foreground)" }}

@@ -15,7 +15,7 @@
 import { useQuery } from "@tanstack/react-query";
 import * as React from "react";
 import { releasePlanQueryOptions, releaseSkinsQueryOptions } from "#/lib/api/release";
-import { loadState } from "../plan";
+import { loadState, PLAN_SAVED_EVENT } from "../plan";
 
 export interface ISkinCommitment {
     /** Originite Prime the picked outfits cost together. */
@@ -34,9 +34,18 @@ export function useSkinCommitment(uid: string | null): ISkinCommitment {
     const [local, setLocal] = React.useState<string[]>([]);
 
     // localStorage is read in an effect because the server pass has none, and a
-    // mismatched first paint would warn.
+    // mismatched first paint would warn. It is re-read on every save from the Planner
+    // tab, because both tabs stay mounted once visited.
     React.useEffect(() => {
-        setLocal(Object.keys(loadState().picks));
+        // Same picks keep the same array: a stage toggle also saves, and a fresh array
+        // would rebuild the plan in the hidden Pulls tab for nothing.
+        const read = () => {
+            const next = Object.keys(loadState().picks);
+            setLocal((prev) => (prev.length === next.length && prev.every((id, i) => id === next[i]) ? prev : next));
+        };
+        read();
+        window.addEventListener(PLAN_SAVED_EVENT, read);
+        return () => window.removeEventListener(PLAN_SAVED_EVENT, read);
     }, []);
 
     return React.useMemo(() => {

@@ -92,10 +92,17 @@ export function loadState(): IPlanState {
     }
 }
 
+/**
+ * Fired on `window` after every local save. The Pulls tab stays mounted once visited, so
+ * it can no longer count on a remount to re-read the picks; it listens for this instead.
+ */
+export const PLAN_SAVED_EVENT = "release-planner:plan-saved";
+
 export function saveState(state: IPlanState): void {
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch {}
+    window.dispatchEvent(new Event(PLAN_SAVED_EVENT));
 }
 
 function isRerun(e: ReleaseEvent): boolean {

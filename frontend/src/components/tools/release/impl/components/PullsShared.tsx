@@ -86,6 +86,66 @@ export function InfoHint({ label, children }: { label: string; children: React.R
     );
 }
 
+/** What Recharts hands a function `tick`; only the fields `renderAxisTick` reads. */
+interface IAxisTickProps {
+    x?: number | string;
+    y?: number | string;
+    payload?: { value?: unknown };
+    index?: number;
+    textAnchor?: "start" | "middle" | "end" | "inherit";
+    verticalAnchor?: string;
+    className?: string;
+    tickFormatter?: (value: never, index: number) => string;
+}
+
+/**
+ * An axis label as a bare `<text>`, for the `tick` prop of every axis on this tab.
+ *
+ * Recharts' own label is its `Text` component, which is handed the axis width and so
+ * word-wraps: it sizes each word of each label in a hidden DOM span ("Oct", "20,",
+ * "2026"), and each of those writes is a full-document style recalculation on this site
+ * (about 17 ms). One-line labels need none of it. The offsets are the ones `Text` uses
+ * for one line: 0.71em below a top anchor, 0.355em below a middle one.
+ */
+export function renderAxisTick({ x, y, payload, index = 0, textAnchor, verticalAnchor, className, tickFormatter }: IAxisTickProps): React.ReactElement {
+    const value = payload?.value;
+    const label = typeof tickFormatter === "function" ? tickFormatter(value as never, index) : String(value ?? "");
+    const dy = verticalAnchor === "start" ? "0.71em" : verticalAnchor === "end" ? "0em" : "0.355em";
+    return (
+        <text x={x} y={y} textAnchor={textAnchor} fill="var(--muted-foreground)" fontSize={11} className={className}>
+            <tspan x={x} dy={dy}>
+                {label}
+            </tspan>
+        </text>
+    );
+}
+
+/**
+ * The rendered width of a chart's box, for picking its axis labels (`categoryTicks`).
+ * A hidden tab reads 0; that reading is ignored, so the labels a tab had stay put while
+ * it is hidden instead of re-laying out for a zero-width plot.
+ */
+export function useChartWidth(): [React.RefCallback<HTMLElement>, number] {
+    const [width, setWidth] = React.useState(0);
+    const observer = React.useRef<ResizeObserver | null>(null);
+    const ref = React.useCallback((node: HTMLElement | null) => {
+        observer.current?.disconnect();
+        observer.current = null;
+        if (!node) return;
+        const read = (w: number) => {
+            if (w > 0) setWidth(Math.round(w));
+        };
+        // No synchronous read here: it would force a layout mid-commit. The observer's
+        // first callback lands before the first paint.
+        observer.current = new ResizeObserver((entries) => {
+            for (const entry of entries) read(entry.contentRect.width);
+        });
+        observer.current.observe(node);
+    }, []);
+    // Before the first read, assume a mid-size card; the chart itself waits for a size too.
+    return [ref, width || 600];
+}
+
 /**
  * Odds need more resolution than `useFormatters().percent` gives: the difference
  * between 96.4% and 96.42% is the difference between agreeing with an independent

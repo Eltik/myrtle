@@ -17,8 +17,9 @@ import { ANNIHILATION_CAPS, DAILY_MISSION_ORUNDUM, dayAt, type GreenCertShop, ty
 import { ORUNDUM_PER_PULL } from "../pulls/rates";
 import type { ISkinCommitment } from "../pulls/skins";
 import type { IPullsSettings } from "../pulls/store";
+import { noVerticalGridLines, timeTicks } from "../pulls/ticks";
 import type { messages } from "./PullsPlannerTab.messages";
-import { CurrencyIcon, CurrencyLabel, FIELD_LABEL, HINT_TEXT, InfoHint, PullsNumber, type PullsT, Stat } from "./PullsShared";
+import { CurrencyIcon, CurrencyLabel, FIELD_LABEL, HINT_TEXT, InfoHint, PullsNumber, type PullsT, renderAxisTick, Stat, useChartWidth } from "./PullsShared";
 import { SectionTitle, ToggleField } from "./shared";
 
 const HORIZONS = [30, 90, 180, 365] as const;
@@ -170,6 +171,13 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
     }, [days, spend, settings.spendOriginite]);
 
     const planned = chartRows.length > 0 && spend.some((s) => s.pulls > 0);
+    const [chartRef, chartWidth] = useChartWidth();
+    const xTicks = React.useMemo(() => {
+        const first = chartRows[0];
+        const last = chartRows.at(-1);
+        if (!first || !last) return [];
+        return timeTicks(first.at, last.at, chartWidth, formatDate(Math.floor(last.at / 1000), locale).length);
+    }, [chartRows, chartWidth, locale]);
 
     return (
         <div className="flex flex-col gap-3">
@@ -380,12 +388,17 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
                     </div>
                 </div>
 
-                <div className="h-56 w-full sm:h-64" role="img" aria-label={planned ? t("release.pulls.chart.ariaPlanned", { date: last ? formatDate(last.at, locale) : "", count: spend.filter((s) => s.pulls > 0).length }) : t("release.pulls.chart.aria", { date: last ? formatDate(last.at, locale) : "" })}>
+                <div
+                    ref={chartRef}
+                    className="h-56 w-full sm:h-64"
+                    role="img"
+                    aria-label={planned ? t("release.pulls.chart.ariaPlanned", { date: last ? formatDate(last.at, locale) : "", count: spend.filter((s) => s.pulls > 0).length }) : t("release.pulls.chart.aria", { date: last ? formatDate(last.at, locale) : "" })}
+                >
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={chartRows} margin={{ top: 8, right: 8, bottom: 0, left: -18 }}>
-                            <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="at" type="number" scale="time" domain={["dataMin", "dataMax"]} tickFormatter={(v: number) => formatDate(Math.floor(v / 1000), locale)} tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} stroke="var(--border)" minTickGap={40} />
-                            <YAxis tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} stroke="var(--border)" width={48} allowDecimals={false} />
+                            <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} verticalCoordinatesGenerator={noVerticalGridLines} />
+                            <XAxis dataKey="at" type="number" scale="time" domain={["dataMin", "dataMax"]} ticks={xTicks} interval={0} tickFormatter={(v: number) => formatDate(Math.floor(v / 1000), locale)} tick={renderAxisTick} stroke="var(--border)" />
+                            <YAxis interval={0} tick={renderAxisTick} stroke="var(--border)" width={48} allowDecimals={false} />
                             <Tooltip
                                 contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
                                 labelStyle={{ color: "var(--muted-foreground)" }}

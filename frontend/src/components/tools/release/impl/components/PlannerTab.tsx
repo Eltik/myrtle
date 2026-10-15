@@ -104,11 +104,14 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
         setPane("events");
         if (stacked()) scrollToPlanner();
     };
-    const open = (key: string) => {
+    // Stable, so a click re-renders only the two cards whose `active` flips, not all of them.
+    const showDetailRef = React.useRef(showDetail);
+    showDetailRef.current = showDetail;
+    const open = React.useCallback((key: string) => {
         setSelected(key);
         setSummary(false);
-        showDetail();
-    };
+        showDetailRef.current();
+    }, []);
 
     if (data.isPending) return <ReleaseLoading />;
     if (data.error) return <ReleaseError error={data.error} onRetry={() => window.location.reload()} />;
@@ -178,7 +181,7 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
                                 {summary ? t("release.planner.showSummary") : t("release.planner.showSelected")}
                             </Button>
                             {data.rows.map((row) => (
-                                <EventCard key={row.key} row={row} total={totals.get(row.key)} state={state} hidden={hidden} active={!summary && current?.key === row.key} onOpen={() => open(row.key)} t={t} locale={locale} />
+                                <EventCard key={row.key} row={row} total={totals.get(row.key)} picks={state.picks} hidden={hidden} active={!summary && current?.key === row.key} onOpen={open} t={t} locale={locale} />
                             ))}
                         </div>
                     </div>
@@ -204,13 +207,29 @@ function rowTag(row: IPlanRow, t: PlannerT): string {
     return row.rerun ? t("release.planner.tag.rerun") : t("release.planner.tag.event");
 }
 
-function EventCard({ row, total, state, hidden, active, onOpen, t, locale }: { row: IPlanRow; total: IRowBalance | undefined; state: IPlanState; hidden: ReadonlySet<string>; active: boolean; onOpen: () => void; t: PlannerT; locale: string }): React.ReactElement {
+interface IEventCardProps {
+    row: IPlanRow;
+    total: IRowBalance | undefined;
+    picks: IPlanState["picks"];
+    hidden: ReadonlySet<string>;
+    active: boolean;
+    onOpen: (key: string) => void;
+    t: PlannerT;
+    locale: string;
+}
+
+/** Memoised: selecting an event changes `active` on two cards, and only those two should re-render. */
+const EventCard = React.memo(function EventCard({ row, total, picks, hidden, active, onOpen, t, locale }: IEventCardProps): React.ReactElement {
     const art = useArt(row.imagePath);
     const timeZone = useReleaseTimeZone();
-    const picked = row.skins.filter((s) => state.picks[s.skinId]).length;
+    const picked = row.skins.filter((s) => picks[s.skinId]).length;
     const outfits = row.skins.filter((s) => !hidden.has(s.skinId)).length;
     return (
-        <button type="button" onClick={onOpen} className={cn("grid w-full cursor-pointer gap-x-3 gap-y-2 rounded-xl border p-2.5 text-left transition-all hover:border-primary/50 sm:grid-cols-[minmax(0,1fr)_auto]", active ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border/60 bg-card")}>
+        <button
+            type="button"
+            onClick={() => onOpen(row.key)}
+            className={cn("grid w-full cursor-pointer gap-x-3 gap-y-2 rounded-xl border p-2.5 text-left transition-all hover:border-primary/50 sm:grid-cols-[minmax(0,1fr)_auto]", active ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border/60 bg-card")}
+        >
             <div className="flex min-w-0 flex-col gap-1">
                 <CnName cn={row.nameCn} en={row.nameEn} auto={row.nameAuto} compact primaryClassName="font-sans font-semibold text-[13px] text-foreground">
                     <Tag className={row.kind === "listing" ? "text-fuchsia-400" : row.kind === "review" ? "text-teal-400" : undefined}>{rowTag(row, t)}</Tag>
@@ -226,7 +245,7 @@ function EventCard({ row, total, state, hidden, active, onOpen, t, locale }: { r
             <Calcs total={total} inline className="self-center max-sm:justify-self-start" />
         </button>
     );
-}
+});
 
 interface IEventDetailProps {
     row: IPlanRow;
