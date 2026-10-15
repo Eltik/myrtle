@@ -10,6 +10,50 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-10-15.title": {
+        text: "New: See the pity behind every 6★",
+        description: "Title of the 2026-10-15 release note. 'Pity' is the guaranteed-6★ counter; 6★ is the top operator rarity.",
+    },
+    "note.2026-10-15.lead": {
+        text: "In your pull history's banner breakdown, each 6★ now shows **how many pulls it took on its pity counter**. Tap it for the details: the banner, when you pulled it, the previous 6★ on that counter, and the 5★, 4★ and 3★ operators you got in between.",
+        description: "Lead paragraph of the 2026-10-15 release note, rendered as Markdown. 'Pity' is the guaranteed-6★ counter.",
+    },
+    "note.2026-10-15.hrefLabel": {
+        text: "Open pull history",
+        description: "Label of the 2026-10-15 release note's call to action, which opens the player's headhunting history.",
+    },
+    "note.2026-10-15.item.1": {
+        text: "The randomizer can draw from 6★ operators only, and can keep or drop the tiers of an official tier list.",
+        description: "Bullet in the 2026-10-15 release note, filed under 'New'.",
+    },
+    "note.2026-10-15.item.2": {
+        text: "Stages suggested in your profile's Score tab open their stage page.",
+        description: "Bullet in the 2026-10-15 release note, filed under 'New'. 'Score' is a profile tab name and must match its translation.",
+    },
+    "note.2026-10-15.item.3": {
+        text: "The base optimizer changes every room's crew at each 12-hour shift, the way the game's Rotate does, and compares its recommended rotation with your saved presets. Wang now counts the extra plants from Eunectes and Greyy the Lightningbearer.",
+        description: "Bullet in the 2026-10-15 release note, filed under 'Improved'. Rotate is the game's base button and must match its in-game translation; Wang, Eunectes and Greyy the Lightningbearer are operators and keep the game's names.",
+    },
+    "note.2026-10-15.item.4": {
+        text: "The pull planner opens and switches tabs much faster.",
+        description: "Bullet in the 2026-10-15 release note, filed under 'Improved'.",
+    },
+    "note.2026-10-15.item.5": {
+        text: "The events that started on October 14 show on EN again, and the release planner no longer lists Critical Phase Transition as overdue.",
+        description: "Bullet in the 2026-10-15 release note, filed under 'Fixed'. EN is the global game server; Critical Phase Transition is an event and keeps the game's name.",
+    },
+    "note.2026-10-15.item.6": {
+        text: "Base evaluations no longer fail while a rotation is being planned.",
+        description: "Bullet in the 2026-10-15 release note, filed under 'Fixed'.",
+    },
+    "note.2026-10-15.item.7": {
+        text: "The story library puts Lone Trail, When Elegies Are Ashes, Code of Brawl and Zwillingsturme im Herbst on the shelves the game files them under.",
+        description: "Bullet in the 2026-10-15 release note, filed under 'Fixed'. The four names are game events and keep the game's names.",
+    },
+    "note.2026-10-15.item.8": {
+        text: "On phones, the planner's Create button is reachable again and the character picker folds its filters away so the tiles have room.",
+        description: "Bullet in the 2026-10-15 release note, filed under 'Fixed'. 'Create' is a button label and must match its translation.",
+    },
     "note.2026-10-13-2.title": {
         text: "New: Choose what visitors see on your profile",
         description: "Title of the second 2026-10-13 release note.",
