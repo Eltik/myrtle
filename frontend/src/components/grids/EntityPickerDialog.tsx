@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { FilterXIcon, RotateCwIcon, SearchIcon, Trash2Icon } from "lucide-react";
+import { FilterXIcon, RotateCwIcon, SearchIcon, SlidersHorizontalIcon, Trash2Icon } from "lucide-react";
 import { type RefObject, useEffect, useMemo, useRef, useState } from "react";
 import { FacetFilter, useEdgeFade } from "#/components/tier-lists/edit/FacetFilter";
 import { anyFacetSelected, type FacetSelection, matchesFacets, matchesSearch } from "#/components/tier-lists/edit/poolFilters";
@@ -103,6 +103,9 @@ export function EntityPickerBody({ kinds, current, selected, onPick, searchRef }
     // Each tab keeps its own facet selections while the picker is open, so a tab visited again filters as it was left; a fresh open starts unfiltered.
     const [facetsByKind, setFacetsByKind] = useState<Partial<Record<TierEntityKind, FacetSelection>>>({});
     const facets = facetsByKind[kind] ?? NO_FACETS;
+    // On a phone the facets stack one per row and would squeeze the tiles to a sliver, so they fold behind a toggle there; wider screens always show them.
+    const [facetsOpen, setFacetsOpen] = useState(false);
+    const activeFacets = Object.values(facets).filter((values) => values.length > 0).length;
     const ownSearchRef = useRef<HTMLInputElement | null>(null);
     const search = searchRef ?? ownSearchRef;
     const tabsFade = useEdgeFade<HTMLDivElement>();
@@ -173,15 +176,24 @@ export function EntityPickerBody({ kinds, current, selected, onPick, searchRef }
                 </div>
             </div>
 
-            <InputGroup>
-                <InputGroupAddon>
-                    <SearchIcon aria-hidden="true" />
-                </InputGroupAddon>
-                <InputGroupInput ref={search} value={query} onChange={(e) => setQuery((e.target as HTMLInputElement).value)} placeholder={t("picker.searchPlaceholder", { kind: labels.plural(kind) })} type="search" aria-label={pool.searchLabel} />
-            </InputGroup>
+            <div className="flex shrink-0 gap-2">
+                <InputGroup className="min-w-0 flex-1">
+                    <InputGroupAddon>
+                        <SearchIcon aria-hidden="true" />
+                    </InputGroupAddon>
+                    <InputGroupInput ref={search} value={query} onChange={(e) => setQuery((e.target as HTMLInputElement).value)} placeholder={t("picker.searchPlaceholder", { kind: labels.plural(kind) })} type="search" aria-label={pool.searchLabel} />
+                </InputGroup>
+                {pool.facets.length > 0 && (
+                    <Button type="button" variant={facetsOpen ? "secondary" : "outline"} className="shrink-0 sm:hidden" aria-expanded={facetsOpen} aria-controls="entity-picker-facets" onClick={() => setFacetsOpen((open) => !open)}>
+                        <SlidersHorizontalIcon />
+                        {t("picker.filters")}
+                        {activeFacets > 0 && <span className="rounded-full bg-primary px-1.5 font-semibold text-[10px] text-primary-foreground leading-4">{activeFacets}</span>}
+                    </Button>
+                )}
+            </div>
             {pool.facets.length > 0 && (
                 <TooltipProvider delay={300}>
-                    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-2">
+                    <div id="entity-picker-facets" className={cn("flex flex-col gap-2 max-sm:min-h-0 max-sm:overflow-y-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-2", !facetsOpen && "max-sm:hidden")}>
                         {pool.facets.map((facet) => (
                             <FacetFilter key={facet.id} facet={facet} value={facets[facet.id] ?? []} onChange={(v) => setFacet(facet.id, v)} />
                         ))}
@@ -196,7 +208,8 @@ export function EntityPickerBody({ kinds, current, selected, onPick, searchRef }
             )}
             {previewTiles.length > 0 && <p className="m-0 -mt-1 font-sans text-muted-foreground text-xs">{t("picker.previewHint", { badge: t("picker.previewBadge") })}</p>}
 
-            <div className="relative min-h-0 flex-1 [@media(max-height:32rem)]:min-h-56">
+            {/* Open filters on a phone scroll in what the tiles leave them, so the tiles never close to nothing. */}
+            <div className="relative min-h-0 flex-1 max-sm:min-h-40 [@media(max-height:32rem)]:min-h-56">
                 {catalogue.status === "pending" ? (
                     <div className="flex h-full items-center justify-center gap-2 font-sans text-muted-foreground text-sm">
                         <Spinner />

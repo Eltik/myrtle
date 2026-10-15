@@ -2063,6 +2063,7 @@
     "grids.picker.description": "Choose an operator, skin, event or anything else for this cell.",
     "grids.picker.empty": "Nothing matches your search and filters.",
     "grids.picker.error": "This list could not be loaded.",
+    "grids.picker.filters": "Filters",
     "grids.picker.kinds": "What to pick from",
     "grids.picker.loading": "Loading…",
     "grids.picker.previewBadge": "CN",

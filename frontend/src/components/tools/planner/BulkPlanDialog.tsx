@@ -180,7 +180,7 @@ export function BulkPlanDialog({ open, onOpenChange }: IBulkPlanDialogProps): Re
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogPopup bottomStickOnMobile={false} className="flex h-[min(840px,calc(100vh-4rem))] w-full max-w-[min(1152px,calc(100vw-2rem))] flex-col overflow-hidden p-0">
+            <DialogPopup bottomStickOnMobile={false} className="flex h-[min(840px,calc(100dvh-2rem))] w-full max-w-[min(1152px,calc(100vw-2rem))] flex-col overflow-hidden p-0">
                 <DialogHeader>
                     <DialogTitle>{t("planner.bulk.title")}</DialogTitle>
                     <DialogDescription>{t("planner.bulk.desc")}</DialogDescription>

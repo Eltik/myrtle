@@ -5,6 +5,7 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useMediaQuery } from "#/hooks/use-media-query";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import { cn } from "#/lib/utils";
 import type { ProfileBackgroundKind } from "#/types/generated/ProfileBackgroundKind";
 import { GALLERY_KINDS, type GalleryKind, isGalleryKind } from "../background";
 import { archivePictureCategory, type IGalleryFilter, NO_GALLERY_FILTER } from "../gallery";
@@ -111,7 +112,7 @@ export const ArtBrowser = memo(function ArtBrowser({ selected, onPick }: IArtBro
     const tiles = <GalleryTiles view={view} selected={gallerySelected} onPick={onPick} minTile={TILE_SIZES[tileSize]} />;
     const characters = (
         // The grids' shared picker scrolls its own tiles, so it gets the height under the strip and sticks there: scrolled to, it fills the view.
-        <div className={`${STICKY_UNDER_STRIP} ${UNDER_STRIP} flex min-h-80 flex-col pt-4 [&>div]:max-sm:px-4`}>
+        <div className={`${STICKY_UNDER_STRIP} ${UNDER_STRIP} flex min-h-80 flex-col pt-4`}>
             <CharacterArt selected={selected} onPick={onPick} />
         </div>
     );
@@ -159,9 +160,11 @@ export const ArtBrowser = memo(function ArtBrowser({ selected, onPick }: IArtBro
         );
     }
 
+    // On a phone the Character art picker sticks together with the source tabs, in one box the height under the strip, so the tabs never sit over the picker's own tabs and search.
+    const pinned = source === "characters";
     return (
-        <section className="flex flex-col">
-            <div className={`${STICKY_UNDER_STRIP} z-20 flex flex-col gap-2.5 border-b bg-background/80 px-4 py-3 backdrop-blur-md backdrop-saturate-150`}>
+        <section className={cn("flex flex-col", pinned && `${STICKY_UNDER_STRIP} ${UNDER_STRIP}`)}>
+            <div className={cn("z-20 flex shrink-0 flex-col gap-2.5 border-b bg-background/80 px-4 py-3 backdrop-blur-md backdrop-saturate-150", !pinned && STICKY_UNDER_STRIP)}>
                 <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none]">
                     <div className="inline-flex w-max gap-0.5 rounded-lg bg-muted/70 p-1" role="tablist" aria-label={t("profile.background.source")}>
                         {SOURCES.map((s) => {
@@ -178,7 +181,13 @@ export const ArtBrowser = memo(function ArtBrowser({ selected, onPick }: IArtBro
                 </div>
                 {source !== "characters" && <GalleryBar view={view} query={chosen.query} actions={actions} />}
             </div>
-            {source === "characters" ? characters : <div className="px-4 pt-4 pb-10">{tiles}</div>}
+            {pinned ? (
+                <div className="flex min-h-0 flex-1 flex-col pt-3 [&>div]:px-4">
+                    <CharacterArt selected={selected} onPick={onPick} />
+                </div>
+            ) : (
+                <div className="px-4 pt-4 pb-10">{tiles}</div>
+            )}
         </section>
     );
 });
