@@ -187,7 +187,7 @@ jobs:
             *) echo "::error::schema-gen failed with exit code $rc"; exit "$rc" ;;
           esac
           missing=$(jq -r '.missing_roots // [] | join(" ")' "$RUNNER_TEMP/gen/schema-gen.json")
-          discovered=$(jq -r '.discovered // [] | join(" ")' "$RUNNER_TEMP/gen/schema-gen.json")
+          discovered=$(jq -r '[.discovered // [] | .[] | .class] | join(" ")' "$RUNNER_TEMP/gen/schema-gen.json")
           [ -z "$missing" ] || echo "::warning::root types absent from the client (the stored file is kept): $missing"
           [ -z "$discovered" ] || echo "::warning::table types in the client that assets/schemas/roots.json does not map yet: $discovered"
 
