@@ -1,4 +1,4 @@
-import { scopeFor } from "#/components/tools/release/impl/pulls/rates";
+import { type PityScope, scopeFor } from "#/components/tools/release/impl/pulls/rates";
 import { classifyClientGachaGroup, type IBanner, type IGachaItem } from "#/lib/api/gacha";
 
 /**
@@ -100,8 +100,29 @@ export interface ISixStarPity {
     exact: boolean;
 }
 
+/** What came on one counter between two 6* pulls: the previous 6* excluded, this one included. */
+export interface IStretchCounts {
+    five: number;
+    four: number;
+    three: number;
+}
+
+/** One 6* pull's pity plus what the popover on its card shows. */
+export interface ISixStarPullDetail extends ISixStarPity {
+    /** The counter it rolled on: Standard and Kernel carry across banners, every other pool is its own. */
+    scope: PityScope;
+    /** The previous 6* on the same counter, or null when none is in the history. */
+    previous: IGachaItem | null;
+    /** Rarity counts of the pulls that make up `count`. */
+    stretch: IStretchCounts;
+}
+
+function scopeOfKey(key: string): PityScope {
+    return key === "standard" || key === "kernel" ? key : "isolated";
+}
+
 /**
- * Every 6* pull's pity count, keyed by the pull object itself.
+ * Every 6* pull's detail, keyed by the pull object itself.
  *
  * Order inside a ten-pull: its ten rows share one `at`, and the wire lists them
  * newest first, like the rest of the history (the backend sorts by `at` DESC, then
@@ -111,28 +132,35 @@ export interface ISixStarPity {
  * (32 runs past 75, and 41 to 50 overfilled by 290). So the chronological order is
  * `at` ascending, and inside one `at` the reverse of the input order.
  */
-export function sixStarPityCounts(items: IGachaItem[], bannersById: Map<string, IBanner>): Map<IGachaItem, ISixStarPity> {
+export function sixStarPullDetails(items: IGachaItem[], bannersById: Map<string, IBanner>): Map<IGachaItem, ISixStarPullDetail> {
     const chronological = items.map((item, index) => ({ item, index })).sort((a, b) => a.item.at - b.item.at || b.index - a.index);
     const historyStart = chronological.length > 0 ? chronological[0].item.at : 0;
-    const counters = new Map<string, { count: number; seenSixStar: boolean }>();
-    const result = new Map<IGachaItem, ISixStarPity>();
+    const counters = new Map<string, { count: number; previous: IGachaItem | null; stretch: IStretchCounts }>();
+    const result = new Map<IGachaItem, ISixStarPullDetail>();
     for (const { item } of chronological) {
         const key = pityCounterKey(item, bannersById);
-        const counter = counters.get(key) ?? { count: 0, seenSixStar: false };
+        let counter = counters.get(key);
+        if (!counter) {
+            counter = { count: 0, previous: null, stretch: { five: 0, four: 0, three: 0 } };
+            counters.set(key, counter);
+        }
         counter.count++;
+        if (item.star === "5") counter.stretch.five++;
+        else if (item.star === "4") counter.stretch.four++;
+        else if (item.star === "3") counter.stretch.three++;
         if (item.star === "6") {
-            let exact = counter.seenSixStar;
+            let exact = counter.previous !== null;
             if (!exact && key.startsWith("pool:")) {
                 // A pool's counter starts at its opening, so a history that begins
                 // earlier holds every pull on it.
                 const openTime = bannersById.get(item.poolId)?.openTime ?? 0;
                 exact = openTime > 0 && historyStart < openTime * 1000;
             }
-            result.set(item, { count: counter.count, exact });
+            result.set(item, { count: counter.count, exact, scope: scopeOfKey(key), previous: counter.previous, stretch: counter.stretch });
             counter.count = 0;
-            counter.seenSixStar = true;
+            counter.previous = item;
+            counter.stretch = { five: 0, four: 0, three: 0 };
         }
-        counters.set(key, counter);
     }
     return result;
 }

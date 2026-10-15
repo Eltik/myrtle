@@ -1,7 +1,9 @@
+import { Link } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
 import { Fragment, useMemo, useState } from "react";
 import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { ClientGachaGroup, IBanner, IClientGachaRecords, IGachaItem } from "#/lib/api/gacha";
@@ -12,7 +14,7 @@ import type { IOperatorIndexEntry } from "#/types/operators";
 import { BANNER_GROUP_LABEL_KEYS, BANNER_RULE_TYPE_LABEL_KEYS, BANNER_STATUS_COLOR, BANNER_STATUS_LABEL_KEYS, bannerStatus, type GachaMessageKey } from "../../constants";
 import type { messages as gachaConstantsMessages } from "../../constants.messages";
 import type { messages } from "./BannerBreakdown.messages";
-import { type ISixStarPity, sixStarPityCounts } from "./pity";
+import { type ISixStarPity, type ISixStarPullDetail, sixStarPullDetails } from "./pity";
 
 /** Own chrome plus the shared banner bucket, status and rule-type labels. */
 type BreakdownT = TypedT<typeof messages & typeof gachaConstantsMessages>;
@@ -58,6 +60,15 @@ const TYPE_COLORS: Record<ClientGachaGroup, string> = {
     boot: "oklch(0.8 0.12 160)",
 };
 
+/**
+ * Prefer the static-data banner name: the Yostar API often echoes a blank
+ * `pool_name`, and rows persisted before the lookup carry the raw pool_id,
+ * which is no name to show.
+ */
+function poolDisplayName(item: IGachaItem, bannersById: Map<string, IBanner>): string {
+    return bannersById.get(item.poolId)?.gachaPoolName || item.poolName || item.poolId;
+}
+
 function groupByPool(items: IGachaItem[], gachaType: ClientGachaGroup, bannersById: Map<string, IBanner>): IBannerStat[] {
     const map = new Map<string, IBannerStat>();
     for (const item of items) {
@@ -72,14 +83,9 @@ function groupByPool(items: IGachaItem[], gachaType: ClientGachaGroup, bannersBy
             if (item.star === "5") existing.fiveStars++;
             if (item.at > existing.lastPullAt) existing.lastPullAt = item.at;
         } else {
-            // Prefer the static-data banner name: the Yostar API often echoes a
-            // blank `pool_name`, and rows persisted before the lookup carry the
-            // raw pool_id, which is no name to show.
-            const banner = bannersById.get(item.poolId);
-            const resolvedName = banner?.gachaPoolName || item.poolName || item.poolId;
             map.set(key, {
                 poolId: item.poolId,
-                poolName: resolvedName,
+                poolName: poolDisplayName(item, bannersById),
                 gachaType,
                 typeLabelKey: BANNER_GROUP_LABEL_KEYS[gachaType],
                 total: 1,
@@ -97,6 +103,11 @@ function groupByPool(items: IGachaItem[], gachaType: ClientGachaGroup, bannersBy
 function fmtDate(ts: number, f: IFormatters): string {
     if (!ts) return "-";
     return f.date(new Date(ts), { month: "short", day: "numeric", year: "numeric" });
+}
+
+function fmtDateTime(ts: number, f: IFormatters): string {
+    if (!ts) return "-";
+    return f.date(new Date(ts), { dateStyle: "medium", timeStyle: "short" });
 }
 
 /** The banner table (static data) uses unix seconds; pull records use ms. */
@@ -223,12 +234,98 @@ function BannerNameCell({ banner, name, typeColor, typeLabelKey, sixStars, fiveS
     );
 }
 
+const KICKER = "font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em]";
+
+/** The pity counter a 6★ pull rolled on, as the popover names it. */
+const COUNTER_LABEL_KEYS = {
+    standard: "history.breakdown.pull.counter.standard",
+    kernel: "history.breakdown.pull.counter.kernel",
+    isolated: "history.breakdown.pull.counter.isolated",
+} as const;
+
+const STRETCH_FIELD = { 5: "five", 4: "four", 3: "three" } as const;
+
+function operatorName(item: IGachaItem, operatorsById: Map<string, IOperatorIndexEntry>): string {
+    return item.charName || operatorsById.get(item.charId)?.name || item.charId;
+}
+
+/** Everything the history says about one 6★ pull, opened from its card. */
+function SixStarPullDetails({ item, detail, isFeatured, bannersById, operatorsById }: { item: IGachaItem; detail: ISixStarPullDetail | undefined; isFeatured: boolean | null; bannersById: Map<string, IBanner>; operatorsById: Map<string, IOperatorIndexEntry> }) {
+    const t: BreakdownT = useT("gacha");
+    const f = useFormatters();
+    const ringColor = rarityStarColor(6);
+    const name = operatorName(item, operatorsById);
+    const previous = detail?.previous ?? null;
+
+    return (
+        <div className="flex flex-col gap-3 text-left">
+            <div className="flex flex-col gap-1">
+                <span className="font-mono text-[9.5px] uppercase tracking-[0.14em]" style={{ color: ringColor }}>
+                    6★
+                    {isFeatured === null ? null : <span style={{ color: isFeatured ? undefined : "var(--muted-foreground)" }}> · {t(isFeatured ? "history.breakdown.rateUp" : "history.breakdown.offBanner")}</span>}
+                </span>
+                {operatorsById.has(item.charId) ? (
+                    <Link to="/operators/$id" params={{ id: item.charId }} className="w-fit rounded-sm font-sans font-semibold text-[14px] text-foreground leading-snug underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
+                        {name}
+                    </Link>
+                ) : (
+                    <span className="font-sans font-semibold text-[14px] text-foreground leading-snug">{name}</span>
+                )}
+            </div>
+
+            <dl className="m-0 grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3 gap-y-1.5">
+                <dt className={KICKER}>{t("history.breakdown.pull.pulled")}</dt>
+                <dd className="m-0 font-sans text-[12px] text-foreground tabular-nums">{fmtDateTime(item.at, f)}</dd>
+                <dt className={KICKER}>{t("history.breakdown.pull.banner")}</dt>
+                <dd className="m-0 font-sans text-[12px] text-foreground leading-snug">{poolDisplayName(item, bannersById)}</dd>
+                {detail ? (
+                    <>
+                        <dt className={KICKER}>{t("history.breakdown.pull.pity")}</dt>
+                        <dd className="m-0 flex flex-col gap-0.5">
+                            <span className="font-sans text-[12px] text-muted-foreground leading-snug">
+                                <span className={`font-mono font-semibold tabular-nums ${pityColorClass(detail)}`}>{detail.exact ? f.number(detail.count) : t("history.breakdown.pityLowerBound", { count: f.number(detail.count) })}</span> · {t(COUNTER_LABEL_KEYS[detail.scope])}
+                            </span>
+                            {detail.exact ? null : <span className="font-sans text-[11px] text-muted-foreground leading-snug">{t("history.breakdown.pull.lowerBound")}</span>}
+                        </dd>
+                    </>
+                ) : null}
+            </dl>
+
+            {detail ? (
+                <div className="flex flex-col gap-2.5 border-border/60 border-t pt-3">
+                    <div className="flex flex-col gap-0.5">
+                        <span className={KICKER}>{t("history.breakdown.pull.previous")}</span>
+                        {previous ? (
+                            <span className="font-sans text-[12px] text-muted-foreground leading-snug">
+                                <span className="font-semibold text-foreground">{operatorName(previous, operatorsById)}</span> · <span className="tabular-nums">{fmtDate(previous.at, f)}</span> · {poolDisplayName(previous, bannersById)}
+                            </span>
+                        ) : (
+                            <span className="font-sans text-[12px] text-muted-foreground">{t("history.breakdown.pull.previousNone")}</span>
+                        )}
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <span className={KICKER}>{t("history.breakdown.pull.stretch", { count: detail.count })}</span>
+                        <span className="flex flex-wrap gap-x-3 gap-y-0.5 font-mono text-[11px] tabular-nums">
+                            {([5, 4, 3] as const).map((rarity) => (
+                                <span key={rarity} style={{ color: rarityStarColor(rarity) }}>
+                                    {t("history.breakdown.pull.stretchStar", { count: f.number(detail.stretch[STRETCH_FIELD[rarity]]), rarity })}
+                                </span>
+                            ))}
+                        </span>
+                    </div>
+                </div>
+            ) : null}
+        </div>
+    );
+}
+
 /**
  * The 6★ operators one banner gave the player, revealed under its row, each with
  * its pity count: pulls since the previous 6★ on the same counter, which for
- * Standard and Kernel carries across banners (see `sixStarPityCounts`).
+ * Standard and Kernel carries across banners (see `sixStarPullDetails`). Each card
+ * opens a popover with the rest of what the history says about that pull.
  */
-function SixStarPulls({ pulls, pityByPull, banner, operatorsById }: { pulls: IGachaItem[]; pityByPull: Map<IGachaItem, ISixStarPity>; banner: IBanner | undefined; operatorsById: Map<string, IOperatorIndexEntry> }) {
+function SixStarPulls({ pulls, detailByPull, banner, bannersById, operatorsById }: { pulls: IGachaItem[]; detailByPull: Map<IGachaItem, ISixStarPullDetail>; banner: IBanner | undefined; bannersById: Map<string, IBanner>; operatorsById: Map<string, IOperatorIndexEntry> }) {
     const t: BreakdownT = useT("gacha");
     const f = useFormatters();
     const ringColor = rarityStarColor(6);
@@ -246,39 +343,53 @@ function SixStarPulls({ pulls, pityByPull, banner, operatorsById }: { pulls: IGa
             {/* Equal-width cells instead of a ragged wrap, so names line up and truncate at one width. */}
             <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] gap-1.5 p-0">
                 {pulls.map((item, i) => {
-                    const name = item.charName || operatorsById.get(item.charId)?.name || item.charId;
+                    const name = operatorName(item, operatorsById);
                     const isFeatured = featured?.has(item.charId) ?? null;
-                    const pity = pityByPull.get(item);
+                    const pity = detailByPull.get(item);
                     return (
                         // biome-ignore lint/suspicious/noArrayIndexKey: the same operator can land twice in one ten-pull
-                        <li key={`${item.charId}-${item.at}-${i}`} className="flex min-w-0 items-center gap-2 rounded-lg border border-border/60 bg-card py-1.5 pr-2.5 pl-1.5">
-                            <span className="relative inline-flex h-8 w-8 shrink-0 overflow-hidden rounded-md" style={{ background: "var(--muted)", boxShadow: `inset 0 0 0 1px color-mix(in oklch, ${ringColor} 60%, transparent)` }}>
-                                <OperatorAvatar charId={item.charId} name={name} className="block h-full w-full object-cover" />
-                            </span>
-                            <span className="flex min-w-0 flex-col gap-0.5">
-                                <span className="truncate font-sans font-semibold text-[12.5px] text-foreground leading-snug" title={name}>
-                                    {name}
-                                </span>
-                                <span className="flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground tabular-nums leading-none">
-                                    {fmtDate(item.at, f)}
-                                    {isFeatured === null ? null : (
-                                        <span className="uppercase tracking-[0.12em]" style={{ color: isFeatured ? ringColor : undefined }}>
-                                            · {t(isFeatured ? "history.breakdown.rateUp" : "history.breakdown.offBanner")}
+                        <li key={`${item.charId}-${item.at}-${i}`} className="flex min-w-0">
+                            <Popover>
+                                <PopoverTrigger
+                                    render={
+                                        <button
+                                            type="button"
+                                            className="flex w-full min-w-0 cursor-pointer touch-manipulation items-center gap-2 rounded-lg border border-border/60 bg-card py-1.5 pr-2.5 pl-1.5 text-left transition-colors hover:border-border hover:bg-muted/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 data-popup-open:border-border data-popup-open:bg-muted/60"
+                                        />
+                                    }
+                                >
+                                    <span className="relative inline-flex h-8 w-8 shrink-0 overflow-hidden rounded-md" style={{ background: "var(--muted)", boxShadow: `inset 0 0 0 1px color-mix(in oklch, ${ringColor} 60%, transparent)` }}>
+                                        <OperatorAvatar charId={item.charId} name={name} className="block h-full w-full object-cover" />
+                                    </span>
+                                    <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                        <span className="truncate font-sans font-semibold text-[12.5px] text-foreground leading-snug" title={name}>
+                                            {name}
                                         </span>
-                                    )}
-                                </span>
-                            </span>
-                            {pity ? (
-                                <span className="ml-auto flex shrink-0 flex-col items-end gap-0.5 pl-1" title={t(pity.exact ? "history.breakdown.pityAt" : "history.breakdown.pityAtLeast", { count: pity.count })}>
-                                    <span className={`font-mono font-semibold text-[13px] tabular-nums leading-none ${pityColorClass(pity)}`} aria-hidden>
-                                        {pity.exact ? f.number(pity.count) : t("history.breakdown.pityLowerBound", { count: f.number(pity.count) })}
+                                        <span className="flex min-w-0 items-center gap-1.5 whitespace-nowrap font-mono text-[10px] text-muted-foreground tabular-nums leading-none">
+                                            <span className="shrink-0">{fmtDate(item.at, f)}</span>
+                                            {isFeatured === null ? null : (
+                                                <span className="truncate uppercase tracking-[0.12em]" style={{ color: isFeatured ? ringColor : undefined }}>
+                                                    · {t(isFeatured ? "history.breakdown.rateUp" : "history.breakdown.offBanner")}
+                                                </span>
+                                            )}
+                                        </span>
                                     </span>
-                                    <span className="font-mono text-[9px] text-muted-foreground uppercase leading-none tracking-[0.14em]" aria-hidden>
-                                        {t("history.breakdown.pityCaption")}
-                                    </span>
-                                    <span className="sr-only">{t(pity.exact ? "history.breakdown.pityAt" : "history.breakdown.pityAtLeast", { count: pity.count })}</span>
-                                </span>
-                            ) : null}
+                                    {pity ? (
+                                        <span className="ml-auto flex shrink-0 flex-col items-end gap-0.5 pl-1" title={t(pity.exact ? "history.breakdown.pityAt" : "history.breakdown.pityAtLeast", { count: pity.count })}>
+                                            <span className={`font-mono font-semibold text-[13px] tabular-nums leading-none ${pityColorClass(pity)}`} aria-hidden>
+                                                {pity.exact ? f.number(pity.count) : t("history.breakdown.pityLowerBound", { count: f.number(pity.count) })}
+                                            </span>
+                                            <span className="font-mono text-[9px] text-muted-foreground uppercase leading-none tracking-[0.14em]" aria-hidden>
+                                                {t("history.breakdown.pityCaption")}
+                                            </span>
+                                            <span className="sr-only">{t(pity.exact ? "history.breakdown.pityAt" : "history.breakdown.pityAtLeast", { count: pity.count })}</span>
+                                        </span>
+                                    ) : null}
+                                </PopoverTrigger>
+                                <PopoverPopup className="w-[min(20rem,calc(100vw-2rem))]">
+                                    <SixStarPullDetails item={item} detail={pity} isFeatured={isFeatured} bannersById={bannersById} operatorsById={operatorsById} />
+                                </PopoverPopup>
+                            </Popover>
                         </li>
                     );
                 })}
@@ -308,9 +419,9 @@ export function BannerBreakdown({ records, bannersById, operatorsById, isLoading
             ...groupByPool(records.boot.records, "boot", bannersById),
         ].sort((a, b) => b.lastPullAt - a.lastPullAt);
     }, [records, bannersById]);
-    const pityByPull = useMemo(() => {
-        if (!records) return new Map<IGachaItem, ISixStarPity>();
-        return sixStarPityCounts([...records.limited.records, ...records.linkage.records, ...records.regular.records, ...records.special.records, ...records.boot.records], bannersById);
+    const detailByPull = useMemo(() => {
+        if (!records) return new Map<IGachaItem, ISixStarPullDetail>();
+        return sixStarPullDetails([...records.limited.records, ...records.linkage.records, ...records.regular.records, ...records.special.records, ...records.boot.records], bannersById);
     }, [records, bannersById]);
 
     if (isLoading) {
@@ -408,7 +519,7 @@ export function BannerBreakdown({ records, bannersById, operatorsById, isLoading
                                     {isOpen ? (
                                         <tr id={panelId} className="not-last:border-border/50 not-last:border-b bg-muted/40">
                                             <td colSpan={5} className="px-2 pt-0.5 pb-3">
-                                                <SixStarPulls pulls={banner.sixStarPulls} pityByPull={pityByPull} banner={meta} operatorsById={operatorsById} />
+                                                <SixStarPulls pulls={banner.sixStarPulls} detailByPull={detailByPull} banner={meta} bannersById={bannersById} operatorsById={operatorsById} />
                                             </td>
                                         </tr>
                                     ) : null}

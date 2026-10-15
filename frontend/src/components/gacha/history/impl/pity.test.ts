@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { classifyClientGachaGroup, type IBanner, type IGachaItem } from "#/lib/api/gacha";
-import { isIsolatedPull, pityCounterKey, pityWithLimitedReset, sharedPity, sixStarPityCounts } from "./pity";
+import { isIsolatedPull, pityCounterKey, pityWithLimitedReset, sharedPity, sixStarPullDetails } from "./pity";
 
 function pull(poolId: string, at: number, star: "3" | "4" | "5" | "6" = "3"): IGachaItem {
     return { charId: "char_x", charName: "", star, color: "", poolId, poolName: "", typeName: "normal", at, atStr: "" } as IGachaItem;
@@ -109,41 +109,73 @@ describe("each 6* pull's pity count", () => {
         const first = pull("SINGLE_EN_1", 1, "6");
         const second = pull("SINGLE_EN_1", 30, "6");
         const items = [first, ...Array.from({ length: 5 }, (_, i) => pull("SINGLE_EN_1", 2 + i)), ...Array.from({ length: 3 }, (_, i) => pull("SPECIAL_EN_40_0_6", 10 + i)), second];
-        const counts = sixStarPityCounts(items, BANNERS);
-        expect(counts.get(second)).toEqual({ count: 9, exact: true });
+        const counts = sixStarPullDetails(items, BANNERS);
+        expect(counts.get(second)).toMatchObject({ count: 9, exact: true });
     });
 
     it("keeps Kernel, isolated and Limited pulls off the Standard counter", () => {
         const first = pull("SINGLE_EN_1", 1, "6");
         const second = pull("SINGLE_EN_1", 50, "6");
         const items = [first, pull("CLASSIC_EN_1", 2), pull("ATTAIN_EN_40_0_2", 3), pull("RETURN_EN_41_0_1", 4), pull("LIMITED_EN_1", 200_000), pull("SINGLE_EN_1", 5), second];
-        expect(sixStarPityCounts(items, LIMITED).get(second)).toEqual({ count: 2, exact: true });
+        expect(sixStarPullDetails(items, LIMITED).get(second)).toMatchObject({ count: 2, exact: true });
     });
 
     it("reads a ten-pull newest first, as the wire lists it", () => {
         // One ten-pull at t=10, wire order newest first: its 6* is the 8th row, so the 3rd pull rolled.
         const before = pull("SINGLE_EN_1", 1, "6");
         const batch = Array.from({ length: 10 }, (_, i) => pull("SINGLE_EN_1", 10, i === 7 ? "6" : "3"));
-        const counts = sixStarPityCounts([...batch, before], BANNERS);
+        const counts = sixStarPullDetails([...batch, before], BANNERS);
         expect(counts.get(batch[7])?.count).toBe(3);
     });
 
     it("marks the first 6* on a shared counter as a lower bound", () => {
         const first = pull("CLASSIC_EN_1", 5, "6");
         const items = [pull("CLASSIC_EN_1", 1), pull("CLASSIC_EN_1", 2), first];
-        expect(sixStarPityCounts(items, BANNERS).get(first)).toEqual({ count: 3, exact: false });
+        expect(sixStarPullDetails(items, BANNERS).get(first)).toMatchObject({ count: 3, exact: false });
     });
 
     it("trusts a pool's first 6* only when the history starts before the pool opened", () => {
         // openTime 100 s = 100,000 ms.
         const sixStar = pull("LIMITED_EN_1", 200_000, "6");
-        expect(sixStarPityCounts([pull("SINGLE_EN_1", 1), pull("LIMITED_EN_1", 150_000), sixStar], LIMITED).get(sixStar)).toEqual({ count: 2, exact: true });
-        expect(sixStarPityCounts([pull("LIMITED_EN_1", 150_000), sixStar], LIMITED).get(sixStar)).toEqual({ count: 2, exact: false });
+        expect(sixStarPullDetails([pull("SINGLE_EN_1", 1), pull("LIMITED_EN_1", 150_000), sixStar], LIMITED).get(sixStar)).toMatchObject({ count: 2, exact: true });
+        expect(sixStarPullDetails([pull("LIMITED_EN_1", 150_000), sixStar], LIMITED).get(sixStar)).toMatchObject({ count: 2, exact: false });
     });
 
     it("falls back to the pull's bucket while the banner list is empty", () => {
         expect(pityCounterKey(pull("SINGLE_EN_1", 1), new Map())).toBe("standard");
         expect(pityCounterKey(pull("FESCLASSIC_EN_1", 1), new Map())).toBe("kernel");
         expect(pityCounterKey(pull("LIMITED_EN_1", 1), new Map())).toBe("pool:LIMITED_EN_1");
+    });
+});
+
+describe("each 6* pull's detail", () => {
+    const LIMITED = new Map<string, IBanner>([...BANNERS, ["LIMITED_EN_1", { gachaPoolId: "LIMITED_EN_1", gachaRuleType: "LIMITED", returning: false, openTime: 100 } as unknown as IBanner]]);
+
+    it("links the previous 6* on the same counter across banners", () => {
+        const first = pull("SINGLE_EN_1", 1, "6");
+        const second = pull("SPECIAL_EN_40_0_6", 10, "6");
+        const details = sixStarPullDetails([first, pull("CLASSIC_EN_1", 5, "6"), second], BANNERS);
+        expect(details.get(first)).toMatchObject({ scope: "standard", previous: null });
+        expect(details.get(second)).toMatchObject({ scope: "standard", previous: first });
+    });
+
+    it("names the counter each scope rolls on", () => {
+        const kernel = pull("CLASSIC_EN_1", 1, "6");
+        const attain = pull("ATTAIN_EN_40_0_2", 2, "6");
+        const limited = pull("LIMITED_EN_1", 200_000, "6");
+        const details = sixStarPullDetails([kernel, attain, limited], LIMITED);
+        expect(details.get(kernel)?.scope).toBe("kernel");
+        expect(details.get(attain)?.scope).toBe("isolated");
+        expect(details.get(limited)?.scope).toBe("isolated");
+    });
+
+    it("counts the rarities between the previous 6* (excluded) and this one", () => {
+        const first = pull("SINGLE_EN_1", 1, "6");
+        const second = pull("SINGLE_EN_1", 20, "6");
+        const items = [first, pull("SINGLE_EN_1", 2, "5"), pull("SINGLE_EN_1", 3, "4"), pull("SINGLE_EN_1", 4, "4"), pull("SINGLE_EN_1", 5), pull("CLASSIC_EN_1", 6, "5"), second];
+        const detail = sixStarPullDetails(items, BANNERS).get(second);
+        expect(detail?.stretch).toEqual({ five: 1, four: 2, three: 1 });
+        expect(detail?.count).toBe(5);
+        expect(sixStarPullDetails(items, BANNERS).get(first)?.stretch).toEqual({ five: 0, four: 0, three: 0 });
     });
 });
