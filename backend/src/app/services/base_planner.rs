@@ -24,7 +24,7 @@ use crate::core::grade::base::assignment::{
     compute_current_assignment, compute_live_assignment, morale_recovery,
 };
 use crate::core::grade::base::context::BaseContext;
-use crate::core::grade::base::pools::{optimal_with_bundles, search_economy};
+use crate::core::grade::base::pools::{AcceptedEconomy, optimal_with_bundles, search_economy};
 use crate::core::grade::base::scope::settle_scoped_proposal;
 use crate::core::grade::base::shift_rotation::{SHIFT_COUNT, recommend_shift_rotation};
 use crate::core::grade::base::sustain_sim::game_morale_drain;
@@ -1144,6 +1144,15 @@ pub async fn optimize(
     // and building move in and back, nothing is cloned.
     let gd = std::sync::Arc::clone(&game_data);
     let scope: HashSet<String> = req.scope.iter().cloned().collect();
+    let plan_key = plan_cache_key(
+        uid,
+        &req.layout,
+        &req.scope,
+        &req.locked,
+        &req.excluded,
+        req.ignore_promotion,
+        &facts,
+    );
     let (ctx, building, baseline, proposal) = cpu::offload("base_optimize", move || {
         let baseline = compute_current_assignment(
             &ctx.profiles,
@@ -1155,16 +1164,19 @@ pub async fn optimize(
         );
         // With the joint-seating bundle trials, as the Score tab's optimal
         // (`pools::optimal_with_bundles`).
-        let proposal = optimal_with_bundles(
-            &candidates,
-            &building,
-            &gd.building,
-            &ctx.registry,
-            &search_registry,
-            &ctx.morale_drains,
-            &pins,
-        )
-        .optimal;
+        let proposal = cached_plan(plan_key, || {
+            optimal_with_bundles(
+                &candidates,
+                &building,
+                &gd.building,
+                &ctx.registry,
+                &search_registry,
+                &ctx.morale_drains,
+                &pins,
+            )
+        })
+        .optimal
+        .clone();
         // A scoped run is settled as the player will read it: every room
         // outside the scope exactly as drafted (the search re-seats dorms and
         // the Control Center on its own), and a scoped room changed only when
@@ -1197,6 +1209,87 @@ pub async fn optimize(
         proposal: base_assignment_to_dto(&proposal, &game_data, &ctx.profiles, &ctx.registry),
         room_diffs,
     })
+}
+
+/// The bundled optimum (registry, pins, plan) a draft resolves to, kept for a
+/// few minutes: the Optimize button and the rotation view ask for the same
+/// plan of the same draft seconds apart, and it is the planner's heaviest
+/// step (about five seconds for a 400-operator roster in release). Keyed on
+/// everything the search reads; sized for a handful of players' drafts.
+static PLAN_CACHE: std::sync::LazyLock<
+    dashmap::DashMap<String, (std::time::Instant, std::sync::Arc<AcceptedEconomy>)>,
+> = std::sync::LazyLock::new(dashmap::DashMap::new);
+const PLAN_CACHE_TTL: std::time::Duration = std::time::Duration::from_secs(10 * 60);
+const PLAN_CACHE_CAP: usize = 64;
+
+fn plan_cache_key(
+    uid: &str,
+    layout: &[DraftRoom],
+    scope: &[String],
+    locked: &[String],
+    excluded: &[String],
+    ignore_promotion: bool,
+    facts: &AccountFactsReq,
+) -> String {
+    let mut rooms: Vec<String> = layout
+        .iter()
+        .map(|r| {
+            let mut ops = r.operators.clone();
+            ops.sort();
+            format!(
+                "{}:{}:{}:{}:{}",
+                r.slot_id,
+                r.room_type,
+                r.level,
+                r.formula_type.as_deref().unwrap_or(""),
+                ops.join(",")
+            )
+        })
+        .collect();
+    rooms.sort();
+    let sorted = |v: &[String]| {
+        let mut v = v.to_vec();
+        v.sort();
+        v.join(",")
+    };
+    format!(
+        "{uid}|{ignore_promotion}|{}|{}|{}|{}|{}|{}",
+        facts.open_recruit_slots.unwrap_or(0),
+        facts.training_class.as_deref().unwrap_or(""),
+        sorted(scope),
+        sorted(locked),
+        sorted(excluded),
+        rooms.join(";")
+    )
+}
+
+/// The cached plan for `key`, or `compute` it and remember it.
+fn cached_plan(
+    key: String,
+    compute: impl FnOnce() -> AcceptedEconomy,
+) -> std::sync::Arc<AcceptedEconomy> {
+    if let Some(hit) = PLAN_CACHE.get(&key)
+        && hit.0.elapsed() < PLAN_CACHE_TTL
+    {
+        return std::sync::Arc::clone(&hit.1);
+    }
+    let plan = std::sync::Arc::new(compute());
+    if PLAN_CACHE.len() >= PLAN_CACHE_CAP {
+        PLAN_CACHE.retain(|_, (at, _)| at.elapsed() < PLAN_CACHE_TTL);
+        if PLAN_CACHE.len() >= PLAN_CACHE_CAP
+            && let Some(oldest) = PLAN_CACHE
+                .iter()
+                .min_by_key(|e| e.value().0)
+                .map(|e| e.key().clone())
+        {
+            PLAN_CACHE.remove(&oldest);
+        }
+    }
+    PLAN_CACHE.insert(
+        key,
+        (std::time::Instant::now(), std::sync::Arc::clone(&plan)),
+    );
+    plan
 }
 
 /// Rooms the optimizer has no model for: it never staffs Training or Workshop and
@@ -1246,18 +1339,29 @@ pub async fn rotation(
     // The rotation search is the planner's heaviest step (about a second in
     // release, ten in a debug build): on the blocking pool, see `cpu::offload`.
     let gd = std::sync::Arc::clone(&game_data);
+    let plan_key = plan_cache_key(
+        uid,
+        &req.layout,
+        &[],
+        &req.locked,
+        &req.excluded,
+        req.ignore_promotion,
+        &facts,
+    );
     let (ctx, building, candidates, plan) = cpu::offload("base_rotation", move || {
         // The rotation plans with the economy the bundle trials accepted
         // (registry and pins), exactly as the Score tab's rotation does.
-        let accepted = optimal_with_bundles(
-            &candidates,
-            &building,
-            &gd.building,
-            &ctx.registry,
-            &search_registry,
-            &ctx.morale_drains,
-            &pins,
-        );
+        let accepted = cached_plan(plan_key, || {
+            optimal_with_bundles(
+                &candidates,
+                &building,
+                &gd.building,
+                &ctx.registry,
+                &search_registry,
+                &ctx.morale_drains,
+                &pins,
+            )
+        });
         let plan = recommend_shift_rotation(
             &candidates,
             &building,

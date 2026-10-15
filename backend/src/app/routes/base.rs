@@ -117,7 +117,7 @@ pub async fn evaluate_layout(
     )
     .await?;
     let viewer = viewer_id(&state, &auth).await;
-    let _admission = cpu::admit("base_evaluate").await?;
+    let _admission = cpu::admit_light("base_evaluate").await?;
     Ok(Json(evaluate(&state, &uid, viewer, body).await?))
 }
 

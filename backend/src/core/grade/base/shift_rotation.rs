@@ -249,6 +249,75 @@ fn preset_sustained_operators(
 }
 
 /// Tiny inputs: a handful of teams/rooms at most.
+/// Minimum-cost perfect assignment of rows to columns (square `cost`): the
+/// Hungarian method, `O(n^3)`. Returns the column each row takes.
+fn assignment(cost: &[Vec<i64>]) -> Vec<usize> {
+    let n = cost.len();
+    if n == 0 {
+        return Vec::new();
+    }
+    // 1-based potentials and matching, the classic formulation.
+    let mut u = vec![0i64; n + 1];
+    let mut v = vec![0i64; n + 1];
+    let mut p = vec![0usize; n + 1];
+    let mut way = vec![0usize; n + 1];
+    for i in 1..=n {
+        p[0] = i;
+        let mut j0 = 0usize;
+        let mut minv = vec![i64::MAX; n + 1];
+        let mut used = vec![false; n + 1];
+        loop {
+            used[j0] = true;
+            let i0 = p[j0];
+            let mut delta = i64::MAX;
+            let mut j1 = 0usize;
+            for j in 1..=n {
+                if used[j] {
+                    continue;
+                }
+                let cur = cost[i0 - 1][j - 1]
+                    .saturating_sub(u[i0])
+                    .saturating_sub(v[j]);
+                if cur < minv[j] {
+                    minv[j] = cur;
+                    way[j] = j0;
+                }
+                if minv[j] < delta {
+                    delta = minv[j];
+                    j1 = j;
+                }
+            }
+            for j in 0..=n {
+                if used[j] {
+                    u[p[j]] = u[p[j]].saturating_add(delta);
+                    v[j] = v[j].saturating_sub(delta);
+                } else {
+                    minv[j] = minv[j].saturating_sub(delta);
+                }
+            }
+            j0 = j1;
+            if p[j0] == 0 {
+                break;
+            }
+        }
+        loop {
+            let j1 = way[j0];
+            p[j0] = p[j1];
+            j0 = j1;
+            if j0 == 0 {
+                break;
+            }
+        }
+    }
+    let mut out = vec![0usize; n];
+    for j in 1..=n {
+        if p[j] != 0 {
+            out[p[j] - 1] = j - 1;
+        }
+    }
+    out
+}
+
 fn permutations(n: usize) -> Vec<Vec<usize>> {
     let mut out = Vec::new();
     let mut current: Vec<usize> = Vec::with_capacity(n);
@@ -496,6 +565,36 @@ fn rotation_core_tiled(
     seats: &HashMap<String, String>,
     tiling: Tiling,
 ) -> ShiftRotation {
+    // One team per room per shift rests two blocks and needs a bed in one of
+    // them: every production seat's team is in its must-rest block at once,
+    // so the rhythm needs a bed per production seat. A base with fewer beds
+    // runs the 24h blocks, where half as many teams rest per block (a
+    // 5-factory, 2-post base with four L5 dorms ran two operators dry under
+    // 12h shifts in the morale simulation; the 4-factory one held).
+    let production_seats: usize = building
+        .rooms
+        .iter()
+        .filter(|r| is_production_room(&r.room_type))
+        .map(|r| max_stationed_at_level(building_data, &r.room_type, r.level).max(0) as usize)
+        .sum();
+    let beds: usize = building
+        .rooms
+        .iter()
+        .filter(|r| r.room_type == "DORMITORY")
+        .map(|r| max_stationed_at_level(building_data, "DORMITORY", r.level).max(0) as usize)
+        .sum();
+    if tiling == Tiling::Shifts && production_seats > beds {
+        return rotation_core_tiled(
+            operators,
+            building,
+            building_data,
+            registry,
+            morale_drains,
+            pins,
+            seats,
+            Tiling::Blocks,
+        );
+    }
     let facility_counts =
         effective_facility_counts(building, operators, registry, building_data, seats);
     let parked = super::assignment::parked_tokens(seats, operators, registry);
@@ -542,6 +641,8 @@ fn rotation_core_tiled(
     // re-selecting the CC when a member is dead weight against the chosen teams.
     // One memo per run: registry, facility counts and drains are fixed here.
     let memo = super::team_select::EnumerationMemo::default();
+    let timing = std::env::var_os("BASE_ROT_TIMING").is_some();
+    let t_phase = std::time::Instant::now();
     let (cc_plan, mut groups) = rotation_cc_plan(
         operators,
         building,
@@ -854,6 +955,13 @@ fn rotation_core_tiled(
     let cc_squad2 = cc_plan.squad2(operators, building_data, registry, &assigned, &team_rooms);
     assigned.extend(cc_squad2.iter().cloned());
 
+    if timing {
+        eprintln!(
+            "rot: cc plan + groups {:.2}s",
+            t_phase.elapsed().as_secs_f64()
+        );
+    }
+    let t_phase = std::time::Instant::now();
     let power_plan = build_power_plan(
         operators,
         building,
@@ -1041,6 +1149,10 @@ fn rotation_core_tiled(
             .unwrap_or_default()
     };
 
+    if timing {
+        eprintln!("rot: power/aux {:.2}s", t_phase.elapsed().as_secs_f64());
+    }
+    let t_phase = std::time::Instant::now();
     // Preset-phase alignment: which unit is "Team A" / "Squad 1" is arbitrary
     // (every unit works the same share), so pick the arrangement matching the saved
     // presets. The plan then confirms operators already in a phase instead of
@@ -1055,7 +1167,7 @@ fn rotation_core_tiled(
     };
     for (gi, g) in groups.iter_mut().enumerate() {
         let n = g.rooms.len();
-        if n == 0 || n > 3 || g.teams.is_empty() {
+        if n == 0 || g.teams.is_empty() {
             continue;
         }
         let linked = linked_groups.contains(&gi);
@@ -1064,6 +1176,76 @@ fn rotation_core_tiled(
             for &t in row {
                 ordinal_cells[t] += 1;
             }
+        }
+        // One team per cell (the 12h-shift tiling): the phase is a linear
+        // assignment of teams to cells, costed per (team, cell) and solved
+        // exactly. Permuting the teams instead (3 rooms = 9 teams = 362,880
+        // orders, each merging and scoring 9 crews) was 4 s of a 5 s rotation
+        // and starved the admission queue (2026-10-15).
+        if ordinal_cells.iter().all(|&c| c == 1) && g.teams.len() == n * SHIFT_COUNT {
+            let cells: Vec<(usize, usize)> = (0..n)
+                .flat_map(|ri| (0..SHIFT_COUNT).map(move |k| (ri, k)))
+                .collect();
+            let cell_of = |ri: usize, k: usize| g.cells[ri][k];
+            // Output first, churn among ties: churn is at most two seats per
+            // operator of a cell, far below the output scale.
+            const CHURN_SCALE: i64 = 1_000;
+            const FORBIDDEN: i64 = i64::MAX / 4;
+            let mut cost = vec![vec![0i64; g.teams.len()]; cells.len()];
+            for (ci, &(ri, k)) in cells.iter().enumerate() {
+                let (slot, level) = &g.rooms[ri];
+                let kept = kept_by_room.get(slot).map_or(&[][..], Vec::as_slice);
+                let capacity =
+                    max_stationed_at_level(building_data, &g.room_type, *level).max(0) as usize;
+                for (t, team) in g.teams.iter().enumerate() {
+                    if linked && ((ci == cell_of(0, 0)) != (t == 0)) {
+                        cost[ci][t] = FORBIDDEN;
+                        continue;
+                    }
+                    let crew = merge_kept(
+                        kept,
+                        &team.ops,
+                        capacity,
+                        &g.room_type,
+                        g.formula_type.as_deref(),
+                        &op_index,
+                        registry,
+                        building_data,
+                        &facility_counts,
+                        total_dorm_levels,
+                        morale_drains,
+                    );
+                    let (speed, value) = compute_team_efficiency(
+                        &crew,
+                        &g.room_type,
+                        g.formula_type.as_deref(),
+                        Some(*level),
+                        &op_index,
+                        registry,
+                        building_data,
+                        &facility_counts,
+                        total_dorm_levels,
+                        morale_drains,
+                        &cc_plan.conditions,
+                    );
+                    let output =
+                        (room_search_score(&g.room_type, speed, value) * 100.0).round() as i64;
+                    let churn = sym_diff(&crew, &preset_for(slot, k)) as i64;
+                    cost[ci][t] = -output * CHURN_SCALE + churn;
+                }
+            }
+            let assigned = assignment(&cost);
+            // Ordinal o is cell o's team: `cells[ri][k]` already indexes the
+            // ordinal, so the permutation maps each ordinal to its assigned team.
+            let mut team_perm = vec![0usize; g.teams.len()];
+            for (ci, &(ri, k)) in cells.iter().enumerate() {
+                team_perm[cell_of(ri, k)] = assigned[ci];
+            }
+            g.teams = team_perm.iter().map(|&t| g.teams[t].clone()).collect();
+            continue;
+        }
+        if n > 3 {
+            continue;
         }
         // Every room order x team permutation (teams only move between ordinals with
         // the same cell count; a synergy-linked team stays on shifts 1+2). Ranked by
@@ -1137,6 +1319,10 @@ fn rotation_core_tiled(
             g.teams = team_perm.iter().map(|&t| g.teams[t].clone()).collect();
         }
     }
+    if timing {
+        eprintln!("rot: alignment {:.2}s", t_phase.elapsed().as_secs_f64());
+    }
+    let t_phase = std::time::Instant::now();
     // Two-squad rooms: flipping is free under Alternating (an even A/B swap), so
     // flip when the presets run the squads in the opposite phase.
     let flip_costs = |slot: &str, s1: &[String], s2: &[String]| -> (usize, usize) {
@@ -1591,6 +1777,12 @@ fn rotation_core_tiled(
         }
     }
 
+    if timing {
+        eprintln!(
+            "rot: shifts assembled {:.2}s",
+            t_phase.elapsed().as_secs_f64()
+        );
+    }
     // The 12h-shift tiling needs `3N` full crews. A production cell the
     // roster could not fill to its seats sends the whole plan back through
     // the 24h blocks, which need half the crews (an understaffed production

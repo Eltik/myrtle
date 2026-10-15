@@ -3452,21 +3452,35 @@ fn shift_rotation_forms_three_overlapping_shifts() {
         .iter()
         .map(|slot| (0..3).map(|k| team_id(k, slot)).collect())
         .collect();
-    // One team per post per shift: every post changes crew at every 12h
-    // rotate, the only rhythm the game's global Rotate can express.
-    for (post, ids) in tp_ids.iter().enumerate() {
-        let distinct: std::collections::HashSet<&String> = ids.iter().collect();
-        assert_eq!(
-            distinct.len(),
-            3,
-            "post {post} swaps at every rotate: {tp_ids:?}"
-        );
-    }
+    // Two dormitories hold ten beds for eighteen production seats, so the
+    // rotation runs the 24h blocks: the two posts are interchangeable,
+    // whichever holds the [A, A, B] block is "early", the other runs [B, C, C].
+    let (early, late) = if tp_ids[0][0] == tp_ids[0][1] {
+        (0, 1)
+    } else {
+        (1, 0)
+    };
+    assert_eq!(
+        tp_ids[early][0], tp_ids[early][1],
+        "the early post runs one team for shifts 1+2: {tp_ids:?}"
+    );
+    assert_ne!(
+        tp_ids[early][1], tp_ids[early][2],
+        "the early post swaps its team for shift 3: {tp_ids:?}"
+    );
+    assert_eq!(
+        tp_ids[late][1], tp_ids[late][2],
+        "the late post runs one team for shifts 2+3: {tp_ids:?}"
+    );
+    assert_eq!(
+        tp_ids[early][2], tp_ids[late][0],
+        "the wrap team's block spans the early post's shift 3 and the late post's shift 1: {tp_ids:?}"
+    );
     let distinct_teams: std::collections::HashSet<&String> = tp_ids.iter().flatten().collect();
     assert_eq!(
         distinct_teams.len(),
-        6,
-        "a pair of posts runs six teams, one per post per shift"
+        3,
+        "a pair of posts runs exactly three teams under the blocks"
     );
     // Teams working the same shift never share an operator, and a team shares nobody with its
     // replacement, EXCEPT a Fiammetta-sustained operator, who is deliberately pinned to one
@@ -8058,11 +8072,29 @@ fn shift_rotation_supports_252_layout() {
             .clone()
             .expect("production cells carry a team id")
     };
-    // One team per post per shift: both posts change crew at every rotate.
-    for post in ["tp0", "tp1"] {
-        let ids: std::collections::HashSet<String> = (0..3).map(|k| team_id(k, post)).collect();
-        assert_eq!(ids.len(), 3, "{post} swaps at every rotate");
-    }
+    // Twenty-one production seats against twenty beds: the 252 runs the 24h
+    // blocks. Whichever post holds the shifts-1+2 block is "early"; the other
+    // runs 2+3.
+    let (early, late) = if team_id(0, "tp0") == team_id(1, "tp0") {
+        ("tp0", "tp1")
+    } else {
+        ("tp1", "tp0")
+    };
+    assert_eq!(
+        team_id(0, early),
+        team_id(1, early),
+        "{early} works shifts 1+2"
+    );
+    assert_ne!(
+        team_id(1, early),
+        team_id(2, early),
+        "{early} swaps for shift 3"
+    );
+    assert_eq!(
+        team_id(1, late),
+        team_id(2, late),
+        "{late} works shifts 2+3"
+    );
 
     // Both plants and the CC stay staffed every shift, cycling two squads.
     for slot in ["p0", "p1", "cc"] {
