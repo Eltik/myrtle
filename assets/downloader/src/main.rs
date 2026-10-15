@@ -6,8 +6,8 @@ use std::sync::Arc;
 use clap::Parser;
 use cli::{Cli, Commands};
 use downloader::{
-    client_extract, download, hot_update, manifest, pipeline, resource_manifest, server::Server,
-    types, version,
+    client_download, client_extract, download, hot_update, manifest, pipeline, resource_manifest,
+    server::Server, types, version,
 };
 
 #[tokio::main]
@@ -23,6 +23,14 @@ async fn main() -> anyhow::Result<()> {
     if let Commands::ClientExtract { input, output } = &cli.command {
         let report = client_extract::run(input, output)?;
         client_extract::print_report(&report);
+        return Ok(());
+    }
+
+    // `client-download` reads the launcher endpoint, not the asset version
+    // endpoint, so it also runs before the version fetch.
+    if let Commands::ClientDownload { platform } = &cli.command {
+        let server: Server = cli.server.parse()?;
+        client_download::run(server, platform, &cli.savedir).await?;
         return Ok(());
     }
 
@@ -72,7 +80,7 @@ async fn main() -> anyhow::Result<()> {
         }
 
         // Handled offline before the version fetch above.
-        Commands::ClientExtract { .. } => unreachable!(),
+        Commands::ClientExtract { .. } | Commands::ClientDownload { .. } => unreachable!(),
     }
 
     Ok(())

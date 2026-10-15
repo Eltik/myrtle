@@ -127,3 +127,61 @@ validation is skipped. `verifier_opts()` sets `ignore_utf8_errors: true`.
 Copy `~/.cargo/registry/src/*/flatbuffers-<version>` over `vendor/flatbuffers`,
 re-apply the hunks above (three for `max_alignment`, three for
 `ignore_utf8_errors`), and keep this file.
+
+## Companion crate: `vendor/flatbuffers_reflection` (no verifier patch needed)
+
+### What
+
+`unpacker schema-sync` judges candidate schemas without generating Rust: flatc
+compiles each `.fbs` to a binary schema (`flatc -b --schema`) and the buffer is
+walked by the reflection verifier. That crate is vendored from
+google/flatbuffers tag `v25.12.19`, directory `rust/reflection` (Cargo.toml,
+src/lib.rs 39,703 B, src/reflection_generated.rs 110,065 B,
+src/reflection_verifier.rs 16,488 B, src/safe_buffer.rs 13,391 B,
+src/struct.rs 1,620 B, all byte-identical to the tag), plus the repository's
+Apache-2.0 `LICENSE`, because the upstream directory carries none. crates.io
+only has `flatbuffers-reflection` 0.1.0. Its `Cargo.toml` already names
+`flatbuffers = { path = "../flatbuffers" }`, so it builds against THIS patched
+crate and sees `max_alignment` and `ignore_utf8_errors`.
+
+### Why the verifier needed no patch
+
+`reflection_verifier.rs` performs no alignment or UTF-8 check of its own. Every
+scalar and offset goes through `TableVerifier::visit_field` or
+`Verifier::get_uoffset`/`in_buffer`/`is_aligned`, the vector-of-tables path
+calls `verifier.is_aligned::<UOffsetT>` directly, structs only call
+`range_in_buffer`, and strings go through `<&str>::run_verifier`. All of those
+are the patched functions above, so both options reach it unchanged.
+
+The two verifiers still differ in one structural way: the reflection verifier
+memoises verified tables by buffer position (`verified[table_pos]`), where the
+generated verifier re-walks a shared table at every reference. That can only
+change a verdict through `max_depth`, `max_tables` or `max_apparent_size`,
+whose limits sit far above any real table, or when two fields of different
+types point at the same table (only possible under a wrong schema).
+
+### Measurement
+
+`unpacker schema-sync --self-check` verifies every gamedata buffer both ways,
+generated decoder and reflection verifier, under the same `.fbs` and
+`verifier_opts()`, on both schema sides where a Yostar variant exists. On the
+2026-10-15 downloads (CN `26-10-08-04-51-28-56071834`, EN
+`26-10-03-16-06-39_0a6acf`, JP `26-10-03-16-46-28_95dc60`, KR
+`26-10-03-16-45-32_7cab75`), against the schemas the committed decoder was
+generated from: CN 3,011 verdicts compared (3,003 pass, 8 fail), EN/JP/KR 2,694
+each (2,686 pass, 8 fail), ZERO disagreements, failing verdicts included. After
+the store and the derived routing landed: CN 2,989, EN/JP/KR 2,671 each, zero
+disagreements.
+
+### The one edit
+
+`Cargo.toml` gains a `[lints.rust]` table allowing `unused_imports` and
+`mismatched_lifetime_syntaxes`: upstream's generated reflection code raises 11
+warnings on the current toolchain, none a defect. No source file is edited.
+
+### Re-vendoring
+
+Fetch the six files from the matching tag with
+`gh api 'repos/google/flatbuffers/contents/rust/reflection/<path>?ref=<tag>' --jq .content | base64 -d`,
+re-add the `[lints.rust]` table, re-read `reflection_verifier.rs` for any check
+that bypasses `Verifier`, and re-run `--self-check` on all four servers.

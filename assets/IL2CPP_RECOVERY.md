@@ -1,5 +1,14 @@
 # IL2CPP Camera-Follow Recovery — Runbook (macOS / Apple Silicon)
 
+> **Correction (2026-10-15):** the premise below that `global-metadata.dat` is runtime-encrypted
+> is wrong. The Android file's body is plain apart from a byte-XOR (0x66) over its header and
+> over 16 KiB of every 64 KiB window, plus one unrecoverable 16 KiB chunk of string-literal
+> indices; the official CN Windows client's metadata is a standard plaintext v29 file. Type,
+> field, property and attribute data are all readable statically, which is how
+> `unpacker schema-gen` regenerates the FlatBuffers schemas (see `assets/schemas/README.md`).
+> What remains encrypted is part of the CODE pages of `libil2cpp.so`, so the live dump in
+> this runbook is still the only way to read the method bodies it targets.
+
 Recover the Arknights **dynchar entrance camera-follow** algorithm from the client binary.
 Background: the follow is compiled `Torappu.*` C# — *an algorithm, not asset data* — and the
 client's `global-metadata.dat` is **runtime-encrypted** (anti-tamper), so a static file dump
@@ -7,7 +16,7 @@ fails. You must dump **decrypted** metadata from a **running** client's memory, 
 one method. See `docs/DYNCHAR_ENTRANCE_INVESTIGATION.md` §5 for why nothing else works.
 
 This runbook targets **Arknights EN** (`com.YoStarEN.Arknights`, Unity 2021.3, IL2CPP metadata
-v27) and runs entirely on an Apple-Silicon Mac.
+v29) and runs entirely on an Apple-Silicon Mac.
 
 Two tools in this repo bracket the manual work:
 - `assets/downloader` → `client-extract` — triage a package, confirm encryption, pull the binary.
@@ -175,7 +184,7 @@ certainly the entrance-camera updater. Each row prints a ready
 ---
 
 ## Notes & gotchas
-- **The version isn't the blocker; the anti-tamper is.** metadata v27 is well within
+- **The version isn't the blocker; the anti-tamper is.** metadata v29 is well within
   Il2CppDumper/Il2CppInspector support — the whole reason for the live dump is decryption.
 - **Emulator/root detection.** If Arknights refuses to launch, hide root (Magisk DenyList /
   Shamiko) and ensure Zygisk is on. The game only needs to reach a screen where metadata is

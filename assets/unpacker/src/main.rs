@@ -72,7 +72,73 @@ fn main() {
         Command::BackfillStoryArt(args) => cmd_backfill_story_art(&args),
         Command::BackfillVideo(args) => cmd_backfill_video(&args),
         Command::BackfillMusic(args) => cmd_backfill_music(&args),
+        Command::SchemaSync(args) => cmd_schema_sync(&args),
+        Command::SchemaGen(args) => cmd_schema_gen(&args),
     }
+}
+
+/// `unpacker schema-gen`; see `unpacker::schema::gen`.
+fn cmd_schema_gen(args: &cli::SchemaGenArgs) {
+    use unpacker::schema::r#gen;
+    let opts = r#gen::Options {
+        client: args.client.clone(),
+        out: args.out.clone(),
+        roots: args.roots.clone().unwrap_or_else(r#gen::default_roots_path),
+        compare: args.compare.clone(),
+        allow_diff: args.allow_diff.clone(),
+        discover_only: args.discover,
+    };
+    let code = r#gen::run(&opts).unwrap_or_else(|e| {
+        eprintln!("error: {e:#}");
+        r#gen::exit_code(&e)
+    });
+    std::process::exit(code);
+}
+
+/// `unpacker schema-sync`; see `unpacker::schema::sync`.
+fn cmd_schema_sync(args: &cli::SchemaSyncArgs) {
+    use unpacker::schema::{
+        reflect::{self, BfbsCache},
+        self_check, store, sync,
+    };
+    let store_dir = args.store.clone().unwrap_or_else(store::default_store_dir);
+    let code = if args.self_check {
+        let cache_dir = args
+            .cache
+            .clone()
+            .unwrap_or_else(reflect::default_cache_dir);
+        match BfbsCache::new(&cache_dir)
+            .and_then(|cache| self_check::run(&store_dir, &args.bundles, &cache))
+        {
+            Ok(0) => 0,
+            Ok(n) => {
+                eprintln!("self-check: {n} disagreeing verdicts");
+                1
+            }
+            Err(e) => {
+                eprintln!("error: {e:#}");
+                1
+            }
+        }
+    } else {
+        let opts = sync::Options {
+            generated: args.generated.clone(),
+            store: store_dir,
+            bundles: args.bundles.clone(),
+            report: args.report.clone(),
+            levels_sample: args.levels_sample,
+            cache: args.cache.clone(),
+            compare_dir: args.compare_dir.clone(),
+        };
+        match sync::run(&opts) {
+            Ok(code) => code,
+            Err(e) => {
+                eprintln!("error: {e:#}");
+                1
+            }
+        }
+    };
+    std::process::exit(code);
 }
 
 /// Transcode one server's cutscenes into an existing output tree without re-extracting
@@ -797,7 +863,7 @@ fn cmd_extract(args: &cli::ExtractArgs) {
     if should_extract_gamedata {
         let idx_path = match &args.idx {
             Some(p) => p.clone(),
-            None => match find_idx_file(&args.input) {
+            None => match export::manifest::find_idx_file(&args.input) {
                 Some(p) => {
                     println!("Auto-detected manifest: {}", p.display());
                     p
@@ -1062,10 +1128,14 @@ struct VerifyRow {
 /// Verification only: nothing is decoded and nothing is written. The `chosen`
 /// column comes from `flatbuffers_decode::verify_table`, which asks
 /// `select_schema_by_verification` itself, so this cannot drift from what
-/// `extract` does. Rows are aggregated per schema type because `level_data`
+/// `extract` does. Rows are aggregated per schema type because `prts___levels`
 /// alone is ~2900 files. Always exits 0 — it is a report, not a gate.
 fn cmd_verify(args: &cli::VerifyArgs) {
-    let idx_path = if let Some(p) = args.idx.clone().or_else(|| find_idx_file(&args.input)) {
+    let idx_path = if let Some(p) = args
+        .idx
+        .clone()
+        .or_else(|| export::manifest::find_idx_file(&args.input))
+    {
         p
     } else {
         eprintln!("error: no .idx manifest found; use --idx <manifest.idx>");
@@ -1083,71 +1153,38 @@ fn cmd_verify(args: &cli::VerifyArgs) {
         std::collections::BTreeMap::new();
     let mut skipped = 0usize;
 
-    for entry in WalkDir::new(&args.input)
-        .into_iter()
-        .filter_map(std::result::Result::ok)
-        .filter(|e| e.file_type().is_file())
-    {
-        let Ok(data) = std::fs::read(entry.path()) else {
-            continue;
-        };
-        let Ok(bundle) = BundleFile::parse(data) else {
-            continue;
-        };
-        if bundle.files.is_empty() {
-            continue;
+    export::gamedata::for_each_gamedata_flatbuffer(&args.input, &manifest, |buf| {
+        let real = buf.path.as_str();
+        let name = buf.name.as_str();
+        let fb = buf.data;
+        let file_name = Path::new(real)
+            .file_name()
+            .and_then(|f| f.to_str())
+            .unwrap_or(name);
+        let verdict = unpacker::flatbuffers_decode::verify_table(&fb, file_name);
+        if verdict.table == "unknown" {
+            skipped += 1;
+            return;
         }
-        let Ok(sf) = SerializedFile::parse(bundle.files[0].data.clone()) else {
-            continue;
-        };
-        for obj in &sf.objects {
-            if obj.class_id != 49 {
-                continue;
-            }
-            let Ok(val) = read_object(&sf, obj) else {
-                continue;
-            };
-            let Some(name) = val["m_Name"].as_str() else {
-                continue;
-            };
-            let Some(real) = manifest.get_output_path(name) else {
-                continue;
-            };
-            if !real.starts_with("gamedata/") {
-                continue;
-            }
-            let Some(fb) = export::text_asset::flatbuffer_payload(&val) else {
-                continue;
-            };
-            let file_name = Path::new(real)
-                .file_name()
-                .and_then(|f| f.to_str())
-                .unwrap_or(name);
-            let verdict = unpacker::flatbuffers_decode::verify_table(&fb, file_name);
-            if verdict.table == "unknown" {
-                skipped += 1;
-                continue;
-            }
-            let row = rows.entry(verdict.table).or_default();
-            row.files += 1;
-            if let Some(err) = verdict.cn {
-                row.cn_fail += 1;
-                row.cn_err.get_or_insert(err);
-            }
-            match verdict.yostar {
-                unpacker::flatbuffers_decode::YostarVerdict::NotRun => {}
-                unpacker::flatbuffers_decode::YostarVerdict::Verified => {
-                    row.yostar.get_or_insert((0, None));
-                }
-                unpacker::flatbuffers_decode::YostarVerdict::Failed(err) => {
-                    let y = row.yostar.get_or_insert((0, None));
-                    y.0 += 1;
-                    y.1.get_or_insert(err);
-                }
-            }
-            *row.chosen.entry(verdict.chosen).or_default() += 1;
+        let row = rows.entry(verdict.table).or_default();
+        row.files += 1;
+        if let Some(err) = verdict.cn {
+            row.cn_fail += 1;
+            row.cn_err.get_or_insert(err);
         }
-    }
+        match verdict.yostar {
+            unpacker::flatbuffers_decode::YostarVerdict::NotRun => {}
+            unpacker::flatbuffers_decode::YostarVerdict::Verified => {
+                row.yostar.get_or_insert((0, None));
+            }
+            unpacker::flatbuffers_decode::YostarVerdict::Failed(err) => {
+                let y = row.yostar.get_or_insert((0, None));
+                y.0 += 1;
+                y.1.get_or_insert(err);
+            }
+        }
+        *row.chosen.entry(verdict.chosen).or_default() += 1;
+    });
 
     for (table, r) in &rows {
         let label = if r.files == 1 {
@@ -1191,22 +1228,6 @@ fn cmd_verify(args: &cli::VerifyArgs) {
         rows.len(),
         rows.values().map(|r| r.files).sum::<usize>()
     );
-}
-
-fn find_idx_file(input_dir: &Path) -> Option<std::path::PathBuf> {
-    // Search input dir first, then parent
-    for dir in [Some(input_dir), input_dir.parent()] {
-        let Some(dir) = dir else { continue };
-        if let Ok(entries) = std::fs::read_dir(dir) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.extension().is_some_and(|ext| ext == "idx") {
-                    return Some(path);
-                }
-            }
-        }
-    }
-    None
 }
 
 /// `.resS` / `.resource` bundle entries hold streamed payload bytes, not a

@@ -64,4 +64,13 @@ pub enum Commands {
         #[arg(short, long, default_value = "./il2cpp-input")]
         output: PathBuf,
     },
+    /// Download the official CN Windows client's `GameAssembly.dll` and
+    /// `global-metadata.dat` (about 264 MB) into `-d <dir>`, plus a
+    /// `client.json` with the client version and each file's size and SHA-256.
+    /// Input for `unpacker schema-gen`. CN only.
+    ClientDownload {
+        /// Client platform; only `windows` publishes the IL2CPP pair.
+        #[arg(long, default_value = "windows")]
+        platform: String,
+    },
 }

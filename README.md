@@ -181,7 +181,7 @@ License TBD. No license file is currently present in the repository.
 This project builds on the work of many open-source projects:
 
 - [UnityPy](https://github.com/K0lb3/UnityPy) - reference Python library for Unity asset extraction (the unpacker is a Rust port).
-- [OpenArknightsFBS](https://github.com/MooncellWiki/OpenArknightsFBS) - FlatBuffers schemas for game data.
+- FlatBuffers schemas for game data are generated from the official game client and resolved against the live binaries under [assets/schemas](assets/schemas/README.md). The format conventions were first documented by [OpenArknightsFBS](https://github.com/MooncellWiki/OpenArknightsFBS), whose files the generator was validated against.
 - [ArkPRTS](https://github.com/thesadru/ArkPRTS) - inspiration for the authentication flow.
 - [ArknightsDpsCompare](https://github.com/WhoAteMyCQQkie/ArknightsDpsCompare) - upstream reference for the DPS/HPS calculations.
 - [isHarryH/Ark-Unpacker](https://github.com/isHarryH/Ark-Unpacker) - original Python unpacking implementation.

@@ -26,13 +26,14 @@
     clippy::literal_string_with_formatting_args
 )]
 
-use anyhow::{Context, bail};
+use anyhow::bail;
 use rayon::prelude::*;
 use regex::Regex;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use unpacker::schema::store::normalize_fbs;
 
 #[allow(dead_code)]
 struct Field {
@@ -53,240 +54,21 @@ struct ParsedStruct {
     root_fn_name: Option<String>, // e.g. "root_as_clz_torappu_stage_table_unchecked"
 }
 
-/// Brings a schema submodule to upstream HEAD, or clones it when absent.
-///
-/// `fetch` + `checkout --detach`, never `pull --rebase`: both repos are pinned
-/// submodules, so the checkout is detached (CI's is also shallow), and a rebase
-/// there either has no branch to rebase or replays the pinned commit onto an
-/// unrelated upstream history and stops on add/add conflicts.
-///
-/// A submodule checkout has a `.git` file; an uninitialised one is an empty
-/// directory inside the parent work tree, where `git rev-parse` answers for the
-/// PARENT repo, so the old `--is-inside-work-tree` probe would have run git
-/// against the parent.
-fn sync_schema_repo(name: &str, url: &str, repo_dir: &Path) -> anyhow::Result<()> {
-    let git = |args: &[&str], dir: &Path| -> anyhow::Result<()> {
-        if !Command::new("git")
-            .args(args)
-            .current_dir(dir)
-            .status()?
-            .success()
-        {
-            bail!("{name}: `git {}` failed", args.join(" "));
-        }
-        Ok(())
-    };
-    if repo_dir.join(".git").exists() {
-        println!("Updating {name} to upstream HEAD...");
-        git(
-            &["fetch", "--quiet", "--depth", "1", "origin", "HEAD"],
-            repo_dir,
-        )?;
-        git(&["checkout", "--quiet", "--detach", "FETCH_HEAD"], repo_dir)?;
-    } else {
-        println!("Cloning {name}...");
-        let parent = repo_dir.parent().context("no parent dir")?;
-        let target = repo_dir.to_str().context("non-UTF-8 path")?;
-        git(&["clone", "--quiet", "--depth", "1", url, target], parent)?;
-    }
-    Ok(())
-}
-
-fn cn_schema_paths(script_dir: &Path) -> anyhow::Result<(PathBuf, PathBuf)> {
-    let repo_dir = script_dir
-        .parent()
-        .context("no parent dir")?
-        .join("OpenArknightsFBS");
-    let fbs_dir = repo_dir.join("FBS");
-
-    Ok((repo_dir, fbs_dir))
-}
-
-fn fetch_cn_schemas(repo_dir: &Path, fbs_dir: &Path) -> anyhow::Result<()> {
-    sync_schema_repo(
-        "OpenArknightsFBS",
-        "https://github.com/MooncellWiki/OpenArknightsFBS.git",
-        repo_dir,
-    )?;
-
-    if !fbs_dir.exists() {
-        bail!("FBS directory not found: {}", fbs_dir.display());
-    }
-
-    patch_schemas(fbs_dir);
-
-    println!("CN schemas: {}", fbs_dir.display());
-
-    Ok(())
-}
-
-/// Apply known fixes to upstream FBS schemas before running flatc.
-///
-/// The `OpenArknightsFBS` repo is community-maintained and occasionally has
-/// field ordering issues that cause `VTable` misalignment. `FlatBuffers` assigns
-/// `VTable` slots by declaration order, so a field inserted in the middle
-/// (rather than appended) breaks all subsequent offsets.
-///
-/// AS OF CN 2.7.71 (upstream `b24069f`) THE ARRAY IS EMPTY: every patch this
-/// function ever carried was REFUTED by running the `FlatBuffers` verifier over
-/// the live binary. In each case pristine upstream verifies and the patched
-/// schema does not — the patches were written against older binaries and each
-/// one outlived the mismatch it was correcting, then started corrupting the
-/// decode itself. The per-patch records below keep the measurement that
-/// retired each one.
-///
-/// BEFORE ADDING A NEW PATCH, two measurements are required. First, the CN
-/// `root_as_*_with_opts` verifier must FAIL on the live binary with pristine
-/// upstream. Second, it must PASS with the patch applied. A patch that cannot
-/// show both is not fixing a misalignment — see `select_schema_by_verification`
-/// in the generated decoder for the check.
-///
-/// Note that a verifier failure alone does not prove the schema is wrong: the
-/// verifier is stricter about alignment than the game's writer, and CN
-/// `activity_table` and `roguelike_topic_table` both fail "unaligned" on schemas
-/// whose decode is known-good.
-fn patch_schemas(fbs_dir: &Path) {
-    // roguelike_topic_table.fbs: NO patch as of CN 2.7.71 (upstream commit
-    // b24069f). Upstream declares the tail of clz_Torappu_RoguelikeTopicDetail
-    // as `rollNodeData, relicTipsData, legacyItems, activity`, and the live
-    // binary agrees: decoded against that order every one of the four fields
-    // holds data of its own shape (Activity populated for all 6 topics,
-    // LegacyItems = real LegacyItemData, rogue_6 CharBuffData 6.7 KB with 49/49
-    // readable blackboard keys, whole table 18.9 MB).
-    //
-    // A prior patch here swapped `relicTipsData` and `activity`. That was
-    // right for the 2.7.41 binary, which lacked `legacyItems`; against 2.7.71
-    // the same swap reads the legacy-item vector through the RelicTips schema
-    // and leaves Activity empty, and the pinned pre-rebase schema decodes
-    // rogue_6 CharBuffData into 1.6 GB of vtable garbage (a 1.8 GB table that
-    // took the backend to a 5.3 GiB load peak). The rebased submodule carries
-    // no roguelike change, so there is nothing for a patch to match.
-    //
-    // skin_table.fbs: NO patch needed as of CN 2.7.41 (upstream commit
-    // 6121fa9). Upstream correctly ships spAvatarId (after avatarId) and
-    // spPortraitId (after portraitId) in clz_Torappu_CharSkinData — 20
-    // vtable fields, matching the live binary.
-    //
-    // A prior patch here REMOVED those two fields. That was correct at
-    // 2.7.21, when the binary lacked them but upstream's schema had them;
-    // it became WRONG once the binary started shipping them (as that patch's
-    // own comment predicted). Dropping to 18 fields shifted every slot from
-    // idx 14 on, so battleSkin / voiceId / displaySkin misread — a string
-    // field landed on table bytes → invalid UTF-8 → the whole
-    // skin_table.json was unparseable and the backend got nothing. Deleting
-    // the patch (letting pristine upstream through) fixes it. Verified by
-    // decoding the live 2.7.41 binary with flatc: char_355_ethan@epoque#7's
-    // DisplaySkin.SkinName decodes as 渗透 and BattleSkin resolves.
-    //
-    // ---- The five June 2026 patches, all DROPPED at 2.7.71 ----
-    // Each was measured on CN 26-09-03-04-06-00_ed95a2 by generating twice, once
-    // from the patched fork and once from pristine b24069f, and diffing the
-    // extraction. Pristine verifies in every row; four of the five patched
-    // schemas fail verification outright.
-    //
-    // activity_table.fbs: the patch removed `defaultEnemyTag` from
-    // clz_Torappu_ActivityEnemyDuelConstData. The 2.7.71 binary HAS the field
-    // (3 occurrences under pristine, 0 under the patch). Patched output carries
-    // 167,669 escaped NUL bytes inside strings and is not valid UTF-8
-    // ("MilestoneName": "\u0000\u0000\u0003..."); pristine has zero and parses.
-    // Patched CN verify FAILS (`u32 @2354602 unaligned`), pristine PASSES.
-    //
-    // open_server_table.fbs: the patch removed `compensateEndDay` from
-    // clz_Torappu_NewbieCheckInPackageData. Patched CheckInRewardDict starts
-    // with a valueless `{"key": 0}` head — the slot-shift artifact — and the
-    // file is not valid UTF-8; pristine starts at key 1 with its reward list
-    // intact. Patched CN verify FAILS (`u32 @56739 unaligned`), pristine PASSES.
-    //
-    // display_meta_table.fbs: the patch reverted three upstream changes
-    // (`limitId`, `keyCodeType`, and the dict-wrapped `timeLimitInfoList`).
-    // It loses data: "KeyCodes" 4 occurrences vs 95 pristine, "LimitId" 0 vs 40,
-    // "KeyCodeType" 0 vs 95. A pristine KeyItem reads
-    // {"KeyCodeType": "KEYBOARD", "KeyCodes": [50, 84], "KeyId": "num0", ...};
-    // the patched one has neither field. Patched CN verify FAILS
-    // (`i64 @121364 unaligned`), pristine PASSES.
-    //
-    // ep_breakbuff_table.fbs: the patch removed `enemyElementBreakDuration`
-    // from clz_Torappu_EPBreakBuffData. The live binary has it — pristine, which
-    // keeps it, is the layout that verifies. Patched CN verify FAILS with an
-    // out-of-bounds read (`Range [1092616552, 1092616556)`) because a float is
-    // read as a vector offset; pristine PASSES. Output is byte-identical either
-    // way only because the Yostar schema (same 3-field layout) already rescued
-    // the patched path via verification.
-    //
-    // stage_table.fbs: the patch truncated clz_Torappu_CGGalleryGroupData to
-    // its first two fields to dodge a garbage `locationId` offset. That symptom
-    // does not reproduce on 2.7.71: pristine CgGalleryGroups decode cleanly
-    // ({"Displays": ["cgId_mainline_0_1_1", ...], "LocationId": "mainline_0_1",
-    // ...}) and the file is valid UTF-8. Both schemas verify here, so this one
-    // was merely discarding two real fields rather than corrupting the table.
-    let patches: &[(&str, &str, &str)] = &[];
-
-    for (filename, old, new) in patches {
-        let path = fbs_dir.join(filename);
-        let Ok(content) = fs::read_to_string(&path) else {
-            continue;
-        };
-        // Normalize CRLF → LF so patches match on Windows (git autocrlf)
-        let content = content.replace("\r\n", "\n");
-        if content.contains(old) {
-            let patched = content.replace(old, new);
-            if fs::write(&path, patched).is_ok() {
-                println!("  patched {filename}: reordered fields for VTable alignment");
-            }
-        }
-    }
-}
-
-/// A `.fbs` reduced to the part that can change how flatc generates code:
-/// comments gone, every run of whitespace collapsed to one space.
-///
-/// The Yostar repo pins each table to the CN commit it was forked from and
-/// records that as a leading `// https://github.com/MooncellWiki/...` comment,
-/// so a comment-sensitive comparison calls all 57 files "different" when most
-/// are byte-identical CN copies.
-fn normalize_fbs(src: &str) -> String {
-    let mut out = String::with_capacity(src.len());
-    let bytes = src.as_bytes();
-    let mut i = 0;
-    while i < bytes.len() {
-        if bytes[i] == b'/' && i + 1 < bytes.len() && bytes[i + 1] == b'/' {
-            while i < bytes.len() && bytes[i] != b'\n' {
-                i += 1;
-            }
-        } else if bytes[i] == b'/' && i + 1 < bytes.len() && bytes[i + 1] == b'*' {
-            i += 2;
-            while i + 1 < bytes.len() && !(bytes[i] == b'*' && bytes[i + 1] == b'/') {
-                i += 1;
-            }
-            i = (i + 2).min(bytes.len());
-            out.push(' ');
-        } else if bytes[i].is_ascii_whitespace() {
-            if !out.ends_with(' ') {
-                out.push(' ');
-            }
-            i += 1;
-        } else {
-            out.push(bytes[i] as char);
-            i += 1;
-        }
-    }
-    out.trim().to_string()
-}
-
 /// Which tables need a Yostar (EN/Global) schema variant.
 ///
-/// A table needs one exactly when its Yostar `.fbs` differs from the CN `.fbs`
-/// after normalisation. Two identical schemas produce identical flatc output
-/// and therefore cannot decode a buffer differently: a variant for such a table
-/// is dead weight in the binary and a second, pointless verifier pass at
-/// runtime. Measured on `OpenArknightsFBS` b24069f vs `ArknightsFlatbuffers`
-/// 2026-09-04: 31 of 57 differ, and every one of the 26 identical ones produced
-/// a flatc-generated `.rs` byte-identical to its CN counterpart.
+/// A table needs one exactly when `assets/schemas/yostar/<table>.fbs` exists
+/// AND differs from `cn/<table>.fbs` after normalisation. `schema-sync` only
+/// writes a Yostar file whose bytes differ from the CN choice, so in practice
+/// the two conditions coincide; the comparison stays because two identical
+/// schemas produce identical flatc output and cannot decode a buffer
+/// differently, and a hand-copied file must not buy a dead variant (a second,
+/// pointless verifier pass at runtime). Measured 2026-09-04 against the old
+/// submodules: 31 of 57 differed, and every one of the 26 identical ones
+/// produced a flatc-generated `.rs` byte-identical to its CN counterpart.
 ///
-/// This replaces a hand-curated list. A curated list has to be revisited every
-/// time either upstream moves, and the failure mode is silent — a table whose
-/// EN layout has just diverged keeps decoding to garbage because nobody added
-/// it. The computed set cannot go stale.
+/// The set is COMPUTED from the store, never curated: a curated list goes
+/// stale silently, and a table whose EN layout has just diverged keeps
+/// decoding to garbage because nobody added it.
 fn compute_yostar_schemas(cn_fbs_dir: &Path, yostar_fbs_dir: &Path) -> anyhow::Result<Vec<String>> {
     let mut differ = Vec::new();
     let mut identical = Vec::new();
@@ -334,39 +116,20 @@ fn compute_yostar_schemas(cn_fbs_dir: &Path, yostar_fbs_dir: &Path) -> anyhow::R
 
 /// Removes stale generated modules so a table that no longer needs a Yostar
 /// variant stops being compiled in (and stops being listed by
-/// `has_yostar_schema`).
+/// `has_yostar_schema`), together with its flatc `.log`.
 fn clear_generated_dir(dir: &Path) -> anyhow::Result<()> {
     if !dir.exists() {
         return Ok(());
     }
     for entry in fs::read_dir(dir)? {
         let path = entry?.path();
-        if path.extension().is_some_and(|ext| ext == "rs") {
+        if path
+            .extension()
+            .is_some_and(|ext| ext == "rs" || ext == "log")
+        {
             fs::remove_file(path)?;
         }
     }
-    Ok(())
-}
-
-fn yostar_schema_paths(script_dir: &Path) -> anyhow::Result<(PathBuf, PathBuf)> {
-    let repo_dir = script_dir
-        .parent()
-        .context("no parent dir")?
-        .join("ArknightsFlatbuffers");
-    let fbs_dir = repo_dir.join("yostar");
-
-    Ok((repo_dir, fbs_dir))
-}
-
-fn fetch_yostar_schemas(repo_dir: &Path, fbs_dir: &Path) -> anyhow::Result<()> {
-    sync_schema_repo(
-        "ArknightsFlatbuffers",
-        "https://github.com/ArknightsAssets/ArknightsFlatbuffers.git",
-        repo_dir,
-    )?;
-
-    println!("Yostar schemas: {}", fbs_dir.display());
-
     Ok(())
 }
 
@@ -1119,13 +882,14 @@ fn root_fn_for(structs: &HashMap<String, Vec<ParsedStruct>>, module: &str) -> Op
         .find_map(|s| s.root_fn_name.clone())
 }
 
-/// Emits `SchemaChoice`, `verifier_opts` and `select_schema_by_verification`:
+/// Emits `SchemaChoice`, `verify_schemas` and `select_schema_by_verification`
+/// (the verifier options come from `crate::schema::opts`, never a copy):
 /// the CN-vs-Yostar schema pick that runs *before* any decode.
 fn emit_schema_verification(
     out: &mut String,
     cn_structs: &HashMap<String, Vec<ParsedStruct>>,
     yostar_structs: &HashMap<String, Vec<ParsedStruct>>,
-    schema_to_module: &[(&'static str, &'static str)],
+    schema_to_module: &[(String, String)],
 ) {
     let mut arms = String::new();
     for (schema_type, module) in schema_to_module {
@@ -1218,53 +982,6 @@ fn emit_schema_verification(
  /// what every caller here wants.
  fn first_line(e: &::flatbuffers::InvalidFlatbuffer) -> String {
      e.to_string().lines().next().unwrap_or_default().to_string()
- }
-
- /// Verifier options for schema selection.
- ///
- /// Deliberately generous. These buffers are real game data, not adversarial
- /// input, and the only question being asked is "do the offsets in this buffer
- /// make sense under this schema". A false *negative* would push a perfectly
- /// good CN table onto the legacy path, so every limit sits far above what any
- /// real table needs; `max_apparent_size` is the flatbuffers default (2 GiB).
- ///
- /// `max_alignment` is not an upstream flatbuffers option; it comes from the
- /// vendored copy in `vendor/flatbuffers` (see MYRTLE-PATCH.md). Hypergryph's
- /// serializer aligns 8-byte scalars to 4 bytes, so upstream's `is_aligned`
- /// rejects a buffer the crate then reads back perfectly well through its
- /// unaligned scalar reads: `roguelike_topic_table` failed verification under
- /// BOTH schemas on BOTH servers with `Type f64 at position N is unaligned`,
- /// N % 8 == 4 (CN 7819508, EN 7285868). Capping the demand at 4 accepts that
- /// layout and leaves every other check untouched.
- ///
- /// `ignore_utf8_errors` is the second vendored option. Upstream rejects a
- /// buffer when a string's BYTES do not decode as UTF-8, which is right for a
- /// reader that hands the `&str` to code assuming valid UTF-8. Ours does not:
- /// every string reaching the emitter goes through `fb_json_macros::json_str`,
- /// i.e. `String::from_utf8_lossy`, so the bad byte becomes U+FFFD and nothing
- /// downstream can observe it. Now that an unverified table is SKIPPED rather
- /// than decoded, a content check the emitter already handles must not be
- /// allowed to cost a whole table.
- ///
- /// `ignore_missing_null_terminator` stays FALSE, deliberately. It is tempting
- /// for the same reason — this reader is length-prefixed and never scans for a
- /// NUL — but it is measurably load-bearing for schema SELECTION. The
- /// `battle/level_script_table` buffer verifies under its own schema and fails
- /// `level_data` on exactly that check; with the option on it verifies under
- /// BOTH and the wrong one wins. EN `roguelike_topic_table` and `building_data`
- /// likewise fail the CN schema only on a missing null terminator, and routing
- /// them back to CN is the multi-GB garbage this whole mechanism exists to
- /// prevent. A missing terminator is a good discriminator; a bad UTF-8 byte is
- /// not.
- const fn verifier_opts() -> ::flatbuffers::VerifierOptions {
-     ::flatbuffers::VerifierOptions {
-         max_depth: 256,
-         max_tables: usize::MAX >> 1,
-         max_apparent_size: 1 << 31,
-         ignore_missing_null_terminator: false,
-         max_alignment: 4,
-         ignore_utf8_errors: true,
-     }
  }
 
  /// Verify `data` against the schemas available for `schema_type`.
@@ -1392,6 +1109,7 @@ fn generate_decode_dispatch(
 
     out.push_str("//! Auto-generated `FlatBuffer` decode dispatch\n");
     out.push_str("//! DO NOT EDIT - regenerate with: cargo run --bin generate-fbs\n\n");
+    out.push_str("use crate::schema::opts::verifier_opts;\n");
     out.push_str("use serde_json::{Value, json};\n");
     out.push_str("use std::panic::{self, AssertUnwindSafe};\n\n");
 
@@ -1425,142 +1143,9 @@ fn generate_decode_dispatch(
     );
 
     // ---- guess_root_type ----
-    // This is the hand-curated mapping. We embed it directly.
-    out.push_str(
-        r#"/// Guess the root type from filename
- fn guess_root_type(filename: &str) -> &'static str {
-     let lower = filename.to_lowercase();
-
-     // `level_script_table` MUST be tested before the `level_` prefix: it is a
-     // battle/ table with its own schema, not a level. Under `level_data`
-     // (prts___levels) its 312-byte buffer decoded to a 541-byte nonsense
-     // record — `MapId` holding raw bytes, everything else empty — and once an
-     // unverified table is skipped rather than decoded it would have been
-     // dropped outright. Under its own schema it verifies and decodes to a
-     // populated `LevelScriptDataLevelDict`.
-     if lower.contains("level_script_table") {
-         "level_script_table"
-     } else if lower.starts_with("level_") {
-         "level_data"
-     } else if lower.contains("enemy_database") {
-         "enemy_database"
-     } else if lower.contains("enemy_handbook") {
-         "enemy_handbook_table"
-     } else if lower.contains("character_table") || lower.contains("char_table") {
-         "character_table"
-     } else if lower.contains("char_master") {
-         "char_master_table"
-     } else if lower.contains("char_meta") {
-         "char_meta_table"
-     } else if lower.contains("char_patch") {
-         "char_patch_table"
-     } else if lower.contains("charword") {
-         "charword_table"
-     } else if lower.contains("skill_table") {
-         "skill_table"
-     } else if lower.contains("item_table") {
-         "item_table"
-     } else if lower.contains("gacha_table") {
-         "gacha_table"
-     } else if lower.contains("skin_table") {
-         "skin_table"
-     } else if lower.contains("handbook_info") {
-         "handbook_info_table"
-     } else if lower.contains("handbook_team") {
-         "handbook_team_table"
-     } else if lower.contains("uniequip_table") {
-         "uniequip_table"
-     } else if lower.contains("battle_equip") {
-         "battle_equip_table"
-     } else if lower.contains("stage_table") {
-         "stage_table"
-     } else if lower.contains("activity_table") {
-         "activity_table"
-     } else if lower.contains("audio_data") {
-         "audio_data"
-     } else if lower.contains("building_local") {
-         "building_local_data"
-     } else if lower.contains("building_data") {
-         "building_data"
-     } else if lower.contains("campaign_table") {
-         "campaign_table"
-     } else if lower.contains("chapter_table") {
-         "chapter_table"
-     } else if lower.contains("charm_table") {
-         "charm_table"
-     } else if lower.contains("checkin_table") {
-         "checkin_table"
-     } else if lower.contains("climb_tower") {
-         "climb_tower_table"
-     } else if lower.contains("clue_data") {
-         "clue_data"
-     } else if lower.contains("crisis_v2") {
-         "crisis_v2_table"
-     } else if lower.contains("crisis_table") {
-         "crisis_table"
-     } else if lower.contains("display_meta") {
-         "display_meta_table"
-     } else if lower.contains("favor_table") {
-         "favor_table"
-     } else if lower.contains("gamedata_const") {
-         "gamedata_const"
-     } else if lower.contains("hotupdate_meta") {
-         "hotupdate_meta_table"
-     } else if lower.contains("medal_table") {
-         "medal_table"
-     } else if lower.contains("meta_ui") {
-         "meta_ui_table"
-     } else if lower.contains("mission_table") {
-         "mission_table"
-     } else if lower.contains("open_server") {
-         "open_server_table"
-     } else if lower.contains("retro_table") {
-         "retro_table"
-     } else if lower.contains("roguelike") {
-         "roguelike_topic_table"
-     } else if lower.contains("sandbox_perm") {
-         "sandbox_perm_table"
-     } else if lower.contains("sandbox_table") {
-         "sandbox_table"
-     } else if lower.contains("shop_client") {
-         "shop_client_table"
-     } else if lower.contains("special_operator") {
-         "special_operator_table"
-     } else if lower.contains("story_review_meta") {
-         "story_review_meta_table"
-     } else if lower.contains("story_review") {
-         "story_review_table"
-     } else if lower.contains("story_table") {
-         "story_table"
-     } else if lower.contains("tip_table") {
-         "tip_table"
-     } else if lower.contains("zone_table") {
-         "zone_table"
-     } else if lower.contains("ep_breakbuff") {
-         "ep_breakbuff_table"
-     } else if lower.contains("buff_table") {
-         "buff_table"
-     } else if lower.contains("cooperate") {
-         "cooperate_battle_table"
-     } else if lower.contains("init_text") || lower.contains("main_text") {
-         "language_data"
-     } else if lower.contains("extra_battlelog") {
-         "extra_battlelog_table"
-     } else if lower.contains("replicate") {
-         "replicate_table"
-     } else if lower.contains("legion_mode") {
-         "legion_mode_buff_table"
-     } else if lower.contains("token_table") {
-         "token_table"
-     } else {
-         "unknown"
-     }
- }
-
- "#,
-    );
-
-    let schema_to_module = build_schema_to_module_map();
+    // Derived from the store: a new upstream table needs no code edit here.
+    let schema_to_module = build_schema_to_module_map(cn_structs);
+    emit_guess_root_type(&mut out, &schema_to_module);
 
     // Sorted so the emitted file is byte-stable across runs (HashMap iteration
     // order is not).
@@ -1574,8 +1159,8 @@ fn generate_decode_dispatch(
             if structs.iter().any(|s| s.is_root) {
                 schema_to_module
                     .iter()
-                    .find(|(_, m)| *m == module)
-                    .map(|(st, _)| *st)
+                    .find(|(_, m)| m == module)
+                    .map(|(st, _)| st.as_str())
             } else {
                 None
             }
@@ -1619,7 +1204,7 @@ fn generate_decode_dispatch(
             for s in structs {
                 if let Some(ref root_fn) = s.root_fn_name
                     && let Some((schema_type, _)) =
-                        schema_to_module.iter().find(|(_, m)| *m == *module)
+                        schema_to_module.iter().find(|(_, m)| m == *module)
                 {
                     out.push_str(&format!(
                         "            \"{schema_type}\" => {{\n\
@@ -1707,7 +1292,7 @@ fn generate_decode_dispatch(
     out.push_str("        let data = &data_clone;\n");
     out.push_str("        match schema_type {\n");
     for (schema_type, module) in &schema_to_module {
-        if let Some(structs) = cn_structs.get(*module) {
+        if let Some(structs) = cn_structs.get(module) {
             for s in structs {
                 if let Some(ref root_fn) = s.root_fn_name {
                     out.push_str(&format!(
@@ -1778,87 +1363,104 @@ pub fn extract_strings(data: &[u8]) -> Vec<String> {
     Ok(())
 }
 
-fn build_schema_to_module_map() -> Vec<(&'static str, &'static str)> {
-    vec![
-        ("character_table", "character_table_generated"),
-        ("char_master_table", "char_master_table_generated"),
-        ("char_meta_table", "char_meta_table_generated"),
-        ("char_patch_table", "char_patch_table_generated"),
-        ("charword_table", "charword_table_generated"),
-        ("skill_table", "skill_table_generated"),
-        ("enemy_database", "enemy_database_generated"),
-        ("enemy_handbook_table", "enemy_handbook_table_generated"),
-        ("item_table", "item_table_generated"),
-        ("skin_table", "skin_table_generated"),
-        ("uniequip_table", "uniequip_table_generated"),
-        ("battle_equip_table", "battle_equip_table_generated"),
-        ("handbook_info_table", "handbook_info_table_generated"),
-        ("handbook_team_table", "handbook_team_table_generated"),
-        ("gacha_table", "gacha_table_generated"),
-        ("stage_table", "stage_table_generated"),
-        ("activity_table", "activity_table_generated"),
-        ("audio_data", "audio_data_generated"),
-        ("building_data", "building_data_generated"),
-        ("building_local_data", "building_local_data_generated"),
-        ("campaign_table", "campaign_table_generated"),
-        ("chapter_table", "chapter_table_generated"),
-        ("charm_table", "charm_table_generated"),
-        ("checkin_table", "checkin_table_generated"),
-        ("climb_tower_table", "climb_tower_table_generated"),
-        ("clue_data", "clue_data_generated"),
-        ("crisis_table", "crisis_table_generated"),
-        ("crisis_v2_table", "crisis_v2_table_generated"),
-        ("display_meta_table", "display_meta_table_generated"),
-        ("favor_table", "favor_table_generated"),
-        ("gamedata_const", "gamedata_const_generated"),
-        ("hotupdate_meta_table", "hotupdate_meta_table_generated"),
-        ("medal_table", "medal_table_generated"),
-        ("meta_ui_table", "meta_ui_table_generated"),
-        ("mission_table", "mission_table_generated"),
-        ("open_server_table", "open_server_table_generated"),
-        ("retro_table", "retro_table_generated"),
-        ("roguelike_topic_table", "roguelike_topic_table_generated"),
-        ("sandbox_perm_table", "sandbox_perm_table_generated"),
-        ("sandbox_table", "sandbox_table_generated"),
-        ("shop_client_table", "shop_client_table_generated"),
-        ("special_operator_table", "special_operator_table_generated"),
-        (
-            "story_review_meta_table",
-            "story_review_meta_table_generated",
-        ),
-        ("story_review_table", "story_review_table_generated"),
-        ("story_table", "story_table_generated"),
-        ("tip_table", "tip_table_generated"),
-        ("zone_table", "zone_table_generated"),
-        ("buff_table", "buff_table_generated"),
-        ("cooperate_battle_table", "cooperate_battle_table_generated"),
-        ("language_data", "init_text_generated"),
-        ("ep_breakbuff_table", "ep_breakbuff_table_generated"),
-        ("extra_battlelog_table", "extra_battlelog_table_generated"),
-        ("replicate_table", "replicate_table_generated"),
-        ("legion_mode_buff_table", "legion_mode_buff_table_generated"),
-        ("token_table", "token_table_generated"),
-        ("level_data", "prts___levels_generated"),
-        ("level_script_table", "level_script_table_generated"),
-    ]
+/// `(schema type, generated module)` for every CN schema that has a root
+/// type, derived from the store: the schema type IS the store stem and the
+/// module is `<stem>_generated`. Sorted, so the emitted file is byte-stable.
+///
+/// This replaced 57 hand-written pairs, which meant a new upstream table needed
+/// a code edit before it could decode at all (`arkvent_table` on CN fell to the
+/// unknown-strings path), and which named two types differently from their
+/// schema (`level_data` for `prts___levels`, `language_data` for `init_text`).
+fn build_schema_to_module_map(
+    cn_structs: &HashMap<String, Vec<ParsedStruct>>,
+) -> Vec<(String, String)> {
+    let mut map: Vec<(String, String)> = cn_structs
+        .keys()
+        .filter(|module| root_fn_for(cn_structs, module).is_some())
+        .filter_map(|module| {
+            module
+                .strip_suffix("_generated")
+                .map(|stem| (stem.to_string(), module.clone()))
+        })
+        .collect();
+    map.sort();
+    map
 }
+
+/// Filename substrings that name a table whose stem they do not contain,
+/// checked after the stems and in this order. Carried over from the hand map.
+const ROUTING_ALIASES: &[(&str, &str)] = &[
+    ("char_table", "character_table"),
+    ("language_data", "init_text"),
+];
+
+/// Emits `guess_root_type`: the LONGEST store stem contained in the filename
+/// wins, then `ROUTING_ALIASES`, then the `level_` prefix as the last fallback
+/// for `prts___levels`.
+///
+/// Longest-first is what the hand-ordered chain got wrong for
+/// `legion_mode_buff_table`: its `buff_table` arm came first, so the table was
+/// verified and decoded under the `buff_table` schema. `level_script_table` is
+/// a stem, so it wins over the `level_` prefix without an ordering rule.
+fn emit_guess_root_type(out: &mut String, schema_to_module: &[(String, String)]) {
+    let mut stems: Vec<&str> = schema_to_module.iter().map(|(s, _)| s.as_str()).collect();
+    stems.sort_by(|a, b| b.len().cmp(&a.len()).then(a.cmp(b)));
+    out.push_str(
+        "/// Guess the root type (the store stem) from a gamedata filename.\n\
+         ///\n\
+         /// Generated from the schema store: the longest stem contained in the\n\
+         /// filename wins, then a short alias table, then the `level_` prefix.\n\
+         fn guess_root_type(filename: &str) -> &'static str {\n\
+         \x20   const STEMS: &[&str] = &[\n",
+    );
+    for stem in &stems {
+        out.push_str(&format!("        \"{stem}\",\n"));
+    }
+    out.push_str("    ];\n    const ALIASES: &[(&str, &str)] = &[\n");
+    for (needle, stem) in ROUTING_ALIASES {
+        if stems.contains(stem) {
+            out.push_str(&format!("        (\"{needle}\", \"{stem}\"),\n"));
+        }
+    }
+    out.push_str("    ];\n");
+    out.push_str(
+        "    let lower = filename.to_lowercase();\n\
+         \x20   if let Some(stem) = STEMS.iter().find(|s| lower.contains(*s)) {\n\
+         \x20       return stem;\n\
+         \x20   }\n\
+         \x20   if let Some((_, stem)) = ALIASES.iter().find(|(n, _)| lower.contains(n)) {\n\
+         \x20       return stem;\n\
+         \x20   }\n",
+    );
+    if stems.contains(&"prts___levels") {
+        out.push_str(
+            "    // Level files carry no table name; this must stay the LAST rule\n\
+             \x20   // (`level_script_table` is matched above as a stem).\n\
+             \x20   if lower.starts_with(\"level_\") {\n\
+             \x20       return \"prts___levels\";\n\
+             \x20   }\n",
+        );
+    }
+    out.push_str("    \"unknown\"\n}\n\n");
+}
+
 fn main() -> anyhow::Result<()> {
     let script_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let src_dir = script_dir.join("src");
 
-    let (cn_repo_dir, cn_fbs_dir) = cn_schema_paths(&script_dir)?;
-    let (yostar_repo_dir, yostar_fbs_dir) = yostar_schema_paths(&script_dir)?;
-
-    println!("{:?}", yostar_fbs_dir);
-
-    if std::env::var("SKIP_FETCH")
-        .is_ok_and(|val| matches!(val.to_lowercase().as_str(), "1" | "true" | "yes"))
-    {
-        println!("skipping submodule fetch because SKIP_FETCH=true");
-    } else {
-        fetch_cn_schemas(&cn_repo_dir, &cn_fbs_dir)?;
-        fetch_yostar_schemas(&yostar_repo_dir, &yostar_fbs_dir)?;
+    // The schema store is the only input. `unpacker schema-sync` fills it;
+    // this generator never fetches anything.
+    let store_dir = unpacker::schema::store::default_store_dir();
+    let cn_fbs_dir = store_dir.join("cn");
+    let yostar_fbs_dir = store_dir.join("yostar");
+    if !cn_fbs_dir.is_dir() {
+        bail!(
+            "schema store not found: {} (run `unpacker schema-sync`)",
+            cn_fbs_dir.display()
+        );
     }
+    println!("CN schemas:     {}", cn_fbs_dir.display());
+    println!("Yostar schemas: {}", yostar_fbs_dir.display());
 
     let cn_output = src_dir.join("generated_fbs");
     let yostar_output = src_dir.join("generated_fbs_yostar");
@@ -1871,7 +1473,11 @@ fn main() -> anyhow::Result<()> {
     // when its Yostar .fbs differs from the CN one. See `compute_yostar_schemas`.
     // The output dir is cleared first so a table that stops differing stops
     // being compiled in.
-    let yostar_schemas = compute_yostar_schemas(&cn_fbs_dir, &yostar_fbs_dir).unwrap();
+    let yostar_schemas = if yostar_fbs_dir.is_dir() {
+        compute_yostar_schemas(&cn_fbs_dir, &yostar_fbs_dir)?
+    } else {
+        Vec::new()
+    };
     clear_generated_dir(&yostar_output)?;
     for name in &yostar_schemas {
         let fbs = yostar_fbs_dir.join(format!("{name}.fbs"));

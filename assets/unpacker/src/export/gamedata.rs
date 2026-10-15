@@ -13,6 +13,73 @@ use crate::unity::object_reader::read_object;
 use crate::unity::serialized_file::SerializedFile;
 use walkdir::WalkDir;
 
+/// One gamedata `FlatBuffer` found in a bundle directory.
+pub struct GamedataBuffer {
+    /// The manifest path, e.g. `gamedata/excel/character_table.bytes`.
+    pub path: String,
+    /// The `TextAsset` name inside the bundle.
+    pub name: String,
+    /// The `FlatBuffer` itself: RSA header and encryption already removed.
+    pub data: Vec<u8>,
+}
+
+/// Hands every gamedata `FlatBuffer` under `bundle_dir` to `f`, one at a time.
+///
+/// The walk `unpacker verify` and `unpacker schema-sync` share: every file that
+/// parses as a bundle, every `TextAsset` (class 49) the manifest places under
+/// `gamedata/`, and only those whose payload `flatbuffer_payload` accepts.
+/// Nothing is decoded and nothing is written. Buffers are handed over one at a
+/// time so a caller that keeps only a sample never holds a whole server.
+pub fn for_each_gamedata_flatbuffer(
+    bundle_dir: &Path,
+    manifest: &ResourceManifest,
+    mut f: impl FnMut(GamedataBuffer),
+) {
+    for entry in WalkDir::new(bundle_dir)
+        .into_iter()
+        .filter_map(std::result::Result::ok)
+        .filter(|e| e.file_type().is_file())
+    {
+        let Ok(data) = std::fs::read(entry.path()) else {
+            continue;
+        };
+        let Ok(bundle) = BundleFile::parse(data) else {
+            continue;
+        };
+        if bundle.files.is_empty() {
+            continue;
+        }
+        let Ok(sf) = SerializedFile::parse(bundle.files[0].data.clone()) else {
+            continue;
+        };
+        for obj in &sf.objects {
+            if obj.class_id != 49 {
+                continue;
+            }
+            let Ok(val) = read_object(&sf, obj) else {
+                continue;
+            };
+            let Some(name) = val["m_Name"].as_str() else {
+                continue;
+            };
+            let Some(real) = manifest.get_output_path(name) else {
+                continue;
+            };
+            if !real.starts_with("gamedata/") {
+                continue;
+            }
+            let Some(fb) = super::text_asset::flatbuffer_payload(&val) else {
+                continue;
+            };
+            f(GamedataBuffer {
+                path: real.to_string(),
+                name: name.to_string(),
+                data: fb,
+            });
+        }
+    }
+}
+
 pub fn export_gamedata(
     bundle_dir: &Path,
     idx_path: &Path,
@@ -260,7 +327,8 @@ fn write_skipped(gamedata_dir: &Path, input_dir: &Path, skipped: &[(String, bool
 }
 
 /// `2026-10-14T05:00:00Z`. Whole seconds, UTC; no date crate in this binary.
-fn rfc3339_utc(t: SystemTime) -> String {
+#[must_use]
+pub fn rfc3339_utc(t: SystemTime) -> String {
     let secs = t.duration_since(UNIX_EPOCH).map_or(0, |d| d.as_secs());
     let (days, rem) = (secs / 86_400, secs % 86_400);
     // Days since 1970-01-01 -> civil date (Howard Hinnant's `civil_from_days`).

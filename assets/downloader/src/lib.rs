@@ -1,3 +1,4 @@
+pub mod client_download;
 pub mod client_extract;
 pub mod download;
 pub mod error;

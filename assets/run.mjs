@@ -1072,8 +1072,8 @@ async function runSetup() {
 	]);
 	if (!proceed) return;
 
-	// Check OpenArknightsFBS
-	const fbsDir = join(__dirname, "OpenArknightsFBS", "FBS");
+	// Check the schema store (assets/schemas/README.md)
+	const fbsDir = join(__dirname, "schemas", "cn");
 	let hasFbs = false;
 	try {
 		const files = readdirSync(fbsDir);
@@ -1084,9 +1084,9 @@ async function runSetup() {
 	if (!hasFbs) {
 		console.log(
 			chalk.yellow(
-				"\n⚠  OpenArknightsFBS/FBS/ has no .fbs files.\n" +
+				"\n⚠  schemas/cn/ has no .fbs files.\n" +
 					"   This is only needed for the generate-fbs binary.\n" +
-					"   If you need it, clone the OpenArknightsFBS repo into this directory.\n",
+					"   The store is committed; a missing one means a partial checkout. See schemas/README.md.\n",
 			),
 		);
 	}

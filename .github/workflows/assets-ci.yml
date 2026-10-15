@@ -5,11 +5,17 @@ on:
     branches: [main, v3]
     paths:
       - "assets/**"
+      # The schema lock is provenance (which versions the store was verified
+      # against); nothing is built from it, and schema-watch commits it alone.
+      - "!assets/schemas/schemas.lock.json"
       - ".github/workflows/assets-ci.yml"
   pull_request:
     branches: [main, v3]
     paths:
       - "assets/**"
+      # The schema lock is provenance (which versions the store was verified
+      # against); nothing is built from it, and schema-watch commits it alone.
+      - "!assets/schemas/schemas.lock.json"
       - ".github/workflows/assets-ci.yml"
   # Backend CI consumes the `game-data` artifact this workflow uploads. It is
   # retained 90 days and only refreshed by a push to assets/**, so this is the
@@ -40,7 +46,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.98.0
         with:
           components: rustfmt
 
@@ -62,7 +68,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.98.0
         with:
           components: clippy
 
@@ -119,7 +125,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.98.0
 
       - uses: Swatinem/rust-cache@v2
         with:
@@ -158,7 +164,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.98.0
 
       - uses: Swatinem/rust-cache@v2
         with:
@@ -219,7 +225,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.98.0
 
       - uses: Swatinem/rust-cache@v2
         with:
@@ -321,7 +327,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.98.0
 
       - name: Install cargo-audit
         run: cargo install cargo-audit
@@ -344,7 +350,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.98.0
 
       - uses: Swatinem/rust-cache@v2
         with:

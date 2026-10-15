@@ -335,13 +335,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 84;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 85] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -427,6 +427,14 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 85] = [
     enum__Torappu_ItemType::EMOTICON_SET,
     enum__Torappu_ItemType::EXCLUSIVE_TKT_GACHA,
     enum__Torappu_ItemType::EXCLUSIVE_TKT_GACHA_10,
+    enum__Torappu_ItemType::SO_CHAR_EXP,
+    enum__Torappu_ItemType::GIFTPACKAGE_TKT,
+    enum__Torappu_ItemType::VOUCHER_SKIN_V2,
+    enum__Torappu_ItemType::RANDOM_VOUCHER_SKIN,
+    enum__Torappu_ItemType::ACT1VHALFIDLE_ITEM,
+    enum__Torappu_ItemType::PLOT_ITEM,
+    enum__Torappu_ItemType::MAGAZINE_LEAF,
+    enum__Torappu_ItemType::STICKER,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -519,9 +527,17 @@ impl enum__Torappu_ItemType {
     pub const EMOTICON_SET: Self = Self(82);
     pub const EXCLUSIVE_TKT_GACHA: Self = Self(83);
     pub const EXCLUSIVE_TKT_GACHA_10: Self = Self(84);
+    pub const SO_CHAR_EXP: Self = Self(85);
+    pub const GIFTPACKAGE_TKT: Self = Self(86);
+    pub const VOUCHER_SKIN_V2: Self = Self(87);
+    pub const RANDOM_VOUCHER_SKIN: Self = Self(88);
+    pub const ACT1VHALFIDLE_ITEM: Self = Self(89);
+    pub const PLOT_ITEM: Self = Self(90);
+    pub const MAGAZINE_LEAF: Self = Self(91);
+    pub const STICKER: Self = Self(92);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 84;
+    pub const ENUM_MAX: i32 = 92;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -608,6 +624,14 @@ impl enum__Torappu_ItemType {
         Self::EMOTICON_SET,
         Self::EXCLUSIVE_TKT_GACHA,
         Self::EXCLUSIVE_TKT_GACHA_10,
+        Self::SO_CHAR_EXP,
+        Self::GIFTPACKAGE_TKT,
+        Self::VOUCHER_SKIN_V2,
+        Self::RANDOM_VOUCHER_SKIN,
+        Self::ACT1VHALFIDLE_ITEM,
+        Self::PLOT_ITEM,
+        Self::MAGAZINE_LEAF,
+        Self::STICKER,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -697,6 +721,14 @@ impl enum__Torappu_ItemType {
             Self::EMOTICON_SET => Some("EMOTICON_SET"),
             Self::EXCLUSIVE_TKT_GACHA => Some("EXCLUSIVE_TKT_GACHA"),
             Self::EXCLUSIVE_TKT_GACHA_10 => Some("EXCLUSIVE_TKT_GACHA_10"),
+            Self::SO_CHAR_EXP => Some("SO_CHAR_EXP"),
+            Self::GIFTPACKAGE_TKT => Some("GIFTPACKAGE_TKT"),
+            Self::VOUCHER_SKIN_V2 => Some("VOUCHER_SKIN_V2"),
+            Self::RANDOM_VOUCHER_SKIN => Some("RANDOM_VOUCHER_SKIN"),
+            Self::ACT1VHALFIDLE_ITEM => Some("ACT1VHALFIDLE_ITEM"),
+            Self::PLOT_ITEM => Some("PLOT_ITEM"),
+            Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
+            Self::STICKER => Some("STICKER"),
             _ => None,
         }
     }
@@ -29786,6 +29818,664 @@ impl dict__string__clz_Torappu_BuildingData_BuildingRoomTypeBuffSortDataT {
         )
     }
 }
+pub enum clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo<'a> {
+    type Inner = clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo<'a> {
+    pub const VT_CHARID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_ICONID: ::flatbuffers::VOffsetT = 6;
+    pub const VT_TITLE: ::flatbuffers::VOffsetT = 8;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo<'bldr>> {
+        let mut builder = clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoBuilder::new(_fbb);
+        if let Some(x) = args.title {
+            builder.add_title(x);
+        }
+        if let Some(x) = args.iconId {
+            builder.add_iconId(x);
+        }
+        if let Some(x) = args.charId {
+            builder.add_charId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoT {
+        let charId = self.charId().map(|x| alloc::string::ToString::to_string(x));
+        let iconId = self.iconId().map(|x| alloc::string::ToString::to_string(x));
+        let title = self.title().map(|x| alloc::string::ToString::to_string(x));
+        clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoT {
+            charId,
+            iconId,
+            title,
+        }
+    }
+
+    #[inline]
+    pub fn charId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo::VT_CHARID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn iconId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo::VT_ICONID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn title(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo::VT_TITLE,
+                None,
+            )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("charId", Self::VT_CHARID, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("iconId", Self::VT_ICONID, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("title", Self::VT_TITLE, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoArgs<'a> {
+    pub charId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub iconId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub title: Option<::flatbuffers::WIPOffset<&'a str>>,
+}
+impl<'a> Default for clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoArgs {
+            charId: None,
+            iconId: None,
+            title: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_charId(&mut self, charId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo::VT_CHARID,
+            charId,
+        );
+    }
+    #[inline]
+    pub fn add_iconId(&mut self, iconId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo::VT_ICONID,
+            iconId,
+        );
+    }
+    #[inline]
+    pub fn add_title(&mut self, title: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo::VT_TITLE,
+            title,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo");
+        ds.field("charId", &self.charId());
+        ds.field("iconId", &self.iconId());
+        ds.field("title", &self.title());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoT {
+    pub charId: Option<alloc::string::String>,
+    pub iconId: Option<alloc::string::String>,
+    pub title: Option<alloc::string::String>,
+}
+impl Default for clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoT {
+    fn default() -> Self {
+        Self {
+            charId: None,
+            iconId: None,
+            title: None,
+        }
+    }
+}
+impl clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo<'b>> {
+        let charId = self.charId.as_ref().map(|x| _fbb.create_string(x));
+        let iconId = self.iconId.as_ref().map(|x| _fbb.create_string(x));
+        let title = self.title.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo::create(
+            _fbb,
+            &clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoArgs {
+                charId,
+                iconId,
+                title,
+            },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a>
+    for dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo<'a>
+{
+    type Inner = dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo<'a> {
+    pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<
+        dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo<'bldr>,
+    > {
+        let mut builder =
+            dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoT {
+        let key = {
+            let x = self.key();
+            alloc::string::ToString::to_string(x)
+        };
+        let value = self.value().map(|x| alloc::boxed::Box::new(x.unpack()));
+        dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(
+        &self,
+        o: &dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo,
+    ) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo,
+            >>(
+                dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo::VT_VALUE,
+                None,
+            )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable
+    for dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo<'_>
+{
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo>>("value", Self::VT_VALUE, false)?
+     .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoArgs<'a> {
+    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub value:
+        Option<::flatbuffers::WIPOffset<clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo<'b>>,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo>>(dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo::VT_VALUE, value);
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<
+        dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo<'a>,
+    > {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo::VT_KEY,
+            "key",
+        );
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds =
+            f.debug_struct("dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoT {
+    pub key: alloc::string::String,
+    pub value: Option<alloc::boxed::Box<clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoT>>,
+}
+impl Default for dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoT {
+    fn default() -> Self {
+        Self {
+            key: alloc::string::ToString::to_string(""),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<
+        dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo<'b>,
+    > {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo::create(
+            _fbb,
+            &dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoArgs { key, value },
+        )
+    }
+}
+pub enum clz_Torappu_BuildingData_TradingRoomInfoDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_BuildingData_TradingRoomInfoData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_BuildingData_TradingRoomInfoData<'a> {
+    type Inner = clz_Torappu_BuildingData_TradingRoomInfoData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_BuildingData_TradingRoomInfoData<'a> {
+    pub const VT_TRADINGROOMSPECIALORDERDATA: ::flatbuffers::VOffsetT = 4;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_BuildingData_TradingRoomInfoData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_BuildingData_TradingRoomInfoDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_TradingRoomInfoData<'bldr>> {
+        let mut builder = clz_Torappu_BuildingData_TradingRoomInfoDataBuilder::new(_fbb);
+        if let Some(x) = args.tradingRoomSpecialOrderData {
+            builder.add_tradingRoomSpecialOrderData(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_BuildingData_TradingRoomInfoDataT {
+        let tradingRoomSpecialOrderData = self
+            .tradingRoomSpecialOrderData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_BuildingData_TradingRoomInfoDataT {
+            tradingRoomSpecialOrderData,
+        }
+    }
+
+    #[inline]
+    pub fn tradingRoomSpecialOrderData(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<
+                dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo<'a>,
+            >,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<
+                        dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo,
+                    >,
+                >,
+            >>(
+                clz_Torappu_BuildingData_TradingRoomInfoData::VT_TRADINGROOMSPECIALORDERDATA,
+                None,
+            )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_BuildingData_TradingRoomInfoData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<
+                        dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo,
+                    >,
+                >,
+            >>(
+                "tradingRoomSpecialOrderData",
+                Self::VT_TRADINGROOMSPECIALORDERDATA,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_BuildingData_TradingRoomInfoDataArgs<'a> {
+    pub tradingRoomSpecialOrderData: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo<'a>,
+                >,
+            >,
+        >,
+    >,
+}
+impl<'a> Default for clz_Torappu_BuildingData_TradingRoomInfoDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_BuildingData_TradingRoomInfoDataArgs {
+            tradingRoomSpecialOrderData: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_BuildingData_TradingRoomInfoDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_BuildingData_TradingRoomInfoDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_tradingRoomSpecialOrderData(
+        &mut self,
+        tradingRoomSpecialOrderData: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfo<'b>,
+                >,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_BuildingData_TradingRoomInfoData::VT_TRADINGROOMSPECIALORDERDATA,
+            tradingRoomSpecialOrderData,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_BuildingData_TradingRoomInfoDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_BuildingData_TradingRoomInfoDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_TradingRoomInfoData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_BuildingData_TradingRoomInfoData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_BuildingData_TradingRoomInfoData");
+        ds.field(
+            "tradingRoomSpecialOrderData",
+            &self.tradingRoomSpecialOrderData(),
+        );
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_BuildingData_TradingRoomInfoDataT {
+    pub tradingRoomSpecialOrderData: Option<
+        alloc::vec::Vec<dict__string__clz_Torappu_BuildingData_TradingRoomSpecialOrderInfoT>,
+    >,
+}
+impl Default for clz_Torappu_BuildingData_TradingRoomInfoDataT {
+    fn default() -> Self {
+        Self {
+            tradingRoomSpecialOrderData: None,
+        }
+    }
+}
+impl clz_Torappu_BuildingData_TradingRoomInfoDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_BuildingData_TradingRoomInfoData<'b>> {
+        let tradingRoomSpecialOrderData = self.tradingRoomSpecialOrderData.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_BuildingData_TradingRoomInfoData::create(
+            _fbb,
+            &clz_Torappu_BuildingData_TradingRoomInfoDataArgs {
+                tradingRoomSpecialOrderData,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_BuildingDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -29885,6 +30575,7 @@ impl<'a> clz_Torappu_BuildingData<'a> {
     pub const VT_EMOJIS: ::flatbuffers::VOffsetT = 160;
     pub const VT_CATEGORYNAMES: ::flatbuffers::VOffsetT = 162;
     pub const VT_BUFFSORTDATA: ::flatbuffers::VOffsetT = 164;
+    pub const VT_TRADINGROOMINFODATA: ::flatbuffers::VOffsetT = 166;
 
     #[inline]
     pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -29905,6 +30596,9 @@ impl<'a> clz_Torappu_BuildingData<'a> {
         builder.add_betaRemoveTime(args.betaRemoveTime);
         builder.add_assistFavorReport(args.assistFavorReport);
         builder.add_tiredApThreshold(args.tiredApThreshold);
+        if let Some(x) = args.tradingRoomInfoData {
+            builder.add_tradingRoomInfoData(x);
+        }
         if let Some(x) = args.buffSortData {
             builder.add_buffSortData(x);
         }
@@ -30245,6 +30939,9 @@ impl<'a> clz_Torappu_BuildingData<'a> {
         let buffSortData = self
             .buffSortData()
             .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let tradingRoomInfoData = self
+            .tradingRoomInfoData()
+            .map(|x| alloc::boxed::Box::new(x.unpack()));
         clz_Torappu_BuildingDataT {
             controlSlotId,
             meetingSlotId,
@@ -30327,6 +31024,7 @@ impl<'a> clz_Torappu_BuildingData<'a> {
             emojis,
             categoryNames,
             buffSortData,
+            tradingRoomInfoData,
         }
     }
 
@@ -31480,6 +32178,15 @@ impl<'a> clz_Torappu_BuildingData<'a> {
             >>(clz_Torappu_BuildingData::VT_BUFFSORTDATA, None)
         }
     }
+    #[inline]
+    pub fn tradingRoomInfoData(&self) -> Option<clz_Torappu_BuildingData_TradingRoomInfoData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_BuildingData_TradingRoomInfoData>>(clz_Torappu_BuildingData::VT_TRADINGROOMINFODATA, None)
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_BuildingData<'_> {
@@ -31570,6 +32277,7 @@ impl ::flatbuffers::Verifiable for clz_Torappu_BuildingData<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("emojis", Self::VT_EMOJIS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__string>>>>("categoryNames", Self::VT_CATEGORYNAMES, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_BuildingData_BuildingRoomTypeBuffSortData>>>>("buffSortData", Self::VT_BUFFSORTDATA, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_BuildingData_TradingRoomInfoData>>("tradingRoomInfoData", Self::VT_TRADINGROOMINFODATA, false)?
      .finish();
         Ok(())
     }
@@ -31840,6 +32548,8 @@ pub struct clz_Torappu_BuildingDataArgs<'a> {
             >,
         >,
     >,
+    pub tradingRoomInfoData:
+        Option<::flatbuffers::WIPOffset<clz_Torappu_BuildingData_TradingRoomInfoData<'a>>>,
 }
 impl<'a> Default for clz_Torappu_BuildingDataArgs<'a> {
     #[inline]
@@ -31926,6 +32636,7 @@ impl<'a> Default for clz_Torappu_BuildingDataArgs<'a> {
             emojis: None,
             categoryNames: None,
             buffSortData: None,
+            tradingRoomInfoData: None,
         }
     }
 }
@@ -32785,6 +33496,15 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_BuildingDataBuild
         );
     }
     #[inline]
+    pub fn add_tradingRoomInfoData(
+        &mut self,
+        tradingRoomInfoData: ::flatbuffers::WIPOffset<
+            clz_Torappu_BuildingData_TradingRoomInfoData<'b>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_BuildingData_TradingRoomInfoData>>(clz_Torappu_BuildingData::VT_TRADINGROOMINFODATA, tradingRoomInfoData);
+    }
+    #[inline]
     pub fn new(
         _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
     ) -> clz_Torappu_BuildingDataBuilder<'a, 'b, A> {
@@ -32897,6 +33617,7 @@ impl ::core::fmt::Debug for clz_Torappu_BuildingData<'_> {
         ds.field("emojis", &self.emojis());
         ds.field("categoryNames", &self.categoryNames());
         ds.field("buffSortData", &self.buffSortData());
+        ds.field("tradingRoomInfoData", &self.tradingRoomInfoData());
         ds.finish()
     }
 }
@@ -33001,6 +33722,8 @@ pub struct clz_Torappu_BuildingDataT {
     pub buffSortData: Option<
         alloc::vec::Vec<dict__string__clz_Torappu_BuildingData_BuildingRoomTypeBuffSortDataT>,
     >,
+    pub tradingRoomInfoData:
+        Option<alloc::boxed::Box<clz_Torappu_BuildingData_TradingRoomInfoDataT>>,
 }
 impl Default for clz_Torappu_BuildingDataT {
     fn default() -> Self {
@@ -33086,6 +33809,7 @@ impl Default for clz_Torappu_BuildingDataT {
             emojis: None,
             categoryNames: None,
             buffSortData: None,
+            tradingRoomInfoData: None,
         }
     }
 }
@@ -33262,6 +33986,7 @@ impl clz_Torappu_BuildingDataT {
             let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
             _fbb.create_vector(&w)
         });
+        let tradingRoomInfoData = self.tradingRoomInfoData.as_ref().map(|x| x.pack(_fbb));
         clz_Torappu_BuildingData::create(
             _fbb,
             &clz_Torappu_BuildingDataArgs {
@@ -33346,6 +34071,7 @@ impl clz_Torappu_BuildingDataT {
                 emojis,
                 categoryNames,
                 buffSortData,
+                tradingRoomInfoData,
             },
         )
     }
