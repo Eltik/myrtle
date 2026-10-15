@@ -13,7 +13,7 @@ import { glyphIndexFor, type IChipModel, sectionChapters } from "./chapters";
 import { groupSearchTarget, type IReadFraction, keepEqualFractions, LIBRARY_SORTS, type LibGroup, type LibIndex, type LibRecord, type LibrarySort, matchesReadState, prepareSearch, READ_FILTERS, type ReadFilter, readFraction, readsFractions, recordSearchTarget, searchList, sortLibrary } from "./derive";
 import { GroupCard, GroupGrid, GroupRow, GroupRowList } from "./GroupCard";
 import { OperatorsTab } from "./OperatorsTab";
-import { browseOrder, chapterNeighbours, type FilterKey, RECORDS_ID, sectionFilterKey, sectionLibrary, type ViewMode } from "./sections";
+import { browseOrder, chapterNeighbours, type FilterKey, RECORDS_ID, sectionFilterKey, sectionGroups, sectionLibrary, type ViewMode } from "./sections";
 import { TOOLBAR_DEFAULTS } from "./toolbar";
 
 type BrowseT = TypedT<typeof messages>;
@@ -138,18 +138,7 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
      * reader sees. `null` is the default, and it keeps the sections.
      */
     const sortFractions = reads.sort ? fractionOf : NO_FRACTIONS;
-    const flat = useMemo(
-        () =>
-            shownSort === "default"
-                ? null
-                : sortLibrary(
-                      library.sections.flatMap((s) => s.groups),
-                      shownSort,
-                      sortFractions,
-                      collator,
-                  ),
-        [library.sections, shownSort, sortFractions, collator],
-    );
+    const flat = useMemo(() => (shownSort === "default" ? null : sortLibrary(sectionGroups(library.sections), shownSort, sortFractions, collator)), [library.sections, shownSort, sortFractions, collator]);
 
     // A search or a records-only filter should not leave the 315 cards behind a Show button.
     const recordsForced = searched.trim() !== "" || shownFilter === "records";

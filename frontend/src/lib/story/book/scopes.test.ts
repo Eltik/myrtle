@@ -4,7 +4,7 @@ import { type BookIndex, bookOf, scopeFileName, scopeStories } from "./book";
 import { imagePaths } from "./epub";
 import { estimateBook } from "./estimate";
 import { scriptOf } from "./fixtures";
-import { arcOf, arcScope, orderRange, rangeScope, storylineOf, storylineScope } from "./scopes";
+import { arcOf, arcScope, homeShelves, orderRange, rangeScope, storylineOf, storylineScope } from "./scopes";
 
 const entry = (id: string, code: string, sort: number) => ({ id, name: id.toUpperCase(), code, sort, hasScript: true, wordCount: 100 });
 const index: BookIndex = {
@@ -16,7 +16,7 @@ const index: BookIndex = {
         { id: "act_b", name: "Event B", stories: [entry("bb", "B-1", 1)] },
     ],
 };
-const line = (id: string, sort: number, groupIds: string[], arcs: Storyline["arcs"] = []): Storyline => ({ id, name: id, sort, groupIds, arcs });
+const line = (id: string, sort: number, groupIds: string[], arcs: Storyline["arcs"] = [], own: string[] = [...arcs.flatMap((a) => a.groupIds), ...groupIds]): Storyline => ({ id, name: id, sort, groupIds, ownGroupIds: own, arcs });
 const storylines: Storyline[] = [
     line("ssLine_2", 3, ["act_b", "act_a"]),
     line(
@@ -41,6 +41,14 @@ describe("scope builders", () => {
         expect(storylineOf(storylines, "act_a")?.key).toBe("ssLine_1");
         expect(storylineOf(storylines, "act_b")?.groupIds).toEqual(["act_b", "act_a"]);
         expect(storylineOf(storylines, "main_0")).toBeNull();
+    });
+
+    it("the storyline is the shelf that OWNS the group over a lower-sort shelf that only points at it", () => {
+        // EN: Snow and Silver Steel (ssLine_3) points at Lone Trail as a BEFORE; it is Those Who Take The Future's (ssLine_7) own.
+        const shelves = [line("ssLine_3", 3, ["act25side", "act46side"], [], ["act46side"]), line("ssLine_7", 7, ["act19side", "act25side"])];
+        expect(storylineOf(shelves, "act25side")?.key).toBe("ssLine_7");
+        expect(homeShelves(shelves).get("act25side")).toBe("ssLine_7");
+        expect(homeShelves(shelves).get("act46side")).toBe("ssLine_3");
     });
 
     it("a reading-order range is inclusive and runs in the order's direction whichever end was picked first", () => {

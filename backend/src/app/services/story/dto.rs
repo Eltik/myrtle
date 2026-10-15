@@ -282,7 +282,8 @@ pub struct ChapterRange {
 ///
 /// A group can sit on SEVERAL shelves (17 do on EN), so `groupIds` over all
 /// storylines is not a partition: it lists 104 slots over 81 distinct groups.
-/// Picking one shelf per group is the consumer's job.
+/// Picking one shelf per group is the consumer's job, and `own_group_ids`
+/// names the one shelf each group is a `STORY_SET` on.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -315,6 +316,15 @@ pub struct Storyline {
     #[ts(optional)]
     pub chapter_range: Option<ChapterRange>,
     pub group_ids: Vec<String>,
+    /// The subset of `group_ids` the shelf lists as its OWN entries
+    /// (`LocationType` `STORY_SET`), in the same order. The rest of the rail
+    /// is `BEFORE` / `AFTER` pointers at a story that lives on another shelf:
+    /// `ssLine_3` (Snow and Silver Steel) points at `act25side` (Lone Trail)
+    /// as the read-first for `act46side`, while `ssLine_7` (Those Who Take The
+    /// Future) is where Lone Trail is a `STORY_SET`. Every EN group that sits
+    /// on a shelf is a `STORY_SET` on exactly one, so this is what picks a
+    /// group's home shelf.
+    pub own_group_ids: Vec<String>,
     pub arcs: Vec<StorylineArc>,
 }
 

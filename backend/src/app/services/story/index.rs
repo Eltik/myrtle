@@ -513,7 +513,9 @@ fn story_sets_by_group(gd: &GameData) -> HashMap<String, &StorylineStorySet> {
 
 /// The storylines as the wire carries them: shelves in `SortId` order,
 /// locations in theirs, every location that joins to a group the Archives
-/// list, deduplicated WITHIN a shelf.
+/// list, deduplicated WITHIN a shelf. `own_group_ids` keeps only the
+/// `STORY_SET` locations: a `BEFORE` / `AFTER` location is the rail pointing
+/// at a story that lives on another shelf.
 fn build_storylines(
     gd: &GameData,
     assets: &AssetIndex,
@@ -534,6 +536,7 @@ fn build_storylines(
             let mut locations: Vec<_> = line.locations.iter().collect();
             locations.sort_by_key(|l| l.sort_id);
             let mut group_ids: Vec<String> = Vec::new();
+            let mut own_group_ids: Vec<String> = Vec::new();
             let mut arcs: Vec<StorylineArc> = Vec::new();
             for location in locations {
                 if let Some(split) = location.mainline_split_data.as_ref() {
@@ -561,6 +564,9 @@ fn build_storylines(
                 if let Some(arc) = arcs.last_mut() {
                     arc.group_ids.push(group_id.clone());
                 }
+                if location.location_type == "STORY_SET" && !own_group_ids.contains(&group_id) {
+                    own_group_ids.push(group_id.clone());
+                }
                 if !group_ids.contains(&group_id) {
                     group_ids.push(group_id);
                 }
@@ -577,6 +583,7 @@ fn build_storylines(
                 logo_url: storyline_art_for(assets, line.storyline_logo_id.as_deref()),
                 chapter_range: chapter_range(&group_ids, chapter_numbers),
                 group_ids,
+                own_group_ids,
                 arcs,
             }
         })

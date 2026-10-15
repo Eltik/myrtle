@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Storyline } from "#/types/generated/Storyline";
 import type { LibEntry, LibGroup, LibIndex, LibRecord } from "./derive";
-import { browseOrder, buildSections, cardCode, chapterNeighbours, FILTER_ORDER, fallbackSections, kindOf, matchesFilter, sectionFilterKey, sectionLibrary, underLine } from "./sections";
+import { browseOrder, buildSections, cardCode, chapterNeighbours, FILTER_ORDER, fallbackSections, kindOf, matchesFilter, sectionFilterKey, sectionGroups, sectionLibrary, underLine } from "./sections";
 
 function entry(id: string, over: Partial<LibEntry> = {}): LibEntry {
     return { id, name: id, sort: 1, groupId: "g", hasScript: true, requiredStages: [], ...over };
@@ -11,8 +11,9 @@ function group(id: string, over: Partial<LibGroup> = {}): LibGroup {
     return { id, name: id, category: "side", entryType: "ACTIVITY", actType: "ACTIVITY_STORY", startTime: 0, stories: [entry(`${id}_1`)], ...over };
 }
 
-function line(id: string, sort: number, groupIds: string[], arcs: Storyline["arcs"] = []): Storyline {
-    return { id, name: `line ${id}`, sort, groupIds, arcs };
+/** `own` defaults to every group on the rail; pass it to model `BEFORE` / `AFTER` pointers. */
+function line(id: string, sort: number, groupIds: string[], arcs: Storyline["arcs"] = [], own: string[] = [...arcs.flatMap((a) => a.groupIds), ...groupIds]): Storyline {
+    return { id, name: `line ${id}`, sort, groupIds, ownGroupIds: own, arcs };
 }
 
 const keepAll = () => true;
@@ -89,6 +90,33 @@ describe("buildSections", () => {
         expect(owner).toHaveLength(1);
         expect(owner[0]?.id).toBe("line-ssLine_1");
         expect(sections.find((s) => s.id === "line-ssLine_2")).toBeUndefined();
+    });
+
+    it("gives a group to the shelf that OWNS it, not to a lower-sorted shelf that only points at it", () => {
+        // EN: ssLine_3 (Snow and Silver Steel) lists act25side (Lone Trail) as a BEFORE
+        // for act46side; ssLine_7 (Those Who Take The Future) is where it is a STORY_SET.
+        const groups = [group("act14side"), group("act25side"), group("act46side"), group("act19side")];
+        const storylines = [line("ssLine_3", 3, ["act14side", "act25side", "act46side"], [], ["act14side", "act46side"]), line("ssLine_7", 7, ["act19side", "act25side"])];
+        const sections = buildSections(groups, storylines);
+        expect(sections.map((s) => [s.id, s.groups.map((g) => g.id)])).toEqual([
+            ["line-ssLine_3", ["act14side", "act46side"]],
+            ["line-ssLine_7", ["act19side", "act25side"]],
+        ]);
+    });
+
+    it("keeps a BEFORE pointer inside its mainline arc AND shows the event on its own shelf", () => {
+        // EN: SHATTER OF A VISION points at Darknights Memoir (act9d0) as the read-first
+        // for chapter 4; act9d0 is a STORY_SET on The Ark (ssLine_1).
+        const groups = [group("main_4", { category: "main" }), group("act9d0"), group("act5d0")];
+        const storylines = [line("mainLine", 0, ["act9d0", "main_4"], [{ name: "SHATTER OF A VISION", sort: 101, groupIds: ["act9d0", "main_4"] }], ["main_4"]), line("ssLine_1", 1, ["act9d0", "act5d0"])];
+        const sections = buildSections(groups, storylines);
+        expect(sections.map((s) => [s.title, s.groups.map((g) => g.id)])).toEqual([
+            ["SHATTER OF A VISION", ["act9d0", "main_4"]],
+            ["line ssLine_1", ["act9d0", "act5d0"]],
+        ]);
+        // The flat list and the sheet's order step through it once, from the arc.
+        expect(sectionGroups(sections).map((g) => g.id)).toEqual(["act9d0", "main_4", "act5d0"]);
+        expect(browseOrder(sections, null).map((g) => g.id)).toEqual(["act9d0", "main_4", "act5d0"]);
     });
 
     it("drops a shelf that names nothing the index carries", () => {

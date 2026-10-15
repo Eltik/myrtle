@@ -9,6 +9,29 @@
 import type { Storyline } from "#/types/generated/Storyline";
 import type { BookScope } from "./types";
 
+/**
+ * Each group's HOME shelf id. A shelf's rail mixes its own stories
+ * (`ownGroupIds`, the `STORY_SET` locations) with `BEFORE` / `AFTER` pointers
+ * at stories that live elsewhere, so the home is the lowest-`sort` shelf that
+ * OWNS the group. A group no shelf owns (none on EN) falls back to the
+ * lowest-`sort` shelf whose rail names it. Lone Trail (`act25side`) is the
+ * case this exists for: Snow and Silver Steel lists it as the read-first for
+ * `act46side` and sorts first, but it is Those Who Take The Future's own.
+ */
+export function homeShelves(storylines: readonly Storyline[]): Map<string, string> {
+    const sorted = [...storylines].sort((a, b) => a.sort - b.sort || a.id.localeCompare(b.id));
+    const homes = new Map<string, string>();
+    for (const line of sorted) {
+        // A backend that predates `ownGroupIds` omits it: every group then
+        // takes the fallback below, which is the old placement.
+        for (const id of line.ownGroupIds ?? []) if (!homes.has(id)) homes.set(id, line.id);
+    }
+    for (const line of sorted) {
+        for (const id of [...line.arcs.flatMap((arc) => arc.groupIds), ...line.groupIds]) if (!homes.has(id)) homes.set(id, line.id);
+    }
+    return homes;
+}
+
 /** The shelf that carries the mainline arcs (`mainLine` on EN, the only one with arcs). */
 function arcShelves(storylines: readonly Storyline[]): Storyline[] {
     return [...storylines].filter((l) => l.arcs.length > 0).sort((a, b) => a.sort - b.sort);
@@ -25,12 +48,15 @@ export function arcOf(storylines: readonly Storyline[], groupId: string): { name
 }
 
 /**
- * The themed shelf (`ssLine_*`, or any shelf without arcs) holding `groupId`,
- * lowest `sort` first when a group sits on several (17 do on EN). The mainline
- * shelf is left out: its answer is the arc.
+ * The themed shelf (`ssLine_*`, or any shelf without arcs) holding `groupId`:
+ * its home shelf ({@link homeShelves}) when that is a themed one, else the
+ * lowest-`sort` themed shelf whose rail names it (a mainline chapter a themed
+ * shelf points at). The mainline shelf is left out: its answer is the arc.
  */
 export function storylineOf(storylines: readonly Storyline[], groupId: string): { name: string; groupIds: string[]; key: string } | null {
-    const line = [...storylines].filter((l) => l.arcs.length === 0 && l.groupIds.includes(groupId)).sort((a, b) => a.sort - b.sort)[0];
+    const themed = [...storylines].filter((l) => l.arcs.length === 0 && l.groupIds.includes(groupId)).sort((a, b) => a.sort - b.sort);
+    const home = homeShelves(storylines).get(groupId);
+    const line = themed.find((l) => l.id === home) ?? themed[0];
     return line ? { name: line.name, groupIds: [...line.groupIds], key: line.id } : null;
 }
 

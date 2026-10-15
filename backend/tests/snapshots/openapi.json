@@ -30291,12 +30291,13 @@
       },
       "Storyline": {
         "type": "object",
-        "description": "One of the game's own themed shelves over the Archives\n(`stage_table.Storylines`), with the `StoryGroup.id`s it holds, in the\norder the shelf lists them.\n\nThe join is `StorylineStorySets`, NOT the group id: a location names a\n`RelevantStorySetId`, that set is `MAINLINE` and names a zone\n(`MainlineData.ZoneId`, which is the mainline group's own id) or `SS` /\n`COLLECT` and names an activity (`RelevantActivityId`, which is the event\ngroup's own id). On EN 81 of 81 sets resolve and 79 of them name a group\nthe Archives list; the other 2 (`setId_mainline_3_1` -> `act2mainss`,\n`setId_mainline_3_2` -> `act3mainss`) name ids `story_review_table` does\nnot carry and are dropped.\n\nA group can sit on SEVERAL shelves (17 do on EN), so `groupIds` over all\nstorylines is not a partition: it lists 104 slots over 81 distinct groups.\nPicking one shelf per group is the consumer's job.",
+        "description": "One of the game's own themed shelves over the Archives\n(`stage_table.Storylines`), with the `StoryGroup.id`s it holds, in the\norder the shelf lists them.\n\nThe join is `StorylineStorySets`, NOT the group id: a location names a\n`RelevantStorySetId`, that set is `MAINLINE` and names a zone\n(`MainlineData.ZoneId`, which is the mainline group's own id) or `SS` /\n`COLLECT` and names an activity (`RelevantActivityId`, which is the event\ngroup's own id). On EN 81 of 81 sets resolve and 79 of them name a group\nthe Archives list; the other 2 (`setId_mainline_3_1` -> `act2mainss`,\n`setId_mainline_3_2` -> `act3mainss`) name ids `story_review_table` does\nnot carry and are dropped.\n\nA group can sit on SEVERAL shelves (17 do on EN), so `groupIds` over all\nstorylines is not a partition: it lists 104 slots over 81 distinct groups.\nPicking one shelf per group is the consumer's job, and `own_group_ids`\nnames the one shelf each group is a `STORY_SET` on.",
         "required": [
           "id",
           "name",
           "sort",
           "groupIds",
+          "ownGroupIds",
           "arcs"
         ],
         "properties": {
@@ -30342,6 +30343,13 @@
           },
           "name": {
             "type": "string"
+          },
+          "ownGroupIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The subset of `group_ids` the shelf lists as its OWN entries\n(`LocationType` `STORY_SET`), in the same order. The rest of the rail\nis `BEFORE` / `AFTER` pointers at a story that lives on another shelf:\n`ssLine_3` (Snow and Silver Steel) points at `act25side` (Lone Trail)\nas the read-first for `act46side`, while `ssLine_7` (Those Who Take The\nFuture) is where Lone Trail is a `STORY_SET`. Every EN group that sits\non a shelf is a `STORY_SET` on exactly one, so this is what picks a\ngroup's home shelf."
           },
           "sort": {
             "type": "integer",

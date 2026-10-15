@@ -179,6 +179,32 @@ fn every_en_story_parses_and_the_library_resolves() {
                 line.id
             );
         }
+        // A shelf's own groups are a subset of its rail, and every shelved
+        // group is a STORY_SET on exactly ONE shelf: that shelf is its home,
+        // and the BEFORE / AFTER pointers on other shelves are not.
+        let mut owners: HashMap<&str, Vec<&str>> = HashMap::new();
+        for line in &index.storylines {
+            for id in &line.own_group_ids {
+                assert!(
+                    line.group_ids.contains(id),
+                    "{} owns {id} but its rail does not list it",
+                    line.id
+                );
+                owners
+                    .entry(id.as_str())
+                    .or_default()
+                    .push(line.id.as_str());
+            }
+        }
+        for id in &shelved {
+            let homes = owners.get(id).map(Vec::as_slice).unwrap_or_default();
+            assert_eq!(homes.len(), 1, "{id} is a STORY_SET on {homes:?}");
+        }
+        // Lone Trail: Snow and Silver Steel points at it as the read-first for
+        // Retracing Our Steps, but it lives on Those Who Take The Future.
+        if owners.contains_key("act25side") {
+            assert_eq!(owners["act25side"], ["ssLine_7"]);
+        }
     }
 
     // The Story Collection's art: the key visual, the chapter glyph, the shelf
