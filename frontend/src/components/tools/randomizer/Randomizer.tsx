@@ -4,6 +4,7 @@ import { useAuth } from "#/hooks/use-auth";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { activitiesQueryOptions, retroActsQueryOptions, stagesQueryOptions, userStageClearsQueryOptions, zonesQueryOptions } from "#/lib/api/stages";
+import { browseTierListsQueryOptions, tierListDetailQueryOptions } from "#/lib/api/tier-lists";
 import { userRosterQueryOptions } from "#/lib/api/user";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -16,6 +17,7 @@ import { SettingsSheet } from "./impl/components/SettingsSheet";
 import { SquadSlab } from "./impl/components/SquadSlab";
 import { StageSlab } from "./impl/components/StageSlab";
 import { DEFAULT_SETTINGS, SETTINGS_VERSION, STORAGE_KEY_SETTINGS } from "./impl/constants";
+import { buildTierIndex, officialTierChoices, resolveTierListSlug, tierFilterNarrows } from "./impl/tier-filter";
 import type { IChallenge, IRandomizerOperator, IRandomizerSettings } from "./impl/types";
 import { applyProfileGate, buildRosterIndex, filterPlayableStages, pickRandomChallenge, pickRandomSquad, pickRandomStage, selectAvailableOperators, selectAvailableStages, toRandomizerOperator } from "./impl/utils";
 import type { messages } from "./Randomizer.messages";
@@ -87,8 +89,27 @@ export function Randomizer(): React.ReactElement {
     const setRosterSelection = React.useCallback((next: Set<string>) => setRosterStored(Array.from(next)), [setRosterStored]);
     const resetRosterSelection = React.useCallback(() => setRosterStored(null), [setRosterStored]);
 
+    // Tier filter: a stored slug that no longer names an official list reads as none,
+    // and until the list loads (or if it fails) the filter stays off rather than emptying the pool.
+    const { data: tierLists } = useQuery(browseTierListsQueryOptions(server));
+    const tierChoices = React.useMemo(() => officialTierChoices(tierLists), [tierLists]);
+    const tierListSlug = resolveTierListSlug(settings.tierListSlug, tierChoices);
+    const tierListQuery = useQuery({ ...tierListDetailQueryOptions(tierListSlug ?? "", server), enabled: tierListSlug !== null });
+    const tierListDetail = tierListSlug !== null ? (tierListQuery.data ?? null) : null;
+    const tierIndex = React.useMemo(() => (tierListDetail ? buildTierIndex(tierListDetail) : null), [tierListDetail]);
+    const tierFilter = React.useMemo(
+        () => ({
+            choices: tierChoices,
+            slug: tierListSlug,
+            index: tierIndex,
+            loading: tierListSlug !== null && tierListQuery.isLoading,
+            narrowingTitle: tierFilterNarrows(tierIndex, settings.deselectedTierIds) ? (tierListDetail?.title ?? null) : null,
+        }),
+        [tierChoices, tierListSlug, tierIndex, tierListQuery.isLoading, settings.deselectedTierIds, tierListDetail],
+    );
+
     // Mirrors every operator-tab constraint, so the roster picker only lists what can be drawn.
-    const rosterPickerOperators = React.useMemo(() => selectAvailableOperators(randomizerOperators, settings, rosterIndex), [randomizerOperators, settings, rosterIndex]);
+    const rosterPickerOperators = React.useMemo(() => selectAvailableOperators(randomizerOperators, settings, rosterIndex, tierIndex), [randomizerOperators, settings, rosterIndex, tierIndex]);
     const availableOperators = React.useMemo(() => rosterPickerOperators.filter((op) => effectiveRosterSet.has(op.id)), [rosterPickerOperators, effectiveRosterSet]);
 
     const availableStages = React.useMemo(() => selectAvailableStages(playableStages, zones, settings, stageClears ?? null, activityLookup), [playableStages, zones, settings, stageClears, activityLookup]);
@@ -177,6 +198,7 @@ export function Randomizer(): React.ReactElement {
                 onRosterReset={resetRosterSelection}
                 rosterIndex={rosterIndex}
                 hasProfile={hasProfile}
+                tierFilter={tierFilter}
                 stages={playableStages}
                 zones={zones}
                 activityLookup={activityLookup}

@@ -75,6 +75,14 @@ export const messages = {
         text: "E2 only",
         description: "Named in the note as one of the active filters. 'E2' is the game's second Elite promotion.",
     },
+    "randomizer.roster.filter.e2SixStar": {
+        text: "E2 only (6★)",
+        description: "Named in the note as one of the active filters: the E2 requirement binds 6-star operators only. 'E2' is the game's second Elite promotion.",
+    },
+    "randomizer.roster.filter.tier": {
+        text: "{list} tiers",
+        description: "Named in the note as one of the active filters; {list} is the title of the official tier list some tiers of which are left out.",
+    },
     "randomizer.roster.filter.owned": {
         text: "Owned only",
         description: "Named in the note as one of the active filters: only operators the player owns.",

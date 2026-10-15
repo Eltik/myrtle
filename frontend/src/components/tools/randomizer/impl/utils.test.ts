@@ -68,3 +68,32 @@ describe("only cleared stages", () => {
         expect(selectAvailableStages(stages, zones, { ...on, onlyCompletedStages: false }, clears, lookup).map((s) => s.stageId)).toEqual(["main_00-02", "main_00-03"]);
     });
 });
+
+describe("E2 rule, 6★ only", () => {
+    const pool = [
+        { id: "op6", rarity: 6, profession: "CASTER" },
+        { id: "op5", rarity: 5, profession: "CASTER" },
+        { id: "op4", rarity: 4, profession: "CASTER" },
+        { id: "op3", rarity: 3, profession: "CASTER" },
+        { id: "unowned5", rarity: 5, profession: "CASTER" },
+    ] as IRandomizerOperator[];
+    // Only the 4★ is at E2; every other owned operator is at E1.
+    const roster = { owned: new Set(["op6", "op5", "op4", "op3"]), e2: new Set<string>(["op4"]) };
+    const on: IRandomizerSettings = { ...DEFAULT_SETTINGS, onlyOwnedOperators: true, onlyE2Operators: true };
+
+    it("is off by default and then reproduces the original rule exactly: E2 binds every rarity", () => {
+        expect(DEFAULT_SETTINGS.e2SixStarOnly).toBe(false);
+        const original = pool.filter((op) => roster.owned.has(op.id) && roster.e2.has(op.id));
+        expect(selectAvailableOperators(pool, on, roster)).toEqual(original);
+        expect(selectAvailableOperators(pool, on, roster).map((o) => o.id)).toEqual(["op4"]);
+    });
+
+    it("on, lets owned lower rarities at E1 through but still holds 6★ to E2 and still requires owned", () => {
+        expect(selectAvailableOperators(pool, { ...on, e2SixStarOnly: true }, roster).map((o) => o.id)).toEqual(["op5", "op4", "op3"]);
+    });
+
+    it("does nothing while E2 only is off", () => {
+        const owned = { ...DEFAULT_SETTINGS, onlyOwnedOperators: true };
+        expect(selectAvailableOperators(pool, { ...owned, e2SixStarOnly: true }, roster)).toEqual(selectAvailableOperators(pool, owned, roster));
+    });
+});

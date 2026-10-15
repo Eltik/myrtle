@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-13T09:39:11.158Z",
+    "generatedAt": "2026-10-15T00:02:12.945Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -11326,6 +11326,40 @@
             "namespace": "gacha",
             "source_text": "{count} off-banner",
             "description": "Summary next to the rate-up count: how many of the banner's 6-star pulls were NOT featured operators. Rendered uppercase.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "gacha.history.breakdown.pityAt",
+            "namespace": "gacha",
+            "source_text": "6★ at pull {count}",
+            "description": "Tooltip and screen-reader text for a 6-star pull's pity number: it came on the {count}th pull since the previous 6-star on the same pity counter.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "gacha.history.breakdown.pityAtLeast",
+            "namespace": "gacha",
+            "source_text": "6★ at pull {count} or later. Earlier pulls are not in this history.",
+            "description": "Same as the pity tooltip, for a pull whose earlier pulls are missing from the history, so {count} is only a lower bound.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "gacha.history.breakdown.pityCaption",
+            "namespace": "gacha",
+            "source_text": "Pity",
+            "description": "Tiny caption under the number on a 6-star pull's card: how many pulls it took since the previous 6-star on the same pity counter. Rendered uppercase, very short.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.history.breakdown.pityLowerBound",
+            "namespace": "gacha",
+            "source_text": "{count}+",
+            "description": "The pity number when earlier pulls are missing from the history, so the real count is at least this, e.g. '42+'. Very short.",
             "placeholders": [
                 "count"
             ]
@@ -40097,6 +40131,20 @@
             "placeholders": []
         },
         {
+            "key": "tools.randomizer.ops.e2SixStarOnly",
+            "namespace": "tools",
+            "source_text": "6★ only",
+            "description": "Switch label under 'E2 only': the E2 requirement binds 6-star operators only.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.randomizer.ops.e2SixStarOnly.desc",
+            "namespace": "tools",
+            "source_text": "Only require Elite 2 for 6★ operators.",
+            "description": "Explanation under the '6★ only' switch; lower rarities then pass at any promotion. 'Elite 2' is the game's second promotion.",
+            "placeholders": []
+        },
+        {
             "key": "tools.randomizer.ops.hideUnplayable",
             "namespace": "tools",
             "source_text": "Hide unplayable operators",
@@ -40185,6 +40233,55 @@
             "placeholders": [
                 "size"
             ]
+        },
+        {
+            "key": "tools.randomizer.ops.tierList",
+            "namespace": "tools",
+            "source_text": "Tier list",
+            "description": "Heading over the tier-list filter.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.randomizer.ops.tierList.aria",
+            "namespace": "tools",
+            "source_text": "Allowed tiers",
+            "description": "Accessible name of the group of tier chips.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.randomizer.ops.tierList.desc",
+            "namespace": "tools",
+            "source_text": "Draw only from the tiers you keep selected.",
+            "description": "Explanation next to the tier-list dropdown; the tiers are the chips that appear once a list is picked.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.randomizer.ops.tierList.loading",
+            "namespace": "tools",
+            "source_text": "Loading tiers...",
+            "description": "Shown while the chosen tier list loads.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.randomizer.ops.tierList.none",
+            "namespace": "tools",
+            "source_text": "None",
+            "description": "Dropdown option: no tier list, so the filter is off.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.randomizer.ops.tierList.title",
+            "namespace": "tools",
+            "source_text": "Official tier list",
+            "description": "Label of the dropdown that picks one of the site's official tier lists to filter by. Also its accessible name.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.randomizer.ops.tierList.unranked",
+            "namespace": "tools",
+            "source_text": "Unranked",
+            "description": "Tier chip for operators the chosen tier list does not place.",
+            "placeholders": []
         },
         {
             "key": "tools.randomizer.preview.alt",
@@ -40280,11 +40377,27 @@
             "placeholders": []
         },
         {
+            "key": "tools.randomizer.roster.filter.e2SixStar",
+            "namespace": "tools",
+            "source_text": "E2 only (6★)",
+            "description": "Named in the note as one of the active filters: the E2 requirement binds 6-star operators only. 'E2' is the game's second Elite promotion.",
+            "placeholders": []
+        },
+        {
             "key": "tools.randomizer.roster.filter.owned",
             "namespace": "tools",
             "source_text": "Owned only",
             "description": "Named in the note as one of the active filters: only operators the player owns.",
             "placeholders": []
+        },
+        {
+            "key": "tools.randomizer.roster.filter.tier",
+            "namespace": "tools",
+            "source_text": "{list} tiers",
+            "description": "Named in the note as one of the active filters; {list} is the title of the official tier list some tiers of which are left out.",
+            "placeholders": [
+                "list"
+            ]
         },
         {
             "key": "tools.randomizer.roster.groupAll",

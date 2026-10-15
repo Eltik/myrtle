@@ -91,6 +91,22 @@ export const messages = {
         text: "{count} off-banner",
         description: "Summary next to the rate-up count: how many of the banner's 6-star pulls were NOT featured operators. Rendered uppercase.",
     },
+    "history.breakdown.pityCaption": {
+        text: "Pity",
+        description: "Tiny caption under the number on a 6-star pull's card: how many pulls it took since the previous 6-star on the same pity counter. Rendered uppercase, very short.",
+    },
+    "history.breakdown.pityLowerBound": {
+        text: "{count}+",
+        description: "The pity number when earlier pulls are missing from the history, so the real count is at least this, e.g. '42+'. Very short.",
+    },
+    "history.breakdown.pityAt": {
+        text: "6★ at pull {count}",
+        description: "Tooltip and screen-reader text for a 6-star pull's pity number: it came on the {count}th pull since the previous 6-star on the same pity counter.",
+    },
+    "history.breakdown.pityAtLeast": {
+        text: "6★ at pull {count} or later. Earlier pulls are not in this history.",
+        description: "Same as the pity tooltip, for a pull whose earlier pulls are missing from the history, so {count} is only a lower bound.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

@@ -1,5 +1,5 @@
 import { scopeFor } from "#/components/tools/release/impl/pulls/rates";
-import type { IBanner, IGachaItem } from "#/lib/api/gacha";
+import { classifyClientGachaGroup, type IBanner, type IGachaItem } from "#/lib/api/gacha";
 
 /**
  * Pool-id prefixes of the isolated pools that land in the Standard or Kernel bucket,
@@ -68,4 +68,71 @@ export function pityWithLimitedReset(items: IGachaItem[], bannersById: Map<strin
         return { pity: 0, reset: true, resetReason: banner.gachaPoolName };
     }
     return { pity: computePity(items.filter((item) => item.poolId === lastPullPoolId)), reset: false };
+}
+
+/**
+ * The pity counter a pull rolls on: the shared Standard or Kernel counter, or the
+ * pool's own (Limited, Collab and every isolated pool). With no banner entry the
+ * pull's bucket decides, as `classifyClientGachaGroup` sorts it.
+ */
+export function pityCounterKey(item: IGachaItem, bannersById: Map<string, IBanner>): string {
+    if (isIsolatedPull(item, bannersById)) return `pool:${item.poolId}`;
+    const banner = bannersById.get(item.poolId);
+    if (banner) {
+        const scope = scopeFor(banner.gachaRuleType);
+        return scope === "isolated" ? `pool:${item.poolId}` : scope;
+    }
+    const group = classifyClientGachaGroup(item);
+    if (group === "regular") return "standard";
+    if (group === "special") return "kernel";
+    return `pool:${item.poolId}`;
+}
+
+export interface ISixStarPity {
+    /** Pulls on the counter since its previous 6*, this pull included. */
+    count: number;
+    /**
+     * False when the counter's earlier pulls may be missing from the history, so
+     * `count` is a lower bound. That is the first 6* on a shared counter (it carries
+     * from the account's first pull), and the first on a pool that opened before the
+     * history begins.
+     */
+    exact: boolean;
+}
+
+/**
+ * Every 6* pull's pity count, keyed by the pull object itself.
+ *
+ * Order inside a ten-pull: its ten rows share one `at`, and the wire lists them
+ * newest first, like the rest of the history (the backend sorts by `at` DESC, then
+ * `batch_index` ASC, the Yostar row order). Measured on local Postgres (2026-10-15,
+ * 5,429 runs between 6* pulls): read newest first, the run lengths follow the game's
+ * 50/99 curve (one run past 75 against 0.3 expected); read oldest first they do not
+ * (32 runs past 75, and 41 to 50 overfilled by 290). So the chronological order is
+ * `at` ascending, and inside one `at` the reverse of the input order.
+ */
+export function sixStarPityCounts(items: IGachaItem[], bannersById: Map<string, IBanner>): Map<IGachaItem, ISixStarPity> {
+    const chronological = items.map((item, index) => ({ item, index })).sort((a, b) => a.item.at - b.item.at || b.index - a.index);
+    const historyStart = chronological.length > 0 ? chronological[0].item.at : 0;
+    const counters = new Map<string, { count: number; seenSixStar: boolean }>();
+    const result = new Map<IGachaItem, ISixStarPity>();
+    for (const { item } of chronological) {
+        const key = pityCounterKey(item, bannersById);
+        const counter = counters.get(key) ?? { count: 0, seenSixStar: false };
+        counter.count++;
+        if (item.star === "6") {
+            let exact = counter.seenSixStar;
+            if (!exact && key.startsWith("pool:")) {
+                // A pool's counter starts at its opening, so a history that begins
+                // earlier holds every pull on it.
+                const openTime = bannersById.get(item.poolId)?.openTime ?? 0;
+                exact = openTime > 0 && historyStart < openTime * 1000;
+            }
+            result.set(item, { count: counter.count, exact });
+            counter.count = 0;
+            counter.seenSixStar = true;
+        }
+        counters.set(key, counter);
+    }
+    return result;
 }

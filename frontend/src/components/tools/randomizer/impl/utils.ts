@@ -7,6 +7,7 @@ import type { IStage, IZone, StageClearsMap } from "#/types/stages";
 import { getActivityIdFromZoneId, getPermanentEventInfo, getPermanentZonePrefix, type IActivityLookup, isActivityCurrentlyOpen } from "./activity-lookup";
 import { CHALLENGES } from "./challenges";
 import { UNPLAYABLE_OPERATOR_IDS } from "./constants";
+import { type ITierIndex, passesTierFilter } from "./tier-filter";
 import type { IChallenge, IRandomizerOperator, IRandomizerSettings, IRosterIndex } from "./types";
 import type { messages as utilMessages } from "./utils.messages";
 
@@ -97,13 +98,15 @@ export function applyProfileGate(settings: IRandomizerSettings, { hasProfile, ha
     return settings;
 }
 
-export function selectAvailableOperators(operators: IRandomizerOperator[], settings: IRandomizerSettings, rosterIndex: IRosterIndex): IRandomizerOperator[] {
+/** `tierIndex` is the chosen official list, or `null` when none is chosen or it has not loaded (filter off). */
+export function selectAvailableOperators(operators: IRandomizerOperator[], settings: IRandomizerSettings, rosterIndex: IRosterIndex, tierIndex: ITierIndex | null = null): IRandomizerOperator[] {
     return operators.filter((op) => {
         if (!settings.allowedRarities.includes(op.rarity)) return false;
         if (!settings.allowedClasses.includes(op.profession)) return false;
         if (settings.hideUnplayableOperators && UNPLAYABLE_OPERATOR_IDS.has(op.id)) return false;
         if (settings.onlyOwnedOperators && !rosterIndex.owned.has(op.id)) return false;
-        if (settings.onlyE2Operators && !rosterIndex.e2.has(op.id)) return false;
+        if (settings.onlyE2Operators && (!settings.e2SixStarOnly || op.rarity === 6) && !rosterIndex.e2.has(op.id)) return false;
+        if (!passesTierFilter(op.id, tierIndex, settings.deselectedTierIds)) return false;
         return true;
     });
 }

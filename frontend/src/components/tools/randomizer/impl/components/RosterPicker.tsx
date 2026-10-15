@@ -28,11 +28,13 @@ interface IRosterPickerProps {
     rosterIndex: IRosterIndex;
     hasProfile: boolean;
     settings: IRandomizerSettings;
+    /** The official tier list's title while it narrows the pool, `null` otherwise. */
+    tierFilterTitle: string | null;
 }
 
 const RARITY_SORT: Record<OperatorRarity, number> = { 6: 0, 5: 1, 4: 2, 3: 3, 2: 4, 1: 5 };
 
-export function RosterPicker({ allOperators, visibleOperators, selected, isExplicit, onChange, onReset, rosterIndex, hasProfile, settings }: IRosterPickerProps): React.ReactElement {
+export function RosterPicker({ allOperators, visibleOperators, selected, isExplicit, onChange, onReset, rosterIndex, hasProfile, settings, tierFilterTitle }: IRosterPickerProps): React.ReactElement {
     const t: RosterT = useT("tools");
     const [query, setQuery] = React.useState("");
 
@@ -101,7 +103,7 @@ export function RosterPicker({ allOperators, visibleOperators, selected, isExpli
 
     const filteredClassCount = ALL_CLASSES.length - settings.allowedClasses.length;
     const filteredRarityCount = ALL_RARITIES.length - settings.allowedRarities.length;
-    const hasActiveFilters = filteredClassCount > 0 || filteredRarityCount > 0 || settings.onlyOwnedOperators || settings.onlyE2Operators;
+    const hasActiveFilters = filteredClassCount > 0 || filteredRarityCount > 0 || settings.onlyOwnedOperators || settings.onlyE2Operators || tierFilterTitle !== null;
 
     const hiddenCount = allOperators.length - visibleOperators.length;
 
@@ -117,7 +119,7 @@ export function RosterPicker({ allOperators, visibleOperators, selected, isExpli
 
     return (
         <div className="flex h-full flex-col gap-3">
-            {hasActiveFilters && <ActiveFiltersHint settings={settings} hiddenCount={hiddenCount} />}
+            {hasActiveFilters && <ActiveFiltersHint settings={settings} hiddenCount={hiddenCount} tierFilterTitle={tierFilterTitle} />}
 
             <div className="flex items-center gap-2">
                 <div className="relative min-w-0 flex-1">
@@ -221,7 +223,7 @@ export function RosterPicker({ allOperators, visibleOperators, selected, isExpli
     );
 }
 
-function ActiveFiltersHint({ settings, hiddenCount }: { settings: IRandomizerSettings; hiddenCount: number }) {
+function ActiveFiltersHint({ settings, hiddenCount, tierFilterTitle }: { settings: IRandomizerSettings; hiddenCount: number; tierFilterTitle: string | null }) {
     const t: RosterT = useT("tools");
     const rt: RosterRichT = useRichT("tools");
     const excludedClasses = ALL_CLASSES.filter((c) => !settings.allowedClasses.includes(c));
@@ -230,8 +232,9 @@ function ActiveFiltersHint({ settings, hiddenCount }: { settings: IRandomizerSet
     const parts: string[] = [];
     if (excludedRarities.length > 0) parts.push(excludedRarities.map((r) => t("randomizer.roster.rarityChip", { rarity: r })).join(", "));
     if (excludedClasses.length > 0) parts.push(excludedClasses.map((c) => CLASS_LABEL[c]).join(", "));
-    if (settings.onlyE2Operators) parts.push(t("randomizer.roster.filter.e2"));
+    if (settings.onlyE2Operators) parts.push(settings.e2SixStarOnly ? t("randomizer.roster.filter.e2SixStar") : t("randomizer.roster.filter.e2"));
     else if (settings.onlyOwnedOperators) parts.push(t("randomizer.roster.filter.owned"));
+    if (tierFilterTitle) parts.push(t("randomizer.roster.filter.tier", { list: tierFilterTitle }));
 
     return (
         <div className="flex items-start gap-2 rounded-md border border-border/60 bg-accent/30 px-3 py-2 text-[11.5px] text-muted-foreground leading-snug">

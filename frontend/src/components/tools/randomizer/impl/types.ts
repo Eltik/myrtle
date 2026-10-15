@@ -30,6 +30,12 @@ export interface IRandomizerSettings {
     onlyCompletedStages: boolean;
     onlyAvailableStages: boolean;
     onlyE2Operators: boolean;
+    /** Narrows the E2 rule to 6★; an owned operator of a lower rarity then passes it at any promotion. */
+    e2SixStarOnly: boolean;
+    /** Official tier list the pool is filtered by; `null` = no tier filter. */
+    tierListSlug: string | null;
+    /** Tier ids (or `UNRANKED_TIER_ID`) left out of the pool. Stored as exclusions so a tier added later is included. */
+    deselectedTierIds: string[];
     /** Stage IDs the user has explicitly opted out of. Empty = all stages allowed. */
     deselectedStageIds: string[];
 }

@@ -12,6 +12,7 @@ import type { IOperatorIndexEntry } from "#/types/operators";
 import { BANNER_GROUP_LABEL_KEYS, BANNER_RULE_TYPE_LABEL_KEYS, BANNER_STATUS_COLOR, BANNER_STATUS_LABEL_KEYS, bannerStatus, type GachaMessageKey } from "../../constants";
 import type { messages as gachaConstantsMessages } from "../../constants.messages";
 import type { messages } from "./BannerBreakdown.messages";
+import { type ISixStarPity, sixStarPityCounts } from "./pity";
 
 /** Own chrome plus the shared banner bucket, status and rule-type labels. */
 type BreakdownT = TypedT<typeof messages & typeof gachaConstantsMessages>;
@@ -24,6 +25,17 @@ interface IBannerBreakdownProps {
 }
 
 const FEATURED_AVATAR_CAP = 6;
+
+/** Every counter here runs the 50/99 curve; the colors are PityPanel's soft-pity and near-guaranteed tones. */
+const SOFT_PITY_AT = 50;
+const NEAR_HARD_PITY_AT = 94;
+
+function pityColorClass({ count, exact }: ISixStarPity): string {
+    if (!exact) return "text-muted-foreground";
+    if (count >= NEAR_HARD_PITY_AT) return "text-[oklch(0.78_0.18_25)]";
+    if (count >= SOFT_PITY_AT) return "text-[oklch(0.78_0.18_80)]";
+    return "text-foreground";
+}
 
 interface IBannerStat {
     poolId: string;
@@ -212,11 +224,11 @@ function BannerNameCell({ banner, name, typeColor, typeLabelKey, sixStars, fiveS
 }
 
 /**
- * The 6★ operators one banner gave the player, revealed under its row. No pull
- * number per operator: a ten-pull shares one timestamp, so the order inside it
- * is not recoverable and any "pull #N" could be off by up to nine.
+ * The 6★ operators one banner gave the player, revealed under its row, each with
+ * its pity count: pulls since the previous 6★ on the same counter, which for
+ * Standard and Kernel carries across banners (see `sixStarPityCounts`).
  */
-function SixStarPulls({ pulls, banner, operatorsById }: { pulls: IGachaItem[]; banner: IBanner | undefined; operatorsById: Map<string, IOperatorIndexEntry> }) {
+function SixStarPulls({ pulls, pityByPull, banner, operatorsById }: { pulls: IGachaItem[]; pityByPull: Map<IGachaItem, ISixStarPity>; banner: IBanner | undefined; operatorsById: Map<string, IOperatorIndexEntry> }) {
     const t: BreakdownT = useT("gacha");
     const f = useFormatters();
     const ringColor = rarityStarColor(6);
@@ -232,10 +244,11 @@ function SixStarPulls({ pulls, banner, operatorsById }: { pulls: IGachaItem[]; b
                 </p>
             ) : null}
             {/* Equal-width cells instead of a ragged wrap, so names line up and truncate at one width. */}
-            <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(10.5rem,1fr))] gap-1.5 p-0">
+            <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] gap-1.5 p-0">
                 {pulls.map((item, i) => {
                     const name = item.charName || operatorsById.get(item.charId)?.name || item.charId;
                     const isFeatured = featured?.has(item.charId) ?? null;
+                    const pity = pityByPull.get(item);
                     return (
                         // biome-ignore lint/suspicious/noArrayIndexKey: the same operator can land twice in one ten-pull
                         <li key={`${item.charId}-${item.at}-${i}`} className="flex min-w-0 items-center gap-2 rounded-lg border border-border/60 bg-card py-1.5 pr-2.5 pl-1.5">
@@ -255,6 +268,17 @@ function SixStarPulls({ pulls, banner, operatorsById }: { pulls: IGachaItem[]; b
                                     )}
                                 </span>
                             </span>
+                            {pity ? (
+                                <span className="ml-auto flex shrink-0 flex-col items-end gap-0.5 pl-1" title={t(pity.exact ? "history.breakdown.pityAt" : "history.breakdown.pityAtLeast", { count: pity.count })}>
+                                    <span className={`font-mono font-semibold text-[13px] tabular-nums leading-none ${pityColorClass(pity)}`} aria-hidden>
+                                        {pity.exact ? f.number(pity.count) : t("history.breakdown.pityLowerBound", { count: f.number(pity.count) })}
+                                    </span>
+                                    <span className="font-mono text-[9px] text-muted-foreground uppercase leading-none tracking-[0.14em]" aria-hidden>
+                                        {t("history.breakdown.pityCaption")}
+                                    </span>
+                                    <span className="sr-only">{t(pity.exact ? "history.breakdown.pityAt" : "history.breakdown.pityAtLeast", { count: pity.count })}</span>
+                                </span>
+                            ) : null}
                         </li>
                     );
                 })}
@@ -283,6 +307,10 @@ export function BannerBreakdown({ records, bannersById, operatorsById, isLoading
             ...groupByPool(records.special.records, "special", bannersById),
             ...groupByPool(records.boot.records, "boot", bannersById),
         ].sort((a, b) => b.lastPullAt - a.lastPullAt);
+    }, [records, bannersById]);
+    const pityByPull = useMemo(() => {
+        if (!records) return new Map<IGachaItem, ISixStarPity>();
+        return sixStarPityCounts([...records.limited.records, ...records.linkage.records, ...records.regular.records, ...records.special.records, ...records.boot.records], bannersById);
     }, [records, bannersById]);
 
     if (isLoading) {
@@ -380,7 +408,7 @@ export function BannerBreakdown({ records, bannersById, operatorsById, isLoading
                                     {isOpen ? (
                                         <tr id={panelId} className="not-last:border-border/50 not-last:border-b bg-muted/40">
                                             <td colSpan={5} className="px-2 pt-0.5 pb-3">
-                                                <SixStarPulls pulls={banner.sixStarPulls} banner={meta} operatorsById={operatorsById} />
+                                                <SixStarPulls pulls={banner.sixStarPulls} pityByPull={pityByPull} banner={meta} operatorsById={operatorsById} />
                                             </td>
                                         </tr>
                                     ) : null}
