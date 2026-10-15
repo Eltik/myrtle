@@ -55,6 +55,7 @@ use crate::core::startup;
 pub mod assets;
 pub mod enrich;
 pub mod profile;
+pub mod stale;
 pub mod story_sprites;
 pub mod tables;
 pub mod types;
@@ -524,9 +525,15 @@ pub fn init_game_data_with_art(
     for w in &warnings {
         tracing::warn!("{w}");
     }
+    // `data_dir` is `<server>/gamedata/excel`; the unpacker writes its skip list one up.
+    let stale_tables = data_dir
+        .parent()
+        .map(stale::read_stale_tables)
+        .unwrap_or_default();
 
     let mut data = GameData {
         table_warnings: warnings,
+        stale_tables,
         operators,
         skills,
         materials,

@@ -3,17 +3,27 @@ name: Schema Watch
 # A game patch that changes a FlatBuffer schema makes the affected gamedata tables verify
 # under no schema. The unpacker then skips them and keeps the previous extraction, so the
 # site serves stale tables until the schemas are regenerated (CN 2.7.81 on 2026-10-09:
-# activity_table, building_data, roguelike_topic_table; the release planner went dark).
+# activity_table, building_data, roguelike_topic_table; EN 26-10-03 on 2026-10-14:
+# activity_table, so the release planner never saw Critical Phase Transition).
+#
+# Schemas come from two upstreams, both pinned submodules:
+#   assets/OpenArknightsFBS      CN
+#   assets/ArknightsFlatbuffers  Yostar (EN/JP/KR) variants, generated from the CN one
 #
 # This job closes that gap without a human in the loop up to the PR:
 #   1. download the live gamedata bundles of every server and run `unpacker verify`;
-#   2. if a table verifies under no schema, or upstream OpenArknightsFBS has moved past the
-#      pinned commit, bump the submodule, run generate-fbs and rebuild;
-#   3. verify again and extract CN gamedata as a smoke test;
-#   4. open (or update) a PR with the before/after matrix.
-# Merging the PR and running `vps-update.sh` rebuilds the unpacker on the VPS (it rebuilds on
-# any assets/OpenArknightsFBS change), and the watcher re-extracts because the new binary is
-# newer than `.last_extract`.
+#   2. if a table verifies under no schema, or either upstream has moved past its pinned
+#      commit, bring both to upstream HEAD, run generate-fbs and rebuild;
+#   3. verify again: a table that verified before and fails now is a REGRESSION and stops
+#      the job; a table upstream has not fixed yet is only a warning, so one lagging server
+#      never blocks a fix for the others (EN was fixed upstream on 2026-10-09 but sat
+#      unshipped for days because JP/KR still failed);
+#   4. extract every server's gamedata as a smoke test;
+#   5. open (or update) a PR with the before/after matrix;
+#   6. run Assets CI on the PR head and squash-merge it when green (the `automerge` job).
+# Auto-merge kill switch: set the repository variable SCHEMA_WATCH_AUTOMERGE=false and the PR
+# waits for a human instead. Needs "Allow GitHub Actions to create and approve pull requests"
+# (Settings > Actions > General), or the PR step fails.
 
 on:
   schedule:
@@ -39,12 +49,17 @@ env:
   # different flatc differs line for line.
   FLATC_VERSION: "25.12.19"
   SERVERS: "cn en jp kr"
+  SCHEMA_REPOS: "OpenArknightsFBS ArknightsFlatbuffers"
 
 jobs:
   watch:
     name: Detect schema drift and regenerate
     runs-on: ubuntu-latest
     timeout-minutes: 150
+    outputs:
+      pr-number: ${{ steps.pr.outputs.pull-request-number }}
+      pr-operation: ${{ steps.pr.outputs.pull-request-operation }}
+      pr-sha: ${{ steps.pr.outputs.pull-request-head-sha }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -76,29 +91,36 @@ jobs:
       - name: Verify with the pinned schemas
         id: before
         run: |
-          mkdir -p "$RUNNER_TEMP/verify/before"
+          dir="$RUNNER_TEMP/verify/before"
+          mkdir -p "$dir"
           broken=0
           for s in $SERVERS; do
-            out="$RUNNER_TEMP/verify/before/$s.txt"
-            assets/unpacker/target/release/unpacker verify -i "$RUNNER_TEMP/ark/$s" > "$out" 2>&1
-            n=$(grep -c 'chosen: none' "$out" || true)
-            echo "$s: $n table(s) verify under no schema"
-            grep 'chosen: none' "$out" || true
+            assets/unpacker/target/release/unpacker verify -i "$RUNNER_TEMP/ark/$s" > "$dir/$s.txt" 2>&1
+            { grep 'chosen: none' "$dir/$s.txt" || true; } | awk '{print $1}' | sort > "$dir/$s.names"
+            n=$(wc -l < "$dir/$s.names")
+            echo "$s: $n table(s) verify under no schema" $(cat "$dir/$s.names")
             broken=$((broken + n))
           done
           echo "broken=$broken" >> "$GITHUB_OUTPUT"
 
       - name: Check upstream schemas
         id: upstream
-        working-directory: assets/OpenArknightsFBS
+        # Commit subjects are third-party text: they go to a file, never into an expression,
+        # where they would run as shell with this job's write token.
         run: |
-          git fetch --quiet origin main
-          pinned=$(git rev-parse HEAD)
-          latest=$(git rev-parse FETCH_HEAD)
-          echo "pinned=$pinned" >> "$GITHUB_OUTPUT"
-          echo "latest=$latest" >> "$GITHUB_OUTPUT"
-          echo "subject=$(git log -1 --format=%s FETCH_HEAD)" >> "$GITHUB_OUTPUT"
-          if [ "$pinned" = "$latest" ]; then echo "moved=false" >> "$GITHUB_OUTPUT"; else echo "moved=true" >> "$GITHUB_OUTPUT"; fi
+          moved=false
+          : > "$RUNNER_TEMP/upstream.md"
+          for repo in $SCHEMA_REPOS; do
+            d="assets/$repo"
+            git -C "$d" fetch --quiet --depth 1 origin HEAD
+            pinned=$(git -C "$d" rev-parse HEAD)
+            latest=$(git -C "$d" rev-parse FETCH_HEAD)
+            [ "$pinned" = "$latest" ] || moved=true
+            printf -- '- %s: `%.7s` -> `%.7s` (%s)\n' "$repo" "$pinned" "$latest" \
+              "$(git -C "$d" log -1 --format=%s FETCH_HEAD)" >> "$RUNNER_TEMP/upstream.md"
+          done
+          cat "$RUNNER_TEMP/upstream.md"
+          echo "moved=$moved" >> "$GITHUB_OUTPUT"
 
       - name: Decide
         id: decide
@@ -110,7 +132,7 @@ jobs:
           if [ "$BROKEN" != "0" ] || [ "$MOVED" = "true" ] || [ "$FORCE" = "true" ]; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
-            echo "Every table verifies and upstream is at the pinned commit; nothing to do."
+            echo "Every table verifies and both upstreams are at the pinned commits; nothing to do."
             echo "run=false" >> "$GITHUB_OUTPUT"
           fi
 
@@ -130,43 +152,49 @@ jobs:
 
       - name: Bump schemas and regenerate
         if: steps.decide.outputs.run == 'true'
-        env:
-          LATEST: ${{ steps.upstream.outputs.latest }}
+        # generate-fbs brings both submodules to upstream HEAD (fetch + detach, safe on this
+        # shallow, detached checkout) before generating.
         run: |
-          git -C assets/OpenArknightsFBS checkout --quiet "$LATEST"
           cargo run --release --manifest-path assets/unpacker/Cargo.toml --bin generate-fbs
           cargo fmt --manifest-path assets/unpacker/Cargo.toml
           cargo build --release --manifest-path assets/unpacker/Cargo.toml --bin unpacker
 
       - name: Verify with the regenerated schemas
         if: steps.decide.outputs.run == 'true'
-        env:
-          LATEST: ${{ steps.upstream.outputs.latest }}
         run: |
-          mkdir -p "$RUNNER_TEMP/verify/after"
-          broken=0
+          before="$RUNNER_TEMP/verify/before"
+          after="$RUNNER_TEMP/verify/after"
+          mkdir -p "$after"
+          regressed=0
+          : > "$RUNNER_TEMP/matrix.md"
           for s in $SERVERS; do
-            out="$RUNNER_TEMP/verify/after/$s.txt"
-            assets/unpacker/target/release/unpacker verify -i "$RUNNER_TEMP/ark/$s" > "$out" 2>&1
-            n=$(grep -c 'chosen: none' "$out" || true)
-            echo "$s: $n table(s) verify under no schema"
-            grep 'chosen: none' "$out" || true
-            broken=$((broken + n))
+            assets/unpacker/target/release/unpacker verify -i "$RUNNER_TEMP/ark/$s" > "$after/$s.txt" 2>&1
+            { grep 'chosen: none' "$after/$s.txt" || true; } | awk '{print $1}' | sort > "$after/$s.names"
+            new=$(comm -13 "$before/$s.names" "$after/$s.names" | xargs)
+            still=$(comm -12 "$before/$s.names" "$after/$s.names" | xargs)
+            fixed=$(comm -23 "$before/$s.names" "$after/$s.names" | xargs)
+            echo "| $s | ${fixed:--} | ${still:--} | ${new:--} |" >> "$RUNNER_TEMP/matrix.md"
+            if [ -n "$new" ]; then
+              echo "::error::$s: verified under the pinned schemas but fails after regenerating: $new"
+              regressed=1
+            fi
+            if [ -n "$still" ]; then
+              echo "::warning::$s: still verifies under no schema (upstream has not caught up; the VPS keeps the previous extraction): $still"
+            fi
           done
-          if [ "$broken" != "0" ]; then
-            echo "::error::$broken table(s) still verify under no schema after regenerating from upstream $LATEST. Upstream has not caught up with the live client yet; the VPS keeps serving the previous extraction meanwhile."
-            exit 1
-          fi
+          cat "$RUNNER_TEMP/matrix.md"
+          exit "$regressed"
 
-      - name: Smoke-extract CN gamedata
+      - name: Smoke-extract every server's gamedata
         if: steps.decide.outputs.run == 'true'
         run: |
-          idx=$(ls "$RUNNER_TEMP"/ark/cn/*.idx | head -1)
-          assets/unpacker/target/release/unpacker extract -i "$RUNNER_TEMP/ark/cn" \
-            -o "$RUNNER_TEMP/out/cn" --gamedata --idx "$idx"
-          python3 -I - "$RUNNER_TEMP/out/cn/gamedata/excel" <<'PY'
+          for s in $SERVERS; do
+            idx=$(ls "$RUNNER_TEMP"/ark/$s/*.idx | head -1)
+            assets/unpacker/target/release/unpacker extract -i "$RUNNER_TEMP/ark/$s" \
+              -o "$RUNNER_TEMP/out/$s" --gamedata --idx "$idx"
+            python3 -I - "$s" "$RUNNER_TEMP/out/$s/gamedata/excel" "$RUNNER_TEMP/verify/after/$s.names" <<'PY'
           import json, pathlib, sys
-          d = pathlib.Path(sys.argv[1])
+          server, d, skipped = sys.argv[1], pathlib.Path(sys.argv[2]), set(pathlib.Path(sys.argv[3]).read_text().split())
           files = sorted(d.glob("*.json"))
           bad = []
           for f in files:
@@ -174,48 +202,90 @@ jobs:
               json.loads(text)
               if "\\u0000" in text:
                   bad.append(f.name)
-          print(f"{len(files)} tables parse as JSON")
-          for need in ("activity_table", "building_data", "roguelike_topic_table", "character_table"):
-              if not (d / f"{need}.json").exists():
-                  sys.exit(f"missing {need}.json")
+          print(f"{server}: {len(files)} tables parse as JSON")
+          # A table upstream has not fixed yet is skipped by design; every other must exist.
+          for need in ("activity_table", "building_data", "roguelike_topic_table", "character_table", "skin_table"):
+              if need not in skipped and not (d / f"{need}.json").exists():
+                  sys.exit(f"{server}: missing {need}.json")
           if bad:
-              sys.exit(f"escaped NULs (a misaligned decode) in: {', '.join(bad)}")
+              sys.exit(f"{server}: escaped NULs (a misaligned decode) in: {', '.join(bad)}")
           PY
+          done
 
       - name: Summarise
         if: steps.decide.outputs.run == 'true'
-        # The subject is the latest commit title of a third-party repository. Expanding it as
-        # an expression inside the script would let that title run as shell with this job's
-        # write token, so every step output reaches the script through env and is quoted.
-        env:
-          PINNED: ${{ steps.upstream.outputs.pinned }}
-          LATEST: ${{ steps.upstream.outputs.latest }}
-          SUBJECT: ${{ steps.upstream.outputs.subject }}
         run: |
           {
-            echo "Upstream OpenArknightsFBS: \`$PINNED\` -> \`$LATEST\` ($SUBJECT)"
+            echo "Upstream schemas:"
             echo
-            echo "Tables that verified under no schema before regenerating:"
+            cat "$RUNNER_TEMP/upstream.md"
             echo
-            echo '```'
-            cat "$RUNNER_TEMP"/verify/before/*.txt | grep 'chosen: none' || echo "(none)"
-            echo '```'
+            echo "| server | fixed | still failing (upstream lag) | regressed |"
+            echo "|---|---|---|---|"
+            cat "$RUNNER_TEMP/matrix.md"
             echo
-            echo "After regenerating, every table on $SERVERS verifies, and a CN gamedata extract parses as JSON with no escaped NULs."
+            echo "Every server's gamedata extracts and parses as JSON with no escaped NULs. A table still failing keeps its previous extraction on the VPS until upstream catches up."
             echo
             echo "After merging, run \`vps-update.sh\` on the VPS: it rebuilds the unpacker, and the watcher re-extracts because the binary is newer than \`.last_extract\`."
           } > "$RUNNER_TEMP/pr-body.md"
           cat "$RUNNER_TEMP/pr-body.md" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Open PR
+        id: pr
         if: steps.decide.outputs.run == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
           branch: schema-watch/fbs-bump
-          title: "chore(unpacker): regenerate FlatBuffer schemas (${{ steps.upstream.outputs.subject }})"
-          commit-message: "chore(unpacker): regenerate FlatBuffer schemas (${{ steps.upstream.outputs.subject }})"
+          title: "chore(unpacker): regenerate FlatBuffer schemas from upstream"
+          commit-message: "chore(unpacker): regenerate FlatBuffer schemas from upstream"
           body-path: ${{ runner.temp }}/pr-body.md
           add-paths: |
             assets/OpenArknightsFBS
+            assets/ArknightsFlatbuffers
             assets/unpacker/src
           delete-branch: true
+
+  # A PR opened with GITHUB_TOKEN triggers no pull_request workflows, so Assets CI would never
+  # run on it. workflow_dispatch is the one event GITHUB_TOKEN may start, so this job
+  # dispatches Assets CI on the PR branch, waits for that exact commit's run, and merges only
+  # that commit (--match-head-commit: a push after the run started aborts the merge). Required
+  # status checks would do the same for every PR, but Assets CI is path-filtered and would
+  # leave unrelated PRs waiting forever.
+  automerge:
+    name: Merge once Assets CI passes
+    needs: watch
+    if: >-
+      needs.watch.outputs.pr-number != '' &&
+      needs.watch.outputs.pr-operation != 'closed' &&
+      vars.SCHEMA_WATCH_AUTOMERGE != 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      actions: write
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      BRANCH: schema-watch/fbs-bump
+      PR: ${{ needs.watch.outputs.pr-number }}
+      SHA: ${{ needs.watch.outputs.pr-sha }}
+    steps:
+      - name: Run Assets CI on the PR head
+        run: |
+          started=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          gh workflow run assets-ci.yml --ref "$BRANCH"
+          id=""
+          for _ in $(seq 1 30); do
+            sleep 10
+            id=$(gh run list --workflow assets-ci.yml --branch "$BRANCH" --event workflow_dispatch \
+              --json databaseId,headSha,createdAt \
+              --jq "[.[] | select(.headSha == \"$SHA\" and .createdAt >= \"$started\")][0].databaseId // empty")
+            [ -n "$id" ] && break
+          done
+          test -n "$id" || { echo "::error::the dispatched Assets CI run for $SHA never appeared"; exit 1; }
+          echo "Assets CI: $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$id"
+          gh run watch "$id" --exit-status --interval 60 > /dev/null
+
+      - name: Merge
+        run: gh pr merge "$PR" --squash --delete-branch --match-head-commit "$SHA"

@@ -170,6 +170,11 @@ pub struct GameData {
     /// with only a `tracing::warn!` to show for it. Retained here so `/health` can
     /// report them and a reload can alert on them.
     pub table_warnings: Vec<String>,
+    /// Tables the unpacker SKIPPED on the last extract because they verified under
+    /// no schema, so the file on disk is an earlier extract's and parses cleanly.
+    /// Disjoint in kind from `table_warnings`: those are empty, these are old. Read
+    /// from `gamedata/.skipped.json`, see [`crate::core::gamedata::stale`].
+    pub stale_tables: Vec<crate::core::gamedata::stale::StaleTable>,
 }
 
 impl GameData {

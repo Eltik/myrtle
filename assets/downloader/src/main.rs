@@ -175,7 +175,7 @@ async fn run_download(
 
     let downloader = Arc::new(download::Downloader::new(
         server,
-        ver.res_version,
+        ver.res_version.clone(),
         cli.threads,
     ));
     let stats = pipeline::run(downloader, tasks, cli.savedir.clone(), &mut manifest).await?;
@@ -184,6 +184,18 @@ async fn run_download(
         "Done: {} downloaded, {} failed, {} bytes",
         stats.downloaded, stats.failed, stats.total_bytes
     );
+
+    // The version these bundles ARE, for the unpacker's `.skipped.json`. `.version`
+    // can't serve: `run.mjs` writes it only after a successful extract, so during
+    // the extract it still names the previous one. Only a complete download is
+    // one version; after a partial one the old stamp stays, which is still right
+    // for the bundles the unpacker will read.
+    if stats.failed == 0 {
+        std::fs::write(
+            cli.savedir.join(".downloaded_version"),
+            format!("{}\n", ver.res_version),
+        )?;
+    }
 
     Ok(())
 }

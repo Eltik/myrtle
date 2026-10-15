@@ -21171,18 +21171,33 @@
       },
       "GameDataHealth": {
         "type": "object",
-        "description": "Tables that fell back to an empty default on the most recent load, per server.\n\nDoes NOT flip the top-level `status`: a degraded table is a data problem, not an\navailability one, and paging an uptime monitor for a cosmetic table would train\neveryone to ignore it.",
+        "description": "Game data problems from the most recent load, per server. Two kinds, kept apart:\n\n- `degraded` / `tables`: a table failed to DESERIALIZE and fell back to an empty\n  default, so the site serves nothing where that table's content should be.\n- `stale`: a table the unpacker SKIPPED because it verified under no schema, so\n  the file on disk is an earlier extract's. It parses and serves plausible data\n  that is missing whatever the newer patch added. Never counted in `degraded`.\n\nNeither flips the top-level `status`: both are data problems, not availability\nones, and paging an uptime monitor for a cosmetic table would train everyone to\nignore it.",
         "required": [
           "degraded",
-          "tables"
+          "tables",
+          "stale"
         ],
         "properties": {
           "degraded": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "True when any server has a table in `tables`. Says nothing about `stale`."
+          },
+          "stale": {
+            "type": "object",
+            "description": "`{ \"en\": [{ \"table\": \"activity_table\", \"since\": ..., \"resVersion\": ... }] }`,\ntables served from an earlier extract since `since`. Absent servers are\ncurrent, or predate the unpacker's `gamedata/.skipped.json`.",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/StaleTable"
+              }
+            },
+            "propertyNames": {
+              "type": "string"
+            }
           },
           "tables": {
             "type": "object",
-            "description": "`{ \"cn\": [\"item_table: ...\", ...] }`. Absent servers loaded cleanly.",
+            "description": "`{ \"cn\": [\"item_table: ...\", ...] }`, tables that fell back to an empty\ndefault. Absent servers loaded cleanly.",
             "additionalProperties": {
               "type": "array",
               "items": {
@@ -28844,6 +28859,31 @@
           "stateMax": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "StaleTable": {
+        "type": "object",
+        "description": "One table the last extract skipped.",
+        "required": [
+          "table",
+          "since"
+        ],
+        "properties": {
+          "resVersion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The resource version whose bundles failed to verify (the downloader's\n`.downloaded_version`); absent when the input was not fetched by it."
+          },
+          "since": {
+            "type": "string",
+            "description": "RFC 3339 UTC of the first extract that skipped it; every extract since has too."
+          },
+          "table": {
+            "type": "string",
+            "description": "The table's file stem, e.g. `activity_table`."
           }
         }
       },

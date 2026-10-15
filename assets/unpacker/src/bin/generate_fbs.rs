@@ -53,12 +53,43 @@ struct ParsedStruct {
     root_fn_name: Option<String>, // e.g. "root_as_clz_torappu_stage_table_unchecked"
 }
 
-fn is_folder_a_git_repo(p: &Path) -> anyhow::Result<bool> {
-    Ok(Command::new("git")
-        .args(["rev-parse", "--is-inside-work-tree"])
-        .current_dir(p)
-        .status()?
-        .success())
+/// Brings a schema submodule to upstream HEAD, or clones it when absent.
+///
+/// `fetch` + `checkout --detach`, never `pull --rebase`: both repos are pinned
+/// submodules, so the checkout is detached (CI's is also shallow), and a rebase
+/// there either has no branch to rebase or replays the pinned commit onto an
+/// unrelated upstream history and stops on add/add conflicts.
+///
+/// A submodule checkout has a `.git` file; an uninitialised one is an empty
+/// directory inside the parent work tree, where `git rev-parse` answers for the
+/// PARENT repo, so the old `--is-inside-work-tree` probe would have run git
+/// against the parent.
+fn sync_schema_repo(name: &str, url: &str, repo_dir: &Path) -> anyhow::Result<()> {
+    let git = |args: &[&str], dir: &Path| -> anyhow::Result<()> {
+        if !Command::new("git")
+            .args(args)
+            .current_dir(dir)
+            .status()?
+            .success()
+        {
+            bail!("{name}: `git {}` failed", args.join(" "));
+        }
+        Ok(())
+    };
+    if repo_dir.join(".git").exists() {
+        println!("Updating {name} to upstream HEAD...");
+        git(
+            &["fetch", "--quiet", "--depth", "1", "origin", "HEAD"],
+            repo_dir,
+        )?;
+        git(&["checkout", "--quiet", "--detach", "FETCH_HEAD"], repo_dir)?;
+    } else {
+        println!("Cloning {name}...");
+        let parent = repo_dir.parent().context("no parent dir")?;
+        let target = repo_dir.to_str().context("non-UTF-8 path")?;
+        git(&["clone", "--quiet", "--depth", "1", url, target], parent)?;
+    }
+    Ok(())
 }
 
 fn cn_schema_paths(script_dir: &Path) -> anyhow::Result<(PathBuf, PathBuf)> {
@@ -72,30 +103,11 @@ fn cn_schema_paths(script_dir: &Path) -> anyhow::Result<(PathBuf, PathBuf)> {
 }
 
 fn fetch_cn_schemas(repo_dir: &Path, fbs_dir: &Path) -> anyhow::Result<()> {
-    let status = if repo_dir.exists() && is_folder_a_git_repo(repo_dir)? {
-        println!("Updating OpenArknightsFBS...");
-        Command::new("git")
-            .args(["pull", "--rebase"])
-            .current_dir(repo_dir)
-            .status()?
-    } else {
-        // Try cloning it
-        println!("Cloning OpenArknightsFBS...");
-        Command::new("git")
-            .args([
-                "clone",
-                "--depth",
-                "1",
-                "https://github.com/MooncellWiki/OpenArknightsFBS.git",
-                repo_dir.to_str().unwrap(),
-            ])
-            .current_dir(repo_dir.parent().unwrap())
-            .status()?
-    };
-
-    if !status.success() {
-        bail!("Failed to clone OpenArknightsFBS");
-    }
+    sync_schema_repo(
+        "OpenArknightsFBS",
+        "https://github.com/MooncellWiki/OpenArknightsFBS.git",
+        repo_dir,
+    )?;
 
     if !fbs_dir.exists() {
         bail!("FBS directory not found: {}", fbs_dir.display());
@@ -346,32 +358,12 @@ fn yostar_schema_paths(script_dir: &Path) -> anyhow::Result<(PathBuf, PathBuf)> 
     Ok((repo_dir, fbs_dir))
 }
 
-/// Clones next to `OpenArknightsFBS` (gitignored), not into `/tmp`: `/tmp` is
-/// wiped on reboot and empty in every container build, so the clone was
-/// redone on almost every run.
 fn fetch_yostar_schemas(repo_dir: &Path, fbs_dir: &Path) -> anyhow::Result<()> {
-    let status = if repo_dir.exists() && is_folder_a_git_repo(repo_dir)? {
-        println!("Updating ArknightsFlatbuffers...");
-        Command::new("git")
-            .args(["pull", "--rebase"])
-            .current_dir(repo_dir)
-            .status()?
-    } else {
-        println!("Cloning ArknightsFlatbuffers...");
-        Command::new("git")
-            .args([
-                "clone",
-                "--depth",
-                "1",
-                "https://github.com/ArknightsAssets/ArknightsFlatbuffers.git",
-                repo_dir.to_str().unwrap(),
-            ])
-            .status()?
-    };
-
-    if !status.success() {
-        bail!("Failed to clone ArknightsFlatbuffers");
-    }
+    sync_schema_repo(
+        "ArknightsFlatbuffers",
+        "https://github.com/ArknightsAssets/ArknightsFlatbuffers.git",
+        repo_dir,
+    )?;
 
     println!("Yostar schemas: {}", fbs_dir.display());
 
