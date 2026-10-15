@@ -378,7 +378,7 @@ pub struct ScoreDimension {
     pub weight_share: f64,
     /// Rarity-weighted completion of this dimension (0.0-1.0).
     pub completion: f64,
-    /// `weight_share x completion` - contributions sum to `operator_grade`.
+    /// `weight_share x completion`; contributions sum to `operator_grade`.
     pub contribution: f64,
 }
 

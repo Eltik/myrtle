@@ -86,12 +86,12 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
     // Playing dynamic art is a global preference (localStorage) set from the
     // Appearance menu, not a per-page toggle. The L2D skeleton frames itself to
     // its own animation bounds (it's a different crop/composition than the static
-    // charart, so the two can't be reliably overlaid - the reference aklive2d
+    // charart, so the two can't be reliably overlaid; the reference aklive2d
     // renderer likewise shows no static). The static image is the load placeholder
     // and fades out once the animation is ready.
     const { dynamicArtwork } = useTheme();
     const dynSkel = dynamicFiles?.skel ?? null;
-    // Which dynamic skin has finished loading - so the static fades only once the
+    // Which dynamic skin has finished loading, so the static fades only once the
     // CURRENT skin's animation is ready (switching skins clears it automatically).
     const [readySkel, setReadySkel] = useState<string | null>(null);
     // The live renderer plays whenever a dynamic scene exists; skins without one
@@ -330,7 +330,6 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
     const [fit, setFit] = useState<{ zoom: number; panX: number; panY: number; width: number; height: number } | null>(null);
     const fitRef = useRef(fit);
     fitRef.current = fit;
-    /** The transform with its pan clamped to the container the content is shown in. */
     const clamped = useCallback((t: ITransform): ITransform => {
         const el = containerElRef.current;
         if (!el) return t;
@@ -467,6 +466,7 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
     const onDownload = useCallback(async () => {
         try {
             const res = await fetch(imageSrc);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const blob = await res.blob();
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
@@ -540,13 +540,10 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
                     <ToolButton onClick={() => zoomBy(-ZOOM_STEP)} disabled={transform.zoom <= minZoom} label={t("outfits.zoomOut")}>
                         <ZoomOut className="h-4 w-4" />
                     </ToolButton>
-                    <span
-                        className="min-w-12 select-none text-center font-mono text-muted-foreground text-xs"
-                        title={fit ? t("outfits.zoomTitle", { camera: (fit.zoom * baseScale).toFixed(3), width: Math.round(fit.width * baseScale), height: Math.round(fit.height * baseScale) }) : undefined}
-                        data-camera={dynamic ? `${transform.zoom},${Math.round(transform.pan.x)},${Math.round(transform.pan.y)}` : undefined}
-                    >
-                        {Math.round(transform.zoom * 100)}%
-                    </span>
+                    <Tooltip disabled={!fit}>
+                        <TooltipTrigger render={<span className="min-w-12 select-none text-center font-mono text-muted-foreground text-xs" data-camera={dynamic ? `${transform.zoom},${Math.round(transform.pan.x)},${Math.round(transform.pan.y)}` : undefined} />}>{Math.round(transform.zoom * 100)}%</TooltipTrigger>
+                        <TooltipPopup>{fit ? t("outfits.zoomTitle", { camera: (fit.zoom * baseScale).toFixed(3), width: Math.round(fit.width * baseScale), height: Math.round(fit.height * baseScale) }) : null}</TooltipPopup>
+                    </Tooltip>
                     <ToolButton onClick={() => zoomBy(ZOOM_STEP)} disabled={transform.zoom >= MAX_ZOOM} label={t("outfits.zoomIn")}>
                         <ZoomIn className="h-4 w-4" />
                     </ToolButton>
@@ -599,11 +596,11 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
                         style={dynamic ? undefined : { transform: `scale(${baseScale * transform.zoom}) translate(${transform.pan.x / (baseScale * transform.zoom)}px, ${transform.pan.y / (baseScale * transform.zoom)}px)` }}
                     >
                         {dynamic ? (
-                            // Fullscreen L2D with the game's authored (`_adjustes`) framing -
+                            // Fullscreen L2D with the game's authored (`_adjustes`) framing:
                             // the large, roughly-square viewport where the full-scene
                             // composition looks right (unlike the narrow card). It opens on the
                             // `contain` fit, the whole composition: the renderer's `height` default
-                            // under authored framing crops the sides of a wide dialog, which read as
+                            // under authored framing crops the sides of a wide dialog, which reads as
                             // "starts way too zoomed-in".
                             <SceneIllustPlayer files={dynamic.files} server={dynamic.server} framing="authored" fit={DEFAULT_SPINE_FIT} backdrop={imageSrc} onHandle={setHandle} />
                         ) : (

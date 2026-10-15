@@ -35,10 +35,11 @@ pub fn parse_operator_profile(
 /// first such reference that does not read `Unknown` for that field: those
 /// enums are mapped from the value's wording, which is as language-bound as
 /// the label, and they are facts rather than text. The first one whose
-/// bracketed lines number the same as the target's supplies the labels. EN alone matched 410 of 412 KR basic-info sections; Skadi (EN
-/// drops the `[Weight]` line the other three servers carry) and Wind Chimes
-/// (EN repeats `[Infection Status]`) match CN line for line, so passing CN
-/// second closes both.
+/// bracketed lines number the same as the target's supplies the labels. EN
+/// alone matched 410 of 412 KR basic-info sections; Skadi (EN drops the
+/// `[Weight]` line the other three servers carry) and Wind Chimes (EN repeats
+/// `[Infection Status]`) match CN line for line, so passing CN second closes
+/// both.
 ///
 /// Left alone: an operator no reference parsed (the robots, whose labels are
 /// a different schema on every server), and a profile the parser already read

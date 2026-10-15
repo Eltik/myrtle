@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use serenity::all::{GuildId, RoleId};
+use serenity::all::{GuildId, RoleId, UserId};
 use serenity::model::id::{ChannelId, MessageId};
 use sqlx::SqlitePool;
 use sqlx::sqlite::SqliteConnectOptions;
@@ -25,6 +25,25 @@ pub async fn init_pool(url: &str) -> Result<SqlitePool, Error> {
         .await
         .map_err(|e| format!("Failed to run migrations: {e}"))?;
     Ok(pool)
+}
+
+/// Run `sql`, a `DELETE ... WHERE guild_id = ?`, for `guild_id`. Returns the rows removed.
+async fn delete_guild_rows(
+    pool: &SqlitePool,
+    sql: &'static str,
+    guild_id: GuildId,
+) -> Result<u64, Error> {
+    let result = sqlx::query(sql)
+        .bind(guild_id.get().cast_signed())
+        .execute(pool)
+        .await?;
+    Ok(result.rows_affected())
+}
+
+/// A stored count or duration back as `u32`, saturating: only hand-editing the DB stores one
+/// out of range.
+fn u32_from_db(v: i64) -> u32 {
+    v.try_into().unwrap_or(u32::MAX)
 }
 
 /// Look up the configured auto-role for `guild_id`, if any.
@@ -101,11 +120,13 @@ pub async fn set_mod_role(
 
 /// Remove the moderator role for `guild_id`. Returns whether a row was removed.
 pub async fn clear_mod_role(pool: &SqlitePool, guild_id: GuildId) -> Result<bool, Error> {
-    let result = sqlx::query("DELETE FROM guild_mod_role WHERE guild_id = ?")
-        .bind(guild_id.get().cast_signed())
-        .execute(pool)
-        .await?;
-    Ok(result.rows_affected() > 0)
+    Ok(delete_guild_rows(
+        pool,
+        "DELETE FROM guild_mod_role WHERE guild_id = ?",
+        guild_id,
+    )
+    .await?
+        > 0)
 }
 
 pub struct ReactionRoleRow {
@@ -116,10 +137,13 @@ pub struct ReactionRoleRow {
     pub role_id: RoleId,
 }
 
-/// Insert or replace the role assigned when `emoji` is reacted on `message`.
+/// Insert or replace the role assigned when `emoji` is reacted on `message`. Returns whether a
+/// row was written.
 ///
 /// Re-running with the same `(message, emoji)` swaps the role rather than erroring, so admins
-/// can rebind an emoji without first removing the old mapping.
+/// can rebind an emoji without first removing the old mapping. The swap only applies to a
+/// binding `guild_id` owns: a `(message, emoji)` already bound by another guild is left as it
+/// is and `false` comes back.
 pub async fn add_reaction_role(
     pool: &SqlitePool,
     guild_id: GuildId,
@@ -127,11 +151,12 @@ pub async fn add_reaction_role(
     message_id: MessageId,
     emoji: &str,
     role_id: RoleId,
-) -> Result<(), Error> {
-    sqlx::query(
+) -> Result<bool, Error> {
+    let result = sqlx::query(
         "INSERT INTO guild_reaction_roles (guild_id, channel_id, message_id, emoji, role_id) \
          VALUES (?, ?, ?, ?, ?) \
-         ON CONFLICT(message_id, emoji) DO UPDATE SET role_id = excluded.role_id",
+         ON CONFLICT(message_id, emoji) DO UPDATE SET role_id = excluded.role_id \
+         WHERE guild_reaction_roles.guild_id = excluded.guild_id",
     )
     .bind(guild_id.get().cast_signed())
     .bind(channel_id.get().cast_signed())
@@ -140,25 +165,49 @@ pub async fn add_reaction_role(
     .bind(role_id.get().cast_signed())
     .execute(pool)
     .await?;
-    Ok(())
-}
-
-/// Delete a single `(message, emoji)` mapping. Returns whether a row was removed.
-pub async fn remove_reaction_role(
-    pool: &SqlitePool,
-    message_id: MessageId,
-    emoji: &str,
-) -> Result<bool, Error> {
-    let result = sqlx::query("DELETE FROM guild_reaction_roles WHERE message_id = ? AND emoji = ?")
-        .bind(message_id.get().cast_signed())
-        .bind(emoji)
-        .execute(pool)
-        .await?;
     Ok(result.rows_affected() > 0)
 }
 
-/// Delete every mapping attached to `message_id`. Used for `/reactionrole delete <message>`
-/// and as the response to a `MessageDelete` event for a tracked message.
+/// Delete `guild_id`'s single `(message, emoji)` mapping. Returns whether a row was removed.
+///
+/// Scoped to the guild: a moderator naming another server's message id removes nothing.
+pub async fn remove_reaction_role(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+    message_id: MessageId,
+    emoji: &str,
+) -> Result<bool, Error> {
+    let result = sqlx::query(
+        "DELETE FROM guild_reaction_roles WHERE guild_id = ? AND message_id = ? AND emoji = ?",
+    )
+    .bind(guild_id.get().cast_signed())
+    .bind(message_id.get().cast_signed())
+    .bind(emoji)
+    .execute(pool)
+    .await?;
+    Ok(result.rows_affected() > 0)
+}
+
+/// Delete every mapping `guild_id` has on `message_id`. Used for `/reactionrole delete
+/// <message>`; scoped to the guild so a moderator cannot clear another server's bindings by
+/// message id.
+pub async fn remove_guild_reaction_message(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+    message_id: MessageId,
+) -> Result<u64, Error> {
+    let result =
+        sqlx::query("DELETE FROM guild_reaction_roles WHERE guild_id = ? AND message_id = ?")
+            .bind(guild_id.get().cast_signed())
+            .bind(message_id.get().cast_signed())
+            .execute(pool)
+            .await?;
+    Ok(result.rows_affected())
+}
+
+/// Delete every mapping attached to `message_id`, whatever guild owns it. The response to a
+/// `MessageDelete` event for a tracked message: once the message is gone, no binding on it can
+/// fire.
 pub async fn remove_reaction_message(
     pool: &SqlitePool,
     message_id: MessageId,
@@ -176,11 +225,12 @@ pub async fn remove_reaction_roles_for_guild(
     pool: &SqlitePool,
     guild_id: GuildId,
 ) -> Result<u64, Error> {
-    let result = sqlx::query("DELETE FROM guild_reaction_roles WHERE guild_id = ?")
-        .bind(guild_id.get().cast_signed())
-        .execute(pool)
-        .await?;
-    Ok(result.rows_affected())
+    delete_guild_rows(
+        pool,
+        "DELETE FROM guild_reaction_roles WHERE guild_id = ?",
+        guild_id,
+    )
+    .await
 }
 
 /// Resolve a single `(message, emoji)` to the role it grants, if any.
@@ -211,18 +261,54 @@ pub async fn list_tracked_message_ids(pool: &SqlitePool) -> Result<Vec<MessageId
         .collect())
 }
 
-/// Set the asset-announcement channel for `guild_id`.
+/// A guild's asset-announcement binding.
+#[derive(Debug, Clone)]
+pub struct AssetChannel {
+    pub channel_id: ChannelId,
+    /// Server labels this guild hears from, as stored ("EN,JP"). `None` means every server.
+    pub servers: Option<Vec<String>>,
+}
+
+impl AssetChannel {
+    fn from_row(channel_id: i64, servers: Option<String>) -> Self {
+        Self {
+            channel_id: ChannelId::new(channel_id.cast_unsigned()),
+            servers: servers.map(|s| {
+                s.split(',')
+                    .map(str::trim)
+                    .filter(|l| !l.is_empty())
+                    .map(str::to_string)
+                    .collect()
+            }),
+        }
+    }
+
+    /// Whether announcements from the server labelled `label` go to this guild.
+    #[must_use]
+    pub fn wants(&self, label: &str) -> bool {
+        self.servers
+            .as_ref()
+            .is_none_or(|s| s.iter().any(|l| l.eq_ignore_ascii_case(label)))
+    }
+}
+
+/// Set the asset-announcement channel for `guild_id`, with the server labels it hears from
+/// (`None` for all of them). Re-running replaces both.
 pub async fn set_assets_channel(
     pool: &SqlitePool,
     guild_id: GuildId,
     channel_id: ChannelId,
+    servers: Option<&[String]>,
 ) -> Result<(), Error> {
     sqlx::query(
-        "INSERT INTO guild_asset_channel (guild_id, channel_id) VALUES (?, ?) \
-         ON CONFLICT(guild_id) DO UPDATE SET channel_id = excluded.channel_id",
+        "INSERT INTO guild_asset_channel (guild_id, channel_id, servers) VALUES (?, ?, ?) \
+         ON CONFLICT(guild_id) DO UPDATE SET \
+            channel_id = excluded.channel_id, \
+            servers = excluded.servers",
     )
     .bind(guild_id.get().cast_signed())
     .bind(channel_id.get().cast_signed())
+    .bind(servers.map(|s| s.join(",")))
     .execute(pool)
     .await?;
     Ok(())
@@ -230,39 +316,42 @@ pub async fn set_assets_channel(
 
 /// Remove the asset-announcement binding for `guild_id`.
 pub async fn clear_assets_channel(pool: &SqlitePool, guild_id: GuildId) -> Result<u64, Error> {
-    let result = sqlx::query("DELETE FROM guild_asset_channel WHERE guild_id = ?")
-        .bind(guild_id.get().cast_signed())
-        .execute(pool)
-        .await?;
-    Ok(result.rows_affected())
+    delete_guild_rows(
+        pool,
+        "DELETE FROM guild_asset_channel WHERE guild_id = ?",
+        guild_id,
+    )
+    .await
 }
 
-/// Look up the asset-announcement channel for `guild_id`, if any.
+/// Look up the asset-announcement binding for `guild_id`, if any.
 pub async fn get_assets_channel(
     pool: &SqlitePool,
     guild_id: GuildId,
-) -> Result<Option<ChannelId>, Error> {
-    let row: Option<(i64,)> =
-        sqlx::query_as("SELECT channel_id FROM guild_asset_channel WHERE guild_id = ?")
+) -> Result<Option<AssetChannel>, Error> {
+    let row: Option<(i64, Option<String>)> =
+        sqlx::query_as("SELECT channel_id, servers FROM guild_asset_channel WHERE guild_id = ?")
             .bind(guild_id.get().cast_signed())
             .fetch_optional(pool)
             .await?;
-    Ok(row.map(|(id,)| ChannelId::new(id.cast_unsigned())))
+    Ok(row.map(|(c, servers)| AssetChannel::from_row(c, servers)))
 }
 
-/// Every configured `(guild, channel)` pair for asset announcements. Used by the watcher
-/// to fan an event out to all subscribers in one pass.
-pub async fn list_assets_channels(pool: &SqlitePool) -> Result<Vec<(GuildId, ChannelId)>, Error> {
-    let rows: Vec<(i64, i64)> =
-        sqlx::query_as("SELECT guild_id, channel_id FROM guild_asset_channel")
+/// Every asset-announcement binding. Used by the watcher to fan an event out to all
+/// subscribers in one pass, skipping guilds whose server filter leaves the event's label out.
+pub async fn list_assets_channels(
+    pool: &SqlitePool,
+) -> Result<Vec<(GuildId, AssetChannel)>, Error> {
+    let rows: Vec<(i64, i64, Option<String>)> =
+        sqlx::query_as("SELECT guild_id, channel_id, servers FROM guild_asset_channel")
             .fetch_all(pool)
             .await?;
     Ok(rows
         .into_iter()
-        .map(|(g, c)| {
+        .map(|(g, c, servers)| {
             (
                 GuildId::new(g.cast_unsigned()),
-                ChannelId::new(c.cast_unsigned()),
+                AssetChannel::from_row(c, servers),
             )
         })
         .collect())
@@ -287,11 +376,12 @@ pub async fn set_audit_log_channel(
 
 /// Remove the audit-log binding for `guild_id`.
 pub async fn clear_audit_log_channel(pool: &SqlitePool, guild_id: GuildId) -> Result<u64, Error> {
-    let result = sqlx::query("DELETE FROM guild_audit_log WHERE guild_id = ?")
-        .bind(guild_id.get().cast_signed())
-        .execute(pool)
-        .await?;
-    Ok(result.rows_affected())
+    delete_guild_rows(
+        pool,
+        "DELETE FROM guild_audit_log WHERE guild_id = ?",
+        guild_id,
+    )
+    .await
 }
 
 /// Look up the audit-log channel for `guild_id`, if any.
@@ -387,11 +477,13 @@ pub enum AuditEvent {
     ModAction,
     #[name = "Server changes"]
     ServerChange,
+    #[name = "Warnings"]
+    Warning,
 }
 
 impl AuditEvent {
     /// Every category, in the order `/auditlog show` lists them.
-    pub const ALL: [Self; 12] = [
+    pub const ALL: [Self; 13] = [
         Self::MessageEdit,
         Self::MessageDelete,
         Self::MessageBulkDelete,
@@ -404,6 +496,7 @@ impl AuditEvent {
         Self::MemberUnban,
         Self::ModAction,
         Self::ServerChange,
+        Self::Warning,
     ];
 
     /// This category's bit in `guild_audit_log.disabled_events`.
@@ -428,6 +521,8 @@ impl AuditEvent {
             // Added after the first ten, so it takes the next free bit rather than slotting in
             // beside the other reaction categories and shifting everything after it.
             Self::ReactionClear => 1 << 11,
+            // `/warn add`, mirrored by the bot itself rather than read from Discord's audit log.
+            Self::Warning => 1 << 12,
         }
     }
 }
@@ -547,11 +642,11 @@ fn row_to_policy(guild_id: GuildId, row: AntiSpamRow) -> Result<AntiSpamPolicy, 
     let action = AntiSpamAction::from_db_str(&action_str)
         .ok_or_else(|| format!("Invalid action '{action_str}' for guild {guild_id}"))?;
     Ok(AntiSpamPolicy {
-        max_per_message: max_per_message.try_into().unwrap_or(u32::MAX),
-        window_secs: window_secs.map(|v| v.try_into().unwrap_or(u32::MAX)),
-        window_max_pings: window_max_pings.map(|v| v.try_into().unwrap_or(u32::MAX)),
+        max_per_message: u32_from_db(max_per_message),
+        window_secs: window_secs.map(u32_from_db),
+        window_max_pings: window_max_pings.map(u32_from_db),
         action,
-        timeout_secs: timeout_secs.map(|v| v.try_into().unwrap_or(u32::MAX)),
+        timeout_secs: timeout_secs.map(u32_from_db),
         exempt_role_id: exempt_role_id.map(|id| RoleId::new(id.cast_unsigned())),
     })
 }
@@ -587,11 +682,12 @@ pub async fn set_antispam_policy(
 
 /// Drop the antispam policy for `guild_id`. Returns the number of rows removed.
 pub async fn clear_antispam_policy(pool: &SqlitePool, guild_id: GuildId) -> Result<u64, Error> {
-    let res = sqlx::query("DELETE FROM guild_max_ping WHERE guild_id = ?")
-        .bind(guild_id.get().cast_signed())
-        .execute(pool)
-        .await?;
-    Ok(res.rows_affected())
+    delete_guild_rows(
+        pool,
+        "DELETE FROM guild_max_ping WHERE guild_id = ?",
+        guild_id,
+    )
+    .await
 }
 
 /// Look up the antispam policy for `guild_id`, if one is configured.
@@ -653,4 +749,587 @@ pub async fn list_reaction_roles_for_guild(
             role_id: RoleId::new(r.cast_unsigned()),
         })
         .collect())
+}
+
+/// One row of `guild_warnings`.
+#[derive(Debug, Clone)]
+pub struct Warning {
+    pub id: i64,
+    pub moderator_id: UserId,
+    pub reason: String,
+    /// Unix seconds.
+    pub created_at: i64,
+}
+
+/// Record a warning and return its id.
+pub async fn add_warning(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+    user_id: UserId,
+    moderator_id: UserId,
+    reason: &str,
+    created_at: i64,
+) -> Result<i64, Error> {
+    let result = sqlx::query(
+        "INSERT INTO guild_warnings (guild_id, user_id, moderator_id, reason, created_at) \
+         VALUES (?, ?, ?, ?, ?)",
+    )
+    .bind(guild_id.get().cast_signed())
+    .bind(user_id.get().cast_signed())
+    .bind(moderator_id.get().cast_signed())
+    .bind(reason)
+    .bind(created_at)
+    .execute(pool)
+    .await?;
+    Ok(result.last_insert_rowid())
+}
+
+/// Every warning `user_id` holds in `guild_id`, newest first.
+pub async fn list_warnings(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+    user_id: UserId,
+) -> Result<Vec<Warning>, Error> {
+    let rows: Vec<(i64, i64, String, i64)> = sqlx::query_as(
+        "SELECT id, moderator_id, reason, created_at FROM guild_warnings \
+         WHERE guild_id = ? AND user_id = ? ORDER BY created_at DESC, id DESC",
+    )
+    .bind(guild_id.get().cast_signed())
+    .bind(user_id.get().cast_signed())
+    .fetch_all(pool)
+    .await?;
+    Ok(rows
+        .into_iter()
+        .map(|(id, m, reason, created_at)| Warning {
+            id,
+            moderator_id: UserId::new(m.cast_unsigned()),
+            reason,
+            created_at,
+        })
+        .collect())
+}
+
+/// How many warnings `user_id` holds in `guild_id` created at or after `since` (unix seconds),
+/// or in total when `since` is `None`.
+pub async fn count_warnings(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+    user_id: UserId,
+    since: Option<i64>,
+) -> Result<i64, Error> {
+    let (count,): (i64,) = sqlx::query_as(
+        "SELECT COUNT(*) FROM guild_warnings \
+         WHERE guild_id = ? AND user_id = ? AND created_at >= ?",
+    )
+    .bind(guild_id.get().cast_signed())
+    .bind(user_id.get().cast_signed())
+    .bind(since.unwrap_or(i64::MIN))
+    .fetch_one(pool)
+    .await?;
+    Ok(count)
+}
+
+/// Delete warning `id`, but only if it belongs to `guild_id`, so one server can't remove
+/// another's warnings by guessing ids. Returns the removed warning's user, if any.
+pub async fn remove_warning(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+    id: i64,
+) -> Result<Option<UserId>, Error> {
+    let row: Option<(i64,)> = sqlx::query_as(
+        "DELETE FROM guild_warnings WHERE id = ? AND guild_id = ? RETURNING user_id",
+    )
+    .bind(id)
+    .bind(guild_id.get().cast_signed())
+    .fetch_optional(pool)
+    .await?;
+    Ok(row.map(|(u,)| UserId::new(u.cast_unsigned())))
+}
+
+/// Delete every warning `user_id` holds in `guild_id`. Returns how many were removed.
+pub async fn clear_warnings(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+    user_id: UserId,
+) -> Result<u64, Error> {
+    let result = sqlx::query("DELETE FROM guild_warnings WHERE guild_id = ? AND user_id = ?")
+        .bind(guild_id.get().cast_signed())
+        .bind(user_id.get().cast_signed())
+        .execute(pool)
+        .await?;
+    Ok(result.rows_affected())
+}
+
+/// What happens to a member who reaches the warning threshold.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, poise::ChoiceParameter)]
+pub enum WarnAction {
+    #[name = "Timeout user"]
+    Timeout,
+    #[name = "Kick user"]
+    Kick,
+    #[name = "Ban user"]
+    Ban,
+}
+
+impl WarnAction {
+    /// Serialized form stored in `guild_warn_policy.action`.
+    #[must_use]
+    pub const fn as_db_str(self) -> &'static str {
+        match self {
+            Self::Timeout => "timeout",
+            Self::Kick => "kick",
+            Self::Ban => "ban",
+        }
+    }
+
+    fn from_db_str(s: &str) -> Option<Self> {
+        match s {
+            "timeout" => Some(Self::Timeout),
+            "kick" => Some(Self::Kick),
+            "ban" => Some(Self::Ban),
+            _ => None,
+        }
+    }
+}
+
+/// A guild's warning escalation policy. No row means no escalation.
+#[derive(Debug, Clone, Copy)]
+pub struct WarnPolicy {
+    pub threshold: u32,
+    /// Only warnings this recent count; `None` counts every warning ever given.
+    pub window_days: Option<u32>,
+    pub action: WarnAction,
+    /// Used only when `action == Timeout`.
+    pub timeout_secs: Option<u32>,
+}
+
+/// Insert or replace the warning policy for `guild_id`.
+pub async fn set_warn_policy(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+    policy: &WarnPolicy,
+) -> Result<(), Error> {
+    sqlx::query(
+        "INSERT INTO guild_warn_policy (guild_id, threshold, window_days, action, timeout_secs) \
+         VALUES (?, ?, ?, ?, ?) \
+         ON CONFLICT(guild_id) DO UPDATE SET \
+            threshold = excluded.threshold, \
+            window_days = excluded.window_days, \
+            action = excluded.action, \
+            timeout_secs = excluded.timeout_secs",
+    )
+    .bind(guild_id.get().cast_signed())
+    .bind(i64::from(policy.threshold))
+    .bind(policy.window_days.map(i64::from))
+    .bind(policy.action.as_db_str())
+    .bind(policy.timeout_secs.map(i64::from))
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
+/// Look up the warning policy for `guild_id`, if one is configured.
+pub async fn get_warn_policy(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+) -> Result<Option<WarnPolicy>, Error> {
+    let row: Option<(i64, Option<i64>, String, Option<i64>)> = sqlx::query_as(
+        "SELECT threshold, window_days, action, timeout_secs FROM guild_warn_policy \
+         WHERE guild_id = ?",
+    )
+    .bind(guild_id.get().cast_signed())
+    .fetch_optional(pool)
+    .await?;
+    row.map(|(threshold, window_days, action, timeout_secs)| {
+        Ok(WarnPolicy {
+            threshold: u32_from_db(threshold),
+            window_days: window_days.map(u32_from_db),
+            action: WarnAction::from_db_str(&action)
+                .ok_or_else(|| format!("Invalid warn action '{action}' for guild {guild_id}"))?,
+            timeout_secs: timeout_secs.map(u32_from_db),
+        })
+    })
+    .transpose()
+}
+
+/// Drop the warning policy for `guild_id`. Returns the number of rows removed.
+pub async fn clear_warn_policy(pool: &SqlitePool, guild_id: GuildId) -> Result<u64, Error> {
+    delete_guild_rows(
+        pool,
+        "DELETE FROM guild_warn_policy WHERE guild_id = ?",
+        guild_id,
+    )
+    .await
+}
+
+/// Bind birthday announcements for `guild_id` to `channel_id`.
+///
+/// On a fresh binding `posted_date` (the current game day, `YYYY-MM-DD`) is written as already
+/// posted, so a channel bound after today's reset starts with tomorrow's birthdays instead of
+/// firing at once. Moving an existing binding only changes the channel and keeps its
+/// `last_posted_date`, so a move can neither repeat nor skip a day.
+pub async fn set_birthday_channel(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+    channel_id: ChannelId,
+    posted_date: &str,
+) -> Result<(), Error> {
+    sqlx::query(
+        "INSERT INTO guild_birthday_channel (guild_id, channel_id, last_posted_date) \
+         VALUES (?, ?, ?) \
+         ON CONFLICT(guild_id) DO UPDATE SET channel_id = excluded.channel_id",
+    )
+    .bind(guild_id.get().cast_signed())
+    .bind(channel_id.get().cast_signed())
+    .bind(posted_date)
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
+/// Remove the birthday binding for `guild_id`. Returns the number of rows removed.
+pub async fn clear_birthday_channel(pool: &SqlitePool, guild_id: GuildId) -> Result<u64, Error> {
+    delete_guild_rows(
+        pool,
+        "DELETE FROM guild_birthday_channel WHERE guild_id = ?",
+        guild_id,
+    )
+    .await
+}
+
+/// The birthday channel for `guild_id` and the last game day posted there, if bound.
+pub async fn get_birthday_channel(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+) -> Result<Option<(ChannelId, Option<String>)>, Error> {
+    let row: Option<(i64, Option<String>)> = sqlx::query_as(
+        "SELECT channel_id, last_posted_date FROM guild_birthday_channel WHERE guild_id = ?",
+    )
+    .bind(guild_id.get().cast_signed())
+    .fetch_optional(pool)
+    .await?;
+    Ok(row.map(|(c, d)| (ChannelId::new(c.cast_unsigned()), d)))
+}
+
+/// Every binding that hasn't posted `date` yet.
+pub async fn list_birthday_channels_due(
+    pool: &SqlitePool,
+    date: &str,
+) -> Result<Vec<(GuildId, ChannelId)>, Error> {
+    let rows: Vec<(i64, i64)> = sqlx::query_as(
+        "SELECT guild_id, channel_id FROM guild_birthday_channel \
+         WHERE last_posted_date IS NULL OR last_posted_date <> ?",
+    )
+    .bind(date)
+    .fetch_all(pool)
+    .await?;
+    Ok(rows
+        .into_iter()
+        .map(|(g, c)| {
+            (
+                GuildId::new(g.cast_unsigned()),
+                ChannelId::new(c.cast_unsigned()),
+            )
+        })
+        .collect())
+}
+
+/// Record that `guild_id` has had `date`'s birthdays.
+pub async fn mark_birthday_posted(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+    date: &str,
+) -> Result<(), Error> {
+    sqlx::query("UPDATE guild_birthday_channel SET last_posted_date = ? WHERE guild_id = ?")
+        .bind(date)
+        .bind(guild_id.get().cast_signed())
+        .execute(pool)
+        .await?;
+    Ok(())
+}
+
+/// Set `user_id`'s TTS nickname in `guild_id`, replacing any previous one.
+pub async fn set_tts_nickname(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+    user_id: UserId,
+    nickname: &str,
+    set_by: UserId,
+    at: i64,
+) -> Result<(), Error> {
+    sqlx::query(
+        "INSERT INTO guild_tts_nicknames (guild_id, user_id, nickname, set_by, set_at) \
+         VALUES (?, ?, ?, ?, ?) \
+         ON CONFLICT(guild_id, user_id) DO UPDATE SET nickname = excluded.nickname, \
+         set_by = excluded.set_by, set_at = excluded.set_at",
+    )
+    .bind(guild_id.get().cast_signed())
+    .bind(user_id.get().cast_signed())
+    .bind(nickname)
+    .bind(set_by.get().cast_signed())
+    .bind(at)
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
+/// Remove `user_id`'s TTS nickname in `guild_id`. Returns whether one was set.
+pub async fn clear_tts_nickname(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+    user_id: UserId,
+) -> Result<bool, Error> {
+    let result = sqlx::query("DELETE FROM guild_tts_nicknames WHERE guild_id = ? AND user_id = ?")
+        .bind(guild_id.get().cast_signed())
+        .bind(user_id.get().cast_signed())
+        .execute(pool)
+        .await?;
+    Ok(result.rows_affected() > 0)
+}
+
+/// Every TTS nickname. Hydrates the cache the message hot path reads.
+pub async fn list_tts_nicknames(
+    pool: &SqlitePool,
+) -> Result<Vec<(GuildId, UserId, String)>, Error> {
+    let rows: Vec<(i64, i64, String)> =
+        sqlx::query_as("SELECT guild_id, user_id, nickname FROM guild_tts_nicknames")
+            .fetch_all(pool)
+            .await?;
+    Ok(rows
+        .into_iter()
+        .map(|(g, u, n)| {
+            (
+                GuildId::new(g.cast_unsigned()),
+                UserId::new(u.cast_unsigned()),
+                n,
+            )
+        })
+        .collect())
+}
+
+/// Set `user_id`'s TTS voice, replacing any previous pick.
+pub async fn set_tts_voice(
+    pool: &SqlitePool,
+    user_id: UserId,
+    voice: &str,
+    at: i64,
+) -> Result<(), Error> {
+    sqlx::query(
+        "INSERT INTO user_tts_voice (user_id, voice, set_at) VALUES (?, ?, ?) \
+         ON CONFLICT(user_id) DO UPDATE SET voice = excluded.voice, set_at = excluded.set_at",
+    )
+    .bind(user_id.get().cast_signed())
+    .bind(voice)
+    .bind(at)
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
+/// Remove `user_id`'s TTS voice pick. Returns whether one was set.
+pub async fn clear_tts_voice(pool: &SqlitePool, user_id: UserId) -> Result<bool, Error> {
+    let result = sqlx::query("DELETE FROM user_tts_voice WHERE user_id = ?")
+        .bind(user_id.get().cast_signed())
+        .execute(pool)
+        .await?;
+    Ok(result.rows_affected() > 0)
+}
+
+/// Every TTS voice pick. Hydrates the cache the message hot path reads.
+pub async fn list_tts_voices(pool: &SqlitePool) -> Result<Vec<(UserId, String)>, Error> {
+    let rows: Vec<(i64, String)> = sqlx::query_as("SELECT user_id, voice FROM user_tts_voice")
+        .fetch_all(pool)
+        .await?;
+    Ok(rows
+        .into_iter()
+        .map(|(u, v)| (UserId::new(u.cast_unsigned()), v))
+        .collect())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A fresh in-memory database with every migration applied. One connection, kept for the
+    /// pool's lifetime: each `SQLite` `:memory:` connection is its own database.
+    async fn memory_pool() -> SqlitePool {
+        let pool = sqlx::sqlite::SqlitePoolOptions::new()
+            .max_connections(1)
+            .idle_timeout(None)
+            .max_lifetime(None)
+            .connect("sqlite::memory:")
+            .await
+            .expect("open in-memory sqlite");
+        sqlx::migrate!("./migrations")
+            .run(&pool)
+            .await
+            .expect("run migrations");
+        pool
+    }
+
+    const GUILD_A: GuildId = GuildId::new(111);
+    const GUILD_B: GuildId = GuildId::new(222);
+    const CHANNEL_B: ChannelId = ChannelId::new(2_000);
+    const MESSAGE_B: MessageId = MessageId::new(20_000);
+
+    /// Guild B binds two emojis on its own message.
+    async fn bind_two_in_guild_b(pool: &SqlitePool) {
+        for (emoji, role) in [("🟥", 501), ("🟦", 502)] {
+            assert!(
+                add_reaction_role(
+                    pool,
+                    GUILD_B,
+                    CHANNEL_B,
+                    MESSAGE_B,
+                    emoji,
+                    RoleId::new(role)
+                )
+                .await
+                .unwrap()
+            );
+        }
+    }
+
+    async fn role_on_b(pool: &SqlitePool, emoji: &str) -> Option<RoleId> {
+        get_role_for_reaction(pool, MESSAGE_B, emoji).await.unwrap()
+    }
+
+    #[tokio::test]
+    async fn remove_reaction_role_is_scoped_to_the_guild() {
+        let pool = memory_pool().await;
+        bind_two_in_guild_b(&pool).await;
+
+        assert!(
+            !remove_reaction_role(&pool, GUILD_A, MESSAGE_B, "🟥")
+                .await
+                .unwrap()
+        );
+        assert_eq!(role_on_b(&pool, "🟥").await, Some(RoleId::new(501)));
+
+        assert!(
+            remove_reaction_role(&pool, GUILD_B, MESSAGE_B, "🟥")
+                .await
+                .unwrap()
+        );
+        assert_eq!(role_on_b(&pool, "🟥").await, None);
+        assert_eq!(role_on_b(&pool, "🟦").await, Some(RoleId::new(502)));
+    }
+
+    #[tokio::test]
+    async fn remove_guild_reaction_message_is_scoped_to_the_guild() {
+        let pool = memory_pool().await;
+        bind_two_in_guild_b(&pool).await;
+
+        assert_eq!(
+            remove_guild_reaction_message(&pool, GUILD_A, MESSAGE_B)
+                .await
+                .unwrap(),
+            0
+        );
+        assert_eq!(
+            list_reaction_roles_for_guild(&pool, GUILD_B)
+                .await
+                .unwrap()
+                .len(),
+            2
+        );
+
+        assert_eq!(
+            remove_guild_reaction_message(&pool, GUILD_B, MESSAGE_B)
+                .await
+                .unwrap(),
+            2
+        );
+        assert!(
+            list_reaction_roles_for_guild(&pool, GUILD_B)
+                .await
+                .unwrap()
+                .is_empty()
+        );
+    }
+
+    #[tokio::test]
+    async fn a_deleted_message_drops_its_bindings_in_any_guild() {
+        let pool = memory_pool().await;
+        bind_two_in_guild_b(&pool).await;
+
+        assert_eq!(remove_reaction_message(&pool, MESSAGE_B).await.unwrap(), 2);
+        assert!(list_tracked_message_ids(&pool).await.unwrap().is_empty());
+    }
+
+    #[tokio::test]
+    async fn add_reaction_role_rebinds_only_its_own_guild() {
+        let pool = memory_pool().await;
+        bind_two_in_guild_b(&pool).await;
+
+        let other_channel = ChannelId::new(1_000);
+        assert!(
+            !add_reaction_role(
+                &pool,
+                GUILD_A,
+                other_channel,
+                MESSAGE_B,
+                "🟥",
+                RoleId::new(901)
+            )
+            .await
+            .unwrap()
+        );
+        assert_eq!(role_on_b(&pool, "🟥").await, Some(RoleId::new(501)));
+        assert!(
+            list_reaction_roles_for_guild(&pool, GUILD_A)
+                .await
+                .unwrap()
+                .is_empty()
+        );
+
+        assert!(
+            add_reaction_role(&pool, GUILD_B, CHANNEL_B, MESSAGE_B, "🟥", RoleId::new(503))
+                .await
+                .unwrap()
+        );
+        assert_eq!(role_on_b(&pool, "🟥").await, Some(RoleId::new(503)));
+    }
+
+    #[test]
+    fn u32_from_db_saturates() {
+        assert_eq!(u32_from_db(0), 0);
+        assert_eq!(u32_from_db(42), 42);
+        assert_eq!(u32_from_db(i64::from(u32::MAX)), u32::MAX);
+        assert_eq!(u32_from_db(i64::from(u32::MAX) + 1), u32::MAX);
+        // A negative value also fails `try_into` and saturates high, not low.
+        assert_eq!(u32_from_db(-1), u32::MAX);
+    }
+
+    #[test]
+    fn audit_event_bits_are_distinct_single_bits() {
+        let mut seen = 0u32;
+        for event in AuditEvent::ALL {
+            let bit = event.bit();
+            assert_eq!(bit.count_ones(), 1, "{event:?}");
+            assert_eq!(seen & bit, 0, "{event:?} reuses a bit");
+            seen |= bit;
+        }
+        // Thirteen categories on bits 0..=12.
+        assert_eq!(seen, 0x1FFF);
+    }
+
+    #[test]
+    fn persisted_bits_never_move() {
+        assert_eq!(AuditEvent::MessageEdit.bit(), 1);
+        assert_eq!(AuditEvent::ServerChange.bit(), 1 << 10);
+        assert_eq!(AuditEvent::ReactionClear.bit(), 1 << 11);
+        assert_eq!(AuditEvent::Warning.bit(), 1 << 12);
+    }
+
+    #[test]
+    fn mask_from_db_keeps_only_known_bits() {
+        assert_eq!(mask_from_db(0), 0);
+        assert_eq!(mask_from_db(0b101), 0b101);
+        assert_eq!(mask_from_db(0x1FFF), 0x1FFF);
+        assert_eq!(mask_from_db((1 << 20) | 0b11), 0b11);
+        // Out of u32 range or negative: nothing disabled, logging stays on.
+        assert_eq!(mask_from_db(-1), 0);
+        assert_eq!(mask_from_db(i64::from(u32::MAX) + 1), 0);
+    }
 }

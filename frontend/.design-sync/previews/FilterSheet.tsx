@@ -26,6 +26,18 @@ const AutoOpen = ({ children }: { children: ReactNode }) => {
     );
 };
 
+/** Class code -> the server's own class name, as the page reads it from the operator index. */
+const CLASS_NAMES: ReadonlyMap<string, string> = new Map([
+    ["PIONEER", "Vanguard"],
+    ["WARRIOR", "Guard"],
+    ["TANK", "Defender"],
+    ["SNIPER", "Sniper"],
+    ["CASTER", "Caster"],
+    ["MEDIC", "Medic"],
+    ["SUPPORT", "Supporter"],
+    ["SPECIAL", "Specialist"],
+]);
+
 const NATIONS: [string, string][] = [
     ["columbia", "Columbia"],
     ["kazimierz", "Kazimierz"],
@@ -50,7 +62,7 @@ const noop = () => {};
 // offers the full roster.
 export const OpenNoFilters = () => (
     <AutoOpen>
-        <FilterSheet activeCount={0} filters={filters("", [], [], [])} matched={382} nations={NATIONS} onChange={noop} onReset={noop} total={382} />
+        <FilterSheet activeCount={0} filters={filters("", [], [], [])} matched={382} nations={NATIONS} classNames={CLASS_NAMES} onChange={noop} onReset={noop} total={382} />
     </AutoOpen>
 );
 
@@ -58,7 +70,7 @@ export const OpenNoFilters = () => (
 // FilterControls and the enabled Reset all light up together.
 export const OpenWithActiveFilters = () => (
     <AutoOpen>
-        <FilterSheet activeCount={3} filters={filters("silence", [6], ["MEDIC"], ["columbia"])} matched={2} nations={NATIONS} onChange={noop} onReset={noop} total={382} />
+        <FilterSheet activeCount={3} filters={filters("silence", [6], ["MEDIC"], ["columbia"])} matched={2} nations={NATIONS} classNames={CLASS_NAMES} onChange={noop} onReset={noop} total={382} />
     </AutoOpen>
 );
 
@@ -70,6 +82,6 @@ export const InPageToolbar = () => (
             <h2 className="m-0 font-bold font-sans text-[17px] text-foreground tracking-tight">Birthday Calendar</h2>
             <p className="mt-1 font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">31 of 382 match</p>
         </div>
-        <FilterSheet activeCount={3} filters={filters("silence", [6], [], ["columbia"])} matched={31} nations={NATIONS} onChange={noop} onReset={noop} total={382} />
+        <FilterSheet activeCount={3} filters={filters("silence", [6], [], ["columbia"])} matched={31} nations={NATIONS} classNames={CLASS_NAMES} onChange={noop} onReset={noop} total={382} />
     </div>
 );

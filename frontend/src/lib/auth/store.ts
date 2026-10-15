@@ -43,17 +43,15 @@ interface IAuthState {
     dialogOpen: boolean;
     postLoginRedirect: string | null;
     /**
-     * A session this client minted itself, from a login response that has not
-     * yet been echoed back by a route load.
+     * A session this client minted itself, from a login response that no route
+     * load has echoed back yet.
      *
-     * The login response writes `site_token` (`SameSite=Lax`); the
-     * `router.invalidate()` that follows re-runs the root `beforeLoad`, which
-     * reads that cookie off the NEW request. When the browser has not committed
-     * the cookie jar by then, `getSessionFn` returns null and the route context
-     * would otherwise overwrite the user we just signed in - no error, no
-     * console output, the spinner just turns back into a "login" button.
-     * While this flag is set, a null route session is treated as "the route has
-     * not caught up", not as "signed out".
+     * The login response writes `site_token` (`SameSite=Lax`) and the following
+     * `router.invalidate()` re-runs the root `beforeLoad` on a NEW request. If the
+     * browser has not committed the cookie by then, `getSessionFn` returns null
+     * and the route context silently overwrites the user we just signed in: no
+     * error, the spinner just turns back into "login". While this is set, a null
+     * route session means "not caught up", not "signed out".
      */
     clientAuthoritative: boolean;
 }

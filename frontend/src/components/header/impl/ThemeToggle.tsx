@@ -3,6 +3,7 @@ import { useId } from "react";
 import { Button } from "#/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "#/components/ui/popover";
 import { Switch } from "#/components/ui/switch";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useTheme } from "#/hooks/use-theme";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -82,16 +83,21 @@ export default function ThemeToggle() {
                             const selected = accent?.type === "preset" && Math.abs(accent.hue - preset.hue) < PRESET_MATCH_TOLERANCE;
                             const swatch = accentToRenderedHex({ type: "preset", hue: preset.hue }, resolved === "dark");
                             return (
-                                <button
-                                    key={preset.name}
-                                    type="button"
-                                    onClick={() => setPresetHue(preset.hue)}
-                                    title={preset.name}
-                                    aria-label={t("themeToggle.setAccent", { name: preset.name })}
-                                    aria-pressed={selected}
-                                    className={cn("relative aspect-square w-full rounded-full ring-offset-2 ring-offset-popover transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", selected && "ring-2 ring-foreground")}
-                                    style={{ backgroundColor: swatch }}
-                                />
+                                <Tooltip key={preset.name}>
+                                    <TooltipTrigger
+                                        render={
+                                            <button
+                                                type="button"
+                                                onClick={() => setPresetHue(preset.hue)}
+                                                aria-label={t("themeToggle.setAccent", { name: preset.name })}
+                                                aria-pressed={selected}
+                                                className={cn("relative aspect-square w-full rounded-full ring-offset-2 ring-offset-popover transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", selected && "ring-2 ring-foreground")}
+                                                style={{ backgroundColor: swatch }}
+                                            />
+                                        }
+                                    />
+                                    <TooltipPopup>{preset.name}</TooltipPopup>
+                                </Tooltip>
                             );
                         })}
                     </div>

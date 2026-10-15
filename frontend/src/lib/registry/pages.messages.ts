@@ -28,6 +28,30 @@ export const messages = {
         text: "Read main chapters, events and operator records",
         description: "Blurb under the Stories palette entry.",
     },
+    "page.music.label": {
+        text: "In-Game Music",
+        description: "Palette entry for the gallery page that lists every piece of music in the game.",
+    },
+    "page.music.desc": {
+        text: "Battle themes, lobby music and story tracks, with where each one plays",
+        description: "Blurb under the In-Game Music palette entry.",
+    },
+    "page.announcements.label": {
+        text: "Game News",
+        description: "Palette entry for the page that mirrors the in-game notice board.",
+    },
+    "page.announcements.desc": {
+        text: "The in-game notice board: events, banners and maintenance",
+        description: "Blurb under the Game News palette entry.",
+    },
+    "page.archives.label": {
+        text: "Archives",
+        description: "Palette entry for the Archives page: personnel files, the faction network and roster statistics.",
+    },
+    "page.archives.desc": {
+        text: "Personnel files, the faction network and the roster counted up",
+        description: "Blurb under the Archives palette entry.",
+    },
     "page.tierLists.label": {
         text: "Tier Lists",
         description: "Palette entry for the tier-list section. A tier list ranks operators into tiers.",

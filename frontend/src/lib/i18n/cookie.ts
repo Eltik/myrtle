@@ -24,7 +24,7 @@ export async function writePreferenceCookie(name: string, value: string | null):
         }
         const encoded = value === null ? "" : encodeURIComponent(value);
         const maxAge = value === null ? 0 : ONE_YEAR_SECONDS;
-        // biome-ignore lint/suspicious/noDocumentCookie: CookieStore is unavailable in this branch by construction - that is what the guard above tests.
+        // biome-ignore lint/suspicious/noDocumentCookie: only reached when the guard above found no CookieStore
         document.cookie = `${name}=${encoded}; path=/; max-age=${maxAge}; samesite=lax`;
     } catch {
         // See above: a blocked cookie only loses the remembered preference.

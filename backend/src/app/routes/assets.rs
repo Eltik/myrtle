@@ -100,9 +100,10 @@ fn canonical_base_dir(base_dir: &Path) -> Result<PathBuf, ApiError> {
     Ok(canonical)
 }
 
-/// Serves from `server`, falling back to the default server when it has no index
-/// entry or isn't loaded. `resolve` maps an index to a relative path, tried per
-/// server.
+/// Serves from the first server in [`AppState::asset_servers`] order (`server`,
+/// the default, then CN) whose index has an entry and whose file serves.
+/// `resolve` maps an index to a relative path, tried per server. The last
+/// server's error is returned, else a 404.
 async fn serve_resolved<F>(
     state: &AppState,
     server: Server,
@@ -112,19 +113,20 @@ async fn serve_resolved<F>(
 where
     F: Fn(&AssetIndex) -> Option<String>,
 {
-    if let Some(sd) = state.try_server_data(server)
-        && let Some(rel) = resolve(&sd.asset_index.load())
-        && let Ok(resp) = serve_file(&sd.art_dir, &rel, headers).await
-    {
-        return Ok(resp);
+    let mut last = ApiError::NotFound;
+    for srv in state.asset_servers(server) {
+        let Some(sd) = state.try_server_data(srv) else {
+            continue;
+        };
+        let Some(rel) = resolve(&sd.asset_index.load()) else {
+            continue;
+        };
+        match serve_file(&sd.art_dir, &rel, headers).await {
+            Ok(resp) => return Ok(resp),
+            Err(e) => last = e,
+        }
     }
-    if server != state.default_server
-        && let Some(sd) = state.try_server_data(state.default_server)
-        && let Some(rel) = resolve(&sd.asset_index.load())
-    {
-        return serve_file(&sd.art_dir, &rel, headers).await;
-    }
-    Err(ApiError::NotFound)
+    Err(last)
 }
 
 async fn portrait_impl(
@@ -1051,17 +1053,18 @@ async fn generic_impl(
     if !allow_all_dirs() && !is_public_asset_path(asset_path) {
         return Err(ApiError::NotFound);
     }
-    if let Some(sd) = state.try_server_data(server)
-        && let Ok(resp) = serve_file(&sd.assets_dir, asset_path, headers).await
-    {
-        return Ok(resp);
+    // `server`'s own tree, then the default's, then CN's: see `asset_servers`.
+    let mut last = ApiError::NotFound;
+    for srv in state.asset_servers(server) {
+        let Some(sd) = state.try_server_data(srv) else {
+            continue;
+        };
+        match serve_file(&sd.assets_dir, asset_path, headers).await {
+            Ok(resp) => return Ok(resp),
+            Err(e) => last = e,
+        }
     }
-    if server != state.default_server
-        && let Some(sd) = state.try_server_data(state.default_server)
-    {
-        return serve_file(&sd.assets_dir, asset_path, headers).await;
-    }
-    Err(ApiError::NotFound)
+    Err(last)
 }
 
 /// Any asset by its path under the server's assets directory.
@@ -1202,9 +1205,18 @@ async fn serve_file_tagged(
             .into_response());
     }
 
-    let mime = mime_guess::from_path(&full_path)
-        .first_or_octet_stream()
-        .to_string();
+    // mime_guess 2.0.5 maps `.m4a` to `audio/m4a`, which is not a registered type; the music
+    // `.m4a` fallbacks (AAC in MP4, for browsers without Vorbis) go out as `audio/mp4`.
+    let mime = if full_path
+        .extension()
+        .is_some_and(|e| e.eq_ignore_ascii_case("m4a"))
+    {
+        "audio/mp4".to_string()
+    } else {
+        mime_guess::from_path(&full_path)
+            .first_or_octet_stream()
+            .to_string()
+    };
 
     let range = request_headers
         .get(header::RANGE)
@@ -1289,8 +1301,7 @@ fn parse_range(value: &str, size: u64) -> Option<(u64, u64)> {
     } else {
         end_s.parse::<u64>().ok()?.min(size.saturating_sub(1))
     };
-    // Reject reversed/inverted ranges; per RFC 7233 these are unsatisfiable
-    // and the server may ignore the header (we fall back to a full 200).
+    // Reversed range: RFC 7233 lets the server ignore the header.
     if start > end {
         return None;
     }
@@ -1309,6 +1320,9 @@ mod tests {
         assert!(is_public_asset_path("spine/x/y[scene].json"));
         assert!(is_public_asset_path("./textures/chararts/a/a_2.png"));
         assert!(is_public_asset_path("/audio/audio/sound_beta_2/x.ogg"));
+        assert!(is_public_asset_path(
+            "/audio/audio/sound_beta_2/music/a/m_a/m_a_loop.m4a"
+        ));
         assert!(is_public_asset_path("/video/main_10/main_10_enter.mp4"));
         assert!(is_public_asset_path("/portraits/char_002_amiya_1.png"));
     }

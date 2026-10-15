@@ -1,0 +1,246 @@
+{
+  "activity_table": {
+    "root": "clz_Torappu_ActivityTable",
+    "kv_field": null
+  },
+  "arkvent_table": {
+    "root": "clz_Torappu_ArkOdcTable",
+    "kv_field": null
+  },
+  "audio_data": {
+    "root": "clz_Torappu_Audio_Middleware_Data_TorappuAudioData",
+    "kv_field": null
+  },
+  "bake_muzzle_data": {
+    "root": "clz_Torappu_Battle_BakedSpineData",
+    "kv_field": null
+  },
+  "battle_equip_table": {
+    "root": "clz_Torappu_BattleEquipPack",
+    "kv_field": "equips"
+  },
+  "buff_table": {
+    "root": "clz_Torappu_BuffData",
+    "kv_field": "buffs"
+  },
+  "building_data": {
+    "root": "clz_Torappu_BuildingData",
+    "kv_field": null
+  },
+  "building_local_data": {
+    "root": "clz_Torappu_BuildingData_BuildingLocalData",
+    "kv_field": null
+  },
+  "campaign_table": {
+    "root": "clz_Torappu_CampaignTable",
+    "kv_field": null
+  },
+  "chapter_table": {
+    "root": "clz_Torappu_ChapterData",
+    "kv_field": "chapters"
+  },
+  "char_master_table": {
+    "root": "clz_Torappu_CharacterData_MasterDataBundle",
+    "kv_field": "master_data_bundles"
+  },
+  "char_meta_table": {
+    "root": "clz_Torappu_CharMetaTable",
+    "kv_field": null
+  },
+  "char_patch_table": {
+    "root": "clz_Torappu_CharPatchData",
+    "kv_field": null
+  },
+  "character_table": {
+    "root": "clz_Torappu_CharacterData",
+    "kv_field": "characters"
+  },
+  "charm_table": {
+    "root": "clz_Torappu_CharmData",
+    "kv_field": null
+  },
+  "charword_table": {
+    "root": "clz_Torappu_CharWordTable",
+    "kv_field": null
+  },
+  "checkin_table": {
+    "root": "clz_Torappu_CheckInTable",
+    "kv_field": null
+  },
+  "climb_tower_table": {
+    "root": "clz_Torappu_ClimbTowerTable",
+    "kv_field": null
+  },
+  "clue_data": {
+    "root": "clz_Torappu_MeetingClueData",
+    "kv_field": null
+  },
+  "cooperate_battle_table": {
+    "root": "clz_Torappu_Battle_Cooperate_CooperateModeBattleData",
+    "kv_field": null
+  },
+  "crisis_table": {
+    "root": "clz_Torappu_CrisisClientData",
+    "kv_field": null
+  },
+  "crisis_v2_table": {
+    "root": "clz_Torappu_CrisisV2SharedData",
+    "kv_field": null
+  },
+  "display_meta_table": {
+    "root": "clz_Torappu_DisplayMetaData",
+    "kv_field": null
+  },
+  "enemy_database": {
+    "root": "clz_Torappu_EnemyDatabase",
+    "kv_field": null
+  },
+  "enemy_handbook_table": {
+    "root": "clz_Torappu_EnemyHandBookDataGroup",
+    "kv_field": null
+  },
+  "ep_breakbuff_table": {
+    "root": "clz_Torappu_EPBreakBuffData",
+    "kv_field": "ep_breakbuffs"
+  },
+  "extra_battlelog_table": {
+    "root": "clz_Torappu_ExtraBattleLogData",
+    "kv_field": "extra_battlelogs"
+  },
+  "favor_table": {
+    "root": "clz_Torappu_FavorTable",
+    "kv_field": null
+  },
+  "gacha_table": {
+    "root": "clz_Torappu_GachaData",
+    "kv_field": null
+  },
+  "gamedata_const": {
+    "root": "clz_Torappu_GameDataConsts",
+    "kv_field": null
+  },
+  "handbook_info_table": {
+    "root": "clz_Torappu_HandbookInfoTable",
+    "kv_field": null
+  },
+  "handbook_team_table": {
+    "root": "clz_Torappu_HandbookTeamData",
+    "kv_field": "handbook_teams"
+  },
+  "hotupdate_meta_table": {
+    "root": "clz_Torappu_HotUpdateMetaTable",
+    "kv_field": null
+  },
+  "init_text": {
+    "root": "clz_Torappu_LanguageData",
+    "kv_field": null
+  },
+  "item_table": {
+    "root": "clz_Torappu_InventoryData",
+    "kv_field": null
+  },
+  "legion_mode_buff_table": {
+    "root": "clz_Torappu_Battle_Legion_LegionModeBuffData",
+    "kv_field": "legion_mode_buffs"
+  },
+  "level_script_table": {
+    "root": "clz_Torappu_Battle_LevelScriptDataMap",
+    "kv_field": null
+  },
+  "main_text": {
+    "root": "clz_Torappu_LanguageData",
+    "kv_field": null
+  },
+  "medal_table": {
+    "root": "clz_Torappu_MedalData",
+    "kv_field": null
+  },
+  "meta_ui_table": {
+    "root": "clz_Torappu_MetaUIDisplayTable",
+    "kv_field": null
+  },
+  "mission_table": {
+    "root": "clz_Torappu_MissionTable",
+    "kv_field": null
+  },
+  "open_server_table": {
+    "root": "clz_Torappu_OpenServerSchedule",
+    "kv_field": null
+  },
+  "prts___levels": {
+    "root": "clz_Torappu_LevelData",
+    "kv_field": null
+  },
+  "replicate_table": {
+    "root": "clz_Torappu_ReplicateTable",
+    "kv_field": "replications"
+  },
+  "resource_manifest": {
+    "root": "clz_Torappu_Resource_ResourceManifest",
+    "kv_field": null
+  },
+  "retro_table": {
+    "root": "clz_Torappu_RetroStageTable",
+    "kv_field": null
+  },
+  "roguelike_topic_table": {
+    "root": "clz_Torappu_RoguelikeTopicTable",
+    "kv_field": null
+  },
+  "sandbox_perm_table": {
+    "root": "clz_Torappu_SandboxPermTable",
+    "kv_field": null
+  },
+  "sandbox_table": {
+    "root": "clz_Torappu_SandboxTable",
+    "kv_field": null
+  },
+  "shop_client_table": {
+    "root": "clz_Torappu_ShopClientData",
+    "kv_field": null
+  },
+  "skill_table": {
+    "root": "clz_Torappu_SkillDataBundle",
+    "kv_field": "skills"
+  },
+  "skin_table": {
+    "root": "clz_Torappu_SkinTable",
+    "kv_field": null
+  },
+  "special_operator_table": {
+    "root": "clz_Torappu_SpecialOperatorTable",
+    "kv_field": null
+  },
+  "stage_table": {
+    "root": "clz_Torappu_StageTable",
+    "kv_field": null
+  },
+  "story_review_meta_table": {
+    "root": "clz_Torappu_StoryReviewMetaTable",
+    "kv_field": null
+  },
+  "story_review_table": {
+    "root": "clz_Torappu_StoryReviewGroupClientData",
+    "kv_field": "story_reviews"
+  },
+  "story_table": {
+    "root": "clz_Torappu_StoryData",
+    "kv_field": "stories"
+  },
+  "tip_table": {
+    "root": "clz_Torappu_TipTable",
+    "kv_field": null
+  },
+  "token_table": {
+    "root": "clz_Torappu_CharacterData",
+    "kv_field": "characters"
+  },
+  "uniequip_table": {
+    "root": "clz_Torappu_UniEquipTable",
+    "kv_field": null
+  },
+  "zone_table": {
+    "root": "clz_Torappu_ZoneTable",
+    "kv_field": null
+  }
+}

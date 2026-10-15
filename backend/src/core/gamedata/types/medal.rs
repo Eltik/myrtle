@@ -342,8 +342,9 @@ impl MedalData {
     pub fn obtainability(&self, medal_id: &str, now: i64) -> Obtainability {
         let Some(medal) = self.medals.get(medal_id) else {
             // Unknown medal: a closed event, kept out of the permanent pool.
-            // End-ts in the deep past forces full decay.
-            return Obtainability::Event { proxy_close_ts: 0 };
+            // A close in the deep past (1, not 0: 0 means "ongoing, full
+            // weight") decays it to the recency floor.
+            return Obtainability::Event { proxy_close_ts: 1 };
         };
 
         if let Some(windows) = self.tower_windows.get(medal_id) {

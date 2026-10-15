@@ -7,6 +7,7 @@ use crate::core::hypergryph::constants::{AuthSession, Server};
 use crate::core::hypergryph::session;
 use crate::core::hypergryph::yostar;
 use crate::database::models::profile_layout::ProfileLayoutPatch;
+use crate::database::queries::account_deletion;
 use crate::database::queries::game_credentials;
 use crate::database::queries::users;
 use crate::database::queries::users::create_user;
@@ -32,7 +33,7 @@ pub fn parse_server(s: &str) -> Result<Server, ApiError> {
 pub async fn send_code(state: &AppState, email: &str, server: Server) -> Result<(), ApiError> {
     if let Err(e) = yostar::send_code(&state.http_client, email, server).await {
         tracing::warn!(
-            email = %email,
+            email = %mask_identifier(email),
             server = server.as_str(),
             error = ?e,
             "yostar send_code failed"
@@ -118,7 +119,7 @@ pub async fn login(
         Ok(r) => r,
         Err(e) => {
             tracing::warn!(
-                email = %email,
+                email = %mask_identifier(email),
                 server = server.as_str(),
                 error = ?e,
                 "yostar login failed"
@@ -375,4 +376,81 @@ pub async fn update_settings(
     )
     .await?;
     Ok(())
+}
+
+/// Delete the caller's account and everything that is theirs, in one
+/// transaction; see [`account_deletion`] for what each table does. 401 when the
+/// account is already gone, the answer every route gives a dead token.
+///
+/// The site token is a stateless JWT and cannot be revoked here. What stops it
+/// is that it now names no row: role-checked routes and `/auth/verify` answer
+/// 401, writes keyed on the account fail its foreign keys, and `/refresh` finds
+/// no stored credentials. The frontend clears its cookie on success.
+pub async fn delete_account(state: &AppState, user_id: Uuid) -> Result<(), ApiError> {
+    let mut tx = state.db.begin().await?;
+    let deleted = account_deletion::delete_account(&mut tx, user_id)
+        .await?
+        .ok_or(ApiError::Unauthorized)?;
+    tx.commit().await?;
+
+    // After the commit, so a read racing the delete cannot cache the old rows
+    // back in.
+    let uid = deleted.uid.as_str();
+    let cache = &state.cache;
+    cache.invalidate(&CacheKey::User { uid }).await;
+    cache.invalidate(&CacheKey::GameSession { uid }).await;
+    cache.invalidate(&CacheKey::PortalSession { uid }).await;
+    for slug in &deleted.tier_list_slugs {
+        cache.invalidate(&CacheKey::TierList { slug }).await;
+    }
+    // Every leaderboard page, standing and item ranking, and search, can hold
+    // the account for up to 15 minutes; deletions are rare enough to flush them
+    // whole. The global stats and ownership tables are aggregates rebuilt by
+    // `refresh-stats` and hold no row of the account.
+    for prefix in ["leaderboard:", "search:"] {
+        cache.invalidate_by_prefix(prefix).await;
+    }
+    for scope in ["improvements", "base:rotation", "base:optimize"] {
+        cache.invalidate_by_prefix(&format!("{scope}:{uid}:")).await;
+    }
+
+    tracing::info!(
+        uid = %mask_identifier(uid),
+        tier_lists = deleted.tier_list_slugs.len(),
+        "account deleted"
+    );
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_every_server_code() {
+        let cases = [
+            ("en", Server::EN),
+            ("jp", Server::JP),
+            ("kr", Server::KR),
+            ("cn", Server::CN),
+            ("bili", Server::Bilibili),
+            ("tw", Server::TW),
+        ];
+        for (code, server) in cases {
+            assert_eq!(parse_server(code).ok(), Some(server), "{code}");
+        }
+    }
+
+    #[test]
+    fn codes_are_case_sensitive_and_unknown_ones_are_bad_requests() {
+        for code in ["EN", "Bilibili", "us", ""] {
+            match parse_server(code) {
+                Err(ApiError::BadRequest(msg)) => {
+                    assert_eq!(msg, format!("unknown server: {code}"));
+                }
+                Err(other) => panic!("{code}: unexpected error {other:?}"),
+                Ok(server) => panic!("{code}: parsed as {server:?}"),
+            }
+        }
+    }
 }

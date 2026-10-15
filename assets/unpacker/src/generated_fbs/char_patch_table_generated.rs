@@ -1548,15 +1548,16 @@ pub const ENUM_MIN_ENUM__TORAPPU_ABNORMAL_COMBO: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ABNORMAL_COMBO: i32 = 2;
+pub const ENUM_MAX_ENUM__TORAPPU_ABNORMAL_COMBO: i32 = 3;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ABNORMAL_COMBO: [enum__Torappu_AbnormalCombo; 3] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ABNORMAL_COMBO: [enum__Torappu_AbnormalCombo; 4] = [
     enum__Torappu_AbnormalCombo::SLEEPING,
     enum__Torappu_AbnormalCombo::SHELTERING,
+    enum__Torappu_AbnormalCombo::ISOLATE,
     enum__Torappu_AbnormalCombo::E_NUM,
 ];
 
@@ -1567,16 +1568,19 @@ pub struct enum__Torappu_AbnormalCombo(pub i32);
 impl enum__Torappu_AbnormalCombo {
     pub const SLEEPING: Self = Self(0);
     pub const SHELTERING: Self = Self(1);
-    pub const E_NUM: Self = Self(2);
+    pub const ISOLATE: Self = Self(2);
+    pub const E_NUM: Self = Self(3);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 2;
-    pub const ENUM_VALUES: &'static [Self] = &[Self::SLEEPING, Self::SHELTERING, Self::E_NUM];
+    pub const ENUM_MAX: i32 = 3;
+    pub const ENUM_VALUES: &'static [Self] =
+        &[Self::SLEEPING, Self::SHELTERING, Self::ISOLATE, Self::E_NUM];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::SLEEPING => Some("SLEEPING"),
             Self::SHELTERING => Some("SHELTERING"),
+            Self::ISOLATE => Some("ISOLATE"),
             Self::E_NUM => Some("E_NUM"),
             _ => None,
         }

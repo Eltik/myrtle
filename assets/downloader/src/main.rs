@@ -6,8 +6,8 @@ use std::sync::Arc;
 use clap::Parser;
 use cli::{Cli, Commands};
 use downloader::{
-    client_extract, download, hot_update, manifest, pipeline, resource_manifest, server::Server,
-    types, version,
+    client_download, client_extract, download, hot_update, manifest, pipeline, resource_manifest,
+    server::Server, types, version,
 };
 
 #[tokio::main]
@@ -23,6 +23,14 @@ async fn main() -> anyhow::Result<()> {
     if let Commands::ClientExtract { input, output } = &cli.command {
         let report = client_extract::run(input, output)?;
         client_extract::print_report(&report);
+        return Ok(());
+    }
+
+    // `client-download` reads the launcher endpoint, not the asset version
+    // endpoint, so it also runs before the version fetch.
+    if let Commands::ClientDownload { platform } = &cli.command {
+        let server: Server = cli.server.parse()?;
+        client_download::run(server, platform, &cli.savedir).await?;
         return Ok(());
     }
 
@@ -72,7 +80,7 @@ async fn main() -> anyhow::Result<()> {
         }
 
         // Handled offline before the version fetch above.
-        Commands::ClientExtract { .. } => unreachable!(),
+        Commands::ClientExtract { .. } | Commands::ClientDownload { .. } => unreachable!(),
     }
 
     Ok(())
@@ -175,7 +183,7 @@ async fn run_download(
 
     let downloader = Arc::new(download::Downloader::new(
         server,
-        ver.res_version,
+        ver.res_version.clone(),
         cli.threads,
     ));
     let stats = pipeline::run(downloader, tasks, cli.savedir.clone(), &mut manifest).await?;
@@ -184,6 +192,18 @@ async fn run_download(
         "Done: {} downloaded, {} failed, {} bytes",
         stats.downloaded, stats.failed, stats.total_bytes
     );
+
+    // The version these bundles ARE, for the unpacker's `.skipped.json`. `.version`
+    // can't serve: `run.mjs` writes it only after a successful extract, so during
+    // the extract it still names the previous one. Only a complete download is
+    // one version; after a partial one the old stamp stays, which is still right
+    // for the bundles the unpacker will read.
+    if stats.failed == 0 {
+        std::fs::write(
+            cli.savedir.join(".downloaded_version"),
+            format!("{}\n", ver.res_version),
+        )?;
+    }
 
     Ok(())
 }

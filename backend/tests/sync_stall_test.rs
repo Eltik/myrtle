@@ -359,14 +359,10 @@ fn an_inline_block_past_the_deadline_drops_the_tail_unrun() {
     );
 }
 
-/// The post-refresh store path on the real payload, stage by stage, inside a
-/// transaction that is ROLLED BACK.
-///
-/// Runs what the server runs: the same `build_index` the request reaches for
-/// `by_txt`, the same `parse_game_story_read`, and the same DELETE and UNNEST
-/// INSERT, driven through `store_game_read_on` so the statements can be timed
-/// and then undone. Nothing is written: the transaction is rolled back and the
-/// row count is read back INSIDE it.
+/// The post-refresh store path on the real payload, timed stage by stage:
+/// the server's own `build_index`, `parse_game_story_read` and DELETE + UNNEST
+/// INSERT (via `store_game_read_on`), inside a transaction that is ROLLED
+/// BACK after the row count is read INSIDE it.
 ///
 /// The payload comes from `MYRTLE_SYNC_DUMP`, never from the repository.
 #[tokio::test]
@@ -474,14 +470,13 @@ async fn the_store_path_on_a_real_payload() {
 ///
 /// Ruled out by reading, before this was written: there is NO per-user lock to
 /// find. `AppState` holds no mutex over user data (`app/state.rs` is atomics
-/// and `ArcSwap` only), `AuthUser::from_request_parts`
-/// (`app/extractors/auth.rs:33`) takes no lock and touches no database, the
-/// rate limiter's `DashMap` (`app/middleware.rs:350`) is held per lookup, the
-/// cache's single-flight registry (`app/cache/mod.rs:38`) is a
-/// `tokio::sync::Mutex` dropped before its build task is spawned, and
-/// `core/grade/**` holds nothing but `LazyLock` regexes. What the refresh held
-/// across the grade was a runtime WORKER, and the timer that owed the budget
-/// its wakeup.
+/// and `ArcSwap` only), `AuthUser::from_request_parts` takes no lock and
+/// touches no database, the rate limiter's `BUCKETS` `DashMap`
+/// (`app/middleware.rs`) is held per lookup, the cache's single-flight
+/// `Inflight` (`app/cache/mod.rs`) is a `tokio::sync::Mutex` dropped before
+/// its build task is spawned, and `core/grade/**` holds nothing but
+/// `LazyLock` regexes. What the refresh held across the grade was a runtime
+/// WORKER, and the timer that owed the budget its wakeup.
 #[test]
 #[ignore = "reads the local Postgres roster"]
 fn the_grade_budget_is_observed_on_time_only_off_the_runtime() {

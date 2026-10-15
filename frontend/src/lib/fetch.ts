@@ -16,7 +16,10 @@ export async function backendFetch(path: string, init: RequestInit & { bearerTok
         return await fetch(`${base}/api${path}`, {
             ...rest,
             headers: {
-                "Content-Type": "application/json",
+                // Only a request with a body names its type. A bodiless browser GET then stays a
+                // CORS "simple" request: with the header, every direct read of the backend
+                // (cross-origin through `VITE_BACKEND_URL`) paid an OPTIONS preflight first.
+                ...(rest.body != null ? { "Content-Type": "application/json" } : {}),
                 ...(identity ? { "Accept-Encoding": "identity" } : {}),
                 ...(bearerToken ? { Authorization: `Bearer ${bearerToken}` } : {}),
                 ...headers,
@@ -24,11 +27,22 @@ export async function backendFetch(path: string, init: RequestInit & { bearerTok
         });
     } catch (err) {
         // `fetch` only throws when no response came back at all. Undici's
-        // message for that is "fetch failed", which reached login toasts
+        // message for that is "fetch failed", which would reach login toasts
         // verbatim; name the situation and keep the socket code for the report.
         // The raw error stays here in the server log (it names the internal
         // backend address), only the code travels to the browser.
         console.error(`backendFetch ${rest.method ?? "GET"} /api${path}: no response`, err);
         throw new BackendUnreachableError(err);
     }
+}
+
+/**
+ * `path`'s JSON from the backend, or `null` for a 404 (an id with no record). Any other failure
+ * throws `Failed to load ${what}: ${status}`.
+ */
+export async function backendJsonOrNull<T>(path: string, what: string): Promise<T | null> {
+    const res = await backendFetch(path);
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error(`Failed to load ${what}: ${res.status}`);
+    return (await res.json()) as T;
 }

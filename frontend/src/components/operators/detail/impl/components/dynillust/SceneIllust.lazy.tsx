@@ -12,8 +12,8 @@ interface ISceneIllustProps {
     backdrop?: string;
     /** Which presentation surface this is; see the full note on `SceneIllust`'s own props.
      *  `"panel"` is the windowed operator-detail card, where the game does NOT play the
-     *  entrance. ⚠️ This interface is a DUPLICATE of the one in `SceneIllust.tsx`, kept so the
-     *  lazy wrapper does not pull the renderer into the SSR bundle; both must be edited together. */
+     *  entrance. This interface DUPLICATES the one in `SceneIllust.tsx`, kept so the lazy
+     *  wrapper does not pull the renderer into the SSR bundle; edit both together. */
     surface?: "viewer" | "panel";
     onReady?: () => void;
     onHandle?: (handle: ISceneIllustHandle | null) => void;

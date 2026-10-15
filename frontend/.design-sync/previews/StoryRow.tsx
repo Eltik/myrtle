@@ -1,0 +1,45 @@
+import { StoryRow } from "frontend";
+import type { LibEntry, LibGroup } from "../../src/components/story/library/impl/derive";
+import type { StoryProgress } from "../../src/lib/story/progress";
+
+// StoryRow is one story inside an open chapter (or an operator's record list):
+// the operation code, the title as a link into the reader, the AVG tag, the
+// word count, "at line N" in primary while the reader is part-way, a "Not
+// extracted" badge on the few stories with no script, and the read tick. The
+// entries are Shatterpoint's from the live EN index.
+
+const SHATTERPOINT: LibGroup = {"id":"main_10","name":"Shatterpoint","category":"main","entryType":"MAINLINE","actType":"MAIN_STORY","coverUrl":"/textures/avg/bg/avg_bkg_h1_27_0/27_g3_minearea_abandoned.png","coverKind":"background","bannerUrl":"/textures/spritepack/mixstory_kv_sprites_1/kv_shatterpoint.png","titleImageUrl":"/textures/spritepack/mixstory_title_sprites_0/title_shatterpoint.png","iconUrl":"/textures/spritepack/mixstory_deco_sprites_h2_0/deco_shatterpoint.png","chapterNumber":10,"startTime":1666180800,"zone":{"chapterName":"Shadow of A Dying Sun","nameFirst":"Episode 10","nameSecond":"Shatterpoint","nameThird":"EPISODE 10"},"wordCount":62481,"illustrationCount":58,"spriteCount":66,"music":{"introUrl":"/audio/audio/sound_beta_2/music/act9d0d0/m_avg_dignified/m_avg_dignified_intro.ogg","loopUrl":"/audio/audio/sound_beta_2/music/act9d0d0/m_avg_dignified/m_avg_dignified_loop.ogg"},"stories":[{"id":"main_10_level_st_10-01","code":"10-1","name":"The Pursued","sort":61,"avgTag":"Interlude","groupId":"main_10","hasScript":true,"wordCount":2221,"hasVideo":false,"requiredStages":["st_10-01"]},{"id":"main_10_level_main_10-01_beg","code":"10-2","name":"Raid Target","sort":62,"avgTag":"Before Operation","groupId":"main_10","hasScript":true,"wordCount":1238,"hasVideo":false,"requiredStages":["main_10-01"]},{"id":"main_10_level_main_10-01_end","code":"10-2","name":"Raid Target","sort":63,"avgTag":"After Operation","groupId":"main_10","hasScript":true,"wordCount":3585,"hasVideo":false,"requiredStages":["main_10-01"]},{"id":"main_10_level_main_10-02_beg","code":"10-3","name":"Heads Down","sort":64,"avgTag":"Before Operation","groupId":"main_10","hasScript":true,"wordCount":1805,"hasVideo":false,"requiredStages":["main_10-02"]},{"id":"main_10_level_main_10-02_end","code":"10-3","name":"Heads Down","sort":65,"avgTag":"After Operation","groupId":"main_10","hasScript":true,"wordCount":1830,"hasVideo":false,"requiredStages":["main_10-02"]},{"id":"main_10_level_main_10-03_beg","code":"10-4","name":"Warning Shot","sort":66,"avgTag":"Before Operation","groupId":"main_10","hasScript":true,"wordCount":2186,"hasVideo":false,"requiredStages":["main_10-03"]},{"id":"main_10_level_main_10-03_end","code":"10-4","name":"Warning Shot","sort":67,"avgTag":"After Operation","groupId":"main_10","hasScript":true,"wordCount":1822,"hasVideo":false,"requiredStages":["main_10-03"]},{"id":"main_10_level_main_10-04_beg","code":"10-5","name":"Breath of the City","sort":68,"avgTag":"Before Operation","groupId":"main_10","hasScript":true,"wordCount":2576,"hasVideo":false,"requiredStages":["main_10-04"]},{"id":"main_10_level_main_10-04_end","code":"10-5","name":"Breath of the City","sort":69,"avgTag":"After Operation","groupId":"main_10","hasScript":true,"wordCount":2588,"hasVideo":false,"requiredStages":["main_10-04"]},{"id":"main_10_level_main_10-05_beg","code":"10-6","name":"Kin or Otherwise","sort":70,"avgTag":"Before Operation","groupId":"main_10","hasScript":true,"wordCount":2305,"hasVideo":false,"requiredStages":["main_10-05"]},{"id":"main_10_level_main_10-05_end","code":"10-6","name":"Kin or Otherwise","sort":71,"avgTag":"After Operation","groupId":"main_10","hasScript":true,"wordCount":2366,"hasVideo":false,"requiredStages":["main_10-05"]},{"id":"main_10_level_main_10-06_beg","code":"10-7","name":"Bound by Pain","sort":72,"avgTag":"Before Operation","groupId":"main_10","hasScript":true,"wordCount":2884,"hasVideo":false,"requiredStages":["main_10-06"]},{"id":"main_10_level_main_10-07_end","code":"10-8","name":"No Time to Mourn","sort":73,"avgTag":"After Operation","groupId":"main_10","hasScript":true,"wordCount":1574,"hasVideo":false,"requiredStages":["main_10-07"]},{"id":"main_10_level_main_10-08_beg","code":"10-9","name":"Friends in Far Places","sort":74,"avgTag":"Before Operation","groupId":"main_10","hasScript":true,"wordCount":2376,"hasVideo":false,"requiredStages":["main_10-08"]},{"id":"main_10_level_main_10-08_end","code":"10-9","name":"Friends in Far Places","sort":75,"avgTag":"After Operation","groupId":"main_10","hasScript":true,"wordCount":2561,"hasVideo":false,"requiredStages":["main_10-08"]},{"id":"main_10_level_main_10-09_beg","code":"10-10","name":"Shadows of Days Past","sort":76,"avgTag":"Before Operation","groupId":"main_10","hasScript":true,"wordCount":2082,"hasVideo":false,"requiredStages":["main_10-09"]},{"id":"main_10_level_main_10-09_end","code":"10-10","name":"Shadows of Days Past","sort":77,"avgTag":"After Operation","groupId":"main_10","hasScript":true,"wordCount":1578,"hasVideo":false,"requiredStages":["main_10-09"]},{"id":"main_10_level_main_10-10_beg","code":"10-11","name":"Battered and Bruised","sort":78,"avgTag":"Before Operation","groupId":"main_10","hasScript":true,"wordCount":1590,"hasVideo":false,"requiredStages":["main_10-10"]},{"id":"main_10_level_main_10-11_end","code":"10-12","name":"At Vendetta's Close","sort":79,"avgTag":"After Operation","groupId":"main_10","hasScript":true,"wordCount":1802,"hasVideo":false,"requiredStages":["main_10-11"]},{"id":"main_10_level_st_10-02","code":"10-13","name":"Crossroads","sort":80,"avgTag":"Interlude","groupId":"main_10","hasScript":true,"wordCount":2435,"hasVideo":false,"requiredStages":["st_10-02"]},{"id":"main_10_level_main_10-12_beg","code":"10-14","name":"Aim","sort":81,"avgTag":"Before Operation","groupId":"main_10","hasScript":true,"wordCount":2181,"hasVideo":false,"requiredStages":["main_10-12"]},{"id":"main_10_level_main_10-12_end","code":"10-14","name":"Aim","sort":82,"avgTag":"After Operation","groupId":"main_10","hasScript":true,"wordCount":1846,"hasVideo":false,"requiredStages":["main_10-12"]},{"id":"main_10_level_main_10-13_beg","code":"10-15","name":"Fleeing Through Fire","sort":83,"avgTag":"Before Operation","groupId":"main_10","hasScript":true,"wordCount":2208,"hasVideo":false,"requiredStages":["main_10-13"]},{"id":"main_10_level_main_10-14_end","code":"10-16","name":"Bloodblade on High","sort":84,"avgTag":"After Operation","groupId":"main_10","hasScript":true,"wordCount":1679,"hasVideo":false,"requiredStages":["main_10-14"]},{"id":"main_10_level_main_10-15_beg","code":"10-17","name":"A Citadel and Its Walls","sort":85,"avgTag":"Before Operation","groupId":"main_10","hasScript":true,"wordCount":2328,"hasVideo":false,"requiredStages":["main_10-15"]},{"id":"main_10_level_main_10-15_end","code":"10-17","name":"A Citadel and Its Walls","sort":86,"avgTag":"After Operation","groupId":"main_10","hasScript":true,"wordCount":3679,"hasVideo":false,"requiredStages":["main_10-15"]},{"id":"main_10_level_st_10-03","code":"10-18","name":"Reflection of an Ideal","sort":87,"avgTag":"Interlude","groupId":"main_10","hasScript":true,"wordCount":2269,"hasVideo":false,"requiredStages":["st_10-03"]},{"id":"main_10_level_st_10-04","code":"10-19","name":"Sparks Afar","sort":88,"avgTag":"Interlude","groupId":"main_10","hasScript":true,"wordCount":2887,"hasVideo":false,"requiredStages":["st_10-04"]}]};
+
+const S = SHATTERPOINT.stories;
+const NO_GAME = new Set<string>();
+const at = (n: number) => S[n] as LibEntry;
+const PROGRESS: StoryProgress = {
+    v: 2,
+    read: Object.fromEntries(S.slice(0, 6).map((s) => [s.id, 1715600000000])),
+    pos: { [S[6].id]: { halt: 47, total: 118, ts: 1715700000000, choices: {} } },
+    last: S[6].id,
+};
+const GAME_READ = new Set([S[7].id]);
+
+/** A run of a chapter's list: read, part-read (at line 48), read in the game, and unread. */
+export const ChapterList = () => (
+    <div className="flex flex-col" style={{ width: 720 }}>
+        {[4, 5, 6, 7, 8, 9].map((n) => (
+            <StoryRow key={at(n).id} story={at(n)} progress={PROGRESS} gameRead={GAME_READ} />
+        ))}
+    </div>
+);
+
+/** A story with no script yet: dimmed, no link and no tick, a "Not extracted" badge. */
+export const NotExtracted = () => (
+    <div className="flex flex-col" style={{ width: 720 }}>
+        <StoryRow story={{ ...at(12), hasScript: false, wordCount: undefined }} progress={PROGRESS} gameRead={NO_GAME} />
+    </div>
+);
+
+/** An operator record row: no code column. */
+export const RecordRow = () => (
+    <div className="flex flex-col" style={{ width: 720 }}>
+        <StoryRow story={{ id: "story_kalts_set_1_story_1", name: "End of a Long Journey", sort: 101, groupId: "story_kalts_set_1", hasScript: true, wordCount: 3109, hasVideo: false, requiredStages: [] } as LibEntry} progress={PROGRESS} gameRead={NO_GAME} showCode={false} />
+    </div>
+);

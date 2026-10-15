@@ -310,6 +310,39 @@ pub struct TierListPermission {
     pub granted_at: DateTime<Utc>,
 }
 
+/// One grant row with the names the admin panel shows beside it: the list,
+/// the grantee and the granter. Read by `GET /admin/tier-lists/permissions`.
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+pub struct TierListGrant {
+    pub tier_list_id: Uuid,
+    pub slug: String,
+    pub title: String,
+    pub list_type: String,
+    pub user_id: Uuid,
+    pub user_uid: String,
+    pub user_nickname: Option<String>,
+    pub permission: String,
+    /// `None` for grants written before the column existed or by the CLI.
+    pub granted_by: Option<Uuid>,
+    pub granted_by_nickname: Option<String>,
+    pub granted_at: DateTime<Utc>,
+}
+
+/// A list the caller holds a grant on, at their highest level on it. Read by
+/// `GET /tier-lists/granted`.
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+pub struct GrantedTierList {
+    pub tier_list_id: Uuid,
+    pub slug: String,
+    pub title: String,
+    pub list_type: String,
+    pub permission: String,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

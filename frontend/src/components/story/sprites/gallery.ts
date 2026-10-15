@@ -331,7 +331,6 @@ export interface ICellRect {
     height: number;
 }
 
-/** The keys the expression grid moves on. */
 export const GRID_KEYS: ReadonlySet<string> = new Set(["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp", "Home", "End"]);
 
 /**

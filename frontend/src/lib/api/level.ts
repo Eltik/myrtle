@@ -3,7 +3,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { backendFetch } from "#/lib/fetch";
 import { DEFAULT_GAMEDATA_SERVER, gamedataKey, gamedataPath, resolveGamedataServer } from "./gamedata";
 
-/** A grid coordinate in game space (`row`/`col`). */
 export interface IPosition {
     row: number;
     col: number;

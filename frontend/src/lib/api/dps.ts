@@ -3,8 +3,6 @@ import { createServerFn } from "@tanstack/react-start";
 import type { ICalcRequestBase, IConditionalInfo, IOperatorListEntry } from "#/components/tools/shared/types";
 import { backendFetch } from "#/lib/fetch";
 
-// Operator/conditional/buff types come from `components/tools/shared/types`,
-// re-exported here under DPS names.
 export type { ICalcBuffs as IDpsCalculateBuffs, ICalcConditionals as IDpsCalculateConditionals } from "#/components/tools/shared/types";
 export type IDpsConditionalInfo = IConditionalInfo;
 export type IDpsOperatorListEntry = IOperatorListEntry;
@@ -37,7 +35,6 @@ export interface IDpsCalculateResponse {
     skill_dps: number;
     total_damage: number;
     average_dps: number;
-    /** Allows reading any result value by metric key. */
     [metric: string]: number;
 }
 

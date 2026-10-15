@@ -4,11 +4,11 @@ export const namespace = "meta";
 
 /**
  * Text rasterised into the default social card, one entry per page in
- * `presets.ts`, plus the section chips the card always draws.
+ * `presets.ts`, plus the section names its kicker draws.
  *
- * These are page metadata like the `seo()` titles - same namespace - but they
- * are a separate surface with its own budget: the card gives the title one
- * 96px line and the subtitle two at 28px, so an OG subtitle is usually a
+ * These are page metadata like the `seo()` titles, in the same namespace, but
+ * they are a separate surface with its own budget: the card gives the title up to
+ * two lines at 56 to 88px and the subtitle two at 26px, so an OG subtitle is usually a
  * shorter rewrite of the page's meta description rather than the same
  * sentence. They get their own keys so the two can be tuned apart.
  *
@@ -139,6 +139,15 @@ export const messages = {
         description: "Subtitle on the healing calculator social card.",
     },
 
+    "og.toolsSquadBuilder.title": {
+        text: "Squad Builder",
+        description: "Headline on the squad builder social card.",
+    },
+    "og.toolsSquadBuilder.subtitle": {
+        text: "Build an Arknights squad and see what it covers.",
+        description: "Subtitle on the squad builder social card.",
+    },
+
     "og.toolsRecruitment.title": {
         text: "Recruitment Calculator",
         description: "Headline on the recruitment tag calculator social card.",
@@ -229,28 +238,71 @@ export const messages = {
         description: "Subtitle on the changelog social card.",
     },
 
-    // The five section chips drawn across the bottom of every default card,
-    // one of them highlighted by the preset's `activeTag`. Uppercased by the
-    // template, so translate them in their natural case.
+    "og.music.title": {
+        text: "Music",
+        description: "Headline on the music gallery social card.",
+    },
+    "og.music.subtitle": {
+        text: "Every Monster Siren album, with covers, artists and a player.",
+        description: "Subtitle on the music gallery social card.",
+    },
+
+    "og.stories.title": {
+        text: "Story Reader",
+        description: "Headline on the story library social card.",
+    },
+    "og.stories.subtitle": {
+        text: "Read every main story, event and operator record as the game stages it.",
+        description: "Subtitle on the story library social card.",
+    },
+
+    "og.archives.title": {
+        text: "Archives",
+        description: "Headline on the operator archives social card: profiles, records and lore.",
+    },
+    "og.archives.subtitle": {
+        text: "Operator files, records and voice lines from the Rhodes Island archives.",
+        description: "Subtitle on the operator archives social card.",
+    },
+
+    // The section the default card names in its kicker, from the preset's
+    // `section`. Uppercased by the template, so translate them in their
+    // natural case.
     "og.tag.home": {
         text: "Home",
-        description: "Section chip on the default social card. Drawn uppercase, at 13px, in a row of five - keep it to one short word.",
+        description: "Section kicker on the default social card, above the headline. Drawn uppercase in a small monospace face with wide tracking: keep it to one short word.",
     },
     "og.tag.collection": {
         text: "Collection",
-        description: "Section chip on the default social card covering operators, enemies and stages. Drawn uppercase, at 13px, in a row of five - keep it to one short word.",
+        description: "Section kicker on the default social card, above the headline. Drawn uppercase in a small monospace face with wide tracking: keep it to one short word. Covers operators, enemies, stages, stories, archives and music.",
     },
     "og.tag.players": {
         text: "Players",
-        description: "Section chip on the default social card covering profiles, search and the leaderboard. Drawn uppercase, at 13px, in a row of five - keep it to one short word.",
+        description: "Section kicker on the default social card, above the headline. Drawn uppercase in a small monospace face with wide tracking: keep it to one short word. Covers profiles, search and the leaderboard.",
+    },
+    "og.tag.community": {
+        text: "Community",
+        description: "Section kicker on the default social card, above the headline. Drawn uppercase in a small monospace face with wide tracking: keep it to one short word. Covers tier lists and grids made by players.",
     },
     "og.tag.gacha": {
         text: "Gacha",
-        description: "Section chip on the default social card. `Gacha` is the standard loanword for the game's randomised pulls. Drawn uppercase, at 13px, in a row of five - keep it to one short word.",
+        description: "Section kicker on the default social card, above the headline. Drawn uppercase in a small monospace face with wide tracking: keep it to one short word. `Gacha` is the standard loanword for the game's randomised pulls.",
     },
     "og.tag.tools": {
         text: "Tools",
-        description: "Section chip on the default social card covering the calculators and planners. Drawn uppercase, at 13px, in a row of five - keep it to one short word.",
+        description: "Section kicker on the default social card, above the headline. Drawn uppercase in a small monospace face with wide tracking: keep it to one short word. Covers the calculators and planners.",
+    },
+    "og.tag.stats": {
+        text: "Stats",
+        description: "Section kicker on the default social card, above the headline. Drawn uppercase in a small monospace face with wide tracking: keep it to one short word. Covers the site-wide index counts.",
+    },
+    "og.tag.account": {
+        text: "Account",
+        description: "Section kicker on the default social card, above the headline. Drawn uppercase in a small monospace face with wide tracking: keep it to one short word. Covers sign-in and settings.",
+    },
+    "og.tag.legal": {
+        text: "Legal",
+        description: "Section kicker on the default social card, above the headline. Drawn uppercase in a small monospace face with wide tracking: keep it to one short word. Covers the terms of service and privacy policy.",
     },
 } satisfies MessageMap;
 

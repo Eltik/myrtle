@@ -1,8 +1,8 @@
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { backendFetch } from "#/lib/fetch";
-// Generated from `backend/src/core/gamedata/types/chibi.rs`. To change a field,
-// edit the Rust struct and run `bun run gen:types` - do not redeclare it here.
+// Generated from `backend/src/core/gamedata/types/chibi.rs`; edit the Rust
+// struct and run `bun run gen:types`, don't redeclare here.
 import type { ChibiCharacter } from "#/types/generated/ChibiCharacter";
 import type { ChibiData } from "#/types/generated/ChibiData";
 import type { ChibiSkin } from "#/types/generated/ChibiSkin";

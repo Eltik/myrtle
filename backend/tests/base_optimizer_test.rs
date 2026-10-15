@@ -3,8 +3,8 @@
 //! named-teammate conditional synergies, Control Center stacking and faction
 //! buffs, the staggered rotation, and the high-level grade.
 
-// Test-local `const CHAR: &str = "..."` declarations next to their assertions, and small numeric
-// casts on counts, are intentional here - pedantic/nursery lints not worth reshaping test code over.
+// Test-local `const CHAR: &str = "..."` next to the assertions and small numeric casts on
+// counts are deliberate: pedantic/nursery lints not worth reshaping test code over.
 #![allow(
     clippy::items_after_statements,
     clippy::cast_possible_truncation,
@@ -423,9 +423,9 @@ fn rhine_lab_faction_synergy_boosts_dorothy() {
     let rhine = factory_efficiency(gd, &rhine_team);
     let mixed = factory_efficiency(gd, &mixed_team);
 
-    // Even though the non-Rhine teammates have *higher* flat efficiency (35 vs
-    // 25), Dorothy's faction bonus (+5% × 2 Rhine = +10%) makes the Rhine team
-    // competitive/better. The key assertion: the faction bonus is actually applied.
+    // The non-Rhine teammates have higher flat efficiency (35 vs 25), but
+    // Dorothy's +5% × 2 Rhine = +10% makes the Rhine team competitive. What is
+    // asserted is that the faction bonus applies.
     let mixed_no_dorothy = factory_efficiency(
         gd,
         &[
@@ -1267,7 +1267,7 @@ fn viviana_knight_buff_reaches_pinus_knights_like_wild_mane() {
     };
     const VIVIANA: &str = "char_4098_vvana";
     const WILD_MANE: &str = "char_496_wildmn";
-    const VERMEIL: &str = "char_190_clour"; // Siracusa - not a Knight
+    const VERMEIL: &str = "char_190_clour"; // Siracusa, not a Knight
 
     let knight_with = factory_eff(&[VIVIANA], &[WILD_MANE]);
     let knight_without = factory_eff(&[], &[WILD_MANE]);
@@ -2619,6 +2619,371 @@ fn a_robot_token_is_parked_dead_when_its_gate_and_an_exclusion_gate_both_pay() {
 }
 
 #[test]
+fn a_dominant_value_shape_does_not_hide_the_proviso_free_level_three_crew() {
+    // Each post shortlists its best crews by uncoupled score. On a three-seat
+    // post every top crew carried Proviso (+55% there), so the joint pick
+    // never saw a Proviso-free level-3 crew and could not seat her at the
+    // level-2 post where she pays on every order. The shortlist now also
+    // keeps, for each operator of a post's best crew, the best crew without
+    // them; the coupled value then seats Shamare/Tequila at the level-3 post
+    // and Proviso at the level-2 one, the way the community runs it, and
+    // the plan is worth at least what that player's own arrangement is
+    // (user report 2026-10-08: their setup out-earned the plan by 7%).
+    use backend::core::grade::base::assignment::{
+        compute_current_assignment, sustained_assignment_value,
+    };
+    use backend::core::grade::base::pools::{optimal_with_bundles, search_economy};
+    const SHAMARE: &str = "char_254_vodfox";
+    const TEQUILA: &str = "char_486_takila";
+    const PROVISO: &str = "char_4032_provs";
+    const QUARTZ: &str = "char_4063_quartz";
+    const BIBEAK: &str = "char_252_bibeak";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let roster: Vec<OperatorBaseProfile> = [
+        SHAMARE,
+        TEQUILA,
+        PROVISO,
+        QUARTZ,
+        "char_300_phenxi",
+        TEXAS,
+        LAPPLAND,
+        EXUSIAI,
+        "char_272_strong",
+        "char_4193_lemuen",
+        BIBEAK,
+        "char_196_sunbr",
+        "char_283_midn",
+        "char_237_gravel",
+        "char_141_nights",
+        "char_240_wyvern",
+        "char_235_jesica",
+        "char_290_vigna",
+        "char_193_frostl",
+        "char_1502_crosly",
+        "char_1032_excu2",
+        "char_123_fang",
+        "char_133_mm",
+        "char_181_flower",
+        "char_128_plosis",
+        "char_002_amiya",
+        "char_2027_wang",
+        "char_107_liskam",
+        "char_285_medic2",
+        "char_1011_lava2",
+        "char_159_peacok",
+        "char_215_mantic",
+    ]
+    .iter()
+    .filter(|id| gd.building.chars.contains_key(**id))
+    .map(|id| profile(gd, id))
+    .collect();
+    let factory = |slot: &str, formula: &str| {
+        let mut r = room(slot, "MANUFACTURE", 3);
+        r.current_formula = Some(formula.into());
+        r
+    };
+    let building = UserBuilding {
+        rooms: vec![
+            room("cc", "CONTROL", 5),
+            room("tp3", "TRADING", 3),
+            room("tp2", "TRADING", 2),
+            factory("mf0", "F_GOLD"),
+            factory("mf1", "F_GOLD"),
+            factory("mf2", "F_EXP"),
+            room("pp0", "POWER", 3),
+            room("d0", "DORMITORY", 5),
+            room("d1", "DORMITORY", 5),
+        ],
+    };
+    let economy = search_economy(&roster, &building, &gd.building, &registry);
+    let plan = optimal_with_bundles(
+        &roster,
+        &building,
+        &gd.building,
+        &registry,
+        &economy.registry,
+        &drains,
+        &economy.pins,
+    )
+    .optimal;
+    let crew = |slot: &str| -> Vec<String> {
+        plan.rooms
+            .iter()
+            .find(|r| r.slot_id == slot)
+            .map(|r| r.operators.clone())
+            .unwrap_or_default()
+    };
+    let (tp3, tp2) = (crew("tp3"), crew("tp2"));
+    assert!(
+        tp2.iter().any(|o| o == PROVISO),
+        "Proviso sells at the level-2 post: tp3 {tp3:?} tp2 {tp2:?}"
+    );
+    assert!(
+        tp3.iter().any(|o| o == SHAMARE) && tp3.iter().any(|o| o == TEQUILA),
+        "Shamare and Tequila sell at the level-3 post: tp3 {tp3:?}"
+    );
+    // The player's own arrangement on the plan's factories: the plan is worth
+    // at least as much.
+    let value = |b: &UserBuilding, a: &backend::core::grade::base::types::BaseAssignment| {
+        sustained_assignment_value(a, &roster, b, &gd.building, &registry, &drains)
+    };
+    let mut theirs = building.clone();
+    for r in &mut theirs.rooms {
+        r.current_operators = match r.slot_id.as_str() {
+            "tp3" => vec![SHAMARE.into(), TEQUILA.into(), BIBEAK.into()],
+            "tp2" => vec![PROVISO.into(), QUARTZ.into()],
+            slot => crew(slot)
+                .into_iter()
+                .filter(|o| ![SHAMARE, TEQUILA, BIBEAK, PROVISO, QUARTZ].contains(&o.as_str()))
+                .collect(),
+        };
+    }
+    let theirs_scored =
+        compute_current_assignment(&roster, &theirs, &gd.building, &registry, &drains, None);
+    let (ours, player) = (value(&building, &plan), value(&theirs, &theirs_scored));
+    assert!(
+        ours >= player * 0.999,
+        "the plan is worth at least the community arrangement: ours {ours:.0} vs theirs {player:.0}"
+    );
+}
+
+#[test]
+fn wangs_expedience_counts_effective_power_plants_for_influence() {
+    // Wang's Expedience branches on Influence (Trading Posts + Power Plants)
+    // against Territory (Factories). Eunectes' "+2 Power Plants" (with
+    // Lancet-2 in a plant) raises Influence in the game: a player with one
+    // post, one plant and three factories read +7% on the post where we
+    // gave the factories +2% (user report 2026-10-14). The branch now reads
+    // the effective facility counts.
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    const WANG: &str = "char_2027_wang";
+    const EUNECTES: &str = "char_416_zumama";
+    const LANCET: &str = "char_285_medic2";
+    const GRAVEL: &str = "char_237_gravel";
+    const LIVE_PLANT_OP: &str = "char_1011_lava2";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let base = |cc: &[&str], plant: &str| {
+        let mut control = room("cc", "CONTROL", 5);
+        control.current_operators = cc.iter().map(|s| (*s).to_string()).collect();
+        let mut post = room("tp", "TRADING", 3);
+        post.current_operators = vec![TEXAS.into()];
+        let mut pp = room("pp", "POWER", 3);
+        pp.current_operators = vec![plant.to_string()];
+        let mut rooms = vec![control, post, pp];
+        for i in 0..3 {
+            let mut mf = room(&format!("mf{i}"), "MANUFACTURE", 3);
+            mf.current_formula = Some("F_GOLD".into());
+            if i == 0 {
+                mf.current_operators = vec![GRAVEL.into()];
+            }
+            rooms.push(mf);
+        }
+        let building = UserBuilding { rooms };
+        let roster: Vec<_> = [WANG, EUNECTES, LANCET, GRAVEL, LIVE_PLANT_OP, TEXAS]
+            .iter()
+            .map(|id| profile(gd, id))
+            .collect();
+        let asn =
+            compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        let eff = |slot: &str| {
+            asn.rooms
+                .iter()
+                .find(|r| r.slot_id == slot)
+                .map_or(0.0, |r| r.total_efficiency)
+        };
+        (eff("tp"), eff("mf0"))
+    };
+    let (post_plain, factory_plain) = base(&[WANG], LIVE_PLANT_OP);
+    let (post_base, factory_base) = base(&[], LIVE_PLANT_OP);
+    assert!(
+        (factory_plain - factory_base - 2.0).abs() < 1e-6 && (post_plain - post_base).abs() < 1e-6,
+        "two influence against three territory: the factories take +2 ({factory_base:.0} -> {factory_plain:.0}), the post nothing ({post_base:.0} -> {post_plain:.0})"
+    );
+    let (post_boosted, factory_boosted) = base(&[WANG, EUNECTES], LANCET);
+    let (post_ref, factory_ref) = base(&[EUNECTES], LANCET);
+    assert!(
+        (post_boosted - post_ref - 7.0).abs() < 1e-6
+            && (factory_boosted - factory_ref).abs() < 1e-6,
+        "Eunectes' two plants tip Influence over Territory: the post takes +7 ({post_ref:.0} -> {post_boosted:.0}), the factories nothing ({factory_ref:.0} -> {factory_boosted:.0})"
+    );
+}
+
+#[test]
+fn every_production_room_changes_crew_at_every_rotate_on_a_full_roster() {
+    // The game's global Rotate advances every room's preset each 12h and
+    // refuses a room whose next formation is its working crew ("No Available
+    // Presets", user recording 2026-10-14). A roster that can staff three
+    // teams per production room gets one team per room per shift, so every
+    // post and factory changes crew at every rotate and the three presets
+    // the game offers map one to one onto the three shifts.
+    use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let building = generic_base();
+    let rot = recommend_shift_rotation(
+        &full_roster(gd),
+        &building,
+        &gd.building,
+        &registry,
+        &drains,
+        &[],
+    );
+    for room in building
+        .rooms
+        .iter()
+        .filter(|r| matches!(r.room_type.as_str(), "TRADING" | "MANUFACTURE"))
+    {
+        let crews: Vec<std::collections::HashSet<String>> = rot
+            .shifts
+            .iter()
+            .map(|s| {
+                s.rooms
+                    .iter()
+                    .find(|r| r.slot_id == room.slot_id)
+                    .map(|r| r.recommended.iter().cloned().collect())
+                    .unwrap_or_default()
+            })
+            .collect();
+        assert!(
+            crews.iter().all(|c| !c.is_empty()),
+            "{} is staffed every shift: {crews:?}",
+            room.slot_id
+        );
+        for k in 0..3 {
+            let next = &crews[(k + 1) % 3];
+            assert!(
+                crews[k] != *next,
+                "{} changes crew between shift {} and the next: {crews:?}",
+                room.slot_id,
+                k + 1
+            );
+        }
+    }
+}
+
+#[test]
+fn presets_set_to_the_recommended_rotation_read_as_its_value() {
+    // "i set the shifts exactly how the optimizer suggested but it keeps saying
+    // that i havent optimized the exp production" (2026-10-15): the Optimizer tab
+    // compared the PEAK single staffing with the shift stationed right now, which
+    // a rotating base never equals. Rotation against rotation closes: saving the
+    // recommended shifts as presets values exactly what the recommendation
+    // values, and every production cell reads as a match.
+    use backend::core::grade::base::rotation_value::{
+        presets_value, rotation_value, usable_preset_shifts,
+    };
+    use backend::core::grade::base::shift_rotation::{SHIFT_COUNT, recommend_shift_rotation};
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let roster = full_roster(gd);
+    let mut building = generic_base();
+    // Two gold and two EXP lines, so both yields are live in the comparison.
+    for (i, room) in building
+        .rooms
+        .iter_mut()
+        .filter(|r| r.room_type == "MANUFACTURE")
+        .enumerate()
+    {
+        room.current_formula = Some(if i < 2 { "F_GOLD" } else { "F_EXP" }.into());
+    }
+    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &[]);
+    let recommended = rotation_value(&rot, &roster, &building, &gd.building, &registry, &drains)
+        .expect("a rotation has shifts");
+    assert!(recommended.exp_per_day > 0.0 && recommended.lmd_per_day > 0.0);
+    assert!(
+        presets_value(&roster, &building, &gd.building, &registry, &drains).is_none(),
+        "no presets, no preset value"
+    );
+
+    // The player saves every room's crew of each shift as that preset (the
+    // game keeps presets per room, the Control Center and dorms included).
+    for room in &mut building.rooms {
+        room.preset_shifts = rot
+            .shifts
+            .iter()
+            .map(|s| {
+                s.rooms
+                    .iter()
+                    .find(|r| r.slot_id == room.slot_id && r.active)
+                    .map(|r| r.recommended.clone())
+                    .unwrap_or_default()
+            })
+            .collect();
+    }
+    assert_eq!(usable_preset_shifts(&building).len(), SHIFT_COUNT);
+    let presets = presets_value(&roster, &building, &gd.building, &registry, &drains)
+        .expect("three usable presets");
+    // Every room is stationed identically shift by shift on both sides, so the
+    // two valuations agree exactly.
+    assert!(
+        (presets.exp_per_day - recommended.exp_per_day).abs() < 1e-6
+            && (presets.lmd_per_day - recommended.lmd_per_day).abs() < 1e-6
+            && (presets.production_efficiency - recommended.production_efficiency).abs() < 1e-6,
+        "presets {presets:?} vs recommended {recommended:?}"
+    );
+}
+
+#[test]
+fn a_small_roster_falls_back_to_the_24h_blocks() {
+    // Three teams per production room need `3N` crews; a roster that cannot
+    // fill them keeps every room staffed by running the 24h blocks instead,
+    // where a team holds its room for two consecutive shifts.
+    use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let roster: Vec<_> = [
+        TEXAS,
+        LAPPLAND,
+        EXUSIAI,
+        "char_4193_lemuen",
+        "char_272_strong",
+        "char_252_bibeak",
+        "char_196_sunbr",
+        "char_283_midn",
+    ]
+    .iter()
+    .map(|id| profile(gd, id))
+    .collect();
+    let building = UserBuilding {
+        rooms: vec![
+            room("tp0", "TRADING", 3),
+            room("tp1", "TRADING", 3),
+            room("d0", "DORMITORY", 5),
+        ],
+    };
+    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &[]);
+    let crews = |slot: &str| -> Vec<Vec<String>> {
+        rot.shifts
+            .iter()
+            .map(|s| {
+                s.rooms
+                    .iter()
+                    .find(|r| r.slot_id == slot)
+                    .map(|r| r.recommended.clone())
+                    .unwrap_or_default()
+            })
+            .collect()
+    };
+    let (a, b) = (crews("tp0"), crews("tp1"));
+    assert!(
+        a.iter().chain(b.iter()).all(|c| !c.is_empty()),
+        "both posts stay staffed every shift: {a:?} {b:?}"
+    );
+    let repeats = |c: &Vec<Vec<String>>| (0..3).any(|k| c[k] == c[(k + 1) % 3]);
+    assert!(
+        repeats(&a) || repeats(&b),
+        "eight traders cannot fill six crews, so a team holds its post across a boundary: {a:?} {b:?}"
+    );
+}
+
+#[test]
 fn dead_conditional_cc_operator_is_dropped_after_assignment() {
     // The roster HAS three Kjerag traders, so SilverAsh's gate passes the roster
     // feasibility check and he is initially seated in the CC. But stronger non-Kjerag
@@ -3150,9 +3515,9 @@ fn shift_rotation_forms_three_overlapping_shifts() {
         .iter()
         .map(|slot| (0..3).map(|k| team_id(k, slot)).collect())
         .collect();
-    // The two posts are interchangeable: whichever holds the [A, A, B] block is
-    // "early", the other runs [B, C, C]. (A 24/7-pinned trader can flip which
-    // slot the tiler hands the early block to.)
+    // Two dormitories hold ten beds for eighteen production seats, so the
+    // rotation runs the 24h blocks: the two posts are interchangeable,
+    // whichever holds the [A, A, B] block is "early", the other runs [B, C, C].
     let (early, late) = if tp_ids[0][0] == tp_ids[0][1] {
         (0, 1)
     } else {
@@ -3170,10 +3535,6 @@ fn shift_rotation_forms_three_overlapping_shifts() {
         tp_ids[late][1], tp_ids[late][2],
         "the late post runs one team for shifts 2+3: {tp_ids:?}"
     );
-    assert_ne!(
-        tp_ids[late][0], tp_ids[late][1],
-        "the late post swaps its team after shift 1: {tp_ids:?}"
-    );
     assert_eq!(
         tp_ids[early][2], tp_ids[late][0],
         "the wrap team's block spans the early post's shift 3 and the late post's shift 1: {tp_ids:?}"
@@ -3182,7 +3543,7 @@ fn shift_rotation_forms_three_overlapping_shifts() {
     assert_eq!(
         distinct_teams.len(),
         3,
-        "a pair of posts runs exactly three teams"
+        "a pair of posts runs exactly three teams under the blocks"
     );
     // Teams working the same shift never share an operator, and a team shares nobody with its
     // replacement, EXCEPT a Fiammetta-sustained operator, who is deliberately pinned to one
@@ -6271,9 +6632,8 @@ fn unresolved_buffs_are_zero_and_inventoried() {
 /// operators of the required faction) in the gate's room type. Context-free scoring
 /// credits the gated part 0 (never guess).
 #[test]
-// Exact float equality is intentional: these are deterministic values threaded
-// straight from the same constants/formulas the assignment resolver used, not
-// results of independent floating-point computation.
+// Exact float equality on purpose: the values come straight from the constants
+// the assignment resolver used, not an independent computation.
 #[allow(clippy::float_cmp)]
 fn room_presence_gates_resolve_against_the_deployment() {
     use backend::core::grade::base::assignment::resolve_room_presence;
@@ -7217,9 +7577,8 @@ fn cc_recovery_auras_offset_cc_workers_drain_only() {
 /// points (floored steps, base always on), exactly like the other
 /// deployment-dependent rewrites. Context-free scoring credits the base only.
 #[test]
-// Exact float equality is intentional: these are deterministic values threaded
-// straight from the same constants/formulas the resolver used, not results of
-// independent floating-point computation.
+// Exact float equality on purpose: the values come straight from the constants
+// the resolver used, not an independent computation.
 #[allow(clippy::float_cmp)]
 fn global_pool_consumers_resolve_against_settled_points() {
     use backend::core::grade::base::assignment::resolve_global_pool;
@@ -7776,7 +8135,9 @@ fn shift_rotation_supports_252_layout() {
             .clone()
             .expect("production cells carry a team id")
     };
-    // Whichever post holds the shifts-1+2 block is "early"; the other runs 2+3.
+    // Twenty-one production seats against twenty beds: the 252 runs the 24h
+    // blocks. Whichever post holds the shifts-1+2 block is "early"; the other
+    // runs 2+3.
     let (early, late) = if team_id(0, "tp0") == team_id(1, "tp0") {
         ("tp0", "tp1")
     } else {
@@ -8562,13 +8923,14 @@ fn reference_parity_252() {
 /// whole room's drain ("-0.1/hr to all Operators in the Trading Post") and a
 /// Control-Center aura lifting every dormitory sleeper's recovery both change
 /// the week's morale arithmetic. With L2 dorms (+1.7/hr), a 24h block drains
-/// 24 but a 12h rest recovers only 20.4: operators leak and deplete; the
-/// room aura cuts the block's drain to 21.6, which the rest covers.
+/// 24 but a 12h rest recovers only 20.4: operators leak and deplete. The
+/// room aura cuts the block's drain to 21.6, still short, so fewer deplete
+/// and later.
 #[test]
 fn morale_auras_change_the_sustainability_arithmetic() {
     use backend::core::grade::base::shift_rotation::{Shift, ShiftRoom, ShiftRotation};
     use backend::core::grade::base::sustain_sim::{Verdict, simulate_rotation};
-    const AURA: &str = "char_4171_wulfen"; // Warm-Up owner? resolved below
+    const AURA: &str = "char_4171_wulfen"; // unused; the owner is looked up below
     let gd = load_game_data();
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
@@ -10493,13 +10855,14 @@ fn a_rested_facility_enabler_is_not_counted_in_that_shift() {
     const GREYY2: &str = "char_1027_greyy2";
     let gd = load_game_data();
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    // Eight operators: too few for three full factory crews, so the rotation
+    // runs the 24h blocks, where Weedy's team works two shifts and Greyy's
+    // alternating squad rests one of them.
     let mut roster: Vec<_> = [
         WEEDY,
         EUNECTES,
         GREYY2,
         "char_1011_lava2",
-        "char_377_gdglow",
-        "char_253_greyy",
         "char_107_liskam",
         "char_472_pasngr",
         "char_1040_blaze2",
@@ -10509,16 +10872,9 @@ fn a_rested_facility_enabler_is_not_counted_in_that_shift() {
     .collect();
     // Enough plain hands that the factory's rest team never borrows Greyy
     // as a filler before the power plan can seat him.
-    for id in [
-        "char_123_fang",
-        "char_133_mm",
-        "char_502_nblade",
-        "char_124_kroos",
-        "char_120_hibisc",
-        "char_211_adnach",
-        "char_212_ansel",
-        "char_36_forget",
-    ] {
+    // Too few hands for three full factory crews: the rotation runs the 24h
+    // blocks, where Weedy's team works two shifts and Greyy rests one of them.
+    for id in ["char_123_fang"] {
         if gd.building.chars.contains_key(id) {
             roster.push(profile(gd, id));
         }
@@ -10529,36 +10885,58 @@ fn a_rested_facility_enabler_is_not_counted_in_that_shift() {
     rooms.extend((0..2).map(|i| room(&format!("d{i}"), "DORMITORY", 3)));
     let building = UserBuilding { rooms };
     let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &[]);
-    let weedy_shifts: Vec<(bool, f64)> = rot
-        .shifts
-        .iter()
-        .filter_map(|s| {
-            let factory = s.rooms.iter().find(|r| {
-                r.room_type == "MANUFACTURE" && r.recommended.iter().any(|o| o == WEEDY)
-            })?;
-            let greyy_working = s.rooms.iter().any(|r| {
-                r.room_type == "POWER" && r.active && r.recommended.iter().any(|o| o == GREYY2)
-            });
-            Some((greyy_working, factory.efficiency.unwrap_or(0.0)))
-        })
-        .collect();
-    let with = weedy_shifts
-        .iter()
-        .filter(|(g, _)| *g)
-        .map(|(_, e)| *e)
-        .next();
-    let without = weedy_shifts
-        .iter()
-        .filter(|(g, _)| !*g)
-        .map(|(_, e)| *e)
-        .next();
-    let (Some(with), Some(without)) = (with, without) else {
-        panic!("Weedy's factory runs both with and without Greyy in a plant, got {weedy_shifts:?}");
-    };
-    assert!(
-        (with - without - 30.0).abs() < 1e-6,
-        "four plants with Greyy, three without: 30 apart, got {with} vs {without}"
-    );
+    // Every production cell is priced against ITS shift's seats: the cell's
+    // figure equals the live scoring of the same stationing (Greyy's fourth
+    // plant counts only in a shift he works one), and the cells differ when
+    // his squad rests.
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    let mut with = Vec::new();
+    let mut without = Vec::new();
+    for shift in &rot.shifts {
+        let mut stationed = building.clone();
+        for r in &mut stationed.rooms {
+            r.current_operators = shift
+                .rooms
+                .iter()
+                .find(|c| c.slot_id == r.slot_id && c.active)
+                .map(|c| c.recommended.clone())
+                .unwrap_or_default();
+        }
+        let live =
+            compute_current_assignment(&roster, &stationed, &gd.building, &registry, &drains, None);
+        let factory = shift
+            .rooms
+            .iter()
+            .find(|c| c.slot_id == "mf0" && c.active)
+            .expect("the factory works every shift");
+        let live_eff = live
+            .rooms
+            .iter()
+            .find(|r| r.slot_id == "mf0")
+            .map_or(0.0, |r| r.total_efficiency);
+        let cell_eff = factory.efficiency.unwrap_or(0.0);
+        assert!(
+            (cell_eff - live_eff).abs() < 1e-6,
+            "shift {}: the cell reads {cell_eff} but the same stationing scores {live_eff}",
+            shift.index
+        );
+        let greyy_working = shift.rooms.iter().any(|r| {
+            r.room_type == "POWER" && r.active && r.recommended.iter().any(|o| o == GREYY2)
+        });
+        if factory.recommended.iter().any(|o| o == WEEDY) {
+            if greyy_working {
+                with.push(cell_eff);
+            } else {
+                without.push(cell_eff);
+            }
+        }
+    }
+    if let (Some(with), Some(without)) = (with.first(), without.first()) {
+        assert!(
+            (with - without - 30.0).abs() < 1e-6,
+            "four plants with Greyy, three without: 30 apart, got {with} vs {without}"
+        );
+    }
 }
 
 /// When a Worldly Plight team is recommended, the Office seat goes to

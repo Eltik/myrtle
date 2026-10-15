@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { StoryArtGallery } from "#/types/generated/StoryArtGallery";
 import type { StoryGallery } from "#/types/generated/StoryGallery";
-import { anyGalleryFilter, archiveCategory, archiveTiles, categoryOptions, filterForSource, filterGallery, groupOptions, type IGalleryFilter, NO_GALLERY_FILTER, pagesFor, searchGroups, storyArtTiles, TILE_PAGE, visibleTiles } from "./gallery";
+import { anyGalleryFilter, archiveCategory, archivePictureCategory, archiveTiles, categoryOptions, filterForSource, filterGallery, foldArchiveIntoStories, groupOptions, type IGalleryFilter, type IGalleryTile, NO_GALLERY_FILTER, pagesFor, searchGroups, storyArtTiles, TILE_PAGE, visibleTiles } from "./gallery";
 
 const picture = (id: string, title: string) => ({ id, title, pictureType: "IMAGE" });
 
@@ -141,5 +141,28 @@ describe("visibleTiles", () => {
         expect(pagesFor(0)).toBe(1);
         expect(pagesFor(TILE_PAGE - 1)).toBe(1);
         expect(pagesFor(TILE_PAGE)).toBe(2);
+    });
+});
+
+describe("foldArchiveIntoStories", () => {
+    const pic = (id: string, groupId: string, category: "is" | "side"): IGalleryTile => ({ kind: "archive_pic", id, title: id, groupId, groupName: `archive ${groupId}`, category });
+    const cg = (id: string, groupId: string): IGalleryTile => ({ kind: "story_cg", id, title: "", groupId, groupName: `story ${groupId}`, category: "side" });
+
+    it("moves an event's pictures after its story's CGs and keeps the IS themes in the Archives", () => {
+        const archive = [pic("act13side_pic_0", "act13side", "side"), pic("pic_rogue_2_KV1", "rogue_2", "is"), pic("act99side_pic_0", "act99side", "side")];
+        const cgs = [cg("a", "act12side"), cg("b", "act13side"), cg("c", "act13side"), cg("d", "act14side")];
+        const out = foldArchiveIntoStories(archive, cgs);
+        expect(out.archive.map((t) => t.id)).toEqual(["pic_rogue_2_KV1"]);
+        expect(out.cgs.map((t) => t.id)).toEqual(["a", "b", "c", "act13side_pic_0", "d", "act99side_pic_0"]);
+        const moved = out.cgs[3];
+        expect(moved?.kind).toBe("archive_pic");
+        expect(moved?.groupName).toBe("story act13side");
+        // A story the CGs do not list keeps the archive's own name.
+        expect(out.cgs[5]?.groupName).toBe("archive act99side");
+    });
+
+    it("reads a saved picture's category from its id", () => {
+        expect(archivePictureCategory("pic_rogue_2_KV1")).toBe("is");
+        expect(archivePictureCategory("act13side_pic_0")).toBe("side");
     });
 });

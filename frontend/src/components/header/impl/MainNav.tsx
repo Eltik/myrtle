@@ -1,8 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
-import { useRef, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import { Kbd } from "#/components/ui/kbd";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "#/components/ui/menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "#/components/ui/menu";
 import { useIsMac } from "#/hooks/use-is-mac";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -25,6 +25,9 @@ export interface INavItem {
     items?: INavItem[];
     sections?: INavSection[];
 }
+
+/** The mono caps heading every dropdown section has always worn, now on the menu's own group label. */
+const SECTION_LABEL = "px-3 pt-2 pb-1.5 font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-widest";
 
 interface IMainNavProps extends React.ComponentProps<"nav"> {
     items: INavItem[];
@@ -51,14 +54,18 @@ function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isAc
     const showSectionTitles = (item.sections?.length ?? 0) > 1;
     const hasIcons = sections.some((section) => section.items.some((t) => t.icon));
 
+    // A menu item rendered as a Link, not a bare Link: Base UI only roves
+    // arrow-key focus across registered items, so plain anchors left ArrowDown
+    // dead (focus stayed on the first row), and a click on an item closes the
+    // menu without an onClick of our own.
     const renderLink = (t: INavItem) => (
-        <Link key={t.href} to={t.href} className="flex items-center gap-3 rounded-lg px-3 py-2.5 no-underline transition-colors hover:bg-accent" onClick={() => setOpen(false)}>
+        <DropdownMenuItem key={t.href} className="cursor-pointer gap-3 rounded-lg px-3 py-2.5 no-underline transition-colors" render={<Link to={t.href} />}>
             {hasIcons && <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/5 bg-muted/70 text-primary">{t.icon && <ToolIcon name={t.icon} />}</span>}
             <span className="flex min-w-0 flex-1 flex-col gap-0.75">
                 <span className="font-medium font-sans text-[13px] text-foreground leading-none tracking-tight">{t.label}</span>
                 {t.desc && <span className="font-sans text-[11.5px] text-muted-foreground leading-snug">{t.desc}</span>}
             </span>
-        </Link>
+        </DropdownMenuItem>
     );
 
     return (
@@ -70,18 +77,24 @@ function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isAc
                     <ChevronDown className={cn(styles.chev, open && "opacity-90")} />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" alignOffset={-8} sideOffset={10} className={cn("p-2", hasIcons ? "min-w-95" : "min-w-52")} onMouseEnter={openNow} onMouseLeave={closeSoon}>
+                    {/* Each section is a menu group labelled by its heading, so a
+                        screen reader announces "Game Data, group" on entering it,
+                        while arrow keys still run straight through every group. */}
                     {showSectionTitles ? (
                         sections.map((section, i) => (
-                            <div key={section.title} className={cn(i > 0 && "mt-1.5 border-white/5 border-t pt-1.5")}>
-                                <div className="px-3 pt-2 pb-1.5 font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-widest">{section.title}</div>
-                                <div className="flex flex-col gap-px">{section.items.map(renderLink)}</div>
-                            </div>
+                            <Fragment key={section.title}>
+                                {i > 0 && <DropdownMenuSeparator className="mx-3 my-1.5" />}
+                                <DropdownMenuGroup className="flex flex-col gap-px">
+                                    <DropdownMenuLabel className={SECTION_LABEL}>{section.title}</DropdownMenuLabel>
+                                    {section.items.map(renderLink)}
+                                </DropdownMenuGroup>
+                            </Fragment>
                         ))
                     ) : (
-                        <>
-                            <div className="px-3 pt-2 pb-1.5 font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-widest">{item.label}</div>
-                            <div className="flex flex-col gap-px">{sections[0]?.items.map(renderLink)}</div>
-                        </>
+                        <DropdownMenuGroup className="flex flex-col gap-px">
+                            <DropdownMenuLabel className={SECTION_LABEL}>{item.label}</DropdownMenuLabel>
+                            {sections[0]?.items.map(renderLink)}
+                        </DropdownMenuGroup>
                     )}
                     {hasIcons && (
                         <div className="mt-1.5 flex items-center justify-between gap-2 border-white/5 border-t px-3 pt-2.5 pb-2 font-sans text-[11.5px] text-muted-foreground leading-none">

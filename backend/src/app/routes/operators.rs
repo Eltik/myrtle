@@ -9,7 +9,7 @@ use crate::app::routes::static_data::json_response;
 use crate::app::services::operators::{
     OperatorBuildStatsResponse, OperatorIndexEntry, OperatorOwnershipResponse, get_build_stats,
     get_index, get_operator_json, get_operator_skins, get_operator_voices, get_ownership,
-    get_upcoming, resolve_operator_json,
+    get_roster, get_upcoming, resolve_operator_json,
 };
 use crate::app::services::recruitment::get_recruitment;
 use crate::app::{error::ApiError, state::AppState};
@@ -112,6 +112,61 @@ pub async fn recruitment_srv(
     Path(server): Path<Server>,
 ) -> Result<Response, ApiError> {
     let body = get_recruitment(&state, server).await?;
+    Ok(json_response(body, &headers))
+}
+
+/// `GET /operators/roster` - every operator on the default server, reduced to the
+/// fields the profile Roster and Optimizer tabs read.
+#[utoipa::path(
+    get,
+    path = "/operators/roster",
+    tag = "gamedata",
+    params(
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the body.")
+    ),
+    responses(
+        (status = 200, description = "One row per operator, sorted by id, with the `/static/operators` fields id, name, profession, professionName, phases, skills, modules, potentialRanks, favorKeyFrames, baseSkills, skin, portrait, itemObtainApproach, obtainChannel and tmplDefault, in that table's wire format. Served from cache with an `ETag` and `Cache-Control: public, max-age=300`.", content_type = "application/json"),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn roster(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<Response, ApiError> {
+    let body = get_roster(&state, state.default_server).await?;
+    Ok(json_response(body, &headers))
+}
+
+/// `GET /{server}/operators/roster` - per-server roster rows.
+/// The `/{server}` form reads that server's game data; the bare form reads the
+/// default server.
+#[utoipa::path(
+    get,
+    path = "/{server}/operators/roster",
+    tag = "gamedata",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the body.")
+    ),
+    responses(
+        (status = 200, description = "One row per operator, sorted by id, with the roster fields of `/static/operators`. Served from cache with an `ETag` and `Cache-Control: public, max-age=300`.", content_type = "application/json"),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn roster_srv(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path(server): Path<Server>,
+) -> Result<Response, ApiError> {
+    let body = get_roster(&state, server).await?;
     Ok(json_response(body, &headers))
 }
 

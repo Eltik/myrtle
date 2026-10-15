@@ -58,13 +58,12 @@ pub struct UiMessage {
 /// One row of the translation editor: the key and its English source joined to
 /// this locale's translation, if any.
 ///
-/// `is_stale` is computed in SQL rather than stored - it is true when a
-/// translation exists but was written against an older English source, which
-/// is the only staleness this system has.
+/// `is_stale` is computed in SQL, not stored: a translation exists but was
+/// written against an older English source. That is the only staleness there is.
 ///
-/// `translated_source_text` is the English that was on screen when the value
-/// was saved. It is what turns `is_stale` from a badge into a diff, and it is
-/// `None` for rows saved before the snapshot column existed.
+/// `translated_source_text` is the English on screen when the value was saved,
+/// which turns `is_stale` from a badge into a diff. `None` for rows saved before
+/// the snapshot column existed.
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
@@ -97,6 +96,22 @@ pub struct UiMessageAuditEntry {
     pub new_value: Option<String>,
     pub changed_by: Uuid,
     pub changed_at: DateTime<Utc>,
+    /// Who `changed_by` is, so the history can name its author without a user
+    /// lookup per row.
+    #[sqlx(flatten)]
+    pub actor: UiMessageAuditActor,
+}
+
+/// The author of one translation revision. `nickname` is `None` once the
+/// account is gone or never synced a name.
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+pub struct UiMessageAuditActor {
+    #[sqlx(rename = "actor_id")]
+    pub id: Uuid,
+    #[sqlx(rename = "actor_nickname")]
+    pub nickname: Option<String>,
 }
 
 /// Audit entry enriched with the actor's display info, so the global feed
@@ -129,6 +144,24 @@ pub struct TranslationPermission {
     pub user_id: Uuid,
     pub permission: String,
     pub granted_by: Option<Uuid>,
+    pub granted_at: DateTime<Utc>,
+}
+
+/// One translation grant with the names the admin panel shows beside it: the
+/// grantee and the granter. Read by `GET /admin/i18n/permissions`; mirrors
+/// `TierListGrant`. The names are `None` once the account is gone.
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+pub struct TranslationGrant {
+    pub locale: String,
+    pub user_id: Uuid,
+    pub user_uid: Option<String>,
+    pub user_nickname: Option<String>,
+    pub permission: String,
+    /// `None` for grants written by the CLI or whose granter was deleted.
+    pub granted_by: Option<Uuid>,
+    pub granted_by_nickname: Option<String>,
     pub granted_at: DateTime<Utc>,
 }
 

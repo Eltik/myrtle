@@ -17,173 +17,195 @@ export interface IDefaultOgPreset {
     titleKey: string;
     subtitleKey?: string;
     /**
-     * Which section chip the card highlights. NOT display text: it is matched
-     * against {@link DEFAULT_OG_TAGS} by identity, and the visible label comes
-     * from `og.tag.*`, so this stays English however the card is translated.
-     *
-     * Deliberately a plain string rather than the chip union: `stats` has
-     * always carried `Stats`, which is not one of the five chips, so that card
-     * highlights nothing. Narrowing the type here would silently change the
-     * rendered card, which is a separate decision from this one.
+     * The site section the card names in its kicker. Its label is the
+     * `og.tag.<section>` message, and it picks the card's art (see
+     * {@link DEFAULT_OG_SECTION_ART}), so every page of a section looks alike.
      */
-    activeTag?: string;
+    section?: DefaultOgSection;
 }
 
+/** The sections a default card can belong to. Ids, not labels: the label is `og.tag.<id>`. */
+export type DefaultOgSection = "home" | "collection" | "players" | "community" | "gacha" | "tools" | "stats" | "account" | "legal";
+
+/** The mascot art a default card draws, by file under `public/home/`. */
+export type DefaultOgArt = "hero" | "happy" | "sleepy" | "fall";
+
 /**
- * The section chips every default card draws, in order. Ids, not labels: see
- * `IDefaultOgPreset.activeTag`.
+ * Which art each section draws, so a card's look is fixed by its slug. The
+ * home and browsing sections get the full key visual; the tools the flag
+ * waving pair; gacha the dropped pull; the account and legal pages the
+ * sleeping one.
  */
-export const DEFAULT_OG_TAGS = ["Home", "Collection", "Players", "Gacha", "Tools"] as const;
+export const DEFAULT_OG_SECTION_ART: Record<DefaultOgSection, DefaultOgArt> = {
+    home: "hero",
+    collection: "hero",
+    community: "hero",
+    stats: "hero",
+    players: "happy",
+    tools: "happy",
+    gacha: "fall",
+    account: "sleepy",
+    legal: "sleepy",
+};
 
 export const DEFAULT_OG_PRESETS = {
     _root: {
         titleKey: "og.root.title",
+        section: "home",
     },
     home: {
         titleKey: "og.home.title",
         subtitleKey: "og.home.subtitle",
-        activeTag: "Home",
+        section: "home",
     },
     login: {
         titleKey: "og.login.title",
         subtitleKey: "og.login.subtitle",
-        activeTag: "Players",
+        section: "account",
     },
     settings: {
         titleKey: "og.settings.title",
         subtitleKey: "og.settings.subtitle",
-        activeTag: "Players",
+        section: "account",
     },
     operators: {
         titleKey: "og.operators.title",
         subtitleKey: "og.operators.subtitle",
-        activeTag: "Collection",
+        section: "collection",
     },
     enemies: {
         titleKey: "og.enemies.title",
         subtitleKey: "og.enemies.subtitle",
-        activeTag: "Collection",
+        section: "collection",
     },
     stages: {
         titleKey: "og.stages.title",
         subtitleKey: "og.stages.subtitle",
-        activeTag: "Collection",
+        section: "collection",
     },
     stats: {
         titleKey: "og.stats.title",
         subtitleKey: "og.stats.subtitle",
-        activeTag: "Stats",
+        section: "stats",
     },
     "user-search": {
         titleKey: "og.userSearch.title",
         subtitleKey: "og.userSearch.subtitle",
-        activeTag: "Players",
+        section: "players",
     },
     "user-leaderboard": {
         titleKey: "og.userLeaderboard.title",
         subtitleKey: "og.userLeaderboard.subtitle",
-        activeTag: "Players",
+        section: "players",
     },
     "gacha-community": {
         titleKey: "og.gachaCommunity.title",
         subtitleKey: "og.gachaCommunity.subtitle",
-        activeTag: "Gacha",
+        section: "gacha",
     },
     "gacha-history": {
         titleKey: "og.gachaHistory.title",
         subtitleKey: "og.gachaHistory.subtitle",
-        activeTag: "Gacha",
+        section: "gacha",
     },
     "tools-dps": {
         titleKey: "og.toolsDps.title",
         subtitleKey: "og.toolsDps.subtitle",
-        activeTag: "Tools",
+        section: "tools",
     },
     "tools-hps": {
         titleKey: "og.toolsHps.title",
         subtitleKey: "og.toolsHps.subtitle",
-        activeTag: "Tools",
+        section: "tools",
+    },
+    "tools-squad-builder": {
+        titleKey: "og.toolsSquadBuilder.title",
+        subtitleKey: "og.toolsSquadBuilder.subtitle",
+        section: "tools",
     },
     "tools-recruitment": {
         titleKey: "og.toolsRecruitment.title",
         subtitleKey: "og.toolsRecruitment.subtitle",
-        activeTag: "Tools",
+        section: "tools",
     },
     "tools-planner": {
         titleKey: "og.toolsPlanner.title",
         subtitleKey: "og.toolsPlanner.subtitle",
-        activeTag: "Tools",
+        section: "tools",
     },
     "tools-randomizer": {
         titleKey: "og.toolsRandomizer.title",
         subtitleKey: "og.toolsRandomizer.subtitle",
-        activeTag: "Tools",
+        section: "tools",
     },
     "tools-birthdays": {
         titleKey: "og.toolsBirthdays.title",
         subtitleKey: "og.toolsBirthdays.subtitle",
-        activeTag: "Tools",
+        section: "tools",
     },
     "tools-release": {
         titleKey: "og.toolsRelease.title",
         subtitleKey: "og.toolsRelease.subtitle",
-        activeTag: "Tools",
+        section: "tools",
     },
     "tier-lists": {
         titleKey: "og.tierLists.title",
         subtitleKey: "og.tierLists.subtitle",
-        activeTag: "Home",
+        section: "community",
     },
     grids: {
         titleKey: "og.grids.title",
         subtitleKey: "og.grids.subtitle",
-        activeTag: "Home",
+        section: "community",
     },
     terms: {
         titleKey: "og.terms.title",
         subtitleKey: "og.terms.subtitle",
-        activeTag: "Home",
+        section: "legal",
     },
     privacy: {
         titleKey: "og.privacy.title",
         subtitleKey: "og.privacy.subtitle",
-        activeTag: "Home",
+        section: "legal",
     },
     changelog: {
         titleKey: "og.changelog.title",
         subtitleKey: "og.changelog.subtitle",
-        activeTag: "Home",
+        section: "home",
+    },
+    music: {
+        titleKey: "og.music.title",
+        subtitleKey: "og.music.subtitle",
+        section: "collection",
+    },
+    stories: {
+        titleKey: "og.stories.title",
+        subtitleKey: "og.stories.subtitle",
+        section: "collection",
+    },
+    archives: {
+        titleKey: "og.archives.title",
+        subtitleKey: "og.archives.subtitle",
+        section: "collection",
     },
 } as const satisfies Record<string, IDefaultOgPreset>;
 
 export type DefaultOgPresetSlug = keyof typeof DEFAULT_OG_PRESETS;
 
-/**
- * `Home` -> `og.tag.home`. The chip ids are the English labels, so the key is
- * derived rather than restated.
- */
-function tagKey(tag: (typeof DEFAULT_OG_TAGS)[number]): string {
-    return `og.tag.${tag.toLowerCase()}`;
-}
-
-/**
- * The five chip labels for one locale, keyed by chip id. The template matches
- * `activeTag` against the id and renders the label from this.
- */
-export function defaultOgTagLabels(source?: IMetaSource | null): Record<string, string> {
-    const labels: Record<string, string> = {};
-    for (const tag of DEFAULT_OG_TAGS) labels[tag] = metaMessage(tagKey(tag), source);
-    return labels;
-}
-
 /** Turn a preset's keys into the text the default template renders. */
 export function resolveDefaultOgPreset(preset: IDefaultOgPreset, source?: IMetaSource | null): IDefaultOgData {
+    const section = preset.section ?? "home";
     return {
         title: metaMessage(preset.titleKey, source),
         subtitle: preset.subtitleKey === undefined ? undefined : metaMessage(preset.subtitleKey, source),
-        activeTag: preset.activeTag,
-        tagLabels: defaultOgTagLabels(source),
+        section: metaMessage(`og.tag.${section}`, source),
+        art: DEFAULT_OG_SECTION_ART[section],
     };
+}
+
+/** The card for a one-off page whose id is its own title: the home section's look. */
+export function literalDefaultOgData(title: string, source?: IMetaSource | null): IDefaultOgData {
+    return { title, section: metaMessage("og.tag.home", source), art: DEFAULT_OG_SECTION_ART.home };
 }
 
 /** The preset a slug names, or `null` for an id that is not a preset at all. */

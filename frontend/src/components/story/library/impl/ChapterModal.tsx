@@ -1,8 +1,6 @@
 /**
  * ONE CHAPTER AS A SHEET, headed by the picture the game itself draws for it.
  *
- * Replaces a letterboxed banner strip, a "MAIN STORY" eyebrow, a 26 px
- * "CHAPTER 1 · EVIL TIME PART 2" heading and one 10%-tinted row per story.
  * Title is the LOGOTYPE (`art.titleSource`, authored per event, on the wire for
  * 81 of the 87 non-record groups). A row is an OPERATION rather than a script
  * (`derive.groupOperations`, 523 of 525 repeated codes merge), because the table
@@ -29,6 +27,7 @@ import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 
 import { Button } from "#/components/ui/button";
 import { Dialog, DialogClose, DialogPopup, DialogTitle } from "#/components/ui/dialog";
 import { Sheet, SheetClose, SheetFooter, SheetPopup, SheetTitle } from "#/components/ui/sheet";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useMediaQuery } from "#/hooks/use-media-query";
 import { storyArchiveQueryOptions } from "#/lib/api/story";
 import { useGamedataServer, useT } from "#/lib/i18n";
@@ -207,15 +206,21 @@ function PinnedClose({ close: Close, label }: { close: typeof DialogClose; label
  */
 function PinnedStep({ to, icon: Icon, label, title, onNavigate }: { to: LibGroup | null; icon: typeof ChevronLeftIcon; label: string; title: string | undefined; onNavigate: (groupId: string) => void }): React.ReactElement {
     return (
-        <button
-            type="button"
-            aria-label={label}
-            title={title}
-            disabled={to === null}
-            onClick={() => to && onNavigate(to.id)}
-            className="flex size-11 cursor-pointer items-center justify-center rounded-full bg-black/45 text-white outline-none backdrop-blur-[2px] transition-colors hover:bg-black/65 focus-visible:ring-2 focus-visible:ring-white/80 disabled:cursor-default disabled:opacity-35 disabled:hover:bg-black/45 sm:pointer-fine:size-9"
-        >
-            <Icon className="size-5" aria-hidden="true" />
-        </button>
+        <Tooltip disabled={!title}>
+            <TooltipTrigger
+                render={
+                    <button
+                        type="button"
+                        aria-label={label}
+                        disabled={to === null}
+                        onClick={() => to && onNavigate(to.id)}
+                        className="flex size-11 cursor-pointer items-center justify-center rounded-full bg-black/45 text-white outline-none backdrop-blur-[2px] transition-colors hover:bg-black/65 focus-visible:ring-2 focus-visible:ring-white/80 disabled:cursor-default disabled:opacity-35 disabled:hover:bg-black/45 sm:pointer-fine:size-9"
+                    />
+                }
+            >
+                <Icon className="size-5" aria-hidden="true" />
+            </TooltipTrigger>
+            <TooltipPopup>{title}</TooltipPopup>
+        </Tooltip>
     );
 }

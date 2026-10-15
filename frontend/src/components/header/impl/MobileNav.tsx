@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ChevronDown, Cog, ExternalLinkIcon, Heart, LayoutList, LogOut, MenuIcon, UserIcon } from "lucide-react";
+import { Fragment, useId } from "react";
 import { useGamedataServerChoice, useGamedataServerOptions, useGamedataServerSwitch } from "#/components/GamedataServerSwitcher";
 import type { messages as gamedataServerMessages } from "#/components/GamedataServerSwitcher.messages";
 import { LocaleOptionLabel, useLocaleSwitch } from "#/components/LocaleSwitcher";
@@ -11,14 +12,16 @@ import { Drawer, DrawerClose, DrawerHeader, DrawerMenu, DrawerMenuGroup, DrawerM
 import { GithubIcon } from "#/components/ui/github-icon";
 import { Spinner } from "#/components/ui/spinner";
 import { useAuth } from "#/hooks/use-auth";
+import { useTheme } from "#/hooks/use-theme";
 import { REPO_URL } from "#/lib/constants";
 import { useI18n, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, getAvatarSkinId } from "#/lib/utils";
 import { ActiveIndicator } from "./ActiveIndicator";
-import { AuthDialog } from "./AuthDialog";
+import { LazyAuthDialog } from "./LazyAuthDialog";
 import type { INavItem } from "./MainNav";
 import type { messages } from "./MobileNav.messages";
+import type { messages as themeMessages } from "./ThemeToggle.messages";
 
 interface IMobileNavProps {
     items: INavItem[];
@@ -35,6 +38,15 @@ export function MobileNav({ items }: IMobileNavProps) {
     const serverOptions = useGamedataServerOptions();
     const serverChoice = useGamedataServerChoice();
     const switchServer = useGamedataServerSwitch();
+    const { mode, setMode } = useTheme();
+    const tTheme: TypedT<typeof themeMessages> = useT("nav");
+    const groupIdBase = useId();
+
+    const renderSubItem = (subItem: INavItem) => (
+        <DrawerMenuItem key={subItem.href} className="h-9 text-muted-foreground text-sm hover:text-foreground" render={<DrawerClose nativeButton={false} render={<Link to={subItem.href} />}></DrawerClose>}>
+            {subItem.label}
+        </DrawerMenuItem>
+    );
 
     const renderNavItem = (item: INavItem) => {
         const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
@@ -47,11 +59,22 @@ export function MobileNav({ items }: IMobileNavProps) {
                         <ChevronDown className="h-4 w-4 opacity-50 transition-transform duration-200 group-data-panel-open:rotate-180" />
                     </CollapsibleTrigger>
                     <CollapsiblePanel className="mt-1 ml-4 flex flex-col gap-1 border-border border-l">
-                        {item.items.map((subItem) => (
-                            <DrawerMenuItem key={subItem.href} className="h-9 text-muted-foreground text-sm hover:text-foreground" render={<DrawerClose nativeButton={false} render={<Link to={subItem.href} />}></DrawerClose>}>
-                                {subItem.label}
-                            </DrawerMenuItem>
-                        ))}
+                        {/* The same sections the desktop dropdown shows, with the
+                            drawer's own group label and separator. */}
+                        {item.sections && item.sections.length > 1
+                            ? item.sections.map((section, i) => {
+                                  const labelId = `${groupIdBase}-${item.href}-${i}`;
+                                  return (
+                                      <Fragment key={section.title}>
+                                          {i > 0 && <DrawerMenuSeparator className="my-0" />}
+                                          <DrawerMenuGroup role="group" aria-labelledby={labelId} className="gap-1">
+                                              <DrawerMenuGroupLabel id={labelId}>{section.title}</DrawerMenuGroupLabel>
+                                              {section.items.map(renderSubItem)}
+                                          </DrawerMenuGroup>
+                                      </Fragment>
+                                  );
+                              })
+                            : item.items.map(renderSubItem)}
                     </CollapsiblePanel>
                 </Collapsible>
             );
@@ -102,12 +125,10 @@ export function MobileNav({ items }: IMobileNavProps) {
                             </DrawerMenuItem>
                         </DrawerMenuGroup>
 
-                        {/* A second path to the same choice, not the only
-                            one: the header's language code is visible at every
-                            width. Kept because the drawer is where a phone
-                            visitor looks for settings, and it can spell the
-                            group out ("Language") where the bar only has room
-                            for a two-letter code. */}
+                        {/* Below `sm` this is the only path: the header drops its
+                            language and theme toggles there. From `sm` up it is a
+                            second path that spells the group out ("Language")
+                            where the bar has room for a two-letter code. */}
                         {available.length > 1 ? (
                             <>
                                 <DrawerMenuSeparator />
@@ -150,6 +171,22 @@ export function MobileNav({ items }: IMobileNavProps) {
                             </>
                         ) : null}
 
+                        {/* Mode only; accent and dynamic art stay in Settings > Appearance. */}
+                        <DrawerMenuSeparator />
+                        <DrawerMenuGroup>
+                            <DrawerMenuGroupLabel>{tTheme("themeToggle.appearance")}</DrawerMenuGroupLabel>
+                            <DrawerMenuRadioGroup
+                                value={mode}
+                                onValueChange={(next: string) => {
+                                    if (next === "light" || next === "dark" || next === "auto") setMode(next);
+                                }}
+                            >
+                                <DrawerMenuRadioItem value="light">{tTheme("themeToggle.light")}</DrawerMenuRadioItem>
+                                <DrawerMenuRadioItem value="dark">{tTheme("themeToggle.dark")}</DrawerMenuRadioItem>
+                                <DrawerMenuRadioItem value="auto">{tTheme("themeToggle.auto")}</DrawerMenuRadioItem>
+                            </DrawerMenuRadioGroup>
+                        </DrawerMenuGroup>
+
                         <DrawerMenuSeparator />
                         <DrawerMenuGroup>
                             <DrawerMenuGroupLabel>{t("mobileNav.account")}</DrawerMenuGroupLabel>
@@ -188,7 +225,7 @@ export function MobileNav({ items }: IMobileNavProps) {
                                         <Cog className="mr-2 h-4 w-4 text-muted-foreground" />
                                         {t("mobileNav.settings")}
                                     </DrawerMenuItem>
-                                    <AuthDialog
+                                    <LazyAuthDialog
                                         trigger={
                                             <DrawerMenuItem>
                                                 <UserIcon className="mr-2 h-4 w-4 text-muted-foreground" />

@@ -1,4 +1,5 @@
 import { Info } from "lucide-react";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { ItemIcon } from "#/components/user/profile/impl/components/tabs/Items/ItemIcon";
 import { type TypedRichT, useFormatters, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -88,10 +89,17 @@ export function Hero({ item, rankedDoctors, topValue, updatedAt, isLoading }: IH
 }
 
 function HeroStat({ label, value, small, loading, title }: { label: string; value: string; small?: boolean; loading?: boolean; title?: string }) {
-    return (
-        <div className="flex min-w-0 flex-col gap-1" title={title}>
+    const body = (
+        <>
             <span className={`font-bold font-sans text-foreground tabular-nums tracking-tight ${small ? "font-semibold text-sm" : "text-[22px] leading-none"}`}>{loading ? "…" : value}</span>
             <span className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.16em]">{label}</span>
-        </div>
+        </>
+    );
+    if (!title) return <div className="flex min-w-0 flex-col gap-1">{body}</div>;
+    return (
+        <Tooltip>
+            <TooltipTrigger render={<div className="flex min-w-0 flex-col gap-1" />}>{body}</TooltipTrigger>
+            <TooltipPopup>{title}</TooltipPopup>
+        </Tooltip>
     );
 }

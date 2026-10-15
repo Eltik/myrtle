@@ -12,12 +12,17 @@
 
 pub mod api;
 pub mod audit;
+pub mod birthday;
 pub mod checks;
 pub mod cmds;
 pub mod config;
 pub mod db;
+pub mod gametext;
 pub mod handler;
 pub mod hooks;
+pub mod search;
+pub mod tts;
 pub mod types;
+pub mod ui;
 pub mod utils;
 pub mod watcher;

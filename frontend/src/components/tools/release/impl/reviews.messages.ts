@@ -1,9 +1,8 @@
 import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 
 /**
- * The one label `reviews.ts` derives. The review's own name is game content -
- * the Chinese and English titles both live in that module as data - so only
- * the year heading is here.
+ * The one label `reviews.ts` derives. The review's own name is game content
+ * (both titles live in that module as data), so only the year heading is here.
  */
 export const namespace = "tools";
 

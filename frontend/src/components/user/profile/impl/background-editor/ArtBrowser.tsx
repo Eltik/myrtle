@@ -1,12 +1,14 @@
 import { BookImageIcon, ClapperboardIcon, MountainIcon, UserRoundIcon } from "lucide-react";
 import { memo, useMemo, useState } from "react";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useMediaQuery } from "#/hooks/use-media-query";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import { cn } from "#/lib/utils";
 import type { ProfileBackgroundKind } from "#/types/generated/ProfileBackgroundKind";
 import { GALLERY_KINDS, type GalleryKind, isGalleryKind } from "../background";
-import { type IGalleryFilter, NO_GALLERY_FILTER } from "../gallery";
+import { archivePictureCategory, type IGalleryFilter, NO_GALLERY_FILTER } from "../gallery";
 import type { messages } from "./ArtBrowser.messages";
 import { COUNT, SEGMENT_ITEM, sourceTab } from "./chips";
 import { RailLabel, RailRow } from "./rail";
@@ -56,14 +58,15 @@ interface IArtBrowserProps {
  * above the tiles. It opens on the source of the art the draft shows.
  *
  * Memoized on `selected` and `onPick`: the draft changes on every pointer move of a drag,
- * and before this the browser, its 120 mounted tiles or the character picker re-rendered
+ * and unmemoized the browser, its 120 mounted tiles or the character picker re-rendered
  * on each one (10 renders per 10 moves, measured 2026-10-06).
  */
 export const ArtBrowser = memo(function ArtBrowser({ selected, onPick }: IArtBrowserProps) {
     const t: TypedT<typeof messages> = useT("user");
     const wide = useMediaQuery("md");
     const catalog = useGalleryCatalog();
-    const [source, setSource] = useState<Source>(() => (selected && isGalleryKind(selected.kind) ? selected.kind : "characters"));
+    // An event's archive picture is listed under Story CGs (see `foldArchiveIntoStories`), so it opens there.
+    const [source, setSource] = useState<Source>(() => (selected && isGalleryKind(selected.kind) ? (selected.kind === "archive_pic" && archivePictureCategory(selected.id) === "side" ? "story_cg" : selected.kind) : "characters"));
     const [chosen, setChosen] = useState<IGalleryFilter>(NO_GALLERY_FILTER);
     const [tileSize, setTileSize] = useTileSize();
     const galleryKind: GalleryKind = source === "characters" ? "archive_pic" : source;
@@ -92,21 +95,24 @@ export const ArtBrowser = memo(function ArtBrowser({ selected, onPick }: IArtBro
 
     const sizeControl = (
         <ToggleGroup value={[tileSize]} onValueChange={(next) => next[0] && setTileSize(next[0] as TileSize)} variant="outline" size="sm" aria-label={t("profile.background.tileSize")} className="shrink-0 max-sm:hidden">
-            <ToggleGroupItem className={SEGMENT_ITEM} value="s" aria-label={t("profile.background.tileSize.s")} title={t("profile.background.tileSize.s")}>
-                S
-            </ToggleGroupItem>
-            <ToggleGroupItem className={SEGMENT_ITEM} value="m" aria-label={t("profile.background.tileSize.m")} title={t("profile.background.tileSize.m")}>
-                M
-            </ToggleGroupItem>
-            <ToggleGroupItem className={SEGMENT_ITEM} value="l" aria-label={t("profile.background.tileSize.l")} title={t("profile.background.tileSize.l")}>
-                L
-            </ToggleGroupItem>
+            <Tooltip>
+                <TooltipTrigger render={<ToggleGroupItem className={SEGMENT_ITEM} value="s" aria-label={t("profile.background.tileSize.s")} />}>S</TooltipTrigger>
+                <TooltipPopup>{t("profile.background.tileSize.s")}</TooltipPopup>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger render={<ToggleGroupItem className={SEGMENT_ITEM} value="m" aria-label={t("profile.background.tileSize.m")} />}>M</TooltipTrigger>
+                <TooltipPopup>{t("profile.background.tileSize.m")}</TooltipPopup>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger render={<ToggleGroupItem className={SEGMENT_ITEM} value="l" aria-label={t("profile.background.tileSize.l")} />}>L</TooltipTrigger>
+                <TooltipPopup>{t("profile.background.tileSize.l")}</TooltipPopup>
+            </Tooltip>
         </ToggleGroup>
     );
     const tiles = <GalleryTiles view={view} selected={gallerySelected} onPick={onPick} minTile={TILE_SIZES[tileSize]} />;
     const characters = (
         // The grids' shared picker scrolls its own tiles, so it gets the height under the strip and sticks there: scrolled to, it fills the view.
-        <div className={`${STICKY_UNDER_STRIP} ${UNDER_STRIP} flex min-h-80 flex-col pt-4 [&>div]:max-sm:px-4`}>
+        <div className={`${STICKY_UNDER_STRIP} ${UNDER_STRIP} flex min-h-80 flex-col pt-4`}>
             <CharacterArt selected={selected} onPick={onPick} />
         </div>
     );
@@ -154,9 +160,11 @@ export const ArtBrowser = memo(function ArtBrowser({ selected, onPick }: IArtBro
         );
     }
 
+    // On a phone the Character art picker sticks together with the source tabs, in one box the height under the strip, so the tabs never sit over the picker's own tabs and search.
+    const pinned = source === "characters";
     return (
-        <section className="flex flex-col">
-            <div className={`${STICKY_UNDER_STRIP} z-20 flex flex-col gap-2.5 border-b bg-background/80 px-4 py-3 backdrop-blur-md backdrop-saturate-150`}>
+        <section className={cn("flex flex-col", pinned && `${STICKY_UNDER_STRIP} ${UNDER_STRIP}`)}>
+            <div className={cn("z-20 flex shrink-0 flex-col gap-2.5 border-b bg-background/80 px-4 py-3 backdrop-blur-md backdrop-saturate-150", !pinned && STICKY_UNDER_STRIP)}>
                 <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none]">
                     <div className="inline-flex w-max gap-0.5 rounded-lg bg-muted/70 p-1" role="tablist" aria-label={t("profile.background.source")}>
                         {SOURCES.map((s) => {
@@ -173,7 +181,13 @@ export const ArtBrowser = memo(function ArtBrowser({ selected, onPick }: IArtBro
                 </div>
                 {source !== "characters" && <GalleryBar view={view} query={chosen.query} actions={actions} />}
             </div>
-            {source === "characters" ? characters : <div className="px-4 pt-4 pb-10">{tiles}</div>}
+            {pinned ? (
+                <div className="flex min-h-0 flex-1 flex-col pt-3 [&>div]:px-4">
+                    <CharacterArt selected={selected} onPick={onPick} />
+                </div>
+            ) : (
+                <div className="px-4 pt-4 pb-10">{tiles}</div>
+            )}
         </section>
     );
 });

@@ -116,11 +116,19 @@ pub async fn fill_from_mirrors(
                     if let Some(dir) = target.parent() {
                         let _ = tokio::fs::create_dir_all(dir).await;
                     }
-                    match tokio::fs::write(&target, &bytes).await {
+                    // A target that exists is skipped on every later pass (the
+                    // `target.exists()` check above), so a torn write must never land there.
+                    let path = target.clone();
+                    let written = tokio::task::spawn_blocking(move || {
+                        crate::utils::fs::write_durable(&path, &bytes)
+                    })
+                    .await
+                    .unwrap_or_else(|e| Err(std::io::Error::other(e)));
+                    match written {
                         Ok(()) => stats.copied += 1,
                         Err(e) => {
                             stats.failed += 1;
-                            tracing::debug!(target = %target.display(), error = %e, "archive write failed");
+                            tracing::warn!(target = %target.display(), error = %e, "release art write failed; will retry next pass");
                         }
                     }
                     all_absent = false;

@@ -40,8 +40,8 @@ function writeSeen(id: string): void {
     try {
         window.localStorage.setItem(RELEASE_NOTE_STORAGE_KEY, id);
     } catch {
-        // Quota or a blocked store. Nothing to do: the visitor sees this once
-        // per session rather than never, which is the acceptable degradation.
+        // Quota or a blocked store: the visitor then sees the note once per
+        // session rather than once.
     }
 }
 
@@ -72,12 +72,10 @@ export function initReleaseNotes(): void {
         return;
     }
 
-    // `seen` stays null until the visitor actually opens the dialog, and a null
-    // seen id counts as UNSEEN. Suppressing the dot for a first-time visitor was
-    // wrong: every existing visitor arrives without the key, so seeding them as
-    // caught up would ship this feature silent and the dot would not appear
-    // until the second announced entry. `countMissedNotes(null)` is 0, so a
-    // newcomer gets one dot and no "N more you missed" line.
+    // A null seen id counts as UNSEEN: every existing visitor arrives without
+    // the key, so seeding them as caught up would hide the dot until the second
+    // announced entry. `countMissedNotes(null)` is 0, so a newcomer gets one dot
+    // and no "N more you missed" line.
     releaseNoteStore.setState((s) => ({ ...s, status: "ready", seenId: seen }));
 }
 

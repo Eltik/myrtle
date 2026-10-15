@@ -66,7 +66,7 @@ export interface ISpineFit {
      * cropping overflow; `height` = scale to the canvas HEIGHT only (the box's on-screen
      * height always equals the canvas height; excess width shows more scene, narrow width
      * crops the sides). `height` makes the subject fill a constant fraction of the frame
-     * height regardless of the container's aspect ratio - the dynchar viewer uses it so the
+     * height regardless of the container's aspect ratio; the dynchar viewer uses it so the
      * character reads the same size on a tall mobile card, a wide desktop card, and a
      * fullscreen dialog alike (`cover` on a square box would inflate the subject with aspect).
      */

@@ -6,7 +6,6 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { messages } from "./primitives.messages";
 
-/** Small hover/focus info affordance that reveals an explanatory tooltip. */
 export function InfoHint({ children, label }: { children: React.ReactNode; label?: string }) {
     const t: TypedT<typeof messages> = useT("stages");
     return (

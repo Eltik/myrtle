@@ -71,7 +71,7 @@ pub struct BuildingDataFile {
     #[serde(deserialize_with = "deserialize_fb_map", default)]
     pub workshop_formulas: HashMap<String, WorkshopFormula>,
 
-    /// Base floorplans. The game keys them as a map.
+    /// Base floorplans, by layout id.
     #[serde(deserialize_with = "deserialize_fb_map_or_default", default)]
     pub layouts: HashMap<String, LayoutDef>,
 

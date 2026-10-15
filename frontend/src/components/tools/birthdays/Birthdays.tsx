@@ -14,8 +14,9 @@ import { FilterSidebar } from "./impl/components/FilterSidebar";
 import { ListView } from "./impl/components/ListView";
 import { TodayCallout } from "./impl/components/TodayCallout";
 import { UpcomingView } from "./impl/components/UpcomingView";
-import { applyFilters, countActiveFilters, countKnown, createEmptyFilters, deriveNations, groupByDay, isCalendarOperator, opsOn } from "./impl/helpers";
+import { applyFilters, countActiveFilters, countKnown, createEmptyFilters, deriveNations, groupByDay, isCalendarOperator, isToday, opsOn } from "./impl/helpers";
 import type { BirthdayView, CalendarScale, IBirthdayFilters, IBirthdayOperator, ISelectedDay } from "./impl/types";
+import { useToday } from "./impl/useToday";
 
 interface IBirthdaysProps {
     operators: IBirthdayOperator[];
@@ -23,7 +24,7 @@ interface IBirthdaysProps {
 
 export function Birthdays({ operators }: IBirthdaysProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("tools");
-    const today = React.useMemo(() => new Date(), []);
+    const today = useToday();
 
     const allBirthdays = React.useMemo(() => calculateBirthdays(operators.filter(isCalendarOperator)), [operators]);
     const nations = React.useMemo(() => deriveNations(allBirthdays.map((b) => b.operator)), [allBirthdays]);
@@ -35,6 +36,15 @@ export function Birthdays({ operators }: IBirthdaysProps): React.ReactElement {
     const [selected, setSelected] = React.useState<ISelectedDay | null>({ year: today.getFullYear(), month: today.getMonth() + 1, day: today.getDate() });
     const [dayDialogOpen, setDayDialogOpen] = React.useState(false);
     const [filters, setFilters] = React.useState<IBirthdayFilters>(createEmptyFilters);
+
+    // Right after hydration `today` moves from the server's UTC day to the reader's own. The
+    // calendar and the selected day follow it unless the reader has already moved them.
+    const [shownToday, setShownToday] = React.useState(today);
+    if (shownToday !== today) {
+        setShownToday(today);
+        if (anchor === shownToday) setAnchor(today);
+        if (selected && isToday(shownToday, selected.year, selected.month, selected.day)) setSelected({ year: today.getFullYear(), month: today.getMonth() + 1, day: today.getDate() });
+    }
 
     const filtered = React.useMemo(() => applyFilters(allBirthdays, filters), [allBirthdays, filters]);
     const byDay = React.useMemo(() => groupByDay(filtered), [filtered]);

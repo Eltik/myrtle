@@ -4,23 +4,12 @@ import { Menu, MenuItem, MenuPopup, MenuTrigger } from "#/components/ui/menu";
 import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import { MY_SORT_OPTIONS, type MyListSort, type MyListTypeFilter, type MyViewMode } from "./MyToolbar.constants";
 import type { messages } from "./MyToolbar.messages";
 
 type MyToolbarT = TypedT<typeof messages>;
 type MyToolbarRichT = TypedRichT<typeof messages>;
 type MyToolbarMessageKey = keyof typeof messages & string;
-
-export type MyListSort = "recent" | "newest" | "alpha" | "views" | "favorites";
-export type MyListTypeFilter = "all" | "community" | "official";
-export type MyViewMode = "grid" | "list";
-
-export const MY_SORT_OPTIONS: Array<{ value: MyListSort; labelKey: MyToolbarMessageKey; hintKey: MyToolbarMessageKey }> = [
-    { value: "recent", labelKey: "my.sort.recent", hintKey: "my.sort.recent.hint" },
-    { value: "newest", labelKey: "my.sort.newest", hintKey: "my.sort.newest.hint" },
-    { value: "alpha", labelKey: "my.sort.alpha", hintKey: "my.sort.alpha.hint" },
-    { value: "views", labelKey: "my.sort.views", hintKey: "my.sort.views.hint" },
-    { value: "favorites", labelKey: "my.sort.favorites", hintKey: "my.sort.favorites.hint" },
-];
 
 const TYPE_TABS: Array<{ value: MyListTypeFilter; labelKey: MyToolbarMessageKey }> = [
     { value: "all", labelKey: "my.type.all" },

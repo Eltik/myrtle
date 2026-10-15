@@ -1,8 +1,7 @@
 /**
- * The Community tab against a MOCKED query, because the binary on :3060 while
- * this shipped answers 404 on `/story/community` and the tab has therefore
- * never been seen with live data. The two states that matter are both here:
- * the aggregate the backend will serve, and the null it serves today.
+ * The Community tab against a MOCKED query, in both states that matter: the
+ * aggregate the backend serves, and the null a backend without
+ * `/story/community` (404) yields.
  */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";

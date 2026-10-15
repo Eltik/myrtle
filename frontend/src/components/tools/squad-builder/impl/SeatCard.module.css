@@ -1,0 +1,447 @@
+/*
+ * The seat card is the Release Planner's gacha card (SkinCard.module.css)
+ * recomposed for a squad seat: the same gradient border, blended pool sheet,
+ * corner block and name strip, driven by the same `--planner-*` variables
+ * that `cardVars()` writes. It differs in what sits over the art (level,
+ * class, promotion, a build band) and in its proportions, so the rules live
+ * here rather than stretching the planner's fixed 177x340 card. Every
+ * measurement is a fraction of a 177px card, like the planner's, so the card
+ * scales as one object from a 105px phone column to a 190px desktop one.
+ */
+
+.card {
+    --u: calc(var(--planner-card-w) / 177);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    aspect-ratio: 177 / 268;
+    overflow: hidden;
+    border: 3px solid;
+    border-image: linear-gradient(180deg, var(--planner-stops)) 1;
+    background-image: linear-gradient(180deg, var(--planner-stops)), var(--planner-sheet);
+    background-blend-mode: color, normal;
+    background-repeat: no-repeat;
+    background-size:
+        auto,
+        var(--planner-sheet-size) var(--planner-sheet-size);
+    background-position:
+        0 0,
+        var(--planner-sheet-pos);
+    background-color: #0d0d0d;
+    color: #fff;
+    box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.45);
+    cursor: pointer;
+    user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
+    text-align: left;
+    outline: none;
+    transition:
+        transform 200ms ease,
+        box-shadow 300ms ease,
+        opacity 200ms ease;
+}
+
+.draggable {
+    cursor: grab;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        0 0 4px 1px var(--planner-c0),
+        6px 6px 4px rgba(0, 0, 0, 0.6);
+}
+
+.card:focus-visible,
+.card[data-focused="true"] {
+    box-shadow:
+        0 0 0 2px var(--color-background),
+        0 0 0 4px var(--color-primary),
+        6px 6px 4px rgba(0, 0, 0, 0.6);
+}
+
+.card[data-highlight="true"] {
+    box-shadow:
+        0 0 0 2px var(--color-background),
+        0 0 0 4px var(--color-info),
+        6px 6px 4px rgba(0, 0, 0, 0.6);
+}
+
+.card[data-drop="true"] {
+    transform: scale(1.03);
+    box-shadow:
+        0 0 0 2px var(--color-background),
+        0 0 0 4px var(--color-primary),
+        0 0 18px 2px var(--color-primary);
+}
+
+.card[data-dragging="true"] {
+    transform: scale(0.97);
+    opacity: 0.4;
+}
+
+.shine {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0;
+    background: linear-gradient(135deg, var(--planner-stops));
+    transition: opacity 400ms ease;
+}
+
+.card:hover .shine {
+    opacity: 0.1;
+}
+
+/* The art box takes what the strip leaves: 3:4 of the card width. */
+.art {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+}
+
+.portrait {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+}
+
+.initial {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: calc(40 * var(--u));
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* The planner's price block, carrying the build instead: level, class, promotion. */
+.corner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    width: calc(40 * var(--u));
+    min-width: 26px;
+    box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.level {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: calc(34 * var(--u));
+    min-height: 22px;
+    background: var(--planner-c0);
+    color: #fff;
+    font-weight: 800;
+    font-size: max(11px, calc(18 * var(--u)));
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.classBox,
+.eliteBox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: calc(34 * var(--u));
+    min-height: 22px;
+}
+
+.classBox {
+    background: color-mix(in srgb, var(--planner-c0) 70%, transparent);
+}
+
+.eliteBox {
+    background: rgba(0, 0, 0, 0.72);
+}
+
+/*
+ * The class and promotion glyphs are white on transparent; on this always-dark
+ * card they stay white in both themes, whatever `.icon-theme-aware` does
+ * elsewhere. The potential glyph is NOT in this list: its rank is drawn as
+ * grey arms turning white (potential_0 is all grey, potential_5 all white),
+ * and flattening it to white would erase the rank.
+ */
+.classBox img,
+.eliteBox img,
+.glyph {
+    filter: brightness(0) invert(1) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.8));
+}
+
+.classBox img {
+    width: calc(26 * var(--u));
+    min-width: 16px;
+    height: auto;
+}
+
+.eliteBox img {
+    width: calc(24 * var(--u));
+    min-width: 15px;
+    height: auto;
+}
+
+.stars {
+    position: absolute;
+    top: calc(5 * var(--u));
+    /* Clear the corner block on the left and the menu square on the right, both of which stop shrinking at a floor. */
+    left: max(30px, calc(44 * var(--u)));
+    right: max(34px, calc(44 * var(--u)));
+    z-index: 2;
+    overflow: hidden;
+    text-align: center;
+    /* The rarity's star colour (`rarityStarColor`), set inline as --star-color. */
+    color: var(--star-color);
+    font-size: max(8px, calc(13 * var(--u)));
+    letter-spacing: -1px;
+    line-height: 1;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px #000;
+    pointer-events: none;
+}
+
+/* Leader and support wear a tag under the menu square, on the right edge. */
+.role {
+    position: absolute;
+    top: calc(max(28px, 36 * var(--u)) + 4px);
+    right: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px 5px 3px 4px;
+    color: #fff;
+    font-weight: 800;
+    font-size: max(8px, calc(9 * var(--u)));
+    letter-spacing: 0.06em;
+    line-height: 1;
+    text-transform: uppercase;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
+    box-shadow: -2px 2px 6px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+}
+
+.roleLeader {
+    background: var(--color-primary);
+}
+
+.roleSupport {
+    background: var(--color-info);
+}
+
+.role svg {
+    width: max(9px, calc(10 * var(--u)));
+    height: max(9px, calc(10 * var(--u)));
+}
+
+/* The build band over the foot of the art: skill, module, potential. */
+.band {
+    position: absolute;
+    inset: auto 0 0 0;
+    z-index: 2;
+    display: flex;
+    align-items: flex-end;
+    gap: calc(4 * var(--u));
+    padding: calc(14 * var(--u)) calc(5 * var(--u)) calc(5 * var(--u));
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.82), rgba(0, 0, 0, 0.5) 60%, transparent);
+}
+
+.tile {
+    position: relative;
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: calc(34 * var(--u));
+    height: calc(34 * var(--u));
+    min-width: 22px;
+    min-height: 22px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.7);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.tile img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.tileEmpty {
+    background: transparent;
+    box-shadow: none;
+    border: 1px dashed rgba(255, 255, 255, 0.35);
+}
+
+.tileEmpty::after {
+    content: "";
+    width: 40%;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.45);
+}
+
+.tileText {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: max(8px, calc(10 * var(--u)));
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.rank {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: calc(14 * var(--u));
+    height: calc(14 * var(--u));
+    min-height: 11px;
+    padding: 0 2px;
+    border-top-left-radius: 3px;
+    background: #fff;
+    color: #000;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-weight: 800;
+    font-size: max(8px, calc(9.5 * var(--u)));
+    line-height: 1;
+}
+
+.glyph {
+    position: absolute;
+    right: -1px;
+    bottom: -1px;
+    width: calc(17 * var(--u));
+    min-width: 12px;
+    height: auto;
+}
+
+.potential {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    height: calc(34 * var(--u));
+    min-height: 22px;
+}
+
+.potential img {
+    width: calc(24 * var(--u));
+    min-width: 15px;
+    height: auto;
+}
+
+/* The planner's name strip, with the seat number in its left margin. */
+.strip {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    height: calc(32 * var(--u));
+    min-height: 22px;
+    border-top: 3px solid;
+    border-image: linear-gradient(90deg, var(--planner-stops)) 1;
+    background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.75)), linear-gradient(90deg, var(--planner-stops));
+    padding: 0 calc(18 * var(--u));
+    overflow: hidden;
+    color: #fff;
+    font-weight: 800;
+    font-size: max(9px, calc(14 * var(--u)));
+    letter-spacing: 0.02em;
+    line-height: 1;
+    white-space: nowrap;
+    text-transform: uppercase;
+    text-shadow:
+        0 1px 2px #000,
+        0 0 6px rgba(0, 0, 0, 0.8);
+}
+
+.name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.seatNo {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(5 * var(--u));
+    display: flex;
+    align-items: center;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-weight: 700;
+    font-size: max(8px, calc(9 * var(--u)));
+    font-variant-numeric: tabular-nums;
+    opacity: 0.6;
+}
+
+/* The menu square sits where the planner's inspect button does, over the card's own button. */
+.menu {
+    --u: calc(var(--planner-card-w) / 177);
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: max(28px, calc(36 * var(--u)));
+    height: max(28px, calc(36 * var(--u)));
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    cursor: pointer;
+    outline: none;
+    transition:
+        opacity 200ms ease,
+        background-color 200ms ease;
+}
+
+.menu:hover,
+.menu:focus-visible,
+.menu[data-popup-open] {
+    background: rgba(0, 0, 0, 0.92);
+    opacity: 1;
+}
+
+.menu:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--color-ring);
+}
+
+.menu svg {
+    width: max(14px, calc(18 * var(--u)));
+    height: max(14px, calc(18 * var(--u)));
+}
+
+/* An empty seat keeps the filled card's footprint, in the page's own tokens. */
+.empty {
+    aspect-ratio: 177 / 268;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .card,
+    .shine,
+    .menu {
+        transition: none;
+    }
+
+    .card:hover,
+    .card[data-drop="true"] {
+        transform: none;
+    }
+}

@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use serde::{Deserialize, Serialize};
 use sqlx::types::{
     Uuid,
@@ -92,13 +94,11 @@ pub struct PlanRequirementItem {
     pub craft_blocked: bool,
     /// The crafting recipe, when this item has one.
     ///
-    /// This closes a genuine cycle in the data: a recipe's costs are themselves
-    /// `PlanRequirementItem`s, which may in turn be craftable. ts-rs emits
-    /// mutually referencing types and handles it, but utoipa inlines nested
-    /// schemas while collecting them and would recurse until the stack runs
-    /// out, so the cycle is cut here and the schema emits a `$ref` instead.
-    /// Removing this attribute makes the whole `OpenAPI` document unbuildable,
-    /// which takes the server down at startup rather than failing a test.
+    /// A cycle: a recipe's costs are `PlanRequirementItem`s, which may be
+    /// craftable. ts-rs copes, but utoipa inlines nested schemas and would
+    /// recurse until the stack runs out, so the cycle is cut here as a `$ref`.
+    /// Without the attribute the `OpenAPI` document cannot be built and the
+    /// server dies at startup, not in a test.
     #[schema(no_recursion)]
     pub recipe: Option<PlanRecipe>,
     /// Stage clears the item's workshop recipe waits on that the player has
@@ -155,6 +155,11 @@ pub struct PlannerResponse {
     pub plans: Vec<OperatorPlanResponse>,
     pub aggregated_requirements: Vec<PlanRequirementItem>,
     pub groups: Vec<PlanGroup>,
+    /// Each counted plan's own requirements, by operator id. Present only when
+    /// the request asked for `by_operator`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub operator_requirements: Option<BTreeMap<String, Vec<PlanRequirementItem>>>,
     /// When the caller's account was last synced to our database. Every
     /// current-state reading behind the plan (roster, inventory, base, stage
     /// clears) is a snapshot as of this moment. Null for an account with no

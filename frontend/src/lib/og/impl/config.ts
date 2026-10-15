@@ -6,7 +6,9 @@ export const OG_CONFIG = {
 
     // Bump on any change that alters how every card renders: it feeds every ogHash, so it
     // invalidates all cached images across all kinds. 4 = CJK/Cyrillic fallback faces added.
-    designVersion: 4,
+    // 5 = the shared-chrome redesign: new default, user and recruitment cards, and the
+    // enemy, squad, archive and music kinds.
+    designVersion: 5,
 
     siteName: "Myrtle",
     siteURL: env.VITE_SITE_URL ?? "http://localhost:3000",

@@ -291,7 +291,7 @@ pub struct ClipReport {
     pub status: ClipStatus,
 }
 
-/// Totals for one pass over a server's `raw/video`.
+/// Totals for one transcode pass: a server's `raw/video` here, its music in `music_m4a.rs`.
 #[derive(Debug, Default)]
 pub struct TreeReport {
     pub transcoded: usize,
@@ -308,7 +308,7 @@ pub enum TreeSkip {
     NoFfmpeg,
 }
 
-fn ffmpeg_available() -> bool {
+pub(crate) fn ffmpeg_available() -> bool {
     Command::new("ffmpeg")
         .arg("-version")
         .stdin(Stdio::null())
@@ -318,11 +318,11 @@ fn ffmpeg_available() -> bool {
         .is_ok_and(|s| s.success())
 }
 
-fn file_len(p: &Path) -> u64 {
+pub(crate) fn file_len(p: &Path) -> u64 {
     fs::metadata(p).map_or(0, |m| m.len())
 }
 
-fn newer_than(p: &Path, than: SystemTime) -> bool {
+pub(crate) fn newer_than(p: &Path, than: SystemTime) -> bool {
     fs::metadata(p)
         .and_then(|m| m.modified())
         .is_ok_and(|t| t > than)
@@ -331,14 +331,14 @@ fn newer_than(p: &Path, than: SystemTime) -> bool {
 /// Refresh a skipped output's mtime. `run.mjs` sweeps every file in a written subtree whose
 /// mtime predates the extract, so a clip skipped as up to date would otherwise be deleted as an
 /// orphan the first time any other clip in `video/` is re-transcoded.
-fn touch(p: &Path) -> io::Result<()> {
+pub(crate) fn touch(p: &Path) -> io::Result<()> {
     File::options()
         .write(true)
         .open(p)?
         .set_modified(SystemTime::now())
 }
 
-fn run_ffmpeg(args: &[&std::ffi::OsStr]) -> Result<(), String> {
+pub(crate) fn run_ffmpeg(args: &[&std::ffi::OsStr]) -> Result<(), String> {
     let out = Command::new("ffmpeg")
         .args(["-nostdin", "-v", "error", "-y"])
         .args(args)

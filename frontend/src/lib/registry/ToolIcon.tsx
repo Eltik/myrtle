@@ -10,6 +10,14 @@ export function ToolIcon({ name, className }: { name: ToolIconName; className?: 
         strokeLinejoin: "round" as const,
     };
     switch (name) {
+        case "music":
+            return (
+                <svg aria-hidden="true" viewBox="0 0 24 24" className={className} {...p}>
+                    <path d="M9 18V5l12-2v13" />
+                    <circle cx="6" cy="18" r="3" />
+                    <circle cx="18" cy="16" r="3" />
+                </svg>
+            );
         case "calc":
             return (
                 <svg aria-hidden="true" viewBox="0 0 24 24" className={className} {...p}>
@@ -140,6 +148,14 @@ export function ToolIcon({ name, className }: { name: ToolIconName; className?: 
                     <path d="M9 4v14M15 6v14" />
                 </svg>
             );
+        case "newspaper":
+            return (
+                <svg aria-hidden="true" viewBox="0 0 24 24" className={className} {...p}>
+                    <path d="M15 18h-5M18 14h-8" />
+                    <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0v-9a2 2 0 0 1 2-2h2" />
+                    <rect x="10" y="6" width="8" height="4" rx="1" />
+                </svg>
+            );
         case "calendar-clock":
             return (
                 <svg aria-hidden="true" viewBox="0 0 24 24" className={className} {...p}>
@@ -162,6 +178,17 @@ export function ToolIcon({ name, className }: { name: ToolIconName; className?: 
                     <rect x="14" y="3" width="7" height="7" rx="1" />
                     <rect x="3" y="14" width="7" height="7" rx="1" />
                     <rect x="14" y="14" width="7" height="7" rx="1" />
+                </svg>
+            );
+        case "squad":
+            return (
+                <svg aria-hidden="true" viewBox="0 0 24 24" className={className} {...p}>
+                    <rect x="3" y="4" width="5" height="7" rx="1" />
+                    <rect x="9.5" y="4" width="5" height="7" rx="1" />
+                    <rect x="16" y="4" width="5" height="7" rx="1" />
+                    <rect x="3" y="13" width="5" height="7" rx="1" />
+                    <rect x="9.5" y="13" width="5" height="7" rx="1" />
+                    <path d="M18.5 14.5v4M16.5 16.5h4" />
                 </svg>
             );
         default:

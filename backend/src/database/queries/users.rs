@@ -50,6 +50,16 @@ pub async fn find_by_id(pool: &PgPool, id: Uuid) -> Result<Option<UserProfile>, 
         .await
 }
 
+/// The stored `users.role` for one account, by primary key; `None` when the
+/// account no longer exists. Read on every request that reaches a role gate
+/// (see `RoleCheckedUser`) and by `/auth/verify`, so it stays one indexed row.
+pub async fn find_role(pool: &PgPool, id: Uuid) -> Result<Option<String>, sqlx::Error> {
+    sqlx::query_scalar::<_, String>("SELECT role FROM users WHERE id = $1")
+        .bind(id)
+        .fetch_optional(pool)
+        .await
+}
+
 pub async fn find_raw_by_uid(
     pool: &PgPool,
     uid: &str,

@@ -1,4 +1,5 @@
 use std::fmt::Write as _;
+use std::num::NonZeroU64;
 
 use crate::db;
 use crate::types::{Context, Data, Error};
@@ -134,6 +135,7 @@ pub async fn edit(
     let (link_channel, message_id) = parse_message_ref(&message)
         .ok_or("Couldn't parse that message reference. Use a message link, `channel-message` id, or message id.")?;
     let target = channel.or(link_channel).unwrap_or_else(|| ctx.channel_id());
+    ensure_in_this_guild(ctx, &message, target).await?;
 
     let msg = target
         .message(ctx.http(), message_id)
@@ -206,6 +208,7 @@ pub async fn source(
     let (link_channel, message_id) = parse_message_ref(&message)
         .ok_or("Couldn't parse that message reference. Use a message link, `channel-message` id, or message id.")?;
     let target = channel.or(link_channel).unwrap_or_else(|| ctx.channel_id());
+    ensure_in_this_guild(ctx, &message, target).await?;
 
     let msg = target
         .message(ctx.http(), message_id)
@@ -260,6 +263,10 @@ pub async fn ban_user(
     if user.id == ctx.framework().bot_id {
         return Err("I can't ban myself.".into());
     }
+    // The owner, member and role lookups are several round-trips; don't race the 3 s
+    // interaction window.
+    ctx.defer_ephemeral().await?;
+    crate::checks::check_hierarchy(ctx, guild, user.id, "ban").await?;
 
     let dmd = delete_message_days.unwrap_or(0);
     if dmd > 7 {
@@ -385,6 +392,10 @@ pub async fn kick_user(
     if user.id == ctx.framework().bot_id {
         return Err("I can't kick myself.".into());
     }
+    // The owner, member and role lookups are several round-trips; don't race the 3 s
+    // interaction window.
+    ctx.defer_ephemeral().await?;
+    crate::checks::check_hierarchy(ctx, guild, user.id, "kick").await?;
 
     match reason.as_deref() {
         Some(r) => guild
@@ -711,6 +722,10 @@ pub async fn autorole_set(
     let guild = ctx
         .guild_id()
         .ok_or("This command must be used in a guild.")?;
+    // The owner, member and role lookups are several round-trips; don't race the 3 s
+    // interaction window.
+    ctx.defer_ephemeral().await?;
+    crate::checks::check_role_binding(ctx, guild, &role).await?;
     db::set_auto_role(&ctx.data().pool, guild, role.id)
         .await
         .map_err(|e| format!("Couldn't save auto-role: {e}"))?;
@@ -949,9 +964,14 @@ pub async fn reactionrole_add(
     let guild = ctx
         .guild_id()
         .ok_or("This command must be used in a guild.")?;
+    // The owner, member and role lookups are several round-trips; don't race the 3 s
+    // interaction window.
+    ctx.defer_ephemeral().await?;
+    crate::checks::check_role_binding(ctx, guild, &role).await?;
     let (link_channel, message_id) = parse_message_ref(&message)
         .ok_or("Couldn't parse that message reference. Use a message link, `channel-message` id, or message id.")?;
     let target = channel.or(link_channel).unwrap_or_else(|| ctx.channel_id());
+    ensure_in_this_guild(ctx, &message, target).await?;
 
     target
         .message(ctx.http(), message_id)
@@ -964,9 +984,12 @@ pub async fn reactionrole_add(
         .map_err(|_| format!("Couldn't parse '{emoji}' as an emoji."))?;
     let key = reaction.to_string();
 
-    db::add_reaction_role(&ctx.data().pool, guild, target, message_id, &key, role.id)
+    let saved = db::add_reaction_role(&ctx.data().pool, guild, target, message_id, &key, role.id)
         .await
         .map_err(|e| format!("Couldn't save reaction-role: {e}"))?;
+    if !saved {
+        return Err(format!("{key} on that message is already bound by another server.").into());
+    }
     ctx.data().tracked_messages.write().await.insert(message_id);
 
     let warning = match target
@@ -1005,7 +1028,8 @@ pub async fn reactionrole_remove(
         ChannelId,
     >,
 ) -> Result<(), Error> {
-    ctx.guild_id()
+    let guild = ctx
+        .guild_id()
         .ok_or("This command must be used in a guild.")?;
     let (link_channel, message_id) = parse_message_ref(&message)
         .ok_or("Couldn't parse that message reference. Use a message link, `channel-message` id, or message id.")?;
@@ -1017,7 +1041,7 @@ pub async fn reactionrole_remove(
         .map_err(|_| format!("Couldn't parse '{emoji}' as an emoji."))?;
     let key = reaction.to_string();
 
-    let removed = db::remove_reaction_role(&ctx.data().pool, message_id, &key)
+    let removed = db::remove_reaction_role(&ctx.data().pool, guild, message_id, &key)
         .await
         .map_err(|e| format!("Couldn't remove reaction-role: {e}"))?;
     if !removed {
@@ -1101,23 +1125,21 @@ pub async fn reactionrole_delete(
         ChannelId,
     >,
 ) -> Result<(), Error> {
-    ctx.guild_id()
+    let guild = ctx
+        .guild_id()
         .ok_or("This command must be used in a guild.")?;
     let (link_channel, message_id) = parse_message_ref(&message)
         .ok_or("Couldn't parse that message reference. Use a message link, `channel-message` id, or message id.")?;
     let target = channel.or(link_channel).unwrap_or_else(|| ctx.channel_id());
 
-    let n = db::remove_reaction_message(&ctx.data().pool, message_id)
+    let n = db::remove_guild_reaction_message(&ctx.data().pool, guild, message_id)
         .await
         .map_err(|e| format!("Couldn't delete reaction-roles: {e}"))?;
     if n == 0 {
         return Err("That message has no reaction-role bindings.".into());
     }
-    ctx.data()
-        .tracked_messages
-        .write()
-        .await
-        .remove(&message_id);
+    // Rebuilt rather than dropping `message_id`: another guild may still hold a binding on it.
+    sync_tracked_cache(ctx.data()).await?;
 
     let link = message_link(ctx.guild_id(), target, message_id);
     ctx.send(
@@ -1210,7 +1232,11 @@ fn parse_embed_json(input: &str) -> Result<CreateEmbed, Error> {
     Ok(CreateEmbed::from(embed))
 }
 
-/// Parse a color string: `#RRGGBB`, `RRGGBB`, `0xRRGGBB`, or a decimal value.
+/// Parse a color string: `#RRGGBB`, `0xRRGGBB`, a decimal value, or bare `RRGGBB`.
+///
+/// Input made only of digits is decimal by design, so a bare hex code is read as hex only when
+/// it has a letter in it (`ff0000`). An all-digit hex code needs its marker: `112233` is the
+/// decimal 112233 (0x01B669), `#112233` is 0x112233.
 fn parse_color(input: &str) -> Result<Colour, Error> {
     let trimmed = input.trim();
     let hex = trimmed
@@ -1233,7 +1259,8 @@ fn parse_color(input: &str) -> Result<Colour, Error> {
 /// Resolve a message reference into an optional channel and a message id.
 ///
 /// Accepts a full message URL (`.../channels/<guild>/<channel>/<message>`), a `channel-message`
-/// id pair, or a bare message id (channel inferred by the caller).
+/// id pair, or a bare message id (channel inferred by the caller). A zero channel or message id
+/// is rejected: serenity ids can't be zero and `*Id::new(0)` panics.
 fn parse_message_ref(input: &str) -> Option<(Option<ChannelId>, MessageId)> {
     let input = input.trim();
 
@@ -1241,24 +1268,74 @@ fn parse_message_ref(input: &str) -> Option<(Option<ChannelId>, MessageId)> {
         let segments: Vec<&str> = input[idx + "/channels/".len()..].split('/').collect();
         // [guild, channel, message]
         if segments.len() >= 3 {
-            let channel = segments[1].parse::<u64>().ok()?;
-            let message = segments[2].parse::<u64>().ok()?;
-            return Some((Some(ChannelId::new(channel)), MessageId::new(message)));
+            let channel = segments[1].parse::<NonZeroU64>().ok()?;
+            let message = segments[2].parse::<NonZeroU64>().ok()?;
+            return Some((Some(ChannelId::from(channel)), MessageId::from(message)));
         }
         return None;
     }
 
     if let Some((channel, message)) = input.split_once('-')
-        && let (Ok(channel), Ok(message)) =
-            (channel.trim().parse::<u64>(), message.trim().parse::<u64>())
+        && let (Ok(channel), Ok(message)) = (
+            channel.trim().parse::<NonZeroU64>(),
+            message.trim().parse::<NonZeroU64>(),
+        )
     {
-        return Some((Some(ChannelId::new(channel)), MessageId::new(message)));
+        return Some((Some(ChannelId::from(channel)), MessageId::from(message)));
     }
 
     input
-        .parse::<u64>()
+        .parse::<NonZeroU64>()
         .ok()
-        .map(|id| (None, MessageId::new(id)))
+        .map(|id| (None, MessageId::from(id)))
+}
+
+/// Refuse a message reference that points outside the guild the command runs in.
+///
+/// Discord's message routes take only a channel id, so a link or `channel-message` pair can name
+/// a channel in any guild the bot is in, while the invoker's permission was checked only here.
+/// The link's guild segment is checked first for a clear reply; the target channel's own guild
+/// is what decides, since a hand-edited link can pair this guild's id with a foreign channel.
+async fn ensure_in_this_guild(
+    ctx: Context<'_>,
+    reference: &str,
+    target: ChannelId,
+) -> Result<(), Error> {
+    let here = ctx
+        .guild_id()
+        .ok_or("This command must be used in a guild.")?;
+    if let Some(why) = link_guild_mismatch(reference, here) {
+        return Err(why.into());
+    }
+    if target == ctx.channel_id() {
+        return Ok(());
+    }
+    let channel_guild = target
+        .to_channel(ctx)
+        .await
+        .map_err(|_| format!("Couldn't find channel <#{target}>."))?
+        .guild()
+        .map(|c| c.guild_id);
+    if channel_guild == Some(here) {
+        Ok(())
+    } else {
+        Err(NOT_THIS_GUILD.into())
+    }
+}
+
+/// The reply when a message reference resolves outside the invoking guild.
+const NOT_THIS_GUILD: &str =
+    "That message isn't in this server. I can only work with messages here.";
+
+/// Why a message link's guild segment rules it out from `here`, or `None` when it names `here`
+/// or `reference` is not a link (a `channel-message` pair or a bare id carries no guild).
+fn link_guild_mismatch(reference: &str, here: GuildId) -> Option<&'static str> {
+    let idx = reference.find("/channels/")?;
+    let guild = reference[idx + "/channels/".len()..].split('/').next()?;
+    if guild == "@me" {
+        return Some("That link points to a DM. I can only work with messages in this server.");
+    }
+    (guild.parse::<u64>().ok() != Some(here.get())).then_some(NOT_THIS_GUILD)
 }
 
 /// Build a clickable jump link to a message.
@@ -1266,5 +1343,138 @@ fn message_link(guild: Option<GuildId>, channel: ChannelId, message: MessageId) 
     match guild {
         Some(g) => format!("https://discord.com/channels/{g}/{channel}/{message}"),
         None => format!("https://discord.com/channels/@me/{channel}/{message}"),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        NOT_THIS_GUILD, link_guild_mismatch, message_link, parse_color, parse_message_ref,
+    };
+    use ::serenity::model::id::{ChannelId, GuildId, MessageId};
+
+    fn color(input: &str) -> Option<u32> {
+        parse_color(input).ok().map(|c| c.0)
+    }
+
+    #[test]
+    fn parses_marked_hex_colors() {
+        assert_eq!(color("#5865F2"), Some(0x0058_65F2));
+        assert_eq!(color("0x5865f2"), Some(0x0058_65F2));
+        assert_eq!(color("0XFF0000"), Some(0x00FF_0000));
+        assert_eq!(color("  #00ff00  "), Some(0x0000_FF00));
+    }
+
+    #[test]
+    fn parses_bare_hex_with_letters() {
+        assert_eq!(color("ff0000"), Some(0x00FF_0000));
+        assert_eq!(color("5865F2"), Some(0x0058_65F2));
+    }
+
+    #[test]
+    fn reads_all_digit_input_as_decimal() {
+        assert_eq!(color("16711680"), Some(0x00FF_0000));
+        assert_eq!(color("0"), Some(0));
+        // By design: all-digit input is decimal, so "112233" is 0x01B669 and the
+        // hex code needs its marker (see `parse_color`).
+        assert_eq!(color("112233"), Some(112_233));
+        assert_eq!(color("#112233"), Some(0x0011_2233));
+    }
+
+    #[test]
+    fn rejects_unparseable_colors_with_a_hint() {
+        for bad in ["", "#", "blue", "#GGGGGG", "-1", "0x1FFFFFFFF"] {
+            let err = parse_color(bad).expect_err(bad).to_string();
+            assert!(err.contains("Use a hex code like #5865F2"), "{bad}: {err}");
+        }
+    }
+
+    #[test]
+    fn parses_message_urls() {
+        assert_eq!(
+            parse_message_ref("https://discord.com/channels/1/22/333"),
+            Some((Some(ChannelId::new(22)), MessageId::new(333)))
+        );
+        assert_eq!(
+            parse_message_ref("https://discord.com/channels/@me/22/333"),
+            Some((Some(ChannelId::new(22)), MessageId::new(333)))
+        );
+        assert_eq!(parse_message_ref("https://discord.com/channels/1/22"), None);
+        assert_eq!(
+            parse_message_ref("https://discord.com/channels/1/x/333"),
+            None
+        );
+    }
+
+    #[test]
+    fn parses_channel_message_pairs_and_bare_ids() {
+        assert_eq!(
+            parse_message_ref("22-333"),
+            Some((Some(ChannelId::new(22)), MessageId::new(333)))
+        );
+        assert_eq!(
+            parse_message_ref(" 22 - 333 "),
+            Some((Some(ChannelId::new(22)), MessageId::new(333)))
+        );
+        assert_eq!(parse_message_ref("333"), Some((None, MessageId::new(333))));
+        for bad in ["", "abc", "22-abc", "-5"] {
+            assert_eq!(parse_message_ref(bad), None, "{bad:?}");
+        }
+    }
+
+    #[test]
+    fn zero_ids_are_rejected() {
+        for bad in [
+            "0",
+            "0-5",
+            "5-0",
+            "0-0",
+            "https://discord.com/channels/1/0/333",
+            "https://discord.com/channels/1/22/0",
+        ] {
+            assert_eq!(parse_message_ref(bad), None, "{bad:?}");
+        }
+        // The guild segment is not read, so a zero there changes nothing.
+        assert_eq!(
+            parse_message_ref("https://discord.com/channels/0/22/333"),
+            Some((Some(ChannelId::new(22)), MessageId::new(333)))
+        );
+    }
+
+    #[test]
+    fn links_into_other_guilds_or_dms_are_refused() {
+        let here = GuildId::new(1);
+        assert_eq!(
+            link_guild_mismatch("https://discord.com/channels/1/22/333", here),
+            None
+        );
+        assert_eq!(
+            link_guild_mismatch("https://discord.com/channels/2/22/333", here),
+            Some(NOT_THIS_GUILD)
+        );
+        assert_eq!(
+            link_guild_mismatch("https://discord.com/channels/x/22/333", here),
+            Some(NOT_THIS_GUILD)
+        );
+        assert!(
+            link_guild_mismatch("https://discord.com/channels/@me/22/333", here)
+                .is_some_and(|why| why.contains("DM"))
+        );
+        // A pair or a bare id carries no guild; the target channel's guild decides those.
+        for no_guild in ["22-333", "333"] {
+            assert_eq!(link_guild_mismatch(no_guild, here), None, "{no_guild:?}");
+        }
+    }
+
+    #[test]
+    fn builds_guild_and_dm_links() {
+        assert_eq!(
+            message_link(Some(GuildId::new(1)), ChannelId::new(2), MessageId::new(3)),
+            "https://discord.com/channels/1/2/3"
+        );
+        assert_eq!(
+            message_link(None, ChannelId::new(2), MessageId::new(3)),
+            "https://discord.com/channels/@me/2/3"
+        );
     }
 }

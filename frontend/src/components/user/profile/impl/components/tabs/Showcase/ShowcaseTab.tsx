@@ -10,20 +10,26 @@ import { EntityAvatar, entityAccent, entityShape } from "#/components/tier-lists
 import { entityPage, useEntityLabels } from "#/components/tier-lists/kinds";
 import { Button } from "#/components/ui/button";
 import { Skeleton } from "#/components/ui/skeleton";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useAuth } from "#/hooks/use-auth";
 import { gridQueryOptions } from "#/lib/api/grids";
 import { publicPlansQueryOptions } from "#/lib/api/planner";
+import { isEntityOfKind } from "#/lib/api/tier-entities";
 import { tierListDetailQueryOptions } from "#/lib/api/tier-lists";
 import type { IRosterEntry } from "#/lib/api/user";
 import { userShowcaseQueryOptions } from "#/lib/api/user";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn, getPortraitById } from "#/lib/utils";
+import { cn } from "#/lib/utils";
 import type { ShowcaseBlockView } from "#/types/generated/ShowcaseBlockView";
 import type { IUserProfile } from "#/types/user";
 import { draftFromView, type IShowcaseEntity, type ShowcaseDraftBlock, shownBlocks } from "../../../showcase";
 import { PlanCard } from "../Plans/PlansTab";
 import { CARD_PADDING, Kicker, StatCard } from "../Stats/primitives";
+import { FactionFavouriteDialog, type IShowcasePlayer, OperatorFavouriteDialog, operatorTarget, ShowcasePlayerContext, useShowcasePlayer } from "./FavouriteDialogs";
+import type { messages as favMessages } from "./FavouriteDialogs.messages";
+import type { RosterAccess } from "./favourites";
+import { OperatorFace } from "./OperatorFace";
 import { blockFit, showcaseRows } from "./rows";
 import type { messages } from "./ShowcaseTab.messages";
 
@@ -38,6 +44,9 @@ export const BLOCK_ACCENT = {
     plan: "oklch(0.70 0.15 162)",
 } as const;
 
+/** A block's slot that hands its height to the card inside, so blocks side by side end on one line. */
+const FILL_SLOT = "flex flex-col *:flex-1";
+
 /** Tallest a tier list block's board shows before it fades out over a link to the full list. */
 const TIER_PEEK_MAX_HEIGHT = "max-h-[560px]";
 
@@ -46,10 +55,15 @@ interface IShowcaseTabProps {
     profile: IUserProfile;
     isOwner: boolean;
     roster: IRosterEntry[];
+    /** Whether the viewer may read the roster, for the build an operator favourite opens. */
+    rosterAccess: RosterAccess;
 }
 
-export function ShowcaseTab({ uid, profile, isOwner, roster }: IShowcaseTabProps) {
+export function ShowcaseTab({ uid, profile, isOwner, roster, rosterAccess }: IShowcaseTabProps) {
     const t: TypedT<typeof messages> = useT("user");
+    const ft: TypedT<typeof favMessages> = useT("user");
+    const playerName = profile.nickname ?? ft("profile.showcase.player", { uid: profile.uid });
+    const player = useMemo<IShowcasePlayer>(() => ({ uid, name: playerName, access: rosterAccess }), [uid, playerName, rosterAccess]);
     const server = useGamedataServer();
     const { user } = useAuth();
     const query = useQuery(userShowcaseQueryOptions(uid, user?.id ?? null, server));
@@ -94,53 +108,56 @@ export function ShowcaseTab({ uid, profile, isOwner, roster }: IShowcaseTabProps
     const rows = showcaseRows(blocks.map((b) => blockFit({ type: b.block.type, removed: b.removed })));
 
     return (
-        <section aria-label={t("profile.showcase.aria")} className="flex flex-col gap-4">
-            {isOwner && (
-                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    {hiddenTab("showcase") ? (
-                        <p className="m-0 flex items-center gap-2 text-muted-foreground text-sm">
-                            <EyeOffIcon aria-hidden="true" className="size-4 shrink-0" />
-                            {t("profile.showcase.tabHidden")}
-                        </p>
-                    ) : (
-                        <span aria-hidden="true" className="hidden sm:block" />
-                    )}
-                    <Button type="button" variant="ghost" size="sm" className="self-end text-muted-foreground hover:text-foreground sm:self-auto" onClick={() => setEditing(true)}>
-                        <PencilIcon />
-                        {t("profile.showcase.edit")}
-                    </Button>
-                </div>
-            )}
-            {rows.map((row) =>
-                // Keyed by the row's first block: a block's place is its identity (two favourites blocks may share a kind and title).
-                row.kind === "full" ? (
-                    <div key={row.index} className="min-w-0">
-                        {card(row.index)}
-                    </div>
-                ) : row.kind === "anchor" ? (
-                    <div key={row.index} className="flex flex-col gap-4 lg:flex-row lg:items-start">
-                        <div className="min-w-0 max-w-full lg:shrink-0">{card(row.index)}</div>
-                        {row.lane.length > 0 && (
-                            <div className="flex min-w-0 flex-1 flex-col gap-4">
-                                {row.lane.map((i) => (
-                                    <div key={i} className="min-w-0">
-                                        {card(i)}
-                                    </div>
-                                ))}
-                            </div>
+        <ShowcasePlayerContext.Provider value={player}>
+            <section aria-label={t("profile.showcase.aria")} className="flex flex-col gap-4">
+                {isOwner && (
+                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        {hiddenTab("showcase") ? (
+                            <p className="m-0 flex items-center gap-2 text-muted-foreground text-sm">
+                                <EyeOffIcon aria-hidden="true" className="size-4 shrink-0" />
+                                {t("profile.showcase.tabHidden")}
+                            </p>
+                        ) : (
+                            <span aria-hidden="true" className="hidden sm:block" />
                         )}
+                        <Button type="button" variant="ghost" size="sm" className="self-end text-muted-foreground hover:text-foreground sm:self-auto" onClick={() => setEditing(true)}>
+                            <PencilIcon />
+                            {t("profile.showcase.edit")}
+                        </Button>
                     </div>
-                ) : (
-                    <div key={row.items[0]} className="flex flex-wrap gap-4">
-                        {row.items.map((i) => (
-                            <div key={i} className={cn("min-w-0", flowItemClass(blocks[i]))}>
-                                {card(i)}
-                            </div>
-                        ))}
-                    </div>
-                ),
-            )}
-        </section>
+                )}
+                {rows.map((row) =>
+                    // Keyed by the row's first block: a block's place is its identity (two favourites blocks may share a kind and title).
+                    row.kind === "full" ? (
+                        <div key={row.index} className="min-w-0">
+                            {card(row.index)}
+                        </div>
+                    ) : row.kind === "anchor" ? (
+                        // Side by side, the shorter side's cards grow to the taller side's height.
+                        <div key={row.index} className="flex flex-col gap-4 lg:flex-row">
+                            <div className={cn(FILL_SLOT, "min-w-0 max-w-full lg:shrink-0")}>{card(row.index)}</div>
+                            {row.lane.length > 0 && (
+                                <div className="flex min-w-0 flex-1 flex-col gap-4">
+                                    {row.lane.map((i) => (
+                                        <div key={i} className={cn(FILL_SLOT, "min-w-0 flex-1")}>
+                                            {card(i)}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div key={row.items[0]} className="flex flex-wrap gap-4">
+                            {row.items.map((i) => (
+                                <div key={i} className={cn(FILL_SLOT, "min-w-0", flowItemClass(blocks[i]))}>
+                                    {card(i)}
+                                </div>
+                            ))}
+                        </div>
+                    ),
+                )}
+            </section>
+        </ShowcasePlayerContext.Provider>
     );
 }
 
@@ -223,7 +240,6 @@ function RemovedBlock({ type }: { type: ShowcaseDraftBlock["type"] }) {
     );
 }
 
-/** A block's header row: the kicker, an optional title and a trailing slot. */
 function BlockHeader({ icon, kicker, title, end }: { icon: typeof HeartIcon; kicker: string; title?: string | null; end?: ReactNode }) {
     return (
         <div className="flex items-start justify-between gap-3">
@@ -236,7 +252,6 @@ function BlockHeader({ icon, kicker, title, end }: { icon: typeof HeartIcon; kic
     );
 }
 
-/** The header's link to a grid's or tier list's own page. */
 function OpenLink({ to, slug, title }: { to: "/grids/$slug" | "/tier-lists/$id"; slug: string; title: string }) {
     const t: TypedT<typeof messages> = useT("user");
     const className = "-mr-1.5 inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 font-medium text-muted-foreground text-xs no-underline transition-colors hover:bg-accent hover:text-foreground";
@@ -273,7 +288,7 @@ function FavouritesBlock({ block }: { block: Extract<ShowcaseDraftBlock, { type:
 
 /**
  * The tiles of a favourites block, in a row that wraps. Operators stand as
- * their 1 : 2 portrait card; every other kind keeps its own art's shape
+ * the 2 : 3 card of the operators page; every other kind keeps its own art's shape
  * (square, or a wide event banner), at one shared height.
  */
 export function FavouriteTiles({ entities }: { entities: readonly IShowcaseEntity[] }) {
@@ -290,51 +305,62 @@ export function FavouriteTiles({ entities }: { entities: readonly IShowcaseEntit
 const TILE_CLASS =
     "group relative flex items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-[linear-gradient(to_bottom,color-mix(in_oklch,var(--tile-accent)_26%,oklch(0.24_0.005_285)),oklch(0.15_0.004_285))] text-lg text-white no-underline outline-none transition-[border-color,transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:border-(--tile-accent) hover:shadow-[0_6px_18px_-6px_color-mix(in_oklch,var(--tile-accent)_45%,transparent)] focus-visible:ring-2 focus-visible:ring-ring";
 
-/**
- * Each shape's size. A portrait is two squares tall; a wide banner is 2.1 squares wide. At lg the
- * tiles grow so a favourites block over a plan fills the height of the grid beside them (see `LANE_MAX`).
- */
+/** An operator's card, drawn as the operators page draws it: no tinted backdrop, the portrait on the plain card. */
+const OPERATOR_TILE_CLASS = "group relative block overflow-hidden rounded-md border border-muted/50 bg-card text-foreground no-underline outline-none transition-[border-radius,border-color] duration-150 hover:rounded-lg hover:border-muted focus-visible:ring-2 focus-visible:ring-ring";
+
+/** Each shape's size. A portrait is the operators page's 2 : 3 card; a wide banner is 2.1 squares wide. */
 const TILE_SIZE = {
-    portrait: "w-[88px] h-[176px] sm:w-[112px] sm:h-[224px] lg:w-[136px] lg:h-[272px]",
+    portrait: "w-[88px] aspect-2/3 sm:w-[104px] lg:w-[120px]",
     square: "size-[88px] sm:size-[112px] lg:size-[136px]",
     wide: "h-[88px] w-[185px] sm:h-[112px] sm:w-[235px] lg:h-[136px] lg:w-[286px]",
 } as const;
 
 function FavouriteTile({ item }: { item: IShowcaseEntity }) {
     const t: TypedT<typeof messages> = useT("user");
+    const ft: TypedT<typeof favMessages> = useT("user");
     const labels = useEntityLabels();
+    const player = useShowcasePlayer();
+    const [open, setOpen] = useState(false);
     const entity = item.entity;
     if (!entity) {
         const label = t("profile.showcase.removed.entity", { id: item.id });
         return (
             <li>
-                <span role="img" aria-label={label} title={label} className={cn(TILE_CLASS, TILE_SIZE.square, "border-border border-dashed bg-muted/30 bg-none text-muted-foreground hover:translate-y-0")}>
-                    <span className="line-clamp-3 break-all px-1 text-center font-mono text-[9px] leading-tight">{item.id}</span>
-                </span>
+                <Tooltip>
+                    <TooltipTrigger render={<span role="img" aria-label={label} className={cn(TILE_CLASS, TILE_SIZE.square, "border-border border-dashed bg-muted/30 bg-none text-muted-foreground hover:translate-y-0")} />}>
+                        <span className="line-clamp-3 break-all px-1 text-center font-mono text-[9px] leading-tight">{item.id}</span>
+                    </TooltipTrigger>
+                    <TooltipPopup>{label}</TooltipPopup>
+                </Tooltip>
             </li>
         );
     }
-    const shape = entity.resolved && entity.kind === "operator" ? "portrait" : entityShape(entity);
+    const server = item.server ?? undefined;
+    const operator = isEntityOfKind(entity, "operator") ? entity : null;
+    const faction = isEntityOfKind(entity, "faction") ? entity : null;
     const label = labels.tileLabel(entity);
     const page = entityPage(entity);
-    const face = (
-        <>
-            {shape === "portrait" ? <PortraitArt entity={entity} server={item.server ?? undefined} /> : <EntityAvatar entity={entity} face="tile" tone="dark" server={item.server ?? undefined} />}
-            <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-0.5 bg-(--tile-accent)" />
-            <span
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-x-0 bottom-0 bg-[linear-gradient(to_top,oklch(0_0_0/0.85),oklch(0_0_0/0.55)_60%,transparent)] px-1.5 pt-5 pb-2 text-center font-medium font-sans text-[11px] text-white leading-tight opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
-            >
-                <span className="line-clamp-2">{entity.name}</span>
-            </span>
-        </>
-    );
+    const face = operator ? <OperatorFace entity={operator} server={server} /> : <EntityFace entity={entity} server={server} />;
     const props = {
         "aria-label": label,
         title: label,
-        className: cn(TILE_CLASS, TILE_SIZE[shape]),
+        className: operator ? cn(OPERATOR_TILE_CLASS, TILE_SIZE.portrait) : cn(TILE_CLASS, TILE_SIZE[entityShape(entity)]),
         style: { "--tile-accent": entityAccent(entity) } as CSSProperties,
     };
+    // On a profile, an operator opens the player's build and a faction its operators. The tile keeps its look:
+    // a button's own text alignment and cursor are the only things the element brings, and both are set back.
+    if (player && (operator || faction)) {
+        const name = operator ? ft("profile.showcase.tile.operatorAria", { name: entity.name, player: player.name }) : ft("profile.showcase.tile.factionAria", { name: entity.name });
+        return (
+            <li>
+                <button type="button" {...props} aria-label={name} aria-haspopup="dialog" className={cn(props.className, "cursor-pointer text-start")} onClick={() => setOpen(true)}>
+                    {face}
+                </button>
+                {operator && <OperatorFavouriteDialog operator={operatorTarget(operator, server)} open={open} onOpenChange={setOpen} />}
+                {faction && <FactionFavouriteDialog faction={faction} open={open} onOpenChange={setOpen} />}
+            </li>
+        );
+    }
     return (
         <li>
             {page !== null ? (
@@ -351,11 +377,20 @@ function FavouriteTile({ item }: { item: IShowcaseEntity }) {
     );
 }
 
-/** An operator's portrait card (180 x 360), falling back to the square avatar where the extract has no portrait. */
-function PortraitArt({ entity, server }: { entity: NonNullable<IShowcaseEntity["entity"]>; server?: string }) {
-    const [failed, setFailed] = useState(false);
-    if (failed) return <EntityAvatar entity={entity} face="tile" tone="dark" server={server} />;
-    return <img src={getPortraitById(entity.id, server)} alt="" aria-hidden="true" loading="lazy" decoding="async" draggable={false} onError={() => setFailed(true)} className="absolute inset-0 block h-full w-full object-cover object-top transition-transform duration-200 group-hover:scale-[1.03]" />;
+/** Any other kind's face: its own art, the accent line, and the name on hover. */
+function EntityFace({ entity, server }: { entity: NonNullable<IShowcaseEntity["entity"]>; server?: string }) {
+    return (
+        <>
+            <EntityAvatar entity={entity} face="tile" tone="dark" server={server} />
+            <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-0.5 bg-(--tile-accent)" />
+            <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 bottom-0 bg-[linear-gradient(to_top,oklch(0_0_0/0.85),oklch(0_0_0/0.55)_60%,transparent)] px-1.5 pt-5 pb-2 text-center font-medium font-sans text-[11px] text-white leading-tight opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+            >
+                <span className="line-clamp-2">{entity.name}</span>
+            </span>
+        </>
+    );
 }
 
 function GridBlock({ slug, isOwner }: { slug: string; isOwner: boolean }) {
@@ -371,7 +406,7 @@ function GridBlock({ slug, isOwner }: { slug: string; isOwner: boolean }) {
     // the card is exactly the board's width plus its padding, so nothing sits empty beside it.
     const cardWidth = `calc(${compactGridSize(grid.rows, grid.cols).boardMaxPx}px + 2rem + 2px)`;
     return (
-        <div className="lg:w-(--card-w) lg:max-w-full" style={{ "--card-w": cardWidth } as CSSProperties}>
+        <div className={cn(FILL_SLOT, "lg:w-(--card-w) lg:max-w-full")} style={{ "--card-w": cardWidth } as CSSProperties}>
             <StatCard color={BLOCK_ACCENT.grid}>
                 <div className="flex flex-col gap-3 p-3 sm:p-4">
                     <BlockHeader icon={LayoutGridIcon} kicker={t("profile.showcase.block.grid")} title={grid.title} end={<OpenLink to="/grids/$slug" slug={slug} title={grid.title} />} />
@@ -403,9 +438,9 @@ function TierListBlock({ slug, isOwner }: { slug: string; isOwner: boolean }) {
 
 /**
  * A tier list cut to its top tiers. At card width a real list runs 931-949 px
- * (6 tiers / 127 operators, 10 tiers / 61), which used to scroll inside a
- * 640 px card; a scroll box inside a scrolling page is the thing that read
- * wrong. Past the cap the board fades out over a link to the full list.
+ * (6 tiers / 127 operators, 10 tiers / 61), too tall for a 640 px card, and a
+ * scroll box inside a scrolling page reads wrong. Past the cap the board fades
+ * out over a link to the full list.
  */
 function TierListPeek({ slug, children }: { slug: string; children: ReactNode }) {
     const t: TypedT<typeof messages> = useT("user");
@@ -444,7 +479,6 @@ function PlanBlock({ id, uid, roster, isOwner, plansHidden }: { id: string; uid:
     if (isPending) return <Skeleton className="h-40 rounded-2xl" />;
     const plan = plans?.find((p) => p.id === id);
     if (!plan) return isOwner ? <RemovedBlock type="plan" /> : null;
-    // One card like every other block: the kicker inside, the plan's body drawn on the card itself.
     return (
         <StatCard color={BLOCK_ACCENT.plan}>
             <div className={cn(CARD_PADDING, "flex flex-col gap-3.5")}>

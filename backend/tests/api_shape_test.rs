@@ -52,8 +52,7 @@ use serde_json::Value;
 // No sampling: every container is walked in full. A cap of 200 children made
 // the test FLAKY: several payloads iterate a `HashMap`, so whether the first 200
 // held a `null` for an `Option` field changed run to run (phantom
-// `stage-index[*].name: null` diffs). Walking everything costs seconds of CPU and
-// a few thousand paths of memory; determinism is worth it.
+// `stage-index[*].name: null` diffs). The full walk costs seconds of CPU.
 
 const fn type_name(v: &Value) -> &'static str {
     match v {

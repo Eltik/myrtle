@@ -10,11 +10,7 @@ export interface ISeoInput {
     noindex?: boolean;
     /** The locale this page is rendered in. Defaults to the source locale. */
     locale?: string;
-    /**
-     * Every locale this page exists in, for `hreflang`. Pass the codes from
-     * `useI18n().available`; omit to emit no alternates, which is correct for
-     * a single-locale deployment.
-     */
+    /** Unused: `seo()` emits no `hreflang`, `RootDocument` does (see below). */
     alternateLocales?: string[];
 }
 
@@ -27,10 +23,6 @@ export function seo(input: ISeoInput): ISeoOutput {
     const fullTitle = input.title.includes(OG_CONFIG.siteName) ? input.title : `${input.title} • ${OG_CONFIG.siteName}`;
     const image = absolute(input.image ?? OG_CONFIG.defaultImage);
     const locale = input.locale ?? DEFAULT_LOCALE;
-    // The canonical must carry the locale prefix, or every translation would
-    // declare the English page as its canonical and none of them would be
-    // indexed - the exact failure that makes translating a reference site
-    // pointless.
     const description = input.description;
 
     const meta: ISeoOutput["meta"] = [
@@ -51,21 +43,18 @@ export function seo(input: ISeoInput): ISeoOutput {
 
     if (input.noindex) meta.push({ name: "robots", content: "noindex, nofollow" });
 
-    // `canonical` and `og:url` are NOT emitted here.
-    //
-    // Both have to carry the active locale's path prefix, and a route's
-    // `head()` cannot see the locale - it is not a React context and the
-    // request URL is not readable from there. Emitting them per route would
-    // have meant threading a locale argument through all 31 `seo()` call
-    // sites, and any one that was missed would silently declare the English
-    // page as a translation's canonical, which de-indexes the translation.
+    // `canonical` and `og:url` are NOT emitted here. Both need the active
+    // locale's path prefix, and a route's `head()` can't see the locale (no
+    // React context, no request URL). Threading a locale through every `seo()`
+    // call site means any one missed silently declares the English page as a
+    // translation's canonical, which de-indexes the translation.
     //
     // `RootDocument` has both the locale and the pathname, so it emits exactly
     // one canonical, one `og:url` and the full `hreflang` set for every route.
     // See `routes/__root.tsx`.
     //
     // The og:image is deliberately not preloaded: the page never renders it, so a
-    // preload only spends bandwidth that the real LCP image competes for.
+    // preload only spends bandwidth the real LCP image competes for.
     const links: ISeoOutput["links"] = [];
 
     return { meta, links };

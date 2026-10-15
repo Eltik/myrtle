@@ -4,6 +4,7 @@ import { useAuth } from "#/hooks/use-auth";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { activitiesQueryOptions, retroActsQueryOptions, stagesQueryOptions, userStageClearsQueryOptions, zonesQueryOptions } from "#/lib/api/stages";
+import { browseTierListsQueryOptions, tierListDetailQueryOptions } from "#/lib/api/tier-lists";
 import { userRosterQueryOptions } from "#/lib/api/user";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -16,6 +17,7 @@ import { SettingsSheet } from "./impl/components/SettingsSheet";
 import { SquadSlab } from "./impl/components/SquadSlab";
 import { StageSlab } from "./impl/components/StageSlab";
 import { DEFAULT_SETTINGS, SETTINGS_VERSION, STORAGE_KEY_SETTINGS } from "./impl/constants";
+import { buildTierIndex, officialTierChoices, resolveTierListSlug, tierFilterNarrows } from "./impl/tier-filter";
 import type { IChallenge, IRandomizerOperator, IRandomizerSettings } from "./impl/types";
 import { applyProfileGate, buildRosterIndex, filterPlayableStages, pickRandomChallenge, pickRandomSquad, pickRandomStage, selectAvailableOperators, selectAvailableStages, toRandomizerOperator } from "./impl/utils";
 import type { messages } from "./Randomizer.messages";
@@ -78,8 +80,7 @@ export function Randomizer(): React.ReactElement {
     const settings = React.useMemo(() => applyProfileGate(migrateSettings(persisted), { hasProfile, hasStageClears }), [persisted, hasProfile, hasStageClears]);
     const updateSettings = React.useCallback((next: Partial<IRandomizerSettings>) => setPersisted((prev) => ({ ...migrateSettings(prev), ...next, _version: SETTINGS_VERSION })), [setPersisted]);
 
-    // Roster selection: `null` means "user hasn't pruned the roster yet" -> treat as all
-    // operators. Any array (even empty) is an explicit choice the user made.
+    // `null` = never pruned, so every operator; any array (even empty) is the user's pick.
     const [rosterStored, setRosterStored] = useLocalStorageState<string[] | null>(ROSTER_STORAGE_KEY, null, { parse: parseRosterSelection });
     const effectiveRosterSet = React.useMemo(() => {
         if (rosterStored === null) return new Set(randomizerOperators.map((op) => op.id));
@@ -88,9 +89,27 @@ export function Randomizer(): React.ReactElement {
     const setRosterSelection = React.useCallback((next: Set<string>) => setRosterStored(Array.from(next)), [setRosterStored]);
     const resetRosterSelection = React.useCallback(() => setRosterStored(null), [setRosterStored]);
 
-    // The roster picker mirrors every operator-tab constraint, so flipping a setting
-    // immediately prunes the roster view to match what the randomizer can actually draw.
-    const rosterPickerOperators = React.useMemo(() => selectAvailableOperators(randomizerOperators, settings, rosterIndex), [randomizerOperators, settings, rosterIndex]);
+    // Tier filter: a stored slug that no longer names an official list reads as none,
+    // and until the list loads (or if it fails) the filter stays off rather than emptying the pool.
+    const { data: tierLists } = useQuery(browseTierListsQueryOptions(server));
+    const tierChoices = React.useMemo(() => officialTierChoices(tierLists), [tierLists]);
+    const tierListSlug = resolveTierListSlug(settings.tierListSlug, tierChoices);
+    const tierListQuery = useQuery({ ...tierListDetailQueryOptions(tierListSlug ?? "", server), enabled: tierListSlug !== null });
+    const tierListDetail = tierListSlug !== null ? (tierListQuery.data ?? null) : null;
+    const tierIndex = React.useMemo(() => (tierListDetail ? buildTierIndex(tierListDetail) : null), [tierListDetail]);
+    const tierFilter = React.useMemo(
+        () => ({
+            choices: tierChoices,
+            slug: tierListSlug,
+            index: tierIndex,
+            loading: tierListSlug !== null && tierListQuery.isLoading,
+            narrowingTitle: tierFilterNarrows(tierIndex, settings.deselectedTierIds) ? (tierListDetail?.title ?? null) : null,
+        }),
+        [tierChoices, tierListSlug, tierIndex, tierListQuery.isLoading, settings.deselectedTierIds, tierListDetail],
+    );
+
+    // Mirrors every operator-tab constraint, so the roster picker only lists what can be drawn.
+    const rosterPickerOperators = React.useMemo(() => selectAvailableOperators(randomizerOperators, settings, rosterIndex, tierIndex), [randomizerOperators, settings, rosterIndex, tierIndex]);
     const availableOperators = React.useMemo(() => rosterPickerOperators.filter((op) => effectiveRosterSet.has(op.id)), [rosterPickerOperators, effectiveRosterSet]);
 
     const availableStages = React.useMemo(() => selectAvailableStages(playableStages, zones, settings, stageClears ?? null, activityLookup), [playableStages, zones, settings, stageClears, activityLookup]);
@@ -105,7 +124,6 @@ export function Randomizer(): React.ReactElement {
     const hasResult = rolledStage !== null || rolledSquad.length > 0 || rolledChallenge !== null;
     const canRoll = availableOperators.length > 0 && availableStages.length > 0;
 
-    /** The squad pool under `challenge`: a SQUAD_FILTER narrows the available operators. */
     const resolveSquadPool = React.useCallback(
         (challenge: IChallenge | null): IRandomizerOperator[] => {
             if (!challenge || challenge.type !== "SQUAD_FILTER") return availableOperators;
@@ -123,7 +141,6 @@ export function Randomizer(): React.ReactElement {
         if (!rolledStage) return;
         const picked = pickRandomChallenge({ stage: rolledStage, operators: availableOperators, squadSize: settings.squadSize });
         setRolledChallenge(picked?.challenge ?? null);
-        // If the new challenge restricts the pool, reroll the squad to honour it.
         if (picked?.challenge.type === "SQUAD_FILTER") {
             setRolledSquad(pickRandomSquad(resolveSquadPool(picked.challenge), settings.squadSize, settings.allowDuplicates));
         }
@@ -181,6 +198,7 @@ export function Randomizer(): React.ReactElement {
                 onRosterReset={resetRosterSelection}
                 rosterIndex={rosterIndex}
                 hasProfile={hasProfile}
+                tierFilter={tierFilter}
                 stages={playableStages}
                 zones={zones}
                 activityLookup={activityLookup}

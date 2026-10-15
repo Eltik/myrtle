@@ -1,16 +1,9 @@
 /**
- * Server-side input sanitizer for markdown fields.
- *
- * Runs on TanStack Start server functions (Node/Nitro) before forwarding to the backend.
- * Defense in depth: the Markdown renderer is already XSS-safe by construction (no
- * `dangerouslySetInnerHTML`), but we strip dangerous content at the storage boundary so:
- *   - third-party consumers of our API can't be tricked by raw HTML in our data
- *   - the stored value never contains active payloads (`<script>`, `javascript:` …)
- *   - data integrity stays clean (no NULs / control characters)
- *
- * This is intentionally not a CommonMark validator. It's a focused stripper
- * for the specific threats markdown text can carry, with everything else
- * passed through untouched.
+ * Strips markdown input at the storage boundary, mostly in server functions
+ * before the backend. Our renderer is already XSS-safe (no
+ * `dangerouslySetInnerHTML`); this is for other API consumers and to keep
+ * `<script>`, `javascript:` and control chars out of stored data. Not a
+ * CommonMark validator: anything not a threat passes through.
  */
 
 const ALLOWED_LINK_SCHEMES = new Set(["http:", "https:", "mailto:"]);
@@ -128,7 +121,7 @@ export function truncateCodePoints(s: string, max: number): string {
 function isAllowedLinkTarget(href: string): boolean {
     const trimmed = href.trim();
     if (!trimmed) return false;
-    // Relative URLs, anchors, query-only - always safe.
+    // Relative URLs, anchors, query-only: always safe.
     if (trimmed.startsWith("/") || trimmed.startsWith("#") || trimmed.startsWith("?") || trimmed.startsWith("./") || trimmed.startsWith("../")) return true;
     const schemeMatch = /^([a-z][a-z0-9+.-]*):/i.exec(trimmed);
     if (schemeMatch?.[1]) {

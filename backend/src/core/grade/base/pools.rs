@@ -449,7 +449,7 @@ mod tests {
 
 #[derive(Debug, Default, PartialEq)]
 pub struct EconomyPlan {
-    /// `buff_id -> solved productivity %` - consumer buffs to override with
+    /// `buff_id -> solved productivity %`: consumer buffs to override with
     /// [`BuffResolutionStrategy::PoolPayoff`].
     pub overrides: Vec<(String, f64)>,
     /// `(char_id, room_type)` generator seats the plan reserves (Senshi into

@@ -23,7 +23,14 @@ const TILE = {
 const AVATAR = (id: string) => `https://api.myrtle.moe/api/avatar/${id}`;
 const LABEL_STYLE = { color: "hsla(0,0%,78%,0.92)" };
 
-const ctx = (over: Record<string, unknown> = {}) => ({ width: 11, height: 7, coordOverride: null, operators: new Map(), disallow: new Set<number>(), ...over });
+/**
+ * `ctx.t` is the board's `useT("stages")`, which resolves a tile's glyph key
+ * against `tile-defs.messages.ts`. These are that file's English strings.
+ */
+const TILE_GLYPHS: Record<string, string> = { "tile.bigForce": "F+", "tile.defUp": "def+", "tile.flyStart": "air", "tile.gazebo": "air+", "tile.hole": "hole", "tile.stairs": "↕", "tile.teleportIn": "in", "tile.teleportOut": "out", "tile.woodenWall": "WW" };
+const t = (key: string) => TILE_GLYPHS[key] ?? key;
+
+const ctx = (over: Record<string, unknown> = {}) => ({ width: 11, height: 7, coordOverride: null, operators: new Map(), disallow: new Set<number>(), t, ...over });
 
 /** The map's dark surface plus the perspective rig MapView wraps the board in. */
 const Surface = ({ children }: { children?: React.ReactNode }) => (

@@ -28,7 +28,7 @@ import { Watermark } from "./view/Watermark";
 
 /** Enemies in the focused group spawn within this many seconds of the focus. */
 const GROUP_WINDOW = 10;
-/** Screen px per (tile/second) of enemy move speed - tuned for a lively-but-readable pace. */
+/** Screen px per (tile/second) of enemy move speed, tuned by eye. */
 const SPEED_SCALE = 100;
 /** Fallback move speed (tiles/sec) when an enemy's stats are missing. */
 const DEFAULT_MOVE_SPEED = 0.72;
@@ -39,8 +39,7 @@ const WAIT_TIME_SCALE = PX_PER_TILE / SPEED_SCALE;
 
 const BOARD_PADDING_Y = 48;
 const H_GUTTER = 24;
-/** Hover-intent delay (ms) before the enemy tooltip opens - long enough that a chibi merely walking
- * past the cursor (or loading in under it) never flashes the tooltip, short enough to feel instant on a real hover. */
+/** Hover-intent delay (ms): a chibi walking past or spawning under the cursor never flashes the tooltip, a real hover still feels instant. */
 const HOVER_OPEN_DELAY = 180;
 /** Keep the board within this fraction of the viewport height so tall maps stay fully visible without dominating the page. */
 const MAX_VIEWPORT_HEIGHT_FRACTION = 0.82;
@@ -142,9 +141,8 @@ const MapBoard = forwardRef<IMapViewHandle, { level: ILevel; code?: string; sett
         return out.slice(0, 8);
     }, [chibiActive, focus, routes, chibiMap, speedFor]);
 
-    // Enemy keys actually on the board this render (walking chibis in 3D, active icon badges in 2D).
-    // The hover tooltip is gated on this so it vanishes in the SAME frame a chibi spawns out - no
-    // lingering/flashing tooltip during the wave transition.
+    // Walking chibis in 3D, active icon badges in 2D. The tooltip is gated on this so it goes
+    // in the SAME frame a chibi spawns out instead of lingering through the wave transition.
     const hoverableKeys = useMemo(() => {
         const keys = new Set<string>();
         if (chibiActive) {
@@ -213,9 +211,8 @@ const MapBoard = forwardRef<IMapViewHandle, { level: ILevel; code?: string; sett
         [routes],
     );
 
-    // Cursor-following tooltip for whichever enemy chibi/icon is hovered on the board.
-    // Position is driven imperatively (per pointer move) so movement never re-renders the map;
-    // only switching which enemy is hovered updates React state.
+    // Tooltip position is set imperatively per pointer move so moving never re-renders the map;
+    // only a change of hovered enemy touches React state.
     const [hoverKey, setHoverKey] = useState<string | null>(null);
     const hoverPanelRef = useRef<HTMLDivElement>(null);
     const hoverKeyRef = useRef<string | null>(null);
@@ -249,10 +246,8 @@ const MapBoard = forwardRef<IMapViewHandle, { level: ILevel; code?: string; sett
         el.style.top = `${top}px`;
     }, []);
 
-    // Chibis are large, constantly-moving hit targets: as they walk/spawn/despawn under a *still*
-    // cursor the browser keeps firing pointer events, which would flash the tooltip on every pass.
-    // So we only open from genuine cursor movement onto an enemy - when the chibi moves under a
-    // stationary cursor (same coords as the last event), we ignore it.
+    // Chibis walking/spawning under a *still* cursor keep firing pointer events, which flashed the
+    // tooltip on every pass. Only real cursor movement opens it; same coords as the last event is ignored.
     const handleEnemyHover = useCallback<EnemyHoverFn>(
         (key, x, y, pointerMoved) => {
             if (!key) {
@@ -265,7 +260,7 @@ const MapBoard = forwardRef<IMapViewHandle, { level: ILevel; code?: string; sett
                 return;
             }
             if (hoverPendingRef.current === key) return; // timer already counting down for this enemy
-            if (!pointerMoved) return; // enemy moved under a stationary cursor - not a real hover
+            if (!pointerMoved) return; // enemy moved under a still cursor, not a real hover
             if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
             hoverPendingRef.current = key;
             hoverTimerRef.current = setTimeout(() => {
@@ -282,7 +277,7 @@ const MapBoard = forwardRef<IMapViewHandle, { level: ILevel; code?: string; sett
     // Stepping/scrolling to another spawn group swaps the chibis out; a hovered chibi can unmount
     // without ever firing pointerleave, which would leave a stale tooltip lingering (and flashing as
     // you keep scrolling). Drop any open/pending hover whenever the focused group changes.
-    // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally keyed on focus only - this resets hover state on navigation.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on focus only, resets hover on navigation
     useEffect(() => {
         if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
         hoverTimerRef.current = null;

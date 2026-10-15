@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IChangelogCommit } from "#/lib/api/changelog";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -22,7 +23,7 @@ export function ActivityStrip({ commits, days }: { commits: IChangelogCommit[]; 
         const start = today.getTime() - (days - 1) * DAY_MS;
         const out: IBucket[] = Array.from({ length: days }, (_, i) => {
             const d = new Date(start + i * DAY_MS);
-            return { label: f.date(d, { month: "short", day: "numeric" }), count: 0 };
+            return { label: f.calendarDay(d, { month: "short", day: "numeric" }), count: 0 };
         });
         for (const c of commits) {
             const t = new Date(c.date).getTime();
@@ -47,17 +48,16 @@ export function ActivityStrip({ commits, days }: { commits: IChangelogCommit[]; 
             </div>
             <div className="flex h-16 items-end gap-px sm:gap-0.5" role="img" aria-label={t("activity.aria", { days, label: busiest?.label ?? t("activity.aria.noDay"), count: busiest?.count ?? 0 })}>
                 {buckets.map((b, i) => (
-                    <div
-                        // biome-ignore lint/suspicious/noArrayIndexKey: fixed-length ordered day buckets
-                        key={i}
-                        className="group/bar relative flex h-full flex-1 items-end"
-                        title={t("activity.bar", { label: b.label, count: b.count })}
-                    >
-                        <div
-                            className={`${styles.activityBar} w-full rounded-xs transition-colors ${b.count > 0 ? "bg-primary/35 group-hover/bar:bg-primary/70" : "bg-muted group-hover/bar:bg-muted-foreground/30"}`}
-                            style={{ height: `${b.count > 0 ? Math.max(8, (b.count / max) * 100) : 6}%`, animationDelay: `${Math.min(i * 12, 360)}ms` }}
-                        />
-                    </div>
+                    // biome-ignore lint/suspicious/noArrayIndexKey: fixed-length ordered day buckets
+                    <Tooltip key={i}>
+                        <TooltipTrigger render={<div className="group/bar relative flex h-full flex-1 items-end" />}>
+                            <div
+                                className={`${styles.activityBar} w-full rounded-xs transition-colors ${b.count > 0 ? "bg-primary/35 group-hover/bar:bg-primary/70" : "bg-muted group-hover/bar:bg-muted-foreground/30"}`}
+                                style={{ height: `${b.count > 0 ? Math.max(8, (b.count / max) * 100) : 6}%`, animationDelay: `${Math.min(i * 12, 360)}ms` }}
+                            />
+                        </TooltipTrigger>
+                        <TooltipPopup>{t("activity.bar", { label: b.label, count: b.count })}</TooltipPopup>
+                    </Tooltip>
                 ))}
             </div>
         </div>

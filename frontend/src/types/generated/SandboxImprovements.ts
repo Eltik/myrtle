@@ -3,14 +3,13 @@ import type { SandboxCategory } from "./SandboxCategory";
 
 export type SandboxImprovements = {
     /**
-     * Overall RA score (0..1) - the weighted sum of every category below. This
-     * is the same value the headline percentage is computed from.
+     * Overall RA score (0..1), the weighted sum of the categories below. The
+     * headline percentage is computed from it.
      */
     total: number;
     /**
-     * One entry per scored category, in grade-weight order. Each carries its
-     * weight, its own completion, and the concrete counts behind it - so the
-     * breakdown fully accounts for the headline percentage.
+     * One entry per scored category, in grade-weight order, with its weight,
+     * completion and counts, so the breakdown adds up to the headline.
      */
     categories: Array<SandboxCategory>;
 };

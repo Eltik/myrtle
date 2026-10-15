@@ -112,9 +112,9 @@ pub fn stored_payload(
 
 /// Replace the account's imported game read marks with this set.
 ///
-/// The set is the UNION of both sources and every row in it is a story the
-/// game says was opened, so every row is stored. That is 1,365 rows for the
-/// measured account against a 1,887-story EN library; the first pass stored 2.
+/// Every row of the set (the UNION of both sources) is stored, read or not;
+/// the verdict is the `read_in_game` column. 1,365 rows for the measured
+/// account against a 1,887-story EN library; the first pass stored 2.
 ///
 /// A set that carries neither source is a no-op, not a delete. One payload
 /// without them must not erase what a payload with them imported.

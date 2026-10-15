@@ -7,7 +7,7 @@ import type { IOperatorBirthday, ISelectedDay } from "../types";
 import type { messages } from "./MonthGrid.messages";
 import { OpChip } from "./OpChip";
 
-/** Operator chips shown per month cell before collapsing to "+N". */
+/** Chips per day cell before "+N"; one extra still shows rather than a "+1". */
 const MAX_CHIPS = 9;
 
 interface IMonthGridProps {
@@ -17,7 +17,6 @@ interface IMonthGridProps {
     today: Date;
 }
 
-/** Classic 6-week month grid; each day is a chip-preview cell that opens the day dialog. */
 export function MonthGrid({ anchor, byDay, onSelect, today }: IMonthGridProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("tools");
     const locale = useLocale();

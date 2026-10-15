@@ -51,12 +51,10 @@ export function ReleaseNoteDialog(): React.ReactElement | null {
                 </DialogHeader>
 
                 {/* The sheet is capped at the viewport, so on a phone the item list
-                    was whatever was left after the media, the lead and the footer,
-                    which was a few rows. `min-h-0` makes it the one child that
-                    shrinks, so it takes the real leftover space instead of the 48vh
-                    I guessed at first, and `.scroll-shadows` says it scrolls: the
-                    guess both wasted room and sliced a line through the middle with
-                    nothing to show the rest was below. */}
+                    gets what is left after the media, the lead and the footer, a
+                    few rows. `min-h-0` makes it the one child that shrinks, so it
+                    takes the real leftover space (a fixed 48vh wasted room and cut
+                    a line in half), and `.scroll-shadows` shows there is more below. */}
                 {note.items && note.items.length > 0 && (
                     <DialogPanel className="scroll-shadows min-h-0 max-sm:overflow-y-auto max-sm:overscroll-contain">
                         <p className="mb-3 font-medium text-[0.69rem] text-muted-foreground uppercase tracking-[0.18em]">{t("dialog.alsoInUpdate")}</p>

@@ -13,13 +13,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ABNORMAL_FLAG: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ABNORMAL_FLAG: i32 = 42;
+pub const ENUM_MAX_ENUM__TORAPPU_ABNORMAL_FLAG: i32 = 45;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ABNORMAL_FLAG: [enum__Torappu_AbnormalFlag; 43] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ABNORMAL_FLAG: [enum__Torappu_AbnormalFlag; 46] = [
     enum__Torappu_AbnormalFlag::STUNNED,
     enum__Torappu_AbnormalFlag::SP_RECOVER_STOPPED,
     enum__Torappu_AbnormalFlag::TARGET_FREE,
@@ -62,6 +62,9 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ABNORMAL_FLAG: [enum__Torappu_AbnormalFlag; 
     enum__Torappu_AbnormalFlag::PALSY,
     enum__Torappu_AbnormalFlag::PALSYING,
     enum__Torappu_AbnormalFlag::ATTRACTED,
+    enum__Torappu_AbnormalFlag::FEARED_PRIVATE,
+    enum__Torappu_AbnormalFlag::DOZE,
+    enum__Torappu_AbnormalFlag::TELEPORTED,
     enum__Torappu_AbnormalFlag::E_NUM,
 ];
 
@@ -112,10 +115,13 @@ impl enum__Torappu_AbnormalFlag {
     pub const PALSY: Self = Self(39);
     pub const PALSYING: Self = Self(40);
     pub const ATTRACTED: Self = Self(41);
-    pub const E_NUM: Self = Self(42);
+    pub const FEARED_PRIVATE: Self = Self(42);
+    pub const DOZE: Self = Self(43);
+    pub const TELEPORTED: Self = Self(44);
+    pub const E_NUM: Self = Self(45);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 42;
+    pub const ENUM_MAX: i32 = 45;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::STUNNED,
         Self::SP_RECOVER_STOPPED,
@@ -159,6 +165,9 @@ impl enum__Torappu_AbnormalFlag {
         Self::PALSY,
         Self::PALSYING,
         Self::ATTRACTED,
+        Self::FEARED_PRIVATE,
+        Self::DOZE,
+        Self::TELEPORTED,
         Self::E_NUM,
     ];
     /// Returns the variant's name or "" if unknown.
@@ -210,6 +219,9 @@ impl enum__Torappu_AbnormalFlag {
             Self::PALSY => Some("PALSY"),
             Self::PALSYING => Some("PALSYING"),
             Self::ATTRACTED => Some("ATTRACTED"),
+            Self::FEARED_PRIVATE => Some("FEARED_PRIVATE"),
+            Self::DOZE => Some("DOZE"),
+            Self::TELEPORTED => Some("TELEPORTED"),
             Self::E_NUM => Some("E_NUM"),
             _ => None,
         }
@@ -409,13 +421,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ATTRIBUTE_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ATTRIBUTE_TYPE: i32 = 36;
+pub const ENUM_MAX_ENUM__TORAPPU_ATTRIBUTE_TYPE: i32 = 38;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ATTRIBUTE_TYPE: [enum__Torappu_AttributeType; 37] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ATTRIBUTE_TYPE: [enum__Torappu_AttributeType; 39] = [
     enum__Torappu_AttributeType::MAX_HP,
     enum__Torappu_AttributeType::ATK,
     enum__Torappu_AttributeType::DEF,
@@ -452,6 +464,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ATTRIBUTE_TYPE: [enum__Torappu_AttributeType
     enum__Torappu_AttributeType::DAMAGE_HITRATE_PHYSICAL,
     enum__Torappu_AttributeType::DAMAGE_HITRATE_MAGICAL,
     enum__Torappu_AttributeType::EP_BREAK_RECOVER_SPEED,
+    enum__Torappu_AttributeType::SLOW_DOWN,
+    enum__Torappu_AttributeType::BLOCK_RADIUS_SCALE,
     enum__Torappu_AttributeType::E_NUM,
 ];
 
@@ -496,10 +510,12 @@ impl enum__Torappu_AttributeType {
     pub const DAMAGE_HITRATE_PHYSICAL: Self = Self(33);
     pub const DAMAGE_HITRATE_MAGICAL: Self = Self(34);
     pub const EP_BREAK_RECOVER_SPEED: Self = Self(35);
-    pub const E_NUM: Self = Self(36);
+    pub const SLOW_DOWN: Self = Self(36);
+    pub const BLOCK_RADIUS_SCALE: Self = Self(37);
+    pub const E_NUM: Self = Self(38);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 36;
+    pub const ENUM_MAX: i32 = 38;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::MAX_HP,
         Self::ATK,
@@ -537,6 +553,8 @@ impl enum__Torappu_AttributeType {
         Self::DAMAGE_HITRATE_PHYSICAL,
         Self::DAMAGE_HITRATE_MAGICAL,
         Self::EP_BREAK_RECOVER_SPEED,
+        Self::SLOW_DOWN,
+        Self::BLOCK_RADIUS_SCALE,
         Self::E_NUM,
     ];
     /// Returns the variant's name or "" if unknown.
@@ -580,6 +598,8 @@ impl enum__Torappu_AttributeType {
             Self::DAMAGE_HITRATE_PHYSICAL => Some("DAMAGE_HITRATE_PHYSICAL"),
             Self::DAMAGE_HITRATE_MAGICAL => Some("DAMAGE_HITRATE_MAGICAL"),
             Self::EP_BREAK_RECOVER_SPEED => Some("EP_BREAK_RECOVER_SPEED"),
+            Self::SLOW_DOWN => Some("SLOW_DOWN"),
+            Self::BLOCK_RADIUS_SCALE => Some("BLOCK_RADIUS_SCALE"),
             Self::E_NUM => Some("E_NUM"),
             _ => None,
         }
@@ -1040,7 +1060,7 @@ impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_BuffData_OverrideTyp
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MIN_ENUM__TORAPPU_BUFF_DATA_ON_EVENT_PRIORITY: i32 = -3000;
+pub const ENUM_MIN_ENUM__TORAPPU_BUFF_DATA_ON_EVENT_PRIORITY: i32 = -4000;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
@@ -1052,7 +1072,8 @@ pub const ENUM_MAX_ENUM__TORAPPU_BUFF_DATA_ON_EVENT_PRIORITY: i32 = 2000;
 )]
 #[allow(non_camel_case_types)]
 pub const ENUM_VALUES_ENUM__TORAPPU_BUFF_DATA_ON_EVENT_PRIORITY:
-    [enum__Torappu_BuffData_OnEventPriority; 6] = [
+    [enum__Torappu_BuffData_OnEventPriority; 7] = [
+    enum__Torappu_BuffData_OnEventPriority::TITI_DOZE_PRIORITY,
     enum__Torappu_BuffData_OnEventPriority::LOWEST_PRIORITY,
     enum__Torappu_BuffData_OnEventPriority::LOWER_PRIORITY,
     enum__Torappu_BuffData_OnEventPriority::LOW_PRIORITY,
@@ -1066,6 +1087,7 @@ pub const ENUM_VALUES_ENUM__TORAPPU_BUFF_DATA_ON_EVENT_PRIORITY:
 pub struct enum__Torappu_BuffData_OnEventPriority(pub i32);
 #[allow(non_upper_case_globals)]
 impl enum__Torappu_BuffData_OnEventPriority {
+    pub const TITI_DOZE_PRIORITY: Self = Self(-4000);
     pub const LOWEST_PRIORITY: Self = Self(-3000);
     pub const LOWER_PRIORITY: Self = Self(-2000);
     pub const LOW_PRIORITY: Self = Self(-1000);
@@ -1073,9 +1095,10 @@ impl enum__Torappu_BuffData_OnEventPriority {
     pub const HIGH_PRIORITY: Self = Self(1000);
     pub const HIGHER_PRIORITY: Self = Self(2000);
 
-    pub const ENUM_MIN: i32 = -3000;
+    pub const ENUM_MIN: i32 = -4000;
     pub const ENUM_MAX: i32 = 2000;
     pub const ENUM_VALUES: &'static [Self] = &[
+        Self::TITI_DOZE_PRIORITY,
         Self::LOWEST_PRIORITY,
         Self::LOWER_PRIORITY,
         Self::LOW_PRIORITY,
@@ -1086,6 +1109,7 @@ impl enum__Torappu_BuffData_OnEventPriority {
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
         match self {
+            Self::TITI_DOZE_PRIORITY => Some("TITI_DOZE_PRIORITY"),
             Self::LOWEST_PRIORITY => Some("LOWEST_PRIORITY"),
             Self::LOWER_PRIORITY => Some("LOWER_PRIORITY"),
             Self::LOW_PRIORITY => Some("LOW_PRIORITY"),
@@ -2253,6 +2277,7 @@ impl<'a> clz_Torappu_BuffData<'a> {
     pub const VT_PRIORITYBBKEYS: ::flatbuffers::VOffsetT = 70;
     pub const VT_STRIPBLACKBOARDPARAMSWITHBUFFKEY: ::flatbuffers::VOffsetT = 72;
     pub const VT_BLACKBOARD: ::flatbuffers::VOffsetT = 74;
+    pub const VT_ENABLEINITDIRECTIONFROMSOURCE: ::flatbuffers::VOffsetT = 76;
 
     #[inline]
     pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -2305,6 +2330,7 @@ impl<'a> clz_Torappu_BuffData<'a> {
         if let Some(x) = args.attributes {
             builder.add_attributes(x);
         }
+        builder.add_enableInitDirectionFromSource(args.enableInitDirectionFromSource);
         builder.add_stripBlackboardParamsWithBuffKey(args.stripBlackboardParamsWithBuffKey);
         builder.add_waitFirstTriggerInterval(args.waitFirstTriggerInterval);
         builder.add_triggerLifeType(args.triggerLifeType);
@@ -2383,6 +2409,7 @@ impl<'a> clz_Torappu_BuffData<'a> {
         let blackboard = self
             .blackboard()
             .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let enableInitDirectionFromSource = self.enableInitDirectionFromSource();
         clz_Torappu_BuffDataT {
             attributes,
             buffKey,
@@ -2420,6 +2447,7 @@ impl<'a> clz_Torappu_BuffData<'a> {
             priorityBBKeys,
             stripBlackboardParamsWithBuffKey,
             blackboard,
+            enableInitDirectionFromSource,
         }
     }
 
@@ -2870,6 +2898,20 @@ impl<'a> clz_Torappu_BuffData<'a> {
             >>(clz_Torappu_BuffData::VT_BLACKBOARD, None)
         }
     }
+    #[inline]
+    pub fn enableInitDirectionFromSource(&self) -> bool {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<bool>(
+                    clz_Torappu_BuffData::VT_ENABLEINITDIRECTIONFROMSOURCE,
+                    Some(false),
+                )
+                .unwrap()
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_BuffData<'_> {
@@ -2994,6 +3036,11 @@ impl ::flatbuffers::Verifiable for clz_Torappu_BuffData<'_> {
                     ::flatbuffers::ForwardsUOffset<clz_Torappu_Blackboard_DataPair>,
                 >,
             >>("blackboard", Self::VT_BLACKBOARD, false)?
+            .visit_field::<bool>(
+                "enableInitDirectionFromSource",
+                Self::VT_ENABLEINITDIRECTIONFROMSOURCE,
+                false,
+            )?
             .finish();
         Ok(())
     }
@@ -3046,6 +3093,7 @@ pub struct clz_Torappu_BuffDataArgs<'a> {
             >,
         >,
     >,
+    pub enableInitDirectionFromSource: bool,
 }
 impl<'a> Default for clz_Torappu_BuffDataArgs<'a> {
     #[inline]
@@ -3087,6 +3135,7 @@ impl<'a> Default for clz_Torappu_BuffDataArgs<'a> {
             priorityBBKeys: None,
             stripBlackboardParamsWithBuffKey: false,
             blackboard: None,
+            enableInitDirectionFromSource: false,
         }
     }
 }
@@ -3368,6 +3417,14 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_BuffDataBuilder<'
         );
     }
     #[inline]
+    pub fn add_enableInitDirectionFromSource(&mut self, enableInitDirectionFromSource: bool) {
+        self.fbb_.push_slot::<bool>(
+            clz_Torappu_BuffData::VT_ENABLEINITDIRECTIONFROMSOURCE,
+            enableInitDirectionFromSource,
+            false,
+        );
+    }
+    #[inline]
     pub fn new(
         _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
     ) -> clz_Torappu_BuffDataBuilder<'a, 'b, A> {
@@ -3435,6 +3492,10 @@ impl ::core::fmt::Debug for clz_Torappu_BuffData<'_> {
             &self.stripBlackboardParamsWithBuffKey(),
         );
         ds.field("blackboard", &self.blackboard());
+        ds.field(
+            "enableInitDirectionFromSource",
+            &self.enableInitDirectionFromSource(),
+        );
         ds.finish()
     }
 }
@@ -3477,6 +3538,7 @@ pub struct clz_Torappu_BuffDataT {
     pub priorityBBKeys: Option<alloc::vec::Vec<alloc::string::String>>,
     pub stripBlackboardParamsWithBuffKey: bool,
     pub blackboard: Option<alloc::vec::Vec<clz_Torappu_Blackboard_DataPairT>>,
+    pub enableInitDirectionFromSource: bool,
 }
 impl Default for clz_Torappu_BuffDataT {
     fn default() -> Self {
@@ -3517,6 +3579,7 @@ impl Default for clz_Torappu_BuffDataT {
             priorityBBKeys: None,
             stripBlackboardParamsWithBuffKey: false,
             blackboard: None,
+            enableInitDirectionFromSource: false,
         }
     }
 }
@@ -3570,6 +3633,7 @@ impl clz_Torappu_BuffDataT {
             let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
             _fbb.create_vector(&w)
         });
+        let enableInitDirectionFromSource = self.enableInitDirectionFromSource;
         clz_Torappu_BuffData::create(
             _fbb,
             &clz_Torappu_BuffDataArgs {
@@ -3609,6 +3673,7 @@ impl clz_Torappu_BuffDataT {
                 priorityBBKeys,
                 stripBlackboardParamsWithBuffKey,
                 blackboard,
+                enableInitDirectionFromSource,
             },
         )
     }

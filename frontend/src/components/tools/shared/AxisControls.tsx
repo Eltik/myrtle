@@ -12,7 +12,7 @@ import type { IAxisInput, ISweepRange } from "./types";
 export interface IOption {
     value: string;
     label: string;
-    /** Compact label for the axis tab; falls back to `label`. Keeps long names from overflowing on narrow screens. */
+    /** Tab label for narrow screens; falls back to `label`. */
     short?: string;
 }
 
@@ -24,16 +24,14 @@ interface IAxisControlsProps {
     yMetric: string;
     onChangeMetric: (metric: string) => void;
     sweep: ISweepRange;
-    /** Granularity/bounds for the currently-selected axis. */
     axisInput: IAxisInput;
-    /** Number of plotted points for the current sweep (caller computes via buildSweepPoints). */
+    /** From the caller's `buildSweepPoints`. */
     pointCount: number;
     onChangeSweep: (patch: Partial<ISweepRange>) => void;
     /** Bumped after `localStorage` hydration so uncontrolled NumberFields remount with persisted values. */
     hydrationToken: number;
-    /** Optional caption describing the selected metric. */
     metricHint?: string;
-    /** Optional trailing element aligned with the sweep-range inputs (e.g. an export button). */
+    /** Sits beside the sweep-range inputs, e.g. an export button. */
     rangeAction?: React.ReactNode;
 }
 

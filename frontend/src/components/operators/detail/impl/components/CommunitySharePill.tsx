@@ -23,11 +23,11 @@ interface ICommunitySharePillProps {
  * The share of the community that picked one skill or module, as a compact
  * percentage with the raw counts on hover.
  *
- * Renders nothing rather than "0%" when there is no figure. A zero here would
- * be read as "nobody picked this", but the actual meaning is "we cannot say" -
- * either the operator's cohort is under the floor of 50 that keeps a rare
- * operator's numbers from describing a handful of identifiable accounts, or
- * nobody has synced a roster with this option set.
+ * Renders nothing rather than "0%" when there is no figure: a zero reads as
+ * "nobody picked this" when it means "we cannot say". Either the cohort is
+ * under the floor of 50 that keeps a rare operator's numbers from describing a
+ * handful of identifiable accounts, or nobody has synced a roster with this
+ * option set.
  */
 export const CommunitySharePill = memo(function CommunitySharePill({ share, total, cohort, className }: ICommunitySharePillProps) {
     const t: TypedT<typeof messages> = useT("operators");

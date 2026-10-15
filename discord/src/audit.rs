@@ -22,32 +22,19 @@ use serenity::model::user::User;
 
 use crate::db::AuditEvent;
 use crate::types::Data;
+use crate::ui::{COLOR_BAD, COLOR_INFO, COLOR_OK, COLOR_PINK, COLOR_WARN, CONTENT_MAX, FIELD_MAX};
 
-#[allow(clippy::unreadable_literal)]
-const COLOR_EDIT: u32 = 0xFEE75C;
-#[allow(clippy::unreadable_literal)]
-const COLOR_DELETE: u32 = 0xED4245;
-#[allow(clippy::unreadable_literal)]
-const COLOR_JOIN: u32 = 0x57F287;
-#[allow(clippy::unreadable_literal)]
-const COLOR_LEAVE: u32 = 0xFEE75C;
-#[allow(clippy::unreadable_literal)]
-const COLOR_BAN: u32 = 0xED4245;
-#[allow(clippy::unreadable_literal)]
-const COLOR_UNBAN: u32 = 0x57F287;
-#[allow(clippy::unreadable_literal)]
-const COLOR_MOD: u32 = 0xEB459E;
-#[allow(clippy::unreadable_literal)]
-const COLOR_STRUCT: u32 = 0x5865F2;
-#[allow(clippy::unreadable_literal)]
-const COLOR_REACT_ADD: u32 = 0x57F287;
-#[allow(clippy::unreadable_literal)]
-const COLOR_REACT_REMOVE: u32 = 0xFEE75C;
+const COLOR_EDIT: u32 = COLOR_WARN;
+const COLOR_DELETE: u32 = COLOR_BAD;
+const COLOR_JOIN: u32 = COLOR_OK;
+const COLOR_LEAVE: u32 = COLOR_WARN;
+const COLOR_BAN: u32 = COLOR_BAD;
+const COLOR_UNBAN: u32 = COLOR_OK;
+const COLOR_MOD: u32 = COLOR_PINK;
+const COLOR_STRUCT: u32 = COLOR_INFO;
+const COLOR_REACT_ADD: u32 = COLOR_OK;
+const COLOR_REACT_REMOVE: u32 = COLOR_WARN;
 
-/// Discord embed field-value limit.
-const FIELD_LIMIT: usize = 1024;
-/// Discord message-content limit (used as a soft cap for the bulk-delete summary).
-const MESSAGE_LIMIT: usize = 2000;
 /// Max cached messages to render inline in a bulk-delete summary before we attach a file.
 const BULK_INLINE_CAP: usize = 25;
 
@@ -168,7 +155,7 @@ pub async fn log_message_delete(
                 .map(|a| format!("`{}` ({} B)", a.filename, a.size))
                 .collect::<Vec<_>>()
                 .join("\n");
-            embed = embed.field("Attachments", truncate(&names, FIELD_LIMIT), false);
+            embed = embed.field("Attachments", truncate(&names, FIELD_MAX), false);
         }
         embed = embed.footer(CreateEmbedFooter::new(format!(
             "Author ID: {} • Message ID: {message_id}",
@@ -245,7 +232,8 @@ pub async fn log_message_bulk_delete(
         )));
 
     let mut attachments: Vec<CreateAttachment> = Vec::new();
-    if body.len() <= MESSAGE_LIMIT && body.len() <= 4000 {
+    // The message-content cap doubles as a soft cap for the bulk-delete summary.
+    if body.len() <= CONTENT_MAX {
         embed = embed.description(body);
     } else {
         embed = embed.description("Summary too large for an embed - see attachment.");
@@ -302,12 +290,12 @@ fn format_content_field(
     if content.is_empty() {
         return ("*(empty)*".to_string(), Vec::new());
     }
-    if content.len() <= FIELD_LIMIT {
+    if content.len() <= FIELD_MAX {
         return (content.to_string(), Vec::new());
     }
     let truncated = format!(
         "{}…\n*(full content attached as `{filename}`)*",
-        truncate(content, FIELD_LIMIT - 64),
+        truncate(content, FIELD_MAX - 64),
     );
     let attach = CreateAttachment::bytes(content.to_owned().into_bytes(), filename);
     (truncated, vec![attach])
@@ -449,7 +437,7 @@ pub async fn log_member_leave(
                 .map(|r| format!("<@&{r}>"))
                 .collect::<Vec<_>>()
                 .join(" ");
-            embed = embed.field("Roles", truncate(&roles, FIELD_LIMIT), false);
+            embed = embed.field("Roles", truncate(&roles, FIELD_MAX), false);
         }
     }
 
@@ -489,6 +477,46 @@ pub async fn log_member_unban(ctx: &Context, data: &Data, guild_id: GuildId, use
 }
 
 // ---------------------------------------------------------------------------
+// Warnings: issued by the bot, so there is no Discord audit entry to mirror.
+// ---------------------------------------------------------------------------
+
+/// Log a `/warn add`. `count` is the member's warning total including this one, and
+/// `escalation` the outcome line when the guild's policy fired.
+#[allow(clippy::too_many_arguments)]
+pub async fn log_warning(
+    http: &Http,
+    data: &Data,
+    guild_id: GuildId,
+    user: &User,
+    moderator: UserId,
+    warning_id: i64,
+    reason: &str,
+    count: i64,
+    escalation: Option<&str>,
+) {
+    let Some(channel) = audit_channel(data, guild_id, AuditEvent::Warning).await else {
+        return;
+    };
+    let mut embed = CreateEmbed::new()
+        .title("Member warned")
+        .colour(COLOR_MOD)
+        .author(CreateEmbedAuthor::new(user.tag()).icon_url(user.face()))
+        .field("Member", format!("<@{}>", user.id), true)
+        .field("Moderator", format!("<@{moderator}>"), true)
+        .field("Warnings", count.to_string(), true)
+        .field("Reason", truncate(reason, FIELD_MAX), false)
+        .timestamp(Timestamp::now())
+        .footer(CreateEmbedFooter::new(format!(
+            "Warning ID: {warning_id} • User ID: {}",
+            user.id
+        )));
+    if let Some(outcome) = escalation {
+        embed = embed.field("Escalation", truncate(outcome, FIELD_MAX), false);
+    }
+    dispatch(http, channel, embed, Vec::new()).await;
+}
+
+// ---------------------------------------------------------------------------
 // Audit log entries: the canonical "who did what" source.
 // ---------------------------------------------------------------------------
 
@@ -518,7 +546,7 @@ pub async fn log_audit_entry(ctx: &Context, data: &Data, guild_id: GuildId, entr
     if let Some(reason) = entry.reason.as_deref()
         && !reason.is_empty()
     {
-        embed = embed.field("Reason", truncate(reason, FIELD_LIMIT), false);
+        embed = embed.field("Reason", truncate(reason, FIELD_MAX), false);
     }
 
     if let Some(opts) = entry.options.as_ref() {
@@ -533,7 +561,7 @@ pub async fn log_audit_entry(ctx: &Context, data: &Data, guild_id: GuildId, entr
     {
         let changes_field = render_changes(changes);
         if !changes_field.is_empty() {
-            embed = embed.field("Changes", truncate(&changes_field, FIELD_LIMIT), false);
+            embed = embed.field("Changes", truncate(&changes_field, FIELD_MAX), false);
         }
     }
 
@@ -721,7 +749,7 @@ fn value_to_str(v: &serde_json::Value) -> String {
 ///
 /// `Reaction::member` and `Reaction::message_author_id` are only populated on the add event,
 /// so the remove path falls back to the user and message caches. On a cache miss we render
-/// raw IDs rather than spending an HTTP fetch — reactions fire far more often than the
+/// raw IDs rather than spending an HTTP fetch: reactions fire far more often than the
 /// message events above, and a mention renders fine without the user object.
 pub async fn log_reaction(ctx: &Context, data: &Data, reaction: &Reaction, added: bool) {
     let Some(guild_id) = reaction.guild_id else {
@@ -927,5 +955,121 @@ fn emoji_image_url(emoji: &ReactionType) -> Option<String> {
             Some(format!("https://cdn.discordapp.com/emojis/{id}.{ext}"))
         }
         _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serenity::model::id::EmojiId;
+
+    #[test]
+    fn truncate_cuts_on_a_char_boundary() {
+        assert_eq!(truncate("hello", 10), "hello");
+        assert_eq!(truncate("hello", 5), "hello");
+        assert_eq!(truncate("hello", 3), "hel");
+        // "é" is two bytes: cutting at byte 2 would split it, so the cut backs off.
+        assert_eq!(truncate("aé", 2), "a");
+        assert_eq!(truncate("日本語", 4), "日");
+        assert_eq!(truncate("日本語", 0), "");
+    }
+
+    #[test]
+    fn truncate_oneline_flattens_newlines_and_counts_chars() {
+        assert_eq!(truncate_oneline("a\nb", 10), "a b");
+        assert_eq!(truncate_oneline("abcdef", 3), "abc…");
+        assert_eq!(truncate_oneline("日本語です", 2), "日本…");
+        assert_eq!(truncate_oneline("abc", 3), "abc");
+    }
+
+    #[test]
+    fn value_to_str_renders_json_compactly() {
+        assert_eq!(value_to_str(&serde_json::json!(null)), "null");
+        assert_eq!(value_to_str(&serde_json::json!(true)), "true");
+        assert_eq!(value_to_str(&serde_json::json!(42)), "42");
+        assert_eq!(value_to_str(&serde_json::json!("plain")), "plain");
+        assert_eq!(value_to_str(&serde_json::json!([1, 2])), "[1,2]");
+        assert_eq!(value_to_str(&serde_json::json!({ "a": 1 })), r#"{"a":1}"#);
+        let long = "x".repeat(100);
+        let out = value_to_str(&serde_json::json!(long));
+        assert_eq!(out.chars().count(), 81);
+        assert!(out.ends_with('…'));
+    }
+
+    #[test]
+    fn render_target_picks_a_mention_shape_per_action() {
+        assert_eq!(
+            render_target(Action::Channel(ChannelAction::Create), 5),
+            "<#5> (`5`)"
+        );
+        assert_eq!(
+            render_target(Action::Thread(ThreadAction::Delete), 5),
+            "<#5> (`5`)"
+        );
+        assert_eq!(
+            render_target(Action::Role(RoleAction::Update), 5),
+            "<@&5> (`5`)"
+        );
+        assert_eq!(
+            render_target(Action::Member(MemberAction::Kick), 5),
+            "<@5> (`5`)"
+        );
+        assert_eq!(
+            render_target(Action::Message(MessageAction::Delete), 5),
+            "Message `5`"
+        );
+        assert_eq!(render_target(Action::Emoji(EmojiAction::Create), 5), "`5`");
+    }
+
+    #[test]
+    fn formats_unicode_and_custom_emoji() {
+        assert_eq!(format_emoji(&ReactionType::Unicode("👍".into())), "👍");
+        let custom = ReactionType::Custom {
+            animated: false,
+            id: EmojiId::new(77),
+            name: Some("myrtle".into()),
+        };
+        assert_eq!(format_emoji(&custom), "<:myrtle:77> `:myrtle:` (`77`)");
+        let nameless = ReactionType::Custom {
+            animated: true,
+            id: EmojiId::new(78),
+            name: None,
+        };
+        assert!(format_emoji(&nameless).ends_with("`:unknown:` (`78`)"));
+    }
+
+    #[test]
+    fn custom_emoji_get_a_cdn_image() {
+        let still = ReactionType::Custom {
+            animated: false,
+            id: EmojiId::new(77),
+            name: None,
+        };
+        let animated = ReactionType::Custom {
+            animated: true,
+            id: EmojiId::new(78),
+            name: None,
+        };
+        assert_eq!(
+            emoji_image_url(&still).as_deref(),
+            Some("https://cdn.discordapp.com/emojis/77.png")
+        );
+        assert_eq!(
+            emoji_image_url(&animated).as_deref(),
+            Some("https://cdn.discordapp.com/emojis/78.gif")
+        );
+        assert_eq!(emoji_image_url(&ReactionType::Unicode("👍".into())), None);
+    }
+
+    #[test]
+    fn message_link_matches_the_admin_helper() {
+        assert_eq!(
+            message_link(Some(GuildId::new(1)), ChannelId::new(2), MessageId::new(3)),
+            "https://discord.com/channels/1/2/3"
+        );
+        assert_eq!(
+            message_link(None, ChannelId::new(2), MessageId::new(3)),
+            "https://discord.com/channels/@me/2/3"
+        );
     }
 }

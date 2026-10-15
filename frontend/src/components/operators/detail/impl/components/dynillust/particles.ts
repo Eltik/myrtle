@@ -242,14 +242,16 @@ export interface IParticleSystemData {
 type RamST = [number, number, number, number];
 
 export interface IRamData {
-    /** `dissolve` = the `Torappu/Particles-L2D/Dissolve/…` family: two multiplied masks, no
+    /** `dissolve` is the `Torappu/Particles-L2D/Dissolve/…` family: two multiplied masks, no
      *  disturb warp, no ramp, `_TintColor` in place of `_MainColor`. Verified against the
-     *  decompiled `Dissolve Add Double` program. */
-    /** `plainDisturb` is the `Particles-L2D/Disturb/Disturb(CustomData)` family, admitted to
-     *  this port only when `?plaindisturb=1` is set. Its fragment is the Ram one with the ramp
-     *  multiply absent and the offset masked by `_WeightTex`, so the port reproduces it once
-     *  `uHasRam` is 0. See the exporter's `plain_disturb` gate. */
-    /** `uvTween` is `Dissolve/Dissolve Add UVTween` (2026-09-06): one mask, colour x2, both
+     *  decompiled `Dissolve Add Double` program.
+     *
+     *  `plainDisturb` is the `Particles-L2D/Disturb/Disturb(CustomData)` family, routed through
+     *  this port by default (`?plaindisturb=0` reverts, see `plainDisturbOn`). Its fragment is
+     *  the Ram one with the ramp multiply absent and the offset masked by `_WeightTex`, so the
+     *  port reproduces it once `uHasRam` is 0. See the exporter's `plain_disturb` gate.
+     *
+     *  `uvTween` is `Dissolve/Dissolve Add UVTween` (2026-09-06): one mask, colour x2, both
      *  lookups scrolled by `mainSpeed` / `dissolveSpeed` under the program's own `fract`, so
      *  its textures always wrap whatever their serialized wrap mode says. */
     kind: "disturb" | "vertexDisturb" | "dissolve" | "plainDisturb" | "uvTween";
@@ -375,13 +377,6 @@ function globalMaxParticles(): number {
     const v = Number.parseInt(new URLSearchParams(window.location.search).get("pbudget") ?? "", 10);
     return Number.isFinite(v) && v > 0 ? v : GLOBAL_MAX_PARTICLES;
 }
-/** ⛔ REFUTED, default OFF (`?meshyflip=1` to try it). Unity mesh local space is Y-up and this
- *  vertex buffer is Y-down, so negating the mesh's local Y here LOOKS required - the billboard
- *  branch does carry that flip in its corner order (vertex 0 is (-hx,-hy), screen top, with
- *  uv (0,0)). Measured on Civilight Eterna, whose 2:1 background planes are the most sensitive
- *  case in the corpus: **31.186 with the flip vs 30.848 without**. The mesh path's non-negated Y
- *  is therefore CORRECT as it stands, and this closes "the mesh geometry is inverted" as an
- *  explanation for the unmechanised `?ramflip=uv` gain. */
 /** TUMBLE ARM (`?tumble=1`, exactly "1"; absent = off, byte-identical). A `rotation3D` system
  *  whose X or Y start rotation is a RANGE tumbles every particle at a random attitude in the
  *  game; drawn flat here, each quad covers its full area. The projected extent of a quad turned
@@ -403,6 +398,13 @@ function tumbleOf(d: IParticleSystemData, rand: number, nt: number): [number, nu
     return [Math.abs(Math.cos(ay)), Math.abs(Math.cos(ax))];
 }
 
+/** ⛔ REFUTED, default OFF (`?meshyflip=1` to try it). Unity mesh local space is Y-up and this
+ *  vertex buffer is Y-down, so negating the mesh's local Y here LOOKS required - the billboard
+ *  branch does carry that flip in its corner order (vertex 0 is (-hx,-hy), screen top, with
+ *  uv (0,0)). Measured on Civilight Eterna, whose 2:1 background planes are the most sensitive
+ *  case in the corpus: **31.186 with the flip vs 30.848 without**. The mesh path's non-negated Y
+ *  is therefore CORRECT as it stands, and this closes "the mesh geometry is inverted" as an
+ *  explanation for the unmechanised `?ramflip=uv` gain. */
 function meshYFlip(): boolean {
     if (typeof window === "undefined") return false;
     return new URLSearchParams(window.location.search).get("meshyflip") === "1";
@@ -416,11 +418,6 @@ function ramFlip(): [number, number] {
     return [v.includes("u") ? 1 : 0, v.includes("v") ? 1 : 0];
 }
 
-/** Reinhard strength for the Ram shader (`?ramtonemap=<k>`, shipped 0.5, 0 = none).
- *  ⚠️ The REAL shader has no compression at all - the decompiled fragment ends
- *  `SV_Target0.xyz = u_xlat16_1.xyz` - because the game feeds this into an HDR bloom pass we do
- *  not run. Ours is a deliberate stand-in for that pass, and it is the only place this port
- *  knowingly diverges. */
 /** DIAGNOSTIC (`?ramrgb2=<f>`): scale the RGB half of the Ram shader's `col += col`. 1 = shipped. */
 function ramRgb2(): number {
     if (typeof window === "undefined") return 1;
@@ -436,6 +433,11 @@ function ramAlpha2(): number {
     return Number.isFinite(v) && v >= 0 ? v : 1;
 }
 
+/** Reinhard strength for the Ram shader (`?ramtonemap=<k>`, shipped 0.5, 0 = none).
+ *  ⚠️ The REAL shader has no compression at all - the decompiled fragment ends
+ *  `SV_Target0.xyz = u_xlat16_1.xyz` - because the game feeds this into an HDR bloom pass we do
+ *  not run. Ours is a deliberate stand-in for that pass, and it is the only place this port
+ *  knowingly diverges. */
 function ramTonemap(): number {
     if (typeof window === "undefined") return 0.5;
     const v = parseFloat(new URLSearchParams(window.location.search).get("ramtonemap") ?? "");
@@ -453,8 +455,6 @@ function psDelayScale(): number {
     return Number.isFinite(v) && v >= 0 ? v : 1;
 }
 
-/** DIAGNOSTIC (`?ramtex=0`): drop the Ram shader's RAMP multiply, to tell "the ramp texture is
- *  bound and contributing" apart from "we are only seeing the warped MAIN texture". */
 /** DIAGNOSTIC (`?ptclweight=0`): ignore `_WeightTex` and run the disturb offset unmasked, which
  *  is what the port did before the sampler existed. */
 function ptclWeightOn(): boolean {
@@ -484,12 +484,6 @@ function ptclRotMat2(deg: number): [number, number, number, number] {
     return [Math.cos(a), Math.sin(a), -Math.sin(a), Math.cos(a)];
 }
 
-/** Route the PLAIN `Disturb/` family through the Ram port. **DEFAULT OFF**, `?plaindisturb=1`
- *  enables. The exporter now emits a ram block for them (`kind: "plainDisturb"`); with this off
- *  they fall through to the plain sprite path, so the default is
- *  bit-identical and one export serves both arms of the A/B.
- *
- *  Read as a MISSING parameter rather than a falsy one. */
 /** DIAGNOSTIC (`?geomdump=<system name>`): dump `RamEmitter.writeGeometry`'s inputs for the
  *  named system, once per emitter. Read as a MISSING parameter; empty disables. */
 function geomDumpName(): string {
@@ -509,6 +503,8 @@ function plainDisturbOn(): boolean {
     return new URLSearchParams(window.location.search).get("plaindisturb") !== "0";
 }
 
+/** DIAGNOSTIC (`?ramtex=0`): drop the Ram shader's RAMP multiply, to tell "the ramp texture is
+ *  bound and contributing" apart from "we are only seeing the warped MAIN texture". */
 function ramTexOn(): boolean {
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("ramtex") !== "0";
@@ -596,6 +592,10 @@ function trailSpacing(spanPx: number, minVertexDistance: number): number {
  *  simply shorter than authored. */
 const TRAIL_HIST_MAX = 96;
 
+/** Scratch polyline (flat `[x,y,…]`, head first) reused across particles and frames so the
+ *  per-frame resample allocates nothing. */
+const TRAIL_LINE: number[] = [];
+
 /** Resample the retained history polyline into a FIXED ribbon-point budget, evenly by
  *  arclength, head first.
  *
@@ -608,10 +608,6 @@ const TRAIL_HIST_MAX = 96;
  *  live samples means the particle has not moved yet: every output collapses onto the head,
  *  which `RopeGeometry` renders as a zero-area strip (invisible) - the correct look for a
  *  trail with no history, and not a width problem. */
-/** Scratch polyline (flat `[x,y,…]`, head first) reused across particles and frames so the
- *  per-frame resample allocates nothing. */
-const TRAIL_LINE: number[] = [];
-
 function resampleTrail(line: number[], n: number, out: PIXI.Point[]): void {
     if (n < 2) {
         for (const q of out) q.set(line[0], -line[1]);
@@ -651,16 +647,6 @@ const TRAIL_MAX_SPAN = 4000;
  *  rasterised, and vanishing is further from the game than a hairline. */
 const MIN_TRAIL_WIDTH = 1;
 
-/** Authored thickness (scene px) of a per-particle trail at the particle's CURRENT size.
- *
- *  Unity's width is `widthOverTrail × particle size` (when `sizeAffectsWidth`).
- *  `PIXI.SimpleRope` cannot express it: `_render` reassigns the geometry width to
- *  `texture.height` every frame, and its guard fires for ANY custom width - so every ribbon
- *  drew at whatever its trail atlas page happened to be. Skadi's `xian` threads authored
- *  1.0–1.25 px drew at 64 px, a median 6.3× too wide across 129 systems in 23 skins. Hence
- *  {@link RopeMesh}. `widthOverTrail` sampled mid-trail: a range is a per-particle random
- *  (Unity RandomBetweenTwoConstants, hence `rand`); a curve varies along the ribbon and one
- *  rope has a single width, so its midpoint is the representative. */
 /** Angular velocity (deg/s) at normalized life `lf`. Accepts the legacy bare number
  *  (a true constant) and the `MMScalar` the exporter emits now. */
 function rotRateAt(v: number | MMScalar | undefined | null, rand: number, lf: number): number {
@@ -680,6 +666,16 @@ const TRAIL_W_DIAG: { scale: number; abs: number | null; spanModel: boolean } = 
     return { scale: Number.isFinite(s) && s > 0 ? s : 1, abs: Number.isFinite(a) && a > 0 ? a : null, spanModel: q.get("trailmodel") === "span" };
 })();
 
+/** Authored thickness (scene px) of a per-particle trail at the particle's CURRENT size.
+ *
+ *  Unity's width is `widthOverTrail × particle size` (when `sizeAffectsWidth`).
+ *  `PIXI.SimpleRope` cannot express it: `_render` reassigns the geometry width to
+ *  `texture.height` every frame, and its guard fires for ANY custom width - so every ribbon
+ *  drew at whatever its trail atlas page happened to be. Skadi's `xian` threads authored
+ *  1.0–1.25 px drew at 64 px, a median 6.3× too wide across 129 systems in 23 skins. Hence
+ *  {@link RopeMesh}. `widthOverTrail` sampled mid-trail: a range is a per-particle random
+ *  (Unity RandomBetweenTwoConstants, hence `rand`); a curve varies along the ribbon and one
+ *  rope has a single width, so its midpoint is the representative. */
 function trailWidth(trail: ITrail, size: number, rand: number): number {
     if (TRAIL_W_DIAG.abs != null) return TRAIL_W_DIAG.abs;
     const mul = trail.widthOverTrail ? scalarOf(trail.widthOverTrail, rand, 0.5) : 1;
@@ -707,8 +703,9 @@ const PREWARM_STEP = 1 / 30;
 /** Hard cap on pre-roll steps, so a pathological `duration` cannot stall the load. */
 const PREWARM_MAX_STEPS = 300;
 
-/** Honour Unity's `simulationSpeed` / `prewarm`? **Still OFF by default, but the reasoning
- *  below was wrong and the implementation was broken. Both are now fixed.**
+/** Honour Unity's `simulationSpeed` / `prewarm`? **`simSpeed` is ON since 2026-08-12
+ *  (`?simspeed=0` disables); `prewarm` stays OFF (`?prewarm=1`).** The sections below are the
+ *  history in order, each measured; the last one is the current verdict.
  *
  *  Corpus census (`probe_simspeed`, 13069 systems / 83 bundles): **1700 systems below 1x, 403
  *  above, 3057 prewarmed** (963 both), touching **80 of 83 skins**.
@@ -818,7 +815,7 @@ const PREWARM_MAX_STEPS = 300;
  *  exactly why the steady-state argument the gate rests on does not apply - and the phase is
  *  not in the data at all.
  *
- *  ## Verdict: both stay OFF
+ *  ## Verdict before 2026-08-12: both stay OFF (inverted for `simSpeed` below)
  *
  *      variant          mly       cel       ska       sum
  *      baseline (off) 17.525    19.270    10.530    47.325
@@ -900,7 +897,7 @@ function prewarmOf(d: IParticleSystemData): boolean {
  *
  *  So the GLOBAL phase we already ship is the one the game matches, and Unity carries the
  *  accumulator across loop boundaries exactly as we do. That also settles the open question
- *  left by [[simSpeedOf]]: `prewarm`'s cost is not a phase-pinning difference we could correct,
+ *  left by {@link simSpeedOf}: `prewarm`'s cost is not a phase-pinning difference we could correct,
  *  it is that adding one `duration` of emission history genuinely re-phases any system whose
  *  duration is not a whole number of emission intervals.
  *
@@ -946,7 +943,6 @@ function sampleCurve(curve: ICurvePoint[], t: number): number {
     return last.v;
 }
 
-/** Evaluate a MinMaxCurve. `rand` in [0,1) picks within ranges; `t` in [0,1] samples curves. */
 /** Read a value the exporter may emit either as a bare number or as an `MMScalar`.
  *
  *  `sampleScalar` switches on `s.mode`; handed a plain number it matches no case and returns
@@ -962,6 +958,7 @@ function scalarOf(v: number | MMScalar | undefined | null, rand: number, t: numb
     return typeof v === "number" ? v : sampleScalar(v, rand, t);
 }
 
+/** Evaluate a MinMaxCurve. `rand` in [0,1) picks within ranges; `t` in [0,1] samples curves. */
 function sampleScalar(s: MMScalar | undefined, rand: number, t: number): number {
     if (!s) return 0;
     switch (s.mode) {
@@ -1040,7 +1037,7 @@ interface IParticle {
      *  mesh-render systems (see {@link MeshEmitter}). */
     sprite: PIXI.Sprite | PIXI.Mesh;
     // Trail (only for particles that draw one): the rope, its points, and a
-    // distance-gated position history (flat [x,y,…], newest first, Y-up).
+    // distance-gated history of `[x, y, age]` triples, newest first, Y-up.
     trailPts?: PIXI.Point[];
     rope?: RopeMesh;
     hist?: number[];
@@ -1115,12 +1112,6 @@ function shapeScale(shape: NonNullable<IParticleSystemData["shape"]>): [number, 
     return s ? [s[0], s[1]] : [1, 1];
 }
 
-/** Unity `ShapeModule.radiusThickness`: the fraction of the radius the emission volume
- *  occupies, measured inward from the surface - 1 fills the whole disc, 0 emits on the
- *  SHELL only (Skadi2's `smoke_01`/`tri_weapon_01` bursts, which we scattered through the
- *  interior instead of ringing the rim). Returns the sampled radius as a fraction of
- *  `radius`, uniform in AREA over the annulus, consuming exactly one `Math.random()` so a
- *  full-volume (thickness 1) shape draws the identical value it always did. */
 /** THE CONE'S BASE DISC TAKES THE SHAPE SCALE (2026-09-06). Unity's shape transform scale
  *  stretches every shape's emission volume, cone included; the spawn had left the cone alone
  *  on one measurement (Virtuosa 33.626 -> 33.640, a 0.014 move) and Chongyue All-Round
@@ -1132,16 +1123,18 @@ function coneScaleOn(): boolean {
     return new URLSearchParams(window.location.search).get("conescale") !== "0";
 }
 
+/** Unity `ShapeModule.radiusThickness`: the fraction of the radius the emission volume
+ *  occupies, measured inward from the surface - 1 fills the whole disc, 0 emits on the
+ *  SHELL only (Skadi2's `smoke_01`/`tri_weapon_01` bursts, which we scattered through the
+ *  interior instead of ringing the rim). Returns the sampled radius as a fraction of
+ *  `radius`, uniform in AREA over the annulus, consuming exactly one `Math.random()` so a
+ *  full-volume (thickness 1) shape draws the identical value it always did. */
 function radialFrac(shape: NonNullable<IParticleSystemData["shape"]>): number {
     const inner = 1 - Math.min(Math.max(shape.radiusThickness ?? 1, 0), 1);
     const i2 = inner * inner;
     return Math.sqrt(i2 + (1 - i2) * Math.random());
 }
 
-/** An emitter's LIVE emission rate (particles/s): the cinematic's animated rate curve
- *  when the exporter captured one (sampled at the emitter clock - rate-curve systems
- *  carry no start delay, so the clock IS cinematic time), else the serialized constant. */
-/** `?bdp=0` disables the {@link isBackdropParticle} demotion (diagnostic). */
 /** `?hazeback=0`: keep a haze panel on a skeleton without separators in the wash between the
  *  scene background and the spine (the previous placement) instead of behind the scene
  *  background. See the placement note at `sheetTarget`. Read as the string "0". */
@@ -1198,22 +1191,12 @@ function tieBehindOn(): boolean {
     return new URLSearchParams(window.location.search).get("tiebehind") !== "0";
 }
 
+/** `?bdp=0` disables the {@link isBackdropParticle} demotion (diagnostic). */
 function backdropDemoteEnabled(): boolean {
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("bdp") !== "0";
 }
 
-/** `?uniskip=0` restores the old flat 150 flow-map luminance cut (diagnostic). */
-/** DIAGNOSTIC (`?customuv=1`, default OFF): also apply the per-particle MAIN-UV (payload 1,2) and
- *  DISTURB-UV (payload 7,8) offsets from the CustomData payload.
- *
- *  The positional decode itself is proven - the DISSOLVE offset at payload 3,4 is what fixed
- *  Wiš'adel's ending stroke (12.643 -> 6.779). These two siblings are decoded the same way and are
- *  exported, but applying them MEASURED WORSE on both references that author them
- *  (cel 18.006 -> 18.018, cet 18.059 -> 18.082; the other six bit-identical), and the only skins
- *  authoring the disturb pair have no capture at all, so nothing can validate them. Kept off by
- *  default for the same reason as `DYNCHAR_UVSCROLL_ALL`: shader-correct is necessary evidence,
- *  never sufficient. Turn on only alongside a corpus render of the affected skins. */
 /** DIAGNOSTIC (`?psize=<f>`, default 1): scale every particle's spawn size.
  *
  *  Motivation, measured 2026-08-12: at the 99th-percentile threshold the game draws ~2.8x as many
@@ -1228,6 +1211,16 @@ function psizeMul(): number {
     return Number.isFinite(v) && v > 0 ? v : 1;
 }
 
+/** DIAGNOSTIC (`?customuv=1`, default OFF): also apply the per-particle MAIN-UV (payload 1,2) and
+ *  DISTURB-UV (payload 7,8) offsets from the CustomData payload.
+ *
+ *  The positional decode itself is proven - the DISSOLVE offset at payload 3,4 is what fixed
+ *  Wiš'adel's ending stroke (12.643 -> 6.779). These two siblings are decoded the same way and are
+ *  exported, but applying them MEASURED WORSE on both references that author them
+ *  (cel 18.006 -> 18.018, cet 18.059 -> 18.082; the other six bit-identical), and the only skins
+ *  authoring the disturb pair have no capture at all, so nothing can validate them. Kept off by
+ *  default for the same reason as `DYNCHAR_UVSCROLL_ALL`: shader-correct is necessary evidence,
+ *  never sufficient. Turn on only alongside a corpus render of the affected skins. */
 function customUVOn(): boolean {
     if (typeof window === "undefined") return false;
     return new URLSearchParams(window.location.search).get("customuv") === "1";
@@ -1261,13 +1254,12 @@ function ramBillboardVSkip(): Set<number> {
     );
 }
 
+/** `?uniskip=0` restores the old flat 150 flow-map luminance cut (diagnostic). */
 function uniformFieldSkipOn(): boolean {
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("uniskip") !== "0";
 }
 
-/** `?meshtile=0` restores the old behaviour where a MESH-render texture-sheet system sampled the
- *  whole atlas instead of its live tile (diagnostic). */
 /** DIAGNOSTIC (`?sheethold=<i>`): pin every mesh flipbook to frame <i>. See the use site. */
 function sheetHold(): number | null {
     if (typeof window === "undefined") return null;
@@ -1275,6 +1267,8 @@ function sheetHold(): number | null {
     return Number.isFinite(v) && v >= 0 ? v : null;
 }
 
+/** `?meshtile=0` restores the old behaviour where a MESH-render texture-sheet system sampled the
+ *  whole atlas instead of its live tile (diagnostic). */
 function sheetMeshTilingOn(): boolean {
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("meshtile") !== "0";
@@ -1293,6 +1287,9 @@ function cullDisabled(): boolean {
     return new URLSearchParams(window.location.search).get("nocull") === "1";
 }
 
+/** An emitter's LIVE emission rate (particles/s): the cinematic's animated rate curve
+ *  when the exporter captured one (sampled at the emitter clock - rate-curve systems
+ *  carry no start delay, so the clock IS cinematic time), else the serialized constant. */
 function emissionRate(d: IParticleSystemData, constRate: number, time: number): number {
     // A clip-driven `rateCurve` (absolute cinematic seconds) wins wherever one exists.
     if (d.rateCurve?.length) return Math.max(0, sampleCurve(d.rateCurve, time));
@@ -1391,30 +1388,6 @@ export type RestBone = ReadonlyMap<string, PIXI.Matrix>;
  *  the ART rather than the bone ORIGIN; see {@link driftWithBone}. */
 export type RestAttachment = ReadonlyMap<string, { x: number; y: number }>;
 
-/** Rigidly bond a bone-parented emitter's whole effect to the character bone it
- *  rides, so it tracks that bone through Idle AND Special animations - SilverAsh
- *  the Reignfrost's purple sword-flame stays on the blade as it sweeps, Hoshiguma's
- *  face fire tracks her head.
- *
- *  Applies the follow bone's FULL world-matrix DELTA `D = Mₙₒw · Mᵣₑf⁻¹` to the
- *  emitter container (translation + ROTATION + scale). Translation-only was wrong:
- *  it kept every spawn point at a fixed world orientation, so as the blade rotated
- *  the flame slid off the edge (the fixed-distance drift). At the reference pose
- *  `D = identity`, so the container is untouched and the flame sits exactly where
- *  its baked `pos` placed it.
- *
- *  Follow-bone selection: emitters whose exporter `boneChain` names a real spine
- *  bone are followed; additionally, a `simulationSpace:"local"` system (Unity's
- *  convention for moving with its parent transform) gets the same nearest-bone
- *  search even with no literal chain-name match. Mlynar's sword-tip sparkle burst
- *  (`weapon_star_*`) is exactly this: authored local-space, generic FX-rig chain
- *  names, no `followBone`; without it, the emitter stays frozen at its baked
- *  rest-pose position while the sword swings and camera dollies, drifting hundreds
- *  of px off-canvas by the time it fires. Un-parented world-fixed emitters - bg
- *  sparks, magic circles - use `"world"`, name none, and stay put. Among followed
- *  emitters, we track the bone PHYSICALLY NEAREST the emitter's spawn `pos`, i.e.
- *  the bone driving the visual the flame sits on - the named `Sword_Fx` is only an
- *  FX-anchor that may not rotate with the rendered blade. */
 /** Linear-sample a `{t,x,y}` position curve into `[x,y]` at time `t`. */
 function samplePosCurve(curve: { t: number; x: number; y: number }[], t: number): [number, number] {
     if (curve.length === 0) return [0, 0];
@@ -1451,6 +1424,30 @@ function haloMatrix(d: IParticleSystemData, ct: number): PIXI.Matrix {
     return new PIXI.Matrix(m, 0, 0, m, cx * (1 - m) + dx, -cy * (1 - m) - dy);
 }
 
+/** Rigidly bond a bone-parented emitter's whole effect to the character bone it
+ *  rides, so it tracks that bone through Idle AND Special animations - SilverAsh
+ *  the Reignfrost's purple sword-flame stays on the blade as it sweeps, Hoshiguma's
+ *  face fire tracks her head.
+ *
+ *  Applies the follow bone's FULL world-matrix DELTA `D = Mₙₒw · Mᵣₑf⁻¹` to the
+ *  emitter container (translation + ROTATION + scale). Translation-only was wrong:
+ *  it kept every spawn point at a fixed world orientation, so as the blade rotated
+ *  the flame slid off the edge (the fixed-distance drift). At the reference pose
+ *  `D = identity`, so the container is untouched and the flame sits exactly where
+ *  its baked `pos` placed it.
+ *
+ *  Follow-bone selection: emitters whose exporter `boneChain` names a real spine
+ *  bone are followed; additionally, a `simulationSpace:"local"` system (Unity's
+ *  convention for moving with its parent transform) gets the same nearest-bone
+ *  search even with no literal chain-name match. Mlynar's sword-tip sparkle burst
+ *  (`weapon_star_*`) is exactly this: authored local-space, generic FX-rig chain
+ *  names, no `followBone`; without it, the emitter stays frozen at its baked
+ *  rest-pose position while the sword swings and camera dollies, drifting hundreds
+ *  of px off-canvas by the time it fires. Un-parented world-fixed emitters - bg
+ *  sparks, magic circles - use `"world"`, name none, and stay put. Among followed
+ *  emitters, we track the bone PHYSICALLY NEAREST the emitter's spawn `pos`, i.e.
+ *  the bone driving the visual the flame sits on - the named `Sword_Fx` is only an
+ *  FX-anchor that may not rotate with the rendered blade. */
 function driftWithBone(container: PIXI.Container, chain: string[] | undefined, pos: readonly [number, number], simSpace: string | undefined, find: FindBone | undefined, st: IBoneAnchor, restBone?: RestBone, follow?: IFollow, halo?: IParticleSystemData, ct?: number, restAtt?: RestAttachment): void {
     if (!st.resolved) {
         st.resolved = true;
@@ -1526,17 +1523,17 @@ function driftWithBone(container: PIXI.Container, chain: string[] | undefined, p
 
 /** Mutable state {@link holdWorldSpace} keeps between frames (the emitter container's
  *  transform as of the previous frame). One per emitter. */
-interface IWorldSpaceState {
+export interface IWorldSpaceState {
     prev: PIXI.Matrix | null;
 }
 
 /** The minimum a particle must expose to be carried by {@link holdWorldSpace}. */
-interface IDriftable {
+export interface IDriftable {
     x: number;
     y: number;
     vx: number;
     vy: number;
-    /** Flat `[x0,y0,x1,y1,…]` trail history (Y-up), when the particle ribbons. */
+    /** Trail history as `[x, y, age]` triples, newest first (Y-up), when the particle ribbons. */
     hist?: number[];
 }
 
@@ -1554,7 +1551,7 @@ interface IDriftable {
  *  falling apple sheds sparks (`rateOverDistance`) all the way down its plunge instead of
  *  dragging the whole cloud with it as a tight blob. No-op - the early return - for a static
  *  emitter, which is most of them, and never reached by a `local` system. */
-function holdWorldSpace(container: PIXI.Container, st: IWorldSpaceState, particles: readonly IDriftable[]): void {
+export function holdWorldSpace(container: PIXI.Container, st: IWorldSpaceState, particles: readonly IDriftable[]): void {
     container.transform.updateLocalTransform();
     const now = container.transform.localTransform;
     const prev = st.prev;
@@ -1574,7 +1571,8 @@ function holdWorldSpace(container: PIXI.Container, st: IWorldSpaceState, particl
         p.vx = vx;
         p.vy = -vy;
         if (p.hist) {
-            for (let i = 0; i + 1 < p.hist.length; i += 2) {
+            // `[x, y, age]` triples: step 3 and leave the age slot alone.
+            for (let i = 0; i + 1 < p.hist.length; i += 3) {
                 const hx = delta.a * p.hist[i] + delta.c * -p.hist[i + 1] + delta.tx;
                 const hy = delta.b * p.hist[i] + delta.d * -p.hist[i + 1] + delta.ty;
                 p.hist[i] = hx;
@@ -1929,34 +1927,22 @@ class Emitter {
             wDir = Math.atan2(d.emitDir[1], d.emitDir[0]) + (Math.random() - 0.5) * 2 * spread;
         }
 
-        // Edge-clip fix: a world-space system's static spawn position can be baked for an
-        // older, narrower framing calibration and now fall outside the live authored display
-        // box (the settled idle box, or - during the entrance - the camera's live zoom/pan
-        // box) for the whole shot, rendering as particles clipped hard at the canvas edge.
-        // Reject spawns whose position is ENTIRELY outside that box (small box-relative
-        // margin so streaks don't visibly pop at the boundary); partial/on-screen spawns are
-        // untouched - ordinary canvas clipping handles those.
-        // GATE on `!this.boneAnchor.boneName` (resolved by `driftWithBone`, called earlier
-        // this same `update()`), not just `simulationSpace`: a system can be authored
-        // `simulationSpace:"world"` (particles drift independently once spawned) while its
-        // EMITTER still rides a live bone (Virtuosa's `followBone:"L_C_Apple_F"` comet-trail
-        // dust) - `wx`/`wy` here are baked in the bone's REST frame, only becoming true
-        // screen coords after `this.container`'s live bone-follow transform is applied at
-        // render time, so testing them against a screen-space box directly would be a
-        // coordinate-space mismatch (and could wrongly thin the apple trail as it plunges).
-        // A genuinely static ambient system (no chain name resolves to a real bone, e.g.
-        // Mlynar's rain - its `boneChain` names are generic rig labels, not spine bones) has
-        // `boneAnchor.boneName === null`, so `wx,-wy` IS already the true screen position.
-        // A large-scale glow/wash (cello's crown backdrop carries several additive/normal
-        // systems sized 700–1360px, anchored FAR outside any live camera box on purpose -
-        // an off-frame "light source" whose bulk paints into frame, not a mis-clipped small
-        // effect) is a fundamentally different authored pattern than a small, localized
-        // streak/spark (Mlynar's rain tops out around 140–270px) - a flat position+margin
-        // test can't safely judge "off-frame" for the former (verified against the game
-        // recording: culling cello's panel removed real, game-matching deep-blue content -
-        // a regression, not a fix) but correctly identifies the latter. Gate the whole cull
-        // to particles small relative to the box, so it only ever touches the
-        // small/localized class the fix targets; large scene-spanning glows are untouched.
+        // Edge-clip cull. A static spawn position can be baked for an older, narrower framing
+        // and fall outside the live display box (the settled idle box, or the entrance camera's
+        // live zoom/pan box) for the whole shot, drawing particles clipped hard at the canvas
+        // edge. Reject spawns ENTIRELY outside that box, with a small box-relative margin;
+        // partial spawns are left to canvas clipping.
+        // Gated on `!this.boneAnchor.boneName` (resolved by `driftWithBone` earlier in this
+        // `update()`), not only on `simulationSpace`: an emitter riding a live bone (Virtuosa's
+        // `followBone:"L_C_Apple_F"` comet-trail dust) has `wx`/`wy` in the bone's REST frame
+        // until the container's bone-follow transform applies, so a screen-box test would
+        // wrongly thin the apple trail as it plunges. A static ambient system (Mlynar's rain,
+        // whose `boneChain` names are rig labels, not spine bones) has no bone, so `wx,-wy` IS
+        // the screen position.
+        // Only particles small relative to the box are culled. A large glow/wash anchored far
+        // off-frame on purpose (cello's crown backdrop, systems sized 700–1360px) paints into
+        // frame: culling cello's panel removed real, game-matching deep-blue content against
+        // the game recording. Mlynar's rain tops out around 140–270px.
         const smallEnoughToClip = this.displayBox ? size < 0.5 * Math.min(this.displayBox.width, this.displayBox.height) : false;
         // DIAGNOSTIC (`?nocull=1`): disable the off-screen spawn cull, so "is this silent system
         // silent because it is genuinely OFF-FRAME, or because we are wrongly clipping it?" can
@@ -1966,9 +1952,8 @@ class Emitter {
         // are therefore mostly off-frame by authoring, not mis-clipped.
         if (!cullDisabled() && d.simulationSpace === "local" && this.displayBox && !this.boneAnchor.boneName && smallEnoughToClip) {
             const box = this.displayBox;
-            // Add the sampled particle's own half-size on top of the box-relative margin so
-            // a moderately-sized sprite isn't hard-culled just for having an edge-adjacent
-            // centre (streaks/sparks don't visibly pop at the boundary).
+            // Widen the margin by the particle's own half-size so an edge-adjacent centre
+            // isn't hard-culled.
             const margin = 0.05 * Math.max(box.width, box.height) + size / 2;
             const sx = wx;
             const sy = -wy;
@@ -2101,8 +2086,7 @@ class Emitter {
             this.time = clock;
             this.cineTime = cine;
         }
-        // Cinematic time for the scale-in curves: the emitter clock counts up from
-        // `-delay`, so `this.time + delay` is absolute seconds since the `_Start` began.
+        // Scale-in curves run on `cineTime`, the real cinematic clock, not the system clock.
         driftWithBone(this.container, d.boneChain, d.pos, d.simulationSpace, findBone, this.boneAnchor, restBone, this.follow, d.scaleCurve ? d : undefined, this.cineTime, restAtt);
         // World-space systems leave their particles behind as the emitter travels on.
         if (d.simulationSpace === "world") holdWorldSpace(this.container, this.worldSpace, this.pool);
@@ -2306,20 +2290,20 @@ class Emitter {
                 // Width follows the particle's CURRENT size so a ribbon grows and fades with
                 // `sizeOverLife`, and drives the geometry rebuild SimpleRope's autoUpdate did.
                 p.rope.setWidth(trailWidth(trail, sz, p.rand));
-                // The ribbon takes the particle's START colour, NOT its faded current colour.
+                // `?trailcol=1`: the ribbon takes the particle's START colour, not its faded
+                // current colour (default OFF, see TRAIL_START_COLOR).
                 //
                 // Unity's trail carries its OWN colour (`colorOverLifetime` / `colorOverTrail`);
                 // `inheritParticleColor` multiplies in the emitter's particle colour, not the
                 // head's `colorOverLifetime` fade. Handing the rope the sprite's current `hex`/
-                // `alpha` instead makes the whole ribbon vanish the moment the head fades out -
-                // even while metres of it are still on screen.
+                // `alpha` makes the whole ribbon vanish the moment the head fades out, even while
+                // metres of it are still on screen.
                 //
                 // Skadi the Corrupting Heart's red beam is exactly that: a ~3000px ribbon whose
                 // head has faded (its gradient hits alpha 0 at 69% of life and stays there), so
                 // we drew the entire streak at alpha 0.000 through t=6..7 while the game shows
-                // two bright red beams crossing the full frame. The other trail implementation
-                // in this file already does the right thing - `inheritParticleColor ? p.startCol
-                // : white` - so this was an inconsistency between the two, not a design choice.
+                // two bright red beams crossing the full frame. `RibbonTrail` already does
+                // `inheritParticleColor ? p.startCol : white`.
                 const towned = (trail.inheritParticleColor ?? true) && TRAIL_START_COLOR;
                 const tlife = trail.colorOverLifetime ? sampleColor(trail.colorOverLifetime, lf, p.rand) : null;
                 const tcol = TRAIL_START_COLOR
@@ -2381,13 +2365,6 @@ class Emitter {
     }
 }
 
-/**
- * Mesh-render-mode emitter: each particle instances a shared MESH (ice-crystal
- * shards, ribbons, blades) transformed by its position/size/rotation, instead of a
- * camera-facing billboard. The exporter emits the mesh's local-space geometry in
- * `data.mesh`. Reuses the full billboard SIMULATION (spawn/shape/movement/lifetime/
- * colour) from {@link Emitter}; only the per-particle display object differs.
- */
 // Mesh-render particles bake an edge-falloff into per-vertex ALPHA (RGB stays
 // white; only aColor.a varies 0..1 to soften the shard rim). Pixi's stock
 // MeshMaterial ignores vertex colour and would render every crystal as a hard
@@ -2441,8 +2418,8 @@ const ADDITIVE_MESH_BOOST = 2.0;
  *  program, which makes them fitted rather than derived. Both are exposed so the derived value
  *  can be measured against the fitted one.
  *
- *  `?meshboost=<f>` overrides {@link ADDITIVE_MESH_BOOST} (2.5, where the shader convention for
- *  every ported family is exactly 2.0).
+ *  `?meshboost=<f>` overrides {@link ADDITIVE_MESH_BOOST} (now 2.0, the shader convention for
+ *  every ported family; 2.5 was the fitted value).
  *  `?meshnorm=<f>` scales NORMAL-blend mesh particles, which get 1.0, i.e. no doubling, while
  *  `Particles-L2D/AlphaBlend` doubles exactly as `/Additive` does. ⛔ DOUBLING THEM IS REFUTED:
  *  `?meshnorm=2` costs cel 16.997 -> 22.985 with DC overshooting -4.915 -> +3.866 and r
@@ -2492,12 +2469,6 @@ function combineAdditiveGains(pile: number, temper: boolean): number {
     }
 }
 
-/** DIAGNOSTIC (`?psdt=<seconds>`): offset every particle system's own clock, leaving the camera
- *  and the spine on theirs. Virtuosa's diamond rings (sys55) are emitted at a constant 2/s with a
- *  5 s lifetime, so ten rings are alive at once, 0.5 s apart in age, and their radii follow
- *  `sizeOverLife(age/5)`. Their PHASE is therefore `(t - t0) mod 0.5` - and a phase error cannot
- *  be measured by re-rendering at a different time, because at t=10 cello pans at 435 px/s and
- *  the whole frame moves with it. This moves the rings alone. Inert (0) by default. */
 /** DIAGNOSTIC (`?umgain=<f>`): override the UNTEXTURED-mesh gain (default 2 - the `col += col`
  *  half-neutral convention). Sweeping it tests whether that ×2 still holds on the current
  *  baseline; it was calibrated on one that scored 35.x. */
@@ -2507,6 +2478,12 @@ function untexMeshGain(): number {
     return Number.isFinite(v) && v >= 0 ? v : 2;
 }
 
+/** DIAGNOSTIC (`?psdt=<seconds>`): offset every particle system's own clock, leaving the camera
+ *  and the spine on theirs. Virtuosa's diamond rings (sys55) are emitted at a constant 2/s with a
+ *  5 s lifetime, so ten rings are alive at once, 0.5 s apart in age, and their radii follow
+ *  `sizeOverLife(age/5)`. Their PHASE is therefore `(t - t0) mod 0.5` - and a phase error cannot
+ *  be measured by re-rendering at a different time, because at t=10 cello pans at 435 px/s and
+ *  the whole frame moves with it. This moves the rings alone. Inert (0) by default. */
 function psDt(): number {
     if (typeof window === "undefined") return 0;
     const v = parseFloat(new URLSearchParams(window.location.search).get("psdt") ?? "");
@@ -2555,16 +2532,6 @@ function parsePsList(spec: string): Set<number> {
 /** Batch plugin name for ADDITIVE particle SPRITES (see {@link ensureAdditiveSpriteBoost}). */
 const ADDITIVE_BOOST_PLUGIN = "dynAdditiveBoost";
 
-/** The same ×2 Unity additive factor {@link ADDITIVE_MESH_BOOST} applies on the MESH path,
- *  but for BILLBOARD sprites - which had no equivalent because PIXI's `Sprite.tint` clamps
- *  at 1.0, so an additive billboard could never contribute more than its authored colour.
- *  The asymmetry is visible: Skadi's crown shoal is a `renderMode:"billboard"` additive
- *  emitter whose white texture and warm authored tint render warm-orange, where the game's
- *  same fish read white because a ×2 contribution clips R and lifts G/B toward neutral.
- *
- *  MEASURED AND REJECTED as a default (2026-08-01): enabling it together with the exporter's
- *  `scalingMode` size fix regressed every reference skin (mly 30.816 -> 32.536,
- *  cel 23.367 -> 24.139, ska 13.789 -> 13.994). Kept OFF; `?spriteboost=<f>` turns it on. */
 /* REAL BUG, MEASURED NEGLIGIBLE (2026-08-03) - recorded so it is not re-derived.
  * PIXI's batcher packs tint x alpha into an 8-bit word, so a particle alpha above 1 is silently
  * clamped. Unity clamps the PRODUCT instead: the Additive fragment writes
@@ -2600,6 +2567,16 @@ function abTintOn(): boolean {
     return new URLSearchParams(window.location.search).get("abtint") === "1";
 }
 
+/** The same ×2 Unity additive factor {@link ADDITIVE_MESH_BOOST} applies on the MESH path,
+ *  but for BILLBOARD sprites - which had no equivalent because PIXI's `Sprite.tint` clamps
+ *  at 1.0, so an additive billboard could never contribute more than its authored colour.
+ *  The asymmetry is visible: Skadi's crown shoal is a `renderMode:"billboard"` additive
+ *  emitter whose white texture and warm authored tint render warm-orange, where the game's
+ *  same fish read white because a ×2 contribution clips R and lifts G/B toward neutral.
+ *
+ *  MEASURED AND REJECTED as a default (2026-08-01): enabling it together with the exporter's
+ *  `scalingMode` size fix regressed every reference skin (mly 30.816 -> 32.536,
+ *  cel 23.367 -> 24.139, ska 13.789 -> 13.994). Kept OFF; `?spriteboost=<f>` turns it on. */
 function additiveSpriteBoost(): number {
     if (typeof window === "undefined") return 1;
     const v = parseFloat(new URLSearchParams(window.location.search).get("spriteboost") ?? "");
@@ -2609,9 +2586,8 @@ function additiveSpriteBoost(): number {
 /** Unity retires expired particles BEFORE emitting, so a slot freed this frame is refillable
  *  the same frame - see the retirement pre-pass in `Emitter.update` for why that matters.
  *
- *  `?retire=0` restores the previous emit-then-age order. It exists so the change can be A/B'd
- *  in ONE build: `particles.ts` carries a large uncommitted delta, so reverting it with
- *  `git checkout` to measure a baseline destroys unrelated work and renders garbage. */
+ *  `?retire=0` restores the previous emit-then-age order, so the two can be A/B'd in one
+ *  build. */
 function retireBeforeEmit(): boolean {
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("retire") !== "0";
@@ -2620,8 +2596,8 @@ function retireBeforeEmit(): boolean {
 /** Resolved once: the query string cannot change without a reload. */
 const RETIRE_BEFORE_EMIT = retireBeforeEmit();
 
-/** A per-particle ribbon takes the particle's START colour rather than its faded CURRENT colour
- *  (`?trailcol=0` restores the old behaviour).
+/** `?trailcol=1`: a per-particle ribbon takes the particle's START colour rather than its faded
+ *  CURRENT colour. Default OFF, see the last paragraph.
  *
  *  Unity stores each trail vertex's colour AS IT WAS LAID, so an old vertex stays bright while
  *  the head fades. A PIXI rope carries ONE tint+alpha for the whole ribbon, so neither extreme is
@@ -2822,6 +2798,13 @@ class RibbonTrail {
     }
 }
 
+/**
+ * Mesh-render-mode emitter: each particle instances a shared MESH (ice-crystal
+ * shards, ribbons, blades) transformed by its position/size/rotation, instead of a
+ * camera-facing billboard. The exporter emits the mesh's local-space geometry in
+ * `data.mesh`. Reuses the full billboard SIMULATION (spawn/shape/movement/lifetime/
+ * colour) from {@link Emitter}; only the per-particle display object differs.
+ */
 class MeshEmitter extends Emitter {
     private readonly geometry: PIXI.Geometry;
     private readonly meshTexture: PIXI.Texture;
@@ -3108,7 +3091,7 @@ void main() {
     // illustration shows through. That is measured WRONG - cet 29.172 -> 29.747, and per column
     // at t=8 it helps 630-720 (detail ratio 0.42 -> 0.64) while HURTING 720-810 (0.28 -> 0.20)
     // and the left edge (0.64 -> 0.40), and pushes the full-frame level further from the capture
-    // (77.8 -> 81.1 against 70.9). ⇒ the right-edge ruins are composited ABOVE these planes in
+    // (77.8 -> 81.1 against 70.9). So the right-edge ruins are composited ABOVE these planes in
     // the game, not seen through them.
     col.a *= uAlpha2;
     float dissolveTex = uHasDissolve > 0.5 ? texture2D(uDissolveTex, dsUV).x : 1.0;
@@ -3517,27 +3500,10 @@ class RamEmitter {
         const size = sampleScalar(d.startSize, sizeRand, nt) * psizeMul();
         const wDir = dirAng + rotDeg * DEG;
         const life = Math.max(MIN_PARTICLE_LIFE, sampleScalar(d.lifetime, Math.random(), nt));
-        // Edge-clip fix: a world-space system's static spawn position can be baked for an
-        // older, narrower framing calibration and now fall outside the live authored display
-        // box (the settled idle box, or - during the entrance - the camera's live zoom/pan
-        // box) for the whole shot, rendering as particles clipped hard at the canvas edge.
-        // Reject spawns whose full trajectories are ENTIRELY outside that box (small
-        // box-relative margin so streaks don't visibly pop at the boundary); particles that
-        // drift into view are untouched - ordinary canvas clipping handles those.
-        // GATE on `!this.boneAnchor.boneName` (resolved by `driftWithBone`, called earlier
-        // this same `update()`), not just `simulationSpace`: a system can be authored
-        // `simulationSpace:"world"` (particles drift independently once spawned) while its
-        // EMITTER still rides a live bone (Virtuosa's `followBone:"L_C_Apple_F"` comet-trail
-        // dust) - `wx`/`wy` here are baked in the bone's REST frame, only becoming true
-        // screen coords after `this.container`'s live bone-follow transform is applied at
-        // render time, so testing them against a screen-space box directly would be a
-        // coordinate-space mismatch (and could wrongly thin the apple trail as it plunges).
-        // A genuinely static ambient system (no chain name resolves to a real bone, e.g.
-        // Mlynar's rain - its `boneChain` names are generic rig labels, not spine bones) has
-        // `boneAnchor.boneName === null`, so `wx,-wy` IS already the true screen position.
-        // See the Emitter.spawn() twin of this check: a large-scale glow/wash anchored far
-        // outside the box on purpose (verified regression on cello's crown backdrop) needs
-        // to stay untouched - gate the cull to particles small relative to the box.
+        // Edge-clip cull: the same rule and gates as the `Emitter.spawn()` twin, where the
+        // reasoning is written out. Bone-anchored emitters (`wx`/`wy` still in the bone's REST
+        // frame) and particles large relative to the box (cello's crown backdrop, a verified
+        // regression when culled) are never culled.
         const smallEnoughToClip = this.displayBox ? size < 0.5 * Math.min(this.displayBox.width, this.displayBox.height) : false;
         // DIAGNOSTIC (`?nocull=1`): disable the off-screen spawn cull, so "is this silent system
         // silent because it is genuinely OFF-FRAME, or because we are wrongly clipping it?" can
@@ -3640,8 +3606,7 @@ class RamEmitter {
             this.time = clock;
             this.cineTime = cine;
         }
-        // Cinematic time for the scale-in curves: the emitter clock counts up from
-        // `-delay`, so `this.time + delay` is absolute seconds since the `_Start` began.
+        // Scale-in curves run on `cineTime`, the real cinematic clock, not the system clock.
         driftWithBone(this.container, d.boneChain, d.pos, d.simulationSpace, findBone, this.boneAnchor, restBone, this.follow, d.scaleCurve ? d : undefined, this.cineTime, restAtt);
         // World-space systems leave their particles behind as the emitter travels on.
         if (d.simulationSpace === "world") holdWorldSpace(this.container, this.worldSpace, this.particles);
@@ -3730,10 +3695,9 @@ class RamEmitter {
         }
         this.particles.length = w;
 
-        // The cinematic's animated `_MainColor`, replayed at the absolute entrance time
-        // (the emitter clock counts up from `-delay`). The scene-quad path has always
-        // replayed its twin (`colorCurve`); without this a Ram emitter the `_Start` clip
-        // brightens held its static serialized colour for the whole shot.
+        // The cinematic's animated `_MainColor`, replayed on `cineTime`. The scene-quad path
+        // has always replayed its twin (`colorCurve`); without this a Ram emitter the `_Start`
+        // clip brightens held its static serialized colour for the whole shot.
         const curve = this.ram.mainColorCurve;
         if (curve?.length) {
             this.shader.uniforms.uMainColor = sampleColorCurve(curve, this.cineTime);
@@ -3810,15 +3774,14 @@ class RamEmitter {
                 // `p.size` drew every mesh particle SQUARE - Civilight Eterna's 2:1 background
                 // planes came out 919x919 instead of 919x459, which stretched a 0.23-wide band of
                 // their landscape sheet over the whole frame and smeared away all of its detail.
-                // The billboard branch immediately above already used `p.sizeY`; this one did not.
+                // The billboard branch below already used `p.sizeY`; this one did not.
                 const szm = p.size * grow * p.tumX;
                 const szy = p.sizeY * grow * p.tumY;
                 const mp = mg.pos;
-                // Unity mesh space is Y-UP; this buffer is Y-DOWN. The billboard branch below
-                // bakes that flip into its corner ORDER (vertex 0 is (-hx,-hy) - screen top -
-                // carrying uv (0,0)); the mesh branch had no equivalent, so a mesh particle's
-                // geometry landed inverted and dragged its UVs with it, sampling every one of its
-                // textures upside down. `?meshyflip=0` restores the old behaviour.
+                // Unity mesh space is Y-UP and this buffer is Y-DOWN, so a flip LOOKS required
+                // here (the billboard branch bakes one into its corner order), but it is REFUTED:
+                // see `meshYFlip`, cet 31.186 with the flip vs 30.848 without. `?meshyflip=1`
+                // applies it.
                 const my = meshYFlip() ? -1 : 1;
                 if (this.basis) {
                     // The emitter's screen basis in place of the plain spin: M = B R(-rot),
@@ -4074,7 +4037,7 @@ export interface ILoadedParticles {
     destroy(): void;
 }
 
-/** One system the loader skipped - see {@link IParticles.drops}. */
+/** One system the loader skipped - see {@link ILoadedParticles.drops}. */
 export interface IParticleDrop {
     /** Index into {@link IParticlesData.systems}. */
     sys: number;
@@ -4551,6 +4514,16 @@ function scalarMax(s: MMScalar | undefined): number {
     }
 }
 
+/** DIAGNOSTIC (`?pilegain=<f>`): scale the pile attenuation (1 = none). The heuristic assumes
+ *  the concurrent particles stack AT A POINT, which is false for a box/area emitter - Mlynar's
+ *  `sys20` spawns over 912x638 px, yet reads `density = rate x lifetime = 500` and is clamped to
+ *  `MIN_GAIN`, i.e. drawn at 2% of its authored brightness. */
+function pileGainOverride(): number | null {
+    if (typeof window === "undefined") return null;
+    const v = parseFloat(new URLSearchParams(window.location.search).get("pilegain") ?? "");
+    return Number.isFinite(v) && v >= 0 ? v : null;
+}
+
 /** Intensity scale for an ADDITIVE billboard emitter, correcting for OVER-PILING.
  *
  *  The HDR pass stops additive stacks from clipping to white and keeps their hue, but
@@ -4564,16 +4537,6 @@ function scalarMax(s: MMScalar | undefined): number {
  *  shape. MOVING emitters (speed > 0) spread their particles over distinct positions, so
  *  they don't pile and aren't touched; BURST emitters (Hoshiguma's ice-flames: `rate=0`,
  *  `life=0.2s`, one particle per burst) have ~0 concurrent pile and stay full-bright. */
-/** DIAGNOSTIC (`?pilegain=<f>`): scale the pile attenuation (1 = none). The heuristic assumes
- *  the concurrent particles stack AT A POINT, which is false for a box/area emitter - Mlynar's
- *  `sys20` spawns over 912x638 px, yet reads `density = rate x lifetime = 500` and is clamped to
- *  `MIN_GAIN`, i.e. drawn at 2% of its authored brightness. */
-function pileGainOverride(): number | null {
-    if (typeof window === "undefined") return null;
-    const v = parseFloat(new URLSearchParams(window.location.search).get("pilegain") ?? "");
-    return Number.isFinite(v) && v >= 0 ? v : null;
-}
-
 function additivePileGain(sys: IParticleSystemData): number {
     const ov = pileGainOverride();
     if (ov !== null) return Math.min(1, ov);
@@ -4602,16 +4565,6 @@ function additivePileGain(sys: IParticleSystemData): number {
     return Math.max(MIN_GAIN, TARGET_STACK / density);
 }
 
-/** Mirror of sceneMesh's `EFFECT_SCENE_GAIN` / `EFFECT_TEX_MAX` on the PARTICLE path.
- *  On a scene that owns its own DARK painted backdrop (`hasDarkBackdrop`, cello only), a
- *  LARGE additive billboard feeds the HDR bloom at full gain and blooms into the crown halo,
- *  washing the white diamond lattice (Virtuosa's two 1313px `star_large` flares, tex5). The
- *  scene-layer path already tempers a large additive layer to `EFFECT_SCENE_GAIN` on such
- *  scenes (`sceneMesh.buildLayerMesh`); the particle path had no equivalent. Apply the same
- *  tamed gain to a large additive billboard, ATTENUATING (not deleting - a subtle central
- *  flare survives) and gated on the data-derived flag so every other skin is byte-identical.
- *  "Large" = billboard bigger than the effect-overlay size (mirrors `EFFECT_TEX_MAX`), so
- *  small additive sparks (the amber orb, comet trail, glow motes) are untouched. */
 /** DIAGNOSTIC (`?addskip=1`): apply the flow/distortion-map `tex.skip` to AUTHORED-ADDITIVE
  *  billboards too, i.e. revert to the pre-2026-08-10 behaviour. 51 systems across 10 skins. */
 function addSkipAll(): boolean {
@@ -4633,6 +4586,16 @@ function orbOnAdditive(): boolean {
     return new URLSearchParams(window.location.search).get("orb") === "1";
 }
 
+/** Mirror of sceneMesh's `EFFECT_SCENE_GAIN` / `EFFECT_TEX_MAX` on the PARTICLE path.
+ *  On a scene that owns its own DARK painted backdrop (`hasDarkBackdrop`, cello only), a
+ *  LARGE additive billboard feeds the HDR bloom at full gain and blooms into the crown halo,
+ *  washing the white diamond lattice (Virtuosa's two 1313px `star_large` flares, tex5). The
+ *  scene-layer path already tempers a large additive layer to `EFFECT_SCENE_GAIN` on such
+ *  scenes (`sceneMesh.buildLayerMesh`); the particle path had no equivalent. Apply the same
+ *  tamed gain to a large additive billboard, ATTENUATING (not deleting - a subtle central
+ *  flare survives) and gated on the data-derived flag so every other skin is byte-identical.
+ *  "Large" = billboard bigger than the effect-overlay size (mirrors `EFFECT_TEX_MAX`), so
+ *  small additive sparks (the amber orb, comet trail, glow motes) are untouched. */
 const EFFECT_PARTICLE_GAIN = 0.3; // = sceneMesh EFFECT_SCENE_GAIN
 const EFFECT_PARTICLE_MAX = 512; // = sceneMesh EFFECT_TEX_MAX (effect-overlay vs large boundary)
 
@@ -4723,9 +4686,8 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
         return (iw * ih) / (discW * discH) >= 0.5;
     };
 
-    /** Raw (unprocessed) texture for a Ram shader slot, by [particles] index.
-     *  Ram, disturb and dissolve inputs are DATA textures (ramp / flow / mask)
-     *  that must stay pixel-exact. */
+    // Raw (unprocessed) texture for a Ram shader slot, by [particles] index. Ram, disturb and
+    // dissolve inputs are DATA textures (ramp / flow / mask) that must stay pixel-exact.
     // `?pmasknpm=0` samples the lookup maps from the premultiplied upload again (the render
     // before 2026-09-07). Explicit string, never a falsy coercion. The ramp is never a lookup:
     // the fragment multiplies it into a premultiplied colour, and a premultiplied ramp is
@@ -4736,6 +4698,7 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
         return b ? new PIXI.Texture(lookup && pmaskStraight ? b.maskBase : b.rawBase) : null;
     };
 
+    const wrapOf = (i: number | null): number | undefined => (i == null ? undefined : data.textureWrap?.[i]);
     /** Main texture for a Ram slot: the dark-field-dropped base (see
      *  ILoadedTex.darkDropBase). An opaque glow main (dark starfield / bokeh,
      *  alpha=1) would otherwise keep its near-black field and, ×2-boosted, stamp a
@@ -4748,7 +4711,6 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
      *  it measured WORSE against the game on all three reference skins, because our
      *  render already sits well ABOVE the capture's luminance through that whole shot.
      *  Kept as-is until that DC excess is understood; see the round-11 notes. */
-    const wrapOf = (i: number | null): number | undefined => (i == null ? undefined : data.textureWrap?.[i]);
     const ramMainTex = (i: number | null): PIXI.Texture | null => {
         const b = i != null ? bases[i] : null;
         if (!b) return null;
@@ -4763,16 +4725,14 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
         return new PIXI.Texture(raw ? b.rawBase : b.darkDropBase);
     };
 
-    // Drop record for the census (see `IParticles.drops`): one entry per skipped system.
+    // Drop record for the census (see `ILoadedParticles.drops`): one entry per skipped system.
     const dropped: IParticleDrop[] = [];
     const drop = (sysIndex: number, sys: IParticleSystemData, reason: string) => {
         dropped.push({ sys: sysIndex, name: sys.name ?? "", reason });
     };
     for (const [sysIndex, sys] of data.systems.entries()) {
         // Ram-shader emitters render via the ported ramp/dissolve/disturb shader
-        // (RamEmitter), using RAW textures. Needs a main tex. Mesh-render-mode Ram
-        // systems are skipped (their real mesh geometry isn't exported; billboarding
-        // a large one stamps a raw quad).
+        // (RamEmitter), using RAW textures. Needs a main tex.
         //
         // A Ram system carrying a texture-sheet flipbook (SilverAsh's purple sword
         // flame) prefers the SPRITE path: it slices the atlas into per-frame textures,
@@ -4797,8 +4757,7 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
         // disturb/dissolve terms the raw texture stamps a huge opaque quad over the scene
         // (cel 15.152 -> 18.359). `?rammesh=0` restores the old drop.
         const ramMeshOn = typeof window === "undefined" || new URLSearchParams(window.location.search).get("rammesh") !== "0";
-        // A `plainDisturb` block is INERT unless the gate is on: without it these systems keep
-        // taking the plain sprite path they have always taken.
+        // `?plaindisturb=0` sends a `plainDisturb` block back down the plain sprite path.
         const plainBlocked = sys.ram?.kind === "plainDisturb" && !plainDisturbOn();
         // `?ramsheet=1`: every sheeted Ram system takes the Ram path (the flipbook tile through
         // the vertex UVs, the dissolve and disturb terms applied), not only the ones the sprite
@@ -5043,19 +5002,14 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
         // up in the corpus scan: unparented sheets (Wiš'adel's 3522 px `sort: -18`, Siege's
         // 1920 px `sort: -50` and 1050 px `sort: -71`), excluded by requiring a followed BONE;
         // and bone-attached scenery (Nian's six `BG_Screen_*` panels at `sort: -133…-73`),
-        // excluded by the same `sort < characterSort ⇒ scenery` line the mesh path already
+        // excluded by the same `sort < characterSort -> scenery` line the mesh path already
         // draws. What remains is rig decoration pinned to the skeleton and drawn OVER the
         // character - which is what pokes out of a silhouette the game keeps clean.
         const noDynamics = scalarMax(sys.startSpeed) === 0 && scalarMax(sys.gravity) === 0 && (sys.shape?.type ?? "none") === "none" && !sys.velocityOverLife && !sys.sizeOverLife && !sys.colorOverLife && !sys.noise && !sys.rotOverLifeDegPerSec && !sys.trail && !sys.tint;
         const isStaticMeshProp = effBlend === "normal" && sys.renderMode === "mesh" && !!sys.followBone && sys.sort >= data.characterSort && sys.looping && sys.maxParticles === 1 && emRate * scalarMax(sys.lifetime) >= 100 && sys.duration > 0 && scalarMax(sys.lifetime) >= sys.duration && noDynamics;
-        // Mesh render mode emits particles as arbitrary textured MESHES (whose
-        // geometry we don't export), often a single large quad with a non-sprite
-        // texture (a galaxy band, a mask, a distortion map). Billboarding those
-        // shows the raw texture as a hard rectangle/band - the "black block" and
-        // "rainbow streak" artifacts - so skip them. EXCEPT when the emitter drives
-        // a texture-sheet flipbook: that's a genuine animated effect sprite (e.g.
-        // SilverAsh the Reignfrost's purple-sword flame), which billboards cleanly
-        // as a single cropped frame.
+        // A mesh-mode system with a texture-sheet flipbook (SilverAsh the Reignfrost's
+        // purple-sword flame) billboards cleanly as one cropped frame, so it takes the sprite
+        // path below instead of the mesh branch.
         const hasSheet = !!(sys.sheet && sys.sheet.tilesX * sys.sheet.tilesY > 1);
         // Mesh-render systems: instance the exported mesh geometry per particle
         // (Hoshiguma's ice-crystal shards). If no geometry was exported (a streamed/
@@ -5063,22 +5017,14 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
         // skip as before - billboarding it would stamp the texture as a hard quad.
         if (sys.renderMode === "mesh" && !hasSheet) {
             const meshBlend: "additive" | "normal" = tex.glow ? "additive" : sys.blend;
-            // Only ADDITIVE mesh particles are actual glowing geometry (Hoshiguma's
-            // ice-crystal shards): additive adds light, so the mesh reads as a shard.
-            // NORMAL-blend mesh systems are flow/distortion panels (blue-flame flow
-            // maps on flat quads) meant to warp what's behind them, not to be drawn
-            // directly - rendering their geometry stamps translucent grey rectangles
-            // over the scene (the "animated top artifacts"). Skip them, as the
-            // pre-mesh code skipped all mesh-render billboards.
-            // Render the mesh when it ADDS light (additive glow shards) OR when it's a
-            // COLOURED effect mesh - jagged lightning bolts, ice-flame tips, water
+            // Render the mesh when it ADDS light (Hoshiguma's additive ice-crystal shards) OR
+            // when it's a COLOURED effect mesh: jagged lightning bolts, ice-flame tips, water
             // ribbons (Hoshiguma the Breacher's `lighting_*`/`fire_tip_*`/`water_*`,
-            // normal-blend, sat 0.28–0.50). Only a DESATURATED, FILLED panel
-            // (`desatPanel`: sat < 0.2 over a covered ≥25% texture - the blue-grey
-            // flow/distortion "bg" maps, tex sat≈0.12) is a shader warp-input that
-            // stamps a grey rectangle - those stay skipped. (Skipping ALL normal-blend
-            // mesh instead would throw out the real lightning bolt and leave only its
-            // additive glow halo.)
+            // normal-blend, sat 0.28–0.50). Only a DESATURATED, FILLED panel (`desatPanel`:
+            // sat < 0.2 over a covered ≥25% texture, the blue-grey flow/distortion "bg" maps,
+            // tex sat≈0.12) is a shader warp-input that stamps a translucent grey rectangle
+            // (the "animated top artifacts"); those stay skipped. Skipping ALL normal-blend
+            // mesh would throw out the real lightning bolt and leave only its additive halo.
             // …EXCEPT a painted BACKDROP PANEL faked as a mesh particle. Same authored
             // shape `isStaticProp` recognises (rate 0, one or two bursts, a lifetime
             // spanning the whole cinematic - set dressing, not a live effect) but sorted

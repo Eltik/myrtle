@@ -9,8 +9,6 @@ import { cn } from "#/lib/utils";
 import type { messages } from "./LocaleSwitcher.messages";
 
 /**
- * Language switcher.
- *
  * Renders nothing when only one locale is enabled, so it costs the current
  * single-locale deployment no pixels and no decisions.
  *

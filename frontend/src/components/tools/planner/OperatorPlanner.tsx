@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
 import { useAuth } from "#/hooks/use-auth";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { useOperatorName } from "#/hooks/use-operator-name";
-import { deleteGroupFn, deletePlansFn, type IOperatorPlanResponse, PLANS_QUERY_PREFIX, plansQueryOptions, setGroupPinnedFn, upsertGroupFn } from "#/lib/api/planner";
+import { deleteGroupFn, deletePlansFn, dropPlansFromCache, type IOperatorPlanResponse, invalidatePlanQueries, plansQueryOptions, setGroupPinnedFn, upsertGroupFn } from "#/lib/api/planner";
 import { userRosterQueryOptions } from "#/lib/api/user";
 import { authActions } from "#/lib/auth/store";
 import { useT } from "#/lib/i18n";
@@ -96,7 +96,7 @@ export function OperatorPlanner(): React.ReactElement {
     const pinnedGroupCount = groups.filter((g) => g.pinned).length;
     const pinDividerAt = pinnedGroupCount > 0 && pinnedGroupCount < groups.length ? pinnedGroupCount : -1;
 
-    const invalidatePlans = () => queryClient.invalidateQueries({ queryKey: PLANS_QUERY_PREFIX });
+    const invalidatePlans = () => invalidatePlanQueries(queryClient);
     const planName = (p: IOperatorPlanResponse) => (p.operator ? operatorName(p.operator) : t("planner.unknownOperator"));
 
     const requestDelete = (targets: IOperatorPlanResponse[]) => {
@@ -115,6 +115,7 @@ export function OperatorPlanner(): React.ReactElement {
         try {
             // One statement, so a failure deletes nothing.
             await deletePlansFn({ data: ids });
+            dropPlansFromCache(queryClient, ids);
             selection.dropPlans(ids);
             setDeleteTarget(null);
         } catch (err) {
@@ -137,6 +138,7 @@ export function OperatorPlanner(): React.ReactElement {
         setCompletedError(null);
         try {
             await deletePlansFn({ data: ids });
+            dropPlansFromCache(queryClient, ids);
             selection.dropPlans(ids);
             invalidatePlans();
             setReviewPlans(null);

@@ -1,7 +1,9 @@
 use discord::{
-    cmds,
+    api::gamedata::GameData,
+    birthday, cmds,
     config::Config,
     db, handler, hooks,
+    tts::Tts,
     types::Data,
     watcher::{self, AssetStatus, AssetsState},
 };
@@ -11,6 +13,7 @@ use std::env;
 use std::sync::Arc;
 
 use serenity::{all::ClientBuilder, cache::Settings, prelude::*};
+use songbird::SerenityInit;
 use tokio::sync::{Mutex as TokioMutex, mpsc};
 
 // Bot bootstrap touches many subsystems (config, db, watcher, framework); splitting it
@@ -36,8 +39,13 @@ async fn main() {
         .expect("Failed to initialize database");
     let http_client = reqwest::Client::builder()
         .user_agent(concat!("myrtle-discord/", env!("CARGO_PKG_VERSION")))
+        .timeout(discord::api::CLIENT_TIMEOUT)
         .build()
         .expect("Failed to build HTTP client");
+    let gamedata = Arc::new(GameData::new(
+        http_client.clone(),
+        &config.endpoints.public_backend,
+    ));
     // One state + WS watcher per configured asset server (EN, CN, ...).
     let mut assets_states: HashMap<String, Arc<AssetsState>> = HashMap::new();
     let mut assets_watchers: Vec<(String, String, mpsc::UnboundedReceiver<String>)> = Vec::new();
@@ -62,7 +70,17 @@ async fn main() {
         | GatewayIntents::DIRECT_MESSAGES
         | GatewayIntents::MESSAGE_CONTENT
         | GatewayIntents::GUILD_PRESENCES
-        | GatewayIntents::GUILD_MESSAGE_REACTIONS;
+        | GatewayIntents::GUILD_MESSAGE_REACTIONS
+        // Who is in which voice channel, for text-to-speech; songbird needs it to join, too.
+        | GatewayIntents::GUILD_VOICE_STATES;
+
+    // One voice manager for the client, registered with serenity below and held by `Tts`.
+    let songbird = songbird::Songbird::serenity();
+    let tts = Arc::new(Tts::new(
+        config.tts.clone(),
+        Arc::clone(&songbird),
+        http_client.clone(),
+    ));
 
     let options = poise::FrameworkOptions {
         commands: cmds::all(),
@@ -100,25 +118,30 @@ async fn main() {
                     .into_iter()
                     .collect();
 
-                let antispam_policies: std::collections::HashMap<_, _> =
-                    db::list_antispam_policies(&pool)
-                        .await?
-                        .into_iter()
-                        .collect();
+                let antispam_policies: HashMap<_, _> = db::list_antispam_policies(&pool)
+                    .await?
+                    .into_iter()
+                    .collect();
                 tracing::info!(
                     "Hydrated antispam policies for {} guild(s)",
                     antispam_policies.len()
                 );
 
-                let audit_log_settings: std::collections::HashMap<_, _> =
-                    db::list_audit_log_settings(&pool)
-                        .await?
-                        .into_iter()
-                        .collect();
+                let audit_log_settings: HashMap<_, _> = db::list_audit_log_settings(&pool)
+                    .await?
+                    .into_iter()
+                    .collect();
                 tracing::info!(
                     "Hydrated audit-log bindings for {} guild(s)",
                     audit_log_settings.len()
                 );
+
+                let tts_nicknames = db::list_tts_nicknames(&pool).await?;
+                tracing::info!("Hydrated {} TTS nickname(s)", tts_nicknames.len());
+                tts.hydrate_nicknames(tts_nicknames);
+                let tts_voices = db::list_tts_voices(&pool).await?;
+                tracing::info!("Hydrated {} TTS voice pick(s)", tts_voices.len());
+                tts.hydrate_voices(tts_voices);
 
                 let reconnect_secs = config.assets.reconnect_secs;
                 for (label, ws_url, rx) in assets_watchers {
@@ -142,13 +165,31 @@ async fn main() {
                     });
                 }
 
-                let ping_history = Arc::new(RwLock::new(std::collections::HashMap::new()));
+                let ping_history = Arc::new(RwLock::new(HashMap::new()));
                 let antispam_policies = Arc::new(RwLock::new(antispam_policies));
 
                 let sweep_history = ping_history.clone();
                 let sweep_policies = antispam_policies.clone();
                 tokio::spawn(async move {
                     handler::run_ping_history_sweep(sweep_history, sweep_policies).await;
+                });
+
+                // Fill the game-data cache now, so the first lookups answer from memory.
+                let warm_gamedata = gamedata.clone();
+                tokio::spawn(async move { warm_gamedata.warm().await });
+
+                let birthday_http = ctx.http.clone();
+                let birthday_pool = pool.clone();
+                let birthday_gamedata = gamedata.clone();
+                let birthday_frontend = config.endpoints.public_frontend.clone();
+                tokio::spawn(async move {
+                    birthday::run(
+                        birthday_http,
+                        birthday_pool,
+                        birthday_gamedata,
+                        birthday_frontend,
+                    )
+                    .await;
                 });
 
                 Ok(Data {
@@ -161,6 +202,9 @@ async fn main() {
                     ping_history,
                     antispam_policies,
                     audit_log_settings: Arc::new(RwLock::new(audit_log_settings)),
+                    gamedata,
+                    operator_images: cmds::operator::images::ImageCheck::default(),
+                    tts,
                 })
             })
         })
@@ -172,6 +216,7 @@ async fn main() {
     let mut client = ClientBuilder::new(token, intents)
         .framework(framework)
         .cache_settings(cache_settings)
+        .register_songbird_with(songbird)
         .await
         .expect("Error creating client");
 

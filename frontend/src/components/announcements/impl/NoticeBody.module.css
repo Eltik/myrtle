@@ -1,0 +1,120 @@
+/* A notice body as the backend sanitizes it: p, br, hr, strong/em, span.accent,
+   lists, tables, links and images, all URLs absolute. Everything here is kept
+   inside the reading column: images shrink to it, tables scroll inside their
+   own box, and an unbroken run (a long URL, a CJK line) wraps instead of
+   pushing the page sideways. */
+.body {
+    min-width: 0;
+    color: var(--foreground);
+    font-size: 15px;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+
+@media (width >= 40rem) {
+    .body {
+        font-size: 15.5px;
+    }
+}
+
+.body > :first-child {
+    margin-top: 0;
+}
+
+.body > :last-child {
+    margin-bottom: 0;
+}
+
+.body p {
+    margin: 0 0 0.9em;
+}
+
+.body strong,
+.body b {
+    font-weight: 650;
+    color: var(--foreground);
+}
+
+.body :global(.accent) {
+    color: var(--primary);
+    font-weight: 550;
+}
+
+.body a {
+    color: var(--primary);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.body hr {
+    margin: 1.4em 0;
+    border: 0;
+    border-top: 1px solid var(--border);
+}
+
+.body img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 0.75em auto;
+    border-radius: 0.5rem;
+}
+
+.body ul,
+.body ol {
+    margin: 0 0 0.9em;
+    padding-inline-start: 1.4em;
+}
+
+.body ul {
+    list-style: disc;
+}
+
+.body ol {
+    list-style: decimal;
+}
+
+.body h1,
+.body h2,
+.body h3,
+.body h4,
+.body h5,
+.body h6 {
+    margin: 1.2em 0 0.5em;
+    font-weight: 650;
+    font-size: 1.05em;
+    line-height: 1.35;
+}
+
+.body blockquote {
+    margin: 0 0 0.9em;
+    padding-inline-start: 0.9em;
+    border-inline-start: 2px solid var(--border);
+    color: var(--muted-foreground);
+}
+
+/* A table is its own horizontal scroller, so a wide schedule never widens the
+   page. `display: block` is what lets `overflow-x` apply to a table. */
+.body table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    margin: 0 0 0.9em;
+    border-collapse: collapse;
+    font-size: 0.92em;
+    -webkit-overflow-scrolling: touch;
+}
+
+.body th,
+.body td {
+    padding: 0.4em 0.7em;
+    border: 1px solid var(--border);
+    text-align: start;
+    vertical-align: top;
+    overflow-wrap: normal;
+}
+
+.body th {
+    background: var(--muted);
+    font-weight: 600;
+}

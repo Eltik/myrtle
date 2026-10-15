@@ -10,7 +10,7 @@ import { REPO_URL } from "#/lib/constants";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { getAvatarSkinId } from "#/lib/utils";
-import { AuthDialog } from "./AuthDialog";
+import { LazyAuthDialog } from "./LazyAuthDialog";
 import type { messages } from "./UserMenu.messages";
 
 export default function UserMenu({ user, loading, logout }: { user: ISession | null; loading: boolean; logout: () => Promise<void> }) {
@@ -58,10 +58,10 @@ export default function UserMenu({ user, loading, logout }: { user: ISession | n
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     {/* Below `lg` the mobile drawer already carries a GitHub
-                        link under "External", so showing it here as well put
-                        the same destination twice on one screen. The drawer
-                        trigger is `lg:hidden`, so at `lg` and up this menu is
-                        the only place the repo link lives and it stays. */}
+                        link under "External", so this one would put the same
+                        destination twice on one screen. The drawer trigger is
+                        `lg:hidden`, so at `lg` and up this menu is the only
+                        place the repo link lives. */}
                     {/* biome-ignore lint/a11y/useAnchorContent: anchor children are slotted in by DropdownMenuItem via the render prop */}
                     <DropdownMenuItem className="cursor-pointer max-lg:hidden" render={<a href={REPO_URL} target="_blank" rel="noreferrer" />}>
                         <GithubIcon className="h-4 w-4 text-muted-foreground" />
@@ -87,5 +87,5 @@ export default function UserMenu({ user, loading, logout }: { user: ISession | n
         );
     }
 
-    return <AuthDialog trigger={<Button>{t("userMenu.login")}</Button>} />;
+    return <LazyAuthDialog trigger={<Button>{t("userMenu.login")}</Button>} />;
 }

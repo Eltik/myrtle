@@ -8,15 +8,24 @@
  * backend resolves each shelf's locations to `StoryGroup.id`s through
  * `StorylineStorySets` (`docs/story-reader.md` section 2). 81 of the 87
  * non-record groups sit on at least one shelf and 17 sit on several, so the
- * shelves are NOT a partition: the page gives each group to the LOWEST-sorted
- * shelf that lists it and drops the repeats, which is why a section can be
- * shorter here than its `groupIds` is on the wire.
+ * shelves are NOT a partition. A shelf's rail mixes its own stories
+ * (`STORY_SET`, `Storyline.ownGroupIds`) with `BEFORE` / `AFTER` pointers at
+ * stories that live elsewhere. The mainline ARCS show every group their rail
+ * lists, pointers included, so Darknights Memoir still reads as the read-first
+ * inside SHATTER OF A VISION (owner ruling 2026-10-15). Every other shelf shows
+ * only the groups whose HOME it is ({@link homeShelves}), so a themed shelf
+ * never repeats another's story: Lone Trail sits under Those Who Take The
+ * Future alone, not also under Snow and Silver Steel, which points at it. A
+ * pointed-at event therefore appears twice on the page, once in the arc and
+ * once on its home shelf; {@link sectionGroups} keeps the first for the flat
+ * list and the sheet's order.
  *
  * A backend older than the `storylines` field sends none, and then
  * {@link fallbackSections} cuts the page by main-chapter order, then by event
  * release year, then records. The page says which cut it is showing.
  */
 
+import { homeShelves } from "#/lib/story/book/scopes";
 import { iconIsLogo, iconIsWide, sectionIconSource } from "./art";
 import type { LibGroup, LibIndex, LibRecord, LibStoryline } from "./derive";
 
@@ -132,33 +141,39 @@ export const RECORDS_ID = "operator-records";
 
 /**
  * The page's sections in the game's own order: the mainline shelf's four arcs,
- * then the twelve side shelves, then the groups no shelf lists, then the
- * operator records.
+ * then the side shelves, then the groups no shelf lists, then the operator
+ * records.
  *
- * Each group lands ONCE, under the first shelf that lists it in `sort` order,
- * and within the mainline shelf under the first arc that lists it.
+ * An arc shows every group its rail lists, a group on two arcs under the
+ * first; a shelf section shows the groups whose home shelf it is
+ * ({@link homeShelves}). Only a group no section shows falls to "other".
  */
 export function buildSections(groups: readonly LibGroup[], storylines: readonly LibStoryline[]): ISection[] {
     const byId = new Map(groups.map((g) => [g.id, g]));
+    const homes = homeShelves(storylines);
     const taken = new Set<string>();
+    const inArc = new Set<string>();
     const sections: ISection[] = [];
 
-    const take = (ids: readonly string[]): LibGroup[] => {
+    const pick = (ids: readonly string[], seen: Set<string>, keep: (id: string) => boolean): LibGroup[] => {
         const out: LibGroup[] = [];
         for (const id of ids) {
-            if (taken.has(id)) continue;
+            if (seen.has(id) || !keep(id)) continue;
             const group = byId.get(id);
             if (!group || group.category === "record") continue;
-            taken.add(id);
+            seen.add(id);
             out.push(group);
         }
         return out;
     };
+    // An arc keeps its BEFORE / AFTER pointers; a shelf keeps only its home groups.
+    const takeArc = (ids: readonly string[]): LibGroup[] => pick(ids, inArc, () => true);
+    const take = (ids: readonly string[], lineId: string): LibGroup[] => pick(ids, taken, (id) => homes.get(id) === lineId);
 
     for (const line of [...storylines].sort((a, b) => a.sort - b.sort || a.id.localeCompare(b.id))) {
         if (line.arcs.length > 0) {
             for (const arc of [...line.arcs].sort((a, b) => a.sort - b.sort)) {
-                const picked = take(arc.groupIds);
+                const picked = takeArc(arc.groupIds);
                 // The ARC's own icon beats the shelf's: `act_0`..`act_3` name the run
                 // the heading is over, where the shelf glyph repeats on all four.
                 const icon = sectionIconSource(arc.iconUrl, line.logoUrl, line.iconUrl);
@@ -166,17 +181,20 @@ export function buildSections(groups: readonly LibGroup[], storylines: readonly 
                     sections.push({ id: `arc-${line.id}-${arc.sort}`, title: arc.name, kind: "arc", groups: picked, collapsed: false, lineId: line.id, iconUrl: icon.kind === "glyph" ? undefined : icon.url, iconWide: iconIsWide(icon), iconLogo: iconIsLogo(icon), chapterRange: arc.chapterRange ?? undefined });
             }
             // A shelf can list a group outside every arc; it still belongs to the shelf.
-            const rest = take(line.groupIds);
+            const rest = take(
+                line.groupIds.filter((id) => !inArc.has(id)),
+                line.id,
+            );
             const icon = sectionIconSource(undefined, line.logoUrl, line.iconUrl);
             if (rest.length > 0) sections.push({ id: `line-${line.id}`, title: line.name, kind: "storyline", groups: rest, collapsed: false, lineId: line.id, iconUrl: icon.kind === "glyph" ? undefined : icon.url, iconLogo: iconIsLogo(icon), chapterRange: line.chapterRange });
             continue;
         }
-        const picked = take(line.groupIds);
+        const picked = take(line.groupIds, line.id);
         const icon = sectionIconSource(undefined, line.logoUrl, line.iconUrl);
         if (picked.length > 0) sections.push({ id: `line-${line.id}`, title: line.name, kind: "storyline", groups: picked, collapsed: false, lineId: line.id, iconUrl: icon.kind === "glyph" ? undefined : icon.url, iconLogo: iconIsLogo(icon), chapterRange: line.chapterRange });
     }
 
-    const rest = groups.filter((g) => g.category !== "record" && !taken.has(g.id)).sort((a, b) => b.startTime - a.startTime || a.id.localeCompare(b.id));
+    const rest = groups.filter((g) => g.category !== "record" && !taken.has(g.id) && !inArc.has(g.id)).sort((a, b) => b.startTime - a.startTime || a.id.localeCompare(b.id));
     if (rest.length > 0) sections.push({ id: OTHER_ID, title: "", kind: "other", groups: rest, collapsed: false, lineId: OTHER_ID });
     return sections;
 }
@@ -301,7 +319,13 @@ export function chapterNeighbours<T extends { id: string }>(order: readonly T[],
     return { prev: order[at - 1] ?? null, next: order[at + 1] ?? null };
 }
 
-/** The order the browse page shows its chapters in: the sorted list when a sort has flattened the shelves, else every shelf's cards in shelf order. */
+/** Every section's cards in section order, each group ONCE at its first appearance: a group an arc points at also sits on its home shelf, and the sorted list must not print it twice. */
+export function sectionGroups(sections: readonly { groups: readonly LibGroup[] }[]): LibGroup[] {
+    const seen = new Set<string>();
+    return sections.flatMap((s) => s.groups).filter((g) => !seen.has(g.id) && Boolean(seen.add(g.id)));
+}
+
+/** The order the browse page shows its chapters in: the sorted list when a sort has flattened the shelves, else every shelf's cards in shelf order, a group repeated on the page stepping from its first appearance. */
 export function browseOrder(sections: readonly { groups: readonly LibGroup[] }[], flat: readonly LibGroup[] | null): readonly LibGroup[] {
-    return flat ?? sections.flatMap((s) => s.groups);
+    return flat ?? sectionGroups(sections);
 }

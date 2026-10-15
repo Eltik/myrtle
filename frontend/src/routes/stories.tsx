@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { isLibraryTab, type LibraryTab, StoryLibrary } from "#/components/story/library/StoryLibrary";
+import { StoryLibrary } from "#/components/story/library/StoryLibrary";
+import { isLibraryTab, type LibraryTab } from "#/components/story/library/StoryLibrary.constants";
 import { storyIndexQueryOptions, storySpriteQueryOptions } from "#/lib/api/story";
 import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
@@ -30,7 +31,7 @@ export const Route = createFileRoute("/stories")({
             title: t("stories.title"),
             description: t("stories.description"),
             path: "/stories",
-            image: defaultOgURL("stages", match.context.i18n),
+            image: defaultOgURL("stories", match.context.i18n),
             locale: match.context.i18n?.locale,
         });
         return {

@@ -25,7 +25,7 @@ export interface IOperatorOwnershipInfo {
      *  ownership, so it says something "Most owned" does not.
      *
      *  `null` when the operator has no owners, or when they cannot reach E2 at
-     *  all - see `canE2`. */
+     *  all (see `canE2`). */
     e2Pct: number | null;
     /** False for the 36 operators that cannot be promoted to E2 (one to three
      *  stars carry fewer than three phases). Their 0% is a fact about the game,

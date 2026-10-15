@@ -1,7 +1,7 @@
 /**
- * Stage group taxonomy shared across enemy-stage UIs (and a future stage
- * viewer). The keys mirror the backend's `EnemyStageRef.group`, which is the
- * single source of truth - the frontend never re-derives a group from ids.
+ * Stage group taxonomy shared by the enemy-stage UIs and the Stage Viewer. The
+ * keys mirror the backend's `EnemyStageRef.group`, the single source of truth:
+ * the frontend never re-derives a group from ids.
  */
 
 import type { messages as stageGroupMessages } from "#/lib/registry/stage-groups.messages";
@@ -54,6 +54,20 @@ export const STAGE_GROUP_DESCRIPTION_KEY: Record<StageGroupKey, StageGroupMessag
     cc: "stageGroup.cc.desc",
     supplies: "stageGroup.supplies.desc",
     other: "stageGroup.other.desc",
+};
+
+/** The localised name of each group, a message key resolved with `t()` in the `nav` namespace. `label` above stays the English fallback for consumers not yet moved. */
+export const STAGE_GROUP_LABEL_KEY: Record<StageGroupKey, StageGroupMessageKey> = {
+    story: "stageGroup.story.label",
+    events: "stageGroup.events.label",
+    annihilation: "stageGroup.annihilation.label",
+    is: "stageGroup.is.label",
+    ra: "stageGroup.ra.label",
+    sss: "stageGroup.sss.label",
+    paradox: "stageGroup.paradox.label",
+    cc: "stageGroup.cc.label",
+    supplies: "stageGroup.supplies.label",
+    other: "stageGroup.other.label",
 };
 
 /** Index of a group key in display order (unknown keys sort last). */

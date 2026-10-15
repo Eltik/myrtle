@@ -4,12 +4,13 @@ import { Crown, Hammer, Medal, Mountain, Sparkles, Swords } from "lucide-react";
 // `ISubscore` rows, copied from the Score tab's SUBSCORES table — the `weight`
 // values mirror the backend's SECTION_WEIGHT_* constants, so the "% of grade"
 // pill on each card is the real share.
-const OPERATOR = { key: "operator_score", label: "Operator", description: "Roster depth & investment", icon: Crown, color: "oklch(0.74 0.17 75)", weight: 0.85 };
-const BASE = { key: "base_score", label: "Base", description: "Drone & facility upgrades", icon: Hammer, color: "oklch(0.70 0.16 145)", weight: 0.35 };
-const STAGE = { key: "stage_score", label: "Stages", description: "Story & event clears", icon: Swords, color: "oklch(0.62 0.20 255)", weight: 0.6 };
-const ROGUELIKE = { key: "roguelike_score", label: "Roguelike", description: "IS endings & relics", icon: Sparkles, color: "oklch(0.65 0.22 340)", weight: 0.3 };
-const SANDBOX = { key: "sandbox_score", label: "Sandbox", description: "RA progress & nodes", icon: Mountain, color: "oklch(0.70 0.14 200)", weight: 0.2 };
-const MEDAL = { key: "medal_score", label: "Medals", description: "Achievement collection", icon: Medal, color: "oklch(0.62 0.22 295)", weight: 0.2 };
+// Section names are message keys (`helpers.messages.ts`), resolved under `user`.
+const OPERATOR = { key: "operator_score", labelKey: "score.section.operator.label", descriptionKey: "score.section.operator.desc", icon: Crown, color: "oklch(0.74 0.17 75)", weight: 0.85 };
+const BASE = { key: "base_score", labelKey: "score.section.base.label", descriptionKey: "score.section.base.desc", icon: Hammer, color: "oklch(0.70 0.16 145)", weight: 0.35 };
+const STAGE = { key: "stage_score", labelKey: "score.section.stage.label", descriptionKey: "score.section.stage.desc", icon: Swords, color: "oklch(0.62 0.20 255)", weight: 0.6 };
+const ROGUELIKE = { key: "roguelike_score", labelKey: "score.section.roguelike.label", descriptionKey: "score.section.roguelike.desc", icon: Sparkles, color: "oklch(0.65 0.22 340)", weight: 0.3 };
+const SANDBOX = { key: "sandbox_score", labelKey: "score.section.sandbox.label", descriptionKey: "score.section.sandbox.desc", icon: Mountain, color: "oklch(0.70 0.14 200)", weight: 0.2 };
+const MEDAL = { key: "medal_score", labelKey: "score.section.medal.label", descriptionKey: "score.section.medal.desc", icon: Medal, color: "oklch(0.62 0.22 295)", weight: 0.2 };
 
 // The card is a Collapsible; the improvements panel only mounts once a Doctor
 // expands it, so a static card is always the collapsed summary face.

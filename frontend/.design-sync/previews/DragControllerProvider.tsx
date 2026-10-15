@@ -1,20 +1,33 @@
-import { DragControllerProvider, EditTierRow, OperatorPool } from "frontend";
+import { DragControllerProvider, EditTierRow, EntityPool } from "frontend";
 import type { CSSProperties, ReactNode } from "react";
 
-/** `ITierOperator` rows — every id verified against https://api.myrtle.moe/api/operators/index. */
-const op = (id: string, name: string, rarity: number, profession: string, subProfessionId: string, position: string, nationId: string) => ({
+/**
+ * An operator placement as the API maps it (`toTierEntity`): a resolved
+ * `operator` entity keyed `operator:<id>`, icon an API path. Every id verified
+ * against https://api.myrtle.moe/api/operators/index.
+ */
+const PROFESSION_NAME: Record<string, string> = { PIONEER: "Vanguard", WARRIOR: "Guard", TANK: "Defender", SNIPER: "Sniper", CASTER: "Caster", MEDIC: "Medic", SUPPORT: "Supporter", SPECIAL: "Specialist" };
+const op = (id: string, name: string, rarity: number, profession: string, subProfessionId: string, position: string, nationId: string | null, description: string | null = null) => ({
+    key: `operator:${id}`,
+    kind: "operator" as const,
     id,
     name,
-    appellation: "",
-    rarity,
-    profession,
+    icon: `/avatar/${id}`,
+    href: `/operators/${id}`,
+    facets: {},
+    resolved: true as const,
+    appellation: null,
+    rarity: rarity as 1 | 2 | 3 | 4 | 5 | 6,
+    profession: profession as never,
     subProfessionId,
-    position,
-    nationId,
-    isNotObtainable: false,
+    professionName: PROFESSION_NAME[profession] ?? null,
+    subProfessionName: null,
+    position: position as never,
+    nationId: nationId || null,
+    nationName: null,
     subOrder: 0,
-    description: null,
-    updatedAt: "2024-05-13T21:40:00.000Z",
+    description,
+    updatedAt: "2024-05-12T14:05:00.000Z",
 });
 
 const ROSTER = [
@@ -44,18 +57,21 @@ const ROSTER = [
     op("char_151_myrtle", "Myrtle", 4, "PIONEER", "bearer", "MELEE", "rhodes"),
 ];
 
-const operatorById: Record<string, (typeof ROSTER)[number]> = Object.fromEntries(ROSTER.map((entry) => [entry.id, entry]));
+const entityByKey: Record<string, (typeof ROSTER)[number]> = Object.fromEntries(ROSTER.map((entry) => [entry.key, entry]));
 
 const TIERS = [
-    { id: "tier-s", name: "S", color: "#dc4d56", description: "Warps a map on its own.", operatorIds: ["char_1035_wisdel", "char_4064_mlynar", "char_1028_texas2", "char_4087_ines"] },
-    { id: "tier-a", name: "A", color: "#e0603c", description: "Best-in-slot for most endgame content.", operatorIds: ["char_350_surtr", "char_4116_blkkgt", "char_2012_typhon", "char_377_gdglow", "char_003_kalts"] },
-    { id: "tier-b", name: "B", color: "#c9a227", description: "Strong, but wants a specific squad.", operatorIds: ["char_103_angel", "char_180_amgoat", "char_293_thorns", "char_179_cgbird"] },
-    { id: "tier-c", name: "C", color: "#4f9d69", description: "Fine on clear, outclassed at CM.", operatorIds: ["char_263_skadi", "char_017_huang"] },
+    { id: "tier-s", name: "S", color: "#dc4d56", description: "Warps a map on its own.", entityKeys: ["operator:char_1035_wisdel", "operator:char_4064_mlynar", "operator:char_1028_texas2", "operator:char_4087_ines"] },
+    { id: "tier-a", name: "A", color: "#e0603c", description: "Best-in-slot for most endgame content.", entityKeys: ["operator:char_350_surtr", "operator:char_4116_blkkgt", "operator:char_2012_typhon", "operator:char_377_gdglow", "operator:char_003_kalts"] },
+    { id: "tier-b", name: "B", color: "#c9a227", description: "Strong, but wants a specific squad.", entityKeys: ["operator:char_103_angel", "operator:char_180_amgoat", "operator:char_293_thorns", "operator:char_179_cgbird"] },
+    { id: "tier-c", name: "C", color: "#4f9d69", description: "Fine on clear, outclassed at CM.", entityKeys: ["operator:char_263_skadi", "operator:char_017_huang"] },
 ];
 
-const NOTED = new Set(["char_1035_wisdel", "char_4087_ines", "char_180_amgoat"]);
+const NOTED = new Set(["operator:char_1035_wisdel", "operator:char_4087_ines", "operator:char_180_amgoat"]);
 
 const noop = () => {};
+
+/** What the first three tiers hold, so the pool dims them. */
+const PLACED = new Set(TIERS.slice(0, 3).flatMap((t) => t.entityKeys));
 
 /** The sizing tokens `Editor.module.css` puts on `.board`, at its ≥640px step. */
 const boardVars = {
@@ -80,8 +96,8 @@ const rows = (tiers: typeof TIERS) =>
         <EditTierRow
             key={tier.id}
             tier={tier}
-            operators={tier.operatorIds.map((id) => operatorById[id])}
-            notedOperatorIds={NOTED}
+            entities={tier.entityKeys.map((key) => entityByKey[key])}
+            notedKeys={NOTED}
             canMoveUp={idx > 0}
             canMoveDown={idx < tiers.length - 1}
             onMoveUp={noop}
@@ -89,24 +105,24 @@ const rows = (tiers: typeof TIERS) =>
             onOpenSettings={noop}
             onPlace={noop}
             onUnplace={noop}
-            onActivateOperator={noop}
+            onActivateEntity={noop}
         />
     ));
 
 export const EditorBoard = () => (
-    <DragControllerProvider operatorById={operatorById} onPlace={noop} onUnplace={noop}>
+    <DragControllerProvider entityByKey={entityByKey} onPlace={noop} onUnplace={noop}>
         <Board>{rows(TIERS)}</Board>
     </DragControllerProvider>
 );
 
 export const BoardWithPool = () => (
-    <DragControllerProvider operatorById={operatorById} onPlace={noop} onUnplace={noop}>
+    <DragControllerProvider entityByKey={entityByKey} onPlace={noop} onUnplace={noop}>
         <div className="flex items-start gap-4">
             <div className="min-w-0 flex-1">
                 <Board>{rows(TIERS.slice(0, 3))}</Board>
             </div>
             <div className="w-80 shrink-0">
-                <OperatorPool operators={ROSTER} placedIds={new Set(TIERS.flatMap((t) => t.operatorIds))} onUnplace={noop} onPickerActivate={noop} rootClassName="h-96" />
+                <EntityPool kinds={["operator"]} catalogues={{ operator: { entities: ROSTER, status: "success", refetch: noop } }} placedKeys={PLACED} placedByKind={{ operator: PLACED.size }} onUnplace={noop} onPickerActivate={noop} rootClassName="h-96" />
             </div>
         </div>
     </DragControllerProvider>

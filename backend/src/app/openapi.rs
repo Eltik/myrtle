@@ -185,6 +185,8 @@ it is missing from the server too.",
         (name = "admin", description = "Administrative endpoints. A non-admin token is answered with 403, not 404."),
         (name = "tier-lists", description = "Community tier lists: their tiers, the operators placed in them, published versions, per-list edit grants and engagement counters."),
         (name = "grids", description = "Community grids: titled boards of labelled cells, each optionally holding one tier-list entity, and forks that reuse a grid as a template."),
+        (name = "music", description = "Music: the Monster Siren Records catalogue (synced from the label's public API), signed stream redirects and lyrics, and the account's liked tracks, listening history and playlists."),
+        (name = "squads", description = "Squad Builder: the account's four saved squads, the in-game squads from the last roster sync, and the coverage, economy, synergy, readiness and themes analysis of one squad."),
         (name = "i18n", description = "The public translation catalog a browser renders from. The content hash is in the path, so a catalog response is immutable and cacheable indefinitely."),
         (name = "i18n-admin", description = "The translation workspace: locales, message editing with an audit trail, game-data text overrides and per-locale grants.")
     )

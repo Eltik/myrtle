@@ -16,12 +16,23 @@ interface IThemeState {
      * English, and nobody types 予愿安洁莉娜 to find Angelina.
      */
     latinNames: boolean;
+    /**
+     * Show the hidden factions (`SubPower` ids the card never shows) on
+     * operator pages. Off by default: some of them are story spoilers.
+     */
+    spoilers: boolean;
+    /** Show the game maintenance countdown in the top bar. On by default. */
+    maintenanceCountdown: boolean;
     hydrated: boolean;
 }
+
+type ToggleField = "dynamicArtwork" | "latinNames" | "spoilers" | "maintenanceCountdown";
 
 const THEME_MODE_STORAGE_KEY = "theme";
 const DYNAMIC_ART_STORAGE_KEY = "myrtle-dynamic-art";
 const LATIN_NAMES_STORAGE_KEY = "myrtle-latin-names";
+const SPOILERS_STORAGE_KEY = "myrtle-spoilers";
+const MAINTENANCE_COUNTDOWN_STORAGE_KEY = "myrtle-maintenance-countdown";
 
 function getInitialMode(): ThemeMode {
     if (typeof window === "undefined") return "auto";
@@ -30,18 +41,22 @@ function getInitialMode(): ThemeMode {
     return "auto";
 }
 
-function getInitialDynamicArtwork(): boolean {
-    // On by default; only an explicit opt-out ("false") disables it.
-    if (typeof window === "undefined") return true;
-    const stored = window.localStorage.getItem(DYNAMIC_ART_STORAGE_KEY);
-    return stored === null ? true : stored === "true";
+/**
+ * A stored on/off toggle: `fallback` when nothing is stored (or off the client), else on only
+ * for the exact string "true".
+ */
+function readToggle(key: string, fallback: boolean): boolean {
+    if (typeof window === "undefined") return fallback;
+    const stored = window.localStorage.getItem(key);
+    return stored === null ? fallback : stored === "true";
 }
 
-function getInitialLatinNames(): boolean {
-    // On by default; only an explicit opt-out ("false") disables it.
-    if (typeof window === "undefined") return true;
-    const stored = window.localStorage.getItem(LATIN_NAMES_STORAGE_KEY);
-    return stored === null ? true : stored === "true";
+/** Sets one toggle in the store and keeps it in localStorage under `key`. */
+function writeToggle(field: ToggleField, key: string, enabled: boolean): void {
+    themeStore.setState((s) => ({ ...s, [field]: enabled }));
+    if (typeof window !== "undefined") {
+        window.localStorage.setItem(key, String(enabled));
+    }
 }
 
 function getSystemResolved(): ResolvedTheme {
@@ -59,6 +74,8 @@ export const themeStore = new Store<IThemeState>({
     accent: null,
     dynamicArtwork: true,
     latinNames: true,
+    spoilers: false,
+    maintenanceCountdown: true,
     hydrated: false,
 });
 
@@ -96,7 +113,17 @@ export function hydrateTheme(): void {
     const accent = getStoredAccent();
     const resolved = applyMode(mode);
     applyAccent(accent, resolved);
-    themeStore.setState(() => ({ mode, resolved, accent, dynamicArtwork: getInitialDynamicArtwork(), latinNames: getInitialLatinNames(), hydrated: true }));
+    themeStore.setState(() => ({
+        mode,
+        resolved,
+        accent,
+        dynamicArtwork: readToggle(DYNAMIC_ART_STORAGE_KEY, true),
+        latinNames: readToggle(LATIN_NAMES_STORAGE_KEY, true),
+        // Off by default: only an explicit opt-in shows spoilers.
+        spoilers: readToggle(SPOILERS_STORAGE_KEY, false),
+        maintenanceCountdown: readToggle(MAINTENANCE_COUNTDOWN_STORAGE_KEY, true),
+        hydrated: true,
+    }));
 }
 
 let systemMediaQuery: MediaQueryList | null = null;
@@ -150,15 +177,15 @@ export const themeActions = {
         setStoredAccent(null);
     },
     setDynamicArtwork(enabled: boolean): void {
-        themeStore.setState((s) => ({ ...s, dynamicArtwork: enabled }));
-        if (typeof window !== "undefined") {
-            window.localStorage.setItem(DYNAMIC_ART_STORAGE_KEY, String(enabled));
-        }
+        writeToggle("dynamicArtwork", DYNAMIC_ART_STORAGE_KEY, enabled);
     },
     setLatinNames(enabled: boolean): void {
-        themeStore.setState((s) => ({ ...s, latinNames: enabled }));
-        if (typeof window !== "undefined") {
-            window.localStorage.setItem(LATIN_NAMES_STORAGE_KEY, String(enabled));
-        }
+        writeToggle("latinNames", LATIN_NAMES_STORAGE_KEY, enabled);
+    },
+    setSpoilers(enabled: boolean): void {
+        writeToggle("spoilers", SPOILERS_STORAGE_KEY, enabled);
+    },
+    setMaintenanceCountdown(enabled: boolean): void {
+        writeToggle("maintenanceCountdown", MAINTENANCE_COUNTDOWN_STORAGE_KEY, enabled);
     },
 };

@@ -4,7 +4,7 @@ use axum::{
 };
 use serde::Deserialize;
 
-use crate::app::extractors::auth::{AuthUser, MaybeAuthUser};
+use crate::app::extractors::auth::{MaybeAuthUser, RoleCheckedUser};
 use crate::app::routes::{
     StatusOk, ensure_tab_visible, resolve_public_profile, resolve_uid_for_tab,
 };
@@ -27,9 +27,10 @@ pub struct GetUserParams {
 /// otherwise.
 ///
 /// Never gated by tab: the row feeds the page header, which every visible tab
-/// sits under. A visitor gets the layout with the private tabs left out, and
-/// no `total_score` or `grade` while the Score tab is private, as
-/// `/get-user-score` refuses that tab's data to them.
+/// sits under. A visitor gets the layout with the private tabs left out, no
+/// `total_score` or `grade` while the Score tab is private, as
+/// `/get-user-score` refuses that tab's data to them, and `null` for every
+/// header number the owner hid (`profile_layout.header.hidden`).
 #[utoipa::path(
     get,
     path = "/get-user",
@@ -60,7 +61,7 @@ pub async fn get_user(
     profile.profile_layout = gate.profile_layout;
     // Projected per caller after the cache read: the cached row is the owner's.
     if !own {
-        profile.hide_private_tabs();
+        profile.hide_private();
         // A block whose grid, tier list or plan is gone is no block to a
         // visitor, so an emptied showcase is no tab either.
         if let Some(layout) = profile.profile_layout.as_mut() {
@@ -157,7 +158,9 @@ pub async fn get_user_score(
 ///
 /// Null when the player has no stored check-in row.
 /// Runs the shared privacy gate: another player's data is readable only when
-/// their profile is public, and a player always sees their own.
+/// their profile is public, and a player always sees their own. A visitor gets
+/// no `cumulative_signin` or `register_ts` when the owner hid them from their
+/// header, as `/get-user` nulls the same numbers.
 #[utoipa::path(
     get,
     path = "/get-user-checkin",
@@ -180,9 +183,13 @@ pub async fn get_user_checkin(
     auth: MaybeAuthUser,
     Query(params): Query<GetUserParams>,
 ) -> Result<Json<Option<UserCheckin>>, ApiError> {
+    let (profile, own) = resolve_public_profile(&state, &auth, &params.uid).await?;
+    ensure_tab_visible(&profile, own, ProfileTabId::Stats)?;
     // `null` until the user has synced once.
-    let uid = resolve_uid_for_tab(&state, &auth, Some(&params.uid), ProfileTabId::Stats).await?;
-    let checkin = get_checkin_by_uid(&state.db, &uid).await?;
+    let mut checkin = get_checkin_by_uid(&state.db, &profile.uid).await?;
+    if let (false, Some(layout), Some(checkin)) = (own, &profile.profile_layout, &mut checkin) {
+        checkin.hide_private(layout);
+    }
     Ok(Json(checkin))
 }
 
@@ -199,9 +206,11 @@ pub struct SetRoleRequest {
 /// Super-admin only, and it refuses to change a super-admin's own row: an
 /// accidental self-demotion here would need the CLI to undo.
 ///
-/// The role reaches `AuthUser` from the JWT, so the target keeps their old
-/// privileges until their token refreshes. Per-locale translation grants are
-/// read from the database per request and take effect immediately.
+/// Role gates act on the lower of the token's role claim and this row, so a
+/// demotion takes effect on the target's next request, while a promotion waits
+/// for their next login (with `DISABLE_ROLE_RECHECK` set, both wait). Per-locale
+/// translation grants are read from the database per request and take effect
+/// immediately.
 #[utoipa::path(
     put,
     path = "/admin/users/{user_id}/role",
@@ -210,7 +219,7 @@ pub struct SetRoleRequest {
         ("user_id" = String, Path, description = "Target account id (UUID).")
     ),
     request_body = SetRoleRequest,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The role was set.", body = StatusOk),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
@@ -224,7 +233,7 @@ pub struct SetRoleRequest {
 )]
 pub async fn set_user_role(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     axum::extract::Path(user_id): axum::extract::Path<uuid::Uuid>,
     Json(body): Json<SetRoleRequest>,
 ) -> Result<Json<StatusOk>, ApiError> {
@@ -264,4 +273,96 @@ pub async fn set_user_role(
     );
 
     Ok(crate::app::routes::ok_status())
+}
+
+#[derive(Deserialize)]
+pub struct AdminUsersParams {
+    /// Nickname substring or UID prefix.
+    pub q: Option<String>,
+    /// `all` (default), `staff`, `translators` or `players`.
+    pub role: Option<String>,
+    pub server: Option<Server>,
+    #[serde(flatten)]
+    pub pagination: crate::app::extractors::pagination::Pagination,
+}
+
+/// The page size for [`list_users`] when the caller names none, and its cap.
+const ADMIN_USERS_DEFAULT_LIMIT: u32 = 50;
+const ADMIN_USERS_MAX_LIMIT: u32 = 200;
+
+/// One page of the admin people list, and how many accounts the filters admit.
+#[derive(serde::Serialize, ts_rs::TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct AdminUsersPage {
+    pub users: Vec<crate::database::models::user::AdminUserEntry>,
+    #[ts(type = "number")]
+    pub total: i64,
+}
+
+/// Every account, private profiles included, for the admin panel's People tab.
+///
+/// Tier list admin or super-admin. Not cached: a role change must show on the
+/// next read.
+#[utoipa::path(
+    get,
+    path = "/admin/users",
+    tag = "admin",
+    params(
+        ("q" = Option<String>, Query, description = "Nickname substring (case-insensitive) or UID prefix. An exact UID match sorts first."),
+        ("role" = Option<String>, Query, description = "`all` (default), `staff` (super-admins, tier list admins and editors), `translators` or `players` (no panel role)."),
+        ("server" = Option<String>, Query, description = "Server code: `en`, `jp`, `kr`, `cn`, `bili` or `tw`. Absent means every server."),
+        ("limit" = Option<u32>, Query, description = "Page size. Defaults to 50, capped at 200."),
+        ("offset" = Option<u32>, Query, description = "Rows to skip. Defaults to 0.")
+    ),
+    security(("bearer_auth" = []), ("service_key" = [])),
+    responses(
+        (status = 200, description = "One page of accounts, most privileged roles first, then by nickname.", body = AdminUsersPage),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 403, response = crate::app::openapi::responses::Forbidden),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn list_users(
+    State(state): State<AppState>,
+    auth: RoleCheckedUser,
+    Query(params): Query<AdminUsersParams>,
+) -> Result<Json<AdminUsersPage>, ApiError> {
+    use crate::database::queries::admin_users::{AdminUserRole, AdminUserSearch};
+
+    if !auth.role.is_tier_list_admin() {
+        return Err(ApiError::Forbidden);
+    }
+    let role = match params
+        .role
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+    {
+        None => AdminUserRole::All,
+        Some(token) => AdminUserRole::parse(token).ok_or_else(|| {
+            ApiError::BadRequest(format!(
+                "role must be `all`, `staff`, `translators` or `players`, got `{token}`"
+            ))
+        })?,
+    };
+    let q = params.q.as_deref().map(str::trim).filter(|s| !s.is_empty());
+    let search = AdminUserSearch {
+        q,
+        role,
+        server: params.server,
+    };
+    let limit = params
+        .pagination
+        .limit
+        .unwrap_or(ADMIN_USERS_DEFAULT_LIMIT)
+        .clamp(1, ADMIN_USERS_MAX_LIMIT);
+    let offset = params.pagination.offset();
+    let (users, total) = tokio::try_join!(
+        search.fetch_page(&state.db, i64::from(limit), i64::from(offset)),
+        search.count(&state.db),
+    )?;
+    Ok(Json(AdminUsersPage { users, total }))
 }

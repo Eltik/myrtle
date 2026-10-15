@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Heart, Settings } from "lucide-react";
 import { useMemo } from "react";
 import { WhatsNewButton } from "#/components/changelog/WhatsNewButton";
+import { MaintenancePill } from "#/components/maintenance/MaintenanceCountdown";
 import { Button } from "#/components/ui/button";
 import { Separator } from "#/components/ui/separator";
 import { useAuth } from "#/hooks/use-auth";
@@ -34,12 +35,35 @@ export default function Header() {
             items: tools.map((tool) => ({ href: tool.href, label: t(tool.labelKey), desc: t(tool.descKey), icon: tool.icon })),
         }));
         const toolItems: INavItem[] = toolSections.flatMap((s) => s.items);
-        const collectionItems: INavItem[] = [
-            { href: "/operators", label: t("header.collection.operators.label"), desc: t("header.collection.operators.desc"), icon: "shield" },
-            { href: "/enemies", label: t("header.collection.enemies.label"), desc: t("header.collection.enemies.desc"), icon: "crosshair" },
-            { href: "/stages", label: t("header.collection.stages.label"), desc: t("header.collection.stages.desc"), icon: "map" },
-            { href: "/stories", label: t("header.collection.stories.label"), desc: t("header.collection.stories.desc"), icon: "book" },
+        // Seven entries read as one undifferentiated list, so the menu groups
+        // them by what a visitor came to do: look up combat data, read the
+        // lore, or browse media and notices. Order inside a group is the old
+        // flat order; only Archives moves, up beside Stories.
+        const collectionSections: INavSection[] = [
+            {
+                title: t("header.collection.section.data"),
+                items: [
+                    { href: "/operators", label: t("header.collection.operators.label"), desc: t("header.collection.operators.desc"), icon: "shield" },
+                    { href: "/enemies", label: t("header.collection.enemies.label"), desc: t("header.collection.enemies.desc"), icon: "crosshair" },
+                    { href: "/stages", label: t("header.collection.stages.label"), desc: t("header.collection.stages.desc"), icon: "map" },
+                ],
+            },
+            {
+                title: t("header.collection.section.lore"),
+                items: [
+                    { href: "/stories", label: t("header.collection.stories.label"), desc: t("header.collection.stories.desc"), icon: "book" },
+                    { href: "/archives", label: t("header.collection.archives.label"), desc: t("header.collection.archives.desc"), icon: "users" },
+                ],
+            },
+            {
+                title: t("header.collection.section.media"),
+                items: [
+                    { href: "/gallery/music", label: t("header.collection.music.label"), desc: t("header.collection.music.desc"), icon: "music" },
+                    { href: "/announcements", label: t("header.collection.news.label"), desc: t("header.collection.news.desc"), icon: "newspaper" },
+                ],
+            },
         ];
+        const collectionItems: INavItem[] = collectionSections.flatMap((s) => s.items);
         const gachaItems: INavItem[] = [
             { href: "/gacha/community", label: t("header.gacha.community.label"), desc: t("header.gacha.community.desc"), icon: "users" },
             { href: "/gacha/history", label: t("header.gacha.history.label"), desc: t("header.gacha.history.desc"), icon: "history" },
@@ -51,7 +75,7 @@ export default function Header() {
         ];
         return [
             { href: "/", label: t("header.home") },
-            { href: "/operators", label: t("header.collection"), items: collectionItems },
+            { href: "/operators", label: t("header.collection"), items: collectionItems, sections: collectionSections },
             { href: "/tools", label: t("header.tools"), items: toolItems, sections: toolSections },
             { href: "/gacha", label: t("header.gacha"), items: gachaItems },
             { href: "/tier-lists", label: t("header.tierLists") },
@@ -60,21 +84,16 @@ export default function Header() {
     }, [t, user]);
 
     return (
-        <header className="sticky top-0 z-50 w-full border-border border-b bg-background/80 backdrop-blur-lg backdrop-saturate-150 supports-backdrop-filter:bg-background/60">
-            <div className="flex h-14 items-center gap-2 px-3 sm:h-16 sm:gap-3.5 sm:px-4">
+        <header className="sticky top-0 z-50 h-(--site-header-height) w-full border-border border-b bg-background/80 backdrop-blur-lg backdrop-saturate-150 supports-backdrop-filter:bg-background/60">
+            <div className="flex h-full items-center gap-2 px-3 sm:gap-3.5 sm:px-4">
                 <div className="flex flex-1 items-center gap-2 sm:gap-4">
                     <MobileNav items={navItems} />
                     <Link to="/" className="flex min-w-0 shrink items-center gap-2 text-foreground no-underline">
                         <img src="/logo/bust_128.png" alt="" width={28} height={28} className="h-7 w-7 shrink-0 object-contain" />
-                        {/* The wordmark yields below `sm`, not any control.
-                            The action cluster is five tap targets on a phone
-                            (search, language, theme, what's new, account) and
-                            a signed-out visitor's "Login" is a text button,
-                            which together overran a 390px bar and pushed Login
-                            off-screen. This span is ~82px of the ~40px deficit
-                            and the only element whose loss costs no function:
-                            the bust stays as the brand mark, and the drawer
-                            header still carries the full wordmark. */}
+                        {/* The wordmark goes below `sm`: five tap targets plus the text
+                            "Login" overran a 390px bar by ~40px and pushed Login off-screen.
+                            The wordmark is ~82px and the only thing that costs no function
+                            (the bust stays, and the drawer header has the full wordmark). */}
                         <span className="hidden font-semibold text-[15px] tracking-tight sm:inline">myrtle.moe</span>
                         <span className="hidden rounded-[5px] border border-border bg-muted/60 px-1.5 py-0.75 font-medium font-mono text-[10.5px] text-muted-foreground leading-none sm:inline-block">v3</span>
                     </Link>
@@ -100,10 +119,17 @@ export default function Header() {
                             </svg>
                         </Button>
 
+                        <MaintenancePill />
+
                         <Separator orientation="vertical" className="mx-1 hidden h-5 sm:block" />
 
-                        <LanguageToggle />
-                        <ThemeToggle />
+                        {/* Below `sm` language and theme live in the hamburger drawer: a phone
+                            bar of search, maintenance pill, two toggles, the bell and the avatar
+                            read as clutter and overran 320px. The bell stays for its unread dot. */}
+                        <div className="hidden sm:contents">
+                            <LanguageToggle />
+                            <ThemeToggle />
+                        </div>
                         <WhatsNewButton />
                         {/* Signed-out visitors have no avatar menu, so the two
                             outbound links stay in the bar for them. Signed-in

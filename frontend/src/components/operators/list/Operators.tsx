@@ -7,14 +7,12 @@ import { PageHeader } from "#/components/ui/page-header";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { useOperatorName } from "#/hooks/use-operator-name";
 import { noteHasContent, operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
-import { operatorOwnershipQueryOptions, operatorsIndexQueryOptions, operatorsListQueryOptions } from "#/lib/api/operators";
+import { type IOperatorExportFields, operatorOwnershipQueryOptions, operatorsExportFieldsQueryOptions, operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { upcomingQueryOptions } from "#/lib/api/upcoming";
 import { operatorsExportSchema } from "#/lib/export";
 import { type TypedRichT, useGamedataServer, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { compactForSearch } from "#/lib/search/fuzzy";
 import { Route } from "#/routes/operators";
-import type { IOperatorListItem, OperatorRarityTier } from "#/types/operators";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 import { Skeleton } from "../../ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../../ui/tooltip";
@@ -29,6 +27,7 @@ import { Pagination, PaginationCompact } from "./impl/components/Pagination";
 import { FILTERS_VISIBLE_KEY, HAS_NOTES_LABEL_KEY, ITEMS_PER_PAGE, ITEMS_PER_PAGE_KEY, ITEMS_PER_PAGE_OPTIONS, type ItemsPerPage, LIST_GRID_COLS, MIN_RARITY_FOR_E2, PAGE_KEY, SORT_OPTIONS, STAT_METRIC_KEY, STAT_METRICS, VIEW_MODE_KEY, VIEW_MODES } from "./impl/constants";
 import type { messages as listConstantsMessages } from "./impl/constants.messages";
 import { enrichOperators } from "./impl/enrich";
+import { operatorFilterPredicate } from "./impl/matchFilters";
 import { buildSharedChips } from "./impl/shared-filters";
 import type { IOperatorExportRow, IOperatorOwnershipInfo, IOperatorView, SortOption, SortOrder, StatMetric, ViewMode } from "./impl/types";
 import { useOperatorFilters } from "./impl/useOperatorFilters";
@@ -104,23 +103,11 @@ export function OperatorsList() {
     const operatorName = useOperatorName();
     const isUpcoming = filters.availability === "upcoming";
 
-    const upcomingFiltered = useMemo(() => {
-        const query = compactForSearch(filters.searchQuery.trim());
-        const classes = new Set(filters.classes);
-        const subclasses = new Set(filters.subclasses);
-        const rarities = new Set(filters.rarities);
-        const nations = new Set(filters.nations);
-        return upcoming
-            .filter((op) => {
-                if (query && !compactForSearch(`${op.name} ${op.appellation ?? ""} ${op.subProfessionId}`).includes(query)) return false;
-                if (classes.size && !classes.has(op.profession)) return false;
-                if (subclasses.size && !subclasses.has(op.subProfessionId)) return false;
-                if (rarities.size && !rarities.has(`TIER_${op.rarity}` as OperatorRarityTier)) return false;
-                if (nations.size && !nations.has(op.nationId)) return false;
-                return true;
-            })
-            .sort((a, b) => b.rarity - a.rarity || operatorName(a).localeCompare(operatorName(b)));
-    }, [upcoming, filters.searchQuery, filters.classes, filters.subclasses, filters.rarities, filters.nations, operatorName]);
+    // The CN-only list runs the same predicate as the Global one. It used to apply only search, class,
+    // subclass, rarity and nation, so a race, faction, gender, birthplace, artist, CV or notes filter
+    // showed every upcoming operator under a "Showing N of N" that read as a filtered result.
+    const enrichedUpcoming = useMemo(() => enrichOperators(upcoming, notedIds, undefined), [upcoming, notedIds]);
+    const upcomingFiltered = useMemo(() => enrichedUpcoming.filter(operatorFilterPredicate(filters)).sort((a, b) => b.rarity - a.rarity || operatorName(a).localeCompare(operatorName(b))), [enrichedUpcoming, filters, operatorName]);
 
     const [viewMode, setViewMode] = useLocalStorageState<ViewMode>(VIEW_MODE_KEY, "grid", {
         parse: (raw) => (VIEW_MODES.has(raw as ViewMode) ? (raw as ViewMode) : undefined),
@@ -165,10 +152,9 @@ export function OperatorsList() {
         [navigate],
     );
 
-    // Arriving with no page in the URL - the breadcrumb out of an operator, the
-    // nav link - resumes the page you were last on, the way the filters and the
-    // view mode already resume. A page in the URL is explicit and always wins,
-    // which is what keeps browser back landing exactly where it left.
+    // No page in the URL (the breadcrumb out of an operator, the nav link)
+    // resumes the last page, like the filters and view mode do. A page in the
+    // URL always wins, which keeps browser back landing where it left.
     const pageRestoredRef = useRef(false);
     useEffect(() => {
         if (pageRestoredRef.current) return;
@@ -185,12 +171,11 @@ export function OperatorsList() {
     const [exportOpen, setExportOpen] = useState(false);
 
     // The export dialog offers full-table-only fields (descriptions, item usage,
-    // skin art, etc.) that the slim operators index doesn't carry. Fetch the full
-    // operator table lazily - only once the dialog is opened - and merge those
-    // fields onto the rows we hand the dialog.
-    const { data: fullOperators } = useQuery({ ...operatorsListQueryOptions(server), enabled: exportOpen });
+    // skin art) the slim index lacks. Fetched only once the dialog opens; the
+    // whole table is too large to return to the browser.
+    const { data: fullOperators } = useQuery({ ...operatorsExportFieldsQueryOptions(server), enabled: exportOpen });
     const fullById = useMemo(() => {
-        const map = new Map<string, IOperatorListItem>();
+        const map = new Map<string, IOperatorExportFields>();
         for (const op of fullOperators ?? []) if (op.id) map.set(op.id, op);
         return map;
     }, [fullOperators]);
@@ -242,8 +227,8 @@ export function OperatorsList() {
         return chips;
     }, [filters, filterOptions.labels, removeFrom, setHasNotes, t]);
 
-    // Only the export dialog consumes these, and the full-table merge (toExportRow)
-    // is empty until it opens - so skip the row rebuild entirely while it's closed.
+    // Only the export dialog reads these, and `toExportRow`'s merge is empty until
+    // it opens, so skip the rebuild while it's closed.
     const exportAllRows = useMemo(() => (exportOpen ? enriched.map(toExportRow) : EMPTY_EXPORT_ROWS), [exportOpen, enriched, toExportRow]);
     const exportFilteredRows = useMemo(() => (exportOpen ? filteredOperators.map(toExportRow) : EMPTY_EXPORT_ROWS), [exportOpen, filteredOperators, toExportRow]);
     const exportPageRows = useMemo(() => (exportOpen ? paginated.map(toExportRow) : EMPTY_EXPORT_ROWS), [exportOpen, paginated, toExportRow]);
@@ -313,7 +298,7 @@ export function OperatorsList() {
                             <Tooltip>
                                 <TooltipTrigger
                                     render={
-                                        <button type="button" title={t("list.viewMode.grid")} data-on={viewMode === "grid" || undefined} onClick={() => setViewMode("grid")} aria-pressed={viewMode === "grid"}>
+                                        <button type="button" aria-label={t("list.viewMode.grid")} data-on={viewMode === "grid" || undefined} onClick={() => setViewMode("grid")} aria-pressed={viewMode === "grid"}>
                                             <LayoutGrid className="h-4 w-4" aria-hidden="true" />
                                         </button>
                                     }
@@ -325,7 +310,7 @@ export function OperatorsList() {
                             <Tooltip>
                                 <TooltipTrigger
                                     render={
-                                        <button type="button" title={t("list.viewMode.compact")} data-on={viewMode === "compact" || undefined} onClick={() => setViewMode("compact")} aria-pressed={viewMode === "compact"}>
+                                        <button type="button" aria-label={t("list.viewMode.compact")} data-on={viewMode === "compact" || undefined} onClick={() => setViewMode("compact")} aria-pressed={viewMode === "compact"}>
                                             <Rows3 className="h-4 w-4" aria-hidden="true" />
                                         </button>
                                     }
@@ -337,7 +322,7 @@ export function OperatorsList() {
                             <Tooltip>
                                 <TooltipTrigger
                                     render={
-                                        <button type="button" title={t("list.viewMode.list")} data-on={viewMode === "list" || undefined} onClick={() => setViewMode("list")} aria-pressed={viewMode === "list"}>
+                                        <button type="button" aria-label={t("list.viewMode.list")} data-on={viewMode === "list" || undefined} onClick={() => setViewMode("list")} aria-pressed={viewMode === "list"}>
                                             <LayoutList className="h-4 w-4" aria-hidden="true" />
                                         </button>
                                     }
@@ -399,15 +384,23 @@ export function OperatorsList() {
                                     ))}
                                 </SelectContent>
                             </Select>
-                            <button
-                                type="button"
-                                className="inline-flex h-8 w-8 cursor-pointer appearance-none items-center justify-center rounded-md border-0 bg-transparent p-0 text-muted-foreground transition-[background-color,color] duration-150 hover:bg-secondary hover:text-foreground"
-                                title={filters.sortOrder === "asc" ? t("list.sort.asc") : t("list.sort.desc")}
-                                onClick={() => setSortOrder((filters.sortOrder === "asc" ? "desc" : "asc") as SortOrder)}
-                                aria-label={t("list.sort.toggleAria")}
-                            >
-                                {filters.sortOrder === "asc" ? <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" /> : <ArrowDown className="h-3.5 w-3.5" aria-hidden="true" />}
-                            </button>
+                            <Tooltip>
+                                <TooltipTrigger
+                                    render={
+                                        <button
+                                            type="button"
+                                            className="inline-flex h-8 w-8 cursor-pointer appearance-none items-center justify-center rounded-md border-0 bg-transparent p-0 text-muted-foreground transition-[background-color,color] duration-150 hover:bg-secondary hover:text-foreground"
+                                            onClick={() => setSortOrder((filters.sortOrder === "asc" ? "desc" : "asc") as SortOrder)}
+                                            aria-label={t("list.sort.toggleAria")}
+                                        />
+                                    }
+                                >
+                                    {filters.sortOrder === "asc" ? <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" /> : <ArrowDown className="h-3.5 w-3.5" aria-hidden="true" />}
+                                </TooltipTrigger>
+                                <TooltipPopup side="top" sideOffset={8}>
+                                    {filters.sortOrder === "asc" ? t("list.sort.asc") : t("list.sort.desc")}
+                                </TooltipPopup>
+                            </Tooltip>
                         </div>
 
                         <div className="inline-flex h-10 items-center rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] p-1">

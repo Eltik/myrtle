@@ -63,6 +63,14 @@ export const messages = {
         text: "Couldn't disconnect",
         description: "Error toast title when deleting the stored game token failed. The body explains why (offline, signed out, or the server's own reason).",
     },
+    "toast.deleted.title": {
+        text: "Your data is gone",
+        description: "Success toast title after the account and all its data were deleted. Shown on the home page.",
+    },
+    "toast.deleted.body": {
+        text: "We deleted your account and signed you out.",
+        description: "Success toast body after the account and all its data were deleted.",
+    },
     "toast.signOutFailed.title": {
         text: "Couldn't sign out",
         description: "Error toast title when ending the browser session failed. The body explains why (offline, signed out, or the server's own reason).",

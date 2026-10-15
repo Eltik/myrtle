@@ -1,10 +1,11 @@
+use std::collections::{HashMap, VecDeque};
 use std::time::{Duration, Instant};
 
 use crate::audit;
 use crate::db::{self, AntiSpamAction, AntiSpamPolicy};
 use crate::types::{AntiSpamPolicies, Data, Error, PingHistory};
 use poise::{FrameworkContext, serenity_prelude::FullEvent::Ready};
-use serenity::all::EditMember;
+use serenity::all::{EditMember, Interaction};
 use serenity::model::Timestamp;
 use serenity::model::channel::{Message, Reaction};
 use serenity::model::id::{GuildId, UserId};
@@ -12,9 +13,9 @@ use serenity::{
     all::prelude::Context,
     client::FullEvent::{
         self, GuildAuditLogEntryCreate, GuildBanAddition, GuildBanRemoval, GuildDelete,
-        GuildMemberAddition, GuildMemberRemoval, Message as MessageCreate, MessageDelete,
-        MessageDeleteBulk, MessageUpdate, ReactionAdd, ReactionRemove, ReactionRemoveAll,
-        ReactionRemoveEmoji,
+        GuildMemberAddition, GuildMemberRemoval, InteractionCreate, Message as MessageCreate,
+        MessageDelete, MessageDeleteBulk, MessageUpdate, ReactionAdd, ReactionRemove,
+        ReactionRemoveAll, ReactionRemoveEmoji, VoiceStateUpdate,
     },
 };
 
@@ -28,11 +29,16 @@ pub async fn event_handler(
     data: &Data,
 ) -> Result<(), Error> {
     let bot_id = framework.bot_id;
-    // dispatcher grows additional arms over time; keep `match` over `if let`
-    #[allow(clippy::single_match)]
     match event {
         Ready { data_about_bot, .. } => {
             tracing::info!("{} is connected!", data_about_bot.user.name);
+        }
+        // Poise answers commands and autocomplete; select menus come through here, routed by
+        // their custom_id prefix.
+        InteractionCreate {
+            interaction: Interaction::Component(component),
+        } if crate::cmds::operator::is_ours(&component.data.custom_id) => {
+            crate::cmds::operator::handle_component(ctx, data, component).await;
         }
         GuildMemberAddition { new_member, .. } => {
             match db::get_auto_role(&data.pool, new_member.guild_id).await {
@@ -114,12 +120,22 @@ pub async fn event_handler(
             .await;
         }
         MessageCreate { new_message } => {
-            if let Err(e) = handle_message(ctx, data, bot_id, new_message).await {
-                tracing::error!(
-                    "Antispam handler failed for message {}: {e}",
-                    new_message.id
-                );
+            let flagged = handle_message(ctx, data, bot_id, new_message)
+                .await
+                .unwrap_or_else(|e| {
+                    tracing::error!(
+                        "Antispam handler failed for message {}: {e}",
+                        new_message.id
+                    );
+                    false
+                });
+            // A message antispam acted on (deleted, or its author warned or removed) is not read out.
+            if !flagged {
+                crate::tts::on_message(&data.tts, ctx, bot_id, new_message);
             }
+        }
+        VoiceStateUpdate { new, .. } => {
+            crate::tts::on_voice_state(&data.tts, ctx, bot_id, new);
         }
         MessageUpdate {
             old_if_available,
@@ -232,6 +248,7 @@ async fn handle_reaction(
 
 /// Run both antispam checks (per-message + rolling window) against `msg` and execute the
 /// configured action on a violation. Silently returns for DMs, bots, and guilds with no policy.
+/// Returns whether an action ran.
 //
 // `significant_drop_tightening` flags the write guard in the rolling-window block, but `entry`
 // borrows from the guard so the suggested rewrite doesn't typecheck. Allow at the fn level
@@ -242,31 +259,31 @@ async fn handle_message(
     data: &Data,
     bot_id: UserId,
     msg: &Message,
-) -> Result<(), Error> {
+) -> Result<bool, Error> {
     if msg.author.bot || msg.author.id == bot_id {
-        return Ok(());
+        return Ok(false);
     }
     let Some(guild_id) = msg.guild_id else {
-        return Ok(());
+        return Ok(false);
     };
     let Some(policy) = data.antispam_policies.read().await.get(&guild_id).cloned() else {
-        return Ok(());
+        return Ok(false);
     };
 
     if let Some(exempt_role) = policy.exempt_role_id
         && let Some(member) = msg.member.as_ref()
         && member.roles.contains(&exempt_role)
     {
-        return Ok(());
+        return Ok(false);
     }
 
-    // `msg.mentions` and `msg.mention_roles` are *deduplicated* — pinging the same target
+    // `msg.mentions` and `msg.mention_roles` are *deduplicated*: pinging the same target
     // five times yields one entry. We want the raw token count so the limit reflects what
     // a human reads as "pings in this message", so parse `msg.content` directly. Requires
     // the MESSAGE_CONTENT intent, which is already requested in main.rs.
     let pings = count_mention_tokens(&msg.content);
     if pings == 0 {
-        return Ok(());
+        return Ok(false);
     }
 
     let mut triggered = pings > policy.max_per_message;
@@ -275,19 +292,11 @@ async fn handle_message(
         let now = Instant::now();
         let cutoff = Duration::from_secs(u64::from(window_secs));
         let key = (guild_id, msg.author.id);
-        // Scope the write guard so it drops before we run the action. The borrow checker
-        // forces `hist` to live as long as `entry`, so clippy's significant_drop_tightening
-        // suggestion to merge them doesn't typecheck; the block is the tightest we can do.
+        // Scope the write guard so it drops before we run the action.
         let total: u32 = {
             let mut hist = data.ping_history.write().await;
             let entry = hist.entry(key).or_default();
-            while let Some(&(t, _)) = entry.front() {
-                if now.duration_since(t) > cutoff {
-                    entry.pop_front();
-                } else {
-                    break;
-                }
-            }
+            drop_expired(entry, now, cutoff);
             entry.push_back((now, pings));
             entry.iter().map(|(_, p)| *p).sum()
         };
@@ -297,7 +306,7 @@ async fn handle_message(
     }
 
     if !triggered {
-        return Ok(());
+        return Ok(false);
     }
 
     tracing::info!(
@@ -308,10 +317,21 @@ async fn handle_message(
         policy.action.as_db_str(),
     );
     execute_action(ctx, &policy, guild_id, msg).await;
-    Ok(())
+    Ok(true)
 }
 
-/// Count raw mention tokens — `<@123>`, `<@!123>`, `<@&123>` — in `content`. Each occurrence
+/// Drop the entries at the front of a user's ping history older than `cutoff` at `now`.
+fn drop_expired(entries: &mut VecDeque<(Instant, u32)>, now: Instant, cutoff: Duration) {
+    while let Some(&(t, _)) = entries.front() {
+        if now.duration_since(t) > cutoff {
+            entries.pop_front();
+        } else {
+            break;
+        }
+    }
+}
+
+/// Count raw mention tokens (`<@123>`, `<@!123>`, `<@&123>`) in `content`. Each occurrence
 /// counts separately, so `@me @me @me` returns 3 (unlike `msg.mentions.len()` which dedupes).
 const fn count_mention_tokens(content: &str) -> u32 {
     let bytes = content.as_bytes();
@@ -419,7 +439,7 @@ pub async fn run_ping_history_sweep(history: PingHistory, policies: AntiSpamPoli
 /// One pass of the sweep. Returned for tracing; the loop above is the only caller.
 async fn sweep_once(history: &PingHistory, policies: &AntiSpamPolicies) -> usize {
     // Snapshot the policy map so we don't hold both locks at once.
-    let policy_snapshot: std::collections::HashMap<_, _> = policies
+    let policy_snapshot: HashMap<_, _> = policies
         .read()
         .await
         .iter()
@@ -435,15 +455,78 @@ async fn sweep_once(history: &PingHistory, policies: &AntiSpamPolicies) -> usize
         let Some(Some(window_secs)) = policy_snapshot.get(guild_id).copied() else {
             return false;
         };
-        let cutoff = Duration::from_secs(u64::from(window_secs));
-        while let Some(&(t, _)) = entries.front() {
-            if now.duration_since(t) > cutoff {
-                entries.pop_front();
-            } else {
-                break;
-            }
-        }
+        drop_expired(entries, now, Duration::from_secs(u64::from(window_secs)));
         !entries.is_empty()
     });
     before - hist.len()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{count_mention_tokens, drop_expired};
+    use std::collections::VecDeque;
+    use std::time::{Duration, Instant};
+
+    #[test]
+    fn counts_user_nickname_and_role_mentions() {
+        assert_eq!(count_mention_tokens("<@123>"), 1);
+        assert_eq!(count_mention_tokens("<@!123>"), 1);
+        assert_eq!(count_mention_tokens("<@&456>"), 1);
+        assert_eq!(count_mention_tokens("hi <@1> and <@!2> and <@&3>!"), 3);
+    }
+
+    #[test]
+    fn repeated_mentions_each_count() {
+        assert_eq!(count_mention_tokens("<@1><@1><@1>"), 3);
+        assert_eq!(count_mention_tokens("<@1> <@1> <@1>"), 3);
+    }
+
+    #[test]
+    fn ignores_malformed_tokens() {
+        for text in [
+            "",
+            "<@>",
+            "<@!>",
+            "<@abc>",
+            "<@123",
+            "@123>",
+            "<#123>",
+            "<@ 123>",
+            "<@!&1>",
+            "<:emoji:123>",
+        ] {
+            assert_eq!(count_mention_tokens(text), 0, "{text:?}");
+        }
+    }
+
+    #[test]
+    fn recovers_after_a_broken_token() {
+        assert_eq!(count_mention_tokens("<@<@5>"), 1);
+        assert_eq!(count_mention_tokens("<@12x<@34>"), 1);
+    }
+
+    #[test]
+    fn drop_expired_pops_only_entries_older_than_the_cutoff() {
+        let now = Instant::now();
+        let cutoff = Duration::from_secs(10);
+        let at = |secs_ago: u64| now.checked_sub(Duration::from_secs(secs_ago)).unwrap();
+        let mut entries: VecDeque<(Instant, u32)> =
+            VecDeque::from([(at(30), 1), (at(11), 2), (at(10), 3), (at(2), 4)]);
+        drop_expired(&mut entries, now, cutoff);
+        // Exactly at the cutoff is kept: only strictly older entries go.
+        assert_eq!(entries.iter().map(|e| e.1).collect::<Vec<_>>(), vec![3, 4]);
+    }
+
+    #[test]
+    fn drop_expired_stops_at_the_first_fresh_entry() {
+        let now = Instant::now();
+        let at = |secs_ago: u64| now.checked_sub(Duration::from_secs(secs_ago)).unwrap();
+        // Out-of-order history: an old entry behind a fresh one is not reached.
+        let mut entries: VecDeque<(Instant, u32)> = VecDeque::from([(at(1), 1), (at(60), 2)]);
+        drop_expired(&mut entries, now, Duration::from_secs(10));
+        assert_eq!(entries.len(), 2);
+        let mut empty: VecDeque<(Instant, u32)> = VecDeque::new();
+        drop_expired(&mut empty, now, Duration::from_secs(10));
+        assert!(empty.is_empty());
+    }
 }

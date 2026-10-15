@@ -105,10 +105,9 @@ export function EnemiesList() {
         [navigate],
     );
 
-    // Arriving with no page in the URL - the breadcrumb out of an enemy, the nav
-    // link - resumes the page you were last on, the way the filters and the view
-    // mode already resume. A page in the URL is explicit and always wins, which
-    // is what keeps browser back landing exactly where it left.
+    // Arriving with no page in the URL (the breadcrumb out of an enemy, the nav
+    // link) resumes the page you were last on, like the filters and view mode do.
+    // A page in the URL always wins, so browser back lands exactly where it left.
     const pageRestoredRef = useRef(false);
     useEffect(() => {
         if (pageRestoredRef.current) return;
@@ -123,7 +122,7 @@ export function EnemiesList() {
     const handlePageChange = useCallback((next: number) => goToPage(next, true), [goToPage]);
     const resetPage = useCallback(() => goToPage(1, false), [goToPage]);
 
-    const { filters, filteredEnemies, setSearchQuery, setLevels, setDamageTypes, setAttackTypes, setRaces, setAppearsIn, setSortBy, setSortOrder, clearFilters, activeFilterCount } = useEnemyFilters(enriched, locationIndex, resetPage);
+    const { filters, filteredEnemies, setSearchQuery, setLevels, setDamageTypes, setAttackTypes, setRaces, setImmunities, setAppearsIn, setSortBy, setSortOrder, clearFilters, activeFilterCount } = useEnemyFilters(enriched, locationIndex, resetPage);
     // A restored "Appears In" filter matches nothing until the stage table arrives,
     // so the counter and the grid show loading rather than a result of zero.
     const locationsPending = stageTable === undefined && filters.appearsIn.length > 0;
@@ -164,7 +163,7 @@ export function EnemiesList() {
             <PageHeader className="pb-1.5" breadcrumbLabel={t("list.breadcrumb")} breadcrumb={[t("list.breadcrumb.collection"), t("list.breadcrumb.enemies")]} title={t("list.title")} description={rt("list.blurb", { count: <strong className="text-foreground">{visibleCount}</strong> })} />
 
             <main className="flex min-w-0 flex-col gap-5.5 pt-5" aria-label={t("list.results.aria")}>
-                <EnemyFilterChips filters={filters} setLevels={setLevels} setDamageTypes={setDamageTypes} setAttackTypes={setAttackTypes} setRaces={setRaces} races={availableRaces} />
+                <EnemyFilterChips filters={filters} setLevels={setLevels} setDamageTypes={setDamageTypes} setAttackTypes={setAttackTypes} setRaces={setRaces} setImmunities={setImmunities} races={availableRaces} />
 
                 {locationTree.length > 0 && <EnemyLocationFilter tree={locationTree} selected={filters.appearsIn} onChange={setAppearsIn} />}
 
@@ -191,7 +190,7 @@ export function EnemiesList() {
                             <Tooltip>
                                 <TooltipTrigger
                                     render={
-                                        <button type="button" title={t("list.viewMode.grid")} data-on={viewMode === "grid" || undefined} onClick={() => setViewMode("grid")} aria-pressed={viewMode === "grid"}>
+                                        <button type="button" aria-label={t("list.viewMode.grid")} data-on={viewMode === "grid" || undefined} onClick={() => setViewMode("grid")} aria-pressed={viewMode === "grid"}>
                                             <LayoutGrid className="h-3.5 w-3.5" aria-hidden="true" />
                                         </button>
                                     }
@@ -203,7 +202,7 @@ export function EnemiesList() {
                             <Tooltip>
                                 <TooltipTrigger
                                     render={
-                                        <button type="button" title={t("list.viewMode.list")} data-on={viewMode === "list" || undefined} onClick={() => setViewMode("list")} aria-pressed={viewMode === "list"}>
+                                        <button type="button" aria-label={t("list.viewMode.list")} data-on={viewMode === "list" || undefined} onClick={() => setViewMode("list")} aria-pressed={viewMode === "list"}>
                                             <LayoutList className="h-3.5 w-3.5" aria-hidden="true" />
                                         </button>
                                     }
@@ -233,15 +232,23 @@ export function EnemiesList() {
                                     ))}
                                 </SelectContent>
                             </Select>
-                            <button
-                                type="button"
-                                className="inline-flex h-7.5 w-7.5 cursor-pointer appearance-none items-center justify-center rounded-md border-0 bg-transparent p-0 text-muted-foreground transition-[background-color,color] duration-150 hover:bg-secondary hover:text-foreground"
-                                title={filters.sortOrder === "asc" ? t("list.sort.asc") : t("list.sort.desc")}
-                                onClick={() => setSortOrder((filters.sortOrder === "asc" ? "desc" : "asc") as SortOrder)}
-                                aria-label={t("list.sort.toggle")}
-                            >
-                                {filters.sortOrder === "asc" ? <ArrowUp className="h-3 w-3" aria-hidden="true" /> : <ArrowDown className="h-3 w-3" aria-hidden="true" />}
-                            </button>
+                            <Tooltip>
+                                <TooltipTrigger
+                                    render={
+                                        <button
+                                            type="button"
+                                            className="inline-flex h-7.5 w-7.5 cursor-pointer appearance-none items-center justify-center rounded-md border-0 bg-transparent p-0 text-muted-foreground transition-[background-color,color] duration-150 hover:bg-secondary hover:text-foreground"
+                                            onClick={() => setSortOrder((filters.sortOrder === "asc" ? "desc" : "asc") as SortOrder)}
+                                            aria-label={t("list.sort.toggle")}
+                                        />
+                                    }
+                                >
+                                    {filters.sortOrder === "asc" ? <ArrowUp className="h-3 w-3" aria-hidden="true" /> : <ArrowDown className="h-3 w-3" aria-hidden="true" />}
+                                </TooltipTrigger>
+                                <TooltipPopup side="top" sideOffset={8}>
+                                    {filters.sortOrder === "asc" ? t("list.sort.asc") : t("list.sort.desc")}
+                                </TooltipPopup>
+                            </Tooltip>
                         </div>
 
                         <div className="inline-flex h-9.5 items-center rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_50%,transparent)] p-0.75">

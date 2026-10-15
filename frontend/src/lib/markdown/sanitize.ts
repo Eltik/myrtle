@@ -22,6 +22,6 @@ export function sanitizeHref(raw: string): string | null {
         return (ALLOWED_SCHEMES as readonly string[]).includes(`${scheme}:`) ? href : null;
     }
 
-    // No scheme and not a relative path - treat as relative.
+    // No scheme: treat as relative.
     return href;
 }

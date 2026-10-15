@@ -17,8 +17,39 @@ const FORMULAS_JSON: &str = include_str!("config/operator_formulas.json");
 const HEAL_FORMULAS_JSON: &str = include_str!("config/heal_formulas.json");
 
 pub fn load_formulas() -> HashMap<String, OperatorFormula> {
-    serde_json::from_str(FORMULAS_JSON).expect("Invalid operator_formulas.json")
+    let mut formulas: HashMap<String, OperatorFormula> =
+        serde_json::from_str(FORMULAS_JSON).expect("Invalid operator_formulas.json");
+    for formula in formulas.values_mut() {
+        normalize_default_skill(formula);
+    }
+    formulas
 }
+
+/// Makes `default_skill` one the table can actually compute.
+///
+/// The client opens an operator on `default_skill`, so a default with no formula
+/// shows no DPS until the user picks another skill. Two shapes reach that today:
+/// a default outside `available_skills` (`char_1044_hsgma2` defaults to S2,
+/// but only S1 and S3 are transpiled), which moves to the highest available
+/// skill; and a table with no skills at all (1 and 2 stars, and operators whose
+/// skills were not transpiled), which moves to 0, basic attack, the index the
+/// engine already forces for rarity 2 and below. DPS tables only: `calculate_hps`
+/// never reads the skill map, so the healer defaults are left as shipped.
+fn normalize_default_skill(formula: &mut OperatorFormula) {
+    match formula.available_skills.iter().max() {
+        None => formula.default_skill = 0,
+        Some(&highest) if !formula.available_skills.contains(&formula.default_skill) => {
+            formula.default_skill = highest;
+        }
+        Some(_) => {}
+    }
+}
+
+/// The skill entry for basic attack (`skill_index` 0), which no table carries.
+/// Every entry is the `custom` kind and `calculate_skill_dps` dispatches on the
+/// operator id, so a default entry computes exactly what the operator's function
+/// does with no skill active.
+static BASIC_ATTACK: LazyLock<SkillFormula> = LazyLock::new(SkillFormula::default);
 
 pub fn load_heal_formulas() -> HashMap<String, OperatorFormula> {
     serde_json::from_str(HEAL_FORMULAS_JSON).expect("Invalid heal_formulas.json")
@@ -164,7 +195,11 @@ pub fn calculate_dps(
     let shredded = apply_shreds(enemy, &unit.shreds);
 
     let skill_key = unit.skill_index.to_string();
-    let skill_formula = formula.skills.get(&skill_key)?;
+    let skill_formula = match formula.skills.get(&skill_key) {
+        Some(skill_formula) => skill_formula,
+        None if unit.skill_index == 0 => &BASIC_ATTACK,
+        None => return None,
+    };
 
     // buff_fragile is 0 during skill_dps in the Python reference: the operator never
     // sees external fragile, it is multiplied on after the call.
@@ -230,5 +265,138 @@ fn apply_init_fixups(unit: &mut OperatorUnit, op_id: &str) {
     // way the reference does when no explicit target HP is supplied.
     if op_id == "char_171_bldsk" && unit.skill_index == 1 {
         unit.target_hp = (1000.0 * (f64::from(unit.elite) + 1.0)).max(100.0);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Operators whose `skills` map has no entry for their own `default_skill`.
+    fn default_skill_gaps(formulas: &HashMap<String, OperatorFormula>) -> Vec<String> {
+        let mut gaps: Vec<String> = formulas
+            .iter()
+            .filter(|(_, f)| !f.skills.contains_key(&f.default_skill.to_string()))
+            .map(|(id, _)| id.clone())
+            .collect();
+        gaps.sort();
+        gaps
+    }
+
+    #[test]
+    fn bundled_formula_tables_parse() {
+        assert_eq!(load_formulas().len(), 260);
+        assert_eq!(load_heal_formulas().len(), 61);
+        assert_eq!(supported_operators().len(), 260);
+        assert_eq!(supported_healers().len(), 61);
+    }
+
+    #[test]
+    fn every_available_skill_has_a_formula() {
+        for (id, f) in supported_operators().iter().chain(supported_healers()) {
+            for skill in &f.available_skills {
+                assert!(
+                    f.skills.contains_key(&skill.to_string()),
+                    "{id}: S{skill} listed but has no formula"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn every_formula_skill_is_the_custom_kind() {
+        for (id, f) in supported_operators().iter().chain(supported_healers()) {
+            for (key, skill) in &f.skills {
+                assert_eq!(skill.formula_type, "custom", "{id} S{key}");
+            }
+        }
+    }
+
+    #[test]
+    fn lookups_hit_and_miss() {
+        assert!(get_formula("char_1044_hsgma2").is_some());
+        assert!(get_formula("char_does_not_exist").is_none());
+        assert!(get_heal_formula("char_473_mberry").is_some());
+        assert!(get_heal_formula("char_does_not_exist").is_none());
+    }
+
+    #[test]
+    fn every_dps_default_skill_is_computable() {
+        // The client opens an operator on its default skill. Every default is
+        // either a skill with a formula or 0, basic attack, which `calculate_dps`
+        // serves without one. Before `normalize_default_skill` these eight had
+        // neither and showed no DPS when first opened.
+        for (id, f) in supported_operators() {
+            assert!(
+                f.default_skill == 0 || f.skills.contains_key(&f.default_skill.to_string()),
+                "{id}: default S{} has no formula",
+                f.default_skill
+            );
+        }
+        let basic_attack_defaults: Vec<String> = default_skill_gaps(supported_operators());
+        assert_eq!(
+            basic_attack_defaults,
+            vec![
+                "char_009_12fce",
+                "char_286_cast3",
+                "char_347_jaksel",
+                "char_4000_jnight",
+                "char_4077_palico",
+                "char_501_durin",
+                "char_503_rang",
+            ]
+        );
+        assert_eq!(
+            get_formula("char_1044_hsgma2").map(|f| f.default_skill),
+            Some(3)
+        );
+        assert_eq!(
+            get_formula("char_347_jaksel").map(|f| f.default_skill),
+            Some(0)
+        );
+    }
+
+    #[test]
+    fn normalize_default_skill_shapes() {
+        let mut f: OperatorFormula = serde_json::from_value(serde_json::json!({
+            "name": "x", "class_name": "x", "available_skills": [1, 3],
+            "available_modules": [], "default_skill": 2, "default_potential": 1,
+            "default_module": 0, "skills": {}, "conditionals": []
+        }))
+        .unwrap();
+        normalize_default_skill(&mut f);
+        assert_eq!(f.default_skill, 3, "outside the list moves to the highest");
+        f.default_skill = 1;
+        normalize_default_skill(&mut f);
+        assert_eq!(f.default_skill, 1, "a listed default is kept");
+        f.available_skills.clear();
+        f.default_skill = 3;
+        normalize_default_skill(&mut f);
+        assert_eq!(f.default_skill, 0, "no skills means basic attack");
+    }
+
+    #[test]
+    fn healers_with_no_default_skill_formula() {
+        // `calculate_hps` never consults `skills`, so for healers this gap is
+        // harmless; pinned so a regenerated table that changes it is noticed.
+        assert_eq!(
+            default_skill_gaps(supported_healers()),
+            vec![
+                "char_181_flower",
+                "char_275_breeze",
+                "char_285_medic2",
+                "char_4091_ulika",
+                "char_4163_rosesa",
+                "char_449_glider",
+                "char_473_mberry",
+            ]
+        );
+    }
+
+    #[test]
+    fn skill_formula_default_is_custom_with_no_overrides() {
+        let f = SkillFormula::default();
+        assert_eq!(f.formula_type, "custom");
+        assert!(f.atk_scale_idx.is_none() && f.hits.is_none() && f.damage_type.is_none());
     }
 }

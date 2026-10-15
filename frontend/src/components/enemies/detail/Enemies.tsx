@@ -10,6 +10,7 @@ import { EnemyChibiTab } from "../list/impl/components/EnemyChibi";
 import { enrichEnemy } from "../list/impl/enrich";
 import type { messages } from "./Enemies.messages";
 import { AppearsInTab } from "./impl/AppearsInTab";
+import { SoundsTab } from "./impl/SoundsTab";
 import { EnemyHero, OverviewTab, SkillsTab, StatsTab } from "./impl/sections";
 
 export function EnemyDetail() {
@@ -20,6 +21,7 @@ export function EnemyDetail() {
     const { data: detail } = useSuspenseQuery(enemyDetailQueryOptions(id, server));
 
     const enemy = useMemo(() => (detail ? enrichEnemy(detail.enemy, detail.raceData) : null), [detail]);
+    const audio = detail?.audio ?? [];
 
     if (!enemy) {
         return (
@@ -53,22 +55,28 @@ export function EnemyDetail() {
 
             <Tabs defaultValue="overview" className="mt-5 flex flex-col gap-0">
                 <div className="border-border border-b">
-                    <TabsList className="mb-3">
-                        <TabsTab value="overview" className="h-8 text-[13px]">
+                    {/* Six tabs measure 403 px against a 343 px column at 375 px wide: the strip scrolls sideways instead of pushing Sounds off the page. */}
+                    <TabsList className="mb-3 max-w-full justify-start overflow-x-auto">
+                        <TabsTab value="overview" className="h-8 pointer-coarse:h-11 text-[13px]">
                             {t("detail.tab.overview")}
                         </TabsTab>
-                        <TabsTab value="stats" className="h-8 text-[13px]">
+                        <TabsTab value="stats" className="h-8 pointer-coarse:h-11 text-[13px]">
                             {t("detail.tab.stats")}
                         </TabsTab>
-                        <TabsTab value="skills" className="h-8 text-[13px]">
+                        <TabsTab value="skills" className="h-8 pointer-coarse:h-11 text-[13px]">
                             {t("detail.tab.skills")}
                         </TabsTab>
-                        <TabsTab value="appears" className="h-8 text-[13px]">
+                        <TabsTab value="appears" className="h-8 pointer-coarse:h-11 text-[13px]">
                             {t("detail.tab.appears")}
                         </TabsTab>
-                        <TabsTab value="chibi" className="h-8 text-[13px]">
+                        <TabsTab value="chibi" className="h-8 pointer-coarse:h-11 text-[13px]">
                             {t("detail.tab.chibi")}
                         </TabsTab>
+                        {audio.length > 0 && (
+                            <TabsTab value="sounds" className="h-8 pointer-coarse:h-11 text-[13px]">
+                                {t("detail.tab.sounds")}
+                            </TabsTab>
+                        )}
                     </TabsList>
                 </div>
                 <div className="pt-5">
@@ -87,6 +95,11 @@ export function EnemyDetail() {
                     <TabsPanel value="chibi">
                         <EnemyChibiTab key={enemy.enemyId} enemyId={enemy.enemyId} />
                     </TabsPanel>
+                    {audio.length > 0 && (
+                        <TabsPanel value="sounds">
+                            <SoundsTab enemyId={enemy.enemyId} audio={audio} />
+                        </TabsPanel>
+                    )}
                 </div>
             </Tabs>
         </div>

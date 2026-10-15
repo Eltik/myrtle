@@ -61,6 +61,18 @@ pub enum CacheKey<'a> {
     ItemLeaderboardCatalog {
         server: Option<&'a str>,
     },
+    MusicStats,
+    MusicTopTracks {
+        window: &'a str,
+        limit: u32,
+    },
+    MusicListeners {
+        window: &'a str,
+        sort: &'a str,
+        track: Option<&'a str>,
+        limit: u32,
+        offset: u32,
+    },
     ItemLeaderboardStanding {
         item: &'a str,
         uid: &'a str,
@@ -225,6 +237,20 @@ impl CacheKey<'_> {
             CacheKey::ItemLeaderboardStanding { item, uid, server } => {
                 format!("leaderboard:items:standing:{item}:{server}:{uid}")
             }
+            CacheKey::MusicStats => "music:stats".to_owned(),
+            CacheKey::MusicTopTracks { window, limit } => {
+                format!("music:stats:top_tracks:{window}:{limit}")
+            }
+            CacheKey::MusicListeners {
+                window,
+                sort,
+                track,
+                limit,
+                offset,
+            } => {
+                let track = track.unwrap_or("all");
+                format!("music:stats:listeners:{track}:{window}:{sort}:{limit}:{offset}")
+            }
             CacheKey::SkinPopularity => "skins:popularity".to_owned(),
             CacheKey::OperatorOwnership { server } => format!("operators:ownership:{server}"),
             CacheKey::OperatorBuildStats {
@@ -286,6 +312,9 @@ impl CacheKey<'_> {
             CacheKey::ItemLeaderboard { .. } => Duration::from_mins(5),
             CacheKey::ItemLeaderboardCatalog { .. } => Duration::from_mins(10),
             CacheKey::ItemLeaderboardStanding { .. } => Duration::from_mins(1),
+            CacheKey::MusicStats => Duration::from_mins(1),
+            CacheKey::MusicTopTracks { .. } => Duration::from_mins(5),
+            CacheKey::MusicListeners { .. } => Duration::from_mins(5),
             CacheKey::SkinPopularity => Duration::from_hours(1),
             CacheKey::OperatorOwnership { .. } => Duration::from_hours(1),
             CacheKey::OperatorBuildStats { .. } => Duration::from_hours(1),

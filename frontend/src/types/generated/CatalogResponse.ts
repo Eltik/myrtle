@@ -11,15 +11,14 @@ import type { CatalogStoreyDto } from "./CatalogStoreyDto";
  */
 export type CatalogResponse = {
     /**
-     * Shifts in a base day. A game constant, not a property of any one
-     * player - a base whose rooms only queue two presets still runs three
-     * shifts, alternating across them.
+     * Shifts in a base day. A game constant: a base whose rooms queue only
+     * two presets still runs three shifts, alternating across them.
      */
     shift_count: number;
     rooms: Array<CatalogRoomDto>;
     formulas: Array<CatalogFormulaDto>;
     /**
-     * The floorplan every base shares - what the client draws the board from.
+     * The floorplan every base shares.
      */
     slots: Array<CatalogSlotDto>;
     storeys: Array<CatalogStoreyDto>;

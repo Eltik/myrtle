@@ -24,7 +24,7 @@ import type { StoryEntry } from "#/types/generated/StoryEntry";
 import type { StoryIndex } from "#/types/generated/StoryIndex";
 import { messages } from "./story.messages";
 
-/** Which picture the card's visual side draws, in the order it is tried. */
+/** Which picture the card's visual side draws. */
 export type StoryOgArtKind = "banner" | "cover" | "operator" | "none";
 
 export interface IStoryOgStat {

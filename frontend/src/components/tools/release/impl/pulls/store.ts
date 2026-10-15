@@ -15,8 +15,10 @@ import { DEFAULT_INCOME, type IIncomeSettings } from "./income";
 const STORAGE_KEY = "release-planner:pulls:v1";
 
 export interface IPullsSettings extends IIncomeSettings {
-    /** Rolls since the user's last 6* on the standard/kernel counter. */
-    pity: number;
+    /** Rolls since the user's last 6* on the Standard counter. */
+    standardPity: number;
+    /** Rolls since the user's last 6* on the Kernel counter, which is separate from Standard. */
+    kernelPity: number;
     /** Whether the resource figures were typed by hand rather than synced. */
     manual: boolean;
     /** Horizon for the projection, in days. */
@@ -35,7 +37,8 @@ export interface IPullsSettings extends IIncomeSettings {
 
 export const DEFAULT_PULLS: IPullsSettings = {
     ...DEFAULT_INCOME,
-    pity: 0,
+    standardPity: 0,
+    kernelPity: 0,
     manual: false,
     horizonDays: 180,
     countFreePulls: true,
@@ -83,7 +86,13 @@ function sanitiseTargets(raw: unknown): Record<string, Record<string, number>> {
     return out;
 }
 
-function sanitise(raw: Partial<IPullsSettings> | null): IPullsSettings {
+/**
+ * A stored settings blob, which may predate the current shape. `pity` is the single
+ * counter an earlier build kept for Standard and Kernel together.
+ */
+type IStoredPulls = Partial<IPullsSettings> & { pity?: unknown };
+
+export function sanitise(raw: IStoredPulls | null): IPullsSettings {
     if (!raw) return DEFAULT_PULLS;
     const num = (v: unknown, fallback: number, min = 0, max = Number.MAX_SAFE_INTEGER) => {
         const n = Number(v);
@@ -104,8 +113,12 @@ function sanitise(raw: Partial<IPullsSettings> | null): IPullsSettings {
         greenCertsPerWeek: num(raw.greenCertsPerWeek, 20, 0, 5000),
         greenCertShop: raw.greenCertShop === "phase1" || raw.greenCertShop === "phase2" ? raw.greenCertShop : "off",
         countFreePulls: raw.countFreePulls !== false,
-        // Pity above the hard-pity roll is not a state the game can be in.
-        pity: num(raw.pity, 0, 0, 98),
+        // Pity above the hard-pity roll is not a state the game can be in. An earlier
+        // build kept one `pity` that seeded BOTH counters, so a stored plan in that
+        // shape seeds both from it and reads exactly as it did. A missing field is
+        // checked explicitly: `Number(null)` is 0 and would pass as a real value.
+        standardPity: num(raw.standardPity !== undefined ? raw.standardPity : raw.pity, 0, 0, 98),
+        kernelPity: num(raw.kernelPity !== undefined ? raw.kernelPity : raw.pity, 0, 0, 98),
         manual: raw.manual === true,
         horizonDays: num(raw.horizonDays, 180, 7, 730),
         allocations: sanitiseAllocations(raw.allocations),
@@ -116,7 +129,7 @@ function sanitise(raw: Partial<IPullsSettings> | null): IPullsSettings {
 export function loadPulls(): IPullsSettings {
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? sanitise(JSON.parse(raw) as Partial<IPullsSettings>) : DEFAULT_PULLS;
+        return raw ? sanitise(JSON.parse(raw) as IStoredPulls) : DEFAULT_PULLS;
     } catch {
         return DEFAULT_PULLS;
     }

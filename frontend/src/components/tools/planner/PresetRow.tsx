@@ -6,6 +6,7 @@ import { Button } from "#/components/ui/button";
 import { useErrorMessage } from "#/components/ui/error-message";
 import { Input } from "#/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { deletePlanPresetFn, type IPresetTarget, PLAN_PRESETS_QUERY_KEY, planPresetsQueryOptions, upsertPlanPresetFn } from "#/lib/api/planner";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -89,9 +90,12 @@ export function PresetRow({ target, onLoad }: IPresetRowProps): React.ReactEleme
                         )}
                     </SelectContent>
                 </Select>
-                <Button variant="outline" size="icon" onClick={handleDelete} disabled={!chosen || isBusy} aria-label={t("planner.bulk.presetDelete")} title={t("planner.bulk.presetDelete")}>
-                    <Trash className="size-4" />
-                </Button>
+                <Tooltip>
+                    <TooltipTrigger render={<Button variant="outline" size="icon" onClick={handleDelete} disabled={!chosen || isBusy} aria-label={t("planner.bulk.presetDelete")} />}>
+                        <Trash className="size-4" />
+                    </TooltipTrigger>
+                    <TooltipPopup>{t("planner.bulk.presetDelete")}</TooltipPopup>
+                </Tooltip>
             </div>
             <div className="flex items-center gap-2">
                 <Input

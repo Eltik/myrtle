@@ -13,7 +13,7 @@ pub struct StatsResponse {
     pub users: UserStats,
     pub gacha: GachaPublicStats,
     pub game_data: GameDataStats,
-    pub tier_lists: TierListStats,
+    pub tier_lists: TierListSiteStats,
     pub rosters: RostersStats,
     pub computed_at: String,
 }
@@ -84,12 +84,15 @@ pub struct GameDataStats {
     pub enemies: usize,
 }
 
+// Not named `TierListStats`: the per-list engagement counters
+// (`database::models::tier_list`) have that name, and OpenAPI schemas are keyed
+// by bare type name, so this one replaced them in the document
+// (tests/openapi_schema_names_test.rs).
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
-#[ts(rename = "TierListSiteStats")]
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct TierListStats {
+pub struct TierListSiteStats {
     #[ts(type = "number")]
     pub total: i64,
     #[ts(type = "number")]
@@ -231,7 +234,7 @@ struct GachaStatsRow {
     four_star_count: i64,
 }
 
-async fn fetch_tier_list_stats(db: &PgPool) -> Result<TierListStats, sqlx::Error> {
+async fn fetch_tier_list_stats(db: &PgPool) -> Result<TierListSiteStats, sqlx::Error> {
     let row = sqlx::query_as::<_, TierListStatsRow>(
         r"
         SELECT
@@ -244,7 +247,7 @@ async fn fetch_tier_list_stats(db: &PgPool) -> Result<TierListStats, sqlx::Error
     .fetch_one(db)
     .await?;
 
-    Ok(TierListStats {
+    Ok(TierListSiteStats {
         total: row.total,
         active: row.active,
         total_versions: row.total_versions,

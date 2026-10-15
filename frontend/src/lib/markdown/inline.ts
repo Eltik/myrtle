@@ -2,8 +2,8 @@ import { sanitizeHref } from "./sanitize";
 import type { InlineNode } from "./types";
 
 /**
- * Parses inline markdown (bold, italic, code, links, autolinks, escapes).
- * Input must NOT contain `\n` - the block tokenizer handles line breaks.
+ * Inline markdown: bold, italic, code, links, autolinks, escapes.
+ * Input must NOT contain `\n`; the block tokenizer handles line breaks.
  */
 export function parseInline(src: string): InlineNode[] {
     const nodes: InlineNode[] = [];

@@ -36,21 +36,33 @@ export const messages = {
         text: "Originite Prime",
         description: "Input label. Originite Prime is the premium currency; do not translate.",
     },
-    "release.pulls.resources.pity": {
-        text: "Pulls since last 6★",
-        description: "Input label for the pity counter: how many draws since the last six-star operator.",
+    "release.pulls.resources.pityStandard": {
+        text: "Standard pity",
+        description: "Input label for the Standard pity counter: how many draws on Standard banners since the last six-star operator. 'Standard' is an Arknights banner family.",
     },
-    "release.pulls.resources.pityHint": {
-        text: "Counts on Standard and Kernel banners, which share a counter. Limited and collab banners always start you at zero.",
-        description: "Explanation in the info popover beside the pity input. 'Standard', 'Kernel', 'Limited' and collab are Arknights banner families.",
+    "release.pulls.resources.pityStandardHint": {
+        text: "Pulls since your last 6★ on Standard banners. It carries from one Standard banner to the next and nowhere else.",
+        description: "Explanation in the info popover beside the Standard pity input.",
     },
-    "release.pulls.resources.pityHint.aria": {
-        text: "About the pity counter",
-        description: "Accessible name of the info button beside the pity input that opens the explanation.",
+    "release.pulls.resources.pityStandardHint.aria": {
+        text: "About the Standard pity counter",
+        description: "Accessible name of the info button beside the Standard pity input that opens the explanation.",
+    },
+    "release.pulls.resources.pityKernel": {
+        text: "Kernel pity",
+        description: "Input label for the Kernel pity counter: how many draws on Kernel banners since the last six-star operator. 'Kernel' is an Arknights banner family.",
+    },
+    "release.pulls.resources.pityKernelHint": {
+        text: "Pulls since your last 6★ on Kernel banners, a separate counter from Standard. Every other banner keeps its own count and starts you at zero.",
+        description: "Explanation in the info popover beside the Kernel pity input. 'Kernel' and 'Standard' are Arknights banner families.",
+    },
+    "release.pulls.resources.pityKernelHint.aria": {
+        text: "About the Kernel pity counter",
+        description: "Accessible name of the info button beside the Kernel pity input that opens the explanation.",
     },
     "release.pulls.resources.pityManual": {
-        text: "Type this one in yourself: the game does not report it, so it is the one figure your account cannot fill.",
-        description: "Note under the resource inputs saying the pity counter is not synced from the account, unlike the boxes beside it.",
+        text: "Type the two pity counts in yourself: the game does not report them, so they are the figures your account cannot fill.",
+        description: "Note under the resource inputs saying the two pity counters are not synced from the account, unlike the boxes beside them.",
     },
     "release.pulls.resources.sync": {
         text: "Use my account's data",
@@ -284,6 +296,10 @@ export const messages = {
         text: "{count, plural, one {# banner has} other {# banners have}} no published rate-up detail yet, so the split is inferred from the banner type.",
         description: "Caveat shown once above the list, counting the banners whose rate-up share was inferred.",
     },
+    "release.pulls.plan.noRateUp": {
+        text: "No rate-up on this banner, so there is no operator to aim for. The first 6★ it gives is one you do not own.",
+        description: "Shown in place of the pull targets on a Special Headhunting banner, which boosts no six-star operator.",
+    },
     "release.pulls.plan.freeOnBanner": {
         text: "+{count} free",
         description: "Compact note that a banner hands out this many free pulls of its own.",
@@ -297,11 +313,11 @@ export const messages = {
         description: "Tooltip on the All preset, saying where its number comes from.",
     },
     "release.pulls.plan.sparkTitle": {
-        text: "Commit enough to reach the {spark}-pull exchange. This banner gives {free} free pulls, so {count} of your own get you there.",
-        description: "Tooltip on the Spark preset when the banner hands out free pulls. The exchange trades a fixed number of pulls for the operator outright.",
+        text: "Commit enough to reach {spark} pulls, where the limited operator comes as a free bonus copy. This banner gives {free} free pulls, so {count} of your own get you there.",
+        description: "Tooltip on the Spark preset when the banner hands out free pulls. At that many total pulls a Limited banner gives one extra copy of its limited operator, once, without affecting pity.",
     },
     "release.pulls.plan.sparkTitlePlain": {
-        text: "Commit enough to reach the {spark}-pull exchange.",
+        text: "Commit enough to reach {spark} pulls, where the limited operator comes as a free bonus copy.",
         description: "Tooltip on the Spark preset when the banner hands out no free pulls.",
     },
     "release.pulls.plan.guaranteeTitle": {
@@ -342,7 +358,7 @@ export const messages = {
     },
     "release.pulls.plan.spark": {
         text: "Spark {count}",
-        description: "Button committing exactly the pulls needed for a Limited banner's outright exchange.",
+        description: "Button committing exactly the pulls needed for a Limited banner's 300-pull bonus copy of its limited operator. 'Spark' is the players' term for that threshold.",
     },
     "release.pulls.plan.guarantee": {
         text: "Guarantee {count}",
@@ -437,8 +453,8 @@ export const messages = {
         description: "Empty state for the banner table. 'EN' is the English game server.",
     },
     "release.pulls.banners.sparkMet": {
-        text: "Clears the {spark}-pull guarantee",
-        description: "Note that the projected budget reaches a Limited banner's outright exchange.",
+        text: "Reaches the {spark}-pull bonus copy",
+        description: "Note that the pulls planned on a Limited banner reach the total at which it gives a free extra copy of its limited operator.",
     },
     "release.pulls.banners.inferred": {
         text: "Rate-up split inferred from the banner type; this pool has no published detail yet.",
@@ -607,6 +623,14 @@ export const messages = {
         text: "{percent}% of 6★ pulls go to {count, plural, one {the rate-up} other {the # rate-ups}}",
         description: "Describes how much of the six-star rate a banner's featured operators take.",
     },
+    "release.pulls.rule.sharePicked": {
+        text: "Every 6★ is one of the {count} operators you pick, {each}% each",
+        description: "Describes an Orienteering banner, where the player locks in three six-star operators and they take the whole six-star rate between them.",
+    },
+    "release.pulls.rule.noRateUp": {
+        text: "No rate-up: no 6★ is boosted on this banner",
+        description: "Describes a Special Headhunting banner, which has no featured six-star operator.",
+    },
     "release.pulls.rule.carry": {
         text: "Shares a pity counter with other {scope} banners",
         description: "Note that pity carries across a banner family. 'scope' is Standard or Kernel.",
@@ -627,6 +651,14 @@ export const messages = {
         text: "The collab operator is handed over on pull {at, number}",
         description: "Describes the collaboration banner's hard guarantee.",
     },
+    "release.pulls.rule.guarantee.linkageRepeat": {
+        text: "Every {at, number} pulls without the collab operator hand one over, and the count restarts after each copy",
+        description: "Describes the newer collaboration banners whose guarantee repeats: each run of that many pulls without the operator ends with one.",
+    },
+    "release.pulls.rule.guarantee.selectionSingle": {
+        text: "Past {first, plural, one {# pull} other {# pulls}} without the rate-up, the next 6★ is the rate-up",
+        description: "Describes the Focused Selection guarantee on a one-rate-up banner.",
+    },
     "release.pulls.rule.guarantee.selection": {
         text: "Past {first, plural, one {# pull} other {# pulls}} the next 6★ is forced on-rate, and past {second} it is the other one",
         description: "Describes the Standard Selection guarantee on two-rate-up banners.",
@@ -636,8 +668,8 @@ export const messages = {
         description: "Describes the Special Headhunting guarantee.",
     },
     "release.pulls.rule.spark": {
-        text: "{count, plural, one {# pull exchanges} other {# pulls exchange}} for the featured operator outright",
-        description: "Describes the Limited banner's certificate exchange.",
+        text: "At {count, plural, one {# pull} other {# pulls}} the limited operator comes once more as a free bonus copy, without touching pity",
+        description: "Describes the Limited banner's one-time gift: after that many total pulls the player receives an extra copy of the limited operator, which does not reset or advance the six-star pity counter.",
     },
 } satisfies MessageMap;
 

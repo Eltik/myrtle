@@ -4,7 +4,7 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::app::error::ApiError;
-use crate::app::extractors::auth::AuthUser;
+use crate::app::extractors::auth::RoleCheckedUser;
 use crate::app::services::tier_list::find_and_authorize;
 use crate::app::services::tier_list::invalidate_detail;
 use crate::app::services::tier_list::load_detail;
@@ -80,7 +80,7 @@ pub struct PublishRequest {
         ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
     ),
     request_body = PublishRequest,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The published version.", body = TierListVersion),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
@@ -94,7 +94,7 @@ pub struct PublishRequest {
 )]
 pub async fn publish(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path(slug): Path<String>,
     Json(body): Json<PublishRequest>,
 ) -> Result<Json<TierListVersion>, ApiError> {

@@ -31,7 +31,8 @@ export type Scope = { kind: "class"; profession: string } | { kind: "sub"; subPr
 export const MAX_HAS = 20;
 
 const SUB_PROFESSION_ID = /^[a-z0-9_]+$/;
-const OPERATOR_ID = /^[a-z0-9_]+$/i;
+/** Mirrors `is_valid_operator_id` in `backend/src/app/services/search.rs`: a longer id answers 400. */
+const OPERATOR_ID = /^[a-z0-9_]{1,50}$/i;
 
 export function isMetricSort(value: string): value is MetricSort {
     return (METRIC_SORTS as readonly string[]).includes(value);

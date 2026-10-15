@@ -241,6 +241,16 @@ impl AppState {
             .cloned()
     }
 
+    /// The servers an asset request for `server` tries, in order: see
+    /// [`asset_fallback_order`].
+    pub fn asset_servers(&self, server: Server) -> Vec<Server> {
+        asset_fallback_order(
+            server,
+            self.default_server,
+            !crate::utils::env::switched_off("ASSET_CN_FALLBACK"),
+        )
+    }
+
     /// The servers a visitor can pick game data from: every loaded server, the
     /// default first and the rest in [`Server::all`] order.
     ///
@@ -334,6 +344,9 @@ pub struct AppConfig {
     /// pipeline runs its own WS (typically a distinct port), so reloads are
     /// routed to the matching [`ServerData`].
     pub asset_ws_urls: HashMap<Server, String>,
+    /// Role gates re-read the caller's stored role (`RoleCheckedUser`). On
+    /// unless `DISABLE_ROLE_RECHECK` is set, which restores claim-only gates.
+    pub role_recheck: bool,
 }
 
 impl AppConfig {
@@ -365,6 +378,8 @@ impl AppConfig {
             servers,
             default_server,
             asset_ws_urls: parse_asset_ws_urls(default_server),
+            role_recheck: !std::env::var("DISABLE_ROLE_RECHECK")
+                .is_ok_and(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "yes")),
         }
     }
 }
@@ -447,8 +462,7 @@ fn parse_asset_ws_urls(default_server: Server) -> HashMap<Server, String> {
 /// Lifted out of `main` so binaries build the same map the server does, with
 /// the same fallbacks: a server that fails to load is inserted as an unloaded
 /// placeholder, and Bilibili shares CN's cell so the two hot-reload together.
-/// A tool that rebuilt this by hand would drift from the server the first time
-/// either changed, and would drift silently.
+/// A hand-built copy would drift from the server silently.
 ///
 /// `phase` wraps each server's load for startup instrumentation. It returns a
 /// guard the caller drops when the phase ends; pass `|_| ()` from a context
@@ -649,6 +663,32 @@ pub fn art_dir_for(config: &AppConfig, server: Server) -> String {
     derive_assets_dir(&config.assets_base_dir, config.default_server)
 }
 
+/// The order an asset request for `server` tries the servers' trees: `server`,
+/// then `default`, then CN.
+///
+/// Art is extracted for EN and CN only. JP and KR receive operators before
+/// Global, so their game data names operators EN has no art for (JP/KR
+/// `char_4223_botany`, `char_4224_turdus`, `char_1051_headb2`: chararts and
+/// portraits under `cn/` only, 2026-10-15). CN, the server every operator
+/// reaches first, is the last resort before a 404. A CN or Bilibili request
+/// never appends CN again; Bilibili shares CN's data.
+///
+/// `ASSET_CN_FALLBACK=0` drops the CN step: `server`, then `default`, as before.
+pub fn asset_fallback_order(server: Server, default: Server, cn_fallback: bool) -> Vec<Server> {
+    let mut order = vec![server];
+    if default != server {
+        order.push(default);
+    }
+    if cn_fallback
+        && !order
+            .iter()
+            .any(|s| matches!(s, Server::CN | Server::Bilibili))
+    {
+        order.push(Server::CN);
+    }
+    order
+}
+
 /// Per-server asset directory, for example `../assets/output/cn`.
 pub fn derive_assets_dir(base: &str, server: Server) -> String {
     format!("{base}/{}", server.as_str())
@@ -685,8 +725,44 @@ fn resolve_bin_server(bin_server: Option<&str>, servers: Option<&str>) -> Server
 
 #[cfg(test)]
 mod tests {
-    use super::{derive_assets_dir, derive_game_data_dir, parse_ws_url_spec};
+    use super::{asset_fallback_order, derive_assets_dir, derive_game_data_dir, parse_ws_url_spec};
     use crate::core::hypergryph::constants::Server;
+
+    #[test]
+    fn asset_order_ends_in_cn() {
+        assert_eq!(
+            asset_fallback_order(Server::JP, Server::EN, true),
+            [Server::JP, Server::EN, Server::CN]
+        );
+        assert_eq!(
+            asset_fallback_order(Server::EN, Server::EN, true),
+            [Server::EN, Server::CN]
+        );
+        assert_eq!(
+            asset_fallback_order(Server::CN, Server::EN, true),
+            [Server::CN, Server::EN]
+        );
+        assert_eq!(
+            asset_fallback_order(Server::Bilibili, Server::EN, true),
+            [Server::Bilibili, Server::EN]
+        );
+        assert_eq!(
+            asset_fallback_order(Server::EN, Server::CN, true),
+            [Server::EN, Server::CN]
+        );
+    }
+
+    #[test]
+    fn asset_order_without_cn_fallback_is_the_old_order() {
+        assert_eq!(
+            asset_fallback_order(Server::KR, Server::EN, false),
+            [Server::KR, Server::EN]
+        );
+        assert_eq!(
+            asset_fallback_order(Server::EN, Server::EN, false),
+            [Server::EN]
+        );
+    }
 
     #[test]
     fn derives_per_server_dirs() {

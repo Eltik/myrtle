@@ -1,0 +1,330 @@
+// This file is auto-generated, see https://github.com/MooncellWiki/OpenArknightsFBS for details.
+enum enum__Torappu_ArkventNPCSpineType : int {
+    BUILDING = 0,
+    ARKVENT = 1,
+}
+
+table dict__string__string {
+    key: string(key);
+    value: string;
+}
+
+enum enum__Torappu_ArkventTaskActorType : int {
+    NONE = 0,
+    NPC = 1,
+    FURNITURE = 2,
+    TRIGGER = 3,
+    COLLIDER = 4,
+    VIRTUAL = 5,
+    NPC_SHOW_ONLY = 6,
+    FURNITURE_SHOW_ONLY = 7,
+    TRIGGER_SHOW_ONLY = 8,
+    SCENE_OBJECT_CONTROL = 9,
+    EFFECT = 10,
+    FLAG_EXPRESSION = 99,
+}
+
+table clz_UnityEngine_Vector3 {
+    x: float; 
+    y: float; 
+    z: float; 
+}
+
+enum enum__Torappu_ArkventTaskVarSeqCompareOperation : int {
+    NONE = 0,
+    GT = 1,
+    GE = 2,
+    EQ = 3,
+    NEQ = 4,
+    LE = 5,
+    LT = 6,
+}
+
+table clz_Torappu_ArkventTaskShowCondition {
+    conditionType: string; 
+    varSeqList: [string]; 
+    type: enum__Torappu_ArkventTaskVarSeqCompareOperation; 
+    value: int; 
+}
+
+enum enum__Torappu_ArkventTaskActorTriggerType : int {
+    NONE = 0,
+    AUTO = 1,
+    ENTER = 2,
+    INTERACT = 3,
+    AUTO_ONCE = 4,
+}
+
+table clz_Torappu_ArkventTaskActorTriggerOperation {
+    operationId: string; 
+    operationTemplate: string; 
+    operationParams: [dict__string__string]; 
+    finishOperation: bool; 
+    preserveBlackout: bool; 
+}
+
+table dict__string__list_clz_Torappu_ArkventTaskActorTriggerOperation {
+    key: string(key);
+    value: [clz_Torappu_ArkventTaskActorTriggerOperation];
+}
+
+enum enum__Torappu_ArkventRangeType : int {
+    NONE = 0,
+    CIRCLE = 1,
+    RECT = 2,
+}
+
+table clz_Torappu_ArkventRangeData {
+    type: enum__Torappu_ArkventRangeType; 
+    position: clz_UnityEngine_Vector3; 
+    bounds: clz_UnityEngine_Vector3; 
+}
+
+enum enum__Torappu_ArkventSpineFaceType : int {
+    RIGHT = 0,
+    LEFT = 1,
+}
+
+table clz_Torappu_ArkventTaskActorData {
+    actorId: string; 
+    actorNameId: string; 
+    actorEnvLineId: string; 
+    sceneId: int; 
+    isGlobal: bool; 
+    charId: string; 
+    skinId: string; 
+    arkventSpineId: string; 
+    npcSpineType: enum__Torappu_ArkventNPCSpineType; 
+    overrideAnimConfig: [dict__string__string]; 
+    furnitureAssetId: string; 
+    actorType: enum__Torappu_ArkventTaskActorType; 
+    actorPosition: clz_UnityEngine_Vector3; 
+    actorYaw: float; 
+    actorShowCondition: [clz_Torappu_ArkventTaskShowCondition]; 
+    actorTriggerType: enum__Torappu_ArkventTaskActorTriggerType; 
+    actorTriggerOperations: [dict__string__list_clz_Torappu_ArkventTaskActorTriggerOperation]; 
+    triggerRange: clz_Torappu_ArkventRangeData; 
+    colliderRange: clz_Torappu_ArkventRangeData; 
+    interactRange: clz_Torappu_ArkventRangeData; 
+    triggerCameraConfig: string; 
+    interactCameraConfig: string; 
+    sceneStatusDriverId: string; 
+    sceneObjectStatus: string; 
+    effectId: string; 
+    effectOffsetY: float; 
+    interactBtnStyleId: string; 
+    interactingBtnStyleId: string; 
+    interactSoundFx: string; 
+    headUpStyleId: string; 
+    spineFace: enum__Torappu_ArkventSpineFaceType; 
+    persistFaceWhenInteract: bool; 
+    hasSafePos: bool; 
+    safePos: clz_UnityEngine_Vector3; 
+}
+
+table dict__string__clz_Torappu_ArkventTaskActorData {
+    key: string(key);
+    value: clz_Torappu_ArkventTaskActorData;
+}
+
+enum enum__Torappu_ArkventCameraBlendStyle : int {
+    Default = 0,
+    Cut = 1,
+    EaseInOut = 2,
+    EaseIn = 3,
+    EaseOut = 4,
+    HardIn = 5,
+    HardOut = 6,
+    Linear = 7,
+}
+
+table clz_Torappu_ArkventCameraPlatformConfig {
+    blendDuration: float; 
+    blendStyle: enum__Torappu_ArkventCameraBlendStyle; 
+    pitch: float; 
+    cameraDistance: float; 
+    lookAheadTime: float; 
+    lookAheadSmoothing: float; 
+    screenX: float; 
+    screenY: float; 
+    trackedObjectOffset: clz_UnityEngine_Vector3; 
+    deadZoneWidth: float; 
+    deadZoneHeight: float; 
+    deadZoneDepth: float; 
+    softZoneWidth: float; 
+    softZoneHeight: float; 
+    biasX: float; 
+    biasY: float; 
+    xDamping: float; 
+    yDamping: float; 
+    zDamping: float; 
+}
+
+table clz_Torappu_ArkventCameraConfigData {
+    pcConfig: clz_Torappu_ArkventCameraPlatformConfig; 
+    mobileConfig: clz_Torappu_ArkventCameraPlatformConfig; 
+}
+
+table dict__string__clz_Torappu_ArkventCameraConfigData {
+    key: string(key);
+    value: clz_Torappu_ArkventCameraConfigData;
+}
+
+table clz_Torappu_ArkventTaskData {
+    topicId: string; 
+    actorData: [dict__string__clz_Torappu_ArkventTaskActorData]; 
+    varSeqData: [string]; 
+    cameraConfigData: [dict__string__clz_Torappu_ArkventCameraConfigData]; 
+}
+
+table clz_Torappu_ArkventSceneData {
+    sceneId: string; 
+    sceneIdHash: int; 
+    sceneName: string; 
+    assetId: string; 
+    spawnPos: clz_UnityEngine_Vector3; 
+    spawnRadius: float; 
+    moveCameraConfigId: string; 
+    idleCameraConfigId: string; 
+}
+
+table dict__int__clz_Torappu_ArkventSceneData {
+    key: int(key);
+    value: clz_Torappu_ArkventSceneData;
+}
+
+table clz_Torappu_ArkventNameMappingData {
+    displayNameMap: [dict__string__string]; 
+}
+
+table clz_Torappu_ArkventInteractBtnStyleData {
+    id: string; 
+    icon: string; 
+    bgStyle: string; 
+    displayText: string; 
+    textColorStr: string; 
+}
+
+table dict__string__clz_Torappu_ArkventInteractBtnStyleData {
+    key: string(key);
+    value: clz_Torappu_ArkventInteractBtnStyleData;
+}
+
+table clz_Torappu_ArkventHeadUIData {
+    id: string; 
+    icon: string; 
+    bgStyle: string; 
+}
+
+table dict__string__clz_Torappu_ArkventHeadUIData {
+    key: string(key);
+    value: clz_Torappu_ArkventHeadUIData;
+}
+
+table clz_Torappu_ArkventBarkItemData {
+    content: string; 
+    weight: int; 
+    duration: float; 
+    cooldown: float; 
+}
+
+table clz_Torappu_ArkventBarkPoolData {
+    barkItemData: [clz_Torappu_ArkventBarkItemData]; 
+}
+
+table dict__string__clz_Torappu_ArkventBarkPoolData {
+    key: string(key);
+    value: clz_Torappu_ArkventBarkPoolData;
+}
+
+table clz_Torappu_ArkventBarkData {
+    barkAreaRadius: float; 
+    showAreaRadius: float; 
+    barkPoolData: [dict__string__clz_Torappu_ArkventBarkPoolData]; 
+}
+
+table dict__string__float {
+    key: string(key);
+    value: float;
+}
+
+table clz_Torappu_ArkventAnimMixData {
+    mixDurationMap: [dict__string__float]; 
+}
+
+enum enum__Torappu_ArkventAudioMetaFlag : int {
+    NONE = 0,
+    MUSIC = 1,
+    LOOP = 2,
+}
+
+enum enum__Torappu_ArkventAudioRollOffType : int {
+    LINEAR = 0,
+    LOGARITHMIC = 1,
+    THIRD_PARTY = 2,
+}
+
+enum enum__Torappu_ArkventAudioSpatialType : int {
+    NONE = 0,
+    OFFSET_Z = 1,
+    DISTANCE = 2,
+}
+
+table clz_Torappu_ArkventAudioSpatialProfile {
+    type: enum__Torappu_ArkventAudioSpatialType; 
+    name: string; 
+}
+
+enum enum__Torappu_ArkventAudioTriggerMode : int {
+    NONE = 0,
+    ONE_SHOT = 1,
+    PERIODIC = 2,
+    EXIT = 3,
+}
+
+table clz_Torappu_ArkventAudioSourceData {
+    id: string; 
+    positionX: float; 
+    positionY: float; 
+    positionZ: float; 
+    module: string; 
+    signal: string; 
+    subSignal: string; 
+    meta: enum__Torappu_ArkventAudioMetaFlag; 
+    soundPlaybackPolicy: int; 
+    minDist: float; 
+    maxDist: float; 
+    rollOffType: enum__Torappu_ArkventAudioRollOffType; 
+    spatialBlend: clz_Torappu_ArkventAudioSpatialProfile; 
+    spatialVolume: clz_Torappu_ArkventAudioSpatialProfile; 
+    volume: float; 
+    effectiveRange: clz_Torappu_ArkventRangeData; 
+    triggerMode: enum__Torappu_ArkventAudioTriggerMode; 
+    periodicFixedInterval: float; 
+    periodicMinInterval: float; 
+    periodicMaxInterval: float; 
+    applyIntervalOnFirstPlay: bool; 
+    fadeOutTime: float; 
+    mutexGroup: string; 
+    mutexOrder: int; 
+    bindActors: [string]; 
+    tags: [string]; 
+}
+
+table dict__int__list_clz_Torappu_ArkventAudioSourceData {
+    key: int(key);
+    value: [clz_Torappu_ArkventAudioSourceData];
+}
+
+table clz_Torappu_ArkventData {
+    taskData: clz_Torappu_ArkventTaskData; 
+    sceneDataMap: [dict__int__clz_Torappu_ArkventSceneData]; 
+    nameMappingData: clz_Torappu_ArkventNameMappingData; 
+    interactBtnStyleDict: [dict__string__clz_Torappu_ArkventInteractBtnStyleData]; 
+    headUIData: [dict__string__clz_Torappu_ArkventHeadUIData]; 
+    barkData: clz_Torappu_ArkventBarkData; 
+    animMixData: clz_Torappu_ArkventAnimMixData; 
+    sceneAudioMap: [dict__int__list_clz_Torappu_ArkventAudioSourceData]; 
+}
+
+root_type clz_Torappu_ArkventData;

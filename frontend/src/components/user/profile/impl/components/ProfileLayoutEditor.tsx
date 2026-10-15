@@ -29,8 +29,7 @@ interface IProfileLayoutEditorProps {
  * The owner's tab editor, shown in place of the tab bar. Order changes by drag or by
  * the arrow buttons (the keyboard and touch path), visibility by the eye toggle.
  * Nothing is stored until Save, which sends the tabs alone. After Reset, Save with the
- * canonical layout and no showcase or background stores "no layout", which is the same
- * page the profile showed before layouts existed.
+ * canonical layout and no showcase or background stores "no layout", the default page.
  */
 export function ProfileLayoutEditor({ profile, labels, onClose }: IProfileLayoutEditorProps) {
     const t: TypedT<typeof messages> = useT("user");

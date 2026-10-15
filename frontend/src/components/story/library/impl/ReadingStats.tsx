@@ -12,7 +12,7 @@ import { readingStats } from "./stats";
 
 type StatsT = TypedT<typeof messages>;
 
-/** The top-N of the longest table. 25 is the reference site's own depth and it is what fits before the table stops being a ranking and starts being the index again. */
+/** Depth of the longest-stories table; 25 matches the reference site. */
 const LONGEST = 25;
 
 export interface IReadingStatsProps {
@@ -23,18 +23,9 @@ export interface IReadingStatsProps {
 }
 
 /**
- * HOW LONG THE LIBRARY IS, IN HOURS RATHER THAN IN WORDS.
- *
- * `1,247,905 words` is a true number nobody can picture. Divided by a reading speed it becomes
- * a span an evening can be measured against, and every figure moves together when the speed
- * changes.
- *
- * The speed is a SETTING, not a measurement: nothing in the index says how fast this reader
- * reads. The two inputs at the top are this browser's own and stay out of the synced progress
- * document, for the reason in `lib/story/reading.ts`.
- *
- * Words come through `isStoryRead`, so a chapter the Arknights client reports played counts
- * exactly as one ticked off by hand does.
+ * Library length as time. The speed inputs are per-browser settings, kept out of
+ * the synced progress document (see `lib/story/reading.ts`). Read words go
+ * through `isStoryRead`, so game-reported reads count like hand-ticked ones.
  */
 export function ReadingStats({ index, progress, gameRead }: IReadingStatsProps): React.ReactElement {
     const t: StatsT = useT("story");
@@ -120,11 +111,9 @@ export function ReadingStats({ index, progress, gameRead }: IReadingStatsProps):
                             <h4 className="mt-5 mb-1 font-sans font-semibold text-[13px] text-foreground">{t("stats.longest")}</h4>
                             <p className="mt-0 mb-2 max-w-prose font-sans text-[11.5px] text-muted-foreground leading-relaxed">{t("stats.longest.note", { count: stats.longest.length })}</p>
                             <ol className="m-0 flex list-none flex-col p-0">
-                                {/* THE THREE FIGURES DROP UNDER THE NAME ON A PHONE. Held on one
-                                    line at 390 they took 214 of the row's 294 px and left the
-                                    title column 13 px, so the ranking printed "A.", "R.", "T.".
-                                    The `sm:contents` wrapper dissolves above 640 and the three
-                                    spans become direct children of the row again. */}
+                                {/* Figures drop under the name on a phone: on one line at 390 they
+                                    took 214 of 294 px and left the title 13 px ("A.", "R.", "T.").
+                                    `sm:contents` puts them back in the row above 640. */}
                                 {stats.longest.map((row, at) => (
                                     <li key={row.id} className="flex flex-wrap items-center gap-x-2.5 gap-y-1 border-border/60 border-b py-1.5 last:border-b-0 sm:flex-nowrap">
                                         <span className="w-6 shrink-0 text-right font-mono text-[10px] text-muted-foreground tabular-nums">{at + 1}</span>

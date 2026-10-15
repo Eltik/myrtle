@@ -27,16 +27,14 @@ export const Route = createFileRoute("/operators_/$id")({
     errorComponent: RootErrorComponent,
     loader: async ({ context, params }) => {
         const server = context.i18n.gamedataServer;
-        const operator = await context.queryClient.ensureQueryData(operatorQueryOptions(params.id, server));
-        // An id the backend does not know (a stale link, `/operators/null`) is a
-        // 404, the same as grids and tier lists, not an error page.
-        if (!operator) throw notFound();
         // Community build stats decide which skill and module the tabs open
-        // on, so they are prefetched rather than fetched from the tab: a
-        // late arrival would visibly re-select in front of the reader.
-        // Fire-and-forget, because a missing aggregate is a fallback, not
-        // an error, and must never block the page.
-        void context.queryClient.prefetchQuery(operatorBuildStatsQueryOptions(params.id, server));
+        // on, so they load beside the operator and SSR renders with them: a
+        // late arrival would visibly re-select in front of the reader, and
+        // one that landed in the browser before hydration mismatched the
+        // server HTML. `prefetchQuery` never throws, so a missing aggregate
+        // is still a fallback, not an error.
+        const [operator] = await Promise.all([context.queryClient.ensureQueryData(operatorQueryOptions(params.id, server)), context.queryClient.prefetchQuery(operatorBuildStatsQueryOptions(params.id, server))]);
+        if (!operator) throw notFound();
         warmOg("operator", params.id, buildOgData(operator));
         // For operators with alternate forms (Amiya), preload the index so
         // the form switcher renders in SSR without a hydration flash.
@@ -55,9 +53,8 @@ export const Route = createFileRoute("/operators_/$id")({
             // so they take the preference's DEFAULT: a CN-only operator is
             // titled by appellation even for a reader who turned it off.
             title: operatorDisplayName(loaderData, true),
-            // Every word here is Arknights vocabulary - the operator's name,
-            // profession and archetype - which the game data layer translates
-            // per region. Nothing in it belongs to this catalog.
+            // Name, profession and archetype are game vocabulary the gamedata
+            // layer translates per region; nothing here belongs to this catalog.
             description: `${ogData.rarity}★ ${professionLabel(loaderData)} • ${subProfessionLabel(loaderData)}`.trim(),
             image: ogURL("operator", params.id, ogData),
             path: `/operators/${params.id}`,

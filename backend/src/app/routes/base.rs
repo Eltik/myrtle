@@ -117,7 +117,7 @@ pub async fn evaluate_layout(
     )
     .await?;
     let viewer = viewer_id(&state, &auth).await;
-    let _admission = cpu::admit("base_evaluate").await?;
+    let _admission = cpu::admit_light("base_evaluate").await?;
     Ok(Json(evaluate(&state, &uid, viewer, body).await?))
 }
 
@@ -272,20 +272,16 @@ pub async fn get_catalog(State(state): State<AppState>) -> Json<CatalogResponse>
     Json(catalog(&state))
 }
 
-/// The signed-in user saving their OWN account facts (recruit slots etc.).
-/// Facts always attach to the caller's profile - there is no setting another
-/// player's facts; viewers get per-request overrides instead.
+/// Save the caller's OWN account facts (recruit slots etc.). Another player's
+/// facts cannot be set; viewers pass per-request overrides instead.
 /// With no declaration the never-guess default stands and the dependent skills
 /// price at zero.
 #[utoipa::path(
     put,
     path = "/base/facts",
     tag = "base",
-    params(
-        ("uid" = Option<String>, Query, description = "Whose roster to plan with. Omitted means the caller's own, which then requires a token.")
-    ),
     request_body = AccountFactsReq,
-    security(("bearer_auth" = []), ()),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The facts as stored.", body = AccountFactsReq),
         (status = 400, response = crate::app::openapi::responses::BadRequest),

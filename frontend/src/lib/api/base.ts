@@ -5,21 +5,17 @@ import { optionalSiteToken } from "./_shared.server";
 import type { IAssignedOperator, IBaseAssignment, IShiftRotation } from "./user";
 
 /**
- * The interactive base planner.
- *
- * Every number here comes from the Rust clause engine - the same one behind
- * `/user/improvements`. This module deliberately contains no scoring math: it
- * ships the drafted layout to the backend and renders what comes back. If you
- * find yourself wanting to "just estimate" an efficiency client-side, that's the
- * seam where the two engines start to disagree.
+ * The interactive base planner. Every number comes from the Rust clause engine,
+ * the same one behind `/user/improvements`; nothing here scores. A client-side
+ * estimate is where the two engines would start to disagree.
  */
 
 /** Game room constants, as they appear in `building_data`. */
 export type RoomType = "CONTROL" | "MANUFACTURE" | "TRADING" | "POWER" | "DORMITORY" | "MEETING" | "HIRE" | "TRAINING" | "WORKSHOP";
 
 /**
- * Every facility `building_data` defines - the nine staffable rooms plus the
- * three the planner never staffs: the Activity Room, and the structure itself.
+ * Every facility `building_data` defines: the nine staffable rooms plus the
+ * three the planner never staffs (the Activity Room, and the structure itself).
  * The catalogue carries all twelve; only `RoomType` reaches the engine.
  */
 export type FacilityType = RoomType | "PRIVATE" | "ELEVATOR" | "CORRIDOR";
@@ -69,8 +65,8 @@ export type ISustainEntry = Refine<SustainEntryDto, { room_type: RoomType }>;
 
 /**
  * The dormitories' contribution. They produce nothing, so they never appear in
- * a `BaseAssignment` - but they set recovery speed and how many operators can
- * rest at once, which is what decides whether a staffing survives its rhythm.
+ * a `BaseAssignment`, but they set recovery speed and how many operators can
+ * rest at once, which decides whether a staffing survives its rhythm.
  */
 export type IDorms = DormsDto;
 export type IDorm = DormDto;
@@ -123,11 +119,9 @@ export type ICatalogRoom = Refine<CatalogRoomDto, { room_type: FacilityType }>;
 export type ICatalogFormula = Refine<CatalogFormulaDto, { formula_type: FormulaType }>;
 
 /**
- * One slot of the base floorplan.
- *
- * Coordinates are in the game's own half-tile units: every room is 2 units
- * tall and an even number wide, while an elevator is 1 unit wide - which is
- * what makes the lift shafts half-width columns on the board.
+ * One slot of the base floorplan. Coordinates are in the game's own half-tile
+ * units: every room is 2 units tall and an even number wide, and an elevator
+ * is 1 unit wide, which is why the lift shafts are half-width columns on the board.
  */
 export type ICatalogSlot = CatalogSlotDto;
 export type ICatalogStorey = CatalogStoreyDto;
@@ -215,9 +209,8 @@ export const getBaseLayoutFn = createServerFn({ method: "GET" })
         const res = await backendFetch(`/base/layout?uid=${encodeURIComponent(uid)}`, { bearerToken: token });
         if (!res.ok) {
             // An empty payload, not `null`: a server function's `null` comes back
-            // over the wire as `undefined`, which React Query rejects outright
-            // ("Query data cannot be undefined") - turning "this profile has no
-            // base" into a hard query error and a board with nothing on it.
+            // over the wire as `undefined`, which React Query rejects ("Query data
+            // cannot be undefined"), turning "no base" into a hard query error.
             if (res.status === 404 || res.status === 403) return { rooms: [], presets: [], facts: { open_recruit_slots: null, training_class: null } } satisfies ILayoutResponse;
             throw new Error(`Failed to load base layout: ${res.status}`);
         }
@@ -256,11 +249,6 @@ export function baseCatalogQueryOptions() {
     });
 }
 
-/**
- * Score a drafted layout. Keyed by the layout itself, so react-query dedupes
- * repeat edits that land back on an arrangement already scored - dragging an
- * operator out and back costs nothing.
- */
 export const saveBaseFactsFn = createServerFn({ method: "POST" })
     .inputValidator((data: { facts: IAccountFacts; bearerToken?: string }) => data)
     .handler(async ({ data: { facts, bearerToken } }) => {

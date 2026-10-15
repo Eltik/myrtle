@@ -23,8 +23,60 @@ pub struct CachedJson {
 
 impl CachedJson {
     fn new(body: String) -> Self {
-        let etag = format!("\"{}\"", hex::encode(Sha256::digest(body.as_bytes())));
+        let etag = strong_etag(body.as_bytes());
         Self { body, etag }
+    }
+}
+
+/// A strong `ETag` for a body: its SHA-256, hex, quoted.
+#[must_use]
+pub fn strong_etag(body: &[u8]) -> String {
+    format!("\"{}\"", hex::encode(Sha256::digest(body)))
+}
+
+/// Pre-serialized JSON held by a per-game-data cache and answered with an
+/// `ETag`. The body is `Bytes`, so a request clones a refcount, never the
+/// body: the music index is 1,161,730 bytes and is read on every page open.
+///
+/// The brotli form is encoded once, here, at the compression layer's quality
+/// (6), and served as is to a client that accepts it; the layer passes a body
+/// that already names its encoding. Before, the layer re-encoded the music
+/// index on every request: 117 to 154 ms of server time for its 110,137 bytes.
+#[derive(Clone, Debug)]
+pub struct SharedJson {
+    pub body: axum::body::Bytes,
+    pub etag: String,
+    pub br: axum::body::Bytes,
+    /// The brotli form's own `ETag`: a different representation of the same body.
+    pub br_etag: String,
+}
+
+/// Brotli quality, the same as `server.rs`'s `CompressionLayer` (see the
+/// measurements there), so a pre-encoded body is byte-for-byte what the layer
+/// would have sent.
+const BROTLI_QUALITY: u32 = 6;
+/// Brotli window, log2: 22 (4 MiB) covers every body this holds.
+const BROTLI_LGWIN: u32 = 22;
+
+impl SharedJson {
+    /// Hashes and brotli-encodes `body`. CPU-bound: call it inside `cpu::run`.
+    #[must_use]
+    pub fn new(body: Vec<u8>) -> Self {
+        let etag = strong_etag(&body);
+        let mut br = Vec::with_capacity(body.len() / 8);
+        {
+            let mut writer =
+                brotli::CompressorWriter::new(&mut br, 4096, BROTLI_QUALITY, BROTLI_LGWIN);
+            // Writing into a Vec cannot fail.
+            let _ = std::io::Write::write_all(&mut writer, &body);
+        }
+        let br_etag = format!("{}-br\"", etag.trim_end_matches('"'));
+        Self {
+            body: axum::body::Bytes::from(body),
+            etag,
+            br: axum::body::Bytes::from(br),
+            br_etag,
+        }
     }
 }
 

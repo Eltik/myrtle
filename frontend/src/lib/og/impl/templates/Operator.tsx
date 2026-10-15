@@ -1,6 +1,6 @@
 import { professionLabel } from "#/lib/utils";
 import type { OperatorProfession, OperatorRarity } from "#/types/operators";
-import { AccentStrip, BG, BrandRow, FG, FG_06, FG_08, FG_55, FG_70, FootRow, RARITY_COLOR, siteHost } from "./Frame";
+import { AccentStrip, BG, BrandRow, CardRoot, Chip, ChipRow, FG, FG_06, FG_08, FG_55, FG_70, FootRow, Kicker, RARITY_COLOR, StarPill, StatStrip, siteHost } from "./Frame";
 
 export interface IOperatorStat {
     label: string;
@@ -31,9 +31,9 @@ export interface IOperatorOgData {
     factionLogoURL?: string;
     professionIconURL?: string;
     stats?: IOperatorStat[];
-    /** Asset tree the card was rendered against. Not drawn -- it takes part in
-     *  the cache hash so a CN operator's card is re-rendered once it lands on
-     *  Global and its art moves to the default tree. */
+    /** Asset tree the card was rendered against. Not drawn: it is in the cache
+     *  hash so a CN operator's card re-renders once it lands on Global and its
+     *  art moves to the default tree. */
     server?: "en" | "cn";
 }
 
@@ -42,27 +42,13 @@ export function OperatorTemplate(data: IOperatorOgData) {
     const rarityColor = RARITY_COLOR[rarity] ?? RARITY_COLOR[6];
     const tags = [position, subProfession, nationId].filter(Boolean);
 
-    // Render the full operator name. Many operators have descriptive suffixes
-    // ("Exusiai the New Covenant", "Reed the Flame Shadow") that are part of
-    // their canonical name - splitting them off looks worse than letting the
-    // size adapt to fit. Appellation is only meaningful when it's a foreign-
-    // language alt name; the EN-only data ships it as `" "` (single space),
-    // which we filter out with a trim check.
+    // Suffixes like "Exusiai the New Covenant" are part of the canonical name;
+    // splitting them off looked worse than shrinking the size to fit. EN data
+    // ships an absent appellation as `" "`, hence the trim.
     const altName = appellation.trim();
 
     return (
-        <div
-            style={{
-                width: 1200,
-                height: 630,
-                display: "flex",
-                background: `radial-gradient(ellipse 70% 60% at 80% 30%, rgba(247,164,82,0.10), transparent 65%), linear-gradient(135deg, #0e141a 0%, #15202a 60%, #0c1218 100%)`,
-                color: FG,
-                fontFamily: "Inter",
-                position: "relative",
-                overflow: "hidden",
-            }}
-        >
+        <CardRoot>
             <div
                 style={{
                     position: "absolute",
@@ -103,29 +89,7 @@ export function OperatorTemplate(data: IOperatorOgData) {
                 <BrandRow kicker="OPERATOR · COMPANION" />
                 <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "center", marginTop: 40 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                        {/* rarity badge - single inline-SVG star (Inter has no ★ glyph
-                            and the rarity_yellow_N.png assets bake N stars in a row) */}
-                        <div
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 6,
-                                padding: "6px 16px 6px 12px",
-                                borderRadius: 999,
-                                background: rarityColor,
-                                color: "#1c1209",
-                                fontWeight: 800,
-                                fontSize: 24,
-                                letterSpacing: "0.02em",
-                                lineHeight: 1,
-                            }}
-                        >
-                            {/* biome-ignore lint/a11y/noSvgWithoutTitle: Satori renders <title> as visible text */}
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="#1c1209">
-                                <path d="M12 2.5l2.92 5.92 6.53.95-4.72 4.6 1.11 6.51L12 17.5l-5.84 3.07 1.11-6.51-4.72-4.6 6.53-.95L12 2.5z" />
-                            </svg>
-                            <div style={{ display: "flex" }}>{rarity}</div>
-                        </div>
+                        <StarPill label={rarity} color={rarityColor} />
                         {profession ? (
                             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                 {professionIconURL ? (
@@ -144,22 +108,13 @@ export function OperatorTemplate(data: IOperatorOgData) {
                                         <img alt="" src={professionIconURL} width={22} height={22} style={{ width: 22, height: 22, objectFit: "contain" }} />
                                     </div>
                                 ) : null}
-                                <div
-                                    style={{
-                                        display: "flex",
-                                        fontFamily: "Geist Mono",
-                                        fontSize: 16,
-                                        letterSpacing: "0.22em",
-                                        textTransform: "uppercase",
-                                        color: FG_70,
-                                    }}
-                                >
+                                <Kicker size={16} color={FG_70}>
                                     {professionLabel({ profession, professionName })}
-                                </div>
+                                </Kicker>
                             </div>
                         ) : null}
                     </div>
-                    {/* name - full canonical name, font size adapts to length so
+                    {/* The full canonical name; the font size adapts to length so
                         "Exusiai the New Covenant" still fits on two lines. */}
                     <div
                         style={{
@@ -191,57 +146,13 @@ export function OperatorTemplate(data: IOperatorOgData) {
                         </div>
                     ) : null}
                     {tags.length > 0 ? (
-                        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 28 }}>
+                        <ChipRow>
                             {tags.map((t, i) => (
-                                <div
-                                    key={t}
-                                    style={{
-                                        display: "flex",
-                                        fontFamily: "Geist Mono",
-                                        fontSize: 13,
-                                        letterSpacing: "0.12em",
-                                        textTransform: "uppercase",
-                                        color: i === 0 ? `${rarityColor}d8` : FG_70,
-                                        background: i === 0 ? `${rarityColor}10` : FG_06,
-                                        border: `1px solid ${i === 0 ? `${rarityColor}55` : FG_08}`,
-                                        padding: "7px 12px",
-                                        borderRadius: 999,
-                                    }}
-                                >
-                                    {String(t).toUpperCase()}
-                                </div>
+                                <Chip key={t} label={String(t)} tint={i === 0 ? rarityColor : undefined} />
                             ))}
-                        </div>
+                        </ChipRow>
                     ) : null}
-                    {stats.length > 0 ? (
-                        <div
-                            style={{
-                                display: "flex",
-                                marginTop: 28,
-                                background: FG_06,
-                                border: `1px solid ${FG_08}`,
-                                borderRadius: 12,
-                                overflow: "hidden",
-                            }}
-                        >
-                            {stats.map((s, i) => (
-                                <div
-                                    key={s.label}
-                                    style={{
-                                        flex: 1,
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        gap: 4,
-                                        padding: "12px 16px",
-                                        borderLeft: i === 0 ? "none" : `1px solid ${FG_08}`,
-                                    }}
-                                >
-                                    <div style={{ display: "flex", fontFamily: "Geist Mono", fontSize: 10, letterSpacing: "0.22em", textTransform: "uppercase", color: FG_55 }}>{s.label}</div>
-                                    <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: FG, lineHeight: 1, letterSpacing: "-0.01em" }}>{s.value}</div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : null}
+                    {stats.length > 0 ? <StatStrip cells={stats} /> : null}
                 </div>
                 <div
                     style={{
@@ -281,13 +192,13 @@ export function OperatorTemplate(data: IOperatorOgData) {
                         <img alt="" src={factionLogoURL} width={42} height={42} style={{ width: 42, height: 42, objectFit: "contain" }} />
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                        <div style={{ display: "flex", fontFamily: "Geist Mono", fontSize: 10, letterSpacing: "0.22em", textTransform: "uppercase", color: FG_55 }}>Faction</div>
+                        <Kicker size={10}>Faction</Kicker>
                         <div style={{ display: "flex", fontSize: 16, fontWeight: 600, color: FG, letterSpacing: "-0.005em", lineHeight: 1 }}>{factionLabel ?? ""}</div>
                     </div>
                 </div>
             ) : null}
             <FootRow path={`${siteHost()} / operators`} />
             <AccentStrip color={rarityColor} />
-        </div>
+        </CardRoot>
     );
 }

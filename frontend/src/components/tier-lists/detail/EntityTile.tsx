@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { type ITierEntity, isOperatorEntity } from "#/lib/api/tier-entities";
 import { stripMarkdown } from "#/lib/markdown";
 import { EntityAvatar, entityAccent, entityShape, kindTileAttributes } from "../entities";
@@ -21,10 +22,13 @@ export function EntityTile({ entity }: { entity: ITierEntity }) {
     const accent = entityAccent(entity);
     if (!entity.resolved) {
         return (
-            <span className={styles.opTile} style={{ ["--rarity-color" as string]: accent }} role="img" aria-label={entity.id} title={entity.id}>
-                <EntityAvatar entity={entity} />
-                <span className={styles.opRarity} aria-hidden="true" />
-            </span>
+            <Tooltip>
+                <TooltipTrigger render={<span className={styles.opTile} style={{ ["--rarity-color" as string]: accent }} role="img" aria-label={entity.id} />}>
+                    <EntityAvatar entity={entity} />
+                    <span className={styles.opRarity} aria-hidden="true" />
+                </TooltipTrigger>
+                <TooltipPopup>{entity.id}</TooltipPopup>
+            </Tooltip>
         );
     }
 

@@ -166,6 +166,25 @@ fn normalize_bundle(bundle: &str) -> String {
     bundle.replace('\\', "/").to_lowercase()
 }
 
+/// The `.idx` resource manifest for a bundle directory: the first `*.idx` in
+/// the directory itself, else in its parent.
+#[must_use]
+pub fn find_idx_file(input_dir: &Path) -> Option<std::path::PathBuf> {
+    // Search input dir first, then parent
+    for dir in [Some(input_dir), input_dir.parent()] {
+        let Some(dir) = dir else { continue };
+        if let Ok(entries) = std::fs::read_dir(dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.extension().is_some_and(|ext| ext == "idx") {
+                    return Some(path);
+                }
+            }
+        }
+    }
+    None
+}
+
 #[cfg(test)]
 mod tests {
     use super::ResourceManifest;

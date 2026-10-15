@@ -24,6 +24,7 @@ pub struct FriendsParams {
     responses(
         (status = 200, description = "`{ \"friends\": [...] }`. The array elements are the game's own player records, passed through unchanged, so their fields are the game's and are not modelled here.", content_type = "application/json"),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
         (status = 429, response = crate::app::openapi::responses::RateLimited),
         (status = 500, response = crate::app::openapi::responses::InternalError),
         (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
@@ -58,6 +59,7 @@ pub struct SearchPlayersParams {
     responses(
         (status = 200, description = "`{ \"friends\": [...] }`, the same envelope as `/friends`. The array elements are the game's own player records, passed through unchanged.", content_type = "application/json"),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
         (status = 429, response = crate::app::openapi::responses::RateLimited),
         (status = 500, response = crate::app::openapi::responses::InternalError),
         (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)

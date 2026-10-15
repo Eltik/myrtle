@@ -1,7 +1,7 @@
 import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 
 /**
- * The registry modules are plain `.ts` - no React, so no `useT()`. Their
+ * The registry modules are plain `.ts` with no React, so no `useT()`. Their
  * entries therefore carry message KEYS (`labelKey`, `descKey`) and the
  * consuming component resolves them with `t()`. The English lives here, in
  * the `nav` namespace the header and the command palette already use.
@@ -80,6 +80,14 @@ export const messages = {
     "tool.release.desc": {
         text: "When CN events, skins, and banners land on EN",
         description: "One-line blurb under the release planner. 'CN' and 'EN' are the Chinese and English game servers and stay as-is.",
+    },
+    "tool.squadBuilder.label": {
+        text: "Squad Builder",
+        description: "Name of the tool for putting together a 12-operator squad and checking what it covers.",
+    },
+    "tool.squadBuilder.desc": {
+        text: "Build a squad, see what it covers",
+        description: "One-line blurb under the squad builder. 'Covers' means which roles and answers the squad has.",
     },
 } satisfies MessageMap;
 

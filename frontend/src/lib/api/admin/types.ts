@@ -2,6 +2,18 @@ export type UserRole = "user" | "tier_list_editor" | "tier_list_admin" | "transl
 
 export type TierListPermissionLevel = "view" | "edit" | "publish" | "admin";
 
+/**
+ * The People tab's role filter, mirroring the backend's: `staff` is
+ * super-admins, tier list admins and tier list editors; `translators` is the
+ * translator role; `players` is plain `user`. In the tab's order.
+ */
+export const ADMIN_USER_ROLE_FILTERS = ["all", "staff", "translators", "players"] as const;
+export type AdminUserRoleFilter = (typeof ADMIN_USER_ROLE_FILTERS)[number];
+
+/** Server codes `GET /admin/users?server=` accepts, in the People tab's order. */
+export const ADMIN_USER_SERVERS = ["en", "jp", "kr", "cn", "bili", "tw"] as const;
+export type AdminUserServer = (typeof ADMIN_USER_SERVERS)[number];
+
 export function isTierListAdmin(role: string | null | undefined): boolean {
     return role === "tier_list_admin" || role === "super_admin";
 }

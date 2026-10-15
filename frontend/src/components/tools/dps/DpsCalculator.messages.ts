@@ -167,6 +167,14 @@ export const messages = {
         text: "Couldn't export chart: {error}",
         description: "Browser alert when saving the chart image failed. {error} is the underlying message and is not translated.",
     },
+    "dps.import.added": {
+        text: "{count, plural, one {Added # operator from your squad} other {Added # operators from your squad}}",
+        description: "Toast after the Squad Builder opened this page with squadmates, which were added as cards.",
+    },
+    "dps.import.skipped": {
+        text: "{count, plural, one {# squadmate is not in the DPS calculator yet} other {# squadmates are not in the DPS calculator yet}}",
+        description: "Toast when some operators sent over from the Squad Builder are not supported by the damage engine, so they were left out.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

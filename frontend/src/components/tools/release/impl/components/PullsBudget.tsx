@@ -1,10 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { RefreshCw } from "lucide-react";
+import { ChevronDown, RefreshCw } from "lucide-react";
 import * as React from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Button } from "#/components/ui/button";
 import { Card } from "#/components/ui/card";
+import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
+import { Tooltip as HintTooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useAuth } from "#/hooks/use-auth";
 import { useResyncRoster } from "#/hooks/use-resync-roster";
 import { userQueryOptions } from "#/lib/api/user";
@@ -15,8 +17,9 @@ import { ANNIHILATION_CAPS, DAILY_MISSION_ORUNDUM, dayAt, type GreenCertShop, ty
 import { ORUNDUM_PER_PULL } from "../pulls/rates";
 import type { ISkinCommitment } from "../pulls/skins";
 import type { IPullsSettings } from "../pulls/store";
+import { noVerticalGridLines, timeTicks } from "../pulls/ticks";
 import type { messages } from "./PullsPlannerTab.messages";
-import { CurrencyIcon, CurrencyLabel, FIELD_LABEL, HINT_TEXT, InfoHint, PullsNumber, type PullsT, Stat } from "./PullsShared";
+import { CurrencyIcon, CurrencyLabel, FIELD_LABEL, HINT_TEXT, InfoHint, PullsNumber, type PullsT, renderAxisTick, Stat, useChartWidth } from "./PullsShared";
 import { SectionTitle, ToggleField } from "./shared";
 
 const HORIZONS = [30, 90, 180, 365] as const;
@@ -102,10 +105,10 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
     /**
      * Which boxes the fill writes, shown rather than described.
      *
-     * Reported in #ui-ux: it was not obvious that "Pulls since last 6*" is NOT filled
-     * from the account, so a player who pressed the button read a stale zero there as
-     * their real counter. The four boxes it does write ring for a moment on the press,
-     * which leaves the fifth visibly untouched.
+     * Reported in #ui-ux: it wasn't obvious the pity counters are NOT filled from the
+     * account, so a player who pressed the button read a stale zero there as their real
+     * counter. The four boxes it does write ring for a moment on the press, which leaves
+     * the two pity boxes visibly untouched.
      */
     const [flash, setFlash] = React.useState(false);
     React.useEffect(() => {
@@ -168,6 +171,13 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
     }, [days, spend, settings.spendOriginite]);
 
     const planned = chartRows.length > 0 && spend.some((s) => s.pulls > 0);
+    const [chartRef, chartWidth] = useChartWidth();
+    const xTicks = React.useMemo(() => {
+        const first = chartRows[0];
+        const last = chartRows.at(-1);
+        if (!first || !last) return [];
+        return timeTicks(first.at, last.at, chartWidth, formatDate(Math.floor(last.at / 1000), locale).length);
+    }, [chartRows, chartWidth, locale]);
 
     return (
         <div className="flex flex-col gap-3">
@@ -183,9 +193,12 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
                             {/* An unlabelled circular arrow beside a labelled button is a
                                 second unexplained control; it re-reads the account from the
                                 game rather than re-reading the page's copy of it. */}
-                            <Button size="sm" variant="ghost" disabled={resync.isPending} onClick={() => resync.mutate()} aria-label={t("release.pulls.resources.resync")} title={t("release.pulls.resources.resync")}>
-                                <RefreshCw className={resync.isPending ? "size-4 animate-spin" : "size-4"} />
-                            </Button>
+                            <HintTooltip>
+                                <TooltipTrigger render={<Button size="sm" variant="ghost" disabled={resync.isPending} onClick={() => resync.mutate()} aria-label={t("release.pulls.resources.resync")} />}>
+                                    <RefreshCw className={resync.isPending ? "size-4 animate-spin" : "size-4"} />
+                                </TooltipTrigger>
+                                <TooltipPopup>{t("release.pulls.resources.resync")}</TooltipPopup>
+                            </HintTooltip>
                         </div>
                     ) : (
                         <span className={HINT_TEXT}>{t("release.pulls.resources.signedOut")}</span>
@@ -200,15 +213,28 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
                     {/* The note hangs off the field it is about. At the bottom of the
                         card it read as a note about the whole card. */}
                     <PullsNumber
-                        id="pulls-pity"
+                        id="pulls-pity-standard"
                         label={
                             <span className="inline-flex items-center gap-1.5">
-                                {t("release.pulls.resources.pity")}
-                                <InfoHint label={t("release.pulls.resources.pityHint.aria")}>{t("release.pulls.resources.pityHint")}</InfoHint>
+                                {t("release.pulls.resources.pityStandard")}
+                                <InfoHint label={t("release.pulls.resources.pityStandardHint.aria")}>{t("release.pulls.resources.pityStandardHint")}</InfoHint>
                             </span>
                         }
-                        value={settings.pity}
-                        onChange={(v) => set("pity", v)}
+                        value={settings.standardPity}
+                        onChange={(v) => set("standardPity", v)}
+                        max={98}
+                        className="w-20"
+                    />
+                    <PullsNumber
+                        id="pulls-pity-kernel"
+                        label={
+                            <span className="inline-flex items-center gap-1.5">
+                                {t("release.pulls.resources.pityKernel")}
+                                <InfoHint label={t("release.pulls.resources.pityKernelHint.aria")}>{t("release.pulls.resources.pityKernelHint")}</InfoHint>
+                            </span>
+                        }
+                        value={settings.kernelPity}
+                        onChange={(v) => set("kernelPity", v)}
                         max={98}
                         className="w-20"
                     />
@@ -216,118 +242,126 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
                 <p className={cn("m-0", HINT_TEXT)}>{t("release.pulls.resources.pityManual")}</p>
             </Card>
 
-            <Card className="flex flex-col gap-4 p-4">
-                <SectionTitle>{t("release.pulls.income.title")}</SectionTitle>
-                <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-                    <ToggleField id="pulls-card" label={<CurrencyLabel name="monthlyCard">{t("release.pulls.income.monthlyCard")}</CurrencyLabel>} checked={settings.monthlyCard} onChange={(v) => set("monthlyCard", v)} />
-                    <ToggleField id="pulls-op-spend" label={<CurrencyLabel name="originite">{t("release.pulls.income.spendOriginite")}</CurrencyLabel>} checked={settings.spendOriginite} onChange={(v) => set("spendOriginite", v)} />
-                    <ToggleField
-                        id="pulls-store"
-                        label={
-                            <span className="inline-flex items-center gap-1.5">
-                                <CurrencyLabel name="orundum">{t("release.pulls.income.store")}</CurrencyLabel>
-                                <InfoHint label={t("release.pulls.income.store.hint.aria")}>{t("release.pulls.income.store.hint")}</InfoHint>
-                            </span>
-                        }
-                        ariaLabel={t("release.pulls.income.store")}
-                        checked={settings.store}
-                        onChange={(v) => set("store", v)}
-                    />
-                </div>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-                    <div className="flex flex-col gap-1">
-                        <span className={FIELD_LABEL}>{t("release.pulls.income.annihilation")}</span>
-                        <Select value={String(settings.annihilation)} onValueChange={(v) => v !== null && set("annihilation", Number(v))}>
-                            <SelectTrigger size="sm" className="w-28 font-mono tabular-nums" aria-label={t("release.pulls.income.annihilation")}>
-                                <SelectValue>{() => f.number(settings.annihilation)}</SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                                {ANNIHILATION_CAPS.map((cap) => (
-                                    <SelectItem key={cap} value={String(cap)}>
-                                        {f.number(cap)}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <PullsNumber id="pulls-extra" label={t("release.pulls.income.extra")} value={settings.extraPerDay} onChange={(v) => set("extraPerDay", v)} step={50} className="w-24" />
-                    <div className="flex flex-col gap-1">
-                        <span className={FIELD_LABEL}>{t("release.pulls.income.horizon")}</span>
-                        <Select value={String(settings.horizonDays)} onValueChange={(v) => v !== null && set("horizonDays", Number(v))}>
-                            <SelectTrigger size="sm" className="w-28 font-mono tabular-nums" aria-label={t("release.pulls.a11y.horizon")}>
-                                <SelectValue>{() => t("release.pulls.income.horizonDays", { count: settings.horizonDays })}</SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                                {HORIZONS.map((d) => (
-                                    <SelectItem key={d} value={String(d)}>
-                                        {t("release.pulls.income.horizonDays", { count: d })}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
-                <p className={cn("m-0", HINT_TEXT)}>{t("release.pulls.income.extraHint")}</p>
+            <Card className="p-4">
+                <Collapsible defaultOpen>
+                    <h3 className="m-0">
+                        <CollapsibleTrigger className="group flex w-full items-center justify-between gap-3 text-left font-sans font-semibold text-[15px] text-foreground">
+                            {t("release.pulls.income.title")}
+                            <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[panel-open]:rotate-180" aria-hidden="true" />
+                        </CollapsibleTrigger>
+                    </h3>
+                    <CollapsiblePanel>
+                        <div className="flex flex-col gap-4 pt-4">
+                            <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                                <ToggleField id="pulls-card" label={<CurrencyLabel name="monthlyCard">{t("release.pulls.income.monthlyCard")}</CurrencyLabel>} checked={settings.monthlyCard} onChange={(v) => set("monthlyCard", v)} />
+                                <ToggleField id="pulls-op-spend" label={<CurrencyLabel name="originite">{t("release.pulls.income.spendOriginite")}</CurrencyLabel>} checked={settings.spendOriginite} onChange={(v) => set("spendOriginite", v)} />
+                                <ToggleField
+                                    id="pulls-store"
+                                    label={
+                                        <span className="inline-flex items-center gap-1.5">
+                                            <CurrencyLabel name="orundum">{t("release.pulls.income.store")}</CurrencyLabel>
+                                            <InfoHint label={t("release.pulls.income.store.hint.aria")}>{t("release.pulls.income.store.hint")}</InfoHint>
+                                        </span>
+                                    }
+                                    ariaLabel={t("release.pulls.income.store")}
+                                    checked={settings.store}
+                                    onChange={(v) => set("store", v)}
+                                />
+                            </div>
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+                                <div className="flex flex-col gap-1">
+                                    <span className={FIELD_LABEL}>{t("release.pulls.income.annihilation")}</span>
+                                    <Select value={String(settings.annihilation)} onValueChange={(v) => v !== null && set("annihilation", Number(v))}>
+                                        <SelectTrigger size="sm" className="w-28 font-mono tabular-nums" aria-label={t("release.pulls.income.annihilation")}>
+                                            <SelectValue>{() => f.number(settings.annihilation)}</SelectValue>
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {ANNIHILATION_CAPS.map((cap) => (
+                                                <SelectItem key={cap} value={String(cap)}>
+                                                    {f.number(cap)}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <PullsNumber id="pulls-extra" label={t("release.pulls.income.extra")} value={settings.extraPerDay} onChange={(v) => set("extraPerDay", v)} step={50} className="w-24" />
+                                <div className="flex flex-col gap-1">
+                                    <span className={FIELD_LABEL}>{t("release.pulls.income.horizon")}</span>
+                                    <Select value={String(settings.horizonDays)} onValueChange={(v) => v !== null && set("horizonDays", Number(v))}>
+                                        <SelectTrigger size="sm" className="w-28 font-mono tabular-nums" aria-label={t("release.pulls.a11y.horizon")}>
+                                            <SelectValue>{() => t("release.pulls.income.horizonDays", { count: settings.horizonDays })}</SelectValue>
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {HORIZONS.map((d) => (
+                                                <SelectItem key={d} value={String(d)}>
+                                                    {t("release.pulls.income.horizonDays", { count: d })}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                            <p className={cn("m-0", HINT_TEXT)}>{t("release.pulls.income.extraHint")}</p>
 
-                <div className="flex flex-col gap-2 border-border border-t pt-3">
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-                        <PullsNumber id="pulls-gold-certs" label={<CurrencyLabel name="goldCert">{t("release.pulls.income.goldCerts")}</CurrencyLabel>} value={settings.goldCertsPerDay} onChange={(v) => set("goldCertsPerDay", v)} step={0.1} max={500} className="w-24" />
-                        {/* A hand-tuned offset faking baseline alignment desynchronises
-                            the moment a neighbouring label wraps, which it does below sm. */}
-                        {/* "buy <hh permit icon> with <gold cert icon>", as asked for in #ui-ux:
-                            the two nouns are things the player recognises by their picture. */}
-                        <ToggleField
-                            id="pulls-gold-shop"
-                            label={rt("release.pulls.income.goldCertShop.rich", {
-                                permits: <CurrencyLabel name="permit">{t("release.pulls.income.goldCertShop.permits")}</CurrencyLabel>,
-                                certs: <CurrencyLabel name="goldCert">{t("release.pulls.income.goldCertShop.certs")}</CurrencyLabel>,
-                            })}
-                            ariaLabel={t("release.pulls.income.goldCertShop")}
-                            checked={settings.goldCertShop}
-                            onChange={(v) => set("goldCertShop", v)}
-                        />
-                    </div>
-                    <p className={cn("m-0", HINT_TEXT)}>{t("release.pulls.income.goldCertHint")}</p>
-                </div>
+                            <div className="flex flex-col gap-2 border-border border-t pt-3">
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+                                    <PullsNumber id="pulls-gold-certs" label={<CurrencyLabel name="goldCert">{t("release.pulls.income.goldCerts")}</CurrencyLabel>} value={settings.goldCertsPerDay} onChange={(v) => set("goldCertsPerDay", v)} step={0.1} max={500} className="w-24" />
+                                    {/* A hand-tuned offset faking baseline alignment desynchronises
+                                    the moment a neighbouring label wraps, which it does below sm. */}
+                                    {/* "buy <hh permit icon> with <gold cert icon>", as asked for in #ui-ux:
+                                    the two nouns are things the player recognises by their picture. */}
+                                    <ToggleField
+                                        id="pulls-gold-shop"
+                                        label={rt("release.pulls.income.goldCertShop.rich", {
+                                            permits: <CurrencyLabel name="permit">{t("release.pulls.income.goldCertShop.permits")}</CurrencyLabel>,
+                                            certs: <CurrencyLabel name="goldCert">{t("release.pulls.income.goldCertShop.certs")}</CurrencyLabel>,
+                                        })}
+                                        ariaLabel={t("release.pulls.income.goldCertShop")}
+                                        checked={settings.goldCertShop}
+                                        onChange={(v) => set("goldCertShop", v)}
+                                    />
+                                </div>
+                                <p className={cn("m-0", HINT_TEXT)}>{t("release.pulls.income.goldCertHint")}</p>
+                            </div>
 
-                <div className="flex flex-col gap-2 border-border border-t pt-3">
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-                        <PullsNumber id="pulls-green-certs" label={<CurrencyLabel name="greenCert">{t("release.pulls.income.greenCerts")}</CurrencyLabel>} value={settings.greenCertsPerWeek} onChange={(v) => set("greenCertsPerWeek", v)} step={5} max={5000} className="w-24" />
-                        <div className="flex flex-col gap-1">
-                            <span className={FIELD_LABEL}>
-                                <CurrencyLabel name="greenCert">{t("release.pulls.income.greenCertShop")}</CurrencyLabel>
-                            </span>
-                            <Select value={settings.greenCertShop} onValueChange={(v) => v !== null && set("greenCertShop", v as GreenCertShop)}>
-                                <SelectTrigger size="sm" className="w-40" aria-label={t("release.pulls.income.greenCertShop")}>
-                                    <SelectValue>{() => greenShopLabel}</SelectValue>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="off">{t("release.pulls.income.greenShop.off")}</SelectItem>
-                                    <SelectItem value="phase1">{t("release.pulls.income.greenShop.phase1")}</SelectItem>
-                                    <SelectItem value="phase2">{t("release.pulls.income.greenShop.phase2")}</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <div className="flex flex-col gap-2 border-border border-t pt-3">
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+                                    <PullsNumber id="pulls-green-certs" label={<CurrencyLabel name="greenCert">{t("release.pulls.income.greenCerts")}</CurrencyLabel>} value={settings.greenCertsPerWeek} onChange={(v) => set("greenCertsPerWeek", v)} step={5} max={5000} className="w-24" />
+                                    <div className="flex flex-col gap-1">
+                                        <span className={FIELD_LABEL}>
+                                            <CurrencyLabel name="greenCert">{t("release.pulls.income.greenCertShop")}</CurrencyLabel>
+                                        </span>
+                                        <Select value={settings.greenCertShop} onValueChange={(v) => v !== null && set("greenCertShop", v as GreenCertShop)}>
+                                            <SelectTrigger size="sm" className="w-40" aria-label={t("release.pulls.income.greenCertShop")}>
+                                                <SelectValue>{() => greenShopLabel}</SelectValue>
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="off">{t("release.pulls.income.greenShop.off")}</SelectItem>
+                                                <SelectItem value="phase1">{t("release.pulls.income.greenShop.phase1")}</SelectItem>
+                                                <SelectItem value="phase2">{t("release.pulls.income.greenShop.phase2")}</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                                <p className={cn("m-0", HINT_TEXT)}>{t("release.pulls.income.greenCertHint")}</p>
+                            </div>
+
+                            <div className="flex flex-col gap-2 border-border border-t pt-3">
+                                <ToggleField id="pulls-free" label={t("release.pulls.income.freePulls")} checked={settings.countFreePulls} onChange={(v) => set("countFreePulls", v)} />
+                                <p className={cn("m-0", HINT_TEXT)}>{t("release.pulls.income.freePullsHint")}</p>
+                                <p className={cn("m-0", HINT_TEXT)}>
+                                    {t("release.pulls.income.skinOriginiteHint", { count: skins.count, op: f.number(skins.originite) })}
+                                    {skins.unpriced > 0 && ` ${t("release.pulls.income.skinUnpriced", { count: skins.unpriced })}`}
+                                </p>
+                                {warning && <output className="m-0 block rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 font-sans text-[12px] text-amber-500 leading-normal">{t("release.pulls.income.originiteShort", { needed: f.number(warning.needed), available: f.number(warning.available) })}</output>}
+                            </div>
                         </div>
-                    </div>
-                    <p className={cn("m-0", HINT_TEXT)}>{t("release.pulls.income.greenCertHint")}</p>
-                </div>
-
-                <div className="flex flex-col gap-2 border-border border-t pt-3">
-                    <ToggleField id="pulls-free" label={t("release.pulls.income.freePulls")} checked={settings.countFreePulls} onChange={(v) => set("countFreePulls", v)} />
-                    <p className={cn("m-0", HINT_TEXT)}>{t("release.pulls.income.freePullsHint")}</p>
-                    <p className={cn("m-0", HINT_TEXT)}>
-                        {t("release.pulls.income.skinOriginiteHint", { count: skins.count, op: f.number(skins.originite) })}
-                        {skins.unpriced > 0 && ` ${t("release.pulls.income.skinUnpriced", { count: skins.unpriced })}`}
-                    </p>
-                    {warning && <output className="m-0 block rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 font-sans text-[12px] text-amber-500 leading-normal">{t("release.pulls.income.originiteShort", { needed: f.number(warning.needed), available: f.number(warning.available) })}</output>}
-                </div>
+                    </CollapsiblePanel>
+                </Collapsible>
             </Card>
 
             <Card className="flex flex-col gap-4 p-4">
                 <div className="flex flex-wrap items-start gap-x-8 gap-y-4">
-                    {/* The "with Originite Prime" sub-lines and the weekly Orundum figure
-                        get icons: the currency sits in front of its number instead of
-                        being spelled out in words. */}
                     <Stat
                         label={t("release.pulls.summary.now")}
                         value={f.number(first?.pulls ?? 0)}
@@ -354,12 +388,17 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
                     </div>
                 </div>
 
-                <div className="h-56 w-full sm:h-64" role="img" aria-label={planned ? t("release.pulls.chart.ariaPlanned", { date: last ? formatDate(last.at, locale) : "", count: spend.filter((s) => s.pulls > 0).length }) : t("release.pulls.chart.aria", { date: last ? formatDate(last.at, locale) : "" })}>
+                <div
+                    ref={chartRef}
+                    className="h-56 w-full sm:h-64"
+                    role="img"
+                    aria-label={planned ? t("release.pulls.chart.ariaPlanned", { date: last ? formatDate(last.at, locale) : "", count: spend.filter((s) => s.pulls > 0).length }) : t("release.pulls.chart.aria", { date: last ? formatDate(last.at, locale) : "" })}
+                >
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={chartRows} margin={{ top: 8, right: 8, bottom: 0, left: -18 }}>
-                            <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="at" type="number" scale="time" domain={["dataMin", "dataMax"]} tickFormatter={(v: number) => formatDate(Math.floor(v / 1000), locale)} tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} stroke="var(--border)" minTickGap={40} />
-                            <YAxis tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} stroke="var(--border)" width={48} allowDecimals={false} />
+                            <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} verticalCoordinatesGenerator={noVerticalGridLines} />
+                            <XAxis dataKey="at" type="number" scale="time" domain={["dataMin", "dataMax"]} ticks={xTicks} interval={0} tickFormatter={(v: number) => formatDate(Math.floor(v / 1000), locale)} tick={renderAxisTick} stroke="var(--border)" />
+                            <YAxis interval={0} tick={renderAxisTick} stroke="var(--border)" width={48} allowDecimals={false} />
                             <Tooltip
                                 contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
                                 labelStyle={{ color: "var(--muted-foreground)" }}

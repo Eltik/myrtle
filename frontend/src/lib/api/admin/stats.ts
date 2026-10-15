@@ -1,25 +1,14 @@
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { backendFetch } from "#/lib/fetch";
+import type { RecentUser } from "#/types/generated/RecentUser";
+import type { RoleBreakdown } from "#/types/generated/RoleBreakdown";
 import { parseError } from "../_shared";
 import { requireSiteToken } from "../_shared.server";
 import type { IStatsResponse } from "../stats";
 
-export interface IRoleBreakdown {
-    user: number;
-    tierListEditor: number;
-    tierListAdmin: number;
-    translator: number;
-    superAdmin: number;
-}
-
-export interface IRecentUser {
-    uid: string;
-    serverId: number;
-    nickname: string | null;
-    level: number | null;
-    createdAt: string;
-}
+export type IRoleBreakdown = RoleBreakdown;
+export type IRecentUser = RecentUser;
 
 export interface IAdminStatsResponse extends IStatsResponse {
     usersByRole: IRoleBreakdown;

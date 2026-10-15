@@ -9,27 +9,13 @@ import type { TypedT } from "#/lib/i18n/messages";
 import type { messages } from "./LanguageToggle.messages";
 
 /**
- * The language control in the header.
- *
- * The active language's code in the top bar, not a row inside the appearance
- * popover: language is the one setting people actively hunt for, and burying it
- * behind a theme icon tests whether the visitor can guess our information
- * architecture.
- *
- * Visible at every width. The bar is busy on a phone, but a control nobody can
- * find is worse than a tight row, and the hamburger drawer carries the same
- * choice as a second path.
- *
- * The room for it comes from the wordmark, which `Header` hides below `sm` -
- * see the comment there. If you add another button to this cluster, take the
- * space from something else rather than from this one.
+ * The active language's code in the top bar, not a row in the appearance
+ * popover: language is the one setting people hunt for. From `sm` up; below
+ * that `Header` drops it and the hamburger drawer carries the same choice.
  *
  * The game-text picker shares this menu because it defaults to the language:
- * the two read as one decision ("what am I reading") with an override.
- *
- * Renders nothing when there is neither a second locale nor a second loaded
- * game-data server, so a single-language, single-server deployment pays no
- * pixels for it.
+ * one decision ("what am I reading") with an override. Renders nothing with
+ * neither a second locale nor a second loaded game-data server.
  */
 export default function LanguageToggle(): React.ReactElement | null {
     const t: TypedT<typeof messages> = useT("nav");
@@ -53,11 +39,8 @@ export default function LanguageToggle(): React.ReactElement | null {
             <DropdownMenuTrigger
                 render={
                     <Button variant="ghost" size="icon" aria-label={t("languageToggle.triggerAria", { label: triggerLabel })} title={triggerLabel}>
-                        {/* The code, not a globe: a globe only says "language lives
-                            here", which you need once, while the code also says WHICH
-                            language you are reading, for about the same width. Not a
-                            flag: a language is not a country, and Русский, 日本語 and
-                            Tagalog have no single correct one. */}
+                        {/* The code, not a globe: it also says WHICH language, at the
+                            same width. Not a flag: a language is not a country. */}
                         <span className="font-mono font-semibold text-[11px] uppercase leading-none tracking-[0.04em]">{shortCode}</span>
                     </Button>
                 }

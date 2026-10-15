@@ -1,5 +1,6 @@
 import { RotateCwIcon } from "lucide-react";
 import { type ReactNode, useMemo } from "react";
+import { SearchField } from "#/components/SearchField";
 import { Button } from "#/components/ui/button";
 import { Spinner } from "#/components/ui/spinner";
 import { useT } from "#/lib/i18n";
@@ -10,7 +11,7 @@ import { anyGalleryFilter, categoryOptions, filterForSource, filterGallery, grou
 import type { messages } from "../ArtBrowser.messages";
 import { TileGrid } from "../TileGrid";
 import type { IGallerySource } from "../useGalleryCatalog";
-import { ActiveFilters, CategoryChips, SearchField, StoryPicker } from "./GalleryFilters";
+import { ActiveFilters, CategoryChips, StoryPicker } from "./GalleryFilters";
 
 /** One gallery source read through the author's filter: what the rail, the chips and the grid each show. */
 export interface IGalleryView {
@@ -48,7 +49,7 @@ export function galleryFilterActions(setChosen: (update: (prev: IGalleryFilter) 
     const update = (part: Partial<IGalleryFilter>) => setChosen((prev) => ({ ...prev, ...part }));
     return {
         update,
-        // Toggles the clicked category in the author's own filter, not in the view's `filter`: that one has the categories set aside for another source dropped, and writing it back lost them (`filterForSource`).
+        // Toggles the clicked category in the author's own filter, not in the view's `filter`: that one has the categories set aside for another source dropped, and writing it back would lose them (`filterForSource`).
         toggleCategory: (id: StoryCategory) => setChosen((prev) => ({ ...prev, categories: prev.categories.includes(id) ? prev.categories.filter((c) => c !== id) : [...prev.categories, id] })),
         clear: () => setChosen(() => NO_GALLERY_FILTER),
     };

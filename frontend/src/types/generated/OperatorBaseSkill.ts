@@ -18,10 +18,9 @@ export type OperatorBaseSkill = {
     unlockElite: number;
     unlockLevel: number;
     /**
-     * Index of this skill's slot in the operator's kit (`BuffChar` order).
-     * Tiers of one slot REPLACE each other on promotion - only the highest
-     * tier the operator has unlocked is live, exactly as
-     * `OperatorBaseProfile::build` picks it. Group by this to tell a
+     * Slot index in the operator's kit (`BuffChar` order). Tiers of one slot
+     * replace each other on promotion: only the highest unlocked tier is live,
+     * as `OperatorBaseProfile::build` picks it. Group by this to tell a
      * superseded tier from a second skill.
      */
     slot: number;

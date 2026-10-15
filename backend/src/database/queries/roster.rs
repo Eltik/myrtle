@@ -51,7 +51,11 @@ pub async fn sync_user_data(
     supports: &serde_json::Value,
     nick_number: Option<&str>,
     enemies: &serde_json::Value,
+    game_squads: &serde_json::Value,
 ) -> Result<(), sqlx::Error> {
+    // One sync, one transaction: the procedure and the originite update land
+    // together or not at all (an early `?` drops `tx`, which rolls back).
+    let mut tx = pool.begin().await?;
     sqlx::query(
         "CALL sp_sync_user_data($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)"
     )
@@ -78,7 +82,7 @@ pub async fn sync_user_data(
     .bind(supports)
     .bind(nick_number)
     .bind(enemies)
-    .execute(pool)
+    .execute(&mut *tx)
     .await?;
     sqlx::query(
         "UPDATE user_status SET originite = $3 WHERE user_id = (SELECT id FROM users WHERE uid = $1 AND server_id = $2)",
@@ -91,9 +95,67 @@ pub async fn sync_user_data(
             .and_then(serde_json::Value::as_i64)
             .map(|v| v as i32),
     )
-    .execute(pool)
+    .execute(&mut *tx)
     .await?;
+    sync_game_squads(&mut tx, uid, server_id, game_squads).await?;
+    tx.commit().await?;
     Ok(())
+}
+
+/// Store the in-game squads one sync carries (`extract_game_squads`): one
+/// upsert that writes a row only when its name or slots changed, and one
+/// delete of the squads the sync no longer carries. An unchanged re-sync
+/// writes 0 rows; the delete-and-reinsert this replaced wrote 2 per squad
+/// (a delete and an insert, 8 for the usual 4). Returns the rows written.
+pub async fn sync_game_squads(
+    conn: &mut sqlx::PgConnection,
+    uid: &str,
+    server_id: i16,
+    game_squads: &serde_json::Value,
+) -> Result<u64, sqlx::Error> {
+    let Some(user_id) = sqlx::query_scalar::<_, uuid::Uuid>(
+        "SELECT id FROM users WHERE uid = $1 AND server_id = $2",
+    )
+    .bind(uid)
+    .bind(server_id)
+    .fetch_optional(&mut *conn)
+    .await?
+    else {
+        return Ok(0);
+    };
+    let squads = if game_squads.is_array() {
+        game_squads.clone()
+    } else {
+        serde_json::json!([])
+    };
+    let upserted = sqlx::query(
+        "INSERT INTO user_game_squads (user_id, squad_index, name, slots, synced_at)
+         SELECT $1, (e->>'index')::smallint, COALESCE(e->>'name', ''), COALESCE(e->'slots', '[]'::jsonb), now()
+         FROM jsonb_array_elements($2) AS e
+         WHERE e ? 'index'
+         ON CONFLICT (user_id, squad_index) DO UPDATE
+            SET name = EXCLUDED.name, slots = EXCLUDED.slots, synced_at = EXCLUDED.synced_at
+            WHERE (user_game_squads.name, user_game_squads.slots)
+                  IS DISTINCT FROM (EXCLUDED.name, EXCLUDED.slots)",
+    )
+    .bind(user_id)
+    .bind(&squads)
+    .execute(&mut *conn)
+    .await?
+    .rows_affected();
+    let deleted = sqlx::query(
+        "DELETE FROM user_game_squads
+         WHERE user_id = $1
+           AND squad_index NOT IN (
+               SELECT (e->>'index')::smallint FROM jsonb_array_elements($2) AS e WHERE e ? 'index'
+           )",
+    )
+    .bind(user_id)
+    .bind(&squads)
+    .execute(&mut *conn)
+    .await?
+    .rows_affected();
+    Ok(upserted + deleted)
 }
 
 /// Get support units for a user (joined with operator state).

@@ -4,7 +4,7 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::app::error::ApiError;
-use crate::app::extractors::auth::AuthUser;
+use crate::app::extractors::auth::{AuthUser, RoleCheckedUser};
 use crate::app::routes::{StatusOk, ok_status};
 use crate::app::services;
 use crate::app::services::tier_list::check_permission;
@@ -119,7 +119,7 @@ pub struct CreateRequest {
     operation_id = "tier_list_create",
     tag = "tier-lists",
     request_body = CreateRequest,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The created list.", body = TierList),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
@@ -133,7 +133,7 @@ pub struct CreateRequest {
 )]
 pub async fn create(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Json(body): Json<CreateRequest>,
 ) -> Result<Json<TierList>, ApiError> {
     validate_list_body(&body.name, body.description.as_deref())?;
@@ -155,7 +155,7 @@ pub async fn create(
     get,
     path = "/tier-lists/mine",
     tag = "tier-lists",
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The caller's lists.", body = Vec<TierList>),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
@@ -178,7 +178,7 @@ pub async fn mine(
     get,
     path = "/tier-lists/favorites",
     tag = "tier-lists",
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "Favourited lists.", body = Vec<TierList>),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
@@ -207,7 +207,7 @@ pub async fn favorites(
     params(
         ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
     ),
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The list is gone.", body = crate::app::routes::StatusOk),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
@@ -220,7 +220,7 @@ pub async fn favorites(
 )]
 pub async fn delete(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path(slug): Path<String>,
 ) -> Result<Json<StatusOk>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;
@@ -257,7 +257,7 @@ pub struct UpdateRequest {
         ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
     ),
     request_body = UpdateRequest,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The list as stored.", body = TierList),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
@@ -272,7 +272,7 @@ pub struct UpdateRequest {
 )]
 pub async fn update(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path(slug): Path<String>,
     Json(body): Json<UpdateRequest>,
 ) -> Result<Json<TierList>, ApiError> {

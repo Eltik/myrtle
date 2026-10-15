@@ -6,19 +6,19 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::app::error::ApiError;
-use crate::app::extractors::auth::AuthUser;
+use crate::app::extractors::auth::{AuthUser, RoleCheckedUser};
 use crate::app::routes::{StatusOk, ok_status};
 use crate::app::services::i18n as service;
 use crate::app::state::AppState;
 use crate::core::auth::permissions::Permission;
-use crate::database::models::i18n::TranslationPermission;
+use crate::database::models::i18n::TranslationGrant;
 
 /// Who may hand out locales. `Permission::Admin` on a locale lets a locale lead
 /// recruit for their language without being a site super-admin; that's why
 /// grants live in a table.
 async fn assert_can_manage(
     state: &AppState,
-    auth: &AuthUser,
+    auth: &RoleCheckedUser,
     locale: &str,
 ) -> Result<Uuid, ApiError> {
     service::assert_can_write(state, auth, locale, Permission::Admin).await
@@ -31,6 +31,10 @@ pub struct ListQuery {
 }
 
 /// Who holds which translation grant.
+///
+/// Tier-list admins and up see every grant. Anyone else who may open the
+/// admin panel sees only their own rows: the list names every grantee,
+/// private profiles included.
 #[utoipa::path(
     get,
     path = "/admin/i18n/permissions",
@@ -41,7 +45,7 @@ pub struct ListQuery {
     ),
     security(("bearer_auth" = []), ("service_key" = [])),
     responses(
-        (status = 200, description = "Current grants.", body = Vec<TranslationPermission>),
+        (status = 200, description = "Current grants.", body = Vec<TranslationGrant>),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
         (status = 403, response = crate::app::openapi::responses::Forbidden),
         (status = 429, response = crate::app::openapi::responses::RateLimited),
@@ -51,19 +55,46 @@ pub struct ListQuery {
 )]
 pub async fn list(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Query(params): Query<ListQuery>,
-) -> Result<Json<Vec<TranslationPermission>>, ApiError> {
+) -> Result<Json<Vec<TranslationGrant>>, ApiError> {
     if !service::can_access_admin_panel(&state, &auth).await? {
         return Err(ApiError::Forbidden);
     }
     Ok(Json(
-        service::list_permissions(&state, params.locale.as_deref()).await?,
+        service::list_permissions(&state, &auth, params.locale.as_deref()).await?,
     ))
 }
 
+/// The caller's own translation grants, for any signed-in role. Empty when
+/// they hold none.
+#[utoipa::path(
+    get,
+    path = "/admin/i18n/permissions/me",
+    operation_id = "i18n_permissions_mine",
+    tag = "i18n-admin",
+    security(("bearer_auth" = []), ("service_key" = [])),
+    responses(
+        (status = 200, description = "The caller's grants.", body = Vec<TranslationGrant>),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn mine(
+    State(state): State<AppState>,
+    auth: AuthUser,
+) -> Result<Json<Vec<TranslationGrant>>, ApiError> {
+    Ok(Json(service::my_permissions(&state, &auth).await?))
+}
+
+// Not named `GrantRequest`: the tier-list permission body has that name, and
+// OpenAPI schemas are keyed by bare type name, so one replaced the other in
+// the document (tests/openapi_schema_names_test.rs).
+/// One translation grant: a permission on a locale for an account.
 #[derive(Deserialize, utoipa::ToSchema)]
-pub struct GrantRequest {
+pub struct TranslationGrantRequest {
     pub locale: String,
     pub user_id: Uuid,
     pub permission: String,
@@ -72,19 +103,21 @@ pub struct GrantRequest {
 /// Give an account a translation grant on one locale.
 ///
 /// Holding any grant is on its own enough to open the admin panel, since a
-/// grant would be unusable otherwise.
+/// grant would be unusable otherwise. A locale that is not in the locale
+/// table is a 404, and so is a user id with no account.
 #[utoipa::path(
     post,
     path = "/admin/i18n/permissions",
     operation_id = "i18n_permission_grant",
     tag = "i18n-admin",
-    request_body = GrantRequest,
+    request_body = TranslationGrantRequest,
     security(("bearer_auth" = []), ("service_key" = [])),
     responses(
         (status = 200, description = "The grant was recorded.", body = crate::app::routes::StatusOk),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
         (status = 403, response = crate::app::openapi::responses::Forbidden),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
         (status = 429, response = crate::app::openapi::responses::RateLimited),
         (status = 500, response = crate::app::openapi::responses::InternalError),
         (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
@@ -92,8 +125,8 @@ pub struct GrantRequest {
 )]
 pub async fn grant(
     State(state): State<AppState>,
-    auth: AuthUser,
-    Json(body): Json<GrantRequest>,
+    auth: RoleCheckedUser,
+    Json(body): Json<TranslationGrantRequest>,
 ) -> Result<Json<StatusOk>, ApiError> {
     let granted_by = assert_can_manage(&state, &auth, &body.locale).await?;
     let permission = Permission::from_str(&body.permission).map_err(ApiError::BadRequest)?;
@@ -107,7 +140,7 @@ pub async fn grant(
     path = "/admin/i18n/permissions/revoke",
     operation_id = "i18n_permission_revoke",
     tag = "i18n-admin",
-    request_body = GrantRequest,
+    request_body = TranslationGrantRequest,
     security(("bearer_auth" = []), ("service_key" = [])),
     responses(
         (status = 200, description = "The grant is gone.", body = crate::app::routes::StatusOk),
@@ -121,8 +154,8 @@ pub async fn grant(
 )]
 pub async fn revoke(
     State(state): State<AppState>,
-    auth: AuthUser,
-    Json(body): Json<GrantRequest>,
+    auth: RoleCheckedUser,
+    Json(body): Json<TranslationGrantRequest>,
 ) -> Result<Json<StatusOk>, ApiError> {
     assert_can_manage(&state, &auth, &body.locale).await?;
     let permission = Permission::from_str(&body.permission).map_err(ApiError::BadRequest)?;

@@ -4,7 +4,7 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::app::error::ApiError;
-use crate::app::extractors::auth::AuthUser;
+use crate::app::extractors::auth::RoleCheckedUser;
 use crate::app::routes::{StatusOk, ok_status};
 use crate::app::services::tier_list::find_and_authorize;
 use crate::app::services::tier_list::invalidate_detail;
@@ -49,7 +49,7 @@ fn validate_tier_body(body: &CreateTierRequest) -> Result<(), ApiError> {
         ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
     ),
     request_body = CreateTierRequest,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The created tier.", body = Tier),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
@@ -64,7 +64,7 @@ fn validate_tier_body(body: &CreateTierRequest) -> Result<(), ApiError> {
 )]
 pub async fn create(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path(slug): Path<String>,
     Json(body): Json<CreateTierRequest>,
 ) -> Result<Json<Tier>, ApiError> {
@@ -99,7 +99,7 @@ pub async fn create(
         ("tier_id" = String, Path, description = "Tier id (UUID).")
     ),
     request_body = CreateTierRequest,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The tier as stored.", body = Tier),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
@@ -114,7 +114,7 @@ pub async fn create(
 )]
 pub async fn update(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path((slug, tier_id)): Path<(String, Uuid)>,
     Json(body): Json<CreateTierRequest>,
 ) -> Result<Json<Tier>, ApiError> {
@@ -153,7 +153,7 @@ pub async fn update(
         ("slug" = String, Path, description = "Tier list slug, as it appears in its URL."),
         ("tier_id" = String, Path, description = "Tier id (UUID).")
     ),
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The tier is gone.", body = crate::app::routes::StatusOk),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
@@ -166,7 +166,7 @@ pub async fn update(
 )]
 pub async fn delete(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path((slug, tier_id)): Path<(String, Uuid)>,
 ) -> Result<Json<StatusOk>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;

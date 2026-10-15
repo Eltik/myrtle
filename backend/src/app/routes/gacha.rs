@@ -52,11 +52,11 @@ pub struct HistoryParams {
     post,
     path = "/gacha/fetch",
     tag = "gacha",
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "What the sync found and stored.", body = crate::app::services::gacha::FetchResult),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
-        (status = 403, response = crate::app::openapi::responses::Forbidden),
         (status = 429, response = crate::app::openapi::responses::RateLimited),
         (status = 500, response = crate::app::openapi::responses::InternalError),
         (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
@@ -104,7 +104,7 @@ pub struct EnhancedStatsParams {
     path = "/gacha/stats/enhanced",
     tag = "gacha",
     params(
-        ("top_n" = Option<u32>, Query, description = "How many operators to include. Also accepted as `topN`."),
+        ("top_n" = Option<u32>, Query, description = "How many operators to include: 10, 20 (the default) or 50. Other values round up to the next of these, and anything above 50 is 50. Also accepted as `topN`."),
         ("include_timing" = Option<bool>, Query, description = "Include pull-timing breakdowns. Also accepted as `includeTiming`.")
     ),
     responses(
@@ -118,10 +118,25 @@ pub async fn enhanced_stats(
     State(state): State<AppState>,
     Query(params): Query<EnhancedStatsParams>,
 ) -> Result<Json<services::gacha::GachaEnhancedStats>, ApiError> {
-    let top_n = params.top_n.unwrap_or(20).clamp(1, 50);
+    let top_n = snap_top_n(params.top_n);
     let include_timing = params.include_timing.unwrap_or(false);
     let stats = get_enhanced_stats(&state, top_n, include_timing).await?;
     Ok(Json(stats))
+}
+
+/// The sizes `enhanced_stats` serves. Each is its own cache entry and every
+/// miss runs two full aggregations, so the set is kept small: 3 sizes x 2
+/// timing flags is 6 keys, where clamping to 1..=50 allowed 100.
+const TOP_N_SIZES: [u32; 3] = [10, 20, 50];
+
+/// Rounds a requested size up to the next served size; above the largest,
+/// the largest. Absent is the default, 20.
+fn snap_top_n(requested: Option<u32>) -> u32 {
+    let n = requested.unwrap_or(20);
+    TOP_N_SIZES
+        .into_iter()
+        .find(|&size| n <= size)
+        .unwrap_or(TOP_N_SIZES[TOP_N_SIZES.len() - 1])
 }
 
 /// Community pull statistics broken down by banner.
@@ -158,7 +173,7 @@ pub async fn per_banner_stats(
         ("limit" = Option<u32>, Query, description = "Page size. Defaults to 20, capped at 100."),
         ("offset" = Option<u32>, Query, description = "Rows to skip. Defaults to 0.")
     ),
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "One page of pulls, plus the totals for the filter.", body = crate::app::services::gacha::GachaHistoryEnvelopeDto),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
@@ -198,7 +213,7 @@ pub async fn history(
     params(
         ("char_id" = String, Path, description = "Operator id.")
     ),
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The caller's pulls of that operator.", body = Vec<crate::app::services::gacha::GachaRecordEntryDto>),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
@@ -222,7 +237,7 @@ pub async fn history_by_char(
     get,
     path = "/gacha/stored-records",
     tag = "gacha",
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "Stored records.", body = crate::app::services::gacha::GachaRecordsDto),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
@@ -246,7 +261,7 @@ pub async fn stored_records(
     path = "/gacha/stats",
     operation_id = "gacha_stats",
     tag = "gacha",
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The caller's statistics.", body = GachaStats),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
@@ -269,7 +284,7 @@ pub async fn stats(
     get,
     path = "/gacha/settings",
     tag = "gacha",
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "Current settings.", body = crate::app::services::gacha::GachaSettingsDto),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
@@ -301,7 +316,7 @@ pub struct UpdateSettingsBody {
     operation_id = "gacha_update_settings",
     tag = "gacha",
     request_body = UpdateSettingsBody,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The settings as stored.", body = crate::app::services::gacha::GachaSettingsDto),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
@@ -325,4 +340,32 @@ pub async fn update_settings(
     )
     .await?;
     Ok(Json(settings))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::snap_top_n;
+
+    #[test]
+    fn top_n_rounds_up_to_a_served_size() {
+        assert_eq!(snap_top_n(None), 20);
+        assert_eq!(snap_top_n(Some(0)), 10);
+        assert_eq!(snap_top_n(Some(1)), 10);
+        assert_eq!(snap_top_n(Some(10)), 10);
+        assert_eq!(snap_top_n(Some(11)), 20);
+        assert_eq!(snap_top_n(Some(20)), 20);
+        assert_eq!(snap_top_n(Some(21)), 50);
+        assert_eq!(snap_top_n(Some(50)), 50);
+        assert_eq!(snap_top_n(Some(51)), 50);
+        assert_eq!(snap_top_n(Some(u32::MAX)), 50);
+    }
+
+    #[test]
+    fn every_request_lands_on_one_of_three_sizes() {
+        let mut sizes: Vec<u32> = (0..=200).map(|n| snap_top_n(Some(n))).collect();
+        sizes.push(snap_top_n(None));
+        sizes.sort_unstable();
+        sizes.dedup();
+        assert_eq!(sizes, [10, 20, 50]);
+    }
 }

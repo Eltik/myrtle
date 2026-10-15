@@ -12,7 +12,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { IOperatorListItem, IOperatorModule } from "#/types/operators";
 import type { messages } from "./OperatorPlannerDialog.messages";
-import { ELITE_PHASES, type IOperatorSkill, isModuleAllowed, isSkillLevelAllowed, MAX_SKILL_LEVEL, MODULE_STAGES, masteryOf, phaseLabel, plannableModules, skillStepCount, skillUnlockCond } from "./planTargets";
+import { ELITE_PHASES, type IOperatorSkill, isEliteBelowFloor, isModuleAllowed, isModuleBelowFloor, isSkillBelowFloor, isSkillLevelAllowed, MAX_SKILL_LEVEL, MODULE_STAGES, masteryOf, phaseLabel, plannableModules, skillStepCount, skillUnlockCond } from "./planTargets";
 import type { IPlanTargets } from "./usePlanTargets";
 
 type DialogT = TypedT<typeof messages>;
@@ -29,26 +29,40 @@ interface IPromotionLevelPanelProps {
 /** The Elite buttons (only those the rarity reaches) and the level slider with its number input. */
 export function PromotionLevelPanel({ targets }: IPromotionLevelPanelProps): React.ReactElement {
     const t: DialogT = useT("tools");
-    const { elite, level, maxElite, maxLevel, changeElite, changeLevel } = targets;
+    const { elite, level, maxElite, maxLevel, minLevel, floor, changeElite, changeLevel } = targets;
 
     return (
         <div className="grid grid-cols-1 items-center gap-6 rounded-xl border border-border bg-card/40 p-4 sm:grid-cols-[auto_1fr]">
             <div className="flex flex-col gap-2">
                 <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">{t("planner.dialog.promotion")}</span>
                 <div className="mt-1 flex items-center gap-2">
-                    {ELITE_PHASES.filter((e) => e <= maxElite).map((e) => (
-                        <button key={e} type="button" onClick={() => changeElite(e)} className={cn("relative flex size-12 cursor-pointer items-center justify-center rounded-lg border transition-all", stepStateClass(elite === e))} title={t("planner.dialog.elite", { elite: e })}>
-                            <img src={eliteIcon(e)} alt={t("planner.dialog.elite", { elite: e })} className="icon-theme-aware size-7 object-contain" />
-                        </button>
-                    ))}
+                    {ELITE_PHASES.filter((e) => e <= maxElite).map((e) => {
+                        const isReached = isEliteBelowFloor(floor, e);
+                        const icon = <img src={eliteIcon(e)} alt={t("planner.dialog.elite", { elite: e })} className="icon-theme-aware size-7 object-contain" />;
+                        // A reached phase is a disabled button, which fires no pointer events, so its tooltip trigger is a wrapping span.
+                        return (
+                            <Tooltip key={e}>
+                                {isReached ? (
+                                    <TooltipTrigger render={<span className="inline-flex cursor-not-allowed" />}>
+                                        <button type="button" disabled className="relative flex size-12 cursor-not-allowed items-center justify-center rounded-lg border border-border/40 bg-muted/20 opacity-20 transition-all">
+                                            {icon}
+                                        </button>
+                                    </TooltipTrigger>
+                                ) : (
+                                    <TooltipTrigger render={<button type="button" onClick={() => changeElite(e)} className={cn("relative flex size-12 cursor-pointer items-center justify-center rounded-lg border transition-all", stepStateClass(elite === e))} />}>{icon}</TooltipTrigger>
+                                )}
+                                <TooltipPopup>{isReached ? t("planner.dialog.alreadyReached") : t("planner.dialog.elite", { elite: e })}</TooltipPopup>
+                            </Tooltip>
+                        );
+                    })}
                 </div>
             </div>
 
             <div className="flex w-full flex-col gap-2">
                 <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">{t("planner.dialog.level", { max: maxLevel })}</span>
                 <div className="mt-2 flex items-center gap-4">
-                    <Slider value={[level]} onValueChange={(vals) => changeLevel(Array.isArray(vals) ? (vals[0] ?? 1) : vals)} min={1} max={maxLevel} className="flex-1" />
-                    <Input type="number" min={1} max={maxLevel} value={level} onChange={(e) => changeLevel(Number.parseInt(e.target.value, 10))} className="w-16 text-center font-mono" />
+                    <Slider value={[level]} onValueChange={(vals) => changeLevel(Array.isArray(vals) ? (vals[0] ?? 1) : vals)} min={minLevel} max={maxLevel} className="flex-1" />
+                    <Input type="number" min={minLevel} max={maxLevel} value={level} onChange={(e) => changeLevel(Number.parseInt(e.target.value, 10))} className="w-16 text-center font-mono" />
                 </div>
             </div>
         </div>
@@ -86,7 +100,6 @@ interface ITargetRowProps {
     meta: React.ReactNode;
     metaClassName?: string;
     stepsClassName: string;
-    /** The row's step buttons. */
     children: React.ReactNode;
 }
 
@@ -130,7 +143,7 @@ function TargetStepButton({ isActive, lockedReason, title, sizeClassName, onSele
                 <TooltipTrigger
                     render={(props) => (
                         <span {...props} className={cn("flex shrink-0 cursor-help", sizeClassName)}>
-                            <button type="button" disabled className="flex h-full w-full cursor-help items-center justify-center rounded-md border border-border/40 bg-muted/20 opacity-20 transition-all" title={title}>
+                            <button type="button" disabled className="flex h-full w-full cursor-help items-center justify-center rounded-md border border-border/40 bg-muted/20 opacity-20 transition-all" aria-label={title}>
                                 {children}
                             </button>
                         </span>
@@ -142,9 +155,10 @@ function TargetStepButton({ isActive, lockedReason, title, sizeClassName, onSele
     }
 
     return (
-        <button type="button" onClick={onSelect} className={cn("flex shrink-0 cursor-pointer items-center justify-center rounded-md border transition-all", sizeClassName, stepStateClass(isActive))} title={title}>
-            {children}
-        </button>
+        <Tooltip>
+            <TooltipTrigger render={<button type="button" onClick={onSelect} aria-label={title} className={cn("flex shrink-0 cursor-pointer items-center justify-center rounded-md border transition-all", sizeClassName, stepStateClass(isActive))} />}>{children}</TooltipTrigger>
+            <TooltipPopup>{title}</TooltipPopup>
+        </Tooltip>
     );
 }
 
@@ -186,7 +200,7 @@ function SkillTargetRow({ operator, skill, skillIdx, targets }: ISkillTargetRowP
     // The skill recovery/trigger labels belong to the operator-detail feature,
     // so they are resolved against that namespace rather than this one.
     const operatorsT: HelperT = useT("operators");
-    const { elite, level, skillTargets, changeSkillTarget } = targets;
+    const { elite, level, floor, skillTargets, changeSkillTarget } = targets;
 
     const currentTarget = skillTargets[skillIdx] ?? 1;
     // The name and SP numbers follow the targeted level, since a skill's SP cost changes as it levels.
@@ -198,6 +212,7 @@ function SkillTargetRow({ operator, skill, skillIdx, targets }: ISkillTargetRowP
     const totalSp = levelInfo?.spData?.spCost ?? 0;
 
     const lockedReason = (value: number): string => {
+        if (isSkillBelowFloor(floor, skillIdx, value)) return t("planner.dialog.alreadyReached");
         if (isSkillLevelAllowed(operator, skillIdx, value, elite, level)) return "";
         const cond = skillUnlockCond(operator, skillIdx, value);
         if (!cond) return "";
@@ -276,7 +291,7 @@ interface IModuleTargetRowProps {
 
 function ModuleTargetRow({ operator, mod, targets }: IModuleTargetRowProps): React.ReactElement {
     const t: DialogT = useT("tools");
-    const { elite, level, moduleTargets, changeModuleTarget } = targets;
+    const { elite, level, floor, moduleTargets, changeModuleTarget } = targets;
 
     const currentTarget = moduleTargets[mod.uniEquipId] ?? 0;
     const moduleTag = mod.typeName1 && mod.typeName2 ? `${mod.typeName1}-${mod.typeName2}` : (mod.typeName1 ?? t("planner.dialog.moduleFallback"));
@@ -288,8 +303,16 @@ function ModuleTargetRow({ operator, mod, targets }: IModuleTargetRowProps): Rea
         <TargetRow iconSrc={moduleIconURL(mod, operator.server)} name={mod.uniEquipName} stepsClassName="flex gap-1.5" meta={<span>{moduleTag}</span>}>
             {MODULE_STAGES.map((stage) => {
                 const isLocked = stage !== 0 && !isUnlocked;
+                const isReached = isModuleBelowFloor(floor, mod.uniEquipId, stage);
                 return (
-                    <TargetStepButton key={stage} isActive={currentTarget === stage} lockedReason={isLocked ? lockedText : ""} title={stage === 0 ? t("planner.dialog.notPlanned") : t("planner.dialog.stage", { stage })} sizeClassName="size-9" onSelect={() => changeModuleTarget(mod.uniEquipId, stage)}>
+                    <TargetStepButton
+                        key={stage}
+                        isActive={currentTarget === stage}
+                        lockedReason={isReached ? t("planner.dialog.alreadyReached") : isLocked ? lockedText : ""}
+                        title={stage === 0 ? t("planner.dialog.notPlanned") : t("planner.dialog.stage", { stage })}
+                        sizeClassName="size-9"
+                        onSelect={() => changeModuleTarget(mod.uniEquipId, stage)}
+                    >
                         <span className="font-semibold text-xs sm:text-[13px]">{stage === 0 ? "-" : stage}</span>
                     </TargetStepButton>
                 );

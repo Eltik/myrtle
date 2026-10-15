@@ -14,30 +14,24 @@ export type StoryGroupReaders = {
      */
     readers: number;
     /**
-     * Accounts that have read every GATED story in the group, the stories
-     * the stage records can speak for. A group with no gated story counts 0,
-     * and the tab prints that as not measurable rather than as nobody:
-     * 494 EN stories carry no gate (every operator record, 20 mini vignettes,
-     * `main_0`'s two Prologue guide entries), and 2,313 of 2,576 accounts are
-     * known only through their stage records, so "every scripted story"
-     * would have made chapter 0 finished by 0 of its 2,314 readers.
+     * Accounts that read every GATED story in the group (the ones stage
+     * records can speak for). 0 on a group with no gated story; the tab shows
+     * that as unmeasurable, not as nobody. 494 EN stories have no gate (every
+     * operator record, 20 mini vignettes, `main_0`'s two Prologue guide
+     * entries) and 2,313 of 2,576 accounts are known only from stage records,
+     * so "every scripted story" made chapter 0 finished by 0 of 2,314 readers.
      */
     finished: number;
     /**
-     * Readers per story, in the group's own story order: the "how far people
-     * get" curve. It is the same number `stories[]` carries for each id,
-     * arranged so a consumer can draw the curve without a join.
+     * Readers per story in the group's story order (the "how far people get"
+     * curve): the same numbers as `stories[]`, pre-joined.
      *
-     * ABSENT on an operator's records, and only there. Carrying it for all
-     * 766 groups put the document at 153,950 bytes, over the 150 KB the wire
-     * contract allows; dropping it from the 315 record groups, which hold 367
-     * one-story-deep curves that say nothing their `readers` count does not,
-     * brings it to 150,066. That is 3,534 bytes under the ceiling and about 70
-     * more stories, which is a THIN margin: the real-data test asserts the
-     * ceiling, so the next EN batch that crosses it says so before the wire
-     * does, and the fix then is to drop the curve everywhere and let the
-     * consumer join it. A consumer that wants a record's curve reads
-     * `stories[]`, which is where every one of these numbers came from.
+     * Absent only on operator records. On all 766 groups the document was
+     * 153,950 bytes, over the 150 KB wire limit; dropping it from the 315
+     * record groups (367 one-story curves that add nothing over `readers`)
+     * gives 150,066, 3,534 bytes (about 70 stories) under. The real-data test
+     * asserts the ceiling; when it trips, drop the curve everywhere and join
+     * client-side.
      */
     depth?: Array<number>;
 };

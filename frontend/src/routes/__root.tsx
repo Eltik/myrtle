@@ -3,14 +3,18 @@ import { createRootRouteWithContext, HeadContent, Outlet, redirect, Scripts, use
 import { useSelector } from "@tanstack/react-store";
 import { lazy, Suspense, useEffect, useRef } from "react";
 import { ReleaseNoteDialog } from "#/components/changelog/ReleaseNoteDialog";
-import { AuthDialog } from "#/components/header/impl/AuthDialog";
+import { useMusicLive } from "#/components/gallery/music/player/presence";
+import { LazyAuthDialog } from "#/components/header/impl/LazyAuthDialog";
 import { AnchoredToastProvider, ToastProvider } from "#/components/ui/toast";
+import { useHydrated } from "#/hooks/use-hydrated";
+import { isSignInPrompt } from "#/lib/auth/search";
 import { getSessionFn } from "#/lib/auth/server";
 import { authActions, authStore } from "#/lib/auth/store";
 import { CommandProvider } from "#/lib/command-context";
 import type { IBootstrap } from "#/lib/i18n";
 import { DEFAULT_LOCALE, directionForLocale, I18nProvider } from "#/lib/i18n";
 import { getI18nBootstrapFn } from "#/lib/i18n/server";
+import { legacyRedirect } from "#/lib/legacy-routes";
 import { metaT } from "#/lib/meta";
 import { memoBootstrap, memoSession, seedRootContext } from "#/lib/root-context";
 import { absolute, localizedPath, seo } from "#/lib/seo";
@@ -28,6 +32,8 @@ interface IRootContext {
     i18n: IBootstrap;
 }
 
+const MusicHost = lazy(() => import("#/components/gallery/music/player/MusicPlayerDock").then((m) => ({ default: m.MusicHost })));
+
 const TanStackDevtoolsRoot = import.meta.env.DEV ? lazy(() => import("../integrations/tanstack-query/devtools")) : null;
 
 const THEME_INIT_SCRIPT = `(function(){try{var stored=window.localStorage.getItem('theme');var mode=(stored==='light'||stored==='dark'||stored==='auto')?stored:'auto';var prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;var resolved=mode==='auto'?(prefersDark?'dark':'light'):mode;var root=document.documentElement;root.classList.remove('light','dark');root.classList.add(resolved);root.style.colorScheme=resolved;
@@ -38,7 +44,12 @@ else if(raw.indexOf('c:')===0){var hex=raw.slice(2);if(/^#[0-9a-fA-F]{6}$/.test(
 }}catch(e){}})();`;
 
 export const Route = createRootRouteWithContext<IMyRouterContext>()({
-    beforeLoad: async (): Promise<{ user: Awaited<ReturnType<typeof getSessionFn>> } & IRootContext> => {
+    beforeLoad: async ({ location }): Promise<{ user: Awaited<ReturnType<typeof getSessionFn>> } & IRootContext> => {
+        // A URL an earlier version of the site served, before the session and catalog
+        // round trip it does not need. 301 so search engines move the page's rank too.
+        const legacy = legacyRedirect(location.pathname, location.search as Record<string, unknown>);
+        if (legacy) throw redirect({ href: legacy, statusCode: 301 });
+
         // One round trip, not two: the catalog is needed for the very first
         // painted character, so it must not queue behind the session. Both are
         // memoized on the client, where this runs on every navigation and every
@@ -53,8 +64,7 @@ export const Route = createRootRouteWithContext<IMyRouterContext>()({
         return { user, i18n };
     },
     head: ({ match }) => {
-        // `head()` is not a component, so there is no `useT()` here, but the match's context
-        // already carries the `i18n` bootstrap `beforeLoad` above loaded. See `lib/meta.ts`.
+        // No `useT()` in `head()`; the context already has the bootstrap. See `lib/meta.ts`.
         const t = metaT(match.context.i18n);
         const { meta, links } = seo({
             title: t("root.title"),
@@ -86,13 +96,42 @@ function RootComponent() {
             <Outlet />
             <GlobalAuthDialog />
             <ReleaseNoteDialog />
+            <SiteMusic />
         </>
+    );
+}
+
+/**
+ * The music player, one instance for the whole site. It mounts on the music
+ * page, and on every other route once the player has sounded in this page
+ * load (`presence.ts` has no engine in it), so a visitor who never plays music
+ * never downloads the player. The dynchar harness is scored pixel for pixel,
+ * so it never gets the bar.
+ */
+function SiteMusic() {
+    const live = useMusicLive();
+    const hydrated = useHydrated();
+    const pathname = useRouterState({ select: (s) => s.location.pathname });
+    const onMusicPage = pathname.startsWith("/gallery/music");
+    // Client only: the player's store is the browser's (the music page fills
+    // it from localStorage), and `@tanstack/react-store` hands hydration the
+    // live store as its server snapshot, so a server-rendered dock mismatched
+    // the HTML. The server never had a track, so it drew no bar to keep.
+    if (!hydrated || (!live && !onMusicPage) || pathname.startsWith("/dyntest")) return null;
+    return (
+        <Suspense fallback={null}>
+            <MusicHost offPage={!onMusicPage} />
+        </Suspense>
     );
 }
 
 function GlobalAuthDialog() {
     const dialogOpen = useSelector(authStore, (s) => s.dialogOpen);
     const user = useSelector(authStore, (s) => s.user);
+    // The store learns the session from `RootComponent`'s effect, which runs
+    // AFTER this child's effects on the first render, so on a hydrating page
+    // the store still says signed out. The route context already knows.
+    const routeUser = Route.useRouteContext({ select: (c) => c.user });
     const navigate = useNavigate();
     const router = useRouter();
     const search = useRouterState({ select: (s) => s.location.search as Record<string, unknown> });
@@ -101,8 +140,9 @@ function GlobalAuthDialog() {
     const lastUserRef = useRef(user);
 
     useEffect(() => {
-        const authParam = search.auth;
-        if (authParam !== "1") {
+        // `?auth=1` parses as the number 1, the app's older redirects sent the
+        // string "1" (`?auth=%221%22`): `isSignInPrompt` takes every spelling.
+        if (!isSignInPrompt(search.auth)) {
             promptedRef.current = null;
             return;
         }
@@ -111,7 +151,7 @@ function GlobalAuthDialog() {
         promptedRef.current = key;
 
         const nextParam = typeof search.next === "string" ? search.next : null;
-        if (!user) {
+        if (!user && !routeUser) {
             authActions.openLoginDialog(nextParam);
         }
 
@@ -119,7 +159,7 @@ function GlobalAuthDialog() {
         delete cleaned.auth;
         delete cleaned.next;
         navigate({ to: pathname, search: cleaned, replace: true });
-    }, [search, pathname, user, navigate]);
+    }, [search, pathname, user, routeUser, navigate]);
 
     useEffect(() => {
         const previous = lastUserRef.current;
@@ -136,18 +176,23 @@ function GlobalAuthDialog() {
         }
     }, [user, router]);
 
-    return <AuthDialog open={dialogOpen} onOpenChange={authActions.setDialogOpen} />;
+    return <LazyAuthDialog open={dialogOpen} onOpenChange={authActions.setDialogOpen} />;
 }
 
 function SiteChrome({ children }: { children: React.ReactNode }) {
     const pathname = useRouterState({ select: (s) => s.location.pathname });
     const isAdmin = pathname.startsWith("/admin");
 
+    // The admin panel sits under the site header (its own section bar renders
+    // below it) but has no footer: it is a working surface, not a page to scroll past.
     if (isAdmin) {
         return (
-            <ToastProvider>
-                <AnchoredToastProvider>{children}</AnchoredToastProvider>
-            </ToastProvider>
+            <>
+                <Header />
+                <ToastProvider>
+                    <AnchoredToastProvider>{children}</AnchoredToastProvider>
+                </ToastProvider>
+            </>
         );
     }
 
@@ -163,34 +208,27 @@ function SiteChrome({ children }: { children: React.ReactNode }) {
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-    // `/dyntest` is the dynchar parity MEASUREMENT harness: its canvas is scored pixel-for-pixel
-    // against in-game captures. The devtools launcher paints a 56×56 badge over its bottom-right,
-    // and hiding it from the DOM does not work: `visibility: hidden !important` over every
-    // element, a second pass after a settle, and hiding whatever `elementsFromPoint` reports
-    // there all left the frame byte-identical, the button still computing `visibility: visible`.
-    // It reached scored frames (Virtuosa t=2, Mlynar t=4, Skadi t=3), lifting the affected beat
-    // by 0.34-0.79 MAD and each skin's mean by 0.043-0.113 MADC. Not mounting it on that one
-    // route is the only reliable fix; the page has no UI to inspect and other routes keep theirs.
+    // `/dyntest` is the dynchar parity harness, scored pixel-for-pixel against in-game captures.
+    // The devtools launcher paints a 56×56 badge bottom-right that CSS can't hide
+    // (`visibility: hidden !important` everywhere, a second pass after settle, and hiding
+    // whatever `elementsFromPoint` reports all left the frame byte-identical). It hit scored
+    // frames (Virtuosa t=2, Mlynar t=4, Skadi t=3): +0.34-0.79 MAD per beat, +0.043-0.113 MADC
+    // per skin mean. So it isn't mounted on that route.
     const devtoolsPath = useRouterState({ select: (s) => s.location.pathname });
     const showDevtools = TanStackDevtoolsRoot !== null && !devtoolsPath.startsWith("/dyntest");
 
     // `lang` drives hyphenation, the CJK font fallback chain, `:lang()` rules and screen reader
-    // pronunciation. The whole i18n bootstrap, not just the locale: the provider has to live HERE,
-    // not in `RootComponent`, because `SiteChrome` (Header and Footer) is rendered by this shell,
-    // above `RootComponent`. One level lower, header and footer read the default empty context
-    // and fell back to English, and both language switchers saw `available: []` and rendered
-    // nothing.
+    // pronunciation. The provider lives in the shell, not `RootComponent`, because `SiteChrome`
+    // renders here, above it. One level lower, Header and Footer read the empty default context:
+    // English text and language switchers with `available: []`.
     const i18n = Route.useRouteContext({ select: (c) => c.i18n });
     const locale = i18n?.locale ?? DEFAULT_LOCALE;
     const alternates = i18n?.available.map((l) => l.code) ?? [];
     const pathname = useRouterState({ select: (s) => s.location.pathname });
 
-    // One canonical, one og:url and the whole hreflang set for every route.
-    //
-    // Lives here, not in each route's `seo()`, because only the shell knows the locale (a
-    // route's `head()` has no access to it) and one missed call site would declare the English
-    // page as a translation's canonical, so the translated site never gets indexed. `pathname`
-    // is the router's internal path with the locale prefix already stripped by the rewrite.
+    // Canonical, og:url and hreflang for every route, here because a route's `head()` doesn't
+    // know the locale, and one missed call site would make the English page a translation's
+    // canonical. `pathname` already has the locale prefix stripped by the rewrite.
     const canonical = absolute(localizedPath(pathname, locale));
 
     return (

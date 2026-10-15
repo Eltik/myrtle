@@ -3,6 +3,7 @@ import { type CSSProperties, type KeyboardEvent, useMemo, useRef, useState } fro
 import { useEdgeFade } from "#/components/tier-lists/edit/FacetFilter";
 import { EntityAvatar } from "#/components/tier-lists/entities";
 import { useEntityLabels } from "#/components/tier-lists/kinds";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { truncateCodePoints } from "#/lib/markdown/sanitize-input";
@@ -127,10 +128,13 @@ function GridCellView({ cell, index, cols, editor, dragging, dropTarget, onDragF
         // Spans, not divs, so the same markup is valid inside the button; the classes give them their boxes.
         const face = (
             <>
-                <span className={styles.art} data-empty={!picked || undefined} title={entityName ?? undefined}>
-                    {art}
-                    {entityName && <span className="sr-only">{entityName}</span>}
-                </span>
+                <Tooltip disabled={!entityName}>
+                    <TooltipTrigger render={<span className={styles.art} data-empty={!picked || undefined} />}>
+                        {art}
+                        {entityName && <span className="sr-only">{entityName}</span>}
+                    </TooltipTrigger>
+                    <TooltipPopup>{entityName}</TooltipPopup>
+                </Tooltip>
                 <span className={styles.strip}>
                     <span className={styles.stripText} title={cell.label || undefined}>
                         {cell.label}
@@ -207,36 +211,42 @@ function GridCellView({ cell, index, cols, editor, dragging, dropTarget, onDragF
                 {art}
             </button>
             {picked && (
-                <button
-                    type="button"
-                    className={styles.clear}
-                    draggable={false}
-                    onPointerDown={(e) => {
-                        e.stopPropagation();
-                        pressingClear.current = true;
-                    }}
-                    onPointerUp={() => {
-                        pressingClear.current = false;
-                    }}
-                    onPointerCancel={() => {
-                        pressingClear.current = false;
-                    }}
-                    onDragStart={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                    }}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        pressingClear.current = false;
-                        editor.onClear(index);
-                        // The button goes with the pick; keep focus on the cell.
-                        artRef.current?.focus();
-                    }}
-                    aria-label={clearLabel}
-                    title={clearLabel}
-                >
-                    <XIcon aria-hidden="true" />
-                </button>
+                <Tooltip>
+                    <TooltipTrigger
+                        render={
+                            <button
+                                type="button"
+                                className={styles.clear}
+                                draggable={false}
+                                onPointerDown={(e) => {
+                                    e.stopPropagation();
+                                    pressingClear.current = true;
+                                }}
+                                onPointerUp={() => {
+                                    pressingClear.current = false;
+                                }}
+                                onPointerCancel={() => {
+                                    pressingClear.current = false;
+                                }}
+                                onDragStart={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    pressingClear.current = false;
+                                    editor.onClear(index);
+                                    // The button goes with the pick; keep focus on the cell.
+                                    artRef.current?.focus();
+                                }}
+                                aria-label={clearLabel}
+                            />
+                        }
+                    >
+                        <XIcon aria-hidden="true" />
+                    </TooltipTrigger>
+                    <TooltipPopup>{clearLabel}</TooltipPopup>
+                </Tooltip>
             )}
             <LabelStrip label={cell.label} position={position} onChange={(label) => editor.onLabelChange(index, label)} onOpen={editor.onOpen && (() => editor.onOpen?.(index))} />
         </div>

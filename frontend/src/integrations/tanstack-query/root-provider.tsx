@@ -23,8 +23,8 @@ export function getContext() {
         //
         // Load-bearing: this monkey-patch depends on TanStack Query internals (the shape
         // of `defaultQueryOptions`), verified on 5.100.1. Min-clamp (not force 0) so SSR
-        // queries survive long enough to dehydrate; `queryClient.clear()` on render finish
-        // (router.tsx) remains the primary OOM defense.
+        // queries survive long enough to dehydrate; the SSR query integration's
+        // `queryClient.clear()` when the response is done (router.tsx) remains the primary OOM defense.
         const resolve = queryClient.defaultQueryOptions.bind(queryClient);
         queryClient.defaultQueryOptions = ((options?: unknown) => {
             const resolved = resolve(options as never);
@@ -37,4 +37,14 @@ export function getContext() {
         queryClient,
     };
 }
+/**
+ * Spread into the options of a query an SSR loader awaits. On the server such a query fails at
+ * once: the default `retry: 1` waits a second and asks again, and the page's whole render waits
+ * with it, so a backend 500 cost that page about 2 s of SSR. In the browser it adds nothing, so
+ * the default above still applies there.
+ */
+export function noRetryOnServer(): { retry?: 0 } {
+    return typeof window === "undefined" ? { retry: 0 } : {};
+}
+
 export default function TanstackQueryProvider() {}

@@ -50,7 +50,7 @@ function groupLabel(dayStart: number, today: number, t: ChangelogPageT, f: IForm
     if (diffDays === 1) return t("page.group.yesterday");
     const d = new Date(dayStart);
     const sameYear = d.getFullYear() === new Date(today).getFullYear();
-    return f.date(d, { weekday: "short", month: "short", day: "numeric", ...(sameYear ? {} : { year: "numeric" }) });
+    return f.calendarDay(d, { weekday: "short", month: "short", day: "numeric", ...(sameYear ? {} : { year: "numeric" }) });
 }
 
 function groupByDay(commits: IChangelogCommit[], t: ChangelogPageT, f: IFormatters): ICommitGroup[] {
@@ -137,7 +137,6 @@ export function ChangelogPage() {
                     </div>
                 </header>
 
-                {/* Surface tabs: curated notes vs the raw commit feed */}
                 <Tabs className="mb-7" onValueChange={(v) => setSurface(v as ChangelogSurface)} value={surface}>
                     <TabsList variant="underline">
                         <TabsTab value="notes">{t("page.tab.notes")}</TabsTab>

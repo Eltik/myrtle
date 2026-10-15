@@ -46,4 +46,11 @@ export type GachaPoolClient = {
      * were available, `"static+api"` once pool detail has been merged in.
      */
     featuredSource: string;
+    /**
+     * Shown only to returning players: a pool some `open_server_table`
+     * `PlayerReturn` tier grants (see `open_server`). Its `gacha_table` window
+     * is years long because the game times it per player, so it is never
+     * "running now for everyone" and its `end_time` is not a real end date.
+     */
+    returning: boolean;
 };

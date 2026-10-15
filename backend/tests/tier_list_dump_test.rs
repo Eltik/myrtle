@@ -53,6 +53,7 @@ fn state(db: sqlx::PgPool) -> AppState {
         servers: vec![Server::EN],
         default_server: Server::EN,
         asset_ws_urls: HashMap::new(),
+        role_recheck: true,
     };
     AppState::new(
         db,

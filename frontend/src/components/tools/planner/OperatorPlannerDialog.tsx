@@ -7,7 +7,7 @@ import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { useAuth } from "#/hooks/use-auth";
 import { useOperatorName } from "#/hooks/use-operator-name";
 import { operatorQueryOptions } from "#/lib/api/operators";
-import { PLANS_QUERY_PREFIX, plansQueryOptions, upsertPlanFn } from "#/lib/api/planner";
+import { invalidatePlanQueries, plansQueryOptions, upsertPlanFn } from "#/lib/api/planner";
 import { userRosterQueryOptions } from "#/lib/api/user";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -95,7 +95,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                     groups: targets.selectedGroups,
                 },
             });
-            queryClient.invalidateQueries({ queryKey: PLANS_QUERY_PREFIX });
+            invalidatePlanQueries(queryClient);
             onOpenChange(false);
         } catch (err) {
             console.error(err);
@@ -109,7 +109,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogPopup bottomStickOnMobile={false} className="flex h-[min(840px,calc(100vh-4rem))] w-full max-w-[min(1152px,calc(100vw-2rem))] flex-col overflow-hidden p-0">
+            <DialogPopup bottomStickOnMobile={false} className="flex h-[min(840px,calc(100dvh-2rem))] w-full max-w-[min(1152px,calc(100vw-2rem))] flex-col overflow-hidden p-0">
                 <DialogHeader>
                     <DialogTitle>{isEditMode ? t("planner.dialog.editTitle") : t("planner.dialog.createTitle")}</DialogTitle>
                     <DialogDescription>{isEditMode ? t("planner.dialog.editDesc", { operator: selectedName ?? t("planner.dialog.editDesc.fallback") }) : t("planner.dialog.createDesc")}</DialogDescription>

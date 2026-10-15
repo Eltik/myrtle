@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
-import { Filter, Search, Trophy, Users, X } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { ArrowRight, Filter, Search, Trophy, Users, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pagination } from "#/components/operators/list/impl/components/Pagination";
 import { Button } from "#/components/ui/button";
@@ -17,7 +17,7 @@ import { SearchToolbar, useSortLabel } from "./impl/components/SearchToolbar";
 import type { messages as toolbarMessages } from "./impl/components/SearchToolbar.messages";
 import { UserCard } from "./impl/components/UserCard";
 import { UserGridSkeleton } from "./impl/components/UserGridSkeleton";
-import { PAGE_SIZE } from "./impl/constants";
+import { PAGE_SIZE, UID_PATTERN } from "./impl/constants";
 import { DEFAULT_SORT, defaultDir, scopeToken } from "./impl/searchControls";
 import { sortBySubstringMatch } from "./impl/sortBySubstringMatch";
 import type { DisplayUser } from "./impl/types";
@@ -40,6 +40,7 @@ export function UserSearch() {
 
     const debouncedQuery = useDebounce(inputValue.trim(), 350);
     const isSearching = debouncedQuery.length > 0;
+    const uidQuery = UID_PATTERN.test(inputValue.trim()) ? inputValue.trim() : null;
 
     const [currentPage, setCurrentPage] = useState(initialPage);
     const resetPage = useCallback(() => setCurrentPage(1), []);
@@ -118,7 +119,16 @@ export function UserSearch() {
                     <InputGroupAddon>
                         <Search aria-hidden="true" />
                     </InputGroupAddon>
-                    <InputGroupInput ref={inputRef} value={inputValue} onChange={(e) => setInputValue(e.target.value)} placeholder={t("search.input.placeholder")} aria-label={t("search.input.label")} />
+                    <InputGroupInput
+                        ref={inputRef}
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" && uidQuery) navigate({ to: "/user/$id", params: { id: uidQuery } });
+                        }}
+                        placeholder={t("search.input.placeholder")}
+                        aria-label={t("search.input.label")}
+                    />
                     <InputGroupAddon align="inline-end">
                         {inputValue ? (
                             <Button variant="ghost" size="icon-xs" onClick={handleClear} aria-label={t("search.clearSearch")}>
@@ -127,6 +137,16 @@ export function UserSearch() {
                         ) : null}
                     </InputGroupAddon>
                 </InputGroup>
+
+                {uidQuery ? (
+                    <Link to="/user/$id" params={{ id: uidQuery }} className="flex max-w-xl items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3 no-underline transition-colors hover:bg-accent">
+                        <span className="flex flex-col gap-0.5">
+                            <span className="font-sans text-[13px] text-foreground">{t("search.uid.open")}</span>
+                            <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{uidQuery}</span>
+                        </span>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    </Link>
+                ) : null}
 
                 <SearchToolbar controls={controls} />
 

@@ -1,5 +1,5 @@
-//! Consistency tests for the operator score breakdown: the per-dimension
-//! decomposition must agree exactly with the collapsed subscore users see.
+//! Operators subscore: the per-dimension breakdown must sum exactly to the
+//! grade, plus the 2026-09-22 and 2026-09-25 reweights pinned against their reports.
 
 mod common;
 
@@ -39,8 +39,7 @@ fn entry(operator_id: &str, elite: i16, level: i16) -> RosterEntry {
 fn breakdown_sums_to_the_operator_grade() {
     let game_data = common::load_game_data();
 
-    // A spread of investment levels across rarities. Operator ids are the
-    // stable early-roster ones present in every gamedata dump.
+    // Early-roster ids, present in every gamedata dump.
     // 6★ mid-investment with one M3 and a leveled module.
     let mut kaltsit = entry("char_003_kalts", 2, 60);
     kaltsit.skill_level = 7;

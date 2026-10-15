@@ -32,10 +32,8 @@ export type OperatorGap = {
      */
     missing: Array<string>;
     /**
-     * Per-tag projected score gain if the user completed that milestone.
-     * One entry per tag in `missing`, in the same order. See `UpgradeDelta`
-     * for the exact fields - surfaces both the operator-local delta and its
-     * contribution to the user's subscore + `total_score`.
+     * Projected gain per tag in `missing`, same order: the operator-local delta
+     * and its contribution to the subscore and `total_score` (see `UpgradeDelta`).
      */
     deltas: Array<UpgradeDelta>;
     /**

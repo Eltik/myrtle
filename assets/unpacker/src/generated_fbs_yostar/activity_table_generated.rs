@@ -13,13 +13,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ACTIVITY_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ACTIVITY_TYPE: i32 = 62;
+pub const ENUM_MAX_ENUM__TORAPPU_ACTIVITY_TYPE: i32 = 63;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ACTIVITY_TYPE: [enum__Torappu_ActivityType; 63] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ACTIVITY_TYPE: [enum__Torappu_ActivityType; 64] = [
     enum__Torappu_ActivityType::DEFAULT,
     enum__Torappu_ActivityType::MISSION_ONLY,
     enum__Torappu_ActivityType::CHECKIN_ONLY,
@@ -82,6 +82,7 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ACTIVITY_TYPE: [enum__Torappu_ActivityType; 
     enum__Torappu_ActivityType::RECRUIT_ONLY,
     enum__Torappu_ActivityType::TYPE_ACT46SIDE,
     enum__Torappu_ActivityType::AUTOCHESS_SEASON,
+    enum__Torappu_ActivityType::ACT_FOOTBALL,
     enum__Torappu_ActivityType::ENUM,
 ];
 
@@ -152,10 +153,11 @@ impl enum__Torappu_ActivityType {
     pub const RECRUIT_ONLY: Self = Self(59);
     pub const TYPE_ACT46SIDE: Self = Self(60);
     pub const AUTOCHESS_SEASON: Self = Self(61);
-    pub const ENUM: Self = Self(62);
+    pub const ACT_FOOTBALL: Self = Self(62);
+    pub const ENUM: Self = Self(63);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 62;
+    pub const ENUM_MAX: i32 = 63;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::DEFAULT,
         Self::MISSION_ONLY,
@@ -219,6 +221,7 @@ impl enum__Torappu_ActivityType {
         Self::RECRUIT_ONLY,
         Self::TYPE_ACT46SIDE,
         Self::AUTOCHESS_SEASON,
+        Self::ACT_FOOTBALL,
         Self::ENUM,
     ];
     /// Returns the variant's name or "" if unknown.
@@ -286,6 +289,7 @@ impl enum__Torappu_ActivityType {
             Self::RECRUIT_ONLY => Some("RECRUIT_ONLY"),
             Self::TYPE_ACT46SIDE => Some("TYPE_ACT46SIDE"),
             Self::AUTOCHESS_SEASON => Some("AUTOCHESS_SEASON"),
+            Self::ACT_FOOTBALL => Some("ACT_FOOTBALL"),
             Self::ENUM => Some("ENUM"),
             _ => None,
         }
@@ -3378,13 +3382,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ACT_ARCHIVE_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ACT_ARCHIVE_TYPE: i32 = 27;
+pub const ENUM_MAX_ENUM__TORAPPU_ACT_ARCHIVE_TYPE: i32 = 29;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ACT_ARCHIVE_TYPE: [enum__Torappu_ActArchiveType; 28] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ACT_ARCHIVE_TYPE: [enum__Torappu_ActArchiveType; 30] = [
     enum__Torappu_ActArchiveType::NONE,
     enum__Torappu_ActArchiveType::TIMELINE,
     enum__Torappu_ActArchiveType::MUSIC,
@@ -3413,6 +3417,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ACT_ARCHIVE_TYPE: [enum__Torappu_ActArchiveT
     enum__Torappu_ActArchiveType::DISASTER,
     enum__Torappu_ActArchiveType::COPPER,
     enum__Torappu_ActArchiveType::WRATH,
+    enum__Torappu_ActArchiveType::SCRAP,
+    enum__Torappu_ActArchiveType::WEATHER,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -3448,9 +3454,11 @@ impl enum__Torappu_ActArchiveType {
     pub const DISASTER: Self = Self(25);
     pub const COPPER: Self = Self(26);
     pub const WRATH: Self = Self(27);
+    pub const SCRAP: Self = Self(28);
+    pub const WEATHER: Self = Self(29);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 27;
+    pub const ENUM_MAX: i32 = 29;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::TIMELINE,
@@ -3480,6 +3488,8 @@ impl enum__Torappu_ActArchiveType {
         Self::DISASTER,
         Self::COPPER,
         Self::WRATH,
+        Self::SCRAP,
+        Self::WEATHER,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -3512,6 +3522,8 @@ impl enum__Torappu_ActArchiveType {
             Self::DISASTER => Some("DISASTER"),
             Self::COPPER => Some("COPPER"),
             Self::WRATH => Some("WRATH"),
+            Self::SCRAP => Some("SCRAP"),
+            Self::WEATHER => Some("WEATHER"),
             _ => None,
         }
     }
@@ -13345,6 +13357,124 @@ impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_Act1VHalfIdleItemTyp
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
+pub const ENUM_MIN_ENUM__TORAPPU_PLAYER_STAGE_STATE: i32 = 0;
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+pub const ENUM_MAX_ENUM__TORAPPU_PLAYER_STAGE_STATE: i32 = 3;
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+#[allow(non_camel_case_types)]
+pub const ENUM_VALUES_ENUM__TORAPPU_PLAYER_STAGE_STATE: [enum__Torappu_PlayerStageState; 4] = [
+    enum__Torappu_PlayerStageState::UNLOCKED,
+    enum__Torappu_PlayerStageState::PLAYED,
+    enum__Torappu_PlayerStageState::PASS,
+    enum__Torappu_PlayerStageState::COMPLETE,
+];
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[repr(transparent)]
+pub struct enum__Torappu_PlayerStageState(pub i32);
+#[allow(non_upper_case_globals)]
+impl enum__Torappu_PlayerStageState {
+    pub const UNLOCKED: Self = Self(0);
+    pub const PLAYED: Self = Self(1);
+    pub const PASS: Self = Self(2);
+    pub const COMPLETE: Self = Self(3);
+
+    pub const ENUM_MIN: i32 = 0;
+    pub const ENUM_MAX: i32 = 3;
+    pub const ENUM_VALUES: &'static [Self] =
+        &[Self::UNLOCKED, Self::PLAYED, Self::PASS, Self::COMPLETE];
+    /// Returns the variant's name or "" if unknown.
+    pub fn variant_name(self) -> Option<&'static str> {
+        match self {
+            Self::UNLOCKED => Some("UNLOCKED"),
+            Self::PLAYED => Some("PLAYED"),
+            Self::PASS => Some("PASS"),
+            Self::COMPLETE => Some("COMPLETE"),
+            _ => None,
+        }
+    }
+}
+impl ::core::fmt::Debug for enum__Torappu_PlayerStageState {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+        if let Some(name) = self.variant_name() {
+            f.write_str(name)
+        } else {
+            f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
+        }
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for enum__Torappu_PlayerStageState {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        for item in enum__Torappu_PlayerStageState::ENUM_VALUES {
+            if let Some(item_name) = item.variant_name() {
+                if item_name == s {
+                    return Ok(item.clone());
+                }
+            }
+        }
+        Err(serde::de::Error::custom(format!(
+            "Unknown enum__Torappu_PlayerStageState variant: {s}"
+        )))
+    }
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_PlayerStageState {
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        let b = unsafe { ::flatbuffers::read_scalar_at::<i32>(buf, loc) };
+        Self(b)
+    }
+}
+
+impl ::flatbuffers::Push for enum__Torappu_PlayerStageState {
+    type Output = enum__Torappu_PlayerStageState;
+    #[inline]
+    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
+        unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
+    }
+}
+
+impl ::flatbuffers::EndianScalar for enum__Torappu_PlayerStageState {
+    type Scalar = i32;
+    #[inline]
+    fn to_little_endian(self) -> i32 {
+        self.0.to_le()
+    }
+    #[inline]
+    #[allow(clippy::wrong_self_convention)]
+    fn from_little_endian(v: i32) -> Self {
+        let b = i32::from_le(v);
+        Self(b)
+    }
+}
+
+impl<'a> ::flatbuffers::Verifiable for enum__Torappu_PlayerStageState {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        i32::run_verifier(v, pos)
+    }
+}
+
+impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_PlayerStageState {}
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
 pub const ENUM_MIN_ENUM__TORAPPU_FIFTH_ANNIV_EXPLORE_VALUE_TYPE: i32 = 0;
 #[deprecated(
     since = "2.0.0",
@@ -13457,6 +13587,125 @@ impl<'a> ::flatbuffers::Verifiable for enum__Torappu_FifthAnnivExploreValueType 
 }
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_FifthAnnivExploreValueType {}
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+pub const ENUM_MIN_ENUM__TORAPPU_ANNIV_7TH_DISPLAY_NODE_TYPE: i32 = 0;
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+pub const ENUM_MAX_ENUM__TORAPPU_ANNIV_7TH_DISPLAY_NODE_TYPE: i32 = 3;
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+#[allow(non_camel_case_types)]
+pub const ENUM_VALUES_ENUM__TORAPPU_ANNIV_7TH_DISPLAY_NODE_TYPE:
+    [enum__Torappu_Anniv7thDisplayNodeType; 4] = [
+    enum__Torappu_Anniv7thDisplayNodeType::LETTER,
+    enum__Torappu_Anniv7thDisplayNodeType::TYPE_WRITER,
+    enum__Torappu_Anniv7thDisplayNodeType::RECORD,
+    enum__Torappu_Anniv7thDisplayNodeType::SIGN,
+];
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[repr(transparent)]
+pub struct enum__Torappu_Anniv7thDisplayNodeType(pub i32);
+#[allow(non_upper_case_globals)]
+impl enum__Torappu_Anniv7thDisplayNodeType {
+    pub const LETTER: Self = Self(0);
+    pub const TYPE_WRITER: Self = Self(1);
+    pub const RECORD: Self = Self(2);
+    pub const SIGN: Self = Self(3);
+
+    pub const ENUM_MIN: i32 = 0;
+    pub const ENUM_MAX: i32 = 3;
+    pub const ENUM_VALUES: &'static [Self] =
+        &[Self::LETTER, Self::TYPE_WRITER, Self::RECORD, Self::SIGN];
+    /// Returns the variant's name or "" if unknown.
+    pub fn variant_name(self) -> Option<&'static str> {
+        match self {
+            Self::LETTER => Some("LETTER"),
+            Self::TYPE_WRITER => Some("TYPE_WRITER"),
+            Self::RECORD => Some("RECORD"),
+            Self::SIGN => Some("SIGN"),
+            _ => None,
+        }
+    }
+}
+impl ::core::fmt::Debug for enum__Torappu_Anniv7thDisplayNodeType {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+        if let Some(name) = self.variant_name() {
+            f.write_str(name)
+        } else {
+            f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
+        }
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for enum__Torappu_Anniv7thDisplayNodeType {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        for item in enum__Torappu_Anniv7thDisplayNodeType::ENUM_VALUES {
+            if let Some(item_name) = item.variant_name() {
+                if item_name == s {
+                    return Ok(item.clone());
+                }
+            }
+        }
+        Err(serde::de::Error::custom(format!(
+            "Unknown enum__Torappu_Anniv7thDisplayNodeType variant: {s}"
+        )))
+    }
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_Anniv7thDisplayNodeType {
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        let b = unsafe { ::flatbuffers::read_scalar_at::<i32>(buf, loc) };
+        Self(b)
+    }
+}
+
+impl ::flatbuffers::Push for enum__Torappu_Anniv7thDisplayNodeType {
+    type Output = enum__Torappu_Anniv7thDisplayNodeType;
+    #[inline]
+    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
+        unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
+    }
+}
+
+impl ::flatbuffers::EndianScalar for enum__Torappu_Anniv7thDisplayNodeType {
+    type Scalar = i32;
+    #[inline]
+    fn to_little_endian(self) -> i32 {
+        self.0.to_le()
+    }
+    #[inline]
+    #[allow(clippy::wrong_self_convention)]
+    fn from_little_endian(v: i32) -> Self {
+        let b = i32::from_le(v);
+        Self(b)
+    }
+}
+
+impl<'a> ::flatbuffers::Verifiable for enum__Torappu_Anniv7thDisplayNodeType {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        i32::run_verifier(v, pos)
+    }
+}
+
+impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_Anniv7thDisplayNodeType {}
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
@@ -245319,6 +245568,3050 @@ impl dict__string__clz_Torappu_ActAutoChessDataT {
         )
     }
 }
+pub enum clz_Torappu_ActFootballData_ActFootballZoneAdditionDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_ActFootballData_ActFootballZoneAdditionData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ActFootballData_ActFootballZoneAdditionData<'a> {
+    type Inner = clz_Torappu_ActFootballData_ActFootballZoneAdditionData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_ActFootballData_ActFootballZoneAdditionData<'a> {
+    pub const VT_ZONEID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_UNLOCKTEXT: ::flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_ActFootballData_ActFootballZoneAdditionData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_ActFootballData_ActFootballZoneAdditionDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActFootballData_ActFootballZoneAdditionData<'bldr>>
+    {
+        let mut builder = clz_Torappu_ActFootballData_ActFootballZoneAdditionDataBuilder::new(_fbb);
+        if let Some(x) = args.unlockText {
+            builder.add_unlockText(x);
+        }
+        if let Some(x) = args.zoneId {
+            builder.add_zoneId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ActFootballData_ActFootballZoneAdditionDataT {
+        let zoneId = self.zoneId().map(|x| alloc::string::ToString::to_string(x));
+        let unlockText = self
+            .unlockText()
+            .map(|x| alloc::string::ToString::to_string(x));
+        clz_Torappu_ActFootballData_ActFootballZoneAdditionDataT { zoneId, unlockText }
+    }
+
+    #[inline]
+    pub fn zoneId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ActFootballData_ActFootballZoneAdditionData::VT_ZONEID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn unlockText(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ActFootballData_ActFootballZoneAdditionData::VT_UNLOCKTEXT,
+                None,
+            )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_ActFootballData_ActFootballZoneAdditionData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("zoneId", Self::VT_ZONEID, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "unlockText",
+                Self::VT_UNLOCKTEXT,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_ActFootballData_ActFootballZoneAdditionDataArgs<'a> {
+    pub zoneId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub unlockText: Option<::flatbuffers::WIPOffset<&'a str>>,
+}
+impl<'a> Default for clz_Torappu_ActFootballData_ActFootballZoneAdditionDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_ActFootballData_ActFootballZoneAdditionDataArgs {
+            zoneId: None,
+            unlockText: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_ActFootballData_ActFootballZoneAdditionDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_ActFootballData_ActFootballZoneAdditionDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_zoneId(&mut self, zoneId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ActFootballData_ActFootballZoneAdditionData::VT_ZONEID,
+            zoneId,
+        );
+    }
+    #[inline]
+    pub fn add_unlockText(&mut self, unlockText: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ActFootballData_ActFootballZoneAdditionData::VT_UNLOCKTEXT,
+            unlockText,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ActFootballData_ActFootballZoneAdditionDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_ActFootballData_ActFootballZoneAdditionDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActFootballData_ActFootballZoneAdditionData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_ActFootballData_ActFootballZoneAdditionData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_ActFootballData_ActFootballZoneAdditionData");
+        ds.field("zoneId", &self.zoneId());
+        ds.field("unlockText", &self.unlockText());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ActFootballData_ActFootballZoneAdditionDataT {
+    pub zoneId: Option<alloc::string::String>,
+    pub unlockText: Option<alloc::string::String>,
+}
+impl Default for clz_Torappu_ActFootballData_ActFootballZoneAdditionDataT {
+    fn default() -> Self {
+        Self {
+            zoneId: None,
+            unlockText: None,
+        }
+    }
+}
+impl clz_Torappu_ActFootballData_ActFootballZoneAdditionDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActFootballData_ActFootballZoneAdditionData<'b>> {
+        let zoneId = self.zoneId.as_ref().map(|x| _fbb.create_string(x));
+        let unlockText = self.unlockText.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_ActFootballData_ActFootballZoneAdditionData::create(
+            _fbb,
+            &clz_Torappu_ActFootballData_ActFootballZoneAdditionDataArgs { zoneId, unlockText },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a>
+    for dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionData<'a>
+{
+    type Inner = dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionData<'a> {
+    pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionDataArgs<
+            'args,
+        >,
+    ) -> ::flatbuffers::WIPOffset<
+        dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionData<'bldr>,
+    > {
+        let mut builder =
+            dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionDataT {
+        let key = {
+            let x = self.key();
+            alloc::string::ToString::to_string(x)
+        };
+        let value = self.value().map(|x| alloc::boxed::Box::new(x.unpack()));
+        dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(
+        &self,
+        o: &dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionData,
+    ) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_ActFootballData_ActFootballZoneAdditionData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                clz_Torappu_ActFootballData_ActFootballZoneAdditionData,
+            >>(
+                dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionData::VT_VALUE,
+                None,
+            )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable
+    for dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionData<'_>
+{
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_ActFootballData_ActFootballZoneAdditionData>>("value", Self::VT_VALUE, false)?
+     .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionDataArgs<'a> {
+    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<
+        ::flatbuffers::WIPOffset<clz_Torappu_ActFootballData_ActFootballZoneAdditionData<'a>>,
+    >,
+}
+impl<'a> Default for dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: ::flatbuffers::WIPOffset<
+            clz_Torappu_ActFootballData_ActFootballZoneAdditionData<'b>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_ActFootballData_ActFootballZoneAdditionData>>(dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionData::VT_VALUE, value);
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionDataBuilder<'a, 'b, A>
+    {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<
+        dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionData<'a>,
+    > {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionData::VT_KEY,
+            "key",
+        );
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug
+    for dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionData<'_>
+{
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds =
+            f.debug_struct("dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionDataT {
+    pub key: alloc::string::String,
+    pub value: Option<alloc::boxed::Box<clz_Torappu_ActFootballData_ActFootballZoneAdditionDataT>>,
+}
+impl Default for dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionDataT {
+    fn default() -> Self {
+        Self {
+            key: alloc::string::ToString::to_string(""),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<
+        dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionData<'b>,
+    > {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionData::create(
+            _fbb,
+            &dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionDataArgs {
+                key,
+                value,
+            },
+        )
+    }
+}
+pub enum clz_Torappu_ActFootballData_ActFootballStageAdditionDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_ActFootballData_ActFootballStageAdditionData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a>
+    for clz_Torappu_ActFootballData_ActFootballStageAdditionData<'a>
+{
+    type Inner = clz_Torappu_ActFootballData_ActFootballStageAdditionData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_ActFootballData_ActFootballStageAdditionData<'a> {
+    pub const VT_STAGEID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_SELFTEAMICON: ::flatbuffers::VOffsetT = 6;
+    pub const VT_SELFTEAMNAME: ::flatbuffers::VOffsetT = 8;
+    pub const VT_ENEMYTEAMICON: ::flatbuffers::VOffsetT = 10;
+    pub const VT_ENEMYTEAMNAME: ::flatbuffers::VOffsetT = 12;
+    pub const VT_UNLOCKBUFFID: ::flatbuffers::VOffsetT = 14;
+    pub const VT_UNLOCKBUFFICON: ::flatbuffers::VOffsetT = 16;
+    pub const VT_UNLOCKBUFFNAME: ::flatbuffers::VOffsetT = 18;
+    pub const VT_UNLOCKBUFFDESC: ::flatbuffers::VOffsetT = 20;
+    pub const VT_FIRSTCOMPLETEPOINT: ::flatbuffers::VOffsetT = 22;
+    pub const VT_COMPLETEPOINT: ::flatbuffers::VOffsetT = 24;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_ActFootballData_ActFootballStageAdditionData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_ActFootballData_ActFootballStageAdditionDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActFootballData_ActFootballStageAdditionData<'bldr>>
+    {
+        let mut builder =
+            clz_Torappu_ActFootballData_ActFootballStageAdditionDataBuilder::new(_fbb);
+        builder.add_completePoint(args.completePoint);
+        builder.add_firstCompletePoint(args.firstCompletePoint);
+        if let Some(x) = args.unlockBuffDesc {
+            builder.add_unlockBuffDesc(x);
+        }
+        if let Some(x) = args.unlockBuffName {
+            builder.add_unlockBuffName(x);
+        }
+        if let Some(x) = args.unlockBuffIcon {
+            builder.add_unlockBuffIcon(x);
+        }
+        if let Some(x) = args.unlockBuffId {
+            builder.add_unlockBuffId(x);
+        }
+        if let Some(x) = args.enemyTeamName {
+            builder.add_enemyTeamName(x);
+        }
+        if let Some(x) = args.enemyTeamIcon {
+            builder.add_enemyTeamIcon(x);
+        }
+        if let Some(x) = args.selfTeamName {
+            builder.add_selfTeamName(x);
+        }
+        if let Some(x) = args.selfTeamIcon {
+            builder.add_selfTeamIcon(x);
+        }
+        if let Some(x) = args.stageId {
+            builder.add_stageId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ActFootballData_ActFootballStageAdditionDataT {
+        let stageId = self
+            .stageId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let selfTeamIcon = self
+            .selfTeamIcon()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let selfTeamName = self
+            .selfTeamName()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let enemyTeamIcon = self
+            .enemyTeamIcon()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let enemyTeamName = self
+            .enemyTeamName()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let unlockBuffId = self
+            .unlockBuffId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let unlockBuffIcon = self
+            .unlockBuffIcon()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let unlockBuffName = self
+            .unlockBuffName()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let unlockBuffDesc = self
+            .unlockBuffDesc()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let firstCompletePoint = self.firstCompletePoint();
+        let completePoint = self.completePoint();
+        clz_Torappu_ActFootballData_ActFootballStageAdditionDataT {
+            stageId,
+            selfTeamIcon,
+            selfTeamName,
+            enemyTeamIcon,
+            enemyTeamName,
+            unlockBuffId,
+            unlockBuffIcon,
+            unlockBuffName,
+            unlockBuffDesc,
+            firstCompletePoint,
+            completePoint,
+        }
+    }
+
+    #[inline]
+    pub fn stageId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_STAGEID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn selfTeamIcon(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_SELFTEAMICON,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn selfTeamName(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_SELFTEAMNAME,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn enemyTeamIcon(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_ENEMYTEAMICON,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn enemyTeamName(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_ENEMYTEAMNAME,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn unlockBuffId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_UNLOCKBUFFID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn unlockBuffIcon(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_UNLOCKBUFFICON,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn unlockBuffName(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_UNLOCKBUFFNAME,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn unlockBuffDesc(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_UNLOCKBUFFDESC,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn firstCompletePoint(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_FIRSTCOMPLETEPOINT,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn completePoint(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_COMPLETEPOINT,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_ActFootballData_ActFootballStageAdditionData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "stageId",
+                Self::VT_STAGEID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "selfTeamIcon",
+                Self::VT_SELFTEAMICON,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "selfTeamName",
+                Self::VT_SELFTEAMNAME,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "enemyTeamIcon",
+                Self::VT_ENEMYTEAMICON,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "enemyTeamName",
+                Self::VT_ENEMYTEAMNAME,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "unlockBuffId",
+                Self::VT_UNLOCKBUFFID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "unlockBuffIcon",
+                Self::VT_UNLOCKBUFFICON,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "unlockBuffName",
+                Self::VT_UNLOCKBUFFNAME,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "unlockBuffDesc",
+                Self::VT_UNLOCKBUFFDESC,
+                false,
+            )?
+            .visit_field::<i32>("firstCompletePoint", Self::VT_FIRSTCOMPLETEPOINT, false)?
+            .visit_field::<i32>("completePoint", Self::VT_COMPLETEPOINT, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_ActFootballData_ActFootballStageAdditionDataArgs<'a> {
+    pub stageId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub selfTeamIcon: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub selfTeamName: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub enemyTeamIcon: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub enemyTeamName: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub unlockBuffId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub unlockBuffIcon: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub unlockBuffName: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub unlockBuffDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub firstCompletePoint: i32,
+    pub completePoint: i32,
+}
+impl<'a> Default for clz_Torappu_ActFootballData_ActFootballStageAdditionDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_ActFootballData_ActFootballStageAdditionDataArgs {
+            stageId: None,
+            selfTeamIcon: None,
+            selfTeamName: None,
+            enemyTeamIcon: None,
+            enemyTeamName: None,
+            unlockBuffId: None,
+            unlockBuffIcon: None,
+            unlockBuffName: None,
+            unlockBuffDesc: None,
+            firstCompletePoint: 0,
+            completePoint: 0,
+        }
+    }
+}
+
+pub struct clz_Torappu_ActFootballData_ActFootballStageAdditionDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_ActFootballData_ActFootballStageAdditionDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_stageId(&mut self, stageId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_STAGEID,
+            stageId,
+        );
+    }
+    #[inline]
+    pub fn add_selfTeamIcon(&mut self, selfTeamIcon: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_SELFTEAMICON,
+            selfTeamIcon,
+        );
+    }
+    #[inline]
+    pub fn add_selfTeamName(&mut self, selfTeamName: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_SELFTEAMNAME,
+            selfTeamName,
+        );
+    }
+    #[inline]
+    pub fn add_enemyTeamIcon(&mut self, enemyTeamIcon: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_ENEMYTEAMICON,
+            enemyTeamIcon,
+        );
+    }
+    #[inline]
+    pub fn add_enemyTeamName(&mut self, enemyTeamName: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_ENEMYTEAMNAME,
+            enemyTeamName,
+        );
+    }
+    #[inline]
+    pub fn add_unlockBuffId(&mut self, unlockBuffId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_UNLOCKBUFFID,
+            unlockBuffId,
+        );
+    }
+    #[inline]
+    pub fn add_unlockBuffIcon(&mut self, unlockBuffIcon: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_UNLOCKBUFFICON,
+            unlockBuffIcon,
+        );
+    }
+    #[inline]
+    pub fn add_unlockBuffName(&mut self, unlockBuffName: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_UNLOCKBUFFNAME,
+            unlockBuffName,
+        );
+    }
+    #[inline]
+    pub fn add_unlockBuffDesc(&mut self, unlockBuffDesc: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_UNLOCKBUFFDESC,
+            unlockBuffDesc,
+        );
+    }
+    #[inline]
+    pub fn add_firstCompletePoint(&mut self, firstCompletePoint: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_FIRSTCOMPLETEPOINT,
+            firstCompletePoint,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_completePoint(&mut self, completePoint: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_COMPLETEPOINT,
+            completePoint,
+            0,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ActFootballData_ActFootballStageAdditionDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_ActFootballData_ActFootballStageAdditionDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActFootballData_ActFootballStageAdditionData<'a>>
+    {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_ActFootballData_ActFootballStageAdditionData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_ActFootballData_ActFootballStageAdditionData");
+        ds.field("stageId", &self.stageId());
+        ds.field("selfTeamIcon", &self.selfTeamIcon());
+        ds.field("selfTeamName", &self.selfTeamName());
+        ds.field("enemyTeamIcon", &self.enemyTeamIcon());
+        ds.field("enemyTeamName", &self.enemyTeamName());
+        ds.field("unlockBuffId", &self.unlockBuffId());
+        ds.field("unlockBuffIcon", &self.unlockBuffIcon());
+        ds.field("unlockBuffName", &self.unlockBuffName());
+        ds.field("unlockBuffDesc", &self.unlockBuffDesc());
+        ds.field("firstCompletePoint", &self.firstCompletePoint());
+        ds.field("completePoint", &self.completePoint());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ActFootballData_ActFootballStageAdditionDataT {
+    pub stageId: Option<alloc::string::String>,
+    pub selfTeamIcon: Option<alloc::string::String>,
+    pub selfTeamName: Option<alloc::string::String>,
+    pub enemyTeamIcon: Option<alloc::string::String>,
+    pub enemyTeamName: Option<alloc::string::String>,
+    pub unlockBuffId: Option<alloc::string::String>,
+    pub unlockBuffIcon: Option<alloc::string::String>,
+    pub unlockBuffName: Option<alloc::string::String>,
+    pub unlockBuffDesc: Option<alloc::string::String>,
+    pub firstCompletePoint: i32,
+    pub completePoint: i32,
+}
+impl Default for clz_Torappu_ActFootballData_ActFootballStageAdditionDataT {
+    fn default() -> Self {
+        Self {
+            stageId: None,
+            selfTeamIcon: None,
+            selfTeamName: None,
+            enemyTeamIcon: None,
+            enemyTeamName: None,
+            unlockBuffId: None,
+            unlockBuffIcon: None,
+            unlockBuffName: None,
+            unlockBuffDesc: None,
+            firstCompletePoint: 0,
+            completePoint: 0,
+        }
+    }
+}
+impl clz_Torappu_ActFootballData_ActFootballStageAdditionDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActFootballData_ActFootballStageAdditionData<'b>>
+    {
+        let stageId = self.stageId.as_ref().map(|x| _fbb.create_string(x));
+        let selfTeamIcon = self.selfTeamIcon.as_ref().map(|x| _fbb.create_string(x));
+        let selfTeamName = self.selfTeamName.as_ref().map(|x| _fbb.create_string(x));
+        let enemyTeamIcon = self.enemyTeamIcon.as_ref().map(|x| _fbb.create_string(x));
+        let enemyTeamName = self.enemyTeamName.as_ref().map(|x| _fbb.create_string(x));
+        let unlockBuffId = self.unlockBuffId.as_ref().map(|x| _fbb.create_string(x));
+        let unlockBuffIcon = self.unlockBuffIcon.as_ref().map(|x| _fbb.create_string(x));
+        let unlockBuffName = self.unlockBuffName.as_ref().map(|x| _fbb.create_string(x));
+        let unlockBuffDesc = self.unlockBuffDesc.as_ref().map(|x| _fbb.create_string(x));
+        let firstCompletePoint = self.firstCompletePoint;
+        let completePoint = self.completePoint;
+        clz_Torappu_ActFootballData_ActFootballStageAdditionData::create(
+            _fbb,
+            &clz_Torappu_ActFootballData_ActFootballStageAdditionDataArgs {
+                stageId,
+                selfTeamIcon,
+                selfTeamName,
+                enemyTeamIcon,
+                enemyTeamName,
+                unlockBuffId,
+                unlockBuffIcon,
+                unlockBuffName,
+                unlockBuffDesc,
+                firstCompletePoint,
+                completePoint,
+            },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a>
+    for dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionData<'a>
+{
+    type Inner = dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionData<'a> {
+    pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionDataArgs<
+            'args,
+        >,
+    ) -> ::flatbuffers::WIPOffset<
+        dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionData<'bldr>,
+    > {
+        let mut builder =
+            dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionDataBuilder::new(
+                _fbb,
+            );
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(
+        &self,
+    ) -> dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionDataT {
+        let key = {
+            let x = self.key();
+            alloc::string::ToString::to_string(x)
+        };
+        let value = self.value().map(|x| alloc::boxed::Box::new(x.unpack()));
+        dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(
+        &self,
+        o: &dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionData,
+    ) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_ActFootballData_ActFootballStageAdditionData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                clz_Torappu_ActFootballData_ActFootballStageAdditionData,
+            >>(
+                dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_VALUE,
+                None,
+            )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable
+    for dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionData<'_>
+{
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                clz_Torappu_ActFootballData_ActFootballStageAdditionData,
+            >>("value", Self::VT_VALUE, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionDataArgs<'a> {
+    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<
+        ::flatbuffers::WIPOffset<clz_Torappu_ActFootballData_ActFootballStageAdditionData<'a>>,
+    >,
+}
+impl<'a> Default
+    for dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionDataArgs<'a>
+{
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: ::flatbuffers::WIPOffset<
+            clz_Torappu_ActFootballData_ActFootballStageAdditionData<'b>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_ActFootballData_ActFootballStageAdditionData>>(dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_VALUE, value);
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionDataBuilder<'a, 'b, A>
+    {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<
+        dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionData<'a>,
+    > {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionData::VT_KEY,
+            "key",
+        );
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug
+    for dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionData<'_>
+{
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f
+            .debug_struct("dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionDataT {
+    pub key: alloc::string::String,
+    pub value: Option<alloc::boxed::Box<clz_Torappu_ActFootballData_ActFootballStageAdditionDataT>>,
+}
+impl Default for dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionDataT {
+    fn default() -> Self {
+        Self {
+            key: alloc::string::ToString::to_string(""),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<
+        dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionData<'b>,
+    > {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionData::create(
+            _fbb,
+            &dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionDataArgs {
+                key,
+                value,
+            },
+        )
+    }
+}
+pub enum clz_Torappu_ActFootballData_ActFootballMilestoneItemDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_ActFootballData_ActFootballMilestoneItemData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a>
+    for clz_Torappu_ActFootballData_ActFootballMilestoneItemData<'a>
+{
+    type Inner = clz_Torappu_ActFootballData_ActFootballMilestoneItemData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_ActFootballData_ActFootballMilestoneItemData<'a> {
+    pub const VT_MILESTONEID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_ORDERID: ::flatbuffers::VOffsetT = 6;
+    pub const VT_TOKENNUM: ::flatbuffers::VOffsetT = 8;
+    pub const VT_REWARD: ::flatbuffers::VOffsetT = 10;
+    pub const VT_AVAILTIME: ::flatbuffers::VOffsetT = 12;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_ActFootballData_ActFootballMilestoneItemData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_ActFootballData_ActFootballMilestoneItemDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActFootballData_ActFootballMilestoneItemData<'bldr>>
+    {
+        let mut builder =
+            clz_Torappu_ActFootballData_ActFootballMilestoneItemDataBuilder::new(_fbb);
+        builder.add_availTime(args.availTime);
+        if let Some(x) = args.reward {
+            builder.add_reward(x);
+        }
+        builder.add_tokenNum(args.tokenNum);
+        builder.add_orderId(args.orderId);
+        if let Some(x) = args.milestoneId {
+            builder.add_milestoneId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ActFootballData_ActFootballMilestoneItemDataT {
+        let milestoneId = self
+            .milestoneId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let orderId = self.orderId();
+        let tokenNum = self.tokenNum();
+        let reward = self.reward().map(|x| alloc::boxed::Box::new(x.unpack()));
+        let availTime = self.availTime();
+        clz_Torappu_ActFootballData_ActFootballMilestoneItemDataT {
+            milestoneId,
+            orderId,
+            tokenNum,
+            reward,
+            availTime,
+        }
+    }
+
+    #[inline]
+    pub fn milestoneId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ActFootballData_ActFootballMilestoneItemData::VT_MILESTONEID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn orderId(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_ActFootballData_ActFootballMilestoneItemData::VT_ORDERID,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn tokenNum(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_ActFootballData_ActFootballMilestoneItemData::VT_TOKENNUM,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn reward(&self) -> Option<clz_Torappu_ItemBundle<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>(
+                    clz_Torappu_ActFootballData_ActFootballMilestoneItemData::VT_REWARD,
+                    None,
+                )
+        }
+    }
+    #[inline]
+    pub fn availTime(&self) -> i64 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i64>(
+                    clz_Torappu_ActFootballData_ActFootballMilestoneItemData::VT_AVAILTIME,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_ActFootballData_ActFootballMilestoneItemData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "milestoneId",
+                Self::VT_MILESTONEID,
+                false,
+            )?
+            .visit_field::<i32>("orderId", Self::VT_ORDERID, false)?
+            .visit_field::<i32>("tokenNum", Self::VT_TOKENNUM, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>(
+                "reward",
+                Self::VT_REWARD,
+                false,
+            )?
+            .visit_field::<i64>("availTime", Self::VT_AVAILTIME, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_ActFootballData_ActFootballMilestoneItemDataArgs<'a> {
+    pub milestoneId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub orderId: i32,
+    pub tokenNum: i32,
+    pub reward: Option<::flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'a>>>,
+    pub availTime: i64,
+}
+impl<'a> Default for clz_Torappu_ActFootballData_ActFootballMilestoneItemDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_ActFootballData_ActFootballMilestoneItemDataArgs {
+            milestoneId: None,
+            orderId: 0,
+            tokenNum: 0,
+            reward: None,
+            availTime: 0,
+        }
+    }
+}
+
+pub struct clz_Torappu_ActFootballData_ActFootballMilestoneItemDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_ActFootballData_ActFootballMilestoneItemDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_milestoneId(&mut self, milestoneId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ActFootballData_ActFootballMilestoneItemData::VT_MILESTONEID,
+            milestoneId,
+        );
+    }
+    #[inline]
+    pub fn add_orderId(&mut self, orderId: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_ActFootballData_ActFootballMilestoneItemData::VT_ORDERID,
+            orderId,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_tokenNum(&mut self, tokenNum: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_ActFootballData_ActFootballMilestoneItemData::VT_TOKENNUM,
+            tokenNum,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_reward(&mut self, reward: ::flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'b>>) {
+        self.fbb_
+            .push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_ItemBundle>>(
+                clz_Torappu_ActFootballData_ActFootballMilestoneItemData::VT_REWARD,
+                reward,
+            );
+    }
+    #[inline]
+    pub fn add_availTime(&mut self, availTime: i64) {
+        self.fbb_.push_slot::<i64>(
+            clz_Torappu_ActFootballData_ActFootballMilestoneItemData::VT_AVAILTIME,
+            availTime,
+            0,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ActFootballData_ActFootballMilestoneItemDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_ActFootballData_ActFootballMilestoneItemDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActFootballData_ActFootballMilestoneItemData<'a>>
+    {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_ActFootballData_ActFootballMilestoneItemData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_ActFootballData_ActFootballMilestoneItemData");
+        ds.field("milestoneId", &self.milestoneId());
+        ds.field("orderId", &self.orderId());
+        ds.field("tokenNum", &self.tokenNum());
+        ds.field("reward", &self.reward());
+        ds.field("availTime", &self.availTime());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ActFootballData_ActFootballMilestoneItemDataT {
+    pub milestoneId: Option<alloc::string::String>,
+    pub orderId: i32,
+    pub tokenNum: i32,
+    pub reward: Option<alloc::boxed::Box<clz_Torappu_ItemBundleT>>,
+    pub availTime: i64,
+}
+impl Default for clz_Torappu_ActFootballData_ActFootballMilestoneItemDataT {
+    fn default() -> Self {
+        Self {
+            milestoneId: None,
+            orderId: 0,
+            tokenNum: 0,
+            reward: None,
+            availTime: 0,
+        }
+    }
+}
+impl clz_Torappu_ActFootballData_ActFootballMilestoneItemDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActFootballData_ActFootballMilestoneItemData<'b>>
+    {
+        let milestoneId = self.milestoneId.as_ref().map(|x| _fbb.create_string(x));
+        let orderId = self.orderId;
+        let tokenNum = self.tokenNum;
+        let reward = self.reward.as_ref().map(|x| x.pack(_fbb));
+        let availTime = self.availTime;
+        clz_Torappu_ActFootballData_ActFootballMilestoneItemData::create(
+            _fbb,
+            &clz_Torappu_ActFootballData_ActFootballMilestoneItemDataArgs {
+                milestoneId,
+                orderId,
+                tokenNum,
+                reward,
+                availTime,
+            },
+        )
+    }
+}
+pub enum clz_Torappu_ActFootballData_ActFootballNPCCharDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_ActFootballData_ActFootballNPCCharData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ActFootballData_ActFootballNPCCharData<'a> {
+    type Inner = clz_Torappu_ActFootballData_ActFootballNPCCharData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_ActFootballData_ActFootballNPCCharData<'a> {
+    pub const VT_INSTID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_CHARID: ::flatbuffers::VOffsetT = 6;
+    pub const VT_LEVEL: ::flatbuffers::VOffsetT = 8;
+    pub const VT_EVOLVEPHASE: ::flatbuffers::VOffsetT = 10;
+    pub const VT_MAINSKILLLEVEL: ::flatbuffers::VOffsetT = 12;
+    pub const VT_SPECIALIZELEVEL: ::flatbuffers::VOffsetT = 14;
+    pub const VT_POTENTIALRANK: ::flatbuffers::VOffsetT = 16;
+    pub const VT_FAVORPOINT: ::flatbuffers::VOffsetT = 18;
+    pub const VT_SKINID: ::flatbuffers::VOffsetT = 20;
+    pub const VT_GETTIME: ::flatbuffers::VOffsetT = 22;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_ActFootballData_ActFootballNPCCharData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_ActFootballData_ActFootballNPCCharDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActFootballData_ActFootballNPCCharData<'bldr>> {
+        let mut builder = clz_Torappu_ActFootballData_ActFootballNPCCharDataBuilder::new(_fbb);
+        builder.add_getTime(args.getTime);
+        if let Some(x) = args.skinId {
+            builder.add_skinId(x);
+        }
+        builder.add_favorPoint(args.favorPoint);
+        builder.add_potentialRank(args.potentialRank);
+        builder.add_specializeLevel(args.specializeLevel);
+        builder.add_mainSkillLevel(args.mainSkillLevel);
+        builder.add_evolvePhase(args.evolvePhase);
+        builder.add_level(args.level);
+        if let Some(x) = args.charId {
+            builder.add_charId(x);
+        }
+        builder.add_instId(args.instId);
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ActFootballData_ActFootballNPCCharDataT {
+        let instId = self.instId();
+        let charId = self.charId().map(|x| alloc::string::ToString::to_string(x));
+        let level = self.level();
+        let evolvePhase = self.evolvePhase();
+        let mainSkillLevel = self.mainSkillLevel();
+        let specializeLevel = self.specializeLevel();
+        let potentialRank = self.potentialRank();
+        let favorPoint = self.favorPoint();
+        let skinId = self.skinId().map(|x| alloc::string::ToString::to_string(x));
+        let getTime = self.getTime();
+        clz_Torappu_ActFootballData_ActFootballNPCCharDataT {
+            instId,
+            charId,
+            level,
+            evolvePhase,
+            mainSkillLevel,
+            specializeLevel,
+            potentialRank,
+            favorPoint,
+            skinId,
+            getTime,
+        }
+    }
+
+    #[inline]
+    pub fn instId(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_ActFootballData_ActFootballNPCCharData::VT_INSTID,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn charId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ActFootballData_ActFootballNPCCharData::VT_CHARID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn level(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_ActFootballData_ActFootballNPCCharData::VT_LEVEL,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn evolvePhase(&self) -> enum__Torappu_EvolvePhase {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<enum__Torappu_EvolvePhase>(
+                    clz_Torappu_ActFootballData_ActFootballNPCCharData::VT_EVOLVEPHASE,
+                    Some(enum__Torappu_EvolvePhase::PHASE_0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn mainSkillLevel(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_ActFootballData_ActFootballNPCCharData::VT_MAINSKILLLEVEL,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn specializeLevel(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_ActFootballData_ActFootballNPCCharData::VT_SPECIALIZELEVEL,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn potentialRank(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_ActFootballData_ActFootballNPCCharData::VT_POTENTIALRANK,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn favorPoint(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_ActFootballData_ActFootballNPCCharData::VT_FAVORPOINT,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn skinId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ActFootballData_ActFootballNPCCharData::VT_SKINID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn getTime(&self) -> i64 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i64>(
+                    clz_Torappu_ActFootballData_ActFootballNPCCharData::VT_GETTIME,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_ActFootballData_ActFootballNPCCharData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<i32>("instId", Self::VT_INSTID, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("charId", Self::VT_CHARID, false)?
+            .visit_field::<i32>("level", Self::VT_LEVEL, false)?
+            .visit_field::<enum__Torappu_EvolvePhase>("evolvePhase", Self::VT_EVOLVEPHASE, false)?
+            .visit_field::<i32>("mainSkillLevel", Self::VT_MAINSKILLLEVEL, false)?
+            .visit_field::<i32>("specializeLevel", Self::VT_SPECIALIZELEVEL, false)?
+            .visit_field::<i32>("potentialRank", Self::VT_POTENTIALRANK, false)?
+            .visit_field::<i32>("favorPoint", Self::VT_FAVORPOINT, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("skinId", Self::VT_SKINID, false)?
+            .visit_field::<i64>("getTime", Self::VT_GETTIME, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_ActFootballData_ActFootballNPCCharDataArgs<'a> {
+    pub instId: i32,
+    pub charId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub level: i32,
+    pub evolvePhase: enum__Torappu_EvolvePhase,
+    pub mainSkillLevel: i32,
+    pub specializeLevel: i32,
+    pub potentialRank: i32,
+    pub favorPoint: i32,
+    pub skinId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub getTime: i64,
+}
+impl<'a> Default for clz_Torappu_ActFootballData_ActFootballNPCCharDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_ActFootballData_ActFootballNPCCharDataArgs {
+            instId: 0,
+            charId: None,
+            level: 0,
+            evolvePhase: enum__Torappu_EvolvePhase::PHASE_0,
+            mainSkillLevel: 0,
+            specializeLevel: 0,
+            potentialRank: 0,
+            favorPoint: 0,
+            skinId: None,
+            getTime: 0,
+        }
+    }
+}
+
+pub struct clz_Torappu_ActFootballData_ActFootballNPCCharDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_ActFootballData_ActFootballNPCCharDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_instId(&mut self, instId: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_ActFootballData_ActFootballNPCCharData::VT_INSTID,
+            instId,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_charId(&mut self, charId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ActFootballData_ActFootballNPCCharData::VT_CHARID,
+            charId,
+        );
+    }
+    #[inline]
+    pub fn add_level(&mut self, level: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_ActFootballData_ActFootballNPCCharData::VT_LEVEL,
+            level,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_evolvePhase(&mut self, evolvePhase: enum__Torappu_EvolvePhase) {
+        self.fbb_.push_slot::<enum__Torappu_EvolvePhase>(
+            clz_Torappu_ActFootballData_ActFootballNPCCharData::VT_EVOLVEPHASE,
+            evolvePhase,
+            enum__Torappu_EvolvePhase::PHASE_0,
+        );
+    }
+    #[inline]
+    pub fn add_mainSkillLevel(&mut self, mainSkillLevel: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_ActFootballData_ActFootballNPCCharData::VT_MAINSKILLLEVEL,
+            mainSkillLevel,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_specializeLevel(&mut self, specializeLevel: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_ActFootballData_ActFootballNPCCharData::VT_SPECIALIZELEVEL,
+            specializeLevel,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_potentialRank(&mut self, potentialRank: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_ActFootballData_ActFootballNPCCharData::VT_POTENTIALRANK,
+            potentialRank,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_favorPoint(&mut self, favorPoint: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_ActFootballData_ActFootballNPCCharData::VT_FAVORPOINT,
+            favorPoint,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_skinId(&mut self, skinId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ActFootballData_ActFootballNPCCharData::VT_SKINID,
+            skinId,
+        );
+    }
+    #[inline]
+    pub fn add_getTime(&mut self, getTime: i64) {
+        self.fbb_.push_slot::<i64>(
+            clz_Torappu_ActFootballData_ActFootballNPCCharData::VT_GETTIME,
+            getTime,
+            0,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ActFootballData_ActFootballNPCCharDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_ActFootballData_ActFootballNPCCharDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActFootballData_ActFootballNPCCharData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_ActFootballData_ActFootballNPCCharData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_ActFootballData_ActFootballNPCCharData");
+        ds.field("instId", &self.instId());
+        ds.field("charId", &self.charId());
+        ds.field("level", &self.level());
+        ds.field("evolvePhase", &self.evolvePhase());
+        ds.field("mainSkillLevel", &self.mainSkillLevel());
+        ds.field("specializeLevel", &self.specializeLevel());
+        ds.field("potentialRank", &self.potentialRank());
+        ds.field("favorPoint", &self.favorPoint());
+        ds.field("skinId", &self.skinId());
+        ds.field("getTime", &self.getTime());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ActFootballData_ActFootballNPCCharDataT {
+    pub instId: i32,
+    pub charId: Option<alloc::string::String>,
+    pub level: i32,
+    pub evolvePhase: enum__Torappu_EvolvePhase,
+    pub mainSkillLevel: i32,
+    pub specializeLevel: i32,
+    pub potentialRank: i32,
+    pub favorPoint: i32,
+    pub skinId: Option<alloc::string::String>,
+    pub getTime: i64,
+}
+impl Default for clz_Torappu_ActFootballData_ActFootballNPCCharDataT {
+    fn default() -> Self {
+        Self {
+            instId: 0,
+            charId: None,
+            level: 0,
+            evolvePhase: enum__Torappu_EvolvePhase::PHASE_0,
+            mainSkillLevel: 0,
+            specializeLevel: 0,
+            potentialRank: 0,
+            favorPoint: 0,
+            skinId: None,
+            getTime: 0,
+        }
+    }
+}
+impl clz_Torappu_ActFootballData_ActFootballNPCCharDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActFootballData_ActFootballNPCCharData<'b>> {
+        let instId = self.instId;
+        let charId = self.charId.as_ref().map(|x| _fbb.create_string(x));
+        let level = self.level;
+        let evolvePhase = self.evolvePhase;
+        let mainSkillLevel = self.mainSkillLevel;
+        let specializeLevel = self.specializeLevel;
+        let potentialRank = self.potentialRank;
+        let favorPoint = self.favorPoint;
+        let skinId = self.skinId.as_ref().map(|x| _fbb.create_string(x));
+        let getTime = self.getTime;
+        clz_Torappu_ActFootballData_ActFootballNPCCharData::create(
+            _fbb,
+            &clz_Torappu_ActFootballData_ActFootballNPCCharDataArgs {
+                instId,
+                charId,
+                level,
+                evolvePhase,
+                mainSkillLevel,
+                specializeLevel,
+                potentialRank,
+                favorPoint,
+                skinId,
+                getTime,
+            },
+        )
+    }
+}
+pub enum dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a>
+    for dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharData<'a>
+{
+    type Inner = dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharData<'a> {
+    pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<
+        dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharData<'bldr>,
+    > {
+        let mut builder =
+            dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        builder.add_key(args.key);
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharDataT {
+        let key = self.key();
+        let value = self.value().map(|x| alloc::boxed::Box::new(x.unpack()));
+        dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharData::VT_KEY,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(
+        &self,
+        o: &dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharData,
+    ) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: i32) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(&val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_ActFootballData_ActFootballNPCCharData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                clz_Torappu_ActFootballData_ActFootballNPCCharData,
+            >>(
+                dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharData::VT_VALUE,
+                None,
+            )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable
+    for dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharData<'_>
+{
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+     .visit_field::<i32>("key", Self::VT_KEY, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_ActFootballData_ActFootballNPCCharData>>("value", Self::VT_VALUE, false)?
+     .finish();
+        Ok(())
+    }
+}
+pub struct dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharDataArgs<'a> {
+    pub key: i32,
+    pub value:
+        Option<::flatbuffers::WIPOffset<clz_Torappu_ActFootballData_ActFootballNPCCharData<'a>>>,
+}
+impl<'a> Default for dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharDataArgs {
+            key: 0,
+            value: None,
+        }
+    }
+}
+
+pub struct dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: i32) {
+        self.fbb_.push_slot::<i32>(
+            dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharData::VT_KEY,
+            key,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: ::flatbuffers::WIPOffset<clz_Torappu_ActFootballData_ActFootballNPCCharData<'b>>,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_ActFootballData_ActFootballNPCCharData>>(dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharData::VT_VALUE, value);
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharData<'a>>
+    {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds =
+            f.debug_struct("dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharDataT {
+    pub key: i32,
+    pub value: Option<alloc::boxed::Box<clz_Torappu_ActFootballData_ActFootballNPCCharDataT>>,
+}
+impl Default for dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharDataT {
+    fn default() -> Self {
+        Self {
+            key: 0,
+            value: None,
+        }
+    }
+}
+impl dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharData<'b>>
+    {
+        let key = self.key;
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharData::create(
+            _fbb,
+            &dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharDataArgs { key, value },
+        )
+    }
+}
+pub enum clz_Torappu_ActFootballData_ActFootballConstDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_ActFootballData_ActFootballConstData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ActFootballData_ActFootballConstData<'a> {
+    type Inner = clz_Torappu_ActFootballData_ActFootballConstData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_ActFootballData_ActFootballConstData<'a> {
+    pub const VT_MILESTONEPOINTID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_MILESTONETRACKID: ::flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_ActFootballData_ActFootballConstData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_ActFootballData_ActFootballConstDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActFootballData_ActFootballConstData<'bldr>> {
+        let mut builder = clz_Torappu_ActFootballData_ActFootballConstDataBuilder::new(_fbb);
+        if let Some(x) = args.milestoneTrackId {
+            builder.add_milestoneTrackId(x);
+        }
+        if let Some(x) = args.milestonePointId {
+            builder.add_milestonePointId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ActFootballData_ActFootballConstDataT {
+        let milestonePointId = self
+            .milestonePointId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let milestoneTrackId = self
+            .milestoneTrackId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        clz_Torappu_ActFootballData_ActFootballConstDataT {
+            milestonePointId,
+            milestoneTrackId,
+        }
+    }
+
+    #[inline]
+    pub fn milestonePointId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ActFootballData_ActFootballConstData::VT_MILESTONEPOINTID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn milestoneTrackId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ActFootballData_ActFootballConstData::VT_MILESTONETRACKID,
+                None,
+            )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_ActFootballData_ActFootballConstData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "milestonePointId",
+                Self::VT_MILESTONEPOINTID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "milestoneTrackId",
+                Self::VT_MILESTONETRACKID,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_ActFootballData_ActFootballConstDataArgs<'a> {
+    pub milestonePointId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub milestoneTrackId: Option<::flatbuffers::WIPOffset<&'a str>>,
+}
+impl<'a> Default for clz_Torappu_ActFootballData_ActFootballConstDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_ActFootballData_ActFootballConstDataArgs {
+            milestonePointId: None,
+            milestoneTrackId: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_ActFootballData_ActFootballConstDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_ActFootballData_ActFootballConstDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_milestonePointId(&mut self, milestonePointId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ActFootballData_ActFootballConstData::VT_MILESTONEPOINTID,
+            milestonePointId,
+        );
+    }
+    #[inline]
+    pub fn add_milestoneTrackId(&mut self, milestoneTrackId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ActFootballData_ActFootballConstData::VT_MILESTONETRACKID,
+            milestoneTrackId,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ActFootballData_ActFootballConstDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_ActFootballData_ActFootballConstDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActFootballData_ActFootballConstData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_ActFootballData_ActFootballConstData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_ActFootballData_ActFootballConstData");
+        ds.field("milestonePointId", &self.milestonePointId());
+        ds.field("milestoneTrackId", &self.milestoneTrackId());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ActFootballData_ActFootballConstDataT {
+    pub milestonePointId: Option<alloc::string::String>,
+    pub milestoneTrackId: Option<alloc::string::String>,
+}
+impl Default for clz_Torappu_ActFootballData_ActFootballConstDataT {
+    fn default() -> Self {
+        Self {
+            milestonePointId: None,
+            milestoneTrackId: None,
+        }
+    }
+}
+impl clz_Torappu_ActFootballData_ActFootballConstDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActFootballData_ActFootballConstData<'b>> {
+        let milestonePointId = self
+            .milestonePointId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let milestoneTrackId = self
+            .milestoneTrackId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        clz_Torappu_ActFootballData_ActFootballConstData::create(
+            _fbb,
+            &clz_Torappu_ActFootballData_ActFootballConstDataArgs {
+                milestonePointId,
+                milestoneTrackId,
+            },
+        )
+    }
+}
+pub enum clz_Torappu_ActFootballDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_ActFootballData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ActFootballData<'a> {
+    type Inner = clz_Torappu_ActFootballData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_ActFootballData<'a> {
+    pub const VT_ZONEADDITIONDATAMAP: ::flatbuffers::VOffsetT = 4;
+    pub const VT_STAGEADDITIONDATAMAP: ::flatbuffers::VOffsetT = 6;
+    pub const VT_MILESTONELIST: ::flatbuffers::VOffsetT = 8;
+    pub const VT_NPCCHARDATADICT: ::flatbuffers::VOffsetT = 10;
+    pub const VT_CONSTDATA: ::flatbuffers::VOffsetT = 12;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_ActFootballData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_ActFootballDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActFootballData<'bldr>> {
+        let mut builder = clz_Torappu_ActFootballDataBuilder::new(_fbb);
+        if let Some(x) = args.constData {
+            builder.add_constData(x);
+        }
+        if let Some(x) = args.npcCharDataDict {
+            builder.add_npcCharDataDict(x);
+        }
+        if let Some(x) = args.milestoneList {
+            builder.add_milestoneList(x);
+        }
+        if let Some(x) = args.stageAdditionDataMap {
+            builder.add_stageAdditionDataMap(x);
+        }
+        if let Some(x) = args.zoneAdditionDataMap {
+            builder.add_zoneAdditionDataMap(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ActFootballDataT {
+        let zoneAdditionDataMap = self
+            .zoneAdditionDataMap()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let stageAdditionDataMap = self
+            .stageAdditionDataMap()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let milestoneList = self
+            .milestoneList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let npcCharDataDict = self
+            .npcCharDataDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let constData = self.constData().map(|x| alloc::boxed::Box::new(x.unpack()));
+        clz_Torappu_ActFootballDataT {
+            zoneAdditionDataMap,
+            stageAdditionDataMap,
+            milestoneList,
+            npcCharDataDict,
+            constData,
+        }
+    }
+
+    #[inline]
+    pub fn zoneAdditionDataMap(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<
+                dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionData<'a>,
+            >,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<
+                        dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionData,
+                    >,
+                >,
+            >>(clz_Torappu_ActFootballData::VT_ZONEADDITIONDATAMAP, None)
+        }
+    }
+    #[inline]
+    pub fn stageAdditionDataMap(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<
+                dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionData<'a>,
+            >,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<
+                        dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionData,
+                    >,
+                >,
+            >>(clz_Torappu_ActFootballData::VT_STAGEADDITIONDATAMAP, None)
+        }
+    }
+    #[inline]
+    pub fn milestoneList(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<
+                clz_Torappu_ActFootballData_ActFootballMilestoneItemData<'a>,
+            >,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<
+                        clz_Torappu_ActFootballData_ActFootballMilestoneItemData,
+                    >,
+                >,
+            >>(clz_Torappu_ActFootballData::VT_MILESTONELIST, None)
+        }
+    }
+    #[inline]
+    pub fn npcCharDataDict(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<
+                dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharData<'a>,
+            >,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<
+                        dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharData,
+                    >,
+                >,
+            >>(clz_Torappu_ActFootballData::VT_NPCCHARDATADICT, None)
+        }
+    }
+    #[inline]
+    pub fn constData(&self) -> Option<clz_Torappu_ActFootballData_ActFootballConstData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                clz_Torappu_ActFootballData_ActFootballConstData,
+            >>(clz_Torappu_ActFootballData::VT_CONSTDATA, None)
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_ActFootballData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionData>>>>("zoneAdditionDataMap", Self::VT_ZONEADDITIONDATAMAP, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionData>>>>("stageAdditionDataMap", Self::VT_STAGEADDITIONDATAMAP, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_ActFootballData_ActFootballMilestoneItemData>>>>("milestoneList", Self::VT_MILESTONELIST, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharData>>>>("npcCharDataDict", Self::VT_NPCCHARDATADICT, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_ActFootballData_ActFootballConstData>>("constData", Self::VT_CONSTDATA, false)?
+     .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_ActFootballDataArgs<'a> {
+    pub zoneAdditionDataMap: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionData<'a>,
+                >,
+            >,
+        >,
+    >,
+    pub stageAdditionDataMap: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionData<'a>,
+                >,
+            >,
+        >,
+    >,
+    pub milestoneList: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<
+                    clz_Torappu_ActFootballData_ActFootballMilestoneItemData<'a>,
+                >,
+            >,
+        >,
+    >,
+    pub npcCharDataDict: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<
+                    dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharData<'a>,
+                >,
+            >,
+        >,
+    >,
+    pub constData:
+        Option<::flatbuffers::WIPOffset<clz_Torappu_ActFootballData_ActFootballConstData<'a>>>,
+}
+impl<'a> Default for clz_Torappu_ActFootballDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_ActFootballDataArgs {
+            zoneAdditionDataMap: None,
+            stageAdditionDataMap: None,
+            milestoneList: None,
+            npcCharDataDict: None,
+            constData: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_ActFootballDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ActFootballDataBuilder<'a, 'b, A> {
+    #[inline]
+    pub fn add_zoneAdditionDataMap(
+        &mut self,
+        zoneAdditionDataMap: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionData<'b>,
+                >,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ActFootballData::VT_ZONEADDITIONDATAMAP,
+            zoneAdditionDataMap,
+        );
+    }
+    #[inline]
+    pub fn add_stageAdditionDataMap(
+        &mut self,
+        stageAdditionDataMap: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionData<'b>,
+                >,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ActFootballData::VT_STAGEADDITIONDATAMAP,
+            stageAdditionDataMap,
+        );
+    }
+    #[inline]
+    pub fn add_milestoneList(
+        &mut self,
+        milestoneList: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<
+                    clz_Torappu_ActFootballData_ActFootballMilestoneItemData<'b>,
+                >,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ActFootballData::VT_MILESTONELIST,
+            milestoneList,
+        );
+    }
+    #[inline]
+    pub fn add_npcCharDataDict(
+        &mut self,
+        npcCharDataDict: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<
+                    dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharData<'b>,
+                >,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ActFootballData::VT_NPCCHARDATADICT,
+            npcCharDataDict,
+        );
+    }
+    #[inline]
+    pub fn add_constData(
+        &mut self,
+        constData: ::flatbuffers::WIPOffset<clz_Torappu_ActFootballData_ActFootballConstData<'b>>,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_ActFootballData_ActFootballConstData>>(clz_Torappu_ActFootballData::VT_CONSTDATA, constData);
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ActFootballDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_ActFootballDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ActFootballData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_ActFootballData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_ActFootballData");
+        ds.field("zoneAdditionDataMap", &self.zoneAdditionDataMap());
+        ds.field("stageAdditionDataMap", &self.stageAdditionDataMap());
+        ds.field("milestoneList", &self.milestoneList());
+        ds.field("npcCharDataDict", &self.npcCharDataDict());
+        ds.field("constData", &self.constData());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ActFootballDataT {
+    pub zoneAdditionDataMap: Option<
+        alloc::vec::Vec<dict__string__clz_Torappu_ActFootballData_ActFootballZoneAdditionDataT>,
+    >,
+    pub stageAdditionDataMap: Option<
+        alloc::vec::Vec<dict__string__clz_Torappu_ActFootballData_ActFootballStageAdditionDataT>,
+    >,
+    pub milestoneList:
+        Option<alloc::vec::Vec<clz_Torappu_ActFootballData_ActFootballMilestoneItemDataT>>,
+    pub npcCharDataDict:
+        Option<alloc::vec::Vec<dict__int__clz_Torappu_ActFootballData_ActFootballNPCCharDataT>>,
+    pub constData: Option<alloc::boxed::Box<clz_Torappu_ActFootballData_ActFootballConstDataT>>,
+}
+impl Default for clz_Torappu_ActFootballDataT {
+    fn default() -> Self {
+        Self {
+            zoneAdditionDataMap: None,
+            stageAdditionDataMap: None,
+            milestoneList: None,
+            npcCharDataDict: None,
+            constData: None,
+        }
+    }
+}
+impl clz_Torappu_ActFootballDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActFootballData<'b>> {
+        let zoneAdditionDataMap = self.zoneAdditionDataMap.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let stageAdditionDataMap = self.stageAdditionDataMap.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let milestoneList = self.milestoneList.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let npcCharDataDict = self.npcCharDataDict.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let constData = self.constData.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_ActFootballData::create(
+            _fbb,
+            &clz_Torappu_ActFootballDataArgs {
+                zoneAdditionDataMap,
+                stageAdditionDataMap,
+                milestoneList,
+                npcCharDataDict,
+                constData,
+            },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_ActFootballDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_ActFootballData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_ActFootballData<'a> {
+    type Inner = dict__string__clz_Torappu_ActFootballData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_ActFootballData<'a> {
+    pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_ActFootballData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_ActFootballDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_ActFootballData<'bldr>> {
+        let mut builder = dict__string__clz_Torappu_ActFootballDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_ActFootballDataT {
+        let key = {
+            let x = self.key();
+            alloc::string::ToString::to_string(x)
+        };
+        let value = self.value().map(|x| alloc::boxed::Box::new(x.unpack()));
+        dict__string__clz_Torappu_ActFootballDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_ActFootballData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_ActFootballData) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_ActFootballData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<clz_Torappu_ActFootballData>>(
+                    dict__string__clz_Torappu_ActFootballData::VT_VALUE,
+                    None,
+                )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_ActFootballData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_ActFootballData>>(
+                "value",
+                Self::VT_VALUE,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_ActFootballDataArgs<'a> {
+    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_ActFootballData<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_ActFootballDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_ActFootballDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_ActFootballDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_ActFootballDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_ActFootballData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<clz_Torappu_ActFootballData<'b>>) {
+        self.fbb_
+            .push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_ActFootballData>>(
+                dict__string__clz_Torappu_ActFootballData::VT_VALUE,
+                value,
+            );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_ActFootballDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_ActFootballDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_ActFootballData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_
+            .required(o, dict__string__clz_Torappu_ActFootballData::VT_KEY, "key");
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for dict__string__clz_Torappu_ActFootballData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_ActFootballData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_ActFootballDataT {
+    pub key: alloc::string::String,
+    pub value: Option<alloc::boxed::Box<clz_Torappu_ActFootballDataT>>,
+}
+impl Default for dict__string__clz_Torappu_ActFootballDataT {
+    fn default() -> Self {
+        Self {
+            key: alloc::string::ToString::to_string(""),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_ActFootballDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_ActFootballData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_ActFootballData::create(
+            _fbb,
+            &dict__string__clz_Torappu_ActFootballDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_ActivityTable_ActivityDetailTableOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -245381,6 +248674,7 @@ impl<'a> clz_Torappu_ActivityTable_ActivityDetailTable<'a> {
     pub const VT_RECRUIT_ONLY: ::flatbuffers::VOffsetT = 86;
     pub const VT_TYPE_ACT46SIDE: ::flatbuffers::VOffsetT = 88;
     pub const VT_AUTOCHESS_SEASON: ::flatbuffers::VOffsetT = 90;
+    pub const VT_ACT_FOOTBALL: ::flatbuffers::VOffsetT = 92;
 
     #[inline]
     pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -245397,6 +248691,9 @@ impl<'a> clz_Torappu_ActivityTable_ActivityDetailTable<'a> {
         args: &'args clz_Torappu_ActivityTable_ActivityDetailTableArgs<'args>,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActivityTable_ActivityDetailTable<'bldr>> {
         let mut builder = clz_Torappu_ActivityTable_ActivityDetailTableBuilder::new(_fbb);
+        if let Some(x) = args.ACT_FOOTBALL {
+            builder.add_ACT_FOOTBALL(x);
+        }
         if let Some(x) = args.AUTOCHESS_SEASON {
             builder.add_AUTOCHESS_SEASON(x);
         }
@@ -245665,6 +248962,9 @@ impl<'a> clz_Torappu_ActivityTable_ActivityDetailTable<'a> {
         let AUTOCHESS_SEASON = self
             .AUTOCHESS_SEASON()
             .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let ACT_FOOTBALL = self
+            .ACT_FOOTBALL()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
         clz_Torappu_ActivityTable_ActivityDetailTableT {
             DEFAULT,
             CHECKIN_ONLY,
@@ -245710,6 +249010,7 @@ impl<'a> clz_Torappu_ActivityTable_ActivityDetailTable<'a> {
             RECRUIT_ONLY,
             TYPE_ACT46SIDE,
             AUTOCHESS_SEASON,
+            ACT_FOOTBALL,
         }
     }
 
@@ -246779,6 +250080,30 @@ impl<'a> clz_Torappu_ActivityTable_ActivityDetailTable<'a> {
             )
         }
     }
+    #[inline]
+    pub fn ACT_FOOTBALL(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActFootballData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActFootballData>,
+                >,
+            >>(
+                clz_Torappu_ActivityTable_ActivityDetailTable::VT_ACT_FOOTBALL,
+                None,
+            )
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_ActivityTable_ActivityDetailTable<'_> {
@@ -247062,6 +250387,12 @@ impl ::flatbuffers::Verifiable for clz_Torappu_ActivityTable_ActivityDetailTable
                     ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActAutoChessData>,
                 >,
             >>("AUTOCHESS_SEASON", Self::VT_AUTOCHESS_SEASON, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActFootballData>,
+                >,
+            >>("ACT_FOOTBALL", Self::VT_ACT_FOOTBALL, false)?
             .finish();
         Ok(())
     }
@@ -247429,6 +250760,14 @@ pub struct clz_Torappu_ActivityTable_ActivityDetailTableArgs<'a> {
             >,
         >,
     >,
+    pub ACT_FOOTBALL: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActFootballData<'a>>,
+            >,
+        >,
+    >,
 }
 impl<'a> Default for clz_Torappu_ActivityTable_ActivityDetailTableArgs<'a> {
     #[inline]
@@ -247478,6 +250817,7 @@ impl<'a> Default for clz_Torappu_ActivityTable_ActivityDetailTableArgs<'a> {
             RECRUIT_ONLY: None,
             TYPE_ACT46SIDE: None,
             AUTOCHESS_SEASON: None,
+            ACT_FOOTBALL: None,
         }
     }
 }
@@ -248164,6 +251504,21 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
+    pub fn add_ACT_FOOTBALL(
+        &mut self,
+        ACT_FOOTBALL: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActFootballData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ActivityTable_ActivityDetailTable::VT_ACT_FOOTBALL,
+            ACT_FOOTBALL,
+        );
+    }
+    #[inline]
     pub fn new(
         _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
     ) -> clz_Torappu_ActivityTable_ActivityDetailTableBuilder<'a, 'b, A> {
@@ -248229,6 +251584,7 @@ impl ::core::fmt::Debug for clz_Torappu_ActivityTable_ActivityDetailTable<'_> {
         ds.field("RECRUIT_ONLY", &self.RECRUIT_ONLY());
         ds.field("TYPE_ACT46SIDE", &self.TYPE_ACT46SIDE());
         ds.field("AUTOCHESS_SEASON", &self.AUTOCHESS_SEASON());
+        ds.field("ACT_FOOTBALL", &self.ACT_FOOTBALL());
         ds.finish()
     }
 }
@@ -248281,6 +251637,7 @@ pub struct clz_Torappu_ActivityTable_ActivityDetailTableT {
     pub RECRUIT_ONLY: Option<alloc::vec::Vec<dict__string__clz_Torappu_ActRecruitOnlyDataT>>,
     pub TYPE_ACT46SIDE: Option<alloc::vec::Vec<dict__string__clz_Torappu_Act46SideDataT>>,
     pub AUTOCHESS_SEASON: Option<alloc::vec::Vec<dict__string__clz_Torappu_ActAutoChessDataT>>,
+    pub ACT_FOOTBALL: Option<alloc::vec::Vec<dict__string__clz_Torappu_ActFootballDataT>>,
 }
 impl Default for clz_Torappu_ActivityTable_ActivityDetailTableT {
     fn default() -> Self {
@@ -248329,6 +251686,7 @@ impl Default for clz_Torappu_ActivityTable_ActivityDetailTableT {
             RECRUIT_ONLY: None,
             TYPE_ACT46SIDE: None,
             AUTOCHESS_SEASON: None,
+            ACT_FOOTBALL: None,
         }
     }
 }
@@ -248513,6 +251871,10 @@ impl clz_Torappu_ActivityTable_ActivityDetailTableT {
             let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
             _fbb.create_vector(&w)
         });
+        let ACT_FOOTBALL = self.ACT_FOOTBALL.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
         clz_Torappu_ActivityTable_ActivityDetailTable::create(
             _fbb,
             &clz_Torappu_ActivityTable_ActivityDetailTableArgs {
@@ -248560,6 +251922,7 @@ impl clz_Torappu_ActivityTable_ActivityDetailTableT {
                 RECRUIT_ONLY,
                 TYPE_ACT46SIDE,
                 AUTOCHESS_SEASON,
+                ACT_FOOTBALL,
             },
         )
     }
@@ -290181,7 +293544,8 @@ impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_KVSwitchInfo<'a> {
 impl<'a> clz_Torappu_KVSwitchInfo<'a> {
     pub const VT_ISDEFAULT: ::flatbuffers::VOffsetT = 4;
     pub const VT_DISPLAYTIME: ::flatbuffers::VOffsetT = 6;
-    pub const VT_ZONEID: ::flatbuffers::VOffsetT = 8;
+    pub const VT_STAGEID: ::flatbuffers::VOffsetT = 8;
+    pub const VT_PASSSTATE: ::flatbuffers::VOffsetT = 10;
 
     #[inline]
     pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -290199,8 +293563,9 @@ impl<'a> clz_Torappu_KVSwitchInfo<'a> {
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_KVSwitchInfo<'bldr>> {
         let mut builder = clz_Torappu_KVSwitchInfoBuilder::new(_fbb);
         builder.add_displayTime(args.displayTime);
-        if let Some(x) = args.zoneId {
-            builder.add_zoneId(x);
+        builder.add_passState(args.passState);
+        if let Some(x) = args.stageId {
+            builder.add_stageId(x);
         }
         builder.add_isDefault(args.isDefault);
         builder.finish()
@@ -290209,11 +293574,15 @@ impl<'a> clz_Torappu_KVSwitchInfo<'a> {
     pub fn unpack(&self) -> clz_Torappu_KVSwitchInfoT {
         let isDefault = self.isDefault();
         let displayTime = self.displayTime();
-        let zoneId = self.zoneId().map(|x| alloc::string::ToString::to_string(x));
+        let stageId = self
+            .stageId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let passState = self.passState();
         clz_Torappu_KVSwitchInfoT {
             isDefault,
             displayTime,
-            zoneId,
+            stageId,
+            passState,
         }
     }
 
@@ -290240,15 +293609,29 @@ impl<'a> clz_Torappu_KVSwitchInfo<'a> {
         }
     }
     #[inline]
-    pub fn zoneId(&self) -> Option<&'a str> {
+    pub fn stageId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
         // which contains a valid value in this slot
         unsafe {
             self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_KVSwitchInfo::VT_ZONEID,
+                clz_Torappu_KVSwitchInfo::VT_STAGEID,
                 None,
             )
+        }
+    }
+    #[inline]
+    pub fn passState(&self) -> enum__Torappu_PlayerStageState {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<enum__Torappu_PlayerStageState>(
+                    clz_Torappu_KVSwitchInfo::VT_PASSSTATE,
+                    Some(enum__Torappu_PlayerStageState::UNLOCKED),
+                )
+                .unwrap()
         }
     }
 }
@@ -290262,7 +293645,12 @@ impl ::flatbuffers::Verifiable for clz_Torappu_KVSwitchInfo<'_> {
         v.visit_table(pos)?
             .visit_field::<bool>("isDefault", Self::VT_ISDEFAULT, false)?
             .visit_field::<i64>("displayTime", Self::VT_DISPLAYTIME, false)?
-            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("zoneId", Self::VT_ZONEID, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "stageId",
+                Self::VT_STAGEID,
+                false,
+            )?
+            .visit_field::<enum__Torappu_PlayerStageState>("passState", Self::VT_PASSSTATE, false)?
             .finish();
         Ok(())
     }
@@ -290270,7 +293658,8 @@ impl ::flatbuffers::Verifiable for clz_Torappu_KVSwitchInfo<'_> {
 pub struct clz_Torappu_KVSwitchInfoArgs<'a> {
     pub isDefault: bool,
     pub displayTime: i64,
-    pub zoneId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub stageId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub passState: enum__Torappu_PlayerStageState,
 }
 impl<'a> Default for clz_Torappu_KVSwitchInfoArgs<'a> {
     #[inline]
@@ -290278,7 +293667,8 @@ impl<'a> Default for clz_Torappu_KVSwitchInfoArgs<'a> {
         clz_Torappu_KVSwitchInfoArgs {
             isDefault: false,
             displayTime: 0,
-            zoneId: None,
+            stageId: None,
+            passState: enum__Torappu_PlayerStageState::UNLOCKED,
         }
     }
 }
@@ -290299,10 +293689,18 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_KVSwitchInfoBuild
             .push_slot::<i64>(clz_Torappu_KVSwitchInfo::VT_DISPLAYTIME, displayTime, 0);
     }
     #[inline]
-    pub fn add_zoneId(&mut self, zoneId: ::flatbuffers::WIPOffset<&'b str>) {
+    pub fn add_stageId(&mut self, stageId: ::flatbuffers::WIPOffset<&'b str>) {
         self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
-            clz_Torappu_KVSwitchInfo::VT_ZONEID,
-            zoneId,
+            clz_Torappu_KVSwitchInfo::VT_STAGEID,
+            stageId,
+        );
+    }
+    #[inline]
+    pub fn add_passState(&mut self, passState: enum__Torappu_PlayerStageState) {
+        self.fbb_.push_slot::<enum__Torappu_PlayerStageState>(
+            clz_Torappu_KVSwitchInfo::VT_PASSSTATE,
+            passState,
+            enum__Torappu_PlayerStageState::UNLOCKED,
         );
     }
     #[inline]
@@ -290327,7 +293725,8 @@ impl ::core::fmt::Debug for clz_Torappu_KVSwitchInfo<'_> {
         let mut ds = f.debug_struct("clz_Torappu_KVSwitchInfo");
         ds.field("isDefault", &self.isDefault());
         ds.field("displayTime", &self.displayTime());
-        ds.field("zoneId", &self.zoneId());
+        ds.field("stageId", &self.stageId());
+        ds.field("passState", &self.passState());
         ds.finish()
     }
 }
@@ -290336,14 +293735,16 @@ impl ::core::fmt::Debug for clz_Torappu_KVSwitchInfo<'_> {
 pub struct clz_Torappu_KVSwitchInfoT {
     pub isDefault: bool,
     pub displayTime: i64,
-    pub zoneId: Option<alloc::string::String>,
+    pub stageId: Option<alloc::string::String>,
+    pub passState: enum__Torappu_PlayerStageState,
 }
 impl Default for clz_Torappu_KVSwitchInfoT {
     fn default() -> Self {
         Self {
             isDefault: false,
             displayTime: 0,
-            zoneId: None,
+            stageId: None,
+            passState: enum__Torappu_PlayerStageState::UNLOCKED,
         }
     }
 }
@@ -290354,13 +293755,15 @@ impl clz_Torappu_KVSwitchInfoT {
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_KVSwitchInfo<'b>> {
         let isDefault = self.isDefault;
         let displayTime = self.displayTime;
-        let zoneId = self.zoneId.as_ref().map(|x| _fbb.create_string(x));
+        let stageId = self.stageId.as_ref().map(|x| _fbb.create_string(x));
+        let passState = self.passState;
         clz_Torappu_KVSwitchInfo::create(
             _fbb,
             &clz_Torappu_KVSwitchInfoArgs {
                 isDefault,
                 displayTime,
-                zoneId,
+                stageId,
+                passState,
             },
         )
     }
@@ -299981,6 +303384,2578 @@ impl clz_Torappu_FifthAnnivExploreDataT {
                 broadcastData,
                 exploreConst,
                 missionData,
+            },
+        )
+    }
+}
+pub enum clz_Torappu_Anniv7thClueGroupDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_Anniv7thClueGroupData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Anniv7thClueGroupData<'a> {
+    type Inner = clz_Torappu_Anniv7thClueGroupData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_Anniv7thClueGroupData<'a> {
+    pub const VT_CLUEGROUPID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_SORTID: ::flatbuffers::VOffsetT = 6;
+    pub const VT_CLUEGROUPNAME: ::flatbuffers::VOffsetT = 8;
+    pub const VT_CLUEGROUPSUBNAME: ::flatbuffers::VOffsetT = 10;
+    pub const VT_CLUEGROUPBG: ::flatbuffers::VOffsetT = 12;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_Anniv7thClueGroupData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_Anniv7thClueGroupDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_Anniv7thClueGroupData<'bldr>> {
+        let mut builder = clz_Torappu_Anniv7thClueGroupDataBuilder::new(_fbb);
+        if let Some(x) = args.clueGroupBg {
+            builder.add_clueGroupBg(x);
+        }
+        if let Some(x) = args.clueGroupSubName {
+            builder.add_clueGroupSubName(x);
+        }
+        if let Some(x) = args.clueGroupName {
+            builder.add_clueGroupName(x);
+        }
+        builder.add_sortId(args.sortId);
+        if let Some(x) = args.clueGroupId {
+            builder.add_clueGroupId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Anniv7thClueGroupDataT {
+        let clueGroupId = self
+            .clueGroupId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let sortId = self.sortId();
+        let clueGroupName = self
+            .clueGroupName()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let clueGroupSubName = self
+            .clueGroupSubName()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let clueGroupBg = self
+            .clueGroupBg()
+            .map(|x| alloc::string::ToString::to_string(x));
+        clz_Torappu_Anniv7thClueGroupDataT {
+            clueGroupId,
+            sortId,
+            clueGroupName,
+            clueGroupSubName,
+            clueGroupBg,
+        }
+    }
+
+    #[inline]
+    pub fn clueGroupId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_Anniv7thClueGroupData::VT_CLUEGROUPID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn sortId(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_Anniv7thClueGroupData::VT_SORTID, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn clueGroupName(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_Anniv7thClueGroupData::VT_CLUEGROUPNAME,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn clueGroupSubName(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_Anniv7thClueGroupData::VT_CLUEGROUPSUBNAME,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn clueGroupBg(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_Anniv7thClueGroupData::VT_CLUEGROUPBG,
+                None,
+            )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_Anniv7thClueGroupData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "clueGroupId",
+                Self::VT_CLUEGROUPID,
+                false,
+            )?
+            .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "clueGroupName",
+                Self::VT_CLUEGROUPNAME,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "clueGroupSubName",
+                Self::VT_CLUEGROUPSUBNAME,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "clueGroupBg",
+                Self::VT_CLUEGROUPBG,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_Anniv7thClueGroupDataArgs<'a> {
+    pub clueGroupId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub sortId: i32,
+    pub clueGroupName: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub clueGroupSubName: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub clueGroupBg: Option<::flatbuffers::WIPOffset<&'a str>>,
+}
+impl<'a> Default for clz_Torappu_Anniv7thClueGroupDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_Anniv7thClueGroupDataArgs {
+            clueGroupId: None,
+            sortId: 0,
+            clueGroupName: None,
+            clueGroupSubName: None,
+            clueGroupBg: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_Anniv7thClueGroupDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_Anniv7thClueGroupDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_clueGroupId(&mut self, clueGroupId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_Anniv7thClueGroupData::VT_CLUEGROUPID,
+            clueGroupId,
+        );
+    }
+    #[inline]
+    pub fn add_sortId(&mut self, sortId: i32) {
+        self.fbb_
+            .push_slot::<i32>(clz_Torappu_Anniv7thClueGroupData::VT_SORTID, sortId, 0);
+    }
+    #[inline]
+    pub fn add_clueGroupName(&mut self, clueGroupName: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_Anniv7thClueGroupData::VT_CLUEGROUPNAME,
+            clueGroupName,
+        );
+    }
+    #[inline]
+    pub fn add_clueGroupSubName(&mut self, clueGroupSubName: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_Anniv7thClueGroupData::VT_CLUEGROUPSUBNAME,
+            clueGroupSubName,
+        );
+    }
+    #[inline]
+    pub fn add_clueGroupBg(&mut self, clueGroupBg: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_Anniv7thClueGroupData::VT_CLUEGROUPBG,
+            clueGroupBg,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Anniv7thClueGroupDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_Anniv7thClueGroupDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_Anniv7thClueGroupData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_Anniv7thClueGroupData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_Anniv7thClueGroupData");
+        ds.field("clueGroupId", &self.clueGroupId());
+        ds.field("sortId", &self.sortId());
+        ds.field("clueGroupName", &self.clueGroupName());
+        ds.field("clueGroupSubName", &self.clueGroupSubName());
+        ds.field("clueGroupBg", &self.clueGroupBg());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Anniv7thClueGroupDataT {
+    pub clueGroupId: Option<alloc::string::String>,
+    pub sortId: i32,
+    pub clueGroupName: Option<alloc::string::String>,
+    pub clueGroupSubName: Option<alloc::string::String>,
+    pub clueGroupBg: Option<alloc::string::String>,
+}
+impl Default for clz_Torappu_Anniv7thClueGroupDataT {
+    fn default() -> Self {
+        Self {
+            clueGroupId: None,
+            sortId: 0,
+            clueGroupName: None,
+            clueGroupSubName: None,
+            clueGroupBg: None,
+        }
+    }
+}
+impl clz_Torappu_Anniv7thClueGroupDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_Anniv7thClueGroupData<'b>> {
+        let clueGroupId = self.clueGroupId.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let clueGroupName = self.clueGroupName.as_ref().map(|x| _fbb.create_string(x));
+        let clueGroupSubName = self
+            .clueGroupSubName
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let clueGroupBg = self.clueGroupBg.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_Anniv7thClueGroupData::create(
+            _fbb,
+            &clz_Torappu_Anniv7thClueGroupDataArgs {
+                clueGroupId,
+                sortId,
+                clueGroupName,
+                clueGroupSubName,
+                clueGroupBg,
+            },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_Anniv7thClueGroupDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_Anniv7thClueGroupData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_Anniv7thClueGroupData<'a> {
+    type Inner = dict__string__clz_Torappu_Anniv7thClueGroupData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_Anniv7thClueGroupData<'a> {
+    pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_Anniv7thClueGroupData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_Anniv7thClueGroupDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_Anniv7thClueGroupData<'bldr>> {
+        let mut builder = dict__string__clz_Torappu_Anniv7thClueGroupDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_Anniv7thClueGroupDataT {
+        let key = {
+            let x = self.key();
+            alloc::string::ToString::to_string(x)
+        };
+        let value = self.value().map(|x| alloc::boxed::Box::new(x.unpack()));
+        dict__string__clz_Torappu_Anniv7thClueGroupDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_Anniv7thClueGroupData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(
+        &self,
+        o: &dict__string__clz_Torappu_Anniv7thClueGroupData,
+    ) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_Anniv7thClueGroupData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<clz_Torappu_Anniv7thClueGroupData>>(
+                    dict__string__clz_Torappu_Anniv7thClueGroupData::VT_VALUE,
+                    None,
+                )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_Anniv7thClueGroupData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_Anniv7thClueGroupData>>(
+                "value",
+                Self::VT_VALUE,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_Anniv7thClueGroupDataArgs<'a> {
+    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_Anniv7thClueGroupData<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_Anniv7thClueGroupDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_Anniv7thClueGroupDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_Anniv7thClueGroupDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_Anniv7thClueGroupDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_Anniv7thClueGroupData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: ::flatbuffers::WIPOffset<clz_Torappu_Anniv7thClueGroupData<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_Anniv7thClueGroupData>>(
+                dict__string__clz_Torappu_Anniv7thClueGroupData::VT_VALUE,
+                value,
+            );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_Anniv7thClueGroupDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_Anniv7thClueGroupDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_Anniv7thClueGroupData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__clz_Torappu_Anniv7thClueGroupData::VT_KEY,
+            "key",
+        );
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for dict__string__clz_Torappu_Anniv7thClueGroupData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_Anniv7thClueGroupData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_Anniv7thClueGroupDataT {
+    pub key: alloc::string::String,
+    pub value: Option<alloc::boxed::Box<clz_Torappu_Anniv7thClueGroupDataT>>,
+}
+impl Default for dict__string__clz_Torappu_Anniv7thClueGroupDataT {
+    fn default() -> Self {
+        Self {
+            key: alloc::string::ToString::to_string(""),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_Anniv7thClueGroupDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_Anniv7thClueGroupData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_Anniv7thClueGroupData::create(
+            _fbb,
+            &dict__string__clz_Torappu_Anniv7thClueGroupDataArgs { key, value },
+        )
+    }
+}
+pub enum clz_Torappu_Anniv7thClueDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_Anniv7thClueData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Anniv7thClueData<'a> {
+    type Inner = clz_Torappu_Anniv7thClueData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_Anniv7thClueData<'a> {
+    pub const VT_CLUEID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_CLUEGROUPID: ::flatbuffers::VOffsetT = 6;
+    pub const VT_SORTID: ::flatbuffers::VOffsetT = 8;
+    pub const VT_CLUELINK: ::flatbuffers::VOffsetT = 10;
+    pub const VT_CLUENAME: ::flatbuffers::VOffsetT = 12;
+    pub const VT_CLUEOWNER: ::flatbuffers::VOffsetT = 14;
+    pub const VT_CLUEDESC: ::flatbuffers::VOffsetT = 16;
+    pub const VT_UNLOCKDESC: ::flatbuffers::VOffsetT = 18;
+    pub const VT_CLUEOWNERPIC: ::flatbuffers::VOffsetT = 20;
+    pub const VT_PAGERES: ::flatbuffers::VOffsetT = 22;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_Anniv7thClueData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_Anniv7thClueDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_Anniv7thClueData<'bldr>> {
+        let mut builder = clz_Torappu_Anniv7thClueDataBuilder::new(_fbb);
+        if let Some(x) = args.pageRes {
+            builder.add_pageRes(x);
+        }
+        if let Some(x) = args.clueOwnerPic {
+            builder.add_clueOwnerPic(x);
+        }
+        if let Some(x) = args.unlockDesc {
+            builder.add_unlockDesc(x);
+        }
+        if let Some(x) = args.clueDesc {
+            builder.add_clueDesc(x);
+        }
+        if let Some(x) = args.clueOwner {
+            builder.add_clueOwner(x);
+        }
+        if let Some(x) = args.clueName {
+            builder.add_clueName(x);
+        }
+        if let Some(x) = args.clueLink {
+            builder.add_clueLink(x);
+        }
+        builder.add_sortId(args.sortId);
+        if let Some(x) = args.clueGroupId {
+            builder.add_clueGroupId(x);
+        }
+        if let Some(x) = args.clueId {
+            builder.add_clueId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Anniv7thClueDataT {
+        let clueId = self.clueId().map(|x| alloc::string::ToString::to_string(x));
+        let clueGroupId = self
+            .clueGroupId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let sortId = self.sortId();
+        let clueLink = self.clueLink().map(|x| {
+            x.iter()
+                .map(|s| alloc::string::ToString::to_string(s))
+                .collect()
+        });
+        let clueName = self
+            .clueName()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let clueOwner = self
+            .clueOwner()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let clueDesc = self
+            .clueDesc()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let unlockDesc = self
+            .unlockDesc()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let clueOwnerPic = self
+            .clueOwnerPic()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let pageRes = self
+            .pageRes()
+            .map(|x| alloc::string::ToString::to_string(x));
+        clz_Torappu_Anniv7thClueDataT {
+            clueId,
+            clueGroupId,
+            sortId,
+            clueLink,
+            clueName,
+            clueOwner,
+            clueDesc,
+            unlockDesc,
+            clueOwnerPic,
+            pageRes,
+        }
+    }
+
+    #[inline]
+    pub fn clueId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_Anniv7thClueData::VT_CLUEID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn clueGroupId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_Anniv7thClueData::VT_CLUEGROUPID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn sortId(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_Anniv7thClueData::VT_SORTID, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn clueLink(
+        &self,
+    ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+            >>(clz_Torappu_Anniv7thClueData::VT_CLUELINK, None)
+        }
+    }
+    #[inline]
+    pub fn clueName(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_Anniv7thClueData::VT_CLUENAME,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn clueOwner(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_Anniv7thClueData::VT_CLUEOWNER,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn clueDesc(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_Anniv7thClueData::VT_CLUEDESC,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn unlockDesc(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_Anniv7thClueData::VT_UNLOCKDESC,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn clueOwnerPic(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_Anniv7thClueData::VT_CLUEOWNERPIC,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn pageRes(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_Anniv7thClueData::VT_PAGERES,
+                None,
+            )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_Anniv7thClueData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("clueId", Self::VT_CLUEID, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "clueGroupId",
+                Self::VT_CLUEGROUPID,
+                false,
+            )?
+            .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>,
+            >>("clueLink", Self::VT_CLUELINK, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "clueName",
+                Self::VT_CLUENAME,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "clueOwner",
+                Self::VT_CLUEOWNER,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "clueDesc",
+                Self::VT_CLUEDESC,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "unlockDesc",
+                Self::VT_UNLOCKDESC,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "clueOwnerPic",
+                Self::VT_CLUEOWNERPIC,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "pageRes",
+                Self::VT_PAGERES,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_Anniv7thClueDataArgs<'a> {
+    pub clueId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub clueGroupId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub sortId: i32,
+    pub clueLink: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+        >,
+    >,
+    pub clueName: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub clueOwner: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub clueDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub unlockDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub clueOwnerPic: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub pageRes: Option<::flatbuffers::WIPOffset<&'a str>>,
+}
+impl<'a> Default for clz_Torappu_Anniv7thClueDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_Anniv7thClueDataArgs {
+            clueId: None,
+            clueGroupId: None,
+            sortId: 0,
+            clueLink: None,
+            clueName: None,
+            clueOwner: None,
+            clueDesc: None,
+            unlockDesc: None,
+            clueOwnerPic: None,
+            pageRes: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_Anniv7thClueDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_Anniv7thClueDataBuilder<'a, 'b, A> {
+    #[inline]
+    pub fn add_clueId(&mut self, clueId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_Anniv7thClueData::VT_CLUEID,
+            clueId,
+        );
+    }
+    #[inline]
+    pub fn add_clueGroupId(&mut self, clueGroupId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_Anniv7thClueData::VT_CLUEGROUPID,
+            clueGroupId,
+        );
+    }
+    #[inline]
+    pub fn add_sortId(&mut self, sortId: i32) {
+        self.fbb_
+            .push_slot::<i32>(clz_Torappu_Anniv7thClueData::VT_SORTID, sortId, 0);
+    }
+    #[inline]
+    pub fn add_clueLink(
+        &mut self,
+        clueLink: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'b, ::flatbuffers::ForwardsUOffset<&'b str>>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_Anniv7thClueData::VT_CLUELINK,
+            clueLink,
+        );
+    }
+    #[inline]
+    pub fn add_clueName(&mut self, clueName: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_Anniv7thClueData::VT_CLUENAME,
+            clueName,
+        );
+    }
+    #[inline]
+    pub fn add_clueOwner(&mut self, clueOwner: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_Anniv7thClueData::VT_CLUEOWNER,
+            clueOwner,
+        );
+    }
+    #[inline]
+    pub fn add_clueDesc(&mut self, clueDesc: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_Anniv7thClueData::VT_CLUEDESC,
+            clueDesc,
+        );
+    }
+    #[inline]
+    pub fn add_unlockDesc(&mut self, unlockDesc: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_Anniv7thClueData::VT_UNLOCKDESC,
+            unlockDesc,
+        );
+    }
+    #[inline]
+    pub fn add_clueOwnerPic(&mut self, clueOwnerPic: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_Anniv7thClueData::VT_CLUEOWNERPIC,
+            clueOwnerPic,
+        );
+    }
+    #[inline]
+    pub fn add_pageRes(&mut self, pageRes: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_Anniv7thClueData::VT_PAGERES,
+            pageRes,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Anniv7thClueDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_Anniv7thClueDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_Anniv7thClueData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_Anniv7thClueData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_Anniv7thClueData");
+        ds.field("clueId", &self.clueId());
+        ds.field("clueGroupId", &self.clueGroupId());
+        ds.field("sortId", &self.sortId());
+        ds.field("clueLink", &self.clueLink());
+        ds.field("clueName", &self.clueName());
+        ds.field("clueOwner", &self.clueOwner());
+        ds.field("clueDesc", &self.clueDesc());
+        ds.field("unlockDesc", &self.unlockDesc());
+        ds.field("clueOwnerPic", &self.clueOwnerPic());
+        ds.field("pageRes", &self.pageRes());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Anniv7thClueDataT {
+    pub clueId: Option<alloc::string::String>,
+    pub clueGroupId: Option<alloc::string::String>,
+    pub sortId: i32,
+    pub clueLink: Option<alloc::vec::Vec<alloc::string::String>>,
+    pub clueName: Option<alloc::string::String>,
+    pub clueOwner: Option<alloc::string::String>,
+    pub clueDesc: Option<alloc::string::String>,
+    pub unlockDesc: Option<alloc::string::String>,
+    pub clueOwnerPic: Option<alloc::string::String>,
+    pub pageRes: Option<alloc::string::String>,
+}
+impl Default for clz_Torappu_Anniv7thClueDataT {
+    fn default() -> Self {
+        Self {
+            clueId: None,
+            clueGroupId: None,
+            sortId: 0,
+            clueLink: None,
+            clueName: None,
+            clueOwner: None,
+            clueDesc: None,
+            unlockDesc: None,
+            clueOwnerPic: None,
+            pageRes: None,
+        }
+    }
+}
+impl clz_Torappu_Anniv7thClueDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_Anniv7thClueData<'b>> {
+        let clueId = self.clueId.as_ref().map(|x| _fbb.create_string(x));
+        let clueGroupId = self.clueGroupId.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let clueLink = self.clueLink.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let clueName = self.clueName.as_ref().map(|x| _fbb.create_string(x));
+        let clueOwner = self.clueOwner.as_ref().map(|x| _fbb.create_string(x));
+        let clueDesc = self.clueDesc.as_ref().map(|x| _fbb.create_string(x));
+        let unlockDesc = self.unlockDesc.as_ref().map(|x| _fbb.create_string(x));
+        let clueOwnerPic = self.clueOwnerPic.as_ref().map(|x| _fbb.create_string(x));
+        let pageRes = self.pageRes.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_Anniv7thClueData::create(
+            _fbb,
+            &clz_Torappu_Anniv7thClueDataArgs {
+                clueId,
+                clueGroupId,
+                sortId,
+                clueLink,
+                clueName,
+                clueOwner,
+                clueDesc,
+                unlockDesc,
+                clueOwnerPic,
+                pageRes,
+            },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_Anniv7thClueDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_Anniv7thClueData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_Anniv7thClueData<'a> {
+    type Inner = dict__string__clz_Torappu_Anniv7thClueData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_Anniv7thClueData<'a> {
+    pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_Anniv7thClueData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_Anniv7thClueDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_Anniv7thClueData<'bldr>> {
+        let mut builder = dict__string__clz_Torappu_Anniv7thClueDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_Anniv7thClueDataT {
+        let key = {
+            let x = self.key();
+            alloc::string::ToString::to_string(x)
+        };
+        let value = self.value().map(|x| alloc::boxed::Box::new(x.unpack()));
+        dict__string__clz_Torappu_Anniv7thClueDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_Anniv7thClueData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_Anniv7thClueData) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_Anniv7thClueData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<clz_Torappu_Anniv7thClueData>>(
+                    dict__string__clz_Torappu_Anniv7thClueData::VT_VALUE,
+                    None,
+                )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_Anniv7thClueData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_Anniv7thClueData>>(
+                "value",
+                Self::VT_VALUE,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_Anniv7thClueDataArgs<'a> {
+    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_Anniv7thClueData<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_Anniv7thClueDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_Anniv7thClueDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_Anniv7thClueDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_Anniv7thClueDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_Anniv7thClueData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<clz_Torappu_Anniv7thClueData<'b>>) {
+        self.fbb_
+            .push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_Anniv7thClueData>>(
+                dict__string__clz_Torappu_Anniv7thClueData::VT_VALUE,
+                value,
+            );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_Anniv7thClueDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_Anniv7thClueDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_Anniv7thClueData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_
+            .required(o, dict__string__clz_Torappu_Anniv7thClueData::VT_KEY, "key");
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for dict__string__clz_Torappu_Anniv7thClueData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_Anniv7thClueData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_Anniv7thClueDataT {
+    pub key: alloc::string::String,
+    pub value: Option<alloc::boxed::Box<clz_Torappu_Anniv7thClueDataT>>,
+}
+impl Default for dict__string__clz_Torappu_Anniv7thClueDataT {
+    fn default() -> Self {
+        Self {
+            key: alloc::string::ToString::to_string(""),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_Anniv7thClueDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_Anniv7thClueData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_Anniv7thClueData::create(
+            _fbb,
+            &dict__string__clz_Torappu_Anniv7thClueDataArgs { key, value },
+        )
+    }
+}
+pub enum clz_Torappu_Anniv7thClueRewardDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_Anniv7thClueRewardData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Anniv7thClueRewardData<'a> {
+    type Inner = clz_Torappu_Anniv7thClueRewardData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_Anniv7thClueRewardData<'a> {
+    pub const VT_CLUERECORDID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_CLUERECORD: ::flatbuffers::VOffsetT = 6;
+    pub const VT_CLUERECORDDESC: ::flatbuffers::VOffsetT = 8;
+    pub const VT_REWARDS: ::flatbuffers::VOffsetT = 10;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_Anniv7thClueRewardData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_Anniv7thClueRewardDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_Anniv7thClueRewardData<'bldr>> {
+        let mut builder = clz_Torappu_Anniv7thClueRewardDataBuilder::new(_fbb);
+        if let Some(x) = args.rewards {
+            builder.add_rewards(x);
+        }
+        if let Some(x) = args.clueRecordDesc {
+            builder.add_clueRecordDesc(x);
+        }
+        builder.add_clueRecord(args.clueRecord);
+        if let Some(x) = args.clueRecordId {
+            builder.add_clueRecordId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Anniv7thClueRewardDataT {
+        let clueRecordId = self
+            .clueRecordId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let clueRecord = self.clueRecord();
+        let clueRecordDesc = self
+            .clueRecordDesc()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let rewards = self
+            .rewards()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_Anniv7thClueRewardDataT {
+            clueRecordId,
+            clueRecord,
+            clueRecordDesc,
+            rewards,
+        }
+    }
+
+    #[inline]
+    pub fn clueRecordId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_Anniv7thClueRewardData::VT_CLUERECORDID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn clueRecord(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_Anniv7thClueRewardData::VT_CLUERECORD, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn clueRecordDesc(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_Anniv7thClueRewardData::VT_CLUERECORDDESC,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn rewards(
+        &self,
+    ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'a>>>>
+    {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>,
+            >>(clz_Torappu_Anniv7thClueRewardData::VT_REWARDS, None)
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_Anniv7thClueRewardData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "clueRecordId",
+                Self::VT_CLUERECORDID,
+                false,
+            )?
+            .visit_field::<i32>("clueRecord", Self::VT_CLUERECORD, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "clueRecordDesc",
+                Self::VT_CLUERECORDDESC,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>,
+            >>("rewards", Self::VT_REWARDS, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_Anniv7thClueRewardDataArgs<'a> {
+    pub clueRecordId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub clueRecord: i32,
+    pub clueRecordDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub rewards: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'a>>>,
+        >,
+    >,
+}
+impl<'a> Default for clz_Torappu_Anniv7thClueRewardDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_Anniv7thClueRewardDataArgs {
+            clueRecordId: None,
+            clueRecord: 0,
+            clueRecordDesc: None,
+            rewards: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_Anniv7thClueRewardDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_Anniv7thClueRewardDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_clueRecordId(&mut self, clueRecordId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_Anniv7thClueRewardData::VT_CLUERECORDID,
+            clueRecordId,
+        );
+    }
+    #[inline]
+    pub fn add_clueRecord(&mut self, clueRecord: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_Anniv7thClueRewardData::VT_CLUERECORD,
+            clueRecord,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_clueRecordDesc(&mut self, clueRecordDesc: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_Anniv7thClueRewardData::VT_CLUERECORDDESC,
+            clueRecordDesc,
+        );
+    }
+    #[inline]
+    pub fn add_rewards(
+        &mut self,
+        rewards: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'b, ::flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'b>>>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_Anniv7thClueRewardData::VT_REWARDS,
+            rewards,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Anniv7thClueRewardDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_Anniv7thClueRewardDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_Anniv7thClueRewardData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_Anniv7thClueRewardData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_Anniv7thClueRewardData");
+        ds.field("clueRecordId", &self.clueRecordId());
+        ds.field("clueRecord", &self.clueRecord());
+        ds.field("clueRecordDesc", &self.clueRecordDesc());
+        ds.field("rewards", &self.rewards());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Anniv7thClueRewardDataT {
+    pub clueRecordId: Option<alloc::string::String>,
+    pub clueRecord: i32,
+    pub clueRecordDesc: Option<alloc::string::String>,
+    pub rewards: Option<alloc::vec::Vec<clz_Torappu_ItemBundleT>>,
+}
+impl Default for clz_Torappu_Anniv7thClueRewardDataT {
+    fn default() -> Self {
+        Self {
+            clueRecordId: None,
+            clueRecord: 0,
+            clueRecordDesc: None,
+            rewards: None,
+        }
+    }
+}
+impl clz_Torappu_Anniv7thClueRewardDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_Anniv7thClueRewardData<'b>> {
+        let clueRecordId = self.clueRecordId.as_ref().map(|x| _fbb.create_string(x));
+        let clueRecord = self.clueRecord;
+        let clueRecordDesc = self.clueRecordDesc.as_ref().map(|x| _fbb.create_string(x));
+        let rewards = self.rewards.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_Anniv7thClueRewardData::create(
+            _fbb,
+            &clz_Torappu_Anniv7thClueRewardDataArgs {
+                clueRecordId,
+                clueRecord,
+                clueRecordDesc,
+                rewards,
+            },
+        )
+    }
+}
+pub enum clz_Torappu_Anniv7thDisplayDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_Anniv7thDisplayData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Anniv7thDisplayData<'a> {
+    type Inner = clz_Torappu_Anniv7thDisplayData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_Anniv7thDisplayData<'a> {
+    pub const VT_SORTID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_CHARID: ::flatbuffers::VOffsetT = 6;
+    pub const VT_VOICEID: ::flatbuffers::VOffsetT = 8;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_Anniv7thDisplayData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_Anniv7thDisplayDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_Anniv7thDisplayData<'bldr>> {
+        let mut builder = clz_Torappu_Anniv7thDisplayDataBuilder::new(_fbb);
+        if let Some(x) = args.voiceId {
+            builder.add_voiceId(x);
+        }
+        if let Some(x) = args.charId {
+            builder.add_charId(x);
+        }
+        builder.add_sortId(args.sortId);
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Anniv7thDisplayDataT {
+        let sortId = self.sortId();
+        let charId = self.charId().map(|x| alloc::string::ToString::to_string(x));
+        let voiceId = self
+            .voiceId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        clz_Torappu_Anniv7thDisplayDataT {
+            sortId,
+            charId,
+            voiceId,
+        }
+    }
+
+    #[inline]
+    pub fn sortId(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_Anniv7thDisplayData::VT_SORTID, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn charId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_Anniv7thDisplayData::VT_CHARID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn voiceId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_Anniv7thDisplayData::VT_VOICEID,
+                None,
+            )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_Anniv7thDisplayData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("charId", Self::VT_CHARID, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "voiceId",
+                Self::VT_VOICEID,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_Anniv7thDisplayDataArgs<'a> {
+    pub sortId: i32,
+    pub charId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub voiceId: Option<::flatbuffers::WIPOffset<&'a str>>,
+}
+impl<'a> Default for clz_Torappu_Anniv7thDisplayDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_Anniv7thDisplayDataArgs {
+            sortId: 0,
+            charId: None,
+            voiceId: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_Anniv7thDisplayDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_Anniv7thDisplayDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_sortId(&mut self, sortId: i32) {
+        self.fbb_
+            .push_slot::<i32>(clz_Torappu_Anniv7thDisplayData::VT_SORTID, sortId, 0);
+    }
+    #[inline]
+    pub fn add_charId(&mut self, charId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_Anniv7thDisplayData::VT_CHARID,
+            charId,
+        );
+    }
+    #[inline]
+    pub fn add_voiceId(&mut self, voiceId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_Anniv7thDisplayData::VT_VOICEID,
+            voiceId,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Anniv7thDisplayDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_Anniv7thDisplayDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_Anniv7thDisplayData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_Anniv7thDisplayData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_Anniv7thDisplayData");
+        ds.field("sortId", &self.sortId());
+        ds.field("charId", &self.charId());
+        ds.field("voiceId", &self.voiceId());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Anniv7thDisplayDataT {
+    pub sortId: i32,
+    pub charId: Option<alloc::string::String>,
+    pub voiceId: Option<alloc::string::String>,
+}
+impl Default for clz_Torappu_Anniv7thDisplayDataT {
+    fn default() -> Self {
+        Self {
+            sortId: 0,
+            charId: None,
+            voiceId: None,
+        }
+    }
+}
+impl clz_Torappu_Anniv7thDisplayDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_Anniv7thDisplayData<'b>> {
+        let sortId = self.sortId;
+        let charId = self.charId.as_ref().map(|x| _fbb.create_string(x));
+        let voiceId = self.voiceId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_Anniv7thDisplayData::create(
+            _fbb,
+            &clz_Torappu_Anniv7thDisplayDataArgs {
+                sortId,
+                charId,
+                voiceId,
+            },
+        )
+    }
+}
+pub enum clz_Torappu_Anniv7thDisplayNodeDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_Anniv7thDisplayNodeData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Anniv7thDisplayNodeData<'a> {
+    type Inner = clz_Torappu_Anniv7thDisplayNodeData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_Anniv7thDisplayNodeData<'a> {
+    pub const VT_NODETYPE: ::flatbuffers::VOffsetT = 4;
+    pub const VT_DISPLAYDATA: ::flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_Anniv7thDisplayNodeData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_Anniv7thDisplayNodeDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_Anniv7thDisplayNodeData<'bldr>> {
+        let mut builder = clz_Torappu_Anniv7thDisplayNodeDataBuilder::new(_fbb);
+        if let Some(x) = args.displayData {
+            builder.add_displayData(x);
+        }
+        builder.add_nodeType(args.nodeType);
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Anniv7thDisplayNodeDataT {
+        let nodeType = self.nodeType();
+        let displayData = self
+            .displayData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_Anniv7thDisplayNodeDataT {
+            nodeType,
+            displayData,
+        }
+    }
+
+    #[inline]
+    pub fn nodeType(&self) -> enum__Torappu_Anniv7thDisplayNodeType {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<enum__Torappu_Anniv7thDisplayNodeType>(
+                    clz_Torappu_Anniv7thDisplayNodeData::VT_NODETYPE,
+                    Some(enum__Torappu_Anniv7thDisplayNodeType::LETTER),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn displayData(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<clz_Torappu_Anniv7thDisplayData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_Anniv7thDisplayData>,
+                >,
+            >>(clz_Torappu_Anniv7thDisplayNodeData::VT_DISPLAYDATA, None)
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_Anniv7thDisplayNodeData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<enum__Torappu_Anniv7thDisplayNodeType>(
+                "nodeType",
+                Self::VT_NODETYPE,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_Anniv7thDisplayData>,
+                >,
+            >>("displayData", Self::VT_DISPLAYDATA, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_Anniv7thDisplayNodeDataArgs<'a> {
+    pub nodeType: enum__Torappu_Anniv7thDisplayNodeType,
+    pub displayData: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_Anniv7thDisplayData<'a>>,
+            >,
+        >,
+    >,
+}
+impl<'a> Default for clz_Torappu_Anniv7thDisplayNodeDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_Anniv7thDisplayNodeDataArgs {
+            nodeType: enum__Torappu_Anniv7thDisplayNodeType::LETTER,
+            displayData: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_Anniv7thDisplayNodeDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+{
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_Anniv7thDisplayNodeDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_nodeType(&mut self, nodeType: enum__Torappu_Anniv7thDisplayNodeType) {
+        self.fbb_
+            .push_slot::<enum__Torappu_Anniv7thDisplayNodeType>(
+                clz_Torappu_Anniv7thDisplayNodeData::VT_NODETYPE,
+                nodeType,
+                enum__Torappu_Anniv7thDisplayNodeType::LETTER,
+            );
+    }
+    #[inline]
+    pub fn add_displayData(
+        &mut self,
+        displayData: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_Anniv7thDisplayData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_Anniv7thDisplayNodeData::VT_DISPLAYDATA,
+            displayData,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Anniv7thDisplayNodeDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_Anniv7thDisplayNodeDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_Anniv7thDisplayNodeData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_Anniv7thDisplayNodeData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_Anniv7thDisplayNodeData");
+        ds.field("nodeType", &self.nodeType());
+        ds.field("displayData", &self.displayData());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Anniv7thDisplayNodeDataT {
+    pub nodeType: enum__Torappu_Anniv7thDisplayNodeType,
+    pub displayData: Option<alloc::vec::Vec<clz_Torappu_Anniv7thDisplayDataT>>,
+}
+impl Default for clz_Torappu_Anniv7thDisplayNodeDataT {
+    fn default() -> Self {
+        Self {
+            nodeType: enum__Torappu_Anniv7thDisplayNodeType::LETTER,
+            displayData: None,
+        }
+    }
+}
+impl clz_Torappu_Anniv7thDisplayNodeDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_Anniv7thDisplayNodeData<'b>> {
+        let nodeType = self.nodeType;
+        let displayData = self.displayData.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_Anniv7thDisplayNodeData::create(
+            _fbb,
+            &clz_Torappu_Anniv7thDisplayNodeDataArgs {
+                nodeType,
+                displayData,
+            },
+        )
+    }
+}
+pub enum clz_Torappu_Anniv7thClueConstDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_Anniv7thClueConstData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Anniv7thClueConstData<'a> {
+    type Inner = clz_Torappu_Anniv7thClueConstData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_Anniv7thClueConstData<'a> {
+    pub const VT_UNLOCKSTAGEID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_UNLOCKTOAST: ::flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_Anniv7thClueConstData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_Anniv7thClueConstDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_Anniv7thClueConstData<'bldr>> {
+        let mut builder = clz_Torappu_Anniv7thClueConstDataBuilder::new(_fbb);
+        if let Some(x) = args.unlockToast {
+            builder.add_unlockToast(x);
+        }
+        if let Some(x) = args.unlockStageId {
+            builder.add_unlockStageId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Anniv7thClueConstDataT {
+        let unlockStageId = self
+            .unlockStageId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let unlockToast = self
+            .unlockToast()
+            .map(|x| alloc::string::ToString::to_string(x));
+        clz_Torappu_Anniv7thClueConstDataT {
+            unlockStageId,
+            unlockToast,
+        }
+    }
+
+    #[inline]
+    pub fn unlockStageId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_Anniv7thClueConstData::VT_UNLOCKSTAGEID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn unlockToast(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_Anniv7thClueConstData::VT_UNLOCKTOAST,
+                None,
+            )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_Anniv7thClueConstData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "unlockStageId",
+                Self::VT_UNLOCKSTAGEID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "unlockToast",
+                Self::VT_UNLOCKTOAST,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_Anniv7thClueConstDataArgs<'a> {
+    pub unlockStageId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub unlockToast: Option<::flatbuffers::WIPOffset<&'a str>>,
+}
+impl<'a> Default for clz_Torappu_Anniv7thClueConstDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_Anniv7thClueConstDataArgs {
+            unlockStageId: None,
+            unlockToast: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_Anniv7thClueConstDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_Anniv7thClueConstDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_unlockStageId(&mut self, unlockStageId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_Anniv7thClueConstData::VT_UNLOCKSTAGEID,
+            unlockStageId,
+        );
+    }
+    #[inline]
+    pub fn add_unlockToast(&mut self, unlockToast: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_Anniv7thClueConstData::VT_UNLOCKTOAST,
+            unlockToast,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Anniv7thClueConstDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_Anniv7thClueConstDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_Anniv7thClueConstData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_Anniv7thClueConstData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_Anniv7thClueConstData");
+        ds.field("unlockStageId", &self.unlockStageId());
+        ds.field("unlockToast", &self.unlockToast());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Anniv7thClueConstDataT {
+    pub unlockStageId: Option<alloc::string::String>,
+    pub unlockToast: Option<alloc::string::String>,
+}
+impl Default for clz_Torappu_Anniv7thClueConstDataT {
+    fn default() -> Self {
+        Self {
+            unlockStageId: None,
+            unlockToast: None,
+        }
+    }
+}
+impl clz_Torappu_Anniv7thClueConstDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_Anniv7thClueConstData<'b>> {
+        let unlockStageId = self.unlockStageId.as_ref().map(|x| _fbb.create_string(x));
+        let unlockToast = self.unlockToast.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_Anniv7thClueConstData::create(
+            _fbb,
+            &clz_Torappu_Anniv7thClueConstDataArgs {
+                unlockStageId,
+                unlockToast,
+            },
+        )
+    }
+}
+pub enum clz_Torappu_Anniv7thMainlineDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_Anniv7thMainlineData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Anniv7thMainlineData<'a> {
+    type Inner = clz_Torappu_Anniv7thMainlineData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_Anniv7thMainlineData<'a> {
+    pub const VT_CLUEGROUPDATA: ::flatbuffers::VOffsetT = 4;
+    pub const VT_CLUEDATA: ::flatbuffers::VOffsetT = 6;
+    pub const VT_CLUEREWARDDATA: ::flatbuffers::VOffsetT = 8;
+    pub const VT_DISPLAYNODEDATA: ::flatbuffers::VOffsetT = 10;
+    pub const VT_CONSTDATA: ::flatbuffers::VOffsetT = 12;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_Anniv7thMainlineData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_Anniv7thMainlineDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_Anniv7thMainlineData<'bldr>> {
+        let mut builder = clz_Torappu_Anniv7thMainlineDataBuilder::new(_fbb);
+        if let Some(x) = args.constData {
+            builder.add_constData(x);
+        }
+        if let Some(x) = args.displayNodeData {
+            builder.add_displayNodeData(x);
+        }
+        if let Some(x) = args.clueRewardData {
+            builder.add_clueRewardData(x);
+        }
+        if let Some(x) = args.clueData {
+            builder.add_clueData(x);
+        }
+        if let Some(x) = args.clueGroupData {
+            builder.add_clueGroupData(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Anniv7thMainlineDataT {
+        let clueGroupData = self
+            .clueGroupData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let clueData = self
+            .clueData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let clueRewardData = self
+            .clueRewardData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let displayNodeData = self
+            .displayNodeData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let constData = self.constData().map(|x| alloc::boxed::Box::new(x.unpack()));
+        clz_Torappu_Anniv7thMainlineDataT {
+            clueGroupData,
+            clueData,
+            clueRewardData,
+            displayNodeData,
+            constData,
+        }
+    }
+
+    #[inline]
+    pub fn clueGroupData(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_Anniv7thClueGroupData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_Anniv7thClueGroupData>,
+                >,
+            >>(clz_Torappu_Anniv7thMainlineData::VT_CLUEGROUPDATA, None)
+        }
+    }
+    #[inline]
+    pub fn clueData(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_Anniv7thClueData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_Anniv7thClueData>,
+                >,
+            >>(clz_Torappu_Anniv7thMainlineData::VT_CLUEDATA, None)
+        }
+    }
+    #[inline]
+    pub fn clueRewardData(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<clz_Torappu_Anniv7thClueRewardData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_Anniv7thClueRewardData>,
+                >,
+            >>(clz_Torappu_Anniv7thMainlineData::VT_CLUEREWARDDATA, None)
+        }
+    }
+    #[inline]
+    pub fn displayNodeData(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<clz_Torappu_Anniv7thDisplayNodeData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_Anniv7thDisplayNodeData>,
+                >,
+            >>(clz_Torappu_Anniv7thMainlineData::VT_DISPLAYNODEDATA, None)
+        }
+    }
+    #[inline]
+    pub fn constData(&self) -> Option<clz_Torappu_Anniv7thClueConstData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<clz_Torappu_Anniv7thClueConstData>>(
+                    clz_Torappu_Anniv7thMainlineData::VT_CONSTDATA,
+                    None,
+                )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_Anniv7thMainlineData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_Anniv7thClueGroupData>,
+                >,
+            >>("clueGroupData", Self::VT_CLUEGROUPDATA, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_Anniv7thClueData>,
+                >,
+            >>("clueData", Self::VT_CLUEDATA, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_Anniv7thClueRewardData>,
+                >,
+            >>("clueRewardData", Self::VT_CLUEREWARDDATA, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_Anniv7thDisplayNodeData>,
+                >,
+            >>("displayNodeData", Self::VT_DISPLAYNODEDATA, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_Anniv7thClueConstData>>(
+                "constData",
+                Self::VT_CONSTDATA,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_Anniv7thMainlineDataArgs<'a> {
+    pub clueGroupData: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_Anniv7thClueGroupData<'a>>,
+            >,
+        >,
+    >,
+    pub clueData: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_Anniv7thClueData<'a>>,
+            >,
+        >,
+    >,
+    pub clueRewardData: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_Anniv7thClueRewardData<'a>>,
+            >,
+        >,
+    >,
+    pub displayNodeData: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_Anniv7thDisplayNodeData<'a>>,
+            >,
+        >,
+    >,
+    pub constData: Option<::flatbuffers::WIPOffset<clz_Torappu_Anniv7thClueConstData<'a>>>,
+}
+impl<'a> Default for clz_Torappu_Anniv7thMainlineDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_Anniv7thMainlineDataArgs {
+            clueGroupData: None,
+            clueData: None,
+            clueRewardData: None,
+            displayNodeData: None,
+            constData: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_Anniv7thMainlineDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_Anniv7thMainlineDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_clueGroupData(
+        &mut self,
+        clueGroupData: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_Anniv7thClueGroupData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_Anniv7thMainlineData::VT_CLUEGROUPDATA,
+            clueGroupData,
+        );
+    }
+    #[inline]
+    pub fn add_clueData(
+        &mut self,
+        clueData: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_Anniv7thClueData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_Anniv7thMainlineData::VT_CLUEDATA,
+            clueData,
+        );
+    }
+    #[inline]
+    pub fn add_clueRewardData(
+        &mut self,
+        clueRewardData: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_Anniv7thClueRewardData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_Anniv7thMainlineData::VT_CLUEREWARDDATA,
+            clueRewardData,
+        );
+    }
+    #[inline]
+    pub fn add_displayNodeData(
+        &mut self,
+        displayNodeData: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_Anniv7thDisplayNodeData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_Anniv7thMainlineData::VT_DISPLAYNODEDATA,
+            displayNodeData,
+        );
+    }
+    #[inline]
+    pub fn add_constData(
+        &mut self,
+        constData: ::flatbuffers::WIPOffset<clz_Torappu_Anniv7thClueConstData<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_Anniv7thClueConstData>>(
+                clz_Torappu_Anniv7thMainlineData::VT_CONSTDATA,
+                constData,
+            );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Anniv7thMainlineDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_Anniv7thMainlineDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_Anniv7thMainlineData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_Anniv7thMainlineData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_Anniv7thMainlineData");
+        ds.field("clueGroupData", &self.clueGroupData());
+        ds.field("clueData", &self.clueData());
+        ds.field("clueRewardData", &self.clueRewardData());
+        ds.field("displayNodeData", &self.displayNodeData());
+        ds.field("constData", &self.constData());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Anniv7thMainlineDataT {
+    pub clueGroupData: Option<alloc::vec::Vec<dict__string__clz_Torappu_Anniv7thClueGroupDataT>>,
+    pub clueData: Option<alloc::vec::Vec<dict__string__clz_Torappu_Anniv7thClueDataT>>,
+    pub clueRewardData: Option<alloc::vec::Vec<clz_Torappu_Anniv7thClueRewardDataT>>,
+    pub displayNodeData: Option<alloc::vec::Vec<clz_Torappu_Anniv7thDisplayNodeDataT>>,
+    pub constData: Option<alloc::boxed::Box<clz_Torappu_Anniv7thClueConstDataT>>,
+}
+impl Default for clz_Torappu_Anniv7thMainlineDataT {
+    fn default() -> Self {
+        Self {
+            clueGroupData: None,
+            clueData: None,
+            clueRewardData: None,
+            displayNodeData: None,
+            constData: None,
+        }
+    }
+}
+impl clz_Torappu_Anniv7thMainlineDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_Anniv7thMainlineData<'b>> {
+        let clueGroupData = self.clueGroupData.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let clueData = self.clueData.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let clueRewardData = self.clueRewardData.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let displayNodeData = self.displayNodeData.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let constData = self.constData.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_Anniv7thMainlineData::create(
+            _fbb,
+            &clz_Torappu_Anniv7thMainlineDataArgs {
+                clueGroupData,
+                clueData,
+                clueRewardData,
+                displayNodeData,
+                constData,
             },
         )
     }
@@ -310632,10 +316607,12 @@ impl<'a> clz_Torappu_ActivityTable_TemplateTrapData<'a> {
     pub const VT_TRAPNAME: ::flatbuffers::VOffsetT = 8;
     pub const VT_TRAPDESC: ::flatbuffers::VOffsetT = 10;
     pub const VT_TRAPTEXT: ::flatbuffers::VOffsetT = 12;
-    pub const VT_TRAPTASKID: ::flatbuffers::VOffsetT = 14;
-    pub const VT_TRAPUNLOCKDESC: ::flatbuffers::VOffsetT = 16;
-    pub const VT_TRAPBUFFID: ::flatbuffers::VOffsetT = 18;
-    pub const VT_AVAILABLECOUNT: ::flatbuffers::VOffsetT = 20;
+    pub const VT_TRAPICON1: ::flatbuffers::VOffsetT = 14;
+    pub const VT_TRAPICON2: ::flatbuffers::VOffsetT = 16;
+    pub const VT_TRAPTASKID: ::flatbuffers::VOffsetT = 18;
+    pub const VT_TRAPUNLOCKDESC: ::flatbuffers::VOffsetT = 20;
+    pub const VT_TRAPBUFFID: ::flatbuffers::VOffsetT = 22;
+    pub const VT_AVAILABLECOUNT: ::flatbuffers::VOffsetT = 24;
 
     #[inline]
     pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -310661,6 +316638,12 @@ impl<'a> clz_Torappu_ActivityTable_TemplateTrapData<'a> {
         }
         if let Some(x) = args.trapTaskId {
             builder.add_trapTaskId(x);
+        }
+        if let Some(x) = args.trapIcon2 {
+            builder.add_trapIcon2(x);
+        }
+        if let Some(x) = args.trapIcon1 {
+            builder.add_trapIcon1(x);
         }
         if let Some(x) = args.trapText {
             builder.add_trapText(x);
@@ -310690,6 +316673,12 @@ impl<'a> clz_Torappu_ActivityTable_TemplateTrapData<'a> {
         let trapText = self
             .trapText()
             .map(|x| alloc::string::ToString::to_string(x));
+        let trapIcon1 = self
+            .trapIcon1()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let trapIcon2 = self
+            .trapIcon2()
+            .map(|x| alloc::string::ToString::to_string(x));
         let trapTaskId = self
             .trapTaskId()
             .map(|x| alloc::string::ToString::to_string(x));
@@ -310706,6 +316695,8 @@ impl<'a> clz_Torappu_ActivityTable_TemplateTrapData<'a> {
             trapName,
             trapDesc,
             trapText,
+            trapIcon1,
+            trapIcon2,
             trapTaskId,
             trapUnlockDesc,
             trapBuffId,
@@ -310771,6 +316762,30 @@ impl<'a> clz_Torappu_ActivityTable_TemplateTrapData<'a> {
         unsafe {
             self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
                 clz_Torappu_ActivityTable_TemplateTrapData::VT_TRAPTEXT,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn trapIcon1(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ActivityTable_TemplateTrapData::VT_TRAPICON1,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn trapIcon2(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ActivityTable_TemplateTrapData::VT_TRAPICON2,
                 None,
             )
         }
@@ -310852,6 +316867,16 @@ impl ::flatbuffers::Verifiable for clz_Torappu_ActivityTable_TemplateTrapData<'_
                 false,
             )?
             .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "trapIcon1",
+                Self::VT_TRAPICON1,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "trapIcon2",
+                Self::VT_TRAPICON2,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
                 "trapTaskId",
                 Self::VT_TRAPTASKID,
                 false,
@@ -310877,6 +316902,8 @@ pub struct clz_Torappu_ActivityTable_TemplateTrapDataArgs<'a> {
     pub trapName: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub trapDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub trapText: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub trapIcon1: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub trapIcon2: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub trapTaskId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub trapUnlockDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub trapBuffId: Option<::flatbuffers::WIPOffset<&'a str>>,
@@ -310891,6 +316918,8 @@ impl<'a> Default for clz_Torappu_ActivityTable_TemplateTrapDataArgs<'a> {
             trapName: None,
             trapDesc: None,
             trapText: None,
+            trapIcon1: None,
+            trapIcon2: None,
             trapTaskId: None,
             trapUnlockDesc: None,
             trapBuffId: None,
@@ -310944,6 +316973,20 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
             clz_Torappu_ActivityTable_TemplateTrapData::VT_TRAPTEXT,
             trapText,
+        );
+    }
+    #[inline]
+    pub fn add_trapIcon1(&mut self, trapIcon1: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ActivityTable_TemplateTrapData::VT_TRAPICON1,
+            trapIcon1,
+        );
+    }
+    #[inline]
+    pub fn add_trapIcon2(&mut self, trapIcon2: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ActivityTable_TemplateTrapData::VT_TRAPICON2,
+            trapIcon2,
         );
     }
     #[inline]
@@ -311002,6 +317045,8 @@ impl ::core::fmt::Debug for clz_Torappu_ActivityTable_TemplateTrapData<'_> {
         ds.field("trapName", &self.trapName());
         ds.field("trapDesc", &self.trapDesc());
         ds.field("trapText", &self.trapText());
+        ds.field("trapIcon1", &self.trapIcon1());
+        ds.field("trapIcon2", &self.trapIcon2());
         ds.field("trapTaskId", &self.trapTaskId());
         ds.field("trapUnlockDesc", &self.trapUnlockDesc());
         ds.field("trapBuffId", &self.trapBuffId());
@@ -311017,6 +317062,8 @@ pub struct clz_Torappu_ActivityTable_TemplateTrapDataT {
     pub trapName: Option<alloc::string::String>,
     pub trapDesc: Option<alloc::string::String>,
     pub trapText: Option<alloc::string::String>,
+    pub trapIcon1: Option<alloc::string::String>,
+    pub trapIcon2: Option<alloc::string::String>,
     pub trapTaskId: Option<alloc::string::String>,
     pub trapUnlockDesc: Option<alloc::string::String>,
     pub trapBuffId: Option<alloc::string::String>,
@@ -311030,6 +317077,8 @@ impl Default for clz_Torappu_ActivityTable_TemplateTrapDataT {
             trapName: None,
             trapDesc: None,
             trapText: None,
+            trapIcon1: None,
+            trapIcon2: None,
             trapTaskId: None,
             trapUnlockDesc: None,
             trapBuffId: None,
@@ -311047,6 +317096,8 @@ impl clz_Torappu_ActivityTable_TemplateTrapDataT {
         let trapName = self.trapName.as_ref().map(|x| _fbb.create_string(x));
         let trapDesc = self.trapDesc.as_ref().map(|x| _fbb.create_string(x));
         let trapText = self.trapText.as_ref().map(|x| _fbb.create_string(x));
+        let trapIcon1 = self.trapIcon1.as_ref().map(|x| _fbb.create_string(x));
+        let trapIcon2 = self.trapIcon2.as_ref().map(|x| _fbb.create_string(x));
         let trapTaskId = self.trapTaskId.as_ref().map(|x| _fbb.create_string(x));
         let trapUnlockDesc = self.trapUnlockDesc.as_ref().map(|x| _fbb.create_string(x));
         let trapBuffId = self.trapBuffId.as_ref().map(|x| _fbb.create_string(x));
@@ -311059,6 +317110,8 @@ impl clz_Torappu_ActivityTable_TemplateTrapDataT {
                 trapName,
                 trapDesc,
                 trapText,
+                trapIcon1,
+                trapIcon2,
                 trapTaskId,
                 trapUnlockDesc,
                 trapBuffId,
@@ -311309,6 +317362,7 @@ impl<'a> clz_Torappu_ActivityTable_ActivityTrapConstData<'a> {
     pub const VT_SQUADSAVESUCCESSTOAST: ::flatbuffers::VOffsetT = 14;
     pub const VT_LOCKEDTOAST: ::flatbuffers::VOffsetT = 16;
     pub const VT_SHOWBTNBACK: ::flatbuffers::VOffsetT = 18;
+    pub const VT_USESPECIALTOAST: ::flatbuffers::VOffsetT = 20;
 
     #[inline]
     pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -311341,6 +317395,7 @@ impl<'a> clz_Torappu_ActivityTable_ActivityTrapConstData<'a> {
         if let Some(x) = args.stageUnlockTrapDesc {
             builder.add_stageUnlockTrapDesc(x);
         }
+        builder.add_useSpecialToast(args.useSpecialToast);
         builder.add_showBtnBack(args.showBtnBack);
         builder.add_mustSelectTrap(args.mustSelectTrap);
         builder.finish()
@@ -311367,6 +317422,7 @@ impl<'a> clz_Torappu_ActivityTable_ActivityTrapConstData<'a> {
             .lockedToast()
             .map(|x| alloc::string::ToString::to_string(x));
         let showBtnBack = self.showBtnBack();
+        let useSpecialToast = self.useSpecialToast();
         clz_Torappu_ActivityTable_ActivityTrapConstDataT {
             stageUnlockTrapDesc,
             trapMaximum,
@@ -311376,6 +317432,7 @@ impl<'a> clz_Torappu_ActivityTable_ActivityTrapConstData<'a> {
             squadSaveSuccessToast,
             lockedToast,
             showBtnBack,
+            useSpecialToast,
         }
     }
 
@@ -311485,6 +317542,20 @@ impl<'a> clz_Torappu_ActivityTable_ActivityTrapConstData<'a> {
                 .unwrap()
         }
     }
+    #[inline]
+    pub fn useSpecialToast(&self) -> bool {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<bool>(
+                    clz_Torappu_ActivityTable_ActivityTrapConstData::VT_USESPECIALTOAST,
+                    Some(false),
+                )
+                .unwrap()
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_ActivityTable_ActivityTrapConstData<'_> {
@@ -311520,6 +317591,7 @@ impl ::flatbuffers::Verifiable for clz_Torappu_ActivityTable_ActivityTrapConstDa
                 false,
             )?
             .visit_field::<bool>("showBtnBack", Self::VT_SHOWBTNBACK, false)?
+            .visit_field::<bool>("useSpecialToast", Self::VT_USESPECIALTOAST, false)?
             .finish();
         Ok(())
     }
@@ -311537,6 +317609,7 @@ pub struct clz_Torappu_ActivityTable_ActivityTrapConstDataArgs<'a> {
     pub squadSaveSuccessToast: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub lockedToast: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub showBtnBack: bool,
+    pub useSpecialToast: bool,
 }
 impl<'a> Default for clz_Torappu_ActivityTable_ActivityTrapConstDataArgs<'a> {
     #[inline]
@@ -311550,6 +317623,7 @@ impl<'a> Default for clz_Torappu_ActivityTable_ActivityTrapConstDataArgs<'a> {
             squadSaveSuccessToast: None,
             lockedToast: None,
             showBtnBack: false,
+            useSpecialToast: false,
         }
     }
 }
@@ -311636,6 +317710,14 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
+    pub fn add_useSpecialToast(&mut self, useSpecialToast: bool) {
+        self.fbb_.push_slot::<bool>(
+            clz_Torappu_ActivityTable_ActivityTrapConstData::VT_USESPECIALTOAST,
+            useSpecialToast,
+            false,
+        );
+    }
+    #[inline]
     pub fn new(
         _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
     ) -> clz_Torappu_ActivityTable_ActivityTrapConstDataBuilder<'a, 'b, A> {
@@ -311665,6 +317747,7 @@ impl ::core::fmt::Debug for clz_Torappu_ActivityTable_ActivityTrapConstData<'_> 
         ds.field("squadSaveSuccessToast", &self.squadSaveSuccessToast());
         ds.field("lockedToast", &self.lockedToast());
         ds.field("showBtnBack", &self.showBtnBack());
+        ds.field("useSpecialToast", &self.useSpecialToast());
         ds.finish()
     }
 }
@@ -311679,6 +317762,7 @@ pub struct clz_Torappu_ActivityTable_ActivityTrapConstDataT {
     pub squadSaveSuccessToast: Option<alloc::string::String>,
     pub lockedToast: Option<alloc::string::String>,
     pub showBtnBack: bool,
+    pub useSpecialToast: bool,
 }
 impl Default for clz_Torappu_ActivityTable_ActivityTrapConstDataT {
     fn default() -> Self {
@@ -311691,6 +317775,7 @@ impl Default for clz_Torappu_ActivityTable_ActivityTrapConstDataT {
             squadSaveSuccessToast: None,
             lockedToast: None,
             showBtnBack: false,
+            useSpecialToast: false,
         }
     }
 }
@@ -311719,6 +317804,7 @@ impl clz_Torappu_ActivityTable_ActivityTrapConstDataT {
             .map(|x| _fbb.create_string(x));
         let lockedToast = self.lockedToast.as_ref().map(|x| _fbb.create_string(x));
         let showBtnBack = self.showBtnBack;
+        let useSpecialToast = self.useSpecialToast;
         clz_Torappu_ActivityTable_ActivityTrapConstData::create(
             _fbb,
             &clz_Torappu_ActivityTable_ActivityTrapConstDataArgs {
@@ -311730,6 +317816,7 @@ impl clz_Torappu_ActivityTable_ActivityTrapConstDataT {
                 squadSaveSuccessToast,
                 lockedToast,
                 showBtnBack,
+                useSpecialToast,
             },
         )
     }
@@ -315502,15 +321589,16 @@ impl<'a> clz_Torappu_ActivityTable<'a> {
     pub const VT_HIDDENSTAGEDATA: ::flatbuffers::VOffsetT = 46;
     pub const VT_MISSIONARCHIVES: ::flatbuffers::VOffsetT = 48;
     pub const VT_FIFTHANNIVEXPLOREDATA: ::flatbuffers::VOffsetT = 50;
-    pub const VT_AUTOCHESSDATA: ::flatbuffers::VOffsetT = 52;
-    pub const VT_STRINGRES: ::flatbuffers::VOffsetT = 54;
-    pub const VT_ACTIVITYTRAPS: ::flatbuffers::VOffsetT = 56;
-    pub const VT_ACTIVITYTRAPMISSIONS: ::flatbuffers::VOffsetT = 58;
-    pub const VT_TRAPRUNEDATADICT: ::flatbuffers::VOffsetT = 60;
-    pub const VT_ACTIVITYTEMPLATEMISSIONSTYLES: ::flatbuffers::VOffsetT = 62;
-    pub const VT_ACTIVITYCROSSDAYTRACKTYPEDATADICT: ::flatbuffers::VOffsetT = 64;
-    pub const VT_ACTIVITYCROSSDAYTRACKTYPEMAP: ::flatbuffers::VOffsetT = 66;
-    pub const VT_ACTIVITYSTORYREADTIPSDATAS: ::flatbuffers::VOffsetT = 68;
+    pub const VT_ANNIV7THDATA: ::flatbuffers::VOffsetT = 52;
+    pub const VT_AUTOCHESSDATA: ::flatbuffers::VOffsetT = 54;
+    pub const VT_STRINGRES: ::flatbuffers::VOffsetT = 56;
+    pub const VT_ACTIVITYTRAPS: ::flatbuffers::VOffsetT = 58;
+    pub const VT_ACTIVITYTRAPMISSIONS: ::flatbuffers::VOffsetT = 60;
+    pub const VT_TRAPRUNEDATADICT: ::flatbuffers::VOffsetT = 62;
+    pub const VT_ACTIVITYTEMPLATEMISSIONSTYLES: ::flatbuffers::VOffsetT = 64;
+    pub const VT_ACTIVITYCROSSDAYTRACKTYPEDATADICT: ::flatbuffers::VOffsetT = 66;
+    pub const VT_ACTIVITYCROSSDAYTRACKTYPEMAP: ::flatbuffers::VOffsetT = 68;
+    pub const VT_ACTIVITYSTORYREADTIPSDATAS: ::flatbuffers::VOffsetT = 70;
 
     #[inline]
     pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -315553,6 +321641,9 @@ impl<'a> clz_Torappu_ActivityTable<'a> {
         }
         if let Some(x) = args.autoChessData {
             builder.add_autoChessData(x);
+        }
+        if let Some(x) = args.anniv7thData {
+            builder.add_anniv7thData(x);
         }
         if let Some(x) = args.fifthAnnivExploreData {
             builder.add_fifthAnnivExploreData(x);
@@ -315696,6 +321787,9 @@ impl<'a> clz_Torappu_ActivityTable<'a> {
         let fifthAnnivExploreData = self
             .fifthAnnivExploreData()
             .map(|x| alloc::boxed::Box::new(x.unpack()));
+        let anniv7thData = self
+            .anniv7thData()
+            .map(|x| alloc::boxed::Box::new(x.unpack()));
         let autoChessData = self
             .autoChessData()
             .map(|x| alloc::boxed::Box::new(x.unpack()));
@@ -315748,6 +321842,7 @@ impl<'a> clz_Torappu_ActivityTable<'a> {
             hiddenStageData,
             missionArchives,
             fifthAnnivExploreData,
+            anniv7thData,
             autoChessData,
             stringRes,
             activityTraps,
@@ -316169,6 +322264,19 @@ impl<'a> clz_Torappu_ActivityTable<'a> {
         }
     }
     #[inline]
+    pub fn anniv7thData(&self) -> Option<clz_Torappu_Anniv7thMainlineData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<clz_Torappu_Anniv7thMainlineData>>(
+                    clz_Torappu_ActivityTable::VT_ANNIV7THDATA,
+                    None,
+                )
+        }
+    }
+    #[inline]
     pub fn autoChessData(&self) -> Option<clz_Torappu_AutoChessData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -316403,6 +322511,7 @@ impl ::flatbuffers::Verifiable for clz_Torappu_ActivityTable<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_ActivityTable_ActivityHiddenStageData>>>>("hiddenStageData", Self::VT_HIDDENSTAGEDATA, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_MissionArchiveData>>>>("missionArchives", Self::VT_MISSIONARCHIVES, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_FifthAnnivExploreData>>("fifthAnnivExploreData", Self::VT_FIFTHANNIVEXPLOREDATA, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_Anniv7thMainlineData>>("anniv7thData", Self::VT_ANNIV7THDATA, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_AutoChessData>>("autoChessData", Self::VT_AUTOCHESSDATA, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__list_dict__string__string>>>>("stringRes", Self::VT_STRINGRES, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActivityTable_ActivityTrapsData>>>>("activityTraps", Self::VT_ACTIVITYTRAPS, false)?
@@ -316548,6 +322657,7 @@ pub struct clz_Torappu_ActivityTableArgs<'a> {
     >,
     pub fifthAnnivExploreData:
         Option<::flatbuffers::WIPOffset<clz_Torappu_FifthAnnivExploreData<'a>>>,
+    pub anniv7thData: Option<::flatbuffers::WIPOffset<clz_Torappu_Anniv7thMainlineData<'a>>>,
     pub autoChessData: Option<::flatbuffers::WIPOffset<clz_Torappu_AutoChessData<'a>>>,
     pub stringRes: Option<
         ::flatbuffers::WIPOffset<
@@ -316650,6 +322760,7 @@ impl<'a> Default for clz_Torappu_ActivityTableArgs<'a> {
             hiddenStageData: None,
             missionArchives: None,
             fifthAnnivExploreData: None,
+            anniv7thData: None,
             autoChessData: None,
             stringRes: None,
             activityTraps: None,
@@ -316978,6 +323089,17 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ActivityTableBuil
             );
     }
     #[inline]
+    pub fn add_anniv7thData(
+        &mut self,
+        anniv7thData: ::flatbuffers::WIPOffset<clz_Torappu_Anniv7thMainlineData<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_Anniv7thMainlineData>>(
+                clz_Torappu_ActivityTable::VT_ANNIV7THDATA,
+                anniv7thData,
+            );
+    }
+    #[inline]
     pub fn add_autoChessData(
         &mut self,
         autoChessData: ::flatbuffers::WIPOffset<clz_Torappu_AutoChessData<'b>>,
@@ -317160,6 +323282,7 @@ impl ::core::fmt::Debug for clz_Torappu_ActivityTable<'_> {
         ds.field("hiddenStageData", &self.hiddenStageData());
         ds.field("missionArchives", &self.missionArchives());
         ds.field("fifthAnnivExploreData", &self.fifthAnnivExploreData());
+        ds.field("anniv7thData", &self.anniv7thData());
         ds.field("autoChessData", &self.autoChessData());
         ds.field("stringRes", &self.stringRes());
         ds.field("activityTraps", &self.activityTraps());
@@ -317215,6 +323338,7 @@ pub struct clz_Torappu_ActivityTableT {
         Option<alloc::vec::Vec<clz_Torappu_ActivityTable_ActivityHiddenStageDataT>>,
     pub missionArchives: Option<alloc::vec::Vec<dict__string__clz_Torappu_MissionArchiveDataT>>,
     pub fifthAnnivExploreData: Option<alloc::boxed::Box<clz_Torappu_FifthAnnivExploreDataT>>,
+    pub anniv7thData: Option<alloc::boxed::Box<clz_Torappu_Anniv7thMainlineDataT>>,
     pub autoChessData: Option<alloc::boxed::Box<clz_Torappu_AutoChessDataT>>,
     pub stringRes: Option<alloc::vec::Vec<dict__string__list_dict__string__stringT>>,
     pub activityTraps:
@@ -317258,6 +323382,7 @@ impl Default for clz_Torappu_ActivityTableT {
             hiddenStageData: None,
             missionArchives: None,
             fifthAnnivExploreData: None,
+            anniv7thData: None,
             autoChessData: None,
             stringRes: None,
             activityTraps: None,
@@ -317347,6 +323472,7 @@ impl clz_Torappu_ActivityTableT {
             _fbb.create_vector(&w)
         });
         let fifthAnnivExploreData = self.fifthAnnivExploreData.as_ref().map(|x| x.pack(_fbb));
+        let anniv7thData = self.anniv7thData.as_ref().map(|x| x.pack(_fbb));
         let autoChessData = self.autoChessData.as_ref().map(|x| x.pack(_fbb));
         let stringRes = self.stringRes.as_ref().map(|x| {
             let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
@@ -317408,6 +323534,7 @@ impl clz_Torappu_ActivityTableT {
                 hiddenStageData,
                 missionArchives,
                 fifthAnnivExploreData,
+                anniv7thData,
                 autoChessData,
                 stringRes,
                 activityTraps,

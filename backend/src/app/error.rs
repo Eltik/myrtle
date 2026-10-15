@@ -39,6 +39,11 @@ pub enum ApiError {
     /// message, `Retry-After`), for a server whose game data is not loaded.
     #[error("{0}")]
     ServiceUnavailableMessage(String),
+    /// The game server is down for maintenance, so nothing can be synced from
+    /// it. 503 with code `GAME_MAINTENANCE`; `ends_at` is the announced end
+    /// (unix seconds) when one is known.
+    #[error("the game is down for maintenance")]
+    GameMaintenance { ends_at: Option<i64> },
 }
 
 impl ApiError {
@@ -60,6 +65,7 @@ impl ApiError {
             Self::Internal(e) => Self::Internal(anyhow::anyhow!("{e:#}")),
             Self::ServiceUnavailable => Self::ServiceUnavailable,
             Self::ServiceUnavailableMessage(m) => Self::ServiceUnavailableMessage(m.clone()),
+            Self::GameMaintenance { ends_at } => Self::GameMaintenance { ends_at: *ends_at },
         }
     }
 }
@@ -94,6 +100,10 @@ pub struct ErrorDetail {
     /// Present only on `VALIDATION_FAILED` (422).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub details: Option<Vec<FieldError>>,
+    /// Present only on `GAME_MAINTENANCE` (503) when the announced end is
+    /// known: unix seconds.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ends_at: Option<i64>,
 }
 
 impl IntoResponse for ApiError {
@@ -118,6 +128,13 @@ impl IntoResponse for ApiError {
             Self::ServiceUnavailable | Self::ServiceUnavailableMessage(_) => {
                 (StatusCode::SERVICE_UNAVAILABLE, "SERVICE_UNAVAILABLE", None)
             }
+            Self::GameMaintenance { .. } => {
+                (StatusCode::SERVICE_UNAVAILABLE, "GAME_MAINTENANCE", None)
+            }
+        };
+        let ends_at = match &self {
+            Self::GameMaintenance { ends_at } => *ends_at,
+            _ => None,
         };
         let retry_after = matches!(self, Self::ServiceUnavailableMessage(_));
 
@@ -126,6 +143,7 @@ impl IntoResponse for ApiError {
                 code,
                 message: self.to_string(),
                 details,
+                ends_at,
             },
         };
 

@@ -20,6 +20,10 @@ const EMPTY_IMMUNITIES: IEnemyImmunities = {
     sleep: false,
     frozen: false,
     levitate: false,
+    fear: false,
+    paralysis: false,
+    tremble: false,
+    lure: false,
 };
 
 function normalizeApplyWay(raw: string | null | undefined): ApplyWay | null {
@@ -65,6 +69,10 @@ export function enrichEnemy(enemy: IEnemy, raceData?: IEnemyHandbook["raceData"]
               sleep: !!attrs.sleepImmune,
               frozen: !!attrs.frozenImmune,
               levitate: !!attrs.levitateImmune,
+              fear: !!attrs.fearImmune,
+              paralysis: !!attrs.paralysisImmune,
+              tremble: !!attrs.trembleImmune,
+              lure: !!attrs.lureImmune,
           }
         : EMPTY_IMMUNITIES;
 

@@ -5,14 +5,16 @@ import { Card } from "#/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { useFormatters, useT } from "#/lib/i18n";
 import { oddsCurve, pullOdds } from "../pulls/odds";
-import { bannerModel, type IBannerModel } from "../pulls/rates";
-import { type BannerArchetype, BannerModelNote, PullsNumber, type PullsT, Stat, useBannerLabel, usePct } from "./PullsShared";
+import { bannerModel, type IBannerModel, type ISharedPity, startPityFor } from "../pulls/rates";
+import { categoryTicks, noVerticalGridLines } from "../pulls/ticks";
+import { type BannerArchetype, BannerModelNote, PullsNumber, type PullsT, renderAxisTick, Stat, useBannerLabel, useChartWidth, usePct } from "./PullsShared";
 import { SectionTitle } from "./shared";
 
 /**
  * The banner archetypes a player can ask about directly, rather than through a
  * specific forecast row. `featuredCount` is what the rule type actually ships with:
- * SINGLE and LINKAGE run one rate-up, the rest run two.
+ * SINGLE and LINKAGE run one rate-up, the rest run two. ATTAIN's is ignored, because
+ * it has no rate-up at all and `bannerModel` says so.
  */
 const ARCHETYPES: { ruleType: BannerArchetype; featuredCount: number }[] = [
     { ruleType: "LIMITED", featuredCount: 2 },
@@ -29,7 +31,8 @@ const MAX_COPIES = 6;
 interface IPullsOddsProps {
     /** Rolls the projection expects at the horizon, offered as a shortcut. */
     budget: number;
-    pity: number;
+    /** The user's pity on the Standard and Kernel counters, which are separate. */
+    pity: ISharedPity;
 }
 
 export function PullsOdds({ budget, pity }: IPullsOddsProps): React.ReactElement {
@@ -47,10 +50,20 @@ export function PullsOdds({ budget, pity }: IPullsOddsProps): React.ReactElement
         return bannerModel({ ruleType: a.ruleType, featuredCount: a.featuredCount });
     }, [ruleType]);
 
-    const startPity = model.carryOver ? pity : 0;
+    const hasRateUp = model.rateUp !== "none";
+    const startPity = startPityFor(model, pity);
     const result = React.useMemo(() => pullOdds(model, pulls, { startPity, maxCopies: MAX_COPIES }), [model, pulls, startPity]);
     const curve = React.useMemo(() => oddsCurve(model, Math.max(pulls, 300), { startPity }), [model, pulls, startPity]);
     const chartRows = React.useMemo(() => curve.filter((_, i) => i % 2 === 0).map((p) => ({ pulls: p.pulls, specific: p.specific * 100, any: p.any * 100 })), [curve]);
+    const [chartRef, chartWidth] = useChartWidth();
+    const xTicks = React.useMemo(
+        () =>
+            categoryTicks(
+                chartRows.map((r) => r.pulls),
+                chartWidth,
+            ),
+        [chartRows, chartWidth],
+    );
 
     return (
         <Card className="flex flex-col gap-4 p-4">
@@ -82,50 +95,55 @@ export function PullsOdds({ budget, pity }: IPullsOddsProps): React.ReactElement
 
             <BannerModelNote model={model} />
 
+            {/* No rate-up (ATTAIN): no operator to have a chance AT, so only the 6* count. */}
             <div className="flex flex-wrap items-start gap-x-8 gap-y-4">
-                <Stat label={model.featuredCount > 1 ? t("release.pulls.odds.specific") : t("release.pulls.odds.any")} value={pct(result.specific)} />
+                {hasRateUp && <Stat label={model.featuredCount > 1 ? t("release.pulls.odds.specific") : t("release.pulls.odds.any")} value={pct(result.specific)} />}
                 {model.featuredCount > 1 && <Stat label={t("release.pulls.odds.any")} value={pct(result.any)} />}
                 {model.featuredCount > 1 && <Stat label={t("release.pulls.odds.both")} value={pct(result.both)} />}
                 <Stat label={t("release.pulls.odds.expectedSix")} value={f.number(Math.round(result.expectedSix * 100) / 100)} />
             </div>
 
-            <div className="h-52 w-full sm:h-60" role="img" aria-label={t("release.pulls.a11y.chartOdds", { max: Math.max(pulls, 300) })}>
-                <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartRows} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
-                        <defs>
-                            <linearGradient id="pullsOddsFill" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#bcabdb" stopOpacity={0.45} />
-                                <stop offset="100%" stopColor="#bcabdb" stopOpacity={0.02} />
-                            </linearGradient>
-                        </defs>
-                        <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
-                        <XAxis dataKey="pulls" tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} stroke="var(--border)" minTickGap={30} />
-                        <YAxis domain={[0, 100]} tickFormatter={(v: number) => pct(v / 100, 0)} tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} stroke="var(--border)" width={44} />
-                        <Tooltip
-                            contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
-                            labelStyle={{ color: "var(--muted-foreground)" }}
-                            labelFormatter={(v) => t("release.pulls.odds.atPulls", { count: Number(v) })}
-                            formatter={(value, name) => [pct(Number(value) / 100), String(name)]}
-                        />
-                        <Area type="monotone" dataKey="specific" name={model.featuredCount > 1 ? t("release.pulls.odds.specific") : t("release.pulls.odds.any")} stroke="#bcabdb" strokeWidth={2} fill="url(#pullsOddsFill)" isAnimationActive={false} />
-                        <ReferenceLine x={pulls} stroke="var(--muted-foreground)" strokeDasharray="4 3" />
-                    </AreaChart>
-                </ResponsiveContainer>
-            </div>
+            {hasRateUp && (
+                <div ref={chartRef} className="h-52 w-full sm:h-60" role="img" aria-label={t("release.pulls.a11y.chartOdds", { max: Math.max(pulls, 300) })}>
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={chartRows} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
+                            <defs>
+                                <linearGradient id="pullsOddsFill" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#bcabdb" stopOpacity={0.45} />
+                                    <stop offset="100%" stopColor="#bcabdb" stopOpacity={0.02} />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} verticalCoordinatesGenerator={noVerticalGridLines} />
+                            <XAxis dataKey="pulls" ticks={xTicks} interval={0} tick={renderAxisTick} stroke="var(--border)" />
+                            <YAxis interval={0} domain={[0, 100]} tickFormatter={(v: number) => pct(v / 100, 0)} tick={renderAxisTick} stroke="var(--border)" width={44} />
+                            <Tooltip
+                                contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
+                                labelStyle={{ color: "var(--muted-foreground)" }}
+                                labelFormatter={(v) => t("release.pulls.odds.atPulls", { count: Number(v) })}
+                                formatter={(value, name) => [pct(Number(value) / 100), String(name)]}
+                            />
+                            <Area type="monotone" dataKey="specific" name={model.featuredCount > 1 ? t("release.pulls.odds.specific") : t("release.pulls.odds.any")} stroke="#bcabdb" strokeWidth={2} fill="url(#pullsOddsFill)" isAnimationActive={false} />
+                            <ReferenceLine x={pulls} stroke="var(--muted-foreground)" strokeDasharray="4 3" />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+            )}
 
-            <div className="flex flex-col gap-1.5">
-                <span className="font-sans font-semibold text-[12px] text-foreground">{t("release.pulls.odds.copies")}</span>
-                {result.copies.map((p, k) => (
-                    // biome-ignore lint/suspicious/noArrayIndexKey: index k is the copy count, which is the row's identity
-                    <div key={`copies-${k}`} className="flex items-center gap-2">
-                        <span className="w-20 flex-none font-sans text-[12px] text-muted-foreground">{k === result.copies.length - 1 ? t("release.pulls.odds.copiesTail", { count: k }) : t("release.pulls.odds.copiesRow", { count: k })}</span>
-                        <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
-                            <div className="h-full rounded-full bg-primary/70" style={{ width: `${Math.max(p * 100, p > 0 ? 0.5 : 0)}%` }} />
+            {hasRateUp && (
+                <div className="flex flex-col gap-1.5">
+                    <span className="font-sans font-semibold text-[12px] text-foreground">{t("release.pulls.odds.copies")}</span>
+                    {result.copies.map((p, k) => (
+                        // biome-ignore lint/suspicious/noArrayIndexKey: index k is the copy count, which is the row's identity
+                        <div key={`copies-${k}`} className="flex items-center gap-2">
+                            <span className="w-20 flex-none font-sans text-[12px] text-muted-foreground">{k === result.copies.length - 1 ? t("release.pulls.odds.copiesTail", { count: k }) : t("release.pulls.odds.copiesRow", { count: k })}</span>
+                            <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
+                                <div className="h-full rounded-full bg-primary/70" style={{ width: `${Math.max(p * 100, p > 0 ? 0.5 : 0)}%` }} />
+                            </div>
+                            <span className="w-14 flex-none text-right font-mono text-[12px] text-muted-foreground tabular-nums">{pct(p, 1)}</span>
                         </div>
-                        <span className="w-14 flex-none text-right font-mono text-[12px] text-muted-foreground tabular-nums">{pct(p, 1)}</span>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            )}
 
             <p className="m-0 font-sans text-[12px] text-muted-foreground leading-normal">{t("release.pulls.odds.method")}</p>
         </Card>

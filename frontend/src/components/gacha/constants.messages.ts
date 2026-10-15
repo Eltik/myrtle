@@ -28,6 +28,10 @@ export const messages = {
         text: "Kernel",
         description: "Banner bucket: the pool of older operators. 'Kernel' is the game's own name for it.",
     },
+    "banner.group.boot": {
+        text: "Starter Headhunting",
+        description: "Banner bucket: the discounted headhunting a new account gets, with its own guaranteed 6-star. 'Starter Headhunting' is the game's own name for it.",
+    },
     "banner.status.active": {
         text: "Active",
         description: "Banner status pill: the banner is running right now.",
@@ -39,6 +43,14 @@ export const messages = {
     "banner.status.ended": {
         text: "Ended",
         description: "Banner status pill: the banner has closed.",
+    },
+    "banner.status.returning": {
+        text: "Returning Doctors only",
+        description: "Banner status pill: the banner is offered only to players coming back after a long absence, each on their own schedule, so it has no shared run window. 'Doctor' is how the game addresses the player.",
+    },
+    "banner.window.returning": {
+        text: "No fixed dates, opens for each Doctor on their return",
+        description: "Shown in place of a banner's date range when the game times it per player. 'Doctor' is how the game addresses the player.",
     },
     "banner.rule.normal": {
         text: "Standard headhunting",
@@ -79,6 +91,10 @@ export const messages = {
     "banner.rule.double": {
         text: "Double rate-up",
         description: "Readable name for a banner's rule type: two operators boosted at once.",
+    },
+    "banner.rule.backflow": {
+        text: "Returning Headhunting",
+        description: "Readable name for a banner's rule type: the recruitment banner offered only to players coming back after a long absence. The game's own English name.",
     },
     "banner.rule.special": {
         text: "Special",

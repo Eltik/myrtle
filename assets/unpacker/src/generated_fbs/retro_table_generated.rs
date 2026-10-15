@@ -902,13 +902,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ACTIVITY_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ACTIVITY_TYPE: i32 = 67;
+pub const ENUM_MAX_ENUM__TORAPPU_ACTIVITY_TYPE: i32 = 68;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ACTIVITY_TYPE: [enum__Torappu_ActivityType; 68] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ACTIVITY_TYPE: [enum__Torappu_ActivityType; 69] = [
     enum__Torappu_ActivityType::DEFAULT,
     enum__Torappu_ActivityType::MISSION_ONLY,
     enum__Torappu_ActivityType::CHECKIN_ONLY,
@@ -976,6 +976,7 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ACTIVITY_TYPE: [enum__Torappu_ActivityType; 
     enum__Torappu_ActivityType::TYPE_ACT53SIDE,
     enum__Torappu_ActivityType::TYPE_ACT54SIDE,
     enum__Torappu_ActivityType::ACT_DP,
+    enum__Torappu_ActivityType::REWARD_ONLY,
     enum__Torappu_ActivityType::ENUM,
 ];
 
@@ -1051,10 +1052,11 @@ impl enum__Torappu_ActivityType {
     pub const TYPE_ACT53SIDE: Self = Self(64);
     pub const TYPE_ACT54SIDE: Self = Self(65);
     pub const ACT_DP: Self = Self(66);
-    pub const ENUM: Self = Self(67);
+    pub const REWARD_ONLY: Self = Self(67);
+    pub const ENUM: Self = Self(68);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 67;
+    pub const ENUM_MAX: i32 = 68;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::DEFAULT,
         Self::MISSION_ONLY,
@@ -1123,6 +1125,7 @@ impl enum__Torappu_ActivityType {
         Self::TYPE_ACT53SIDE,
         Self::TYPE_ACT54SIDE,
         Self::ACT_DP,
+        Self::REWARD_ONLY,
         Self::ENUM,
     ];
     /// Returns the variant's name or "" if unknown.
@@ -1195,6 +1198,7 @@ impl enum__Torappu_ActivityType {
             Self::TYPE_ACT53SIDE => Some("TYPE_ACT53SIDE"),
             Self::TYPE_ACT54SIDE => Some("TYPE_ACT54SIDE"),
             Self::ACT_DP => Some("ACT_DP"),
+            Self::REWARD_ONLY => Some("REWARD_ONLY"),
             Self::ENUM => Some("ENUM"),
             _ => None,
         }

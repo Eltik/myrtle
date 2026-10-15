@@ -997,3 +997,19 @@ pub async fn update_gacha_settings(
     update_gacha_flags(&state.db, user_id, store_records, share_anonymous_stats).await?;
     get_gacha_settings(state, user_id).await
 }
+
+#[cfg(test)]
+mod tests {
+    use super::classify_gacha_group;
+
+    #[test]
+    fn groups_pool_types_into_three_tabs() {
+        assert_eq!(classify_gacha_group("limited"), "limited");
+        assert_eq!(classify_gacha_group("linkage"), "limited");
+        assert_eq!(classify_gacha_group("single"), "special");
+        assert_eq!(classify_gacha_group("boot"), "special");
+        for other in ["normal", "classic", "double", "LIMITED", ""] {
+            assert_eq!(classify_gacha_group(other), "regular", "{other}");
+        }
+    }
+}

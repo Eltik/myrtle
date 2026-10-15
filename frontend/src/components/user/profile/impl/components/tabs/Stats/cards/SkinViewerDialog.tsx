@@ -5,6 +5,7 @@ import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useSta
 import { DetailRow, type ISkinPrice, SkinDetailContent } from "#/components/skins/SkinDetailDialog";
 import { Dialog, DialogContent, DialogTitle } from "#/components/ui/dialog";
 import { ScrollArea } from "#/components/ui/scroll-area";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { type ISkinIndexEntry, skinPopularityQueryOptions } from "#/lib/api/skins";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -398,18 +399,22 @@ const PopularityChip = memo(function PopularityChip({ info, color }: { info: ISk
     const pct = info.pct ?? 0;
     const label = f.percent(pct);
     return (
-        <span className="flex items-center gap-0.5 rounded-full bg-background/85 px-1.5 py-px font-mono font-semibold text-[9px] uppercase tabular-nums tracking-wider shadow-sm" style={{ color }} title={t("profile.skins.popularity.tooltip", { owners: f.number(info.owners), pct: (pct * 100).toFixed(2) })}>
-            {label}
-        </span>
+        <Tooltip>
+            <TooltipTrigger render={<span className="flex items-center gap-0.5 rounded-full bg-background/85 px-1.5 py-px font-mono font-semibold text-[9px] uppercase tabular-nums tracking-wider shadow-sm" style={{ color }} />}>{label}</TooltipTrigger>
+            <TooltipPopup>{t("profile.skins.popularity.tooltip", { owners: f.number(info.owners), pct: (pct * 100).toFixed(2) })}</TooltipPopup>
+        </Tooltip>
     );
 });
 
 const PriceChip = memo(function PriceChip({ price }: { price: ISkinPrice }) {
     const isFree = price.kind === "free";
     return (
-        <span className={cn("flex items-center gap-0.5 rounded-full px-1.5 py-px font-mono font-semibold text-[9px] uppercase tracking-wider shadow-sm", isFree ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-background/85 text-foreground")} title={price.tooltip ?? undefined}>
-            {price.label}
-        </span>
+        <Tooltip disabled={!price.tooltip}>
+            <TooltipTrigger render={<span className={cn("flex items-center gap-0.5 rounded-full px-1.5 py-px font-mono font-semibold text-[9px] uppercase tracking-wider shadow-sm", isFree ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-background/85 text-foreground")} />}>
+                {price.label}
+            </TooltipTrigger>
+            <TooltipPopup>{price.tooltip}</TooltipPopup>
+        </Tooltip>
     );
 });
 
@@ -608,7 +613,7 @@ const CHANNEL_PRIORITY: Record<SectionChannel, number> = {
 
 const CHANNEL_LABEL: Record<SectionChannel, MessageKey | null> = {
     collab: "profile.skins.channel.collab",
-    store: null, // implicit - main paid brands are the baseline, no chip needed
+    store: null, // implicit: main paid brands are the baseline, no chip needed
     seasonal: "profile.skins.channel.seasonal",
     "special-pack": "profile.skins.channel.specialPack",
     is: "profile.skins.channel.is",
@@ -625,7 +630,7 @@ function channelLabel(channel: SectionChannel, t: ViewerT): string | null {
 /**
  * The server's language-neutral channel -> the viewer's chip set. There is no chip for
  * reclamationAlgorithm, so it joins "is": it is the Integrated Strategies mode's own reward track.
- * `other` is the old fallthrough, a store skin with no chip.
+ * `other` is the fallthrough: a store skin with no chip.
  */
 const SKIN_CHANNEL_SECTION: Record<SkinChannel, SectionChannel> = {
     store: "store",
@@ -656,10 +661,8 @@ function classifyChannel(tagId: string | null | undefined): SectionChannel {
     return "store";
 }
 
-// Strip the iteration suffix from a skin group name so all iterations of the
-// same brand fold into a single section. "Witch Feast/V" -> "Witch Feast",
-// "Coral Coast/XX" -> "Coral Coast", but a one-word brand like "Sanrio
-// characters" is left untouched (it has no iteration roman numeral).
+// Folds every iteration of a brand into one section: "Witch Feast/V" ->
+// "Witch Feast". A name with no roman-numeral suffix is left alone.
 const ITERATION_SUFFIX_RE = /\/[IVXLCDM]+$/i;
 
 function buildSections(filtered: ICardData[], mode: SortMode, popularity: Map<string, ISkinPopularityInfo> | null, t: ViewerT): ISkinSection[] {
@@ -727,20 +730,18 @@ function buildSections(filtered: ICardData[], mode: SortMode, popularity: Map<st
     });
 }
 
-/** Per-skin Originite Prime cost overrides. Keyed by **skinId** (most specific -
- *  e.g. `char_002_amiya@witch#1`) or **skinGroupId** (e.g. `2024#witch` - applies
- *  to every skin in that iteration of a brand).
+/** Per-skin Originite Prime cost overrides. Keyed by **skinId** (most specific,
+ *  e.g. `char_002_amiya@witch#1`) or **skinGroupId** (e.g. `2024#witch`: every
+ *  skin in that iteration of a brand).
  *
- *  We need this because the AK client gamedata we ship (skin_table.json,
- *  shop_client_table.json) does NOT include per-skin OP prices - those are
- *  served by the live store API only. So there's no programmatic way to derive
- *  them from the data. Until we have a reliable source, populate this table
- *  with verified values per skin or per group.
+ *  The client gamedata we ship (skin_table.json, shop_client_table.json) has NO
+ *  per-skin OP prices; only the live store API serves them. Until there is a
+ *  reliable source, fill this table with verified values per skin or per group.
  *
  *  Lookup order in `getSkinPrice`:
  *    1. exact `skinId` match
  *    2. `skinGroupId` match
- *    3. no entry -> generic "Store" chip (no OP number) so we don't lie. */
+ *    3. no entry -> no chip (no OP number), so no price is guessed. */
 const SKIN_PRICE_OVERRIDES: Record<string, number> = {
     // Examples (uncomment and fill in verified values):
     // "char_002_amiya@witch#1": 21,
@@ -760,7 +761,7 @@ function getSkinPrice(skin: ISkinIndexEntry, t: ViewerT): ISkinPrice {
     if (op != null) {
         return { kind: "paid", label: t("profile.skins.price.op", { op }), tooltip: t("profile.skins.price.store.tooltip") };
     }
-    // Unknown store price - render no chip (label: null) rather than a noisy "Store" tag.
+    // Unknown store price: no chip (label: null) rather than a noisy "Store" tag.
     return { kind: "store", label: null, tooltip: null };
 }
 

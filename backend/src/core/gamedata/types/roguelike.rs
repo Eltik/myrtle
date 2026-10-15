@@ -23,14 +23,12 @@ pub struct RoguelikeThemeGameData {
     /// Only `rogue_1` has capsules.
     pub max_capsules: i32,
     pub max_bands: i32,
-    /// Archive relic ids (`ArchiveComp.Relic.Relic`). This is the in-game
-    /// collectible archive, and it is NOT the same set as the keys the client
-    /// writes to `collect.relic`: the archive lists the tool items
-    /// (`*_active_tool_N`, `*_explore_tool_N`) which the client stores in other
-    /// buckets, and `collect.relic` carries upgrade variants
-    /// (`*_relic_legacy_N_a/_b/_c`) which the archive does not list. Counts must
-    /// therefore iterate THIS list and look ids up, never count bucket keys.
-    /// See [`RoguelikeThemeGameData::count_collected`].
+    /// Archive relic ids (`ArchiveComp.Relic.Relic`). NOT the key set of
+    /// `collect.relic`: the archive lists tool items (`*_active_tool_N`,
+    /// `*_explore_tool_N`) the client stores in other buckets, and
+    /// `collect.relic` holds upgrade variants (`*_relic_legacy_N_a/_b/_c`) the
+    /// archive omits. Count by iterating this list, never bucket keys (see
+    /// [`RoguelikeThemeGameData::count_collected`]).
     pub relic_ids: Vec<String>,
     /// Archive capsule ids (`ArchiveComp.Capsule.Capsule`)
     pub capsule_ids: Vec<String>,

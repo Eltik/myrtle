@@ -227,12 +227,11 @@ pub struct HistoryParams {
     pub uid: String,
 }
 
-/// A user's score/rank across every leaderboard snapshot, oldest first - the
-/// Score tab's history chart.
+/// A user's score and rank across every leaderboard snapshot, oldest first.
 ///
-/// Takes the same privacy gate as every other by-uid endpoint: a public
-/// profile's history is public, a private one's is not, and a player always
-/// sees their own.
+/// Feeds the Score tab's history chart. Same privacy gate as every other
+/// by-uid endpoint: a private profile, or a private Score tab, is visible
+/// only to its owner.
 #[utoipa::path(
     get,
     path = "/leaderboard/history",

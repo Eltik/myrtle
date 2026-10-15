@@ -1,4 +1,5 @@
 use std::sync::LazyLock;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 
 use axum::http::HeaderMap;
@@ -13,8 +14,8 @@ use sha2::Sha256;
 use uuid::Uuid;
 
 use crate::app::error::ApiError;
-use crate::app::extractors::auth::AuthUser;
 use crate::app::extractors::auth::MaybeAuthUser;
+use crate::app::extractors::auth::{AuthUser, RoleCheckedUser};
 use crate::app::routes::{StatusOk, ok_status};
 use crate::app::services::tier_list::check_permission;
 use crate::app::services::tier_list::invalidate_detail;
@@ -77,8 +78,21 @@ fn client_ip(headers: &HeaderMap) -> Option<String> {
 
 static VIEW_RATE_BUCKETS: LazyLock<DashMap<String, (Instant, u32)>> = LazyLock::new(DashMap::new);
 
+/// Calls between sweeps of [`VIEW_RATE_BUCKETS`]. Without the sweep every key
+/// stayed for the life of the process, and the key is the leftmost
+/// `X-Forwarded-For` entry, which the client writes.
+const VIEW_RATE_SWEEP_EVERY: u64 = 1_000;
+static VIEW_RATE_CALLS: AtomicU64 = AtomicU64::new(0);
+
 fn check_view_rate(ip: &str) -> bool {
     let now = Instant::now();
+    // Before `entry`, which holds a shard lock `retain` would wait on.
+    if VIEW_RATE_CALLS
+        .fetch_add(1, Ordering::Relaxed)
+        .is_multiple_of(VIEW_RATE_SWEEP_EVERY)
+    {
+        VIEW_RATE_BUCKETS.retain(|_, (start, _)| now.duration_since(*start) < VIEW_RATE_WINDOW);
+    }
     let mut entry = VIEW_RATE_BUCKETS.entry(ip.to_owned()).or_insert((now, 0));
     let (window_start, count) = *entry;
     if now.duration_since(window_start) >= VIEW_RATE_WINDOW {
@@ -93,9 +107,6 @@ fn check_view_rate(ip: &str) -> bool {
 }
 
 /// Whether a `POST /tier-lists/{slug}/view` counted as a new view.
-///
-/// Serialized directly by the handler, so this declaration is the wire format,
-/// the `OpenAPI` schema and the generated TypeScript at once.
 #[derive(serde::Serialize, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct ViewRecorded {
@@ -203,7 +214,7 @@ pub async fn get_stats(
     params(
         ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
     ),
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The favourite state after the toggle.", body = FavoriteState),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
@@ -239,7 +250,7 @@ pub async fn toggle_favorite(
     params(
         ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
     ),
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The caller's favourite state.", body = FavoriteState),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
@@ -274,7 +285,7 @@ pub struct SetFlairRequest {
         ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
     ),
     request_body = SetFlairRequest,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The flair was set.", body = crate::app::routes::StatusOk),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
@@ -288,7 +299,7 @@ pub struct SetFlairRequest {
 )]
 pub async fn set_flair(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path(slug): Path<String>,
     Json(body): Json<SetFlairRequest>,
 ) -> Result<Json<StatusOk>, ApiError> {
@@ -334,7 +345,7 @@ pub struct SetVisibilityRequest {
         ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
     ),
     request_body = SetVisibilityRequest,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The visibility as stored.", body = VisibilityState),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
@@ -348,7 +359,7 @@ pub struct SetVisibilityRequest {
 )]
 pub async fn set_visibility(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path(slug): Path<String>,
     Json(body): Json<SetVisibilityRequest>,
 ) -> Result<Json<VisibilityState>, ApiError> {
@@ -390,7 +401,7 @@ pub struct CreateFlairRequest {
 )]
 pub async fn create_flair(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Json(body): Json<CreateFlairRequest>,
 ) -> Result<Json<TierListFlair>, ApiError> {
     if !auth.role.is_tier_list_admin() {
@@ -406,4 +417,29 @@ pub async fn create_flair(
     )
     .await?;
     Ok(Json(flair))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// An address that stopped calling leaves the view limiter's map once its
+    /// window is over. Every key used to stay for the life of the process, and
+    /// the key is the leftmost `X-Forwarded-For` entry, which the client writes,
+    /// so a client rotating that header grew the map one entry per call.
+    #[test]
+    fn an_idle_address_leaves_the_view_rate_map() {
+        let stale = "view-rate-test-stale".to_owned();
+        let Some(long_ago) = Instant::now().checked_sub(VIEW_RATE_WINDOW * 2) else {
+            return;
+        };
+        VIEW_RATE_BUCKETS.insert(stale.clone(), (long_ago, 1));
+        for i in 0..20_000 {
+            check_view_rate(&format!("view-rate-test-{i}"));
+        }
+        assert!(
+            !VIEW_RATE_BUCKETS.contains_key(&stale),
+            "an address idle for two windows is still held"
+        );
+    }
 }

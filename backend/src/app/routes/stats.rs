@@ -2,7 +2,7 @@ use axum::Json;
 use axum::extract::State;
 
 use crate::app::error::ApiError;
-use crate::app::extractors::auth::AuthUser;
+use crate::app::extractors::auth::RoleCheckedUser;
 use crate::app::services::stats::get_admin_stats;
 use crate::app::services::stats::get_stats;
 use crate::app::services::stats::{AdminStatsResponse, StatsResponse};
@@ -43,7 +43,7 @@ pub async fn stats(State(state): State<AppState>) -> Result<Json<StatsResponse>,
 )]
 pub async fn admin_stats(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
 ) -> Result<Json<AdminStatsResponse>, ApiError> {
     if !auth.role.is_tier_list_admin() {
         return Err(ApiError::Forbidden);

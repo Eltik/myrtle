@@ -33,6 +33,22 @@ pub struct OperatorNoteAuditEntry {
     pub new_value: Option<String>,
     pub changed_by: Uuid,
     pub changed_at: DateTime<Utc>,
+    /// Who `changed_by` is, so a revision list can name its author without a
+    /// user lookup per row.
+    #[sqlx(flatten)]
+    pub actor: OperatorNoteAuditActor,
+}
+
+/// The author of one per-operator revision. `nickname` is `None` once the
+/// account is gone or never synced a name.
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+pub struct OperatorNoteAuditActor {
+    #[sqlx(rename = "actor_id")]
+    pub id: Uuid,
+    #[sqlx(rename = "actor_nickname")]
+    pub nickname: Option<String>,
 }
 
 /// Audit entry enriched with the actor's display info, so clients don't have to

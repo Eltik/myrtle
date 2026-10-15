@@ -9,130 +9,86 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TierListsRouteImport } from './routes/tier-lists'
-import { Route as TermsRouteImport } from './routes/terms'
-import { Route as StoriesRouteImport } from './routes/stories'
-import { Route as StatsRouteImport } from './routes/stats'
-import { Route as StagesRouteImport } from './routes/stages'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as OperatorsRouteImport } from './routes/operators'
-import { Route as HelpMeRouteImport } from './routes/help-me'
-import { Route as GridsRouteImport } from './routes/grids'
-import { Route as EnemiesRouteImport } from './routes/enemies'
-import { Route as DyntestRouteImport } from './routes/dyntest'
-import { Route as DonateRouteImport } from './routes/donate'
-import { Route as DiscordRouteImport } from './routes/discord'
-import { Route as ChangelogRouteImport } from './routes/changelog'
-import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as UserSearchRouteImport } from './routes/user.search'
-import { Route as UserLeaderboardRouteImport } from './routes/user.leaderboard'
-import { Route as UserIdRouteImport } from './routes/user.$id'
-import { Route as ToolsReleaseRouteImport } from './routes/tools.release'
-import { Route as ToolsRecruitmentRouteImport } from './routes/tools.recruitment'
-import { Route as ToolsRandomizerRouteImport } from './routes/tools.randomizer'
-import { Route as ToolsPlannerRouteImport } from './routes/tools.planner'
-import { Route as ToolsHpsRouteImport } from './routes/tools.hps'
-import { Route as ToolsDpsRouteImport } from './routes/tools.dps'
-import { Route as ToolsBirthdaysRouteImport } from './routes/tools.birthdays'
-import { Route as TierListsIdRouteImport } from './routes/tier-lists_.$id'
-import { Route as StoriesSpritesRouteImport } from './routes/stories_.sprites'
-import { Route as StoriesStoryIdRouteImport } from './routes/stories_.$storyId'
-import { Route as StagesStageIdRouteImport } from './routes/stages_.$stageId'
-import { Route as OperatorsIdRouteImport } from './routes/operators_.$id'
-import { Route as GridsSlugRouteImport } from './routes/grids_.$slug'
-import { Route as GachaHistoryRouteImport } from './routes/gacha.history'
-import { Route as GachaCommunityRouteImport } from './routes/gacha.community'
-import { Route as EnemiesIdRouteImport } from './routes/enemies_.$id'
+import { Route as AuthedRouteImport } from './routes/_authed'
+import { Route as AnnouncementsRouteImport } from './routes/announcements'
+import { Route as ArchivesRouteImport } from './routes/archives'
+import { Route as ChangelogRouteImport } from './routes/changelog'
+import { Route as DiscordRouteImport } from './routes/discord'
+import { Route as DonateRouteImport } from './routes/donate'
+import { Route as DyntestRouteImport } from './routes/dyntest'
+import { Route as EnemiesRouteImport } from './routes/enemies'
+import { Route as GridsRouteImport } from './routes/grids'
+import { Route as HelpMeRouteImport } from './routes/help-me'
+import { Route as OperatorsRouteImport } from './routes/operators'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as StagesRouteImport } from './routes/stages'
+import { Route as StatsRouteImport } from './routes/stats'
+import { Route as StoriesRouteImport } from './routes/stories'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TierListsRouteImport } from './routes/tier-lists'
 import { Route as AuthedAdminRouteImport } from './routes/_authed/admin'
+import { Route as EnemiesIdRouteImport } from './routes/enemies_.$id'
+import { Route as GachaCommunityRouteImport } from './routes/gacha.community'
+import { Route as GachaHistoryRouteImport } from './routes/gacha.history'
+import { Route as GalleryMusicRouteImport } from './routes/gallery.music'
+import { Route as GridsSlugRouteImport } from './routes/grids_.$slug'
+import { Route as OperatorsIdRouteImport } from './routes/operators_.$id'
+import { Route as StagesStageIdRouteImport } from './routes/stages_.$stageId'
+import { Route as StoriesStoryIdRouteImport } from './routes/stories_.$storyId'
+import { Route as StoriesSpritesRouteImport } from './routes/stories_.sprites'
+import { Route as TierListsIdRouteImport } from './routes/tier-lists_.$id'
+import { Route as ToolsBirthdaysRouteImport } from './routes/tools.birthdays'
+import { Route as ToolsDpsRouteImport } from './routes/tools.dps'
+import { Route as ToolsHpsRouteImport } from './routes/tools.hps'
+import { Route as ToolsPlannerRouteImport } from './routes/tools.planner'
+import { Route as ToolsRandomizerRouteImport } from './routes/tools.randomizer'
+import { Route as ToolsRecruitmentRouteImport } from './routes/tools.recruitment'
+import { Route as ToolsReleaseRouteImport } from './routes/tools.release'
+import { Route as ToolsSquadBuilderRouteImport } from './routes/tools.squad-builder'
+import { Route as UserIdRouteImport } from './routes/user.$id'
+import { Route as UserLeaderboardRouteImport } from './routes/user.leaderboard'
+import { Route as UserSearchRouteImport } from './routes/user.search'
 import { Route as AuthedAdminIndexRouteImport } from './routes/_authed/admin/index'
-import { Route as StoriesSpritesBaseRouteImport } from './routes/stories_.sprites_.$base'
-import { Route as ApiOgDefaultRouteImport } from './routes/api/og/default'
-import { Route as AuthedTierListsMyRouteImport } from './routes/_authed/tier-lists_.my'
-import { Route as AuthedGridsMyRouteImport } from './routes/_authed/grids_.my'
-import { Route as AuthedAdminUsersRouteImport } from './routes/_authed/admin/users'
-import { Route as AuthedAdminTranslationsRouteImport } from './routes/_authed/admin/translations'
-import { Route as AuthedAdminSettingsRouteImport } from './routes/_authed/admin/settings'
-import { Route as AuthedAdminPermissionsRouteImport } from './routes/_authed/admin/permissions'
-import { Route as AuthedAdminOperatorNotesRouteImport } from './routes/_authed/admin/operator-notes'
-import { Route as AuthedAdminOfficialTierListsRouteImport } from './routes/_authed/admin/official-tier-lists'
-import { Route as AuthedAdminHealthRouteImport } from './routes/_authed/admin/health'
 import { Route as AuthedAdminAuditRouteImport } from './routes/_authed/admin/audit'
-import { Route as ApiTierListsSlugImageRouteImport } from './routes/api/tier-lists/$slug/image'
-import { Route as ApiOgKindIdRouteImport } from './routes/api/og/$kind/$id'
-import { Route as ApiGridsSlugImageRouteImport } from './routes/api/grids/$slug/image'
+import { Route as AuthedAdminHealthRouteImport } from './routes/_authed/admin/health'
+import { Route as AuthedAdminOfficialTierListsRouteImport } from './routes/_authed/admin/official-tier-lists'
+import { Route as AuthedAdminOperatorNotesRouteImport } from './routes/_authed/admin/operator-notes'
+import { Route as AuthedAdminPermissionsRouteImport } from './routes/_authed/admin/permissions'
+import { Route as AuthedAdminSettingsRouteImport } from './routes/_authed/admin/settings'
+import { Route as AuthedAdminSystemRouteImport } from './routes/_authed/admin/system'
+import { Route as AuthedAdminTierListsRouteImport } from './routes/_authed/admin/tier-lists'
+import { Route as AuthedAdminTranslationsRouteImport } from './routes/_authed/admin/translations'
+import { Route as AuthedAdminUsersRouteImport } from './routes/_authed/admin/users'
+import { Route as AuthedGridsMyRouteImport } from './routes/_authed/grids_.my'
+import { Route as AuthedTierListsMyRouteImport } from './routes/_authed/tier-lists_.my'
+import { Route as ApiOgDefaultRouteImport } from './routes/api/og/default'
+import { Route as StoriesSpritesBaseRouteImport } from './routes/stories_.sprites_.$base'
 import { Route as AuthedGridsSlugEditRouteImport } from './routes/_authed/grids_.$slug.edit'
+import { Route as ApiGridsSlugImageRouteImport } from './routes/api/grids/$slug/image'
+import { Route as ApiOgKindIdRouteImport } from './routes/api/og/$kind/$id'
+import { Route as ApiTierListsSlugImageRouteImport } from './routes/api/tier-lists/$slug/image'
 import { Route as AuthedTierListsMyIdEditRouteImport } from './routes/_authed/tier-lists_.my_.$id.edit'
 
-const TierListsRoute = TierListsRouteImport.update({
-  id: '/tier-lists',
-  path: '/tier-lists',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
+const AuthedRoute = AuthedRouteImport.update({
+  id: '/_authed',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StoriesRoute = StoriesRouteImport.update({
-  id: '/stories',
-  path: '/stories',
+const AnnouncementsRoute = AnnouncementsRouteImport.update({
+  id: '/announcements',
+  path: '/announcements',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StatsRoute = StatsRouteImport.update({
-  id: '/stats',
-  path: '/stats',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const StagesRoute = StagesRouteImport.update({
-  id: '/stages',
-  path: '/stages',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OperatorsRoute = OperatorsRouteImport.update({
-  id: '/operators',
-  path: '/operators',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HelpMeRoute = HelpMeRouteImport.update({
-  id: '/help-me',
-  path: '/help-me',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GridsRoute = GridsRouteImport.update({
-  id: '/grids',
-  path: '/grids',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EnemiesRoute = EnemiesRouteImport.update({
-  id: '/enemies',
-  path: '/enemies',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DyntestRoute = DyntestRouteImport.update({
-  id: '/dyntest',
-  path: '/dyntest',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DonateRoute = DonateRouteImport.update({
-  id: '/donate',
-  path: '/donate',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DiscordRoute = DiscordRouteImport.update({
-  id: '/discord',
-  path: '/discord',
+const ArchivesRoute = ArchivesRouteImport.update({
+  id: '/archives',
+  path: '/archives',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChangelogRoute = ChangelogRouteImport.update({
@@ -140,108 +96,79 @@ const ChangelogRoute = ChangelogRouteImport.update({
   path: '/changelog',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthedRoute = AuthedRouteImport.update({
-  id: '/_authed',
+const DiscordRoute = DiscordRouteImport.update({
+  id: '/discord',
+  path: '/discord',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const DonateRoute = DonateRouteImport.update({
+  id: '/donate',
+  path: '/donate',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UserSearchRoute = UserSearchRouteImport.update({
-  id: '/user/search',
-  path: '/user/search',
+const DyntestRoute = DyntestRouteImport.update({
+  id: '/dyntest',
+  path: '/dyntest',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UserLeaderboardRoute = UserLeaderboardRouteImport.update({
-  id: '/user/leaderboard',
-  path: '/user/leaderboard',
+const EnemiesRoute = EnemiesRouteImport.update({
+  id: '/enemies',
+  path: '/enemies',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UserIdRoute = UserIdRouteImport.update({
-  id: '/user/$id',
-  path: '/user/$id',
+const GridsRoute = GridsRouteImport.update({
+  id: '/grids',
+  path: '/grids',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ToolsReleaseRoute = ToolsReleaseRouteImport.update({
-  id: '/tools/release',
-  path: '/tools/release',
+const HelpMeRoute = HelpMeRouteImport.update({
+  id: '/help-me',
+  path: '/help-me',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ToolsRecruitmentRoute = ToolsRecruitmentRouteImport.update({
-  id: '/tools/recruitment',
-  path: '/tools/recruitment',
+const OperatorsRoute = OperatorsRouteImport.update({
+  id: '/operators',
+  path: '/operators',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ToolsRandomizerRoute = ToolsRandomizerRouteImport.update({
-  id: '/tools/randomizer',
-  path: '/tools/randomizer',
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ToolsPlannerRoute = ToolsPlannerRouteImport.update({
-  id: '/tools/planner',
-  path: '/tools/planner',
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ToolsHpsRoute = ToolsHpsRouteImport.update({
-  id: '/tools/hps',
-  path: '/tools/hps',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ToolsDpsRoute = ToolsDpsRouteImport.update({
-  id: '/tools/dps',
-  path: '/tools/dps',
+const StagesRoute = StagesRouteImport.update({
+  id: '/stages',
+  path: '/stages',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ToolsBirthdaysRoute = ToolsBirthdaysRouteImport.update({
-  id: '/tools/birthdays',
-  path: '/tools/birthdays',
+const StatsRoute = StatsRouteImport.update({
+  id: '/stats',
+  path: '/stats',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TierListsIdRoute = TierListsIdRouteImport.update({
-  id: '/tier-lists_/$id',
-  path: '/tier-lists/$id',
+const StoriesRoute = StoriesRouteImport.update({
+  id: '/stories',
+  path: '/stories',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StoriesSpritesRoute = StoriesSpritesRouteImport.update({
-  id: '/stories_/sprites',
-  path: '/stories/sprites',
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StoriesStoryIdRoute = StoriesStoryIdRouteImport.update({
-  id: '/stories_/$storyId',
-  path: '/stories/$storyId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const StagesStageIdRoute = StagesStageIdRouteImport.update({
-  id: '/stages_/$stageId',
-  path: '/stages/$stageId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OperatorsIdRoute = OperatorsIdRouteImport.update({
-  id: '/operators_/$id',
-  path: '/operators/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GridsSlugRoute = GridsSlugRouteImport.update({
-  id: '/grids_/$slug',
-  path: '/grids/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GachaHistoryRoute = GachaHistoryRouteImport.update({
-  id: '/gacha/history',
-  path: '/gacha/history',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GachaCommunityRoute = GachaCommunityRouteImport.update({
-  id: '/gacha/community',
-  path: '/gacha/community',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EnemiesIdRoute = EnemiesIdRouteImport.update({
-  id: '/enemies_/$id',
-  path: '/enemies/$id',
+const TierListsRoute = TierListsRouteImport.update({
+  id: '/tier-lists',
+  path: '/tier-lists',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthedAdminRoute = AuthedAdminRouteImport.update({
@@ -249,66 +176,114 @@ const AuthedAdminRoute = AuthedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthedRoute,
 } as any)
+const EnemiesIdRoute = EnemiesIdRouteImport.update({
+  id: '/enemies_/$id',
+  path: '/enemies/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GachaCommunityRoute = GachaCommunityRouteImport.update({
+  id: '/gacha/community',
+  path: '/gacha/community',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GachaHistoryRoute = GachaHistoryRouteImport.update({
+  id: '/gacha/history',
+  path: '/gacha/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GalleryMusicRoute = GalleryMusicRouteImport.update({
+  id: '/gallery/music',
+  path: '/gallery/music',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GridsSlugRoute = GridsSlugRouteImport.update({
+  id: '/grids_/$slug',
+  path: '/grids/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperatorsIdRoute = OperatorsIdRouteImport.update({
+  id: '/operators_/$id',
+  path: '/operators/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StagesStageIdRoute = StagesStageIdRouteImport.update({
+  id: '/stages_/$stageId',
+  path: '/stages/$stageId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoriesStoryIdRoute = StoriesStoryIdRouteImport.update({
+  id: '/stories_/$storyId',
+  path: '/stories/$storyId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoriesSpritesRoute = StoriesSpritesRouteImport.update({
+  id: '/stories_/sprites',
+  path: '/stories/sprites',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TierListsIdRoute = TierListsIdRouteImport.update({
+  id: '/tier-lists_/$id',
+  path: '/tier-lists/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsBirthdaysRoute = ToolsBirthdaysRouteImport.update({
+  id: '/tools/birthdays',
+  path: '/tools/birthdays',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsDpsRoute = ToolsDpsRouteImport.update({
+  id: '/tools/dps',
+  path: '/tools/dps',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsHpsRoute = ToolsHpsRouteImport.update({
+  id: '/tools/hps',
+  path: '/tools/hps',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsPlannerRoute = ToolsPlannerRouteImport.update({
+  id: '/tools/planner',
+  path: '/tools/planner',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsRandomizerRoute = ToolsRandomizerRouteImport.update({
+  id: '/tools/randomizer',
+  path: '/tools/randomizer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsRecruitmentRoute = ToolsRecruitmentRouteImport.update({
+  id: '/tools/recruitment',
+  path: '/tools/recruitment',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsReleaseRoute = ToolsReleaseRouteImport.update({
+  id: '/tools/release',
+  path: '/tools/release',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsSquadBuilderRoute = ToolsSquadBuilderRouteImport.update({
+  id: '/tools/squad-builder',
+  path: '/tools/squad-builder',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UserIdRoute = UserIdRouteImport.update({
+  id: '/user/$id',
+  path: '/user/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UserLeaderboardRoute = UserLeaderboardRouteImport.update({
+  id: '/user/leaderboard',
+  path: '/user/leaderboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UserSearchRoute = UserSearchRouteImport.update({
+  id: '/user/search',
+  path: '/user/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthedAdminIndexRoute = AuthedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AuthedAdminRoute,
-} as any)
-const StoriesSpritesBaseRoute = StoriesSpritesBaseRouteImport.update({
-  id: '/stories_/sprites_/$base',
-  path: '/stories/sprites/$base',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiOgDefaultRoute = ApiOgDefaultRouteImport.update({
-  id: '/api/og/default',
-  path: '/api/og/default',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthedTierListsMyRoute = AuthedTierListsMyRouteImport.update({
-  id: '/tier-lists_/my',
-  path: '/tier-lists/my',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedGridsMyRoute = AuthedGridsMyRouteImport.update({
-  id: '/grids_/my',
-  path: '/grids/my',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedAdminUsersRoute = AuthedAdminUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => AuthedAdminRoute,
-} as any)
-const AuthedAdminTranslationsRoute = AuthedAdminTranslationsRouteImport.update({
-  id: '/translations',
-  path: '/translations',
-  getParentRoute: () => AuthedAdminRoute,
-} as any)
-const AuthedAdminSettingsRoute = AuthedAdminSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AuthedAdminRoute,
-} as any)
-const AuthedAdminPermissionsRoute = AuthedAdminPermissionsRouteImport.update({
-  id: '/permissions',
-  path: '/permissions',
-  getParentRoute: () => AuthedAdminRoute,
-} as any)
-const AuthedAdminOperatorNotesRoute =
-  AuthedAdminOperatorNotesRouteImport.update({
-    id: '/operator-notes',
-    path: '/operator-notes',
-    getParentRoute: () => AuthedAdminRoute,
-  } as any)
-const AuthedAdminOfficialTierListsRoute =
-  AuthedAdminOfficialTierListsRouteImport.update({
-    id: '/official-tier-lists',
-    path: '/official-tier-lists',
-    getParentRoute: () => AuthedAdminRoute,
-  } as any)
-const AuthedAdminHealthRoute = AuthedAdminHealthRouteImport.update({
-  id: '/health',
-  path: '/health',
   getParentRoute: () => AuthedAdminRoute,
 } as any)
 const AuthedAdminAuditRoute = AuthedAdminAuditRouteImport.update({
@@ -316,9 +291,81 @@ const AuthedAdminAuditRoute = AuthedAdminAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => AuthedAdminRoute,
 } as any)
-const ApiTierListsSlugImageRoute = ApiTierListsSlugImageRouteImport.update({
-  id: '/api/tier-lists/$slug/image',
-  path: '/api/tier-lists/$slug/image',
+const AuthedAdminHealthRoute = AuthedAdminHealthRouteImport.update({
+  id: '/health',
+  path: '/health',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
+const AuthedAdminOfficialTierListsRoute =
+  AuthedAdminOfficialTierListsRouteImport.update({
+    id: '/official-tier-lists',
+    path: '/official-tier-lists',
+    getParentRoute: () => AuthedAdminRoute,
+  } as any)
+const AuthedAdminOperatorNotesRoute =
+  AuthedAdminOperatorNotesRouteImport.update({
+    id: '/operator-notes',
+    path: '/operator-notes',
+    getParentRoute: () => AuthedAdminRoute,
+  } as any)
+const AuthedAdminPermissionsRoute = AuthedAdminPermissionsRouteImport.update({
+  id: '/permissions',
+  path: '/permissions',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
+const AuthedAdminSettingsRoute = AuthedAdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
+const AuthedAdminSystemRoute = AuthedAdminSystemRouteImport.update({
+  id: '/system',
+  path: '/system',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
+const AuthedAdminTierListsRoute = AuthedAdminTierListsRouteImport.update({
+  id: '/tier-lists',
+  path: '/tier-lists',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
+const AuthedAdminTranslationsRoute = AuthedAdminTranslationsRouteImport.update({
+  id: '/translations',
+  path: '/translations',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
+const AuthedAdminUsersRoute = AuthedAdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
+const AuthedGridsMyRoute = AuthedGridsMyRouteImport.update({
+  id: '/grids_/my',
+  path: '/grids/my',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedTierListsMyRoute = AuthedTierListsMyRouteImport.update({
+  id: '/tier-lists_/my',
+  path: '/tier-lists/my',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const ApiOgDefaultRoute = ApiOgDefaultRouteImport.update({
+  id: '/api/og/default',
+  path: '/api/og/default',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoriesSpritesBaseRoute = StoriesSpritesBaseRouteImport.update({
+  id: '/stories_/sprites_/$base',
+  path: '/stories/sprites/$base',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthedGridsSlugEditRoute = AuthedGridsSlugEditRouteImport.update({
+  id: '/grids_/$slug/edit',
+  path: '/grids/$slug/edit',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const ApiGridsSlugImageRoute = ApiGridsSlugImageRouteImport.update({
+  id: '/api/grids/$slug/image',
+  path: '/api/grids/$slug/image',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiOgKindIdRoute = ApiOgKindIdRouteImport.update({
@@ -326,15 +373,10 @@ const ApiOgKindIdRoute = ApiOgKindIdRouteImport.update({
   path: '/api/og/$kind/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiGridsSlugImageRoute = ApiGridsSlugImageRouteImport.update({
-  id: '/api/grids/$slug/image',
-  path: '/api/grids/$slug/image',
+const ApiTierListsSlugImageRoute = ApiTierListsSlugImageRouteImport.update({
+  id: '/api/tier-lists/$slug/image',
+  path: '/api/tier-lists/$slug/image',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AuthedGridsSlugEditRoute = AuthedGridsSlugEditRouteImport.update({
-  id: '/grids_/$slug/edit',
-  path: '/grids/$slug/edit',
-  getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedTierListsMyIdEditRoute = AuthedTierListsMyIdEditRouteImport.update({
   id: '/tier-lists_/my_/$id/edit',
@@ -344,6 +386,8 @@ const AuthedTierListsMyIdEditRoute = AuthedTierListsMyIdEditRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/announcements': typeof AnnouncementsRoute
+  '/archives': typeof ArchivesRoute
   '/changelog': typeof ChangelogRoute
   '/discord': typeof DiscordRoute
   '/donate': typeof DonateRoute
@@ -354,6 +398,7 @@ export interface FileRoutesByFullPath {
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stages': typeof StagesRoute
   '/stats': typeof StatsRoute
   '/stories': typeof StoriesRoute
@@ -363,6 +408,7 @@ export interface FileRoutesByFullPath {
   '/enemies/$id': typeof EnemiesIdRoute
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
+  '/gallery/music': typeof GalleryMusicRoute
   '/grids/$slug': typeof GridsSlugRoute
   '/operators/$id': typeof OperatorsIdRoute
   '/stages/$stageId': typeof StagesStageIdRoute
@@ -376,6 +422,7 @@ export interface FileRoutesByFullPath {
   '/tools/randomizer': typeof ToolsRandomizerRoute
   '/tools/recruitment': typeof ToolsRecruitmentRoute
   '/tools/release': typeof ToolsReleaseRoute
+  '/tools/squad-builder': typeof ToolsSquadBuilderRoute
   '/user/$id': typeof UserIdRoute
   '/user/leaderboard': typeof UserLeaderboardRoute
   '/user/search': typeof UserSearchRoute
@@ -385,6 +432,8 @@ export interface FileRoutesByFullPath {
   '/admin/operator-notes': typeof AuthedAdminOperatorNotesRoute
   '/admin/permissions': typeof AuthedAdminPermissionsRoute
   '/admin/settings': typeof AuthedAdminSettingsRoute
+  '/admin/system': typeof AuthedAdminSystemRoute
+  '/admin/tier-lists': typeof AuthedAdminTierListsRoute
   '/admin/translations': typeof AuthedAdminTranslationsRoute
   '/admin/users': typeof AuthedAdminUsersRoute
   '/grids/my': typeof AuthedGridsMyRoute
@@ -400,6 +449,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/announcements': typeof AnnouncementsRoute
+  '/archives': typeof ArchivesRoute
   '/changelog': typeof ChangelogRoute
   '/discord': typeof DiscordRoute
   '/donate': typeof DonateRoute
@@ -410,6 +461,7 @@ export interface FileRoutesByTo {
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stages': typeof StagesRoute
   '/stats': typeof StatsRoute
   '/stories': typeof StoriesRoute
@@ -418,6 +470,7 @@ export interface FileRoutesByTo {
   '/enemies/$id': typeof EnemiesIdRoute
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
+  '/gallery/music': typeof GalleryMusicRoute
   '/grids/$slug': typeof GridsSlugRoute
   '/operators/$id': typeof OperatorsIdRoute
   '/stages/$stageId': typeof StagesStageIdRoute
@@ -431,6 +484,7 @@ export interface FileRoutesByTo {
   '/tools/randomizer': typeof ToolsRandomizerRoute
   '/tools/recruitment': typeof ToolsRecruitmentRoute
   '/tools/release': typeof ToolsReleaseRoute
+  '/tools/squad-builder': typeof ToolsSquadBuilderRoute
   '/user/$id': typeof UserIdRoute
   '/user/leaderboard': typeof UserLeaderboardRoute
   '/user/search': typeof UserSearchRoute
@@ -440,6 +494,8 @@ export interface FileRoutesByTo {
   '/admin/operator-notes': typeof AuthedAdminOperatorNotesRoute
   '/admin/permissions': typeof AuthedAdminPermissionsRoute
   '/admin/settings': typeof AuthedAdminSettingsRoute
+  '/admin/system': typeof AuthedAdminSystemRoute
+  '/admin/tier-lists': typeof AuthedAdminTierListsRoute
   '/admin/translations': typeof AuthedAdminTranslationsRoute
   '/admin/users': typeof AuthedAdminUsersRoute
   '/grids/my': typeof AuthedGridsMyRoute
@@ -457,6 +513,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
+  '/announcements': typeof AnnouncementsRoute
+  '/archives': typeof ArchivesRoute
   '/changelog': typeof ChangelogRoute
   '/discord': typeof DiscordRoute
   '/donate': typeof DonateRoute
@@ -467,6 +525,7 @@ export interface FileRoutesById {
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stages': typeof StagesRoute
   '/stats': typeof StatsRoute
   '/stories': typeof StoriesRoute
@@ -476,6 +535,7 @@ export interface FileRoutesById {
   '/enemies_/$id': typeof EnemiesIdRoute
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
+  '/gallery/music': typeof GalleryMusicRoute
   '/grids_/$slug': typeof GridsSlugRoute
   '/operators_/$id': typeof OperatorsIdRoute
   '/stages_/$stageId': typeof StagesStageIdRoute
@@ -489,6 +549,7 @@ export interface FileRoutesById {
   '/tools/randomizer': typeof ToolsRandomizerRoute
   '/tools/recruitment': typeof ToolsRecruitmentRoute
   '/tools/release': typeof ToolsReleaseRoute
+  '/tools/squad-builder': typeof ToolsSquadBuilderRoute
   '/user/$id': typeof UserIdRoute
   '/user/leaderboard': typeof UserLeaderboardRoute
   '/user/search': typeof UserSearchRoute
@@ -498,6 +559,8 @@ export interface FileRoutesById {
   '/_authed/admin/operator-notes': typeof AuthedAdminOperatorNotesRoute
   '/_authed/admin/permissions': typeof AuthedAdminPermissionsRoute
   '/_authed/admin/settings': typeof AuthedAdminSettingsRoute
+  '/_authed/admin/system': typeof AuthedAdminSystemRoute
+  '/_authed/admin/tier-lists': typeof AuthedAdminTierListsRoute
   '/_authed/admin/translations': typeof AuthedAdminTranslationsRoute
   '/_authed/admin/users': typeof AuthedAdminUsersRoute
   '/_authed/grids_/my': typeof AuthedGridsMyRoute
@@ -515,6 +578,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/announcements'
+    | '/archives'
     | '/changelog'
     | '/discord'
     | '/donate'
@@ -525,6 +590,7 @@ export interface FileRouteTypes {
     | '/operators'
     | '/privacy'
     | '/settings'
+    | '/sitemap.xml'
     | '/stages'
     | '/stats'
     | '/stories'
@@ -534,6 +600,7 @@ export interface FileRouteTypes {
     | '/enemies/$id'
     | '/gacha/community'
     | '/gacha/history'
+    | '/gallery/music'
     | '/grids/$slug'
     | '/operators/$id'
     | '/stages/$stageId'
@@ -547,6 +614,7 @@ export interface FileRouteTypes {
     | '/tools/randomizer'
     | '/tools/recruitment'
     | '/tools/release'
+    | '/tools/squad-builder'
     | '/user/$id'
     | '/user/leaderboard'
     | '/user/search'
@@ -556,6 +624,8 @@ export interface FileRouteTypes {
     | '/admin/operator-notes'
     | '/admin/permissions'
     | '/admin/settings'
+    | '/admin/system'
+    | '/admin/tier-lists'
     | '/admin/translations'
     | '/admin/users'
     | '/grids/my'
@@ -571,6 +641,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/announcements'
+    | '/archives'
     | '/changelog'
     | '/discord'
     | '/donate'
@@ -581,6 +653,7 @@ export interface FileRouteTypes {
     | '/operators'
     | '/privacy'
     | '/settings'
+    | '/sitemap.xml'
     | '/stages'
     | '/stats'
     | '/stories'
@@ -589,6 +662,7 @@ export interface FileRouteTypes {
     | '/enemies/$id'
     | '/gacha/community'
     | '/gacha/history'
+    | '/gallery/music'
     | '/grids/$slug'
     | '/operators/$id'
     | '/stages/$stageId'
@@ -602,6 +676,7 @@ export interface FileRouteTypes {
     | '/tools/randomizer'
     | '/tools/recruitment'
     | '/tools/release'
+    | '/tools/squad-builder'
     | '/user/$id'
     | '/user/leaderboard'
     | '/user/search'
@@ -611,6 +686,8 @@ export interface FileRouteTypes {
     | '/admin/operator-notes'
     | '/admin/permissions'
     | '/admin/settings'
+    | '/admin/system'
+    | '/admin/tier-lists'
     | '/admin/translations'
     | '/admin/users'
     | '/grids/my'
@@ -627,6 +704,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authed'
+    | '/announcements'
+    | '/archives'
     | '/changelog'
     | '/discord'
     | '/donate'
@@ -637,6 +716,7 @@ export interface FileRouteTypes {
     | '/operators'
     | '/privacy'
     | '/settings'
+    | '/sitemap.xml'
     | '/stages'
     | '/stats'
     | '/stories'
@@ -646,6 +726,7 @@ export interface FileRouteTypes {
     | '/enemies_/$id'
     | '/gacha/community'
     | '/gacha/history'
+    | '/gallery/music'
     | '/grids_/$slug'
     | '/operators_/$id'
     | '/stages_/$stageId'
@@ -659,6 +740,7 @@ export interface FileRouteTypes {
     | '/tools/randomizer'
     | '/tools/recruitment'
     | '/tools/release'
+    | '/tools/squad-builder'
     | '/user/$id'
     | '/user/leaderboard'
     | '/user/search'
@@ -668,6 +750,8 @@ export interface FileRouteTypes {
     | '/_authed/admin/operator-notes'
     | '/_authed/admin/permissions'
     | '/_authed/admin/settings'
+    | '/_authed/admin/system'
+    | '/_authed/admin/tier-lists'
     | '/_authed/admin/translations'
     | '/_authed/admin/users'
     | '/_authed/grids_/my'
@@ -685,6 +769,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
+  AnnouncementsRoute: typeof AnnouncementsRoute
+  ArchivesRoute: typeof ArchivesRoute
   ChangelogRoute: typeof ChangelogRoute
   DiscordRoute: typeof DiscordRoute
   DonateRoute: typeof DonateRoute
@@ -695,6 +781,7 @@ export interface RootRouteChildren {
   OperatorsRoute: typeof OperatorsRoute
   PrivacyRoute: typeof PrivacyRoute
   SettingsRoute: typeof SettingsRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StagesRoute: typeof StagesRoute
   StatsRoute: typeof StatsRoute
   StoriesRoute: typeof StoriesRoute
@@ -703,6 +790,7 @@ export interface RootRouteChildren {
   EnemiesIdRoute: typeof EnemiesIdRoute
   GachaCommunityRoute: typeof GachaCommunityRoute
   GachaHistoryRoute: typeof GachaHistoryRoute
+  GalleryMusicRoute: typeof GalleryMusicRoute
   GridsSlugRoute: typeof GridsSlugRoute
   OperatorsIdRoute: typeof OperatorsIdRoute
   StagesStageIdRoute: typeof StagesStageIdRoute
@@ -716,6 +804,7 @@ export interface RootRouteChildren {
   ToolsRandomizerRoute: typeof ToolsRandomizerRoute
   ToolsRecruitmentRoute: typeof ToolsRecruitmentRoute
   ToolsReleaseRoute: typeof ToolsReleaseRoute
+  ToolsSquadBuilderRoute: typeof ToolsSquadBuilderRoute
   UserIdRoute: typeof UserIdRoute
   UserLeaderboardRoute: typeof UserLeaderboardRoute
   UserSearchRoute: typeof UserSearchRoute
@@ -728,109 +817,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/tier-lists': {
-      id: '/tier-lists'
-      path: '/tier-lists'
-      fullPath: '/tier-lists'
-      preLoaderRoute: typeof TierListsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/stories': {
-      id: '/stories'
-      path: '/stories'
-      fullPath: '/stories'
-      preLoaderRoute: typeof StoriesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/stats': {
-      id: '/stats'
-      path: '/stats'
-      fullPath: '/stats'
-      preLoaderRoute: typeof StatsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/stages': {
-      id: '/stages'
-      path: '/stages'
-      fullPath: '/stages'
-      preLoaderRoute: typeof StagesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/operators': {
-      id: '/operators'
-      path: '/operators'
-      fullPath: '/operators'
-      preLoaderRoute: typeof OperatorsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/help-me': {
-      id: '/help-me'
-      path: '/help-me'
-      fullPath: '/help-me'
-      preLoaderRoute: typeof HelpMeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/grids': {
-      id: '/grids'
-      path: '/grids'
-      fullPath: '/grids'
-      preLoaderRoute: typeof GridsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/enemies': {
-      id: '/enemies'
-      path: '/enemies'
-      fullPath: '/enemies'
-      preLoaderRoute: typeof EnemiesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dyntest': {
-      id: '/dyntest'
-      path: '/dyntest'
-      fullPath: '/dyntest'
-      preLoaderRoute: typeof DyntestRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/donate': {
-      id: '/donate'
-      path: '/donate'
-      fullPath: '/donate'
-      preLoaderRoute: typeof DonateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/discord': {
-      id: '/discord'
-      path: '/discord'
-      fullPath: '/discord'
-      preLoaderRoute: typeof DiscordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/changelog': {
-      id: '/changelog'
-      path: '/changelog'
-      fullPath: '/changelog'
-      preLoaderRoute: typeof ChangelogRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authed': {
@@ -840,144 +831,130 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/announcements': {
+      id: '/announcements'
+      path: '/announcements'
+      fullPath: '/announcements'
+      preLoaderRoute: typeof AnnouncementsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/user/search': {
-      id: '/user/search'
-      path: '/user/search'
-      fullPath: '/user/search'
-      preLoaderRoute: typeof UserSearchRouteImport
+    '/archives': {
+      id: '/archives'
+      path: '/archives'
+      fullPath: '/archives'
+      preLoaderRoute: typeof ArchivesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/user/leaderboard': {
-      id: '/user/leaderboard'
-      path: '/user/leaderboard'
-      fullPath: '/user/leaderboard'
-      preLoaderRoute: typeof UserLeaderboardRouteImport
+    '/changelog': {
+      id: '/changelog'
+      path: '/changelog'
+      fullPath: '/changelog'
+      preLoaderRoute: typeof ChangelogRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/user/$id': {
-      id: '/user/$id'
-      path: '/user/$id'
-      fullPath: '/user/$id'
-      preLoaderRoute: typeof UserIdRouteImport
+    '/discord': {
+      id: '/discord'
+      path: '/discord'
+      fullPath: '/discord'
+      preLoaderRoute: typeof DiscordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tools/release': {
-      id: '/tools/release'
-      path: '/tools/release'
-      fullPath: '/tools/release'
-      preLoaderRoute: typeof ToolsReleaseRouteImport
+    '/donate': {
+      id: '/donate'
+      path: '/donate'
+      fullPath: '/donate'
+      preLoaderRoute: typeof DonateRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tools/recruitment': {
-      id: '/tools/recruitment'
-      path: '/tools/recruitment'
-      fullPath: '/tools/recruitment'
-      preLoaderRoute: typeof ToolsRecruitmentRouteImport
+    '/dyntest': {
+      id: '/dyntest'
+      path: '/dyntest'
+      fullPath: '/dyntest'
+      preLoaderRoute: typeof DyntestRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tools/randomizer': {
-      id: '/tools/randomizer'
-      path: '/tools/randomizer'
-      fullPath: '/tools/randomizer'
-      preLoaderRoute: typeof ToolsRandomizerRouteImport
+    '/enemies': {
+      id: '/enemies'
+      path: '/enemies'
+      fullPath: '/enemies'
+      preLoaderRoute: typeof EnemiesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tools/planner': {
-      id: '/tools/planner'
-      path: '/tools/planner'
-      fullPath: '/tools/planner'
-      preLoaderRoute: typeof ToolsPlannerRouteImport
+    '/grids': {
+      id: '/grids'
+      path: '/grids'
+      fullPath: '/grids'
+      preLoaderRoute: typeof GridsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tools/hps': {
-      id: '/tools/hps'
-      path: '/tools/hps'
-      fullPath: '/tools/hps'
-      preLoaderRoute: typeof ToolsHpsRouteImport
+    '/help-me': {
+      id: '/help-me'
+      path: '/help-me'
+      fullPath: '/help-me'
+      preLoaderRoute: typeof HelpMeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tools/dps': {
-      id: '/tools/dps'
-      path: '/tools/dps'
-      fullPath: '/tools/dps'
-      preLoaderRoute: typeof ToolsDpsRouteImport
+    '/operators': {
+      id: '/operators'
+      path: '/operators'
+      fullPath: '/operators'
+      preLoaderRoute: typeof OperatorsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tools/birthdays': {
-      id: '/tools/birthdays'
-      path: '/tools/birthdays'
-      fullPath: '/tools/birthdays'
-      preLoaderRoute: typeof ToolsBirthdaysRouteImport
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tier-lists_/$id': {
-      id: '/tier-lists_/$id'
-      path: '/tier-lists/$id'
-      fullPath: '/tier-lists/$id'
-      preLoaderRoute: typeof TierListsIdRouteImport
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/stories_/sprites': {
-      id: '/stories_/sprites'
-      path: '/stories/sprites'
-      fullPath: '/stories/sprites'
-      preLoaderRoute: typeof StoriesSpritesRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/stories_/$storyId': {
-      id: '/stories_/$storyId'
-      path: '/stories/$storyId'
-      fullPath: '/stories/$storyId'
-      preLoaderRoute: typeof StoriesStoryIdRouteImport
+    '/stages': {
+      id: '/stages'
+      path: '/stages'
+      fullPath: '/stages'
+      preLoaderRoute: typeof StagesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/stages_/$stageId': {
-      id: '/stages_/$stageId'
-      path: '/stages/$stageId'
-      fullPath: '/stages/$stageId'
-      preLoaderRoute: typeof StagesStageIdRouteImport
+    '/stats': {
+      id: '/stats'
+      path: '/stats'
+      fullPath: '/stats'
+      preLoaderRoute: typeof StatsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/operators_/$id': {
-      id: '/operators_/$id'
-      path: '/operators/$id'
-      fullPath: '/operators/$id'
-      preLoaderRoute: typeof OperatorsIdRouteImport
+    '/stories': {
+      id: '/stories'
+      path: '/stories'
+      fullPath: '/stories'
+      preLoaderRoute: typeof StoriesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/grids_/$slug': {
-      id: '/grids_/$slug'
-      path: '/grids/$slug'
-      fullPath: '/grids/$slug'
-      preLoaderRoute: typeof GridsSlugRouteImport
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/gacha/history': {
-      id: '/gacha/history'
-      path: '/gacha/history'
-      fullPath: '/gacha/history'
-      preLoaderRoute: typeof GachaHistoryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/gacha/community': {
-      id: '/gacha/community'
-      path: '/gacha/community'
-      fullPath: '/gacha/community'
-      preLoaderRoute: typeof GachaCommunityRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/enemies_/$id': {
-      id: '/enemies_/$id'
-      path: '/enemies/$id'
-      fullPath: '/enemies/$id'
-      preLoaderRoute: typeof EnemiesIdRouteImport
+    '/tier-lists': {
+      id: '/tier-lists'
+      path: '/tier-lists'
+      fullPath: '/tier-lists'
+      preLoaderRoute: typeof TierListsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authed/admin': {
@@ -987,88 +964,158 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedAdminRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/enemies_/$id': {
+      id: '/enemies_/$id'
+      path: '/enemies/$id'
+      fullPath: '/enemies/$id'
+      preLoaderRoute: typeof EnemiesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gacha/community': {
+      id: '/gacha/community'
+      path: '/gacha/community'
+      fullPath: '/gacha/community'
+      preLoaderRoute: typeof GachaCommunityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gacha/history': {
+      id: '/gacha/history'
+      path: '/gacha/history'
+      fullPath: '/gacha/history'
+      preLoaderRoute: typeof GachaHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gallery/music': {
+      id: '/gallery/music'
+      path: '/gallery/music'
+      fullPath: '/gallery/music'
+      preLoaderRoute: typeof GalleryMusicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/grids_/$slug': {
+      id: '/grids_/$slug'
+      path: '/grids/$slug'
+      fullPath: '/grids/$slug'
+      preLoaderRoute: typeof GridsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operators_/$id': {
+      id: '/operators_/$id'
+      path: '/operators/$id'
+      fullPath: '/operators/$id'
+      preLoaderRoute: typeof OperatorsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stages_/$stageId': {
+      id: '/stages_/$stageId'
+      path: '/stages/$stageId'
+      fullPath: '/stages/$stageId'
+      preLoaderRoute: typeof StagesStageIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stories_/$storyId': {
+      id: '/stories_/$storyId'
+      path: '/stories/$storyId'
+      fullPath: '/stories/$storyId'
+      preLoaderRoute: typeof StoriesStoryIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stories_/sprites': {
+      id: '/stories_/sprites'
+      path: '/stories/sprites'
+      fullPath: '/stories/sprites'
+      preLoaderRoute: typeof StoriesSpritesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tier-lists_/$id': {
+      id: '/tier-lists_/$id'
+      path: '/tier-lists/$id'
+      fullPath: '/tier-lists/$id'
+      preLoaderRoute: typeof TierListsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/birthdays': {
+      id: '/tools/birthdays'
+      path: '/tools/birthdays'
+      fullPath: '/tools/birthdays'
+      preLoaderRoute: typeof ToolsBirthdaysRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/dps': {
+      id: '/tools/dps'
+      path: '/tools/dps'
+      fullPath: '/tools/dps'
+      preLoaderRoute: typeof ToolsDpsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/hps': {
+      id: '/tools/hps'
+      path: '/tools/hps'
+      fullPath: '/tools/hps'
+      preLoaderRoute: typeof ToolsHpsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/planner': {
+      id: '/tools/planner'
+      path: '/tools/planner'
+      fullPath: '/tools/planner'
+      preLoaderRoute: typeof ToolsPlannerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/randomizer': {
+      id: '/tools/randomizer'
+      path: '/tools/randomizer'
+      fullPath: '/tools/randomizer'
+      preLoaderRoute: typeof ToolsRandomizerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/recruitment': {
+      id: '/tools/recruitment'
+      path: '/tools/recruitment'
+      fullPath: '/tools/recruitment'
+      preLoaderRoute: typeof ToolsRecruitmentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/release': {
+      id: '/tools/release'
+      path: '/tools/release'
+      fullPath: '/tools/release'
+      preLoaderRoute: typeof ToolsReleaseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/squad-builder': {
+      id: '/tools/squad-builder'
+      path: '/tools/squad-builder'
+      fullPath: '/tools/squad-builder'
+      preLoaderRoute: typeof ToolsSquadBuilderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/user/$id': {
+      id: '/user/$id'
+      path: '/user/$id'
+      fullPath: '/user/$id'
+      preLoaderRoute: typeof UserIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/user/leaderboard': {
+      id: '/user/leaderboard'
+      path: '/user/leaderboard'
+      fullPath: '/user/leaderboard'
+      preLoaderRoute: typeof UserLeaderboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/user/search': {
+      id: '/user/search'
+      path: '/user/search'
+      fullPath: '/user/search'
+      preLoaderRoute: typeof UserSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authed/admin/': {
       id: '/_authed/admin/'
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthedAdminIndexRouteImport
-      parentRoute: typeof AuthedAdminRoute
-    }
-    '/stories_/sprites_/$base': {
-      id: '/stories_/sprites_/$base'
-      path: '/stories/sprites/$base'
-      fullPath: '/stories/sprites/$base'
-      preLoaderRoute: typeof StoriesSpritesBaseRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/og/default': {
-      id: '/api/og/default'
-      path: '/api/og/default'
-      fullPath: '/api/og/default'
-      preLoaderRoute: typeof ApiOgDefaultRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authed/tier-lists_/my': {
-      id: '/_authed/tier-lists_/my'
-      path: '/tier-lists/my'
-      fullPath: '/tier-lists/my'
-      preLoaderRoute: typeof AuthedTierListsMyRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/grids_/my': {
-      id: '/_authed/grids_/my'
-      path: '/grids/my'
-      fullPath: '/grids/my'
-      preLoaderRoute: typeof AuthedGridsMyRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/admin/users': {
-      id: '/_authed/admin/users'
-      path: '/users'
-      fullPath: '/admin/users'
-      preLoaderRoute: typeof AuthedAdminUsersRouteImport
-      parentRoute: typeof AuthedAdminRoute
-    }
-    '/_authed/admin/translations': {
-      id: '/_authed/admin/translations'
-      path: '/translations'
-      fullPath: '/admin/translations'
-      preLoaderRoute: typeof AuthedAdminTranslationsRouteImport
-      parentRoute: typeof AuthedAdminRoute
-    }
-    '/_authed/admin/settings': {
-      id: '/_authed/admin/settings'
-      path: '/settings'
-      fullPath: '/admin/settings'
-      preLoaderRoute: typeof AuthedAdminSettingsRouteImport
-      parentRoute: typeof AuthedAdminRoute
-    }
-    '/_authed/admin/permissions': {
-      id: '/_authed/admin/permissions'
-      path: '/permissions'
-      fullPath: '/admin/permissions'
-      preLoaderRoute: typeof AuthedAdminPermissionsRouteImport
-      parentRoute: typeof AuthedAdminRoute
-    }
-    '/_authed/admin/operator-notes': {
-      id: '/_authed/admin/operator-notes'
-      path: '/operator-notes'
-      fullPath: '/admin/operator-notes'
-      preLoaderRoute: typeof AuthedAdminOperatorNotesRouteImport
-      parentRoute: typeof AuthedAdminRoute
-    }
-    '/_authed/admin/official-tier-lists': {
-      id: '/_authed/admin/official-tier-lists'
-      path: '/official-tier-lists'
-      fullPath: '/admin/official-tier-lists'
-      preLoaderRoute: typeof AuthedAdminOfficialTierListsRouteImport
-      parentRoute: typeof AuthedAdminRoute
-    }
-    '/_authed/admin/health': {
-      id: '/_authed/admin/health'
-      path: '/health'
-      fullPath: '/admin/health'
-      preLoaderRoute: typeof AuthedAdminHealthRouteImport
       parentRoute: typeof AuthedAdminRoute
     }
     '/_authed/admin/audit': {
@@ -1078,11 +1125,109 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedAdminAuditRouteImport
       parentRoute: typeof AuthedAdminRoute
     }
-    '/api/tier-lists/$slug/image': {
-      id: '/api/tier-lists/$slug/image'
-      path: '/api/tier-lists/$slug/image'
-      fullPath: '/api/tier-lists/$slug/image'
-      preLoaderRoute: typeof ApiTierListsSlugImageRouteImport
+    '/_authed/admin/health': {
+      id: '/_authed/admin/health'
+      path: '/health'
+      fullPath: '/admin/health'
+      preLoaderRoute: typeof AuthedAdminHealthRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/official-tier-lists': {
+      id: '/_authed/admin/official-tier-lists'
+      path: '/official-tier-lists'
+      fullPath: '/admin/official-tier-lists'
+      preLoaderRoute: typeof AuthedAdminOfficialTierListsRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/operator-notes': {
+      id: '/_authed/admin/operator-notes'
+      path: '/operator-notes'
+      fullPath: '/admin/operator-notes'
+      preLoaderRoute: typeof AuthedAdminOperatorNotesRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/permissions': {
+      id: '/_authed/admin/permissions'
+      path: '/permissions'
+      fullPath: '/admin/permissions'
+      preLoaderRoute: typeof AuthedAdminPermissionsRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/settings': {
+      id: '/_authed/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AuthedAdminSettingsRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/system': {
+      id: '/_authed/admin/system'
+      path: '/system'
+      fullPath: '/admin/system'
+      preLoaderRoute: typeof AuthedAdminSystemRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/tier-lists': {
+      id: '/_authed/admin/tier-lists'
+      path: '/tier-lists'
+      fullPath: '/admin/tier-lists'
+      preLoaderRoute: typeof AuthedAdminTierListsRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/translations': {
+      id: '/_authed/admin/translations'
+      path: '/translations'
+      fullPath: '/admin/translations'
+      preLoaderRoute: typeof AuthedAdminTranslationsRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/users': {
+      id: '/_authed/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AuthedAdminUsersRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/grids_/my': {
+      id: '/_authed/grids_/my'
+      path: '/grids/my'
+      fullPath: '/grids/my'
+      preLoaderRoute: typeof AuthedGridsMyRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/tier-lists_/my': {
+      id: '/_authed/tier-lists_/my'
+      path: '/tier-lists/my'
+      fullPath: '/tier-lists/my'
+      preLoaderRoute: typeof AuthedTierListsMyRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/api/og/default': {
+      id: '/api/og/default'
+      path: '/api/og/default'
+      fullPath: '/api/og/default'
+      preLoaderRoute: typeof ApiOgDefaultRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stories_/sprites_/$base': {
+      id: '/stories_/sprites_/$base'
+      path: '/stories/sprites/$base'
+      fullPath: '/stories/sprites/$base'
+      preLoaderRoute: typeof StoriesSpritesBaseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authed/grids_/$slug/edit': {
+      id: '/_authed/grids_/$slug/edit'
+      path: '/grids/$slug/edit'
+      fullPath: '/grids/$slug/edit'
+      preLoaderRoute: typeof AuthedGridsSlugEditRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/api/grids/$slug/image': {
+      id: '/api/grids/$slug/image'
+      path: '/api/grids/$slug/image'
+      fullPath: '/api/grids/$slug/image'
+      preLoaderRoute: typeof ApiGridsSlugImageRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/og/$kind/$id': {
@@ -1092,19 +1237,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiOgKindIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/grids/$slug/image': {
-      id: '/api/grids/$slug/image'
-      path: '/api/grids/$slug/image'
-      fullPath: '/api/grids/$slug/image'
-      preLoaderRoute: typeof ApiGridsSlugImageRouteImport
+    '/api/tier-lists/$slug/image': {
+      id: '/api/tier-lists/$slug/image'
+      path: '/api/tier-lists/$slug/image'
+      fullPath: '/api/tier-lists/$slug/image'
+      preLoaderRoute: typeof ApiTierListsSlugImageRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_authed/grids_/$slug/edit': {
-      id: '/_authed/grids_/$slug/edit'
-      path: '/grids/$slug/edit'
-      fullPath: '/grids/$slug/edit'
-      preLoaderRoute: typeof AuthedGridsSlugEditRouteImport
-      parentRoute: typeof AuthedRoute
     }
     '/_authed/tier-lists_/my_/$id/edit': {
       id: '/_authed/tier-lists_/my_/$id/edit'
@@ -1123,6 +1261,8 @@ interface AuthedAdminRouteChildren {
   AuthedAdminOperatorNotesRoute: typeof AuthedAdminOperatorNotesRoute
   AuthedAdminPermissionsRoute: typeof AuthedAdminPermissionsRoute
   AuthedAdminSettingsRoute: typeof AuthedAdminSettingsRoute
+  AuthedAdminSystemRoute: typeof AuthedAdminSystemRoute
+  AuthedAdminTierListsRoute: typeof AuthedAdminTierListsRoute
   AuthedAdminTranslationsRoute: typeof AuthedAdminTranslationsRoute
   AuthedAdminUsersRoute: typeof AuthedAdminUsersRoute
   AuthedAdminIndexRoute: typeof AuthedAdminIndexRoute
@@ -1135,6 +1275,8 @@ const AuthedAdminRouteChildren: AuthedAdminRouteChildren = {
   AuthedAdminOperatorNotesRoute: AuthedAdminOperatorNotesRoute,
   AuthedAdminPermissionsRoute: AuthedAdminPermissionsRoute,
   AuthedAdminSettingsRoute: AuthedAdminSettingsRoute,
+  AuthedAdminSystemRoute: AuthedAdminSystemRoute,
+  AuthedAdminTierListsRoute: AuthedAdminTierListsRoute,
   AuthedAdminTranslationsRoute: AuthedAdminTranslationsRoute,
   AuthedAdminUsersRoute: AuthedAdminUsersRoute,
   AuthedAdminIndexRoute: AuthedAdminIndexRoute,
@@ -1166,6 +1308,8 @@ const AuthedRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
+  AnnouncementsRoute: AnnouncementsRoute,
+  ArchivesRoute: ArchivesRoute,
   ChangelogRoute: ChangelogRoute,
   DiscordRoute: DiscordRoute,
   DonateRoute: DonateRoute,
@@ -1176,6 +1320,7 @@ const rootRouteChildren: RootRouteChildren = {
   OperatorsRoute: OperatorsRoute,
   PrivacyRoute: PrivacyRoute,
   SettingsRoute: SettingsRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   StagesRoute: StagesRoute,
   StatsRoute: StatsRoute,
   StoriesRoute: StoriesRoute,
@@ -1184,6 +1329,7 @@ const rootRouteChildren: RootRouteChildren = {
   EnemiesIdRoute: EnemiesIdRoute,
   GachaCommunityRoute: GachaCommunityRoute,
   GachaHistoryRoute: GachaHistoryRoute,
+  GalleryMusicRoute: GalleryMusicRoute,
   GridsSlugRoute: GridsSlugRoute,
   OperatorsIdRoute: OperatorsIdRoute,
   StagesStageIdRoute: StagesStageIdRoute,
@@ -1197,6 +1343,7 @@ const rootRouteChildren: RootRouteChildren = {
   ToolsRandomizerRoute: ToolsRandomizerRoute,
   ToolsRecruitmentRoute: ToolsRecruitmentRoute,
   ToolsReleaseRoute: ToolsReleaseRoute,
+  ToolsSquadBuilderRoute: ToolsSquadBuilderRoute,
   UserIdRoute: UserIdRoute,
   UserLeaderboardRoute: UserLeaderboardRoute,
   UserSearchRoute: UserSearchRoute,

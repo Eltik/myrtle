@@ -224,3 +224,31 @@ pub async fn search_users(
     state.cache.set(&key, &page).await;
     Ok(page)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::is_valid_operator_id;
+
+    #[test]
+    fn accepts_game_style_ids() {
+        assert!(is_valid_operator_id("char_1035_wisdel"));
+        assert!(is_valid_operator_id("char_002_amiya"));
+        assert!(is_valid_operator_id("A"));
+        assert!(is_valid_operator_id(&"a".repeat(50)));
+    }
+
+    #[test]
+    fn rejects_empty_long_and_non_word_ids() {
+        assert!(!is_valid_operator_id(""));
+        assert!(!is_valid_operator_id(&"a".repeat(51)));
+        for bad in [
+            "char-002",
+            "char 002",
+            "char_002;drop",
+            "char/002",
+            "char_\u{30a2}",
+        ] {
+            assert!(!is_valid_operator_id(bad), "{bad}");
+        }
+    }
+}

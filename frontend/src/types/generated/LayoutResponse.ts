@@ -6,12 +6,11 @@ import type { SlotPresetsDto } from "./SlotPresetsDto";
 /**
  * The player's real base, every built slot of it.
  *
- * This exists because a `BaseAssignment` is deliberately NOT a layout: it
- * carries only the rooms the plan has something to say about (production, plus
- * a staffed Control Center). Seeding a planner from it silently drops
- * dormitories, power plants and every support facility - which then breaks the
- * power balance AND the scoring, since dorm levels and facility counts feed
- * the clause engine.
+ * A `BaseAssignment` is deliberately NOT a layout: it carries only the rooms
+ * the plan has something to say about (production, plus a staffed Control
+ * Center). Seeding a planner from it drops dormitories, power plants and every
+ * support facility, which breaks the power balance AND the scoring (dorm levels
+ * and facility counts feed the clause engine).
  */
 export type LayoutResponse = {
     rooms: Array<DraftRoomDto>;

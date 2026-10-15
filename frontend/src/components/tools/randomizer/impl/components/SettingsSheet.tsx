@@ -6,6 +6,7 @@ import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { IStage, IZone, StageClearsMap } from "#/types/stages";
 import type { IActivityLookup } from "../activity-lookup";
+import type { ITierFilterState } from "../tier-filter";
 import type { IRandomizerOperator, IRandomizerSettings, IRosterIndex } from "../types";
 import { OperatorFiltersPanel } from "./OperatorFiltersPanel";
 import { RosterPicker } from "./RosterPicker";
@@ -28,6 +29,7 @@ interface ISettingsSheetProps {
     onRosterReset: () => void;
     rosterIndex: IRosterIndex;
     hasProfile: boolean;
+    tierFilter: ITierFilterState;
     stages: IStage[];
     zones: IZone[];
     activityLookup: IActivityLookup;
@@ -64,7 +66,7 @@ export function SettingsSheet(props: ISettingsSheetProps): React.ReactElement {
                         </TabsList>
 
                         <TabsContent value="operators">
-                            <OperatorFiltersPanel settings={props.settings} onChange={props.onChange} hasProfile={props.hasProfile} />
+                            <OperatorFiltersPanel settings={props.settings} onChange={props.onChange} hasProfile={props.hasProfile} tierFilter={props.tierFilter} />
                         </TabsContent>
 
                         <TabsContent value="stages">
@@ -82,6 +84,7 @@ export function SettingsSheet(props: ISettingsSheetProps): React.ReactElement {
                                 rosterIndex={props.rosterIndex}
                                 hasProfile={props.hasProfile}
                                 settings={props.settings}
+                                tierFilterTitle={props.tierFilter.narrowingTitle}
                             />
                         </TabsContent>
                     </Tabs>

@@ -39,7 +39,11 @@ export const SOFT_PITY_INCREMENT = 0.02;
  */
 export const HARD_PITY_PULL = SOFT_PITY_START + Math.round((1 - BASE_SIX_RATE) / SOFT_PITY_INCREMENT);
 
-/** Every pool on both servers ships `Guarantee5Avail: 1, Guarantee5Count: 10`. */
+/**
+ * Every pool on both servers ships `Guarantee5Avail: 1, Guarantee5Count: 10`, and the
+ * text spells out that it is once per banner: "A 5-star and above operator is
+ * guaranteed within the first 10 headhunting attempts" (`SPECIAL_EN_32_0_8`).
+ */
 export const GUARANTEE_FIVE_COUNT = 10;
 
 /** Orundum for one roll. */
@@ -56,25 +60,41 @@ export interface IGuarantee {
     kind: GuaranteeKind;
     /** LINKAGE: the roll by which the collab 6* is handed over. */
     at?: number;
+    /**
+     * LINKAGE: true when the handover recurs every `at` rolls without the collab 6*,
+     * the counter restarting at each copy, rather than firing once.
+     */
+    repeat?: boolean;
     /** DOUBLE / CLASSIC_DOUBLE: rolls after which the next 6* is forced on-rate. */
     first?: number;
     /** DOUBLE / CLASSIC_DOUBLE: rolls after which the OTHER rate-up is forced. */
     second?: number;
 }
 
+/**
+ * Where a banner's 6* rate-up comes from. `featured` is the usual published rate-up,
+ * `picked` the Orienteering operators the player locks in, and `none` a banner that
+ * boosts no 6* at all (ATTAIN, CLASSIC_ATTAIN).
+ */
+export type RateUpKind = "featured" | "picked" | "none";
+
 export interface IBannerModel {
     ruleType: string;
+    rateUp: RateUpKind;
     /** Share of the 6* band taken by EACH featured operator. */
     shareEach: number;
     /** Share of the 6* band taken by all featured operators together. */
     shareTotal: number;
-    /** How many 6* operators are rate-up. */
+    /** How many 6* operators are rate-up. Zero on a banner with no rate-up. */
     featuredCount: number;
     scope: PityScope;
     /** Whether pity survives the banner closing. False means it resets to zero. */
     carryOver: boolean;
     guarantee: IGuarantee;
-    /** Rolls that buy the featured operator outright in the banner shop, or null. */
+    /**
+     * Total rolls on the banner at which one free bonus copy of the limited operator
+     * (slot A) is handed over, once, without touching pity. Null when there is none.
+     */
     spark: number | null;
     /** True when the featured share could not be read and was inferred from the rule type. */
     inferred: boolean;
@@ -92,7 +112,20 @@ export interface IBannerModel {
  */
 const LIMITED_SHARE_POOL_IDS = new Set(["NORM_EN_6_0_6", "NORM_6_0_4"]);
 
-const STANDARD_RULES = new Set(["NORMAL", "SINGLE", "DOUBLE", "BACKFLOW"]);
+/**
+ * SPECIAL (Orienteering) is Standard Headhunting by its own pool text: every EN and
+ * CN SPECIAL pool carries the Standard pity paragraph ("The rate up from headhunting
+ * attempts will carry over to subsequent [Standard Headhunting]"), and CN says outright
+ * 该寻访为【标准寻访】. Pull history agrees (local Postgres, 874 users, 2026-10-10):
+ * a Standard chain without SPECIAL holds 16 pulls at or past roll 99 with no 6*, which
+ * hard pity makes impossible; with SPECIAL chained in, none (longest run 96).
+ *
+ * BACKFLOW ("Returning Headhunting") is deliberately NOT here, so it falls through
+ * to isolated. Its own pool detail (`RETURN_EN_41_0_1`) says its rolls "will not be
+ * accumulated or applied to any other banner, and will remain separate from any
+ * accumulated rolls on other banners", and are "reset to 0" when the banner ends.
+ */
+const STANDARD_RULES = new Set(["NORMAL", "SINGLE", "DOUBLE", "SPECIAL"]);
 /**
  * CLASSIC_ATTAIN is deliberately NOT here despite the CLASSIC prefix. Its own rule
  * text says the cumulative rolls "do not carry over between different
@@ -101,10 +134,30 @@ const STANDARD_RULES = new Set(["NORMAL", "SINGLE", "DOUBLE", "BACKFLOW"]);
  */
 const KERNEL_RULES = new Set(["CLASSIC", "CLASSIC_DOUBLE", "FESCLASSIC"]);
 
-function scopeFor(ruleType: string): PityScope {
+/**
+ * Everything else is isolated: the rolls count only on that one banner and are gone
+ * when it closes. ATTAIN matches its text: "the number of rolls without obtaining a
+ * 6-star Operator will not be accumulated or applied to any other banner". Pull history
+ * confirms ATTAIN and CLASSIC_ATTAIN: chaining either into its family's counter adds
+ * 35 and 33 pulls at or past roll 99 (Kernel alone: 0).
+ */
+export function scopeFor(ruleType: string): PityScope {
     if (STANDARD_RULES.has(ruleType)) return "standard";
     if (KERNEL_RULES.has(ruleType)) return "kernel";
     return "isolated";
+}
+
+/** The user's pity on each shared counter. Standard and Kernel are separate counters. */
+export interface ISharedPity {
+    standard: number;
+    kernel: number;
+}
+
+/** The rolls a banner of this model starts on: its own counter's, or 0 when isolated. */
+export function startPityFor(model: IBannerModel, pity: ISharedPity): number {
+    if (model.scope === "standard") return pity.standard;
+    if (model.scope === "kernel") return pity.kernel;
+    return 0;
 }
 
 /**
@@ -123,14 +176,16 @@ function scopeFor(ruleType: string): PityScope {
  * current rate-up 6-star operator, the next 6-star operator received is guaranteed to
  * be the current rate-up 6-star operator", which is the same threshold the two-rate-up
  * pools use, on a banner with only one operator to force. LIMITED, by contrast,
- * carries NO forced-rate-up text: its 300 is the Data Contract exchange, a separate
- * currency mechanism, not a redirected roll.
+ * carries NO forced-rate-up text: its 300 is a bonus copy handed over on top of the
+ * rolls (see `LIMITED_BONUS_AT`), not a redirected roll.
  */
-function guaranteeFor(ruleType: string): IGuarantee {
+function guaranteeFor(ruleType: string, linkageLoopAt: number | null): IGuarantee {
     switch (ruleType) {
         case "LINKAGE":
-            // "you are guaranteed to receive [X] within 120 attempts, only once"
-            return { kind: "linkage", at: 120 };
+            // EN and older CN: "you are guaranteed to receive [X] within 120 attempts,
+            // only once". The newest CN pools repeat it; see `IBannerModelInput.linkageLoopAt`.
+            if (linkageLoopAt !== null && Number.isInteger(linkageLoopAt) && linkageLoopAt > 0) return { kind: "linkage", at: linkageLoopAt, repeat: true };
+            return { kind: "linkage", at: LINKAGE_GUARANTEE_AT };
         case "SINGLE":
             // One rate-up, so there is no "other one" for a second threshold to force.
             return { kind: "selection", first: 150 };
@@ -149,11 +204,46 @@ function guaranteeFor(ruleType: string): IGuarantee {
 }
 
 /**
- * The share of the 6* band the featured operators take together.
- *
- * Read from the pool detail when it is present. The sidecar lags brand-new pools
- * (41 of 401 EN pools had no entry at the time of writing), so the rule type is the
- * fallback and the result is flagged `inferred` when that path is taken.
+ * The once-only collab handover: every pool's `linkageParam` that does not loop ships
+ * `guaranteeTarget6Count: 120` (`LINKAGE_R6_01` / `LINKAGE_MH_01`), and its text reads
+ * "guaranteed to receive [X] within 120 attempts, only once".
+ */
+const LINKAGE_GUARANTEE_AT = 120;
+
+/**
+ * The limited operator's bonus copy. Every Limited pool's text since `LIMITED_EN_30_0_5`
+ * (CN `LIMITED_50_0_1`, through `LIMITED_76_0_1`) reads "you will get the limited
+ * Operator: X after a total of 300 rolls (once only). This special 6-star Operator is
+ * a bonus gift ... does not affect your chance to get your next 6-star Operator", CN
+ * "累计寻访300次，可以额外获得限定干员X（仅限一次）". Every LIMITED `limitParam` in
+ * both tables carries `hasFreeChar: true, freeCount: 300`. The pools before those
+ * predate a forward-looking planner, so the rule is applied to the rule type.
+ */
+export const LIMITED_BONUS_AT = 300;
+
+/**
+ * Orienteering's three picks take the WHOLE 6* band. The player locks in "three
+ * 5-star and three 6-star Operators" (`SPECIAL_EN_32_0_8`), and `gacha_table`'s
+ * `SpecialGachaPercentDict` is `{5: 1.0, 4: 0.6}`: the picks hold 100% of rarity rank
+ * 5 (6*) and 60% of rank 4 (5*). Pull history agrees (local Postgres, 2026-10-10):
+ * across 375 user-banners on SPECIAL pools no user holds more than 3 distinct 6* from
+ * one pool, including the 20 who drew 4 to 7 of them. So each pick is a third,
+ * however many candidates the pool lists.
+ */
+const SPECIAL_PICKS = 3;
+const SPECIAL_SHARE_TOTAL = 1;
+
+/**
+ * Banners with no 6* rate-up. `upCharInfo` is empty on every ATTAIN and CLASSIC_ATTAIN
+ * pool on both servers; their only promise is "the first 6-star Operator obtained is
+ * guaranteed to be an unowned 6-star".
+ */
+const NO_RATE_UP_RULES = new Set(["ATTAIN", "CLASSIC_ATTAIN"]);
+
+/**
+ * The rule type's share of the 6* band for all featured operators together, used
+ * when the sidecar declares none. The sidecar lags brand-new pools (41 of 401 EN
+ * pools had no entry at the time of writing); `bannerModel` flags this path `inferred`.
  */
 function shareTotalFor(ruleType: string, poolId: string | null): number {
     if (poolId !== null && LIMITED_SHARE_POOL_IDS.has(poolId)) return 0.7;
@@ -164,25 +254,40 @@ export interface IBannerModelInput {
     ruleType: string;
     featuredCount: number;
     poolId?: string | null;
-    /** `upCharInfo.perCharList[rarityRank=5].percent` when the sidecar supplied it. */
+    /**
+     * `upCharInfo.perCharList[rarityRank=5].percent` when the sidecar supplied it: the
+     * share EACH featured operator takes, a 0..1 fraction (`ReleaseBanner.declaredShareEach`).
+     * Orienteering and the no-rate-up rules ignore it; their split is the rule's own.
+     */
     declaredShareEach?: number | null;
+    /**
+     * Rolls per cycle of a REPEATING collab handover, `ReleaseBanner.linkageLoopAt`. Only
+     * `LINKAGE_74_0_1`, `LINKAGE_74_0_3` and `LINKAGE_77_0_1` (CN) carry one: they read
+     * "每120次寻访必定能获得干员【X】，每次获得干员【X】后重新累计次数" (every 120 rolls guarantee
+     * X, the count restarting after each copy of X) and ship `linkageRuleId:
+     * "LINKAGE_LOOP6_NEW5"` with `loopTarget6Count: 120` in `linkageParam`; every older CN
+     * pool and every EN one says "仅限一次" / "only once". Null means once-only.
+     */
+    linkageLoopAt?: number | null;
 }
 
-export function bannerModel({ ruleType, featuredCount, poolId = null, declaredShareEach = null }: IBannerModelInput): IBannerModel {
+export function bannerModel({ ruleType, featuredCount, poolId = null, declaredShareEach = null, linkageLoopAt = null }: IBannerModelInput): IBannerModel {
+    const common = {
+        ruleType,
+        scope: scopeFor(ruleType),
+        carryOver: scopeFor(ruleType) !== "isolated",
+        guarantee: guaranteeFor(ruleType, linkageLoopAt),
+        spark: ruleType === "LIMITED" ? LIMITED_BONUS_AT : null,
+    };
+    // Both read off the rule itself, not the featured list, so neither is inferred, and
+    // a declared share does not override them.
+    if (NO_RATE_UP_RULES.has(ruleType)) return { ...common, rateUp: "none", shareEach: 0, shareTotal: 0, featuredCount: 0, inferred: false };
+    if (ruleType === "SPECIAL") return { ...common, rateUp: "picked", shareEach: SPECIAL_SHARE_TOTAL / SPECIAL_PICKS, shareTotal: SPECIAL_SHARE_TOTAL, featuredCount: SPECIAL_PICKS, inferred: false };
+
     const count = Math.max(1, featuredCount);
     const declared = declaredShareEach !== null && Number.isFinite(declaredShareEach) && declaredShareEach > 0;
     const shareEach = declared ? (declaredShareEach as number) : shareTotalFor(ruleType, poolId) / count;
-    return {
-        ruleType,
-        shareEach,
-        shareTotal: Math.min(1, shareEach * count),
-        featuredCount: count,
-        scope: scopeFor(ruleType),
-        carryOver: scopeFor(ruleType) !== "isolated",
-        guarantee: guaranteeFor(ruleType),
-        spark: ruleType === "LIMITED" ? 300 : null,
-        inferred: !declared,
-    };
+    return { ...common, rateUp: "featured", shareEach, shareTotal: Math.min(1, shareEach * count), featuredCount: count, inferred: !declared };
 }
 
 /**

@@ -132,8 +132,8 @@ const FIT_STEP = 0.01;
  * dark box, down on the light one, until the ratio clears
  * {@link TEXT_CONTRAST_TARGET} against that surface's worst composite.
  *
- * The walk ends at white or at black, which always clear it (8.453:1 and
- * 13.835:1 respectively, `TEXT_SWATCHES` row 0), so it cannot fail to return a
+ * The walk ends at white or at black, which always clear it (white is 8.453:1;
+ * black beats row 0's #1a1a1a at 13.835:1), so it cannot fail to return a
  * legible colour; an unparseable input is handed back untouched for the caller
  * to drop.
  */

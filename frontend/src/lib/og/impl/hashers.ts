@@ -1,5 +1,10 @@
+import { archiveOgHashParts, type IArchiveOgData } from "./archive";
+import { enemyOgHashParts, type IEnemyOgData } from "./enemy";
 import type { IGridImageData } from "./grid";
 import { ogHash } from "./hash";
+import { type IMusicOgData, musicOgHashParts } from "./music";
+import { type IRecruitmentOgData, recruitmentOgHashParts } from "./recruitment";
+import { type ISquadOgData, squadOgHashParts } from "./squad";
 import { type IStoryOgData, storyOgHashParts } from "./story";
 import type { IDefaultOgData } from "./templates/Default";
 import { GRID_IMAGE_LAYOUT } from "./templates/GridImage";
@@ -7,7 +12,7 @@ import type { IOperatorOgData } from "./templates/Operator";
 import type { IStageOgData } from "./templates/Stage";
 import type { ITierListOgData } from "./templates/TierList";
 import { type ITierListBoardImageData, TIER_LIST_BOARD_IMAGE_LAYOUT } from "./templates/TierListBoardImage";
-import type { IUserOgData } from "./templates/User";
+import { type IUserOgData, userOgHashParts } from "./user";
 
 // The per-kind `?v=` hash, apart from the registry so building an og:image URL on the
 // client does not bundle the templates and their server-only fetchers.
@@ -45,33 +50,22 @@ const operatorHasher = defineOgHasher<IOperatorOgData>({
     hashParts: (data) => [data.name, data.appellation, data.profession, data.professionName ?? "", data.rarity, data.subProfession, data.position, data.nationId, data.factionLabel ?? "", data.professionIconURL ?? "", (data.stats ?? []).map((s) => `${s.label}=${s.value}`).join("|"), data.server ?? ""],
 });
 
-const USER_HASH_VERSION = "v16";
+// v17: the card is redrawn and hashes every field it draws (`userOgHashParts`);
+// v16 hashed only what the route's partial data happened to carry.
+const USER_HASH_VERSION = "v17";
 
 const userHasher = defineOgHasher<IUserOgData>({
     kind: "user",
     hashVersion: USER_HASH_VERSION,
-    hashParts: (data) => [
-        data.nickname,
-        data.nickNumber ?? "",
-        data.uid,
-        data.level,
-        data.grade,
-        data.totalScore,
-        data.operatorCount,
-        data.skinCount,
-        data.itemCount,
-        data.lmd,
-        data.secretaryArtURL ?? "",
-        data.supportUnitsKind ?? "",
-        (data.supportUnits ?? [])
-            .map((u) => {
-                const sk = (u.skills ?? []).map((s) => `${s.mastery}.${s.skillLevel}`).join(",");
-                const md = (u.modules ?? []).map((m) => m.level).join(",");
-                return `${u.id}:${u.elite}:${u.level}:s${sk}:m${md}`;
-            })
-            .join("|"),
-        data.rarityCounts ? [6, 5, 4, 3, 2, 1].map((r) => `${r}=${data.rarityCounts?.[r] ?? 0}`).join(",") : "",
-    ],
+    hashParts: (data) => userOgHashParts(data),
+});
+
+const RECRUITMENT_HASH_VERSION = "v1";
+
+const recruitmentHasher = defineOgHasher<IRecruitmentOgData>({
+    kind: "recruitment",
+    hashVersion: RECRUITMENT_HASH_VERSION,
+    hashParts: (data) => recruitmentOgHashParts(data),
 });
 
 const TIER_LIST_HASH_VERSION = "v4";
@@ -130,16 +124,47 @@ const storyHasher = defineOgHasher<IStoryOgData>({
     hashParts: (data) => storyOgHashParts(data),
 });
 
-const DEFAULT_HASH_VERSION = "v6";
+const ENEMY_HASH_VERSION = "v1";
+
+const enemyHasher = defineOgHasher<IEnemyOgData>({
+    kind: "enemy",
+    hashVersion: ENEMY_HASH_VERSION,
+    hashParts: (data) => enemyOgHashParts(data),
+});
+
+const SQUAD_HASH_VERSION = "v1";
+
+const squadHasher = defineOgHasher<ISquadOgData>({
+    kind: "squad",
+    hashVersion: SQUAD_HASH_VERSION,
+    hashParts: (data) => squadOgHashParts(data),
+});
+
+const ARCHIVE_HASH_VERSION = "v1";
+
+const archiveHasher = defineOgHasher<IArchiveOgData>({
+    kind: "archive",
+    hashVersion: ARCHIVE_HASH_VERSION,
+    hashParts: (data) => archiveOgHashParts(data),
+});
+
+const MUSIC_HASH_VERSION = "v1";
+
+const musicHasher = defineOgHasher<IMusicOgData>({
+    kind: "music",
+    hashVersion: MUSIC_HASH_VERSION,
+    hashParts: (data) => musicOgHashParts(data),
+});
+
+// v7: the card names its section and draws mascot art instead of the chip row.
+const DEFAULT_HASH_VERSION = "v7";
 
 const defaultHasher = defineOgHasher<IDefaultOgData>({
     kind: "default",
     hashVersion: DEFAULT_HASH_VERSION,
-    // `tagLabels` are deliberately absent: they are the same five words on
-    // every card in a given locale, and the locale is already in the cache key
-    // (see `ogResponse`). Hashing them would change every English URL for no
-    // change in the image.
-    hashParts: (data) => [data.title, data.subtitle ?? "", data.activeTag ?? ""],
+    // The section label is hashed as drawn, so a translator's edit to it
+    // re-renders the card like an edit to the title does.
+    hashParts: (data) => [data.title, data.subtitle ?? "", data.section ?? "", data.art ?? ""],
 });
 
 interface IOgDataByKind {
@@ -150,6 +175,11 @@ interface IOgDataByKind {
     "grid-image": IGridImageData;
     stage: IStageOgData;
     story: IStoryOgData;
+    recruitment: IRecruitmentOgData;
+    enemy: IEnemyOgData;
+    squad: ISquadOgData;
+    archive: IArchiveOgData;
+    music: IMusicOgData;
     default: IDefaultOgData;
 }
 
@@ -166,5 +196,10 @@ export const ogHashers: { [K in OgKind]: IOgHasher<OgData<K>> } = {
     "grid-image": gridImageHasher,
     stage: stageHasher,
     story: storyHasher,
+    recruitment: recruitmentHasher,
+    enemy: enemyHasher,
+    squad: squadHasher,
+    archive: archiveHasher,
+    music: musicHasher,
     default: defaultHasher,
 };

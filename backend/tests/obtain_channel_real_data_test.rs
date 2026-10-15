@@ -1,8 +1,8 @@
 //! Obtain channels and localized faction and subclass names on the real trees,
 //! with KR and JP channels aligned against EN and CN.
 //!
-//! Skips when `assets/output/{en,cn,kr}` are absent, which is CI: the CI
-//! `game-data` artifact carries EN only.
+//! Skips without `assets/output/en` and `cn`, which is CI (the `game-data`
+//! artifact carries EN only); KR and JP each skip when absent.
 
 mod common;
 

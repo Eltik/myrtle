@@ -4,9 +4,11 @@ import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { useMaintenance } from "#/hooks/use-maintenance";
 import { formatServerWithPublisher } from "#/lib/auth/login";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import { formatSpan, isGameDown } from "#/lib/maintenance";
 import { formatRelativeShort } from "#/lib/utils";
 import type { IUserProfile } from "#/types/user";
 import type { messages as dataMessages } from "./DataPanel.messages";
@@ -37,6 +39,10 @@ export function AccountPanel({ user, onResync, syncing, onSignOut, signingOut, o
     const t: TypedT<typeof profileMessages & typeof dataMessages> = useT("settings");
     const display = user.nickname ?? "Player";
     const nickNum = user.nick_number ? `#${user.nick_number}` : "";
+    // While the game is down a sync would only be refused; say so instead of offering it.
+    const maintenance = useMaintenance();
+    const paused = maintenance !== null && isGameDown(maintenance.stage);
+    const pausedNote = !paused ? null : maintenance.secondsLeft !== null ? t("data.sync.paused", { time: formatSpan(maintenance.secondsLeft) }) : t("data.sync.pausedNoEnd");
 
     return (
         <div className="flex flex-col gap-4">
@@ -83,9 +89,9 @@ export function AccountPanel({ user, onResync, syncing, onSignOut, signingOut, o
                 <CardContent className="pt-0">
                     <SettingRow
                         title={t("data.sync.rowTitle")}
-                        description={t("data.sync.rowDesc")}
+                        description={pausedNote ?? t("data.sync.rowDesc")}
                         control={
-                            <Button size="sm" onClick={onResync} disabled={syncing} loading={syncing} className="w-full sm:w-auto">
+                            <Button size="sm" onClick={onResync} disabled={syncing || paused} loading={syncing} className="w-full sm:w-auto">
                                 <RefreshCwIcon className="size-3.5" />
                                 {syncing ? t("resync.pending") : t("resync.now")}
                             </Button>

@@ -2,6 +2,7 @@ import type * as React from "react";
 
 import { eliteIcon, specializedIcon } from "#/components/operators/detail/impl/assets";
 import { Input } from "#/components/ui/input";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IPresetTarget } from "#/lib/api/planner";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -38,15 +39,12 @@ export function BulkTargetForm({ target, onChange }: IBulkTargetFormProps): Reac
                 <FieldBlock label={t("planner.dialog.promotion")}>
                     <div className="flex items-center gap-2">
                         {ELITE_PHASES.map((e) => (
-                            <button
-                                key={e}
-                                type="button"
-                                onClick={() => onChange(withPresetChange(target, { field: "elite", value: e }))}
-                                className={cn("flex size-12 cursor-pointer items-center justify-center rounded-lg border transition-all", stepStateClass(target.elite === e))}
-                                title={t("planner.dialog.elite", { elite: e })}
-                            >
-                                <img src={eliteIcon(e)} alt={t("planner.dialog.elite", { elite: e })} className="icon-theme-aware size-7 object-contain" />
-                            </button>
+                            <Tooltip key={e}>
+                                <TooltipTrigger render={<button type="button" onClick={() => onChange(withPresetChange(target, { field: "elite", value: e }))} className={cn("flex size-12 cursor-pointer items-center justify-center rounded-lg border transition-all", stepStateClass(target.elite === e))} />}>
+                                    <img src={eliteIcon(e)} alt={t("planner.dialog.elite", { elite: e })} className="icon-theme-aware size-7 object-contain" />
+                                </TooltipTrigger>
+                                <TooltipPopup>{t("planner.dialog.elite", { elite: e })}</TooltipPopup>
+                            </Tooltip>
                         ))}
                     </div>
                 </FieldBlock>
@@ -117,8 +115,9 @@ interface IStepButtonProps {
 
 function StepButton({ isActive, title, onSelect, children }: IStepButtonProps): React.ReactElement {
     return (
-        <button type="button" onClick={onSelect} aria-pressed={isActive} className={cn("flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md border transition-all", stepStateClass(isActive))} title={title}>
-            {children}
-        </button>
+        <Tooltip>
+            <TooltipTrigger render={<button type="button" onClick={onSelect} aria-pressed={isActive} aria-label={title} className={cn("flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md border transition-all", stepStateClass(isActive))} />}>{children}</TooltipTrigger>
+            <TooltipPopup>{title}</TooltipPopup>
+        </Tooltip>
     );
 }

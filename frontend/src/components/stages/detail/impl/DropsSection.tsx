@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Package } from "lucide-react";
 import { useState } from "react";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { RARITY_HEX_MUTED } from "#/lib/utils";
@@ -15,16 +16,19 @@ function RateMeter({ occ }: { occ: { labelKey: StageDetailMessageKey; level: num
     const tConst: TypedT<typeof detailConstantsMessages> = useT("stages");
     const label = tConst(occ.labelKey);
     return (
-        <span className="inline-flex items-center gap-1.5" title={t("drops.rateTitle", { rate: label })}>
-            <span aria-hidden="true" className="flex items-center gap-0.5">
-                {[0, 1, 2, 3, 4].map((i) => (
-                    <span key={i} className="h-2.5 w-1 rounded-[1px]" style={{ background: i < occ.level ? occ.tone : "color-mix(in oklch, var(--muted-foreground) 28%, transparent)" }} />
-                ))}
-            </span>
-            <span className="font-medium font-mono text-[10px] uppercase leading-none tracking-[0.08em]" style={{ color: occ.tone }}>
-                {label}
-            </span>
-        </span>
+        <Tooltip>
+            <TooltipTrigger render={<span className="inline-flex items-center gap-1.5" />}>
+                <span aria-hidden="true" className="flex items-center gap-0.5">
+                    {[0, 1, 2, 3, 4].map((i) => (
+                        <span key={i} className="h-2.5 w-1 rounded-[1px]" style={{ background: i < occ.level ? occ.tone : "color-mix(in oklch, var(--muted-foreground) 28%, transparent)" }} />
+                    ))}
+                </span>
+                <span className="font-medium font-mono text-[10px] uppercase leading-none tracking-[0.08em]" style={{ color: occ.tone }}>
+                    {label}
+                </span>
+            </TooltipTrigger>
+            <TooltipPopup>{t("drops.rateTitle", { rate: label })}</TooltipPopup>
+        </Tooltip>
     );
 }
 

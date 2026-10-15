@@ -23,49 +23,60 @@ const SEEDS: ISeed[] = [
     { uid: "44012908", nickname: "Rhodes Admin", server: "KR", level: 109, avatar_id: "char_4045_heidi", grade: "B", rank_global: 5, rank_delta: -4, total_score: 0.773, operator_score: 0.741 },
 ];
 
-const toEntry = (seed: ISeed) => ({
-    id: seed.uid,
+/** `rowFromScore`: one ranked row per standing, `value` the ranked score (0..1). */
+const toRow = (seed: ISeed, value: number) => ({
     uid: seed.uid,
     nickname: seed.nickname,
     nick_number: null,
     level: seed.level,
     avatar_id: seed.avatar_id,
-    secretary: null,
-    secretary_skin_id: null,
     server: seed.server,
     grade: seed.grade,
-    total_score: seed.total_score,
-    operator_score: seed.operator_score,
-    stage_score: seed.total_score - 0.07,
-    roguelike_score: seed.total_score - 0.19,
-    sandbox_score: seed.total_score - 0.24,
-    medal_score: seed.total_score - 0.11,
-    base_score: seed.total_score - 0.05,
-    skin_score: seed.total_score - 0.31,
-    rank_global: seed.rank_global,
-    rank_server: seed.rank_global,
-    rank_delta: seed.rank_delta,
+    rank: seed.rank_global,
+    delta: seed.rank_delta,
+    value,
     isSelf: seed.isSelf ?? false,
 });
 
-const ENTRIES = SEEDS.map(toEntry);
+const BY_TOTAL = SEEDS.map((s) => toRow(s, s.total_score));
+const BY_OPERATORS = [...SEEDS].sort((a, b) => b.operator_score - a.operator_score).map((s, i) => ({ ...toRow(s, s.operator_score), rank: i + 1 }));
+
+/** Originite Prime holdings, `rowFromItem`: the value is the quantity, the bar a share of the top holding. */
+const OP_HOLDINGS = [6421, 5180, 3977, 2210, 1046];
+const BY_ITEM = SEEDS.map((s, i) => toRow(s, OP_HOLDINGS[i]));
+
+/** The item catalog as the page holds it once loaded; `meta` is the item-table row (only the joined fields are read here). */
+const CATALOG = {
+    items: [{ item_id: "4002", holders: 2412, top: 6421, total_quantity: 1873390, meta: null, name: "Originite Prime", rarityNum: 6, iconId: "DIAMOND" }],
+    population: 2629,
+};
+const EMPTY_CATALOG = { items: [], population: null };
+
+const noop = () => {};
 
 const Frame = ({ children }: { children: ReactNode }) => <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]">{children}</div>;
 
 export const TopRanks = () => (
     <Frame>
-        <LeaderboardTable entries={ENTRIES} intervalLabel="since yesterday" onSort={() => {}} sort="total_score" />
+        <LeaderboardTable rows={BY_TOTAL} ranking={{ kind: "score", sort: "total_score" }} onRanking={noop} catalog={EMPTY_CATALOG} materials={undefined as never} topValue={null as never} intervalKey="leaderboard.interval.day.since" />
     </Frame>
 );
 
 export const SortedByOperators = () => (
     <Frame>
-        <LeaderboardTable entries={ENTRIES} intervalLabel="in the past 7 days" onSort={() => {}} sort="operator_score" />
+        <LeaderboardTable rows={BY_OPERATORS} ranking={{ kind: "score", sort: "operator_score" }} onRanking={noop} catalog={EMPTY_CATALOG} materials={undefined as never} topValue={null as never} intervalKey="leaderboard.interval.week.since" />
+    </Frame>
+);
+
+/** Ranked by an item: counts with bars against the top holding; grades still shown. */
+export const RankedByItem = () => (
+    <Frame>
+        <LeaderboardTable rows={BY_ITEM} ranking={{ kind: "item", item: "4002" }} onRanking={noop} catalog={CATALOG} materials={undefined as never} topValue={OP_HOLDINGS[0]} />
     </Frame>
 );
 
 export const NoResults = () => (
     <Frame>
-        <LeaderboardTable entries={[]} onSort={() => {}} sort="total_score" />
+        <LeaderboardTable rows={[]} ranking={{ kind: "score", sort: "total_score" }} onRanking={noop} catalog={EMPTY_CATALOG} materials={undefined as never} topValue={null as never} />
     </Frame>
 );

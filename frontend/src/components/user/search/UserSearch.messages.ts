@@ -24,8 +24,12 @@ export const messages = {
         description: "Paragraph under the user-search page heading.",
     },
     "search.input.placeholder": {
-        text: "Search by nickname…",
+        text: "Search by nickname or UID…",
         description: "Placeholder in the search box. Keep the single-character ellipsis.",
+    },
+    "search.uid.open": {
+        text: "Open this UID's profile",
+        description: "Label of the link shown under the search box when the typed text looks like a player UID (a plain number). The UID itself is shown beneath it.",
     },
     "search.input.label": {
         text: "Search doctors",

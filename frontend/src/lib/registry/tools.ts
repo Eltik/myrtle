@@ -1,6 +1,6 @@
 import type { messages as toolMessages } from "#/lib/registry/tools.messages";
 
-export type ToolIconName = "chart" | "calc" | "star" | "dice" | "cake" | "pack" | "search" | "trophy" | "users" | "user" | "history" | "tiers" | "heart" | "list-todo" | "shield" | "crosshair" | "map" | "calendar-clock" | "book" | "grid";
+export type ToolIconName = "chart" | "calc" | "star" | "dice" | "cake" | "pack" | "search" | "trophy" | "users" | "user" | "history" | "tiers" | "heart" | "list-todo" | "shield" | "crosshair" | "map" | "calendar-clock" | "book" | "grid" | "music" | "squad" | "newspaper";
 
 export type ToolCategory = "calculator" | "fun";
 
@@ -70,6 +70,15 @@ export const TOOLS: ITool[] = [
         icon: "heart",
         category: "calculator",
         keywords: ["healing", "hps", "heal", "medic", "chart", "skill", "curve", "calculator"],
+    },
+    {
+        id: "squad-builder",
+        href: "/tools/squad-builder",
+        labelKey: "tool.squadBuilder.label",
+        descKey: "tool.squadBuilder.desc",
+        icon: "squad",
+        category: "calculator",
+        keywords: ["squad", "team", "builder", "coverage", "synergy", "deploy", "dp", "lineup", "share"],
     },
     {
         id: "randomizer",

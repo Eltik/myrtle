@@ -7,6 +7,7 @@ import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
 import { useInvalidateProfile, useResyncRoster } from "#/hooks/use-resync-roster";
 import { disconnectGameAccountFn, type IUpdateUserSettingsInput, updateUserSettingsFn } from "#/lib/api/auth";
+import { deleteAccountFn } from "#/lib/auth/server";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { forgetSession } from "#/lib/root-context";
@@ -87,6 +88,20 @@ export function SettingsPage({ user }: { user: IUserProfile | null }) {
         onError: (err: unknown) => toastError("disconnect", t("toast.disconnectFailed.title"), err),
     });
 
+    const deleteMutation = useMutation({
+        mutationFn: () => deleteAccountFn(),
+        onSuccess: async () => {
+            // The server fn already dropped the cookies; this clears the
+            // client's copy of the session and its cached private queries.
+            try {
+                await logout();
+            } finally {
+                await navigate({ to: "/" });
+                toastSuccess("account-deleted", t("toast.deleted.title"), t("toast.deleted.body"));
+            }
+        },
+    });
+
     const handleSettingsChange = (next: IUpdateUserSettingsInput) => {
         setSettings(next);
         settingsMutation.mutate(next);
@@ -108,7 +123,7 @@ export function SettingsPage({ user }: { user: IUserProfile | null }) {
             {user && active === "account" && <AccountPanel user={user} onResync={() => resyncMutation.mutate()} syncing={resyncMutation.isPending} onSignOut={handleSignOut} signingOut={signingOut} onDisconnect={() => disconnectMutation.mutate()} disconnecting={disconnectMutation.isPending} />}
             {active === "appearance" && <AppearancePanel />}
             {user && active === "privacy" && <PrivacyPanel settings={settings} onChange={handleSettingsChange} saving={settingsMutation.isPending} />}
-            {user && active === "danger" && <DangerPanel />}
+            {user && active === "danger" && <DangerPanel onDelete={() => deleteMutation.mutate()} deleting={deleteMutation.isPending} errorMessage={deleteMutation.error ? describeError(deleteMutation.error) : null} onDialogClose={() => deleteMutation.reset()} />}
         </SettingsShell>
     );
 }

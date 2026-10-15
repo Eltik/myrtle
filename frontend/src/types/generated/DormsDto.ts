@@ -2,15 +2,15 @@
 import type { DormDto } from "./DormDto";
 
 /**
- * The dormitories' contribution. They produce nothing, so they never appear in
- * a `BaseAssignment` - but they set how fast workers recover and how many can
- * rest at once, which is what decides whether a staffing survives its own
- * rhythm. Surfaced separately so "no yield" doesn't read as "not accounted for".
+ * The dorms. They produce nothing, so no `BaseAssignment` lists them, but they
+ * set recovery speed and how many can rest at once, which decides whether a
+ * staffing survives its own rhythm. Listed apart so no yield doesn't read as
+ * unaccounted.
  */
 export type DormsDto = {
     count: number;
     /**
-     * Sum of dorm levels - the `&dorm&lv` scaling the clause engine reads.
+     * Sum of dorm levels (the clause engine's `&dorm&lv`).
      */
     total_levels: number;
     /**
@@ -22,8 +22,8 @@ export type DormsDto = {
      */
     recovery_per_hour: number;
     /**
-     * Each dormitory, BEST FIRST - the order resters fill them. A 2/5/2's
-     * under-leveled dorms show up here as the slower rates they are.
+     * Each dorm, best first (the order resters fill them), so a 2/5/2's
+     * low dorms show their slower rates.
      */
     per_dorm: Array<DormDto>;
 };

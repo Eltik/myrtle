@@ -24,7 +24,7 @@ where
     Ok(items.into_iter().map(|kv| (kv.key, kv.value)).collect())
 }
 
-/// Deserialize `FlatBuffer`'s [{key, value}] array format into `HashMap`, with default on missing
+/// [`deserialize_fb_map`], but `null` reads as an empty map.
 pub fn deserialize_fb_map_or_default<'de, D, K, V>(
     deserializer: D,
 ) -> Result<HashMap<K, V>, D::Error>

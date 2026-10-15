@@ -1,18 +1,18 @@
 import { TierSettingsDialog } from "frontend";
 import type { ReactNode } from "react";
 
-/** `IEditTier` — operator ids verified against https://api.myrtle.moe/api/operators/index. */
+/** `IEditTier` — `operator:<id>` entity keys, ids verified against https://api.myrtle.moe/api/operators/index. */
 const S_TIER = {
     id: "tier-s",
     name: "S",
     color: "#dc4d56",
     description: "Warps a map on its own. An operator only lands here if a squad without them has to change plan, not just play slower.",
-    operatorIds: ["char_1035_wisdel", "char_4064_mlynar", "char_1028_texas2", "char_4087_ines", "char_350_surtr", "char_4116_blkkgt", "char_2012_typhon"],
+    entityKeys: ["operator:char_1035_wisdel", "operator:char_4064_mlynar", "operator:char_1028_texas2", "operator:char_4087_ines", "operator:char_350_surtr", "operator:char_4116_blkkgt", "operator:char_2012_typhon"],
 };
 
-const NEW_TIER = { id: "tier-d", name: "D", color: "#4f9d69", description: "", operatorIds: [] };
+const NEW_TIER = { id: "tier-d", name: "D", color: "#4f9d69", description: "", entityKeys: [] };
 
-const ONLY_TIER = { id: "tier-1", name: "Pick-One", color: "#8b6ad6", description: "One slot, six candidates. Ranked for CC#12 Daybreak risk 18.", operatorIds: [] };
+const ONLY_TIER = { id: "tier-1", name: "Pick-One", color: "#8b6ad6", description: "One slot, six candidates. Ranked for CC#12 Daybreak risk 18.", entityKeys: [] };
 
 const noop = () => {};
 

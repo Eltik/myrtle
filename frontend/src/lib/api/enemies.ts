@@ -6,12 +6,14 @@ import { values } from "#/lib/records";
 import type { StageGroupKey } from "#/lib/registry/stage-groups";
 // Generated from `backend/src/core/gamedata/types/{enemy,enemy_stages}.rs` and
 // `backend/src/app/routes/enemies.rs`. To change a field, edit the Rust struct
-// and run `bun run gen:types` - do not redeclare it here.
+// and run `bun run gen:types`; never redeclare it here.
 import type { AbilityInfo } from "#/types/generated/AbilityInfo";
 import type { CommunityEnemyAverageResponse } from "#/types/generated/CommunityEnemyAverageResponse";
 import type { DamageType } from "#/types/generated/DamageType";
 import type { Enemy } from "#/types/generated/Enemy";
 import type { EnemyAttributes } from "#/types/generated/EnemyAttributes";
+import type { EnemyAudio } from "#/types/generated/EnemyAudio";
+import type { EnemyAudioCategory } from "#/types/generated/EnemyAudioCategory";
 import type { EnemyHandbook } from "#/types/generated/EnemyHandbook";
 import type { EnemyInfoList } from "#/types/generated/EnemyInfoList";
 import type { EnemyLevel } from "#/types/generated/EnemyLevel";
@@ -40,6 +42,8 @@ export type IEnemyLevelStats = EnemyLevelStats;
 export type IEnemyStats = EnemyStats;
 export type IEnemy = Enemy;
 export type IEnemyHandbook = EnemyHandbook;
+export type IEnemyAudio = EnemyAudio;
+export type IEnemyAudioCategory = EnemyAudioCategory;
 
 /** Backend-served square icon for an enemy, keyed by `enemyId`. */
 export function enemyIconURL(enemyId: string, server: string = DEFAULT_GAMEDATA_SERVER): string {
@@ -147,12 +151,14 @@ export function enemyCommunityAverageQueryOptions() {
 
 /**
  * A single enemy's handbook record plus the race lookup needed to resolve its
- * displayed race. Served by `GET /enemies/{id}`; replaces loading the entire
- * enemy handbook to render one enemy.
+ * displayed race. Served by `GET /enemies/{id}`, so one enemy never loads the
+ * entire enemy handbook.
  */
 export interface IEnemyDetail {
     enemy: IEnemy;
     raceData: Record<string, IEnemyRaceData>;
+    /** The enemy's battle sounds; empty (or absent from an older backend) when none link to it. */
+    audio?: IEnemyAudio[];
 }
 
 export const getEnemyDetailFn = createServerFn({ method: "GET" })

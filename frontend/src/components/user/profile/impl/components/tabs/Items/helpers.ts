@@ -46,8 +46,8 @@ export function rarityTierToNumber(tier: string | null | undefined): number {
 }
 
 // `formatItemType` and `formatVoucherId` title-case a raw API code
-// (`SKILL_SUMMARY` -> `Skill Summary`), so what they return is the code itself,
-// not prose - which is why neither goes through the catalog.
+// (`SKILL_SUMMARY` -> `Skill Summary`); the result is the code, not prose, so
+// neither goes through the catalog.
 export function formatItemType(itemType: string | null | undefined): string {
     if (!itemType || itemType === "UNKNOWN" || itemType === "NONE") return "Item";
     return itemType
@@ -70,7 +70,7 @@ export function categorizeItem(meta: IMaterialItem | null, expIds: Set<string>):
     if (meta.classifyType === "CONSUME") return "consume";
     const t = (meta.itemType || "").toUpperCase();
     if (t.includes("EXP")) return "exp";
-    if (t === "GOLD" || t === "DIAMOND" || t === "DIAMOND_SHD" || t === "LMD" || t === "ETH" || t === "EPGS" || t === "VOUCHER_PRTS" || t === "CARD_EXP" || t === "ACTIVITY_COIN") return "lmd";
+    if (t === "GOLD" || t === "DIAMOND" || t === "DIAMOND_SHD" || t === "LMD" || t === "ETH" || t === "EPGS" || t === "VOUCHER_PRTS" || t === "ACTIVITY_COIN") return "lmd";
     if (t.includes("MOD_")) return "module";
     if (t.includes("CHIP") || t.includes("CLASS_TOKEN")) return "chip";
     if (t.includes("FURN")) return "furniture";

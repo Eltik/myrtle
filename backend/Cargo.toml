@@ -70,8 +70,9 @@ tikv-jemalloc-sys = "0.6"
 anyhow = "1.0.102"
 arc-swap = "1"
 base64 = "0.22"
+brotli = "9.0.0"
 bson = "3.1.0"
-axum = { version = "0.8.8", features = ["macros"] }
+axum = "0.8.8"
 chacha20poly1305 = "0.10"
 chrono = { version = "0.4.44", features = ["serde"] }
 dashmap = "6"
@@ -94,20 +95,21 @@ regex = "1.12.3"
 reqwest = { version = "0.13", features = ["json"] }
 rsa = "0.9"
 serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.149"
+# float_roundtrip: parse every float back to the exact f64 it was printed from,
+# so a value read from the JSON cache matches the one computed on the miss.
+serde_json = { version = "1.0.149", features = ["float_roundtrip"] }
 ts-rs = { version = "11", features = ["chrono-impl", "uuid-impl", "serde-json-impl", "no-serde-warnings"] }
 sha1 = "0.10.6"
 sha2 = "0.10"
 sqlx = { version = "0.8.6", features = ["postgres", "runtime-tokio", "uuid", "chrono", "json"] }
 subtle = "2"
 thiserror = "2.0.18"
-tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "signal", "process"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "signal"] }
 tokio-tungstenite = { version = "0.26", features = ["connect"] }
 tokio-util = { version = "0.7.18", features = ["io"] }
-tower = "0.5.3"
-tower-http = { version = "0.6.8", features = ["cors", "compression-gzip", "compression-br", "trace", "request-id"] }
+tower-http = { version = "0.6.8", features = ["cors", "compression-gzip", "compression-br"] }
 tracing = "0.1.44"
-tracing-subscriber = { version = "0.3.23", features = ["env-filter", "json"] }
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 urlencoding = "2"
 utoipa = { version = "5.5", features = ["axum_extras", "chrono", "uuid"] }
 utoipa-axum = "0.2"
@@ -116,6 +118,10 @@ uuid = { version = "1.22.0", features = ["serde", "v4"] }
 validator = { version = "0.20.0", features = ["derive"] }
 walkdir = "2.5.0"
 zip = "8.6.0"
+ammonia = "4.2.3"
+
+[dev-dependencies]
+tower = { version = "0.5.3", features = ["util"] }
 
 [profile.release]
 lto = "thin"

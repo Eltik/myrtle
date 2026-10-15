@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useSyncExternalStore } from "react";
+import { pauseSiteMusic, registerOtherMusic } from "#/components/gallery/music/player/presence";
 import { asset } from "#/components/operators/detail/impl/assets";
+import type { GamedataServer } from "#/lib/api/gamedata";
 import { createStoryAudio, type StoryAudio } from "#/lib/story/audio";
 import { clamp01 } from "#/lib/story/num";
 import { DEFAULT_SETTINGS, loadSettings, updateSettings } from "#/lib/story/settings";
@@ -9,6 +11,8 @@ import type { StoryMusic } from "#/types/generated/StoryMusic";
 export interface IThemeCue {
     intro?: string;
     loop: string;
+    /** The server whose tree holds both clips, when it is not the default one. Absent for every story theme. */
+    server?: GamedataServer;
 }
 
 /** What is sounding, named well enough for a bar at the foot of the page to say so. */
@@ -61,15 +65,13 @@ const INITIAL: IPlayerState = { track: null, paused: false, volume: DEFAULT_SETT
  * route, so the library is unmounted while a story is open and each side reads
  * the document fresh on mount.
  *
- * PAUSE IS A STOP THAT REMEMBERS ITS SECOND. `AudioBufferSourceNode` still
- * cannot be resumed, so a pause is still a stop, but the position is read off
- * the audio clock before the sources die and the resume starts new ones that
- * far into the cue, which the listener hears as a continuation rather than the
- * replay from the intro this used to be. The seek slider is the same
- * mechanism pointed anywhere on the timeline. What it costs: the join is
+ * PAUSE IS A STOP THAT REMEMBERS ITS SECOND. An `AudioBufferSourceNode` cannot
+ * be resumed, so the position is read off the audio clock before the sources
+ * die and the resume starts new ones that far into the cue. The seek slider is
+ * the same mechanism pointed anywhere on the timeline. The cost: the join is
  * rebuilt each time, and a channel whose decode fell back to a media element
- * reports no timeline at all, so there it remains a replay from the top and
- * the bar shows no slider.
+ * reports no timeline, so there a resume replays from the top and the bar
+ * shows no slider.
  */
 let audio: StoryAudio | null = null;
 let state: IPlayerState = INITIAL;
@@ -120,13 +122,15 @@ function start(track: IPlayerTrack, offsetSeconds: number | null): void {
     const settings = loadSettings();
     audio ??= createStoryAudio();
     if (!audio.arm()) return;
+    // The music player has its own channel; a theme pauses it rather than sounding over it.
+    pauseSiteMusic();
     audio.setMasterMusic(settings.musicVolume);
     audio.setMuted(settings.muted);
     // A crossfade only makes sense over something that is sounding. Over silence
     // it is a fade-IN the reader hears as a slow start. A seek is neither: the
     // two ends are the same track, so a crossfade there is the track over itself.
     const crossfade = offsetSeconds === null && state.track !== null && !state.paused ? FADE_SEC : 0;
-    const req = { intro: track.cue.intro ? asset(track.cue.intro) : undefined, loop: asset(track.cue.loop), volume: 1, crossfade };
+    const req = { intro: track.cue.intro ? asset(track.cue.intro, track.cue.server) : undefined, loop: asset(track.cue.loop, track.cue.server), volume: 1, crossfade };
     if (offsetSeconds === null) audio.playMusic(req);
     else audio.playMusicAt(req, offsetSeconds);
     // The length survives a seek within one cue and is unknown for a new one,
@@ -330,6 +334,11 @@ export function useNowPlayingClock(running: boolean): void {
 export function useLibraryPlayerLifetime(): void {
     useEffect(() => {
         hydrate();
-        return dispose;
+        // The music player starting pauses this channel, as a theme starting pauses the player.
+        const unregister = registerOtherMusic(pause);
+        return () => {
+            unregister();
+            dispose();
+        };
     }, []);
 }

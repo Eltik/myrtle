@@ -118,6 +118,10 @@ export const messages = {
         text: "Stage {stage}",
         description: "Native tooltip of a module-stage button. 'Stage' is the game's own name for a module's upgrade step.",
     },
+    "planner.dialog.alreadyReached": {
+        text: "Already reached",
+        description: "Tooltip on a promotion, skill or module step below where the player's operator already is. Plans only go up, so these steps cannot be picked.",
+    },
     "planner.dialog.notPlanned": {
         text: "Not planned",
         description: "Native tooltip of the module-stage button meaning the module is left out of the plan.",

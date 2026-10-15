@@ -65,6 +65,9 @@ services:
             SERVERS: ${SERVERS:-en}
             ASSET_WS_URLS: ${ASSET_WS_URLS}
             SERVICE_KEY: ${SERVICE_KEY}
+            # Every interface inside the container, whatever backend/.env sets
+            # for a local run (HOST=127.0.0.1 there would make it unreachable).
+            HOST: 0.0.0.0
             PORT: 3060
         volumes:
             - ./backend:/src

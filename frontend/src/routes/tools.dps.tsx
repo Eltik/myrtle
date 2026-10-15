@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle } from "lucide-react";
+import * as React from "react";
 import { DpsCalculator } from "#/components/tools/dps/DpsCalculator";
 import { Button } from "#/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
@@ -8,9 +9,15 @@ import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
+export interface IDpsSearch {
+    /** The Squad Builder's hand-off (`encodeDpsImport`); read once and dropped. */
+    import?: string;
+}
+
 export const Route = createFileRoute("/tools/dps")({
     component: RouteComponent,
     errorComponent: DpsErrorComponent,
+    validateSearch: (search: Record<string, unknown>): IDpsSearch => (typeof search.import === "string" && search.import.length > 0 ? { import: search.import } : {}),
     // Per-operator detail (skill names, module icons) is fetched when an operator
     // is picked, by `useOperatorDetail`; nothing operator-wide is needed to render.
     loader: ({ context: { queryClient } }) => queryClient.prefetchQuery(dpsOperatorsQueryOptions()),
@@ -31,7 +38,11 @@ export const Route = createFileRoute("/tools/dps")({
 });
 
 function RouteComponent() {
-    return <DpsCalculator />;
+    const search = Route.useSearch();
+    const navigate = useNavigate();
+    // Dropped with a replace once the page has read it, so a reload does not add the cards again.
+    const onImportConsumed = React.useCallback(() => void navigate({ to: "/tools/dps", search: {}, replace: true }), [navigate]);
+    return <DpsCalculator importParam={search.import} onImportConsumed={onImportConsumed} />;
 }
 
 function DpsErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {

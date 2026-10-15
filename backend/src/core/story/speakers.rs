@@ -1,7 +1,7 @@
 //! WHO IS SPEAKING, per line, over a parsed script: the stage's slots, the
 //! cut-in plate and the interlude windows, tracked by the same rules the
 //! reader's engine plays them by (`frontend/src/lib/story/engine.ts`, and
-//! `speaker.ts` for the lit-slot join), so a name the census pins on a sprite
+//! `components/story/reader/speaker.ts` for the lit-slot join), so a name the census pins on a sprite
 //! is the name a reader sees beside that sprite lit.
 //!
 //! Nothing on the wire joins a `[name="Nine"]` line to a sprite key, so the

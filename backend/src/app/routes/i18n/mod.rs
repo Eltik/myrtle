@@ -32,5 +32,6 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(admin::list_overrides, admin::put_override))
         .routes(routes!(admin::delete_override))
         .routes(routes!(permissions::list, permissions::grant))
+        .routes(routes!(permissions::mine))
         .routes(routes!(permissions::revoke))
 }

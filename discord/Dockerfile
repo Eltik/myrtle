@@ -1,8 +1,9 @@
 FROM rust:1-bookworm AS builder
 WORKDIR /build
 
+# cmake builds the vendored libopus that songbird encodes voice with (opus2 `bundled`).
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    pkg-config libssl-dev
+    pkg-config libssl-dev cmake
 RUN rm -rf /var/lib/apt/lists/*
 
 COPY . .

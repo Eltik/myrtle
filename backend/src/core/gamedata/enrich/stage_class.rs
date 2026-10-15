@@ -17,7 +17,7 @@ use crate::core::gamedata::types::roguelike::RoguelikeTopicTableFile;
 use crate::core::gamedata::types::stage::{Stage, StageDifficulty};
 use crate::core::gamedata::types::zone::{Zone, ZoneType};
 
-/// Canonical, display-ready info for one stage / level.
+/// Display info for one stage or level file.
 pub struct StageInfo {
     /// Short per-stage label (in-game stage code, IS/RA node name, etc.).
     pub code: String,
@@ -379,8 +379,7 @@ const fn mode_type_label(zone_type: Option<&ZoneType>) -> Option<&'static str> {
     }
 }
 
-/// Holds the gamedata tables needed to classify any stage/level. Build once,
-/// then call `classify_level` / `classify_stage_id` per item.
+/// Build once per load, then `classify_level` / `classify_stage_id` per item.
 pub struct StageClassifier<'a> {
     stages: &'a HashMap<String, Stage>,
     zones: &'a HashMap<String, Zone>,
@@ -689,5 +688,52 @@ impl<'a> StageClassifier<'a> {
             });
         }
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{is_hard_path, is_topic_key, node_code};
+
+    #[test]
+    fn hard_paths_are_spotted_case_insensitively() {
+        for hard in [
+            "Obt/Main/level_tough_12-01",
+            "Obt/Hard/level_hard_15-01",
+            "obt/hard/level_x",
+            "Activities/ACT_HARD_01/level_a",
+            "Obt/Main/level_main_hard_10-01",
+        ] {
+            assert!(is_hard_path(hard), "{hard}");
+        }
+        for normal in [
+            "Obt/Main/level_main_01-07",
+            "obt/hardware/level_x",
+            "level_hard",
+            "",
+        ] {
+            assert!(!is_hard_path(normal), "{normal}");
+        }
+    }
+
+    #[test]
+    fn topic_keys_come_from_the_season_number() {
+        assert_eq!(is_topic_key("rogue_4").as_deref(), Some("rogue_4"));
+        assert_eq!(is_topic_key("rogue4").as_deref(), Some("rogue_4"));
+        assert_eq!(is_topic_key("rogue_10").as_deref(), Some("rogue_10"));
+        assert_eq!(is_topic_key("rogue_04").as_deref(), Some("rogue_4"));
+        assert_eq!(is_topic_key("rogue_"), None);
+        assert_eq!(is_topic_key("sandbox"), None);
+        // Anything after the digits fails the parse.
+        assert_eq!(is_topic_key("rogue4_b-4-c"), None);
+    }
+
+    #[test]
+    fn node_code_is_everything_after_the_first_underscore() {
+        assert_eq!(node_code("rogue4_b-4-c"), "b-4-c");
+        assert_eq!(node_code("sandbox2_04"), "04");
+        assert_eq!(node_code("crisis_v2_01-02"), "v2_01-02");
+        assert_eq!(node_code("plain"), "plain");
+        assert_eq!(node_code("trailing_"), "");
     }
 }

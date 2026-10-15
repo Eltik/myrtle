@@ -95,12 +95,7 @@ $ sudo apt install build-essential
 # Windows
 # Install Visual Studio Build Tools (C++ workload). See https://learn.microsoft.com/en-us/cpp/build/vscpp-step-0-installation?view=msvc-170
 ```
-4. Clone OpenArknightsFBS into the assets directory
-```bash
-cd assets
-git clone https://github.com/Eltik/OpenArknightsFBS.git
-```
-5. Build the downloader and unpacker:
+4. Build the downloader and unpacker:
 ```bash
 # Build downloader
 $ cd downloader
@@ -110,13 +105,13 @@ $ cargo build --release
 $ cd unpacker
 $ cargo build --release
 ```
-6. Download assets
+5. Download assets
 ```bash
 # Default save directory: ./ArkAssets
 # Can override with -d /path/to/dir
 downloader --server en download --all
 ```
-7. Extract assets
+6. Extract assets
 ```bash
 unpacker extract -i ./ArkAssets -o ./output
 ```

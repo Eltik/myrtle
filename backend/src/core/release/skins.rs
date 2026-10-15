@@ -632,10 +632,10 @@ fn merged_listing_starts(group: &GroupHistory) -> Vec<i64> {
 
 /// Dates a group's next EN rerun from its own listing rhythm.
 ///
-/// Anchored on the last EN *listing* start, never a review window:
-/// `group_histories` attaches every review window to every older group, so
-/// anchoring on `last_seen` put 80 outfits on one date (review 2026-07-16 +
-/// pooled 343 d = 2027-06-24). With an own listing gap, the estimate is anchor +
+/// Anchored on the last EN *listing* start, never a review window: before the
+/// pool-age gate (still under `RELEASE_REVIEWS_ALL_GROUPS=1`) every review sat
+/// on every older group, and anchoring on `last_seen` put 80 outfits on one
+/// date (review 2026-07-16 + pooled 343 d = 2027-06-24). With an own listing gap, the estimate is anchor +
 /// that last gap, with the pooled spread as lo/hi (the only measure of cadence
 /// noise). Without one, the pooled model dates it from the anchor.
 ///

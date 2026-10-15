@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { Combobox, ComboboxChip, ComboboxChips, ComboboxChipsInput, ComboboxEmpty, ComboboxItem, ComboboxList, ComboboxPopup, ComboboxValue } from "#/components/ui/combobox";
 import { Field, FieldLabel } from "#/components/ui/field";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip";
 import { cn } from "#/lib/utils";
+import { type IFacetOption, useKindT } from "../kinds";
 import type { IPoolFacet } from "./poolKinds";
 
 // A pool facet's filter row, shared by the tier-list pool dialog (`KindPool`)
@@ -45,6 +47,65 @@ export function useEdgeFade<T extends HTMLElement>() {
 
 /** One facet's row of toggles: the pool dialog's, and the grid picker's. */
 export function FacetFilter({ facet, value, onChange }: { facet: IPoolFacet; value: string[]; onChange: (next: string[]) => void }) {
+    // A data-fed menu with nothing to offer (a backend from before the facet) shows no row.
+    if (facet.variant === "menu") return facet.options.length > 0 ? <FacetMenu facet={facet} value={value} onChange={onChange} /> : null;
+    return <FacetToggles facet={facet} value={value} onChange={onChange} />;
+}
+
+/**
+ * A long facet (19 nations, 25 factions, 37 races) as a searchable dropdown whose
+ * choices sit as chips in its field: a row of that many toggles would scroll
+ * most of them out of sight.
+ */
+function FacetMenu({ facet, value, onChange }: { facet: IPoolFacet; value: string[]; onChange: (next: string[]) => void }) {
+    const t = useKindT();
+    const id = useId();
+    const byValue = useMemo(() => new Map(facet.options.map((o) => [o.value, o])), [facet.options]);
+    // A chosen value the catalogue no longer offers (another server's list) drops out of the chips, not out of the filter.
+    const selected = useMemo(() => value.map((v) => byValue.get(v)).filter((o): o is IFacetOption => o !== undefined), [value, byValue]);
+    return (
+        <Field className="min-w-0 max-w-full gap-1.5 sm:flex-row sm:items-center sm:gap-2">
+            <FieldLabel htmlFor={id} className="whitespace-nowrap font-bold font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.16em]">
+                {facet.label}
+            </FieldLabel>
+            <Combobox<IFacetOption, true> multiple items={facet.options} value={selected} onValueChange={(next) => onChange(next.map((o) => o.value))} itemToStringLabel={(o) => o.label} itemToStringValue={(o) => o.value} isItemEqualToValue={(a, b) => a.value === b.value}>
+                <ComboboxChips className="min-w-0 sm:max-w-md">
+                    <ComboboxValue>
+                        {(chips: IFacetOption[]) => (
+                            <>
+                                {chips.map((o) => (
+                                    <ComboboxChip key={o.value} aria-label={o.label}>
+                                        {o.label}
+                                    </ComboboxChip>
+                                ))}
+                                <ComboboxChipsInput id={id} size="sm" aria-label={facet.groupLabel} placeholder={chips.length === 0 ? facet.placeholder : ""} />
+                            </>
+                        )}
+                    </ComboboxValue>
+                </ComboboxChips>
+                <ComboboxPopup className="w-[min(300px,calc(100vw-2rem))]">
+                    <ComboboxEmpty>{t("edit.pool.menu.noMatches")}</ComboboxEmpty>
+                    <ComboboxList>
+                        {(o: IFacetOption) => (
+                            <ComboboxItem key={o.value} value={o}>
+                                <span className="flex items-center gap-2">
+                                    {o.icon && (
+                                        <span aria-hidden="true" className="inline-flex size-[18px] shrink-0 items-center justify-center">
+                                            {o.icon}
+                                        </span>
+                                    )}
+                                    <span className="truncate">{o.label}</span>
+                                </span>
+                            </ComboboxItem>
+                        )}
+                    </ComboboxList>
+                </ComboboxPopup>
+            </Combobox>
+        </Field>
+    );
+}
+
+function FacetToggles({ facet, value, onChange }: { facet: IPoolFacet; value: string[]; onChange: (next: string[]) => void }) {
     const fade = useEdgeFade<HTMLDivElement>();
     return (
         // min-w-0: a long facet (24 skin brands) has to shrink to the dialog so its row scrolls instead of overflowing.

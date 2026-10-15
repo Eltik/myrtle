@@ -6,6 +6,7 @@ import { statsQueryOptions } from "#/lib/api/stats";
 import { type TypedRichT, useFormatters, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { CatalogGrid } from "./impl/CatalogGrid";
+import { FieldNotes } from "./impl/FieldNotes";
 import { type IKpiCell, KpiCell, KpiStrip } from "./impl/KpiStrip";
 import { PageHeader } from "./impl/PageHeader";
 import styles from "./impl/StatsPage.module.css";
@@ -76,6 +77,7 @@ export function StatsPage() {
                             ))}
                         </div>
                     )}
+                    <FieldNotes />
                 </section>
 
                 <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-6">

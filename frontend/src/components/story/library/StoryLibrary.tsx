@@ -23,15 +23,8 @@ import { NowPlayingBar } from "./impl/NowPlayingBar";
 import { ProgressTab } from "./impl/ProgressTab";
 import { useLibraryPlayerLifetime } from "./impl/player";
 import { ReadingOrderTab } from "./impl/ReadingOrderTab";
+import { isLibraryTab, type LibraryTab } from "./StoryLibrary.constants";
 import type { messages } from "./StoryLibrary.messages";
-
-/** The library's tabs, in strip order. `browse` is the default and never written to the URL. */
-export const LIBRARY_TABS = ["browse", "reading", "illustrations", "progress", "community", "characters"] as const;
-export type LibraryTab = (typeof LIBRARY_TABS)[number];
-
-export function isLibraryTab(value: unknown): value is LibraryTab {
-    return typeof value === "string" && (LIBRARY_TABS as readonly string[]).includes(value);
-}
 
 // The Characters tab is its own chunk: Browse's bundle and first load do not
 // carry the gallery, and nothing of it is fetched until the tab is opened.
@@ -40,9 +33,8 @@ const CharactersTab = lazy(() => import("../sprites/CharactersTab"));
 /**
  * The library at `/stories`: a page head, a compact continue row, one mode row,
  * and then a single continuous browse surface cut into the game's own storyline
- * sections. Reading Order, Illustrations and Progress are the other modes;
- * operator records are the browse surface's own last section, and their dialog
- * is unchanged.
+ * sections. Reading Order, Illustrations, Progress, Community and Characters are
+ * the other modes; operator records are the browse surface's own last section.
  *
  * Progress lives in localStorage, which the server does not have. The first
  * render on BOTH sides uses an empty progress and an effect swaps in the real
@@ -55,7 +47,7 @@ export function StoryLibrary(): React.ReactElement {
     const index = data as unknown as LibIndex;
 
     // The document is read once on mount and then FOLLOWED, because the library
-    // is no longer only a reader of it: every tick in the sheet, in a reading
+    // also writes it: every tick in the sheet, in a reading
     // order row and in an operator's records writes through `saveProgress`, and
     // a fraction that only refreshed on a tab change would leave a reader
     // clicking a tick that does not move. The same subscription carries the
@@ -125,8 +117,8 @@ export function StoryLibrary(): React.ReactElement {
 
     return (
         <div className="page-shell [--page-max:1400px]">
-            {/* THE BIG NUMBER IS A DESKTOP ORNAMENT. Under 640 it was a 130 px block of
-                its own over a 923 px head, so there it folds into the subhead as a
+            {/* THE BIG NUMBER IS A DESKTOP ORNAMENT. Under 640 it would be a 130 px block
+                of its own over a 923 px head, so there it folds into the subhead as a
                 third count and the right-hand stat is hidden. At 640 and up the
                 subhead keeps its two counts and the number stays where it was. */}
             <PageHeader

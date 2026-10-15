@@ -1,6 +1,7 @@
 import { Badge } from "#/components/ui/badge";
 import { Card } from "#/components/ui/card";
 import { Dialog, DialogTrigger } from "#/components/ui/dialog";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { messages } from "./DetailedCard.messages";
@@ -53,15 +54,19 @@ export function DetailedCard({ item }: IDetailedCardProps) {
                     {(stageCount > 0 || recipeCount > 0) && (
                         <span className="inline-flex shrink-0 items-center gap-2 font-mono text-[10.5px] text-muted-foreground tabular-nums">
                             {stageCount > 0 && (
-                                <span title={t("profile.items.card.dropStages", { count: stageCount })}>
-                                    {stageCount}
-                                    <span className="ml-0.5 opacity-60">{t("profile.items.card.drops")}</span>
-                                </span>
+                                <Tooltip>
+                                    <TooltipTrigger render={<span />}>
+                                        {stageCount}
+                                        <span className="ml-0.5 opacity-60">{t("profile.items.card.drops")}</span>
+                                    </TooltipTrigger>
+                                    <TooltipPopup>{t("profile.items.card.dropStages", { count: stageCount })}</TooltipPopup>
+                                </Tooltip>
                             )}
                             {recipeCount > 0 && (
-                                <span className="text-foreground/70" title={t("profile.items.card.recipe")}>
-                                    ⚒
-                                </span>
+                                <Tooltip>
+                                    <TooltipTrigger render={<span className="text-foreground/70" role="img" aria-label={t("profile.items.card.recipe")} />}>⚒</TooltipTrigger>
+                                    <TooltipPopup>{t("profile.items.card.recipe")}</TooltipPopup>
+                                </Tooltip>
                             )}
                         </span>
                     )}

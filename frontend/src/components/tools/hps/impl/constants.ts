@@ -59,7 +59,6 @@ export interface IBuffPreset {
     targets: number;
 }
 
-/** Quick presets covering common healing scenarios. */
 export const BUFF_PRESETS: readonly IBuffPreset[] = [
     { id: "solo", labelKey: "hps.preset.solo", summaryKey: "hps.preset.solo.summary", atk: 0, aspd: 0, targets: 1 },
     { id: "atk-aura", labelKey: "hps.preset.atkAura", summaryKey: "hps.preset.atkAura.summary", atk: 0.4, aspd: 0, targets: 1 },

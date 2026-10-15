@@ -11,6 +11,10 @@ export const messages = {
         text: "Change background",
         description: "Accessible name and tooltip of the small image button, shown only to the profile's owner, that opens the picker for the art behind their profile header.",
     },
+    "profile.hero.editHeader": {
+        text: "Edit header numbers",
+        description: "Accessible name and tooltip of the small button, shown only to the profile's owner, that opens the editor for which numbers the stat cards show and which numbers are hidden from visitors.",
+    },
     "profile.hero.copyUid": {
         text: "Copy UID",
         description: "Copies the account number: accessible name and tooltip of the small copy button. 'UID' is the in-game account number.",

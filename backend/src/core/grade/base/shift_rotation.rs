@@ -2,14 +2,19 @@
 //!
 //! It follows the login rhythm players run:
 //!
-//! - **Production groups** (gold factories, EXP factories, posts) get
-//!   `ceil(3N/2)` teams (3 for a pair of rooms) tiled as 24h blocks: two
-//!   consecutive shifts on (wrapping), one off, and ONE team per group swaps at
-//!   each 12h login:
+//! - **Production groups** (gold factories, EXP factories, posts) get one team
+//!   per room per shift (`3N` teams): every room changes crew at every 12h
+//!   login, each team works 12h and rests 24h. That is the only rhythm the
+//!   game's global Rotate can express as presets - a room whose next formation
+//!   is its working crew reads "No Available Presets" (user recording
+//!   2026-10-14). A roster too small to staff `3N` full crews, or a base
+//!   with fewer dormitory beds than production seats, falls back to
+//!   `ceil(3N/2)` teams as 24h blocks (`Tiling::Blocks`), rotated every 24h:
 //!
 //!   ```text
-//!     room 1:  Team A   Team A   Team B
-//!     room 2:  Team B   Team C   Team C
+//!     shifts:  room 1:  Team A   Team B   Team C
+//!     blocks:  room 1:  Team A   Team A   Team B
+//!              room 2:  Team B   Team C   Team C
 //!   ```
 //!
 //! - **Power, Office, Reception, Control Center** alternate two squads: Squad 1
@@ -38,7 +43,7 @@ use super::{
         room_presence_relevant, room_search_score, rotation_cc_plan,
     },
     buff_registry::BuffResolutionStrategy,
-    team_select::{PlannedGroup, plan_production_groups, tiled_objective},
+    team_select::{PlannedGroup, Tiling, plan_production_groups, tiled_objective},
     types::{OperatorBaseProfile, UserBuilding},
     util::{is_production_room, max_stationed_at_level},
 };
@@ -85,7 +90,8 @@ pub struct ShiftRoom {
     /// Crew efficiency % (speed incl. Squad-1 globals) for production and power
     /// cells, to show how output is distributed.
     pub efficiency: Option<f64>,
-    /// Same id across the two shift columns a production team's 24h block covers,
+    /// Stable identity of the team staffing this cell (under the 24h-block
+    /// fallback the same id spans the two shift columns a block covers),
     /// so the frontend can tie them together.
     pub team_id: Option<String>,
     /// Display label: "Team A/B/C" for production blocks, "Squad 1/2" elsewhere.
@@ -243,6 +249,75 @@ fn preset_sustained_operators(
 }
 
 /// Tiny inputs: a handful of teams/rooms at most.
+/// Minimum-cost perfect assignment of rows to columns (square `cost`): the
+/// Hungarian method, `O(n^3)`. Returns the column each row takes.
+fn assignment(cost: &[Vec<i64>]) -> Vec<usize> {
+    let n = cost.len();
+    if n == 0 {
+        return Vec::new();
+    }
+    // 1-based potentials and matching, the classic formulation.
+    let mut u = vec![0i64; n + 1];
+    let mut v = vec![0i64; n + 1];
+    let mut p = vec![0usize; n + 1];
+    let mut way = vec![0usize; n + 1];
+    for i in 1..=n {
+        p[0] = i;
+        let mut j0 = 0usize;
+        let mut minv = vec![i64::MAX; n + 1];
+        let mut used = vec![false; n + 1];
+        loop {
+            used[j0] = true;
+            let i0 = p[j0];
+            let mut delta = i64::MAX;
+            let mut j1 = 0usize;
+            for j in 1..=n {
+                if used[j] {
+                    continue;
+                }
+                let cur = cost[i0 - 1][j - 1]
+                    .saturating_sub(u[i0])
+                    .saturating_sub(v[j]);
+                if cur < minv[j] {
+                    minv[j] = cur;
+                    way[j] = j0;
+                }
+                if minv[j] < delta {
+                    delta = minv[j];
+                    j1 = j;
+                }
+            }
+            for j in 0..=n {
+                if used[j] {
+                    u[p[j]] = u[p[j]].saturating_add(delta);
+                    v[j] = v[j].saturating_sub(delta);
+                } else {
+                    minv[j] = minv[j].saturating_sub(delta);
+                }
+            }
+            j0 = j1;
+            if p[j0] == 0 {
+                break;
+            }
+        }
+        loop {
+            let j1 = way[j0];
+            p[j0] = p[j1];
+            j0 = j1;
+            if j0 == 0 {
+                break;
+            }
+        }
+    }
+    let mut out = vec![0usize; n];
+    for j in 1..=n {
+        if p[j] != 0 {
+            out[p[j] - 1] = j - 1;
+        }
+    }
+    out
+}
+
 fn permutations(n: usize) -> Vec<Vec<usize>> {
     let mut out = Vec::new();
     let mut current: Vec<usize> = Vec::with_capacity(n);
@@ -378,8 +453,12 @@ pub fn recommend_shift_rotation(
             &pinned_seats,
         );
     }
-    let layout_registry =
-        super::assignment::resolve_layout_branches(registry, building, building_data);
+    let layout_registry = super::assignment::resolve_layout_branches(
+        registry,
+        building,
+        building_data,
+        &effective_facility_counts(building, operators, registry, building_data, &pinned_seats),
+    );
     let registry = &layout_registry;
     let pass1_registry = resolve_room_presence(
         &resolve_base_wide(registry, &HashSet::new(), &HashSet::new()),
@@ -460,6 +539,62 @@ fn rotation_core(
     pins: &[(String, String)],
     seats: &HashMap<String, String>,
 ) -> ShiftRotation {
+    rotation_core_tiled(
+        operators,
+        building,
+        building_data,
+        registry,
+        morale_drains,
+        pins,
+        seats,
+        Tiling::Shifts,
+    )
+}
+
+/// [`rotation_core`] under one tiling. `Shifts` is tried first; a production
+/// team the roster cannot fill sends the whole plan back through `Blocks`
+/// (an unstaffed production room is never right).
+#[allow(clippy::too_many_arguments)]
+fn rotation_core_tiled(
+    operators: &[OperatorBaseProfile],
+    building: &UserBuilding,
+    building_data: &BuildingDataFile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    morale_drains: &HashMap<String, f64>,
+    pins: &[(String, String)],
+    seats: &HashMap<String, String>,
+    tiling: Tiling,
+) -> ShiftRotation {
+    // One team per room per shift rests two blocks and needs a bed in one of
+    // them: every production seat's team is in its must-rest block at once,
+    // so the rhythm needs a bed per production seat. A base with fewer beds
+    // runs the 24h blocks, where half as many teams rest per block (a
+    // 5-factory, 2-post base with four L5 dorms ran two operators dry under
+    // 12h shifts in the morale simulation; the 4-factory one held).
+    let production_seats: usize = building
+        .rooms
+        .iter()
+        .filter(|r| is_production_room(&r.room_type))
+        .map(|r| max_stationed_at_level(building_data, &r.room_type, r.level).max(0) as usize)
+        .sum();
+    let beds: usize = building
+        .rooms
+        .iter()
+        .filter(|r| r.room_type == "DORMITORY")
+        .map(|r| max_stationed_at_level(building_data, "DORMITORY", r.level).max(0) as usize)
+        .sum();
+    if tiling == Tiling::Shifts && production_seats > beds {
+        return rotation_core_tiled(
+            operators,
+            building,
+            building_data,
+            registry,
+            morale_drains,
+            pins,
+            seats,
+            Tiling::Blocks,
+        );
+    }
     let facility_counts =
         effective_facility_counts(building, operators, registry, building_data, seats);
     let parked = super::assignment::parked_tokens(seats, operators, registry);
@@ -506,6 +641,8 @@ fn rotation_core(
     // re-selecting the CC when a member is dead weight against the chosen teams.
     // One memo per run: registry, facility counts and drains are fixed here.
     let memo = super::team_select::EnumerationMemo::default();
+    let timing = std::env::var_os("BASE_ROT_TIMING").is_some();
+    let t_phase = std::time::Instant::now();
     let (cc_plan, mut groups) = rotation_cc_plan(
         operators,
         building,
@@ -529,6 +666,7 @@ fn rotation_core(
                 &HashMap::new(),
                 &HashMap::new(),
                 &memo,
+                tiling,
             )
         },
     );
@@ -617,6 +755,7 @@ fn rotation_core(
                             &reserved,
                             &HashMap::new(),
                             &memo,
+                            tiling,
                         );
                         let unseated = tiled_objective(&pinned_plan, &cc_plan.global_bonuses);
                         seat_pinned_operator(
@@ -696,12 +835,12 @@ fn rotation_core(
     let mut sustained_label: Vec<String> = kept_by_room.values().flatten().cloned().collect();
     sustained_label.sort();
     sustained_label.dedup();
-    // Every production team works a 24h block ([A,A,B] / [B,C,C]), so a member
-    // whose drain outruns a full bar (Aroma's "+0.25 Morale per hour" rider) runs
-    // dry mid-block. They leave the pool unless the manager sustains them or a plan
-    // pins them; the morale sim reports on what remains.
+    // Under 24h blocks a member whose drain outruns a full bar (Aroma's "+0.25
+    // Morale per hour" rider) runs dry mid-block, so they leave the pool unless
+    // the manager sustains them or a plan pins them; a 12h shift any bar lasts.
     let heavy: Vec<String> = operators
         .iter()
+        .filter(|_| tiling == Tiling::Blocks)
         .filter(|op| !super::sustain_sim::sustains_24h_block(op, morale_drains))
         .filter(|op| !sustained_label.contains(&op.char_id) && !pinned_ids.contains(&op.char_id))
         .map(|op| op.char_id.clone())
@@ -727,6 +866,7 @@ fn rotation_core(
             &HashMap::new(),
             &kept_by_room,
             &memo,
+            tiling,
         );
     }
 
@@ -815,6 +955,13 @@ fn rotation_core(
     let cc_squad2 = cc_plan.squad2(operators, building_data, registry, &assigned, &team_rooms);
     assigned.extend(cc_squad2.iter().cloned());
 
+    if timing {
+        eprintln!(
+            "rot: cc plan + groups {:.2}s",
+            t_phase.elapsed().as_secs_f64()
+        );
+    }
+    let t_phase = std::time::Instant::now();
     let power_plan = build_power_plan(
         operators,
         building,
@@ -1002,6 +1149,10 @@ fn rotation_core(
             .unwrap_or_default()
     };
 
+    if timing {
+        eprintln!("rot: power/aux {:.2}s", t_phase.elapsed().as_secs_f64());
+    }
+    let t_phase = std::time::Instant::now();
     // Preset-phase alignment: which unit is "Team A" / "Squad 1" is arbitrary
     // (every unit works the same share), so pick the arrangement matching the saved
     // presets. The plan then confirms operators already in a phase instead of
@@ -1016,7 +1167,7 @@ fn rotation_core(
     };
     for (gi, g) in groups.iter_mut().enumerate() {
         let n = g.rooms.len();
-        if n == 0 || n > 3 || g.teams.is_empty() {
+        if n == 0 || g.teams.is_empty() {
             continue;
         }
         let linked = linked_groups.contains(&gi);
@@ -1025,6 +1176,76 @@ fn rotation_core(
             for &t in row {
                 ordinal_cells[t] += 1;
             }
+        }
+        // One team per cell (the 12h-shift tiling): the phase is a linear
+        // assignment of teams to cells, costed per (team, cell) and solved
+        // exactly. Permuting the teams instead (3 rooms = 9 teams = 362,880
+        // orders, each merging and scoring 9 crews) was 4 s of a 5 s rotation
+        // and starved the admission queue (2026-10-15).
+        if ordinal_cells.iter().all(|&c| c == 1) && g.teams.len() == n * SHIFT_COUNT {
+            let cells: Vec<(usize, usize)> = (0..n)
+                .flat_map(|ri| (0..SHIFT_COUNT).map(move |k| (ri, k)))
+                .collect();
+            let cell_of = |ri: usize, k: usize| g.cells[ri][k];
+            // Output first, churn among ties: churn is at most two seats per
+            // operator of a cell, far below the output scale.
+            const CHURN_SCALE: i64 = 1_000;
+            const FORBIDDEN: i64 = i64::MAX / 4;
+            let mut cost = vec![vec![0i64; g.teams.len()]; cells.len()];
+            for (ci, &(ri, k)) in cells.iter().enumerate() {
+                let (slot, level) = &g.rooms[ri];
+                let kept = kept_by_room.get(slot).map_or(&[][..], Vec::as_slice);
+                let capacity =
+                    max_stationed_at_level(building_data, &g.room_type, *level).max(0) as usize;
+                for (t, team) in g.teams.iter().enumerate() {
+                    if linked && ((ci == cell_of(0, 0)) != (t == 0)) {
+                        cost[ci][t] = FORBIDDEN;
+                        continue;
+                    }
+                    let crew = merge_kept(
+                        kept,
+                        &team.ops,
+                        capacity,
+                        &g.room_type,
+                        g.formula_type.as_deref(),
+                        &op_index,
+                        registry,
+                        building_data,
+                        &facility_counts,
+                        total_dorm_levels,
+                        morale_drains,
+                    );
+                    let (speed, value) = compute_team_efficiency(
+                        &crew,
+                        &g.room_type,
+                        g.formula_type.as_deref(),
+                        Some(*level),
+                        &op_index,
+                        registry,
+                        building_data,
+                        &facility_counts,
+                        total_dorm_levels,
+                        morale_drains,
+                        &cc_plan.conditions,
+                    );
+                    let output =
+                        (room_search_score(&g.room_type, speed, value) * 100.0).round() as i64;
+                    let churn = sym_diff(&crew, &preset_for(slot, k)) as i64;
+                    cost[ci][t] = -output * CHURN_SCALE + churn;
+                }
+            }
+            let assigned = assignment(&cost);
+            // Ordinal o is cell o's team: `cells[ri][k]` already indexes the
+            // ordinal, so the permutation maps each ordinal to its assigned team.
+            let mut team_perm = vec![0usize; g.teams.len()];
+            for (ci, &(ri, k)) in cells.iter().enumerate() {
+                team_perm[cell_of(ri, k)] = assigned[ci];
+            }
+            g.teams = team_perm.iter().map(|&t| g.teams[t].clone()).collect();
+            continue;
+        }
+        if n > 3 {
+            continue;
         }
         // Every room order x team permutation (teams only move between ordinals with
         // the same cell count; a synergy-linked team stays on shifts 1+2). Ranked by
@@ -1098,6 +1319,10 @@ fn rotation_core(
             g.teams = team_perm.iter().map(|&t| g.teams[t].clone()).collect();
         }
     }
+    if timing {
+        eprintln!("rot: alignment {:.2}s", t_phase.elapsed().as_secs_f64());
+    }
+    let t_phase = std::time::Instant::now();
     // Two-squad rooms: flipping is free under Alternating (an even A/B swap), so
     // flip when the presets run the squads in the opposite phase.
     let flip_costs = |slot: &str, s1: &[String], s2: &[String]| -> (usize, usize) {
@@ -1254,7 +1479,6 @@ fn rotation_core(
     let team_letter = |ordinal: usize| -> String {
         char::from(b'A' + u8::try_from(ordinal % 26).unwrap_or(0)).to_string()
     };
-    // Crew efficiency (speed incl. Squad-1 globals) for production/power cells.
     let crew_efficiency = |crew: &[String], room_type: &str, formula: Option<&str>| -> f64 {
         let (speed, _) = compute_team_efficiency(
             crew,
@@ -1553,6 +1777,46 @@ fn rotation_core(
         }
     }
 
+    if timing {
+        eprintln!(
+            "rot: shifts assembled {:.2}s",
+            t_phase.elapsed().as_secs_f64()
+        );
+    }
+    // The 12h-shift tiling needs `3N` full crews. A production cell the
+    // roster could not fill to its seats sends the whole plan back through
+    // the 24h blocks, which need half the crews (an understaffed production
+    // room is never right).
+    if tiling == Tiling::Shifts {
+        let seats_of = |slot: &str| -> usize {
+            building
+                .rooms
+                .iter()
+                .find(|r| r.slot_id == slot)
+                .map_or(0, |r| {
+                    max_stationed_at_level(building_data, &r.room_type, r.level).max(0) as usize
+                })
+        };
+        let short = shifts.iter().any(|s| {
+            s.rooms.iter().any(|r| {
+                is_production_room(&r.room_type)
+                    && r.active
+                    && r.recommended.len() < seats_of(&r.slot_id)
+            })
+        });
+        if short {
+            return rotation_core_tiled(
+                operators,
+                building,
+                building_data,
+                registry,
+                morale_drains,
+                pins,
+                seats,
+                Tiling::Blocks,
+            );
+        }
+    }
     ShiftRotation {
         shifts,
         sustained: sustained_label,

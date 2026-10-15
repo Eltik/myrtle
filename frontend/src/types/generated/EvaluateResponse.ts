@@ -28,14 +28,14 @@ export type EvaluateResponse = {
      */
     claim?: ClaimDto | null;
     /**
-     * The drafted crews simulated with NO rotation at all - "if you never
-     * swap". `None` when nothing is staffed. Seeded with PROJECTED live
-     * morale, so its clock starts now, not at a hypothetical full bar.
+     * The drafted crews simulated with no rotation ("if you never swap").
+     * `None` when nothing is staffed. Seeded with PROJECTED live morale, so
+     * its clock starts now, not at a full bar.
      */
     unrotated?: SustainabilityDto | null;
     /**
-     * Hours since the newest morale write in the sync - how stale the
-     * "current bar" data is. `None` when the sync carries no morale.
+     * Hours since the sync's newest morale write, i.e. how stale the current
+     * bars are. `None` when the sync carries no morale.
      */
     morale_synced_hours_ago?: number | null;
     /**

@@ -1,5 +1,4 @@
 import fs from "node:fs";
-import { createRequire } from "node:module";
 import path from "node:path";
 import tailwindcss from "@tailwindcss/vite";
 import { devtools } from "@tanstack/devtools-vite";
@@ -8,10 +7,6 @@ import viteReact from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
 import { defineConfig, type Plugin } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
-
-const require = createRequire(import.meta.url);
-const utilsPkgJson = require.resolve("@base-ui/utils/package.json");
-const utilsRoot = path.dirname(utilsPkgJson);
 
 function externalizeResvg(): Plugin {
     return {
@@ -26,21 +21,12 @@ function externalizeResvg(): Plugin {
     };
 }
 
-/** DEV ONLY: serve an ALTERNATE export root at `/altassets/`.
+/** Dev only: serve an alternate export root at `/altassets/` so an exporter change can be
+ *  scored without installing over the tree the backend serves. Same path shape as the
+ *  backend (`/spine/DynIllust/...`).
  *
- *  Scoring an EXPORTER change used to mean installing the new export over the tree the
- *  backend serves, which is not ours to write, so exporter gates shipped unmeasured. This
- *  serves a second, read-only export root straight off the dev server instead, under the
- *  same relative path shape the backend uses (`/spine/DynIllust/...`), so a scratch export
- *  can be scored without the deployed tree being touched at all.
- *
- *  Set `DYNCHAR_ALT_ROOT` to an export directory (the one CONTAINING `spine/`) and pass
- *  `?assetroot=/altassets` to the renderer. Absent either, nothing changes: the plugin
- *  registers no middleware and `chibiAssetURL` resolves to the backend exactly as before.
- *  `apply: "serve"` keeps it out of any production build.
- *
- *  Read-only and path-guarded: it resolves under the root and refuses anything that escapes,
- *  and it never writes. */
+ *  Set `DYNCHAR_ALT_ROOT` to the directory containing `spine/` and pass
+ *  `?assetroot=/altassets` to the renderer; without either, nothing changes. Read-only. */
 function altAssetRoot(): Plugin {
     return {
         name: "myrtle:alt-asset-root",
@@ -86,23 +72,11 @@ function altAssetRoot(): Plugin {
 }
 
 const config = defineConfig({
-    resolve: {
-        alias: [
-            {
-                find: /^@base-ui\/utils\/store$/,
-                replacement: path.join(utilsRoot, "esm/store/index.js"),
-            },
-            {
-                find: /^@base-ui\/utils\/(.+)$/,
-                replacement: path.join(utilsRoot, "$1.js"),
-            },
-        ],
-    },
     server: {
-        watch: {
-            usePolling: true,
-            interval: 100,
-        },
+        // Polling is for the Docker dev container (Dockerfile.dev sets VITE_USE_POLLING=1), where a
+        // bind mount from the host does not reliably deliver file events. A native run gets FSEvents
+        // or inotify instead, while polling stats every watched file each 100 ms and burns most of a core at idle.
+        watch: process.env.VITE_USE_POLLING === "1" ? { usePolling: true, interval: 100 } : {},
     },
     plugins: [externalizeResvg(), altAssetRoot(), devtools(), tailwindcss(), tanstackStart(), nitro(), viteReact(), tsconfigPaths()],
     optimizeDeps: { exclude: ["@resvg/resvg-js"] },

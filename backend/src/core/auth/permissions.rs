@@ -114,6 +114,31 @@ impl GlobalRole {
         }
     }
 
+    /// Place in the privilege chain, lowest first. The roles form a chain
+    /// because every power a lower role holds, a higher one holds too:
+    /// `translator` only opens the panel, which every staff role also does.
+    /// `lower_of_keeps_exactly_the_powers_both_share` pins that, so a new role
+    /// that breaks the chain fails a test instead of ranking silently.
+    const fn rank(self) -> u8 {
+        match self {
+            Self::User => 0,
+            Self::Translator => 1,
+            Self::TierListEditor => 2,
+            Self::TierListAdmin => 3,
+            Self::SuperAdmin => 4,
+        }
+    }
+
+    /// The less privileged of two roles: what both allow, and nothing more.
+    #[must_use]
+    pub const fn lower_of(self, other: Self) -> Self {
+        if self.rank() <= other.rank() {
+            self
+        } else {
+            other
+        }
+    }
+
     pub const fn all() -> &'static [Self] {
         &[
             Self::User,
@@ -169,5 +194,35 @@ impl AuthContext {
 
     pub const fn can_create_tier_list(self) -> bool {
         self.role.is_any_admin_role()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Every role predicate the gates call, in one row.
+    fn powers(role: GlobalRole) -> [bool; 6] {
+        [
+            role.is_tier_list_admin(),
+            role.is_super_admin(),
+            role.is_any_admin_role(),
+            role.can_access_admin_panel(),
+            role.can_have_tier_permissions(),
+            role.global_tier_permission().is_some(),
+        ]
+    }
+
+    #[test]
+    fn lower_of_keeps_exactly_the_powers_both_share() {
+        for &a in GlobalRole::all() {
+            for &b in GlobalRole::all() {
+                let low = a.lower_of(b);
+                let (pa, pb) = (powers(a), powers(b));
+                let shared: Vec<bool> = pa.iter().zip(pb).map(|(x, y)| *x && y).collect();
+                assert_eq!(powers(low).to_vec(), shared, "{a} x {b} -> {low}");
+                assert_eq!(low, b.lower_of(a), "{a} x {b} is not symmetric");
+            }
+        }
     }
 }

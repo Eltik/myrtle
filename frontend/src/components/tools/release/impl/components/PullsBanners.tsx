@@ -6,6 +6,7 @@ import { Card } from "#/components/ui/card";
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Input } from "#/components/ui/input";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { releaseEventsQueryOptions } from "#/lib/api/release";
 import { useFormatters, useLocale, useT } from "#/lib/i18n";
 import { cn, getAvatarById, rarityToNumber } from "#/lib/utils";
@@ -110,6 +111,11 @@ function Estimated({ row, t, onPreset, onAllocate }: { row: IPlanRow; t: PullsT;
     const f = useFormatters();
     const pct = usePct();
     const { estimate, maxPot, goalEstimate } = row;
+    /* ATTAIN and CLASSIC_ATTAIN boost no 6*, so every goal below would be "never". Their one
+       promise, an unowned first 6*, is what the panel says instead. */
+    if (row.model.rateUp === "none") {
+        return <p className="m-0 w-full min-w-0 rounded-lg border border-border bg-muted/20 px-2.5 py-2 font-sans text-[12px] text-muted-foreground leading-normal">{t("release.pulls.plan.noRateUp")}</p>;
+    }
     const worstTail = Math.max(estimate.specific.unresolved, estimate.both?.unresolved ?? 0, maxPot.unresolved, goalEstimate?.unresolved ?? 0);
 
     /**
@@ -220,15 +226,9 @@ function Estimated({ row, t, onPreset, onAllocate }: { row: IPlanRow; t: PullsT;
 }
 
 /**
- * A featured operator with the potential the user is pulling for.
- *
- * `OpRef` renders these as links to /operators/{id}, which is right everywhere else
- * in the release planner and wrong here: on this row the operator IS the input, and
- * navigating away mid-plan is the last thing a click should do. This keeps `OpRef`'s
- * look so the two read as the same object, and hangs a stepper off it.
- *
- * Zero is a real value meaning "not pulling for this one", which is why the stepper
- * shows a word there rather than a bare 0 that would read as a potential.
+ * A featured operator with a potential stepper. Looks like `OpRef` but isn't a
+ * link: here the operator is an input, and navigating away mid-plan is wrong.
+ * Zero means "not pulling for this one", so it shows a word, not a bare 0.
  */
 function OperatorPot({ id, lookup, name, copies, onSet, t }: { id: string; lookup: OperatorLookup; name: AutoName | null; copies: number; onSet: (copies: number) => void; t: PullsT }): React.ReactElement {
     const autoOn = useAutoTranslate();
@@ -285,13 +285,7 @@ interface IPlanRowProps {
     eventArt: EventArt;
 }
 
-/**
- * One banner.
- *
- * ONE number a planner wants per banner: the chance the current commitment buys, so that is
- * the only thing set large. Everything else is a control or a muted supporting line, and the
- * caveats that would repeat per row appear once above the list.
- */
+/** One banner. Caveats that would repeat per row are said once above the list. */
 function PlanRow({ row, lookup, charNames, today, t, onAllocate, onPreset, onSetTarget, onClearRow, eventArt }: IPlanRowProps): React.ReactElement {
     const locale = useLocale();
     const f = useFormatters();
@@ -322,17 +316,10 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onPreset, onSet
 
     return (
         /**
-         * This row does NOT use `ListRow`, which the sibling tabs use, and that is
-         * deliberate. Its grid is `sm:grid-cols-[240px_minmax(0,1fr)_minmax(240px,auto)]`
-         * with `gap-x-3`, a rigid 504px floor against a content column whose minimum is
-         * zero. At a 639px viewport the content column is 435px; at 640px it is 72px.
-         * The `sm` breakpoint makes the layout NARROWER by 363px, and this row carries
-         * far more than the name-and-dates those tabs put there, so it collapsed.
-         *
-         * The breakpoints below are chosen from what the content actually needs: the
-         * allocate stepper is an irreducible 152px and the preset group is about 330px
-         * unwrapped, so the columns only split once there is room for them. Worst case
-         * is 256px at a 320px viewport and 512px at 768px, never 72.
+         * Not `ListRow`: its `sm:grid-cols-[240px_minmax(0,1fr)_minmax(240px,auto)]`
+         * has a 504px floor, so at 640px the content column dropped from 435px to 72px.
+         * Breakpoints here follow the content: the allocate stepper is 152px and the
+         * presets ~330px unwrapped. Worst case 256px at 320 and 512px at 768.
          */
         <div className="grid grid-cols-1 gap-x-4 gap-y-3 border-border border-t py-4 first:border-t-0 md:grid-cols-[180px_minmax(0,1fr)] md:items-start xl:grid-cols-[200px_minmax(0,1fr)_236px]">
             <div className="min-w-0">{visual}</div>
@@ -344,22 +331,15 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onPreset, onSet
                     <CnName cn={banner.nameCn} auto={banner.nameEnAuto} primaryClassName="font-sans font-semibold text-[13px] text-foreground" compact>
                         <Tag>{tagLabel(banner.ruleType)}</Tag>
                     </CnName>
-                    {/* The badge prints the start date for every status that has one, so this
-                        printed "Dec 16, 2026" twice. It stays only for the two statuses whose
-                        badge is a bare chip. */}
+                    {/* The badge already prints the start date, except for these two statuses. */}
                     {banner.resolution.status === "unmodelled" || banner.resolution.status === "independent" ? <span className="font-mono text-[12px] text-muted-foreground tabular-nums">{formatDate(row.enStart, locale)}</span> : null}
                     <ResolutionBadge resolution={banner.resolution} today={today} />
                 </div>
 
-                {/* The row's anchor is its BUDGET, not its odds: a percentage answered what the
-                    Estimated panel beside it answers better, in rolls.
-
-                    The leading figure switches with state. Nothing committed: what the banner
-                    has. Count typed: THAT COUNT, the same number as the input below it. A
-                    derived figure failed twice: leftover pins to zero on every overcommitted
-                    row (five identical zeroes), and a clause quoting capped `spent` announced
-                    "spending 339" where 397 was entered. A headline that echoes the control
-                    cannot drift from it. */}
+                {/* Budget, not odds (the Estimated panel answers that in rolls). Shows what
+                    the banner has, or once typed, the input's own count. Derived figures
+                    drifted: leftover pinned to zero on every overcommitted row, and capped
+                    `spent` said "spending 339" where 397 was entered. */}
                 <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
                     {row.allocated > 0 ? (
                         <>
@@ -388,7 +368,8 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onPreset, onSet
                     </div>
                 )}
 
-                {row.featured.length > 0 && (
+                {/* No steppers on a banner with no rate-up: its operators are not a target. */}
+                {row.featured.length > 0 && model.rateUp !== "none" && (
                     <div className="flex flex-wrap gap-1">
                         {row.featured.map((id) => (
                             <OperatorPot key={id} id={id} lookup={lookup} name={charNames[id] ?? null} copies={row.targets[id] ?? 0} onSet={(copies) => onSetTarget(row.key, id, copies)} t={t} />
@@ -424,48 +405,37 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onPreset, onSet
                     </div>
 
                     <div className="flex min-w-0 flex-wrap items-center gap-1">
-                        {/* Presets carry a label: a bare number beside them reads as another
-                            statistic, not a button. */}
-                        {/* Label and first button travel together: as wrap siblings they separate
-                            at narrow widths, leaving a bare number. */}
-                        {/* Each preset says what it IS (the bank, the exchange, the
-                            guarantee), not just what it equals: three bare numbers under a
-                            "SET TO" kicker read as unexplained ("the numbers seem random"). */}
+                        {/* Label and first preset wrap together, and each preset names what it
+                            is (bank, bonus copy, guarantee): bare numbers read as random stats. */}
                         <span className="inline-flex items-center gap-1">
                             <span className="font-sans text-[11.5px] text-muted-foreground uppercase tracking-[0.06em]">{t("release.pulls.plan.setTo")}</span>
-                            <Button size="sm" variant="outline" className="h-7 px-2 font-mono text-[12px]" onClick={() => onPreset(row.key, targets.max)} disabled={targets.max === 0} aria-label={t("release.pulls.plan.max")} title={t("release.pulls.plan.maxTitle", { count: f.number(targets.max) })}>
-                                {t("release.pulls.plan.maxLabel", { count: f.number(targets.max) })}
-                            </Button>
+                            <Tooltip>
+                                <TooltipTrigger render={<Button size="sm" variant="outline" className="h-7 px-2 font-mono text-[12px]" onClick={() => onPreset(row.key, targets.max)} disabled={targets.max === 0} aria-label={t("release.pulls.plan.max")} />}>
+                                    {t("release.pulls.plan.maxLabel", { count: f.number(targets.max) })}
+                                </TooltipTrigger>
+                                <TooltipPopup className="max-w-xs">{t("release.pulls.plan.maxTitle", { count: f.number(targets.max) })}</TooltipPopup>
+                            </Tooltip>
                         </span>
                         {targets.spark !== null && model.spark !== null && (
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-7 px-2 font-mono text-[12px]"
-                                onClick={() => onPreset(row.key, targets.spark ?? 0)}
-                                title={row.freePulls > 0 ? t("release.pulls.plan.sparkTitle", { spark: f.number(model.spark), free: f.number(row.freePulls), count: f.number(targets.spark) }) : t("release.pulls.plan.sparkTitlePlain", { spark: f.number(model.spark) })}
-                            >
-                                {t("release.pulls.plan.spark", { count: targets.spark })}
-                            </Button>
+                            <Tooltip>
+                                <TooltipTrigger render={<Button size="sm" variant="outline" className="h-7 px-2 font-mono text-[12px]" onClick={() => onPreset(row.key, targets.spark ?? 0)} />}>{t("release.pulls.plan.spark", { count: targets.spark })}</TooltipTrigger>
+                                <TooltipPopup className="max-w-xs">{row.freePulls > 0 ? t("release.pulls.plan.sparkTitle", { spark: f.number(model.spark), free: f.number(row.freePulls), count: f.number(targets.spark) }) : t("release.pulls.plan.sparkTitlePlain", { spark: f.number(model.spark) })}</TooltipPopup>
+                            </Tooltip>
                         )}
                         {targets.guarantee !== null && rawGuarantee !== null && (
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-7 px-2 font-mono text-[12px]"
-                                onClick={() => onPreset(row.key, targets.guarantee ?? 0)}
-                                title={row.freePulls > 0 ? t("release.pulls.plan.guaranteeTitle", { at: f.number(rawGuarantee), free: f.number(row.freePulls), count: f.number(targets.guarantee) }) : t("release.pulls.plan.guaranteeTitlePlain", { at: f.number(rawGuarantee) })}
-                            >
-                                {t("release.pulls.plan.guarantee", { count: targets.guarantee })}
-                            </Button>
+                            <Tooltip>
+                                <TooltipTrigger render={<Button size="sm" variant="outline" className="h-7 px-2 font-mono text-[12px]" onClick={() => onPreset(row.key, targets.guarantee ?? 0)} />}>{t("release.pulls.plan.guarantee", { count: targets.guarantee })}</TooltipTrigger>
+                                <TooltipPopup className="max-w-xs">{row.freePulls > 0 ? t("release.pulls.plan.guaranteeTitle", { at: f.number(rawGuarantee), free: f.number(row.freePulls), count: f.number(targets.guarantee) }) : t("release.pulls.plan.guaranteeTitlePlain", { at: f.number(rawGuarantee) })}</TooltipPopup>
+                            </Tooltip>
                         )}
                         {/* Clears the potential picks too, else operators stay marked P6 with
                             nothing committed and the next rebuild prices that goal and restores
                             the count. */}
                         {(row.allocated > 0 || row.totalCopies > 0) && (
-                            <Button size="sm" variant="ghost" className="h-7 px-2 font-mono text-[12px]" onClick={() => onClearRow(row.key)} title={t("release.pulls.plan.clearTitle")}>
-                                {t("release.pulls.plan.clear")}
-                            </Button>
+                            <Tooltip>
+                                <TooltipTrigger render={<Button size="sm" variant="ghost" className="h-7 px-2 font-mono text-[12px]" onClick={() => onClearRow(row.key)} />}>{t("release.pulls.plan.clear")}</TooltipTrigger>
+                                <TooltipPopup className="max-w-xs">{t("release.pulls.plan.clearTitle")}</TooltipPopup>
+                            </Tooltip>
                         )}
                     </div>
                 </div>

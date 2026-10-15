@@ -47,12 +47,10 @@ pub struct StoryIndexCache {
     pub lookup: HashMap<String, StoryRef>,
     /// The inverse of `lookup`: script path (`StoryTxt`) -> story id.
     ///
-    /// The game's own "this story was played" record is a set of script
-    /// PATHS (`user.status.flags`), not story ids, so the refresh needs this
-    /// direction. It is built here, once per game-data load, because
-    /// inverting 1,887 entries on every account refresh is work the cache
-    /// already owns. First writer wins, which is the library group rather
-    /// than the operator record when a path is listed under both.
+    /// The game's "story played" record (`user.status.flags`) is a set of
+    /// script PATHS, not story ids. Built once per game-data load rather than
+    /// inverting 1,887 entries on every account refresh. First writer wins:
+    /// the library group over the operator record when both list a path.
     pub by_txt: HashMap<String, String>,
     /// Story id -> the stage gates the review table puts on it
     /// (`RequiredStages`). The refresh reads the account's `dungeon.stages`
@@ -70,11 +68,10 @@ pub struct StoryIndexCache {
     /// its stories reference. The two id spaces cannot collide: every
     /// operator id starts with `char_` and 0 of the 451 EN group ids do.
     pub illustrations: HashMap<String, GroupRefs>,
-    /// The event archives, keyed by library group id and built ALREADY
-    /// RESOLVED. It is cached rather than rebuilt per request because the
-    /// whole thing is 5 groups and 300 items on EN, and because its art is
-    /// resolved by the same rule `coverUrl` and `bannerUrl` are: at build
-    /// time, off game data the cache is keyed by.
+    /// The event archives by library group id, art already resolved. Cached,
+    /// not built per request: 5 groups and 300 items on EN, and the art
+    /// resolves at build time off the cache's game data, like `coverUrl` and
+    /// `bannerUrl`.
     pub archives: HashMap<String, StoryArchive>,
     /// Wall time of the archive build, the art walk included.
     pub archive_ms: u128,
@@ -139,11 +136,10 @@ fn zone_for(gd: &GameData, zone_id: &str) -> Option<StoryZone> {
 }
 
 /// The chapter number a reader knows the group by: `zone_table`'s
-/// `ZoneNameTitleCurrent`, the "00".."16" the client prints under the word
-/// EPISODE, falling back to the numeric tail of a `main_N` id. `main_15` and
-/// `main_16` have no zone of their own, so the fallback is what answers for
-/// them when the zone lookup misses; their zones (`act2mainss_zone1`,
-/// `act3mainss_zone1`) do carry "15" and "16" and are preferred.
+/// `ZoneNameTitleCurrent` (the "00".."16" the client prints under EPISODE),
+/// else the numeric tail of a `main_N` id. `main_15`/`main_16` are not zone
+/// ids, but their zones (`act2mainss_zone1`, `act3mainss_zone1`) carry "15"
+/// and "16"; the id tail only answers when that lookup misses.
 fn chapter_number_for(gd: &GameData, group_id: &str, zone_id: Option<&str>) -> Option<u32> {
     zone_id
         .and_then(|z| gd.zones.get(z))
@@ -174,11 +170,10 @@ pub fn build_index(
     let mut by_txt: HashMap<String, String> = HashMap::new();
     let mut gates: HashMap<String, Vec<StoryRequiredStage>> = HashMap::new();
     let mut probe_time = std::time::Duration::ZERO;
-    // One read per DISTINCT `StoryTxt`: whole file plus a parse, because the word count
-    // is computed here, ONCE, not on every `GET /story/{id}`. On EN that is 1,887
-    // distinct paths over 2,254 calls (1,887 library stories plus 367 record
-    // stories, which the 364 `record` groups already list), so the memo saves
-    // 367 loads. Debug build: this pass 5,793 ms, the old 16-byte-head probe 53 ms.
+    // One full read + parse per DISTINCT `StoryTxt`, so the word count is paid
+    // here once, not per `GET /story/{id}`. EN: 1,887 paths over 2,254 calls; the
+    // memo skips the 367 record stories the 364 `record` groups already list.
+    // Debug build: 5,793 ms, vs 53 ms for the old 16-byte-head probe.
     let mut measured: HashMap<String, Option<ScriptFacts>> = HashMap::new();
     let mut probe = |story_txt: &str| -> Option<ScriptFacts> {
         if let Some(hit) = measured.get(story_txt) {
@@ -518,7 +513,9 @@ fn story_sets_by_group(gd: &GameData) -> HashMap<String, &StorylineStorySet> {
 
 /// The storylines as the wire carries them: shelves in `SortId` order,
 /// locations in theirs, every location that joins to a group the Archives
-/// list, deduplicated WITHIN a shelf.
+/// list, deduplicated WITHIN a shelf. `own_group_ids` keeps only the
+/// `STORY_SET` locations: a `BEFORE` / `AFTER` location is the rail pointing
+/// at a story that lives on another shelf.
 fn build_storylines(
     gd: &GameData,
     assets: &AssetIndex,
@@ -539,6 +536,7 @@ fn build_storylines(
             let mut locations: Vec<_> = line.locations.iter().collect();
             locations.sort_by_key(|l| l.sort_id);
             let mut group_ids: Vec<String> = Vec::new();
+            let mut own_group_ids: Vec<String> = Vec::new();
             let mut arcs: Vec<StorylineArc> = Vec::new();
             for location in locations {
                 if let Some(split) = location.mainline_split_data.as_ref() {
@@ -566,6 +564,9 @@ fn build_storylines(
                 if let Some(arc) = arcs.last_mut() {
                     arc.group_ids.push(group_id.clone());
                 }
+                if location.location_type == "STORY_SET" && !own_group_ids.contains(&group_id) {
+                    own_group_ids.push(group_id.clone());
+                }
                 if !group_ids.contains(&group_id) {
                     group_ids.push(group_id);
                 }
@@ -582,6 +583,7 @@ fn build_storylines(
                 logo_url: storyline_art_for(assets, line.storyline_logo_id.as_deref()),
                 chapter_range: chapter_range(&group_ids, chapter_numbers),
                 group_ids,
+                own_group_ids,
                 arcs,
             }
         })

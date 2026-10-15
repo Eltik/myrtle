@@ -1,24 +1,29 @@
 import { createFileRoute } from "@tanstack/react-router";
 import Home from "#/components/home/Home";
-import { statsQueryOptions } from "#/lib/api/stats";
-import { homeTierListsQueryOptions } from "#/lib/api/tier-lists";
+import { TOP_DOCTORS_QUERY } from "#/components/home/impl/TopDoctors";
+import { liveFeedQueryOptions } from "#/lib/api/live";
+import { leaderboardQueryOptions } from "#/lib/api/user";
+import { isSignInPrompt, SIGN_IN_PROMPT } from "#/lib/auth/search";
 import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
 interface IHomeSearch {
-    auth?: "1";
+    auth?: typeof SIGN_IN_PROMPT;
     next?: string;
 }
 
 export const Route = createFileRoute("/")({
     component: Home,
     validateSearch: (search: Record<string, unknown>): IHomeSearch => {
-        const auth = search.auth === "1" ? "1" : undefined;
+        // Normalized to the number, so a redirect here serializes as `?auth=1`.
+        const auth = isSignInPrompt(search.auth) ? SIGN_IN_PROMPT : undefined;
         const next = typeof search.next === "string" ? search.next : undefined;
         return { auth, next };
     },
-    loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(statsQueryOptions()), context.queryClient.ensureQueryData(homeTierListsQueryOptions(context.i18n.gamedataServer))]),
+    // `prefetchQuery` never throws: a backend hiccup leaves a section in its own
+    // error state instead of failing the whole home page.
+    loader: ({ context: { queryClient, i18n } }) => Promise.all([queryClient.prefetchQuery(liveFeedQueryOptions(i18n.gamedataServer)), queryClient.prefetchQuery(leaderboardQueryOptions(TOP_DOCTORS_QUERY))]),
     head: ({ match }) => {
         const t = metaT(match.context.i18n);
         const { meta, links } = seo({

@@ -5,10 +5,9 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
  * so they carry message KEYS and whichever component renders a row resolves it
  * with `t()`.
  *
- * Only this site's own chrome lives here. The class, archetype, nation and
- * faction option labels are game vocabulary - they come from
- * `formatProfession` and friends in `lib/utils.ts`, which the game-data layer
- * translates per region - so they are deliberately absent.
+ * Only this site's own chrome lives here. Class, archetype, nation and faction
+ * labels are game vocabulary from `formatProfession` and friends in
+ * `lib/utils.ts`, translated per region by the game-data layer.
  */
 export const namespace = "operators";
 

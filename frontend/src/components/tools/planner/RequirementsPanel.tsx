@@ -1,4 +1,4 @@
-import { useQueries } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ChevronDown, ChevronRight, Info, LayoutList, List, Users } from "lucide-react";
 import * as React from "react";
@@ -108,19 +108,23 @@ function PlannerRequirementRow({ item, depth, path, expandedPaths, onToggleExpan
                                 <TooltipPopup className="max-w-xs">{item.craftReason}</TooltipPopup>
                             </Tooltip>
                         </div>
+                    ) : item.craftReason ? (
+                        <Tooltip>
+                            <TooltipTrigger render={<span className="cursor-help text-muted-foreground/50" />}>-</TooltipTrigger>
+                            <TooltipPopup className="max-w-xs">{item.craftReason}</TooltipPopup>
+                        </Tooltip>
                     ) : (
-                        <span className="text-muted-foreground/50" title={item.craftReason}>
-                            -
-                        </span>
+                        <span className="text-muted-foreground/50">-</span>
                     )}
                 </td>
                 <td className="py-2.5 pl-2 text-right text-xs tabular-nums">
                     {status === "missing" ? (
                         <span className="font-semibold text-red-400 text-xs">{f.number(item.missingCount)}</span>
                     ) : needsCrafting ? (
-                        <span className="font-semibold text-amber-400 text-xs" title={t("planner.req.craftTitle", { have: f.number(item.inventoryCount), required: f.number(item.requiredCount), shortfall: f.number(shortfall) })}>
-                            {t("planner.req.craft", { count: f.number(shortfall) })}
-                        </span>
+                        <Tooltip>
+                            <TooltipTrigger render={<span className="font-semibold text-amber-400 text-xs" />}>{t("planner.req.craft", { count: f.number(shortfall) })}</TooltipTrigger>
+                            <TooltipPopup>{t("planner.req.craftTitle", { have: f.number(item.inventoryCount), required: f.number(item.requiredCount), shortfall: f.number(shortfall) })}</TooltipPopup>
+                        </Tooltip>
                     ) : (
                         <span className="font-semibold text-emerald-400">✓</span>
                     )}
@@ -314,9 +318,11 @@ interface IByOperatorViewProps {
 
 function ByOperatorView({ plans, maxTier, predicate, collapsedSections, onToggleSection, expandedPaths, onToggleExpand }: IByOperatorViewProps) {
     const t: ReqT = useT("tools");
-    const results = useQueries({
-        queries: plans.map((p) => plansQueryOptions([p.operator_id], maxTier || undefined)),
-    });
+    // One request for every plan's own requirements, not one full `/plans` request
+    // per active plan, each carrying every plan: 193 plans meant 193 copies of the
+    // whole list, all refetched after any edit or delete.
+    const activeIds = React.useMemo(() => plans.map((p) => p.operator_id), [plans]);
+    const { data, isLoading } = useQuery({ ...plansQueryOptions(activeIds, maxTier || undefined, true), enabled: activeIds.length > 0 });
 
     if (plans.length === 0) {
         return <p className="mt-6 text-center text-muted-foreground text-sm">{t("planner.req.noActivePlans")}</p>;
@@ -324,15 +330,14 @@ function ByOperatorView({ plans, maxTier, predicate, collapsedSections, onToggle
 
     return (
         <div className="mt-3 flex flex-col gap-3">
-            {plans.map((p, i) => {
-                const q = results[i];
+            {plans.map((p) => {
                 return (
                     <ByOperatorSection
                         key={p.operator_id}
                         plan={p}
                         predicate={predicate}
-                        isLoading={q.isLoading}
-                        requirements={q.data?.aggregatedRequirements ?? []}
+                        isLoading={isLoading}
+                        requirements={data?.operatorRequirements?.[p.operator_id] ?? []}
                         collapsed={collapsedSections[p.operator_id] ?? false}
                         onToggle={() => onToggleSection(p.operator_id)}
                         expandedPaths={expandedPaths}
@@ -403,9 +408,10 @@ export function RequirementsPanel({ aggregatedRequirements, isLoading, activePla
                 <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                     <h2 className="font-semibold text-foreground text-sm">{t("planner.req.title")}</h2>
                     {lastSyncedAt && (
-                        <time dateTime={lastSyncedAt} title={f.date(lastSyncedAt, { dateStyle: "medium", timeStyle: "short" })} className="text-muted-foreground text-xs">
-                            {t("planner.req.lastSynced", { time: f.relativeLong(lastSyncedAt) })}
-                        </time>
+                        <Tooltip>
+                            <TooltipTrigger render={<time dateTime={lastSyncedAt} className="text-muted-foreground text-xs" />}>{t("planner.req.lastSynced", { time: f.relativeLong(lastSyncedAt) })}</TooltipTrigger>
+                            <TooltipPopup>{f.date(lastSyncedAt, { dateStyle: "medium", timeStyle: "short" })}</TooltipPopup>
+                        </Tooltip>
                     )}
                 </div>
                 {hasRequirements && (
@@ -420,15 +426,24 @@ export function RequirementsPanel({ aggregatedRequirements, isLoading, activePla
                                 if (next) setSettings((prev) => ({ ...prev, view: next }));
                             }}
                         >
-                            <ToggleGroupItem value="grouped" aria-label={t("planner.req.view.grouped.aria")} title={t("planner.req.view.grouped")}>
-                                <LayoutList />
-                            </ToggleGroupItem>
-                            <ToggleGroupItem value="flat" aria-label={t("planner.req.view.flat.aria")} title={t("planner.req.view.flat")}>
-                                <List />
-                            </ToggleGroupItem>
-                            <ToggleGroupItem value="by-operator" aria-label={t("planner.req.view.byOperator.aria")} title={t("planner.req.view.byOperator")}>
-                                <Users />
-                            </ToggleGroupItem>
+                            <Tooltip>
+                                <TooltipTrigger render={<ToggleGroupItem value="grouped" aria-label={t("planner.req.view.grouped.aria")} />}>
+                                    <LayoutList />
+                                </TooltipTrigger>
+                                <TooltipPopup>{t("planner.req.view.grouped")}</TooltipPopup>
+                            </Tooltip>
+                            <Tooltip>
+                                <TooltipTrigger render={<ToggleGroupItem value="flat" aria-label={t("planner.req.view.flat.aria")} />}>
+                                    <List />
+                                </TooltipTrigger>
+                                <TooltipPopup>{t("planner.req.view.flat")}</TooltipPopup>
+                            </Tooltip>
+                            <Tooltip>
+                                <TooltipTrigger render={<ToggleGroupItem value="by-operator" aria-label={t("planner.req.view.byOperator.aria")} />}>
+                                    <Users />
+                                </TooltipTrigger>
+                                <TooltipPopup>{t("planner.req.view.byOperator")}</TooltipPopup>
+                            </Tooltip>
                         </ToggleGroup>
                     </div>
                 )}

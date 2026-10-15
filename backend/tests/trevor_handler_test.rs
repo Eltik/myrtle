@@ -41,6 +41,7 @@ fn state() -> AppState {
         servers: vec![Server::EN],
         default_server: Server::EN,
         asset_ws_urls: HashMap::new(),
+        role_recheck: true,
     };
     AppState::new(
         db,
@@ -58,7 +59,7 @@ fn user(id: Uuid) -> AuthUser {
         user_id: id.to_string(),
         uid: "12345678".into(),
         server: "en".into(),
-        role: GlobalRole::default(),
+        token_role: GlobalRole::default(),
     }
 }
 
@@ -67,7 +68,7 @@ fn service() -> AuthUser {
         user_id: "service".into(),
         uid: "service".into(),
         server: "internal".into(),
-        role: GlobalRole::SuperAdmin,
+        token_role: GlobalRole::SuperAdmin,
     }
 }
 

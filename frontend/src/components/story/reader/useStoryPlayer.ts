@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { pauseSiteMusic, registerOtherMusic } from "#/components/gallery/music/player/presence";
 import { asset } from "#/components/operators/detail/impl/assets";
 import type { StoryAudio } from "#/lib/story/audio";
 import { type CameraShake, createEngine, type Effect, type Engine, type Halt, type StepResult, type UnresolvedAsset } from "#/lib/story/engine";
@@ -111,7 +112,7 @@ export function useStoryPlayer({ script, storyId, nickname, audio, initialHalt, 
     const [backlog, setBacklog] = useState<BacklogEntry[]>([]);
     const [revealKey, setRevealKey] = useState(0);
     // `saved` is localStorage, which the server cannot read. Reading it in the
-    // first render made the server send the title card and the client the resume
+    // first render would make the server send the title card and the client the resume
     // card: a hydration mismatch on every title screen. Both render the title card
     // and the resume offer arrives after mount.
     const [saved, setSaved] = useState<StoryPosition | null>(null);
@@ -154,10 +155,16 @@ export function useStoryPlayer({ script, storyId, nickname, audio, initialHalt, 
     // every cue 404s against the dev server's own origin.
     const playMusicEffect = useCallback(
         (e: { intro?: string; loop?: string; volume: number; crossfade: number }) => {
+            // The story's own music pauses the site's music player rather than sounding over it.
+            pauseSiteMusic();
             audio.playMusic({ intro: e.intro ? asset(e.intro) : undefined, loop: e.loop ? asset(e.loop) : undefined, volume: e.volume, crossfade: e.crossfade });
         },
         [audio],
     );
+
+    // The music player starting stops the scene's music, as a cue starting pauses the player.
+    // The script's next cue brings music back.
+    useEffect(() => registerOtherMusic(() => audio.stopMusic(0.5)), [audio]);
 
     const fire = useCallback(
         (effects: Effect[]) => {
@@ -220,7 +227,7 @@ export function useStoryPlayer({ script, storyId, nickname, audio, initialHalt, 
                 // STATE is re-derived from the engine: the music it last asked
                 // for, the script's own per-channel levels, and every loop that
                 // is still running at this halt. Without the last two a Back
-                // dropped the ambience for good and carried the previous walk's
+                // would drop the ambience for good and carry the previous walk's
                 // channel levels into the new one.
                 const music = engine.currentMusic;
                 if (music?.kind === "music") playMusicEffect({ ...music, crossfade: 0.5 });

@@ -1,10 +1,11 @@
 import { Kicker } from "#/components/ui/kicker";
-import type { ClientGachaGroup, IBanner, IClientGachaRecords, IGachaItem } from "#/lib/api/gacha";
+import type { ClientGachaGroup, IBanner, IClientGachaRecords } from "#/lib/api/gacha";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { BANNER_GROUP_LABEL_KEYS, type GachaMessageKey } from "../../constants";
 import type { messages as gachaConstantsMessages } from "../../constants.messages";
 import type { messages } from "./PityPanel.messages";
+import { pityWithLimitedReset, sharedPity } from "./pity";
 
 /** This panel renders its own chrome plus the shared banner-bucket labels. */
 type PityT = TypedT<typeof messages & typeof gachaConstantsMessages>;
@@ -28,43 +29,14 @@ interface IBannerPity {
     resetReason?: string;
 }
 
-function computePity(items: IGachaItem[]): number {
-    const sorted = [...items].sort((a, b) => b.at - a.at);
-    let pity = 0;
-    for (const item of sorted) {
-        if (item.star === "6") break;
-        pity++;
-    }
-    return pity;
-}
-
-/**
- * Limited and Collab pity does NOT carry between banners in-game - each
- * pool has its own independent pity counter that vanishes when the banner
- * closes. So if the user's most recent pull on a Limited/Collab bucket was
- * on a banner that has now ended, treat the bucket's pity as 0.
- * Standard (regular) and Kernel (special) pity does carry over and is
- * computed normally.
- */
-function pityWithLimitedReset(items: IGachaItem[], bannersById: Map<string, IBanner>): { pity: number; reset: boolean; resetReason?: string } {
-    if (items.length === 0) return { pity: 0, reset: false };
-    const sorted = [...items].sort((a, b) => b.at - a.at);
-    const lastPullPoolId = sorted[0].poolId;
-    const banner = bannersById.get(lastPullPoolId);
-    // Static-data endTime is unix-seconds; pull `at` is unix-ms.
-    const nowSec = Date.now() / 1000;
-    if (banner && banner.endTime > 0 && nowSec > banner.endTime) {
-        return { pity: 0, reset: true, resetReason: banner.gachaPoolName };
-    }
-    return { pity: computePity(items), reset: false };
-}
-
 const BANNER_CONFIGS: { key: ClientGachaGroup; labelKey: GachaMessageKey; softPityAt: number; hardPityAt: number; color: string }[] = [
     { key: "limited", labelKey: BANNER_GROUP_LABEL_KEYS.limited, softPityAt: 50, hardPityAt: 99, color: "oklch(0.85 0.18 80)" },
-    // Collab/joint operation banners: separate pity from limited, hard guarantee at 120 pulls.
-    { key: "linkage", labelKey: BANNER_GROUP_LABEL_KEYS.linkage, softPityAt: 50, hardPityAt: 120, color: "oklch(0.78 0.16 320)" },
+    // Collab banners: their own pity, same 50/99 curve. The "within 120 attempts" in their
+    // text is a once-per-banner guarantee of the featured operator, not 6* pity.
+    { key: "linkage", labelKey: BANNER_GROUP_LABEL_KEYS.linkage, softPityAt: 50, hardPityAt: 99, color: "oklch(0.78 0.16 320)" },
     { key: "regular", labelKey: BANNER_GROUP_LABEL_KEYS.regular, softPityAt: 50, hardPityAt: 99, color: "#bcabdb" },
-    { key: "special", labelKey: BANNER_GROUP_LABEL_KEYS.special, softPityAt: 45, hardPityAt: 80, color: "#88c8e3" },
+    { key: "special", labelKey: BANNER_GROUP_LABEL_KEYS.special, softPityAt: 50, hardPityAt: 99, color: "#88c8e3" },
+    // No Starter Headhunting card: its 21 pulls end on their own guaranteed 6*, so there is no counter to carry.
 ];
 
 function PityMeter({ pity, softPityAt, hardPityAt, color }: { pity: number; softPityAt: number; hardPityAt: number; color: string }) {
@@ -165,10 +137,10 @@ export function PityPanel({ records, bannersById, isLoading }: IPityPanelProps) 
     const pities: IBannerPity[] = BANNER_CONFIGS.map((cfg) => {
         const items = records[cfg.key].records;
         if (cfg.key === "limited" || cfg.key === "linkage") {
-            const { pity, reset, resetReason } = pityWithLimitedReset(items, bannersById);
+            const { pity, reset, resetReason } = pityWithLimitedReset(items, bannersById, Date.now() / 1000);
             return { ...cfg, pity, reset, resetReason };
         }
-        return { ...cfg, pity: computePity(items) };
+        return { ...cfg, pity: sharedPity(items, bannersById) };
     });
 
     return (

@@ -15,9 +15,6 @@ use crate::database::models::profile_layout::ProfileLayoutPatch;
 use crate::database::queries;
 
 /// The `/auth/verify` response: the session a token currently represents.
-///
-/// Serialized directly by the handler, so this declaration is the wire format,
-/// the `OpenAPI` schema and the generated TypeScript at once.
 #[derive(serde::Serialize, TS, ToSchema)]
 #[ts(export)]
 #[serde(rename_all = "camelCase")]
@@ -91,7 +88,8 @@ pub struct LoginRequest {
     pub email: String,
     pub code: String,
     pub server: String,
-    /// See the module note on `save_credentials`.
+    /// "Remember this login". Defaults to true; false stores nothing and clears
+    /// what a previous login left.
     #[serde(default = "default_true")]
     pub save_credentials: bool,
 }
@@ -133,7 +131,8 @@ pub async fn login(
 pub struct BilibiliLoginRequest {
     pub username: String,
     pub password: String,
-    /// See the module note on `save_credentials`.
+    /// "Remember this login". Defaults to true; false stores nothing and clears
+    /// what a previous login left.
     #[serde(default = "default_true")]
     pub save_credentials: bool,
 }
@@ -200,7 +199,8 @@ pub async fn send_bilibili_sms(
 pub struct BilibiliSmsLoginRequest {
     pub phone: String,
     pub code: String,
-    /// See the module note on `save_credentials`.
+    /// "Remember this login". Defaults to true; false stores nothing and clears
+    /// what a previous login left.
     #[serde(default = "default_true")]
     pub save_credentials: bool,
 }
@@ -268,7 +268,8 @@ pub struct CnLoginRequest {
     pub password: Option<String>,
     #[serde(default)]
     pub code: Option<String>,
-    /// See the module note on `save_credentials`.
+    /// "Remember this login". Defaults to true; false stores nothing and clears
+    /// what a previous login left.
     #[serde(default = "default_true")]
     pub save_credentials: bool,
 }
@@ -307,7 +308,9 @@ pub async fn login_cn(
 /// Check the caller's token and report the session it represents.
 ///
 /// The role is re-read from the database rather than taken from the token's
-/// frozen claim, so a promotion or demotion takes effect on the next call.
+/// frozen claim, so a promotion or demotion takes effect on the next call. A
+/// token for an account that no longer exists is 401, as it is on every
+/// role-gated route.
 #[utoipa::path(
     get,
     path = "/auth/verify",
@@ -326,18 +329,25 @@ pub async fn verify(
     State(state): State<AppState>,
     auth: AuthUser,
 ) -> Result<Json<VerifySession>, ApiError> {
-    // the extractor already validated the token; the role is re-read because
-    // the JWT claim froze it at login (see the fn doc).
+    // Role re-read: the JWT claim froze it at login.
     let db_role: Option<String> = if let Ok(uuid) = uuid::Uuid::parse_str(&auth.user_id) {
-        sqlx::query_scalar::<_, String>("SELECT role FROM users WHERE id = $1")
-            .bind(uuid)
-            .fetch_optional(&state.db)
-            .await?
+        queries::users::find_role(&state.db, uuid).await?
     } else {
         None
     };
 
-    let role = db_role.unwrap_or_else(|| auth.role.to_string());
+    let role = match db_role {
+        Some(role) => role,
+        // An account id with no row: the account is gone, so the token is
+        // dead, the same 401 every role-gated route gives it. Answering 200
+        // with the token's frozen role told the panel gate a deleted admin was
+        // still one. The service principal has no row by design and keeps the
+        // fallback, as does every token under `DISABLE_ROLE_RECHECK=1`.
+        None if state.config.role_recheck && auth.user_uuid().is_ok() => {
+            return Err(ApiError::Unauthorized);
+        }
+        None => auth.token_role.to_string(),
+    };
 
     // Same gate as the `/admin` route tree, so the two can't disagree. Uses the DB
     // role (the JWT claim freezes at login), OR any translation grant: a grant is
@@ -372,10 +382,11 @@ pub struct UpdateSettingsRequest {
     pub store_gacha: Option<bool>,
     pub share_stats: Option<bool>,
     /// Absent leaves the saved layout alone, `null` resets it to the default
-    /// (today's order, every tab visible, no showcase, no background). An
-    /// object sets the keys it carries and keeps the rest: `tabs` replaces the
-    /// tab list, `showcase` the blocks, `background` the header art (`null`
-    /// removes it). Normalized before it is stored: unknown tab ids and
+    /// (today's order, every tab visible, no showcase, no background, every
+    /// header number shown). An object sets the keys it carries and keeps the
+    /// rest: `tabs` replaces the tab list, `showcase` the blocks, `background`
+    /// the header art and `header` the hidden numbers and the strip (`null`
+    /// removes either of the last two). Normalized before it is stored: unknown tab ids and
     /// repeats are dropped, missing tabs appended visible.
     #[serde(default, deserialize_with = "present")]
     #[schema(value_type = Option<ProfileLayoutPatch>, required = false)]
@@ -400,7 +411,7 @@ where
     operation_id = "auth_update_settings",
     tag = "auth",
     request_body = UpdateSettingsRequest,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "Settings saved and the profile cache invalidated.", body = StatusOk),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
@@ -416,11 +427,12 @@ pub async fn update_settings(
     Json(body): Json<UpdateSettingsRequest>,
 ) -> Result<Json<StatusOk>, ApiError> {
     let user_id: uuid::Uuid = auth.user_uuid()?;
-    // Only tabs gate search and the leaderboards: a reset or a tabs save.
-    let tabs_changed = match &body.profile_layout {
+    // Tabs and hidden header numbers gate search and the leaderboards: a
+    // reset, a tabs save or a header save.
+    let ranking_changed = match &body.profile_layout {
         None => false,
         Some(None) => true,
-        Some(Some(patch)) => patch.tabs.is_some(),
+        Some(Some(patch)) => patch.tabs.is_some() || patch.header.is_some(),
     };
     services::auth::update_settings(
         &state,
@@ -437,13 +449,18 @@ pub async fn update_settings(
         .cache
         .invalidate(&CacheKey::User { uid: &auth.uid })
         .await;
-    // Search and every leaderboard drop a player by tab, and their pages are
-    // cached for up to 15 minutes: without this a tab just made private would
-    // keep ranking its owner until the TTL ran out. Layout saves are rare, so
+    // Search and every leaderboard drop a player by tab or hidden number, and
+    // their pages are cached for up to 15 minutes: without this a tab just
+    // made private would keep ranking its owner until the TTL ran out. The
+    // music listener pages carry the level. Layout saves are rare, so
     // flushing every page costs a few rebuilt pages, not a steady load.
-    if tabs_changed {
+    if ranking_changed {
         state.cache.invalidate_by_prefix("search:").await;
         state.cache.invalidate_by_prefix("leaderboard:").await;
+        state
+            .cache
+            .invalidate_by_prefix("music:stats:listeners:")
+            .await;
     }
     Ok(ok_status())
 }
@@ -454,13 +471,12 @@ pub async fn update_settings(
 /// revoked is our ability to reach Yostar on their behalf. Re-syncing then
 /// needs a fresh email code, which is the point.
 ///
-/// Idempotent: disconnecting twice is not an error. `removed` reports whether
-/// there was anything stored to remove.
+/// Idempotent; `removed` reports whether anything was stored.
 #[utoipa::path(
     post,
     path = "/auth/disconnect",
     tag = "auth",
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "Any stored credentials were removed.", body = DisconnectResult),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
@@ -480,6 +496,37 @@ pub async fn disconnect(
         status: "ok".to_owned(),
         removed,
     }))
+}
+
+/// Delete the caller's account and everything that is theirs.
+///
+/// Removes the profile, synced game data, scores, gacha history, plans, grids,
+/// community tier lists and stored game credentials in one transaction. Shared
+/// content the account touched (official tier lists, translations, audit
+/// trails of other people's rows) stays with the account's name removed. Not
+/// undoable; signing in again later starts a fresh, empty account.
+///
+/// Counts against the `auth` rate limit (10 a minute).
+#[utoipa::path(
+    post,
+    path = "/auth/delete-account",
+    tag = "auth",
+    security(("bearer_auth" = [])),
+    responses(
+        (status = 200, description = "The account and its data are gone; the token now names no account.", body = StatusOk),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn delete_account(
+    State(state): State<AppState>,
+    auth: AuthUser,
+) -> Result<Json<StatusOk>, ApiError> {
+    services::auth::delete_account(&state, auth.user_uuid()?).await?;
+    Ok(ok_status())
 }
 
 /// Re-sync the caller's roster and account data from the game servers.

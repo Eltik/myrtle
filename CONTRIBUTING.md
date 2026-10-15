@@ -155,7 +155,7 @@ myrtle.moe/
 │   ├── downloader/     # Multi-server asset downloader (Rust)
 │   ├── unpacker/       # High-performance asset extractor (Rust)
 │   ├── unity-rs/       # Unity asset parsing library (Rust port of UnityPy)
-│   ├── OpenArknightsFBS/ # FlatBuffers schemas for game data
+│   ├── schemas/        # FlatBuffers schema store (see assets/schemas/README.md)
 │   └── Unpacked/       # Extracted game assets (~90GB)
 └── .github/            # CI/CD workflows
 ```
@@ -194,7 +194,7 @@ Each component has its own detailed README with specific documentation.
 | [unity-rs](assets/unity-rs/)                                                     | Rust port of UnityPy for Unity asset parsing              |
 | [downloader](assets/downloader/)                                                 | Multi-server asset downloader with version tracking       |
 | [unpacker](assets/unpacker/)                                                     | High-performance asset extraction (9x faster than Python) |
-| [OpenArknightsFBS](https://github.com/MooncellWiki/OpenArknightsFBS/tree/YoStar) | FlatBuffers schemas for 59 game data tables               |
+| [schemas](assets/schemas/)                                                       | FlatBuffers schema store, generated from the game client   |
 
 ## Architecture
 
@@ -250,7 +250,7 @@ Each component has its own detailed README with specific documentation.
 | Asset Downloader    | [assets/downloader/README.md](assets/downloader/README.md)                                                                    |
 | Asset Unpacker      | [assets/unpacker/README.md](assets/unpacker/README.md)                                                                        |
 | Unity-RS Library    | [assets/unity-rs/README.md](assets/unity-rs/README.md)                                                                        |
-| FlatBuffers Schemas | [MooncellWiki/OpenArknightsFBS/tree/YoStar/README.md](https://github.com/MooncellWiki/OpenArknightsFBS/tree/YoStar/README.md) |
+| FlatBuffers Schemas | [assets/schemas/README.md](assets/schemas/README.md)                                                                          |
 
 ## API Reference
 

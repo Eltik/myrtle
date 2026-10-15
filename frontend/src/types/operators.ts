@@ -65,6 +65,7 @@ import type { PotentialBuff } from "./generated/PotentialBuff";
 import type { PotentialBuffAttributes } from "./generated/PotentialBuffAttributes";
 import type { PotentialRank } from "./generated/PotentialRank";
 import type { SkillLevel } from "./generated/SkillLevel";
+import type { SkillRules } from "./generated/SkillRules";
 import type { SkillSpData } from "./generated/SkillSpData";
 import type { SkillStatic } from "./generated/SkillStatic";
 import type { Talent } from "./generated/Talent";
@@ -163,7 +164,7 @@ export interface IOperatorIndexEntry {
     isNotObtainable: boolean;
     groupId: string | null;
     teamId: string | null;
-    /** The server's own localized names for the ids above; null when no id or not in that server's table. Optional: a cached response from before these fields may lack them for up to 24 h. */
+    // The server's own localized names for the ids above; null when no id or not in that server's table. Optional: a cached response from before these fields may lack them for up to 24 h.
     /** The server's own class name (its gacha class tag) for `profession`. */
     professionName?: string | null;
     subProfessionName?: string | null;
@@ -173,7 +174,7 @@ export interface IOperatorIndexEntry {
     /** Language-neutral acquisition category; absent in an old cached response. */
     obtainChannel?: ObtainChannel | null;
     artists: string[];
-    /** Small portrait image (headshot) - /upk/arts/charportraits/{pack}/{id}_{1|2}.png */
+    /** Small portrait (headshot): /upk/arts/charportraits/{pack}/{id}_{1|2}.png */
     portrait: string | null;
     /** "Male" / "Female" / etc.; empty string when unknown. */
     gender: string;
@@ -192,12 +193,14 @@ export interface IOperatorIndexEntry {
     skillCount: number;
     potentialRankCount: number;
     modules: IOperatorIndexModule[];
+    /** When each skill, skill rank and mastery unlocks (`Skills[i].UnlockCond`, `AllSkillLvlup`, `LevelUpCostCond`). */
+    skillRules: SkillRules;
     /** The profile's `dateOfBirth` verbatim (e.g. "October 4"); empty when there is no profile. */
     dateOfBirth: string;
 }
 
-/** The module fields the profile Stats tab reads, named as on `IModule`. */
-export type IOperatorIndexModule = Pick<IModule, "uniEquipId" | "typeName1" | "typeName2" | "type">;
+/** The module fields the profile Stats tab reads, named as on `IModule`, plus the module's rank count (`battle_equip_table` phases). */
+export type IOperatorIndexModule = Pick<IModule, "uniEquipId" | "typeName1" | "typeName2" | "type"> & { rankCount: number };
 
 /**
  * One operator as the detail endpoints serve it: the Rust `Operator` plus the

@@ -197,6 +197,7 @@ async fn state() -> AppState {
         servers: vec![Server::EN],
         default_server: Server::EN,
         asset_ws_urls: HashMap::new(),
+        role_recheck: true,
     };
     let db = backend::database::init(DATABASE_URL)
         .await
@@ -551,7 +552,7 @@ async fn run(state: AppState, subject: Subject) {
         user_id: subject.id.to_string(),
         uid: subject.uid.clone(),
         server: "EN".into(),
-        role: GlobalRole::User,
+        token_role: GlobalRole::User,
     };
     let mut failures: Vec<String> = Vec::new();
     check_tab_gates(&state, &subject, &owner, &mut failures).await;

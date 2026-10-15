@@ -8,11 +8,11 @@ use uuid::Uuid;
 use crate::app::cache::keys::CacheKey;
 use crate::app::cache::{CachedJson, cached_json};
 use crate::app::error::{ApiError, FieldError};
-use crate::app::extractors::auth::AuthUser;
+use crate::app::extractors::auth::{AuthUser, RoleCheckedUser};
 use crate::app::state::AppState;
 use crate::core::auth::permissions::Permission;
 use crate::database::models::i18n::{
-    GamedataOverride, Locale, TranslationEntry, TranslationPermission, UiMessageAuditEntry,
+    GamedataOverride, Locale, TranslationEntry, TranslationGrant, UiMessageAuditEntry,
 };
 use crate::database::queries::i18n as queries;
 
@@ -168,10 +168,10 @@ pub async fn get_catalog(
 
 /// Super-admins pass; anyone else needs a `translation_permissions` row for the
 /// locale that grants `required`. Read per request, so a new grant works on the
-/// next call, unlike `users.role`, which rides the JWT.
+/// next call, unlike a promotion in `users.role`, which waits for the next login.
 pub async fn assert_can_write(
     state: &AppState,
-    auth: &AuthUser,
+    auth: &RoleCheckedUser,
     locale: &str,
     required: Permission,
 ) -> Result<Uuid, ApiError> {
@@ -202,7 +202,10 @@ pub async fn assert_can_write(
 /// Whether the caller may open the admin translation surface: a staff role, or any
 /// single grant (otherwise its holder couldn't reach the screen that spends it).
 /// Read per request from the database, like the grants.
-pub async fn can_access_admin_panel(state: &AppState, auth: &AuthUser) -> Result<bool, ApiError> {
+pub async fn can_access_admin_panel(
+    state: &AppState,
+    auth: &RoleCheckedUser,
+) -> Result<bool, ApiError> {
     if auth.role.can_access_admin_panel() {
         return Ok(true);
     }
@@ -214,7 +217,10 @@ pub async fn can_access_admin_panel(state: &AppState, auth: &AuthUser) -> Result
 
 /// The locales this caller may edit, for the admin UI's locale picker. A
 /// super-admin gets every locale; anyone else gets exactly their grants.
-pub async fn writable_locales(state: &AppState, auth: &AuthUser) -> Result<Vec<String>, ApiError> {
+pub async fn writable_locales(
+    state: &AppState,
+    auth: &RoleCheckedUser,
+) -> Result<Vec<String>, ApiError> {
     if auth.role.is_super_admin() {
         return Ok(queries::list_locales(&state.db, false)
             .await?
@@ -747,15 +753,38 @@ pub async fn sync_source_catalog(
     })
 }
 
+/// Translation grants, optionally for one locale. Every grantee's name and UID
+/// (private profiles included) goes to tier-list admins and up only; anyone
+/// else sees just their own rows.
 pub async fn list_permissions(
     state: &AppState,
+    auth: &RoleCheckedUser,
     locale: Option<&str>,
-) -> Result<Vec<TranslationPermission>, ApiError> {
-    queries::list_permissions(&state.db, locale)
+) -> Result<Vec<TranslationGrant>, ApiError> {
+    let only = if auth.role.is_tier_list_admin() {
+        None
+    } else {
+        Some(auth.user_uuid()?)
+    };
+    queries::list_permissions(&state.db, locale, only)
         .await
         .map_err(std::convert::Into::into)
 }
 
+/// The caller's own translation grants, whatever their role.
+pub async fn my_permissions(
+    state: &AppState,
+    auth: &AuthUser,
+) -> Result<Vec<TranslationGrant>, ApiError> {
+    let user_id = auth.user_uuid()?;
+    queries::list_permissions(&state.db, None, Some(user_id))
+        .await
+        .map_err(std::convert::Into::into)
+}
+
+/// Record a grant. A locale missing from `locales` is a 404, like an unknown
+/// locale on the catalog route, and so is a user id with no account, instead
+/// of the foreign-key violation (a 500) the insert would otherwise raise.
 pub async fn grant_permission(
     state: &AppState,
     locale: &str,
@@ -763,6 +792,15 @@ pub async fn grant_permission(
     permission: Permission,
     granted_by: Uuid,
 ) -> Result<(), ApiError> {
+    if queries::get_locale(&state.db, locale).await?.is_none() {
+        return Err(ApiError::NotFound);
+    }
+    if crate::database::queries::users::find_role(&state.db, user_id)
+        .await?
+        .is_none()
+    {
+        return Err(ApiError::NotFound);
+    }
     queries::grant_permission(
         &state.db,
         locale,

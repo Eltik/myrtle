@@ -13,6 +13,7 @@ export interface IItemEntry extends IInventoryItem {
     name: string;
     rarityNum: number;
     category: ItemCategory;
+    /** The icon file stem; `null` while the item table is still loading. */
     iconId: string | null;
     expValue: number | null;
 }

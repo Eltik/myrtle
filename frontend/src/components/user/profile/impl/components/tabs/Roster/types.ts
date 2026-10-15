@@ -1,6 +1,7 @@
 import type { ISharedFilters } from "#/components/operators/list/impl/types";
+import type { IOperatorRosterItem } from "#/lib/api/operators";
 import type { IRosterEntry } from "#/lib/api/user";
-import type { IOperatorIndexEntry, IOperatorListItem } from "#/types/operators";
+import type { IOperatorIndexEntry } from "#/types/operators";
 
 export type SortKey = "investment" | "level" | "rarity" | "obtained" | "potential" | "trust" | "maxed";
 export type SortOrder = "asc" | "desc";
@@ -18,7 +19,7 @@ export type ViewMode = "detailed" | "compact";
 export interface IOwnedEntry extends IRosterEntry {
     isOwned: true;
     meta: IOperatorIndexEntry | null;
-    static: IOperatorListItem | null;
+    static: IOperatorRosterItem | null;
     name: string;
     rarity: number;
     voiceActors: string[];
@@ -30,7 +31,7 @@ export interface IUnownedEntry {
     name: string;
     rarity: number;
     meta: IOperatorIndexEntry;
-    static: IOperatorListItem | null;
+    static: IOperatorRosterItem | null;
     voiceActors: string[];
 }
 

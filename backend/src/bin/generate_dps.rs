@@ -17,11 +17,9 @@
 //!   cargo run --bin generate-dps -- --healing-transpile   # Only transpile HPS Python -> Rust
 //!   cargo run --bin generate-dps -- --repo <path>         # Custom `ArknightsDpsCompare` path
 
-// This binary is a code generator/transpiler: large emit functions, intentional
-// numeric casts when emitting literals, float comparisons against parsed constants,
-// string-building via `push_str(format!(..))`, and explicit token-mapping match arms
-// are inherent to the job. Silence the pedantic/nursery lints that flag those patterns
-// rather than distort the generator.
+// A transpiler: large emit functions, numeric casts when emitting literals, float
+// comparisons against parsed constants, `push_str(format!(..))` and token-mapping
+// match arms come with the job, so the lints that flag them are silenced.
 #![allow(
     clippy::too_many_lines,
     clippy::trivially_copy_pass_by_ref,
@@ -189,9 +187,8 @@ enum OutputShape {
 /// Healers whose body uses constructs the transpiler can't handle; emit `None` stubs.
 const HEAL_FALLBACKS: &[&str] = &["AmiyaMedic", "ReedAlter"];
 
-/// Locate a Python interpreter that supports the 3.10+ `match` statement
-/// (required by upstream `damage_formulas.py`). Honors `PYTHON_BIN` env var
-/// for explicit override; otherwise probes common names in priority order.
+/// A Python with 3.10+ `match` (upstream `damage_formulas.py` uses it).
+/// `PYTHON_BIN` overrides; otherwise probes the common names in order.
 fn python_command() -> String {
     if let Ok(explicit) = std::env::var("PYTHON_BIN") {
         return explicit;
@@ -373,8 +370,7 @@ fn parse_operators(
 
     let mut result = HashMap::new();
     for (i, (start, class_name)) in class_positions.iter().enumerate() {
-        // Skip base classes that aren't real operators. `Healer` extends
-        // `Operator` but is itself just a thin shim used for inheritance.
+        // `Healer` is an inheritance shim, not an operator.
         if class_name == "Healer" {
             continue;
         }
@@ -1189,7 +1185,6 @@ const RUST_KEYWORDS: &[(&str, &str)] = &[
     ("unsafe", "unsafe_val"),
 ];
 
-/// Pre-compiled regexes used across the transpilation functions.
 struct TranspileRegexes {
     // transpile_skill_dps
     assign_var_re: Regex,
@@ -1368,7 +1363,6 @@ struct InitMutations {
     modified_fields: std::collections::HashSet<String>, // e.g. {"drone_atk", "trait_damage"}
 }
 
-#[allow(dead_code)]
 fn extract_and_transpile_init_mutations(init_body: &str) -> InitMutations {
     let mut mutations = Vec::new();
     let mut modified_fields = std::collections::HashSet::new();
@@ -1547,7 +1541,6 @@ fn extract_and_transpile_init_mutations(init_body: &str) -> InitMutations {
     }
 }
 
-#[allow(dead_code)]
 fn transpile_init_expr(py_expr: &str) -> String {
     let mut s = py_expr.to_string();
     // Field mappings; order matters, longer/specific prefixes first
@@ -1704,7 +1697,7 @@ fn transpile_skill_dps(
 
     // Pass 2: transpile lines. No `let mut` in the body, just assignments
     let mut declared_vars: std::collections::HashSet<String> = std::collections::HashSet::new();
-    // Mark everything as already declared so transpile_expressions won't add `let mut`
+    // All pre-declared, so transpile_expressions won't add `let mut`
     declared_vars.extend(builtin_vars.iter().map(std::string::ToString::to_string));
     declared_vars.extend(all_vars.iter().cloned());
 

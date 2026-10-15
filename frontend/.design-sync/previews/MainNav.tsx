@@ -9,11 +9,32 @@ import { type ReactNode, useEffect, useRef } from "react";
 // `src/components/header/Header.tsx` (signed-out branch: no "My Profile" row),
 // with the tool sections expanded from `getToolsByCategory()`.
 
-const COLLECTION = [
-    { href: "/operators", label: "Operators", desc: "Every operator released in Arknights.", icon: "shield" as const },
-    { href: "/enemies", label: "Enemies", desc: "Every enemy catalogued, with stats and traits.", icon: "crosshair" as const },
-    { href: "/stages", label: "Stages", desc: "Every stage, mapped with an enemy-pathing simulator.", icon: "map" as const },
+const COLLECTION_SECTIONS = [
+    {
+        title: "Game Data",
+        items: [
+            { href: "/operators", label: "Operators", desc: "Every operator released in Arknights.", icon: "shield" as const },
+            { href: "/enemies", label: "Enemies", desc: "Every enemy catalogued, with stats and traits.", icon: "crosshair" as const },
+            { href: "/stages", label: "Stages", desc: "Every stage, mapped with an enemy-pathing simulator.", icon: "map" as const },
+        ],
+    },
+    {
+        title: "Story & Lore",
+        items: [
+            { href: "/stories", label: "Stories", desc: "Read every story in the game, with your progress synced.", icon: "book" as const },
+            { href: "/archives", label: "Archives", desc: "Personnel files, the faction network and the roster counted up.", icon: "users" as const },
+        ],
+    },
+    {
+        title: "Media & News",
+        items: [
+            { href: "/gallery/music", label: "In-Game Music", desc: "Every track in the game, where it plays, and a player that loops it like the game does.", icon: "music" as const },
+            { href: "/announcements", label: "News", desc: "The in-game notice board", icon: "newspaper" as const },
+        ],
+    },
 ];
+
+const COLLECTION = COLLECTION_SECTIONS.flatMap((s) => s.items);
 
 const TOOL_SECTIONS = [
     {
@@ -46,7 +67,7 @@ const PLAYERS = [
 
 const NAV_ITEMS = [
     { href: "/", label: "Home" },
-    { href: "/operators", label: "Collection", items: COLLECTION },
+    { href: "/operators", label: "Collection", items: COLLECTION, sections: COLLECTION_SECTIONS },
     { href: "/tools", label: "Tools", items: TOOL_SECTIONS.flatMap((s) => s.items), sections: TOOL_SECTIONS },
     { href: "/gacha", label: "Gacha", items: GACHA },
     { href: "/tier-lists", label: "Tier Lists" },

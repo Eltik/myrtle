@@ -69,7 +69,8 @@ pub struct FacilityOutput {
     pub idle_hours: f64,
 }
 
-/// Morale sampled at every 12h block boundary (`samples[0]` = t=0, full bar).
+/// Morale sampled at every 12h block boundary. `samples[0]` is t=0: a full bar,
+/// or the live bar when `simulate_rotation_from` is seeded.
 #[derive(Debug, Clone)]
 pub struct OperatorMoraleTimeline {
     pub char_id: String,
@@ -466,7 +467,7 @@ pub fn simulate_rotation_from(
         .collect();
     let mut depleted: Vec<DepletedOperator> = Vec::new();
     let mut dorm_overflow = 0usize;
-    // Sampled at every block boundary (t=0 is full).
+    // Sampled at every block boundary; t=0 is the starting bar, seeded or full.
     let mut samples: HashMap<String, Vec<f64>> = schedules
         .keys()
         .map(|id| {
@@ -586,15 +587,29 @@ pub fn simulate_rotation_from(
         // next: dorm level rate + residents' whole-dorm aura + the working CC aura ("all
         // Operators in Dormitories recover +0.05/hr"). The single-target healer tops up
         // the neediest. Past the last free seat, no recovery that block.
+        // A rester whose NEXT block is work must recover now; one with another
+        // rest block ahead (the 12h-shift rhythm rests two blocks) can wait
+        // for a bed. Beds go to the must-rest-now first, lowest bar first,
+        // and only they count as short a bed: a rester with a block to spare
+        // is not a failure yet.
+        let must_rest_now = |id: &str| -> bool {
+            schedules
+                .get(id)
+                .is_some_and(|s| s.works[(shift + 1) % 3].is_some())
+        };
         let mut resting: Vec<&String> = schedules
             .iter()
             .filter(|(id, s)| s.works[shift].is_none() && morale[id.as_str()] < MORALE_MAX)
             .map(|(id, _)| id)
             .collect();
         resting.sort_by(|a, b| {
-            morale[a.as_str()]
-                .partial_cmp(&morale[b.as_str()])
-                .unwrap_or(std::cmp::Ordering::Equal)
+            must_rest_now(b)
+                .cmp(&must_rest_now(a))
+                .then_with(|| {
+                    morale[a.as_str()]
+                        .partial_cmp(&morale[b.as_str()])
+                        .unwrap_or(std::cmp::Ordering::Equal)
+                })
                 .then_with(|| a.cmp(b))
         });
         let mut queue = resting.into_iter();
@@ -616,7 +631,16 @@ pub fn simulate_rotation_from(
                 *m = (*m + (rate + boost) * SHIFT_HOURS).min(MORALE_MAX);
             }
         }
-        unseated += queue.count();
+        // Short a bed = would run dry in the next block without one. A bar
+        // that still covers the next shift's drain (12 left after a 12h shift)
+        // is the rhythm working, not a shortage.
+        unseated += queue
+            .filter(|id| must_rest_now(id))
+            .filter(|id| {
+                let drain = schedules.get(id.as_str()).map_or(0.0, |s| s.drain);
+                morale[id.as_str()] < drain * SHIFT_HOURS - EPS
+            })
+            .count();
         dorm_overflow = dorm_overflow.max(unseated);
 
         for (id, track) in &mut samples {

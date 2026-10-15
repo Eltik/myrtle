@@ -79,6 +79,26 @@ pub struct GachaPoolClient {
     /// were available, `"static+api"` once pool detail has been merged in.
     #[serde(default, skip_deserializing)]
     pub featured_source: String,
+    /// Shown only to returning players: a pool some `open_server_table`
+    /// `PlayerReturn` tier grants (see `open_server`). Its `gacha_table` window
+    /// is years long because the game times it per player, so it is never
+    /// "running now for everyone" and its `end_time` is not a real end date.
+    #[serde(default, skip_deserializing)]
+    pub returning: bool,
+    /// The 6★ rate-up share each featured operator takes, as a 0..1 fraction of
+    /// the 6★ band: the sidecar's `upCharInfo.perCharList[rarityRank=5].percent`,
+    /// which is already per operator (LIMITED reads 0.35 with `count: 2`). `None`
+    /// without a sidecar entry or a 6★ rate-up in it. Internal: the release
+    /// planner reads it, the static banner endpoint does not ship it.
+    #[serde(skip)]
+    #[ts(skip)]
+    pub declared_share6: Option<f64>,
+    /// Rolls per cycle of a REPEATING collab handover, from `LinkageParam`'s
+    /// `loopTarget6Count` (the `LINKAGE_LOOP6_NEW5` rule). `None` on once-only
+    /// collabs, which carry `guaranteeTarget6Count` instead, and on everything else.
+    #[serde(skip)]
+    #[ts(skip)]
+    pub linkage_loop_at: Option<u32>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -150,6 +170,19 @@ pub const PROFESSION_TAG_IDS: [(&str, i32); 8] = [
     ("SPECIAL", 7),
     ("PIONEER", 8),
 ];
+
+/// The gacha tag ids of the two positions and the two handbook genders, so a
+/// position or gender reads in the server's own `TagName` (EN Melee/Ranged/
+/// Male/Female, CN 近战位/远程位/男性干员/女性干员, JP 近距離/遠距離/男性/女性,
+/// KR 근거리/원거리/남성/여성, checked 2026-10-11). Named because no table
+/// links them: `TagGroup` equals `TagId` on all 31 EN tags, so no group field
+/// sets them apart, and neither `character_table` `Position` nor the
+/// handbook gender carries a tag id. The frontend recruitment tool names the
+/// same ids (`MELEE_TAG_ID`, `HIDDEN_TAG_IDS`).
+pub const MELEE_TAG_ID: i32 = 9;
+pub const RANGED_TAG_ID: i32 = 10;
+pub const MALE_TAG_ID: i32 = 1012;
+pub const FEMALE_TAG_ID: i32 = 1013;
 
 /// Profession code -> the server's own class name, read off its gacha tags
 /// verbatim (CN's 干员 and JP's タイプ suffixes are the game's wording, kept).

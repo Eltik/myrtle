@@ -163,9 +163,8 @@ pub struct StoryGroup {
     pub icon_url: Option<String>,
     /// 0 through 16 on the 17 mainline chapters, absent everywhere else. Read
     /// off the ZONE (`zone_table.ZoneNameTitleCurrent`, the "00".."16" the
-    /// client prints under `EPISODE`), falling back to the `main_N` id. It is
-    /// what a reader actually knows a chapter by, where `name` is an arc
-    /// title nobody remembers.
+    /// client prints under `EPISODE`), falling back to the `main_N` id. Readers
+    /// know a chapter by this number, not by its `name`.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub chapter_number: Option<u32>,
@@ -173,9 +172,8 @@ pub struct StoryGroup {
     /// group's own `StartTime`, except on a MAINLINE group, where every one of
     /// the 17 EN rows writes -1 and the date is the zone's
     /// `zone_table.MainlineAdditionInfo.ZoneOpenTime` instead (5 of 17 carry
-    /// one: `main_10` 1666180800 through `main_14` 1730394000). No field says
-    /// which source answered, because a release date is a release date and the
-    /// consumer renders one line either way.
+    /// one: `main_10` 1666180800 through `main_14` 1730394000). Which source
+    /// answered is not exposed; the consumer renders one date either way.
     #[ts(type = "number")]
     pub start_time: i64,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -284,7 +282,8 @@ pub struct ChapterRange {
 ///
 /// A group can sit on SEVERAL shelves (17 do on EN), so `groupIds` over all
 /// storylines is not a partition: it lists 104 slots over 81 distinct groups.
-/// Picking one shelf per group is the consumer's job.
+/// Picking one shelf per group is the consumer's job, and `own_group_ids`
+/// names the one shelf each group is a `STORY_SET` on.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -317,6 +316,15 @@ pub struct Storyline {
     #[ts(optional)]
     pub chapter_range: Option<ChapterRange>,
     pub group_ids: Vec<String>,
+    /// The subset of `group_ids` the shelf lists as its OWN entries
+    /// (`LocationType` `STORY_SET`), in the same order. The rest of the rail
+    /// is `BEFORE` / `AFTER` pointers at a story that lives on another shelf:
+    /// `ssLine_3` (Snow and Silver Steel) points at `act25side` (Lone Trail)
+    /// as the read-first for `act46side`, while `ssLine_7` (Those Who Take The
+    /// Future) is where Lone Trail is a `STORY_SET`. Every EN group that sits
+    /// on a shelf is a `STORY_SET` on exactly one, so this is what picks a
+    /// group's home shelf.
+    pub own_group_ids: Vec<String>,
     pub arcs: Vec<StorylineArc>,
 }
 
@@ -535,7 +543,7 @@ pub struct ArchiveNewsItem {
 pub struct ArchiveNewsFormat {
     pub type_id: String,
     pub type_name: String,
-    /// The small masthead glyph, and the big one the story is headed with.
+    /// The small masthead glyph; `mainLogoUrl` is the big one heading the story.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub logo_url: Option<String>,

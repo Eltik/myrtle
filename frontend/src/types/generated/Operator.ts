@@ -4,6 +4,7 @@ import type { AttributeKeyFrame } from "./AttributeKeyFrame";
 import type { Drone } from "./Drone";
 import type { EnrichedSkill } from "./EnrichedSkill";
 import type { HandbookItem } from "./HandbookItem";
+import type { HiddenFaction } from "./HiddenFaction";
 import type { ObtainChannel } from "./ObtainChannel";
 import type { OperatorAudio } from "./OperatorAudio";
 import type { OperatorBaseSkill } from "./OperatorBaseSkill";
@@ -35,9 +36,9 @@ export type Operator = {
      */
     mainPower: PowerAffiliation | null;
     /**
-     * Secondary affiliations - the game's multi-power system. RIIC faction
-     * tags COUNT these: Texas is nation `lungmen` but `SubPower` `siracusa`,
-     * and Umiri's "all Siracusa Operators" buff reaches her in-game.
+     * Secondary affiliations. RIIC faction tags count these: Texas is nation
+     * `lungmen` but `SubPower` `siracusa`, and Umiri's "all Siracusa
+     * Operators" buff reaches her in-game.
      */
     subPower: Array<PowerAffiliation> | null;
     /**
@@ -48,6 +49,11 @@ export type Operator = {
     nationName: string | null;
     groupName: string | null;
     teamName: string | null;
+    /**
+     * `sub_power` minus the `main_power` ids, in table order, named. The site
+     * shows these only behind the reader's spoiler setting.
+     */
+    hiddenFactions: Array<HiddenFaction>;
     displayNumber: string;
     appellation: string;
     position: OperatorPosition;
@@ -107,11 +113,10 @@ export type Operator = {
      */
     skin: string | null;
     /**
-     * All template ids for operators that have alternate forms (Amiya only,
-     * at time of writing). `None` for normal operators. Each id in this list
-     * is itself a fully-enriched entry in `GameData.operators`. The list is
-     * populated on *every* form in the group, with `default` indicating the
-     * canonical base id.
+     * Every template id of an operator with alternate forms (only Amiya so
+     * far), set on each form in the group; each id is its own entry in
+     * `GameData.operators`. `None` for everyone else. `tmpl_default` names
+     * the base id.
      */
     tmplIds?: Array<string> | null;
     /**

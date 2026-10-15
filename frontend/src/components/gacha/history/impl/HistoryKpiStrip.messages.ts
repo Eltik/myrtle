@@ -9,7 +9,7 @@ export const messages = {
     },
     "history.kpi.bannerTypes": {
         text: "across {count, plural, one {# banner type} other {# banner types}}",
-        description: "Under the total pull count: how many of the four banner buckets the player has pulled on. Lowercase; it starts a fragment, not a sentence.",
+        description: "Under the total pull count: how many of the five banner buckets the player has pulled on. Lowercase; it starts a fragment, not a sentence.",
     },
     "history.kpi.orundum": {
         text: "≈ {count} Orundum",
@@ -18,6 +18,10 @@ export const messages = {
     "history.kpi.orundum.title": {
         text: "{pulls} pulls x {rate} Orundum; free and discounted pulls make this an upper estimate",
         description: "Tooltip explaining the Orundum estimate. Orundum is the game's currency and keeps its name; the x is a plain multiplication.",
+    },
+    "history.kpi.orundum.titleStarter": {
+        text: "{pulls} pulls x {rate} Orundum + {starterPulls} Starter Headhunting pulls x {starterRate} Orundum; free and discounted pulls make this an upper estimate",
+        description: "Tooltip explaining the Orundum estimate when the player also pulled on Starter Headhunting, which costs less per pull. Orundum is the game's currency and keeps its name; the x is a plain multiplication.",
     },
     "history.kpi.sixStars": {
         text: "6★ operators",

@@ -1,5 +1,6 @@
 import { classifyFailure, type IFailure } from "#/lib/api/_shared";
 import { useT } from "#/lib/i18n";
+import { useFormatters } from "#/lib/i18n/formatters";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { messages } from "./error-message.messages";
 
@@ -18,10 +19,12 @@ const BARE_STATUS = /^Request failed: \d+$/;
  */
 export function useErrorMessage(): (err: unknown) => string {
     const t: TypedT<typeof messages> = useT("common");
-    return (err: unknown) => describe(classifyFailure(err), t);
+    const { date } = useFormatters();
+    const at = (sec: number) => date(sec * 1000, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    return (err: unknown) => describe(classifyFailure(err), t, at);
 }
 
-function describe(f: IFailure, t: TypedT<typeof messages>): string {
+function describe(f: IFailure, t: TypedT<typeof messages>, at: (sec: number) => string): string {
     switch (f.kind) {
         case "offline":
             return t("errorMessage.offline");
@@ -30,18 +33,23 @@ function describe(f: IFailure, t: TypedT<typeof messages>): string {
         case "timeout":
             return t("errorMessage.timeout");
         case "http":
-            return describeHttp(f, t);
+            return describeHttp(f, t, at);
         case "unknown":
             return f.message.trim() || t("errorMessage.unknown");
     }
 }
 
-function describeHttp(f: IFailure, t: TypedT<typeof messages>): string {
+function describeHttp(f: IFailure, t: TypedT<typeof messages>, at: (sec: number) => string): string {
     const status = f.status ?? 0;
     // `code` is the backend's `ApiError` discriminator (backend/src/app/error.rs);
     // `SYNC_FAILED` is ours, minted in `lib/auth/server.ts` `completeLogin`.
     if (f.code === "SYNC_FAILED") return t("errorMessage.syncFailed", { status });
     if (f.code === "GAME_LOGIN_REQUIRED") return t("errorMessage.gameLoginRequired");
+    if (f.code === "GAME_MAINTENANCE") {
+        // A passed end means the maintenance is overrunning; naming it would read as stale.
+        const endsAt = f.endsAt ?? null;
+        return endsAt !== null && endsAt * 1000 > Date.now() ? t("errorMessage.gameMaintenanceUntil", { time: at(endsAt) }) : t("errorMessage.gameMaintenance");
+    }
     if (status === 429 || f.code === "RATE_LIMITED") return t("errorMessage.rateLimited");
     if (status === 503 || f.code === "SERVICE_UNAVAILABLE") return t("errorMessage.unavailable", { status });
     if (status >= 500) return t("errorMessage.serverError", { status });

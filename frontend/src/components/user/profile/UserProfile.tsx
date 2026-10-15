@@ -6,19 +6,22 @@ import { Button } from "#/components/ui/button";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useAuth } from "#/hooks/use-auth";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
-import { operatorsIndexQueryOptions, operatorsListQueryOptions } from "#/lib/api/operators";
+import { operatorsIndexQueryOptions, operatorsRosterQueryOptions } from "#/lib/api/operators";
 import { publicPlansQueryOptions } from "#/lib/api/planner";
 import { userEncounteredEnemiesQueryOptions, userImprovementsQueryOptions, userInventoryQueryOptions, userQueryOptions, userRosterQueryOptions, userScoreQueryOptions } from "#/lib/api/user";
 import { type TypedRichT, useGamedataServer, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { Hero } from "./impl/components/Hero";
+import { ProfileHeaderEditor } from "./impl/components/ProfileHeaderEditor";
 import { ProfileLayoutEditor } from "./impl/components/ProfileLayoutEditor";
 import type { messages as layoutMessages } from "./impl/components/ProfileLayoutEditor.messages";
 import { ProfileTabs } from "./impl/components/ProfileTabs";
 import { StatStrip } from "./impl/components/StatStrip";
 import { ScoreTabSkeleton } from "./impl/components/tabs/Score/ScoreTabSkeleton";
+import { rosterAccess } from "./impl/components/tabs/Showcase/favourites";
 import { StatsTab } from "./impl/components/tabs/Stats/StatsTab";
 import { DynamicArtProvider } from "./impl/dynamic-art";
+import { type IHeaderDraft, previewHeader } from "./impl/header";
 import { resolveActiveTab, shownTabs, tabMemory } from "./impl/layout";
 import { isTabId, type TabId } from "./impl/types";
 import type { messages } from "./UserProfile.messages";
@@ -65,7 +68,7 @@ const TAB_CHUNKS: Partial<Record<TabId, () => Promise<unknown>>> = {
     showcase: loadShowcaseTab,
 };
 
-/** Tabs that render phases, skills or template ids and so need the full operator table. */
+/** Tabs that render phases, skills or template ids and so need the roster fields of the operator table. */
 const FULL_TABLE_TABS: ReadonlySet<TabId> = new Set<TabId>(["roster", "optimizer"]);
 
 function GridSkeleton() {
@@ -171,15 +174,17 @@ export function UserProfile() {
     const [editingLayout, setEditingLayout] = useState(false);
     // The background editor is open. Its draft lives in the editor, previewed there; the page's header keeps the saved background.
     const [editingBackground, setEditingBackground] = useState(false);
+    // The header editor is open, and its latest draft, which the header and strip preview.
+    const [editingHeader, setEditingHeader] = useState(false);
+    const [headerPreview, setHeaderPreview] = useState<IHeaderDraft | null>(null);
 
-    // Genuinely-global data: the profile record + roster power the hero, stat
-    // strip, and several tab counts, so both stay eager. Everything else is
-    // gated to the tab that needs it and fetched only once that tab first
-    // becomes active.
+    // The profile record and roster feed the hero, stat strip and several tab
+    // counts, so they load up front (the roster unless its tab is hidden).
+    // Everything else waits for its tab.
     const { data, isLoading } = useQuery(userQueryOptions(id));
 
-    // With no layout saved (`null`) every line below reduces to the page as it was:
-    // all tabs, the old order, the remembered tab, the roster fetched for everyone.
+    // With no layout saved (`null`) every line below reduces to the default page:
+    // all tabs in canonical order, the remembered tab, the roster fetched for everyone.
     const layout = data?.profile_layout ?? null;
     const isOwner = Boolean(user && data && user.id === data.id);
     const memory = tabMemory(layout, isOwner);
@@ -190,6 +195,7 @@ export function UserProfile() {
     const canReadRoster = memory === "stored" || shown.includes("roster");
 
     const { data: roster } = useQuery({ ...userRosterQueryOptions(id), enabled: canReadRoster });
+    const showcaseRosterAccess = useMemo(() => rosterAccess(canReadRoster, roster), [canReadRoster, roster]);
     const gamedataServer = useGamedataServer();
     // The default Stats tab reads only the slim index, so the full table (23.9 MB
     // raw) waits for a tab that renders phases, skills or template ids.
@@ -203,7 +209,11 @@ export function UserProfile() {
     const loadTabChunk = useCallback((tab: TabId) => {
         const load = TAB_CHUNKS[tab];
         if (!load) return;
-        void load().then(() => setLoadedChunks((prev) => (prev.has(tab) ? prev : new Set(prev).add(tab))));
+        // A failed chunk is only logged here: the rendered tab's own lazy() import rejects too
+        // and reaches the error boundary, so this prefetch must not add an unhandled rejection.
+        void load()
+            .then(() => setLoadedChunks((prev) => (prev.has(tab) ? prev : new Set(prev).add(tab))))
+            .catch((e) => console.error("Failed to load profile tab chunk", tab, e));
     }, []);
     useEffect(() => {
         if (activeTab) loadTabChunk(activeTab);
@@ -219,11 +229,10 @@ export function UserProfile() {
     const { data: score, isLoading: isScoreLoading } = useQuery({ ...userScoreQueryOptions(id), enabled: activeTab === "score" });
     const { data: publicPlans } = useQuery({ ...publicPlansQueryOptions(id), enabled: activeTab === "plans" });
     const { data: operatorsStatic } = useQuery({
-        ...operatorsListQueryOptions(gamedataServer),
+        ...operatorsRosterQueryOptions(gamedataServer),
         enabled: activeTab !== null && FULL_TABLE_TABS.has(activeTab) && loadedChunks.has(activeTab),
     });
-    // Improvements only fire while the Score tab is mounted - it's a heavier
-    // payload than the headline score, so don't pay for it on every profile view.
+    // Score tab only: a heavier payload than the headline score.
     const { data: improvements, isLoading: isImprovementsLoading } = useQuery({
         ...userImprovementsQueryOptions(id),
         enabled: activeTab === "score",
@@ -258,16 +267,29 @@ export function UserProfile() {
     if (isLoading) return <ProfileSkeleton />;
     if (!data) return <ProfileNotFound id={id} />;
 
+    // The owner's header and strip show the open editor's draft; everyone else, the saved one.
+    const headerProfile = isOwner && editingHeader && headerPreview ? previewHeader(data, headerPreview) : data;
+
     return (
         <DynamicArtProvider server={data.server}>
             <main className="page-shell flex flex-1 flex-col gap-7 [--page-max:1440px]">
-                <Hero profile={data} background={layout?.background ?? null} onChangeBackground={isOwner ? () => setEditingBackground(true) : undefined} />
+                <Hero profile={headerProfile} background={layout?.background ?? null} isOwner={isOwner} onChangeBackground={isOwner ? () => setEditingBackground(true) : undefined} onEditHeader={isOwner ? () => setEditingHeader(true) : undefined} />
                 {isOwner && editingBackground && (
                     <Suspense fallback={null}>
                         <BackgroundEditor profile={data} saved={layout?.background ?? null} onClose={() => setEditingBackground(false)} />
                     </Suspense>
                 )}
-                <StatStrip profile={data} rosterCount={roster?.length} />
+                <StatStrip profile={headerProfile} rosterCount={roster?.length} isOwner={isOwner} />
+                {isOwner && editingHeader && (
+                    <ProfileHeaderEditor
+                        profile={data}
+                        onDraft={setHeaderPreview}
+                        onClose={() => {
+                            setEditingHeader(false);
+                            setHeaderPreview(null);
+                        }}
+                    />
+                )}
                 {editingLayout && isOwner ? (
                     <ProfileLayoutEditor profile={data} labels={labels} onClose={() => setEditingLayout(false)} />
                 ) : (
@@ -302,7 +324,7 @@ export function UserProfile() {
                         {activeTab === "plans" && <PlansTab uid={id} roster={roster ?? []} />}
                         {activeTab === "enemies" && <EnemiesTab encountered={encounteredEnemies} isLoading={isEnemiesLoading} />}
                         {activeTab === "score" && <ScoreTab score={score} isLoading={isScoreLoading} improvements={improvements} isImprovementsLoading={isImprovementsLoading} uid={id} server={data.server} />}
-                        {activeTab === "showcase" && <ShowcaseTab uid={id} profile={data} isOwner={isOwner} roster={roster ?? []} />}
+                        {activeTab === "showcase" && <ShowcaseTab uid={id} profile={data} isOwner={isOwner} roster={roster ?? []} rosterAccess={showcaseRosterAccess} />}
                         {activeTab === "optimizer" && <OptimizerTab uid={id} roster={roster ?? []} operatorsStatic={operatorsStatic ?? []} />}
                     </Suspense>
                 )}

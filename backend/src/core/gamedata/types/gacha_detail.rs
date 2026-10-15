@@ -6,8 +6,8 @@
 //! [`super::super::enrich::gacha`]). The client fills the rest in from
 //! a second request, `POST {gs}/gacha/getPoolDetail` with `{"poolId": "..."}`.
 //!
-//! The two sources are **complementary, not redundant**, and which one carries
-//! a banner's rate-ups depends on its rule type:
+//! Neither source is complete alone; which one carries a banner's rate-ups
+//! depends on its rule type:
 //!
 //! | rule type        | `upCharInfo.perCharList` | authoritative source            |
 //! |------------------|--------------------------|---------------------------------|
@@ -124,7 +124,8 @@ pub struct UpCharInfo {
 pub struct PerCharEntry {
     #[serde(default)]
     pub rarity_rank: i32,
-    /// Share of this rarity's total rate taken by `char_id_list`, e.g. `0.35`.
+    /// Share of this rarity's rate taken by EACH operator in `char_id_list`, as
+    /// a 0..1 fraction: LIMITED reads `0.35` with `count: 2`, a 70% split.
     #[serde(default)]
     pub percent: f64,
     #[serde(default)]

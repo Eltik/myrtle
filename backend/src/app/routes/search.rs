@@ -139,11 +139,13 @@ pub async fn search(
     // and its blocks are pruned of gone referents only on the profile's own
     // reads, so sending them here would name deleted grids and hidden plans.
     for entry in &mut page.entries {
-        entry.profile.hide_private_tabs();
+        entry.profile.hide_private();
         if let Some(layout) = entry.profile.profile_layout.as_mut() {
             layout.showcase = None;
-            // A result row draws no header, so it carries no header art.
+            // A result row draws no header, so it carries no header art and no
+            // strip; the numbers the owner hid are already nulled on the row.
             layout.background = None;
+            layout.header = None;
         }
     }
     Ok(Json(page))

@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 use crate::{
     app::{error::ApiError, state::AppState},
@@ -6,8 +6,8 @@ use crate::{
         gamedata::types::gacha::GachaPoolClient,
         hypergryph::constants::Server,
         release::{
-            AlignMethod, BannersResponse, PoolAlignment, ReleaseBanner, Resolution,
-            STANDING_POOL_SECS, align, estimate, ledger, override_name, resolve,
+            AlignMethod, BannersResponse, PoolAlignment, ReleaseBanner, Resolution, align,
+            estimate, ledger, override_name, resolve,
         },
         translate::{self, AutoName, TranslationMemory},
     },
@@ -60,7 +60,7 @@ pub async fn get_banners(state: &AppState) -> Result<BannersResponse, ApiError> 
         .map(String::as_str)
         .collect();
     let anchors = align::anchors(&cn.gacha.gacha_pool_client, cn, &shared);
-    let mut char_names: HashMap<String, AutoName> = HashMap::new();
+    let mut char_names: BTreeMap<String, AutoName> = BTreeMap::new();
     let mut name_char = |id: &str| {
         if !char_names.contains_key(id)
             && let Some(n) = translate::operator_name(cn, en, id)
@@ -129,7 +129,7 @@ pub async fn get_banners(state: &AppState) -> Result<BannersResponse, ApiError> 
                 name_cn: pool.gacha_pool_name.clone(),
                 cn_open: pool.open_time,
                 cn_end: pool.end_time,
-                standing: pool.end_time - pool.open_time > STANDING_POOL_SECS,
+                returning: pool.returning,
                 featured6: pool.featured6.clone(),
                 featured5: pool.featured5.clone(),
                 debut_chars,
@@ -146,6 +146,10 @@ pub async fn get_banners(state: &AppState) -> Result<BannersResponse, ApiError> 
                     &pool.gacha_pool_id,
                 ),
                 resolution,
+                declared_share_each: en_pool
+                    .and_then(|e| e.declared_share6)
+                    .or(pool.declared_share6),
+                linkage_loop_at: en_pool.map_or(pool.linkage_loop_at, |e| e.linkage_loop_at),
             }
         })
         .collect();

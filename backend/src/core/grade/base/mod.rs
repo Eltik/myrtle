@@ -6,6 +6,7 @@ pub mod dorms;
 pub mod ledger;
 pub mod order_mix;
 pub mod pools;
+pub mod rotation_value;
 pub mod scope;
 pub mod score;
 pub mod shift_rotation;

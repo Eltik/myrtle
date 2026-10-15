@@ -1,4 +1,4 @@
-//! Trevor's tables (v035): versions and their panels, the job queue, answers
+//! Trevor's tables (v039): versions and their panels, the job queue, answers
 //! and feedback. Callers live in `app/services/trevor`.
 use chrono::{DateTime, Utc};
 use serde_json::Value;

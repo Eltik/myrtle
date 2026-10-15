@@ -107,6 +107,38 @@ export const messages = {
         text: "予愿安洁莉娜 becomes Angelina the Mellow Wish, and 斗争血脉/XI becomes Bloodline of Combat/XI. Search matches either name whichever one is shown. A name with no Latin form yet stays in Chinese. On by default.",
         description: "Caption under the Latin-names switch. Both Chinese examples and their Latin names are game data and stay as-is.",
     },
+    "appearance.spoilers.title": {
+        text: "Spoilers",
+        description: "Card title over the option that shows story-spoiling details on operator pages.",
+    },
+    "appearance.spoilers.desc": {
+        text: "Some operators belong to more factions than their card lets on, and a few of those give away story twists.",
+        description: "Card description under the Spoilers title. 'Card' is the operator's in-game info card, which shows one faction logo.",
+    },
+    "appearance.spoilers.rowTitle": {
+        text: "Enable spoilers",
+        description: "Label of the switch that turns spoiler details on, and the switch's accessible name.",
+    },
+    "appearance.spoilers.rowDesc": {
+        text: "Shows the hidden factions the game never puts on an operator's card. Off by default.",
+        description: "Caption under the spoilers switch. 'Faction' is the game's word for a nation, group or team an operator belongs to.",
+    },
+    "appearance.topBar.title": {
+        text: "Top Bar",
+        description: "Card title over the options for what shows up in the bar at the top of every page.",
+    },
+    "appearance.topBar.desc": {
+        text: "What shows up in the bar at the top of every page.",
+        description: "Card description under the Top Bar title.",
+    },
+    "appearance.topBar.maintenance.rowTitle": {
+        text: "Maintenance countdown",
+        description: "Label of the switch that shows a game maintenance countdown in the top bar, and the switch's accessible name.",
+    },
+    "appearance.topBar.maintenance.rowDesc": {
+        text: "Shows when the game is about to go down for maintenance, or is down right now, straight from Yostar's notices. Home still shows it either way. On by default.",
+        description: "Caption under the maintenance countdown switch. 'Yostar' is the game's publisher; 'Home' is the site's landing page.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

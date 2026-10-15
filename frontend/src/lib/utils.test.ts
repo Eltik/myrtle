@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatProfession, professionLabel, serverNames } from "./utils";
+import { formatProfession, getAvatarById, getSecretaryAvatarURL, professionLabel, serverNames, toAvatarStem } from "./utils";
 
 describe("professionLabel", () => {
     it("shows the server's own class name verbatim, suffix and all", () => {
@@ -31,5 +31,24 @@ describe("serverNames", () => {
             "profession",
         );
         expect([...names]).toEqual([["WARRIOR", "가드"]]);
+    });
+});
+
+describe("toAvatarStem", () => {
+    it("maps base-art ids to the avatar file stems the backend serves", () => {
+        expect(toAvatarStem("char_002_amiya")).toBe("char_002_amiya");
+        expect(toAvatarStem("char_002_amiya#1")).toBe("char_002_amiya");
+        expect(toAvatarStem("char_002_amiya#2")).toBe("char_002_amiya_2");
+        expect(toAvatarStem("char_002_amiya#1+")).toBe("char_002_amiya_1%2B");
+    });
+
+    it("keeps a skin's # and encodes it", () => {
+        expect(toAvatarStem("char_002_amiya@winter#1")).toBe("char_002_amiya_winter%231");
+        expect(toAvatarStem("char_4193_lemuen@ambienceSynesthesia#7")).toBe("char_4193_lemuen_ambienceSynesthesia%237");
+    });
+
+    it("builds the secretary and id avatar URLs from the same stem", () => {
+        expect(getSecretaryAvatarURL({ secretary: "char_002_amiya", secretary_skin_id: "char_002_amiya#1+" })).toMatch(/\/api\/avatar\/char_002_amiya_1%2B$/);
+        expect(getAvatarById("char_002_amiya#2", "cn")).toMatch(/\/api\/cn\/avatar\/char_002_amiya_2$/);
     });
 });

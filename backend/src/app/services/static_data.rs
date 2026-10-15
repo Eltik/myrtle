@@ -1,15 +1,19 @@
 use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 
 use serde::Serialize;
 use serde_json::Value;
 
 use crate::app::cache::keys::CacheKey;
-use crate::app::cache::{CachedJson, cached_json};
+use crate::app::cache::{CachedJson, SharedJson, cached_json};
+use crate::app::cpu;
 use crate::app::error::ApiError;
 use crate::app::services::level::get_level;
+use crate::app::services::story::ServerCache;
 use crate::app::state::AppState;
 use crate::core::gamedata::types::GameData;
+use crate::core::gamedata::types::audio::EnemyAudio;
 use crate::core::gamedata::types::chibi::ChibiCharacter;
 use crate::core::gamedata::types::enemy::{Enemy, RaceData};
 use crate::core::gamedata::types::enemy_stages::{EnemyStageRef, EnemyStageTable};
@@ -21,18 +25,75 @@ use crate::core::gamedata::types::stage_index::StageIndexEntry;
 use crate::core::gamedata::types::zone::{Zone, ZoneType};
 use crate::core::hypergryph::constants::Server;
 
+/// Every table [`serialize_resource`] serves; a slot's index is its place in
+/// [`TABLES`]. Keep in step with that match (and `tests/api_shape_test.rs`).
+const RESOURCES: [&str; 21] = [
+    "operators",
+    "skills",
+    "modules",
+    "skins",
+    "materials",
+    "stages",
+    "zones",
+    "activities",
+    "retro_acts",
+    "enemies",
+    "enemy-stages",
+    "enemy-stage-table",
+    "stage-index",
+    "gacha",
+    "banners",
+    "voices",
+    "handbook",
+    "chibis",
+    "enemy-chibis",
+    "trust",
+    "ranges",
+];
+
+/// One per-server, per-game-data cache per table, so a CN `operators` build
+/// does not hold an EN `skins` reader. Keyed on the `GameData` allocation: a
+/// hot reload swaps it, and the next reader rebuilds.
+static TABLES: [ServerCache<SharedJson>; RESOURCES.len()] =
+    [const { ServerCache::new() }; RESOURCES.len()];
+
+/// One whole game-data table as JSON, serialized, hashed and brotli-encoded
+/// once per game data load (the music index's [`SharedJson`]).
+///
+/// Before, every request cloned the cached JSON-of-JSON, parsed it back and
+/// let the compression layer re-encode the body: for `operators` (23,831,684
+/// bytes) 191.7 ms of brotli plus 24.7 ms of decode per request in release.
+///
+/// # Errors
+/// `404` for an unknown table or a server that is not loaded, `500` when the
+/// table does not serialize, `503` when the CPU pool sheds.
 pub async fn get_resource(
     state: &AppState,
     server: Server,
     resource: &str,
-) -> Result<CachedJson, ApiError> {
-    let server_data = state.require_server_data(server)?;
-    let key = cache_key(resource, server);
-    cached_json(state, &key, move || async move {
-        let gd = server_data.game_data.load_full();
-        serialize_resource(&gd, resource)
-    })
-    .await
+) -> Result<SharedJson, ApiError> {
+    let slot = RESOURCES
+        .iter()
+        .position(|name| *name == resource)
+        .ok_or(ApiError::NotFound)?;
+    let name = RESOURCES[slot];
+    let gd = state.require_server_data(server)?.game_data.load_full();
+    let build_gd = Arc::clone(&gd);
+    let json = TABLES[slot]
+        .get_or_build(
+            server,
+            gd,
+            |_| true,
+            || async move {
+                cpu::run("static_resource", move || {
+                    let body = serialize_resource(&build_gd, name)?;
+                    Ok::<_, ApiError>(Arc::new(SharedJson::new(body.into_bytes())))
+                })
+                .await?
+            },
+        )
+        .await?;
+    Ok(SharedJson::clone(&json))
 }
 
 fn serialize_resource(data: &GameData, resource: &str) -> Result<String, ApiError> {
@@ -174,8 +235,22 @@ pub async fn get_stage_detail(
             }
         }
 
-        // `get_level` caches on its own; `None` when the stage has no level file.
-        let level_data = get_level(state, server, stage_id).await.ok();
+        // `get_level` caches on its own. NotFound is the expected "this stage has
+        // no level file" case; any other error (a level file that does not parse)
+        // still serves the stage without its map, but is logged so it is seen.
+        let level_data = match get_level(state, server, stage_id).await {
+            Ok(level) => Some(level),
+            Err(ApiError::NotFound) => None,
+            Err(e) => {
+                tracing::warn!(
+                    server = server.as_str(),
+                    stage_id,
+                    error = %level_error_detail(&e),
+                    "stage level data failed to load; serving the stage without it"
+                );
+                None
+            }
+        };
 
         let sd = state.require_server_data(server)?;
         let gd = sd.game_data.load_full();
@@ -238,6 +313,8 @@ struct EnemyDetailResponse<'a> {
     /// The full (small) race table; the page resolves the race name from
     /// `enemyTags` against it, as the old client join did.
     race_data: &'a HashMap<String, RaceData>,
+    /// The enemy's battle sounds (empty when none link to it).
+    audio: &'a [EnemyAudio],
 }
 
 pub async fn get_enemy_detail(
@@ -256,6 +333,7 @@ pub async fn get_enemy_detail(
         serde_json::to_string(&EnemyDetailResponse {
             enemy,
             race_data: &gd.enemies.race_data,
+            audio: gd.enemy_audio.get(id).map_or(&[], Vec::as_slice),
         })
         .map_err(|e| ApiError::Internal(e.into()))
     })
@@ -383,4 +461,94 @@ pub async fn get_skins_index(state: &AppState, server: Server) -> Result<CachedJ
         serde_json::to_string(&slim).map_err(|e| ApiError::Internal(e.into()))
     })
     .await
+}
+
+/// The log text for a level that failed to load. `ApiError::Internal` displays
+/// as the bare "internal error", so its anyhow chain is printed with `{:#}`
+/// instead (`context: cause`, one line); every other variant keeps its Display.
+fn level_error_detail(e: &ApiError) -> String {
+    match e {
+        ApiError::Internal(inner) => format!("{inner:#}"),
+        other => other.to_string(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{RESOURCES, collect_level_enemy_ids, level_error_detail, serialize_resource};
+    use crate::app::error::ApiError;
+    use serde_json::json;
+    use std::collections::HashSet;
+
+    fn set(ids: &[&str]) -> HashSet<String> {
+        ids.iter().map(|s| (*s).to_string()).collect()
+    }
+
+    /// Every cached slot names a table `serialize_resource` serves, so no slot
+    /// answers 404 and no table goes uncached.
+    #[test]
+    fn every_cached_table_serializes() {
+        let gd = crate::core::gamedata::types::GameData::default();
+        for name in RESOURCES {
+            assert!(serialize_resource(&gd, name).is_ok(), "{name}");
+        }
+        assert!(matches!(
+            serialize_resource(&gd, "nope"),
+            Err(ApiError::NotFound)
+        ));
+    }
+
+    #[test]
+    fn unions_db_refs_and_wave_action_keys() {
+        let level = json!({
+            "enemyDbRefs": [
+                { "id": "enemy_1007_slime", "level": 0 },
+                { "id": "enemy_1000_gopro" },
+                { "level": 1 },
+            ],
+            "waves": [
+                { "fragments": [
+                    { "actions": [
+                        { "key": "enemy_1007_slime" },
+                        { "key": "" },
+                        { "key": "enemy_1001_bigbo" },
+                        { "noKey": true },
+                    ]},
+                    { "noActions": true },
+                ]},
+                { "noFragments": true },
+            ],
+        });
+        assert_eq!(
+            collect_level_enemy_ids(&level),
+            set(&["enemy_1007_slime", "enemy_1000_gopro", "enemy_1001_bigbo"])
+        );
+    }
+
+    #[test]
+    fn non_enemy_action_keys_are_kept_too() {
+        // Action keys are not filtered by kind: a trap or token spawn key lands in
+        // the set and simply finds no enemy when looked up.
+        let level = json!({ "waves": [ { "fragments": [ { "actions": [ { "key": "trap_001_crate" } ] } ] } ] });
+        assert_eq!(collect_level_enemy_ids(&level), set(&["trap_001_crate"]));
+    }
+
+    #[test]
+    fn an_empty_level_has_no_enemies() {
+        assert!(collect_level_enemy_ids(&json!({})).is_empty());
+        assert!(collect_level_enemy_ids(&json!({ "enemyDbRefs": {}, "waves": "x" })).is_empty());
+    }
+
+    #[test]
+    fn level_error_detail_prints_the_internal_cause_chain() {
+        let parse = serde_json::from_slice::<serde_json::Value>(b"{not json").unwrap_err();
+        let parse_msg = parse.to_string();
+        let e = ApiError::Internal(anyhow::Error::from(parse).context("level_main_01-07.json"));
+        assert_eq!(e.to_string(), "internal error");
+        assert_eq!(
+            level_error_detail(&e),
+            format!("level_main_01-07.json: {parse_msg}")
+        );
+        assert_eq!(level_error_detail(&ApiError::NotFound), "not found");
+    }
 }

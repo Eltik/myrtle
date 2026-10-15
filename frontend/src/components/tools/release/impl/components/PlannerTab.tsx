@@ -3,6 +3,7 @@ import { ListChecks, RotateCcw, X } from "lucide-react";
 import * as React from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useAuth } from "#/hooks/use-auth";
 import { useResyncRoster } from "#/hooks/use-resync-roster";
 import { userSkinsQueryOptions } from "#/lib/api/skins";
@@ -12,7 +13,7 @@ import { useLocale, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, getAvatarById } from "#/lib/utils";
 import { useAutoTranslate } from "../autoTranslate";
-import { formatDate } from "../helpers";
+import { formatDate, useReleaseTimeZone } from "../helpers";
 import type { messages as helperMessages } from "../helpers.messages";
 import { balances, EMPTY_STATE, type IPlanRow, type IPlanSkin, type IPlanState, type IRowBalance, planGroups, rowDeviates, rowExpense, rowIncome, rowPotential, type StageClears, type StageStatus, stageKey, stageOn, stageStatus, usePlanData } from "../plan";
 import type { messages as planMessages } from "../plan.messages";
@@ -43,6 +44,7 @@ const HEADER_PX = 80;
 export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
     const t: PlannerT = useT("tools");
     const locale = useLocale();
+    const timeZone = useReleaseTimeZone();
     const [showPast, setShowPast] = React.useState(false);
     // On by default: a signed-in planner opens with the outfits you already own filtered out.
     const [hideOwned, setHideOwned] = React.useState(true);
@@ -102,11 +104,14 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
         setPane("events");
         if (stacked()) scrollToPlanner();
     };
-    const open = (key: string) => {
+    // Stable, so a click re-renders only the two cards whose `active` flips, not all of them.
+    const showDetailRef = React.useRef(showDetail);
+    showDetailRef.current = showDetail;
+    const open = React.useCallback((key: string) => {
         setSelected(key);
         setSummary(false);
-        showDetail();
-    };
+        showDetailRef.current();
+    }, []);
 
     if (data.isPending) return <ReleaseLoading />;
     if (data.error) return <ReleaseError error={data.error} onRetry={() => window.location.reload()} />;
@@ -117,7 +122,7 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
                 <ToggleField id="planner-show-past" label={t("release.planner.showPast")} checked={showPast} onChange={setShowPast} />
                 {uid && <ToggleField id="planner-hide-owned" label={t("release.planner.hideOwned")} checked={hideOwned} onChange={setHideOwned} />}
                 <span className="font-sans text-[11px] text-muted-foreground">
-                    {t("release.planner.blurb")} {uid ? (sync.saving ? t("release.planner.saving") : sync.savedAt ? t("release.planner.saved", { date: formatDate(sync.savedAt, locale) }) : t("release.planner.autosave")) : t("release.planner.signedOut")}
+                    {t("release.planner.blurb")} {uid ? (sync.saving ? t("release.planner.saving") : sync.savedAt ? t("release.planner.saved", { date: formatDate(sync.savedAt, locale, timeZone) }) : t("release.planner.autosave")) : t("release.planner.signedOut")}
                 </span>
             </div>
             {data.rows.length === 0 ? (
@@ -165,7 +170,7 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
                                                 {t("release.planner.useAccount", { count: accountPrimes })}
                                             </button>
                                         ) : (
-                                            `${t("release.planner.fromAccount")}${profile.data?.updated_at ? t("release.planner.fromAccountSynced", { date: formatDate(Date.parse(profile.data.updated_at) / 1000, locale) }) : ""}`
+                                            `${t("release.planner.fromAccount")}${profile.data?.updated_at ? t("release.planner.fromAccountSynced", { date: formatDate(Date.parse(profile.data.updated_at) / 1000, locale, timeZone) }) : ""}`
                                         )}
                                     </span>
                                 )}
@@ -176,7 +181,7 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
                                 {summary ? t("release.planner.showSummary") : t("release.planner.showSelected")}
                             </Button>
                             {data.rows.map((row) => (
-                                <EventCard key={row.key} row={row} total={totals.get(row.key)} state={state} hidden={hidden} active={!summary && current?.key === row.key} onOpen={() => open(row.key)} t={t} locale={locale} />
+                                <EventCard key={row.key} row={row} total={totals.get(row.key)} picks={state.picks} hidden={hidden} active={!summary && current?.key === row.key} onOpen={open} t={t} locale={locale} />
                             ))}
                         </div>
                     </div>
@@ -202,18 +207,35 @@ function rowTag(row: IPlanRow, t: PlannerT): string {
     return row.rerun ? t("release.planner.tag.rerun") : t("release.planner.tag.event");
 }
 
-function EventCard({ row, total, state, hidden, active, onOpen, t, locale }: { row: IPlanRow; total: IRowBalance | undefined; state: IPlanState; hidden: ReadonlySet<string>; active: boolean; onOpen: () => void; t: PlannerT; locale: string }): React.ReactElement {
+interface IEventCardProps {
+    row: IPlanRow;
+    total: IRowBalance | undefined;
+    picks: IPlanState["picks"];
+    hidden: ReadonlySet<string>;
+    active: boolean;
+    onOpen: (key: string) => void;
+    t: PlannerT;
+    locale: string;
+}
+
+/** Memoised: selecting an event changes `active` on two cards, and only those two should re-render. */
+const EventCard = React.memo(function EventCard({ row, total, picks, hidden, active, onOpen, t, locale }: IEventCardProps): React.ReactElement {
     const art = useArt(row.imagePath);
-    const picked = row.skins.filter((s) => state.picks[s.skinId]).length;
+    const timeZone = useReleaseTimeZone();
+    const picked = row.skins.filter((s) => picks[s.skinId]).length;
     const outfits = row.skins.filter((s) => !hidden.has(s.skinId)).length;
     return (
-        <button type="button" onClick={onOpen} className={cn("grid w-full cursor-pointer gap-x-3 gap-y-2 rounded-xl border p-2.5 text-left transition-all hover:border-primary/50 sm:grid-cols-[minmax(0,1fr)_auto]", active ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border/60 bg-card")}>
+        <button
+            type="button"
+            onClick={() => onOpen(row.key)}
+            className={cn("grid w-full cursor-pointer gap-x-3 gap-y-2 rounded-xl border p-2.5 text-left transition-all hover:border-primary/50 sm:grid-cols-[minmax(0,1fr)_auto]", active ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border/60 bg-card")}
+        >
             <div className="flex min-w-0 flex-col gap-1">
                 <CnName cn={row.nameCn} en={row.nameEn} auto={row.nameAuto} compact primaryClassName="font-sans font-semibold text-[13px] text-foreground">
                     <Tag className={row.kind === "listing" ? "text-fuchsia-400" : row.kind === "review" ? "text-teal-400" : undefined}>{rowTag(row, t)}</Tag>
                 </CnName>
                 <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">
-                    {row.resolution.status === "unlisted" ? t("release.planner.card.unlisted", { date: formatDate(row.enStart, locale) }) : formatDate(row.enStart, locale)}
+                    {row.resolution.status === "unlisted" ? t("release.planner.card.unlisted", { date: formatDate(row.enStart, locale, timeZone) }) : formatDate(row.enStart, locale, timeZone)}
                     {isOverdue(row.resolution) ? t("release.planner.card.overdue") : row.resolution.status === "estimated" ? t("release.planner.card.estimated") : ""}
                     {outfits > 0 ? t("release.planner.card.outfits", { count: outfits }) : ""}
                     {picked > 0 ? t("release.planner.card.picked", { count: picked }) : ""}
@@ -223,7 +245,7 @@ function EventCard({ row, total, state, hidden, active, onOpen, t, locale }: { r
             <Calcs total={total} inline className="self-center max-sm:justify-self-start" />
         </button>
     );
-}
+});
 
 interface IEventDetailProps {
     row: IPlanRow;
@@ -282,24 +304,32 @@ function EventDetail({ row, state, clears, hidden, total, today, lookup, onPick,
                         <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
                             {t("release.planner.stages.income", { income, potential })} <OpIcon className="size-3.5" />
                         </span>
-                        {onRecord > 0 && (
-                            <span className="font-sans text-[11px] text-muted-foreground" title={tally.unknown > 0 ? t("release.planner.stages.unknownTitle", { count: tally.unknown }) : undefined}>
-                                {[
+                        {onRecord > 0 &&
+                            (() => {
+                                const tallyText = [
                                     tally.claimed > 0 && t("release.planner.stages.claimed", { count: tally.claimed }),
                                     tally.open > 0 && (row.ended ? t("release.planner.stages.missed", { count: tally.open }) : t("release.planner.stages.open", { count: tally.open })),
                                     tally.unrated > 0 && t("release.planner.stages.unrated", { count: tally.unrated }),
                                     tally.unknown > 0 && t("release.planner.stages.unknown", { count: tally.unknown }),
                                 ]
                                     .filter(Boolean)
-                                    .join(t("release.planner.stages.tallyJoin"))}
-                            </span>
-                        )}
+                                    .join(t("release.planner.stages.tallyJoin"));
+                                return tally.unknown > 0 ? (
+                                    <Tooltip>
+                                        <TooltipTrigger render={<span className="cursor-help font-sans text-[11px] text-muted-foreground" />}>{tallyText}</TooltipTrigger>
+                                        <TooltipPopup className="max-w-xs">{t("release.planner.stages.unknownTitle", { count: tally.unknown })}</TooltipPopup>
+                                    </Tooltip>
+                                ) : (
+                                    <span className="font-sans text-[11px] text-muted-foreground">{tallyText}</span>
+                                );
+                            })()}
                         {row.ended ? (
                             <span className="font-sans text-[11.5px] text-muted-foreground">{t("release.planner.stages.ended")}</span>
                         ) : deviates ? (
-                            <button type="button" onClick={() => onResetStages(row)} title={clears ? t("release.planner.stages.resetAccount") : t("release.planner.stages.resetDefaults")} className="cursor-pointer font-sans text-[11.5px] text-primary hover:underline">
-                                {t("release.planner.stages.resetAll")}
-                            </button>
+                            <Tooltip>
+                                <TooltipTrigger render={<button type="button" onClick={() => onResetStages(row)} className="cursor-pointer font-sans text-[11.5px] text-primary hover:underline" />}>{t("release.planner.stages.resetAll")}</TooltipTrigger>
+                                <TooltipPopup>{clears ? t("release.planner.stages.resetAccount") : t("release.planner.stages.resetDefaults")}</TooltipPopup>
+                            </Tooltip>
                         ) : (
                             <button type="button" onClick={() => onAllStages(row, !allOn)} className="cursor-pointer font-sans text-[11.5px] text-primary hover:underline">
                                 {allOn ? t("release.planner.stages.clearAll") : t("release.planner.stages.selectAll")}
@@ -312,14 +342,13 @@ function EventDetail({ row, state, clears, hidden, total, today, lookup, onPick,
                             const status = stageStatus(st, clears);
                             const missed = row.ended && status !== "claimed";
                             const titleKey = missed ? "release.planner.status.ended" : STATUS_TITLE_KEYS[status];
-                            return (
+                            const stageButton = (
                                 <button
                                     key={stageKey(st)}
                                     type="button"
                                     aria-pressed={on}
                                     disabled={row.ended}
                                     onClick={() => onStage(row, stageKey(st), !on)}
-                                    title={titleKey ? t(titleKey) : undefined}
                                     className={cn(
                                         "inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-2 py-1 font-mono text-[11px] transition-colors disabled:cursor-default",
                                         on ? "border-primary/50 bg-primary/10 text-foreground" : "border-border/60 bg-muted/30 text-muted-foreground",
@@ -332,6 +361,15 @@ function EventDetail({ row, state, clears, hidden, total, today, lookup, onPick,
                                     {st.challenge ? t("release.planner.stages.cm") : ""}
                                     {st.op !== 1 ? t("release.planner.stages.multiplier", { count: st.op }) : ""}
                                 </button>
+                            );
+                            // The trigger is a wrapping span: an ended event disables the button, and a disabled button fires no pointer events.
+                            return titleKey ? (
+                                <Tooltip key={stageKey(st)}>
+                                    <TooltipTrigger render={<span className="inline-flex" />}>{stageButton}</TooltipTrigger>
+                                    <TooltipPopup className="max-w-xs">{t(titleKey)}</TooltipPopup>
+                                </Tooltip>
+                            ) : (
+                                <React.Fragment key={stageKey(st)}>{stageButton}</React.Fragment>
                             );
                         })}
                     </div>
@@ -372,6 +410,7 @@ interface ISummaryProps {
 
 function Summary({ rows, state, clears, totals, lookup, onRemove, t, locale }: ISummaryProps): React.ReactElement {
     const autoOn = useAutoTranslate();
+    const timeZone = useReleaseTimeZone();
     const income = rows.reduce((sum, row) => sum + rowIncome(row, state, clears), 0);
     const expense = rows.reduce((sum, row) => sum + rowExpense(row, state), 0);
     const tail = rows.at(-1);
@@ -396,7 +435,7 @@ function Summary({ rows, state, clears, totals, lookup, onRemove, t, locale }: I
             </div>
             {short && (
                 <p className="m-0 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 font-sans text-[12px] text-destructive-foreground">
-                    {t("release.planner.summary.short", { count: -(totals.get(short.key)?.balance ?? 0), event: resolveName(short.nameCn, short.nameEn, short.nameAuto, autoOn).text, date: formatDate(short.enStart, locale) })}
+                    {t("release.planner.summary.short", { count: -(totals.get(short.key)?.balance ?? 0), event: resolveName(short.nameCn, short.nameEn, short.nameAuto, autoOn).text, date: formatDate(short.enStart, locale, timeZone) })}
                 </p>
             )}
             {picked.length === 0 ? (
@@ -406,7 +445,7 @@ function Summary({ rows, state, clears, totals, lookup, onRemove, t, locale }: I
                     <section key={row.key} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-2 border-border/60 border-t pt-3">
                         <div className="flex min-w-0 flex-col gap-2">
                             <CnName cn={row.nameCn} en={row.nameEn} auto={row.nameAuto} compact primaryClassName="font-sans font-semibold text-[13px] text-foreground">
-                                <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{formatDate(row.enStart, locale)}</span>
+                                <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{formatDate(row.enStart, locale, timeZone)}</span>
                             </CnName>
                             <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-1.5 p-0">
                                 {skins.map((s) => (
@@ -437,9 +476,12 @@ function SummarySkin({ skin, lookup, autoOn, onRemove, removeLabel }: { skin: IP
                 <span className="truncate font-sans text-[11.5px] text-muted-foreground">{skinName}</span>
             </span>
             <Op value={skin.price.price} className="shrink-0 text-[11.5px] text-foreground" />
-            <button type="button" onClick={() => onRemove(skin)} aria-label={removeLabel} title={removeLabel} className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
-                <X className="size-3.5" aria-hidden="true" />
-            </button>
+            <Tooltip>
+                <TooltipTrigger render={<button type="button" onClick={() => onRemove(skin)} aria-label={removeLabel} className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground" />}>
+                    <X className="size-3.5" aria-hidden="true" />
+                </TooltipTrigger>
+                <TooltipPopup>{removeLabel}</TooltipPopup>
+            </Tooltip>
         </li>
     );
 }

@@ -53,13 +53,12 @@ use std::{
 
 const DEFAULT_BATCH_SIZE: usize = 1000;
 
-/// Conservative per-batch payload cap. Postgres rejects a jsonb value above
-/// ~256MB ("total size of jsonb array elements exceeds the maximum"), and the
-/// server-side binary representation can run larger than the JSON text we
-/// measure here, so flush well below the hard limit. Row-count batching alone
-/// is not enough: 1000 rows of a jumbo-JSONB table (synced building blobs)
-/// overflow the cap long before the row limit. An oversized SINGLE row still
-/// ships alone; if one row crosses the server cap by itself, no batching saves it.
+/// Per-batch payload cap. Postgres rejects a jsonb value above ~256MB ("total
+/// size of jsonb array elements exceeds the maximum") and its binary form can
+/// be larger than the JSON text measured here, so flush well below that. Row
+/// count alone is not enough: 1000 rows of a jumbo-JSONB table (synced building
+/// blobs) pass the cap long before the row limit. An oversized single row still
+/// ships alone; one row over the server cap cannot be saved by batching.
 const MAX_BATCH_BYTES: usize = 64 * 1024 * 1024;
 
 #[derive(Deserialize)]

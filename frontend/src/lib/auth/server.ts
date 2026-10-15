@@ -54,6 +54,20 @@ export const logoutFn = createServerFn({ method: "POST" }).handler(async () => {
     clearAuthCookies();
 });
 
+/**
+ * Delete the signed-in account and all its data, then drop the session
+ * cookies. The cookies go only on success: a failed delete leaves the user
+ * signed in to try again. Throws `APIError(401)` when signed out.
+ */
+export const deleteAccountFn = createServerFn({ method: "POST" }).handler(async () => {
+    const token = getCookie("site_token");
+    if (!token) throw new APIError(401, "Not signed in");
+    const res = await backendFetch("/auth/delete-account", { method: "POST", bearerToken: token });
+    if (!res.ok) throw await parseError(res);
+    clearAuthCookies();
+    return (await res.json()) as StatusOk;
+});
+
 // The code requests name their fields explicitly: the validators pass the
 // client's object through unchecked, so this is what keeps the backend body to
 // exactly the fields it expects.
@@ -127,6 +141,8 @@ async function completeLogin(loginRes: Response): Promise<ISession> {
     const refreshRes = await backendFetch("/refresh", { method: "POST", bearerToken: token });
     if (!refreshRes.ok) {
         const err = await parseError(refreshRes);
+        // Maintenance is not a failure: keep its code so the dialog says why and until when.
+        if (err.code === "GAME_MAINTENANCE") throw err;
         throw new APIError(err.status, `Signed in, but the first roster sync failed: ${err.message}`, "SYNC_FAILED");
     }
 

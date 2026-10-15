@@ -2,7 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { backendFetch } from "#/lib/fetch";
 // Generated from `backend/src/core/gamedata/types/skin.rs`. To change a field,
-// edit the Rust struct and run `bun run gen:types` - do not redeclare it here.
+// edit the Rust struct and run `bun run gen:types`; don't redeclare it here.
 import type { BattleSkin } from "#/types/generated/BattleSkin";
 import type { Brand } from "#/types/generated/Brand";
 import type { DisplaySkin } from "#/types/generated/DisplaySkin";
@@ -27,8 +27,7 @@ export type IBrand = Brand;
 export type ISkinImages = SkinImages;
 export type IEnrichedSkin = EnrichedSkin;
 
-/** The slim per-skin projection served by `GET /skins/index` - exactly the field
- *  set the profile Stats tab and its skin-collection dialog read, over ALL skins. */
+/** `GET /skins/index`: over ALL skins, only the fields the profile Stats tab and its skin-collection dialog read. */
 export interface ISkinIndexDisplay {
     skinName: string | null;
     skinGroupId: string;

@@ -93,7 +93,7 @@ pub struct ServerShare {
     pub players: i64,
 }
 
-/// One point of a user's leaderboard history - a snapshot they appeared in.
+/// One point of a user's leaderboard history: a snapshot they appeared in.
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Serialize, sqlx::FromRow)]

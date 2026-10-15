@@ -1,4 +1,5 @@
 import { CalendarCheck, CalendarDays, Check, Clock } from "lucide-react";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { countGameDays, gameDate } from "#/lib/registry/server-time";
@@ -33,8 +34,8 @@ const SIGNIN = PALETTE.signin;
  */
 function monthState(checkin: IUserCheckin, server: string) {
     const sync = new Date(checkin.updated_at);
-    // The snapshot belongs to the game day it was taken on, which lives in
-    // SERVER time (04:00 reset) - the viewer's local date may be a day ahead.
+    // The snapshot belongs to the game day it was taken on, in SERVER time
+    // (04:00 reset); the viewer's local date may be a day ahead.
     const { year, month, day } = gameDate(Math.floor(sync.getTime() / 1000), server);
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const claimed = Math.max(0, Math.min(checkin.claimed_this_month, daysInMonth));
@@ -55,19 +56,20 @@ function humanAge(days: number, t: CardT): string {
 
 /** "3 weeks ago", "yesterday", etc., in the page's locale. */
 function relativeTime(date: Date, f: IFormatters): string {
-    // `relativeLong`, not `relative`: this card's wording is the DEFAULT (long)
-    // `Intl.RelativeTimeFormat` style, so it reads
-    // "3 weeks ago". The shared `relative` is the narrow style used in dense
-    // UI ("3 wk. ago"), which would have silently reworded this card.
+    // `relativeLong`, not `relative`: this card reads in the DEFAULT long style
+    // ("3 weeks ago"); the shared `relative` is the narrow one ("3 wk. ago").
     return f.relativeLong(date.toISOString());
 }
 
 function StatRow({ label, value, title }: { label: string; value: string; title?: string }) {
     return (
-        <div className="flex items-center justify-between gap-2 border-border/40 border-t pt-2.5" title={title}>
-            <span className={KICKER_TEXT}>{label}</span>
-            <span className="font-mono text-[11px] text-foreground tabular-nums">{value}</span>
-        </div>
+        <Tooltip disabled={!title}>
+            <TooltipTrigger render={<div className="flex items-center justify-between gap-2 border-border/40 border-t pt-2.5" />}>
+                <span className={KICKER_TEXT}>{label}</span>
+                <span className="font-mono text-[11px] text-foreground tabular-nums">{value}</span>
+            </TooltipTrigger>
+            <TooltipPopup>{title}</TooltipPopup>
+        </Tooltip>
     );
 }
 
@@ -81,8 +83,9 @@ export function SignInOverviewCard({ checkin, server }: ICardProps) {
 
     const ageDays = register_ts ? countGameDays(register_ts, last_online_ts ?? Math.floor(Date.now() / 1000), server) : null;
     // Floor (not round) so e.g. 915/919 reads 99%, never a misleading 100%.
-    const rate = ageDays !== null ? Math.min(100, Math.floor((cumulative_signin / ageDays) * 100)) : null;
-    const missed = ageDays !== null ? Math.max(0, ageDays - cumulative_signin) : null;
+    // `cumulative_signin` and `register_ts` are `null` to a visitor when the owner hid them from their header.
+    const rate = ageDays !== null && cumulative_signin !== null ? Math.min(100, Math.floor((cumulative_signin / ageDays) * 100)) : null;
+    const missed = ageDays !== null && cumulative_signin !== null ? Math.max(0, ageDays - cumulative_signin) : null;
     const { claimed, elapsed } = monthState(checkin, server);
 
     return (
@@ -91,7 +94,7 @@ export function SignInOverviewCard({ checkin, server }: ICardProps) {
                 <Kicker icon={CalendarDays} label={t("profile.stats.signin.record.title")} />
 
                 <div className="grid grid-cols-2 gap-3">
-                    <Tile color={SIGNIN} sub={t("profile.stats.signin.total")} tooltip={t("profile.stats.signin.total.tooltip")} value={f.number(cumulative_signin)} />
+                    {cumulative_signin !== null && <Tile color={SIGNIN} sub={t("profile.stats.signin.total")} tooltip={t("profile.stats.signin.total.tooltip")} value={f.number(cumulative_signin)} />}
                     {ageDays !== null && <Tile color={SIGNIN} sub={t("profile.stats.signin.age")} value={f.number(ageDays)} />}
                 </div>
 
@@ -129,8 +132,8 @@ function LegendSwatch({ state }: { state: SlotState }) {
 /**
  * Right card: the current month's sign-in progress (snapshot as of last sync).
  *
- * The cells are the month's reward SLOTS, claimed front-to-back - the same
- * thing the game itself draws. They are not dates, so there is no weekday
+ * The cells are the month's reward SLOTS, claimed front-to-back, which is what
+ * the game itself draws. They are not dates, so there is no weekday
  * header and no "you missed the 4th": being behind shows up as open slots at
  * the end of the claimed run.
  */
@@ -143,7 +146,7 @@ export function SignInCalendarCard({ checkin, server }: ICardProps) {
     const { sync, year, month, daysInMonth, claimed, elapsed, behind } = monthState(checkin, server);
 
     const monthAnchor = new Date(year, month, 1);
-    const monthLabel = f.date(monthAnchor, MONTH_LONG);
+    const monthLabel = f.calendarDay(monthAnchor, MONTH_LONG);
     const syncAbsolute = f.date(sync, DATE_SHORT);
 
     // The next slot the player can take - the one the game highlights.
@@ -158,10 +161,13 @@ export function SignInCalendarCard({ checkin, server }: ICardProps) {
             <div className={cn("flex h-full flex-col gap-4", CARD_PADDING)}>
                 <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
                     <Kicker icon={CalendarCheck} label={t("profile.stats.signin.calendar.title")} />
-                    <span className="inline-flex items-center gap-1.5 font-medium text-[11px] text-muted-foreground" title={t("profile.stats.signin.syncedTitle", { date: syncAbsolute })}>
-                        <Clock aria-hidden className="size-3" />
-                        {t("profile.stats.signin.synced", { ago: relativeTime(sync, f) })}
-                    </span>
+                    <Tooltip>
+                        <TooltipTrigger render={<span className="inline-flex items-center gap-1.5 font-medium text-[11px] text-muted-foreground" />}>
+                            <Clock aria-hidden className="size-3" />
+                            {t("profile.stats.signin.synced", { ago: relativeTime(sync, f) })}
+                        </TooltipTrigger>
+                        <TooltipPopup>{t("profile.stats.signin.syncedTitle", { date: syncAbsolute })}</TooltipPopup>
+                    </Tooltip>
                 </div>
 
                 <div className="flex items-baseline justify-between">
@@ -188,18 +194,23 @@ export function SignInCalendarCard({ checkin, server }: ICardProps) {
                             if (withCard) titleParts.push(t("profile.stats.signin.cell.monthlyCard"));
                             if (slot === nextSlot) titleParts.push(t("profile.stats.signin.cell.nextUp"));
                             return (
-                                <div
-                                    className={cn(CELL_BASE, state === "open" && "border-border/60 border-dashed text-muted-foreground/55", state === "upcoming" && "border-transparent text-muted-foreground/30", state === "claimed" && "border-transparent")}
-                                    key={slot}
-                                    style={{
-                                        ...(state === "claimed" && claimedStyle()),
-                                        ...(slot === nextSlot && { boxShadow: `inset 0 0 0 1.5px color-mix(in oklch, ${SIGNIN} 55%, transparent)` }),
-                                    }}
-                                    title={titleParts.join(" · ")}
-                                >
-                                    {slot}
-                                    {state === "claimed" && <Check aria-hidden className="absolute top-0.5 right-0.5 size-2" style={{ color: SIGNIN }} />}
-                                </div>
+                                <Tooltip key={slot}>
+                                    <TooltipTrigger
+                                        render={
+                                            <div
+                                                className={cn(CELL_BASE, state === "open" && "border-border/60 border-dashed text-muted-foreground/55", state === "upcoming" && "border-transparent text-muted-foreground/30", state === "claimed" && "border-transparent")}
+                                                style={{
+                                                    ...(state === "claimed" && claimedStyle()),
+                                                    ...(slot === nextSlot && { boxShadow: `inset 0 0 0 1.5px color-mix(in oklch, ${SIGNIN} 55%, transparent)` }),
+                                                }}
+                                            />
+                                        }
+                                    >
+                                        {slot}
+                                        {state === "claimed" && <Check aria-hidden className="absolute top-0.5 right-0.5 size-2" style={{ color: SIGNIN }} />}
+                                    </TooltipTrigger>
+                                    <TooltipPopup>{titleParts.join(" · ")}</TooltipPopup>
+                                </Tooltip>
                             );
                         })}
                     </div>
@@ -220,25 +231,28 @@ export function SignInCalendarCard({ checkin, server }: ICardProps) {
 
                 <div className="mt-auto flex items-center justify-between gap-2 border-border/40 border-t pt-2.5">
                     <span className={KICKER_TEXT}>{t("profile.stats.signin.behind")}</span>
-                    <span className="font-mono text-[11px] text-foreground tabular-nums" title={cardDays > 0 ? t("profile.stats.signin.cardDays.tooltip", { cardDays, claimed }) : undefined}>
-                        {behind === 0 ? (
-                            <span className="font-semibold" style={{ color: SIGNIN }}>
-                                {t("profile.stats.signin.caughtUp")}
-                            </span>
-                        ) : (
-                            <>
+                    <Tooltip disabled={cardDays <= 0}>
+                        <TooltipTrigger render={<span className="font-mono text-[11px] text-foreground tabular-nums" />}>
+                            {behind === 0 ? (
                                 <span className="font-semibold" style={{ color: SIGNIN }}>
-                                    {behind}
-                                </span>{" "}
-                                {t("profile.stats.signin.behind.days", { count: behind })}
-                            </>
-                        )}
-                        {can_check_in && (
-                            <span className="ml-2 font-semibold" style={{ color: SIGNIN }}>
-                                {t("profile.stats.signin.claimReady")}
-                            </span>
-                        )}
-                    </span>
+                                    {t("profile.stats.signin.caughtUp")}
+                                </span>
+                            ) : (
+                                <>
+                                    <span className="font-semibold" style={{ color: SIGNIN }}>
+                                        {behind}
+                                    </span>{" "}
+                                    {t("profile.stats.signin.behind.days", { count: behind })}
+                                </>
+                            )}
+                            {can_check_in && (
+                                <span className="ml-2 font-semibold" style={{ color: SIGNIN }}>
+                                    {t("profile.stats.signin.claimReady")}
+                                </span>
+                            )}
+                        </TooltipTrigger>
+                        <TooltipPopup>{t("profile.stats.signin.cardDays.tooltip", { cardDays, claimed })}</TooltipPopup>
+                    </Tooltip>
                 </div>
             </div>
         </StatCard>

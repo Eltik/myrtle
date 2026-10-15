@@ -17,8 +17,7 @@
 //!   hand-written `#[ts(type = "unknown")]` breaks the frontend build at
 //!   every server-fn boundary the type crosses.
 //!
-//! Neither shows up as a build failure anywhere else: the bindings compile fine,
-//! they are just wrong. Hence this test.
+//! Neither fails a build anywhere else: the bindings compile, they are just wrong.
 
 use std::fs;
 use std::path::PathBuf;

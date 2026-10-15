@@ -1,9 +1,25 @@
 import type { FilterSets } from "#/components/operators/list/impl/shared-filters";
 import { hasAnySharedFilter, matchesSharedFilters } from "#/components/operators/list/impl/shared-filters";
+import type { IOperatorRosterItem } from "#/lib/api/operators";
+import type { IRosterEntry } from "#/lib/api/user";
 import { compactForSearch } from "#/lib/search/fuzzy";
 import type { ObtainChannel } from "#/types/generated/ObtainChannel";
+import type { IOperatorIndexEntry } from "#/types/operators";
 import { isMaxed, MAX_ELITE_BY_RARITY, MAX_LEVEL_BY_RARITY } from "./helpers.card";
-import type { IDisplayEntry, SortKey, SortOrder, SourceFilter } from "./types";
+import type { IDisplayEntry, IOwnedEntry, SortKey, SortOrder, SourceFilter } from "./types";
+
+/** One roster row as the roster's cards and `OperatorDialog` read it: the row, its index entry and its full table entry, either of which may be missing. */
+export function toOwnedEntry(r: IRosterEntry, meta: IOperatorIndexEntry | null, staticOp: IOperatorRosterItem | null): IOwnedEntry {
+    return {
+        ...r,
+        isOwned: true,
+        meta,
+        static: staticOp,
+        name: meta?.name ?? r.operator_id,
+        rarity: meta?.rarity ?? 1,
+        voiceActors: meta?.voiceActors ?? [],
+    };
+}
 
 /**
  * Classifies an operator by the server's language-neutral `channel` when the field is present.
@@ -75,10 +91,10 @@ function maxedKey(e: IDisplayEntry): number {
  *
  * A term that CANNOT apply to this operator has its weight redistributed across
  * the terms that can, rather than being scored as complete. The difference
- * matters: scoring the inapplicable as 1 made the function NON-MONOTONIC,
+ * matters: scoring the inapplicable as 1 makes the function NON-MONOTONIC,
  * because masteries are inapplicable below E2 and merely empty at E2, so
- * promoting a 6-star from E1 80 S7 to E2 1 S7 dropped its score 0.707 -> 0.697.
- * Investment went up and the number went down. Redistribution makes the same
+ * promoting a 6-star from E1 80 S7 to E2 1 S7 drops its score 0.707 -> 0.697.
+ * Investment goes up and the number goes down. Redistribution makes the same
  * step 0.502 -> 0.667, drops a fully-uninvested 6-star from 0.250 to 0.000, and
  * still lets a finished 3-star or 1-star, which can never have masteries or
  * modules, reach a full 1.000. Measured, and pinned by helpers.test.ts.
@@ -168,9 +184,9 @@ function cmpByKey(a: IDisplayEntry, b: IDisplayEntry, key: SortKey): number {
 /**
  * Ties break by investment, then rarity, then name.
  *
- * A bare `name.localeCompare` tie-break put an alphabetic accident between two operators the
+ * A bare `name.localeCompare` tie-break puts an alphabetic accident between two operators the
  * player thinks of as very differently invested: inside one rarity band, a maxed operator and an
- * E0 1 operator sat wherever their names fell. Each key's own secondary term is dropped from
+ * E0 1 operator sit wherever their names fall. Each key's own secondary term is dropped from
  * `cmpByKey` for the same reason: this chain is the single place tie order is decided.
  */
 export function sortEntries(entries: IDisplayEntry[], key: SortKey, order: SortOrder): IDisplayEntry[] {

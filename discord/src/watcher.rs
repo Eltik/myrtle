@@ -18,15 +18,7 @@ use tokio::sync::{Mutex, RwLock, mpsc, oneshot};
 use tokio_tungstenite::{connect_async, tungstenite::Message};
 
 use crate::db;
-
-#[allow(clippy::unreadable_literal)]
-const COLOR_OK: u32 = 0x57F287;
-#[allow(clippy::unreadable_literal)]
-const COLOR_WARN: u32 = 0xFEE75C;
-#[allow(clippy::unreadable_literal)]
-const COLOR_BAD: u32 = 0xED4245;
-#[allow(clippy::unreadable_literal)]
-const COLOR_INFO: u32 = 0x5865F2;
+use crate::ui::{COLOR_BAD, COLOR_INFO, COLOR_OK, COLOR_WARN};
 
 /// Shared state owned by both the watcher task and the slash-command handlers.
 ///
@@ -239,8 +231,9 @@ async fn handle_event(
         }
     };
 
-    for (_guild, channel) in channels {
-        broadcast_one(http, channel, embed.clone()).await;
+    // A guild with a server filter (`/assets channel set servers:`) only hears its own labels.
+    for (_guild, binding) in channels.into_iter().filter(|(_, b)| b.wants(label)) {
+        broadcast_one(http, binding.channel_id, embed.clone()).await;
     }
 }
 
@@ -317,7 +310,7 @@ fn build_embed(event: &AssetEvent, pending_new_version: Option<&str>) -> Option<
             total_bytes,
             total_bytes_formatted,
         } => {
-            // Prefer the pipeline's preformatted size — its rounding matches the CLI output.
+            // Prefer the pipeline's preformatted size: its rounding matches the CLI output.
             let size = total_bytes_formatted
                 .clone()
                 .unwrap_or_else(|| format_bytes(*total_bytes));
@@ -386,12 +379,14 @@ async fn broadcast_one(http: &Arc<Http>, channel: ChannelId, embed: CreateEmbed)
     }
 }
 
-async fn is_announcement_channel(http: &Arc<Http>, channel: ChannelId) -> bool {
+/// Whether `channel` is an announcement channel, whose messages should be crossposted to
+/// following servers. Also used by the birthday announcer.
+pub async fn is_announcement_channel(http: &Arc<Http>, channel: ChannelId) -> bool {
     match channel.to_channel(http.as_ref()).await {
         Ok(Channel::Guild(c)) => c.kind == ChannelType::News,
         Ok(_) => false,
         Err(e) => {
-            tracing::warn!("assets watcher: fetch channel {channel} for crosspost check: {e}");
+            tracing::warn!("fetch channel {channel} for crosspost check: {e}");
             false
         }
     }
@@ -411,5 +406,23 @@ fn format_bytes(bytes: u64) -> String {
         format!("{:.1} MB", f / MB as f64)
     } else {
         format!("{:.2} GB", f / GB as f64)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::format_bytes;
+
+    #[test]
+    fn picks_the_largest_whole_unit() {
+        assert_eq!(format_bytes(0), "0 B");
+        assert_eq!(format_bytes(1023), "1023 B");
+        assert_eq!(format_bytes(1024), "1.0 KB");
+        assert_eq!(format_bytes(1536), "1.5 KB");
+        assert_eq!(format_bytes(1024 * 1024 - 1), "1024.0 KB");
+        assert_eq!(format_bytes(1024 * 1024), "1.0 MB");
+        assert_eq!(format_bytes(5 * 1024 * 1024 + 512 * 1024), "5.5 MB");
+        assert_eq!(format_bytes(1024 * 1024 * 1024), "1.00 GB");
+        assert_eq!(format_bytes(3 * 1024 * 1024 * 1024 / 2), "1.50 GB");
     }
 }

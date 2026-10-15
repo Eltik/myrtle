@@ -117,20 +117,17 @@ function getCombinations<T>(arr: T[], maxSize: number): T[][] {
 // floored at Robot outranks a Survival combo that can still drop a 3★, however
 // many 5★s Survival's pool happens to contain.
 //
-// The 5★ share is also not a real drop probability - it is pool share, which
-// this project has already concluded is not the in-game rate, which is why no
-// percentage is displayed anywhere in this tool. A number we deliberately will
-// not show a user because it is wrong must not be deciding the order either.
+// The 5★ share is also not a real drop probability. It is pool share, which is
+// not the in-game rate, which is why this tool shows no percentage anywhere. A
+// number we won't show a user because it is wrong must not decide the order.
 //
 // This precedence has been inverted three times, each pass silently undoing the
 // last, because it is easy to reorder two lines inside an anonymous comparator
 // without noticing there was an argument attached to them. Hence the shape
 // below: the precedence is an ordered list of named comparators rather than a
 // sequence of statements, and `assertFloorOutranksPoolShare` fails loudly in dev
-// if the first two are ever swapped. If you are here to put pool composition
-// back on top, you need to delete that check too - please take that as the
-// argument it is meant to be, and change the reasoning above rather than only
-// the code.
+// if the first two are ever swapped. Putting pool composition back on top means
+// deleting that check too; change the reasoning above, not only the code.
 
 type ResultComparator = (a: ITagCombinationResult, b: ITagCombinationResult) => number;
 
@@ -166,10 +163,10 @@ function rankCombinations(mode: OperatorSortMode): ResultComparator {
 }
 
 /**
- * The regression guard, run in dev so a swap fails loudly: two combinations where
- * the floor and the 5★ share disagree - a Robot-floored pool with no 5★s
- * against a 3★-floored pool that is half 5★ - must rank the better floor first.
- * This is the exact comparison that has regressed three times.
+ * Dev-only regression guard: when the floor and the 5★ share disagree (a
+ * Robot-floored pool with no 5★s against a 3★-floored pool that is half 5★),
+ * the better floor must rank first. This exact comparison has regressed three
+ * times.
  */
 function assertFloorOutranksPoolShare(): void {
     const make = (rarities: number[]): ITagCombinationResult => ({

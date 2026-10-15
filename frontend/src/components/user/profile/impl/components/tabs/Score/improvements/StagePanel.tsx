@@ -1,4 +1,6 @@
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IImprovementsResponse, IStageGap, IStagePoolImprovements } from "#/lib/api/user";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -124,13 +126,16 @@ function StageChip({ stage, accent, locked = false }: { stage: IStageGap; accent
     const primary = leadWithName ? stage.name : stage.code;
     const secondary = leadWithName ? stage.code : stage.name;
     return (
-        <span className={cn("group flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/15 px-2 py-1 transition-colors hover:border-border/70 hover:bg-muted/30", locked && "opacity-55")} title={locked ? t("score.improvements.stage.chip.lockedTitle", { label: tooltipLabel }) : tooltipLabel}>
-            <span className={`size-1.5 shrink-0 rounded-full ${stateDot}`} aria-hidden />
-            <span className={cn(TEXT_BADGE, "max-w-[22ch] truncate font-semibold")} style={{ color: `color-mix(in oklch, ${accent} 55%, var(--foreground))` }}>
-                {primary}
-            </span>
-            {secondary && <span className="hidden max-w-[16ch] truncate text-[11px] text-muted-foreground sm:inline">{secondary}</span>}
-            {stage.weight !== 1 && <Pill color={accent}>×{stage.weight.toFixed(2)}</Pill>}
-        </span>
+        <Tooltip>
+            <TooltipTrigger render={<Link to="/stages/$stageId" params={{ stageId: stage.stage_id }} className={cn("group flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/15 px-2 py-1 transition-colors hover:border-border/70 hover:bg-muted/30", locked && "opacity-55")} />}>
+                <span className={`size-1.5 shrink-0 rounded-full ${stateDot}`} aria-hidden />
+                <span className={cn(TEXT_BADGE, "max-w-[22ch] truncate font-semibold")} style={{ color: `color-mix(in oklch, ${accent} 55%, var(--foreground))` }}>
+                    {primary}
+                </span>
+                {secondary && <span className="hidden max-w-[16ch] truncate text-[11px] text-muted-foreground sm:inline">{secondary}</span>}
+                {stage.weight !== 1 && <Pill color={accent}>×{stage.weight.toFixed(2)}</Pill>}
+            </TooltipTrigger>
+            <TooltipPopup>{locked ? t("score.improvements.stage.chip.lockedTitle", { label: tooltipLabel }) : tooltipLabel}</TooltipPopup>
+        </Tooltip>
     );
 }

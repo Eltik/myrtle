@@ -29,8 +29,7 @@
 //!   - the giant raw `data` blob beyond what we extract (v3 reconstructs from
 //!     normalized tables on demand)
 
-// CLI tool: a long top-level fn, an intentional cast, and explicit token->id match arms
-// (kept verbose for clarity) are expected here.
+// CLI tool: a long top-level fn, a cast, and explicit token->id match arms.
 #![allow(
     clippy::too_many_lines,
     clippy::cast_possible_wrap,

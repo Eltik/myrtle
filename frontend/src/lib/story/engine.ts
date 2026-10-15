@@ -21,13 +21,14 @@
  * string into a number or a slot in `args.ts`, and the DOTween curve table in
  * `ease.ts`.
  *
- * The switch itself is ONE function on purpose. Its thirty-eight arms share
- * eleven pieces of walk state (`state`, `pc`, `skipping`, `currentSounds`,
- * `sfxLevels`, the two sequence counters and the four closures `frame`, `hold`,
- * `finish` and `unhandled`), so cutting it into per-kind modules would mean
- * threading a context object through every arm: more surface, the same logic,
- * and a behaviour risk the tests cannot see. It is long because the game has
- * thirty-eight commands, not because two things are tangled in it.
+ * The walk is ONE function on purpose. Its 39 command kinds (37 switch arms
+ * plus `predicate` and `decision` ahead of the switch) share eleven pieces of
+ * walk state (`state`, `pc`, `skipping`, `currentSounds`, `sfxLevels`, the two
+ * sequence counters and the four closures `frame`, `hold`, `finish` and
+ * `unhandled`), so per-kind modules would thread a context object through
+ * every arm: more surface, the same logic, and a behaviour risk the tests
+ * cannot see. It is long because there are 39 kinds, not because two things
+ * are tangled in it.
  */
 import type { StoryCommand } from "#/types/generated/StoryCommand";
 import type { StoryScript } from "#/types/generated/StoryScript";
@@ -502,8 +503,8 @@ function build(script: StoryScript, options: EngineOptions, total: number): Engi
                     // `_ProcessSlotWithParam` reads the focus INT: absent or 0
                     // lights both, 1 lights slot 1 and dims slot 2, 2 is the
                     // reverse, -1 is EXACTLY 1 (`orr w8,focus,#2; cmp w8,#2` is
-                    // false for -1), and 3 dims everything. This reader used to
-                    // light both on -1 (3,045 lines) and on 3 (127).
+                    // false for -1), and 3 dims everything. Lighting both on -1
+                    // mislights 3,045 lines, and on 3 another 127.
                     const focus = Math.trunc(num(a.focus, 0));
                     const lit1 = focus !== 2 && focus !== 3;
                     const lit2 = focus === 0 || focus === 2;

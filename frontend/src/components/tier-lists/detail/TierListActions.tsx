@@ -30,7 +30,7 @@ export function TierListActions({ detail }: ITierListActionsProps) {
         onMutate: async () => {
             await queryClient.cancelQueries({ queryKey: favoriteKey });
             const previous = queryClient.getQueryData<{ favorited: boolean } | null>(favoriteKey);
-            queryClient.setQueryData<{ favorited: boolean } | null>(favoriteKey, { favorited: !(previous?.favorited ?? false) });
+            queryClient.setQueryData<{ favorited: boolean } | null>(favoriteKey, () => ({ favorited: !(previous?.favorited ?? false) }));
             return { previous };
         },
         onError: (_err, _vars, ctx) => {

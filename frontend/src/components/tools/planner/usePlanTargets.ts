@@ -4,7 +4,7 @@ import type { IOperatorPlanResponse } from "#/lib/api/planner";
 import type { IRosterEntry } from "#/lib/api/user";
 import { rarityToNumber } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
-import { clampModuleTargets, clampSkillTargets, getMaxLevel, initialTargets, type ModuleTargets, maxEliteFor, type SkillTargets, withSkillTarget } from "./planTargets";
+import { clampModuleTargets, clampSkillTargets, getMaxLevel, initialTargets, isEliteBelowFloor, isModuleBelowFloor, isSkillBelowFloor, type ModuleTargets, maxEliteFor, minLevelFor, NO_FLOOR, raiseToFloor, rosterFloor, type SkillTargets, withSkillTarget } from "./planTargets";
 
 interface IUsePlanTargetsArgs {
     open: boolean;
@@ -40,6 +40,9 @@ interface ISeededState {
  * those would throw away masteries the plan or roster legitimately has; the
  * `isFullyApplied` flag holds it off until the seeded promotion and level have
  * rendered.
+ *
+ * Every field is floored at the roster (`rosterFloor`): the seed is raised to
+ * it and the setters refuse a step below it, so a plan never asks to go down.
  */
 export function usePlanTargets({ open, operator, existingPlan, roster, hasRosterData }: IUsePlanTargetsArgs) {
     const [elite, setElite] = React.useState<number>(0);
@@ -53,6 +56,10 @@ export function usePlanTargets({ open, operator, existingPlan, roster, hasRoster
     const rarity = operator ? rarityToNumber(operator.rarity) : 6;
     const maxElite = maxEliteFor(rarity);
     const maxLevel = operator ? getMaxLevel(rarity, elite) : 90;
+
+    const rosterEntry = operator ? roster?.find((entry) => entry.operator_id === operator.id) : undefined;
+    const floor = React.useMemo(() => (operator ? rosterFloor(operator, rosterEntry) : NO_FLOOR), [operator, rosterEntry]);
+    const minLevel = minLevelFor(floor, elite);
 
     React.useEffect(() => {
         if (open) return;
@@ -69,8 +76,8 @@ export function usePlanTargets({ open, operator, existingPlan, roster, hasRoster
         if (!operator || !hasRosterData) return;
         if (seededRef.current?.operatorId === operator.id) return;
 
-        const rosterEntry = roster?.find((entry) => entry.operator_id === operator.id);
-        const seed = initialTargets(operator, existingPlan, rosterEntry);
+        const entry = roster?.find((e) => e.operator_id === operator.id);
+        const seed = raiseToFloor(initialTargets(operator, existingPlan, entry), rosterFloor(operator, entry));
 
         setDisplayOnProfile(seed.displayOnProfile);
         setSelectedGroups(seed.groups);
@@ -100,22 +107,26 @@ export function usePlanTargets({ open, operator, existingPlan, roster, hasRoster
     }, [elite, level, operator]);
 
     const changeElite = (newElite: number) => {
+        if (isEliteBelowFloor(floor, newElite)) return;
         setElite(newElite);
         const maxLevelForElite = getMaxLevel(rarity, newElite);
-        setLevel((prev) => Math.min(prev, maxLevelForElite));
+        const minLevelForElite = minLevelFor(floor, newElite);
+        setLevel((prev) => Math.max(Math.min(prev, maxLevelForElite), minLevelForElite));
     };
 
-    /** Takes raw slider or input values: NaN (a cleared input) reads as 1, and the result is clamped to 1..maxLevel. */
+    /** Takes raw slider or input values: NaN (a cleared input) reads as the floor, and the result is clamped to minLevel..maxLevel. */
     const changeLevel = (value: number) => {
-        const target = Number.isNaN(value) ? 1 : value;
-        setLevel(Math.min(Math.max(1, target), maxLevel));
+        const target = Number.isNaN(value) ? minLevel : value;
+        setLevel(Math.min(Math.max(minLevel, target), maxLevel));
     };
 
     const changeSkillTarget = (skillIdx: number, value: number) => {
+        if (isSkillBelowFloor(floor, skillIdx, value)) return;
         setSkillTargets((prev) => withSkillTarget(prev, operator?.skills.length ?? 0, skillIdx, value));
     };
 
     const changeModuleTarget = (moduleId: string, stage: number) => {
+        if (isModuleBelowFloor(floor, moduleId, stage)) return;
         setModuleTargets((prev) => ({ ...prev, [moduleId]: stage }));
     };
 
@@ -124,6 +135,8 @@ export function usePlanTargets({ open, operator, existingPlan, roster, hasRoster
         level,
         maxElite,
         maxLevel,
+        minLevel,
+        floor,
         skillTargets,
         moduleTargets,
         displayOnProfile,

@@ -15,10 +15,9 @@ export const SERVERS: readonly IServerMeta[] = [
     { code: "en", region: "Global", publisher: "Yostar", loginDisabled: false },
     { code: "jp", region: "Japan", publisher: "Yostar", loginDisabled: false },
     { code: "kr", region: "Korea", publisher: "Yostar", loginDisabled: false },
-    // Disabled on the frontend for now: the oauth2 grant this depends on uses
-    // a placeholder appCode (Skland's, not the real game client's - see
-    // backend core::hypergryph::passport module docs), so login fails even
-    // with correct credentials. Backend implementation is left as-is.
+    // Disabled here only: the oauth2 grant uses a placeholder appCode (Skland's,
+    // not the game client's; see core::hypergryph::passport), so login fails
+    // even with correct credentials.
     { code: "cn", region: "China", publisher: "Hypergryph", loginDisabled: true },
     { code: "tw", region: "Taiwan", publisher: "Longcheng", loginDisabled: true },
     // Disabled on the frontend for now: password login needs re-verification
@@ -30,7 +29,7 @@ export const SERVERS: readonly IServerMeta[] = [
 
 const SERVER_BY_CODE: Record<string, IServerMeta> = Object.fromEntries(SERVERS.map((s) => [s.code, s]));
 
-/** "EN · Yostar Global" - used in the settings page. */
+/** "EN · Yostar Global", for the settings page. */
 export function formatServerWithPublisher(code: string | null | undefined): string {
     if (!code) return "-";
     const meta = SERVER_BY_CODE[code.toLowerCase()];
@@ -38,7 +37,7 @@ export function formatServerWithPublisher(code: string | null | undefined): stri
     return `${meta.code.toUpperCase()} · ${meta.publisher} ${meta.region}`;
 }
 
-/** "Global (EN)" - used in the login server picker. */
+/** "Global (EN)", for the login server picker. */
 export function formatServerForPicker(code: AKServer): string {
     const meta = SERVER_BY_CODE[code];
     if (!meta) return code.toUpperCase();
@@ -77,11 +76,8 @@ export const bilibiliLoginSchema = z.object({
 });
 export type BilibiliLoginInput = z.infer<typeof bilibiliLoginSchema>;
 
-// Bilibili SMS-code login: phone plus the code requested for it, as an
-// alternative to the username/password flow above. UNVERIFIED: see backend
-// core::hypergryph::bilibili module docs - the SMS endpoints are a
-// structural guess mirroring the confirmed password flow, not confirmed
-// against a real response.
+// UNVERIFIED: the SMS endpoints mirror the confirmed password flow but have
+// never been checked against a real response (core::hypergryph::bilibili).
 export const bilibiliSmsLoginSchema = z.object({
     phone: z.string().min(1, "Phone number is required").max(32, "Phone number too long"),
     code: z.string().min(1, "Code is required").max(16, "Code too long"),

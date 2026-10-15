@@ -11,10 +11,9 @@
  *
  * 1. {@link gamedataPath} returns the *unprefixed* path for the default server,
  *    so an English render's requests carry no server segment.
- * 2. {@link gamedataKey} contributes the server to every game-data query key -
- *    and contributes *nothing* for the default server, so English cache entries
- *    keep the keys they already had while `ja` (-> `jp`) can never be served out
- *    of them.
+ * 2. {@link gamedataKey} contributes the server to every game-data query key,
+ *    and *nothing* for the default server, so English cache entries keep the
+ *    keys they already had while `ja` (-> `jp`) can never be served out of them.
  */
 
 /** The game regions the backend can serve, matching its `Server` enum. */

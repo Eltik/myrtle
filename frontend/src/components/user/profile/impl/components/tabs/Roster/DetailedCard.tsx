@@ -49,10 +49,11 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
     useEffect(() => {
         const el = cardRef.current;
         if (!el) return;
+        let timer: ReturnType<typeof setTimeout> | undefined;
         const observer = new IntersectionObserver(
             (entries) => {
                 if (entries[0]?.isIntersecting) {
-                    setTimeout(() => {
+                    timer = setTimeout(() => {
                         setLevelProgress((entry.level / maxLvlForPhase) * 100);
                         setTrustProgress((trustPct / 200) * 100);
                     }, 300);
@@ -62,7 +63,10 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
             { threshold: 0.2 },
         );
         observer.observe(el);
-        return () => observer.disconnect();
+        return () => {
+            observer.disconnect();
+            clearTimeout(timer);
+        };
     }, [entry.level, maxLvlForPhase, trustPct]);
 
     const skills = (op?.skills ?? []).map((skill, i) => ({

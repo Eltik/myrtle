@@ -3,15 +3,12 @@
  * `{arg, select, ...}`, `{arg, number}`, `{arg, date}`, `#` inside a plural
  * branch, and `'` escaping.
  *
- * Hand-written rather than pulled from `intl-messageformat` on purpose. The
- * grammar the backend will ACCEPT is already narrower than full ICU - it
- * rejects any message referencing an argument the source string didn't
- * declare, and rejects unbalanced braces - so the formatter only has to cover
- * what can actually be stored. That buys a dependency-free runtime on the hot
- * render path, and keeps the lockfile out of the change.
+ * Hand-written instead of `intl-messageformat`: the backend already rejects
+ * undeclared arguments and unbalanced braces, so only what can be stored needs
+ * covering, and the hot render path stays dependency-free.
  *
- * Plural category selection is `Intl.PluralRules`, so every locale's real
- * rules apply (Polish has four, Japanese has one) without a rules table here.
+ * Plural selection is `Intl.PluralRules`, so every locale's real rules apply
+ * (Polish has four, Japanese has one) without a rules table here.
  */
 
 export type MessageValues = Record<string, string | number | Date | boolean | null | undefined>;
@@ -70,20 +67,16 @@ function parseNodes(src: string, start: number, nested: boolean): { nodes: INode
         const ch = src[i];
 
         if (ch === "'") {
-            // ICU 4.8 "real literal" quoting, which is the rule every ICU
-            // implementation ships today:
+            // ICU 4.8 "real literal" quoting, what every ICU ships today:
             //
             //   ''            -> one literal apostrophe
             //   '{ '} '# '|   -> starts a quoted run, ended by the next '
             //   ' anywhere else -> a plain apostrophe, NOT a quote
             //
-            // That last clause is the one that matters. Treating every
-            // apostrophe as a quote start silently ate them: "Most E2'd"
-            // rendered as "Most E2d", and a string with two of them
-            // ("What's public, and what isn't") lost both and swallowed the
-            // text between. English is the source language here, so that was
-            // corrupting the default rendering of any message with a
-            // contraction or a possessive - with no error anywhere.
+            // The last clause matters. Treating every apostrophe as a quote
+            // start silently ate them: "Most E2'd" rendered as "Most E2d", and
+            // "What's public, and what isn't" lost both and swallowed the text
+            // between. That hit every English contraction, with no error.
             if (src[i + 1] === "'") {
                 text += "'";
                 i += 2;
@@ -156,10 +149,9 @@ function parseArg(src: string, start: number): ParsedArg {
     if (src[i] !== ",") {
         const close = src.indexOf("}", i);
         if (close === -1) {
-            // The brace never closes. Emitting an argument here would render
-            // the whole tail as empty - a malformed stored translation would
-            // silently blank the sentence instead of showing anything. Keep
-            // the raw text so the damage is visible and bounded.
+            // Unclosed brace. An argument here would blank the whole tail of a
+            // malformed stored translation; keep the raw text so the damage is
+            // visible and bounded.
             return { node: { kind: "text", value: src.slice(start) }, end: src.length };
         }
         return { node: { kind: "arg", name, type: "plain" }, end: close + 1 };
@@ -304,16 +296,10 @@ export function formatMessage(message: string, locale: string, values?: MessageV
     }
 }
 
-// ---------------------------------------------------------------- description
-
 /**
- * One argument of a message, as the translation editor needs to explain it.
- *
- * The editor used to show the declared placeholder names and nothing else, so
- * a translator meeting `{count, plural, one {player} other {players}}` was
- * handed the raw ICU and left to infer the grammar from it. The parser already
- * knows the answer; this is that knowledge exported rather than re-derived by
- * a regex in a component.
+ * One argument of a message, for the translation editor to explain. Exported
+ * from the parser so a component never re-derives plural/select branches with
+ * a regex.
  */
 export interface IMessageArgument {
     name: string;
@@ -328,8 +314,7 @@ export interface IMessageArgument {
 
 /**
  * A branch's wording as a translator reads it: literal text, `#` for the
- * number, and `{name}` for a nested argument. Not a re-serialiser - it is only
- * ever shown, never parsed back.
+ * number, `{name}` for a nested argument. Display only, never parsed back.
  */
 function nodesToText(nodes: INode[]): string {
     let out = "";
@@ -350,10 +335,9 @@ function collectArgs(nodes: INode[], into: Map<string, IMessageArgument>): void 
             for (const [key, inner] of Object.entries(node.branches)) branchText[key] = nodesToText(inner);
         }
         const existing = into.get(node.name);
-        // A name can appear more than once - `{count, number} {count, plural,
-        // ...}` is the catalogue's commonest shape. The branching occurrence is
-        // the one worth describing, so a bare mention never overwrites it and
-        // a branching one always replaces a bare one.
+        // `{count, number} {count, plural, ...}` is the catalogue's commonest
+        // shape, so a name can repeat. Keep the branching occurrence: a bare
+        // mention never overwrites it, a branching one replaces a bare one.
         if (!existing || (existing.branches.length === 0 && branches.length > 0)) {
             into.set(node.name, { name: node.name, type: node.type, branches, branchText, offset: node.offset ?? null });
         }
@@ -372,14 +356,11 @@ export function describeMessage(message: string): IMessageArgument[] {
     if (!message.includes("{")) return [];
     try {
         const found = new Map<string, IMessageArgument>();
-        // `parseNodes` rather than `parse`: the caller is the translation editor,
-        // which calls this on every keystroke, so going through the memo would
-        // put one dead entry per keystroke into a cache the RENDER path shares.
-        // At 5000 entries that cache clears wholesale and every message on
-        // screen is reparsed. Parsing the longest string in the catalogue
-        // outright measures 1.5us, and the editor's input is different on every
-        // keystroke, so the memo could never hit here: it bought nothing and
-        // charged the hot path.
+        // `parseNodes`, not `parse`: the editor calls this per keystroke, and
+        // the memo would fill the RENDER path's cache with dead entries until
+        // it clears wholesale at 5000 and reparses everything on screen. The
+        // memo can never hit here anyway; the longest catalogue string parses
+        // in 1.5us.
         collectArgs(parseNodes(message, 0, false).nodes, found);
         return [...found.values()];
     } catch {
@@ -391,10 +372,9 @@ export function describeMessage(message: string): IMessageArgument[] {
 const CATEGORY_ORDER = ["zero", "one", "two", "few", "many", "other"] as const;
 
 /**
- * The plural categories a locale actually uses, from `Intl.PluralRules` rather
- * than a table - English has two, Russian has four, Japanese has one. A
- * translation that omits one of these is missing a grammatical form, which is
- * a real defect the editor can point at.
+ * The plural categories a locale uses, from `Intl.PluralRules` (English two,
+ * Russian four, Japanese one). A translation missing one is missing a
+ * grammatical form, which the editor flags.
  */
 const CATEGORY_CACHE = new Map<string, string[]>();
 const EXAMPLE_CACHE = new Map<string, IPluralExample[]>();
@@ -405,11 +385,9 @@ export function pluralCategoriesFor(locale: string, type: "plural" | "selectordi
     try {
         const rules = new Intl.PluralRules(locale, { type: type === "selectordinal" ? "ordinal" : "cardinal" });
         const categories = new Set(rules.resolvedOptions().pluralCategories);
-        // `resolvedOptions` reports the categories ALPHABETICALLY, which puts
-        // Russian's `few` and `many` ahead of `one` - an order no grammar book
-        // uses and a confusing thing to hand a translator. CLDR's own order is
-        // the one below, and `other` ends it because it is the fallback every
-        // locale must have.
+        // `resolvedOptions` reports categories ALPHABETICALLY, putting Russian's
+        // `few` and `many` ahead of `one`. Reorder to CLDR's order, `other`
+        // last as every locale's fallback.
         const order = CATEGORY_ORDER.filter((c) => categories.has(c));
         CATEGORY_CACHE.set(`${locale}:${type}`, order);
         return order;
@@ -428,13 +406,10 @@ const EXAMPLE_SCAN_LIMIT = 120;
 const EXAMPLES_PER_CATEGORY = 4;
 
 /**
- * Concrete numbers that land in each category, found by running the locale's
- * own rules over 0..120.
- *
- * This is the part a translator asked for in so many words: "one" and "other"
- * are opaque names, but "few: 2, 3, 4, 22" is a rule you can read. Scanning
- * beats a hand-written table because it cannot drift from the runtime that
- * will actually select the branch.
+ * Concrete numbers that land in each category, from the locale's own rules
+ * over 0..120. A translator asked for this: "few: 2, 3, 4, 22" reads where
+ * "few" does not. Scanning cannot drift from the runtime that selects the
+ * branch, a hand table could.
  */
 export function pluralExamples(locale: string, type: "plural" | "selectordinal" = "plural"): IPluralExample[] {
     // A locale's plural rules do not change, so this is computed once per

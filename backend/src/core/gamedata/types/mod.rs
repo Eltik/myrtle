@@ -23,6 +23,7 @@ pub mod mission;
 pub mod mission_archive;
 pub mod module;
 pub mod obtain;
+pub mod open_server;
 pub mod operator;
 pub mod range;
 pub mod retro;
@@ -168,6 +169,9 @@ pub struct GameTables {
     pub medals: MedalData,
     pub roguelike: RoguelikeGameData,
     pub enemies: EnemyHandbook,
+    /// Enemy-linked battle sounds keyed by handbook enemy id, see
+    /// [`crate::core::gamedata::enrich::audio::build_enemy_audio`].
+    pub enemy_audio: HashMap<String, Vec<audio::EnemyAudio>>,
     pub enemy_stage_index: EnemyStageIndex,
     pub stage_index: StageIndex,
     pub mode_levels: HashMap<String, String>,
@@ -188,6 +192,9 @@ pub struct GameTables {
     pub factions: HashMap<String, handbook_team::HandbookTeam>,
     /// Stronghold Protocol bonds, keyed by bond id, see [`autochess`].
     pub autochess_bonds: HashMap<String, autochess::AutoChessBond>,
+    /// The Squad Builder's load-time tables (text rule readings, tag ids,
+    /// enemy grade bands), see [`crate::core::squad::index`].
+    pub squad: crate::core::squad::index::SquadIndex,
     /// Tables that failed to deserialize and fell back to `T::default()`.
     /// One entry per table, `"<table>: <error>"`. Empty on a clean load.
     ///
@@ -196,6 +203,11 @@ pub struct GameTables {
     /// with only a `tracing::warn!` to show for it. Retained here so `/health` can
     /// report them and a reload can alert on them.
     pub table_warnings: Vec<String>,
+    /// Tables the unpacker SKIPPED on the last extract because they verified under
+    /// no schema, so the file on disk is an earlier extract's and parses cleanly.
+    /// Disjoint in kind from `table_warnings`: those are empty, these are old. Read
+    /// from `gamedata/.skipped.json`, see [`crate::core::gamedata::stale`].
+    pub stale_tables: Vec<crate::core::gamedata::stale::StaleTable>,
 }
 
 impl GameData {

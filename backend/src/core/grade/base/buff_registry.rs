@@ -1743,9 +1743,6 @@ pub fn build_registry(
                     } else {
                         24.0
                     };
-                    // Over a 24hr shift:
-                    // - Ramp phase: average = (base + cap) / 2, duration = min(ramp_hours, 24)
-                    // - Plateau phase: value = cap, duration = max(24 - ramp_hours, 0)
                     let ramp_duration = ramp_hours.min(24.0);
                     let plateau_duration = (24.0 - ramp_duration).max(0.0);
                     let avg = ((base + cap) / 2.0 * ramp_duration + cap * plateau_duration) / 24.0;

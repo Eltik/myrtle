@@ -1,13 +1,14 @@
 //! Client-binary extractor for IL2CPP recovery.
 //!
-//! Pulls the two artifacts an IL2CPP dump needs — the native library
+//! Pulls the two artifacts an IL2CPP dump needs, the native library
 //! (`libil2cpp.so` on Android, the Mach-O executable on iOS) and
-//! `global-metadata.dat` — out of a user-provided app package, then reports
+//! `global-metadata.dat`, out of a user-provided app package, then reports
 //! whether a *static* dump is likely to succeed.
 //!
-//! Arknights ships anti-tamper that encrypts `global-metadata.dat` at runtime,
-//! so a plaintext file inside the package is the happy path; a mismatched magic
-//! means the on-disk copy is scrambled and only a Frida memory dump will work.
+//! The Android package's `global-metadata.dat` is obfuscated on disk (header
+//! XORed, body striped), so a mismatched magic is the expected Android result.
+//! The CN Windows client ships the same metadata in plain form; for schema
+//! work use `client-download` and `unpacker schema-gen` instead.
 //!
 //! Every container format handled here (APK / XAPK / APKM / OBB / IPA) is a ZIP
 //! archive. XAPK/APKM additionally nest an inner base APK (and OBBs); this module
@@ -22,8 +23,13 @@ use zip::ZipArchive;
 
 /// `global-metadata.dat` magic, little-endian u32 at offset 0.
 pub const GLOBAL_METADATA_MAGIC: u32 = 0xFAB1_1BAF;
-/// IL2CPP metadata version this toolchain targets (Unity 2021.3 client).
-pub const EXPECTED_METADATA_VERSION: u32 = 27;
+/// IL2CPP metadata version of the current clients: Unity 2021.3.39f1, metadata
+/// v29, measured 2026-10-15 on the CN Windows, CN Android and EN Android files.
+/// The CN build adds a 92-byte typedef row variant, which `unpacker schema-gen`
+/// handles. The Android file's header is XORed with 0x66 (bytes 8.. of the
+/// header; the magic and version words are scrambled differently), so its
+/// on-disk magic reads 0x12724394 and it classifies as `LikelyEncrypted`.
+pub const EXPECTED_METADATA_VERSION: u32 = 29;
 
 // --- Mach-O constants ---------------------------------------------------------
 const MH_MAGIC_64: u32 = 0xfeed_facf;
@@ -39,13 +45,16 @@ const CPU_TYPE_ARM64: u32 = 0x0100_000c;
 /// Classification of a `global-metadata.dat` from its 8-byte header.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MetadataStatus {
-    /// Magic matches and version is the expected v27 — safe to dump statically.
+    /// Magic matches and version is the expected v29: safe to dump statically.
     Ok { version: u32 },
-    /// Magic matches but a different version — dumper may still work, verify.
+    /// Magic matches but a different version: the dumper may still work, verify.
     WrongVersion { version: u32 },
-    /// Magic does not match — the on-disk file is (almost certainly) encrypted.
+    /// Magic does not match: in the Android metadata the header bytes from offset 8
+    /// are XORed with 0x66, the magic and version words are scrambled differently,
+    /// and the body is striped. The name is historical; it is obfuscation, not
+    /// encryption, and the Windows client's copy is plain.
     LikelyEncrypted { magic: u32 },
-    /// Fewer than 8 bytes — not a metadata file.
+    /// Fewer than 8 bytes: not a metadata file.
     TooShort,
 }
 
@@ -58,12 +67,13 @@ impl MetadataStatus {
                 format!("OK, plaintext metadata (v{version})")
             }
             Self::WrongVersion { version } => format!(
-                "magic OK but version is v{version} (expected v{EXPECTED_METADATA_VERSION}) — \
+                "magic OK but version is v{version} (expected v{EXPECTED_METADATA_VERSION}); \
                  check your Il2CppDumper build supports it"
             ),
             Self::LikelyEncrypted { magic } => format!(
-                "LIKELY ENCRYPTED (magic {magic:#010x} != {GLOBAL_METADATA_MAGIC:#010x}) — a \
-                 static dump will fail; use the Frida memory-dump runbook"
+                "OBFUSCATED (magic {magic:#010x} != {GLOBAL_METADATA_MAGIC:#010x}): the Android \
+                 metadata has an XORed header and a striped body, not real encryption; a stock \
+                 dumper rejects it as is"
             ),
             Self::TooShort => "file too short to be global-metadata.dat".to_string(),
         }
@@ -104,14 +114,14 @@ impl MachOStatus {
     pub fn summary(&self) -> String {
         match self {
             Self::FairPlayEncrypted { cryptid } => format!(
-                "FairPlay-encrypted (cryptid={cryptid}) — needs a decrypted dump from a \
+                "FairPlay-encrypted (cryptid={cryptid}): needs a decrypted dump from a \
                  jailbroken device (e.g. frida-ios-dump / flexdecrypt)"
             ),
             Self::NotEncrypted => {
-                "not encrypted (cryptid=0) — Mach-O is already decrypted".to_string()
+                "not encrypted (cryptid=0): Mach-O is already decrypted".to_string()
             }
             Self::NoEncryptionCommand => {
-                "no LC_ENCRYPTION_INFO command — treat as unencrypted".to_string()
+                "no LC_ENCRYPTION_INFO command: treat as unencrypted".to_string()
             }
         }
     }
@@ -222,7 +232,7 @@ pub struct ExtractReport {
 enum Platform {
     /// Plain Android APK or standalone OBB.
     AndroidZip,
-    /// XAPK / APKM — outer zip nesting an inner base APK (+ OBBs).
+    /// XAPK / APKM: outer zip nesting an inner base APK (+ OBBs).
     AndroidBundle,
     /// iOS IPA.
     Ios,
@@ -539,15 +549,22 @@ pub fn print_report(report: &ExtractReport) {
         }
         Some(MetadataStatus::WrongVersion { .. }) => {
             println!(
-                "  - version differs from v27; try Il2CppDumper anyway, but confirm the \
+                "  - version differs from v{EXPECTED_METADATA_VERSION}; try Il2CppDumper anyway, but confirm the \
                  metadata reader supports this version."
             );
         }
-        Some(MetadataStatus::LikelyEncrypted { .. } | MetadataStatus::TooShort) | None => {
+        Some(MetadataStatus::LikelyEncrypted { .. }) => {
             println!(
-                "  - static metadata is unusable; use the Frida memory-dump runbook \
-                 (dump libil2cpp.so + global-metadata.dat from a running process on a \
-                 rooted/jailbroken device), then run Il2CppDumper on the dumped pair."
+                "  - this is the Android metadata (header XORed, body striped). Use the \
+                 official CN Windows client instead: its global-metadata.dat is plain v29. \
+                 Run `downloader -s cn client-download -d <dir>` and then \
+                 `unpacker schema-gen --client <dir> --out <out>`."
+            );
+        }
+        Some(MetadataStatus::TooShort) | None => {
+            println!(
+                "  - no usable metadata in this package; fetch the CN Windows client pair \
+                 with `downloader -s cn client-download -d <dir>`."
             );
         }
     }
@@ -577,17 +594,17 @@ mod tests {
     }
 
     #[test]
-    fn classifies_plaintext_v27() {
-        let bytes = metadata_bytes(GLOBAL_METADATA_MAGIC, 27);
+    fn classifies_plaintext_v29() {
+        let bytes = metadata_bytes(GLOBAL_METADATA_MAGIC, 29);
         assert_eq!(
             classify_metadata(&bytes),
-            MetadataStatus::Ok { version: 27 }
+            MetadataStatus::Ok { version: 29 }
         );
     }
 
     #[test]
     fn classifies_wrong_magic_as_encrypted() {
-        let bytes = metadata_bytes(0xDEAD_BEEF, 27);
+        let bytes = metadata_bytes(0xDEAD_BEEF, 29);
         assert_eq!(
             classify_metadata(&bytes),
             MetadataStatus::LikelyEncrypted { magic: 0xDEAD_BEEF }
@@ -691,7 +708,7 @@ mod tests {
         let apk_path = dir.path().join("app.apk");
         fs::write(
             &apk_path,
-            make_apk_zip(&metadata_bytes(GLOBAL_METADATA_MAGIC, 27)),
+            make_apk_zip(&metadata_bytes(GLOBAL_METADATA_MAGIC, 29)),
         )
         .unwrap();
 
@@ -705,7 +722,7 @@ mod tests {
         assert!(report.metadata.is_some(), "metadata should be extracted");
         assert_eq!(
             report.metadata_status,
-            Some(MetadataStatus::Ok { version: 27 })
+            Some(MetadataStatus::Ok { version: 29 })
         );
         assert!(out.join("libil2cpp.so").exists());
         assert!(out.join("global-metadata.dat").exists());
@@ -715,7 +732,7 @@ mod tests {
     fn extracts_apk_and_flags_encrypted() {
         let dir = tempfile::tempdir().unwrap();
         let apk_path = dir.path().join("app.apk");
-        fs::write(&apk_path, make_apk_zip(&metadata_bytes(0x1234_5678, 27))).unwrap();
+        fs::write(&apk_path, make_apk_zip(&metadata_bytes(0x1234_5678, 29))).unwrap();
 
         let out = dir.path().join("out");
         let report = run(&apk_path, &out).unwrap();
@@ -728,7 +745,7 @@ mod tests {
     #[test]
     fn extracts_nested_xapk() {
         // outer zip -> base.apk -> lib + metadata
-        let inner = make_apk_zip(&metadata_bytes(GLOBAL_METADATA_MAGIC, 27));
+        let inner = make_apk_zip(&metadata_bytes(GLOBAL_METADATA_MAGIC, 29));
         let mut outer = Vec::new();
         {
             let mut w = zip::ZipWriter::new(Cursor::new(&mut outer));
@@ -748,7 +765,7 @@ mod tests {
         assert!(report.native_lib.is_some());
         assert_eq!(
             report.metadata_status,
-            Some(MetadataStatus::Ok { version: 27 })
+            Some(MetadataStatus::Ok { version: 29 })
         );
     }
 
@@ -767,7 +784,7 @@ mod tests {
                 opts,
             )
             .unwrap();
-            w.write_all(&metadata_bytes(GLOBAL_METADATA_MAGIC, 27))
+            w.write_all(&metadata_bytes(GLOBAL_METADATA_MAGIC, 29))
                 .unwrap();
             w.finish().unwrap();
         }
@@ -783,7 +800,7 @@ mod tests {
         );
         assert_eq!(
             report.metadata_status,
-            Some(MetadataStatus::Ok { version: 27 })
+            Some(MetadataStatus::Ok { version: 29 })
         );
         assert!(out.join("Arknights").exists());
     }

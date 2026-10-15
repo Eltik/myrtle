@@ -175,16 +175,12 @@ fn modified(path: &Path) -> Option<SystemTime> {
     std::fs::metadata(path).and_then(|m| m.modified()).ok()
 }
 
-/// Make sure `assets_dir`'s thumbnail of `id` exists and is no older than its
-/// source body, rendering it when it is missing or stale. Returns the path to
-/// serve, relative to `assets_dir`.
+/// Render `id`'s thumbnail if it is missing or older than its body; returns the
+/// path to serve, relative to `assets_dir`. `body_rel` is the body PNG under
+/// `assets_dir` (`/textures/avg/...`); each format caches separately.
 ///
-/// `body_rel` is the body PNG relative to `assets_dir` (`/textures/avg/...`).
-/// Each format is its own cached file, rendered from the body on its first
-/// request.
-/// The file is written to a temporary name and renamed into place, so a
-/// reader never sees a half-written thumbnail and two racing renders of the
-/// same id both leave a whole one.
+/// Written to a temp name and renamed, so a reader never sees a partial file
+/// and two racing renders of one id both leave a whole one.
 pub async fn ensure(
     assets_dir: &str,
     id: &str,
@@ -216,14 +212,7 @@ pub async fn ensure(
     if fresh(&target) {
         return Ok(rel);
     }
-    // Unique per process and request thread, so racing renders never share
-    // a temporary file.
-    let tmp_name = format!(
-        "{id}.{}.{}.{:?}.tmp",
-        format.ext(),
-        std::process::id(),
-        std::thread::current().id()
-    );
+    let tmp_name = crate::utils::fs::unique_tmp_name(&format!("{id}.{}", format.ext()));
     crate::app::cpu::offload("story_sprite_thumb", move || -> anyhow::Result<()> {
         let png = std::fs::read(&source)?;
         let bytes = render(&png, face, THUMB_PX, format)?;
@@ -248,8 +237,10 @@ fn write_atomically(target: &Path, tmp_name: &str, bytes: &[u8]) -> anyhow::Resu
         |c: char| !c.is_ascii_alphanumeric() && c != '.' && c != '_',
         "",
     ));
-    std::fs::write(&tmp, bytes)?;
-    std::fs::rename(&tmp, target)?;
+    if let Err(e) = std::fs::write(&tmp, bytes).and_then(|()| std::fs::rename(&tmp, target)) {
+        let _ = std::fs::remove_file(&tmp);
+        return Err(e.into());
+    }
     Ok(())
 }
 
@@ -329,6 +320,53 @@ mod tests {
         assert_ne!(
             cache_rel_path("avg_npc_1", ThumbFormat::Webp),
             cache_rel_path("avg_npc_1", ThumbFormat::Png)
+        );
+    }
+
+    /// Two renders of one id that both miss the cache, polled on ONE thread (a
+    /// current-thread runtime: two requests on one tokio worker), each end in a
+    /// whole file and an `Ok`. A temp name keyed on the polling thread is shared
+    /// by both: the second writer truncates the first's temp file, and the
+    /// loser's rename finds it already moved and answers 404.
+    #[test]
+    fn concurrent_renders_of_one_id_on_one_thread_all_succeed() {
+        const ROUNDS: usize = 40;
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        let root = std::env::temp_dir().join(format!("story-thumb-race-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        let body_rel = "/textures/avg/characters/race/race.png";
+        let source = root.join(body_rel.trim_start_matches('/'));
+        std::fs::create_dir_all(source.parent().unwrap()).unwrap();
+        let mut png = Vec::new();
+        image::DynamicImage::ImageRgba8(plate(256, 256, |x, y| x > 64 && y > 32))
+            .write_to(&mut std::io::Cursor::new(&mut png), image::ImageFormat::Png)
+            .unwrap();
+        std::fs::write(&source, &png).unwrap();
+        let assets_dir = root.to_string_lossy().into_owned();
+        let target = root.join(cache_rel_path("race", ThumbFormat::Webp));
+        let mut failures = 0;
+        for _ in 0..ROUNDS {
+            let _ = std::fs::remove_file(&target);
+            let (a, b) = rt.block_on(async {
+                tokio::join!(
+                    ensure(&assets_dir, "race", body_rel, None, ThumbFormat::Webp),
+                    ensure(&assets_dir, "race", body_rel, None, ThumbFormat::Webp),
+                )
+            });
+            failures += usize::from(a.is_err()) + usize::from(b.is_err());
+            let webp = std::fs::read(&target).unwrap();
+            let decoded = image::load_from_memory(&webp).unwrap();
+            assert_eq!(decoded.width(), THUMB_PX);
+        }
+        let _ = std::fs::remove_dir_all(&root);
+        assert_eq!(
+            failures,
+            0,
+            "{failures} of {} renders answered an error",
+            2 * ROUNDS
         );
     }
 

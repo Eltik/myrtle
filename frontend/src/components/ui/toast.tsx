@@ -34,10 +34,10 @@ function upsertReplayClassName(toast: { type?: string; updateKey?: number }): st
     const k = toast.updateKey ?? 0;
     if (k <= 0) return undefined;
     const isEven = k % 2 === 0;
-    if (toast.type === "error") {
-        return isEven ? "animate-toast-error-even" : "animate-toast-error-odd";
-    }
-    return isEven ? "animate-toast-success-even" : "animate-toast-success-odd";
+    let replay: string;
+    if (toast.type === "error") replay = isEven ? "animate-toast-error-even" : "animate-toast-error-odd";
+    else replay = isEven ? "animate-toast-success-even" : "animate-toast-success-odd";
+    return `${replay} motion-reduce:animate-none`;
 }
 
 function Toasts({ position }: { position: ToastPosition }): React.ReactElement {

@@ -96,7 +96,8 @@ pub struct OperatorUnit {
 
     pub shadows: f64,
 
-    /// Target HP for healing formulas. Defaults to 0 unless set via params.
+    /// Target HP for healing formulas. 0 except Warfarin S1, which
+    /// `engine::apply_init_fixups` defaults the way the reference does.
     pub target_hp: f64,
 
     /// A specific module was requested but can't be resolved from the current

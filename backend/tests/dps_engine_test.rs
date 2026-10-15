@@ -1,5 +1,5 @@
-// Parity test against a Python reference: exact `!= 1.0` sentinel checks, integer/float casts on
-// fixture data, and a long table-driven case are intentional - allow the pedantic/nursery noise.
+// Parity test against a Python reference: exact `!= 1.0` sentinels, fixture casts and one long
+// table-driven case are deliberate.
 #![allow(
     clippy::float_cmp,
     clippy::cast_possible_truncation,
@@ -413,13 +413,10 @@ fn test_engine_vs_python_expected() {
     );
 }
 
-/// When a specific module is requested that the current game data can't resolve,
-/// `calculate_dps` must return `None` rather than silently computing a hybrid
-/// (default/no-module) result.
-///
-/// "Missing" is derived from the operator's actual advanced modules (sorted by
-/// uniequip number): a formula module at position `pos` is unavailable when the
-/// operator has fewer than `pos + 1` advanced modules. No hardcoded uniequip IDs.
+/// A requested module the game data can't resolve must give `None`, not a
+/// silent no-module result. Missing = the formula module's position is past the
+/// operator's advanced-module count (sorted by uniequip number); no hardcoded
+/// uniequip ids.
 #[test]
 fn test_unavailable_module_returns_none() {
     dotenv::dotenv().ok();
@@ -463,7 +460,6 @@ fn test_unavailable_module_returns_none() {
         let advanced_count = advanced.len();
 
         for (pos, &module_idx) in formula.available_modules.iter().enumerate() {
-            // Module is resolvable iff the operator has a module at this position.
             if pos < advanced_count {
                 continue;
             }

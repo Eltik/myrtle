@@ -50,6 +50,18 @@ pub const TABLES: &[&str] = &[
     "plan_presets",
     "release_plans",
     "grids",
+    "user_squads",
+    "user_game_squads",
+    "siren_albums",
+    "siren_songs",
+    "music_likes",
+    "music_history",
+    "music_playlists",
+    "music_playlist_tracks",
+    // `music_stat_dedupe` (v037) is not here: an UNLOGGED day of dedupe
+    // slots, worthless once restored.
+    "music_track_stats",
+    "music_stat_events",
     "locales",
     "ui_message_keys",
     "ui_messages",
@@ -88,6 +100,8 @@ pub const SERIAL_COLUMNS: &[(&str, &str)] = &[
     ("leaderboard_snapshots", "id"),
     ("ui_message_audit_log", "id"),
     ("audit_log", "id"),
+    ("music_history", "id"),
+    ("music_stat_events", "id"),
 ];
 
 /// Every (child, parent) foreign-key edge between two different public

@@ -220,12 +220,7 @@ pub async fn ensure(
     if fresh(&target) {
         return Ok(rel);
     }
-    let tmp_name = format!(
-        "{}.{}.{:?}.tmp",
-        variant_file_stem(&variant.key),
-        std::process::id(),
-        std::thread::current().id()
-    );
+    let tmp_name = crate::utils::fs::unique_tmp_name(&variant_file_stem(&variant.key));
     let v = variant.clone();
     crate::app::cpu::run(
         "story_sprite_variant_thumb",
@@ -268,8 +263,10 @@ pub(super) fn write_atomically(target: &Path, tmp_name: &str, bytes: &[u8]) -> a
         |c: char| !c.is_ascii_alphanumeric() && c != '.' && c != '_',
         "",
     ));
-    std::fs::write(&tmp, bytes)?;
-    std::fs::rename(&tmp, target)?;
+    if let Err(e) = std::fs::write(&tmp, bytes).and_then(|()| std::fs::rename(&tmp, target)) {
+        let _ = std::fs::remove_file(&tmp);
+        return Err(e.into());
+    }
     Ok(())
 }
 
@@ -318,7 +315,7 @@ mod tests {
 
     #[test]
     fn the_face_lands_at_face_pos_in_texture_pixels() {
-        // A 200 px transparent body declared as a 400 px texture: the patch at
+        // A 200 px body declared as a 400 px texture: the patch at
         // (100, 40, 50, 50) texture px lands at (50, 20, 25, 25) decoded px.
         let body = RgbaImage::from_pixel(200, 200, image::Rgba([0, 0, 255, 255]));
         let face = RgbaImage::from_pixel(64, 64, image::Rgba([255, 0, 0, 255]));

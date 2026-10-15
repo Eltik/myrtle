@@ -74,7 +74,9 @@ pub fn init_chibi_data(assets_dir: &Path) -> ChibiData {
         }
     }
 
-    let characters_arc: Vec<Arc<ChibiCharacter>> = characters.into_values().map(Arc::new).collect();
+    let mut characters: Vec<ChibiCharacter> = characters.into_values().collect();
+    sort_characters(&mut characters);
+    let characters_arc: Vec<Arc<ChibiCharacter>> = characters.into_iter().map(Arc::new).collect();
     let by_operator: HashMap<String, Arc<ChibiCharacter>> = characters_arc
         .iter()
         .map(|c| (c.operator_code.clone(), Arc::clone(c)))
@@ -134,7 +136,9 @@ pub fn init_enemy_chibi_data(assets_dir: &Path, enemies: &EnemyHandbook) -> Chib
         }
     }
 
-    let characters_arc: Vec<Arc<ChibiCharacter>> = characters.into_values().map(Arc::new).collect();
+    let mut characters: Vec<ChibiCharacter> = characters.into_values().collect();
+    sort_characters(&mut characters);
+    let characters_arc: Vec<Arc<ChibiCharacter>> = characters.into_iter().map(Arc::new).collect();
     let by_operator: HashMap<String, Arc<ChibiCharacter>> = characters_arc
         .iter()
         .map(|c| (c.operator_code.clone(), Arc::clone(c)))
@@ -144,6 +148,19 @@ pub fn init_enemy_chibi_data(assets_dir: &Path, enemies: &EnemyHandbook) -> Chib
         raw_items: Vec::new(),
         characters: characters_arc,
         by_operator,
+    }
+}
+
+/// Characters by operator code, each one's skins with `default` first and the
+/// rest by name. Both are gathered through hash maps and directory listings, so
+/// without this the served arrays changed order from one boot to the next, and
+/// a client that falls back to `skins[0]` got a different skin per boot.
+fn sort_characters(characters: &mut [ChibiCharacter]) {
+    characters.sort_by(|a, b| a.operator_code.cmp(&b.operator_code));
+    for character in characters {
+        character
+            .skins
+            .sort_by(|a, b| (a.name != "default", &a.name).cmp(&(b.name != "default", &b.name)));
     }
 }
 
@@ -194,8 +211,8 @@ fn parse_skin_identity(dir_name: &str) -> (String, String) {
 /// keyed by its file stem. [alpha]/[mask] companion textures are excluded
 /// and any stem missing both atlas+skel is dropped (incomplete set).
 //
-// `name` is lowercased into `lower` before the extension checks below, so those
-// `ends_with` comparisons are already case-insensitive (the lint's concern is moot).
+// `name` is lowercased into `lower` first, so these `ends_with` checks are
+// already case-insensitive.
 #[allow(clippy::case_sensitive_file_extension_comparisons)]
 fn collect_all_spine_sets(dir: &Path, base_url: &str) -> Vec<(String, SpineFiles)> {
     let Ok(entries) = std::fs::read_dir(dir) else {

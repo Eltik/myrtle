@@ -1,15 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { AdminShell } from "#/components/admin/AdminShell";
-import { Health } from "#/components/admin/screens/Health";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
+// Legacy URL: health moved into the System section.
 export const Route = createFileRoute("/_authed/admin/health")({
-    component: AdminHealthRoute,
+    beforeLoad: () => {
+        throw redirect({ to: "/admin/system", search: { tab: "health" }, replace: true });
+    },
 });
-
-function AdminHealthRoute(): React.ReactElement {
-    return (
-        <AdminShell crumbs={[{ label: "myrtle.moe", to: "/" }, { label: "admin", to: "/admin" }, { label: "Health & cache" }]}>
-            <Health />
-        </AdminShell>
-    );
-}

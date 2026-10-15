@@ -22,7 +22,7 @@ function visitorPayload(tabs: [TabId, boolean][], blocks: ShowcaseBlock[]): Prof
     return { tabs: all.filter((t) => t.visible), ...(showcaseVisible ? { showcase: { blocks } } : {}) };
 }
 
-/** The tab a reader opens on, with nothing picked and Stats remembered (the old default). */
+/** The tab a reader opens on, with nothing picked and Stats remembered (the remembered-tab default). */
 function landing(layout: ProfileLayout | null, isOwner: boolean): TabId | null {
     return resolveActiveTab(shownTabs(layout, isOwner), tabMemory(layout, isOwner), "stats", null);
 }

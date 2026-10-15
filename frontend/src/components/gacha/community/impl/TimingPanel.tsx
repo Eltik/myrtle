@@ -25,9 +25,10 @@ const TYPE_COLORS: Record<ClientGachaGroup, string> = {
     linkage: "oklch(0.78 0.16 320)",
     regular: "#bcabdb",
     special: "#88c8e3",
+    boot: "oklch(0.8 0.12 160)",
 };
 
-// Track render order - top row down. Same order as the rest of the UI.
+// Top row down, same order as the rest of the UI.
 const TRACK_ORDER: ClientGachaGroup[] = ["limited", "linkage", "special", "regular"];
 
 export function TimingPanel({ timing, firstPullAt, banners }: ITimingPanelProps) {
@@ -90,27 +91,23 @@ interface IBannerBand {
 }
 
 /**
- * Map banners onto the date-indexed chart x-axis.
- *
- * The line chart uses uniform row-index spacing (one column per date that has
- * pulls). We approximate banner bands by snapping each banner's open/close
- * timestamps to the nearest row indices - slightly inaccurate when the
- * underlying series has multi-day gaps, but the community corpus is dense
- * enough day-to-day that this is invisible in practice.
- *
- * Bands are clamped to the chart window; banners with zero overlap are
- * dropped. Tracks are stacked by rule-type (TRACK_ORDER), at most 4 rows.
+ * The chart's x-axis is one column per date with pulls, so a banner's open and
+ * close snap to the nearest row index. Off across multi-day gaps, but the
+ * community series is dense enough that it never shows. Bands are clamped to
+ * the window and banners with no overlap dropped; at most 4 tracks.
  */
 function buildBannerBands(rows: IDatePullData[], banners: IBanner[]): { byTrack: Record<ClientGachaGroup, IBannerBand[]>; nonEmptyTracks: ClientGachaGroup[]; daySecs: number[] } {
     const daySecs = rows.map((r) => Date.UTC(...parseISODate(r.date)) / 1000);
     const firstSec = daySecs[0];
     const lastSec = daySecs[daySecs.length - 1];
 
-    const byTrack: Record<ClientGachaGroup, IBannerBand[]> = { limited: [], linkage: [], regular: [], special: [] };
+    const byTrack: Record<ClientGachaGroup, IBannerBand[]> = { limited: [], linkage: [], regular: [], special: [], boot: [] };
 
     if (daySecs.length === 0) return { byTrack, nonEmptyTracks: [], daySecs };
 
     for (const b of banners) {
+        // A returning-players-only pool has no shared run: its table window is years long.
+        if (b.returning) continue;
         if (b.endTime < firstSec || b.openTime > lastSec) continue;
         const startIdx = lowerBoundIdx(daySecs, b.openTime);
         const endIdx = upperBoundIdx(daySecs, b.endTime);
@@ -244,7 +241,6 @@ function ActivityChart({ data, days, color, height, bands }: { data: number[]; d
     const hoverTopPx = hoverIdx != null ? PAD_T + (1 - data[hoverIdx] / max) * plotInnerH : 0;
     const cardTransform = hoverIdx == null ? "" : hoverLeftPct < 12 ? "translate(0, calc(-100% - 10px))" : hoverLeftPct > 88 ? "translate(-100%, calc(-100% - 10px))" : "translate(-50%, calc(-100% - 10px))";
 
-    // Banner bands active on the hovered column. Used to enrich the tooltip.
     const activeBands: IBannerBand[] = hoverIdx == null ? [] : bands.nonEmptyTracks.flatMap((track) => bands.byTrack[track].filter((b) => hoverIdx >= b.startIdx && hoverIdx <= b.endIdx));
 
     return (
@@ -310,7 +306,6 @@ function ActivityChart({ data, days, color, height, bands }: { data: number[]; d
                     </>
                 ) : null}
 
-                {/* Banner-run tracks: one row per rule-type that has banners in window. */}
                 {bands.nonEmptyTracks.length > 0 ? (
                     <div className={styles.acBannerTracks} style={{ bottom: X_AXIS_H, height: tracksH - TRACKS_TOP_GAP }}>
                         {bands.nonEmptyTracks.map((track, ti) => (

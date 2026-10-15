@@ -39,6 +39,10 @@ export const messages = {
         text: "Nothing matches your search and filters.",
         description: "Shown in the picker when the search and the filter toggles leave nothing.",
     },
+    "picker.filters": {
+        text: "Filters",
+        description: "Phone-only button beside the picker's search that shows or hides the filter toggles (rarity, class and so on). A badge after it counts the filters in use.",
+    },
     "picker.clearFilters": {
         text: "Clear filters",
         description: "Button in the picker that turns off every filter toggle (rarity, class and so on) of the current type tab.",

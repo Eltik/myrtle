@@ -84,9 +84,10 @@ pub struct ProfileTab {
 
 /// How the owner arranged their profile, `user_settings.profile_layout`.
 ///
-/// Stored as a jsonb object of three keys: `tabs` (the order and visibility
-/// of every tab), `showcase` (the Showcase tab's blocks) and `background` (the
-/// header art); a save sets only the keys it sends. Deserializing goes
+/// Stored as a jsonb object of four keys: `tabs` (the order and visibility
+/// of every tab), `showcase` (the Showcase tab's blocks), `background` (the
+/// header art) and `header` (the header numbers visitors receive and the stat
+/// strip's cards); a save sets only the keys it sends. Deserializing goes
 /// through [`ProfileLayout::normalize`], so every value that reaches the
 /// code, from the database, the cache or a request body, holds each known tab
 /// exactly once.
@@ -113,6 +114,13 @@ pub struct ProfileLayout {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub background: Option<ProfileBackground>,
+    /// Which header numbers a visitor receives and which fill the stat strip.
+    /// `None` when the stored layout has none, which renders the header and
+    /// strip exactly as before this existed, every number shown. Like the
+    /// background, not gated by any tab.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub header: Option<ProfileHeader>,
 }
 
 /// Most blocks one showcase holds.
@@ -210,6 +218,13 @@ pub enum ShowcaseBlock {
     Plan {
         #[ts(type = "string")]
         id: Uuid,
+        /// The plan's operator. Deleting a plan and planning the operator
+        /// again makes a new row with a new id; the block follows the
+        /// operator to it instead of reading as removed. Absent on blocks
+        /// saved before 2026-10-07, which still match by `id` alone.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        operator_id: Option<String>,
     },
 }
 
@@ -250,6 +265,7 @@ impl ShowcaseBlock {
             "tier_list" => Some(Self::TierList { slug: key("slug")? }),
             "plan" => Some(Self::Plan {
                 id: key("id")?.parse().ok()?,
+                operator_id: key("operator_id"),
             }),
             _ => None,
         }
@@ -262,7 +278,16 @@ impl ShowcaseBlock {
         match (self, other) {
             (Self::Grid { slug: a }, Self::Grid { slug: b })
             | (Self::TierList { slug: a }, Self::TierList { slug: b }) => a == b,
-            (Self::Plan { id: a }, Self::Plan { id: b }) => a == b,
+            (
+                Self::Plan {
+                    id: a,
+                    operator_id: a_op,
+                },
+                Self::Plan {
+                    id: b,
+                    operator_id: b_op,
+                },
+            ) => a == b || (a_op.is_some() && a_op == b_op),
             _ => false,
         }
     }
@@ -438,17 +463,225 @@ impl ProfileBackground {
     }
 }
 
+/// One number the profile header shows. The variants are the allow-list of
+/// what an owner may hide from visitors, and their declaration order is the
+/// canonical order a stored `hidden` list is kept in.
+///
+/// Identity is not on the list: the uid is the profile's URL and the nickname
+/// is what search matches, so neither can be hidden from the page that is
+/// reached through them, and the server and avatar say nothing a visitor
+/// could not read off the uid and the page.
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ProfileHeaderField {
+    /// Account level and EXP, the bar under the nickname.
+    Level,
+    /// The registration date.
+    Registered,
+    /// Cumulative sign-in days.
+    SignIn,
+    Operators,
+    /// Both skin counts: every outfit, and the non-default ones the strip shows.
+    Skins,
+    Items,
+    Orundum,
+    /// Originite Prime.
+    Originite,
+    Lmd,
+    /// Headhunting Permits, `gacha_tickets`.
+    HeadhuntingPermits,
+    /// Ten-roll Headhunting Permits, `ten_pull_tickets`.
+    TenPullPermits,
+}
+
+impl ProfileHeaderField {
+    /// Every field, in canonical order.
+    pub const ALL: [Self; 11] = [
+        Self::Level,
+        Self::Registered,
+        Self::SignIn,
+        Self::Operators,
+        Self::Skins,
+        Self::Items,
+        Self::Orundum,
+        Self::Originite,
+        Self::Lmd,
+        Self::HeadhuntingPermits,
+        Self::TenPullPermits,
+    ];
+
+    /// The stat strip before header layouts existed, in its order: what a
+    /// header with no `strip` shows.
+    pub const DEFAULT_STRIP: [Self; 5] = [
+        Self::Operators,
+        Self::Skins,
+        Self::Items,
+        Self::Orundum,
+        Self::Originite,
+    ];
+
+    /// The wire id, as the client and the stored jsonb spell it.
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Level => "level",
+            Self::Registered => "registered",
+            Self::SignIn => "sign_in",
+            Self::Operators => "operators",
+            Self::Skins => "skins",
+            Self::Items => "items",
+            Self::Orundum => "orundum",
+            Self::Originite => "originite",
+            Self::Lmd => "lmd",
+            Self::HeadhuntingPermits => "headhunting_permits",
+            Self::TenPullPermits => "ten_pull_permits",
+        }
+    }
+
+    pub fn from_id(id: &str) -> Option<Self> {
+        Self::ALL.into_iter().find(|field| field.as_str() == id)
+    }
+
+    /// Whether the field can be a stat strip card. The level, the date and
+    /// the sign-in tally have their own places in the header and are not a
+    /// single number.
+    pub const fn is_strip_card(self) -> bool {
+        !matches!(self, Self::Level | Self::Registered | Self::SignIn)
+    }
+
+    /// A SQL predicate, true unless the `profile_layout` jsonb in `column`
+    /// hides this field: for the queries that rank or sort players by it,
+    /// which must drop a player who hid it just as `/get-user` nulls it for a
+    /// visitor. The twin of [`ProfileTabId::visible_sql`]; containment is exact
+    /// because a stored `hidden` list is normalized. The id is a fixed literal,
+    /// never user input.
+    pub fn visible_sql(self, column: &str) -> String {
+        format!(
+            "NOT COALESCE({column} -> 'header' -> 'hidden' @> '[\"{}\"]'::jsonb, false)",
+            self.as_str()
+        )
+    }
+
+    /// [`Self::visible_sql`] for a query that has the player's id but no
+    /// `user_settings` row joined: true unless `user_id`'s stored layout hides
+    /// this field. A player with no settings row hides nothing.
+    pub fn visible_for_sql(self, user_id: &str) -> String {
+        format!(
+            "NOT EXISTS (SELECT 1 FROM user_settings hs WHERE hs.user_id = {user_id} AND hs.profile_layout -> 'header' -> 'hidden' @> '[\"{}\"]'::jsonb)",
+            self.as_str()
+        )
+    }
+
+    /// `value` where `user_id` shows this field, else NULL: for the ranking
+    /// rows that carry a header number beside the thing they rank by.
+    pub fn shown_sql(self, user_id: &str, value: &str) -> String {
+        format!(
+            "CASE WHEN {} THEN {value} END",
+            self.visible_for_sql(user_id)
+        )
+    }
+}
+
+/// Most cards the stat strip holds, the five it had before it was editable.
+pub const HEADER_STRIP_MAX: usize = 5;
+
+/// `profile_layout.header`: which header numbers visitors receive, and which
+/// fill the stat strip. Absent, the header and strip render exactly as they did
+/// before this existed.
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ProfileHeader {
+    /// Fields a visitor does not receive, in canonical order, each once. The
+    /// owner still sees them, marked.
+    pub hidden: Vec<ProfileHeaderField>,
+    /// The strip's cards, in display order, at most [`HEADER_STRIP_MAX`], each
+    /// once, strip cards only. `None` is [`ProfileHeaderField::DEFAULT_STRIP`];
+    /// an empty list is no strip at all.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub strip: Option<Vec<ProfileHeaderField>>,
+}
+
+impl ProfileHeader {
+    /// `raw` as a header, or `None` when it is not an object. Unknown and
+    /// repeated ids are dropped from both lists; `hidden` is put in canonical
+    /// order; `strip` drops ids that are not strip cards and is cut to
+    /// [`HEADER_STRIP_MAX`] (the first win). A `strip` that is not an array is
+    /// no strip key, the default strip.
+    pub fn normalize(raw: &serde_json::Value) -> Option<Self> {
+        if !raw.is_object() {
+            return None;
+        }
+        let ids = |field: &str| {
+            array_field(raw, field)
+                .iter()
+                .filter_map(|id| id.as_str().and_then(ProfileHeaderField::from_id))
+                .collect::<Vec<_>>()
+        };
+        let named = ids("hidden");
+        let hidden = ProfileHeaderField::ALL
+            .into_iter()
+            .filter(|field| named.contains(field))
+            .collect();
+        let strip = raw.get("strip").filter(|s| s.is_array()).map(|_| {
+            let mut strip: Vec<ProfileHeaderField> = Vec::with_capacity(HEADER_STRIP_MAX);
+            for field in ids("strip") {
+                if strip.len() < HEADER_STRIP_MAX
+                    && field.is_strip_card()
+                    && !strip.contains(&field)
+                {
+                    strip.push(field);
+                }
+            }
+            strip
+        });
+        Some(Self { hidden, strip })
+    }
+
+    pub fn is_hidden(&self, field: ProfileHeaderField) -> bool {
+        self.hidden.contains(&field)
+    }
+
+    /// The cards the owner arranged, the default five when they never did.
+    pub fn strip_cards(&self) -> Vec<ProfileHeaderField> {
+        self.strip
+            .clone()
+            .unwrap_or_else(|| ProfileHeaderField::DEFAULT_STRIP.to_vec())
+    }
+
+    /// The header as a visitor receives it: the strip resolved and without its
+    /// hidden cards, so a hidden number has no card that would read "-". The
+    /// `hidden` list is kept: it names what the nulled fields already show is
+    /// missing, and tells the client a hidden date from an unsynced one.
+    #[must_use]
+    pub fn visible_only(&self) -> Self {
+        Self {
+            hidden: self.hidden.clone(),
+            strip: Some(
+                self.strip_cards()
+                    .into_iter()
+                    .filter(|field| !self.is_hidden(*field))
+                    .collect(),
+            ),
+        }
+    }
+}
+
 /// A save of `profile_layout`: only the keys the request carried, each
 /// normalized as [`ProfileLayout::normalize`] reads it. A key left out keeps
 /// the stored value, so the tab editor sends only `tabs`, the showcase editor
-/// only `showcase` and the background picker only `background`, and none can
-/// wipe another's work (see `queries::users::update_settings`). The one save
-/// that clears the whole layout is the tab editor's explicit Reset, which
-/// sends `null` instead of a patch.
+/// only `showcase`, the background picker only `background` and the header
+/// editor only `header`, and none can wipe another's work (see
+/// `queries::users::update_settings`). The one save that clears the whole
+/// layout is the tab editor's explicit Reset, which sends `null` instead of a
+/// patch.
 ///
 /// `tabs` is present when the request carried a `tabs` array, `showcase` when
-/// it carried a `showcase` object. `background` is present whenever the key
-/// is: `null`, or a value that does not normalize, clears it.
+/// it carried a `showcase` object. `background` and `header` are present
+/// whenever their key is: `null`, or a value that does not normalize, clears
+/// it.
 #[derive(utoipa::ToSchema, Debug, Clone, Default, PartialEq, Eq, Deserialize)]
 #[serde(from = "serde_json::Value")]
 pub struct ProfileLayoutPatch {
@@ -458,6 +691,8 @@ pub struct ProfileLayoutPatch {
     pub showcase: Option<ProfileShowcase>,
     #[schema(value_type = Option<ProfileBackground>, required = false)]
     pub background: Option<Option<ProfileBackground>>,
+    #[schema(value_type = Option<ProfileHeader>, required = false)]
+    pub header: Option<Option<ProfileHeader>>,
 }
 
 impl From<serde_json::Value> for ProfileLayoutPatch {
@@ -480,6 +715,7 @@ impl ProfileLayoutPatch {
                 .filter(|s| s.is_object())
                 .map(ProfileShowcase::normalize),
             background: raw.get("background").map(ProfileBackground::normalize),
+            header: raw.get("header").map(ProfileHeader::normalize),
         }
     }
 
@@ -495,21 +731,29 @@ impl ProfileLayoutPatch {
         if let Some(Some(background)) = &self.background {
             out.insert("background".into(), serde_json::json!(background));
         }
+        if let Some(Some(header)) = &self.header {
+            out.insert("header".into(), serde_json::json!(header));
+        }
         serde_json::Value::Object(out)
     }
 
-    /// The keys the save removes from the stored layout: a cleared background.
+    /// The keys the save removes from the stored layout: a cleared background
+    /// or header.
     pub fn removed_keys(&self) -> Vec<&'static str> {
+        let mut keys = Vec::new();
         if matches!(self.background, Some(None)) {
-            vec!["background"]
-        } else {
-            Vec::new()
+            keys.push("background");
         }
+        if matches!(self.header, Some(None)) {
+            keys.push("header");
+        }
+        keys
     }
 
     /// The layout `stored` becomes under this save, the twin of the SQL in
     /// `queries::users::update_settings`: stored keys the save leaves out
-    /// survive, a cleared background goes, and an empty result is no layout.
+    /// survive, a cleared background or header goes, and an empty result is no
+    /// layout.
     pub fn apply(&self, stored: Option<&serde_json::Value>) -> Option<serde_json::Value> {
         let mut out = stored
             .and_then(serde_json::Value::as_object)
@@ -546,7 +790,8 @@ impl ProfileLayout {
     /// a profile saved before it. A missing or non-boolean `visible` reads as
     /// visible, today's behavior. A missing Showcase tab is the exception:
     /// it goes first, its canonical place. `showcase` is read by
-    /// [`ProfileShowcase::normalize`] when it is an object, else is `None`.
+    /// [`ProfileShowcase::normalize`] when it is an object, else is `None`;
+    /// `header` by [`ProfileHeader::normalize`] the same way.
     ///
     /// Total: a value that is not an object, or has no `tabs` array, is the
     /// default layout. No input fails, so a malformed row never takes the
@@ -585,10 +830,12 @@ impl ProfileLayout {
             .filter(|s| s.is_object())
             .map(ProfileShowcase::normalize);
         let background = raw.get("background").and_then(ProfileBackground::normalize);
+        let header = raw.get("header").and_then(ProfileHeader::normalize);
         Self {
             tabs,
             showcase,
             background,
+            header,
         }
     }
 
@@ -604,6 +851,9 @@ impl ProfileLayout {
     /// The showcase follows its tab: absent when the Showcase tab is private,
     /// and without its plan blocks when the Plans tab is, since a plan block
     /// shows that tab's data. The background is kept: it belongs to no tab.
+    /// The header goes through [`ProfileHeader::visible_only`]; the fields it
+    /// hides are nulled on the profile row itself, by
+    /// `UserProfile::hide_private`.
     #[must_use]
     pub fn visible_only(&self) -> Self {
         let showcase = self
@@ -625,7 +875,13 @@ impl ProfileLayout {
             tabs: self.tabs.iter().copied().filter(|t| t.visible).collect(),
             showcase,
             background: self.background.clone(),
+            header: self.header.as_ref().map(ProfileHeader::visible_only),
         }
+    }
+
+    /// Whether a visitor may receive `field`. No header hides nothing.
+    pub fn header_shows(&self, field: ProfileHeaderField) -> bool {
+        !self.header.as_ref().is_some_and(|h| h.is_hidden(field))
     }
 
     /// The showcase's blocks, none when there is no showcase.
@@ -848,6 +1104,17 @@ mod tests {
         assert!(sql.contains(&ProfileTabId::Score.visible_sql("us.profile_layout")));
     }
 
+    #[test]
+    fn the_leaderboard_view_masks_a_hidden_level() {
+        let sql = include_str!("../migrations/v038_leaderboard_hidden_level.sql");
+        assert!(sql.contains(&format!(
+            "{} AS level",
+            ProfileHeaderField::Level.shown_sql("u.id", "u.level")
+        )));
+        // The v034 gate is carried over verbatim.
+        assert!(sql.contains(&ProfileTabId::Score.visible_sql("us.profile_layout")));
+    }
+
     fn kinds(layout: &ProfileLayout) -> Vec<&'static str> {
         layout
             .showcase_blocks()
@@ -911,7 +1178,8 @@ mod tests {
         assert_eq!(
             layout.showcase_blocks()[3],
             ShowcaseBlock::Plan {
-                id: PLAN.parse().unwrap()
+                id: PLAN.parse().unwrap(),
+                operator_id: None,
             }
         );
     }
@@ -1373,5 +1641,222 @@ mod tests {
             ProfileLayout::normalize(&alone).tabs.len(),
             ProfileTabId::ALL.len()
         );
+    }
+
+    fn header(raw: Value) -> Option<ProfileHeader> {
+        ProfileLayout::normalize(&json!({ "header": raw })).header
+    }
+
+    fn wire(fields: &[ProfileHeaderField]) -> Vec<&'static str> {
+        fields.iter().map(|f| f.as_str()).collect()
+    }
+
+    #[test]
+    fn a_layout_without_a_header_has_none_and_serializes_without_the_key() {
+        assert_eq!(ProfileLayout::default().header, None);
+        let layout = ProfileLayout::normalize(&json!({ "tabs": [], "background": null }));
+        assert_eq!(layout.header, None);
+        assert_eq!(layout.visible_only().header, None);
+        assert!(
+            serde_json::to_value(&layout)
+                .unwrap()
+                .get("header")
+                .is_none()
+        );
+        for field in ProfileHeaderField::ALL {
+            assert!(layout.header_shows(field), "{}", field.as_str());
+        }
+    }
+
+    #[test]
+    fn a_header_that_is_not_an_object_is_none_and_shapeless_lists_are_empty() {
+        for raw in [
+            json!(null),
+            json!("originite"),
+            json!(["originite"]),
+            json!(3),
+        ] {
+            assert_eq!(header(raw.clone()), None, "{raw}");
+        }
+        // An object is a header, however little of it reads.
+        assert_eq!(header(json!({})), Some(ProfileHeader::default()));
+        assert_eq!(
+            header(json!({ "hidden": "originite", "strip": { "0": "lmd" } })),
+            Some(ProfileHeader::default())
+        );
+    }
+
+    #[test]
+    fn hidden_drops_unknown_ids_and_repeats_and_keeps_canonical_order() {
+        let got = header(json!({ "hidden": [
+            "originite", "uid", "nickname", 7, null, "lmd", "originite", "level", " lmd",
+        ] }))
+        .unwrap();
+        assert_eq!(wire(&got.hidden), ["level", "originite", "lmd"]);
+        assert!(got.is_hidden(ProfileHeaderField::Originite));
+        assert!(!got.is_hidden(ProfileHeaderField::Orundum));
+    }
+
+    #[test]
+    fn the_strip_drops_unknown_repeated_and_non_card_ids_and_is_cut_to_five() {
+        let got = header(json!({ "strip": [
+            "lmd", "registered", "lmd", "nope", "level", "originite", "sign_in",
+            "ten_pull_permits", "operators", "skins", "items", "orundum",
+        ] }))
+        .unwrap();
+        assert_eq!(
+            wire(got.strip.as_deref().unwrap()),
+            ["lmd", "originite", "ten_pull_permits", "operators", "skins"]
+        );
+        assert_eq!(got.strip.as_ref().map(Vec::len), Some(HEADER_STRIP_MAX));
+        // An empty list is no strip; no list is the default one.
+        assert_eq!(header(json!({ "strip": [] })).unwrap().strip, Some(vec![]));
+        assert_eq!(header(json!({ "strip": "lmd" })).unwrap().strip, None);
+        assert_eq!(
+            wire(&header(json!({})).unwrap().strip_cards()),
+            ["operators", "skins", "items", "orundum", "originite"]
+        );
+    }
+
+    #[test]
+    fn a_normalized_header_is_a_fixed_point_and_round_trips() {
+        let raw = json!({
+            "tabs": [{ "id": "roster", "visible": false }],
+            "header": { "hidden": ["lmd", "originite", "lmd"], "strip": ["lmd", "x", "orundum"] },
+        });
+        let once = ProfileLayout::normalize(&raw);
+        let wire_once = serde_json::to_value(&once).unwrap();
+        assert_eq!(
+            wire_once["header"],
+            json!({ "hidden": ["originite", "lmd"], "strip": ["lmd", "orundum"] })
+        );
+        assert_eq!(ProfileLayout::normalize(&wire_once), once);
+        // No strip key stays absent on the way out.
+        let bare = header(json!({ "hidden": ["level"] })).unwrap();
+        assert_eq!(
+            serde_json::to_value(bare).unwrap(),
+            json!({ "hidden": ["level"] })
+        );
+    }
+
+    #[test]
+    fn the_visitor_header_resolves_the_strip_and_drops_hidden_cards() {
+        let visitor = |raw: Value| {
+            ProfileLayout::normalize(&json!({ "header": raw }))
+                .visible_only()
+                .header
+                .unwrap()
+        };
+        let got = visitor(json!({ "hidden": ["originite", "level"] }));
+        assert_eq!(
+            wire(got.strip.as_deref().unwrap()),
+            ["operators", "skins", "items", "orundum"]
+        );
+        assert_eq!(wire(&got.hidden), ["level", "originite"]);
+        let got = visitor(json!({ "hidden": ["lmd"], "strip": ["lmd", "orundum"] }));
+        assert_eq!(wire(got.strip.as_deref().unwrap()), ["orundum"]);
+        let got = visitor(json!({ "hidden": ["lmd"], "strip": ["lmd"] }));
+        assert_eq!(got.strip, Some(vec![]));
+        // Nothing hidden and no strip: the default five, now spelled out.
+        assert_eq!(
+            visitor(json!({})).strip.as_deref(),
+            Some(&ProfileHeaderField::DEFAULT_STRIP[..])
+        );
+        // The owner's layout keeps what they arranged.
+        let owner =
+            ProfileLayout::normalize(&json!({ "header": { "hidden": ["lmd"], "strip": ["lmd"] } }));
+        assert_eq!(
+            owner.header.unwrap().strip,
+            Some(vec![ProfileHeaderField::Lmd])
+        );
+    }
+
+    #[test]
+    fn header_wire_ids_round_trip_and_the_sql_predicate_matches_the_stored_shape() {
+        for field in ProfileHeaderField::ALL {
+            assert_eq!(serde_json::to_value(field).unwrap(), json!(field.as_str()));
+            assert_eq!(ProfileHeaderField::from_id(field.as_str()), Some(field));
+        }
+        assert!(
+            ProfileHeaderField::DEFAULT_STRIP
+                .iter()
+                .all(|f| f.is_strip_card())
+        );
+        assert_eq!(
+            ProfileHeaderField::Originite.visible_sql("us.profile_layout"),
+            r#"NOT COALESCE(us.profile_layout -> 'header' -> 'hidden' @> '["originite"]'::jsonb, false)"#
+        );
+        let stored = serde_json::to_value(ProfileHeader {
+            hidden: vec![ProfileHeaderField::Originite],
+            strip: None,
+        })
+        .unwrap();
+        assert!(
+            ProfileHeaderField::Originite
+                .visible_sql("c")
+                .contains(&stored["hidden"].to_string())
+        );
+    }
+
+    #[test]
+    fn a_header_save_keeps_the_other_keys_and_theirs_keep_it() {
+        let stored = json!({
+            "tabs": [{ "id": "roster", "visible": false }],
+            "showcase": { "blocks": [{ "type": "grid", "slug": "g" }] },
+            "background": { "kind": "operator", "id": "char_003_kalts" },
+        });
+        let set = ProfileLayoutPatch::normalize(
+            &json!({ "header": { "hidden": ["originite", "nope"], "strip": ["lmd"] } }),
+        );
+        assert_eq!(
+            (
+                set.tabs.as_ref(),
+                set.showcase.as_ref(),
+                set.background.as_ref()
+            ),
+            (None, None, None)
+        );
+        assert_eq!(
+            set.merge_json(),
+            json!({ "header": { "hidden": ["originite"], "strip": ["lmd"] } })
+        );
+        let after = set.apply(Some(&stored)).unwrap();
+        for key in ["tabs", "showcase", "background"] {
+            assert_eq!(after[key], stored[key], "{key}");
+        }
+        assert_eq!(after["header"]["hidden"], json!(["originite"]));
+
+        // Every other editor's save keeps the header.
+        for other in [
+            json!({ "tabs": [] }),
+            json!({ "showcase": { "blocks": [] } }),
+            json!({ "background": null }),
+            json!({ "background": { "kind": "skin", "id": "a@b#1" } }),
+        ] {
+            let kept = ProfileLayoutPatch::normalize(&other)
+                .apply(Some(&after))
+                .unwrap();
+            assert_eq!(kept["header"], after["header"], "{other}");
+            assert_eq!(
+                ProfileLayoutPatch::normalize(&other).header,
+                None,
+                "{other}"
+            );
+        }
+
+        // Null, or a header that is not an object, clears it alone.
+        for raw in [json!(null), json!(["originite"])] {
+            let clear = ProfileLayoutPatch::normalize(&json!({ "header": raw }));
+            assert_eq!(clear.header, Some(None), "{raw}");
+            assert_eq!(clear.removed_keys(), ["header"]);
+            assert_eq!(clear.apply(Some(&after)), Some(stored.clone()));
+        }
+        // A header alone, cleared, leaves no layout.
+        let alone = set.apply(None).unwrap();
+        let clear = ProfileLayoutPatch::normalize(&json!({ "header": null }));
+        assert_eq!(clear.apply(Some(&alone)), None);
+        // Clearing both at once removes both.
+        let both = ProfileLayoutPatch::normalize(&json!({ "header": null, "background": null }));
+        assert_eq!(both.removed_keys(), ["background", "header"]);
     }
 }

@@ -10,7 +10,7 @@ export type SupportUnit = {
     skill_index: number;
     current_equip: string | null;
     /**
-     * Joined from `user_operators` - null if the support refers to an op the
+     * Joined from `user_operators`: null if the support names an operator the
      * player no longer owns (shouldn't happen, but the FK is soft).
      */
     elite: number | null;

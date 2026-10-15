@@ -23,6 +23,11 @@ export interface IEnemyImmunities {
     sleep: boolean;
     frozen: boolean;
     levitate: boolean;
+    fear: boolean;
+    paralysis: boolean;
+    /** The game's "Frighten" (ba.tremble): no normal attacks while blocked. */
+    tremble: boolean;
+    lure: boolean;
 }
 
 export interface IEnemyView extends IEnemy {
@@ -50,6 +55,9 @@ export interface IFilterState {
     /** Location filter: zone ids ("rogue_4") and/or stage ids
      *  ("level_main_10-06") an enemy must appear in (OR semantics). */
     appearsIn: string[];
+    /** Statuses an enemy must be immune to. AND semantics, unlike the other
+     *  filters: every selected status must be immune. */
+    immunities: (keyof IEnemyImmunities)[];
     sortBy: SortOption;
     sortOrder: SortOrder;
 }
@@ -73,6 +81,7 @@ export interface IUseEnemyFiltersReturn {
     setAttackTypes: (v: ApplyWay[]) => void;
     setRaces: (v: string[]) => void;
     setAppearsIn: (v: string[]) => void;
+    setImmunities: (v: (keyof IEnemyImmunities)[]) => void;
     setSortBy: (v: SortOption) => void;
     setSortOrder: (v: SortOrder) => void;
     clearFilters: () => void;

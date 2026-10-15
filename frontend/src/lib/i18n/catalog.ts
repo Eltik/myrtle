@@ -7,7 +7,7 @@ export type Catalog = Record<string, string>;
 /**
  * The every-namespace catalog. The backend splits catalogs by namespace and
  * the manifest carries a hash per namespace, so per-route lazy loading is
- * available the moment it is worth doing - but until the catalog is measured
+ * available the moment it is worth doing, but until the catalog is measured
  * large enough to need it, one request for everything is fewer moving parts
  * and one fewer round trip on first paint.
  */
@@ -23,7 +23,7 @@ interface ICacheEntry {
  * pattern already used for the operator index. A page render is then a map
  * lookup rather than a backend round trip.
  *
- * Catalogs are keyed by content hash, so an entry can never be stale - it can
+ * Catalogs are keyed by content hash, so an entry can never be stale; it can
  * only become unreferenced once the manifest publishes a new hash.
  */
 const catalogCache = new Map<string, ICacheEntry>();
@@ -63,8 +63,8 @@ export async function fetchManifest(force = false): Promise<I18nManifest | null>
 
 /**
  * Fetch one catalog by content hash. The URL contains the hash, so the
- * response is `immutable` and every layer between here and Postgres - the
- * backend cache, Cloudflare, the browser - can hold it forever without any
+ * response is `immutable` and every layer between here and Postgres (the
+ * backend cache, Cloudflare, the browser) can hold it forever without any
  * purge step. This project has no Cloudflare purge automation at all, which is
  * exactly why the hash is in the path.
  */
@@ -91,12 +91,12 @@ export interface IBootstrap {
     locale: string;
     /**
      * Where to send the visitor when the path claimed a locale the backend
-     * does not serve - `/ja/operators` when `ja` is missing, disabled, or the
+     * does not serve: `/ja/operators` when `ja` is missing, disabled, or the
      * backend predates it.
      *
-     * Without this the request silently rendered English under a `/ja` URL
-     * with `lang="en"`, which is indistinguishable from "my translation did
-     * not apply" and is exactly how that failure was first reported.
+     * Without this the request renders English under a `/ja` URL with
+     * `lang="en"`, which is indistinguishable from "my translation did not
+     * apply".
      */
     redirectTo: string | null;
     /** The switcher's entries. */
@@ -107,7 +107,7 @@ export interface IBootstrap {
     /**
      * The Arknights client whose text serves this locale's game data
      * (operator names, skill descriptions, stage text), so the game-data API
-     * layer can pick the `/{server}/...` endpoints - see `lib/api/gamedata.ts`.
+     * layer can pick the `/{server}/...` endpoints (see `lib/api/gamedata.ts`).
      * The visitor's own pick (the `gamedata_server` cookie) wins over the
      * locale's row when the backend has that server loaded; see
      * {@link pickGamedataServer}.
@@ -120,7 +120,7 @@ export interface IBootstrap {
     /**
      * The servers the backend has loaded, the default first: the picker's
      * entries. Empty when the backend predates the field, which hides the
-     * picker and leaves the locale's row in charge exactly as before.
+     * picker and leaves the locale's row in charge.
      */
     gamedataServers: string[];
 }
@@ -152,8 +152,7 @@ export interface IGamedataServerChoice {
  * 404 on a deployment without KR data.
  *
  * `loaded === undefined` is a backend older than the `gamedata_servers` field.
- * The locale's row is then trusted as-is and the pick ignored, which is exactly
- * the behaviour before the picker existed.
+ * The locale's row is then trusted as-is and the pick ignored.
  */
 export function pickGamedataServer(localeRow: string | undefined, picked: string | undefined, loaded: string[] | undefined): IGamedataServerChoice {
     const row = localeRow ?? DEFAULT_GAMEDATA_SERVER;
@@ -167,7 +166,7 @@ export function pickGamedataServer(localeRow: string | undefined, picked: string
 
 /**
  * Everything a render needs to show text in one locale. Falls back to an empty
- * catalog - not an error - when the backend cannot be reached, because the
+ * catalog, not an error, when the backend cannot be reached, because the
  * bundled source catalog covers English either way.
  */
 export async function loadBootstrap(requested: string, fallback: string, claimedPath?: string, pickedServer?: string): Promise<IBootstrap> {

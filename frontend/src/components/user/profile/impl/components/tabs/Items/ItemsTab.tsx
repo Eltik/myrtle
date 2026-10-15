@@ -61,8 +61,8 @@ function getRarityLabel(value: ItemRarityFilter, t: TabT): string {
 export function ItemsTab({ inventory }: IItemsTabProps) {
     const t: TabT = useT("user");
     const f = useFormatters();
-    const { data: materials } = useQuery(materialsQueryOptions(useGamedataServer()));
-    const { filters, set, toggleSortOrder, sorted, categoryCounts, totalQty } = useItems(inventory, materials);
+    const { data: materials, isPending: materialsPending } = useQuery(materialsQueryOptions(useGamedataServer()));
+    const { filters, set, toggleSortOrder, sorted, categoryCounts, totalQty } = useItems(inventory, materials, materialsPending);
 
     const visibleCategories = CATEGORY_ORDER.filter((c) => c === "all" || (categoryCounts.get(c) ?? 0) > 0);
 

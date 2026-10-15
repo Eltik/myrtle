@@ -15,9 +15,9 @@ export const STAGE_GROUP_ICON: Record<StageGroupKey, LucideIcon> = {
 };
 
 /**
- * Intentional-looking stand-in for missing stage art: a tone-tinted wash with a
- * faint hatch pattern and the category glyph. Rendered *under* `StagePreview`,
- * so it only shows when there is no image (or the image 404s and hides itself).
+ * Stand-in for missing stage art: a tone-tinted wash, a faint hatch and the
+ * category glyph. Rendered *under* `StagePreview`, so it only shows when there
+ * is no image (or the image 404s and hides itself).
  */
 export function PreviewFallback({ tone, group, iconClassName = "h-4.5 w-4.5" }: { tone: string; group: StageGroupKey; iconClassName?: string }) {
     const Icon = STAGE_GROUP_ICON[group];

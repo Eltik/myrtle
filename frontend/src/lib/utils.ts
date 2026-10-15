@@ -25,8 +25,9 @@ export function toAvatarStem(id: string): string {
         // Skin: char_X@winter#1 -> char_X_winter#1
         return encodeURIComponent(id.replaceAll("@", "_"));
     }
-    // Base art: char_X#1 -> char_X, char_X#2 -> char_X_2
-    const stem = id.endsWith("#1") ? id.slice(0, -2) : id.replace(/#(\d+)$/, "_$1");
+    // Base art: char_X#1 -> char_X, char_X#2 -> char_X_2, and Amiya's char_002_amiya#1+
+    // (the avatar the backend serves as char_002_amiya_1+) -> char_002_amiya_1+
+    const stem = id.endsWith("#1") ? id.slice(0, -2) : id.replace(/#(\d+\+?)$/, "_$1");
     return encodeURIComponent(stem);
 }
 
@@ -69,7 +70,7 @@ export function parseOperatorName(name: string): { displayName: string; subtitle
     return { displayName: parts[0] ?? name, subtitle: parts[2] ?? null };
 }
 
-/** Locale number formatting - "1,234,567".
+/** Locale number formatting: "1,234,567".
  *
  *  `locale` defaults to the source locale: `Intl.NumberFormat` under `en` and
  *  `Number#toLocaleString("en-US")` give identical output for grouping and decimals (checked
@@ -103,8 +104,8 @@ export function formatNumberCompact(n: number | null | undefined, locale: string
 export function formatSharePct(fraction: number, locale: string = DEFAULT_LOCALE): string {
     const p = fraction * 100;
     const digits = p >= 10 ? 0 : p >= 1 ? 1 : p > 0 ? 2 : 0;
-    // `style: "percent"` would re-multiply and, more importantly, moves the
-    // sign for locales that write it differently - which is the point.
+    // `style: "percent"` takes the fraction, not `p`, and places the sign the
+    // way each locale writes it.
     return new Intl.NumberFormat(locale, {
         style: "percent",
         minimumFractionDigits: digits,
@@ -449,7 +450,7 @@ export const professionLabel = (op: Pick<IOperatorNames, "profession" | "profess
 export const archetypeLabel = (op: IOperatorNames): string => op.subProfessionName || formatArchetype(op.subProfessionId ?? "");
 
 /**
- * Archetype with its class appended, for the sites that used `formatSubProfession`. The class
+ * Archetype with its class appended: the server-aware `formatSubProfession`. The class
  * suffix is English-only logic, so a server name that already equals the English table entry
  * keeps the English composition (output unchanged on EN) and any other server name shows as is.
  */
@@ -521,8 +522,8 @@ export function formatRelative(iso: string | null | undefined, locale: string = 
     return relative(locale, -Math.floor(days / 365), "year", "always", style);
 }
 
-/** "just now" is not an Intl concept - there is no zero-distance phrasing in
- *  `RelativeTimeFormat` - so it stays a message. English is inlined here to
+/** "just now" is not an Intl concept (`RelativeTimeFormat` has no zero-distance
+ *  phrasing), so it stays a message. English is inlined here to
  *  keep this a pure function; a locale that needs it translated reads
  *  `common.time.justNow` through `useRelativeTime()`. */
 function relativeJustNow(locale: string): string {

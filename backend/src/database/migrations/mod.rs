@@ -107,7 +107,14 @@ const MIGRATIONS: &[(&str, &str)] = &[
         "v034_leaderboard_private_score",
         include_str!("v034_leaderboard_private_score.sql"),
     ),
-    ("v035_trevor", include_str!("v035_trevor.sql")),
+    ("v035_user_squads", include_str!("v035_user_squads.sql")),
+    ("v036_music_library", include_str!("v036_music_library.sql")),
+    ("v037_music_stats", include_str!("v037_music_stats.sql")),
+    (
+        "v038_leaderboard_hidden_level",
+        include_str!("v038_leaderboard_hidden_level.sql"),
+    ),
+    ("v039_trevor", include_str!("v039_trevor.sql")),
 ];
 
 pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {

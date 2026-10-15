@@ -4,6 +4,7 @@ import type React from "react";
 import { useMemo, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Skeleton } from "#/components/ui/skeleton";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { storyCommunityQueryOptions } from "#/lib/api/story";
 import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -139,9 +140,10 @@ function GroupRankRow({ row, rank, onOpen, t, f }: { row: ICommunityGroupRow; ra
                 <span className="flex w-24 shrink-0 flex-col items-end sm:w-28">
                     <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.12em]">{t("community.finished")}</span>
                     {row.finished === null || row.finishedShare === null ? (
-                        <span className="mt-0.5 text-right font-sans text-[11px] text-muted-foreground" title={t("community.notMeasurable.why")}>
-                            {t("community.notMeasurable")}
-                        </span>
+                        <Tooltip>
+                            <TooltipTrigger render={<span className="mt-0.5 text-right font-sans text-[11px] text-muted-foreground" />}>{t("community.notMeasurable")}</TooltipTrigger>
+                            <TooltipPopup>{t("community.notMeasurable.why")}</TooltipPopup>
+                        </Tooltip>
                     ) : (
                         <>
                             <span className="font-mono text-[14px] text-foreground tabular-nums">{f.number(row.finished)}</span>
@@ -221,9 +223,12 @@ function DepthStrip({ groups, initial, t, f }: { groups: ICommunityDepthGroup[];
                         {group.bars.map((bar) => {
                             const label = t("community.depth.bar", { name: bar.code ? `${bar.code} ${bar.name}` : bar.name, readers: f.number(bar.readers), share: f.percent(bar.readerShare) });
                             return (
-                                <span key={bar.id} role="img" title={label} aria-label={label} className="flex min-w-0 flex-1 items-end self-stretch">
-                                    <span className="w-full rounded-t-xs bg-primary/80" style={{ height: `${Math.max(1, Math.round(bar.readerShare * 1000) / 10)}%` }} />
-                                </span>
+                                <Tooltip key={bar.id}>
+                                    <TooltipTrigger render={<span role="img" aria-label={label} className="flex min-w-0 flex-1 items-end self-stretch" />}>
+                                        <span className="w-full rounded-t-xs bg-primary/80" style={{ height: `${Math.max(1, Math.round(bar.readerShare * 1000) / 10)}%` }} />
+                                    </TooltipTrigger>
+                                    <TooltipPopup>{label}</TooltipPopup>
+                                </Tooltip>
                             );
                         })}
                     </div>

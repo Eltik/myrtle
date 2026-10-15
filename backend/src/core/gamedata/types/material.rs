@@ -47,10 +47,10 @@ pub enum ItemClass {
     #[serde(rename = "NONE")]
     None,
     /// Catch-all for classify types this enum does not name yet. CN ships
-    /// `MEMENTO` on six story souvenir items; without a fallback those six
-    /// values fail their `Item`, which fails the whole `item_table`, which
-    /// `load_table_or_warn` swallows into an empty `Materials` - every item
-    /// then loses its name and icon id. `ItemType` already does this.
+    /// `MEMENTO` on six story souvenir items; without it those fail their
+    /// `Item`, which fails the whole `item_table`, which `load_table_or_warn`
+    /// swallows into an empty `Materials`, so every item loses its name and
+    /// icon id. `ItemType` already does this.
     #[serde(rename = "UNKNOWN", other)]
     #[default]
     Unknown,
@@ -143,9 +143,8 @@ pub enum ItemOccPer {
     Always,
     Sometimes,
     Often,
-    /// Catch-all so an unrecognised value degrades to one variant instead of
-    /// failing the record, which fails the whole table. HG ships new values on
-    /// CN first; see `ItemClass` for the outage this prevents.
+    /// Catch-all: HG ships new values on CN first, and one unknown value fails
+    /// the whole table (see `ItemClass`).
     #[serde(other)]
     Unknown,
 }
@@ -158,9 +157,8 @@ pub enum BuildingRoomType {
     #[default]
     Workshop,
     Manufacture,
-    /// Catch-all so an unrecognised value degrades to one variant instead of
-    /// failing the record, which fails the whole table. HG ships new values on
-    /// CN first; see `ItemClass` for the outage this prevents.
+    /// Catch-all: HG ships new values on CN first, and one unknown value fails
+    /// the whole table (see `ItemClass`).
     #[serde(other)]
     Unknown,
 }
@@ -173,9 +171,8 @@ pub enum VoucherItemType {
     #[default]
     OptionalVoucherPick,
     MaterialIssueVoucher,
-    /// Catch-all so an unrecognised value degrades to one variant instead of
-    /// failing the record, which fails the whole table. HG ships new values on
-    /// CN first; see `ItemClass` for the outage this prevents.
+    /// Catch-all: HG ships new values on CN first, and one unknown value fails
+    /// the whole table (see `ItemClass`).
     #[serde(other)]
     Unknown,
 }
@@ -188,9 +185,8 @@ pub enum VoucherDisplayType {
     #[default]
     None,
     Divide,
-    /// Catch-all so an unrecognised value degrades to one variant instead of
-    /// failing the record, which fails the whole table. HG ships new values on
-    /// CN first; see `ItemClass` for the outage this prevents.
+    /// Catch-all: HG ships new values on CN first, and one unknown value fails
+    /// the whole table (see `ItemClass`).
     #[serde(other)]
     Unknown,
 }

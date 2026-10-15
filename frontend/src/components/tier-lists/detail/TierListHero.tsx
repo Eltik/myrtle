@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "#/components/ui/breadcrumb";
 import { Kicker } from "#/components/ui/kicker";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { ITierListDetail } from "#/lib/api/tier-lists";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -122,21 +123,27 @@ export function TierListHero({ detail }: ITierListHeroProps) {
                                     <span className="opacity-50" aria-hidden="true">
                                         ·
                                     </span>
-                                    <span className="inline-flex items-center gap-1.5" title={t("detail.hero.views.title", { count: f.number(stats.viewCount) })}>
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 opacity-70" aria-hidden="true">
-                                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                                            <circle cx="12" cy="12" r="3" />
-                                        </svg>
-                                        <span className="font-mono font-semibold text-foreground tabular-nums">{f.compact(stats.viewCount)}</span>
-                                        <span>{t("detail.hero.views")}</span>
-                                    </span>
-                                    <span className="inline-flex items-center gap-1.5" title={t("detail.hero.favorites.title", { count: f.number(stats.favoriteCount) })}>
-                                        <svg viewBox="0 0 24 24" fill="currentColor" className="h-3 w-3 opacity-70" aria-hidden="true">
-                                            <path d="M12 21s-7-4.5-9.5-9C.7 8.7 2.5 5 6 5c2 0 3.5 1 4 2.5C10.5 6 12 5 14 5c3.5 0 5.3 3.7 3.5 7-2.5 4.5-9.5 9-9.5 9Z" />
-                                        </svg>
-                                        <span className="font-mono font-semibold text-foreground tabular-nums">{f.compact(stats.favoriteCount)}</span>
-                                        <span>{t("detail.hero.favorites")}</span>
-                                    </span>
+                                    <Tooltip>
+                                        <TooltipTrigger render={<span className="inline-flex items-center gap-1.5" />}>
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 opacity-70" aria-hidden="true">
+                                                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                                <circle cx="12" cy="12" r="3" />
+                                            </svg>
+                                            <span className="font-mono font-semibold text-foreground tabular-nums">{f.compact(stats.viewCount)}</span>
+                                            <span>{t("detail.hero.views")}</span>
+                                        </TooltipTrigger>
+                                        <TooltipPopup>{t("detail.hero.views.title", { count: f.number(stats.viewCount) })}</TooltipPopup>
+                                    </Tooltip>
+                                    <Tooltip>
+                                        <TooltipTrigger render={<span className="inline-flex items-center gap-1.5" />}>
+                                            <svg viewBox="0 0 24 24" fill="currentColor" className="h-3 w-3 opacity-70" aria-hidden="true">
+                                                <path d="M12 21s-7-4.5-9.5-9C.7 8.7 2.5 5 6 5c2 0 3.5 1 4 2.5C10.5 6 12 5 14 5c3.5 0 5.3 3.7 3.5 7-2.5 4.5-9.5 9-9.5 9Z" />
+                                            </svg>
+                                            <span className="font-mono font-semibold text-foreground tabular-nums">{f.compact(stats.favoriteCount)}</span>
+                                            <span>{t("detail.hero.favorites")}</span>
+                                        </TooltipTrigger>
+                                        <TooltipPopup>{t("detail.hero.favorites.title", { count: f.number(stats.favoriteCount) })}</TooltipPopup>
+                                    </Tooltip>
                                 </>
                             )}
                         </div>

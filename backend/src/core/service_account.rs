@@ -16,9 +16,10 @@
 //! # Credentials
 //!
 //! A stored session carries a durable `yostar_uid` / `yostar_token` pair, which
-//! [`refresh_secret`] trades for a live `secret` without an OTP round-trip. A
-//! human logs in once per account (`cargo run --bin set-session`); the backend
-//! renews itself from there.
+//! [`refresh_secret`](crate::core::hypergryph::session::refresh_secret) trades
+//! for a live `secret` without an OTP round-trip. A human logs in once per
+//! account (`cargo run --bin set-session`); the backend renews itself from
+//! there.
 
 use std::{
     collections::HashMap,
@@ -34,7 +35,7 @@ use tokio::sync::Mutex;
 use crate::core::hypergryph::{
     constants::{AuthSession, Server},
     fetch::{FetchError, REQUEST_TIMEOUT, auth_request_with_timeout, parse_json_tolerating},
-    session::refresh_secret,
+    session::{RefreshStep, refresh_secret_by_step},
 };
 
 const DEFAULT_SESSION_DIR: &str = "game_sessions";
@@ -70,7 +71,21 @@ pub fn session_path(server: Server) -> PathBuf {
 /// the durable token pair that makes unattended refresh possible.
 pub fn read_session_file(path: &Path) -> Option<AuthSession> {
     let raw = std::fs::read_to_string(path).ok()?;
-    let session: AuthSession = serde_json::from_str(&raw).ok()?;
+    let session: AuthSession = match serde_json::from_str(&raw) {
+        Ok(session) => session,
+        Err(e) => {
+            // Position and category only: serde's message can quote a value
+            // from the file, and the file holds credentials.
+            tracing::warn!(
+                path = %path.display(),
+                category = ?e.classify(),
+                line = e.line(),
+                column = e.column(),
+                "session file does not parse; re-run `set-session`"
+            );
+            return None;
+        }
+    };
     if session.yostar_uid.is_empty() || session.yostar_token.is_empty() {
         tracing::warn!(
             path = %path.display(),
@@ -110,6 +125,9 @@ struct Inner {
     session: AuthSession,
     /// `None` until the first successful refresh in this process.
     refreshed_at: Option<Instant>,
+    /// A refused-token alert went out and no refresh has succeeded since; one
+    /// ping per outage, not one per request.
+    alerted: bool,
 }
 
 /// A shared, serialized handle to one server's service account.
@@ -143,6 +161,7 @@ impl ServiceAccount {
             inner: Mutex::new(Inner {
                 session,
                 refreshed_at: None,
+                alerted: false,
             }),
             server,
             path,
@@ -266,9 +285,74 @@ impl ServiceAccount {
         .map(drop)
     }
 
+    /// Re-mint the `secret` and nothing else: u8 token, then `account/login` on
+    /// the game server. The cheapest round-trip that needs the game up, which
+    /// is what [`crate::core::maintenance`] asks once a planned window has
+    /// passed.
+    pub async fn probe(&self, client: &Client) -> Result<(), FetchError> {
+        let mut guard = self.inner.lock().await;
+        self.refresh(client, &mut guard).await
+    }
+
+    /// A refused durable token surfaces as [`FetchError::NotLoggedIn`], never
+    /// as [`FetchError::Upstream`]: callers read `Upstream` as a verdict on the
+    /// one request (a pool, a shop) or on the game, and a dead credential is
+    /// neither.
+    ///
+    /// Before giving up, the session file is re-read: a human who logged in
+    /// again elsewhere and copied the file over is adopted without a restart.
     async fn refresh(&self, client: &Client, inner: &mut Inner) -> Result<(), FetchError> {
-        refresh_secret(client, &mut inner.session, self.server).await?;
+        let refused = match self.try_refresh(client, inner).await {
+            Ok(()) => return Ok(()),
+            Err(Refusal::Other(e)) => return Err(e),
+            Err(Refusal::Token(e)) => e,
+        };
+
+        if let Some(on_disk) = read_session_file(&self.path)
+            && on_disk.yostar_token != inner.session.yostar_token
+        {
+            tracing::info!(
+                server = self.server.as_str(),
+                "service account token refused; adopting the newer session file"
+            );
+            inner.session = on_disk;
+            match self.try_refresh(client, inner).await {
+                Ok(()) => return Ok(()),
+                Err(Refusal::Other(e)) => return Err(e),
+                Err(Refusal::Token(_)) => {}
+            }
+        }
+
+        tracing::warn!(
+            server = self.server.as_str(),
+            error = ?refused,
+            "service account token refused; run `set-session` for this server"
+        );
+        if !inner.alerted {
+            inner.alerted = true;
+            let client = client.clone();
+            let server = self.server.as_str().to_owned();
+            let error = format!("{refused:?}");
+            tokio::spawn(async move {
+                crate::core::alerts::report_service_account_refused(&client, &server, &error).await;
+            });
+        }
+        Err(FetchError::NotLoggedIn)
+    }
+
+    async fn try_refresh(&self, client: &Client, inner: &mut Inner) -> Result<(), Refusal> {
+        match refresh_secret_by_step(client, &mut inner.session, self.server).await {
+            Ok(()) => {}
+            Err((
+                RefreshStep::Token,
+                e @ (FetchError::Upstream(_) | FetchError::ParseError(_)),
+            )) => {
+                return Err(Refusal::Token(e));
+            }
+            Err((_, e)) => return Err(Refusal::Other(e)),
+        }
         inner.refreshed_at = Some(Instant::now());
+        inner.alerted = false;
         self.persist(&inner.session);
         Ok(())
     }
@@ -284,6 +368,13 @@ impl ServiceAccount {
             );
         }
     }
+}
+
+/// Why [`ServiceAccount::try_refresh`] failed: the durable token itself, or
+/// anything else (transport, the game refusing the login).
+enum Refusal {
+    Token(FetchError),
+    Other(FetchError),
 }
 
 /// Every service account the backend has credentials for, keyed by server.

@@ -84,6 +84,42 @@ export const messages = {
         text: "None",
         description: "Attack range of an enemy: it has no attack at all.",
     },
+    "immunity.stun": {
+        text: "Stun",
+        description: "Filter chip under 'Immune to': status effect. The game's own term for it.",
+    },
+    "immunity.silence": {
+        text: "Silence",
+        description: "Filter chip under 'Immune to': status effect that blocks skills. The game's own term for it.",
+    },
+    "immunity.sleep": {
+        text: "Sleep",
+        description: "Filter chip under 'Immune to': status effect. The game's own term for it.",
+    },
+    "immunity.frozen": {
+        text: "Frozen",
+        description: "Filter chip under 'Immune to': status effect. The game's own term for it.",
+    },
+    "immunity.levitate": {
+        text: "Levitate",
+        description: "Filter chip under 'Immune to': status effect that lifts the target off the ground. The game's own term for it.",
+    },
+    "immunity.fear": {
+        text: "Fear",
+        description: "Filter chip under 'Immune to': status effect; the target cannot act and moves erratically. The game's own term for it.",
+    },
+    "immunity.paralysis": {
+        text: "Paralysis",
+        description: "Filter chip under 'Immune to': status effect that periodically stops the target in place. The game's own term for it.",
+    },
+    "immunity.tremble": {
+        text: "Frighten",
+        description: "Filter chip under 'Immune to': status effect; the target cannot make normal attacks while blocked. The game's own term for it.",
+    },
+    "immunity.lure": {
+        text: "Lure",
+        description: "Filter chip under 'Immune to': status effect that pulls the target toward a point. The game's own term for it.",
+    },
 } satisfies MessageMap;
 
 // `dynamic`: these keys are stored on constants / token entries and resolved by

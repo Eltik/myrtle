@@ -7,6 +7,7 @@ import type { IStage, IZone, StageClearsMap } from "#/types/stages";
 import { getActivityIdFromZoneId, getPermanentEventInfo, getPermanentZonePrefix, type IActivityLookup, isActivityCurrentlyOpen } from "./activity-lookup";
 import { CHALLENGES } from "./challenges";
 import { UNPLAYABLE_OPERATOR_IDS } from "./constants";
+import { type ITierIndex, passesTierFilter } from "./tier-filter";
 import type { IChallenge, IRandomizerOperator, IRandomizerSettings, IRosterIndex } from "./types";
 import type { messages as utilMessages } from "./utils.messages";
 
@@ -86,14 +87,10 @@ export function toRandomizerOperator(op: IOperatorIndexEntry): IRandomizerOperat
 }
 
 /**
- * The settings as they apply to this session. Saved settings outlive the
- * session, but the owned / E2 / cleared filters read data only a profile
- * brings: signed out, the roster and the clears are empty, so a filter saved
- * while signed in would draw nothing ("0 drawable") behind a switch that
- * renders off and locked, where it cannot be turned off. Those filters apply
- * only with a profile, and the cleared filter only once the clears have loaded
- * (a missing clears map reads every stage as uncleared). The stored choice is
- * untouched and returns when the data does.
+ * Saved settings as they apply now. Owned / E2 / cleared need a profile:
+ * signed out, a filter saved while signed in drew "0 drawable" behind a locked
+ * switch. Cleared also waits for the clears to load (a missing map reads every
+ * stage as uncleared). The stored choice is left alone.
  */
 export function applyProfileGate(settings: IRandomizerSettings, { hasProfile, hasStageClears }: { hasProfile: boolean; hasStageClears: boolean }): IRandomizerSettings {
     if (!hasProfile) return { ...settings, onlyOwnedOperators: false, onlyE2Operators: false, onlyCompletedStages: false };
@@ -101,13 +98,15 @@ export function applyProfileGate(settings: IRandomizerSettings, { hasProfile, ha
     return settings;
 }
 
-export function selectAvailableOperators(operators: IRandomizerOperator[], settings: IRandomizerSettings, rosterIndex: IRosterIndex): IRandomizerOperator[] {
+/** `tierIndex` is the chosen official list, or `null` when none is chosen or it has not loaded (filter off). */
+export function selectAvailableOperators(operators: IRandomizerOperator[], settings: IRandomizerSettings, rosterIndex: IRosterIndex, tierIndex: ITierIndex | null = null): IRandomizerOperator[] {
     return operators.filter((op) => {
         if (!settings.allowedRarities.includes(op.rarity)) return false;
         if (!settings.allowedClasses.includes(op.profession)) return false;
         if (settings.hideUnplayableOperators && UNPLAYABLE_OPERATOR_IDS.has(op.id)) return false;
         if (settings.onlyOwnedOperators && !rosterIndex.owned.has(op.id)) return false;
-        if (settings.onlyE2Operators && !rosterIndex.e2.has(op.id)) return false;
+        if (settings.onlyE2Operators && (!settings.e2SixStarOnly || op.rarity === 6) && !rosterIndex.e2.has(op.id)) return false;
+        if (!passesTierFilter(op.id, tierIndex, settings.deselectedTierIds)) return false;
         return true;
     });
 }
@@ -235,9 +234,8 @@ export function getZoneDisplayName(zone: IZone | undefined, stageZoneId: string)
 }
 
 /**
- * A stage is cleared when its `state` is 3 (passed). Note that for adverse/tough
- * variants, clearing the harder version auto-passes the Normal/Easy variant with
- * `state: 3` and `completeTimes: 0`, so checking `completeTimes` alone would miss them.
+ * Cleared = `state` 3. Not `completeTimes`: clearing an adverse/tough variant
+ * auto-passes the Normal/Easy one with `state: 3` and `completeTimes: 0`.
  */
 export function isStageCleared(stageId: string, stageClears: StageClearsMap | null | undefined): boolean {
     const clear = stageClears?.[stageId];

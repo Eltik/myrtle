@@ -89,9 +89,8 @@ pub struct ItemCatalogParams {
     pub server: Option<String>,
 }
 
-/// Every item at least one visible player holds, with the holder count, the
-/// largest single holding and the summed holdings, ordered by holders, most
-/// first; and the visible population those counts are taken over.
+/// Every item at least one visible player holds: holder count, largest holding
+/// and total held, most holders first, plus the visible population.
 #[utoipa::path(
     get,
     path = "/leaderboard/items/catalog",

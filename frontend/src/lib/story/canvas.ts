@@ -120,7 +120,7 @@ export const DEFAULT_BOTTOM_MARGIN = Number(((BOX_BOTTOM / CANVAS_W) * 100).toFi
  * ... tree`, 2026-09-29), canvas px. `root` is the template's own `sizeDelta`,
  * which a script `size` replaces; `frame` is the visible `back_shadow` and
  * `content` the `content_mask` that clips the background and the figure, both
- * kept in proportion to the root when `size` rewrites it.
+ * keeping their insets from the root when `size` rewrites it.
  *
  * - `group_interclude_vertical_common` root 320x760, `back_shadow` stretched
  *   over it, `content_mask` inset 18 each side (sizeDelta -36,-36).

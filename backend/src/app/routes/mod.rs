@@ -7,16 +7,15 @@ use uuid::Uuid;
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
 use crate::app::state::AppState;
-use crate::database::models::profile_layout::ProfileTabId;
+use crate::database::models::profile_layout::{ProfileLayout, ProfileTabId};
 use crate::database::models::user::UserProfile;
 use crate::database::queries::users::{find_by_id, find_by_uid};
 
 /// The `{"status":"ok"}` success body for endpoints that return no payload.
 ///
-/// The type IS the documented schema and the serialized body, so there is no
-/// second declaration to keep in agreement. It reached the wire as an untyped
-/// `serde_json::json!` before, which meant the `OpenAPI` document described it
-/// from a hand-written copy.
+/// The type is both the documented schema and the serialized body. It used to be
+/// an untyped `serde_json::json!`, which the `OpenAPI` document described from a
+/// hand-written copy.
 #[derive(serde::Serialize, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct StatusOk {
@@ -154,6 +153,30 @@ pub(crate) async fn resolve_uid_for_tab(
     }
 }
 
+/// As [`resolve_user_id_for_tab`], with the layout that limits what the
+/// caller may read of the tab: `None` for the owner, who reads everything,
+/// the stored layout for a visitor (itself `None` when the owner never
+/// customized, which hides nothing).
+pub(crate) async fn resolve_user_id_for_tab_as_viewer(
+    state: &AppState,
+    auth: &MaybeAuthUser,
+    uid_param: Option<&str>,
+    tab: ProfileTabId,
+) -> Result<(Uuid, Option<ProfileLayout>), ApiError> {
+    match uid_param {
+        Some(uid) => {
+            let (profile, own) = resolve_public_profile(state, auth, uid).await?;
+            ensure_tab_visible(&profile, own, tab)?;
+            let layout = if own { None } else { profile.profile_layout };
+            Ok((profile.id, layout))
+        }
+        None => Ok((
+            auth.0.as_ref().ok_or(ApiError::Unauthorized)?.user_uuid()?,
+            None,
+        )),
+    }
+}
+
 /// No uid given: the caller's own, which needs a lookup because the token
 /// carries the row id rather than the game-account uid.
 async fn own_uid(state: &AppState, auth: &MaybeAuthUser) -> Result<String, ApiError> {
@@ -166,6 +189,8 @@ async fn own_uid(state: &AppState, auth: &MaybeAuthUser) -> Result<String, ApiEr
 }
 
 pub mod account;
+pub mod announcements;
+pub mod archives;
 pub mod assets;
 pub mod auth;
 pub mod base;
@@ -181,6 +206,8 @@ pub mod inventory;
 pub mod item_leaderboard;
 pub mod leaderboard;
 pub mod level;
+pub mod maintenance;
+pub mod music;
 pub mod operator_notes;
 pub mod operators;
 pub mod planner;
@@ -189,6 +216,7 @@ pub mod roster;
 pub mod search;
 pub mod skins;
 pub mod social;
+pub mod squads;
 pub mod stages;
 pub mod static_data;
 pub mod stats;
@@ -211,6 +239,9 @@ pub mod user;
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         .routes(routes!(health::health))
+        .routes(routes!(maintenance::maintenance))
+        .routes(routes!(announcements::list))
+        .routes(routes!(announcements::detail))
         .routes(routes!(user::get_user))
         .routes(routes!(user::get_user_score))
         .routes(routes!(user::get_user_checkin))
@@ -252,6 +283,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(auth::verify))
         .routes(routes!(auth::update_settings))
         .routes(routes!(auth::disconnect))
+        .routes(routes!(auth::delete_account))
         .routes(routes!(release::events))
         .routes(routes!(release::banners))
         .routes(routes!(release::skins))
@@ -294,9 +326,11 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(stats::stats))
         .routes(routes!(stats::admin_stats))
         .routes(routes!(user::set_user_role))
+        .routes(routes!(user::list_users))
         .routes(routes!(operators::index))
         .routes(routes!(operators::ownership))
         .routes(routes!(operators::recruitment))
+        .routes(routes!(operators::roster))
         .routes(routes!(stages::stage_detail))
         .routes(routes!(enemies::enemy_detail))
         .routes(routes!(enemies::enemy_stages))
@@ -327,6 +361,16 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(operators::build_stats))
         .routes(routes!(operators::voices_detail))
         .routes(routes!(operators::voices_detail_srv))
+        .routes(routes!(archives::network))
+        .routes(routes!(archives::dossiers))
+        .routes(routes!(archives::demographics))
+        .routes(routes!(archives::hidden_factions))
+        .routes(routes!(archives::operator))
+        .routes(routes!(archives::network_srv))
+        .routes(routes!(archives::dossiers_srv))
+        .routes(routes!(archives::demographics_srv))
+        .routes(routes!(archives::hidden_factions_srv))
+        .routes(routes!(archives::operator_srv))
         .routes(routes!(story::community))
         .routes(routes!(story::index))
         .routes(routes!(story::illustrations))
@@ -335,6 +379,8 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(story::sprite_detail))
         .routes(routes!(story::sprite_variant_thumb))
         .routes(routes!(story::gallery))
+        .routes(routes!(music::music))
+        .routes(routes!(music::music_srv))
         .routes(routes!(story::gallery_picture))
         .routes(routes!(story::art_gallery))
         .routes(routes!(story::art_picture))
@@ -364,6 +410,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(operators::index_srv))
         .routes(routes!(operators::ownership_srv))
         .routes(routes!(operators::recruitment_srv))
+        .routes(routes!(operators::roster_srv))
         .routes(routes!(operators::detail_srv))
         .routes(routes!(operators::build_stats_srv))
         .routes(routes!(stages::stage_detail_srv))
@@ -391,5 +438,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(assets::generic_srv))
         .merge(tier_lists::router())
         .merge(grids::router())
+        .merge(squads::router())
+        .merge(music::router())
         .merge(i18n::router())
 }

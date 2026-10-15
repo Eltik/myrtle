@@ -19,7 +19,8 @@ import { MyHero } from "./MyHero";
 import { MyListCard } from "./MyListCard";
 import { MyListRow } from "./MyListRow";
 import type { messages } from "./MyTierLists.messages";
-import { type MyListSort, type MyListTypeFilter, MyToolbar, type MyViewMode } from "./MyToolbar";
+import { MyToolbar } from "./MyToolbar";
+import type { MyListSort, MyListTypeFilter, MyViewMode } from "./MyToolbar.constants";
 
 const COMMUNITY_QUOTA = 10;
 

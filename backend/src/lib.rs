@@ -1,8 +1,7 @@
 // Internal app crate, not a published library: `pedantic`/`nursery` run for
 // signal, the groups below are allowed on purpose.
 #![allow(
-    // Library-API doc/ergonomics lints - not meaningful for an internal app crate
-    // with no external consumers.
+    // Library-API doc/ergonomics lints: nothing outside this crate calls it.
     clippy::missing_errors_doc,
     clippy::missing_panics_doc,
     clippy::too_long_first_doc_paragraph,
@@ -10,14 +9,14 @@
     clippy::must_use_candidate,
     clippy::implicit_hasher,
     clippy::ref_option,
-    // Intentional numeric casts pervasive in the DPS/grading math. Replacing every
-    // `as` with `try_from` + error handling would add noise without value.
+    // The DPS/grading math casts on purpose everywhere; `try_from` on each
+    // would be noise.
     clippy::cast_possible_truncation,
     clippy::cast_precision_loss,
     clippy::cast_sign_loss,
     clippy::cast_possible_wrap,
-    // Style/nursery lints whose rewrites don't improve this code (less readable,
-    // derive-macro false positives, or intentional explicit forms).
+    // Style/nursery lints whose rewrites read worse here, misfire on derive
+    // macros, or undo a deliberate explicit form.
     clippy::option_if_let_else,
     clippy::match_same_arms,
     clippy::assigning_clones,
@@ -33,9 +32,8 @@
     clippy::struct_field_names,
     clippy::struct_excessive_bools,
     clippy::too_many_lines,
-    // Floating-point lints: `mul_add`/`ln_1p` are more accurate but change numerical
-    // results, and the DPS/HPS math must match the reference implementation. We keep
-    // the explicit `a * b + c` form and silence the lint rather than alter outputs.
+    // `mul_add`/`ln_1p` are more accurate but change numerical results, and the
+    // DPS/HPS math must match the reference implementation.
     clippy::suboptimal_flops,
     clippy::imprecise_flops
 )]

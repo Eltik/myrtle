@@ -4671,14 +4671,14 @@ pub const ENUM_MIN_ENUM__TORAPPU_ROGUELIKE_REWARD_EX_DROP_TAG_SRC_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_REWARD_EX_DROP_TAG_SRC_TYPE: i32 = 10;
+pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_REWARD_EX_DROP_TAG_SRC_TYPE: i32 = 11;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
 pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_REWARD_EX_DROP_TAG_SRC_TYPE:
-    [enum__Torappu_RoguelikeRewardExDropTagSrcType; 11] = [
+    [enum__Torappu_RoguelikeRewardExDropTagSrcType; 12] = [
     enum__Torappu_RoguelikeRewardExDropTagSrcType::NONE,
     enum__Torappu_RoguelikeRewardExDropTagSrcType::TREASURE,
     enum__Torappu_RoguelikeRewardExDropTagSrcType::TOTEM,
@@ -4690,6 +4690,7 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_REWARD_EX_DROP_TAG_SRC_TYPE:
     enum__Torappu_RoguelikeRewardExDropTagSrcType::STEP,
     enum__Torappu_RoguelikeRewardExDropTagSrcType::GREED,
     enum__Torappu_RoguelikeRewardExDropTagSrcType::GOLDEN_AGE,
+    enum__Torappu_RoguelikeRewardExDropTagSrcType::ADVENTURER_EXTRA,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -4708,9 +4709,10 @@ impl enum__Torappu_RoguelikeRewardExDropTagSrcType {
     pub const STEP: Self = Self(8);
     pub const GREED: Self = Self(9);
     pub const GOLDEN_AGE: Self = Self(10);
+    pub const ADVENTURER_EXTRA: Self = Self(11);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 10;
+    pub const ENUM_MAX: i32 = 11;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::TREASURE,
@@ -4723,6 +4725,7 @@ impl enum__Torappu_RoguelikeRewardExDropTagSrcType {
         Self::STEP,
         Self::GREED,
         Self::GOLDEN_AGE,
+        Self::ADVENTURER_EXTRA,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -4738,6 +4741,7 @@ impl enum__Torappu_RoguelikeRewardExDropTagSrcType {
             Self::STEP => Some("STEP"),
             Self::GREED => Some("GREED"),
             Self::GOLDEN_AGE => Some("GOLDEN_AGE"),
+            Self::ADVENTURER_EXTRA => Some("ADVENTURER_EXTRA"),
             _ => None,
         }
     }
@@ -7757,16 +7761,17 @@ pub const ENUM_MIN_ENUM__TORAPPU_ROGUELIKE_MOVE_SCRAP_RANGE_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_MOVE_SCRAP_RANGE_TYPE: i32 = 1;
+pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_MOVE_SCRAP_RANGE_TYPE: i32 = 2;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
 pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_MOVE_SCRAP_RANGE_TYPE:
-    [enum__Torappu_RoguelikeMoveScrapRangeType; 2] = [
+    [enum__Torappu_RoguelikeMoveScrapRangeType; 3] = [
     enum__Torappu_RoguelikeMoveScrapRangeType::RANGE,
     enum__Torappu_RoguelikeMoveScrapRangeType::FULL_MAP,
+    enum__Torappu_RoguelikeMoveScrapRangeType::FULL_ROW_COL,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -7776,15 +7781,17 @@ pub struct enum__Torappu_RoguelikeMoveScrapRangeType(pub i32);
 impl enum__Torappu_RoguelikeMoveScrapRangeType {
     pub const RANGE: Self = Self(0);
     pub const FULL_MAP: Self = Self(1);
+    pub const FULL_ROW_COL: Self = Self(2);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 1;
-    pub const ENUM_VALUES: &'static [Self] = &[Self::RANGE, Self::FULL_MAP];
+    pub const ENUM_MAX: i32 = 2;
+    pub const ENUM_VALUES: &'static [Self] = &[Self::RANGE, Self::FULL_MAP, Self::FULL_ROW_COL];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::RANGE => Some("RANGE"),
             Self::FULL_MAP => Some("FULL_MAP"),
+            Self::FULL_ROW_COL => Some("FULL_ROW_COL"),
             _ => None,
         }
     }
@@ -92546,8 +92553,13 @@ impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_RoguelikeGridZoneModuleConsts
 impl<'a> clz_Torappu_RoguelikeGridZoneModuleConsts<'a> {
     pub const VT_SAVAGEBUBBLE: ::flatbuffers::VOffsetT = 4;
     pub const VT_SECRETZONEDISABLEBUFF: ::flatbuffers::VOffsetT = 6;
-    pub const VT_MAXBANNERDIFFICULTY: ::flatbuffers::VOffsetT = 8;
-    pub const VT_FOCUSVIEWBOSSHINTSTAGEID: ::flatbuffers::VOffsetT = 10;
+    pub const VT_SHADVRTRAPIDS: ::flatbuffers::VOffsetT = 8;
+    pub const VT_SHADVRFIRSTDIETRAPIDS: ::flatbuffers::VOffsetT = 10;
+    pub const VT_SHADVRALIVEEVENTID: ::flatbuffers::VOffsetT = 12;
+    pub const VT_SHADVRDIEEVENTID: ::flatbuffers::VOffsetT = 14;
+    pub const VT_SHADVRFINALRELICID: ::flatbuffers::VOffsetT = 16;
+    pub const VT_MAXBANNERDIFFICULTY: ::flatbuffers::VOffsetT = 18;
+    pub const VT_FOCUSVIEWBOSSHINTSTAGEID: ::flatbuffers::VOffsetT = 20;
 
     #[inline]
     pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -92568,6 +92580,21 @@ impl<'a> clz_Torappu_RoguelikeGridZoneModuleConsts<'a> {
             builder.add_focusViewBossHintStageId(x);
         }
         builder.add_maxBannerDifficulty(args.maxBannerDifficulty);
+        if let Some(x) = args.shadvrFinalRelicId {
+            builder.add_shadvrFinalRelicId(x);
+        }
+        if let Some(x) = args.shadvrDieEventId {
+            builder.add_shadvrDieEventId(x);
+        }
+        if let Some(x) = args.shadvrAliveEventId {
+            builder.add_shadvrAliveEventId(x);
+        }
+        if let Some(x) = args.shadvrFirstDieTrapIds {
+            builder.add_shadvrFirstDieTrapIds(x);
+        }
+        if let Some(x) = args.shadvrTrapIds {
+            builder.add_shadvrTrapIds(x);
+        }
         if let Some(x) = args.secretZoneDisableBuff {
             builder.add_secretZoneDisableBuff(x);
         }
@@ -92584,6 +92611,25 @@ impl<'a> clz_Torappu_RoguelikeGridZoneModuleConsts<'a> {
         let secretZoneDisableBuff = self
             .secretZoneDisableBuff()
             .map(|x| alloc::string::ToString::to_string(x));
+        let shadvrTrapIds = self.shadvrTrapIds().map(|x| {
+            x.iter()
+                .map(|s| alloc::string::ToString::to_string(s))
+                .collect()
+        });
+        let shadvrFirstDieTrapIds = self.shadvrFirstDieTrapIds().map(|x| {
+            x.iter()
+                .map(|s| alloc::string::ToString::to_string(s))
+                .collect()
+        });
+        let shadvrAliveEventId = self
+            .shadvrAliveEventId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let shadvrDieEventId = self
+            .shadvrDieEventId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let shadvrFinalRelicId = self
+            .shadvrFinalRelicId()
+            .map(|x| alloc::string::ToString::to_string(x));
         let maxBannerDifficulty = self.maxBannerDifficulty();
         let focusViewBossHintStageId = self
             .focusViewBossHintStageId()
@@ -92591,6 +92637,11 @@ impl<'a> clz_Torappu_RoguelikeGridZoneModuleConsts<'a> {
         clz_Torappu_RoguelikeGridZoneModuleConstsT {
             savageBubble,
             secretZoneDisableBuff,
+            shadvrTrapIds,
+            shadvrFirstDieTrapIds,
+            shadvrAliveEventId,
+            shadvrDieEventId,
+            shadvrFinalRelicId,
             maxBannerDifficulty,
             focusViewBossHintStageId,
         }
@@ -92616,6 +92667,74 @@ impl<'a> clz_Torappu_RoguelikeGridZoneModuleConsts<'a> {
         unsafe {
             self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
                 clz_Torappu_RoguelikeGridZoneModuleConsts::VT_SECRETZONEDISABLEBUFF,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn shadvrTrapIds(
+        &self,
+    ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+            >>(
+                clz_Torappu_RoguelikeGridZoneModuleConsts::VT_SHADVRTRAPIDS,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn shadvrFirstDieTrapIds(
+        &self,
+    ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+            >>(
+                clz_Torappu_RoguelikeGridZoneModuleConsts::VT_SHADVRFIRSTDIETRAPIDS,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn shadvrAliveEventId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_RoguelikeGridZoneModuleConsts::VT_SHADVRALIVEEVENTID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn shadvrDieEventId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_RoguelikeGridZoneModuleConsts::VT_SHADVRDIEEVENTID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn shadvrFinalRelicId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_RoguelikeGridZoneModuleConsts::VT_SHADVRFINALRELICID,
                 None,
             )
         }
@@ -92670,6 +92789,31 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeGridZoneModuleConsts<'_>
                 Self::VT_SECRETZONEDISABLEBUFF,
                 false,
             )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>,
+            >>("shadvrTrapIds", Self::VT_SHADVRTRAPIDS, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>,
+            >>(
+                "shadvrFirstDieTrapIds",
+                Self::VT_SHADVRFIRSTDIETRAPIDS,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "shadvrAliveEventId",
+                Self::VT_SHADVRALIVEEVENTID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "shadvrDieEventId",
+                Self::VT_SHADVRDIEEVENTID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "shadvrFinalRelicId",
+                Self::VT_SHADVRFINALRELICID,
+                false,
+            )?
             .visit_field::<i32>("maxBannerDifficulty", Self::VT_MAXBANNERDIFFICULTY, false)?
             .visit_field::<::flatbuffers::ForwardsUOffset<
                 ::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__bool>>,
@@ -92685,6 +92829,19 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeGridZoneModuleConsts<'_>
 pub struct clz_Torappu_RoguelikeGridZoneModuleConstsArgs<'a> {
     pub savageBubble: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub secretZoneDisableBuff: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub shadvrTrapIds: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+        >,
+    >,
+    pub shadvrFirstDieTrapIds: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+        >,
+    >,
+    pub shadvrAliveEventId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub shadvrDieEventId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub shadvrFinalRelicId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub maxBannerDifficulty: i32,
     pub focusViewBossHintStageId: Option<
         ::flatbuffers::WIPOffset<
@@ -92698,6 +92855,11 @@ impl<'a> Default for clz_Torappu_RoguelikeGridZoneModuleConstsArgs<'a> {
         clz_Torappu_RoguelikeGridZoneModuleConstsArgs {
             savageBubble: None,
             secretZoneDisableBuff: None,
+            shadvrTrapIds: None,
+            shadvrFirstDieTrapIds: None,
+            shadvrAliveEventId: None,
+            shadvrDieEventId: None,
+            shadvrFinalRelicId: None,
             maxBannerDifficulty: 0,
             focusViewBossHintStageId: None,
         }
@@ -92730,6 +92892,57 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
             clz_Torappu_RoguelikeGridZoneModuleConsts::VT_SECRETZONEDISABLEBUFF,
             secretZoneDisableBuff,
+        );
+    }
+    #[inline]
+    pub fn add_shadvrTrapIds(
+        &mut self,
+        shadvrTrapIds: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'b, ::flatbuffers::ForwardsUOffset<&'b str>>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_RoguelikeGridZoneModuleConsts::VT_SHADVRTRAPIDS,
+            shadvrTrapIds,
+        );
+    }
+    #[inline]
+    pub fn add_shadvrFirstDieTrapIds(
+        &mut self,
+        shadvrFirstDieTrapIds: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'b, ::flatbuffers::ForwardsUOffset<&'b str>>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_RoguelikeGridZoneModuleConsts::VT_SHADVRFIRSTDIETRAPIDS,
+            shadvrFirstDieTrapIds,
+        );
+    }
+    #[inline]
+    pub fn add_shadvrAliveEventId(
+        &mut self,
+        shadvrAliveEventId: ::flatbuffers::WIPOffset<&'b str>,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_RoguelikeGridZoneModuleConsts::VT_SHADVRALIVEEVENTID,
+            shadvrAliveEventId,
+        );
+    }
+    #[inline]
+    pub fn add_shadvrDieEventId(&mut self, shadvrDieEventId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_RoguelikeGridZoneModuleConsts::VT_SHADVRDIEEVENTID,
+            shadvrDieEventId,
+        );
+    }
+    #[inline]
+    pub fn add_shadvrFinalRelicId(
+        &mut self,
+        shadvrFinalRelicId: ::flatbuffers::WIPOffset<&'b str>,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_RoguelikeGridZoneModuleConsts::VT_SHADVRFINALRELICID,
+            shadvrFinalRelicId,
         );
     }
     #[inline]
@@ -92774,6 +92987,11 @@ impl ::core::fmt::Debug for clz_Torappu_RoguelikeGridZoneModuleConsts<'_> {
         let mut ds = f.debug_struct("clz_Torappu_RoguelikeGridZoneModuleConsts");
         ds.field("savageBubble", &self.savageBubble());
         ds.field("secretZoneDisableBuff", &self.secretZoneDisableBuff());
+        ds.field("shadvrTrapIds", &self.shadvrTrapIds());
+        ds.field("shadvrFirstDieTrapIds", &self.shadvrFirstDieTrapIds());
+        ds.field("shadvrAliveEventId", &self.shadvrAliveEventId());
+        ds.field("shadvrDieEventId", &self.shadvrDieEventId());
+        ds.field("shadvrFinalRelicId", &self.shadvrFinalRelicId());
         ds.field("maxBannerDifficulty", &self.maxBannerDifficulty());
         ds.field("focusViewBossHintStageId", &self.focusViewBossHintStageId());
         ds.finish()
@@ -92784,6 +93002,11 @@ impl ::core::fmt::Debug for clz_Torappu_RoguelikeGridZoneModuleConsts<'_> {
 pub struct clz_Torappu_RoguelikeGridZoneModuleConstsT {
     pub savageBubble: Option<alloc::string::String>,
     pub secretZoneDisableBuff: Option<alloc::string::String>,
+    pub shadvrTrapIds: Option<alloc::vec::Vec<alloc::string::String>>,
+    pub shadvrFirstDieTrapIds: Option<alloc::vec::Vec<alloc::string::String>>,
+    pub shadvrAliveEventId: Option<alloc::string::String>,
+    pub shadvrDieEventId: Option<alloc::string::String>,
+    pub shadvrFinalRelicId: Option<alloc::string::String>,
     pub maxBannerDifficulty: i32,
     pub focusViewBossHintStageId: Option<alloc::vec::Vec<dict__string__boolT>>,
 }
@@ -92792,6 +93015,11 @@ impl Default for clz_Torappu_RoguelikeGridZoneModuleConstsT {
         Self {
             savageBubble: None,
             secretZoneDisableBuff: None,
+            shadvrTrapIds: None,
+            shadvrFirstDieTrapIds: None,
+            shadvrAliveEventId: None,
+            shadvrDieEventId: None,
+            shadvrFinalRelicId: None,
             maxBannerDifficulty: 0,
             focusViewBossHintStageId: None,
         }
@@ -92807,6 +93035,26 @@ impl clz_Torappu_RoguelikeGridZoneModuleConstsT {
             .secretZoneDisableBuff
             .as_ref()
             .map(|x| _fbb.create_string(x));
+        let shadvrTrapIds = self.shadvrTrapIds.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let shadvrFirstDieTrapIds = self.shadvrFirstDieTrapIds.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let shadvrAliveEventId = self
+            .shadvrAliveEventId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let shadvrDieEventId = self
+            .shadvrDieEventId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let shadvrFinalRelicId = self
+            .shadvrFinalRelicId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
         let maxBannerDifficulty = self.maxBannerDifficulty;
         let focusViewBossHintStageId = self.focusViewBossHintStageId.as_ref().map(|x| {
             let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
@@ -92817,6 +93065,11 @@ impl clz_Torappu_RoguelikeGridZoneModuleConstsT {
             &clz_Torappu_RoguelikeGridZoneModuleConstsArgs {
                 savageBubble,
                 secretZoneDisableBuff,
+                shadvrTrapIds,
+                shadvrFirstDieTrapIds,
+                shadvrAliveEventId,
+                shadvrDieEventId,
+                shadvrFinalRelicId,
                 maxBannerDifficulty,
                 focusViewBossHintStageId,
             },
@@ -93918,9 +94171,10 @@ impl<'a> clz_Torappu_RoguelikeScrapMoveData<'a> {
     pub const VT_NODE: ::flatbuffers::VOffsetT = 10;
     pub const VT_STEP: ::flatbuffers::VOffsetT = 12;
     pub const VT_ISRANDOMMOVE: ::flatbuffers::VOffsetT = 14;
-    pub const VT_SCRAPID: ::flatbuffers::VOffsetT = 16;
-    pub const VT_SCRAPDESC: ::flatbuffers::VOffsetT = 18;
-    pub const VT_SELLPRICE: ::flatbuffers::VOffsetT = 20;
+    pub const VT_NODECHANGETARGETTYPE: ::flatbuffers::VOffsetT = 16;
+    pub const VT_SCRAPID: ::flatbuffers::VOffsetT = 18;
+    pub const VT_SCRAPDESC: ::flatbuffers::VOffsetT = 20;
+    pub const VT_SELLPRICE: ::flatbuffers::VOffsetT = 22;
 
     #[inline]
     pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -93944,6 +94198,7 @@ impl<'a> clz_Torappu_RoguelikeScrapMoveData<'a> {
         if let Some(x) = args.scrapId {
             builder.add_scrapId(x);
         }
+        builder.add_nodeChangeTargetType(args.nodeChangeTargetType);
         builder.add_step(args.step);
         if let Some(x) = args.node {
             builder.add_node(x);
@@ -93968,6 +94223,7 @@ impl<'a> clz_Torappu_RoguelikeScrapMoveData<'a> {
         });
         let step = self.step();
         let isRandomMove = self.isRandomMove();
+        let nodeChangeTargetType = self.nodeChangeTargetType();
         let scrapId = self
             .scrapId()
             .map(|x| alloc::string::ToString::to_string(x));
@@ -93982,6 +94238,7 @@ impl<'a> clz_Torappu_RoguelikeScrapMoveData<'a> {
             node,
             step,
             isRandomMove,
+            nodeChangeTargetType,
             scrapId,
             scrapDesc,
             sellPrice,
@@ -94064,6 +94321,20 @@ impl<'a> clz_Torappu_RoguelikeScrapMoveData<'a> {
         }
     }
     #[inline]
+    pub fn nodeChangeTargetType(&self) -> enum__Torappu_RoguelikeEventType {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<enum__Torappu_RoguelikeEventType>(
+                    clz_Torappu_RoguelikeScrapMoveData::VT_NODECHANGETARGETTYPE,
+                    Some(enum__Torappu_RoguelikeEventType::NONE),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
     pub fn scrapId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -94119,6 +94390,11 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeScrapMoveData<'_> {
             >>("node", Self::VT_NODE, false)?
             .visit_field::<i32>("step", Self::VT_STEP, false)?
             .visit_field::<bool>("isRandomMove", Self::VT_ISRANDOMMOVE, false)?
+            .visit_field::<enum__Torappu_RoguelikeEventType>(
+                "nodeChangeTargetType",
+                Self::VT_NODECHANGETARGETTYPE,
+                false,
+            )?
             .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
                 "scrapId",
                 Self::VT_SCRAPID,
@@ -94145,6 +94421,7 @@ pub struct clz_Torappu_RoguelikeScrapMoveDataArgs<'a> {
     >,
     pub step: i32,
     pub isRandomMove: bool,
+    pub nodeChangeTargetType: enum__Torappu_RoguelikeEventType,
     pub scrapId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub scrapDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub sellPrice: i32,
@@ -94159,6 +94436,7 @@ impl<'a> Default for clz_Torappu_RoguelikeScrapMoveDataArgs<'a> {
             node: None,
             step: 0,
             isRandomMove: false,
+            nodeChangeTargetType: enum__Torappu_RoguelikeEventType::NONE,
             scrapId: None,
             scrapDesc: None,
             sellPrice: 0,
@@ -94220,6 +94498,17 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
+    pub fn add_nodeChangeTargetType(
+        &mut self,
+        nodeChangeTargetType: enum__Torappu_RoguelikeEventType,
+    ) {
+        self.fbb_.push_slot::<enum__Torappu_RoguelikeEventType>(
+            clz_Torappu_RoguelikeScrapMoveData::VT_NODECHANGETARGETTYPE,
+            nodeChangeTargetType,
+            enum__Torappu_RoguelikeEventType::NONE,
+        );
+    }
+    #[inline]
     pub fn add_scrapId(&mut self, scrapId: ::flatbuffers::WIPOffset<&'b str>) {
         self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
             clz_Torappu_RoguelikeScrapMoveData::VT_SCRAPID,
@@ -94267,6 +94556,7 @@ impl ::core::fmt::Debug for clz_Torappu_RoguelikeScrapMoveData<'_> {
         ds.field("node", &self.node());
         ds.field("step", &self.step());
         ds.field("isRandomMove", &self.isRandomMove());
+        ds.field("nodeChangeTargetType", &self.nodeChangeTargetType());
         ds.field("scrapId", &self.scrapId());
         ds.field("scrapDesc", &self.scrapDesc());
         ds.field("sellPrice", &self.sellPrice());
@@ -94282,6 +94572,7 @@ pub struct clz_Torappu_RoguelikeScrapMoveDataT {
     pub node: Option<alloc::vec::Vec<alloc::string::String>>,
     pub step: i32,
     pub isRandomMove: bool,
+    pub nodeChangeTargetType: enum__Torappu_RoguelikeEventType,
     pub scrapId: Option<alloc::string::String>,
     pub scrapDesc: Option<alloc::string::String>,
     pub sellPrice: i32,
@@ -94295,6 +94586,7 @@ impl Default for clz_Torappu_RoguelikeScrapMoveDataT {
             node: None,
             step: 0,
             isRandomMove: false,
+            nodeChangeTargetType: enum__Torappu_RoguelikeEventType::NONE,
             scrapId: None,
             scrapDesc: None,
             sellPrice: 0,
@@ -94315,6 +94607,7 @@ impl clz_Torappu_RoguelikeScrapMoveDataT {
         });
         let step = self.step;
         let isRandomMove = self.isRandomMove;
+        let nodeChangeTargetType = self.nodeChangeTargetType;
         let scrapId = self.scrapId.as_ref().map(|x| _fbb.create_string(x));
         let scrapDesc = self.scrapDesc.as_ref().map(|x| _fbb.create_string(x));
         let sellPrice = self.sellPrice;
@@ -94327,6 +94620,7 @@ impl clz_Torappu_RoguelikeScrapMoveDataT {
                 node,
                 step,
                 isRandomMove,
+                nodeChangeTargetType,
                 scrapId,
                 scrapDesc,
                 sellPrice,

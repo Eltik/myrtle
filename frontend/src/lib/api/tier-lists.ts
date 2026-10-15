@@ -2,12 +2,13 @@ import { randomBytes } from "node:crypto";
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { getCookie, getRequestIP, setCookie } from "@tanstack/react-start/server";
-import type { IOperator, ITierEntry, ITierList } from "#/components/home/impl/data";
 import { env } from "#/env";
+import { noRetryOnServer } from "#/integrations/tanstack-query/root-provider";
 import { backendFetch } from "#/lib/fetch";
 import { sanitizeMarkdownForStorage, sanitizePlainName } from "#/lib/markdown/sanitize-input";
 import { formatRelative } from "#/lib/utils";
 import type { EntitySummary } from "#/types/generated/EntitySummary";
+import type { GrantedTierList } from "#/types/generated/GrantedTierList";
 import type { PlacementDetail } from "#/types/generated/PlacementDetail";
 import type { JsonValue } from "#/types/generated/serde_json/JsonValue";
 // The `IBackend*` types are the WIRE shapes, generated from
@@ -24,10 +25,48 @@ import type { TierPlacement } from "#/types/generated/TierPlacement";
 import type { OperatorProfession } from "#/types/operators";
 import { type IBackendStatus, parseError } from "./_shared";
 import { requireSiteToken } from "./_shared.server";
+import type { TierListPermissionLevel } from "./admin/types";
 import { DEFAULT_GAMEDATA_SERVER, gamedataKey, resolveGamedataServer } from "./gamedata";
-import { DEFAULT_ENTITY_KINDS, entityArtFit, type ITierEntity, isOperatorEntity, type TierEntityKind, toTierEntity } from "./tier-entities";
+import { type ArtFit, DEFAULT_ENTITY_KINDS, entityArtFit, type ITierEntity, isOperatorEntity, type TierEntityKind, toTierEntity } from "./tier-entities";
 
 export type { ITierEntity, ITierOperator, TierEntityKind } from "./tier-entities";
+
+/** A card preview's tile, the view model `toCardOperator` builds. */
+export interface IOperator {
+    id: string;
+    name: string;
+    rarity: number;
+    role: string;
+    arch: string;
+    /** Set for a non-operator placement (an enemy, an event...); absent for an operator. */
+    kind?: Exclude<TierEntityKind, "operator">;
+    /** The non-operator's resolved icon path, `null` when the extract has no art. */
+    icon?: string | null;
+    /** How the non-operator's art sits in its tile, see `entityArtFit`. */
+    fit?: ArtFit;
+}
+
+export interface ITierEntry {
+    name: string;
+    operators: IOperator[];
+    color?: string | null;
+}
+
+export interface ITierList {
+    id: string;
+    slug: string;
+    title: string;
+    tag: string;
+    stage: string;
+    author: { name: string; avatarId: string | null };
+    updated: string;
+    votes: number;
+    views: number;
+    comments: number;
+    hot?: boolean;
+    accent: string;
+    tiers: ITierEntry[];
+}
 
 const VIEW_SESSION_COOKIE = "mtl_sid";
 
@@ -62,7 +101,6 @@ type IBackendFlair = TierListFlair;
 
 type IBackendTierListDetail = TierListDetail;
 
-const HOME_TIER_LIST_LIMIT = 6;
 const BROWSE_TIER_LIST_LIMIT = 200;
 
 const PROFESSION_TO_ROLE: Record<OperatorProfession, string> = {
@@ -183,22 +221,6 @@ async function fetchTierListDetails(limit: number, server?: string): Promise<IBa
     const detailsRes = await backendFetch(`/tier-lists/details?limit=${limit}&${serverQuery(server)}`);
     if (!detailsRes.ok) throw new Error(`Failed to load tier lists: ${detailsRes.status}`);
     return (await detailsRes.json()) as IBackendTierListDetail[];
-}
-
-export const getHomeTierListsFn = createServerFn({ method: "GET" })
-    .inputValidator((server: string | undefined) => server)
-    .handler(async ({ data: server }): Promise<ITierList[]> => {
-        const details = await fetchTierListDetails(HOME_TIER_LIST_LIMIT, server);
-        return details.map((detail, i) => mapDetail(detail, i));
-    });
-
-export function homeTierListsQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
-    return queryOptions({
-        queryKey: ["tier-lists", "home", ...gamedataKey(server)],
-        queryFn: () => getHomeTierListsFn({ data: resolveGamedataServer(server) }),
-        staleTime: 5 * 60 * 1000,
-        gcTime: 60 * 60 * 1000,
-    });
 }
 
 export type TierListType = "official" | "community";
@@ -427,6 +449,8 @@ export function myTierListFavoriteQueryOptions(slug: string, authed: boolean) {
         enabled: authed,
         staleTime: 60 * 1000,
         gcTime: 5 * 60 * 1000,
+        // The tier-list page's loader awaits this during SSR.
+        ...noRetryOnServer(),
     });
 }
 
@@ -453,7 +477,7 @@ export function tierListFlairsQueryOptions() {
     });
 }
 
-/** Plain JSON value - used for tier list version snapshots. */
+/** Tier list version snapshots. */
 export type TierListJsonValue = JsonValue;
 
 export interface ICreateTierListInput {
@@ -690,6 +714,45 @@ export function myTierListsQueryOptions(authed: boolean) {
     return queryOptions({
         queryKey: ["tier-lists", "mine", authed ? "auth" : "anon"],
         queryFn: () => (authed ? getMyTierListsFn() : Promise.resolve([] as ITierListSummary[])),
+        enabled: authed,
+        staleTime: 30 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+}
+
+/** A list the signed-in user holds a grant on, at their highest level on it. */
+export interface IGrantedTierList {
+    tierListId: string;
+    slug: string;
+    title: string;
+    listType: TierListType;
+    permission: TierListPermissionLevel;
+}
+
+export const getGrantedTierListsFn = createServerFn({ method: "GET" }).handler(async (): Promise<IGrantedTierList[]> => {
+    const token = getCookie("site_token");
+    if (!token) return [];
+    const res = await backendFetch("/tier-lists/granted", { bearerToken: token });
+    if (res.status === 401) return [];
+    if (!res.ok) throw await parseError(res);
+    const raw = (await res.json()) as GrantedTierList[];
+    return raw.map((g) => ({
+        tierListId: g.tier_list_id,
+        slug: g.slug,
+        title: g.title,
+        listType: g.list_type === "official" ? "official" : "community",
+        permission: g.permission as IGrantedTierList["permission"],
+    }));
+});
+
+/**
+ * The lists granted to the signed-in user (`GET /tier-lists/granted`), not the
+ * ones they created (that is `myTierListsQueryOptions`). Any signed-in role.
+ */
+export function grantedTierListsQueryOptions(authed: boolean) {
+    return queryOptions({
+        queryKey: ["tier-lists", "granted", authed ? "auth" : "anon"],
+        queryFn: () => (authed ? getGrantedTierListsFn() : Promise.resolve([] as IGrantedTierList[])),
         enabled: authed,
         staleTime: 30 * 1000,
         gcTime: 5 * 60 * 1000,
@@ -946,6 +1009,8 @@ export function tierListVersionsQueryOptions(slug: string, server: string = DEFA
         queryFn: () => getTierListVersionsFn({ data: { slug, server: resolveGamedataServer(server) } }),
         staleTime: 60 * 1000,
         gcTime: 5 * 60 * 1000,
+        // The tier-list page's loader awaits this during SSR.
+        ...noRetryOnServer(),
     });
 }
 
@@ -968,6 +1033,5 @@ export function tierEntityCatalogueQueryOptions(kind: TierEntityKind, server: st
     });
 }
 
-// Per-list tier-list permission management lives in `./admin/permissions`.
-// See `getTierListPermissionsFn`, `grantTierListPermissionFn`,
-// `revokeTierListPermissionFn` in `#/lib/api/admin`.
+// Per-list grants (`allTierListGrantsQueryOptions`, `grantTierListPermissionFn`,
+// `revokeTierListPermissionFn`) live in `./admin/permissions`.

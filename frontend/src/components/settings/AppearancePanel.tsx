@@ -8,6 +8,7 @@ import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Switch } from "#/components/ui/switch";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useTheme } from "#/hooks/use-theme";
 import { useI18n, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -17,7 +18,7 @@ import type { messages } from "./AppearancePanel.messages";
 import { SectionLabel, SettingRow } from "./SettingsShell";
 
 export function AppearancePanel() {
-    const { mode, resolved, accent, isDefaultAccent, dynamicArtwork, latinNames, setMode, setPresetHue, setCustomHex, resetAccent, setDynamicArtwork, setLatinNames } = useTheme();
+    const { mode, resolved, accent, isDefaultAccent, dynamicArtwork, latinNames, spoilers, maintenanceCountdown, setMode, setPresetHue, setCustomHex, resetAccent, setDynamicArtwork, setLatinNames, setSpoilers, setMaintenanceCountdown } = useTheme();
     const customInputId = useId();
     const t: TypedT<typeof messages> = useT("settings");
 
@@ -52,16 +53,21 @@ export function AppearancePanel() {
                             const selected = accent?.type === "preset" && Math.abs(accent.hue - preset.hue) < PRESET_MATCH_TOLERANCE;
                             const swatch = accentToRenderedHex({ type: "preset", hue: preset.hue }, resolved === "dark");
                             return (
-                                <button
-                                    key={preset.name}
-                                    type="button"
-                                    onClick={() => setPresetHue(preset.hue)}
-                                    title={preset.name}
-                                    aria-label={t("appearance.accent.setTo", { name: preset.name })}
-                                    aria-pressed={selected}
-                                    className={cn("relative aspect-square w-full cursor-pointer rounded-full border-2 border-background outline-none ring-1 ring-border transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-ring", selected && "ring-2 ring-foreground")}
-                                    style={{ backgroundColor: swatch }}
-                                />
+                                <Tooltip key={preset.name}>
+                                    <TooltipTrigger
+                                        render={
+                                            <button
+                                                type="button"
+                                                onClick={() => setPresetHue(preset.hue)}
+                                                aria-label={t("appearance.accent.setTo", { name: preset.name })}
+                                                aria-pressed={selected}
+                                                className={cn("relative aspect-square w-full cursor-pointer rounded-full border-2 border-background outline-none ring-1 ring-border transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-ring", selected && "ring-2 ring-foreground")}
+                                                style={{ backgroundColor: swatch }}
+                                            />
+                                        }
+                                    />
+                                    <TooltipPopup>{preset.name}</TooltipPopup>
+                                </Tooltip>
                             );
                         })}
                     </div>
@@ -93,18 +99,28 @@ export function AppearancePanel() {
                 </CardContent>
             </Card>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>{t("appearance.latinNames.title")}</CardTitle>
-                    <CardDescription>{t("appearance.latinNames.desc")}</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                    <SettingRow layout="inline" title={t("appearance.latinNames.rowTitle")} description={t("appearance.latinNames.rowDesc")} control={<Switch checked={latinNames} onCheckedChange={setLatinNames} aria-label={t("appearance.latinNames.rowTitle")} />} />
-                </CardContent>
-            </Card>
+            <ToggleCard title={t("appearance.latinNames.title")} description={t("appearance.latinNames.desc")} rowTitle={t("appearance.latinNames.rowTitle")} rowDescription={t("appearance.latinNames.rowDesc")} checked={latinNames} onCheckedChange={setLatinNames} />
 
+            <ToggleCard title={t("appearance.spoilers.title")} description={t("appearance.spoilers.desc")} rowTitle={t("appearance.spoilers.rowTitle")} rowDescription={t("appearance.spoilers.rowDesc")} checked={spoilers} onCheckedChange={setSpoilers} />
+
+            <ToggleCard title={t("appearance.topBar.title")} description={t("appearance.topBar.desc")} rowTitle={t("appearance.topBar.maintenance.rowTitle")} rowDescription={t("appearance.topBar.maintenance.rowDesc")} checked={maintenanceCountdown} onCheckedChange={setMaintenanceCountdown} />
             <LanguageCard />
         </div>
+    );
+}
+
+/** A card holding one on/off setting: the card names the area, the row names the switch. */
+function ToggleCard({ title, description, rowTitle, rowDescription, checked, onCheckedChange }: { title: string; description: string; rowTitle: string; rowDescription: string; checked: boolean; onCheckedChange: (checked: boolean) => void }) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>{title}</CardTitle>
+                <CardDescription>{description}</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+                <SettingRow layout="inline" title={rowTitle} description={rowDescription} control={<Switch checked={checked} onCheckedChange={onCheckedChange} aria-label={rowTitle} />} />
+            </CardContent>
+        </Card>
     );
 }
 

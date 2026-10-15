@@ -39,7 +39,8 @@
  * inferring it from the network log.
  */
 
-import { createBufferCache } from "./audioBuffers";
+import { candidatesFor, createBufferCache } from "./audioBuffers";
+import { audioContextConstructor } from "./audioContext";
 import { type AudioLedgerRow, basename, LEDGER_MAX, ledgerRow, rmsOf, rmsSummary, TRACE_MAX, TRACE_MS } from "./audioLedger";
 import { createUnlockGate } from "./audioUnlock";
 import { clamp01 } from "./num";
@@ -63,8 +64,20 @@ interface MusicVoice {
     key: string;
     /** False until the decode has landed and the sources are scheduled. */
     started: boolean;
+    /** What `musicStatus` reports for this cue. */
+    status: MusicStatus;
     row: AudioLedgerRow | null;
 }
+
+/**
+ * Whether the current cue is SOUNDING, as far as this module can know.
+ * `loading` until the sources are scheduled or the media element's `play()`
+ * resolves; `failed` when every decode lost and the element refused too, which
+ * on iOS is a `play()` rejected outside the gesture or a type it cannot play.
+ * `ended` when a fallback element playing a cue with no loop reached its end,
+ * which is the only end a cue without a timeline can report.
+ */
+export type MusicStatus = "idle" | "loading" | "playing" | "failed" | "ended";
 
 /** What `[playsound]` asks for, past the url. */
 export interface SoundRequest {
@@ -125,6 +138,12 @@ export interface StoryAudio {
      * on a fallback channel, whose media element has no timeline here.
      */
     readonly musicPosition: number;
+    /**
+     * The current cue's {@link MusicStatus}. A player reads this rather than
+     * `lastFallback`, which is sticky for the session and says nothing about
+     * whether the fallback element ever made a sound.
+     */
+    readonly musicStatus: MusicStatus;
     /** The decoded intro's duration, so a bar can mark where the loop begins. Zero for a loop-only cue. */
     readonly musicIntroSeconds: number;
     /** The cue's timeline, intro plus loop, in seconds. Zero until the decode lands and zero on a fallback channel. */
@@ -133,7 +152,7 @@ export interface StoryAudio {
     /** The script's `[musicvolume]`: scales the current cue, not the settings volume. */
     setCueVolume(volume: number, fadeSec: number): void;
     playSound(url: string, req: SoundRequest): void;
-    /** `[stopsound]`: bare stops every voice, `ch=` stops that channel only, over `fadeSec`. */
+    /** `[stopsound]`: bare stops every voice, `channel=` stops that channel only, over `fadeSec`. */
     stopSounds(channel?: string, fadeSec?: number): void;
     /**
      * `[soundvolume]`: the script's own SFX level for ONE channel, under the
@@ -315,8 +334,20 @@ export function createStoryAudio(): StoryAudio {
             // A rebuild starts a new clock at 0, so the previous context's RMS
             // rows would read as the future and poison `rmsBetween`.
             trace.length = 0;
-            const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+            const Ctor = audioContextConstructor();
             if (!Ctor) return false;
+            // iOS routes Web Audio through the "ambient" session by default, which
+            // the ring/silent switch mutes while a media element keeps playing:
+            // the same shape as the report that game music (Web Audio) is silent
+            // and Monster Siren (a media element) is not. Safari 16.4+ exposes
+            // `navigator.audioSession`; "playback" is the media category. Not
+            // measured on a device; a browser without the API skips it.
+            try {
+                const session = (navigator as unknown as { audioSession?: { type: string } }).audioSession;
+                if (session && session.type === "auto") session.type = "playback";
+            } catch {
+                // A read-only or throwing implementation keeps its default.
+            }
             ctx = new Ctor();
             musicBus = ctx.createGain();
             sfxBus = ctx.createGain();
@@ -400,7 +431,7 @@ export function createStoryAudio(): StoryAudio {
         gain.connect(musicBus);
         const url = req.loop ?? req.intro ?? "";
         const row = DEV ? log("music", { key: basename(url), url, requestedVolume: req.volume, fetchStatus: cache.statusOf(url), scheduledStart: ctx.currentTime, busGainAtStart: musicBus.gain.value }) : null;
-        const voice: MusicVoice = { gain, sources: [], cueVolume: req.volume, key: url, started: false, row };
+        const voice: MusicVoice = { gain, sources: [], cueVolume: req.volume, key: url, started: false, status: "loading", row };
         current = voice;
         if (previous) killVoice(previous, req.crossfade, "crossfade");
 
@@ -419,15 +450,24 @@ export function createStoryAudio(): StoryAudio {
                 if (b) row.decoded = { channels: b.numberOfChannels, sampleRate: b.sampleRate, duration: b.duration };
             }
             if (!intro && !loop) {
-                // Decode failed: a media element plays the loop alone (not gapless).
+                // Decode failed: a media element plays the loop alone (not gapless),
+                // from the url this browser can play first (the `.m4a` on iOS,
+                // which cannot play the `.ogg` the cue names).
                 // It keeps no timeline either, so `musicLength` stays 0 and an
                 // offset is DROPPED: a channel with no decoded buffers cannot
                 // say where it is, and a bar that offered a seek there would be
                 // drawing a position it made up.
                 const src = req.loop ?? req.intro;
-                if (!src) return;
-                const el = new Audio(src);
-                el.loop = true;
+                if (!src) {
+                    voice.status = "failed";
+                    return;
+                }
+                const el = new Audio(candidatesFor(src)[0] ?? src);
+                // An intro with no loop plays once, as the decoded path does.
+                el.loop = req.loop !== undefined;
+                el.onended = () => {
+                    if (voice.status === "playing") voice.status = "ended";
+                };
                 el.volume = Math.min(1, voice.cueVolume * (muted || musicDucked ? 0 : masterMusic));
                 voice.fallback = el;
                 voice.started = true;
@@ -435,7 +475,19 @@ export function createStoryAudio(): StoryAudio {
                     row.fallback = true;
                     row.actualStartClock = ctx.currentTime;
                 }
-                void el.play().catch(() => undefined);
+                // The rejection is the ONLY sign this channel is silent: the
+                // play() runs after the decode awaits, outside the gesture, and
+                // iOS refuses it there (and refuses any type it cannot play).
+                // Swallowing it left the music player reading "playing" over
+                // silence, so it is the cue's status now.
+                el.play().then(
+                    () => {
+                        if (voice.status === "loading") voice.status = "playing";
+                    },
+                    () => {
+                        voice.status = "failed";
+                    },
+                );
                 return;
             }
             const startAt = ctx.currentTime + 0.05;
@@ -467,6 +519,7 @@ export function createStoryAudio(): StoryAudio {
             }
             timeline = { origin: startAt - into, introSeconds, loopSeconds };
             voice.started = true;
+            voice.status = "playing";
             // The cue volume, NOT `req.volume`: a `[musicvolume]` that landed
             // inside the decode window already moved it, and ramping back to
             // the request would silently discard that command.
@@ -707,6 +760,9 @@ export function createStoryAudio(): StoryAudio {
         },
         get musicPosition() {
             return musicPosition();
+        },
+        get musicStatus() {
+            return current?.status ?? "idle";
         },
         get musicIntroSeconds() {
             return timeline?.introSeconds ?? 0;

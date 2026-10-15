@@ -281,7 +281,7 @@ export const messages = {
         description: "First paragraph of section 6.",
     },
     "terms.s6.p2": {
-        text: "Upon termination, your right to use the Service will immediately cease. If you wish to terminate your account, you may discontinue using the Service and contact us to request account deletion.",
+        text: "Upon termination, your right to use the Service will immediately cease. If you wish to terminate your account, you can delete it and all its data yourself from Settings → Danger zone → Delete my data, or contact us if you can't sign in.",
         description: "Second paragraph of section 6.",
     },
     "terms.s6.p3": {

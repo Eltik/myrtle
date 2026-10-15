@@ -17,8 +17,7 @@ export type CatalogSlotDto = {
     storey_id: string;
     offset_col: number;
     /**
-     * Absolute - the storey's Y-offset is already applied. Counts up from the
-     * bottom of the base, so B4 is 0.
+     * Absolute (storey Y-offset applied), counted up from the bottom: B4 is 0.
      */
     offset_row: number;
     size_col: number;

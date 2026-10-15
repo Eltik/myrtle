@@ -229,9 +229,9 @@ pub struct SpawnOut {
     pub level: String,
 }
 
-/// Grouped spawn-schedule entry (one per `SPAWN` action), powering the spawn
-/// table and the simulator's "spawn index". Unlike [`SpawnOut`] (one per token),
-/// this keeps the action's count/interval/wave intact.
+/// One `SPAWN` action, for the spawn table and the simulator's "spawn index".
+/// Unlike [`SpawnOut`] (one per token), it keeps the action's count, interval
+/// and wave.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ScheduleEntry {
@@ -636,7 +636,6 @@ fn tile_kind(t: &RawTile) -> String {
     if !kind.is_empty() {
         return kind.to_owned();
     }
-    // Fallback by tile physics.
     if t.height_type == "HIGHLAND" {
         "high"
     } else if t.buildable_type == "NONE" && t.passable_mask.contains("FLY") {
@@ -771,7 +770,6 @@ mod tests {
         ] {
             assert!(entry.contains_key(k), "missing schedule key `{k}`");
         }
-        // start/end tiles should be discoverable
         let kinds: std::collections::HashSet<_> = map
             .tiles
             .iter()

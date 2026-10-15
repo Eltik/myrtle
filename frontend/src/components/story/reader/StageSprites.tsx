@@ -6,7 +6,7 @@
  * `bodyPlate`) are pure and defensive: the wire fields they read are newer than
  * the running backend can be, so an absent one falls back to the slot template
  * rather than throwing inside a render. They are exported so the geometry can
- * be driven without a DOM; nothing outside this file imports them today, and
+ * be driven without a DOM; `StageLayers.tsx` uses `bodyPlate` for cut-ins, and
  * `stage.test.tsx` reaches them through a rendered `Stage`.
  */
 import type React from "react";
@@ -24,6 +24,16 @@ interface FacePlacement {
     h: number;
 }
 
+/**
+ * A face patch. `facePos` is the patch's TOP-LEFT corner in BODY TEXTURE
+ * pixels and `w`/`h` the on-body size the 128 px face texture is scaled into
+ * (Haak: 512,120,51,71). Body texture pixels are NOT canvas pixels: the plate
+ * is 1024 canvas px whatever the texture measures, so the fraction of the
+ * plate is `facePos / bodySize` and Haak's 1024 body was right only by
+ * coincidence. Read defensively: the running backend predates the binding and
+ * sends no `facePos` at all, and the legacy hubs write the sentinels (-1,-1)
+ * and (0,0).
+ */
 export function facePlacement(sprite: { faceUrl?: string; facePos?: unknown }): FacePlacement | null {
     if (!sprite.faceUrl) return null;
     const raw = sprite.facePos as { x?: unknown; y?: unknown; w?: unknown; h?: unknown } | undefined | null;
@@ -62,8 +72,8 @@ export function bodyTextureSize(sprite: { bodySize?: unknown }): BodyTextureSize
  * can produce, and Amiya's 1091.7 matches her own bundle's root RectTransform
  * of 1090 to 0.16%. The character's OWN prefab rect wins. It rides the wire as
  * `CharacterSprite.plate` and is read DEFENSIVELY, because the running backend
- * predates the binding: without it the slot template 1024 at (0,203) is what
- * shipped.
+ * predates the binding: without it the fallback is the slot template, 1024 at
+ * (0,203).
  */
 export function bodyPlate(sprite: { plate?: unknown }): BodyPlate {
     const raw = sprite.plate as { x?: unknown; y?: unknown; w?: unknown; h?: unknown } | undefined | null;
@@ -85,7 +95,7 @@ const LAZY_IMAGE = { loading: "lazy", decoding: "async" } as const;
  * the interlude window, which draws a character exactly as a slot does, and
  * for the character gallery, which draws every expression of a folder the
  * same way. `lazy` defers both images until they near the viewport, for a grid
- * of hundreds; the stage never sets it, so its images load exactly as before.
+ * of hundreds; the stage never sets it, so its images load eagerly.
  */
 export function Body({ state, sec, mode, lazy = false }: { state: Pick<SlotState, "sprite" | "name">; sec: number; mode: "in" | "hold" | "out"; lazy?: boolean }): React.ReactElement {
     const face = facePlacement(state.sprite);
@@ -160,8 +170,6 @@ export function Sprite({ slot, state, sec, focus }: { slot: Slot; state: SlotSta
                 transform: `translateX(-50%) scale(${state.scale})`,
                 transformOrigin: `${state.pivotX * 100}% ${(1 - state.pivotY) * 100}%`,
                 opacity: state.alpha,
-                // The multiply is instant on a sprite that was not here a frame
-                // ago and tweened when only the focus moved.
                 filter: joinFilters(state.lit ? undefined : DIM_FILTER, focusFilter(focus)),
                 transitionDuration: `${fresh ? 0 : sec}s`,
             }}

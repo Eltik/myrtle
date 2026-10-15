@@ -6,6 +6,7 @@ use crate::database::queries::score::update_score;
 use crate::database::queries::users::find_by_uid;
 use crate::{
     app::{error::ApiError, services::game_session, state::AppState},
+    core::gamedata::types::module::{ModuleType, Modules},
     core::{
         gamedata::types::{
             campaign::CampaignRotations,
@@ -13,8 +14,9 @@ use crate::{
         },
         grade::calculate::calculate_user_grade,
         hypergryph::{constants::Server, yostar::sync_data_raw},
+        maintenance,
     },
-    database::models::score::UserScore,
+    database::models::{score::UserScore, squad::SQUAD_SIZE},
 };
 
 #[derive(Deserialize)]
@@ -111,6 +113,28 @@ pub struct Avatar {
 #[derive(Deserialize)]
 pub struct Troop {
     pub chars: Option<serde_json::Map<String, serde_json::Value>>,
+    /// The in-game squads keyed by `squadId`, each a [`TroopSquad`]. Kept raw
+    /// so one malformed squad drops alone instead of failing the sync.
+    pub squads: Option<serde_json::Map<String, serde_json::Value>>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TroopSquad {
+    pub squad_id: Option<String>,
+    pub name: Option<String>,
+    /// Twelve entries, `null` for an empty seat.
+    pub slots: Option<Vec<Option<TroopSquadSlot>>>,
+}
+
+/// One squad seat. Points at a troop slot by `charInstId`, like
+/// [`AssistChar`].
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TroopSquadSlot {
+    pub char_inst_id: Option<i64>,
+    pub skill_index: Option<i64>,
+    pub current_equip: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -193,9 +217,8 @@ pub struct CheckIn {
     /// bare `history` key does not exist on this object.
     #[serde(rename = "checkInHistory")]
     pub history: Option<Vec<i16>>,
-    /// Lifetime cumulative sign-in days, the "X / 1000 total days of sign-ins"
-    /// counter shown on the daily sign-in carousel's milestone page. Distinct
-    /// from `history`, which is only the current month's calendar.
+    /// Lifetime sign-in days, the "X / 1000 total days of sign-ins" counter on
+    /// the sign-in carousel's milestone page. `history` covers only this month.
     #[serde(rename = "showCount")]
     pub show_count: Option<i64>,
     /// Identifier of the active monthly sign-in series (e.g. `signin<N>`).
@@ -215,10 +238,22 @@ pub async fn refresh(
     user_id: &str,
     server: Server,
 ) -> Result<serde_json::Value, ApiError> {
+    // Inside an announced window (or an overrun of one) the game refuses the
+    // sync anyway; say why instead of surfacing whatever error it picks.
+    if let Some(window) = maintenance::blocking_window(server) {
+        return Err(ApiError::GameMaintenance {
+            ends_at: window.ends_at,
+        });
+    }
+
     let mut session = game_session::ensure_fresh(state, user_id, server).await?;
 
     let text = match sync_data_raw(&state.http_client, &mut session, server).await {
         Ok(t) => t,
+        Err(e) if maintenance::is_maintenance_error(&e) => {
+            tracing::info!(uid = %user_id, server = server.as_str(), error = ?e, "account/syncData refused for maintenance");
+            return Err(ApiError::GameMaintenance { ends_at: None });
+        }
         Err(e) => {
             tracing::warn!(
                 uid = %user_id,
@@ -233,11 +268,11 @@ pub async fn refresh(
     game_session::save(state, user_id, &session).await;
     dump_sync_data(user_id, server, &text);
 
-    let data: SyncDataResponse =
-        serde_json::from_str(&text).map_err(|e| ApiError::Internal(e.into()))?;
-
+    // syncData is the whole account (megabytes for a mature one): parse the text
+    // once and build the typed view from the tree.
     let raw: std::sync::Arc<serde_json::Value> =
         std::sync::Arc::new(serde_json::from_str(&text).map_err(|e| ApiError::Internal(e.into()))?);
+    let data = SyncDataResponse::deserialize(&*raw).map_err(|e| ApiError::Internal(e.into()))?;
 
     let game_story = game_story_read(state, user_id, server, &raw).await;
     log_story_block(user_id, &raw, &game_story);
@@ -249,10 +284,8 @@ pub async fn refresh(
     let status = user.status.as_ref();
 
     let nickname = status.and_then(|s| s.nick_name.as_deref()).unwrap_or("");
-    // nickNumber comes from Hypergryph as either a string ("1234") or an
-    // integer (1234) depending on server/version, and may live on
-    // `status` or as a sibling of it. Probe both paths and accept either
-    // type. Stored as string so leading zeros survive.
+    // nickNumber is a string or an int depending on server, on `status` or
+    // beside it. Kept as a string so leading zeros survive.
     let nick_number_owned = extract_nick_number(&raw);
     let nick_number = nick_number_owned.as_deref();
     let level = status.and_then(|s| s.level).unwrap_or(0) as i16;
@@ -285,6 +318,7 @@ pub async fn refresh(
     status_json["originite"] =
         extract_originite(&raw).map_or(serde_json::Value::Null, |op| serde_json::json!(op));
     let supports = extract_supports(&user.troop, &user.social);
+    let game_squads = extract_game_squads(&user.troop, &state.game_data(server).modules);
     let mut stages = user
         .dungeon
         .as_ref()
@@ -333,22 +367,21 @@ pub async fn refresh(
         &supports,
         nick_number,
         &enemies,
+        &game_squads,
     )
     .await?;
 
-    // What the game says has been read goes in BEFORE the grade, and the grade
-    // goes off the async runtime. Both halves of that are the 2026-09-24
-    // defect.
-    // `calculate_user_grade` scores INLINE on this task: 40,327 ms standalone in
-    // a debug build, 73,011 ms of the failing request's 75.967 s as
-    // `myrtle_cpu_task_duration_seconds_sum{kind="user_grade"}` measured it. A
-    // task inside inline compute is never polled, so the 30 s handler timeout in
-    // `middleware` could not be OBSERVED until the scoring returned, and
-    // `tokio::time::timeout` polls its inner future first, so it fired at the
-    // first await afterwards and DROPPED everything behind it. That is why the
-    // request answered 5xx at 75.967 s, `user_scores` was written (its INSERT
-    // had been sent) and `user_game_story_read` held 0 rows. The store itself is
-    // 19 ms for 1,365 rows, so it belongs ahead of the scoring, not behind it.
+    // The 2026-09-24 defect, both halves: the game's read marks are stored BEFORE
+    // the grade, and the grade runs off the async runtime.
+    // `calculate_user_grade` scored INLINE on this task: 40,327 ms standalone in a
+    // debug build, 73,011 ms of the failing request's 75.967 s
+    // (`myrtle_cpu_task_duration_seconds_sum{kind="user_grade"}`). A task inside
+    // inline compute is never polled, so the 30 s handler timeout in `middleware`
+    // wasn't OBSERVED until scoring returned; `tokio::time::timeout` polls its inner
+    // future first, so it fired at the next await and DROPPED everything after it.
+    // Hence the 5xx at 75.967 s, `user_scores` written (its INSERT was already sent)
+    // and 0 rows in `user_game_story_read`. The store is 19 ms for 1,365 rows, so it
+    // goes ahead of the scoring.
     let mut import = serde_json::json!({
         "ok": false,
         "error": "the account row was not found after the sync",
@@ -357,37 +390,33 @@ pub async fn refresh(
     if let Some(user) = find_by_uid(&state.db, user_id).await? {
         import = import_game_read(state, user_id, user.id, &game_story).await;
 
-        // The grade on its own task, bounded, and the scoring on the BLOCKING
-        // POOL rather than on a runtime worker.
+        // The grade on its own task, bounded, with the scoring on the BLOCKING POOL
+        // rather than a runtime worker.
         //
         // Its own task was not enough. Measured 2026-09-24: the grade held its
         // admission for 73.620 s
-        // (`myrtle_cpu_task_duration_seconds_sum{kind="user_grade"}`), and this
-        // 12 s budget was not observed until 23:36:36.532, 73.6 s after the
-        // import at 23:35:22.916, so the deadline passed 61.6 s unnoticed. A
-        // `tokio::time::timeout` is only observed when its own task is polled,
-        // and with one worker inside a non-yielding 73 s compute the runtime's
-        // timer was not serviced on time either. `cpu::admit` bounded how many
-        // such computes could run at once; it never took the compute off the
-        // worker, which is exactly the distinction `cpu`'s module doc draws.
-        // Measured offline on the same account, one runtime, the same probe
-        // running `/auth/verify`'s two queries every 100 ms
+        // (`myrtle_cpu_task_duration_seconds_sum{kind="user_grade"}`) and this 12 s
+        // budget was not observed until 23:36:36.532, 73.6 s after the import at
+        // 23:35:22.916: 61.6 s late. A `tokio::time::timeout` is observed only when
+        // its task is polled, and with one worker stuck in a non-yielding 73 s
+        // compute the timer wasn't serviced on time either. `cpu::admit` bounds how
+        // many such computes run at once; it never moved the compute off the worker
+        // (the distinction `cpu`'s module doc draws).
+        // Offline, same account, one runtime, a probe running `/auth/verify`'s two
+        // queries every 100 ms
         // (`sync_stall_test::the_grade_budget_is_observed_on_time_only_off_the_runtime`):
-        // on a worker the budget was observed at 39.604 s and 43.156 s over two
-        // runs, both of them the instant the grade RETURNED (39.603 s,
-        // 43.156 s); off it, 12.003 s and 12.002 s while the grade still took
-        // 40.373 s and 40.908 s. The session probe was never the casualty: its
-        // worst was 0.012 s and 0.021 s on a worker, so nothing in this path
-        // held a lock a user route needed.
+        // on a worker the budget was observed at 39.604 s and 43.156 s, the instant
+        // the grade RETURNED (39.603 s, 43.156 s); off it, 12.003 s and 12.002 s
+        // while the grade still took 40.373 s and 40.908 s. The session probe never
+        // suffered (worst 0.012 s and 0.021 s on a worker), so nothing here held a
+        // lock a user route needed.
         //
-        // `calculate_user_grade` is an `async fn` whose only awaits are the
-        // seven up-front queries, and `core/grade` is another session's file,
-        // so it is not split here into load-then-score. Instead the whole call
-        // is DRIVEN from a blocking-pool thread: `Handle::block_on` inside
-        // `cpu::run` parks that thread on the queries, which stay registered
-        // with this runtime's IO driver, and runs the scoring there. No async
-        // worker is held at any point, so the awaited `JoinHandle` yields and
-        // the budget below fires at 12 s.
+        // `calculate_user_grade` is an `async fn` whose only awaits are its seven
+        // up-front queries, so rather than split it into load-then-score the whole
+        // call is DRIVEN from a blocking-pool thread: `Handle::block_on` inside
+        // `cpu::run` parks that thread on the queries (still registered with this
+        // runtime's IO driver) and scores there. No async worker is held, so the
+        // awaited `JoinHandle` yields and the budget fires at 12 s.
         let db = state.db.clone();
         let scoring_db = state.db.clone();
         let game_data = state.default_game_data();
@@ -1071,6 +1100,86 @@ fn extract_supports(troop: &Option<Troop>, social: &Option<Social>) -> serde_jso
     serde_json::to_value(entries).unwrap_or_default()
 }
 
+/// The in-game squads as `user_game_squads` rows: a JSON array of
+/// `{index, name, slots}` where `slots` is exactly twelve entries, each `null`
+/// or `{char_id, skill_index, module_id}`.
+///
+/// `index` is the `squadId` as a number, else the squad's position in the map;
+/// the set of squads is whatever the payload carries (the game's squad count
+/// is in no table). A seat whose `charInstId` does not resolve to a troop char
+/// becomes `null` rather than a guessed operator. An equip whose
+/// `uniequip_table` `Type_` is `INITIAL` is the default badge, which the game
+/// reports for an operator with no module on, so it is stored as no module.
+fn extract_game_squads(troop: &Option<Troop>, modules: &Modules) -> serde_json::Value {
+    let Some(troop) = troop.as_ref() else {
+        return serde_json::json!([]);
+    };
+    let Some(squads) = troop.squads.as_ref() else {
+        return serde_json::json!([]);
+    };
+    // `instId` -> `charId`, read once: only the id is needed, so the rest of
+    // each troop char is never deserialized.
+    let char_ids: std::collections::HashMap<&str, &str> = troop
+        .chars
+        .iter()
+        .flatten()
+        .filter_map(|(inst, entry)| {
+            let id = entry.get("charId")?.as_str().filter(|id| !id.is_empty())?;
+            Some((inst.as_str(), id))
+        })
+        .collect();
+    let initial = |id: &str| {
+        modules
+            .equip_dict
+            .get(id)
+            .is_some_and(|m| m.module_type == ModuleType::Initial)
+    };
+
+    let entries: Vec<serde_json::Value> = squads
+        .values()
+        .enumerate()
+        .filter_map(|(position, raw)| {
+            let squad: TroopSquad = serde_json::from_value(raw.clone()).ok()?;
+            let index = squad
+                .squad_id
+                .as_deref()
+                .and_then(|id| id.parse::<i16>().ok())
+                .or_else(|| i16::try_from(position).ok())?;
+            let mut slots: Vec<serde_json::Value> = squad
+                .slots
+                .unwrap_or_default()
+                .into_iter()
+                .take(SQUAD_SIZE)
+                .map(|slot| {
+                    let Some(slot) = slot else {
+                        return serde_json::Value::Null;
+                    };
+                    let Some(char_id) = slot
+                        .char_inst_id
+                        .and_then(|inst| char_ids.get(inst.to_string().as_str()).copied())
+                    else {
+                        return serde_json::Value::Null;
+                    };
+                    let module_id = slot.current_equip.filter(|e| !e.is_empty() && !initial(e));
+                    serde_json::json!({
+                        "char_id": char_id,
+                        "skill_index": slot.skill_index.unwrap_or(0),
+                        "module_id": module_id,
+                    })
+                })
+                .collect();
+            slots.resize(SQUAD_SIZE, serde_json::Value::Null);
+            Some(serde_json::json!({
+                "index": index,
+                "name": squad.name.unwrap_or_default(),
+                "slots": slots,
+            }))
+        })
+        .collect();
+
+    serde_json::Value::Array(entries)
+}
+
 /// Annihilation progress lives at `user.campaignsV2.instances` (top level, not
 /// under `user.dungeon`) and counts kills, with no `state` flag. Merged into the
 /// stages object with a synthesized `state` (kill target reached -> 3, partial
@@ -1370,5 +1479,100 @@ mod tests {
             0,
             "a zero counter is not a row"
         );
+    }
+
+    /// The refresh builds `SyncDataResponse` from the parsed tree, not from the
+    /// text; both routes must read the same values.
+    #[test]
+    fn sync_data_reads_the_same_from_text_and_from_the_tree() {
+        let text = r#"{
+            "result": 0,
+            "user": {
+                "status": {"nickName": "Doctor", "level": 120, "diamondShard": 4321,
+                           "avatar": {"id": "avatar_def_01"}, "registerTs": 1600000000},
+                "troop": {"chars": {"1": {"charId": "char_002_amiya", "level": 90}}},
+                "inventory": {"30012": 7},
+                "skin": {"characterSkins": {"char_002_amiya@winter#1": {"obtainedAt": 1}}},
+                "checkIn": {"checkInHistory": [1, 0, 1], "canCheckIn": 1},
+                "social": {"assistCharList": [null, {"charInstId": 1, "skillIndex": 2}]}
+            }
+        }"#;
+        let from_text: SyncDataResponse = serde_json::from_str(text).unwrap();
+        let tree: serde_json::Value = serde_json::from_str(text).unwrap();
+        let from_tree = SyncDataResponse::deserialize(&tree).unwrap();
+        let view = |d: &SyncDataResponse| {
+            let user = d.user.as_ref().unwrap();
+            let status = user.status.as_ref().unwrap();
+            let social = user.social.as_ref().unwrap();
+            (
+                d.result,
+                status.nick_name.clone(),
+                status.level,
+                status.orundum,
+                status.register_ts,
+                status.avatar.as_ref().and_then(|a| a.id.clone()),
+                user.troop.as_ref().and_then(|t| t.chars.clone()),
+                user.inventory.clone(),
+                user.skin.as_ref().and_then(|s| s.character_skins.clone()),
+                user.checkin.as_ref().and_then(|c| c.history.clone()),
+                user.checkin.as_ref().and_then(|c| c.can_check_in),
+                social.assist_char_list.as_ref().map(|l| {
+                    l.iter()
+                        .map(|a| a.as_ref().map(|a| (a.char_inst_id, a.skill_index)))
+                        .collect::<Vec<_>>()
+                }),
+            )
+        };
+        assert_eq!(view(&from_text), view(&from_tree));
+        assert_eq!(view(&from_tree).3, Some(4321));
+        assert_eq!(view(&from_tree).9, Some(vec![1, 0, 1]));
+    }
+
+    #[test]
+    fn game_squads_resolve_seats_and_pad_to_twelve() {
+        let troop: Troop = serde_json::from_value(serde_json::json!({
+            "chars": {
+                "305": {"instId": 305, "charId": "char_4080_lin"},
+                "12": {"instId": 12, "charId": "char_002_amiya"}
+            },
+            "squads": {
+                "3": {
+                    "squadId": "3",
+                    "name": "Lin",
+                    "slots": [
+                        {"charInstId": 305, "skillIndex": 1, "currentEquip": "uniequip_002_lin"},
+                        null,
+                        {"charInstId": 999, "skillIndex": 2, "currentEquip": null},
+                        {"charInstId": 12, "skillIndex": null, "currentEquip": "uniequip_001_amiya"}
+                    ]
+                },
+                "7": {"squadId": "7", "name": "A fifth squad", "slots": []}
+            }
+        }))
+        .unwrap();
+        let mut modules = Modules::default();
+        for (id, kind) in [
+            ("uniequip_001_amiya", ModuleType::Initial),
+            ("uniequip_002_lin", ModuleType::Advanced),
+        ] {
+            let m = crate::core::gamedata::types::module::Module {
+                module_type: kind,
+                ..Default::default()
+            };
+            modules.equip_dict.insert(id.to_string(), m);
+        }
+        let mut slots = vec![serde_json::Value::Null; 12];
+        slots[0] = serde_json::json!({"char_id": "char_4080_lin", "skill_index": 1, "module_id": "uniequip_002_lin"});
+        slots[3] =
+            serde_json::json!({"char_id": "char_002_amiya", "skill_index": 0, "module_id": null});
+        // Squad 7 is kept: the payload decides how many squads there are.
+        assert_eq!(
+            extract_game_squads(&Some(troop), &modules),
+            serde_json::json!([
+                {"index": 3, "name": "Lin", "slots": slots},
+                {"index": 7, "name": "A fifth squad", "slots": vec![serde_json::Value::Null; 12]}
+            ])
+        );
+        assert_eq!(extract_game_squads(&None, &modules), serde_json::json!([]));
     }
 }

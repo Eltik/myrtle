@@ -2,7 +2,7 @@
 
 /**
  * LMD the account earns in a day, and the days until `lmd_missing` is
- * covered - once from the base and mission chests alone, once with every
+ * covered: once from the base and mission chests alone, once with every
  * day's natural sanity spent on the LMD farming stage.
  */
 export type LmdIncomeDto = {
@@ -31,7 +31,8 @@ export type LmdIncomeDto = {
     farming_per_day: number;
     /**
      * Days until the shortfall is earned from the base and dailies: 0 when
-     * nothing is missing, `None` when nothing is earned.
+     * nothing is missing or the balance is hidden, `None` when nothing is
+     * earned.
      */
     days_without_farming: number | null;
     /**

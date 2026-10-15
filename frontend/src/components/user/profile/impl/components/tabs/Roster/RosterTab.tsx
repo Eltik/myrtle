@@ -7,10 +7,11 @@ import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
+import type { IOperatorRosterItem } from "#/lib/api/operators";
 import type { IRosterEntry } from "#/lib/api/user";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import type { IOperatorIndexEntry, IOperatorListItem } from "#/types/operators";
+import type { IOperatorIndexEntry } from "#/types/operators";
 import { CompactCard } from "./CompactCard";
 import { DetailedCard } from "./DetailedCard";
 import { RosterFilters } from "./RosterFilters";
@@ -22,7 +23,7 @@ import { useRoster } from "./useRoster";
 interface IRosterTabProps {
     roster: IRosterEntry[];
     operatorsIndex: IOperatorIndexEntry[];
-    operatorsStatic: IOperatorListItem[];
+    operatorsStatic: IOperatorRosterItem[];
 }
 
 /** A key in `RosterTab.messages.ts`; resolved by the toolbar below. */

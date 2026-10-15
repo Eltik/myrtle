@@ -1,7 +1,8 @@
 //! Balanced multi-team selection for the shift rotation.
 //!
 //! Each production GROUP (same product: gold factories, EXP factories, posts)
-//! gets `ceil(3N/2)` teams tiled as 24h blocks over its `N rooms × 3 shifts`
+//! gets one team per room-shift cell (`3N`, see `Tiling::Shifts`; `ceil(3N/2)`
+//! 24h blocks as the small-roster fallback) over its `N rooms × 3 shifts`
 //! cells, so exactly one team per group swaps every 12h.
 //!
 //! Teams are chosen jointly to maximize summed output, not best-first.
@@ -107,23 +108,47 @@ pub struct PlannedGroup {
 /// For 2 rooms it's the hand-run login rhythm: `room0 = [T0, T0, T1]`,
 /// `room1 = [T1, T2, T2]`. Every team works 24h (T1 wraps shift 3 -> 1), rests
 /// 12h, and one team per group swaps at each login.
-pub fn tile_group(n_rooms: usize) -> Vec<[usize; SHIFT_COUNT]> {
+/// How a production group's teams are laid over the three 12h shifts.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Tiling {
+    /// One team per room per shift (`3N` teams): every room changes crew at
+    /// every 12h rotate, which is the only rhythm the game's global Rotate
+    /// can express as presets (a room whose next formation equals its
+    /// working crew reads "No Available Presets" and will not rotate -
+    /// user recording 2026-10-14). Each team works 12h and rests 24h.
+    Shifts,
+    /// `ceil(3N/2)` teams as 24h blocks ([A,A,B] / [B,C,C]): fewer teams
+    /// and half as many resters per block, so a roster too small to staff
+    /// `3N` full crews, or a base with fewer dormitory beds than production
+    /// seats, falls back to it. A team then works two consecutive shifts and
+    /// the player rotates it every 24h.
+    Blocks,
+}
+
+pub fn tile_group(n_rooms: usize, tiling: Tiling) -> Vec<[usize; SHIFT_COUNT]> {
     let mut cells = vec![[0usize; SHIFT_COUNT]; n_rooms];
     for pos in 0..(n_rooms * SHIFT_COUNT) {
-        cells[pos / SHIFT_COUNT][pos % SHIFT_COUNT] = pos / 2;
+        cells[pos / SHIFT_COUNT][pos % SHIFT_COUNT] = match tiling {
+            Tiling::Shifts => pos,
+            Tiling::Blocks => pos / 2,
+        };
     }
     cells
 }
 
-pub const fn teams_for_rooms(n_rooms: usize) -> usize {
-    (n_rooms * SHIFT_COUNT).div_ceil(2)
+pub const fn teams_for_rooms(n_rooms: usize, tiling: Tiling) -> usize {
+    match tiling {
+        Tiling::Shifts => n_rooms * SHIFT_COUNT,
+        Tiling::Blocks => (n_rooms * SHIFT_COUNT).div_ceil(2),
+    }
 }
 
-/// Cells per team ordinal (2, except a trailing 1).
-fn ordinal_weights(n_rooms: usize) -> Vec<usize> {
-    let teams = teams_for_rooms(n_rooms);
+/// Cells per team ordinal (1 under `Shifts`; 2 under `Blocks`, except a
+/// trailing 1).
+fn ordinal_weights(n_rooms: usize, tiling: Tiling) -> Vec<usize> {
+    let teams = teams_for_rooms(n_rooms, tiling);
     let mut w = vec![0usize; teams];
-    for room in tile_group(n_rooms) {
+    for room in tile_group(n_rooms, tiling) {
         for t in room {
             w[t] += 1;
         }
@@ -233,6 +258,7 @@ pub fn plan_production_groups(
     reserved_seats: &HashMap<String, usize>,
     kept: &HashMap<String, Vec<String>>,
     memo: &EnumerationMemo,
+    tiling: Tiling,
 ) -> Vec<PlannedGroup> {
     // Seats held out per room: `reserved_seats` (kept EMPTY by the sustain oracle
     // to price a plan without its candidate) plus pinned crews, which the posts
@@ -324,6 +350,7 @@ pub fn plan_production_groups(
             morale_drains,
             kept,
             memo,
+            tiling,
         );
         pad_teams(
             &mut planned,
@@ -429,6 +456,7 @@ fn select_balanced_teams(
     morale_drains: &HashMap<String, f64>,
     kept: &HashMap<String, Vec<String>>,
     memo: &EnumerationMemo,
+    tiling: Tiling,
 ) -> Vec<PlannedGroup> {
     let op_index = build_op_index(operators);
     // Team size is bounded by the group's SMALLEST room so any team fits any room
@@ -452,7 +480,7 @@ fn select_balanced_teams(
                 (sets.len() == spec.rooms.len() && sets.iter().all(|s| *s == sets[0]))
                     .then(|| sets[0])
             };
-            let teams_needed = teams_for_rooms(spec.rooms.len());
+            let teams_needed = teams_for_rooms(spec.rooms.len(), tiling);
             let min_level = spec.rooms.iter().map(|(_, l)| *l).min().unwrap_or(1);
             let pool = BASE_POOL + POOL_PER_EXTRA_TEAM * teams_needed.saturating_sub(1);
             // The pin is allowed back into ITS post's enumeration: the enumerator can build
@@ -481,7 +509,8 @@ fn select_balanced_teams(
                 capacity as i32,
                 pool,
                 spec.room_type == "MANUFACTURE",
-                true,
+                // A 24h block needs a bar that lasts it; a single 12h shift does not.
+                tiling == Tiling::Blocks,
                 cc_conditions,
             );
             let mut teams = memo.get_or_enumerate(key, || {
@@ -609,7 +638,7 @@ fn select_balanced_teams(
     // trailing 1).
     let weights: Vec<Vec<usize>> = specs
         .iter()
-        .map(|s| ordinal_weights(s.rooms.len()))
+        .map(|s| ordinal_weights(s.rooms.len(), tiling))
         .collect();
     let max_teams = weights.iter().map(Vec::len).max().unwrap_or(0);
     let mut slots: Vec<(usize, usize)> = Vec::new(); // (group, ordinal)
@@ -764,7 +793,7 @@ fn select_balanced_teams(
             .enumerate()
             .map(|(g, spec)| {
                 let n = spec.rooms.len();
-                let teams_needed = teams_for_rooms(n);
+                let teams_needed = teams_for_rooms(n, tiling);
                 let mut selected: Vec<CandidateTeam> = Vec::new();
                 for (si, &(sg, _)) in slots.iter().enumerate() {
                     if sg == g
@@ -778,7 +807,7 @@ fn select_balanced_teams(
                         .partial_cmp(&a.score)
                         .unwrap_or(std::cmp::Ordering::Equal)
                 });
-                let w = ordinal_weights(n);
+                let w = ordinal_weights(n, tiling);
                 let mut ordinals: Vec<usize> = (0..teams_needed).collect();
                 ordinals.sort_by_key(|&o| std::cmp::Reverse(w[o]));
                 let mut teams: Vec<CandidateTeam> = (0..teams_needed)
@@ -801,7 +830,7 @@ fn select_balanced_teams(
                     formula_type: spec.formula_type.clone(),
                     rooms: spec.rooms.clone(),
                     teams,
-                    cells: tile_group(n),
+                    cells: tile_group(n, tiling),
                 }
             })
             .collect()
@@ -1310,14 +1339,13 @@ fn pad_teams(
 
 #[cfg(test)]
 mod tests {
-    use super::{SHIFT_COUNT, teams_for_rooms, tile_group};
+    use super::{SHIFT_COUNT, Tiling, teams_for_rooms, tile_group};
 
     #[test]
     fn tiling_invariants_hold_for_small_groups() {
         for n_rooms in 1..=4 {
-            let cells = tile_group(n_rooms);
-            let teams = teams_for_rooms(n_rooms);
-            // Every cell is covered by a valid team index.
+            let cells = tile_group(n_rooms, Tiling::Blocks);
+            let teams = teams_for_rooms(n_rooms, Tiling::Blocks);
             let mut count = vec![0usize; teams];
             for room in &cells {
                 for &t in room {
@@ -1351,7 +1379,7 @@ mod tests {
     fn two_room_tiling_matches_the_login_rhythm() {
         // room0 = [T0, T0, T1], room1 = [T1, T2, T2]: each team works 24h then rests
         // 12h, and exactly one of the group's rooms changes team at each boundary.
-        let cells = tile_group(2);
+        let cells = tile_group(2, Tiling::Blocks);
         assert_eq!(cells, vec![[0, 0, 1], [1, 2, 2]]);
         for s in 1..SHIFT_COUNT {
             let changes = cells.iter().filter(|room| room[s] != room[s - 1]).count();

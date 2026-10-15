@@ -9,13 +9,13 @@ import type { SustainabilityDto } from "./SustainabilityDto";
 
 export type BaseImprovements = {
     /**
-     * The player's CURRENT base exactly as stationed right now - for comparing
-     * against the optimized assignments.
+     * The CURRENT base as stationed, to compare against the optimized
+     * assignments.
      */
     current: BaseAssignmentDto | null;
     /**
-     * Peak assignment - the highest-efficiency arrangement of the roster across
-     * the existing rooms. Useful as a "what's possible right now" view.
+     * Peak assignment: the highest-efficiency arrangement of the roster across
+     * the existing rooms.
      */
     optimal: BaseAssignmentDto | null;
     /**

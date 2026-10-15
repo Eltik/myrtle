@@ -65,5 +65,8 @@ export const DEFAULT_SETTINGS = {
     onlyCompletedStages: false,
     onlyAvailableStages: true,
     onlyE2Operators: false,
+    e2SixStarOnly: false,
+    tierListSlug: null as string | null,
+    deselectedTierIds: [] as string[],
     deselectedStageIds: [] as string[],
 };

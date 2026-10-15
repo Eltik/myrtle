@@ -4,7 +4,7 @@ use backend::core::service_account::ServiceAccounts;
 use backend::core::startup;
 use backend::core::{
     asset_watcher, dps_watcher, event_shop_job, gacha_detail_job, leaderboard_snapshot_job,
-    medal_ownership_job, operator_ownership_job, regrade_job, release, trending_job,
+    maintenance, medal_ownership_job, operator_ownership_job, regrade_job, release, trending_job,
 };
 use backend::{
     app::{
@@ -102,9 +102,8 @@ fn spawn_shutdown_watchdog() {
     }
 }
 
-// Startup wiring is inherently a long, linear sequence of `.await`s; splitting it into
-// helpers would not make it more readable. Matches the crate-wide allow in `lib.rs`,
-// which does not cover this binary's separate crate root.
+// Startup is one long linear sequence of `.await`s. Matches the crate-wide allow in
+// `lib.rs`, which does not cover this binary's crate root.
 #[allow(clippy::too_many_lines)]
 async fn async_main() {
     dotenv().ok();
@@ -248,6 +247,9 @@ async fn async_main() {
     // Outside the jobs gate: an idle lazy server is unloaded whether or not the
     // cron jobs run. Spawns nothing unless a server is lazy.
     backend::app::residency::spawn_reaper(state.clone());
+
+    maintenance::spawn(state.clone());
+    backend::app::services::music::siren::spawn(state.clone());
 
     drop(jobs_phase);
 

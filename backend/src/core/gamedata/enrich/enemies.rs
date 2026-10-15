@@ -60,6 +60,10 @@ fn merge_level_entry(
         sleep_immune: pick_bool(&attrs.sleep_immune, |a| a.sleep_immune),
         frozen_immune: pick_bool(&attrs.frozen_immune, |a| a.frozen_immune),
         levitate_immune: pick_bool(&attrs.levitate_immune, |a| a.levitate_immune),
+        fear_immune: pick_bool(&attrs.feared_immune, |a| a.fear_immune),
+        paralysis_immune: pick_bool(&attrs.palsy_immune, |a| a.paralysis_immune),
+        tremble_immune: pick_bool(&attrs.disarmed_combat_immune, |a| a.tremble_immune),
+        lure_immune: pick_bool(&attrs.attract_immune, |a| a.lure_immune),
     };
 
     let apply_way = data

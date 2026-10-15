@@ -192,9 +192,8 @@ export function Pagination({ currentPage, totalPages, onPageChange, className }:
 }
 
 /**
- * A prev/next pair with a page readout, sized to sit inside a toolbar row. The
- * full numbered strip only lives at the foot of a listing, so this is what a
- * page offers above the results - reachable without scrolling past them.
+ * A prev/next pair with a page readout, sized for a toolbar row: the pager
+ * above the results, since the numbered strip only lives at the foot.
  */
 export function PaginationCompact({ currentPage, totalPages, onPageChange, className }: IPaginationProps) {
     const t: TypedT<typeof messages> = useT("operators");

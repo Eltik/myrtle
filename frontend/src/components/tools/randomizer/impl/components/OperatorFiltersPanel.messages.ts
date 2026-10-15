@@ -67,6 +67,42 @@ export const messages = {
         text: "Restrict further to operators at elite 2 in your roster.",
         description: "Explanation under the 'E2 only' switch. 'Elite 2' is the game's second promotion.",
     },
+    "randomizer.ops.e2SixStarOnly": {
+        text: "6★ only",
+        description: "Switch label under 'E2 only': the E2 requirement binds 6-star operators only.",
+    },
+    "randomizer.ops.e2SixStarOnly.desc": {
+        text: "Only require Elite 2 for 6★ operators.",
+        description: "Explanation under the '6★ only' switch; lower rarities then pass at any promotion. 'Elite 2' is the game's second promotion.",
+    },
+    "randomizer.ops.tierList": {
+        text: "Tier list",
+        description: "Heading over the tier-list filter.",
+    },
+    "randomizer.ops.tierList.title": {
+        text: "Official tier list",
+        description: "Label of the dropdown that picks one of the site's official tier lists to filter by. Also its accessible name.",
+    },
+    "randomizer.ops.tierList.desc": {
+        text: "Draw only from the tiers you keep selected.",
+        description: "Explanation next to the tier-list dropdown; the tiers are the chips that appear once a list is picked.",
+    },
+    "randomizer.ops.tierList.none": {
+        text: "None",
+        description: "Dropdown option: no tier list, so the filter is off.",
+    },
+    "randomizer.ops.tierList.loading": {
+        text: "Loading tiers...",
+        description: "Shown while the chosen tier list loads.",
+    },
+    "randomizer.ops.tierList.unranked": {
+        text: "Unranked",
+        description: "Tier chip for operators the chosen tier list does not place.",
+    },
+    "randomizer.ops.tierList.aria": {
+        text: "Allowed tiers",
+        description: "Accessible name of the group of tier chips.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

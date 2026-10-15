@@ -4,18 +4,21 @@ import { GridEditor } from "#/components/grids/GridEditor";
 import { Spinner } from "#/components/ui/spinner";
 import { gridQueryOptions } from "#/lib/api/grids";
 import { tierEntityCatalogueQueryOptions } from "#/lib/api/tier-lists";
+import { signInSearch } from "#/lib/auth/search";
 import { metaT } from "#/lib/meta";
 import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/_authed/grids_/$slug/edit")({
     beforeLoad: ({ context, location }) => {
-        if (!context.user) throw redirect({ to: "/", search: { auth: "1", next: location.href } });
+        if (!context.user) throw redirect({ to: "/", search: signInSearch(location.href) });
     },
     loader: ({ context, params }) => {
         const server = context.i18n.gamedataServer;
-        // Warm the operator catalogue, the picker's first tab on most grids. Not awaited: the editor suspends on the grid itself.
-        void context.queryClient.prefetchQuery(tierEntityCatalogueQueryOptions("operator", server));
+        // Not awaited: the editor suspends on the grid itself.
         void context.queryClient.prefetchQuery(gridQueryOptions(params.slug, context.user?.id ?? null, server));
+        // Warm the operator catalogue, the picker's first tab on most grids, in the browser only:
+        // on the server nothing awaits it, so it would only ride along in the HTML stream.
+        if (typeof window !== "undefined") void context.queryClient.prefetchQuery(tierEntityCatalogueQueryOptions("operator", server));
     },
     component: RouteComponent,
     head: ({ match, params }) => {

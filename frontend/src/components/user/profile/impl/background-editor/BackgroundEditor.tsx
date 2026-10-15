@@ -20,7 +20,7 @@ import { useBackgroundDraft } from "./useBackgroundDraft";
 
 interface IBackgroundEditorProps {
     profile: IUserProfile;
-    /** The background saved now, `null` for none. */
+    /** The saved background, `null` for none. */
     saved: ProfileBackground | null;
     onClose: () => void;
 }
@@ -93,7 +93,7 @@ export function BackgroundEditor({ profile, saved, onClose }: IBackgroundEditorP
     const pickedKind = draft?.kind;
     const pickedId = draft?.id;
     const selected = useMemo<IPickedArt | null>(() => (pickedKind !== undefined && pickedId !== undefined ? { kind: pickedKind, id: pickedId } : null), [pickedKind, pickedId]);
-    // The hidden strip keeps the crop it last showed: it is out of sight and takes no input, so a drag on the full preview does not re-render its frame each move. A new art (pick, elite, removal) still reaches it, so the art is loaded before it shows; the live crop does the moment it shows.
+    // While hidden the strip keeps the crop it last showed, so a drag on the full preview does not re-render it each move. A new art (pick, elite, removal) still reaches it so the image is loaded before it shows; the live crop follows once it shows.
     const stripHeld = useRef(draft);
     if (collapsed || !sameArt(stripHeld.current, draft)) stripHeld.current = draft;
     const stripDraft = collapsed ? draft : stripHeld.current;

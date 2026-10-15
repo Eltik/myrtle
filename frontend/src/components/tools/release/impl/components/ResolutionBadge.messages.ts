@@ -59,13 +59,13 @@ export const messages = {
         text: "{lo} to {hi}",
         description: "The window an estimated date could fall in. Both halves are already formatted dates.",
     },
-    "release.badge.since": {
-        text: "since {date}",
-        description: "Shown in place of a date range for a pool that opened once and never closed.",
+    "release.badge.returning": {
+        text: "Returning Doctors only",
+        description: "Shown in place of a date for the Returning Headhunting banner, which the game offers only to players coming back after a long absence. 'Doctor' is how the game addresses the player.",
     },
-    "release.badge.standing": {
-        text: "standing pool",
-        description: "Shown in place of a relative day for a banner that is permanently available. 'Standing' means always open.",
+    "release.badge.returning.title": {
+        text: "Offered only to Doctors returning after a long absence. Each one gets their own window, so there is no calendar date.",
+        description: "Tooltip on 'Returning Doctors only'. 'Doctor' is how the game addresses the player.",
     },
 } satisfies MessageMap;
 

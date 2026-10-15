@@ -13,8 +13,8 @@ use crate::core::gamedata::{
         module::{BattleEquip, RawModules},
         obtain::ObtainChannel,
         operator::{
-            AllSkillLevelUp, CharPatchInfo, Drone, EvolveCost, LevelUpCostItem, Operator,
-            OperatorBaseSkill, Phase, RawOperator,
+            AllSkillLevelUp, CharPatchInfo, Drone, EvolveCost, HiddenFaction, LevelUpCostItem,
+            Operator, OperatorBaseSkill, Phase, PowerAffiliation, RawOperator,
         },
         skill::Skill,
         skin::SkinData,
@@ -161,6 +161,7 @@ fn enrich_operator(id: &str, raw: &RawOperator, ctx: &EnrichCtx) -> Operator {
         nation_name: faction_name(ctx.factions, raw.nation_id.as_deref()),
         group_name: faction_name(ctx.factions, raw.group_id.as_deref()),
         team_name: faction_name(ctx.factions, raw.team_id.as_deref()),
+        hidden_factions: hidden_factions(ctx.factions, raw),
         display_number: raw.display_number.clone().unwrap_or_default(),
         appellation: raw.appellation.clone(),
         position: raw.position.clone(),
@@ -218,6 +219,38 @@ fn faction_name(factions: &HashMap<String, HandbookTeam>, id: Option<&str>) -> O
         .get(id)
         .map(|team| team.power_name.clone())
         .filter(|name| !name.is_empty())
+}
+
+/// The `SubPower` ids that are not on the card. A `SubPower` entry can name
+/// a group with its nation (Reed's is `tara` + `victoria`), so each entry is
+/// read team, group, nation, and an id the operator already shows (any
+/// `MainPower` or top-level id) is dropped: Reed keeps only `tara`.
+fn hidden_factions(
+    factions: &HashMap<String, HandbookTeam>,
+    raw: &RawOperator,
+) -> Vec<HiddenFaction> {
+    let ids = |p: &PowerAffiliation| [p.team_id.clone(), p.group_id.clone(), p.nation_id.clone()];
+    let mut shown: Vec<String> = [
+        raw.nation_id.clone(),
+        raw.group_id.clone(),
+        raw.team_id.clone(),
+    ]
+    .into_iter()
+    .chain(raw.main_power.iter().flat_map(ids))
+    .flatten()
+    .collect();
+    let mut hidden = Vec::new();
+    for id in raw.sub_power.iter().flatten().flat_map(ids).flatten() {
+        if id.is_empty() || id == NO_FACTION || shown.contains(&id) {
+            continue;
+        }
+        shown.push(id.clone());
+        hidden.push(HiddenFaction {
+            name: faction_name(factions, Some(&id)),
+            id,
+        });
+    }
+    hidden
 }
 
 fn resolve_drones(id: &str, raw: &RawOperator, drones: &HashMap<String, Drone>) -> Vec<Drone> {

@@ -106,7 +106,11 @@ impl CacheStore {
                     .set_ex(key_str, value, ttl.as_secs())
                     .await
                     .inspect_err(|e| {
-                        tracing::debug!(key = %key_str, error = %e, "cache set failed");
+                        // A failed write means every later read of this key
+                        // misses and rebuilds; that should be visible.
+                        tracing::warn!(key = %key_str, error = %e, "cache set failed");
+                        let class = key_str.split(':').next().unwrap_or("unknown");
+                        METRICS.record_cache(class, CacheOutcome::WriteError);
                     });
             }
             Self::Memory { entries } => {
@@ -229,6 +233,53 @@ impl CacheStore {
                     entries.retain(|_, (_, expires_at)| Instant::now() < *expires_at);
                 }
             });
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// `/api/release/skins` served `devP75Days` 1.2291666666666665 on the call
+    /// that computed it and 1.2291666666666663 from the cache: without the
+    /// `float_roundtrip` feature serde_json parses some floats one ulp off the
+    /// value they were printed from.
+    #[tokio::test]
+    async fn a_cached_float_reads_back_bit_for_bit() {
+        let values = vec![
+            1.229_166_666_666_666_5_f64,
+            0.1,
+            1.0 / 3.0,
+            1e-300,
+            -2.5e300,
+        ];
+        let cache = CacheStore::new_memory();
+        cache.set(&CacheKey::Stats, &values).await;
+        let back: Vec<f64> = cache.get(&CacheKey::Stats).await.expect("cached");
+        assert_eq!(back.len(), values.len());
+        for (a, b) in values.iter().zip(&back) {
+            assert_eq!(a.to_bits(), b.to_bits(), "{a} came back as {b}");
+        }
+    }
+
+    /// The same over 200,000 arbitrary finite doubles, all exponents included.
+    #[test]
+    fn every_float_survives_a_json_round_trip() {
+        let mut state: u64 = 0x9e37_79b9_7f4a_7c15;
+        let mut checked = 0;
+        while checked < 200_000 {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            let value = f64::from_bits(state);
+            if !value.is_finite() {
+                continue;
+            }
+            let text = serde_json::to_string(&value).expect("finite floats serialize");
+            let back: f64 = serde_json::from_str(&text).expect("and parse");
+            assert_eq!(value.to_bits(), back.to_bits(), "{text}");
+            checked += 1;
         }
     }
 }

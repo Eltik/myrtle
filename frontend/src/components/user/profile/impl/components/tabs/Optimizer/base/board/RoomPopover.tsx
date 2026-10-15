@@ -93,7 +93,7 @@ export function RoomPopover({ tile }: { tile: ITile }) {
 
     // Spare-seat picks for the crew currently displayed: the shift's rotation cell
     // when a shift tab is active, else the optimized proposal. These operators were
-    // parked for zero opportunity cost - their skills are not why they're seated.
+    // parked for zero opportunity cost: their skills are not why they're seated.
     const shiftRoom = api.viewShift != null ? api.shiftRoom(tile.slotId) : undefined;
     const proposalRoom = api.proposal?.proposal.rooms.find((r) => r.slot_id === tile.slotId);
     const benched = new Set((shiftRoom ? shiftRoom.recommended : (proposalRoom?.operators ?? [])).filter((o) => o.bench).map((o) => o.operator_id));

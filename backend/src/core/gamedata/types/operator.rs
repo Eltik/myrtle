@@ -515,6 +515,9 @@ pub struct EnrichedSkill {
     pub override_prefab_key: Option<String>,
     pub override_token_key: Option<String>,
     pub level_up_cost_cond: Vec<LevelUpCostCond>,
+    /// `Skills[i].UnlockCond`: the promotion and level the skill unlocks at.
+    #[serde(default)]
+    pub unlock_cond: Option<UnlockCondition>,
     #[serde(rename = "static")]
     pub static_data: Option<SkillStatic>,
 }
@@ -533,6 +536,23 @@ pub struct PowerAffiliation {
     pub group_id: Option<String>,
     #[serde(default, alias = "TeamId")]
     pub team_id: Option<String>,
+}
+
+/// A faction the operator belongs to that the game never puts on their card:
+/// a `SubPower` id that is not one of the `MainPower` ids. Texas the Omertosa
+/// carries `siracusa` here, W carries `rhodes`. On the EN tree of 2026-10-11,
+/// 78 `character_table` operators have at least one (80 with Amiya's two
+/// patch forms).
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct HiddenFaction {
+    /// `handbook_team_table` power id, also the `logo_{id}` camp logo name.
+    pub id: String,
+    /// The table's name for it in the server's own language, `None` when the
+    /// table does not name the id.
+    pub name: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -554,9 +574,9 @@ pub struct Operator {
     /// Primary affiliation (mirrors the top-level nation/group ids).
     #[serde(default)]
     pub main_power: Option<PowerAffiliation>,
-    /// Secondary affiliations - the game's multi-power system. RIIC faction
-    /// tags COUNT these: Texas is nation `lungmen` but `SubPower` `siracusa`,
-    /// and Umiri's "all Siracusa Operators" buff reaches her in-game.
+    /// Secondary affiliations. RIIC faction tags count these: Texas is nation
+    /// `lungmen` but `SubPower` `siracusa`, and Umiri's "all Siracusa
+    /// Operators" buff reaches her in-game.
     #[serde(default)]
     pub sub_power: Option<Vec<PowerAffiliation>>,
     /// `handbook_team_table` names of `nation_id`, `group_id` and `team_id`
@@ -568,6 +588,10 @@ pub struct Operator {
     pub group_name: Option<String>,
     #[serde(default)]
     pub team_name: Option<String>,
+    /// `sub_power` minus the `main_power` ids, in table order, named. The site
+    /// shows these only behind the reader's spoiler setting.
+    #[serde(default)]
+    pub hidden_factions: Vec<HiddenFaction>,
     pub display_number: String,
     pub appellation: String,
     pub position: OperatorPosition,
@@ -620,11 +644,10 @@ pub struct Operator {
     /// Full illustration: /upk/chararts/{id}/{id}_{1|2}.png. `None` if absent
     /// (portrait is the fallback).
     pub skin: Option<String>,
-    /// All template ids for operators that have alternate forms (Amiya only,
-    /// at time of writing). `None` for normal operators. Each id in this list
-    /// is itself a fully-enriched entry in `GameData.operators`. The list is
-    /// populated on *every* form in the group, with `default` indicating the
-    /// canonical base id.
+    /// Every template id of an operator with alternate forms (only Amiya so
+    /// far), set on each form in the group; each id is its own entry in
+    /// `GameData.operators`. `None` for everyone else. `tmpl_default` names
+    /// the base id.
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tmpl_ids: Option<Vec<String>>,
@@ -779,10 +802,9 @@ pub struct OperatorBaseSkill {
     /// Elite phase required to unlock (0, 1, or 2)
     pub unlock_elite: i32,
     pub unlock_level: i32,
-    /// Index of this skill's slot in the operator's kit (`BuffChar` order).
-    /// Tiers of one slot REPLACE each other on promotion - only the highest
-    /// tier the operator has unlocked is live, exactly as
-    /// `OperatorBaseProfile::build` picks it. Group by this to tell a
+    /// Slot index in the operator's kit (`BuffChar` order). Tiers of one slot
+    /// replace each other on promotion: only the highest unlocked tier is live,
+    /// as `OperatorBaseProfile::build` picks it. Group by this to tell a
     /// superseded tier from a second skill.
     #[serde(default)]
     pub slot: usize,

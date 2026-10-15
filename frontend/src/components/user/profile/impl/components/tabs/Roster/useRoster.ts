@@ -3,9 +3,10 @@ import { buildFilterOptions, countSharedFilters, EMPTY_SHARED_FILTERS, toFilterS
 import type { ArrayFilterKey, ISharedFilters } from "#/components/operators/list/impl/types";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { useMediaQuery } from "#/hooks/use-media-query";
+import type { IOperatorRosterItem } from "#/lib/api/operators";
 import type { IRosterEntry } from "#/lib/api/user";
-import type { IOperatorIndexEntry, IOperatorListItem } from "#/types/operators";
-import { filterEntries, sortEntries } from "./helpers";
+import type { IOperatorIndexEntry } from "#/types/operators";
+import { filterEntries, sortEntries, toOwnedEntry } from "./helpers";
 import { type IDisplayEntry, type IRosterFilterState, OWNED_ONLY_SORTS, type ViewMode } from "./types";
 
 const INITIAL: IRosterFilterState = {
@@ -20,13 +21,11 @@ const INITIAL: IRosterFilterState = {
 
 const PAGE_SIZE: Record<ViewMode, number> = { detailed: 24, compact: 48 };
 
-export function useRoster(roster: IRosterEntry[], operatorsIndex: IOperatorIndexEntry[], operatorsStatic: IOperatorListItem[]) {
-    // This key predates classes and subclasses, so the merge prevents missing arrays
-    // from throwing when returning visitors use the new filters.
-    // `hadStoredViewMode` records whether the visitor has ever chosen a view
-    // mode, so the responsive default below can tell "never picked one" from
-    // "picked compact". It is a ref rather than state: it must be readable by
-    // the init effect on the same tick the parse ran, and it never re-renders.
+export function useRoster(roster: IRosterEntry[], operatorsIndex: IOperatorIndexEntry[], operatorsStatic: IOperatorRosterItem[]) {
+    // The stored filters predate classes and subclasses, so the parse merges over
+    // INITIAL to fill the missing arrays. `hadStoredViewMode` tells "never picked a
+    // view mode" from "picked compact" for the first-visit default below; a ref,
+    // because the init effect reads it on the same tick the parse ran.
     const hadStoredViewMode = useRef(false);
     const [filters, setFilters] = useLocalStorageState<IRosterFilterState>("user:roster:filters", INITIAL, {
         parse: (raw) => {
@@ -73,32 +72,20 @@ export function useRoster(roster: IRosterEntry[], operatorsIndex: IOperatorIndex
     const ownedIds = useMemo(() => new Set(roster.map((r) => r.operator_id)), [roster]);
 
     const staticMap = useMemo(() => {
-        const m = new Map<string, IOperatorListItem>();
+        const m = new Map<string, IOperatorRosterItem>();
         for (const op of operatorsStatic) if (op.id) m.set(op.id, op);
         return m;
     }, [operatorsStatic]);
 
     const allEntries = useMemo<IDisplayEntry[]>(() => {
-        const owned: IDisplayEntry[] = roster.map((r) => {
-            const meta = indexMap.get(r.operator_id) ?? null;
-            return {
-                ...r,
-                isOwned: true,
-                meta,
-                static: staticMap.get(r.operator_id) ?? null,
-                name: meta?.name ?? r.operator_id,
-                rarity: meta?.rarity ?? 1,
-                voiceActors: meta?.voiceActors ?? [],
-            };
-        });
+        const owned: IDisplayEntry[] = roster.map((r) => toOwnedEntry(r, indexMap.get(r.operator_id) ?? null, staticMap.get(r.operator_id) ?? null));
         if (filters.ownership === "owned") return owned;
 
         const unowned: IDisplayEntry[] = [];
         for (const op of operatorsIndex) {
             if (op.isNotObtainable || ownedIds.has(op.id)) continue;
-            // Branch forms (e.g. Amiya Guard `char_1001_amiya2`, Medic
-            // `char_1037_amiya3`) are alt forms of a base operator. Ownership
-            // follows the base - never show a branch in the "unowned" list.
+            // Branch forms (Amiya Guard `char_1001_amiya2`, Medic `char_1037_amiya3`)
+            // follow their base's ownership, so a branch never lists as unowned.
             const staticOp = staticMap.get(op.id);
             if (staticOp?.tmplDefault && staticOp.tmplDefault !== op.id) continue;
             unowned.push({ isOwned: false, operator_id: op.id, name: op.name, rarity: op.rarity, meta: op, static: staticOp ?? null, voiceActors: op.voiceActors });
@@ -139,8 +126,8 @@ export function useRoster(roster: IRosterEntry[], operatorsIndex: IOperatorIndex
     const set = useCallback(<K extends keyof IRosterFilterState>(key: K, value: IRosterFilterState[K]) => setFilters((p) => ({ ...p, [key]: value })), [setFilters]);
     const removeFrom = useCallback((key: ArrayFilterKey, value: string) => setFilters((p) => ({ ...p, [key]: p[key].filter((v) => v !== value) })), [setFilters]);
     const setShared = useCallback(<K extends ArrayFilterKey>(key: K, value: ISharedFilters[K]) => setFilters((p) => ({ ...p, [key]: value })), [setFilters]);
-    // Ownership, sorting, and view mode define scope or presentation and remain intact.
-    // Source is a filter like the notes select on /operators: it counts, chips, and clears.
+    // Ownership, sort and view mode are scope, not filters, so a clear keeps them.
+    // Source counts, chips and clears like the notes select on /operators.
     const clearFilters = useCallback(() => setFilters((p) => ({ ...p, search: "", source: "any", ...EMPTY_SHARED_FILTERS })), [setFilters]);
     const activeFilterCount = countSharedFilters(filters) + (filters.search ? 1 : 0) + (filters.source !== "any" ? 1 : 0);
 

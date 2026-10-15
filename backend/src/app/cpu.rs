@@ -44,11 +44,28 @@ static PERMITS: LazyLock<usize> = LazyLock::new(|| {
 
 static CPU: LazyLock<Semaphore> = LazyLock::new(|| Semaphore::new(*PERMITS));
 
+/// A second pool for LIGHT work (a layout evaluation runs ~0.2 s), so it never
+/// queues behind a rotation or an improvements search holding the heavy
+/// permits for seconds: under a few users' rotations every evaluate timed out
+/// at the heavy queue (2026-10-15, "permits=2 waiting=3"). Same size as the
+/// heavy pool by default; `CPU_LIGHT_PERMITS` overrides.
+static LIGHT_PERMITS: LazyLock<usize> = LazyLock::new(|| {
+    std::env::var("CPU_LIGHT_PERMITS")
+        .ok()
+        .and_then(|v| v.parse::<usize>().ok())
+        .filter(|n| *n > 0)
+        .unwrap_or(*PERMITS)
+});
+
+static LIGHT: LazyLock<Semaphore> = LazyLock::new(|| Semaphore::new(*LIGHT_PERMITS));
+
 /// How long a request may wait for a permit before it is refused.
 ///
 /// A small multiple of the mean hold time (`/admin/stats`: `sum_micros / started`
 /// per kind), so a burst drains while a saturated box still sheds before the 30s
-/// handler timeout in `middleware`.
+/// handler timeout in `middleware`. A rotation holds a permit for about six
+/// seconds in release (the plan beside it), so 8 s lets one more reader queue
+/// behind it instead of a 503; light work has its own pool and never waits here.
 ///
 /// `CPU_TASK_WAIT_MS=0` restores the old behaviour EXACTLY: refuse the moment no
 /// permit is free.
@@ -56,7 +73,7 @@ static WAIT: LazyLock<Duration> = LazyLock::new(|| {
     let ms = std::env::var("CPU_TASK_WAIT_MS")
         .ok()
         .and_then(|v| v.parse::<u64>().ok())
-        .unwrap_or(2_500);
+        .unwrap_or(8_000);
     Duration::from_millis(ms)
 });
 
@@ -115,7 +132,14 @@ fn refuse(kind: &'static str, why: &'static str) -> ApiError {
 /// Take a permit, waiting a bounded time, or refuse when saturated by depth or
 /// time. Tokio's semaphore is FIFO, so new arrivals can't starve a waiter.
 async fn acquire(kind: &'static str) -> Result<SemaphorePermit<'static>, ApiError> {
-    if let Ok(permit) = CPU.try_acquire() {
+    acquire_from(&CPU, kind).await
+}
+
+async fn acquire_from(
+    pool: &'static Semaphore,
+    kind: &'static str,
+) -> Result<SemaphorePermit<'static>, ApiError> {
+    if let Ok(permit) = pool.try_acquire() {
         METRICS.cpu_started(kind);
         return Ok(permit);
     }
@@ -132,7 +156,7 @@ async fn acquire(kind: &'static str) -> Result<SemaphorePermit<'static>, ApiErro
         return Err(refuse(kind, "wait queue is full"));
     }
 
-    match tokio::time::timeout(*WAIT, CPU.acquire()).await {
+    match tokio::time::timeout(*WAIT, pool.acquire()).await {
         Ok(Ok(permit)) => {
             METRICS.cpu_started(kind);
             Ok(permit)
@@ -209,8 +233,20 @@ pub async fn admit(kind: &'static str) -> Result<Admission, ApiError> {
     })
 }
 
+/// [`admit`] on the light pool: for work that runs well under a second (a
+/// layout evaluation), kept apart from the searches so it is never shed
+/// behind them.
+pub async fn admit_light(kind: &'static str) -> Result<Admission, ApiError> {
+    let permit = acquire_from(&LIGHT, kind).await?;
+    Ok(Admission {
+        kind,
+        started: Instant::now(),
+        _permit: permit,
+    })
+}
+
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::{admit, permits, run, waiting};
     use std::time::Duration;
 
@@ -218,8 +254,9 @@ mod tests {
     /// on parallel threads, so two tests that take permits at once see each
     /// other's holdings: on a 4-core runner (2 permits) the saturation test
     /// failed its FIRST acquire while the round-trip test was mid-loop. Every
-    /// test that touches the pool holds this for its duration.
-    static POOL: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+    /// test that touches the pool holds this for its duration, including tests
+    /// elsewhere whose work goes through `run` (`app::residency`'s loads).
+    pub(crate) static POOL: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 
     #[test]
     fn permits_are_at_least_one() {

@@ -4,19 +4,21 @@ import { requireSiteToken } from "#/lib/api/_shared.server";
 import { backendFetch } from "#/lib/fetch";
 import type { DisconnectResult } from "#/types/generated/DisconnectResult";
 import type { ProfileBackground } from "#/types/generated/ProfileBackground";
+import type { ProfileHeader } from "#/types/generated/ProfileHeader";
 import type { ProfileShowcase } from "#/types/generated/ProfileShowcase";
 import type { ProfileTab } from "#/types/generated/ProfileTab";
 import type { StatusOk } from "#/types/generated/StatusOk";
 
 /**
  * A save of the profile layout: only the keys sent change, the rest are kept as stored.
- * `tabs` replaces the tab list, `showcase` the blocks, `background` the header art
- * (`null` removes it).
+ * `tabs` replaces the tab list, `showcase` the blocks, `background` the header art and
+ * `header` the hidden numbers and the stat strip (`null` removes either of the last two).
  */
 export interface IProfileLayoutPatch {
     tabs?: ProfileTab[];
     showcase?: ProfileShowcase;
     background?: ProfileBackground | null;
+    header?: ProfileHeader | null;
 }
 
 export interface IUpdateUserSettingsInput {
@@ -25,7 +27,7 @@ export interface IUpdateUserSettingsInput {
     share_stats: boolean;
     /**
      * Omitted leaves the saved layout alone, `null` resets it to the default (tabs,
-     * showcase and background alike), a patch sets the keys it carries (the backend
+     * showcase, background and header alike), a patch sets the keys it carries (the backend
      * normalizes them before storing).
      */
     profile_layout?: IProfileLayoutPatch | null;

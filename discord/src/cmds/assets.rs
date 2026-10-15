@@ -7,8 +7,10 @@ use poise::serenity_prelude as serenity;
 use serde_json::json;
 use tokio::sync::oneshot;
 
+use crate::checks::require_guild;
 use crate::db;
 use crate::types::{Context, Error};
+use crate::ui::CONTENT_MAX;
 use crate::watcher::AssetsState;
 
 /// Resolve a server label (case-insensitive) to its `AssetsState`, or error with
@@ -23,12 +25,62 @@ fn assets_state_for(ctx: &Context<'_>, server: &str) -> Result<Arc<AssetsState>,
     }
     let mut labels: Vec<&str> = states.keys().map(String::as_str).collect();
     labels.sort_unstable();
+    Err(unknown_server(server, &labels))
+}
+
+/// "Unknown server `XX`. Configured: CN, EN", with `labels` already sorted.
+fn unknown_server(server: &str, labels: &[&str]) -> Error {
     let list = if labels.is_empty() {
         "(none configured)".to_string()
     } else {
         labels.join(", ")
     };
-    Err(format!("Unknown server `{server}`. Configured: {list}").into())
+    format!("Unknown server `{server}`. Configured: {list}").into()
+}
+
+/// "every server", or "EN, JP only" for a binding with a server filter.
+fn server_scope(servers: Option<&[String]>) -> String {
+    servers.map_or_else(
+        || "every server".to_string(),
+        |s| format!("{} only", s.join(", ")),
+    )
+}
+
+/// Autocomplete a server label from the configured asset servers.
+async fn autocomplete_server(ctx: Context<'_>, partial: &str) -> Vec<String> {
+    let mut labels: Vec<String> = ctx
+        .data()
+        .assets
+        .keys()
+        .filter(|l| l.to_lowercase().starts_with(&partial.trim().to_lowercase()))
+        .cloned()
+        .collect();
+    labels.sort_unstable();
+    labels
+}
+
+/// Parse a comma list of server labels ("EN, jp") against the configured servers.
+///
+/// Returns the labels in their configured spelling, deduplicated, in configured-label order.
+/// Errors name the unknown label and list the valid ones.
+fn parse_server_filter(ctx: &Context<'_>, raw: &str) -> Result<Vec<String>, Error> {
+    let mut configured: Vec<&String> = ctx.data().assets.keys().collect();
+    configured.sort_unstable();
+    let mut wanted: Vec<String> = Vec::new();
+    for token in raw.split(',').map(str::trim).filter(|t| !t.is_empty()) {
+        let Some(label) = configured.iter().find(|l| l.eq_ignore_ascii_case(token)) else {
+            let list: Vec<&str> = configured.iter().map(|l| l.as_str()).collect();
+            return Err(unknown_server(token, &list));
+        };
+        if !wanted.contains(label) {
+            wanted.push((*label).clone());
+        }
+    }
+    if wanted.is_empty() {
+        return Err("`servers` needs at least one server label, e.g. `EN,JP`.".into());
+    }
+    wanted.sort_unstable();
+    Ok(wanted)
 }
 
 /// Manage the Arknights asset-pipeline integration.
@@ -55,7 +107,7 @@ pub async fn assets(_ctx: Context<'_>) -> Result<(), Error> {
 
 /// Configure which channel receives asset announcements for this guild.
 ///
-/// Subcommands: `set`, `clear`, `show`. Server-owner only, via the `/assets` check.
+/// Subcommands: `set`, `clear`, `show`. Bot owners only, via the `/assets` check.
 #[poise::command(
     slash_command,
     guild_only,
@@ -68,20 +120,30 @@ pub async fn assets_channel(_ctx: Context<'_>) -> Result<(), Error> {
 }
 
 /// Bind asset announcements to a channel.
+///
+/// `servers` limits the announcements to some regions (comma list, e.g. `EN,JP`). Leave it out
+/// to hear from every configured server; re-running `set` replaces both the channel and the list.
 #[poise::command(slash_command, guild_only, rename = "set")]
 pub async fn assets_channel_set(
     ctx: Context<'_>,
     #[description = "Channel to announce updates in"] channel: serenity::ChannelId,
+    #[description = "Only these servers, comma-separated (e.g. EN,JP). Omit for all."]
+    servers: Option<String>,
 ) -> Result<(), Error> {
-    let guild = ctx
-        .guild_id()
-        .ok_or("This command must be used in a guild.")?;
-    db::set_assets_channel(&ctx.data().pool, guild, channel)
+    let guild = require_guild(ctx)?;
+    let filter = servers
+        .as_deref()
+        .map(|raw| parse_server_filter(&ctx, raw))
+        .transpose()?;
+    db::set_assets_channel(&ctx.data().pool, guild, channel, filter.as_deref())
         .await
         .map_err(|e| format!("Couldn't save assets channel: {e}"))?;
+    let scope = server_scope(filter.as_deref());
     ctx.send(
         CreateReply::default()
-            .content(format!("Asset announcements will be sent to <#{channel}>."))
+            .content(format!(
+                "Asset announcements will be sent to <#{channel}>, from {scope}."
+            ))
             .ephemeral(true),
     )
     .await?;
@@ -91,9 +153,7 @@ pub async fn assets_channel_set(
 /// Stop sending asset announcements for this guild.
 #[poise::command(slash_command, guild_only, rename = "clear")]
 pub async fn assets_channel_clear(ctx: Context<'_>) -> Result<(), Error> {
-    let guild = ctx
-        .guild_id()
-        .ok_or("This command must be used in a guild.")?;
+    let guild = require_guild(ctx)?;
     let removed = db::clear_assets_channel(&ctx.data().pool, guild)
         .await
         .map_err(|e| format!("Couldn't clear assets channel: {e}"))?;
@@ -110,14 +170,16 @@ pub async fn assets_channel_clear(ctx: Context<'_>) -> Result<(), Error> {
 /// Show the configured asset-announcements channel for this guild.
 #[poise::command(slash_command, guild_only, rename = "show")]
 pub async fn assets_channel_show(ctx: Context<'_>) -> Result<(), Error> {
-    let guild = ctx
-        .guild_id()
-        .ok_or("This command must be used in a guild.")?;
+    let guild = require_guild(ctx)?;
     let content = match db::get_assets_channel(&ctx.data().pool, guild)
         .await
         .map_err(|e| format!("Couldn't read assets channel: {e}"))?
     {
-        Some(c) => format!("Asset announcements: <#{c}>"),
+        Some(binding) => format!(
+            "Asset announcements: <#{}>, from {}.",
+            binding.channel_id,
+            server_scope(binding.servers.as_deref())
+        ),
         None => "No asset channel configured.".to_string(),
     };
     ctx.send(CreateReply::default().content(content).ephemeral(true))
@@ -129,7 +191,9 @@ pub async fn assets_channel_show(ctx: Context<'_>) -> Result<(), Error> {
 #[poise::command(slash_command, guild_only, rename = "status")]
 pub async fn assets_status(
     ctx: Context<'_>,
-    #[description = "Server label (e.g. EN, CN). Omit for all."] server: Option<String>,
+    #[description = "Server label (EN, CN, JP, KR). Omit for all."]
+    #[autocomplete = "autocomplete_server"]
+    server: Option<String>,
 ) -> Result<(), Error> {
     let states = &ctx.data().assets;
     if states.is_empty() {
@@ -177,7 +241,9 @@ pub async fn assets_status(
 #[poise::command(slash_command, guild_only, rename = "resources")]
 pub async fn assets_resources(
     ctx: Context<'_>,
-    #[description = "Server label (e.g. EN, CN)"] server: String,
+    #[description = "Server label (EN, CN, JP, KR)"]
+    #[autocomplete = "autocomplete_server"]
+    server: String,
 ) -> Result<(), Error> {
     ctx.defer_ephemeral().await?;
     let state = assets_state_for(&ctx, &server)?;
@@ -216,7 +282,7 @@ pub async fn assets_resources(
         let _ = writeln!(body, "…and {} more", payload.files.len() - 25);
     }
 
-    let reply = if body.len() <= 2000 {
+    let reply = if body.len() <= CONTENT_MAX {
         CreateReply::default().content(body)
     } else {
         CreateReply::default().attachment(serenity::CreateAttachment::bytes(
@@ -226,4 +292,29 @@ pub async fn assets_resources(
     };
     ctx.send(reply.ephemeral(true)).await?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{server_scope, unknown_server};
+
+    #[test]
+    fn unknown_server_lists_the_configured_labels() {
+        assert_eq!(
+            unknown_server("XX", &["CN", "EN"]).to_string(),
+            "Unknown server `XX`. Configured: CN, EN"
+        );
+        assert_eq!(
+            unknown_server("XX", &[]).to_string(),
+            "Unknown server `XX`. Configured: (none configured)"
+        );
+    }
+
+    #[test]
+    fn server_scope_reads_every_server_without_a_filter() {
+        assert_eq!(server_scope(None), "every server");
+        let filter = vec!["EN".to_string(), "JP".to_string()];
+        assert_eq!(server_scope(Some(filter.as_slice())), "EN, JP only");
+        assert_eq!(server_scope(Some(&[])), " only");
+    }
 }

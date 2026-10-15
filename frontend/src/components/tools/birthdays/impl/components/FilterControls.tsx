@@ -4,6 +4,7 @@ import { FilterDropdown } from "#/components/operators/list/impl/components/Filt
 import { ClassIcon, TeamIcon } from "#/components/operators/list/impl/components/Icons";
 import { Input } from "#/components/ui/input";
 import { InputGroup, InputGroupAddon } from "#/components/ui/input-group";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, formatNationId, professionLabel } from "#/lib/utils";
@@ -51,20 +52,29 @@ export function FilterControls({ filters, onChange, nations, classNames }: IFilt
                 <div className="grid grid-cols-4 gap-1.5">
                     {PROFESSIONS.map((p) => {
                         const on = filters.professions.has(p);
+                        const label = professionLabel({ profession: p, professionName: classNames.get(p) });
                         return (
-                            <button
-                                key={p}
-                                type="button"
-                                title={professionLabel({ profession: p, professionName: classNames.get(p) })}
-                                aria-pressed={on}
-                                onClick={() => toggleProfession(p)}
-                                className={cn(
-                                    "inline-flex aspect-square cursor-pointer items-center justify-center rounded-md border transition-colors",
-                                    on ? "border-primary bg-[color-mix(in_oklch,var(--primary)_16%,transparent)] text-primary" : "border-border bg-[color-mix(in_oklch,var(--secondary)_50%,transparent)] text-muted-foreground hover:border-[color-mix(in_oklch,var(--primary)_45%,var(--border))] hover:text-foreground",
-                                )}
-                            >
-                                <ClassIcon profession={p} size={20} />
-                            </button>
+                            <Tooltip key={p}>
+                                <TooltipTrigger
+                                    render={
+                                        <button
+                                            type="button"
+                                            aria-label={label}
+                                            aria-pressed={on}
+                                            onClick={() => toggleProfession(p)}
+                                            className={cn(
+                                                "inline-flex aspect-square cursor-pointer items-center justify-center rounded-md border transition-colors",
+                                                on
+                                                    ? "border-primary bg-[color-mix(in_oklch,var(--primary)_16%,transparent)] text-primary"
+                                                    : "border-border bg-[color-mix(in_oklch,var(--secondary)_50%,transparent)] text-muted-foreground hover:border-[color-mix(in_oklch,var(--primary)_45%,var(--border))] hover:text-foreground",
+                                            )}
+                                        />
+                                    }
+                                >
+                                    <ClassIcon profession={p} size={20} />
+                                </TooltipTrigger>
+                                <TooltipPopup>{label}</TooltipPopup>
+                            </Tooltip>
                         );
                     })}
                 </div>

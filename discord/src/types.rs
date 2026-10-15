@@ -7,13 +7,14 @@ use std::{
 };
 use tokio::sync::{Mutex, RwLock};
 
+use crate::api::gamedata::GameData;
 use crate::config::Config;
 use crate::db::{AntiSpamPolicy, AuditSettings};
 use crate::watcher::AssetsStates;
 
 /// Per-`(guild, user)` rolling window of recent ping counts, keyed by send time.
 ///
-/// Lives only in memory — antispam doesn't need to survive restarts, and a tiny deque per
+/// Lives only in memory: antispam doesn't need to survive restarts, and a tiny deque per
 /// user is cheaper than another DB roundtrip on every message.
 pub type PingHistory = Arc<RwLock<HashMap<(GuildId, UserId), VecDeque<(Instant, u32)>>>>;
 
@@ -39,6 +40,21 @@ pub struct Data {
     pub ping_history: PingHistory,
     pub antispam_policies: AntiSpamPolicies,
     pub audit_log_settings: AuditLogSettings,
+    /// Operator, enemy, stage and story lists from the public backend, cached for
+    /// `/collection` and `/birthday`. Shared with the birthday announcer task.
+    pub gamedata: Arc<GameData>,
+    /// Which image links the backend 404s, remembered per URL for the operator view.
+    pub operator_images: crate::cmds::operator::images::ImageCheck,
+    /// Text-to-speech in voice channels: the voice, live sessions, TTS nicknames.
+    pub tts: Arc<crate::tts::Tts>,
+}
+
+impl Data {
+    /// The public frontend's base URL without a trailing slash; empty when unconfigured.
+    #[must_use]
+    pub fn frontend(&self) -> &str {
+        self.config.endpoints.public_frontend.trim_end_matches('/')
+    }
 }
 
 pub type Error = Box<dyn std::error::Error + Send + Sync>;

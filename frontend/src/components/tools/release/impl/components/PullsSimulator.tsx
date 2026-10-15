@@ -6,9 +6,10 @@ import { Card } from "#/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { useFormatters, useT } from "#/lib/i18n";
 import { cn } from "#/lib/utils";
-import { bannerModel, type IBannerModel, ORUNDUM_PER_PULL } from "../pulls/rates";
+import { bannerModel, type IBannerModel, type ISharedPity, ORUNDUM_PER_PULL, startPityFor } from "../pulls/rates";
 import { createPuller, type IPuller, type IPullOutcome, type ITargetStats, simulateToTarget } from "../pulls/simulate";
-import { type BannerArchetype, BannerModelNote, type PullsT, Stat, useBannerLabel, usePct } from "./PullsShared";
+import { categoryTicks, noVerticalGridLines } from "../pulls/ticks";
+import { type BannerArchetype, BannerModelNote, type PullsT, renderAxisTick, Stat, useBannerLabel, useChartWidth, usePct } from "./PullsShared";
 import { SectionTitle } from "./shared";
 
 const ARCHETYPES: { ruleType: BannerArchetype; featuredCount: number }[] = [
@@ -40,7 +41,8 @@ const RARITY_COLOR: Record<number, string> = {
 
 interface IPullsSimulatorProps {
     budget: number;
-    pity: number;
+    /** The user's pity on the Standard and Kernel counters, which are separate. */
+    pity: ISharedPity;
 }
 
 export function PullsSimulator({ budget, pity }: IPullsSimulatorProps): React.ReactElement {
@@ -57,7 +59,7 @@ export function PullsSimulator({ budget, pity }: IPullsSimulatorProps): React.Re
         const a = ARCHETYPES.find((x) => x.ruleType === ruleType) ?? ARCHETYPES[0];
         return bannerModel({ ruleType: a.ruleType, featuredCount: a.featuredCount });
     }, [ruleType]);
-    const startPity = model.carryOver ? pity : 0;
+    const startPity = startPityFor(model, pity);
 
     /**
      * The puller IS the run: one mutable object holding pity, copies and the
@@ -111,14 +113,22 @@ export function PullsSimulator({ budget, pity }: IPullsSimulatorProps): React.Re
             })),
         [stats],
     );
+    const [chartRef, chartWidth] = useChartWidth();
+    const xTicks = React.useMemo(
+        () =>
+            categoryTicks(
+                chartRows.map((r) => r.at),
+                chartWidth,
+            ),
+        [chartRows, chartWidth],
+    );
 
     const state = puller.state;
     const doPull = (n: number) => {
         const drawn = puller.pullMany(n);
         setHistory((h) => [...drawn].reverse().concat(h).slice(0, 60));
     };
-    // Bumping the run id is what rebuilds the puller, because the memo is the only
-    // thing holding the run's state and a new identity is the only way to clear it.
+    // A new run id changes the signature, which is the only thing that rebuilds the puller.
     const reset = () => setRunId((n) => n + 1);
 
     return (
@@ -217,12 +227,12 @@ export function PullsSimulator({ budget, pity }: IPullsSimulatorProps): React.Re
                     <Stat label={t("release.pulls.sim.p90")} value={f.number(stats.p90)} />
                     {withinBudget !== null && <Stat label={t("release.pulls.sim.withinBudget", { count: f.number(budget) })} value={pct(withinBudget, 0)} />}
                 </div>
-                <div className="h-44 w-full sm:h-52" role="img" aria-label={t("release.pulls.a11y.chartSim", { median: f.number(stats.p50), p90: f.number(stats.p90) })}>
+                <div ref={chartRef} className="h-44 w-full sm:h-52" role="img" aria-label={t("release.pulls.a11y.chartSim", { median: f.number(stats.p50), p90: f.number(stats.p90) })}>
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={chartRows} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
-                            <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="at" tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} stroke="var(--border)" minTickGap={30} />
-                            <YAxis tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} stroke="var(--border)" width={44} allowDecimals={false} />
+                            <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} verticalCoordinatesGenerator={noVerticalGridLines} />
+                            <XAxis dataKey="at" ticks={xTicks} interval={0} tick={renderAxisTick} stroke="var(--border)" />
+                            <YAxis interval={0} tick={renderAxisTick} stroke="var(--border)" width={44} allowDecimals={false} />
                             <Tooltip
                                 cursor={{ fill: "var(--muted)", opacity: 0.4 }}
                                 contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}

@@ -30,6 +30,12 @@ export interface IRandomizerSettings {
     onlyCompletedStages: boolean;
     onlyAvailableStages: boolean;
     onlyE2Operators: boolean;
+    /** Narrows the E2 rule to 6★; an owned operator of a lower rarity then passes it at any promotion. */
+    e2SixStarOnly: boolean;
+    /** Official tier list the pool is filtered by; `null` = no tier filter. */
+    tierListSlug: string | null;
+    /** Tier ids (or `UNRANKED_TIER_ID`) left out of the pool. Stored as exclusions so a tier added later is included. */
+    deselectedTierIds: string[];
     /** Stage IDs the user has explicitly opted out of. Empty = all stages allowed. */
     deselectedStageIds: string[];
 }
@@ -68,14 +74,12 @@ export interface ISquadFilterChallenge extends IChallengeBase {
 /** A challenge that only applies when the rolled stage matches a predicate. */
 export interface IStageChallenge extends IChallengeBase {
     type: "STAGE";
-    /** Return true if this challenge should be eligible for the given rolled stage. */
     match: (stage: IStage) => boolean;
 }
 
 export type IChallenge = IPlainChallenge | ISquadFilterChallenge | IStageChallenge;
 
 export interface IRosterIndex {
-    /** Set of operator IDs the user owns. */
     owned: Set<string>;
     /** Subset of owned operators with elite ≥ 2. */
     e2: Set<string>;

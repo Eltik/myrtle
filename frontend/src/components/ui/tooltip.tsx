@@ -30,8 +30,11 @@ export function TooltipPopup({
     anchor?: TooltipPrimitive.Positioner.Props["anchor"];
     portalProps?: TooltipPrimitive.Portal.Props;
 }): React.ReactElement {
+    // A popup portalled to <body> is invisible while another element is fullscreen (the
+    // story reader, the archives network chart), so it joins the fullscreen element instead.
+    const fullscreenContainer = typeof document !== "undefined" ? (document.fullscreenElement as HTMLElement | null) : null;
     return (
-        <TooltipPrimitive.Portal {...portalProps}>
+        <TooltipPrimitive.Portal container={fullscreenContainer ?? undefined} {...portalProps}>
             <TooltipPrimitive.Positioner align={align} anchor={anchor} className="z-70 h-(--positioner-height) w-(--positioner-width) max-w-(--available-width) transition-[top,left,right,bottom,transform] data-instant:transition-none" data-slot="tooltip-positioner" side={side} sideOffset={sideOffset}>
                 <TooltipPrimitive.Popup
                     className={cn(

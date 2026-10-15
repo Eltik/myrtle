@@ -63,6 +63,7 @@ export function StatsForNerds() {
     const planned = api.proposal?.proposal;
     const diffs = (api.proposal?.room_diffs ?? []).filter((d) => d.before.join() !== d.after.join());
     const rotation = api.rotation?.rotation;
+    const comparison = api.rotation?.comparison;
     const timeline = rotation?.sustainability?.timeline ?? [];
 
     const depleting = sustain.filter((entry) => entry.lasts_hours !== null);
@@ -110,8 +111,30 @@ export function StatsForNerds() {
                         {rotation?.sustained && rotation.sustained.length > 0 && <Row label={t("profile.base.nerds.sustained")}>{rotation.sustained.map((o) => o.name).join(", ")}</Row>}
                     </Section>
 
+                    {comparison?.presets && (
+                        <Section title={t("profile.base.nerds.rotationComparison")}>
+                            <Row label={t("profile.base.nerds.productionEfficiency")}>
+                                {Math.round(comparison.presets.production_efficiency)}% &rarr; {Math.round(comparison.recommended.production_efficiency)}% <Delta from={comparison.presets.production_efficiency} suffix="%" to={comparison.recommended.production_efficiency} />
+                            </Row>
+                            <Row label={t("profile.base.headline.lmd")}>
+                                {num(comparison.presets.lmd_per_day, f)} &rarr; {num(comparison.recommended.lmd_per_day, f)} <Delta from={comparison.presets.lmd_per_day} to={comparison.recommended.lmd_per_day} />
+                            </Row>
+                            <Row label={t("profile.base.headline.exp")}>
+                                {num(comparison.presets.exp_per_day, f)} &rarr; {num(comparison.recommended.exp_per_day, f)} <Delta from={comparison.presets.exp_per_day} to={comparison.recommended.exp_per_day} />
+                            </Row>
+                            <Row label={t("profile.base.nerds.totalValue")}>
+                                {num(comparison.presets.total_value, f)} &rarr; {num(comparison.recommended.total_value, f)} <Delta from={comparison.presets.total_value} to={comparison.recommended.total_value} />
+                            </Row>
+                            <Row label={t("profile.base.nerds.shiftsMatching")}>
+                                {comparison.matching_cells} / {comparison.production_cells}
+                            </Row>
+                            {comparison.matching_cells === comparison.production_cells && comparison.production_cells > 0 && <p className="text-[11px] text-emerald-400">{t("profile.base.nerds.presetsMatch")}</p>}
+                        </Section>
+                    )}
+
                     {baseline && planned && (
                         <Section title={t("profile.base.nerds.comparison")}>
+                            <p className="text-[11px] text-muted-foreground">{t("profile.base.nerds.comparison.note")}</p>
                             <Row label={t("profile.base.nerds.productionEfficiency")}>
                                 {Math.round(baseline.total_production_efficiency)}% &rarr; {Math.round(planned.total_production_efficiency)}% <Delta from={baseline.total_production_efficiency} suffix="%" to={planned.total_production_efficiency} />
                             </Row>

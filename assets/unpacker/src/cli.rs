@@ -33,6 +33,17 @@ pub enum Command {
     /// and `.mp4` in an existing output tree (the same step `extract` runs
     /// last)
     BackfillVideo(BackfillVideoArgs),
+    /// Write an AAC `.m4a` beside every in-game music `.ogg` in an existing
+    /// output tree (the same step `extract` runs after the audio export)
+    BackfillMusic(BackfillMusicArgs),
+    /// Resolve which `FlatBuffers` schema every gamedata table needs from the
+    /// live bundles, the generated CN schemas and the vendored history, and
+    /// write it into the schema store (`assets/schemas`)
+    SchemaSync(SchemaSyncArgs),
+    /// Regenerate the gamedata `.fbs` schemas from the CN Windows client
+    /// (`GameAssembly.dll` + `global-metadata.dat`, from `downloader -s cn
+    /// client-download`)
+    SchemaGen(SchemaGenArgs),
 }
 
 #[derive(Parser)]
@@ -246,4 +257,111 @@ pub struct BackfillVideoArgs {
     /// Transcode every clip even when its outputs are newer than the `.usm`
     #[arg(long)]
     pub force: bool,
+}
+
+/// `unpacker backfill-music`: the music step of an extract on its own. It has
+/// `ffmpeg` write `<clip>.m4a` (AAC-LC 192k, source rate, `+faststart`) beside
+/// every `.ogg` under `audio/audio/sound_beta_2/music/` and every `m_*.ogg`
+/// under `audio/anon/`, for browsers without a Vorbis decoder. A clip whose
+/// `.m4a` is newer than its `.ogg`, or whose `.ogg` matches the fingerprint in
+/// `audio/m4a_sources.json`, is skipped. Exits 1 when `ffmpeg` is missing or a
+/// clip fails, where `extract` only warns.
+#[derive(Parser)]
+pub struct BackfillMusicArgs {
+    /// Output tree for one server (the directory holding `audio/`)
+    #[arg(short, long)]
+    pub output: PathBuf,
+
+    /// Transcode every clip even when its `.m4a` is current
+    #[arg(long)]
+    pub force: bool,
+}
+
+/// `unpacker schema-sync`. The contract (candidate order, scoring, lock
+/// format) is `assets/schemas/README.md`. Exit codes: 0 resolved; 2 a table
+/// that verified in the previous lock now verifies under no candidate on a
+/// server where it did; 1 error.
+#[derive(Parser)]
+pub struct SchemaSyncArgs {
+    /// `unpacker schema-gen` output (`<stem>.fbs`, `client.json`,
+    /// `schema-gen.json`): the CN candidates. Without it CN is the stored `cn/`
+    #[arg(long)]
+    pub generated: Option<PathBuf>,
+
+    /// The schema store (default: `assets/schemas` beside this crate)
+    #[arg(long)]
+    pub store: Option<PathBuf>,
+
+    /// `<server>=<dir>` gamedata-profile download (anon/*.ab + .idx); repeat
+    /// per server. `cn` is the CN side, every other name a Yostar server
+    #[arg(long = "bundles", value_parser = parse_bundles)]
+    pub bundles: Vec<(String, PathBuf)>,
+
+    /// Write the before/after matrix as Markdown here
+    #[arg(long)]
+    pub report: Option<PathBuf>,
+
+    /// How many buffers of a directory-routed table (`prts___levels`, the first
+    /// N in sorted path order) must verify
+    #[arg(long, default_value_t = 20)]
+    pub levels_sample: usize,
+
+    /// Binary-schema cache (default: `unpacker-bfbs-cache` in the temp dir)
+    #[arg(long)]
+    pub cache: Option<PathBuf>,
+
+    /// Instead of syncing, verify every gamedata buffer through the generated
+    /// decoder AND the reflection verifier under the store's current schemas,
+    /// and print where they disagree (exit 1 on any disagreement)
+    #[arg(long)]
+    pub self_check: bool,
+
+    /// Compare the resulting Yostar choice with another tree of `.fbs` files
+    /// (a measurement aid)
+    #[arg(long, hide = true)]
+    pub compare_dir: Option<PathBuf>,
+}
+
+fn parse_bundles(s: &str) -> Result<(String, PathBuf), String> {
+    let (server, dir) = s
+        .split_once('=')
+        .ok_or_else(|| format!("expected <server>=<dir>, got `{s}`"))?;
+    if server.is_empty() || dir.is_empty() {
+        return Err(format!("expected <server>=<dir>, got `{s}`"));
+    }
+    Ok((server.to_lowercase(), PathBuf::from(dir)))
+}
+
+/// `unpacker schema-gen`; see `unpacker::schema::gen`. Exit codes: 0 success;
+/// 1 error; 2 `--compare` found a file neither IDENTICAL nor in
+/// `--allow-diff`; 3 the client's binary layout is not what the reader knows
+/// (a human must look).
+#[derive(Parser)]
+pub struct SchemaGenArgs {
+    /// Directory holding `GameAssembly.dll`, `global-metadata.dat` and
+    /// `client.json`
+    #[arg(long)]
+    pub client: PathBuf,
+
+    /// Where to write `<stem>.fbs`, `client.json` and `schema-gen.json`
+    #[arg(long, required_unless_present = "discover")]
+    pub out: Option<PathBuf>,
+
+    /// Root map (default: `assets/schemas/roots.json` beside this crate)
+    #[arg(long)]
+    pub roots: Option<PathBuf>,
+
+    /// Compare the output with every `.fbs` in this directory (comments and
+    /// whitespace ignored) and print IDENTICAL / DIFF / MISSING per file
+    #[arg(long)]
+    pub compare: Option<PathBuf>,
+
+    /// Comma-separated stems allowed to be DIFF or MISSING under `--compare`
+    #[arg(long, value_delimiter = ',')]
+    pub allow_diff: Vec<String>,
+
+    /// Only list the client's `ConstTable` / `SimpleKVTable` classes whose
+    /// root the root map does not name, as JSON, and exit
+    #[arg(long)]
+    pub discover: bool,
 }

@@ -485,6 +485,7 @@ mod tests {
             servers: servers.to_vec(),
             default_server: servers[0],
             asset_ws_urls: HashMap::new(),
+            role_recheck: true,
         };
         let map = load_server_map_with(&config, lazy, |_| ());
         let db = sqlx::postgres::PgPoolOptions::new()
@@ -524,6 +525,7 @@ mod tests {
     #[tokio::test]
     async fn failed_servers_boot_unavailable_and_a_reload_retries_them() {
         let _serial = serial();
+        let _cpu = crate::app::cpu::tests::POOL.lock().await;
         let scratch = Scratch::new("fail");
         let state = state_for(scratch.base(), &[Server::EN, Server::CN], &[]);
 
@@ -564,6 +566,7 @@ mod tests {
     #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
     async fn lazy_server_loads_once_on_request_and_unloads_when_idle() {
         let _serial = serial();
+        let _cpu = crate::app::cpu::tests::POOL.lock().await;
         let scratch = Scratch::new("lazy");
         scratch.write_server(Server::EN);
         scratch.write_server(Server::JP);
@@ -657,6 +660,7 @@ mod tests {
     #[tokio::test]
     async fn sidecar_patch_shares_the_live_tables() {
         let _serial = serial();
+        let _cpu = crate::app::cpu::tests::POOL.lock().await;
         let scratch = Scratch::new("patch");
         scratch.write_server(Server::EN);
         scratch.write_server(Server::CN);
@@ -700,6 +704,7 @@ mod tests {
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn route_layer_loads_the_named_server() {
         let _serial = serial();
+        let _cpu = crate::app::cpu::tests::POOL.lock().await;
         use axum::body::Body;
         use axum::http::{Request as HttpRequest, StatusCode};
         use tower::ServiceExt;

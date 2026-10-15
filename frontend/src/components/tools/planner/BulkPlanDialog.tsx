@@ -9,7 +9,7 @@ import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { useAuth } from "#/hooks/use-auth";
 import { APIError } from "#/lib/api/_shared";
 import { operatorQueryOptions } from "#/lib/api/operators";
-import { type IOperatorPlanResponse, type IPresetTarget, PLANS_QUERY_PREFIX, plansQueryOptions, upsertPlanFn } from "#/lib/api/planner";
+import { type IOperatorPlanResponse, type IPresetTarget, invalidatePlanQueries, plansQueryOptions, upsertPlanFn } from "#/lib/api/planner";
 import { type IRosterEntry, userRosterQueryOptions } from "#/lib/api/user";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -172,7 +172,7 @@ export function BulkPlanDialog({ open, onOpenChange }: IBulkPlanDialogProps): Re
             else nextFailures[id] = errorMessage(result.reason);
         });
 
-        if (savedIds.size > 0) queryClient.invalidateQueries({ queryKey: PLANS_QUERY_PREFIX });
+        if (savedIds.size > 0) invalidatePlanQueries(queryClient);
         setIsSaving(false);
         if (Object.keys(nextFailures).length === 0) {
             onOpenChange(false);
@@ -184,7 +184,7 @@ export function BulkPlanDialog({ open, onOpenChange }: IBulkPlanDialogProps): Re
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogPopup bottomStickOnMobile={false} className="flex h-[min(840px,calc(100vh-4rem))] w-full max-w-[min(1152px,calc(100vw-2rem))] flex-col overflow-hidden p-0">
+            <DialogPopup bottomStickOnMobile={false} className="flex h-[min(840px,calc(100dvh-2rem))] w-full max-w-[min(1152px,calc(100vw-2rem))] flex-col overflow-hidden p-0">
                 <DialogHeader>
                     <DialogTitle>{t("planner.bulk.title")}</DialogTitle>
                     <DialogDescription>{t("planner.bulk.desc")}</DialogDescription>
@@ -247,7 +247,6 @@ export function BulkPlanDialog({ open, onOpenChange }: IBulkPlanDialogProps): Re
 
 interface IPreviewRowProps {
     row: IPreviewRow;
-    /** The save error for this operator, if its last save failed. */
     failure: string | undefined;
     onRemove: () => void;
 }

@@ -1,9 +1,12 @@
 use axum::Json;
 use axum::extract::State;
 use serde::Serialize;
+use std::collections::BTreeMap;
 use std::time::{Duration, Instant};
 
 use crate::app::state::AppState;
+use crate::core::gamedata::stale::StaleTable;
+use crate::core::gamedata::types::GameData;
 
 #[derive(Serialize, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
@@ -26,17 +29,49 @@ struct CacheHealth {
     response_time_ms: f64,
 }
 
-/// Tables that fell back to an empty default on the most recent load, per server.
+/// Game data problems from the most recent load, per server. Two kinds, kept apart:
 ///
-/// Deliberately does NOT flip the top-level `status`: a degraded table is a data
-/// problem, not an availability one, and paging an uptime monitor for a cosmetic
-/// table would train everyone to ignore it. Report it, don't alarm on it.
+/// - `degraded` / `tables`: a table failed to DESERIALIZE and fell back to an empty
+///   default, so the site serves nothing where that table's content should be.
+/// - `stale`: a table the unpacker SKIPPED because it verified under no schema, so
+///   the file on disk is an earlier extract's. It parses and serves plausible data
+///   that is missing whatever the newer patch added. Never counted in `degraded`.
+///
+/// Neither flips the top-level `status`: both are data problems, not availability
+/// ones, and paging an uptime monitor for a cosmetic table would train everyone to
+/// ignore it.
 #[derive(Serialize, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 struct GameDataHealth {
+    /// True when any server has a table in `tables`. Says nothing about `stale`.
     degraded: bool,
-    /// `{ "cn": ["item_table: ...", ...] }`. Absent servers loaded cleanly.
-    tables: std::collections::BTreeMap<String, Vec<String>>,
+    /// `{ "cn": ["item_table: ...", ...] }`, tables that fell back to an empty
+    /// default. Absent servers loaded cleanly.
+    tables: BTreeMap<String, Vec<String>>,
+    /// `{ "en": [{ "table": "activity_table", "since": ..., "resVersion": ... }] }`,
+    /// tables served from an earlier extract since `since`. Absent servers are
+    /// current, or predate the unpacker's `gamedata/.skipped.json`.
+    stale: BTreeMap<String, Vec<StaleTable>>,
+}
+
+impl GameDataHealth {
+    fn from_servers<'a>(servers: impl IntoIterator<Item = (&'a str, &'a GameData)>) -> Self {
+        let mut tables = BTreeMap::new();
+        let mut stale = BTreeMap::new();
+        for (srv, gd) in servers {
+            if !gd.table_warnings.is_empty() {
+                tables.insert(srv.to_owned(), gd.table_warnings.clone());
+            }
+            if !gd.stale_tables.is_empty() {
+                stale.insert(srv.to_owned(), gd.stale_tables.clone());
+            }
+        }
+        Self {
+            degraded: !tables.is_empty(),
+            tables,
+            stale,
+        }
+    }
 }
 
 #[derive(Serialize, utoipa::ToSchema)]
@@ -85,20 +120,17 @@ pub async fn health(State(state): State<AppState>) -> Json<HealthResponse> {
 
     let all_ok = cache_ok && db_ok;
 
-    let mut tables: std::collections::BTreeMap<String, Vec<String>> =
-        std::collections::BTreeMap::new();
-    for srv in state.config.servers.iter().copied() {
-        if let Some(sd) = state.try_server_data(srv) {
-            let warnings = sd.game_data.load_full().table_warnings.clone();
-            if !warnings.is_empty() {
-                tables.insert(srv.as_str().to_owned(), warnings);
-            }
-        }
-    }
-    let game_data = GameDataHealth {
-        degraded: !tables.is_empty(),
-        tables,
-    };
+    let loaded: Vec<_> = state
+        .config
+        .servers
+        .iter()
+        .filter_map(|&srv| {
+            state
+                .try_server_data(srv)
+                .map(|sd| (srv.as_str(), sd.game_data.load_full()))
+        })
+        .collect();
+    let game_data = GameDataHealth::from_servers(loaded.iter().map(|(srv, gd)| (*srv, &**gd)));
 
     Json(HealthResponse {
         status: if all_ok { "ok" } else { "degraded" },
@@ -119,4 +151,61 @@ pub async fn health(State(state): State<AppState>) -> Json<HealthResponse> {
         timestamp: chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true),
         response_time_ms: elapsed_ms(start.elapsed()),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::core::gamedata::types::GameTables;
+    use std::collections::HashMap;
+
+    fn stale(table: &str) -> StaleTable {
+        StaleTable {
+            table: table.into(),
+            since: "2026-10-14T05:00:00Z".into(),
+            res_version: Some("26-10-03-16-06-39_0a6acf".into()),
+        }
+    }
+
+    /// A stale table shows under `stale` and leaves `degraded` false; a fallen-back
+    /// one is the only thing that sets `degraded`. Clean servers are absent from both.
+    #[test]
+    fn stale_and_degraded_are_reported_apart() {
+        let tables = |t: GameTables| GameData::from_parts(t, Default::default(), HashMap::new());
+        let en = tables(GameTables {
+            stale_tables: vec![stale("activity_table")],
+            ..GameTables::default()
+        });
+        let cn = tables(GameTables {
+            table_warnings: vec!["item_table: unknown variant".into()],
+            ..GameTables::default()
+        });
+        let jp = GameData::default();
+
+        let only_stale = GameDataHealth::from_servers([("en", &en), ("jp", &jp)]);
+        assert_eq!(
+            serde_json::to_value(&only_stale).unwrap(),
+            serde_json::json!({
+                "degraded": false,
+                "tables": {},
+                "stale": { "en": [{
+                    "table": "activity_table",
+                    "since": "2026-10-14T05:00:00Z",
+                    "resVersion": "26-10-03-16-06-39_0a6acf"
+                }] }
+            })
+        );
+
+        let both = GameDataHealth::from_servers([("en", &en), ("cn", &cn), ("jp", &jp)]);
+        let v = serde_json::to_value(&both).unwrap();
+        assert_eq!(v["degraded"], true);
+        assert_eq!(
+            v["tables"],
+            serde_json::json!({ "cn": ["item_table: unknown variant"] })
+        );
+        assert_eq!(
+            v["stale"].as_object().unwrap().keys().collect::<Vec<_>>(),
+            ["en"]
+        );
+    }
 }

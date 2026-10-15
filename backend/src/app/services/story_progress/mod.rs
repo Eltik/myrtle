@@ -240,9 +240,8 @@ pub async fn put(
     .bind(&doc.0)
     .fetch_one(&state.db)
     .await?;
-    // The document is replaced whole and nothing reads it. The two game fields ride
-    // along because the response type is shared with the GET; empty here would
-    // misreport an account that has imported marks.
+    // The game fields ride along because the response type is shared with the
+    // GET; empty here would misreport an account that has imported marks.
     let (game_read, game_unread, game_archived, game_synced_at) =
         game_read_for(state, user_id).await?;
     Ok(StoryProgressResponse {

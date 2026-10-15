@@ -1,5 +1,6 @@
 import * as PIXI from "pixi.js";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FrameStepper, type IFramePosition } from "#/components/ui/frame-stepper";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Spinner } from "#/components/ui/spinner";
 import type { IChibiCharacter, IChibiSkin } from "#/lib/api/chibis";
@@ -7,7 +8,7 @@ import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { capitalize } from "#/lib/utils";
 import type { messages } from "./ChibiViewer.messages";
-import { ANIMATION_SPEED, CHIBI_OFFSET_X, CHIBI_OFFSET_Y, type ViewType } from "./constants";
+import { ANIMATION_SPEED, CHIBI_OFFSET_X, CHIBI_OFFSET_Y, SPINE_FALLBACK_FPS, type ViewType } from "./constants";
 import { DownloadButton } from "./download-button";
 import { chibiMaxScale, getAvailableViewTypes, type IAnimationBounds, loadSpineWithEncodedURLs, measureAnimationBounds, resolveChibiView } from "./helpers";
 import { useRecorder } from "./use-recorder";
@@ -47,6 +48,10 @@ export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
     const mountedRef = useRef(true);
     const loadIdRef = useRef(0);
     const recordingRef = useRef(false);
+    const viewerRef = useRef<HTMLDivElement>(null);
+    // Read by the tick loop, so a pause takes effect on the next frame without a re-render.
+    const pausedRef = useRef(false);
+    const [paused, setPaused] = useState(false);
 
     const [selectedAnimation, setSelectedAnimation] = useState<string>("Idle");
     const [availableAnimations, setAvailableAnimations] = useState<string[]>([]);
@@ -199,8 +204,10 @@ export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
                 if (!mountedRef.current) return;
                 const dt = Math.min((now - lastTick) / 1000, 0.1);
                 lastTick = now;
-                if (!recordingRef.current && spineRef.current) spineRef.current.update(dt);
-                // Rendered while recording too, as PIXI's ticker did: the recorder has moved the
+                // Paused still applies the pose at zero delta, so a step, an
+                // animation change or the recorder's restore shows at once.
+                if (!recordingRef.current && spineRef.current) spineRef.current.update(pausedRef.current ? 0 : dt);
+                // Rendered while recording too: the recorder has moved the
                 // spine onto its own app, so the live canvas shows it gone, not a frozen frame.
                 if (appRef.current?.renderer) appRef.current.renderer.render(appRef.current.stage);
                 animationFrameId = requestAnimationFrame(tick);
@@ -231,8 +238,39 @@ export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
         setViewType(value as ViewType);
     };
 
+    const handlePausedChange = useCallback((next: boolean) => {
+        pausedRef.current = next;
+        setPaused(next);
+    }, []);
+
+    const getPosition = useCallback((): IFramePosition | null => {
+        const spine = spineRef.current;
+        const entry = spine?.state.tracks[0];
+        if (!spine || !entry) return null;
+        const fps = spineFps(spine);
+        const duration = entry.animationEnd;
+        const total = Math.max(1, Math.round(duration * fps));
+        const seconds = duration > 0 ? entry.trackTime % duration : 0;
+        return { frame: Math.round(seconds * fps) % total, total, seconds };
+    }, []);
+
+    // Seeks the track to the neighbouring frame. Track time restarts inside
+    // the clip, which a looping entry wraps the same way; the paused tick
+    // applies the new pose.
+    const handleStep = useCallback(
+        (direction: -1 | 1) => {
+            const spine = spineRef.current;
+            const entry = spine?.state.tracks[0];
+            const pos = getPosition();
+            if (!spine || !entry || !pos) return;
+            const frame = (pos.frame + direction + pos.total) % pos.total;
+            entry.trackTime = frame / spineFps(spine);
+        },
+        [getPosition],
+    );
+
     return (
-        <div className="w-full rounded-lg border border-border bg-card/30 p-3">
+        <div className="w-full rounded-lg border border-border bg-card/30 p-3" ref={viewerRef}>
             <h4 className="mb-2 font-medium text-foreground">{t("chibi.title")}</h4>
 
             <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -281,6 +319,21 @@ export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
                     </div>
                 )}
             </div>
+            <FrameStepper className="mt-2" disabled={isLoading || !!error || isRecording} getPosition={getPosition} onPausedChange={handlePausedChange} onStep={handleStep} paused={paused} scopeRef={viewerRef} />
         </div>
     );
+}
+
+/**
+ * The skeleton's own dopesheet rate when its export kept it (`fps` is a
+ * nonessential field), else 30. Census of all 4,496 EN skeletons on
+ * 2026-10-11: the 1,307 that record a rate all record 30.0 (419 BattleFront,
+ * 399 BattleBack, 487 Enemy, 2 DynIllust), none records anything else, 3,169
+ * (every parsed Building one among them) were exported without it, and 20 did
+ * not parse as 3.8 headers. So one frame is 1/30 s wherever it can be read,
+ * and 30 is the only rate the data offers for the rest.
+ */
+function spineFps(spine: import("pixi-spine").Spine): number {
+    const fps = (spine.spineData as { fps?: number }).fps;
+    return fps !== undefined && fps > 0 ? fps : SPINE_FALLBACK_FPS;
 }

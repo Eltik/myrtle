@@ -41,12 +41,10 @@ use crate::core::hypergryph::constants::Server;
 /// How long a computed aggregate is served before it is rebuilt.
 pub const MAX_AGE: Duration = Duration::from_hours(6);
 
-/// How many accounts one blocking hand-off folds.
-///
-/// The stage documents average 27 KB each, so a batch of 128 is about 3.4 MB
-/// in flight and 21 hand-offs over the 2,585 counted accounts. It is a TRADE
-/// and not a derived number: small enough that the resident set is bounded,
-/// large enough that `spawn_blocking` overhead is noise against the parse.
+/// Accounts per blocking hand-off. Stage documents average 27 KB, so 128 is
+/// ~3.4 MB in flight and 21 hand-offs over 2,585 accounts. A trade, not a
+/// derived number: bounds RSS while keeping `spawn_blocking` overhead noise
+/// next to the parse.
 const BATCH: usize = 128;
 
 /// One story and how many accounts have read it.
@@ -68,28 +66,22 @@ pub struct StoryGroupReaders {
     pub id: String,
     /// Accounts that have read at least one story in the group.
     pub readers: u32,
-    /// Accounts that have read every GATED story in the group, the stories
-    /// the stage records can speak for. A group with no gated story counts 0,
-    /// and the tab prints that as not measurable rather than as nobody:
-    /// 494 EN stories carry no gate (every operator record, 20 mini vignettes,
-    /// `main_0`'s two Prologue guide entries), and 2,313 of 2,576 accounts are
-    /// known only through their stage records, so "every scripted story"
-    /// would have made chapter 0 finished by 0 of its 2,314 readers.
+    /// Accounts that read every GATED story in the group (the ones stage
+    /// records can speak for). 0 on a group with no gated story; the tab shows
+    /// that as unmeasurable, not as nobody. 494 EN stories have no gate (every
+    /// operator record, 20 mini vignettes, `main_0`'s two Prologue guide
+    /// entries) and 2,313 of 2,576 accounts are known only from stage records,
+    /// so "every scripted story" made chapter 0 finished by 0 of 2,314 readers.
     pub finished: u32,
-    /// Readers per story, in the group's own story order: the "how far people
-    /// get" curve. It is the same number `stories[]` carries for each id,
-    /// arranged so a consumer can draw the curve without a join.
+    /// Readers per story in the group's story order (the "how far people get"
+    /// curve): the same numbers as `stories[]`, pre-joined.
     ///
-    /// ABSENT on an operator's records, and only there. Carrying it for all
-    /// 766 groups put the document at 153,950 bytes, over the 150 KB the wire
-    /// contract allows; dropping it from the 315 record groups, which hold 367
-    /// one-story-deep curves that say nothing their `readers` count does not,
-    /// brings it to 150,066. That is 3,534 bytes under the ceiling and about 70
-    /// more stories, which is a THIN margin: the real-data test asserts the
-    /// ceiling, so the next EN batch that crosses it says so before the wire
-    /// does, and the fix then is to drop the curve everywhere and let the
-    /// consumer join it. A consumer that wants a record's curve reads
-    /// `stories[]`, which is where every one of these numbers came from.
+    /// Absent only on operator records. On all 766 groups the document was
+    /// 153,950 bytes, over the 150 KB wire limit; dropping it from the 315
+    /// record groups (367 one-story curves that add nothing over `readers`)
+    /// gives 150,066, 3,534 bytes (about 70 stories) under. The real-data test
+    /// asserts the ceiling; when it trips, drop the curve everywhere and join
+    /// client-side.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub depth: Option<Vec<u32>>,
@@ -312,12 +304,9 @@ impl Tally {
         }
     }
 
-    /// Fold one account in.
-    ///
-    /// The three sources are applied in the order the reader's own library
-    /// applies them, and the WITHDRAWAL is last: an `unread` key takes a mark
-    /// away whichever source put it there, which is what makes a hand clear on
-    /// a story the game thinks was played stick.
+    /// Fold one account in. Sources apply in the reader library's order with
+    /// the `unread` withdrawal last, so a hand clear sticks even on a story the
+    /// game thinks was played.
     pub fn add(&mut self, plan: &CommunityPlan, account: &AccountRead) {
         self.census.scanned += 1;
         if !account.has_source() {
@@ -365,14 +354,10 @@ impl Tally {
         }
     }
 
-    /// The gate verdict over one account's stage records.
-    ///
-    /// `stage_satisfies` takes a `dungeon.cowLevel` entry as its second
-    /// argument and gets NONE here: the refresh copies a special story stage's
-    /// first-open timestamp onto the stored record as `cowFirstTs`, and that
-    /// is the field the rule reads when no cowLevel entry is passed. A store
-    /// written before that copy loses those stages, which is the same caveat
-    /// `story_progress::reverdict` carries.
+    /// `stage_satisfies` gets no `dungeon.cowLevel` entry here: the refresh
+    /// copies a special story stage's first-open time onto the stored record as
+    /// `cowFirstTs`, which the rule reads instead. Stores written before that
+    /// copy miss those stages (same caveat as `story_progress::reverdict`).
     fn add_gates(&mut self, plan: &CommunityPlan, stages: Option<&str>) {
         let Some(raw) = stages else { return };
         let Ok(Value::Object(stages)) = serde_json::from_str::<Value>(raw) else {
@@ -483,20 +468,15 @@ impl Tally {
 /// counted only while it has turned neither off.
 const VISIBLE: &str = "s.public_profile AND s.share_stats";
 
-/// Compute the aggregate for one server, end to end.
+/// The account stream holds one connection for the whole walk; each batch
+/// folds on the blocking pool, so no JSON parse or gate pass runs on an async
+/// worker. Verdict rows come per batch on a second connection, only for
+/// accounts a cheap `DISTINCT` says have any (1 of 2,585 today).
 ///
-/// The account stream holds one connection for the whole walk and the fold
-/// runs on the blocking pool a batch at a time, so no JSON parse and no gate
-/// pass ever lands on an async worker. The verdict rows are fetched per batch
-/// on a second connection, and only for the accounts a cheap `DISTINCT` says
-/// have any: today that is 1 account of 2,585, and the shape still holds when
-/// it is all of them.
-///
-/// Scale: 2,585 admitted accounts times 43 MB of jsonb, folded in 21 hand-offs
-/// of [`BATCH`], against a plan of 1,887 interned story ids and 766 groups. The
-/// per-account pass is O(marks + groups) with the story ids already dense, so
-/// nothing here is quadratic in the library; the cost is the JSON parse, and
-/// that is why every batch goes through `cpu::offload`.
+/// Scale: 2,585 accounts, 43 MB of jsonb, 21 hand-offs of [`BATCH`], 1,887
+/// interned story ids, 766 groups. The per-account pass is O(marks + groups),
+/// so nothing here is quadratic in the library; the cost is the JSON parse,
+/// hence `cpu::offload` per batch.
 pub async fn compute(
     state: &AppState,
     server: Server,

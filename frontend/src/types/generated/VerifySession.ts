@@ -2,9 +2,6 @@
 
 /**
  * The `/auth/verify` response: the session a token currently represents.
- *
- * Serialized directly by the handler, so this declaration is the wire format,
- * the `OpenAPI` schema and the generated TypeScript at once.
  */
 export type VerifySession = {
     /**

@@ -3,8 +3,8 @@ import type { ClaimIntervalDto } from "./ClaimIntervalDto";
 
 export type ClaimDto = {
     /**
-     * Hours (from an empty buffer, i.e. from a claim now) until the FIRST
-     * production room's buffer is full - log in before this to lose nothing.
+     * Hours from a claim now until the FIRST production room's buffer is
+     * full. Log in before this to lose nothing.
      */
     next_full_hours: number;
     /**

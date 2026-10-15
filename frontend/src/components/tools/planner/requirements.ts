@@ -29,9 +29,8 @@ export interface IRequirementStatusInfo {
 }
 
 /**
- * Single source of truth for a requirement's status. The row rendering and the
- * filter/count logic both derive status here so the visible badges and the filter
- * chips can never disagree. Precedence: missing (has an unbuildable shortfall)
+ * A requirement's status. The row rendering and the filter/count logic both read
+ * it here, so the badges and the filter chips never disagree. Precedence: missing (has an unbuildable shortfall)
  * > craft (shortfall, but craftable) > complete.
  */
 export function requirementStatus(item: IPlanRequirementItem): IRequirementStatusInfo {

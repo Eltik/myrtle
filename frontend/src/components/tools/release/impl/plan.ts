@@ -92,10 +92,17 @@ export function loadState(): IPlanState {
     }
 }
 
+/**
+ * Fired on `window` after every local save. The Pulls tab stays mounted once visited, so
+ * it can no longer count on a remount to re-read the picks; it listens for this instead.
+ */
+export const PLAN_SAVED_EVENT = "release-planner:plan-saved";
+
 export function saveState(state: IPlanState): void {
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch {}
+    window.dispatchEvent(new Event(PLAN_SAVED_EVENT));
 }
 
 function isRerun(e: ReleaseEvent): boolean {
@@ -325,7 +332,7 @@ export function stageKey(stage: OpStage): string {
     return stage.stageId;
 }
 
-/** The code-based key plans were saved under before picks were keyed by id; still read so old picks survive. */
+/** The legacy pick key, by stage code; still read so picks saved under it survive. */
 function legacyStageKey(stage: OpStage): string {
     return stage.challenge ? `${stage.code} CM` : stage.code;
 }

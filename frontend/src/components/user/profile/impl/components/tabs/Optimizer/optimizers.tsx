@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
+import type { IOperatorRosterItem } from "#/lib/api/operators";
 import type { IRosterEntry } from "#/lib/api/user";
-import type { IOperatorListItem } from "#/types/operators";
 import { AccountOptimizer } from "./account/AccountOptimizer";
 import { BaseOptimizer } from "./base/BaseOptimizer";
 import type { messages as optimizerMessages } from "./optimizers.messages";
@@ -8,7 +8,7 @@ import type { messages as optimizerMessages } from "./optimizers.messages";
 export interface IOptimizerProps {
     uid: string;
     roster: IRosterEntry[];
-    operatorsStatic: IOperatorListItem[];
+    operatorsStatic: IOperatorRosterItem[];
 }
 
 /** A key in `optimizers.messages.ts`; resolved by the tab strip. */

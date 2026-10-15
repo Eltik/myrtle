@@ -60,8 +60,8 @@ export const RARITY_COLORS: Record<number, { bg: string; text: string; border: s
 };
 
 /**
- * Profession labels are game vocabulary - the game data ships its own
- * translation per region - so they are not in the message catalog.
+ * Profession labels are game vocabulary (the game data ships its own
+ * translation per region), so they are not in the message catalog.
  */
 export const PROFESSION_LABELS: Record<string, string> = {
     WARRIOR: "Guard",

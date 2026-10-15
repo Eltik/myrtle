@@ -1516,13 +1516,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_UIGUIDE_TARGET: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_UIGUIDE_TARGET: i32 = 58;
+pub const ENUM_MAX_ENUM__TORAPPU_UIGUIDE_TARGET: i32 = 60;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_UIGUIDE_TARGET: [enum__Torappu_UIGuideTarget; 57] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_UIGUIDE_TARGET: [enum__Torappu_UIGuideTarget; 59] = [
     enum__Torappu_UIGuideTarget::NONE,
     enum__Torappu_UIGuideTarget::BUILDING_CONTROL,
     enum__Torappu_UIGuideTarget::BUILDING_DORM,
@@ -1580,6 +1580,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_UIGUIDE_TARGET: [enum__Torappu_UIGuideTarget
     enum__Torappu_UIGuideTarget::ARK_ODC,
     enum__Torappu_UIGuideTarget::ACT54SIDE_CARD,
     enum__Torappu_UIGuideTarget::ACT_VASEBREAKER,
+    enum__Torappu_UIGuideTarget::BUILDING_RECYCLE,
+    enum__Torappu_UIGuideTarget::ACT_ARCADE_V2,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -1644,9 +1646,11 @@ impl enum__Torappu_UIGuideTarget {
     pub const ARK_ODC: Self = Self(56);
     pub const ACT54SIDE_CARD: Self = Self(57);
     pub const ACT_VASEBREAKER: Self = Self(58);
+    pub const BUILDING_RECYCLE: Self = Self(59);
+    pub const ACT_ARCADE_V2: Self = Self(60);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 58;
+    pub const ENUM_MAX: i32 = 60;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::BUILDING_CONTROL,
@@ -1705,6 +1709,8 @@ impl enum__Torappu_UIGuideTarget {
         Self::ARK_ODC,
         Self::ACT54SIDE_CARD,
         Self::ACT_VASEBREAKER,
+        Self::BUILDING_RECYCLE,
+        Self::ACT_ARCADE_V2,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -1766,6 +1772,8 @@ impl enum__Torappu_UIGuideTarget {
             Self::ARK_ODC => Some("ARK_ODC"),
             Self::ACT54SIDE_CARD => Some("ACT54SIDE_CARD"),
             Self::ACT_VASEBREAKER => Some("ACT_VASEBREAKER"),
+            Self::BUILDING_RECYCLE => Some("BUILDING_RECYCLE"),
+            Self::ACT_ARCADE_V2 => Some("ACT_ARCADE_V2"),
             _ => None,
         }
     }
@@ -2190,13 +2198,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ACTIVITY_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ACTIVITY_TYPE: i32 = 67;
+pub const ENUM_MAX_ENUM__TORAPPU_ACTIVITY_TYPE: i32 = 68;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ACTIVITY_TYPE: [enum__Torappu_ActivityType; 68] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ACTIVITY_TYPE: [enum__Torappu_ActivityType; 69] = [
     enum__Torappu_ActivityType::DEFAULT,
     enum__Torappu_ActivityType::MISSION_ONLY,
     enum__Torappu_ActivityType::CHECKIN_ONLY,
@@ -2264,6 +2272,7 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ACTIVITY_TYPE: [enum__Torappu_ActivityType; 
     enum__Torappu_ActivityType::TYPE_ACT53SIDE,
     enum__Torappu_ActivityType::TYPE_ACT54SIDE,
     enum__Torappu_ActivityType::ACT_DP,
+    enum__Torappu_ActivityType::REWARD_ONLY,
     enum__Torappu_ActivityType::ENUM,
 ];
 
@@ -2339,10 +2348,11 @@ impl enum__Torappu_ActivityType {
     pub const TYPE_ACT53SIDE: Self = Self(64);
     pub const TYPE_ACT54SIDE: Self = Self(65);
     pub const ACT_DP: Self = Self(66);
-    pub const ENUM: Self = Self(67);
+    pub const REWARD_ONLY: Self = Self(67);
+    pub const ENUM: Self = Self(68);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 67;
+    pub const ENUM_MAX: i32 = 68;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::DEFAULT,
         Self::MISSION_ONLY,
@@ -2411,6 +2421,7 @@ impl enum__Torappu_ActivityType {
         Self::TYPE_ACT53SIDE,
         Self::TYPE_ACT54SIDE,
         Self::ACT_DP,
+        Self::REWARD_ONLY,
         Self::ENUM,
     ];
     /// Returns the variant's name or "" if unknown.
@@ -2483,6 +2494,7 @@ impl enum__Torappu_ActivityType {
             Self::TYPE_ACT53SIDE => Some("TYPE_ACT53SIDE"),
             Self::TYPE_ACT54SIDE => Some("TYPE_ACT54SIDE"),
             Self::ACT_DP => Some("ACT_DP"),
+            Self::REWARD_ONLY => Some("REWARD_ONLY"),
             Self::ENUM => Some("ENUM"),
             _ => None,
         }

@@ -18,14 +18,18 @@ export type BackendErrorKind = "unreachable" | "http";
 export class APIError extends Error {
     readonly kind: BackendErrorKind = "http";
     readonly code: string | null;
+    /** `GAME_MAINTENANCE` only: the announced end, unix seconds, when the backend knows it. */
+    readonly endsAt: number | null;
     constructor(
         public readonly status: number,
         message: string,
         code: string | null = null,
+        endsAt: number | null = null,
     ) {
         super(message);
         this.name = "APIError";
         this.code = code;
+        this.endsAt = endsAt;
     }
 }
 
@@ -62,7 +66,7 @@ export async function parseError(res: Response): Promise<APIError> {
     const fallback = `Request failed: ${res.status}`;
     try {
         const data = (await res.json()) as unknown;
-        return new APIError(res.status, extractErrorMessage(data) ?? fallback, extractErrorCode(data));
+        return new APIError(res.status, extractErrorMessage(data) ?? fallback, extractErrorCode(data), extractEndsAt(data));
     } catch {
         return new APIError(res.status, fallback);
     }
@@ -102,6 +106,15 @@ function extractErrorCode(data: unknown): string | null {
     return typeof code === "string" && code ? code : null;
 }
 
+/** The backend's `{ error: { ends_at } }` on `GAME_MAINTENANCE`; null when absent. */
+function extractEndsAt(data: unknown): number | null {
+    if (!data || typeof data !== "object") return null;
+    const error = (data as { error?: unknown }).error;
+    if (!error || typeof error !== "object") return null;
+    const endsAt = (error as { ends_at?: unknown }).ends_at;
+    return typeof endsAt === "number" && Number.isFinite(endsAt) ? endsAt : null;
+}
+
 /** What a failed request means, classified for a person rather than a log. */
 export type FailureKind =
     /** The browser reports no network at all. */
@@ -120,6 +133,8 @@ export interface IFailure {
     status: number | null;
     code: string | null;
     message: string;
+    /** `GAME_MAINTENANCE` only: the announced end, unix seconds. */
+    endsAt?: number | null;
 }
 
 const BROWSER_NETWORK_FAILURE = /failed to fetch|load failed|networkerror when attempting|network request failed/i;
@@ -145,7 +160,8 @@ export function classifyFailure(err: unknown): IFailure {
         // A reverse proxy answering for a dead upstream is not the backend
         // speaking; treat it as the backend being gone.
         if (e.status === 502 || e.status === 504) return { kind: "unreachable", status: e.status, code, message };
-        return { kind: "http", status: e.status, code, message };
+        const endsAt = (e as { endsAt?: unknown }).endsAt;
+        return { kind: "http", status: e.status, code, message, endsAt: typeof endsAt === "number" ? endsAt : null };
     }
     if (e?.name === "AbortError" || e?.name === "TimeoutError") {
         return { kind: "timeout", status: null, code: null, message };

@@ -125,11 +125,9 @@ export interface IGapItem {
     value: number;
     color: string;
     tooltip?: string;
-    /** Inline collapsible list - best for compact, scannable detail. */
+    /** Expands inline under the pill. */
     details?: IOperatorGapItem[];
-    /** When provided, clicking the pill opens this node inside a dialog instead
-     *  of expanding inline. Use for richer drill-down experiences (large images,
-     *  multi-column layouts, etc.). Mutually exclusive with `details`. */
+    /** Opens in a dialog on click instead of expanding inline; wins over `details`. */
     dialogContent?: ReactNode;
 }
 

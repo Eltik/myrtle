@@ -81,19 +81,18 @@ export function AccountOptimizer({ uid }: IOptimizerProps) {
             {data && (
                 <div className="flex flex-wrap gap-6 rounded-xl border border-border bg-card px-4 py-3">
                     <Headline label={t("profile.account.maxLevel.remaining")} value={`${data.operators_remaining} / ${data.operators_total}`} />
-                    {/* EXP needed, EXP short, then LMD needed, LMD short. The two
-                        currencies were interleaved, and the "N owned" note sat under
-                        EXP NEEDED but under LMD SHORT, so neither the pairs nor the
-                        notes lined up. Each currency now reads "needed, then short,
-                        and here is what you hold" in the same order. */}
+                    {/* Each currency reads needed, then short with the owned note,
+                        in the same order; interleaved, neither the pairs nor the
+                        notes lined up. */}
                     <Headline label={t("profile.account.maxLevel.expNeeded")} value={f.number(data.exp_needed)} />
                     <Headline hint={t("profile.account.maxLevel.owned", { owned: f.number(data.exp_owned) })} label={t("profile.account.maxLevel.expMissing")} value={f.number(data.exp_missing)} />
                     <Headline hint={t("profile.account.maxLevel.lmdSplit", { levels: f.number(data.level_lmd_needed), promotions: f.number(data.promotion_lmd_needed) })} label={t("profile.account.maxLevel.lmdNeeded")} value={f.number(data.lmd_needed)} />
-                    <Headline hint={t("profile.account.maxLevel.owned", { owned: f.number(data.lmd_owned) })} label={t("profile.account.maxLevel.lmdMissing")} value={f.number(data.lmd_missing)} />
+                    {/* `null` when the owner hid their LMD from visitors: the shortfall would give the balance back. */}
+                    {data.lmd_owned !== null && data.lmd_missing !== null && <Headline hint={t("profile.account.maxLevel.owned", { owned: f.number(data.lmd_owned) })} label={t("profile.account.maxLevel.lmdMissing")} value={f.number(data.lmd_missing)} />}
                 </div>
             )}
 
-            {data && data.lmd_missing > 0 && (
+            {data && data.lmd_missing !== null && data.lmd_missing > 0 && (
                 <div className="flex flex-wrap gap-6 rounded-xl border border-border bg-card px-4 py-3">
                     {/* What the account earns and how long the shortfall takes:
                         the base as stationed now plus the mission chests, then

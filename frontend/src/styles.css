@@ -21,7 +21,7 @@
   --font-heading: "Inter Variable", ui-sans-serif, system-ui, var(--font-cjk), sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, var(--font-cjk), monospace;
   --font-display: "Fraunces", Georgia, var(--font-cjk), serif;
-  /* Squared-off technical numerals - RIIC readouts, not body copy. */
+  /* Squared-off technical numerals for RIIC readouts, not body copy. */
   --font-techno: "Orbitron Variable", var(--font-mono);
 }
 
@@ -124,6 +124,26 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* The music player bar is fixed to the viewport foot, on every page once
+   music has played: while it shows, the page ends that much (and the
+   home-indicator inset) lower, so the footer scrolls clear of it. A page bar
+   that claims the same strip (the story library's now-playing bar, the grid
+   editor's unsaved-changes bar) reserves its own height and, while the music
+   bar shows, stacks on top of it: hiding the music bar left music playing
+   with no way to stop it. See `PlayerBar`. */
+body:has([data-music-player-bar]) {
+  --music-bar-reserve: calc(64px + env(safe-area-inset-bottom));
+  padding-bottom: var(--music-bar-reserve);
+}
+body:has([data-music-player-bar]) [data-claims-bottom] {
+  bottom: var(--music-bar-reserve);
+}
+/* Bottom toasts rise above the bar too: at 390 px a download toast covered
+   its top 47 px, the title and the play button. */
+body:has([data-music-player-bar]) [data-slot="toast-viewport"][data-position*="bottom"] {
+  bottom: calc(var(--music-bar-reserve) + var(--toast-inset));
 }
 
 code {
@@ -427,13 +447,19 @@ pre code {
    These live in `components`, not `utilities`, so an ordinary Tailwind utility
    on the same element still wins: `sm:mx-0` has to be able to switch
    `page-bleed` off, and a page has to be able to override the rhythm. */
+/* The sticky site header's full height, its 1px bottom border included. The
+   header sets its own height from this, so anything that has to clear the
+   header (the home scroll cue, the 404's fill) reads the same number instead
+   of restating 56 or 64 and drifting off the real 57 / 65. */
 :root {
     --page-gutter: 0.75rem;
+    --site-header-height: calc(3.5rem + 1px);
 }
 
 @media (width >= 40rem) {
     :root {
         --page-gutter: 1rem;
+        --site-header-height: calc(4rem + 1px);
     }
 }
 
@@ -469,7 +495,7 @@ pre code {
    Uppercase and 0.12em tracking are Latin typographic devices. Hangul, kana
    and Han are syllable blocks: `text-transform` does nothing to them, and the
    tracking pushes the blocks apart into something that reads as broken rather
-   than as styled - which is what the Korean profile screenshot showed. Those
+   than as styled, which is what the Korean profile screenshot showed. Those
    locales get the sans face at a heavier weight, which is the same emphasis
    the tracking was buying in Latin. */
 @layer components {

@@ -30,7 +30,6 @@ export function gridSizeLabel(rows: number, cols: number): string {
     return `${rows}x${cols}`;
 }
 
-/** The browse page's search params. */
 export interface IGridsSearch {
     sort: GridSort;
     q: string;

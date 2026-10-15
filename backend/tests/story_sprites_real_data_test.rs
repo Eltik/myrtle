@@ -334,12 +334,12 @@ fn the_gallery_names_every_folder_by_the_lit_slot_rule() {
     }
 }
 
-/// Prices the one choice the lit-slot rule leaves open: whether a shown
-/// cut-in or interlude window is the WHOLE answer for a line, or joins the lit
-/// slots as one more candidate. Each policy is scored by how much of its
-/// plate-time weight lands on a folder whose primary name IS the line's
-/// speaker, the primaries taken from plate-free lines only so neither policy
-/// grades itself.
+/// Prices the one choice the lit-slot rule leaves open: what a shown cut-in
+/// or interlude window means for a line (`PlateRule`: the whole answer, one
+/// more candidate beside the lit slots, or a fallback when the stage names
+/// no one). Each rule is scored by how much of its plate-time weight lands on
+/// a folder whose primary name IS the line's speaker, primaries taken from
+/// plate-free lines only so no rule grades itself.
 #[test]
 fn plates_over_the_stage_priced_both_ways() {
     use backend::core::story::speakers::{PlateRule, SpeakerRules, attribute_speakers_with};

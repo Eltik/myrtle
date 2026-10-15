@@ -1,15 +1,13 @@
 import { downloadBlob, loadImage } from "#/lib/utils";
 
 /**
- * Render an in-DOM SVG element to a PNG and trigger a browser download.
+ * Render an in-DOM SVG element to a PNG and download it.
  *
- * Recharts renders an SVG that inherits CSS custom properties (e.g.
- * `var(--border)`, `var(--muted-foreground)`) from the document. Once the SVG
- * is detached and rasterised by the browser via `<img src=blob:…svg>`, those
- * variables are no longer in scope, so the chart would render with the
- * defaults (typically black on transparent). To work around that we walk the
- * source tree in parallel with a clone and inline each element's computed
- * paint properties (fill, stroke, color, font-*) as inline styles.
+ * Recharts' SVG inherits CSS custom properties (`var(--border)`,
+ * `var(--muted-foreground)`) from the document, and once it is rasterised
+ * through an `<img>` they are out of scope, so the chart draws in defaults
+ * (black on transparent). Each element's computed paint properties (fill,
+ * stroke, color, font-*) are inlined onto a clone instead.
  */
 export interface IExportSvgOptions {
     filename?: string;
@@ -72,8 +70,6 @@ export async function exportSvgAsPng(svg: SVGSVGElement, options: IExportSvgOpti
     const headerHeight = (titleBlock?.height ?? 0) + (legendBlock?.height ?? 0);
 
     if (headerHeight > 0) {
-        // Wrap the cloned chart content in a translate group so the original
-        // chart sits below the header without overlapping the new elements.
         const moved = document.createElementNS("http://www.w3.org/2000/svg", "g");
         moved.setAttribute("transform", `translate(0, ${headerHeight})`);
         while (cloned.firstChild) moved.appendChild(cloned.firstChild);
@@ -122,8 +118,7 @@ export async function exportSvgAsPng(svg: SVGSVGElement, options: IExportSvgOpti
 
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
     if (!blob) {
-        // Fallback path for the rare case where toBlob returns null - convert
-        // the dataURL into a Blob ourselves so the user still gets a download.
+        // toBlob can return null; the canvas's data URL still gets a download.
         const dataPng = canvas.toDataURL("image/png");
         const fallback = dataURLToBlob(dataPng);
         downloadBlob(fallback, filename);
@@ -230,7 +225,6 @@ function injectSnapshotCallout(svg: SVGSVGElement, snapshot: ISnapshotCallout, f
     const boxWidth = contentWidth + 2 * padX;
     const boxHeight = padY + headingFontSize + 6 + snapshot.entries.length * lineHeight + padY - 4;
 
-    // Decide which side of the line to anchor on. Prefer right if there's room.
     const offsetFromLine = 8;
     const placeRight = lineX + offsetFromLine + boxWidth + 8 <= chartWidth;
     const boxX = placeRight ? lineX + offsetFromLine : Math.max(8, lineX - offsetFromLine - boxWidth);

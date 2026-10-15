@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 
 type StatKind = "views" | "favorites" | "views24h";
 
@@ -33,9 +34,12 @@ const ICONS: Record<StatKind, ReactNode> = {
 export function CardStat({ kind, value, title }: ICardStatProps) {
     const trend = kind === "views24h";
     return (
-        <span className={trend ? "inline-flex items-center gap-0.5 text-primary" : "inline-flex items-center gap-1"} title={title}>
-            {ICONS[kind]}
-            <span className={trend ? "font-bold" : "font-semibold text-foreground"}>{value}</span>
-        </span>
+        <Tooltip>
+            <TooltipTrigger render={<span className={trend ? "inline-flex items-center gap-0.5 text-primary" : "inline-flex items-center gap-1"} />}>
+                {ICONS[kind]}
+                <span className={trend ? "font-bold" : "font-semibold text-foreground"}>{value}</span>
+            </TooltipTrigger>
+            <TooltipPopup>{title}</TooltipPopup>
+        </Tooltip>
     );
 }

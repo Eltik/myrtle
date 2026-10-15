@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -232,9 +232,7 @@ pub struct PoolAlignment {
     pub method: AlignMethod,
 }
 
-pub const STANDING_POOL_SECS: i64 = 365 * 86_400;
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct ReleaseBanner {
@@ -245,7 +243,9 @@ pub struct ReleaseBanner {
     pub cn_open: i64,
     #[ts(type = "number")]
     pub cn_end: i64,
-    pub standing: bool,
+    /// Shown only to returning players (`GachaPoolClient::returning`). Its
+    /// `cn_end` is the table's placeholder years out, not a real end date.
+    pub returning: bool,
     pub featured6: Vec<String>,
     pub featured5: Vec<String>,
     pub debut_chars: Vec<String>,
@@ -256,6 +256,16 @@ pub struct ReleaseBanner {
     pub name_en_auto: Option<AutoName>,
     pub image_path: Option<String>,
     pub resolution: Resolution,
+    /// The 6★ rate-up share each featured operator takes, a 0..1 fraction of the
+    /// 6★ band, as the pool detail publishes it (`GachaPoolClient::declared_share6`).
+    /// Read from the aligned EN pool when it has one, else the CN pool. `None` when
+    /// neither sidecar covers the pool or it has no 6★ rate-up; the planner then
+    /// infers the share from the rule type.
+    pub declared_share_each: Option<f64>,
+    /// Rolls per cycle when the collab handover REPEATS (`LINKAGE_LOOP6_NEW5`),
+    /// `None` on a once-only collab and every other rule type. The aligned EN pool's
+    /// table decides when there is one, else the CN pool's.
+    pub linkage_loop_at: Option<u32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, utoipa::ToSchema)]
@@ -265,7 +275,9 @@ pub struct BannersResponse {
     pub model: LagModel,
     pub yearly: YearlyModel,
     pub banners: Vec<ReleaseBanner>,
-    pub char_names: HashMap<String, AutoName>,
+    // A BTreeMap, so a response read back from the cache serializes in the
+    // same key order as the one that filled it.
+    pub char_names: BTreeMap<String, AutoName>,
     pub rule_independence: Vec<crate::core::release::align::RuleIndependence>,
 }
 
@@ -400,7 +412,8 @@ pub struct SkinsResponse {
     pub rerun_forecasts: Vec<RerunForecast>,
     pub reviews: Vec<ReviewWindow>,
     pub review_pool: Vec<ReviewOutfit>,
-    pub group_art: HashMap<String, SkinGroupArt>,
+    // A BTreeMap for the same reason as `BannersResponse::char_names`.
+    pub group_art: BTreeMap<String, SkinGroupArt>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
@@ -466,4 +479,32 @@ pub struct PutReleasePlan {
     pub initial_manual: bool,
     pub picks: Vec<String>,
     pub stages: HashMap<String, HashMap<String, bool>>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ShopGoodKind;
+
+    #[test]
+    fn shop_goods_are_grouped_by_item_type() {
+        let cases = [
+            ("CHAR_SKIN", ShopGoodKind::Outfit),
+            ("FURN", ShopGoodKind::Furniture),
+            ("HOME_THEME", ShopGoodKind::Furniture),
+            ("MATERIAL", ShopGoodKind::Material),
+            ("GOLD", ShopGoodKind::Currency),
+            ("DIAMOND_SHD", ShopGoodKind::Currency),
+            ("AP_SUPPLY", ShopGoodKind::Currency),
+            ("CARD_EXP", ShopGoodKind::Exp),
+            ("TKT_RECRUIT", ShopGoodKind::Ticket),
+            ("TKT_GACHA_10", ShopGoodKind::Ticket),
+            ("TKT", ShopGoodKind::Other),
+            ("DIAMOND", ShopGoodKind::Other),
+            ("char_skin", ShopGoodKind::Other),
+            ("", ShopGoodKind::Other),
+        ];
+        for (item_type, kind) in cases {
+            assert_eq!(ShopGoodKind::of(item_type), kind, "{item_type}");
+        }
+    }
 }

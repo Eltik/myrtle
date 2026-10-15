@@ -37,6 +37,7 @@
 )]
 
 pub mod export;
+pub mod schema;
 pub mod unity;
 
 #[macro_use]

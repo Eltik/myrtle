@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "#/components/ui/tabs";
+import type { IOperatorRosterItem } from "#/lib/api/operators";
 import type { IRosterEntry } from "#/lib/api/user";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import type { IOperatorListItem } from "#/types/operators";
 import { ComingSoon } from "./ComingSoon";
 import { OPTIMIZERS } from "./optimizers";
 import type { messages as optimizerMessages } from "./optimizers.messages";
@@ -11,7 +11,7 @@ import type { messages as optimizerMessages } from "./optimizers.messages";
 interface IProps {
     uid: string;
     roster: IRosterEntry[];
-    operatorsStatic: IOperatorListItem[];
+    operatorsStatic: IOperatorRosterItem[];
 }
 
 export function OptimizerTab({ uid, roster, operatorsStatic }: IProps) {

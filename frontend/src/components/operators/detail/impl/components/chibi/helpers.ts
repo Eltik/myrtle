@@ -58,15 +58,15 @@ function encodeAssetPath(path: string): string {
  *  so an exporter A/B can be scored without writing the deployed asset tree. It is served by
  *  the `myrtle:alt-asset-root` vite plugin under the SAME relative path shape the backend
  *  uses, which is what makes the two interchangeable. Undefined, empty or production leaves
- *  the URL exactly as it was, so the default is the previous behaviour byte for byte. */
+ *  the URL unchanged. */
 export function chibiAssetURL(path: string, server?: "en" | "cn", root?: string): string {
     if (root && import.meta.env.DEV) return `${root}${encodeAssetPath(path)}`;
     const prefix = server && server !== "en" ? `${server}/` : "";
     return `${env.VITE_BACKEND_URL}/api/${prefix}assets${encodeAssetPath(path)}`;
 }
 
-/** Atlas pages are MINIFIED heavily - a dynchar page is 2280x2280 drawn into a viewport a
- *  few hundred px tall - and PIXI's default `MIPMAP_MODES.POW2` builds no mipmap chain for a
+/** Atlas pages are MINIFIED heavily (a dynchar page is 2280x2280 drawn into a viewport a
+ *  few hundred px tall), and PIXI's default `MIPMAP_MODES.POW2` builds no mipmap chain for a
  *  non-power-of-two page, so every such page is sampled with bilinear-only minification. Fine
  *  detail in the art then aliases into shimmering vertical slivers that read as spurious
  *  "rain": measured on Virtuosa's seated set, our vertically-coherent high-frequency energy is
@@ -76,8 +76,8 @@ export function chibiAssetURL(path: string, server?: "en" | "cn", root?: string)
  *  Measured over the three reference skins this is worth -1.40 / -0.53 / -0.39 MADC (interior).
  *  It did NOT move the vertical-streak metric (1.57x -> 1.55x), so the aliasing it removes is
  *  general minification shimmer across the whole illustration, not those streaks, which remain
- *  unexplained. Applying the same to the SCENE textures is a measured no-op - those pages are
- *  128/256/512/1024, i.e. power-of-two, so PIXI's default POW2 mode already mipmaps them; this
+ *  unexplained. Applying the same to the SCENE textures is a measured no-op: those pages are
+ *  128/256/512/1024, already power-of-two, so PIXI's default POW2 mode mipmaps them; this
  *  matters only because the dynchar ATLAS pages are 2280 and fall outside that default. */
 const ATLAS_MIPMAP = PIXI.MIPMAP_MODES.ON;
 
@@ -203,14 +203,14 @@ export async function loadSpineWithEncodedURLs(skelPath: string, atlasPath: stri
         try {
             skeletonData = new SkeletonJson(loader).readSkeletonData(JSON.parse(new TextDecoder().decode(skelBytes)));
         } catch {
-            skeletonData = null; // not actually JSON - fall through to binary
+            skeletonData = null; // not JSON after all: fall through to binary
         }
     }
     if (!skeletonData) {
         skeletonData = new SkeletonBinary(loader).readSkeletonData(skelBytes);
     }
 
-    // runtime-4.1 SkeletonData types diverge slightly from base Spine types,
+    // runtime-3.8 SkeletonData types diverge slightly from pixi-spine's base types,
     // but the runtime contract is compatible.
     const spine = new Spine(skeletonData as unknown as ConstructorParameters<typeof Spine>[0]);
     // Repair the runtime-3.8 PathConstraint rotation bug (see pathConstraintFix)

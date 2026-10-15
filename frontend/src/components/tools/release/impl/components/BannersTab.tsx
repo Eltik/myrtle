@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import * as React from "react";
 import { Card } from "#/components/ui/card";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { releaseBannersQueryOptions, releaseEventsQueryOptions } from "#/lib/api/release";
 import { type TypedRichT, useGamedataServer, useLocale, useRichT, useT } from "#/lib/i18n";
@@ -31,9 +32,10 @@ function IndependenceNote({ rules }: { rules: RuleIndependence[] }): React.React
     if (independent.length === 0) return null;
     const list = independent.map((r) => t("release.banners.independence.item", { type: r.ruleType.toLowerCase().replaceAll("_", " "), rate: Math.round(r.mismatchRate * 100), count: r.events })).join(", ");
     return (
-        <p className="m-0 font-sans text-[12.5px] text-muted-foreground leading-normal" title={t("release.banners.independence.title")}>
-            {t("release.banners.independence", { list })}
-        </p>
+        <Tooltip>
+            <TooltipTrigger render={<p className="m-0 font-sans text-[12.5px] text-muted-foreground leading-normal" />}>{t("release.banners.independence", { list })}</TooltipTrigger>
+            <TooltipPopup className="max-w-xs">{t("release.banners.independence.title")}</TooltipPopup>
+        </Tooltip>
     );
 }
 
@@ -101,11 +103,14 @@ export function BannersTab({ today }: IBannersTabProps): React.ReactElement {
 function FaceStrip({ ids, lookup, alt, t }: { ids: string[]; lookup: OperatorLookup; alt: string; t: BannersT }): React.ReactElement {
     const tight = ids.length > 2;
     return (
-        <div className="flex aspect-[5/2] w-full items-center justify-center gap-1 overflow-hidden rounded-md bg-linear-to-br from-zinc-800 to-zinc-950 p-1 sm:w-60 sm:p-1.5" title={t("release.banners.faceStrip.title", { banner: alt })}>
-            {ids.map((id) => (
-                <FaceAvatar key={id} id={id} onEn={lookup.has(id)} tight={tight} />
-            ))}
-        </div>
+        <Tooltip>
+            <TooltipTrigger render={<div className="flex aspect-[5/2] w-full items-center justify-center gap-1 overflow-hidden rounded-md bg-linear-to-br from-zinc-800 to-zinc-950 p-1 sm:w-60 sm:p-1.5" />}>
+                {ids.map((id) => (
+                    <FaceAvatar key={id} id={id} onEn={lookup.has(id)} tight={tight} />
+                ))}
+            </TooltipTrigger>
+            <TooltipPopup>{t("release.banners.faceStrip.title", { banner: alt })}</TooltipPopup>
+        </Tooltip>
     );
 }
 
@@ -143,21 +148,26 @@ function BannerRow({ banner, lookup, charNames, eventNames, eventsByDay, eventTi
     const faces = art.src ? [] : [...banner.enFeatured6, ...banner.featured6, ...banner.overrideFeatured, ...banner.debutChars].filter((id, i, all) => all.indexOf(id) === i).slice(0, 3);
     const visual = art.src ? <RowImage src={art.src} alt={alt} title={artIsEvent && eventArtName ? t("release.banners.eventArt", { event: eventArtName }) : undefined} onError={art.onError} wide /> : faces.length > 0 ? <FaceStrip ids={faces} lookup={lookup} alt={alt} t={t} /> : null;
     return (
-        <ListRow visual={visual} wide badge={<ResolutionBadge resolution={banner.resolution} today={today} standing={banner.standing} />}>
+        <ListRow visual={visual} wide badge={<ResolutionBadge resolution={banner.resolution} today={today} returning={banner.returning} />}>
             <CnName cn={banner.nameCn} auto={banner.nameEnAuto} primaryClassName="font-sans font-semibold text-[13.5px] text-foreground">
                 <Tag>{tagLabel(banner.ruleType)}</Tag>
                 <span className="font-mono text-[11.5px] text-muted-foreground tabular-nums">
                     <span className="mr-1 uppercase tracking-[0.06em]">{t("release.banners.cn")}</span>
-                    {banner.standing ? t("release.banners.since", { date: formatDate(banner.cnOpen, locale) }) : formatDate(banner.cnOpen, locale)}
+                    {formatDate(banner.cnOpen, locale)}
                 </span>
             </CnName>
             {rosters.length > 0 && (
                 <div className="flex flex-col gap-1">
                     {rosters.map(([label, ids, title]) => (
                         <div key={label} className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                            <span className="font-sans text-[11px] text-muted-foreground" title={title}>
-                                {label}
-                            </span>
+                            {title ? (
+                                <Tooltip>
+                                    <TooltipTrigger render={<span className="cursor-help font-sans text-[11px] text-muted-foreground" />}>{label}</TooltipTrigger>
+                                    <TooltipPopup className="max-w-xs">{title}</TooltipPopup>
+                                </Tooltip>
+                            ) : (
+                                <span className="font-sans text-[11px] text-muted-foreground">{label}</span>
+                            )}
                             <OpRefList ids={ids} lookup={lookup} names={charNames} />
                         </div>
                     ))}

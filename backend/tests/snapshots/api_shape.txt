@@ -246,6 +246,10 @@ operators.*.handbook.storyTextAudio[*].storyTitle: string
 operators.*.handbook.storyTextAudio[*].unLockorNot: bool
 operators.*.handbook.storyTextAudio[*]: object
 operators.*.handbook: object
+operators.*.hiddenFactions: array
+operators.*.hiddenFactions[*].id: string
+operators.*.hiddenFactions[*].name: string
+operators.*.hiddenFactions[*]: object
 operators.*.id: string
 operators.*.isNotObtainable: bool
 operators.*.isSpChar: bool
@@ -477,7 +481,6 @@ operators.*.skills[*].skillId: string
 operators.*.skills[*].static.Hidden: bool
 operators.*.skills[*].static.IconId: null
 operators.*.skills[*].static.IconId: string
-operators.*.skills[*].static.Image: null
 operators.*.skills[*].static.Image: string
 operators.*.skills[*].static.Levels: array
 operators.*.skills[*].static.Levels[*].blackboard: array
@@ -503,6 +506,9 @@ operators.*.skills[*].static.Levels[*].spData: object
 operators.*.skills[*].static.Levels[*]: object
 operators.*.skills[*].static.SkillId: string
 operators.*.skills[*].static: object
+operators.*.skills[*].unlockCond.Level: number
+operators.*.skills[*].unlockCond.Phase: string
+operators.*.skills[*].unlockCond: object
 operators.*.skills[*]: object
 operators.*.skin: string
 operators.*.subPower: array
@@ -1110,6 +1116,7 @@ gacha.gachaPoolClient[*].lmtgsid: string
 gacha.gachaPoolClient[*].openTime: number
 gacha.gachaPoolClient[*].pickup6: array
 gacha.gachaPoolClient[*].pickup6[*]: string
+gacha.gachaPoolClient[*].returning: bool
 gacha.gachaPoolClient[*].weightUp: array
 gacha.gachaPoolClient[*].weightUp[*].charId: string
 gacha.gachaPoolClient[*].weightUp[*].rarityRank: number
@@ -1203,6 +1210,7 @@ banners[*].lmtgsid: string
 banners[*].openTime: number
 banners[*].pickup6: array
 banners[*].pickup6[*]: string
+banners[*].returning: bool
 banners[*].weightUp: array
 banners[*].weightUp[*].charId: string
 banners[*].weightUp[*].rarityRank: number

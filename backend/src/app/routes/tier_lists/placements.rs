@@ -4,7 +4,7 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::app::error::ApiError;
-use crate::app::extractors::auth::AuthUser;
+use crate::app::extractors::auth::RoleCheckedUser;
 use crate::app::routes::{StatusOk, ok_status};
 use crate::app::services::tier_list::find_and_authorize;
 use crate::app::services::tier_list::invalidate_detail;
@@ -42,7 +42,7 @@ pub struct AddPlacementRequest {
         ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
     ),
     request_body = AddPlacementRequest,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The placement.", body = TierPlacement),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
@@ -57,7 +57,7 @@ pub struct AddPlacementRequest {
 )]
 pub async fn add(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path(slug): Path<String>,
     Json(body): Json<AddPlacementRequest>,
 ) -> Result<Json<TierPlacement>, ApiError> {
@@ -109,7 +109,7 @@ pub struct UpdateDescriptionRequest {
         ("id" = String, Path, description = "Entity id in that kind's space, e.g. `char_002_amiya`.")
     ),
     request_body = UpdateDescriptionRequest,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The placement as stored.", body = TierPlacement),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
@@ -123,7 +123,7 @@ pub struct UpdateDescriptionRequest {
 )]
 pub async fn update_description(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path((slug, kind, id)): Path<(String, EntityKind, String)>,
     Json(body): Json<UpdateDescriptionRequest>,
 ) -> Result<Json<TierPlacement>, ApiError> {
@@ -159,7 +159,7 @@ pub async fn update_description(
         ("kind" = EntityKind, Path, description = "Entity kind, e.g. `operator`."),
         ("id" = String, Path, description = "Entity id in that kind's space, e.g. `char_002_amiya`.")
     ),
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The placement is gone.", body = crate::app::routes::StatusOk),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
@@ -172,7 +172,7 @@ pub async fn update_description(
 )]
 pub async fn remove(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path((slug, kind, id)): Path<(String, EntityKind, String)>,
 ) -> Result<Json<StatusOk>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;
@@ -212,7 +212,7 @@ pub struct MovePlacementRequest {
         ("id" = String, Path, description = "Entity id in that kind's space, e.g. `char_002_amiya`.")
     ),
     request_body = MovePlacementRequest,
-    security(("bearer_auth" = []), ("service_key" = [])),
+    security(("bearer_auth" = [])),
     responses(
         (status = 200, description = "The placement in its new position.", body = TierPlacement),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
@@ -226,7 +226,7 @@ pub struct MovePlacementRequest {
 )]
 pub async fn move_to(
     State(state): State<AppState>,
-    auth: AuthUser,
+    auth: RoleCheckedUser,
     Path((slug, kind, id)): Path<(String, EntityKind, String)>,
     Json(body): Json<MovePlacementRequest>,
 ) -> Result<Json<TierPlacement>, ApiError> {

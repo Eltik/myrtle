@@ -54,7 +54,7 @@ pub struct GameStoryRead {
     pub read: bool,
 }
 
-/// Both sources as parsed, plus the census the refresh logs.
+/// All three sources as parsed, plus the census the refresh logs.
 #[derive(Debug, Clone, Default)]
 pub struct GameStoryReadSet {
     /// Whether the payload said anything about reading at all.
@@ -70,7 +70,7 @@ pub struct GameStoryReadSet {
     /// Archive groups and the stories listed under them.
     pub groups: usize,
     pub stories: usize,
-    /// The union of both sources, by story id.
+    /// The union of the three sources, by story id.
     pub read: Vec<GameStoryRead>,
     /// One story id, for the log line that pins the id namespace.
     pub sample: Option<String>,
@@ -95,8 +95,8 @@ pub struct GameStoryReadSet {
 }
 
 impl GameStoryReadSet {
-    /// Stories present in the Archive block, which is the smaller half of the
-    /// union and the number the reader's progress line quotes in brackets.
+    /// Archive-listed stories the verdict marks read; the number the reader's
+    /// progress line quotes in brackets.
     #[must_use]
     pub fn archived(&self) -> usize {
         self.read.iter().filter(|r| r.archived && r.read).count()
@@ -180,8 +180,8 @@ fn probe_story_shaped_key(user: &serde_json::Map<String, Value>) -> Option<Strin
         .map(|(k, _)| k.clone())
 }
 
-/// Pull the stories the game says the account has read out of a raw `syncData`
-/// payload, from both sources, and union them.
+/// The stories a raw `syncData` payload says were read: flags, Archive and
+/// stage gates, unioned.
 ///
 /// `by_txt` is the story index's script path -> story id map
 /// (`story::StoryIndexCache::by_txt`), per server. An EMPTY map is legal and

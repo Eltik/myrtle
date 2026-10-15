@@ -110,7 +110,7 @@ export function StageList() {
 
             {empty && <div className="rounded-[14px] border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">{t("list.empty")}</div>}
 
-            {/* Timeline spine - decoration only above sm; phones get the full width back. */}
+            {/* Timeline spine: decoration only above sm, so phones get the full width back. */}
             <div className="relative sm:pl-6.5">
                 <div className="absolute top-2 bottom-2.5 left-0.75 hidden w-px sm:block" style={{ background: "linear-gradient(180deg,var(--border),color-mix(in oklch,var(--border) 25%,transparent))" }} />
                 <VirtualStageTree groups={visibleGroups} searching={searching} open={open} closedSections={closedSections} onToggleSection={toggleSection} onToggleZone={toggle} onDetails={setDetailEvent} scrollZone={scrollZone} onScrolled={() => setScrollZone(null)} />
@@ -310,7 +310,6 @@ function EventHeaderRow({ row, onToggle, onDetails }: { row: Extract<FlatRow, { 
 
                 <button type="button" onClick={onToggle} aria-expanded={open} aria-label={open ? t("list.zone.collapse", { title: event.title }) : t("list.zone.expand", { title: event.title })} className="absolute inset-0 cursor-pointer rounded-none ring-inset focus-visible:ring-2 focus-visible:ring-ring/60" />
 
-                {/* Zone thumbnail: opens the enlarged-banner detail dialog. */}
                 <button type="button" onClick={onDetails} aria-haspopup="dialog" aria-label={t("list.zone.about", { title: event.title })} className="group relative z-1 h-10 w-16 flex-none cursor-zoom-in overflow-hidden rounded-md border border-border ring-inset focus-visible:ring-2 focus-visible:ring-ring/60">
                     <PreviewFallback tone={event.tone} group={event.group} iconClassName="h-3.5 w-3.5" />
                     {cover && <StagePreview src={cover} />}

@@ -201,7 +201,14 @@ async fn status(client: &reqwest::Client, server: Server, out: &Path) -> Result<
             write_session_file(out, &stored).context("persisting refreshed session")?;
             Ok(())
         }
-        Err(e) => bail!("refresh failed: {e:?} - re-run with --email to log in again"),
+        Err(e) => {
+            let relogin = if server == Server::Bilibili {
+                "--bili-user/--bili-pass"
+            } else {
+                "--email"
+            };
+            bail!("refresh failed: {e:?} - re-run with {relogin} to log in again")
+        }
     }
 }
 

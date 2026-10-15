@@ -1,7 +1,7 @@
-import { BookOpenIcon, CheckIcon, ChevronDownIcon, FilterXIcon, SearchIcon, XIcon } from "lucide-react";
+import { BookOpenIcon, CheckIcon, ChevronDownIcon, FilterXIcon, XIcon } from "lucide-react";
 import { useMemo, useState } from "react";
+import { SearchField } from "#/components/SearchField";
 import { Button } from "#/components/ui/button";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -62,27 +62,6 @@ interface IStoryPickerProps {
     onChoose: (group: string | null) => void;
 }
 
-interface ISearchFieldProps {
-    value: string;
-    onChange: (value: string) => void;
-    placeholder: string;
-    /** The input's accessible label. */
-    label: string;
-    className?: string;
-}
-
-/** A search box: the magnifier, then the input. The gallery's search and both story searches are this. */
-export function SearchField({ value, onChange, placeholder, label, className }: ISearchFieldProps) {
-    return (
-        <InputGroup className={className}>
-            <InputGroupAddon>
-                <SearchIcon aria-hidden="true" />
-            </InputGroupAddon>
-            <InputGroupInput value={value} onChange={(e) => onChange((e.target as HTMLInputElement).value)} placeholder={placeholder} type="search" aria-label={label} />
-        </InputGroup>
-    );
-}
-
 const storyRow = (active: boolean) =>
     cn("flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-start font-sans text-[13px] leading-tight outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring", active ? "bg-primary/12 font-medium text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground");
 
@@ -113,12 +92,7 @@ function StoryRows({ groups, query, chosen, total, onChoose }: Omit<IStoryPicker
     );
 }
 
-/**
- * The story filter: a button naming the chosen story that opens a bounded panel with its
- * own search (through `fuzzy.ts`), "All stories" first, then each story with its count.
- * The search sits on an opaque bar above the list, never over it; the list scrolls inside
- * the panel and fades at both edges.
- */
+/** The story filter as a popover. The search bar sits outside the scroll so rows never show through it. */
 export function StoryPicker({ groups, chosen, chosenName, total, onChoose }: IStoryPickerProps) {
     const t: T = useT("user");
     const [open, setOpen] = useState(false);
@@ -148,12 +122,7 @@ export function StoryPicker({ groups, chosen, chosenName, total, onChoose }: ISt
     );
 }
 
-/**
- * The rail's story filter, a bounded panel of its own: its search on an opaque bar at the
- * top, outside the scroll, so no row ever shows through it; under it "All stories", then
- * each story with its muted count, scrolling inside the panel and fading at both edges.
- * It fills whatever height the rail leaves it.
- */
+/** {@link StoryPicker} inline for the rail, filling whatever height the rail leaves it. */
 export function StoryPanel({ groups, chosen, total, onChoose }: Omit<IStoryPickerProps, "chosenName">) {
     const t: T = useT("user");
     const [query, setQuery] = useState("");

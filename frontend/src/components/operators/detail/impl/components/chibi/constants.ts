@@ -2,6 +2,8 @@ export const CHIBI_OFFSET_X = 0.5;
 export const CHIBI_OFFSET_Y = 0.85;
 export const CHIBI_SCALE = 0.75;
 export const ANIMATION_SPEED = 1;
+/** Frame rate for frame stepping when a skeleton does not record its own; see `spineFps`. */
+export const SPINE_FALLBACK_FPS = 30;
 
 // Dynamic illustrations are full-size art (thousands of px), so they are
 // fitted to the canvas from measured bounds instead of using the fixed chibi

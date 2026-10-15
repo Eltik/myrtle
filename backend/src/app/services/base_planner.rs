@@ -16,7 +16,8 @@ use ts_rs::TS;
 use crate::app::cpu;
 use crate::app::error::ApiError;
 use crate::app::services::improvements::{
-    BaseAssignmentDto, ShiftRotationDto, base_assignment_to_dto, shift_rotation_to_dto,
+    BaseAssignmentDto, ShiftRoomDto, ShiftRotationDto, base_assignment_to_dto,
+    shift_rotation_to_dto,
 };
 use crate::app::state::AppState;
 use crate::core::gamedata::types::GameData;
@@ -24,13 +25,15 @@ use crate::core::grade::base::assignment::{
     compute_current_assignment, compute_live_assignment, morale_recovery,
 };
 use crate::core::grade::base::context::BaseContext;
-use crate::core::grade::base::pools::{optimal_with_bundles, search_economy};
+use crate::core::grade::base::pools::{AcceptedEconomy, optimal_with_bundles, search_economy};
+use crate::core::grade::base::rotation_value::{StaffingValue, presets_value, rotation_value};
 use crate::core::grade::base::scope::settle_scoped_proposal;
 use crate::core::grade::base::shift_rotation::{SHIFT_COUNT, recommend_shift_rotation};
 use crate::core::grade::base::sustain_sim::game_morale_drain;
 use crate::core::grade::base::types::{
     BaseAssignment, OperatorBaseProfile, RoomAssignment, UserBuilding, UserRoom,
 };
+use crate::core::grade::base::util::is_production_room;
 use crate::core::grade::base::yield_model::room_yield;
 use crate::database::models::user::UserProfile;
 use crate::database::queries::building::get_building;
@@ -77,12 +80,11 @@ pub struct EvaluateRequest {
 
 /// The player's real base, every built slot of it.
 ///
-/// This exists because a `BaseAssignment` is deliberately NOT a layout: it
-/// carries only the rooms the plan has something to say about (production, plus
-/// a staffed Control Center). Seeding a planner from it silently drops
-/// dormitories, power plants and every support facility - which then breaks the
-/// power balance AND the scoring, since dorm levels and facility counts feed
-/// the clause engine.
+/// A `BaseAssignment` is deliberately NOT a layout: it carries only the rooms
+/// the plan has something to say about (production, plus a staffed Control
+/// Center). Seeding a planner from it drops dormitories, power plants and every
+/// support facility, which breaks the power balance AND the scoring (dorm levels
+/// and facility counts feed the clause engine).
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
@@ -106,8 +108,7 @@ pub struct SlotPresetsDto {
     pub shifts: Vec<Vec<String>>,
 }
 
-/// The serialized twin of [`DraftRoom`] - what the client sends back on every
-/// evaluate/optimize call.
+/// [`DraftRoom`] as the client posts it back on every evaluate/optimize call.
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
@@ -159,14 +160,14 @@ pub struct EvaluateResponse {
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub claim: Option<ClaimDto>,
-    /// The drafted crews simulated with NO rotation at all - "if you never
-    /// swap". `None` when nothing is staffed. Seeded with PROJECTED live
-    /// morale, so its clock starts now, not at a hypothetical full bar.
+    /// The drafted crews simulated with no rotation ("if you never swap").
+    /// `None` when nothing is staffed. Seeded with PROJECTED live morale, so
+    /// its clock starts now, not at a full bar.
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub unrotated: Option<crate::app::services::improvements::SustainabilityDto>,
-    /// Hours since the newest morale write in the sync - how stale the
-    /// "current bar" data is. `None` when the sync carries no morale.
+    /// Hours since the sync's newest morale write, i.e. how stale the current
+    /// bars are. `None` when the sync carries no morale.
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub morale_synced_hours_ago: Option<f64>,
@@ -208,8 +209,8 @@ pub struct DronesDto {
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct ClaimDto {
-    /// Hours (from an empty buffer, i.e. from a claim now) until the FIRST
-    /// production room's buffer is full - log in before this to lose nothing.
+    /// Hours from a claim now until the FIRST production room's buffer is
+    /// full. Log in before this to lose nothing.
     pub next_full_hours: f64,
     /// Steady-state losses at each check-in cadence.
     pub intervals: Vec<ClaimIntervalDto>,
@@ -225,23 +226,23 @@ pub struct ClaimIntervalDto {
     pub lost_exp_per_day: f64,
 }
 
-/// The dormitories' contribution. They produce nothing, so they never appear in
-/// a `BaseAssignment` - but they set how fast workers recover and how many can
-/// rest at once, which is what decides whether a staffing survives its own
-/// rhythm. Surfaced separately so "no yield" doesn't read as "not accounted for".
+/// The dorms. They produce nothing, so no `BaseAssignment` lists them, but they
+/// set recovery speed and how many can rest at once, which decides whether a
+/// staffing survives its own rhythm. Listed apart so no yield doesn't read as
+/// unaccounted.
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct DormsDto {
     pub count: usize,
-    /// Sum of dorm levels - the `&dorm&lv` scaling the clause engine reads.
+    /// Sum of dorm levels (the clause engine's `&dorm&lv`).
     pub total_levels: i32,
     /// Operators the base can rest at once.
     pub total_capacity: i32,
     /// Morale restored per hour to a resting operator, scaled by dorm levels.
     pub recovery_per_hour: f64,
-    /// Each dormitory, BEST FIRST - the order resters fill them. A 2/5/2's
-    /// under-leveled dorms show up here as the slower rates they are.
+    /// Each dorm, best first (the order resters fill them), so a 2/5/2's
+    /// low dorms show their slower rates.
     pub per_dorm: Vec<DormDto>,
 }
 
@@ -301,8 +302,8 @@ pub struct PowerDto {
     pub net: i32,
 }
 
-/// A rotation is whole-base by construction (a shift covers every room at
-/// once), so unlike optimize there is no `scope` - only who must stay put.
+/// No `scope`, unlike optimize: a shift covers every room at once, so the only
+/// input is who must stay put.
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -461,6 +462,52 @@ pub struct RotationResponse {
     pub rotation: ShiftRotationDto,
     /// Shifts per day the rotation assumes, so the UI never hardcodes it.
     pub shift_count: usize,
+    /// The recommended rotation against the player's saved presets, both valued
+    /// the way the grade values a base (each shift stationed and scored, averaged).
+    pub comparison: RotationComparisonDto,
+}
+
+/// Rotation against rotation. The Optimize proposal is the PEAK single staffing;
+/// a player running the recommended rotation stations one shift of it at a
+/// time, so the peak always reads above their base and "optimized vs your base"
+/// could never close for them. This is the comparison that can.
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+#[derive(Debug, Clone, Serialize)]
+pub struct RotationComparisonDto {
+    /// The recommended rotation, averaged over its shifts.
+    pub recommended: RotationValueDto,
+    /// The player's saved presets averaged over the shifts the grade counts
+    /// (every production room with presets has a crew in them). `None` without
+    /// usable presets.
+    pub presets: Option<RotationValueDto>,
+    /// Production room-shift cells of the presets that match the recommendation
+    /// (same crew, or an equivalent one within the leniency band).
+    pub matching_cells: usize,
+    /// Production room-shift cells in the recommended rotation.
+    pub production_cells: usize,
+}
+
+/// Daily figures of a rotation, averaged over its shifts.
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+#[derive(Debug, Clone, Serialize)]
+pub struct RotationValueDto {
+    pub production_efficiency: f64,
+    pub lmd_per_day: f64,
+    pub exp_per_day: f64,
+    pub total_value: f64,
+}
+
+impl From<StaffingValue> for RotationValueDto {
+    fn from(v: StaffingValue) -> Self {
+        Self {
+            production_efficiency: v.production_efficiency,
+            lmd_per_day: v.lmd_per_day,
+            exp_per_day: v.exp_per_day,
+            total_value: v.total_value,
+        }
+    }
 }
 
 #[derive(TS, utoipa::ToSchema)]
@@ -469,9 +516,8 @@ pub struct RotationResponse {
 pub struct OptimizeResponse {
     /// The proposed layout, scored.
     pub proposal: BaseAssignmentDto,
-    /// The draft as submitted, scored the same way - the honest before-picture
-    /// the UI diffs against. Computed here rather than trusted from the client
-    /// so both sides of the comparison come from one engine run.
+    /// The draft as submitted, scored here rather than trusted from the
+    /// client, so both sides of the UI's diff come from one engine run.
     pub baseline: BaseAssignmentDto,
     /// Only the rooms whose crew actually changed.
     pub room_diffs: Vec<RoomDiffDto>,
@@ -499,13 +545,12 @@ pub struct RoomDiffDto {
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct CatalogResponse {
-    /// Shifts in a base day. A game constant, not a property of any one
-    /// player - a base whose rooms only queue two presets still runs three
-    /// shifts, alternating across them.
+    /// Shifts in a base day. A game constant: a base whose rooms queue only
+    /// two presets still runs three shifts, alternating across them.
     pub shift_count: usize,
     pub rooms: Vec<CatalogRoomDto>,
     pub formulas: Vec<CatalogFormulaDto>,
-    /// The floorplan every base shares - what the client draws the board from.
+    /// The floorplan every base shares.
     pub slots: Vec<CatalogSlotDto>,
     pub storeys: Vec<CatalogStoreyDto>,
 }
@@ -525,8 +570,7 @@ pub struct CatalogSlotDto {
     pub category: String,
     pub storey_id: String,
     pub offset_col: i32,
-    /// Absolute - the storey's Y-offset is already applied. Counts up from the
-    /// bottom of the base, so B4 is 0.
+    /// Absolute (storey Y-offset applied), counted up from the bottom: B4 is 0.
     pub offset_row: i32,
     pub size_col: i32,
     pub size_row: i32,
@@ -842,16 +886,22 @@ pub async fn evaluate(
             .collect(),
     };
 
-    // Scores rooms exactly as stationed, which is what "score this draft" means.
-    let assignment = compute_live_assignment(
-        &ctx.profiles,
-        &building,
-        &game_data.building,
-        &ctx.registry,
-        &ctx.morale_drains,
-        None,
-        &synced_bars,
-    );
+    // Scored as stationed. CPU-bound, so on the blocking pool (`cpu::offload`);
+    // context and building move in and back out, nothing is cloned.
+    let gd = std::sync::Arc::clone(&game_data);
+    let (ctx, building, assignment) = cpu::offload("base_evaluate", move || {
+        let assignment = compute_live_assignment(
+            &ctx.profiles,
+            &building,
+            &gd.building,
+            &ctx.registry,
+            &ctx.morale_drains,
+            None,
+            &synced_bars,
+        );
+        (ctx, building, assignment)
+    })
+    .await?;
 
     let assignment_dto =
         base_assignment_to_dto(&assignment, &game_data, &ctx.profiles, &ctx.registry);
@@ -1139,11 +1189,19 @@ pub async fn optimize(
         }
     }
     let search_registry = economy.registry;
-    // The two searches are CPU-bound; on the blocking pool they cannot stall
-    // the async worker's other futures (see `cpu::offload`). The context and
-    // the building move in and come back, so nothing is cloned.
+    // Both searches are CPU-bound, so blocking pool as in `evaluate`; context
+    // and building move in and back, nothing is cloned.
     let gd = std::sync::Arc::clone(&game_data);
     let scope: HashSet<String> = req.scope.iter().cloned().collect();
+    let plan_key = plan_cache_key(
+        uid,
+        &req.layout,
+        &req.scope,
+        &req.locked,
+        &req.excluded,
+        req.ignore_promotion,
+        &facts,
+    );
     let (ctx, building, baseline, proposal) = cpu::offload("base_optimize", move || {
         let baseline = compute_current_assignment(
             &ctx.profiles,
@@ -1155,16 +1213,19 @@ pub async fn optimize(
         );
         // With the joint-seating bundle trials, as the Score tab's optimal
         // (`pools::optimal_with_bundles`).
-        let proposal = optimal_with_bundles(
-            &candidates,
-            &building,
-            &gd.building,
-            &ctx.registry,
-            &search_registry,
-            &ctx.morale_drains,
-            &pins,
-        )
-        .optimal;
+        let proposal = cached_plan(plan_key, || {
+            optimal_with_bundles(
+                &candidates,
+                &building,
+                &gd.building,
+                &ctx.registry,
+                &search_registry,
+                &ctx.morale_drains,
+                &pins,
+            )
+        })
+        .optimal
+        .clone();
         // A scoped run is settled as the player will read it: every room
         // outside the scope exactly as drafted (the search re-seats dorms and
         // the Control Center on its own), and a scoped room changed only when
@@ -1199,6 +1260,87 @@ pub async fn optimize(
     })
 }
 
+/// The bundled optimum (registry, pins, plan) a draft resolves to, kept for a
+/// few minutes: the Optimize button and the rotation view ask for the same
+/// plan of the same draft seconds apart, and it is the planner's heaviest
+/// step (about five seconds for a 400-operator roster in release). Keyed on
+/// everything the search reads; sized for a handful of players' drafts.
+static PLAN_CACHE: std::sync::LazyLock<
+    dashmap::DashMap<String, (std::time::Instant, std::sync::Arc<AcceptedEconomy>)>,
+> = std::sync::LazyLock::new(dashmap::DashMap::new);
+const PLAN_CACHE_TTL: std::time::Duration = std::time::Duration::from_secs(10 * 60);
+const PLAN_CACHE_CAP: usize = 64;
+
+fn plan_cache_key(
+    uid: &str,
+    layout: &[DraftRoom],
+    scope: &[String],
+    locked: &[String],
+    excluded: &[String],
+    ignore_promotion: bool,
+    facts: &AccountFactsReq,
+) -> String {
+    let mut rooms: Vec<String> = layout
+        .iter()
+        .map(|r| {
+            let mut ops = r.operators.clone();
+            ops.sort();
+            format!(
+                "{}:{}:{}:{}:{}",
+                r.slot_id,
+                r.room_type,
+                r.level,
+                r.formula_type.as_deref().unwrap_or(""),
+                ops.join(",")
+            )
+        })
+        .collect();
+    rooms.sort();
+    let sorted = |v: &[String]| {
+        let mut v = v.to_vec();
+        v.sort();
+        v.join(",")
+    };
+    format!(
+        "{uid}|{ignore_promotion}|{}|{}|{}|{}|{}|{}",
+        facts.open_recruit_slots.unwrap_or(0),
+        facts.training_class.as_deref().unwrap_or(""),
+        sorted(scope),
+        sorted(locked),
+        sorted(excluded),
+        rooms.join(";")
+    )
+}
+
+/// The cached plan for `key`, or `compute` it and remember it.
+fn cached_plan(
+    key: String,
+    compute: impl FnOnce() -> AcceptedEconomy,
+) -> std::sync::Arc<AcceptedEconomy> {
+    if let Some(hit) = PLAN_CACHE.get(&key)
+        && hit.0.elapsed() < PLAN_CACHE_TTL
+    {
+        return std::sync::Arc::clone(&hit.1);
+    }
+    let plan = std::sync::Arc::new(compute());
+    if PLAN_CACHE.len() >= PLAN_CACHE_CAP {
+        PLAN_CACHE.retain(|_, (at, _)| at.elapsed() < PLAN_CACHE_TTL);
+        if PLAN_CACHE.len() >= PLAN_CACHE_CAP
+            && let Some(oldest) = PLAN_CACHE
+                .iter()
+                .min_by_key(|e| e.value().0)
+                .map(|e| e.key().clone())
+        {
+            PLAN_CACHE.remove(&oldest);
+        }
+    }
+    PLAN_CACHE.insert(
+        key,
+        (std::time::Instant::now(), std::sync::Arc::clone(&plan)),
+    );
+    plan
+}
+
 /// Rooms the optimizer has no model for: it never staffs Training or Workshop and
 /// nothing in the search values a seat there.
 ///
@@ -1223,7 +1365,7 @@ pub async fn rotation(
     let mut ctx = context_for(state, uid, viewer_id, &game_data, req.ignore_promotion).await?;
     let facts = effective_facts(state, uid, req.facts).await;
     apply_account_facts(&mut ctx, &game_data, &facts);
-    let building = UserBuilding {
+    let mut building = UserBuilding {
         rooms: req
             .layout
             .iter()
@@ -1231,6 +1373,20 @@ pub async fn rotation(
             .map(DraftRoom::into_user_room)
             .collect(),
     };
+    // The draft carries no presets. The player's saved shifts come from the synced
+    // base, so the shift views can diff against them and the rotation aligns its
+    // phases to them, as the Score tab's rotation does.
+    if let Some(real) = synced_building(state, uid).await? {
+        for room in &mut building.rooms {
+            if let Some(saved) = real
+                .rooms
+                .iter()
+                .find(|r| r.slot_id == room.slot_id && r.room_type == room.room_type)
+            {
+                room.preset_shifts.clone_from(&saved.preset_shifts);
+            }
+        }
+    }
 
     let mut pins = build_pins(&req.layout, &[], &req.locked);
     let candidates = ctx.profiles_excluding(&req.excluded);
@@ -1246,41 +1402,101 @@ pub async fn rotation(
     // The rotation search is the planner's heaviest step (about a second in
     // release, ten in a debug build): on the blocking pool, see `cpu::offload`.
     let gd = std::sync::Arc::clone(&game_data);
-    let (ctx, building, candidates, plan) = cpu::offload("base_rotation", move || {
-        // The rotation plans with the economy the bundle trials accepted
-        // (registry and pins), exactly as the Score tab's rotation does.
-        let accepted = optimal_with_bundles(
-            &candidates,
-            &building,
-            &gd.building,
-            &ctx.registry,
-            &search_registry,
-            &ctx.morale_drains,
-            &pins,
-        );
-        let plan = recommend_shift_rotation(
-            &candidates,
-            &building,
-            &gd.building,
-            &accepted.registry,
-            &ctx.morale_drains,
-            &accepted.pins,
-        );
-        (ctx, building, candidates, plan)
-    })
-    .await?;
+    let plan_key = plan_cache_key(
+        uid,
+        &req.layout,
+        &[],
+        &req.locked,
+        &req.excluded,
+        req.ignore_promotion,
+        &facts,
+    );
+    let (ctx, building, candidates, plan, recommended, presets) =
+        cpu::offload("base_rotation", move || {
+            // The rotation plans with the economy the bundle trials accepted
+            // (registry and pins), exactly as the Score tab's rotation does.
+            let accepted = cached_plan(plan_key, || {
+                optimal_with_bundles(
+                    &candidates,
+                    &building,
+                    &gd.building,
+                    &ctx.registry,
+                    &search_registry,
+                    &ctx.morale_drains,
+                    &pins,
+                )
+            });
+            let plan = recommend_shift_rotation(
+                &candidates,
+                &building,
+                &gd.building,
+                &accepted.registry,
+                &ctx.morale_drains,
+                &accepted.pins,
+            );
+            // Both sides valued on the full roster through the live path, so an
+            // excluded operator sitting in a saved preset still prices.
+            let recommended = rotation_value(
+                &plan,
+                &ctx.profiles,
+                &building,
+                &gd.building,
+                &ctx.registry,
+                &ctx.morale_drains,
+            )
+            .unwrap_or_default();
+            let presets = presets_value(
+                &ctx.profiles,
+                &building,
+                &gd.building,
+                &ctx.registry,
+                &ctx.morale_drains,
+            );
+            (ctx, building, candidates, plan, recommended, presets)
+        })
+        .await?;
+
+    let rotation = shift_rotation_to_dto(
+        &plan,
+        &game_data,
+        &candidates,
+        &building,
+        &ctx.registry,
+        &ctx.morale_drains,
+    );
+    let production_cells: Vec<&ShiftRoomDto> = rotation
+        .shifts
+        .iter()
+        .flat_map(|shift| shift.rooms.iter())
+        .filter(|r| r.active && is_production_room(&r.room_type))
+        .collect();
+    let matching_cells = production_cells
+        .iter()
+        .filter(|r| r.matches || r.equivalent)
+        .count();
+    let production_cells = production_cells.len();
 
     Ok(RotationResponse {
-        rotation: shift_rotation_to_dto(
-            &plan,
-            &game_data,
-            &candidates,
-            &building,
-            &ctx.registry,
-            &ctx.morale_drains,
-        ),
+        rotation,
         shift_count: SHIFT_COUNT,
+        comparison: RotationComparisonDto {
+            recommended: recommended.into(),
+            presets: presets.map(Into::into),
+            matching_cells,
+            production_cells,
+        },
     })
+}
+
+/// The player's synced base, when they have one. Privacy was settled by the
+/// caller's `context_for` on the same uid.
+async fn synced_building(state: &AppState, uid: &str) -> Result<Option<UserBuilding>, ApiError> {
+    let Some(user) = find_by_uid(&state.db, uid).await? else {
+        return Ok(None);
+    };
+    Ok(get_building(&state.db, user.id)
+        .await?
+        .map(|json| UserBuilding::from_json(&json)))
 }
 
 /// The `(char_id, room_type)` pins a planner run must respect: rooms outside
