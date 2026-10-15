@@ -1,6 +1,6 @@
 //! Tables the unpacker kept from an earlier extract because this one would not decode.
 //!
-//! When a patch changes a FlatBuffer table's layout so it verifies under neither the CN
+//! When a patch changes a `FlatBuffer` table's layout so it verifies under neither the CN
 //! nor the Yostar schema, the unpacker SKIPS it and keeps the previous `.json`, then lists
 //! it in `gamedata/.skipped.json` (see `assets/unpacker/src/export/gamedata.rs`). The
 //! table still parses here, so `table_warnings` never sees it: on 2026-10-14 EN
