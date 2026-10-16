@@ -55,6 +55,40 @@ impl Tools {
         self.topic(&outer[0].1).ok()
     }
 
+    /// The group topics a question names (2026-10-16, Ian's ian34 "Evaluate the political influence of Karlan Trade Group
+    /// and Blacksteel"): served nation, place, race and organization topics whose name or alias of 4 or more characters
+    /// the question holds as whole words, case folded, a name inside a longer matched one not counted; each with its
+    /// forms, in the order the question names them.
+    #[must_use]
+    pub fn named_group_topics(&self, q: &str) -> Vec<(String, Vec<String>)> {
+        let n = norm(q);
+        let Some(rows) = self.topics.as_ref() else { return Vec::new() };
+        let mut hits: Vec<(usize, String, &Value)> = Vec::new();
+        for r in rows.iter().filter(|r| matches!(s(r, "kind").as_str(), "nation" | "place" | "race" | "organization")) {
+            for f in std::iter::once(s(r, "topic")).chain(r["aliases"].as_array().into_iter().flatten().filter_map(|a| a.as_str().map(str::to_owned))) {
+                let x = norm(&f);
+                if x.chars().count() >= 4 && contains_words(&n, &x) {
+                    hits.push((n.find(&x).unwrap_or(usize::MAX), x, r));
+                }
+            }
+        }
+        let outer: Vec<&(usize, String, &Value)> = hits.iter()
+            .filter(|(_, x, r)| !hits.iter().any(|(_, y, u)| s(u, "topic") != s(r, "topic") && y.len() > x.len() && contains_words(y, x))).collect();
+        let mut out: Vec<(usize, String, Vec<String>)> = Vec::new();
+        for (at, _, r) in outer {
+            let topic = s(r, "topic");
+            if let Some(o) = out.iter_mut().find(|o| o.1 == topic) {
+                o.0 = o.0.min(*at);
+                continue;
+            }
+            let forms = std::iter::once(topic.clone()).chain(r["aliases"].as_array().into_iter().flatten().filter_map(|a| a.as_str().map(str::to_owned)))
+                .filter(|f| f.chars().count() >= 4).collect();
+            out.push((*at, topic, forms));
+        }
+        out.sort_by_key(|o| o.0);
+        out.into_iter().map(|(_, t, f)| (t, f)).collect()
+    }
+
     /// The nation topic of a place topic (2026-10-03, Ian's item 5: Dossoles's summary is about the city, and the three
     /// factions are in Bolívar's): the served nation topic whose name or aliases the place's summary writes most often
     /// (whole words, at least once); None for a topic that is not a place. A trade, not a derivation: no table gives a

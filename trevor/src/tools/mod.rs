@@ -21,7 +21,7 @@ mod operators;
 #[cfg(test)]
 mod tests;
 
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::Path;
 
 use serde::{Deserialize, Serialize};
@@ -351,6 +351,12 @@ impl Tools {
         // A thin topic (too few passages name it, or a short or poorly supported summary; scripts/topics.py thin) is
         // never served; only topics from data (2026-10-01) are ever marked.
         t.topics = read_jsonl(&root.join("artifacts/topics/topics.jsonl")).map(served_topics);
+        if std::env::var("TREVOR_TOPIC_IDENTITIES").as_deref() != Ok("0") {
+            t.fold_group_identities();
+        }
+        if std::env::var("TREVOR_ORG_SHORT_NAMES").as_deref() != Ok("0") {
+            t.org_short_names();
+        }
         t.overview = read_jsonl(&root.join("artifacts/overview/overview.jsonl"));
         for table in CROSSREF_TABLES {
             if let Some(v) = read_json(&root.join(format!("artifacts/crossref/{table}.json"))) {
@@ -383,6 +389,64 @@ impl Tools {
             }
         }
         t
+    }
+
+    /// Identity links that name an organization, nation or place, not a person (2026-10-16, Ian's ian34): an identity
+    /// group whose label is such a topic's name or alias gives its names to that topic as aliases and leaves the person
+    /// lists. entities.py linked "Blacksteel" to "Blacksteel Worldwide"; as a person name, "Blacksteel" (150 P3b chunks,
+    /// mid-sentence in 111 chunks of 22 story groups) was never mined as a topic form, so "Karlan Trade Group and Blacksteel"
+    /// named one organization. Of the 158 groups only that one has a group topic as its label. `TREVOR_TOPIC_IDENTITIES=0`
+    /// keeps the old lists.
+    pub(crate) fn fold_group_identities(&mut self) {
+        let Some(rows) = self.topics.as_mut() else { return };
+        let forms = |r: &Value| -> Vec<String> {
+            std::iter::once(s(r, "topic")).chain(r["aliases"].as_array().into_iter().flatten().filter_map(|a| a.as_str().map(str::to_owned)))
+                .map(|f| norm(&f)).collect()
+        };
+        self.identities.retain(|group| {
+            let Some(label) = group.first().map(|l| norm(l)) else { return true };
+            let Some(r) = rows.iter_mut().find(|r| matches!(s(r, "kind").as_str(), "organization" | "nation" | "place") && forms(r).contains(&label)) else {
+                return true;
+            };
+            let have = forms(r);
+            if let Some(al) = r["aliases"].as_array_mut() {
+                for n in group.iter().filter(|n| !have.contains(&norm(n))) {
+                    al.push(Value::String(n.clone()));
+                }
+            }
+            false
+        });
+    }
+
+    /// The short name of an organization topic named with a company suffix (2026-10-16, ian34): "Blacksteel Worldwide"
+    /// is also "Blacksteel", the name the story uses (150 P3b chunks against the full name's 13), when the head is 4
+    /// characters or more and no topic already has it as a form. Of the 354 topics this adds exactly that one alias
+    /// ("Karlan Trade CO., LTD" and "Raythean Industries" already carry their heads; "Group" is not a suffix here, so
+    /// the Ursus Student Self-government Group keeps its name). It replaces, at the source, the identity link
+    /// `fold_group_identities` used to read, which `entities.py build` drops since 2026-10-16 as naming a group.
+    /// `TREVOR_ORG_SHORT_NAMES=0` leaves the topics as written.
+    pub(crate) fn org_short_names(&mut self) {
+        const SUFFIX: &[&str] = &["worldwide", "company", "co", "ltd", "inc", "corporation", "corp", "llc", "holdings", "enterprises", "industries"];
+        let Some(rows) = self.topics.as_mut() else { return };
+        let forms: BTreeSet<String> = rows.iter().flat_map(|r| std::iter::once(s(r, "topic"))
+            .chain(r["aliases"].as_array().into_iter().flatten().filter_map(|a| a.as_str().map(str::to_owned)))).map(|f| norm(&f)).collect();
+        for r in rows.iter_mut().filter(|r| s(r, "kind") == "organization") {
+            let topic = s(r, "topic");
+            let words: Vec<&str> = topic.split(|c: char| !(c.is_alphanumeric() || c == '\'' || c == '-')).filter(|w| !w.is_empty()).collect();
+            let mut end = words.len();
+            while end > 0 && SUFFIX.contains(&words[end - 1].to_lowercase().as_str()) {
+                end -= 1;
+            }
+            if end == 0 || end == words.len() {
+                continue;
+            }
+            let head = words[..end].join(" ");
+            if head.chars().count() >= 4 && !forms.contains(&norm(&head)) {
+                if let Some(al) = r["aliases"].as_array_mut() {
+                    al.push(Value::String(head));
+                }
+            }
+        }
     }
 
     /// Run a route's tool with its string arguments.

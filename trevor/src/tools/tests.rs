@@ -454,3 +454,47 @@ fn whole_word_matches_skip_matches_inside_words() {
     assert_eq!(whole_word_matches("Iris and Irisa met Iris.", "Iris").collect::<Vec<_>>(), vec![0, 19]);
     assert_eq!(whole_word_matches("Rhodes Island's Islands", "Island").count(), 1);
 }
+
+/// ian35 (2026-10-16): an operator ranking that lists Aurela, a person named in Gracebearer's file, is caught; the
+/// operators, a topic item and plain prose are not; the question gate reads "operators" and who/which "operator".
+#[test]
+fn operator_list_items() {
+    let t = Tools { attributes: Some(vec![json!({"name": "Caper"}), json!({"name": "Rosmontis"})]),
+                    topics: Some(vec![json!({"topic": "Reunion Movement", "kind": "organization", "aliases": ["Reunion"]})]), ..Tools::default() };
+    let ans = "Based on the passages:\n\n*   **Aurela:** She took delight in cruelty [2]. Also [3, 4].\n*   **Caper:** chaos [18].\n1. **Rosmontis (Elite Operator)** [1]\n- **Reunion:** a group [5]\nAurela is first.";
+    assert_eq!(t.non_operator_items(ans), vec![("Aurela".to_owned(), vec![2, 3, 4])]);
+    assert!(t.asks_operators("Give a ranking of operators who break the most Geneva convention rules"));
+    assert!(t.asks_operators("Which operator is the best cook?"));
+    assert!(!t.asks_operators("Is Texas a good operator?"));
+    assert!(!t.asks_operators("Which operator NPC is not playable?"));
+    assert!(!t.asks_operators("Which operator/Rhodes Island NPC comes closest to being a Psychologist?"));
+    assert!(t.non_operator_items("*   **Aurela**: Although not a playable operator, she was cruel [2].").is_empty());
+}
+
+/// ian34 (2026-10-16): an identity group whose label is an organization topic gives the topic its names and leaves the
+/// person lists; the question then names both groups.
+#[test]
+fn group_identities_and_named_groups() {
+    let mut t = Tools { identities: vec![vec!["Blacksteel Worldwide".into(), "Blacksteel".into(), "Blacksteel Worldwide".into()],
+                                         vec!["Lucilla".into(), "Lucilla".into()]],
+                        topics: Some(vec![json!({"topic": "Blacksteel Worldwide", "kind": "organization", "aliases": ["Blacksteel Worldwide", "BSW"]}),
+                                          json!({"topic": "Karlan Trade CO., LTD", "kind": "organization", "aliases": ["Karlan Trade"]}),
+                                          json!({"topic": "Mount Karlan", "kind": "place", "aliases": []})]), ..Tools::default() };
+    let q = "Evaluate the political influence of Karlan Trade Group and Blacksteel. Who possesses more power?";
+    assert_eq!(t.named_group_topics(q).len(), 1, "before: Blacksteel is a person name");
+    t.fold_group_identities();
+    assert_eq!(t.identities.len(), 1);
+    let g: Vec<String> = t.named_group_topics(q).into_iter().map(|g| g.0).collect();
+    assert_eq!(g, vec!["Karlan Trade CO., LTD".to_owned(), "Blacksteel Worldwide".to_owned()]);
+    assert!(t.named_group_topics("What is Mount Karlan?").iter().all(|g| g.0 == "Mount Karlan"));
+
+    // Since identities.json no longer carries the Blacksteel link, the company-suffix rule supplies the short name.
+    let mut u = Tools { topics: Some(vec![json!({"topic": "Blacksteel Worldwide", "kind": "organization", "aliases": ["Blacksteel Worldwide", "BSW"]}),
+                                          json!({"topic": "Karlan Trade CO., LTD", "kind": "organization", "aliases": ["Karlan Trade"]}),
+                                          json!({"topic": "Ursus Student Self-government Group", "kind": "organization", "aliases": []})]), ..Tools::default() };
+    u.org_short_names();
+    let g: Vec<String> = u.named_group_topics(q).into_iter().map(|g| g.0).collect();
+    assert_eq!(g, vec!["Karlan Trade CO., LTD".to_owned(), "Blacksteel Worldwide".to_owned()]);
+    assert_eq!(u.topics.as_ref().unwrap()[1]["aliases"].as_array().unwrap().len(), 1, "Karlan Trade already has its head");
+    assert_eq!(u.topics.as_ref().unwrap()[2]["aliases"].as_array().unwrap().len(), 0, "Group is not a suffix");
+}

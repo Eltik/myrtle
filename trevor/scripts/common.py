@@ -12,7 +12,8 @@ directory is on sys.path, and so it is for a script that another loads with load
 import collections, hashlib, importlib.util, json, math, os, re, threading, time, urllib.parse, urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-GAMEDATA = os.path.join(ROOT, '..', 'assets', 'output', 'en', 'gamedata')
+# TREVOR_GAMEDATA points at another checkout's game data (a git worktree has no assets/output of its own).
+GAMEDATA = os.environ.get('TREVOR_GAMEDATA') or os.path.join(ROOT, '..', 'assets', 'output', 'en', 'gamedata')
 EXCEL = os.path.join(GAMEDATA, 'excel')
 # The yes/no grammar every judge call uses.
 G_BOOL = 'root ::= "true" | "false"\n'

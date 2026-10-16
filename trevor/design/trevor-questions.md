@@ -444,3 +444,65 @@ Tests pass, 75 without embed and 80 with (the chronology test now also checks th
 **Item 1 follow-up (2026-10-06 14:00 to 14:50): no reranker-score threshold gives `--line-pool` 0 losses, because the loss g0034 has the HIGHEST score of all 29 gold questions; `--line-pool-min` is built, opt-in, not default.** `--line-pool-min F` fires the pool only when the best line outside the retrieved passages scores at least F (reranker logit); TREVOR_LINE_POOL_DEBUG=1 prints each question's gate and best score, TREVOR_LINE_POOL_DETECT=1 (measurement) skips the answer call. The scores of the 30 gold questions (29 reach the pool) were read in one Gemma session before any of Ian's: the questions the ungated pool changed rank g0034 (lost) 10.175, g0032 10.054, g0041 10.032, g0038 9.631, g0047 9.283, g0071 9.030, g0074 8.985, g0015 8.935, g0101 8.835, g0016 8.606 (the 7 gains are g0032, g0041, g0038, g0047, g0071, g0074 and g0016), then g0008 8.337, g0028 8.151, g0060 8.056, g0036 7.643; so every threshold that keeps a gain keeps g0034, and the only 0-loss threshold (above 10.175) fires on nothing. The threshold written down at 14:06:56, before Ian's scores were read, is 8.6 (just under the lowest gain, g0016): it fires on 12 of the 29 gold and, since a fired question gets exactly the ungated excerpts, its gold verdicts are the ungated arm's on those: correct +7, -1 (g0034), pairwise 5 wins (g0016, g0032, g0038, g0041, g0047; g0060's win no longer fires), 0 losses. On Ian's 33 it fires on 3 (ian15 9.090, ian30 8.830, ian31 9.552): ian17 (6.003), ian1 (7.743), ian2, ian5 and ian27 drop out, but ian30, a pairwise loss, still fires with the same prompt. On the real probe it fires on 15 of the 96 questions detected (r012, r016, r017, r034, r038, r041, r043, r054, r055, r058, r063, r078, r079, r087, r089) before the watchdog stopped the session at 14:30 (swap 15,990 to 18,060 MB, +2.07 GB, pressure at warning); the last 24 were not detected and the 15 were not answered, so the real-probe set judge and pairwise were not run. ⚠ The gold and Ian verdicts at 8.6 are derived from the ungated arm's records on the reading that a fired question's prompt is the same; no spot check reran one, so it is unverified. Ruled out by measurement: a minimum-score gate as the route to a 0-loss default (g0034 outranks every gain). Without `--line-pool-min` the opt-in pool is the ungated one of the morning, and the default path does not reach the pool at all. Records: artifacts/answers/night13/gate.*.
 
 **`ask --serve`, structured output and the spoiler horizon (2026-10-07 07:12 to 07:45, design/trevor-integration.md section 8 step 1).** `ask --serve` loads the tools, the P3b indexes and the llama-server once and answers jobs as library calls over a minimal HTTP JSON API on 127.0.0.1 (`POST /v1/ask {question, horizon?, server?, flags?}`, `GET /health`; src/bin/ask/serve.rs); `ask --worker URL` is the pull-worker skeleton of section 4 (long-poll `worker/next`, `worker/result`, `worker/heartbeat`, `x-service-key` from `TREVOR_SERVICE_KEY`), built but never run against a backend. The result carries the answer, citations as `{storyId, chunkId, lineStart, lineEnd}`, the passages, the route, the job flags, the form, `server` "en" and `corpusVersion` (`en-e79e364cfbdeeffa` today: 16 hex of the sha256 over the P3b and P4x chunks shas). Without a horizon a job takes the one-shot path (route first, P4x swapped in as the main corpus when the route or the source keywords ask for it, then `answer_one`), and the EQUIVALENCE holds: ian1 to ian10 through `ask --no-cache-prompt "q"` and through `--serve --no-cache-prompt` in one Gemma session are byte-identical on 10 of 10 (answer text plus the cited `[n] id` lines), 8 story routes and 2 P4x routes (ian6 voice, ian8 operator_file) among them, no table route. After the horizon depth change below, ian8 and the three no-horizon horizon questions were rerun and are identical to the first run on 4 of 4 (all fields but timings). Throughput did not improve on this run: serve's 10 jobs took 347.1 s (router 64.8 s, answer 235.1 s) against 321 s of wall clock for the 10 one-shot processes including their loads, 26 s slower; unexplained (system free memory was 28 % during the run, against 64 % before it), and a repeat with `memory_pressure` sampled would decide whether the resident second corpus costs it. A horizon (story or group id) keeps retrieval to chunks released at or before it by the reading guide's 85 group positions and `spoiler.jsonl`'s `storySort`; chunks of unplaced groups (operator files and records, voice, modules, items, enemies, outfits, IS, dossiers, summaries) are HIDDEN, and table answers, topic summaries and entries, dossiers, the game-data passage, the overview, canon evidence, the identity and chronology notes and the evidence composition are left out (per-era rebuilds are later work). Measured on three questions: "Why does Ch'en leave the Lungmen Guard Department?" at main_3 15 passages (all after main_3 or unplaced) -> 12 (main_2, main_3; declines, which is right for a reader at Episode 3), "What happened to Talulah?" at main_4 17 (main_8, main_9) -> 14 (main_1, main_2, main_4; answers from her Chernobog battle only), ian12's Mon3tr question at main_6 24 -> 15 (act3d0, act5d0, main_6; declines, the answer is act42side), 0 passages after the horizon in all three. Ruled out by measurement: the first cut's 8 x k (64) fused candidates before the drop kept only 1, 5 and 2 passages on the same three, since their top 64 were nearly all later stories; the filter now reads 2,000 candidates per retriever (`HORIZON_DEPTH`), which dense and BM25 score anyway. Kill switch: no `horizon` field is the old behavior, verified by the 10 of 10 above. Tests: 2 horizon tests (lib), the request/result schema and the request reader (ask); `cargo test --release --features embed` 95 passed, clippy clean.
+
+**Ian's deferred bugs ian34 and ian35 fixed; three defaults, each with a kill switch verified identical (2026-10-16 07:24 to 08:15).**
+
+*ian34, Blacksteel.* "Evaluate the political influence of Karlan Trade Group and Blacksteel" answered that Blacksteel is not mentioned. The prompt dump showed all 15 passages were Karlan Trade, Silverash and Kjerag; the 33k-character prompt held "Blacksteel" once, in the question.
+
+The cause is in the data:
+- `artifacts/entities/identities.json` links "Blacksteel" to "Blacksteel Worldwide", an organization, as if it were a person.
+- `topics.py people_names` therefore dropped "Blacksteel" (150 P3b chunks, mid-sentence in 111 chunks of 22 story groups) from mining.
+- So the Blacksteel Worldwide topic kept only "Blacksteel Worldwide" (13 chunks) and "BSW" as forms.
+
+Of the 158 identity groups, only that one has a group topic (organization, nation, place) as its label. Six others carry a race or concept word among a person's names (Lucilla: Ægir, Tessai: Oni, Gordon Tannen: Savra, Kouhei Mifune: Phidia, Sui: Feranmut, Seaborn); that is a separate extraction defect, left alone.
+
+The fix has two defaults:
+1. `Tools::fold_group_identities`: such a group's names become the topic's aliases, and the group leaves the person lists (`TREVOR_TOPIC_IDENTITIES=0` restores the old lists).
+2. Group evidence: an opinion question naming two or more group topics (`Tools::named_group_topics`) gets each group's best 3 chunks naming it, from the topic name plus the evidence query, ahead of the candidates (`--no-group-evidence`).
+
+ian34 now compares both companies with citations on each side: Karlan Trade as Kjerag's only window to the outside world, Blacksteel Worldwide as a Columbian private security contractor.
+
+*ian35, Aurela.* "Give a ranking of operators who break the most Geneva convention rules" ranked Aurela first. Aurela is the fallen Laterano gun-knight and mercenary in Gracebearer's file 4, not an operator.
+
+The new default is the operator list check (`--no-operator-list-check`):
+- It applies to a question asking for operators (`Tools::asks_operators`: "operators", or "operator" with who/which/rank/list; not with "NPC" or "character" offered, and not a NonPlayable question).
+- When the answer lists, as a bold item, someone who is not a playable operator (`Tools::non_operator_items`; topics excepted; an item whose own line already says "not a playable operator" excepted), the question is asked once more with a note naming the person and whose operator file the cited passage is.
+- When the second answer still lists one, the data note is appended.
+
+ian35 now lists Caper, Crownslayer and Rosmontis with what their files actually say, keeps Aurela only as "not a playable operator", and declines the ranking.
+
+*Measured.*
+- The switches fire, without a model (`--detect-only`), as follows:
+  - group evidence on 14 of 450 questions (gold v2 6, real 2, held-out 4, Ian 2);
+  - the operator gate on 11 (gold 4, real 3, held-out 2, trivia 1, Ian 1).
+- Those questions plus r117 (the one other Blacksteel question), 26 in all, were answered with all three switches off and with the defaults, `--no-cache-prompt`, one client.
+  - Switches off reproduced the old binary byte for byte on ian34 and ian35.
+  - 4 answers changed: ian34, ian35, h005 (both decline, worded differently), and r055.
+  - r055 ("Which operator/Rhodes Island NPC ...") was a false trigger on "Dr. Kal'tsit"; the NPC gate fixes it, and r055 is byte-identical to the base again.
+- The Qwen pairwise judge answered "A" in both orders on all 4 changed answers, which is position bias, not a verdict, so it settles nothing either way.
+- Tests: 98 pass, clippy clean.
+
+**Identity links that name a group, fixed at the source (2026-10-16, Ian's side issue).**
+
+*The fix.* `entities.py build` now drops a link when either name is a group word (`group_words`):
+- a race, nation or birthplace of operator_attributes;
+- a handbook team (organization or nation) or enemy race of the game tables;
+- any served topic name or alias.
+
+`ENTITY_GROUP_WORDS=0` keeps every link. With it, the build reproduces the old identities.json byte for byte under PYTHONHASHSEED=1. Seeds 0 and 2 differ only by the documented label tie, which is pre-existing.
+
+*Effect on identities.json.* 11 links dropped; 158 identities become 153.
+- Removed: Blacksteel Worldwide (organization ~ its short name), Lucilla ~ Ægir, Gordon Tannen ~ Savra, Seaborn ~ Mysterious Seaborn, and Sui ~ Feranmut ~ proxy.
+- Kouhei Mifune loses Phidia and keeps his real former name Kinbee Harada.
+- Tessai loses Oni and also "Madame Oni". The only quote for "Madame Oni" ("the woman known as 'Madame Oni' silently watches on") never names Tessai; the race word was the bridge, so that link was unstated.
+
+On all 1,017 eval questions (gold v2, real probe, held-out, trivia, Ian's, Reddit, Discord), `ask --detect-only` gives 0 differing lines between the old and new files.
+
+*Blacksteel's short name, now from a rule.* The Rust fold `fold_group_identities` read the bad link, so Blacksteel's short name now comes from `Tools::org_short_names`:
+- An organization topic named with a company suffix (Worldwide, Company, Co., Ltd, Inc, Corporation, Corp, LLC, Holdings, Enterprises, Industries; not Group) also answers to its head.
+- Of the 354 topics, that adds exactly "Blacksteel". Karlan Trade and Raythean already carry their heads.
+- `TREVOR_ORG_SHORT_NAMES=0` turns it off, and ian34 then names only Karlan Trade, as before.
+
+The next topic mining (`topics.py mine`) will see "Blacksteel" as a candidate, since it is no longer a person's name.
+
+`scripts/common.py` reads the game data from `TREVOR_GAMEDATA` when set: the myrtle-trevor worktree has no assets/output of its own.

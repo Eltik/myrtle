@@ -183,8 +183,36 @@ def stage_extract2():
 PLACEHOLDER = re.compile(r"^(?:code ?name|real name|name|alias|title|nickname|unknown|\?+)$", re.I)
 
 
+def group_words():
+    """Folded names of groups, not people (2026-10-16, Ian's ian34 and the side issue after it): races, nations and
+    birthplaces of operator_attributes, the handbook teams (organizations, nations) and enemy races of the game tables,
+    and every served topic name and alias. A link with one of them is not a person's identity: "Blacksteel" ~
+    "Blacksteel Worldwide" made an organization a person (so topics.py never mined "Blacksteel"), and Lucilla ~ Aegir,
+    Tessai ~ Oni, Gordon Tannen ~ Savra, Kouhei Mifune ~ Phidia, Sui ~ Feranmut joined a person to their race or kind.
+    ENTITY_GROUP_WORDS=0 keeps every link as before."""
+    if os.environ.get('ENTITY_GROUP_WORDS') == '0':
+        return set()
+    words = set()
+    for r in read_jsonl(os.path.join(OUT, 'operator_attributes.jsonl')):
+        for k in ('race', 'nation', 'birthplace'):
+            for x in re.split(r'[/,]', r.get(k) or ''):
+                words.add(norm(re.sub(r'\s*\([^)]*\)', '', x)))
+    try:
+        for t in json.load(open(os.path.join(common.EXCEL, 'handbook_team_table.json')))['Handbook_teams']:
+            words |= {norm(t['value']['PowerName']), norm(t['value']['PowerCode'])}
+        for r in json.load(open(os.path.join(common.EXCEL, 'enemy_handbook_table.json')))['RaceData']:
+            words.add(norm(r['value']['RaceName']))
+    except FileNotFoundError:
+        print(f'group words: no game tables at {common.EXCEL} (set TREVOR_GAMEDATA); attributes and topics only')
+    for r in read_jsonl(os.path.join(ROOT, 'artifacts', 'topics', 'topics.jsonl')) or []:
+        words |= {norm(a) for a in [r['topic'], *r.get('aliases', [])]}
+    return {w for w in words if len(w) >= 3}
+
+
 def stage_build():
     cs = chunks()
+    groupw = group_words()
+    grouped = 0
     speaks = collections.Counter(p for c in cs for p in set(c['speakers']))
     parent = {}
     def find(x):
@@ -205,6 +233,9 @@ def stage_build():
             if not (is_name(a) and is_name(b)) or PLACEHOLDER.match(a) or PLACEHOLDER.match(b):
                 dropped += 1
                 continue
+            if norm(a) in groupw or norm(b) in groupw:
+                grouped += 1
+                continue
             # The quote itself must state the link: an identity cue, or both names. "I can see you, Raidian."
             # only addresses someone and had merged Raidian into Kal'tsit (Ian's review, 2026-09-27).
             qn = norm(l['quote'])
@@ -223,7 +254,7 @@ def stage_build():
         ids.append({'label': label, 'speaksInChunks': speaks.get(label, 0), 'names': sorted(members),
                     'evidence': {m: evidence[m][:4] for m in sorted(members)}})
     ids.sort(key=lambda i: -i['speaksInChunks'])
-    print(f'links dropped as not a name: {dropped}; as not stated by the quote: {len(unstated)}')
+    print(f'links dropped as not a name: {dropped}; as naming a group, not a person: {grouped}; as not stated by the quote: {len(unstated)}')
     if v2:
         # Labelled inferences, never merged into an identity: the links whose quote does not state them, and a full name
         # whose first word is a linked name in the same story ("Mabel Grimm" in the interlude where Iris looks for the

@@ -46,6 +46,57 @@ impl Tools {
         direct(name).or_else(|| self.identity_links.iter().filter(|l| norm(&l.0) == n).find_map(|l| direct(&l.1)))
     }
 
+    /// Whether a question asks for operators as its answer (2026-10-16, Ian's ian35 "Give a ranking of operators who break
+    /// the most Geneva convention rules"): it says "operators", or "operator" in a who/which question, and not that the
+    /// answer is not playable (that is `answer_constraint`'s NonPlayable), and not when it offers NPCs or characters as the
+    /// alternative ("Which operator/Rhodes Island NPC comes closest to being a Psychologist?", real r055).
+    #[must_use]
+    pub fn asks_operators(&self, q: &str) -> bool {
+        let n = norm(q);
+        if ["npc", "npcs", "character", "characters"].iter().any(|w| contains_words(&n, w)) {
+            return false;
+        }
+        let who = ["who", "whom", "whose", "which", "rank", "ranking", "list"].iter().any(|w| contains_words(&n, w));
+        (contains_words(&n, "operators") || (contains_words(&n, "operator") && who))
+            && !matches!(self.answer_constraint(q), Some(AnswerConstraint::NonPlayable))
+    }
+
+    /// The names an answer lists as its items ("*   **Aurela:** ...", "1. **Texas** ..."), each with the 1-based passage
+    /// numbers its item cites, that are not playable operators by the game data (`playable_of`) and not a topic's name or
+    /// alias (an organization or nation item is not a claim that it is an operator). An item name is the bold text at
+    /// the start of a list line, a parenthesis and a trailing colon dropped, of one to three capitalized words.
+    #[must_use]
+    pub fn non_operator_items(&self, answer: &str) -> Vec<(String, Vec<usize>)> {
+        let topic_forms: BTreeSet<String> = self.topics.iter().flatten()
+            .flat_map(|r| std::iter::once(s(r, "topic")).chain(r["aliases"].as_array().into_iter().flatten().filter_map(|a| a.as_str().map(str::to_owned))))
+            .map(|f| norm(&f)).collect();
+        let mut out: Vec<(String, Vec<usize>)> = Vec::new();
+        for line in answer.lines() {
+            let t = line.trim_start();
+            let t = t.strip_prefix(['*', '-']).map(str::trim_start)
+                .or_else(|| t.split_once(". ").filter(|(d, _)| !d.is_empty() && d.chars().all(|c| c.is_ascii_digit())).map(|(_, r)| r.trim_start()));
+            let Some(rest) = t.and_then(|t| t.strip_prefix("**")) else { continue };
+            let Some((name, after)) = rest.split_once("**") else { continue };
+            // The item says so itself ("**Aurela**: Although not a playable operator, she ..."): no claim to correct.
+            let low = after.to_lowercase();
+            if ["not a playable operator", "not an operator", "not playable", "not an rhodes island operator"].iter().any(|w| low.contains(w)) {
+                continue;
+            }
+            let name = name.split(" (").next().unwrap_or_default().trim().trim_end_matches(':').trim();
+            let words: Vec<&str> = name.split_whitespace().collect();
+            if words.is_empty() || words.len() > 3 || !words.iter().all(|w| w.chars().next().is_some_and(char::is_uppercase)) {
+                continue;
+            }
+            if self.playable_of(name).is_some() || topic_forms.contains(&norm(name)) || out.iter().any(|o| o.0 == name) {
+                continue;
+            }
+            let cites: Vec<usize> = after.split('[').skip(1).filter_map(|x| x.split(']').next())
+                .flat_map(|x| x.split(',').filter_map(|n| n.trim().parse::<usize>().ok()).collect::<Vec<_>>()).collect();
+            out.push((name.to_owned(), cites));
+        }
+        out
+    }
+
     /// The first character name the first sentence of an answer gives (operator names, real names and identity-link names, whole words,
     /// longest first, not a name the question itself uses) and, when that character fails the question's category by
     /// the game data, the reason; `None` when the first name passes, the answer names no known character, or the
