@@ -797,6 +797,21 @@ async fn through_limiter(s: &AppState, ip: &str, key: &str, n: usize) -> Vec<Sta
     out
 }
 
+/// How many of 120 calls from `ip` the limiter refuses. The limiter counts fixed 60 s windows, so a burst that straddles
+/// a window boundary is refused less; one retry on a fresh address (`retry_ip`) makes that a non-event.
+async fn limited_of(s: &AppState, ip: &str, retry_ip: &str, key: &str) -> usize {
+    let count = |v: Vec<StatusCode>| {
+        v.iter()
+            .filter(|c| **c == StatusCode::TOO_MANY_REQUESTS)
+            .count()
+    };
+    let first = count(through_limiter(s, ip, key, 120).await);
+    if first == 20 {
+        return first;
+    }
+    count(through_limiter(s, retry_ip, key, 120).await)
+}
+
 #[tokio::test]
 async fn a_valid_worker_key_skips_the_rate_limiter_and_an_invalid_one_does_not() {
     let s = state();
@@ -806,19 +821,15 @@ async fn a_valid_worker_key_skips_the_rate_limiter_and_an_invalid_one_does_not()
         good.iter().all(|c| *c == StatusCode::BAD_REQUEST),
         "{good:?}"
     );
-    let bad = through_limiter(&s, "203.0.113.51", "not-the-key", 120).await;
-    let limited = bad
-        .iter()
-        .filter(|c| **c == StatusCode::TOO_MANY_REQUESTS)
-        .count();
-    assert_eq!(limited, 20, "the 101st to 120th are refused");
+    assert_eq!(
+        limited_of(&s, "203.0.113.51", "203.0.113.61", "not-the-key").await,
+        20,
+        "the 101st to 120th are refused"
+    );
     // TREVOR_SCOPED_WORKER_KEY=0: the worker key is no bypass either.
     with_config(&s, |c| c.scoped_worker_key = false);
-    let off = through_limiter(&s, "203.0.113.52", WORKER_KEY, 120).await;
     assert_eq!(
-        off.iter()
-            .filter(|c| **c == StatusCode::TOO_MANY_REQUESTS)
-            .count(),
+        limited_of(&s, "203.0.113.52", "203.0.113.62", WORKER_KEY).await,
         20
     );
 }
