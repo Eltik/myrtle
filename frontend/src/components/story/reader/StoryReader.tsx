@@ -20,6 +20,7 @@ import type { CameraShake } from "#/lib/story/engine";
 import { clamp01 } from "#/lib/story/num";
 import { autoPlayDelaySec, type BoxPosition, resolveNickname, useStorySettings, type VolumeKey, withVolume } from "#/lib/story/settings";
 import { parseStoryText, plainStoryText } from "#/lib/story/text";
+import { trevorEnabled } from "#/lib/trevor/flag";
 import { cn } from "#/lib/utils";
 import type { StoryCategory } from "#/types/generated/StoryCategory";
 import type { StoryEntry } from "#/types/generated/StoryEntry";
@@ -37,6 +38,7 @@ import { Scrubber } from "./Scrubber";
 import { SettingsDialog } from "./SettingsDialog";
 import { SkipDialog } from "./SkipDialog";
 import { Stage } from "./Stage";
+import { haltForLine } from "./scrub";
 import { nextShownLine, type ShownLine } from "./shownLine";
 import { nextSkip, SKIP_CLOSED, type SkipEvent, type SkipState, skipAvailable, skipNodeLine } from "./skip";
 import { useSpeakerTint } from "./speaker";
@@ -47,6 +49,8 @@ import "./reader.css";
 
 // Only mounted once opened, so the PDF and EPUB exporters stay out of the reader chunk.
 const ExportSheet = lazy(() => import("../export/ExportSheet").then((m) => ({ default: m.ExportSheet })));
+// Trevor (`VITE_TREVOR=1` only): its own chunk, fetched on the first open.
+const TrevorSheet = lazy(() => import("../trevor/TrevorSheet").then((m) => ({ default: m.TrevorSheet })));
 
 export interface IStoryReaderProps {
     script: StoryScript;
@@ -141,6 +145,12 @@ export function StoryReader({ script, entry, groupName, exportGroup = null, cate
     const [logOpen, setLogOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [exportOpen, setExportOpen] = useState(false);
+    // Trevor is off unless the build set `VITE_TREVOR=1`; off, both states stay
+    // false and nothing below renders or changes. Once opened the sheet stays
+    // mounted, so a question in flight survives closing it.
+    const trevorOn = trevorEnabled();
+    const [trevorOpen, setTrevorOpen] = useState(false);
+    const [trevorMounted, setTrevorMounted] = useState(false);
     // The mute button's volume popover. It counts as a dialog: its sliders take
     // the arrow keys, which would otherwise turn the page under them.
     const [volumeOpen, setVolumeOpen] = useState(false);
@@ -212,7 +222,7 @@ export function StoryReader({ script, entry, groupName, exportGroup = null, cate
     const revealDone = revealDoneKey === revealKey;
     const [completeSignal, setCompleteSignal] = useState(0);
     const rootRef = useRef<HTMLDivElement>(null);
-    const dialogOpen = logOpen || settingsOpen || skip.open || volumeOpen || exportOpen;
+    const dialogOpen = logOpen || settingsOpen || skip.open || volumeOpen || exportOpen || trevorOpen;
     // Under 1024 px the pills are icon-only and every label is a tooltip.
     const compact = useMediaQuery("(max-width: 1023px)");
 
@@ -426,6 +436,15 @@ export function StoryReader({ script, entry, groupName, exportGroup = null, cate
                         onSettings={() => setSettingsOpen(true)}
                         onLog={() => setLogOpen(true)}
                         onExport={exportGroup ? () => setExportOpen(true) : undefined}
+                        onTrevor={
+                            trevorOn
+                                ? () => {
+                                      setTrevorMounted(true);
+                                      setTrevorOpen(true);
+                                  }
+                                : undefined
+                        }
+                        trevorOpen={trevorOpen}
                         theater={theater}
                         onTheater={() => setTheater((v) => nextTheater(v, "toggle"))}
                         onHideToolbar={toggleToolbar}
@@ -570,6 +589,19 @@ export function StoryReader({ script, entry, groupName, exportGroup = null, cate
             {exportGroup && exportOpen ? (
                 <Suspense fallback={null}>
                     <ExportSheet open={exportOpen} onOpenChange={setExportOpen} group={exportGroup} storyId={script.id} />
+                </Suspense>
+            ) : null}
+            {trevorOn && trevorMounted ? (
+                <Suspense fallback={null}>
+                    <TrevorSheet
+                        storyId={script.id}
+                        open={trevorOpen}
+                        onOpenChange={setTrevorOpen}
+                        onJumpLine={(line) => {
+                            audio.arm();
+                            jumpTo(haltForLine(haltSummaries, line));
+                        }}
+                    />
                 </Suspense>
             ) : null}
             <SkipDialog open={skip.open} onCancel={() => onSkipEvent("cancel")} onConfirm={() => onSkipEvent("confirm")} title={title} node={skipNodeLine(entry, groupName)} synopsis={script.synopsis} />

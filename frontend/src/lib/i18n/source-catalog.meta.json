@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-15T12:02:21.159Z",
+    "generatedAt": "2026-10-16T14:00:29.826Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -31898,6 +31898,609 @@
             "source_text": "Vignettes",
             "description": "Sub-tab of the story library holding the small seasonal event stories.",
             "placeholders": []
+        },
+        {
+            "key": "story.trevor.answer.cite",
+            "namespace": "story",
+            "source_text": "Source {n}",
+            "description": "Accessible name of a citation marker in the answer text, e.g. Source 3.",
+            "placeholders": [
+                "n"
+            ]
+        },
+        {
+            "key": "story.trevor.answer.label",
+            "namespace": "story",
+            "source_text": "Trevor's answer",
+            "description": "Accessible name of the region that holds the answer.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.answer.line",
+            "namespace": "story",
+            "source_text": "line {line}",
+            "description": "Where a cited passage starts in its story script.",
+            "placeholders": [
+                "line"
+            ]
+        },
+        {
+            "key": "story.trevor.answer.openHere",
+            "namespace": "story",
+            "source_text": "Jump to this line",
+            "description": "Title of a citation that is in the story being read; clicking it jumps the reader there.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.answer.otherSource",
+            "namespace": "story",
+            "source_text": "Operator file or other record",
+            "description": "Label of a cited passage that is not a story scene the reader can open.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.answer.sources",
+            "namespace": "story",
+            "source_text": "Sources",
+            "description": "Heading over the story passages the answer cites.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.ask.another",
+            "namespace": "story",
+            "source_text": "Ask another question",
+            "description": "Button that clears the answer and returns to the question box.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.ask.busy",
+            "namespace": "story",
+            "source_text": "Trevor is busy. Try again in a minute.",
+            "description": "Shown when the queue is full (HTTP 503).",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.ask.checkAgain",
+            "namespace": "story",
+            "source_text": "Check again",
+            "description": "Button that resumes checking for the answer.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.ask.count",
+            "namespace": "story",
+            "source_text": "{count} / {max}",
+            "description": "Character counter of the question box, e.g. 42 / 500.",
+            "placeholders": [
+                "count",
+                "max"
+            ]
+        },
+        {
+            "key": "story.trevor.ask.etaMinutes",
+            "namespace": "story",
+            "source_text": "{count, plural, one {about # minute} other {about # minutes}}",
+            "description": "Expected wait for an answer, after Queued.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "story.trevor.ask.etaSeconds",
+            "namespace": "story",
+            "source_text": "{count, plural, one {about # second} other {about # seconds}}",
+            "description": "Expected wait for an answer, after Queued.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "story.trevor.ask.failed",
+            "namespace": "story",
+            "source_text": "Trevor couldn't answer that. Try asking another way.",
+            "description": "Shown when the answerer failed on the question.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.ask.heading",
+            "namespace": "story",
+            "source_text": "Ask your own",
+            "description": "Heading over the question box.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.ask.hint",
+            "namespace": "story",
+            "source_text": "Answers only use the stories you have read, and never go past this one.",
+            "description": "Hint under the question box about the spoiler horizon.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.ask.label",
+            "namespace": "story",
+            "source_text": "Your question about the story",
+            "description": "Accessible label of the question box.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.ask.noWorker",
+            "namespace": "story",
+            "source_text": "No answerer is online right now. Your question waits in the queue.",
+            "description": "Shown while queued when nothing is online to answer.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.ask.offline",
+            "namespace": "story",
+            "source_text": "Trevor's answerer went offline. Your question is still queued.",
+            "description": "Shown when the page stopped checking because nothing is online.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.ask.passagesNote",
+            "namespace": "story",
+            "source_text": "No answerer was free, so these are the passages that best match your question.",
+            "description": "Explains a passages-only answer.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.ask.passagesOnly",
+            "namespace": "story",
+            "source_text": "Quick look: passages only",
+            "description": "Label on an answer that is the best-matching story passages rather than a written answer.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.ask.placeholder",
+            "namespace": "story",
+            "source_text": "Ask about what you've read so far",
+            "description": "Placeholder in the question box.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.ask.position",
+            "namespace": "story",
+            "source_text": "{position, plural, one {Next in line} other {# in line}}",
+            "description": "The question's place in the queue.",
+            "placeholders": [
+                "position"
+            ]
+        },
+        {
+            "key": "story.trevor.ask.queued",
+            "namespace": "story",
+            "source_text": "Queued",
+            "description": "Status of a question waiting for an answerer.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.ask.rateLimited",
+            "namespace": "story",
+            "source_text": "You've reached this hour's question limit. Try again later.",
+            "description": "Shown when the account asked too many questions this hour (HTTP 429).",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.ask.sending",
+            "namespace": "story",
+            "source_text": "Sending…",
+            "description": "Status while the question is being sent.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.ask.sessionEnded",
+            "namespace": "story",
+            "source_text": "Your session ended. Sign in again to ask.",
+            "description": "Shown when the question was refused because the account is signed out (HTTP 401).",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.ask.signIn",
+            "namespace": "story",
+            "source_text": "Sign in",
+            "description": "Button that opens the sign-in dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.ask.signedOut",
+            "namespace": "story",
+            "source_text": "Sign in to ask Trevor. The recap, characters and terms are free to read.",
+            "description": "Shown in place of the question box to a visitor who is not signed in.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.ask.spoiler",
+            "namespace": "story",
+            "source_text": "Spoiler-safe up to {era}",
+            "description": "Label on an answer: it uses nothing after this point of the story. {era} is a chapter name, e.g. Shatterpoint.",
+            "placeholders": [
+                "era"
+            ]
+        },
+        {
+            "key": "story.trevor.ask.spoilerNone",
+            "namespace": "story",
+            "source_text": "Spoiler-safe up to the very start. Mark stories read to widen it.",
+            "description": "Label on an answer when the reader has no stories marked read, so the answer can use almost nothing.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.ask.statusOffline",
+            "namespace": "story",
+            "source_text": "Trevor's answerer is offline. Questions wait in a queue until it is back.",
+            "description": "Notice above the question box when nothing is online to answer.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.ask.submit",
+            "namespace": "story",
+            "source_text": "Ask",
+            "description": "Button that sends the question.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.ask.tooLong",
+            "namespace": "story",
+            "source_text": "That question is too long.",
+            "description": "Shown when the question was refused for its size (HTTP 413).",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.ask.tooMany",
+            "namespace": "story",
+            "source_text": "You already have questions waiting. Wait for one to finish.",
+            "description": "Shown when the account has too many open questions (HTTP 409).",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.ask.verify",
+            "namespace": "story",
+            "source_text": "Couldn't confirm you're not a bot. Try again.",
+            "description": "Shown when the bot check refused the question (HTTP 403).",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.ask.writing",
+            "namespace": "story",
+            "source_text": "Writing…",
+            "description": "Status while the answer is being written out.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.feedback.down",
+            "namespace": "story",
+            "source_text": "Not helpful",
+            "description": "Thumbs-down button under an answer.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.feedback.label",
+            "namespace": "story",
+            "source_text": "Was this answer helpful?",
+            "description": "Label of the thumbs up and down buttons under an answer.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.feedback.thanks",
+            "namespace": "story",
+            "source_text": "Thanks for the feedback.",
+            "description": "Shown after a vote was recorded.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.feedback.up",
+            "namespace": "story",
+            "source_text": "Helpful",
+            "description": "Thumbs-up button under an answer.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.open",
+            "namespace": "story",
+            "source_text": "Trevor",
+            "description": "Reader toolbar button that opens Trevor, the story companion panel (recap, characters, terms, questions). A name; keep it short.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.panel.error",
+            "namespace": "story",
+            "source_text": "Couldn't load Trevor's notes.",
+            "description": "Shown when loading the panel failed.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.panel.loading",
+            "namespace": "story",
+            "source_text": "Loading Trevor's notes…",
+            "description": "Shown while the panel's data loads.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.panel.none",
+            "namespace": "story",
+            "source_text": "Trevor has no notes for this story yet.",
+            "description": "Shown when the story has no panel (no script, or not built yet).",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.panel.retry",
+            "namespace": "story",
+            "source_text": "Try again",
+            "description": "Button that retries loading the panel.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.primer.heading",
+            "namespace": "story",
+            "source_text": "Before you start",
+            "description": "Heading of a short primer in the chapter sheet on what the chapter builds on.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.primer.note",
+            "namespace": "story",
+            "source_text": "Trevor's recap of what came before, with no spoilers for this chapter.",
+            "description": "Note under the chapter primer.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.recap.beforeYouStart",
+            "namespace": "story",
+            "source_text": "Before you start",
+            "description": "Heading over a short primer on what the chapter builds on, shown on a chapter's first stories.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.recap.buildsOn",
+            "namespace": "story",
+            "source_text": "Builds on",
+            "description": "Label before a list of earlier chapters this chapter follows from.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.recap.earlierHidden",
+            "namespace": "story",
+            "source_text": "{count, plural, one {# earlier story is not listed.} other {# earlier stories are not listed.}}",
+            "description": "Note under the list of earlier stories when the chapter has more than the list shows.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "story.trevor.recap.empty",
+            "namespace": "story",
+            "source_text": "No recap for this story yet.",
+            "description": "Empty state of the Story so far tab.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.recap.previous",
+            "namespace": "story",
+            "source_text": "Previously",
+            "description": "Heading over the summary of the story just before this one.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.recap.soFar",
+            "namespace": "story",
+            "source_text": "Earlier in {group}",
+            "description": "Heading over short synopses of earlier stories in the same chapter. {group} is the chapter or event name.",
+            "placeholders": [
+                "group"
+            ]
+        },
+        {
+            "key": "story.trevor.recap.soFarPlain",
+            "namespace": "story",
+            "source_text": "Earlier in this chapter",
+            "description": "Heading over short synopses of earlier stories, used when the chapter name is unknown.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.recap.thisStory",
+            "namespace": "story",
+            "source_text": "This story's summary (spoilers for it)",
+            "description": "Toggle that reveals a summary of the story being read. It spoils this story only, so it starts closed.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.sheet.sections",
+            "namespace": "story",
+            "source_text": "Trevor sections",
+            "description": "Accessible name of the tab strip that switches between the panel's sections.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.sheet.subtitle",
+            "namespace": "story",
+            "source_text": "Recaps and answers that stop at this story.",
+            "description": "One line under the panel title: nothing in the panel reveals anything after the story being read.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.sheet.title",
+            "namespace": "story",
+            "source_text": "Trevor",
+            "description": "Title of the story companion panel. A name.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.suggest.empty",
+            "namespace": "story",
+            "source_text": "No suggested questions for this story.",
+            "description": "Shown when the story has no suggested questions.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.suggest.fromThisStory",
+            "namespace": "story",
+            "source_text": "From this story",
+            "description": "Badge on a suggested question answered from the story being read.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.suggest.heading",
+            "namespace": "story",
+            "source_text": "Suggested questions",
+            "description": "Heading over questions the reader can click to see or ask.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.suggest.prepared",
+            "namespace": "story",
+            "source_text": "A prepared answer, spoiler-safe up to this story.",
+            "description": "Small note under a suggested question's answer, which was written ahead of time rather than just now.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.tab.ask",
+            "namespace": "story",
+            "source_text": "Ask",
+            "description": "Tab with suggested questions and a box to ask Trevor your own.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.tab.recap",
+            "namespace": "story",
+            "source_text": "Story so far",
+            "description": "Tab with a recap of the chapter up to the story being read.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.tab.terms",
+            "namespace": "story",
+            "source_text": "Terms",
+            "description": "Tab listing places, groups and concepts named in this story, with short definitions.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.tab.who",
+            "namespace": "story",
+            "source_text": "Who's here",
+            "description": "Tab listing the characters who speak in this story.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.terms.empty",
+            "namespace": "story",
+            "source_text": "No terms for this story.",
+            "description": "Empty state of the Terms tab.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.terms.firstNamed",
+            "namespace": "story",
+            "source_text": "First named in {group}",
+            "description": "Where a term was first mentioned. {group} is a chapter or event name.",
+            "placeholders": [
+                "group"
+            ]
+        },
+        {
+            "key": "story.trevor.terms.kind.concept",
+            "namespace": "story",
+            "source_text": "Concept",
+            "description": "Kind badge on a term: an idea, a disease, a technology.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.terms.kind.event",
+            "namespace": "story",
+            "source_text": "Event",
+            "description": "Kind badge on a term: something that happened.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.terms.kind.nation",
+            "namespace": "story",
+            "source_text": "Nation",
+            "description": "Kind badge on a term: a country.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.terms.kind.organization",
+            "namespace": "story",
+            "source_text": "Organization",
+            "description": "Kind badge on a term: a group or company.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.terms.kind.place",
+            "namespace": "story",
+            "source_text": "Place",
+            "description": "Kind badge on a term: a location.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.terms.kind.race",
+            "namespace": "story",
+            "source_text": "Race",
+            "description": "Kind badge on a term: one of the setting's peoples.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.terms.more",
+            "namespace": "story",
+            "source_text": "{count, plural, one {# more term is named.} other {# more terms are named.}}",
+            "description": "Note under the term list when more terms are named than are listed.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "story.trevor.terms.noDefinition",
+            "namespace": "story",
+            "source_text": "No spoiler-safe definition yet.",
+            "description": "Shown under a term when there is nothing safe to say about it at this point.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.who.debut",
+            "namespace": "story",
+            "source_text": "First appearance",
+            "description": "Badge on a character who appears for the first time in this story.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.who.empty",
+            "namespace": "story",
+            "source_text": "No speaking characters found in this story.",
+            "description": "Empty state of the Who's here tab.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.who.firstSeen",
+            "namespace": "story",
+            "source_text": "First seen in {group}",
+            "description": "Where a character first appeared. {group} is a chapter or event name.",
+            "placeholders": [
+                "group"
+            ]
+        },
+        {
+            "key": "story.trevor.who.more",
+            "namespace": "story",
+            "source_text": "{count, plural, one {# more character speaks.} other {# more characters speak.}}",
+            "description": "Note under the character list when more characters speak than are listed.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "story.trevor.who.noIdentity",
+            "namespace": "story",
+            "source_text": "No spoiler-safe description yet.",
+            "description": "Shown under a character's name when there is nothing safe to say about them at this point.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.who.seenIn",
+            "namespace": "story",
+            "source_text": "{count, plural, one {Seen in # chapter} other {Seen in # chapters}}",
+            "description": "How many chapters a character has appeared in so far.",
+            "placeholders": [
+                "count"
+            ]
         },
         {
             "key": "tierLists.browse.card.emptyDraft",

@@ -1,0 +1,141 @@
+{
+    "schema": 1,
+    "storyId": "act18side_level_act18side_05_beg",
+    "groupId": "act18side",
+    "group": "Lingering Echoes",
+    "title": "Lingering Echoes, LE-5 Moonlight (Before Operation)",
+    "position": 776,
+    "era": { "id": "main_10", "name": "Shatterpoint", "position": 722 },
+    "recap": {
+        "thisStory": {
+            "title": "Lingering Echoes, LE-5 Moonlight (Before Operation)",
+            "synopsis": "Hibiscus tries to convince Czerny to cancel the duet, but to no avail. Having second thoughts, Ebenholz runs into a suspicious person who seems to have a hand in the rumors circulating around the Afterglow.",
+            "summary": "In the Afterglow, Kreide urged a recovering Ebenholz to rest before their upcoming concert, but Ebenholz insisted on leaving to handle an urgent matter. Meanwhile, Hibiscus confronted Czerny, warning him that a duet between Ebenholz and Kreide would cause a catastrophe, potentially killing many Infected. Czerny refused to cancel the concert, arguing that he could not prioritize \"illusory concerns\" over the community's aspirations. While Ursula led Hibiscus away to calm down, Ebenholz privately contemplated the danger and decided to investigate a rumor regarding the sewers. He eventually intercepted Lachmann, who was spreading rumors to incite a mob against Hibiscus. Ebenholz confronted Lachmann in the sewers to demand the identity of his employer, only to be interrupted by a mysterious figure who appeared behind them.",
+            "spoiler": true
+        },
+        "previous": {
+            "storyId": "act18side_level_act18side_st02",
+            "title": "Lingering Echoes, LE-ST-2 The Rite of Spring (Interlude)",
+            "summary": "In a rundown building, a Cowardly Noble and a Reckless Caster orchestrated a horrific plan to revive the powers of a deceased monarch by using his bloodline as vessels for the \"Voice of Mundane.\" The narrator, a young child of the bloodline, recalled how the captors systematically murdered and experimented on fifteen siblings until only he and one boy remained. The boy eventually volunteered to undergo the procedure, survived briefly, and was then taken away permanently. Eventually, it became the narrator's turn; he was subjected to a painful transformation that granted him Originium Arts but left him physically diminished. When the captors were finally killed by the Empresses' Voice, an elegantly dressed man entered the room. The narrator struck the man with his wand, causing a blow that fused the monarch's final melody into his mind, leaving him as a haunted vessel."
+        },
+        "soFar": [
+            {
+                "storyId": "act18side_level_act18side_01_beg",
+                "title": "Lingering Echoes, LE-1 Tritsch-Tratsch-Polka (Before Operation)",
+                "synopsis": "Ebenholz and Kreide's performance does not gain Czerny's favor. Consequently, Ebenholz leaves to visit Gertrude, concert sponsor, where he learns of a plan she's had waiting in the wings."
+            },
+            {
+                "storyId": "act18side_level_act18side_01_end",
+                "title": "Lingering Echoes, LE-1 Tritsch-Tratsch-Polka (After Operation)",
+                "synopsis": "Ebenholz and Kreide begin to rehearse for the concert. Hibiscus is conducting her investigation all over the Afterglow, looking to find the truth of the Infected suddenly recovering."
+            },
+            {
+                "storyId": "act18side_level_act18side_02_beg",
+                "title": "Lingering Echoes, LE-2 Appassionata, ou Pathétique (Before Operation)",
+                "synopsis": "The extent of the mysterious recoveries turns out to be greater than Hibiscus foresaw, and the street is filled with uncertain rumors, linking a Sarkaz with calamity. Hibiscus is forced to confront the crowd besieging her."
+            },
+            {
+                "storyId": "act18side_level_act18side_02_end",
+                "title": "Lingering Echoes, LE-2 Appassionata, ou Pathétique (After Operation)",
+                "synopsis": "While passing by, Ebenholz and Kreide save Hibiscus, but the cello Kreide borrowed from Czerny is damaged in the process. The concert draws closer and closer, but the duo have yet to earn Czerny's acknowledgement."
+            },
+            {
+                "storyId": "act18side_level_act18side_03_beg",
+                "title": "Lingering Echoes, LE-3 Der Freischütz (Before Operation)",
+                "synopsis": "To purchase a new instrument, Ebenholz and Kreide put themselves at risk and enter the Cliffy Patio, an area off-limits to the Infected. Once again, they ask Czerny to assess the fruits of their practice."
+            },
+            { "storyId": "act18side_level_act18side_03_end", "title": "Lingering Echoes, LE-3 Der Freischütz (After Operation)", "synopsis": "Ebenholz finally gains Czerny's approval. When Czerny goes to the concert hall for a routine pre-concert inspection, he runs into Gertrude by chance." },
+            {
+                "storyId": "act18side_level_act18side_04_beg",
+                "title": "Lingering Echoes, LE-4 Surprise (Before Operation)",
+                "synopsis": "Hibiscus discovers the changes in the conditions of the Infected are related to Ebenholz and Kreide. She speaks out and tries to bar them from performing, and Ebenholz goes to confront Gertrude."
+            },
+            { "storyId": "act18side_level_act18side_04_end", "title": "Lingering Echoes, LE-4 Surprise (After Operation)", "synopsis": "Ebenholz tries to break free from Gertrude's grasp, but finds himself with nowhere to go. As soon as he returns back home, he collapses with a severe headache." }
+        ],
+        "earlierCount": 10,
+        "beforeYouStart": { "bankId": "primer:act18side" },
+        "buildsOn": ["Stories of Afternoon", "Children of Ursus", "Beyond Here", "Who Is Real", "Vigilo", "Near Light"]
+    },
+    "whosHere": {
+        "characters": [
+            {
+                "name": "Ebenholz",
+                "chunks": 3,
+                "identity": "Ebenholz, a Leithanien commoner who became infected with Oripathy during the Vyseheim incident.",
+                "identitySource": "operatorFile",
+                "whoId": null,
+                "debut": false,
+                "firstSeen": { "storyId": "act18side_level_act18side_01_beg", "group": "Lingering Echoes" },
+                "seenInGroups": 1,
+                "recentGroups": ["Lone Lamp"]
+            },
+            { "name": "Czerny", "chunks": 2, "identity": null, "identitySource": null, "whoId": null, "debut": false, "firstSeen": { "storyId": "act18side_level_act18side_01_end", "group": "Lingering Echoes" }, "seenInGroups": 1, "recentGroups": ["Lone Lamp"] },
+            { "name": "Hibiscus", "chunks": 2, "identity": null, "identitySource": null, "whoId": null, "debut": false, "firstSeen": { "storyId": "act7d5_level_act7d5_st04", "group": "Stories of Afternoon" }, "seenInGroups": 10, "recentGroups": ["Lucky Charm", "Lone Lamp", "Nameless Flower"] },
+            { "name": "Lachmann", "chunks": 2, "identity": null, "identitySource": null, "whoId": null, "debut": false, "firstSeen": null, "seenInGroups": 0, "recentGroups": [] },
+            { "name": "Frivolous Noble", "chunks": 1, "identity": null, "identitySource": null, "whoId": null, "debut": false, "firstSeen": { "storyId": "act18side_level_act18side_st01", "group": "Lingering Echoes" }, "seenInGroups": 0, "recentGroups": [] },
+            { "name": "Kreide", "chunks": 1, "identity": null, "identitySource": null, "whoId": null, "debut": false, "firstSeen": { "storyId": "act18side_level_act18side_01_beg", "group": "Lingering Echoes" }, "seenInGroups": 1, "recentGroups": ["Lone Lamp"] },
+            { "name": "Ursula", "chunks": 1, "identity": null, "identitySource": null, "whoId": null, "debut": false, "firstSeen": null, "seenInGroups": 0, "recentGroups": [] }
+        ],
+        "more": 0
+    },
+    "terms": {
+        "items": [
+            { "term": "Afterglow", "kind": "place", "mentions": 4, "definition": "The Afterglow is a district in Leithanien characterized by its vibrant culture of music, dance, and social gathering.", "firstNamed": { "storyId": "story_ebnhlz_set_1_story_1", "group": "Lone Lamp" } },
+            {
+                "term": "Oripathy and the Infected",
+                "kind": "concept",
+                "mentions": 3,
+                "definition": "While many cases involve visible surface crystals, some acute infections circulate rapidly through the blood without presenting visible crystals, leading to severe symptoms like thrombosis and necrosis.",
+                "firstNamed": { "storyId": "main_0_2_guide_to_home", "group": "Evil Time Part 1" }
+            },
+            { "term": "Empresses", "kind": "organization", "mentions": 1, "definition": "The Empresses are the sovereign rulers of Leithanien, a nation currently in a state of flux.", "firstNamed": { "storyId": "main_8_level_st_08-02", "group": "Roaring Flare" } },
+            { "term": "Rhodes Island", "kind": "organization", "mentions": 1, "definition": "Rhodes Island is a pharmaceutical company that primarily focuses on developing medicine and treatments for the Infected.", "firstNamed": { "storyId": "main_0_0_welcome_to_guide", "group": "Evil Time Part 1" } },
+            { "term": "Urtica", "kind": "place", "mentions": 1, "definition": null, "firstNamed": { "storyId": "story_ebnhlz_set_1_story_1", "group": "Lone Lamp" } }
+        ],
+        "more": 0
+    },
+    "suggestions": {
+        "items": [
+            {
+                "id": "ask:b00329",
+                "kind": "ask",
+                "question": "What injuries did Hibiscus sustain during the concert, and why did Andante believe Hibiscus was in no shape to help anyone?",
+                "gatePos": 761,
+                "fromThisStory": false,
+                "answer": "The provided text does not specify what injuries Hibiscus sustained during the concert. However, Andante believed Hibiscus was in no shape to help anyone because she had numerous wounds on her body."
+            },
+            {
+                "id": "ask:b00734",
+                "kind": "ask",
+                "question": "Why did the Rude Infected's son ask Hibiscus to help him?",
+                "gatePos": 761,
+                "fromThisStory": false,
+                "answer": "The Rude Infected's son asked Hibiscus for help because his father was in a bad condition. He reported that his father had been feeling well a few days prior, but had developed a high fever and new crystals on his skin that morning."
+            },
+            {
+                "id": "ask:b00867",
+                "kind": "ask",
+                "question": "Why does Ebenholz plan to vouch for the Despondent Infected with the Plainclothes Guard?",
+                "gatePos": 759,
+                "fromThisStory": false,
+                "answer": "Ebenholz plans to vouch for the Despondent Infected because he believes that, as a noble, he can use his status to bypass the rule that commoners are not allowed in."
+            },
+            {
+                "id": "story:act18side_level_act18side_st02",
+                "kind": "story",
+                "question": "What happens in Lingering Echoes, LE-ST-2 The Rite of Spring (Interlude)?",
+                "gatePos": 775,
+                "fromThisStory": false,
+                "answer": "In a rundown building, a Cowardly Noble and a Reckless Caster orchestrated a horrific plan to revive the powers of a deceased monarch by using his bloodline as vessels for the \"Voice of Mundane.\" The narrator, a young child of the bloodline, recalled how the captors systematically murdered and experimented on fifteen siblings until only he and one boy remained. The boy eventually volunteered to undergo the procedure, survived briefly, and was then taken away permanently. Eventually, it became the narrator's turn; he was subjected to a painful transformation that granted him Originium Arts but left him physically diminished. When the captors were finally killed by the Empresses' Voice, an elegantly dressed man entered the room. The narrator struck the man with his wand, causing a blow that fused the monarch's final melody into his mind, leaving him as a haunted vessel."
+            },
+            {
+                "id": "event:act13side",
+                "kind": "event",
+                "question": "What happens in Near Light?",
+                "gatePos": 596,
+                "fromThisStory": false,
+                "answer": "The story of the Kazimierz Major begins in the Grand Knight Territory of Kawalerielki, where a storm of political and social unrest brews. The setting is defined by the tension between the ruling General Chamber of Commerce, the marginalized Infected, and the noble ideals of the knighthood. Key characters include the Radiant Knight, Margaret Nearl; the Candle Knight, Viviana Droste; the Blood Knight, Dikaiopolis; and various figures like Spokesman McKee, the Doctor of Rhodes Island, and the rebel group of Infected led by Sona.\n\nThe narrative unfolds as the tournament preparations commence. Spokesman McKee and the Candle Knight discuss the competition, while Sona and her team plan missions to expose the corruption of the General Chamber of Commerce. During the tournament, an Infected knight named Jamie is tragically killed by the Brassrust Knightclub, sparking public outcry. This tragedy highlights the cruelty of the knights toward the Infected. Meanwhile, Margaret Nearl prepares for her duel against the Candle Knight. During their match, Maria Nearl is kidnapped by the Armorless Union but is rescued by Iwona. Margaret eventually triumphs over Viviana, who acknowledges her legendary status.\n\nAs the tournament progresses, the Blood Knight emerges as a hero for the Infected, defeating the Nightmare Knight in a fierce battle. Simultaneously, the Armorless Union attempts to purge the Infected and assassinate Rhodes Island members, but they are thwarted by figures like Shining and the bounty hunter Toland. The political landscape shifts as Spokesman Malkiewicz navigates the \"unspoken rules\" of the territory and the secret \"Area 0.\"\n\nThe story reaches its climax in the grand finals between Margaret Nearl and the Blood Knight. Margaret endures the Blood Knight's overwhelming power, eventually shattering her own weapon to defeat him. Following the match, it is revealed that Margaret’s past exile was a corporate conspiracy. She chooses to escort the defeated Blood Knight to the Wall of Champions to reclaim the title of \"knight.\" The events conclude with Margaret departing for Rhodes Island to seek treatment, while the marginalized people of the territory begin to unite against the ruling elite."
+            }
+        ]
+    }
+}

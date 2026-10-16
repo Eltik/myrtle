@@ -12,7 +12,7 @@
  * ways the chrome goes (theater mode, the deliberate "Hide toolbar", and the
  * opt-in idle fade) are all written up there.
  */
-import { ArrowLeftIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, ChevronUpIcon, DownloadIcon, EyeOffIcon, FastForwardIcon, HistoryIcon, MaximizeIcon, MinimizeIcon, PlayIcon, SettingsIcon, Volume2Icon, VolumeXIcon } from "lucide-react";
+import { ArrowLeftIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, ChevronUpIcon, DownloadIcon, EyeOffIcon, FastForwardIcon, HistoryIcon, MaximizeIcon, MessageCircleQuestionMarkIcon, MinimizeIcon, PlayIcon, SettingsIcon, Volume2Icon, VolumeXIcon } from "lucide-react";
 import type React from "react";
 import { memo, useId, useRef } from "react";
 import { Button } from "#/components/ui/button";
@@ -25,10 +25,11 @@ import type { TypedT } from "#/lib/i18n/messages";
 import type { VolumeKey } from "#/lib/story/settings";
 import { cn } from "#/lib/utils";
 import type { messages as exportMessages } from "../export/export.messages";
+import type { messages as trevorMessages } from "../trevor/trevor.messages";
 import { DARK_FOCUS, PILL, TOUCH_TARGET } from "./glass";
 import type { messages } from "./reader.messages";
 
-type ReaderT = TypedT<typeof messages & typeof exportMessages>;
+type ReaderT = TypedT<typeof messages & typeof exportMessages & typeof trevorMessages>;
 
 /** The pill's fast setting, and the other half of its 1x/2x toggle. */
 export const FAST_RATIO = 2;
@@ -134,6 +135,14 @@ export interface IReaderToolbarProps {
      * 32 px control would wrap them. Under 640 the Settings sheet carries it.
      */
     onExport?: () => void;
+    /**
+     * Opens Trevor, the story companion sheet. Undefined unless the build set
+     * `VITE_TREVOR=1`, and then the button is not rendered at all, so the
+     * pill is the one it was before Trevor.
+     */
+    onTrevor?: () => void;
+    /** The Trevor sheet is open. */
+    trevorOpen?: boolean;
     theater: boolean;
     onTheater: () => void;
     onHideToolbar: () => void;
@@ -188,6 +197,11 @@ export function ReaderToolbar(p: IReaderToolbarProps): React.ReactElement {
                 <PillButton compact={compact} label={t("reader.toolbar.log")} onClick={p.onLog}>
                     <HistoryIcon />
                 </PillButton>
+                {p.onTrevor ? (
+                    <PillButton compact={compact} label={t("trevor.open")} active={p.trevorOpen} onClick={p.onTrevor} hook="trevor">
+                        <MessageCircleQuestionMarkIcon />
+                    </PillButton>
+                ) : null}
                 {p.onExport ? (
                     <PillButton compact={compact} className="max-sm:hidden" label={t("export.openStory")} onClick={p.onExport} hook="export">
                         <DownloadIcon />

@@ -23,7 +23,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeftIcon, ChevronRightIcon, XIcon } from "lucide-react";
 import type React from "react";
-import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Fragment, lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Dialog, DialogClose, DialogPopup, DialogTitle } from "#/components/ui/dialog";
 import { Sheet, SheetClose, SheetFooter, SheetPopup, SheetTitle } from "#/components/ui/sheet";
@@ -33,6 +33,7 @@ import { storyArchiveQueryOptions } from "#/lib/api/story";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { StoryProgress } from "#/lib/story/progress";
+import { trevorEnabled } from "#/lib/trevor/flag";
 import { ArchivePanel, type ChapterView, ChapterViewSwitch } from "./ArchivePanel";
 import { archiveSections } from "./archive";
 import type { messages } from "./Browse.messages";
@@ -40,9 +41,12 @@ import { useChapterAudio } from "./ChapterAudio";
 import { Entries } from "./ChapterEntries";
 import { Hero } from "./ChapterHero";
 import { MetaRow } from "./ChapterMeta";
-import type { LibGroup } from "./derive";
+import { type LibGroup, sortedStories } from "./derive";
 
 type BrowseT = TypedT<typeof messages>;
+
+// Trevor's "Before you start" (`VITE_TREVOR=1` only), in its own chunk.
+const ChapterPrimer = lazy(() => import("#/components/story/trevor/ChapterPrimer").then((m) => ({ default: m.ChapterPrimer })));
 
 export interface IChapterModalProps {
     group: LibGroup;
@@ -145,6 +149,12 @@ export function ChapterModal({ group, progress, gameRead, onClose, prev = null, 
             {views}
         </div>
     );
+    // Off (the default), nothing renders here and the sheet is what it was.
+    const primer = trevorEnabled() ? (
+        <Suspense fallback={null}>
+            <ChapterPrimer storyId={sortedStories(group.stories).find((s) => s.hasScript)?.id ?? null} />
+        </Suspense>
+    ) : null;
 
     if (phone) {
         return (
@@ -154,6 +164,7 @@ export function ChapterModal({ group, progress, gameRead, onClose, prev = null, 
                         <Fragment key={group.id}>
                             <Hero group={group} title={SheetTitle} audio={audio} scrollRoot={scroller} />
                             {sticky}
+                            {primer}
                             {body}
                         </Fragment>
                     </div>
@@ -173,6 +184,7 @@ export function ChapterModal({ group, progress, gameRead, onClose, prev = null, 
                     <Fragment key={group.id}>
                         <Hero group={group} title={DialogTitle} audio={audio} scrollRoot={scroller} />
                         {sticky}
+                        {primer}
                         {body}
                     </Fragment>
                 </div>
