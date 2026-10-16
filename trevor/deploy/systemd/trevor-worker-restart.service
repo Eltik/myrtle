@@ -1,0 +1,6 @@
+[Unit]
+Description=Restart the Trevor worker (triggered by trevor-worker-restart.path)
+
+[Service]
+Type=oneshot
+ExecStart=/bin/systemctl try-restart trevor-worker.service

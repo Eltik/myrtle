@@ -1,0 +1,10 @@
+# 19:30 UTC daily (plan v2 section 3.4); Persistent runs a missed one after a reboot.
+[Unit]
+Description=Trevor daily content update, 19:30 UTC
+
+[Timer]
+OnCalendar=*-*-* 19:30:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,24 @@
+# The deterministic daily update (trevor-vps-update.sh daily): exits in seconds unless the asset watcher has a new EN
+# res_version. No Restart: a held update (a failed gate) must not loop; the next timer run retries, and the last
+# good version stays active meanwhile.
+[Unit]
+Description=Trevor daily content update
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=trevor
+Group=trevor
+EnvironmentFile=/etc/trevor/trevor.env
+ExecStart=/var/www/myrtle.moe/trevor/scripts/trevor-vps-update.sh daily
+Nice=19
+IOSchedulingClass=idle
+CPUQuota=100%
+MemoryMax=2G
+TimeoutStartSec=6h
+ReadWritePaths=/var/lib/trevor /run/trevor
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes

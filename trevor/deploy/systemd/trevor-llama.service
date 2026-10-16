@@ -1,0 +1,28 @@
+# Trevor rung 3: llama-server with Gemma 4 E2B Q4_K_M on one pinned vCPU (design/trevor-vps-runbook.md).
+# Flags and limits from trevor-zero-cost.md section 2.1: one thread, 4,096-token context, one slot, no weight
+# repacking (keeps RSS at about 3.1 GB), no busy-polling, a 256 MiB prompt cache. AllowedCPUs pins it to vCPU 2;
+# CPUWeight 10 and Nice 19 make it yield to the site. No CPUQuota: a quota stalls llama.cpp's threads.
+[Unit]
+Description=Trevor llama-server (Gemma 4 E2B, CPU rung)
+After=network.target
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=trevor
+Group=trevor
+ExecStart=/usr/local/bin/llama-server -m /var/www/myrtle.moe/trevor/models/llm/gemma-4-E2B-it-Q4_K_M.gguf --host 127.0.0.1 --port 8081 -t 1 -c 4096 -np 1 --no-repack --poll 0 --cache-ram 256 --no-webui
+AllowedCPUs=2
+CPUWeight=10
+Nice=19
+MemoryMax=4G
+Restart=always
+RestartSec=10
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,10 @@
+# 23:00 UTC: the last hour before Cloudflare's 00:00 UTC Neuron reset (trevor-zero-cost.md section 2.2).
+[Unit]
+Description=Trevor summaries, 23:00 UTC
+
+[Timer]
+OnCalendar=*-*-* 23:00:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

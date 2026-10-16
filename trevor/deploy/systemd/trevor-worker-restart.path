@@ -1,0 +1,11 @@
+# trevor-vps-update.sh writes /var/lib/trevor/state/worker-restart after it points trevor/artifacts at a new release
+# (or back, on a rollback); this restarts the worker on the new artifacts without giving the update job root.
+[Unit]
+Description=Restart the Trevor worker when the live release changes
+
+[Path]
+PathChanged=/var/lib/trevor/state/worker-restart
+Unit=trevor-worker-restart.service
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,25 @@
+# Summaries for stories that have none (trevor-vps-update.sh summaries): Cloudflare in 23:00-23:55 UTC from the Neurons the
+# day's readers left, then the local E2B (a second llama-server on :8082 with a 16,384-token context, vCPUs 0-1)
+# until 07:00 UTC, then the rebuild, gates and publish. Exits in seconds when nothing lacks a summary.
+[Unit]
+Description=Trevor summaries for new stories
+After=network-online.target trevor-update.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=trevor
+Group=trevor
+EnvironmentFile=/etc/trevor/trevor.env
+ExecStart=/var/www/myrtle.moe/trevor/scripts/trevor-vps-update.sh summaries
+Nice=19
+IOSchedulingClass=idle
+AllowedCPUs=0-1
+CPUWeight=10
+MemoryMax=4G
+TimeoutStartSec=10h
+ReadWritePaths=/var/lib/trevor /run/trevor
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes

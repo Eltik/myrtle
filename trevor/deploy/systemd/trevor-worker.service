@@ -1,0 +1,31 @@
+# Trevor worker: pulls questions from the local myrtle backend and answers them (contract v1 section 3).
+# Rungs: Cloudflare (TREVOR_CF_* in the environment file), the local llama-server on :8081, passages.
+# TREVOR_WORKER_ARGS (environment file) carries any further ask flags, split on spaces.
+[Unit]
+Description=Trevor worker (ask --worker)
+After=network-online.target trevor-llama.service
+Wants=network-online.target trevor-llama.service
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=trevor
+Group=trevor
+WorkingDirectory=/var/www/myrtle.moe/trevor
+EnvironmentFile=/etc/trevor/trevor.env
+ExecStart=/var/www/myrtle.moe/trevor/target/release/ask --worker http://127.0.0.1:3060 --retrieval ${TREVOR_RETRIEVAL} --server http://127.0.0.1:8081 --no-spawn --ignore-lock $TREVOR_WORKER_ARGS
+Restart=always
+RestartSec=10
+Nice=10
+CPUQuota=100%
+MemoryHigh=1280M
+MemoryMax=1536M
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/var/lib/trevor /run/trevor
+
+[Install]
+WantedBy=multi-user.target
