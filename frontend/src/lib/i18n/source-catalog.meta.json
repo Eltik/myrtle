@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-16T14:00:29.826Z",
+    "generatedAt": "2026-10-16T23:09:24.298Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -31946,13 +31946,6 @@
             "placeholders": []
         },
         {
-            "key": "story.trevor.ask.another",
-            "namespace": "story",
-            "source_text": "Ask another question",
-            "description": "Button that clears the answer and returns to the question box.",
-            "placeholders": []
-        },
-        {
             "key": "story.trevor.ask.busy",
             "namespace": "story",
             "source_text": "Trevor is busy. Try again in a minute.",
@@ -31999,13 +31992,6 @@
             "namespace": "story",
             "source_text": "Trevor couldn't answer that. Try asking another way.",
             "description": "Shown when the answerer failed on the question.",
-            "placeholders": []
-        },
-        {
-            "key": "story.trevor.ask.heading",
-            "namespace": "story",
-            "source_text": "Ask your own",
-            "description": "Heading over the question box.",
             "placeholders": []
         },
         {
@@ -32160,10 +32146,31 @@
             "placeholders": []
         },
         {
-            "key": "story.trevor.ask.writing",
+            "key": "story.trevor.chat.enterHint",
             "namespace": "story",
-            "source_text": "Writing…",
-            "description": "Status while the answer is being written out.",
+            "source_text": "Enter to send, Shift+Enter for a new line",
+            "description": "Small hint under the question box on devices with a keyboard. Key names as printed on the keys.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.chat.jump",
+            "namespace": "story",
+            "source_text": "Jump to latest",
+            "description": "Button over the conversation, shown when the reader has scrolled up: scrolls to the newest message.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.chat.label",
+            "namespace": "story",
+            "source_text": "Conversation with Trevor",
+            "description": "Accessible name of the scrolling list of questions and Trevor's answers in the Ask tab.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.chat.offlineFrozen",
+            "namespace": "story",
+            "source_text": "Trevor's answerer went offline before answering this one.",
+            "description": "Trevor's reply to an earlier question in the conversation whose answer never came because the answering service went offline.",
             "placeholders": []
         },
         {
@@ -32322,20 +32329,6 @@
             "namespace": "story",
             "source_text": "Trevor",
             "description": "Title of the story companion panel. A name.",
-            "placeholders": []
-        },
-        {
-            "key": "story.trevor.suggest.empty",
-            "namespace": "story",
-            "source_text": "No suggested questions for this story.",
-            "description": "Shown when the story has no suggested questions.",
-            "placeholders": []
-        },
-        {
-            "key": "story.trevor.suggest.fromThisStory",
-            "namespace": "story",
-            "source_text": "From this story",
-            "description": "Badge on a suggested question answered from the story being read.",
             "placeholders": []
         },
         {

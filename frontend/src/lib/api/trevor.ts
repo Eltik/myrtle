@@ -15,7 +15,12 @@
  *   `lib/trevor/sse.ts`. A native `EventSource` cannot carry the bearer header.
  *
  * Every non-2xx answer is thrown as the backend's own `APIError` (`parseError`),
- * so `classifyFailure` and `lib/trevor/errors.ts` see its status.
+ * so `classifyFailure` and `lib/trevor/errors.ts` see its status. An error
+ * thrown inside a server function reaches the browser as a bare `Error` with
+ * only its message (TanStack Start's `$TSR/Error` serializer drops `status`
+ * and `kind`; measured in the preview: a 503 arrived as "Trevor is busy" with
+ * no status), so the authed calls return a refusal as data (`settle`) and the
+ * browser side rethrows it as the `APIError` it was (`unwrap`).
  */
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
@@ -27,8 +32,27 @@ import type { FeedbackRequest } from "#/types/generated/FeedbackRequest";
 import type { JobView } from "#/types/generated/JobView";
 import type { StoryPanels } from "#/types/generated/StoryPanels";
 import type { TrevorStatus } from "#/types/generated/TrevorStatus";
-import { parseError } from "./_shared";
+import { APIError, parseError } from "./_shared";
 import { requireSiteToken } from "./_shared.server";
+
+/** A server function's outcome as plain data: the value, or the refusal's status, message and code. */
+export type Settled<T> = { ok: true; value: T } | { ok: false; status: number; message: string; code: string | null };
+
+/** Run a server-side call and return an `APIError` as data instead of throwing it across the boundary. */
+export async function settle<T>(run: () => Promise<T>): Promise<Settled<T>> {
+    try {
+        return { ok: true, value: await run() };
+    } catch (err) {
+        if (err instanceof APIError) return { ok: false, status: err.status, message: err.message, code: err.code };
+        throw err;
+    }
+}
+
+/** The browser side of `settle`: the value, or the refusal rethrown as the `APIError` it was. */
+export function unwrap<T>(s: Settled<T>): T {
+    if (s.ok) return s.value;
+    throw new APIError(s.status, s.message, s.code);
+}
 
 /** The response body of a successful request; the backend's error otherwise. */
 async function readJSON<T>(res: Response): Promise<T> {
@@ -79,28 +103,32 @@ export function trevorStatusQueryOptions() {
 /** Ask a question. 200 is a cached answer; 202 is the job that will answer. */
 export const askTrevorFn = createServerFn({ method: "POST" })
     .inputValidator((data: AskRequest) => data)
-    .handler(async ({ data }) => {
-        const token = requireSiteToken();
-        const body: AskRequest = { question: data.question };
-        if (data.horizonStory) body.horizonStory = data.horizonStory;
-        if (data.turnstileToken) body.turnstileToken = data.turnstileToken;
-        return readJSON<AskResponse>(await backendFetch("/trevor/ask", { method: "POST", bearerToken: token, body: JSON.stringify(body) }));
-    });
+    .handler(({ data }) =>
+        settle(async () => {
+            const token = requireSiteToken();
+            const body: AskRequest = { question: data.question };
+            if (data.horizonStory) body.horizonStory = data.horizonStory;
+            if (data.turnstileToken) body.turnstileToken = data.turnstileToken;
+            return readJSON<AskResponse>(await backendFetch("/trevor/ask", { method: "POST", bearerToken: token, body: JSON.stringify(body) }));
+        }),
+    );
 
-export function ask(input: { question: string; horizonStory?: string | null; turnstileToken?: string | null }): Promise<AskResponse> {
-    return askTrevorFn({ data: { question: input.question, horizonStory: input.horizonStory ?? undefined, turnstileToken: input.turnstileToken ?? undefined } });
+export async function ask(input: { question: string; horizonStory?: string | null; turnstileToken?: string | null }): Promise<AskResponse> {
+    return unwrap(await askTrevorFn({ data: { question: input.question, horizonStory: input.horizonStory ?? undefined, turnstileToken: input.turnstileToken ?? undefined } }));
 }
 
 /** A job's state: the polling fallback. */
 export const getTrevorJobFn = createServerFn({ method: "GET" })
     .inputValidator((jobId: string) => jobId)
-    .handler(async ({ data: jobId }) => {
-        const token = requireSiteToken();
-        return readJSON<JobView>(await backendFetch(`/trevor/jobs/${encodeURIComponent(jobId)}`, { bearerToken: token }));
-    });
+    .handler(({ data: jobId }) =>
+        settle(async () => {
+            const token = requireSiteToken();
+            return readJSON<JobView>(await backendFetch(`/trevor/jobs/${encodeURIComponent(jobId)}`, { bearerToken: token }));
+        }),
+    );
 
-export function getJob(jobId: string): Promise<JobView> {
-    return getTrevorJobFn({ data: jobId });
+export async function getJob(jobId: string): Promise<JobView> {
+    return unwrap(await getTrevorJobFn({ data: jobId }));
 }
 
 /** The client's request signal, so a reader who closes the panel closes the upstream stream too. */
@@ -136,13 +164,15 @@ export function streamJob(jobId: string, signal?: AbortSignal): Promise<Response
 /** Vote on an answer (1 up, -1 down, 0 withdraws), optionally with a "this is wrong" note. */
 export const sendTrevorFeedbackFn = createServerFn({ method: "POST" })
     .inputValidator((data: { answerId: string } & FeedbackRequest) => data)
-    .handler(async ({ data: { answerId, vote, note } }) => {
-        const token = requireSiteToken();
-        const res = await backendFetch(`/trevor/answers/${encodeURIComponent(answerId)}/feedback`, { method: "POST", bearerToken: token, body: JSON.stringify({ vote, note } satisfies FeedbackRequest) });
-        if (!res.ok) throw await parseError(res);
-        return true;
-    });
+    .handler(({ data: { answerId, vote, note } }) =>
+        settle(async () => {
+            const token = requireSiteToken();
+            const res = await backendFetch(`/trevor/answers/${encodeURIComponent(answerId)}/feedback`, { method: "POST", bearerToken: token, body: JSON.stringify({ vote, note } satisfies FeedbackRequest) });
+            if (!res.ok) throw await parseError(res);
+            return true;
+        }),
+    );
 
-export function sendFeedback(answerId: string, vote: -1 | 0 | 1, note: string | null = null): Promise<boolean> {
-    return sendTrevorFeedbackFn({ data: { answerId, vote, note } });
+export async function sendFeedback(answerId: string, vote: -1 | 0 | 1, note: string | null = null): Promise<boolean> {
+    return unwrap(await sendTrevorFeedbackFn({ data: { answerId, vote, note } }));
 }

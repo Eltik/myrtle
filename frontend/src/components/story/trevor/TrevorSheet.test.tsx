@@ -1,6 +1,6 @@
 /**
  * The Trevor sheet rendered from a real published panel (Lingering Echoes,
- * LE-5, rank 776) with the backend faked at `backendFetch`, and the ask box
+ * LE-5, rank 776) with the backend faked at `backendFetch`, and the chat
  * driven through its states with a fake ask, stream and job.
  */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -128,18 +128,29 @@ beforeEach(() => {
     requests.length = 0;
     // jsdom has no Web Animations; the sheet's scroll area asks for them.
     if (!("getAnimations" in Element.prototype)) Object.defineProperty(Element.prototype, "getAnimations", { value: () => [], configurable: true });
+    // Nor a font set; the composer re-measures its rows when fonts load.
+    if (!("fonts" in document)) Object.defineProperty(document, "fonts", { value: { addEventListener: () => {}, removeEventListener: () => {} }, configurable: true });
 });
 afterEach(() => {
     cleanup();
     vi.clearAllMocks();
 });
 
+function chip(id: string): HTMLButtonElement {
+    const el = sheet().querySelector<HTMLButtonElement>(`[data-trevor-suggestion="${id}"] button`);
+    if (!el) throw new Error(`the suggestion ${id} did not render`);
+    return el;
+}
+
 describe("the Trevor sheet, from a published panel", () => {
-    it("asks for the panel under the active version and opens on the recap", async () => {
+    it("opens on the chat, with the recap one tab away under the active version", async () => {
         mount();
-        await waitFor(() => expect(within(sheet()).getByText("Previously")).toBeTruthy());
+        await waitFor(() => expect(sheet().querySelector("[data-trevor-suggestion]")).not.toBeNull());
+        expect(within(sheet()).getByRole("tab", { name: "Ask" }).getAttribute("aria-selected")).toBe("true");
         expect(requests).toContain(`/trevor/panels/${STORY}?v=${STATUS.activeVersion}`);
         expect(within(sheet()).getByText("Lingering Echoes, LE-5 Moonlight (Before Operation)")).toBeTruthy();
+        await openTab("Story so far");
+        expect(within(sheet()).getByText("Previously")).toBeTruthy();
         expect(within(sheet()).getByText("Earlier in Lingering Echoes")).toBeTruthy();
         // 10 earlier stories, 8 listed.
         expect(within(sheet()).getByText("2 earlier stories are not listed.")).toBeTruthy();
@@ -149,7 +160,7 @@ describe("the Trevor sheet, from a published panel", () => {
 
     it("lists who speaks and the terms named", async () => {
         mount();
-        await waitFor(() => expect(within(sheet()).getByText("Previously")).toBeTruthy());
+        await waitFor(() => expect(sheet().querySelector("[data-trevor-suggestion]")).not.toBeNull());
         await openTab("Who's here");
         expect(within(sheet()).getByText("Ebenholz, a Leithanien commoner who became infected with Oripathy during the Vyseheim incident.")).toBeTruthy();
         expect(within(sheet()).getAllByText("First seen in Lingering Echoes").length).toBeGreaterThan(0);
@@ -158,27 +169,28 @@ describe("the Trevor sheet, from a published panel", () => {
         expect(within(sheet()).getAllByText("Place").length).toBeGreaterThan(0);
     });
 
-    it("opens a suggested question's prepared answer in place, with no request", async () => {
+    it("adds a suggested question's prepared answer to the thread, with no request", async () => {
         const d = deps();
         mount(d);
-        await waitFor(() => expect(within(sheet()).getByText("Previously")).toBeTruthy());
-        await openTab("Ask");
-        const item = sheet().querySelector<HTMLElement>('[data-trevor-suggestion="ask:b00734"]');
-        if (!item) throw new Error("the suggestion did not render");
-        const button = within(item).getByRole("button");
-        expect(button.getAttribute("aria-expanded")).toBe("false");
-        fireEvent.click(button);
-        expect(button.getAttribute("aria-expanded")).toBe("true");
-        const answer = item.querySelector<HTMLElement>("[data-trevor-bank-answer]");
-        expect(answer?.hidden).toBe(false);
-        expect(answer?.textContent).toContain("his father was in a bad condition");
+        await waitFor(() => expect(sheet().querySelector("[data-trevor-suggestion]")).not.toBeNull());
+        const button = chip("ask:b00734");
+        expect(button.hasAttribute("data-trevor-prepared")).toBe(true);
+        const question = button.textContent ?? "";
+        await act(async () => {
+            fireEvent.click(button);
+        });
+        const turn = sheet().querySelector<HTMLElement>('[data-trevor-turn="bank"]');
+        expect(turn?.textContent).toContain(question);
+        expect(turn?.querySelector("[data-trevor-bank-answer]")?.textContent).toContain("his father was in a bad condition");
+        expect(within(turn as HTMLElement).getByText("A prepared answer, spoiler-safe up to this story.")).toBeTruthy();
+        // The chips belong to the empty thread.
+        expect(sheet().querySelector("[data-trevor-suggestion]")).toBeNull();
         expect(d.ask).not.toHaveBeenCalled();
     });
 
-    it("asks a signed-out reader to sign in rather than showing the box", async () => {
+    it("asks a signed-out reader to sign in in place of the composer", async () => {
         mount();
-        await openTab("Ask");
-        expect(sheet().querySelector("[data-trevor-signed-out]")).not.toBeNull();
+        await waitFor(() => expect(sheet().querySelector("[data-trevor-signed-out]")).not.toBeNull());
         expect(sheet().querySelector("[data-trevor-question]")).toBeNull();
         fireEvent.click(within(sheet()).getByRole("button", { name: "Sign in" }));
         expect(login).toHaveBeenCalledTimes(1);
@@ -190,18 +202,34 @@ describe("the ask box", () => {
         auth.user = { uid: "1" };
     });
 
+    function box(): HTMLTextAreaElement {
+        const el = sheet().querySelector<HTMLTextAreaElement>("[data-trevor-question]");
+        if (!el) throw new Error("the composer did not render");
+        return el;
+    }
+
     async function ask(question: string): Promise<void> {
-        await openTab("Ask");
-        const box = sheet().querySelector<HTMLTextAreaElement>("[data-trevor-question]");
-        if (!box) throw new Error("the question box did not render");
-        fireEvent.change(box, { target: { value: question } });
+        await waitFor(() => box());
         await act(async () => {
-            fireEvent.keyDown(box, { key: "Enter" });
+            box().value = question;
+            fireEvent.input(box());
+        });
+        // jsdom reports no fine pointer, so Enter is a new line there: send with
+        // the button, focused first as a keyboard user's would be.
+        const send = within(sheet()).getByRole("button", { name: "Ask" });
+        await act(async () => {
+            send.focus();
+            fireEvent.click(send);
         });
     }
 
+    /** The question being followed: the live turn's reply region. */
+    function live(): HTMLElement | null {
+        return sheet().querySelector<HTMLElement>("[data-trevor-live]");
+    }
+
     function state(): string | null {
-        return sheet().querySelector("[data-trevor-state]")?.getAttribute("data-trevor-state") ?? null;
+        return live()?.getAttribute("data-trevor-state") ?? null;
     }
 
     it("streams the answer into a busy live region, then shows it with its sources and spoiler label", async () => {
@@ -218,12 +246,15 @@ describe("the ask box", () => {
         expect(d.ask).toHaveBeenCalledWith({ question: "Who is Hibiscus?", horizonStory: STORY, turnstileToken: null });
         await waitFor(() => expect(state()).toBe("queued"));
         expect(within(sheet()).getByText("Queued · about 2 minutes")).toBeTruthy();
+        expect(sheet().querySelector("[data-trevor-asked]")?.textContent).toBe("Who is Hibiscus?");
+        // One question at a time: the send button stands down while it is in flight.
+        expect((within(sheet()).getByRole("button", { name: "Ask" }) as HTMLButtonElement).disabled).toBe(true);
 
         await act(async () => {
             push('event: delta\ndata: {"seq":0,"text":"Hibiscus is"}\n\n');
         });
         await waitFor(() => expect(state()).toBe("streaming"));
-        const region = sheet().querySelector<HTMLElement>("[data-trevor-state]");
+        const region = live();
         expect(region?.getAttribute("aria-live")).toBe("polite");
         expect(region?.getAttribute("aria-busy")).toBe("true");
         expect(region?.textContent).toContain("Hibiscus is");
@@ -233,7 +264,9 @@ describe("the ask box", () => {
             push(`event: done\ndata: ${JSON.stringify(done)}\n\n`);
         });
         await waitFor(() => expect(state()).toBe("done"));
-        expect(sheet().querySelector("[data-trevor-state]")?.getAttribute("aria-busy")).toBe("false");
+        expect(live()?.getAttribute("aria-busy")).toBe("false");
+        // The answer hands the keyboard back to the composer.
+        await waitFor(() => expect(document.activeElement).toBe(box()));
         expect(within(sheet()).getByText("Spoiler-safe up to Shatterpoint")).toBeTruthy();
         expect(sheet().querySelector("[data-trevor-passages]")).toBeNull();
         // Source 1 is another story: a link that opens it at the cited line.
@@ -270,6 +303,23 @@ describe("the ask box", () => {
         await ask("Who is Hibiscus?");
         await waitFor(() => expect(state()).toBe("refused"));
         expect(within(sheet()).getByText(text)).toBeTruthy();
+    });
+
+    it("keeps the earlier questions in the thread as the next one is asked", async () => {
+        const cached: AskResponse = { jobId: null, status: "done", rung: "cache", spoilerSafeUpTo: SHATTERPOINT, etaSecs: null, streamUrl: null, answer: LIVE_ANSWER };
+        const askFn = vi.fn().mockResolvedValueOnce(cached).mockRejectedValueOnce(new APIError(503, "Trevor is busy"));
+        mount(deps({ ask: askFn }));
+        await ask("Who is Hibiscus?");
+        await waitFor(() => expect(state()).toBe("done"));
+        await ask("And her sister?");
+        await waitFor(() => expect(state()).toBe("refused"));
+        const asked = [...sheet().querySelectorAll("[data-trevor-asked]")].map((e) => e.textContent);
+        expect(asked).toEqual(["Who is Hibiscus?", "And her sister?"]);
+        // The first answer is still there, frozen, with its sources; the spoiler pill keeps the last horizon.
+        expect(sheet().querySelectorAll('[data-trevor-state="done"]').length).toBe(1);
+        expect(sheet().querySelector('[data-trevor-state="done"] [data-trevor-citation="1"]')).not.toBeNull();
+        expect(within(sheet()).getByText("Trevor is busy. Try again in a minute.")).toBeTruthy();
+        expect(within(sheet()).getByText("Spoiler-safe up to Shatterpoint")).toBeTruthy();
     });
 
     it("stops waiting when nobody is online, and checks again on request", async () => {

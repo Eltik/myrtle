@@ -81,3 +81,19 @@ Each phase is shippable on its own, behind a switch that turns it off.
 6. When the worker process is down: panels and cache only, or BM25 inside the backend (about +15 to 30 MB).
 7. The asks for the host owner (Start at boot, VirtIO SCSI, guest agent, +1 to 2 vCPU), and permission to run `llama-bench -t 1,2` on the box.
 8. A throwaway local database for the Phase A test.
+
+## Previewing the reader panel without a Trevor backend
+
+To preview it, run `cd frontend && bun run dev:trevor`. The command starts `scripts/trevor-preview.mjs`, which runs a mock backend on 127.0.0.1:3999 and `vite dev` on 127.0.0.1:3005 with `VITE_TREVOR=1` pointed at that mock. Ctrl+C stops both.
+
+Open http://127.0.0.1:3999/demo-login to sign in as the demo account. It sets the cookie `site_token=trevor-demo` and lands on Lingering Echoes LE-5 in the reader; `/demo-logout` clears it.
+
+The mock serves panels from `trevor/artifacts/panels` and fakes `/trevor/status` and `/trevor/ask`. It streams a canned answer over SSE: 2.5 s in the queue, then about 60 deltas 120 ms apart. Every other read is proxied as a GET to the backend on :3060, and any other method is refused, so the preview writes nothing.
+
+The answer kind can be switched while the preview runs:
+- `/demo-mode/stream`, the default;
+- `/demo-mode/passages`, a cached passages-only answer;
+- `/demo-mode/busy`, a 503;
+- `/demo-mode/offline`, a question that stays queued with no worker.
+
+Both servers bind 127.0.0.1 rather than localhost, so the demo cookie never replaces a real session on the localhost dev server at :3000.

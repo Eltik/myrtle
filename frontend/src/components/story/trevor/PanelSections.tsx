@@ -1,19 +1,17 @@
 /**
- * The four sections of a story's panel, drawn from its schema-1 JSON with no
- * model and no request: the recap so far, who speaks, the terms named, and
- * the suggested questions. Every fact in the JSON is already gated to the
- * story's own place in the release order by the panel builder; nothing here
- * filters or reorders it.
+ * Three sections of a story's panel, drawn from its schema-1 JSON with no
+ * model and no request: the recap so far, who speaks, and the terms named.
+ * The fourth, the suggested questions, is the chat's empty state (`AskChat`).
+ * Every fact in the JSON is already gated to the story's own place in the
+ * release order by the panel builder; nothing here filters or reorders it.
  */
 import { ChevronDownIcon } from "lucide-react";
 import type React from "react";
-import { useId, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "#/components/ui/collapsible";
-import { authActions } from "#/lib/auth/store";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { primerOf, type TrevorPanel, type TrevorSuggestion } from "#/lib/trevor/panels";
+import { primerOf, type TrevorPanel } from "#/lib/trevor/panels";
 import { cn } from "#/lib/utils";
 import type { messages } from "./trevor.messages";
 
@@ -160,67 +158,5 @@ export function TermsSection({ panel }: { panel: TrevorPanel }): React.ReactElem
             </dl>
             {more > 0 ? <p className="text-muted-foreground text-xs">{t("trevor.terms.more", { count: more })}</p> : null}
         </div>
-    );
-}
-
-/**
- * The suggested questions. One with a prepared answer opens it in place, no
- * request made; one without asks Trevor (or, signed out, offers sign-in).
- */
-export function SuggestionsSection({ panel, signedIn, onAsk }: { panel: TrevorPanel; signedIn: boolean; onAsk: (question: string) => void }): React.ReactElement {
-    const t: TrevorT = useT("story");
-    const items = panel.suggestions?.items ?? [];
-    return (
-        <section className="flex flex-col gap-2" data-trevor-section="suggestions">
-            <h3 className={HEADING}>{t("trevor.suggest.heading")}</h3>
-            {items.length === 0 ? (
-                <p className="text-muted-foreground text-sm">{t("trevor.suggest.empty")}</p>
-            ) : (
-                <ul className="flex flex-col gap-1.5">
-                    {items.map((s) => (
-                        <Suggestion key={s.id} s={s} signedIn={signedIn} onAsk={onAsk} />
-                    ))}
-                </ul>
-            )}
-        </section>
-    );
-}
-
-function Suggestion({ s, signedIn, onAsk }: { s: TrevorSuggestion; signedIn: boolean; onAsk: (question: string) => void }): React.ReactElement {
-    const t: TrevorT = useT("story");
-    const [open, setOpen] = useState(false);
-    const panelId = useId();
-    const answer = s.answer?.trim();
-    const onClick = () => {
-        if (answer) setOpen((v) => !v);
-        else if (signedIn) onAsk(s.question);
-        else authActions.openLoginDialog();
-    };
-    return (
-        <li className="rounded-md border border-border" data-trevor-suggestion={s.id}>
-            <button
-                type="button"
-                onClick={onClick}
-                aria-expanded={answer ? open : undefined}
-                aria-controls={answer ? panelId : undefined}
-                className="flex min-h-11 w-full items-start justify-between gap-2 rounded-md px-3 py-2 text-start text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-h-9"
-            >
-                <span className="flex flex-col gap-1">
-                    <span>{s.question}</span>
-                    {s.fromThisStory ? (
-                        <Badge variant="outline" className="self-start">
-                            {t("trevor.suggest.fromThisStory")}
-                        </Badge>
-                    ) : null}
-                </span>
-                {answer ? <ChevronDownIcon className={cn("mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")} aria-hidden /> : null}
-            </button>
-            {answer ? (
-                <div id={panelId} hidden={!open} className="flex flex-col gap-1.5 border-border border-t px-3 py-2.5" data-trevor-bank-answer>
-                    <p className="text-sm leading-relaxed">{answer}</p>
-                    <p className="text-muted-foreground text-xs">{t("trevor.suggest.prepared")}</p>
-                </div>
-            ) : null}
-        </li>
     );
 }

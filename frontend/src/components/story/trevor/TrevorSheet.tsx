@@ -2,9 +2,11 @@
  * TREVOR IN THE READER (provisional, behind `VITE_TREVOR=1`).
  *
  * A sheet over the reader, from the right above 640 px and from the bottom
- * under it (the chapter sheet's rule), with four tabs: the recap so far, who
- * speaks, the terms named, and Ask (suggested questions, then the question
- * box). The panels are public and need no model; asking needs an account.
+ * under it (the chapter sheet's rule). It opens on Ask, a chat with Trevor
+ * (`AskChat`): the panel's suggested questions wait in its empty state and the
+ * composer is pinned to the bottom. The recap so far, who speaks and the terms
+ * named are the three tabs beside it. The panels are public and need no
+ * model; asking needs an account.
  *
  * The reader mounts this lazily on the first open and keeps it mounted, so a
  * question in flight survives closing and reopening the sheet. While it is
@@ -28,13 +30,13 @@ import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { parsePanel, type TrevorPanel } from "#/lib/trevor/panels";
 import { type IAskDeps, useTrevorAsk } from "#/lib/trevor/useTrevorAsk";
-import { AskBox } from "./AskBox";
-import { RecapSection, SuggestionsSection, TermsSection, WhoSection } from "./PanelSections";
+import { AskChat } from "./AskChat";
+import { RecapSection, TermsSection, WhoSection } from "./PanelSections";
 import type { messages } from "./trevor.messages";
 
 type TrevorT = TypedT<typeof messages>;
 
-export type TrevorTab = "recap" | "who" | "terms" | "ask";
+export type TrevorTab = "ask" | "recap" | "who" | "terms";
 
 export interface ITrevorSheetProps {
     storyId: string;
@@ -59,12 +61,7 @@ export function TrevorSheet({ storyId, open, onOpenChange, onJumpLine, askDeps }
     const panels = useQuery({ ...trevorPanelsQueryOptions(storyId, status.data?.activeVersion ?? null), enabled: open && !status.isPending });
     const panel = panels.data ? parsePanel(panels.data.panels) : null;
     const asker = useTrevorAsk(storyId, askDeps);
-    const [tab, setTab] = useState<TrevorTab>("recap");
-
-    const onAsk = (question: string, token: string | null = null) => {
-        setTab("ask");
-        void asker.ask(question, token);
-    };
+    const [tab, setTab] = useState<TrevorTab>("ask");
     const jump = onJumpLine
         ? (line: number) => {
               onJumpLine(line);
@@ -80,9 +77,7 @@ export function TrevorSheet({ storyId, open, onOpenChange, onJumpLine, askDeps }
             onRetry={() => void panels.refetch()}
             tab={tab}
             onTab={setTab}
-            ask={<AskBox storyId={storyId} signedIn={signedIn} status={status.data} state={asker.state} onAsk={(q, token) => onAsk(q, token)} onResume={asker.resume} onReset={asker.reset} onJumpLine={jump} />}
-            signedIn={signedIn}
-            onSuggestion={(q) => onAsk(q)}
+            ask={<AskChat storyId={storyId} panel={panel} signedIn={signedIn} status={status.data} state={asker.state} onAsk={(q, token) => void asker.ask(q, token)} onResume={asker.resume} onReset={asker.reset} onJumpLine={jump} active={open && tab === "ask"} />}
         />
     );
 
@@ -106,18 +101,16 @@ export interface ITrevorBodyProps {
     onRetry: () => void;
     tab: TrevorTab;
     onTab: (tab: TrevorTab) => void;
-    /** The question box, built by the caller so it owns the ask state. */
+    /** The chat, built by the caller so it owns the ask state. */
     ask: React.ReactNode;
-    signedIn: boolean;
-    onSuggestion: (question: string) => void;
 }
 
 /** The tabs and their content, apart from the sheet so a test can render them inline. */
-export function TrevorBody({ panel, loading, failed, onRetry, tab, onTab, ask, signedIn, onSuggestion }: ITrevorBodyProps): React.ReactElement {
+export function TrevorBody({ panel, loading, failed, onRetry, tab, onTab, ask }: ITrevorBodyProps): React.ReactElement {
     const t: TrevorT = useT("story");
     const note = (child: React.ReactNode) => <div className="flex flex-col items-center gap-3 py-8 text-center text-muted-foreground text-sm">{child}</div>;
-    // A story with no panel (or a panel that failed) still has the Ask tab:
-    // the question box does not need the panel.
+    // A story with no panel (or a panel that failed) still has the chat: only
+    // its suggestion chips need the panel.
     const missing = loading
         ? note(
               <>
@@ -139,6 +132,9 @@ export function TrevorBody({ panel, loading, failed, onRetry, tab, onTab, ask, s
         <Tabs value={tab} onValueChange={(v) => onTab(v as TrevorTab)} className="min-h-0 flex-1 gap-0">
             <div className="border-border border-b px-4 pb-2 sm:px-6">
                 <TabsList variant="underline" aria-label={t("trevor.sheet.sections")} className="w-full justify-start overflow-x-auto">
+                    <TabsTab value="ask" className="max-sm:min-h-11">
+                        {t("trevor.tab.ask")}
+                    </TabsTab>
                     <TabsTab value="recap" className="max-sm:min-h-11">
                         {t("trevor.tab.recap")}
                     </TabsTab>
@@ -148,25 +144,21 @@ export function TrevorBody({ panel, loading, failed, onRetry, tab, onTab, ask, s
                     <TabsTab value="terms" className="max-sm:min-h-11">
                         {t("trevor.tab.terms")}
                     </TabsTab>
-                    <TabsTab value="ask" className="max-sm:min-h-11">
-                        {t("trevor.tab.ask")}
-                    </TabsTab>
                 </TabsList>
             </div>
-            <SheetPanel className="px-4 pt-4 sm:px-6">
-                <TabsPanel value="recap">{panel ? <RecapSection panel={panel} /> : missing}</TabsPanel>
-                <TabsPanel value="who">{panel ? <WhoSection panel={panel} /> : missing}</TabsPanel>
-                <TabsPanel value="terms">{panel ? <TermsSection panel={panel} /> : missing}</TabsPanel>
-                <TabsPanel value="ask" keepMounted>
-                    <div className="flex flex-col gap-6">
-                        {panel ? <SuggestionsSection panel={panel} signedIn={signedIn} onAsk={onSuggestion} /> : null}
-                        <section className="flex flex-col gap-2">
-                            <h3 className="font-semibold text-muted-foreground text-xs uppercase tracking-wide">{t("trevor.ask.heading")}</h3>
-                            {ask}
-                        </section>
-                    </div>
-                </TabsPanel>
-            </SheetPanel>
+            {/* The chat scrolls itself and pins its composer, so it sits outside the sheet's scroll panel; kept mounted so the thread survives a tab switch. */}
+            <TabsPanel value="ask" keepMounted className="flex min-h-0 flex-col">
+                {ask}
+            </TabsPanel>
+            <TabsPanel value="recap" className="min-h-0">
+                <SheetPanel className="px-4 pt-4 sm:px-6">{panel ? <RecapSection panel={panel} /> : missing}</SheetPanel>
+            </TabsPanel>
+            <TabsPanel value="who" className="min-h-0">
+                <SheetPanel className="px-4 pt-4 sm:px-6">{panel ? <WhoSection panel={panel} /> : missing}</SheetPanel>
+            </TabsPanel>
+            <TabsPanel value="terms" className="min-h-0">
+                <SheetPanel className="px-4 pt-4 sm:px-6">{panel ? <TermsSection panel={panel} /> : missing}</SheetPanel>
+            </TabsPanel>
         </Tabs>
     );
 }

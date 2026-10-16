@@ -137,21 +137,9 @@ export const messages = {
         text: "Suggested questions",
         description: "Heading over questions the reader can click to see or ask.",
     },
-    "trevor.suggest.fromThisStory": {
-        text: "From this story",
-        description: "Badge on a suggested question answered from the story being read.",
-    },
     "trevor.suggest.prepared": {
         text: "A prepared answer, spoiler-safe up to this story.",
         description: "Small note under a suggested question's answer, which was written ahead of time rather than just now.",
-    },
-    "trevor.suggest.empty": {
-        text: "No suggested questions for this story.",
-        description: "Shown when the story has no suggested questions.",
-    },
-    "trevor.ask.heading": {
-        text: "Ask your own",
-        description: "Heading over the question box.",
     },
     "trevor.ask.label": {
         text: "Your question about the story",
@@ -225,10 +213,6 @@ export const messages = {
         text: "Trevor's answerer is offline. Questions wait in a queue until it is back.",
         description: "Notice above the question box when nothing is online to answer.",
     },
-    "trevor.ask.writing": {
-        text: "Writing…",
-        description: "Status while the answer is being written out.",
-    },
     "trevor.ask.passagesOnly": {
         text: "Quick look: passages only",
         description: "Label on an answer that is the best-matching story passages rather than a written answer.",
@@ -240,10 +224,6 @@ export const messages = {
     "trevor.ask.failed": {
         text: "Trevor couldn't answer that. Try asking another way.",
         description: "Shown when the answerer failed on the question.",
-    },
-    "trevor.ask.another": {
-        text: "Ask another question",
-        description: "Button that clears the answer and returns to the question box.",
     },
     "trevor.ask.verify": {
         text: "Couldn't confirm you're not a bot. Try again.",
@@ -268,6 +248,22 @@ export const messages = {
     "trevor.ask.sessionEnded": {
         text: "Your session ended. Sign in again to ask.",
         description: "Shown when the question was refused because the account is signed out (HTTP 401).",
+    },
+    "trevor.chat.label": {
+        text: "Conversation with Trevor",
+        description: "Accessible name of the scrolling list of questions and Trevor's answers in the Ask tab.",
+    },
+    "trevor.chat.jump": {
+        text: "Jump to latest",
+        description: "Button over the conversation, shown when the reader has scrolled up: scrolls to the newest message.",
+    },
+    "trevor.chat.enterHint": {
+        text: "Enter to send, Shift+Enter for a new line",
+        description: "Small hint under the question box on devices with a keyboard. Key names as printed on the keys.",
+    },
+    "trevor.chat.offlineFrozen": {
+        text: "Trevor's answerer went offline before answering this one.",
+        description: "Trevor's reply to an earlier question in the conversation whose answer never came because the answering service went offline.",
     },
     "trevor.answer.label": {
         text: "Trevor's answer",

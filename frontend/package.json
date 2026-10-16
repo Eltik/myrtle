@@ -8,6 +8,7 @@
   "packageManager": "bun@1.4.2",
   "scripts": {
     "dev": "vite dev --port 3000",
+    "dev:trevor": "bun scripts/trevor-preview.mjs",
     "gen:types": "rm -rf src/types/generated && cd ../backend && cargo test export_bindings && cargo test --test bindings_shape_test && cd ../frontend && bunx --bun biome check --write src/types/generated",
     "gen:check": "cd ../backend && cargo test export_bindings >/dev/null && cd .. && git diff --exit-code --stat frontend/src/types/generated || (echo 'Generated bindings are stale. Run: bun run gen:types' >&2 && exit 1)",
     "build": "NODE_OPTIONS=--max-old-space-size=6144 vite build",
@@ -54,6 +55,7 @@
     "html-to-image": "^1.11.13",
     "isbot": "^5.1.39",
     "lucide-react": "^1.55.0",
+    "motion": "14.0.0",
     "mp4-muxer": "^5.2.2",
     "pdf-lib": "^1.17.1",
     "pixi-spine": "4.0.6",
