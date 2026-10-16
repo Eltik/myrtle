@@ -81,6 +81,8 @@ pub const TABLES: &[&str] = &[
     "trevor_panels",
     "trevor_answers",
     "trevor_jobs",
+    "trevor_workers",
+    "trevor_neurons",
     "trevor_feedback",
     "audit_log",
 ];

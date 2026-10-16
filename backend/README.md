@@ -595,6 +595,31 @@ Tier-list operations use a 4-level hierarchy - **View → Edit → Publish → A
 | `DEVICE_IDS_FILE` | `device_ids.json` | Device-identity persistence when not pinned |
 | `HYPERGRYPH_CN_APP_CODE` | built-in | CN passport app code override |
 
+### Trevor
+
+The story question answerer (`/api/trevor/*`; interface: `trevor/design/trevor-contract-v1.md`). Read once at boot.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TREVOR_WORKER_KEY` | - | The worker's secret, header `x-trevor-worker-key`, accepted only on `/trevor/worker/*` and `/trevor/versions`. Unset or empty: those routes answer `503` |
+| `TREVOR_QUEUE_TTL_SECS` | `600` | A queued job nobody claimed in this long fails ("expired in the queue"); `1800` is the previous value |
+| `TREVOR_CF_DAILY_NEURONS` | `9000` | Cloudflare Workers AI Neurons per UTC day; `0` turns the `cf` rung off |
+| `TREVOR_CF_SUMMARY_RESERVE` | `1000` | Neurons kept back for the daily summaries; `cf` answers stop at daily minus this |
+| `TREVOR_CPU_QUEUE_MAX` | `6` | Jobs queued or running on the `cpu` rung before new questions get the passages answer |
+| `TREVOR_RESULT_MAX_BYTES` | `65536` | A worker result body over this is a `413`; `0` lifts the cap (axum's 2 MB default then applies, the previous behaviour) |
+| `TURNSTILE_SECRET` | - | When set, `POST /trevor/ask` verifies `turnstileToken` with Cloudflare siteverify (missing or rejected: `403`; siteverify unreachable: `503` "Trevor is busy", failing closed). Unset skips the check |
+| `TREVOR_SCOPED_WORKER_KEY` | on | `0` restores the old worker gate: the global `SERVICE_KEY` (`x-service-key`) on the worker routes, the worker key nowhere |
+| `TREVOR_NOTIFY_POLL` | on | `0` restores the old `worker/next`: a claim query every second and a stale sweep on every poll, no 60 s background sweep |
+| `TREVOR_ERA_BUCKETS` | on | `0` keys jobs and cached answers by the exact horizon gatePos instead of its era boundary |
+| `TREVOR_PANELS_IMMUTABLE` | on | `0` serves every panel response with `public, max-age=300`, even when `?v=` names the active version |
+| `TREVOR_CACHE_LIVE_ONLY` | on | `0` caches passages-only answers again (on: they are stored for their job but never served from the cache) |
+| `TREVOR_CACHE_VERSION_CHECK` | on | `0` caches an answer whatever corpus version it came from (on: one from another version than the job's is stored uncached) |
+| `TREVOR_TTL_FROM_QUEUED` | on | `0` expires queued jobs by `created_at`, so a requeued job keeps its first clock (on: `queued_at`, reset by a requeue) |
+| `TREVOR_BUSY_PROTECTS` | on | `0` requeues a stale running job even while an online worker's heartbeat names it as `busyJobId` |
+| `TREVOR_JOB_OWNER_ONLY` | on | `0` lets any signed-in user poll any job id (on: the asker or a twin joiner only, like the stream) |
+
+A request with a valid `x-trevor-worker-key` skips the per-IP rate limiter, as the service key does.
+
 ### Jobs
 
 | Variable | Default | Description |

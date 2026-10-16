@@ -12169,7 +12169,7 @@
           "trevor"
         ],
         "summary": "Ask Trevor a question about the story.",
-        "description": "Answers 200 with a cached answer, or 202 with a job to poll at\n`GET /trevor/jobs/{id}`. Thirty questions an hour per account. The spoiler\nhorizon defaults to the caller's furthest-read story; `noHorizon` lifts it.",
+        "description": "Answers 200 with a cached answer (`status: done`, `rung: cache`), or 202\nwith the job that will answer: its rung, ETA and SSE `streamUrl`. Thirty\nquestions an hour per account. The spoiler horizon is the furthest story\nthe account has read, lowered (never raised) by `horizonStory`, then\nbucketed to its era (`spoilerSafeUpTo`). With `TURNSTILE_SECRET` set,\n`turnstileToken` is verified and an unreachable Cloudflare is a 503.",
         "operationId": "ask",
         "requestBody": {
           "content": {
@@ -12183,7 +12183,7 @@
         },
         "responses": {
           "200": {
-            "description": "A cached answer (`status: answered`).",
+            "description": "A cached answer.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12193,7 +12193,7 @@
             }
           },
           "202": {
-            "description": "Queued for a worker (`status: queued`): the job id, its place in the queue and an ETA in seconds.",
+            "description": "Queued (or joined to an identical open question): the job, its rung, an ETA in seconds and the stream URL.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12207,6 +12207,9 @@
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           },
           "409": {
             "$ref": "#/components/responses/Conflict"
@@ -12233,7 +12236,7 @@
         "tags": [
           "trevor"
         ],
-        "summary": "A queued question's state; poll every 2 s until `done` or `failed`.",
+        "summary": "A queued question's state: the polling fallback to the stream. Only its\nasker (or a twin who joined the same question) may read it.",
         "operationId": "job",
         "parameters": [
           {
@@ -12261,6 +12264,9 @@
           "401": {
             "$ref": "#/components/responses/Unauthorized"
           },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
@@ -12281,7 +12287,64 @@
         ]
       }
     },
-    "/api/trevor/story/{storyId}/panels": {
+    "/api/trevor/jobs/{id}/stream": {
+      "get": {
+        "tags": [
+          "trevor"
+        ],
+        "summary": "A job's answer as it is written, over server-sent events.",
+        "description": "Events: `delta` `{seq, text}` (append in `seq` order), `done` (the job\nview, with the answer), `error` `{message}`, and a `: keepalive` comment\nevery 15 s. Closes after `done` or `error`; a finished job sends one at\nonce. Only the asker (or a twin who joined the same question) may open it.",
+        "operationId": "job_stream",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The job id from `POST /trevor/ask`.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An SSE stream of `delta`, `done` and `error` events.",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
+    "/api/trevor/panels/{storyId}": {
       "get": {
         "tags": [
           "trevor"
@@ -12308,6 +12371,15 @@
             }
           },
           {
+            "name": "v",
+            "in": "query",
+            "description": "The corpus version the caller expects. When it is the active one the\nresponse is cacheable for a day and immutable.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "If-None-Match",
             "in": "header",
             "description": "Echo a previous response's `ETag` to get a 304 instead of the body.",
@@ -12322,7 +12394,7 @@
         ],
         "responses": {
           "200": {
-            "description": "The story's panels under the active version.",
+            "description": "The story's panels under the active version. `Cache-Control: public, max-age=86400, immutable` when `v` is the active version, else `max-age=300`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12352,12 +12424,56 @@
         }
       }
     },
+    "/api/trevor/status": {
+      "get": {
+        "tags": [
+          "trevor"
+        ],
+        "summary": "Whether Trevor can answer right now: a worker online, which model rungs\nit offers, the active corpus version, the model queues and today's\nCloudflare budget as a bucket (`ok`, `low` under 20% left, `spent`).",
+        "operationId": "status",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "query",
+            "description": "`en` (the default) or `cn`.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The status; `Cache-Control: public, max-age=15`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrevorStatus"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
     "/api/trevor/versions": {
       "post": {
         "tags": [
           "trevor"
         ],
-        "summary": "Worker: publish a corpus version's manifest and panel JSON, and (by\ndefault) make it the server's active version.",
+        "summary": "Worker: publish a corpus version's manifest and panel JSON, and (by\ndefault) make it the server's active version. The body may be gzip\n(`Content-Encoding: gzip`): at most 4 MiB as sent and 8 MiB decompressed.\nSend panels in `activate: false` chunks, then one `activate: true` call\nthat resends `manifest` (with `builtFrom`, `storyOrder`, `eras`) and\n`gateReport`.",
         "operationId": "publish_version",
         "requestBody": {
           "content": {
@@ -12386,8 +12502,11 @@
           "401": {
             "$ref": "#/components/responses/Unauthorized"
           },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
+          "413": {
+            "description": "Over 4 MiB as sent or 8 MiB decompressed."
+          },
+          "415": {
+            "description": "A `Content-Encoding` other than gzip."
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
@@ -12398,7 +12517,7 @@
         },
         "security": [
           {
-            "service_key": []
+            "trevor_worker_key": []
           }
         ]
       }
@@ -12408,13 +12527,13 @@
         "tags": [
           "trevor"
         ],
-        "summary": "Worker: report liveness (every 30 s); drives the reader's \"online\" state.",
+        "summary": "Worker: report liveness and live rungs (every 30 s, mid-job too); drives\n`/trevor/status` and the rung choice.",
         "operationId": "worker_heartbeat",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/WorkerHello"
+                "$ref": "#/components/schemas/Heartbeat"
               }
             }
           },
@@ -12430,16 +12549,72 @@
           "401": {
             "$ref": "#/components/responses/Unauthorized"
           },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
           }
         },
         "security": [
           {
-            "service_key": []
+            "trevor_worker_key": []
+          }
+        ]
+      }
+    },
+    "/api/trevor/worker/jobs/{jobId}/delta": {
+      "post": {
+        "tags": [
+          "trevor"
+        ],
+        "summary": "Worker: stream a running job's answer text to its readers. Not stored.",
+        "operationId": "worker_delta",
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "description": "The running job.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkerDelta"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Fanned out to the job's stream readers (if any)."
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "trevor_worker_key": []
           }
         ]
       }
@@ -12449,7 +12624,7 @@
         "tags": [
           "trevor"
         ],
-        "summary": "Worker: claim the next queued job. Holds an empty poll open for up to 20 s,\nthen answers 204.",
+        "summary": "Worker: claim the next queued job, with the rung, profile and horizon\ngatePos it runs under. Holds an empty poll open for up to 20 s (woken on\nenqueue), then answers 204.",
         "operationId": "worker_next",
         "requestBody": {
           "content": {
@@ -12481,9 +12656,6 @@
           "401": {
             "$ref": "#/components/responses/Unauthorized"
           },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
           "500": {
             "$ref": "#/components/responses/InternalError"
           },
@@ -12493,7 +12665,7 @@
         },
         "security": [
           {
-            "service_key": []
+            "trevor_worker_key": []
           }
         ]
       }
@@ -12503,7 +12675,7 @@
         "tags": [
           "trevor"
         ],
-        "summary": "Worker: post a job's answer or failure.",
+        "summary": "Worker: post a job's answer (only the cited passages, trimmed) or failure.\nA body over 64 KB is refused with a 413.",
         "operationId": "worker_result",
         "requestBody": {
           "content": {
@@ -12525,11 +12697,11 @@
           "401": {
             "$ref": "#/components/responses/Unauthorized"
           },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
           "409": {
             "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "The result is over `TREVOR_RESULT_MAX_BYTES` (64 KB)."
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
@@ -12540,7 +12712,7 @@
         },
         "security": [
           {
-            "service_key": []
+            "trevor_worker_key": []
           }
         ]
       }
@@ -18351,16 +18523,12 @@
           "question"
         ],
         "properties": {
-          "horizon": {
+          "horizonStory": {
             "type": [
               "string",
               "null"
             ],
-            "description": "An explicit spoiler horizon (a story id). Absent: the user's\nfurthest-read story."
-          },
-          "noHorizon": {
-            "type": "boolean",
-            "description": "True lifts the horizon: the answer may use every released story."
+            "description": "The story being read: lowers the horizon to it when it is before the\nfurthest story the account has read. It never raises the horizon."
           },
           "question": {
             "type": "string"
@@ -18372,61 +18540,74 @@
             ],
             "description": "`en` (the default) or `cn`."
           },
-          "storyId": {
+          "turnstileToken": {
             "type": [
               "string",
               "null"
             ],
-            "description": "The story being read, if any: the horizon when the user has no read\nprogress yet."
+            "description": "The Turnstile widget's token; required when the server checks Turnstile."
           }
         }
       },
       "AskResponse": {
-        "oneOf": [
-          {
-            "allOf": [
+        "type": "object",
+        "description": "What `POST /trevor/ask` answers: a cached answer (`status: done`,\n`rung: cache`, no job), or the job that will answer.",
+        "required": [
+          "status",
+          "rung"
+        ],
+        "properties": {
+          "answer": {
+            "oneOf": [
               {
-                "$ref": "#/components/schemas/TrevorAnswer"
+                "type": "null"
               },
               {
-                "type": "object",
-                "required": [
-                  "status"
-                ],
-                "properties": {
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "answered"
-                    ]
-                  }
-                }
+                "$ref": "#/components/schemas/TrevorAnswer"
               }
             ]
           },
-          {
-            "allOf": [
+          "etaSecs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Seconds until the answer is expected; null while no worker is online\nand for a cached answer."
+          },
+          "jobId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Null for a cached answer: no job was queued."
+          },
+          "rung": {
+            "$ref": "#/components/schemas/TrevorRung"
+          },
+          "spoilerSafeUpTo": {
+            "oneOf": [
               {
-                "$ref": "#/components/schemas/QueuedJob"
+                "type": "null"
               },
               {
-                "type": "object",
-                "required": [
-                  "status"
-                ],
-                "properties": {
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "queued"
-                    ]
-                  }
-                }
+                "$ref": "#/components/schemas/TrevorSpoilerSafe",
+                "description": "Null when the horizon is before the first era (nothing released)."
               }
             ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
+          "streamUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`GET` this for the answer as it is written (SSE); null for a cached answer."
           }
-        ],
-        "description": "What `POST /trevor/ask` answers: an answer at once, or a job to poll."
+        }
       },
       "AssignedOperator": {
         "type": "object",
@@ -19357,6 +19538,44 @@
                 "description": "The canvas rect the whole plate is drawn into, from the character's own\nprefab root. It is the bundle's, so every sprite of a folder shares it."
               }
             ]
+          }
+        }
+      },
+      "Citation": {
+        "type": "object",
+        "description": "One cited passage.",
+        "required": [
+          "n",
+          "storyId",
+          "chunkId",
+          "lineStart",
+          "lineEnd",
+          "text"
+        ],
+        "properties": {
+          "chunkId": {
+            "type": "string"
+          },
+          "lineEnd": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "lineStart": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "n": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "storyId": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
           }
         }
       },
@@ -22488,6 +22707,34 @@
           }
         }
       },
+      "Heartbeat": {
+        "type": "object",
+        "description": "`worker/heartbeat`, every 30 s from the worker's own task (mid-job too).",
+        "required": [
+          "workerId"
+        ],
+        "properties": {
+          "busyJobId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The job the worker is answering, or null when idle."
+          },
+          "corpusVersion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rungs": {
+            "$ref": "#/components/schemas/TrevorRungFlags"
+          },
+          "workerId": {
+            "type": "string"
+          }
+        }
+      },
       "HiddenFaction": {
         "type": "object",
         "description": "A faction the operator belongs to that the game never puts on their card:\na `SubPower` id that is not one of the `MainPower` ids. Texas the Omertosa\ncarries `siracusa` here, W carries `rhodes`. On the EN tree of 2026-10-11,\n78 `character_table` operators have at least one (80 with Amiya's two\npatch forms).",
@@ -22858,12 +23105,12 @@
       },
       "JobView": {
         "type": "object",
-        "description": "`GET /trevor/jobs/{id}`.",
+        "description": "`GET /trevor/jobs/{id}`, and the SSE `done` event.",
         "required": [
           "jobId",
           "status",
+          "rung",
           "position",
-          "eta",
           "workerOnline"
         ],
         "properties": {
@@ -22885,9 +23132,13 @@
             ],
             "description": "Present once `status` is `failed`."
           },
-          "eta": {
-            "type": "integer",
-            "format": "int64"
+          "etaSecs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Seconds until the answer is expected; null once finished and while no\nworker is online."
           },
           "jobId": {
             "type": "string",
@@ -22895,13 +23146,18 @@
           },
           "position": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "1-based place in the server's queue; 0 once a worker took it."
+          },
+          "rung": {
+            "$ref": "#/components/schemas/TrevorRung"
           },
           "status": {
             "$ref": "#/components/schemas/JobStatus"
           },
           "workerOnline": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "False when no worker has sent a heartbeat in the last 75 s."
           }
         }
       },
@@ -26330,17 +26586,19 @@
             "type": [
               "object",
               "null"
-            ]
+            ],
+            "description": "Required on the activating call."
           },
           "manifest": {
             "type": [
               "object",
               "null"
-            ]
+            ],
+            "description": "`{builtFrom, storyOrder, eras, ...}`; required on the activating call."
           },
           "panels": {
             "type": "object",
-            "description": "Story id -> that story's panel JSON. May be sent in several calls with\n`activate: false` and a final call that activates."
+            "description": "Story id -> that story's panel JSON (its `position` is the gatePos).\nSent in several calls with `activate: false` and a final call that\nactivates and resends `manifest` and `gateReport`."
           },
           "server": {
             "type": [
@@ -26498,36 +26756,6 @@
             "propertyNames": {
               "type": "string"
             }
-          }
-        }
-      },
-      "QueuedJob": {
-        "type": "object",
-        "description": "A queued question.",
-        "required": [
-          "jobId",
-          "position",
-          "eta",
-          "workerOnline"
-        ],
-        "properties": {
-          "eta": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Seconds until an answer is expected, assuming a worker is online."
-          },
-          "jobId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "position": {
-            "type": "integer",
-            "format": "int64",
-            "description": "1-based place in the server's queue; 0 once a worker took it."
-          },
-          "workerOnline": {
-            "type": "boolean",
-            "description": "False when no worker has sent a heartbeat recently: the job waits."
           }
         }
       },
@@ -30484,7 +30712,7 @@
       },
       "StoryPanels": {
         "type": "object",
-        "description": "`GET /trevor/story/{storyId}/panels`: the published panel JSON verbatim.",
+        "description": "`GET /trevor/panels/{storyId}`: the published panel JSON verbatim.",
         "required": [
           "storyId",
           "server",
@@ -32561,33 +32789,162 @@
       },
       "TrevorAnswer": {
         "type": "object",
-        "description": "One answer as the reader sees it. `answer` is the worker's structured\nresult verbatim (answer text, citations, route, corpus version, timings).",
+        "description": "One answer as the reader sees it. `answer` is the worker's structured\nresult (answer text, cited passages, route, corpus version, timings).",
         "required": [
           "id",
           "version",
           "server",
+          "eraPos",
+          "rung",
+          "source",
           "answer"
         ],
         "properties": {
           "answer": {
             "type": "object"
           },
-          "horizon": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "The horizon the answer was made under, null for none."
+          "eraPos": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The era boundary (a gatePos) the answer is spoiler-safe up to."
           },
           "id": {
             "type": "string",
             "format": "uuid"
           },
+          "rung": {
+            "$ref": "#/components/schemas/TrevorRung",
+            "description": "The rung that made it (`cf`, `cpu` or `passages`)."
+          },
           "server": {
             "type": "string"
           },
+          "source": {
+            "$ref": "#/components/schemas/TrevorAnswerSource"
+          },
           "version": {
             "type": "string"
+          }
+        }
+      },
+      "TrevorAnswerSource": {
+        "type": "string",
+        "description": "Whether a model wrote the answer or it is the top passages only.",
+        "enum": [
+          "live",
+          "passages"
+        ]
+      },
+      "TrevorCfBudget": {
+        "type": "string",
+        "description": "The day's `cf` budget as a bucket, never a number.",
+        "enum": [
+          "ok",
+          "low",
+          "spent"
+        ]
+      },
+      "TrevorProfile": {
+        "type": "string",
+        "description": "The worker pipeline profile for a job.",
+        "enum": [
+          "full",
+          "slim"
+        ]
+      },
+      "TrevorQueueDepth": {
+        "type": "object",
+        "description": "Live jobs per model rung.",
+        "required": [
+          "cf",
+          "cpu"
+        ],
+        "properties": {
+          "cf": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "cpu": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "TrevorRung": {
+        "type": "string",
+        "description": "Where an answer comes from. A job's rung is never `cache`; a response's is\n`cache` when the answer was already stored.",
+        "enum": [
+          "cache",
+          "cf",
+          "cpu",
+          "passages"
+        ]
+      },
+      "TrevorRungFlags": {
+        "type": "object",
+        "description": "The model rungs a worker reports live in its heartbeat.",
+        "properties": {
+          "cf": {
+            "type": "boolean",
+            "default": false
+          },
+          "cpu": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "TrevorSpoilerSafe": {
+        "type": "object",
+        "description": "\"Spoiler-safe up to\" in a response.",
+        "required": [
+          "eraId",
+          "name",
+          "position"
+        ],
+        "properties": {
+          "eraId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "position": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "TrevorStatus": {
+        "type": "object",
+        "description": "`GET /trevor/status`.",
+        "required": [
+          "online",
+          "rungs",
+          "queueDepth",
+          "cfBudget"
+        ],
+        "properties": {
+          "activeVersion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cfBudget": {
+            "$ref": "#/components/schemas/TrevorCfBudget"
+          },
+          "online": {
+            "type": "boolean",
+            "description": "A worker sent a heartbeat in the last 75 s."
+          },
+          "queueDepth": {
+            "$ref": "#/components/schemas/TrevorQueueDepth",
+            "description": "Jobs queued or running per model rung."
+          },
+          "rungs": {
+            "$ref": "#/components/schemas/TrevorRungFlags",
+            "description": "The model rungs online workers report (both false while offline)."
           }
         }
       },
@@ -33922,29 +34279,96 @@
           }
         }
       },
+      "WorkerAnswer": {
+        "type": "object",
+        "description": "A worker's answer as stored and served. Unknown fields (the old full\n`passages` list) are dropped on the way in.",
+        "required": [
+          "answer",
+          "rung",
+          "profile",
+          "source",
+          "citations",
+          "corpusVersion"
+        ],
+        "properties": {
+          "answer": {
+            "type": "string"
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
+            "description": "Only the cited passages, each trimmed to 600 characters."
+          },
+          "corpusVersion": {
+            "type": "string"
+          },
+          "form": {
+            "type": "object"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/TrevorProfile"
+          },
+          "route": {
+            "type": "object"
+          },
+          "rung": {
+            "$ref": "#/components/schemas/TrevorRung"
+          },
+          "source": {
+            "$ref": "#/components/schemas/TrevorAnswerSource"
+          },
+          "timings": {
+            "type": "object",
+            "description": "`{routeMs, answerMs, totalMs}`."
+          },
+          "tokensIn": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "tokensOut": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          }
+        }
+      },
+      "WorkerDelta": {
+        "type": "object",
+        "description": "`worker/jobs/{jobId}/delta`: streamed answer text.",
+        "required": [
+          "workerId",
+          "seq",
+          "text"
+        ],
+        "properties": {
+          "seq": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "text": {
+            "type": "string"
+          },
+          "workerId": {
+            "type": "string"
+          }
+        }
+      },
       "WorkerHello": {
         "type": "object",
-        "description": "`worker/next` and `worker/heartbeat` bodies.",
+        "description": "`worker/next`: `{workerId}`. `server` (default `en`) picks the queue.",
         "required": [
           "workerId"
         ],
         "properties": {
-          "corpusVersion": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "server": {
             "type": [
               "string",
               "null"
             ]
-          },
-          "slots": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
           },
           "workerId": {
             "type": "string"
@@ -33958,6 +34382,8 @@
           "jobId",
           "question",
           "server",
+          "rung",
+          "profile",
           "flags"
         ],
         "properties": {
@@ -33967,18 +34393,27 @@
               "type": "string"
             }
           },
-          "horizon": {
+          "horizonPos": {
             "type": [
-              "string",
+              "integer",
               "null"
-            ]
+            ],
+            "format": "int32",
+            "description": "Keep only chunks at or before this gatePos; null = no limit\n(internal jobs only)."
           },
           "jobId": {
             "type": "string",
             "format": "uuid"
           },
+          "profile": {
+            "$ref": "#/components/schemas/TrevorProfile"
+          },
           "question": {
             "type": "string"
+          },
+          "rung": {
+            "$ref": "#/components/schemas/TrevorRung",
+            "description": "`cf`, `cpu` or `passages`."
           },
           "server": {
             "type": "string"
@@ -33987,7 +34422,7 @@
       },
       "WorkerResult": {
         "type": "object",
-        "description": "`worker/result`: `ok` with the structured `result`, or not with `error`\n(and the HTTP-style `status` the worker would have answered).",
+        "description": "`worker/result`: `ok` with the structured `result`, or not with `error`.",
         "required": [
           "jobId",
           "workerId",
@@ -34008,18 +34443,14 @@
             "type": "boolean"
           },
           "result": {
-            "type": [
-              "object",
-              "null"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/WorkerAnswer"
+              }
             ]
-          },
-          "status": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "int32",
-            "minimum": 0
           },
           "workerId": {
             "type": "string"
@@ -34149,6 +34580,12 @@
         "in": "header",
         "name": "x-service-key",
         "description": "Internal shared secret for server-side rendering. Not issued to third parties."
+      },
+      "trevor_worker_key": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-trevor-worker-key",
+        "description": "The Trevor worker's own secret (`TREVOR_WORKER_KEY`), accepted only on `/trevor/worker/*` and `/trevor/versions`."
       }
     }
   },
@@ -34203,7 +34640,7 @@
     },
     {
       "name": "trevor",
-      "description": "Trevor, the story question answerer: questions answered from cache or queued for a GPU worker, per-story panels from the published corpus version, feedback, and the worker protocol behind the service key."
+      "description": "Trevor, the story question answerer: questions answered from the cache or queued for a worker on a rung (Cloudflare, local CPU, or passages only) under the reader's era spoiler horizon, streamed over SSE; per-story panels from the published corpus version; feedback; status; and the worker protocol behind the scoped worker key."
     },
     {
       "name": "meta",

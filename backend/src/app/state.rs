@@ -114,6 +114,10 @@ pub struct AppStateInner {
     pub service_accounts: ServiceAccounts,
     /// Detached cache builds in flight (see `cache::cached_json_detached`).
     pub inflight: Inflight,
+    /// Trevor's config (`TREVOR_*` env, read at boot), the worker wake-up
+    /// `Notify`, the per-job SSE broadcast registry and the Turnstile
+    /// verifier. See `services::trevor::runtime`.
+    pub trevor: crate::app::services::trevor::runtime::TrevorRuntime,
     /// Set when a roster sync changes rows the operator ownership aggregate is
     /// computed from; cleared by `core::operator_ownership_job` once it has
     /// recomputed. See [`AppState::mark_ownership_dirty`].
@@ -137,6 +141,9 @@ impl AppState {
                 servers,
                 default_server,
                 config: Arc::new(config),
+                trevor: crate::app::services::trevor::runtime::TrevorRuntime::from_env(
+                    client.clone(),
+                ),
                 http_client: client,
                 service_accounts,
                 inflight: Inflight::default(),

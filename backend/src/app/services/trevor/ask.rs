@@ -1,15 +1,20 @@
-//! The reader side: ask, poll a job, read a story's panels, leave feedback.
+//! The reader side: ask, poll a job, read a story's panels, leave feedback,
+//! and the public status.
+use std::collections::HashSet;
+use std::net::IpAddr;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use chrono::Utc;
 use serde_json::Value;
 use uuid::Uuid;
 
 use super::{
-    ASK_PER_HOUR, AskRequest, AskResponse, FeedbackRequest, JobStatus, JobView, MAX_OPEN_PER_USER,
-    MAX_QUEUED, QueuedJob, StoryPanels, TrevorAnswer, eta_secs, horizon_key, parse_server, qkey,
-    validate_question, worker::Heartbeat,
+    ASK_PER_HOUR, AnswerSource, AskRequest, AskResponse, CfBudget, Era, FeedbackRequest, Horizon,
+    JobStatus, JobView, MAX_OPEN_PER_USER, MAX_QUEUED, ONLINE_SECS, QueueDepth, Rung, RungFlags,
+    RungInputs, StoryPanels, TrevorAnswer, TrevorStatus, bucket_horizon, cf_budget, horizon_pos,
+    parse_server, qkey, select_rung, turnstile, validate_question,
 };
-use crate::app::cache::{CachedJson, cached_json_detached, keys::CacheKey};
+use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
 use crate::app::services::story_progress;
 use crate::app::state::AppState;
@@ -46,64 +51,193 @@ fn view(row: &q::AnswerRow) -> TrevorAnswer {
         id: row.id,
         version: row.version.clone(),
         server: row.server.clone(),
-        horizon: (!row.horizon.is_empty()).then(|| row.horizon.clone()),
+        era_pos: row.era_pos,
+        rung: Rung::parse_job(&row.rung),
+        source: AnswerSource::parse(&row.source),
         answer: row.answer.clone(),
     }
 }
 
-/// The last heartbeat of a server's workers, if one is fresh.
-pub async fn heartbeat(state: &AppState, server: &str) -> Option<Heartbeat> {
-    state.cache.get(&CacheKey::TrevorWorker { server }).await
+/// The SSE route of a job, as the reader requests it.
+pub fn stream_url(job_id: Uuid) -> String {
+    format!("/api/trevor/jobs/{job_id}/stream")
 }
 
-/// The user's furthest-read story: among the stories the account has read
-/// (its own marks and the game's), the one in the latest-released group, the
-/// highest `sort` within it. `None` when nothing is read or the index is not
-/// built for that server.
-pub async fn furthest_read(
+/// The stories the account has read: the game's read flags plus its own
+/// marks, minus what it marked unread.
+pub async fn read_stories(state: &AppState, user_id: Uuid) -> Result<Vec<String>, ApiError> {
+    let progress = story_progress::get(state, user_id).await?;
+    let mut read: HashSet<String> = progress.game_read.into_iter().collect();
+    if let Some(doc) = &progress.progress {
+        if let Some(marks) = doc.0.get("read").and_then(Value::as_object) {
+            read.extend(marks.keys().cloned());
+        }
+        if let Some(unread) = doc.0.get("unread").and_then(Value::as_object) {
+            for id in unread.keys() {
+                read.remove(id);
+            }
+        }
+    }
+    Ok(read.into_iter().collect())
+}
+
+/// The active version and its eras; an unparsable `eras` reads as none.
+async fn active_eras(
+    state: &AppState,
+    server: &str,
+) -> Result<Option<(String, Vec<Era>)>, ApiError> {
+    Ok(q::active_version_eras(&state.db, server)
+        .await?
+        .map(|(version, eras)| {
+            let eras = eras
+                .and_then(|v| serde_json::from_value::<Vec<Era>>(v).ok())
+                .unwrap_or_default();
+            (version, eras)
+        }))
+}
+
+/// The ask's horizon (contract section 1): the furthest gatePos the account
+/// has read in the active version, lowered by `horizonStory`, bucketed to its
+/// era. No active version means nothing is released: eraPos 0.
+pub async fn resolve_horizon(
     state: &AppState,
     user_id: Uuid,
     server: &str,
-) -> Result<Option<String>, ApiError> {
-    let progress = story_progress::get(state, user_id).await?;
-    let mut read: std::collections::HashSet<String> = progress.game_read.into_iter().collect();
-    if let Some(doc) = &progress.progress
-        && let Some(marks) = doc.0.get("read").and_then(Value::as_object)
-    {
-        read.extend(marks.keys().cloned());
-    }
-    if let Some(doc) = &progress.progress
-        && let Some(unread) = doc.0.get("unread").and_then(Value::as_object)
-    {
-        for id in unread.keys() {
-            read.remove(id);
-        }
-    }
-    if read.is_empty() {
-        return Ok(None);
-    }
-    let Ok(game_server) = crate::app::services::auth::parse_server(server) else {
-        return Ok(None);
+    horizon_story: Option<&str>,
+) -> Result<(Option<String>, Horizon), ApiError> {
+    let buckets = state.trevor.config().era_buckets;
+    let Some((version, eras)) = active_eras(state, server).await? else {
+        return Ok((None, bucket_horizon(&[], 0, buckets)));
     };
-    let index = crate::app::services::story::get_story_index(state, game_server).await?;
-    Ok(index
-        .groups
+    let read = read_stories(state, user_id).await?;
+    let profile_pos = q::max_gate_pos(&state.db, &version, server, &read)
+        .await?
+        .unwrap_or(0);
+    let story_pos = match horizon_story.map(str::trim).filter(|s| !s.is_empty()) {
+        None => None,
+        Some(story) => {
+            if story.len() > 200 {
+                return Err(ApiError::BadRequest("horizonStory is too long".into()));
+            }
+            match q::story_gate_pos(&state.db, &version, server, story).await? {
+                Some(pos) => Some(pos.unwrap_or(0)),
+                None => {
+                    return Err(ApiError::BadRequest(format!(
+                        "horizonStory {story} is not in the active Trevor version"
+                    )));
+                }
+            }
+        }
+    };
+    let pos = horizon_pos(profile_pos, story_pos);
+    Ok((Some(version), bucket_horizon(&eras, pos, buckets)))
+}
+
+fn rung_flags(v: Option<&Value>) -> RungFlags {
+    v.and_then(|v| serde_json::from_value(v.clone()).ok())
+        .unwrap_or_default()
+}
+
+/// Seconds per answer on each rung: the median of its recent finished jobs,
+/// or the contract's fallback while there are too few.
+async fn rung_etas(state: &AppState) -> Result<[(Rung, i64); 3], ApiError> {
+    let rows = q::rung_etas(&state.db).await?;
+    let pick = |rung: Rung| {
+        rows.iter()
+            .find(|(r, _, _)| r == rung.as_str())
+            .and_then(|(_, median, n)| {
+                (*n >= super::ETA_MIN_SAMPLES)
+                    .then_some(*median)
+                    .flatten()
+                    .map(|m| m.ceil() as i64)
+            })
+            .unwrap_or_else(|| rung.fallback_eta_secs())
+    };
+    Ok([
+        (Rung::Cf, pick(Rung::Cf)),
+        (Rung::Cpu, pick(Rung::Cpu)),
+        (Rung::Passages, pick(Rung::Passages)),
+    ])
+}
+
+fn eta_of(etas: &[(Rung, i64); 3], rung: Rung) -> i64 {
+    etas.iter()
+        .find(|(r, _)| *r == rung)
+        .map_or_else(|| rung.fallback_eta_secs(), |(_, s)| *s)
+}
+
+/// The ETA of a queued or running job; null while no worker is online.
+/// Queued: every queued job up to this one, each at its rung's answer time,
+/// shared across the online workers. Running: its rung's answer time less
+/// what it has run.
+async fn job_eta(
+    state: &AppState,
+    job: &q::JobRow,
+    status: JobStatus,
+    online: i64,
+) -> Result<Option<i64>, ApiError> {
+    if online == 0 || status.is_terminal() {
+        return Ok(None);
+    }
+    let etas = rung_etas(state).await?;
+    let rung = Rung::parse_job(&job.rung);
+    if status == JobStatus::Running {
+        let ran = job
+            .started_at
+            .map_or(0, |at| (Utc::now() - at).num_seconds().max(0));
+        return Ok(Some((eta_of(&etas, rung) - ran).max(1)));
+    }
+    let ahead = q::queued_ahead_by_rung(&state.db, job).await?;
+    let total: i64 = ahead
         .iter()
-        .flat_map(|g| g.stories.iter().map(move |s| (g.start_time, s.sort, &s.id)))
-        .filter(|(_, _, id)| read.contains(*id))
-        .max()
-        .map(|(_, _, id)| id.clone()))
+        .map(|(r, n)| n * eta_of(&etas, Rung::parse_job(r)))
+        .sum();
+    Ok(Some((total.max(1) + online - 1) / online))
+}
+
+/// The view of a job as `GET /trevor/jobs/{id}` and the SSE `done` event
+/// show it.
+pub async fn job_view(state: &AppState, job: &q::JobRow) -> Result<JobView, ApiError> {
+    let status = JobStatus::parse(&job.status);
+    let (online, _, _) = q::workers_online(&state.db, ONLINE_SECS).await?;
+    let position = if status == JobStatus::Queued {
+        q::queued_ahead_by_rung(&state.db, job)
+            .await?
+            .iter()
+            .map(|(_, n)| n)
+            .sum()
+    } else {
+        0
+    };
+    let answer = match job.answer_id {
+        Some(id) if status == JobStatus::Done => {
+            q::answer_by_id(&state.db, id).await?.as_ref().map(view)
+        }
+        _ => None,
+    };
+    Ok(JobView {
+        job_id: job.id,
+        status,
+        rung: Rung::parse_job(&job.rung),
+        position,
+        eta_secs: job_eta(state, job, status, online).await?,
+        worker_online: online > 0,
+        answer,
+        error: job.error.clone(),
+    })
 }
 
 /// `POST /trevor/ask`.
 pub async fn ask(
     state: &AppState,
     user_id: Uuid,
+    remote_ip: Option<IpAddr>,
     req: AskRequest,
 ) -> Result<AskResponse, ApiError> {
     let normalized = validate_question(&req.question)?;
     let server = parse_server(req.server.as_deref())?;
     let key = qkey(&normalized);
+    turnstile::check(state, req.turnstile_token.as_deref(), remote_ip).await?;
 
     let user = user_id.to_string();
     // Counted before the cache lookup: a cached answer is cheap, but 30 an
@@ -118,131 +252,150 @@ pub async fn ask(
         .unwrap_or(0);
     admit(asked, 0, 0)?;
 
-    let horizon = if req.no_horizon {
-        None
-    } else if let Some(h) = req.horizon.as_deref().filter(|h| !h.trim().is_empty()) {
-        Some(h.trim().to_owned())
-    } else {
-        furthest_read(state, user_id, server)
-            .await
-            .unwrap_or_else(|e| {
-                tracing::warn!(error = %e, "trevor: furthest-read lookup failed");
-                None
-            })
-            .or_else(|| req.story_id.clone())
-    };
-    let horizon = horizon_key(horizon.as_deref()).to_owned();
+    let (version, horizon) =
+        resolve_horizon(state, user_id, server, req.horizon_story.as_deref()).await?;
 
-    if let Some(version) = q::active_version(&state.db, server).await? {
-        let cache_key = CacheKey::TrevorAnswer {
-            server,
-            version: &version,
-            qkey: &key,
-            horizon: &horizon,
-        };
-        if let Some(hit) = state.cache.get::<TrevorAnswer>(&cache_key).await {
-            return Ok(AskResponse::Answered(hit));
-        }
-        if let Some(row) = q::hit_answer(&state.db, &version, server, &key, &horizon).await? {
-            let answer = view(&row);
-            state.cache.set(&cache_key, &answer).await;
-            return Ok(AskResponse::Answered(answer));
-        }
+    if let Some(version) = &version
+        && let Some(row) = q::hit_answer(&state.db, version, server, &key, horizon.era_pos).await?
+    {
+        return Ok(AskResponse {
+            job_id: None,
+            status: JobStatus::Done,
+            rung: Rung::Cache,
+            spoiler_safe_up_to: horizon.spoiler_safe,
+            answer: Some(view(&row)),
+            eta_secs: None,
+            stream_url: None,
+        });
     }
 
-    let beat = heartbeat(state, server).await;
-    let slots = beat.as_ref().map_or(1, |b| i64::from(b.slots));
-    // Someone already asked this: join their job instead of queueing a twin.
-    let job = if let Some(open) = q::open_job_for_key(&state.db, server, &key, &horizon).await? {
-        open
-    } else {
-        let open = q::open_jobs_of_user(&state.db, user_id).await?;
-        let queued = q::queued_jobs(&state.db, server).await?;
-        admit(0, open, queued)?;
-        q::insert_job(
-            &state.db,
-            Some(user_id),
-            req.question.trim(),
-            &key,
-            &horizon,
-            server,
-        )
-        .await?
-    };
-    let position = if JobStatus::parse(&job.status) == JobStatus::Queued {
-        q::queue_position(&state.db, &job).await?
-    } else {
-        0
-    };
-    Ok(AskResponse::Queued(QueuedJob {
-        job_id: job.id,
-        position,
-        eta: eta_secs(position.max(1), slots),
-        worker_online: beat.is_some(),
-    }))
+    // Someone already asked this under the same horizon: join their job
+    // instead of queueing a twin.
+    let job =
+        if let Some(open) = q::open_job_for_key(&state.db, server, &key, horizon.era_pos).await? {
+            if open.user_id != Some(user_id) {
+                state.trevor.add_joiner(open.id, user_id);
+            }
+            open
+        } else {
+            let open = q::open_jobs_of_user(&state.db, user_id).await?;
+            let queued = q::queued_jobs(&state.db, server).await?;
+            admit(0, open, queued)?;
+            let (rungs, neurons_today, cpu_depth) = q::rung_inputs(&state.db).await?;
+            let rung = select_rung(
+                &RungInputs {
+                    rungs: rung_flags(rungs.as_ref()),
+                    neurons_today,
+                    cpu_depth,
+                },
+                &state.trevor.config(),
+            );
+            let inserted = q::insert_job(
+                &state.db,
+                &q::NewJob {
+                    user_id: Some(user_id),
+                    question: req.question.trim(),
+                    qkey: &key,
+                    horizon_pos: Some(horizon.era_pos),
+                    server,
+                    corpus_version: version.as_deref(),
+                    rung: rung.as_str(),
+                    profile: rung.profile().as_str(),
+                },
+            )
+            .await?;
+            if let Some(job) = inserted {
+                state.trevor.job_enqueued();
+                job
+            } else {
+                // An identical ask enqueued between the lookup and the
+                // insert (the unique open-key index refused this one): join it.
+                let open = q::open_job_for_key(&state.db, server, &key, horizon.era_pos)
+                    .await?
+                    .ok_or_else(|| {
+                        ApiError::Conflict("the identical question just closed; ask again".into())
+                    })?;
+                if open.user_id != Some(user_id) {
+                    state.trevor.add_joiner(open.id, user_id);
+                }
+                open
+            }
+        };
+    let jv = job_view(state, &job).await?;
+    Ok(AskResponse {
+        job_id: Some(job.id),
+        status: jv.status,
+        rung: jv.rung,
+        spoiler_safe_up_to: horizon.spoiler_safe,
+        answer: jv.answer,
+        eta_secs: jv.eta_secs,
+        stream_url: Some(stream_url(job.id)),
+    })
+}
+
+/// May this user read this job's stream? Its asker, or someone who joined
+/// it as a twin in this process.
+pub fn may_stream(state: &AppState, job: &q::JobRow, user_id: Uuid) -> bool {
+    job.user_id == Some(user_id) || state.trevor.is_joiner(job.id, user_id)
 }
 
 /// `GET /trevor/jobs/{id}`. Any signed-in user may poll a job id they hold:
 /// ids are unguessable, and askers who joined a twin job poll its id.
-pub async fn job(state: &AppState, job_id: Uuid) -> Result<JobView, ApiError> {
+///
+/// Owner (or twin joiner) only, like the stream; `TREVOR_JOB_OWNER_ONLY=0`
+/// lets any signed-in user poll any id again.
+pub async fn job(state: &AppState, user_id: Uuid, job_id: Uuid) -> Result<JobView, ApiError> {
     let job = q::job_by_id(&state.db, job_id)
         .await?
         .ok_or(ApiError::NotFound)?;
-    let status = JobStatus::parse(&job.status);
-    let beat = heartbeat(state, &job.server).await;
-    let slots = beat.as_ref().map_or(1, |b| i64::from(b.slots));
-    let position = if status == JobStatus::Queued {
-        q::queue_position(&state.db, &job).await?
-    } else {
-        0
-    };
-    let answer = match job.answer_id {
-        Some(id) if status == JobStatus::Done => {
-            q::answer_by_id(&state.db, id).await?.as_ref().map(view)
-        }
-        _ => None,
-    };
-    Ok(JobView {
-        job_id: job.id,
-        status,
-        position,
-        eta: match status {
-            JobStatus::Queued => eta_secs(position, slots),
-            JobStatus::Running => super::ANSWER_SECS,
-            JobStatus::Done | JobStatus::Failed => 0,
-        },
-        worker_online: beat.is_some(),
-        answer,
-        error: job.error,
-    })
+    if state.trevor.config().job_owner_only && !may_stream(state, &job, user_id) {
+        return Err(ApiError::Forbidden);
+    }
+    job_view(state, &job).await
 }
 
-/// `GET /trevor/story/{storyId}/panels`: 404 until a version with this story
-/// is published and active.
+/// `GET /trevor/panels/{storyId}`: 404 until a version with this story is
+/// published and active. Read from Postgres on every call; the edge caches
+/// it (see the route's `Cache-Control`).
 pub async fn panels(
     state: &AppState,
     server: &'static str,
     story_id: &str,
-) -> Result<CachedJson, ApiError> {
+) -> Result<StoryPanels, ApiError> {
     if story_id.is_empty() || story_id.len() > 200 {
         return Err(ApiError::BadRequest("storyId is empty or too long".into()));
     }
-    let key = CacheKey::TrevorPanels { server, story_id };
-    let db = state.db.clone();
-    let id = story_id.to_owned();
-    cached_json_detached(state, &key, move || async move {
-        let (version, panels) = q::active_panels(&db, server, &id)
-            .await?
-            .ok_or_else(|| ApiError::NotFoundMessage(format!("no Trevor panels for {id}")))?;
-        let body = StoryPanels {
-            story_id: id,
-            server: server.to_owned(),
-            version,
-            panels,
-        };
-        serde_json::to_string(&body).map_err(|e| ApiError::Internal(e.into()))
+    let (version, panels) = q::active_panels(&state.db, server, story_id)
+        .await?
+        .ok_or_else(|| ApiError::NotFoundMessage(format!("no Trevor panels for {story_id}")))?;
+    Ok(StoryPanels {
+        story_id: story_id.to_owned(),
+        server: server.to_owned(),
+        version,
+        panels,
     })
-    .await
+}
+
+/// `GET /trevor/status`.
+pub async fn status(state: &AppState, server: &str) -> Result<TrevorStatus, ApiError> {
+    let (online, cf, cpu) = q::workers_online(&state.db, ONLINE_SECS).await?;
+    let (cf_depth, cpu_depth) = q::model_queue_depth(&state.db).await?;
+    let neurons_today = q::neurons_today(&state.db).await?;
+    let cfg = state.trevor.config();
+    Ok(TrevorStatus {
+        online: online > 0,
+        rungs: RungFlags { cf, cpu },
+        active_version: q::active_version(&state.db, server).await?,
+        queue_depth: QueueDepth {
+            cf: cf_depth,
+            cpu: cpu_depth,
+        },
+        cf_budget: if cfg.cf_daily_neurons <= 0 {
+            CfBudget::Spent
+        } else {
+            cf_budget(neurons_today, &cfg)
+        },
+    })
 }
 
 /// `POST /trevor/answers/{id}/feedback`.
@@ -297,5 +450,22 @@ mod tests {
             admit(1, 0, MAX_QUEUED),
             Err(ApiError::ServiceUnavailable)
         ));
+    }
+
+    #[test]
+    fn rung_flags_read_a_heartbeat_and_default_to_none() {
+        assert_eq!(rung_flags(None), RungFlags::default());
+        let v = serde_json::json!({ "cf": true, "cpu": false });
+        assert_eq!(
+            rung_flags(Some(&v)),
+            RungFlags {
+                cf: true,
+                cpu: false
+            }
+        );
+        assert_eq!(
+            rung_flags(Some(&serde_json::json!("x"))),
+            RungFlags::default()
+        );
     }
 }

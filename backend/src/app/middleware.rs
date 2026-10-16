@@ -406,7 +406,11 @@ fn is_service_call(req: &Request, state: &AppState) -> bool {
 pub async fn rate_limit(State(state): State<AppState>, req: Request, next: Next) -> Response {
     let route = classify_path(&req);
 
-    if is_service_call(&req, &state) {
+    // The Trevor worker's scoped key is the service key's twin here: one
+    // worker's long-polls, heartbeats and streamed deltas are not a visitor.
+    if is_service_call(&req, &state)
+        || crate::app::services::trevor::worker::presents_worker_key(req.headers(), &state)
+    {
         return next.run(req).await;
     }
 

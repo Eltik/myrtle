@@ -250,6 +250,9 @@ async fn async_main() {
 
     maintenance::spawn(state.clone());
     backend::app::services::music::siren::spawn(state.clone());
+    // Outside the jobs gate too: Trevor's queue expiry and stale requeue live
+    // here (they ran on every worker poll before), so the queue needs it.
+    backend::app::services::trevor::worker::spawn_sweep(state.clone());
 
     drop(jobs_phase);
 

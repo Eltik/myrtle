@@ -117,6 +117,14 @@ impl Modify for SecurityAddon {
                 "Internal shared secret for server-side rendering. Not issued to third parties.",
             ))),
         );
+
+        components.add_security_scheme(
+            "trevor_worker_key",
+            SecurityScheme::ApiKey(ApiKey::Header(ApiKeyValue::with_description(
+                "x-trevor-worker-key",
+                "The Trevor worker's own secret (`TREVOR_WORKER_KEY`), accepted only on `/trevor/worker/*` and `/trevor/versions`.",
+            ))),
+        );
     }
 }
 
@@ -180,7 +188,7 @@ it is missing from the server too.",
         (name = "release", description = "What CN has that this server does not yet, and when it is projected to arrive."),
         (name = "notes", description = "Editorial operator notes and their audit trail."),
         (name = "search", description = "Cross-entity search."),
-        (name = "trevor", description = "Trevor, the story question answerer: questions answered from cache or queued for a GPU worker, per-story panels from the published corpus version, feedback, and the worker protocol behind the service key."),
+        (name = "trevor", description = "Trevor, the story question answerer: questions answered from the cache or queued for a worker on a rung (Cloudflare, local CPU, or passages only) under the reader's era spoiler horizon, streamed over SSE; per-story panels from the published corpus version; feedback; status; and the worker protocol behind the scoped worker key."),
         (name = "meta", description = "Health and site-wide totals."),
         (name = "admin", description = "Administrative endpoints. A non-admin token is answered with 403, not 404."),
         (name = "tier-lists", description = "Community tier lists: their tiers, the operators placed in them, published versions, per-list edit grants and engagement counters."),

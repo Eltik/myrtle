@@ -107,7 +107,8 @@ thiserror = "2.0.18"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "signal"] }
 tokio-tungstenite = { version = "0.26", features = ["connect"] }
 tokio-util = { version = "0.7.18", features = ["io"] }
-tower-http = { version = "0.6.8", features = ["cors", "compression-gzip", "compression-br"] }
+# decompression-gzip: `POST /trevor/versions` accepts gzip bodies (trevor contract v1 section 3).
+tower-http = { version = "0.6.8", features = ["cors", "compression-gzip", "compression-br", "decompression-gzip"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 urlencoding = "2"
@@ -122,6 +123,8 @@ ammonia = "4.2.3"
 
 [dev-dependencies]
 tower = { version = "0.5.3", features = ["util"] }
+# Paused clocks: the Trevor SSE test runs past the 30 s handler timeout in virtual time.
+tokio = { version = "1", features = ["test-util"] }
 
 [profile.release]
 lto = "thin"
