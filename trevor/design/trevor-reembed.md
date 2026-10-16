@@ -81,7 +81,7 @@ INT8 file); fetched and verified on the Mac 2026-10-16.
   zeroed, non-unit, non-hex and changed-dim tails.
 - **Guard.** Fired for real: memory pressure level 2 (other agents compiling Rust) paused the full run and both resume
   tests for 30 to 90 s at a time and resumed on its own; no thermal or performance warning was recorded at any point
-  (PENDING totals).
+  (totals of the full run below: 30 pauses, 4,955 s paused in all).
 - `cargo clippy --release --all-targets --features embed`: 0 warnings. `cargo test --release --features embed --lib
   embed`: 3 passed.
 
@@ -98,7 +98,17 @@ fp32, 500 P3b chunks (the first 500 rows), guard on, duty 1, nice 10, other agen
 without sudo is the battery's (`ioreg -rn AppleSmartBattery` "Temperature"), a chassis proxy, not the package; it did not
 move at either setting, and `pmset -g therm` recorded nothing. With `--duty 0.6` the process averages about 115 % CPU.
 
-PENDING: the full run.
+**The full run** (2026-10-16 08:42 to 2026-10-17 01:00, in three sittings: stopped by Ian's pause at 2,331 rows, by `--max-minutes 44` at 9,405, then to the end). It ran with guard on, threads 2, duty 0.6 and nice 10, beside other agents' Rust builds and a Gemma 12B eval:
+
+| corpus | embedded | reused | embedding | duty sleep | paused (pauses) | peak RSS |
+|---|---|---|---|---|---|---|
+| p3b-fp32 | 16,050 (all) | 0 | 1,258 s (last sitting) | 839 s | 931 s (11) | 1,487 MB |
+| p4x-fp32 | 8,566 | 16,050 from p3b-fp32 | 769 s | 513 s | 3,994 s (18) | 719 MB |
+| p4-art-fp32 | 848 | 22,917 from p4x-fp32 | 52 s | 35 s | 30 s (1) | 705 MB |
+
+- Every pause was memory pressure level 2 while the 12B was loaded. 326 samples, one every 30 s, recorded no thermal or performance warning, and the battery temperature stayed between 30.53 and 30.87 C.
+- `embed-check --n 100` passes on all three: min cosine 0.999998.
+- The serving corpora `artifacts/p3b`, `artifacts/p4x` and `artifacts/p4-art` were never written.
 
 ## 5. Procedure
 
@@ -148,7 +158,20 @@ all 3 online CPUs. A stopped or killed run (exit 3, OOM, deploy) resumes on the 
 
 ## 6. Quality
 
-PENDING.
+Measured 2026-10-16 23:40 with `eval run`, hybrid, P3b. The INT8 arm uses the stored INT8 corpus and INT8 queries; the fp32 arm uses `artifacts/p3b-fp32` and fp32 queries (query model `auto`).
+
+| set | INT8 recall@10 | fp32 recall@10 | hit@10 | MRR@10 | first-gold rank, fp32 vs INT8 |
+|---|---|---|---|---|---|
+| gold v2 (131) | 0.7316 | 0.7201 | 0.8015 / 0.7863 | 0.4941 / 0.4871 | 12 better, 17 worse, 102 same |
+| dev set (47) | 0.9149 | 0.9255 | 0.9362 / 0.9362 | 0.6427 / 0.6170 | 4 better, 6 worse, 37 same |
+
+The two sets disagree in sign, and the gold changes split 12 to 17, which a sign test cannot tell from noise (p about 0.46).
+
+**The rule before the run was:** swap only if neither set drops more than 0.005. Gold drops 0.0115, so the Mac keeps serving INT8 (the corpora in `artifacts/p3b` and `artifacts/p4x`, with their baselines).
+
+**The VPS has no INT8 option.** Its queries cannot use the Mac's INT8 vectors (median cosine 0.946 across ONNX Runtime builds, section 2), so it serves fp32. The price is the gold row above: -0.0115 recall@10, inside noise.
+
+The Mac-built fp32 corpora (`artifacts/p3b-fp32`, `artifacts/p4x-fp32`, `artifacts/p4-art-fp32`) can be copied to the VPS instead of running `EMBED_FULL=1` there. Check the copy with `embed-check` on the VPS (section 5); it must report min cosine 0.999 or more.
 
 ## 7. Not done here, and what the swap needs
 

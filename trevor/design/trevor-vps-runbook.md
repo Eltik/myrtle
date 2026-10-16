@@ -236,6 +236,7 @@ of every failure below is a slower or passage-only answer, never a charge.
 | what | value |
 |---|---|
 | panels.py, 1,862 panels | 7.9 to 11.8 s wall, 160 to 175 MB max RSS (prototype on the Cowork VM: 8.8 s, 191 MB) |
+| `ask --worker` while loading, Mac (2026-10-17) | peak RSS 152 MB with `--retrieval bm25`, 356 MB hybrid; 12 and 21 MB once settled, since macOS stops counting the memory-mapped indexes. Linux counts touched mapped pages, so expect up to the peaks plus page cache; both fit `MemoryMax=1536M` |
 | kill switches `--no-gate-sources --era-guide-position --gate-order off` | 1,862 of 1,862 panels byte-identical to the prototype's `out/` |
 | panel sizes (default build) | 21,747,890 B raw, 2,270,197 B gzip -6 (ratio 0.104); per story median 12,134 B, max 19,547 B |
 | gates.py without the canary | 0.88 s, 164 MB |
