@@ -279,6 +279,8 @@ panels_and_gates() {
   local res="$1"
   cd "$WORK"
   step "panels"
+  # Boss enemy handbook lines for "Who's here" (panels.py skips the source when the file is missing).
+  [[ "${ENEMY_INTROS:-1}" == "1" ]] && run python3 scripts/enemy_intros.py --gamedata "$TREVOR_GAMEDATA"
   # shellcheck disable=SC2086
   run python3 scripts/panels.py --built-from "$res" $PANELS_ARGS
   step "gates"

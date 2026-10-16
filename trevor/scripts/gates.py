@@ -47,7 +47,7 @@ PANEL = {
         "buildsOn": LIST(S),
     },
     "whosHere": {"characters": LIST({"name": S, "chunks": I, "identity": OPT(S),
-                                     "identitySource": OPT(ENUM("operatorFile", "bank")), "whoId": OPT(S), "debut": B,
+                                     "identitySource": OPT(ENUM("operatorFile", "bank", "enemyHandbook", "storySynopsis", "storyLine")), "whoId": OPT(S), "debut": B,
                                      "firstSeen": OPT(REF), "seenInGroups": I, "recentGroups": LIST(S)}),
                  "more": I},
     "terms": {"items": LIST({"term": S, "kind": S, "mentions": I, "definition": OPT(S), "firstNamed": OPT(REF)}),
