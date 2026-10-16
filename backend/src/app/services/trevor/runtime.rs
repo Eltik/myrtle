@@ -47,6 +47,10 @@ pub struct TrevorConfig {
     /// `TREVOR_BUSY_PROTECTS=0` requeues a stale running job even while an
     /// online worker's heartbeat names it as its busy job.
     pub busy_protects: bool,
+    /// `TREVOR_JOB_MAX_RUN_SECS`: a running job this old is requeued (once)
+    /// or failed even while a live worker names it as busy; `0` lets the
+    /// busy heartbeat protect it forever (the old behaviour).
+    pub job_max_run_secs: i64,
     /// `TREVOR_JOB_OWNER_ONLY=0` lets any signed-in user poll any job id.
     pub job_owner_only: bool,
     /// `TREVOR_QUEUE_TTL_SECS`: a queued job nobody claimed in this long fails.
@@ -79,6 +83,7 @@ impl Default for TrevorConfig {
             version_check: true,
             ttl_from_queued: true,
             busy_protects: true,
+            job_max_run_secs: 1800,
             job_owner_only: true,
             queue_ttl_secs: 600,
             cf_daily_neurons: 9000,
@@ -119,6 +124,7 @@ impl TrevorConfig {
             version_check: !switched_off("TREVOR_CACHE_VERSION_CHECK"),
             ttl_from_queued: !switched_off("TREVOR_TTL_FROM_QUEUED"),
             busy_protects: !switched_off("TREVOR_BUSY_PROTECTS"),
+            job_max_run_secs: env_num("TREVOR_JOB_MAX_RUN_SECS", d.job_max_run_secs).max(0),
             job_owner_only: !switched_off("TREVOR_JOB_OWNER_ONLY"),
             queue_ttl_secs: env_num("TREVOR_QUEUE_TTL_SECS", d.queue_ttl_secs).max(1),
             cf_daily_neurons: env_num("TREVOR_CF_DAILY_NEURONS", d.cf_daily_neurons),

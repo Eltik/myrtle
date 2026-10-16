@@ -534,7 +534,8 @@ pub struct SweptJob {
     pub error: Option<String>,
 }
 
-/// Requeue running jobs whose worker went quiet (failing them once they had
+/// Requeue running jobs whose worker went quiet, or that ran past
+/// `max_run_secs` whatever the heartbeat says (failing them once they had
 /// `max_attempts` claims), and expire queued jobs that waited too long.
 /// How the sweep treats its edge cases (each a kill switch).
 #[derive(Debug, Clone, Copy)]
@@ -545,6 +546,9 @@ pub struct SweepRules {
     /// `online_secs`) says it is answering.
     pub busy_protects: bool,
     pub online_secs: i64,
+    /// The busy protection ends once a job has run this long: it is then
+    /// requeued or failed like a silent one. `0` means no ceiling.
+    pub max_run_secs: i64,
 }
 
 pub async fn sweep_stale(
@@ -557,10 +561,15 @@ pub async fn sweep_stale(
     let mut swept: Vec<SweptJob> = sqlx::query_as(
         "UPDATE trevor_jobs j SET status = CASE WHEN attempts >= $2 THEN 'failed' ELSE 'queued' END, \
          worker_id = NULL, started_at = NULL, queued_at = now(), \
-         error = CASE WHEN attempts >= $2 THEN 'the worker stopped answering' ELSE error END, \
+         error = CASE WHEN attempts < $2 THEN error \
+                      WHEN $3 AND EXISTS (SELECT 1 FROM trevor_workers w WHERE w.busy_job_id = j.id \
+                           AND w.last_seen > now() - make_interval(secs => $4)) \
+                      THEN 'the job ran past its time limit' \
+                      ELSE 'the worker stopped answering' END, \
          finished_at = CASE WHEN attempts >= $2 THEN now() ELSE NULL END \
          WHERE status = 'running' AND started_at < now() - make_interval(secs => $1) \
-           AND NOT ($3 AND EXISTS (SELECT 1 FROM trevor_workers w WHERE w.busy_job_id = j.id \
+           AND NOT ($3 AND ($5 <= 0 OR started_at >= now() - make_interval(secs => $5)) \
+                    AND EXISTS (SELECT 1 FROM trevor_workers w WHERE w.busy_job_id = j.id \
                     AND w.last_seen > now() - make_interval(secs => $4))) \
          RETURNING id, status, error",
     )
@@ -568,6 +577,7 @@ pub async fn sweep_stale(
     .bind(max_attempts)
     .bind(rules.busy_protects)
     .bind(rules.online_secs as f64)
+    .bind(rules.max_run_secs as f64)
     .fetch_all(pool)
     .await?;
     let expired: Vec<SweptJob> = sqlx::query_as(

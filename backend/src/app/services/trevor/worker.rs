@@ -318,6 +318,7 @@ pub async fn sweep(state: &AppState) -> Result<usize, ApiError> {
             ttl_from_queued: cfg.ttl_from_queued,
             busy_protects: cfg.busy_protects,
             online_secs: super::ONLINE_SECS,
+            max_run_secs: cfg.job_max_run_secs,
         },
     )
     .await?;

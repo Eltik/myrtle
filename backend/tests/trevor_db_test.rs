@@ -10,7 +10,8 @@
 //! the per-user cap, rung selection against the heartbeat, the Neuron
 //! ledger and the CPU queue, the ledger itself, the answer cache, SKIP LOCKED
 //! with concurrent claimers, the Notify wake-up and the idle claim count
-//! against the old 1 s poll, stale requeue then fail, queue TTL expiry, the
+//! against the old 1 s poll, stale requeue then fail, the run ceiling on a
+//! job a live worker keeps naming as busy, queue TTL expiry, the
 //! SSE fan-out of worker deltas, `/trevor/status`, per-rung ETAs and the
 //! heartbeat row.
 //!
@@ -976,6 +977,7 @@ async fn trevor_queue_against_a_throwaway_database() {
     step_stream(&s).await;
     step_status_eta_heartbeat(&s).await;
     step_review_fixes(&s).await;
+    step_run_ceiling(&s).await;
     step_notify(&pool).await;
 }
 
@@ -1089,13 +1091,19 @@ async fn step_review_fixes(s: &AppState) {
     }))
     .unwrap();
     worker::heartbeat(s, &busy).await.unwrap();
-    age_running(pool, id, 3600).await;
+    age_running(pool, id, 1799).await;
     worker::sweep(s).await.unwrap();
     assert_eq!(
         job(s, id).await.status,
         "running",
-        "busy on an online worker"
+        "busy on an online worker, under the 1800 s ceiling"
     );
+    // TREVOR_JOB_MAX_RUN_SECS=0: no ceiling, the busy heartbeat protects it
+    // at any age (the rule before the ceiling).
+    let no_ceiling = state_on(pool, |c| c.job_max_run_secs = 0);
+    age_running(pool, id, 3600).await;
+    worker::sweep(&no_ceiling).await.unwrap();
+    assert_eq!(job(s, id).await.status, "running", "no ceiling at 3600 s");
     let old = state_on(pool, |c| c.busy_protects = false);
     worker::sweep(&old).await.unwrap();
     assert_eq!(job(s, id).await.status, "queued");
@@ -1146,4 +1154,79 @@ async fn step_review_fixes(s: &AppState) {
     let open = state_on(pool, |c| c.job_owner_only = false);
     assert!(svc_ask::job(&open, stranger, id).await.is_ok());
     eprintln!("review fixes 2-7 ok");
+}
+
+/// The run ceiling (`TREVOR_JOB_MAX_RUN_SECS`, default 1800): a job a live
+/// worker keeps naming as busy is requeued once past it, then failed.
+async fn step_run_ceiling(s: &AppState) {
+    let pool = &s.db;
+    reset_queue(pool).await;
+    beat(s, "w1", false, true).await;
+    let u = new_user(pool).await;
+    let id = ask(s, u, "a job that never ends", None)
+        .await
+        .unwrap()
+        .job_id
+        .unwrap();
+    let mut rx = s.trevor.subscribe(id);
+    let busy = |w: &str| -> Heartbeat {
+        serde_json::from_value(json!({
+            "workerId": w, "rungs": { "cf": false, "cpu": true }, "busyJobId": id.to_string()
+        }))
+        .unwrap()
+    };
+
+    assert_eq!(next(s, "w1").await.unwrap().job_id, id);
+    worker::heartbeat(s, &busy("w1")).await.unwrap();
+    age_running(pool, id, 1801).await;
+    worker::sweep(s).await.unwrap();
+    let j = job(s, id).await;
+    assert_eq!(
+        (j.status.as_str(), j.attempts, j.worker_id.as_deref()),
+        ("queued", 1, None),
+        "requeued at 1801 s although w1 names it"
+    );
+    assert_eq!(j.error, None);
+
+    // The second claim runs past the ceiling too: failed, and the stream ends.
+    assert_eq!(next(s, "w2").await.unwrap().job_id, id);
+    worker::heartbeat(s, &busy("w2")).await.unwrap();
+    age_running(pool, id, 1799).await;
+    worker::sweep(s).await.unwrap();
+    assert_eq!(
+        job(s, id).await.status,
+        "running",
+        "1799 s on the second claim"
+    );
+    age_running(pool, id, 1801).await;
+    worker::sweep(s).await.unwrap();
+    let j = job(s, id).await;
+    assert_eq!((j.status.as_str(), j.attempts), ("failed", 2));
+    assert_eq!(j.error.as_deref(), Some("the job ran past its time limit"));
+    match rx.recv().await.unwrap() {
+        StreamEvent::Error(m) => assert_eq!(m, "the job ran past its time limit"),
+        other => panic!("expected an error event, got {other:?}"),
+    }
+    // A late result from the first worker is refused.
+    let late = worker::result(s, &result_json(id, "w1", "cpu", (2000, 250))).await;
+    assert!(late.is_err(), "late result after the ceiling");
+
+    // A silent job (no worker names it) past the ceiling keeps the old message.
+    reset_queue(pool).await;
+    beat(s, "w1", false, true).await;
+    let id = ask(s, u, "silent twice", None)
+        .await
+        .unwrap()
+        .job_id
+        .unwrap();
+    for w in ["w1", "w2"] {
+        assert_eq!(next(s, w).await.unwrap().job_id, id);
+        age_running(pool, id, 1801).await;
+        worker::sweep(s).await.unwrap();
+    }
+    assert_eq!(
+        job(s, id).await.error.as_deref(),
+        Some("the worker stopped answering")
+    );
+    eprintln!("run ceiling: busy job requeued at 1801 s, failed on the second, 1799 s kept");
 }

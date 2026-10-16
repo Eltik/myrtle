@@ -606,6 +606,7 @@ The story question answerer (`/api/trevor/*`; interface: `trevor/design/trevor-c
 | `TREVOR_CF_DAILY_NEURONS` | `9000` | Cloudflare Workers AI Neurons per UTC day; `0` turns the `cf` rung off |
 | `TREVOR_CF_SUMMARY_RESERVE` | `1000` | Neurons kept back for the daily summaries; `cf` answers stop at daily minus this |
 | `TREVOR_CPU_QUEUE_MAX` | `6` | Jobs queued or running on the `cpu` rung before new questions get the passages answer |
+| `TREVOR_JOB_MAX_RUN_SECS` | `1800` | A running job this old is requeued (once, then failed with "the job ran past its time limit") even while a live worker names it as `busyJobId`; `0` lets the busy heartbeat protect it with no ceiling, the previous behaviour |
 | `TREVOR_RESULT_MAX_BYTES` | `65536` | A worker result body over this is a `413`; `0` lifts the cap (axum's 2 MB default then applies, the previous behaviour) |
 | `TURNSTILE_SECRET` | - | When set, `POST /trevor/ask` verifies `turnstileToken` with Cloudflare siteverify (missing or rejected: `403`; siteverify unreachable: `503` "Trevor is busy", failing closed). Unset skips the check |
 | `TREVOR_SCOPED_WORKER_KEY` | on | `0` restores the old worker gate: the global `SERVICE_KEY` (`x-service-key`) on the worker routes, the worker key nowhere |
