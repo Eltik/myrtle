@@ -9,6 +9,10 @@ Copies of the claude.ai project "Trevor (Myrtle)" docs as of 2026-09-25, plus th
 | `trevor-goldset-automation.md` | The automated gold-set pipeline: filters, cross-family judge, calibration, anchor completion; what building it refuted. |
 | `trevor-questions.md` | What people will ask: 16 question categories, where each answer lives (1.2M words of lore outside the index), a 10-question probe, the behaviors needed. |
 | `trevor-updates.md` | What each stage does with a new or changed story (audit with file:line), and the plan for an incremental updater after asset updates. |
+| `trevor-contract-v1.md` | The binding backend/worker/publish interface (2026-10-16): one gatePos spoiler scale and 22 eras, the horizon from the reader's profile, rungs and the Neuron ledger, worker auth, streaming, storage. |
+| `trevor-reembed.md` | fp32 embedding everywhere and the guarded, resumable re-embed (threads, duty cycle, thermal/memory/battery pauses, checkpoint); measurements and the VPS command. |
+| `trevor-vps-runbook.md` | Installing, updating, rolling back and monitoring Trevor on the VPS; what happens on each failure. |
+| `trevor-integration-plan-v3.md` | The $0 build order (2026-10-16): what exists on the trevor branch, corrections to the overnight plans, phases A to E, Ian's open decisions. |
 | `trevor-retrieval-baseline.md` | Search stack, eval harness, first dev-set numbers and what they can and cannot say. |
 | `trevor-p0-status.md` | Phase 0 as built and as run on the Mac; the INT8-on-x86 finding; the Ettin head check. |
 | `trevor-implementation-notes.md` | Verified API facts and corrections to the older specs (read section 1 before trusting them); real-corpus measurements in section 8. |
