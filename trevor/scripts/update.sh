@@ -180,6 +180,11 @@ python3 scripts/sources.py
 step "profiles and typed sources (p3b, p4)"
 build_lores
 step "reading guide"; python3 scripts/reading_guide.py build
+# Release dates of operator files, records, voice lines, modules and outfits (2026-10-17): without them a new source is
+# undated and the spoiler horizon hides it; the VPS update already runs this. SOURCE_DATES=0 skips it (the script before).
+if [[ "${SOURCE_DATES:-1}" != "0" ]]; then
+  step "source dates"; python3 scripts/source_dates.py ${TREVOR_GAMEDATA:+--gamedata "$TREVOR_GAMEDATA/excel"}
+fi
 # The gatePos order (2026-10-16, design/trevor-contract-v1.md section 1) reads the reading guide, spoiler.jsonl and
 # source_dates.json, so it is rewritten once all three are final; GATE_ORDER=0 skips it (the script before 2026-10-16).
 if [[ "${GATE_ORDER:-1}" != "0" ]]; then
