@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { TrevorAnswer } from "#/types/generated/TrevorAnswer";
 import sample from "./__fixtures__/panel_act18side_05_beg.json";
 import { answerBlocks, answerInlines, parseAnswer } from "./answer";
-import { ASK_IDLE, askBusy, askReducer } from "./askState";
+import { ASK_IDLE, askPending, askReducer } from "./askState";
 import { panelCoverage, parsePanel, primerOf } from "./panels";
 
 describe("parsePanel", () => {
@@ -88,14 +88,14 @@ describe("the ask reducer", () => {
 
     it("walks sending, queued, streaming, done", () => {
         let s = askReducer(ASK_IDLE, { type: "send", question: "Who is Hibiscus?" });
-        expect(askBusy(s)).toBe(true);
+        expect(askPending(s)).toBe(true);
         s = askReducer(s, { type: "accepted", response: accepted });
         expect(s).toMatchObject({ kind: "queued", jobId: "j1", etaSecs: 120, workerOnline: true });
         s = askReducer(s, { type: "text", text: "Hibis" });
         expect(s).toMatchObject({ kind: "streaming", text: "Hibis" });
         s = askReducer(s, { type: "done", view: { jobId: "j1", status: "done", rung: "cpu", position: 0, etaSecs: null, workerOnline: true, answer: answer(), error: null } });
         expect(s).toMatchObject({ kind: "done", question: "Who is Hibiscus?", cached: false, spoiler: { name: "Shatterpoint" } });
-        expect(askBusy(s)).toBe(false);
+        expect(askPending(s)).toBe(false);
     });
 
     it("takes a cached answer straight to done", () => {

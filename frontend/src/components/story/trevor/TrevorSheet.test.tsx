@@ -87,6 +87,11 @@ const LIVE_ANSWER: TrevorAnswer = {
     },
 };
 
+/** The live answer with other text, same sources. */
+function withText(text: string): TrevorAnswer {
+    return { ...LIVE_ANSWER, answer: { ...(LIVE_ANSWER.answer as Record<string, unknown>), answer: text } as TrevorAnswer["answer"] };
+}
+
 function deps(over: Partial<IAskDeps> = {}): IAskDeps {
     return {
         ask: vi.fn(async (): Promise<AskResponse> => ({ jobId: "j1", status: "queued", rung: "cpu", spoilerSafeUpTo: SHATTERPOINT, etaSecs: 120, streamUrl: "/api/trevor/jobs/j1/stream" })),
@@ -247,8 +252,9 @@ describe("the ask box", () => {
         await waitFor(() => expect(state()).toBe("queued"));
         expect(within(sheet()).getByText("Queued · about 2 minutes")).toBeTruthy();
         expect(sheet().querySelector("[data-trevor-asked]")?.textContent).toBe("Who is Hibiscus?");
-        // One question at a time: the send button stands down while it is in flight.
+        // The draft was sent and cleared: the button waits for the next question, the box stays open.
         expect((within(sheet()).getByRole("button", { name: "Ask" }) as HTMLButtonElement).disabled).toBe(true);
+        expect(box().disabled).toBe(false);
 
         await act(async () => {
             push('event: delta\ndata: {"seq":0,"text":"Hibiscus is"}\n\n');
@@ -320,6 +326,72 @@ describe("the ask box", () => {
         expect(sheet().querySelector('[data-trevor-state="done"] [data-trevor-citation="1"]')).not.toBeNull();
         expect(within(sheet()).getByText("Trevor is busy. Try again in a minute.")).toBeTruthy();
         expect(within(sheet()).getByText("Spoiler-safe up to Shatterpoint")).toBeTruthy();
+    });
+
+    it("finishes an answer whose stream drops mid-sentence, from the job's own answer", async () => {
+        const enc = new TextEncoder();
+        let ctrl!: ReadableStreamDefaultController<Uint8Array>;
+        const body = new ReadableStream<Uint8Array>({
+            start(c) {
+                ctrl = c;
+            },
+        });
+        const full = withText("On this evidence, she is the one keeping the clinic running [1].");
+        const getJob = vi.fn(async (): Promise<JobView> => ({ jobId: "j1", status: "done", rung: "cf", position: 0, etaSecs: null, workerOnline: true, answer: full, error: null }));
+        mount(deps({ openStream: vi.fn(async () => new Response(body, { status: 200 })), getJob }));
+        await ask("Who keeps the clinic running?");
+        await waitFor(() => expect(state()).toBe("queued"));
+        await act(async () => {
+            ctrl.enqueue(enc.encode('event: delta\ndata: {"seq":0,"text":"On this evidence, she"}\n\n'));
+            ctrl.close();
+        });
+        await waitFor(() => expect(state()).toBe("done"));
+        expect(live()?.textContent).toContain("she is the one keeping the clinic running");
+    });
+
+    it("answers several questions at once, in the order asked, and waits past the open-job cap", async () => {
+        const streams = new Map<string, { push: (s: string) => void; close: () => void }>();
+        const enc = new TextEncoder();
+        let n = 0;
+        const askFn = vi.fn(async (): Promise<AskResponse> => {
+            n += 1;
+            return { jobId: `j${n}`, status: "queued", rung: "cf", spoilerSafeUpTo: SHATTERPOINT, etaSecs: 20, streamUrl: null };
+        });
+        const openStream = vi.fn(async (jobId: string) => {
+            const body = new ReadableStream<Uint8Array>({
+                start(c) {
+                    streams.set(jobId, { push: (s) => c.enqueue(enc.encode(s)), close: () => c.close() });
+                },
+            });
+            return new Response(body, { status: 200 });
+        });
+        mount(deps({ ask: askFn, openStream }));
+        for (const q of ["First?", "Second?", "Third?", "Fourth?"]) await ask(q);
+        await waitFor(() => expect(streams.size).toBe(3));
+        const states = () => [...sheet().querySelectorAll("[data-trevor-state]")].map((e) => e.getAttribute("data-trevor-state"));
+        // Three in flight, the fourth waits here and says why.
+        expect(askFn).toHaveBeenCalledTimes(3);
+        expect(states()).toEqual(["queued", "queued", "queued", "held"]);
+        expect(sheet().querySelector("[data-trevor-held]")?.textContent).toContain("3 questions are already with Trevor");
+        // All three stream at once.
+        const delta = (id: string, text: string) => streams.get(id)?.push(`event: delta\ndata: ${JSON.stringify({ seq: 0, text })}\n\n`);
+        await act(async () => {
+            delta("j1", "One");
+            delta("j2", "Two");
+            delta("j3", "Three");
+        });
+        await waitFor(() => expect(states()).toEqual(["streaming", "streaming", "streaming", "held"]));
+        // The third finishes first; the second fails; neither disturbs the first.
+        const doneView = (jobId: string, text: string) => ({ jobId, status: "done", rung: "cf", position: 0, etaSecs: null, workerOnline: true, answer: withText(text), error: null });
+        await act(async () => {
+            streams.get("j3")?.push(`event: done\ndata: ${JSON.stringify(doneView("j3", "Third answer."))}\n\n`);
+            streams.get("j2")?.push('event: error\ndata: {"message":"worker died"}\n\n');
+        });
+        await waitFor(() => expect(states()).toEqual(["streaming", "failed", "done", "queued"]));
+        expect(askFn).toHaveBeenCalledTimes(4);
+        const asked = [...sheet().querySelectorAll("[data-trevor-asked]")].map((e) => e.textContent);
+        expect(asked).toEqual(["First?", "Second?", "Third?", "Fourth?"]);
+        expect(sheet().querySelectorAll('[data-trevor-state="streaming"]')[0]?.textContent).toContain("One");
     });
 
     it("stops waiting when nobody is online, and checks again on request", async () => {

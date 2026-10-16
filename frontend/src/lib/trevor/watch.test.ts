@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { APIError } from "#/lib/api/_shared";
 import type { JobView } from "#/types/generated/JobView";
 import type { TrevorStatus } from "#/types/generated/TrevorStatus";
-import { createDeltaBuffer, type IWatchDeps, type IWatchHandlers, POLL_MS, watchJob } from "./watch";
+import { createDeltaBuffer, type IWatchDeps, type IWatchHandlers, POLL_MS, STALL_MS, watchJob } from "./watch";
 
 const ANSWER = { id: "a1", version: "v", server: "en", eraPos: 722, rung: "cf", source: "live", answer: { answer: "Hibiscus is a nurse [1].", citations: [] } } as const;
 
@@ -88,6 +88,64 @@ describe("watchJob over the stream", () => {
         s.send("error", { message: "worker crashed" });
         await flush();
         expect(h.log).toEqual(["mode:stream", "failed:worker crashed"]);
+    });
+});
+
+describe("watchJob never leaves an answer half written", () => {
+    it("finishes from a poll when the stream drops mid-sentence, the job's answer replacing the streamed text", async () => {
+        const s = controllableStream();
+        const getJob = vi.fn(async () => view({ status: "done", answer: ANSWER as unknown as JobView["answer"] }));
+        const h = handlers();
+        watchJob("j1", h, { openStream: async () => s.response, getJob, getStatus: async () => ONLINE });
+        await flush();
+        s.send("delta", { seq: 0, text: "On this evidence, " });
+        s.send("delta", { seq: 1, text: "she" });
+        s.close();
+        await flush();
+        await flush();
+        expect(h.log).toEqual(["mode:stream", "text:On this evidence, ", "text:On this evidence, she", "mode:poll", "done:a1"]);
+        expect(getJob).toHaveBeenCalledTimes(1);
+    });
+
+    it("drops a stream that goes silent past the stall limit and polls, while keep-alives hold a quiet one open", async () => {
+        const s = controllableStream();
+        const getJob = vi.fn(async () => view({ status: "done", answer: ANSWER as unknown as JobView["answer"] }));
+        const h = handlers();
+        watchJob("j1", h, { openStream: async () => s.response, getJob, getStatus: async () => ONLINE });
+        await flush();
+        s.send("delta", { seq: 0, text: "On this evidence, she" });
+        await flush();
+        // Keep-alives every 15 s: three quiet minutes are not a stall.
+        for (let i = 0; i < 12; i++) {
+            await vi.advanceTimersByTimeAsync(15_000);
+            s.comment();
+            await flush();
+        }
+        expect(getJob).not.toHaveBeenCalled();
+        // Then nothing at all: the stream is dropped and the job polled.
+        await vi.advanceTimersByTimeAsync(STALL_MS);
+        await flush();
+        expect(getJob).toHaveBeenCalledTimes(1);
+        expect(h.log).toEqual(["mode:stream", "text:On this evidence, she", "mode:poll", "done:a1"]);
+    });
+
+    it("keeps the text when a watch on the same job is restarted with its delta buffer", async () => {
+        const first = controllableStream();
+        const second = controllableStream();
+        const opens = [first.response, second.response];
+        const buffer = createDeltaBuffer();
+        const deps: IWatchDeps = { openStream: async () => opens.shift() as Response, getJob: vi.fn(), getStatus: async () => ONLINE };
+        const h = handlers();
+        const w = watchJob("j1", h, deps, buffer);
+        await flush();
+        first.send("delta", { seq: 0, text: "On this " });
+        await flush();
+        w.stop();
+        watchJob("j1", h, deps, buffer);
+        await flush();
+        second.send("delta", { seq: 1, text: "evidence." });
+        await flush();
+        expect(h.log.filter((l) => l.startsWith("text:"))).toEqual(["text:On this ", "text:On this evidence."]);
     });
 });
 

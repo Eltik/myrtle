@@ -261,9 +261,9 @@ export const messages = {
         text: "Enter to send, Shift+Enter for a new line",
         description: "Small hint under the question box on devices with a keyboard. Key names as printed on the keys.",
     },
-    "trevor.chat.offlineFrozen": {
-        text: "Trevor's answerer went offline before answering this one.",
-        description: "Trevor's reply to an earlier question in the conversation whose answer never came because the answering service went offline.",
+    "trevor.chat.held": {
+        text: "{max, plural, one {Waiting: # question is already with Trevor. This one goes next.} other {Waiting: # questions are already with Trevor. This one goes as soon as one is answered.}}",
+        description: "Trevor's placeholder reply to a question the reader asked while the most questions one account may have open at once were still being answered. The question is sent automatically when one finishes. # is that limit (3).",
     },
     "trevor.answer.label": {
         text: "Trevor's answer",

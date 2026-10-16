@@ -29,7 +29,7 @@ import { trevorPanelsQueryOptions, trevorStatusQueryOptions } from "#/lib/api/tr
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { parsePanel, type TrevorPanel } from "#/lib/trevor/panels";
-import { type IAskDeps, useTrevorAsk } from "#/lib/trevor/useTrevorAsk";
+import { type IAskDeps, useTrevorThread } from "#/lib/trevor/useTrevorAsk";
 import { AskChat } from "./AskChat";
 import { RecapSection, TermsSection, WhoSection } from "./PanelSections";
 import type { messages } from "./trevor.messages";
@@ -60,7 +60,7 @@ export function TrevorSheet({ storyId, open, onOpenChange, onJumpLine, askDeps }
     // version (`?v=`) and the backend can answer it immutable.
     const panels = useQuery({ ...trevorPanelsQueryOptions(storyId, status.data?.activeVersion ?? null), enabled: open && !status.isPending });
     const panel = panels.data ? parsePanel(panels.data.panels) : null;
-    const asker = useTrevorAsk(storyId, askDeps);
+    const asker = useTrevorThread(storyId, askDeps);
     const [tab, setTab] = useState<TrevorTab>("ask");
     const jump = onJumpLine
         ? (line: number) => {
@@ -77,7 +77,7 @@ export function TrevorSheet({ storyId, open, onOpenChange, onJumpLine, askDeps }
             onRetry={() => void panels.refetch()}
             tab={tab}
             onTab={setTab}
-            ask={<AskChat storyId={storyId} panel={panel} signedIn={signedIn} status={status.data} state={asker.state} onAsk={(q, token) => void asker.ask(q, token)} onResume={asker.resume} onReset={asker.reset} onJumpLine={jump} active={open && tab === "ask"} />}
+            ask={<AskChat storyId={storyId} panel={panel} signedIn={signedIn} status={status.data} thread={asker.thread} onAsk={asker.ask} onPrepared={asker.addPrepared} onResume={asker.resume} onJumpLine={jump} active={open && tab === "ask"} />}
         />
     );
 

@@ -2,16 +2,18 @@
  * THE ASK TAB AS A CHAT (coss chat: `components/chat/*`, `ui/composer`).
  *
  * The reader's questions are outgoing messages and Trevor's replies incoming
- * ones, oldest first, in a log that follows the newest message while the
- * reader is at the bottom and offers "Jump to latest" when they scrolled up.
- * One question is followed at a time (`useTrevorAsk`); the ones before it are
- * frozen into a thread kept in component state (`lib/trevor/thread.ts`), so
- * the sitting reads as one conversation and nothing is stored.
+ * ones, in the order asked, in a log that follows the newest message while
+ * the reader is at the bottom and offers "Jump to latest" when they scrolled
+ * up. The reader may ask again while earlier questions are still queued or
+ * streaming: each turn has its own job and watcher (`useTrevorThread`,
+ * `lib/trevor/thread.ts`), and answers stream into their own bubbles at once.
+ * Past the backend's 3 open questions a turn waits here, said so in words,
+ * and is sent when one is answered; the composer never stands down for it.
  *
  * Each reply carries its own live region (the log itself is `aria-live=off`):
  * polite, and busy while the answer streams, so a screen reader reads it once,
- * whole, instead of word by word. When an answer settles, focus returns to the
- * composer if it was in the chat. The empty state offers the panel's suggested
+ * whole, instead of word by word. When an answer settles and focus was lost
+ * (on the page body), it returns to the composer. The empty state offers the panel's suggested
  * questions as chips: one with a prepared answer adds it to the thread with no
  * request; one without asks Trevor.
  */
@@ -31,11 +33,11 @@ import { useMediaQuery } from "#/hooks/use-media-query";
 import { authActions } from "#/lib/auth/store";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { type AskState, askBusy } from "#/lib/trevor/askState";
+import { askPending } from "#/lib/trevor/askState";
 import type { TrevorFailureKind } from "#/lib/trevor/errors";
 import { turnstileSiteKey } from "#/lib/trevor/flag";
 import type { TrevorPanel, TrevorSuggestion } from "#/lib/trevor/panels";
-import { addBankTurn, EMPTY_THREAD, freezeLive, type IThread, latestSpoiler, type ThreadTurn, threadEmpty } from "#/lib/trevor/thread";
+import { type IThread, latestSpoiler, MAX_OPEN, pendingCount, type ThreadTurn, type TurnState } from "#/lib/trevor/thread";
 import { cn } from "#/lib/utils";
 import type { TrevorStatus } from "#/types/generated/TrevorStatus";
 import { AnswerText } from "./AnswerText";
@@ -53,19 +55,18 @@ export interface IAskChatProps {
     panel: TrevorPanel | null;
     signedIn: boolean;
     status: TrevorStatus | undefined;
-    /** The question being followed, from `useTrevorAsk`. */
-    state: AskState;
+    /** Every turn of the sitting, from `useTrevorThread`. */
+    thread: IThread;
     onAsk: (question: string, turnstileToken: string | null) => void;
-    onResume: () => void;
-    onReset: () => void;
+    onPrepared: (suggestion: { id: string; question: string; answer: string }) => void;
+    onResume: (turnId: number) => void;
     onJumpLine?: (line: number) => void;
     /** The chat is on screen (sheet open, Ask tab selected): end-following runs only then. */
     active: boolean;
 }
 
-export function AskChat({ storyId, panel, signedIn, status, state, onAsk, onResume, onReset, onJumpLine, active }: IAskChatProps): React.ReactElement {
+export function AskChat({ storyId, panel, signedIn, status, thread, onAsk, onPrepared, onResume, onJumpLine, active }: IAskChatProps): React.ReactElement {
     const t: TrevorT = useT("story");
-    const [thread, setThread] = useState<IThread>(EMPTY_THREAD);
     const [draft, setDraft] = useState<ComposerValue>([]);
     const siteKey = turnstileSiteKey();
     const [token, setToken] = useState<string | null>(null);
@@ -74,35 +75,35 @@ export function AskChat({ storyId, panel, signedIn, status, state, onAsk, onResu
     const rootRef = useRef<HTMLDivElement>(null);
     const hintId = useId();
     const coarse = useMediaQuery("(pointer: coarse)");
-    const busy = askBusy(state);
-    const live = state.kind === "idle" ? null : state;
-    const empty = threadEmpty(thread, state);
-    const spoiler = latestSpoiler(thread, state);
-    const scroll = useChatScroll({ active, itemCount: thread.turns.length + (live ? 1 : 0), layoutKey: `${state.kind}:${state.kind === "streaming" ? state.text.length : 0}` });
+    const pending = pendingCount(thread);
+    const empty = thread.turns.length === 0;
+    const spoiler = latestSpoiler(thread);
+    const lastId = [...thread.turns].reverse().find((x) => x.kind === "ask")?.id;
+    const layoutKey = thread.turns.map((x) => (x.kind === "ask" ? `${x.state.kind}${x.state.kind === "streaming" ? x.state.text.length : ""}` : "b")).join(",");
+    const scroll = useChatScroll({ active, itemCount: thread.turns.length, layoutKey });
 
-    // An answer settling hands the keyboard back to the composer, when the
-    // reader was in the chat (never stealing focus from elsewhere).
-    const wasBusy = useRef(busy);
+    // An answer settling hands the keyboard back to the composer when focus
+    // was lost to the page body, or sat on the send button; never when the
+    // reader is on something else, such as a source link in another answer.
+    const wasPending = useRef(pending);
     useEffect(() => {
-        if (wasBusy.current && !busy) {
+        if (pending < wasPending.current) {
             const focused = document.activeElement;
-            if (!focused || focused === document.body || rootRef.current?.contains(focused)) inputRef.current?.focus();
+            const onSend = focused instanceof HTMLButtonElement && rootRef.current?.querySelector("[data-trevor-composer]")?.contains(focused);
+            if (!focused || focused === document.body || onSend) inputRef.current?.focus();
         }
-        wasBusy.current = busy;
-    }, [busy]);
+        wasPending.current = pending;
+    }, [pending]);
 
     const ask = (question: string) => {
-        if (busy || !signedIn) return;
+        if (!signedIn) return;
         scroll.atBottomRef.current = true;
-        setThread((th) => freezeLive(th, state));
         onAsk(question, token);
         if (siteKey) setResetKey((k) => k + 1);
     };
     const openPrepared = (s: TrevorSuggestion, answer: string) => {
-        if (busy) return;
         scroll.atBottomRef.current = true;
-        setThread((th) => addBankTurn(th, state, { id: s.id, question: s.question, answer }));
-        onReset();
+        onPrepared({ id: s.id, question: s.question, answer });
     };
     const onSuggestion = (s: TrevorSuggestion) => {
         const answer = s.answer?.trim();
@@ -123,9 +124,8 @@ export function AskChat({ storyId, panel, signedIn, status, state, onAsk, onResu
                 ) : (
                     <div className="flex flex-col gap-4">
                         {thread.turns.map((turn) => (
-                            <Turn key={turn.id} turn={turn} storyId={storyId} signedIn={signedIn} onJumpLine={onJumpLine} />
+                            <Turn key={turn.id} turn={turn} latest={turn.id === lastId} storyId={storyId} signedIn={signedIn} onJumpLine={onJumpLine} onResume={onResume} />
                         ))}
-                        {live ? <AskTurn state={live} current storyId={storyId} signedIn={signedIn} onJumpLine={onJumpLine} onResume={onResume} /> : null}
                     </div>
                 )}
             </ChatConversation>
@@ -147,7 +147,7 @@ export function AskChat({ storyId, panel, signedIn, status, state, onAsk, onResu
                             submitOnEnter="desktop"
                             value={draft}
                             onValueChange={setDraft}
-                            submitDisabled={busy || tooLong || blockedByCheck}
+                            submitDisabled={tooLong || blockedByCheck}
                             onSubmit={(value: ComposerValue) => {
                                 const question = getComposerText(value).trim();
                                 if (!question || question.length > QUESTION_MAX) return;
@@ -166,7 +166,7 @@ export function AskChat({ storyId, panel, signedIn, status, state, onAsk, onResu
                                 <ComposerActionGroup align="end">
                                     <ComposerSubmit
                                         render={
-                                            <Button aria-label={t("trevor.ask.submit")} size="icon-sm" className="rounded-full max-sm:size-10" loading={state.kind === "sending"}>
+                                            <Button aria-label={t("trevor.ask.submit")} size="icon-sm" className="rounded-full disabled:border-border disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100 max-sm:size-10">
                                                 <ArrowUpIcon aria-hidden />
                                             </Button>
                                         }
@@ -230,15 +230,15 @@ function EmptyChat({ panel, signedIn, onSuggestion }: { panel: TrevorPanel | nul
 
 function TrevorAvatar(): React.ReactElement {
     return (
-        <Avatar aria-hidden className="size-7 bg-primary/12 font-semibold text-primary text-xs">
-            <AvatarFallback className="bg-primary/12">T</AvatarFallback>
+        <Avatar aria-hidden className="size-7 bg-primary font-semibold text-primary-foreground text-xs">
+            <AvatarFallback className="bg-primary text-primary-foreground">T</AvatarFallback>
         </Avatar>
     );
 }
 
-function Turn({ turn, storyId, signedIn, onJumpLine }: { turn: ThreadTurn; storyId: string | null; signedIn: boolean; onJumpLine?: (line: number) => void }): React.ReactElement {
+function Turn({ turn, latest, storyId, signedIn, onJumpLine, onResume }: { turn: ThreadTurn; latest: boolean; storyId: string | null; signedIn: boolean; onJumpLine?: (line: number) => void; onResume: (turnId: number) => void }): React.ReactElement {
     const t: TrevorT = useT("story");
-    if (turn.kind === "ask") return <AskTurn state={turn.state} current={false} storyId={storyId} signedIn={signedIn} onJumpLine={onJumpLine} />;
+    if (turn.kind === "ask") return <AskTurn state={turn.state} latest={latest} storyId={storyId} signedIn={signedIn} onJumpLine={onJumpLine} onResume={() => onResume(turn.id)} />;
     return (
         <div className="flex flex-col gap-4" data-trevor-turn="bank">
             <ChatMessage side="outgoing">{turn.question}</ChatMessage>
@@ -249,18 +249,26 @@ function Turn({ turn, storyId, signedIn, onJumpLine }: { turn: ThreadTurn; story
     );
 }
 
-/** One asked question and Trevor's reply, live (`current`) or frozen in the thread. */
-function AskTurn({ state, current, storyId, signedIn, onJumpLine, onResume }: { state: Exclude<AskState, { kind: "idle" }>; current: boolean; storyId: string | null; signedIn: boolean; onJumpLine?: (line: number) => void; onResume?: () => void }): React.ReactElement {
+/** One asked question and Trevor's reply; `latest` marks the newest asked turn. */
+function AskTurn({ state, latest, storyId, signedIn, onJumpLine, onResume }: { state: TurnState; latest: boolean; storyId: string | null; signedIn: boolean; onJumpLine?: (line: number) => void; onResume: () => void }): React.ReactElement {
     const t: TrevorT = useT("story");
     const describe = useErrorMessage();
     const sourceId = `trevor-src-${useId().replace(/:/g, "")}`;
     const waiting = state.kind === "sending" || state.kind === "queued";
-    const pending = waiting || state.kind === "streaming";
+    const pending = askPending(state);
     const author = "Trevor";
     const avatar = <TrevorAvatar />;
 
     let reply: React.ReactNode;
-    if (waiting) {
+    if (state.kind === "held") {
+        reply = (
+            <ChatMessage side="incoming" author={author} avatar={avatar} bubble={false}>
+                <p className="text-muted-foreground text-sm" data-trevor-held>
+                    {t("trevor.chat.held", { max: MAX_OPEN })}
+                </p>
+            </ChatMessage>
+        );
+    } else if (waiting) {
         const label = state.kind === "sending" ? t("trevor.ask.sending") : [t("trevor.ask.queued"), eta(state.etaSecs, t), state.position ? t("trevor.ask.position", { position: state.position }) : null].filter(Boolean).join(" · ");
         reply = (
             <ChatMessage side="incoming" author={author} avatar={avatar} bubble={false} footer={state.kind === "queued" && !state.workerOnline ? <span className="text-muted-foreground text-xs">{t("trevor.ask.noWorker")}</span> : undefined}>
@@ -293,9 +301,9 @@ function AskTurn({ state, current, storyId, signedIn, onJumpLine, onResume }: { 
         );
     } else {
         // failed, refused, offline: Trevor says so in words, as a quieter reply.
-        const words = state.kind === "failed" ? t("trevor.ask.failed") : state.kind === "offline" ? (current ? t("trevor.ask.offline") : t("trevor.chat.offlineFrozen")) : (refusal(state.failure, t) ?? describe(state.error));
+        const words = state.kind === "failed" ? t("trevor.ask.failed") : state.kind === "offline" ? t("trevor.ask.offline") : (refusal(state.failure, t) ?? describe(state.error));
         const action =
-            state.kind === "offline" && current && onResume ? (
+            state.kind === "offline" ? (
                 <Button variant="outline" size="sm" className="max-sm:h-11" onClick={onResume}>
                     {t("trevor.ask.checkAgain")}
                 </Button>
@@ -315,10 +323,10 @@ function AskTurn({ state, current, storyId, signedIn, onJumpLine, onResume }: { 
 
     return (
         <div className="flex flex-col gap-4" data-trevor-turn="ask">
-            <ChatMessage side="outgoing" animateEntrance={current && state.kind === "sending"} data-trevor-asked>
+            <ChatMessage side="outgoing" animateEntrance={state.kind === "sending" || state.kind === "held"} data-trevor-asked>
                 {state.question}
             </ChatMessage>
-            <div aria-live={current ? "polite" : undefined} aria-busy={current ? pending : undefined} data-trevor-state={state.kind} data-trevor-live={current ? "" : undefined}>
+            <div aria-live="polite" aria-busy={pending} data-trevor-state={state.kind} data-trevor-live={latest ? "" : undefined}>
                 {reply}
             </div>
         </div>

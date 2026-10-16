@@ -2,6 +2,7 @@
  * THE ASK BOX'S STATE, as a pure reducer so every transition is tested
  * without a DOM or a network.
  *
+ * held -> sending                    (a slot freed: see thread.ts, MAX_OPEN)
  * idle -> sending -> (done | queued | refused)
  * queued -> streaming -> done        (the stream carries the text)
  * queued -> done | failed | offline   (polling, or a stream that ended early)
@@ -25,6 +26,7 @@ interface IJob extends IAsked {
 
 export type AskState =
     | { kind: "idle" }
+    | ({ kind: "held" } & IAsked)
     | ({ kind: "sending" } & IAsked)
     | ({ kind: "queued"; etaSecs: number | null; position: number | null; workerOnline: boolean } & IJob)
     | ({ kind: "streaming"; text: string } & IJob)
@@ -35,6 +37,7 @@ export type AskState =
 
 export type AskEvent =
     | { type: "send"; question: string }
+    | { type: "hold"; question: string }
     | { type: "accepted"; response: AskResponse }
     | { type: "text"; text: string }
     | { type: "progress"; view: JobView }
@@ -58,6 +61,8 @@ export function askReducer(s: AskState, e: AskEvent): AskState {
             return ASK_IDLE;
         case "send":
             return { kind: "sending", question: e.question };
+        case "hold":
+            return { kind: "held", question: e.question };
         case "accepted": {
             if (s.kind !== "sending") return s;
             const r = e.response;
@@ -100,7 +105,7 @@ export function askReducer(s: AskState, e: AskEvent): AskState {
     }
 }
 
-/** The question is in flight: the box should not take another. */
-export function askBusy(s: AskState): boolean {
-    return s.kind === "sending" || s.kind === "queued" || s.kind === "streaming";
+/** The question is not settled yet: waiting to be sent, sent, queued or streaming. */
+export function askPending(s: AskState): boolean {
+    return s.kind === "held" || s.kind === "sending" || s.kind === "queued" || s.kind === "streaming";
 }

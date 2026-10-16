@@ -10,6 +10,13 @@
  * the queue, and asking every 5 s for an hour would only spend the reader's
  * battery. The caller may resume with a fresh `watchJob` call.
  *
+ * A stream that stays open but goes silent (no delta and not even the
+ * backend's 15 s keep-alive comment for `stallMs`, 45 s) is treated as one
+ * that closed: it is dropped and the job is polled. Before this, a stalled
+ * stream left the answer frozen mid-sentence with nothing to finish it.
+ * The job's `done` view is authoritative: its answer replaces whatever the
+ * deltas assembled, on the stream and on a poll alike.
+ *
  * Pure of React and of the network: every request comes in through `deps`, so
  * the tests drive it with a fake stream and fake timers.
  */
@@ -21,6 +28,8 @@ import { readSse } from "./sse";
 export const POLL_MS = 5_000;
 /** At most this many polls (15 minutes at 5 s), past the backend's 600 s queue TTL. */
 export const MAX_POLLS = 180;
+/** A stream silent this long (three of the backend's 15 s keep-alives) is dropped for polling. */
+export const STALL_MS = 45_000;
 
 export interface IWatchDeps {
     /** The job's SSE body as a `fetch` Response (a server function proxies it with the account's token). */
@@ -29,6 +38,7 @@ export interface IWatchDeps {
     getStatus: () => Promise<TrevorStatus>;
     pollMs?: number;
     maxPolls?: number;
+    stallMs?: number;
     setTimer?: (fn: () => void, ms: number) => unknown;
     clearTimer?: (handle: unknown) => void;
 }
@@ -60,7 +70,12 @@ function permanent(err: unknown): boolean {
 }
 
 /** Assembles deltas by `seq`, ignoring repeats, so an out-of-order or repeated delta cannot garble the text. */
-export function createDeltaBuffer(): { add: (seq: number, text: string) => string; text: () => string } {
+export interface IDeltaBuffer {
+    add: (seq: number, text: string) => string;
+    text: () => string;
+}
+
+export function createDeltaBuffer(): IDeltaBuffer {
     const parts = new Map<number, string>();
     const join = () =>
         [...parts.entries()]
@@ -76,19 +91,29 @@ export function createDeltaBuffer(): { add: (seq: number, text: string) => strin
     };
 }
 
-export function watchJob(jobId: string, handlers: IWatchHandlers, deps: IWatchDeps): IJobWatch {
+/**
+ * `deltas` may be passed in so a watch restarted on the same job (a remount)
+ * keeps the text the first one assembled: `seq` is per job, so the two merge.
+ */
+export function watchJob(jobId: string, handlers: IWatchHandlers, deps: IWatchDeps, deltas: IDeltaBuffer = createDeltaBuffer()): IJobWatch {
     const pollMs = deps.pollMs ?? POLL_MS;
     const maxPolls = deps.maxPolls ?? MAX_POLLS;
+    const stallMs = deps.stallMs ?? STALL_MS;
     const setTimer = deps.setTimer ?? ((fn: () => void, ms: number) => setTimeout(fn, ms));
     const clearTimer = deps.clearTimer ?? ((h: unknown) => clearTimeout(h as ReturnType<typeof setTimeout>));
     const ctrl = new AbortController();
     let stopped = false;
     let timer: unknown = null;
-    const deltas = createDeltaBuffer();
+    let stallTimer: unknown = null;
 
+    const clearStall = () => {
+        if (stallTimer !== null) clearTimer(stallTimer);
+        stallTimer = null;
+    };
     const stop = () => {
         stopped = true;
         ctrl.abort();
+        clearStall();
         if (timer !== null) clearTimer(timer);
         timer = null;
     };
@@ -96,10 +121,23 @@ export function watchJob(jobId: string, handlers: IWatchHandlers, deps: IWatchDe
     /** True when the stream delivered the job's end (done or error). */
     const stream = async (): Promise<boolean> => {
         let terminal = false;
+        // Its own controller, so a stall can drop the stream without stopping the watch.
+        const streamCtrl = new AbortController();
+        const onStop = () => streamCtrl.abort();
+        ctrl.signal.addEventListener("abort", onStop, { once: true });
+        const arm = () => {
+            clearStall();
+            stallTimer = setTimer(() => {
+                stallTimer = null;
+                streamCtrl.abort();
+            }, stallMs);
+        };
         try {
-            const res = await deps.openStream(jobId, ctrl.signal);
+            arm();
+            const res = await deps.openStream(jobId, streamCtrl.signal);
             if (stopped || !res.ok || !res.body) return false;
             handlers.onMode?.("stream");
+            arm();
             await readSse(
                 res.body,
                 (e) => {
@@ -112,19 +150,23 @@ export function watchJob(jobId: string, handlers: IWatchHandlers, deps: IWatchDe
                         if (!view || typeof view !== "object") return;
                         terminal = true;
                         handlers.onDone(view);
-                        ctrl.abort();
+                        streamCtrl.abort();
                     } else if (e.event === "error") {
                         const d = safeJson(e.data) as { message?: unknown } | null;
                         terminal = true;
                         handlers.onJobFailed(typeof d?.message === "string" ? d.message : "");
-                        ctrl.abort();
+                        streamCtrl.abort();
                     }
                 },
-                ctrl.signal,
+                streamCtrl.signal,
+                arm,
             );
         } catch {
-            // Fall through to polling: a stream that will not open or breaks
-            // mid-answer still has a job behind it.
+            // Fall through to polling: a stream that will not open, breaks
+            // mid-answer or stalls still has a job behind it.
+        } finally {
+            clearStall();
+            ctrl.signal.removeEventListener("abort", onStop);
         }
         return terminal;
     };

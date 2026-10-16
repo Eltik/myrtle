@@ -1,17 +1,26 @@
 /**
- * The ask box's hook: one question at a time, followed to its answer.
+ * The Ask tab's hook: the thread, with every open question followed at once.
  *
- * `ask` posts the question with the story being read as `horizonStory` (the
- * backend lowers the spoiler horizon to it, never raises it), then follows the
- * job with `watchJob`: the stream, or polling every 5 s. Unmounting, a new
- * question and `reset` all stop the watch, so a closed panel leaves no request
- * behind it.
+ * `ask` adds a turn (`thread.ts` decides whether it is sent now or waits for
+ * one of the backend's 3 open-job slots). Each turn being sent gets its own
+ * request, posted with the story being read as `horizonStory` (the backend
+ * lowers the spoiler horizon to it, never raises it); each turn with a job
+ * gets its own `watchJob` (the stream, or polling every 5 s), so answers
+ * stream into their own bubbles side by side and finish in any order.
+ *
+ * Requests and watchers are started by an effect from the thread itself, not
+ * by the click: a turn that is queued or streaming and has no watcher gets
+ * one. So a remount (StrictMode, a hot reload in the preview) that stopped
+ * the watchers starts them again on the same jobs, keeping each turn's text,
+ * instead of leaving an answer frozen mid-sentence. Unmounting stops every
+ * watcher, so a closed reader leaves no request behind it.
  */
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import * as api from "#/lib/api/trevor";
 import type { AskResponse } from "#/types/generated/AskResponse";
-import { ASK_IDLE, type AskState, askReducer } from "./askState";
-import { type IJobWatch, type IWatchDeps, watchJob } from "./watch";
+import type { AskEvent } from "./askState";
+import { EMPTY_THREAD, type IAskTurn, type IThread, MAX_OPEN, threadReducer } from "./thread";
+import { createDeltaBuffer, type IDeltaBuffer, type IJobWatch, type IWatchDeps, watchJob } from "./watch";
 
 export interface IAskDeps extends IWatchDeps {
     ask: (input: { question: string; horizonStory?: string | null; turnstileToken?: string | null }) => Promise<AskResponse>;
@@ -24,67 +33,103 @@ const DEFAULT_DEPS: IAskDeps = {
     getStatus: api.getStatus,
 };
 
-export function useTrevorAsk(storyId: string | null, deps: IAskDeps = DEFAULT_DEPS): { state: AskState; ask: (question: string, turnstileToken?: string | null) => Promise<void>; resume: () => void; reset: () => void } {
-    const [state, dispatch] = useReducer(askReducer, ASK_IDLE);
-    const watch = useRef<IJobWatch | null>(null);
+export interface ITrevorThread {
+    thread: IThread;
+    ask: (question: string, turnstileToken?: string | null) => void;
+    addPrepared: (suggestion: { id: string; question: string; answer: string }) => void;
+    /** Follow an offline turn's job again. */
+    resume: (turnId: number) => void;
+}
+
+export function useTrevorThread(storyId: string | null, deps: IAskDeps = DEFAULT_DEPS, cap: number = MAX_OPEN): ITrevorThread {
+    const [thread, dispatch] = useReducer((t: IThread, a: Parameters<typeof threadReducer>[1]) => threadReducer(t, a, cap), EMPTY_THREAD);
     const depsRef = useRef(deps);
     depsRef.current = deps;
-    const stateRef = useRef(state);
-    stateRef.current = state;
+    const storyRef = useRef(storyId);
+    storyRef.current = storyId;
+    const watches = useRef(new Map<number, { jobId: string; watch: IJobWatch }>());
+    const deltas = useRef(new Map<number, IDeltaBuffer>());
+    const sent = useRef(new Set<number>());
 
-    const stopWatch = useCallback(() => {
-        watch.current?.stop();
-        watch.current = null;
-    }, []);
-    useEffect(() => stopWatch, [stopWatch]);
+    const turnEvent = useCallback((id: number, event: AskEvent) => dispatch({ type: "turn", id, event }), []);
 
-    const follow = useCallback(
-        (jobId: string) => {
-            stopWatch();
-            watch.current = watchJob(
-                jobId,
-                {
-                    onText: (text) => dispatch({ type: "text", text }),
-                    onProgress: (view) => dispatch({ type: "progress", view }),
-                    onDone: (view) => dispatch({ type: "done", view }),
-                    onJobFailed: (message) => dispatch({ type: "jobFailed", message }),
-                    onRequestError: (error) => dispatch({ type: "requestError", error }),
-                    onOffline: () => dispatch({ type: "offline" }),
-                },
-                depsRef.current,
-            );
-        },
-        [stopWatch],
-    );
-
-    const ask = useCallback(
-        async (question: string, turnstileToken?: string | null) => {
-            stopWatch();
-            dispatch({ type: "send", question });
+    const send = useCallback(
+        async (turn: IAskTurn) => {
             let response: AskResponse;
             try {
-                response = await depsRef.current.ask({ question, horizonStory: storyId, turnstileToken });
+                response = await depsRef.current.ask({ question: turn.state.question, horizonStory: storyRef.current, turnstileToken: turn.token });
             } catch (error) {
-                dispatch({ type: "requestError", error });
+                turnEvent(turn.id, { type: "requestError", error });
                 return;
             }
-            dispatch({ type: "accepted", response });
-            if (!response.answer && response.jobId) follow(response.jobId);
+            turnEvent(turn.id, { type: "accepted", response });
         },
-        [follow, stopWatch, storyId],
+        [turnEvent],
     );
 
-    const resume = useCallback(() => {
-        const s = stateRef.current;
-        if (s.kind !== "offline") return;
-        dispatch({ type: "resume" });
-        follow(s.jobId);
-    }, [follow]);
+    const follow = useCallback(
+        (id: number, jobId: string) => {
+            let buffer = deltas.current.get(id);
+            if (!buffer) {
+                buffer = createDeltaBuffer();
+                deltas.current.set(id, buffer);
+            }
+            const settle = (event: AskEvent) => {
+                if (watches.current.get(id)?.jobId === jobId) watches.current.delete(id);
+                turnEvent(id, event);
+            };
+            const watch = watchJob(
+                jobId,
+                {
+                    onText: (text) => turnEvent(id, { type: "text", text }),
+                    onProgress: (view) => turnEvent(id, { type: "progress", view }),
+                    onDone: (view) => settle({ type: "done", view }),
+                    onJobFailed: (message) => settle({ type: "jobFailed", message }),
+                    onRequestError: (error) => settle({ type: "requestError", error }),
+                    onOffline: () => settle({ type: "offline" }),
+                },
+                depsRef.current,
+                buffer,
+            );
+            watches.current.set(id, { jobId, watch });
+        },
+        [turnEvent],
+    );
 
-    const reset = useCallback(() => {
-        stopWatch();
-        dispatch({ type: "reset" });
-    }, [stopWatch]);
+    // Start what the thread asks for: a request for each turn being sent, a
+    // watcher for each turn with a job in flight; stop a watcher whose turn settled.
+    useEffect(() => {
+        const live = new Set<number>();
+        for (const turn of thread.turns) {
+            if (turn.kind !== "ask") continue;
+            const s = turn.state;
+            if (s.kind === "sending" && !sent.current.has(turn.id)) {
+                sent.current.add(turn.id);
+                void send(turn);
+            }
+            if (s.kind === "queued" || s.kind === "streaming") {
+                live.add(turn.id);
+                if (!watches.current.has(turn.id)) follow(turn.id, s.jobId);
+            }
+        }
+        for (const [id, w] of watches.current) {
+            if (live.has(id)) continue;
+            w.watch.stop();
+            watches.current.delete(id);
+        }
+    }, [thread, send, follow]);
 
-    return { state, ask, resume, reset };
+    useEffect(() => {
+        const map = watches.current;
+        return () => {
+            for (const w of map.values()) w.watch.stop();
+            map.clear();
+        };
+    }, []);
+
+    const ask = useCallback((question: string, turnstileToken: string | null = null) => dispatch({ type: "ask", question, token: turnstileToken }), []);
+    const addPrepared = useCallback((suggestion: { id: string; question: string; answer: string }) => dispatch({ type: "bank", suggestion }), []);
+    const resume = useCallback((turnId: number) => turnEvent(turnId, { type: "resume" }), [turnEvent]);
+
+    return { thread, ask, addPrepared, resume };
 }

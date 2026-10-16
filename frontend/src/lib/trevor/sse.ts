@@ -67,8 +67,12 @@ export function createSseParser(onEvent: (e: ISseEvent) => void): { push: (chunk
     };
 }
 
-/** Read a `text/event-stream` body to its end, or until `signal` aborts. */
-export async function readSse(body: ReadableStream<Uint8Array>, onEvent: (e: ISseEvent) => void, signal?: AbortSignal): Promise<void> {
+/**
+ * Read a `text/event-stream` body to its end, or until `signal` aborts.
+ * `onBytes` hears every chunk, keep-alive comments included, so a caller can
+ * tell a quiet stream from a dead one.
+ */
+export async function readSse(body: ReadableStream<Uint8Array>, onEvent: (e: ISseEvent) => void, signal?: AbortSignal, onBytes?: () => void): Promise<void> {
     const reader = body.getReader();
     const decoder = new TextDecoder();
     const parser = createSseParser(onEvent);
@@ -81,6 +85,7 @@ export async function readSse(body: ReadableStream<Uint8Array>, onEvent: (e: ISs
             if (signal?.aborted) return;
             const { value, done } = await reader.read();
             if (done) break;
+            onBytes?.();
             parser.push(decoder.decode(value, { stream: true }));
         }
         parser.push(decoder.decode());
