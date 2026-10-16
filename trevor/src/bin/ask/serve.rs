@@ -492,17 +492,30 @@ const CITE_CHARS: usize = 600;
 /// The backend's result limit.
 const RESULT_MAX: usize = 64 * 1024;
 
-/// `text` cut to at most `max` characters at a line break (at `max` characters when its first line is longer).
+/// `text` cut to at most `max` characters at a line break, or at a word break when the last line break inside `max`
+/// would keep under half of it (`TREVOR_CITE_WORD_CUT=0`: the line break wherever it is, else `max` characters).
 pub(crate) fn trim_at_line(text: &str, max: usize) -> String {
+    trim_text(text, max, std::env::var("TREVOR_CITE_WORD_CUT").as_deref() != Ok("0"))
+}
+
+/// [`trim_at_line`] with the word-break rule chosen. Without it, an operator file (a title line, then one paragraph of
+/// 1,000 characters) kept only its 25-character title: on P4x, 785 of the 19,604 chunks over 600 characters kept
+/// under 100 of them and 2,021 under 300 (2026-10-16).
+pub(crate) fn trim_text(text: &str, max: usize, word_cut: bool) -> String {
     if text.chars().count() <= max {
         return text.to_owned();
     }
     let end = text.char_indices().nth(max).map_or(text.len(), |(i, _)| i);
     let head = &text[..end];
-    match head.rfind('\n') {
-        Some(i) if i > 0 => head[..i].trim_end().to_owned(),
-        _ => head.to_owned(),
+    let floor = if word_cut { max / 2 } else { 0 };
+    let keeps = |i: usize| i > 0 && (!word_cut || head[..i].trim_end().chars().count() >= floor);
+    if let Some(i) = head.rfind('\n').filter(|&i| keeps(i)) {
+        return head[..i].trim_end().to_owned();
     }
+    if word_cut && let Some(i) = head.rfind(char::is_whitespace).filter(|&i| keeps(i)) {
+        return head[..i].trim_end().to_owned();
+    }
+    head.to_owned()
 }
 
 /// A result body under the backend's 64 KB limit: citation texts are cut to 200 characters, then dropped, when needed.

@@ -192,13 +192,30 @@ fn worker_deltas_send_only_text_that_continues_the_stream() {
 
 #[test]
 fn worker_result_parts_keep_the_contract() {
-    use crate::serve::{AskRequest, WorkerJob, canary_passing, fit_result, heartbeat_body, trim_at_line};
+    use crate::serve::{AskRequest, WorkerJob, canary_passing, fit_result, heartbeat_body, trim_at_line, trim_text};
     // Citation text: at most 600 characters, cut at a line break when there is one.
     let text = format!("{}\n{}\n{}", "a".repeat(300), "b".repeat(250), "c".repeat(100));
     assert_eq!(trim_at_line(&text, 600), format!("{}\n{}", "a".repeat(300), "b".repeat(250)));
     assert_eq!(trim_at_line(&"x".repeat(700), 600).chars().count(), 600);
     assert_eq!(trim_at_line("short\ntext", 600), "short\ntext");
     assert_eq!(trim_at_line(&"é".repeat(601), 600), "é".repeat(600));
+    // A title line, then one long paragraph (an operator file): cut at a word break, not after the title.
+    let para = format!("Operator archive: Insider\n{}", "sugar donut ".repeat(100));
+    let cut = trim_text(&para, 600, true);
+    assert!(cut.starts_with("Operator archive: Insider\nsugar donut"), "{cut:?}");
+    assert!(cut.chars().count() <= 600 && cut.chars().count() >= 590, "{}", cut.chars().count());
+    assert!(para.starts_with(&cut) && para[cut.len()..].starts_with(' '), "a whole word: {cut:?}");
+    // TREVOR_CITE_WORD_CUT=0: the old rule keeps only the title.
+    assert_eq!(trim_text(&para, 600, false), "Operator archive: Insider");
+    // A line break that keeps half or more still wins over a later word break.
+    let lines = format!("{}\n{}", "a ".repeat(160).trim_end(), "b ".repeat(300));
+    assert_eq!(trim_text(&lines, 600, true), "a ".repeat(160).trim_end());
+    // No break at all: the hard cut, as before.
+    assert_eq!(trim_text(&"x".repeat(700), 600, true), "x".repeat(600));
+    // Both rules agree whenever the last line break inside 600 keeps at least 300 characters.
+    for t in [text.as_str(), "short\ntext"] {
+        assert_eq!(trim_text(t, 600, true), trim_text(t, 600, false));
+    }
     // A result over 64 KB loses citation text first.
     let cites: Vec<serde_json::Value> = (0..200).map(|n| serde_json::json!({"n": n, "text": "z".repeat(600)})).collect();
     let big = serde_json::json!({"jobId": "j", "result": {"answer": "A", "citations": cites}});
