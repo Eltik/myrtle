@@ -16,6 +16,8 @@
 #   REFRESH_REFERENCE=1  refresh the wiki EVAL REFERENCES under eval/reference (network; off). Never served or built
 #                        from (Ian, 2026-10-04: the wiki is a reference Trevor's own deductions are scored against)
 #   DEEP_TOP=N           deep topic entries (scripts/topic_deep.py, 2026-10-03 night 9) for the N most asked topics (40)
+#   GATE_ORDER=0         skip `ask --gate-order` after the reading guide (artifacts/chrono/gate_order.json, the gatePos
+#                        order the horizon and the panels read; a stale file is then rebuilt in memory with a warning)
 # Since 2026-10-01 (evening) step 4b mines topic candidates from the game tables and the corpus and classifies new ones on
 # Gemma (scripts/topics.py mine, classify; TOPIC_SOURCE=v1 = the 46 topics alone); p3b/p4 are built from the 200 v1
 # dossiers and 46 topics, and ask --lore v2 adds the others at answer time.
@@ -88,10 +90,33 @@ plan_p4_models() {
   step "design tiles"; python3 scripts/art_captions.py design_tiles
   step "canon";        python3 scripts/canon_refs.py inputs | sed '$d'
 }
+# The gatePos order (ask --gate-order, no model) records the sha of its three inputs; this says whether it is current now.
+# A real run rewrites it after the reading guide whatever this says, since step 1 and the guide change two of them.
+plan_gate_order() {
+  python3 - <<'PY'
+import hashlib, json, os
+ins = {"readingGuide": "artifacts/chrono/reading_guide.json", "spoiler": "artifacts/spoiler.jsonl",
+       "sourceDates": "artifacts/chrono/source_dates.json"}
+now = {k: hashlib.sha256(open(p, "rb").read()).hexdigest()[:16] if os.path.exists(p) else None for k, p in ins.items()}
+try:
+    rec = json.load(open("artifacts/chrono/gate_order.json"))
+except (OSError, ValueError):
+    rec = None
+if rec is None:
+    print("gate order: artifacts/chrono/gate_order.json is missing; ask --gate-order writes it after the reading guide")
+else:
+    old = rec.get("inputs") or {}
+    changed = [k for k in ins if old.get(k) != now[k]]
+    state = "current" if not changed else "stale (" + ", ".join(changed) + " changed)"
+    print(f"gate order: {state}; {len(rec.get('storyOrder', []))} stories, {len(rec.get('eras', []))} eras;"
+          " ask --gate-order rewrites it after the reading guide")
+PY
+}
 if [[ -n "${PLAN:-}" ]]; then
   export PLAN
   run_models
   [[ -n "${SKIP_P4_MODELS:-}" ]] || plan_p4_models
+  if [[ "${GATE_ORDER:-1}" != "0" ]]; then step "gate order"; plan_gate_order | tee -a "$LOG/steps.log"; fi
   exit 0
 fi
 ( while true; do
@@ -155,6 +180,11 @@ python3 scripts/sources.py
 step "profiles and typed sources (p3b, p4)"
 build_lores
 step "reading guide"; python3 scripts/reading_guide.py build
+# The gatePos order (2026-10-16, design/trevor-contract-v1.md section 1) reads the reading guide, spoiler.jsonl and
+# source_dates.json, so it is rewritten once all three are final; GATE_ORDER=0 skips it (the script before 2026-10-16).
+if [[ "${GATE_ORDER:-1}" != "0" ]]; then
+  step "gate order"; target/release/ask --gate-order | tee -a "$LOG/steps.log"
+fi
 step "answer bank"; PRIMERS=1 python3 scripts/answer_bank.py seed; python3 scripts/answer_bank.py merge
 
 # 4b. Model stages over P4 (2026-10-01): topic summaries, then the IS ending canon, each only when its inputs changed.
