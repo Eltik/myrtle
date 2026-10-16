@@ -68,6 +68,10 @@ pub(crate) struct Form {
     /// The opinion gate held this opinion question back (`opinion_needs_candidates`): no candidates, OPINION_RULE.
     #[serde(skip)]
     pub(crate) gated: bool,
+    /// For an opinion question naming two or more groups (organizations, nations, places, races): each group's topic
+    /// name and its forms, set by `answer_one` (`Tools::named_group_topics`; `--no-group-evidence` leaves it empty).
+    #[serde(skip)]
+    pub(crate) groups: Vec<(String, Vec<String>)>,
 }
 
 /// One grammar-bound call to the answer model (about 0.5 s): fact, or yes_no or opinion with an evidence query. Output

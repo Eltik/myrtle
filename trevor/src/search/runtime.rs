@@ -3,7 +3,7 @@
 //! the eval measures exactly the code path users run.
 
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
 use serde::Serialize;
@@ -14,7 +14,7 @@ use super::horizon::Horizon;
 use super::pipeline::{Hit, Indexes, Mode, Models, RetrievalConfig, retrieve};
 use super::rerank::Reranker;
 use super::store::ChunkStore;
-use crate::corpus::embed::QueryEmbedder;
+use crate::corpus::embed::{QueryEmbedder, check_query_model, resolve_query_onnx};
 
 #[derive(Debug, Clone, clap::Args)]
 pub struct RuntimeArgs {
@@ -25,10 +25,16 @@ pub struct RuntimeArgs {
     /// gte-modernbert-base directory.
     #[arg(long, default_value = "models/gte-modernbert-base")]
     pub model_dir: PathBuf,
-    /// ONNX file for QUERIES. INT8 is right on Apple Silicon; on x86 use the
-    /// fp32 `model.onnx`, since INT8 drifts to cosine 0.94 there.
-    #[arg(long, default_value = "model_int8.onnx")]
+    /// ONNX file for QUERIES. `auto` (the default since 2026-10-16, design/trevor-reembed.md section 7) is the file
+    /// the corpus vectors were built with (`vectors.meta.json` `modelFile`): `model_int8.onnx` for the INT8 corpora,
+    /// the old default, so nothing changes until an fp32 re-embed is swapped in. A query model whose sha differs from
+    /// the vectors' is refused (INT8 drifts to cosine 0.94 on x86) unless `--allow-query-model-mismatch`.
+    #[arg(long, default_value = "auto")]
     pub query_onnx: String,
+    /// Allow a query model other than the one the vectors were built with (logged), as before 2026-10-16;
+    /// `TREVOR_ALLOW_QUERY_MODEL_MISMATCH=1` does the same.
+    #[arg(long)]
+    pub allow_query_model_mismatch: bool,
     /// ettin-reranker-17m-v1 directory. Only loaded when reranking is on.
     #[arg(long, default_value = "models/ettin-reranker-17m-v1")]
     pub rerank_dir: PathBuf,
@@ -87,11 +93,37 @@ pub struct Runtime {
     pub store: ChunkStore,
     pub dense: Option<DenseIndex>,
     pub bm25: Option<Bm25>,
-    embedder: Option<QueryEmbedder>,
+    embedder: Option<SharedEmbedder>,
     pub reranker: Option<Reranker>,
     /// The spoiler horizon (`ask --serve` jobs): `retrieve` returns only chunks released at or before it. None, the
     /// default, retrieves exactly as before.
     pub horizon: Option<Arc<Horizon>>,
+    /// BM25-only serving (`ask --retrieval bm25`, 2026-10-16): loaded without the dense index and the embedder, and a
+    /// dense or hybrid retrieval runs as BM25. False, the default, leaves a missing dense index an error as before.
+    pub bm25_only: bool,
+}
+
+/// A query embedder that several runtimes share (2026-10-16, ian7: the first `ask --serve` job that loaded P4x or the
+/// art corpus spent 21.2 s building a second embedder). It is reused only for the same model directory, ONNX file and
+/// thread count, and only when the new corpus's vectors were made with the tokenizer it was checked against.
+/// `TREVOR_SHARE_EMBEDDER=0` loads one per runtime, as before.
+#[derive(Clone)]
+pub struct SharedEmbedder {
+    inner: Arc<Mutex<QueryEmbedder>>,
+    model_dir: PathBuf,
+    onnx: String,
+    threads: Option<usize>,
+    tokenizer_sha: String,
+}
+
+impl SharedEmbedder {
+    fn fits(&self, a: &RuntimeArgs, onnx: &str, tokenizer_sha: &str) -> bool {
+        self.model_dir == a.model_dir && self.onnx == onnx && self.threads == a.threads && self.tokenizer_sha == tokenizer_sha
+    }
+
+    fn embed(&self, q: &str) -> Result<Vec<f32>> {
+        self.inner.lock().map_err(|_| anyhow::anyhow!("query embedder lock poisoned"))?.embed(q)
+    }
 }
 
 /// The fused candidate depth a horizon-filtered retrieval reads before dropping hidden chunks.
@@ -109,15 +141,45 @@ impl Runtime {
         needs_bm25: bool,
         needs_rerank: bool,
     ) -> Result<Self> {
+        Self::load_sharing(a, needs_dense, needs_bm25, needs_rerank, None)
+    }
+
+    /// As [`Runtime::load`], reusing `share` (another runtime's query embedder) when it fits this corpus.
+    ///
+    /// # Errors
+    /// Any missing or stale artifact.
+    pub fn load_sharing(
+        a: &RuntimeArgs,
+        needs_dense: bool,
+        needs_bm25: bool,
+        needs_rerank: bool,
+        share: Option<SharedEmbedder>,
+    ) -> Result<Self> {
         let store = ChunkStore::load(&a.corpus.join("chunks.jsonl"))?;
         let (dense, embedder) = if needs_dense {
             let d = DenseIndex::load(&a.corpus, &store)?;
-            let e = QueryEmbedder::load(
-                &a.model_dir,
-                &a.query_onnx,
-                a.threads,
-                &d.meta.tokenizer_sha,
-            )?;
+            let onnx = resolve_query_onnx(&a.query_onnx, &d.meta.model_file).to_owned();
+            let share = share.filter(|s| std::env::var("TREVOR_SHARE_EMBEDDER").as_deref() != Ok("0")
+                && s.fits(a, &onnx, &d.meta.tokenizer_sha));
+            let e = match share {
+                Some(s) => s,
+                None => SharedEmbedder {
+                    inner: Arc::new(Mutex::new(QueryEmbedder::load(
+                        &a.model_dir,
+                        &onnx,
+                        a.threads,
+                        &d.meta.tokenizer_sha,
+                    )?)),
+                    model_dir: a.model_dir.clone(),
+                    onnx,
+                    threads: a.threads,
+                    tokenizer_sha: d.meta.tokenizer_sha.clone(),
+                },
+            };
+            {
+                let q = e.inner.lock().map_err(|_| anyhow::anyhow!("query embedder lock poisoned"))?;
+                check_query_model(&d.meta.model_file, &d.meta.model_sha, &q, a.allow_query_model_mismatch)?;
+            }
             (Some(d), Some(e))
         } else {
             (None, None)
@@ -144,7 +206,14 @@ impl Runtime {
             embedder,
             reranker,
             horizon: None,
+            bm25_only: false,
         })
+    }
+
+    /// This runtime's query embedder, for another runtime to share ([`Runtime::load_sharing`]).
+    #[must_use]
+    pub fn shared_embedder(&self) -> Option<SharedEmbedder> {
+        self.embedder.clone()
     }
 
     /// # Errors
@@ -170,14 +239,19 @@ impl Runtime {
     }
 
     fn retrieve_all(&mut self, query: &str, cfg: &RetrievalConfig) -> Result<Vec<Hit>> {
+        let bm25_cfg;
+        let cfg = if self.bm25_only && self.dense.is_none() && cfg.mode != Mode::Bm25 {
+            bm25_cfg = RetrievalConfig { mode: Mode::Bm25, ..cfg.clone() };
+            &bm25_cfg
+        } else { cfg };
         let ix = Indexes {
             store: &self.store,
             dense: self.dense.as_ref(),
             bm25: self.bm25.as_ref(),
         };
-        let embedder = &mut self.embedder;
+        let embedder = &self.embedder;
         let mut embed = |q: &str| -> Result<Vec<f32>> {
-            match embedder.as_mut() {
+            match embedder.as_ref() {
                 Some(e) => e.embed(q),
                 None => anyhow::bail!("no query embedder loaded"),
             }
@@ -201,7 +275,7 @@ impl Runtime {
     /// # Errors
     /// No embedder loaded, or an inference failure.
     pub fn embed_query(&mut self, q: &str) -> Result<Vec<f32>> {
-        match self.embedder.as_mut() {
+        match self.embedder.as_ref() {
             Some(e) => e.embed(q),
             None => anyhow::bail!("no query embedder loaded"),
         }
@@ -214,8 +288,8 @@ impl Runtime {
             chunk_count: self.store.len(),
             doc_model_sha: self.dense.as_ref().map(|d| d.meta.model_sha.clone()),
             tokenizer_sha: self.dense.as_ref().map(|d| d.meta.tokenizer_sha.clone()),
-            query_model_file: self.embedder.as_ref().map(|e| e.onnx_file.clone()),
-            query_model_sha: self.embedder.as_ref().map(|e| e.model_sha.clone()),
+            query_model_file: self.embedder.as_ref().and_then(|e| e.inner.lock().ok().map(|e| e.onnx_file.clone())),
+            query_model_sha: self.embedder.as_ref().and_then(|e| e.inner.lock().ok().map(|e| e.model_sha.clone())),
             reranker_sha: self.reranker.as_ref().map(|r| r.model_sha.clone()),
             rerank_max_tokens: self.reranker.as_ref().map(|r| r.max_tokens),
             bm25_pattern: super::tokenizer::LORE_PATTERN,

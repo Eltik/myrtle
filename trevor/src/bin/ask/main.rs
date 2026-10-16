@@ -26,15 +26,14 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use trevor::goldgen::llm::Llm;
-use trevor::search::runtime::Runtime;
-use trevor::tools::{ToolOptions, Tools};
+use trevor::tools::Tools;
 
 use crate::answer::{Tables, answer_one};
 use crate::chrono::load_chrono;
-use crate::cli::{Args, LoreSet, RouterKind, deep_for, p4_dir, retrieval_plan, router_source};
+use crate::cli::{Args, LoreSet, RetrievalKind, RouterKind, apply_profile, deep_for, p4_dir, retrieval_plan, router_source, tool_options};
 use crate::detect::source_kind;
 use crate::intents::{knn_eval, label_intents, load_knn, paraphrase_intents};
-use crate::retrieval::{Runtimes, load_names};
+use crate::retrieval::{Runtimes, load_names, load_runtime};
 use crate::routing::{print_route_only, route_question};
 use crate::scenes::line_study;
 use crate::server::{Spawned, connect_or_spawn};
@@ -49,6 +48,21 @@ async fn main() -> Result<()> {
     let corpus_default = m.value_source("corpus") == Some(clap::parser::ValueSource::DefaultValue);
     // RELATION_RULE is the default since 2026-10-05 night (`--no-relation-rule`).
     a.relation_rule = !a.no_relation_rule;
+    if m.value_source("retrieval") == Some(clap::parser::ValueSource::DefaultValue)
+        && std::env::var("TREVOR_RETRIEVAL").as_deref() == Ok("bm25") {
+        a.retrieval = RetrievalKind::Bm25;
+    }
+    let profile = a.profile;
+    apply_profile(&mut a, profile);
+    if a.gate_order {
+        let f = trevor::search::horizon::ReleaseOrder::write_file(std::path::Path::new("."))?;
+        println!("{}: {} stories ({} never visible, {} placed by date), {} dated sources, {} eras",
+                 trevor::search::horizon::GATE_ORDER_PATH, f.story_order.len(), f.never.len(), f.dated.len(), f.source_pos.len(), f.eras.len());
+        return Ok(());
+    }
+    if let (Some(b), true) = (&a.batch, a.horizon_check) {
+        return serve::horizon_check(&a, b);
+    }
     if corpus_default {
         // P4 (P3b plus 6,347 chunks of module stories, voice lines, IS, enemies, outfits and items) only for a question
         // that names one of those sources: on gold set v2 it cost 0.008 correct and 0.025 faithfulness against P3b,
@@ -79,6 +93,12 @@ async fn main() -> Result<()> {
     }
     let knn = if matches!(a.router, RouterKind::Knn | RouterKind::Hybrid) && !a.no_route { Some(load_knn(&a, &tools)?) } else { None };
     let mut tables = Tables { tools, knn, topic: None, route: None };
+    if let (Some(b), true) = (&a.batch, a.json_check) {
+        return serve::json_check(&a, &mut tables, b).await;
+    }
+    if a.canary {
+        return serve::run_canary(a, corpus_default, tables, chrono).await;
+    }
     if a.serve || a.worker.is_some() {
         return serve::run(a, corpus_default, tables, chrono).await;
     }
@@ -115,8 +135,10 @@ async fn main() -> Result<()> {
         early = llm;
     }
     // Loaded after the table routes, which need no index (a table answer no longer waits on the ONNX load).
-    let mut rts = Runtimes { main: Runtime::load(&a.runtime, true, true, a.rerank_add > 0)?, p4: None, art: None, p4_dir: p4_dir(&a),
-                             switch: corpus_default && router_source(&a), args: a.runtime.clone(), rerank: a.rerank_add > 0, horizon: None };
+    let dense = a.retrieval == RetrievalKind::Hybrid;
+    let mut rts = Runtimes { main: load_runtime(&a.runtime, dense, a.rerank_add > 0, None)?, p4: None, art: None, p4_dir: p4_dir(&a),
+                             switch: corpus_default && router_source(&a), args: a.runtime.clone(), rerank: a.rerank_add > 0, horizon: None,
+                             dense };
     if let (Some(b), true) = (&a.batch, a.line_study) {
         return line_study(&mut rts.main, &rts.args, b);
     }
@@ -164,14 +186,8 @@ fn load_tools(a: &Args) -> Tools {
         // Deep entries are switched on per question (`deep_for`, the broad-question gate).
         tools.topics_deep = false;
     }
-    // The keyword router is the kill switch for all routing work, so it keeps the tools as they were.
-    // The exact recap match changes the keyword router's "Explain the ending of Episode 1" (and Episode 0), so it
-    // applies to the model and kNN routers only.
-    tools.opts = if a.router == RouterKind::Keywords { ToolOptions { canon_v1: a.canon_v1, ..ToolOptions::KEYWORDS } }
-        else { ToolOptions { storylines: !a.no_storylines, exact_recap: !a.recap_substring, is_offset: !a.is_numbering_v1,
-                             canon_v1: a.canon_v1, wiki_legacy: a.wiki_legacy } };
+    tools.opts = tool_options(a);
     if a.wiki_legacy {
-        tools.opts.wiki_legacy = true;
         tools.design_basis_wiki = trevor::reference::wiki_design_basis(std::path::Path::new("."));
     }
     tools

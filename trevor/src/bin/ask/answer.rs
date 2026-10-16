@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use trevor::corpus::chunk::Chunk;
-use trevor::goldgen::llm::{Llm, Request};
+use trevor::goldgen::llm::{Llm, Request, is_json_invalid};
 use trevor::router::Knn;
 use trevor::search::pipeline::{Mode, RetrievalConfig};
 use trevor::search::runtime::Runtime;
@@ -32,7 +32,7 @@ use crate::retrieval::{
     FALLBACK_KINDS, RECORD_KINDS, Names, Pre, Runtimes, expand_names, file_owner, named_characters, names_proper_word,
     one_operator, one_operator_wide, opinion_needs_candidates, passages, people_named, story_label, typed_owner,
 };
-use crate::routing::{is_ending_passages, route_question};
+use crate::routing::{Routed, is_ending_passages, route_question};
 use crate::scenes::{SCOPED_REST, character_scenes, compose_evidence, line_pool, scoped_scenes};
 use crate::terms::{term_glossary, term_lookup};
 
@@ -82,6 +82,7 @@ pub(crate) struct Tables {
 pub(crate) async fn answer_one(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Names>, chrono: &Chrono, q: &str, a: &Args,
                     tables: &mut Tables) -> Result<Answer> {
     let first = answer_one_inner(rts, llm, names, chrono, q, a, tables).await?;
+    let first = operator_list_check(rts, llm, names, chrono, q, a, tables, first).await?;
     if a.no_answer_check || a.no_route || first.passages.is_empty() || !asks_identity(q) {
         return Ok(first);
     }
@@ -101,6 +102,40 @@ pub(crate) async fn answer_one(rts: &mut Runtimes, llm: &Llm, names: &HashMap<St
         second.answer = format!("{}\n\nTrevor's data check: {r2}, and the question asks for {wants}, so {n2} does not fit.", second.answer);
     }
     compose_after(rts, llm, names, chrono, q, &again, tables, second).await
+}
+
+/// The operator list check (default since 2026-10-16, `--no-operator-list-check`; Ian's ian35): an answer to a question
+/// asking for operators (`Tools::asks_operators`) whose list items name someone who is not a playable operator ("Give a
+/// ranking of operators who break the most Geneva convention rules" ranked Aurela first, a Sankta mercenary named in
+/// Gracebearer's file 4) is asked once more with a note naming each such person and the operator file the cited passage
+/// belongs to; when the second answer still lists one, the data note is appended.
+#[allow(clippy::too_many_arguments)]
+async fn operator_list_check(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Names>, chrono: &Chrono, q: &str, a: &Args,
+                             tables: &mut Tables, first: Answer) -> Result<Answer> {
+    if a.no_operator_list_check || a.no_route || first.passages.is_empty() || !tables.tools.asks_operators(q) {
+        return Ok(first);
+    }
+    let reasons = |ans: &Answer, tools: &Tools| -> Vec<String> {
+        tools.non_operator_items(&ans.answer).into_iter().map(|(name, cites)| {
+            let file = cites.iter().filter_map(|n| ans.passages.get(n.wrapping_sub(1))).find_map(|id| file_owner(tools, id));
+            match file {
+                Some(o) => format!("{name} is not a playable operator; {name} is a person named in {o}'s operator file, and what that file says {name} did is {name}'s, not {o}'s"),
+                None => format!("{name} is not a playable operator by the game data"),
+            }
+        }).collect()
+    };
+    let found = reasons(&first, &tables.tools);
+    if found.is_empty() {
+        return Ok(first);
+    }
+    let note = format!("An earlier answer to this question listed people as operators who are not. By the game data: {}. The question asks about operators: list only playable operators, and give each act to the person the passage says did it.", found.join("; "));
+    let again = Args { check_note: Some(note), routed: false, ..a.clone() };
+    let mut second = answer_one_inner(rts, llm, names, chrono, q, &again, tables).await?;
+    let still = reasons(&second, &tables.tools);
+    if !still.is_empty() {
+        second.answer = format!("{}\n\nTrevor's data check: {}.", second.answer, still.join("; "));
+    }
+    Ok(second)
 }
 
 /// The evidence composition after the answer check (`compose_evidence`): only for a declined answer to a question whose
@@ -185,7 +220,7 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
     let mut route = if a.routed { tables.route.take() } else { None };
     if !a.no_route && !a.routed {
         tables.tools.topics_deep = deep_for(a, &tables.tools, q);
-        let r = route_question(q, a, &tables.tools, tables.knn.as_mut(), Some(llm)).await?;
+        let r = route_checked(q, a, tables, Some(llm)).await?;
         // Under a spoiler horizon a table answer (built from every story) and a topic summary are not served; the
         // question is answered from the passages the horizon lets through instead.
         if let Some(text) = r.text {
@@ -267,12 +302,24 @@ summaries; prefer the passages)".into(), text));
         else { expand_names(rt, &tables.tools, q) };
     let q = expanded.as_str();
     let story_q = if a.story_query && !a.no_route && a.router != RouterKind::Keywords { story_words(llm, q).await? } else { None };
-    let mut form = if form_on(a) { Some(question_form(llm, q, a.form_v1, a.model_flags).await?) } else { None };
+    let mut form = if form_on(a) {
+        // A backend without grammars (OpenAI-compatible) whose JSON did not validate twice: the fact form.
+        Some(match question_form(llm, q, a.form_v1, a.model_flags).await {
+            Err(e) if is_json_invalid(&e) => Form { form: "fact".into(), ..Form::default() },
+            r => r?,
+        })
+    } else { None };
     if let Some(sq) = story_q {
         form.get_or_insert_with(|| Form { form: "fact".into(), ..Form::default() }).story = Some(sq);
     }
     if let Some(f) = form.as_mut().filter(|f| f.form == "opinion") {
         f.named = named_characters(rt, &tables.tools, q);
+        if !a.no_group_evidence {
+            f.groups = tables.tools.named_group_topics(q);
+            if f.groups.len() < 2 {
+                f.groups.clear();
+            }
+        }
     }
     if let Some(f) = form.as_mut().filter(|f| f.form == "opinion" && (a.opinion_gate || (!a.no_opinion_gate && is_opinion_question(q)))) {
         if !opinion_needs_candidates(rt, &tables.tools, q, !f.named.is_empty()) && (a.opinion_gate || !names_proper_word(rt, q)) {
@@ -369,6 +416,18 @@ summaries; prefer the passages)".into(), text));
     Ok(second)
 }
 
+/// The router, with the keyword router as the fallback when the model's JSON did not validate twice (a backend without
+/// grammars, `--backend openai`; a llama.cpp router call is grammar-bound and never fails that way).
+pub(crate) async fn route_checked(q: &str, a: &Args, tables: &mut Tables, llm: Option<&Llm>) -> Result<Routed> {
+    match route_question(q, a, &tables.tools, tables.knn.as_mut(), llm).await {
+        Err(e) if is_json_invalid(&e) => {
+            let kw = Args { router: RouterKind::Keywords, ..a.clone() };
+            route_question(q, &kw, &tables.tools, tables.knn.as_mut(), llm).await
+        }
+        r => r,
+    }
+}
+
 /// The chunk ids an answer cites, in citation order, and how many citations point at no passage. "[4]", "[4, 5]" and
 /// "[4][5]" all cite; anything else in brackets is prose. Numbers 1 to `off` are the passages before the retrieved
 /// rows, then the rows, then `post`.
@@ -416,7 +475,7 @@ fn citations(text: &str, off: usize, first: &[&Pre], rows: &[usize], post: &[&Pr
 
 /// A retrieved passage's label. The source kind leads it, so an answer can say where a claim comes from (SOURCE_RULE):
 /// an operator file, a dossier or event summary Trevor wrote, a typed unit by its own first line, or a story.
-fn passage_label(names: &HashMap<String, Names>, c: &Chunk) -> String {
+pub(crate) fn passage_label(names: &HashMap<String, Names>, c: &Chunk) -> String {
     match c.group_id.as_str() {
         "archive" => format!("operator file: {}", c.story_id.trim_start_matches("archive_")),
         "profile" => format!("Trevor's character dossier (a summary written by Trevor): {}", c.story_id),

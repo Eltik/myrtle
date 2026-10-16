@@ -107,6 +107,13 @@ pub(crate) fn detect_only(a: &Args, tools: &Tools, b: &Path) -> Result<()> {
                 .filter(|(n, _)| store_rt.as_ref().is_none_or(|rt| proper_name(rt, n))).map(|(n, _)| n).collect();
             f.push(if who.is_empty() { format!("event={gid}") } else { format!("scoped={gid}:{}", who.join("|")) });
         }
+        if t.asks_operators(q) {
+            f.push("operators".into());
+        }
+        let groups = t.named_group_topics(q);
+        if groups.len() >= 2 {
+            f.push(format!("groups={}", groups.iter().map(|g| g.0.as_str()).collect::<Vec<_>>().join("|")));
+        }
         if let Some(rt) = store_rt.as_ref() {
             let e = expand_names(rt, t, q);
             if !opinion_needs_candidates(rt, t, &e, !named_characters(rt, t, &e).is_empty()) {

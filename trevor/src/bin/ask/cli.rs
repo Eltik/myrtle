@@ -228,6 +228,45 @@ pub(crate) struct Args {
     /// exercised against a backend.
     #[arg(long, value_name = "URL")]
     pub(crate) worker: Option<String>,
+    /// The pipeline profile (design/trevor-contract-v1.md section 2; also per worker job): `full` is today's default
+    /// pipeline (the kill switch: no flag changes); `slim` is the CPU rung's: the keyword router, k 5, a 2,000-token
+    /// passage budget, 250 output tokens, no typed fallback, no answer extension and no second-look retries (answer
+    /// check, operator list check, evidence composition, the decline retry).
+    #[arg(long, value_enum, default_value_t = Profile::Full)]
+    pub(crate) profile: Profile,
+    /// Retrieval for serving (2026-10-16): `hybrid` (dense + BM25, the default) or `bm25`, which never loads the dense
+    /// index or the query embedder and runs every dense or hybrid retrieval as BM25 (the VPS has no INT8-safe query
+    /// embedder; dev set recall@10 0.862 against 0.915 hybrid). `TREVOR_RETRIEVAL=bm25` sets it for a worker.
+    #[arg(long, value_enum, default_value_t = RetrievalKind::Hybrid)]
+    pub(crate) retrieval: RetrievalKind,
+    /// The model backend: `llama` (the local llama-server, the default) or `openai`, an OpenAI-compatible chat
+    /// endpoint: Cloudflare Workers AI when TREVOR_CF_MODELS and TREVOR_CF_ACCOUNT_ID (or TREVOR_CF_BASE_URL) are set,
+    /// else the local llama-server's own /v1/chat/completions (started as usual), for tests. Grammar-bound calls become
+    /// validated JSON prompts there, with the keyword router and the fact form as fallbacks.
+    #[arg(long, value_enum, default_value_t = BackendKind::Llama)]
+    pub(crate) backend: BackendKind,
+    /// `--worker`: do not stream answer deltas to the backend (the result alone, as before).
+    #[arg(long)]
+    pub(crate) no_stream: bool,
+    /// Run the 10 canary questions against each Cloudflare model id in TREVOR_CF_MODELS until one passes, and write
+    /// the result to artifacts/canary/cf.json (TREVOR_CANARY_FILE), which the worker reads for its `cf` rung.
+    #[arg(long)]
+    pub(crate) canary: bool,
+    /// Write the gatePos order (artifacts/chrono/gate_order.json, see src/search/horizon.rs) from the reading guide,
+    /// the story table and the source dates, and exit.
+    #[arg(long)]
+    pub(crate) gate_order: bool,
+    /// With `--batch`: compare the gatePos horizon with the old story-id horizon on every chunk and on the questions'
+    /// retrieved candidates, print every difference, and exit (no model).
+    #[arg(long, hide = true)]
+    pub(crate) horizon_check: bool,
+    /// With `--batch`: run only the router and question-form calls of each question and print the route, the form and
+    /// the usage totals (on `--backend openai`, how often the JSON prompts fail validation).
+    #[arg(long, hide = true)]
+    pub(crate) json_check: bool,
+    /// Passages in a `passages` rung answer (no model).
+    #[arg(long, default_value_t = 5)]
+    pub(crate) passages_n: usize,
     /// The router sends a question about one operator's everyday life (likes, downtime, opinions of the base) to
     /// their voice lines (2026-10-03; opt-in until measured, see design/trevor-questions.md section 12).
     #[arg(long)]
@@ -329,6 +368,16 @@ pub(crate) struct Args {
     /// faithfulness 16/18 to 12/14, Qwen pairwise 2 ties, 0 losses.
     #[arg(long)]
     pub(crate) no_opinion_gate: bool,
+    /// Kill switch for group evidence (default since 2026-10-16, Ian's ian34): an opinion question naming two or more
+    /// group topics (organizations, nations, places, races; `Tools::named_group_topics`) gets each group's best 3 chunks
+    /// naming it, from the topic name plus the evidence query, ahead of the candidates.
+    #[arg(long)]
+    pub(crate) no_group_evidence: bool,
+    /// Kill switch for the operator list check (default since 2026-10-16, Ian's ian35; `Tools::asks_operators`,
+    /// `Tools::non_operator_items`): a question asking for operators whose answer lists someone who is not a playable
+    /// operator is asked once more with a note naming them and whose operator file the cited passage is.
+    #[arg(long)]
+    pub(crate) no_operator_list_check: bool,
     /// When-questions (2026-10-03, item 3): DATE_RULE, end with a labelled year estimate from the timeline notes when
     /// no passage states the year (the age rule's counterpart for dates). Opt-in until measured.
     #[arg(long)]
@@ -603,4 +652,71 @@ pub(crate) fn p4_dir(a: &Args) -> &'static str {
 /// only for a question about the topic as a whole (`Tools::broad_topic_question`); `--deep-topics-all` is night 9's reach.
 pub(crate) fn deep_for(a: &Args, tools: &Tools, q: &str) -> bool {
     !a.no_deep_topics && a.lore != LoreSet::V1 && (a.deep_topics_all || tools.broad_topic_question(q))
+}
+
+/// The pipeline profile (contract section 2).
+#[derive(Clone, Copy, PartialEq, Eq, Debug, clap::ValueEnum)]
+pub(crate) enum Profile {
+    Full,
+    Slim,
+}
+
+impl Profile {
+    pub(crate) fn name(self) -> &'static str {
+        match self {
+            Self::Full => "full",
+            Self::Slim => "slim",
+        }
+    }
+
+    pub(crate) fn parse(s: &str) -> Option<Self> {
+        match s {
+            "full" => Some(Self::Full),
+            "slim" => Some(Self::Slim),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug, clap::ValueEnum)]
+pub(crate) enum RetrievalKind {
+    Hybrid,
+    Bm25,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug, clap::ValueEnum)]
+pub(crate) enum BackendKind {
+    Llama,
+    Openai,
+}
+
+/// Set `a` to profile `p`: `full` changes nothing; `slim` is the CPU rung's pipeline.
+pub(crate) fn apply_profile(a: &mut Args, p: Profile) {
+    a.profile = p;
+    if p == Profile::Slim {
+        a.router = RouterKind::Keywords;
+        a.k = 5;
+        a.max_context_tokens = 2000;
+        a.n_predict = 250;
+        a.no_typed_fallback = true;
+        a.no_answer_extend = true;
+        a.no_answer_check = true;
+        a.no_operator_list_check = true;
+        a.compose_evidence = false;
+        a.retry = false;
+    }
+}
+
+/// The table tools' options for `a`'s router: the keyword router is the kill switch for all routing work, so it keeps
+/// the tools as they were; the exact recap match changes the keyword router's "Explain the ending of Episode 1" (and
+/// Episode 0), so it applies to the model and kNN routers only.
+pub(crate) fn tool_options(a: &Args) -> trevor::tools::ToolOptions {
+    use trevor::tools::ToolOptions;
+    let mut opts = if a.router == RouterKind::Keywords { ToolOptions { canon_v1: a.canon_v1, ..ToolOptions::KEYWORDS } }
+        else { ToolOptions { storylines: !a.no_storylines, exact_recap: !a.recap_substring, is_offset: !a.is_numbering_v1,
+                             canon_v1: a.canon_v1, wiki_legacy: a.wiki_legacy } };
+    if a.wiki_legacy {
+        opts.wiki_legacy = true;
+    }
+    opts
 }

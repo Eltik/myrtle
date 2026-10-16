@@ -36,6 +36,8 @@ pub(crate) const CHARACTER_GROUPS: [&str; 2] = ["archive", "profile"];
 /// Candidates an opinion question gathers from character sources, and at most this many per character.
 pub(crate) const CANDIDATES: usize = 6;
 pub(crate) const CANDIDATE_PER_CHARACTER: usize = 2;
+/// Chunks per group an opinion question compares (`Form::groups`), ahead of the candidates.
+pub(crate) const GROUP_EVIDENCE: usize = 3;
 
 #[derive(Deserialize)]
 pub(crate) struct Names {
@@ -154,6 +156,19 @@ pub(crate) fn passages(rt: &mut Runtime, q: &str, a: &Args, kind: Option<&str>, 
                 *n <= CANDIDATE_PER_CHARACTER
             }
         }).take(room));
+        // Each group an opinion question compares gets its own chunks first (2026-10-16, Ian's ian34): with only the
+        // question's and the evidence query's hits, "Karlan Trade Group and Blacksteel" filled all 15 passages with
+        // Karlan Trade and Silverash, and the answer said Blacksteel is not mentioned (150 P3b chunks name it).
+        let groups = form.map(|f| f.groups.clone()).unwrap_or_default();
+        let mut own: Vec<trevor::search::pipeline::Hit> = Vec::new();
+        for (topic, forms) in &groups {
+            let found = rt.retrieve(&format!("{topic} {ev}"), &RetrievalConfig { k: 60, ..cfg })?;
+            let names = |row: usize| { let t = norm(&rt.store.chunks[row].text); forms.iter().any(|f| contains_words(&t, &norm(f))) };
+            let mine: Vec<_> = found.into_iter().filter(|h| names(h.row) && !own.iter().chain(&cands).any(|x| x.row == h.row))
+                .take(GROUP_EVIDENCE).collect();
+            own.extend(mine);
+        }
+        let cands: Vec<_> = own.into_iter().chain(cands).collect();
         bare = cands.iter().map(|h| h.row).collect();
         hits = cands.into_iter().chain(hits.into_iter().filter(|h| !bare.contains(&h.row))).collect();
     }
@@ -426,6 +441,21 @@ pub(crate) struct Runtimes {
     pub(crate) rerank: bool,
     /// The spoiler horizon of the current `--serve` job, given to every corpus `pick` returns. None outside serve.
     pub(crate) horizon: Option<std::sync::Arc<trevor::search::horizon::Horizon>>,
+    /// Load the dense index and the query embedder (`--retrieval hybrid`, the default); false is BM25-only serving.
+    pub(crate) dense: bool,
+}
+
+/// A corpus as `ask` loads it: BM25 always, the dense index and query embedder unless BM25-only (`dense` false), the
+/// reranker with `--rerank-add`; the query embedder of `share` is reused when it fits (`Runtime::load_sharing`).
+/// `TREVOR_LOAD_DEBUG=1` prints the load time.
+pub(crate) fn load_runtime(a: &RuntimeArgs, dense: bool, rerank: bool, share: Option<trevor::search::runtime::SharedEmbedder>) -> Result<Runtime> {
+    let t = std::time::Instant::now();
+    let mut rt = Runtime::load_sharing(a, dense, true, rerank, share)?;
+    rt.bm25_only = !dense;
+    if std::env::var("TREVOR_LOAD_DEBUG").is_ok() {
+        eprintln!("loaded {} in {:.2} s (dense {dense})", a.corpus.display(), t.elapsed().as_secs_f64());
+    }
+    Ok(rt)
 }
 
 impl Runtimes {
@@ -434,7 +464,7 @@ impl Runtimes {
             if self.p4.is_none() {
                 let mut a = self.args.clone();
                 a.corpus = PathBuf::from(self.p4_dir);
-                self.p4 = Some(Runtime::load(&a, true, true, self.rerank)?);
+                self.p4 = Some(load_runtime(&a, self.dense, self.rerank, self.main.shared_embedder())?);
             }
             let rt = self.p4.as_mut().expect("loaded above");
             rt.horizon.clone_from(&self.horizon);
@@ -466,7 +496,7 @@ impl Runtimes {
         if self.art.is_none() {
             let mut a = self.args.clone();
             a.corpus = PathBuf::from(ART_DIR);
-            self.art = Some(Runtime::load(&a, true, true, self.rerank)?);
+            self.art = Some(load_runtime(&a, self.dense, self.rerank, self.main.shared_embedder())?);
         }
         let rt = self.art.as_mut().expect("loaded above");
         rt.horizon.clone_from(&self.horizon);

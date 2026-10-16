@@ -3,9 +3,9 @@
 use std::path::PathBuf;
 
 use anyhow::{Context, Result};
-use trevor::goldgen::llm::Llm;
+use trevor::goldgen::llm::{Llm, OpenAiConfig};
 
-use crate::cli::Args;
+use crate::cli::{Args, BackendKind};
 
 /// A llama-server this process started; killed when dropped, so it never outlives `ask`.
 pub(crate) struct Spawned(std::process::Child, Option<PathBuf>);
@@ -63,9 +63,33 @@ pub(crate) async fn wait_for_lock(a: &Args) -> Result<()> {
     Ok(())
 }
 
+/// The answer model as `--backend` picks it: the llama-server ([`connect_local`]), or with `--backend openai` Cloudflare
+/// when its variables are set, else the local llama-server (connected or started as usual) through its own
+/// `/v1/chat/completions`.
+pub(crate) async fn connect_or_spawn(a: &Args) -> Result<(Llm, Option<Spawned>)> {
+    if a.backend == BackendKind::Openai {
+        if let Some(llm) = cloudflare(a)? {
+            return Ok((llm, None));
+        }
+        let (local, guard) = connect_or_spawn_plain(a).await?;
+        return Ok((openai_llm(a, OpenAiConfig::local(&a.server, vec![local.model.clone()]))?, guard));
+    }
+    connect_local(a).await
+}
+
+/// The Cloudflare backend when TREVOR_CF_MODELS and TREVOR_CF_ACCOUNT_ID (or TREVOR_CF_BASE_URL) are set.
+pub(crate) fn cloudflare(a: &Args) -> Result<Option<Llm>> {
+    OpenAiConfig::cloudflare_from_env().map(|c| openai_llm(a, c)).transpose()
+}
+
+pub(crate) fn openai_llm(a: &Args, cfg: OpenAiConfig) -> Result<Llm> {
+    let llm = Llm::openai(cfg)?;
+    Ok(if a.no_cache_prompt { llm.without_prompt_cache() } else { llm })
+}
+
 /// Connect to the server at `a.server`, or start one on its port with the answer model and wait
 /// until it is healthy (the model loads in about 15 s). Waits first while another job holds the model lock.
-pub(crate) async fn connect_or_spawn(a: &Args) -> Result<(Llm, Option<Spawned>)> {
+pub(crate) async fn connect_local(a: &Args) -> Result<(Llm, Option<Spawned>)> {
     let (llm, guard) = connect_or_spawn_plain(a).await?;
     let llm = if a.no_cache_prompt { llm.without_prompt_cache() } else { llm };
     let llm = match &a.dump_prompt { Some(p) => llm.with_dump(p)?, None => llm };
