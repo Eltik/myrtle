@@ -549,3 +549,28 @@ The arm was set up to be the cf rung's own code path rather than the plain llama
 *Machine.* Thermal: no warning recorded at any check. Disk: 28.3 GB free at 22:45, 22 to 27 GiB through the night (swap files grew with swap). Arm a's first start (22:48 to 23:03) tripped the swap rule at +3,266 MB after 28 answers with the re-embed still running (free memory 17 to 29 %, level 2); its one retry resumed by qid and ran to the end with swap +879 MB at most. The Qwen judge ran at 32 % free or more, level 1, no swap growth. llama-server aborts on SIGTERM in ggml-metal's teardown (GGML_ASSERT rsets count, ggml-metal-device.m:1025); the runner's SIGKILL fallback was not needed. Every server, client and watchdog was stopped by PID; the model lock was released after each arm.
 
 Records: artifacts/answers/eval3way/ (per arm gold.jsonl, real.jsonl, *.judged.jsonl, *.judge.out, tokens.log, mem.log, run.log, server.log; TRIP.1 and TRIP.2 for the 26B; summary.json from summarize.py; compare.py and declines.py for the per-question comparisons; run_arm.sh, run_arm2.sh, judge_all.sh, watch.py).
+
+**Middle profiles for the CPU rung: retrieval budget, not the model, is the lever (2026-10-17 04:27 to 05:53).**
+
+Section 13 found that slim loses to full mainly because the gold chunk reaches the prompt far less often (55 against 106 of 131), and that E2B scores like the 12B on the same passages. So two "middle" arms were run on E2B, both with one model call. Each takes the full pipeline's answer call with the keyword router, `--n-predict 250` and slim's switches off (no typed fallback, answer extension, answer check or operator-list check). It raises k to 8 and widens the context budget.
+
+Conditions: `--no-cache-prompt`, one client, the same Qwen judge and scripts as section 13 (artifacts/answers/eval3way/e-e2b-mid36, f-e2b-mid6k; `run_arm3.sh` passes the flags).
+
+| E2B arm | context budget | gold correct / declined / wrong (of 131) | gold chunk in prompt | gold faithful | real responds / handles | tokens in (mean) | Neurons (mean) | Mac median per answer | server RSS |
+|---|---|---|---|---|---|---|---|---|---|
+| slim (section 13) | 2,000, k 5 | 42 / 10 / 79 | 55 | 0.898 | 44 / 37 of 43 | 1,814 | 17.6 | 1.0 s | 3,983 MB |
+| mid 3.6k | 3,600, k 8 | 57 / 4 / 70 | 82 | 0.900 | 46 / 38 | 3,463 | 32.6 | 2.0 s | 4,019 MB |
+| mid 6k | 6,000, k 8 | 73 / 3 / 55 | 101 | 0.930 | 58 / 39 | 5,832 | 54.2 | 3.1 s | 4,013 MB |
+| (12B full, section 13) | 9,000, k 8, 3 calls | 86 / 15 / 30 | 106 | 0.940 | 91 / 40 | 12,418 | 116.3 | 33.0 s | 9,221 MB |
+
+E2B's declines are undercounted by the script's phrase list (section 13); correct counts are unaffected.
+
+*Slot sizes.* The 6k arm's first run overflowed an 8,192-token slot at 8,596 tokens, because the budget counts passage tokens only. It ran with `--kv-unified-per-slot 12288`. The 3.6k arm fits the VPS unit's `-c 4096`; 6k needs `-c 12288` there, and E2B's RSS barely moves (about 4.0 GB at either size).
+
+*Reading.* On E2B, widening the passages from 2k to 6k tokens takes gold correct 42 to 73 and real responds 44 to 58, and faithfulness rises with it (0.898 to 0.930). That is 85% of today's full 12B gold score from one call on a 2B-class model. It still answers wrongly instead of declining far more often than the 12B (55 against 30), so "quick answer" stays the right label.
+
+*Cost and speed.*
+- On the VPS CPU (not measured there), prefill dominates. At the benchmark's 49.5 to 94.6 prompt tokens/s on 1 to 2 threads, 5,832 tokens take about 1 to 2 minutes, against roughly 20 to 40 s for slim.
+- On Cloudflare a 6k-style answer costs about 54 Neurons: about 166 answers under the 9,000 stop, against 77 for the full pipeline (assuming the 26B tokenizes like the 12B).
+
+*Recommendation.* For the CPU rung, replace slim with a mid profile, 6k if the 1 to 2 minute wait is acceptable, else 3.6k. For the Cloudflare rung when the daily cap binds, measure a mid profile on the 26B (not run: the 26B did not fit beside Ian's open apps). The contract's `slim` profile stays as built until Ian chooses; a `mid` profile is a small addition to `apply_profile`.
