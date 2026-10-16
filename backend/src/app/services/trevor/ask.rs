@@ -18,6 +18,7 @@ use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
 use crate::app::services::story_progress;
 use crate::app::state::AppState;
+use crate::core::hypergryph::constants::Server;
 use crate::database::queries::trevor as q;
 
 /// Why an ask is refused before it costs anything, or `Ok` to go on.
@@ -63,10 +64,9 @@ pub fn stream_url(job_id: Uuid) -> String {
     format!("/api/trevor/jobs/{job_id}/stream")
 }
 
-/// The stories the account has read: the game's read flags plus its own
-/// marks, minus what it marked unread.
-pub async fn read_stories(state: &AppState, user_id: Uuid) -> Result<Vec<String>, ApiError> {
-    let progress = story_progress::get(state, user_id).await?;
+/// The stories a progress response says were read: the game's read flags
+/// plus the site's own marks, minus what the reader marked unread.
+fn reads_of(progress: story_progress::StoryProgressResponse) -> Vec<String> {
     let mut read: HashSet<String> = progress.game_read.into_iter().collect();
     if let Some(doc) = &progress.progress {
         if let Some(marks) = doc.0.get("read").and_then(Value::as_object) {
@@ -78,7 +78,85 @@ pub async fn read_stories(state: &AppState, user_id: Uuid) -> Result<Vec<String>
             }
         }
     }
-    Ok(read.into_iter().collect())
+    read.into_iter().collect()
+}
+
+/// Whether a progress response carries nothing to read from: no
+/// `user_game_story_read` row at all (read or unread) and no site read mark.
+fn holds_no_reads(progress: &story_progress::StoryProgressResponse) -> bool {
+    progress.game_synced_at.is_none()
+        && progress.game_read.is_empty()
+        && progress.game_unread.is_empty()
+        && progress.progress.as_ref().is_none_or(|doc| {
+            doc.0
+                .get("read")
+                .and_then(Value::as_object)
+                .is_none_or(serde_json::Map::is_empty)
+        })
+}
+
+/// The stories the account has read: the game's read flags plus its own
+/// marks, minus what it marked unread.
+///
+/// An account that has stage progress but no game read rows and no site
+/// marks (2,628 of the 2,630 local accounts on 2026-10-17: the rows only
+/// exist since a sync after 2026-09-24) would ask at gatePos 0. For it, the
+/// first ask in this process re-derives and stores the game's verdict from
+/// the stored stage progress ([`story_progress::reverdict`], the same rows a
+/// sync writes) and reads again. Once per account per process, whatever it
+/// yields; a failed re-derivation is logged and the ask goes on with what
+/// was stored. `TREVOR_REVERDICT_ON_ASK=0` skips it.
+pub async fn read_stories(
+    state: &AppState,
+    user_id: Uuid,
+    server: &str,
+) -> Result<Vec<String>, ApiError> {
+    let progress = story_progress::get(state, user_id).await?;
+    if !state.trevor.config().reverdict_on_ask || !holds_no_reads(&progress) {
+        return Ok(reads_of(progress));
+    }
+    let Some(game_server) = Server::parse(server) else {
+        return Ok(reads_of(progress));
+    };
+    if !state.trevor.first_reverdict(user_id) {
+        return Ok(reads_of(progress));
+    }
+    let has_stages: bool =
+        sqlx::query_scalar("SELECT EXISTS (SELECT 1 FROM user_stage_progress WHERE user_id = $1)")
+            .bind(user_id)
+            .fetch_one(&state.db)
+            .await?;
+    if !has_stages {
+        return Ok(reads_of(progress));
+    }
+    state
+        .trevor
+        .reverdicts
+        .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let started = std::time::Instant::now();
+    match story_progress::reverdict(state, user_id, game_server).await {
+        Ok(fresh) => {
+            let read = reads_of(fresh);
+            tracing::info!(
+                %user_id,
+                server,
+                read = read.len(),
+                ms = started.elapsed().as_millis(),
+                "trevor: read verdict re-derived on ask"
+            );
+            Ok(read)
+        }
+        Err(e) => {
+            tracing::warn!(
+                %user_id,
+                server,
+                error = %e,
+                ms = started.elapsed().as_millis(),
+                "trevor: re-deriving the read verdict on ask failed; asking with the stored reads"
+            );
+            Ok(reads_of(progress))
+        }
+    }
 }
 
 /// The active version and its eras; an unparsable `eras` reads as none.
@@ -109,7 +187,7 @@ pub async fn resolve_horizon(
     let Some((version, eras)) = active_eras(state, server).await? else {
         return Ok((None, bucket_horizon(&[], 0, buckets)));
     };
-    let read = read_stories(state, user_id).await?;
+    let read = read_stories(state, user_id, server).await?;
     let profile_pos = q::max_gate_pos(&state.db, &version, server, &read)
         .await?
         .unwrap_or(0);
@@ -450,6 +528,37 @@ mod tests {
             admit(1, 0, MAX_QUEUED),
             Err(ApiError::ServiceUnavailable)
         ));
+    }
+
+    fn progress(
+        doc: Option<Value>,
+        game_read: &[&str],
+        game_unread: &[&str],
+    ) -> story_progress::StoryProgressResponse {
+        let synced = !(game_read.is_empty() && game_unread.is_empty());
+        story_progress::StoryProgressResponse {
+            progress: doc.map(story_progress::StoryProgressDocument),
+            updated_at: None,
+            game_read: game_read.iter().map(|s| (*s).to_owned()).collect(),
+            game_unread: game_unread.iter().map(|s| (*s).to_owned()).collect(),
+            game_archived: 0,
+            game_synced_at: synced.then_some(1),
+        }
+    }
+
+    #[test]
+    fn only_an_account_with_nothing_stored_is_re_derived() {
+        assert!(holds_no_reads(&progress(None, &[], &[])));
+        let empty = serde_json::json!({ "v": 2, "read": {}, "pos": {} });
+        assert!(holds_no_reads(&progress(Some(empty), &[], &[])));
+        // Unread marks alone are not reads: still re-derived.
+        let unread = serde_json::json!({ "v": 2, "read": {}, "unread": { "a": 1 }, "pos": {} });
+        assert!(holds_no_reads(&progress(Some(unread), &[], &[])));
+        let marked = serde_json::json!({ "v": 2, "read": { "a": 1 }, "pos": {} });
+        assert!(!holds_no_reads(&progress(Some(marked), &[], &[])));
+        assert!(!holds_no_reads(&progress(None, &["a"], &[])));
+        // Rows that are all unread are still a stored verdict.
+        assert!(!holds_no_reads(&progress(None, &[], &["a"])));
     }
 
     #[test]

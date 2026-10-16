@@ -13,12 +13,17 @@
 //! against the old 1 s poll, stale requeue then fail, the run ceiling on a
 //! job a live worker keeps naming as busy, queue TTL expiry, the
 //! SSE fan-out of worker deltas, `/trevor/status`, per-rung ETAs and the
-//! heartbeat row.
+//! heartbeat row, and the horizon of an account that holds only stage
+//! progress (its read verdict re-derived on ask, and not under
+//! `TREVOR_REVERDICT_ON_ASK=0`).
 //!
 //! Ignored by default (CI has no Postgres):
 //! `cargo test --test trevor_db_test -- --ignored --nocapture`
 
 use std::collections::HashMap;
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use std::sync::atomic::Ordering;
 use std::time::{Duration, Instant};
 
 use axum::Router;
@@ -32,8 +37,10 @@ use backend::app::services::trevor::worker::{self, Heartbeat, WorkerHello};
 use backend::app::services::trevor::{
     AskRequest, AskResponse, JobStatus, Profile, Rung, ask as svc_ask, stream,
 };
-use backend::app::state::{AppConfig, AppState};
+use backend::app::state::{AppConfig, AppState, ServerData};
 use backend::core::auth::credentials::CredentialKey;
+use backend::core::gamedata::types::GameData;
+use backend::core::gamedata::types::story_review::StoryReviewGroup;
 use backend::core::hypergryph::constants::Server;
 use backend::database::queries::trevor as q;
 use futures_util::StreamExt;
@@ -83,6 +90,14 @@ async fn fresh_db() -> PgPool {
 }
 
 fn state_on(pool: &PgPool, tweak: impl FnOnce(&mut TrevorConfig)) -> AppState {
+    state_with(pool, HashMap::new(), tweak)
+}
+
+fn state_with(
+    pool: &PgPool,
+    server_data: HashMap<Server, Arc<ServerData>>,
+    tweak: impl FnOnce(&mut TrevorConfig),
+) -> AppState {
     let config = AppConfig {
         jwt_secret: "db-test-jwt-secret-0123456789abcdef".into(),
         game_credential_key: CredentialKey::parse(&"22".repeat(32)).expect("key"),
@@ -97,7 +112,7 @@ fn state_on(pool: &PgPool, tweak: impl FnOnce(&mut TrevorConfig)) -> AppState {
     let s = AppState::new(
         pool.clone(),
         CacheStore::new_memory(),
-        HashMap::new(),
+        server_data,
         Server::EN,
         config,
         reqwest::Client::new(),
@@ -979,6 +994,8 @@ async fn trevor_queue_against_a_throwaway_database() {
     step_review_fixes(&s).await;
     step_run_ceiling(&s).await;
     step_notify(&pool).await;
+    // Last: it activates its own version.
+    step_reverdict_on_ask(&pool).await;
 }
 
 /// A result body with a chosen source and corpus version.
@@ -1229,4 +1246,231 @@ async fn step_run_ceiling(s: &AppState) {
         Some("the worker stopped answering")
     );
     eprintln!("run ceiling: busy job requeued at 1801 s, failed on the second, 1799 s kept");
+}
+
+// --- the read verdict re-derived on ask ----------------------------------------
+
+/// The EN story tree when `ASSETS_DIR` names one (the main checkout's
+/// `assets/output/en`); the worktree carries none.
+fn real_en_tree() -> Option<PathBuf> {
+    let dir = PathBuf::from(std::env::var_os("ASSETS_DIR")?);
+    let dir = if dir.is_absolute() {
+        dir
+    } else {
+        Path::new(env!("CARGO_MANIFEST_DIR")).join(dir)
+    };
+    dir.join("gamedata/excel/story_review_table.json")
+        .is_file()
+        .then_some(dir)
+}
+
+/// The two mainline chapters and the first story of the third, with the
+/// review table's real ids and gates: a `_beg` is read once its stage was
+/// PLAYED, an `_end` once it was PASSED.
+fn fixture_game_data() -> GameData {
+    let story = |chapter: u32, stage: &str, half: &str| {
+        let min = if half == "beg" { "PLAYED" } else { "PASS" };
+        json!({
+            "storyId": format!("main_{chapter}_level_{stage}_{half}"),
+            "storyGroup": format!("main_{chapter}"),
+            "storyName": format!("{stage} {half}"),
+            "storyTxt": format!("obt/main/level_{stage}_{half}"),
+            "requiredStages": [{ "stageId": stage, "minState": min, "maxState": "COMPLETE" }]
+        })
+    };
+    let group = |chapter: u32, stages: &[&str]| -> StoryReviewGroup {
+        let stories: Vec<Value> = stages
+            .iter()
+            .flat_map(|st| [story(chapter, st, "beg"), story(chapter, st, "end")])
+            .collect();
+        serde_json::from_value(json!({
+            "id": format!("main_{chapter}"), "name": format!("Chapter {chapter}"),
+            "entryType": "MAINLINE", "actType": "MAIN_STORY", "infoUnlockDatas": stories
+        }))
+        .expect("review group")
+    };
+    let mut gd = GameData::default();
+    for (chapter, stages) in [
+        (0, &["main_00-01", "main_00-02"][..]),
+        (1, &["main_01-01"][..]),
+        (2, &["main_02-01"][..]),
+    ] {
+        gd.story_reviews
+            .insert(format!("main_{chapter}"), group(chapter, stages));
+    }
+    gd
+}
+
+/// EN server data for the story index: the real tree when `ASSETS_DIR`
+/// names one, else [`fixture_game_data`] over no assets at all.
+fn en_story_data() -> (HashMap<Server, Arc<ServerData>>, &'static str) {
+    use std::sync::atomic::AtomicBool;
+    let (gd, assets, dir, label) = if let Some(dir) = real_en_tree() {
+        let (gd, assets) =
+            backend::core::gamedata::init_game_data(&dir.join("gamedata/excel"), &dir)
+                .expect("the EN game data");
+        (gd, assets, dir, "the real EN story index")
+    } else {
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("target/trevor-db-test-no-assets");
+        let assets = backend::core::gamedata::assets::AssetIndex::build(&dir);
+        (
+            fixture_game_data(),
+            assets,
+            dir,
+            "the 8-story fixture index",
+        )
+    };
+    let sd = Arc::new(ServerData {
+        game_data: arc_swap::ArcSwap::from_pointee(gd),
+        asset_index: arc_swap::ArcSwap::from_pointee(assets),
+        game_data_dir: dir.join("gamedata/excel").display().to_string(),
+        assets_dir: dir.display().to_string(),
+        art_dir: dir.display().to_string(),
+        loaded: AtomicBool::new(true),
+        residency: Default::default(),
+    });
+    (HashMap::from([(Server::EN, sd)]), label)
+}
+
+async fn set_stages(pool: &PgPool, user: Uuid, stages: &[(&str, i32)]) {
+    let doc: serde_json::Map<String, Value> = stages
+        .iter()
+        .map(|(id, state)| {
+            let played = i32::from(*state >= 2);
+            (
+                (*id).to_owned(),
+                json!({ "stageId": id, "state": state, "startTimes": played, "completeTimes": played }),
+            )
+        })
+        .collect();
+    sqlx::query("INSERT INTO user_stage_progress (user_id, stages) VALUES ($1, $2)")
+        .bind(user)
+        .bind(Value::Object(doc))
+        .execute(pool)
+        .await
+        .expect("stages");
+}
+
+async fn game_rows(pool: &PgPool, user: Uuid) -> (i64, i64) {
+    sqlx::query_as(
+        "SELECT count(*), count(*) FILTER (WHERE read_in_game) FROM user_game_story_read WHERE user_id = $1",
+    )
+    .bind(user)
+    .fetch_one(pool)
+    .await
+    .expect("rows")
+}
+
+/// An account with ONLY `user_stage_progress` (no game read rows, no site
+/// marks) asks at its stage-derived horizon; with the switch off, at 0.
+async fn step_reverdict_on_ask(pool: &PgPool) {
+    let (data, label) = en_story_data();
+    let s = state_with(pool, data.clone(), |_| {});
+    let off = state_with(pool, data, |c| c.reverdict_on_ask = false);
+    reset_queue(pool).await;
+
+    // gatePos 1..6; eras open at 1 (chapter 0), 3 (chapter 1), 5 (chapter 2).
+    let order = [
+        "main_0_level_main_00-01_beg",
+        "main_0_level_main_00-01_end",
+        "main_1_level_main_01-01_beg",
+        "main_1_level_main_01-01_end",
+        "main_2_level_main_02-01_beg",
+        "main_2_level_main_02-01_end",
+    ];
+    let eras = json!([
+        { "id": "main_0", "name": "Evil Time Part 1", "position": 1 },
+        { "id": "main_1", "name": "Evil Time Part 2", "position": 3 },
+        { "id": "main_2", "name": "Separated Hearts", "position": 5 }
+    ]);
+    let panels: serde_json::Map<String, Value> = order
+        .iter()
+        .zip(1..)
+        .map(|(id, pos)| ((*id).to_owned(), panel(id, Some(pos))))
+        .collect();
+    let body = json!({
+        "version": "v-stages", "activate": true, "gateReport": { "spoilerLeaks": 0 },
+        "manifest": { "builtFrom": "26-10-01-res", "storyOrder": order, "eras": eras },
+        "panels": panels
+    });
+    assert_eq!(publish(&app(&s), &body).await, StatusCode::OK);
+
+    // Chapters 0 and 1 cleared, chapter 2's first stage still locked.
+    let a = new_user(pool).await;
+    set_stages(
+        pool,
+        a,
+        &[
+            ("main_00-01", 3),
+            ("main_00-02", 3),
+            ("main_01-01", 3),
+            ("main_02-01", 0),
+        ],
+    )
+    .await;
+
+    // Switch off: today's behaviour, nothing released and nothing written.
+    let r = ask(&off, a, "Who is Amiya?", None).await.expect("ask off");
+    assert_eq!(r.spoiler_safe_up_to, None);
+    assert_eq!(job(&off, r.job_id.unwrap()).await.horizon_pos, Some(0));
+    assert_eq!(game_rows(pool, a).await, (0, 0));
+    assert_eq!(off.trevor.reverdicts.load(Ordering::Relaxed), 0);
+
+    // On: the verdict is re-derived from the stages, stored, and read.
+    let started = Instant::now();
+    let r = ask(&s, a, "Who is Kal'tsit?", None).await.expect("ask on");
+    let ms = started.elapsed().as_millis();
+    let era = r.spoiler_safe_up_to.clone().expect("an era");
+    assert_eq!((era.era_id.as_str(), era.position), ("main_1", 3));
+    assert_eq!(
+        job(&s, r.job_id.unwrap()).await.horizon_pos,
+        Some(3),
+        "read up to gatePos 4 (01-01 end) -> era main_1 at 3"
+    );
+    let (rows, read) = game_rows(pool, a).await;
+    assert!(read >= 4, "the 00-01 and 01-01 halves at least: {read}");
+    assert_eq!(s.trevor.reverdicts.load(Ordering::Relaxed), 1);
+    // Exact gatePos under TREVOR_ERA_BUCKETS=0, from the rows now stored.
+    let exact = state_with(pool, HashMap::new(), |c| c.era_buckets = false);
+    let rx = ask(&exact, a, "Who is Theresa?", None)
+        .await
+        .expect("exact");
+    assert_eq!(job(&exact, rx.job_id.unwrap()).await.horizon_pos, Some(4));
+    assert_eq!(
+        exact.trevor.reverdicts.load(Ordering::Relaxed),
+        0,
+        "rows exist now"
+    );
+
+    // Stages that satisfy no gate: re-derived ONCE per process, not per ask.
+    let b = new_user(pool).await;
+    set_stages(pool, b, &[("main_00-01", 0)]).await;
+    for q in ["Who is W?", "Who is Ch'en?"] {
+        let r = ask(&s, b, q, None).await.expect("ask b");
+        assert_eq!(r.spoiler_safe_up_to, None);
+        assert_eq!(job(&s, r.job_id.unwrap()).await.horizon_pos, Some(0));
+    }
+    assert_eq!(game_rows(pool, b).await.1, 0);
+    assert_eq!(
+        s.trevor.reverdicts.load(Ordering::Relaxed),
+        2,
+        "one for a, one for b"
+    );
+
+    // No stage progress at all: no re-derivation.
+    let c = new_user(pool).await;
+    let r = ask(&s, c, "Who is Mephisto?", None).await.expect("ask c");
+    assert_eq!(job(&s, r.job_id.unwrap()).await.horizon_pos, Some(0));
+    assert_eq!(s.trevor.reverdicts.load(Ordering::Relaxed), 2);
+
+    // A site read mark: the stored reads stand, no re-derivation.
+    let d = new_user(pool).await;
+    set_stages(pool, d, &[("main_01-01", 3)]).await;
+    set_progress(pool, d, &[order[0]], &[]).await;
+    let r = ask(&s, d, "Who is Talulah?", None).await.expect("ask d");
+    assert_eq!(job(&s, r.job_id.unwrap()).await.horizon_pos, Some(1));
+    assert_eq!(s.trevor.reverdicts.load(Ordering::Relaxed), 2);
+    eprintln!(
+        "reverdict on ask ({label}): stage-only account -> era main_1 (gatePos 4), {rows} rows stored ({read} read), first ask {ms} ms; off -> 0; empty verdict re-derived once; marks or no stages skip it"
+    );
 }

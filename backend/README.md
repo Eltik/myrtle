@@ -618,6 +618,7 @@ The story question answerer (`/api/trevor/*`; interface: `trevor/design/trevor-c
 | `TREVOR_TTL_FROM_QUEUED` | on | `0` expires queued jobs by `created_at`, so a requeued job keeps its first clock (on: `queued_at`, reset by a requeue) |
 | `TREVOR_BUSY_PROTECTS` | on | `0` requeues a stale running job even while an online worker's heartbeat names it as `busyJobId` |
 | `TREVOR_JOB_OWNER_ONLY` | on | `0` lets any signed-in user poll any job id (on: the asker or a twin joiner only, like the stream) |
+| `TREVOR_REVERDICT_ON_ASK` | on | An ask from an account with stage progress but no game read rows and no site read marks first re-derives and stores the game's read verdict from the stored stage progress (as a sync does), once per account per process; `0` reads only what is stored, so such an account asks at gatePos 0 (nothing released), the previous behaviour |
 
 A request with a valid `x-trevor-worker-key` skips the per-IP rate limiter, as the service key does.
 

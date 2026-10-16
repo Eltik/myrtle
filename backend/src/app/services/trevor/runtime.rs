@@ -53,6 +53,10 @@ pub struct TrevorConfig {
     pub job_max_run_secs: i64,
     /// `TREVOR_JOB_OWNER_ONLY=0` lets any signed-in user poll any job id.
     pub job_owner_only: bool,
+    /// `TREVOR_REVERDICT_ON_ASK=0` resolves an ask's horizon from the stored
+    /// read rows only, as before: an account with stage progress but no game
+    /// read rows and no site marks then asks at gatePos 0.
+    pub reverdict_on_ask: bool,
     /// `TREVOR_QUEUE_TTL_SECS`: a queued job nobody claimed in this long fails.
     pub queue_ttl_secs: i64,
     /// `TREVOR_CF_DAILY_NEURONS`: the Cloudflare free allowance per UTC day.
@@ -85,6 +89,7 @@ impl Default for TrevorConfig {
             busy_protects: true,
             job_max_run_secs: 1800,
             job_owner_only: true,
+            reverdict_on_ask: true,
             queue_ttl_secs: 600,
             cf_daily_neurons: 9000,
             cf_summary_reserve: 1000,
@@ -126,6 +131,7 @@ impl TrevorConfig {
             busy_protects: !switched_off("TREVOR_BUSY_PROTECTS"),
             job_max_run_secs: env_num("TREVOR_JOB_MAX_RUN_SECS", d.job_max_run_secs).max(0),
             job_owner_only: !switched_off("TREVOR_JOB_OWNER_ONLY"),
+            reverdict_on_ask: !switched_off("TREVOR_REVERDICT_ON_ASK"),
             queue_ttl_secs: env_num("TREVOR_QUEUE_TTL_SECS", d.queue_ttl_secs).max(1),
             cf_daily_neurons: env_num("TREVOR_CF_DAILY_NEURONS", d.cf_daily_neurons),
             cf_summary_reserve: env_num("TREVOR_CF_SUMMARY_RESERVE", d.cf_summary_reserve),
@@ -173,6 +179,12 @@ pub struct TrevorRuntime {
     /// Claim queries `worker/next` has issued: an idle poll costs one under
     /// the `Notify` wake-up and about 21 under `TREVOR_NOTIFY_POLL=0`.
     pub claim_queries: AtomicU64,
+    /// Accounts whose read verdict an ask has already tried to re-derive, so
+    /// one whose stage progress legitimately yields no reads costs one
+    /// re-derivation per process, not one per ask. 16 bytes per asker.
+    reverdict_tried: DashMap<Uuid, ()>,
+    /// Re-derivations an ask has started (tests).
+    pub reverdicts: AtomicU64,
 }
 
 impl TrevorRuntime {
@@ -185,6 +197,8 @@ impl TrevorRuntime {
             running: DashMap::new(),
             verifier: RwLock::new(verifier),
             claim_queries: AtomicU64::new(0),
+            reverdict_tried: DashMap::new(),
+            reverdicts: AtomicU64::new(0),
         }
     }
 
@@ -282,6 +296,12 @@ impl TrevorRuntime {
         self.joiners
             .get(&job_id)
             .is_some_and(|j| j.1.contains(&user_id))
+    }
+
+    /// True the first time it is called for an account in this process: the
+    /// one re-derivation an ask may start for it.
+    pub fn first_reverdict(&self, user_id: Uuid) -> bool {
+        self.reverdict_tried.insert(user_id, ()).is_none()
     }
 
     /// Drop channels nobody listens to and joiner lists past their hour.
