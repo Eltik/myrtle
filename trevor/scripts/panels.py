@@ -48,8 +48,42 @@ strictly earlier; suggestions, identities, term definitions, primer and era at o
 --gate-sources (default on) also gates a bank entry by its `sources` (operator files a `who` answer read), not only by
 its `gateStories`; --no-gate-sources is the prototype's rule.
 
+EXTRA IDENTITY AND DEFINITION SOURCES (2026-10-17, --extra-sources; `none` is the kill switch and reproduces the
+panels before them byte for byte). They only fill an identity or a definition the sources above leave empty (the
+operator file's first Profile sentence, then the bank `who` answer); the listing, its order and every other field
+are unchanged. Identity, first match in this order, each its earliest occurrence:
+  attrs     the operator file's Basic Info (entities/operator_attributes.jsonl), gated by the file's own sourcePos
+  enemy     a boss enemy handbook description (artifacts/chrono/enemy_intros.json, scripts/enemy_intros.py), visible
+            from the _end story of the first story stage that fields the boss (a _beg-only stage: the next gatePos)
+  synopsis  "Name, a/an/the <phrase>," in the official synopsis of a STRICTLY earlier story
+  intro     a speaker's self-introduction ("Elena: “I'm Elena, a researcher in the Energy Section.”") or another
+            speaker's ("This is Senshi, the newest member of the party"), quoted, from a strictly earlier story
+  mention   a mid-sentence appositive in a strictly earlier story ("...told Rankin, the foreman, ..."), not after a
+            title or a clause opener, not a list item, not a clause; only for labels that are not terms or roles
+  Their identitySource is null (gates.py's schema allows operatorFile|bank|null; attrs writes operatorFile);
+  --identity-source-labels writes enemyHandbook/storySynopsis/storyLine instead.
+Definitions:
+  topic     later sentences of the topic summary (the prototype reads the first 3), first those whose subject is
+            the term, then any other that names the term and does not lean on the sentence before it; each still
+            gated by every passage it cites
+  --ground  (default all when any extra source is on) the summaries were written from all of a topic's passages,
+            so a sentence can cite an early passage and state a later one's fact ("The current Speaker of
+            Parliament is Vina Victoria [4]", [4] an early outfit text). Every capitalized name and quoted phrase of
+            a sentence must occur in its cited passages; one that does not is looked up in the topic's other
+            passages and the sentence waits for the earliest that has it; a name in no passage drops it. `all`
+            also applies this to the prototype's first 3 sentences (2026-10-17: 13 of them wait for a later
+            passage, 11 are dropped, 27 are evidenced at no later gate); `new` leaves those as they were.
+provenance.json (not published) records each extra line's kind and source; the post-build check (check_new_lines)
+re-derives every one from the gate order's positions alone: a story source must be strictly before the panel, an
+enemy stage and an operator file at or before, every cited passage at or before, an undated one never.
+--inject-late N is its canary (2N lines from the next story; the build must report 2N violations and exit 1).
+--operator-release outfit (opt-in, measurement): an operator file becomes visible at the earliest of its own date
+and its dated outfits' (an outfit cannot ship before its operator); the shared gate order dates it by records and
+modules only.
+
 Usage: python3 scripts/panels.py [--out artifacts/panels] [--version V] [--built-from RES_VERSION]
                                  [--gate-order auto|read|write|off] [--no-answers] [--self-test]
+                                 [--extra-sources LIST|none] [--ground auto|all|new|off] [--inject-late N]
 """
 import argparse, bisect, collections, gzip, hashlib, json, os, re, shutil, statistics, sys, time
 
@@ -139,6 +173,275 @@ GENERIC = re.compile(
 
 def dumps_compact(x):
     return json.dumps(x, ensure_ascii=False, separators=(",", ":"))
+
+
+# ---------------------------------------------------------------- extra identity and term sources (2026-10-17)
+# Each fills only an identity or a definition the prototype's sources leave empty; the listing itself is unchanged.
+EXTRA_SOURCES = ("attrs", "enemy", "synopsis", "intro", "mention", "topic")
+# identitySource for the new kinds under --identity-source-labels (gates.py's schema accepts only operatorFile|bank|null
+# today, so by default they are written as null and the kind lives in provenance.json)
+EXTRA_LABEL = {"enemy": "enemyHandbook", "synopsis": "storySynopsis", "intro": "storyLine", "mention": "storyLine"}
+# A story line where a speaker names themself and says what they are: "I'm Elena, a researcher in the Energy
+# Section." The name must be the line's speaker label. Starts that carry no identity are dropped.
+INTRO_SELF = re.compile(r"(?:^|(?<=[.!?…] ))(?:I'm|I am|My name is|My name's) ([A-Z][\w'’.\- ]{0,30}?)(, | of )"
+                        r"([^.;!?…]{3,90}?)[.!?…]")
+# Another speaker introduces them: "That's Mostima, the Messenger..."
+INTRO_OTHER = re.compile(r"(?:^|(?<=[.!?…] ))(?:This is|this is|That's|That is|Meet) ([A-Z][\w'’.\- ]{0,30}?), "
+                         r"((?:a|an|the|our|my) [^.;!?…,]{3,80}?)[.!?…,]")
+INTRO_BAD_START = re.compile(r"^(?:and (?!I'm |I am )|but |not |so |of course|this |that |which |if |right|yes|no\b|"
+                             r"okay|ok\b|sorry|please|just |too\b|again|here|now\b|though|you\b|your |remember)", re.I)
+# An official synopsis names someone with an appositive: "..., Cecelia, a resident of the outskirts, ..."
+SYN_APPOS = re.compile(r"(?:^|(?<=[.!?;] )|(?<=, )|(?<=[a-z] ))([A-Z][\w'’\-]*(?: [A-Z][\w'’\-]*){0,2}), "
+                       r"((?:a|an|the) [^,.;:!?]{3,90}?)(?:,(?! (?:and|or|nor) )| who\b)")
+
+
+# Topic summary sentences that talk about the text instead of the term, or say what is not known.
+TOPIC_META = re.compile(r"\b(the text|the passages?|the sources?|does not (?:specify|say|mention|explain|describe)|"
+                        r"not (?:specified|mentioned|explained|described|stated)|unclear|unknown|remains? a mystery|"
+                        r"questions remain)\b", re.I)
+# Later summary sentences that lean on the one before them ("While...", "Her leadership...") make poor definitions.
+TOPIC_WEAK_START = re.compile(r"^(?:While|However|Despite|Finally|Additionally|Furthermore|Although|In addition|"
+                              r"Ultimately|Notably|Moreover|Beyond|Overall|Meanwhile|Conversely|Similarly|Likewise|"
+                              r"Instead|Also|Thus|Therefore|Consequently|For example|For instance|This|These|That|"
+                              r"Those|Such|He|She|His|Her|Its|Their|Other|Some|Many|Several|Both|Each|Under|After|"
+                              r"Before|During|Since|Following|As|In contrast|By contrast|On the other hand|To solve|"
+                              r"To address|In some|In other|In this|In turn|In one|At the same time)\b")
+KIND_HEADS = {
+    "organization": {"organization", "group", "company", "corporation", "family", "club", "agency", "association",
+                     "union", "order", "society", "guild", "faction", "movement", "institution", "team", "band"},
+    "place": {"city", "region", "area", "town", "village", "district", "borough", "island", "territory", "mountain",
+              "mountains", "settlement", "location", "site", "land", "country", "province"},
+    "nation": {"nation", "country", "state", "empire", "kingdom", "federation", "republic"},
+    "race": {"race", "species", "people"},
+    "event": {"event", "incident", "war", "conflict", "battle", "catastrophe"},
+    "concept": set(),
+}
+
+
+GROUND_SKIP = {"The", "It", "They", "In", "While", "However", "This", "These", "Its", "Their", "A", "An", "As", "At",
+               "By", "For", "From", "On", "Of", "To", "With", "Despite", "Although", "Additionally", "Furthermore",
+               "Notably", "Under", "After", "Before", "During", "Since", "Following", "Some", "Many", "Several",
+               "Both", "Each", "Other", "Such", "When", "Where", "Which", "Who", "He", "She", "His", "Her", "Unlike",
+               "Ultimately", "Finally", "Moreover", "Overall", "Meanwhile", "Currently", "Historically", "Today",
+               "Later", "Once", "Though", "Beyond", "Within", "Through", "Among", "Also", "Because", "If", "One",
+               "Two", "Three", "That", "Those", "There", "Here", "According"}
+
+
+def _norm(x):
+    return x.lower().replace("’", "'")
+
+
+def has_word(w, T):
+    """w occurs in the lowercased text T, allowing a suffix ("Victorian" in "victoria", "Felines" in "feline")."""
+    w = _norm(w)
+    return w in T or any(w.endswith(x) and len(w) - len(x) >= 4 and w[:-len(x)] in T
+                         for x in ("ians", "ian", "ans", "an", "es", "s", "n"))
+
+
+def has_item(item, T):
+    """A capitalized word, or a quoted phrase ('"..."'), occurs in the lowercased text T."""
+    if item.startswith('"'):
+        q = _norm(item.strip('"'))
+        return q in T or all(has_word(x, T) for x in q.split())
+    return has_word(item, T)
+
+
+def ungrounded_items(sent, text, names):
+    """The capitalized words (after the first) and quoted phrases of a summary sentence that do not occur in text
+    (its cited passages). The term's own name and aliases are exempt."""
+    T = _norm(text)
+    own = {w.lower() for n in names for w in tokens(n)}
+    out = []
+    for m in re.finditer(r"[A-Z][\w'’\-]+", sent):
+        w = re.sub(r"(?:'s|’s)$", "", m.group(0).rstrip("'’"))
+        if m.start() and w not in GROUND_SKIP and w.lower() not in own and not has_word(w, T):
+            out.append(w)
+    for m in re.finditer(r'"([^"]{3,80})"', sent):
+        q = '"' + re.sub(r"[\s,.;:!?]+$", "", m.group(1)) + '"'
+        if not has_item(q, T):
+            out.append(q)
+    return out
+
+
+def grounded(sent, passages, names):
+    """True when every name and quoted phrase of the sentence occurs in its cited passages (no text: False)."""
+    text = " ".join(passages)
+    return bool(text.strip()) and not ungrounded_items(sent, text, names)
+
+
+def story_intros(text, speakers_seen):
+    """(name, kind, line) for every introduction in one chunk's text, in text order. kind is "self" or "other"."""
+    out = []
+    for line in text.split("\n"):
+        m = re.match(r"^([^:]{1,40}): (.*)$", line)
+        if not m:
+            continue
+        spk, body = m.group(1), m.group(2)
+        for mm in INTRO_SELF.finditer(body):
+            if mm.group(1) == spk and not INTRO_BAD_START.match(mm.group(3)) and len(mm.group(3).split()) <= 14:
+                out.append((spk, "self", f"{spk}: “{body[mm.start():mm.end()]}”"))
+        for mm in INTRO_OTHER.finditer(body):
+            n = mm.group(1)
+            if n != spk and n in speakers_seen and len(mm.group(2).split()) <= 10:
+                out.append((n, "other", f"{spk}: “{body[mm.start():mm.end()].rstrip(',')}…”"
+                            if body[mm.end() - 1] == "," else f"{spk}: “{body[mm.start():mm.end()]}”"))
+    return out
+
+
+# A story line (dialogue of someone else, or narration) that names them with an appositive in mid-sentence:
+# "...she told Rankin, the foreman, ..." A lowercase word must come before the name (a vocative follows a comma or
+# starts the line), no form of address may precede it, and the phrase may hold no pronoun or auxiliary (a clause,
+# "Miss Alty, the town has become quite dangerous", is not an appositive). The phrase must close with a comma that
+# no "and"/"or" follows ("Diane, the departing Glasgow Gang, and the crown" is a list).
+MENTION_APPOS = re.compile(r"(?<=[a-z] )([A-Z][\w'’\-]*(?: [A-Z][\w'’\-]*){0,2}), "
+                           r"((?:a|an|the) [^,.;:!?…]{3,70}?),(?! (?:and|or|nor) )")
+TITLE_WORDS = {"Miss", "Mister", "Mr.", "Mrs.", "Ms.", "Dame", "Sir", "Herr", "Frau", "Madam", "Madame", "Lord", "Lady",
+               "Master", "Uncle", "Aunt", "Captain", "Doctor", "Dr.", "Signora", "Signore", "Signor", "Mistress", "Old",
+               "Little", "Big", "Your", "Mayor", "Patriarch", "Professor", "General", "Commander", "Chief", "Elder"}
+# "With Caesar, the Signori dei Lupi surround..." or "After meeting Mostima, the two blend into the crowd": the
+# sentence opened with an introductory phrase that ends at the name's comma, so a clause follows, not an appositive.
+MENTION_OPENER = re.compile(r"(?:^|[.!?…] )(?:With|After|Before|For|Like|Unlike|As|Since|Without|Besides|Despite|"
+                            r"Upon|When|While|Behind|Beside|Against|Including|Except|Once|Until|Following|Thanks to|"
+                            r"Together with|Along with|Because of|Due to|During|In|On|At|Through|Under|Among|Alongside|"
+                            r"[A-Z][a-z]*(?:ed|ing))"
+                            r"\b[^.!?…,;:]*$")
+MENTION_TITLE = re.compile(r"\b(?:Miss|Mister|Mr\.|Mrs\.|Ms\.|Dame|Sir|Herr|Frau|Madam|Madame|Lord|Lady|Your|"
+                           r"Master|Uncle|Aunt|Captain|Doctor|Dr\.|Signora|Signore|Signor|Mistress|Old|Little|Big|"
+                           r"dear|my)\s+$")
+MENTION_CLAUSE = re.compile(r"\b(?:I|you|he|she|we|they|it|me|him|her|us|them|his|their|our|your|its|is|are|was|"
+                            r"were|be|been|has|have|had|will|would|should|can|could|must|may|might|shall|do|does|did|"
+                            r"isn't|aren't|wasn't|weren't|don't|doesn't|didn't|won't|can't|goes|gave|came)\b")
+
+
+# A head noun that says nothing about who they are, or a plural head (the phrase is a list item, "Theresa, the
+# invincible forces of nature, ...").
+ROLE_WORDS = {"Operator", "Operators", "Doctor", "King", "Queen", "Tutor", "Mechanist", "Chancellor", "Emperor",
+              "Empress", "Gendarmerie", "Grace", "Spokesman", "Spokesperson", "Announcer", "Narrator"}
+APPOS_VAGUE_HEAD = {"man", "woman", "girl", "boy", "guy", "one", "kid", "child", "lady", "gentleman", "person", "sort",
+                    "type", "thing", "fellow", "lass", "lad"}
+APPOS_PREP = re.compile(r"\s(?:of|from|in|at|with|who|whom|that|for|on|to|under|behind)\s")
+
+
+def appositive_ok(phrase):
+    """A noun phrase that can stand as an identity line: not a clause, not vague, not plural."""
+    words = phrase.split()
+    if len(words) > 8 or MENTION_CLAUSE.search(phrase.split(" ", 1)[1]) or words[1].lower() == "one":
+        return False
+    head = APPOS_PREP.split(" " + phrase + " ", 1)[0].split()[-1].lower()
+    if head in APPOS_VAGUE_HEAD and len(words) <= 3:
+        return False
+    return not (len(head) > 3 and head.endswith("s") and not head.endswith(("ss", "us", "is")) and head[:1].islower())
+
+
+def story_mentions(text):
+    """(name, line) for each mid-sentence appositive of one chunk's text (speaker != name)."""
+    out = []
+    for line in text.split("\n"):
+        m = re.match(r"^([^:]{1,40}): (.*)$", line)
+        spk, body = (m.group(1), m.group(2)) if m else (None, line)
+        for mm in MENTION_APPOS.finditer(body):
+            words, phrase = mm.group(1).split(" "), mm.group(2)
+            if not appositive_ok(phrase) or MENTION_TITLE.search(body[:mm.start()]) or \
+                    MENTION_OPENER.search(body[:mm.start()]) or any(w in TITLE_WORDS for w in words[:-1]):
+                continue
+            out.append((words, phrase, spk))
+    return out
+
+
+def synopsis_appositives(syn, names):
+    """(name, line) for each "Name, a/an/the <phrase>," of an official synopsis whose name is a listed speaker."""
+    out = []
+    for m in SYN_APPOS.finditer(syn or ""):
+        words, phrase = m.group(1).split(" "), m.group(2)
+        if not appositive_ok(phrase) or MENTION_OPENER.search(syn[:m.start()]) or \
+                any(w in TITLE_WORDS for w in words[:-1]):
+            continue
+        for i in range(len(words)):  # "Rhodes Island operator Grani": the longest suffix that is a speaker
+            n = " ".join(words[i:])
+            if n in names:
+                out.append((n, f"{n}, {phrase}."))
+                break
+    return out
+
+
+def lead_sentences(s, min_len=60, maxlen=260):
+    """Leading sentences of s until they reach min_len characters ("Age unknown, gender unknown, history unknown."
+    alone says little), cut at maxlen like first_sentence."""
+    parts = SENT.split((s or "").strip().split("\n")[0])
+    out = ""
+    for x in parts:
+        if out and len(out) + 1 + len(x) > maxlen:
+            break
+        out = f"{out} {x}" if out else x
+        if len(out) >= min_len:
+            break
+    return first_sentence(out, maxlen) if len(out) > maxlen else out
+
+
+BASIC_INFO_OK = re.compile(r"^[A-Za-zÀ-ÿ0-9 '’\-.,()&/]+$")
+
+
+def basic_info_line(at):
+    """The operator file's Basic Info as one line (operator_attributes.jsonl row). A field with stray symbols is
+    left out (Ifrit's file is glitched on purpose: "race: Sa■&K?uSxw?...")."""
+    at = {k: (v if isinstance(v, str) and BASIC_INFO_OK.match(v) else None) for k, v in at.items()}
+    head = f"{at['class']} Operator ({at['branch']})" if at.get("class") and at.get("branch") else at.get("class")
+    if not head:
+        return None
+    parts = [head]
+    aff = [x for x in (at.get("nation"), at.get("group"), at.get("team")) if x]
+    if aff:
+        parts.append("affiliation: " + ", ".join(dict.fromkeys(aff)))
+    if at.get("race") and at["race"] != "Unknown":
+        parts.append("race: " + at["race"])
+    if at.get("birthplace") and at["birthplace"] != "Unknown":
+        parts.append("birthplace: " + at["birthplace"])
+    return "; ".join(parts) + "."
+
+
+def check_new_lines(p, prov, gp, sp):
+    """The extra sources' gate, checked from the written panel, its provenance record and the gate order's positions
+    alone (storyId -> gatePos, sourceId -> sourcePos), not from the code that chose the lines. Every identity or
+    definition that has a provenance record must match it and its source must sit at or before the panel's gatePos
+    (story lines and synopses strictly before). Returns violation strings."""
+    sid, here = p["storyId"], p["position"]
+    out = []
+
+    def pos_of(x, chunk=False):
+        s = x.rsplit("#", 1)[0] if chunk else x  # a chunk id is "<source>#NNNN"; source ids may hold '#' too
+        return gp.get(s, sp.get(s))
+
+    ids = (prov or {}).get("identity", {})
+    defs = (prov or {}).get("definition", {})
+    for c in p["whosHere"]["characters"]:
+        r = ids.get(c["name"])
+        if r is None:
+            if c["identity"] is not None and c["identitySource"] not in ("operatorFile", "bank"):
+                out.append(f"{sid}: identity of {c['name']} has no source")
+            continue
+        if c["identity"] != r["text"]:
+            out.append(f"{sid}: identity of {c['name']} differs from its provenance")
+        q = pos_of(r["source"])
+        if r["kind"] in ("synopsis", "intro", "mention"):
+            ok = q is not None and q < here
+        elif r["kind"] == "enemy":
+            ok = q is not None and q + (1 if r.get("after") else 0) <= here
+        elif r["kind"] in ("attrs", "outfit"):
+            ok = q is not None and q <= here
+        else:
+            ok = False
+        if not ok:
+            out.append(f"{sid}: identity of {c['name']} from {r['kind']} {r['source']} at {q} is past {here}")
+    for t in p["terms"]["items"]:
+        r = defs.get(t["term"])
+        if r is None:
+            continue
+        if t["definition"] != r["text"]:
+            out.append(f"{sid}: definition of {t['term']} differs from its provenance")
+        qs = [pos_of(x, chunk=True) for x in r["passages"]]
+        if r["kind"] != "topic" or not qs or any(q is None or q > here for q in qs):
+            out.append(f"{sid}: definition of {t['term']} cites {r['passages']} at {qs}, past {here}")
+    return out
 
 
 # ---------------------------------------------------------------- release order
@@ -378,8 +681,17 @@ def build(a):
 
     # --- operator archives (official game text; dated by source_dates)
     archive = {}
+    ground = a.ground if a.ground != "auto" else ("all" if a.extra_sources else "off")
+    need_pass = ({p for t in jl(os.path.join(art, "topics/topics.jsonl")) for p in t["passages"]}
+                 if ground != "off" else set())
+    pass_text = {}  # passage chunk id -> text, for the grounding check
     with open(os.path.join(art, "p3b/chunks.jsonl"), encoding="utf-8") as f:
         for line in f:
+            if need_pass:
+                i = line.find('"chunkId":"') + 11
+                if line[i:line.find('"', i)] in need_pass:
+                    d = json.loads(line)
+                    pass_text.setdefault(d["chunkId"], d["text"])
             if '"storyId":"archive_' not in line[:160]:
                 continue
             d = json.loads(line)
@@ -389,20 +701,73 @@ def build(a):
             n = re.match(r"Operator archive:\s*(.+)", d["text"])
             if m and n:
                 archive[n.group(1).strip()] = (d["storyId"], first_sentence(m.group(1)), O.key(d["storyId"]))
+    outfit_bound = {}  # operator name -> outfit source id that moved its file earlier (--operator-release outfit)
+    if a.operator_release == "outfit":
+        # An outfit cannot ship before its operator, so a dated outfit is also an upper bound on the operator's EN
+        # release; the file is shown from the earliest of its own date and its outfits' dates.
+        first_outfit = {}
+        for src in O.source_date:
+            mo = re.match(r"skin_(char_\d+_[a-z0-9]+)_", src)
+            if mo:
+                k = O.key(src)
+                if mo.group(1) not in first_outfit or k < first_outfit[mo.group(1)][0]:
+                    first_outfit[mo.group(1)] = (k, src)
+        for name, (aid, line, k) in list(archive.items()):
+            fo = first_outfit.get(aid[len("archive_"):])
+            if fo and fo[0] < k:
+                archive[name] = (aid, line, fo[0])
+                outfit_bound[name] = (fo[1], k)
+
+    if need_pass and os.path.exists(os.path.join(art, "p4x/chunks.jsonl")):  # outfits and modules live only in P4x
+        with open(os.path.join(art, "p4x/chunks.jsonl"), encoding="utf-8") as f:
+            for line in f:
+                i = line.find('"chunkId":"') + 11
+                cid = line[i:line.find('"', i)]
+                if cid in need_pass and cid not in pass_text:
+                    pass_text[cid] = json.loads(line)["text"]
 
     # --- topics: per-sentence gate from cited passages
+    extra = set(a.extra_sources)
+    stats_extra = collections.Counter()
     topics = {}
     for t in jl(os.path.join(art, "topics/topics.jsonl")):
-        sents = []
-        for s in SENT.split((t.get("summary") or "").split("\n")[0])[:3]:
+        sents, more, other = [], [], []
+
+        def cited(s):
             cites = [int(n) for g in CITE.findall(s) for n in re.split(r"\s*,\s*", g)]
             if not cites:
-                continue
+                return None
             ids = [t["passages"][n - 1] for n in cites if 0 < n <= len(t["passages"])]
-            if len(ids) != len(cites):
-                continue
-            sents.append((O.max_key(ids), strip_cites(s)))
-        topics[t["topic"]] = {"kind": t["kind"], "sents": sents, "aliases": t.get("aliases") or []}
+            return ids if len(ids) == len(cites) else None
+        paras = (t.get("summary") or "").split("\n")
+        for s in SENT.split(paras[0])[:3]:
+            ids = cited(s)
+            if ids is not None:
+                sents.append((O.max_key(ids), strip_cites(s), ids))
+        if "topic" in extra:
+            # Later sentences of the summary whose subject is the term: the term or an alias ("The Royal Guard is
+            # ..."), or "The <noun>" where the noun is a word of the term's name ("The Union" for Truckers' Union) or
+            # a head noun of its kind ("The city" for a place), or "It"/"They". Each is still gated by every passage
+            # it cites.
+            alts = sorted({x for x in (t["topic"], *(t.get("aliases") or [])) if x}, key=len, reverse=True)
+            heads = {w.lower() for x in alts for w in tokens(x) if len(w) > 3} | KIND_HEADS.get(t["kind"], set())
+            subj = re.compile(r"^(?:The |the )?(?:" + "|".join(re.escape(x) for x in alts) + r")\b")
+            rest = SENT.split(paras[0])[3:] + [s for para in paras[1:] for s in SENT.split(para)]
+            for s in rest:
+                ids = cited(s)
+                txt = strip_cites(s)
+                if ids is None or len(txt) > 300 or TOPIC_META.search(txt) or "*" in txt:
+                    continue
+                m = re.match(r"^The ([a-z][a-z'’\-]+)\b", txt)
+                if subj.match(txt) or (m and m.group(1) in heads) or re.match(r"^(?:It|They) [a-z]", txt):
+                    more.append((O.max_key(ids), txt, ids))
+                elif not TOPIC_WEAK_START.match(txt) and (
+                        {w.lower() for w in tokens(txt)} & {w.lower() for x in alts for w in tokens(x) if len(w) > 3}):
+                    # any other sentence must at least name the term ("Beanstalk is a Metal Crab breeder" under
+                    # Reproba is about one member, not the race)
+                    other.append((O.max_key(ids), txt, ids))
+        topics[t["topic"]] = {"kind": t["kind"], "sents": sents, "more": more + other,
+                              "aliases": t.get("aliases") or [], "passages": t["passages"]}
     exact, lower, maxlen = {}, {}, 1
     for name, t in topics.items():
         for al in {name, *t["aliases"]}:
@@ -418,10 +783,22 @@ def build(a):
     # --- one pass over story chunks: speakers and term mentions per story
     speakers = collections.defaultdict(collections.Counter)
     terms = collections.defaultdict(collections.Counter)
+    intro_raw = []  # (story key, chunk ordinal, name, kind, line, storyId), in file order
+    mention_raw = []  # (story key, chunk ordinal, name words, phrase, speaker, storyId)
+    speakers_seen = set()
     for d in jl(os.path.join(art, "chunks.jsonl")):
         sid = d["storyId"]
+        if d["chunkId"] in need_pass:
+            pass_text.setdefault(d["chunkId"], d["text"])
         for s in d.get("speakers") or []:
             speakers[sid][s] += 1
+        if "mention" in extra:
+            for words, phrase, spk in story_mentions(d["text"]):
+                mention_raw.append((O.key(sid), d["ordinal"], words, phrase, spk, sid))
+        if "intro" in extra:
+            speakers_seen.update(d.get("speakers") or [])
+            for n, kind, line in story_intros(d["text"], speakers_seen):
+                intro_raw.append((O.key(sid), d["ordinal"], n, kind, line, sid))
         tk = tokens(d["text"])
         lk = [x.lower() for x in tk]
         i, n = 0, len(tk)
@@ -438,6 +815,90 @@ def build(a):
     for sid in O.ranked:
         for name in terms.get(sid, ()):
             term_first.setdefault(name, sid)
+
+    # --- grounding: a model-written summary sentence may carry facts from passages it does not cite ("The current
+    # Speaker of Parliament is Vina Victoria [4]", where [4] is an early outfit text and Vina's role comes from a
+    # later event). Every name and quoted phrase of a sentence must occur in its cited passages; one that does not
+    # is looked up in the topic's other passages and the sentence waits for the earliest that has it (that passage
+    # joins its sources). A name in no passage at all drops the sentence.
+    def evidenced(t, names, x, what):
+        k, txt, ids = x
+        cited = " ".join(pass_text.get(i, "") for i in ids)
+        if not cited.strip():
+            stats_extra[f"ground_{what}_dropped"] += 1
+            return None
+        ev = []
+        for item in ungrounded_items(txt, cited, names):
+            best = min(((O.key(p_), p_) for p_ in t["passages"] if has_item(item, _norm(pass_text.get(p_, "")))),
+                       default=None)
+            if best is None:
+                stats_extra[f"ground_{what}_dropped"] += 1
+                return None
+            ev.append(best)
+        if ev:
+            stats_extra[f"ground_{what}_delayed" if max(ev)[0] > k else f"ground_{what}_evidenced"] += 1
+            k = max(k, max(ev)[0])
+            ids = ids + [p_ for _, p_ in ev if p_ not in ids]
+        return (k, txt, ids)
+    for name, t in topics.items():
+        names = [name, *t["aliases"]]
+        if ground == "all":
+            t["sents"] = [y for y in (evidenced(t, names, x, "first3") for x in t["sents"]) if y]
+        if ground != "off":
+            t["more"] = [y for y in (evidenced(t, names, x, "later") for x in t["more"]) if y]
+        t["sents"] = [(k, s_) for k, s_, *_ in t["sents"]]
+
+    # --- extra identity sources: per name, candidates (visible from key, kind, text, provenance)
+    # A candidate is shown on a panel with key K when its key is < K (story lines, synopses: strictly earlier
+    # stories) or <= K (an enemy's stage, an operator file). Each name keeps its earliest candidate per kind.
+    id_cand = collections.defaultdict(dict)  # name -> kind -> (key, strict, text, prov)
+
+    def offer(name, kind, key, strict, text, prov):
+        if key == NEVER or not text:
+            return
+        cur = id_cand[name].get(kind)
+        if cur is None or (key, text) < (cur[0], cur[2]):
+            id_cand[name][kind] = (key, strict, tidy(text), prov)
+    all_names = {n for c in speakers.values() for n in c}
+    if "attrs" in extra:
+        for at in jl(os.path.join(art, "entities/operator_attributes.jsonl")):
+            src = "archive_" + at["charId"]
+            if at["name"] in all_names and src in O.source_date:
+                offer(at["name"], "attrs", O.key(src), False, basic_info_line(at), {"kind": "attrs", "source": src})
+    if "enemy" in extra:
+        ep = os.path.join(art, "chrono/enemy_intros.json")
+        enemies = json.load(open(ep, encoding="utf-8"))["enemies"] if os.path.exists(ep) else {}
+        stats_extra["enemyIntrosFile"] = os.path.exists(ep)
+        for name, rows in enemies.items():
+            if name not in all_names:
+                continue
+            for r in rows:
+                for st in r["stages"]:
+                    if st["story"] not in O.story:
+                        continue
+                    k = O.key(st["story"])
+                    # after: visible from the story AFTER the stage's _beg story, i.e. on keys > k
+                    offer(name, "enemy", k, st["after"], lead_sentences(r["description"]),
+                          {"kind": "enemy", "source": st["story"], "after": st["after"], "enemyId": r["enemyId"]})
+    # An appositive names a person; a label that is a term (Sankta, Feline) or a role (the Doctor, "Rhodes Island
+    # Operator") gets none from a synopsis or a passing mention.
+    term_names = {x for name, t in topics.items() for x in (name, *t["aliases"])}
+    person = {n for n in all_names if n not in term_names and n.split(" ")[-1] not in ROLE_WORDS}
+    if "synopsis" in extra:
+        for sid in O.ranked:
+            for n, line in synopsis_appositives(p2.get(sid, {}).get("officialSynopsis"), person):
+                offer(n, "synopsis", O.key(sid), True, line, {"kind": "synopsis", "source": sid})
+    for k, _o, n, kind, line, sid in sorted(intro_raw, key=lambda x: (x[0], x[1])):
+        if n in all_names:
+            offer(n, "intro", k, True, line, {"kind": "intro", "source": sid})
+    for k, _o, words, phrase, spk, sid in sorted(mention_raw, key=lambda x: (x[0], x[1])):
+        for i in range(len(words)):  # the longest suffix that is a speaker label
+            n = " ".join(words[i:])
+            if n in all_names:
+                if n != spk and n in person:
+                    offer(n, "mention", k, True, f"{n}, {phrase}.", {"kind": "mention", "source": sid})
+                break
+    EXTRA_ORDER = ("attrs", "enemy", "synopsis", "intro", "mention")  # after the operator file and the bank
     t_load = time.time()
 
     era_keys = [(e["_key"], e) for e in eras]
@@ -457,6 +918,9 @@ def build(a):
     sizes, sizes_noans, bodies = [], [], []
     ctx = {"O": O, "by_id": by_id, "archive": archive, "who": who, "topics": topics, "era_keys": era_keys}
     violations = []
+    provenance = {}  # storyId -> {"identity": {name: rec}, "definition": {term: rec}}, extra sources only
+    gate_gp, gate_sp = gate_pos_map(gate_order_doc(O, art, eras_of(O)))  # the check's own positions
+    injected = 0
     for sid in O.ranked:
         row = O.story[sid]
         g = row["groupId"]
@@ -504,11 +968,25 @@ def build(a):
             ident, src, wid = None, None, None
             if name in archive and archive[name][2] <= K:
                 ident, src = archive[name][1], "operatorFile"
+                if name in outfit_bound and outfit_bound[name][1] > K:  # visible only through the outfit bound
+                    provenance.setdefault(sid, {}).setdefault("identity", {})[name] = {
+                        "kind": "outfit", "source": outfit_bound[name][0], "text": tidy(ident)}
+                    stats_extra["identity_outfit"] += 1
             w = who.get(name)
             if w and w["_gate"] <= K:
                 wid = w["id"]
                 if ident is None:
                     ident, src = first_sentence(w["answer"]), "bank"
+            if ident is None and name in id_cand:
+                for kind in EXTRA_ORDER:
+                    c = id_cand[name].get(kind)
+                    if c and (c[0] < K if c[1] else c[0] <= K):
+                        ident = c[2]
+                        src = "operatorFile" if kind == "attrs" else (EXTRA_LABEL[kind] if a.identity_source_labels
+                                                                      else None)
+                        provenance.setdefault(sid, {}).setdefault("identity", {})[name] = dict(c[3], text=ident)
+                        stats_extra["identity_" + kind] += 1
+                        break
             fa = first_app.get(name)
             fa_k = O.key(fa["storyId"]) if fa else NEVER
             seen = []
@@ -533,6 +1011,13 @@ def build(a):
                 continue
             t = topics[name]
             defn = next((s for k, s in t["sents"] if k <= K), None)
+            if defn is None:
+                more_hit = next(((s, ids) for k, s, ids in t["more"] if k <= K), None)
+                if more_hit:
+                    defn = more_hit[0]
+                    provenance.setdefault(sid, {}).setdefault("definition", {})[name] = {
+                        "kind": "topic", "topic": name, "passages": more_hit[1], "text": tidy(defn)}
+                    stats_extra["definition_topic"] += 1
             fs = term_first.get(name)
             items.append({"term": name, "kind": t["kind"], "mentions": cnt, "definition": defn,
                           "firstNamed": None if fs is None or fs == sid else
@@ -594,8 +1079,22 @@ def build(a):
             "terms": {"items": items, "more": tmore},
             "suggestions": {"items": sugg},
         }
+        if a.inject_late and injected < 2 * a.inject_late and chars and items and R < len(O.ranked):
+            # The canary for the check below: a line whose source is the NEXT story (gatePos R + 1) must be caught.
+            later = O.ranked[R]
+            chars[0]["identity"], chars[0]["identitySource"] = "INJECTED line from a later story", None
+            items[0]["definition"] = "INJECTED definition citing a later story"
+            pv = provenance.setdefault(sid, {})
+            pv.setdefault("identity", {})[chars[0]["name"]] = {"kind": "intro", "source": later,
+                                                               "text": chars[0]["identity"]}
+            pv.setdefault("definition", {})[items[0]["term"]] = {"kind": "topic", "topic": items[0]["term"],
+                                                                 "passages": [later + "#0000"],
+                                                                 "text": items[0]["definition"]}
+            injected += 2
         body = tidy(dumps_compact(panel)).encode("utf-8")
-        violations += verify_panel(json.loads(body), ctx)
+        written = json.loads(body)
+        violations += verify_panel(written, ctx, provenance.get(sid))
+        violations += check_new_lines(written, provenance.get(sid), gate_gp, gate_sp)
         with open(os.path.join(stage, "stories", sid + ".json"), "wb") as f:
             f.write(body)
         sizes.append(len(body))
@@ -636,6 +1135,7 @@ def build(a):
                                    if sizes_noans else None),
         "totalRawBytes": len(all_raw), "totalGzipBytes": len(all_gz), "gzipRatio": round(len(all_gz) / len(all_raw), 3),
         "gateViolations": len(violations),
+        "extraSources": dict(sorted(stats_extra.items()), sources=sorted(extra)),
         "undatedStories": sum(1 for s in O.ranked if O._key[s] == NEVER),
         "gateOrder": gate_how,
         "eras": [{k: e[k] for k in ("id", "name", "position", "groupPosition")} for e in eras],
@@ -653,10 +1153,15 @@ def build(a):
         "stats": {k: st[k] for k in ("panelsNonEmpty", "items", "totalRawBytes", "totalGzipBytes", "gateViolations")},
     }
     write_json_atomic(os.path.join(stage, "manifest.json"), manifest)
+    if extra:
+        # Not published: where each extra-source line came from, for the gate check and for review.
+        write_json_atomic(os.path.join(stage, "provenance.json"), provenance)
     with open(os.path.join(stage, "stats.json"), "w", encoding="utf-8") as f:
         json.dump(st, f, indent=2, ensure_ascii=False)
     for v in violations[:20]:
         sys.stderr.write(f"VIOLATION {v}\n")
+    if a.inject_late:
+        sys.stderr.write(f"inject-late: {injected} late lines injected, {len(violations)} violations reported\n")
     if violations:
         sys.stderr.write(f"{len(violations)} gate violations; {a.out} left unchanged, the build is in {stage}\n")
         return 1
@@ -674,7 +1179,7 @@ def build(a):
 
 
 # ---------------------------------------------------------------- the post-build check
-def verify_panel(p, ctx):
+def verify_panel(p, ctx, prov=None):
     """Every fact of one written panel checked against the release order from the panel's own content. Returns
     a list of violation strings (empty when the panel is clean)."""
     O, by_id, archive, who, topics = ctx["O"], ctx["by_id"], ctx["archive"], ctx["who"], ctx["topics"]
@@ -698,7 +1203,9 @@ def verify_panel(p, ctx):
     for c in p["whosHere"]["characters"]:
         if c["firstSeen"] and not O.key(c["firstSeen"]["storyId"]) < K:
             bad(f"firstSeen {c['name']}")
-        if c["identitySource"] == "operatorFile" and not (c["name"] in archive and archive[c["name"]][2] <= K):
+        has_prov = c["name"] in (prov or {}).get("identity", {})  # an extra source: check_new_lines checks it
+        if c["identitySource"] == "operatorFile" and not has_prov and not (c["name"] in archive and
+                                                                         archive[c["name"]][2] <= K):
             bad(f"operator file {c['name']}")
         if c["identitySource"] == "bank" and not (c["name"] in who and who[c["name"]]["_gate"] <= K):
             bad(f"who {c['name']}")
@@ -707,7 +1214,7 @@ def verify_panel(p, ctx):
     for t in p["terms"]["items"]:
         if t["firstNamed"] and not O.key(t["firstNamed"]["storyId"]) < K:
             bad(f"firstNamed {t['term']}")
-        if t["definition"] is not None:
+        if t["definition"] is not None and t["term"] not in (prov or {}).get("definition", {}):
             ks = [k for k, s in topics[t["term"]]["sents"] if tidy(s) == t["definition"] or s == t["definition"]]
             if not ks or min(ks) > K:
                 bad(f"definition {t['term']}")
@@ -762,7 +1269,53 @@ def self_test():
     sha2, how2 = sync_gate_order(O, art, eras_of(O), "auto", d)
     assert how1 == "written" and how2 == "read (fresh)" and sha1 == sha2, (how1, how2)
     shutil.rmtree(d)
-    print("panels.py self-test: ok (order, ties, dated and undated records, sourcePos, eras, gate_order round trip)")
+    # The extra-source gate: story lines strictly earlier, an enemy stage at or before (after = the next gatePos),
+    # cited passages at or before by gatePos or sourcePos, undated never.
+    gp2, sp2 = {"s1": 1, "s2": 2, "s3": 3}, {"archive_x": 2}
+
+    def one(kind, src, here, **kw):
+        p = {"storyId": "s", "position": here, "terms": {"items": []},
+             "whosHere": {"characters": [{"name": "N", "identity": "line", "identitySource": None}]}}
+        return check_new_lines(p, {"identity": {"N": dict(kind=kind, source=src, text="line", **kw)}}, gp2, sp2)
+    assert not one("intro", "s1", 2) and one("intro", "s2", 2) and one("synopsis", "s3", 2)
+    assert not one("mention", "s1", 2) and one("mention", "s2", 2)
+    assert not one("enemy", "s2", 2, after=False) and one("enemy", "s2", 2, after=True)
+    assert not one("outfit", "archive_x", 2) and one("outfit", "archive_x", 1)
+    sp2["skin_x#1"] = 2
+    assert not one("outfit", "skin_x#1", 2) and one("outfit", "skin_x#1", 1)
+    assert not one("enemy", "s2", 3, after=True) and not one("attrs", "archive_x", 2) and one("attrs", "archive_x", 1)
+    assert one("intro", "undated_story", 3) and one("other", "s1", 3)
+    p = {"storyId": "s", "position": 2, "terms": {"items": []},
+         "whosHere": {"characters": [{"name": "N", "identity": "line", "identitySource": None}]}}
+    assert check_new_lines(p, None, gp2, sp2), "an identity with no source and no provenance must be caught"
+    for cites, bad in ((["s1#0001", "archive_x#0000"], False), (["s3#0000"], True), (["enemy_y#0000"], True),
+                       ([], True)):
+        p = {"storyId": "s", "position": 2, "whosHere": {"characters": []},
+             "terms": {"items": [{"term": "T", "definition": "d"}]}}
+        got = check_new_lines(p, {"definition": {"T": {"kind": "topic", "passages": cites, "text": "d"}}}, gp2, sp2)
+        assert bool(got) == bad, (cites, got)
+    assert story_intros("Elena: Yes! I'm Elena, a researcher in the Energy Section. Sorry.", set()) == [
+        ("Elena", "self", "Elena: “I'm Elena, a researcher in the Energy Section.”")]
+    assert story_intros("Talulah: I am Talulah, of course.", set()) == []  # no identity in it
+    assert not grounded("The current Speaker of Parliament is Vina Victoria.",
+                        ["Gnosis became Speaker of the Parliament of Kjerag."], ["Parliament"])
+    assert grounded("The Victorian city is known as the \"Iron City,\" a place.", ["Victoria's iron city"], ["X"])
+    assert story_mentions("Raidian: she told Rankin, the foreman, to go.")[0][:2] == (["Rankin"], "the foreman")
+    assert story_mentions("Elysium: Miss Alty, the town has become quite dangerous.") == []
+    assert story_mentions("Joanna: After greeting Enya, the girl looks aside and falls quiet again.") == []
+    assert story_mentions("Chester: As requested by Sir Arctosz, the leader of Rhodes Island, Dr. Ling.") == []
+    assert story_mentions("She thinks about the drunken Diane, the departing Glasgow Gang, and the crown.") == []
+    assert story_mentions("With Caesar, the Signori dei Lupi surround Vargo, shifting.") == []
+    assert synopsis_appositives("After meeting Mostima, the two blend into the crowd, unseen.", {"Mostima"}) == []
+    assert synopsis_appositives("Led by Siege, the Exemplars arrive in Gibsonham, where...", {"Siege"}) == []
+    assert synopsis_appositives("It turns out that Zuo Le, the youth, and Zheng did it.", {"Zuo Le"}) == []
+    assert synopsis_appositives("Wei Yenwu, the head of Lungmen, waits.", {"Wei Yenwu"}) == [
+        ("Wei Yenwu", "Wei Yenwu, the head of Lungmen.")]
+    assert story_mentions("Amiya: we fight Theresa, the invincible forces of nature, and more.") == []
+    assert synopsis_appositives("At dawn, Cecelia, a resident of the outskirts, meets them.", {"Cecelia"}) == [
+        ("Cecelia", "Cecelia, a resident of the outskirts.")]
+    print("panels.py self-test: ok (order, ties, dated and undated records, sourcePos, eras, gate_order round trip, "
+          "extra-source gate and extractors)")
 
 
 def main():
@@ -780,6 +1333,21 @@ def main():
     ap.add_argument("--no-gate-sources", dest="gate_sources", action="store_false",
                     help="kill switch: gate bank entries by gateStories only (the prototype)")
     ap.add_argument("--no-answers", action="store_true", help="suggestions carry ids only, no answer text")
+    ap.add_argument("--extra-sources", default=",".join(EXTRA_SOURCES),
+                    help="comma list of the 2026-10-17 identity/definition sources (" + ",".join(EXTRA_SOURCES) +
+                    "); 'none' is the kill switch: the panels before them, byte for byte")
+    ap.add_argument("--ground", choices=("auto", "all", "new", "off"), default="auto",
+                    help="topic definitions must name only what their cited passages name: all sentences, only the "
+                    "2026-10-17 ones, or off; auto = all, or off under --extra-sources none")
+    ap.add_argument("--operator-release", choices=("file", "outfit"), default="file",
+                    help="when an operator file becomes visible: its own source date (default, the shared gate "
+                    "order) or the earliest of that and the operator's dated outfits (opt-in, measurement)")
+    ap.add_argument("--identity-source-labels", action="store_true",
+                    help="write enemyHandbook/storySynopsis/storyLine as identitySource (needs gates.py's schema "
+                    "to accept them); default null")
+    ap.add_argument("--inject-late", type=int, default=0, metavar="N",
+                    help="canary: put N identities and N definitions from a later story into the build; the gate "
+                    "check must report all 2N and the build exits 1 (use with --out on a scratch directory)")
     ap.add_argument("--max-chars", type=int, default=12)
     ap.add_argument("--max-terms", type=int, default=8)
     ap.add_argument("--max-suggest", type=int, default=6)
@@ -789,6 +1357,10 @@ def main():
     if a.self_test:
         self_test()
         return 0
+    a.extra_sources = [] if a.extra_sources in ("none", "") else a.extra_sources.split(",")
+    bad = [x for x in a.extra_sources if x not in EXTRA_SOURCES]
+    if bad:
+        ap.error(f"--extra-sources: unknown {bad}")
     a.trevor = os.path.abspath(a.trevor)
     a.out = os.path.abspath(a.out or os.path.join(a.trevor, "artifacts", "panels"))
     return build(a)
