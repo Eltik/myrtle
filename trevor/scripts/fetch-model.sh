@@ -18,6 +18,9 @@
 #       with DESIGN_MODEL=26b). Runs alone: ~15 GB resident on the 24 GB Mac.
 #   WITH_VISION=1 ./scripts/fetch-model.sh
 #       also Gemma 4 12B's multimodal projector (175 MB) for image input.
+#   WITH_E2B=1 ./scripts/fetch-model.sh
+#       also Gemma 4 E2B instruct Q4_K_M (3.1 GB), the VPS CPU rung's model
+#       (the slim profile; design/trevor-questions.md section 13).
 set -euo pipefail
 
 ROOT="${1:-models}"
@@ -97,4 +100,12 @@ fi
 if [[ "${WITH_VISION:-0}" == "1" ]]; then
   fetch google/gemma-4-12B-it-qat-q4_0-gguf 29d097773436b69ff9feafd636ab4cf873786537 "$ROOT/llm" \
     "mmproj-gemma-4-12b-it-qat-q4_0.gguf|mmproj-gemma-4-12b-it-qat-q4_0.gguf|cb018338a7538a9814d994bfe54644c71eb7ed54e31eae2f721e45fd3c260da7"
+fi
+
+# WITH_E2B=1: unsloth's Q4_K_M GGUF of google/gemma-4-E2B-it (Google publishes
+# only a QAT Q4_0 of E2B; Q4_K_M is the quant the VPS CPU benchmark used);
+# main as of 2026-07-17.
+if [[ "${WITH_E2B:-0}" == "1" ]]; then
+  fetch unsloth/gemma-4-E2B-it-GGUF 0314792d7f1f7e229411f620751375812bb9faf2 "$ROOT/llm" \
+    "gemma-4-E2B-it-Q4_K_M.gguf|gemma-4-e2b-it-q4_k_m.gguf|740185b21d22ceb83a11c3aa62ad5842ef32c70f6096d756bbee85a1e4ec34b8"
 fi
