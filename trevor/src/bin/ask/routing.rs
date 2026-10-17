@@ -381,7 +381,7 @@ impl Routed {
 /// Choose a table tool with the router `a.router` and run it. `llm` is needed by the model router only.
 pub(crate) async fn route_question(q: &str, a: &Args, tools: &Tools, llm: Option<&Llm>) -> Result<Routed> {
     let started = std::time::Instant::now();
-    // Detectors that read the question only, before the router (2026-10-03): every router line added for a tool moved
+    // Detectors that read the question only, before the router: every router line added for a tool moved
     // 20 to 34 unrelated routes, so these tools are reached without one.
     if a.router == RouterKind::Model && !a.no_route {
         let ms = || started.elapsed().as_secs_f64() * 1000.0;

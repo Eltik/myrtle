@@ -38,13 +38,12 @@ use crate::server::{Spawned, connect_or_spawn};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // `ask` answers from P3b (P3a plus the 200 dossiers and 88 event summaries) unless --corpus is given: on 120
-    // real Reddit questions it responds 0.575 against 0.550 (4 gained, 1 lost) and on gold set v2 0.641 against
-    // 0.618 (Ian, 2026-09-28). Search and eval keep P3a, where P3b costs 0.015 retrieval recall.
+    // `ask` answers from P3b (P3a plus the 200 dossiers and 88 event summaries) unless --corpus is given; search and
+    // eval keep P3a (design/trevor-retrieval-baseline.md has the measurements).
     let m = <Args as clap::CommandFactory>::command().get_matches();
     let mut a = <Args as clap::FromArgMatches>::from_arg_matches(&m)?;
     let corpus_default = m.value_source("corpus") == Some(clap::parser::ValueSource::DefaultValue);
-    // RELATION_RULE is the default since 2026-10-05 night (`--no-relation-rule`).
+    // RELATION_RULE is the default (`--no-relation-rule`); `answer_one_inner` narrows it per question.
     a.relation_rule = !a.no_relation_rule;
     if m.value_source("retrieval") == Some(clap::parser::ValueSource::DefaultValue)
         && std::env::var("TREVOR_RETRIEVAL").as_deref() == Ok("bm25") {
@@ -62,10 +61,9 @@ async fn main() -> Result<()> {
         return serve::horizon_check(&a, b);
     }
     if corpus_default {
-        // P4 (P3b plus 6,347 chunks of module stories, voice lines, IS, enemies, outfits and items) only for a question
-        // that names one of those sources: on gold set v2 it cost 0.008 correct and 0.025 faithfulness against P3b,
-        // while source-specific real questions went from 1 to 3 of 7 (2026-09-29).
-        // With the model router naming the source, the corpus follows its route instead (set after routing).
+        // P4 (P3b plus the module stories, voice lines, IS, enemies, outfits and items) only for a question that names
+        // one of those sources (`source_kind`); with the model router naming the source, the corpus follows its route
+        // instead (set after routing).
         let source_q = !router_source(&a) && a.batch.is_none() && a.question.as_deref().is_some_and(|q| source_kind(q).is_some());
         let (p3b, p4) = (P3B_DIR, p4_dir(&a));
         a.runtime.corpus = PathBuf::from(if source_q { p4 } else { p3b });

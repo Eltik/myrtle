@@ -66,8 +66,8 @@ pub(crate) struct Tables {
     pub(crate) route: Option<Route>,
 }
 
-/// One answer, with the answer category check (default since 2026-10-05, `--no-answer-check`): a who/which question that constrains its
-/// answer's category ("Which Rhodes Island Operator (not playable unit) had visited Iris' castle of dreams?") and whose
+/// One answer, with the answer category check (`--no-answer-check`): a who/which question that constrains its answer's
+/// category ("Which Rhodes Island Operator (not playable unit) had visited Iris' castle of dreams?") and whose
 /// answer's first named character fails it by the game data (Sakiko Togawa is a playable operator) is asked once more
 /// with a passage saying so; when the second answer's first name fails too, the data note is appended to it.
 pub(crate) async fn answer_one(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Names>, chrono: &Chrono, q: &str, a: &Args,
@@ -93,7 +93,7 @@ pub(crate) async fn answer_one(rts: &mut Runtimes, llm: &Llm, names: &HashMap<St
     Ok(second)
 }
 
-/// The operator list check (default since 2026-10-16, `--no-operator-list-check`; Ian's ian35): an answer to a question
+/// The operator list check (`--no-operator-list-check`; ian35): an answer to a question
 /// asking for operators (`Tools::asks_operators`) whose list items name someone who is not a playable operator ("Give a
 /// ranking of operators who break the most Geneva convention rules" ranked Aurela first, a Sankta mercenary named in
 /// Gracebearer's file 4) is asked once more with a note naming each such person and the operator file the cited passage
@@ -152,7 +152,7 @@ fn lead_passages(a: &Args, tools: &Tools, q: &str, topic: &Option<TopicPassage>,
 
 pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Names>, chrono: &Chrono, q: &str, a: &Args,
                           tables: &mut Tables) -> Result<Answer> {
-    // The relation rule is about people (2026-10-05): not for a question naming a nation, place, race or organization topic.
+    // The relation rule is about people: not for a question naming a nation, place, race or organization topic.
     let people_only;
     let a = if a.relation_rule && tables.tools.names_group_topic(q) {
         people_only = Args { relation_rule: false, ..a.clone() };
@@ -188,7 +188,7 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
         &short
     };
     let mut pre = lead_passages(a, &tables.tools, q, &topic, &route, ending_pre);
-    // Term lookup (night 9): the term's spelling in P4x, its two best record chunks and a glossary, before the passages.
+    // Term lookup: the term's spelling in P4x, its two best record chunks and a glossary, before the passages.
     let mut term_search: Option<String> = None;
     if !a.no_term_lookup && !a.no_route {
         if let Some(term) = term_of(q) {
@@ -260,9 +260,9 @@ summaries; prefer the passages)".into(), text));
                 who.join(" or ")), c.text.clone()).in_scope());
         }
     }
-    // Character-scoped scenes (2026-10-06): no event named, one character named as the subject of a said or done act.
-    // They are added before the retrieved passages, which keep their whole budget (with the scoped scenes' 3,000-token
-    // rest, gold g0004 lost the retrieved line "I won't burn Rhodes Island, or my homework").
+    // Character-scoped scenes: no event named, one character named as the subject of a said or done act. They are added
+    // before the retrieved passages, which keep their whole budget (the scoped scenes' 3,000-token rest lost gold g0004's
+    // retrieved line).
     if scoped.is_none() && !a.no_character_scenes && !a.no_route && kind.is_none() {
         if let Some((who, rows)) = character_scenes(rt, &a.runtime, &tables.tools, q) {
             for (i, (r, text, _)) in rows.iter().enumerate() {
@@ -280,11 +280,11 @@ summaries; prefer the passages)".into(), text));
     } else { a };
     let form = form.as_ref();
     let first = answer_from(rt, llm, names, chrono, q, term_search.as_deref().unwrap_or(q), a, &pre, kind, form).await?;
-    // The typed fallback (2026-10-03, item 10; `--no-typed-fallback`): a declined answer to a question that names exactly one operator and was
+    // The typed fallback (`--no-typed-fallback`): a declined answer to a question that names exactly one operator and was
     // not routed to a typed source tries that operator's own voice lines, module stories and (when artifacts/p4-art is
-    // built) art units, without touching the router prompt: every added router line moved about 20 unrelated routes.
-    // Since 2026-10-03 (leftover b) also an answer that cites only the operator's own file: "who helped Mutsumi care
-    // for the plants?" cited her file, which says only that others admire her; the robots are in her module story.
+    // built) art units, without touching the router prompt. So does an answer that cites only the operator's own file
+    // (`--no-own-file-fallback`): "who helped Mutsumi care for the plants?" cited her file, which says only that others
+    // admire her; the robots are in her module story.
     let own_file_only = |op: &str| !a.no_own_file_fallback && !first.cited.is_empty() && first.cited.iter()
         .all(|id| file_owner(&tables.tools, id).is_some_and(|o| norm(&o) == norm(op)));
     let retry_op = one_operator(q, &tables.tools).filter(|_| declines(&first.answer))
@@ -299,9 +299,9 @@ summaries; prefer the passages)".into(), text));
             if let Some(k) = own {
                 let k: &'static str = FALLBACK_KINDS.iter().find(|x| **x == k).copied().unwrap_or("voice");
                 let second = answer_from(rt2, llm, names, chrono, q, q, a, &pre, Some(k), form).await?;
-                // Kept only when it cites a unit of the operator itself: "what operator is based off an animal with
-                // phantom as part of its name" (ian11) named Phantom, got Melantha's voice lines first and answered
-                // "Melantha" where the default declines (2026-10-03 07:50 run).
+                // Kept only when it cites a unit of the operator itself: ian11 ("what operator is based off an animal
+                // with phantom as part of its name") named Phantom, got Melantha's voice lines first and answered
+                // "Melantha".
                 let cites_own = second.cited.iter().any(|id| rt2.store.chunks.iter().find(|c| c.chunk_id == *id)
                     .is_some_and(|c| FALLBACK_KINDS.contains(&c.group_id.as_str())
                         && typed_owner(c.text.lines().next().unwrap_or_default()).is_some_and(|o| norm(&o) == norm(&op))));
@@ -391,7 +391,7 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
     let opinion_form = form.is_some_and(|f| f.form == "opinion");
     let (mut rows, lore) = passages(rt, search, a, kind, form)?;
     // Under a spoiler horizon (`--serve` jobs): only chunks released at or before it, and of the generated passages
-    // only those that are themselves such a chunk (a topic, dossier, game-data or overview passage is not).
+    // only those that are themselves such a chunk (a topic, dossier or game-data passage is not).
     let kept: Vec<Pre>;
     let pre = match rt.horizon.clone() {
         Some(h) => {
@@ -419,7 +419,7 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
         let label = passage_label(names, c);
         // A file found through another name of its character says so: with "Margaret vs Degenbrecher" and Nearl the
         // Radiant Knight's file among the passages, the answer still said it found nothing about "a character named
-        // Margaret" (2026-09-30).
+        // Margaret".
         let label = match form.and_then(|f| f.named.iter().find(|(sid, asked, file)| *sid == c.story_id
             && norm(asked) != norm(file))) {
             Some((_, asked, file)) => format!("{label}; this is the file of {file}, whom the question calls {asked}"),
@@ -492,10 +492,9 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
         system.push_str(YES_NO_RULE);
     }
     match lore {
-        // The typed units lead the passages, so the source-kind rule's "say Trevor lacks that text" does not apply:
-        // it made the Angelina answer open with a decline although passage [1] was her outfit (2026-09-30).
-        // Two parts, spelled out: with the lore passages merely present, Gemma answered from [1] alone (Angelina,
-        // 2026-09-30 08:40).
+        // The typed units lead the passages, so the source-kind rule's "say Trevor lacks that text" does not apply: it
+        // made the Angelina answer open with a decline although passage [1] was her outfit. The two parts are spelled
+        // out: with the lore passages merely present, Gemma answered from [1] alone.
         Some(l) => system.push_str(&format!(" Passages [{}] to [{}] are the source text the question asks about (their label \
 names the kind); never say Trevor lacks that text. Answer in two parts. First, what that source text says, citing [{}] to [{}]. \
 Then a paragraph that begins \"Lore context:\" and explains the people, places, powers and events the source text mentions, \

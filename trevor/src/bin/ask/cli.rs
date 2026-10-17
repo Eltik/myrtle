@@ -48,9 +48,9 @@ pub(crate) struct Args {
     /// body, race features, abilities or age (2026-10-02).
     #[arg(long)]
     pub(crate) no_game_data: bool,
-    /// v1: the 46 topics and the P3b and P4 built with the 200 dossiers, as before 2026-10-01; v2 (the default since
-    /// 2026-10-03; 0 losses on real probe, held-out and gold): plus the topics and dossiers chosen from data, a new
-    /// dossier and a game-data passage at answer time. `--lore v1` is the kill switch.
+    /// v1: the 46 topics and the P3b and P4 built with the 200 dossiers, as before 2026-10-01; v2 (the default): plus
+    /// the topics and dossiers chosen from data, a new dossier and a game-data passage at answer time. `--lore v1` is the
+    /// kill switch.
     #[arg(long, value_enum, default_value = "v2")]
     pub(crate) lore: LoreSet,
     /// Recap stories by the old substring test on story ids (Episode 1 then also takes Episodes 10 to 16); the
@@ -59,9 +59,7 @@ pub(crate) struct Args {
     pub(crate) recap_substring: bool,
     /// Do not let the model router name the source of a retrieval route (story, operator_file, module,
     /// voice, skin, is, enemy, item, any), which picks P4 and the preferred kind instead of `source_kind`'s keyword
-    /// list. The source is the default since 2026-09-30: on the 32 real-probe questions it moves or that are
-    /// source-specific, responds 7 to 14 (7 gained, 0 lost), faithfulness 0.712 to 0.762, gold set v2 1 gained of 4
-    /// moved. This flag restores the router before it (`--route-only` byte-identical on 266 questions).
+    /// list. This flag restores the router before the source (2026-09-30).
     #[arg(long)]
     pub(crate) no_router_source: bool,
     /// Number Integrated Strategies runs as the data's ids do (rogue_1 = IS 1), as before 2026-09-30; the game counts
@@ -71,8 +69,7 @@ pub(crate) struct Args {
     /// Do not add lore to a question about an outfit, item, module or enemy (before 2026-09-30). By default the story
     /// and operator-file passages its best unit's text retrieves follow the unit, other operators' units are dropped,
     /// and the answer has two parts, the second opening "Lore context:" (see `LORE_KINDS` for why operator files and
-    /// voice lines are left out). Default since round 6c (2026-09-30): Ian's Angelina outfit question answers in two
-    /// parts, r046 responds 0 to 1 (faithful 6/6), r102 unchanged, 0 losses, `--route-only` identical on 266 questions.
+    /// voice lines are left out).
     #[arg(long)]
     pub(crate) no_source_lore: bool,
     /// Do not add the full name after a short name the question uses ("kal" -> "kal (Kal'tsit)"), for retrieval
@@ -85,9 +82,7 @@ pub(crate) struct Args {
     /// No question-form call (before 2026-09-30). By default one more grammar-bound Gemma call sorts a retrieval
     /// question into fact, yes_no or opinion with an evidence query; a yes/no question interleaves the evidence query's
     /// hits and gets YES_NO_RULE, a judgment question gathers candidates from operator files and dossiers (named
-    /// characters first, found by codename, real name or identity link) and gets OPINION_FORM_RULE. Measured on 63
-    /// real-probe questions: responds 42 to 52 (13 gained, 3 lost: r030, r046, r080), handles 26 to 23 of 27,
-    /// faithfulness 0.903 to 0.895; 6 fact controls byte-identical. Made the default by Ian (2026-09-30, +13/-3).
+    /// characters first, found by codename, real name or identity link) and gets OPINION_FORM_RULE.
     #[arg(long)]
     pub(crate) no_question_form: bool,
     /// No second look at an opinion form (before 2026-10-01): the first call's opinion stands even for a question about
@@ -197,147 +192,135 @@ pub(crate) struct Args {
     /// Passages in a `passages` rung answer (no model).
     #[arg(long, default_value_t = 5)]
     pub(crate) passages_n: usize,
-    /// Leave out the explicit-estimate rule a question asking an age gets with the game-data passage (the rule is the
-    /// default since 2026-10-03).
+    /// Leave out the explicit-estimate rule a question asking an age gets with the game-data passage.
     #[arg(long)]
     pub(crate) no_age_estimate: bool,
-    /// Turn off the origin chain (default since 2026-10-03, item 1): a why/when/how-it-began question gets ORIGIN_RULE
-    /// (trace the causes back to the earliest one the passages show) and the earlier scenes of the story its search keeps
-    /// hitting, placed first (ian15 now starts from Swire's kidnapping; 0 losses; see design/trevor-questions.md section 12).
+    /// Turn off the origin chain: a why/when/how-it-began question gets ORIGIN_RULE (trace the causes back to the
+    /// earliest one the passages show) and the earlier scenes of the story its search keeps hitting, placed first.
     #[arg(long)]
     pub(crate) no_origin_chain: bool,
     /// RELATION_RULE for this question: `!no_relation_rule`, set by `main` and per job; `answer_one_inner` clears it for
     /// a question naming a group topic, and for a relation question naming fewer than two people (not an admiration one).
     #[arg(skip)]
     pub(crate) relation_rule: bool,
-    /// Kill switch for RELATION_RULE (default since 2026-10-05 night: 0 pairwise losses on the 14 relationship questions,
-    /// 4 wins: g0099, ian19, ian23, relx299).
+    /// Kill switch for RELATION_RULE (relationship and admiration questions; see `relation_rule`).
     #[arg(long)]
     pub(crate) no_relation_rule: bool,
-    /// Kill switch for the scoped scenes (default since 2026-10-05 night): a question naming a main episode or event and a
+    /// Kill switch for the scoped scenes: a question naming a main episode or event and a
     /// character who speaks or is named in it gets, first, that event's scenes with the character ranked by the question.
     #[arg(long)]
     pub(crate) no_scoped_scenes: bool,
-    /// Kill switch for the character-scoped scenes (2026-10-06, `character_scenes`): a question naming no event and one
+    /// Kill switch for the character-scoped scenes (`character_scenes`): a question naming no event and one
     /// character as the subject of a said or done act ("During which event Mon3tr suggested assassinating a child") gets
     /// excerpts of the scenes where that character speaks, their lines ranked by the reranker.
     #[arg(long)]
     pub(crate) no_character_scenes: bool,
-    /// Kill switch for the answer extension (default since 2026-10-06): an answer that stopped at `--n-predict` is asked
-    /// again with twice the limit (Ian's ian27 stopped mid-sentence at 400 tokens).
+    /// Kill switch for the answer extension: an answer that stopped at `--n-predict` is asked again with twice the limit
+    /// (ian27 stopped mid-sentence at 400 tokens).
     #[arg(long)]
     pub(crate) no_answer_extend: bool,
     /// Measurement: with --batch, print the scoped scenes each question would get (chunk ids), without a model.
     #[arg(long, hide = true)]
     pub(crate) scoped_only: bool,
-    /// Measurement (2026-10-06, Ian's item 1): with --batch of {qid, question, chunk, quote}, the rank of the evidence line
+    /// Measurement: with --batch of {qid, question, chunk, quote}, the rank of the evidence line
     /// among every line of the corpus (each with the line before it) by line dense and by the reranker, estimated on a
     /// stride sample (TREVOR_LINE_STRIDE, default 30; the reranker on every TREVOR_LINE_RR_STRIDE-th, default 300), next to
     /// the chunk's dense, BM25 and fused ranks. No model server.
     #[arg(long, hide = true)]
     pub(crate) line_study: bool,
-    /// Kill switch for the opinion gate (default since 2026-10-06; `opinion_needs_candidates`): an opinion question the
-    /// keyword test also calls an opinion ("favourite", "do you think", ...) that names no character or group, asks no
-    /// who/which and names no word the corpus writes as a proper name (`names_proper_word`: "Fort barron") gets no
-    /// candidates from operator files and dossiers and OPINION_RULE ("the story does not settle it") instead of
-    /// OPINION_FORM_RULE. Fires on r030 and r116 of the 448 set questions: real-probe responds 1 to 2 of 2 and handles 1 to
-    /// 2 (r030 regains both), faithfulness 16/18 to 12/14, Qwen pairwise 2 ties, 0 losses.
+    /// Kill switch for the opinion gate (`opinion_needs_candidates`): an opinion question the keyword test also calls an
+    /// opinion ("favourite", "do you think", ...) that names no character or group, asks no who/which and names no word
+    /// the corpus writes as a proper name (`names_proper_word`: "Fort barron") gets no candidates from operator files and
+    /// dossiers and OPINION_RULE ("the story does not settle it") instead of OPINION_FORM_RULE.
     #[arg(long)]
     pub(crate) no_opinion_gate: bool,
-    /// Kill switch for group evidence (default since 2026-10-16, Ian's ian34): an opinion question naming two or more
+    /// Kill switch for group evidence (ian34): an opinion question naming two or more
     /// group topics (organizations, nations, places, races; `Tools::named_group_topics`) gets each group's best 3 chunks
     /// naming it, from the topic name plus the evidence query, ahead of the candidates.
     #[arg(long)]
     pub(crate) no_group_evidence: bool,
-    /// Kill switch for the operator list check (default since 2026-10-16, Ian's ian35; `Tools::asks_operators`,
+    /// Kill switch for the operator list check (ian35; `Tools::asks_operators`,
     /// `Tools::non_operator_items`): a question asking for operators whose answer lists someone who is not a playable
     /// operator is asked once more with a note naming them and whose operator file the cited passage is.
     #[arg(long)]
     pub(crate) no_operator_list_check: bool,
-    /// Turn off the race-trait rule (default since 2026-10-03, item 11, no model): race topics serve the summary after
-    /// `topics.py traitrule`, where a body-feature sentence stays only when a cited line gives the feature to a speaker or
-    /// subject of that race in operator_attributes.jsonl (drops Durin "thick tails" and Savra "a horn"; 0 losses).
+    /// Turn off the race-trait rule: race topics serve the summary after `topics.py traitrule`, where a body-feature
+    /// sentence stays only when a cited line gives the feature to a speaker or subject of that race in
+    /// operator_attributes.jsonl (drops Durin "thick tails" and Savra "a horn").
     #[arg(long)]
     pub(crate) no_race_trait_rule: bool,
-    /// Turn off the typed fallback (default since 2026-10-03, item 10; no router change): a declined answer to a
-    /// question naming one operator, not routed to a typed source, is tried again with that operator's voice lines,
-    /// module stories or art units first, and kept only when it cites one of that operator's own units (trivia correct
-    /// 0 to 3 of 3 changed, gold 0 losses, Ian's 25 unchanged; see design/trevor-questions.md section 12).
+    /// Turn off the typed fallback: a declined answer to a question naming one operator, not routed to a typed source, is
+    /// tried again with that operator's voice lines, module stories or art units first, and kept only when it cites one
+    /// of that operator's own units.
     #[arg(long)]
     pub(crate) no_typed_fallback: bool,
-    /// Turn off the game text (default since 2026-10-03, item 6): P4 routes read artifacts/p4x, P4 plus the game text
-    /// the coverage audit found unindexed (scripts/gametext.py; real probe responds 2 to 4 of 6 changed, 0 losses).
+    /// Turn off the game text: P4 routes read artifacts/p4x, P4 plus the game text the coverage audit found unindexed
+    /// (scripts/gametext.py).
     #[arg(long)]
     pub(crate) no_game_text: bool,
-    /// Turn off the appearance index (2026-10-03, item 7): "What chapters does Elysium appear in?" is answered, before
+    /// Turn off the appearance index: "What chapters does Elysium appear in?" is answered, before
     /// the router, by the `appearances` tool (scripts/appearances.py: the story groups where a character speaks, and apart
     /// those where they are only named).
     #[arg(long)]
     pub(crate) no_appearances: bool,
-    /// Turn off the cross-reference trigger (2026-10-03, leftover d): a question with "boss" and a joining word goes to
+    /// Turn off the cross-reference trigger: a question with "boss" and a joining word goes to
     /// the `cross_ref` tool before the router, with no router line.
     #[arg(long)]
     pub(crate) no_cross_ref_trigger: bool,
-    /// Turn off the design-inspiration tool (2026-10-04, Ian's ian11): a question with a design word ("based off an animal",
+    /// Turn off the design-inspiration tool (ian11): a question with a design word ("based off an animal",
     /// "inspired by", "motif", "design inspiration") whose content word is an inferred subject or an operator name in
     /// artifacts/entities/design_infer.jsonl (scripts/design_infer.py: deduced from the game data, checked by a second
     /// model) is answered, before the router, by the `design_basis` tool, both readings, labelled as Trevor's inference.
     #[arg(long)]
     pub(crate) no_design_basis: bool,
-    /// Turn off IS-ending passages (2026-10-03, item 2): a question naming an Integrated Strategies run and one of its
+    /// Turn off IS-ending passages: a question naming an Integrated Strategies run and one of its
     /// endings (number, ordinal or name) or its endbooks is answered from that ending's scene and endbook stories, with
     /// the game's ending order, without the router.
     #[arg(long)]
     pub(crate) no_is_ending: bool,
-    /// Turn off the term rule (2026-10-03, item 6): a "what is/are X" question gets TERM_RULE (plain words, a short
+    /// Turn off the term rule: a "what is/are X" question gets TERM_RULE (plain words, a short
     /// definition of each in-world term used).
     #[arg(long)]
     pub(crate) no_term_rule: bool,
-    /// Turn off chronology lines for the subject (2026-10-03, leftover c): a when-question gets the dated lines of
+    /// Turn off chronology lines for the subject: a when-question gets the dated lines of
     /// artifacts/chrono/terra_history.md that name its subject, and DATE_RULE (a labelled estimate).
     #[arg(long)]
     pub(crate) no_chrono_subject: bool,
-    /// Turn off the own-file fallback (2026-10-03, leftover b): an answer to a one-operator question that cites only
+    /// Turn off the own-file fallback: an answer to a one-operator question that cites only
     /// that operator's file is tried again like a decline (typed fallback), kept only when it cites the operator's own
     /// voice line, module or art unit.
     #[arg(long)]
     pub(crate) no_own_file_fallback: bool,
-    /// Turn off time evidence (2026-10-03 night 8; default, 0 losses on the 3 questions it fires on, ian17 now
-    /// estimates "between 1086 and 1090"): when chronology lines name a when-question's subject, they come as a numbered
+    /// Turn off time evidence: when chronology lines name a when-question's subject, they come as a numbered
     /// TIME EVIDENCE block right before the question, and the question is followed by the estimate as the required
     /// final line ("Estimate: ..."); off, they are the CHRONOLOGY LINES block, as before.
     #[arg(long)]
     pub(crate) no_time_evidence: bool,
-    /// Turn off deep topic entries (default since 2026-10-05, lore v2 only): the topic tool serves the judged map-reduce
+    /// Turn off deep topic entries (lore v2 only): the topic tool serves the judged map-reduce
     /// entry of scripts/topic_deep.py (artifacts/topics/deep.jsonl: the story groups, operator files, game records and
     /// dossiers naming the topic, summarized per source, then into What it is, Traits, History, Society and politics,
     /// Notable people, Key events, Open questions; the judge's unsupported sentences dropped) instead of the summary, for
     /// a question about the topic as a whole (`Tools::broad_topic_question`: at most one content word besides the
-    /// topic's name). Night 9 served it to every topic question and lost held-out h033 and real r079 (both specific
-    /// questions); gated, it changes ian28 alone of the 447 (Qwen pairwise: the entry wins) and the 14 topic-routed
-    /// questions with an entry are byte-identical.
+    /// topic's name).
     #[arg(long)]
     pub(crate) no_deep_topics: bool,
-    /// Turn off term lookup (default since 2026-10-03 night 9; fires on 4 of 447 questions, changes 2, 0 losses: ian31
-    /// now defines the Khaganquest from its game-text record): a short what-is question whose term occurs in P4x as one
+    /// Turn off term lookup: a short what-is question whose term occurs in P4x as one
     /// to three words written together or apart ("khagan quest" is "Khaganquest") searches with the corpus's spelling
     /// and gets, before the passages, the 2 P4x chunks naming the term most (records and files first) and a glossary
     /// of the served topics those chunks name (the first two sentences of each summary, at most 3).
     #[arg(long)]
     pub(crate) no_term_lookup: bool,
-    /// Turn off the answer category check (default since 2026-10-05): a who/which question that constrains its answer's category ("not
-    /// playable", "NPC", "playable operator", "from <nation>") has the names its answer gives checked against the
-    /// game data (operator_attributes names, real names, identity links); when every name it gives fails, it is asked
-    /// once more with a passage saying which names fail and why, and a second failure gets that note appended. Fires on
-    /// ian24 alone of the 447 set questions and on 2 of 1,228 Reddit and Discord questions; changes no default answer
-    /// (the default declines ian24).
+    /// Turn off the answer category check: a who/which question that constrains its answer's category ("not playable",
+    /// "NPC", "playable operator", "from <nation>") has the names its answer gives checked against the game data
+    /// (operator_attributes names, real names, identity links); when every name it gives fails, it is asked once more
+    /// with a passage saying which names fail and why, and a second failure gets that note appended.
     #[arg(long)]
     pub(crate) no_answer_check: bool,
     /// The note of the answer check's second ask, set only inside `answer_one`.
     #[arg(skip)]
     pub(crate) check_note: Option<String>,
-    /// Turn off the rarity order of the term-lookup glossary (default since 2026-10-05): the served topics the term's
-    /// chunks name are ordered by first mention, as on night 9, instead of rarest first (fewest P4x chunks naming them).
+    /// Turn off the rarity order of the term-lookup glossary: the served topics the term's chunks name are ordered by
+    /// first mention instead of rarest first (fewest P4x chunks naming them).
     #[arg(long)]
     pub(crate) no_glossary_rarity: bool,
     /// With `--batch`: print, per question, which of the 2026-10-03 question-only detectors fire, without a model

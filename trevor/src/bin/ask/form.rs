@@ -8,14 +8,11 @@ use crate::detect::{is_canon_question, is_source_question, is_synthesis_question
 
 /// The question-form call: prompt and grammar.
 pub(crate) const FORM_SYSTEM: &str = include_str!("../../../prompts/form.system.txt");
-/// The second look at an opinion form (2026-10-01; `--form-v1` turns it off): the same prompt with opinion kept for
-/// judgments across people, and a question about one character's trait, feelings or likes sent to fact or yes_no. The
-/// first prompt classed "Is Ulpianus talkative or untalkative?", "is nian actually a nice person?" and "how does
-/// greythroat feel about other people now?" as opinion, which gathered other operators' files as candidates and the
-/// hedge "the story does not rank them"; the Ulpianus answer quoted Nightblade's file as his, and 6 of the 14 trivia
-/// misses with the source chunk in the passages were one-character questions in the opinion form. It runs only when
-/// the first call says opinion, and an opinion it confirms keeps the first call's evidence query, so fact and yes/no
-/// questions and confirmed opinion questions retrieve exactly as before.
+/// The second look at an opinion form (`--form-v1` turns it off): the same prompt with opinion kept for judgments
+/// across people, and a question about one character's trait, feelings or likes sent to fact or yes_no ("Is Ulpianus
+/// talkative or untalkative?" as an opinion gathered other operators' files as candidates and quoted Nightblade's file as
+/// his). It runs only when the first call says opinion, and an opinion it confirms keeps the first call's evidence query,
+/// so fact and yes/no questions and confirmed opinion questions retrieve exactly as before.
 pub(crate) const FORM_SYSTEM_V2: &str = include_str!("../../../prompts/form.system.v2.txt");
 pub(crate) const FORM_GRAMMAR: &str = include_str!("../../../prompts/form.gbnf");
 
