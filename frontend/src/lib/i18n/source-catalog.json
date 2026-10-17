@@ -4368,7 +4368,6 @@
     "story.trevor.library.signedOut": "Trevor's answers follow your reading progress: they use only the stories you have read, so nothing ahead of you is spoiled. Sign in so Trevor knows how far you are.",
     "story.trevor.library.signedOutPrepared": "Each story's Trevor panel in the reader (recap, characters, terms and prepared answers) needs no account.",
     "story.trevor.library.signedOutTitle": "Ask Trevor about the lore",
-    "story.trevor.library.status.deferred": "Quick look given, full answer coming",
     "story.trevor.library.status.done": "Answered",
     "story.trevor.library.status.failed": "Not answered",
     "story.trevor.library.status.queued": "Waiting",

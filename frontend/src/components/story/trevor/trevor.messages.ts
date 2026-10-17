@@ -373,10 +373,6 @@ export const messages = {
         text: "Not answered",
         description: "Status of a past question Trevor could not answer.",
     },
-    "trevor.library.status.deferred": {
-        text: "Quick look given, full answer coming",
-        description: "Status of a past question that got a quick look (passages only) while its full answer waits in the queue.",
-    },
     "trevor.library.signedOutTitle": {
         text: "Ask Trevor about the lore",
         description: "Title of the Ask Trevor tab for a signed-out visitor.",
