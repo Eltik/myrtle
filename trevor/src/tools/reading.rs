@@ -53,8 +53,8 @@ say how Episodes 0 to 9 interleave with the early events. Years are estimates un
 
     // ---------------------------------------------------------------- reading guide
     // Reading-order questions, 5 to 9% of real ones, answered 0.29 by retrieval (design/trevor-questions.md): the EN
-    // release order (`scripts/reading_guide.py`; main episode and event dates from the game data since 2026-10-04,
-    // the wiki's episode dates before, `opts.wiki_legacy`), what an event builds on (its primer's prior context), reading time, and where a character first speaks.
+    // release order (`scripts/reading_guide.py`; main episode and event dates from the game data), what an event builds
+    // on (its primer's prior context), reading time, and where a character first speaks.
 
     /// Reading in chronological order: players ask it far more often than they recommend it (3 recommend, 6 advise
     /// against; design/trevor-reading-order-research.md), so the in-world order comes with the reason most don't.
@@ -64,21 +64,9 @@ say how Episodes 0 to 9 interleave with the early events. Years are estimates un
     pub fn reading_chronological(&self) -> ToolResult {
         self.guide_items()?;
         let why = self.community.as_ref().map_or(String::new(), |c| c["chronological"]["why"].as_str().unwrap_or_default().to_owned());
-        // The prequel placements and years below were taken from the community's guides and the wiki (2026-09-28);
-        // the wiki is a reference only since 2026-10-04, so the default keeps the community's reason and Trevor's
-        // own estimate from the game text (`opts.wiki_legacy` restores the paragraph).
-        if !self.opts.wiki_legacy {
-            return Ok(format!("Most players recommend reading in release order, not chronological order: {why}. If you want \
-the in-world order anyway, Trevor's own estimate from the dates the script states follows; most stories state no year, so \
-their placement follows release order.\n\n{}", self.timeline_all()));
-        }
         Ok(format!("Most players recommend reading in release order, not chronological order: {why}. If you want the \
-in-world order anyway, the stories set before the Prologue come first: A Walk in the Dust (1070s to 1080s), Babel (the Kazdel \
-civil war, 1090 to 1094) and Darknights Memoir (about 1094 to 1096), then the main story, with Children of Ursus during the \
-Chernobog crisis (Episodes 0 to 3). Several side stories are set later than they came out: Guide Ahead, IL Siracusano, \
-Dorothy's Vision and Lone Trail after Episode 14 (1099), and the Yan events (1101 to 1102) near the end. Placements of these \
-prequels are from the community's reading guides and the Arknights wiki; Trevor's own estimate for the rest follows.\n\n{}",
-            self.timeline_all()))
+in-world order anyway, Trevor's own estimate from the dates the script states follows; most stories state no year, so their \
+placement follows release order.\n\n{}", self.timeline_all()))
     }
 
     /// Where a character first speaks.
@@ -125,8 +113,7 @@ voice lines or battles.", guide_label(i), w))
         let pos = |i: &Value| i["position"].as_u64().unwrap_or(0);
         let (first, then) = if pos(x) <= pos(y) { (x, y) } else { (y, x) };
         let (fl, tl) = (guide_label(first), guide_label(then));
-        let src = if self.opts.wiki_legacy { "from the game data and the Arknights wiki" } else { "from the game data" };
-        let mut out = format!("Release order (EN, {src}): {fl} came out on {}, {tl} on {}.",
+        let mut out = format!("Release order (EN, from the game data): {fl} came out on {}, {tl} on {}.",
                               s(first, "released"), s(then, "released"));
         // The game's own links, direct or through a storyline that holds both.
         let edges = self.story_edges();
@@ -256,8 +243,7 @@ has sorted by since September 2025. Chronological order is rarely recommended be
                 out.push_str(&format!("- {}: {} ({}{tag})\n", s(r, "name"), s(r, "rule"), r["commenters"].as_u64().unwrap_or(0)));
             }
         }
-        let dates = if self.opts.wiki_legacy { "main episode dates from the Arknights wiki, event dates from the game data" }
-            else { "dates from the game data; \"about\" marks an estimate, \"by\" a latest date" };
+        let dates = "dates from the game data; \"about\" marks an estimate, \"by\" a latest date";
         out.push_str(&format!("\nTrevor's own measure, the events later stories share the most cast with: {keyl}.\n\nEN release order \
 ({} entries; {dates}):\n", items.len()));
         for i in items {

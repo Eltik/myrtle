@@ -15,7 +15,6 @@ mod scenes;
 mod terms;
 mod retrieval;
 mod routing;
-mod deduce;
 mod answer;
 mod batch;
 mod server;
@@ -166,15 +165,11 @@ fn load_tools(a: &Args) -> Tools {
         tools.load_new_dossiers(std::path::Path::new("."));
         tools.game_data = !a.no_game_data;
         tools.topics_v2_text = true;
-        tools.topics_speaker_check = a.speaker_trait_check;
         tools.topics_race_rule = !a.no_race_trait_rule;
         // Deep entries are switched on per question (`deep_for`, the broad-question gate).
         tools.topics_deep = false;
     }
     tools.opts = tool_options(a);
-    if a.wiki_legacy {
-        tools.design_basis_wiki = trevor::reference::wiki_design_basis(std::path::Path::new("."));
-    }
     tools
 }
 

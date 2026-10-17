@@ -56,8 +56,7 @@ Trevor finds deaths from lines that say so; a death shown only by action can be 
     }
 
     /// Playable operators whose death the game text confirms (`scripts/deaths.py build`, 2026-10-04: reported in 2 or more
-    /// story groups and speaking in no story released after the first report; the wiki's status before, `opts.wiki_legacy`),
-    /// and a count of the unconfirmed ones.
+    /// story groups and speaking in no story released after the first report), and a count of the unconfirmed ones.
     ///
     /// # Errors
     /// Missing table.
@@ -69,8 +68,7 @@ Trevor finds deaths from lines that say so; a death shown only by action can be 
             by_op.entry(s(e, "character")).or_default().push(e);
         }
         let (conf, unconf): (Vec<_>, Vec<_>) = by_op.iter().partition(|(_, v)| v.iter().any(|e| e["corroborated"].as_bool() == Some(true)));
-        let how = if self.opts.wiki_legacy { "the script shows it and the Arknights wiki marks them dead" }
-            else { "the script reports it in two or more stories and they speak in no story released after" };
+        let how = "the script reports it in two or more stories and they speak in no story released after";
         let mut out = format!("Playable operators whose death is confirmed ({how}), \
 as of the stories in Trevor's corpus (latest: {latest}): {}. A later story can change this, and Trevor never marks anyone as alive.\n", conf.len());
         for (_, v) in &conf {
@@ -78,9 +76,8 @@ as of the stories in Trevor's corpus (latest: {latest}): {}. A later story can c
         }
         if !unconf.is_empty() {
             // Not listed: on the full run these were rumors (W, Ines), titles (Graf Urtica) and misreadings
-            // (Rosmontis "Are they here to take my life away?"), none marked dead by the wiki.
-            let not = if self.opts.wiki_legacy { "that the wiki does not confirm" }
-                else { "that the game text does not confirm (one story only, or they speak in a later story)" };
+            // (Rosmontis "Are they here to take my life away?").
+            let not = "that the game text does not confirm (one story only, or they speak in a later story)";
             out.push_str(&format!("The script also reports deaths for {} more operators {not}; most are \
 rumors inside the story, titles passing between people, or misreadings. Ask about one operator (\"Does W die?\") to see the lines.\n",
                 unconf.len()));
@@ -106,8 +103,7 @@ rumors inside the story, titles passing between people, or misreadings. Ask abou
             out.push_str(&format!("- {kind} in {}: \"{}\"\n", s(e, "storyId"), s(e, "quote")));
         }
         if mine.iter().any(|e| e["playable"].as_bool() == Some(true) && e["corroborated"].as_bool() != Some(true)) {
-            let why = if self.opts.wiki_legacy { "the wiki does not mark them dead" }
-                else { "the game text does not confirm it (reported in one story only, or they speak in a story released after)" };
+            let why = "the game text does not confirm it (reported in one story only, or they speak in a story released after)";
             out.push_str(&format!("This is a playable operator and {why}: treat these lines as unconfirmed. Stories often \
 report deaths that turn out false (W and Ines are reported dead and are alive).\n"));
         }

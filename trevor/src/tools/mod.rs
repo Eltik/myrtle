@@ -57,19 +57,15 @@ pub struct ToolOptions {
     /// The canon answer as before the per-run verdicts (2026-09-30): strength labels from reference counts only
     /// (`ask --canon-v1`). Off, a run whose data carries a `verdict` is answered from it.
     pub canon_v1: bool,
-    /// The wiki-based answers of the morning of 2026-10-04, for measurement only (`ask --wiki-legacy`): the design tool
-    /// reads the wiki trivia table (`crate::reference`) and the reading-guide and death texts credit the wiki. Off (the
-    /// default since 2026-10-04, Ian: the wiki is a reference), Trevor serves only what he deduces from the game data.
-    pub wiki_legacy: bool,
 }
 
 impl ToolOptions {
-    pub const KEYWORDS: Self = Self { storylines: false, exact_recap: false, is_offset: true, canon_v1: false, wiki_legacy: false };
+    pub const KEYWORDS: Self = Self { storylines: false, exact_recap: false, is_offset: true, canon_v1: false };
 }
 
 impl Default for ToolOptions {
     fn default() -> Self {
-        Self { storylines: true, exact_recap: true, is_offset: true, canon_v1: false, wiki_legacy: false }
+        Self { storylines: true, exact_recap: true, is_offset: true, canon_v1: false }
     }
 }
 pub const RETRIEVE: &str = "retrieve";
@@ -235,9 +231,6 @@ pub struct Tools {
     pub game_data: bool,
     /// `ask --lore v2`: topic summaries use `summaryV2` where a trait audit regenerated one (2026-10-02).
     pub topics_v2_text: bool,
-    /// With `topics_v2_text`: `summaryV2s` where the speaker-aware trait check (`topics.py traitcheck2`, 2026-10-03)
-    /// wrote one (`ask --speaker-trait-check`).
-    pub topics_speaker_check: bool,
     /// With `topics_v2_text`: `summaryV2r` where the race-trait rule (`topics.py traitrule`, 2026-10-03, no model) wrote
     /// one (`ask --race-trait-rule`).
     pub topics_race_rule: bool,
@@ -258,13 +251,6 @@ pub struct Tools {
     /// checked by a second model against the evidence it cites. Read by the `design_basis` tool, labelled as Trevor's
     /// inference.
     pub design_basis: Option<Vec<Value>>,
-    /// The wiki's trivia rows (`crate::reference::wiki_design_basis`), loaded only for `ask --wiki-legacy`.
-    pub design_basis_wiki: Option<Vec<Value>>,
-    /// What the game shows about each operator's design (`scripts/design_infer.py evidence`, 2026-10-05): one row per
-    /// operator, `{charId, operator, race, alters, text}`, the text being the race, recruitment text, body-feature
-    /// sentences of the operator file, the model-written art description and the whole-image and tiled visual readings.
-    /// Read by `ask --design-deduce` (shortlist by data, then Gemma matches features).
-    pub design_evidence: Option<Vec<Value>>,
     /// Deep topic entries (`scripts/topic_deep.py`, 2026-10-03 night 9): topic name to the judged entry's served text
     /// (a map-reduce over the story groups, operator files, game records and dossiers naming the topic).
     pub deep_topics: HashMap<String, String>,
@@ -357,7 +343,6 @@ impl Tools {
         t.topic_groups = read_json(&root.join("artifacts/topics/topic_groups.json"));
         t.place_nations = read_json(&root.join("artifacts/topics/place_nation.json"));
         t.design_basis = read_jsonl(&root.join("artifacts/entities/design_infer.jsonl")).filter(|v| !v.is_empty());
-        t.design_evidence = read_jsonl(&root.join("artifacts/entities/design_evidence.jsonl")).filter(|v| !v.is_empty());
         for d in read_jsonl(&root.join("artifacts/topics/deep.jsonl")).unwrap_or_default() {
             if let (Some(t_), Some(text)) = (d["topic"].as_str(), d["served"].as_str()) {
                 t.deep_topics.insert(t_.to_owned(), text.to_owned());

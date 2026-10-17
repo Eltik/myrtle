@@ -225,10 +225,6 @@ pub(crate) struct Args {
     /// default since 2026-10-03).
     #[arg(long)]
     pub(crate) no_age_estimate: bool,
-    /// Race topics serve the summary after the speaker-aware trait check (`topics.py traitcheck2`, 2026-10-03), which
-    /// drops a body-feature sentence resting on a line about someone of another race (Durin "thick tails"). Opt-in.
-    #[arg(long)]
-    pub(crate) speaker_trait_check: bool,
     /// Replace the last N of the k fused hits with the Ettin reranker's best hits (of the fused top 40) not already
     /// among them. Reranking outright fails on gold v2 over P3b (recall@10 0.732 to 0.605, 22 lost and 8 gained,
     /// 2026-09-30) but the reranker's first pick is often a passage fusion ranks lower: fused top 7 plus its best new
@@ -362,21 +358,6 @@ pub(crate) struct Args {
     /// model) is answered, before the router, by the `design_basis` tool, both readings, labelled as Trevor's inference.
     #[arg(long)]
     pub(crate) no_design_basis: bool,
-    /// Two-step design deduction (2026-10-05, opt-in): a design question the `design_basis` table cannot answer goes,
-    /// before the router, to a deduction from the game's art and text (artifacts/entities/design_evidence.jsonl, from
-    /// scripts/design_infer.py evidence). Forward ("which operator is based on an animal with phantom in its name"):
-    /// Gemma lists real-world candidates with their visible features from general knowledge, a data shortlist (inverse-
-    /// frequency feature words over the evidence rows) keeps 8 operators, and Gemma names the ones whose evidence shows the
-    /// features. Reverse ("what animal is Kirara based on"): Gemma reads the named operator's evidence. Labelled "Trevor's
-    /// deduction from the game's art and text"; says plainly when nothing in the game shows a match.
-    #[arg(long)]
-    pub(crate) design_deduce: bool,
-    /// The wiki-based answers of the morning of 2026-10-04, for measurement only (2026-10-04, Ian: the wiki is a
-    /// reference, never a source): the design tool reads the wiki trivia table (trevor::reference) and the reading-guide
-    /// and death texts credit the wiki as before. Pair it with the wiki-built tables (MAIN_DATES=wiki reading_guide.py
-    /// dates and build, DEATH_CONFIRM=wiki deaths.py build) to reproduce the old answers.
-    #[arg(long)]
-    pub(crate) wiki_legacy: bool,
     /// Turn off IS-ending passages (2026-10-03, item 2): a question naming an Integrated Strategies run and one of its
     /// endings (number, ordinal or name) or its endbooks is answered from that ending's scene and endbook stories, with
     /// the game's ending order, without the router.
@@ -474,10 +455,6 @@ pub(crate) struct Args {
     /// The composed passages of the evidence composition's ask, set only inside `answer_one`.
     #[arg(skip)]
     pub(crate) compose: Vec<(String, String, String)>,
-    /// Serve the deep entry to every topic question, as `--deep-topics` did on night 9 (measurement only; lost h033 and
-    /// r079 then).
-    #[arg(long)]
-    pub(crate) deep_topics_all: bool,
     /// Turn off the rarity order of the term-lookup glossary (default since 2026-10-05): the served topics the term's
     /// chunks name are ordered by first mention, as on night 9, instead of rarest first (fewest P4x chunks naming them).
     #[arg(long)]
@@ -579,9 +556,9 @@ pub(crate) fn p4_dir(a: &Args) -> &'static str {
 }
 
 /// Whether the topic tool serves deep entries for this question (default since 2026-10-05, lore v2 only; `--no-deep-topics`):
-/// only for a question about the topic as a whole (`Tools::broad_topic_question`); `--deep-topics-all` is night 9's reach.
+/// only for a question about the topic as a whole (`Tools::broad_topic_question`).
 pub(crate) fn deep_for(a: &Args, tools: &Tools, q: &str) -> bool {
-    !a.no_deep_topics && a.lore != LoreSet::V1 && (a.deep_topics_all || tools.broad_topic_question(q))
+    !a.no_deep_topics && a.lore != LoreSet::V1 && tools.broad_topic_question(q)
 }
 
 /// The pipeline profile (contract section 2).
@@ -665,11 +642,7 @@ pub(crate) fn apply_profile(a: &mut Args, p: Profile) {
 /// Episode 0), so it applies to the model and off routers only.
 pub(crate) fn tool_options(a: &Args) -> trevor::tools::ToolOptions {
     use trevor::tools::ToolOptions;
-    let mut opts = if a.router == RouterKind::Keywords { ToolOptions { canon_v1: a.canon_v1, ..ToolOptions::KEYWORDS } }
+    if a.router == RouterKind::Keywords { ToolOptions { canon_v1: a.canon_v1, ..ToolOptions::KEYWORDS } }
         else { ToolOptions { storylines: !a.no_storylines, exact_recap: !a.recap_substring, is_offset: !a.is_numbering_v1,
-                             canon_v1: a.canon_v1, wiki_legacy: a.wiki_legacy } };
-    if a.wiki_legacy {
-        opts.wiki_legacy = true;
-    }
-    opts
+                             canon_v1: a.canon_v1 } }
 }

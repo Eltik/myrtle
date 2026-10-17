@@ -8,7 +8,6 @@ use trevor::search::runtime::Runtime;
 use trevor::tools::{Route, ToolError, Tools, TopicPassage};
 
 use crate::cli::{Args, RouterKind, dossier_allowed, router_prompt};
-use crate::deduce::design_deduce;
 use crate::detect::{
     has, is_death_question, is_listing_question, is_open_listing, is_operator_status_question, is_time_question,
 };
@@ -396,14 +395,6 @@ pub(crate) async fn route_question(q: &str, a: &Args, tools: &Tools, llm: Option
         if let Some(route) = pre {
             if let Ok(text) = tools.run(&route) {
                 return Ok(Routed { route, text: Some(text), error: None, topic: None, dossier: None, game: None, ms: ms() });
-            }
-        }
-        if a.design_deduce && !a.no_design_basis && tools.design_basis(q).is_none() {
-            if let (Some(llm), Some((forward, named))) = (llm, tools.design_deduce_question(q)) {
-                if let Some(text) = design_deduce(llm, tools, q, forward, &named).await? {
-                    let route = Route::new("design_deduce", &[("question", q)]);
-                    return Ok(Routed { route, text: Some(text), error: None, topic: None, dossier: None, game: None, ms: ms() });
-                }
             }
         }
     }

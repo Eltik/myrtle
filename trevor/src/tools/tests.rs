@@ -354,33 +354,6 @@ fn cross_ref_lists_bosses_by_operator_and_off_topic_questions_name_nothing() {
 }
 
 #[test]
-fn design_deduce_reads_forward_and_reverse_and_shortlists_by_rare_features() {
-    let mut t = tools();
-    assert!(t.design_deduce_question("what animal is kirara based on").is_none());
-    let row = |n: &str, text: &str| json!({"charId": n, "operator": n, "race": "", "alters": [], "text": text});
-    t.design_evidence = Some(vec![
-        row("Lucilla", "Art: dark ribbon-like tentacles and a translucent bell above her, blue water."),
-        row("Phantom", "Art: a black cat, blue light."),
-        row("Texas", "Art: wolf ears, blue sword."),
-        row("Texas the Omertosa", "Art: a black wolf companion, blue."),
-        row("Kirara", "Art: coral, blue screens.")]);
-    // ian11 asks for an operator: forward, even though "phantom" is an operator's name.
-    let (fwd, _) = t.design_deduce_question("what operator is based off an animal with phantom as part of its name").unwrap();
-    assert!(fwd);
-    let (fwd, named) = t.design_deduce_question("What animal is Kirara based on?").unwrap();
-    assert!(!fwd && named.len() == 1 && named[0]["operator"] == "Kirara");
-    // the longest name wins over the name it contains
-    let (_, named) = t.design_deduce_question("What is Texas the Omertosa based on?").unwrap();
-    assert_eq!(named.iter().map(|r| r["operator"].as_str().unwrap()).collect::<Vec<_>>(), vec!["Texas the Omertosa"]);
-    assert!(t.design_deduce_question("who is phantom").is_none());
-    // "tentacles" and "bell" are rare, "blue" is everywhere: Lucilla first, and an operator sharing only "blue" scores 0
-    let short = t.design_shortlist(&[("giant phantom jelly".to_owned(), 2.0), ("long ribbon-like tentacles".to_owned(), 1.0),
-                                     ("bell".to_owned(), 1.0), ("blue".to_owned(), 1.0)], 3);
-    assert_eq!(short.first().map(|r| r["operator"].as_str().unwrap()), Some("Lucilla"));
-    assert!(short.iter().all(|r| r["operator"] != "Kirara"));
-}
-
-#[test]
 fn design_basis_answers_both_readings_and_only_design_questions() {
     let mut t = tools();
     assert_eq!(t.design_basis("what operator is based off an animal with phantom as part of its name"), None);
@@ -401,15 +374,10 @@ fn design_basis_answers_both_readings_and_only_design_questions() {
     assert_eq!(t.design_basis("what is the kitchen of rhodes island based on"), None);
     // An operator with nothing inferred says so instead of guessing.
     assert!(t.design_basis("what animal is lucilla based on").unwrap().contains("- Lucilla: the game data does not point"));
-    // The kill switch is the wiki answer, read only from the rows the legacy loader gives it.
-    t.opts.wiki_legacy = true;
-    assert_eq!(t.design_basis("what animal is lucilla based on"), None);
-    t.design_basis_wiki = Some(vec![json!({"operator": "Lucilla", "basis": ["giant phantom jelly"], "sentence": "s.", "alters": [], "url": "u1"})]);
-    assert!(t.design_basis("what animal is lucilla based on").unwrap().starts_with("From the Arknights wiki's trivia pages"));
 }
 
-/// The wiki is an eval reference only (2026-10-04): no serving code names its directory except `crate::reference`,
-/// whose loader only `ask --wiki-legacy` calls, and loading the tables never reads it.
+/// The wiki is an eval reference only (2026-10-04): no serving code names its directory, and loading the tables never
+/// reads it.
 #[test]
 fn serving_code_never_opens_eval_reference() {
     let dir = concat!("eval/", "reference");
@@ -421,7 +389,7 @@ fn serving_code_never_opens_eval_reference() {
             let p = e.path();
             if p.is_dir() {
                 stack.push(p);
-            } else if p.extension().is_some_and(|x| x == "rs") && p != src.join("reference.rs") {
+            } else if p.extension().is_some_and(|x| x == "rs") {
                 let text = std::fs::read_to_string(&p).unwrap();
                 if text.contains(dir) || text.contains(concat!("wiki_", "cache")) || text.contains(concat!("design_basis", ".jsonl"))
                     || text.contains(concat!("wiki_", "deceased")) || text.contains(concat!("wiki_", "status")) {
@@ -435,8 +403,7 @@ fn serving_code_never_opens_eval_reference() {
     std::fs::create_dir_all(root.join(dir)).unwrap();
     std::fs::write(root.join(dir).join(concat!("design_basis", ".jsonl")), "{\"operator\": \"Lucilla\", \"basis\": [\"jelly\"]}\n").unwrap();
     let t = Tools::load(&root);
-    assert!(t.design_basis.is_none() && t.design_basis_wiki.is_none() && !t.opts.wiki_legacy);
-    assert!(crate::reference::wiki_design_basis(&root).is_some());
+    assert!(t.design_basis.is_none());
     std::fs::remove_dir_all(&root).unwrap();
 }
 

@@ -178,12 +178,10 @@ impl Tools {
     }
 
     /// Which summary field a topic row serves: `summary` (v1), `summaryV2` (`--lore v2`, where the trait audit
-    /// regenerated one), `summaryV2s` (`--speaker-trait-check`, where the speaker-aware check wrote one).
+    /// regenerated one), `summaryV2r` (with the race-trait rule, where `topics.py traitrule` wrote one).
     pub(super) fn topic_text_key(&self, r: &Value) -> &'static str {
         if self.topics_v2_text && self.topics_race_rule && r.get("summaryV2r").is_some() {
             "summaryV2r"
-        } else if self.topics_v2_text && self.topics_speaker_check && r.get("summaryV2s").is_some() {
-            "summaryV2s"
         } else if self.topics_v2_text && r.get("summaryV2").is_some() {
             "summaryV2"
         } else {

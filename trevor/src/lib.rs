@@ -7,7 +7,6 @@
 pub mod corpus;
 pub mod eval;
 pub mod goldgen;
-pub mod reference;
 pub mod router;
 pub mod search;
 pub mod tools;
