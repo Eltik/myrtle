@@ -1,5 +1,4 @@
-//! The question form call (fact, yes/no or opinion, with an evidence query), the answer-rule flags and the
-//! `--story-query` rewrite.
+//! The question form call (fact, yes/no or opinion, with an evidence query) and the answer-rule flags.
 
 use anyhow::Result;
 use serde::Deserialize;
@@ -19,15 +18,10 @@ pub(crate) const FORM_SYSTEM: &str = include_str!("../../../prompts/form.system.
 /// questions and confirmed opinion questions retrieve exactly as before.
 pub(crate) const FORM_SYSTEM_V2: &str = include_str!("../../../prompts/form.system.v2.txt");
 pub(crate) const FORM_GRAMMAR: &str = include_str!("../../../prompts/form.gbnf");
-/// The answer-rule flags (2026-10-01; opt-in with `--model-flags`): one more grammar-bound call beside the form call
-/// says whether a retrieval question asks about time (TIME_RULE and the timeline notes), canon (CANON_RULE), a comparison
-/// or overview (SYNTH_RULE) or one kind of source text (SOURCE_RULE), in place of the English keyword tests. A separate
-/// call, so the form and its evidence query, and with them the passages, stay exactly as before.
-pub(crate) const FLAGS_SYSTEM: &str = include_str!("../../../prompts/flags.system.txt");
-pub(crate) const FLAGS_GRAMMAR: &str = include_str!("../../../prompts/flags.gbnf");
 
-/// Which answer rules a retrieval question needs (`question_form` with `--model-flags`).
-#[derive(Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// Which answer rules a retrieval question needs: time (TIME_RULE and the timeline notes), canon (CANON_RULE), a
+/// comparison or overview (SYNTH_RULE) or one kind of source text (SOURCE_RULE), by the English keyword tests.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub(crate) struct Flags {
     pub(crate) asks_time: bool,
     pub(crate) asks_canon: bool,
@@ -36,15 +30,9 @@ pub(crate) struct Flags {
 }
 
 impl Flags {
-    /// The English keyword tests, used unless `--model-flags` is given and the form call runs.
     pub(crate) fn keywords(q: &str) -> Flags {
         Flags { asks_time: is_time_question(q), asks_canon: is_canon_question(q), asks_synthesis: is_synthesis_question(q),
                 asks_source_text: is_source_question(q) }
-    }
-
-    pub(crate) fn show(self) -> String {
-        [(self.asks_time, "time"), (self.asks_canon, "canon"), (self.asks_synthesis, "synthesis"),
-         (self.asks_source_text, "source")].iter().filter(|(on, _)| *on).map(|(_, n)| *n).collect::<Vec<_>>().join(",")
     }
 }
 
@@ -59,12 +47,6 @@ pub(crate) struct Form {
     /// name), set by `answer_one` from the corpus it retrieves from (not part of the model's output).
     #[serde(skip)]
     pub(crate) named: Vec<(String, String, String)>,
-    /// `--story-query`: the question in the words the story would use (not part of the form call's output).
-    #[serde(skip)]
-    pub(crate) story: Option<String>,
-    /// The answer-rule flags, from their own call (not part of the form call's output); None = the keyword tests.
-    #[serde(skip)]
-    pub(crate) flags: Option<Flags>,
     /// The opinion gate held this opinion question back (`opinion_needs_candidates`): no candidates, OPINION_RULE.
     #[serde(skip)]
     pub(crate) gated: bool,
@@ -76,31 +58,15 @@ pub(crate) struct Form {
 
 /// One grammar-bound call to the answer model (about 0.5 s): fact, or yes_no or opinion with an evidence query. Output
 /// that does not parse is a fact question, which leaves the answer as before.
-pub(crate) async fn question_form(llm: &Llm, q: &str, v1: bool, flags: bool) -> Result<Form> {
+pub(crate) async fn question_form(llm: &Llm, q: &str, v1: bool) -> Result<Form> {
     let ask = |system: &'static str| async move {
         let c = llm.complete(&Request::greedy(system, &format!("Q: {q}"), Some(FORM_GRAMMAR), 80, &[])).await?;
         anyhow::Ok(serde_json::from_str::<Form>(c.content.trim()).unwrap_or_default())
     };
     let first = ask(FORM_SYSTEM).await?;
-    let mut form = if v1 || first.form != "opinion" { first } else {
-        let second = ask(FORM_SYSTEM_V2).await?;
-        if second.form == "opinion" || second.form.is_empty() { first } else { second }
-    };
-    if flags {
-        // Output that does not parse leaves the keyword tests in charge (None).
-        let c = llm.complete(&Request::greedy(FLAGS_SYSTEM, &format!("Q: {q}"), Some(FLAGS_GRAMMAR), 60, &[])).await?;
-        form.flags = serde_json::from_str::<Flags>(c.content.trim()).ok();
+    if v1 || first.form != "opinion" {
+        return Ok(first);
     }
-    Ok(form)
-}
-
-/// `--story-query`: the question as the story's own lines would put it.
-pub(crate) const STORY_WORDS: &str = "Rewrite this question about the Arknights story as a search query in the words the story's own \
-lines would use: the names it gives, and for what it asks about, the plain, blunt, casual or slang words characters would \
-actually say (not formal or clinical terms). Output the query only, one line.";
-
-pub(crate) async fn story_words(llm: &Llm, q: &str) -> Result<Option<String>> {
-    let c = llm.complete(&Request::greedy(STORY_WORDS, q, None, 60, &["\n"])).await?;
-    let t = c.content.trim().trim_matches('"').trim().to_owned();
-    Ok((!t.is_empty()).then_some(t))
+    let second = ask(FORM_SYSTEM_V2).await?;
+    Ok(if second.form == "opinion" || second.form.is_empty() { first } else { second })
 }

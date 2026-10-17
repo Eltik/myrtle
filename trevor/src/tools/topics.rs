@@ -1,12 +1,11 @@
 //! Topic summaries (races, nations, places, organizations, concepts), deep topic entries, new dossiers and the
 //! game-data passage of trait questions.
 
-use std::collections::BTreeSet;
 use std::path::Path;
 
 use serde_json::Value;
 
-use super::text::{contains_words, fuzzy_unique, norm, strip_citations, whole_word_matches};
+use super::text::{contains_words, fuzzy_unique, norm, strip_citations};
 use super::{ToolError, Tools, TopicPassage, read_jsonl, s};
 
 /// Words of a question about a body, a race feature, an ability or an age (`Tools::game_data`).
@@ -25,36 +24,6 @@ pub(super) fn served_topics(rows: Vec<Value>) -> Vec<Value> {
 }
 
 impl Tools {
-    /// The topic a question names itself (2026-10-03, Ian's item 5: "Who are the three main factions in dossoles?" was
-    /// routed to plain retrieval though Dossoles is a topic): a served topic's name or alias of 4 or more characters as
-    /// whole words, case folded, when it is the only topic the question names (a name inside a longer one does not
-    /// count), the topic is a nation, place, race or organization, and the question names no operator. None when the
-    /// topic tool cannot serve it.
-    #[must_use]
-    pub fn named_topic(&self, q: &str) -> Option<TopicPassage> {
-        let n = norm(q);
-        let rows = self.topics.as_ref()?;
-        let mut hits: Vec<(String, String, String)> = Vec::new();
-        for r in rows {
-            for f in std::iter::once(s(r, "topic")).chain(r["aliases"].as_array().into_iter().flatten().filter_map(|a| a.as_str().map(str::to_owned))) {
-                let x = norm(&f);
-                if x.chars().count() >= 4 && contains_words(&n, &x) {
-                    hits.push((x, s(r, "topic"), s(r, "kind")));
-                }
-            }
-        }
-        let outer: Vec<&(String, String, String)> = hits.iter()
-            .filter(|(x, t, _)| !hits.iter().any(|(y, u, _)| u != t && y.len() > x.len() && contains_words(y, x))).collect();
-        let topics: BTreeSet<&str> = outer.iter().map(|h| h.1.as_str()).collect();
-        if topics.len() != 1 || !matches!(outer[0].2.as_str(), "nation" | "place" | "race" | "organization") {
-            return None;
-        }
-        if self.operator_names().iter().any(|o| { let x = norm(o); x.chars().count() >= 3 && contains_words(&n, &x) }) {
-            return None;
-        }
-        self.topic(&outer[0].1).ok()
-    }
-
     /// The group topics a question names (2026-10-16, Ian's ian34 "Evaluate the political influence of Karlan Trade Group
     /// and Blacksteel"): served nation, place, race and organization topics whose name or alias of 4 or more characters
     /// the question holds as whole words, case folded, a name inside a longer matched one not counted; each with its
@@ -87,48 +56,6 @@ impl Tools {
         }
         out.sort_by_key(|o| o.0);
         out.into_iter().map(|(_, t, f)| (t, f)).collect()
-    }
-
-    /// The nation topic of a place topic (2026-10-03, Ian's item 5: Dossoles's summary is about the city, and the three
-    /// factions are in Bolívar's): the served nation topic whose name or aliases the place's summary writes most often
-    /// (whole words, at least once); None for a topic that is not a place. A trade, not a derivation: no table gives a
-    /// place's nation, and the summary's most-named nation is wrong for Chernobog (Yan, 2 mentions; it is Ursus).
-    ///
-    /// Since 2026-10-03 night 8 the nation comes from data when `from_data` is set and artifacts/topics/place_nation.json
-    /// maps the place (scripts/place_nation.py: the birthplace table, else the nation story chunks naming the place name
-    /// most by count x log lift; Chernobog: Ursus, 98 of 262 chunks); `from_data` false is the summary count above.
-    #[must_use]
-    pub fn place_nation(&self, topic: &str, from_data: bool) -> Option<TopicPassage> {
-        let rows = self.topics.as_ref()?;
-        if from_data {
-            let place = rows.iter().find(|r| s(r, "topic") == topic && s(r, "kind") == "place")?;
-            let nation = self.place_nations.as_ref()?[s(place, "topic")]["nation"].as_str()?.to_owned();
-            return self.topic(&nation).ok();
-        }
-        let place = rows.iter().find(|r| s(r, "topic") == topic && s(r, "kind") == "place")?;
-        let text = s(place, self.topic_text_key(place));
-        let mut best: Option<(usize, String)> = None;
-        for r in rows.iter().filter(|r| s(r, "kind") == "nation") {
-            let n: usize = std::iter::once(s(r, "topic")).chain(r["aliases"].as_array().into_iter().flatten().filter_map(|a| a.as_str().map(str::to_owned)))
-                .map(|f| whole_word_matches(&text, &f).count()).sum();
-            if n > 0 && best.as_ref().is_none_or(|(m, _)| n > *m) {
-                best = Some((n, s(r, "topic")));
-            }
-        }
-        best.and_then(|(_, t)| self.topic(&t).ok())
-    }
-
-    /// The P2 event summaries of the story groups that name a topic most, at most `k` (`scripts/topic_groups.py`), as
-    /// (group id, the group's name, summary).
-    #[must_use]
-    pub fn topic_events(&self, topic: &str, k: usize) -> Vec<(String, String, String)> {
-        let Some(list) = self.topic_groups.as_ref().and_then(|v| v[topic].as_array()) else { return Vec::new() };
-        list.iter().filter_map(|g| {
-            let id = g["groupId"].as_str()?;
-            let text = self.group_summaries.get(id)?;
-            let name = self.groups.get(id).and_then(|x| x["name"].as_str()).map_or_else(|| id.to_owned(), str::to_owned);
-            Some((id.to_owned(), name, text.clone()))
-        }).take(k).collect()
     }
 
     /// Whether a question names a served nation, place, race or organization topic (a form of 4 letters or more as whole

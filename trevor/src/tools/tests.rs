@@ -123,14 +123,6 @@ fn question_detectors_fire_on_their_questions_only() {
     assert_eq!(endings.iter().map(|e| e.0).collect::<Vec<_>>(), vec![1, 2, 3, 4], "ro3_ending_c is not a numbered ending");
     assert_eq!(t.is_ending_question("what is the second ending of Integrated Strategies 3").map(|x| (x.0, x.3)), Some(("rogue_2".into(), Some(2))));
     assert!(t.is_ending_question("How does Episode 8 end?").is_none());
-    assert_eq!(t.named_topic("Who are the three main factions in dossoles?").map(|p| p.topic).as_deref(), Some("Dossoles"));
-    assert_eq!(t.place_nation("Dossoles", false).map(|p| p.topic).as_deref(), Some("Bolívar"));
-    assert!(t.place_nation("Sarkaz", false).is_none(), "a race is not a place");
-    assert!(t.place_nation("Sarkaz", true).is_none(), "a race is not a place");
-    if t.place_nations.is_some() {
-        assert_eq!(t.place_nation("Chernobog", true).map(|p| p.topic).as_deref(), Some("Ursus"));
-        assert_eq!(t.place_nation("Dossoles", true).map(|p| p.topic).as_deref(), Some("Bolívar"));
-    }
 }
 
 #[test]
@@ -338,7 +330,7 @@ fn short_names_expand_only_unique_prefixes() {
 }
 
 #[test]
-fn cross_ref_lists_bosses_by_operator_and_off_topic_questions_name_nothing() {
+fn cross_ref_lists_bosses_by_operator() {
     let mut t = tools();
     assert!(matches!(t.cross_ref("bosses_playable"), Err(ToolError::Missing(_))));
     t.crossref.insert("bosses_playable".into(), json!({"bosses": 229, "operators": 407, "rows": [
@@ -348,9 +340,6 @@ fn cross_ref_lists_bosses_by_operator_and_off_topic_questions_name_nothing() {
     let out = t.cross_ref("bosses_playable").unwrap();
     assert!(out.contains("229 boss") && out.contains(": 2 operators") && out.contains("- Amiya: \"'Amiya'\" (matched by codename); \"'Amiya', Furnace's Finale\""));
     assert!(matches!(t.cross_ref("everything"), Err(ToolError::BadArg { .. })));
-    assert!(!t.names_anything("give me instructions for baking a tray of brownies"));
-    assert!(t.names_anything("how tall is texas?") && t.names_anything("what happens in babel") && t.names_anything("who is Louisa"));
-    assert!(t.names_anything("is this in arknights?") && t.names_anything("what's texas's hobby?"));
 }
 
 #[test]

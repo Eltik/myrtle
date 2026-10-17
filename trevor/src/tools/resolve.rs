@@ -83,27 +83,6 @@ impl Tools {
         self.attributes.iter().flatten().filter_map(|r| r["name"].as_str()).filter(|n| !n.is_empty()).collect()
     }
 
-    /// Whether the question names anything Trevor's tables know: an operator, a speaker, an event or episode, a topic
-    /// (race, nation, concept, with its merged names), a place, or an identity-link name, as whole words after `norm`,
-    /// three letters or more; or the word "arknights". `ask --lore-only` adds its off-topic sentence only when this is
-    /// false (2026-10-03), so a lore question that names its subject keeps its prompt byte for byte.
-    #[must_use]
-    pub fn names_anything(&self, q: &str) -> bool {
-        // Possessives too: `norm` drops the apostrophe, so "siege's" would read "sieges".
-        let nq = norm(q);
-        let np = norm(&q.replace("'s", " ").replace("\u{2019}s", " "));
-        let hit = |n: &str| { let n = norm(n); n.chars().count() >= 3 && (contains_words(&nq, &n) || contains_words(&np, &n)) };
-        if hit("arknights") || self.operator_names().into_iter().any(hit) || self.speaker_names().into_iter().any(hit)
-            || self.places().iter().any(|p| hit(p)) || self.identities.iter().flatten().any(|n| hit(n)) {
-            return true;
-        }
-        if self.groups.values().any(|g| g["name"].as_str().is_some_and(hit)) {
-            return true;
-        }
-        self.topics.iter().flatten().any(|t| t["topic"].as_str().is_some_and(hit)
-            || t["names"].as_array().into_iter().flatten().filter_map(Value::as_str).any(hit))
-    }
-
     /// Short names in a question that are the start of exactly one operator or identity-link name ("kal" for
     /// Kal'tsit): (the word as written, the full name). Words that are a whole name, or shorter than 3 letters, are
     /// left alone; the caller also checks that the word is rare in the corpus (a real word like "can" is not a name).

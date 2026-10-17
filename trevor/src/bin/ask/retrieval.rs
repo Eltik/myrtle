@@ -6,7 +6,6 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use serde::Deserialize;
-use trevor::corpus::chunk::Chunk;
 use trevor::search::pipeline::{Mode, RetrievalConfig};
 use trevor::search::runtime::{Runtime, RuntimeArgs};
 use trevor::tools::{Tools, contains_words, norm};
@@ -55,14 +54,6 @@ pub(crate) fn story_label(names: &HashMap<String, Names>, story_id: &str) -> Str
     names.get(story_id).map_or_else(|| format!("story: {story_id}"), |n| format!("story: {}, {}", n.group, n.story))
 }
 
-/// The label of an operator-file or story passage: "operator file: <char id>", else [`story_label`].
-pub(crate) fn file_or_story_label(names: &HashMap<String, Names>, c: &Chunk) -> String {
-    match c.group_id.as_str() {
-        "archive" => format!("operator file: {}", c.story_id.trim_start_matches("archive_")),
-        _ => story_label(names, &c.story_id),
-    }
-}
-
 /// P4 unit kinds: the typed sources and Trevor's topic summaries, which a lore query leaves out.
 pub(crate) const TYPED: [&str; 7] = ["module", "voice", "skin", "is", "enemy", "item", "topic"];
 
@@ -89,21 +80,6 @@ pub(crate) struct Lore {
 pub(crate) fn passages(rt: &mut Runtime, q: &str, a: &Args, kind: Option<&str>, form: Option<&Form>) -> Result<(Vec<usize>, Option<Lore>)> {
     let cfg = RetrievalConfig { mode: Mode::Hybrid, k: a.k, ..RetrievalConfig::default() };
     let mut hits = rt.retrieve(q, &cfg)?;
-    if a.rerank_add > 0 {
-        let keep = a.k.saturating_sub(a.rerank_add).min(hits.len());
-        let rr = rt.retrieve(q, &RetrievalConfig { rerank_top: 40, k: 40, ..cfg })?;
-        let mut head: Vec<_> = hits[..keep].to_vec();
-        for h in rr {
-            if head.len() >= a.k {
-                break;
-            }
-            if !head.iter().any(|x| x.row == h.row) {
-                head.push(h);
-            }
-        }
-        let rest: Vec<_> = hits.into_iter().filter(|h| !head.iter().any(|x| x.row == h.row)).collect();
-        hits = head.into_iter().chain(rest).collect();
-    }
     let mut lore_added: Option<Lore> = None;
     let evidence = form.and_then(|f| f.evidence.as_deref()).filter(|e| !e.trim().is_empty());
     // A yes/no question interleaves the hits of its evidence query with its own: "Has Harold married twice? Does he have
@@ -111,11 +87,6 @@ pub(crate) fn passages(rt: &mut Runtime, q: &str, a: &Args, kind: Option<&str>, 
     // ranks them 1st to 8th (2026-09-30).
     if let (Some(ev), Some("yes_no")) = (evidence, form.map(|f| f.form.as_str())) {
         let extra = rt.retrieve(ev, &cfg)?;
-        hits = interleave(extra, hits);
-    }
-    // `--story-query`: the story-words query's hits interleaved with the question's (and the yes/no evidence's).
-    if let Some(sq) = form.and_then(|f| f.story.as_deref()) {
-        let extra = rt.retrieve(sq, &cfg)?;
         hits = interleave(extra, hits);
     }
     let evidence = evidence.filter(|_| form.is_some_and(|f| f.form == "opinion"));
@@ -316,14 +287,12 @@ pub(crate) fn named_characters(rt: &Runtime, tools: &Tools, q: &str) -> Vec<(Str
     out
 }
 
-/// The opinion gate (`--opinion-gate`, opt-in since 2026-10-05 night): the question form's opinion branch gathers
-/// candidates from operator files and dossiers only when the question names a character (`people_named`, or a file
-/// `named_characters` finds) or a nation, place, race or organization (`Tools::names_group_topic`), or asks who or which;
-/// otherwise OPINION_RULE ("the story does not settle it", then the evidence) without candidates. "In lore how strong are
-/// my favourite characters?" (real r030) listed Degenbrecher's strength as if she were the asker's favourite (2026-10-05
-/// regression run). Measured: responds 10 to 13 and handles 8 to 10 of the 16 real questions it touches by the
-/// real-probe judge, but Qwen pairwise 2 wins and 3 losses (r039, r067, r068) over 19; two other answer rules for the
-/// gated questions lost more (the keyword rule alone: 2 wins, 5 losses; OPINION_FORM_RULE without candidates: 3 and 3).
+/// Whether an opinion question gets candidates from operator files and dossiers: it names a character (`people_named`,
+/// or a file `named_characters` finds) or a nation, place, race or organization (`Tools::names_group_topic`), or asks
+/// who or which. When it does not, the opinion gate (default since 2026-10-06, `--no-opinion-gate`) gives a question the
+/// keyword test also calls an opinion, naming no proper word, OPINION_RULE ("the story does not settle it", then the
+/// evidence) without candidates: "In lore how strong are my favourite characters?" (real r030) listed Degenbrecher's
+/// strength as if she were the asker's favourite (2026-10-05 regression run).
 pub(crate) fn opinion_needs_candidates(rt: &Runtime, tools: &Tools, q: &str, named: bool) -> bool {
     let n = norm(q);
     named || tools.names_group_topic(q) || ["who", "which", "whom", "whose"].iter().any(|w| contains_words(&n, w))
@@ -437,20 +406,19 @@ pub(crate) struct Runtimes {
     pub(crate) p4_dir: &'static str,
     pub(crate) switch: bool,
     pub(crate) args: RuntimeArgs,
-    /// Load the reranker (`--rerank-add`).
-    pub(crate) rerank: bool,
     /// The spoiler horizon of the current `--serve` job, given to every corpus `pick` returns. None outside serve.
     pub(crate) horizon: Option<std::sync::Arc<trevor::search::horizon::Horizon>>,
     /// Load the dense index and the query embedder (`--retrieval hybrid`, the default); false is BM25-only serving.
     pub(crate) dense: bool,
 }
 
-/// A corpus as `ask` loads it: BM25 always, the dense index and query embedder unless BM25-only (`dense` false), the
-/// reranker with `--rerank-add`; the query embedder of `share` is reused when it fits (`Runtime::load_sharing`).
+/// A corpus as `ask` loads it: BM25 always, the dense index and query embedder unless BM25-only (`dense` false); the
+/// reranker loads on first use (`scenes::ensure_reranker`); the query embedder of `share` is reused when it fits
+/// (`Runtime::load_sharing`).
 /// `TREVOR_LOAD_DEBUG=1` prints the load time.
-pub(crate) fn load_runtime(a: &RuntimeArgs, dense: bool, rerank: bool, share: Option<trevor::search::runtime::SharedEmbedder>) -> Result<Runtime> {
+pub(crate) fn load_runtime(a: &RuntimeArgs, dense: bool, share: Option<trevor::search::runtime::SharedEmbedder>) -> Result<Runtime> {
     let t = std::time::Instant::now();
-    let mut rt = Runtime::load_sharing(a, dense, true, rerank, share)?;
+    let mut rt = Runtime::load_sharing(a, dense, true, false, share)?;
     rt.bm25_only = !dense;
     if trevor::util::env_on("TREVOR_LOAD_DEBUG") {
         eprintln!("loaded {} in {:.2} s (dense {dense})", a.corpus.display(), t.elapsed().as_secs_f64());
@@ -464,7 +432,7 @@ impl Runtimes {
             if self.p4.is_none() {
                 let mut a = self.args.clone();
                 a.corpus = PathBuf::from(self.p4_dir);
-                self.p4 = Some(load_runtime(&a, self.dense, self.rerank, self.main.shared_embedder())?);
+                self.p4 = Some(load_runtime(&a, self.dense, self.main.shared_embedder())?);
             }
             let rt = self.p4.as_mut().expect("loaded above");
             rt.horizon.clone_from(&self.horizon);
@@ -496,7 +464,7 @@ impl Runtimes {
         if self.art.is_none() {
             let mut a = self.args.clone();
             a.corpus = PathBuf::from(ART_DIR);
-            self.art = Some(load_runtime(&a, self.dense, self.rerank, self.main.shared_embedder())?);
+            self.art = Some(load_runtime(&a, self.dense, self.main.shared_embedder())?);
         }
         let rt = self.art.as_mut().expect("loaded above");
         rt.horizon.clone_from(&self.horizon);

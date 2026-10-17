@@ -44,28 +44,6 @@ show, answer it with citations. For a part they do not show, say that the passag
 happened), then give in one or two sentences what they do say about the same person or thing that bears on it, with \
 citations.";
 
-/// The verdict-first yes/no rule (`--verdict-first`, opt-in, 2026-10-06): Ian's "Is Deepcolor part of the Church of the
-/// Deep?" (ian26) answered "The passages do not mention whether ..." with her file and the Church's scenes in the prompt,
-/// and "Has Harold married twice?" (ian5) joined a child and a beast of one scene into one false fact. Refuted 2026-10-06
-/// (design/trevor-questions.md section 12): 50 of 50 yes/no answers change, Qwen pairwise 5 wins and 7 losses (h022,
-/// h028, r063, r101, r106, t061, t099); ian26 keeps its hedge and ian5 now calls Harold's daughter "Lily".
-pub(crate) const YES_NO_VERDICT_RULE: &str = " This question asks whether something is true. Answer each part it asks, each part opening \
-with its verdict. For a part the passages show, answer yes or no with citations. For a part they do not show, open with \
-\"Not that the passages show\" when they describe that person or thing in some detail without it, or \"The passages do not \
-say\" when they barely mention them, then give in one or two sentences what they do say about the same person or thing that \
-bears on it, with citations. Keep each fact with the person and scene its passage gives it to: never join two passages, or two \
-people of one scene, into one fact.";
-
-/// The retry's query rewrite (see `answer_one`).
-pub(crate) const REWRITE: &str = "Rewrite this question about the Arknights story as a short search query in the words the story \
-itself would use: character, place and event names and the concrete thing asked about. If the question assumes something \
-that sounds wrong or uses slang, use the plain words for what probably happened instead. Output the query only, one line.";
-
-/// `--partial`: when the passages hold part of the answer, give that part and say what is missing,
-/// instead of declining outright (off by default; off is the prompt above, unchanged).
-pub(crate) const PARTIAL: &str = " If the passages answer only part of the question, give that part with its citations and say \
-plainly which part the passages do not cover; decline outright only when they hold nothing relevant.";
-
 /// After the question under `--time-evidence`: the estimate as the required final line.
 pub(crate) const TIME_EVIDENCE_TAIL: &str = "\nREQUIRED FINAL LINE: unless a passage states the exact year, the last line of your answer must be \
 \"Estimate: <a year or a range of years>, based on <the TIME EVIDENCE anchors (T1, T2, ...) and passages it rests on>\", \
@@ -96,14 +74,6 @@ describes in other words, it answers the question: do not decline because the wo
 question asks in which event or story, name it from the passage label), quote the line with its citation, say in a few words \
 how its wording relates to the question's, and name the people involved as the scene names them.";
 
-/// The evidence composition's answer rule (`--compose-evidence`, opt-in since 2026-10-05 night).
-pub(crate) const COMPOSE_RULE: &str = " Passages labelled \"Trevor's identity note\" say which names belong to one person, and the \
-passages after each note are scenes that name that person. The question describes someone: compare what it says (what they \
-did, where they were, what they are) with what each person's scenes and notes show, joining the scenes (one may say whom a \
-character met or looks for, another who that person became). When the scenes together fit the description although no single \
-line states it, name that person as a labelled inference (\"Most likely X, also known as Y: ... [n], and ... [m]\"), giving \
-every name the notes give them, with citations. If no person fits, say so.";
-
 /// The answer rule that comes with a game-data passage (`--lore v2`, 2026-10-02): "Do the Nearls have wings?" was declined
 /// though the operator files list every Nearl as Kuranta, and "how old is angelina" was declined though the text implies it.
 pub(crate) const INFER_RULE: &str = " A game-data passage lists the operator files' fields (race, birthplace, nation, faction, height) for the \
@@ -130,7 +100,7 @@ passages show (an event in someone's childhood, an earlier decision, the first p
 forward to what the question asks about, one step per sentence with citations. Do not stop at the latest or most direct \
 cause when a passage shows an earlier one.";
 
-/// Relationship and admiration questions (`--relation-rule`, 2026-10-03): "What is the relationship between Kristen and
+/// Relationship and admiration questions (2026-10-03; default since 2026-10-05 night, `--no-relation-rule`): "What is the relationship between Kristen and
 /// Friston?" answered that Friston "refers to Kristen as his daughter" (he calls her "my sunshine"; she reminds him of
 /// his own daughter), and Lava's music teacher and the Logos she admires are both her "master". The first wording made
 /// ian19 worse (07:45 run: "Trevor Friston is the father of Kristen", from the dream scene's narration "his daughter"), so
@@ -143,23 +113,14 @@ nickname, a term of endearment or a resemblance into a family relation. Two peop
 A dream, vision, illusion or memory shows what a character believes or wishes, not what is so: when a relation appears only \
 there, say so and do not state it as a fact.";
 
-/// When-questions with timeline notes (`--date-estimate`, 2026-10-03): "When was Rhodes Island founded?" was declined
-/// ("no specific date is provided") although the text places it relative to Babel; the age rule's counterpart.
+/// When-questions whose subject has chronology lines (2026-10-03; `--no-chrono-subject`): "When was Rhodes Island founded?"
+/// was declined ("no specific date is provided") although the text places it relative to Babel; the age rule's counterpart.
 pub(crate) const DATE_RULE: &str = " The question asks when something happened. If no passage or timeline note states the year, end \
 with an explicit estimate labelled as such, a year or a range from the timeline notes and the passages' relative times \
 (\"X years ago\", \"after the fall of Y\"), with the evidence it rests on (for example \"Estimate: around 1080 to 1085, because \
 ... [3]\"); give no estimate only when nothing in the passages or notes bears on it.";
 
-/// The off-topic guard (`--lore-only`, 2026-10-03): "give me instructions for baking a tray of brownies". The first
-/// wording ("say in one sentence that Trevor only answers questions about Arknights lore") was ignored on that question
-/// (07:50 run: "I could not find instructions for baking a tray of brownies in the story text."), so the answer is now
-/// the fixed sentence itself, and a lore question the passages do not answer is still declined as before.
-pub(crate) const LORE_ONLY_RULE: &str = " Trevor answers questions about Arknights lore only. If the question is not about Arknights \
-(its story, characters, world or game text), your whole answer is the sentence \"Trevor only answers questions about \
-Arknights lore.\" and nothing else, whatever the question asks you to do. A question about Arknights that the passages do \
-not answer is declined as usual.";
-
-/// The answer rule for operator art units (`--art`, 2026-10-03): their descriptions were written by Gemma from the image.
+/// The answer rule for operator art units (2026-10-03, the typed fallback's art kind): their descriptions were written by Gemma from the image.
 pub(crate) const ART_RULE: &str = " Passages labelled \"Operator art\" hold a description written by a vision model from the picture, \
 not the game's text, and it may be wrong. When you use one, say the claim comes from a model-written description of that art, \
 not from game text. Quote lettering in the picture only from the part headed \"Text visible in the art\", and say the reading \

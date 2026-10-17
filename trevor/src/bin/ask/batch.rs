@@ -1,5 +1,5 @@
 //! The one-process batch modes over a JSONL question file (`--batch` with `--show-expansion`, `--form-only`,
-//! `--detect-only`, `--route-only`, `--scoped-only`, `--detect-identity`, or alone to answer every question). Each
+//! `--detect-only`, `--route-only`, `--scoped-only`, or alone to answer every question). Each
 //! prints one line per question, or for answers appends one record per question to `--out` (resumable).
 
 use std::collections::{BTreeSet, HashMap};
@@ -8,23 +8,22 @@ use std::path::Path;
 
 use anyhow::{Context, Result};
 use trevor::goldgen::llm::Llm;
-use trevor::search::pipeline::{Mode, RetrievalConfig};
 use trevor::search::runtime::Runtime;
 use trevor::tools::{Tools, norm};
 
 use crate::answer::{Answer, Tables, answer_one};
 use crate::chrono::{
-    Chrono, chronology_for, identity_expand, identity_notes, label_links, load_chrono, load_chrono_cached, proper_name,
+    Chrono, chronology_for, load_chrono_cached, proper_name,
 };
 use crate::cli::{Args, RouterKind, deep_for};
 use crate::detect::{asks_admire, asks_identity, asks_relation, asks_scene, asks_when, is_opinion_question, term_of};
 use crate::form::{Flags, question_form};
 use crate::retrieval::{
-    Names, Runtimes, expand_names, load_names, named_characters, names_proper_word, one_operator, one_operator_wide,
+    Names, Runtimes, expand_names, named_characters, names_proper_word, one_operator, one_operator_wide,
     opinion_needs_candidates, people_named,
 };
 use crate::routing::{is_ending_route, route_question};
-use crate::scenes::{character_scenes, compose_evidence, person_forms, scoped_scenes};
+use crate::scenes::{character_scenes, person_forms, scoped_scenes};
 use crate::server::connect_or_spawn;
 
 /// The non-blank lines of a batch file, each parsed as JSON. The file is read up front; a line that does not parse
@@ -56,7 +55,7 @@ pub(crate) fn show_expansion(a: &Args, tools: &Tools) -> Result<()> {
     Ok(())
 }
 
-/// `--form-only`: the question form call alone, "qid<TAB>form<TAB>evidence" (and the flags with `--model-flags`).
+/// `--form-only`: the question form call alone, "qid<TAB>form<TAB>evidence".
 pub(crate) async fn form_only(a: &Args, tools: &Tools) -> Result<()> {
     let rt = Runtime::load(&a.runtime, false, false, false)?;
     let (llm, _server) = connect_or_spawn(a).await?;
@@ -67,13 +66,8 @@ pub(crate) async fn form_only(a: &Args, tools: &Tools) -> Result<()> {
     };
     for (id, q) in qs {
         let e = if a.no_name_expansion { q.clone() } else { expand_names(&rt, tools, &q) };
-        let f = question_form(&llm, &e, a.form_v1, a.model_flags).await?;
-        match f.flags {
-            // With the flags: the model's flags, then the keyword tests' (to compare).
-            Some(fl) => println!("{id}\t{}\t{}\t{}\t{}", f.form, f.evidence.unwrap_or_default(), fl.show(),
-                                 Flags::keywords(&e).show()),
-            None => println!("{id}\t{}\t{}", f.form, f.evidence.unwrap_or_default()),
-        }
+        let f = question_form(&llm, &e, a.form_v1).await?;
+        println!("{id}\t{}\t{}", f.form, f.evidence.unwrap_or_default());
     }
     Ok(())
 }
@@ -98,7 +92,6 @@ pub(crate) fn detect_only(a: &Args, tools: &Tools, b: &Path) -> Result<()> {
                 if asks_admire(q) { ",admire" } else { "" }) });
         }
         if Flags::keywords(q).asks_time && asks_when(q) && !chronology_for(q, load_chrono_cached()).is_empty() { f.push("chrono".into()); }
-        if let Some(tp) = t.named_topic(q) { f.push(format!("named_topic={}", tp.topic)); }
         if asks_identity(q) { if let Some(c) = t.answer_constraint(q) { f.push(format!("constraint={c:?}")); } }
         if t.broad_topic_question(q) { f.push("broad_topic".into()); }
         if let Some(g) = t.event_in_question(q) {
@@ -116,8 +109,9 @@ pub(crate) fn detect_only(a: &Args, tools: &Tools, b: &Path) -> Result<()> {
         }
         if let Some(rt) = store_rt.as_ref() {
             let e = expand_names(rt, t, q);
-            if !opinion_needs_candidates(rt, t, &e, !named_characters(rt, t, &e).is_empty()) {
-                f.push(if is_opinion_question(&e) && !names_proper_word(rt, &e) { "opinion-gate".into() } else { "opinion-gate-wide".into() });
+            if !opinion_needs_candidates(rt, t, &e, !named_characters(rt, t, &e).is_empty()) && is_opinion_question(&e)
+                && !names_proper_word(rt, &e) {
+                f.push("opinion-gate".into());
             }
         }
         if let Some(rt) = store_rt.as_ref().filter(|_| t.event_in_question(q).is_none() && t.appearance_question(q).is_none()) {
@@ -142,28 +136,18 @@ pub(crate) async fn route_only(a: &Args, tables: &mut Tables, b: &Path) -> Resul
         let (id, q) = qid_question(&v);
         tables.tools.topics_deep = deep_for(a, &tables.tools, q);
         let r = route_question(q, a, &tables.tools, llm.as_ref().map(|x| &x.0)).await?;
-        let head = r.text.as_deref().map_or_else(|| {
-            // `--lore-only`: whether the off-topic sentence would be added (the question names nothing Trevor knows).
-            let off = if a.lore_only && !tables.tools.names_anything(q) { " (off-topic rule)" } else { "" };
-            format!("RETRIEVAL{}{off}", r.passage_notes())
-        }, |t| format!("TABLE {}", t.lines().next().unwrap_or_default()));
+        let head = r.text.as_deref().map_or_else(|| format!("RETRIEVAL{}", r.passage_notes()),
+                                                 |t| format!("TABLE {}", t.lines().next().unwrap_or_default()));
         println!("{id}\t{}\t{head}", serde_json::to_string(&r.route)?);
     }
     Ok(())
 }
 
-/// `--scoped-only --batch`: the composed evidence, scoped scenes and character scenes each question would get.
+/// `--scoped-only --batch`: the scoped scenes and character scenes each question would get.
 pub(crate) fn scoped_only(rts: &mut Runtimes, tools: &Tools, b: &Path) -> Result<()> {
     for v in batch_items(b)? {
         let v = v?;
         let (id, q) = qid_question(&v);
-        if let Some(ps) = v["passages"].as_array() {
-            let ps: Vec<String> = ps.iter().filter_map(|x| x.as_str().map(str::to_owned)).collect();
-            let names = load_names();
-            for (cid, label, _) in compose_evidence(&mut rts.main, &load_chrono(), &names, q, &ps) {
-                println!("{id}\tcompose\t{cid}\t{label}");
-            }
-        }
         if let Some((e, who, rows)) = scoped_scenes(&mut rts.main, tools, q) {
             let ids: Vec<&str> = rows.iter().map(|&r| rts.main.store.chunks[r].chunk_id.as_str()).collect();
             println!("{id}\t{e}\t{}\t{}", who.join("|"), ids.join(" "));
@@ -172,36 +156,6 @@ pub(crate) fn scoped_only(rts: &mut Runtimes, tools: &Tools, b: &Path) -> Result
             let ids: Vec<String> = rows.iter().map(|(r, _, n)| format!("{}:{n}", rts.main.store.chunks[*r].chunk_id)).collect();
             println!("{id}\tcharacter\t{who}\t{}", ids.join(" "));
         }
-    }
-    Ok(())
-}
-
-/// `--detect-only --batch` with the index: which identity questions would get identity notes from their plain hybrid
-/// top k over P3b or P4 (the prefilter of the 2026-10-03 A/B; the answer's own passages may differ by the form's query).
-pub(crate) fn detect_identity(a: &Args, rts: &mut Runtimes, b: &Path) -> Result<()> {
-    let chrono = load_chrono();
-    for v in batch_items(b)? {
-        let v = v?;
-        let (id, q) = qid_question(&v);
-        if !asks_identity(q) {
-            continue;
-        }
-        let cfg = RetrievalConfig { mode: Mode::Hybrid, k: a.k, ..RetrievalConfig::default() };
-        let mut fired = Vec::new();
-        for p4 in [false, true] {
-            let rt = if p4 { rts.pick(Some(true))? } else { &mut rts.main };
-            let rows: Vec<usize> = rt.retrieve(q, &cfg)?.iter().map(|h| h.row).collect();
-            if !identity_notes(rt, &rows, &chrono).is_empty() {
-                fired.push(if p4 { "p4" } else { "p3b" });
-            }
-            if !label_links(rt, &rows, &chrono).is_empty() {
-                fired.push(if p4 { "labels-p4" } else { "labels-p3b" });
-            }
-            if identity_expand(rt, &chrono, q, rows.clone(), 2).0.len() > rows.len() {
-                fired.push(if p4 { "expand-p4" } else { "expand-p3b" });
-            }
-        }
-        println!("{id}\t{}", fired.join(" "));
     }
     Ok(())
 }

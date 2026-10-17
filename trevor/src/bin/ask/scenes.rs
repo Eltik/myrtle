@@ -1,5 +1,5 @@
-//! Scene-scoped passages: the scenes of a named event in which a named character speaks, excerpts of a
-//! character's own scenes, the line pool, and the composed evidence of identity questions.
+//! Scene-scoped passages: the scenes of a named event in which a named character speaks, and excerpts of a
+//! character's own scenes.
 
 use std::collections::HashMap;
 
@@ -7,10 +7,9 @@ use anyhow::{Context, Result};
 use trevor::search::runtime::{Runtime, RuntimeArgs};
 use trevor::tools::{Tools, contains_words, norm};
 
-use crate::chrono::{Chrono, label_links, proper_name};
+use crate::chrono::proper_name;
 use crate::detect::asks_scene;
-use crate::retrieval::{GENERATED_KINDS, RECORD_KINDS, Names, Pre, file_or_story_label, people_named};
-use crate::terms::count_word;
+use crate::retrieval::{GENERATED_KINDS, RECORD_KINDS, people_named};
 
 /// Scenes of the event a question names where the character it names speaks or is named (the scoped scenes, default since
 /// 2026-10-05 night; `--no-scoped-scenes`). Ian's "what is the name of the npc that mon3tr suggests assassinating in masses
@@ -256,86 +255,6 @@ pub(crate) fn line_study(rt: &mut Runtime, ra: &RuntimeArgs, batch: &std::path::
     Ok(())
 }
 
-/// The line pool (`--line-pool`, opt-in since 2026-10-06): the hybrid (dense + BM25, RRF k 60) top `LINE_POOL_CHUNKS`
-/// chunks for `search` outside the generated kinds, each of their lines with the line before it, scored by the reranker
-/// with the question. On 84 single-line gold questions the gold line ranks in the reranked top 4 of about 1,430 pool
-/// lines for 7 of the 8 that are answered wrong without the gold chunk among their passages (`--line-study`, design/
-/// trevor-questions.md section 12), where a whole-corpus line dense index (221,517 lines, a 71-minute build, 170 MB as
-/// int8) ranks the gold line in its top 200 for 68 of 87 against 83 of 87 for the chunk fusion, and Chiave's line (ian6)
-/// about 19,400th. Answered 2026-10-06: gold correct 4 to 10 of the 14 changed of 30 (+7, -1: g0034), Qwen pairwise 6
-/// wins, 0 losses; Ian's 33: fires on 8, pairwise 0 wins, 2 losses (ian17, ian30), so it is opt-in. Fires when the best line is outside `rows` (or always with `all`); then the best lines outside `rows`, at most
-/// `CHAR_LINES_PER_SCENE` a chunk, as excerpts with `CHAR_WINDOW` lines either side within `LINE_POOL_TOKENS`.
-#[allow(clippy::too_many_arguments)]
-pub(crate) fn line_pool(rt: &mut Runtime, ra: &RuntimeArgs, names: &HashMap<String, Names>, q: &str, search: &str, rows: &[usize], all: bool,
-             min: Option<f32>) -> Result<Vec<Pre>> {
-    if rt.dense.is_none() || rt.bm25.is_none() {
-        return Ok(Vec::new());
-    }
-    ensure_reranker(rt, ra)?;
-    let qv = rt.embed_query(search)?;
-    let d = rt.dense.as_ref().context("dense")?.search(&qv, rt.store.len())?;
-    let b = rt.bm25.as_ref().context("bm25")?.search(search, rt.store.len(), &rt.store)?;
-    let mut fused: HashMap<usize, f64> = HashMap::new();
-    for h in [&d, &b] {
-        for (k, (r, _)) in h.iter().enumerate() {
-            *fused.entry(*r).or_default() += 1.0 / (61.0 + k as f64);
-        }
-    }
-    let mut top: Vec<(usize, f64)> = fused.into_iter().filter(|(r, _)| !GENERATED_KINDS.contains(&rt.store.chunks[*r].group_id.as_str())).collect();
-    top.sort_by(|x, y| y.1.total_cmp(&x.1).then(x.0.cmp(&y.0)));
-    let mut units: Vec<(usize, usize)> = Vec::new();
-    let mut texts: Vec<String> = Vec::new();
-    for (r, _) in top.into_iter().take(LINE_POOL_CHUNKS) {
-        let lines: Vec<&str> = rt.store.chunks[r].text.lines().collect();
-        for (i, line) in lines.iter().enumerate().filter(|(_, l)| !l.trim().is_empty()) {
-            units.push((r, i));
-            texts.push(if i > 0 { format!("{}\n{line}", lines[i - 1]) } else { (*line).to_owned() });
-        }
-    }
-    let refs: Vec<&str> = texts.iter().map(String::as_str).collect();
-    let sc = rt.reranker.as_ref().context("reranker")?.score(q, &refs)?;
-    let mut ord: Vec<usize> = (0..units.len()).collect();
-    ord.sort_by(|&x, &y| sc[y].total_cmp(&sc[x]).then(units[x].cmp(&units[y])));
-    let gate = ord.first().is_some_and(|&o| !rows.contains(&units[o].0));
-    let best_out = ord.iter().find(|&&o| !rows.contains(&units[o].0)).map_or(f32::NEG_INFINITY, |&o| sc[o]);
-    if trevor::util::env_on("TREVOR_LINE_POOL_DEBUG") {
-        eprintln!("linepool\tgate={gate}\tbest_out={best_out:.4}\t{q}");
-    }
-    if (!gate && !all) || min.is_some_and(|m| best_out < m) {
-        return Ok(Vec::new());
-    }
-    let mut picked: Vec<(usize, Vec<usize>)> = Vec::new();
-    let mut used = 0u32;
-    for (r, i) in ord.into_iter().map(|o| units[o]).filter(|(r, _)| !rows.contains(r)) {
-        let at = picked.iter().position(|(x, _)| *x == r);
-        let mut idx = at.map_or_else(Vec::new, |p| picked[p].1.clone());
-        if idx.len() >= CHAR_LINES_PER_SCENE {
-            continue;
-        }
-        let before = if idx.is_empty() { 0 } else { excerpt(rt, r, &idx).1 };
-        idx.push(i);
-        let grow = excerpt(rt, r, &idx).1.saturating_sub(before);
-        if used + grow > LINE_POOL_TOKENS && !picked.is_empty() {
-            break;
-        }
-        used += grow;
-        match at { Some(p) => picked[p].1 = idx, None => picked.push((r, idx)) }
-        if picked.iter().map(|(_, v)| v.len()).sum::<usize>() >= LINE_POOL_LINES {
-            break;
-        }
-    }
-    Ok(picked.into_iter().map(|(r, idx)| {
-        let c = &rt.store.chunks[r];
-        let label = file_or_story_label(names, c);
-        Pre::new(c.chunk_id.clone(), format!("{label}; an excerpt around a line that matches the question"), excerpt(rt, r, &idx).0).after()
-    }).collect())
-}
-
-/// The line pool: chunks whose lines are reranked, lines added, and their token budget on top of the passages'.
-pub(crate) const LINE_POOL_CHUNKS: usize = 100;
-pub(crate) const LINE_POOL_LINES: usize = 4;
-pub(crate) const LINE_POOL_TOKENS: u32 = 1500;
-
 /// Character-scoped excerpts: lines kept either side of a picked line, picked lines per scene, scenes, and tokens (on top
 /// of the retrieved passages' budget; at 3,000 the 8 questions it fires on get 2 to 14 scenes).
 pub(crate) const CHAR_WINDOW: usize = 2;
@@ -368,42 +287,6 @@ pub(crate) fn rank_by_question(rt: &mut Runtime, q: &str, cands: &[usize]) -> Op
     Some(ranked.into_iter().map(|(r, _)| r).collect())
 }
 
-/// Evidence composition for a who/which question with a description (`--compose-evidence`, opt-in since 2026-10-05 night):
-/// when the answer to a question whose answer category the check reads (`Tools::answer_constraint`) still declines,
-/// the stated identity links whose source is among its passages (`label_links`, at most 2) become candidates, each as a
-/// note ("Bluishsilver and Mabel are the same person ...", with the quote) followed by the scenes naming either name
-/// best for the question (`rank_by_question` over P4x; generated kinds left out), within 3,000 tokens per link. ian24
-/// ("Which Rhodes Island Operator (not playable unit) had visited Iris' castle of dreams?") declined with Iris's file,
-/// which says Mabel was the deceased Operator Bluishsilver, as passage [1]: the interlude where Iris looks for Mabel Grimm
-/// never reached the prompt, and the model does not join two passages on its own. Returns (id, label, text) passages.
-pub(crate) fn compose_evidence(rt: &mut Runtime, chrono: &Chrono, names: &HashMap<String, Names>, q: &str, passages: &[String]) -> Vec<(String, String, String)> {
-    let rows: Vec<usize> = passages.iter().filter_map(|id| rt.store.row(id)).collect();
-    let links = label_links(rt, &rows, chrono);
-    let mut out = Vec::new();
-    for (at, x, y, rel, quote) in links.iter().take(2) {
-        out.push((format!("identity:{x}={y}"), format!("Trevor's identity note (from the game text, {at})"),
-                  format!("{x} and {y} are the same person: {y} is the {rel} of {x} (\"{quote}\").")));
-        let cands: Vec<usize> = rt.store.chunks.iter().enumerate()
-            .filter(|(_, c)| !GENERATED_KINDS.contains(&c.group_id.as_str())
-                && (count_word(&c.text, x) > 0 || count_word(&c.text, y) > 0))
-            .map(|(i, _)| i).collect();
-        let mut used = 0u32;
-        for r in rank_by_question(rt, q, &cands).unwrap_or_default() {
-            let c = &rt.store.chunks[r];
-            // The scoped scenes' budget, shared by the links (2 at most): with 3 scenes ian24's ask lacked Iris's voice
-            // line "I'm looking for a girl named Mabel ... twenty years ago" and declined.
-            if used + c.token_count > SCOPED_TOKENS / 2 && used > 0 {
-                break;
-            }
-            used += c.token_count;
-            let (who, other) = if count_word(&c.text, x) > 0 { (x, y) } else { (y, x) };
-            let label = file_or_story_label(names, c);
-            out.push((c.chunk_id.clone(), format!("{label}; a scene that names {who}, the same person as {other}"), c.text.clone()));
-        }
-    }
-    out
-}
-
 /// The scoped scenes take up to this many tokens, two thirds of the default 9,000-token passage budget (the scope is what
 /// the question names), at most `SCOPED_K` scenes; the retrieved passages then get `SCOPED_REST`. With 2,400 tokens
 /// (4 scenes) Ian's Mon3tr scene ranked 9th of the 20 candidates (8,878 tokens) and was left out.
@@ -411,7 +294,7 @@ pub(crate) const SCOPED_K: usize = 16;
 pub(crate) const SCOPED_TOKENS: u32 = 6000;
 pub(crate) const SCOPED_REST: u32 = 3000;
 
-/// Load the reranker into `rt` on first use: the scene and line-pool paths rerank even when retrieval does not.
+/// Load the reranker into `rt` on first use: the scene paths rerank even when retrieval does not.
 fn ensure_reranker(rt: &mut Runtime, ra: &RuntimeArgs) -> Result<()> {
     if rt.reranker.is_none() {
         rt.reranker = Some(trevor::search::rerank::Reranker::load(&ra.rerank_dir, &ra.rerank_onnx, ra.rerank_max_tokens, ra.threads)?);

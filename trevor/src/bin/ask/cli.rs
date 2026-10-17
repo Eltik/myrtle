@@ -30,9 +30,6 @@ pub(crate) struct Args {
     pub(crate) max_context_tokens: u32,
     #[arg(long, default_value_t = 400)]
     pub(crate) n_predict: u32,
-    /// Answer the covered part of a question instead of declining it whole.
-    #[arg(long)]
-    pub(crate) partial: bool,
     /// Turn off question routing (table tools, timeline notes for time questions, synthesis for comparisons).
     #[arg(long)]
     pub(crate) no_route: bool,
@@ -47,10 +44,6 @@ pub(crate) struct Args {
     /// Ignore the topic tool: no topic summary is added to retrieval.
     #[arg(long)]
     pub(crate) no_topics: bool,
-    /// With `--lore v2`, add a new dossier also to a question routed to a typed source (IS, voice, module, outfit, item,
-    /// enemy), as on 2026-10-02 morning, when it lost r021 ("the same Tin Man from the random encounter in IS2?").
-    #[arg(long)]
-    pub(crate) dossier_on_typed: bool,
     /// With `--lore v2`, do not add the game-data passage and inference rule to a question about a named character's
     /// body, race features, abilities or age (2026-10-02).
     #[arg(long)]
@@ -107,14 +100,7 @@ pub(crate) struct Args {
     /// yanese saying?" hedged its right answer away the same way.
     #[arg(long)]
     pub(crate) keyword_opinion: bool,
-    /// Decide TIME_RULE with the timeline notes, SYNTH_RULE, CANON_RULE and SOURCE_RULE by one more grammar-bound Gemma
-    /// call after the form call (prompts/flags.system.txt) instead of the English keyword tests. Opt-in (2026-10-01):
-    /// on the questions whose flags differ it lost answers on real probe, gold and Ian's set (design/trevor-questions.md
-    /// section 12); without it the keyword tests decide, exactly as before.
-    #[arg(long)]
-    pub(crate) model_flags: bool,
-    /// Print the question form of each question of --batch (or the question) as `qid<TAB>form<TAB>evidence`, then
-    /// (with --model-flags) the answer-rule flags and the keyword tests' flags, and exit.
+    /// Print the question form of each question of --batch (or the question) as `qid<TAB>form<TAB>evidence`, and exit.
     #[arg(long)]
     pub(crate) form_only: bool,
     /// Print each question of --batch (or the question) with its short names expanded, and exit (no model).
@@ -126,11 +112,6 @@ pub(crate) struct Args {
     /// Set for the single question, which `main` routes before loading the index.
     #[arg(skip)]
     pub(crate) routed: bool,
-    /// Retry a declined answer once with a rewritten query and wider retrieval. Off by default: on 2026-09-29 it
-    /// answered 0 of 36 declines on 120 real questions (rewrite only) and 0 on gold set v2 (rewrite plus 16 passages),
-    /// at about 6 s more per question.
-    #[arg(long)]
-    pub(crate) retry: bool,
     /// Print the table answer when a table route answers, else the line RETRIEVAL, and exit without loading a
     /// model or the index (scripts/route-check.py runs the routing regression set with it).
     #[arg(long)]
@@ -155,11 +136,6 @@ pub(crate) struct Args {
     /// its own server when none answers, as before.
     #[arg(long)]
     pub(crate) share_server: bool,
-    /// A second retrieval query in the words the story itself would use (one more Gemma call), its hits interleaved
-    /// with the question's own: "What operator declared that they want to pee in public?" never retrieves Chiave's "see
-    /// who can piss farther", which a query in the story's words ranks 2nd (2026-09-30). Opt-in until measured.
-    #[arg(long)]
-    pub(crate) story_query: bool,
     /// Append every model request's rendered prompt, `prompt_n`, `cache_n` and output to this file (JSON lines), to
     /// check that two runs send the same prompts (2026-10-02). Debug only; the answers are unchanged.
     #[arg(long)]
@@ -183,7 +159,7 @@ pub(crate) struct Args {
     /// The pipeline profile (design/trevor-contract-v1.md section 2; also per worker job): `full` is today's default
     /// pipeline (the kill switch: no flag changes); `slim` is contract v1's CPU pipeline: the keyword router, k 5, a
     /// 2,000-token passage budget, 250 output tokens, no typed fallback, no answer extension and no second-look retries
-    /// (answer check, operator list check, evidence composition, the decline retry); `mid` (contract v1.1 section 4, the
+    /// (answer check, operator list check); `mid` (contract v1.1 section 4, the
     /// cpu rung's default) is the keyword router, k 8, a 3,600-token budget, 250 output tokens and the same three
     /// follow-ups off; `mid6k` is `mid` with a 6,000-token budget.
     #[arg(long, value_enum, default_value_t = Profile::Full)]
@@ -225,32 +201,19 @@ pub(crate) struct Args {
     /// default since 2026-10-03).
     #[arg(long)]
     pub(crate) no_age_estimate: bool,
-    /// Replace the last N of the k fused hits with the Ettin reranker's best hits (of the fused top 40) not already
-    /// among them. Reranking outright fails on gold v2 over P3b (recall@10 0.732 to 0.605, 22 lost and 8 gained,
-    /// 2026-09-30) but the reranker's first pick is often a passage fusion ranks lower: fused top 7 plus its best new
-    /// hit against fused top 8 is recall +0.063 [+0.023, +0.109], 10 gained and 2 lost. Opt-in (0) until the answers
-    /// are measured.
-    #[arg(long, default_value_t = 0)]
-    pub(crate) rerank_add: usize,
     /// Turn off the origin chain (default since 2026-10-03, item 1): a why/when/how-it-began question gets ORIGIN_RULE
     /// (trace the causes back to the earliest one the passages show) and the earlier scenes of the story its search keeps
     /// hitting, placed first (ian15 now starts from Swire's kidnapping; 0 losses; see design/trevor-questions.md section 12).
     #[arg(long)]
     pub(crate) no_origin_chain: bool,
-    /// Relationship and admiration questions (2026-10-03, item 2): RELATION_RULE keeps literal relations apart from what
-    /// characters call each other and keeps distinct people with one title apart. The default since 2026-10-05 night, for a
-    /// relation question naming two people (or an admiration question), see `relation_rule_any`; this flag is kept and
-    /// changes nothing.
-    #[arg(long)]
+    /// RELATION_RULE for this question: `!no_relation_rule`, set by `main` and per job; `answer_one_inner` clears it for
+    /// a question naming a group topic, and for a relation question naming fewer than two people (not an admiration one).
+    #[arg(skip)]
     pub(crate) relation_rule: bool,
     /// Kill switch for RELATION_RULE (default since 2026-10-05 night: 0 pairwise losses on the 14 relationship questions,
     /// 4 wins: g0099, ian19, ian23, relx299).
     #[arg(long)]
     pub(crate) no_relation_rule: bool,
-    /// With `--relation-rule`, apply it also to a question naming a nation, place, race or organization topic (since
-    /// 2026-10-05 the rule is for people only: "Are Petrams related to Aegirs?", real r108, was lost to it twice).
-    #[arg(long)]
-    pub(crate) relation_rule_all: bool,
     /// Kill switch for the scoped scenes (default since 2026-10-05 night): a question naming a main episode or event and a
     /// character who speaks or is named in it gets, first, that event's scenes with the character ranked by the question.
     #[arg(long)]
@@ -260,33 +223,10 @@ pub(crate) struct Args {
     /// excerpts of the scenes where that character speaks, their lines ranked by the reranker.
     #[arg(long)]
     pub(crate) no_character_scenes: bool,
-    /// The line pool (opt-in, 2026-10-06, Ian's item 1): the lines of the hybrid top `LINE_POOL_CHUNKS` chunks, each with the
-    /// line before it, ranked by the reranker; when the best line lies outside the retrieved passages, the best
-    /// `LINE_POOL_LINES` such lines come as excerpts after the retrieved passages, within `LINE_POOL_TOKENS` on top.
-    /// Measured 2026-10-06: gold correct +7 -1 on 30 (g0034 lost), but Ian's ian17 and ian30 lost pairwise, so opt-in.
-    #[arg(long)]
-    pub(crate) line_pool: bool,
-    /// With `--line-pool`, add the excerpts even when the best pool line is already among the retrieved passages.
-    #[arg(long)]
-    pub(crate) line_pool_all: bool,
-    /// With `--line-pool`, fire only when the best line outside the retrieved passages scores at least this (reranker
-    /// logit). TREVOR_LINE_POOL_DEBUG=1 prints each question's best score; TREVOR_LINE_POOL_DETECT=1 (measurement) skips
-    /// the answer call and returns "line-pool detect: <excerpts>".
-    #[arg(long)]
-    pub(crate) line_pool_min: Option<f32>,
     /// Kill switch for the answer extension (default since 2026-10-06): an answer that stopped at `--n-predict` is asked
     /// again with twice the limit (Ian's ian27 stopped mid-sentence at 400 tokens).
     #[arg(long)]
     pub(crate) no_answer_extend: bool,
-    /// The verdict-first yes/no rule (opt-in, refuted 2026-10-06, Ian's item 2): YES_NO_VERDICT_RULE instead of YES_NO_RULE;
-    /// on the 50 yes/no questions Qwen pairwise 5 wins, 7 losses, 38 ties, and ian26 still opens "The passages do not say".
-    #[arg(long)]
-    pub(crate) verdict_first: bool,
-    /// With `--relation-rule`, apply it also to a relation question naming fewer than two people (since 2026-10-05
-    /// night the rule needs two named people, or an admiration question: real-style relx26 "what their relationship is ...
-    /// Drudge is the big brother" and relx810 "Is Mon3tr related to the Aggeloi?" were lost to it pairwise).
-    #[arg(long)]
-    pub(crate) relation_rule_any: bool,
     /// Measurement: with --batch, print the scoped scenes each question would get (chunk ids), without a model.
     #[arg(long, hide = true)]
     pub(crate) scoped_only: bool,
@@ -296,18 +236,12 @@ pub(crate) struct Args {
     /// the chunk's dense, BM25 and fused ranks. No model server.
     #[arg(long, hide = true)]
     pub(crate) line_study: bool,
-    /// The opinion gate (opt-in, 2026-10-05 night; `opinion_needs_candidates`): an opinion question that names no character
-    /// or group and asks no who/which gets no candidates from operator files and dossiers and OPINION_RULE ("the story does
-    /// not settle it") instead of OPINION_FORM_RULE. Fixes real r030 ("In lore how strong are my favourite characters?") by
-    /// the real-probe judge, but loses 3 of 19 touched questions pairwise (r039, r067, r068). Since 2026-10-06 the default
-    /// is the narrow gate (`no_opinion_gate`); this flag is night 11's wider reach, measurement only.
-    #[arg(long)]
-    pub(crate) opinion_gate: bool,
-    /// Kill switch for the narrow opinion gate (default since 2026-10-06): the gate of `--opinion-gate` only for a question
-    /// the keyword test also calls an opinion ("favourite", "do you think", ...) and that names no word the corpus writes
-    /// as a proper name (`names_proper_word`: "Fort barron"), so real r039, r067 and r068 keep their candidates. Fires on
-    /// r030 and r116 of the 448 set questions: real-probe responds 1 to 2 of 2 and handles 1 to 2 (r030 regains both),
-    /// faithfulness 16/18 to 12/14, Qwen pairwise 2 ties, 0 losses.
+    /// Kill switch for the opinion gate (default since 2026-10-06; `opinion_needs_candidates`): an opinion question the
+    /// keyword test also calls an opinion ("favourite", "do you think", ...) that names no character or group, asks no
+    /// who/which and names no word the corpus writes as a proper name (`names_proper_word`: "Fort barron") gets no
+    /// candidates from operator files and dossiers and OPINION_RULE ("the story does not settle it") instead of
+    /// OPINION_FORM_RULE. Fires on r030 and r116 of the 448 set questions: real-probe responds 1 to 2 of 2 and handles 1 to
+    /// 2 (r030 regains both), faithfulness 16/18 to 12/14, Qwen pairwise 2 ties, 0 losses.
     #[arg(long)]
     pub(crate) no_opinion_gate: bool,
     /// Kill switch for group evidence (default since 2026-10-16, Ian's ian34): an opinion question naming two or more
@@ -320,14 +254,6 @@ pub(crate) struct Args {
     /// operator is asked once more with a note naming them and whose operator file the cited passage is.
     #[arg(long)]
     pub(crate) no_operator_list_check: bool,
-    /// When-questions (2026-10-03, item 3): DATE_RULE, end with a labelled year estimate from the timeline notes when
-    /// no passage states the year (the age rule's counterpart for dates). Opt-in until measured.
-    #[arg(long)]
-    pub(crate) date_estimate: bool,
-    /// Off-topic guard (2026-10-03, item 8): a question that names nothing Trevor's tables know gets LORE_ONLY_RULE
-    /// (Trevor answers Arknights lore only). Opt-in until measured.
-    #[arg(long)]
-    pub(crate) lore_only: bool,
     /// Turn off the race-trait rule (default since 2026-10-03, item 11, no model): race topics serve the summary after
     /// `topics.py traitrule`, where a body-feature sentence stays only when a cited line gives the feature to a speaker or
     /// subject of that race in operator_attributes.jsonl (drops Durin "thick tails" and Savra "a horn"; 0 losses).
@@ -363,28 +289,10 @@ pub(crate) struct Args {
     /// the game's ending order, without the router.
     #[arg(long)]
     pub(crate) no_is_ending: bool,
-    /// The named topic (2026-10-03, item 5; opt-in after losses): a retrieval question that names one served nation,
-    /// place, race or organization topic and no operator gets its summary although the router chose no topic ("factions
-    /// in dossoles"). Measured with --topic-events and --place-nation: held-out responds 10 to 7 of 10 changed (lost
-    /// h004, h017, h033, near-identical declines), real 10 to 11 of 14, gold 16 to 17 of 24; ian30 answers the factions.
-    #[arg(long)]
-    pub(crate) named_topic: bool,
-    /// With `--named-topic`, the night 7 reach: every question naming one such topic (since 2026-10-05 only a question about
-    /// the topic as a whole, `Tools::broad_topic_question`).
-    #[arg(long)]
-    pub(crate) named_topic_all: bool,
-    /// Topic events (2026-10-03, items 3 and 4; opt-in, measured with --named-topic): a topic summary comes with the P2
-    /// event summaries of the 3 story groups that name the topic most (scripts/topic_groups.py).
-    #[arg(long)]
-    pub(crate) topic_events: bool,
     /// Turn off the term rule (2026-10-03, item 6): a "what is/are X" question gets TERM_RULE (plain words, a short
     /// definition of each in-world term used).
     #[arg(long)]
     pub(crate) no_term_rule: bool,
-    /// The place's nation (2026-10-03, item 5; opt-in, measured with --named-topic): a place topic comes with the topic
-    /// of the nation its summary names most (Dossoles: Bolívar).
-    #[arg(long)]
-    pub(crate) place_nation: bool,
     /// Turn off chronology lines for the subject (2026-10-03, leftover c): a when-question gets the dated lines of
     /// artifacts/chrono/terra_history.md that name its subject, and DATE_RULE (a labelled estimate).
     #[arg(long)]
@@ -394,24 +302,12 @@ pub(crate) struct Args {
     /// voice line, module or art unit.
     #[arg(long)]
     pub(crate) no_own_file_fallback: bool,
-    /// Identity notes (2026-10-03, leftover a; opt-in): for a who/which/identity question, when a passage is the source
-    /// of a stated identity link of identities.v2.json (Iris's file: Mabel was Bluishsilver), a note after the passages
-    /// states the link and its quote; inferred links sharing a name follow, labelled. ian24 still declines with the note
-    /// in its prompt, and the prefilter undercounted where it fires (ian1, ian3, ian7, ian18 changed outside it).
-    #[arg(long)]
-    pub(crate) identity_notes: bool,
     /// Turn off time evidence (2026-10-03 night 8; default, 0 losses on the 3 questions it fires on, ian17 now
     /// estimates "between 1086 and 1090"): when chronology lines name a when-question's subject, they come as a numbered
     /// TIME EVIDENCE block right before the question, and the question is followed by the estimate as the required
-    /// final line ("Estimate: ..."); off, they are the CHRONOLOGY LINES block before the identity notes, as before.
+    /// final line ("Estimate: ..."); off, they are the CHRONOLOGY LINES block, as before.
     #[arg(long)]
     pub(crate) no_time_evidence: bool,
-    /// Identity labels (2026-10-03 night 8; opt-in): for a who/which/identity question, a passage that is the source of a
-    /// stated identity link of identities.v2.json carries the resolved link in its label ("Bluishsilver, real name
-    /// Mabel, per ..."), both names proper names by the corpus (the lowercase form is under 1% of the capitalized
-    /// count: "Operator" 1,168 of 6,260 is dropped).
-    #[arg(long)]
-    pub(crate) identity_labels: bool,
     /// Turn off deep topic entries (default since 2026-10-05, lore v2 only): the topic tool serves the judged map-reduce
     /// entry of scripts/topic_deep.py (artifacts/topics/deep.jsonl: the story groups, operator files, game records and
     /// dossiers naming the topic, summarized per source, then into What it is, Traits, History, Society and politics,
@@ -429,47 +325,25 @@ pub(crate) struct Args {
     /// of the served topics those chunks name (the first two sentences of each summary, at most 3).
     #[arg(long)]
     pub(crate) no_term_lookup: bool,
-    /// Identity expansion (2026-10-03 night 9; opt-in, no gains): a who/which question naming a character, whose
-    /// passages include the source of a stated identity link (Iris's file: Mabel was Bluishsilver), also gets the 2
-    /// passages where a linked name and the named character appear together (the interlude where Iris looks for Mabel
-    /// Grimm), placed right after the link's source passage, each labelled with the resolved link. Measured on the 11
-    /// questions it fires on: 0 judged losses, no gains; ian24 answers Sakiko Togawa alone and declines with
-    /// --identity-labels.
-    #[arg(long)]
-    pub(crate) identity_expand: bool,
     /// Turn off the answer category check (default since 2026-10-05): a who/which question that constrains its answer's category ("not
     /// playable", "NPC", "playable operator", "from <nation>") has the names its answer gives checked against the
     /// game data (operator_attributes names, real names, identity links); when every name it gives fails, it is asked
     /// once more with a passage saying which names fail and why, and a second failure gets that note appended. Fires on
     /// ian24 alone of the 447 set questions and on 2 of 1,228 Reddit and Discord questions; changes no default answer
-    /// (the default declines ian24); with --identity-expand ian24 goes from Sakiko Togawa (a playable operator) to a decline.
+    /// (the default declines ian24).
     #[arg(long)]
     pub(crate) no_answer_check: bool,
     /// The note of the answer check's second ask, set only inside `answer_one`.
     #[arg(skip)]
     pub(crate) check_note: Option<String>,
-    /// The evidence composition (`compose_evidence`; opt-in, 2026-10-05 night: it fires on ian24 alone of the 448 set
-    /// questions, which still declines with the composed evidence, so it changes no answer and costs one more call).
-    #[arg(long)]
-    pub(crate) compose_evidence: bool,
-    /// The composed passages of the evidence composition's ask, set only inside `answer_one`.
-    #[arg(skip)]
-    pub(crate) compose: Vec<(String, String, String)>,
     /// Turn off the rarity order of the term-lookup glossary (default since 2026-10-05): the served topics the term's
     /// chunks name are ordered by first mention, as on night 9, instead of rarest first (fewest P4x chunks naming them).
     #[arg(long)]
     pub(crate) no_glossary_rarity: bool,
-    /// With `--place-nation`, the nation of a place from the summary count of night 7 (Chernobog: Yan) instead of
-    /// artifacts/topics/place_nation.json (scripts/place_nation.py, 2026-10-03 night 8; Chernobog: Ursus).
-    #[arg(long)]
-    pub(crate) place_nation_summary: bool,
     /// With `--batch`: print, per question, which of the 2026-10-03 question-only detectors fire, without a model
     /// (the prefilter of the A/B runs).
     #[arg(long, hide = true)]
     pub(crate) detect_only: bool,
-    /// With `--batch`: print the identity questions whose plain top k would get identity notes (needs the index).
-    #[arg(long, hide = true)]
-    pub(crate) detect_identity: bool,
     /// Model file for the server `ask` starts when none is running.
     #[arg(long, default_value = "models/llm/gemma-4-12b-it-qat-q4_0.gguf")]
     pub(crate) model: PathBuf,
@@ -517,9 +391,9 @@ pub(crate) fn router_source(a: &Args) -> bool {
 }
 
 /// Whether a new dossier may join this question's passages: not when it is routed to a typed P4 source, which asks
-/// about that text, not about the character (`--dossier-on-typed` allows it).
+/// about that text, not about the character.
 pub(crate) fn dossier_allowed(q: &str, a: &Args, route: Option<&Route>) -> bool {
-    a.dossier_on_typed || !retrieval_plan(q, a, route).1.is_some_and(|k| k != "archive")
+    !retrieval_plan(q, a, route).1.is_some_and(|k| k != "archive")
 }
 
 /// Where retrieval looks: Some(true) for P4 (typed sources), Some(false) for P3b, None to keep the loaded corpus; and
@@ -632,8 +506,6 @@ pub(crate) fn apply_profile(a: &mut Args, p: Profile) {
         a.no_answer_extend = true;
         a.no_answer_check = true;
         a.no_operator_list_check = true;
-        a.compose_evidence = false;
-        a.retry = false;
     }
 }
 

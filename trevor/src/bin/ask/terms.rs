@@ -7,18 +7,6 @@ use trevor::tools::Tools;
 
 use crate::retrieval::{GENERATED_KINDS, RECORD_KINDS};
 
-/// Whole-word occurrences of `needle` in `text`, case-sensitive.
-pub(crate) fn count_word(text: &str, needle: &str) -> usize {
-    if needle.is_empty() {
-        return 0;
-    }
-    text.match_indices(needle).filter(|(i, _)| {
-        let before = text[..*i].chars().next_back();
-        let after = text[i + needle.len()..].chars().next();
-        !before.is_some_and(char::is_alphanumeric) && !after.is_some_and(char::is_alphanumeric)
-    }).count()
-}
-
 /// Lowercase letters and digits only: "Khagan quest" and "Khaganquest" are both "khaganquest".
 pub(crate) fn compact(x: &str) -> String {
     x.chars().filter(|c| c.is_alphanumeric()).flat_map(char::to_lowercase).collect()

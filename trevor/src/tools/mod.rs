@@ -241,11 +241,6 @@ pub struct Tools {
     /// 2026-10-03): `{"groups": {id: {name, kind, episode, order}}, "characters": {name: {forms, speaks, mentioned,
     /// namedIn}}}`. Read by the `appearances` tool.
     pub appearances: Option<Value>,
-    /// Per topic, the story groups that name it most (`scripts/topic_groups.py`, 2026-10-03), and the P2 event summary
-    /// of each group (`artifacts/p2/groups.jsonl`): the deeper topic answer serves the first 3 after the topic summary.
-    pub topic_groups: Option<Value>,
-    /// The nation of each place topic from data (`scripts/place_nation.py`, 2026-10-03 night 8).
-    pub place_nations: Option<Value>,
     /// Operator design inspirations inferred from the game data (`scripts/design_infer.py`, 2026-10-04): one row per
     /// operator, `{operator, charId, alters, subjects: [{subject, category, why, confidence, evidence}]}`, each subject
     /// checked by a second model against the evidence it cites. Read by the `design_basis` tool, labelled as Trevor's
@@ -254,11 +249,10 @@ pub struct Tools {
     /// Deep topic entries (`scripts/topic_deep.py`, 2026-10-03 night 9): topic name to the judged entry's served text
     /// (a map-reduce over the story groups, operator files, game records and dossiers naming the topic).
     pub deep_topics: HashMap<String, String>,
-    /// Serve the deep entry instead of the summary where one exists (`ask --deep-topics`).
+    /// Serve the deep entry instead of the summary where one exists (set per question by `ask`'s broad-question gate).
     pub topics_deep: bool,
-    pub group_summaries: HashMap<String, String>,
     /// Identity links with their evidence (`artifacts/entities/identities.v2.json`, `ENTITY_V2=1 scripts/entities.py
-    /// build`, 2026-10-03): (name, other name, relation, quote, where, stated). Read by `ask`'s identity notes.
+    /// build`, 2026-10-03): (name, other name, relation, quote, where, stated). Read by the answer category check.
     pub identity_links: Vec<(String, String, String, String, String, bool)>,
     pub opts: ToolOptions,
 }
@@ -340,16 +334,11 @@ impl Tools {
             }
         }
         t.appearances = read_json(&root.join("artifacts/appearances/appearances.json"));
-        t.topic_groups = read_json(&root.join("artifacts/topics/topic_groups.json"));
-        t.place_nations = read_json(&root.join("artifacts/topics/place_nation.json"));
         t.design_basis = read_jsonl(&root.join("artifacts/entities/design_infer.jsonl")).filter(|v| !v.is_empty());
         for d in read_jsonl(&root.join("artifacts/topics/deep.jsonl")).unwrap_or_default() {
             if let (Some(t_), Some(text)) = (d["topic"].as_str(), d["served"].as_str()) {
                 t.deep_topics.insert(t_.to_owned(), text.to_owned());
             }
-        }
-        for g in read_jsonl(&root.join("artifacts/p2/groups.jsonl")).unwrap_or_default() {
-            t.group_summaries.insert(s(&g, "groupId"), s(&g, "summary"));
         }
         if let Some(v) = read_json(&root.join("artifacts/entities/identities.v2.json")) {
             for i in v["identities"].as_array().into_iter().flatten() {

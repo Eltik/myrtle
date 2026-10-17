@@ -6,7 +6,7 @@ use crate::batch::{batch_items, qid_question};
 use crate::chrono::{Chrono, chronology_for, time_evidence_block};
 use crate::detect::{asks_identity, asks_origin, asks_relation, asks_scene, asks_term, asks_when, term_of};
 use crate::retrieval::{Names, one_operator, one_operator_wide, story_label, typed_owner};
-use crate::terms::{compact, count_word, first_sentences};
+use crate::terms::{compact, first_sentences};
 
 #[test]
 fn term_lookup_helpers_find_the_term_and_its_spelling_parts() {
@@ -15,8 +15,6 @@ fn term_lookup_helpers_find_the_term_and_its_spelling_parts() {
     assert_eq!(term_of("What is Amiya's power?"), None, "a possessive is not a term question");
     assert_eq!(compact("Khagan quest"), compact("Khaganquest"));
     assert_eq!(compact("Kal'tsit"), "kaltsit");
-    assert_eq!(count_word("Iris looked for Mabel. Iris'", "Iris"), 2);
-    assert_eq!(count_word("Irisa and Iris", "Iris"), 1);
     assert_eq!(first_sentences("What it is\nA land of ice. It is cold. It is far.", 2), "A land of ice. It is cold.");
 }
 
@@ -254,7 +252,7 @@ fn profiles_slim_sets_the_cpu_pipeline_and_full_changes_nothing() {
     let mut slim = parse(&["q", "--profile", "slim"]);
     apply_profile(&mut slim, Profile::Slim);
     assert!(slim.router == RouterKind::Keywords && slim.no_typed_fallback && slim.no_answer_extend && slim.no_answer_check
-            && slim.no_operator_list_check && !slim.retry);
+            && slim.no_operator_list_check);
     assert_eq!((slim.k, slim.max_context_tokens, slim.n_predict), (5, 2000, 250));
     assert!(!crate::cli::form_on(&slim), "the keyword router has no form call");
 }

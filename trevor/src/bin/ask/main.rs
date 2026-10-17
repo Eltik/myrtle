@@ -120,17 +120,13 @@ async fn main() -> Result<()> {
     }
     // Loaded after the table routes, which need no index (a table answer no longer waits on the ONNX load).
     let dense = a.retrieval == RetrievalKind::Hybrid;
-    let mut rts = Runtimes { main: load_runtime(&a.runtime, dense, a.rerank_add > 0, None)?, p4: None, art: None, p4_dir: p4_dir(&a),
-                             switch: corpus_default && router_source(&a), args: a.runtime.clone(), rerank: a.rerank_add > 0, horizon: None,
-                             dense };
+    let mut rts = Runtimes { main: load_runtime(&a.runtime, dense, None)?, p4: None, art: None, p4_dir: p4_dir(&a),
+                             switch: corpus_default && router_source(&a), args: a.runtime.clone(), horizon: None, dense };
     if let (Some(b), true) = (&a.batch, a.line_study) {
         return line_study(&mut rts.main, &rts.args, b);
     }
     if let (Some(b), true) = (&a.batch, a.scoped_only) {
         return batch::scoped_only(&mut rts, &tables.tools, b);
-    }
-    if let (Some(b), true) = (&a.batch, a.detect_identity) {
-        return batch::detect_identity(&a, &mut rts, b);
     }
     let (llm, _server) = match early { Some(x) => x, None => connect_or_spawn(&a).await? };
     let names = load_names();

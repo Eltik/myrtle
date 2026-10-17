@@ -47,8 +47,7 @@ pub(crate) fn is_synthesis_question(q: &str) -> bool {
 }
 
 /// A question asking who someone is or which person did something, or naming a real name, codename or identity: the
-/// questions identity notes are for (on every question they fired on 61 of 336 earlier answers, 41 of them trivia
-/// questions about one operator's file; with this test, 5).
+/// questions the answer category check reads.
 pub(crate) fn asks_identity(q: &str) -> bool {
     let n = norm(q);
     ["who", "whom", "whose", "which", "real name", "codename", "identity", "same person", "known as"].iter()
@@ -163,14 +162,6 @@ pub(crate) fn asks_relation(q: &str) -> bool {
 pub(crate) fn asks_when(q: &str) -> bool {
     let ql = format!(" {} ", q.to_lowercase().replace(|c: char| !c.is_alphanumeric() && c != '\'', " "));
     [" when ", " what year ", " which year ", " how long ago "].iter().any(|w| ql.contains(w))
-}
-
-/// An answer whose first sentence says the passages do not specify or identify what was asked ("The story text does not
-/// specify which non-playable Rhodes Island Operator visited Iris's castle of dreams"): a decline for the evidence
-/// composition, which `declines` (the retry's and the typed fallback's test) does not count.
-pub(crate) fn leaves_open(answer: &str) -> bool {
-    let first = answer.trim().split(['.', '!', '?']).next().unwrap_or_default().to_lowercase();
-    ["does not specify", "do not specify", "does not identify", "do not identify", "does not name", "do not name"].iter().any(|w| first.contains(w))
 }
 
 /// A decline opens the answer ("I could not find it in the story text"), the rule `answer-eval.py` uses.

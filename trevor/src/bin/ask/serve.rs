@@ -51,7 +51,7 @@
 //! `--no-cache-prompt`. With a horizon (a gatePos, or a story or group id turned into one; src/search/horizon.rs)
 //! retrieval returns only chunks released at or before it, and everything built from every story is left out: table
 //! answers (the question is answered from the passages instead), topic summaries and entries, dossiers, the game-data
-//! passage, the overview, canon evidence, the identity and chronology notes and the evidence composition.
+//! passage, canon evidence and the chronology notes.
 
 use std::collections::{BTreeMap, HashMap};
 use std::path::{Path, PathBuf};
@@ -83,7 +83,7 @@ const SERVER: &str = "en";
 
 /// Request flags that would change what the service loaded; a job may not give them.
 const LOAD_FLAGS: &[&str] = &["--corpus", "--lore", "--router", "--serve", "--worker", "--port", "--batch", "--out", "--server",
-                              "--model", "--no-game-text", "--art", "--rerank-add", "--model-dir", "--query-onnx", "--allow-query-model-mismatch", "--retrieval",
+                              "--model", "--no-game-text", "--model-dir", "--query-onnx", "--allow-query-model-mismatch", "--retrieval",
                               "--backend", "--canary", "--gate-order", "--horizon-check", "--json-check", "--no-stream"];
 
 /// One question: `POST /v1/ask` body, or a worker job's fields.
@@ -243,7 +243,7 @@ impl Service {
     /// ends), the Cloudflare model list when configured, and the release order.
     async fn load(a: Args, corpus_default: bool, tables: Tables, chrono: Chrono, need: Need) -> Result<Self> {
         let dense = a.retrieval == RetrievalKind::Hybrid;
-        let main = load_runtime(&a.runtime, dense, a.rerank_add > 0, None)?;
+        let main = load_runtime(&a.runtime, dense, None)?;
         let mut parts = vec![(a.runtime.corpus.display().to_string(), main.store.chunks_sha.clone())];
         let dir = p4_dir(&a);
         if let Some(sha) = recorded_sha(dir).filter(|_| std::path::Path::new(dir) != a.runtime.corpus) {
@@ -251,7 +251,7 @@ impl Service {
         }
         let corpus_version = corpus_version(&parts);
         let rts = Runtimes { main, p4: None, art: None, p4_dir: p4_dir(&a), switch: corpus_default && router_source(&a),
-                             args: a.runtime.clone(), rerank: a.rerank_add > 0, horizon: None, dense };
+                             args: a.runtime.clone(), horizon: None, dense };
         let (llm, server) = match need {
             Need::Model => {
                 let (l, s) = connect_or_spawn(&a).await?;
@@ -337,11 +337,7 @@ impl Service {
     async fn answer(&mut self, q: &str, req: &AskRequest, mut a: Args, horizon: Option<Arc<Horizon>>, llm: &Llm, t0: Instant)
                     -> Result<(AskResult, BTreeMap<String, String>), JobError> {
         if horizon.is_some() {
-            // Built from every story: identity links, the chronology of the subject, the evidence composition.
-            a.identity_notes = false;
-            a.identity_labels = false;
-            a.identity_expand = false;
-            a.compose_evidence = false;
+            // Built from every story: the chronology of the subject.
             a.no_chrono_subject = true;
         }
         let horizon_id = horizon.as_ref().map(|h| h.id.clone());
@@ -445,7 +441,7 @@ impl Service {
         if self.rts.p4.is_none() {
             let mut ra = self.rts.args.clone();
             ra.corpus.clone_from(&dir);
-            self.rts.p4 = Some(load_runtime(&ra, self.rts.dense, self.rts.rerank, self.rts.main.shared_embedder())?);
+            self.rts.p4 = Some(load_runtime(&ra, self.rts.dense, self.rts.main.shared_embedder())?);
         }
         let p4 = self.rts.p4.as_mut().expect("loaded above");
         std::mem::swap(&mut self.rts.main, p4);
@@ -1279,7 +1275,7 @@ pub(crate) fn horizon_check(a: &Args, batch: &Path) -> Result<()> {
     }
     // The questions: hybrid candidates (BM25 with --retrieval bm25) at the tie stories and 32 spread horizons.
     let dense = a.retrieval == RetrievalKind::Hybrid;
-    let mut rt = load_runtime(&a.runtime, dense, false, None)?;
+    let mut rt = load_runtime(&a.runtime, dense, None)?;
     let step = (horizons.len() / 32).max(1);
     let sample: Vec<String> = ties.iter().cloned().chain(horizons.iter().step_by(step).cloned()).collect();
     let (mut kept_same, mut diff_rows) = (0usize, 0usize);
@@ -1315,7 +1311,7 @@ pub(crate) async fn json_check(a: &Args, tables: &mut Tables, batch: &Path) -> R
         let (qid, q) = (v["qid"].as_str().unwrap_or_default(), v["question"].as_str().unwrap_or_default());
         tables.tools.topics_deep = deep_for(a, &tables.tools, q);
         let r = route_checked(q, a, tables, Some(&llm)).await?;
-        let form = match crate::form::question_form(&llm, q, a.form_v1, a.model_flags).await {
+        let form = match crate::form::question_form(&llm, q, a.form_v1).await {
             Ok(f) => format!("{}{}", f.form, f.evidence.map_or(String::new(), |e| format!(": {e}"))),
             Err(e) if trevor::goldgen::llm::is_json_invalid(&e) => "INVALID".to_owned(),
             Err(e) => return Err(e),
