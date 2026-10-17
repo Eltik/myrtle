@@ -3,7 +3,9 @@
 How Trevor's content is built, gated, published and rolled back on the myrtle.moe VPS, and what happens when
 something breaks. The install steps are `deploy/README.md`; the interface is `trevor-contract-v1.md` (binding); the
 build order is `trevor-integration-plan-v3.md`. Nothing here has run on the VPS yet: every number below was measured
-on the Mac (M5 Pro) unless it says otherwise.
+on the development machine (Apple M5 Pro, 24 GB) unless it says otherwise. The variables the backend reads, with their
+defaults, are documented in [backend/README.md, Trevor](../../backend/README.md#trevor); this runbook names them and
+links there. The variables the worker and the scripts read are documented here and in `deploy/trevor.env.example`.
 
 ## 1. What runs where
 
@@ -43,20 +45,20 @@ rollback), or with `RESET_STAGE=1`.
 
 ## 3. Embeddings: BM25-only or fp32
 
-The Mac's corpus vectors are INT8 (`model_int8.onnx`), and INT8 drifts to cosine 0.94 on x86. Two ways are safe:
+The build machine's corpus vectors are INT8 (`model_int8.onnx`), and INT8 drifts to cosine 0.94 on x86. Two ways are safe:
 
 - **BM25-only** (`TREVOR_RETRIEVAL=bm25`, `EMBED=0`). Nothing is embedded on the VPS; the worker never loads the
-  dense index. Gold v2 BM25 recall@10 on P3b, the serving corpus: 0.636 (measured today by the gate, 131 items).
+  dense index. Gold v2 BM25 recall@10 on P3b, the serving corpus: 0.636 (measured on 2026-10-16 by the gate, 131 items).
 - **Hybrid** with fp32 vectors (`EMBED=1`, `EMBED_ONNX=model.onnx`, then `TREVOR_RETRIEVAL=hybrid`). The fp32 export
   gives the same vectors on every CPU. The daily job embeds only new or changed chunks (`embed-corpus` reuse, keyed on
   the text sha) and only in `EMBED_DIRS` (default `artifacts/p3b artifacts/p4x`, the corpora ask serves). It refuses
   to run when a directory it would embed into, or reuse from, holds vectors from another export
   (`vectors.meta.json` `modelFile`), so the runtimes never mix: the one-time full re-embed is
   `EMBED_FULL=1 FORCE=1 trevor-vps-update.sh daily` (deploy/README.md step 9, about 1 to 2 h at nice 19 by the plan's
-  estimate, unmeasured on the VPS), or fp32 vectors copied from the Mac.
+  estimate, unmeasured on the VPS), or fp32 vectors copied from the build machine.
 - `embed-corpus` since 2026-10-16 takes `--model-file` (alias of `--onnx-file`) and pauses itself under memory, CPU
   pressure or load (its guard is on by default; `--no-guard` turns it off). The script detects both from `--help`
-  and warns when the binary predates them. `trevor-reembed.md` (another agent's) is the reference for the guard.
+  and warns when the binary predates them. `trevor-reembed.md` is the reference for the guard.
 
 ## 4. The daily update (`trevor-vps-update.sh daily`, 19:30 UTC)
 
@@ -73,7 +75,7 @@ The Mac's corpus vectors are INT8 (`model_int8.onnx`), and INT8 drifts to cosine
    `deaths.py build`, `attributes.py`, `sources.py`, the lores (`dossiers.py sets`, `build-profiles`, P3b, P4, P4x
    with `gametext.py`), `reading_guide.py build`, `source_dates.py`, `appearances.py`, `answer_bank.py seed` and
    `merge`. Every model output is read as it is (frozen): a new story gets no dossier, topic, chronology extraction
-   or identity link until a manual rebuild on the Mac. Its bank questions and answers are the exception: just
+   or identity link until a manual rebuild on the build machine. Its bank questions and answers are the exception: just
    before the bank merge, `bank_regen.py detect --prev <live release>` lists the new and changed chunks for the
    overnight run, and the merge drops every generated answer whose evidence changed or vanished (section 5a).
 4. **Panels** (`panels.py --built-from <res_version>`), which also writes `artifacts/chrono/gate_order.json` (section 6).
@@ -89,18 +91,20 @@ The Mac's corpus vectors are INT8 (`model_int8.onnx`), and INT8 drifts to cosine
 
 Any failed step sends ONE `update_failed` alert per run (contract v1.1 section 2.2). It is a Discord embed in the
 backend's `core::alerts` style that gives the step, the exit code and the last `ALERT_LOG_LINES` (20) lines of the
-run log. The webhook is `DISCORD_ALERT_WEBHOOK`, with `TREVOR_DISCORD_WEBHOOK` (the name before 2026-10-17) as the
-fallback. A marker file keyed on the run's pid keeps a subshell's error trap and the parent's from posting twice.
+run log. The script posts it, and step 9's notice, to `DISCORD_ALERT_WEBHOOK`. The backend reads only that variable
+(its `core::alerts`, see [backend/README.md, Trevor](../../backend/README.md#trevor)); `TREVOR_DISCORD_WEBHOOK` (the
+name before 2026-10-17) is read only by `trevor-vps-update.sh`, as its fallback when `DISCORD_ALERT_WEBHOOK` is unset
+or empty. A marker file keyed on the run's pid keeps a subshell's error trap and the parent's from posting twice.
 
-Measured on the Mac against a scratch copy of the artifacts and a stand-in backend, `SKIP_FETCH=1`, vectors reused
-(section 12 has the numbers).
+Measured on the development machine (Apple M5 Pro, 24 GB) against a scratch copy of the artifacts and a stand-in
+backend, `SKIP_FETCH=1`, vectors reused (section 14 has the numbers).
 
 `PLAN=1 trevor-vps-update.sh daily` prints every step it would run; detection and the embedding guard are real, nothing is
 written.
 
 ## 5. Summaries (`trevor-vps-update.sh summaries`, 23:00 UTC)
 
-Ian (2026-10-16): summaries are the only model stage of the update. `summaries_cf.py` writes p2-summaries.py's rows
+Decision (2026-10-16): summaries are the only model stage of the update. `summaries_cf.py` writes p2-summaries.py's rows
 (same prompts, inputs, max tokens and incremental keys) for every story and group that has NO summary row
 (`--scope stale` would also redo changed ones).
 
@@ -121,7 +125,7 @@ Ian (2026-10-16): summaries are the only model stage of the update. `summaries_c
 
 ## 5a. Pre-generated answers that follow updates (`bank_regen.py`, contract v1.1 section 3a)
 
-Ian (2026-10-17): "generate new answers when there is a new update". Section 5 summarizes first, then the same run
+Requirement (2026-10-17): when there is a new update, generate new answers for it. Section 5 summarizes first, then the same run
 does this with the same Cloudflare client and window, and then on the same E2B server.
 
 - **What counts as changed.** `detect` compares the sha16 of every chunk's text in the stage's P3b (over P4x) with
@@ -151,7 +155,7 @@ does this with the same Cloudflare client and window, and then on the same E2B s
 - `PLAN=1 trevor-vps-update.sh summaries` and `PLAN=1 bank_regen.py run` print the pending units, their story groups
   and the model calls they cost.
 
-**Measured on the Mac (2026-10-17)**, on a simulated update: a scratch tree whose "previous" corpus had 20 chunks
+**Measured on the development machine (Apple M5 Pro, 24 GB), 2026-10-17**, on a simulated update: a scratch tree whose "previous" corpus had 20 chunks
 re-worded. These were 10 question chunks, 5 chunks cited by other answers, and 5 chunks with neither.
 - `detect` takes 0.9 s and 446 MB. It found 20 changed chunks and made 25 units: 10 changed chunks that had a
   question, 10 that had none, and 5 re-answers. It backfilled 900 ledger rows.
@@ -168,7 +172,7 @@ re-worded. These were 10 question chunks, 5 chunks cited by other answers, and 5
 
 **A typical event update** is the newest side story, act49side: 196 chunks, 191 of them question-eligible. Add
 about 5 archive chunks for each new operator (median 5 over 417 operators), so about 200 units and 400 model calls.
-- On the Mac that is about 10 minutes.
+- On the build machine that is about 10 minutes.
 - On Cloudflare a unit costs about 47 Neurons (7 for a question over a 583-token chunk, 40 for a 3,628-token mid
   answer), so 200 units cost about 9,400 Neurons. That is about one whole day's allocation, so leftover quota covers
   only part of it.
@@ -184,7 +188,7 @@ ties (main_6 sort 20, act33side sorts 7 and 17) the old horizon let see each oth
 by `source_dates.json` sit just before the first guide group whose latest date admits them; undated stories rank last
 and are never visible.
 
-The file's schema is horizon.rs's `GateOrderFile`, written identically by `panels.py` and by `ask --gate-order`:
+The file's schema is `GateOrderFile` in `src/search/horizon/mod.rs`, written identically by `panels.py` and by `ask --gate-order`:
 
 ```
 {"schema": 1,
@@ -199,15 +203,15 @@ The file's schema is horizon.rs's `GateOrderFile`, written identically by `panel
 
 `panels.py --gate-order auto` reads a file whose inputs match and checks its storyOrder, never, dated, sourcePos and
 era positions against its own ranking (exit 3 on any difference, no panels built); a missing or stale file is written.
-horizon.rs rebuilds the order in memory, with a warning, when the file is missing or stale.
+The horizon (`src/search/horizon/`) rebuilds the order in memory, with a warning, when the file is missing or stale.
 
-The **eras** (Ian's decision D7, provisional): every main episode, plus an event whenever 6 or more guide groups pass
+The **eras** (decision D7, provisional): every main episode, plus an event whenever 6 or more guide groups pass
 without a boundary. Today: main_0 to main_9 at gatePos 14, 26, 46, 62, 82, 99, 202, 271, 362, 565; act18d3 488;
 act16side 687; main_10 722; act12mini 853; main_11 to main_16 at 888, 1026, 1190, 1374, 1608, 1745; act33side 1329;
 act38side 1503. Each panel's `era` and the manifest's `eras` carry `{id, name, position}` with position on the gatePos
 scale (the prototype wrote the reading-guide position there; `panels.py --era-guide-position` restores it).
 
-**Spoilers come from the user's profile, through the backend** (Ian, 2026-10-16; contract section 1): the backend
+**Spoilers come from the user's profile, through the backend** (decision, 2026-10-16; contract section 1): the backend
 takes the maximum gatePos over the stories the reader has read, lowers it to the story being read when the request
 names one, buckets it to the era boundary at or before it, and sends the worker `horizonPos`. Nothing on the VPS side
 decides a reader's horizon.
@@ -240,7 +244,7 @@ stand-in `ask`, a citation past the horizon and a wrong corpusVersion each fail 
 - The manifest: `schema, version, server, corpusVersion, builtFrom` (EN res_version), `builtAt, storyOrder, eras,
   panels, panelsSha, gateOrderSha, answersInline, stats`.
 - **Version names**: `<corpusVersion>-p<first 8 hex of the panels sha>`, e.g. `en-e79e364cfbdeeffa-pef0c5bba`.
-  `corpusVersion` is serve.rs's rule (`en-` + 16 hex over the main corpus's and P4x's chunk shas), so the manifest
+  `corpusVersion` is the worker's rule (`corpus_version` in `src/bin/ask/serve/mod.rs`) (`en-` + 16 hex over the main corpus's and P4x's chunk shas), so the manifest
   names the corpus the worker reports. The panels suffix gives a summaries-only rebuild its own version, so its
   activate is atomic too; rebuilding identical content gives the identical name, and publishing it again is skipped.
 - `--dry-run DIR` writes every request (exact wire bytes plus `requests.json`, key redacted) and sends nothing.
@@ -273,12 +277,12 @@ of every failure below is a slower or passage-only answer, never a charge.
 
 ## 12. When something fails
 
-| event | what happens | needs Ian? |
+| event | what happens | needs the maintainer? |
 |---|---|---|
 | a step of the update fails (build, gate, upload) | the run stops, the active version and the live release stay, the stage keeps the work, one `update_failed` alert names the step, the exit code and the last log lines; the next 19:30 run retries | only if it repeats |
 | the activate call fails after the switch | `current` flips back, the worker restarts on the old release | no |
-| Cloudflare retires a model | the worker's weekly canary (`ask --canary`, `TREVOR_CANARY_FILE`) and the summaries move to the next id in `TREVOR_CF_MODELS`; with none left, the cf rung is off and summaries run on E2B | add a model id when convenient |
-| Cloudflare quota spent | the backend stops the cf rung at its ledger cap; summaries stop at the first 429 and the rest go to E2B overnight | no |
+| Cloudflare retires a model | the canary (`ask --canary`, run by hand: no script or systemd unit schedules it; the worker's cf rung needs a pass recorded in `TREVOR_CANARY_FILE` within `TREVOR_CANARY_MAX_AGE_DAYS`, 8) and the summaries move to the next id in `TREVOR_CF_MODELS`; with none left, the cf rung is off and summaries run on E2B | add a model id when convenient |
+| Cloudflare quota spent | the backend stops the cf rung at its ledger cap (`TREVOR_CF_DAILY_NEURONS` minus `TREVOR_CF_SUMMARY_RESERVE`, see [backend/README.md, Trevor](../../backend/README.md#trevor)); summaries stop at the first 429 and the rest go to E2B overnight | no |
 | Cloudflare ends the free plan | the cf rung and Cloudflare summaries stop; CPU, passages and cache answer; summaries take longer on E2B | no |
 | VPS reboot | the units start at boot (`WantedBy`), `/run/trevor` is recreated by tmpfiles, the timers catch up a missed run (`Persistent=true`). Needs the host's "Start at boot" | host setting once |
 | the game changes its data format | build-corpus or a builder fails, the update is held, the site keeps the last version; new stories have no panel ("not covered yet") | to fix the parser |
@@ -293,7 +297,7 @@ of every failure below is a slower or passage-only answer, never a charge.
 
 ## 13. Decisions recorded here
 
-- **Summaries are the only model stage** (Ian, 2026-10-16); all other model outputs are frozen at the Mac's build.
+- **Summaries are the only model stage** (decision, 2026-10-16); all other model outputs are frozen at the build machine's last build.
 - **22 eras** by the provisional rule (D7), on the gatePos scale.
 - **Spoilers from the reader's profile via the backend**; the VPS jobs never compute a reader's horizon.
 - **Bank entries are gated by their `sources` too** (new in panels.py, default; `--no-gate-sources` is the prototype):
@@ -303,12 +307,14 @@ of every failure below is a slower or passage-only answer, never a charge.
   suggestions' gatePos rise. 1,849 panels change in all, 1,849 of them only by `era.position`.
 - **Version naming** `<corpusVersion>-p<panels sha8>` (section 8).
 
-## 14. Measured on the Mac (2026-10-16)
+## 14. Measured on the development machine (2026-10-16)
+
+Measured on the development machine (Apple M5 Pro, 24 GB) unless a row says otherwise.
 
 | what | value |
 |---|---|
-| panels.py, 1,862 panels | 7.9 to 11.8 s wall, 160 to 175 MB max RSS (prototype on the Cowork VM: 8.8 s, 191 MB) |
-| `ask --worker` while loading, Mac (2026-10-17) | peak RSS 152 MB with `--retrieval bm25`, 356 MB hybrid; 12 and 21 MB once settled, since macOS stops counting the memory-mapped indexes. Linux counts touched mapped pages, so expect up to the peaks plus page cache; both fit `MemoryMax=1536M` |
+| panels.py, 1,862 panels | 7.9 to 11.8 s wall, 160 to 175 MB max RSS (the prototype, measured on a separate VM: 8.8 s, 191 MB) |
+| `ask --worker` while loading, build machine (2026-10-17) | peak RSS 152 MB with `--retrieval bm25`, 356 MB hybrid; 12 and 21 MB once settled, since macOS stops counting the memory-mapped indexes. Linux counts touched mapped pages, so expect up to the peaks plus page cache; both fit `MemoryMax=1536M` |
 | kill switches `--no-gate-sources --era-guide-position --gate-order off` | 1,862 of 1,862 panels byte-identical to the prototype's `out/` |
 | panel sizes (default build) | 21,747,890 B raw, 2,270,197 B gzip -6 (ratio 0.104); per story median 12,134 B, max 19,547 B |
 | gates.py without the canary | 0.88 s, 164 MB |
@@ -319,12 +325,12 @@ of every failure below is a slower or passage-only answer, never a charge.
 
 - Nothing has run on the VPS: E2B speed (`llama-bench`), the fp32 re-embed time, the second llama-server's memory
   next to the serving one, and AllowedCPUs on this host are expectations.
-- The backend side of the contract (gzip request bodies, the 4 / 8 MiB limits, `/api/trevor/status`) is another
-  agent's; publish.py was tested against a stand-in that enforces the same limits.
+- The backend side of the contract (gzip request bodies, the 4 / 8 MiB limits, `/api/trevor/status`) was built
+  separately; publish.py was tested against a stand-in that enforces the same limits.
 - Cloudflare's request shape for Gemma 4 thinking (`chat_template_kwargs`) is the worker's guess, not read from
   Cloudflare's page (no network here); `TREVOR_CF_THINKING` switches it.
 - The canary has run only against a stand-in `ask`; its first real run needs a model.
 - The warm-up routes (`GET /api/trevor/worker/popular`, `POST /api/trevor/worker/warm`) are specified in contract
   v1.1 section 3c but not built in the backend yet; `bank_regen.py warm` was tested against a stand-in only.
-- Bank regeneration's speed on the VPS's one core is the contract's estimate, not a measurement; the Mac's E2B on
+- Bank regeneration's speed on the VPS's one core is the contract's estimate, not a measurement; the build machine's E2B on
   Metal does a unit in 3.1 s.
