@@ -431,7 +431,7 @@ pub(crate) fn expand_names(rt: &Runtime, tools: &Tools, q: &str) -> String {
 pub(crate) struct Runtimes {
     pub(crate) main: Runtime,
     pub(crate) p4: Option<Runtime>,
-    /// P4 plus the operator art units (`--art`), loaded on the first question routed to the "art" source.
+    /// P4 plus the operator art units, loaded on the first typed-fallback ask for an operator's art.
     pub(crate) art: Option<Runtime>,
     /// The P4 directory of the lore served (`--lore`).
     pub(crate) p4_dir: &'static str,
@@ -505,8 +505,8 @@ impl Runtimes {
 }
 
 /// P4 plus one unit per operator art image (`scripts/art_captions.py units`, then `build-units --units
-/// artifacts/art/p4_art_units.jsonl --out artifacts/p4-art`). Read only for the router's "art" source (`--art`), so P4
-/// and every other answer stay as they were.
+/// artifacts/art/p4_art_units.jsonl --out artifacts/p4-art`). Read only by the typed fallback's "art" kind, when built,
+/// so P4 and every other answer stay as they were.
 pub(crate) const ART_DIR: &str = "artifacts/p4-art";
 
 /// A generated passage placed before the retrieved ones: a topic summary or a new dossier (`id` is what answers cite).

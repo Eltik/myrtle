@@ -19,7 +19,6 @@ root ::= "{\"tool\": \"" (
   "operator_filter\", \"args\": {" filter (", " filter)* "}" |
   "canon\", \"args\": {" run? "}" |
   "topic\", \"args\": {" topic "}" |
-  "overview\", \"args\": {}" |
   "retrieve\", \"args\": {}"
 ) "}"
 event ::= "\"event\": " name

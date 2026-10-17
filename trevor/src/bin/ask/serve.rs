@@ -75,7 +75,7 @@ use crate::chrono::Chrono;
 use crate::cli::{Args, Profile, RetrievalKind, RouterKind, apply_profile, deep_for, p4_dir, retrieval_plan, router_source, tool_options};
 use crate::detect::source_kind;
 use crate::guard::{self, GuardConfig, GuardView};
-use crate::retrieval::{ART_DIR, Names, Runtimes, load_names, load_runtime};
+use crate::retrieval::{Names, Runtimes, load_names, load_runtime};
 use crate::server::{Spawned, cloudflare, connect_local, connect_or_spawn, openai_llm};
 
 /// The only server with a corpus today; CN is a second corpus version stream later (section 10).
@@ -245,10 +245,9 @@ impl Service {
         let dense = a.retrieval == RetrievalKind::Hybrid;
         let main = load_runtime(&a.runtime, dense, a.rerank_add > 0, None)?;
         let mut parts = vec![(a.runtime.corpus.display().to_string(), main.store.chunks_sha.clone())];
-        for dir in std::iter::once(p4_dir(&a)).chain([ART_DIR].into_iter().filter(|_| a.art)) {
-            if let Some(sha) = recorded_sha(dir).filter(|_| std::path::Path::new(dir) != a.runtime.corpus) {
-                parts.push((dir.to_owned(), sha));
-            }
+        let dir = p4_dir(&a);
+        if let Some(sha) = recorded_sha(dir).filter(|_| std::path::Path::new(dir) != a.runtime.corpus) {
+            parts.push((dir.to_owned(), sha));
         }
         let corpus_version = corpus_version(&parts);
         let rts = Runtimes { main, p4: None, art: None, p4_dir: p4_dir(&a), switch: corpus_default && router_source(&a),

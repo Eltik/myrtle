@@ -228,8 +228,6 @@ pub struct Tools {
     pub canon: Option<Value>,
     /// Topic summaries of races, nations and concepts (`artifacts/topics/topics.jsonl`).
     pub topics: Option<Vec<Value>>,
-    /// The summary tree for whole-story questions (`artifacts/overview/overview.jsonl`, `scripts/overview.py`).
-    pub overview: Option<Vec<Value>>,
     /// The dossiers chosen from data (2026-10-01), not in P3b: (name, text as P3b shows a dossier). Empty unless
     /// [`Tools::load_new_dossiers`] ran (`ask --lore v2`).
     pub new_dossiers: Vec<(String, String)>,
@@ -244,7 +242,7 @@ pub struct Tools {
     /// one (`ask --race-trait-rule`).
     pub topics_race_rule: bool,
     /// Cast-wide cross-references from game data (`scripts/crossref.py`, 2026-10-03): table name to its JSON
-    /// (`artifacts/crossref/<table>.json`). Read by the `cross_ref` tool, which only `ask --cross-ref` routes to.
+    /// (`artifacts/crossref/<table>.json`). Read by the `cross_ref` tool, which `ask`'s cross-reference trigger routes to.
     pub crossref: BTreeMap<String, Value>,
     /// Per character, the story groups where they speak and where they are only mentioned (`scripts/appearances.py`,
     /// 2026-10-03): `{"groups": {id: {name, kind, episode, order}}, "characters": {name: {forms, speaks, mentioned,
@@ -350,7 +348,6 @@ impl Tools {
         if std::env::var("TREVOR_ORG_SHORT_NAMES").as_deref() != Ok("0") {
             t.org_short_names();
         }
-        t.overview = read_jsonl(&root.join("artifacts/overview/overview.jsonl"));
         for table in CROSSREF_TABLES {
             if let Some(v) = read_json(&root.join(format!("artifacts/crossref/{table}.json"))) {
                 t.crossref.insert((*table).to_owned(), v);

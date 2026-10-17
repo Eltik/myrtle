@@ -56,14 +56,6 @@ say\" when they barely mention them, then give in one or two sentences what they
 bears on it, with citations. Keep each fact with the person and scene its passage gives it to: never join two passages, or two \
 people of one scene, into one fact.";
 
-/// A whole-story question answered from the summary tree (`scripts/overview.py`; opt-in with `--overview`):
-/// "Summarize the Arknights story in one word" was declined, since no passage states the whole story.
-pub(crate) const OVERVIEW_RULE: &str = " The passages are Trevor's own summaries, not story text: [1] the whole story, [2] the world \
-of Terra, and from [3] on one per storyline, the main story first. The question asks about the story or the world as a \
-whole: answer it from these summaries, with citations. If it asks for something the story does not state (one word, a \
-theme, a verdict, a comparison), do not decline: say that this is an interpretation, give it, and give the reasons from \
-the passages in two to four sentences.";
-
 /// The retry's query rewrite (see `answer_one`).
 pub(crate) const REWRITE: &str = "Rewrite this question about the Arknights story as a short search query in the words the story \
 itself would use: character, place and event names and the concrete thing asked about. If the question assumes something \

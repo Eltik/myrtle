@@ -23,7 +23,7 @@ use crate::detect::{
 use crate::form::{Flags, Form, question_form, story_words};
 use crate::prompts::{
     AGE_RULE, ART_RULE, CANON_RULE, CHAR_LABEL, CHAR_RULE_TAIL, COMPOSE_RULE, DATE_RULE, INFER_RULE, LORE_ONLY_RULE,
-    OPINION_FORM_RULE, OPINION_RULE, ORIGIN_RULE, OVERVIEW_RULE, PARTIAL, RELATION_RULE, REWRITE, SCOPED_RULE_HEAD,
+    OPINION_FORM_RULE, OPINION_RULE, ORIGIN_RULE, PARTIAL, RELATION_RULE, REWRITE, SCOPED_RULE_HEAD,
     SCOPED_RULE_TAIL, SOURCE_RULE, SYNTH_RULE, SYSTEM, TERM_RULE, TIME_EVIDENCE_TAIL, TIME_RULE, YES_NO_RULE,
     YES_NO_VERDICT_RULE,
 };
@@ -251,12 +251,6 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
         // Gendarmerie summary and event summaries displaced the story passage on the Pegasi's speed.
         && (a.named_topic_all || tables.tools.broad_topic_question(q)) {
         topic = tables.tools.named_topic(q);
-    }
-    if route.as_ref().is_some_and(|r| r.tool == "overview") {
-        if let Some(passages) = tables.tools.overview_passages().ok().filter(|_| !rts.horizon_set()) {
-            return answer_overview(llm, q, a, &passages).await;
-        }
-        route = Some(Route::retrieve());
     }
     let mut pre = lead_passages(a, &tables.tools, q, &topic, &route, ending_pre);
     // Term lookup (night 9): the term's spelling in P4x, its two best record chunks and a glossary, before the passages.
@@ -665,35 +659,4 @@ read and is not complete.\n\n{answer}", rows.len());
             f.story.as_ref().map_or(base.clone(), |sq| format!("{base}; story words: {sq}"))
         }),
     })
-}
-
-/// A whole-story answer from the summary tree: `passages` as (id, label, text), cited as "overview:<id>".
-pub(crate) async fn answer_overview(llm: &Llm, q: &str, a: &Args, passages: &[(String, String, String)]) -> Result<Answer> {
-    let started = std::time::Instant::now();
-    let mut user = String::from("PASSAGES\n");
-    for (i, (_, label, text)) in passages.iter().enumerate() {
-        user.push_str(&format!("\n[{}] (Trevor's summary (generated): {label})\n{text}\n", i + 1));
-    }
-    user.push_str(&format!("\nQUESTION: {q}"));
-    let system = format!("{SYSTEM}{OVERVIEW_RULE}");
-    let c = llm.complete(&Request::greedy(&system, &user, None, a.n_predict, &[])).await?;
-    let ids: Vec<String> = passages.iter().map(|(id, _, _)| format!("overview:{id}")).collect();
-    let (mut cited, mut invalid) = (Vec::new(), 0usize);
-    for inner in c.content.split('[').skip(1).filter_map(|t| t.split_once(']').map(|(x, _)| x)) {
-        let parts: Vec<&str> = inner.split([',', ';', ' ']).filter(|t| !t.is_empty()).collect();
-        let nums: Vec<usize> = parts.iter().filter_map(|t| t.parse().ok()).collect();
-        if nums.is_empty() || nums.len() != parts.len() {
-            continue;
-        }
-        for n in nums {
-            match ids.get(n.wrapping_sub(1)) {
-                Some(id) if !cited.contains(id) => cited.push(id.clone()),
-                Some(_) => {}
-                None => invalid += 1,
-            }
-        }
-    }
-    Ok(Answer { qid: None, question: q.to_owned(), answer: c.content.trim().to_owned(), cited, passages: ids,
-                invalid_citations: invalid, prompt_tokens: c.prompt_tokens, ms: started.elapsed().as_secs_f64() * 1000.0,
-                retry_query: None, form: None, generated: Default::default() })
 }

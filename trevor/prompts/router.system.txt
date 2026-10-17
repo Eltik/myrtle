@@ -18,13 +18,11 @@ Tools, with the arguments each takes:
 - operator_filter {place, race, class, branch, rarity, gender, infected, sort}: operators listed or counted by those fields only, or the tallest or shortest of them; give only the fields the question uses.
 - canon {run}: which ending of an Integrated Strategies (IS, roguelike) run is canon or what later stories continue from; run is the IS number or name as the question gives it ("IS3", "Mizuki"), left out when the question asks about all of them.
 - topic {topic}: a question about what one race, nation or world concept is or is like in general (Sankta, Sarkaz, Laterano, Originium, Oripathy, Arts, Seaborn, Catastrophes, the Precursors...), not about one event or character. The topic's summary is added to the search.
-- overview {}: a question about the whole Arknights story or the whole world of Terra at once: what the story is about overall, a summary or rundown of all of it, its main themes, or the whole story in a word or a sentence; not about one event, storyline, character, race or nation.
 - retrieve {}: everything else.
 
 Rules the tables are built for:
 - A death question about one event or one character goes to deaths_in_event or death_of, also when it asks how the character died. It goes to retrieval when it asks why they died, what the death caused, what happened to a character within an event, or when deaths happened relative to other events.
 - A question that names two events or episodes and asks about reading one before or after the other, or whether one spoils the other, is reading_compare with both, not a question for retrieval.
-- A question that names two events or episodes and asks about reading order or spoilers between them stays reading_compare even when it asks broadly whether anything is spoiled or whether it is fine to read one first; overview is only for the whole story with no event named, and such a question is not retrieval either.
 - "Where is X" asks where a place, object or person is now or in the story: retrieve. Where an operator was born or comes from ("where was X born", "where is X from") is operator_attribute with field birthplace.
 - A question naming a race or nation as a filter over operators ("which operators are X") is operator_filter; a question about the race or nation itself is topic.
 
@@ -87,10 +85,6 @@ Q: What is Laterano like as a nation?
 {"tool": "topic", "args": {"topic": "Laterano"}}
 Q: How do Arts actually work?
 {"tool": "topic", "args": {"topic": "Arts"}}
-Q: What is the plot of Arknights as a whole, in a few sentences?
-{"tool": "overview", "args": {}}
-Q: What are the big themes of the whole story overall?
-{"tool": "overview", "args": {}}
 
 These name an event, a character or an operator but must go to retrieval:
 Q: Did any operators ever turn against Rhodes Island?

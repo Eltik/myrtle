@@ -426,11 +426,6 @@ pub(crate) async fn route_question(q: &str, a: &Args, tools: &Tools, llm: Option
         let (topic, error) = match r { Ok(p) => (Some(p), None), Err(e) => (None, Some(e)) };
         return Ok(Routed { route, text: None, error, topic, dossier, game, ms });
     }
-    // Not an answer: `answer_one` answers from the summary tree (or retrieves, when the tree is missing).
-    if route.tool == "overview" {
-        let error = tools.overview_passages().err();
-        return Ok(Routed { route, text: None, error, topic: None, dossier: None, game: None, ms });
-    }
     let (text, error) = if route.is_retrieve() { (None, None) } else {
         match tools.run(&route) { Ok(t) => (Some(t), None), Err(e) => (None, Some(e)) }
     };

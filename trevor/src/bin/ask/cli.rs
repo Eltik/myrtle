@@ -113,14 +113,6 @@ pub(crate) struct Args {
     /// section 12); without it the keyword tests decide, exactly as before.
     #[arg(long)]
     pub(crate) model_flags: bool,
-    /// Give the model router an overview tool (opt-in, 2026-10-01): a question about the whole story or the whole world
-    /// ("Summarize the Arknights story in one word") is answered from the summary tree of `scripts/overview.py` (the
-    /// story and world overviews and one summary per storyline) instead of retrieval. Opt-in because its router lines
-    /// move one of Ian's 9 retrieval sources (ian3, any to story); a rule added the same day keeps two-event reading
-    /// questions on reading_compare (route check 75/76 with it). Without it the router prompt and grammar are exactly
-    /// the ones before.
-    #[arg(long)]
-    pub(crate) overview: bool,
     /// Print the question form of each question of --batch (or the question) as `qid<TAB>form<TAB>evidence`, then
     /// (with --model-flags) the answer-rule flags and the keyword tests' flags, and exit.
     #[arg(long)]
@@ -229,10 +221,6 @@ pub(crate) struct Args {
     /// Passages in a `passages` rung answer (no model).
     #[arg(long, default_value_t = 5)]
     pub(crate) passages_n: usize,
-    /// The router sends a question about one operator's everyday life (likes, downtime, opinions of the base) to
-    /// their voice lines (2026-10-03; opt-in until measured, see design/trevor-questions.md section 12).
-    #[arg(long)]
-    pub(crate) voice_rule: bool,
     /// Leave out the explicit-estimate rule a question asking an age gets with the game-data passage (the rule is the
     /// default since 2026-10-03).
     #[arg(long)]
@@ -241,10 +229,6 @@ pub(crate) struct Args {
     /// drops a body-feature sentence resting on a line about someone of another race (Durin "thick tails"). Opt-in.
     #[arg(long)]
     pub(crate) speaker_trait_check: bool,
-    /// Operator art: the router's "art" source retrieves the model-written art descriptions (artifacts/p4-art, built
-    /// by scripts/art_captions.py units and build-units; 2026-10-03, opt-in until measured).
-    #[arg(long)]
-    pub(crate) art: bool,
     /// Replace the last N of the k fused hits with the Ettin reranker's best hits (of the fused top 40) not already
     /// among them. Reranking outright fails on gold v2 over P3b (recall@10 0.732 to 0.605, 22 lost and 8 gained,
     /// 2026-09-30) but the reranker's first pick is often a passage fusion ranks lower: fused top 7 plus its best new
@@ -344,10 +328,6 @@ pub(crate) struct Args {
     /// no passage states the year (the age rule's counterpart for dates). Opt-in until measured.
     #[arg(long)]
     pub(crate) date_estimate: bool,
-    /// The router's `cross_ref` tool (2026-10-03, item 4): cast-wide game-data cross-references, first "boss enemies
-    /// who are playable operators" (artifacts/crossref/, scripts/crossref.py). Opt-in until measured.
-    #[arg(long)]
-    pub(crate) cross_ref: bool,
     /// Off-topic guard (2026-10-03, item 8): a question that names nothing Trevor's tables know gets LORE_ONLY_RULE
     /// (Trevor answers Arknights lore only). Opt-in until measured.
     #[arg(long)]
@@ -373,7 +353,7 @@ pub(crate) struct Args {
     #[arg(long)]
     pub(crate) no_appearances: bool,
     /// Turn off the cross-reference trigger (2026-10-03, leftover d): a question with "boss" and a joining word goes to
-    /// the `cross_ref` tool before the router, with no router line (the `--cross-ref` line moved 34 routes).
+    /// the `cross_ref` tool before the router, with no router line.
     #[arg(long)]
     pub(crate) no_cross_ref_trigger: bool,
     /// Turn off the design-inspiration tool (2026-10-04, Ian's ian11): a question with a design word ("based off an animal",
@@ -551,8 +531,7 @@ pub(crate) fn lore_on(a: &Args) -> bool {
 
 /// The parts of the model router's prompt that `a` turns on.
 pub(crate) fn router_prompt(a: &Args) -> router::RouterPrompt {
-    router::RouterPrompt { source: router_source(a), compare: !a.no_reading_compare, overview: a.overview,
-                           wide_topics: a.lore == LoreSet::V2, voice_rule: a.voice_rule, art: a.art, cross_ref: a.cross_ref }
+    router::RouterPrompt { source: router_source(a), compare: !a.no_reading_compare, wide_topics: a.lore == LoreSet::V2 }
 }
 
 /// Whether the model router names the source of a retrieval route (default; `--no-router-source` turns it off).
@@ -580,7 +559,7 @@ pub(crate) fn retrieval_plan(q: &str, a: &Args, route: Option<&Route>) -> (Optio
         None | Some("story") => (Some(false), None),
         Some("any") => (Some(true), None),
         Some("operator_file") => (Some(true), Some("archive")),
-        Some(k) => (Some(true), ["module", "voice", "skin", "is", "enemy", "item", "art"].into_iter().find(|x| *x == k)),
+        Some(k) => (Some(true), ["module", "voice", "skin", "is", "enemy", "item"].into_iter().find(|x| *x == k)),
     }
 }
 

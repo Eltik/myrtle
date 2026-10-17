@@ -1,5 +1,5 @@
-//! Topic summaries (races, nations, places, organizations, concepts), deep topic entries, the overview
-//! tree, new dossiers and the game-data passage of trait questions.
+//! Topic summaries (races, nations, places, organizations, concepts), deep topic entries, new dossiers and the
+//! game-data passage of trait questions.
 
 use std::collections::BTreeSet;
 use std::path::Path;
@@ -351,29 +351,6 @@ impl Tools {
             return Err(ToolError::NoData(format!("no summary for {}", s(r, "topic"))));
         }
         Ok(TopicPassage { topic: s(r, "topic"), text })
-    }
-
-    // ---------------------------------------------------------------- overview
-
-    /// The whole-story passages, citations stripped: the story overview, the world overview, then one summary per
-    /// storyline (the main story first, then the game's order), each as (id, label, text).
-    ///
-    /// # Errors
-    /// Missing table, or no story overview in it.
-    pub fn overview_passages(&self) -> Result<Vec<(String, String, String)>, ToolError> {
-        let rows = self.overview.as_ref().ok_or(ToolError::Missing("overview.jsonl"))?;
-        let rank = |r: &Value| match (s(r, "kind").as_str(), s(r, "id").as_str()) {
-            ("story", _) => 0,
-            ("world", _) => 1,
-            (_, "mainLine") => 2,
-            _ => 3,
-        };
-        let mut v: Vec<&Value> = rows.iter().filter(|r| !s(r, "summary").trim().is_empty()).collect();
-        v.sort_by_key(|r| rank(r));
-        if v.first().is_none_or(|r| rank(r) != 0) {
-            return Err(ToolError::NoData("no story overview".to_owned()));
-        }
-        Ok(v.into_iter().map(|r| (s(r, "id"), s(r, "name"), strip_citations(&s(r, "summary")))).collect())
     }
 
     // ---------------------------------------------------------------- recaps
