@@ -23,22 +23,18 @@ use std::time::{Duration, Instant};
 use axum::Router;
 use axum::body::Body;
 use axum::http::{Request, StatusCode, header};
-use backend::app::cache::store::CacheStore;
-use backend::app::services::trevor::alerts;
-use backend::app::services::trevor::runtime::TrevorConfig;
 use backend::app::state::{AppConfig, AppState};
-use backend::core::auth::credentials::CredentialKey;
-use backend::core::hypergryph::constants::Server;
 use backend::database::queries::trevor as q;
 use futures_util::StreamExt;
 use serde_json::{Value, json};
-use sqlx::{Connection, PgConnection, PgPool};
+use sqlx::PgPool;
 use tower::ServiceExt;
 use uuid::Uuid;
 
-const ADMIN_URL: &str = "postgres://postgres:password@127.0.0.1:5432/postgres";
-const TEST_DB: &str = "trevor_test";
-const TEST_URL: &str = "postgres://postgres:password@127.0.0.1:5432/trevor_test";
+#[path = "common/trevor.rs"]
+mod trevor_common;
+use trevor_common::{QuietSink, app, app_config, app_state, fresh_db};
+
 const WORKER_KEY: &str = "load-test-worker-key-0123456789";
 const JWT_SECRET: &str = "load-test-jwt-secret-0123456789abcdef";
 
@@ -51,71 +47,13 @@ const SSE: usize = 1000;
 const MODEL_MS: u64 = 400;
 const PASSAGES_MS: u64 = 20;
 
-async fn fresh_db() -> PgPool {
-    let mut admin = PgConnection::connect(ADMIN_URL)
-        .await
-        .expect("local Postgres");
-    let exists: bool =
-        sqlx::query_scalar("SELECT EXISTS (SELECT 1 FROM pg_database WHERE datname = $1)")
-            .bind(TEST_DB)
-            .fetch_one(&mut admin)
-            .await
-            .expect("catalog");
-    if !exists {
-        sqlx::raw_sql("CREATE DATABASE trevor_test")
-            .execute(&mut admin)
-            .await
-            .expect("create trevor_test");
-    }
-    admin.close().await.ok();
-    let mut c = PgConnection::connect(TEST_URL).await.expect("trevor_test");
-    let name: String = sqlx::query_scalar("SELECT current_database()")
-        .fetch_one(&mut c)
-        .await
-        .expect("name");
-    assert_eq!(name, TEST_DB, "refusing to reset any other database");
-    sqlx::raw_sql("DROP SCHEMA public CASCADE; CREATE SCHEMA public;")
-        .execute(&mut c)
-        .await
-        .expect("reset schema");
-    c.close().await.ok();
-    backend::database::init(TEST_URL)
-        .await
-        .expect("migrations and seed")
-}
-
-struct Quiet;
-
-impl alerts::AlertSink for Quiet {
-    fn send(&self, _: alerts::Alert) {}
-}
-
 fn state(pool: &PgPool) -> AppState {
     let config = AppConfig {
-        jwt_secret: JWT_SECRET.into(),
-        game_credential_key: CredentialKey::parse(&"22".repeat(32)).expect("key"),
-        rate_limit_rpm: 100,
-        service_key: "load-test-service-key".into(),
-        assets_base_dir: String::new(),
-        servers: vec![Server::EN],
-        default_server: Server::EN,
-        asset_ws_urls: HashMap::new(),
         role_recheck: false,
+        ..app_config(JWT_SECRET, "load-test-service-key")
     };
-    let s = AppState::new(
-        pool.clone(),
-        CacheStore::new_memory(),
-        HashMap::new(),
-        Server::EN,
-        config,
-        reqwest::Client::new(),
-        backend::core::service_account::ServiceAccounts::default(),
-    );
-    s.trevor.set_config(TrevorConfig {
-        worker_key: WORKER_KEY.into(),
-        ..TrevorConfig::default()
-    });
-    s.trevor.set_sink(Arc::new(Quiet));
+    let s = app_state(pool.clone(), HashMap::new(), config, WORKER_KEY);
+    s.trevor.set_sink(Arc::new(QuietSink));
     s
 }
 
@@ -430,7 +368,7 @@ async fn trevor_under_a_burst() {
     publish(&pool).await;
     let users = users(&pool).await;
     let s = state(&pool);
-    let app = backend::app::server::api_parts().0.with_state(s.clone());
+    let app = app(&s);
 
     let stop_rss = Arc::new(AtomicBool::new(false));
     let rss = rss_sampler(stop_rss.clone());

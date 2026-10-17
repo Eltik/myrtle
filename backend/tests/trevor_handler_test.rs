@@ -16,13 +16,12 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use axum::Json;
 use axum::Router;
-use axum::body::{Body, Bytes};
+use axum::body::Body;
 use axum::extract::{Path, Query, State};
 use axum::http::{HeaderMap, Request, StatusCode, header};
 use axum::response::IntoResponse;
 use axum::routing::get;
 use backend::app::cache::keys::CacheKey;
-use backend::app::cache::store::CacheStore;
 use backend::app::extractors::auth::AuthUser;
 use backend::app::routes::trevor::{self, ClientIp, PanelsQuery};
 use backend::app::services::trevor::runtime::{StreamEvent, TrevorConfig};
@@ -30,16 +29,18 @@ use backend::app::services::trevor::turnstile::TurnstileVerifier;
 use backend::app::services::trevor::{
     AskRequest, FeedbackRequest, JobStatus, JobView, Rung, stream,
 };
-use backend::app::state::{AppConfig, AppState};
-use backend::core::auth::credentials::CredentialKey;
+use backend::app::state::AppState;
 use backend::core::auth::permissions::GlobalRole;
-use backend::core::hypergryph::constants::Server;
 use futures_util::StreamExt;
 use futures_util::future::BoxFuture;
 use serde_json::json;
 use sqlx::postgres::PgPoolOptions;
 use tower::ServiceExt;
 use uuid::Uuid;
+
+#[path = "common/trevor.rs"]
+mod trevor_common;
+use trevor_common::{app, app_config, app_state, gzip};
 
 const SERVICE_KEY: &str = "test-service-key";
 const WORKER_KEY: &str = "test-worker-key-0123456789";
@@ -50,31 +51,8 @@ fn state() -> AppState {
         .acquire_timeout(Duration::from_millis(200))
         .connect_lazy("postgres://nobody:nothing@127.0.0.1:1/none")
         .expect("lazy pool");
-    let config = AppConfig {
-        jwt_secret: JWT_SECRET.into(),
-        game_credential_key: CredentialKey::parse(&"11".repeat(32)).expect("key"),
-        rate_limit_rpm: 100,
-        service_key: SERVICE_KEY.into(),
-        assets_base_dir: String::new(),
-        servers: vec![Server::EN],
-        default_server: Server::EN,
-        asset_ws_urls: HashMap::new(),
-        role_recheck: true,
-    };
-    let s = AppState::new(
-        db,
-        CacheStore::new_memory(),
-        HashMap::new(),
-        Server::EN,
-        config,
-        reqwest::Client::new(),
-        backend::core::service_account::ServiceAccounts::default(),
-    );
-    s.trevor.set_config(TrevorConfig {
-        worker_key: WORKER_KEY.into(),
-        ..TrevorConfig::default()
-    });
-    s
+    let config = app_config(JWT_SECRET, SERVICE_KEY);
+    app_state(db, HashMap::new(), config, WORKER_KEY)
 }
 
 fn with_config(s: &AppState, f: impl FnOnce(&mut TrevorConfig)) {
@@ -112,12 +90,6 @@ async fn error_message(r: axum::response::Response) -> String {
         .as_str()
         .unwrap_or_default()
         .to_owned()
-}
-
-/// The `/api` router exactly as the server builds it (without the global
-/// rate-limit and observe layers).
-fn app(s: &AppState) -> Router {
-    backend::app::server::api_parts().0.with_state(s.clone())
 }
 
 async fn call(app: &Router, req: Request<Body>) -> axum::response::Response {
@@ -525,39 +497,6 @@ async fn a_result_over_64_kb_is_a_413() {
         call(&app, send(1_000_000)).await.status(),
         StatusCode::BAD_REQUEST
     );
-}
-
-/// Gzip `body` with the server's own response compression, so the test
-/// needs no gzip crate: a one-route router that echoes the bytes, asked
-/// with `Accept-Encoding: gzip`.
-async fn gzip(body: Vec<u8>) -> Vec<u8> {
-    let body = Bytes::from(body);
-    let echo = Router::new()
-        .route(
-            "/",
-            get(move || {
-                let body = body.clone();
-                async move { body }
-            }),
-        )
-        .layer(tower_http::compression::CompressionLayer::new().gzip(true));
-    let resp = echo
-        .oneshot(
-            Request::get("/")
-                .header(header::ACCEPT_ENCODING, "gzip")
-                .body(Body::empty())
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-    assert_eq!(
-        resp.headers().get(header::CONTENT_ENCODING).unwrap(),
-        "gzip"
-    );
-    axum::body::to_bytes(resp.into_body(), usize::MAX)
-        .await
-        .unwrap()
-        .to_vec()
 }
 
 /// A publish body that fails validation (empty version) once parsed, with

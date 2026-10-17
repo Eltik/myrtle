@@ -27,70 +27,35 @@ use std::sync::atomic::Ordering;
 use std::time::{Duration, Instant};
 
 use axum::Router;
-use axum::body::{Body, Bytes};
+use axum::body::Body;
 use axum::http::{Request, StatusCode, header};
-use axum::routing::get;
-use backend::app::cache::store::CacheStore;
 use backend::app::error::ApiError;
 use backend::app::services::trevor::runtime::{StreamEvent, TrevorConfig};
 use backend::app::services::trevor::worker::{self, Heartbeat, WorkerHello};
 use backend::app::services::trevor::{
     AskRequest, AskResponse, JobStatus, Profile, Rung, alerts, ask as svc_ask, stream,
 };
-use backend::app::state::{AppConfig, AppState, ServerData};
-use backend::core::auth::credentials::CredentialKey;
+use backend::app::state::{AppState, ServerData};
 use backend::core::gamedata::types::GameData;
 use backend::core::gamedata::types::story_review::StoryReviewGroup;
 use backend::core::hypergryph::constants::Server;
 use backend::database::queries::trevor as q;
 use futures_util::StreamExt;
 use serde_json::{Value, json};
-use sqlx::{Connection, PgConnection, PgPool};
+use sqlx::PgPool;
 use tower::ServiceExt;
 use uuid::Uuid;
 
-const ADMIN_URL: &str = "postgres://postgres:password@127.0.0.1:5432/postgres";
-const TEST_DB: &str = "trevor_test";
-const TEST_URL: &str = "postgres://postgres:password@127.0.0.1:5432/trevor_test";
+#[path = "common/trevor.rs"]
+mod trevor_common;
+use trevor_common::{
+    RecordingSink, app, app_config, app_state, fresh_db, gzip, insert_user, set_progress,
+};
+
 const WORKER_KEY: &str = "db-test-worker-key-0123456789";
 
-/// Create `trevor_test` if absent, rebuild its schema, run the migrations.
-async fn fresh_db() -> PgPool {
-    let mut admin = PgConnection::connect(ADMIN_URL)
-        .await
-        .expect("local Postgres");
-    let exists: bool =
-        sqlx::query_scalar("SELECT EXISTS (SELECT 1 FROM pg_database WHERE datname = $1)")
-            .bind(TEST_DB)
-            .fetch_one(&mut admin)
-            .await
-            .expect("catalog");
-    if !exists {
-        sqlx::raw_sql("CREATE DATABASE trevor_test")
-            .execute(&mut admin)
-            .await
-            .expect("create trevor_test");
-    }
-    admin.close().await.ok();
-
-    let mut c = PgConnection::connect(TEST_URL).await.expect("trevor_test");
-    let name: String = sqlx::query_scalar("SELECT current_database()")
-        .fetch_one(&mut c)
-        .await
-        .expect("name");
-    assert_eq!(name, TEST_DB, "refusing to reset any other database");
-    sqlx::raw_sql("DROP SCHEMA public CASCADE; CREATE SCHEMA public;")
-        .execute(&mut c)
-        .await
-        .expect("reset schema");
-    c.close().await.ok();
-    backend::database::init(TEST_URL)
-        .await
-        .expect("migrations and seed")
-}
-
 /// Every contract v1.1 switch at its off value (the v1 behaviour).
-fn v1(c: &mut TrevorConfig) {
+fn v11_switches_off(c: &mut TrevorConfig) {
     c.normq = false;
     c.admission = false;
     c.fair_claim = false;
@@ -110,32 +75,14 @@ fn state_with(
     server_data: HashMap<Server, Arc<ServerData>>,
     tweak: impl FnOnce(&mut TrevorConfig),
 ) -> AppState {
-    let config = AppConfig {
-        jwt_secret: "db-test-jwt-secret-0123456789abcdef".into(),
-        game_credential_key: CredentialKey::parse(&"22".repeat(32)).expect("key"),
-        rate_limit_rpm: 100,
-        service_key: "db-test-service-key".into(),
-        assets_base_dir: String::new(),
-        servers: vec![Server::EN],
-        default_server: Server::EN,
-        asset_ws_urls: HashMap::new(),
-        role_recheck: true,
-    };
-    let s = AppState::new(
-        pool.clone(),
-        CacheStore::new_memory(),
-        server_data,
-        Server::EN,
-        config,
-        reqwest::Client::new(),
-        backend::core::service_account::ServiceAccounts::default(),
-    );
+    let config = app_config("db-test-jwt-secret-0123456789abcdef", "db-test-service-key");
+    let s = app_state(pool.clone(), server_data, config, WORKER_KEY);
     let mut cfg = TrevorConfig {
         worker_key: WORKER_KEY.into(),
         ..TrevorConfig::default()
     };
     // The v1 steps run with every contract v1.1 switch off.
-    v1(&mut cfg);
+    v11_switches_off(&mut cfg);
     tweak(&mut cfg);
     s.trevor.set_config(cfg);
     s
@@ -143,7 +90,10 @@ fn state_with(
 
 /// A state on the contract v1.1 defaults (every new switch on), alerts
 /// recorded instead of posted.
-fn state_v11(pool: &PgPool, tweak: impl FnOnce(&mut TrevorConfig)) -> (AppState, Arc<Recorder>) {
+fn state_with_recorder(
+    pool: &PgPool,
+    tweak: impl FnOnce(&mut TrevorConfig),
+) -> (AppState, Arc<RecordingSink>) {
     let s = state_with(pool, HashMap::new(), |c| {
         *c = TrevorConfig {
             worker_key: WORKER_KEY.into(),
@@ -151,56 +101,13 @@ fn state_v11(pool: &PgPool, tweak: impl FnOnce(&mut TrevorConfig)) -> (AppState,
         };
         tweak(c);
     });
-    let rec = Arc::new(Recorder::default());
+    let rec = Arc::new(RecordingSink::default());
     s.trevor.set_sink(rec.clone());
     (s, rec)
 }
 
-/// The fake webhook: records every alert, sends nothing.
-#[derive(Default)]
-struct Recorder(std::sync::Mutex<Vec<alerts::Alert>>);
-
-impl alerts::AlertSink for Recorder {
-    fn send(&self, alert: alerts::Alert) {
-        self.0.lock().unwrap().push(alert);
-    }
-}
-
-impl Recorder {
-    fn take(&self) -> Vec<(alerts::AlertKind, bool)> {
-        std::mem::take(&mut *self.0.lock().unwrap())
-            .into_iter()
-            .map(|a| (a.kind, a.recovered))
-            .collect()
-    }
-}
-
 async fn new_user(pool: &PgPool) -> Uuid {
-    let uid = format!("tdb{}", &Uuid::new_v4().simple().to_string()[..12]);
-    sqlx::query_scalar("INSERT INTO users (uid, server_id) VALUES ($1, 0) RETURNING id")
-        .bind(&uid)
-        .fetch_one(pool)
-        .await
-        .expect("user")
-}
-
-/// The site reader's progress document: `read` and `unread` marks.
-async fn set_progress(pool: &PgPool, user: Uuid, read: &[&str], unread: &[&str]) {
-    let marks = |ids: &[&str]| -> Value {
-        ids.iter()
-            .map(|id| ((*id).to_owned(), json!(1)))
-            .collect::<serde_json::Map<_, _>>()
-            .into()
-    };
-    sqlx::query(
-        "INSERT INTO user_story_progress (user_id, progress) VALUES ($1, $2) \
-         ON CONFLICT (user_id) DO UPDATE SET progress = EXCLUDED.progress",
-    )
-    .bind(user)
-    .bind(json!({ "read": marks(read), "unread": marks(unread) }))
-    .execute(pool)
-    .await
-    .expect("progress");
+    insert_user(pool, "tdb").await.0
 }
 
 async fn game_read(pool: &PgPool, user: Uuid, story: &str) {
@@ -301,37 +208,6 @@ async fn post_result(s: &AppState, body: &[u8]) {
 }
 
 // --- publish ----------------------------------------------------------------
-
-/// Gzip with the server's own response compression (no gzip crate needed).
-async fn gzip(body: Vec<u8>) -> Vec<u8> {
-    let body = Bytes::from(body);
-    let echo = Router::new()
-        .route(
-            "/",
-            get(move || {
-                let body = body.clone();
-                async move { body }
-            }),
-        )
-        .layer(tower_http::compression::CompressionLayer::new().gzip(true));
-    let resp = echo
-        .oneshot(
-            Request::get("/")
-                .header(header::ACCEPT_ENCODING, "gzip")
-                .body(Body::empty())
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-    axum::body::to_bytes(resp.into_body(), usize::MAX)
-        .await
-        .unwrap()
-        .to_vec()
-}
-
-fn app(s: &AppState) -> Router {
-    backend::app::server::api_parts().0.with_state(s.clone())
-}
 
 async fn send(app: &Router, req: Request<Body>) -> (StatusCode, axum::http::HeaderMap, Vec<u8>) {
     let resp = app.clone().oneshot(req).await.expect("infallible");
@@ -1043,7 +919,7 @@ async fn trevor_queue_against_a_throwaway_database() {
     let pool = fresh_db().await;
     // The v1 steps run with every contract v1.1 switch off: they pass
     // unchanged, which is the proof each off value restores v1.
-    let s = state_on(&pool, v1);
+    let s = state_on(&pool, v11_switches_off);
     step_publish(&s).await;
     step_horizon_and_twins(&s).await;
     step_rungs(&s).await;
@@ -1642,13 +1518,13 @@ async fn send_json(
 /// under `TREVOR_NORMQ=0` the full-width variant is a separate job.
 async fn step_v11_normq(pool: &PgPool) {
     reset_queue(pool).await;
-    let (s, _) = state_v11(pool, |_| {});
+    let (s, _) = state_with_recorder(pool, |_| {});
     beat(&s, "w1", false, true).await;
     let (a, b) = (era4_user(pool).await, era4_user(pool).await);
     let first = ask_ok(&s, a, "Who is Kal'tsit?").await;
     let twin = ask_ok(&s, b, "  WHO is \u{FF2B}altsit ").await;
     assert_eq!(first.job_id, twin.job_id, "normQ variants join one job");
-    let (old, _) = state_v11(pool, |c| c.normq = false);
+    let (old, _) = state_with_recorder(pool, |c| c.normq = false);
     let other = ask_ok(&old, b, "who is \u{FF2B}altsit").await;
     assert_ne!(
         other.job_id, first.job_id,
@@ -1663,7 +1539,7 @@ async fn step_v11_normq(pool: &PgPool) {
 /// questions on; claims serve quick passages first and deferred last.
 async fn step_v11_admission(pool: &PgPool) {
     reset_queue(pool).await;
-    let (s, _) = state_v11(pool, |c| c.cpu_queue_max = 1);
+    let (s, _) = state_with_recorder(pool, |c| c.cpu_queue_max = 1);
     beat(&s, "w1", false, true).await;
     let u = era4_user(pool).await;
     let u2 = era4_user(pool).await;
@@ -1698,7 +1574,7 @@ async fn step_v11_admission(pool: &PgPool) {
 
     // Global cap reached: passages, no deferred job.
     reset_queue(pool).await;
-    let (g, _) = state_v11(pool, |c| {
+    let (g, _) = state_with_recorder(pool, |c| {
         c.cpu_queue_max = 1;
         c.global_queue_max = 1;
     });
@@ -1710,14 +1586,14 @@ async fn step_v11_admission(pool: &PgPool) {
 
     // The cf cap: TREVOR_CF_QUEUE_MAX=1 sends the second to cpu.
     reset_queue(pool).await;
-    let (c, _) = state_v11(pool, |c| c.cf_queue_max = 1);
+    let (c, _) = state_with_recorder(pool, |c| c.cf_queue_max = 1);
     beat(&c, "w1", true, true).await;
     assert_eq!(ask_ok(&c, u, "cf one").await.rung, Rung::Cf);
     assert_eq!(ask_ok(&c, u, "cf two").await.rung, Rung::Cpu);
 
     // Quick look: an earlier era's cached answer to the same question.
     reset_queue(pool).await;
-    let (ql, _) = state_v11(pool, |c| c.cpu_queue_max = 0);
+    let (ql, _) = state_with_recorder(pool, |c| c.cpu_queue_max = 0);
     beat(&ql, "w1", false, true).await;
     let early = new_user(pool).await;
     set_progress(pool, early, &["s2"], &[]).await;
@@ -1738,7 +1614,7 @@ async fn step_v11_admission(pool: &PgPool) {
 
     // TREVOR_ADMISSION=0: the v1 path (no deferred, flat cpu cap).
     reset_queue(pool).await;
-    let (v1s, _) = state_v11(pool, |c| {
+    let (v1s, _) = state_with_recorder(pool, |c| {
         c.admission = false;
         c.cpu_queue_max = 1;
     });
@@ -1760,7 +1636,7 @@ async fn step_v11_admission(pool: &PgPool) {
 /// Fair claiming and claim by rung.
 async fn step_v11_fair(pool: &PgPool) {
     reset_queue(pool).await;
-    let (s, _) = state_v11(pool, |_| {});
+    let (s, _) = state_with_recorder(pool, |_| {});
     beat(&s, "w1", false, true).await;
     let (a, b) = (era4_user(pool).await, era4_user(pool).await);
     for i in 0..3 {
@@ -1777,7 +1653,7 @@ async fn step_v11_fair(pool: &PgPool) {
     );
     // TREVOR_FAIR_CLAIM=0: the oldest created first.
     reset_queue(pool).await;
-    let (old, _) = state_v11(pool, |c| c.fair_claim = false);
+    let (old, _) = state_with_recorder(pool, |c| c.fair_claim = false);
     beat(&old, "w1", false, true).await;
     for i in 0..3 {
         ask_ok(&old, a, &format!("unfair a {i}")).await;
@@ -1815,7 +1691,7 @@ async fn step_v11_fair(pool: &PgPool) {
     );
     // TREVOR_CLAIM_BY_RUNG=0: any worker takes any job.
     reset_queue(pool).await;
-    let (any, _) = state_v11(pool, |c| c.claim_by_rung = false);
+    let (any, _) = state_with_recorder(pool, |c| c.claim_by_rung = false);
     beat(&any, "cfw", true, false).await;
     beat(&any, "cpuw", false, true).await;
     let cf2 = ask_ok(&any, a, "rung cf job two").await;
@@ -1833,7 +1709,7 @@ async fn step_v11_mode_status_alerts(pool: &PgPool) {
     reset_queue(pool).await;
     let u = era4_user(pool).await;
     // passages: a passages job, nothing deferred, no model job.
-    let (p, _) = state_v11(pool, |c| {
+    let (p, _) = state_with_recorder(pool, |c| {
         c.mode = backend::app::services::trevor::Mode::Passages
     });
     beat(&p, "w1", true, true).await;
@@ -1841,7 +1717,7 @@ async fn step_v11_mode_status_alerts(pool: &PgPool) {
     assert_eq!(r.rung, Rung::Passages);
     assert!(r.deferred_job_id.is_none());
     // A model job queued before the switch runs as passages.
-    let (on, _) = state_v11(pool, |_| {});
+    let (on, _) = state_with_recorder(pool, |_| {});
     let m = ask_ok(&on, u, "mode model").await;
     assert_eq!(m.rung, Rung::Cf);
     claim(&p, "w1", true, true).await.unwrap(); // the passages one
@@ -1849,7 +1725,8 @@ async fn step_v11_mode_status_alerts(pool: &PgPool) {
     assert_eq!(Some(w.job_id), m.job_id);
     assert_eq!(w.rung, Rung::Passages);
     // off: 503 "Trevor is resting" unless cached.
-    let (off, _) = state_v11(pool, |c| c.mode = backend::app::services::trevor::Mode::Off);
+    let (off, _) =
+        state_with_recorder(pool, |c| c.mode = backend::app::services::trevor::Mode::Off);
     match ask(&off, u, "mode off", None).await {
         Err(ApiError::ServiceUnavailableMessage(m)) => assert_eq!(m, "Trevor is resting"),
         other => panic!("expected 503, got {other:?}"),
@@ -1866,7 +1743,7 @@ async fn step_v11_mode_status_alerts(pool: &PgPool) {
 
     // Status: workers per rung, guard, mode.
     reset_queue(pool).await;
-    let (s, rec) = state_v11(pool, |_| {});
+    let (s, rec) = state_with_recorder(pool, |_| {});
     beat(&s, "a", true, false).await;
     beat(&s, "b", false, true).await;
     beat(&s, "c", false, true).await;
@@ -1937,7 +1814,7 @@ async fn step_v11_mode_status_alerts(pool: &PgPool) {
         "{sent:?}"
     );
     // TREVOR_ALERTS=0: nothing.
-    let (quiet, qrec) = state_v11(pool, |c| c.alerts = false);
+    let (quiet, qrec) = state_with_recorder(pool, |c| c.alerts = false);
     assert!(alerts::evaluate(&quiet).await.unwrap().is_empty());
     assert!(qrec.take().is_empty());
     eprintln!(
@@ -1948,7 +1825,7 @@ async fn step_v11_mode_status_alerts(pool: &PgPool) {
 /// "My questions", popular, the warm-up routes, and the carry-over.
 async fn step_v11_lists_and_carry(pool: &PgPool) {
     reset_queue(pool).await;
-    let (s, _) = state_v11(pool, |_| {});
+    let (s, _) = state_with_recorder(pool, |_| {});
     let app = app(&s);
     beat(&s, "w1", false, true).await;
     let (a, b, c) = (
@@ -2146,7 +2023,7 @@ async fn step_v11_lists_and_carry(pool: &PgPool) {
             .0,
         StatusCode::PAYLOAD_TOO_LARGE
     );
-    let (p, _) = state_v11(pool, |c| {
+    let (p, _) = state_with_recorder(pool, |c| {
         c.mode = backend::app::services::trevor::Mode::Passages
     });
     assert_eq!(
@@ -2163,7 +2040,7 @@ async fn step_v11_lists_and_carry(pool: &PgPool) {
     );
 
     // TREVOR_CARRY_OVER=0: nothing moves.
-    let (nc, _) = state_v11(pool, |c| c.carry_over = false);
+    let (nc, _) = state_with_recorder(pool, |c| c.carry_over = false);
     let nca = crate::app(&nc);
     let chunk = json!({ "version": "v-nocarry", "activate": false, "panels": panels, "chunkShas": { "s1#0": "aaa", "s2#1": "bbb" } });
     assert_eq!(publish(&nca, &chunk).await, StatusCode::OK);
