@@ -26,6 +26,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { backendFetch } from "#/lib/fetch";
+import { type IMyJobs, type IPopular, parseMyJobs, parsePopular } from "#/lib/trevor/library";
 import type { AskRequest } from "#/types/generated/AskRequest";
 import type { AskResponse } from "#/types/generated/AskResponse";
 import type { FeedbackRequest } from "#/types/generated/FeedbackRequest";
@@ -33,7 +34,7 @@ import type { JobView } from "#/types/generated/JobView";
 import type { StoryPanels } from "#/types/generated/StoryPanels";
 import type { TrevorStatus } from "#/types/generated/TrevorStatus";
 import { APIError, parseError } from "./_shared";
-import { requireSiteToken } from "./_shared.server";
+import { optionalSiteToken, requireSiteToken } from "./_shared.server";
 
 /** A server function's outcome as plain data: the value, or the refusal's status, message and code. */
 export type Settled<T> = { ok: true; value: T } | { ok: false; status: number; message: string; code: string | null };
@@ -175,4 +176,57 @@ export const sendTrevorFeedbackFn = createServerFn({ method: "POST" })
 
 export async function sendFeedback(answerId: string, vote: -1 | 0 | 1, note: string | null = null): Promise<boolean> {
     return unwrap(await sendTrevorFeedbackFn({ data: { answerId, vote, note } }));
+}
+
+/**
+ * The most-asked answered questions inside the asker's era (contract v1.1
+ * section 5), for the stories tab's chips. Public: the token is sent when
+ * there is one, so the backend can place the reader's era; anonymous is era 0
+ * and an empty list. `null` when the backend has no such route (404).
+ */
+export const getTrevorPopularFn = createServerFn({ method: "GET" })
+    .inputValidator((limit: number) => limit)
+    .handler(async ({ data: limit }) => {
+        const res = await backendFetch(`/trevor/popular?limit=${limit}`, { bearerToken: optionalSiteToken() });
+        if (res.status === 404) return null;
+        return parsePopular(await readJSON<unknown>(res));
+    });
+
+export function getPopular(limit = 8): Promise<IPopular | null> {
+    return getTrevorPopularFn({ data: limit });
+}
+
+export function trevorPopularQueryOptions(signedIn: boolean, limit = 8) {
+    return queryOptions({
+        queryKey: ["trevor", "popular", signedIn, limit],
+        queryFn: () => getPopular(limit),
+        staleTime: 5 * 60 * 1000,
+        retry: 1,
+    });
+}
+
+/** The reader's recent questions ("My questions"), newest first; `null` when the backend has no such route (404). */
+export const getTrevorMyJobsFn = createServerFn({ method: "GET" })
+    .inputValidator((data: { limit: number; before: string | null }) => data)
+    .handler(({ data: { limit, before } }) =>
+        settle(async () => {
+            const token = requireSiteToken();
+            const query = `?limit=${limit}${before ? `&before=${encodeURIComponent(before)}` : ""}`;
+            const res = await backendFetch(`/trevor/me/jobs${query}`, { bearerToken: token });
+            if (res.status === 404) return null;
+            return parseMyJobs(await readJSON<unknown>(res), limit);
+        }),
+    );
+
+export async function getMyJobs(limit = 20, before: string | null = null): Promise<IMyJobs | null> {
+    return unwrap(await getTrevorMyJobsFn({ data: { limit, before } }));
+}
+
+export function trevorMyJobsQueryOptions(limit = 20) {
+    return queryOptions({
+        queryKey: ["trevor", "me", "jobs", limit],
+        queryFn: () => getMyJobs(limit),
+        staleTime: 15 * 1000,
+        retry: 1,
+    });
 }

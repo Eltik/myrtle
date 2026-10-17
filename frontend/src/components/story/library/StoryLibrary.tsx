@@ -9,6 +9,7 @@ import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { emptyProgress, loadProgress, onProgressStorage, onProgressWritten, type StoryProgress } from "#/lib/story/progress";
 import { useStoryGameRead, useStoryProgressSync } from "#/lib/story/sync";
+import { trevorEnabled } from "#/lib/trevor/flag";
 import { cn } from "#/lib/utils";
 import type { messages as spriteMessages } from "../sprites/CharactersTab.messages";
 import { Browse } from "./impl/Browse";
@@ -23,12 +24,14 @@ import { NowPlayingBar } from "./impl/NowPlayingBar";
 import { ProgressTab } from "./impl/ProgressTab";
 import { useLibraryPlayerLifetime } from "./impl/player";
 import { ReadingOrderTab } from "./impl/ReadingOrderTab";
-import { isLibraryTab, type LibraryTab } from "./StoryLibrary.constants";
+import { ASK_TAB, isLibraryTab, type LibraryTab } from "./StoryLibrary.constants";
 import type { messages } from "./StoryLibrary.messages";
 
 // The Characters tab is its own chunk: Browse's bundle and first load do not
 // carry the gallery, and nothing of it is fetched until the tab is opened.
 const CharactersTab = lazy(() => import("../sprites/CharactersTab"));
+// Ask Trevor (behind VITE_TREVOR=1) is its own chunk too, fetched on first open.
+const LibraryAsk = lazy(() => import("../trevor/LibraryAsk").then((m) => ({ default: m.LibraryAsk })));
 
 /**
  * The library at `/stories`: a page head, a compact continue row, one mode row,
@@ -87,13 +90,23 @@ export function StoryLibrary(): React.ReactElement {
     // re-render the library.
     const tab: LibraryTab = useSearch({ from: "/stories", select: (search) => search.tab ?? "browse" });
     const navigate = useNavigate({ from: "/stories" });
+    const trevor = trevorEnabled();
+    // Ask Trevor joins the strip and the panels only with the flag on. It is
+    // spliced into the SAME flat children arrays rather than added as a
+    // conditional slot: React's useId derives ids from a child's index AND the
+    // sibling count, so even a null slot renumbers every tab's id, and the flag
+    // off must render byte for byte as before.
+    const withAsk = (items: React.ReactElement[], ask: React.ReactElement, at: number): React.ReactElement[] => (trevor ? [...items.slice(0, at), ask, ...items.slice(at)] : items);
     const setTab = useCallback(
         (next: string) => {
-            const value: LibraryTab = isLibraryTab(next) ? next : "browse";
+            const value: LibraryTab = isLibraryTab(next) ? next : next === ASK_TAB && trevor ? ASK_TAB : "browse";
             void navigate({ search: (prev) => ({ ...prev, tab: value === "browse" ? undefined : value, sprite: value === "characters" ? prev.sprite : undefined }), replace: true, resetScroll: false });
         },
-        [navigate],
+        [navigate, trevor],
     );
+    // Mounted on first open and KEPT, so a question in flight survives a tab switch.
+    const [askSeen, setAskSeen] = useState(tab === ASK_TAB);
+    if (tab === ASK_TAB && !askSeen) setAskSeen(true);
     // Mounted on first open and KEPT, so switching to Browse and back keeps the
     // search text, the filters, the page count and the scroll of the grid.
     const [charactersSeen, setCharactersSeen] = useState(tab === "characters");
@@ -143,53 +156,73 @@ export function StoryLibrary(): React.ReactElement {
             {hero ? <ContinueCard pick={hero} progress={progress} gameRead={gameRead} onViewChapter={viewChapter} /> : null}
 
             <Tabs value={tab} onValueChange={(value) => setTab(String(value))}>
-                <div className="msv-scroll flex max-w-full items-center gap-1 overflow-x-auto">
-                    <TabsList className="shrink-0">
-                        <TabsTab value="browse" className="shrink-0 max-sm:min-h-11">
-                            {t("library.tab.browse")}
-                        </TabsTab>
-                        <TabsTab value="reading" className="shrink-0 max-sm:min-h-11">
-                            {t("library.tab.reading")}
-                        </TabsTab>
-                        <TabsTab value="illustrations" className="shrink-0 max-sm:min-h-11">
-                            {t("library.tab.illustrations")}
-                        </TabsTab>
-                        <TabsTab value="progress" className="shrink-0 max-sm:min-h-11">
-                            {t("library.tab.progress")}
-                        </TabsTab>
-                        <TabsTab value="community" className="shrink-0 max-sm:min-h-11">
-                            {t("community.tab")}
-                        </TabsTab>
-                        <TabsTab value="characters" className="shrink-0 max-sm:min-h-11">
-                            {t("sprites.tab")}
-                        </TabsTab>
-                    </TabsList>
-                </div>
-                <TabsPanel value="browse" className="pt-4">
-                    <Browse index={index} progress={progress} gameRead={gameRead} openGroup={openGroup} onOpenHandled={onOpenHandled} />
-                </TabsPanel>
-                <TabsPanel value="reading">
-                    <ReadingOrderTab groups={storyGroups} progress={progress} gameRead={gameRead} />
-                </TabsPanel>
-                <TabsPanel value="illustrations" className="pt-4">
-                    <IllustrationsTab groups={storyGroups} records={index.records} />
-                </TabsPanel>
-                <TabsPanel value="progress">
-                    <ProgressTab index={index} progress={progress} gameRead={gameRead} onProgressChanged={setProgress} />
-                </TabsPanel>
-                {/* A ranked row here opens the chapter sheet through the SAME seam the
-                    continue card uses, which switches to Browse and hands the group id
-                    over rather than teaching a second surface to mount the sheet. */}
-                <TabsPanel value="community">
-                    <CommunityTab index={index} onViewChapter={viewChapter} />
-                </TabsPanel>
-                <TabsPanel value="characters" keepMounted={charactersSeen}>
-                    {charactersSeen ? (
-                        <Suspense fallback={null}>
-                            <CharactersTab />
-                        </Suspense>
-                    ) : null}
-                </TabsPanel>
+                {withAsk(
+                    [
+                        <div key="strip" className="msv-scroll flex max-w-full items-center gap-1 overflow-x-auto">
+                            <TabsList className="shrink-0">
+                                {withAsk(
+                                    [
+                                        <TabsTab key="browse" value="browse" className="shrink-0 max-sm:min-h-11">
+                                            {t("library.tab.browse")}
+                                        </TabsTab>,
+                                        <TabsTab key="reading" value="reading" className="shrink-0 max-sm:min-h-11">
+                                            {t("library.tab.reading")}
+                                        </TabsTab>,
+                                        <TabsTab key="illustrations" value="illustrations" className="shrink-0 max-sm:min-h-11">
+                                            {t("library.tab.illustrations")}
+                                        </TabsTab>,
+                                        <TabsTab key="progress" value="progress" className="shrink-0 max-sm:min-h-11">
+                                            {t("library.tab.progress")}
+                                        </TabsTab>,
+                                        <TabsTab key="community" value="community" className="shrink-0 max-sm:min-h-11">
+                                            {t("community.tab")}
+                                        </TabsTab>,
+                                        <TabsTab key="characters" value="characters" className="shrink-0 max-sm:min-h-11">
+                                            {t("sprites.tab")}
+                                        </TabsTab>,
+                                    ],
+                                    <TabsTab key="ask" value={ASK_TAB} className="shrink-0 max-sm:min-h-11" data-trevor-library-tab>
+                                        {t("library.tab.ask")}
+                                    </TabsTab>,
+                                    1,
+                                )}
+                            </TabsList>
+                        </div>,
+                        <TabsPanel key="browse" value="browse" className="pt-4">
+                            <Browse index={index} progress={progress} gameRead={gameRead} openGroup={openGroup} onOpenHandled={onOpenHandled} />
+                        </TabsPanel>,
+                        <TabsPanel key="reading" value="reading">
+                            <ReadingOrderTab groups={storyGroups} progress={progress} gameRead={gameRead} />
+                        </TabsPanel>,
+                        <TabsPanel key="illustrations" value="illustrations" className="pt-4">
+                            <IllustrationsTab groups={storyGroups} records={index.records} />
+                        </TabsPanel>,
+                        <TabsPanel key="progress" value="progress">
+                            <ProgressTab index={index} progress={progress} gameRead={gameRead} onProgressChanged={setProgress} />
+                        </TabsPanel>,
+                        // A ranked row here opens the chapter sheet through the SAME seam the
+                        // continue card uses, which switches to Browse and hands the group id
+                        // over rather than teaching a second surface to mount the sheet.
+                        <TabsPanel key="community" value="community">
+                            <CommunityTab index={index} onViewChapter={viewChapter} />
+                        </TabsPanel>,
+                        <TabsPanel key="characters" value="characters" keepMounted={charactersSeen}>
+                            {charactersSeen ? (
+                                <Suspense fallback={null}>
+                                    <CharactersTab />
+                                </Suspense>
+                            ) : null}
+                        </TabsPanel>,
+                    ],
+                    <TabsPanel key="ask" value={ASK_TAB} keepMounted={askSeen}>
+                        {askSeen ? (
+                            <Suspense fallback={null}>
+                                <LibraryAsk active={tab === ASK_TAB} />
+                            </Suspense>
+                        ) : null}
+                    </TabsPanel>,
+                    7,
+                )}
             </Tabs>
 
             <NowPlayingBar />

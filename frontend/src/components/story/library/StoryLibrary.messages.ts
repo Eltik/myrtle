@@ -39,6 +39,10 @@ export const messages = {
         text: "Browse",
         description: "First mode tab: the chapter sections.",
     },
+    "library.tab.ask": {
+        text: "Ask Trevor",
+        description: "Library tab with a chat where the reader asks Trevor, the story companion, any lore question. Trevor is a name.",
+    },
     "library.tab.reading": {
         text: "Reading Order",
         description: "Top-level tab holding the reading orders the data can derive.",

@@ -40,7 +40,7 @@ vi.mock("@tanstack/react-router", () => ({
 vi.mock("#/hooks/use-auth", () => ({ useAuth: () => ({ user: auth.user }) }));
 vi.mock("#/lib/auth/store", () => ({ authActions: { openLoginDialog: login } }));
 
-const STATUS: TrevorStatus = { online: true, rungs: { cf: true, cpu: true }, activeVersion: "en-e79e364cfbdeeffa-pef0c5bba", queueDepth: { cf: 0, cpu: 0 }, cfBudget: "ok" };
+const STATUS = { online: true, rungs: { cf: true, cpu: true }, activeVersion: "en-e79e364cfbdeeffa-pef0c5bba", queueDepth: { cf: 0, cpu: 0 }, cfBudget: "ok", workers: { cf: 1, cpu: 1 }, guard: "ok", mode: "on" } as TrevorStatus;
 const INDEX = {
     groups: [
         {

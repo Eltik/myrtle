@@ -19,7 +19,7 @@ import { useCallback, useEffect, useReducer, useRef } from "react";
 import * as api from "#/lib/api/trevor";
 import type { AskResponse } from "#/types/generated/AskResponse";
 import type { AskEvent } from "./askState";
-import { EMPTY_THREAD, type IAskTurn, type IThread, MAX_OPEN, threadReducer } from "./thread";
+import { EMPTY_THREAD, type IAskTurn, type IThread, MAX_OPEN, type TurnState, threadReducer } from "./thread";
 import { createDeltaBuffer, type IDeltaBuffer, type IJobWatch, type IWatchDeps, watchJob } from "./watch";
 
 export interface IAskDeps extends IWatchDeps {
@@ -37,6 +37,8 @@ export interface ITrevorThread {
     thread: IThread;
     ask: (question: string, turnstileToken?: string | null) => void;
     addPrepared: (suggestion: { id: string; question: string; answer: string }) => void;
+    /** Re-show a question asked earlier; one still open is followed again. */
+    restore: (state: TurnState) => void;
     /** Follow an offline turn's job again. */
     resume: (turnId: number) => void;
 }
@@ -48,7 +50,7 @@ export function useTrevorThread(storyId: string | null, deps: IAskDeps = DEFAULT
     const storyRef = useRef(storyId);
     storyRef.current = storyId;
     const watches = useRef(new Map<number, { jobId: string; watch: IJobWatch }>());
-    const deltas = useRef(new Map<number, IDeltaBuffer>());
+    const deltas = useRef(new Map<string, IDeltaBuffer>());
     const sent = useRef(new Set<number>());
 
     const turnEvent = useCallback((id: number, event: AskEvent) => dispatch({ type: "turn", id, event }), []);
@@ -69,10 +71,12 @@ export function useTrevorThread(storyId: string | null, deps: IAskDeps = DEFAULT
 
     const follow = useCallback(
         (id: number, jobId: string) => {
-            let buffer = deltas.current.get(id);
+            // Per turn AND job: a quick look's turn moves on to its deferred job, whose seqs start again.
+            const key = `${id}:${jobId}`;
+            let buffer = deltas.current.get(key);
             if (!buffer) {
                 buffer = createDeltaBuffer();
-                deltas.current.set(id, buffer);
+                deltas.current.set(key, buffer);
             }
             const settle = (event: AskEvent) => {
                 if (watches.current.get(id)?.jobId === jobId) watches.current.delete(id);
@@ -109,7 +113,9 @@ export function useTrevorThread(storyId: string | null, deps: IAskDeps = DEFAULT
             }
             if (s.kind === "queued" || s.kind === "streaming") {
                 live.add(turn.id);
-                if (!watches.current.has(turn.id)) follow(turn.id, s.jobId);
+                const w = watches.current.get(turn.id);
+                if (w && w.jobId !== s.jobId) w.watch.stop();
+                if (!w || w.jobId !== s.jobId) follow(turn.id, s.jobId);
             }
         }
         for (const [id, w] of watches.current) {
@@ -130,6 +136,7 @@ export function useTrevorThread(storyId: string | null, deps: IAskDeps = DEFAULT
     const ask = useCallback((question: string, turnstileToken: string | null = null) => dispatch({ type: "ask", question, token: turnstileToken }), []);
     const addPrepared = useCallback((suggestion: { id: string; question: string; answer: string }) => dispatch({ type: "bank", suggestion }), []);
     const resume = useCallback((turnId: number) => turnEvent(turnId, { type: "resume" }), [turnEvent]);
+    const restore = useCallback((state: TurnState) => dispatch({ type: "restore", state }), []);
 
-    return { thread, ask, addPrepared, resume };
+    return { thread, ask, addPrepared, resume, restore };
 }

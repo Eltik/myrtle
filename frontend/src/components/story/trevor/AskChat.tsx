@@ -15,7 +15,13 @@
  * whole, instead of word by word. When an answer settles and focus was lost
  * (on the page body), it returns to the composer. The empty state offers the panel's suggested
  * questions as chips: one with a prepared answer adds it to the thread with no
- * request; one without asks Trevor.
+ * request; one without asks Trevor. The stories page's tab passes its own
+ * empty state (popular questions, My questions) and the era its list was drawn
+ * from, and no story: the horizon is then the reader's profile alone.
+ *
+ * A quick look (a passages answer given at once while the full answer is
+ * deferred, contract v1.1 section 1b) shows as its own reply at once, with
+ * Trevor still writing under it; the full answer replaces it when it lands.
  */
 import { ArrowUpIcon } from "lucide-react";
 import type React from "react";
@@ -33,12 +39,14 @@ import { useMediaQuery } from "#/hooks/use-media-query";
 import { authActions } from "#/lib/auth/store";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import type { IParsedAnswer } from "#/lib/trevor/answer";
 import { askPending } from "#/lib/trevor/askState";
 import type { TrevorFailureKind } from "#/lib/trevor/errors";
 import { turnstileSiteKey } from "#/lib/trevor/flag";
 import type { TrevorPanel, TrevorSuggestion } from "#/lib/trevor/panels";
 import { type IThread, latestSpoiler, MAX_OPEN, pendingCount, type ThreadTurn, type TurnState } from "#/lib/trevor/thread";
 import { cn } from "#/lib/utils";
+import type { TrevorSpoilerSafe } from "#/types/generated/TrevorSpoilerSafe";
 import type { TrevorStatus } from "#/types/generated/TrevorStatus";
 import { AnswerText } from "./AnswerText";
 import { AnswerFooter, SpoilerLabel } from "./AnswerView";
@@ -63,9 +71,13 @@ export interface IAskChatProps {
     onJumpLine?: (line: number) => void;
     /** The chat is on screen (sheet open, Ask tab selected): end-following runs only then. */
     active: boolean;
+    /** Replaces the panel's greeting and suggestions in the empty thread. */
+    emptyState?: React.ReactNode;
+    /** The horizon to show before any ask has reported one (`undefined`: none known). */
+    spoilerFallback?: TrevorSpoilerSafe | null;
 }
 
-export function AskChat({ storyId, panel, signedIn, status, thread, onAsk, onPrepared, onResume, onJumpLine, active }: IAskChatProps): React.ReactElement {
+export function AskChat({ storyId, panel, signedIn, status, thread, onAsk, onPrepared, onResume, onJumpLine, active, emptyState, spoilerFallback }: IAskChatProps): React.ReactElement {
     const t: TrevorT = useT("story");
     const [draft, setDraft] = useState<ComposerValue>([]);
     const siteKey = turnstileSiteKey();
@@ -77,7 +89,8 @@ export function AskChat({ storyId, panel, signedIn, status, thread, onAsk, onPre
     const coarse = useMediaQuery("(pointer: coarse)");
     const pending = pendingCount(thread);
     const empty = thread.turns.length === 0;
-    const spoiler = latestSpoiler(thread);
+    const reported = latestSpoiler(thread);
+    const spoiler = reported === undefined ? spoilerFallback : reported;
     const lastId = [...thread.turns].reverse().find((x) => x.kind === "ask")?.id;
     const layoutKey = thread.turns.map((x) => (x.kind === "ask" ? `${x.state.kind}${x.state.kind === "streaming" ? x.state.text.length : ""}` : "b")).join(",");
     const scroll = useChatScroll({ active, itemCount: thread.turns.length, layoutKey });
@@ -119,7 +132,9 @@ export function AskChat({ storyId, panel, signedIn, status, thread, onAsk, onPre
     return (
         <div ref={rootRef} className="flex min-h-0 flex-1 flex-col" data-trevor-chat>
             <ChatConversation scroll={scroll} label={t("trevor.chat.label")} jumpLabel={t("trevor.chat.jump")} live="off" contentClassName="px-4 pt-4 sm:px-6">
-                {empty ? (
+                {empty && emptyState ? (
+                    emptyState
+                ) : empty ? (
                     <EmptyChat panel={panel} signedIn={signedIn} onSuggestion={onSuggestion} />
                 ) : (
                     <div className="flex flex-col gap-4">
@@ -228,7 +243,7 @@ function EmptyChat({ panel, signedIn, onSuggestion }: { panel: TrevorPanel | nul
     );
 }
 
-function TrevorAvatar(): React.ReactElement {
+export function TrevorAvatar(): React.ReactElement {
     return (
         <Avatar aria-hidden className="size-7 bg-primary font-semibold text-primary-foreground text-xs">
             <AvatarFallback className="bg-primary text-primary-foreground">T</AvatarFallback>
@@ -259,6 +274,7 @@ function AskTurn({ state, latest, storyId, signedIn, onJumpLine, onResume }: { s
     const author = "Trevor";
     const avatar = <TrevorAvatar />;
 
+    const quick = state.kind === "queued" || state.kind === "streaming" || state.kind === "offline" ? state.quick : undefined;
     let reply: React.ReactNode;
     if (state.kind === "held") {
         reply = (
@@ -269,7 +285,7 @@ function AskTurn({ state, latest, storyId, signedIn, onJumpLine, onResume }: { s
             </ChatMessage>
         );
     } else if (waiting) {
-        const label = state.kind === "sending" ? t("trevor.ask.sending") : [t("trevor.ask.queued"), eta(state.etaSecs, t), state.position ? t("trevor.ask.position", { position: state.position }) : null].filter(Boolean).join(" · ");
+        const label = state.kind === "sending" ? t("trevor.ask.sending") : [quick ? t("trevor.quick.writing") : t("trevor.ask.queued"), eta(state.etaSecs, t), state.position ? t("trevor.ask.position", { position: state.position }) : null].filter(Boolean).join(" · ");
         reply = (
             <ChatMessage side="incoming" author={author} avatar={avatar} bubble={false} footer={state.kind === "queued" && !state.workerOnline ? <span className="text-muted-foreground text-xs">{t("trevor.ask.noWorker")}</span> : undefined}>
                 <ChatTypingIndicator label={label} />
@@ -281,6 +297,8 @@ function AskTurn({ state, latest, storyId, signedIn, onJumpLine, onResume }: { s
                 <AnswerText text={state.text} sourceId={null} cited={new Set()} />
             </ChatMessage>
         );
+    } else if (state.kind === "done" && state.quick) {
+        reply = <QuickLook answer={state.answer} note={state.fullFailed ? t("trevor.quick.fullFailed") : null} sourceId={sourceId} storyId={storyId} signedIn={signedIn} onJumpLine={onJumpLine} />;
     } else if (state.kind === "done") {
         const a = state.answer;
         const passages = a.source === "passages";
@@ -326,10 +344,34 @@ function AskTurn({ state, latest, storyId, signedIn, onJumpLine, onResume }: { s
             <ChatMessage side="outgoing" animateEntrance={state.kind === "sending" || state.kind === "held"} data-trevor-asked>
                 {state.question}
             </ChatMessage>
+            {/* The quick look is an answer already: its own region, read at once, while the full answer is still busy below it. */}
+            {quick ? (
+                <div aria-live="polite">
+                    <QuickLook answer={quick} note={t("trevor.quick.deferred")} sourceId={`${sourceId}-q`} storyId={storyId} signedIn={signedIn} onJumpLine={onJumpLine} />
+                </div>
+            ) : null}
             <div aria-live="polite" aria-busy={pending} data-trevor-state={state.kind} data-trevor-live={latest ? "" : undefined}>
                 {reply}
             </div>
         </div>
+    );
+}
+
+/** A passages answer given at once (the quick look), labelled as such, its quotes under it. */
+function QuickLook({ answer, note, sourceId, storyId, signedIn, onJumpLine }: { answer: IParsedAnswer; note: string | null; sourceId: string; storyId: string | null; signedIn: boolean; onJumpLine?: (line: number) => void }): React.ReactElement {
+    const t: TrevorT = useT("story");
+    return (
+        <ChatMessage side="incoming" author="Trevor" avatar={<TrevorAvatar />} footer={<AnswerFooter answer={answer} sourceId={sourceId} storyId={storyId} onJumpLine={onJumpLine} signedIn={signedIn} />} aria-label={t("trevor.answer.label")} data-trevor-quick>
+            <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-1">
+                    <span className="self-start rounded-full bg-background/70 px-2 py-0.5 font-medium text-xs" data-trevor-passages>
+                        {t("trevor.ask.passagesOnly")}
+                    </span>
+                    {note ? <p className="text-muted-foreground text-xs">{note}</p> : null}
+                </div>
+                {answer.text ? <AnswerText text={answer.text} sourceId={sourceId} cited={new Set(answer.citations.map((c) => c.n))} /> : null}
+            </div>
+        </ChatMessage>
     );
 }
 

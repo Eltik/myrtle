@@ -1,20 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { StoryLibrary } from "#/components/story/library/StoryLibrary";
-import { isLibraryTab, type LibraryTab } from "#/components/story/library/StoryLibrary.constants";
+import { ASK_TAB, isLibraryTab, type LibraryTab } from "#/components/story/library/StoryLibrary.constants";
 import { storyIndexQueryOptions, storySpriteQueryOptions } from "#/lib/api/story";
 import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
+import { trevorEnabled } from "#/lib/trevor/flag";
 
 export const Route = createFileRoute("/stories")({
     component: RouteComponent,
     errorComponent: RootErrorComponent,
     // `?tab=` picks a library tab (absent is Browse) and `?sprite=<base>` opens
     // one character's sheet over the Characters tab. Both are read as MISSING
-    // rather than falsy, and an unknown tab value is dropped.
+    // rather than falsy, and an unknown tab value is dropped. `ask` (Ask Trevor)
+    // is a tab only while the Trevor flag is on.
     validateSearch: (search: Record<string, unknown>): { tab?: LibraryTab; sprite?: string } => {
         const out: { tab?: LibraryTab; sprite?: string } = {};
         if (isLibraryTab(search.tab) && search.tab !== "browse") out.tab = search.tab;
+        else if (search.tab === ASK_TAB && trevorEnabled()) out.tab = ASK_TAB;
         if (typeof search.sprite === "string" && search.sprite.trim() !== "") out.sprite = search.sprite.trim();
         return out;
     },

@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-16T23:30:41.879Z",
+    "generatedAt": "2026-10-17T11:59:28.791Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -28901,6 +28901,13 @@
             "placeholders": []
         },
         {
+            "key": "story.library.tab.ask",
+            "namespace": "story",
+            "source_text": "Ask Trevor",
+            "description": "Library tab with a chat where the reader asks Trevor, the story companion, any lore question. Trevor is a name.",
+            "placeholders": []
+        },
+        {
             "key": "story.library.tab.browse",
             "namespace": "story",
             "source_text": "Browse",
@@ -32204,6 +32211,118 @@
             "placeholders": []
         },
         {
+            "key": "story.trevor.library.eraUnknown",
+            "namespace": "story",
+            "source_text": "Answers stop at the furthest story you have read.",
+            "description": "Shown where the spoiler-safe era would be, before the backend has named it.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.library.greeting",
+            "namespace": "story",
+            "source_text": "Ask me anything about the story. I answer from the game's own text and stop where your reading stops.",
+            "description": "Trevor's greeting in the empty chat on the stories page's Ask Trevor tab. First person: Trevor speaks.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.library.label",
+            "namespace": "story",
+            "source_text": "Ask Trevor",
+            "description": "Accessible name of the stories page's Ask Trevor section.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.library.mine",
+            "namespace": "story",
+            "source_text": "My questions",
+            "description": "Heading over the list of questions the reader asked Trevor before.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.library.mineEmpty",
+            "namespace": "story",
+            "source_text": "Questions you ask appear here with their answers.",
+            "description": "Empty state of My questions.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.library.mineError",
+            "namespace": "story",
+            "source_text": "Couldn't load your questions.",
+            "description": "Shown when loading My questions failed.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.library.mineMore",
+            "namespace": "story",
+            "source_text": "Show older",
+            "description": "Button under My questions that loads older questions.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.library.popular",
+            "namespace": "story",
+            "source_text": "Asked often in your era",
+            "description": "Heading over chips of questions other readers at the same point in the story asked most.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.library.signedOut",
+            "namespace": "story",
+            "source_text": "Trevor's answers follow your reading progress: they use only the stories you have read, so nothing ahead of you is spoiled. Sign in so Trevor knows how far you are.",
+            "description": "Explanation on the Ask Trevor tab for a signed-out visitor.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.library.signedOutPrepared",
+            "namespace": "story",
+            "source_text": "Each story's Trevor panel in the reader (recap, characters, terms and prepared answers) needs no account.",
+            "description": "Second line for a signed-out visitor: what Trevor offers without signing in.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.library.signedOutTitle",
+            "namespace": "story",
+            "source_text": "Ask Trevor about the lore",
+            "description": "Title of the Ask Trevor tab for a signed-out visitor.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.library.status.deferred",
+            "namespace": "story",
+            "source_text": "Quick look given, full answer coming",
+            "description": "Status of a past question that got a quick look (passages only) while its full answer waits in the queue.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.library.status.done",
+            "namespace": "story",
+            "source_text": "Answered",
+            "description": "Status of a past question that has its answer.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.library.status.failed",
+            "namespace": "story",
+            "source_text": "Not answered",
+            "description": "Status of a past question Trevor could not answer.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.library.status.queued",
+            "namespace": "story",
+            "source_text": "Waiting",
+            "description": "Status of a past question that is still in Trevor's queue.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.library.status.running",
+            "namespace": "story",
+            "source_text": "Being written",
+            "description": "Status of a past question whose answer is being written now.",
+            "placeholders": []
+        },
+        {
             "key": "story.trevor.open",
             "namespace": "story",
             "source_text": "Trevor",
@@ -32250,6 +32369,27 @@
             "namespace": "story",
             "source_text": "Trevor's recap of what came before, with no spoilers for this chapter.",
             "description": "Note under the chapter primer.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.quick.deferred",
+            "namespace": "story",
+            "source_text": "Trevor is writing the full answer and it will replace this one here. It also waits in My questions on the stories page.",
+            "description": "Note under a quick look (passages only) whose full answer was queued for later.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.quick.fullFailed",
+            "namespace": "story",
+            "source_text": "The full answer could not be written, so this quick look stands.",
+            "description": "Note under a quick look whose deferred full answer failed.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.quick.writing",
+            "namespace": "story",
+            "source_text": "Writing the full answer",
+            "description": "Typing indicator label under a quick look while the full answer is queued or being written.",
             "placeholders": []
         },
         {

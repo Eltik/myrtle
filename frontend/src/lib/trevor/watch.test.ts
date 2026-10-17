@@ -15,7 +15,7 @@ function view(over: Partial<JobView> = {}): JobView {
     return { jobId: "j1", status: "queued", rung: "cpu", position: 2, etaSecs: 40, workerOnline: true, answer: null, error: null, ...over } as JobView;
 }
 
-const ONLINE: TrevorStatus = { online: true, rungs: { cf: true, cpu: true }, activeVersion: "v", queueDepth: { cf: 0, cpu: 1 }, cfBudget: "ok" };
+const ONLINE = { online: true, rungs: { cf: true, cpu: true }, activeVersion: "v", queueDepth: { cf: 0, cpu: 1 }, cfBudget: "ok", workers: { cf: 1, cpu: 1 }, guard: "ok", mode: "on" } as TrevorStatus;
 const OFFLINE: TrevorStatus = { ...ONLINE, online: false, rungs: { cf: false, cpu: false } };
 
 /** An SSE response whose events are written as the test pushes them. */

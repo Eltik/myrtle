@@ -313,6 +313,82 @@ export const messages = {
         text: "Trevor's recap of what came before, with no spoilers for this chapter.",
         description: "Note under the chapter primer.",
     },
+    "trevor.quick.deferred": {
+        text: "Trevor is writing the full answer and it will replace this one here. It also waits in My questions on the stories page.",
+        description: "Note under a quick look (passages only) whose full answer was queued for later.",
+    },
+    "trevor.quick.writing": {
+        text: "Writing the full answer",
+        description: "Typing indicator label under a quick look while the full answer is queued or being written.",
+    },
+    "trevor.quick.fullFailed": {
+        text: "The full answer could not be written, so this quick look stands.",
+        description: "Note under a quick look whose deferred full answer failed.",
+    },
+    "trevor.library.label": {
+        text: "Ask Trevor",
+        description: "Accessible name of the stories page's Ask Trevor section.",
+    },
+    "trevor.library.greeting": {
+        text: "Ask me anything about the story. I answer from the game's own text and stop where your reading stops.",
+        description: "Trevor's greeting in the empty chat on the stories page's Ask Trevor tab. First person: Trevor speaks.",
+    },
+    "trevor.library.eraUnknown": {
+        text: "Answers stop at the furthest story you have read.",
+        description: "Shown where the spoiler-safe era would be, before the backend has named it.",
+    },
+    "trevor.library.popular": {
+        text: "Asked often in your era",
+        description: "Heading over chips of questions other readers at the same point in the story asked most.",
+    },
+    "trevor.library.mine": {
+        text: "My questions",
+        description: "Heading over the list of questions the reader asked Trevor before.",
+    },
+    "trevor.library.mineEmpty": {
+        text: "Questions you ask appear here with their answers.",
+        description: "Empty state of My questions.",
+    },
+    "trevor.library.mineError": {
+        text: "Couldn't load your questions.",
+        description: "Shown when loading My questions failed.",
+    },
+    "trevor.library.mineMore": {
+        text: "Show older",
+        description: "Button under My questions that loads older questions.",
+    },
+    "trevor.library.status.queued": {
+        text: "Waiting",
+        description: "Status of a past question that is still in Trevor's queue.",
+    },
+    "trevor.library.status.running": {
+        text: "Being written",
+        description: "Status of a past question whose answer is being written now.",
+    },
+    "trevor.library.status.done": {
+        text: "Answered",
+        description: "Status of a past question that has its answer.",
+    },
+    "trevor.library.status.failed": {
+        text: "Not answered",
+        description: "Status of a past question Trevor could not answer.",
+    },
+    "trevor.library.status.deferred": {
+        text: "Quick look given, full answer coming",
+        description: "Status of a past question that got a quick look (passages only) while its full answer waits in the queue.",
+    },
+    "trevor.library.signedOutTitle": {
+        text: "Ask Trevor about the lore",
+        description: "Title of the Ask Trevor tab for a signed-out visitor.",
+    },
+    "trevor.library.signedOut": {
+        text: "Trevor's answers follow your reading progress: they use only the stories you have read, so nothing ahead of you is spoiled. Sign in so Trevor knows how far you are.",
+        description: "Explanation on the Ask Trevor tab for a signed-out visitor.",
+    },
+    "trevor.library.signedOutPrepared": {
+        text: "Each story's Trevor panel in the reader (recap, characters, terms and prepared answers) needs no account.",
+        description: "Second line for a signed-out visitor: what Trevor offers without signing in.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

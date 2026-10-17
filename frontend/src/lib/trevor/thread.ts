@@ -31,6 +31,8 @@ export interface IAskTurn {
     state: TurnState;
     /** The Turnstile token it was asked with, sent with it even if it waited. */
     token: string | null;
+    /** Re-shown from "My questions": its spoiler horizon is not known here. */
+    restored?: true;
 }
 
 /** A suggested question opened from the panel's prepared answer: no request was made. */
@@ -51,7 +53,12 @@ export interface IThread {
 
 export const EMPTY_THREAD: IThread = { turns: [], nextId: 1 };
 
-export type ThreadAction = { type: "ask"; question: string; token: string | null } | { type: "bank"; suggestion: { id: string; question: string; answer: string } } | { type: "turn"; id: number; event: AskEvent };
+export type ThreadAction =
+    | { type: "ask"; question: string; token: string | null }
+    | { type: "bank"; suggestion: { id: string; question: string; answer: string } }
+    /** A question asked earlier (the stories tab's "My questions"), re-shown as it stands: answered, or still open and followed again. */
+    | { type: "restore"; state: TurnState }
+    | { type: "turn"; id: number; event: AskEvent };
 
 /**
  * Open jobs the thread holds against the backend's cap: each turn being sent
@@ -91,6 +98,10 @@ export function threadReducer(thread: IThread, action: ThreadAction, cap: number
         case "bank": {
             const s = action.suggestion;
             return { turns: [...thread.turns, { id: thread.nextId, kind: "bank", suggestionId: s.id, question: s.question, answer: s.answer }], nextId: thread.nextId + 1 };
+        }
+        case "restore": {
+            if (action.state.kind === "held" || action.state.kind === "sending") return thread;
+            return { turns: [...thread.turns, { id: thread.nextId, kind: "ask", state: action.state, token: null, restored: true }], nextId: thread.nextId + 1 };
         }
         case "turn": {
             let changed = false;
@@ -137,7 +148,7 @@ function spoilerOf(s: TurnState): TrevorSpoilerSafe | null | undefined {
 export function latestSpoiler(thread: IThread): TrevorSpoilerSafe | null | undefined {
     for (let i = thread.turns.length - 1; i >= 0; i--) {
         const turn = thread.turns[i];
-        if (turn?.kind !== "ask") continue;
+        if (turn?.kind !== "ask" || turn.restored) continue;
         const s = spoilerOf(turn.state);
         if (s !== undefined) return s;
     }
