@@ -67,6 +67,8 @@ tikv-jemallocator = "0.6"
 tikv-jemalloc-sys = "0.6"
 
 [dependencies]
+# NFKC for Trevor's cache key (contract v1.1 section 1a); already in the lock as a transitive dependency.
+unicode-normalization = "0.1.25"
 anyhow = "1.0.102"
 arc-swap = "1"
 base64 = "0.22"

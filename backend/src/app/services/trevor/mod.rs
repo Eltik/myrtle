@@ -108,10 +108,9 @@ pub fn normalize_question_v1(question: &str) -> String {
 
 /// The compatibility fold of one character: the NFKC mappings a typed
 /// question meets (full-width ASCII, the ideographic and other Unicode
-/// spaces, ligatures, super/subscript digits, the ellipsis). The backend has
-/// no Unicode normalization tables (`unicode-normalization` is not a
-/// dependency), so this is the NFKC subset, not all of it; see
-/// [`normalize_question`].
+/// spaces, ligatures, super/subscript digits, the ellipsis). Since
+/// 2026-10-17 [`normalize_question`] runs full NFKC (`unicode-normalization`)
+/// before it, so this keeps only what NFKC leaves alone.
 fn nfkc_fold(c: char, out: &mut String) {
     match c {
         // Full-width ASCII block -> ASCII.
@@ -167,6 +166,10 @@ const fn is_apostrophe(c: char) -> bool {
 /// and "Did Theresa kill W" stay two questions. `TREVOR_NORMQ=0` restores
 /// [`normalize_question_v1`].
 pub fn normalize_question(question: &str) -> String {
+    use unicode_normalization::UnicodeNormalization;
+    // Full NFKC first (composes "e" + U+0301 into "é", folds compatibility
+    // forms); `nfkc_fold` then applies the mappings NFKC leaves alone.
+    let question: String = question.nfkc().collect();
     let mut folded = String::with_capacity(question.len());
     for c in question.chars() {
         nfkc_fold(c, &mut folded);
@@ -944,8 +947,8 @@ mod tests {
         assert_eq!(n("Episode \u{2167}"), "episode viii");
         assert_eq!(n("zero\u{200B}width"), "zerowidth");
         assert_eq!(n("Wi\u{0161}'adel"), "wi\u{0161}adel");
-        // Decomposed accents keep their mark on the letter.
-        assert_eq!(n("Wis\u{030C}'adel"), "wis\u{030C}adel");
+        // Full NFKC (2026-10-17): a decomposed accent composes onto its letter.
+        assert_eq!(n("Wis\u{030C}'adel"), "wi\u{0161}adel");
     }
 
     #[test]
@@ -964,6 +967,12 @@ mod tests {
         assert_eq!(a, b);
         assert_eq!(a.len(), 32);
         assert_ne!(a, qkey(&normalize_question("Who is Kal'tsit?")));
+        // Full NFKC (2026-10-17): a decomposed accent keys like the precomposed letter.
+        assert_eq!(
+            normalize_question("Who is Ve\u{0301}ronique?"),
+            normalize_question("Who is V\u{E9}ronique?")
+        );
+        assert_eq!(normalize_question("\u{FB01}nal battle"), "final battle");
     }
 
     #[test]
