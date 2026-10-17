@@ -1,6 +1,6 @@
 # Trevor: in-world chronology (2026-09-26)
 
-Ian's requirement: chronology means in-world order, not release order, and Trevor should work it out, framing the timeline on explicitly stated years, so that it can answer "what is the timeline history of Terra?" and "was this event before or after that one?". Code: `scripts/chrono.py` (stages `cues`, `extract`, `events`, `exceptions`, `place`, `eval`); data in `artifacts/chrono/`.
+Requirement: chronology means in-world order, not release order, and Trevor should work it out, framing the timeline on explicitly stated years, so that it can answer "what is the timeline history of Terra?" and "was this event before or after that one?". Code: `scripts/chrono.py` (stages `cues`, `extract`, `events`, `exceptions`, `place`, `eval`); data in `artifacts/chrono/`.
 
 ## 1. What the text offers
 
@@ -8,7 +8,7 @@ Explicit years are rare: a Terra year (1000 to 1110) appears in 80 of 1,861 stor
 
 ## 2. The answer key (eval only, never shown to a model)
 
-The Arknights Terra Wiki timeline (https://arknights.wiki.gg/wiki/Arknights_Timeline, fetched through its API), parsed into 290 rows mapping dated entries to our groups and stories. T1: 16 groups with an explicit "the event during which X takes place" entry; T2: 22 more cited under exactly one year (main chapters excluded: their citations are mostly flashbacks, e.g. Episode 10 cited for 1072). Groups cited under several years (8, e.g. `act18d0` under 1075, 1080, 1084) are excluded as ambiguous. It is a fan reference: a yardstick, not truth.
+The Arknights Terra Wiki timeline (https://arknights.wiki.gg/wiki/Arknights_Timeline, fetched through its API), parsed into 290 rows mapping dated entries to Trevor's groups and stories. T1: 16 groups with an explicit "the event during which X takes place" entry; T2: 22 more cited under exactly one year (main chapters excluded: their citations are mostly flashbacks, e.g. Episode 10 cited for 1072). Groups cited under several years (8, e.g. `act18d0` under 1075, 1080, 1084) are excluded as ambiguous. It is a fan reference: a yardstick, not truth.
 
 ## 3. Release order is the baseline to beat
 
@@ -40,11 +40,11 @@ Against the wiki: 75 of the 81 events before 1097 (0.926) fall in a year the wik
 
 ## 7. Chronology v1, shipped as data plus a CLI (2026-09-26)
 
-Ian's call: release order as the starting point, the AI finds the exceptions, and explicitly stated years frame the timeline. `python3 scripts/chrono.py build` writes `artifacts/chrono/timeline_v1.json`: 437 groups at their backbone storyline year (7 anchored by their own dated captions, the rest by release position), each with its dated lines, plus 153 explicitly dated history lines. `history` writes `terra_history.md` (the Terra history from stated years, by century, captions marked). `order "A" "B"` answers before or after, citing both sides' dated lines and saying whether the answer rests on dated evidence or on storyline position. Ordering accuracy on the reference: 0.830 (T1+T2), 0.954 (T1), identical to release order by construction. Known label error: "1062 (scene dated): Blaze was born" is history, not a caption, so the caption flag is not fully reliable.
+Decision: release order as the starting point, the AI finds the exceptions, and explicitly stated years frame the timeline. `python3 scripts/chrono.py build` writes `artifacts/chrono/timeline_v1.json`: 437 groups at their backbone storyline year (7 anchored by their own dated captions, the rest by release position), each with its dated lines, plus 153 explicitly dated history lines. `history` writes `terra_history.md` (the Terra history from stated years, by century, captions marked). `order "A" "B"` answers before or after, citing both sides' dated lines and saying whether the answer rests on dated evidence or on storyline position. Ordering accuracy on the reference: 0.830 (T1+T2), 0.954 (T1), identical to release order by construction. Known label error: "1062 (scene dated): Blaze was born" is history, not a caption, so the caption flag is not fully reliable.
 
 ## 8. Exceptions with reasoning: better, still not moved by default
 
-`scripts/chrono_exceptions_reasoning.py`: the same exception question on Qwen3.5 9B with thinking on (`--reasoning on --reasoning-budget 2048`), asked only of the 6 groups whose own dated evidence disagrees with the backbone by more than 3 years, plus the 16 T1 groups as controls. 96 s per group, 0 unparsed.
+`scripts/chrono_exceptions_reasoning.py` (removed 2026-10-17; it is in git history, see section 10): the same exception question on Qwen3.5 9B with thinking on (`--reasoning on --reasoning-budget 2048`), asked only of the 6 groups whose own dated evidence disagrees with the backbone by more than 3 years, plus the 16 T1 groups as controls. 96 s per group, 0 unparsed.
 
 - Controls (all present-day): 13 of 16 called storyline, against 2 of 16 for Gemma without reasoning. The three misses (`1stact`, `act12side`, `act47side`) all justify themselves with outside lore ("a prequel", "generally established in lore") and cite no dated line.
 - The v1 failure cases are fixed: the song (1078), the inscription (1080) and the construction date (1011) are read as mentions of the past.
@@ -79,9 +79,9 @@ Measuring them. Coarse ("the wiki has an entry in that year") is uninformative: 
 
 `order` answers now also note an event's scenes dated well before its storyline position and how many of its stories recount the past without dating it.
 
-## 12. Derived years after Ian's review (2026-09-27)
+## 12. Derived years after the human review (2026-09-27)
 
-Ian left the 8 derived-year items blank and asked for verification against the wiki. Checking each against the wiki timeline: 2 right (the Sami prophecy, 1095; "that night twenty-three years ago" in a Leithanien story, 1077, matching "Die Septemberaufstand, September 1077"), 1 likely right (1079 in a Columbian story; the wiki has a Columbian 1079 event), 1 wrong (#6), 4 not on the wiki.
+The review left the 8 derived-year items blank and asked for verification against the wiki. Checking each against the wiki timeline: 2 right (the Sami prophecy, 1095; "that night twenty-three years ago" in a Leithanien story, 1077, matching "Die Septemberaufstand, September 1077"), 1 likely right (1079 in a Columbian story; the wiki has a Columbian 1079 event), 1 wrong (#6), 4 not on the wiki.
 
 Two defects found and fixed:
 - **Compound numbers.** "twenty-three years ago" was read as three years ago (item #2 said 1097). The parser now reads tens-and-units first. 38 of 546 derived years changed, all compound numbers (for example "twenty-six years ago" in a 1098 scene, 1092 to 1072); 3 rows dropped, 505 unchanged.
@@ -89,7 +89,7 @@ Two defects found and fixed:
 
 ## 13. More anchors (2026-09-28): refuted
 
-Ian asked whether more anchors would make the years more accurate. Measured against the wiki reference, present-era years only (1090 to 1105), backbone as built: setting-tier entries (the wiki's own "the event takes place in" list) 16 events, mean absolute error 0.469 years, every one within 1 year; cited-tier (years the wiki cites from a story, which include flashbacks) 43 events, 1.558. The large cited-tier errors are mostly the wiki citing a flashback year (Zwillingstürme cited 1092, its own caption says 1100).
+The question: would more anchors make the years more accurate? Measured against the wiki reference, present-era years only (1090 to 1105), backbone as built: setting-tier entries (the wiki's own "the event takes place in" list) 16 events, mean absolute error 0.469 years, every one within 1 year; cited-tier (years the wiki cites from a story, which include flashbacks) 43 events, 1.558. The large cited-tier errors are mostly the wiki citing a flashback year (Zwillingstürme cited 1092, its own caption says 1100).
 
 - Linear interpolation between the 7 anchors instead of the step: 1.48 against 1.47 on 57 events, no gain.
 - Wiki years as extra anchors, a ceiling test: half of the wiki's event years added as anchors, error measured on the other half: 1.63 to 1.82, worse. More points on a release-date curve add noise, because an event's year is not a function of its release date (release order agrees with in-world order on 0.774 of pairs).
@@ -97,4 +97,4 @@ Ian asked whether more anchors would make the years more accurate. Measured agai
 - Option A, archives' present dates as anchors past 1100 (Zuo Le 1102, Mon3tr, Lemuen, Branch 1101): not buildable. No gamedata table links an operator to its debut (`docs/release/CN_EN_RELEASE_MAPPING.md`); pool metadata names 168 operators, but only in the pools the table still holds, so a first pool is often a rerun (Ascalon's reads 2026-03, a Returning Headhunting).
 - The two 1101 lines as anchors, simulated: 24 events move from 1100 to 1100.67, and the error is unchanged on both tiers (setting 0.469, cited 1.558): Retracing Our Steps and Unrealized Realities move closer to 1101 while Act or Die and Ato (1099) move away. Events released 2024 to 2026 span 1099 to 1102 in-world, so no monotone release curve places them better. Not built.
 
-What would move the years is per-event evidence, not backbone anchors: an event's own present-year statement (all used), cross-references to dated events (a handful), or the wiki's setting years used directly for the events it covers (Ian's call; it makes those years wiki-sourced and needs a held-out split to stay measurable).
+What would move the years is per-event evidence, not backbone anchors: an event's own present-year statement (all used), cross-references to dated events (a handful), or the wiki's setting years used directly for the events it covers (a project decision still open; it makes those years wiki-sourced and needs a held-out split to stay measurable).

@@ -11,7 +11,7 @@ have failed silently rather than loudly.
 
 ---
 
-## 1. Corrections to the specs I already wrote
+## 1. Corrections to the earlier specs
 
 | # | Spec said | Verified truth | Severity |
 |---|---|---|---|
@@ -20,8 +20,8 @@ have failed silently rather than loudly.
 | 3 | `--mlock` in the llama-server flags | **`--mlock` and `--no-mmap` do not exist on llama.cpp master.** The server was refactored; `tools/server/utils.hpp` is gone. | Startup failure |
 | 4 | `-fa on` implied a boolean flag | `-fa` is now tri-state `[on\|off\|auto]`, **default `auto`**, and the old bare boolean is gone. `auto` silently degrades to off on a device mismatch. Pass `-fa on` so failure is loud. | Silent perf loss |
 | 5 | `-cram -1` (unlimited host prompt cache) | Default is already **8192 MiB**, and that default is the documented #1 cause of "llama-server leaks RAM" reports. On 24 GB, `-cram -1` is actively harmful. Use `-cram 1024`, and `-cram 0` on the long-context instance. | **Would have caused OOM** |
-| 6 | `--cache-reuse 256` | Verified worth ~nothing here. It reuses KV across *mid-prompt* insertions via KV shifting; your divergence is at the end of the prompt, which the plain longest-common-prefix already handles. | Harmless, just useless |
-| 7 | "byte-identical system prompt so slot matching hits" | The rule is right, the mechanism I cited is not. `-sps` (slot-prompt-similarity) defaults to **0.10**, and it divides the common-prefix length by the *incoming prompt length*. A 100-token prefix on a 2,000-token prompt scores 0.05, below the floor, so **similarity matching never fires** and selection falls through to LRU. Keep the prompt byte-identical anyway (the cache is a strict token-level LCP), but the throughput win is batching, not slot affinity. | Reasoning was wrong |
+| 6 | `--cache-reuse 256` | Verified worth ~nothing here. It reuses KV across *mid-prompt* insertions via KV shifting; Trevor's prompts diverge at the end, which the plain longest-common-prefix already handles. | Harmless, just useless |
+| 7 | "byte-identical system prompt so slot matching hits" | The rule is right, the mechanism the spec cited is not. `-sps` (slot-prompt-similarity) defaults to **0.10**, and it divides the common-prefix length by the *incoming prompt length*. A 100-token prefix on a 2,000-token prompt scores 0.05, below the floor, so **similarity matching never fires** and selection falls through to LRU. Keep the prompt byte-identical anyway (the cache is a strict token-level LCP), but the throughput win is batching, not slot affinity. | Reasoning was wrong |
 | 8 | `ort`: `SessionBuilder::with_disable_per_session_threads` | **Does not exist in 2.0.0-rc.13.** The polarity is inverted: enabling a global pool on the environment makes all sessions share it, and a session opts *out* with `with_independent_thread_pool()`. | Compile error |
 | 9 | "ONNX `Session` is `Send + Sync`, one session shared" | In rc.13, `Session::run` takes **`&mut self`** — the docs cite EP allocators and statistics trackers not being thread safe. You cannot call it from `&self` in an axum handler. Needs `Mutex<Session>` or a pool. fastembed hides this behind internal locking, which is a real argument for using it. | **Design error** |
 | 10 | Ettin reranker: use it via ONNX | The published `onnx/model*.onnx` **appear to contain the ModernBERT backbone only**, with the 4-module scoring head living in separate safetensors. Size arithmetic on two model sizes supports this: 17m ONNX exceeds the backbone by 135,312 bytes while the head's own weights are 265,604. High confidence, not proven. §5 has the one-command check. | **Blocks the reranker** until checked |
@@ -52,7 +52,8 @@ Three things fall out of this that simplify the corpus build:
 - **`wordCount` is precomputed** by the same rule as `StoryScript.wordCount`, so it is a
   free cross-check against the chunker's own token accounting.
 
-One discrepancy is narrowed but not closed. `services/story.rs` and `docs/story-reader.md`
+One discrepancy is narrowed but not closed. The backend's `services/story.rs` (now
+`backend/src/app/services/story/`) and `docs/story-reader.md`
 both say **1,797 scripted EN stories**; the table resolves **1,862 of 1,887** on the current
 tree. Three explanations are ruled out by measurement (§8.4). Log `totals.withScript` on the
 first ingest run and treat the API as authoritative.
@@ -176,7 +177,7 @@ print("outputs:", [(o.name, [d.dim_param or d.dim_value for d in o.type.tensor_t
 PY
 ```
 
-- Output `logits [batch, 1]` → my inference is wrong; use `TextRerank` unchanged. Note the
+- Output `logits [batch, 1]` → the inference above is wrong; use `TextRerank` unchanged. Note the
   repo has **no `special_tokens_map.json`**, so pass `special_tokens_map_file: b"{}".to_vec()`
   (fastembed iterates the map and skips invalid entries, so an empty object is safe).
 - Output `last_hidden_state [batch, seq, 256]` → the head is missing. Implement it in Rust:
@@ -275,18 +276,17 @@ the process in edge cases, so supervise it.
 
 ## 7. Still unverified, in priority order
 
-> **Items 1, 5 and 6 are blocked from this workspace.** `huggingface.co` is denied by the
-> account's egress allowlist on both the cloud side and your computer's shell (the proxy
-> answers 403 to CONNECT). They need either your own terminal, which is not under that
-> policy, or `huggingface.co` added to the allowlist (Admin settings, Capabilities). The
-> model files and the gte-modernbert tokenizer all live there, which is also why §8 uses a
-> chars/4 token proxy.
+> **Items 1, 5 and 6 were blocked in the sandbox these notes were written in.** `huggingface.co`
+> was denied by its egress allowlist, in the cloud and in the local shell alike (the proxy
+> answered 403 to CONNECT). They need a terminal outside that policy, or `huggingface.co`
+> added to the allowlist. The model files and the gte-modernbert tokenizer all live there,
+> which is also why §8 uses a chars/4 token proxy.
 
 1. **Whether the Ettin ONNX contains the scoring head.** §5 settles it in one command. Until
    then the reranker design has two branches.
-2. **Whether `-np` scales on this machine.** `llama-batched-bench` at 1, 2, 4, 8, or simply
+2. **Whether `-np` scales on the development machine.** `llama-batched-bench` at 1, 2, 4, 8, or simply
    watch `llamacpp:n_busy_slots_per_decode` during the first hundred requests. No published
-   Apple Silicon batched-throughput numbers exist; every figure I have seen is CUDA.
+   Apple Silicon batched-throughput numbers exist; every published figure found was CUDA.
 3. **Whether the VPS CPU has VNNI.** One grep, and it decides INT8 versus fp32.
 4. **The 1,797 vs 1,862 scripted-story discrepancy.** Narrowed in §8.4; one API call closes it.
 5. **Opset versions** of both ONNX files. Same script as §5 prints them.
@@ -307,7 +307,7 @@ chunked once. Tokens counted as chars/4, because the embedder's tokenizer sits b
 egress block; on 2026-09-22 chars/4 agreed with 1.45 tok/word within 2.3%, so boundaries
 here are approximate by a few percent, not wrong in shape. The corpus snapshot was staged
 from the repo as one tarball, left at `scratchpad/_to_delete/trevor-corpus-probe.tar.gz`
-(14.9 MB, git-ignored) for you to delete.
+(14.9 MB, git-ignored), to be deleted.
 
 ### 8.1 The corpus
 

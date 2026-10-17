@@ -1,6 +1,6 @@
 # Trevor: automated gold-set generation
 
-Written 2026-09-25. Replaces the human review step of `archive/trevor-goldset-generation.md` with checks that run unattended, and records what the build of it found. Code: `src/goldgen/`, `src/bin/goldset.rs`, `prompts/`, `scripts/goldset-run.sh` in `myrtle/trevor/`.
+Written 2026-09-25. Replaces the human review step of `archive/trevor-goldset-generation.md` with checks that run unattended, and records what the build of it found. Code: `src/goldgen/`, `src/bin/goldset/`, `prompts/`, `scripts/goldset-run.sh` in `myrtle/trevor/`.
 
 ## 1. How review is automated
 
@@ -18,14 +18,14 @@ Unanswerable items: 17 hand-written candidates; one is kept only if no pooled pa
 
 ## 2. Found while building it
 
-- **The spec's grammar does not parse.** llama.cpp GBNF ends a rule at a newline unless the newline is inside parentheses, so the multi-line `root ::=` in `trevor-goldset-generation.md` section 4 is rejected ("expecting name"). Wrapped in parentheses in `prompts/*.gbnf`.
+- **The spec's grammar does not parse.** llama.cpp GBNF ends a rule at a newline unless the newline is inside parentheses, so the multi-line `root ::=` in `archive/trevor-goldset-generation.md` section 4 is rejected ("expecting name"). Wrapped in parentheses in `prompts/*.gbnf`.
 - **The spec's trigram filter cannot fire.** Character-trigram Jaccard divides by the union, and a 2,300-character passage dominates it: measured values sit near 0.05 to 0.16 whatever the question copies, so a 0.30 threshold never trips. Replaced with word-trigram containment (share of the question's trigrams found in the passage); the Jaccard value is still recorded per item for comparison.
 - **Multi-hop pairs now need different groups**, not just different stories: two chapters of one event share context, so a question across them is barely two-hop.
-- **Model choice was set by the Mac, not by quality.** Gemma 4 26B-A4B Q4_0 is 14.4 GB; the Mac has 24 GB with 7.6 GB of swap already in use and 58 GB free disk. Gemma 4 12B QAT Q4_0 (7.0 GB) and Qwen3.5 9B Q4_K_M (5.7 GB) load one at a time. Both are pinned by revision and sha256 in `fetch-model.sh` (`WITH_LLM=1`).
+- **Model choice was set by the development machine, not by quality.** Gemma 4 26B-A4B Q4_0 is 14.4 GB; the development machine (an Apple M5 Pro) has 24 GB with 7.6 GB of swap already in use and 58 GB free disk. Gemma 4 12B QAT Q4_0 (7.0 GB) and Qwen3.5 9B Q4_K_M (5.7 GB) load one at a time. Both are pinned by revision and sha256 in `fetch-model.sh` (`WITH_LLM=1`).
 - llama.cpp is Homebrew 0.5.0 (build 11146); installing it also upgraded `openssl@3` to 3.6.4. `--reasoning off` renders Qwen's template with an empty think block, checked.
 
 ## 3. Status
 
-The whole pipeline ran end to end in the cloud with a 0.8B stand-in model: sample, generate, filter, closed-book, judge, finish, and the output passes `eval validate`. That tested the plumbing only; the tiny model's questions are nonsense. Both real models are downloaded and verified on the Mac. Not yet run there.
+The whole pipeline ran end to end in the cloud with a 0.8B stand-in model: sample, generate, filter, closed-book, judge, finish, and the output passes `eval validate`. That tested the plumbing only; the tiny model's questions are nonsense. Both real models are downloaded and verified on the development machine. Not yet run there.
 
-Expected Mac time, unmeasured: about 280 generations, a closed-book pass, roughly 700 judge calls, and roughly 1,500 anchor-completion calls, likely around an hour.
+Expected time on the development machine, unmeasured: about 280 generations, a closed-book pass, roughly 700 judge calls, and roughly 1,500 anchor-completion calls, likely around an hour.

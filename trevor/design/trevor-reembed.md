@@ -1,9 +1,10 @@
 # Re-embedding Trevor's corpora with the fp32 export, safely
 
-2026-10-16. Owner of this doc: the embed step (`src/corpus/embed.rs`, `src/bin/embed-corpus.rs`,
-`src/bin/embed-check.rs`, `scripts/fetch-model.sh`). Ian's ask: "figure out a safe way to re-embed without causing any
-hardware failures", so that the VPS can add vectors for new story chunks daily while the Mac stays a development
-machine.
+2026-10-16. Owner of this doc: the embed step (`src/corpus/embed/`, `src/bin/embed-corpus.rs`,
+`src/bin/embed-check.rs`, `scripts/fetch-model.sh`). Requirement: a way to re-embed that cannot cause hardware failures,
+so that the VPS can add vectors for new story chunks daily and the development machine is not needed for it.
+Measurements are from the development machine, an Apple M5 Pro with 24 GB of unified memory ("M5 Pro" below), unless
+stated otherwise.
 
 ## 1. Why every vector moves to fp32
 
@@ -11,15 +12,15 @@ The INT8 export's vectors depend on the ONNX Runtime build and the CPU, not just
 
 | comparison (same text, gte-modernbert-base) | n | min | median | mean |
 |---|---|---|---|---|
-| Mac fp32 (Rust, ORT 1.28) vs stored Mac INT8 (Rust, ORT 1.28), P3b sample | 1,000 | 0.992290 | 0.996808 | 0.996679 |
-| Mac INT8 (Python, ORT 1.19.2, arm64) vs stored Mac INT8 (Rust, ORT 1.28) | 100 | 0.907510 | 0.946003 | 0.945908 |
-| Rosetta x86_64 INT8 (Python, ORT 1.19.2) vs stored Mac INT8 | 100 | 0.906126 | 0.945915 | 0.945318 |
+| M5 Pro fp32 (Rust, ORT 1.28) vs stored M5 Pro INT8 (Rust, ORT 1.28), P3b sample | 1,000 | 0.992290 | 0.996808 | 0.996679 |
+| M5 Pro INT8 (Python, ORT 1.19.2, arm64) vs stored M5 Pro INT8 (Rust, ORT 1.28) | 100 | 0.907510 | 0.946003 | 0.945908 |
+| Rosetta x86_64 INT8 (Python, ORT 1.19.2) vs stored M5 Pro INT8 | 100 | 0.906126 | 0.945915 | 0.945318 |
 | Xeon AVX-512 VNNI INT8 vs fp32 (trevor-p0-status.md, ORT 1.25 and 1.28) | 40 | 0.9174 | | 0.9410 |
-| Mac fp32 (Python, ORT 1.19.2, arm64) vs stored Mac fp32 (Rust, ORT 1.28) | 100 | 0.999999 | 1.000000 | 1.000000 |
-| Rosetta x86_64 fp32 (Python, ORT 1.19.2) vs stored Mac fp32 (Rust, ORT 1.28) | 100 | 0.999999 | 1.000000 | 1.000000 |
+| M5 Pro fp32 (Python, ORT 1.19.2, arm64) vs stored M5 Pro fp32 (Rust, ORT 1.28) | 100 | 0.999999 | 1.000000 | 1.000000 |
+| Rosetta x86_64 fp32 (Python, ORT 1.19.2) vs stored M5 Pro fp32 (Rust, ORT 1.28) | 100 | 0.999999 | 1.000000 | 1.000000 |
 
-The second row is new and corrects what we believed: "the INT8 export is accurate on Apple Silicon" is true only of the
-ORT 1.25/1.28 build the Rust crate downloads. The same file on the same Mac under ORT 1.19.2 lands at 0.946 of the
+The second row is new and corrects an earlier claim: "the INT8 export is accurate on Apple Silicon" is true only of the
+ORT 1.25/1.28 build the Rust crate downloads. The same file on the same M5 Pro under ORT 1.19.2 lands at 0.946 of the
 stored vectors, the same drift the x86 Xeon showed. So INT8 vectors are tied to one runtime build on one CPU family, and
 an ORT upgrade alone could silently move every query away from the corpus. The fp32 export agrees with itself to
 0.999999 across two ORT versions (1.19.2 and 1.28) and two instruction sets (NEON and Rosetta's x86_64 AVX2
@@ -27,10 +28,10 @@ translation). The Python pipeline is the control: its fp32 vectors match the Rus
 the runtime, not the harness. (Rosetta translates no AVX-512, so the VPS's Zen 4 path is not covered by the proxy: the
 VPS check in section 5 is the real gate.)
 
-fp32 costs disk and memory, not speed, on the Mac: `model.onnx` is 596,392,315 bytes (INT8: 150,218,016), the embed
-process peaks at 939 MB to 1,417 MB RSS (INT8 run 650 MB per HANDOFF), and fp32 is only a little slower: 7.42 chunks/s
+fp32 costs disk and memory, not speed, on the M5 Pro: `model.onnx` is 596,392,315 bytes (INT8: 150,218,016), the embed
+process peaks at 939 MB to 1,417 MB RSS (INT8 run 650 MB per `archive/HANDOFF.md`), and fp32 is only a little slower: 7.42 chunks/s
 at 2 threads and 9.16 at 4 (first 500 P3b rows) against INT8's 8.47 at 2, 9.57 at 4 and 7.22 at ORT's default (first
-200 rows), all under other agents' builds, so the sets and loads differ.
+200 rows), all while other Rust builds ran, so the sets and loads differ.
 
 ## 2. Flags
 
@@ -59,12 +60,12 @@ Query side (`corpus::embed`): `vectors.meta.json` already records `modelFile` an
 `check_query_model(vectors_model_file, vectors_model_sha, &query_embedder, allow)` refuses a query embedder whose sha
 differs; `TREVOR_ALLOW_QUERY_MODEL_MISMATCH=1` (or `allow`) turns the refusal into a warning, the old behavior.
 `resolve_query_onnx("auto", modelFile)` picks the vectors' own file. The loader lives in `src/search/runtime.rs`,
-which this change does not own, so the check is NOT wired yet; the three-line patch is in section 7.
+which this change did not touch, so the check is NOT wired yet; the three-line patch is in section 7.
 
 `scripts/fetch-model.sh`: `WITH_FP32=1` fetches `onnx/model.onnx` from Alibaba-NLP/gte-modernbert-base at revision
 e7f32e3c00f91d699e8c43b53106206bcc72bb22 (the INT8 file's repo and revision), sha256
 947f31df7effaeec4edb57c50e4ed7e0f2034d9336063f92615b92e3e0d24d78, 596,392,315 bytes. Kept behind the flag (4x the
-INT8 file); fetched and verified on the Mac 2026-10-16.
+INT8 file); fetched and verified on the development machine 2026-10-16.
 
 ## 3. Verification
 
@@ -79,26 +80,26 @@ INT8 file); fetched and verified on the Mac 2026-10-16.
   an uninterrupted run. A `--max-minutes 0.25` run that spent its time paused stopped with exit 3 and a 0-row
   checkpoint; the rerun completed, byte-identical. Unit test `checkpoint_keeps_the_valid_prefix` covers the torn,
   zeroed, non-unit, non-hex and changed-dim tails.
-- **Guard.** Fired for real: memory pressure level 2 (other agents compiling Rust) paused the full run and both resume
+- **Guard.** Fired for real: memory pressure level 2 (concurrent Rust builds) paused the full run and both resume
   tests for 30 to 90 s at a time and resumed on its own; no thermal or performance warning was recorded at any point
   (totals of the full run below: 30 pauses, 4,955 s paused in all).
 - `cargo clippy --release --all-targets --features embed`: 0 warnings. `cargo test --release --features embed --lib
   embed`: 3 passed.
 
-## 4. Mac measurements
+## 4. Measurements on the M5 Pro
 
-fp32, 500 P3b chunks (the first 500 rows), guard on, duty 1, nice 10, other agents compiling (load average 3.0 to 4.4):
+fp32, 500 P3b chunks (the first 500 rows), guard on, duty 1, nice 10, other Rust builds running (load average 3.0 to 4.4):
 
 | threads | embedding time | chunks/s | process CPU | RSS | battery temp (ioreg, C) | pmset therm |
 |---|---|---|---|---|---|---|
 | 2 | 67.4 s | 7.42 | 188 to 192 % | 583 to 939 MB | 30.76 -> 30.75 | nothing recorded |
 | 4 | 54.6 s | 9.16 | 337 to 346 % | 852 to 1,417 MB | 30.75 -> 30.75 | nothing recorded |
 
-4 threads buy 1.23x the rate for 1.8x the CPU, so 2 threads is the default. The only temperature the Mac publishes
+4 threads buy 1.23x the rate for 1.8x the CPU, so 2 threads is the default. The only temperature macOS publishes on this machine
 without sudo is the battery's (`ioreg -rn AppleSmartBattery` "Temperature"), a chassis proxy, not the package; it did not
 move at either setting, and `pmset -g therm` recorded nothing. With `--duty 0.6` the process averages about 115 % CPU.
 
-**The full run** (2026-10-16 08:42 to 2026-10-17 01:00, in three sittings: stopped by Ian's pause at 2,331 rows, by `--max-minutes 44` at 9,405, then to the end). It ran with guard on, threads 2, duty 0.6 and nice 10, beside other agents' Rust builds and a Gemma 12B eval:
+**The full run** (2026-10-16 08:42 to 2026-10-17 01:00, in three sittings: stopped by a manual pause at 2,331 rows, by `--max-minutes 44` at 9,405, then to the end). It ran with guard on, threads 2, duty 0.6 and nice 10, beside other Rust builds and a Gemma 12B eval:
 
 | corpus | embedded | reused | embedding | duty sleep | paused (pauses) | peak RSS |
 |---|---|---|---|---|---|---|
@@ -112,7 +113,7 @@ move at either setting, and `pmset -g therm` recorded nothing. With `--duty 0.6`
 
 ## 5. Procedure
 
-### Mac: full re-embed (once, then only when the model changes)
+### Development machine (macOS): full re-embed (once, then only when the model changes)
 
 Check first: `memory_pressure | tail -1` (free >= 25 %), `pmset -g therm` (nothing recorded), on AC power. Then, into
 copies, never over the serving directories:
@@ -135,16 +136,16 @@ or P4x), so their fp32 vectors cost seconds with `--reuse-from`.
 
 ### VPS: daily incremental
 
-The VPS embeds only new or changed chunks, reusing the fp32 vectors copied from the Mac (same `modelSha`, so reuse
+The VPS embeds only new or changed chunks, reusing the fp32 vectors copied from the development machine (same `modelSha`, so reuse
 applies across machines). Before the first incremental run, gate the host (read-only, about a minute):
 
 ```sh
 sudo systemd-run --uid="$(id -u)" --gid="$(id -g)" --working-directory="$PWD" -p Nice=19 -p CPUWeight=10 -p MemoryMax=2G -p AllowedCPUs=1 --pty --wait --collect target/release/embed-check --model-dir models/gte-modernbert-base --onnx-file model.onnx --corpus artifacts/p3b-fp32 --n 200 --threads 1
 ```
 
-PASS (min cosine >= 0.999) means the VPS's fp32 vectors are interchangeable with the Mac's. Optional second number
+PASS (min cosine >= 0.999) means the VPS's fp32 vectors are interchangeable with the development machine's. Optional second number
 for the record: the same with `--onnx-file model_int8.onnx --corpus artifacts/p3b --min-cos 0` measures this CPU's INT8
-drift against the Mac's INT8 vectors.
+drift against the development machine's INT8 vectors.
 
 The incremental embed, under the same limits (one CPU, so one thread):
 
@@ -152,7 +153,7 @@ The incremental embed, under the same limits (one CPU, so one thread):
 sudo systemd-run --uid="$(id -u)" --gid="$(id -g)" --working-directory="$PWD" -p Nice=19 -p CPUWeight=10 -p MemoryMax=2G -p AllowedCPUs=1 -p IOWeight=10 --wait --collect target/release/embed-corpus --model-dir models/gte-modernbert-base --model-file model.onnx --corpus artifacts/p4x --reuse-from artifacts/p3b --threads 1 --duty 0.6 --max-minutes 120
 ```
 
-`MemoryMax=2G` is above the fp32 process's measured peak (1,417 MB at 4 threads on the Mac; 1 thread needs less).
+`MemoryMax=2G` is above the fp32 process's measured peak (1,417 MB at 4 threads on the M5 Pro; 1 thread needs less).
 `AllowedCPUs=1` pins it to one of the three vCPUs; the guard's load test still compares the system load average with
 all 3 online CPUs. A stopped or killed run (exit 3, OOM, deploy) resumes on the next timer from its checkpoint.
 
@@ -167,15 +168,15 @@ Measured 2026-10-16 23:40 with `eval run`, hybrid, P3b. The INT8 arm uses the st
 
 The two sets disagree in sign, and the gold changes split 12 to 17, which a sign test cannot tell from noise (p about 0.46).
 
-**The rule before the run was:** swap only if neither set drops more than 0.005. Gold drops 0.0115, so the Mac keeps serving INT8 (the corpora in `artifacts/p3b` and `artifacts/p4x`, with their baselines).
+**The rule before the run was:** swap only if neither set drops more than 0.005. Gold drops 0.0115, so the development machine keeps serving INT8 (the corpora in `artifacts/p3b` and `artifacts/p4x`, with their baselines).
 
-**The VPS has no INT8 option.** Its queries cannot use the Mac's INT8 vectors (median cosine 0.946 across ONNX Runtime builds, section 2), so it serves fp32. The price is the gold row above: -0.0115 recall@10, inside noise.
+**The VPS has no INT8 option.** Its queries cannot use the development machine's INT8 vectors (median cosine 0.946 across ONNX Runtime builds, section 2), so it serves fp32. The price is the gold row above: -0.0115 recall@10, inside noise.
 
-The Mac-built fp32 corpora (`artifacts/p3b-fp32`, `artifacts/p4x-fp32`, `artifacts/p4-art-fp32`) can be copied to the VPS instead of running `EMBED_FULL=1` there. Check the copy with `embed-check` on the VPS (section 5); it must report min cosine 0.999 or more.
+The fp32 corpora built on the development machine (`artifacts/p3b-fp32`, `artifacts/p4x-fp32`, `artifacts/p4-art-fp32`) can be copied to the VPS instead of running `EMBED_FULL=1` there. Check the copy with `embed-check` on the VPS (section 5); it must report min cosine 0.999 or more.
 
 ## 7. Not done here, and what the swap needs
 
-- **Wire the query check** in `src/search/runtime.rs` (another agent's file). In `Runtime::load_sharing`, resolve the
+- **Wire the query check** in `src/search/runtime.rs` (outside this change). In `Runtime::load_sharing`, resolve the
   file and check after the embedder is built or shared:
   `let onnx = embed::resolve_query_onnx(&a.query_onnx, &d.meta.model_file).to_owned();`, use `onnx` where
   `a.query_onnx` is used (the load and `SharedEmbedder::fits`), then

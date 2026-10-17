@@ -1,6 +1,6 @@
 # Trevor: evaluation harness implementation spec
 
-Companion to `claude/trevor-research.md` and `claude/trevor-corpus-spec.md`. Build this
+Companion to `archive/trevor-research.md` and `trevor-corpus-spec.md`. Build this
 immediately after corpus phase P0, before P1. Every phase after P0 is then a change with a
 number attached rather than an assumption.
 
@@ -72,7 +72,7 @@ generation gets you to the same place in **2 to 3 hours**:
 ### 2.4 The closed-book control, which is the highest-value check in the harness
 
 Run every gold question with **no retrieval at all** and record whether the model answers
-correctly. This measures parametric leakage, and for you it is not a formality.
+correctly. This measures parametric leakage, and for this project it is not a formality.
 
 Standard benchmarks leak badly: GPT-5 scored **HotpotQA 50%, 2WikiMultihopQA 62%, QASC 75%**
 with no context. When leakage was removed, the spread between competing RAG methods widened
@@ -315,7 +315,7 @@ Recipe:
    The mean hides the one fabricated claim that matters.
 4. Report the **coverage counter** from the corpus spec alongside it. Faithfulness is
    one-sided and a summary that says nothing scores 100%.
-5. Anchor with 30-50 human-judged summaries and report κ between the metric and your own
+5. Anchor with 30-50 human-judged summaries and report κ between the metric and the human
    judgments. The human-annotator ceiling in this literature is **Pearson 0.70**; know where
    your ceiling is before chasing a two-point delta.
 
@@ -333,5 +333,5 @@ Recipe:
 6. Gate only on the 95% CI of the paired difference lying entirely below zero.
 
 At n=50 this detects paired regressions of roughly **9 to 18 pp**. Coarse, but it is a real
-number with a real error bar, and it exists before P1 spends 3.5 hours of Mac time on
+number with a real error bar, and it exists before P1 spends 3.5 hours of development-machine time on
 contextual prefixes that you would otherwise have no way to justify keeping.

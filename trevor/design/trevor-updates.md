@@ -1,6 +1,6 @@
 # Trevor after an asset update
 
-Ian (2026-09-28): "I want to be able to do this scalably, so eventually having a script that retrains Trevor whenever there is an asset update quickly would be nice." Trevor is not trained; an update re-ingests, re-embeds, re-indexes and re-extracts. This doc records what each stage does today when a story is new or changed, and the plan for an updater that redoes only what changed. **Built 2026-09-28:** `scripts/update.sh` (the plan below), `build-corpus --refresh`, vector reuse in `embed-corpus`, and content-hash keys on every model stage (`scripts/incr.py`). The audit table records the state before that build.
+Requirement (2026-09-28): a script that brings Trevor up to date quickly and scalably whenever there is an asset update. Trevor is not trained; an update re-ingests, re-embeds, re-indexes and re-extracts. This doc records what each stage does today when a story is new or changed, and the plan for an updater that redoes only what changed. **Built 2026-09-28:** `scripts/update.sh` (the plan below), `build-corpus --refresh`, vector reuse in `embed-corpus`, and content-hash keys on every model stage (`scripts/incr.py`). The audit table records the state before that build.
 
 ## The rule
 
@@ -10,7 +10,7 @@ Every per-unit stage skips a unit only when its key matches `(unit id, sha of th
 
 | stage | skips on | changed story | new story | full rerun |
 |---|---|---|---|---|
-| build-corpus (`ingest.rs` recover, lines 256 to 297, filter 604 to 608) | storyId | kept stale | picked up | minutes, needs the backend on :3060 |
+| build-corpus (recover in the then `ingest.rs`, lines 256 to 297, filter 604 to 608; now `src/corpus/ingest/`) | storyId | kept stale | picked up | minutes, needs the backend on :3060 |
 | embed-corpus | nothing, rewrites all | redone | embedded | about 28 min |
 | build-index (BM25) | nothing; readers refuse a stale `chunks_sha` | redone | redone | 2.4 s |
 | build-prefixes, build-archives, build-profiles | nothing; record `source_chunks_sha`, never checked | redone | redone | seconds |
@@ -35,7 +35,7 @@ Readers are safe: `bm25.rs:79` and `dense.rs:44` refuse an index whose `chunks_s
 ## The updater, as planned
 
 `scripts/update.sh`, one model loaded at a time, every step resumable:
-1. Refuse to start unless the backend answers on :3060 (Ian starts it; Claude never does).
+1. Refuse to start unless the backend answers on :3060 (the backend is started by hand; the updater never starts it).
 2. build-corpus with content-hash change detection; write the changed and new story ids.
 3. embed-corpus reusing unchanged vectors; build-index; build-archives and build-profiles.
 4. Gemma: P2 story summaries for changed stories, then group summaries for touched groups; chrono extract for changed stories; entities extract for changed chunks; deaths extract; dossiers for touched characters; primers for touched targets.
@@ -52,4 +52,4 @@ A typical monthly event (one new group, 10 to 20 stories, about 150 chunks) shou
 - `scripts/incr.py`: each model stage keys a unit on (id, sha of the exact input it sends, prompt sha), replaces a redone unit's row in place, and drops duplicates and vanished units. `PLAN=1` prints what would be redone and why without a server; `KEY_IDS_ONLY=1` restores id-only skipping. Existing rows were backfilled with their current input sha (row counts unchanged; the backups were deleted on 2026-09-29 after the check). A one-word edit to one chunk flagged exactly: that story's summary, its group's B and C summaries (A reads the blurbs only), one exception check, one dossier, the one primer whose prior context holds it, and that chunk's bank question.
 - Bank questions keep their sample after the first build (a redraw would move most of the 900 picks when a group is added); chunks of stories new since `question_pool.json` are drawn at 900/13,954 by a hash of the chunk id. `BANK_RESAMPLE=1` restores the redraw.
 - State now, from `PLAN=1 scripts/update.sh`: every stage 0 to do except dossiers, 50, because identity links and the timeline were rebuilt after the dossiers were written (Kal'tsit's still lists "Raidian"); the first real update regenerates them (about 14 min). `chrono place` (81 stale) is outside the updater; only `chrono eval` reads it.
-- Not run end to end: the real refresh needs the backend, which only Ian starts.
+- Not run end to end: the real refresh needs the backend, which is only ever started by hand.

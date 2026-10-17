@@ -4,9 +4,9 @@ Research date: 2026-09-29. Purpose: a baseline to compare an automatically built
 
 ## Method and sources
 
-- **Reddit r/arknights**, through the Arctic Shift archive (reddit.com itself is blocked here).
-  - Post search for "reading order", "story order", "chronological", "where to start", "essential events", "event order", "timeline" gave 335 unique posts, 60 of them on-topic. I fetched full comment trees for 57 of those threads, including the 5 most-linked guide threads.
-  - Most story-order questions get removed under Rule 5 ("use the megathreads"), so the real advice lives in the weekly question threads. I sampled every 5th thread from 724 threads ("Daily Questions Megathread" 2020 to 2022, "Help Center and Megathread Hub" 2022 to 2026). That was 145 threads and 159,487 comments, filtered for reading-order language.
+- **Reddit r/arknights**, through the Arctic Shift archive (reddit.com itself was blocked from the research environment).
+  - Post search for "reading order", "story order", "chronological", "where to start", "essential events", "event order", "timeline" gave 335 unique posts, 60 of them on-topic. Full comment trees were fetched for 57 of those threads, including the 5 most-linked guide threads.
+  - Most story-order questions get removed under Rule 5 ("use the megathreads"), so the real advice lives in the weekly question threads. Every 5th thread was sampled from 724 threads ("Daily Questions Megathread" 2020 to 2022, "Help Center and Megathread Hub" 2022 to 2026). That was 145 threads and 159,487 comments, filtered for reading-order language.
   - In total, 2,522 comments were screened. Around 250 were read by hand.
 - **arknights.wiki.gg**, via the MediaWiki API. Pages used: [Arknights Timeline](https://arknights.wiki.gg/wiki/Arknights_Timeline), [Story/Movements](https://arknights.wiki.gg/wiki/Story/Movements), and the 14 Movement subpages. The subpages carry the in-game "related story" links, which the wiki describes as stories "recommended to be read first".
 - **Community guides** that are linked again and again in the threads:
@@ -193,7 +193,7 @@ These match the community consensus except for two points:
 ## Unreachable or partial sources
 
 - **reddit.com**: blocked. Everything above comes through Arctic Shift.
-- **Arctic Shift full-text comment search**: timed out on every query ("Timeout. Maybe slow down a bit"). So did several post queries: "chronological order", "which events", "read before", "story guide" and a few others returned HTTP 422. I worked around this by sampling the megathreads, which covers about 1 in 5 of the 724 threads.
+- **Arctic Shift full-text comment search**: timed out on every query ("Timeout. Maybe slow down a bit"). So did several post queries: "chronological order", "which events", "read before", "story guide" and a few others returned HTTP 422. The workaround was sampling the megathreads, which covers about 1 in 5 of the 724 threads.
 - **The older community timeline Google Doc** (1htVLOcG..., linked in 2022 threads): now returns "page not found".
 - **The G5 Google Sheet**: only the intro tab was readable through CSV export.
 - **G3's gallery**: only its first image was viewed. The rest were read through the comments.

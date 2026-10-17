@@ -1,12 +1,12 @@
 # Trevor: `build-corpus` implementation spec
 
-> **Superseded in places.** `claude/trevor-implementation-notes.md` (2026-09-23) corrects
+> **Superseded in places.** `trevor-implementation-notes.md` (2026-09-23) corrects
 > ten claims in this document against verified APIs, including the llama-server flag set
 > below and the embedding pooling mode. Read it first. The corrections are inlined here
 > where they are short enough; the notes carry the evidence.
 
-Companion to `claude/trevor-research.md`. This specifies the offline Mac-side binary that
-produces every artifact the VPS serves. Nothing in here runs in a request path.
+Companion to `archive/trevor-research.md`. This specifies the offline binary, run on the
+development machine, that produces every artifact the VPS serves. Nothing in here runs in a request path.
 
 **Sequencing note that overrides the research doc's ordering.** The research says build the
 retrieval eval first. You cannot evaluate retrieval without an index, so the real order is
@@ -87,7 +87,10 @@ trevor/
   prompts/     (versioned, hashed into job ids)
 ```
 
-`build-corpus` is a **Mac-side tool**. It must not be in the VPS binary's dependency graph:
+This is the proposed layout; the crate as built differs (for example `src/corpus/` holds `chunk/`,
+`ingest/` and `embed/` module directories, and the model client is `src/llm/`).
+
+`build-corpus` is a **development-machine tool**. It must not be in the VPS binary's dependency graph:
 no `llama-cpp-2`, no model loading, just `reqwest` to a local `llama-server`.
 
 ---
@@ -391,10 +394,10 @@ golden files above are all on the deterministic layer.
    measured on an M5 Pro is contested by a five-backend comparison that found everything flat.
    Ten minutes, and it decides whether the budget is 10 hours or 17.
 3. **Quality gate.** Run 30 representative stories through Tier-1 Q4 and Tier-2 Q8 and read
-   both outputs yourself. No public benchmark isolates abstractive summarization faithfulness
-   for these models; that gap is real and only your own reading closes it.
+   both outputs by hand. No public benchmark isolates abstractive summarization faithfulness
+   for these models; that gap is real and only human reading closes it.
 
-Session setup: `sudo pmset -a powermode 2 disablesleep 1` (measured **+52% to +89%** on dense
+Run setup: `sudo pmset -a powermode 2 disablesleep 1` (measured **+52% to +89%** on dense
 models on M5 Pro), `sudo sysctl iogpu.wired_limit_mb=19456`, `caffeinate -dimsu`. Expect
 **8-15% sustained thermal derate** on the 14" chassis. Nothing here leaves a daemon running
 after the build exits.
