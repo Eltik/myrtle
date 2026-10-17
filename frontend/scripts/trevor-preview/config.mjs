@@ -21,7 +21,8 @@ export const QUEUE_MAX = Number(process.env.TREVOR_PREVIEW_QUEUE_MAX ?? 2);
 export const ASK_BIN = path.join(TREVOR, "target/release/ask");
 export const E2B = path.join(TREVOR, "models/llm/gemma-4-e2b-it-q4_k_m.gguf");
 export const G12B = path.join(TREVOR, "models/llm/gemma-4-12b-it-qat-q4_0.gguf");
-export const LOCK = "/private/tmp/claude-501/trevor-llm.lock";
+/** The model lock, resolved as `ask --lock` resolves its default: $TREVOR_LLM_LOCK, else trevor-llm.lock in $TMPDIR (or /tmp). */
+export const LOCK = process.env.TREVOR_LLM_LOCK || path.join(process.env.TMPDIR || "/tmp", "trevor-llm.lock");
 export const MIN_FREE_PCT = 30;
 export const WORKER_KEY = crypto.randomBytes(24).toString("hex");
 

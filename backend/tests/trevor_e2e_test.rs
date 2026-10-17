@@ -27,8 +27,8 @@
 //! PATH. A worker starts only with 25% of memory free and the 12B only with
 //! 30% (waiting up to `TREVOR_E2E_WAIT_SECS`, default 900, then panicking);
 //! step 4 refuses at once when a llama-server is already running or another
-//! job holds the model lock
-//! (/private/tmp/claude-501/trevor-llm.lock). It shares `trevor_test` with
+//! job holds the model lock (`ask`'s default: $TREVOR_LLM_LOCK, else
+//! trevor-llm.lock in $TMPDIR or /tmp). It shares `trevor_test` with
 //! `trevor_db_test`, so never run the two at once:
 //!
 //! `cargo test --test trevor_e2e_test -- --ignored --nocapture`
@@ -53,7 +53,14 @@ use trevor_common::{TEST_DB, app, app_config, app_state, fresh_db, insert_user, 
 
 const WORKER_KEY: &str = "e2e-test-worker-key-0123456789";
 const JWT_SECRET: &str = "e2e-test-jwt-secret-0123456789abcdef";
-const MODEL_LOCK: &str = "/private/tmp/claude-501/trevor-llm.lock";
+/// The model lock, resolved as `ask --lock` resolves its default (trevor/src/bin/ask/cli.rs, `lock_path_from`).
+fn model_lock() -> std::path::PathBuf {
+    let set = |k: &str| std::env::var_os(k).filter(|v| !v.is_empty());
+    set("TREVOR_LLM_LOCK").map(Into::into).unwrap_or_else(|| {
+        std::path::PathBuf::from(set("TMPDIR").unwrap_or_else(|| "/tmp".into()))
+            .join("trevor-llm.lock")
+    })
+}
 /// The worker's heartbeat interval in this test (30 s in production).
 const HEARTBEAT_SECS: u64 = 2;
 
@@ -164,7 +171,7 @@ async fn wait_for_memory(min: u32, what: &str) -> u32 {
 
 /// The model lock's holder while that process lives.
 fn lock_holder() -> Option<String> {
-    let text = std::fs::read_to_string(MODEL_LOCK).ok()?;
+    let text = std::fs::read_to_string(model_lock()).ok()?;
     let pid: u32 = text.split_whitespace().next()?.parse().ok()?;
     alive(pid).then(|| text.trim().to_owned())
 }
@@ -270,10 +277,10 @@ impl Worker {
                 let _ = sh("kill", &["-KILL", &l.to_string()]);
             }
         }
-        if std::fs::read_to_string(MODEL_LOCK)
+        if std::fs::read_to_string(model_lock())
             .is_ok_and(|t| t.split_whitespace().next() == Some(pid.to_string().as_str()))
         {
-            let _ = std::fs::remove_file(MODEL_LOCK);
+            let _ = std::fs::remove_file(model_lock());
         }
     }
 }

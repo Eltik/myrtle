@@ -19,7 +19,7 @@ Reads a panels.py build (default artifacts/panels: manifest.json + stories/*.jso
 The report passes when every gate that ran passes. Exit 0 = passed, 1 = a gate failed, 2 = could not run.
 
 Env: TREVOR_STATE_DIR (default <trevor>/artifacts/publish), TREVOR_LLM_LOCK (default
-/private/tmp/claude-501/trevor-llm.lock, ask's), TREVOR_LLM_URL (a running llama-server for the canary; unset = ask
+ask's: ${TMPDIR:-/tmp}/trevor-llm.lock, common.llm_lock_path), TREVOR_LLM_URL (a running llama-server for the canary; unset = ask
 starts its own model), GATES_ASK_FLAGS (extra ask flags for the canary, e.g. "--router keywords --k 5").
 """
 import argparse, hashlib, json, os, re, shlex, signal, socket, subprocess, sys, time, urllib.error, urllib.request
@@ -400,7 +400,7 @@ def gate_canary(a, manifest, order):
         return {"skipped": True, "reason": f"refused on this Mac: {why}", "pass": None}
     qs = [json.loads(l) for l in open(a.canary, encoding="utf-8") if l.strip()]
     gp = gate_maps(order)[0]
-    lock = os.environ.get("TREVOR_LLM_LOCK", "/private/tmp/claude-501/trevor-llm.lock")
+    lock = common.llm_lock_path()
     if not take_lock(lock, "gates-canary", a.lock_wait):
         return {"pass": False, "error": f"model lock {lock} held by another job for {a.lock_wait} s"}
     port = free_port()
@@ -531,8 +531,22 @@ def self_test():
     assert citation_violations({"citations": [{"storyId": "s2"}, {"storyId": "archive_x"}]}, 2, order) == []
     assert len(citation_violations({"citations": [{"storyId": "s3"}, {"chunkId": "topic:x"}, {"storyId": "archive_x"}]},
                                    1, order)) == 3
+    saved = {k: os.environ.pop(k, None) for k in ("TREVOR_LLM_LOCK", "TMPDIR")}
+    try:  # the lock default matches ask's (cli.rs lock_path_from)
+        assert common.llm_lock_path() == "/tmp/trevor-llm.lock"
+        os.environ["TMPDIR"] = "/var/folders/x/T/"
+        assert common.llm_lock_path() == "/var/folders/x/T/trevor-llm.lock"
+        os.environ["TREVOR_LLM_LOCK"] = ""
+        assert common.llm_lock_path() == "/var/folders/x/T/trevor-llm.lock"
+        os.environ["TREVOR_LLM_LOCK"] = "/run/trevor/llm.lock"
+        assert common.llm_lock_path() == "/run/trevor/llm.lock"
+    finally:
+        for k, v in saved.items():
+            os.environ.pop(k, None)
+            if v is not None:
+                os.environ[k] = v
     print("gates.py self-test: ok (schema accepts the panel, 5 schema faults and 6 spoiler faults each caught once, "
-          "citation check)")
+          "citation check, model lock default)")
 
 
 def main():

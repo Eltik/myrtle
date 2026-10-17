@@ -1,6 +1,7 @@
 //! The command line: every flag of `ask`, and the gates derived from more than one flag (which router
 //! runs, which corpus and source rules apply).
 
+use std::ffi::OsString;
 use std::path::PathBuf;
 
 use clap::Parser;
@@ -9,6 +10,23 @@ use trevor::search::runtime::RuntimeArgs;
 use trevor::tools::{Route, Tools};
 
 use crate::detect::source_kind;
+
+/// The model lock when `--lock` is not given, resolved from the environment.
+pub(crate) fn default_lock_path() -> PathBuf {
+    lock_path_from(std::env::var_os("TREVOR_LLM_LOCK"), std::env::var_os("TMPDIR"))
+}
+
+/// `$TREVOR_LLM_LOCK` when set and non-empty, else `trevor-llm.lock` in `$TMPDIR`, or in /tmp when that is unset or
+/// empty. scripts/common.py (`llm_lock_path`) and the shell scripts resolve it the same way, so every job meets at the
+/// same file; `std::env::temp_dir` is not used because on macOS it falls back to the per-user folder when TMPDIR is
+/// unset, where the shell's `${TMPDIR:-/tmp}` gives /tmp.
+pub(crate) fn lock_path_from(lock: Option<OsString>, tmpdir: Option<OsString>) -> PathBuf {
+    match (lock.filter(|v| !v.is_empty()), tmpdir.filter(|v| !v.is_empty())) {
+        (Some(lock), _) => PathBuf::from(lock),
+        (None, Some(dir)) => PathBuf::from(dir).join("trevor-llm.lock"),
+        (None, None) => PathBuf::from("/tmp/trevor-llm.lock"),
+    }
+}
 
 #[derive(Parser, Clone, Debug)]
 #[command(about = "Answer an Arknights lore question from retrieved passages")]
@@ -115,8 +133,8 @@ pub(crate) struct Args {
     /// The shared model lock (`<pid> <label>`): while another job holds it, `ask` waits for it instead of sharing that
     /// job's server, which may run with other settings (reasoning on, for one). A lock held by an ancestor of this
     /// process (the script that started `ask`) counts as this process's own. `ask` writes the lock itself for a server
-    /// it starts.
-    #[arg(long, default_value = "/private/tmp/claude-501/trevor-llm.lock")]
+    /// it starts. Default: `$TREVOR_LLM_LOCK`, else `trevor-llm.lock` in `$TMPDIR` (or /tmp).
+    #[arg(long, default_value_os_t = default_lock_path())]
     pub(crate) lock: PathBuf,
     /// Fail at once when another job holds the model lock, instead of waiting.
     #[arg(long)]

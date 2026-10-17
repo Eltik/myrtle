@@ -22,6 +22,12 @@ CITE = re.compile(r'\s*\[[\d,;\s]+\]')
 JSON_HEADERS = {'content-type': 'application/json'}
 
 
+def llm_lock_path():
+    """The shared model lock, resolved as `ask --lock` resolves its default (src/bin/ask/cli.rs, lock_path_from):
+    $TREVOR_LLM_LOCK when set and non-empty, else trevor-llm.lock in $TMPDIR, or in /tmp when that is unset or empty."""
+    return os.environ.get('TREVOR_LLM_LOCK') or os.path.join(os.environ.get('TMPDIR') or '/tmp', 'trevor-llm.lock')
+
+
 def sha16(s):
     """The first 16 hex digits of the sha256 of a string: every input, prompt and row key in the pipeline."""
     return hashlib.sha256(s.encode()).hexdigest()[:16]

@@ -4,6 +4,7 @@ use trevor::tools::Tools;
 
 use crate::batch::{batch_items, qid_question};
 use crate::chrono::{Chrono, chronology_for, time_evidence_block};
+use crate::cli::lock_path_from;
 use crate::detect::{asks_identity, asks_origin, asks_relation, asks_scene, asks_term, asks_when, term_of};
 use crate::labels::{Names, story_label, typed_owner};
 use crate::people::{one_operator, one_operator_wide};
@@ -371,4 +372,16 @@ async fn worker_heartbeat_and_deltas_reach_the_fake_backend() {
     };
     assert_eq!(text, "Talulah [1].");
     assert!(deltas.iter().all(|v| v["workerId"] == "w1"));
+}
+
+#[test]
+fn model_lock_defaults_to_the_env_then_tmpdir_then_tmp() {
+    use std::ffi::OsString;
+    use std::path::PathBuf;
+    let os = |s: &str| Some(OsString::from(s));
+    assert_eq!(lock_path_from(os("/run/trevor/llm.lock"), os("/var/tmp")), PathBuf::from("/run/trevor/llm.lock"));
+    assert_eq!(lock_path_from(None, os("/var/folders/x/T/")), PathBuf::from("/var/folders/x/T/trevor-llm.lock"));
+    assert_eq!(lock_path_from(os(""), os("/var/tmp")), PathBuf::from("/var/tmp/trevor-llm.lock"), "empty = unset");
+    assert_eq!(lock_path_from(None, None), PathBuf::from("/tmp/trevor-llm.lock"));
+    assert_eq!(lock_path_from(None, os("")), PathBuf::from("/tmp/trevor-llm.lock"), "empty TMPDIR = /tmp");
 }
