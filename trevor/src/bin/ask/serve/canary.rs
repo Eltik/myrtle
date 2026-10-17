@@ -86,8 +86,8 @@ pub(crate) async fn run_canary(a: Args, corpus_default: bool, tables: Tables, ch
         let t = Instant::now();
         let mut m = CanaryModel { id: id.clone(), ..CanaryModel::default() };
         for (q, expect) in CANARY {
-            let req = AskRequest { question: q.into(), horizon: None, horizon_pos: Some(last), server: None, flags: Vec::new(),
-                                   profile: Some("full".into()) };
+            let req = AskRequest { question: q.into(), horizon: None, horizon_pos: Some(last), server: None,
+                                   flags: Vec::new(), profile: Some("full".into()) };
             match svc.ask(req, Some(llm.clone())).await {
                 Ok(job) => {
                     let ans = job.result.answer.to_lowercase();
@@ -104,11 +104,13 @@ pub(crate) async fn run_canary(a: Args, corpus_default: bool, tables: Tables, ch
             }
         }
         let u = llm.usage();
-        (m.json_calls, m.json_failures, m.tokens_in, m.tokens_out) = (u.json_calls, u.json_failures, u.tokens_in, u.tokens_out);
+        (m.json_calls, m.json_failures, m.tokens_in, m.tokens_out) =
+            (u.json_calls, u.json_failures, u.tokens_in, u.tokens_out);
         m.secs = t.elapsed().as_secs_f64();
         m.passed = m.errors.is_empty() && m.hits >= CANARY_PASS;
-        eprintln!("canary {id}: {} of {} hits, {} errors, {} of {} JSON calls failed, {:.0} s: {}", m.hits, CANARY.len(), m.errors.len(),
-                  m.json_failures, m.json_calls, m.secs, if m.passed { "PASS" } else { "fail" });
+        eprintln!("canary {id}: {} of {} hits, {} errors, {} of {} JSON calls failed, {:.0} s: {}",
+                  m.hits, CANARY.len(), m.errors.len(), m.json_failures, m.json_calls, m.secs,
+                  if m.passed { "PASS" } else { "fail" });
         let passed = m.passed;
         out.models.push(m);
         if passed {

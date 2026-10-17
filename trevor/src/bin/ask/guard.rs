@@ -44,8 +44,8 @@ pub(crate) struct GuardConfig {
 
 impl Default for GuardConfig {
     fn default() -> Self {
-        Self { psi_cpu: 60.0, psi_mem: 20.0, mem_mb: 800.0, rss_mb: 4500.0, load: 1.5, steal: None, need: 3, cooldown_secs: 300,
-               every: Duration::from_secs(5) }
+        Self { psi_cpu: 60.0, psi_mem: 20.0, mem_mb: 800.0, rss_mb: 4500.0, load: 1.5, steal: None, need: 3,
+               cooldown_secs: 300, every: Duration::from_secs(5) }
     }
 }
 
@@ -95,16 +95,16 @@ impl Sample {
     /// One line for the log.
     pub(crate) fn brief(&self) -> String {
         let f = |name: &str, v: Option<f64>| v.map(|v| format!("{name}={v:.1}"));
-        [f("psi_cpu", self.psi_cpu), f("psi_mem", self.psi_mem), f("mem_avail_mb", self.mem_avail_mb), f("rss_mb", self.rss_mb),
-         f("load_per_cpu", self.load_per_cpu), f("steal", self.steal_pct), self.mac_pressure.map(|v| format!("vm_pressure={v}")),
-         self.thermal.map(|v| format!("thermal_warning={v}"))]
+        [f("psi_cpu", self.psi_cpu), f("psi_mem", self.psi_mem), f("mem_avail_mb", self.mem_avail_mb),
+         f("rss_mb", self.rss_mb), f("load_per_cpu", self.load_per_cpu), f("steal", self.steal_pct),
+         self.mac_pressure.map(|v| format!("vm_pressure={v}")), self.thermal.map(|v| format!("thermal_warning={v}"))]
             .into_iter().flatten().collect::<Vec<_>>().join(" ")
     }
 }
 
 /// The signals, in the order a trip reason names them.
-const SIGNALS: [Signal; 8] = [Signal::MemAvail, Signal::Rss, Signal::PsiMem, Signal::MacPressure, Signal::PsiCpu, Signal::Load,
-                              Signal::Steal, Signal::Thermal];
+const SIGNALS: [Signal; 8] = [Signal::MemAvail, Signal::Rss, Signal::PsiMem, Signal::MacPressure, Signal::PsiCpu,
+                              Signal::Load, Signal::Steal, Signal::Thermal];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Signal {
@@ -147,18 +147,21 @@ impl Signal {
     }
 
     fn read(self, s: &Sample, c: &GuardConfig) -> Option<Reading> {
-        let above = |v: f64, t: f64, name: &str| Reading { bad: v > t, calm: v < 0.8 * t, text: format!("{name} {v:.1} > {t}") };
+        let above = |v: f64, t: f64, name: &str| Reading { bad: v > t, calm: v < 0.8 * t,
+                                                           text: format!("{name} {v:.1} > {t}") };
         match self {
             Self::PsiCpu => s.psi_cpu.map(|v| above(v, c.psi_cpu, self.name())),
             Self::PsiMem => s.psi_mem.map(|v| above(v, c.psi_mem, self.name())),
             Self::Rss => s.rss_mb.map(|v| above(v, c.rss_mb, self.name())),
             Self::Load => s.load_per_cpu.map(|v| above(v, c.load, self.name())),
             Self::Steal => s.steal_pct.zip(c.steal).map(|(v, t)| above(v, t, self.name())),
-            Self::MemAvail => s.mem_avail_mb.map(|v| Reading { bad: v < c.mem_mb, calm: v > c.mem_mb / 0.8,
-                                                               text: format!("{} {v:.0} < {}", self.name(), c.mem_mb) }),
+            Self::MemAvail => s.mem_avail_mb.map(|v| Reading {
+                bad: v < c.mem_mb, calm: v > c.mem_mb / 0.8, text: format!("{} {v:.0} < {}", self.name(), c.mem_mb)
+            }),
             Self::MacPressure => s.mac_pressure.map(|v| Reading { bad: v >= 4, calm: f64::from(v) < 0.8 * 4.0,
                                                                   text: format!("{} {v} (critical)", self.name()) }),
-            Self::Thermal => s.thermal.map(|w| Reading { bad: w, calm: !w, text: format!("{} recorded (pmset -g therm)", self.name()) }),
+            Self::Thermal => s.thermal.map(|w| Reading { bad: w, calm: !w,
+                                                         text: format!("{} recorded (pmset -g therm)", self.name()) }),
         }
     }
 }
@@ -213,7 +216,8 @@ impl Guard {
             }
         }
         let need = self.cfg.need;
-        let reason = |h: &[(Signal, &Reading)]| h.iter().map(|(_, r)| format!("{} for {need} samples", r.text)).collect::<Vec<_>>().join("; ");
+        let reason = |h: &[(Signal, &Reading)]| h.iter().map(|(_, r)| format!("{} for {need} samples", r.text))
+            .collect::<Vec<_>>().join("; ");
         match &mut self.trip {
             None => {
                 if held.is_empty() {
@@ -294,7 +298,8 @@ pub(crate) async fn run(cfg: GuardConfig, tx: tokio::sync::watch::Sender<GuardVi
             eprintln!("guard: {} -> {}", s.brief(), if guard.trip().is_some() { "tripped" } else { "ok" });
         }
         match &change {
-            Some(Change::Tripped(t)) => eprintln!("guard: TRIPPED ({}){}", t.reason, if t.memory { "; memory: the llama-server stops" } else { "" }),
+            Some(Change::Tripped(t)) => eprintln!("guard: TRIPPED ({}){}", t.reason,
+                                                  if t.memory { "; memory: the llama-server stops" } else { "" }),
             Some(Change::Recovered) => eprintln!("guard: recovered after {} s calm", guard.cfg.cooldown_secs),
             None => {}
         }
@@ -328,10 +333,12 @@ impl Sampler {
         Sample {
             psi_cpu: read("/proc/pressure/cpu").as_deref().and_then(trevor::host::parse_psi_some_avg10),
             psi_mem: read("/proc/pressure/memory").as_deref().and_then(trevor::host::parse_psi_some_avg10),
-            mem_avail_mb: read("/proc/meminfo").as_deref().and_then(|t| trevor::host::parse_kb_field(t, "MemAvailable:")).map(|kb| kb / 1024.0),
+            mem_avail_mb: read("/proc/meminfo").as_deref()
+                .and_then(|t| trevor::host::parse_kb_field(t, "MemAvailable:")).map(|kb| kb / 1024.0),
             rss_mb: linux_llama_rss_mb(),
             #[allow(clippy::cast_precision_loss)]
-            load_per_cpu: read("/proc/loadavg").as_deref().and_then(|t| t.split_whitespace().next()?.parse::<f64>().ok())
+            load_per_cpu: read("/proc/loadavg").as_deref()
+                .and_then(|t| t.split_whitespace().next()?.parse::<f64>().ok())
                 .map(|l| l / cpus as f64),
             steal_pct: steal,
             mac_pressure: None,
@@ -363,7 +370,8 @@ impl Sampler {
 #[cfg(target_os = "macos")]
 fn mac_llama_rss_mb() -> Option<f64> {
     let pids = trevor::host::run_cmd("pgrep", &["-x", "llama-server"])?;
-    pids.split_whitespace().filter_map(|p| trevor::host::run_cmd("ps", &["-o", "rss=", "-p", p])?.trim().parse::<f64>().ok())
+    pids.split_whitespace()
+        .filter_map(|p| trevor::host::run_cmd("ps", &["-o", "rss=", "-p", p])?.trim().parse::<f64>().ok())
         .map(|kb| kb / 1024.0).reduce(f64::max)
 }
 

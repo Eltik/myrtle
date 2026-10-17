@@ -311,7 +311,8 @@ pub fn run(cfg: &EmbedConfig, progress: &dyn Fn(usize, usize)) -> Result<RunResu
         stats: RunStats { total, ..RunStats::default() },
     };
     for (i, c) in lines.iter().enumerate() {
-        let stored = pool.get(&keys[i]).map(|b| (b, true)).or_else(|| resumable.get(&keys[i]).map(|b| (b.as_slice(), false)));
+        let stored = pool.get(&keys[i]).map(|b| (b, true))
+            .or_else(|| resumable.get(&keys[i]).map(|b| (b.as_slice(), false)));
         let v = if let Some((bytes, from_pool)) = stored {
             if from_pool {
                 reused += 1;

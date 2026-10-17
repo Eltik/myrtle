@@ -153,7 +153,8 @@ async fn main() -> Result<()> {
     );
     if let Some(c) = &m.refresh {
         eprintln!(
-            "refresh: added {} | changed {} | removed {} | unchanged {} | failed {} | chunks {} -> {} ({} added or changed)",
+            "refresh: added {} | changed {} | removed {} | unchanged {} | failed {} | \
+             chunks {} -> {} ({} added or changed)",
             c.added,
             c.changed,
             c.removed,

@@ -247,7 +247,8 @@ fn fake_backend(routes: Routes) -> String {
             let (status, body) = body.map_or(("404 Not Found", String::new()), |b| ("200 OK", b));
             let _ = write!(
                 conn,
-                "HTTP/1.1 {status}\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                "HTTP/1.1 {status}\r\ncontent-type: application/json\r\ncontent-length: {}\r\n\
+                 connection: close\r\n\r\n{body}",
                 body.len()
             );
         }

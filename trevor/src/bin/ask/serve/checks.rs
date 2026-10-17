@@ -27,17 +27,20 @@ pub(crate) fn horizon_check(a: &Args, batch: &Path) -> Result<()> {
         let mut seen: HashMap<(String, i64), Vec<String>> = HashMap::new();
         for l in std::fs::read_to_string("artifacts/spoiler.jsonl")?.lines().filter(|l| !l.trim().is_empty()) {
             let v: serde_json::Value = serde_json::from_str(l)?;
-            if let (Some(s), Some(g), Some(k)) = (v["storyId"].as_str(), v["groupId"].as_str(), v["storySort"].as_i64()) {
+            if let (Some(s), Some(g), Some(k)) =
+                (v["storyId"].as_str(), v["groupId"].as_str(), v["storySort"].as_i64()) {
                 seen.entry((g.to_owned(), k)).or_default().push(s.to_owned());
             }
         }
-        let mut t: Vec<String> = seen.into_values().filter(|v| v.len() > 1).flatten().filter(|s| order.legacy_horizon(s).is_ok()).collect();
+        let mut t: Vec<String> = seen.into_values().filter(|v| v.len() > 1).flatten()
+            .filter(|s| order.legacy_horizon(s).is_ok()).collect();
         t.sort();
         t
     };
     println!("tie stories in placed groups: {} {:?}", ties.len(), ties);
     let mut corpora = vec![a.runtime.corpus.clone()];
-    if Path::new(crate::cli::GAME_TEXT_DIR).join("chunks.jsonl").exists() && a.runtime.corpus != Path::new(crate::cli::GAME_TEXT_DIR) {
+    if Path::new(crate::cli::GAME_TEXT_DIR).join("chunks.jsonl").exists()
+        && a.runtime.corpus != Path::new(crate::cli::GAME_TEXT_DIR) {
         corpora.push(PathBuf::from(crate::cli::GAME_TEXT_DIR));
     }
     for dir in &corpora {
@@ -54,12 +57,13 @@ pub(crate) fn horizon_check(a: &Args, batch: &Path) -> Result<()> {
                 }
             }
         }
-        println!("{}: {} chunks x {} horizons = {checks} checks, {} (horizon, chunk story) pairs differ:", dir.display(),
-                 rt.store.len(), horizons.len(), diffs.len());
+        println!("{}: {} chunks x {} horizons = {checks} checks, {} (horizon, chunk story) pairs differ:",
+                 dir.display(), rt.store.len(), horizons.len(), diffs.len());
         for ((h, s, g), n) in &diffs {
             let tie = ties.contains(h) && ties.contains(s);
-            println!("  horizon {h} chunk story {s}: {n} chunks, old {} new {}{}", order.legacy_horizon(h)?.allows(s, g),
-                     order.horizon(h)?.allows(s, g), if tie { " (tie)" } else { " (NOT A TIE)" });
+            println!("  horizon {h} chunk story {s}: {n} chunks, old {} new {}{}",
+                     order.legacy_horizon(h)?.allows(s, g), order.horizon(h)?.allows(s, g),
+                     if tie { " (tie)" } else { " (NOT A TIE)" });
         }
     }
     // The questions: hybrid candidates (BM25 with --retrieval bm25) at the tie stories and 32 spread horizons.
@@ -71,19 +75,25 @@ pub(crate) fn horizon_check(a: &Args, batch: &Path) -> Result<()> {
     for line in std::fs::read_to_string(batch)?.lines().filter(|l| !l.trim().is_empty()) {
         let v: serde_json::Value = serde_json::from_str(line)?;
         let (qid, q) = (v["qid"].as_str().unwrap_or_default(), v["question"].as_str().unwrap_or_default());
-        let hits = rt.retrieve(q, &RetrievalConfig { mode: Mode::Hybrid, candidates: 2000, k: 2000, ..RetrievalConfig::default() })?;
+        let hits = rt.retrieve(q, &RetrievalConfig { mode: Mode::Hybrid, candidates: 2000, k: 2000,
+                                                     ..RetrievalConfig::default() })?;
         for h in &sample {
             let (old, new) = (order.legacy_horizon(h)?, order.horizon(h)?);
-            let keep = |hz: &Horizon| -> Vec<usize> { hits.iter().map(|x| x.row).filter(|&r| rt.allows_row(hz, r)).collect() };
+            let keep = |hz: &Horizon| -> Vec<usize> {
+                hits.iter().map(|x| x.row).filter(|&r| rt.allows_row(hz, r)).collect()
+            };
             let (ko, kn) = (keep(&old), keep(&new));
             if ko == kn {
                 kept_same += 1;
                 continue;
             }
-            let only_old: Vec<&str> = ko.iter().filter(|r| !kn.contains(r)).map(|&r| rt.store.chunks[r].chunk_id.as_str()).collect();
-            let only_new: Vec<&str> = kn.iter().filter(|r| !ko.contains(r)).map(|&r| rt.store.chunks[r].chunk_id.as_str()).collect();
+            let only_old: Vec<&str> =
+                ko.iter().filter(|r| !kn.contains(r)).map(|&r| rt.store.chunks[r].chunk_id.as_str()).collect();
+            let only_new: Vec<&str> =
+                kn.iter().filter(|r| !ko.contains(r)).map(|&r| rt.store.chunks[r].chunk_id.as_str()).collect();
             diff_rows += 1;
-            println!("  {qid} at {h}: old keeps {} new keeps {}; old only {only_old:?}; new only {only_new:?}", ko.len(), kn.len());
+            println!("  {qid} at {h}: old keeps {} new keeps {}; old only {only_old:?}; new only {only_new:?}",
+                     ko.len(), kn.len());
         }
     }
     println!("questions: {kept_same} (question, horizon) pairs keep the same candidates, {diff_rows} differ");
@@ -109,7 +119,8 @@ pub(crate) async fn json_check(a: &Args, tables: &mut Tables, batch: &Path) -> R
         n += 1;
     }
     let u = llm.usage();
-    eprintln!("json-check: {n} questions, {} calls, {} JSON calls, {} needed a second ask, {} failed twice; {} tokens in, {} out",
+    eprintln!("json-check: {n} questions, {} calls, {} JSON calls, {} needed a second ask, {} failed twice; \
+               {} tokens in, {} out",
               u.calls, u.json_calls, u.json_retries, u.json_failures, u.tokens_in, u.tokens_out);
     Ok(())
 }

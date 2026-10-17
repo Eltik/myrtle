@@ -127,7 +127,9 @@ mod tests {
 
     #[test]
     fn guard_parsers() {
-        let none = "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\nNote: No CPU power status has been recorded\n";
+        let none = "Note: No thermal warning level has been recorded\n\
+                    Note: No performance warning level has been recorded\n\
+                    Note: No CPU power status has been recorded\n";
         assert_eq!(therm_warning(none), None);
         assert!(therm_warning("Thermal warning level: 2\n").is_some());
         assert!(therm_warning("CPU_Speed_Limit \t= 80\n").is_some());
@@ -142,7 +144,8 @@ mod tests {
 
     #[test]
     fn guard_parses_proc_and_pmset() {
-        let psi = "some avg10=12.34 avg60=5.00 avg300=1.00 total=123\nfull avg10=99.00 avg60=0.00 avg300=0.00 total=0\n";
+        let psi = "some avg10=12.34 avg60=5.00 avg300=1.00 total=123\n\
+                   full avg10=99.00 avg60=0.00 avg300=0.00 total=0\n";
         assert_eq!(parse_psi_some_avg10(psi), Some(12.34));
         let meminfo = "MemTotal:        8000000 kB\nMemFree:          100000 kB\nMemAvailable:     819200 kB\n";
         assert_eq!(parse_kb_field(meminfo, "MemAvailable:"), Some(819_200.0));
@@ -153,11 +156,13 @@ mod tests {
         assert_eq!(steal_pct(a, b), Some(20.0 * 100.0 / 150.0));
         assert_eq!(steal_pct(a, a), None);
         // An idle Mac: three Notes, no warning.
-        let quiet = "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\n\
+        let quiet = "Note: No thermal warning level has been recorded\n\
+                     Note: No performance warning level has been recorded\n\
                      Note: No CPU power status has been recorded\n";
         assert!(!pmset_warning(quiet));
         assert!(pmset_warning("Thermal warning level set to 1."));
-        assert!(!pmset_warning("CPU Power notify\n\tCPU_Scheduler_Limit \t= 100\n\tCPU_Available_CPUs \t= 15\n\tCPU_Speed_Limit \t= 100"),
+        assert!(!pmset_warning("CPU Power notify\n\tCPU_Scheduler_Limit \t= 100\n\t\
+                                CPU_Available_CPUs \t= 15\n\tCPU_Speed_Limit \t= 100"),
                 "limits of 100 are no throttling, but CPU_Available_CPUs = 15 is not a limit");
         assert!(pmset_warning("CPU_Speed_Limit \t= 70"));
         assert!(!pmset_warning("Thermal warning level set to 0."));

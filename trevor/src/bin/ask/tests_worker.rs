@@ -21,7 +21,8 @@ fn guard_trips_after_three_consecutive_bad_samples_of_one_signal() {
     assert_eq!(g.observe(&psi_cpu(70.0), 15), None);
     assert_eq!(g.observe(&psi_cpu(70.0), 20), None);
     match g.observe(&psi_cpu(70.0), 25) {
-        Some(Change::Tripped(Trip { reason, since: 25, memory: false })) => assert!(reason.starts_with("psi_cpu 70.0 > 60"), "{reason}"),
+        Some(Change::Tripped(Trip { reason, since: 25, memory: false })) =>
+            assert!(reason.starts_with("psi_cpu 70.0 > 60"), "{reason}"),
         other => panic!("expected a cpu trip, got {other:?}"),
     }
     // At the threshold is not above it; a missing signal is never bad.
@@ -57,7 +58,8 @@ fn guard_needs_the_same_signal_three_times_and_flags_memory_trips() {
     assert_eq!(g.observe(&both, 3), None);
     assert_eq!(g.observe(&both, 4), None);
     match g.observe(&both, 5) {
-        Some(Change::Tripped(t)) => assert!(t.memory && t.since == 2 && t.reason.contains("psi_mem 30.0 > 20"), "{t:?}"),
+        Some(Change::Tripped(t)) =>
+            assert!(t.memory && t.since == 2 && t.reason.contains("psi_mem 30.0 > 20"), "{t:?}"),
         other => panic!("expected an escalation, got {other:?}"),
     }
     assert_eq!(g.observe(&both, 6), None, "escalates once");
@@ -98,8 +100,8 @@ fn guard_recovers_only_after_the_cooldown_with_every_signal_under_80_percent() {
 #[test]
 fn guard_mac_signals_trip_on_critical_pressure_and_thermal_warnings() {
     let mut g = Guard::new(GuardConfig { cooldown_secs: 0, ..cfg() });
-    let p = |level: u32, thermal: bool| Sample { mac_pressure: Some(level), thermal: Some(thermal), mem_avail_mb: Some(9000.0),
-                                                 ..Sample::default() };
+    let p = |level: u32, thermal: bool| Sample { mac_pressure: Some(level), thermal: Some(thermal),
+                                                 mem_avail_mb: Some(9000.0), ..Sample::default() };
     // Level 2 (warning) is an everyday state on a Mac: it never trips.
     for t in 0..5 {
         assert_eq!(g.observe(&p(2, false), t), None);
@@ -116,15 +118,18 @@ fn guard_mac_signals_trip_on_critical_pressure_and_thermal_warnings() {
 
 #[test]
 fn guard_config_reads_the_contract_env_and_the_kill_switch() {
-    let env = |pairs: &'static [(&'static str, &'static str)]| move |k: &str| pairs.iter().find(|(n, _)| *n == k).map(|(_, v)| (*v).to_owned());
+    let env = |pairs: &'static [(&'static str, &'static str)]|
+        move |k: &str| pairs.iter().find(|(n, _)| *n == k).map(|(_, v)| (*v).to_owned());
     assert_eq!(GuardConfig::from_lookup(env(&[("TREVOR_GUARD", "0")])), None);
     let d = GuardConfig::from_lookup(env(&[])).unwrap();
     assert_eq!((d.psi_cpu, d.psi_mem, d.mem_mb, d.rss_mb, d.load, d.steal, d.need, d.cooldown_secs, d.every.as_secs()),
                (60.0, 20.0, 800.0, 4500.0, 1.5, None, 3, 300, 5));
-    let c = GuardConfig::from_lookup(env(&[("TREVOR_GUARD", "1"), ("TREVOR_GUARD_PSI_CPU", "40"), ("TREVOR_GUARD_MEM_MB", "2000"),
-                                           ("TREVOR_GUARD_RSS_MB", "x"), ("TREVOR_GUARD_COOLDOWN_SECS", "20"), ("TREVOR_GUARD_STEAL", "25"),
+    let c = GuardConfig::from_lookup(env(&[("TREVOR_GUARD", "1"), ("TREVOR_GUARD_PSI_CPU", "40"),
+                                           ("TREVOR_GUARD_MEM_MB", "2000"), ("TREVOR_GUARD_RSS_MB", "x"),
+                                           ("TREVOR_GUARD_COOLDOWN_SECS", "20"), ("TREVOR_GUARD_STEAL", "25"),
                                            ("TREVOR_GUARD_SECS", "1")])).unwrap();
-    assert_eq!((c.psi_cpu, c.mem_mb, c.rss_mb, c.cooldown_secs, c.steal, c.every.as_secs()), (40.0, 2000.0, 4500.0, 20, Some(25.0), 1));
+    assert_eq!((c.psi_cpu, c.mem_mb, c.rss_mb, c.cooldown_secs, c.steal, c.every.as_secs()),
+               (40.0, 2000.0, 4500.0, 20, Some(25.0), 1));
 }
 
 #[test]
@@ -132,12 +137,15 @@ fn heartbeat_carries_the_guard_only_when_it_is_on() {
     use crate::serve::worker::heartbeat_body;
     let rungs = serde_json::json!({"cf": false, "cpu": false});
     let off = heartbeat_body("w", rungs.clone(), "en-1", None, None);
-    assert_eq!(off, serde_json::json!({"workerId": "w", "rungs": rungs, "corpusVersion": "en-1", "busyJobId": null}), "TREVOR_GUARD=0: v1 body");
+    assert_eq!(off, serde_json::json!({"workerId": "w", "rungs": rungs, "corpusVersion": "en-1", "busyJobId": null}),
+               "TREVOR_GUARD=0: v1 body");
     let ok = heartbeat_body("w", rungs.clone(), "en-1", None, Some(&GuardView::default()));
     assert_eq!(ok["guard"], serde_json::json!({"state": "ok", "reason": null, "since": null}));
-    let t = GuardView { trip: Some(Trip { reason: "psi_cpu 70.0 > 60 for 3 samples".into(), since: 1_760_000_000, memory: false }) };
+    let t = GuardView { trip: Some(Trip { reason: "psi_cpu 70.0 > 60 for 3 samples".into(), since: 1_760_000_000,
+                                          memory: false }) };
     let tripped = heartbeat_body("w", rungs, "en-1", Some("j1".into()), Some(&t));
-    assert_eq!(tripped["guard"], serde_json::json!({"state": "tripped", "reason": "psi_cpu 70.0 > 60 for 3 samples", "since": 1_760_000_000u64}));
+    assert_eq!(tripped["guard"], serde_json::json!({"state": "tripped", "reason": "psi_cpu 70.0 > 60 for 3 samples",
+                                                    "since": 1_760_000_000u64}));
     assert_eq!(tripped["busyJobId"], "j1");
 }
 
@@ -152,8 +160,8 @@ fn profile_mid_is_exactly_the_eval_arm_flags() {
         apply_profile(&mut a, p);
         a
     };
-    let arm = ["--router", "keywords", "--k", "8", "--n-predict", "250", "--no-typed-fallback", "--no-answer-extend", "--no-answer-check",
-               "--no-operator-list-check"];
+    let arm = ["--router", "keywords", "--k", "8", "--n-predict", "250", "--no-typed-fallback", "--no-answer-extend",
+               "--no-answer-check", "--no-operator-list-check"];
     for (profile, budget) in [("mid", "3600"), ("mid6k", "6000")] {
         let mut flags = vec!["q", "--profile", "full", "--max-context-tokens", budget];
         flags.extend(arm);

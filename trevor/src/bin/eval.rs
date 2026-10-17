@@ -145,7 +145,8 @@ fn print_record(r: &RunRecord) {
     }
     if let Some(c) = &r.vs_baseline {
         println!(
-            "  vs {}: recall@10 {:+.3} [{:+.3}, {:+.3}], paired t p={:.3}; hit@10 lost {} gained {} (McNemar p={:.3}) -> {:?}",
+            "  vs {}: recall@10 {:+.3} [{:+.3}, {:+.3}], paired t p={:.3}; \
+             hit@10 lost {} gained {} (McNemar p={:.3}) -> {:?}",
             c.baseline_run_id,
             c.delta,
             c.ci95.0,

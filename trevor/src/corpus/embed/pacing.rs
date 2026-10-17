@@ -103,7 +103,8 @@ pub(super) struct Pacer<'a> {
 impl Pacer<'_> {
     /// Before an embedding call: Err(reason) when the run must stop now, after
     /// syncing the checkpoint; otherwise waits out any pause and returns.
-    pub(super) fn before(&mut self, ckpt: &mut Option<Checkpoint>, done: usize, total: usize) -> Result<std::result::Result<(), String>> {
+    pub(super) fn before(&mut self, ckpt: &mut Option<Checkpoint>, done: usize, total: usize)
+        -> Result<std::result::Result<(), String>> {
         let over = |d: Option<Instant>| d.is_some_and(|d| Instant::now() >= d);
         if over(self.deadline) {
             return Ok(Err("max-minutes reached".to_owned()));

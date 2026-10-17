@@ -113,8 +113,9 @@ impl Packer<'_> {
             scene_ordinal: cur[0].0,
             line_start: cur[0].0,
             line_end: cur[cur.len() - 1].0,
-            ..derived::generated_chunk(format!("archive_{}#{:04}", self.char_id, self.ordinal), format!("archive_{}", self.char_id),
-                                       "archive".to_owned(), self.ordinal, vec![self.name.clone()], text, n)
+            ..derived::generated_chunk(format!("archive_{}#{:04}", self.char_id, self.ordinal),
+                                       format!("archive_{}", self.char_id), "archive".to_owned(), self.ordinal,
+                                       vec![self.name.clone()], text, n)
         });
         self.ordinal += 1;
         cur.clear();

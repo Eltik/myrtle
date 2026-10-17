@@ -82,9 +82,10 @@ pub(crate) use http::run;
 const SERVER: &str = "en";
 
 /// Request flags that would change what the service loaded; a job may not give them.
-const LOAD_FLAGS: &[&str] = &["--corpus", "--lore", "--router", "--serve", "--worker", "--port", "--batch", "--out", "--server",
-                              "--model", "--no-game-text", "--model-dir", "--query-onnx", "--allow-query-model-mismatch", "--retrieval",
-                              "--backend", "--canary", "--gate-order", "--horizon-check", "--json-check", "--no-stream"];
+const LOAD_FLAGS: &[&str] = &["--corpus", "--lore", "--router", "--serve", "--worker", "--port", "--batch", "--out",
+                              "--server", "--model", "--no-game-text", "--model-dir", "--query-onnx",
+                              "--allow-query-model-mismatch", "--retrieval", "--backend", "--canary", "--gate-order",
+                              "--horizon-check", "--json-check", "--no-stream"];
 
 /// One question: `POST /v1/ask` body, or a worker job's fields.
 #[derive(Debug, Clone, Deserialize)]
@@ -226,7 +227,7 @@ fn recorded_sha(dir: &str) -> Option<String> {
     meta["chunksSha"].as_str().map(str::to_owned)
 }
 
-const PASSAGES_HEAD: &str = "Trevor could not run its model for this question, so this is not an answer: these are the passages \
-that match the question best.";
-const PASSAGES_NONE: &str = "Trevor could not run its model for this question, and no passage released at or before this \
-reading position matches it.";
+const PASSAGES_HEAD: &str = "Trevor could not run its model for this question, so this is not an answer: these are \
+                             the passages that match the question best.";
+const PASSAGES_NONE: &str = "Trevor could not run its model for this question, and no passage released at or before \
+                             this reading position matches it.";

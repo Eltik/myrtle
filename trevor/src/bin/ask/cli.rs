@@ -364,7 +364,8 @@ pub(crate) fn lore_on(a: &Args) -> bool {
 
 /// The parts of the model router's prompt that `a` turns on.
 pub(crate) fn router_prompt(a: &Args) -> router::RouterPrompt {
-    router::RouterPrompt { source: router_source(a), compare: !a.no_reading_compare, wide_topics: a.lore == LoreSet::V2 }
+    router::RouterPrompt { source: router_source(a), compare: !a.no_reading_compare,
+                           wide_topics: a.lore == LoreSet::V2 }
 }
 
 /// Whether the model router names the source of a retrieval route (default; `--no-router-source` turns it off).
@@ -408,7 +409,11 @@ pub(crate) const P4_DIR: &str = "artifacts/p4";
 
 /// The P4 directory `a` reads: `GAME_TEXT_DIR` when it is built (unless `--no-game-text`), else `P4_DIR`.
 pub(crate) fn p4_dir(a: &Args) -> &'static str {
-    if !a.no_game_text && std::path::Path::new(GAME_TEXT_DIR).join("chunks.jsonl").exists() { GAME_TEXT_DIR } else { P4_DIR }
+    if !a.no_game_text && std::path::Path::new(GAME_TEXT_DIR).join("chunks.jsonl").exists() {
+        GAME_TEXT_DIR
+    } else {
+        P4_DIR
+    }
 }
 
 /// Whether the topic tool serves deep entries for this question (the default, lore v2 only; `--no-deep-topics`):
@@ -497,6 +502,6 @@ pub(crate) fn apply_profile(a: &mut Args, p: Profile) {
 pub(crate) fn tool_options(a: &Args) -> trevor::tools::ToolOptions {
     use trevor::tools::ToolOptions;
     if a.router == RouterKind::Keywords { ToolOptions { canon_v1: a.canon_v1, ..ToolOptions::KEYWORDS } }
-        else { ToolOptions { storylines: !a.no_storylines, exact_recap: !a.recap_substring, is_offset: !a.is_numbering_v1,
-                             canon_v1: a.canon_v1 } }
+        else { ToolOptions { storylines: !a.no_storylines, exact_recap: !a.recap_substring,
+                             is_offset: !a.is_numbering_v1, canon_v1: a.canon_v1 } }
 }

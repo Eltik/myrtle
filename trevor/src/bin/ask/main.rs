@@ -30,7 +30,8 @@ use trevor::tools::Tools;
 
 use crate::answer::{Tables, answer_one};
 use crate::chrono::load_chrono;
-use crate::cli::{Args, LoreSet, P3B_DIR, RetrievalKind, RouterKind, apply_profile, deep_for, p4_dir, retrieval_plan, router_source, tool_options};
+use crate::cli::{Args, LoreSet, P3B_DIR, RetrievalKind, RouterKind, apply_profile, deep_for, p4_dir, retrieval_plan,
+                 router_source, tool_options};
 use crate::detect::source_kind;
 use crate::retrieval::{Runtimes, load_names, load_runtime};
 use crate::routing::{print_route_only, route_question};
@@ -55,7 +56,8 @@ async fn main() -> Result<()> {
     if a.gate_order {
         let f = trevor::search::horizon::ReleaseOrder::write_file(std::path::Path::new("."))?;
         println!("{}: {} stories ({} never visible, {} placed by date), {} dated sources, {} eras",
-                 trevor::search::horizon::GATE_ORDER_PATH, f.story_order.len(), f.never.len(), f.dated.len(), f.source_pos.len(), f.eras.len());
+                 trevor::search::horizon::GATE_ORDER_PATH, f.story_order.len(), f.never.len(), f.dated.len(),
+                 f.source_pos.len(), f.eras.len());
         return Ok(());
     }
     if let (Some(b), true) = (&a.batch, a.horizon_check) {
@@ -65,7 +67,8 @@ async fn main() -> Result<()> {
         // P4 (P3b plus the module stories, voice lines, IS, enemies, outfits and items) only for a question that names
         // one of those sources (`source_kind`); with the model router naming the source, the corpus follows its route
         // instead (set after routing).
-        let source_q = !router_source(&a) && a.batch.is_none() && a.question.as_deref().is_some_and(|q| source_kind(q).is_some());
+        let source_q = !router_source(&a) && a.batch.is_none()
+            && a.question.as_deref().is_some_and(|q| source_kind(q).is_some());
         let (p3b, p4) = (P3B_DIR, p4_dir(&a));
         a.runtime.corpus = PathBuf::from(if source_q { p4 } else { p3b });
     }
@@ -120,7 +123,8 @@ async fn main() -> Result<()> {
     // Loaded after the table routes, which need no index (a table answer no longer waits on the ONNX load).
     let dense = a.retrieval == RetrievalKind::Hybrid;
     let mut rts = Runtimes { main: load_runtime(&a.runtime, dense, None)?, p4: None, art: None, p4_dir: p4_dir(&a),
-                             switch: corpus_default && router_source(&a), args: a.runtime.clone(), horizon: None, dense };
+                             switch: corpus_default && router_source(&a), args: a.runtime.clone(), horizon: None,
+                             dense };
     if let (Some(b), true) = (&a.batch, a.line_study) {
         return line_study(&mut rts.main, &rts.args, b);
     }

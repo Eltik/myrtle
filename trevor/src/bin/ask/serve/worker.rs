@@ -47,7 +47,8 @@ pub(crate) struct Probe {
 impl Probe {
     /// `cpu` is false while the power guard is tripped (contract v1.1 section 2.1).
     async fn rungs(&self, guard: Option<&GuardView>) -> serde_json::Value {
-        let cf = self.cf_models.as_ref().is_some_and(|m| canary_passing(&self.canary, m, trevor::util::unix_now()).is_some());
+        let cf = self.cf_models.as_ref()
+            .is_some_and(|m| canary_passing(&self.canary, m, trevor::util::unix_now()).is_some());
         let cpu = !guard.is_some_and(GuardView::tripped)
             && matches!(self.http.get(format!("{}/health", self.llama)).timeout(Duration::from_secs(5)).send().await,
                         Ok(r) if r.status().is_success());
@@ -58,7 +59,8 @@ impl Probe {
 /// The heartbeat body; `guard` is None when the guard is off (`TREVOR_GUARD=0`), which leaves the v1 body unchanged.
 pub(crate) fn heartbeat_body(worker_id: &str, rungs: serde_json::Value, corpus_version: &str, busy: Option<String>,
                              guard: Option<&GuardView>) -> serde_json::Value {
-    let mut body = serde_json::json!({"workerId": worker_id, "rungs": rungs, "corpusVersion": corpus_version, "busyJobId": busy});
+    let mut body = serde_json::json!({"workerId": worker_id, "rungs": rungs, "corpusVersion": corpus_version,
+                                      "busyJobId": busy});
     if let Some(g) = guard {
         body["guard"] = serde_json::to_value(g.status()).unwrap_or_default();
     }
@@ -67,8 +69,8 @@ pub(crate) fn heartbeat_body(worker_id: &str, rungs: serde_json::Value, corpus_v
 
 /// A heartbeat every `every`, and one at once whenever the guard trips or recovers (the backend settles a claimed job's
 /// rung by the last heartbeat, so a trip must not wait up to 30 s to be seen).
-pub(crate) async fn heartbeat_loop(api: Api, probe: Probe, corpus_version: String, busy: Arc<Mutex<Option<String>>>, every: Duration,
-                                   mut guard: Option<tokio::sync::watch::Receiver<GuardView>>) {
+pub(crate) async fn heartbeat_loop(api: Api, probe: Probe, corpus_version: String, busy: Arc<Mutex<Option<String>>>,
+                                   every: Duration, mut guard: Option<tokio::sync::watch::Receiver<GuardView>>) {
     loop {
         let view = guard.as_mut().map(|g| g.borrow_and_update().clone());
         let rungs = probe.rungs(view.as_ref()).await;
@@ -116,9 +118,11 @@ impl Service {
 
     /// One worker job: the result body to post. With the power guard on, a `cpu` job never runs the local model while
     /// it is tripped, and a trip during the answer stops it: the job is answered with passages instead.
-    async fn run_job(&mut self, api: &Api, job: WorkerJob, guard: Option<&tokio::sync::watch::Receiver<GuardView>>) -> serde_json::Value {
+    async fn run_job(&mut self, api: &Api, job: WorkerJob, guard: Option<&tokio::sync::watch::Receiver<GuardView>>)
+                     -> serde_json::Value {
         let rung = job.rung.clone().unwrap_or_else(|| "cpu".into());
-        let fail = |e: String| serde_json::json!({"jobId": job.job_id, "workerId": api.worker_id, "ok": false, "error": e});
+        let fail =
+            |e: String| serde_json::json!({"jobId": job.job_id, "workerId": api.worker_id, "ok": false, "error": e});
         let profile = match job.profile.as_deref() {
             Some(p) => p.to_owned(),
             None => default_profile(&rung, trevor::env::var("TREVOR_CPU_PROFILE").as_deref()),
@@ -126,11 +130,13 @@ impl Service {
         let guarded = (rung == "cpu").then_some(guard).flatten();
         if guarded.is_some_and(|g| g.borrow().tripped()) {
             eprintln!("worker: the power guard is tripped; job {} gets passages instead of the cpu rung", job.job_id);
-            return self.passages_body(api, &job, &AskRequest { question: job.question.clone(), horizon: None, horizon_pos: job.horizon_pos,
-                                                                server: job.server.clone(), flags: job.flags.clone(), profile: Some(profile) });
+            return self.passages_body(api, &job, &AskRequest {
+                question: job.question.clone(), horizon: None, horizon_pos: job.horizon_pos, server: job.server.clone(),
+                flags: job.flags.clone(), profile: Some(profile)
+            });
         }
-        let req = AskRequest { question: job.question.clone(), horizon: None, horizon_pos: job.horizon_pos, server: job.server.clone(),
-                               flags: job.flags.clone(), profile: Some(profile) };
+        let req = AskRequest { question: job.question.clone(), horizon: None, horizon_pos: job.horizon_pos,
+                               server: job.server.clone(), flags: job.flags.clone(), profile: Some(profile) };
         let llm = match rung.as_str() {
             "cf" => self.cf.clone().inspect(|l| {
                 if let Some(id) = canary_passing(&canary_path(), &l.model_ids(), trevor::util::unix_now()) {
@@ -174,7 +180,8 @@ impl Service {
                     Ok(j) => Ok((j, rung.clone())),
                     Err((400, e)) => return fail(e),
                     Err((_, e)) => {
-                        eprintln!("worker: job {} failed on the {rung} rung ({e}); answering with passages", job.job_id);
+                        eprintln!("worker: job {} failed on the {rung} rung ({e}); answering with passages",
+                                  job.job_id);
                         self.passages(&req).map(|j| (j, "passages".to_owned()))
                     }
                 }
@@ -218,8 +225,9 @@ impl Service {
                     eprintln!("worker: memory trip: stopped the llama-server this worker started");
                     self.llm = None;
                 } else {
-                    eprintln!("worker: memory trip, but the llama-server at {} was not started by this worker (--share-server or \
-                               already running); it is left running and no cpu job uses it until the guard recovers", self.a.server);
+                    eprintln!("worker: memory trip, but the llama-server at {} was not started by this worker \
+                               (--share-server or already running); it is left running and no cpu job uses it \
+                               until the guard recovers", self.a.server);
                 }
                 self.guard_stopped = true;
             }
@@ -228,12 +236,14 @@ impl Service {
                 a.no_wait = true;
                 match connect_local(&a).await {
                     Ok((l, s)) => {
-                        eprintln!("worker: guard recovered; llama-server {}", if s.is_some() { "started again" } else { "connected" });
+                        eprintln!("worker: guard recovered; llama-server {}",
+                                  if s.is_some() { "started again" } else { "connected" });
                         self.llm = Some(l);
                         self.server = s;
                         self.guard_stopped = false;
                     }
-                    Err(e) => eprintln!("worker: guard recovered, but no llama-server yet ({e:#}); trying again after the next poll"),
+                    Err(e) => eprintln!("worker: guard recovered, but no llama-server yet ({e:#}); \
+                                         trying again after the next poll"),
                 }
             }
             _ => {}
@@ -254,7 +264,8 @@ pub(super) async fn pull(svc: &mut Service, base: &str) -> Result<()> {
     }
     let busy = Arc::new(Mutex::new(None::<String>));
     let every = Duration::from_secs(trevor::env::parse_or("TREVOR_HEARTBEAT_SECS", 30));
-    let probe = Probe { http, llama: svc.llm.as_ref().and_then(Llm::llama_base).unwrap_or(&svc.a.server).trim_end_matches('/').to_owned(),
+    let probe = Probe { http, llama: svc.llm.as_ref().and_then(Llm::llama_base).unwrap_or(&svc.a.server)
+                                         .trim_end_matches('/').to_owned(),
                         cf_models: svc.cf.as_ref().map(Llm::model_ids), canary: canary_path() };
     let guard = GuardConfig::from_env().map(|cfg| {
         eprintln!("worker: power guard on ({cfg:?})");
@@ -265,9 +276,11 @@ pub(super) async fn pull(svc: &mut Service, base: &str) -> Result<()> {
     if guard.is_none() {
         eprintln!("worker: power guard off (TREVOR_GUARD=0)");
     }
-    let hb = tokio::spawn(heartbeat_loop(api.clone(), probe, svc.corpus_version.clone(), Arc::clone(&busy), every, guard.clone()));
+    let hb = tokio::spawn(heartbeat_loop(api.clone(), probe, svc.corpus_version.clone(), Arc::clone(&busy), every,
+                                         guard.clone()));
     eprintln!("worker {}: polling {} ({}; cf {}, local model {})", api.worker_id, api.base, svc.corpus_version,
-              svc.cf.as_ref().map_or("off".to_owned(), |l| l.model_ids().join(",")), svc.llm.as_ref().map_or("none", |l| l.model.as_str()));
+              svc.cf.as_ref().map_or("off".to_owned(), |l| l.model_ids().join(",")),
+              svc.llm.as_ref().map_or("none", |l| l.model.as_str()));
     let mut term = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())?;
     loop {
         if let Some(g) = &guard {
@@ -287,8 +300,16 @@ pub(super) async fn pull(svc: &mut Service, base: &str) -> Result<()> {
                 Ok(b) => serde_json::from_slice::<WorkerJob>(&b),
                 Err(e) => { eprintln!("worker: reading a job failed: {e}"); continue; }
             },
-            Ok(r) => { eprintln!("worker: next answered {}", r.status()); tokio::time::sleep(Duration::from_secs(10)).await; continue; }
-            Err(e) => { eprintln!("worker: next failed: {e}"); tokio::time::sleep(Duration::from_secs(10)).await; continue; }
+            Ok(r) => {
+                eprintln!("worker: next answered {}", r.status());
+                tokio::time::sleep(Duration::from_secs(10)).await;
+                continue;
+            }
+            Err(e) => {
+                eprintln!("worker: next failed: {e}");
+                tokio::time::sleep(Duration::from_secs(10)).await;
+                continue;
+            }
         };
         let job = match job {
             Ok(j) => j,

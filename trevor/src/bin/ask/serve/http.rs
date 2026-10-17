@@ -28,7 +28,8 @@ pub(crate) async fn run(a: Args, corpus_default: bool, tables: Tables, chrono: C
 
 async fn listen(svc: &mut Service, port: u16) -> Result<()> {
     let listener = TcpListener::bind(("127.0.0.1", port)).await.with_context(|| format!("binding 127.0.0.1:{port}"))?;
-    eprintln!("serve: http://127.0.0.1:{port} ({}, model {})", svc.corpus_version, svc.llm.as_ref().map_or("none", |l| l.model.as_str()));
+    eprintln!("serve: http://127.0.0.1:{port} ({}, model {})", svc.corpus_version,
+              svc.llm.as_ref().map_or("none", |l| l.model.as_str()));
     let mut term = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())?;
     loop {
         let mut s = tokio::select! {
@@ -46,7 +47,8 @@ async fn listen(svc: &mut Service, port: u16) -> Result<()> {
 
 /// One request: read it, answer it, close.
 async fn handle(svc: &mut Service, s: &mut TcpStream) -> Result<()> {
-    let (method, path, body) = tokio::time::timeout(Duration::from_secs(10), read_request(s)).await.context("request timed out")??;
+    let (method, path, body) =
+        tokio::time::timeout(Duration::from_secs(10), read_request(s)).await.context("request timed out")??;
     let (code, json) = match (method.as_str(), path.as_str()) {
         ("GET", "/health") => (200, svc.health()),
         ("POST", "/v1/ask") => match serde_json::from_slice::<AskRequest>(&body) {
@@ -59,8 +61,10 @@ async fn handle(svc: &mut Service, s: &mut TcpStream) -> Result<()> {
         _ => (404, serde_json::json!({"error": "not found"})),
     };
     let body = serde_json::to_vec(&json)?;
-    let reason = match code { 200 => "OK", 400 => "Bad Request", 404 => "Not Found", 503 => "Service Unavailable", _ => "Internal Server Error" };
-    let head = format!("HTTP/1.1 {code} {reason}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", body.len());
+    let reason = match code { 200 => "OK", 400 => "Bad Request", 404 => "Not Found", 503 => "Service Unavailable",
+                              _ => "Internal Server Error" };
+    let head = format!("HTTP/1.1 {code} {reason}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\
+                        Connection: close\r\n\r\n", body.len());
     s.write_all(head.as_bytes()).await?;
     s.write_all(&body).await?;
     s.shutdown().await?;
