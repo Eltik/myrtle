@@ -2,12 +2,12 @@
 
 This adds to `trevor-contract-v1.md` and binds the same way: backend, worker, scripts and frontend implement exactly this. JSON is camelCase.
 
-## 0. Ian's goals (2026-10-17)
+## 0. Goals (2026-10-17)
 
 1. Every question gets a real Trevor answer.
 2. Pre-generated answers regenerate when a game update lands.
 3. Questions are answered concurrently at the scale of 10,000+ users.
-4. When the model uses too much power, Trevor fails safe quietly and pings Ian on Discord.
+4. When the model uses too much power, Trevor fails safe quietly and posts an alert to the maintainers' Discord channel.
 5. The stories page gets an "Ask Trevor" tab for any lore question.
 
 ## 1. Capacity and the scaling model
@@ -24,10 +24,10 @@ Concurrency is therefore made of four parts.
 - Twins (same normQ, same era) join one open job, as built.
 - 77% of local users share one era bucket (measured 2026-10-17), so a popular question costs one model call per era per version.
 
-**b. Admission control** (backend, per rung):
-- `TREVOR_CPU_QUEUE_MAX` (default 6) jobs queued or running per online cpu worker.
-- `TREVOR_CF_QUEUE_MAX` (default 4).
-- `TREVOR_GLOBAL_QUEUE_MAX` (default 200) jobs open in all.
+**b. Admission control** (backend, per rung; defaults and the `TREVOR_ADMISSION=0` kill switch are in the [backend README, Trevor table](../../backend/README.md#trevor)):
+- `TREVOR_CPU_QUEUE_MAX` jobs queued or running per online cpu worker (counted as one worker while none is online). This replaces v1's flat cap; `TREVOR_ADMISSION=0` restores the flat cap.
+- `TREVOR_CF_QUEUE_MAX` jobs queued or running on the `cf` rung.
+- `TREVOR_GLOBAL_QUEUE_MAX` jobs open in all.
 
 When no model rung can take a new job, the ask gets an immediate `passages` answer, labelled "Quick look". If the global cap is not reached, the ask is ALSO queued as a `deferred` job (`trevor_jobs.deferred = true`): workers take deferred jobs only when no normal job is waiting. The full answer then shows in the reader's "My questions" (section 5) when ready.
 
@@ -73,7 +73,7 @@ On macOS, pressure level 4 or a thermal warning also trips it.
 
 ### 2.2 Backend alerts (Discord, the existing `DISCORD_ALERT_WEBHOOK` of `core::alerts`)
 
-Each alert kind fires at most once per `TREVOR_ALERT_COOLDOWN_SECS` (default 1800) and sends one "recovered" message when it clears. Kinds:
+Each alert kind fires at most once per `TREVOR_ALERT_COOLDOWN_SECS` (default in the [backend README, Trevor table](../../backend/README.md#trevor)) and sends one "recovered" message when it clears. Kinds:
 
 | kind | fires when |
 |---|---|
@@ -88,7 +88,7 @@ Alerts never block a request; a failed webhook is logged and swallowed (as `core
 
 ### 2.3 Master switch
 
-`TREVOR_MODE` = `on` (default) | `passages` | `off`.
+`TREVOR_MODE` = `on` (default) | `passages` | `off` (the exact behaviour of each value is in the [backend README, Trevor table](../../backend/README.md#trevor)).
 - `passages`: every ask is answered at once from passages, and nothing is queued.
 - `off`: ask returns 503 "Trevor is resting", while panels and cached answers still serve.
 
@@ -127,7 +127,7 @@ The script treats a 409 as done, and any other failure as an `update_failed` ale
 
 - **`mid`** = the eval winner on E2B: keyword router, k 8, a 3,600-token passage budget, 250 output tokens, one model call.
   - Measured: gold correct 57 of 131 against 42 for slim; fits a 4,096 slot.
-  - `cpu` uses `mid` by default.
+  - `cpu` uses `mid` by default; `TREVOR_CPU_PROFILE=slim` restores v1's `slim` (see the [backend README, Trevor table](../../backend/README.md#trevor)).
   - `slim` stays as built; `full` is for `cf`.
 - **`mid6k`** (6,000-token budget, needs a 12,288-token slot, gold 73) is an opt-in profile for a cpu worker started with that slot size.
 

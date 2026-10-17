@@ -1,14 +1,14 @@
 # Trevor contract v1: backend, worker, publish (2026-10-16)
 
-This is the binding interface for the build in `trevor-integration-plan-v3.md`. The backend (`backend/src/app/services/trevor/`), the worker (`trevor/src/bin/ask/serve.rs`, `ask --worker`) and the publish client (`trevor/scripts/`) all implement exactly this. Change it here first. JSON is camelCase. It supersedes `trevor-integration.md` section 8 where they differ.
+This is the binding interface for the build in `trevor-integration-plan-v3.md`. The backend (`backend/src/app/services/trevor/`), the worker (`trevor/src/bin/ask/serve/`, `ask --worker`) and the publish client (`trevor/scripts/`) all implement exactly this. Change it here first. JSON is camelCase. It supersedes `trevor-integration.md` section 8 where they differ.
 
 ## 1. One spoiler scale: `gatePos`
 
 - Every story has one integer rank, its **gatePos**, which is its 1-based position in Trevor's EN release order.
   - The order is the panel builder's: reading-guide position, then storySort, then story-table file order, which breaks every tie.
-  - Trevor's `horizon.rs`, the panels, `trevor_panels.gate_pos` and `trevor_answers.gate_pos` all use this one scale. No component computes its own order.
+  - Trevor's horizon (`src/search/horizon/`), the panels, `trevor_panels.gate_pos` and `trevor_answers.gate_pos` all use this one scale. No component computes its own order.
 - **Eras** are the panel builder's 22 boundaries. An era is `{id, name, position}`, where `position` is a gatePos. Each version manifest carries `storyOrder` (story ids in gatePos order) and `eras`.
-- **Horizon from the user's profile (Ian, 2026-10-16).** The backend owns it.
+- **Horizon from the user's profile (decided 2026-10-16).** The backend owns it.
   - `profilePos` = the maximum gatePos over the stories the signed-in user has read (`story_progress`), using the active version's `trevor_panels.gate_pos`. A reader with no progress gets gatePos 0, meaning nothing has been released yet.
   - A request may name a `horizonStory` (the story being read now). Then `pos = min(gatePos(horizonStory), profilePos)`. A request can lower the horizon below the profile, never raise it.
   - The job's horizon is the era boundary at or before `pos`: `eraPos = max(era.position <= pos)`, or 0. Answers are cached by (version, server, qkey, eraPos). The response says `spoilerSafeUpTo: {eraId, name, position}`, or null for eraPos 0.
@@ -21,11 +21,11 @@ This is the binding interface for the build in `trevor-integration-plan-v3.md`. 
 | rung | what | when the backend picks it |
 |---|---|---|
 | `cache` | Postgres `trevor_answers` hit | always tried first |
-| `cf` | Cloudflare Workers AI, full profile | the worker's last heartbeat reports `cf: true`, and today's Neuron ledger is below `TREVOR_CF_DAILY_NEURONS` (default 9000) minus `TREVOR_CF_SUMMARY_RESERVE` (default 1000) |
-| `cpu` | local llama-server (E2B on the VPS, any GGUF in dev), slim profile | the heartbeat reports `cpu: true`, and fewer than `TREVOR_CPU_QUEUE_MAX` (default 6) jobs are queued or running on this rung |
+| `cf` | Cloudflare Workers AI, full profile | the worker's last heartbeat reports `cf: true`, and today's Neuron ledger is below `TREVOR_CF_DAILY_NEURONS` minus `TREVOR_CF_SUMMARY_RESERVE` (defaults in the [backend README, Trevor table](../../backend/README.md#trevor)) |
+| `cpu` | local llama-server (E2B on the VPS, any GGUF in dev), slim profile in v1 (`mid` since v1.1 section 4) | the heartbeat reports `cpu: true`, and fewer than `TREVOR_CPU_QUEUE_MAX` jobs are queued or running on this rung (a flat cap in v1; per online cpu worker since v1.1 section 1b) |
 | `passages` | no model: top cited passages | otherwise, and on any model failure |
 
-`profile` is `full` or `slim`. `cf` uses `full`, `cpu` uses `slim`, and `passages` ignores it.
+`profile` is `full` or `slim`. `cf` uses `full`, `cpu` uses `slim`, and `passages` ignores it. **Superseded by v1.1 section 4:** `cpu` now uses `mid` by default, and `TREVOR_CPU_PROFILE=slim` restores `slim`.
 - The slim profile: keyword router, k 5, 2,000 context tokens, 250 output tokens, no typed fallback, no answer extension, no second-look retries.
 - The full profile is today's default pipeline.
 
@@ -33,7 +33,7 @@ This is the binding interface for the build in `trevor-integration-plan-v3.md`. 
 
 ## 3. Worker API
 
-The worker authenticates with header `x-trevor-worker-key: <TREVOR_WORKER_KEY>`, compared in constant time. An empty configured key disables the worker routes with a 503. The global service key is NOT accepted on these routes, and the worker key is accepted nowhere else.
+The worker authenticates with header `x-trevor-worker-key: <TREVOR_WORKER_KEY>`, compared in constant time. An empty configured key disables the worker routes with a 503. The global service key is NOT accepted on these routes, and the worker key is accepted nowhere else (the worker routes and the publish route `POST /api/trevor/versions`; a valid worker key also exempts the request from the per-IP rate limiter). Kill switch: `TREVOR_SCOPED_WORKER_KEY=0` restores the pre-v1 gate, where these routes take only the global service key (`x-service-key`) and the worker key is accepted nowhere; see the [backend README, Trevor table](../../backend/README.md#trevor).
 
 **`POST /api/trevor/worker/next`** takes `{workerId}`.
 - It long-polls up to 20 s, woken by a `tokio::sync::Notify` when a job is enqueued.
@@ -109,4 +109,4 @@ Migration v039, still unapplied, is amended in place:
 - New table `trevor_workers`.
 - New table `trevor_neurons(day date PK, neurons int)`.
 - Answers live in Postgres only: no Redis copies of answers or panels. Redis keeps the quota counters.
-- Queue: a queued job expires after `TREVOR_QUEUE_TTL_SECS` (default 600). A job stale while running is requeued once, then failed. The sweep runs on a 60 s background tick, not on every poll.
+- Queue: a queued job expires after `TREVOR_QUEUE_TTL_SECS` (default in the [backend README, Trevor table](../../backend/README.md#trevor)). A job stale while running is requeued once, then failed. The sweep runs on a 60 s background tick, not on every poll.
