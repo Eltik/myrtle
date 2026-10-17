@@ -6,7 +6,7 @@ use std::path::Path;
 use anyhow::{Result, bail};
 use trevor::eval::goldset::{Anchor, ClosedBook, GoldItem, Review, Stratum};
 use trevor::goldgen::filters::fnv1a;
-use trevor::goldgen::llm::Llm;
+use trevor::llm::Llm;
 use trevor::goldgen::{ClosedBookAnswer, Filtered, Generated, Judged, self as gg, sha16};
 use trevor::search::pipeline::{Mode, RetrievalConfig};
 use trevor::search::runtime::{Runtime, RuntimeArgs};

@@ -6,7 +6,7 @@ use std::path::Path;
 use anyhow::Result;
 use futures::StreamExt as _;
 use trevor::eval::goldset::Stratum;
-use trevor::goldgen::llm::{Llm, Request};
+use trevor::llm::{Llm, Request};
 use trevor::goldgen::sample::SampleItem;
 use trevor::goldgen::{Generated, self as gg, sha16};
 use trevor::search::store::ChunkStore;

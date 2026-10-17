@@ -314,7 +314,7 @@ impl SseLines {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::goldgen::llm::{Llm, Request};
+    use crate::llm::{Llm, Request};
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
     /// A one-route HTTP server: each request's model id picks a canned (status, content type, body).
@@ -400,11 +400,11 @@ mod tests {
         ]).await;
         let cfg = OpenAiConfig { url, token: None, models: vec!["m".into()], thinking: Thinking::Omit, timeout_secs: 10, concurrency: 1 };
         let llm = Llm::openai(cfg).unwrap();
-        let g = include_str!("../../../prompts/form.gbnf");
+        let g = include_str!("../../prompts/form.gbnf");
         let c = llm.complete(&Request::greedy("sys", "Q: x", Some(g), 80, &[])).await.unwrap();
         assert_eq!(c.content, "{\"form\": \"fact\"}");
         let e = llm.complete(&Request::greedy("sys", "Q: y", Some(g), 80, &[])).await.unwrap_err();
-        assert!(crate::goldgen::llm::is_json_invalid(&e));
+        assert!(crate::llm::is_json_invalid(&e));
         let u = llm.usage();
         assert_eq!((u.json_calls, u.json_retries, u.json_failures, u.calls), (2, 2, 1, 4));
         assert_eq!(h.await.unwrap()[0], "m null ");

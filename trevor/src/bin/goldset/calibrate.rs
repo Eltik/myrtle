@@ -5,7 +5,7 @@ use std::path::Path;
 
 use anyhow::{Context, Result};
 use trevor::goldgen::filters::fnv1a;
-use trevor::goldgen::llm::Llm;
+use trevor::llm::Llm;
 use trevor::goldgen::sample;
 use trevor::goldgen::{Filtered, Generated, self as gg};
 use trevor::search::store::ChunkStore;

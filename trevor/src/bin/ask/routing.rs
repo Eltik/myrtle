@@ -2,7 +2,7 @@
 //! the `--route-only` output.
 
 use anyhow::{Context, Result};
-use trevor::goldgen::llm::Llm;
+use trevor::llm::Llm;
 use trevor::router;
 use trevor::search::runtime::Runtime;
 use trevor::tools::{Route, ToolError, Tools, TopicPassage};

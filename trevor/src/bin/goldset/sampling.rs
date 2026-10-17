@@ -5,7 +5,7 @@ use std::path::Path;
 
 use anyhow::{Context, Result};
 use trevor::eval::goldset::Stratum;
-use trevor::goldgen::llm::{Llm, Request};
+use trevor::llm::{Llm, Request};
 use trevor::goldgen::sample::{self, SampleItem};
 use trevor::goldgen::{self as gg};
 use trevor::search::store::ChunkStore;

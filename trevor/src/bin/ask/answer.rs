@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use trevor::corpus::chunk::Chunk;
-use trevor::goldgen::llm::{Llm, Request, is_json_invalid};
+use trevor::llm::{Llm, Request, is_json_invalid};
 use trevor::search::pipeline::{Mode, RetrievalConfig};
 use trevor::search::runtime::Runtime;
 use trevor::tools::{AnswerConstraint, Route, Tools, TopicPassage, norm};

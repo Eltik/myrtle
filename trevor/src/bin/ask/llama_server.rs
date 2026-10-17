@@ -3,7 +3,7 @@
 use std::path::PathBuf;
 
 use anyhow::{Context, Result};
-use trevor::goldgen::llm::{Llm, OpenAiConfig};
+use trevor::llm::{Llm, OpenAiConfig};
 
 use crate::cli::{Args, BackendKind};
 

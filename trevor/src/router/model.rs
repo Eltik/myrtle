@@ -3,7 +3,7 @@
 
 use anyhow::Result;
 
-use crate::goldgen::llm::{Llm, Request};
+use crate::llm::{Llm, Request};
 use crate::tools::Route;
 
 pub const ROUTER_SYSTEM: &str = include_str!("../../prompts/router.system.txt");

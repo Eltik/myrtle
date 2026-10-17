@@ -16,7 +16,6 @@
 //! families, so the judge is not grading its own generations.
 
 pub mod filters;
-pub mod llm;
 pub mod sample;
 
 use serde::{Deserialize, Serialize};

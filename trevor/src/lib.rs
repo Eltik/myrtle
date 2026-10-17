@@ -9,6 +9,7 @@ pub mod env;
 pub mod eval;
 pub mod goldgen;
 pub mod host;
+pub mod llm;
 pub mod router;
 pub mod search;
 pub mod tools;

@@ -7,7 +7,7 @@ use std::io::Write as _;
 use std::path::Path;
 
 use anyhow::{Context, Result};
-use trevor::goldgen::llm::Llm;
+use trevor::llm::Llm;
 use trevor::search::runtime::Runtime;
 use trevor::tools::{Tools, norm};
 
@@ -24,7 +24,7 @@ use crate::retrieval::{
 };
 use crate::routing::{is_ending_route, route_question};
 use crate::scenes::{character_scenes, person_forms, scoped_scenes};
-use crate::server::connect_or_spawn;
+use crate::llama_server::connect_or_spawn;
 
 /// The non-blank lines of a batch file, each parsed as JSON. The file is read up front; a line that does not parse
 /// fails when the loop reaches it, after the lines before it have printed.

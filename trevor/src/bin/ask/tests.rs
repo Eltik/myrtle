@@ -106,7 +106,7 @@ fn serve_request_and_result_schema() {
 
 #[test]
 fn serve_reads_a_request_with_its_body() {
-    use crate::serve::read_request;
+    use crate::serve::http::read_request;
     let rt = tokio::runtime::Builder::new_current_thread().build().unwrap();
     let raw = b"POST /v1/ask HTTP/1.1\r\nHost: x\r\ncontent-length: 16\r\n\r\n{\"question\":\"Q\"}";
     let (m, p, b) = rt.block_on(read_request(&mut &raw[..])).unwrap();
@@ -126,7 +126,7 @@ async fn scripted(statuses: Vec<u16>) -> (String, tokio::task::JoinHandle<Vec<(S
         let mut seen = Vec::new();
         for status in statuses {
             let (mut s, _) = l.accept().await.unwrap();
-            let (_, path, body) = crate::serve::read_request(&mut s).await.unwrap();
+            let (_, path, body) = crate::serve::http::read_request(&mut s).await.unwrap();
             seen.push((path, serde_json::from_slice(&body).unwrap_or(serde_json::Value::Null)));
             let head = format!("HTTP/1.1 {status} X\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
             s.write_all(head.as_bytes()).await.unwrap();
@@ -139,7 +139,7 @@ async fn scripted(statuses: Vec<u16>) -> (String, tokio::task::JoinHandle<Vec<(S
 
 #[tokio::test]
 async fn worker_result_retries_then_spools_and_resends_on_start() {
-    use crate::serve::{Api, Posted, deliver, resend_spool};
+    use crate::serve::delivery::{Api, Posted, deliver, resend_spool};
     let spool = std::env::temp_dir().join(format!("trevor-spool-test-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&spool);
     let api = |base: String| Api { http: reqwest::Client::new(), base, key: "k".into(), worker_id: "w".into(),
@@ -174,8 +174,8 @@ async fn worker_result_retries_then_spools_and_resends_on_start() {
 
 #[test]
 fn worker_deltas_send_only_text_that_continues_the_stream() {
-    use crate::serve::DeltaState;
-    use trevor::goldgen::llm::StreamEvent::{Piece, Start};
+    use crate::serve::delivery::DeltaState;
+    use trevor::llm::StreamEvent::{Piece, Start};
     let mut d = DeltaState::default();
     let mut out = String::new();
     for e in [Start, Piece("Talulah".into()), Piece(" leads".into()),
@@ -190,7 +190,10 @@ fn worker_deltas_send_only_text_that_continues_the_stream() {
 
 #[test]
 fn worker_result_parts_keep_the_contract() {
-    use crate::serve::{AskRequest, WorkerJob, canary_passing, fit_result, heartbeat_body, trim_at_line, trim_text};
+    use crate::serve::AskRequest;
+    use crate::serve::canary::canary_passing;
+    use crate::serve::service::{fit_result, trim_at_line, trim_text};
+    use crate::serve::worker::{WorkerJob, heartbeat_body};
     // Citation text: at most 600 characters, cut at a line break when there is one.
     let text = format!("{}\n{}\n{}", "a".repeat(300), "b".repeat(250), "c".repeat(100));
     assert_eq!(trim_at_line(&text, 600), format!("{}\n{}", "a".repeat(300), "b".repeat(250)));
@@ -294,8 +297,9 @@ async fn fake_backend(n: usize) -> (String, tokio::task::JoinHandle<Vec<(String,
 
 #[tokio::test]
 async fn worker_heartbeat_and_deltas_reach_the_fake_backend() {
-    use crate::serve::{Api, Probe, forward_deltas, heartbeat_loop};
-    use trevor::goldgen::llm::StreamEvent::{Piece, Start};
+    use crate::serve::delivery::{Api, forward_deltas};
+    use crate::serve::worker::{Probe, heartbeat_loop};
+    use trevor::llm::StreamEvent::{Piece, Start};
     let (base, h) = fake_backend(3).await;
     let api = Api { http: reqwest::Client::new(), base, key: "secret".into(), worker_id: "w1".into(), backoff: Vec::new() };
     // A heartbeat while a job is busy: cf off (no canary), cpu off (nothing on the probe port).

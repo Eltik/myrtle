@@ -6,7 +6,7 @@ use std::path::Path;
 
 use anyhow::{Result, bail};
 use futures::StreamExt as _;
-use trevor::goldgen::llm::{Llm, Request};
+use trevor::llm::{Llm, Request};
 use trevor::goldgen::{ClosedBookAnswer, Filtered, Generated, Judged, self as gg};
 use trevor::search::store::ChunkStore;
 

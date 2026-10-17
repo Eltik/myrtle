@@ -2,7 +2,7 @@
 
 use anyhow::Result;
 use serde::Deserialize;
-use trevor::goldgen::llm::{Llm, Request};
+use trevor::llm::{Llm, Request};
 
 use crate::detect::{is_canon_question, is_source_question, is_synthesis_question, is_time_question};
 

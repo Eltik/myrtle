@@ -18,14 +18,14 @@ mod retrieval;
 mod routing;
 mod answer;
 mod batch;
-mod server;
+mod llama_server;
 mod serve;
 mod guard;
 
 use std::path::PathBuf;
 
 use anyhow::{Context, Result};
-use trevor::goldgen::llm::Llm;
+use trevor::llm::Llm;
 use trevor::tools::Tools;
 
 use crate::answer::{Tables, answer_one};
@@ -35,7 +35,7 @@ use crate::detect::source_kind;
 use crate::retrieval::{Runtimes, load_names, load_runtime};
 use crate::routing::{print_route_only, route_question};
 use crate::scenes::line_study;
-use crate::server::{Spawned, connect_or_spawn};
+use crate::llama_server::{Spawned, connect_or_spawn};
 
 #[tokio::main]
 async fn main() -> Result<()> {

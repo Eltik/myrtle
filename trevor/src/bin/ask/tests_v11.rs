@@ -129,7 +129,7 @@ fn guard_config_reads_the_contract_env_and_the_kill_switch() {
 
 #[test]
 fn heartbeat_carries_the_guard_only_when_it_is_on() {
-    use crate::serve::heartbeat_body;
+    use crate::serve::worker::heartbeat_body;
     let rungs = serde_json::json!({"cf": false, "cpu": false});
     let off = heartbeat_body("w", rungs.clone(), "en-1", None, None);
     assert_eq!(off, serde_json::json!({"workerId": "w", "rungs": rungs, "corpusVersion": "en-1", "busyJobId": null}), "TREVOR_GUARD=0: v1 body");
@@ -171,7 +171,7 @@ fn profile_mid_is_exactly_the_eval_arm_flags() {
 
 #[test]
 fn the_cpu_rung_defaults_to_mid_and_slim_is_the_kill_switch() {
-    use crate::serve::default_profile;
+    use crate::serve::worker::default_profile;
     assert_eq!(default_profile("cf", None), "full");
     assert_eq!(default_profile("cf", Some("slim")), "full");
     assert_eq!(default_profile("cpu", None), "mid");
