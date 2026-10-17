@@ -109,10 +109,7 @@ const panelSchema = z.object({
 });
 
 export type TrevorPanel = z.output<typeof panelSchema>;
-export type TrevorCharacter = z.output<typeof character>;
-export type TrevorTerm = z.output<typeof term>;
 export type TrevorSuggestion = z.output<typeof suggestion>;
-export type TrevorPanelEra = z.output<typeof era>;
 
 /** A schema-1 panel, or null for anything else. */
 export function parsePanel(value: unknown): TrevorPanel | null {

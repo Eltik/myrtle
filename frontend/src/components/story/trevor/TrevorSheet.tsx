@@ -29,14 +29,14 @@ import { trevorPanelsQueryOptions, trevorStatusQueryOptions } from "#/lib/api/tr
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { parsePanel, type TrevorPanel } from "#/lib/trevor/panels";
-import { type IAskDeps, useTrevorThread } from "#/lib/trevor/useTrevorAsk";
+import { type IAskDeps, useTrevorThread } from "#/lib/trevor/useTrevorThread";
 import { AskChat } from "./AskChat";
 import { RecapSection, TermsSection, WhoSection } from "./PanelSections";
 import type { messages } from "./trevor.messages";
 
 type TrevorT = TypedT<typeof messages>;
 
-export type TrevorTab = "ask" | "recap" | "who" | "terms";
+type TrevorTab = "ask" | "recap" | "who" | "terms";
 
 export interface ITrevorSheetProps {
     storyId: string;
@@ -53,9 +53,8 @@ export function TrevorSheet({ storyId, open, onOpenChange, onJumpLine, askDeps }
     const phone = useMediaQuery("max-sm");
     const { user } = useAuth();
     const signedIn = user !== null;
-    // Polled while the sheet is open, so the offline notice and the panel
-    // version follow the worker; the backend caches it for 15 s anyway.
-    const status = useQuery({ ...trevorStatusQueryOptions(), enabled: open, refetchInterval: open ? 30_000 : false });
+    // Polled while the sheet is open, so the offline notice and the panel version follow the worker.
+    const status = useQuery(trevorStatusQueryOptions(open));
     // The panel waits for the status once, so its request names the active
     // version (`?v=`) and the backend can answer it immutable.
     const panels = useQuery({ ...trevorPanelsQueryOptions(storyId, status.data?.activeVersion ?? null), enabled: open && !status.isPending });
@@ -94,7 +93,7 @@ export function TrevorSheet({ storyId, open, onOpenChange, onJumpLine, askDeps }
     );
 }
 
-export interface ITrevorBodyProps {
+interface ITrevorBodyProps {
     panel: TrevorPanel | null;
     loading: boolean;
     failed: boolean;
@@ -105,8 +104,8 @@ export interface ITrevorBodyProps {
     ask: React.ReactNode;
 }
 
-/** The tabs and their content, apart from the sheet so a test can render them inline. */
-export function TrevorBody({ panel, loading, failed, onRetry, tab, onTab, ask }: ITrevorBodyProps): React.ReactElement {
+/** The tabs and their content: Ask (the chat the caller built), then the panel's recap, who and terms. */
+function TrevorBody({ panel, loading, failed, onRetry, tab, onTab, ask }: ITrevorBodyProps): React.ReactElement {
     const t: TrevorT = useT("story");
     const note = (child: React.ReactNode) => <div className="flex flex-col items-center gap-3 py-8 text-center text-muted-foreground text-sm">{child}</div>;
     // A story with no panel (or a panel that failed) still has the chat: only

@@ -17,7 +17,7 @@
  * the reader drops it, and nothing is stored or sent.
  */
 import type { TrevorSpoilerSafe } from "#/types/generated/TrevorSpoilerSafe";
-import { type AskEvent, type AskState, askReducer } from "./askState";
+import { type AskEvent, type AskState, askPending, askReducer, hasJob } from "./askState";
 
 /** The backend's `MAX_OPEN_PER_USER`: open jobs one account may hold. */
 export const MAX_OPEN = 3;
@@ -36,7 +36,7 @@ export interface IAskTurn {
 }
 
 /** A suggested question opened from the panel's prepared answer: no request was made. */
-export interface IBankTurn {
+interface IBankTurn {
     id: number;
     kind: "bank";
     suggestionId: string;
@@ -72,7 +72,7 @@ export function openSlots(thread: IThread): number {
         if (turn.kind !== "ask") continue;
         const s = turn.state;
         if (s.kind === "sending") sending++;
-        else if (s.kind === "queued" || s.kind === "streaming" || s.kind === "offline") jobs.add(s.jobId);
+        else if (hasJob(s)) jobs.add(s.jobId);
     }
     return sending + jobs.size;
 }
@@ -117,27 +117,13 @@ export function threadReducer(thread: IThread, action: ThreadAction, cap: number
     }
 }
 
-/** The ask turn with this id, or undefined. */
-export function askTurn(thread: IThread, id: number): IAskTurn | undefined {
-    const t = thread.turns.find((x) => x.id === id);
-    return t?.kind === "ask" ? t : undefined;
-}
-
 /** Turns not settled yet: waiting, being sent, queued or streaming. */
 export function pendingCount(thread: IThread): number {
-    return thread.turns.filter((t) => t.kind === "ask" && (t.state.kind === "held" || t.state.kind === "sending" || t.state.kind === "queued" || t.state.kind === "streaming")).length;
+    return thread.turns.filter((t) => t.kind === "ask" && askPending(t.state)).length;
 }
 
 function spoilerOf(s: TurnState): TrevorSpoilerSafe | null | undefined {
-    switch (s.kind) {
-        case "queued":
-        case "streaming":
-        case "offline":
-        case "done":
-            return s.spoiler;
-        default:
-            return undefined;
-    }
+    return hasJob(s) || s.kind === "done" ? s.spoiler : undefined;
 }
 
 /**

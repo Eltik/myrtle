@@ -8,7 +8,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import type React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { I18nProvider } from "#/lib/i18n/context";
-import type { IAskDeps } from "#/lib/trevor/useTrevorAsk";
+import type { IAskDeps } from "#/lib/trevor/useTrevorThread";
 import type { TrevorAnswer } from "#/types/generated/TrevorAnswer";
 import type { TrevorStatus } from "#/types/generated/TrevorStatus";
 

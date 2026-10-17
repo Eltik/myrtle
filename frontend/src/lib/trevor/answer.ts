@@ -68,7 +68,7 @@ export function parseAnswer(a: TrevorAnswer): IParsedAnswer {
 }
 
 export type AnswerInline = { kind: "text"; text: string } | { kind: "bold"; text: string } | { kind: "cite"; ns: number[] };
-export type AnswerBlock = { kind: "p"; inlines: AnswerInline[] } | { kind: "ul"; items: AnswerInline[][] };
+type AnswerBlock = { kind: "p"; inlines: AnswerInline[] } | { kind: "ul"; items: AnswerInline[][] };
 
 const CITE = /\[(\d+(?:\s*,\s*\d+)*)\]/g;
 const BULLET = /^\s*(?:[*\-•]|\d+[.)])\s+/;

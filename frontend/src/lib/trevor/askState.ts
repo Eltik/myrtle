@@ -61,9 +61,19 @@ export type AskEvent =
 
 export const ASK_IDLE: AskState = { kind: "idle" };
 
+/** The question has a job on the backend: queued, streaming, or offline (still queued, with no worker to take it). */
+export function hasJob(s: AskState): s is Extract<AskState, { kind: "queued" | "streaming" | "offline" }> {
+    return s.kind === "queued" || s.kind === "streaming" || s.kind === "offline";
+}
+
+/** A watcher follows the question's job now: queued or streaming. */
+export function isFollowed(s: AskState): s is Extract<AskState, { kind: "queued" | "streaming" }> {
+    return s.kind === "queued" || s.kind === "streaming";
+}
+
 /** The job fields of a state that has a job, or null. */
 function jobOf(s: AskState): IJob | null {
-    if (s.kind !== "queued" && s.kind !== "streaming" && s.kind !== "offline") return null;
+    if (!hasJob(s)) return null;
     const job: IJob = { question: s.question, jobId: s.jobId, rung: s.rung, spoiler: s.spoiler };
     if (s.quick) job.quick = s.quick;
     if (s.next) job.next = s.next;

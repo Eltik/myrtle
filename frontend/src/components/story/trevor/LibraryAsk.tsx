@@ -23,24 +23,25 @@
  * to sign in; nothing is requested.
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { HistoryIcon } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { ChatMessage } from "#/components/chat/chat-message";
-import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
-import { Spinner } from "#/components/ui/spinner";
 import { useAuth } from "#/hooks/use-auth";
 import { getMyJobs, trevorMyJobsQueryOptions, trevorPopularQueryOptions, trevorStatusQueryOptions } from "#/lib/api/trevor";
 import { authActions } from "#/lib/auth/store";
-import { useFormatters, useT } from "#/lib/i18n";
+import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { parseAnswer } from "#/lib/trevor/answer";
+import { isFollowed } from "#/lib/trevor/askState";
 import { type IMyJob, jobOpen, toTurnState } from "#/lib/trevor/library";
-import { type IAskDeps, useTrevorThread } from "#/lib/trevor/useTrevorAsk";
+import { type IAskDeps, useTrevorThread } from "#/lib/trevor/useTrevorThread";
 import { cn } from "#/lib/utils";
 import type { TrevorPopularQuestion } from "#/types/generated/TrevorPopularQuestion";
-import { AskChat, TrevorAvatar } from "./AskChat";
+import { AskChat } from "./AskChat";
+import { MyQuestions } from "./MyQuestions";
+import { LISTED_CHIP_CLASS } from "./QuestionChipRow";
+import { TrevorAvatar } from "./TrevorAvatar";
 import type { messages } from "./trevor.messages";
 
 type TrevorT = TypedT<typeof messages>;
@@ -66,7 +67,7 @@ export function LibraryAsk({ active, askDeps }: ILibraryAskProps): React.ReactEl
 
 function SignedIn({ t, active, askDeps }: { t: TrevorT; active: boolean; askDeps?: IAskDeps }): React.ReactElement {
     const queryClient = useQueryClient();
-    const status = useQuery({ ...trevorStatusQueryOptions(), enabled: active, refetchInterval: active ? 30_000 : false });
+    const status = useQuery(trevorStatusQueryOptions(active));
     const popular = useQuery({ ...trevorPopularQueryOptions(true), enabled: active });
     const asker = useTrevorThread(null, askDeps);
     const [older, setOlder] = useState<IMyJob[]>([]);
@@ -86,7 +87,7 @@ function SignedIn({ t, active, askDeps }: { t: TrevorT; active: boolean; askDeps
         wasProgress.current = progress;
     }, [progress, queryClient]);
 
-    const following = new Set(asker.thread.turns.flatMap((x) => (x.kind === "ask" && (x.state.kind === "queued" || x.state.kind === "streaming") ? [x.state.jobId] : [])));
+    const following = new Set(asker.thread.turns.flatMap((x) => (x.kind === "ask" && isFollowed(x.state) ? [x.state.jobId] : [])));
     const openJob = (job: IMyJob) => {
         if (job.jobId && following.has(job.jobId)) return;
         asker.restore(toTurnState(job));
@@ -136,12 +137,7 @@ function SignedIn({ t, active, askDeps }: { t: TrevorT; active: boolean; askDeps
                                         {/* Under 640 px the first 4 only: the chat opens at its end, so a longer list would push the greeting out of view. */}
                                         {questions.map((q, i) => (
                                             <li key={q.question} className={cn("max-w-full", i >= PHONE_CHIPS && "max-sm:hidden")}>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => openPopular(q)}
-                                                    className="max-w-full rounded-2xl border border-border bg-background px-3 py-1.5 text-start text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11"
-                                                    data-trevor-prepared=""
-                                                >
+                                                <button type="button" onClick={() => openPopular(q)} className={LISTED_CHIP_CLASS} data-trevor-prepared="">
                                                     {q.question}
                                                 </button>
                                             </li>
@@ -155,64 +151,6 @@ function SignedIn({ t, active, askDeps }: { t: TrevorT; active: boolean; askDeps
             </div>
             {myQuestions ? <aside className="lg:max-h-[760px] lg:overflow-y-auto">{myQuestions}</aside> : null}
         </section>
-    );
-}
-
-/** The reader's past questions, newest first; each opens into the thread. */
-function MyQuestions({ jobs, loading, failed, hasMore, onMore, onOpen }: { jobs: IMyJob[]; loading: boolean; failed: boolean; hasMore: boolean; onMore: () => void; onOpen: (job: IMyJob) => void }): React.ReactElement {
-    const t: TrevorT = useT("story");
-    const f = useFormatters();
-    return (
-        <section className="flex flex-col gap-2" aria-labelledby="trevor-mine" data-trevor-mine>
-            <h3 id="trevor-mine" className="flex items-center gap-1.5 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
-                <HistoryIcon aria-hidden className="size-3.5" />
-                {t("trevor.library.mine")}
-            </h3>
-            {loading ? (
-                <div className="flex justify-center py-4">
-                    <Spinner className="size-4" />
-                </div>
-            ) : failed ? (
-                <p className="text-muted-foreground text-sm">{t("trevor.library.mineError")}</p>
-            ) : jobs.length === 0 ? (
-                <p className="text-muted-foreground text-sm">{t("trevor.library.mineEmpty")}</p>
-            ) : (
-                <ul className="flex flex-col gap-1.5">
-                    {jobs.map((job) => (
-                        <li key={job.key}>
-                            <button
-                                type="button"
-                                onClick={() => onOpen(job)}
-                                className="flex w-full flex-col gap-1 rounded-lg border border-border bg-background px-3 py-2 text-start transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11"
-                                data-trevor-mine-job={job.jobId ?? job.key}
-                                data-trevor-mine-status={job.status}
-                            >
-                                <span className="line-clamp-2 text-sm">{job.question}</span>
-                                <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground text-xs">
-                                    <JobStatusBadge job={job} t={t} />
-                                    {Number.isNaN(Date.parse(job.createdAt)) ? null : <span className="tabular-nums">{f.relative(new Date(job.createdAt).toISOString())}</span>}
-                                </span>
-                            </button>
-                        </li>
-                    ))}
-                </ul>
-            )}
-            {hasMore && !loading && !failed ? (
-                <Button variant="ghost" size="sm" className="self-start max-sm:h-11" onClick={onMore}>
-                    {t("trevor.library.mineMore")}
-                </Button>
-            ) : null}
-        </section>
-    );
-}
-
-function JobStatusBadge({ job, t }: { job: IMyJob; t: TrevorT }): React.ReactElement {
-    const open = jobOpen(job);
-    return (
-        <Badge variant="outline" className={cn("h-auto py-0 font-normal", open && "border-primary/40 text-foreground", job.status === "failed" && "border-warning/40")}>
-            {open ? <Spinner className="size-3" /> : null}
-            {t(`trevor.library.status.${job.status}`)}
-        </Badge>
     );
 }
 

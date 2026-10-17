@@ -18,7 +18,7 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import * as api from "#/lib/api/trevor";
 import type { AskResponse } from "#/types/generated/AskResponse";
-import type { AskEvent } from "./askState";
+import { type AskEvent, isFollowed } from "./askState";
 import { EMPTY_THREAD, type IAskTurn, type IThread, MAX_OPEN, type TurnState, threadReducer } from "./thread";
 import { createDeltaBuffer, type IDeltaBuffer, type IJobWatch, type IWatchDeps, watchJob } from "./watch";
 
@@ -33,7 +33,7 @@ const DEFAULT_DEPS: IAskDeps = {
     getStatus: api.getStatus,
 };
 
-export interface ITrevorThread {
+interface ITrevorThread {
     thread: IThread;
     ask: (question: string, turnstileToken?: string | null) => void;
     addPrepared: (suggestion: { id: string; question: string; answer: string }) => void;
@@ -111,7 +111,7 @@ export function useTrevorThread(storyId: string | null, deps: IAskDeps = DEFAULT
                 sent.current.add(turn.id);
                 void send(turn);
             }
-            if (s.kind === "queued" || s.kind === "streaming") {
+            if (isFollowed(s)) {
                 live.add(turn.id);
                 const w = watches.current.get(turn.id);
                 if (w && w.jobId !== s.jobId) w.watch.stop();

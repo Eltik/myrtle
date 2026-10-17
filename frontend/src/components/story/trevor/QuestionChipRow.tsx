@@ -13,28 +13,15 @@
  * empty thread only, as before 2026-10-17.
  */
 import type React from "react";
-import type { IThread } from "#/lib/trevor/thread";
-
-export interface IQuestionChip {
-    key: string;
-    question: string;
-    /** The chip carries its answer: picking it adds the answer with no request. */
-    prepared: boolean;
-    onPick: () => void;
-}
+import type { IQuestionChip } from "#/lib/trevor/chips";
 
 /** False only when the build set `VITE_TREVOR_CHIP_ROW=0`. */
 export function chipRowEnabled(): boolean {
     return import.meta.env.VITE_TREVOR_CHIP_ROW !== "0";
 }
 
-const fold = (question: string): string => question.trim().toLowerCase();
-
-/** The chips whose question is not yet in the thread (compared trimmed, case-folded). */
-export function unaskedChips(chips: IQuestionChip[], thread: IThread): IQuestionChip[] {
-    const asked = new Set(thread.turns.map((turn) => fold(turn.kind === "ask" ? turn.state.question : turn.question)));
-    return chips.filter((chip) => !asked.has(fold(chip.question)));
-}
+/** A chip in the empty thread's wrapped list of questions (the panel's suggestions, the era's popular questions). */
+export const LISTED_CHIP_CLASS = "max-w-full rounded-2xl border border-border bg-background px-3 py-1.5 text-start text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11";
 
 export function QuestionChipRow({ label, chips }: { label: string; chips: IQuestionChip[] }): React.ReactElement | null {
     if (chips.length === 0) return null;

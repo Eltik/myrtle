@@ -10,7 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { APIError } from "#/lib/api/_shared";
 import { I18nProvider } from "#/lib/i18n/context";
 import sample from "#/lib/trevor/__fixtures__/panel_act18side_05_beg.json";
-import type { IAskDeps } from "#/lib/trevor/useTrevorAsk";
+import type { IAskDeps } from "#/lib/trevor/useTrevorThread";
 import type { AskResponse } from "#/types/generated/AskResponse";
 import type { JobView } from "#/types/generated/JobView";
 import type { TrevorAnswer } from "#/types/generated/TrevorAnswer";

@@ -9,6 +9,7 @@ import type { TrevorPopular } from "#/types/generated/TrevorPopular";
 import type { TrevorPopularQuestion } from "#/types/generated/TrevorPopularQuestion";
 import type { TrevorSpoilerSafe } from "#/types/generated/TrevorSpoilerSafe";
 import { parseAnswer } from "./answer";
+import { foldQuestion } from "./chips";
 import type { TurnState } from "./thread";
 
 export interface IPopular {
@@ -28,16 +29,14 @@ export interface IMyJobs {
     nextBefore: string | null;
 }
 
-const fold = (question: string): string => question.trim().toLowerCase();
-
 /** The popular list with each question trimmed and a question listed twice kept once. */
 export function parsePopular(body: TrevorPopular): IPopular {
     const questions: TrevorPopularQuestion[] = [];
     const seen = new Set<string>();
     for (const item of body.items) {
         const question = item.question.trim();
-        if (!question || seen.has(fold(question))) continue;
-        seen.add(fold(question));
+        if (!question || seen.has(foldQuestion(question))) continue;
+        seen.add(foldQuestion(question));
         questions.push({ ...item, question });
     }
     return { questions, spoiler: body.spoilerSafeUpTo };

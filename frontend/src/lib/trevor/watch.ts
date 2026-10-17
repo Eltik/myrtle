@@ -27,7 +27,7 @@ import { readSse } from "./sse";
 /** The polling interval the contract's fallback names. */
 export const POLL_MS = 5_000;
 /** At most this many polls (15 minutes at 5 s), past the backend's 600 s queue TTL. */
-export const MAX_POLLS = 180;
+const MAX_POLLS = 180;
 /** A stream silent this long (three of the backend's 15 s keep-alives) is dropped for polling. */
 export const STALL_MS = 45_000;
 

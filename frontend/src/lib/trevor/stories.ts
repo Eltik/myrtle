@@ -9,7 +9,7 @@
  */
 import type { StoryIndex } from "#/types/generated/StoryIndex";
 
-export interface IStoryLabel {
+interface IStoryLabel {
     name: string;
     groupName: string;
     code: string | null;

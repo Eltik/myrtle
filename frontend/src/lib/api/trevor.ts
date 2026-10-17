@@ -94,12 +94,15 @@ export function getStatus(): Promise<TrevorStatus> {
     return getTrevorStatusFn();
 }
 
-export function trevorStatusQueryOptions() {
+/** The status, fetched and polled every 30 s only while `active` (the sheet or the tab on screen). */
+export function trevorStatusQueryOptions(active: boolean) {
     return queryOptions({
         queryKey: ["trevor", "status"],
         queryFn: getStatus,
         staleTime: 15 * 1000,
         retry: 1,
+        enabled: active,
+        refetchInterval: active ? 30_000 : false,
     });
 }
 
