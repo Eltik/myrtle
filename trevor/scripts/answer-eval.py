@@ -83,8 +83,7 @@ def main(gold_path, ans_path):
         sup = [verdict(SUPPORT_SYS, f'PASSAGES:\n{given}\n\nSENTENCE: {s}') for s in sents]
         row.update({'sentences': len(sents), 'supported': sum(sup), 'unsupported': [s for s, v in zip(sents, sup) if not v],
                     'cited': len(a['cited']), 'invalidCitations': a['invalidCitations']})
-        with open(out_path, 'a') as f:
-            f.write(json.dumps(row, ensure_ascii=False) + '\n')
+        common.append_jsonl(out_path, row)
     R = [json.loads(l) for l in open(out_path)]
     A = [r for r in R if r['answerable']]; U = [r for r in R if not r['answerable']]
     n = len(A)

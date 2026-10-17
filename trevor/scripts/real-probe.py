@@ -86,8 +86,7 @@ def stage_judge(ans_path):
         sents = [] if routed else sentences(a['answer'])
         sup = [verdict(SUPPORT_SYS, f'PASSAGES:\n{given}\n\nSENTENCE: {s}') for s in sents]
         row.update({'sentences': len(sents), 'supported': sum(sup)})
-        with open(out, 'a') as f:
-            f.write(json.dumps(row) + '\n')
+        common.append_jsonl(out, row, ensure_ascii=True)
     J = [json.loads(l) for l in open(out)]
     by = collections.defaultdict(list)
     for r in J:

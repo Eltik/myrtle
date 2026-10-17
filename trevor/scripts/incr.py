@@ -18,7 +18,7 @@ and duplicate rows are dropped, so no reader ever sees two rows for one unit.
 import collections, json, os, sys, tempfile, threading
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
-from common import ROOT, load_script, read_jsonl, sha16
+from common import ROOT, append_jsonl, load_script, read_jsonl, sha16
 
 PLAN = os.environ.get('PLAN') == '1'
 IDS_ONLY = os.environ.get('KEY_IDS_ONLY') == '1'
@@ -130,8 +130,7 @@ class Stage:
                 write_jsonl(self.path, self.rows)
             else:
                 self.rows.append(row)
-                with open(self.path, 'a') as f:
-                    f.write(json.dumps(row, ensure_ascii=False) + '\n')
+                append_jsonl(self.path, row)
             self.have[k] = row
 
 
