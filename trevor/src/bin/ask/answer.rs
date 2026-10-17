@@ -7,7 +7,6 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use trevor::corpus::chunk::Chunk;
 use trevor::goldgen::llm::{Llm, Request, is_json_invalid};
-use trevor::router::Knn;
 use trevor::search::pipeline::{Mode, RetrievalConfig};
 use trevor::search::runtime::Runtime;
 use trevor::tools::{AnswerConstraint, Route, Tools, TopicPassage, norm};
@@ -65,10 +64,9 @@ pub(crate) fn table_only(q: &str, text: String) -> Answer {
              invalid_citations: 0, prompt_tokens: 0, ms: 0.0, retry_query: None, form: None, generated: Default::default() }
 }
 
-/// The table tools and the kNN router when `--router knn` loaded it.
+/// The table tools, and what `main` routed for the single question before the index loaded.
 pub(crate) struct Tables {
     pub(crate) tools: Tools,
-    pub(crate) knn: Option<Knn>,
     /// The topic summary the router chose for the single question, routed before the index loads.
     pub(crate) topic: Option<TopicPassage>,
     /// The route of the single question, routed before the index loads.
@@ -419,10 +417,10 @@ summaries; prefer the passages)".into(), text));
 /// The router, with the keyword router as the fallback when the model's JSON did not validate twice (a backend without
 /// grammars, `--backend openai`; a llama.cpp router call is grammar-bound and never fails that way).
 pub(crate) async fn route_checked(q: &str, a: &Args, tables: &mut Tables, llm: Option<&Llm>) -> Result<Routed> {
-    match route_question(q, a, &tables.tools, tables.knn.as_mut(), llm).await {
+    match route_question(q, a, &tables.tools, llm).await {
         Err(e) if is_json_invalid(&e) => {
             let kw = Args { router: RouterKind::Keywords, ..a.clone() };
-            route_question(q, &kw, &tables.tools, tables.knn.as_mut(), llm).await
+            route_question(q, &kw, &tables.tools, llm).await
         }
         r => r,
     }

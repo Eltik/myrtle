@@ -38,55 +38,9 @@ pub(crate) struct Args {
     pub(crate) no_route: bool,
     /// Which router picks a table tool before retrieval: `model` (one grammar-bound call to the answer model),
     /// `keywords` (the keyword rules of 2026-09-29, the kill switch: identical output on all 1,266 real and
-    /// route-check questions), `knn` (nearest labelled examples by embedding, no LLM), `off` (no table tools; the
-    /// policy lines and timeline notes stay, unlike --no-route).
+    /// route-check questions), `off` (no table tools; the policy lines and timeline notes stay, unlike --no-route).
     #[arg(long, value_enum, default_value_t = RouterKind::Model)]
     pub(crate) router: RouterKind,
-    /// Labelled example questions for `--router knn` (written by --label-intents).
-    #[arg(long, default_value = "eval/intents.jsonl")]
-    pub(crate) intents: PathBuf,
-    /// Embedder of the kNN router (models/gte-trevor is the fine-tuned one). Separate from --model-dir, which must
-    /// stay the model the corpus vectors were made with.
-    #[arg(long, default_value = "models/gte-modernbert-base")]
-    pub(crate) knn_model_dir: PathBuf,
-    #[arg(long, default_value = "model_int8.onnx")]
-    pub(crate) knn_onnx: String,
-    /// Neighbours that vote.
-    #[arg(long, default_value_t = 5)]
-    pub(crate) knn_k: usize,
-    /// A table tool needs its nearest example at this cosine or above. 0.80 with --knn-min-share 0.7 is the
-    /// leave-one-out pick on the training 80% of eval/intents.jsonl (2026-09-29, gte-modernbert-base, k 5): test table
-    /// precision 1.000 on 3 answers, recall 0.167; 0 and 0.6 gave precision 0.611 on the training sweep.
-    #[arg(long, default_value_t = 0.80)]
-    pub(crate) knn_min_sim: f32,
-    /// A table tool needs this share of the similarity-weighted vote.
-    #[arg(long, default_value_t = 0.7)]
-    pub(crate) knn_min_share: f32,
-    /// Route a question that is itself a labelled example by the other examples (the route check uses it, so the
-    /// kNN router is not scored on its own labels).
-    #[arg(long)]
-    pub(crate) knn_holdout: bool,
-    /// Label every question of the Reddit (without categories X and P), Discord and route-check sets with the model
-    /// router into this file (resumable); route-check expectations override the model where they conflict.
-    #[arg(long)]
-    pub(crate) label_intents: Option<PathBuf>,
-    /// Paraphrases of the training questions (`--paraphrase-intents`) added to the kNN examples; off by default.
-    #[arg(long)]
-    pub(crate) knn_synth: Option<PathBuf>,
-    /// Write --paraphrases rewrites of every table-labelled training question, each checked by the model router.
-    #[arg(long)]
-    pub(crate) paraphrase_intents: Option<PathBuf>,
-    #[arg(long, default_value_t = 20)]
-    pub(crate) paraphrases: usize,
-    /// The hybrid router takes the kNN decision when its nearest example is at this cosine or above...
-    #[arg(long, default_value_t = 0.92)]
-    pub(crate) hybrid_min_sim: f32,
-    /// ...and its vote share at least this; otherwise it asks the model router.
-    #[arg(long, default_value_t = 0.9)]
-    pub(crate) hybrid_min_share: f32,
-    /// Evaluate the kNN router on a seeded 80/20 split of --intents and exit.
-    #[arg(long)]
-    pub(crate) knn_eval: bool,
     /// Keep the reading guide as it was before it led with the game's Storylines links (2026-09-29).
     #[arg(long)]
     pub(crate) no_storylines: bool,
@@ -581,13 +535,10 @@ pub(crate) enum LoreSet {
 pub(crate) enum RouterKind {
     Model,
     Keywords,
-    Knn,
-    /// kNN when it is sure (--hybrid-min-sim, --hybrid-min-share), else the model router.
-    Hybrid,
     Off,
 }
 
-/// Whether the form call runs: model, kNN and hybrid routers, not the keyword kill switch.
+/// Whether the form call runs: the model and off routers, not the keyword kill switch.
 pub(crate) fn form_on(a: &Args) -> bool {
     a.router != RouterKind::Keywords && !a.no_route && !a.no_question_form
 }
@@ -606,7 +557,6 @@ pub(crate) fn router_prompt(a: &Args) -> router::RouterPrompt {
 
 /// Whether the model router names the source of a retrieval route (default; `--no-router-source` turns it off).
 pub(crate) fn router_source(a: &Args) -> bool {
-    // Not the hybrid router: its kNN decisions carry no source, so it keeps the keyword list for all of its routes.
     a.router == RouterKind::Model && !a.no_router_source && !a.no_route
 }
 
@@ -733,7 +683,7 @@ pub(crate) fn apply_profile(a: &mut Args, p: Profile) {
 
 /// The table tools' options for `a`'s router: the keyword router is the kill switch for all routing work, so it keeps
 /// the tools as they were; the exact recap match changes the keyword router's "Explain the ending of Episode 1" (and
-/// Episode 0), so it applies to the model and kNN routers only.
+/// Episode 0), so it applies to the model and off routers only.
 pub(crate) fn tool_options(a: &Args) -> trevor::tools::ToolOptions {
     use trevor::tools::ToolOptions;
     let mut opts = if a.router == RouterKind::Keywords { ToolOptions { canon_v1: a.canon_v1, ..ToolOptions::KEYWORDS } }

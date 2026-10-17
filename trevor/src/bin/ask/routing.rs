@@ -1,9 +1,9 @@
-//! Routing a question to a table tool or to retrieval: the keyword rules (the kill switch), the model,
-//! kNN and hybrid routers, and the `--route-only` output.
+//! Routing a question to a table tool or to retrieval: the keyword rules (the kill switch), the model router, and
+//! the `--route-only` output.
 
 use anyhow::{Context, Result};
 use trevor::goldgen::llm::Llm;
-use trevor::router::{self, Knn};
+use trevor::router;
 use trevor::search::runtime::Runtime;
 use trevor::tools::{Route, ToolError, Tools, TopicPassage};
 
@@ -12,7 +12,6 @@ use crate::deduce::design_deduce;
 use crate::detect::{
     has, is_death_question, is_listing_question, is_open_listing, is_operator_status_question, is_time_question,
 };
-use crate::intents::knn_sure;
 use crate::retrieval::Pre;
 
 /// Whole-corpus questions answered from Trevor's tables instead of a few passages (Ian, 2026-09-27:
@@ -381,7 +380,7 @@ impl Routed {
 }
 
 /// Choose a table tool with the router `a.router` and run it. `llm` is needed by the model router only.
-pub(crate) async fn route_question(q: &str, a: &Args, tools: &Tools, knn: Option<&mut Knn>, llm: Option<&Llm>) -> Result<Routed> {
+pub(crate) async fn route_question(q: &str, a: &Args, tools: &Tools, llm: Option<&Llm>) -> Result<Routed> {
     let started = std::time::Instant::now();
     // Detectors that read the question only, before the router (2026-10-03): every router line added for a tool moved
     // 20 to 34 unrelated routes, so these tools are reached without one.
@@ -415,15 +414,6 @@ pub(crate) async fn route_question(q: &str, a: &Args, tools: &Tools, knn: Option
             return Ok(Routed { route, text, error: None, topic: None, dossier: None, game: None, ms: started.elapsed().as_secs_f64() * 1000.0 });
         }
         RouterKind::Model => router::route_model_with(llm.context("the model router needs a llama-server")?, q, &router_prompt(a)).await?,
-        RouterKind::Knn => knn.context("the kNN router is not loaded")?.route(q, a.knn_holdout)?.0,
-        RouterKind::Hybrid => {
-            let knn = knn.context("the kNN router is not loaded")?;
-            let (_, v) = knn.route(q, a.knn_holdout)?;
-            match knn_sure(&v, q, &knn.dict, tools, a.hybrid_min_sim, a.hybrid_min_share) {
-                Some(r) => r,
-                None => router::route_model(llm.context("the hybrid router needs a llama-server when kNN is unsure")?, q).await?,
-            }
-        }
     };
     let ms = started.elapsed().as_secs_f64() * 1000.0;
     let dossier = tools.new_dossier(q).filter(|_| dossier_allowed(q, a, Some(&route))).map(|d| d.topic);
@@ -448,8 +438,8 @@ pub(crate) async fn route_question(q: &str, a: &Args, tools: &Tools, knn: Option
     Ok(Routed { route, text, error, topic: None, dossier, game, ms })
 }
 
-/// `--route-only`: the keyword router prints as before (the table text, or RETRIEVAL); the model and kNN routers
-/// print their choice first, as `ROUTE {"tool": ..., "args": {...}}`.
+/// `--route-only`: the keyword router prints as before (the table text, or RETRIEVAL); the model router
+/// prints its choice first, as `ROUTE {"tool": ..., "args": {...}}`.
 pub(crate) fn print_route_only(q: &str, a: &Args, r: &Routed) -> Result<()> {
     if a.router != RouterKind::Keywords {
         println!("ROUTE {}", serde_json::to_string(&r.route)?);

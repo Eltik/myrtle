@@ -136,12 +136,12 @@ pub(crate) fn detect_only(a: &Args, tools: &Tools, b: &Path) -> Result<()> {
 /// `--route-only --batch FILE`: one line per question, "qid<TAB>route<TAB>first line of the route-only output", in
 /// one process (2026-10-03; the per-question process loads the tools each time).
 pub(crate) async fn route_only(a: &Args, tables: &mut Tables, b: &Path) -> Result<()> {
-    let llm = if matches!(a.router, RouterKind::Model | RouterKind::Hybrid) { Some(connect_or_spawn(a).await?) } else { None };
+    let llm = if a.router == RouterKind::Model { Some(connect_or_spawn(a).await?) } else { None };
     for v in batch_items(b)? {
         let v = v?;
         let (id, q) = qid_question(&v);
         tables.tools.topics_deep = deep_for(a, &tables.tools, q);
-        let r = route_question(q, a, &tables.tools, tables.knn.as_mut(), llm.as_ref().map(|x| &x.0)).await?;
+        let r = route_question(q, a, &tables.tools, llm.as_ref().map(|x| &x.0)).await?;
         let head = r.text.as_deref().map_or_else(|| {
             // `--lore-only`: whether the off-topic sentence would be added (the question names nothing Trevor knows).
             let off = if a.lore_only && !tables.tools.names_anything(q) { " (off-topic rule)" } else { "" };

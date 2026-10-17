@@ -358,7 +358,7 @@ impl Service {
         // then route, then P4 when the route's source asks for it.
         let mut use_p4 = self.corpus_default && !router_source(&a) && source_kind(q).is_some();
         if !a.no_route {
-            let router_llm = matches!(a.router, RouterKind::Model | RouterKind::Hybrid).then_some(llm);
+            let router_llm = (a.router == RouterKind::Model).then_some(llm);
             self.tables.tools.topics_deep = deep_for(&a, &self.tables.tools, q);
             let r = route_checked(q, &a, &mut self.tables, router_llm).await.map_err(failed)?;
             out.timings.route_ms = r.ms;

@@ -2,7 +2,7 @@
 //!
 //! `ask` used to answer some questions from tables with one function per route that both parsed the
 //! question with keyword lists and wrote the answer. The writing half lives here, unchanged in its
-//! text; the parsing half is now a router's job (`ask --router model|keywords|knn`, `crate::router`).
+//! text; the parsing half is now a router's job (`ask --router model|keywords`, `crate::router`).
 //! Every tool resolves its own arguments: an event given by name ("Babel", "Episode 7", "chapter 14",
 //! a misspelling within one or two letters) resolves to a group id, a character or operator name
 //! through the tables and the identity links. A failed resolution is a [`ToolError`], which the

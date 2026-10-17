@@ -19,7 +19,6 @@ mod deduce;
 mod answer;
 mod batch;
 mod server;
-mod intents;
 mod serve;
 mod guard;
 
@@ -33,7 +32,6 @@ use crate::answer::{Tables, answer_one};
 use crate::chrono::load_chrono;
 use crate::cli::{Args, LoreSet, P3B_DIR, RetrievalKind, RouterKind, apply_profile, deep_for, p4_dir, retrieval_plan, router_source, tool_options};
 use crate::detect::source_kind;
-use crate::intents::{knn_eval, label_intents, load_knn, paraphrase_intents};
 use crate::retrieval::{Runtimes, load_names, load_runtime};
 use crate::routing::{print_route_only, route_question};
 use crate::scenes::line_study;
@@ -75,25 +73,13 @@ async fn main() -> Result<()> {
     }
     let chrono = load_chrono();
     let tools = load_tools(&a);
-    if a.knn_eval {
-        return knn_eval(&a, &tools);
-    }
     if a.show_expansion {
         return batch::show_expansion(&a, &tools);
     }
     if a.form_only {
         return batch::form_only(&a, &tools).await;
     }
-    if let Some(out) = a.paraphrase_intents.clone() {
-        let (llm, _server) = connect_or_spawn(&a).await?;
-        return paraphrase_intents(&a, &tools, &llm, &out).await;
-    }
-    if let Some(out) = a.label_intents.clone() {
-        let (llm, _server) = connect_or_spawn(&a).await?;
-        return label_intents(&tools, &llm, &out).await;
-    }
-    let knn = if matches!(a.router, RouterKind::Knn | RouterKind::Hybrid) && !a.no_route { Some(load_knn(&a, &tools)?) } else { None };
-    let mut tables = Tables { tools, knn, topic: None, route: None };
+    let mut tables = Tables { tools, topic: None, route: None };
     if let (Some(b), true) = (&a.batch, a.json_check) {
         return serve::json_check(&a, &mut tables, b).await;
     }
@@ -103,8 +89,8 @@ async fn main() -> Result<()> {
     if a.serve || a.worker.is_some() {
         return serve::run(a, corpus_default, tables, chrono).await;
     }
-    // Table-routed questions need no index: answer them before loading it. The keyword, kNN and off routers need
-    // no model either, so they answer before starting or connecting to a server.
+    // Table-routed questions need no index: answer them before loading it. The keyword and off routers need no model
+    // either, so they answer before starting or connecting to a server.
     let mut early: Option<(Llm, Option<Spawned>)> = None;
     if let (Some(b), true) = (&a.batch, a.detect_only) {
         return batch::detect_only(&a, &tables.tools, b);
@@ -113,11 +99,9 @@ async fn main() -> Result<()> {
         return batch::route_only(&a, &mut tables, b).await;
     }
     if let (None, Some(q), false) = (&a.batch, &a.question, a.no_route) {
-        // The hybrid router connects only when kNN is unsure, which it learns after the vote; it connects up front
-        // like the model router for simplicity, since a question it routes to retrieval needs the server anyway.
-        let llm = if matches!(a.router, RouterKind::Model | RouterKind::Hybrid) { Some(connect_or_spawn(&a).await?) } else { None };
+        let llm = if a.router == RouterKind::Model { Some(connect_or_spawn(&a).await?) } else { None };
         tables.tools.topics_deep = deep_for(&a, &tables.tools, q);
-        let r = route_question(q, &a, &tables.tools, tables.knn.as_mut(), llm.as_ref().map(|x| &x.0)).await?;
+        let r = route_question(q, &a, &tables.tools, llm.as_ref().map(|x| &x.0)).await?;
         if a.route_only {
             if a.router == RouterKind::Model {
                 eprintln!("model router: {:.0} ms", r.ms);
