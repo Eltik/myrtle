@@ -302,8 +302,8 @@ has sorted by since September 2025. Chronological order is rarely recommended be
 
     // ---------------------------------------------------------------- deaths
     // Death events (`scripts/deaths.py`): each is a death the script shows or reports, tied to its story and quoted
-    // verbatim, so status follows the stories a reader has seen and a new story only adds events (Ian, 2026-09-28:
-    // Arknights is live service).
+    // verbatim, so status follows the stories a reader has seen and a new story only adds events (Arknights is a live
+    // service).
 
     pub(super) fn latest(&self) -> String {
         self.groups.values().max_by_key(|g| g["releaseTime"].as_i64().unwrap_or(0))

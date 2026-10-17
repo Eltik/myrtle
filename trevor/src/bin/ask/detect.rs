@@ -123,8 +123,8 @@ pub(crate) fn is_operator_status_question(q: &str) -> bool {
 // returning a tool and its arguments; the text comes from `trevor::tools`. A parser that matches but whose tool
 // fails falls through to the next parser, as each route's `None` did before.
 
-/// "List all X of every operator" with no table behind it: retrieval sees a sample, and Ian's real-names
-/// question (2026-09-28) got 7 names from 17 passages, presented as the answer.
+/// "List all X of every operator" with no table behind it: retrieval sees a sample, and a few names from a few
+/// passages would be presented as the whole answer.
 pub(crate) fn is_open_listing(q: &str) -> bool {
     has(q, &["list all", "list every", "list the", "all the ", "every ", "all known", "complete list", "full list",
              "name all", "all of the", "which operators", "which characters"])

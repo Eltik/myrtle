@@ -24,8 +24,8 @@ impl Tools {
             None => runs.iter().collect(),
         };
         let offset = usize::from(self.opts.is_offset);
-        // The per-run verdicts (scripts/canon_refs.py, 2026-09-30) when every chosen run has one; else the reference
-        // counts, as before.
+        // The per-run verdicts (scripts/canon_refs.py) when every chosen run has one; else the reference
+        // counts.
         if !self.opts.canon_v1 && chosen.iter().all(|r| r["verdict"].is_object()) {
             let mut out = String::from("The game never labels an ending canon; Trevor's reading of the stories:\n");
             for r in chosen {
@@ -71,7 +71,7 @@ impl Tools {
 
     // ---------------------------------------------------------------- topics
 
-    /// An Integrated Strategies ending a question asks about (2026-10-03, Ian's item 2): the run (an "IS" number,
+    /// An Integrated Strategies ending a question asks about: the run (an "IS" number,
     /// "Integrated Strategies" with a number, or a run's full name) and the ending (its number, "first" to "fifth", or its
     /// name), from `is_endings.json`. Returns (data run id, the run's numbered endings in the game's order as (number, name),
     /// the asked ending's number when the question names one). Endings without a number in their id are not numbered

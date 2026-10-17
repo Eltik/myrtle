@@ -105,7 +105,7 @@ fn question_detectors_fire_on_their_questions_only() {
     assert_eq!(t.appearance_question("What chapters does Elysium appear in?").as_deref(), Some("Elysium"));
     assert_eq!(t.appearance_question("When does Elysium first appear?"), None, "the first_appearance tool's question");
     assert_eq!(t.appearance_question("Who is Elysium?"), None);
-    // The scoped scenes' detectors (2026-10-05 night): the event a question names, without "the" or the apostrophe,
+    // The scoped scenes' detectors: the event a question names, without "the" or the apostrophe,
     // and the characters of the appearance index who appear in it.
     let q = "what is the name of the npc that mon3tr suggests assassinating in masses travels";
     let g = t.event_in_question(q).expect("The Masses' Travels");
@@ -231,7 +231,7 @@ fn deep_entries_replace_the_summary_only_when_switched_on_and_long_enough() {
     assert!(t.topic("sami").unwrap().text.starts_with("What it is\nA northern land. ice"));
     assert!(t.topic("Sarkaz").unwrap().text.starts_with("Horned."), "a deep entry under 100 words falls back to the summary");
     assert!(t.deep_entry("Sarkaz").is_none() && t.deep_entry("Sami").is_some());
-    // The 2026-10-05 gate: only a question about the topic as a whole.
+    // The deep-entry gate: only a question about the topic as a whole.
     assert!(t.broad_topic_question("Who are the sarkaz?") && t.broad_topic_question("What is sami guarding?"));
     assert!(!t.broad_topic_question("Do Sarkaz, as a culture, give their horns as gifts?"));
     assert!(!t.broad_topic_question("Who is Amiya?"), "names no topic");
@@ -365,7 +365,7 @@ fn design_basis_answers_both_readings_and_only_design_questions() {
     assert!(t.design_basis("what animal is lucilla based on").unwrap().contains("- Lucilla: the game data does not point"));
 }
 
-/// The wiki is an eval reference only (2026-10-04): no serving code names its directory, and loading the tables never
+/// The wiki is an eval reference only: no serving code names its directory, and loading the tables never
 /// reads it.
 #[test]
 fn serving_code_never_opens_eval_reference() {
@@ -411,7 +411,7 @@ fn whole_word_matches_skip_matches_inside_words() {
     assert_eq!(whole_word_matches("Rhodes Island's Islands", "Island").count(), 1);
 }
 
-/// ian35 (2026-10-16): an operator ranking that lists Aurela, a person named in Gracebearer's file, is caught; the
+/// An operator ranking that lists Aurela, a person named in Gracebearer's file, is caught; the
 /// operators, a topic item and plain prose are not; the question gate reads "operators" and who/which "operator".
 #[test]
 fn operator_list_items() {
@@ -427,7 +427,7 @@ fn operator_list_items() {
     assert!(t.non_operator_items("*   **Aurela**: Although not a playable operator, she was cruel [2].").is_empty());
 }
 
-/// ian34 (2026-10-16): an identity group whose label is an organization topic gives the topic its names and leaves the
+/// An identity group whose label is an organization topic gives the topic its names and leaves the
 /// person lists; the question then names both groups.
 #[test]
 fn group_identities_and_named_groups() {

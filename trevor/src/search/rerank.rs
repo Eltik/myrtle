@@ -1,7 +1,7 @@
 //! Cross-encoder reranking with `cross-encoder/ettin-reranker-17m-v1`.
 //!
 //! The published ONNX export is the ModernBERT backbone only: its single
-//! output is `last_hidden_state [batch, seq, 256]` (checked 2026-09-24, opset
+//! output is `last_hidden_state [batch, seq, 256]` (opset
 //! 18). The sentence-transformers scoring head ships as three safetensors
 //! files and is applied here:
 //!

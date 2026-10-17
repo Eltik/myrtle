@@ -32,7 +32,7 @@ impl Tools {
             return Ok(g);
         }
         // Without a leading "the" and each word's trailing "s": "Masses Travel" is The Masses' Travels (the model
-        // router wrote it so for Ian's question, 2026-09-30).
+        // router can write a name so).
         let key = |x: &str| strip(x).split(' ').map(|w| if w.len() > 3 { w.trim_end_matches('s') } else { w }).collect::<Vec<_>>().join(" ");
         let nk = key(&n);
         let keyed: Vec<(&Value, String)> = events.iter().map(|(g, gn)| (*g, key(gn))).collect();

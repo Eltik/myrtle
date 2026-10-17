@@ -36,7 +36,7 @@ joins later under another name is found only when a real name or identity link c
         Ok(out)
     }
 
-    /// Where a character appears (2026-10-03, Ian's item 7): the story groups where they speak and, apart, those
+    /// Where a character appears: the story groups where they speak and, apart, those
     /// where they are only mentioned, in EN release order, from `artifacts/appearances/appearances.json`.
     ///
     /// # Errors
@@ -97,7 +97,7 @@ in the game data), and appearances under a name the identity links do not connec
     }
 
     /// The character of a question that asks where someone appears ("What chapters does Elysium appear in?", "which
-    /// events is Mudrock in", 2026-10-03): an appearance word and a story word, not "first" (the `first_appearance` tool's
+    /// events is Mudrock in"): an appearance word and a story word, not "first" (the `first_appearance` tool's
     /// question), and one name of the appearance index (or an identity link to one) as whole words, the longest kept.
     #[must_use]
     pub fn appearance_question(&self, q: &str) -> Option<String> {
@@ -124,7 +124,7 @@ in the game data), and appearances under a name the identity links do not connec
         best.map(str::to_owned)
     }
 
-    /// The main episode or event a question names, for the scoped scenes (2026-10-05 night): "Episode 7" or "chapter 7"
+    /// The main episode or event a question names, for the scoped scenes: "Episode 7" or "chapter 7"
     /// by number, else the longest event name the question holds as whole words, compared case and punctuation folded and
     /// without a leading "the", 6 characters or more ("in masses travels" is The Masses' Travels). Operator records
     /// (story_*) are not events a player names.
@@ -133,7 +133,7 @@ in the game data), and appearances under a name the identity links do not connec
         let n = norm(q);
         let t: Vec<&str> = n.split(' ').collect();
         // An event named as a time boundary ("What happened to Mandragora after Episode 10?") is not the scope: the
-        // question asks about what lies outside it (real r014 lost pairwise when scoped to Episode 10, 2026-10-05 night).
+        // question asks about what lies outside it.
         let boundary = |w: Option<&&str>| w.is_some_and(|w| matches!(*w, "after" | "before" | "since" | "until" | "following"));
         for (i, w) in t.iter().enumerate() {
             if matches!(*w, "episode" | "chapter") && !boundary(i.checked_sub(1).and_then(|j| t.get(j))) {
@@ -192,9 +192,9 @@ in the game data), and appearances under a name the identity links do not connec
         out
     }
 
-    /// The cross-reference table a question asks for without the router (2026-10-03, leftover d): `bosses_playable` for
-    /// a question with "boss" or "bosses" and a word for joining or playing ("playable", "join", "operator", "recruit",
-    /// "obtain", "ally", "side"). The router line for the table moved 34 unrelated routes; this test reads the question only.
+    /// The cross-reference table a question asks for without the router: `bosses_playable` for a question with "boss" or
+    /// "bosses" and a word for joining or playing ("playable", "join", "operator", "recruit", "obtain", "ally", "side").
+    /// This test reads the question only, so the table needs no router line, which would move unrelated routes.
     #[must_use]
     pub fn cross_ref_question(&self, q: &str) -> Option<&'static str> {
         let n = norm(q);

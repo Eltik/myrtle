@@ -78,20 +78,19 @@ pub(crate) fn passages(rt: &mut Runtime, q: &str, a: &Args, kind: Option<&str>, 
     let mut hits = rt.retrieve(q, &cfg)?;
     let mut lore_added: Option<Lore> = None;
     let evidence = form.and_then(|f| f.evidence.as_deref()).filter(|e| !e.trim().is_empty());
-    // A yes/no question interleaves the hits of its evidence query with its own: "Has Harold married twice? Does he have
-    // children?" ranked the lines naming his wife and daughter 29th to 44th, and "Harold wife daughter children married"
-    // ranks them 1st to 8th (2026-09-30).
+    // A yes/no question interleaves the hits of its evidence query with its own: the evidence query names the facts
+    // to check ("Harold wife daughter children married") and ranks the lines that hold them far higher than the
+    // question's own wording does.
     if let (Some(ev), Some("yes_no")) = (evidence, form.map(|f| f.form.as_str())) {
         let extra = rt.retrieve(ev, &cfg)?;
         hits = interleave(extra, hits);
     }
     let evidence = evidence.filter(|_| form.is_some_and(|f| f.form == "opinion"));
     // A judgment question gathers candidates first: the evidence query ("skilled cook, culinary talent") over a wide list,
-    // kept to operator files and dossiers, at most two chunks per character. "Who is the best cook?" retrieved the Dungeon
-    // Meshi collaboration and no operator file in its top 100; the evidence query puts Matterhorn's, Hung's, Lee's and
-    // Gummy's files in the top 52 (2026-09-30). They take no neighbours, so six candidates cost six chunks. Characters the
-    // question names come first, each from its own files: "Midnight or Matsukiri?" otherwise filled four of six places
-    // with other operators' files and dropped Midnight's.
+    // kept to operator files and dossiers, at most two chunks per character, since the question's own wording ("Who is
+    // the best cook?") rarely retrieves an operator file. They take no neighbours, so six candidates cost six chunks.
+    // Characters the question names come first, each from its own files, so other operators' files cannot crowd out a
+    // named one ("Midnight or Matsukiri?").
     let mut bare: BTreeSet<usize> = BTreeSet::new();
     if let Some(ev) = evidence {
         let mut per: HashMap<String, usize> = HashMap::new();
@@ -123,9 +122,9 @@ pub(crate) fn passages(rt: &mut Runtime, q: &str, a: &Args, kind: Option<&str>, 
                 *n <= CANDIDATE_PER_CHARACTER
             }
         }).take(room));
-        // Each group an opinion question compares gets its own chunks first (2026-10-16, Ian's ian34): with only the
-        // question's and the evidence query's hits, "Karlan Trade Group and Blacksteel" filled all 15 passages with
-        // Karlan Trade and Silverash, and the answer said Blacksteel is not mentioned (150 P3b chunks name it).
+        // Each group an opinion question compares gets its own chunks first: with only the question's and the evidence
+        // query's hits, one group can fill every passage ("Karlan Trade Group and Blacksteel" retrieves Karlan Trade and
+        // Silverash) and the answer then says the other is not mentioned.
         let groups = form.map(|f| f.groups.clone()).unwrap_or_default();
         let mut own: Vec<trevor::search::pipeline::Hit> = Vec::new();
         for (topic, forms) in &groups {
@@ -147,7 +146,7 @@ pub(crate) fn passages(rt: &mut Runtime, q: &str, a: &Args, kind: Option<&str>, 
         let mut pref: Vec<_> = wide.into_iter().filter(|h| rt.store.chunks[h.row].group_id == kind)
             .take(if lore_here { 12 } else { 3 }).collect();
         // With lore on, units of another operator do not follow the best unit ("What does Angelina's Bloodline of
-        // Combat outfit say?" put Swire's Bloodline of Combat outfit third, 2026-09-30).
+        // Combat outfit say?" would otherwise also take Swire's Bloodline of Combat outfit).
         if lore_here {
             let owner_of = |row: usize| unit_owner(rt.store.chunks[row].text.lines().next().unwrap_or_default());
             if let Some(o) = pref.first().and_then(|h| owner_of(h.row)) {
@@ -155,9 +154,9 @@ pub(crate) fn passages(rt: &mut Runtime, q: &str, a: &Args, kind: Option<&str>, 
             }
             pref.truncate(3);
         }
-        // Lore for a typed source (Ian, 2026-09-30: "What does Angelina's Bloodline of Combat outfit say?" answered with
-        // the outfit's two sentences and no lore): the best unit's own text is a second query, and its best story and
-        // operator-file passages follow the units, so the answer can explain who and what the unit names.
+        // Lore for a typed source: the best unit's own text is a second query, and its best story and operator-file
+        // passages follow the units, so the answer can explain who and what the unit names (an outfit's description
+        // alone can be two sentences).
         let mut lore = Vec::new();
         if lore_here {
             if let Some(top) = pref.first() {
@@ -174,13 +173,10 @@ pub(crate) fn passages(rt: &mut Runtime, q: &str, a: &Args, kind: Option<&str>, 
         hits = head.into_iter().chain(hits.into_iter().filter(|h| !taken.contains(&h.row))).collect();
     }
     // The origin chain (`--no-origin-chain` turns it off): a why/how-it-began question also gets the earlier scenes of the story its search keeps hitting.
-    // "Why did swire join the LGD?" ranks her story's L.G.D. years (#0009) 6th and its opening chunks 7th and 8th, and
-    // the 9,000-token budget keeps only the first 6 hits' clusters, so the kidnapping (#0003, 20th) and the badge (#0005)
-    // never reach the answer. The story with the most chunks in the top 20 (at least 3) goes first: its chunks there that
-    // come before its best-ranked hit, without neighbours, in story order (at most 5), then that hit with its neighbours,
-    // then the other hits. Two earlier versions (2026-10-03) added nothing to this question: the earliest top-60 scene of
-    // the top 3 stories (her story is the 6th distinct one), and the dominant story's earlier chunks placed after the
-    // first 4 hits while "earlier" was measured from the lowest position among the hits (#0000, so nothing came first).
+    // The earliest cause often ranks too low for the passage budget to keep it ("Why did swire join the LGD?": the
+    // kidnapping that opens her story ranks below her L.G.D. years). The story with the most chunks in the top 20 (at
+    // least 3) goes first: its chunks there that come before its best-ranked hit, without neighbours, in story order (at
+    // most 5), then that hit with its neighbours, then the other hits.
     if !a.no_origin_chain && !a.no_route && asks_origin(q) {
         let wide = rt.retrieve(q, &RetrievalConfig { k: 20, ..cfg })?;
         let mut count: HashMap<&str, usize> = HashMap::new();
@@ -232,8 +228,8 @@ pub(crate) fn passages(rt: &mut Runtime, q: &str, a: &Args, kind: Option<&str>, 
 /// file's own name), longest name first. A file's names are its heading's ("Operator archive: Midnight", "Character
 /// profile: Kal'tsit (also known as AMa-10, ...)"), plus, for each of them, the operator's real name from
 /// `real_names.jsonl` (and its first word when it has two or more: "Margaret Nearl" gives "Margaret") and the names of its
-/// identity links. Matched as whole words, case folded, 3 letters or more. "Margaret vs Degenbrecher" found no file
-/// for Margaret before the real names were added: Nearl's files carry only codenames (2026-09-30).
+/// identity links. Matched as whole words, case folded, 3 letters or more. The real names matter because files carry
+/// only codenames ("Margaret vs Degenbrecher" finds Nearl's files through "Margaret Nearl").
 pub(crate) fn named_characters(rt: &Runtime, tools: &Tools, q: &str) -> Vec<(String, String, String)> {
     let ql = q.to_lowercase();
     let whole = |n: &str| {
@@ -285,10 +281,10 @@ pub(crate) fn named_characters(rt: &Runtime, tools: &Tools, q: &str) -> Vec<(Str
 
 /// Whether an opinion question gets candidates from operator files and dossiers: it names a character (`people_named`,
 /// or a file `named_characters` finds) or a nation, place, race or organization (`Tools::names_group_topic`), or asks
-/// who or which. When it does not, the opinion gate (default since 2026-10-06, `--no-opinion-gate`) gives a question the
-/// keyword test also calls an opinion, naming no proper word, OPINION_RULE ("the story does not settle it", then the
-/// evidence) without candidates: "In lore how strong are my favourite characters?" (real r030) listed Degenbrecher's
-/// strength as if she were the asker's favourite (2026-10-05 regression run).
+/// who or which. When it does not, the opinion gate (the default, `--no-opinion-gate`) gives a question the keyword
+/// test also calls an opinion, naming no proper word, OPINION_RULE ("the story does not settle it", then the evidence)
+/// without candidates, since candidates for "In lore how strong are my favourite characters?" would be presented as
+/// the asker's favourites.
 pub(crate) fn opinion_needs_candidates(rt: &Runtime, tools: &Tools, q: &str, named: bool) -> bool {
     let n = norm(q);
     named || tools.names_group_topic(q) || ["who", "which", "whom", "whose"].iter().any(|w| contains_words(&n, w))
@@ -469,7 +465,7 @@ pub(crate) struct Pre {
     pub(crate) id: String,
     pub(crate) label: String,
     pub(crate) text: String,
-    /// After the retrieved passages instead of before them (a new dossier: placed first it lost g0107, 2026-10-02).
+    /// After the retrieved passages instead of before them (a new dossier).
     pub(crate) last: bool,
     /// Adds INFER_RULE to the system prompt (the game-data passage).
     pub(crate) rule: bool,
@@ -529,7 +525,7 @@ pub(crate) fn one_operator(q: &str, tools: &Tools) -> Option<String> {
 }
 
 /// [`one_operator`], or else the operator whose multi-word name starts with a word of the question that starts no other
-/// operator's name and is no operator's whole name ("Mutsumi" is Mutsumi Wakaba, 2026-10-03); for the own-file fallback.
+/// operator's name and is no operator's whole name ("Mutsumi" is Mutsumi Wakaba); for the own-file fallback.
 pub(crate) fn one_operator_wide(q: &str, tools: &Tools) -> Option<String> {
     if let Some(op) = one_operator(q, tools) {
         return Some(op);

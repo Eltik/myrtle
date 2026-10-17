@@ -7,14 +7,14 @@ use super::text::{contains_words, norm, whole_word_matches};
 use super::{AnswerConstraint, Tools, s};
 
 impl Tools {
-    /// The category a who/which question asks its answer to belong to (2026-10-05, `ask --answer-check`), read from the
+    /// The category a who/which question asks its answer to belong to (`ask --answer-check`), read from the
     /// question's words alone: not playable ("not playable", "non-playable", "unplayable", "NPC"), playable, or from a
     /// nation of the attribute table ("from Victoria", "Victoria operator").
     #[must_use]
     pub fn answer_constraint(&self, q: &str) -> Option<AnswerConstraint> {
         let n = norm(q);
         // "NPC" alone constrains only when the question does not offer an operator as the alternative: "Which
-        // operator/Rhodes Island NPC comes closest to being a Psychologist?" (real r055) accepts both.
+        // operator/Rhodes Island NPC comes closest to being a Psychologist?" accepts both.
         let npc = ["npc", "npcs"].iter().any(|w| contains_words(&n, w)) && !contains_words(&n, "operator");
         if npc || ["not playable", "non playable", "nonplayable", "unplayable", "not a playable"].iter().any(|w| contains_words(&n, w)) {
             return Some(AnswerConstraint::NonPlayable);
@@ -46,10 +46,10 @@ impl Tools {
         direct(name).or_else(|| self.identity_links.iter().filter(|l| norm(&l.0) == n).find_map(|l| direct(&l.1)))
     }
 
-    /// Whether a question asks for operators as its answer (2026-10-16, Ian's ian35 "Give a ranking of operators who break
-    /// the most Geneva convention rules"): it says "operators", or "operator" in a who/which question, and not that the
-    /// answer is not playable (that is `answer_constraint`'s NonPlayable), and not when it offers NPCs or characters as the
-    /// alternative ("Which operator/Rhodes Island NPC comes closest to being a Psychologist?", real r055).
+    /// Whether a question asks for operators as its answer ("Give a ranking of operators who break the most Geneva
+    /// convention rules"): it says "operators", or "operator" in a who/which question, and not that the answer is not
+    /// playable (that is `answer_constraint`'s NonPlayable), and not when it offers NPCs or characters as the
+    /// alternative ("Which operator/Rhodes Island NPC comes closest to being a Psychologist?").
     #[must_use]
     pub fn asks_operators(&self, q: &str) -> bool {
         let n = norm(q);
@@ -112,7 +112,7 @@ impl Tools {
         names.sort_by_key(|x| std::cmp::Reverse(x.len()));
         names.dedup();
         // The first sentence names the answer; a later one may name a character only as context ("the text mentions
-        // that Iris met with the elite operator Rosmontis", in a decline, 2026-10-05).
+        // that Iris met with the elite operator Rosmontis", in a decline).
         let text = answer.trim_start().split(['\n']).next().unwrap_or_default();
         let text = text.find(". ").map_or(text, |i| &text[..=i]);
         let at = |f: &str| whole_word_matches(text, f).next();

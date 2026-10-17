@@ -1,5 +1,5 @@
-//! The model client: a local `llama-server` (the default backend, unchanged) or an OpenAI-compatible chat endpoint
-//! (Cloudflare Workers AI, 2026-10-16; [`openai`]).
+//! The model client: a local `llama-server` (the default backend) or an OpenAI-compatible chat endpoint
+//! (Cloudflare Workers AI; [`openai`]).
 //!
 //! llama.cpp backend: chat formatting goes through the server's own `/apply-template`, so the prompt is rendered by
 //! the model's Jinja template and nothing here knows Gemma's or Qwen's turn markers. Generation goes through
@@ -10,9 +10,9 @@
 //! every slot is busy, so concurrency is bounded here to the server's slot count; and one failed decode answers 500 to
 //! every in-flight request, so 5xx and transport errors are retried.
 //!
-//! Streaming (2026-10-16): when a stream sink is set ([`Llm::set_stream`], the `ask --worker` job loop), a call with no
-//! grammar and no stop strings (an answer call) streams (`stream: true`) and sends its text pieces to the sink as they
-//! arrive; the returned [`Completion`] is the same. Without a sink every request is sent exactly as before.
+//! Streaming: when a stream sink is set ([`Llm::set_stream`], the `ask --worker` job loop), a call with no grammar and
+//! no stop strings (an answer call) streams (`stream: true`) and sends its text pieces to the sink as they arrive; the
+//! returned [`Completion`] is the same. Without a sink no request streams.
 //!
 //! The OpenAI-compatible backend has no grammar: a grammar-bound call (router, question form, flags) is sent as a plain
 //! prompt asking for one JSON object, validated (it must parse, and its keys must be keys the grammar names), asked once
@@ -246,7 +246,7 @@ impl Llm {
 
     /// Send `cache_prompt: false` (`ask --no-cache-prompt`). llama-server's output depends on how much of a prompt it
     /// reuses from the KV cache or the `-cram` host cache: a reused prefix changes the batch split of the rest, and
-    /// with it the logits in the last bits, so the same prompt can decode to other words (measured 2026-10-02).
+    /// with it the logits in the last bits, so the same prompt can decode to other words.
     #[must_use]
     pub fn without_prompt_cache(mut self) -> Self {
         self.no_cache = true;
@@ -367,9 +367,9 @@ impl Llm {
             {"role": "user", "content": user}
         ]});
         // Thinking off per request, whatever the server was started with: a server another job started with
-        // `--reasoning on` rendered Trevor's prompts with the thinking turn open, and `ask` hung on it (2026-09-30).
+        // `--reasoning on` renders Trevor's prompts with the thinking turn open, and `ask` can hang on it.
         // On a `--reasoning off` server the rendered prompt is byte-identical with or without this (verified for Gemma
-        // 4 12B and Qwen3.5 9B). `TREVOR_TEMPLATE_THINK=1` sends the request as before.
+        // 4 12B and Qwen3.5 9B). `TREVOR_TEMPLATE_THINK=1` sends the request without it.
         if !crate::env::is("TREVOR_TEMPLATE_THINK", "1") {
             body["chat_template_kwargs"] = json!({"enable_thinking": false});
         }

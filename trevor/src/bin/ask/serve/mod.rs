@@ -6,7 +6,7 @@
 //! `GET /health` and `POST /v1/ask {question, horizon?, horizonPos?, server?, flags?, profile?}`. Jobs run one at a
 //! time (one model slot); a connection that arrives during an answer waits in the listen backlog.
 //!
-//! `--worker URL` pulls jobs from a myrtle backend by design/trevor-contract-v1.md section 3 (2026-10-16), with the
+//! `--worker URL` pulls jobs from a myrtle backend by design/trevor-contract-v1.md section 3, with the
 //! `x-trevor-worker-key` header from `TREVOR_WORKER_KEY`:
 //! - `POST {URL}/api/trevor/worker/next {workerId}` long-polls; 204 = no job; 200 = `{jobId, question, server,
 //!   horizonPos, rung, profile, flags}`.
@@ -41,10 +41,8 @@
 //! supervisor, and N `ask --worker URL --share-server` processes with distinct `TREVOR_WORKER_ID`s. `--share-server`
 //! connects without waiting for the model lock, never starts a server and never stops one (so a memory trip cannot stop
 //! a shared server; the guard still stops claiming model work). Without it each worker waits for the lock and starts
-//! its own server when none answers, as before. Measured on the M5 Pro (Metal) with E2B and `mid`, 10 gold questions,
-//! two runs each (2026-10-17): one worker on `-np 1` 26.4 and 28.8 answers a minute (median 2.1 to 2.3 s a job), two
-//! workers on `-np 2` 33.8 and 33.4 (median 3.6 to 3.7 s a job), so +16% to +28% throughput for +60% latency; a VPS core
-//! without a GPU is not measured.
+//! its own server when none answers. Two workers on one `-np 2` server answer more jobs a minute than one worker on
+//! `-np 1`, each job taking longer.
 //!
 //! Without a horizon a job takes exactly the path of the one-shot `ask "question"` (route first, P4 only when the route
 //! or the source keywords ask for it, then `answer_one` with the route), so the answers match it byte for byte under

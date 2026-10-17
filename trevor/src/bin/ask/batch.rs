@@ -128,7 +128,7 @@ pub(crate) fn detect_only(a: &Args, tools: &Tools, b: &Path) -> Result<()> {
 }
 
 /// `--route-only --batch FILE`: one line per question, "qid<TAB>route<TAB>first line of the route-only output", in
-/// one process (2026-10-03; the per-question process loads the tools each time).
+/// one process (a process per question would load the tools each time).
 pub(crate) async fn route_only(a: &Args, tables: &mut Tables, b: &Path) -> Result<()> {
     let llm = if a.router == RouterKind::Model { Some(connect_or_spawn(a).await?) } else { None };
     for v in batch_items(b)? {

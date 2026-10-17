@@ -13,11 +13,11 @@ pub const ROUTER_GRAMMAR: &str = include_str!("../../prompts/router.gbnf");
 /// with every later part off is the one before it, line for line.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct RouterPrompt {
-    /// A retrieval route names its source (2026-09-30).
+    /// A retrieval route names its source.
     pub source: bool,
-    /// The `reading_compare` tool (2026-09-30).
+    /// The `reading_compare` tool.
     pub compare: bool,
-    /// The wider topic line of `--lore v2` (2026-10-01).
+    /// The wider topic line of `--lore v2`.
     pub wide_topics: bool,
 }
 
@@ -52,12 +52,12 @@ pub(crate) fn without_tool(system: &str, grammar: &str, tool: &str, rules: &[&st
     (keep.join("\n"), g.join("\n"))
 }
 
-/// The prompt and grammar without the `reading_compare` tool (added 2026-09-30).
+/// The prompt and grammar without the `reading_compare` tool.
 pub(crate) fn without_compare(system: &str, grammar: &str) -> (String, String) {
     without_tool(system, grammar, "reading_compare", &["other ::="])
 }
 
-/// The topic tool's line as written before the topics from data (2026-10-01), and its wider form for `ask --lore v2`,
+/// The topic tool's line as written before the topics from data, and its wider form for `ask --lore v2`,
 /// where topics also cover places, organizations, factions and events.
 pub(crate) const TOPIC_LINE: &str = "a question about what one race, nation or world concept is or is like in general (Sankta, Sarkaz, Laterano, Originium, Oripathy, Arts, Seaborn, Catastrophes, the Precursors...)";
 pub(crate) const TOPIC_LINE_WIDE: &str = "a question about what one race, nation, city or place, organization or faction, historical event or world concept is or is like in general (Sankta, Sarkaz, Laterano, Londinium, Chernobog, Reunion, Rhodes Island, Rhine Lab, Babel, Originium, Oripathy, Arts, Seaborn, Catastrophes, the Precursors...)";
@@ -73,7 +73,7 @@ pub(crate) fn with_wide_topics(system: &str) -> String {
 pub const SOURCES: &[&str] = &["story", "operator_file", "module", "voice", "skin", "is", "enemy", "item", "any"];
 
 /// The router prompt and grammar with a required `source` on retrieval routes, built from the plain ones so that
-/// `source: false` sends exactly the prompt and grammar of before (2026-09-30).
+/// `source: false` sends exactly the plain prompt and grammar.
 pub(crate) fn source_variant() -> &'static (String, String) {
     static V: std::sync::OnceLock<(String, String)> = std::sync::OnceLock::new();
     V.get_or_init(|| {
@@ -91,8 +91,7 @@ pub(crate) fn source_variant() -> &'static (String, String) {
 
 /// One grammar-bound call to the answer model with the prompt and grammar `o` picks. Output that does not parse (it
 /// cannot under the grammar unless cut off at `n_predict`) is retrieval. With `source`, a retrieval route also names
-/// the kind of text that holds the answer; without `compare`, the router has no `reading_compare` tool (as before
-/// 2026-09-30).
+/// the kind of text that holds the answer; without `compare`, the router has no `reading_compare` tool.
 ///
 /// # Errors
 /// Server errors after the client's retries.

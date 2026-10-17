@@ -1,8 +1,8 @@
 //! Phase 0 embed: `chunks.jsonl` -> `vectors.bin` + `vectors.meta.json`.
 //!
-//! Paced and resumable since 2026-10-16 (design/trevor-reembed.md): two ONNX
-//! threads, a resource guard, a 0.6 duty cycle and a checkpoint by default.
-//! `--threads 0 --no-guard --duty 1 --checkpoint-every 0` is the run before.
+//! Paced and resumable (design/trevor-reembed.md): two ONNX threads, a
+//! resource guard, a 0.6 duty cycle and a checkpoint by default.
+//! `--threads 0 --no-guard --duty 1 --checkpoint-every 0` turns all four off.
 
 use std::path::PathBuf;
 
@@ -24,8 +24,7 @@ struct Args {
     /// Directory holding chunks.jsonl and manifest.p0.json.
     #[arg(long, default_value = "artifacts")]
     corpus: PathBuf,
-    /// ONNX Runtime intra-op threads. 0 = ONNX Runtime's own default (the
-    /// behavior before 2026-10-16).
+    /// ONNX Runtime intra-op threads. 0 = ONNX Runtime's own default.
     #[arg(long, default_value_t = 2)]
     threads: usize,
     /// Embed chunk text without its P1 prefix (BM25 still indexes the prefix).
@@ -70,7 +69,7 @@ struct Args {
     #[arg(long)]
     max_minutes: Option<f64>,
     /// fsync the checkpoint (vectors.ckpt) every this many embedded chunks.
-    /// 0 = no checkpoint, the run before 2026-10-16.
+    /// 0 = no checkpoint.
     #[arg(long, default_value_t = 100)]
     checkpoint_every: usize,
 }

@@ -83,7 +83,7 @@ elsewhere can be missing; for the rest, those passages give no real name.\n", na
     }
 
     /// A value of `k` (race, branch), accepting a plural ("Sarkazs") or a value inside a longer text ("Fortress
-    /// defenders": the model router passed the branch with its class on 2026-09-29).
+    /// defenders": the model router can pass the branch with its class).
     pub(super) fn resolve_value(&self, what: &'static str, k: &str, v: &str) -> Result<String, ToolError> {
         let vals: Vec<String> = self.attr_values(k).into_iter().collect();
         let refs: Vec<&str> = vals.iter().map(String::as_str).collect();
@@ -101,8 +101,8 @@ elsewhere can be missing; for the rest, those passages give no real name.\n", na
         let rows = self.attrs()?;
         type Pred = Box<dyn Fn(&Value) -> bool>;
         let mut filters: Vec<(String, Pred)> = Vec::new();
-        // A value in the wrong field moves to the field it resolves in: the model router wrote {"place": "Soloblade"}
-        // for "List all Soloblade operators" (2026-09-29). Only a place that is no place moves.
+        // A value in the wrong field moves to the field it resolves in: the model router can write {"place": "Soloblade"}
+        // for "List all Soloblade operators". Only a place that is no place moves.
         let mut f = f.clone();
         if let Some(p) = f.place.clone().filter(|p| self.resolve_place(p).is_err()) {
             if f.branch.is_none() && self.resolve_value("branch", "branch", &p).is_ok() {

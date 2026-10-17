@@ -1,4 +1,4 @@
-//! The OpenAI-compatible chat backend (2026-10-16, design/trevor-integration-plan-v3.md phase B step 5): Cloudflare
+//! The OpenAI-compatible chat backend: Cloudflare
 //! Workers AI's `/ai/v1/chat/completions`, or any server with that wire shape (Homebrew `llama-server`'s own
 //! `/v1/chat/completions`, which is how it is tested).
 //!

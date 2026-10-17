@@ -34,23 +34,22 @@ pub(crate) struct Args {
     #[arg(long)]
     pub(crate) no_route: bool,
     /// Which router picks a table tool before retrieval: `model` (one grammar-bound call to the answer model),
-    /// `keywords` (the keyword rules of 2026-09-29, the kill switch: identical output on all 1,266 real and
-    /// route-check questions), `off` (no table tools; the policy lines and timeline notes stay, unlike --no-route).
+    /// `keywords` (the keyword rules, the kill switch), `off` (no table tools; the policy lines and timeline notes
+    /// stay, unlike --no-route).
     #[arg(long, value_enum, default_value_t = RouterKind::Model)]
     pub(crate) router: RouterKind,
-    /// Keep the reading guide as it was before it led with the game's Storylines links (2026-09-29).
+    /// Do not lead the reading guide with the game's Storylines links.
     #[arg(long)]
     pub(crate) no_storylines: bool,
     /// Ignore the topic tool: no topic summary is added to retrieval.
     #[arg(long)]
     pub(crate) no_topics: bool,
     /// With `--lore v2`, do not add the game-data passage and inference rule to a question about a named character's
-    /// body, race features, abilities or age (2026-10-02).
+    /// body, race features, abilities or age.
     #[arg(long)]
     pub(crate) no_game_data: bool,
-    /// v1: the 46 topics and the P3b and P4 built with the 200 dossiers, as before 2026-10-01; v2 (the default): plus
-    /// the topics and dossiers chosen from data, a new dossier and a game-data passage at answer time. `--lore v1` is the
-    /// kill switch.
+    /// v1: the 46 topics and the P3b and P4 built with the 200 dossiers; v2 (the default): plus the topics and dossiers
+    /// chosen from data, a new dossier and a game-data passage at answer time. `--lore v1` is the kill switch.
     #[arg(long, value_enum, default_value = "v2")]
     pub(crate) lore: LoreSet,
     /// Recap stories by the old substring test on story ids (Episode 1 then also takes Episodes 10 to 16); the
@@ -59,40 +58,39 @@ pub(crate) struct Args {
     pub(crate) recap_substring: bool,
     /// Do not let the model router name the source of a retrieval route (story, operator_file, module,
     /// voice, skin, is, enemy, item, any), which picks P4 and the preferred kind instead of `source_kind`'s keyword
-    /// list. This flag restores the router before the source (2026-09-30).
+    /// list. With this flag the model router names no source.
     #[arg(long)]
     pub(crate) no_router_source: bool,
-    /// Number Integrated Strategies runs as the data's ids do (rogue_1 = IS 1), as before 2026-09-30; the game counts
-    /// Ceobe's Fungimist as IS #1, so rogue_1 Phantom & Crimson Solitaire is IS #2.
+    /// Number Integrated Strategies runs as the data's ids do (rogue_1 = IS 1); the game counts Ceobe's Fungimist as
+    /// IS #1, so rogue_1 Phantom & Crimson Solitaire is IS #2.
     #[arg(long)]
     pub(crate) is_numbering_v1: bool,
-    /// Do not add lore to a question about an outfit, item, module or enemy (before 2026-09-30). By default the story
+    /// Do not add lore to a question about an outfit, item, module or enemy. By default the story
     /// and operator-file passages its best unit's text retrieves follow the unit, other operators' units are dropped,
     /// and the answer has two parts, the second opening "Lore context:" (see `LORE_KINDS` for why operator files and
     /// voice lines are left out).
     #[arg(long)]
     pub(crate) no_source_lore: bool,
     /// Do not add the full name after a short name the question uses ("kal" -> "kal (Kal'tsit)"), for retrieval
-    /// and the answer (before 2026-09-30).
+    /// and the answer.
     #[arg(long)]
     pub(crate) no_name_expansion: bool,
-    /// The model router has no reading_compare tool ("can I read X after Y", "does X spoil Y"), as before 2026-09-30.
+    /// The model router has no reading_compare tool ("can I read X after Y", "does X spoil Y").
     #[arg(long)]
     pub(crate) no_reading_compare: bool,
-    /// No question-form call (before 2026-09-30). By default one more grammar-bound Gemma call sorts a retrieval
+    /// No question-form call. By default one more grammar-bound Gemma call sorts a retrieval
     /// question into fact, yes_no or opinion with an evidence query; a yes/no question interleaves the evidence query's
     /// hits and gets YES_NO_RULE, a judgment question gathers candidates from operator files and dossiers (named
     /// characters first, found by codename, real name or identity link) and gets OPINION_FORM_RULE.
     #[arg(long)]
     pub(crate) no_question_form: bool,
-    /// No second look at an opinion form (before 2026-10-01): the first call's opinion stands even for a question about
-    /// one character's trait or feelings (see FORM_SYSTEM_V2).
+    /// No second look at an opinion form: the first call's opinion stands even for a question about one character's
+    /// trait or feelings (see FORM_SYSTEM_V2).
     #[arg(long)]
     pub(crate) form_v1: bool,
     /// Add OPINION_RULE on the keyword test ("favorite", "strongest", ...) even when the form call ran and chose fact or
-    /// yes_no (before 2026-10-01). By default the form call's choice decides: "What is Insider's favorite food?" (form
-    /// fact) opened "The story does not settle on a single favorite food", and trivia t064 "what's blaze's favorite
-    /// yanese saying?" hedged its right answer away the same way.
+    /// yes_no. By default the form call's choice decides, since a fact question that only uses an opinion word ("What
+    /// is Insider's favorite food?") has a factual answer that OPINION_RULE makes the model hedge away.
     #[arg(long)]
     pub(crate) keyword_opinion: bool,
     /// Print the question form of each question of --batch (or the question) as `qid<TAB>form<TAB>evidence`, and exit.
@@ -101,7 +99,7 @@ pub(crate) struct Args {
     /// Print each question of --batch (or the question) with its short names expanded, and exit (no model).
     #[arg(long)]
     pub(crate) show_expansion: bool,
-    /// Answer canon questions from reference counts only, as before the per-run verdicts (2026-09-30).
+    /// Answer canon questions from reference counts only, without the per-run verdicts.
     #[arg(long)]
     pub(crate) canon_v1: bool,
     /// Set for the single question, which `main` routes before loading the index.
@@ -111,32 +109,33 @@ pub(crate) struct Args {
     /// model or the index (scripts/route-check.py runs the routing regression set with it).
     #[arg(long)]
     pub(crate) route_only: bool,
-    /// Do not start a llama-server when none answers at --server (fail instead, as before).
+    /// Do not start a llama-server when none answers at --server (fail instead).
     #[arg(long)]
     pub(crate) no_spawn: bool,
     /// The shared model lock (`<pid> <label>`): while another job holds it, `ask` waits for it instead of sharing that
-    /// job's server (2026-09-30: `ask` reused a canon job's reasoning-on Gemma and hung). A lock held by an ancestor of
-    /// this process (the script that started `ask`) is ours. `ask` writes the lock itself for a server it starts.
+    /// job's server, which may run with other settings (reasoning on, for one). A lock held by an ancestor of this
+    /// process (the script that started `ask`) counts as this process's own. `ask` writes the lock itself for a server
+    /// it starts.
     #[arg(long, default_value = "/private/tmp/claude-501/trevor-llm.lock")]
     pub(crate) lock: PathBuf,
     /// Fail at once when another job holds the model lock, instead of waiting.
     #[arg(long)]
     pub(crate) no_wait: bool,
-    /// Share the server even when another job holds the model lock (before 2026-09-30).
+    /// Share the server even when another job holds the model lock.
     #[arg(long)]
     pub(crate) ignore_lock: bool,
     /// The llama-server at --server is shared by several processes and run by someone else (contract v1.1 section 1d:
     /// N `ask --worker` processes on one host, one llama-server with `-np N`): connect to it without waiting for the
     /// model lock, never start one (as --no-spawn) and never stop it. Off: each process waits for the lock and starts
-    /// its own server when none answers, as before.
+    /// its own server when none answers.
     #[arg(long)]
     pub(crate) share_server: bool,
     /// Append every model request's rendered prompt, `prompt_n`, `cache_n` and output to this file (JSON lines), to
-    /// check that two runs send the same prompts (2026-10-02). Debug only; the answers are unchanged.
+    /// check that two runs send the same prompts. Debug only; the answers are unchanged.
     #[arg(long)]
     pub(crate) dump_prompt: Option<PathBuf>,
     /// Send every request with `cache_prompt: false`: no prompt reuses KV cache from an earlier one, so the same
-    /// prompts decode to the same answers whatever ran before (2026-10-02; slower by the reused prefix). Off by default.
+    /// prompts decode to the same answers whatever ran before (slower by the reused prefix). Off by default.
     #[arg(long)]
     pub(crate) no_cache_prompt: bool,
     /// Serve questions over a local HTTP JSON API instead of answering one (`POST /v1/ask`, `GET /health`; see
@@ -151,7 +150,7 @@ pub(crate) struct Args {
     /// serve.rs for the heartbeat, the power guard and running several workers on one llama-server (--share-server).
     #[arg(long, value_name = "URL")]
     pub(crate) worker: Option<String>,
-    /// The pipeline profile (design/trevor-contract-v1.md section 2; also per worker job): `full` is today's default
+    /// The pipeline profile (design/trevor-contract-v1.md section 2; also per worker job): `full` is the default
     /// pipeline (the kill switch: no flag changes); `slim` is contract v1's CPU pipeline: the keyword router, k 5, a
     /// 2,000-token passage budget, 250 output tokens, no typed fallback, no answer extension and no second-look retries
     /// (answer check, operator list check); `mid` (contract v1.1 section 4, the
@@ -159,9 +158,9 @@ pub(crate) struct Args {
     /// follow-ups off; `mid6k` is `mid` with a 6,000-token budget.
     #[arg(long, value_enum, default_value_t = Profile::Full)]
     pub(crate) profile: Profile,
-    /// Retrieval for serving (2026-10-16): `hybrid` (dense + BM25, the default) or `bm25`, which never loads the dense
-    /// index or the query embedder and runs every dense or hybrid retrieval as BM25 (the VPS has no INT8-safe query
-    /// embedder; dev set recall@10 0.862 against 0.915 hybrid). `TREVOR_RETRIEVAL=bm25` sets it for a worker.
+    /// Retrieval for serving: `hybrid` (dense + BM25, the default) or `bm25`, which never loads the dense index or the
+    /// query embedder and runs every dense or hybrid retrieval as BM25 (for a host with no INT8-safe query embedder).
+    /// `TREVOR_RETRIEVAL=bm25` sets it for a worker.
     #[arg(long, value_enum, default_value_t = RetrievalKind::Hybrid)]
     pub(crate) retrieval: RetrievalKind,
     /// The model backend: `llama` (the local llama-server, the default) or `openai`, an OpenAI-compatible chat
@@ -170,7 +169,7 @@ pub(crate) struct Args {
     /// validated JSON prompts there, with the keyword router and the fact form as fallbacks.
     #[arg(long, value_enum, default_value_t = BackendKind::Llama)]
     pub(crate) backend: BackendKind,
-    /// `--worker`: do not stream answer deltas to the backend (the result alone, as before).
+    /// `--worker`: do not stream answer deltas to the backend (send the result alone).
     #[arg(long)]
     pub(crate) no_stream: bool,
     /// Run the 10 canary questions against each Cloudflare model id in TREVOR_CF_MODELS until one passes, and write
@@ -215,8 +214,8 @@ pub(crate) struct Args {
     /// excerpts of the scenes where that character speaks, their lines ranked by the reranker.
     #[arg(long)]
     pub(crate) no_character_scenes: bool,
-    /// Kill switch for the answer extension: an answer that stopped at `--n-predict` is asked again with twice the limit
-    /// (ian27 stopped mid-sentence at 400 tokens).
+    /// Kill switch for the answer extension: an answer that stopped at `--n-predict` is asked again with twice the
+    /// limit, so it does not end mid-sentence.
     #[arg(long)]
     pub(crate) no_answer_extend: bool,
     /// Measurement: with --batch, print the scoped scenes each question would get (chunk ids), without a model.
@@ -234,12 +233,12 @@ pub(crate) struct Args {
     /// dossiers and OPINION_RULE ("the story does not settle it") instead of OPINION_FORM_RULE.
     #[arg(long)]
     pub(crate) no_opinion_gate: bool,
-    /// Kill switch for group evidence (ian34): an opinion question naming two or more
+    /// Kill switch for group evidence: an opinion question naming two or more
     /// group topics (organizations, nations, places, races; `Tools::named_group_topics`) gets each group's best 3 chunks
     /// naming it, from the topic name plus the evidence query, ahead of the candidates.
     #[arg(long)]
     pub(crate) no_group_evidence: bool,
-    /// Kill switch for the operator list check (ian35; `Tools::asks_operators`,
+    /// Kill switch for the operator list check (`Tools::asks_operators`,
     /// `Tools::non_operator_items`): a question asking for operators whose answer lists someone who is not a playable
     /// operator is asked once more with a note naming them and whose operator file the cited passage is.
     #[arg(long)]
@@ -267,7 +266,7 @@ pub(crate) struct Args {
     /// the `cross_ref` tool before the router, with no router line.
     #[arg(long)]
     pub(crate) no_cross_ref_trigger: bool,
-    /// Turn off the design-inspiration tool (ian11): a question with a design word ("based off an animal",
+    /// Turn off the design-inspiration tool: a question with a design word ("based off an animal",
     /// "inspired by", "motif", "design inspiration") whose content word is an inferred subject or an operator name in
     /// artifacts/entities/design_infer.jsonl (scripts/design_infer.py: deduced from the game data, checked by a second
     /// model) is answered, before the router, by the `design_basis` tool, both readings, labelled as Trevor's inference.
@@ -293,7 +292,7 @@ pub(crate) struct Args {
     pub(crate) no_own_file_fallback: bool,
     /// Turn off time evidence: when chronology lines name a when-question's subject, they come as a numbered
     /// TIME EVIDENCE block right before the question, and the question is followed by the estimate as the required
-    /// final line ("Estimate: ..."); off, they are the CHRONOLOGY LINES block, as before.
+    /// final line ("Estimate: ..."); off, they are the CHRONOLOGY LINES block.
     #[arg(long)]
     pub(crate) no_time_evidence: bool,
     /// Turn off deep topic entries (lore v2 only): the topic tool serves the judged map-reduce
@@ -323,8 +322,8 @@ pub(crate) struct Args {
     /// first mention instead of rarest first (fewest P4x chunks naming them).
     #[arg(long)]
     pub(crate) no_glossary_rarity: bool,
-    /// With `--batch`: print, per question, which of the 2026-10-03 question-only detectors fire, without a model
-    /// (the prefilter of the A/B runs).
+    /// With `--batch`: print, per question, which question-only detectors fire, without a model (the prefilter of the
+    /// A/B runs).
     #[arg(long, hide = true)]
     pub(crate) detect_only: bool,
     /// Model file for the server `ask` starts when none is running.
@@ -337,7 +336,7 @@ pub(crate) struct Args {
     pub(crate) out: PathBuf,
 }
 
-/// Which lore Trevor serves (2026-10-01): v1 is the 46 topics and the 200 dossiers, v2 adds the topics and dossiers
+/// Which lore Trevor serves: v1 is the 46 topics and the 200 dossiers, v2 adds the topics and dossiers
 /// chosen from data (scripts/topics.py mine, scripts/dossiers.py characters_v2), in their own corpus directories.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, clap::ValueEnum)]
 pub(crate) enum LoreSet {
@@ -397,9 +396,9 @@ pub(crate) fn retrieval_plan(q: &str, a: &Args, route: Option<&Route>) -> (Optio
     }
 }
 
-/// P4 plus the game text the coverage audit found unindexed (`scripts/gametext.py`, 2026-10-03, item 6): story intros,
-/// unfetched story scripts, record notes, event archives, mail, operator record intros, world tips and event text, as
-/// "gametext" units. Read for P4 routes by default since 2026-10-03; `--no-game-text` reads P4 as before.
+/// P4 plus the game text the coverage audit found unindexed (`scripts/gametext.py`): story intros, unfetched story
+/// scripts, record notes, event archives, mail, operator record intros, world tips and event text, as "gametext" units.
+/// Read for P4 routes by default; `--no-game-text` reads P4 alone.
 pub(crate) const GAME_TEXT_DIR: &str = "artifacts/p4x";
 
 /// The P3b and P4 directories `ask` uses when `--corpus` is left at its default, for both lore sets: `--lore v2`
@@ -412,7 +411,7 @@ pub(crate) fn p4_dir(a: &Args) -> &'static str {
     if !a.no_game_text && std::path::Path::new(GAME_TEXT_DIR).join("chunks.jsonl").exists() { GAME_TEXT_DIR } else { P4_DIR }
 }
 
-/// Whether the topic tool serves deep entries for this question (default since 2026-10-05, lore v2 only; `--no-deep-topics`):
+/// Whether the topic tool serves deep entries for this question (the default, lore v2 only; `--no-deep-topics`):
 /// only for a question about the topic as a whole (`Tools::broad_topic_question`).
 pub(crate) fn deep_for(a: &Args, tools: &Tools, q: &str) -> bool {
     !a.no_deep_topics && a.lore != LoreSet::V1 && tools.broad_topic_question(q)
@@ -423,7 +422,7 @@ pub(crate) fn deep_for(a: &Args, tools: &Tools, q: &str) -> bool {
 pub(crate) enum Profile {
     Full,
     Slim,
-    /// Contract v1.1 section 4: the eval's middle arm `e-e2b-mid36` (the cpu rung's default since 2026-10-17).
+    /// Contract v1.1 section 4: the eval's middle arm `e-e2b-mid36` (the cpu rung's default).
     Mid,
     /// `mid` with a 6,000-token passage budget (arm `f-e2b-mid6k`); needs a 12,288-token slot.
     Mid6k,
@@ -465,9 +464,9 @@ pub(crate) enum BackendKind {
 }
 
 /// Set `a` to profile `p`: `full` changes nothing; `slim` is the contract v1 CPU pipeline; `mid` and `mid6k` are
-/// exactly the flags of the eval arms `e-e2b-mid36` and `f-e2b-mid6k` (artifacts/answers/eval3way/queue_mid.sh: `--router
-/// keywords --k 8 --n-predict 250 --no-typed-fallback --no-answer-extend --no-answer-check --no-operator-list-check
-/// --max-context-tokens 3600|6000` on top of `--profile full`): one answer call, no router call, gold 57 and 73 of 131.
+/// exactly the flags of the eval arms `e-e2b-mid36` and `f-e2b-mid6k` (`--router keywords --k 8 --n-predict 250
+/// --no-typed-fallback --no-answer-extend --no-answer-check --no-operator-list-check --max-context-tokens 3600|6000` on
+/// top of `--profile full`): one answer call, no router call.
 pub(crate) fn apply_profile(a: &mut Args, p: Profile) {
     a.profile = p;
     if matches!(p, Profile::Mid | Profile::Mid6k) {

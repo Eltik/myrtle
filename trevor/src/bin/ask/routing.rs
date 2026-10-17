@@ -13,8 +13,8 @@ use crate::detect::{
 };
 use crate::retrieval::Pre;
 
-/// Whole-corpus questions answered from Trevor's tables instead of a few passages (Ian, 2026-09-27:
-/// "every story in chronological order" listed six items from 16 passages).
+/// Whole-corpus questions answered from Trevor's tables instead of a few passages, which cannot list the whole corpus
+/// ("every story in chronological order").
 pub(crate) fn keyword_route(q: &str, t: &Tools) -> Option<(Route, String)> {
     let parsers: [fn(&str, &Tools) -> Option<Route>; 6] =
         [reading_route, recap_route, listing_route, death_route, real_name_route, attribute_route];
@@ -245,8 +245,7 @@ pub(crate) fn recap_route(q: &str, t: &Tools) -> Option<Route> {
 
 /// Content words a question has beyond `used` and common question words. A single-subject lookup ("What race is
 /// Texas?", "Does W die?") has none; real questions that only mention an operator ("Has there been any explanation
-/// why Mostima treats Exusiai the way she does?") have several and must go to retrieval (6 of 7 table answers to
-/// 120 real Reddit questions were such misfires, 2026-09-28).
+/// why Mostima treats Exusiai the way she does?") have several and must go to retrieval, not to a table.
 pub(crate) fn leftover(q: &str, used: &[String]) -> usize {
     let stop = ["which", "what", "who", "whom", "how", "when", "where", "is", "are", "was", "were", "the", "a", "an", "of",
                 "in", "from", "does", "do", "did", "s", "operator", "operators", "their", "her", "his", "they", "she", "he",
@@ -441,7 +440,7 @@ pub(crate) fn print_route_only(q: &str, a: &Args, r: &Routed) -> Result<()> {
     Ok(())
 }
 
-/// The IS-ending route (2026-10-03, item 2): a question naming an Integrated Strategies run and one numbered ending,
+/// The IS-ending route: a question naming an Integrated Strategies run and one numbered ending,
 /// not asking which ending is canon (the `canon` tool's question).
 pub(crate) fn is_ending_route(q: &str, a: &Args, tools: &Tools) -> Option<Route> {
     if a.no_is_ending || has(q, &["canon", "canonical", "official", "true ending"]) {

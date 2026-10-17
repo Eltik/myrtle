@@ -12,10 +12,10 @@ use crate::detect::asks_scene;
 use crate::kinds::{RECORD_KINDS, is_generated};
 use crate::retrieval::people_named;
 
-/// Scenes of the event a question names where the character it names speaks or is named (the scoped scenes, default since
-/// 2026-10-05 night; `--no-scoped-scenes`). Ian's "what is the name of the npc that mon3tr suggests assassinating in masses
-/// travels" was declined although the line is in the corpus ("Mon3tr: (I can take her out. Nobody would notice.)",
-/// act42side_08_beg#0000): the whole-corpus search never ranks it, because nothing in the scene says "assassinate". The
+/// Scenes of the event a question names where the character it names speaks or is named (the scoped scenes, the
+/// default; `--no-scoped-scenes`). A question can describe a line in words the scene never uses ("the npc that mon3tr
+/// suggests assassinating in masses travels" for "Mon3tr: (I can take her out. Nobody would notice.)"), and the
+/// whole-corpus search then never ranks it; the event and the character narrow the search to a few scenes. The
 /// event comes from `Tools::event_in_question`, the characters from `Tools::event_characters` (appearance index and identity
 /// links) kept when the corpus writes the name capitalized (`proper_name`); the candidates are the event's chunks whose
 /// speakers or text hold one of their forms, ranked by the question with dense and BM25 fused by reciprocal rank (k 60),
@@ -103,17 +103,14 @@ pub(crate) fn excerpt(rt: &Runtime, r: usize, idx: &[usize]) -> (String, u32) {
     (text, tok)
 }
 
-/// Character-scoped scenes (default since 2026-10-06; `--no-character-scenes`): a question that names no event, names one
-/// character (`people_named`) and makes them the subject of a said or done act (`asks_scene`) gets excerpts of the
-/// scenes where that character speaks, placed first, on top of the retrieved passages' whole budget. Ian's "During which
-/// event Mon3tr suggested assassinating a child" (ian12) was declined: nothing in the scene says "assassinate" ("Mon3tr:
-/// (I can take her out. Nobody would notice.)", act42side_08_beg#0000), so the whole-corpus search ranks that chunk 6,619th
-/// dense, 93rd BM25 and 195th fused of 16,050 in P3b. Among Mon3tr's 172 speaking scenes (421 lines) the chunk ranks 71st
-/// by the scoped scenes' dense + BM25 fusion, 158th by chunk dense and 134th by line dense (the bi-encoder is not
-/// paraphrase-tolerant here), but 1st when the reranker (a cross-encoder) reads the question with each of her lines and the
-/// line before it, in 0.97 s. Each picked line keeps `CHAR_WINDOW` lines either side, at most `CHAR_LINES_PER_SCENE` lines
-/// a scene and `CHAR_K` scenes, within `CHAR_TOKENS`. A first version took the scoped scenes' 6,000 tokens and cut the
-/// retrieved passages to 3,000: it lost gold g0004 (the retrieved "I won't burn Rhodes Island, or my homework" fell out).
+/// Character-scoped scenes (the default; `--no-character-scenes`): a question that names no event, names one character
+/// (`people_named`) and makes them the subject of a said or done act (`asks_scene`) gets excerpts of the scenes where
+/// that character speaks, placed first, on top of the retrieved passages' whole budget (cutting that budget drops
+/// passages other questions need). The question may describe the act in words the line never uses ("During which event
+/// Mon3tr suggested assassinating a child" for "Mon3tr: (I can take her out. Nobody would notice.)"), which neither the
+/// whole-corpus search nor the bi-encoder over the character's lines ranks well, so the reranker (a cross-encoder) reads
+/// the question with each of the character's lines and the line before it. Each picked line keeps `CHAR_WINDOW` lines
+/// either side, at most `CHAR_LINES_PER_SCENE` lines a scene and `CHAR_K` scenes, within `CHAR_TOKENS`.
 /// Returns (the character as the corpus writes them, excerpts best first).
 pub(crate) fn character_scenes(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools, q: &str) -> Option<(String, Excerpts)> {
     if tools.event_in_question(q).is_some() || tools.appearance_question(q).is_some() {
@@ -183,7 +180,7 @@ pub(crate) fn character_scenes(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools
     Some((shown, out))
 }
 
-/// The line study of Ian's item 1 (`--line-study`, measurement only): every line of the corpus outside the generated kinds
+/// The line study (`--line-study`, measurement only): every line of the corpus outside the generated kinds
 /// with the line before it is a unit; a stride sample of them is embedded (one text per call) and, per question, the
 /// evidence line's rank among all units is estimated as the sample units scoring above it times the stride, by line dense
 /// and by the reranker, next to the evidence chunk's exact dense, BM25 and fused (RRF k 60) ranks.
@@ -290,8 +287,8 @@ pub(crate) fn rank_by_question(rt: &mut Runtime, q: &str, cands: &[usize]) -> Op
 }
 
 /// The scoped scenes take up to this many tokens, two thirds of the default 9,000-token passage budget (the scope is what
-/// the question names), at most `SCOPED_K` scenes; the retrieved passages then get `SCOPED_REST`. With 2,400 tokens
-/// (4 scenes) Ian's Mon3tr scene ranked 9th of the 20 candidates (8,878 tokens) and was left out.
+/// the question names), at most `SCOPED_K` scenes; the retrieved passages then get `SCOPED_REST`. A smaller budget
+/// (2,400 tokens, 4 scenes) can leave out the scene the question asks about.
 pub(crate) const SCOPED_K: usize = 16;
 pub(crate) const SCOPED_TOKENS: u32 = 6000;
 pub(crate) const SCOPED_REST: u32 = 3000;

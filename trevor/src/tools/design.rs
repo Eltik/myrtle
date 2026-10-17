@@ -5,7 +5,7 @@ use serde_json::Value;
 use super::text::{contains_words, norm};
 use super::{Tools, s};
 
-/// The design-question detector of the `design_basis` tool (2026-10-04): the normalized question and its content words
+/// The design-question detector of the `design_basis` tool: the normalized question and its content words
 /// (4 letters or more, not a question or design word), or `None` when it is not a design question. "based on/off" counts
 /// only at the end ("what is Lucilla based on"), before "a", "an", "any" or "real", or with "animal" or "creature" in the
 /// question; "based on his inspection" and "Based on the conversation between ..." (2 gold questions) are not.
@@ -32,7 +32,7 @@ pub(super) fn design_question(q: &str) -> Option<(String, Vec<String>)> {
 }
 
 impl Tools {
-    /// A design-inspiration answer (2026-10-04, Ian's ian11), or `None` when the question is not one. It fires on a
+    /// A design-inspiration answer, or `None` when the question is not one. It fires on a
     /// question with a design word ("inspired by", "inspiration", "motif", "modeled after", "design inspiration", or
     /// "based on/off" at the end, before "a"/"an"/"real", or with "animal" in the question) and reads it both ways: each
     /// content word of the question (4 letters or more, not a question or design word) is matched as a whole word against

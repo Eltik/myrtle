@@ -12,7 +12,7 @@ pub(crate) fn compact(x: &str) -> String {
     x.chars().filter(|c| c.is_alphanumeric()).flat_map(char::to_lowercase).collect()
 }
 
-/// Term lookup (`--term-lookup`, 2026-10-03 night 9): the corpus's spelling of a term and the chunks naming it most.
+/// Term lookup (`--term-lookup`): the corpus's spelling of a term and the chunks naming it most.
 /// The term matches one to three consecutive words of a chunk written together or apart ("khagan quest" finds
 /// "Khaganquest"); the spelling is the commonest surface form; the chunks are at most `k` of distinct stories, records
 /// and files first, then by how often they name it.
@@ -88,9 +88,9 @@ pub(crate) fn whole_word_at(text: &str, f: &str) -> Option<usize> {
 }
 
 /// The glossary of a term lookup: the served topics the term's chunks name (case-sensitive whole words, by first
-/// mention), not the term itself, at most `k`, each as the first two sentences of its summary. With `rarity` (default
-/// since 2026-10-05), the rarest first: fewest chunks of `rarity` naming one of the topic's forms, first mention breaking
-/// ties ("What is the khagan quest?" got Rhodes Island, Terra and Precursors, the generic topics, on night 9).
+/// mention), not the term itself, at most `k`, each as the first two sentences of its summary. With `rarity` (the
+/// default), the rarest first: fewest chunks of `rarity` naming one of the topic's forms, first mention breaking ties,
+/// so generic topics (Rhodes Island, Terra, Precursors) do not take the places.
 pub(crate) fn term_glossary(tools: &Tools, texts: &[&str], term: &str, k: usize, rarity: Option<&Runtime>) -> Vec<(String, String)> {
     let key = compact(term);
     let Some(rows) = tools.topics.as_ref() else { return Vec::new() };

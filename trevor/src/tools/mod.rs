@@ -52,9 +52,9 @@ pub struct ToolOptions {
     /// Episode 0 took 182 story summaries instead of 14 and Episode 1 took 211 instead of 12 (`--recap-substring`).
     pub exact_recap: bool,
     /// Integrated Strategies numbers as the game counts them: IS #1 is Ceobe's Fungimist (CN only, not in the data
-    /// Trevor has), so rogue_1 is IS #2 (Ian, 2026-09-30). Off (`ask --is-numbering-v1`) is the old rogue_N = IS N.
+    /// Trevor has), so rogue_1 is IS #2. Off (`ask --is-numbering-v1`) is the old rogue_N = IS N.
     pub is_offset: bool,
-    /// The canon answer as before the per-run verdicts (2026-09-30): strength labels from reference counts only
+    /// The canon answer without the per-run verdicts: strength labels from reference counts only
     /// (`ask --canon-v1`). Off, a run whose data carries a `verdict` is answered from it.
     pub canon_v1: bool,
 }
@@ -207,7 +207,7 @@ const PLACE_KEYS: [&str; 4] = ["nation", "group", "team", "birthplace"];
 #[derive(Default)]
 pub struct Tools {
     /// Chronology v1 groups by id (`artifacts/chrono/timeline_v1.json`). Ordered: lookups by name and the latest
-    /// release iterate it, and a HashMap made their ties depend on the run (2026-10-02).
+    /// release iterate it, and a HashMap would make their ties depend on the run.
     pub groups: BTreeMap<String, Value>,
     pub guide: Option<Value>,
     pub community: Option<Value>,
@@ -224,40 +224,40 @@ pub struct Tools {
     pub canon: Option<Value>,
     /// Topic summaries of races, nations and concepts (`artifacts/topics/topics.jsonl`).
     pub topics: Option<Vec<Value>>,
-    /// The dossiers chosen from data (2026-10-01), not in P3b: (name, text as P3b shows a dossier). Empty unless
+    /// The dossiers chosen from data, not in P3b: (name, text as P3b shows a dossier). Empty unless
     /// [`Tools::load_new_dossiers`] ran (`ask --lore v2`).
     pub new_dossiers: Vec<(String, String)>,
     /// `ask --lore v2`: answer a trait question with the named characters' game data (see [`Tools::game_data`]).
     pub game_data: bool,
-    /// `ask --lore v2`: topic summaries use `summaryV2` where a trait audit regenerated one (2026-10-02).
+    /// `ask --lore v2`: topic summaries use `summaryV2` where a trait audit regenerated one.
     pub topics_v2_text: bool,
-    /// With `topics_v2_text`: `summaryV2r` where the race-trait rule (`topics.py traitrule`, 2026-10-03, no model) wrote
+    /// With `topics_v2_text`: `summaryV2r` where the race-trait rule (`topics.py traitrule`, no model) wrote
     /// one (`ask --race-trait-rule`).
     pub topics_race_rule: bool,
-    /// Cast-wide cross-references from game data (`scripts/crossref.py`, 2026-10-03): table name to its JSON
+    /// Cast-wide cross-references from game data (`scripts/crossref.py`): table name to its JSON
     /// (`artifacts/crossref/<table>.json`). Read by the `cross_ref` tool, which `ask`'s cross-reference trigger routes to.
     pub crossref: BTreeMap<String, Value>,
-    /// Per character, the story groups where they speak and where they are only mentioned (`scripts/appearances.py`,
-    /// 2026-10-03): `{"groups": {id: {name, kind, episode, order}}, "characters": {name: {forms, speaks, mentioned,
-    /// namedIn}}}`. Read by the `appearances` tool.
+    /// Per character, the story groups where they speak and where they are only mentioned (`scripts/appearances.py`):
+    /// `{"groups": {id: {name, kind, episode, order}}, "characters": {name: {forms, speaks, mentioned, namedIn}}}`.
+    /// Read by the `appearances` tool.
     pub appearances: Option<Value>,
-    /// Operator design inspirations inferred from the game data (`scripts/design_infer.py`, 2026-10-04): one row per
+    /// Operator design inspirations inferred from the game data (`scripts/design_infer.py`): one row per
     /// operator, `{operator, charId, alters, subjects: [{subject, category, why, confidence, evidence}]}`, each subject
     /// checked by a second model against the evidence it cites. Read by the `design_basis` tool, labelled as Trevor's
     /// inference.
     pub design_basis: Option<Vec<Value>>,
-    /// Deep topic entries (`scripts/topic_deep.py`, 2026-10-03 night 9): topic name to the judged entry's served text
+    /// Deep topic entries (`scripts/topic_deep.py`): topic name to the judged entry's served text
     /// (a map-reduce over the story groups, operator files, game records and dossiers naming the topic).
     pub deep_topics: HashMap<String, String>,
     /// Serve the deep entry instead of the summary where one exists (set per question by `ask`'s broad-question gate).
     pub topics_deep: bool,
     /// Identity links with their evidence (`artifacts/entities/identities.v2.json`, `ENTITY_V2=1 scripts/entities.py
-    /// build`, 2026-10-03): (name, other name, relation, quote, where, stated). Read by the answer category check.
+    /// build`): (name, other name, relation, quote, where, stated). Read by the answer category check.
     pub identity_links: Vec<(String, String, String, String, String, bool)>,
     pub opts: ToolOptions,
 }
 
-/// The category a who/which question asks its answer to belong to (`Tools::answer_constraint`, 2026-10-05).
+/// The category a who/which question asks its answer to belong to (`Tools::answer_constraint`).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AnswerConstraint {
     /// "not playable", "NPC": the answer has no operator file.
@@ -320,7 +320,7 @@ impl Tools {
         t.storylines = read_json(&root.join("artifacts/chrono/storylines.json"));
         t.canon = read_json(&root.join("artifacts/canon/is_endings.json"));
         // A thin topic (too few passages name it, or a short or poorly supported summary; scripts/topics.py thin) is
-        // never served; only topics from data (2026-10-01) are ever marked.
+        // never served; only topics from data are ever marked.
         t.topics = read_jsonl(&root.join("artifacts/topics/topics.jsonl")).map(served_topics);
         if crate::env::on_unless_0("TREVOR_TOPIC_IDENTITIES") {
             t.fold_group_identities();
@@ -355,12 +355,10 @@ impl Tools {
         t
     }
 
-    /// Identity links that name an organization, nation or place, not a person (2026-10-16, Ian's ian34): an identity
-    /// group whose label is such a topic's name or alias gives its names to that topic as aliases and leaves the person
-    /// lists. entities.py linked "Blacksteel" to "Blacksteel Worldwide"; as a person name, "Blacksteel" (150 P3b chunks,
-    /// mid-sentence in 111 chunks of 22 story groups) was never mined as a topic form, so "Karlan Trade Group and Blacksteel"
-    /// named one organization. Of the 158 groups only that one has a group topic as its label. `TREVOR_TOPIC_IDENTITIES=0`
-    /// keeps the old lists.
+    /// Identity links that name an organization, nation or place, not a person: an identity group whose label is such a
+    /// topic's name or alias gives its names to that topic as aliases and leaves the person lists, so a group name kept
+    /// as a person name ("Blacksteel" for "Blacksteel Worldwide") still resolves to its topic. `TREVOR_TOPIC_IDENTITIES=0`
+    /// keeps the person lists as written.
     pub(crate) fn fold_group_identities(&mut self) {
         let Some(rows) = self.topics.as_mut() else { return };
         let forms = |r: &Value| -> Vec<String> {
@@ -382,12 +380,10 @@ impl Tools {
         });
     }
 
-    /// The short name of an organization topic named with a company suffix (2026-10-16, ian34): "Blacksteel Worldwide"
-    /// is also "Blacksteel", the name the story uses (150 P3b chunks against the full name's 13), when the head is 4
-    /// characters or more and no topic already has it as a form. Of the 354 topics this adds exactly that one alias
-    /// ("Karlan Trade CO., LTD" and "Raythean Industries" already carry their heads; "Group" is not a suffix here, so
-    /// the Ursus Student Self-government Group keeps its name). It replaces, at the source, the identity link
-    /// `fold_group_identities` used to read, which `entities.py build` drops since 2026-10-16 as naming a group.
+    /// The short name of an organization topic named with a company suffix: "Blacksteel Worldwide" is also
+    /// "Blacksteel", the name the story uses, when the head is 4 characters or more and no topic already has it as a
+    /// form. "Group" is not a suffix here, so the Ursus Student Self-government Group keeps its name. It replaces, at the
+    /// source, the identity link `fold_group_identities` would read, which `entities.py build` drops as naming a group.
     /// `TREVOR_ORG_SHORT_NAMES=0` leaves the topics as written.
     pub(crate) fn org_short_names(&mut self) {
         const SUFFIX: &[&str] = &["worldwide", "company", "co", "ltd", "inc", "corporation", "corp", "llc", "holdings", "enterprises", "industries"];
@@ -446,7 +442,7 @@ impl Tools {
             "appearances" => self.appearances(r.arg("character")?),
             "design_basis" => self.design_basis(r.arg("question")?)
                 .ok_or_else(|| ToolError::NotFound { what: "design inspiration", name: r.arg("question").unwrap_or_default().to_owned() }),
-            // The model router wrote {"run": "all"} for "any of the IS endings" (2026-09-29).
+            // The model router can write {"run": "all"} for "any of the IS endings": treated as no run.
             "canon" => self.canon(r.opt("run").filter(|v| !matches!(norm(v).as_str(), "all" | "any" | "every" | "all runs"))),
             // Not an answer: `ask` adds the summary to retrieval (see `topic`); here it only reports the resolution.
             "topic" => self.topic(r.arg("topic")?).map(|p| format!("Topic passage for retrieval: {}", p.topic)),

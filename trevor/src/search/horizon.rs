@@ -1,13 +1,13 @@
 //! The spoiler horizon: which chunks a reader who has read up to one point of the EN release order may see.
 //!
-//! Since 2026-10-16 (design/trevor-contract-v1.md section 1) a horizon is an integer `horizonPos` on the **gatePos**
+//! A horizon (design/trevor-contract-v1.md section 1) is an integer `horizonPos` on the **gatePos**
 //! scale: every story of `artifacts/spoiler.jsonl` has one 1-based rank in Trevor's EN release order, and a chunk is
 //! visible when its story's rank (or, for a dated source that is not a story, its insertion rank) is at or below the
 //! horizon. The panels, the backend's `trevor_panels.gate_pos` / `trevor_answers.gate_pos` and this file all read the
 //! one order written to [`GATE_ORDER_PATH`]; no component computes its own.
 //!
-//! The order is the panel prototype's (`~/overnight-2026-10-15/prototypes/trevor-panels/build_panels.py`, `Order`),
-//! ported exactly. Each story gets a key, compared field by field:
+//! The order is the panel prototype's (`build_panels.py`, `Order`), ported exactly. Each story gets a key, compared
+//! field by field:
 //! - a story of a group the reading guide places (`artifacts/chrono/reading_guide.json`, 85 groups):
 //!   `(guide position, 1, storySort, "", 0, file line)`;
 //! - a story or other source the guide does not place but `artifacts/chrono/source_dates.json` dates (an upper bound on
@@ -39,15 +39,15 @@
 //! }
 //! ```
 //! `eras` follows the prototype's provisional rule: every main episode, plus an event whenever 6 or more guide groups
-//! pass without a boundary (22 eras on 2026-10-16). An era's `position` is the gatePos of its group's last story (the
+//! pass without a boundary. An era's `position` is the gatePos of its group's last story (the
 //! prototype's group key), so `eraPos = max(era.position <= pos)` is the latest era a reader at `pos` has completed.
 //! The file records the sha of its three inputs; a missing or stale file is rebuilt in memory from the inputs (with a
 //! warning), so serving never runs on an order that disagrees with the story table.
 //!
 //! Kill switches: `TREVOR_HORIZON_GATE=0` serves the old story-id horizon (group position, then storySort, ties
-//! mutually visible; a gatePos is turned back into the story at that rank), byte for byte the 2026-10-07 rule.
-//! `TREVOR_HORIZON_DATES=0` ignores the source dates, so every chunk the guide does not place is hidden, as before
-//! 2026-10-07 (the ranks stay those of the file).
+//! mutually visible; a gatePos is turned back into the story at that rank), byte for byte the story-id rule.
+//! `TREVOR_HORIZON_DATES=0` ignores the source dates, so every chunk the guide does not place is hidden (the ranks
+//! stay those of the file).
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::Path;
@@ -276,7 +276,7 @@ impl ReleaseOrder {
         Ok(Horizon { id: format!("gate:{pos}"), pos, legacy: None, order: Arc::clone(self) })
     }
 
-    /// The old (2026-10-07) horizon of a story or group id: group position, then storySort with ties visible.
+    /// The old story-id horizon of a story or group id: group position, then storySort with ties visible.
     ///
     /// # Errors
     /// The id names no story or group the reading guide places.

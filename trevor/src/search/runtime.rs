@@ -19,19 +19,19 @@ use crate::corpus::embed::{QueryEmbedder, check_query_model, resolve_query_onnx}
 #[derive(Debug, Clone, clap::Args)]
 pub struct RuntimeArgs {
     /// Directory holding chunks.jsonl, vectors.bin and bm25/. Default: the P0 story corpus plus the
-    /// operator archives (`build-archives`, adopted 2026-09-27); `--corpus artifacts` is the stories alone.
+    /// operator archives (`build-archives`); `--corpus artifacts` is the stories alone.
     #[arg(long, default_value = "artifacts/p3a")]
     pub corpus: PathBuf,
     /// gte-modernbert-base directory.
     #[arg(long, default_value = "models/gte-modernbert-base")]
     pub model_dir: PathBuf,
-    /// ONNX file for QUERIES. `auto` (the default since 2026-10-16, design/trevor-reembed.md section 7) is the file
+    /// ONNX file for QUERIES. `auto` (the default, design/trevor-reembed.md section 7) is the file
     /// the corpus vectors were built with (`vectors.meta.json` `modelFile`): `model_int8.onnx` for the INT8 corpora,
     /// the old default, so nothing changes until an fp32 re-embed is swapped in. A query model whose sha differs from
     /// the vectors' is refused (INT8 drifts to cosine 0.94 on x86) unless `--allow-query-model-mismatch`.
     #[arg(long, default_value = "auto")]
     pub query_onnx: String,
-    /// Allow a query model other than the one the vectors were built with (logged), as before 2026-10-16;
+    /// Allow a query model other than the one the vectors were built with (logged);
     /// `TREVOR_ALLOW_QUERY_MODEL_MISMATCH=1` does the same.
     #[arg(long)]
     pub allow_query_model_mismatch: bool,
@@ -98,15 +98,15 @@ pub struct Runtime {
     /// The spoiler horizon (`ask --serve` jobs): `retrieve` returns only chunks released at or before it. None, the
     /// default, retrieves exactly as before.
     pub horizon: Option<Arc<Horizon>>,
-    /// BM25-only serving (`ask --retrieval bm25`, 2026-10-16): loaded without the dense index and the embedder, and a
+    /// BM25-only serving (`ask --retrieval bm25`): loaded without the dense index and the embedder, and a
     /// dense or hybrid retrieval runs as BM25. False, the default, leaves a missing dense index an error as before.
     pub bm25_only: bool,
 }
 
-/// A query embedder that several runtimes share (2026-10-16, ian7: the first `ask --serve` job that loaded P4x or the
-/// art corpus spent 21.2 s building a second embedder). It is reused only for the same model directory, ONNX file and
-/// thread count, and only when the new corpus's vectors were made with the tokenizer it was checked against.
-/// `TREVOR_SHARE_EMBEDDER=0` loads one per runtime, as before.
+/// A query embedder that several runtimes share, so a serve job that loads another corpus (P4x, the art corpus) does
+/// not spend seconds building a second one. It is reused only for the same model directory, ONNX file and thread count,
+/// and only when the new corpus's vectors were made with the tokenizer it was checked against.
+/// `TREVOR_SHARE_EMBEDDER=0` loads one per runtime.
 #[derive(Clone)]
 pub struct SharedEmbedder {
     inner: Arc<Mutex<QueryEmbedder>>,
@@ -221,8 +221,8 @@ impl Runtime {
     pub fn retrieve(&mut self, query: &str, cfg: &RetrievalConfig) -> Result<Vec<Hit>> {
         let Some(h) = self.horizon.clone() else { return self.retrieve_all(query, cfg) };
         // Under a horizon: a fused list of at least HORIZON_DEPTH candidates per retriever, the hidden chunks dropped,
-        // then the first `k`. The 2026-10-07 first cut took 8 x k (64) and kept 1, 5 and 2 passages on three questions
-        // whose top 64 were nearly all later stories; dense and BM25 score every chunk anyway, so the depth is cheap.
+        // then the first `k`. A depth of 8 x k alone can leave a question whose top candidates are nearly all later
+        // stories with one or two passages; dense and BM25 score every chunk anyway, so the depth is cheap.
         // A reranked config reranks before the drop (opt-in paths only; `ask --rerank-add`).
         let depth = cfg.candidates.max(cfg.k * 8).max(HORIZON_DEPTH);
         let wide = RetrievalConfig { candidates: depth, k: depth, ..cfg.clone() };

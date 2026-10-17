@@ -10,7 +10,7 @@ use trevor::tools::{contains_words, norm};
 pub(crate) struct Chrono {
     pub(crate) groups: std::collections::BTreeMap<String, serde_json::Value>,
     pub(crate) lines: HashMap<String, Vec<String>>,
-    /// The dated lines of artifacts/chrono/terra_history.md as (year, line), for a when-question's subject (2026-10-03).
+    /// The dated lines of artifacts/chrono/terra_history.md as (year, line), for a when-question's subject.
     pub(crate) history: Vec<(f64, String)>,
 }
 
@@ -97,8 +97,8 @@ pub(crate) fn timeline_notes(rt: &Runtime, chrono: &Chrono, rows: &[usize], off:
     out
 }
 
-/// The chronology lines of `chronology_for` as the numbered TIME EVIDENCE block of `--time-evidence` (2026-10-03 night 8:
-/// ian17 had the 1086 and 1090 to 1094 lines in its prompt and still declined without an estimate).
+/// The chronology lines of `chronology_for` as the numbered TIME EVIDENCE block of `--time-evidence`: numbered anchors
+/// right before the question, since dated lines elsewhere in the prompt can still end in a decline without an estimate.
 pub(crate) fn time_evidence_block(lines: &str) -> String {
     let items: Vec<&str> = lines.lines().filter_map(|l| l.strip_prefix("- ")).collect();
     let mut out = String::from("\nTIME EVIDENCE (dated anchors from Trevor's chronology of the whole story, oldest first; use them for the estimate)\n");
@@ -111,8 +111,8 @@ pub(crate) fn time_evidence_block(lines: &str) -> String {
 /// Question words that never name a when-question's subject.
 pub(crate) const QUESTION_WORDS: &[&str] = &["When", "What", "Which", "Who", "Why", "How", "Where", "Did", "Does", "Do", "Is", "Was", "Were", "Are", "In", "The"];
 
-/// The dated lines of Trevor's chronology that name a when-question's subject (2026-10-03, leftover c: "When was Rhodes
-/// Island founded?" had timeline notes only for the events its passages came from, none about the founding). Subjects
+/// The dated lines of Trevor's chronology that name a when-question's subject, since the timeline notes cover only the
+/// events the passages come from ("When was Rhodes Island founded?" gets none about the founding). Subjects
 /// are the question's runs of capitalized words (question words left out); a line counts when it holds one as whole
 /// words, case folded. Lines that share more of the question's other words (first 4 letters) come first, then the
 /// earliest; at most 8, listed by year. Empty when no line names a subject.
@@ -155,7 +155,7 @@ year says how it was counted)\n", subjects.join(", ").to_uppercase());
     out
 }
 
-/// Whether a name is a proper name by the corpus (2026-10-03 night 8): its lowercase form occurs
+/// Whether a name is a proper name by the corpus: its lowercase form occurs
 /// as a whole word under 1% as often as the name itself across the loaded chunks ("Operator" 1,168 of 6,260 and "Doctor"
 /// 676 of 4,317 are not; "Iris" 3 of 363, "Bluishsilver" 0 of 12 are). A name with no lowercase letters to fold, or
 /// never written, is not.

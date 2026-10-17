@@ -55,7 +55,7 @@ Trevor finds deaths from lines that say so; a death shown only by action can be 
         Ok(out)
     }
 
-    /// Playable operators whose death the game text confirms (`scripts/deaths.py build`, 2026-10-04: reported in 2 or more
+    /// Playable operators whose death the game text confirms (`scripts/deaths.py build`: reported in 2 or more
     /// story groups and speaking in no story released after the first report), and a count of the unconfirmed ones.
     ///
     /// # Errors

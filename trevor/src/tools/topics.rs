@@ -24,8 +24,8 @@ pub(super) fn served_topics(rows: Vec<Value>) -> Vec<Value> {
 }
 
 impl Tools {
-    /// The group topics a question names (2026-10-16, Ian's ian34 "Evaluate the political influence of Karlan Trade Group
-    /// and Blacksteel"): served nation, place, race and organization topics whose name or alias of 4 or more characters
+    /// The group topics a question names ("Evaluate the political influence of Karlan Trade Group and Blacksteel"):
+    /// served nation, place, race and organization topics whose name or alias of 4 or more characters
     /// the question holds as whole words, case folded, a name inside a longer matched one not counted; each with its
     /// forms, in the order the question names them.
     #[must_use]
@@ -59,7 +59,7 @@ impl Tools {
     }
 
     /// Whether a question names a served nation, place, race or organization topic (a form of 4 letters or more as whole
-    /// words): "Are Petrams related to Aegirs?" asks about peoples, not people (2026-10-05, the relation rule's gate).
+    /// words): "Are Petrams related to Aegirs?" asks about peoples, not people (the relation rule's gate).
     #[must_use]
     pub fn names_group_topic(&self, q: &str) -> bool {
         let n = norm(q);
@@ -68,11 +68,10 @@ impl Tools {
             .map(|f| norm(&f)).any(|f| f.chars().count() >= 4 && (contains_words(&n, &f) || contains_words(&n, &format!("{f}s"))))
     }
 
-    /// Whether a question asks about a topic as a whole (2026-10-05, the deep-entry gate): it names a served topic and,
-    /// besides that topic's forms and function words, has at most one content word of 3 letters or more. "Who are the
-    /// sarkaz?" (0) and "What is sami guarding?" (1, guarding) are; "Do Liberi, as a culture, give their feathers as
-    /// gifts?" (held-out h033) and "Do black Sankta halos adn energy wings mean something?" (real r079), the two answers
-    /// the ungated deep entries lost on night 9, are not.
+    /// Whether a question asks about a topic as a whole (the deep-entry gate): it names a served topic and, besides that
+    /// topic's forms and function words, has at most one content word of 3 letters or more. "Who are the sarkaz?" (0)
+    /// and "What is sami guarding?" (1, guarding) are; "Do Liberi, as a culture, give their feathers as gifts?" and "Do
+    /// black Sankta halos adn energy wings mean something?", which ask one detail, are not.
     #[must_use]
     pub fn broad_topic_question(&self, q: &str) -> bool {
         const STOP: &[&str] = &["what", "who", "whom", "which", "where", "when", "why", "how", "are", "is", "was", "were",
@@ -116,7 +115,7 @@ impl Tools {
         }
     }
 
-    /// The 46 topics as before 2026-10-01 (`ask --lore v1`): the rows without a `source`, without the merged `names`
+    /// The 46 topics of lore v1 (`ask --lore v1`): the rows without a `source`, without the merged `names`
     /// the topics from data added to them.
     pub fn topics_v1(&mut self) {
         if let Some(rows) = self.topics.as_mut() {
@@ -150,8 +149,8 @@ impl Tools {
 
     /// A game-data passage for a question about a named character's (or family's) body, race features, abilities or
     /// age: each named operator's race, birthplace, faction and height from the operator files, then the topic summary
-    /// of each race (2026-10-02: "Do the Nearls have wings?" was declined by both lores, though the files list every
-    /// Nearl as Kuranta and the Kuranta are horse-like). Names match as written (4 letters or more), folded from 6
+    /// of each race ("Do the Nearls have wings?" is answered from the files listing every Nearl as Kuranta and the
+    /// Kuranta summary, which no story passage states). Names match as written (4 letters or more), folded from 6
     /// letters, and a family plural matches each operator whose first word it is ("Nearls": Nearl, Nearl the Radiant
     /// Knight). The trait test is a word list, a trade: no model call is spent on it.
     #[must_use]
@@ -225,10 +224,10 @@ impl Tools {
     }
 
     /// The new dossier of the character the question names, if one does (the longest name wins). A dossier is matched
-    /// by its own name only, never by identity-link names (those joined Estelle to Perfumer, 2026-10-02), and as written
-    /// (case and all, whole words: "Red", "Grace" and "Mountain" are words; folded matching sent g0120's "on the
-    /// mountain" to Mountain's dossier); a name of two or more words also matches folded ("innkeeper zheng"). A trade:
-    /// a lower-case "silverash" gets no dossier.
+    /// by its own name only, never by identity-link names (those can join different characters, Estelle to Perfumer),
+    /// and as written (case and all, whole words: "Red", "Grace" and "Mountain" are words, and folded matching would
+    /// send "on the mountain" to Mountain's dossier); a name of two or more words also matches folded ("innkeeper
+    /// zheng"). A trade: a lower-case "silverash" gets no dossier.
     #[must_use]
     pub fn new_dossier(&self, q: &str) -> Option<TopicPassage> {
         let nq = norm(q);
@@ -236,7 +235,7 @@ impl Tools {
             let before = q[..i].chars().next_back();
             let rest = &q[i + name.len()..];
             let after = rest.chars().next();
-            // Not the start of a longer name: "Lin Qingyan" is not Lin (g0120, 2026-10-02).
+            // Not the start of a longer name: "Lin Qingyan" is not Lin.
             let longer = rest.strip_prefix(' ').and_then(|r| r.chars().next()).is_some_and(char::is_uppercase);
             !before.is_some_and(char::is_alphanumeric) && !after.is_some_and(char::is_alphanumeric) && !longer
         });
@@ -270,8 +269,8 @@ impl Tools {
         let r = by_name.or_else(by_alias).or_else(|| fuzzy_unique(&n, names.iter().map(|(r, t)| (*r, t.as_str())))).ok_or_else(nf)?;
         let deep = self.deep_entry(&s(r, "topic"));
         let text = deep.unwrap_or_else(|| strip_citations(&s(r, self.topic_text_key(r))));
-        // Summaries are 214 to 389 words except Pythia's 38, which is the generator asking for passages (2026-09-29
-        // judge); under 100 words is treated as no summary.
+        // A summary under 100 words is treated as no summary: the generator asking for passages instead of
+        // summarizing (Pythia's) is that short, real summaries are far longer.
         if text.split_whitespace().count() < 100 {
             return Err(ToolError::NoData(format!("no summary for {}", s(r, "topic"))));
         }

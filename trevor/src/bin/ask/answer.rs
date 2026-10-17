@@ -94,10 +94,10 @@ pub(crate) async fn answer_one(rts: &mut Runtimes, llm: &Llm, names: &HashMap<St
     Ok(second)
 }
 
-/// The operator list check (`--no-operator-list-check`; ian35): an answer to a question
-/// asking for operators (`Tools::asks_operators`) whose list items name someone who is not a playable operator ("Give a
-/// ranking of operators who break the most Geneva convention rules" ranked Aurela first, a Sankta mercenary named in
-/// Gracebearer's file 4) is asked once more with a note naming each such person and the operator file the cited passage
+/// The operator list check (`--no-operator-list-check`): an answer to a question
+/// asking for operators (`Tools::asks_operators`) whose list items name someone who is not a playable operator (Aurela,
+/// a Sankta mercenary named in Gracebearer's file 4, in a ranking of operators) is asked once more with a note naming
+/// each such person and the operator file the cited passage
 /// belongs to; when the second answer still lists one, the data note is appended.
 #[allow(clippy::too_many_arguments)]
 async fn operator_list_check(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Names>, chrono: &Chrono, q: &str, a: &Args,
@@ -262,8 +262,8 @@ summaries; prefer the passages)".into(), text));
         }
     }
     // Character-scoped scenes: no event named, one character named as the subject of a said or done act. They are added
-    // before the retrieved passages, which keep their whole budget (the scoped scenes' 3,000-token rest lost gold g0004's
-    // retrieved line).
+    // before the retrieved passages, which keep their whole budget (the scoped scenes' 3,000-token rest would drop
+    // retrieved lines other questions need).
     if scoped.is_none() && !a.no_character_scenes && !a.no_route && kind.is_none() {
         if let Some((who, rows)) = character_scenes(rt, &a.runtime, &tables.tools, q) {
             for (i, (r, text, _)) in rows.iter().enumerate() {
@@ -300,9 +300,9 @@ summaries; prefer the passages)".into(), text));
             if let Some(k) = own {
                 let k: &'static str = FALLBACK_KINDS.iter().find(|x| **x == k).copied().unwrap_or("voice");
                 let second = answer_from(rt2, llm, names, chrono, q, q, a, &pre, Some(k), form).await?;
-                // Kept only when it cites a unit of the operator itself: ian11 ("what operator is based off an animal
-                // with phantom as part of its name") named Phantom, got Melantha's voice lines first and answered
-                // "Melantha".
+                // Kept only when it cites a unit of the operator itself: a question that names an operator only in
+                // passing ("what operator is based off an animal with phantom as part of its name") can get another
+                // operator's units and answer with that operator.
                 let cites_own = second.cited.iter().any(|id| rt2.store.chunks.iter().find(|c| c.chunk_id == *id)
                     .is_some_and(|c| FALLBACK_KINDS.contains(&c.group_id.as_str())
                         && typed_owner(c.text.lines().next().unwrap_or_default()).is_some_and(|o| norm(&o) == norm(&op))));
@@ -418,9 +418,9 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
     for (i, &r) in rows.iter().enumerate() {
         let c = &rt.store.chunks[r];
         let label = passage_label(names, c);
-        // A file found through another name of its character says so: with "Margaret vs Degenbrecher" and Nearl the
-        // Radiant Knight's file among the passages, the answer still said it found nothing about "a character named
-        // Margaret".
+        // A file found through another name of its character says so: otherwise, with "Margaret vs Degenbrecher" and
+        // Nearl the Radiant Knight's file among the passages, the answer can say it found nothing about "a character
+        // named Margaret".
         let label = match form.and_then(|f| f.named.iter().find(|(sid, asked, file)| *sid == c.story_id
             && norm(asked) != norm(file))) {
             Some((_, asked, file)) => format!("{label}; this is the file of {file}, whom the question calls {asked}"),
