@@ -23,8 +23,8 @@ from the game data (skin_table + character_table), never from the model.
   python3 scripts/art_captions.py units
       one P4 unit per captioned image (kind "art") -> artifacts/art/units.jsonl, and
       artifacts/art/p4_art_units.jsonl = artifacts/sources/all_units.jsonl (P4's units) + the art units, for
-      `build-units --units artifacts/art/p4_art_units.jsonl --out artifacts/p4-art` (`ask --art` reads it;
-      P4 itself never holds them, so leaving p4-art unbuilt is the kill switch)
+      `build-units --units artifacts/art/p4_art_units.jsonl --out artifacts/p4-art` (ask's typed fallback reads
+      its art units when it is built; P4 itself never holds them, so leaving p4-art unbuilt is the kill switch)
 
 Images are cropped to their alpha bounding box, composited on mid grey and
 downscaled to ART_MAX_SIDE (default 1536) before encoding as JPEG. The
