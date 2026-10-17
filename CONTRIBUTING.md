@@ -108,8 +108,8 @@ This parses the Python DPS source, transpiles formulas to Rust, and runs linting
 
 For detailed asset pipeline documentation, see:
 
-- [Downloader README](assets/downloader/README.md)
-- [Unpacker README](assets/unpacker/README.md)
+- [Downloader CLI reference](assets/README.md#downloader-cli-reference)
+- [Unpacker CLI reference](assets/README.md#unpacker-cli-reference)
 
 ---
 
@@ -154,7 +154,6 @@ myrtle.moe/
 ├── assets/             # Game asset processing toolkit
 │   ├── downloader/     # Multi-server asset downloader (Rust)
 │   ├── unpacker/       # High-performance asset extractor (Rust)
-│   ├── unity-rs/       # Unity asset parsing library (Rust port of UnityPy)
 │   ├── schemas/        # FlatBuffers schema store (see assets/schemas/README.md)
 │   └── Unpacked/       # Extracted game assets (~90GB)
 └── .github/            # CI/CD workflows
@@ -191,7 +190,6 @@ Each component has its own detailed README with specific documentation.
 
 | Component                                                                        | Purpose                                                   |
 | -------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| [unity-rs](assets/unity-rs/)                                                     | Rust port of UnityPy for Unity asset parsing              |
 | [downloader](assets/downloader/)                                                 | Multi-server asset downloader with version tracking       |
 | [unpacker](assets/unpacker/)                                                     | High-performance asset extraction (9x faster than Python) |
 | [schemas](assets/schemas/)                                                       | FlatBuffers schema store, generated from the game client   |
@@ -247,9 +245,8 @@ Each component has its own detailed README with specific documentation.
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | Frontend            | [frontend/README.md](frontend/README.md)                                                                                      |
 | Backend             | [backend/README.md](backend/README.md)                                                                                        |
-| Asset Downloader    | [assets/downloader/README.md](assets/downloader/README.md)                                                                    |
-| Asset Unpacker      | [assets/unpacker/README.md](assets/unpacker/README.md)                                                                        |
-| Unity-RS Library    | [assets/unity-rs/README.md](assets/unity-rs/README.md)                                                                        |
+| Asset Downloader    | [assets/README.md, Downloader CLI Reference](assets/README.md#downloader-cli-reference)                                        |
+| Asset Unpacker      | [assets/README.md, Unpacker CLI Reference](assets/README.md#unpacker-cli-reference)                                            |
 | FlatBuffers Schemas | [assets/schemas/README.md](assets/schemas/README.md)                                                                          |
 
 ## API Reference
