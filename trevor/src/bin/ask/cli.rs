@@ -333,6 +333,14 @@ pub(crate) struct Args {
     /// with a passage saying which names fail and why, and a second failure gets that note appended.
     #[arg(long)]
     pub(crate) no_answer_check: bool,
+    /// Run the identity-claim check over the answers of a `--dump-prompt` file without a model and print what it would
+    /// change (the prefilter of the A/B runs).
+    #[arg(long, hide = true)]
+    pub(crate) identity_scan: Option<PathBuf>,
+    /// Keep every identity claim of an answer: no sentence saying two names are one person ("is referred to as",
+    /// "is also known as", "is actually") is dropped when no identity link or passage joins the two names.
+    #[arg(long)]
+    pub(crate) no_identity_check: bool,
     /// The note of the answer check's second ask, set only inside `answer_one`.
     #[arg(skip)]
     pub(crate) check_note: Option<String>,

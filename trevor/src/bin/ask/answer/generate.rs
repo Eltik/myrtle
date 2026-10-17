@@ -114,8 +114,10 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
     let time_q = !a.no_route && flags.asks_time;
     let synth_q = !a.no_route && flags.asks_synthesis;
     let mut user = String::from("PASSAGES\n");
+    let mut texts: Vec<String> = Vec::with_capacity(off + rows.len() + post.len());
     for (i, p) in first.iter().enumerate() {
         user.push_str(&format!("\n[{}] ({})\n{}\n", i + 1, p.label, p.text));
+        texts.push(format!("({})\n{}", p.label, p.text));
     }
     for (i, &r) in rows.iter().enumerate() {
         let c = &rt.store.chunks[r];
@@ -129,9 +131,11 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
             None => label,
         };
         user.push_str(&format!("\n[{}] ({label})\n{}\n", i + 1 + off, c.text));
+        texts.push(format!("({label})\n{}", c.text));
     }
     for (i, p) in post.iter().enumerate() {
         user.push_str(&format!("\n[{}] ({})\n{}\n", off + rows.len() + i + 1, p.label, p.text));
+        texts.push(format!("({})\n{}", p.label, p.text));
     }
     if time_q {
         user.push_str(&timeline_notes(rt, chrono, &rows, off));
@@ -240,5 +244,6 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
         ms: started.elapsed().as_secs_f64() * 1000.0,
         generated: pre.iter().filter(|p| !p.id.starts_with("topic:")).map(|p| (p.id.clone(), p.text.clone())).collect(),
         form: form.map(|f| f.evidence.as_ref().map_or_else(|| f.form.clone(), |e| format!("{}: {e}", f.form))),
+        texts,
     })
 }

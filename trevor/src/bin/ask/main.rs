@@ -84,6 +84,9 @@ async fn main() -> Result<()> {
     if a.form_only {
         return batch::form_only(&a, &tools).await;
     }
+    if let Some(d) = &a.identity_scan {
+        return batch::identity_scan(&tools, d);
+    }
     let mut tables = Tables { tools, topic: None, route: None };
     if let (Some(b), true) = (&a.batch, a.json_check) {
         return serve::json_check(&a, &mut tables, b).await;

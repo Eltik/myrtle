@@ -30,6 +30,7 @@ use crate::scenes::{SCOPED_REST, character_scenes, scoped_scenes};
 use crate::terms::{term_glossary, term_lookup};
 
 mod generate;
+pub(crate) mod identity;
 
 pub(crate) use generate::passage_label;
 use generate::answer_from;
@@ -53,11 +54,15 @@ pub(crate) struct Answer {
     /// The text of each generated passage only `--lore v2` adds (new dossier, game data), by passage id, for the judges.
     #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
     pub(crate) generated: std::collections::BTreeMap<String, String>,
+    /// Each passage's label and text as the prompt showed it, in passage order (the identity-claim check reads them).
+    #[serde(skip)]
+    pub(crate) texts: Vec<String>,
 }
 
 pub(crate) fn table_only(q: &str, text: String) -> Answer {
     Answer { qid: None, question: q.to_owned(), answer: text, cited: Vec::new(), passages: Vec::new(),
-             invalid_citations: 0, prompt_tokens: 0, ms: 0.0, form: None, generated: Default::default() }
+             invalid_citations: 0, prompt_tokens: 0, ms: 0.0, form: None, generated: Default::default(),
+             texts: Vec::new() }
 }
 
 /// The table tools, and what `main` routed for the single question before the index loaded.
@@ -69,12 +74,29 @@ pub(crate) struct Tables {
     pub(crate) route: Option<Route>,
 }
 
+/// One answer with its checks, then the identity-claim check (`--no-identity-check`, `identity.rs`): a sentence
+/// saying that two different names are one person stays only when an identity link or a passage joins them.
+pub(crate) async fn answer_one(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Names>, chrono: &Chrono,
+                    q: &str, a: &Args, tables: &mut Tables) -> Result<Answer> {
+    let mut ans = answer_checked(rts, llm, names, chrono, q, a, tables).await?;
+    if !a.no_identity_check && !ans.texts.is_empty() {
+        if let Some((text, claims)) = identity::check(&ans.answer, q, &ans.texts, &tables.tools) {
+            if trevor::env::debug_on("TREVOR_IDENTITY_DEBUG") {
+                eprintln!("identity check: dropped {claims:?}");
+            }
+            ans.cited = identity::cited_ids(&text, &ans.passages);
+            ans.answer = text;
+        }
+    }
+    Ok(ans)
+}
+
 /// One answer, with the answer category check (`--no-answer-check`): a who/which question that constrains its answer's
 /// category ("Which Rhodes Island Operator (not playable unit) had visited Iris' castle of dreams?") and whose
 /// answer's first named character fails it by the game data (Sakiko Togawa is a playable operator) is asked once more
 /// with a passage saying so; when the second answer's first name fails too, the data note is appended to it.
-pub(crate) async fn answer_one(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Names>, chrono: &Chrono,
-                    q: &str, a: &Args, tables: &mut Tables) -> Result<Answer> {
+async fn answer_checked(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Names>, chrono: &Chrono,
+                        q: &str, a: &Args, tables: &mut Tables) -> Result<Answer> {
     let first = answer_one_inner(rts, llm, names, chrono, q, a, tables).await?;
     let first = operator_list_check(rts, llm, names, chrono, q, a, tables, first).await?;
     if a.no_answer_check || a.no_route || first.passages.is_empty() || !asks_identity(q) {

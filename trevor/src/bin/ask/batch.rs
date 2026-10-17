@@ -201,3 +201,45 @@ pub(crate) async fn answer_batch(a: &Args, rts: &mut Runtimes, llm: &Llm, names:
     }
     Ok(())
 }
+
+/// `--identity-scan DUMP`: the identity-claim check (`answer/identity.rs`) over the answers of a `--dump-prompt` file,
+/// without a model: each answer call's passages and question are read back from its rendered prompt. Prints every
+/// answer the check would change (question, claims, the answer after) and the counts.
+pub(crate) fn identity_scan(tools: &Tools, dump: &Path) -> Result<()> {
+    let text = std::fs::read_to_string(dump).with_context(|| format!("reading {}", dump.display()))?;
+    let (mut answers, mut changed) = (0usize, 0usize);
+    for line in text.lines().filter(|l| !l.trim().is_empty()) {
+        let v: serde_json::Value = serde_json::from_str(line)?;
+        let (Some(prompt), Some(content)) = (v["prompt"].as_str(), v["content"].as_str()) else { continue };
+        let Some(user) = prompt.split("<|turn>user\n").nth(1).map(|u| u.split("<turn|>").next().unwrap_or(u)) else {
+            continue;
+        };
+        let Some(body) = user.strip_prefix("PASSAGES\n") else { continue };
+        let Some(qat) = body.rfind("\nQUESTION: ") else { continue };
+        let q = body[qat + 11..].lines().next().unwrap_or_default();
+        // Passage headers: "\n[n] (" at a line start, numbered 1, 2, ... in order.
+        let mut starts: Vec<usize> = Vec::new();
+        let mut n = 1;
+        let mut from = 0;
+        while let Some(i) = body[from..qat].find(&format!("\n[{n}] (")) {
+            starts.push(from + i + 1);
+            from += i + 1;
+            n += 1;
+        }
+        let texts: Vec<String> = starts.iter().enumerate().map(|(k, &s)| {
+            let end = starts.get(k + 1).copied().unwrap_or(qat);
+            let p = &body[s..end];
+            p[p.find(' ').map_or(0, |i| i + 1)..].trim_end().to_owned()
+        }).collect();
+        if texts.is_empty() {
+            continue;
+        }
+        answers += 1;
+        if let Some((after, claims)) = crate::answer::identity::check(content.trim(), q, &texts, tools) {
+            changed += 1;
+            println!("Q: {q}\nclaims: {claims:?}\nbefore: {}\nafter: {after}\n", content.trim());
+        }
+    }
+    println!("{answers} answer calls, {changed} changed by the identity-claim check");
+    Ok(())
+}

@@ -86,7 +86,7 @@ const SERVER: &str = "en";
 const LOAD_FLAGS: &[&str] = &["--corpus", "--lore", "--router", "--serve", "--worker", "--port", "--batch", "--out",
                               "--server", "--model", "--no-game-text", "--model-dir", "--query-onnx",
                               "--allow-query-model-mismatch", "--retrieval", "--backend", "--canary", "--gate-order",
-                              "--horizon-check", "--json-check", "--no-stream"];
+                              "--horizon-check", "--json-check", "--no-stream", "--identity-scan"];
 
 /// One question: `POST /v1/ask` body, or a worker job's fields.
 #[derive(Debug, Clone, Deserialize)]
