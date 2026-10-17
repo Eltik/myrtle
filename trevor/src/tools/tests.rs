@@ -171,7 +171,7 @@ fn real_tables_resolve_player_names() {
     if t.canon.as_ref().is_some_and(|c| c["runs"][0]["verdict"].is_object()) {
         for run_ in ["IS3", "IS2"] {
             let r = run("canon", &[("run", run_)]).unwrap();
-            if std::env::var("TREVOR_PRINT_CANON").is_ok() {
+            if crate::util::env_on("TREVOR_PRINT_CANON") {
                 println!("=== {run_}\n{r}");
             }
             assert!(r.starts_with("The game never labels an ending canon; Trevor's reading of the stories:"), "{r}");

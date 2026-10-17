@@ -78,6 +78,19 @@ pub fn write_jsonl_atomic<T: Serialize>(path: &Path, tmp_ext: &str, rows: impl I
     Ok(())
 }
 
+/// Whether a debug or opt-in environment switch is on: `1` or `true` (any case). Unset, empty, `0`, `false` and
+/// every other value are off, so `KEY=0` turns a switch off instead of on.
+#[must_use]
+pub fn env_on(key: &str) -> bool {
+    switch_on(std::env::var(key).ok().as_deref())
+}
+
+/// The rule of `env_on` for one value (`None` = unset).
+#[must_use]
+pub fn switch_on(value: Option<&str>) -> bool {
+    value.is_some_and(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -89,6 +102,16 @@ mod tests {
         // The old byte-by-byte `content_sha` fold.
         let fold = Sha256::digest("Ch'en".as_bytes()).iter().take(8).map(|b| format!("{b:02x}")).collect::<String>();
         assert_eq!(sha16("Ch'en"), fold);
+    }
+
+    #[test]
+    fn a_switch_is_on_only_for_1_or_true() {
+        for on in ["1", "true", "TRUE", "True"] {
+            assert!(switch_on(Some(on)), "{on}");
+        }
+        for off in [None, Some(""), Some("0"), Some("false"), Some("no"), Some("yes"), Some(" 1"), Some("2")] {
+            assert!(!switch_on(off), "{off:?}");
+        }
     }
 
     #[test]

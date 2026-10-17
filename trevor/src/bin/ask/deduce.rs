@@ -91,7 +91,7 @@ points to a specific real-world animal, creature, plant or object beyond the rac
         terms.extend(c.features.iter().map(|f| (f.clone(), 1.0)));
     }
     let short = tools.design_shortlist(&terms, 8);
-    if std::env::var("TREVOR_DEDUCE_DEBUG").is_ok() {
+    if trevor::util::env_on("TREVOR_DEDUCE_DEBUG") {
         eprintln!("deduce terms {terms:?}\nshortlist {:?}", short.iter().map(|r| r["operator"].as_str().unwrap_or_default()).collect::<Vec<_>>());
     }
     let cands = list.candidates.iter().map(|c| format!("- {} ({}): {}", c.name, c.group, c.features.join("; "))).collect::<Vec<_>>().join("\n");

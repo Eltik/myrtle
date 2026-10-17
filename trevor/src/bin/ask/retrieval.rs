@@ -452,7 +452,7 @@ pub(crate) fn load_runtime(a: &RuntimeArgs, dense: bool, rerank: bool, share: Op
     let t = std::time::Instant::now();
     let mut rt = Runtime::load_sharing(a, dense, true, rerank, share)?;
     rt.bm25_only = !dense;
-    if std::env::var("TREVOR_LOAD_DEBUG").is_ok() {
+    if trevor::util::env_on("TREVOR_LOAD_DEBUG") {
         eprintln!("loaded {} in {:.2} s (dense {dense})", a.corpus.display(), t.elapsed().as_secs_f64());
     }
     Ok(rt)

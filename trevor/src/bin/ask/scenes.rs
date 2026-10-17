@@ -39,7 +39,7 @@ pub(crate) fn scoped_scenes(rt: &mut Runtime, tools: &Tools, q: &str) -> Option<
         return None;
     }
     let ranked = rank_by_question(rt, q, &cands)?;
-    if std::env::var("TREVOR_SCOPED_DEBUG").is_ok() {
+    if trevor::util::env_on("TREVOR_SCOPED_DEBUG") {
         eprintln!("scoped {gid}: {} candidates, {} tokens", cands.len(), cands.iter().map(|&r| rt.store.chunks[r].token_count).sum::<u32>());
         for (i, &r) in ranked.iter().enumerate() {
             eprintln!("  {i} {}", rt.store.chunks[r].chunk_id);
@@ -153,7 +153,7 @@ pub(crate) fn character_scenes(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools
     let mut ord: Vec<usize> = (0..units.len()).collect();
     ord.sort_by(|&x, &y| sc[y].total_cmp(&sc[x]).then(units[x].cmp(&units[y])));
     let units: Vec<(usize, usize)> = ord.into_iter().map(|o| units[o]).collect();
-    if let Some(target) = std::env::var("TREVOR_SCOPED_DEBUG").ok().as_deref() {
+    if let Some(target) = std::env::var("TREVOR_SCOPED_DEBUG").ok().filter(|v| !v.is_empty() && v != "0").as_deref() {
         let mut by_line: Vec<usize> = Vec::new();
         for (r, _) in &units { if !by_line.contains(r) { by_line.push(*r); } }
         let rrf = rank_by_question(rt, q, &cands).unwrap_or_default();
@@ -298,7 +298,7 @@ pub(crate) fn line_pool(rt: &mut Runtime, ra: &RuntimeArgs, names: &HashMap<Stri
     ord.sort_by(|&x, &y| sc[y].total_cmp(&sc[x]).then(units[x].cmp(&units[y])));
     let gate = ord.first().is_some_and(|&o| !rows.contains(&units[o].0));
     let best_out = ord.iter().find(|&&o| !rows.contains(&units[o].0)).map_or(f32::NEG_INFINITY, |&o| sc[o]);
-    if std::env::var("TREVOR_LINE_POOL_DEBUG").is_ok() {
+    if trevor::util::env_on("TREVOR_LINE_POOL_DEBUG") {
         eprintln!("linepool\tgate={gate}\tbest_out={best_out:.4}\t{q}");
     }
     if (!gate && !all) || min.is_some_and(|m| best_out < m) {

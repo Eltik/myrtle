@@ -154,7 +154,7 @@ pub(crate) async fn compose_after(rts: &mut Runtimes, llm: &Llm, names: &HashMap
     }
     let again = Args { compose, routed: false, ..a.clone() };
     let composed = answer_one_inner(rts, llm, names, chrono, q, &again, tables).await?;
-    if std::env::var("TREVOR_SCOPED_DEBUG").is_ok() {
+    if trevor::util::env_on("TREVOR_SCOPED_DEBUG") {
         eprintln!("compose: {:?}; composed answer: {}", again.compose.iter().map(|x| &x.0).collect::<Vec<_>>(), composed.answer);
     }
     if declines(&composed.answer) || leaves_open(&composed.answer) || tables.tools.failing_answer_name(q, &composed.answer, &c).is_some() {
@@ -517,7 +517,7 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
     if let Some(h) = rt.horizon.clone() {
         pool.retain(|p| rt.store.row(&p.id).is_some_and(|r| rt.allows_row(&h, r)));
     }
-    if a.line_pool && std::env::var("TREVOR_LINE_POOL_DETECT").is_ok() {
+    if a.line_pool && trevor::util::env_on("TREVOR_LINE_POOL_DETECT") {
         return Ok(Answer { qid: None, question: q.to_owned(), answer: format!("line-pool detect: {}", pool.len()), cited: Vec::new(),
                            passages: Vec::new(), invalid_citations: 0, prompt_tokens: 0, ms: 0.0, retry_query: None, form: None,
                            generated: std::collections::BTreeMap::new() });
