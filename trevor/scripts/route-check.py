@@ -9,23 +9,21 @@ question, the route it must take (table or retrieval) and text a table answer mu
 
 `--router keywords` (the default here, no model, 20 s) is the keyword router `update.sh` has always
 checked. `--router model` needs Gemma on :8081 (ask connects to it; start it first, or ask starts and
-stops one per question, about 15 s each). ASK=path runs another ask binary (a frozen copy while the tree is rebuilt). `--router knn` and `--router hybrid` route each question by the
-other labelled examples and their paraphrases (`--knn-holdout`), since every route-check question is also a
-labelled example; hybrid takes the model router's cases and needs Gemma too.
+stops one per question, about 15 s each). ASK=path runs another ask binary (a frozen copy while the tree is rebuilt).
 """
 import argparse, json, os, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ap = argparse.ArgumentParser()
-ap.add_argument('--router', default='keywords', choices=['keywords', 'model', 'knn', 'hybrid', 'off'])
+ap.add_argument('--router', default='keywords', choices=['keywords', 'model', 'off'])
 ap.add_argument('extra', nargs='*', help='more ask flags, after --')
 args = ap.parse_args()
-flags = ['--router', args.router] + (['--knn-holdout'] if args.router in ('knn', 'hybrid') else []) + args.extra
+flags = ['--router', args.router] + args.extra
 fails = 0
 # Cases with "routers" apply only to those routers (canon, topic and Storylines, 2026-09-29, which the keyword
-# router never had); "tool" also checks the router's chosen tool (model and kNN print it as a ROUTE line).
+# router never had); "tool" also checks the router's chosen tool (the model router prints it as a ROUTE line).
 cases = [c for c in (json.loads(l) for l in open(os.path.join(ROOT, 'eval', 'routes.jsonl')))
-         if ('model' if args.router == 'hybrid' else args.router) in c.get('routers', ['keywords', 'model', 'knn', 'off'])]
+         if args.router in c.get('routers', ['keywords', 'model', 'off'])]
 for c in cases:
     out = subprocess.run([os.environ.get('ASK') or os.path.join(ROOT, 'target', 'release', 'ask'), '--route-only', *flags, c['q']], cwd=ROOT,
                          capture_output=True, text=True).stdout
