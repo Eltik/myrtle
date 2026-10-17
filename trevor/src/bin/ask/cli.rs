@@ -139,7 +139,7 @@ pub(crate) struct Args {
     #[arg(long)]
     pub(crate) no_cache_prompt: bool,
     /// Serve questions over a local HTTP JSON API instead of answering one (`POST /v1/ask`, `GET /health`; see
-    /// `serve.rs`): the indexes, tools and llama-server load once and every job is a library call. Binds 127.0.0.1.
+    /// `src/bin/ask/serve/`): the indexes, tools and llama-server load once and every job is a library call. Binds 127.0.0.1.
     #[arg(long)]
     pub(crate) serve: bool,
     /// The port `--serve` listens on.
@@ -147,7 +147,7 @@ pub(crate) struct Args {
     pub(crate) port: u16,
     /// Pull jobs from a myrtle backend instead of listening (design/trevor-contract-v1.md section 3, v1.1 section 2.1):
     /// long-polls `{URL}/api/trevor/worker/next` with the `x-trevor-worker-key` header from `TREVOR_WORKER_KEY`; see
-    /// serve.rs for the heartbeat, the power guard and running several workers on one llama-server (--share-server).
+    /// src/bin/ask/serve/ for the heartbeat, the power guard and running several workers on one llama-server (--share-server).
     #[arg(long, value_name = "URL")]
     pub(crate) worker: Option<String>,
     /// The pipeline profile (design/trevor-contract-v1.md section 2; also per worker job): `full` is the default

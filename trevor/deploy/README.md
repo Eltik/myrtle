@@ -1,6 +1,6 @@
 # Installing Trevor on the VPS
 
-Step by step, for Ian to run on the VPS (Ubuntu 24.04, 3 vCPU AMD Ryzen 9 7900, 11 GB). Nothing here has been run
+Step by step, for the operator of the VPS (Ubuntu 24.04, 3 vCPU AMD Ryzen 9 7900, 11 GB). Nothing here has been run
 yet. The why behind each step, the failure table and rollback are in `../design/trevor-vps-runbook.md`.
 
 Paths assumed below (change them in every unit and in `/etc/trevor/trevor.env` together if the box differs):
@@ -61,7 +61,7 @@ sudo install -d -o trevor -g trevor /var/www/myrtle.moe/trevor/models/llm
 # Gemma 4 E2B instruct, Q4_K_M GGUF (about 3 GB). Pin the repo revision and check the sha256 after download.
 sha256sum /var/www/myrtle.moe/trevor/models/llm/gemma-4-E2B-it-Q4_K_M.gguf
 # gte-modernbert-base: tokenizer.json is needed by every build step; model.onnx (fp32) only when EMBED=1.
-# Copy models/gte-modernbert-base from the Mac (scripts/fetch-model.sh pins and checks it).
+# Copy models/gte-modernbert-base from the build machine (scripts/fetch-model.sh pins and checks it).
 ```
 
 ## 4. Benchmark the CPU rung (one minute, read-only)
@@ -89,14 +89,15 @@ Copy to `/var/www/myrtle.moe/trevor/target/release/`: `ask eval build-corpus bui
 build-prefixes build-profiles build-units embed-corpus`. The repo checkout supplies `scripts/ prompts/ data/ eval/
 deploy/`.
 
-## 6. Artifacts from the Mac
+## 6. Artifacts from the build machine
 
-Everything Trevor serves or rebuilds from comes from the Mac's `trevor/artifacts`. These directories are
+Everything Trevor serves or rebuilds from comes from the build machine's `trevor/artifacts` (the development
+machine where `scripts/update.sh` runs). These directories are
 development-only and can stay behind (about 0.4 GB): `answers/ p1a-split/ p3b-lore/ p4-lore/ goldgen-arch/
 goldgen-v2/ embedft/ update/ router/`. Keep `goldgen/` (`goldgen/names.json` is read by `ask` and appearances.py).
 
 ```bash
-# on the Mac
+# on the build machine
 rsync -a --exclude answers/ --exclude p1a-split/ --exclude p3b-lore/ --exclude p4-lore/ --exclude goldgen-arch/ \
   --exclude goldgen-v2/ --exclude embedft/ --exclude update/ --exclude router/ --exclude panels/ --exclude publish/ \
   trevor/artifacts/ vps:/var/www/myrtle.moe/trevor/artifacts/
@@ -130,9 +131,9 @@ systemctl list-timers 'trevor-*'
 ## 9. Embeddings: pick one
 
 - **BM25-only (start here).** `TREVOR_RETRIEVAL=bm25` and `EMBED=0` in the environment file. No vectors are made on
-  the VPS and the Mac's INT8 vectors are never read.
+  the VPS and the build machine's INT8 vectors are never read.
 - **Hybrid.** Vectors made with the fp32 export (`model.onnx`), the same on every CPU. Either copy fp32 vectors made
-  on the Mac, or re-embed once on the VPS (about 1 to 2 h at nice 19):
+  on the build machine, or re-embed once on the VPS (about 1 to 2 h at nice 19):
 
   ```bash
   sudo systemd-run --unit=trevor-reembed --uid=trevor --gid=trevor -p EnvironmentFile=/etc/trevor/trevor.env \
