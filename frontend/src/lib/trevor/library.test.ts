@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 import type { AskResponse } from "#/types/generated/AskResponse";
 import type { JobView } from "#/types/generated/JobView";
 import type { TrevorAnswer } from "#/types/generated/TrevorAnswer";
+import type { TrevorMyQuestion } from "#/types/generated/TrevorMyQuestion";
 import { askReducer } from "./askState";
-import { type IMyJob, jobOpen, parseMyJobs, parsePopular, timeOf, toTurnState } from "./library";
+import { type IMyJob, jobOpen, parseMyJobs, parsePopular, toTurnState } from "./library";
 import { EMPTY_THREAD, latestSpoiler, openSlots, threadReducer } from "./thread";
 
 const ERA = { eraId: "main_10", name: "Shatterpoint", position: 722 };
@@ -76,47 +77,27 @@ describe("quick look with a deferred full answer (contract v1.1 1b)", () => {
 });
 
 describe("the stories tab's lists (contract v1.1 section 5)", () => {
-    it("reads the popular questions and their era from the backend's {spoilerSafeUpTo, items}, deduping", () => {
-        const p = parsePopular({ items: [{ question: " Who is Amiya? ", answer: stored("A."), askers: 4 }, { question: "who is amiya?" }, { nope: 1 }, "Why Chernobog?", { question: "Why Chernobog?", answer: null, askers: 2 }], spoilerSafeUpTo: ERA });
-        expect(p.questions.map((q) => [q.question, q.answer !== null, q.askers])).toEqual([
-            ["Who is Amiya?", true, 4],
-            ["Why Chernobog?", false, 2],
+    const row = (jobId: string | null, question: string, status: TrevorMyQuestion["status"], createdAt: string, answer: TrevorAnswer | null = null): TrevorMyQuestion => ({ jobId, question, status, rung: jobId ? "cpu" : "cache", source: answer ? "live" : null, createdAt, finishedAt: null, answer });
+
+    it("reads the popular questions and their era, trimmed and deduped", () => {
+        const p = parsePopular({
+            items: [
+                { question: " Who is Amiya? ", answer: stored("A."), askers: 4 },
+                { question: "who is amiya?", answer: stored("A."), askers: 3 },
+                { question: "Why Chernobog?", answer: stored("B."), askers: 2 },
+            ],
+            spoilerSafeUpTo: ERA,
+        });
+        expect(p.questions.map((q) => [q.question, q.askers])).toEqual([
+            ["Who is Amiya?", 4],
+            ["Why Chernobog?", 2],
         ]);
         expect(p.spoiler).toEqual(ERA);
         expect(parsePopular({ items: [], spoilerSafeUpTo: null })).toEqual({ questions: [], spoiler: null });
-        // The old bare list is no longer read: it carries no era.
-        expect(parsePopular([{ question: "Who is Amiya?", answer: null, askers: 2 }])).toEqual({ questions: [], spoiler: undefined });
-        expect(parsePopular({ questions: [{ question: "Who is Amiya?" }], spoilerSafeUpTo: ERA }).questions).toEqual([]);
-        expect(parsePopular("garbage")).toEqual({ questions: [], spoiler: undefined });
-    });
-
-    it("reads my jobs, dropping rows with no id or question", () => {
-        const m = parseMyJobs({
-            jobs: [
-                { jobId: "j1", question: "Q1", status: "done", rung: "cpu", source: "live", createdAt: "2026-10-17T10:00:00Z", finishedAt: 1_792_000_000, answer: stored("A1") },
-                { jobId: "j2", question: "Q2", status: "queued", rung: "cpu", deferred: true, createdAt: 1_792_000_000_000, quickLook: stored("P", "passages") },
-                { question: "no id" },
-                { jobId: "j3", question: "Q3", status: "weird" },
-            ],
-            nextBefore: "j3",
-        });
-        expect(m.jobs.map((j) => [j.jobId, j.status, j.deferred, j.answer !== null, j.quickLook !== null])).toEqual([
-            ["j1", "done", false, true, false],
-            ["j2", "queued", true, false, true],
-            ["j3", "queued", false, false, false],
-        ]);
-        expect(m.nextBefore).toBe("j3");
-        expect(m.jobs[0]?.createdAt).toBe(Date.parse("2026-10-17T10:00:00Z"));
-        expect(m.jobs[0]?.finishedAt).toBe(1_792_000_000_000);
-        expect(timeOf("not a date")).toBeNull();
-        expect(parseMyJobs([{ id: "k", question: "bare" }]).jobs[0]?.jobId).toBe("k");
     });
 
     it("reads the backend's bare list: a cache hit has no job, and a full page pages before its last row", () => {
-        const rows = [
-            { jobId: null, question: "Cached?", status: "done", rung: "cache", source: "live", createdAt: "2026-10-17T10:00:00Z", finishedAt: null, answer: stored("C") },
-            { jobId: "j2", question: "Open?", status: "queued", rung: "cpu", source: null, createdAt: "2026-10-17T09:00:00Z", finishedAt: null, answer: null },
-        ];
+        const rows = [row(null, "Cached?", "done", "2026-10-17T10:00:00Z", stored("C")), row("j2", "Open?", "queued", "2026-10-17T09:00:00Z")];
         const m = parseMyJobs(rows, 2);
         expect(m.jobs.map((j) => [j.jobId, j.key])).toEqual([
             [null, "2026-10-17T10:00:00Z|Cached?"],
@@ -127,18 +108,12 @@ describe("the stories tab's lists (contract v1.1 section 5)", () => {
         expect(toTurnState(m.jobs[0] as IMyJob)).toMatchObject({ kind: "done", cached: true });
     });
 
-    it("re-shows a past question as the turn it is: answered, open with its quick look, or failed", () => {
-        const [done, open, failed] = parseMyJobs({
-            jobs: [
-                { jobId: "j1", question: "Q1", status: "done", rung: "cpu", answer: stored("A1") },
-                { jobId: "j2", question: "Q2", status: "running", rung: "cpu", deferred: true, quickLook: stored("P", "passages") },
-                { jobId: "j3", question: "Q3", status: "failed", error: "boom" },
-            ],
-        }).jobs;
+    it("re-shows a past question as the turn it is: answered, open, or failed", () => {
+        const [done, open, failed] = parseMyJobs([row("j1", "Q1", "done", "2026-10-17T10:00:00Z", stored("A1")), row("j2", "Q2", "running", "2026-10-17T09:00:00Z"), row("j3", "Q3", "failed", "2026-10-17T08:00:00Z")], 20).jobs;
         if (!done || !open || !failed) throw new Error("parse");
         expect(toTurnState(done)).toMatchObject({ kind: "done", cached: true });
         expect(toTurnState(open)).toMatchObject({ kind: "queued", jobId: "j2" });
-        expect(toTurnState(failed)).toMatchObject({ kind: "failed", message: "boom" });
+        expect(toTurnState(failed)).toMatchObject({ kind: "failed", message: "" });
         expect([jobOpen(done), jobOpen(open), jobOpen(failed)]).toEqual([false, true, false]);
     });
 

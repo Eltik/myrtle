@@ -32,6 +32,8 @@ import type { AskResponse } from "#/types/generated/AskResponse";
 import type { FeedbackRequest } from "#/types/generated/FeedbackRequest";
 import type { JobView } from "#/types/generated/JobView";
 import type { StoryPanels } from "#/types/generated/StoryPanels";
+import type { TrevorMyQuestion } from "#/types/generated/TrevorMyQuestion";
+import type { TrevorPopular } from "#/types/generated/TrevorPopular";
 import type { TrevorStatus } from "#/types/generated/TrevorStatus";
 import { APIError, parseError } from "./_shared";
 import { optionalSiteToken, requireSiteToken } from "./_shared.server";
@@ -189,7 +191,7 @@ export const getTrevorPopularFn = createServerFn({ method: "GET" })
     .handler(async ({ data: limit }) => {
         const res = await backendFetch(`/trevor/popular?limit=${limit}`, { bearerToken: optionalSiteToken() });
         if (res.status === 404) return null;
-        return parsePopular(await readJSON<unknown>(res));
+        return parsePopular(await readJSON<TrevorPopular>(res));
     });
 
 export function getPopular(limit = 8): Promise<IPopular | null> {
@@ -214,7 +216,7 @@ export const getTrevorMyJobsFn = createServerFn({ method: "GET" })
             const query = `?limit=${limit}${before ? `&before=${encodeURIComponent(before)}` : ""}`;
             const res = await backendFetch(`/trevor/me/jobs${query}`, { bearerToken: token });
             if (res.status === 404) return null;
-            return parseMyJobs(await readJSON<unknown>(res), limit);
+            return parseMyJobs(await readJSON<TrevorMyQuestion[]>(res), limit);
         }),
     );
 

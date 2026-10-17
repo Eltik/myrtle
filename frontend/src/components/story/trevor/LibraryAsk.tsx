@@ -36,9 +36,10 @@ import { authActions } from "#/lib/auth/store";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { parseAnswer } from "#/lib/trevor/answer";
-import { type IMyJob, type IPopularQuestion, jobOpen, toTurnState } from "#/lib/trevor/library";
+import { type IMyJob, jobOpen, toTurnState } from "#/lib/trevor/library";
 import { type IAskDeps, useTrevorThread } from "#/lib/trevor/useTrevorAsk";
 import { cn } from "#/lib/utils";
+import type { TrevorPopularQuestion } from "#/types/generated/TrevorPopularQuestion";
 import { AskChat, TrevorAvatar } from "./AskChat";
 import type { messages } from "./trevor.messages";
 
@@ -90,10 +91,7 @@ function SignedIn({ t, active, askDeps }: { t: TrevorT; active: boolean; askDeps
         if (job.jobId && following.has(job.jobId)) return;
         asker.restore(toTurnState(job));
     };
-    const openPopular = (q: IPopularQuestion) => {
-        if (q.answer) asker.restore({ kind: "done", question: q.question, answer: parseAnswer(q.answer), rung: q.answer.rung, spoiler: null, cached: true });
-        else asker.ask(q.question, null);
-    };
+    const openPopular = (q: TrevorPopularQuestion) => asker.restore({ kind: "done", question: q.question, answer: parseAnswer(q.answer), rung: q.answer.rung, spoiler: null, cached: true });
     const loadOlder = async () => {
         const cursor = olderCursor === undefined ? (mine.data?.nextBefore ?? null) : olderCursor;
         if (!cursor) return;
@@ -106,7 +104,7 @@ function SignedIn({ t, active, askDeps }: { t: TrevorT; active: boolean; askDeps
     const moreCursor = olderCursor === undefined ? (mine.data?.nextBefore ?? null) : olderCursor;
     const myQuestions = mine.data === null ? null : <MyQuestions jobs={jobs} loading={mine.isPending} failed={mine.isError} hasMore={moreCursor !== null} onMore={() => void loadOlder()} onOpen={openJob} />;
     const questions = popular.data?.questions ?? [];
-    const popularChips = questions.map((q) => ({ key: q.question, question: q.question, prepared: q.answer !== null, onPick: () => openPopular(q) }));
+    const popularChips = questions.map((q) => ({ key: q.question, question: q.question, prepared: true, onPick: () => openPopular(q) }));
 
     return (
         <section aria-label={t("trevor.library.label")} className="grid gap-4 pt-4 lg:grid-cols-[minmax(0,1fr)_20rem]" data-trevor-library>
@@ -142,7 +140,7 @@ function SignedIn({ t, active, askDeps }: { t: TrevorT; active: boolean; askDeps
                                                     type="button"
                                                     onClick={() => openPopular(q)}
                                                     className="max-w-full rounded-2xl border border-border bg-background px-3 py-1.5 text-start text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11"
-                                                    data-trevor-prepared={q.answer ? "" : undefined}
+                                                    data-trevor-prepared=""
                                                 >
                                                     {q.question}
                                                 </button>
@@ -192,7 +190,7 @@ function MyQuestions({ jobs, loading, failed, hasMore, onMore, onOpen }: { jobs:
                                 <span className="line-clamp-2 text-sm">{job.question}</span>
                                 <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground text-xs">
                                     <JobStatusBadge job={job} t={t} />
-                                    {job.createdAt !== null ? <span className="tabular-nums">{f.relative(new Date(job.createdAt).toISOString())}</span> : null}
+                                    {Number.isNaN(Date.parse(job.createdAt)) ? null : <span className="tabular-nums">{f.relative(new Date(job.createdAt).toISOString())}</span>}
                                 </span>
                             </button>
                         </li>
@@ -210,11 +208,10 @@ function MyQuestions({ jobs, loading, failed, hasMore, onMore, onOpen }: { jobs:
 
 function JobStatusBadge({ job, t }: { job: IMyJob; t: TrevorT }): React.ReactElement {
     const open = jobOpen(job);
-    const label = open && job.deferred ? t("trevor.library.status.deferred") : t(`trevor.library.status.${job.status}`);
     return (
         <Badge variant="outline" className={cn("h-auto py-0 font-normal", open && "border-primary/40 text-foreground", job.status === "failed" && "border-warning/40")}>
             {open ? <Spinner className="size-3" /> : null}
-            {label}
+            {t(`trevor.library.status.${job.status}`)}
         </Badge>
     );
 }

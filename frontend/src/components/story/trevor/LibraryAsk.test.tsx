@@ -107,16 +107,16 @@ describe("Ask Trevor on the stories page", () => {
             Response.json({
                 items: [
                     { question: "Who is Amiya?", answer: stored("Prepared."), askers: 3 },
-                    { question: "Why Chernobog?", answer: null, askers: 2 },
+                    { question: "Why Chernobog?", answer: stored("Also prepared."), askers: 2 },
                 ],
                 spoilerSafeUpTo: ERA,
             });
-        routes["/trevor/me/jobs"] = () => Response.json({ jobs: [{ jobId: "j7", question: "What is Originium?", status: "queued", rung: "cpu", deferred: true, createdAt: "2026-10-17T10:00:00Z", answer: null, quickLook: stored("Passages.") }], nextBefore: null });
+        routes["/trevor/me/jobs"] = () => Response.json([{ jobId: "j7", question: "What is Originium?", status: "queued", rung: "cpu", source: null, createdAt: "2026-10-17T10:00:00Z", finishedAt: null, answer: null }]);
         mount();
         await waitFor(() => expect(document.querySelectorAll("[data-trevor-popular] button").length).toBe(2));
         expect(document.querySelector("[data-trevor-spoiler]")?.textContent).toContain("Shatterpoint");
         expect(document.querySelectorAll('[data-trevor-mine-job="j7"]').length).toBe(1);
-        expect(document.querySelector('[data-trevor-mine-job="j7"]')?.textContent).toContain("Quick look given, full answer coming");
+        expect(document.querySelector('[data-trevor-mine-job="j7"]')?.textContent).toContain("Waiting");
 
         await act(async () => {
             fireEvent.click(document.querySelector("[data-trevor-popular] [data-trevor-prepared]") as HTMLElement);
@@ -127,28 +127,17 @@ describe("Ask Trevor on the stories page", () => {
         await act(async () => {
             fireEvent.click(document.querySelector('[data-trevor-mine-job="j7"]') as HTMLElement);
         });
-        // The open past question is followed again until its full answer replaces the quick look.
+        // The open past question is followed again until its answer lands.
         await waitFor(() => expect(document.body.textContent).toContain("Followed in full."));
     });
 
-    it("asks a popular question that has no stored answer, with no story horizon", async () => {
-        routes["/trevor/popular"] = () => Response.json({ items: [{ question: "Why Chernobog?", answer: null, askers: 2 }], spoilerSafeUpTo: ERA });
-        mount();
-        await waitFor(() => expect(document.querySelectorAll("[data-trevor-popular] button").length).toBe(1));
-        await act(async () => {
-            fireEvent.click(document.querySelector("[data-trevor-popular] button") as HTMLElement);
-        });
-        await waitFor(() => expect(asked).toEqual([{ question: "Why Chernobog?", horizonStory: null, turnstileToken: null }]));
-        await waitFor(() => expect(document.body.textContent).toContain("Asked."));
-    });
-
-    it("keeps the unasked popular questions above the composer after the first question, and asks from there", async () => {
+    it("keeps the unopened popular questions above the composer after the first question, and opens from there", async () => {
         routes["/trevor/popular"] = () =>
             Response.json({
                 items: [
                     { question: "Who is Amiya?", answer: stored("Prepared."), askers: 3 },
-                    { question: "Why Chernobog?", answer: null, askers: 2 },
-                    { question: "What is Rhodes Island?", answer: null, askers: 1 },
+                    { question: "Why Chernobog?", answer: stored("Chernobog."), askers: 2 },
+                    { question: "What is Rhodes Island?", answer: stored("Rhodes Island."), askers: 2 },
                 ],
                 spoilerSafeUpTo: ERA,
             });
@@ -165,7 +154,8 @@ describe("Ask Trevor on the stories page", () => {
         await act(async () => {
             fireEvent.click(document.querySelector("[data-trevor-chip-row] [data-trevor-chip]") as HTMLElement);
         });
-        await waitFor(() => expect(asked).toEqual([{ question: "Why Chernobog?", horizonStory: null, turnstileToken: null }]));
+        await waitFor(() => expect(document.body.textContent).toContain("Chernobog."));
+        expect(asked).toEqual([]);
         expect(row()).toEqual(["What is Rhodes Island?"]);
         // A typed question that matches a chip (case and spaces aside) hides it too.
         const box = document.querySelector("[data-trevor-question]") as HTMLTextAreaElement;
@@ -177,7 +167,7 @@ describe("Ask Trevor on the stories page", () => {
         await act(async () => {
             fireEvent.click(screen.getByRole("button", { name: "Ask" }));
         });
-        await waitFor(() => expect(asked.map((x) => x.question)).toEqual(["Why Chernobog?", "what is rhodes island?"]));
+        await waitFor(() => expect(asked.map((x) => x.question)).toEqual(["what is rhodes island?"]));
         expect(document.querySelector("[data-trevor-chip-row]")).toBeNull();
     });
 });

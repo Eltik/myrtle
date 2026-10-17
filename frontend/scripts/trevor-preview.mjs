@@ -54,7 +54,8 @@
 //   trevor/artifacts/panels, /trevor/jobs/<id> and its stream, feedback;
 // - GET /api/trevor/popular?limit=8: this run's answers inside the reader's era (each counted as
 //   2 askers) and up to 5 bank answers inside it; anonymous gets an empty list;
-// - GET /api/trevor/me/jobs?limit=20&before=<jobId>: this run's jobs, newest first;
+// - GET /api/trevor/me/jobs?limit=20&before=<createdAt>: this run's asks, newest first, a bare
+//   array of the backend's rows (a deferred ask is listed under its deferred job);
 // - a signed-in session for the cookie `site_token=trevor-demo` (/demo-login sets it,
 //   /demo-logout clears it);
 // - every other GET is proxied to the real backend (MOCK_UPSTREAM, default
@@ -547,12 +548,9 @@ function jobRow(j) {
         status: v.status,
         rung: v.rung,
         source: v.answer?.source ?? null,
-        deferred: !!j.deferred,
         createdAt: iso(j.created),
         finishedAt: ended ? iso(j.real ? j.finished : j.doneAt) : null,
         answer: v.answer ?? null,
-        quickLook: j.quickJob ? (JOBS.get(j.quickJob)?.answer ?? null) : null,
-        error: v.error ?? null,
     };
 }
 
@@ -682,14 +680,9 @@ const server = Bun.serve({
         if (p === "/api/trevor/me/jobs") {
             if (!demo) return json({ error: { code: "UNAUTHORIZED", message: "sign in" } }, 401);
             const limit = Math.min(Math.max(Number(url.searchParams.get("limit") ?? 20) || 20, 1), 50);
-            let rows = [...JOBS.values()].filter((j) => j.uid === DEMO_UID && !j.quick).reverse();
-            const before = url.searchParams.get("before");
-            if (before) {
-                const at = rows.findIndex((j) => j.id === before);
-                rows = at < 0 ? [] : rows.slice(at + 1);
-            }
-            const page = rows.slice(0, limit);
-            return json({ jobs: page.map(jobRow), nextBefore: rows.length > limit ? (page.at(-1)?.id ?? null) : null });
+            const before = Date.parse(url.searchParams.get("before") ?? "");
+            const rows = [...JOBS.values()].filter((j) => j.uid === DEMO_UID && !j.quick && !(j.created >= before)).reverse();
+            return json(rows.slice(0, limit).map(jobRow));
         }
         if (p === "/api/trevor/ask" && req.method === "POST") {
             if (!demo) return json({ error: { code: "UNAUTHORIZED", message: "sign in" } }, 401);
