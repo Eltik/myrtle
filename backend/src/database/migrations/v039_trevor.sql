@@ -11,6 +11,13 @@
 -- Trevor's EN release order (contract section 1). A job's horizon is a
 -- gatePos (`horizon_pos`), and answers are cached per era boundary
 -- (`era_pos`), so every reader past the same boundary shares one answer.
+--
+-- Contract v1.1 (trevor/design/trevor-contract-v1.1.md) adds: the deferred
+-- queue (`trevor_jobs.deferred`), the cited chunk shas an answer depends on
+-- (`trevor_answers.cited_shas`) and each version's chunk sha map
+-- (`trevor_chunk_shas`) for the cache carry-over, the worker power guard
+-- (`trevor_workers.guard`), and one row per ask (`trevor_asks`) for "My
+-- questions", the popular list and the warm-up.
 
 CREATE TABLE trevor_versions (
     version      TEXT        NOT NULL,
@@ -55,6 +62,13 @@ CREATE TABLE trevor_answers (
     question   TEXT        NOT NULL,
     answer     JSONB       NOT NULL,
     hits       BIGINT      NOT NULL DEFAULT 0,
+    -- {chunkId: sha} of every cited chunk, from the worker's
+    -- `citations[].sha`. NULL when any citation came without a sha (or there
+    -- were none): such an answer is never carried to a new version.
+    cited_shas JSONB,
+    -- The version this answer was copied from on activation (contract v1.1
+    -- section 3b); NULL for an answer a worker made for this version.
+    carried_from TEXT,
     -- False for an answer stored only for its job and never served from
     -- the cache: a passages-only answer, or one from a corpus version other
     -- than the job's.
@@ -71,7 +85,8 @@ CREATE INDEX trevor_answers_hits ON trevor_answers (server, version, hits DESC);
 -- only for an internal job (no limit).
 CREATE TABLE trevor_jobs (
     id          UUID        NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-    kind        TEXT        NOT NULL DEFAULT 'ask' CHECK (kind IN ('ask', 'update')),
+    -- `warm`: an internal re-answer queued by the update script (no user).
+    kind        TEXT        NOT NULL DEFAULT 'ask' CHECK (kind IN ('ask', 'update', 'warm')),
     user_id     UUID        REFERENCES users (id) ON DELETE SET NULL,
     question    TEXT        NOT NULL,
     qkey        TEXT        NOT NULL,
@@ -80,7 +95,10 @@ CREATE TABLE trevor_jobs (
     -- The active corpus version when the job was queued.
     corpus_version TEXT,
     rung        TEXT        NOT NULL DEFAULT 'passages' CHECK (rung IN ('cf', 'cpu', 'passages')),
-    profile     TEXT        NOT NULL DEFAULT 'full' CHECK (profile IN ('full', 'slim')),
+    profile     TEXT        NOT NULL DEFAULT 'full' CHECK (profile IN ('full', 'slim', 'mid')),
+    -- Admitted past a full model rung (contract v1.1 section 1b): workers
+    -- claim it only when no normal job they can serve is waiting.
+    deferred    BOOLEAN     NOT NULL DEFAULT false,
     status      TEXT        NOT NULL DEFAULT 'queued'
                             CHECK (status IN ('queued', 'running', 'done', 'failed')),
     worker_id   TEXT,
@@ -98,8 +116,12 @@ CREATE INDEX trevor_jobs_queue ON trevor_jobs (server, status, created_at);
 -- The per-user cap counts a user's open jobs.
 CREATE INDEX trevor_jobs_user_open ON trevor_jobs (user_id) WHERE status IN ('queued', 'running');
 -- A second ask of a question already in the queue joins that job; unique,
--- so two concurrent identical asks cannot both enqueue.
-CREATE UNIQUE INDEX trevor_jobs_open_key ON trevor_jobs (server, qkey, horizon_pos) WHERE status IN ('queued', 'running');
+-- so two concurrent identical asks cannot both enqueue. One normal and one
+-- deferred job may be open per key: an overflowed ask holds a quick
+-- passages job and the deferred full one.
+CREATE UNIQUE INDEX trevor_jobs_open_key ON trevor_jobs (server, qkey, horizon_pos, deferred) WHERE status IN ('queued', 'running');
+-- The fair claim counts a user's running jobs.
+CREATE INDEX trevor_jobs_user_running ON trevor_jobs (user_id) WHERE status = 'running';
 -- The CPU rung's depth and the per-rung ETA read jobs by rung.
 CREATE INDEX trevor_jobs_rung ON trevor_jobs (rung, status, finished_at);
 
@@ -111,8 +133,46 @@ CREATE TABLE trevor_workers (
     last_seen      TIMESTAMPTZ NOT NULL DEFAULT now(),
     rungs          JSONB       NOT NULL DEFAULT '{}'::jsonb,
     corpus_version TEXT,
-    busy_job_id    UUID
+    busy_job_id    UUID,
+    -- The worker power guard (contract v1.1 section 2.1):
+    -- {state: "ok"|"tripped", reason, since}. NULL from a worker without one.
+    guard          JSONB
 );
+
+-- Every chunk's text sha in one version ({chunkId: sha} sent with the
+-- publish, contract v1.1 section 3b): activation copies a cached answer of
+-- the previous version when each of its cited chunks has the same sha here.
+CREATE TABLE trevor_chunk_shas (
+    version  TEXT NOT NULL,
+    server   TEXT NOT NULL,
+    chunk_id TEXT NOT NULL,
+    sha      TEXT NOT NULL,
+    PRIMARY KEY (version, server, chunk_id),
+    FOREIGN KEY (version, server) REFERENCES trevor_versions (version, server) ON DELETE CASCADE
+);
+
+-- One row per ask that got past validation: "My questions" (contract v1.1
+-- section 5), the popular list (distinct askers) and the warm-up (asks in
+-- the last 30 days). `job_id` is the job the ask streams (a model job, or
+-- the quick passages job of an overflowed ask), `deferred_job_id` the full
+-- answer an overflowed ask waits for, `answer_id` a cache hit.
+CREATE TABLE trevor_asks (
+    id              UUID        NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id         UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    server          TEXT        NOT NULL,
+    version         TEXT,
+    question        TEXT        NOT NULL,
+    -- normQ itself (`qkey` is its hash): the warm-up list reports it.
+    normq           TEXT        NOT NULL,
+    qkey            TEXT        NOT NULL,
+    era_pos         INTEGER     NOT NULL,
+    job_id          UUID        REFERENCES trevor_jobs (id) ON DELETE SET NULL,
+    deferred_job_id UUID        REFERENCES trevor_jobs (id) ON DELETE SET NULL,
+    answer_id       UUID        REFERENCES trevor_answers (id) ON DELETE SET NULL,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX trevor_asks_user ON trevor_asks (user_id, created_at DESC);
+CREATE INDEX trevor_asks_key ON trevor_asks (server, qkey, era_pos, created_at);
 
 -- Cloudflare Workers AI Neurons spent per UTC day by `cf` answers.
 CREATE TABLE trevor_neurons (

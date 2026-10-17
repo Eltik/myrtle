@@ -16,6 +16,7 @@
 //! - [`runtime`]: the in-process state (config, wake-up, broadcast registry).
 //! - [`turnstile`]: the Cloudflare Turnstile check on ask.
 
+pub mod alerts;
 pub mod ask;
 pub mod runtime;
 pub mod stream;
@@ -36,7 +37,9 @@ pub use runtime::TrevorConfig;
 pub const ASK_PER_HOUR: u64 = 30;
 /// Open (queued or running) jobs one user may hold at once.
 pub const MAX_OPEN_PER_USER: i64 = 3;
-/// Queued jobs per server before ask answers "Trevor is busy" (503).
+/// Queued jobs per server before ask answers "Trevor is busy" (503); only
+/// under `TREVOR_ADMISSION=0`. Admission control replaces it with
+/// `TREVOR_GLOBAL_QUEUE_MAX` and a passages answer instead of the 503.
 pub const MAX_QUEUED: i64 = 200;
 /// The longest question accepted, in characters.
 pub const MAX_QUESTION_CHARS: usize = 500;
@@ -79,12 +82,10 @@ pub fn parse_server(server: Option<&str>) -> Result<&'static str, ApiError> {
         .ok_or_else(|| ApiError::BadRequest(format!("server must be one of {SERVERS:?}")))
 }
 
-/// The question as the cache sees it: case-folded, whitespace collapsed,
-/// typographic quotes and dashes made plain, trailing question marks and full
-/// stops dropped. Two askers who type the same question differently share one
-/// answer; anything that could change the meaning (word order, other
-/// punctuation, digits) is kept.
-pub fn normalize_question(question: &str) -> String {
+/// The question as the cache saw it before contract v1.1 (kept verbatim for
+/// `TREVOR_NORMQ=0`): case-folded, whitespace collapsed, typographic quotes
+/// and dashes made plain, trailing question marks and full stops dropped.
+pub fn normalize_question_v1(question: &str) -> String {
     let mapped: String = question
         .chars()
         .map(|c| match c {
@@ -105,14 +106,111 @@ pub fn normalize_question(question: &str) -> String {
     collapsed.trim_end_matches(['?', '.', '!', ' ']).to_owned()
 }
 
+/// The compatibility fold of one character: the NFKC mappings a typed
+/// question meets (full-width ASCII, the ideographic and other Unicode
+/// spaces, ligatures, super/subscript digits, the ellipsis). The backend has
+/// no Unicode normalization tables (`unicode-normalization` is not a
+/// dependency), so this is the NFKC subset, not all of it; see
+/// [`normalize_question`].
+fn nfkc_fold(c: char, out: &mut String) {
+    match c {
+        // Full-width ASCII block -> ASCII.
+        '\u{FF01}'..='\u{FF5E}' => {
+            out.push(char::from_u32(c as u32 - 0xFF01 + 0x21).unwrap_or(c));
+        }
+        '\u{00A0}'
+        | '\u{1680}'
+        | '\u{2000}'..='\u{200A}'
+        | '\u{202F}'
+        | '\u{205F}'
+        | '\u{3000}' => out.push(' '),
+        '\u{200B}' | '\u{200C}' | '\u{200D}' | '\u{2060}' | '\u{FEFF}' | '\u{00AD}' => {}
+        '\u{FB00}' => out.push_str("ff"),
+        '\u{FB01}' => out.push_str("fi"),
+        '\u{FB02}' => out.push_str("fl"),
+        '\u{FB03}' => out.push_str("ffi"),
+        '\u{FB04}' => out.push_str("ffl"),
+        '\u{2026}' => out.push_str("..."),
+        '\u{00B2}' => out.push('2'),
+        '\u{00B3}' => out.push('3'),
+        '\u{00B9}' => out.push('1'),
+        '\u{2070}' => out.push('0'),
+        '\u{2074}'..='\u{2079}' => {
+            out.push(char::from_u32(c as u32 - 0x2074 + u32::from(b'4')).unwrap_or(c));
+        }
+        '\u{2080}'..='\u{2089}' => {
+            out.push(char::from_u32(c as u32 - 0x2080 + u32::from(b'0')).unwrap_or(c));
+        }
+        '\u{2160}'..='\u{2169}' => {
+            const ROMAN: [&str; 10] = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+            out.push_str(ROMAN[(c as u32 - 0x2160) as usize]);
+        }
+        '\u{3002}' | '\u{FF61}' => out.push('.'),
+        c => out.push(c),
+    }
+}
+
+/// An apostrophe inside a word joins it ("Kal'tsit" = "Kaltsit"); every
+/// other punctuation mark is a word break.
+const fn is_apostrophe(c: char) -> bool {
+    matches!(
+        c,
+        '\'' | '\u{2018}' | '\u{2019}' | '\u{02BC}' | '\u{2032}' | '`' | '\u{00B4}'
+    )
+}
+
+/// normQ (contract v1.1 section 1a), the question as the cache, the twin
+/// join and the open-job index see it: the NFKC compatibility fold
+/// ([`nfkc_fold`]), lowercase, apostrophes dropped, every other punctuation
+/// or symbol mark folded to a space, whitespace collapsed, which also drops
+/// a trailing "?". Word order and digits are kept, so "Did W kill Theresa"
+/// and "Did Theresa kill W" stay two questions. `TREVOR_NORMQ=0` restores
+/// [`normalize_question_v1`].
+pub fn normalize_question(question: &str) -> String {
+    let mut folded = String::with_capacity(question.len());
+    for c in question.chars() {
+        nfkc_fold(c, &mut folded);
+    }
+    let mut out = String::with_capacity(folded.len());
+    for c in folded.chars().flat_map(char::to_lowercase) {
+        if is_apostrophe(c) {
+            continue;
+        }
+        // Combining marks stay with their letter; anything else that is not
+        // a letter or digit breaks the word.
+        if c.is_alphanumeric() || is_combining(c) {
+            out.push(c);
+        } else {
+            out.push(' ');
+        }
+    }
+    out.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+/// The combining diacritical marks (U+0300 to U+036F), which belong to the
+/// letter before them rather than breaking the word.
+const fn is_combining(c: char) -> bool {
+    matches!(c, '\u{0300}'..='\u{036F}')
+}
+
+/// The normalized question under the configured rule (`TREVOR_NORMQ`).
+pub fn normalize_with(question: &str, normq: bool) -> String {
+    if normq {
+        normalize_question(question)
+    } else {
+        normalize_question_v1(question)
+    }
+}
+
 /// The cache key of a normalized question: 32 hex chars of its SHA-256.
 pub fn qkey(normalized: &str) -> String {
     hex::encode(&Sha256::digest(normalized.as_bytes())[..16])
 }
 
-/// Admit a question, or say why not.
-pub fn validate_question(question: &str) -> Result<String, ApiError> {
-    let normalized = normalize_question(question);
+/// Admit a question, or say why not; `normq` picks the normalization
+/// (`TREVOR_NORMQ`).
+pub fn validate_question(question: &str, normq: bool) -> Result<String, ApiError> {
+    let normalized = normalize_with(question, normq);
     if normalized.is_empty() {
         return Err(ApiError::BadRequest("question is empty".into()));
     }
@@ -158,11 +256,22 @@ impl Rung {
         }
     }
 
-    /// The pipeline profile of a job on this rung: `cf` runs the full
-    /// pipeline, `cpu` the slim one; `passages` ignores it (stored `full`).
+    /// The pipeline profile of a job on this rung under contract v1: `cf`
+    /// runs the full pipeline, `cpu` the slim one; `passages` ignores it
+    /// (stored `full`).
     pub const fn profile(self) -> Profile {
         match self {
             Self::Cpu => Profile::Slim,
+            _ => Profile::Full,
+        }
+    }
+
+    /// The profile under the configured CPU profile (contract v1.1 section
+    /// 4: `cpu` runs `mid` by default; `TREVOR_CPU_PROFILE=slim` restores
+    /// [`Rung::profile`]).
+    pub const fn profile_with(self, cpu: Profile) -> Profile {
+        match self {
+            Self::Cpu => cpu,
             _ => Profile::Full,
         }
     }
@@ -185,6 +294,9 @@ impl Rung {
 pub enum Profile {
     Full,
     Slim,
+    /// The E2B eval winner (contract v1.1 section 4): keyword router, k 8, a
+    /// 3,600-token passage budget, 250 output tokens, one model call.
+    Mid,
 }
 
 impl Profile {
@@ -192,6 +304,7 @@ impl Profile {
         match self {
             Self::Full => "full",
             Self::Slim => "slim",
+            Self::Mid => "mid",
         }
     }
 }
@@ -213,8 +326,72 @@ pub struct RungInputs {
     pub rungs: RungFlags,
     /// Neurons spent today (UTC) by `cf` answers.
     pub neurons_today: i64,
-    /// Jobs queued or running on the `cpu` rung.
+    /// Jobs queued or running on the `cpu` rung (normal jobs only once the
+    /// deferred queue exists).
     pub cpu_depth: i64,
+}
+
+/// What admission control reads besides [`RungInputs`] (contract v1.1
+/// section 1b).
+#[derive(Debug, Clone, Copy, Default)]
+pub struct AdmissionInputs {
+    pub rung: RungInputs,
+    /// Normal jobs queued or running on the `cf` rung.
+    pub cf_depth: i64,
+    /// Online workers whose heartbeat offers `cpu`.
+    pub cpu_workers: i64,
+    /// Jobs open (queued or running, normal or deferred) on every server.
+    pub open_total: i64,
+}
+
+/// Admission control's verdict for a new question.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Admission {
+    /// A model rung (or, with no model rung offered at all, the passages
+    /// rung) takes it now.
+    Now(Rung),
+    /// Every offered model rung is full: a quick passages job now, and the
+    /// full answer as a deferred job on `deferred` when the global cap
+    /// allows (`None` when it does not).
+    Overflow { deferred: Option<Rung> },
+}
+
+/// The CPU rung's cap: `TREVOR_CPU_QUEUE_MAX` per online cpu worker. A
+/// heartbeat that offers `cpu` while no cpu worker is online (a restart)
+/// counts as one, so a single worker keeps the v1 cap exactly.
+pub fn cpu_cap(cfg: &TrevorConfig, cpu_workers: i64) -> i64 {
+    cfg.cpu_queue_max.saturating_mul(cpu_workers.max(1))
+}
+
+/// Admission control (contract v1.1 section 1b): `cf` while the heartbeat
+/// offers it, the day's ledger is under budget and fewer than
+/// `TREVOR_CF_QUEUE_MAX` normal jobs are on it (`0`: no cap); else `cpu`
+/// while offered and under [`cpu_cap`]; else, when a model rung is offered
+/// but full, an overflow (deferred on the rung that will serve it, unless
+/// `TREVOR_GLOBAL_QUEUE_MAX` jobs are already open); else `passages`.
+pub fn admit_rung(inputs: &AdmissionInputs, cfg: &TrevorConfig) -> Admission {
+    let r = &inputs.rung;
+    let cf_usable = r.rungs.cf && r.neurons_today < cf_serving_budget(cfg);
+    let cf_room = cfg.cf_queue_max <= 0 || inputs.cf_depth < cfg.cf_queue_max;
+    if cf_usable && cf_room {
+        return Admission::Now(Rung::Cf);
+    }
+    if r.rungs.cpu && r.cpu_depth < cpu_cap(cfg, inputs.cpu_workers) {
+        return Admission::Now(Rung::Cpu);
+    }
+    let full = if r.rungs.cpu {
+        Some(Rung::Cpu)
+    } else if cf_usable {
+        Some(Rung::Cf)
+    } else {
+        None
+    };
+    match full {
+        None => Admission::Now(Rung::Passages),
+        Some(rung) => Admission::Overflow {
+            deferred: (inputs.open_total < cfg.global_queue_max).then_some(rung),
+        },
+    }
 }
 
 /// Neurons `cf` answers may spend today before the summary reserve.
@@ -245,6 +422,10 @@ pub fn settle_rung(
     neurons_today: i64,
     cfg: &TrevorConfig,
 ) -> Rung {
+    // TREVOR_MODE=passages (or off): no model runs, whatever was queued.
+    if cfg.mode != Mode::On {
+        return Rung::Passages;
+    }
     match assigned {
         Rung::Cf if worker.cf && neurons_today < cf_serving_budget(cfg) => Rung::Cf,
         Rung::Cf | Rung::Cpu if worker.cpu => Rung::Cpu,
@@ -281,6 +462,65 @@ pub fn cf_budget(neurons_today: i64, cfg: &TrevorConfig) -> CfBudget {
     } else {
         CfBudget::Ok
     }
+}
+
+// --- master switch and guard (contract v1.1 sections 2.1, 2.3) --------------
+
+/// `TREVOR_MODE`: `on` (default), `passages` (every ask answered from
+/// passages at once, no model job queued), `off` (ask is a 503 "Trevor is
+/// resting" unless the answer is cached; panels and cached answers serve).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS, ToSchema)]
+#[serde(rename_all = "lowercase")]
+#[ts(export, rename = "TrevorMode")]
+#[schema(as = TrevorMode)]
+pub enum Mode {
+    On,
+    Passages,
+    Off,
+}
+
+impl Mode {
+    /// The env value; anything unknown reads as `on`, with a warning.
+    pub fn parse(s: &str) -> Option<Self> {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "on" | "" => Some(Self::On),
+            "passages" => Some(Self::Passages),
+            "off" => Some(Self::Off),
+            _ => None,
+        }
+    }
+}
+
+/// A worker's power guard state.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, TS, ToSchema)]
+#[serde(rename_all = "lowercase")]
+#[ts(export, rename = "TrevorGuardState")]
+#[schema(as = TrevorGuardState)]
+pub enum GuardState {
+    #[default]
+    Ok,
+    Tripped,
+}
+
+/// The heartbeat's `guard` (contract v1.1 section 2.1).
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct Guard {
+    pub state: GuardState,
+    pub reason: Option<String>,
+    /// Unix seconds the state began.
+    pub since: Option<i64>,
+}
+
+/// Online workers per model rung.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, TS, ToSchema)]
+#[ts(export, rename = "TrevorWorkerCounts")]
+#[schema(as = TrevorWorkerCounts)]
+pub struct WorkerCounts {
+    #[ts(type = "number")]
+    pub cf: i64,
+    #[ts(type = "number")]
+    pub cpu: i64,
 }
 
 // --- spoiler horizon (contract section 1) -----------------------------------
@@ -378,6 +618,10 @@ pub struct Citation {
     pub line_start: u32,
     pub line_end: u32,
     pub text: String,
+    /// The cited chunk's text sha (contract v1.1 section 3b); answers whose
+    /// every citation carries one can be carried to a new version.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sha: Option<String>,
 }
 
 /// Whether a model wrote the answer or it is the top passages only.
@@ -522,6 +766,19 @@ pub struct AskResponse {
     pub eta_secs: Option<i64>,
     /// `GET` this for the answer as it is written (SSE); null for a cached answer.
     pub stream_url: Option<String>,
+    /// The full answer was deferred (contract v1.1 section 1b): this job
+    /// gives the quick passages answer now, and the full one shows in "My
+    /// questions" (`GET /trevor/me/jobs`) under `deferredJobId` when ready.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub deferred_job_id: Option<Uuid>,
+    /// "Quick look" while the answer is made: the same question's cached
+    /// answer from an earlier era (so it is spoiler-safe for this reader).
+    /// Sent only with an overflowed or passages-only ask, and only when one
+    /// exists.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub quick_look: Option<TrevorAnswer>,
 }
 
 /// `GET /trevor/jobs/{id}`, and the SSE `done` event.
@@ -571,6 +828,48 @@ pub struct TrevorStatus {
     /// Jobs queued or running per model rung.
     pub queue_depth: QueueDepth,
     pub cf_budget: CfBudget,
+    /// Online workers offering each model rung (contract v1.1 section 1d).
+    pub workers: WorkerCounts,
+    /// `tripped` while any online worker's power guard is tripped.
+    pub guard: GuardState,
+    /// The master switch, `TREVOR_MODE`.
+    pub mode: Mode,
+}
+
+/// One of the reader's questions, for "My questions" (`GET /trevor/me/jobs`).
+#[derive(Debug, Clone, Serialize, TS, ToSchema)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, rename = "TrevorMyQuestion")]
+#[schema(as = TrevorMyQuestion)]
+pub struct MyQuestion {
+    /// The job that makes (or made) the full answer: the deferred job of an
+    /// overflowed ask, else the ask's job; null for a cache hit.
+    pub job_id: Option<Uuid>,
+    pub question: String,
+    pub status: JobStatus,
+    /// `cache` for a cache hit, else the job's rung.
+    pub rung: Rung,
+    /// Whether a model wrote the answer; null until there is one.
+    pub source: Option<AnswerSource>,
+    #[ts(type = "string")]
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    #[ts(type = "string | null")]
+    pub finished_at: Option<chrono::DateTime<chrono::Utc>>,
+    /// Present once done.
+    pub answer: Option<TrevorAnswer>,
+}
+
+/// One popular question with its answer (`GET /trevor/popular`).
+#[derive(Debug, Clone, Serialize, TS, ToSchema)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, rename = "TrevorPopularQuestion")]
+#[schema(as = TrevorPopularQuestion)]
+pub struct PopularQuestion {
+    pub question: String,
+    /// Distinct accounts that asked it (at least 2).
+    #[ts(type = "number")]
+    pub askers: i64,
+    pub answer: TrevorAnswer,
 }
 
 /// `GET /trevor/panels/{storyId}`: the published panel JSON verbatim.
@@ -606,30 +905,56 @@ mod tests {
     }
 
     #[test]
-    fn normalize_folds_case_space_quotes_and_trailing_marks() {
+    fn normalize_v1_folds_case_space_quotes_and_trailing_marks() {
         assert_eq!(
-            normalize_question("  Who is   Kal\u{2019}tsit?? "),
+            normalize_question_v1("  Who is   Kal\u{2019}tsit?? "),
             "who is kal'tsit"
         );
-        assert_eq!(normalize_question("Who is Kal'tsit"), "who is kal'tsit");
-        assert_eq!(normalize_question("Why?\u{FF1F}"), "why");
+        assert_eq!(normalize_question_v1("Who is Kal'tsit"), "who is kal'tsit");
+        assert_eq!(normalize_question_v1("Why?\u{FF1F}"), "why");
         assert_eq!(
-            normalize_question("\u{201C}Ch\u{2014}en\u{201D}!"),
+            normalize_question_v1("\u{201C}Ch\u{2014}en\u{201D}!"),
             "\"ch-en\""
+        );
+        assert_eq!(normalize_question_v1("a, b"), "a, b");
+        // TREVOR_NORMQ=0 is exactly the v1 rule.
+        assert_eq!(
+            normalize_with("A, b?", false),
+            normalize_question_v1("A, b?")
         );
     }
 
     #[test]
-    fn normalize_keeps_what_changes_meaning() {
-        assert_ne!(
-            normalize_question("Did W kill Theresa?"),
-            normalize_question("Did Theresa kill W?")
+    fn normq_folds_nfkc_case_punctuation_space_and_the_trailing_mark() {
+        let n = normalize_question;
+        assert_eq!(n("  Who is   Kal\u{2019}tsit?? "), "who is kaltsit");
+        assert_eq!(n("Who is Kal'tsit"), "who is kaltsit");
+        assert_eq!(n("who is kaltsit"), "who is kaltsit");
+        // Full-width letters, ideographic space and question mark (NFKC).
+        assert_eq!(
+            n("\u{FF37}ho\u{3000}is \u{FF21}miya\u{FF1F}"),
+            "who is amiya"
         );
-        assert_ne!(
-            normalize_question("chapter 10"),
-            normalize_question("chapter 1")
-        );
-        assert_eq!(normalize_question("a, b"), "a, b");
+        assert_eq!(n("Why?\u{FF1F}"), "why");
+        assert_eq!(n("\u{201C}Ch\u{2014}en\u{201D}!"), "ch en");
+        assert_eq!(n("a, b"), "a b");
+        assert_eq!(n("a,b"), "a b");
+        assert_eq!(n("Who is Amiya\u{2026}"), "who is amiya");
+        assert_eq!(n("the \u{FB01}nal battle"), "the final battle");
+        assert_eq!(n("Episode \u{2167}"), "episode viii");
+        assert_eq!(n("zero\u{200B}width"), "zerowidth");
+        assert_eq!(n("Wi\u{0161}'adel"), "wi\u{0161}adel");
+        // Decomposed accents keep their mark on the letter.
+        assert_eq!(n("Wis\u{030C}'adel"), "wis\u{030C}adel");
+    }
+
+    #[test]
+    fn normq_keeps_what_changes_meaning() {
+        let n = normalize_question;
+        assert_ne!(n("Did W kill Theresa?"), n("Did Theresa kill W?"));
+        assert_ne!(n("chapter 10"), n("chapter 1"));
+        assert_ne!(n("chapter 1-10"), n("chapter 110"));
+        assert_eq!(n("chapter 1-10"), "chapter 1 10");
     }
 
     #[test]
@@ -643,9 +968,125 @@ mod tests {
 
     #[test]
     fn validate_refuses_empty_and_long() {
-        assert!(validate_question(" ?? ").is_err());
-        assert!(validate_question(&"a".repeat(MAX_QUESTION_CHARS + 1)).is_err());
-        assert!(validate_question(&"a".repeat(MAX_QUESTION_CHARS)).is_ok());
+        for normq in [true, false] {
+            assert!(validate_question(" ?? ", normq).is_err());
+            assert!(validate_question(&"a".repeat(MAX_QUESTION_CHARS + 1), normq).is_err());
+            assert!(validate_question(&"a".repeat(MAX_QUESTION_CHARS), normq).is_ok());
+        }
+        // Punctuation only is empty under normQ.
+        assert!(validate_question("!?,.", true).is_err());
+    }
+
+    #[test]
+    fn admission_caps_per_rung_and_overflows_to_deferred() {
+        let c = cfg();
+        let both = RungFlags {
+            cf: true,
+            cpu: true,
+        };
+        let cpu_only = RungFlags {
+            cf: false,
+            cpu: true,
+        };
+        let adm = |rungs, neurons_today, cpu_depth, cf_depth, cpu_workers, open_total| {
+            admit_rung(
+                &AdmissionInputs {
+                    rung: RungInputs {
+                        rungs,
+                        neurons_today,
+                        cpu_depth,
+                    },
+                    cf_depth,
+                    cpu_workers,
+                    open_total,
+                },
+                &c,
+            )
+        };
+        assert_eq!(adm(both, 0, 0, 0, 1, 0), Admission::Now(Rung::Cf));
+        // TREVOR_CF_QUEUE_MAX=4: the fifth goes to cpu.
+        assert_eq!(adm(both, 0, 0, 3, 1, 0), Admission::Now(Rung::Cf));
+        assert_eq!(adm(both, 0, 0, 4, 1, 0), Admission::Now(Rung::Cpu));
+        // 6 per online cpu worker.
+        assert_eq!(adm(cpu_only, 0, 5, 0, 1, 0), Admission::Now(Rung::Cpu));
+        assert_eq!(
+            adm(cpu_only, 0, 6, 0, 1, 10),
+            Admission::Overflow {
+                deferred: Some(Rung::Cpu)
+            }
+        );
+        assert_eq!(adm(cpu_only, 0, 6, 0, 2, 10), Admission::Now(Rung::Cpu));
+        assert_eq!(adm(cpu_only, 0, 11, 0, 2, 10), Admission::Now(Rung::Cpu));
+        // A restart (no cpu worker online) keeps the one-worker cap.
+        assert_eq!(adm(cpu_only, 0, 5, 0, 0, 0), Admission::Now(Rung::Cpu));
+        // The global cap drops the deferred job, never the passages answer.
+        assert_eq!(
+            adm(cpu_only, 0, 6, 0, 1, 200),
+            Admission::Overflow { deferred: None }
+        );
+        // cf only and full: deferred on cf.
+        let cf_only = RungFlags {
+            cf: true,
+            cpu: false,
+        };
+        assert_eq!(
+            adm(cf_only, 0, 0, 4, 0, 0),
+            Admission::Overflow {
+                deferred: Some(Rung::Cf)
+            }
+        );
+        // cf spent and no cpu: plain passages, nothing to defer to.
+        assert_eq!(
+            adm(cf_only, 8000, 0, 0, 0, 0),
+            Admission::Now(Rung::Passages)
+        );
+        assert_eq!(
+            adm(RungFlags::default(), 0, 0, 0, 0, 0),
+            Admission::Now(Rung::Passages)
+        );
+        // TREVOR_CF_QUEUE_MAX=0 lifts the cf cap.
+        let nocap = TrevorConfig {
+            cf_queue_max: 0,
+            ..cfg()
+        };
+        let inputs = AdmissionInputs {
+            rung: RungInputs {
+                rungs: both,
+                neurons_today: 0,
+                cpu_depth: 0,
+            },
+            cf_depth: 1000,
+            cpu_workers: 1,
+            open_total: 0,
+        };
+        assert_eq!(admit_rung(&inputs, &nocap), Admission::Now(Rung::Cf));
+    }
+
+    #[test]
+    fn mode_parses_and_steps_every_claim_down_unless_on() {
+        assert_eq!(Mode::parse("on"), Some(Mode::On));
+        assert_eq!(Mode::parse(" Passages "), Some(Mode::Passages));
+        assert_eq!(Mode::parse("off"), Some(Mode::Off));
+        assert_eq!(Mode::parse("maybe"), None);
+        let both = RungFlags {
+            cf: true,
+            cpu: true,
+        };
+        let p = TrevorConfig {
+            mode: Mode::Passages,
+            ..cfg()
+        };
+        assert_eq!(settle_rung(Rung::Cf, both, 0, &p), Rung::Passages);
+        assert_eq!(settle_rung(Rung::Cpu, both, 0, &p), Rung::Passages);
+        assert_eq!(settle_rung(Rung::Cf, both, 0, &cfg()), Rung::Cf);
+    }
+
+    #[test]
+    fn the_cpu_profile_is_mid_unless_switched_to_slim() {
+        assert_eq!(Rung::Cpu.profile_with(Profile::Mid), Profile::Mid);
+        assert_eq!(Rung::Cpu.profile_with(Profile::Slim), Rung::Cpu.profile());
+        assert_eq!(Rung::Cf.profile_with(Profile::Mid), Profile::Full);
+        assert_eq!(cfg().cpu_profile, Profile::Mid);
     }
 
     #[test]

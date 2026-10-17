@@ -16,9 +16,9 @@ use uuid::Uuid;
 
 use super::runtime::StreamEvent;
 use super::{
-    AnswerSource, CITATION_TEXT_CHARS, Era, LONG_POLL_SECS, MAX_ATTEMPTS, Profile,
-    RUNNING_STALE_SECS, Rung, RungFlags, SWEEP_EVERY_SECS, WorkerAnswer, neurons, parse_server,
-    settle_rung, trim_citation_text,
+    AnswerSource, CITATION_TEXT_CHARS, Era, Guard, LONG_POLL_SECS, MAX_ATTEMPTS, Mode, ONLINE_SECS,
+    Profile, RUNNING_STALE_SECS, Rung, RungFlags, SWEEP_EVERY_SECS, WorkerAnswer, neurons,
+    parse_server, qkey, settle_rung, trim_citation_text, validate_question,
 };
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::AuthUser;
@@ -114,6 +114,10 @@ pub struct Heartbeat {
     /// The job the worker is answering, or null when idle.
     #[serde(default)]
     pub busy_job_id: Option<String>,
+    /// The power guard (contract v1.1 section 2.1); absent from an older
+    /// worker, which reads as no guard.
+    #[serde(default)]
+    pub guard: Option<Guard>,
 }
 
 /// A claimed job, as `ask --worker` reads it.
@@ -180,6 +184,13 @@ pub struct PublishVersion {
     /// Make this the server's active version (default true).
     #[serde(default = "yes")]
     pub activate: bool,
+    /// `{chunkId: sha}` of the version's chunks (contract v1.1 section 3b),
+    /// in any of the calls (they accumulate). Activation carries a cached
+    /// answer of the previous version over when every chunk it cites is
+    /// here with the same sha; a version published without it carries none.
+    #[serde(default)]
+    #[schema(value_type = Object)]
+    pub chunk_shas: BTreeMap<String, String>,
 }
 
 const fn yes() -> bool {
@@ -193,6 +204,61 @@ pub struct PublishOutcome {
     pub server: String,
     pub panels: usize,
     pub active: bool,
+    /// Chunk shas stored by this call.
+    pub chunk_shas: usize,
+    /// Cached answers carried over from the previous version on activation.
+    pub carried: u64,
+}
+
+/// `worker/popular`: one question to re-answer after a publish.
+#[derive(Debug, Clone, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct WarmQuestion {
+    /// The latest asked text.
+    pub question: String,
+    /// The cache's normalized form (contract v1.1 section 1a).
+    pub norm_q: String,
+    /// The era boundary readers asked it under: warm it with this horizon.
+    pub era_pos: i32,
+    /// Asks in the last 30 days, twins included.
+    pub hits: i64,
+}
+
+/// `GET /trevor/worker/popular`.
+#[derive(Debug, Clone, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct WarmList {
+    pub version: String,
+    pub items: Vec<WarmQuestion>,
+}
+
+/// `POST /trevor/worker/warm`: queue internal deferred re-answers (no user).
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct WarmRequest {
+    /// Must be the server's active version (409 otherwise).
+    pub version: String,
+    #[serde(default)]
+    pub server: Option<String>,
+    pub items: Vec<WarmItem>,
+}
+
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct WarmItem {
+    pub question: String,
+    pub era_pos: i32,
+}
+
+#[derive(Debug, Clone, Default, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct WarmOutcome {
+    /// New deferred internal jobs.
+    pub queued: usize,
+    /// Already cached in the version under that era: nothing queued.
+    pub cached: usize,
+    /// An open job (normal or deferred) already asks it: joined.
+    pub joined: usize,
 }
 
 fn check_worker_id(id: &str) -> Result<(), ApiError> {
@@ -217,7 +283,29 @@ pub async fn heartbeat(state: &AppState, beat: &Heartbeat) -> Result<(), ApiErro
         .as_deref()
         .filter(|v| !v.is_empty() && v.len() <= 100);
     let rungs = serde_json::to_value(beat.rungs).map_err(|e| ApiError::Internal(e.into()))?;
-    q::upsert_worker(&state.db, &beat.worker_id, &rungs, corpus, busy).await?;
+    let guard = beat
+        .guard
+        .as_ref()
+        .map(|g| {
+            let mut g = g.clone();
+            g.reason = g.reason.map(|r| r.chars().take(300).collect());
+            serde_json::to_value(g)
+        })
+        .transpose()
+        .map_err(|e| ApiError::Internal(e.into()))?;
+    q::upsert_worker(
+        &state.db,
+        &beat.worker_id,
+        &rungs,
+        corpus,
+        busy,
+        guard.as_ref(),
+    )
+    .await?;
+    // A guard trip pings at once; an alert never fails the heartbeat.
+    if let Err(e) = super::alerts::after_heartbeat(state).await {
+        tracing::warn!(error = %e, "trevor: guard alert check failed");
+    }
     Ok(())
 }
 
@@ -227,23 +315,33 @@ async fn claim(
     server: &str,
     worker_id: &str,
 ) -> Result<Option<WorkerJob>, ApiError> {
-    state.trevor.claim_queries.fetch_add(1, Ordering::Relaxed);
-    let Some(job) = q::claim_next(&state.db, server, worker_id).await? else {
+    let cfg = state.trevor.config();
+    // TREVOR_MODE=off: nothing is claimed; queued jobs wait (or expire).
+    if cfg.mode == Mode::Off {
         return Ok(None);
-    };
-    let assigned = Rung::parse_job(&job.rung);
-    let (rungs, neurons_today) = q::worker_rungs_and_neurons(&state.db, worker_id).await?;
+    }
+    state.trevor.claim_queries.fetch_add(1, Ordering::Relaxed);
+    let (rungs, _) = q::worker_rungs_and_neurons(&state.db, worker_id).await?;
     let worker_rungs: RungFlags = rungs
         .and_then(|v| serde_json::from_value(v).ok())
         .unwrap_or_default();
-    let rung = settle_rung(
-        assigned,
-        worker_rungs,
-        neurons_today,
-        &state.trevor.config(),
-    );
-    if rung != assigned {
-        q::set_job_rung(&state.db, job.id, rung.as_str(), rung.profile().as_str()).await?;
+    let rules = q::ClaimRules {
+        admission: cfg.admission,
+        fair: cfg.fair_claim,
+        by_rung: cfg.claim_by_rung,
+        cf: worker_rungs.cf,
+        cpu: worker_rungs.cpu,
+        online_secs: ONLINE_SECS,
+    };
+    let Some(job) = q::claim_next(&state.db, server, worker_id, rules).await? else {
+        return Ok(None);
+    };
+    let assigned = Rung::parse_job(&job.rung);
+    let neurons_today = q::neurons_today(&state.db).await?;
+    let rung = settle_rung(assigned, worker_rungs, neurons_today, &cfg);
+    let profile = rung.profile_with(cfg.cpu_profile);
+    if rung != assigned || job.profile != profile.as_str() {
+        q::set_job_rung(&state.db, job.id, rung.as_str(), profile.as_str()).await?;
     }
     state.trevor.mark_running(job.id, worker_id);
     Ok(Some(WorkerJob {
@@ -252,7 +350,7 @@ async fn claim(
         server: job.server,
         horizon_pos: job.horizon_pos,
         rung,
-        profile: rung.profile(),
+        profile,
         flags: Vec::new(),
     }))
 }
@@ -319,6 +417,7 @@ pub async fn sweep(state: &AppState) -> Result<usize, ApiError> {
             busy_protects: cfg.busy_protects,
             online_secs: super::ONLINE_SECS,
             max_run_secs: cfg.job_max_run_secs,
+            deferred_ttl_secs: cfg.deferred_ttl_secs,
         },
     )
     .await?;
@@ -349,8 +448,10 @@ pub async fn sweep(state: &AppState) -> Result<usize, ApiError> {
 
 /// The sweep's background tick (every [`SWEEP_EVERY_SECS`]). Under
 /// `TREVOR_NOTIFY_POLL=0` it leaves the sweep to `worker/next`, as before,
-/// and only prunes idle stream channels.
+/// and only prunes idle stream channels. Also starts the alert evaluator
+/// (contract v1.1 section 2.2), which does nothing under `TREVOR_ALERTS=0`.
 pub fn spawn_sweep(state: AppState) {
+    super::alerts::spawn_evaluator(state.clone());
     tokio::spawn(async move {
         let mut tick = tokio::time::interval(Duration::from_secs(SWEEP_EVERY_SECS));
         tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
@@ -455,6 +556,7 @@ async fn store_result(state: &AppState, res: WorkerResult) -> Result<(), ApiErro
     for c in &mut answer.citations {
         c.text = trim_citation_text(&c.text, CITATION_TEXT_CHARS);
     }
+    let cited = cited_shas(&answer);
     let stored = serde_json::to_value(&answer).map_err(|e| ApiError::Internal(e.into()))?;
     let cfg = state.trevor.config();
     let cost = neurons(answer.tokens_in, answer.tokens_out);
@@ -471,6 +573,7 @@ async fn store_result(state: &AppState, res: WorkerResult) -> Result<(), ApiErro
             reported_cf: answer.rung == Rung::Cf,
             cacheable: !(cfg.cache_live_only && answer.source == AnswerSource::Passages),
             version_check: cfg.version_check,
+            cited_shas: cited.as_ref(),
         },
     )
     .await?
@@ -500,6 +603,23 @@ async fn store_result(state: &AppState, res: WorkerResult) -> Result<(), ApiErro
         }
     }
     Ok(())
+}
+
+/// `{chunkId: sha}` of an answer's citations when every one carries a
+/// non-empty sha, else `None` (the answer is then never carried over).
+pub fn cited_shas(answer: &WorkerAnswer) -> Option<Value> {
+    if answer.citations.is_empty() {
+        return None;
+    }
+    let mut map = serde_json::Map::new();
+    for c in &answer.citations {
+        let sha = c
+            .sha
+            .as_deref()
+            .filter(|s| !s.is_empty() && s.len() <= 128)?;
+        map.insert(c.chunk_id.clone(), Value::String(sha.to_owned()));
+    }
+    Some(Value::Object(map))
 }
 
 /// What the activating call must carry: the manifest with a well-formed
@@ -549,7 +669,18 @@ pub async fn publish(state: &AppState, req: PublishVersion) -> Result<PublishOut
             panels,
         })
         .collect();
-    q::publish_version(
+    if req
+        .chunk_shas
+        .iter()
+        .any(|(id, sha)| id.is_empty() || id.len() > 200 || sha.is_empty() || sha.len() > 128)
+    {
+        return Err(ApiError::BadRequest(
+            "chunkShas: every chunk id and sha must be non-empty (ids at most 200 characters, shas 128)"
+                .into(),
+        ));
+    }
+    let shas: Vec<(String, String)> = req.chunk_shas.into_iter().collect();
+    let carried = q::publish_version(
         &state.db,
         &req.version,
         server,
@@ -558,14 +689,152 @@ pub async fn publish(state: &AppState, req: PublishVersion) -> Result<PublishOut
         req.manifest.as_ref(),
         &panels,
         req.activate,
+        &shas,
+        state.trevor.config().carry_over,
     )
     .await?;
+    if req.activate {
+        tracing::info!(version = %req.version, server, carried, "trevor: version activated");
+    }
     Ok(PublishOutcome {
         version: req.version,
         server: server.to_owned(),
         panels: panels.len(),
         active: req.activate,
+        chunk_shas: shas.len(),
+        carried,
     })
+}
+
+/// The warm-up list (contract v1.1 section 3c): at most `limit` (default
+/// `TREVOR_WARM_TOP`'s 100, 1 to 500) (normQ, eraPos) pairs asked in the
+/// last 30 days that `version` has no cached answer for. 404 for an unknown
+/// version.
+pub async fn popular(
+    state: &AppState,
+    server: Option<&str>,
+    version: &str,
+    limit: Option<i64>,
+) -> Result<WarmList, ApiError> {
+    let server = parse_server(server)?;
+    if version.is_empty() || version.len() > 100 {
+        return Err(ApiError::BadRequest("version is empty or too long".into()));
+    }
+    let limit = limit.unwrap_or(WARM_TOP_DEFAULT);
+    if !(1..=WARM_MAX).contains(&limit) {
+        return Err(ApiError::BadRequest(format!(
+            "limit must be 1 to {WARM_MAX}"
+        )));
+    }
+    if !q::version_known(&state.db, version, server).await? {
+        return Err(ApiError::NotFoundMessage(format!(
+            "no Trevor version {version}"
+        )));
+    }
+    let items = q::warm_candidates(&state.db, version, server, WARM_DAYS, limit)
+        .await?
+        .into_iter()
+        .map(|(question, norm_q, era_pos, hits)| WarmQuestion {
+            question,
+            norm_q,
+            era_pos,
+            hits,
+        })
+        .collect();
+    Ok(WarmList {
+        version: version.to_owned(),
+        items,
+    })
+}
+
+/// `TREVOR_WARM_TOP`'s default: the update script's warm-up size.
+pub const WARM_TOP_DEFAULT: i64 = 100;
+/// The warm-up counts asks in this many days.
+pub const WARM_DAYS: i32 = 30;
+/// One warm list or call holds at most this many items.
+pub const WARM_MAX: i64 = 500;
+/// A warm call's body is at most this many bytes (413 over it).
+pub const WARM_BODY_MAX: usize = 64 * 1024;
+
+/// `worker/warm`: queue each item as an internal deferred job with no user
+/// and its era as the horizon. Nothing is queued for an item already cached
+/// in `version` under that era (`cached`); an item with an open job (normal
+/// or deferred) joins it (`joined`). The rung stored is the best model rung
+/// a heartbeat offers; the claim settles it like any job's. 409 when
+/// `version` is not the active version, 503 unless `TREVOR_MODE` is `on`.
+pub async fn warm(state: &AppState, req: WarmRequest) -> Result<WarmOutcome, ApiError> {
+    let server = parse_server(req.server.as_deref())?;
+    let cfg = state.trevor.config();
+    if cfg.mode != Mode::On {
+        return Err(ApiError::ServiceUnavailableMessage(
+            "Trevor is not answering with a model (TREVOR_MODE is not on)".into(),
+        ));
+    }
+    if req.items.len() > WARM_MAX as usize {
+        return Err(ApiError::BadRequest(format!(
+            "at most {WARM_MAX} items per call"
+        )));
+    }
+    if q::active_version(&state.db, server).await?.as_deref() != Some(req.version.as_str()) {
+        return Err(ApiError::Conflict(format!(
+            "{} is not the active version",
+            req.version
+        )));
+    }
+    let adm = q::admission_inputs(&state.db, ONLINE_SECS).await?;
+    let rungs: RungFlags = adm
+        .rungs
+        .and_then(|v| serde_json::from_value(v).ok())
+        .unwrap_or_default();
+    let rung = if rungs.cf {
+        Rung::Cf
+    } else if rungs.cpu {
+        Rung::Cpu
+    } else {
+        Rung::Passages
+    };
+    let mut out = WarmOutcome::default();
+    for item in &req.items {
+        let normalized = validate_question(&item.question, cfg.normq)?;
+        let key = qkey(&normalized);
+        let era = item.era_pos.max(0);
+        if q::has_cached(&state.db, &req.version, server, &key, era).await? {
+            out.cached += 1;
+            continue;
+        }
+        if q::open_job_for_key(&state.db, server, &key, era, false)
+            .await?
+            .is_some()
+        {
+            out.joined += 1;
+            continue;
+        }
+        let inserted = q::insert_job(
+            &state.db,
+            &q::NewJob {
+                user_id: None,
+                question: item.question.trim(),
+                qkey: &key,
+                horizon_pos: Some(era),
+                server,
+                corpus_version: Some(&req.version),
+                rung: rung.as_str(),
+                profile: rung.profile_with(cfg.cpu_profile).as_str(),
+                deferred: true,
+                kind: "warm",
+            },
+        )
+        .await?;
+        if inserted.is_some() {
+            out.queued += 1;
+        } else {
+            out.joined += 1;
+        }
+    }
+    if out.queued > 0 {
+        state.trevor.job_enqueued();
+    }
+    Ok(out)
 }
 
 #[cfg(test)]
@@ -617,6 +886,65 @@ mod tests {
     }
 
     #[test]
+    fn cited_shas_need_a_sha_on_every_citation() {
+        let answer = |cites: Value| -> WorkerAnswer {
+            serde_json::from_value(serde_json::json!({
+                "answer": "A.", "rung": "cpu", "profile": "mid", "source": "live",
+                "citations": cites, "corpusVersion": "v1"
+            }))
+            .unwrap()
+        };
+        let c = |chunk: &str, sha: Option<&str>| {
+            let mut v = serde_json::json!({"n": 1, "storyId": "s", "chunkId": chunk,
+                                           "lineStart": 1, "lineEnd": 2, "text": "t"});
+            if let Some(sha) = sha {
+                v["sha"] = serde_json::json!(sha);
+            }
+            v
+        };
+        let both = answer(serde_json::json!([
+            c("a#0", Some("x1")),
+            c("b#2", Some("y2"))
+        ]));
+        assert_eq!(
+            cited_shas(&both),
+            Some(serde_json::json!({"a#0": "x1", "b#2": "y2"}))
+        );
+        assert_eq!(
+            serde_json::to_value(&both).unwrap()["citations"][0]["sha"],
+            "x1"
+        );
+        assert_eq!(
+            cited_shas(&answer(serde_json::json!([
+                c("a#0", Some("x1")),
+                c("b#2", None)
+            ]))),
+            None
+        );
+        assert_eq!(
+            cited_shas(&answer(serde_json::json!([c("a#0", Some(""))]))),
+            None
+        );
+        assert_eq!(cited_shas(&answer(serde_json::json!([]))), None);
+    }
+
+    #[test]
+    fn a_heartbeat_takes_the_guard_and_an_old_one_has_none() {
+        let hb: Heartbeat = serde_json::from_value(serde_json::json!({
+            "workerId": "w", "rungs": {"cf": false, "cpu": false},
+            "guard": {"state": "tripped", "reason": "mem 700 MB < 800", "since": 1760000000}
+        }))
+        .unwrap();
+        let g = hb.guard.unwrap();
+        assert_eq!(g.state, super::super::GuardState::Tripped);
+        assert_eq!(g.since, Some(1_760_000_000));
+        let old: Heartbeat =
+            serde_json::from_value(serde_json::json!({"workerId": "w", "rungs": {"cf": true}}))
+                .unwrap();
+        assert!(old.guard.is_none());
+    }
+
+    #[test]
     fn a_result_drops_the_passages_list_and_keeps_tokens() {
         let r: WorkerResult = serde_json::from_value(serde_json::json!({
             "jobId": Uuid::nil(), "workerId": "w", "ok": true,
@@ -631,8 +959,11 @@ mod tests {
             }
         }))
         .unwrap();
-        let stored = serde_json::to_value(r.result.unwrap()).unwrap();
+        let answer = r.result.unwrap();
+        assert_eq!(cited_shas(&answer), None, "a citation without a sha");
+        let stored = serde_json::to_value(answer).unwrap();
         assert!(stored.get("passages").is_none());
+        assert!(stored["citations"][0].get("sha").is_none());
         assert_eq!(stored["tokensIn"], 2000);
         assert_eq!(stored["citations"][0]["storyId"], "s");
     }

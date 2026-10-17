@@ -3,4 +3,4 @@
 /**
  * The worker pipeline profile for a job.
  */
-export type TrevorProfile = "full" | "slim";
+export type TrevorProfile = "full" | "slim" | "mid";

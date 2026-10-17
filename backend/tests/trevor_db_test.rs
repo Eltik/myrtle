@@ -35,7 +35,7 @@ use backend::app::error::ApiError;
 use backend::app::services::trevor::runtime::{StreamEvent, TrevorConfig};
 use backend::app::services::trevor::worker::{self, Heartbeat, WorkerHello};
 use backend::app::services::trevor::{
-    AskRequest, AskResponse, JobStatus, Profile, Rung, ask as svc_ask, stream,
+    AskRequest, AskResponse, JobStatus, Profile, Rung, alerts, ask as svc_ask, stream,
 };
 use backend::app::state::{AppConfig, AppState, ServerData};
 use backend::core::auth::credentials::CredentialKey;
@@ -89,6 +89,18 @@ async fn fresh_db() -> PgPool {
         .expect("migrations and seed")
 }
 
+/// Every contract v1.1 switch at its off value (the v1 behaviour).
+fn v1(c: &mut TrevorConfig) {
+    c.normq = false;
+    c.admission = false;
+    c.fair_claim = false;
+    c.claim_by_rung = false;
+    c.cpu_profile = Profile::Slim;
+    c.carry_over = false;
+    c.ask_log = false;
+    c.alerts = false;
+}
+
 fn state_on(pool: &PgPool, tweak: impl FnOnce(&mut TrevorConfig)) -> AppState {
     state_with(pool, HashMap::new(), tweak)
 }
@@ -122,9 +134,45 @@ fn state_with(
         worker_key: WORKER_KEY.into(),
         ..TrevorConfig::default()
     };
+    // The v1 steps run with every contract v1.1 switch off.
+    v1(&mut cfg);
     tweak(&mut cfg);
     s.trevor.set_config(cfg);
     s
+}
+
+/// A state on the contract v1.1 defaults (every new switch on), alerts
+/// recorded instead of posted.
+fn state_v11(pool: &PgPool, tweak: impl FnOnce(&mut TrevorConfig)) -> (AppState, Arc<Recorder>) {
+    let s = state_with(pool, HashMap::new(), |c| {
+        *c = TrevorConfig {
+            worker_key: WORKER_KEY.into(),
+            ..TrevorConfig::default()
+        };
+        tweak(c);
+    });
+    let rec = Arc::new(Recorder::default());
+    s.trevor.set_sink(rec.clone());
+    (s, rec)
+}
+
+/// The fake webhook: records every alert, sends nothing.
+#[derive(Default)]
+struct Recorder(std::sync::Mutex<Vec<alerts::Alert>>);
+
+impl alerts::AlertSink for Recorder {
+    fn send(&self, alert: alerts::Alert) {
+        self.0.lock().unwrap().push(alert);
+    }
+}
+
+impl Recorder {
+    fn take(&self) -> Vec<(alerts::AlertKind, bool)> {
+        std::mem::take(&mut *self.0.lock().unwrap())
+            .into_iter()
+            .map(|a| (a.kind, a.recovered))
+            .collect()
+    }
 }
 
 async fn new_user(pool: &PgPool) -> Uuid {
@@ -211,7 +259,7 @@ async fn neurons_today(pool: &PgPool) -> i64 {
 /// Empty the queue-side tables; the published version stays.
 async fn reset_queue(pool: &PgPool) {
     sqlx::raw_sql(
-        "TRUNCATE trevor_feedback, trevor_jobs, trevor_answers, trevor_workers, trevor_neurons",
+        "TRUNCATE trevor_asks, trevor_feedback, trevor_jobs, trevor_answers, trevor_workers, trevor_neurons",
     )
     .execute(pool)
     .await
@@ -632,6 +680,16 @@ async fn step_ledger_and_cache(s: &AppState) {
 
 // --- the queue ------------------------------------------------------------------
 
+/// Every v1.1 claim rule on, for a claimer with no heartbeat.
+const RULES: q::ClaimRules = q::ClaimRules {
+    admission: true,
+    fair: true,
+    by_rung: true,
+    cf: false,
+    cpu: false,
+    online_secs: 75,
+};
+
 async fn step_skip_locked(s: &AppState) {
     reset_queue(&s.db).await;
     let pool = &s.db;
@@ -650,7 +708,7 @@ async fn step_skip_locked(s: &AppState) {
         let pool = pool.clone();
         async move {
             let mut mine = Vec::new();
-            while let Some(job) = q::claim_next(&pool, "en", &format!("racer{w}"))
+            while let Some(job) = q::claim_next(&pool, "en", &format!("racer{w}"), RULES)
                 .await
                 .unwrap()
             {
@@ -896,7 +954,8 @@ async fn step_status_eta_heartbeat(s: &AppState) {
     assert_eq!(
         v,
         json!({ "online": false, "rungs": { "cf": false, "cpu": false }, "activeVersion": "v1",
-                "queueDepth": { "cf": 0, "cpu": 0 }, "cfBudget": "ok" })
+                "queueDepth": { "cf": 0, "cpu": 0 }, "cfBudget": "ok",
+                "workers": { "cf": 0, "cpu": 0 }, "guard": "ok", "mode": "on" })
     );
     beat(s, "w1", true, false).await;
     set_neurons(pool, 6401).await;
@@ -982,7 +1041,9 @@ async fn step_status_eta_heartbeat(s: &AppState) {
 #[ignore = "needs the local Postgres; creates and resets the throwaway database trevor_test"]
 async fn trevor_queue_against_a_throwaway_database() {
     let pool = fresh_db().await;
-    let s = state_on(&pool, |_| {});
+    // The v1 steps run with every contract v1.1 switch off: they pass
+    // unchanged, which is the proof each off value restores v1.
+    let s = state_on(&pool, v1);
     step_publish(&s).await;
     step_horizon_and_twins(&s).await;
     step_rungs(&s).await;
@@ -994,6 +1055,12 @@ async fn trevor_queue_against_a_throwaway_database() {
     step_review_fixes(&s).await;
     step_run_ceiling(&s).await;
     step_notify(&pool).await;
+    step_v11_normq(&pool).await;
+    step_v11_admission(&pool).await;
+    step_v11_fair(&pool).await;
+    step_v11_mode_status_alerts(&pool).await;
+    // Activates its own versions.
+    step_v11_lists_and_carry(&pool).await;
     // Last: it activates its own version.
     step_reverdict_on_ask(&pool).await;
 }
@@ -1473,4 +1540,644 @@ async fn step_reverdict_on_ask(pool: &PgPool) {
     eprintln!(
         "reverdict on ask ({label}): stage-only account -> era main_1 (gatePos 4), {rows} rows stored ({read} read), first ask {ms} ms; off -> 0; empty verdict re-derived once; marks or no stages skip it"
     );
+}
+
+// --- contract v1.1 ----------------------------------------------------------
+
+async fn ask_ok(s: &AppState, user: Uuid, question: &str) -> AskResponse {
+    ask(s, user, question, None).await.expect("ask")
+}
+
+/// A reader at era 4 (has read s5).
+async fn era4_user(pool: &PgPool) -> Uuid {
+    let u = new_user(pool).await;
+    set_progress(pool, u, &["s5"], &[]).await;
+    u
+}
+
+async fn beat_guard(s: &AppState, worker_id: &str, cpu: bool, guard: Value) {
+    let hb: Heartbeat = serde_json::from_value(json!({
+        "workerId": worker_id, "rungs": { "cf": false, "cpu": cpu },
+        "corpusVersion": "v1", "busyJobId": null, "guard": guard
+    }))
+    .expect("heartbeat");
+    worker::heartbeat(s, &hb).await.expect("heartbeat");
+}
+
+/// Claim directly (no long-poll) under the state's rules for one worker.
+async fn claim(s: &AppState, worker_id: &str, cf: bool, cpu: bool) -> Option<q::JobRow> {
+    let cfg = s.trevor.config();
+    q::claim_next(
+        &s.db,
+        "en",
+        worker_id,
+        q::ClaimRules {
+            admission: cfg.admission,
+            fair: cfg.fair_claim,
+            by_rung: cfg.claim_by_rung,
+            cf,
+            cpu,
+            online_secs: 75,
+        },
+    )
+    .await
+    .expect("claim")
+}
+
+/// A live result citing `cites` ((chunkId, sha or none)).
+fn result_cites(
+    job_id: Uuid,
+    worker_id: &str,
+    version: &str,
+    cites: &[(&str, Option<&str>)],
+) -> Vec<u8> {
+    let citations: Vec<Value> = cites
+        .iter()
+        .enumerate()
+        .map(|(i, (chunk, sha))| {
+            let mut c = json!({"n": i + 1, "storyId": "s1", "chunkId": chunk, "lineStart": 1,
+                               "lineEnd": 2, "text": "t"});
+            if let Some(sha) = sha {
+                c["sha"] = json!(sha);
+            }
+            c
+        })
+        .collect();
+    json!({
+        "jobId": job_id, "workerId": worker_id, "ok": true,
+        "result": {
+            "answer": "A.", "rung": "cpu", "profile": "mid", "source": "live",
+            "citations": citations, "route": "who", "form": "short", "corpusVersion": version,
+            "tokensIn": 100, "tokensOut": 10, "timings": {}
+        }
+    })
+    .to_string()
+    .into_bytes()
+}
+
+async fn send_json(
+    app: &Router,
+    method: &str,
+    uri: &str,
+    key: bool,
+    body: Option<Value>,
+) -> (StatusCode, Value) {
+    let mut req = Request::builder().method(method).uri(uri);
+    if key {
+        req = req.header("x-trevor-worker-key", WORKER_KEY);
+    }
+    let req = match body {
+        Some(b) => req
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(b.to_string()))
+            .unwrap(),
+        None => req.body(Body::empty()).unwrap(),
+    };
+    let (status, _, body) = send(app, req).await;
+    (status, serde_json::from_slice(&body).unwrap_or(Value::Null))
+}
+
+/// normQ: case, NFKC (full-width), punctuation, apostrophes and the
+/// trailing "?" all map to one key, shared by the twin join and the cache;
+/// under `TREVOR_NORMQ=0` the full-width variant is a separate job.
+async fn step_v11_normq(pool: &PgPool) {
+    reset_queue(pool).await;
+    let (s, _) = state_v11(pool, |_| {});
+    beat(&s, "w1", false, true).await;
+    let (a, b) = (era4_user(pool).await, era4_user(pool).await);
+    let first = ask_ok(&s, a, "Who is Kal'tsit?").await;
+    let twin = ask_ok(&s, b, "  WHO is \u{FF2B}altsit ").await;
+    assert_eq!(first.job_id, twin.job_id, "normQ variants join one job");
+    let (old, _) = state_v11(pool, |c| c.normq = false);
+    let other = ask_ok(&old, b, "who is \u{FF2B}altsit").await;
+    assert_ne!(
+        other.job_id, first.job_id,
+        "the v1 key keeps the full-width text apart"
+    );
+    eprintln!("v1.1 normQ: 2 variants -> 1 job; TREVOR_NORMQ=0 -> 2 jobs");
+}
+
+/// Admission control: the cpu cap is per online cpu worker, an overflow gets
+/// a quick passages job plus a deferred job (and a Quick look from an
+/// earlier era), the global cap drops the deferred job, the cf cap moves
+/// questions on; claims serve quick passages first and deferred last.
+async fn step_v11_admission(pool: &PgPool) {
+    reset_queue(pool).await;
+    let (s, _) = state_v11(pool, |c| c.cpu_queue_max = 1);
+    beat(&s, "w1", false, true).await;
+    let u = era4_user(pool).await;
+    let u2 = era4_user(pool).await;
+    let one = ask_ok(&s, u, "admission one").await;
+    assert_eq!(one.rung, Rung::Cpu);
+    assert!(one.deferred_job_id.is_none());
+    // One cpu worker at TREVOR_CPU_QUEUE_MAX=1: the second overflows.
+    let two = ask_ok(&s, u, "admission two").await;
+    assert_eq!(two.rung, Rung::Passages);
+    let deferred = two.deferred_job_id.expect("deferred job");
+    let dj = job(&s, deferred).await;
+    assert!(dj.deferred);
+    assert_eq!(dj.rung, "cpu");
+    assert_eq!(dj.profile, "mid");
+    // A second cpu worker doubles the cap.
+    beat(&s, "w2", false, true).await;
+    let three = ask_ok(&s, u2, "admission three").await;
+    assert_eq!(three.rung, Rung::Cpu);
+    // A twin of the overflowed ask joins both jobs.
+    let twin = ask_ok(&s, u2, "Admission two?").await;
+    assert_eq!(twin.job_id, two.job_id);
+    assert_eq!(twin.deferred_job_id, Some(deferred));
+
+    // Claim order: the quick passages job first, the deferred one last.
+    let c1 = claim(&s, "w1", false, true).await.unwrap();
+    assert_eq!(Some(c1.id), two.job_id, "quick passages first");
+    let c2 = claim(&s, "w1", false, true).await.unwrap();
+    let c3 = claim(&s, "w1", false, true).await.unwrap();
+    assert!(!c2.deferred && !c3.deferred);
+    let c4 = claim(&s, "w1", false, true).await.unwrap();
+    assert_eq!(c4.id, deferred, "deferred only when no normal job waits");
+
+    // Global cap reached: passages, no deferred job.
+    reset_queue(pool).await;
+    let (g, _) = state_v11(pool, |c| {
+        c.cpu_queue_max = 1;
+        c.global_queue_max = 1;
+    });
+    beat(&g, "w1", false, true).await;
+    ask_ok(&g, u, "global one").await;
+    let over = ask_ok(&g, u, "global two").await;
+    assert_eq!(over.rung, Rung::Passages);
+    assert!(over.deferred_job_id.is_none());
+
+    // The cf cap: TREVOR_CF_QUEUE_MAX=1 sends the second to cpu.
+    reset_queue(pool).await;
+    let (c, _) = state_v11(pool, |c| c.cf_queue_max = 1);
+    beat(&c, "w1", true, true).await;
+    assert_eq!(ask_ok(&c, u, "cf one").await.rung, Rung::Cf);
+    assert_eq!(ask_ok(&c, u, "cf two").await.rung, Rung::Cpu);
+
+    // Quick look: an earlier era's cached answer to the same question.
+    reset_queue(pool).await;
+    let (ql, _) = state_v11(pool, |c| c.cpu_queue_max = 0);
+    beat(&ql, "w1", false, true).await;
+    let early = new_user(pool).await;
+    set_progress(pool, early, &["s2"], &[]).await;
+    let ok = state_on(pool, |_| {});
+    beat(&ok, "w9", false, true).await;
+    let e = ask_ok(&ok, early, "quick look question").await;
+    let claimed = next(&ok, "w9").await.unwrap();
+    assert_eq!(Some(claimed.job_id), e.job_id);
+    post_result(
+        &ok,
+        &result_cites(claimed.job_id, "w9", "v1", &[("s1#0", Some("a"))]),
+    )
+    .await;
+    let late = ask_ok(&ql, u, "Quick look question").await;
+    assert_eq!(late.rung, Rung::Passages);
+    let look = late.quick_look.expect("quick look");
+    assert_eq!(look.era_pos, 1);
+
+    // TREVOR_ADMISSION=0: the v1 path (no deferred, flat cpu cap).
+    reset_queue(pool).await;
+    let (v1s, _) = state_v11(pool, |c| {
+        c.admission = false;
+        c.cpu_queue_max = 1;
+    });
+    beat(&v1s, "w1", false, true).await;
+    beat(&v1s, "w2", false, true).await;
+    ask_ok(&v1s, u, "flat one").await;
+    let flat = ask_ok(&v1s, u, "flat two").await;
+    assert_eq!(
+        flat.rung,
+        Rung::Passages,
+        "flat cap ignores the second worker"
+    );
+    assert!(flat.deferred_job_id.is_none() && flat.quick_look.is_none());
+    eprintln!(
+        "v1.1 admission: per-worker cpu cap, overflow -> passages + deferred, global cap, cf cap, quick look, claim order, TREVOR_ADMISSION=0 ok"
+    );
+}
+
+/// Fair claiming and claim by rung.
+async fn step_v11_fair(pool: &PgPool) {
+    reset_queue(pool).await;
+    let (s, _) = state_v11(pool, |_| {});
+    beat(&s, "w1", false, true).await;
+    let (a, b) = (era4_user(pool).await, era4_user(pool).await);
+    for i in 0..3 {
+        ask_ok(&s, a, &format!("fair a {i}")).await;
+    }
+    let first = claim(&s, "w1", false, true).await.unwrap();
+    assert_eq!(first.user_id, Some(a));
+    let bj = ask_ok(&s, b, "fair b").await;
+    let second = claim(&s, "w1", false, true).await.unwrap();
+    assert_eq!(
+        Some(second.id),
+        bj.job_id,
+        "the user with none running goes first"
+    );
+    // TREVOR_FAIR_CLAIM=0: the oldest created first.
+    reset_queue(pool).await;
+    let (old, _) = state_v11(pool, |c| c.fair_claim = false);
+    beat(&old, "w1", false, true).await;
+    for i in 0..3 {
+        ask_ok(&old, a, &format!("unfair a {i}")).await;
+    }
+    claim(&old, "w1", false, true).await.unwrap();
+    ask_ok(&old, b, "unfair b").await;
+    assert_eq!(
+        claim(&old, "w1", false, true).await.unwrap().user_id,
+        Some(a)
+    );
+
+    // Claim by rung: a cpu-only worker leaves a cf job to the online cf worker.
+    reset_queue(pool).await;
+    beat(&s, "cfw", true, false).await;
+    beat(&s, "cpuw", false, true).await;
+    let cfj = ask_ok(&s, a, "rung cf job").await;
+    assert_eq!(cfj.rung, Rung::Cf);
+    assert!(claim(&s, "cpuw", false, true).await.is_none());
+    assert_eq!(
+        claim(&s, "cfw", true, false).await.map(|j| j.id),
+        cfj.job_id
+    );
+    // With the cf worker gone (stale), the cpu worker takes it.
+    reset_queue(pool).await;
+    beat(&s, "cpuw", false, true).await;
+    let gone = ask_ok(&s, a, "rung orphan").await;
+    sqlx::query("INSERT INTO trevor_workers (worker_id, last_seen, rungs) VALUES ('cfw', now() - interval '5 minutes', '{\"cf\": true, \"cpu\": false}')")
+        .execute(pool)
+        .await
+        .unwrap();
+    // The latest heartbeat offers cpu only, so the job is cpu: claimable.
+    assert_eq!(
+        claim(&s, "cpuw", false, true).await.map(|j| j.id),
+        gone.job_id
+    );
+    // TREVOR_CLAIM_BY_RUNG=0: any worker takes any job.
+    reset_queue(pool).await;
+    let (any, _) = state_v11(pool, |c| c.claim_by_rung = false);
+    beat(&any, "cfw", true, false).await;
+    beat(&any, "cpuw", false, true).await;
+    let cf2 = ask_ok(&any, a, "rung cf job two").await;
+    assert_eq!(
+        claim(&any, "cpuw", false, true).await.map(|j| j.id),
+        cf2.job_id
+    );
+    eprintln!(
+        "v1.1 fair claim: fewest running first, TREVOR_FAIR_CLAIM=0 oldest first; claim by rung ok"
+    );
+}
+
+/// Mode, status, guard and the alerts (fake webhook, no network).
+async fn step_v11_mode_status_alerts(pool: &PgPool) {
+    reset_queue(pool).await;
+    let u = era4_user(pool).await;
+    // passages: a passages job, nothing deferred, no model job.
+    let (p, _) = state_v11(pool, |c| {
+        c.mode = backend::app::services::trevor::Mode::Passages
+    });
+    beat(&p, "w1", true, true).await;
+    let r = ask_ok(&p, u, "mode passages").await;
+    assert_eq!(r.rung, Rung::Passages);
+    assert!(r.deferred_job_id.is_none());
+    // A model job queued before the switch runs as passages.
+    let (on, _) = state_v11(pool, |_| {});
+    let m = ask_ok(&on, u, "mode model").await;
+    assert_eq!(m.rung, Rung::Cf);
+    claim(&p, "w1", true, true).await.unwrap(); // the passages one
+    let w = next(&p, "w1").await.expect("job");
+    assert_eq!(Some(w.job_id), m.job_id);
+    assert_eq!(w.rung, Rung::Passages);
+    // off: 503 "Trevor is resting" unless cached.
+    let (off, _) = state_v11(pool, |c| c.mode = backend::app::services::trevor::Mode::Off);
+    match ask(&off, u, "mode off", None).await {
+        Err(ApiError::ServiceUnavailableMessage(m)) => assert_eq!(m, "Trevor is resting"),
+        other => panic!("expected 503, got {other:?}"),
+    }
+    post_result(
+        &p,
+        &result_cites(w.job_id, "w1", "v1", &[("s1#0", Some("a"))]),
+    )
+    .await;
+    let hit = ask(&off, u, "Mode model?", None)
+        .await
+        .expect("cached in off mode");
+    assert_eq!(hit.rung, Rung::Cache);
+
+    // Status: workers per rung, guard, mode.
+    reset_queue(pool).await;
+    let (s, rec) = state_v11(pool, |_| {});
+    beat(&s, "a", true, false).await;
+    beat(&s, "b", false, true).await;
+    beat(&s, "c", false, true).await;
+    let st = svc_ask::status(&s, "en").await.unwrap();
+    assert_eq!((st.workers.cf, st.workers.cpu), (1, 2));
+    assert_eq!(serde_json::to_value(st.guard).unwrap(), "ok");
+    assert_eq!(serde_json::to_value(st.mode).unwrap(), "on");
+    // guard_tripped: fires once, recovers once.
+    let tripped = json!({"state": "tripped", "reason": "psi cpu 71 > 60", "since": 1});
+    beat_guard(&s, "b", false, tripped.clone()).await;
+    assert_eq!(rec.take(), vec![(alerts::AlertKind::GuardTripped, false)]);
+    beat_guard(&s, "b", false, tripped).await;
+    assert!(rec.take().is_empty(), "at most once");
+    let st = svc_ask::status(&s, "en").await.unwrap();
+    assert_eq!(serde_json::to_value(st.guard).unwrap(), "tripped");
+    assert_eq!(st.workers.cpu, 1);
+    beat_guard(
+        &s,
+        "b",
+        true,
+        json!({"state": "ok", "reason": null, "since": 2}),
+    )
+    .await;
+    assert_eq!(rec.take(), vec![(alerts::AlertKind::GuardTripped, true)]);
+    // backlog: a normal job queued 6 minutes ago; deferred ones never count.
+    let j = ask_ok(&s, u, "backlog question").await;
+    sqlx::query("UPDATE trevor_jobs SET queued_at = now() - interval '6 minutes' WHERE id = $1")
+        .bind(j.job_id)
+        .execute(pool)
+        .await
+        .unwrap();
+    let sent = alerts::evaluate(&s).await.unwrap();
+    assert_eq!(
+        sent.iter()
+            .map(|a| (a.kind, a.recovered))
+            .collect::<Vec<_>>(),
+        vec![(alerts::AlertKind::Backlog, false)]
+    );
+    assert_eq!(rec.take().len(), 1);
+    assert!(alerts::evaluate(&s).await.unwrap().is_empty(), "cooldown");
+    sqlx::query("UPDATE trevor_jobs SET deferred = true WHERE id = $1")
+        .bind(j.job_id)
+        .execute(pool)
+        .await
+        .unwrap();
+    let sent = alerts::evaluate(&s).await.unwrap();
+    assert_eq!(
+        sent.iter()
+            .map(|a| (a.kind, a.recovered))
+            .collect::<Vec<_>>(),
+        vec![(alerts::AlertKind::Backlog, true)]
+    );
+    // failure_rate: 11 of the last 40 finished failed.
+    reset_queue(pool).await;
+    sqlx::query(
+        "INSERT INTO trevor_jobs (question, qkey, server, status, finished_at, horizon_pos) \
+         SELECT 'q' || g, 'k' || g, 'en', CASE WHEN g <= 11 THEN 'failed' ELSE 'done' END, now(), g \
+         FROM generate_series(1, 40) g",
+    )
+    .execute(pool)
+    .await
+    .unwrap();
+    beat(&s, "a", true, false).await;
+    let sent = alerts::evaluate(&s).await.unwrap();
+    assert!(
+        sent.iter()
+            .any(|a| a.kind == alerts::AlertKind::FailureRate && !a.recovered),
+        "{sent:?}"
+    );
+    // TREVOR_ALERTS=0: nothing.
+    let (quiet, qrec) = state_v11(pool, |c| c.alerts = false);
+    assert!(alerts::evaluate(&quiet).await.unwrap().is_empty());
+    assert!(qrec.take().is_empty());
+    eprintln!(
+        "v1.1 mode/status/alerts: passages + off modes, workers {{cf 1, cpu 2}}, guard fire+recover once, backlog fire+recover, failure_rate 11/40 fires, TREVOR_ALERTS=0 silent"
+    );
+}
+
+/// "My questions", popular, the warm-up routes, and the carry-over.
+async fn step_v11_lists_and_carry(pool: &PgPool) {
+    reset_queue(pool).await;
+    let (s, _) = state_v11(pool, |_| {});
+    let app = app(&s);
+    beat(&s, "w1", false, true).await;
+    let (a, b, c) = (
+        era4_user(pool).await,
+        era4_user(pool).await,
+        era4_user(pool).await,
+    );
+    let version: String = q::active_version(pool, "en").await.unwrap().unwrap();
+
+    // Answer "carry me" (cites two chunks with shas), "carry changed" (one),
+    // "no sha" (none).
+    let mut answered = Vec::new();
+    for (question, cites) in [
+        (
+            "carry me",
+            vec![("s1#0", Some("aaa")), ("s2#1", Some("bbb"))],
+        ),
+        ("carry changed", vec![("s3#0", Some("ccc"))]),
+        ("no sha", vec![("s1#0", None)]),
+    ] {
+        let r = ask_ok(&s, a, question).await;
+        let j = claim(&s, "w1", false, true).await.unwrap();
+        assert_eq!(Some(j.id), r.job_id);
+        post_result(&s, &result_cites(j.id, "w1", &version, &cites)).await;
+        answered.push(r.job_id.unwrap());
+    }
+    // b and c ask "carry me" (cache hits): 3 distinct askers.
+    assert_eq!(ask_ok(&s, b, "Carry me?").await.rung, Rung::Cache);
+    assert_eq!(ask_ok(&s, c, "carry  me").await.rung, Rung::Cache);
+    assert_eq!(ask_ok(&s, b, "carry changed").await.rung, Rung::Cache);
+
+    // My questions: newest first, the cache hits included.
+    let mine = svc_ask::my_questions(&s, a, None, None).await.unwrap();
+    assert_eq!(mine.len(), 3);
+    assert_eq!(mine[0].question, "no sha");
+    assert!(
+        mine.iter()
+            .all(|m| m.status == JobStatus::Done && m.answer.is_some())
+    );
+    let theirs = svc_ask::my_questions(&s, b, None, Some(1)).await.unwrap();
+    assert_eq!(
+        (theirs.len(), theirs[0].rung, theirs[0].job_id),
+        (1, Rung::Cache, None)
+    );
+    let page2 = svc_ask::my_questions(&s, a, Some(mine[1].created_at), None)
+        .await
+        .unwrap();
+    assert_eq!(page2.len(), 1);
+
+    // Popular: at least 2 distinct askers, inside the era.
+    let pop = svc_ask::popular(&s, Some(a), "en", None).await.unwrap();
+    let names: Vec<(&str, i64)> = pop
+        .iter()
+        .map(|p| (p.question.as_str(), p.askers))
+        .collect();
+    assert_eq!(names, vec![("carry me", 3), ("carry changed", 2)]);
+    assert!(
+        svc_ask::popular(&s, None, "en", None)
+            .await
+            .unwrap()
+            .is_empty()
+    );
+    let early = new_user(pool).await;
+    set_progress(pool, early, &["s2"], &[]).await;
+    assert!(
+        svc_ask::popular(&s, Some(early), "en", None)
+            .await
+            .unwrap()
+            .is_empty(),
+        "answers at era 4 are past era 1"
+    );
+    let (st, body) = send_json(&app, "GET", "/api/trevor/popular?limit=1", false, None).await;
+    assert_eq!((st, body), (StatusCode::OK, json!([])));
+
+    // Carry-over: v-carry ships chunk shas; s3#0 changed.
+    let shas = json!({ "s1#0": "aaa", "s2#1": "bbb", "s3#0": "CHANGED" });
+    let panels: serde_json::Map<String, Value> = (1..=6)
+        .map(|i| (format!("s{i}"), panel(&format!("s{i}"), Some(i))))
+        .collect();
+    let chunk =
+        json!({ "version": "v-carry", "activate": false, "panels": panels, "chunkShas": shas });
+    assert_eq!(publish(&app, &chunk).await, StatusCode::OK);
+    let (st, out) = send_json(
+        &app,
+        "POST",
+        "/api/trevor/versions",
+        true,
+        Some(json!({
+            "version": "v-carry", "activate": true, "gateReport": { "ok": true },
+            "manifest": { "storyOrder": story_order(), "eras": eras() }
+        })),
+    )
+    .await;
+    assert_eq!(st, StatusCode::OK, "{out}");
+    assert_eq!(
+        out["carried"], 1,
+        "only the answer whose cited shas all match"
+    );
+    assert_eq!(ask_ok(&s, b, "carry me").await.rung, Rung::Cache);
+    assert_ne!(ask_ok(&s, b, "carry changed").await.rung, Rung::Cache);
+    assert_ne!(ask_ok(&s, b, "no sha").await.rung, Rung::Cache);
+
+    // Warm-up list for v-carry: the asked pairs with no cached answer there.
+    let (st, list) = send_json(
+        &app,
+        "GET",
+        "/api/trevor/worker/popular?version=v-carry&limit=10",
+        true,
+        None,
+    )
+    .await;
+    assert_eq!(st, StatusCode::OK, "{list}");
+    assert_eq!(list["version"], "v-carry");
+    let items = list["items"].as_array().unwrap();
+    let norm: Vec<&str> = items.iter().map(|i| i["normQ"].as_str().unwrap()).collect();
+    assert_eq!(
+        norm,
+        vec!["carry changed", "no sha"],
+        "carry me was carried over"
+    );
+    assert_eq!(items[0]["hits"], 3);
+    assert_eq!(items[0]["eraPos"], 4);
+    assert_eq!(
+        send_json(
+            &app,
+            "GET",
+            "/api/trevor/worker/popular?version=nope",
+            true,
+            None
+        )
+        .await
+        .0,
+        StatusCode::NOT_FOUND
+    );
+    assert_eq!(
+        send_json(
+            &app,
+            "GET",
+            "/api/trevor/worker/popular?version=v-carry",
+            false,
+            None
+        )
+        .await
+        .0,
+        StatusCode::UNAUTHORIZED
+    );
+
+    // Warm: queue deferred internal jobs.
+    let warm = json!({ "version": "v-carry", "items": [
+        { "question": "carry me", "eraPos": 4 },
+        { "question": "carry changed", "eraPos": 4 },
+        { "question": "warm fresh", "eraPos": 4 },
+        { "question": "warm fresh", "eraPos": 4 }
+    ]});
+    let (st, out) = send_json(
+        &app,
+        "POST",
+        "/api/trevor/worker/warm",
+        true,
+        Some(warm.clone()),
+    )
+    .await;
+    assert_eq!(st, StatusCode::OK, "{out}");
+    // carry me: cached; carry changed: b's ask above left an open job (joined);
+    // warm fresh: queued once, then joined.
+    assert_eq!(out, json!({ "queued": 1, "cached": 1, "joined": 2 }));
+    let (internal, deferred): (Option<Uuid>, bool) =
+        sqlx::query_as("SELECT user_id, deferred FROM trevor_jobs WHERE kind = 'warm'")
+            .fetch_one(pool)
+            .await
+            .unwrap();
+    assert_eq!((internal, deferred), (None, true));
+    let stale = json!({ "version": version, "items": [] });
+    assert_eq!(
+        send_json(&app, "POST", "/api/trevor/worker/warm", true, Some(stale))
+            .await
+            .0,
+        StatusCode::CONFLICT
+    );
+    let big =
+        json!({ "version": "v-carry", "items": [{ "question": "x".repeat(70_000), "eraPos": 0 }] });
+    assert_eq!(
+        send_json(&app, "POST", "/api/trevor/worker/warm", true, Some(big))
+            .await
+            .0,
+        StatusCode::PAYLOAD_TOO_LARGE
+    );
+    let (p, _) = state_v11(pool, |c| {
+        c.mode = backend::app::services::trevor::Mode::Passages
+    });
+    assert_eq!(
+        send_json(
+            &backend_app(&p),
+            "POST",
+            "/api/trevor/worker/warm",
+            true,
+            Some(warm)
+        )
+        .await
+        .0,
+        StatusCode::SERVICE_UNAVAILABLE
+    );
+
+    // TREVOR_CARRY_OVER=0: nothing moves.
+    let (nc, _) = state_v11(pool, |c| c.carry_over = false);
+    let nca = app_of(&nc);
+    let chunk = json!({ "version": "v-nocarry", "activate": false, "panels": panels, "chunkShas": { "s1#0": "aaa", "s2#1": "bbb" } });
+    assert_eq!(publish(&nca, &chunk).await, StatusCode::OK);
+    let (_, out) = send_json(
+        &nca,
+        "POST",
+        "/api/trevor/versions",
+        true,
+        Some(json!({
+            "version": "v-nocarry", "activate": true, "gateReport": { "ok": true },
+            "manifest": { "storyOrder": story_order(), "eras": eras() }
+        })),
+    )
+    .await;
+    assert_eq!(out["carried"], 0);
+    eprintln!(
+        "v1.1 lists/carry: my questions 3 + paging, popular [carry me 3, carry changed 2], carried 1 of 3, warm-up list + warm {{queued 1, cached 1, joined 2}}, 404/401/409/413/503, TREVOR_CARRY_OVER=0 carried 0"
+    );
+}
+
+fn backend_app(s: &AppState) -> Router {
+    app(s)
+}
+
+fn app_of(s: &AppState) -> Router {
+    app(s)
 }

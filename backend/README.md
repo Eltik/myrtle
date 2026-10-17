@@ -597,7 +597,7 @@ Tier-list operations use a 4-level hierarchy - **View → Edit → Publish → A
 
 ### Trevor
 
-The story question answerer (`/api/trevor/*`; interface: `trevor/design/trevor-contract-v1.md`). Read once at boot.
+The story question answerer (`/api/trevor/*`; interface: `trevor/design/trevor-contract-v1.md` and `trevor-contract-v1.1.md`). Read once at boot.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -605,7 +605,14 @@ The story question answerer (`/api/trevor/*`; interface: `trevor/design/trevor-c
 | `TREVOR_QUEUE_TTL_SECS` | `600` | A queued job nobody claimed in this long fails ("expired in the queue"); `1800` is the previous value |
 | `TREVOR_CF_DAILY_NEURONS` | `9000` | Cloudflare Workers AI Neurons per UTC day; `0` turns the `cf` rung off |
 | `TREVOR_CF_SUMMARY_RESERVE` | `1000` | Neurons kept back for the daily summaries; `cf` answers stop at daily minus this |
-| `TREVOR_CPU_QUEUE_MAX` | `6` | Jobs queued or running on the `cpu` rung before new questions get the passages answer |
+| `TREVOR_CPU_QUEUE_MAX` | `6` | Normal jobs queued or running on the `cpu` rung per online cpu worker (one while none is online) before new questions overflow; under `TREVOR_ADMISSION=0` a flat cap, as before |
+| `TREVOR_CF_QUEUE_MAX` | `4` | Normal jobs queued or running on the `cf` rung before new questions go to `cpu`; `0` lifts the cap (the v1 behaviour) |
+| `TREVOR_GLOBAL_QUEUE_MAX` | `200` | Jobs open on every server before an overflowed question gets its quick passages answer without a deferred job |
+| `TREVOR_DEFERRED_TTL_SECS` | `21600` | A deferred job nobody claimed in this long expires (a normal one after `TREVOR_QUEUE_TTL_SECS`) |
+| `TREVOR_MODE` | `on` | `passages`: every new question gets a passages job, no model job and no deferred job, and claimed model jobs run as passages. `off`: ask answers cached questions and otherwise `503` "Trevor is resting"; workers claim nothing. Unknown values read as `on` |
+| `TREVOR_CPU_PROFILE` | `mid` | The pipeline profile `cpu` jobs carry (contract v1.1 section 4); `slim` restores v1 |
+| `TREVOR_ALERT_COOLDOWN_SECS` | `1800` | Each Trevor alert kind (`guard_tripped`, `worker_offline`, `backlog`, `failure_rate`, `cf_budget`) posts to `DISCORD_ALERT_WEBHOOK` at most once per this long, plus one "recovered" message |
+| `TREVOR_ALERT_EVERY_SECS` | `30` | The alert evaluator's tick |
 | `TREVOR_JOB_MAX_RUN_SECS` | `1800` | A running job this old is requeued (once, then failed with "the job ran past its time limit") even while a live worker names it as `busyJobId`; `0` lets the busy heartbeat protect it with no ceiling, the previous behaviour |
 | `TREVOR_RESULT_MAX_BYTES` | `65536` | A worker result body over this is a `413`; `0` lifts the cap (axum's 2 MB default then applies, the previous behaviour) |
 | `TURNSTILE_SECRET` | - | When set, `POST /trevor/ask` verifies `turnstileToken` with Cloudflare siteverify (missing or rejected: `403`; siteverify unreachable: `503` "Trevor is busy", failing closed). Unset skips the check |
@@ -618,6 +625,13 @@ The story question answerer (`/api/trevor/*`; interface: `trevor/design/trevor-c
 | `TREVOR_TTL_FROM_QUEUED` | on | `0` expires queued jobs by `created_at`, so a requeued job keeps its first clock (on: `queued_at`, reset by a requeue) |
 | `TREVOR_BUSY_PROTECTS` | on | `0` requeues a stale running job even while an online worker's heartbeat names it as `busyJobId` |
 | `TREVOR_JOB_OWNER_ONLY` | on | `0` lets any signed-in user poll any job id (on: the asker or a twin joiner only, like the stream) |
+| `TREVOR_NORMQ` | on | normQ keys the cache, the twin join and the open-job index (NFKC compatibility fold, lowercase, apostrophes dropped, other punctuation a space, whitespace collapsed); `0` restores the v1 normalization |
+| `TREVOR_ADMISSION` | on | Admission control: per-rung caps under one advisory lock, an overflowed question gets a quick passages job (claimed first) plus a deferred full job; `0` restores v1 (flat cpu cap, no cf cap, no deferred jobs, `503` at 200 queued) |
+| `TREVOR_FAIR_CLAIM` | on | `worker/next` claims the job whose user has the fewest running, then the oldest `queued_at`; `0` claims the oldest `created_at` |
+| `TREVOR_CLAIM_BY_RUNG` | on | A worker claims only jobs it can serve at their rung, unless no other online worker can; `0` lets any worker take any job and step it down |
+| `TREVOR_CARRY_OVER` | on | Activating a version copies cached answers whose cited chunk shas are unchanged in its `chunkShas`; `0` copies none |
+| `TREVOR_ASK_LOG` | on | One `trevor_asks` row per ask (feeds `/trevor/me/jobs`, `/trevor/popular`, `/trevor/worker/popular`); `0` records none, so those lists stay empty |
+| `TREVOR_ALERTS` | on | `0` sends no Trevor alert |
 | `TREVOR_REVERDICT_ON_ASK` | on | An ask from an account with stage progress but no game read rows and no site read marks first re-derives and stores the game's read verdict from the stored stage progress (as a sync does), once per account per process; `0` reads only what is stored, so such an account asks at gatePos 0 (nothing released), the previous behaviour |
 
 A request with a valid `x-trevor-worker-key` skips the per-IP rate limiter, as the service key does.

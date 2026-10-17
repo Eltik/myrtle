@@ -14,8 +14,9 @@ use dashmap::DashMap;
 use tokio::sync::{Notify, broadcast};
 use uuid::Uuid;
 
-use super::JobView;
+use super::alerts::{AlertSink, Alerter, DiscordSink};
 use super::turnstile::{SiteVerify, TurnstileVerifier};
+use super::{JobView, Mode, Profile};
 use crate::utils::env::switched_off;
 
 /// Trevor's environment knobs and kill switches (read once at boot).
@@ -72,6 +73,46 @@ pub struct TrevorConfig {
     /// `TURNSTILE_SECRET`: when set, ask verifies the request's Turnstile
     /// token and fails closed (503) when Cloudflare cannot be reached.
     pub turnstile_secret: Option<String>,
+    /// `TREVOR_NORMQ=0` keys the cache, the twin join and the open-job index
+    /// by the v1 normalization instead of normQ (contract v1.1 section 1a).
+    pub normq: bool,
+    /// `TREVOR_ADMISSION=0` restores the v1 rung choice: a flat CPU cap, no
+    /// cf cap, no deferred jobs, and a 503 once 200 jobs of a server queue.
+    pub admission: bool,
+    /// `TREVOR_CF_QUEUE_MAX`: normal jobs queued or running on `cf` before
+    /// new ones go to the next rung; `0` lifts the cap.
+    pub cf_queue_max: i64,
+    /// `TREVOR_GLOBAL_QUEUE_MAX`: jobs open in all before an overflowed ask
+    /// gets its passages answer without a deferred job.
+    pub global_queue_max: i64,
+    /// `TREVOR_DEFERRED_TTL_SECS`: a deferred job nobody claimed in this long
+    /// expires (a normal one after `TREVOR_QUEUE_TTL_SECS`).
+    pub deferred_ttl_secs: i64,
+    /// `TREVOR_FAIR_CLAIM=0` claims the oldest queued job (by `created_at`)
+    /// instead of the one whose user has the fewest running, then the oldest
+    /// `queued_at` (contract v1.1 section 1c).
+    pub fair_claim: bool,
+    /// `TREVOR_CLAIM_BY_RUNG=0` lets any worker claim any job (stepping its
+    /// rung down at claim) instead of only the jobs it can serve, unless no
+    /// online worker can.
+    pub claim_by_rung: bool,
+    /// `TREVOR_MODE`: `on`, `passages` or `off` (contract v1.1 section 2.3).
+    pub mode: Mode,
+    /// `TREVOR_CPU_PROFILE`: `mid` (default, contract v1.1 section 4) or
+    /// `slim` (the v1 profile).
+    pub cpu_profile: Profile,
+    /// `TREVOR_CARRY_OVER=0` copies no cached answer to a newly activated
+    /// version (contract v1.1 section 3b).
+    pub carry_over: bool,
+    /// `TREVOR_ASK_LOG=0` records no `trevor_asks` row: "My questions", the
+    /// popular list and the warm-up list then stay empty.
+    pub ask_log: bool,
+    /// `TREVOR_ALERTS=0` sends no Trevor alert (contract v1.1 section 2.2).
+    pub alerts: bool,
+    /// `TREVOR_ALERT_COOLDOWN_SECS`: one alert per kind per this long.
+    pub alert_cooldown_secs: i64,
+    /// `TREVOR_ALERT_EVERY_SECS`: the alert evaluator's tick.
+    pub alert_every_secs: u64,
 }
 
 impl Default for TrevorConfig {
@@ -96,6 +137,20 @@ impl Default for TrevorConfig {
             cpu_queue_max: 6,
             result_max_bytes: 64 * 1024,
             turnstile_secret: None,
+            normq: true,
+            admission: true,
+            cf_queue_max: 4,
+            global_queue_max: 200,
+            deferred_ttl_secs: 6 * 3600,
+            fair_claim: true,
+            claim_by_rung: true,
+            mode: Mode::On,
+            cpu_profile: Profile::Mid,
+            carry_over: true,
+            ask_log: true,
+            alerts: true,
+            alert_cooldown_secs: 1800,
+            alert_every_secs: 30,
         }
     }
 }
@@ -140,6 +195,33 @@ impl TrevorConfig {
             turnstile_secret: std::env::var("TURNSTILE_SECRET")
                 .ok()
                 .filter(|s| !s.trim().is_empty()),
+            normq: !switched_off("TREVOR_NORMQ"),
+            admission: !switched_off("TREVOR_ADMISSION"),
+            cf_queue_max: env_num("TREVOR_CF_QUEUE_MAX", d.cf_queue_max).max(0),
+            global_queue_max: env_num("TREVOR_GLOBAL_QUEUE_MAX", d.global_queue_max).max(0),
+            deferred_ttl_secs: env_num("TREVOR_DEFERRED_TTL_SECS", d.deferred_ttl_secs).max(1),
+            fair_claim: !switched_off("TREVOR_FAIR_CLAIM"),
+            claim_by_rung: !switched_off("TREVOR_CLAIM_BY_RUNG"),
+            mode: std::env::var("TREVOR_MODE").map_or(d.mode, |v| {
+                Mode::parse(&v).unwrap_or_else(|| {
+                    tracing::warn!(value = %v, "trevor: TREVOR_MODE is not on|passages|off; using on");
+                    Mode::On
+                })
+            }),
+            cpu_profile: match std::env::var("TREVOR_CPU_PROFILE").as_deref().map(str::trim) {
+                Ok("slim") => Profile::Slim,
+                Ok("mid" | "") | Err(_) => Profile::Mid,
+                Ok(other) => {
+                    tracing::warn!(value = other, "trevor: TREVOR_CPU_PROFILE is not mid|slim; using mid");
+                    Profile::Mid
+                }
+            },
+            carry_over: !switched_off("TREVOR_CARRY_OVER"),
+            ask_log: !switched_off("TREVOR_ASK_LOG"),
+            alerts: !switched_off("TREVOR_ALERTS"),
+            alert_cooldown_secs: env_num("TREVOR_ALERT_COOLDOWN_SECS", d.alert_cooldown_secs)
+                .max(0),
+            alert_every_secs: env_num("TREVOR_ALERT_EVERY_SECS", d.alert_every_secs).max(1),
         }
     }
 }
@@ -185,10 +267,28 @@ pub struct TrevorRuntime {
     reverdict_tried: DashMap<Uuid, ()>,
     /// Re-derivations an ask has started (tests).
     pub reverdicts: AtomicU64,
+    /// The alert state per kind (contract v1.1 section 2.2).
+    pub alerter: Alerter,
+    sink: RwLock<Arc<dyn AlertSink>>,
+    /// When this process started (unix secs): `worker_offline` measures from
+    /// it while no worker ever sent a heartbeat.
+    pub started_at: i64,
 }
 
 impl TrevorRuntime {
     pub fn new(config: TrevorConfig, verifier: Arc<dyn TurnstileVerifier>) -> Self {
+        Self::with_sink(
+            config,
+            verifier,
+            Arc::new(DiscordSink::new(reqwest::Client::new())),
+        )
+    }
+
+    pub fn with_sink(
+        config: TrevorConfig,
+        verifier: Arc<dyn TurnstileVerifier>,
+        sink: Arc<dyn AlertSink>,
+    ) -> Self {
         Self {
             config: RwLock::new(Arc::new(config)),
             notify: Notify::new(),
@@ -199,11 +299,33 @@ impl TrevorRuntime {
             claim_queries: AtomicU64::new(0),
             reverdict_tried: DashMap::new(),
             reverdicts: AtomicU64::new(0),
+            alerter: Alerter::default(),
+            sink: RwLock::new(sink),
+            started_at: chrono::Utc::now().timestamp(),
         }
     }
 
     pub fn from_env(client: reqwest::Client) -> Self {
-        Self::new(TrevorConfig::from_env(), Arc::new(SiteVerify::new(client)))
+        Self::with_sink(
+            TrevorConfig::from_env(),
+            Arc::new(SiteVerify::new(client.clone())),
+            Arc::new(DiscordSink::new(client)),
+        )
+    }
+
+    pub fn sink(&self) -> Arc<dyn AlertSink> {
+        self.sink
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .clone()
+    }
+
+    /// Replace the alert sink (tests record alerts instead of posting them).
+    pub fn set_sink(&self, sink: Arc<dyn AlertSink>) {
+        *self
+            .sink
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = sink;
     }
 
     pub fn config(&self) -> Arc<TrevorConfig> {

@@ -12344,6 +12344,72 @@
         ]
       }
     },
+    "/api/trevor/me/jobs": {
+      "get": {
+        "tags": [
+          "trevor"
+        ],
+        "summary": "The reader's recent questions for \"My questions\": each with its job\n(the deferred one of an overflowed ask), status, rung, source, times, and\nthe answer once done. Cache hits are listed too (`rung: cache`, no job).",
+        "operationId": "my_jobs",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "At most this many (default 20, at most 50).",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "description": "Only questions asked before this instant (RFC 3339): pass the last\nitem's `createdAt` for the next page.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Newest first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TrevorMyQuestion"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
     "/api/trevor/panels/{storyId}": {
       "get": {
         "tags": [
@@ -12411,6 +12477,63 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/trevor/popular": {
+      "get": {
+        "tags": [
+          "trevor"
+        ],
+        "summary": "The most-asked cached questions inside the reader's era, with their\nanswers, asked by at least two accounts. Signed out: an empty list (era 0,\nnothing released).",
+        "operationId": "popular",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "query",
+            "description": "`en` (the default) or `cn`.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "At most this many (default 8, at most 50).",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Most askers first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TrevorPopularQuestion"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -12670,6 +12793,77 @@
         ]
       }
     },
+    "/api/trevor/worker/popular": {
+      "get": {
+        "tags": [
+          "trevor"
+        ],
+        "summary": "Worker: the warm-up list after a publish: the (normQ, eraPos) pairs most\nasked in the last 30 days that `version` holds no cached answer for\n(carried over or made since). 404 for an unknown version.",
+        "operationId": "worker_popular",
+        "parameters": [
+          {
+            "name": "version",
+            "in": "query",
+            "description": "The newly published version: questions it already holds a cached\nanswer for (carried over or answered) are left out.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "description": "`en` (the default) or `cn`.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "At most this many (1 to 500, default 100).",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Most asked first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarmList"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "trevor_worker_key": []
+          }
+        ]
+      }
+    },
     "/api/trevor/worker/result": {
       "post": {
         "tags": [
@@ -12702,6 +12896,60 @@
           },
           "413": {
             "description": "The result is over `TREVOR_RESULT_MAX_BYTES` (64 KB)."
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "trevor_worker_key": []
+          }
+        ]
+      }
+    },
+    "/api/trevor/worker/warm": {
+      "post": {
+        "tags": [
+          "trevor"
+        ],
+        "summary": "Worker: queue internal re-answers (no user) as deferred jobs, each under\nits era as the horizon: `queued`, `cached` (already answered in the\nversion, nothing queued) and `joined` (an open job asks it). 409 when the\nversion is no longer active; 503 unless `TREVOR_MODE` is `on`; a body\nover 64 KB is a 413.",
+        "operationId": "worker_warm",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WarmRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Queued, cached and joined counts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarmOutcome"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "The body is over 64 KB."
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
@@ -18567,6 +18815,14 @@
               }
             ]
           },
+          "deferredJobId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "The full answer was deferred (contract v1.1 section 1b): this job\ngives the quick passages answer now, and the full one shows in \"My\nquestions\" (`GET /trevor/me/jobs`) under `deferredJobId` when ready."
+          },
           "etaSecs": {
             "type": [
               "integer",
@@ -18582,6 +18838,17 @@
             ],
             "format": "uuid",
             "description": "Null for a cached answer: no job was queued."
+          },
+          "quickLook": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TrevorAnswer",
+                "description": "\"Quick look\" while the answer is made: the same question's cached\nanswer from an earlier era (so it is spoiler-safe for this reader).\nSent only with an overflowed or passages-only ask, and only when one\nexists."
+              }
+            ]
           },
           "rung": {
             "$ref": "#/components/schemas/TrevorRung"
@@ -19570,6 +19837,13 @@
             "type": "integer",
             "format": "int32",
             "minimum": 0
+          },
+          "sha": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The cited chunk's text sha (contract v1.1 section 3b); answers whose\nevery citation carries one can be carried to a new version."
           },
           "storyId": {
             "type": "string"
@@ -22580,6 +22854,36 @@
           }
         }
       },
+      "Guard": {
+        "type": "object",
+        "description": "The heartbeat's `guard` (contract v1.1 section 2.1).",
+        "properties": {
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "since": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Unix seconds the state began.",
+            "default": null
+          },
+          "state": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TrevorGuardState"
+              }
+            ],
+            "default": "ok"
+          }
+        }
+      },
       "HandoffBuffs": {
         "type": "object",
         "required": [
@@ -22725,6 +23029,17 @@
             "type": [
               "string",
               "null"
+            ]
+          },
+          "guard": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Guard",
+                "description": "The power guard (contract v1.1 section 2.1); absent from an older\nworker, which reads as no guard."
+              }
             ]
           },
           "rungs": {
@@ -26535,11 +26850,24 @@
           "version",
           "server",
           "panels",
-          "active"
+          "active",
+          "chunkShas",
+          "carried"
         ],
         "properties": {
           "active": {
             "type": "boolean"
+          },
+          "carried": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Cached answers carried over from the previous version on activation.",
+            "minimum": 0
+          },
+          "chunkShas": {
+            "type": "integer",
+            "description": "Chunk shas stored by this call.",
+            "minimum": 0
           },
           "panels": {
             "type": "integer",
@@ -26581,6 +26909,10 @@
               "null"
             ],
             "format": "date-time"
+          },
+          "chunkShas": {
+            "type": "object",
+            "description": "`{chunkId: sha}` of the version's chunks (contract v1.1 section 3b),\nin any of the calls (they accumulate). Activation carries a cached\nanswer of the previous version over when every chunk it cites is\nhere with the same sha; a version published without it carries none."
           },
           "gateReport": {
             "type": [
@@ -32844,12 +33176,115 @@
           "spent"
         ]
       },
+      "TrevorGuardState": {
+        "type": "string",
+        "description": "A worker's power guard state.",
+        "enum": [
+          "ok",
+          "tripped"
+        ]
+      },
+      "TrevorMode": {
+        "type": "string",
+        "description": "`TREVOR_MODE`: `on` (default), `passages` (every ask answered from\npassages at once, no model job queued), `off` (ask is a 503 \"Trevor is\nresting\" unless the answer is cached; panels and cached answers serve).",
+        "enum": [
+          "on",
+          "passages",
+          "off"
+        ]
+      },
+      "TrevorMyQuestion": {
+        "type": "object",
+        "description": "One of the reader's questions, for \"My questions\" (`GET /trevor/me/jobs`).",
+        "required": [
+          "question",
+          "status",
+          "rung",
+          "createdAt"
+        ],
+        "properties": {
+          "answer": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TrevorAnswer",
+                "description": "Present once done."
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "jobId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "The job that makes (or made) the full answer: the deferred job of an\noverflowed ask, else the ask's job; null for a cache hit."
+          },
+          "question": {
+            "type": "string"
+          },
+          "rung": {
+            "$ref": "#/components/schemas/TrevorRung",
+            "description": "`cache` for a cache hit, else the job's rung."
+          },
+          "source": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TrevorAnswerSource",
+                "description": "Whether a model wrote the answer; null until there is one."
+              }
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          }
+        }
+      },
+      "TrevorPopularQuestion": {
+        "type": "object",
+        "description": "One popular question with its answer (`GET /trevor/popular`).",
+        "required": [
+          "question",
+          "askers",
+          "answer"
+        ],
+        "properties": {
+          "answer": {
+            "$ref": "#/components/schemas/TrevorAnswer"
+          },
+          "askers": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Distinct accounts that asked it (at least 2)."
+          },
+          "question": {
+            "type": "string"
+          }
+        }
+      },
       "TrevorProfile": {
         "type": "string",
         "description": "The worker pipeline profile for a job.",
         "enum": [
           "full",
-          "slim"
+          "slim",
+          "mid"
         ]
       },
       "TrevorQueueDepth": {
@@ -32922,7 +33357,10 @@
           "online",
           "rungs",
           "queueDepth",
-          "cfBudget"
+          "cfBudget",
+          "workers",
+          "guard",
+          "mode"
         ],
         "properties": {
           "activeVersion": {
@@ -32933,6 +33371,14 @@
           },
           "cfBudget": {
             "$ref": "#/components/schemas/TrevorCfBudget"
+          },
+          "guard": {
+            "$ref": "#/components/schemas/TrevorGuardState",
+            "description": "`tripped` while any online worker's power guard is tripped."
+          },
+          "mode": {
+            "$ref": "#/components/schemas/TrevorMode",
+            "description": "The master switch, `TREVOR_MODE`."
           },
           "online": {
             "type": "boolean",
@@ -32945,6 +33391,28 @@
           "rungs": {
             "$ref": "#/components/schemas/TrevorRungFlags",
             "description": "The model rungs online workers report (both false while offline)."
+          },
+          "workers": {
+            "$ref": "#/components/schemas/TrevorWorkerCounts",
+            "description": "Online workers offering each model rung (contract v1.1 section 1d)."
+          }
+        }
+      },
+      "TrevorWorkerCounts": {
+        "type": "object",
+        "description": "Online workers per model rung.",
+        "required": [
+          "cf",
+          "cpu"
+        ],
+        "properties": {
+          "cf": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "cpu": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
@@ -34276,6 +34744,122 @@
                 "UNKNOWN"
               ]
             }
+          }
+        }
+      },
+      "WarmItem": {
+        "type": "object",
+        "required": [
+          "question",
+          "eraPos"
+        ],
+        "properties": {
+          "eraPos": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "question": {
+            "type": "string"
+          }
+        }
+      },
+      "WarmList": {
+        "type": "object",
+        "description": "`GET /trevor/worker/popular`.",
+        "required": [
+          "version",
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WarmQuestion"
+            }
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "WarmOutcome": {
+        "type": "object",
+        "required": [
+          "queued",
+          "cached",
+          "joined"
+        ],
+        "properties": {
+          "cached": {
+            "type": "integer",
+            "description": "Already cached in the version under that era: nothing queued.",
+            "minimum": 0
+          },
+          "joined": {
+            "type": "integer",
+            "description": "An open job (normal or deferred) already asks it: joined.",
+            "minimum": 0
+          },
+          "queued": {
+            "type": "integer",
+            "description": "New deferred internal jobs.",
+            "minimum": 0
+          }
+        }
+      },
+      "WarmQuestion": {
+        "type": "object",
+        "description": "`worker/popular`: one question to re-answer after a publish.",
+        "required": [
+          "question",
+          "normQ",
+          "eraPos",
+          "hits"
+        ],
+        "properties": {
+          "eraPos": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The era boundary readers asked it under: warm it with this horizon."
+          },
+          "hits": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Asks in the last 30 days, twins included."
+          },
+          "normQ": {
+            "type": "string",
+            "description": "The cache's normalized form (contract v1.1 section 1a)."
+          },
+          "question": {
+            "type": "string",
+            "description": "The latest asked text."
+          }
+        }
+      },
+      "WarmRequest": {
+        "type": "object",
+        "description": "`POST /trevor/worker/warm`: queue internal deferred re-answers (no user).",
+        "required": [
+          "version",
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WarmItem"
+            }
+          },
+          "server": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "version": {
+            "type": "string",
+            "description": "Must be the server's active version (409 otherwise)."
           }
         }
       },

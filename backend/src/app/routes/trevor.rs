@@ -18,13 +18,13 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use uuid::Uuid;
 
 use crate::app::cache::strong_etag;
-use crate::app::extractors::auth::AuthUser;
+use crate::app::extractors::auth::{AuthUser, MaybeAuthUser};
 use crate::app::services::trevor::{
-    self as svc, AskRequest, AskResponse, FeedbackRequest, JobStatus, JobView, StoryPanels,
-    TrevorStatus,
+    self as svc, AskRequest, AskResponse, FeedbackRequest, JobStatus, JobView, MyQuestion,
+    PopularQuestion, StoryPanels, TrevorStatus,
     worker::{
-        self, Heartbeat, PublishOutcome, PublishVersion, ResultError, WorkerDelta, WorkerHello,
-        WorkerJob, WorkerKey, WorkerResult,
+        self, Heartbeat, PublishOutcome, PublishVersion, ResultError, WarmList, WarmOutcome,
+        WarmRequest, WorkerDelta, WorkerHello, WorkerJob, WorkerKey, WorkerResult,
     },
 };
 use crate::app::{error::ApiError, state::AppState};
@@ -56,6 +56,37 @@ pub struct PanelsQuery {
     /// The corpus version the caller expects. When it is the active one the
     /// response is cacheable for a day and immutable.
     pub v: Option<String>,
+}
+
+#[derive(Debug, Deserialize, IntoParams)]
+#[into_params(parameter_in = Query)]
+pub struct MyJobsQuery {
+    /// At most this many (default 20, at most 50).
+    pub limit: Option<i64>,
+    /// Only questions asked before this instant (RFC 3339): pass the last
+    /// item's `createdAt` for the next page.
+    pub before: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+#[derive(Debug, Deserialize, IntoParams)]
+#[into_params(parameter_in = Query)]
+pub struct PopularQuery {
+    /// `en` (the default) or `cn`.
+    pub server: Option<String>,
+    /// At most this many (default 8, at most 50).
+    pub limit: Option<i64>,
+}
+
+#[derive(Debug, Deserialize, IntoParams)]
+#[into_params(parameter_in = Query)]
+pub struct WorkerPopularQuery {
+    /// The newly published version: questions it already holds a cached
+    /// answer for (carried over or answered) are left out.
+    pub version: String,
+    /// `en` (the default) or `cn`.
+    pub server: Option<String>,
+    /// At most this many (1 to 500, default 100).
+    pub limit: Option<i64>,
 }
 
 /// The client address Turnstile's `remoteip` gets: the rate limiter's view
@@ -296,6 +327,118 @@ pub async fn status(
     Ok(([(header::CACHE_CONTROL, STATUS_CACHE_CONTROL)], Json(body)).into_response())
 }
 
+/// The reader's recent questions for "My questions": each with its job
+/// (the deferred one of an overflowed ask), status, rung, source, times, and
+/// the answer once done. Cache hits are listed too (`rung: cache`, no job).
+#[utoipa::path(
+    get,
+    path = "/trevor/me/jobs",
+    tag = "trevor",
+    params(MyJobsQuery),
+    security(("bearer_auth" = [])),
+    responses(
+        (status = 200, description = "Newest first.", body = Vec<MyQuestion>),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn my_jobs(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Query(query): Query<MyJobsQuery>,
+) -> Result<Json<Vec<MyQuestion>>, ApiError> {
+    Ok(Json(
+        svc::ask::my_questions(&state, auth.user_uuid()?, query.before, query.limit).await?,
+    ))
+}
+
+/// The most-asked cached questions inside the reader's era, with their
+/// answers, asked by at least two accounts. Signed out: an empty list (era 0,
+/// nothing released).
+#[utoipa::path(
+    get,
+    path = "/trevor/popular",
+    tag = "trevor",
+    params(PopularQuery),
+    responses(
+        (status = 200, description = "Most askers first.", body = Vec<PopularQuestion>),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn popular(
+    State(state): State<AppState>,
+    MaybeAuthUser(auth): MaybeAuthUser,
+    Query(query): Query<PopularQuery>,
+) -> Result<Response, ApiError> {
+    let server = svc::parse_server(query.server.as_deref())?;
+    let user = auth.map(|a| a.user_uuid()).transpose()?;
+    let body = svc::ask::popular(&state, user, server, query.limit).await?;
+    Ok(([(header::CACHE_CONTROL, "private, max-age=60")], Json(body)).into_response())
+}
+
+/// Worker: the warm-up list after a publish: the (normQ, eraPos) pairs most
+/// asked in the last 30 days that `version` holds no cached answer for
+/// (carried over or made since). 404 for an unknown version.
+#[utoipa::path(
+    get,
+    path = "/trevor/worker/popular",
+    tag = "trevor",
+    params(WorkerPopularQuery),
+    security(("trevor_worker_key" = [])),
+    responses(
+        (status = 200, description = "Most asked first.", body = WarmList),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn worker_popular(
+    State(state): State<AppState>,
+    _key: WorkerKey,
+    Query(query): Query<WorkerPopularQuery>,
+) -> Result<Json<WarmList>, ApiError> {
+    Ok(Json(
+        worker::popular(&state, query.server.as_deref(), &query.version, query.limit).await?,
+    ))
+}
+
+/// Worker: queue internal re-answers (no user) as deferred jobs, each under
+/// its era as the horizon: `queued`, `cached` (already answered in the
+/// version, nothing queued) and `joined` (an open job asks it). 409 when the
+/// version is no longer active; 503 unless `TREVOR_MODE` is `on`; a body
+/// over 64 KB is a 413.
+#[utoipa::path(
+    post,
+    path = "/trevor/worker/warm",
+    tag = "trevor",
+    request_body = WarmRequest,
+    security(("trevor_worker_key" = [])),
+    responses(
+        (status = 200, description = "Queued, cached and joined counts.", body = WarmOutcome),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 409, response = crate::app::openapi::responses::Conflict),
+        (status = 413, description = "The body is over 64 KB."),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn worker_warm(
+    State(state): State<AppState>,
+    _key: WorkerKey,
+    Json(body): Json<WarmRequest>,
+) -> Result<Json<WarmOutcome>, ApiError> {
+    Ok(Json(worker::warm(&state, body).await?))
+}
+
 /// Worker: claim the next queued job, with the rung, profile and horizon
 /// gatePos it runs under. Holds an empty poll open for up to 20 s (woken on
 /// enqueue), then answers 204.
@@ -478,12 +621,27 @@ async fn limit_compressed(req: Request, next: Next) -> Response {
 /// The publish route with its own body handling (contract section 3):
 /// outermost the 4 MiB limit on the body as sent, then gzip decompression,
 /// then the 8 MiB limit the JSON extractor applies to the decompressed body.
+///
+/// Also carries the contract v1.1 routes (`me/jobs`, `popular`,
+/// `worker/popular`, `worker/warm`) without those layers, so they need no
+/// line in `routes/mod.rs` (which belongs to the route table's owner; they
+/// may move there).
 pub fn publish_router() -> OpenApiRouter<AppState> {
-    OpenApiRouter::new()
+    let publish = OpenApiRouter::new()
         .routes(routes!(publish_version))
         .layer(DefaultBodyLimit::max(PUBLISH_DECOMPRESSED_MAX))
         .layer(RequestDecompressionLayer::new())
-        .layer(axum::middleware::from_fn(limit_compressed))
+        .layer(axum::middleware::from_fn(limit_compressed));
+    OpenApiRouter::new()
+        .routes(routes!(my_jobs))
+        .routes(routes!(popular))
+        .routes(routes!(worker_popular))
+        .merge(
+            OpenApiRouter::new()
+                .routes(routes!(worker_warm))
+                .layer(DefaultBodyLimit::max(worker::WARM_BODY_MAX)),
+        )
+        .merge(publish)
 }
 
 #[cfg(test)]

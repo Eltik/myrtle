@@ -83,6 +83,39 @@ pub async fn report_service_account_refused(client: &reqwest::Client, server: &s
     .await;
 }
 
+/// A Trevor alert or its "recovered" follow-up (contract v1.1 section 2.2):
+/// red when it fires, green when it clears. The caller decides when (one per
+/// kind per cooldown); this only formats and posts.
+pub async fn report_trevor(
+    client: &reqwest::Client,
+    kind: &str,
+    title: &str,
+    description: &str,
+    recovered: bool,
+) {
+    if recovered {
+        tracing::info!(kind, "trevor alert recovered");
+    } else {
+        tracing::warn!(kind, description, "trevor alert");
+    }
+    post(client, trevor_embed(kind, title, description, recovered)).await;
+}
+
+/// The embed of [`report_trevor`], pure so its shape is testable.
+pub fn trevor_embed(
+    kind: &str,
+    title: &str,
+    description: &str,
+    recovered: bool,
+) -> serde_json::Value {
+    json!({
+        "title": if recovered { format!("Trevor recovered: {title}") } else { format!("Trevor: {title}") },
+        "description": description.replace('`', "'"),
+        "color": if recovered { 0x002E_A043_u32 } else { 0x00D0_3A3A_u32 },
+        "footer": { "text": format!("trevor alert `{kind}`") },
+    })
+}
+
 /// Fire-and-forget: a failed webhook is logged and swallowed. Alerting must
 /// never be able to take down the caller.
 async fn post(client: &reqwest::Client, embed: serde_json::Value) {

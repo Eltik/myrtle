@@ -31,6 +31,8 @@ Concurrency is therefore made of four parts.
 
 When no model rung can take a new job, the ask gets an immediate `passages` answer, labelled "Quick look". If the global cap is not reached, the ask is ALSO queued as a `deferred` job (`trevor_jobs.deferred = true`): workers take deferred jobs only when no normal job is waiting. The full answer then shows in the reader's "My questions" (section 5) when ready.
 
+**Backend clarification (2026-10-17): how the instant passages answer is made.** The backend cannot retrieve, so an overflowed ask gets a quick `passages` job (normal, not deferred, `rung: passages`). Every worker claims quick passages jobs before any model job (they cost no model and were promised at once), and a guard-tripped worker still serves them. The ask's response carries the quick job (`jobId`, `streamUrl`, `rung: passages`), the deferred full job as `deferredJobId`, and, when an earlier era cached the same normQ, that answer as `quickLook` (spoiler-safe because its era is lower), so a reader has something even when no worker is online. Admission reads the rung depths and inserts under one Postgres advisory lock: without it, a 2,000-ask burst over 50 keys put all 50 jobs on a cpu rung capped at 24 (measured). A user holds at most 3 open deferred jobs; past that the overflowed ask gets the passages answer only. The per-user cap of 3 open counts normal jobs only. Several workers: the rungs offered are the OR over online workers (the latest heartbeat's while none is online), and a worker claims only jobs it can serve at their rung unless no other online worker can. Deferred jobs expire after `TREVOR_DEFERRED_TTL_SECS` (default 21,600).
+
 **c. Fair claiming.** `worker/next` claims the queued job whose user has the fewest jobs running, then the oldest (ORDER BY running-per-user, queued_at), so one heavy user cannot starve others. The per-user caps stay: 3 open, 30 an hour.
 
 **d. Scale-out.** Any number of worker processes may pull from the queue (SKIP LOCKED, as built), each with its own `workerId`. Adding a VPS core or another machine adds throughput with no code change. `/trevor/status` reports workers online per rung.
@@ -92,6 +94,8 @@ Alerts never block a request; a failed webhook is logged and swallowed (as `core
 
 Readers never see a stack trace or a raw backend message.
 
+**Backend clarification (2026-10-17).** `passages` still needs a worker to retrieve: each new question gets a `passages` job (claimed first), never a model or deferred job, and a model job queued before the switch runs as `passages` when claimed. `off` serves a cached answer from ask (200) and otherwise answers 503 "Trevor is resting"; workers claim nothing while it is off.
+
 ## 3. Pre-generated answers that follow game updates
 
 **a. Panel suggestions and the bank.** The daily VPS update regenerates only what changed:
@@ -102,6 +106,8 @@ Readers never see a stack trace or a raw backend message.
 Answers are made in the Cloudflare window (leftover quota), else by E2B overnight, using the `mid` profile. An answer is kept only when it does not decline and cites something within its gate.
 
 **b. Cache carry-over on publish.** When a new version is activated, a cached answer of the previous version is copied to the new version when its question's evidence did not change. Every cited chunk id must exist in the new corpus with the same text sha (`trevor_answers.cited_shas`, stored at answer time), and the era position must still exist. No model call is involved. Dropped answers are re-made lazily on the next ask.
+
+**Backend clarification (2026-10-17): where the chunk shas come from.** The publish sends `chunkShas: {chunkId: sha}` for EVERY chunk of the new version, in any of its calls (they accumulate, like `panels`); the backend stores them in `trevor_chunk_shas`. The worker result carries `citations[].sha` (the cited chunk's text sha; the same string the publish sends). An answer is stored with `cited_shas = {chunkId: sha}` only when every citation carries a non-empty sha; otherwise (or with no citations) it is never carried. On the activating call, before the active flag moves, each cached answer of the previous active version is copied when every `cited_shas` entry is in the new map with the same sha and its `era_pos` is 0, the internal no-limit value, or a `position` of the new manifest's `eras` (an era that moved is not carried). The copy keeps its hits and records `carried_from`; the publish response reports `carried` (and `chunkShas`, the count stored by the call). A version published without `chunkShas` carries nothing over. Chosen over sending a changed-chunk list because the full map makes the comparison against the new corpus itself, whatever version the publisher diffed against; its cost is one id and sha per chunk per publish. `TREVOR_CARRY_OVER=0` turns it off.
 
 **c. Warm-up.** After a publish, the update script asks the backend for the top `TREVOR_WARM_TOP` (default 100) questions by hits in the last 30 days that were NOT carried over (`GET /api/trevor/worker/popular?version=&limit=`, worker key). It re-answers them as `deferred` internal jobs (no user) through the normal queue, so they are cached before readers ask.
 
@@ -130,6 +136,10 @@ The script treats a 409 as done, and any other failure as an `update_failed` ale
 - `GET /api/trevor/me/jobs?limit=20&before=`: signed-in. The reader's recent questions: jobId, question, status, rung, source, createdAt, finishedAt, the answer when done. Feeds "My questions".
 - `GET /api/trevor/popular?limit=8`: signed-in or anonymous. The most-asked cached questions with answers inside the asker's era (anonymous: era 0, nothing released, so an empty list). Used as suggestions in the stories tab. Only questions asked by at least 2 distinct users are listed.
 - `/api/trevor/status` adds `workers: {cf: n, cpu: n}`, `guard: "ok"|"tripped"`, `mode`.
+
+**Backend clarification (2026-10-17): shapes.** Every ask that passes validation is recorded (`trevor_asks`), so a twin joiner and a cache hit appear in "My questions" too.
+- `me/jobs` answers an array, newest first, of `{jobId: uuid|null, question, status, rung, source: "live"|"passages"|null, createdAt, finishedAt, answer: TrevorAnswer|null}`. `jobId` is the deferred job of an overflowed ask, else the ask's job, and null for a cache hit (`rung: "cache"`, `status: "done"`). `limit` is 1 to 50; `before` is an RFC 3339 instant (pass the last item's `createdAt`).
+- `popular` answers an array of `{question, askers, answer: TrevorAnswer}`: per normQ, the cached answer of the latest era at or before the reader's, listed when at least 2 distinct accounts asked it (in any version, so a publish does not empty the list), most askers then hits first. `limit` is 1 to 50 (default 8); `Cache-Control: private, max-age=60`.
 
 ## 6. The stories page "Ask Trevor" tab
 

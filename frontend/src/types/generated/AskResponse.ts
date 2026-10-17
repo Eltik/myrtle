@@ -29,4 +29,17 @@ export type AskResponse = {
      * `GET` this for the answer as it is written (SSE); null for a cached answer.
      */
     streamUrl: string | null;
+    /**
+     * The full answer was deferred (contract v1.1 section 1b): this job
+     * gives the quick passages answer now, and the full one shows in "My
+     * questions" (`GET /trevor/me/jobs`) under `deferredJobId` when ready.
+     */
+    deferredJobId?: string;
+    /**
+     * "Quick look" while the answer is made: the same question's cached
+     * answer from an earlier era (so it is spoiler-safe for this reader).
+     * Sent only with an overflowed or passages-only ask, and only when one
+     * exists.
+     */
+    quickLook?: TrevorAnswer;
 };
