@@ -15,10 +15,8 @@ the EN release dates of the main episodes come from the game data alone:
           before the game's first event (activity_table BasicInfo, the earliest StartTime); any other undated
           episode (Episode 5: Adverse stages without a schedule) is placed right after the episode before it,
           date unknown.
-          MAIN_DATES=wiki copies the wiki reference (eval/reference/main_release.wiki.json) instead, the file
-          before 2026-10-04, for measurement only.
   wiki    eval reference only (REFRESH_REFERENCE=1 or by hand; network): the wiki's Main Theme act pages ->
-          eval/reference/main_release.wiki.json, never read by build unless MAIN_DATES=wiki
+          eval/reference/main_release.wiki.json, never read by build
   score   no network: the game-data dates against the wiki reference (exact, within 1 day, order agreement)
   storylines  the game's own reading links (stage_table.json Storylines, the Terminal "Movements" view): 14
           storylines with their story sets in order, and every BEFORE/AFTER location turned into a "read A before
@@ -29,7 +27,7 @@ the EN release dates of the main episodes come from the game data alone:
           event's weight as a prerequisite) and artifacts/chrono/first_appearance.json (per speaker, the
           earliest-released group they speak in)
 """
-import collections, datetime, json, os, re, shutil, statistics, sys, time
+import collections, datetime, json, os, re, statistics, sys, time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
 import common
@@ -74,10 +72,6 @@ def kv(x):
 
 def stage_dates():
     """EN release dates of the main episodes from the game data alone (see the module docstring)."""
-    if os.environ.get('MAIN_DATES') == 'wiki':
-        shutil.copyfile(WIKI_REF, os.path.join(CH, 'main_release.json'))
-        print(f'dates: MAIN_DATES=wiki, copied {WIKI_REF} (measurement only)')
-        return
     zt = json.load(open(os.path.join(GD, 'zone_table.json')))
     st = json.load(open(os.path.join(GD, 'stage_table.json')))
     act = json.load(open(os.path.join(GD, 'activity_table.json')))

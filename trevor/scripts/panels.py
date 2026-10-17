@@ -77,9 +77,6 @@ provenance.json (not published) records each extra line's kind and source; the p
 re-derives every one from the gate order's positions alone: a story source must be strictly before the panel, an
 enemy stage and an operator file at or before, every cited passage at or before, an undated one never.
 --inject-late N is its canary (2N lines from the next story; the build must report 2N violations and exit 1).
---operator-release outfit (opt-in, measurement): an operator file becomes visible at the earliest of its own date
-and its dated outfits' (an outfit cannot ship before its operator); the shared gate order dates it by records and
-modules only.
 
 Usage: python3 scripts/panels.py [--out artifacts/panels] [--version V] [--built-from RES_VERSION]
                                  [--gate-order auto|read|write|off] [--no-answers] [--self-test]
@@ -426,7 +423,7 @@ def check_new_lines(p, prov, gp, sp):
             ok = q is not None and q < here
         elif r["kind"] == "enemy":
             ok = q is not None and q + (1 if r.get("after") else 0) <= here
-        elif r["kind"] in ("attrs", "outfit"):
+        elif r["kind"] == "attrs":
             ok = q is not None and q <= here
         else:
             ok = False
@@ -701,22 +698,6 @@ def build(a):
             n = re.match(r"Operator archive:\s*(.+)", d["text"])
             if m and n:
                 archive[n.group(1).strip()] = (d["storyId"], first_sentence(m.group(1)), O.key(d["storyId"]))
-    outfit_bound = {}  # operator name -> outfit source id that moved its file earlier (--operator-release outfit)
-    if a.operator_release == "outfit":
-        # An outfit cannot ship before its operator, so a dated outfit is also an upper bound on the operator's EN
-        # release; the file is shown from the earliest of its own date and its outfits' dates.
-        first_outfit = {}
-        for src in O.source_date:
-            mo = re.match(r"skin_(char_\d+_[a-z0-9]+)_", src)
-            if mo:
-                k = O.key(src)
-                if mo.group(1) not in first_outfit or k < first_outfit[mo.group(1)][0]:
-                    first_outfit[mo.group(1)] = (k, src)
-        for name, (aid, line, k) in list(archive.items()):
-            fo = first_outfit.get(aid[len("archive_"):])
-            if fo and fo[0] < k:
-                archive[name] = (aid, line, fo[0])
-                outfit_bound[name] = (fo[1], k)
 
     if need_pass and os.path.exists(os.path.join(art, "p4x/chunks.jsonl")):  # outfits and modules live only in P4x
         with open(os.path.join(art, "p4x/chunks.jsonl"), encoding="utf-8") as f:
@@ -968,10 +949,6 @@ def build(a):
             ident, src, wid = None, None, None
             if name in archive and archive[name][2] <= K:
                 ident, src = archive[name][1], "operatorFile"
-                if name in outfit_bound and outfit_bound[name][1] > K:  # visible only through the outfit bound
-                    provenance.setdefault(sid, {}).setdefault("identity", {})[name] = {
-                        "kind": "outfit", "source": outfit_bound[name][0], "text": tidy(ident)}
-                    stats_extra["identity_outfit"] += 1
             w = who.get(name)
             if w and w["_gate"] <= K:
                 wid = w["id"]
@@ -1280,9 +1257,6 @@ def self_test():
     assert not one("intro", "s1", 2) and one("intro", "s2", 2) and one("synopsis", "s3", 2)
     assert not one("mention", "s1", 2) and one("mention", "s2", 2)
     assert not one("enemy", "s2", 2, after=False) and one("enemy", "s2", 2, after=True)
-    assert not one("outfit", "archive_x", 2) and one("outfit", "archive_x", 1)
-    sp2["skin_x#1"] = 2
-    assert not one("outfit", "skin_x#1", 2) and one("outfit", "skin_x#1", 1)
     assert not one("enemy", "s2", 3, after=True) and not one("attrs", "archive_x", 2) and one("attrs", "archive_x", 1)
     assert one("intro", "undated_story", 3) and one("other", "s1", 3)
     p = {"storyId": "s", "position": 2, "terms": {"items": []},
@@ -1339,9 +1313,6 @@ def main():
     ap.add_argument("--ground", choices=("auto", "all", "new", "off"), default="auto",
                     help="topic definitions must name only what their cited passages name: all sentences, only the "
                     "2026-10-17 ones, or off; auto = all, or off under --extra-sources none")
-    ap.add_argument("--operator-release", choices=("file", "outfit"), default="file",
-                    help="when an operator file becomes visible: its own source date (default, the shared gate "
-                    "order) or the earliest of that and the operator's dated outfits (opt-in, measurement)")
     ap.add_argument("--identity-source-labels", action="store_true",
                     help="write enemyHandbook/storySynopsis/storyLine as identitySource (needs gates.py's schema "
                     "to accept them); default null")

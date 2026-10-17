@@ -154,8 +154,7 @@ def p2_pending():
 
 # Every stage converted to the incremental key: (script, builder). A builder returns the Stage first.
 STAGES = [('p2-summaries', 'story_stage'), ('p2-summaries', 'group_stage'), ('chrono', 'extract_stage'),
-          ('chrono', 'place_stage'), ('chrono', 'events_stage'), ('chrono', 'exceptions_stage'),
-          ('entities', 'extract_stage'), ('dossiers', 'gen_stage'), ('primers', 'gen_stage'),
+          ('chrono', 'events_stage'), ('entities', 'extract_stage'), ('dossiers', 'gen_stage'), ('primers', 'gen_stage'),
           ('answer_bank', 'questions_stage')]
 
 

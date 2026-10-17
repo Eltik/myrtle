@@ -24,8 +24,7 @@ changed or new passages.
            the character speaks in no story released after the first report (W and Ines, reported dead twice
            each, speak in 7 and 5 later groups, which is what refuted the bare 2-story rule); release order is
            timeline_v1's releaseTime and the game-data main episode dates (reading_guide.py dates). Routes show
-           the rest apart. DEATH_CONFIRM=wiki restores the wiki confirmation (eval/reference/wiki_deceased.jsonl
-           and wiki_status.jsonl, and the wiki titles as known names) for measurement only
+           the rest apart.
   eval     the game-text confirmation against the wiki reference: precision and recall over named characters,
            and over playable operators
 PLAN=1 makes extract and check print what they would do and stop, calling no model.
@@ -38,7 +37,6 @@ from common import ROOT, read_jsonl, sha16
 
 ENT = os.path.join(ROOT, 'artifacts', 'entities')
 REF = os.path.join(ROOT, 'eval', 'reference')
-LEGACY = os.environ.get('DEATH_CONFIRM') == 'wiki'
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
 GD = common.EXCEL
 DEATH = re.compile(r"\b(die[sd]?|dying|death|dead|killed|kill(?:ed)?|perish\w*|slain|passed away|corpse|lifeless|funeral|"
@@ -145,16 +143,13 @@ JUNK_NAMES = {'he', 'she', 'they', 'him', 'her', 'them', 'dad', 'mom', 'mum', 'p
 
 
 def namer():
-    """Named = a known speaker, identity name or operator (plus the wiki deceased titles under
-    DEATH_CONFIRM=wiki), or a proper name in capitals; everything else ("my son", "the four soldiers",
-    "others") is an unnamed death, counted but not listed."""
+    """Named = a known speaker, identity name or operator, or a proper name in capitals; everything else
+    ("my son", "the four soldiers", "others") is an unnamed death, counted but not listed."""
     known = set()
     for l in open(os.path.join(ROOT, 'artifacts', 'chunks.jsonl')):
         known.update(x.lower() for x in json.loads(l)['speakers'])
     for i in json.load(open(os.path.join(ENT, 'identities.json'))):
         known.update(n.lower() for n in i['names'])
-    for w in (read_jsonl(os.path.join(REF, 'wiki_deceased.jsonl')) if LEGACY else []):
-        known.add(w['title'].lower())
     ct = json.load(open(os.path.join(GD, 'character_table.json')))['Characters']
     known.update(c['value']['Name'].lower() for c in ct if c['value'].get('Name'))
     lead = re.compile(r"^(?:my|his|her|their|our|your|the|a|an|all|another|some|those|these)\b", re.I)
@@ -262,11 +257,6 @@ def stage_build():
     resolve = resolver(); named = namer()
     use_check = os.environ.get('DEATH_CHECK') != '0'
     checks = {c['key']: c['ok'] for c in read_jsonl(os.path.join(ENT, 'death_checks.jsonl'))}
-    if LEGACY:
-        wiki_dead = {norm(w['title']) for w in read_jsonl(os.path.join(REF, 'wiki_deceased.jsonl'))}
-        sys.path.insert(0, os.path.join(ROOT, 'scripts'))
-        from wiki_status import wiki_class
-        wiki_op = {r['charId']: wiki_class(r['statusRaw']) for r in read_jsonl(os.path.join(REF, 'wiki_status.jsonl'))}
     M = [r for r in read_jsonl(os.path.join(ENT, 'death_mentions.jsonl')) if r['promptSha'] == PSHA
          and r['chunkId'] in chunks and r['textSha'] == sha16(chunks[r['chunkId']]['text'])]
     events = {}; unnamed = collections.Counter(); dropped = collections.Counter()
@@ -292,29 +282,19 @@ def stage_build():
             events[key] = {'character': who, 'nameInText': m['name'], 'playable': cid is not None, 'charId': cid,
                            'generic': cid is None and bool(GENERIC.search(who)), 'kind': m['kind'], 'storyId': r['storyId'], 'groupId': r['groupId'],
                            'releaseTime': rel.get(r['groupId']), 'chunkId': r['chunkId'], 'quote': m['quote']}
-    stories_of = collections.defaultdict(set)
-    for e in events.values():
-        stories_of[e['character']].add(e['storyId'])
     groups_of = collections.defaultdict(set)
     for e in events.values():
         groups_of[e['character']].add(e['groupId'])
     order, speaks = release_order(), speakers_by_group()
     for e in events.values():
-        if e['playable'] and LEGACY:
-            # The wiki confirmation before 2026-10-04 (measurement only). "Reported in 2+ stories" alone was refuted
-            # on the full run: W and Ines, both alive, are reported dead in two stories each (in-story rumors), and
-            # Ebenholz inherited the previous Graf Urtica's death through the title. DEATH_CORROB_STORIES=1 restores it.
-            e['corroborated'] = (norm(e['character']) in wiki_dead or wiki_op.get(e['charId']) in ('deceased', 'mixed')
-                                 or (os.environ.get('DEATH_CORROB_STORIES') == '1' and len(stories_of[e['character']]) >= 2))
-        elif e['playable'] or not LEGACY:
-            # From the game text (2026-10-04): reported in 2+ story groups, and no line in any later-released group.
-            c = e['character']
-            first = min((order[g] for g in groups_of[c] if g in order), default=None)
-            later = sorted(g for g in speaks.get(norm(c), set()) | speaks.get(norm(e['nameInText']), set())
-                           if first is not None and order.get(g, -1) > first)
-            e['corroborated'] = len(groups_of[c]) >= 2 and first is not None and not later
-            e['confirm'] = {'storyGroups': len(groups_of[c]), 'laterGroupsSpeaking': len(later), 'firstLaterGroup':
-                            later[0] if later else None}
+        # From the game text (2026-10-04): reported in 2+ story groups, and no line in any later-released group.
+        c = e['character']
+        first = min((order[g] for g in groups_of[c] if g in order), default=None)
+        later = sorted(g for g in speaks.get(norm(c), set()) | speaks.get(norm(e['nameInText']), set())
+                       if first is not None and order.get(g, -1) > first)
+        e['corroborated'] = len(groups_of[c]) >= 2 and first is not None and not later
+        e['confirm'] = {'storyGroups': len(groups_of[c]), 'laterGroupsSpeaking': len(later), 'firstLaterGroup':
+                        later[0] if later else None}
     common.write_jsonl(os.path.join(ENT, 'deaths.jsonl'), events.values())
     with open(os.path.join(ENT, 'deaths_unnamed.json'), 'w') as f:
         json.dump([{'storyId': s, 'kind': k, 'count': n} for (s, k), n in sorted(unnamed.items())], f, indent=0)

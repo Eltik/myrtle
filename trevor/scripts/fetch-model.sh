@@ -12,10 +12,6 @@
 #       also the two local LLMs for gold-set generation (12.7 GB): Gemma 4
 #       12B QAT Q4_0 writes questions, Qwen3.5 9B Q4_K_M judges them. Two
 #       model families on purpose, so the judge is not grading its own work.
-#   WITH_LLM_LARGE=1 ./scripts/fetch-model.sh
-#       also Gemma 4 26B-A4B QAT Q4_0 (14.4 GB, the MoE, ~4B active), piloted
-#       2026-10-04 for the design-inspiration inference (scripts/design_infer.py
-#       with DESIGN_MODEL=26b). Runs alone: ~15 GB resident on the 24 GB Mac.
 #   WITH_VISION=1 ./scripts/fetch-model.sh
 #       also Gemma 4 12B's multimodal projector (175 MB) for image input.
 #   WITH_E2B=1 ./scripts/fetch-model.sh
@@ -84,14 +80,6 @@ if [[ "${WITH_LLM:-0}" == "1" ]]; then
     "gemma-4-12b-it-qat-q4_0.gguf|gemma-4-12b-it-qat-q4_0.gguf|93567e57a8fe10b23569b9d9ec38cd005deedf71e29477c421a4b83f418a538b"
   fetch unsloth/Qwen3.5-9B-GGUF 3885219b6810b007914f3a7950a8d1b469d598a5 "$ROOT/llm" \
     "Qwen3.5-9B-Q4_K_M.gguf|Qwen3.5-9B-Q4_K_M.gguf|03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8"
-fi
-
-# WITH_LLM_LARGE=1: Google's own QAT Q4_0 GGUF of Gemma 4 26B-A4B instruct, the
-# same publisher as the 12B; main as of 2026-07-17. Saved under a lowercase name
-# like the 12B's.
-if [[ "${WITH_LLM_LARGE:-0}" == "1" ]]; then
-  fetch google/gemma-4-26B-A4B-it-qat-q4_0-gguf d1c082be9cf3c8a514acf63b8761f4b41935842e "$ROOT/llm" \
-    "gemma-4-26B_q4_0-it.gguf|gemma-4-26b-a4b-it-qat-q4_0.gguf|3eca3b8f6d7baf218a7dd6bba5fb59a56ee25fe2d567b6f5f589b4f697eca51d"
 fi
 
 # WITH_VISION=1: the Gemma 4 12B multimodal projector (175 MB) from the same

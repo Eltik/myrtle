@@ -74,8 +74,8 @@ EVIDENCE = os.environ.get('CANON_EVIDENCE', 'passage')
 STORY_SCHEMES = ('story-gemma', 'story-qwen', 'story-agreed')
 # Which verdict attempt build writes as each run's `verdict` (tag and prompt in verdicts.jsonl), and the second opinion
 # it is compared with. CANON_VERDICT=0 leaves verdict and evidence out.
-VERDICT = os.environ.get('CANON_VERDICT', f"gemma-on:{os.environ.get('CANON_VERDICT_PROMPT', 'v3')}")
-VERDICT_SECOND = os.environ.get('CANON_VERDICT_SECOND', f"qwen-off:{os.environ.get('CANON_VERDICT_PROMPT', 'v3')}")
+VERDICT = os.environ.get('CANON_VERDICT', 'gemma-on:v3')
+VERDICT_SECOND = os.environ.get('CANON_VERDICT_SECOND', 'qwen-off:v3')
 # The models said 'strong' on one story (2026-09-30, 4 of 5 runs). The written confidence is the lower of the model's and
 # a rule over the evidence the verdict cites for its own ending: no cited story none, one weak, two moderate, three or
 # more strong only when they span at least two events (else moderate). CANON_CONF_RULE=0 writes the model's alone.
@@ -614,14 +614,14 @@ VERDICT_SYS = ("You weigh evidence about which ending of one run of Integrated S
 VERDICT_CTX = 250
 # Prompt v2 (2026-09-30): the answer first judges every evidence passage (holds or not, why), then decides from the
 # passages that hold. v1 answered in one step: every verdict was 'strong', and IS3's cited Lone Trail, Chapter 13 and
-# Path of Life for star and sea imagery while discounting Highmore's module. CANON_VERDICT_PROMPT=v1 asks v1.
-VERDICT_PROMPT = os.environ.get('CANON_VERDICT_PROMPT', 'v3')
+# Path of Life for star and sea imagery while discounting Highmore's module.
 # Prompt v3 (2026-09-30): v2 with the run's named characters. v2's IS3 verdict was Stella Caerula, strong, from five
 # passages of star and sea imagery in which no character of the run appears, over Highmore's operator file (Mizuki asks
 # Rhodes Island to take Highmore in); Ian's canon for IS3 is Precious Days. v3 lists each ending's named characters and
 # labels each passage with the ones it names, and says: an ending is shown by the state its characters are left in; a
-# passage naming none of them is atmosphere and counts as weak at most; weigh passages, do not count them.
-# CANON_VERDICT_PROMPT=v2 asks v2.
+# passage naming none of them is atmosphere and counts as weak at most; weigh passages, do not count them. v3 is the
+# prompt every verdict asks (VERDICT_SYS + VERDICT_V2 + VERDICT_V3); verdicts.jsonl records it as `prompt`.
+VERDICT_PROMPT = 'v3'
 VERDICT_V3 = (" An ending is shown by the state its named characters are left in (alive or dead, where they live, in what "
               "form, what role they hold). Each passage is labelled with the run's named characters it mentions. A passage "
               "that mentions none of them (atmosphere, cosmic or sea imagery, other characters' visions, legends or "
@@ -661,7 +661,7 @@ def ending_characters():
 
 def verdict_prompt(run, endings, items):
     es = [e for e in endings if e['run'] == run]
-    chars = ending_characters() if VERDICT_PROMPT == 'v3' else {}
+    chars = ending_characters()
     head = (f"RUN: {is_number(run)}, {es[0]['runName']} (began {es[0]['start']})\nENDINGS:\n" +
             '\n'.join(f"{e['endingId']} ({e['name']}): {e['summary']}" +
                        (f" Named characters: {', '.join(chars.get(e['endingId']) or ['none named'])}." if chars else '')
@@ -719,16 +719,11 @@ def cite_names(cites, run_items):
 
 
 def verdict_grammar(ids):
-    if VERDICT_PROMPT in ('v2', 'v3'):
-        return ('root ::= "{\\"assessments\\": [" item ( ", " item ){0,39} "], \\"reasoning\\": " rstr ", \\"endingId\\": \\"" ( ' +
-                ' | '.join(f'"{i}"' for i in ids) + ' | "none" | "undetermined" ) "\\", \\"confidence\\": \\"" ( "strong" | '
-                '"moderate" | "weak" | "none" ) "\\", \\"cites\\": [" ( qstr ( ", " qstr ){0,7} )? "]}"\n'
-                'item ::= "{\\"n\\": " [0-9]{1,2} ", \\"holds\\": " ( "true" | "false" ) ", \\"why\\": " wstr "}"\n'
-                'wstr ::= "\\"" [^"\\n]{1,200} "\\""\n'
-                'rstr ::= "\\"" [^"\\n]{0,1500} "\\""\nqstr ::= "\\"" [^"\\n]{1,80} "\\""\n')
-    return ('root ::= "{\\"reasoning\\": " rstr ", \\"endingId\\": \\"" ( ' + ' | '.join(f'"{i}"' for i in ids) +
-            ' | "none" | "undetermined" ) "\\", \\"confidence\\": \\"" ( "strong" | "moderate" | "weak" | "none" ) '
-            '"\\", \\"cites\\": [" ( qstr ( ", " qstr ){0,7} )? "]}"\n'
+    return ('root ::= "{\\"assessments\\": [" item ( ", " item ){0,39} "], \\"reasoning\\": " rstr ", \\"endingId\\": \\"" ( ' +
+            ' | '.join(f'"{i}"' for i in ids) + ' | "none" | "undetermined" ) "\\", \\"confidence\\": \\"" ( "strong" | '
+            '"moderate" | "weak" | "none" ) "\\", \\"cites\\": [" ( qstr ( ", " qstr ){0,7} )? "]}"\n'
+            'item ::= "{\\"n\\": " [0-9]{1,2} ", \\"holds\\": " ( "true" | "false" ) ", \\"why\\": " wstr "}"\n'
+            'wstr ::= "\\"" [^"\\n]{1,200} "\\""\n'
             'rstr ::= "\\"" [^"\\n]{0,1500} "\\""\nqstr ::= "\\"" [^"\\n]{1,80} "\\""\n')
 
 
@@ -746,13 +741,12 @@ def stage_verdict():
             continue
         user, ids = verdict_prompt(run, endings, items)
         t0 = time.time()
-        system = VERDICT_SYS + (VERDICT_V2 if VERDICT_PROMPT in ('v2', 'v3') else '') + (VERDICT_V3 if VERDICT_PROMPT == 'v3' else '')
+        system = VERDICT_SYS + VERDICT_V2 + VERDICT_V3
         h = hashlib.sha256((system + user).encode()).hexdigest()[:12]
-        shape = ('{"assessments": [{"n": 1, "holds": true, "why": ...}, ...], "reasoning": ..., "endingId": ..., "confidence": ..., "cites": [...]}'
-                 if VERDICT_PROMPT in ('v2', 'v3') else '{"reasoning": ..., "endingId": ..., "confidence": ..., "cites": [...]}')
+        shape = '{"assessments": [{"n": 1, "holds": true, "why": ...}, ...], "reasoning": ..., "endingId": ..., "confidence": ..., "cites": [...]}'
         body = {'messages': [{'role': 'system', 'content': system}, {'role': 'user', 'content': user +
                 (f'\n\nAnswer with one JSON object: {shape}.' if thinking else '')}],
-                'temperature': 0, 'seed': 1, 'max_tokens': 7000 if thinking else (3000 if VERDICT_PROMPT in ('v2', 'v3') else 900)}
+                'temperature': 0, 'seed': 1, 'max_tokens': 7000 if thinking else 3000}
         if not thinking:
             body['grammar'] = verdict_grammar(ids)
         resp = common.chat_once(SERVER, body, 1800)  # no retry: one attempt per run, recorded with its prompt hash

@@ -88,13 +88,11 @@ def p1a_rows():
     return (json.loads(l) for l in open(os.path.join(ROOT, 'artifacts', 'p1a', 'chunks.jsonl')))
 
 
-def group_names(strip=True):
-    """groupId -> its name, the first field of its first P1a prefix line (`strip=False`: as the place and exceptions
-    prompts have always shown it, unstripped)."""
+def group_names():
+    """groupId -> its name, the first field of its first P1a prefix line."""
     names = {}
     for r in p1a_rows():
-        name = r['prefix'].split('\n')[0].split(',')[0]
-        names.setdefault(r['groupId'], name.strip() if strip else name)
+        names.setdefault(r['groupId'], r['prefix'].split('\n')[0].split(',')[0].strip())
     return names
 
 
@@ -186,62 +184,6 @@ def stage_extract():
     print(f'extract: {n[0]} in {time.time() - t0:.0f}s', flush=True)
 
 
-PLACE_SYS = (
-    "You place one Arknights story event on the in-world timeline, in Terra calendar years. You get reference points: "
-    "other events with the year their own scripts date them to. Then the target event: its summary and time evidence "
-    "quoted from its script. Decide the year in which the target event's present takes place. Use an explicit date for "
-    "the present first. Otherwise relate the target to a reference point it mentions or follows from, for example an "
-    "incident it calls two years past. If nothing in the given text supports a year, answer null. Flashbacks to earlier "
-    "years are not the present. Never use knowledge from outside the given text.")
-PLACE_GRAMMAR = r'''root ::= "{\"year\": " year ", \"basis\": " basis ", \"reason\": " q "}"
-year ::= "null" | "1" [0-9] [0-9] [0-9]
-basis ::= "\"explicit\"" | "\"relative\"" | "\"none\""
-q ::= "\"" ch{10,300} "\""
-ch ::= [^"\\\x00-\x1F]
-'''
-
-
-def place_stage():
-    facts = collections.defaultdict(list)
-    for r in read_jsonl(os.path.join(OUT, 'facts.jsonl')):
-        for f in r['facts']:
-            facts[r['groupId']].append((r['storyId'], f))
-    names = group_names(strip=False)
-    summ = c_groups()
-    pend = incr.p2_pending()[1] if incr.PLAN else set()
-    dated = place_explicit()
-    ref_lines = []
-    for g in sorted(dated, key=dated.get):
-        first = ' '.join(summ.get(g, '').split()[:30])
-        ref_lines.append(f"- {names.get(g, g)}: {int(dated[g])}. {first}...")
-    ref_block = '\n'.join(ref_lines)
-    # Every placement reads the reference block, so a redone summary of any dated group redoes them all.
-    ref_pending = any(g in pend for g in dated)
-    st = incr.Stage('chrono place', os.path.join(OUT, 'placed.jsonl'), lambda r: r['groupId'], sha16(PLACE_SYS + PLACE_GRAMMAR))
-    targets = [g for g in sorted(facts) if not g.startswith('story_')]
-    users = {}
-    for g in targets:
-        ev = '\n'.join(f'- ({f["type"]}) "{f["quote"]}" -> {f["when"]}' for _, f in facts[g][:40])
-        users[g] = (f'Reference points (year from each script):\n{ref_block}\n\nTarget event: {names.get(g, g)}\n'
-                    f'Summary: {summ.get(g, "(none)")}\n\nTime evidence from its script:\n{ev or "(none)"}')
-        st.unit(g, users[g], upstream=ref_pending or g in pend)
-    return st, targets, None, users, len(ref_lines)
-
-
-def stage_place():
-    st, targets, live, users, n_ref = place_stage()
-    targets = st.plan(targets, live)
-    if targets is None:
-        return
-    psha = st.psha
-    print(f'place: {len(targets)} groups, {n_ref} reference points, prompt {psha}', flush=True)
-    for g in targets:
-        out = common.content(common.chat_once(SERVER, common.chat_body(PLACE_SYS, users[g], 200, grammar=PLACE_GRAMMAR), 900))
-        row = json.loads(out); row.update({'groupId': g, 'promptSha': psha})
-        st.put(row)
-        print(f"{g}: {row['year']} ({row['basis']}) {row['reason'][:120]}", flush=True)
-
-
 YEAR_RE = re.compile(r"\b(?:year|in|of|since|by|until|around|circa|ca\.)\s+(\d{3,4})\b|\b(1[01]\d\d)\b"
                      r"|\b(\d{3,4})\s*(?:AD|BC|BCE|CE|A\.D\.)\b", re.I)
 EVENT_SYS = (
@@ -325,21 +267,6 @@ def stage_events():
     print(f"events: {sum(r['is_year'] for r in rows)} calendar years of {len(rows)} candidates", flush=True)
 
 
-EXC_SYS = (
-    "You decide where one Arknights story event sits in in-world time. You are told the year the ongoing storyline has "
-    "reached around this event, and given the event's summary and every dated line from its script. Decide whether the "
-    "event's own present, the time its main storyline happens in, is that storyline period, or clearly earlier (a "
-    "historical or prequel event) or clearly later. Flashback scenes, memories, dated songs, books, inscriptions and "
-    "records inside a present-day event do not make the event historical. Choose earlier or later only when the "
-    "evidence shows the main storyline itself is set then, and give its year only if a dated line supports it.")
-EXC_GRAMMAR = r'''root ::= "{\"setting\": " setting ", \"year\": " year ", \"reason\": " q "}"
-setting ::= "\"storyline\"" | "\"earlier\"" | "\"later\""
-year ::= "null" | [1-9] [0-9] [0-9] | "1" [0-9] [0-9] [0-9]
-q ::= "\"" ch{10,300} "\""
-ch ::= [^"\\\x00-\x1F]
-'''
-
-
 def release_times():
     rel = {}
     for x in (json.loads(l) for l in open(os.path.join(ROOT, 'artifacts', 'spoiler.jsonl'))):
@@ -405,129 +332,6 @@ def storyline_year(t, anchors):
         if at <= t:
             best = fy
     return best
-
-
-def exceptions_stage():
-    anchors, dropped, rel = backbone()
-    names = group_names(strip=False)
-    summ = c_groups()
-    pend = incr.p2_pending()[1] if incr.PLAN else set()
-    gof = story_groups()
-    dated = collections.defaultdict(list)
-    for e in read_jsonl(os.path.join(OUT, 'events.jsonl')):
-        if e['is_year'] and e['kind'] == 'story':
-            dated[gof[e['source']]].append(e)
-    st = incr.Stage('chrono exceptions', os.path.join(OUT, 'exceptions.jsonl'), lambda r: r['groupId'], sha16(EXC_SYS + EXC_GRAMMAR))
-    targets = [g for g in sorted(rel, key=rel.get) if g in summ]
-    users, sy = {}, {}
-    for g in targets:
-        sy[g] = storyline_year(rel[g], anchors)
-        lines = '\n'.join(f"- {e['year']}: {e['event']} (\"{e['line'][:160]}\")" for e in dated[g]) or '(no dated lines)'
-        users[g] = (f'The ongoing storyline has reached about year {sy[g]:.0f} around this event.\n\nEvent: {names.get(g, g)}\n'
-                    f'Summary: {summ[g]}\n\nDated lines from its script:\n{lines}')
-        st.unit(g, users[g], upstream=g in pend)
-    return st, targets, None, users, sy, anchors, dropped
-
-
-def stage_exceptions():
-    st, targets, live, users, sy, anchors, dropped = exceptions_stage()
-    print('backbone anchors', [(g, y) for _, y, g in anchors], 'dropped', dropped, flush=True)
-    targets = st.plan(targets, live)
-    if targets is None:
-        return
-    psha = st.psha
-    print(f'exceptions: {len(targets)} groups, prompt {psha}', flush=True)
-    for g in targets:
-        row = json.loads(common.content(common.chat_once(SERVER, common.chat_body(EXC_SYS, users[g], 220, grammar=EXC_GRAMMAR), 900)))
-        row.update({'groupId': g, 'storylineYear': round(sy[g], 2), 'promptSha': psha})
-        st.put(row)
-        if row['setting'] != 'storyline':
-            print(f"{g}: {row['setting']} {row['year']} (storyline {sy[g]:.0f}) {row['reason'][:120]}", flush=True)
-    print('exceptions done', flush=True)
-
-
-def timeline_v2():
-    """Present year per group: the storyline year at its release, unless the exception pass
-    moved it with a dated line; ties broken by release order."""
-    anchors, _, rel = backbone()
-    exc = {r['groupId']: r for r in read_jsonl(os.path.join(OUT, 'exceptions.jsonl'))}
-    out = {}
-    for g, t in rel.items():
-        y = storyline_year(t, anchors)
-        e = exc.get(g)
-        if e and e['setting'] != 'storyline' and e.get('year'):
-            y = float(e['year'])
-        out[g] = y + (t - 1.5e9) / 1e12  # release order as a sub-year tiebreak
-    return out
-
-
-def reference():
-    """Eval-only reference years per group: T1 = the wiki's 'event during which X takes
-    place' entries, T2 = groups cited under exactly one year (never main chapters,
-    whose citations are mostly flashbacks). Built from reference.json."""
-    R = json.load(open(os.path.join(REF, 'reference.json')))
-    by = collections.defaultdict(list)
-    for r in R:
-        if r['kind'] == 'g' and not r['id'].startswith('story_'):
-            by[r['id']].append(r)
-    ref = {}
-    for g, rs in by.items():
-        st = [r for r in rs if r['tier'] == 'setting']
-        if st:
-            ref[g] = ('T1', st[0]['year'] + (st[0]['frac'] or 0.0))
-        elif len({r['year'] for r in rs}) == 1 and not g.startswith('main_'):
-            ref[g] = ('T2', float(rs[0]['year']) + (rs[0]['frac'] or 0.0))
-    return ref
-
-
-def place_explicit():
-    """Model-free baseline: an event sits at the majority year its own facts give its present."""
-    votes = collections.defaultdict(collections.Counter)
-    for r in read_jsonl(os.path.join(OUT, 'facts.jsonl')):
-        for f in r['facts']:
-            if f.get('year') and f['when'].lower().startswith('present'):
-                votes[r['groupId']][f['year']] += 1
-    return {g: float(c.most_common(1)[0][0]) for g, c in votes.items()}
-
-
-def score(pred, ref, label):
-    import itertools
-    gs = [g for g in ref if g in pred]
-    exact = sum(int(pred[g]) == int(ref[g][1]) for g in gs)
-    pairs = agree = ties = 0
-    for a, b in itertools.combinations(gs, 2):
-        if int(ref[a][1]) == int(ref[b][1]):
-            continue
-        pairs += 1
-        if pred[a] == pred[b]:
-            ties += 1
-        elif (ref[a][1] < ref[b][1]) == (pred[a] < pred[b]):
-            agree += 1
-    decided = pairs - ties
-    print(f'{label}: placed {len(gs)}/{len(ref)} reference groups, exact year {exact}/{len(gs)}; '
-          f'year-distinct pairs {pairs}: correct {agree}, wrong {decided - agree}, tied {ties}; '
-          f'accuracy on decided {agree / max(decided, 1):.3f}, on all {agree / max(pairs, 1):.3f}')
-
-
-def stage_eval():
-    ref = reference()
-    for tier in ('T1', 'T1+T2'):
-        rr = {g: v for g, v in ref.items() if tier == 'T1+T2' or v[0] == 'T1'}
-        print(f'-- {tier}: {len(rr)} groups')
-        spo = [json.loads(l) for l in open(os.path.join(ROOT, 'artifacts', 'spoiler.jsonl'))]
-        rel = {}
-        for x in spo:
-            t = x.get('groupStartTime')
-            if t not in (None, -1, '-1'):
-                rel[x['groupId']] = float(t)
-        # Release order as a year-free ranking: map ranks to pseudo-years so ties never happen.
-        order = sorted(rel, key=rel.get)
-        score({g: 2000 + i for i, g in enumerate(order)}, rr, 'release order')
-        score(place_explicit(), rr, 'explicit present-year majority')
-        score(timeline_v2(), rr, 'timeline v2 (backbone + exceptions)')
-        pl = os.path.join(OUT, 'placed.jsonl')
-        if os.path.exists(pl):
-            score({r['groupId']: float(r['year']) for r in read_jsonl(pl) if r.get('year')}, rr, 'model placement')
 
 
 def place_main_chapters(groups, fb, dated):
@@ -853,4 +657,4 @@ def stage_derive():
 if __name__ == '__main__':
     if sys.argv[1] == 'order':
         stage_order(sys.argv[2], sys.argv[3]); sys.exit()
-    {'derive': stage_derive, 'flashbacks': stage_flashbacks, 'build': stage_build, 'history': stage_history, 'cues': stage_cues, 'extract': stage_extract, 'eval': stage_eval, 'place': stage_place, 'events': stage_events, 'exceptions': stage_exceptions}[sys.argv[1]]()
+    {'derive': stage_derive, 'flashbacks': stage_flashbacks, 'build': stage_build, 'history': stage_history, 'cues': stage_cues, 'extract': stage_extract, 'events': stage_events}[sys.argv[1]]()
