@@ -597,7 +597,9 @@ Tier-list operations use a 4-level hierarchy - **View → Edit → Publish → A
 
 ### Trevor
 
-The story question answerer (`/api/trevor/*`; interface: `trevor/design/trevor-contract-v1.md` and `trevor-contract-v1.1.md`). Read once at boot.
+The story question answerer (`/api/trevor/*`; interface: `trevor/design/trevor-contract-v1.md` and `trevor-contract-v1.1.md`). Read once at boot by `TrevorConfig::from_env` (`src/app/services/trevor/runtime.rs`). This table is the reference for every Trevor variable the backend reads; the contracts, the VPS runbook and `trevor/deploy/trevor.env.example` should link here rather than restate defaults. Variables the worker (`ask --worker`) or the scripts read are documented with them, not here.
+
+Trevor alerts post to `DISCORD_ALERT_WEBHOOK` (the `core::alerts` variable). The backend does not read `TREVOR_DISCORD_WEBHOOK`; only `trevor/scripts/trevor-vps-update.sh` falls back to it.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
