@@ -622,7 +622,7 @@ def stage_derive():
                 skipped['no present year'] += 1
                 continue
             # Round amounts are not precise offsets: "a century ago" for Siracusa's independence meant about
-            # 131 years (Ian's review, 2026-09-27). Centuries, decades and hedged amounts are marked approximate.
+            # 131 years (review, 2026-09-27). Centuries, decades and hedged amounts are marked approximate.
             approx = (unit.startswith(('centur', 'decade')) or n % 10 == 0 and n >= 30 or
                       re.search(r"\b(almost|nearly|about|around|over|more than|some|roughly|close to)\b", f['quote'], re.I) is not None)
             rows.append({'storyId': s_, 'groupId': g, 'year': int(round(base + sign * n)), 'offset': sign * n, 'approximate': approx,

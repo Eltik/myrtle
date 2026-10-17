@@ -19,7 +19,7 @@ the generator writes a cited summary from those passages only.
   judge      judge model on $SERVER (Qwen3.5 9B, a different family from the generator): each sentence of each summary
              against the passages listed for its topic (the generator's whole input) -> artifacts/topics/judged.jsonl
              (resumable, keyed on topic + summary + prompt); per-topic score, mean, worst 5 with unsupported claims
-Since 2026-10-01 (Ian: "topics on everything in the lore, chosen from data") the plan adds topics from data to the 46:
+Since 2026-10-01 (requirement: "topics on everything in the lore, chosen from data") the plan adds topics from data to the 46:
   mine       -> artifacts/topics/candidates.jsonl, no model: every race, nation, birthplace, team or group and enemy
              race in the game tables, plus the proper names the story and operator-file text uses mid-sentence in at
              least TOPIC_MINE_MIN chunks (default K, so a topic's passages can all name it) of at least

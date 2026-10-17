@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """P2 primers: "what you need to know before starting" each main chapter and event.
 
-Ian's decision (2026-09-26): chronology is in-world order. For each target group (main chapters
+Decision (2026-09-26): chronology is in-world order. For each target group (main chapters
 and multi-story events), the prior context is the groups that come before it in chronology v1
 (storyline year, then main-story episode, then release), ranked by how many of the target's
 recurring speakers they share; the six highest are summarized from their method-C group summaries.

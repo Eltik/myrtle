@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Training pairs (question, passage) for fine-tuning the gte embedder on Trevor's corpus.
 
-Ian (2026-09-29): fine-tune the embedder first (the research survey's next retrieval experiment; GPL reported up
+Decision (2026-09-29): fine-tune the embedder first (the research survey's next retrieval experiment; GPL reported up
 to +9.3 nDCG@10 from generated in-domain pairs). The gold set generation files are not used: gold set v2 was
 selected from them, so training on them would leak the evaluation. Instead the generator writes one question per
 sampled passage from the story scripts and operator archives, excluding every story gold set v2 anchors to, in

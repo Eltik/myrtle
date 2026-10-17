@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Held-out character-trivia questions in Ian's style (eval/ian-questions.jsonl is the pattern).
+"""Held-out character-trivia questions in the probe set's style (eval/ian-questions.jsonl is the pattern).
 
-Ian's questions (2026-09-30) ask about one character's favorite food, who they like, their personality, marriage and
+The probe questions (2026-09-30) ask about one character's favorite food, who they like, their personality, marriage and
 family, embarrassing moments, hobbies and habits, casually and with short names. The gold set asks almost none of
 these, so this builds a set that does, from facts Trevor's corpus holds, with the question worded away from the source
-text so vocabulary gaps show (Ian's "pee" against the story's "piss").
+text so vocabulary gaps show (a probe's "pee" against the story's "piss").
 
   sample   ~160 candidate chunks, seeded, at most one per operator, spread over operator archives, operator records,
            voice lines, dossiers and story scenes; gold v2 stories are left out -> artifacts/trivia/sample.jsonl

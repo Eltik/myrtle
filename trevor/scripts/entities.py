@@ -98,7 +98,7 @@ def extract_one(c, psha):
         links = []
     ctx = norm(c['context'])
     # A name is a name: two or more lowercase words ("Victoria's nomadic villages", "child of the House
-    # of Rostov") means a description, not a name (Ian's review, 2026-09-27). "Duke of Cumberland" keeps.
+    # of Rostov") means a description, not a name (review, 2026-09-27). "Duke of Cumberland" keeps.
     def is_name(x):
         return sum(1 for w in x.split() if w[:1].islower()) < 2
     links = [l for l in links if is_name(l['name_a']) and is_name(l['name_b'])] + \
@@ -184,7 +184,7 @@ PLACEHOLDER = re.compile(r"^(?:code ?name|real name|name|alias|title|nickname|un
 
 
 def group_words():
-    """Folded names of groups, not people (2026-10-16, Ian's ian34 and the side issue after it): races, nations and
+    """Folded names of groups, not people (2026-10-16, probe question ian34 and the side issue after it): races, nations and
     birthplaces of operator_attributes, the handbook teams (organizations, nations) and enemy races of the game tables,
     and every served topic name and alias. A link with one of them is not a person's identity: "Blacksteel" ~
     "Blacksteel Worldwide" made an organization a person (so topics.py never mined "Blacksteel"), and Lucilla ~ Aegir,
@@ -237,7 +237,7 @@ def stage_build():
                 grouped += 1
                 continue
             # The quote itself must state the link: an identity cue, or both names. "I can see you, Raidian."
-            # only addresses someone and had merged Raidian into Kal'tsit (Ian's review, 2026-09-27).
+            # only addresses someone and had merged Raidian into Kal'tsit (review, 2026-09-27).
             qn = norm(l['quote'])
             if not (CUE.search(l['quote']) or (norm(a) in qn and norm(b) in qn)):
                 unstated.append((a, b, l['quote'], r['storyId'], l['relation']))
@@ -287,7 +287,7 @@ def stage_build():
         return
     json.dump(ids, open(os.path.join(OUT, 'identities.json'), 'w'), ensure_ascii=False, indent=1)
     big = [i for i in ids if len(i['names']) > 6]
-    # Many names is not an error in itself: Fiammetta went by many codenames (Ian, 2026-09-27).
+    # Many names is not an error in itself: Fiammetta went by many codenames (review, 2026-09-27).
     print(f"identities: {len(ids)} from {len(parent)} names; labelled by a speaker: {sum(i['speaksInChunks'] > 0 for i in ids)}; "
           f"with more than 6 names: {len(big)} ({', '.join(i['label'] for i in big)})")
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Typed source units from the game data that the story corpus lacks, for source-specific questions.
 
-Ian (2026-09-28): source-specific questions ("what does Kal'tsit's module say", "what does Exusiai say when poked",
+Measured 2026-09-28: source-specific questions ("what does Kal'tsit's module say", "what does Exusiai say when poked",
 IS endings) were answered 0.14 of the time, and the first probe answered a module question from story passages as
 if they were the module. These units carry their source in `groupId` and in a heading line, so retrieval can find
 them and `ask` can say where a passage comes from:
@@ -29,7 +29,7 @@ TAG = re.compile(r'<[@$/][^>]*>|</>|<[^>]{1,40}>')
 
 # The game's numbering of Integrated Strategies runs is one ahead of the data's run ids: IS #1 was Ceobe's Fungimist
 # (CN only, in roguelike_table.json, untranslated, never in roguelike_topic_table), so rogue_1 Phantom & Crimson
-# Solitaire is IS #2 and rogue_5 Sui's Garden of Grotesqueries is IS #6 (Ian, 2026-09-30). IS_OFFSET=0 restores
+# Solitaire is IS #2 and rogue_5 Sui's Garden of Grotesqueries is IS #6 (decided 2026-09-30). IS_OFFSET=0 restores
 # the old titles, which numbered them 1 to 5.
 IS_OFFSET = int(os.environ.get('IS_OFFSET', '1'))
 

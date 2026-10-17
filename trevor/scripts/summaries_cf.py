@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """P2 story and group summaries for NEW stories on the VPS: Cloudflare Workers AI in the hour before the daily
-Neuron reset, else the local Gemma 4 E2B overnight (design/trevor-vps-runbook.md section 5; Ian 2026-10-16:
+Neuron reset, else the local Gemma 4 E2B overnight (design/trevor-vps-runbook.md section 5; decided 2026-10-16:
 summaries are the only model stage of the daily update).
 
 The rows are p2-summaries.py's, in the same files (artifacts/p2/stories.jsonl, groups.jsonl), keyed the same way

@@ -2,8 +2,8 @@
 """Reading guide: the EN release order of the main story and events, what each event builds on, and where
 each character first appears.
 
-Ian (2026-09-28): reading-order questions are 5 to 9% of real questions ("where do I start", "when should I
-read Babel") and `ask` answered 0.29 of them. Since 2026-10-04 (Ian: the wiki is a reference, never a source)
+Measured 2026-09-28: reading-order questions are 5 to 9% of real questions ("where do I start", "when should I
+read Babel") and `ask` answered 0.29 of them. Since 2026-10-04 (project rule: the wiki is a reference, never a source)
 the EN release dates of the main episodes come from the game data alone:
   dates   (default source, no network) -> artifacts/chrono/main_release.json: an episode's zone open time
           (zone_table MainlineAdditionInfo, Episodes 10 to 14) or its home-screen theme start (activity_table

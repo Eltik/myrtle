@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Appearance index (2026-10-03, Ian's item 7): per character, every story group where they speak and, apart from
+"""Appearance index (2026-10-03, item 7 of the feature list): per character, every story group where they speak and, apart from
 that, every group where they are only mentioned, for `ask`'s `appearances` tool ("What chapters does Elysium appear
 in?").
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Real names of playable operators, each with a verbatim quote, for whole-roster questions.
 
-Ian (2026-09-28): "List all the known real names of every operator" was answered from 17 retrieved
+Probe question (2026-09-28): "List all the known real names of every operator" was answered from 17 retrieved
 passages: 7 names, two of them codenames (Rose Salt, Titi), one not an operator. A whole-roster
 question needs a table. Per operator (407, character_table minus tokens, traps, unobtainable), the
 generator reads the operator's archive plus up to 4 story passages where the codename appears near a

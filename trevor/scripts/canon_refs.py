@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Which Integrated Strategies endings later stories treat as having happened: evidence for canon questions.
 
-Ian (2026-09-29): "Based on inferring and thinking, you should be able to determine what endings are canon."
+Requirement (2026-09-29): "Based on inferring and thinking, you should be able to determine what endings are canon."
 The game never rules on it; players infer it from later stories that refer to one ending's events. This does the
 same, with quotes. For each ending of IS2 to IS6 (rogue_1 to rogue_5 in the game data; the game's IS1, Ceobe's
 Fungimist, is not in it) (the ending's own cutscene script, gamedata/story/obt/roguelike),
@@ -617,7 +617,7 @@ VERDICT_CTX = 250
 # Path of Life for star and sea imagery while discounting Highmore's module.
 # Prompt v3 (2026-09-30): v2 with the run's named characters. v2's IS3 verdict was Stella Caerula, strong, from five
 # passages of star and sea imagery in which no character of the run appears, over Highmore's operator file (Mizuki asks
-# Rhodes Island to take Highmore in); Ian's canon for IS3 is Precious Days. v3 lists each ending's named characters and
+# Rhodes Island to take Highmore in); the reference canon for IS3 is Precious Days. v3 lists each ending's named characters and
 # labels each passage with the ones it names, and says: an ending is shown by the state its characters are left in; a
 # passage naming none of them is atmosphere and counts as weak at most; weigh passages, do not count them. v3 is the
 # prompt every verdict asks (VERDICT_SYS + VERDICT_V2 + VERDICT_V3); verdicts.jsonl records it as `prompt`.

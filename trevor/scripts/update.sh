@@ -7,14 +7,14 @@
 # are reused for every chunk whose embedded text is unchanged (embed-corpus), so an update re-embeds
 # only new or edited chunks instead of 28 min for all 13,837.
 #
-# Needs the myrtle backend on :3060 (Ian starts it; this script never does). One model is loaded at a
+# Needs the myrtle backend on :3060 (started separately; this script never does). One model is loaded at a
 # time; the server and the thermal logger stop on any exit. Every step resumes where it stopped.
 #   PLAN=1               print what each model stage would redo, load no model, write only this run's log
 #   SKIP_FETCH=1         skip build-corpus (use the current chunks.jsonl), e.g. after a gamedata-only update
 #   SKIP_BANK_ANSWERS=1  skip `ask` over new bank questions (18.6 s each)
 #   SKIP_P4_MODELS=1     skip step 4b (topic summaries and IS ending canon over P4), the script before 2026-10-01
 #   REFRESH_REFERENCE=1  refresh the wiki EVAL REFERENCES under eval/reference (network; off). Never served or built
-#                        from (Ian, 2026-10-04: the wiki is a reference Trevor's own deductions are scored against)
+#                        from (project rule, 2026-10-04: the wiki is a reference Trevor's own deductions are scored against)
 #   DEEP_TOP=N           deep topic entries (scripts/topic_deep.py, 2026-10-03 night 9) for the N most asked topics (40)
 #   GATE_ORDER=0         skip `ask --gate-order` after the reading guide (artifacts/chrono/gate_order.json, the gatePos
 #                        order the horizon and the panels read; a stale file is then rebuilt in memory with a warning)

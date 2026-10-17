@@ -3,7 +3,7 @@
 
 No model: character_table (rarity, class, branch, nation, group, team) and each operator's handbook
 "Basic Info" (gender, place and date of birth, race, height, infection status, combat experience).
-Ian (2026-09-28): "List all the operators from Kazimierz" got 4 names from 19 retrieved passages; this
+Probe question (2026-09-28): "List all the operators from Kazimierz" got 4 names from 19 retrieved passages; this
 table answers such questions completely. "From X" is ambiguous in the data: `nation` is the game's
 affiliation field (character_table NationId, 383 of 407 set), `birthplace` is the handbook's Place of
 Birth; `ask` reports both. Values are the game's own text; "Undisclosed" and "Unknown" stay as written.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deep topic entries by map-reduce (2026-10-03 night 9, Ian: the Sarkaz answer "lacks a ton", the Sami one "eeehhh").
+"""Deep topic entries by map-reduce (2026-10-03 night 9, review: the Sarkaz answer "lacks a ton", the Sami one "eeehhh").
 
 A topic summary of topics.py reads 14 BM25 passages; the Sarkaz are named in 2,000+ chunks of the corpus. This script
 gathers a served topic's evidence broadly and summarizes it in two steps:

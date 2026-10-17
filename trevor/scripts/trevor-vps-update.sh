@@ -2,7 +2,7 @@
 # Trevor's content update on the VPS (design/trevor-vps-runbook.md). Ubuntu 24.04, bash, python3 (stdlib only), the
 # release binaries in target/release, util-linux (flock, ionice), curl and rsync; nothing from the Mac.
 #
-# Ian's decisions (2026-10-16): summaries are the ONLY model stage; everything else is deterministic; every other
+# Decisions (2026-10-16): summaries are the ONLY model stage; everything else is deterministic; every other
 # model output (dossiers, topics, primers, chronology extraction, identities, deaths, the bank's generated answers,
 # canon, design) is frozen at what the Mac built until a manual rebuild.
 #

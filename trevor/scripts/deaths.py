@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Death events: who dies in which story, extracted from the script, with a verbatim quote.
 
-Ian (2026-09-28): "What non-playable characters died in x story", and Arknights is live service, so a
+Probe question (2026-09-28): "What non-playable characters died in x story", and Arknights is live service, so a
 character's status can change with each new story. Deaths are therefore stored as events tied to the
 story where they happen, not as a per-character status: status as of a reader's progress is the
 latest event in the stories they have cleared, and every event carries its own spoiler gate. A
@@ -11,7 +11,7 @@ dropped. Every stage is keyed per chunk (text sha + prompt sha), so an asset upd
 changed or new passages.
   wiki     eval reference only (network): every wiki page whose infobox status is Deceased ->
            eval/reference/wiki_deceased.jsonl (83 named characters plus 2 list pages on 2026-09-28); since
-           2026-10-04 nothing that builds deaths.jsonl reads it (Ian: the wiki is a reference, never a source)
+           2026-10-04 nothing that builds deaths.jsonl reads it (project rule: the wiki is a reference, never a source)
   extract  generator model on $SERVER, chunks with a death word (4,700 of 13,837), DEATH_GROUPS=a,b limits
            to groups (pilot) -> entities/death_mentions.jsonl (resumable, 2 threads)
   check    generator model: a strict second question per named mention ("does this passage show NAME

@@ -507,7 +507,7 @@ class Order:
 
 
 def eras_of(O, guide_position=False):
-    """The provisional era rule (Ian's decision D7, 2026-10-16: the 22 eras): every main episode, plus an event
+    """The provisional era rule (decision D7, 2026-10-16: the 22 eras): every main episode, plus an event
     whenever 6 or more guide groups pass without a boundary. position = gatePos of the group's last story (contract);
     groupPosition = the reading-guide group position (the prototype's `position`)."""
     eras, last = [], -99

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Operator status from the Arknights wiki (arknights.wiki.gg), a reference for the dead-operator table.
 
-Ian (2026-09-28): "you can also verify with the arknights wiki, which details the status of an
+Suggestion (2026-09-28): "you can also verify with the arknights wiki, which details the status of an
 operator." Operator pages carry no status; each operator's `<Name>/Story` page opens with a
 `{{Character infobox}}` whose `|status =` field holds it (Theresa: "Deceased {{Spoiler|...}}", Shu:
 "Active"). Inline `{{Status|deceased}}` marks family members and is ignored. One request a second,

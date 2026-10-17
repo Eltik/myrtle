@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cast-wide cross-references from game data, for `ask`'s cross_ref tool (2026-10-03, item 4 of Ian's list).
+"""Cast-wide cross-references from game data, for `ask`'s cross_ref tool (2026-10-03, item 4 of the feature list).
 
 First table, "bosses_playable": every boss enemy of the enemy handbook (enemy_handbook_table EnemyLevel BOSS) whose
 character is also a playable operator. A boss's character name is its handbook name without quotes, without a title

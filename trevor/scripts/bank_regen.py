@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Pre-generated answers that follow game updates (contract v1.1 section 3a and 3c; Ian 2026-10-17: "generate new
-answers when there is a new update").
+"""Pre-generated answers that follow game updates (contract v1.1 section 3a and 3c; decided 2026-10-17: new answers are
+generated when there is a new update).
 
 The bank's generated entries (`kind: ask`, scripts/answer_bank.py) are a question drawn from one chunk plus Trevor's
 answer to it. After a game update this script finds the chunks that are new or whose text changed, asks a question
