@@ -18,10 +18,12 @@ use crate::chrono::{
 use crate::cli::{Args, RouterKind, deep_for};
 use crate::detect::{asks_admire, asks_identity, asks_relation, asks_scene, asks_when, is_opinion_question, term_of};
 use crate::form::{Flags, question_form};
-use crate::retrieval::{
-    Names, Runtimes, expand_names, named_characters, names_proper_word, one_operator, one_operator_wide,
-    opinion_needs_candidates, people_named,
+use crate::labels::Names;
+use crate::people::{
+    expand_names, named_characters, names_proper_word, one_operator, one_operator_wide, opinion_needs_candidates,
+    people_named,
 };
+use crate::runtimes::Runtimes;
 use crate::routing::{is_ending_route, route_question};
 use crate::scenes::{character_scenes, person_forms, scoped_scenes};
 use crate::llama_server::connect_or_spawn;

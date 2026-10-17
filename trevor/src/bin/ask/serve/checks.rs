@@ -11,7 +11,7 @@ use trevor::search::runtime::Runtime;
 
 use crate::answer::{Tables, route_checked};
 use crate::cli::{Args, RetrievalKind, deep_for};
-use crate::retrieval::load_runtime;
+use crate::runtimes::load_runtime;
 use crate::llama_server::connect_or_spawn;
 
 

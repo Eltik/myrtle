@@ -24,10 +24,13 @@ use crate::prompts::{
     TIME_EVIDENCE_TAIL, TIME_RULE, YES_NO_RULE,
 };
 use crate::kinds::{FALLBACK_KINDS, RECORD_KINDS};
-use crate::retrieval::{
-    Names, Pre, Runtimes, expand_names, file_owner, named_characters, names_proper_word,
-    one_operator, one_operator_wide, opinion_needs_candidates, passages, people_named, story_label, typed_owner,
+use crate::labels::{Names, file_owner, story_label, typed_owner};
+use crate::people::{
+    expand_names, named_characters, names_proper_word, one_operator, one_operator_wide, opinion_needs_candidates,
+    people_named,
 };
+use crate::retrieval::{Pre, passages};
+use crate::runtimes::Runtimes;
 use crate::routing::{Routed, is_ending_passages, route_question};
 use crate::scenes::{SCOPED_REST, character_scenes, scoped_scenes};
 use crate::terms::{term_glossary, term_lookup};

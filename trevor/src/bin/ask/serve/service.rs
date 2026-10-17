@@ -19,7 +19,8 @@ use crate::cli::{Args, Profile, RetrievalKind, RouterKind, apply_profile, deep_f
                  router_source, tool_options};
 use crate::detect::source_kind;
 use crate::kinds::is_generated;
-use crate::retrieval::{Runtimes, load_names, load_runtime};
+use crate::labels::load_names;
+use crate::runtimes::{Runtimes, load_runtime};
 use crate::llama_server::{cloudflare, connect_local, connect_or_spawn};
 
 use super::{

@@ -63,7 +63,8 @@ use trevor::tools::{Route, ToolOptions};
 use crate::answer::Tables;
 use crate::chrono::Chrono;
 use crate::cli::{Args, Profile};
-use crate::retrieval::{Names, Runtimes};
+use crate::labels::Names;
+use crate::runtimes::Runtimes;
 use crate::llama_server::Spawned;
 
 pub(crate) mod canary;

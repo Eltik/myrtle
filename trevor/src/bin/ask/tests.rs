@@ -5,7 +5,8 @@ use trevor::tools::Tools;
 use crate::batch::{batch_items, qid_question};
 use crate::chrono::{Chrono, chronology_for, time_evidence_block};
 use crate::detect::{asks_identity, asks_origin, asks_relation, asks_scene, asks_term, asks_when, term_of};
-use crate::retrieval::{Names, one_operator, one_operator_wide, story_label, typed_owner};
+use crate::labels::{Names, story_label, typed_owner};
+use crate::people::{one_operator, one_operator_wide};
 use crate::terms::{compact, first_sentences};
 
 #[test]

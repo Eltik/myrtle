@@ -10,7 +10,7 @@ use trevor::tools::{Tools, contains_words, norm};
 use crate::chrono::proper_name;
 use crate::detect::asks_scene;
 use crate::kinds::{RECORD_KINDS, is_generated};
-use crate::retrieval::people_named;
+use crate::people::people_named;
 
 /// Scenes of the event a question names where the character it names speaks or is named (the scoped scenes, the
 /// default; `--no-scoped-scenes`). A question can describe a line in words the scene never uses ("the npc that mon3tr
