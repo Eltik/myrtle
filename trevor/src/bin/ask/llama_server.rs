@@ -31,7 +31,7 @@ pub(crate) fn foreign_lock(path: &std::path::Path) -> Option<(u32, String)> {
     let (pid, label) = text.trim().split_once(' ').unwrap_or((text.trim(), ""));
     let pid: u32 = pid.parse().ok()?;
     if !alive(pid) {
-        // A lock left by a process that died without its cleanup (seen 2026-10-17: pid 98205, no llama-server).
+        // A lock left by a process that died without its cleanup.
         return None;
     }
     let mut p = std::process::id();

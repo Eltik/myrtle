@@ -1,4 +1,4 @@
-//! Contract v1.1 worker tests: the power guard's decision on injected samples, the heartbeat's
+//! Worker tests (contract v1.1): the power guard's decision on injected samples, the heartbeat's
 //! `guard` object, and the `mid` profiles.
 
 use crate::guard::{Change, Guard, GuardConfig, GuardView, Sample, Trip};
@@ -100,7 +100,7 @@ fn guard_mac_signals_trip_on_critical_pressure_and_thermal_warnings() {
     let mut g = Guard::new(GuardConfig { cooldown_secs: 0, ..cfg() });
     let p = |level: u32, thermal: bool| Sample { mac_pressure: Some(level), thermal: Some(thermal), mem_avail_mb: Some(9000.0),
                                                  ..Sample::default() };
-    // Level 2 (warning) is this Mac's everyday state on 2026-10-17: it never trips.
+    // Level 2 (warning) is an everyday state on a Mac: it never trips.
     for t in 0..5 {
         assert_eq!(g.observe(&p(2, false), t), None);
     }

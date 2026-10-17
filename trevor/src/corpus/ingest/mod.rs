@@ -55,8 +55,8 @@ use verify::prose_words;
 // ---------------------------------------------------------------------------
 // Wire types. Only the fields this crate reads are modelled: modelling fields
 // it does not use is how a sibling crate breaks on the next backend change.
-// serde ignores the rest. Verified against backend/src/app/services/story.rs
-// and backend/src/core/story/mod.rs on 2026-09-24.
+// serde ignores the rest. Checked against backend/src/app/services/story.rs
+// and backend/src/core/story/mod.rs.
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Deserialize)]
