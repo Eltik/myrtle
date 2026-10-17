@@ -35,6 +35,11 @@ describe("quick look with a deferred full answer (contract v1.1 1b)", () => {
         expect(askReducer(p, { type: "jobFailed", message: "x" })).toMatchObject({ kind: "queued", jobId: "d1" });
     });
 
+    it("backend shape: a quick passages job already done carries its answer, the quick look at once", () => {
+        const s = askReducer({ kind: "sending", question: "Who?" }, { type: "accepted", response: { jobId: "p1", status: "done", rung: "passages", spoilerSafeUpTo: ERA, answer: stored("Passages now.", "passages"), etaSecs: null, streamUrl: "", deferredJobId: "d1" } });
+        expect(s.kind === "queued" && [s.jobId, s.next, s.quick?.text]).toEqual(["d1", undefined, "Passages now."]);
+    });
+
     it("backend shape: an earlier era's cached answer is the quick look at once", () => {
         const look = stored("Earlier era.");
         const deferred = askReducer({ kind: "sending", question: "Who?" }, { type: "accepted", response: { jobId: "p1", status: "queued", rung: "passages", spoilerSafeUpTo: ERA, etaSecs: 1, streamUrl: "", deferredJobId: "d1", quickLook: look } as AskResponse });

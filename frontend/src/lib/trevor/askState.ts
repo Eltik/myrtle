@@ -103,7 +103,8 @@ export function askReducer(s: AskState, e: AskEvent): AskState {
         case "accepted": {
             if (s.kind !== "sending") return s;
             const r = e.response;
-            const quick = r.quickLook ? parseAnswer(r.quickLook) : undefined;
+            // A quick passages job that finished before the response was read comes back with its answer: that is the quick look too.
+            const quick = r.answer ? parseAnswer(r.answer) : r.quickLook ? parseAnswer(r.quickLook) : undefined;
             const base = { kind: "queued" as const, question: s.question, rung: r.rung, spoiler: r.spoilerSafeUpTo, etaSecs: r.etaSecs, position: null, workerOnline: r.etaSecs !== null };
             if (r.deferredJobId) {
                 // The quick look in hand: follow the full answer. Not yet: follow the passages job first, then the full answer.
