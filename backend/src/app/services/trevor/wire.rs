@@ -6,7 +6,10 @@ use ts_rs::TS;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use super::{AnswerSource, CfBudget, GuardState, Mode, Rung, RungFlags, SpoilerSafe, WorkerCounts};
+use super::{
+    AnswerSource, CfBudget, GuardState, Mode, Rung, RungFlags, SpoilerMode, SpoilerSafe,
+    WorkerCounts,
+};
 
 /// `POST /trevor/ask`.
 #[derive(Debug, Clone, Deserialize, TS, ToSchema)]
@@ -27,6 +30,13 @@ pub struct AskRequest {
     #[serde(default)]
     #[ts(optional)]
     pub turnstile_token: Option<String>,
+    /// `safe` (the default) follows the reader's progress; `all` answers from
+    /// every released story (spoiler mode, contract v1.1 section 8). Any
+    /// other value is a 400.
+    #[serde(default)]
+    #[ts(optional, as = "Option<SpoilerMode>")]
+    #[schema(value_type = Option<SpoilerMode>)]
+    pub spoilers: Option<String>,
 }
 
 /// One answer as the reader sees it. `answer` is the worker's structured
@@ -82,8 +92,13 @@ pub struct AskResponse {
     pub job_id: Option<Uuid>,
     pub status: JobStatus,
     pub rung: Rung,
-    /// Null when the horizon is before the first era (nothing released).
+    /// Null when the horizon is before the first era (nothing released),
+    /// and for a spoiler-mode ask.
     pub spoiler_safe_up_to: Option<SpoilerSafe>,
+    /// `all` when the ask was answered in spoiler mode; absent otherwise.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub spoilers: Option<SpoilerMode>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub answer: Option<TrevorAnswer>,
@@ -184,6 +199,10 @@ pub struct MyQuestion {
     pub finished_at: Option<chrono::DateTime<chrono::Utc>>,
     /// Present once done.
     pub answer: Option<TrevorAnswer>,
+    /// `all` when it was asked in spoiler mode; absent otherwise.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub spoilers: Option<SpoilerMode>,
 }
 
 /// One popular question with its answer (`GET /trevor/popular`).

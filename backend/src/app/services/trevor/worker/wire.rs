@@ -45,7 +45,7 @@ pub struct WorkerJob {
     pub question: String,
     pub server: String,
     /// Keep only chunks at or before this gatePos; null = no limit
-    /// (internal jobs only).
+    /// (internal jobs and spoiler-mode asks, contract v1.1 section 8).
     pub horizon_pos: Option<i32>,
     /// `cf`, `cpu` or `passages`.
     pub rung: Rung,

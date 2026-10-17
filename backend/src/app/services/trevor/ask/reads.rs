@@ -7,8 +7,8 @@ use uuid::Uuid;
 use crate::app::error::ApiError;
 use crate::app::services::trevor::{
     AnswerSource, CfBudget, FeedbackRequest, GuardState, JobStatus, JobView, MyQuestion,
-    ONLINE_SECS, Popular, PopularQuestion, QueueDepth, Rung, RungFlags, StoryPanels, TrevorAnswer,
-    TrevorStatus, WorkerCounts, cf_budget,
+    NO_LIMIT_ERA, ONLINE_SECS, Popular, PopularQuestion, QueueDepth, Rung, RungFlags, SpoilerMode,
+    StoryPanels, TrevorAnswer, TrevorStatus, WorkerCounts, cf_budget,
 };
 use crate::app::state::AppState;
 use crate::database::queries::trevor as q;
@@ -60,6 +60,7 @@ pub async fn my_questions(
                 created_at: r.created_at,
                 finished_at: r.finished_at,
                 answer,
+                spoilers: (r.era_pos == NO_LIMIT_ERA).then_some(SpoilerMode::All),
             }
         })
         .collect())

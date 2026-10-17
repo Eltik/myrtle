@@ -152,3 +152,25 @@ The script treats a 409 as done, and any other failure as an `update_failed` ale
 ## 7. The dev preview uses the real Trevor
 
 `bun run dev:trevor` runs the real `ask --worker` against the preview's mock backend, which implements the worker protocol (contract v1 section 3). The local Gemma 12B (or E2B) answers through the real pipeline. The canned answers remain only as a labelled fallback when the binary or the model is missing.
+
+## 8. Spoiler mode (2026-10-18)
+
+A signed-in reader may turn spoiler protection off and get answers from every released story.
+
+- **Request.** `POST /api/trevor/ask` takes `spoilers: "safe" | "all"`, optional, default `"safe"` (the behaviour before this section). Any other value is a 400.
+- **Horizon.** `"all"` ignores the profile and `horizonStory`: the job runs with no limit, and `worker/next` sends it `horizonPos: null`.
+- **Cache bucket.** A spoiler answer is cached, joined and logged under `eraPos = 2147483647` (`NO_LIMIT_ERA`, i32::MAX), the bucket internal no-limit jobs already use. The job row stores that value; `worker/next` maps it to `horizonPos: null`.
+  - It is never 0, which means "nothing released".
+  - It sorts above every era, so every spoiler-safe lookup that reads answers at or before a reader's era (the quick look, `popular`) never reaches it. A negative sentinel would sort below every era and would leak into those lookups.
+  - Publish carry-over already keeps this bucket (section 3b).
+- **Isolation.** A spoiler ask is never served a spoiler-safe cache entry, and the reverse. Twins join only within the same bucket.
+- **Response.** `spoilerSafeUpTo` is null and `spoilers: "all"` is present. A spoiler-safe response omits `spoilers`, so its bytes are unchanged.
+- **Quick look.** A spoiler ask may be shown any earlier era's cached answer.
+- **"My questions".** An item asked in spoiler mode carries `spoilers: "all"`; other items omit the field.
+- **Popular.** `GET /api/trevor/popular` stays spoiler-safe for every reader. It lists answers at or before the reader's era only, so it never lists a spoiler answer. Its "at least 2 askers" count excludes spoiler-mode asks, so spoiler-mode readers cannot promote a question to the chips spoiler-safe readers see.
+- **Kill switch.** Under `TREVOR_SPOILER_MODE=0` the backend ignores `spoilers`, as it did before this section: every ask is spoiler-safe and no value is refused. It does not answer 400, because refusing a field the old backend ignored would be a new behaviour, not the old one. The response then carries no `spoilers` field, so the UI shows the spoiler-safe label and no badge.
+- **Frontend.** The chat (reader sheet and the stories Ask tab) has a "Spoilers" switch beside the spoiler-safe label.
+  - It is off by default and stored per browser.
+  - Turning it on asks for confirmation once.
+  - It is sent with each ask, and an answer asked in spoiler mode carries a "Spoilers" badge.
+  - `VITE_TREVOR_SPOILER_MODE=0` hides the switch and never sends `spoilers`.

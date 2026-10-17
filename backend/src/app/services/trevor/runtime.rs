@@ -109,6 +109,9 @@ pub struct TrevorConfig {
     pub ask_log: bool,
     /// `TREVOR_ALERTS=0` sends no Trevor alert (contract v1.1 section 2.2).
     pub alerts: bool,
+    /// `TREVOR_SPOILER_MODE=0` ignores an ask's `spoilers`, as before spoiler
+    /// mode: every ask is spoiler-safe (contract v1.1 section 8).
+    pub spoiler_mode: bool,
     /// `TREVOR_ALERT_COOLDOWN_SECS`: one alert per kind per this long.
     pub alert_cooldown_secs: i64,
     /// `TREVOR_ALERT_EVERY_SECS`: the alert evaluator's tick.
@@ -149,6 +152,7 @@ impl Default for TrevorConfig {
             carry_over: true,
             ask_log: true,
             alerts: true,
+            spoiler_mode: true,
             alert_cooldown_secs: 1800,
             alert_every_secs: 30,
         }
@@ -219,6 +223,7 @@ impl TrevorConfig {
             carry_over: !switched_off("TREVOR_CARRY_OVER"),
             ask_log: !switched_off("TREVOR_ASK_LOG"),
             alerts: !switched_off("TREVOR_ALERTS"),
+            spoiler_mode: !switched_off("TREVOR_SPOILER_MODE"),
             alert_cooldown_secs: env_num("TREVOR_ALERT_COOLDOWN_SECS", d.alert_cooldown_secs)
                 .max(0),
             alert_every_secs: env_num("TREVOR_ALERT_EVERY_SECS", d.alert_every_secs).max(1),

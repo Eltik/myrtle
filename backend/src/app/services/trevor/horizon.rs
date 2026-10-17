@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 use utoipa::ToSchema;
 
+use crate::app::error::ApiError;
+
 /// An era boundary from the active manifest: `position` is a gatePos.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, ToSchema)]
 #[serde(rename_all = "camelCase")]
@@ -73,6 +75,58 @@ pub fn bucket_horizon(eras: &[Era], pos: i32, buckets: bool) -> Horizon {
     }
 }
 
+/// Spoiler mode (contract v1.1 section 8): `safe` follows the reader's
+/// progress; `all` answers from every released story.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, TS, ToSchema)]
+#[serde(rename_all = "lowercase")]
+#[ts(export, rename = "TrevorSpoilerMode")]
+#[schema(as = TrevorSpoilerMode)]
+pub enum SpoilerMode {
+    #[default]
+    Safe,
+    All,
+}
+
+impl SpoilerMode {
+    /// The request's `spoilers`, defaulted to `safe`; any other value is a 400.
+    /// With spoiler mode switched off (`TREVOR_SPOILER_MODE=0`) the field is
+    /// ignored, as it was before spoiler mode: every ask is `safe`.
+    pub fn parse_request(value: Option<&str>, enabled: bool) -> Result<Self, ApiError> {
+        if !enabled {
+            return Ok(Self::Safe);
+        }
+        match value.map(str::trim) {
+            None | Some("safe") => Ok(Self::Safe),
+            Some("all") => Ok(Self::All),
+            Some(_) => Err(ApiError::BadRequest(
+                "spoilers must be \"safe\" or \"all\"".into(),
+            )),
+        }
+    }
+
+    /// The response's `spoilers`: present only for `all`, so a spoiler-safe
+    /// response keeps its bytes.
+    pub fn reported(self) -> Option<Self> {
+        (self == Self::All).then_some(Self::All)
+    }
+}
+
+/// The horizon of a spoiler-mode ask: the no-limit bucket, which sorts above
+/// every era (so no spoiler-safe lookup at or before a reader's era reaches
+/// it) and which the worker receives as `horizonPos: null`.
+pub fn no_limit_horizon() -> Horizon {
+    Horizon {
+        era_pos: super::NO_LIMIT_ERA,
+        spoiler_safe: None,
+    }
+}
+
+/// The `horizonPos` a worker receives for a job's stored horizon: the
+/// no-limit bucket is sent as null, every other value as it is.
+pub fn worker_horizon(horizon_pos: Option<i32>) -> Option<i32> {
+    horizon_pos.filter(|p| *p != super::NO_LIMIT_ERA)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -116,5 +170,52 @@ mod tests {
         let h = bucket_horizon(&e, 39, false);
         assert_eq!(h.era_pos, 39);
         assert_eq!(h.spoiler_safe.unwrap().position, 21);
+    }
+
+    #[test]
+    fn spoilers_parse_to_safe_by_default_and_refuse_unknown_values() {
+        assert_eq!(
+            SpoilerMode::parse_request(None, true).unwrap(),
+            SpoilerMode::Safe
+        );
+        assert_eq!(
+            SpoilerMode::parse_request(Some("safe"), true).unwrap(),
+            SpoilerMode::Safe
+        );
+        assert_eq!(
+            SpoilerMode::parse_request(Some("all"), true).unwrap(),
+            SpoilerMode::All
+        );
+        assert!(matches!(
+            SpoilerMode::parse_request(Some("ALL"), true),
+            Err(ApiError::BadRequest(_))
+        ));
+        assert!(SpoilerMode::parse_request(Some("some"), true).is_err());
+    }
+
+    #[test]
+    fn spoiler_mode_off_ignores_the_field_as_before() {
+        assert_eq!(
+            SpoilerMode::parse_request(Some("all"), false).unwrap(),
+            SpoilerMode::Safe
+        );
+        assert_eq!(
+            SpoilerMode::parse_request(Some("junk"), false).unwrap(),
+            SpoilerMode::Safe
+        );
+    }
+
+    #[test]
+    fn the_no_limit_bucket_is_above_every_era_and_reaches_the_worker_as_null() {
+        let h = no_limit_horizon();
+        assert_ne!(h.era_pos, 0);
+        assert!(eras().iter().all(|e| e.position < h.era_pos));
+        assert_eq!(h.spoiler_safe, None);
+        assert_eq!(worker_horizon(Some(h.era_pos)), None);
+        assert_eq!(worker_horizon(Some(21)), Some(21));
+        assert_eq!(worker_horizon(Some(0)), Some(0));
+        assert_eq!(worker_horizon(None), None);
+        assert_eq!(SpoilerMode::All.reported(), Some(SpoilerMode::All));
+        assert_eq!(SpoilerMode::Safe.reported(), None);
     }
 }

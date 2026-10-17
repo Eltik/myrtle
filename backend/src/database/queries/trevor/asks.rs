@@ -48,6 +48,8 @@ pub async fn insert_ask(pool: &PgPool, a: &NewAsk<'_>) -> Result<(), sqlx::Error
 #[derive(Debug, Clone, FromRow)]
 pub struct MyAskRow {
     pub question: String,
+    /// The ask's own bucket (the no-limit one for a spoiler-mode ask).
+    pub era_pos: i32,
     pub created_at: DateTime<Utc>,
     pub job_id: Option<Uuid>,
     pub status: Option<String>,
@@ -71,7 +73,7 @@ pub async fn my_asks(
 ) -> Result<Vec<MyAskRow>, sqlx::Error> {
     sqlx::query_as(
         r"
-        SELECT k.question, k.created_at, j.id AS job_id, j.status, j.rung, j.finished_at,
+        SELECT k.question, k.era_pos, k.created_at, j.id AS job_id, j.status, j.rung, j.finished_at,
                (j.id IS NULL AND k.answer_id IS NOT NULL) AS hit,
                a.id AS answer_id, a.version AS a_version, a.server AS a_server,
                a.era_pos AS a_era_pos, a.rung AS a_rung, a.source AS a_source, a.answer AS a_answer
@@ -97,7 +99,10 @@ pub async fn my_asks(
 /// may see: per question, the cached answer of the latest era at or before
 /// `era_pos`, listed when at least `min_askers` distinct accounts asked it
 /// on the server (in any version, so a publish does not reset the list),
-/// most askers (then hits) first.
+/// most askers (then hits) first. Spoiler-mode asks (the no-limit bucket)
+/// are not counted, so they cannot put a question on a spoiler-safe
+/// reader's chips; and the answer read is at or before `era_pos`, which is
+/// always below that bucket (contract v1.1 section 8).
 pub async fn popular(
     pool: &PgPool,
     version: &str,
@@ -117,7 +122,7 @@ pub async fn popular(
         r"
         WITH askers AS (
             SELECT qkey, count(DISTINCT user_id) AS askers
-            FROM trevor_asks WHERE server = $2
+            FROM trevor_asks WHERE server = $2 AND era_pos <> $6
             GROUP BY qkey HAVING count(DISTINCT user_id) >= $4
         ), best AS (
             SELECT DISTINCT ON (a.qkey) a.*
@@ -137,6 +142,7 @@ pub async fn popular(
     .bind(era_pos)
     .bind(min_askers)
     .bind(limit)
+    .bind(crate::app::services::trevor::NO_LIMIT_ERA)
     .fetch_all(pool)
     .await?;
     Ok(rows

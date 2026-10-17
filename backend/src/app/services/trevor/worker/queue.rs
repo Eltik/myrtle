@@ -10,7 +10,7 @@ use crate::app::error::ApiError;
 use crate::app::services::trevor::runtime::StreamEvent;
 use crate::app::services::trevor::{
     LONG_POLL_SECS, MAX_ATTEMPTS, Mode, ONLINE_SECS, RUNNING_STALE_SECS, Rung, RungFlags,
-    SWEEP_EVERY_SECS, parse_server, settle_rung,
+    SWEEP_EVERY_SECS, parse_server, settle_rung, worker_horizon,
 };
 use crate::app::state::AppState;
 use crate::database::queries::trevor as q;
@@ -104,7 +104,8 @@ async fn claim(
         job_id: job.id,
         question: job.question,
         server: job.server,
-        horizon_pos: job.horizon_pos,
+        // A spoiler-mode job's no-limit bucket reaches the worker as null.
+        horizon_pos: worker_horizon(job.horizon_pos),
         rung,
         profile,
         flags: Vec::new(),

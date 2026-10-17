@@ -18785,6 +18785,17 @@
             ],
             "description": "`en` (the default) or `cn`."
           },
+          "spoilers": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TrevorSpoilerMode",
+                "description": "`safe` (the default) follows the reader's progress; `all` answers from\nevery released story (spoiler mode, contract v1.1 section 8). Any\nother value is a 400."
+              }
+            ]
+          },
           "turnstileToken": {
             "type": [
               "string",
@@ -18857,7 +18868,18 @@
               },
               {
                 "$ref": "#/components/schemas/TrevorSpoilerSafe",
-                "description": "Null when the horizon is before the first era (nothing released)."
+                "description": "Null when the horizon is before the first era (nothing released),\nand for a spoiler-mode ask."
+              }
+            ]
+          },
+          "spoilers": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TrevorSpoilerMode",
+                "description": "`all` when the ask was answered in spoiler mode; absent otherwise."
               }
             ]
           },
@@ -33248,6 +33270,17 @@
               }
             ]
           },
+          "spoilers": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TrevorSpoilerMode",
+                "description": "`all` when it was asked in spoiler mode; absent otherwise."
+              }
+            ]
+          },
           "status": {
             "$ref": "#/components/schemas/JobStatus"
           }
@@ -33352,6 +33385,14 @@
             "default": false
           }
         }
+      },
+      "TrevorSpoilerMode": {
+        "type": "string",
+        "description": "Spoiler mode (contract v1.1 section 8): `safe` follows the reader's\nprogress; `all` answers from every released story.",
+        "enum": [
+          "safe",
+          "all"
+        ]
       },
       "TrevorSpoilerSafe": {
         "type": "object",
@@ -35007,7 +35048,7 @@
               "null"
             ],
             "format": "int32",
-            "description": "Keep only chunks at or before this gatePos; null = no limit\n(internal jobs only)."
+            "description": "Keep only chunks at or before this gatePos; null = no limit\n(internal jobs and spoiler-mode asks, contract v1.1 section 8)."
           },
           "jobId": {
             "type": "string",

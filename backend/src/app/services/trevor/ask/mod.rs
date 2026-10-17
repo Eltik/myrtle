@@ -23,8 +23,9 @@ use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
 use crate::app::services::trevor::{
     ASK_PER_HOUR, Admission, AdmissionInputs, AnswerSource, AskRequest, AskResponse, Horizon,
-    JobStatus, MAX_OPEN_PER_USER, MAX_QUEUED, Mode, ONLINE_SECS, Rung, RungInputs, TrevorAnswer,
-    admit_rung, parse_server, qkey, select_rung, turnstile, validate_question,
+    JobStatus, MAX_OPEN_PER_USER, MAX_QUEUED, Mode, ONLINE_SECS, Rung, RungInputs, SpoilerMode,
+    TrevorAnswer, admit_rung, no_limit_horizon, parse_server, qkey, select_rung, turnstile,
+    validate_question,
 };
 use crate::app::state::AppState;
 use crate::database::queries::trevor as q;
@@ -146,6 +147,7 @@ pub async fn ask(
     let cfg = state.trevor.config();
     let normalized = validate_question(&req.question, cfg.normq)?;
     let server = parse_server(req.server.as_deref())?;
+    let spoilers = SpoilerMode::parse_request(req.spoilers.as_deref(), cfg.spoiler_mode)?;
     let key = qkey(&normalized);
     turnstile::check(state, req.turnstile_token.as_deref(), remote_ip).await?;
 
@@ -162,8 +164,17 @@ pub async fn ask(
         .unwrap_or(0);
     admit(asked, 0, 0)?;
 
-    let (version, horizon) =
-        resolve_horizon(state, user_id, server, req.horizon_story.as_deref()).await?;
+    // Spoiler mode (contract v1.1 section 8): no horizon, and a bucket of its
+    // own above every era, so it never meets a spoiler-safe answer or twin.
+    let (version, horizon) = match spoilers {
+        SpoilerMode::Safe => {
+            resolve_horizon(state, user_id, server, req.horizon_story.as_deref()).await?
+        }
+        SpoilerMode::All => (
+            progress::active_eras(state, server).await?.map(|(v, _)| v),
+            no_limit_horizon(),
+        ),
+    };
     let question = req.question.trim();
     let ask_row = |job_id, deferred_job_id, answer_id| q::NewAsk {
         user_id,
@@ -187,6 +198,7 @@ pub async fn ask(
             status: JobStatus::Done,
             rung: Rung::Cache,
             spoiler_safe_up_to: horizon.spoiler_safe,
+            spoilers: spoilers.reported(),
             answer: Some(view(&row)),
             eta_secs: None,
             stream_url: None,
@@ -269,6 +281,7 @@ pub async fn ask(
                 server,
                 &version,
                 horizon,
+                spoilers,
                 question,
                 &normalized,
                 open,
@@ -338,6 +351,7 @@ pub async fn ask(
         server,
         &version,
         horizon,
+        spoilers,
         question,
         &normalized,
         job,
@@ -356,6 +370,7 @@ async fn finish_ask(
     server: &str,
     version: &Option<String>,
     horizon: Horizon,
+    spoilers: SpoilerMode,
     question: &str,
     normalized: &str,
     job: q::JobRow,
@@ -393,6 +408,7 @@ async fn finish_ask(
         status: jv.status,
         rung: jv.rung,
         spoiler_safe_up_to: horizon.spoiler_safe,
+        spoilers: spoilers.reported(),
         answer: jv.answer,
         eta_secs: jv.eta_secs,
         stream_url: Some(stream_url(job.id)),

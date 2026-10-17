@@ -3,6 +3,7 @@ import type { JobStatus } from "./JobStatus";
 import type { TrevorAnswer } from "./TrevorAnswer";
 import type { TrevorAnswerSource } from "./TrevorAnswerSource";
 import type { TrevorRung } from "./TrevorRung";
+import type { TrevorSpoilerMode } from "./TrevorSpoilerMode";
 
 /**
  * One of the reader's questions, for "My questions" (`GET /trevor/me/jobs`).
@@ -29,4 +30,8 @@ export type TrevorMyQuestion = {
      * Present once done.
      */
     answer: TrevorAnswer | null;
+    /**
+     * `all` when it was asked in spoiler mode; absent otherwise.
+     */
+    spoilers?: TrevorSpoilerMode;
 };

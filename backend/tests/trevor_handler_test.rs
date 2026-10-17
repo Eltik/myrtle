@@ -126,6 +126,34 @@ async fn ask_refuses_an_empty_question_and_an_unknown_server() {
     assert_eq!(status(jp), StatusCode::BAD_REQUEST);
 }
 
+/// Spoiler mode (contract v1.1 section 8): `spoilers` other than `safe` or
+/// `all` is a 400 before anything is counted or read; under
+/// `TREVOR_SPOILER_MODE=0` the field is ignored, as before, so the same body
+/// gets past validation (and here fails later, at the closed database).
+#[tokio::test]
+async fn ask_refuses_an_unknown_spoilers_value_unless_spoiler_mode_is_off() {
+    let body = |spoilers: &str| -> AskRequest {
+        serde_json::from_value(json!({ "question": "Who is Amiya?", "spoilers": spoilers }))
+            .expect("ask body")
+    };
+    let s = state();
+    let me = Uuid::new_v4();
+    let bad = trevor::ask(
+        State(s.clone()),
+        user(me),
+        ClientIp(None),
+        Json(body("maybe")),
+    )
+    .await
+    .expect_err("an unknown spoilers value is refused");
+    let resp = bad.into_response();
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+    assert!(error_message(resp).await.contains("spoilers"));
+    with_config(&s, |c| c.spoiler_mode = false);
+    let off = trevor::ask(State(s), user(me), ClientIp(None), Json(body("maybe"))).await;
+    assert_ne!(status(off), StatusCode::BAD_REQUEST);
+}
+
 #[tokio::test]
 async fn ask_answers_429_past_the_hourly_allowance() {
     let s = state();

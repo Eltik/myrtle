@@ -635,6 +635,7 @@ Trevor alerts post to `DISCORD_ALERT_WEBHOOK` (the `core::alerts` variable). The
 | `TREVOR_ASK_LOG` | on | One `trevor_asks` row per ask (feeds `/trevor/me/jobs`, `/trevor/popular`, `/trevor/worker/popular`); `0` records none, so those lists stay empty |
 | `TREVOR_ALERTS` | on | `0` sends no Trevor alert |
 | `TREVOR_REVERDICT_ON_ASK` | on | An ask from an account with stage progress but no game read rows and no site read marks first re-derives and stores the game's read verdict from the stored stage progress (as a sync does), once per account per process; `0` reads only what is stored, so such an account asks at gatePos 0 (nothing released), the previous behaviour |
+| `TREVOR_SPOILER_MODE` | on | Spoiler mode (contract v1.1 section 8): an ask with `spoilers: "all"` runs with no horizon (the worker gets `horizonPos: null`) and is cached, joined and logged under its own bucket, `eraPos` 2147483647, which no spoiler-safe lookup reaches; `popular` does not count those asks; any other value than `safe` or `all` is a `400`. `0` ignores the field, as before: every ask is spoiler-safe and no value is refused |
 
 A request with a valid `x-trevor-worker-key` skips the per-IP rate limiter, as the service key does.
 

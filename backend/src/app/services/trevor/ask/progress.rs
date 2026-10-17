@@ -109,7 +109,7 @@ pub async fn read_stories(
 }
 
 /// The active version and its eras; an unparsable `eras` reads as none.
-async fn active_eras(
+pub(crate) async fn active_eras(
     state: &AppState,
     server: &str,
 ) -> Result<Option<(String, Vec<Era>)>, ApiError> {

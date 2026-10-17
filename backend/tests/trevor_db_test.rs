@@ -15,7 +15,8 @@
 //! SSE fan-out of worker deltas, `/trevor/status`, per-rung ETAs and the
 //! heartbeat row, and the horizon of an account that holds only stage
 //! progress (its read verdict re-derived on ask, and not under
-//! `TREVOR_REVERDICT_ON_ASK=0`).
+//! `TREVOR_REVERDICT_ON_ASK=0`), and spoiler mode (its own cache bucket,
+//! twin join and popular count, and `TREVOR_SPOILER_MODE=0`).
 //!
 //! Ignored by default (CI has no Postgres):
 //! `cargo test --test trevor_db_test -- --ignored --nocapture`
@@ -33,7 +34,8 @@ use backend::app::error::ApiError;
 use backend::app::services::trevor::runtime::{StreamEvent, TrevorConfig};
 use backend::app::services::trevor::worker::{self, Heartbeat, WorkerHello};
 use backend::app::services::trevor::{
-    AskRequest, AskResponse, JobStatus, Profile, Rung, alerts, ask as svc_ask, stream,
+    AskRequest, AskResponse, JobStatus, NO_LIMIT_ERA, Profile, Rung, SpoilerMode, alerts,
+    ask as svc_ask, stream,
 };
 use backend::app::state::{AppState, ServerData};
 use backend::core::gamedata::types::GameData;
@@ -935,6 +937,7 @@ async fn trevor_queue_against_a_throwaway_database() {
     step_v11_admission(&pool).await;
     step_v11_fair(&pool).await;
     step_v11_mode_status_alerts(&pool).await;
+    step_spoiler_mode(&pool).await;
     // Activates its own versions.
     step_v11_lists_and_carry(&pool).await;
     // Last: it activates its own version.
@@ -1819,6 +1822,172 @@ async fn step_v11_mode_status_alerts(pool: &PgPool) {
     assert!(qrec.take().is_empty());
     eprintln!(
         "v1.1 mode/status/alerts: passages + off modes, workers {{cf 1, cpu 2}}, guard fire+recover once, backlog fire+recover, failure_rate 11/40 fires, TREVOR_ALERTS=0 silent"
+    );
+}
+
+async fn ask_spoilers(
+    s: &AppState,
+    user: Uuid,
+    question: &str,
+    spoilers: &str,
+) -> Result<AskResponse, ApiError> {
+    let req: AskRequest =
+        serde_json::from_value(json!({ "question": question, "spoilers": spoilers })).expect("ask");
+    svc_ask::ask(s, user, None, req).await
+}
+
+/// Claim the next job through `worker/next` (so the wire horizon is the
+/// one a worker receives) and answer it live, citing one chunk.
+async fn answer_next(s: &AppState, version: &str) -> worker::WorkerJob {
+    let j = next(s, "w1").await.expect("a queued job");
+    post_result(
+        s,
+        &result_cites(j.job_id, "w1", version, &[("s1#0", Some("aaa"))]),
+    )
+    .await;
+    j
+}
+
+/// Spoiler mode (contract v1.1 section 8): a spoiler ask and a spoiler-safe
+/// ask never share a cache entry or a job, the worker gets `horizonPos:
+/// null`, "My questions" marks the spoiler asks, `popular` never counts or
+/// lists them for a spoiler-safe reader, an unknown value is a 400, and
+/// `TREVOR_SPOILER_MODE=0` reads every ask as spoiler-safe.
+async fn step_spoiler_mode(pool: &PgPool) {
+    reset_queue(pool).await;
+    let (s, _) = state_with_recorder(pool, |_| {});
+    beat(&s, "w1", false, true).await;
+    let version: String = q::active_version(pool, "en").await.unwrap().unwrap();
+    let (a, b, c, d) = (
+        era4_user(pool).await,
+        era4_user(pool).await,
+        era4_user(pool).await,
+        era4_user(pool).await,
+    );
+
+    // A spoiler-safe answer at era 4.
+    let safe = ask_ok(&s, a, "who is the ghost").await;
+    assert!(safe.spoilers.is_none() && safe.spoiler_safe_up_to.is_some());
+    let wire = serde_json::to_value(&safe).unwrap();
+    assert!(
+        wire.get("spoilers").is_none(),
+        "a safe response keeps its bytes"
+    );
+    let j = answer_next(&s, &version).await;
+    assert_eq!(j.horizon_pos, Some(4));
+
+    // A spoiler ask of the same question is not served the safe entry.
+    let all = ask_spoilers(&s, b, "Who is the ghost?", "all")
+        .await
+        .unwrap();
+    assert_ne!(
+        all.rung,
+        Rung::Cache,
+        "a spoiler ask never reads a safe entry"
+    );
+    assert_eq!(all.spoilers, Some(SpoilerMode::All));
+    assert!(all.spoiler_safe_up_to.is_none());
+    assert_eq!(
+        serde_json::to_value(&all).unwrap()["spoilers"],
+        json!("all")
+    );
+    let row = job(&s, all.job_id.unwrap()).await;
+    assert_eq!(row.horizon_pos, Some(NO_LIMIT_ERA));
+    let j = answer_next(&s, &version).await;
+    assert_eq!(j.job_id, all.job_id.unwrap());
+    assert_eq!(j.horizon_pos, None, "the worker gets no limit");
+
+    // Each bucket now serves only its own answer.
+    let hit_all = ask_spoilers(&s, c, "who is the ghost", "all")
+        .await
+        .unwrap();
+    assert_eq!(hit_all.rung, Rung::Cache);
+    assert_eq!(hit_all.spoilers, Some(SpoilerMode::All));
+    assert_eq!(hit_all.answer.as_ref().unwrap().era_pos, NO_LIMIT_ERA);
+    let hit_safe = ask_ok(&s, d, "who is the ghost").await;
+    assert_eq!(hit_safe.rung, Rung::Cache);
+    assert_eq!(hit_safe.answer.as_ref().unwrap().era_pos, 4);
+    assert!(hit_safe.spoilers.is_none());
+
+    // The reverse: a question answered only in spoiler mode is a new job
+    // for a spoiler-safe reader.
+    ask_spoilers(&s, b, "only with spoilers", "all")
+        .await
+        .unwrap();
+    answer_next(&s, &version).await;
+    assert_eq!(
+        ask_spoilers(&s, c, "only with spoilers", "all")
+            .await
+            .unwrap()
+            .rung,
+        Rung::Cache
+    );
+    let fresh = ask_ok(&s, a, "only with spoilers").await;
+    assert_ne!(
+        fresh.rung,
+        Rung::Cache,
+        "a safe ask never reads a spoiler entry"
+    );
+    answer_next(&s, &version).await;
+
+    // Twins join only within their bucket.
+    let open_safe = ask_ok(&s, a, "an open question").await;
+    let open_all = ask_spoilers(&s, b, "an open question", "all")
+        .await
+        .unwrap();
+    assert_ne!(open_safe.job_id, open_all.job_id);
+    let twin_all = ask_spoilers(&s, c, "an open question", "all")
+        .await
+        .unwrap();
+    assert_eq!(twin_all.job_id, open_all.job_id);
+    let twin_safe = ask_ok(&s, d, "an open question").await;
+    assert_eq!(twin_safe.job_id, open_safe.job_id);
+
+    // My questions marks the spoiler asks only.
+    let mine_b = svc_ask::my_questions(&s, b, None, None).await.unwrap();
+    assert_eq!(mine_b.len(), 3);
+    assert!(mine_b.iter().all(|m| m.spoilers == Some(SpoilerMode::All)));
+    let mine_a = svc_ask::my_questions(&s, a, None, None).await.unwrap();
+    assert!(mine_a.iter().all(|m| m.spoilers.is_none()));
+
+    // Popular for a spoiler-safe reader: "who is the ghost" has 2 safe
+    // askers (a, d) and is listed with its era-4 answer; "only with
+    // spoilers" has 1 safe asker (a) and 2 spoiler ones (b, c), so it is
+    // not listed although 3 accounts asked it.
+    let pop = svc_ask::popular(&s, Some(a), "en", None).await.unwrap();
+    let names: Vec<(&str, i64, i32)> = pop
+        .items
+        .iter()
+        .map(|p| (p.question.as_str(), p.askers, p.answer.era_pos))
+        .collect();
+    assert_eq!(names, vec![("who is the ghost", 2, 4)]);
+
+    // An unknown value is a 400.
+    assert!(matches!(
+        ask_spoilers(&s, a, "who is the ghost", "maybe").await,
+        Err(ApiError::BadRequest(_))
+    ));
+
+    // TREVOR_SPOILER_MODE=0: the field is ignored, as before.
+    let (off, _) = state_with_recorder(pool, |c| c.spoiler_mode = false);
+    let as_safe = ask_spoilers(&off, b, "who is the ghost", "all")
+        .await
+        .unwrap();
+    assert_eq!(as_safe.rung, Rung::Cache);
+    assert_eq!(as_safe.answer.as_ref().unwrap().era_pos, 4);
+    assert!(as_safe.spoilers.is_none() && as_safe.spoiler_safe_up_to.is_some());
+    assert!(
+        serde_json::to_value(&as_safe)
+            .unwrap()
+            .get("spoilers")
+            .is_none()
+    );
+    let junk = ask_spoilers(&off, b, "who is the ghost", "maybe")
+        .await
+        .unwrap();
+    assert_eq!(junk.rung, Rung::Cache);
+    println!(
+        "spoiler mode: safe/all buckets isolated both ways (eraPos 4 vs {NO_LIMIT_ERA}), wire horizonPos null, twins split by bucket, popular [who is the ghost 2], 400 on unknown, TREVOR_SPOILER_MODE=0 reads as safe"
     );
 }
 

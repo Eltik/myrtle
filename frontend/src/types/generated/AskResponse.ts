@@ -2,6 +2,7 @@
 import type { JobStatus } from "./JobStatus";
 import type { TrevorAnswer } from "./TrevorAnswer";
 import type { TrevorRung } from "./TrevorRung";
+import type { TrevorSpoilerMode } from "./TrevorSpoilerMode";
 import type { TrevorSpoilerSafe } from "./TrevorSpoilerSafe";
 
 /**
@@ -16,9 +17,14 @@ export type AskResponse = {
     status: JobStatus;
     rung: TrevorRung;
     /**
-     * Null when the horizon is before the first era (nothing released).
+     * Null when the horizon is before the first era (nothing released),
+     * and for a spoiler-mode ask.
      */
     spoilerSafeUpTo: TrevorSpoilerSafe | null;
+    /**
+     * `all` when the ask was answered in spoiler mode; absent otherwise.
+     */
+    spoilers?: TrevorSpoilerMode;
     answer?: TrevorAnswer;
     /**
      * Seconds until the answer is expected; null while no worker is online

@@ -12,7 +12,7 @@ This is the binding interface for the build in `trevor-integration-plan-v3.md`. 
   - `profilePos` = the maximum gatePos over the stories the signed-in user has read (`story_progress`), using the active version's `trevor_panels.gate_pos`. A reader with no progress gets gatePos 0, meaning nothing has been released yet.
   - A request may name a `horizonStory` (the story being read now). Then `pos = min(gatePos(horizonStory), profilePos)`. A request can lower the horizon below the profile, never raise it.
   - The job's horizon is the era boundary at or before `pos`: `eraPos = max(era.position <= pos)`, or 0. Answers are cached by (version, server, qkey, eraPos). The response says `spoilerSafeUpTo: {eraId, name, position}`, or null for eraPos 0.
-- **The worker receives `horizonPos` (an integer), not a story id.** It keeps only chunks whose gatePos (or dated-source equivalent, as today) is ≤ `horizonPos`. `horizonPos` null means no limit, which happens only for an internal job.
+- **The worker receives `horizonPos` (an integer), not a story id.** It keeps only chunks whose gatePos (or dated-source equivalent, as today) is ≤ `horizonPos`. `horizonPos` null means no limit, which happens for an internal job and for a spoiler-mode ask (v1.1 section 8).
 
 ## 2. Rungs
 
@@ -77,7 +77,7 @@ The worker authenticates with header `x-trevor-worker-key: <TREVOR_WORKER_KEY>`,
 ## 4. Public API
 
 **`POST /api/trevor/ask`**: signed-in users only.
-- Request: `{question, horizonStory?: storyId, turnstileToken?}`.
+- Request: `{question, horizonStory?: storyId, turnstileToken?}`. Since v1.1 section 8 it also takes `spoilers?: "safe" | "all"` (spoiler mode).
 - Turnstile is verified when `TURNSTILE_SECRET` is set. Unset means skipped, which is the dev default. When it is set and siteverify is unreachable, the backend fails CLOSED with a 503 "Trevor is busy".
 - Quota: 30 an hour per user (as built).
 - Response: `{jobId, status, rung, spoilerSafeUpTo, answer?: TrevorAnswer, etaSecs: int|null, streamUrl}`.
