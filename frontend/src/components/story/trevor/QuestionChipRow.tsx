@@ -10,7 +10,7 @@
  * chip; when every one has been asked the row is not rendered.
  *
  * Kill switch: `VITE_TREVOR_CHIP_ROW=0` drops the row, so the chips live in the
- * empty thread only, as before 2026-10-17.
+ * empty thread only.
  */
 import type React from "react";
 import type { IQuestionChip } from "#/lib/trevor/chips";

@@ -1,26 +1,15 @@
 /**
- * THE STORIES PAGE'S "ASK TREVOR" TAB (contract v1.1 section 6; provisional,
- * behind `VITE_TREVOR=1`, which is the only way the library mounts it).
+ * The stories page's "Ask Trevor" tab (contract v1.1 section 6), mounted only
+ * with `VITE_TREVOR=1`.
  *
- * The reader's chat (`AskChat`) with no story: the backend's horizon is then
- * the reader's profile alone (the furthest story they have read), so a
- * question can be about anything in the lore up to there. The era it stops at
- * is named above the composer, from the newest answer or, before any, from
- * the popular list's era.
- *
- * The empty thread holds Trevor's greeting, the questions asked most in the
- * reader's era as chips (`GET /trevor/popular`; a chip that carries its answer
- * shows it with no request); after the first question the ones not yet asked
- * stay above the composer as one scrolling row. "My questions" (`GET /trevor/me/jobs`) sits
- * beside the chat from 1024 px up and under it below that, outside the chat's
- * scroller, so it stays reachable once the thread has turns. A past question opens into the thread: answered ones
- * with their stored answer, open ones followed again until they land, and a
- * deferred one with its quick look until the full answer replaces it. Both
- * routes are optional: a backend without them (404) leaves the chat working
- * with neither list.
- *
- * Signed out, the tab explains that answers follow reading progress and asks
- * to sign in; nothing is requested.
+ * The reader's chat (`AskChat`) with no story, so the spoiler horizon is the
+ * reader's profile alone; the era it stops at is named above the composer.
+ * The empty thread holds the era's popular questions (`GET /trevor/popular`),
+ * each opening its stored answer with no request. "My questions"
+ * (`GET /trevor/me/jobs`) sits beside the chat from 1024 px up and under it
+ * below, and a past question opens into the thread, an open one followed again
+ * until it lands. A backend without these routes (404) leaves the chat working
+ * with neither list. Signed out, the tab explains and requests nothing.
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type React from "react";

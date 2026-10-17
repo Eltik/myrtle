@@ -12,8 +12,7 @@
  *
  * A stream that stays open but goes silent (no delta and not even the
  * backend's 15 s keep-alive comment for `stallMs`, 45 s) is treated as one
- * that closed: it is dropped and the job is polled. Before this, a stalled
- * stream left the answer frozen mid-sentence with nothing to finish it.
+ * that closed: it is dropped and the job is polled.
  * The job's `done` view is authoritative: its answer replaces whatever the
  * deltas assembled, on the stream and on a poll alike.
  *

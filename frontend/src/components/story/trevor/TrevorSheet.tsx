@@ -13,8 +13,7 @@
  * open the reader counts it as a dialog: its hotkeys stand down, so Space in
  * the question box types a space instead of turning the page.
  *
- * Built from the kit (`Sheet`, `Tabs`, `Badge`, `Button`) and its tokens only,
- * so the coming mockups can restyle it without touching the data flow.
+ * Built from the kit (`Sheet`, `Tabs`, `Badge`, `Button`) and its tokens only.
  */
 import { useQuery } from "@tanstack/react-query";
 import type React from "react";

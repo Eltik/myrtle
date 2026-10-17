@@ -1,4 +1,12 @@
-/** One turn of the Ask chat: the reader's question and Trevor's reply in whatever state the question is in. */
+/**
+ * One turn of the Ask chat: the reader's question and Trevor's reply in
+ * whatever state the question is in.
+ *
+ * Each reply is its own polite live region, busy while the answer streams, so
+ * a screen reader reads it once, whole. A quick look (contract v1.1 section
+ * 1b) shows at once as its own reply with Trevor still writing under it; the
+ * full answer replaces it when it lands.
+ */
 import type React from "react";
 import { useId } from "react";
 import { ChatMessage } from "#/components/chat/chat-message";

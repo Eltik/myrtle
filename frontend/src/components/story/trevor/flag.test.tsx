@@ -3,11 +3,9 @@
  * chapter sheet render nothing of Trevor, even when the backend has a panel to
  * give; with `VITE_TREVOR=1` the toolbar button and the chapter primer appear.
  *
- * The stronger check was made once by hand on 2026-10-16: the reader (the
- * tutorial fixture) and the chapter sheet rendered with the flag off are
- * byte-identical to their render before Trevor existed (24,216 and 14,222
- * bytes of `document.body.innerHTML`, `cmp` equal). This file keeps the
- * structural half of that in CI.
+ * This file checks the structure. Whether the flag-off render is byte for
+ * byte the render without Trevor (`document.body.innerHTML` of the tutorial
+ * reader and the chapter sheet, compared with `cmp`) is checked by hand.
  */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, fireEvent, render, waitFor } from "@testing-library/react";

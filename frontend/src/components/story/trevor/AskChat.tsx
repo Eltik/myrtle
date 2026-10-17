@@ -1,30 +1,19 @@
 /**
- * THE ASK TAB AS A CHAT (coss chat: `components/chat/*`, `ui/composer`).
+ * The Ask tab as a chat (coss chat kit: `components/chat/*`, `ui/composer`).
  *
  * The reader's questions are outgoing messages and Trevor's replies incoming
- * ones, in the order asked, in a log that follows the newest message while
- * the reader is at the bottom and offers "Jump to latest" when they scrolled
- * up. The reader may ask again while earlier questions are still queued or
- * streaming: each turn has its own job and watcher (`useTrevorThread`,
- * `lib/trevor/thread.ts`), and answers stream into their own bubbles at once.
- * Past the backend's 3 open questions a turn waits here, said so in words,
- * and is sent when one is answered; the composer never stands down for it.
+ * ones, in the order asked; the log follows the newest message while the
+ * reader is at the bottom and offers "Jump to latest" otherwise. Each question
+ * has its own job and watcher (`useTrevorThread`), so answers stream into their
+ * own bubbles at once; past the backend's 3 open questions a turn waits, and
+ * says so. When an answer settles and focus was lost, it returns to the
+ * composer.
  *
- * Each reply carries its own live region (the log itself is `aria-live=off`):
- * polite, and busy while the answer streams, so a screen reader reads it once,
- * whole, instead of word by word. When an answer settles and focus was lost
- * (on the page body), it returns to the composer. The empty state offers the panel's suggested
- * questions as chips: one with a prepared answer adds it to the thread with no
- * request; one without asks Trevor. Once the thread has turns, the same
- * questions not yet asked stay above the composer as one scrolling row
- * (`QuestionChipRow`). The stories page's tab passes its own empty state
- * (popular questions, My questions), its own chips for that row, and the era
- * its list was drawn from, and no story: the horizon is then the reader's
- * profile alone.
- *
- * A quick look (a passages answer given at once while the full answer is
- * deferred, contract v1.1 section 1b) shows as its own reply at once, with
- * Trevor still writing under it; the full answer replaces it when it lands.
+ * The empty thread offers the panel's suggested questions: one with a prepared
+ * answer adds it with no request, one without asks Trevor. Once the thread has
+ * turns, the ones not yet asked stay above the composer (`QuestionChipRow`).
+ * The stories page passes its own empty state, chips and era, and no story, so
+ * the horizon is the reader's profile alone.
  */
 import { ArrowUpIcon } from "lucide-react";
 import type React from "react";

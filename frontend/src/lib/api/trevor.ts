@@ -1,26 +1,18 @@
 /**
- * Trevor, the story question answerer: the reader's client for contract v1
- * section 4 (`trevor/design/trevor-contract-v1.md`).
+ * Trevor's client (contract v1 section 4, `trevor/design/trevor-contract-v1.md`).
  *
- * - Panels and status are public. Panels are per story and per corpus
- *   version: `?v=` naming the active version makes the backend answer them
- *   immutable for a day, so a caller that knows the version (from `/status`)
- *   passes it.
- * - Asking, a job, its stream and feedback need an account. The token is the
- *   httpOnly `site_token` cookie, which only the server can read, so every
- *   authed call is a server function; a signed-out call throws `APIError(401)`
- *   without reaching the backend.
- * - The stream is proxied as a RAW Response (TanStack Start passes a returned
- *   `Response` through untouched, `x-tss-raw`), read in the browser by
- *   `lib/trevor/sse.ts`. A native `EventSource` cannot carry the bearer header.
+ * Panels and status are public; naming the active version (`?v=`, from
+ * `/status`) lets the backend answer panels immutable for a day. Asking, a
+ * job, its stream and feedback need the httpOnly `site_token` cookie, which
+ * only the server can read, so each is a server function; signed out they
+ * throw `APIError(401)` without reaching the backend. The stream is proxied as
+ * a raw Response (a native `EventSource` cannot send the bearer header) and
+ * read in the browser by `lib/trevor/sse.ts`.
  *
- * Every non-2xx answer is thrown as the backend's own `APIError` (`parseError`),
- * so `classifyFailure` and `lib/trevor/errors.ts` see its status. An error
- * thrown inside a server function reaches the browser as a bare `Error` with
- * only its message (TanStack Start's `$TSR/Error` serializer drops `status`
- * and `kind`; measured in the preview: a 503 arrived as "Trevor is busy" with
- * no status), so the authed calls return a refusal as data (`settle`) and the
- * browser side rethrows it as the `APIError` it was (`unwrap`).
+ * An error thrown inside a server function reaches the browser as a bare
+ * `Error` without `status` and `kind`, so the authed calls return a refusal as
+ * data (`settle`) and the browser rethrows it as the `APIError` it was
+ * (`unwrap`); `classifyFailure` and `lib/trevor/errors.ts` then see its status.
  */
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
