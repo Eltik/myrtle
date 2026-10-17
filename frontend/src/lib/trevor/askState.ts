@@ -1,6 +1,5 @@
 /**
- * THE ASK BOX'S STATE, as a pure reducer so every transition is tested
- * without a DOM or a network.
+ * One asked question's state, as a pure reducer.
  *
  * held -> sending                    (a slot freed: see thread.ts, MAX_OPEN)
  * idle -> sending -> (done | queued | refused)
@@ -8,18 +7,16 @@
  * queued -> done | failed | offline   (polling, or a stream that ended early)
  * offline -> queued                   (the reader resumes; the question never left the queue)
  *
- * Quick look (contract v1.1 section 1b): when no model can take the question
- * now, the backend answers at once from passages AND queues a deferred job for
- * the full answer. The ask's response then carries both an answer and an open
- * job; the turn is `queued` with that answer as `quick`, so the quick look is
- * shown at once and the full answer replaces it when the job finishes. A
- * deferred job that fails, or a watch that is refused, settles on the quick
- * look (`done`, `fullFailed`), never on an error: the reader already has an
- * answer.
+ * Quick look (contract v1.1 section 1b): an ask no model can take now comes
+ * back with a quick passages job (`jobId`), the deferred full answer's job
+ * (`deferredJobId`) and, when an earlier era answered the same question, that
+ * answer (`quickLook`). The turn follows the passages job, then the deferred
+ * job with the passages answer shown as `quick`; with a `quickLook` it follows
+ * the deferred job at once. A deferred job that fails, or a watch that is
+ * refused, settles on the quick look (`done`, `fullFailed`), never on an error.
  */
 import type { AskResponse } from "#/types/generated/AskResponse";
 import type { JobView } from "#/types/generated/JobView";
-import type { TrevorAnswer } from "#/types/generated/TrevorAnswer";
 import type { TrevorRung } from "#/types/generated/TrevorRung";
 import type { TrevorSpoilerSafe } from "#/types/generated/TrevorSpoilerSafe";
 import { type IParsedAnswer, parseAnswer } from "./answer";
@@ -85,26 +82,6 @@ function quickFallback(job: IJob): AskState | null {
     return job.quick ? { kind: "done", question: job.question, answer: job.quick, rung: job.quick.rung, spoiler: job.spoiler, cached: false, quick: true, fullFailed: true } : null;
 }
 
-/** The v1.1 fields of an ask's response, read whether or not the generated type has them yet. */
-type AskResponseV11 = AskResponse & { deferredJobId?: string | null; quickLook?: TrevorAnswer | null; deferred?: boolean };
-
-/**
- * The job of the deferred full answer, or null. The backend names it
- * `deferredJobId` beside the quick passages job; the dev preview's mock
- * (`scripts/trevor-preview.mjs`) answers the passages inline and flags the
- * ask's own job `deferred`.
- */
-export function deferredJob(r: AskResponse): string | null {
-    const v = r as AskResponseV11;
-    if (v.deferredJobId) return v.deferredJobId;
-    return v.deferred === true && r.answer && r.jobId ? r.jobId : null;
-}
-
-/** The response is a quick look with its full answer deferred. */
-export function isDeferred(r: AskResponse): boolean {
-    return deferredJob(r) !== null;
-}
-
 export function askReducer(s: AskState, e: AskEvent): AskState {
     switch (e.type) {
         case "reset":
@@ -116,20 +93,17 @@ export function askReducer(s: AskState, e: AskEvent): AskState {
         case "accepted": {
             if (s.kind !== "sending") return s;
             const r = e.response;
-            const deferred = deferredJob(r);
-            const looked = (r as AskResponseV11).quickLook;
-            const quick = r.answer ? parseAnswer(r.answer) : looked ? parseAnswer(looked) : undefined;
-            const base = { question: s.question, rung: r.rung, spoiler: r.spoilerSafeUpTo, etaSecs: r.etaSecs, position: null, workerOnline: r.etaSecs !== null };
-            if (deferred) {
+            const quick = r.quickLook ? parseAnswer(r.quickLook) : undefined;
+            const base = { kind: "queued" as const, question: s.question, rung: r.rung, spoiler: r.spoilerSafeUpTo, etaSecs: r.etaSecs, position: null, workerOnline: r.etaSecs !== null };
+            if (r.deferredJobId) {
                 // The quick look in hand: follow the full answer. Not yet: follow the passages job first, then the full answer.
-                if (quick || !r.jobId || r.jobId === deferred) return { kind: "queued", ...base, jobId: deferred, ...(quick ? { quick } : {}) };
-                return { kind: "queued", ...base, jobId: r.jobId, next: deferred };
+                if (quick || !r.jobId) return { ...base, jobId: r.deferredJobId, ...(quick ? { quick } : {}) };
+                return { ...base, jobId: r.jobId, next: r.deferredJobId };
             }
-            // A passages-only ask still running may carry an earlier era's answer to show meanwhile.
-            if (!r.answer && r.jobId && quick) return { kind: "queued", ...base, jobId: r.jobId, quick };
             if (r.answer) return { kind: "done", question: s.question, answer: parseAnswer(r.answer), rung: r.rung, spoiler: r.spoilerSafeUpTo, cached: r.jobId === null };
             if (!r.jobId) return { kind: "failed", question: s.question, message: "" };
-            return { kind: "queued", question: s.question, jobId: r.jobId, rung: r.rung, spoiler: r.spoilerSafeUpTo, etaSecs: r.etaSecs, position: null, workerOnline: r.etaSecs !== null };
+            // A passages-only ask still running may carry an earlier era's answer to show meanwhile.
+            return quick ? { ...base, jobId: r.jobId, quick } : { ...base, jobId: r.jobId };
         }
         case "text": {
             const job = jobOf(s);

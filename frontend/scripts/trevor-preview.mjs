@@ -30,9 +30,11 @@
 //   done view. Claiming is fair (the user with the fewest running jobs, then the oldest job), and
 //   deferred jobs are claimed only when no normal job waits.
 // - Quick look (contract v1.1 section 1b): when TREVOR_PREVIEW_QUEUE_MAX (default 2) jobs are
-//   already queued or running, or in mode `quick`, the ask is answered at once with a passages
-//   answer (the closest prepared bank answer inside the era and its cited passages) and also
-//   queued as a deferred job, which then streams like any other.
+//   already queued or running, or in mode `quick`, the ask gets a quick passages job (always
+//   canned: the closest prepared bank answer inside the era and its cited passages, done within
+//   a second) and a deferred job for the full answer, which then streams like any other. The
+//   response carries the quick job as `jobId`, the deferred one as `deferredJobId`, and, when
+//   this run answered the same question in an earlier era, that answer as `quickLook`.
 // - Stopping the preview (Ctrl+C, SIGTERM, SIGHUP, or vite exiting) stops vite, the worker (SIGTERM,
 //   SIGKILL after 15 s) and the llama-server the worker started (its child pid, recorded every
 //   2 s), and removes the model lock only when it names the worker. No other llama-server is
@@ -286,9 +288,9 @@ const answer = (source, text = ANSWER_TEXT, citations = CITATIONS) => ({
 const queuedView = (id) => ({ jobId: id, status: "queued", rung: "cpu", position: 1, etaSecs: null, workerOnline: false, answer: null, error: null });
 
 /**
- * Every job of this run, in creation order. Canned: { id, uid, question, nq, horizon, deferred, quickLook, created,
+ * Every job of this run, in creation order. Canned: { id, uid, question, nq, horizon, deferred, quickJob, created,
  * words, sent, fail, deltaMs, start, doneAt, answer }. Real (real: true): { ..., status, started, finished, firstDelta,
- * answer, error, subs, nextSeq, pending }.
+ * answer, error, subs, nextSeq, pending }. A deferred job's quick passages job (quick: true) is always canned.
  */
 const JOBS = new Map();
 const rand = (lo, hi) => lo + Math.random() * (hi - lo);
@@ -341,8 +343,8 @@ const openJobs = (now = Date.now()) => [...JOBS.values()].filter((j) => isOpen(j
 
 function jobView(j, now = Date.now()) {
     if (now >= j.doneAt) {
-        if (j.fail) return { jobId: j.id, status: "failed", rung: "cf", position: 0, etaSecs: null, workerOnline: true, answer: null, error: "the mock was asked to fail" };
-        return { jobId: j.id, status: "done", rung: "cf", position: 0, etaSecs: null, workerOnline: true, answer: j.answer, error: null };
+        if (j.fail) return { jobId: j.id, status: "failed", rung: j.rung ?? "cf", position: 0, etaSecs: null, workerOnline: true, answer: null, error: "the mock was asked to fail" };
+        return { jobId: j.id, status: "done", rung: j.rung ?? "cf", position: 0, etaSecs: null, workerOnline: true, answer: j.answer, error: null };
     }
     if (now >= j.start) return { jobId: j.id, status: "running", rung: "cf", position: 0, etaSecs: Math.ceil((j.doneAt - now) / 1000), workerOnline: true, answer: null, error: null };
     const ahead = openJobs(now).filter((o) => !o.real && o.start < j.start).length;
@@ -549,16 +551,24 @@ function jobRow(j) {
         createdAt: iso(j.created),
         finishedAt: ended ? iso(j.real ? j.finished : j.doneAt) : null,
         answer: v.answer ?? null,
-        quickLook: j.quickLook ?? null,
+        quickLook: j.quickJob ? (JOBS.get(j.quickJob)?.answer ?? null) : null,
         error: v.error ?? null,
     };
 }
 
-/** A new job for an ask: real (queued for the worker) or canned (on its own clock). */
+/** The quick passages job of a deferred ask: canned in both modes, done within a second, its answer the bank's quick look. */
+function newQuickJob(id, question, horizon) {
+    const start = Date.now() + rand(300, 900);
+    const j = { id, uid: DEMO_UID, question, nq: normQ(question), horizon, deferred: false, quick: true, created: Date.now(), rung: "passages", words: [], sent: 0, fail: false, deltaMs: 0, start, doneAt: start, answer: quickLook(question, horizon) };
+    JOBS.set(id, j);
+    return j;
+}
+
+/** A new job for an ask: real (queued for the worker) or canned (on its own clock). A deferred one comes with its quick passages job. */
 function newJob(question, body, horizon, deferred) {
     const now = Date.now();
     const id = `job-${jobs}`;
-    const common = { id, uid: DEMO_UID, question, nq: normQ(question), horizon, deferred, quickLook: deferred ? quickLook(question, horizon) : null, created: now };
+    const common = { id, uid: DEMO_UID, question, nq: normQ(question), horizon, deferred, quickJob: deferred ? newQuickJob(`${id}-quick`, question, horizon).id : null, created: now };
     if (REAL) {
         const j = { ...common, real: true, status: "queued", subs: new Set(), nextSeq: 0, pending: new Map() };
         JOBS.set(id, j);
@@ -577,13 +587,25 @@ function newJob(question, body, horizon, deferred) {
     return j;
 }
 
-/** POST /api/trevor/ask's answer for a job: queued, or the quick look of a deferred job. */
+/** This run's answer to the same question from an earlier era, the backend's `quickLook`; null when there is none. */
+function earlierAnswer(j) {
+    for (const o of JOBS.values()) {
+        if (o.quick || o.nq !== j.nq || o.horizon.eraPos >= j.horizon.eraPos) continue;
+        const v = o.real ? realView(o) : jobView(o);
+        if (v.status === "done" && v.answer) return v.answer;
+    }
+    return null;
+}
+
+/** POST /api/trevor/ask's answer for a job: queued, or a deferred job's quick passages job (contract v1.1 section 1b). */
 function accepted(j) {
-    const v = j.real ? realView(j) : jobView(j);
     const spoiler = REAL ? j.horizon.spoiler : (j.horizon.spoiler ?? SPOILER);
-    const out = { jobId: j.id, status: v.status === "running" ? "running" : "queued", rung: j.real ? "cpu" : "cf", spoilerSafeUpTo: spoiler, etaSecs: v.etaSecs, streamUrl: `/api/trevor/jobs/${j.id}/stream` };
-    if (j.deferred) return json({ ...out, status: "queued", rung: "passages", deferred: true, answer: j.quickLook }, 202);
-    return json(out, 202);
+    const shown = j.deferred ? JOBS.get(j.quickJob) : j;
+    const v = shown.real ? realView(shown) : jobView(shown);
+    const out = { jobId: shown.id, status: v.status === "running" ? "running" : "queued", rung: shown.real ? "cpu" : "cf", spoilerSafeUpTo: spoiler, etaSecs: v.etaSecs, streamUrl: `/api/trevor/jobs/${shown.id}/stream` };
+    if (!j.deferred) return json(out, 202);
+    const look = earlierAnswer(j);
+    return json({ ...out, rung: "passages", deferredJobId: j.id, ...(look ? { quickLook: look } : {}) }, 202);
 }
 
 const server = Bun.serve({
@@ -650,7 +672,7 @@ const server = Bun.serve({
                 const v = j.real ? realView(j) : jobView(j);
                 // A decline ("The provided passages do not ...") is not worth suggesting.
                 const text = v.answer?.answer?.answer;
-                if (v.status !== "done" || !v.answer || v.answer.eraPos > h.eraPos || seen.has(j.nq) || (typeof text === "string" && DECLINES.test(text))) continue;
+                if (j.quick || v.status !== "done" || !v.answer || v.answer.eraPos > h.eraPos || seen.has(j.nq) || (typeof text === "string" && DECLINES.test(text))) continue;
                 seen.add(j.nq);
                 asked.push({ question: j.question, answer: v.answer, askers: 2 });
             }
@@ -660,7 +682,7 @@ const server = Bun.serve({
         if (p === "/api/trevor/me/jobs") {
             if (!demo) return json({ error: { code: "UNAUTHORIZED", message: "sign in" } }, 401);
             const limit = Math.min(Math.max(Number(url.searchParams.get("limit") ?? 20) || 20, 1), 50);
-            let rows = [...JOBS.values()].filter((j) => j.uid === DEMO_UID).reverse();
+            let rows = [...JOBS.values()].filter((j) => j.uid === DEMO_UID && !j.quick).reverse();
             const before = url.searchParams.get("before");
             if (before) {
                 const at = rows.findIndex((j) => j.id === before);
@@ -688,13 +710,13 @@ const server = Bun.serve({
             }
             const open = openJobs();
             const nq = normQ(question);
-            const twin = open.find((j) => j.nq === nq && j.horizon.eraPos === horizon.eraPos);
+            const twin = open.find((j) => !j.quick && j.nq === nq && j.horizon.eraPos === horizon.eraPos);
             if (twin) return accepted(twin);
             if (open.length >= MAX_OPEN) return json({ error: { code: "CONFLICT", message: `at most ${MAX_OPEN} questions may wait at once; wait for one to finish` } }, 409);
             const full = REAL && open.filter((j) => j.real).length >= QUEUE_MAX;
             return accepted(newJob(question, body, horizon, MODE === "quick" || full));
         }
-        const stream = p.match(/^\/api\/trevor\/jobs\/(job-\d+)\/stream$/);
+        const stream = p.match(/^\/api\/trevor\/jobs\/(job-\d+(?:-quick)?)\/stream$/);
         if (stream) {
             const j = JOBS.get(stream[1] ?? "");
             if (MODE === "offline" || !j) return json({ error: { code: "NOT_FOUND", message: "no stream" } }, 404);
@@ -726,7 +748,7 @@ const server = Bun.serve({
             });
             return new Response(body, { headers: { "content-type": "text/event-stream", "cache-control": "no-cache", ...cors } });
         }
-        const job = p.match(/^\/api\/trevor\/jobs\/(job-\d+)$/);
+        const job = p.match(/^\/api\/trevor\/jobs\/(job-\d+(?:-quick)?)$/);
         if (job) {
             const j = JOBS.get(job[1] ?? "");
             if (MODE === "offline") return json(queuedView(job[1] ?? ""));

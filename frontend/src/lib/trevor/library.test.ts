@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { AskResponse } from "#/types/generated/AskResponse";
 import type { JobView } from "#/types/generated/JobView";
 import type { TrevorAnswer } from "#/types/generated/TrevorAnswer";
-import { askReducer, isDeferred } from "./askState";
+import { askReducer } from "./askState";
 import { type IMyJob, jobOpen, parseMyJobs, parsePopular, timeOf, toTurnState } from "./library";
 import { EMPTY_THREAD, latestSpoiler, openSlots, threadReducer } from "./thread";
 
@@ -16,19 +16,11 @@ const stored = (text: string, source: "live" | "passages" = "live"): TrevorAnswe
     source,
     answer: { answer: text, citations: [{ n: 1, storyId: "s1", chunkId: "c1", lineStart: 3, lineEnd: 5, text: "Quote." }] },
 });
-// The dev preview mock's shape: the passages answer inline, the ask's own job deferred.
-const quickResponse = (extra: Partial<AskResponse> = {}): AskResponse => ({ jobId: "j1", status: "queued", rung: "passages", spoilerSafeUpTo: ERA, answer: stored("Top passages.", "passages"), etaSecs: 120, streamUrl: "/api/trevor/jobs/j1/stream", deferred: true, ...extra }) as AskResponse;
+// A deferred ask with an earlier era's answer as its quick look: the full answer is job j1.
+const quickResponse = (extra: Partial<AskResponse> = {}): AskResponse => ({ jobId: "p1", status: "queued", rung: "passages", spoilerSafeUpTo: ERA, etaSecs: 120, streamUrl: "/api/trevor/jobs/p1/stream", deferredJobId: "j1", quickLook: stored("Top passages.", "passages"), ...extra });
 const view = (answer: TrevorAnswer | null, error: string | null = null): JobView => ({ jobId: "j1", status: answer ? "done" : "failed", rung: "cpu", position: 0, etaSecs: null, workerOnline: true, answer, error });
 
 describe("quick look with a deferred full answer (contract v1.1 1b)", () => {
-    it("finds the deferred job: the backend's deferredJobId, or the mock's flagged job", () => {
-        expect(isDeferred(quickResponse())).toBe(true);
-        expect(isDeferred(quickResponse({ deferred: false } as Partial<AskResponse>))).toBe(false);
-        expect(isDeferred(quickResponse({ jobId: null }))).toBe(false);
-        expect(isDeferred({ jobId: "p1", status: "queued", rung: "passages", spoilerSafeUpTo: ERA, etaSecs: 1, streamUrl: "", deferredJobId: "d1" } as AskResponse)).toBe(true);
-        expect(isDeferred({ jobId: "j", status: "done", rung: "cache", spoilerSafeUpTo: ERA, answer: stored("A"), etaSecs: null, streamUrl: null })).toBe(false);
-    });
-
     it("backend shape: follows the quick passages job, then the deferred full answer with the passages as the quick look", () => {
         const r = { jobId: "p1", status: "queued", rung: "passages", spoilerSafeUpTo: ERA, etaSecs: 1, streamUrl: "", deferredJobId: "d1" } as AskResponse;
         let s = askReducer({ kind: "sending", question: "Who?" }, { type: "accepted", response: r });
@@ -70,7 +62,7 @@ describe("quick look with a deferred full answer (contract v1.1 1b)", () => {
             const s = askReducer(q, e);
             expect(s.kind === "done" && [s.quick, s.fullFailed, s.answer.source]).toEqual([true, true, "passages"]);
         }
-        const plain = askReducer({ kind: "sending", question: "Who?" }, { type: "accepted", response: { ...quickResponse(), answer: undefined } });
+        const plain = askReducer({ kind: "sending", question: "Who?" }, { type: "accepted", response: { ...quickResponse(), deferredJobId: undefined, quickLook: undefined } });
         expect(askReducer(plain, { type: "jobFailed", message: "x" }).kind).toBe("failed");
     });
 
@@ -152,7 +144,7 @@ describe("the stories tab's lists (contract v1.1 section 5)", () => {
 
     it("restores turns that do not move the spoiler pill and are followed when open", () => {
         let t = threadReducer(EMPTY_THREAD, { type: "ask", question: "Now?", token: null });
-        t = threadReducer(t, { type: "turn", id: 1, event: { type: "accepted", response: { ...quickResponse(), answer: undefined } } });
+        t = threadReducer(t, { type: "turn", id: 1, event: { type: "accepted", response: quickResponse() } });
         t = threadReducer(t, { type: "restore", state: { kind: "queued", question: "Old?", jobId: "j9", rung: "cpu", spoiler: null, etaSecs: null, position: null, workerOnline: true } });
         expect(latestSpoiler(t)).toEqual(ERA);
         expect(openSlots(t)).toBe(2);
