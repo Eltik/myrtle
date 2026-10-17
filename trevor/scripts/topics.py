@@ -703,71 +703,6 @@ def stage_traitcheck():
     print(f'traitcheck: {n_checked} body-feature sentences checked, {n_dropped} dropped', flush=True)
 
 
-TRAIT_CHECK2_SYS = ("You check one sentence of a summary about a race of the Arknights world against the lines of the passages "
-                    "it cites that name the feature, each with the line before it. A line is \"Speaker: words\" or narration. Decide "
-                    "WHO has the feature in those lines. Answer true only if the lines give the feature to members of this race as a "
-                    "group, or to a person the lines themselves show to be of this race (narration, a record, or the person speaking "
-                    "of their own body). Answer false when the feature belongs to someone the speaker is addressing or describing "
-                    "whose race the lines do not show to be this one (a person of this race talking about another person's tail or "
-                    "horn does not give this race that feature), to another race, or is a figure of speech. Answer true or false only.")
-CSHA3 = sha16(TRAIT_CHECK2_SYS)
-
-
-def feature_lines(text, words, limit=14):
-    """The lines of a passage that name one of `words`, each after the line before it (who is talking to whom)."""
-    lines, out = text.split('\n'), []
-    for i, line in enumerate(lines):
-        if any(re.search(rf'\b{re.escape(w)}', line, re.I) for w in words):
-            if i > 0 and lines[i - 1] not in out:
-                out.append(lines[i - 1])
-            if line not in out:
-                out.append(line)
-    return out[:limit]
-
-
-def stage_traitcheck2():
-    """Speaker-aware trait check (2026-10-03): each body-feature sentence of a race's summaryV2 against only the lines of
-    its cited passages that name the feature, with the line before each, so the judge sees who has it. Writes summaryV2s
-    (summaryV2 minus the sentences this check fails) and traitDroppedS; summaryV2 is untouched, and ask serves summaryV2s
-    only with --speaker-trait-check. 2026-10-02's traitcheck passed Durin "thick tails" (Inam about Tomimi's tail) and
-    Savra "a horn" (a Savra girl about Philae's horn): it read whole 3,000-character passages."""
-    path = os.path.join(OUT, 'topics.jsonl')
-    rows = read_jsonl(path)
-    chunks = {c['chunkId']: c for c in read_jsonl(os.path.join(ROOT, 'artifacts', 'p4', 'chunks.jsonl'))}
-    n_checked = n_dropped = 0
-    for r in rows:
-        base = r.get('summaryV2')
-        if not base or r.get('kind') != 'race':
-            continue
-        key = sha16(base + CSHA3)
-        if r.get('traitCheckKeyS') == key:
-            continue
-        parts = re.split(r'(?<=[.!?])\s+', base)
-        dropped = []
-        for i, x in enumerate(parts):
-            words = sorted({m.lower() for m in BODY_RE.findall(x)})
-            if not words:
-                continue
-            stems = sorted({w.rstrip('s') if len(w) > 3 else w for w in words})
-            cites = common.cited_numbers(x)
-            ps = r['passagesV2']
-            ev = '\n---\n'.join('\n'.join(feature_lines(chunks[ps[c - 1]]['text'], stems)) for c in cites
-                                if 0 < c <= len(ps) and ps[c - 1] in chunks)
-            claim = common.strip_cites(x)
-            ok = judge_once(TRAIT_CHECK2_SYS, f"RACE: {r['topic']}\nLINES:\n{ev.strip() or '(no cited line names the feature)'}\n\nSENTENCE: {claim}",
-                            cache_prompt=False)
-            n_checked += 1
-            print(f"traitcheck2 {r['topic']} {'keep' if ok else 'DROP'}: {claim[:140]}", flush=True)
-            if not ok:
-                dropped.append(i)
-        r['summaryV2s'] = ' '.join(x for i, x in enumerate(parts) if i not in dropped)
-        r['traitDroppedS'] = [parts[i] for i in dropped]
-        r['traitCheckKeyS'] = key
-        n_dropped += len(dropped)
-    common.write_jsonl(path, rows)
-    print(f'traitcheck2: {n_checked} body-feature sentences checked, {n_dropped} dropped', flush=True)
-
-
 def stage_traitrule():
     """Race-trait rule without a model (2026-10-03, item 11): a body-feature sentence of a race's summaryV2 stays only when
     a cited line that names the feature gives it to this race. Per line: the speaker (the "Name:" label) and the subject
@@ -776,8 +711,9 @@ def stage_traitrule():
     operator_attributes.jsonl; narration naming the race itself (outside the speaker label) supports the feature. A feature
     is refuted when its lines give known races and none of them is this one and no line names the race; a sentence with a
     refuted feature is dropped. Writes summaryV2r and traitDroppedR; summaryV2 is untouched, and ask serves summaryV2r only
-    with --race-trait-rule. traitcheck2 (Qwen) kept both misattributions this is built for: Durin "thick tails" (Inam and
-    Tomimi, Archosauria, about Tomimi's tail) and Savra "a horn" (a Savra girl about Philae's horn; Philae is Sarkaz)."""
+    with --race-trait-rule. The speaker-aware Qwen check (traitcheck2, 2026-10-03, retired) kept both misattributions
+    this is built for: Durin "thick tails" (Inam and Tomimi, Archosauria, about Tomimi's tail) and Savra "a horn" (a
+    Savra girl about Philae's horn; Philae is Sarkaz)."""
     path = os.path.join(OUT, 'topics.jsonl')
     rows = read_jsonl(path)
     chunks = {c['chunkId']: c for c in read_jsonl(os.path.join(ROOT, 'artifacts', 'p4', 'chunks.jsonl'))}
@@ -885,4 +821,4 @@ def stage_units():
 if __name__ == '__main__':
     {'plan': stage_plan, 'gen': stage_gen, 'units': stage_units, 'judge': stage_judge, 'mine': stage_mine,
      'classify': stage_classify, 'thin': stage_thin, 'retrait': stage_retrait, 'traitcheck': stage_traitcheck,
-     'traitcheck2': stage_traitcheck2, 'traitrule': stage_traitrule}[sys.argv[1]]()
+     'traitrule': stage_traitrule}[sys.argv[1]]()
