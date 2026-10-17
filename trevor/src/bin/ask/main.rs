@@ -13,6 +13,7 @@ mod detect;
 mod chrono;
 mod scenes;
 mod terms;
+mod kinds;
 mod retrieval;
 mod routing;
 mod answer;
@@ -46,7 +47,7 @@ async fn main() -> Result<()> {
     // RELATION_RULE is the default (`--no-relation-rule`); `answer_one_inner` narrows it per question.
     a.relation_rule = !a.no_relation_rule;
     if m.value_source("retrieval") == Some(clap::parser::ValueSource::DefaultValue)
-        && std::env::var("TREVOR_RETRIEVAL").as_deref() == Ok("bm25") {
+        && trevor::env::is("TREVOR_RETRIEVAL", "bm25") {
         a.retrieval = RetrievalKind::Bm25;
     }
     let profile = a.profile;

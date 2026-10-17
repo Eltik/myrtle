@@ -721,12 +721,6 @@ impl Manifest {
     }
 }
 
-fn now_unix() -> u64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map_or(0, |d| d.as_secs())
-}
-
 /// Rename so a reader never sees a half-written derived file.
 fn write_jsonl<T: Serialize>(path: &Path, rows: impl IntoIterator<Item = T>) -> Result<()> {
     crate::util::write_jsonl_atomic(path, "jsonl.tmp", rows)
@@ -926,7 +920,7 @@ pub async fn run(
                 }
                 std::fs::rename(&refresh_tmp, &chunks_path)?;
             }
-            report.built_at_unix = now_unix();
+            report.built_at_unix = crate::util::unix_now();
             let tmp = cfg.out.join("changes.json.tmp");
             std::fs::write(&tmp, serde_json::to_vec_pretty(&report)?)?;
             std::fs::rename(&tmp, cfg.out.join("changes.json"))?;
@@ -945,7 +939,7 @@ pub async fn run(
         .count();
     let manifest = Manifest {
         phase: "p0-ingest",
-        built_at_unix: now_unix(),
+        built_at_unix: crate::util::unix_now(),
         backend_base: cfg.base.clone(),
         totals_from_api: index.totals,
         scripted_stories: jobs.len(),

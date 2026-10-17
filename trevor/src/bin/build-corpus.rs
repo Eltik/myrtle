@@ -122,7 +122,7 @@ async fn main() -> Result<()> {
         out: args.out,
         concurrency: args.concurrency,
         limit: args.limit,
-        service_key: std::env::var("TREVOR_SERVICE_KEY").ok(),
+        service_key: trevor::env::var("TREVOR_SERVICE_KEY"),
         chunk: ChunkConfig {
             target_min_tokens: args.min_tokens,
             target_max_tokens: args.max_tokens,

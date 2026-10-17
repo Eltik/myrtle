@@ -52,7 +52,7 @@ impl Default for GuardConfig {
 impl GuardConfig {
     /// The guard from the environment; None under `TREVOR_GUARD=0`.
     pub(crate) fn from_env() -> Option<Self> {
-        Self::from_lookup(|k| std::env::var(k).ok())
+        Self::from_lookup(trevor::env::var)
     }
 
     pub(crate) fn from_lookup(get: impl Fn(&str) -> Option<String>) -> Option<Self> {
@@ -278,7 +278,7 @@ impl GuardView {
 
 /// Run the guard: sample every `cfg.every`, publish each change on `tx`. Returns when every receiver is gone.
 pub(crate) async fn run(cfg: GuardConfig, tx: tokio::sync::watch::Sender<GuardView>) {
-    let log = std::env::var("TREVOR_GUARD_LOG").as_deref() == Ok("1");
+    let log = trevor::env::is("TREVOR_GUARD_LOG", "1");
     let every = cfg.every;
     let mut guard = Guard::new(cfg);
     let mut sampler = Sampler::default();
@@ -288,7 +288,7 @@ pub(crate) async fn run(cfg: GuardConfig, tx: tokio::sync::watch::Sender<GuardVi
             (s, sampler)
         }).await.unwrap_or_default();
         sampler = back;
-        let now = unix_now();
+        let now = trevor::util::unix_now();
         let change = guard.observe(&s, now);
         if log {
             eprintln!("guard: {} -> {}", s.brief(), if guard.trip().is_some() { "tripped" } else { "ok" });
@@ -308,9 +308,6 @@ pub(crate) async fn run(cfg: GuardConfig, tx: tokio::sync::watch::Sender<GuardVi
     }
 }
 
-fn unix_now() -> u64 {
-    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_secs())
-}
 
 /// The host reader; keeps the previous /proc/stat totals for the steal rate.
 #[derive(Default)]
@@ -324,14 +321,14 @@ impl Sampler {
     pub(crate) fn sample(&mut self) -> Sample {
         let read = |p: &str| std::fs::read_to_string(p).ok();
         let cpus = std::thread::available_parallelism().map_or(1, std::num::NonZeroUsize::get);
-        let steal = read("/proc/stat").as_deref().and_then(parse_stat_steal).and_then(|now| {
+        let steal = read("/proc/stat").as_deref().and_then(trevor::host::parse_stat_steal).and_then(|now| {
             let prev = self.prev_stat.replace(now);
-            prev.and_then(|p| steal_pct(p, now))
+            prev.and_then(|p| trevor::host::steal_pct(p, now))
         });
         Sample {
-            psi_cpu: read("/proc/pressure/cpu").as_deref().and_then(parse_psi_some_avg10),
-            psi_mem: read("/proc/pressure/memory").as_deref().and_then(parse_psi_some_avg10),
-            mem_avail_mb: read("/proc/meminfo").as_deref().and_then(|t| parse_kb_field(t, "MemAvailable:")).map(|kb| kb / 1024.0),
+            psi_cpu: read("/proc/pressure/cpu").as_deref().and_then(trevor::host::parse_psi_some_avg10),
+            psi_mem: read("/proc/pressure/memory").as_deref().and_then(trevor::host::parse_psi_some_avg10),
+            mem_avail_mb: read("/proc/meminfo").as_deref().and_then(|t| trevor::host::parse_kb_field(t, "MemAvailable:")).map(|kb| kb / 1024.0),
             rss_mb: linux_llama_rss_mb(),
             #[allow(clippy::cast_precision_loss)]
             load_per_cpu: read("/proc/loadavg").as_deref().and_then(|t| t.split_whitespace().next()?.parse::<f64>().ok())
@@ -344,13 +341,13 @@ impl Sampler {
 
     #[cfg(target_os = "macos")]
     pub(crate) fn sample(&mut self) -> Sample {
-        let sysctl = |k: &str| run_cmd("sysctl", &["-n", k]);
+        let sysctl = |k: &str| trevor::host::run_cmd("sysctl", &["-n", k]);
         let level = sysctl("kern.memorystatus_level").and_then(|t| t.trim().parse::<f64>().ok());
         let mem = sysctl("hw.memsize").and_then(|t| t.trim().parse::<f64>().ok());
         Sample {
             mac_pressure: sysctl("kern.memorystatus_vm_pressure_level").and_then(|t| t.trim().parse().ok()),
             mem_avail_mb: level.zip(mem).map(|(pct, bytes)| pct / 100.0 * bytes / 1_048_576.0),
-            thermal: run_cmd("pmset", &["-g", "therm"]).map(|t| pmset_warning(&t)),
+            thermal: trevor::host::run_cmd("pmset", &["-g", "therm"]).map(|t| trevor::host::pmset_warning(&t)),
             rss_mb: mac_llama_rss_mb(),
             ..Sample::default()
         }
@@ -362,17 +359,11 @@ impl Sampler {
     }
 }
 
-#[cfg(target_os = "macos")]
-fn run_cmd(cmd: &str, args: &[&str]) -> Option<String> {
-    let out = std::process::Command::new(cmd).args(args).stderr(std::process::Stdio::null()).output().ok()?;
-    out.status.success().then(|| String::from_utf8_lossy(&out.stdout).into_owned())
-}
-
 /// The largest RSS of the processes named exactly `llama-server` (`pgrep -x`, never a pattern), MiB.
 #[cfg(target_os = "macos")]
 fn mac_llama_rss_mb() -> Option<f64> {
-    let pids = run_cmd("pgrep", &["-x", "llama-server"])?;
-    pids.split_whitespace().filter_map(|p| run_cmd("ps", &["-o", "rss=", "-p", p])?.trim().parse::<f64>().ok())
+    let pids = trevor::host::run_cmd("pgrep", &["-x", "llama-server"])?;
+    pids.split_whitespace().filter_map(|p| trevor::host::run_cmd("ps", &["-o", "rss=", "-p", p])?.trim().parse::<f64>().ok())
         .map(|kb| kb / 1024.0).reduce(f64::max)
 }
 
@@ -381,55 +372,6 @@ fn linux_llama_rss_mb() -> Option<f64> {
     std::fs::read_dir("/proc").ok()?.filter_map(Result::ok)
         .filter(|e| e.file_name().to_str().is_some_and(|n| n.bytes().all(|b| b.is_ascii_digit())))
         .filter(|e| std::fs::read_to_string(e.path().join("comm")).is_ok_and(|c| c.trim() == "llama-server"))
-        .filter_map(|e| parse_kb_field(&std::fs::read_to_string(e.path().join("status")).ok()?, "VmRSS:"))
+        .filter_map(|e| trevor::host::parse_kb_field(&std::fs::read_to_string(e.path().join("status")).ok()?, "VmRSS:"))
         .map(|kb| kb / 1024.0).reduce(f64::max)
-}
-
-/// `some avg10=` of a /proc/pressure file.
-#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
-pub(crate) fn parse_psi_some_avg10(text: &str) -> Option<f64> {
-    let line = text.lines().find(|l| l.starts_with("some "))?;
-    line.split_whitespace().find_map(|f| f.strip_prefix("avg10="))?.parse().ok()
-}
-
-/// A `Name:   123 kB` field of /proc/meminfo or /proc/<pid>/status, in kB.
-#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
-pub(crate) fn parse_kb_field(text: &str, field: &str) -> Option<f64> {
-    text.lines().find_map(|l| l.strip_prefix(field))?.split_whitespace().next()?.parse().ok()
-}
-
-/// (steal, total) jiffies of the aggregate `cpu` line of /proc/stat.
-#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
-pub(crate) fn parse_stat_steal(text: &str) -> Option<(u64, u64)> {
-    let line = text.lines().find(|l| l.starts_with("cpu "))?;
-    let v: Vec<u64> = line.split_whitespace().skip(1).filter_map(|f| f.parse().ok()).collect();
-    // user nice system idle iowait irq softirq steal [guest guest_nice]; guest time is already in user and nice.
-    let total: u64 = v.iter().take(8).sum();
-    Some((*v.get(7)?, total))
-}
-
-/// Steal percent between two /proc/stat readings.
-#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
-pub(crate) fn steal_pct(prev: (u64, u64), now: (u64, u64)) -> Option<f64> {
-    let dt = now.1.checked_sub(prev.1).filter(|d| *d > 0)?;
-    let ds = now.0.saturating_sub(prev.0);
-    #[allow(clippy::cast_precision_loss)]
-    Some(ds as f64 * 100.0 / dt as f64)
-}
-
-/// Whether `pmset -g therm` recorded a warning: a `*_Limit = N` line under 100 (100 = no throttling), a "warning level"
-/// line above 0, or another line naming a warning; the "Note: No ... has been recorded" lines, the "CPU Power notify"
-/// header and the other `key = value` lines (CPU_Available_CPUs) are not.
-pub(crate) fn pmset_warning(text: &str) -> bool {
-    text.lines().map(str::trim).filter(|l| !l.is_empty() && !l.starts_with("Note:")).any(|l| {
-        let num = l.trim_end_matches('.').rsplit([' ', '=', '\t']).next().and_then(|n| n.trim().parse::<i64>().ok());
-        let low = l.to_lowercase();
-        if let Some((key, _)) = l.split_once('=') {
-            return key.trim().ends_with("_Limit") && num.is_some_and(|n| n < 100);
-        }
-        if low.contains("level") && let Some(n) = num {
-            return n > 0;
-        }
-        low.contains("warning")
-    })
 }

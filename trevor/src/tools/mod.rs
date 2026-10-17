@@ -322,10 +322,10 @@ impl Tools {
         // A thin topic (too few passages name it, or a short or poorly supported summary; scripts/topics.py thin) is
         // never served; only topics from data (2026-10-01) are ever marked.
         t.topics = read_jsonl(&root.join("artifacts/topics/topics.jsonl")).map(served_topics);
-        if std::env::var("TREVOR_TOPIC_IDENTITIES").as_deref() != Ok("0") {
+        if crate::env::on_unless_0("TREVOR_TOPIC_IDENTITIES") {
             t.fold_group_identities();
         }
-        if std::env::var("TREVOR_ORG_SHORT_NAMES").as_deref() != Ok("0") {
+        if crate::env::on_unless_0("TREVOR_ORG_SHORT_NAMES") {
             t.org_short_names();
         }
         for table in CROSSREF_TABLES {

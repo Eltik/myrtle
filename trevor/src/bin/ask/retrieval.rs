@@ -14,6 +14,7 @@ use crate::chrono::proper_name;
 use crate::cli::{Args, lore_on};
 use crate::detect::asks_origin;
 use crate::form::Form;
+use crate::kinds::{CHARACTER_GROUPS, LORE_KINDS, TYPED};
 
 /// Hits of `extra` and `hits` alternately, first seen wins.
 pub(crate) fn interleave(extra: Vec<trevor::search::pipeline::Hit>, hits: Vec<trevor::search::pipeline::Hit>) -> Vec<trevor::search::pipeline::Hit> {
@@ -30,8 +31,6 @@ pub(crate) fn interleave(extra: Vec<trevor::search::pipeline::Hit>, hits: Vec<tr
     mixed
 }
 
-/// Character sources: operator files and Trevor's character dossiers.
-pub(crate) const CHARACTER_GROUPS: [&str; 2] = ["archive", "profile"];
 /// Candidates an opinion question gathers from character sources, and at most this many per character.
 pub(crate) const CANDIDATES: usize = 6;
 pub(crate) const CANDIDATE_PER_CHARACTER: usize = 2;
@@ -53,9 +52,6 @@ pub(crate) fn load_names() -> HashMap<String, Names> {
 pub(crate) fn story_label(names: &HashMap<String, Names>, story_id: &str) -> String {
     names.get(story_id).map_or_else(|| format!("story: {story_id}"), |n| format!("story: {}, {}", n.group, n.story))
 }
-
-/// P4 unit kinds: the typed sources and Trevor's topic summaries, which a lore query leaves out.
-pub(crate) const TYPED: [&str; 7] = ["module", "voice", "skin", "is", "enemy", "item", "topic"];
 
 /// The operator a typed unit belongs to, from its heading line: "Outfit: Newsgirl (Amiya)", "Voice lines: Texas",
 /// "Module story: Drone Control Module.P (Magallan's module, SUM-X)"; None for IS, enemy and item units.
@@ -352,20 +348,10 @@ pub(crate) fn capitalized_in(q: &str, name: &str) -> bool {
         && !q[i + first.len()..].chars().next().is_some_and(char::is_alphanumeric))
 }
 
-/// Chunk kinds Trevor wrote itself, never a term's evidence.
-pub(crate) const GENERATED_KINDS: [&str; 3] = ["profile", "summary", "topic"];
-/// Chunk kinds that hold records and files, which define a term more often than a scene does.
-pub(crate) const RECORD_KINDS: [&str; 7] = ["archive", "gametext", "is", "module", "item", "enemy", "skin"];
-
 /// The operator a cited operator-file chunk belongs to ("archive_char_338_iris#0001" -> Iris).
 pub(crate) fn file_owner(tools: &Tools, id: &str) -> Option<String> {
     id.starts_with("archive_").then(|| tools.source_owner(id.split('#').next().unwrap_or(id))).flatten()
 }
-
-/// The kinds whose text describes an object (outfit, item, module, enemy) and so names lore it does not explain.
-/// Operator files and voice lines keep plain retrieval: all 5 answers the first two lore versions lost were those kinds
-/// (2026-09-30: Kal'tsit's voice, Mon3tr's and two gold operator files, a gold voice question).
-pub(crate) const LORE_KINDS: [&str; 4] = ["skin", "item", "module", "enemy"];
 
 /// Chunks whose text holds `w` as a whole word, case folded (apostrophes count as letters, so "kal" is not in
 /// "Kal'tsit").
@@ -420,7 +406,7 @@ pub(crate) fn load_runtime(a: &RuntimeArgs, dense: bool, share: Option<trevor::s
     let t = std::time::Instant::now();
     let mut rt = Runtime::load_sharing(a, dense, true, false, share)?;
     rt.bm25_only = !dense;
-    if trevor::util::env_on("TREVOR_LOAD_DEBUG") {
+    if trevor::env::debug_on("TREVOR_LOAD_DEBUG") {
         eprintln!("loaded {} in {:.2} s (dense {dense})", a.corpus.display(), t.elapsed().as_secs_f64());
     }
     Ok(rt)
@@ -516,9 +502,6 @@ impl Pre {
         self
     }
 }
-
-/// The unit kinds the typed fallback tries, in no order: the best-ranked unit of the named operator decides the kind.
-pub(crate) const FALLBACK_KINDS: [&str; 3] = ["voice", "module", "art"];
 
 /// The operator a typed unit belongs to, from its first line ("Voice lines: X", "Module story: ... (X's module, ...)",
 /// "Operator art: X, E2 ...").

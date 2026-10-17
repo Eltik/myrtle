@@ -147,8 +147,8 @@ impl ReleaseOrder {
     /// The guide or the story table missing or unreadable.
     pub fn load(root: &Path) -> Result<Self> {
         let (guide, rows, dates, inputs) = read_inputs(root)?;
-        let use_dates = std::env::var("TREVOR_HORIZON_DATES").as_deref() != Ok("0");
-        let legacy = std::env::var("TREVOR_HORIZON_GATE").as_deref() == Ok("0");
+        let use_dates = crate::env::on_unless_0("TREVOR_HORIZON_DATES");
+        let legacy = crate::env::is_0("TREVOR_HORIZON_GATE");
         let file: Option<GateOrderFile> = crate::util::read_json_opt(&root.join(GATE_ORDER_PATH));
         let gate = match file {
             Some(f) if f.schema == 1 && f.inputs.as_ref() == Some(&inputs) => f,

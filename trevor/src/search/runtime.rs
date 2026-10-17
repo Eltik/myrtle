@@ -159,7 +159,7 @@ impl Runtime {
         let (dense, embedder) = if needs_dense {
             let d = DenseIndex::load(&a.corpus, &store)?;
             let onnx = resolve_query_onnx(&a.query_onnx, &d.meta.model_file).to_owned();
-            let share = share.filter(|s| std::env::var("TREVOR_SHARE_EMBEDDER").as_deref() != Ok("0")
+            let share = share.filter(|s| crate::env::on_unless_0("TREVOR_SHARE_EMBEDDER")
                 && s.fits(a, &onnx, &d.meta.tokenizer_sha));
             let e = match share {
                 Some(s) => s,

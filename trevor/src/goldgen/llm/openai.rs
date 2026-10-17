@@ -40,9 +40,9 @@ impl Thinking {
     /// `TREVOR_CF_THINKING`: `effort`, `omit`, anything else the template kwargs.
     #[must_use]
     pub fn from_env() -> Self {
-        match std::env::var("TREVOR_CF_THINKING").as_deref() {
-            Ok("effort") => Self::ReasoningEffort,
-            Ok("omit") => Self::Omit,
+        match crate::env::var("TREVOR_CF_THINKING").as_deref() {
+            Some("effort") => Self::ReasoningEffort,
+            Some("omit") => Self::Omit,
             _ => Self::TemplateKwargs,
         }
     }
@@ -72,16 +72,16 @@ impl OpenAiConfig {
     /// `TREVOR_CF_BASE_URL` nor `TREVOR_CF_ACCOUNT_ID` is set.
     #[must_use]
     pub fn cloudflare_from_env() -> Option<Self> {
-        let models: Vec<String> = std::env::var("TREVOR_CF_MODELS").ok()?.split(',').map(str::trim)
+        let models: Vec<String> = crate::env::var("TREVOR_CF_MODELS")?.split(',').map(str::trim)
             .filter(|m| !m.is_empty()).map(str::to_owned).collect();
         if models.is_empty() {
             return None;
         }
-        let url = match std::env::var("TREVOR_CF_BASE_URL").ok().filter(|u| !u.is_empty()) {
+        let url = match crate::env::non_empty("TREVOR_CF_BASE_URL") {
             Some(u) => u,
-            None => cloudflare_url(&std::env::var("TREVOR_CF_ACCOUNT_ID").ok().filter(|a| !a.is_empty())?),
+            None => cloudflare_url(&crate::env::non_empty("TREVOR_CF_ACCOUNT_ID")?),
         };
-        let token = std::env::var("TREVOR_CF_API_TOKEN").ok().filter(|t| !t.is_empty());
+        let token = crate::env::non_empty("TREVOR_CF_API_TOKEN");
         Some(Self { url, token, models, thinking: Thinking::from_env(), timeout_secs: 120, concurrency: 1 })
     }
 

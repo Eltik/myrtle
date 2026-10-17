@@ -74,6 +74,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::corpus::chunk::indexed_text;
 use crate::corpus::reuse::{self, ReusePool};
+use crate::host::{cpu_some_avg10, mem_available_gib, online_cpus, probe, therm_warning};
 use crate::util::sha_hex;
 
 /// gte-modernbert-base's trained context. A chunk longer than this would be
@@ -291,7 +292,7 @@ pub fn check_query_model(
         "query model {} ({:.16}) is not the model the vectors were built with, {} ({:.16})",
         query.onnx_file, query.model_sha, vectors_model_file, vectors_model_sha
     );
-    let env = std::env::var(ALLOW_QUERY_MODEL_MISMATCH_ENV).is_ok_and(|v| v == "1");
+    let env = crate::env::is(ALLOW_QUERY_MODEL_MISMATCH_ENV, "1");
     if allow_mismatch || env {
         eprintln!("warning: {msg}; allowed by override");
         return Ok(());
@@ -330,59 +331,6 @@ impl Default for Guard {
             pause_secs: 30.0,
         }
     }
-}
-
-fn probe(prog: &str, args: &[&str]) -> Option<String> {
-    let out = std::process::Command::new(prog).args(args).output().ok()?;
-    out.status.success().then(|| String::from_utf8_lossy(&out.stdout).into_owned())
-}
-
-/// A recorded warning in `pmset -g therm` output, or None. Apple Silicon
-/// prints "Note: No thermal warning level has been recorded" (and the same for
-/// performance warnings and CPU power status) when nothing is recorded; any
-/// other line naming a warning level or power status, or a `*_Limit` below
-/// 100 (Intel's CPU_Speed_Limit), is a reason to pause.
-#[must_use]
-pub fn therm_warning(text: &str) -> Option<String> {
-    for line in text.lines().map(str::trim) {
-        if line.is_empty() || line.starts_with("Note: No") {
-            continue;
-        }
-        let lower = line.to_ascii_lowercase();
-        if lower.contains("warning level") || lower.contains("power status") {
-            return Some(line.to_owned());
-        }
-        if let Some((k, v)) = line.split_once('=')
-            && k.trim().ends_with("_Limit")
-            && v.trim().parse::<f64>().is_ok_and(|x| x < 100.0)
-        {
-            return Some(line.to_owned());
-        }
-    }
-    None
-}
-
-/// `MemAvailable` from /proc/meminfo, in GiB.
-#[must_use]
-pub fn mem_available_gib(meminfo: &str) -> Option<f64> {
-    let line = meminfo.lines().find(|l| l.starts_with("MemAvailable:"))?;
-    let kb: f64 = line.split_whitespace().nth(1)?.parse().ok()?;
-    Some(kb / (1024.0 * 1024.0))
-}
-
-/// `some avg10` from /proc/pressure/cpu, in percent.
-#[must_use]
-pub fn cpu_some_avg10(psi: &str) -> Option<f64> {
-    let line = psi.lines().find(|l| l.starts_with("some "))?;
-    line.split_whitespace().find_map(|f| f.strip_prefix("avg10=")?.parse().ok())
-}
-
-/// The online CPUs counted in /proc/stat (`cpu0`, `cpu1`, ...).
-#[must_use]
-pub fn online_cpus(stat: &str) -> usize {
-    stat.lines()
-        .filter(|l| l.strip_prefix("cpu").is_some_and(|r| r.starts_with(|c: char| c.is_ascii_digit())))
-        .count()
 }
 
 impl Guard {
@@ -879,9 +827,7 @@ pub fn run(cfg: &EmbedConfig, progress: &dyn Fn(usize, usize)) -> Result<RunResu
         normalized: true,
         batch_size: reuse::BATCH_SIZE,
         max_norm_error,
-        built_at_unix: std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map_or(0, |d| d.as_secs()),
+        built_at_unix: crate::util::unix_now(),
         seconds: started.elapsed().as_secs_f64(),
         prefix_ignored: cfg.ignore_prefix && lines.iter().any(|c| c.prefix.is_some()),
         chunk_ids: lines.iter().map(|c| c.chunk_id.clone()).collect(),
@@ -932,21 +878,6 @@ mod tests {
         assert_eq!(parse_checkpoint(&[a.clone(), record("1111111111111111", &[0.5, 0.5])].concat()).1, a.len());
         assert_eq!(parse_checkpoint(&[a.clone(), record("XYZ1111111111111", &[1.0, 0.0])].concat()).1, a.len());
         assert_eq!(parse_checkpoint(&[a.clone(), record("1111111111111111", &[1.0, 0.0, 0.0])].concat()).1, a.len());
-    }
-
-    #[test]
-    fn guard_parsers() {
-        let none = "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\nNote: No CPU power status has been recorded\n";
-        assert_eq!(therm_warning(none), None);
-        assert!(therm_warning("Thermal warning level: 2\n").is_some());
-        assert!(therm_warning("CPU_Speed_Limit \t= 80\n").is_some());
-        assert_eq!(therm_warning("CPU_Speed_Limit \t= 100\n"), None);
-        let mi = "MemTotal:       11534336 kB\nMemFree:  100 kB\nMemAvailable:    1572864 kB\n";
-        assert!((mem_available_gib(mi).unwrap() - 1.5).abs() < 1e-9);
-        let psi = "some avg10=41.50 avg60=3.00 avg300=1.00 total=1\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0\n";
-        assert!((cpu_some_avg10(psi).unwrap() - 41.5).abs() < 1e-9);
-        let stat = "cpu  1 2 3\ncpu0 1 2 3\ncpu1 1 2 3\ncpu2 1 2 3\nintr 5\nctxt 6\n";
-        assert_eq!(online_cpus(stat), 3);
     }
 
     #[test]

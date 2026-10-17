@@ -223,9 +223,7 @@ pub fn summarize(info: RunInfo, set: &GoldSet, outcomes: &[QueryOutcome]) -> Run
         run_id: info.run_id,
         label: info.label,
         commit: info.commit,
-        run_at_unix: std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map_or(0, |d| d.as_secs()),
+        run_at_unix: crate::util::unix_now(),
         goldset_path: info.goldset_path,
         goldset_sha: set.sha.clone(),
         n_items: set.items.len(),

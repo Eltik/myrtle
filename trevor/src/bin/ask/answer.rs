@@ -23,8 +23,9 @@ use crate::prompts::{
     ORIGIN_RULE, RELATION_RULE, SCOPED_RULE_HEAD, SCOPED_RULE_TAIL, SOURCE_RULE, SYNTH_RULE, SYSTEM, TERM_RULE,
     TIME_EVIDENCE_TAIL, TIME_RULE, YES_NO_RULE,
 };
+use crate::kinds::{FALLBACK_KINDS, RECORD_KINDS};
 use crate::retrieval::{
-    FALLBACK_KINDS, RECORD_KINDS, Names, Pre, Runtimes, expand_names, file_owner, named_characters, names_proper_word,
+    Names, Pre, Runtimes, expand_names, file_owner, named_characters, names_proper_word,
     one_operator, one_operator_wide, opinion_needs_candidates, passages, people_named, story_label, typed_owner,
 };
 use crate::routing::{Routed, is_ending_passages, route_question};

@@ -1,8 +1,7 @@
-//! Contract v1.1 worker tests: the power guard's decision on injected samples, its host parsers, the heartbeat's
+//! Contract v1.1 worker tests: the power guard's decision on injected samples, the heartbeat's
 //! `guard` object, and the `mid` profiles.
 
-use crate::guard::{Change, Guard, GuardConfig, GuardView, Sample, Trip, parse_kb_field, parse_psi_some_avg10, parse_stat_steal,
-                   pmset_warning, steal_pct};
+use crate::guard::{Change, Guard, GuardConfig, GuardView, Sample, Trip};
 
 fn cfg() -> GuardConfig {
     GuardConfig { cooldown_secs: 300, ..GuardConfig::default() }
@@ -126,29 +125,6 @@ fn guard_config_reads_the_contract_env_and_the_kill_switch() {
                                            ("TREVOR_GUARD_RSS_MB", "x"), ("TREVOR_GUARD_COOLDOWN_SECS", "20"), ("TREVOR_GUARD_STEAL", "25"),
                                            ("TREVOR_GUARD_SECS", "1")])).unwrap();
     assert_eq!((c.psi_cpu, c.mem_mb, c.rss_mb, c.cooldown_secs, c.steal, c.every.as_secs()), (40.0, 2000.0, 4500.0, 20, Some(25.0), 1));
-}
-
-#[test]
-fn guard_parses_proc_and_pmset() {
-    let psi = "some avg10=12.34 avg60=5.00 avg300=1.00 total=123\nfull avg10=99.00 avg60=0.00 avg300=0.00 total=0\n";
-    assert_eq!(parse_psi_some_avg10(psi), Some(12.34));
-    let meminfo = "MemTotal:        8000000 kB\nMemFree:          100000 kB\nMemAvailable:     819200 kB\n";
-    assert_eq!(parse_kb_field(meminfo, "MemAvailable:"), Some(819_200.0));
-    assert_eq!(parse_kb_field("Name:\tllama-server\nVmRSS:\t 4718592 kB\n", "VmRSS:"), Some(4_718_592.0));
-    let a = parse_stat_steal("cpu  100 0 50 800 10 0 0 40 0 0\ncpu0 1 2 3\n").unwrap();
-    let b = parse_stat_steal("cpu  150 0 70 860 10 0 0 60 0 0\n").unwrap();
-    assert_eq!((a, b), ((40, 1000), (60, 1150)));
-    assert_eq!(steal_pct(a, b), Some(20.0 * 100.0 / 150.0));
-    assert_eq!(steal_pct(a, a), None);
-    // This Mac on 2026-10-17: three Notes, no warning.
-    let quiet = "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\n\
-                 Note: No CPU power status has been recorded\n";
-    assert!(!pmset_warning(quiet));
-    assert!(pmset_warning("Thermal warning level set to 1."));
-    assert!(!pmset_warning("CPU Power notify\n\tCPU_Scheduler_Limit \t= 100\n\tCPU_Available_CPUs \t= 15\n\tCPU_Speed_Limit \t= 100"),
-            "limits of 100 are no throttling, but CPU_Available_CPUs = 15 is not a limit");
-    assert!(pmset_warning("CPU_Speed_Limit \t= 70"));
-    assert!(!pmset_warning("Thermal warning level set to 0."));
 }
 
 #[test]

@@ -5,7 +5,7 @@ use std::collections::{BTreeSet, HashMap};
 use trevor::search::runtime::Runtime;
 use trevor::tools::Tools;
 
-use crate::retrieval::{GENERATED_KINDS, RECORD_KINDS};
+use crate::kinds::{RECORD_KINDS, is_generated};
 
 /// Lowercase letters and digits only: "Khagan quest" and "Khaganquest" are both "khaganquest".
 pub(crate) fn compact(x: &str) -> String {
@@ -24,7 +24,7 @@ pub(crate) fn term_lookup(rt: &Runtime, term: &str, k: usize) -> Option<(String,
     let mut forms: HashMap<String, usize> = HashMap::new();
     let mut hits: Vec<(bool, usize, usize)> = Vec::new();
     for (row, c) in rt.store.chunks.iter().enumerate() {
-        if GENERATED_KINDS.contains(&c.group_id.as_str()) || !compact(&c.text).contains(&key) {
+        if is_generated(&c.group_id) || !compact(&c.text).contains(&key) {
             continue;
         }
         let spans: Vec<(usize, usize)> = {
@@ -105,7 +105,7 @@ pub(crate) fn term_glossary(tools: &Tools, texts: &[&str], term: &str, k: usize,
         let forms: Vec<&str> = forms.into_iter().filter(|f| f.chars().next().is_some_and(char::is_uppercase) && f.chars().count() >= 4).collect();
         let first = forms.iter().filter_map(|f| whole_word_at(&all, f)).min();
         if let Some(i) = first {
-            let df = rarity.map_or(0, |rt| rt.store.chunks.iter().filter(|c| !GENERATED_KINDS.contains(&c.group_id.as_str())
+            let df = rarity.map_or(0, |rt| rt.store.chunks.iter().filter(|c| !is_generated(&c.group_id)
                 && forms.iter().any(|f| whole_word_at(&c.text, f).is_some())).count());
             found.push((df, i, name.to_owned()));
         }

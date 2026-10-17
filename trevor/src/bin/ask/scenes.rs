@@ -9,7 +9,8 @@ use trevor::tools::{Tools, contains_words, norm};
 
 use crate::chrono::proper_name;
 use crate::detect::asks_scene;
-use crate::retrieval::{GENERATED_KINDS, RECORD_KINDS, people_named};
+use crate::kinds::{RECORD_KINDS, is_generated};
+use crate::retrieval::people_named;
 
 /// Scenes of the event a question names where the character it names speaks or is named (the scoped scenes, default since
 /// 2026-10-05 night; `--no-scoped-scenes`). Ian's "what is the name of the npc that mon3tr suggests assassinating in masses
@@ -38,7 +39,7 @@ pub(crate) fn scoped_scenes(rt: &mut Runtime, tools: &Tools, q: &str) -> Option<
         return None;
     }
     let ranked = rank_by_question(rt, q, &cands)?;
-    if trevor::util::env_on("TREVOR_SCOPED_DEBUG") {
+    if trevor::env::debug_on("TREVOR_SCOPED_DEBUG") {
         eprintln!("scoped {gid}: {} candidates, {} tokens", cands.len(), cands.iter().map(|&r| rt.store.chunks[r].token_count).sum::<u32>());
         for (i, &r) in ranked.iter().enumerate() {
             eprintln!("  {i} {}", rt.store.chunks[r].chunk_id);
@@ -126,7 +127,7 @@ pub(crate) fn character_scenes(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools
     }
     let shown = tools.operator_names().into_iter().chain(tools.speaker_names()).find(|x| norm(x) == *key)
         .map_or_else(|| key.clone(), str::to_owned);
-    let skip = |g: &str| GENERATED_KINDS.contains(&g) || RECORD_KINDS.contains(&g) || g == "voice";
+    let skip = |g: &str| is_generated(g) || RECORD_KINDS.contains(&g) || g == "voice";
     let cands: Vec<usize> = rt.store.chunks.iter().enumerate()
         .filter(|(_, c)| !skip(&c.group_id) && c.speakers.iter().any(|s| forms.contains(&norm(s))))
         .map(|(i, _)| i).collect();
@@ -152,7 +153,7 @@ pub(crate) fn character_scenes(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools
     let mut ord: Vec<usize> = (0..units.len()).collect();
     ord.sort_by(|&x, &y| sc[y].total_cmp(&sc[x]).then(units[x].cmp(&units[y])));
     let units: Vec<(usize, usize)> = ord.into_iter().map(|o| units[o]).collect();
-    if let Some(target) = std::env::var("TREVOR_SCOPED_DEBUG").ok().filter(|v| !v.is_empty() && v != "0").as_deref() {
+    if let Some(target) = trevor::env::non_empty("TREVOR_SCOPED_DEBUG").filter(|v| v != "0").as_deref() {
         let mut by_line: Vec<usize> = Vec::new();
         for (r, _) in &units { if !by_line.contains(r) { by_line.push(*r); } }
         let rrf = rank_by_question(rt, q, &cands).unwrap_or_default();
@@ -187,11 +188,12 @@ pub(crate) fn character_scenes(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools
 /// evidence line's rank among all units is estimated as the sample units scoring above it times the stride, by line dense
 /// and by the reranker, next to the evidence chunk's exact dense, BM25 and fused (RRF k 60) ranks.
 pub(crate) fn line_study(rt: &mut Runtime, ra: &RuntimeArgs, batch: &std::path::Path) -> Result<()> {
-    let env = |k: &str, d: usize| std::env::var(k).ok().and_then(|v| v.parse().ok()).unwrap_or(d);
-    let (stride, rr_stride, pool) = (env("TREVOR_LINE_STRIDE", 30), env("TREVOR_LINE_RR_STRIDE", 300), env("TREVOR_LINE_POOL", 100));
+    let stride: usize = trevor::env::parse_or("TREVOR_LINE_STRIDE", 30);
+    let rr_stride: usize = trevor::env::parse_or("TREVOR_LINE_RR_STRIDE", 300);
+    let pool: usize = trevor::env::parse_or("TREVOR_LINE_POOL", 100);
     let mut units: Vec<(usize, usize)> = Vec::new();
     let mut texts: Vec<String> = Vec::new();
-    for (r, c) in rt.store.chunks.iter().enumerate().filter(|(_, c)| !GENERATED_KINDS.contains(&c.group_id.as_str())) {
+    for (r, c) in rt.store.chunks.iter().enumerate().filter(|(_, c)| !is_generated(&c.group_id)) {
         let lines: Vec<&str> = c.text.lines().collect();
         for (i, line) in lines.iter().enumerate().filter(|(_, l)| !l.trim().is_empty()) {
             units.push((r, i));
@@ -242,7 +244,7 @@ pub(crate) fn line_study(rt: &mut Runtime, ra: &RuntimeArgs, batch: &std::path::
         let fr = fused.get(&row).copied().unwrap_or(0.0);
         let fused_rank = fused.values().filter(|&&x| x > fr).count() + 1;
         // The pool variant: the lines of the fused top `pool` chunks, reranked (no line index).
-        let mut top: Vec<(usize, f64)> = fused.into_iter().filter(|(r, _)| !GENERATED_KINDS.contains(&rt.store.chunks[*r].group_id.as_str())).collect();
+        let mut top: Vec<(usize, f64)> = fused.into_iter().filter(|(r, _)| !is_generated(&rt.store.chunks[*r].group_id)).collect();
         top.sort_by(|x, y| y.1.total_cmp(&x.1).then(x.0.cmp(&y.0)));
         let pool_rows: Vec<usize> = top.into_iter().take(pool).map(|(r, _)| r).collect();
         let pu: Vec<usize> = (0..n).filter(|&u| pool_rows.contains(&units[u].0)).collect();

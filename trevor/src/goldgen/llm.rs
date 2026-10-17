@@ -370,7 +370,7 @@ impl Llm {
         // `--reasoning on` rendered Trevor's prompts with the thinking turn open, and `ask` hung on it (2026-09-30).
         // On a `--reasoning off` server the rendered prompt is byte-identical with or without this (verified for Gemma
         // 4 12B and Qwen3.5 9B). `TREVOR_TEMPLATE_THINK=1` sends the request as before.
-        if std::env::var("TREVOR_TEMPLATE_THINK").as_deref() != Ok("1") {
+        if !crate::env::is("TREVOR_TEMPLATE_THINK", "1") {
             body["chat_template_kwargs"] = json!({"enable_thinking": false});
         }
         let v = self.post(base, "/apply-template", &body).await?;

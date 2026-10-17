@@ -75,6 +75,7 @@ use crate::chrono::Chrono;
 use crate::cli::{Args, Profile, RetrievalKind, RouterKind, apply_profile, deep_for, p4_dir, retrieval_plan, router_source, tool_options};
 use crate::detect::source_kind;
 use crate::guard::{self, GuardConfig, GuardView};
+use crate::kinds::is_generated;
 use crate::retrieval::{Names, Runtimes, load_names, load_runtime};
 use crate::server::{Spawned, cloudflare, connect_local, connect_or_spawn, openai_llm};
 
@@ -230,8 +231,6 @@ fn recorded_sha(dir: &str) -> Option<String> {
     meta["chunksSha"].as_str().map(str::to_owned)
 }
 
-/// Generated corpus kinds a `passages` answer leaves out: it serves source text only.
-const GENERATED_KINDS: &[&str] = &["profile", "summary", "topic"];
 const PASSAGES_HEAD: &str = "Trevor could not run its model for this question, so this is not an answer: these are the passages \
 that match the question best.";
 const PASSAGES_NONE: &str = "Trevor could not run its model for this question, and no passage released at or before this \
@@ -411,7 +410,7 @@ impl Service {
         let n = self.a.passages_n.max(1);
         let rt = self.rts.pick(None).map_err(failed)?;
         let hits = rt.retrieve(&q, &RetrievalConfig { mode: Mode::Hybrid, k: n * 4, ..RetrievalConfig::default() }).map_err(failed)?;
-        let rows: Vec<usize> = hits.iter().map(|h| h.row).filter(|&r| !GENERATED_KINDS.contains(&rt.store.chunks[r].group_id.as_str()))
+        let rows: Vec<usize> = hits.iter().map(|h| h.row).filter(|&r| !is_generated(&rt.store.chunks[r].group_id))
             .take(n).collect();
         let labelled: Vec<(String, String)> = rows.iter().map(|&r| {
             let c = &rt.store.chunks[r];
@@ -522,7 +521,7 @@ const RESULT_MAX: usize = 64 * 1024;
 /// `text` cut to at most `max` characters at a line break, or at a word break when the last line break inside `max`
 /// would keep under half of it (`TREVOR_CITE_WORD_CUT=0`: the line break wherever it is, else `max` characters).
 pub(crate) fn trim_at_line(text: &str, max: usize) -> String {
-    trim_text(text, max, std::env::var("TREVOR_CITE_WORD_CUT").as_deref() != Ok("0"))
+    trim_text(text, max, trevor::env::on_unless_0("TREVOR_CITE_WORD_CUT"))
 }
 
 /// [`trim_at_line`] with the word-break rule chosen. Without it, an operator file (a title line, then one paragraph of
@@ -727,10 +726,8 @@ impl Api {
 /// The worker id: `TREVOR_WORKER_ID`, else "trevor-<host name>" (stable across restarts, so a spooled result names the
 /// worker that claimed its job).
 fn worker_id() -> String {
-    if let Ok(id) = std::env::var("TREVOR_WORKER_ID") {
-        if !id.is_empty() {
-            return id;
-        }
+    if let Some(id) = trevor::env::non_empty("TREVOR_WORKER_ID") {
+        return id;
     }
     let host = std::process::Command::new("hostname").output().ok()
         .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_owned()).filter(|h| !h.is_empty()).unwrap_or_else(|| "local".into());
@@ -738,7 +735,7 @@ fn worker_id() -> String {
 }
 
 fn spool_dir() -> PathBuf {
-    PathBuf::from(std::env::var("TREVOR_SPOOL_DIR").ok().filter(|d| !d.is_empty()).unwrap_or_else(|| "artifacts/spool".into()))
+    PathBuf::from(trevor::env::non_empty("TREVOR_SPOOL_DIR").unwrap_or_else(|| "artifacts/spool".into()))
 }
 
 /// Post a result; when every retry fails, write it to the spool directory.
@@ -882,18 +879,15 @@ const CANARY: [(&str, &[&str]); 10] = [
 const CANARY_PASS: usize = 8;
 
 fn canary_path() -> PathBuf {
-    PathBuf::from(std::env::var("TREVOR_CANARY_FILE").ok().filter(|p| !p.is_empty()).unwrap_or_else(|| "artifacts/canary/cf.json".into()))
+    PathBuf::from(trevor::env::non_empty("TREVOR_CANARY_FILE").unwrap_or_else(|| "artifacts/canary/cf.json".into()))
 }
 
-fn unix_now() -> u64 {
-    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_secs())
-}
 
 /// The model id the last canary passed, when it is in `models` and the canary is at most `TREVOR_CANARY_MAX_AGE_DAYS`
 /// (8) days old.
 pub(crate) fn canary_passing(path: &Path, models: &[String], now: u64) -> Option<String> {
     let f: CanaryFile = trevor::util::read_json_opt(path)?;
-    let max_days: u64 = std::env::var("TREVOR_CANARY_MAX_AGE_DAYS").ok().and_then(|d| d.parse().ok()).unwrap_or(8);
+    let max_days: u64 = trevor::env::parse_or("TREVOR_CANARY_MAX_AGE_DAYS", 8);
     let id = f.passing?;
     (now.saturating_sub(f.checked_at) <= max_days * 86_400 && models.contains(&id)).then_some(id)
 }
@@ -906,7 +900,7 @@ pub(crate) async fn run_canary(a: Args, corpus_default: bool, tables: Tables, ch
     let mut svc = Service::load(a, corpus_default, tables, chrono, Need::Nothing).await?;
     let gate = svc.order.gate();
     let last = u32::try_from(gate.story_order.len() - gate.never.len()).unwrap_or(u32::MAX);
-    let mut out = CanaryFile { checked_at: unix_now(), ..CanaryFile::default() };
+    let mut out = CanaryFile { checked_at: trevor::util::unix_now(), ..CanaryFile::default() };
     for id in &base.models {
         let llm = openai_llm(&svc.a, OpenAiConfig { models: vec![id.clone()], ..base.clone() })?;
         let t = Instant::now();
@@ -965,7 +959,7 @@ pub(crate) struct Probe {
 impl Probe {
     /// `cpu` is false while the power guard is tripped (contract v1.1 section 2.1).
     async fn rungs(&self, guard: Option<&GuardView>) -> serde_json::Value {
-        let cf = self.cf_models.as_ref().is_some_and(|m| canary_passing(&self.canary, m, unix_now()).is_some());
+        let cf = self.cf_models.as_ref().is_some_and(|m| canary_passing(&self.canary, m, trevor::util::unix_now()).is_some());
         let cpu = !guard.is_some_and(GuardView::tripped)
             && matches!(self.http.get(format!("{}/health", self.llama)).timeout(Duration::from_secs(5)).send().await,
                         Ok(r) if r.status().is_success());
@@ -992,7 +986,7 @@ pub(crate) async fn heartbeat_loop(api: Api, probe: Probe, corpus_version: Strin
         let rungs = probe.rungs(view.as_ref()).await;
         let job = busy.lock().ok().and_then(|b| b.clone());
         let body = heartbeat_body(&api.worker_id, rungs, &corpus_version, job, view.as_ref());
-        if std::env::var("TREVOR_HEARTBEAT_LOG").as_deref() == Ok("1") {
+        if trevor::env::is("TREVOR_HEARTBEAT_LOG", "1") {
             eprintln!("worker: heartbeat {body}");
         }
         match api.post("heartbeat", &body, Duration::from_secs(15)).await {
@@ -1039,7 +1033,7 @@ impl Service {
         let fail = |e: String| serde_json::json!({"jobId": job.job_id, "workerId": api.worker_id, "ok": false, "error": e});
         let profile = match job.profile.as_deref() {
             Some(p) => p.to_owned(),
-            None => default_profile(&rung, std::env::var("TREVOR_CPU_PROFILE").ok().as_deref()),
+            None => default_profile(&rung, trevor::env::var("TREVOR_CPU_PROFILE").as_deref()),
         };
         let guarded = (rung == "cpu").then_some(guard).flatten();
         if guarded.is_some_and(|g| g.borrow().tripped()) {
@@ -1051,7 +1045,7 @@ impl Service {
                                flags: job.flags.clone(), profile: Some(profile) };
         let llm = match rung.as_str() {
             "cf" => self.cf.clone().inspect(|l| {
-                if let Some(id) = canary_passing(&canary_path(), &l.model_ids(), unix_now()) {
+                if let Some(id) = canary_passing(&canary_path(), &l.model_ids(), trevor::util::unix_now()) {
                     l.prefer_model(&id);
                 }
             }),
@@ -1161,7 +1155,7 @@ impl Service {
 
 /// `--worker`: long-poll the backend for jobs, answer each, post the result; the heartbeat runs in its own task.
 async fn pull(svc: &mut Service, base: &str) -> Result<()> {
-    let key = std::env::var("TREVOR_WORKER_KEY").ok().filter(|k| !k.is_empty()).context("--worker needs TREVOR_WORKER_KEY")?;
+    let key = trevor::env::non_empty("TREVOR_WORKER_KEY").context("--worker needs TREVOR_WORKER_KEY")?;
     let http = reqwest::Client::builder().timeout(Duration::from_secs(90)).build()?;
     let api = Api { http: http.clone(), base: base.trim_end_matches('/').to_owned(), key, worker_id: worker_id(),
                     backoff: [1, 4, 16].map(Duration::from_secs).to_vec() };
@@ -1171,7 +1165,7 @@ async fn pull(svc: &mut Service, base: &str) -> Result<()> {
         eprintln!("worker: spool {}: {sent} results sent, {kept} kept", spool.display());
     }
     let busy = Arc::new(Mutex::new(None::<String>));
-    let every = Duration::from_secs(std::env::var("TREVOR_HEARTBEAT_SECS").ok().and_then(|s| s.parse().ok()).unwrap_or(30));
+    let every = Duration::from_secs(trevor::env::parse_or("TREVOR_HEARTBEAT_SECS", 30));
     let probe = Probe { http, llama: svc.llm.as_ref().and_then(Llm::llama_base).unwrap_or(&svc.a.server).trim_end_matches('/').to_owned(),
                         cf_models: svc.cf.as_ref().map(Llm::model_ids), canary: canary_path() };
     let guard = GuardConfig::from_env().map(|cfg| {
