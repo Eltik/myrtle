@@ -24,6 +24,7 @@ mod batch;
 mod llama_server;
 mod serve;
 mod guard;
+mod spoiler;
 
 use std::path::PathBuf;
 

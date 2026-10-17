@@ -97,3 +97,14 @@ fn story_sort_ties_break_by_file_order_and_eras_sit_at_the_last_story() {
     assert_eq!(o.era_at(4).map(|e| e.id.as_str()), Some("main_0"));
     assert_eq!(o.era_at(0), None);
 }
+
+#[test]
+fn group_span_is_the_first_and_last_story_gate_pos() {
+    let o = order();
+    assert_eq!(o.group_span("main_0"), Some((1, 1)));
+    assert_eq!(o.group_span("act1"), Some((2, 4)));
+    assert_eq!(o.group_span("main_1"), Some((5, 5)));
+    assert_eq!(o.group_span("nothing"), None);
+    // Through a horizon's order.
+    assert_eq!(o.horizon_at(3).unwrap().order().group_span("act1"), Some((2, 4)));
+}

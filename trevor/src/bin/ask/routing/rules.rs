@@ -237,13 +237,19 @@ pub(crate) fn recap_route(q: &str, t: &Tools) -> Option<Route> {
     let words = ["what happens in", "what happened in", "what happens during", "explain the ending", "ending of",
                  "summary of", "summarize", "summarise", "recap", "plot of", "story of", "what is the story",
                  "what was the story", "tl dr", "tldr", "rundown of"];
-    if !has(q, &words) {
+    // `summary_route`: a bare "summary" ("Guide Ahead summary"), the event the event detector finds when the name is
+    // not in the question as written ("The Masses Travels"), and the name's words folded as `leftover` folds the
+    // question's ("Masses'" is "masses").
+    let wide = t.opts.summary_route;
+    if !has(q, &words) && !(wide && has(q, &["summary"])) {
         return None;
     }
-    let g = named_group(q, t)?;
+    let g = named_group(q, t).or_else(|| wide.then(|| t.event_in_question(q)).flatten())?;
     let id = g["groupId"].as_str()?.to_owned();
     let name = g["name"].as_str().unwrap_or(&id).to_owned();
-    let mut used: Vec<String> = name.split_whitespace().map(str::to_owned).collect();
+    let mut used: Vec<String> = if wide {
+        name.replace(['?', ',', '.', '!', '\'', '"'], " ").split_whitespace().map(str::to_owned).collect()
+    } else { name.split_whitespace().map(str::to_owned).collect() };
     used.extend(["happens", "happened", "during", "explain", "ending", "summary", "summarize", "summarise", "recap",
                  "plot", "story", "tl", "dr", "tldr", "rundown", "can", "someone", "me", "give", "please", "event",
                  "episode", "chapter", "spoiler", "spoilers", "i", "you", "for", "on", "this",

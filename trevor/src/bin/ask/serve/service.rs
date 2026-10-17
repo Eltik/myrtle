@@ -150,21 +150,31 @@ impl Service {
                                   timings: Timings { route_ms: 0.0, answer_ms: 0.0, total_ms: 0.0 } };
         // As the one-shot `ask "question"` does in `main`: P4 for a source question when the router names no source,
         // then route, then P4 when the route's source asks for it.
+        // An event wholly after the horizon: the spoiler notice, nothing retrieved.
+        if let Some(text) = self.rts.horizon.as_deref().filter(|_| !a.no_spoiler_notice)
+            .and_then(|h| crate::spoiler::notice(q, &self.tables.tools, h)) {
+            out.answer = text;
+            out.timings.total_ms = t0.elapsed().as_secs_f64() * 1000.0;
+            return Ok((out, BTreeMap::new()));
+        }
         let mut use_p4 = self.corpus_default && !router_source(&a) && source_kind(q).is_some();
         if !a.no_route {
             let router_llm = (a.router == RouterKind::Model).then_some(llm);
             self.tables.tools.topics_deep = deep_for(&a, &self.tables.tools, q);
             let r = route_checked(q, &a, &mut self.tables, router_llm).await.map_err(failed)?;
             out.timings.route_ms = r.ms;
+            let table_ok = self.rts.horizon.as_deref().is_none_or(|h| !a.no_horizon_recap
+                && crate::spoiler::recap_within(&r.route, &self.tables.tools, h));
             let route = match r.text {
-                Some(text) if !self.rts.horizon_set() => {
+                Some(text) if table_ok => {
                     out.answer = text;
                     out.route = Some(r.route);
                     out.table = true;
                     out.timings.total_ms = t0.elapsed().as_secs_f64() * 1000.0;
                     return Ok((out, BTreeMap::new()));
                 }
-                // Under a horizon a table answer is not served; the passages answer instead.
+                // Under a horizon a table answer is not served (but a recap of an event wholly within it); the
+                // passages answer instead.
                 Some(_) => Route::retrieve(),
                 None => {
                     self.tables.topic = if self.rts.horizon_set() { None } else { r.topic };
@@ -207,6 +217,17 @@ impl Service {
         let horizon = self.horizon_for(req)?;
         let horizon_id = horizon.as_ref().map(|h| h.id.clone());
         self.rts.set_horizon(horizon);
+        if let Some(text) = self.rts.horizon.as_deref().filter(|_| !self.a.no_spoiler_notice)
+            .and_then(|h| crate::spoiler::notice(&q, &self.tables.tools, h)) {
+            let ms = t0.elapsed().as_secs_f64() * 1000.0;
+            let result = AskResult { answer: text, citations: Vec::new(), passages: Vec::new(), route: None,
+                                     table: false, flags: req.flags.clone(), form: None, horizon: horizon_id,
+                                     server: SERVER.to_owned(), corpus_version: self.corpus_version.clone(),
+                                     invalid_citations: 0, prompt_tokens: 0,
+                                     timings: Timings { route_ms: 0.0, answer_ms: ms, total_ms: ms } };
+            return Ok(Job { result, generated: BTreeMap::new(), usage: UsageSnapshot::default(), profile,
+                            source: "passages" });
+        }
         let n = self.a.passages_n.max(1);
         let rt = self.rts.pick(None).map_err(failed)?;
         let hits = rt

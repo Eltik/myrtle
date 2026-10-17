@@ -137,3 +137,14 @@ pub(crate) const ART_RULE: &str = " Passages labelled \"Operator art\" hold a de
 model from the picture, not the game's text, and it may be wrong. When you use one, say the claim comes from a \
 model-written description of that art, not from game text. Quote lettering in the picture only from the part \
 headed \"Text visible in the art\", and say the reading may be wrong.";
+
+/// The spoiler notice (`--no-spoiler-notice` turns it off): the answer, with no retrieval and no model call, to a
+/// question under a spoiler horizon that names an event released wholly after it. `{event}` is the event's name,
+/// `{where}` the reader's position (SPOILER_WHERE with the last era they completed, or nothing before the first
+/// era). Not sent to a model.
+pub(crate) const SPOILER_NOTICE: &str = "{event} comes after where you have read{where}, so Trevor won't {act} \
+yet. Turn off spoiler protection to ask about it.";
+/// What Trevor will not do yet: SPOILER_ACT_SUMMARY for a summary request, else SPOILER_ACT.
+pub(crate) const SPOILER_ACT_SUMMARY: &str = "summarise it";
+pub(crate) const SPOILER_ACT: &str = "answer questions about it";
+pub(crate) const SPOILER_WHERE: &str = " (you are up to {era})";

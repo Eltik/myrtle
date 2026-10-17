@@ -47,15 +47,21 @@ pub struct ToolOptions {
     /// The canon answer without the per-run verdicts: strength labels from reference counts only
     /// (`ask --canon-v1`). Off, a run whose data carries a `verdict` is answered from it.
     pub canon_v1: bool,
+    /// The keyword router's recap rule takes a summary request ("Give me a summary of The Masses Travels") whose event
+    /// only the event detector finds ([`Tools::event_in_question`]: case and punctuation folded), takes a bare
+    /// "summary", and reads the event's name with its punctuation folded as the question's is. Off
+    /// (`ask --no-summary-route`) is the rule before.
+    pub summary_route: bool,
 }
 
 impl ToolOptions {
-    pub const KEYWORDS: Self = Self { storylines: false, exact_recap: false, is_offset: true, canon_v1: false };
+    pub const KEYWORDS: Self =
+        Self { storylines: false, exact_recap: false, is_offset: true, canon_v1: false, summary_route: true };
 }
 
 impl Default for ToolOptions {
     fn default() -> Self {
-        Self { storylines: true, exact_recap: true, is_offset: true, canon_v1: false }
+        Self { storylines: true, exact_recap: true, is_offset: true, canon_v1: false, summary_route: true }
     }
 }
 pub const RETRIEVE: &str = "retrieve";

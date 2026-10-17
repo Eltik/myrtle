@@ -202,7 +202,9 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
         // Under a spoiler horizon a table answer (built from every story) and a topic summary are not served; the
         // question is answered from the passages the horizon lets through instead.
         if let Some(text) = r.text {
-            if !rts.horizon_set() {
+            let table_ok = rts.horizon.as_deref().is_none_or(|h| !a.no_horizon_recap
+                && crate::spoiler::recap_within(&r.route, &tables.tools, h));
+            if table_ok {
                 return Ok(table_only(q, text));
             }
             route = Some(Route::retrieve());

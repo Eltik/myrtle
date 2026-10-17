@@ -311,6 +311,16 @@ impl ReleaseOrder {
     pub fn era_at(&self, pos: u32) -> Option<&Era> {
         self.gate.eras.iter().filter(|e| e.position <= pos).max_by_key(|e| e.position)
     }
+
+    /// The gatePos of a group's first and last placed story (stories hidden at every horizon left out), or None when
+    /// it has none.
+    #[must_use]
+    pub fn group_span(&self, group_id: &str) -> Option<(u32, u32)> {
+        let pos = self.story.iter()
+            .filter(|(sid, (g, _))| g == group_id && !self.never.contains(*sid))
+            .filter_map(|(sid, _)| self.gate_pos.get(sid).copied());
+        pos.fold(None, |acc, p| Some(acc.map_or((p, p), |(a, b): (u32, u32)| (a.min(p), b.max(p)))))
+    }
 }
 /// The old rule's horizon: guide position, the horizon story's storySort (None for a whole group) and date.
 #[derive(Debug, Clone)]
@@ -332,6 +342,12 @@ pub struct Horizon {
 }
 
 impl Horizon {
+    /// The release order this horizon reads.
+    #[must_use]
+    pub fn order(&self) -> &ReleaseOrder {
+        &self.order
+    }
+
     /// Whether a chunk of `story_id` in `group_id` was released at or before the horizon.
     #[must_use]
     pub fn allows(&self, story_id: &str, group_id: &str) -> bool {

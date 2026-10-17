@@ -341,6 +341,18 @@ pub(crate) struct Args {
     /// "is also known as", "is actually") is dropped when no identity link or passage joins the two names.
     #[arg(long)]
     pub(crate) no_identity_check: bool,
+    /// Under a spoiler horizon, answer a question naming an event that lies wholly after it with retrieval (as
+    /// before) instead of the spoiler notice (`prompts.rs` SPOILER_NOTICE).
+    #[arg(long)]
+    pub(crate) no_spoiler_notice: bool,
+    /// Under a spoiler horizon, never serve the recap table, even for an event released wholly at or before it (the
+    /// question is answered from the passages, as before).
+    #[arg(long)]
+    pub(crate) no_horizon_recap: bool,
+    /// The keyword router's recap rule as before: no event found by the event detector when the exact name is not in
+    /// the question, no bare "summary", and an apostrophe in the event's name ("The Masses' Travels") blocks the route.
+    #[arg(long)]
+    pub(crate) no_summary_route: bool,
     /// The note of the answer check's second ask, set only inside `answer_one`.
     #[arg(skip)]
     pub(crate) check_note: Option<String>,
@@ -527,7 +539,9 @@ pub(crate) fn apply_profile(a: &mut Args, p: Profile) {
 /// Episode 0), so it applies to the model and off routers only.
 pub(crate) fn tool_options(a: &Args) -> trevor::tools::ToolOptions {
     use trevor::tools::ToolOptions;
-    if a.router == RouterKind::Keywords { ToolOptions { canon_v1: a.canon_v1, ..ToolOptions::KEYWORDS } }
-        else { ToolOptions { storylines: !a.no_storylines, exact_recap: !a.recap_substring,
-                             is_offset: !a.is_numbering_v1, canon_v1: a.canon_v1 } }
+    if a.router == RouterKind::Keywords {
+        ToolOptions { canon_v1: a.canon_v1, summary_route: !a.no_summary_route, ..ToolOptions::KEYWORDS }
+    } else { ToolOptions { storylines: !a.no_storylines, exact_recap: !a.recap_substring,
+                           is_offset: !a.is_numbering_v1, canon_v1: a.canon_v1,
+                           summary_route: !a.no_summary_route } }
 }
