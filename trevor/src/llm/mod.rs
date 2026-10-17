@@ -19,19 +19,24 @@
 //! more on failure, and then fails with [`JsonInvalid`], on which `ask` falls back to the keyword router or the fact
 //! form.
 
+mod json;
+mod llama;
 pub mod openai;
+mod usage;
 
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::Ordering;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use anyhow::{Context, Result, anyhow, bail};
+use anyhow::{Context, Result, bail};
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 use tokio::sync::Semaphore;
 use tokio::sync::mpsc::UnboundedSender;
 
+pub use json::{JsonInvalid, grammar_keys, is_json_invalid, valid_json};
 pub use openai::{OpenAiConfig, Thinking};
+pub use usage::UsageSnapshot;
+use usage::Usage;
 
 #[derive(Clone)]
 pub struct Llm {
@@ -95,95 +100,10 @@ impl<'a> Request<'a> {
     }
 }
 
-/// A grammar-bound call on a backend without grammars returned no valid JSON object twice.
-#[derive(Debug)]
-pub struct JsonInvalid(pub String);
-
-impl std::fmt::Display for JsonInvalid {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "the model returned no valid JSON object twice: {:?}", self.0)
-    }
-}
-
-impl std::error::Error for JsonInvalid {}
-
-/// Whether `e` is (or wraps) a [`JsonInvalid`].
-#[must_use]
-pub fn is_json_invalid(e: &anyhow::Error) -> bool {
-    e.chain().any(|c| c.downcast_ref::<JsonInvalid>().is_some())
-}
-
-/// Running totals over every call of this client (and its clones).
-#[derive(Debug, Default)]
-struct Usage {
-    calls: AtomicU64,
-    tokens_in: AtomicU64,
-    tokens_out: AtomicU64,
-    json_calls: AtomicU64,
-    json_retries: AtomicU64,
-    json_failures: AtomicU64,
-}
-
-/// A copy of the totals; subtract two to get one job's share.
-#[derive(Debug, Clone, Copy, Default, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
-pub struct UsageSnapshot {
-    pub calls: u64,
-    /// Every prompt token, cached or not.
-    pub tokens_in: u64,
-    pub tokens_out: u64,
-    /// Grammar-bound calls answered as plain JSON prompts (OpenAI-compatible backend only).
-    pub json_calls: u64,
-    /// Of those, the ones whose first reply did not validate.
-    pub json_retries: u64,
-    /// And the ones whose second reply did not validate either.
-    pub json_failures: u64,
-}
-
-impl std::ops::Sub for UsageSnapshot {
-    type Output = Self;
-    fn sub(self, o: Self) -> Self {
-        Self { calls: self.calls - o.calls, tokens_in: self.tokens_in - o.tokens_in,
-               tokens_out: self.tokens_out - o.tokens_out,
-               json_calls: self.json_calls - o.json_calls, json_retries: self.json_retries - o.json_retries,
-               json_failures: self.json_failures - o.json_failures }
-    }
-}
-
 impl Llm {
     fn with_backend(http: reqwest::Client, backend: Backend, model: String, slots: usize) -> Self {
         Self { http, backend, sem: Arc::new(Semaphore::new(slots)), model, slots, dump: None, no_cache: false,
                usage: Arc::default(), sink: Arc::default() }
-    }
-
-    /// A llama-server at `base`.
-    ///
-    /// # Errors
-    /// The server is unreachable or `/props` lacks the fields used here.
-    pub async fn connect(base: &str) -> Result<Self> {
-        let http = reqwest::Client::builder()
-            .timeout(Duration::from_secs(600))
-            .build()?;
-        let props: serde_json::Value = http
-            .get(format!("{base}/props"))
-            .send()
-            .await
-            .with_context(|| format!("no llama-server at {base}"))?
-            .error_for_status()?
-            .json()
-            .await?;
-        let path = props["model_path"]
-            .as_str()
-            .context("/props has no model_path")?;
-        let model = std::path::Path::new(path)
-            .file_name()
-            .and_then(|f| f.to_str())
-            .unwrap_or(path)
-            .to_owned();
-        let slots = usize::try_from(props["total_slots"].as_u64().unwrap_or(1))
-            .unwrap_or(1)
-            .max(1);
-        Ok(Self::with_backend(http, Backend::LlamaCpp { base: base.trim_end_matches('/').to_owned() }, model, slots))
     }
 
     /// An OpenAI-compatible chat endpoint (no request is made here).
@@ -273,118 +193,6 @@ impl Llm {
                         json_failures: u.json_failures.load(Ordering::Relaxed) }
     }
 
-    async fn post(&self, base: &str, path: &str, body: &serde_json::Value) -> Result<serde_json::Value> {
-        let mut last = None;
-        for attempt in 0..4u32 {
-            if attempt > 0 {
-                tokio::time::sleep(Duration::from_millis(500 << attempt)).await;
-            }
-            match self
-                .http
-                .post(format!("{base}{path}"))
-                .json(body)
-                .send()
-                .await
-            {
-                Ok(r) if r.status().is_server_error() => {
-                    last = Some(anyhow!(
-                        "{path}: HTTP {}: {}",
-                        r.status(),
-                        r.text().await.unwrap_or_default()
-                    ));
-                }
-                Ok(r) if !r.status().is_success() => {
-                    let s = r.status();
-                    bail!("{path}: HTTP {s}: {}", r.text().await.unwrap_or_default());
-                }
-                Ok(r) => return Ok(r.json().await?),
-                Err(e) => last = Some(anyhow!("{path}: {e}")),
-            }
-        }
-        Err(last.unwrap_or_else(|| anyhow!("{path}: failed")))
-    }
-
-    /// `/completion` with `stream: true`: the pieces go to `sink` as they arrive; the result has the shape of the
-    /// non-streaming response (`content`, `stop_type`, `timings`, `tokens_cached`). Retried like [`Llm::post`], also
-    /// after a cut stream (the sink then sees a new `Start`).
-    async fn post_stream(&self, base: &str, body: &serde_json::Value, sink: &UnboundedSender<StreamEvent>)
-        -> Result<serde_json::Value> {
-        let mut last = None;
-        for attempt in 0..4u32 {
-            if attempt > 0 {
-                tokio::time::sleep(Duration::from_millis(500 << attempt)).await;
-            }
-            let r = match self.http.post(format!("{base}/completion")).json(body).send().await {
-                Ok(r) => r,
-                Err(e) => { last = Some(anyhow!("/completion: {e}")); continue; }
-            };
-            if r.status().is_server_error() {
-                last = Some(anyhow!("/completion: HTTP {}: {}", r.status(), r.text().await.unwrap_or_default()));
-                continue;
-            }
-            if !r.status().is_success() {
-                let s = r.status();
-                bail!("/completion: HTTP {s}: {}", r.text().await.unwrap_or_default());
-            }
-            let _ = sink.send(StreamEvent::Start);
-            let mut content = String::new();
-            let mut lines = openai::SseLines::new(r);
-            let end = loop {
-                match lines.next_data().await {
-                    Ok(Some(data)) => {
-                        let Ok(v) = serde_json::from_str::<serde_json::Value>(&data) else { continue };
-                        if v.get("error").is_some() {
-                            break Err(anyhow!("/completion stream error: {}", v["error"]));
-                        }
-                        if let Some(piece) = v["content"].as_str().filter(|p| !p.is_empty()) {
-                            content.push_str(piece);
-                            let _ = sink.send(StreamEvent::Piece(piece.to_owned()));
-                        }
-                        if v["stop"].as_bool() == Some(true) {
-                            break Ok(v);
-                        }
-                    }
-                    Ok(None) => break Err(anyhow!("/completion: the stream ended before its last event")),
-                    Err(e) => break Err(anyhow!("/completion stream: {e}")),
-                }
-            };
-            match end {
-                Ok(mut v) => {
-                    v["content"] = json!(content);
-                    return Ok(v);
-                }
-                Err(e) => last = Some(e),
-            }
-        }
-        Err(last.unwrap_or_else(|| anyhow!("/completion: failed")))
-    }
-
-    /// The prompt exactly as the model's chat template renders it (llama.cpp backend only).
-    ///
-    /// # Errors
-    /// Server errors, or the OpenAI-compatible backend (its endpoint renders the template itself).
-    pub async fn render(&self, system: &str, user: &str) -> Result<String> {
-        let Backend::LlamaCpp { base } = &self.backend else {
-            bail!("the OpenAI-compatible backend renders its own chat template");
-        };
-        let mut body = json!({"messages": [
-            {"role": "system", "content": system},
-            {"role": "user", "content": user}
-        ]});
-        // Thinking off per request, whatever the server was started with: a server another job started with
-        // `--reasoning on` renders Trevor's prompts with the thinking turn open, and `ask` can hang on it.
-        // On a `--reasoning off` server the rendered prompt is byte-identical with or without this (verified for Gemma
-        // 4 12B and Qwen3.5 9B). `TREVOR_TEMPLATE_THINK=1` sends the request without it.
-        if !crate::env::is("TREVOR_TEMPLATE_THINK", "1") {
-            body["chat_template_kwargs"] = json!({"enable_thinking": false});
-        }
-        let v = self.post(base, "/apply-template", &body).await?;
-        Ok(v["prompt"]
-            .as_str()
-            .context("/apply-template returned no prompt")?
-            .to_owned())
-    }
-
     /// # Errors
     /// Server errors after retries; on the OpenAI-compatible backend also [`JsonInvalid`] for a grammar-bound call.
     pub async fn complete(&self, req: &Request<'_>) -> Result<Completion> {
@@ -416,78 +224,6 @@ impl Llm {
         self.usage.tokens_out.fetch_add(c.predicted_tokens, Ordering::Relaxed);
     }
 
-    async fn complete_llama(&self, base: &str, req: &Request<'_>, sink: Option<&UnboundedSender<StreamEvent>>)
-        -> Result<Completion> {
-        let prompt = self.render(req.system, req.user).await?;
-        let mut body = json!({
-            "prompt": prompt,
-            "seed": req.seed,
-            "temperature": req.temperature,
-            "top_p": 0.95,
-            "n_predict": req.n_predict,
-            "cache_prompt": !self.no_cache,
-            "stop": req.stop,
-        });
-        if let Some(g) = req.grammar {
-            body["grammar"] = json!(g);
-        }
-        let v = match sink {
-            Some(s) => {
-                body["stream"] = json!(true);
-                self.post_stream(base, &body, s).await?
-            }
-            None => self.post(base, "/completion", &body).await?,
-        };
-        let t = &v["timings"];
-        if let Some(d) = &self.dump {
-            use std::io::Write as _;
-            let line = json!({"prompt": prompt, "promptN": t["prompt_n"], "cacheN": t["cache_n"],
-                              "content": v["content"], "seed": req.seed, "temperature": req.temperature});
-            if let Ok(mut f) = d.lock() {
-                writeln!(f, "{line}")?;
-            }
-        }
-        let c = Completion {
-            content: v["content"].as_str().unwrap_or_default().to_owned(),
-            stop_type: v["stop_type"].as_str().unwrap_or_default().to_owned(),
-            prompt_tokens: t["prompt_n"].as_u64().unwrap_or(0),
-            cached_tokens: t["cache_n"]
-                .as_u64()
-                .or_else(|| v["tokens_cached"].as_u64())
-                .unwrap_or(0),
-            predicted_tokens: t["predicted_n"].as_u64().unwrap_or(0),
-            ms: 0.0,
-        };
-        self.count(&c);
-        Ok(c)
-    }
-
-    /// A grammar-bound call on the OpenAI-compatible backend: a plain prompt for one JSON object, validated against the
-    /// keys the grammar names, asked once more when it does not validate.
-    async fn complete_json(&self, client: &openai::Client, req: &Request<'_>, grammar: &str) -> Result<Completion> {
-        let system = format!("{}{JSON_ONLY}", req.system);
-        let keys = grammar_keys(grammar);
-        let plain = Request { system: &system, user: req.user, grammar: None, seed: req.seed,
-                              temperature: req.temperature, n_predict: req.n_predict.max(64) * 2, stop: &[] };
-        self.usage.json_calls.fetch_add(1, Ordering::Relaxed);
-        let mut c = client.chat(&self.http, &plain, &system, req.user, self.no_cache, None).await?;
-        self.count(&c);
-        if let Some(j) = valid_json(&c.content, &keys) {
-            c.content = j;
-            return Ok(c);
-        }
-        self.usage.json_retries.fetch_add(1, Ordering::Relaxed);
-        let user = format!("{}{JSON_AGAIN}", req.user);
-        let mut c2 = client.chat(&self.http, &plain, &system, &user, self.no_cache, None).await?;
-        self.count(&c2);
-        if let Some(j) = valid_json(&c2.content, &keys) {
-            c2.content = j;
-            return Ok(c2);
-        }
-        self.usage.json_failures.fetch_add(1, Ordering::Relaxed);
-        Err(JsonInvalid(c2.content).into())
-    }
-
     /// A binary judgment under `verdict.gbnf`, at temperature 0.
     ///
     /// # Errors
@@ -512,45 +248,6 @@ impl Llm {
             .with_context(|| format!("verdict did not parse: {:?}", c.content))?;
         Ok(v.verdict)
     }
-}
-
-/// Appended to the system prompt of a grammar-bound call on a backend without grammars.
-const JSON_ONLY: &str = "\n\nReply with one JSON object only: no other text, no code fence.";
-/// Appended to the question when the first reply did not validate.
-const JSON_AGAIN: &str = "\n\nYour previous reply was not one valid JSON object. Reply with the JSON object only.";
-
-/// The object keys a GBNF grammar names: every `\"name\":` in its literals.
-#[must_use]
-pub fn grammar_keys(grammar: &str) -> Vec<String> {
-    let mut keys: Vec<String> = Vec::new();
-    let mut rest = grammar;
-    while let Some(i) = rest.find("\\\"") {
-        rest = &rest[i + 2..];
-        let end = rest.find(|c: char| !(c.is_ascii_alphanumeric() || c == '_')).unwrap_or(rest.len());
-        if end > 0 && rest[end..].starts_with("\\\":") && !keys.iter().any(|k| k == &rest[..end]) {
-            keys.push(rest[..end].to_owned());
-        }
-    }
-    keys
-}
-
-/// The JSON object in `text` (a code fence or prose around it is dropped) when it parses and every key, at any depth,
-/// is one of `keys` (any key when `keys` is empty).
-#[must_use]
-pub fn valid_json(text: &str, keys: &[String]) -> Option<String> {
-    fn ok(v: &serde_json::Value, keys: &[String]) -> bool {
-        match v {
-            serde_json::Value::Object(m) => m
-                .iter()
-                .all(|(k, x)| (keys.is_empty() || keys.iter().any(|y| y == k)) && ok(x, keys)),
-            serde_json::Value::Array(a) => a.iter().all(|x| ok(x, keys)),
-            _ => true,
-        }
-    }
-    let (start, end) = (text.find('{')?, text.rfind('}')?);
-    let body = text.get(start..=end)?;
-    let v: serde_json::Value = serde_json::from_str(body).ok()?;
-    (v.is_object() && ok(&v, keys)).then(|| body.to_owned())
 }
 
 #[cfg(test)]

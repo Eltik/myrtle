@@ -331,9 +331,8 @@ pub(crate) fn trim_at_line(text: &str, max: usize) -> String {
     trim_text(text, max, trevor::env::on_unless_0("TREVOR_CITE_WORD_CUT"))
 }
 
-/// [`trim_at_line`] with the word-break rule chosen. Without it, an operator file (a title line, then one paragraph of
-/// 1,000 characters) kept only its 25-character title: on P4x, 785 of the 19,604 chunks over 600 characters kept
-/// under 100 of them and 2,021 under 300 (2026-10-16).
+/// [`trim_at_line`] with the word-break rule chosen. Without the word break, a chunk whose first line is short and
+/// whose second is long (an operator file: a title line, then one long paragraph) keeps little more than its title.
 pub(crate) fn trim_text(text: &str, max: usize, word_cut: bool) -> String {
     if text.chars().count() <= max {
         return text.to_owned();
