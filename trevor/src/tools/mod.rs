@@ -32,16 +32,6 @@ pub use self::operators::filter_from_args;
 pub use self::text::{contains_words, norm, whole_word_matches};
 use self::topics::{served_topics};
 
-/// A table file as JSON, `None` when missing or unparsable.
-fn read_json(path: &Path) -> Option<Value> {
-    read_json_opt(path)
-}
-
-/// A JSONL table, malformed lines skipped, `None` when missing.
-fn read_jsonl(path: &Path) -> Option<Vec<Value>> {
-    read_jsonl_opt(path)
-}
-
 /// Behaviors added after the keyword router, each with its off value. `ask --router keywords` runs with
 /// [`ToolOptions::KEYWORDS`], so its output stays byte-identical to the binary before them.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -298,32 +288,32 @@ impl Tools {
     #[must_use]
     pub fn load(root: &Path) -> Self {
         let mut t = Self::default();
-        if let Some(v) = read_json(&root.join("artifacts/chrono/timeline_v1.json")) {
+        if let Some(v) = read_json_opt::<Value>(&root.join("artifacts/chrono/timeline_v1.json")) {
             for g in v["groups"].as_array().into_iter().flatten() {
                 if let Some(id) = g["groupId"].as_str() {
                     t.groups.insert(id.to_owned(), g.clone());
                 }
             }
         }
-        t.guide = read_json(&root.join("artifacts/chrono/reading_guide.json"));
-        t.community = read_json(&root.join("data/reading_community.json"));
-        t.first = read_json(&root.join("artifacts/chrono/first_appearance.json"));
-        t.bank = read_jsonl(&root.join("artifacts/bank/bank.jsonl")).unwrap_or_default();
-        t.deaths = read_jsonl(&root.join("artifacts/entities/deaths.jsonl"));
-        t.real_names = read_jsonl(&root.join("artifacts/entities/real_names.jsonl"));
-        t.attributes = read_jsonl(&root.join("artifacts/entities/operator_attributes.jsonl"));
-        if let Some(v) = read_json(&root.join("artifacts/entities/identities.json")) {
+        t.guide = read_json_opt::<Value>(&root.join("artifacts/chrono/reading_guide.json"));
+        t.community = read_json_opt::<Value>(&root.join("data/reading_community.json"));
+        t.first = read_json_opt::<Value>(&root.join("artifacts/chrono/first_appearance.json"));
+        t.bank = read_jsonl_opt::<Value>(&root.join("artifacts/bank/bank.jsonl")).unwrap_or_default();
+        t.deaths = read_jsonl_opt::<Value>(&root.join("artifacts/entities/deaths.jsonl"));
+        t.real_names = read_jsonl_opt::<Value>(&root.join("artifacts/entities/real_names.jsonl"));
+        t.attributes = read_jsonl_opt::<Value>(&root.join("artifacts/entities/operator_attributes.jsonl"));
+        if let Some(v) = read_json_opt::<Value>(&root.join("artifacts/entities/identities.json")) {
             for i in v.as_array().into_iter().flatten() {
                 let mut names = vec![s(i, "label")];
                 names.extend(i["names"].as_array().into_iter().flatten().filter_map(|n| n.as_str().map(str::to_owned)));
                 t.identities.push(names);
             }
         }
-        t.storylines = read_json(&root.join("artifacts/chrono/storylines.json"));
-        t.canon = read_json(&root.join("artifacts/canon/is_endings.json"));
+        t.storylines = read_json_opt::<Value>(&root.join("artifacts/chrono/storylines.json"));
+        t.canon = read_json_opt::<Value>(&root.join("artifacts/canon/is_endings.json"));
         // A thin topic (too few passages name it, or a short or poorly supported summary; scripts/topics.py thin) is
         // never served; only topics from data are ever marked.
-        t.topics = read_jsonl(&root.join("artifacts/topics/topics.jsonl")).map(served_topics);
+        t.topics = read_jsonl_opt::<Value>(&root.join("artifacts/topics/topics.jsonl")).map(served_topics);
         if crate::env::on_unless_0("TREVOR_TOPIC_IDENTITIES") {
             t.fold_group_identities();
         }
@@ -331,18 +321,18 @@ impl Tools {
             t.org_short_names();
         }
         for table in CROSSREF_TABLES {
-            if let Some(v) = read_json(&root.join(format!("artifacts/crossref/{table}.json"))) {
+            if let Some(v) = read_json_opt::<Value>(&root.join(format!("artifacts/crossref/{table}.json"))) {
                 t.crossref.insert((*table).to_owned(), v);
             }
         }
-        t.appearances = read_json(&root.join("artifacts/appearances/appearances.json"));
-        t.design_basis = read_jsonl(&root.join("artifacts/entities/design_infer.jsonl")).filter(|v| !v.is_empty());
-        for d in read_jsonl(&root.join("artifacts/topics/deep.jsonl")).unwrap_or_default() {
+        t.appearances = read_json_opt::<Value>(&root.join("artifacts/appearances/appearances.json"));
+        t.design_basis = read_jsonl_opt::<Value>(&root.join("artifacts/entities/design_infer.jsonl")).filter(|v| !v.is_empty());
+        for d in read_jsonl_opt::<Value>(&root.join("artifacts/topics/deep.jsonl")).unwrap_or_default() {
             if let (Some(t_), Some(text)) = (d["topic"].as_str(), d["served"].as_str()) {
                 t.deep_topics.insert(t_.to_owned(), text.to_owned());
             }
         }
-        if let Some(v) = read_json(&root.join("artifacts/entities/identities.v2.json")) {
+        if let Some(v) = read_json_opt::<Value>(&root.join("artifacts/entities/identities.v2.json")) {
             for i in v["identities"].as_array().into_iter().flatten() {
                 for (name, ev) in i["evidence"].as_object().into_iter().flatten() {
                     for e in ev.as_array().into_iter().flatten() {

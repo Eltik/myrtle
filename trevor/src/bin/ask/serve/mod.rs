@@ -56,7 +56,6 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use trevor::llm::{Llm, UsageSnapshot};
 use trevor::search::horizon::ReleaseOrder;
 use trevor::tools::{Route, ToolOptions};
@@ -217,17 +216,13 @@ pub(crate) struct Service {
 /// The corpus version: the first 16 hex of the sha256 of "dir chunks-sha" lines for every corpus a job may read (the
 /// main corpus, P4/P4x and the art corpus when built), prefixed by the server.
 pub(crate) fn corpus_version(parts: &[(String, String)]) -> String {
-    let mut h = Sha256::new();
-    for (dir, sha) in parts {
-        h.update(format!("{dir} {sha}\n"));
-    }
-    let hex: String = h.finalize().iter().take(8).map(|b| format!("{b:02x}")).collect();
-    format!("{SERVER}-{hex}")
+    let lines: String = parts.iter().map(|(dir, sha)| format!("{dir} {sha}\n")).collect();
+    format!("{SERVER}-{}", trevor::util::sha16(&lines))
 }
 
 /// The `chunksSha` a corpus directory's vectors were built from (every derived index records it).
 fn recorded_sha(dir: &str) -> Option<String> {
-    let meta: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(PathBuf::from(dir).join("vectors.meta.json")).ok()?).ok()?;
+    let meta: serde_json::Value = trevor::util::read_json_opt(&PathBuf::from(dir).join("vectors.meta.json"))?;
     meta["chunksSha"].as_str().map(str::to_owned)
 }
 

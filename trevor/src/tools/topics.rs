@@ -6,7 +6,8 @@ use std::path::Path;
 use serde_json::Value;
 
 use super::text::{contains_words, fuzzy_unique, norm, strip_citations};
-use super::{ToolError, Tools, TopicPassage, read_jsonl, s};
+use super::{ToolError, Tools, TopicPassage, s};
+use crate::util::read_jsonl_opt;
 
 /// Words of a question about a body, a race feature, an ability or an age (`Tools::game_data`).
 pub(super) const TRAIT_WORDS: &[&str] = &["wing", "wings", "horn", "horns", "halo", "halos", "ear", "ears", "tail",
@@ -141,9 +142,9 @@ impl Tools {
     /// Load the dossiers of `artifacts/dossiers/dossiers.jsonl` that are not among the v1 ones
     /// (`dossiers.v1.jsonl`, which P3b holds), with their text as `build-profiles` writes a profile.
     pub fn load_new_dossiers(&mut self, root: &Path) {
-        let v1: std::collections::HashSet<String> = read_jsonl(&root.join("artifacts/dossiers/dossiers.v1.jsonl"))
+        let v1: std::collections::HashSet<String> = read_jsonl_opt::<Value>(&root.join("artifacts/dossiers/dossiers.v1.jsonl"))
             .unwrap_or_default().iter().map(|r| s(r, "name")).collect();
-        for d in read_jsonl(&root.join("artifacts/dossiers/dossiers.jsonl")).unwrap_or_default() {
+        for d in read_jsonl_opt::<Value>(&root.join("artifacts/dossiers/dossiers.jsonl")).unwrap_or_default() {
             let name = s(&d, "name");
             if v1.contains(&name) {
                 continue;

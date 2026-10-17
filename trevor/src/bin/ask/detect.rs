@@ -80,9 +80,15 @@ pub(crate) fn asks_scene(q: &str, forms: &[String]) -> bool {
     })
 }
 
+/// `q` lowercased, every character but letters, digits and apostrophes turned into a space, with a space at each end:
+/// the form the word lists below are matched in (" how old " is in it only as whole words).
+fn padded_words(q: &str) -> String {
+    format!(" {} ", q.to_lowercase().replace(|c: char| !c.is_alphanumeric() && c != '\'', " "))
+}
+
 /// Whether a relation question asks whom someone admires (one person named, the other asked for).
 pub(crate) fn asks_admire(q: &str) -> bool {
-    let ql = format!(" {} ", q.to_lowercase().replace(|c: char| !c.is_alphanumeric() && c != '\'', " "));
+    let ql = padded_words(q);
     [" fan of ", " idolise ", " idolises ", " idolize ", " idolizes ", " idolised ", " idolized ", " admire ",
      " admires ", " look up to ", " looks up to "].iter().any(|w| ql.contains(w))
 }
@@ -143,13 +149,13 @@ pub(crate) fn is_death_question(q: &str) -> bool {
 
 /// Whether a question asks someone's age ("how old", "age", "aged", "years old").
 pub(crate) fn asks_age(q: &str) -> bool {
-    let ql = format!(" {} ", q.to_lowercase().replace(|c: char| !c.is_alphanumeric() && c != '\'', " "));
+    let ql = padded_words(q);
     [" how old ", " age ", " aged ", " years old ", " ages "].iter().any(|w| ql.contains(w))
 }
 
 /// Whether a question asks why, when or how something began (a why/when/how word and a beginning word).
 pub(crate) fn asks_origin(q: &str) -> bool {
-    let ql = format!(" {} ", q.to_lowercase().replace(|c: char| !c.is_alphanumeric() && c != '\'', " "));
+    let ql = padded_words(q);
     let wh = [" why ", " when ", " how "].iter().any(|w| ql.contains(w));
     wh && [" start ", " started ", " starts ", " begin ", " began ", " begun ", " beginning ", " origin ", " origins ",
            " originate ", " originated ", " founded ", " founding ", " join ", " joined ", " joins ", " become ",
@@ -158,7 +164,7 @@ pub(crate) fn asks_origin(q: &str) -> bool {
 
 /// Whether a question asks how people are related, or whom someone admires.
 pub(crate) fn asks_relation(q: &str) -> bool {
-    let ql = format!(" {} ", q.to_lowercase().replace(|c: char| !c.is_alphanumeric() && c != '\'', " "));
+    let ql = padded_words(q);
     [" relationship ", " relationships ", " relation ", " related ", " relatives ", " fan of ", " idolise ",
      " idolises ", " idolize ", " idolizes ", " idolised ", " idolized ", " admire ", " admires ", " look up to ",
      " looks up to "]
@@ -167,7 +173,7 @@ pub(crate) fn asks_relation(q: &str) -> bool {
 
 /// Whether a question asks when something happened ("when", "what year", "which year", "how long ago").
 pub(crate) fn asks_when(q: &str) -> bool {
-    let ql = format!(" {} ", q.to_lowercase().replace(|c: char| !c.is_alphanumeric() && c != '\'', " "));
+    let ql = padded_words(q);
     [" when ", " what year ", " which year ", " how long ago "].iter().any(|w| ql.contains(w))
 }
 
