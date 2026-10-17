@@ -54,6 +54,39 @@ def head_bytes(version, server, built_at, manifest, gate_report):
             + b',"manifest":' + j(manifest) + b',"gateReport":' + j(gate_report))
 
 
+# Chunk shas for the backend's cache carry-over (contract v1.1 section 3b, backend clarification): every chunk id the
+# worker can cite, with the `contentSha` its citations carry, sent in calls of their own before the activate call.
+CHUNK_SHA_BATCH = 8000
+CHUNK_SHA_CORPORA = "artifacts/p3b,artifacts/p4x,artifacts/p4-art"
+
+
+def chunk_sha_map(root, corpora):
+    """{chunkId: contentSha} over the corpora the worker serves (first corpus wins; a differing sha for the same id is
+    counted, not sent twice). A chunk without contentSha gets sha256(text)[:16], the worker's fallback. Missing corpus
+    directories are skipped and named."""
+    shas, conflicts, missing = {}, 0, []
+    for c in [x.strip() for x in corpora.split(",") if x.strip()]:
+        path = os.path.join(root, c, "chunks.jsonl")
+        if not os.path.exists(path):
+            missing.append(c)
+            continue
+        for line in open(path, encoding="utf-8"):
+            r = json.loads(line)
+            sha = r.get("contentSha") or hashlib.sha256(r["text"].encode("utf-8")).hexdigest()[:16]
+            old = shas.setdefault(r["chunkId"], sha)
+            conflicts += old != sha
+    return shas, conflicts, missing
+
+
+def sha_bodies(head, shas, batch=CHUNK_SHA_BATCH):
+    """Request bodies carrying the sha map in sorted batches: `{head, activate: false, panels: {}, chunkShas: {...}}`."""
+    ids = sorted(shas)
+    for i in range(0, len(ids), batch):
+        part = {k: shas[k] for k in ids[i:i + batch]}
+        yield (b"{" + head + b',"activate":false,"panels":{},"chunkShas":'
+               + json.dumps(part, separators=(",", ":")).encode("utf-8") + b"}")
+
+
 def encode(body, use_gzip):
     return gzip.compress(body, 6, mtime=0) if use_gzip else body
 
@@ -186,6 +219,18 @@ def publish(a):
     hdr = headers_for(a.key or "", use_gzip)
     reqs = [{"url": url, "headers": hdr, "activate": False, "panels": len(g), "body": body, "wire": wire,
              "gzip": use_gzip} for g, body, wire in chunks]
+    n_shas = 0
+    if not a.no_chunk_shas:
+        shas, conflicts, missing = chunk_sha_map(a.trevor, a.chunk_sha_corpora)
+        n_shas = len(shas)
+        if missing:
+            print(f"publish: chunk shas: no chunks.jsonl in {', '.join(missing)} (skipped)", file=sys.stderr)
+        if conflicts:
+            print(f"publish: chunk shas: {conflicts} ids carry different shas in different corpora; the first is sent",
+                  file=sys.stderr)
+        for body in sha_bodies(head, shas):
+            reqs.append({"url": url, "headers": hdr, "activate": False, "panels": 0, "shas": True, "body": body,
+                         "wire": encode(body, use_gzip), "gzip": use_gzip})
     act_body = envelope(head, [], True)
     reqs.append({"url": url, "headers": hdr, "activate": True, "panels": 0, "body": act_body,
                  "wire": encode(act_body, use_gzip), "gzip": use_gzip})
@@ -193,7 +238,8 @@ def publish(a):
         assert len(r["wire"]) <= a.max_compressed and len(r["body"]) <= a.max_decompressed, "a request is over the limits"
     total = sum(r["panels"] for r in reqs)
     assert total == len(items), (total, len(items))
-    summary = (f"{manifest['version']}: {len(items)} panels in {len(chunks)} chunks + 1 activate; wire "
+    summary = (f"{manifest['version']}: {len(items)} panels in {len(chunks)} chunks, {n_shas} chunk shas in "
+               f"{sum(1 for r in reqs if r.get('shas'))} calls + 1 activate; wire "
                f"{sum(len(r['wire']) for r in reqs)} B (max {max(len(r['wire']) for r in reqs)}), decompressed "
                f"{sum(len(r['body']) for r in reqs)} B (max {max(len(r['body']) for r in reqs)})")
     if a.dry_run:
@@ -209,6 +255,8 @@ def publish(a):
         res = post(r["url"], r["wire"], r["headers"])
         if r["activate"] and res.get("active") is not True:
             raise SendError(f"activate call answered {res}")
+        if r.get("shas") and res.get("chunkShas") not in (None, len(json.loads(r["body"])["chunkShas"])):
+            raise SendError(f"chunk sha call {i} answered chunkShas={res.get('chunkShas')}")
         if not r["activate"] and res.get("panels") not in (None, r["panels"]):
             raise SendError(f"chunk {i} answered panels={res.get('panels')}, sent {r['panels']}")
     if a.no_activate:
@@ -334,6 +382,10 @@ def main():
     ap.add_argument("--no-gzip", action="store_true", help="send raw JSON (a backend without request decompression)")
     ap.add_argument("--max-compressed", type=int, default=MAX_COMPRESSED)
     ap.add_argument("--max-decompressed", type=int, default=MAX_DECOMPRESSED)
+    ap.add_argument("--no-chunk-shas", action="store_true", default=os.environ.get("TREVOR_CHUNK_SHAS") == "0",
+                    help="send no chunk shas (the 2026-10-16 publish; the backend then carries no cached answer over)")
+    ap.add_argument("--chunk-sha-corpora", default=os.environ.get("TREVOR_CHUNK_SHA_CORPORA", CHUNK_SHA_CORPORA),
+                    help="comma-separated corpus dirs under --trevor whose chunk ids and contentShas are sent")
     ap.add_argument("--self-test", action="store_true")
     a = ap.parse_args()
     if a.self_test:
