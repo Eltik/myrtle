@@ -23,8 +23,28 @@
 //!   1, 4 and 16 s, then spooled to `TREVOR_SPOOL_DIR` (artifacts/spool/) and sent again when the worker starts.
 //!
 //! Rungs: `cf` answers with the Cloudflare model (full profile; router, form and flags as validated JSON prompts),
-//! `cpu` with the local llama-server (slim profile), `passages` with no model: the top `--passages-n` (5) passages
-//! within the horizon, `source: "passages"`, which is also the answer when a model rung fails.
+//! `cpu` with the local llama-server (the job's profile; one that names none gets `mid` since contract v1.1 section 4,
+//! `TREVOR_CPU_PROFILE=slim` restores the v1 default), `passages` with no model: the top `--passages-n` (5) passages
+//! within the horizon, `source: "passages"`, which is also the answer when a model rung fails. Every citation carries
+//! `sha`, the chunk's `contentSha` (sha256 of its text, first 16 hex; the same hash of the passage text for a generated
+//! passage), for the cache carry-over of contract v1.1 section 3b.
+//!
+//! Contract v1.1 section 2.1, the power guard (`guard.rs`, `TREVOR_GUARD=0` turns it off): while it is tripped the
+//! heartbeat reports `rungs.cpu = false` and `guard {state, reason, since}` (sent at once on every change, not only every
+//! 30 s), a claimed `cpu` job is answered with passages without touching the model, a trip during a `cpu` answer drops
+//! the model call and answers with passages, and a memory trip stops the llama-server this worker started (started again
+//! on recovery). The worker keeps claiming: the backend settles a claimed job's rung by the last heartbeat, and `cf`
+//! and `passages` jobs run no local model.
+//!
+//! Several workers on one host (contract v1.1 section 1d): run ONE llama-server with `-np N` (N parallel slots;
+//! `--kv-unified-per-slot` keeps each slot's context, 8,192 is enough for `mid`, 12,288 for `mid6k`) under its own
+//! supervisor, and N `ask --worker URL --share-server` processes with distinct `TREVOR_WORKER_ID`s. `--share-server`
+//! connects without waiting for the model lock, never starts a server and never stops one (so a memory trip cannot stop
+//! a shared server; the guard still stops claiming model work). Without it each worker waits for the lock and starts
+//! its own server when none answers, as before. Measured on the M5 Pro (Metal) with E2B and `mid`, 10 gold questions,
+//! two runs each (2026-10-17): one worker on `-np 1` 26.4 and 28.8 answers a minute (median 2.1 to 2.3 s a job), two
+//! workers on `-np 2` 33.8 and 33.4 (median 3.6 to 3.7 s a job), so +16% to +28% throughput for +60% latency; a VPS core
+//! without a GPU is not measured.
 //!
 //! Without a horizon a job takes exactly the path of the one-shot `ask "question"` (route first, P4 only when the route
 //! or the source keywords ask for it, then `answer_one` with the route), so the answers match it byte for byte under
@@ -54,6 +74,7 @@ use crate::answer::{Tables, answer_one, passage_label, route_checked};
 use crate::chrono::Chrono;
 use crate::cli::{Args, Profile, RetrievalKind, RouterKind, apply_profile, deep_for, p4_dir, retrieval_plan, router_source, tool_options};
 use crate::detect::source_kind;
+use crate::guard::{self, GuardConfig, GuardView};
 use crate::retrieval::{ART_DIR, Names, Runtimes, load_names, load_runtime};
 use crate::server::{Spawned, cloudflare, connect_local, connect_or_spawn, openai_llm};
 
@@ -82,7 +103,7 @@ pub(crate) struct AskRequest {
     /// Extra `ask` flags for this job (`["--no-answer-check"]`); flags that change what is loaded are refused.
     #[serde(default)]
     pub(crate) flags: Vec<String>,
-    /// "full" or "slim"; the service's `--profile` when absent.
+    /// "full", "slim", "mid" or "mid6k"; the service's `--profile` when absent.
     #[serde(default)]
     pub(crate) profile: Option<String>,
 }
@@ -187,7 +208,9 @@ pub(crate) struct Service {
     /// `tools.opts` as loaded, restored after a job whose profile changed the router.
     opts0: ToolOptions,
     main_corpus: PathBuf,
-    _server: Option<Spawned>,
+    server: Option<Spawned>,
+    /// The power guard stopped the llama-server this worker started (a memory trip); it starts again on recovery.
+    guard_stopped: bool,
 }
 
 /// The corpus version: the first 16 hex of the sha256 of "dir chunks-sha" lines for every corpus a job may read (the
@@ -250,7 +273,7 @@ impl Service {
                   order.dated_sources(), order.gate().eras.len());
         Ok(Self { argv: std::env::args().collect(), corpus_default, deep0: tables.tools.topics_deep, opts0: tables.tools.opts,
                   main_corpus: a.runtime.corpus.clone(), tables, rts, llm, cf, names: load_names(), chrono, order, corpus_version, a,
-                  _server: server })
+                  server, guard_stopped: false })
     }
 
     /// The job's arguments: the service's own, or (with job flags or another profile) the command line again plus the
@@ -286,7 +309,7 @@ impl Service {
     }
 
     fn profile_of(req: &AskRequest) -> Result<Option<Profile>, JobError> {
-        req.profile.as_deref().map(|p| Profile::parse(p).ok_or_else(|| bad(format!("profile {p:?} is not full or slim")))).transpose()
+        req.profile.as_deref().map(|p| Profile::parse(p).ok_or_else(|| bad(format!("profile {p:?} is not one of {}", Profile::NAMES.join(", "))))).transpose()
     }
 
     /// Answer one job with `llm` (the service's own model when None).
@@ -468,6 +491,14 @@ impl Service {
         id.strip_prefix("topic:").and_then(|t| self.tables.tools.topic(t).ok()).map(|t| t.text).unwrap_or_default()
     }
 
+    /// The cited passage's text hash for the cache carry-over (contract v1.1 section 3b): the chunk's own `contentSha`
+    /// (sha256 of its text, first 16 hex) when a loaded corpus holds it, else the same hash of the passage text (a
+    /// generated passage: topic, dossier, game-data note).
+    fn passage_sha(&self, id: &str, text: &str) -> String {
+        self.runtimes().find_map(|rt| rt.store.row(id).map(|r| rt.store.chunks[r].content_sha.clone())).filter(|s| !s.is_empty())
+            .unwrap_or_else(|| trevor::util::sha16(text))
+    }
+
     fn health(&self) -> serde_json::Value {
         serde_json::json!({"ok": true, "server": SERVER, "corpusVersion": self.corpus_version,
                            "model": self.llm.as_ref().map(|l| l.model.clone())})
@@ -478,8 +509,9 @@ impl Service {
         let r = &job.result;
         let citations: Vec<serde_json::Value> = r.citations.iter().map(|c| {
             let n = r.passages.iter().position(|p| *p == c.chunk_id).map_or(0, |i| i + 1);
+            let text = self.passage_text(&c.chunk_id, &job.generated);
             serde_json::json!({"n": n, "storyId": c.story_id, "chunkId": c.chunk_id, "lineStart": c.line_start,
-                               "lineEnd": c.line_end, "text": trim_at_line(&self.passage_text(&c.chunk_id, &job.generated), CITE_CHARS)})
+                               "lineEnd": c.line_end, "sha": self.passage_sha(&c.chunk_id, &text), "text": trim_at_line(&text, CITE_CHARS)})
         }).collect();
         serde_json::json!({"answer": r.answer, "rung": rung, "profile": job.profile.name(), "source": job.source,
                            "citations": citations, "route": r.route, "form": r.form, "corpusVersion": r.corpus_version,
@@ -936,29 +968,61 @@ pub(crate) struct Probe {
 }
 
 impl Probe {
-    async fn rungs(&self) -> serde_json::Value {
+    /// `cpu` is false while the power guard is tripped (contract v1.1 section 2.1).
+    async fn rungs(&self, guard: Option<&GuardView>) -> serde_json::Value {
         let cf = self.cf_models.as_ref().is_some_and(|m| canary_passing(&self.canary, m, unix_now()).is_some());
-        let cpu = matches!(self.http.get(format!("{}/health", self.llama)).timeout(Duration::from_secs(5)).send().await,
-                           Ok(r) if r.status().is_success());
+        let cpu = !guard.is_some_and(GuardView::tripped)
+            && matches!(self.http.get(format!("{}/health", self.llama)).timeout(Duration::from_secs(5)).send().await,
+                        Ok(r) if r.status().is_success());
         serde_json::json!({"cf": cf, "cpu": cpu})
     }
 }
 
-pub(crate) fn heartbeat_body(worker_id: &str, rungs: serde_json::Value, corpus_version: &str, busy: Option<String>) -> serde_json::Value {
-    serde_json::json!({"workerId": worker_id, "rungs": rungs, "corpusVersion": corpus_version, "busyJobId": busy})
+/// The heartbeat body; `guard` is None when the guard is off (`TREVOR_GUARD=0`), which leaves the v1 body unchanged.
+pub(crate) fn heartbeat_body(worker_id: &str, rungs: serde_json::Value, corpus_version: &str, busy: Option<String>,
+                             guard: Option<&GuardView>) -> serde_json::Value {
+    let mut body = serde_json::json!({"workerId": worker_id, "rungs": rungs, "corpusVersion": corpus_version, "busyJobId": busy});
+    if let Some(g) = guard {
+        body["guard"] = serde_json::to_value(g.status()).unwrap_or_default();
+    }
+    body
 }
 
-pub(crate) async fn heartbeat_loop(api: Api, probe: Probe, corpus_version: String, busy: Arc<Mutex<Option<String>>>, every: Duration) {
+/// A heartbeat every `every`, and one at once whenever the guard trips or recovers (the backend settles a claimed job's
+/// rung by the last heartbeat, so a trip must not wait up to 30 s to be seen).
+pub(crate) async fn heartbeat_loop(api: Api, probe: Probe, corpus_version: String, busy: Arc<Mutex<Option<String>>>, every: Duration,
+                                   mut guard: Option<tokio::sync::watch::Receiver<GuardView>>) {
     loop {
-        let rungs = probe.rungs().await;
+        let view = guard.as_mut().map(|g| g.borrow_and_update().clone());
+        let rungs = probe.rungs(view.as_ref()).await;
         let job = busy.lock().ok().and_then(|b| b.clone());
-        let body = heartbeat_body(&api.worker_id, rungs, &corpus_version, job);
+        let body = heartbeat_body(&api.worker_id, rungs, &corpus_version, job, view.as_ref());
+        if std::env::var("TREVOR_HEARTBEAT_LOG").as_deref() == Ok("1") {
+            eprintln!("worker: heartbeat {body}");
+        }
         match api.post("heartbeat", &body, Duration::from_secs(15)).await {
             Posted::Ok => {}
             other => eprintln!("worker: heartbeat: {other:?}"),
         }
-        tokio::time::sleep(every).await;
+        match guard.as_mut() {
+            Some(g) => {
+                tokio::select! {
+                    () = tokio::time::sleep(every) => {}
+                    r = g.changed() => if r.is_err() { guard = None; },
+                }
+            }
+            None => tokio::time::sleep(every).await,
+        }
     }
+}
+
+/// The profile of a job that names none: `full` on the cf rung; on the others `TREVOR_CPU_PROFILE` (default `mid`,
+/// contract v1.1 section 4; `slim` is the v1 default, the kill switch).
+pub(crate) fn default_profile(rung: &str, cpu_profile: Option<&str>) -> String {
+    if rung == "cf" {
+        return "full".into();
+    }
+    cpu_profile.map(str::trim).filter(|p| Profile::parse(p).is_some()).unwrap_or("mid").to_owned()
 }
 
 impl Service {
@@ -973,14 +1037,21 @@ impl Service {
         self.llm.clone()
     }
 
-    /// One worker job: the result body to post.
-    async fn run_job(&mut self, api: &Api, job: WorkerJob) -> serde_json::Value {
+    /// One worker job: the result body to post. With the power guard on, a `cpu` job never runs the local model while
+    /// it is tripped, and a trip during the answer stops it: the job is answered with passages instead.
+    async fn run_job(&mut self, api: &Api, job: WorkerJob, guard: Option<&tokio::sync::watch::Receiver<GuardView>>) -> serde_json::Value {
         let rung = job.rung.clone().unwrap_or_else(|| "cpu".into());
         let fail = |e: String| serde_json::json!({"jobId": job.job_id, "workerId": api.worker_id, "ok": false, "error": e});
         let profile = match job.profile.as_deref() {
             Some(p) => p.to_owned(),
-            None => if rung == "cf" { "full".into() } else { "slim".into() },
+            None => default_profile(&rung, std::env::var("TREVOR_CPU_PROFILE").ok().as_deref()),
         };
+        let guarded = (rung == "cpu").then_some(guard).flatten();
+        if guarded.is_some_and(|g| g.borrow().tripped()) {
+            eprintln!("worker: the power guard is tripped; job {} gets passages instead of the cpu rung", job.job_id);
+            return self.passages_body(api, &job, &AskRequest { question: job.question.clone(), horizon: None, horizon_pos: job.horizon_pos,
+                                                                server: job.server.clone(), flags: job.flags.clone(), profile: Some(profile) });
+        }
         let req = AskRequest { question: job.question.clone(), horizon: None, horizon_pos: job.horizon_pos, server: job.server.clone(),
                                flags: job.flags.clone(), profile: Some(profile) };
         let llm = match rung.as_str() {
@@ -1000,7 +1071,24 @@ impl Service {
                     llm.set_stream(Some(tx));
                     tokio::spawn(forward_deltas(api.clone(), job.job_id.clone(), rx))
                 });
-                let r = self.ask(req.clone(), Some(llm.clone())).await;
+                let r = match guarded {
+                    None => self.ask(req.clone(), Some(llm.clone())).await,
+                    Some(g) => {
+                        let mut g = g.clone();
+                        let r = tokio::select! {
+                            r = self.ask(req.clone(), Some(llm.clone())) => Some(r),
+                            _ = g.wait_for(GuardView::tripped) => None,
+                        };
+                        match r {
+                            Some(r) => r,
+                            None => {
+                                // The answer future was dropped mid-await: undo what `ask` restores after it.
+                                self.reset_after_cancel();
+                                Err((503, "the power guard tripped during the answer".to_owned()))
+                            }
+                        }
+                    }
+                };
                 llm.set_stream(None);
                 if let Some(f) = fwd {
                     let _ = tokio::time::timeout(Duration::from_secs(30), f).await;
@@ -1027,6 +1115,53 @@ impl Service {
             Err((_, e)) => fail(e),
         }
     }
+
+    fn passages_body(&mut self, api: &Api, job: &WorkerJob, req: &AskRequest) -> serde_json::Value {
+        match self.passages(req) {
+            Ok(j) => fit_result(serde_json::json!({"jobId": job.job_id, "workerId": api.worker_id, "ok": true,
+                                                   "result": self.worker_result(&j, "passages")})),
+            Err((_, e)) => serde_json::json!({"jobId": job.job_id, "workerId": api.worker_id, "ok": false, "error": e}),
+        }
+    }
+
+    /// After an answer future was dropped: the tool options and the main corpus as `ask` would have restored them.
+    fn reset_after_cancel(&mut self) {
+        self.tables.tools.opts = self.opts0;
+        if self.rts.args.corpus != self.main_corpus {
+            self.swap_back();
+        }
+    }
+
+    /// Act on the guard between jobs: on a memory trip stop the llama-server this worker started; on recovery start it
+    /// again (without waiting for the model lock: when another job holds it, the next turn tries again).
+    async fn follow_guard(&mut self, view: &GuardView) {
+        match &view.trip {
+            Some(t) if t.memory && !self.guard_stopped => {
+                if self.server.take().is_some() {
+                    eprintln!("worker: memory trip: stopped the llama-server this worker started");
+                    self.llm = None;
+                } else {
+                    eprintln!("worker: memory trip, but the llama-server at {} was not started by this worker (--share-server or \
+                               already running); it is left running and no cpu job uses it until the guard recovers", self.a.server);
+                }
+                self.guard_stopped = true;
+            }
+            None if self.guard_stopped => {
+                let mut a = self.a.clone();
+                a.no_wait = true;
+                match connect_local(&a).await {
+                    Ok((l, s)) => {
+                        eprintln!("worker: guard recovered; llama-server {}", if s.is_some() { "started again" } else { "connected" });
+                        self.llm = Some(l);
+                        self.server = s;
+                        self.guard_stopped = false;
+                    }
+                    Err(e) => eprintln!("worker: guard recovered, but no llama-server yet ({e:#}); trying again after the next poll"),
+                }
+            }
+            _ => {}
+        }
+    }
 }
 
 /// `--worker`: long-poll the backend for jobs, answer each, post the result; the heartbeat runs in its own task.
@@ -1044,11 +1179,24 @@ async fn pull(svc: &mut Service, base: &str) -> Result<()> {
     let every = Duration::from_secs(std::env::var("TREVOR_HEARTBEAT_SECS").ok().and_then(|s| s.parse().ok()).unwrap_or(30));
     let probe = Probe { http, llama: svc.llm.as_ref().and_then(Llm::llama_base).unwrap_or(&svc.a.server).trim_end_matches('/').to_owned(),
                         cf_models: svc.cf.as_ref().map(Llm::model_ids), canary: canary_path() };
-    let hb = tokio::spawn(heartbeat_loop(api.clone(), probe, svc.corpus_version.clone(), Arc::clone(&busy), every));
+    let guard = GuardConfig::from_env().map(|cfg| {
+        eprintln!("worker: power guard on ({cfg:?})");
+        let (tx, rx) = tokio::sync::watch::channel(GuardView::default());
+        tokio::spawn(guard::run(cfg, tx));
+        rx
+    });
+    if guard.is_none() {
+        eprintln!("worker: power guard off (TREVOR_GUARD=0)");
+    }
+    let hb = tokio::spawn(heartbeat_loop(api.clone(), probe, svc.corpus_version.clone(), Arc::clone(&busy), every, guard.clone()));
     eprintln!("worker {}: polling {} ({}; cf {}, local model {})", api.worker_id, api.base, svc.corpus_version,
               svc.cf.as_ref().map_or("off".to_owned(), |l| l.model_ids().join(",")), svc.llm.as_ref().map_or("none", |l| l.model.as_str()));
     let mut term = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())?;
     loop {
+        if let Some(g) = &guard {
+            let view = g.borrow().clone();
+            svc.follow_guard(&view).await;
+        }
         let next = serde_json::json!({"workerId": api.worker_id});
         let resp = tokio::select! {
             r = api.http.post(api.url("next")).header("x-trevor-worker-key", &api.key).json(&next).send() => r,
@@ -1072,7 +1220,7 @@ async fn pull(svc: &mut Service, base: &str) -> Result<()> {
         if let Ok(mut b) = busy.lock() {
             *b = Some(job.job_id.clone());
         }
-        let body = svc.run_job(&api, job).await;
+        let body = svc.run_job(&api, job, guard.as_ref()).await;
         deliver(&api, &spool, &body).await;
         if let Ok(mut b) = busy.lock() {
             *b = None;

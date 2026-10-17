@@ -30,6 +30,10 @@ pub(crate) fn foreign_lock(path: &std::path::Path) -> Option<(u32, String)> {
     let text = std::fs::read_to_string(path).ok()?;
     let (pid, label) = text.trim().split_once(' ').unwrap_or((text.trim(), ""));
     let pid: u32 = pid.parse().ok()?;
+    if !alive(pid) {
+        // A lock left by a process that died without its cleanup (seen 2026-10-17: pid 98205, no llama-server).
+        return None;
+    }
     let mut p = std::process::id();
     for _ in 0..64 {
         if p == pid {
@@ -42,6 +46,12 @@ pub(crate) fn foreign_lock(path: &std::path::Path) -> Option<(u32, String)> {
         }
     }
     Some((pid, label.to_owned()))
+}
+
+/// Whether process `pid` exists (`ps -p`, which also sees another user's process); true when `ps` cannot run.
+fn alive(pid: u32) -> bool {
+    std::process::Command::new("ps").args(["-p", &pid.to_string()]).stdout(std::process::Stdio::null())
+        .status().map_or(true, |s| s.success())
 }
 
 /// Wait while another job holds the model lock (or fail with `--no-wait`).
@@ -97,9 +107,14 @@ pub(crate) async fn connect_local(a: &Args) -> Result<(Llm, Option<Spawned>)> {
 }
 
 pub(crate) async fn connect_or_spawn_plain(a: &Args) -> Result<(Llm, Option<Spawned>)> {
-    wait_for_lock(a).await?;
+    if !a.share_server {
+        wait_for_lock(a).await?;
+    }
     if let Ok(llm) = Llm::connect(&a.server).await {
         return Ok((llm, None));
+    }
+    if a.share_server {
+        return Err(anyhow::anyhow!("no llama-server at {} (--share-server never starts one)", a.server));
     }
     if a.no_spawn {
         return Err(anyhow::anyhow!("no llama-server at {} (and --no-spawn was given)", a.server));

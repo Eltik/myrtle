@@ -230,7 +230,7 @@ fn worker_result_parts_keep_the_contract() {
     let r: AskRequest = serde_json::from_str(r#"{"question":"Q","horizonPos":5,"profile":"slim"}"#).unwrap();
     assert_eq!((r.horizon_pos, r.profile.as_deref()), (Some(5), Some("slim")));
     // The heartbeat.
-    let hb = heartbeat_body("w", serde_json::json!({"cf": false, "cpu": true}), "en-1", None);
+    let hb = heartbeat_body("w", serde_json::json!({"cf": false, "cpu": true}), "en-1", None, None);
     assert_eq!(hb, serde_json::json!({"workerId": "w", "rungs": {"cf": false, "cpu": true}, "corpusVersion": "en-1", "busyJobId": null}));
     // The canary: a passing id counts while it is in the list and at most 8 days old.
     let p = std::env::temp_dir().join(format!("trevor-canary-test-{}.json", std::process::id()));
@@ -304,7 +304,7 @@ async fn worker_heartbeat_and_deltas_reach_the_fake_backend() {
     let busy = std::sync::Arc::new(std::sync::Mutex::new(Some("job-1".to_owned())));
     let probe = Probe { http: reqwest::Client::new(), llama: "http://127.0.0.1:9".into(), cf_models: Some(vec!["@cf/x".into()]),
                         canary: std::path::PathBuf::from("/nonexistent/canary.json") };
-    let hb = tokio::spawn(heartbeat_loop(api.clone(), probe, "en-abc".into(), busy, std::time::Duration::from_secs(3600)));
+    let hb = tokio::spawn(heartbeat_loop(api.clone(), probe, "en-abc".into(), busy, std::time::Duration::from_secs(3600), None));
     // Two deltas: the events waiting at a send are coalesced, and a repeated prefix is not resent.
     let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
     for e in [Start, Piece("Tal".into()), Piece("ulah".into())] {

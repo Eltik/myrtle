@@ -10,7 +10,7 @@ use trevor::tools::{Route, Tools};
 
 use crate::detect::source_kind;
 
-#[derive(Parser, Clone)]
+#[derive(Parser, Clone, Debug)]
 #[command(about = "Answer an Arknights lore question from retrieved passages")]
 pub(crate) struct Args {
     /// The question (omit with --batch).
@@ -203,6 +203,12 @@ pub(crate) struct Args {
     /// Share the server even when another job holds the model lock (before 2026-09-30).
     #[arg(long)]
     pub(crate) ignore_lock: bool,
+    /// The llama-server at --server is shared by several processes and run by someone else (contract v1.1 section 1d:
+    /// N `ask --worker` processes on one host, one llama-server with `-np N`): connect to it without waiting for the
+    /// model lock, never start one (as --no-spawn) and never stop it. Off: each process waits for the lock and starts
+    /// its own server when none answers, as before.
+    #[arg(long)]
+    pub(crate) share_server: bool,
     /// A second retrieval query in the words the story itself would use (one more Gemma call), its hits interleaved
     /// with the question's own: "What operator declared that they want to pee in public?" never retrieves Chiave's "see
     /// who can piss farther", which a query in the story's words ranks 2nd (2026-09-30). Opt-in until measured.
@@ -223,15 +229,17 @@ pub(crate) struct Args {
     /// The port `--serve` listens on.
     #[arg(long, default_value_t = 8090)]
     pub(crate) port: u16,
-    /// Pull jobs from a myrtle backend instead of listening (design/trevor-integration.md section 4): long-polls
-    /// `{URL}/api/trevor/worker/next` with the `x-service-key` header from `TREVOR_SERVICE_KEY`. Skeleton, not yet
-    /// exercised against a backend.
+    /// Pull jobs from a myrtle backend instead of listening (design/trevor-contract-v1.md section 3, v1.1 section 2.1):
+    /// long-polls `{URL}/api/trevor/worker/next` with the `x-trevor-worker-key` header from `TREVOR_WORKER_KEY`; see
+    /// serve.rs for the heartbeat, the power guard and running several workers on one llama-server (--share-server).
     #[arg(long, value_name = "URL")]
     pub(crate) worker: Option<String>,
     /// The pipeline profile (design/trevor-contract-v1.md section 2; also per worker job): `full` is today's default
-    /// pipeline (the kill switch: no flag changes); `slim` is the CPU rung's: the keyword router, k 5, a 2,000-token
-    /// passage budget, 250 output tokens, no typed fallback, no answer extension and no second-look retries (answer
-    /// check, operator list check, evidence composition, the decline retry).
+    /// pipeline (the kill switch: no flag changes); `slim` is contract v1's CPU pipeline: the keyword router, k 5, a
+    /// 2,000-token passage budget, 250 output tokens, no typed fallback, no answer extension and no second-look retries
+    /// (answer check, operator list check, evidence composition, the decline retry); `mid` (contract v1.1 section 4, the
+    /// cpu rung's default) is the keyword router, k 8, a 3,600-token budget, 250 output tokens and the same three
+    /// follow-ups off; `mid6k` is `mid` with a 6,000-token budget.
     #[arg(long, value_enum, default_value_t = Profile::Full)]
     pub(crate) profile: Profile,
     /// Retrieval for serving (2026-10-16): `hybrid` (dense + BM25, the default) or `bm25`, which never loads the dense
@@ -563,7 +571,7 @@ pub(crate) struct Args {
 
 /// Which lore Trevor serves (2026-10-01): v1 is the 46 topics and the 200 dossiers, v2 adds the topics and dossiers
 /// chosen from data (scripts/topics.py mine, scripts/dossiers.py characters_v2), in their own corpus directories.
-#[derive(Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, clap::ValueEnum)]
 pub(crate) enum LoreSet {
     V1,
     V2,
@@ -581,7 +589,7 @@ impl LoreSet {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, clap::ValueEnum)]
 pub(crate) enum RouterKind {
     Model,
     Keywords,
@@ -659,13 +667,21 @@ pub(crate) fn deep_for(a: &Args, tools: &Tools, q: &str) -> bool {
 pub(crate) enum Profile {
     Full,
     Slim,
+    /// Contract v1.1 section 4: the eval's middle arm `e-e2b-mid36` (the cpu rung's default since 2026-10-17).
+    Mid,
+    /// `mid` with a 6,000-token passage budget (arm `f-e2b-mid6k`); needs a 12,288-token slot.
+    Mid6k,
 }
 
 impl Profile {
+    pub(crate) const NAMES: &[&str] = &["full", "slim", "mid", "mid6k"];
+
     pub(crate) fn name(self) -> &'static str {
         match self {
             Self::Full => "full",
             Self::Slim => "slim",
+            Self::Mid => "mid",
+            Self::Mid6k => "mid6k",
         }
     }
 
@@ -673,6 +689,8 @@ impl Profile {
         match s {
             "full" => Some(Self::Full),
             "slim" => Some(Self::Slim),
+            "mid" => Some(Self::Mid),
+            "mid6k" => Some(Self::Mid6k),
             _ => None,
         }
     }
@@ -690,9 +708,22 @@ pub(crate) enum BackendKind {
     Openai,
 }
 
-/// Set `a` to profile `p`: `full` changes nothing; `slim` is the CPU rung's pipeline.
+/// Set `a` to profile `p`: `full` changes nothing; `slim` is the contract v1 CPU pipeline; `mid` and `mid6k` are
+/// exactly the flags of the eval arms `e-e2b-mid36` and `f-e2b-mid6k` (artifacts/answers/eval3way/queue_mid.sh: `--router
+/// keywords --k 8 --n-predict 250 --no-typed-fallback --no-answer-extend --no-answer-check --no-operator-list-check
+/// --max-context-tokens 3600|6000` on top of `--profile full`): one answer call, no router call, gold 57 and 73 of 131.
 pub(crate) fn apply_profile(a: &mut Args, p: Profile) {
     a.profile = p;
+    if matches!(p, Profile::Mid | Profile::Mid6k) {
+        a.router = RouterKind::Keywords;
+        a.k = 8;
+        a.max_context_tokens = if p == Profile::Mid { 3600 } else { 6000 };
+        a.n_predict = 250;
+        a.no_typed_fallback = true;
+        a.no_answer_extend = true;
+        a.no_answer_check = true;
+        a.no_operator_list_check = true;
+    }
     if p == Profile::Slim {
         a.router = RouterKind::Keywords;
         a.k = 5;

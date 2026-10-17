@@ -21,6 +21,7 @@ mod batch;
 mod server;
 mod intents;
 mod serve;
+mod guard;
 
 use std::path::PathBuf;
 
@@ -195,3 +196,5 @@ fn load_tools(a: &Args) -> Tools {
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod tests_v11;
