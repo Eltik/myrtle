@@ -121,3 +121,33 @@ fn the_vote_is_weighted_and_reports_its_share() {
     let v = vote(&ex, &[1.0, 0.0], 3, Some(0));
     assert!((v.top - 0.9).abs() < 1e-6);
 }
+
+/// Pins the exact bytes of the router prompt and grammar `ask` sends: the default (`source`, `compare` and
+/// `wide_topics` on), `--no-router-source`, `--lore v1`, and every part off. A prompt edit that is meant to change
+/// nothing must leave these hashes as they are.
+#[test]
+fn router_prompt_bytes_are_pinned() {
+    let default = RouterPrompt { source: true, compare: true, wide_topics: true, ..RouterPrompt::default() };
+    let cases = [
+        ("default", default),
+        ("no_router_source", RouterPrompt { source: false, ..default }),
+        ("lore_v1", RouterPrompt { wide_topics: false, ..default }),
+        ("all_off", RouterPrompt::default()),
+    ];
+    let got: Vec<(&str, String)> = cases
+        .iter()
+        .map(|(name, o)| {
+            let (s, g) = router_prompt(o);
+            (*name, crate::util::sha16(&format!("{s}\u{0}{g}")))
+        })
+        .collect();
+    let want = [
+        ("default", "80700fbf1135697a"),
+        ("no_router_source", "d4f6d6a025dc9925"),
+        ("lore_v1", "d743a4d4f1abc807"),
+        ("all_off", "8277433626664b44"),
+    ];
+    for ((name, sha), (wname, wsha)) in got.iter().zip(want) {
+        assert_eq!((*name, sha.as_str()), (wname, wsha), "router prompt bytes changed: {got:?}");
+    }
+}
