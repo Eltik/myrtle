@@ -1,11 +1,11 @@
 # Trevor: research findings for an Arknights lore model
 
-> **Partially superseded.** `claude/trevor-implementation-notes.md` (2026-09-23) corrects
-> several claims here against verified APIs. One correction is mine to own: the RRF k=20
-> claim below overstated its evidence.
+> **Partially superseded.** [`trevor-implementation-notes.md`](../trevor-implementation-notes.md) (2026-09-23) corrects
+> several claims here against verified APIs. One correction concerns this document's own
+> evidence: the RRF k=20 claim below overstated it.
 
 Six parallel research threads, 2026-09-22. Constraint set: no external LLM API of any
-kind, zero recurring cost. Hardware measured, not assumed: MacBook Pro **M5 Pro, 15 cores
+kind, zero recurring cost. Hardware measured, not assumed: the development machine, a MacBook Pro **M5 Pro, 15 cores
 (5P + 10E), 24 GB unified, 307 GB/s, 114 GB free disk**, no ML tooling installed. VPS
 **3 vCPU, 10 GB RAM + 4 GB swap**, seven tenants, one recorded kernel OOM kill at
 `anon-rss: 9.3 GB`.
@@ -26,17 +26,17 @@ pointing the same direction.
 
 **Raw continued pretraining on a corpus this size is measured to be net-harmful.** The
 closest published analogue is EntiGraph (ICLR 2025), whose source corpus was 1.3M tokens,
-same order as yours and the same shape: a small closed corpus where facts appear once.
+same order as Trevor's and the same shape: a small closed corpus where facts appear once.
 QuALITY closed-book accuracy on Llama 3 8B: base **39.49%**, raw CPT on the corpus
 **38.15%**. The training made it worse. To reach the regime where it helps they needed
-**460x synthetic expansion to 600M tokens**, which got 56.42%. For your 6.0M tokens that
-ratio is 2.8B tokens, which on this Mac is roughly **162 days of generation plus 65 days
+**460x synthetic expansion to 600M tokens**, which got 56.42%. For Trevor's 6.0M tokens that
+ratio is 2.8B tokens, which on the development machine is roughly **162 days of generation plus 65 days
 of training**. And the payoff once retrieval is present was **60.35% -> 62.73%, +2.38
 points**. Off by three orders of magnitude on effort for two points.
 
 **Scale arithmetic says the same thing without any experiment.** 6.0M tokens against an 8B
 model is **0.00075 tokens per parameter**. Successful domain-adaptive pretraining in the
-literature runs at 3.2 to 8 tokens per parameter. You are 1,000x to 10,000x below the
+literature runs at 3.2 to 8 tokens per parameter. Trevor's corpus is 1,000x to 10,000x below the
 floor. Allen-Zhu's knowledge capacity work needs **~1,000 exposures per fact** for full
 extraction; a story beat narrated once in one phrasing gets 2 to 4.
 
@@ -95,7 +95,7 @@ knowledge SFT (-8.3 coefficient, -56.40% in the replication); full fine-tuning o
 
 ---
 
-## 2. Retrieval: route before you retrieve
+## 2. Retrieval: route before retrieving
 
 **The corpus is small enough that retrieval is the wrong default for most questions.**
 Median group is 4.4k tokens, mean 12.2k, and only `main_14` exceeds 100k. On NarrativeQA,
@@ -111,7 +111,7 @@ does not pay: fixed-size beat breakpoint and clustering chunkers across 10 retri
 datasets; build times were **fixed-size <1 s, recursive semantic 4.90 min, LumberChunker
 8.37 h, DenseX 15.05 h** with no meaningful effectiveness gain. Meanwhile SECOM (ICLR 2025)
 measured dialogue specifically: topically-coherent **segment-level** memory units scored
-GPT4Score **69.33** versus 57.99 turn-level and 51.18 session-level. Your scripts already
+GPT4Score **69.33** versus 57.99 turn-level and 51.18 session-level. The scripts already
 carry scene and speaker-turn boundaries for free. Chunk at 400-600 tokens on turn
 boundaries, never splitting a turn, 0-10% overlap, with the speaker name kept verbatim in
 the chunk text so BM25 can hit it.
@@ -120,23 +120,23 @@ the chunk text so BM25 can hit it.
 Anthropic measured failure rate (1 - recall@20) going **5.7% -> 3.7%** with contextual
 embeddings, **-> 2.9%** adding contextual BM25, **-> 1.9%** adding reranking, a 67%
 reduction. The usual framing prices this at $1.02 per million document tokens, about $5.60
-for your corpus. **You have no API, so the real price is Mac time:** ~14,000 chunks at
+for this corpus. **With no API, the real price is local machine time:** ~14,000 chunks at
 ~100 generated tokens each is 1.4M tokens of generation, roughly **7 hours**. That is a
 real line item and it roughly doubles the v1 build. It is still worth it, because the
-prefix is where you resolve who "he" and "the Doctor" refer to, and NoLiMa measured that
+prefix is where the build resolves who "he" and "the Doctor" refer to, and NoLiMa measured that
 conversion precisely: questions with literal lexical overlap score **98.5% at 32k context**
 while latent-association questions score **56.2%**. Screenplay dialogue is the worst case
 for latent association.
 
 Late chunking is the cheaper alternative and loses on both axes here. Head-to-head it
 trails contextual retrieval (NDCG@5 0.309 vs 0.317), and it caps at the encoder's context
-window (8,192 tokens), which covers your median group but not your mean or the 124k
+window (8,192 tokens), which covers the median group but not the mean or the 124k
 outlier.
 
-**Hybrid, and expect BM25 to matter more than usual.** Start with RRF. *(Correction, 2026-09-23: I wrote "measured best at k=20" here and that overstated the evidence. No study establishes k=20; the one real sweep found k=32 peaking at nDCG@10 0.899 against k=60's 0.881, with 10 through 100 all inside 0.868-0.899. Make k a config knob, default 20, and do not spend much on it.)* Move to convex combination once you have ~40 labeled queries:
+**Hybrid, and expect BM25 to matter more than usual.** Start with RRF. *(Correction, 2026-09-23: an earlier version said "measured best at k=20" here, which overstated the evidence. No study establishes k=20; the one real sweep found k=32 peaking at nDCG@10 0.899 against k=60's 0.881, with 10 through 100 all inside 0.868-0.899. Make k a config knob, default 20, and do not spend much on it.)* Move to convex combination once ~40 labeled queries exist:
 Bruch et al. (TOIS 2023) found CC beats RRF in-domain and out-of-domain and needs only a
 small tuning set, and Elastic measured tuned weighted sum at **+6% nDCG@10 over the strong
-single retriever versus RRF's +1.4%**. Your proper nouns are invented tokens with no
+single retriever versus RRF's +1.4%**. The corpus's proper nouns are invented tokens with no
 pretraining support, and "every time X is described as Y" is an enumeration query that
 BM25 owns.
 
@@ -151,7 +151,7 @@ the 1B version only reaches 0.6114 / 0.7237. The 17M beats ms-marco-MiniLM-L6-v2
 negative: on NovelQA's detail subset plain RAG scored **55.28% vs Community-GraphRAG
 46.88%**, HippoRAG2 on NarrativeQA gained **+0.2 F1**, and on STAGE's screenplay QA
 benchmark **Hybrid RAG 70.2% Pass@5 vs GraphRAG 52.0%**. Build the cheap piece instead:
-your 5,808 speaker strings are exact, zero-error structured metadata, so a speaker-to-chunk
+the 5,808 speaker strings are exact, zero-error structured metadata, so a speaker-to-chunk
 inverted index costs nothing and has no extraction error. E²GraphRAG showed the light
 version wins anyway, beating GraphRAG-local on NovelQA **45.60% vs 43.34%** with indexing
 **1,397 s vs 13,794 s**.
@@ -167,7 +167,7 @@ exact SIMD scan costs **0.50 ms** and **1.5 ms** respectively at recall 1.0. An 
 would buy 1.4 ms in a pipeline whose reranker costs 280 ms, at the price of 4% recall plus
 an index build plus a dependency. The crossover where ANN starts to matter is 300k to 1M
 vectors. Skip pgvector entirely: at 14,000 rows its iterative scan degenerates into the
-flat scan you would have written, with a planner, a WAL and an extension upgrade treadmill
+flat scan one would write by hand, with a planner, a WAL and an extension upgrade treadmill
 in the way.
 
 ---
@@ -176,10 +176,10 @@ in the way.
 
 **Postgres full-text search cannot index `Kal'tsit`.** Confirmed from the pgsql-hackers
 archive: `to_tsvector('peter o''toole')` yields `'o':2 'peter':1 'tool':3`. The apostrophe
-splits the token **and then the English stemmer mangles the remainder**. Applied to your
-corpus that turns your single most important token class into garbage. The parser cannot be
+splits the token **and then the English stemmer mangles the remainder**. Applied to this
+corpus that turns its single most important token class into garbage. The parser cannot be
 fixed without a C extension. Tantivy's default `SimpleTokenizer` has the same problem, but
-tantivy lets you replace the tokenizer, which is the point: a `RegexTokenizer` on
+tantivy allows replacing the tokenizer, which is the point: a `RegexTokenizer` on
 `[\p{L}\p{N}]+(?:['’\-.][\p{L}\p{N}]+)*` with `LowerCaser` and **no stemmer** keeps
 `Kal'tsit`, `Ch'en`, `W's` and `Ifrit-Nian` intact. Fuzzy distance 1-2 then rescues
 `Kaltsit` -> `Kal'tsit`.
@@ -191,7 +191,7 @@ Recommended crate stack, versions verified 2026-09-22:
 | Embedding | `fastembed = "=7.0.1"` | Wraps `ort`; absorbs its RC churn. `ort` is still 2.0.0-rc.13 with breaking changes in every RC |
 | Lexical | `tantivy = "0.26.2"` | Mmap-backed, so the 12-25 MB index is reclaimable page cache, not anonymous RSS |
 | Vectors | none | `Vec<f32>` behind `ArcSwap`, normalized at build time |
-| Tokenizing | `tokenizers = "0.23.2"` | Same `tokenizer.json` on Mac and VPS or chunk sizes silently drift |
+| Tokenizing | `tokenizers = "0.23.2"` | Same `tokenizer.json` on the build machine and VPS or chunk sizes silently drift |
 | Hot swap | `arc-swap = "1.9.2"` | Matches the existing `ArcSwap<GameData>` pattern |
 | Reranker | Ettin 17M, INT8 ONNX, 256 tokens, batched top-40 | ~280 ms on 2 cores |
 
@@ -200,12 +200,12 @@ slower); `embed_anything` (44,999 lifetime downloads); `instant-distance` (**no 
 since 2023-06-26**); pgvector; Outlines for constrained decoding (**3% schema coverage on
 GitHub-Hard, 3-8 s grammar compile** versus llama.cpp GBNF at 39% and 0.05 s).
 
-**Two memory hazards specific to your OOM history.** First, glibc arena hoarding around
+**Two memory hazards specific to the VPS's OOM history.** First, glibc arena hoarding around
 ONNX Runtime is measured and large: a 19-20 MB model consumed ~120 MB RSS, with
 `mallinfo2()` showing **~40 MB in use versus ~188 MB hoarded**. Lowering the mmap threshold
 to 32 KB cut hoarding **188 MB -> 4-5 MB**, and disabling ORT's internal arena saved
 another 50 MB. Second, `intra_op_num_threads` defaults to one thread per core **per
-session**, and `allow_spinning` defaults to on, so two sessions on a 3-vCPU box gives you
+session**, and `allow_spinning` defaults to on, so two sessions on a 3-vCPU box gives
 six busy-waiting ORT threads competing with tokio. Use a global ORT thread pool,
 `intra_threads = 2`, spinning off, every `run()` inside `spawn_blocking`, and a
 `Semaphore::new(1)` in front of the reranker.
@@ -228,35 +228,35 @@ releasing every 1-3 weeks) out of the VPS build graph entirely.
 
 ---
 
-## 4. Hosting: your constraint eliminates live generation, and that is fine
+## 4. Hosting: the no-API constraint eliminates live generation, and that is fine
 
 State the constraint's consequence plainly. The free inference tiers are real and
 generous, Cloudflare Workers AI computes to **~740 answers/day free** on Llama 3.1 8B with
 the cleanest data terms of any provider, Cerebras gives 1M tokens/day, Groq 200k. **All of
-them are external APIs.** Your rule rules them all out. What remains is your VPS, your
-laptop, or rented hardware.
+them are external APIs.** The no-API rule rules them all out. What remains is the VPS, the
+development laptop, or rented hardware.
 
 **The VPS cannot generate.** Projected from published benchmarks via the bandwidth model, 3
 shared vCPUs give roughly 5-12 tok/s on a 1.7B at Q4 and 1-2.5 tok/s on an 8B. But decode
 is not the blocker: **prefill is, and almost everyone forgets it.** A 2,000-token RAG
 prompt at 50-200 tok/s for a 1.5B means 10-40 s before the first token. **Total
-time-to-answer 30-90 seconds**, while saturating the cores that serve your website, on a
+time-to-answer 30-90 seconds**, while saturating the cores that serve the website, on a
 box that has already been OOM-killed once. One user asking a question makes the site slow
 for everyone.
 
 **The laptop cannot serve.** Cloudflare Tunnel itself is genuinely free and excellent,
-unmetered, with TLS at the edge and no open inbound ports. The problem is the origin: lid
-closes, campus Wi-Fi to café to tethering, Kyoto egress to a global audience, and a single
-point of failure that travels in your backpack. Realistic availability lands around 50-80%,
-which for a public feature is worse than not shipping. It also conflicts with your standing
-preference against leaving long-running background jobs on the Mac. The laptop's correct
+unmetered, with TLS at the edge and no open inbound ports. The problem is the origin: the lid
+closes, the network changes from one Wi-Fi or tethered connection to the next, egress from
+one region serves a global audience, and the single point of failure is a portable machine. Realistic availability lands around 50-80%,
+which for a public feature is worse than not shipping. It also conflicts with the project rule
+against leaving long-running background jobs on the development machine. The laptop's correct
 role is batch precompute while plugged in.
 
 **Dedicated GPU is the only live-generation option, and it is not zero.** Cheapest
 sustained 24/7 is Vast.ai interruptible RTX 4000 Ada at **~$101/month**, on-demand ~$130,
 Hetzner GEX44 at **€184 (~$210)**.
 
-**So the architecture is: no live inference on the critical path.** Precompute on the Mac,
+**So the architecture is: no live inference on the critical path.** Precompute on the development machine,
 serve lookups and retrieval from the VPS. The degradation ladder, each rung independently
 testable:
 
@@ -282,7 +282,7 @@ question-distribution data exists for game-wiki Q&A specifically; that is a genu
 not something to extrapolate from web-search Zipf literature.
 
 **The miss path is a content pipeline, not an error.** Log it, batch-generate overnight,
-and the log tells you exactly which lore to prioritize.
+and the log shows exactly which lore to prioritize.
 
 ---
 
@@ -292,19 +292,19 @@ One measured fact dictates the build order. **Synthetic questions are valid for 
 work and invalid for generation work.** Kendall τ between synthetic-benchmark and
 human-benchmark rankings was **0.44-0.75 for retriever configurations** but ranged
 **-1.00 to +1.00 for comparing generators**, with several metrics inverting model
-preferences. Your only free labeling source is trustworthy for exactly one thing.
+preferences. The only free labeling source is trustworthy for exactly one thing.
 
 Retrieval is also where the headroom is: oracle context scores **76.1-88.6%** against
 closed-book **31.5-56.1%**. No prompt change moves a 40-point band. And retrieval metrics
 need no model at all, so they run in CI in seconds and never flake.
 
-**The mandatory control, and it is a bigger risk for you than for most.** Run every gold
+**The mandatory control, and it is a bigger risk here than for most.** Run every gold
 question closed-book with no retrieval and record the score. Standard benchmarks leak
 badly: GPT-5 scored **HotpotQA 50%, 2WikiMultihopQA 62%, QASC 75%** with no context at all,
 and when leakage was removed the spread between RAG methods widened from **3% to 10-18%**.
 Arknights is a popular game with a large wiki footprint in pretraining data, so a local
 Qwen or Gemma may already know a fair amount of it. **If closed-book accuracy exceeds
-30-40%, your eval is not measuring retrieval** and no number from it means anything. Five
+30-40%, the eval is not measuring retrieval** and no number from it means anything. Five
 lines of harness code, highest-value validity check available.
 
 **Gold set: 150 questions.** That number converges from three independent directions:
@@ -378,7 +378,7 @@ M5 Pro), assuming `-np 4` batching delivers the measured ~2x aggregate:
 
 **The answer bank is 62% of the entire build.** That is the phasing finding. Do not
 enumerate 50,000 questions upfront. Seed 5,000 (1.9 hours) and grow the bank from real miss
-logs, which is both cheaper and better targeted than any enumeration you would guess at.
+logs, which is both cheaper and better targeted than any enumeration guessed in advance.
 
 Which means **v1 is one night, not a weekend**: summaries plus prefixes plus prefill is
 roughly **10 hours**, and that alone ships reader enrichment (per-story synopsis, "previously
@@ -389,9 +389,9 @@ surface.
 vs llama.cpp 76.9 tok/s) but loses everything that matters for a batch job. Concurrency
 measured on an M5 Pro with an 8B: `mlx_lm.server` went 81 -> 94 tok/s at concurrency 4
 because it serializes, while `llama-server` went **74 -> 218 tok/s, ~2.9x**. MLX's prefix
-cache reuse is **broken for exactly the model families you want**, silently falling back to
+cache reuse is **broken for exactly the model families this plan wants**, silently falling back to
 full recompute on sliding-window and SSM-hybrid architectures, which covers Qwen 3.5 all
-sizes, GPT-OSS, and Gemma 3. And MLX runs ~50% slower past 30k context. Your workload is
+sizes, GPT-OSS, and Gemma 3. And MLX runs ~50% slower past 30k context. The workload is
 5:1 input-heavy with a shared system prompt, so prefix caching is the single biggest lever
 and MLX cannot pull it.
 
@@ -428,23 +428,23 @@ that chassis degrade 13.8-19.0% within a single run.
 
 ---
 
-## 7. What I did not verify
+## 7. What was not verified
 
-- **Nothing was benchmarked on your hardware.** Every throughput figure is derived from
+- **Nothing was benchmarked on the development hardware.** Every throughput figure is derived from
   published benchmarks on comparable chips, several of them from SEO-generated sites that
   contradict roofline physics. The roofline filter is
   `tok/s ≈ (bandwidth ÷ active-weight GB) × 0.60-0.70`; one widely-cited claim of 70-80
-  tok/s for a dense 27B on this class of Mac computes to 12-18 and is simply wrong.
+  tok/s for a dense 27B on this class of machine computes to 12-18 and is simply wrong.
 - **Closed-book Arknights knowledge of the candidate models is unmeasured**, and it is the
   single largest unknown in the plan. It determines whether the eval is valid and whether a
   spoiler filter is even achievable.
 - **CN remains unverified**: 5,388 script files on disk but `docs/story-reader.md` records
-  only 1 of 2,009 `StoryTxt` paths resolving. I did not re-check that this session.
+  only 1 of 2,009 `StoryTxt` paths resolving. It was not re-checked for this research.
 - **`handbook_info_table.json` (5.7 MB) and `charword_table.json` (11.1 MB)** are
   lore-bearing, already parsed, and not in the 4,108,615-word count. The corpus is larger
-  than stated by an amount I have not measured.
+  than stated by an unmeasured amount.
 - **No public benchmark isolates abstractive summarization faithfulness** for any of the
-  candidate models. That gap is real and only your own eval closes it.
+  candidate models. That gap is real and only Trevor's own eval closes it.
 - One directly on-topic paper, "Self-Study Reconsidered: The Hidden Fragility of Learning
   from Self-Generated QA" (arXiv 2606.32002), was rate-limited and could not be read. It
   bears on the SFT-data-generation step and is worth reading directly.

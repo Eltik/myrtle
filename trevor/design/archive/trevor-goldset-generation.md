@@ -1,6 +1,6 @@
 # Trevor: gold-set generation, prompts and grammar
 
-Implements §2 of `claude/trevor-eval-spec.md`. Everything here runs on the Mac against a
+Implements §2 of [`trevor-eval-spec.md`](../trevor-eval-spec.md). Everything here runs on the development machine against a
 local `llama-server`. Output is `eval/goldset_v1.jsonl`, frozen and reviewed in PRs.
 
 **Why generate rather than hand-write.** Synthetic questions are measured valid for exactly
@@ -134,7 +134,7 @@ hex     ::= [0-9a-fA-F]
 bool    ::= "true" | "false"
 ```
 
-If the `{m,n}` repetition form is unsupported on your llama.cpp build, drop the bounds to
+If the `{m,n}` repetition form is unsupported on the installed llama.cpp build, drop the bounds to
 `qchar*` and enforce the lengths in the filter instead. Check once with
 `llama-server --grammar-file` on a throwaway prompt before running the batch.
 
@@ -213,7 +213,7 @@ on graded quality, so keep every judgment in this harness binary.
 Record `closed_book.correct` per item and the pooled rate in the gold set header.
 
 **The gate: if pooled closed-book accuracy exceeds 30%, stop.** The eval is measuring the
-model's pretraining knowledge of Arknights rather than your retrieval. On standard
+model's pretraining knowledge of Arknights rather than the retrieval. On standard
 benchmarks GPT-5 scored **HotpotQA 50%, 2WikiMultihopQA 62%, QASC 75%** with no context at
 all, and removing that leakage widened the spread between competing RAG methods from **3% to
 10-18%** — before removal the benchmark could barely rank them.
@@ -221,7 +221,7 @@ all, and removing that leakage widened the spread between competing RAG methods 
 Arknights has a large wiki footprint in pretraining data, so treat this number as a **model
 selection criterion**, not only an eval control. There is a real tension here worth stating
 rather than resolving silently: a model that knows Arknights writes more fluent answers,
-*and* invalidates your eval, *and* makes spoiler gating impossible because it can confabulate
+*and* invalidates the eval, *and* makes spoiler gating impossible because it can confabulate
 post-boundary facts from weights. Measure it per candidate model before choosing one.
 
 Remediation when the gate trips, in order of preference: drop items whose answers are
@@ -243,7 +243,7 @@ only as a last resort re-scope to stories with the thinnest wiki coverage.
  "generated_by":"gemma-4-26b-a4b-q4@<sha>","prompt_sha":"<sha>","seed":2847361092,
  "filters":{"trigram_jaccard":0.11,"bm25_rank":4,"deictic":false},
  "closed_book":{"model":"gemma-4-26b-a4b-q4@<sha>","correct":false,"checked_at":"2026-09-24"},
- "reviewed_by":"ian","review":"accepted"}
+ "reviewed_by":"<reviewer>","review":"accepted"}
 ```
 
 Header line carries `{"goldset_version":"v1","built_at":…,"n":150,"closed_book_pooled":0.14,

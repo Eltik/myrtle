@@ -1,6 +1,6 @@
-# Codex brief: `trevor/src/corpus/chunk.rs`
+# Implementation brief: `trevor/src/corpus/chunk.rs`
 
-> **SUPERSEDED 2026-09-24. Do not hand this to codex.** `chunk.rs` now exists in the
+> **SUPERSEDED 2026-09-24. Do not use this brief as a task.** `chunk.rs` now exists in the
 > scaffold, implemented directly and measured over the real corpus (implementation notes
 > §8). This brief also carries two rules the measurement refuted: it tells the implementer
 > that `[Image]` is a hard scene boundary (it is a CG overlay; that rule mislabeled 986
@@ -26,11 +26,12 @@ else in the crate.
 
 ## The brief
 
-Copy everything below the line into `codex exec`.
+The brief as written follows the line. It is self-contained for an implementer working only in
+`chunk.rs`.
 
 ---
 
-Repo: /Users/eltik/Documents/Coding/myrtle. Rust crate: trevor. Build with `cargo build --release` and test with `cargo test --lib chunk` from trevor. Do NOT run git commit/checkout/reset/restore/stash/clean. Do not touch any file outside trevor/src/corpus/chunk.rs.
+Repo: the myrtle repository root. Rust crate: trevor. Build with `cargo build --release` and test with `cargo test --lib chunk` from trevor. Do NOT run git commit/checkout/reset/restore/stash/clean. Do not touch any file outside trevor/src/corpus/chunk.rs.
 
 TASK: the Arknights story corpus must be split into retrieval chunks, and the two obvious approaches are both measurably wrong on this corpus. A fixed-size token window splits speaker turns, which strands a line of dialogue from the name that owns it and makes the chunk unattributable. Breaking on every `[Background]` command over-segments by roughly 2x, because a `Background` command with no `image` argument is a fade, not a scene change: a sample of 1,200 files shows 9,887 `Background` commands carrying `image` and the remainder carrying only `fadetime`/`block`. Breaking on `[Blocker]` or `[Delay]` is worse still: they occur 89,386 and 89,473 times across the corpus against `Background`'s 19,977, and they are intra-scene pacing. Implement scene-aware packing instead.
 
@@ -188,8 +189,9 @@ repeated identical `background` image does not open a scene; a turn is never spl
 oversized single turn survives whole; a sub-minimum story yields one chunk; the
 concatenation invariant. Comments explain WHY, not the diff, and no comment may reference
 "the old code" or "previously". `cargo build --release`, `cargo fmt --check` and
-`cargo clippy -- -D warnings` must be clean for what you introduce; pre-existing warnings
+`cargo clippy -- -D warnings` must be clean for the new code; pre-existing warnings
 elsewhere are fine.
 
-WHEN DONE, print the final diff scoped to trevor/src/corpus/chunk.rs, the test output, and
-confirmation that build, fmt and clippy are clean. Print the diff, not a summary of it.
+WHEN DONE, the deliverable is the final diff scoped to trevor/src/corpus/chunk.rs, the test
+output, and confirmation that build, fmt and clippy are clean: the diff itself, not a summary
+of it.

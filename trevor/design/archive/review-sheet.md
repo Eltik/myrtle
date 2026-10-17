@@ -1,33 +1,33 @@
 # Trevor review sheet (about 20 minutes)
 
-Each item shows what Trevor produced and what its automatic judge decided. Mark each **agree** or **disagree** with the judge; where you disagree, a word on why. Your answers measure how far the automatic checks can be trusted (the spec asks for this anchor). Nothing else waits on it.
+Each item shows what Trevor produced and what its automatic judge decided. The items were reviewed by hand and marked **agree** or **disagree** with the judge, with a word on why where the review disagrees; an item still showing both options was left unmarked. The marks measure how far the automatic checks can be trusted (the spec asks for this anchor). Nothing else waits on it.
 
 ## 1. Character dossier sentences (12)
 
 1. **Toland**: "He later assists in "Near Light, NL-3 Preparing" by saving Iwona Krukowska from Monique, a Lazurite from the Armorless Union."  
-   Judge: NOT supported. Your call: agree / disagree
+   Judge: NOT supported. Hand review: agree / disagree
 2. **Lavinia**: "Following the death of Ministro Carracci, Lavinia investigates the corruption of the legal system alongside Texas."  
-   Judge: NOT supported. Your call: agree / disagree
+   Judge: NOT supported. Hand review: agree / disagree
 3. **Grani**: "During a series of missions to find the "Knights' Treasure" at Mt."  
-   Judge: NOT supported. Your call: agree / disagree
+   Judge: NOT supported. Hand review: agree / disagree
 4. **Rat King**: "He also interacts with various gangs, such as the Lou Seois and the Gambino Family, often manipulating them or forcing them to surrender to maintain order."  
-   Judge: NOT supported. Your call: agree / disagree
+   Judge: NOT supported. Hand review: agree / disagree
 5. **Specter**: "Across various stories, Specter’s journey is marked by a transition from a land-dwelling life to a state of fractured consciousness."  
-   Judge: NOT supported. Your call: agree
+   Judge: NOT supported. Hand review: agree
 6. **FrostNova**: "In the final stages of the "Partial Necrosis" operations, FrostNova faced heavy exhaustion and grief over her fallen comrades."  
-   Judge: NOT supported. Your call: agree
+   Judge: NOT supported. Hand review: agree
 7. **Kroos**: "Kroos is infected with Oripathy, though her symptoms remain minor."  
-   Judge: supported. Your call: agree
+   Judge: supported. Hand review: agree
 8. **Utage**: "Following this, she participated in a series of battles involving the tribe's mechanical masterpieces and a confrontation with Reunion."  
-   Judge: supported. Your call: agree / disagree
+   Judge: supported. Hand review: agree / disagree
 9. **Dobermann**: "Despite her difficulty in expressing herself properly, Dobermann is highly respected for her dedication to the island's future."  
-   Judge: supported. Your call: agree
+   Judge: supported. Hand review: agree
 10. **Nearl**: "Together, they formed the "Followers," a group dedicated to providing healing to the Infected."  
-   Judge: supported. Your call: agree / disagree
+   Judge: supported. Hand review: agree / disagree
 11. **Schwarz**: "Throughout these events, Schwarz remains a steadfast guardian, balancing her role as a lethal soldier with her protective devotion to Ceylon."  
-   Judge: supported. Your call: agree
+   Judge: supported. Hand review: agree
 12. **Vina**: "Known for her commitment to the common people and her agency in shaping the nation's future, Vina is a leader who navigates complex political landscapes, often balancing the demands of the military, the nobility, and the citizenry."  
-   Judge: supported. Your call: agree
+   Judge: supported. Hand review: agree
 
 ## 2. Identity links (10): is it true that these two names are the same person, as stated?
 
