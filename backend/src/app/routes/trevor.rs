@@ -622,10 +622,10 @@ async fn limit_compressed(req: Request, next: Next) -> Response {
 /// outermost the 4 MiB limit on the body as sent, then gzip decompression,
 /// then the 8 MiB limit the JSON extractor applies to the decompressed body.
 ///
-/// Also carries the contract v1.1 routes (`me/jobs`, `popular`,
-/// `worker/popular`, `worker/warm`) without those layers, so they need no
-/// line in `routes/mod.rs` (which belongs to the route table's owner; they
-/// may move there).
+/// It also carries the contract v1.1 routes without those layers:
+/// `me/jobs`, `popular`, `worker/popular`, and `worker/warm` under its own
+/// [`worker::WARM_BODY_MAX`] limit. `routes/mod.rs` registers the other
+/// Trevor routes one by one and merges this router.
 pub fn publish_router() -> OpenApiRouter<AppState> {
     let publish = OpenApiRouter::new()
         .routes(routes!(publish_version))

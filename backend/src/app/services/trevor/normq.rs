@@ -7,8 +7,8 @@ use sha2::{Digest, Sha256};
 use super::MAX_QUESTION_CHARS;
 use crate::app::error::ApiError;
 
-/// The question as the cache saw it before contract v1.1 (kept verbatim for
-/// `TREVOR_NORMQ=0`): case-folded, whitespace collapsed, typographic quotes
+/// The contract v1 normalization, kept verbatim for `TREVOR_NORMQ=0`:
+/// case-folded, whitespace collapsed, typographic quotes
 /// and dashes made plain, trailing question marks and full stops dropped.
 pub fn normalize_question_v1(question: &str) -> String {
     let mapped: String = question
@@ -31,11 +31,11 @@ pub fn normalize_question_v1(question: &str) -> String {
     collapsed.trim_end_matches(['?', '.', '!', ' ']).to_owned()
 }
 
-/// The compatibility fold of one character: the NFKC mappings a typed
-/// question meets (full-width ASCII, the ideographic and other Unicode
-/// spaces, ligatures, super/subscript digits, the ellipsis). Since
-/// 2026-10-17 [`normalize_question`] runs full NFKC (`unicode-normalization`)
-/// before it, so this keeps only what NFKC leaves alone.
+/// The character fold [`normalize_question`] applies after full NFKC
+/// (`unicode-normalization`): full-width ASCII to ASCII, the ideographic and
+/// other Unicode spaces to a space, ligatures, super/subscript digits, the
+/// ellipsis and Roman numerals spelled out, the ideographic and half-width
+/// full stops to ".", and zero-width characters and the soft hyphen dropped.
 fn nfkc_fold(c: char, out: &mut String) {
     match c {
         // Full-width ASCII block -> ASCII.
@@ -194,7 +194,7 @@ mod tests {
         assert_eq!(n("Episode \u{2167}"), "episode viii");
         assert_eq!(n("zero\u{200B}width"), "zerowidth");
         assert_eq!(n("Wi\u{0161}'adel"), "wi\u{0161}adel");
-        // Full NFKC (2026-10-17): a decomposed accent composes onto its letter.
+        // Full NFKC: a decomposed accent composes onto its letter.
         assert_eq!(n("Wis\u{030C}'adel"), "wi\u{0161}adel");
     }
 
@@ -214,7 +214,7 @@ mod tests {
         assert_eq!(a, b);
         assert_eq!(a.len(), 32);
         assert_ne!(a, qkey(&normalize_question("Who is Kal'tsit?")));
-        // Full NFKC (2026-10-17): a decomposed accent keys like the precomposed letter.
+        // Full NFKC: a decomposed accent keys like the precomposed letter.
         assert_eq!(
             normalize_question("Who is Ve\u{0301}ronique?"),
             normalize_question("Who is V\u{E9}ronique?")

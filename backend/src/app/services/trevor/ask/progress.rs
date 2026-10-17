@@ -49,8 +49,7 @@ fn holds_no_reads(progress: &story_progress::StoryProgressResponse) -> bool {
 /// marks, minus what it marked unread.
 ///
 /// An account that has stage progress but no game read rows and no site
-/// marks (2,628 of the 2,630 local accounts on 2026-10-17: the rows only
-/// exist since a sync after 2026-09-24) would ask at gatePos 0. For it, the
+/// marks would ask at gatePos 0. For it, the
 /// first ask in this process re-derives and stores the game's verdict from
 /// the stored stage progress ([`story_progress::reverdict`], the same rows a
 /// sync writes) and reads again. Once per account per process, whatever it

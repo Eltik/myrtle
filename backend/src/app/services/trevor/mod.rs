@@ -46,7 +46,7 @@ pub use wire::*;
 
 use crate::app::error::ApiError;
 
-/// Free questions a signed-in user may ask per clock hour (Ian, 2026-10-07).
+/// Free questions a signed-in user may ask per clock hour.
 pub const ASK_PER_HOUR: u64 = 30;
 /// Open (queued or running) jobs one user may hold at once.
 pub const MAX_OPEN_PER_USER: i64 = 3;

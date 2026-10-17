@@ -251,8 +251,7 @@ pub async fn ask(
         let mut tx = state.db.begin().await?;
         q::admission_lock(&mut *tx).await?;
         // A twin admitted while this ask waited for the lock: join it rather
-        // than read it as load (measured: without this, 24 of 50 keys in a
-        // 2,000-ask burst also got a needless deferred job).
+        // than read it as load, which would give it a needless deferred job.
         if let Some(open) =
             q::open_job_for_key(&mut *tx, server, &key, horizon.era_pos, false).await?
         {

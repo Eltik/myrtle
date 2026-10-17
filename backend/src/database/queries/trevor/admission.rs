@@ -89,9 +89,7 @@ pub struct AdmissionRow {
 
 /// Serialize admission (contract v1.1 section 1b): held to the end of the
 /// caller's transaction, so concurrent asks read the rung depths one at a
-/// time and the caps hold under a burst. Measured 2026-10-17 without it:
-/// 2,000 concurrent asks over 50 keys put all 50 jobs on a cpu rung capped
-/// at 24 (`tests/trevor_load_test.rs`).
+/// time and the caps hold under a burst (`tests/trevor_load_test.rs`).
 pub async fn admission_lock<'e, E>(exec: E) -> Result<(), sqlx::Error>
 where
     E: sqlx::Executor<'e, Database = sqlx::Postgres>,
