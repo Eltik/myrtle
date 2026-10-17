@@ -16,8 +16,8 @@ Output (default artifacts/panels/):
 The directory is written as <out>.tmp and renamed over <out>, so a reader never sees half a build.
 
 THE SHARED GATE ORDER: artifacts/chrono/gate_order.json (schema 1). One spoiler scale for every component
-(horizon.rs, the panels, trevor_panels.gate_pos, trevor_answers.gate_pos). The schema is horizon.rs's
-(`GateOrderFile`, src/search/horizon.rs, also written by `ask --gate-order`); this script writes the same structure
+(src/search/horizon/, the panels, trevor_panels.gate_pos, trevor_answers.gate_pos). The schema is horizon/mod.rs's
+(`GateOrderFile`, src/search/horizon/mod.rs, also written by `ask --gate-order`); this script writes the same structure
 in the same format (serde_json pretty: 2-space indent, sourcePos keys sorted, no trailing newline), so either
 writer produces the same file from the same inputs:
   {
@@ -32,7 +32,7 @@ writer produces the same file from the same inputs:
     "eras": [{"id", "name", "position", "groupPosition"}]   position = gatePos of the era group's last story;
                                      groupPosition = the reading-guide position (the prototype's era `position`)
   }
-  Rule (the prototype's, which is horizon.rs's old rule plus a strict tie-break): a story in a reading-guide group
+  Rule (the prototype's, which is horizon/mod.rs's old rule plus a strict tie-break): a story in a reading-guide group
   sorts by (guide position, storySort, line in spoiler.jsonl); the line breaks the storySort ties the old story-id
   horizon treated as mutually visible. An unplaced story or source dated by source_dates.json (an upper bound on its
   EN release) sits just BEFORE the stories of the first guide group whose latest guide date admits that date, ordered
@@ -108,7 +108,7 @@ def parse_day(s):
     if not m:
         return None
     y, mo, d = (int(x) for x in m.groups())
-    # days from civil (same as horizon.rs)
+    # days from civil (same as src/search/horizon/)
     y2 = y - 1 if mo <= 2 else y
     era = y2 // 400
     yoe = y2 - era * 400
@@ -439,7 +439,7 @@ def check_new_lines(p, prov, gp, sp):
 
 # ---------------------------------------------------------------- release order
 class Order:
-    """Total release order over stories and dated sources, equivalent to horizon.rs `allows` (plus the tie-break)."""
+    """Total release order over stories and dated sources, equivalent to horizon/mod.rs `allows` (plus the tie-break)."""
 
     def __init__(self, art):
         guide = json.load(open(os.path.join(art, "chrono/reading_guide.json"), encoding="utf-8"))["items"]
@@ -518,7 +518,7 @@ def eras_of(O, guide_position=False):
     out = []
     for g in eras:
         gs = [s for s in O.group_stories.get(g["groupId"], []) if O._key[s] != NEVER]
-        if not gs:  # a group with no scripted story has no gatePos (horizon.rs skips it too)
+        if not gs:  # a group with no scripted story has no gatePos (horizon/mod.rs skips it too)
             continue
         out.append({"id": g["groupId"], "name": g["name"],
                     "position": g["position"] if guide_position else O.rank[gs[-1]],
@@ -531,7 +531,7 @@ def sha16(path):
 
 
 def gate_order_doc(O, art, eras):
-    """horizon.rs's GateOrderFile, field for field."""
+    """horizon/mod.rs's GateOrderFile, field for field."""
     root = os.path.dirname(art)
     never = [s for s in O.ranked if O._key[s] == NEVER]
     dated = [s for s in O.ranked if O._key[s] != NEVER and O._key[s][1] == 0]

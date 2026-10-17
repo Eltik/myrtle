@@ -47,7 +47,7 @@ SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
 MIN_ASKED = int(os.environ.get('MIN_ASKED', '1'))
 K = int(os.environ.get('TOPIC_PASSAGES', '14'))
 # Concepts and groups players ask about that are not a race or nation field; each is kept only if real questions
-# mention it (the counts are in design/trevor-questions.md section 12). Aliases widen retrieval.
+# mention it (the counts are in design/experiment-log.md). Aliases widen retrieval.
 CONCEPTS = {'Originium': ['Originium'], 'Oripathy and the Infected': ['Oripathy', 'Infected', 'infection'],
             'Arts': ['Arts', 'Arts unit', 'caster'], 'Catastrophes': ['Catastrophe', 'Catastrophe Messenger'],
             'Seaborn': ['Seaborn', 'Ishar-mla', 'Sea Terror'], 'Mobile cities and landships': ['mobile city', 'landship', 'nomadic city'],

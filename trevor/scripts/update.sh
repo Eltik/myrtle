@@ -189,7 +189,7 @@ fi
 step "answer bank"; PRIMERS=1 python3 scripts/answer_bank.py seed; python3 scripts/answer_bank.py merge
 
 # 4b. Model stages over P4 (2026-10-01): topic summaries, then the IS ending canon, each only when its inputs changed.
-# One model at a time; IS6's reasoning-on verdict needs a 24,576-token slot (design/trevor-questions.md section 12).
+# One model at a time; IS6's reasoning-on verdict needs a 24,576-token slot (design/experiment-log.md).
 serve() {  # serve MODEL [llama-server args]: start one server on $PORT and wait for it
   await_no_llama
   start_llama "$1" "$LOG/server.log" 1 "${KV:-16384}" "${@:2}"

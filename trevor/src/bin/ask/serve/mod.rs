@@ -46,7 +46,7 @@
 //!
 //! Without a horizon a job takes exactly the path of the one-shot `ask "question"` (route first, P4 only when the route
 //! or the source keywords ask for it, then `answer_one` with the route), so the answers match it byte for byte under
-//! `--no-cache-prompt`. With a horizon (a gatePos, or a story or group id turned into one; src/search/horizon.rs)
+//! `--no-cache-prompt`. With a horizon (a gatePos, or a story or group id turned into one; src/search/horizon/mod.rs)
 //! retrieval returns only chunks released at or before it, and everything built from every story is left out: table
 //! answers (the question is answered from the passages instead), topic summaries and entries, dossiers, the game-data
 //! passage, canon evidence and the chronology notes.

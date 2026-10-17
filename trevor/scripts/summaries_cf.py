@@ -78,7 +78,7 @@ class CF(Backend):
         self.account, self.token = env.get("TREVOR_CF_ACCOUNT_ID"), env.get("TREVOR_CF_API_TOKEN")
         self.url = env.get("TREVOR_CF_BASE_URL") or CF_URL.format(account=self.account)
         self.models = [m.strip() for m in (env.get("TREVOR_CF_MODELS") or DEFAULT_MODELS).split(",") if m.strip()]
-        # Thinking off as the worker sends it (src/goldgen/llm/openai.rs, TREVOR_CF_THINKING).
+        # Thinking off as the worker sends it (src/llm/openai.rs, TREVOR_CF_THINKING).
         thinking = env.get("TREVOR_CF_THINKING")
         self.extra = ({"reasoning_effort": "none"} if thinking == "effort" else {} if thinking == "omit"
                       else {"chat_template_kwargs": {"enable_thinking": False}})

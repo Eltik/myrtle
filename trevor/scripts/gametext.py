@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Lore-bearing game text Trevor never indexed, as one labelled unit kind "gametext" (2026-10-03, item 6).
 
-The coverage audit of 2026-10-03 (design/trevor-questions.md section 12) sampled every excel field and story file under
+The coverage audit of 2026-10-03 (design/experiment-log.md) sampled every excel field and story file under
 ../assets/output/en against P4 and the story corpus. The lore-bearing gaps this script ingests, each unit headed
 "Game text (<kind>): <title>" so an answer can say where a claim comes from:
   intro      the game's one- or two-sentence intro of every story ("[uc]info" files, 1,860 of 1,881 missing), one unit

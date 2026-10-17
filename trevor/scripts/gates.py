@@ -117,7 +117,7 @@ def _errs(v, spec):
 # ---------------------------------------------------------------- loading
 def gate_maps(order):
     """storyId -> gatePos (stories in `never` have none) and sourceId -> sourcePos, from gate_order.json (schema 1,
-    horizon.rs's GateOrderFile)."""
+    horizon/mod.rs's GateOrderFile)."""
     order = order or {}
     never = set(order.get("never") or [])
     return ({s: i + 1 for i, s in enumerate(order.get("storyOrder") or []) if s not in never},
@@ -382,7 +382,7 @@ def citation_violations(res, horizon_pos, order):
 
 def ask_one(base, q, sid, pos, mode):
     """POST one canary question; the horizon as contract v1's horizonPos, or as the story id when this `ask` predates
-    it (serve.rs refuses unknown fields with a 400). Returns (status, body, mode used)."""
+    it (src/bin/ask/serve/mod.rs refuses unknown fields with a 400). Returns (status, body, mode used)."""
     for m in ([mode] if mode else ["pos", "story"]):
         body = {"question": q, "horizonPos": pos} if m == "pos" else {"question": q, "horizon": sid}
         code, res = http_json(f"{base}/v1/ask", body, timeout=1800)

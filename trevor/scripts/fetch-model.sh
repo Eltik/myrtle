@@ -16,7 +16,7 @@
 #       also Gemma 4 12B's multimodal projector (175 MB) for image input.
 #   WITH_E2B=1 ./scripts/fetch-model.sh
 #       also Gemma 4 E2B instruct Q4_K_M (3.1 GB), the VPS CPU rung's model
-#       (the slim profile; design/trevor-questions.md section 13).
+#       (the slim profile; design/experiment-log.md, serving).
 set -euo pipefail
 
 ROOT="${1:-models}"

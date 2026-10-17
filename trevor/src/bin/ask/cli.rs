@@ -176,7 +176,7 @@ pub(crate) struct Args {
     /// the result to artifacts/canary/cf.json (TREVOR_CANARY_FILE), which the worker reads for its `cf` rung.
     #[arg(long)]
     pub(crate) canary: bool,
-    /// Write the gatePos order (artifacts/chrono/gate_order.json, see src/search/horizon.rs) from the reading guide,
+    /// Write the gatePos order (artifacts/chrono/gate_order.json, see src/search/horizon/mod.rs) from the reading guide,
     /// the story table and the source dates, and exit.
     #[arg(long)]
     pub(crate) gate_order: bool,
