@@ -72,15 +72,25 @@ The Mac's corpus vectors are INT8 (`model_int8.onnx`), and INT8 drifts to cosine
    P0 and P3a indexes, `chrono.py derive/flashbacks/build/history`, `reading_guide.py dates`, `entities.py build`,
    `deaths.py build`, `attributes.py`, `sources.py`, the lores (`dossiers.py sets`, `build-profiles`, P3b, P4, P4x
    with `gametext.py`), `reading_guide.py build`, `source_dates.py`, `appearances.py`, `answer_bank.py seed` and
-   `merge`. Every model output is read as it is (frozen): a new story gets no dossier, topic, chronology extraction,
-   identity link or bank question until a manual rebuild on the Mac.
+   `merge`. Every model output is read as it is (frozen): a new story gets no dossier, topic, chronology extraction
+   or identity link until a manual rebuild on the Mac. Its bank questions and answers are the exception: just
+   before the bank merge, `bank_regen.py detect --prev <live release>` lists the new and changed chunks for the
+   overnight run, and the merge drops every generated answer whose evidence changed or vanished (section 5a).
 4. **Panels** (`panels.py --built-from <res_version>`), which also writes `artifacts/chrono/gate_order.json` (section 6).
 5. **Gates** (`gates.py`, section 7). A failed gate stops here.
 6. **Publish** (`publish.py --no-activate`): the panels go up as an inactive version.
 7. **Promote**: copy the stage into a new release, flip `current`, restart the worker, wait `WORKER_SETTLE` (30 s).
 8. **Activate** (`publish.py --activate <version>`). If that call fails, `current` flips back and the worker restarts
    on the old release; the backend never activated the new version.
-9. **Notify** (optional Discord webhook): "published <version>" or "update held at step X".
+9. **Notify** (optional, `DISCORD_ALERT_WEBHOOK`): a "published <version>" notice.
+10. **Warm-up** (contract v1.1 section 3c): `bank_regen.py warm --version <v> --limit $TREVOR_WARM_TOP` gets the
+    most-asked questions that were not carried over and sends them back as deferred internal jobs. A failure here
+    leaves the version live and sends an alert. `TREVOR_WARM_TOP=0` skips this step.
+
+Any failed step sends ONE `update_failed` alert per run (contract v1.1 section 2.2). It is a Discord embed in the
+backend's `core::alerts` style that gives the step, the exit code and the last `ALERT_LOG_LINES` (20) lines of the
+run log. The webhook is `DISCORD_ALERT_WEBHOOK`, with `TREVOR_DISCORD_WEBHOOK` (the name before 2026-10-17) as the
+fallback. A marker file keyed on the run's pid keeps a subshell's error trap and the parent's from posting twice.
 
 Measured on the Mac against a scratch copy of the artifacts and a stand-in backend, `SKIP_FETCH=1`, vectors reused
 (section 12 has the numbers).
@@ -105,9 +115,66 @@ Ian (2026-10-16): summaries are the only model stage of the update. `summaries_c
    `MemAvailable` above 2,500 MB and under the model lock, stopped by PID when done or at 07:00 UTC. Both servers map
    the same GGUF, so the second adds its KV cache and buffers, not another 3 GB of weights; that is the expectation,
    not a measurement.
-3. When any summary was written: the rebuild (without build-corpus), panels, gates, publish, promote, activate, as in
-   section 4. A story still without a summary ships its panel without one (`recap.thisStory` null) and gets it the
-   next night.
+3. When any summary or bank answer was written: the rebuild (without build-corpus), panels, gates, publish,
+   promote and activate, as in section 4. A story still without a summary ships its panel without one
+   (`recap.thisStory` null) and gets it the next night.
+
+## 5a. Pre-generated answers that follow updates (`bank_regen.py`, contract v1.1 section 3a)
+
+Ian (2026-10-17): "generate new answers when there is a new update". Section 5 summarizes first, then the same run
+does this with the same Cloudflare client and window, and then on the same E2B server.
+
+- **What counts as changed.** `detect` compares the sha16 of every chunk's text in the stage's P3b (over P4x) with
+  the live release's.
+  - Pending units (`artifacts/bank/regen/pending.json`) are every question-eligible chunk that is new or changed
+    (over 400 characters, not a profile or summary unit, not a gold-set story), plus every existing question whose
+    own chunk is unchanged but whose answer cited a changed or vanished chunk. The latter are re-answered under
+    their old qid.
+  - Units carry over across nights until they are done.
+  - The first `detect` also writes the evidence ledger (`artifacts/bank/evidence.jsonl`, the shas of each answer's
+    question chunk and cited chunks) for the 900 answers made before it, from the live release's corpus.
+- **Run.** Units go in slices of 10, at most `REGEN_MAX_UNITS` (150) a night. Re-answers go first, then changed
+  chunks that had a question, then new chunks.
+  - **Questions** come from `answer_bank.stage_questions(only=...)`, with the same prompt and incremental key.
+  - **Answers** come from `ask --batch` with the `mid` profile, or with the eval's equivalent flags while `ask` has
+    no `--profile mid`: `--router keywords --k 8 --max-context-tokens 3600 --n-predict 250` and the four
+    no-retry switches.
+  - **Cloudflare** is used inside `TREVOR_CF_WINDOW`, up to `TREVOR_CF_BANK_MAX_NEURONS` (9000) minus what the
+    summaries spent. An answer's Neurons are estimated from its prompt tokens plus the full 250-token output.
+  - **Local E2B** takes the rest until `SUMMARY_UNTIL`.
+- **Merge** (`answer_bank.py merge`) keeps an old entry only while every chunk in its evidence row has the same
+  sha.
+  - A new answer is kept only when it does not decline, cites something, and has at least one citation at or before
+    its question's own story by gatePos.
+  - `REGEN_ANSWERS=0` turns all of this off. With it, bank.jsonl is byte-identical to the merge before
+    (sha256 fb157643..., verified 2026-10-17).
+- `PLAN=1 trevor-vps-update.sh summaries` and `PLAN=1 bank_regen.py run` print the pending units, their story groups
+  and the model calls they cost.
+
+**Measured on the Mac (2026-10-17)**, on a simulated update: a scratch tree whose "previous" corpus had 20 chunks
+re-worded. These were 10 question chunks, 5 chunks cited by other answers, and 5 chunks with neither.
+- `detect` takes 0.9 s and 446 MB. It found 20 changed chunks and made 25 units: 10 changed chunks that had a
+  question, 10 that had none, and 5 re-answers. It backfilled 900 ledger rows.
+- The merge then drops 15 of 875 entries (evidence changed).
+- The run on the E2B (Metal, `-np 1`, 8,192-token slot) took 78.7 s for 25 units: 20 question calls and 25 answer
+  calls. That is 3.1 s and 1.8 model calls a unit.
+  - Answers take a median of 2.2 s, with a mean prompt of 3,628 tokens (max 4,273).
+  - Of 25 answers, 1 declined and 2 cited only later stories and were dropped. One was a prologue question answered
+    from act33side.
+- Result: 860 entries kept byte for byte, 10 dropped (their chunk changed and the question was redone), 5
+  re-answered in place, 17 added: 882 ask entries against 875.
+- `panels.py` takes 10.0 s, and 84 of 1,862 panels differ from the build without the change. `gates.py
+  --no-canary` passes (schema, spoiler 0 violations, recall 0.636132).
+
+**A typical event update** is the newest side story, act49side: 196 chunks, 191 of them question-eligible. Add
+about 5 archive chunks for each new operator (median 5 over 417 operators), so about 200 units and 400 model calls.
+- On the Mac that is about 10 minutes.
+- On Cloudflare a unit costs about 47 Neurons (7 for a question over a 583-token chunk, 40 for a 3,628-token mid
+  answer), so 200 units cost about 9,400 Neurons. That is about one whole day's allocation, so leftover quota covers
+  only part of it.
+- On the VPS's one E2B core, mid answers run at roughly 1,000 to 1,900 a day by the contract's estimate, so 45 to
+  86 s each. With a shorter question call, that is about 1 to 2 minutes a unit, or 3.5 to 7 hours for 200 units.
+  This is not measured on the VPS. The 150-unit cap spreads one event over about two nights.
 
 ## 6. One spoiler scale: `artifacts/chrono/gate_order.json`
 
@@ -193,7 +260,10 @@ worker's own reports will show. By hand: `publish.py --activate <version>` (with
   (contract section 4). `activeVersion` should equal `state/active.json`'s version.
 - `trevor-vps-update.sh status`: the active version, the live release, the EN res_version, the backend's status.
 - `journalctl -u trevor-update -u trevor-summaries -u trevor-worker -u trevor-llama --since today`
-- `systemctl list-timers 'trevor-*'`; the Discord webhook posts every publish and every held update.
+- `systemctl list-timers 'trevor-*'`; the Discord webhook posts every publish and one `update_failed` alert per
+  failed run.
+- `artifacts/bank/regen/history.jsonl`: every `detect` and `run`, with counts. `trevor-vps-update.sh summaries`
+  logs `bank-cf.json` and `bank-local.json` in the run's log directory.
 
 ## 11. Costs
 
@@ -205,7 +275,7 @@ of every failure below is a slower or passage-only answer, never a charge.
 
 | event | what happens | needs Ian? |
 |---|---|---|
-| a step of the update fails (build, gate, upload) | the run stops, the active version and the live release stay, the stage keeps the work, Discord says "update held at step X"; the next 19:30 run retries | only if it repeats |
+| a step of the update fails (build, gate, upload) | the run stops, the active version and the live release stay, the stage keeps the work, one `update_failed` alert names the step, the exit code and the last log lines; the next 19:30 run retries | only if it repeats |
 | the activate call fails after the switch | `current` flips back, the worker restarts on the old release | no |
 | Cloudflare retires a model | the worker's weekly canary (`ask --canary`, `TREVOR_CANARY_FILE`) and the summaries move to the next id in `TREVOR_CF_MODELS`; with none left, the cf rung is off and summaries run on E2B | add a model id when convenient |
 | Cloudflare quota spent | the backend stops the cf rung at its ledger cap; summaries stop at the first 429 and the rest go to E2B overnight | no |
@@ -214,6 +284,8 @@ of every failure below is a slower or passage-only answer, never a charge.
 | the game changes its data format | build-corpus or a builder fails, the update is held, the site keeps the last version; new stories have no panel ("not covered yet") | to fix the parser |
 | the backend is down at 19:30 | build-corpus fails, held, retried the next day | no |
 | a new story has no summary yet | its panel ships without one; the 23:00 run adds it | no |
+| an update changes many chunks (a new event) | the merge drops the stale answers at once; the questions and answers come back over the next nights, `REGEN_MAX_UNITS` (150) a night | no |
+| the warm-up fails | the version stays live; one alert | only if it repeats |
 | embedding would mix runtimes | `trevor-vps-update.sh` refuses before embedding (held) | run the one-time fp32 re-embed or set EMBED=0 |
 | the E2B GGUF is missing or memory is short | local summaries are skipped; they wait for Cloudflare the next night | no |
 | the 19:30 run still holds the update lock at 23:00 | the summaries run exits at once (flock) and the summaries wait a day | no |
@@ -252,3 +324,7 @@ of every failure below is a slower or passage-only answer, never a charge.
 - Cloudflare's request shape for Gemma 4 thinking (`chat_template_kwargs`) is the worker's guess, not read from
   Cloudflare's page (no network here); `TREVOR_CF_THINKING` switches it.
 - The canary has run only against a stand-in `ask`; its first real run needs a model.
+- The warm-up routes (`GET /api/trevor/worker/popular`, `POST /api/trevor/worker/warm`) are specified in contract
+  v1.1 section 3c but not built in the backend yet; `bank_regen.py warm` was tested against a stand-in only.
+- Bank regeneration's speed on the VPS's one core is the contract's estimate, not a measurement; the Mac's E2B on
+  Metal does a unit in 3.1 s.

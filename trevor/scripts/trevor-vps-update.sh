@@ -11,8 +11,10 @@
 #                             backend, rebuild every deterministic artifact, embed only new or changed chunks, build
 #                             the panels, run the gates, publish, switch the worker to the new artifacts, notify.
 #   trevor-vps-update.sh summaries   23:00 UTC (trevor-summaries.timer): story and group summaries for stories that have
-#                             none (Cloudflare inside 23:00-23:55 UTC, then the local E2B until 07:00 UTC), then
-#                             the same rebuild, gates and publish when any summary was written.
+#                             none, then the bank's pre-generated answers for chunks the update added or changed
+#                             (scripts/bank_regen.py; contract v1.1 section 3a), each on Cloudflare inside 23:00-23:55
+#                             UTC, then on the local E2B until 07:00 UTC; then the same rebuild, gates and publish when
+#                             any summary or answer was written.
 #   trevor-vps-update.sh rollback [VERSION]   re-activate VERSION (default: the version active before the current one) and
 #                             point the worker back at that version's artifacts.
 #   trevor-vps-update.sh status      the active version, the live release, the backend's /api/trevor/status.
@@ -28,7 +30,16 @@
 #   TREVOR_DIR [this script's ../]   code: scripts, prompts, data, eval, deploy, target/release, models
 #   TREVOR_HOME [/var/lib/trevor]    releases/, stage/, state/, logs/
 #   ASSETS_DIR [$TREVOR_DIR/../assets]   the asset watcher's tree; RES_VERSION_FILE [$ASSETS_DIR/ArkAssets/en/.version]
-#   TREVOR_BACKEND [http://127.0.0.1:3060]  TREVOR_WORKER_KEY (publish)  TREVOR_DISCORD_WEBHOOK (optional)
+#   TREVOR_BACKEND [http://127.0.0.1:3060]  TREVOR_WORKER_KEY (publish, warm-up)
+#   DISCORD_ALERT_WEBHOOK (optional; the backend's core::alerts variable; TREVOR_DISCORD_WEBHOOK, the name before
+#              2026-10-17, is read when it is unset): one update_failed alert per failed run (contract v1.1 section
+#              2.2: the step, the exit code, the last ALERT_LOG_LINES [20] log lines) and a "published" notice
+#   REGEN_ANSWERS [1]  0 = the bank's answers are never regenerated: no change detection, no answer model run, and
+#              answer_bank.py merge as before 2026-10-17 (byte-identical bank.jsonl, verified)
+#   REGEN_MAX_UNITS [150]  pending bank units (a changed chunk: 1 question + 1 mid answer; a re-answer: 1 answer)
+#              one run regenerates at most; the rest stay pending for the next night
+#   TREVOR_CF_BANK_MAX_NEURONS [9000]  the bank's Cloudflare cap, minus what the summaries spent the same night
+#   TREVOR_WARM_TOP [100]  questions the warm-up re-asks after a publish (contract v1.1 section 3c); 0 = no warm-up
 #   EMBED [1]  0 = no embedding at all (only for a worker serving BM25-only); EMBED_ONNX [model.onnx] the export the
 #              vectors must have been made with (a mismatch refuses: x86 must not mix with the Mac's INT8);
 #              EMBED_FULL [0] 1 = re-embed every chunk (the one-time fp32 re-embed, about 1 to 2 h);
@@ -69,6 +80,8 @@ SUMMARY_PORT="${SUMMARY_PORT:-8082}"; SUMMARY_CTX="${SUMMARY_CTX:-16384}"; SUMMA
 SUMMARY_UNTIL="${SUMMARY_UNTIL:-07:00}"; SUMMARY_MIN_AVAIL_MB="${SUMMARY_MIN_AVAIL_MB:-2500}"
 KEEP_RELEASES="${KEEP_RELEASES:-3}"; WORKER_SETTLE="${WORKER_SETTLE:-30}"; SETTLE_MIN="${SETTLE_MIN:-15}"
 PLAN="${PLAN:-}"; FORCE="${FORCE:-0}"; SKIP_FETCH="${SKIP_FETCH:-}"; NO_PUBLISH="${NO_PUBLISH:-}"
+ALERT_WEBHOOK="${DISCORD_ALERT_WEBHOOK:-${TREVOR_DISCORD_WEBHOOK:-}}"; ALERT_LOG_LINES="${ALERT_LOG_LINES:-20}"
+export REGEN_ANSWERS="${REGEN_ANSWERS:-1}"; TREVOR_WARM_TOP="${TREVOR_WARM_TOP:-100}"
 
 STATE="$TREVOR_HOME/state"
 WORK=""   # the tree the build runs in: the stage, or (PLAN=1) the live tree, where only reads happen
@@ -96,7 +109,7 @@ MODEL_LOCK_HELD=""
 log() { echo "== $(date -u +%H:%M:%S) $*"; }
 die() {
   echo "ERROR: $*" >&2
-  [[ "$CMD" == "daily" || "$CMD" == "summaries" || "$CMD" == "rollback" ]] && notify "update held at step '$STEP': $*. The last good version stays active."
+  [[ "$CMD" == "daily" || "$CMD" == "summaries" || "$CMD" == "rollback" ]] && alert_failed 1 "$*"
   exit 1
 }
 step() { STEP="$*"; log "$*"; }
@@ -116,23 +129,53 @@ except Exception:
     print("")' "$1" "$2"
 }
 
+# post_embed TITLE DESCRIPTION COLOR FOOTER: one Discord embed, core::alerts' shape ({"embeds": [{title, description,
+# color, footer}]}); never fails the run (a failed webhook is logged and swallowed, as core::alerts does).
+post_embed() {
+  [[ -n "$ALERT_WEBHOOK" && -z "$PLAN" ]] || return 0
+  python3 -c 'import json,sys
+t, d, c, f = sys.argv[1:5]
+print(json.dumps({"embeds": [{"title": t[:250], "description": d[:3900], "color": int(c), "footer": {"text": f[:200]}}]}))' \
+    "$1" "$2" "$3" "$4" \
+    | curl -sS -m 20 -H 'content-type: application/json' -d @- "$ALERT_WEBHOOK" >/dev/null 2>&1 \
+    || echo "== discord alert failed to send (swallowed)" >&2
+  return 0
+}
+
 notify() {  # informational only; never fails the run
   local msg="$1"
   log "notify: $msg"
-  [[ -n "${TREVOR_DISCORD_WEBHOOK:-}" && -z "$PLAN" ]] || return 0
-  python3 -c 'import json,sys; print(json.dumps({"content": sys.argv[1][:1900]}))' "Trevor: $msg" \
-    | curl -sS -m 20 -H 'content-type: application/json' -d @- "$TREVOR_DISCORD_WEBHOOK" >/dev/null 2>&1 || true
+  post_embed "Trevor update ($CMD)" "$msg" 3447003 "trevor-vps-update.sh $CMD"
+}
+
+# alert_failed RC [MESSAGE [OUTCOME]]: contract v1.1 section 2.2 `update_failed`, at most once per run (a marker file
+# keyed on the run's pid, so a subshell's ERR trap and the parent's do not both post). OUTCOME replaces the default
+# "last good version stays active" line (the warm-up fails after the version went live).
+ALERT_MARK="${TMPDIR:-/tmp}/trevor-update-alerted.$$"
+alert_failed() {
+  local rc="$1" msg="${2:-}" tail_lines=""
+  local outcome="${3:-The last good version stays active; the stage keeps the work for the next run.}"
+  [[ -e "$ALERT_MARK" ]] && return 0
+  : > "$ALERT_MARK" 2>/dev/null || true
+  log "update_failed: step '$STEP', exit $rc${msg:+: $msg}"
+  [[ -n "$LOG" && -f "$LOG/run.log" ]] && { sleep 0.5; tail_lines="$(tail -n "$ALERT_LOG_LINES" "$LOG/run.log" | sed 's/```/` ` `/g')"; }
+  post_embed "Trevor update failed: $STEP" \
+    "\`trevor-vps-update.sh $CMD\` failed at step **$STEP** with exit **$rc**.${msg:+ $msg}
+$outcome
+\`\`\`
+${tail_lines:-(no log)}
+\`\`\`" 13646394 "update_failed · $(hostname 2>/dev/null || echo vps) · log ${LOG:-none}"
 }
 
 on_error() {
   local rc=$?
   stop_local_llm
   release_model_lock
-  notify "update held at step '$STEP' (exit $rc); the last good version stays active. Log: ${LOG:-none}"
+  alert_failed "$rc"
   exit "$rc"
 }
 trap on_error ERR
-trap 'stop_local_llm; release_model_lock' EXIT
+trap 'stop_local_llm; release_model_lock; rm -f "$ALERT_MARK"' EXIT
 trap 'exit 143' TERM INT
 
 # ---------------------------------------------------------------- the model lock (ask's convention: "<pid> <label>")
@@ -272,6 +315,12 @@ deterministic_build() {  # in the stage; FETCH=1 refreshes the corpus from the b
   run python3 scripts/reading_guide.py build
   run python3 scripts/source_dates.py
   run python3 scripts/appearances.py
+  # Contract v1.1 section 3a: which chunks the update added or changed against the live release (the version readers
+  # have now); their bank units join the pending list the overnight run answers, and the merge drops every generated
+  # answer whose evidence changed or vanished. REGEN_ANSWERS=0: neither (the merge before 2026-10-17).
+  if [[ "$REGEN_ANSWERS" != "0" && -e "$LIVE" ]]; then
+    run python3 scripts/bank_regen.py detect --prev "$(abspath "$LIVE")"
+  fi
   run env PRIMERS=1 python3 scripts/answer_bank.py seed; run python3 scripts/answer_bank.py merge
 }
 
@@ -329,6 +378,10 @@ publish_stage() {
     step "publish (dry run)"
     python3 scripts/publish.py --dry-run "$LOG/publish-dry"
     log "NO_PUBLISH=1: requests in $LOG/publish-dry; the live release is unchanged"
+    if [[ "$TREVOR_WARM_TOP" != "0" && -n "${TREVOR_WORKER_KEY:-}" ]]; then
+      python3 scripts/bank_regen.py warm --version "$version" --limit "$TREVOR_WARM_TOP" --dry-run "$LOG/warm-dry" \
+        || log "warm-up dry run failed (ignored under NO_PUBLISH)"
+    fi
     return 0
   fi
   [[ -n "${TREVOR_WORKER_KEY:-}" ]] || die "TREVOR_WORKER_KEY is not set"
@@ -354,6 +407,18 @@ publish_stage() {
   local changes=""
   [[ -f "$LOG/changes.txt" ]] && changes=" changes: $(cat "$LOG/changes.txt")"
   notify "published $version (builtFrom $(json_get artifacts/panels/manifest.json builtFrom)).$changes"
+  warm_up "$version"
+}
+
+# Contract v1.1 section 3c: the backend's most-asked questions that were not carried over to $1 go back to it as
+# deferred internal jobs. Never fails the run (the version is already live); a failure is an update_failed alert.
+warm_up() {
+  [[ "$TREVOR_WARM_TOP" != "0" ]] || { log "TREVOR_WARM_TOP=0: no warm-up"; return 0; }
+  STEP="warm-up"
+  local rc=0
+  python3 scripts/bank_regen.py warm --version "$1" --limit "$TREVOR_WARM_TOP" || rc=$?
+  (( rc == 0 )) || alert_failed "$rc" "" "Version $1 is live; only the warm-up failed (no answers were pre-asked)."
+  return 0
 }
 
 # ---------------------------------------------------------------- the local summary model
@@ -410,34 +475,59 @@ cmd_daily() {
   publish_stage
 }
 
-cmd_summaries() {
-  local res before after written=0 n
+cmd_summaries() {  # summaries for new stories, then the bank's pending answers; one model server for both
+  local res before after written=0 n bank_before bank_after bank_done=0 cf_spent=0
   res="$(tr -d '[:space:]' < "$RES_VERSION_FILE" 2>/dev/null || true)"
   if [[ -n "$PLAN" ]]; then
     cd "$TREVOR_DIR"
     python3 scripts/summaries_cf.py --plan
     echo "PLAN: summaries_cf.py --backend cf, then (if any remain) llama-server $E2B_GGUF on :$SUMMARY_PORT and --backend local --until $SUMMARY_UNTIL, then the rebuild, gates and publish"
+    if [[ "$REGEN_ANSWERS" != "0" ]]; then
+      PLAN=1 python3 scripts/bank_regen.py run
+      echo "PLAN: bank_regen.py run --backend cf (after the summaries), then --backend local on the same llama-server until $SUMMARY_UNTIL"
+    fi
     return 0
   fi
   prepare_stage
   cd "$WORK"
   before="$(pending_summaries)"
-  if [[ "$before" == "0" ]]; then log "no story or group lacks a summary"; return 0; fi
-  step "summaries: $before units (Cloudflare first)"
-  python3 scripts/summaries_cf.py --backend cf --status "$LOG/summaries-cf.json" || log "cf summaries ended with an error"
-  n="$(json_get "$LOG/summaries-cf.json" written)"; written=$((written + ${n:-0}))
+  bank_before=0
+  [[ "$REGEN_ANSWERS" == "0" ]] || bank_before="$(python3 scripts/bank_regen.py count | tail -1)"
+  if [[ "$before" == "0" && "$bank_before" == "0" ]]; then log "no story or group lacks a summary and no bank unit is pending"; return 0; fi
+  if [[ "$before" != "0" ]]; then
+    step "summaries: $before units (Cloudflare first)"
+    python3 scripts/summaries_cf.py --backend cf --status "$LOG/summaries-cf.json" || log "cf summaries ended with an error"
+    n="$(json_get "$LOG/summaries-cf.json" written)"; written=$((written + ${n:-0}))
+    cf_spent="$(json_get "$LOG/summaries-cf.json" neurons)"
+  fi
+  if [[ "$bank_before" != "0" ]]; then
+    step "bank answers: $bank_before pending units on Cloudflare (after ${cf_spent:-0} summary Neurons)"
+    python3 scripts/bank_regen.py run --backend cf --cf-spent "${cf_spent:-0}" --status "$LOG/bank-cf.json" \
+      || log "cf bank answers ended with an error"
+    n="$(json_get "$LOG/bank-cf.json" units)"; bank_done=$((bank_done + ${n:-0}))
+  fi
   after="$(pending_summaries)"
-  if [[ "$after" != "0" && "$LOCAL_SUMMARIES" == "1" ]]; then
-    step "summaries: $after units on the local E2B until $SUMMARY_UNTIL UTC"
+  bank_after=0
+  [[ "$REGEN_ANSWERS" == "0" ]] || bank_after="$(python3 scripts/bank_regen.py count | tail -1)"
+  if [[ ( "$after" != "0" || "$bank_after" != "0" ) && "$LOCAL_SUMMARIES" == "1" ]]; then
+    step "local E2B until $SUMMARY_UNTIL UTC: $after summary units, then $bank_after bank units"
     if start_local_llm; then
-      TREVOR_SUMMARY_LLM_URL="http://127.0.0.1:$SUMMARY_PORT" python3 scripts/summaries_cf.py --backend local \
-        --until "$SUMMARY_UNTIL" --status "$LOG/summaries-local.json" || log "local summaries ended with an error"
+      if [[ "$after" != "0" ]]; then
+        TREVOR_SUMMARY_LLM_URL="http://127.0.0.1:$SUMMARY_PORT" python3 scripts/summaries_cf.py --backend local \
+          --until "$SUMMARY_UNTIL" --status "$LOG/summaries-local.json" || log "local summaries ended with an error"
+        n="$(json_get "$LOG/summaries-local.json" written)"; written=$((written + ${n:-0}))
+      fi
+      if [[ "$bank_after" != "0" ]]; then
+        STEP="bank answers (local)"
+        TREVOR_SUMMARY_LLM_URL="http://127.0.0.1:$SUMMARY_PORT" python3 scripts/bank_regen.py run --backend local \
+          --until "$SUMMARY_UNTIL" --status "$LOG/bank-local.json" || log "local bank answers ended with an error"
+        n="$(json_get "$LOG/bank-local.json" units)"; bank_done=$((bank_done + ${n:-0}))
+      fi
       stop_local_llm
-      n="$(json_get "$LOG/summaries-local.json" written)"; written=$((written + ${n:-0}))
     fi
   fi
-  log "summaries written: $written; still pending: $(pending_summaries)"
-  if (( written == 0 )); then return 0; fi
+  log "summaries written: $written; still pending: $(pending_summaries); bank units done: $bank_done, pending: $( [[ "$REGEN_ANSWERS" == "0" ]] && echo 0 || python3 scripts/bank_regen.py count | tail -1)"
+  if (( written == 0 && bank_done == 0 )); then return 0; fi
   deterministic_build 0
   panels_and_gates "$res"
   publish_stage

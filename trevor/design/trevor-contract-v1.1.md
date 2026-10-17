@@ -105,6 +105,18 @@ Answers are made in the Cloudflare window (leftover quota), else by E2B overnigh
 
 **c. Warm-up.** After a publish, the update script asks the backend for the top `TREVOR_WARM_TOP` (default 100) questions by hits in the last 30 days that were NOT carried over (`GET /api/trevor/worker/popular?version=&limit=`, worker key). It re-answers them as `deferred` internal jobs (no user) through the normal queue, so they are cached before readers ask.
 
+**Warm-up shapes (2026-10-17, for the backend to implement; the script side is `scripts/bank_regen.py warm`).** Both routes take the worker key (contract v1 section 3), and both are JSON in camelCase.
+- `GET /api/trevor/worker/popular?version=V&limit=N`, with N from 1 to 500 and a default of 100. It answers 200 `{version: V, items: [{question, normQ, eraPos, hits}]}`, most hits first.
+  - The items are the (normQ, eraPos) pairs asked in the last 30 days that have no cached answer in version V, whether carried over or made since. `hits` counts asks, twins included; `question` is the latest asked text.
+  - It answers 404 when V is unknown.
+- `POST /api/trevor/worker/warm` takes `{version: V, items: [{question, eraPos}]}`, with at most 500 items; a body over 64 KB gets a 413.
+  - For each item the backend enqueues one `deferred` internal job: user null, `horizonPos` = `eraPos`, and the rung picked by the normal admission rules when a worker claims it.
+  - It enqueues nothing for an item whose (normQ, eraPos) already has a cached answer in V, and an item with an open job joins it.
+  - It answers 200 `{queued, cached, joined}` (counts), 409 when V is no longer the active version, and 503 when `TREVOR_MODE` is not `on`.
+  - Internal jobs count against no user quota and do not raise the `backlog` alert.
+
+The script treats a 409 as done, and any other failure as an `update_failed` alert that leaves the published version live. `TREVOR_WARM_TOP=0` skips the warm-up.
+
 ## 4. Profiles
 
 - **`mid`** = the eval winner on E2B: keyword router, k 8, a 3,600-token passage budget, 250 output tokens, one model call.

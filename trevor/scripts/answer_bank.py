@@ -15,10 +15,15 @@ The site shows an entry only to a reader who has cleared every gate story.
                         and inventions ("the death of Emperor")
   primers    judge model: support of every primer sentence -> artifacts/bank/primer_support.jsonl
   questions  generator model: one factual question per sampled chunk (N_QUESTIONS, default 900);
-             stories anchored by gold set v2 are excluded so the eval stays clean
+             stories anchored by gold set v2 are excluded so the eval stays clean; scripts/bank_regen.py
+             calls stage_questions(only=chunk ids) to question exactly the chunks an update changed
   answer     runs `target/release/ask --batch` on the questions (generator model on the server)
   merge      generated answers that do not decline and cite something join the bank,
-             gate = source story + cited stories
+             gate = source story + cited stories. Since 2026-10-17 (contract v1.1 section 3a) an answer
+             whose evidence row (artifacts/bank/evidence.jsonl, scripts/bank_regen.py: the sha of its
+             question's chunk and of every cited chunk when it was made) no longer matches the corpus is
+             dropped, and an answer bank_regen.py made is kept only when one citation sits at or before
+             its question's own story by gatePos; REGEN_ANSWERS=0 is the merge before, byte for byte
   judge      judge model: faithfulness of a sample of generated answers to their passages
 Output: artifacts/bank/bank.jsonl (id, kind, question, aliases, answer, sources, gateStories,
 requiredStages, gateChars). The corpus spec calls this file answers.jsonl; bank.jsonl avoids a
@@ -28,7 +33,7 @@ import collections, json, os, random, re, subprocess, sys, time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
 import common, incr
-from common import ROOT, read_jsonl
+from common import ROOT, read_jsonl, sha16
 
 OUT = os.path.join(ROOT, 'artifacts', 'bank')
 CORPUS = os.path.join(ROOT, os.environ.get('CORPUS', 'artifacts/p3b'))
@@ -134,20 +139,37 @@ def stage_primers():
     print(f'primers: {len(R)} primers, {k}/{t} sentences supported and kept ({k / max(t, 1):.3f})')
 
 
-def questions_stage():
+def eligible_chunk(c, gold):
+    """A chunk a bank question may be drawn from: script or operator archive text (profile and summary units are
+    model-written), over 400 characters, outside the gold set's stories."""
+    return c['storyId'] not in gold and len(c['text']) > 400 and c['groupId'] not in ('profile', 'summary')
+
+
+def gold_stories():
+    return {an['story_id'] for g in read_jsonl(os.path.join(ROOT, 'eval', 'goldset_v2.jsonl')) for an in g.get('anchors', [])}
+
+
+def questions_stage(only=None):
+    """`only` (a set of chunk ids, scripts/bank_regen.py): the units are exactly those chunks that are eligible, and
+    every other row is kept; the sample and its pool are left alone."""
     chunks = read_jsonl(os.path.join(CORPUS, 'chunks.jsonl'))
-    gold = {an['story_id'] for g in read_jsonl(os.path.join(ROOT, 'eval', 'goldset_v2.jsonl')) for an in g.get('anchors', [])}
+    gold = gold_stories()
     # Round-robin over groups so a long event does not crowd out the rest; stories in the gold set are
     # skipped whole so no bank question paraphrases an eval item.
     by_g = collections.defaultdict(list)
     for c in chunks:
         # Profile and summary units are model-written; a question drawn from one would grade Trevor on its
         # own output, so questions come from the script and the operator archives only.
-        if c['storyId'] not in gold and len(c['text']) > 400 and c['groupId'] not in ('profile', 'summary'):
+        if eligible_chunk(c, gold):
             by_g[c['groupId']].append(c)
     st = incr.Stage('bank questions', os.path.join(OUT, 'questions.jsonl'), lambda r: r['chunkId'], incr.sha16(Q_SYS))
     pool_path = os.path.join(OUT, 'question_pool.json')
     eligible = [c for v in by_g.values() for c in v]
+    if only is not None:
+        picked = [c for c in eligible if c['chunkId'] in only]
+        for c in picked:
+            st.unit(c['chunkId'], c['text'])
+        return st, [c['chunkId'] for c in picked], {c['chunkId'] for c in chunks}, picked
     if st.rows and not os.environ.get('BANK_RESAMPLE'):
         # After the first build the sample is kept: re-drawing the round-robin after an update reshuffles it
         # (a new group moves every pick) and would regenerate most of the 900 questions. Kept picks stay
@@ -179,12 +201,14 @@ def questions_stage():
     return st, [c['chunkId'] for c in picked], {c['chunkId'] for c in chunks}, picked
 
 
-def stage_questions():
+def stage_questions(only=None, chat_fn=None, show=True):
+    """`only`: question only these chunk ids (bank_regen.py); `chat_fn(system, user, max_tokens)` -> text replaces
+    the local server. Returns the rows written."""
     os.makedirs(OUT, exist_ok=True)
-    st, order, live, picked = questions_stage()
-    ids = st.plan(order, live)
+    st, order, live, picked = questions_stage(only)
+    ids = st.plan(order, live, show=show)
     if ids is None:
-        return
+        return []
     ids = set(ids)
     todo = [c for c in picked if c['chunkId'] in ids]
     print(f'questions: {len(todo)} to do, {len(st.rows)} done', flush=True)
@@ -193,13 +217,18 @@ def stage_questions():
     base = len(st.rows) if incr.IDS_ONLY else max((int(r['qid'][1:]) for r in st.rows), default=0)
     psha = st.psha
     t0 = time.time()
+    out = []
     for n, c in enumerate(todo, 1):
-        q = chat(Q_SYS, c['text'][:6000], 80).split('\n')[0].strip()
-        st.put({'qid': f"b{base + n:05d}", 'question': q, 'chunkId': c['chunkId'],
-                'storyId': c['storyId'], 'groupId': c['groupId'], 'promptSha': psha})
+        q = (chat_fn or chat)(Q_SYS, c['text'][:6000], 80).split('\n')[0].strip()
+        row = {'qid': f"b{base + n:05d}", 'question': q, 'chunkId': c['chunkId'],
+               'storyId': c['storyId'], 'groupId': c['groupId'], 'promptSha': psha}
+        st.put(row)
+        out.append(row)
         if n % 50 == 0:
             print(f'{time.strftime("%H:%M:%S")} questions {n}/{len(todo)}, {(time.time() - t0) / n:.1f} s each', flush=True)
-    print('questions done', flush=True)
+    if show:
+        print('questions done', flush=True)
+    return out
 
 
 def stage_answer():
@@ -208,16 +237,62 @@ def stage_answer():
     sys.exit(subprocess.call(cmd, cwd=ROOT))
 
 
+def evidence_shas(art):
+    """chunk id -> sha16 of its text over the corpora a bank answer can cite: P4x, then CORPUS (P3b) over it (P3b's
+    16,050 chunks are in P4x with the same text). Missing files count as empty."""
+    out = {}
+    for d in ('p4x', os.path.relpath(CORPUS, os.path.join(ROOT, 'artifacts'))):
+        p = os.path.join(art, d, 'chunks.jsonl')
+        if os.path.exists(p):
+            for r in read_jsonl(p):
+                out[r['chunkId']] = sha16(r['text'])
+    return out
+
+
+def evidence_ledger():
+    """qid -> its newest row of artifacts/bank/evidence.jsonl (scripts/bank_regen.py): the sha of every chunk the
+    answer rests on (the question's chunk and the cited ones) when it was made, and how it was made."""
+    return {r['qid']: r for r in read_jsonl(os.path.join(OUT, 'evidence.jsonl'))}
+
+
+def within_gate(a, q, sp_pos):
+    """The 2026-10-17 keep rule for regenerated answers (contract v1.1 section 3a): at least one cited chunk sits at
+    or before the question's own chunk on the gatePos scale, so the answer does not rest only on later stories."""
+    own = sp_pos.get(q['storyId'])
+    return own is not None and any(sp_pos.get(c.split('#')[0], 10**9) <= own for c in a['cited'])
+
+
 def stage_merge():
     sp = spoilers()
     Q = {r['qid']: r for r in read_jsonl(os.path.join(OUT, 'questions.jsonl'))}
     rows = read_jsonl(os.path.join(OUT, 'seed.jsonl')); kept = dropped = 0
+    # REGEN_ANSWERS=0 is the kill switch: no evidence check and no gate rule, the merge before 2026-10-17.
+    check = os.environ.get('REGEN_ANSWERS') != '0'
+    ledger = evidence_ledger() if check else {}
+    cur = evidence_shas(os.path.join(ROOT, 'artifacts')) if check and ledger else {}
+    sp_pos = gate_positions() if check and ledger else {}
+    why = collections.Counter()
     for a in read_jsonl(os.path.join(OUT, 'answers.jsonl')):
         q = Q.get(a['qid'])
         first = re.split(r'(?<=[.!?])\s+', a['answer'].strip(), maxsplit=1)[0]
         if not q or DECLINE.search(first) or not a['cited']:
             dropped += 1
+            if check and not q:
+                why['question redone (its chunk changed)'] += 1
             continue
+        ev = ledger.get(a['qid'])
+        if check and ev is None:
+            why['unverified (no evidence row, kept)'] += 1
+        elif check:
+            moved = [c for c, h in ev['shas'].items() if cur.get(c) != h]
+            if moved:
+                why['evidence vanished' if any(c not in cur for c in moved) else 'evidence changed'] += 1
+                dropped += 1
+                continue
+            if ev.get('made') == 'regen' and not within_gate(a, q, sp_pos):
+                why['cites only past its gate'] += 1
+                dropped += 1
+                continue
         cited = sorted({c.split('#')[0] for c in a['cited']})
         chars = [s[len('archive_'):] for s in cited if s.startswith('archive_')]
         rows.append({'id': f"ask:{a['qid']}", 'kind': 'ask', 'question': q['question'], 'aliases': [],
@@ -226,7 +301,20 @@ def stage_merge():
         kept += 1
     common.write_jsonl(os.path.join(OUT, 'bank.jsonl'), rows)
     c = collections.Counter(r['kind'] for r in rows)
-    print(f'bank: {len(rows)} entries {dict(c)}; generated kept {kept}, dropped {dropped} (declined or uncited)')
+    print(f'bank: {len(rows)} entries {dict(c)}; generated kept {kept}, dropped {dropped} (declined or uncited'
+          + (', or evidence changed' if check else '') + ')' + (f'; {dict(why)}' if why else ''))
+    return {'entries': len(rows), 'kept': kept, 'dropped': dropped, **{k: v for k, v in why.items()}}
+
+
+def gate_positions():
+    """story or source id -> gatePos from artifacts/chrono/gate_order.json (storyOrder index + 1, sourcePos)."""
+    p = os.path.join(ROOT, 'artifacts', 'chrono', 'gate_order.json')
+    if not os.path.exists(p):
+        return {}
+    g = json.load(open(p))
+    pos = {s: i + 1 for i, s in enumerate(g['storyOrder'])}
+    pos.update({k: v for k, v in (g.get('sourcePos') or {}).items() if k not in pos})
+    return pos
 
 
 def stage_judge():
