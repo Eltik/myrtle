@@ -14,7 +14,7 @@ which one made it. No model.
 import json, os, re, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
-from common import EXCEL, ROOT
+from common import ROOT, excel_table
 
 OUT = os.path.join(ROOT, 'artifacts', 'crossref')
 
@@ -32,13 +32,9 @@ def core_name(enemy_name):
     return n
 
 
-def load(name):
-    return json.load(open(os.path.join(EXCEL, name)))
-
-
 def main():
-    enemies = {x['key']: x['value'] for x in load('enemy_handbook_table.json')['EnemyData']}
-    chars = {x['key']: x['value'] for x in load('character_table.json')['Characters']}
+    enemies = {x['key']: x['value'] for x in excel_table('enemy_handbook_table.json')['EnemyData']}
+    chars = {x['key']: x['value'] for x in excel_table('character_table.json')['Characters']}
     ops = {k: v['Name'] for k, v in chars.items()
            if k.startswith('char_') and v.get('Profession') not in ('TOKEN', 'TRAP') and not v.get('IsNotObtainable')}
     by_name = {}

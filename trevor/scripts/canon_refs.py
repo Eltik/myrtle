@@ -45,7 +45,7 @@ import collections, datetime, hashlib, json, math, os, re, sys, time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
 import common
-from common import GAMEDATA as GD, ROOT, kv, read_jsonl, story_script as script_text
+from common import GAMEDATA as GD, ROOT, excel_table, kv, read_jsonl, story_script as script_text
 
 OUT = os.path.join(ROOT, 'artifacts', 'canon')
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
@@ -131,7 +131,7 @@ def timeline_names():
 
 def stage_endings():
     os.makedirs(OUT, exist_ok=True)
-    t = json.load(open(os.path.join(GD, 'excel', 'roguelike_topic_table.json')))
+    t = excel_table('roguelike_topic_table.json')
     topics = {x['key']: x['value'] for x in t['Topics']}
     rows = []
     for d in t['Details']:
@@ -172,8 +172,8 @@ def release_dates():
     for e in json.load(open(os.path.join(ROOT, 'artifacts', 'chrono', 'main_release.json'))):
         if e.get('global'):
             rel[f"main_{e['episode']}"] = e['global']
-    mods = kv(json.load(open(os.path.join(GD, 'excel', 'uniequip_table.json')))['EquipDict'])
-    t = json.load(open(os.path.join(GD, 'excel', 'roguelike_topic_table.json')))
+    mods = kv(excel_table('uniequip_table.json')['EquipDict'])
+    t = excel_table('roguelike_topic_table.json')
     runs = {x['key']: datetime.datetime.utcfromtimestamp(x['value']['StartTime']).strftime('%Y-%m-%d') for x in t['Topics']}
 
     def date(c):
@@ -548,7 +548,7 @@ _RECORD_NAMES = {}
 def record_name(sid):
     """'story_12fce_set_1_story_1' -> 'Operator record: <operator name>'."""
     if not _RECORD_NAMES:
-        chars = kv(json.load(open(os.path.join(GD, 'excel', 'character_table.json')))['Characters'])
+        chars = kv(excel_table('character_table.json')['Characters'])
         _RECORD_NAMES.update({k.split('_', 2)[-1]: v.get('Name') for k, v in chars.items()})
     key = sid.split('_')[1]
     return f"Operator record: {_RECORD_NAMES.get(key, key)}"

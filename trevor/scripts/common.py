@@ -78,6 +78,11 @@ def load_json(path):
     return json.load(open(path))
 
 
+def excel_table(name):
+    """A game data table from excel/ (TREVOR_GAMEDATA's when set), decoded."""
+    return load_json(os.path.join(EXCEL, name))
+
+
 def kv(x):
     """A game table's [{key, value}] list as a dict; anything else unchanged."""
     return {r['key']: r['value'] for r in x} if isinstance(x, list) and x and isinstance(x[0], dict) and 'key' in x[0] else x
@@ -99,7 +104,7 @@ def story_script(path):
 
 def playable_operators():
     """(charId, name) of every obtainable operator, in character_table order: no TOKEN or TRAP, not IsNotObtainable."""
-    ct = json.load(open(os.path.join(EXCEL, 'character_table.json')))['Characters']
+    ct = excel_table('character_table.json')['Characters']
     return [(c['key'], c['value']['Name']) for c in ct
             if c['value'].get('Profession') not in ('TOKEN', 'TRAP') and not c['value'].get('IsNotObtainable')]
 

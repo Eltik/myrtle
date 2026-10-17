@@ -13,15 +13,11 @@ import collections, json, os, re, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
 import common
-from common import EXCEL as GD, ROOT
+from common import ROOT, excel_table
 
 OUT = os.path.join(ROOT, 'artifacts', 'entities', 'operator_attributes.jsonl')
 CLASS = {'PIONEER': 'Vanguard', 'WARRIOR': 'Guard', 'TANK': 'Defender', 'SNIPER': 'Sniper', 'CASTER': 'Caster',
          'MEDIC': 'Medic', 'SUPPORT': 'Supporter', 'SPECIAL': 'Specialist'}
-
-
-def load(name):
-    return json.load(open(os.path.join(GD, name)))
 
 
 def kv(rows):
@@ -40,10 +36,10 @@ def infected(text):
 
 
 def main():
-    chars = kv(load('character_table.json')['Characters'])
-    teams = {k: v['PowerName'] for k, v in kv(load('handbook_team_table.json')['Handbook_teams']).items()}
-    branches = {k: v['SubProfessionName'] for k, v in kv(load('uniequip_table.json')['SubProfDict']).items()}
-    hb = {x['value']['CharID']: x['value'] for x in load('handbook_info_table.json')['HandbookDict']}
+    chars = kv(excel_table('character_table.json')['Characters'])
+    teams = {k: v['PowerName'] for k, v in kv(excel_table('handbook_team_table.json')['Handbook_teams']).items()}
+    branches = {k: v['SubProfessionName'] for k, v in kv(excel_table('uniequip_table.json')['SubProfDict']).items()}
+    hb = {x['value']['CharID']: x['value'] for x in excel_table('handbook_info_table.json')['HandbookDict']}
     rows = []
     for cid, c in chars.items():
         if c.get('Profession') in ('TOKEN', 'TRAP') or c.get('IsNotObtainable'):

@@ -31,7 +31,7 @@ import collections, datetime, json, os, re, statistics, sys, time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
 import common
-from common import EXCEL as GD, ROOT
+from common import ROOT
 
 CH = os.path.join(ROOT, 'artifacts', 'chrono')
 WIKI_REF = os.path.join(ROOT, 'eval', 'reference', 'main_release.wiki.json')
@@ -72,9 +72,9 @@ def kv(x):
 
 def stage_dates():
     """EN release dates of the main episodes from the game data alone (see the module docstring)."""
-    zt = json.load(open(os.path.join(GD, 'zone_table.json')))
-    st = json.load(open(os.path.join(GD, 'stage_table.json')))
-    act = json.load(open(os.path.join(GD, 'activity_table.json')))
+    zt = common.excel_table('zone_table.json')
+    st = common.excel_table('stage_table.json')
+    act = common.excel_table('activity_table.json')
     zones, stages = kv(zt['Zones']), kv(st['Stages'])
     opened = {k: v.get('ZoneOpenTime', -1) for k, v in kv(zt['MainlineAdditionInfo']).items()}
     # Episode number per zone: main_N zones, and the zones holding main_N-NN stages (main_15 in act2mainss_zone1).
@@ -228,7 +228,7 @@ def stage_build():
 
 
 def stage_storylines():
-    st = json.load(open(os.path.join(GD, 'stage_table.json')))
+    st = common.excel_table('stage_table.json')
     sets = kv(st['StorylineStorySets'])
     names = {g['groupId']: g['name'] for g in json.load(open(os.path.join(CH, 'timeline_v1.json')))['groups']}
 

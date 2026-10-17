@@ -21,7 +21,7 @@ import collections, glob, json, os, re, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
 import common
-from common import EXCEL as GD, ROOT, kv, story_script as script
+from common import EXCEL as GD, ROOT, excel_table, kv, story_script as script
 
 OUT = os.path.join(ROOT, 'artifacts', 'sources', 'units.jsonl')
 TAG = re.compile(r'<[@$/][^>]*>|</>|<[^>]{1,40}>')
@@ -38,10 +38,6 @@ def is_no(n):
     return str(int(n) + IS_OFFSET) if str(n).isdigit() else n
 
 
-def load(name):
-    return json.load(open(os.path.join(GD, name)))
-
-
 def clean(s):
     # Rich-text tags ("<@ba.kw>", "<$ba.camp>", "</>") and the player's nickname placeholder.
     s = TAG.sub('', s or '').replace('{@nickname}', 'Doctor').replace('\\n', '\n')
@@ -53,7 +49,7 @@ def words(s):
 
 
 def add_modules(add, cname):
-    for eid, e in kv(load('uniequip_table.json')['EquipDict']).items():
+    for eid, e in kv(excel_table('uniequip_table.json')['EquipDict']).items():
         cid = e.get('CharId')
         if e.get('Type_') == 'INITIAL' or not cid:
             continue  # the ORIGINAL module of every operator carries one generic line
@@ -64,7 +60,7 @@ def add_modules(add, cname):
 
 def add_voices(add, cname):
     lines = collections.defaultdict(list)
-    for w in kv(load('charword_table.json')['CharWords']).values():
+    for w in kv(excel_table('charword_table.json')['CharWords']).values():
         # The default voice set only: a skin's alternate set repeats the same titles.
         if w.get('WordKey') == w.get('CharId') and w.get('VoiceText'):
             lines[w['CharId']].append((int(w.get('VoiceIndex') or 0), w.get('VoiceTitle'), w['VoiceText']))
@@ -112,14 +108,14 @@ def add_is_scripts(add, rl, topics):
 
 
 def add_enemies(add):
-    for eid, e in kv(load('enemy_handbook_table.json')['EnemyData']).items():
+    for eid, e in kv(excel_table('enemy_handbook_table.json')['EnemyData']).items():
         if e.get('HideInHandbook') is True:
             continue
         add(f'enemy_{eid}', 'enemy', f"Enemy entry: {e.get('Name')}", e.get('Description'))
 
 
 def add_outfits(add, cname):
-    for sid, s in kv(load('skin_table.json')['CharSkins']).items():
+    for sid, s in kv(excel_table('skin_table.json')['CharSkins']).items():
         d = s.get('DisplaySkin') or {}
         body = '\n'.join(x for x in (d.get('Content'), d.get('Dialog'), d.get('Usage'), d.get('Description')) if x)
         op = cname.get(s.get('CharId'), s.get('CharId'))
@@ -129,13 +125,13 @@ def add_outfits(add, cname):
 
 
 def add_items(add):
-    for iid, i in kv(load('item_table.json')['Items']).items():
+    for iid, i in kv(excel_table('item_table.json')['Items']).items():
         if words(i.get('Description')) >= 8:
             add(f'item_{iid}', 'item', f"Item: {i.get('Name')}", f"{i.get('Description')}\n{i.get('Usage') or ''}")
 
 
 def main():
-    chars = kv(load('character_table.json')['Characters'])
+    chars = kv(excel_table('character_table.json')['Characters'])
     cname = {k: v.get('Name') for k, v in chars.items()}
     units = []
 
@@ -146,7 +142,7 @@ def main():
 
     add_modules(add, cname)
     add_voices(add, cname)
-    rl = load('roguelike_topic_table.json')
+    rl = excel_table('roguelike_topic_table.json')
     topics = {t['key']: t['value'].get('Name') for t in rl['Topics']}
     add_is_runs(add, rl, topics)
     add_is_scripts(add, rl, topics)

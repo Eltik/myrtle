@@ -38,7 +38,6 @@ from common import ROOT, read_jsonl, sha16
 ENT = os.path.join(ROOT, 'artifacts', 'entities')
 REF = os.path.join(ROOT, 'eval', 'reference')
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
-GD = common.EXCEL
 DEATH = re.compile(r"\b(die[sd]?|dying|death|dead|killed|kill(?:ed)?|perish\w*|slain|passed away|corpse|lifeless|funeral|"
                    r"sacrific\w+|last breath|stopped breathing|murder\w*|executed|execution)\b", re.I)
 SYS = ("You read a passage of an Arknights story script, written as 'Speaker: line'. List every character whose death this "
@@ -150,7 +149,7 @@ def namer():
         known.update(x.lower() for x in json.loads(l)['speakers'])
     for i in json.load(open(os.path.join(ENT, 'identities.json'))):
         known.update(n.lower() for n in i['names'])
-    ct = json.load(open(os.path.join(GD, 'character_table.json')))['Characters']
+    ct = common.excel_table('character_table.json')['Characters']
     known.update(c['value']['Name'].lower() for c in ct if c['value'].get('Name'))
     lead = re.compile(r"^(?:my|his|her|their|our|your|the|a|an|all|another|some|those|these)\b", re.I)
     proper = lambda n: all(w[:1].isupper() or w in ('of', 'the', 'de', 'von', 'van', 'la', 'le') for w in n.split())

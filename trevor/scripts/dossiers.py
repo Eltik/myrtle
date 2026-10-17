@@ -16,7 +16,7 @@ import collections, json, os, random, re, sys, threading, time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
 import common, incr
-from common import EXCEL, ROOT, read_jsonl, sha16
+from common import ROOT, read_jsonl, sha16
 
 OUT = os.path.join(ROOT, 'artifacts', 'dossiers')
 CORPUS = os.path.join(ROOT, os.environ.get('CORPUS', 'artifacts/p3a'))
@@ -56,7 +56,7 @@ def characters(rows):
             continue
         for p in set(r['speakers']):
             spk[p] += 1; grp[p].add(r['groupId'])
-    ct = json.load(open(os.path.join(EXCEL, 'character_table.json')))['Characters']
+    ct = common.excel_table('character_table.json')['Characters']
     ops = {c['value'].get('Name'): c['key'] for c in ct if c['value'].get('Name')}
     ids = {i['label']: i for i in json.load(open(os.path.join(ROOT, 'artifacts', 'entities', 'identities.json')))}
     out = []
