@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { DECLINES, seeds } from "./bank.mjs";
 import { answer, cannedStream, queuedView, SPOILER } from "./canned.mjs";
-import { cors, DEMO, DEMO_UID, GATE_POS, horizonOf, json, MAX_OPEN, MODES, normQ, PANELS, profileStory, QUEUE_MAX, STORY, setProfileStory, UPSTREAM, VERSION, VITE_PORT } from "./config.mjs";
+import { cors, DEMO, DEMO_UID, GATE_POS, horizonOf, json, MAX_OPEN, MODES, normQ, PANELS, profileStory, QUEUE_MAX, STORY, setProfileStory, spoilerHorizon, UPSTREAM, VERSION, VITE_PORT } from "./config.mjs";
 import { REAL } from "./decide.mjs";
 import { accepted, jobRow, newJob, viewOf } from "./jobs.mjs";
 import { asks, countAsk, JOBS, openJobs } from "./store.mjs";
@@ -80,7 +80,8 @@ export async function route(req) {
             const v = viewOf(j);
             // A decline ("The provided passages do not ...") is not worth suggesting.
             const text = v.answer?.answer?.answer;
-            if (j.quick || v.status !== "done" || !v.answer || v.answer.eraPos > h.eraPos || seen.has(j.nq) || (typeof text === "string" && DECLINES.test(text))) continue;
+            // A spoiler-mode answer is never a chip for a spoiler-safe reader (contract v1.1 section 8).
+            if (j.quick || j.horizon.all || v.status !== "done" || !v.answer || v.answer.eraPos > h.eraPos || seen.has(j.nq) || (typeof text === "string" && DECLINES.test(text))) continue;
             seen.add(j.nq);
             asked.push({ question: j.question, answer: v.answer, askers: 2 });
         }
@@ -106,7 +107,8 @@ export async function route(req) {
         const body = await req.json().catch(() => ({}));
         const question = String(body.question ?? "").trim();
         if (!question) return json({ error: { code: "BAD_REQUEST", message: "empty question" } }, 400);
-        let horizon = horizonOf(body.horizonStory);
+        // Spoiler mode (contract v1.1 section 8): no horizon, a bucket of its own, never 400 on horizonStory.
+        let horizon = spoilerHorizon(body) ?? horizonOf(body.horizonStory);
         if (horizon.error) {
             if (REAL) return json({ error: { code: "BAD_REQUEST", message: horizon.error } }, 400);
             horizon = horizonOf(null);

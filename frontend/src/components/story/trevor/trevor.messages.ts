@@ -177,6 +177,46 @@ export const messages = {
         text: "Spoiler-safe up to the very start. Mark stories read to widen it.",
         description: "Label on an answer when the reader has no stories marked read, so the answer can use almost nothing.",
     },
+    "trevor.spoilers.name": {
+        text: "Spoilers",
+        description: "Accessible name of the switch that lets Trevor answer from stories the reader has not read yet (spoiler mode).",
+    },
+    "trevor.spoilers.off": {
+        text: "Spoilers: off",
+        description: "Visible text beside the spoiler-mode switch while it is off: answers only use stories the reader has read.",
+    },
+    "trevor.spoilers.on": {
+        text: "Spoilers: on",
+        description: "Visible text beside the spoiler-mode switch while it is on: answers may use any released story.",
+    },
+    "trevor.spoilers.label": {
+        text: "Spoilers on: answers may reveal later stories",
+        description: "Label above the question box while spoiler mode is on, in place of 'Spoiler-safe up to ...'.",
+    },
+    "trevor.spoilers.placeholder": {
+        text: "Ask about any released story",
+        description: "Placeholder in the question box while spoiler mode is on, in place of 'Ask about what you've read so far'.",
+    },
+    "trevor.spoilers.badge": {
+        text: "Spoilers",
+        description: "Small tag on an answer that was asked with spoiler mode on, so it may reveal stories the reader has not read.",
+    },
+    "trevor.spoilers.confirmTitle": {
+        text: "Turn spoilers on?",
+        description: "Title of the confirmation shown the first time the reader turns spoiler mode on.",
+    },
+    "trevor.spoilers.confirmBody": {
+        text: "Trevor will answer from all released stories, including ones you haven't read. You can turn this off at any time.",
+        description: "Body of the spoiler-mode confirmation.",
+    },
+    "trevor.spoilers.confirm": {
+        text: "Turn spoilers on",
+        description: "Button in the confirmation that turns spoiler mode on.",
+    },
+    "trevor.spoilers.cancel": {
+        text: "Keep them off",
+        description: "Button in the confirmation that leaves spoiler mode off.",
+    },
     "trevor.ask.sending": {
         text: "Sending…",
         description: "Status while the question is being sent.",

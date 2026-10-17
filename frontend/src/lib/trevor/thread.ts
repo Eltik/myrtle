@@ -33,6 +33,8 @@ export interface IAskTurn {
     token: string | null;
     /** Re-shown from "My questions": its spoiler horizon is not known here. */
     restored?: true;
+    /** Asked with spoiler mode on: sent with `spoilers: "all"`, even if it waited. */
+    spoilers?: true;
 }
 
 /** A suggested question opened from the panel's prepared answer: no request was made. */
@@ -54,7 +56,7 @@ export interface IThread {
 export const EMPTY_THREAD: IThread = { turns: [], nextId: 1 };
 
 export type ThreadAction =
-    | { type: "ask"; question: string; token: string | null }
+    | { type: "ask"; question: string; token: string | null; spoilers?: boolean }
     | { type: "bank"; suggestion: { id: string; question: string; answer: string } }
     /** A question asked earlier (the stories tab's "My questions"), re-shown as it stands: answered, or still open and followed again. */
     | { type: "restore"; state: TurnState }
@@ -93,7 +95,9 @@ export function threadReducer(thread: IThread, action: ThreadAction, cap: number
     switch (action.type) {
         case "ask": {
             const state: TurnState = openSlots(thread) < cap ? { kind: "sending", question: action.question } : { kind: "held", question: action.question };
-            return { turns: [...thread.turns, { id: thread.nextId, kind: "ask", state, token: action.token }], nextId: thread.nextId + 1 };
+            const turn: IAskTurn = { id: thread.nextId, kind: "ask", state, token: action.token };
+            if (action.spoilers) turn.spoilers = true;
+            return { turns: [...thread.turns, turn], nextId: thread.nextId + 1 };
         }
         case "bank": {
             const s = action.suggestion;
@@ -123,6 +127,8 @@ export function pendingCount(thread: IThread): number {
 }
 
 function spoilerOf(s: TurnState): TrevorSpoilerSafe | null | undefined {
+    // A spoiler-mode answer has no horizon: its null is not "the very start".
+    if ((hasJob(s) || s.kind === "done") && s.spoilers) return undefined;
     return hasJob(s) || s.kind === "done" ? s.spoiler : undefined;
 }
 

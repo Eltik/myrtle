@@ -55,6 +55,13 @@ export function horizonOf(storyId) {
     const era = eraAt(pos);
     return { pos, eraPos: era?.position ?? 0, spoiler: era ? { eraId: era.id, name: era.name, position: era.position } : null };
 }
+/** Spoiler mode's bucket (contract v1.1 section 8): the backend's NO_LIMIT_ERA, above every era. */
+export const NO_LIMIT_ERA = 2147483647;
+/** The horizon of a spoiler-mode ask (`spoilers: "all"`): no limit, sent to the worker as `horizonPos: null`. MOCK_SPOILER_MODE=0 ignores the field, as the backend's TREVOR_SPOILER_MODE=0 does. */
+export function spoilerHorizon(body) {
+    if (process.env.MOCK_SPOILER_MODE === "0" || body?.spoilers !== "all") return null;
+    return { pos: NO_LIMIT_ERA, eraPos: NO_LIMIT_ERA, spoiler: null, all: true };
+}
 /** The contract v1.1 normQ: NFKC, lowercase, punctuation folded, whitespace collapsed (a trailing "?" goes with it). */
 export const normQ = (q) =>
     q

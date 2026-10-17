@@ -9,6 +9,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { type IMyJob, jobOpen } from "#/lib/trevor/library";
 import { cn } from "#/lib/utils";
 import type { JobStatus } from "#/types/generated/JobStatus";
+import { SpoilersBadge } from "./SpoilerSwitch";
 import type { messages } from "./trevor.messages";
 
 type TrevorT = TypedT<typeof messages>;
@@ -45,6 +46,7 @@ export function MyQuestions({ jobs, loading, failed, hasMore, onMore, onOpen }: 
                                 <span className="line-clamp-2 text-sm">{job.question}</span>
                                 <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground text-xs">
                                     <JobStatusBadge job={job} t={t} />
+                                    {job.spoilers === "all" ? <SpoilersBadge /> : null}
                                     {Number.isNaN(Date.parse(job.createdAt)) ? null : <span className="tabular-nums">{f.relative(new Date(job.createdAt).toISOString())}</span>}
                                 </span>
                             </button>

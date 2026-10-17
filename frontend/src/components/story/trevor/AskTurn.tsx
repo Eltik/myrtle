@@ -22,6 +22,7 @@ import type { TrevorFailureKind } from "#/lib/trevor/errors";
 import { MAX_OPEN, type ThreadTurn, type TurnState } from "#/lib/trevor/thread";
 import { AnswerText } from "./AnswerText";
 import { AnswerFooter } from "./AnswerView";
+import { SpoilersBadge } from "./SpoilerSwitch";
 import { TrevorAvatar } from "./TrevorAvatar";
 import type { messages } from "./trevor.messages";
 
@@ -52,6 +53,8 @@ function AskTurn({ state, latest, storyId, signedIn, onJumpLine, onResume }: { s
     const avatar = <TrevorAvatar />;
 
     const quick = hasJob(state) ? state.quick : undefined;
+    // Asked in spoiler mode (contract v1.1 section 8): every answer of the turn is tagged.
+    const spoilers = (hasJob(state) || state.kind === "done") && state.spoilers === true;
     let reply: React.ReactNode;
     if (state.kind === "held") {
         reply = (
@@ -71,14 +74,21 @@ function AskTurn({ state, latest, storyId, signedIn, onJumpLine, onResume }: { s
     } else if (state.kind === "streaming") {
         reply = (
             <ChatMessage side="incoming" author={author} avatar={avatar}>
-                <AnswerText text={state.text} sourceId={null} cited={new Set()} />
+                {spoilers ? (
+                    <div className="flex flex-col gap-2">
+                        <SpoilersBadge />
+                        <AnswerText text={state.text} sourceId={null} cited={new Set()} />
+                    </div>
+                ) : (
+                    <AnswerText text={state.text} sourceId={null} cited={new Set()} />
+                )}
             </ChatMessage>
         );
     } else if (state.kind === "done" && state.quick) {
-        reply = <AnswerReply answer={state.answer} quick note={state.fullFailed ? t("trevor.quick.fullFailed") : null} sourceId={sourceId} storyId={storyId} signedIn={signedIn} onJumpLine={onJumpLine} />;
+        reply = <AnswerReply answer={state.answer} quick spoilers={spoilers} note={state.fullFailed ? t("trevor.quick.fullFailed") : null} sourceId={sourceId} storyId={storyId} signedIn={signedIn} onJumpLine={onJumpLine} />;
     } else if (state.kind === "done") {
         const passages = state.answer.source === "passages";
-        reply = <AnswerReply answer={state.answer} passagesLabel={passages} note={passages ? t("trevor.ask.passagesNote") : null} sourceId={sourceId} storyId={storyId} signedIn={signedIn} onJumpLine={onJumpLine} />;
+        reply = <AnswerReply answer={state.answer} passagesLabel={passages} spoilers={spoilers} note={passages ? t("trevor.ask.passagesNote") : null} sourceId={sourceId} storyId={storyId} signedIn={signedIn} onJumpLine={onJumpLine} />;
     } else {
         // failed, refused, offline: Trevor says so in words, as a quieter reply.
         const words = state.kind === "failed" ? t("trevor.ask.failed") : state.kind === "offline" ? t("trevor.ask.offline") : (refusal(state.failure, t) ?? describe(state.error));
@@ -109,7 +119,7 @@ function AskTurn({ state, latest, storyId, signedIn, onJumpLine, onResume }: { s
             {/* The quick look is an answer already: its own region, read at once, while the full answer is still busy below it. */}
             {quick ? (
                 <div aria-live="polite">
-                    <AnswerReply answer={quick} quick note={t("trevor.quick.deferred")} sourceId={`${sourceId}-q`} storyId={storyId} signedIn={signedIn} onJumpLine={onJumpLine} />
+                    <AnswerReply answer={quick} quick spoilers={spoilers} note={t("trevor.quick.deferred")} sourceId={`${sourceId}-q`} storyId={storyId} signedIn={signedIn} onJumpLine={onJumpLine} />
                 </div>
             ) : null}
             <div aria-live="polite" aria-busy={pending} data-trevor-state={state.kind} data-trevor-live={latest ? "" : undefined}>
@@ -122,12 +132,14 @@ function AskTurn({ state, latest, storyId, signedIn, onJumpLine, onResume }: { s
 /**
  * A finished answer as Trevor's reply. A quick look (a passages answer given at
  * once) is always labelled "passages only"; a done answer is when its source is
- * passages. `note` sits under the label.
+ * passages. `note` sits under the label. `spoilers` tags an answer asked in
+ * spoiler mode.
  */
 function AnswerReply({
     answer,
     quick = false,
     passagesLabel = quick,
+    spoilers = false,
     note,
     sourceId,
     storyId,
@@ -137,6 +149,7 @@ function AnswerReply({
     answer: IParsedAnswer;
     quick?: boolean;
     passagesLabel?: boolean;
+    spoilers?: boolean;
     note: string | null;
     sourceId: string;
     storyId: string | null;
@@ -147,6 +160,7 @@ function AnswerReply({
     return (
         <ChatMessage side="incoming" author="Trevor" avatar={<TrevorAvatar />} footer={<AnswerFooter answer={answer} sourceId={sourceId} storyId={storyId} onJumpLine={onJumpLine} signedIn={signedIn} />} aria-label={t("trevor.answer.label")} data-trevor-quick={quick || undefined}>
             <div className="flex flex-col gap-2">
+                {spoilers ? <SpoilersBadge /> : null}
                 {passagesLabel ? (
                     <div className="flex flex-col gap-1">
                         <span className="self-start rounded-full bg-background/70 px-2 py-0.5 font-medium text-xs" data-trevor-passages>

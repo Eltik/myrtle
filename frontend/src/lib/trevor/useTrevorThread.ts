@@ -23,7 +23,7 @@ import { EMPTY_THREAD, type IAskTurn, type IThread, MAX_OPEN, type TurnState, th
 import { createDeltaBuffer, type IDeltaBuffer, type IJobWatch, type IWatchDeps, watchJob } from "./watch";
 
 export interface IAskDeps extends IWatchDeps {
-    ask: (input: { question: string; horizonStory?: string | null; turnstileToken?: string | null }) => Promise<AskResponse>;
+    ask: (input: { question: string; horizonStory?: string | null; turnstileToken?: string | null; spoilers?: "all" }) => Promise<AskResponse>;
 }
 
 const DEFAULT_DEPS: IAskDeps = {
@@ -35,7 +35,8 @@ const DEFAULT_DEPS: IAskDeps = {
 
 interface ITrevorThread {
     thread: IThread;
-    ask: (question: string, turnstileToken?: string | null) => void;
+    /** `spoilers` asks in spoiler mode (contract v1.1 section 8). */
+    ask: (question: string, turnstileToken?: string | null, spoilers?: boolean) => void;
     addPrepared: (suggestion: { id: string; question: string; answer: string }) => void;
     /** Re-show a question asked earlier; one still open is followed again. */
     restore: (state: TurnState) => void;
@@ -59,7 +60,8 @@ export function useTrevorThread(storyId: string | null, deps: IAskDeps = DEFAULT
         async (turn: IAskTurn) => {
             let response: AskResponse;
             try {
-                response = await depsRef.current.ask({ question: turn.state.question, horizonStory: storyRef.current, turnstileToken: turn.token });
+                // Spoiler mode only adds the field: a spoiler-safe ask is the request it always was.
+                response = await depsRef.current.ask({ question: turn.state.question, horizonStory: storyRef.current, turnstileToken: turn.token, ...(turn.spoilers ? { spoilers: "all" as const } : {}) });
             } catch (error) {
                 turnEvent(turn.id, { type: "requestError", error });
                 return;
@@ -133,7 +135,7 @@ export function useTrevorThread(storyId: string | null, deps: IAskDeps = DEFAULT
         };
     }, []);
 
-    const ask = useCallback((question: string, turnstileToken: string | null = null) => dispatch({ type: "ask", question, token: turnstileToken }), []);
+    const ask = useCallback((question: string, turnstileToken: string | null = null, spoilers = false) => dispatch({ type: "ask", question, token: turnstileToken, spoilers }), []);
     const addPrepared = useCallback((suggestion: { id: string; question: string; answer: string }) => dispatch({ type: "bank", suggestion }), []);
     const resume = useCallback((turnId: number) => turnEvent(turnId, { type: "resume" }), [turnEvent]);
     const restore = useCallback((state: TurnState) => dispatch({ type: "restore", state }), []);

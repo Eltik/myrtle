@@ -12,7 +12,10 @@
 //   array, newest first, paged by before=<createdAt>); /demo-login and /demo-logout (cookie site_token=trevor-demo),
 //   /demo-mode/<mode>, /demo-profile/<storyId|none>; every other GET is proxied to MOCK_UPSTREAM
 //   (http://localhost:3060) without the demo token, and any other method is refused. At most MOCK_MAX_OPEN (3) open
-//   jobs (a further ask is a 409), and a twin (the same normQ in the same era while open) joins the open job.
+//   jobs (a further ask is a 409), and a twin (the same normQ in the same era while open) joins the open job. An ask
+//   with `spoilers: "all"` (contract v1.1 section 8) has no horizon: its own bucket, `spoilers: "all"` and a null
+//   `spoilerSafeUpTo` in the response, `horizonPos: null` to the worker, never a popular chip; MOCK_SPOILER_MODE=0
+//   ignores the field.
 // - jobs.mjs: the jobs an ask makes. Past TREVOR_PREVIEW_QUEUE_MAX (2) queued or running real jobs, or in mode `quick`,
 //   an ask gets a quick passages job (always canned, its answer the closest bank answer inside the era) as `jobId`, a
 //   deferred job for the full answer as `deferredJobId`, and this run's earlier-era answer as `quickLook` when there is

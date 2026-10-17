@@ -14,6 +14,12 @@
  * turns, the ones not yet asked stay above the composer (`QuestionChipRow`).
  * The stories page passes its own empty state, chips and era, and no story, so
  * the horizon is the reader's profile alone.
+ *
+ * A signed-in reader has a "Spoilers" switch beside the spoiler-safe label
+ * (spoiler mode, contract v1.1 section 8, `SpoilerSwitch`); while it is on,
+ * each question is sent with `spoilers: "all"` and the label says answers may
+ * reveal later stories. `VITE_TREVOR_SPOILER_MODE=0` renders the label row as
+ * it was before the switch.
  */
 import { ArrowUpIcon } from "lucide-react";
 import type React from "react";
@@ -29,8 +35,9 @@ import { authActions } from "#/lib/auth/store";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { type IQuestionChip, unaskedChips } from "#/lib/trevor/chips";
-import { turnstileSiteKey } from "#/lib/trevor/flag";
+import { trevorSpoilerModeEnabled, turnstileSiteKey } from "#/lib/trevor/flag";
 import type { TrevorPanel, TrevorSuggestion } from "#/lib/trevor/panels";
+import { useSpoilerMode } from "#/lib/trevor/spoilerMode";
 import { type IThread, latestSpoiler, pendingCount } from "#/lib/trevor/thread";
 import { cn } from "#/lib/utils";
 import type { TrevorSpoilerSafe } from "#/types/generated/TrevorSpoilerSafe";
@@ -38,6 +45,7 @@ import type { TrevorStatus } from "#/types/generated/TrevorStatus";
 import { SpoilerLabel } from "./AnswerView";
 import { ChatTurn } from "./AskTurn";
 import { chipRowEnabled, LISTED_CHIP_CLASS, QuestionChipRow } from "./QuestionChipRow";
+import { SpoilerSwitch, SpoilersOnLabel } from "./SpoilerSwitch";
 import { TrevorAvatar } from "./TrevorAvatar";
 import { Turnstile } from "./Turnstile";
 import type { messages } from "./trevor.messages";
@@ -54,7 +62,8 @@ export interface IAskChatProps {
     status: TrevorStatus | undefined;
     /** Every turn of the sitting, from `useTrevorThread`. */
     thread: IThread;
-    onAsk: (question: string, turnstileToken: string | null) => void;
+    /** `spoilers`: asked with spoiler mode on. */
+    onAsk: (question: string, turnstileToken: string | null, spoilers: boolean) => void;
     onPrepared: (suggestion: { id: string; question: string; answer: string }) => void;
     onResume: (turnId: number) => void;
     onJumpLine?: (line: number) => void;
@@ -82,6 +91,8 @@ export function AskChat({ storyId, panel, signedIn, status, thread, onAsk, onPre
     const empty = thread.turns.length === 0;
     const reported = latestSpoiler(thread);
     const spoiler = reported === undefined ? spoilerFallback : reported;
+    const [spoilersOn, setSpoilersOn] = useSpoilerMode();
+    const spoilerSwitch = signedIn && trevorSpoilerModeEnabled();
     const lastId = [...thread.turns].reverse().find((x) => x.kind === "ask")?.id;
     const layoutKey = thread.turns.map((x) => (x.kind === "ask" ? `${x.state.kind}${x.state.kind === "streaming" ? x.state.text.length : ""}` : "b")).join(",");
     const scroll = useChatScroll({ active, itemCount: thread.turns.length, layoutKey });
@@ -102,7 +113,7 @@ export function AskChat({ storyId, panel, signedIn, status, thread, onAsk, onPre
     const ask = (question: string) => {
         if (!signedIn) return;
         scroll.atBottomRef.current = true;
-        onAsk(question, token);
+        onAsk(question, token, spoilersOn);
         if (siteKey) setResetKey((k) => k + 1);
     };
     const openPrepared = (s: TrevorSuggestion, answer: string) => {
@@ -154,7 +165,12 @@ export function AskChat({ storyId, panel, signedIn, status, thread, onAsk, onPre
                         <AlertDescription>{t("trevor.ask.statusOffline")}</AlertDescription>
                     </Alert>
                 ) : null}
-                {spoiler !== undefined ? (
+                {spoilerSwitch ? (
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1" data-trevor-spoiler-row>
+                        {spoilersOn ? <SpoilersOnLabel /> : spoiler !== undefined ? <SpoilerLabel spoiler={spoiler} /> : null}
+                        <SpoilerSwitch on={spoilersOn} onChange={setSpoilersOn} />
+                    </div>
+                ) : spoiler !== undefined ? (
                     <div className="flex">
                         <SpoilerLabel spoiler={spoiler} />
                     </div>
@@ -176,7 +192,7 @@ export function AskChat({ storyId, panel, signedIn, status, thread, onAsk, onPre
                             }}
                             data-trevor-composer
                         >
-                            <ComposerInput aria-label={t("trevor.ask.label")} aria-describedby={coarse ? undefined : hintId} placeholder={t("trevor.ask.placeholder")} render={<textarea ref={inputRef} maxLength={QUESTION_MAX} data-trevor-question />} />
+                            <ComposerInput aria-label={t("trevor.ask.label")} aria-describedby={coarse ? undefined : hintId} placeholder={spoilersOn ? t("trevor.spoilers.placeholder") : t("trevor.ask.placeholder")} render={<textarea ref={inputRef} maxLength={QUESTION_MAX} data-trevor-question />} />
                             <ComposerActions>
                                 <ComposerActionGroup>
                                     <span className={cn("ps-1 font-mono text-muted-foreground text-xs tabular-nums", text.length < QUESTION_MAX * 0.8 && "sr-only")} aria-hidden>

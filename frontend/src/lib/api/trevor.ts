@@ -107,12 +107,14 @@ export const askTrevorFn = createServerFn({ method: "POST" })
             const body: AskRequest = { question: data.question };
             if (data.horizonStory) body.horizonStory = data.horizonStory;
             if (data.turnstileToken) body.turnstileToken = data.turnstileToken;
+            // Only spoiler mode is sent: a spoiler-safe ask keeps the body it always had.
+            if (data.spoilers === "all") body.spoilers = "all";
             return readJSON<AskResponse>(await backendFetch("/trevor/ask", { method: "POST", bearerToken: token, body: JSON.stringify(body) }));
         }),
     );
 
-export async function ask(input: { question: string; horizonStory?: string | null; turnstileToken?: string | null }): Promise<AskResponse> {
-    return unwrap(await askTrevorFn({ data: { question: input.question, horizonStory: input.horizonStory ?? undefined, turnstileToken: input.turnstileToken ?? undefined } }));
+export async function ask(input: { question: string; horizonStory?: string | null; turnstileToken?: string | null; spoilers?: "all" }): Promise<AskResponse> {
+    return unwrap(await askTrevorFn({ data: { question: input.question, horizonStory: input.horizonStory ?? undefined, turnstileToken: input.turnstileToken ?? undefined, ...(input.spoilers ? { spoilers: input.spoilers } : {}) } }));
 }
 
 /** A job's state: the polling fallback. */

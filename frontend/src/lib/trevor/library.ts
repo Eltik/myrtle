@@ -52,9 +52,10 @@ export function parseMyJobs(rows: TrevorMyQuestion[], limit: number): IMyJobs {
 /** A past question as a thread turn: answered, failed, or open and to be followed again. */
 export function toTurnState(job: IMyJob): TurnState {
     const question = job.question;
-    if (job.status === "done" && job.answer) return { kind: "done", question, answer: parseAnswer(job.answer), rung: job.answer.rung, spoiler: null, cached: true };
+    const flag = job.spoilers === "all" ? { spoilers: true as const } : {};
+    if (job.status === "done" && job.answer) return { kind: "done", question, answer: parseAnswer(job.answer), rung: job.answer.rung, spoiler: null, cached: true, ...flag };
     if (job.status === "done" || job.status === "failed" || !job.jobId) return { kind: "failed", question, message: "" };
-    return { kind: "queued", question, jobId: job.jobId, rung: job.rung, spoiler: null, etaSecs: null, position: null, workerOnline: true };
+    return { kind: "queued", question, jobId: job.jobId, rung: job.rung, spoiler: null, etaSecs: null, position: null, workerOnline: true, ...flag };
 }
 
 /** The job is still open (queued or running). */

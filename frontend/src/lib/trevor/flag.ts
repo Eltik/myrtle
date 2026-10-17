@@ -28,3 +28,12 @@ export function turnstileSiteKey(): string | null {
     const key: unknown = import.meta.env.VITE_TURNSTILE_SITE_KEY;
     return typeof key === "string" && key.trim() !== "" ? key.trim() : null;
 }
+
+/**
+ * Spoiler mode's switch in the chat (contract v1.1 section 8). On unless the
+ * build sets `VITE_TREVOR_SPOILER_MODE=0`, which hides the switch and never
+ * sends `spoilers`, so every ask is the spoiler-safe one it was before.
+ */
+export function trevorSpoilerModeEnabled(): boolean {
+    return import.meta.env.VITE_TREVOR_SPOILER_MODE !== "0";
+}

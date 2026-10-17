@@ -79,8 +79,10 @@ async function nextJob(req) {
         if (j) {
             j.status = "running";
             j.started = Date.now();
-            console.log(`${j.id} claimed after ${((j.started - j.created) / 1000).toFixed(1)} s: horizonPos ${j.horizon.eraPos}, profile ${PROFILE}${j.deferred ? ", deferred" : ""}`);
-            return json({ jobId: j.id, question: j.question, server: "en", horizonPos: j.horizon.eraPos, rung: "cpu", profile: PROFILE, flags: [] });
+            // A spoiler-mode job has no limit: the worker gets horizonPos null (contract v1.1 section 8).
+            const horizonPos = j.horizon.all ? null : j.horizon.eraPos;
+            console.log(`${j.id} claimed after ${((j.started - j.created) / 1000).toFixed(1)} s: horizonPos ${horizonPos}, profile ${PROFILE}${j.deferred ? ", deferred" : ""}`);
+            return json({ jobId: j.id, question: j.question, server: "en", horizonPos, rung: "cpu", profile: PROFILE, flags: [] });
         }
         const left = until - Date.now();
         if (left <= 0) return new Response(null, { status: 204 });

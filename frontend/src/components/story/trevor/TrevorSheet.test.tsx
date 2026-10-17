@@ -450,3 +450,112 @@ describe("the ask box", () => {
         await waitFor(() => expect(getJob.mock.calls.length).toBe(polls + 1));
     });
 });
+
+describe("spoiler mode (contract v1.1 section 8)", () => {
+    beforeEach(async () => {
+        auth.user = { uid: "1" };
+        window.localStorage.clear();
+        const { resetSpoilerMemory } = await import("#/lib/trevor/spoilerMode");
+        resetSpoilerMemory();
+    });
+
+    function box(): HTMLTextAreaElement {
+        const el = sheet().querySelector<HTMLTextAreaElement>("[data-trevor-question]");
+        if (!el) throw new Error("the composer did not render");
+        return el;
+    }
+
+    async function ask(question: string): Promise<void> {
+        await waitFor(() => box());
+        await act(async () => {
+            box().value = question;
+            fireEvent.input(box());
+        });
+        const send = within(sheet()).getByRole("button", { name: "Ask" });
+        await act(async () => {
+            fireEvent.click(send);
+        });
+    }
+
+    function toggle(): HTMLElement {
+        return within(sheet()).getByRole("switch", { name: "Spoilers" });
+    }
+
+    const SPOILER_HIT: AskResponse = { jobId: null, status: "done", rung: "cache", spoilerSafeUpTo: null, spoilers: "all", answer: LIVE_ANSWER, etaSecs: null, streamUrl: null };
+
+    it("is off by default: the switch says so and the ask is the spoiler-safe one", async () => {
+        const d = deps();
+        mount(d);
+        await waitFor(() => toggle());
+        expect(toggle().getAttribute("aria-checked")).toBe("false");
+        expect(within(sheet()).getByText("Spoilers: off")).toBeTruthy();
+        await ask("Who is Hibiscus?");
+        expect(d.ask).toHaveBeenCalledWith({ question: "Who is Hibiscus?", horizonStory: STORY, turnstileToken: null });
+        await waitFor(() => expect(sheet().querySelector("[data-trevor-spoiler]")?.textContent).toBe("Spoiler-safe up to Shatterpoint"));
+        expect(sheet().querySelector("[data-trevor-spoilers-badge]")).toBeNull();
+    });
+
+    it("asks once before turning on, then sends spoilers: all and tags the answer", async () => {
+        const d = deps({ ask: vi.fn(async () => SPOILER_HIT) });
+        mount(d);
+        await waitFor(() => toggle());
+        // Declined: still off, nothing stored.
+        await act(async () => {
+            fireEvent.click(toggle());
+        });
+        const dialog = await waitFor(() => within(document.body).getByRole("alertdialog"));
+        expect(within(dialog).getByText("Trevor will answer from all released stories, including ones you haven't read. You can turn this off at any time.")).toBeTruthy();
+        await act(async () => {
+            fireEvent.click(within(dialog).getByRole("button", { name: "Keep them off" }));
+        });
+        expect(toggle().getAttribute("aria-checked")).toBe("false");
+        expect(window.localStorage.getItem("myrtle-trevor-spoilers")).toBeNull();
+        // Confirmed: on, stored, and labelled.
+        await act(async () => {
+            fireEvent.click(toggle());
+        });
+        const again = await waitFor(() => within(document.body).getByRole("alertdialog"));
+        await act(async () => {
+            fireEvent.click(within(again).getByRole("button", { name: "Turn spoilers on" }));
+        });
+        await waitFor(() => expect(toggle().getAttribute("aria-checked")).toBe("true"));
+        expect(window.localStorage.getItem("myrtle-trevor-spoilers")).toBe("all");
+        expect(sheet().querySelector('[data-trevor-spoiler="all"]')?.textContent).toBe("Spoilers on: answers may reveal later stories");
+        await ask("Who is Hibiscus?");
+        expect(d.ask).toHaveBeenCalledWith({ question: "Who is Hibiscus?", horizonStory: STORY, turnstileToken: null, spoilers: "all" });
+        await waitFor(() => expect(sheet().querySelector("[data-trevor-live] [data-trevor-spoilers-badge]")?.textContent).toBe("Spoilers"));
+        // Off asks nothing; on again does not ask twice in this browser.
+        await act(async () => {
+            fireEvent.click(toggle());
+        });
+        expect(toggle().getAttribute("aria-checked")).toBe("false");
+        // The spoiler answer's null horizon is not read as "the very start".
+        expect(sheet().querySelector("[data-trevor-spoiler]")).toBeNull();
+        await act(async () => {
+            fireEvent.click(toggle());
+        });
+        expect(within(document.body).queryByRole("alertdialog")).toBeNull();
+        expect(toggle().getAttribute("aria-checked")).toBe("true");
+    });
+
+    it("hides the switch and never sends spoilers with VITE_TREVOR_SPOILER_MODE=0", async () => {
+        vi.stubEnv("VITE_TREVOR_SPOILER_MODE", "0");
+        window.localStorage.setItem("myrtle-trevor-spoilers", "all");
+        try {
+            const d = deps();
+            mount(d);
+            await waitFor(() => box());
+            expect(within(sheet()).queryByRole("switch")).toBeNull();
+            expect(sheet().querySelector("[data-trevor-spoiler-row]")).toBeNull();
+            await ask("Who is Hibiscus?");
+            expect(d.ask).toHaveBeenCalledWith({ question: "Who is Hibiscus?", horizonStory: STORY, turnstileToken: null });
+            // The label row is the one from before the switch.
+            await waitFor(() => expect(sheet().querySelector("[data-trevor-spoiler]")?.textContent).toBe("Spoiler-safe up to Shatterpoint"));
+            const row = sheet().querySelector("[data-trevor-spoiler]")?.parentElement;
+            expect(row?.getAttribute("class")).toBe("flex");
+            expect(row?.childElementCount).toBe(1);
+        } finally {
+            vi.unstubAllEnvs();
+        }
+    });
+});

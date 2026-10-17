@@ -14,6 +14,10 @@
  * job with the passages answer shown as `quick`; with a `quickLook` it follows
  * the deferred job at once. A deferred job that fails, or a watch that is
  * refused, settles on the quick look (`done`, `fullFailed`), never on an error.
+ *
+ * Spoiler mode (contract v1.1 section 8): an ask the backend answered in
+ * spoiler mode (`spoilers: "all"`) keeps `spoilers` through every state, so
+ * its answer is badged and its null horizon is never read as "the very start".
  */
 import type { AskResponse } from "#/types/generated/AskResponse";
 import type { JobView } from "#/types/generated/JobView";
@@ -33,6 +37,8 @@ interface IJob extends IAsked {
     quick?: IParsedAnswer;
     /** The deferred full answer's job, followed once this (quick passages) job settles. */
     next?: string;
+    /** Answered in spoiler mode: no horizon. */
+    spoilers?: true;
 }
 
 export type AskState =
@@ -42,7 +48,7 @@ export type AskState =
     | ({ kind: "queued"; etaSecs: number | null; position: number | null; workerOnline: boolean } & IJob)
     | ({ kind: "streaming"; text: string } & IJob)
     | ({ kind: "offline" } & IJob)
-    | ({ kind: "done"; answer: IParsedAnswer; rung: TrevorRung; spoiler: TrevorSpoilerSafe | null; cached: boolean; quick?: boolean; fullFailed?: boolean } & IAsked)
+    | ({ kind: "done"; answer: IParsedAnswer; rung: TrevorRung; spoiler: TrevorSpoilerSafe | null; cached: boolean; quick?: boolean; fullFailed?: boolean; spoilers?: true } & IAsked)
     | ({ kind: "failed"; message: string } & IAsked)
     | ({ kind: "refused"; failure: TrevorFailureKind; error: unknown } & IAsked);
 
@@ -77,19 +83,25 @@ function jobOf(s: AskState): IJob | null {
     const job: IJob = { question: s.question, jobId: s.jobId, rung: s.rung, spoiler: s.spoiler };
     if (s.quick) job.quick = s.quick;
     if (s.next) job.next = s.next;
+    if (s.spoilers) job.spoilers = true;
     return job;
+}
+
+/** `{ spoilers: true }` for a spoiler-mode job, else nothing. */
+function spoilersOf(job: { spoilers?: true }): { spoilers?: true } {
+    return job.spoilers ? { spoilers: true } : {};
 }
 
 /** The job's quick passages job settled: follow the deferred full answer, with the passages answer (if any) as the quick look. */
 function toDeferred(job: IJob, answer: IParsedAnswer | null): AskState {
     const quick = answer ?? job.quick;
-    const next: AskState = { kind: "queued", question: job.question, jobId: job.next as string, rung: job.rung, spoiler: job.spoiler, etaSecs: null, position: null, workerOnline: true };
+    const next: AskState = { kind: "queued", question: job.question, jobId: job.next as string, rung: job.rung, spoiler: job.spoiler, etaSecs: null, position: null, workerOnline: true, ...spoilersOf(job) };
     return quick ? { ...next, quick } : next;
 }
 
 /** The quick look a deferred job settles on when its full answer cannot be had. */
 function quickFallback(job: IJob): AskState | null {
-    return job.quick ? { kind: "done", question: job.question, answer: job.quick, rung: job.quick.rung, spoiler: job.spoiler, cached: false, quick: true, fullFailed: true } : null;
+    return job.quick ? { kind: "done", question: job.question, answer: job.quick, rung: job.quick.rung, spoiler: job.spoiler, cached: false, quick: true, fullFailed: true, ...spoilersOf(job) } : null;
 }
 
 export function askReducer(s: AskState, e: AskEvent): AskState {
@@ -105,13 +117,14 @@ export function askReducer(s: AskState, e: AskEvent): AskState {
             const r = e.response;
             // A quick passages job that finished before the response was read comes back with its answer: that is the quick look too.
             const quick = r.answer ? parseAnswer(r.answer) : r.quickLook ? parseAnswer(r.quickLook) : undefined;
-            const base = { kind: "queued" as const, question: s.question, rung: r.rung, spoiler: r.spoilerSafeUpTo, etaSecs: r.etaSecs, position: null, workerOnline: r.etaSecs !== null };
+            const flag = r.spoilers === "all" ? { spoilers: true as const } : {};
+            const base = { kind: "queued" as const, question: s.question, rung: r.rung, spoiler: r.spoilerSafeUpTo, etaSecs: r.etaSecs, position: null, workerOnline: r.etaSecs !== null, ...flag };
             if (r.deferredJobId) {
                 // The quick look in hand: follow the full answer. Not yet: follow the passages job first, then the full answer.
                 if (quick || !r.jobId) return { ...base, jobId: r.deferredJobId, ...(quick ? { quick } : {}) };
                 return { ...base, jobId: r.jobId, next: r.deferredJobId };
             }
-            if (r.answer) return { kind: "done", question: s.question, answer: parseAnswer(r.answer), rung: r.rung, spoiler: r.spoilerSafeUpTo, cached: r.jobId === null };
+            if (r.answer) return { kind: "done", question: s.question, answer: parseAnswer(r.answer), rung: r.rung, spoiler: r.spoilerSafeUpTo, cached: r.jobId === null, ...flag };
             if (!r.jobId) return { kind: "failed", question: s.question, message: "" };
             // A passages-only ask still running may carry an earlier era's answer to show meanwhile.
             return quick ? { ...base, jobId: r.jobId, quick } : { ...base, jobId: r.jobId };
@@ -130,7 +143,7 @@ export function askReducer(s: AskState, e: AskEvent): AskState {
             if (!job) return s;
             if (job.next) return toDeferred(job, e.view.answer ? parseAnswer(e.view.answer) : null);
             if (!e.view.answer) return quickFallback(job) ?? { kind: "failed", question: job.question, message: e.view.error ?? "" };
-            return { kind: "done", question: job.question, answer: parseAnswer(e.view.answer), rung: e.view.rung, spoiler: job.spoiler, cached: false };
+            return { kind: "done", question: job.question, answer: parseAnswer(e.view.answer), rung: e.view.rung, spoiler: job.spoiler, cached: false, ...spoilersOf(job) };
         }
         case "jobFailed": {
             const job = jobOf(s);

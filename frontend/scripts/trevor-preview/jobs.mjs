@@ -22,6 +22,7 @@ export function jobRow(j) {
         createdAt: iso(j.created),
         finishedAt: ended ? iso(j.real ? j.finished : j.doneAt) : null,
         answer: v.answer ?? null,
+        ...(j.horizon.all ? { spoilers: "all" } : {}),
     };
 }
 
@@ -68,10 +69,10 @@ function earlierAnswer(j) {
 
 /** POST /api/trevor/ask's answer for a job: queued, or a deferred job's quick passages job (contract v1.1 section 1b). */
 export function accepted(j) {
-    const spoiler = REAL ? j.horizon.spoiler : (j.horizon.spoiler ?? SPOILER);
+    const spoiler = REAL || j.horizon.all ? j.horizon.spoiler : (j.horizon.spoiler ?? SPOILER);
     const shown = j.deferred ? JOBS.get(j.quickJob) : j;
     const v = viewOf(shown);
-    const out = { jobId: shown.id, status: v.status === "running" ? "running" : "queued", rung: shown.real ? "cpu" : "cf", spoilerSafeUpTo: spoiler, etaSecs: v.etaSecs, streamUrl: `/api/trevor/jobs/${shown.id}/stream` };
+    const out = { jobId: shown.id, status: v.status === "running" ? "running" : "queued", rung: shown.real ? "cpu" : "cf", spoilerSafeUpTo: spoiler, ...(j.horizon.all ? { spoilers: "all" } : {}), etaSecs: v.etaSecs, streamUrl: `/api/trevor/jobs/${shown.id}/stream` };
     if (!j.deferred) return json(out, 202);
     const look = earlierAnswer(j);
     return json({ ...out, rung: "passages", deferredJobId: j.id, ...(look ? { quickLook: look } : {}) }, 202);

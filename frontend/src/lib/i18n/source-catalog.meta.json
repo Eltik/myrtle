@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-17T17:22:58.020Z",
+    "generatedAt": "2026-10-17T23:22:31.127Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -32464,6 +32464,76 @@
             "namespace": "story",
             "source_text": "Trevor",
             "description": "Title of the story companion panel. A name.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.spoilers.badge",
+            "namespace": "story",
+            "source_text": "Spoilers",
+            "description": "Small tag on an answer that was asked with spoiler mode on, so it may reveal stories the reader has not read.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.spoilers.cancel",
+            "namespace": "story",
+            "source_text": "Keep them off",
+            "description": "Button in the confirmation that leaves spoiler mode off.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.spoilers.confirm",
+            "namespace": "story",
+            "source_text": "Turn spoilers on",
+            "description": "Button in the confirmation that turns spoiler mode on.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.spoilers.confirmBody",
+            "namespace": "story",
+            "source_text": "Trevor will answer from all released stories, including ones you haven't read. You can turn this off at any time.",
+            "description": "Body of the spoiler-mode confirmation.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.spoilers.confirmTitle",
+            "namespace": "story",
+            "source_text": "Turn spoilers on?",
+            "description": "Title of the confirmation shown the first time the reader turns spoiler mode on.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.spoilers.label",
+            "namespace": "story",
+            "source_text": "Spoilers on: answers may reveal later stories",
+            "description": "Label above the question box while spoiler mode is on, in place of 'Spoiler-safe up to ...'.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.spoilers.name",
+            "namespace": "story",
+            "source_text": "Spoilers",
+            "description": "Accessible name of the switch that lets Trevor answer from stories the reader has not read yet (spoiler mode).",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.spoilers.off",
+            "namespace": "story",
+            "source_text": "Spoilers: off",
+            "description": "Visible text beside the spoiler-mode switch while it is off: answers only use stories the reader has read.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.spoilers.on",
+            "namespace": "story",
+            "source_text": "Spoilers: on",
+            "description": "Visible text beside the spoiler-mode switch while it is on: answers may use any released story.",
+            "placeholders": []
+        },
+        {
+            "key": "story.trevor.spoilers.placeholder",
+            "namespace": "story",
+            "source_text": "Ask about any released story",
+            "description": "Placeholder in the question box while spoiler mode is on, in place of 'Ask about what you've read so far'.",
             "placeholders": []
         },
         {

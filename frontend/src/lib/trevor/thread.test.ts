@@ -109,3 +109,34 @@ describe("the ask thread", () => {
         expect(latestSpoiler(t)).toBeNull();
     });
 });
+
+describe("spoiler mode in the thread (contract v1.1 section 8)", () => {
+    const all = (jobId: string, deferredJobId?: string): AskResponse => ({ ...accepted(jobId, null), spoilers: "all", ...(deferredJobId ? { deferredJobId, rung: "passages" } : {}) });
+
+    it("remembers the mode a turn was asked in, even while it waits for a slot", () => {
+        const t = run([...Array.from({ length: MAX_OPEN }, (_, i) => ask(`q${i}`)), { type: "ask", question: "spoil it", token: null, spoilers: true }]);
+        const held = t.turns[MAX_OPEN];
+        expect(held?.kind === "ask" && held.state.kind).toBe("held");
+        expect(held?.kind === "ask" && held.spoilers).toBe(true);
+        expect(t.turns[0]?.kind === "ask" && t.turns[0].spoilers).toBeUndefined();
+    });
+
+    it("keeps an answer's spoiler mode through the stream, the deferred job and done", () => {
+        let t = run([{ type: "ask", question: "spoil it", token: null, spoilers: true }, ev(1, { type: "accepted", response: all("p1", "d1") })]);
+        const s1 = t.turns[0];
+        expect(s1?.kind === "ask" && s1.state.kind === "queued" && s1.state.spoilers).toBe(true);
+        t = run([ev(1, { type: "done", view: done("p1", "quick") }), ev(1, { type: "text", text: "Full" }), ev(1, { type: "done", view: done("d1", "Full answer") })], t);
+        const s2 = t.turns[0];
+        expect(s2?.kind === "ask" && s2.state.kind === "done" && s2.state.spoilers).toBe(true);
+    });
+
+    it("never reads a spoiler answer's null horizon as the very start", () => {
+        const t = run([ask("safe"), ev(1, { type: "accepted", response: accepted("j1") }), { type: "ask", question: "spoil it", token: null, spoilers: true }, ev(2, { type: "accepted", response: all("j2") })]);
+        expect(latestSpoiler(t)).toEqual(SHATTERPOINT);
+        const only = run([{ type: "ask", question: "spoil it", token: null, spoilers: true }, ev(1, { type: "accepted", response: all("j2") })]);
+        expect(latestSpoiler(only)).toBeUndefined();
+        // A safe answer before the first era still reads as the very start.
+        const start = run([ask("safe"), ev(1, { type: "accepted", response: accepted("j1", null) })]);
+        expect(latestSpoiler(start)).toBeNull();
+    });
+});
