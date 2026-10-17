@@ -197,12 +197,6 @@ impl Llm {
         Ok(Self::with_backend(http, Backend::OpenAi(Arc::new(openai::Client::new(cfg))), model, slots))
     }
 
-    /// Whether this is the OpenAI-compatible backend.
-    #[must_use]
-    pub fn is_openai(&self) -> bool {
-        matches!(self.backend, Backend::OpenAi(_))
-    }
-
     /// The model ids of the OpenAI-compatible backend, in failover order (empty for llama.cpp).
     #[must_use]
     pub fn model_ids(&self) -> Vec<String> {

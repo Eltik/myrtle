@@ -31,7 +31,7 @@ use trevor::tools::Tools;
 
 use crate::answer::{Tables, answer_one};
 use crate::chrono::load_chrono;
-use crate::cli::{Args, LoreSet, RetrievalKind, RouterKind, apply_profile, deep_for, p4_dir, retrieval_plan, router_source, tool_options};
+use crate::cli::{Args, LoreSet, P3B_DIR, RetrievalKind, RouterKind, apply_profile, deep_for, p4_dir, retrieval_plan, router_source, tool_options};
 use crate::detect::source_kind;
 use crate::intents::{knn_eval, label_intents, load_knn, paraphrase_intents};
 use crate::retrieval::{Runtimes, load_names, load_runtime};
@@ -70,7 +70,7 @@ async fn main() -> Result<()> {
         // while source-specific real questions went from 1 to 3 of 7 (2026-09-29).
         // With the model router naming the source, the corpus follows its route instead (set after routing).
         let source_q = !router_source(&a) && a.batch.is_none() && a.question.as_deref().is_some_and(|q| source_kind(q).is_some());
-        let (p3b, p4) = (a.lore.dirs().0, p4_dir(&a));
+        let (p3b, p4) = (P3B_DIR, p4_dir(&a));
         a.runtime.corpus = PathBuf::from(if source_q { p4 } else { p3b });
     }
     let chrono = load_chrono();

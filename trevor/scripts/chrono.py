@@ -225,9 +225,6 @@ def place_stage():
         users[g] = (f'Reference points (year from each script):\n{ref_block}\n\nTarget event: {names.get(g, g)}\n'
                     f'Summary: {summ.get(g, "(none)")}\n\nTime evidence from its script:\n{ev or "(none)"}')
         st.unit(g, users[g], upstream=ref_pending or g in pend)
-    # No backfill: placed.jsonl (2026-09-26 09:19) predates the facts.jsonl it reads (09-26 21:14), so
-    # today's inputs are not the ones these 52 rows were built from; the stage redoes them.
-    st.no_backfill = 'placed.jsonl predates facts.jsonl'
     return st, targets, None, users, len(ref_lines)
 
 

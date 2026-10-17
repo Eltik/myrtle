@@ -13,7 +13,7 @@ and duplicate rows are dropped, so no reader ever sees two rows for one unit.
   KEY_IDS_ONLY=1  kill switch: skip on the unit id alone and append, exactly the behavior before
                   2026-09-28 (rows still carry inputSha; nothing is replaced or dropped)
   CHUNKS=path     read this chunks.jsonl instead of artifacts/chunks.jsonl (simulating an update)
-  python3 scripts/incr.py backfill   one-time migration, see backfill()
+  PLAN=1 python3 scripts/incr.py plan   the plan of every converted stage
 """
 import collections, json, os, sys, tempfile, threading
 
@@ -56,8 +56,6 @@ class Stage:
             self.have[key(r)] = r  # newest row wins, as appended
         self.units = {}
         self.lock = threading.Lock()
-        self.row_input = None  # backfill: rebuild an old row's input from the row itself, when it records it
-        self.no_backfill = None  # backfill: why this stage's old rows cannot be vouched for
 
     def unit(self, k, model_input, upstream=False):
         """`upstream`: the unit reads a model output that its own stage will redo (PLAN only), so this
@@ -161,37 +159,6 @@ STAGES = [('p2-summaries', 'story_stage'), ('p2-summaries', 'group_stage'), ('ch
           ('answer_bank', 'questions_stage')]
 
 
-def backfill():
-    """One-time migration: rows written before 2026-09-28 carry no inputSha, so every unit would count as
-    changed. This writes the sha of each unit's CURRENT input into its rows. That is valid only because
-    the corpus and every upstream output are unchanged since those rows were built (no asset update
-    between the model runs and this migration); run it once, before any update. A stage whose old rows
-    record their own inputs rebuilds them from the row (dossiers), and a stage whose inputs demonstrably
-    changed after its run is left out (chrono place). Rows that already carry
-    an inputSha are never touched, so running it again cannot hide a real change. Bank questions also
-    lacked promptSha; the current Q_SYS is written under the same assumption."""
-    mods = {}
-    for script, builder in STAGES:
-        m = mods.setdefault(script, module(script))
-        st = getattr(m, builder)()[0]
-        if st.no_backfill:
-            print(f'{st.name}: not backfilled, {st.no_backfill}', flush=True)
-            continue
-        n = 0
-        for r in st.rows:
-            k = st.key(r)
-            if 'inputSha' not in r and k in st.units:
-                r['inputSha'] = input_sha(st.row_input(r)) if st.row_input else st.units[k][0]; n += 1
-            if 'promptSha' not in r:
-                r['promptSha'] = st.psha
-        before = sum(1 for _ in open(st.path))
-        write_jsonl(st.path, st.rows)
-        after = sum(1 for _ in open(st.path))
-        print(f'{st.name}: {st.path[len(ROOT) + 1:]} rows {before} -> {after}, inputSha written {n}, '
-              f'rows of units not in the corpus {sum(1 for r in st.rows if st.key(r) not in st.units)}', flush=True)
-        assert before == after
-
-
 def plan_all():
     """PLAN=1 over every converted stage."""
     assert PLAN, 'run as PLAN=1 python3 scripts/incr.py plan'
@@ -203,4 +170,4 @@ def plan_all():
 
 
 if __name__ == '__main__':
-    {'backfill': backfill, 'plan': plan_all}[sys.argv[1]]()
+    {'plan': plan_all}[sys.argv[1]]()

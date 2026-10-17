@@ -470,12 +470,6 @@ impl Horizon {
             None => o.use_dates && o.gate.source_pos.get(story_id).is_some_and(|&p| p <= self.pos),
         }
     }
-
-    /// Whether this is the old story-id rule (`TREVOR_HORIZON_GATE=0`).
-    #[must_use]
-    pub fn is_legacy(&self) -> bool {
-        self.legacy.is_some()
-    }
 }
 
 #[cfg(test)]

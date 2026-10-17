@@ -4,9 +4,9 @@
 Ian (2026-09-28): "What non-playable characters died in x story", and Arknights is live service, so a
 character's status can change with each new story. Deaths are therefore stored as events tied to the
 story where they happen, not as a per-character status: status as of a reader's progress is the
-latest event in the stories they have cleared, and every event carries its own spoiler gate. The
-summary-built operator table (operator_status.py) was refuted (19 flagged, most wrong), so this reads
-the script passages themselves, and a quote must be found verbatim in its passage or the mention is
+latest event in the stories they have cleared, and every event carries its own spoiler gate. A
+summary-built operator table was refuted (19 flagged, most wrong), so this reads the script passages
+themselves, and a quote must be found verbatim in its passage or the mention is
 dropped. Every stage is keyed per chunk (text sha + prompt sha), so an asset update re-extracts only
 changed or new passages.
   wiki     eval reference only (network): every wiki page whose infobox status is Deceased ->

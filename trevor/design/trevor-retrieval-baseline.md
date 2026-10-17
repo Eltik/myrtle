@@ -263,11 +263,11 @@ Ruled out on the acceptance case: alias expansion of the search query. "What hap
 
 Faithfulness (Qwen3.5 9B, each sentence against the top 5 BM25 passages of the character's own story chunks and archive, plus neighbours; seeded sample of 30): 349 of 391 sentences supported (0.893); 10 of 30 dossiers fully supported; worst Specter 9/14, Toland 9/13, Czerny 8/11. The unsupported set mixes likely-true sentences outside the evidence window (Toland's specific Near Light chapter roles, drawn from story summaries) with likely conflation (Specter "trained by Gladiia", "met Skadi, who taught her to dance"). As with P2 this is a lower bound, and no human has checked a dossier yet.
 
-Instrument note: the sentence splitter also broke at "Mt." (a dossier sentence was judged as the fragment "... at Mt."), so the 0.893 slightly understates the dossiers. "Mt.", "No.", "Vol." and a duplicate "Ms." guard are now in both `dossiers.py` and `p2-judge.py`; the numbers above were measured before the fix and are left as measured. `design/review-sheet.md` holds 32 items (dossier sentences with the judge's verdict, identity links, derived years, two event summaries) for a human check of the automatic judges.
+Instrument note: the sentence splitter also broke at "Mt." (a dossier sentence was judged as the fragment "... at Mt."), so the 0.893 slightly understates the dossiers. "Mt.", "No.", "Vol." and a duplicate "Ms." guard are now in both `dossiers.py` and `p2-judge.py`; the numbers above were measured before the fix and are left as measured. `design/archive/review-sheet.md` holds 32 items (dossier sentences with the judge's verdict, identity links, derived years, two event summaries) for a human check of the automatic judges.
 
 ## 13. Ian's review of the judges and outputs (2026-09-27)
 
-`design/review-sheet.md`, filled in by Ian; blanks are items he was unsure of.
+`design/archive/review-sheet.md`, filled in by Ian; blanks are items he was unsure of.
 
 **Dossier sentences (judge vs Ian):** 6 of 12 marked, and Ian agrees with the judge on all 6 (2 judged not supported, 4 supported). Six is small; it says nothing against the judge.
 

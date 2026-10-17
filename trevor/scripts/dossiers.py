@@ -206,10 +206,6 @@ def gen_stage():
         # A story whose summary P2 will redo (or write for the first time) can enter the top 12.
         top = [s for s, _ in lines_in[c.get('speaks', c['name'])].most_common(12) if s in summ or s in pend]
         st.unit(c['name'], gen_input(c, lines_in, summ, gkey, arch)[0], upstream=any(s in pend for s in top))
-    # Backfill rebuilds each old row's input from the names and stories the row records, not from today's
-    # inputs: identities.json (2026-09-28 07:55) and timeline_v1.json (09-27 18:58) were rebuilt after the
-    # dossiers (09-27 00:55), which changed the names of 32 of 200 and the story order of 25.
-    st.row_input = lambda r: gen_text(r, r['stories'], summ, arch)[0]
     # A dossier's unit exists while its name still speaks in the corpus; a smaller N_CHARACTERS drops none.
     live = {p for r in rows if r['groupId'] != 'archive' for p in r['speakers']}
     # v2 adds operators who never speak in a story; their rows stay while they are characters (a superset of

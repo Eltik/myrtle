@@ -64,7 +64,7 @@ Full run (2026-09-26): temporal facts for all 1,861 stories (the last 755, mostl
 ```sh
 python3 scripts/chrono.py cues|extract|events|flashbacks|build|history|eval    # extract/events need Gemma on :8081
 python3 scripts/chrono.py order "A Light Spark in Darkness" "Lone Trail"
-python3 scripts/chrono_exceptions_reasoning.py                                # needs Qwen with --reasoning on
+git show 0563d8dd:trevor/scripts/chrono_exceptions_reasoning.py             # removed 2026-10-17; ran on Qwen with --reasoning on
 ```
 
 Next, in order of value: the derived-years layer (relative facts in stories whose present is dated, turned into years by arithmetic; this is where most of the wiki's dates come from); folding story-level flashback tags into `order` answers; and the operator archives (888k tokens) as a lore source in P3, since 58 of the 197 dated lines are there.

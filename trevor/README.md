@@ -1,6 +1,6 @@
 # trevor
 
-Trevor is a local, zero-cost Arknights lore assistant: retrieval over the EN story corpus plus a local model, with no external LLM API. This crate holds the corpus build (ingest, scene-aware chunking, dense embeddings), hybrid retrieval (BM25 + dense, fused by RRF, optional cross-encoder rerank) and the retrieval eval harness. Design notes are in `design/` (start with `design/HANDOFF.md`), copied from the claude.ai project docs.
+Trevor is a local, zero-cost Arknights lore assistant: retrieval over the EN story corpus plus a local model, with no external LLM API. This crate holds the corpus build (ingest, scene-aware chunking, dense embeddings), hybrid retrieval (BM25 + dense, fused by RRF, optional cross-encoder rerank) and the retrieval eval harness. Design notes are in `design/`; `design/README.md` indexes them.
 
 All commands run from this directory. Anything that embeds or reranks needs `--features embed`, which downloads ONNX Runtime 1.28 on first build. To use a system ONNX Runtime (1.23 or newer) instead, build with `--features embed-dylib` and set `ORT_DYLIB_PATH`.
 

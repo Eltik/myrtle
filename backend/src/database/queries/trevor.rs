@@ -323,13 +323,6 @@ where
     .await
 }
 
-/// Jobs open (queued or running) on every server.
-pub async fn open_jobs_total(pool: &PgPool) -> Result<i64, sqlx::Error> {
-    sqlx::query_scalar("SELECT count(*) FROM trevor_jobs WHERE status IN ('queued', 'running')")
-        .fetch_one(pool)
-        .await
-}
-
 /// What the rung choice reads, in one round trip: the rungs of the most
 /// recent heartbeat (online or not), today's Neurons, and the CPU rung's
 /// live jobs.

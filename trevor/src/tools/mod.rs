@@ -42,13 +42,6 @@ fn read_jsonl(path: &Path) -> Option<Vec<Value>> {
     read_jsonl_opt(path)
 }
 
-/// Every tool a router may choose, plus `retrieve` (answer by retrieval).
-pub const TOOL_NAMES: &[&str] = &[
-    "reading_guide", "reading_event", "reading_chronological", "reading_time", "first_appearance", "recap",
-    "timeline_all", "deaths_in_event", "death_of", "dead_operators", "real_name", "real_names",
-    "operator_attribute", "operator_filter", "canon", "topic", "reading_compare",
-];
-
 /// Behaviors added after the keyword router, each with its off value. `ask --router keywords` runs with
 /// [`ToolOptions::KEYWORDS`], so its output stays byte-identical to the binary before them.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

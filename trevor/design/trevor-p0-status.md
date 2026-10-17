@@ -1,6 +1,6 @@
 # Trevor: Phase 0 status
 
-Written 2026-09-24, updated the same day after the live run (section 3). This is the current state of P0 and supersedes `trevor-ingest-codex-brief.md` (implemented directly, with the changes listed in section 4) and items 6 and 7 of section 7 in `trevor-implementation-notes.md`. Section 8 of those notes used a chars/4 token proxy; the numbers here use the real gte-modernbert tokenizer.
+Written 2026-09-24, updated the same day after the live run (section 3). This is the current state of P0 and supersedes `archive/trevor-ingest-codex-brief.md` (implemented directly, with the changes listed in section 4) and items 6 and 7 of section 7 in `trevor-implementation-notes.md`. Section 8 of those notes used a chars/4 token proxy; the numbers here use the real gte-modernbert tokenizer.
 
 ## 1. Where it is and how to run it
 

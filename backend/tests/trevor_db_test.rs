@@ -2141,7 +2141,7 @@ async fn step_v11_lists_and_carry(pool: &PgPool) {
     });
     assert_eq!(
         send_json(
-            &backend_app(&p),
+            &crate::app(&p),
             "POST",
             "/api/trevor/worker/warm",
             true,
@@ -2154,7 +2154,7 @@ async fn step_v11_lists_and_carry(pool: &PgPool) {
 
     // TREVOR_CARRY_OVER=0: nothing moves.
     let (nc, _) = state_v11(pool, |c| c.carry_over = false);
-    let nca = app_of(&nc);
+    let nca = crate::app(&nc);
     let chunk = json!({ "version": "v-nocarry", "activate": false, "panels": panels, "chunkShas": { "s1#0": "aaa", "s2#1": "bbb" } });
     assert_eq!(publish(&nca, &chunk).await, StatusCode::OK);
     let (_, out) = send_json(
@@ -2172,12 +2172,4 @@ async fn step_v11_lists_and_carry(pool: &PgPool) {
     eprintln!(
         "v1.1 lists/carry: my questions 3 + paging, popular [carry me 3, carry changed 2], carried 1 of 3, warm-up list + warm {{queued 1, cached 1, joined 2}}, 404/401/409/413/503, TREVOR_CARRY_OVER=0 carried 0"
     );
-}
-
-fn backend_app(s: &AppState) -> Router {
-    app(s)
-}
-
-fn app_of(s: &AppState) -> Router {
-    app(s)
 }

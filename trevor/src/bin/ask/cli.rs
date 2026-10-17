@@ -577,18 +577,6 @@ pub(crate) enum LoreSet {
     V2,
 }
 
-impl LoreSet {
-    /// The P3b and P4 directories `ask` uses when `--corpus` is left at its default.
-    pub(crate) fn dirs(self) -> (&'static str, &'static str) {
-        match self {
-            Self::V1 => ("artifacts/p3b", "artifacts/p4"),
-            // Since 2026-10-02 v2 retrieves from the v1 corpora: built into P3b, the 336 new dossiers changed the passages
-            // of 50 of 120 real-probe questions and reordered others (5 lost), so they are added by name instead.
-            Self::V2 => ("artifacts/p3b", "artifacts/p4"),
-        }
-    }
-}
-
 #[derive(Clone, Copy, PartialEq, Eq, Debug, clap::ValueEnum)]
 pub(crate) enum RouterKind {
     Model,
@@ -651,9 +639,14 @@ pub(crate) fn retrieval_plan(q: &str, a: &Args, route: Option<&Route>) -> (Optio
 /// "gametext" units. Read for P4 routes by default since 2026-10-03; `--no-game-text` reads P4 as before.
 pub(crate) const GAME_TEXT_DIR: &str = "artifacts/p4x";
 
-/// The P4 directory `a` reads: `GAME_TEXT_DIR` when it is built (unless `--no-game-text`), else the lore's P4.
+/// The P3b and P4 directories `ask` uses when `--corpus` is left at its default, for both lore sets: `--lore v2`
+/// adds its dossiers and topics by name at answer time instead of building them into these corpora.
+pub(crate) const P3B_DIR: &str = "artifacts/p3b";
+pub(crate) const P4_DIR: &str = "artifacts/p4";
+
+/// The P4 directory `a` reads: `GAME_TEXT_DIR` when it is built (unless `--no-game-text`), else `P4_DIR`.
 pub(crate) fn p4_dir(a: &Args) -> &'static str {
-    if !a.no_game_text && std::path::Path::new(GAME_TEXT_DIR).join("chunks.jsonl").exists() { GAME_TEXT_DIR } else { a.lore.dirs().1 }
+    if !a.no_game_text && std::path::Path::new(GAME_TEXT_DIR).join("chunks.jsonl").exists() { GAME_TEXT_DIR } else { P4_DIR }
 }
 
 /// Whether the topic tool serves deep entries for this question (default since 2026-10-05, lore v2 only; `--no-deep-topics`):

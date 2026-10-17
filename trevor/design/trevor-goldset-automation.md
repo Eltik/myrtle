@@ -1,6 +1,6 @@
 # Trevor: automated gold-set generation
 
-Written 2026-09-25. Replaces the human review step of `trevor-goldset-generation.md` with checks that run unattended, and records what the build of it found. Code: `src/goldgen/`, `src/bin/goldset.rs`, `prompts/`, `scripts/goldset-run.sh` in `myrtle/trevor/`.
+Written 2026-09-25. Replaces the human review step of `archive/trevor-goldset-generation.md` with checks that run unattended, and records what the build of it found. Code: `src/goldgen/`, `src/bin/goldset.rs`, `prompts/`, `scripts/goldset-run.sh` in `myrtle/trevor/`.
 
 ## 1. How review is automated
 
