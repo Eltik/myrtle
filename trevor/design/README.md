@@ -9,6 +9,7 @@ Copies of the claude.ai project "Trevor (Myrtle)" docs as of 2026-09-25, plus th
 | `trevor-goldset-automation.md` | The automated gold-set pipeline: filters, cross-family judge, calibration, anchor completion; what building it refuted. |
 | `trevor-questions.md` | What people will ask: 16 question categories, where each answer lives (1.2M words of lore outside the index), a 10-question probe, the behaviors needed. |
 | `trevor-updates.md` | What each stage does with a new or changed story (audit with file:line), and the plan for an incremental updater after asset updates. |
+| `trevor-contract-v1.1.md` | Additions of 2026-10-17: capacity and the scaling model (answer once, admission control, fair claiming, scale-out), the worker power guard and Discord alerts, the master switch, pre-generated answers that follow game updates, the `mid` profile, the stories-page Ask tab, the real-worker dev preview. |
 | `trevor-contract-v1.md` | The binding backend/worker/publish interface (2026-10-16): one gatePos spoiler scale and 22 eras, the horizon from the reader's profile, rungs and the Neuron ledger, worker auth, streaming, storage. |
 | `trevor-reembed.md` | fp32 embedding everywhere and the guarded, resumable re-embed (threads, duty cycle, thermal/memory/battery pauses, checkpoint); measurements and the VPS command. |
 | `trevor-vps-runbook.md` | Installing, updating, rolling back and monitoring Trevor on the VPS; what happens on each failure. |
