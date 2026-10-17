@@ -17,7 +17,7 @@ one unit and a changed story redoes its summary and then its group's. The
 generator pauses while the Mac runs on battery and resumes on AC.
 Design and pilot numbers: design/trevor-retrieval-baseline.md section 9.
 """
-import collections, json, os, subprocess, sys, threading, time, urllib.request
+import collections, json, os, subprocess, sys, threading, time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
 import common, incr
@@ -43,11 +43,6 @@ def wait_for_ac():
         while on_battery():
             time.sleep(60)
         print(f'{time.strftime("%H:%M:%S")} AC power: resuming', flush=True)
-
-
-def model_name():
-    with urllib.request.urlopen(f'{SERVER}/v1/models', timeout=30) as r:
-        return os.path.basename(json.load(r)['data'][0]['id'])
 
 
 def chat(system, user, max_tokens):
@@ -100,7 +95,7 @@ def stage_story():
     if todo is None:
         return
     os.makedirs(OUT, exist_ok=True)
-    model = model_name(); psha = st.psha
+    model = common.model_id(SERVER, 30); psha = st.psha
     print(f'story: {len(todo)} to do, {len(order) - len(todo)} done, model {model}, prompt {psha}', flush=True)
     lock = threading.Lock(); n = [0]; t0 = time.time()
 
@@ -152,7 +147,7 @@ def stage_group():
         return
     todo = set(todo)
     path = st.path
-    model = model_name(); psha = st.psha
+    model = common.model_id(SERVER, 30); psha = st.psha
     print(f'group: {len(targets)} multi-story groups, model {model}, prompt {psha}', flush=True)
     for g in targets:
         for method in ('C', 'B', 'A'):

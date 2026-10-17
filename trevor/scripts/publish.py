@@ -33,6 +33,9 @@ TREVOR_STATE_DIR.
 """
 import argparse, gzip, hashlib, json, os, sys, time, urllib.error, urllib.request
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py sits beside the scripts
+import common  # noqa: E402
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PATH = "/api/trevor/versions"
 MAX_COMPRESSED = 4 * 1024 * 1024
@@ -184,9 +187,7 @@ def record(state, version, activate_body, manifest, how):
     store_activate(state, version, activate_body)
     act = {"version": version, "builtFrom": manifest.get("builtFrom"), "corpusVersion": manifest.get("corpusVersion"),
            "activatedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
-    with open(os.path.join(state, "active.json.tmp"), "w") as f:
-        json.dump(act, f, indent=1)
-    os.replace(os.path.join(state, "active.json.tmp"), os.path.join(state, "active.json"))
+    common.write_json_atomic(os.path.join(state, "active.json"), act, indent=1)
     with open(os.path.join(state, "history.jsonl"), "a") as f:
         f.write(json.dumps(dict(act, how=how)) + "\n")
 

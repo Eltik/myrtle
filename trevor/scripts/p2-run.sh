@@ -4,7 +4,7 @@
 # Every stage resumes where it stopped. Output: artifacts/p2/{stories,groups}.jsonl.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-source scripts/llama.sh  # stop_pid, await_health
+source scripts/llama.sh  # stop_pid, await_health, start_llama
 PORT="${PORT:-8081}"
 GEN=models/llm/gemma-4-12b-it-qat-q4_0.gguf
 mkdir -p artifacts/p2
@@ -19,9 +19,7 @@ trap cleanup EXIT INT TERM
     sleep 600
   done ) &
 THERM_PID=$!
-llama-server -m "$GEN" --host 127.0.0.1 --port "$PORT" -np 2 --kv-unified-per-slot 16384 \
-  -fa on -cram 512 --no-webui --reasoning off -ngl all >> artifacts/p2/server.log 2>&1 &
-SERVER_PID=$!
+start_llama "$GEN" artifacts/p2/server.log 2 16384 --reasoning off
 await_health "$SERVER_PID" continue
 SERVER="http://127.0.0.1:$PORT" python3 scripts/p2-summaries.py story
 SERVER="http://127.0.0.1:$PORT" python3 scripts/p2-summaries.py group

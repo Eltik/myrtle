@@ -84,6 +84,10 @@ Usage: python3 scripts/panels.py [--out artifacts/panels] [--version V] [--built
 """
 import argparse, bisect, collections, gzip, hashlib, json, os, re, shutil, statistics, sys, time
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py sits beside the scripts
+import common  # noqa: E402
+from common import sha_file  # noqa: E402
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCHEMA = 1
 GATE_ORDER_SCHEMA = 1
@@ -97,14 +101,6 @@ def jl(path):
         for line in f:
             if line.strip():
                 yield json.loads(line)
-
-
-def sha_file(path):
-    h = hashlib.sha256()
-    with open(path, "rb") as f:
-        for b in iter(lambda: f.read(1 << 20), b""):
-            h.update(b)
-    return h.hexdigest()
 
 
 def parse_day(s):
@@ -562,11 +558,8 @@ def gate_pos_map(doc):
 
 
 def write_json_atomic(path, obj, indent=None):
-    tmp = path + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(obj, f, ensure_ascii=False, indent=indent, separators=None if indent else (",", ":"))
-        f.write("\n")
-    os.replace(tmp, path)
+    common.write_json_atomic(path, obj, newline=True, encoding="utf-8", ensure_ascii=False, indent=indent,
+                             separators=None if indent else (",", ":"))
 
 
 def sync_gate_order(O, art, eras, mode, trevor):
@@ -599,10 +592,7 @@ def sync_gate_order(O, art, eras, mode, trevor):
         sys.stderr.write(f"--gate-order read: {GATE_ORDER_REL} is missing\n")
         sys.exit(3)
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    tmp = path + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        f.write(json.dumps(doc, ensure_ascii=False, indent=2))  # serde_json::to_vec_pretty's format
-    os.replace(tmp, path)
+    common.write_json_atomic(path, doc, encoding="utf-8", ensure_ascii=False, indent=2)  # serde_json::to_vec_pretty's format
     return sha_file(path), "written"
 
 

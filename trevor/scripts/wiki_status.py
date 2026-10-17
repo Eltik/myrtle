@@ -37,7 +37,7 @@ def wiki_class(raw):
 
 def main():
     ops = common.playable_operators()
-    done = {json.loads(l)['charId'] for l in open(OUT)} if os.path.exists(OUT) else set()
+    done = {r['charId'] for r in common.read_jsonl(OUT)}
     for cid, name in ops:
         if cid in done:
             continue

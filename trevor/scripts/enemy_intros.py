@@ -17,7 +17,10 @@ uses an enemy's earliest stage; this file holds story ids only, so it stays vali
 
 Usage: python3 scripts/enemy_intros.py [--gamedata ../assets/output/en/gamedata]
 """
-import argparse, hashlib, json, os, re, sys
+import argparse, json, os, re, sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py sits beside the scripts
+import common  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "artifacts", "chrono", "enemy_intros.json")
@@ -67,13 +70,9 @@ def main():
                                                   "stages": [stages[eid][b] for b in sorted(stages[eid])]})
     doc = {"schema": 1,
            "note": "boss enemy handbook entries and the story stages that field them; scripts/enemy_intros.py",
-           "inputs": {"enemyHandbook": hashlib.sha256(open(hb_path, "rb").read()).hexdigest()[:16], "levels": read},
+           "inputs": {"enemyHandbook": common.sha_file(hb_path)[:16], "levels": read},
            "enemies": enemies}
-    tmp = a.out + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(doc, f, ensure_ascii=False, indent=1, sort_keys=True)
-        f.write("\n")
-    os.replace(tmp, a.out)
+    common.write_json_atomic(a.out, doc, newline=True, encoding="utf-8", ensure_ascii=False, indent=1, sort_keys=True)
     print(f"enemy_intros: {len(enemies)} boss names ({sum(len(v) for v in enemies.values())} entries) from {read} "
           f"story level files -> {a.out}")
 

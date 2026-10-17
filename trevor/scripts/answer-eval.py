@@ -54,7 +54,7 @@ def main(gold_path, ans_path):
     gold = {json.loads(l)['qid']: json.loads(l) for l in open(gold_path)}
     answers = [json.loads(l) for l in open(ans_path)]
     out_path = ans_path.replace('.jsonl', '.judged.jsonl')
-    done = {json.loads(l)['qid'] for l in open(out_path)} if os.path.exists(out_path) else set()
+    done = {r['qid'] for r in common.read_jsonl(out_path)}
     print(f'judge: {len(answers) - len(done)} to do', flush=True)
     for a in answers:
         if a['qid'] in done:

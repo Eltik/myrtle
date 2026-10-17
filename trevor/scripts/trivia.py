@@ -127,7 +127,7 @@ GEN_SCHEMA = {'type': 'object', 'properties': {
 
 
 def done_ids(path):
-    return {json.loads(l)['chunkId'] for l in open(path)} if os.path.exists(path) else set()
+    return {r['chunkId'] for r in common.read_jsonl(path)}
 
 
 def stage_gen():
@@ -206,7 +206,7 @@ def stage_judge(ans_path):
     for t in (json.loads(l) for l in open(os.path.join(ROOT, 'artifacts/topics/topics.jsonl'))):
         text[f"topic:{t['topic']}"] = common.strip_cites(t.get('summary') or '')
     out_path = ans_path.replace('.jsonl', '.judged.jsonl')
-    done = {json.loads(l)['qid'] for l in open(out_path)} if os.path.exists(out_path) else set()
+    done = {r['qid'] for r in common.read_jsonl(out_path)}
     for a in (json.loads(l) for l in open(ans_path)):
         if a['qid'] in done:
             continue

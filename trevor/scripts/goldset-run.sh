@@ -7,6 +7,7 @@
 # including on Ctrl-C or an error. Every stage resumes where it stopped.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+source scripts/llama.sh  # stop_pid, start_llama
 
 PORT="${PORT:-8081}"
 SERVER="http://127.0.0.1:$PORT"
@@ -26,20 +27,12 @@ B=target/release
 mkdir -p "$WORK"
 
 SERVER_PID=""
-stop_server() {
-  if [[ -n "$SERVER_PID" ]]; then
-    kill "$SERVER_PID" 2>/dev/null || true
-    wait "$SERVER_PID" 2>/dev/null || true
-    SERVER_PID=""
-  fi
-}
+stop_server() { stop_pid "$SERVER_PID"; SERVER_PID=""; }
 trap stop_server EXIT INT TERM
 
 start_server() {
   echo "== loading $(basename "$1")"
-  llama-server -m "$1" --host 127.0.0.1 --port "$PORT" -np 2 --kv-unified-per-slot 4096 \
-    -fa on -cram 512 --no-webui --reasoning off -ngl all >>"$WORK/server.log" 2>&1 &
-  SERVER_PID=$!
+  start_llama "$1" "$WORK/server.log" 2 4096 --reasoning off
   for _ in $(seq 1 180); do
     if curl -sf "$SERVER/health" >/dev/null; then return 0; fi
     if ! kill -0 "$SERVER_PID" 2>/dev/null; then echo "llama-server exited; see $WORK/server.log" >&2; exit 1; fi

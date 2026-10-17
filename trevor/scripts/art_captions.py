@@ -31,7 +31,7 @@ downscaled to ART_MAX_SIDE (default 1536) before encoding as JPEG. The
 server's --image-max-tokens bounds the visual tokens per image.
 ART_PROMPT=v1 is the only prompt so far; its hash is written into each row.
 """
-import argparse, base64, hashlib, io, json, os, random, subprocess, sys, time, urllib.request
+import argparse, base64, hashlib, io, json, os, random, subprocess, sys, time
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
@@ -210,9 +210,7 @@ def text(a):
 
 
 def post(url, body, timeout=600):
-    req = urllib.request.Request(url, json.dumps(body).encode(), {"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return json.load(r)
+    return common.post(url, json.dumps(body).encode(), timeout)
 
 
 def pick(rows, n, seed):
@@ -323,7 +321,7 @@ def ocr(a):
 
 def stats(_a):
     p = OUT / "captions.jsonl"
-    rows = list({r["id"]: r for r in map(json.loads, open(p))}.values()) if p.exists() else []
+    rows = list({r["id"]: r for r in common.read_jsonl(p)}.values())
     if not rows:
         print("no captions")
         return
@@ -358,7 +356,7 @@ def units(_a):
     tl = {r["id"]: r for r in map(json.loads, filter(str.strip, open(tiles_p)))} if tiles_p.exists() else {}
     import re
     attrs = ROOT / "artifacts" / "entities" / "operator_attributes.jsonl"
-    height = {r["charId"]: r.get("heightCm") for r in map(json.loads, open(attrs))} if attrs.exists() else {}
+    height = {r["charId"]: r.get("heightCm") for r in common.read_jsonl(attrs)}
     out = []
     for i, (iid, m) in enumerate(man.items()):
         c = caps.get(iid)

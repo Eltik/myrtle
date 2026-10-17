@@ -23,7 +23,7 @@
 # dossiers and 46 topics, and ask --lore v2 adds the others at answer time.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-source scripts/llama.sh  # stop_pid, await_health
+source scripts/llama.sh  # stop_pid, await_health, start_llama, await_no_llama
 BASE="${BASE:-http://127.0.0.1:3060}"
 PORT="${PORT:-8081}"
 GEN=models/llm/gemma-4-12b-it-qat-q4_0.gguf
@@ -122,10 +122,8 @@ fi
     sleep 900
   done ) >> "$LOG/thermal.log" &
 THERM_PID=$!
-while pgrep -x llama-server >/dev/null; do echo "waiting for another llama-server to exit"; sleep 30; done
-llama-server -m "$GEN" --host 127.0.0.1 --port "$PORT" -np 2 --kv-unified-per-slot 16384 \
-  -fa on -cram 512 --no-webui --reasoning off -ngl all > "$LOG/server.log" 2>&1 &
-SERVER_PID=$!
+await_no_llama
+start_llama "$GEN" "$LOG/server.log" 2 16384 --reasoning off
 await_health "$SERVER_PID" continue
 export SERVER="http://127.0.0.1:$PORT"
 run_models
@@ -193,10 +191,8 @@ step "answer bank"; PRIMERS=1 python3 scripts/answer_bank.py seed; python3 scrip
 # 4b. Model stages over P4 (2026-10-01): topic summaries, then the IS ending canon, each only when its inputs changed.
 # One model at a time; IS6's reasoning-on verdict needs a 24,576-token slot (design/trevor-questions.md section 12).
 serve() {  # serve MODEL [llama-server args]: start one server on $PORT and wait for it
-  while pgrep -x llama-server >/dev/null; do echo "waiting for another llama-server to exit"; sleep 30; done
-  llama-server -m "$1" --host 127.0.0.1 --port "$PORT" -np 1 --kv-unified-per-slot "${KV:-16384}" \
-    -fa on -cram 512 --no-webui -ngl all "${@:2}" >> "$LOG/server.log" 2>&1 &
-  SERVER_PID=$!
+  await_no_llama
+  start_llama "$1" "$LOG/server.log" 1 "${KV:-16384}" "${@:2}"
   await_health "$SERVER_PID" exit
 }
 unserve() { stop_pid "$SERVER_PID"; SERVER_PID=""; }

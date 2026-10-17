@@ -90,10 +90,7 @@ def load_pending():
 
 def save_pending(p):
     os.makedirs(REGEN, exist_ok=True)
-    tmp = PENDING + '.tmp'
-    with open(tmp, 'w') as f:
-        json.dump(p, f, indent=1, sort_keys=True)
-    os.replace(tmp, PENDING)
+    common.write_json_atomic(PENDING, p, indent=1, sort_keys=True)
 
 
 def corpus_rel():
@@ -409,9 +406,7 @@ def run(a):
     common.append_jsonl(os.path.join(REGEN, 'history.jsonl'), {'kind': 'run', **{k: v for k, v in status.items() if k != 'slices'}})
     print(json.dumps({k: v for k, v in status.items() if k != 'slices'}), flush=True)
     if a.status:
-        with open(a.status + '.tmp', 'w') as f:
-            json.dump(status, f, indent=1)
-        os.replace(a.status + '.tmp', a.status)
+        common.write_json_atomic(a.status, status, indent=1)
     return status
 
 

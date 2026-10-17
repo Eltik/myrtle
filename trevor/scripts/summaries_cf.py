@@ -155,8 +155,7 @@ class Local(Backend):
             return False
         if self.model is None:
             try:
-                with urllib.request.urlopen(f"{self.url}/v1/models", timeout=10) as r:
-                    self.model = os.path.basename(json.load(r)["data"][0]["id"])
+                self.model = common.model_id(self.url, 10)
             except (urllib.error.URLError, OSError, ValueError, KeyError, IndexError) as e:
                 self.stopped = f"no llama-server at {self.url} ({e})"
                 return False
@@ -257,9 +256,7 @@ def run(a, env=os.environ):
     counts["at"] = utc_now().strftime("%Y-%m-%dT%H:%M:%SZ")
     print(json.dumps(counts), flush=True)
     if a.status:
-        with open(a.status + ".tmp", "w") as f:
-            json.dump(counts, f, indent=1)
-        os.replace(a.status + ".tmp", a.status)
+        common.write_json_atomic(a.status, counts, indent=1)
     return 0
 
 

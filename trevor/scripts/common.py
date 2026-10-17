@@ -54,6 +54,26 @@ def append_jsonl(path, row, ensure_ascii=False):
         f.write(json.dumps(row, ensure_ascii=ensure_ascii) + '\n')
 
 
+def write_json_atomic(path, obj, newline=False, encoding=None, **dump_kw):
+    """json.dump(obj, **dump_kw) into `<path>.tmp` (plus a final newline when asked), then a rename over `path`, so a
+    reader never sees half a file. `encoding` None is the platform default, as open() without one."""
+    tmp = path + '.tmp'
+    with open(tmp, 'w', encoding=encoding) as f:
+        json.dump(obj, f, **dump_kw)
+        if newline:
+            f.write('\n')
+    os.replace(tmp, path)
+
+
+def sha_file(path):
+    """The sha256 hex digest of a file's bytes, read in 1 MiB blocks."""
+    h = hashlib.sha256()
+    with open(path, 'rb') as f:
+        for b in iter(lambda: f.read(1 << 20), b''):
+            h.update(b)
+    return h.hexdigest()
+
+
 def load_json(path):
     return json.load(open(path))
 
@@ -120,6 +140,12 @@ def post_retry(url, data, timeout, parse=lambda d: d, tries=4):
         except Exception as e:
             err = e; time.sleep(5 * (attempt + 1))
     raise err
+
+
+def model_id(server, timeout):
+    """The model the llama-server at `server` has loaded: the file name of the first id /v1/models lists."""
+    with urllib.request.urlopen(f'{server}/v1/models', timeout=timeout) as r:
+        return os.path.basename(json.load(r)['data'][0]['id'])
 
 
 def content(resp):

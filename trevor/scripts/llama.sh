@@ -1,4 +1,5 @@
-# Helpers for the shell scripts that run a local llama-server (update.sh, p2-run.sh); source it, do not run it.
+# Helpers for the shell scripts that run a local llama-server (update.sh, p2-run.sh, goldset-run.sh); source it, do
+# not run it.
 
 # stop_pid PID: stop a background job this shell started (SIGTERM) and reap it; nothing when PID is empty or the job
 # has already exited.
@@ -17,4 +18,18 @@ await_health() {
     sleep 1
   done
   [[ "$2" == "continue" ]] || exit 1
+}
+
+# start_llama MODEL LOG SLOTS KV [ARG...]: start llama-server on $PORT in the background with the flags every script
+# uses (SLOTS parallel slots of KV tokens each, flash attention, all layers on the GPU) plus ARGs, its output appended
+# to LOG; the PID goes to SERVER_PID.
+start_llama() {
+  llama-server -m "$1" --host 127.0.0.1 --port "$PORT" -np "$3" --kv-unified-per-slot "$4" \
+    -fa on -cram 512 --no-webui -ngl all "${@:5}" >> "$2" 2>&1 &
+  SERVER_PID=$!
+}
+
+# await_no_llama: wait while another llama-server runs (one model loaded at a time).
+await_no_llama() {
+  while pgrep -x llama-server >/dev/null; do echo "waiting for another llama-server to exit"; sleep 30; done
 }

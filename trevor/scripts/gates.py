@@ -24,6 +24,9 @@ starts its own model), GATES_ASK_FLAGS (extra ask flags for the canary, e.g. "--
 """
 import argparse, hashlib, json, os, re, shlex, signal, socket, subprocess, sys, time, urllib.error, urllib.request
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py sits beside the scripts
+import common  # noqa: E402
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REPORT_SCHEMA = 1
 RECALL_TOLERANCE = 0.02
@@ -474,10 +477,7 @@ def run(a):
               "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "seconds": round(time.time() - t0, 1),
               "passed": all(g.get("pass") is True for g in ran), "gates": gates}
     out = a.out or os.path.join(a.panels, "gate_report.json")
-    tmp = out + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(report, f, ensure_ascii=False, indent=1)
-    os.replace(tmp, out)
+    common.write_json_atomic(out, report, encoding="utf-8", ensure_ascii=False, indent=1)
     summary = {k: ("skipped" if g.get("skipped") else ("pass" if g.get("pass") else "FAIL")) for k, g in gates.items()}
     print(json.dumps({"passed": report["passed"], "gates": summary,
                       "spoilerViolations": gates["spoiler"]["violations"],

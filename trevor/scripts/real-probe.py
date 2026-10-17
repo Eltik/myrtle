@@ -71,7 +71,7 @@ def stage_judge(ans_path):
     # PROBE: another question file in the same format (qid, question, category, answerable); default the real probe.
     Q = {json.loads(l)['qid']: json.loads(l) for l in open(os.path.join(ROOT, os.environ.get('PROBE', 'eval/real-probe.jsonl')))}
     out = ans_path.replace('.jsonl', '.judged.jsonl')
-    done = {json.loads(l)['qid'] for l in open(out)} if os.path.exists(out) else set()
+    done = {r['qid'] for r in common.read_jsonl(out)}
     for a in map(json.loads, open(ans_path)):
         if a['qid'] in done:
             continue
