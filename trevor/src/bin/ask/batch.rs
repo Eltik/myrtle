@@ -61,7 +61,8 @@ pub(crate) async fn form_only(a: &Args, tools: &Tools) -> Result<()> {
     let (llm, _server) = connect_or_spawn(a).await?;
     let qs: Vec<(String, String)> = match &a.batch {
         Some(b) => std::fs::read_to_string(b)?.lines().filter_map(|l| serde_json::from_str::<serde_json::Value>(l).ok())
-            .filter_map(|v| Some((v["qid"].as_str().unwrap_or_default().to_owned(), v["question"].as_str()?.to_owned()))).collect(),
+            .filter_map(|v| Some((v["qid"].as_str().unwrap_or_default().to_owned(), v["question"].as_str()?.to_owned())))
+            .collect(),
         None => a.question.clone().map(|q| (String::new(), q)).into_iter().collect(),
     };
     for (id, q) in qs {
@@ -91,7 +92,9 @@ pub(crate) fn detect_only(a: &Args, tools: &Tools, b: &Path) -> Result<()> {
             f.push(if t.names_group_topic(q) { "relation-group".into() } else { format!("relation(people={people}{})",
                 if asks_admire(q) { ",admire" } else { "" }) });
         }
-        if Flags::keywords(q).asks_time && asks_when(q) && !chronology_for(q, load_chrono_cached()).is_empty() { f.push("chrono".into()); }
+        if Flags::keywords(q).asks_time && asks_when(q) && !chronology_for(q, load_chrono_cached()).is_empty() {
+            f.push("chrono".into());
+        }
         if asks_identity(q) { if let Some(c) = t.answer_constraint(q) { f.push(format!("constraint={c:?}")); } }
         if t.broad_topic_question(q) { f.push("broad_topic".into()); }
         if let Some(g) = t.event_in_question(q) {
@@ -114,7 +117,10 @@ pub(crate) fn detect_only(a: &Args, tools: &Tools, b: &Path) -> Result<()> {
                 f.push("opinion-gate".into());
             }
         }
-        if let Some(rt) = store_rt.as_ref().filter(|_| t.event_in_question(q).is_none() && t.appearance_question(q).is_none()) {
+        if let Some(rt) = store_rt
+            .as_ref()
+            .filter(|_| t.event_in_question(q).is_none() && t.appearance_question(q).is_none())
+        {
             if let [k] = people_named(rt, t, q).as_slice() {
                 let forms: Vec<String> = person_forms(t, k).iter().map(|x| norm(x)).collect();
                 if !t.names_group_topic(k) && asks_scene(q, &forms) { f.push(format!("charscope={k}")); }
@@ -153,7 +159,8 @@ pub(crate) fn scoped_only(rts: &mut Runtimes, tools: &Tools, b: &Path) -> Result
             println!("{id}\t{e}\t{}\t{}", who.join("|"), ids.join(" "));
         }
         if let Some((who, rows)) = character_scenes(&mut rts.main, &rts.args, tools, q) {
-            let ids: Vec<String> = rows.iter().map(|(r, _, n)| format!("{}:{n}", rts.main.store.chunks[*r].chunk_id)).collect();
+            let ids: Vec<String> =
+                rows.iter().map(|(r, _, n)| format!("{}:{n}", rts.main.store.chunks[*r].chunk_id)).collect();
             println!("{id}\tcharacter\t{who}\t{}", ids.join(" "));
         }
     }
@@ -161,8 +168,8 @@ pub(crate) fn scoped_only(rts: &mut Runtimes, tools: &Tools, b: &Path) -> Result
 }
 
 /// `--batch` alone: answer every question not yet in `--out`, appending one answer record per question.
-pub(crate) async fn answer_batch(a: &Args, rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Names>, chrono: &Chrono,
-                            tables: &mut Tables, batch: &Path) -> Result<()> {
+pub(crate) async fn answer_batch(a: &Args, rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Names>,
+                            chrono: &Chrono, tables: &mut Tables, batch: &Path) -> Result<()> {
     let done: BTreeSet<String> = std::fs::read_to_string(&a.out)
         .unwrap_or_default()
         .lines()

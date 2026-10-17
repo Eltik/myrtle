@@ -15,7 +15,8 @@ impl Tools {
     /// Values of one attribute column, without the game's placeholders (the routes' dictionaries).
     #[must_use]
     pub fn attr_values(&self, k: &str) -> BTreeSet<String> {
-        self.attributes.iter().flatten().map(|r| s(r, k)).filter(|v| v.len() >= 3 && !matches!(v.as_str(), "Unknown" | "Undisclosed"))
+        self.attributes.iter().flatten().map(|r| s(r, k))
+            .filter(|v| v.len() >= 3 && !matches!(v.as_str(), "Unknown" | "Undisclosed"))
             .collect()
     }
 
@@ -37,7 +38,8 @@ impl Tools {
         let rows = self.names_table()?;
         let names: Vec<&str> = rows.iter().filter_map(|r| r["name"].as_str()).filter(|n| !n.is_empty()).collect();
         let who = self.resolve_name("operator", operator, &names)?;
-        let r = rows.iter().rev().find(|r| r["name"].as_str() == Some(who)).ok_or_else(|| ToolError::NotFound { what: "operator", name: operator.to_owned() })?;
+        let r = rows.iter().rev().find(|r| r["name"].as_str() == Some(who))
+            .ok_or_else(|| ToolError::NotFound { what: "operator", name: operator.to_owned() })?;
         r["realName"].is_string().then(|| format!("{}'s real name is {}. The line that states it: \"{}\" ({}).",
                                                   s(r, "name"), s(r, "realName"), s(r, "quote"), s(r, "storyId")))
             .ok_or_else(|| ToolError::NoData(format!("no real name for {who} in the table")))
@@ -50,22 +52,27 @@ impl Tools {
     pub fn real_names(&self, place: Option<&str>) -> ToolResult {
         let rows = self.names_table()?;
         let named: Vec<&Value> = rows.iter().filter(|r| r["realName"].is_string()).collect();
-        let line = |r: &Value| format!("- {}: {} (\"{}\", {})", s(r, "name"), s(r, "realName"), s(r, "quote"), s(r, "storyId"));
+        let line = |r: &Value| format!("- {}: {} (\"{}\", {})",
+            s(r, "name"), s(r, "realName"), s(r, "quote"), s(r, "storyId"));
         // "Real names of every operator from Kazimierz": the place filter of the attribute table narrows the list.
         let (place, ids) = match place {
             Some(p) => {
                 let p = self.resolve_place(p)?;
-                let ids: HashSet<String> = self.attrs()?.iter().filter(|r| PLACE_KEYS.iter().any(|k| r[*k].as_str() == Some(p.as_str())))
+                let ids: HashSet<String> = self.attrs()?.iter()
+                    .filter(|r| PLACE_KEYS.iter().any(|k| r[*k].as_str() == Some(p.as_str())))
                     .filter_map(|r| r["charId"].as_str().map(str::to_owned)).collect();
                 (Some(p), Some(ids))
             }
             None => (None, None),
         };
-        let named: Vec<&&Value> = named.iter().filter(|r| ids.as_ref().is_none_or(|ids| ids.contains(&s(r, "charId")))).collect();
+        let named: Vec<&&Value> = named.iter()
+            .filter(|r| ids.as_ref().is_none_or(|ids| ids.contains(&s(r, "charId")))).collect();
         let scope = place.map_or(String::new(), |p| format!(" affiliated with or born in {p}"));
-        let mut out = format!("Real names Trevor found for {} playable operators{scope} (of {} checked), each with the line that \
-states it. Checked: each operator's file and up to 4 story passages that name them near a naming word, so a name revealed \
-elsewhere can be missing; for the rest, those passages give no real name.\n", named.len(), rows.len());
+        let mut out = format!("Real names Trevor found for {} playable operators{scope} (of {} checked), \
+            each with the line that states it. \
+            Checked: each operator's file and up to 4 story passages that name them near a naming word, \
+            so a name revealed elsewhere can be missing; for the rest, those passages give no real name.\n",
+            named.len(), rows.len());
         for r in &named {
             out.push_str(&line(r)); out.push('\n');
         }
@@ -88,7 +95,8 @@ elsewhere can be missing; for the rest, those passages give no real name.\n", na
         let vals: Vec<String> = self.attr_values(k).into_iter().collect();
         let refs: Vec<&str> = vals.iter().map(String::as_str).collect();
         self.resolve_name(what, v, &refs)
-            .or_else(|e| v.strip_suffix('s').map_or(Err(e.clone()), |x| self.resolve_name(what, x, &refs).map_err(|_| e)))
+            .or_else(|e| v.strip_suffix('s')
+                .map_or(Err(e.clone()), |x| self.resolve_name(what, x, &refs).map_err(|_| e)))
             .or_else(|e| contained_value(v, &refs).ok_or(e))
             .map(str::to_owned)
     }
@@ -121,7 +129,8 @@ elsewhere can be missing; for the rest, those passages give no real name.\n", na
         if let Some(race) = &f.race {
             let race = self.resolve_value("race", "race", race)?;
             let rl = race.clone();
-            filters.push((format!("race {race}"), Box::new(move |r| r["race"].as_str().is_some_and(|x| x.split('/').any(|p| p.trim() == rl)))));
+            filters.push((format!("race {race}"),
+                Box::new(move |r| r["race"].as_str().is_some_and(|x| x.split('/').any(|p| p.trim() == rl)))));
         }
         for c in &f.classes {
             let c = resolve_class(c)?;
@@ -169,11 +178,14 @@ give the height as written, some approximate or in armor.\n", h.len());
             }
             return Ok(out);
         }
-        let mut out = format!("{} of the {} playable operators are {desc}, from the game data (character_table and each \
-operator's file). The game leaves some fields Unknown or Undisclosed; those operators are not counted.\n", hit.len(), rows.len());
+        let mut out = format!("{} of the {} playable operators are {desc}, \
+            from the game data (character_table and each operator's file). \
+            The game leaves some fields Unknown or Undisclosed; those operators are not counted.\n",
+            hit.len(), rows.len());
         for r in &hit {
             let why = if desc.contains("affiliated") {
-                let aff = ["nation", "group", "team"].iter().map(|k| s(r, k)).filter(|v| !v.is_empty()).collect::<Vec<_>>().join(", ");
+                let aff = ["nation", "group", "team"].iter().map(|k| s(r, k)).filter(|v| !v.is_empty())
+                    .collect::<Vec<_>>().join(", ");
                 format!(" (affiliation: {}; born in {})", if aff.is_empty() { "none".into() } else { aff },
                         Some(s(r, "birthplace")).filter(|b| !b.is_empty()).unwrap_or_else(|| "not given".into()))
             } else { String::new() };
@@ -190,15 +202,19 @@ operator's file). The game leaves some fields Unknown or Undisclosed; those oper
         let rows = self.attrs()?;
         let names = self.operator_names();
         let who = self.resolve_name("operator", operator, &names)?;
-        let r = rows.iter().rev().find(|r| r["name"].as_str() == Some(who)).ok_or_else(|| ToolError::NotFound { what: "operator", name: operator.to_owned() })?;
+        let r = rows.iter().rev().find(|r| r["name"].as_str() == Some(who))
+            .ok_or_else(|| ToolError::NotFound { what: "operator", name: operator.to_owned() })?;
         let v = match field.key() {
             "heightCm" => r["heightCm"].as_i64().map(|h| format!("{h} cm")),
             "rarity" => r["rarity"].as_i64().map(|h| format!("{h} stars")),
-            "nation" => Some(["nation", "group", "team"].iter().map(|k| s(r, k)).filter(|v| !v.is_empty()).collect::<Vec<_>>().join(", "))
+            "nation" => Some(["nation", "group", "team"].iter().map(|k| s(r, k)).filter(|v| !v.is_empty())
+                .collect::<Vec<_>>().join(", "))
                 .filter(|v| !v.is_empty()),
             k => r[k].as_str().map(str::to_owned),
         }.ok_or_else(|| ToolError::NoData(format!("{who} has no {}", field.key())))?;
-        let label = match field.key() { "heightCm" => "height", "infectionText" => "infection status", "nation" => "affiliation", k => k };
+        let label = match field.key() {
+            "heightCm" => "height", "infectionText" => "infection status", "nation" => "affiliation", k => k
+        };
         Ok(format!("{}'s {label}, from their operator file in the game data: {v}.", s(r, "name")))
     }
 }
@@ -224,9 +240,12 @@ pub fn filter_from_args(r: &Route) -> Result<Filter, ToolError> {
     Ok(Filter {
         place: r.opt("place").map(str::to_owned),
         race: r.opt("race").map(str::to_owned),
-        classes: r.opt("class").map(|c| c.split(',').map(|x| x.trim().to_owned()).filter(|x| !x.is_empty()).collect()).unwrap_or_default(),
+        classes: r.opt("class")
+            .map(|c| c.split(',').map(|x| x.trim().to_owned()).filter(|x| !x.is_empty()).collect())
+            .unwrap_or_default(),
         branch: r.opt("branch").map(str::to_owned),
-        rarity: r.opt("rarity").map(|v| v.trim_end_matches(['*', ' ']).trim_end_matches("-star").trim_end_matches(" star").parse::<i64>()
+        rarity: r.opt("rarity").map(|v| v.trim_end_matches(['*', ' '])
+            .trim_end_matches("-star").trim_end_matches(" star").parse::<i64>()
             .map_err(|_| ToolError::BadArg { arg: "rarity", value: v.to_owned() })).transpose()?,
         female: r.opt("gender").map(|v| match v.to_lowercase().as_str() {
             "female" | "women" | "woman" => Ok(true),

@@ -66,7 +66,11 @@ pub fn contains_words(hay: &str, needle: &str) -> bool {
 /// The longest value `text` holds as whole words (a plural "s" allowed), for an argument with extra words.
 pub(super) fn contained_value<'a>(text: &str, vals: &[&'a str]) -> Option<&'a str> {
     let n = norm(text);
-    vals.iter().filter(|v| { let vn = norm(v); vn.len() >= 3 && (contains_words(&n, &vn) || contains_words(&n, &format!("{vn}s"))) })
+    vals.iter()
+        .filter(|v| {
+            let vn = norm(v);
+            vn.len() >= 3 && (contains_words(&n, &vn) || contains_words(&n, &format!("{vn}s")))
+        })
         .max_by_key(|v| v.len()).copied()
 }
 

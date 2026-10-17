@@ -147,7 +147,8 @@ pub enum Field {
 
 impl Field {
     pub const NAMES: &[&str] =
-        &["race", "birthplace", "birthday", "height", "infection", "class", "branch", "rarity", "gender", "affiliation"];
+        &["race", "birthplace", "birthday", "height", "infection", "class", "branch", "rarity", "gender",
+            "affiliation"];
 
     /// # Errors
     /// A name outside [`Field::NAMES`].
@@ -200,7 +201,8 @@ pub struct Filter {
     pub tallest: Option<bool>,
 }
 
-pub const CLASSES: [&str; 8] = ["Vanguard", "Guard", "Defender", "Sniper", "Caster", "Medic", "Supporter", "Specialist"];
+pub const CLASSES: [&str; 8] =
+    ["Vanguard", "Guard", "Defender", "Sniper", "Caster", "Medic", "Supporter", "Specialist"];
 const PLACE_KEYS: [&str; 4] = ["nation", "group", "team", "birthplace"];
 
 /// The tables, loaded once.
@@ -344,12 +346,14 @@ impl Tools {
             for i in v["identities"].as_array().into_iter().flatten() {
                 for (name, ev) in i["evidence"].as_object().into_iter().flatten() {
                     for e in ev.as_array().into_iter().flatten() {
-                        t.identity_links.push((name.clone(), s(e, "other"), s(e, "relation"), s(e, "quote"), s(e, "where"), true));
+                        t.identity_links.push((name.clone(), s(e, "other"), s(e, "relation"), s(e, "quote"),
+                            s(e, "where"), true));
                     }
                 }
             }
             for e in v["inferred"].as_array().into_iter().flatten() {
-                t.identity_links.push((s(e, "name_a"), s(e, "name_b"), s(e, "relation"), s(e, "quote"), s(e, "where"), false));
+                t.identity_links.push((s(e, "name_a"), s(e, "name_b"), s(e, "relation"), s(e, "quote"),
+                    s(e, "where"), false));
             }
         }
         t
@@ -362,12 +366,16 @@ impl Tools {
     pub(crate) fn fold_group_identities(&mut self) {
         let Some(rows) = self.topics.as_mut() else { return };
         let forms = |r: &Value| -> Vec<String> {
-            std::iter::once(s(r, "topic")).chain(r["aliases"].as_array().into_iter().flatten().filter_map(|a| a.as_str().map(str::to_owned)))
+            std::iter::once(s(r, "topic"))
+                .chain(r["aliases"].as_array().into_iter().flatten().filter_map(|a| a.as_str().map(str::to_owned)))
                 .map(|f| norm(&f)).collect()
         };
         self.identities.retain(|group| {
             let Some(label) = group.first().map(|l| norm(l)) else { return true };
-            let Some(r) = rows.iter_mut().find(|r| matches!(s(r, "kind").as_str(), "organization" | "nation" | "place") && forms(r).contains(&label)) else {
+            let Some(r) = rows.iter_mut()
+                .find(|r| matches!(s(r, "kind").as_str(), "organization" | "nation" | "place")
+                    && forms(r).contains(&label))
+            else {
                 return true;
             };
             let have = forms(r);
@@ -386,13 +394,16 @@ impl Tools {
     /// source, the identity link `fold_group_identities` would read, which `entities.py build` drops as naming a group.
     /// `TREVOR_ORG_SHORT_NAMES=0` leaves the topics as written.
     pub(crate) fn org_short_names(&mut self) {
-        const SUFFIX: &[&str] = &["worldwide", "company", "co", "ltd", "inc", "corporation", "corp", "llc", "holdings", "enterprises", "industries"];
+        const SUFFIX: &[&str] = &["worldwide", "company", "co", "ltd", "inc", "corporation", "corp", "llc", "holdings",
+            "enterprises", "industries"];
         let Some(rows) = self.topics.as_mut() else { return };
         let forms: BTreeSet<String> = rows.iter().flat_map(|r| std::iter::once(s(r, "topic"))
-            .chain(r["aliases"].as_array().into_iter().flatten().filter_map(|a| a.as_str().map(str::to_owned)))).map(|f| norm(&f)).collect();
+            .chain(r["aliases"].as_array().into_iter().flatten().filter_map(|a| a.as_str().map(str::to_owned))))
+            .map(|f| norm(&f)).collect();
         for r in rows.iter_mut().filter(|r| s(r, "kind") == "organization") {
             let topic = s(r, "topic");
-            let words: Vec<&str> = topic.split(|c: char| !(c.is_alphanumeric() || c == '\'' || c == '-')).filter(|w| !w.is_empty()).collect();
+            let words: Vec<&str> = topic.split(|c: char| !(c.is_alphanumeric() || c == '\'' || c == '-'))
+                .filter(|w| !w.is_empty()).collect();
             let mut end = words.len();
             while end > 0 && SUFFIX.contains(&words[end - 1].to_lowercase().as_str()) {
                 end -= 1;
@@ -441,9 +452,12 @@ impl Tools {
             "cross_ref" => self.cross_ref(r.arg("table")?),
             "appearances" => self.appearances(r.arg("character")?),
             "design_basis" => self.design_basis(r.arg("question")?)
-                .ok_or_else(|| ToolError::NotFound { what: "design inspiration", name: r.arg("question").unwrap_or_default().to_owned() }),
+                .ok_or_else(|| ToolError::NotFound {
+                    what: "design inspiration", name: r.arg("question").unwrap_or_default().to_owned()
+                }),
             // The model router can write {"run": "all"} for "any of the IS endings": treated as no run.
-            "canon" => self.canon(r.opt("run").filter(|v| !matches!(norm(v).as_str(), "all" | "any" | "every" | "all runs"))),
+            "canon" => self.canon(r.opt("run")
+                .filter(|v| !matches!(norm(v).as_str(), "all" | "any" | "every" | "all runs"))),
             // Not an answer: `ask` adds the summary to retrieval (see `topic`); here it only reports the resolution.
             "topic" => self.topic(r.arg("topic")?).map(|p| format!("Topic passage for retrieval: {}", p.topic)),
             t => Err(ToolError::UnknownTool(t.to_owned())),

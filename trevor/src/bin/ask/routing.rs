@@ -35,7 +35,8 @@ pub(crate) fn place_filter(q: &str, t: &Tools) -> Option<String> {
     let ql = format!(" {} ", q.to_lowercase().replace(['?', ',', '.', '!', '\''], " "));
     let keys = ["nation", "group", "team", "birthplace"];
     rows.iter().flat_map(|r| keys.iter().filter_map(|k| r[*k].as_str().map(str::to_owned)).collect::<Vec<_>>())
-        .filter(|p| p.len() >= 3 && !matches!(p.as_str(), "Unknown" | "Undisclosed") && ql.contains(&format!(" {} ", p.to_lowercase())))
+        .filter(|p| p.len() >= 3 && !matches!(p.as_str(), "Unknown" | "Undisclosed")
+            && ql.contains(&format!(" {} ", p.to_lowercase())))
         .max_by_key(String::len)
 }
 
@@ -55,7 +56,9 @@ pub(crate) fn attribute_route(q: &str, t: &Tools) -> Option<Route> {
         used.push(p);
     }
     // "Ursus" is a nation and a race; a word already taken as the place is not also a race filter.
-    if let Some(race) = t.attr_values("race").iter().filter(|v| (word(v) || word(&format!("{v}s"))) && !used.contains(v)).max_by_key(|v| v.len()).cloned() {
+    if let Some(race) = t.attr_values("race").iter()
+        .filter(|v| (word(v) || word(&format!("{v}s"))) && !used.contains(v))
+        .max_by_key(|v| v.len()).cloned() {
         args.push(("race", race.clone()));
         used.push(race);
     }
@@ -71,12 +74,14 @@ pub(crate) fn attribute_route(q: &str, t: &Tools) -> Option<Route> {
     }
     // Branches ("Fortress", "Soloblade"); a branch named like its class ("Medic") is left to the class filter.
     let class_words = ["vanguard", "guard", "defender", "sniper", "caster", "medic", "supporter", "specialist"];
-    if let Some(b) = t.attr_values("branch").iter().filter(|b| !class_words.contains(&b.to_lowercase().as_str()) && (word(b) || word(&format!("{b}s"))))
+    if let Some(b) = t.attr_values("branch").iter()
+        .filter(|b| !class_words.contains(&b.to_lowercase().as_str()) && (word(b) || word(&format!("{b}s"))))
         .max_by_key(|b| b.len()).cloned() {
         args.push(("branch", b.clone()));
         used.push(b);
     }
-    if let Some(n) = (1..=6).find(|n| ql.contains(&format!(" {n}-star")) || ql.contains(&format!(" {n} star")) || ql.contains(&format!(" {n}*"))) {
+    if let Some(n) = (1..=6).find(|n| ql.contains(&format!(" {n}-star")) || ql.contains(&format!(" {n} star"))
+        || ql.contains(&format!(" {n}*"))) {
         args.push(("rarity", n.to_string()));
         used.push(format!("{n}"));
     }
@@ -106,27 +111,34 @@ pub(crate) fn attribute_route(q: &str, t: &Tools) -> Option<Route> {
     if (!args.is_empty() || sup.is_some()) && listing {
         // Only a roster question: after removing the filters and question words no content word may remain,
         // so "Which operators from Rhodes Island went to Londinium?" stays with retrieval.
-        let stop = ["which", "what", "who", "how", "many", "are", "is", "there", "the", "a", "an", "all", "list", "of", "in",
-                    "from", "operator", "operators", "character", "characters", "every", "known", "with", "and", "or", "star",
-                    "one", "person", "people", "branch",
-                    "have", "has", "that", "born", "affiliated", "me", "give", "show", "name", "names", "playable", "do",
-                    "does", "total", "count", "number", "any"];
+        let stop = ["which", "what", "who", "how", "many", "are", "is", "there", "the", "a", "an", "all", "list",
+                    "of", "in", "from", "operator", "operators", "character", "characters", "every", "known", "with",
+                    "and", "or", "star", "one", "person", "people", "branch", "have", "has", "that", "born",
+                    "affiliated", "me", "give", "show", "name", "names", "playable", "do", "does", "total", "count",
+                    "number", "any"];
         let mut rest = ql.clone();
         for u in &used {
-            rest = rest.replace(&format!(" {} ", u.to_lowercase()), " ").replace(&format!(" {}s ", u.to_lowercase()), " ");
+            rest = rest.replace(&format!(" {} ", u.to_lowercase()), " ")
+                .replace(&format!(" {}s ", u.to_lowercase()), " ");
         }
-        let extra = rest.split_whitespace().filter(|w| !stop.contains(w) && !w.chars().all(|c| c.is_ascii_digit() || c == '-' || c == '*')
-            && !w.ends_with("-star")).count();
+        let extra = rest.split_whitespace()
+            .filter(|w| !stop.contains(w) && !w.chars().all(|c| c.is_ascii_digit() || c == '-' || c == '*')
+                && !w.ends_with("-star"))
+            .count();
         // Zero, not one: "Which operators betrayed Rhodes Island?" has one extra word and listed all 84.
         if extra == 0 {
             if let Some(w) = sup {
                 args.push(("sort", w.to_owned()));
             }
-            return Some(Route { tool: "operator_filter".into(), args: args.into_iter().map(|(k, v)| (k.to_owned(), v)).collect() });
+            return Some(Route {
+                tool: "operator_filter".into(),
+                args: args.into_iter().map(|(k, v)| (k.to_owned(), v)).collect()
+            });
         }
     }
     // One operator's attribute: "What race is Texas?", "When is Exusiai's birthday?".
-    let asks = [("race", &["race", "species"][..]), ("birthplace", &["born", "birthplace", "place of birth", "where is", "hometown"][..]),
+    let asks = [("race", &["race", "species"][..]),
+                ("birthplace", &["born", "birthplace", "place of birth", "where is", "hometown"][..]),
                 ("birthday", &["birthday", "date of birth"][..]), ("height", &["height", "how tall"][..]),
                 ("infection", &["infected", "infection", "oripathy"][..]), ("class", &["class", "archetype"][..]),
                 ("branch", &["branch", "subclass"][..]), ("rarity", &["rarity", "how many stars", "star"][..]),
@@ -139,8 +151,9 @@ pub(crate) fn attribute_route(q: &str, t: &Tools) -> Option<Route> {
     }).max_by_key(|r| s(r, "name").len())?;
     let mut used: Vec<String> = kws.iter().map(|w| (*w).to_owned()).collect();
     used.push(s(r, "name"));
-    used.extend(["born", "birthday", "tall", "many", "stars", "star", "race", "species", "infected", "height", "gender",
-                 "class", "branch", "affiliation", "faction", "belong", "to", "rarity"].iter().map(|w| (*w).to_owned()));
+    used.extend(["born", "birthday", "tall", "many", "stars", "star", "race", "species", "infected", "height",
+                 "gender", "class", "branch", "affiliation", "faction", "belong", "to",
+                 "rarity"].iter().map(|w| (*w).to_owned()));
     if leftover(q, &used) > 0 {
         return None;
     }
@@ -154,27 +167,31 @@ pub(crate) fn reading_route(q: &str, t: &Tools) -> Option<Route> {
     let s = |v: &serde_json::Value, k: &str| v[k].as_str().unwrap_or_default().to_owned();
     // Reading in chronological order: players ask it far more often than they recommend it.
     // Reading words, not "order": "In chronological order, order the death of FrostNova..." asks for a timeline.
-    if has(q, &["read", "start", "play"]) && has(q, &["chronolog", "in-world", "in world", "in universe", "in-universe", "timeline order"])
-        && !has(q, &["placed", "was before", "were before", "happened before", "take place", "takes place", "took place"]) {
+    if has(q, &["read", "start", "play"])
+        && has(q, &["chronolog", "in-world", "in world", "in universe", "in-universe", "timeline order"])
+        && !has(q, &["placed", "was before", "were before", "happened before",
+                     "take place", "takes place", "took place"]) {
         return Some(Route::new("reading_chronological", &[]));
     }
     // In-world timing ("Is Il Siracusano placed before chapter 2?", "this was before Babel, right?") is chronology,
     // not reading order: those go to retrieval with the timeline notes.
-    if has(q, &["placed", "set before", "set after", "take place", "takes place", "took place", "was before", "were before",
-                "happened before", "happen before", "timeline", "chronolog", "in-world", "in world"]) {
+    if has(q, &["placed", "set before", "set after", "take place", "takes place", "took place", "was before",
+                "were before", "happened before", "happen before", "timeline", "chronolog", "in-world", "in world"]) {
         return None;
     }
     let group = named_group(q, t).and_then(|g| items.iter().find(|i| i["groupId"].as_str() == Some(gid(g))));
     // Where a character first speaks.
-    if has(q, &["first appear", "first appearance", "first show up", "first shows up", "debut", "shows up", "introduced"]) {
+    if has(q, &["first appear", "first appearance", "first show up", "first shows up", "debut", "shows up",
+                "introduced"]) {
         let first = t.first.as_ref()?;
         let ql = format!(" {} ", q.to_lowercase().replace(['?', ',', '.', '!', '[', ']'], " "));
         let who = first.as_object()?.keys().filter(|n| n.len() >= 3 && n.chars().next().is_some_and(char::is_uppercase)
             && ql.contains(&format!(" {} ", n.to_lowercase()))).max_by_key(|n| n.len())?.clone();
         // "Did you know the Candle Knight shows up in Catapult's operator record?" is not a first-appearance question.
         let mut used: Vec<String> = vec![who.clone()];
-        used.extend(["first", "appear", "appears", "appearance", "show", "shows", "up", "debut", "introduced", "get", "part",
-                     "story", "i", "we", "see", "meet", "which", "event", "chapter"].iter().map(|w| (*w).to_owned()));
+        used.extend(["first", "appear", "appears", "appearance", "show", "shows", "up", "debut", "introduced", "get",
+                     "part", "story", "i", "we", "see", "meet", "which", "event",
+                     "chapter"].iter().map(|w| (*w).to_owned()));
         if leftover(q, &used) > 0 {
             return None;
         }
@@ -183,21 +200,23 @@ pub(crate) fn reading_route(q: &str, t: &Tools) -> Option<Route> {
     // Reading time of one event or episode.
     if let Some(i) = group {
         // Reading words, not a bare "how long" ("How long has it been in The Masses' Travels?" asks in-world time).
-        if has(q, &["how many hours", "hours of reading", "how many words", "reading time", "how long to read", "how long is",
-                    "how long does it take", "how long will it take"]) {
+        if has(q, &["how many hours", "hours of reading", "how many words", "reading time", "how long to read",
+                    "how long is", "how long does it take", "how long will it take"]) {
             return Some(Route::new("reading_time", &[("event", &s(i, "groupId"))]));
         }
     }
     // What an event builds on and where it sits in the EN release order.
-    let per_event = ["before", "when should i read", "when do i read", "when to read", "should i read", "need to read",
-                     "read first", "prerequisite", "recommended reading", "stories to play", "what to read", "have to read"];
+    let per_event = ["before", "when should i read", "when do i read", "when to read", "should i read",
+                     "need to read", "read first", "prerequisite", "recommended reading", "stories to play",
+                     "what to read", "have to read"];
     if let Some(i) = group {
         let name = s(i, "name");
         let mut used: Vec<String> = name.split_whitespace().map(str::to_owned).collect();
-        used.extend(["before", "when", "should", "read", "reading", "need", "needs", "first", "prerequisite", "prerequisites",
-                     "recommended", "stories", "story", "play", "playing", "what", "to", "have", "i", "know", "complete",
-                     "specific", "chapters", "chapter", "rerun", "event", "regarding", "main", "start", "after", "or",
-                     "things", "anything", "about", "it", "you", "do", "that", "which", "episode"].iter().map(|w| (*w).to_owned()));
+        used.extend(["before", "when", "should", "read", "reading", "need", "needs", "first", "prerequisite",
+                     "prerequisites", "recommended", "stories", "story", "play", "playing", "what", "to", "have", "i",
+                     "know", "complete", "specific", "chapters", "chapter", "rerun", "event", "regarding", "main",
+                     "start", "after", "or", "things", "anything", "about", "it", "you", "do", "that", "which",
+                     "episode"].iter().map(|w| (*w).to_owned()));
         if let Some(n) = i["episode"].as_u64() {
             used.push(n.to_string());
         }
@@ -209,9 +228,10 @@ pub(crate) fn reading_route(q: &str, t: &Tools) -> Option<Route> {
     }
     // The whole guide.
     let general = ["reading order", "read order", "story order", "release order", "order to read", "order of events",
-                   "where do i start", "where to start", "where should i start", "how do i start", "start with arknights",
-                   "best way to start", "catch up", "key to understand", "key events", "major lore", "important events",
-                   "essential events", "new player", "recommended order", "which events are key", "which events matter"];
+                   "where do i start", "where to start", "where should i start", "how do i start",
+                   "start with arknights", "best way to start", "catch up", "key to understand", "key events",
+                   "major lore", "important events", "essential events", "new player", "recommended order",
+                   "which events are key", "which events matter"];
     if group.is_none() && has(q, &general) {
         return Some(Route::new("reading_guide", &[]));
     }
@@ -231,8 +251,9 @@ pub(crate) fn recap_route(q: &str, t: &Tools) -> Option<Route> {
     let name = g["name"].as_str().unwrap_or(&id).to_owned();
     let mut used: Vec<String> = name.split_whitespace().map(str::to_owned).collect();
     used.extend(["happens", "happened", "during", "explain", "ending", "summary", "summarize", "summarise", "recap",
-                 "plot", "story", "tl", "dr", "tldr", "rundown", "can", "someone", "me", "give", "please", "event", "episode",
-                 "chapter", "spoiler", "spoilers", "i", "you", "for", "on", "this", "that"].iter().map(|w| (*w).to_owned()));
+                 "plot", "story", "tl", "dr", "tldr", "rundown", "can", "someone", "me", "give", "please", "event",
+                 "episode", "chapter", "spoiler", "spoilers", "i", "you", "for", "on", "this",
+                 "that"].iter().map(|w| (*w).to_owned()));
     if let Some(n) = g["chapter"].as_u64() {
         used.push(n.to_string());
     }
@@ -247,9 +268,10 @@ pub(crate) fn recap_route(q: &str, t: &Tools) -> Option<Route> {
 /// Texas?", "Does W die?") has none; real questions that only mention an operator ("Has there been any explanation
 /// why Mostima treats Exusiai the way she does?") have several and must go to retrieval, not to a table.
 pub(crate) fn leftover(q: &str, used: &[String]) -> usize {
-    let stop = ["which", "what", "who", "whom", "how", "when", "where", "is", "are", "was", "were", "the", "a", "an", "of",
-                "in", "from", "does", "do", "did", "s", "operator", "operators", "their", "her", "his", "they", "she", "he",
-                "it", "its", "to", "and", "or", "there", "any", "ever", "really", "actually", "still", "at", "end", "by"];
+    let stop = ["which", "what", "who", "whom", "how", "when", "where", "is", "are", "was", "were", "the", "a", "an",
+                "of", "in", "from", "does", "do", "did", "s", "operator", "operators", "their", "her", "his", "they",
+                "she", "he", "it", "its", "to", "and", "or", "there", "any", "ever", "really", "actually", "still",
+                "at", "end", "by"];
     let mut ql = format!(" {} ", q.to_lowercase().replace(['?', ',', '.', '!', '\'', '"'], " "));
     for u in used {
         ql = ql.replace(&format!(" {} ", u.to_lowercase()), " ");
@@ -315,9 +337,9 @@ pub(crate) fn death_route(q: &str, t: &Tools) -> Option<Route> {
         // Only "who died in X": "Did Lappland die at the end of Il Siracusano? Or what happened?" and "Was Tin Man's
         // death in Mansfield Break, or an earlier story?" ask something else and go to retrieval.
         let mut used: Vec<String> = name.split_whitespace().map(str::to_owned).collect();
-        used.extend(["die", "died", "dies", "dead", "death", "deaths", "killed", "who", "which", "characters", "character",
-                     "named", "non-playable", "npcs", "npc", "people", "playable", "episode", "chapter", "list", "all",
-                     "everyone", "anyone", "happen", "there", "any"].iter().map(|w| (*w).to_owned()));
+        used.extend(["die", "died", "dies", "dead", "death", "deaths", "killed", "who", "which", "characters",
+                     "character", "named", "non-playable", "npcs", "npc", "people", "playable", "episode", "chapter",
+                     "list", "all", "everyone", "anyone", "happen", "there", "any"].iter().map(|w| (*w).to_owned()));
         if let Some(n) = g["chapter"].as_u64() {
             used.push(n.to_string());
         }
@@ -345,7 +367,8 @@ pub(crate) fn death_route(q: &str, t: &Tools) -> Option<Route> {
     })?;
     // Only a question about whether or how this one character dies; "Didn't the war end because Theresa died? How
     // can there have been an ascension ceremony..." is about something else and goes to retrieval.
-    let dw = ["die", "dies", "died", "dead", "death", "killed", "deceased", "passed", "away", "confirmed", "how", "when"];
+    let dw = ["die", "dies", "died", "dead", "death", "killed", "deceased", "passed", "away", "confirmed",
+              "how", "when"];
     if leftover(q, &std::iter::once(who.clone()).chain(dw.iter().map(|w| (*w).to_owned())).collect::<Vec<_>>()) > 0 {
         return None;
     }
@@ -389,11 +412,15 @@ pub(crate) async fn route_question(q: &str, a: &Args, tools: &Tools, llm: Option
         }
         let pre = (!a.no_appearances).then(|| tools.appearance_question(q)).flatten()
             .map(|c| Route::new("appearances", &[("character", c.as_str())]))
-            .or_else(|| (!a.no_cross_ref_trigger).then(|| tools.cross_ref_question(q)).flatten().map(|t| Route::new("cross_ref", &[("table", t)])))
-            .or_else(|| (!a.no_design_basis && tools.design_basis(q).is_some()).then(|| Route::new("design_basis", &[("question", q)])));
+            .or_else(|| (!a.no_cross_ref_trigger).then(|| tools.cross_ref_question(q)).flatten()
+                .map(|t| Route::new("cross_ref", &[("table", t)])))
+            .or_else(|| (!a.no_design_basis && tools.design_basis(q).is_some())
+                .then(|| Route::new("design_basis", &[("question", q)])));
         if let Some(route) = pre {
             if let Ok(text) = tools.run(&route) {
-                return Ok(Routed { route, text: Some(text), error: None, topic: None, dossier: None, game: None, ms: ms() });
+                return Ok(Routed {
+                    route, text: Some(text), error: None, topic: None, dossier: None, game: None, ms: ms()
+                });
             }
         }
     }
@@ -401,9 +428,13 @@ pub(crate) async fn route_question(q: &str, a: &Args, tools: &Tools, llm: Option
         RouterKind::Off => Route::retrieve(),
         RouterKind::Keywords => {
             let (route, text) = keyword_route(q, tools).map_or((Route::retrieve(), None), |(r, t)| (r, Some(t)));
-            return Ok(Routed { route, text, error: None, topic: None, dossier: None, game: None, ms: started.elapsed().as_secs_f64() * 1000.0 });
+            return Ok(Routed {
+                route, text, error: None, topic: None, dossier: None, game: None,
+                ms: started.elapsed().as_secs_f64() * 1000.0
+            });
         }
-        RouterKind::Model => router::route_model_with(llm.context("the model router needs a llama-server")?, q, &router_prompt(a)).await?,
+        RouterKind::Model => router::route_model_with(
+            llm.context("the model router needs a llama-server")?, q, &router_prompt(a)).await?,
     };
     let ms = started.elapsed().as_secs_f64() * 1000.0;
     let dossier = tools.new_dossier(q).filter(|_| dossier_allowed(q, a, Some(&route))).map(|d| d.topic);
@@ -460,13 +491,17 @@ pub(crate) fn is_ending_passages(rt: &Runtime, tools: &Tools, q: &str, r: &Route
     let n: usize = run.trim_start_matches("rogue_").parse::<usize>().unwrap_or(0) + 1;
     let name = endings.iter().find(|(e, _)| *e == k).map_or(String::new(), |(_, x)| x.clone());
     let order = endings.iter().map(|(e, x)| format!("Ending {e} '{x}'")).collect::<Vec<_>>().join(", ");
-    let mut pre = vec![Pre::new(format!("gamedata:{run}_endings"), format!("game data: Integrated Strategies {n}, {run_name}, endings"),
-                                format!("Integrated Strategies {n} ({run_name}) has {} numbered endings, in the game's order: {order}.",
+    let mut pre = vec![Pre::new(format!("gamedata:{run}_endings"),
+                                format!("game data: Integrated Strategies {n}, {run_name}, endings"),
+                                format!("Integrated Strategies {n} ({run_name}) has {} numbered endings, \
+                                         in the game's order: {order}.",
                                         endings.len()))];
     let script = format!("is_{run}_ending_{k}_script#");
     let book = format!("is_endbook_{run}_{k}_");
     for c in rt.store.chunks.iter().filter(|c| c.chunk_id.starts_with(&script)) {
-        pre.push(Pre::new(c.chunk_id.clone(), format!("Integrated Strategies {n}, {run_name}: Ending {k} '{name}', ending scene"), c.text.clone()));
+        pre.push(Pre::new(c.chunk_id.clone(),
+                          format!("Integrated Strategies {n}, {run_name}: Ending {k} '{name}', ending scene"),
+                          c.text.clone()));
     }
     for c in rt.store.chunks.iter().filter(|c| c.chunk_id.starts_with(&book)) {
         let j = c.chunk_id[book.len()..].split('#').next().unwrap_or_default();

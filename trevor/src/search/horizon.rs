@@ -154,7 +154,8 @@ impl ReleaseOrder {
             Some(f) if f.schema == 1 && f.inputs.as_ref() == Some(&inputs) => f,
             other => {
                 let why = if other.is_some() { "is stale (its inputs changed)" } else { "is missing" };
-                eprintln!("horizon: {GATE_ORDER_PATH} {why}; using the order rebuilt from its inputs (run `ask --gate-order`)");
+                eprintln!("horizon: {GATE_ORDER_PATH} {why}; \
+                           using the order rebuilt from its inputs (run `ask --gate-order`)");
                 build_gate_order(&guide, &rows, dates.as_ref(), Some(inputs))
             }
         };
@@ -233,7 +234,10 @@ impl ReleaseOrder {
             .filter_map(|i| Some((i["groupId"].as_str()?.to_owned(), u32::try_from(i["position"].as_u64()?).ok()?)))
             .collect();
         let story = stories.iter()
-            .filter_map(|s| Some((s["storyId"].as_str()?.to_owned(), (s["groupId"].as_str()?.to_owned(), s["storySort"].as_i64()?))))
+            .filter_map(|s| Some((
+                s["storyId"].as_str()?.to_owned(),
+                (s["groupId"].as_str()?.to_owned(), s["storySort"].as_i64()?)
+            )))
             .collect();
         let mut order = Self { group_pos, story, date_at: latest_dates(guide), use_dates: true, ..Self::default() };
         order.set_gate(build_gate_order(guide, stories, None, None));
@@ -288,7 +292,12 @@ impl ReleaseOrder {
         let pos = *self.group_pos.get(group)
             .with_context(|| format!("horizon {id:?} is not a story or group in the EN release order"))?;
         let legacy = Legacy { pos, sort, date: self.date_at.get(&pos).copied() };
-        Ok(Horizon { id: id.to_owned(), pos: self.gate_pos_of(id).unwrap_or(0), legacy: Some(legacy), order: Arc::clone(self) })
+        Ok(Horizon {
+            id: id.to_owned(),
+            pos: self.gate_pos_of(id).unwrap_or(0),
+            legacy: Some(legacy),
+            order: Arc::clone(self)
+        })
     }
 
     /// The era a reader at gatePos `pos` has completed: `max(era.position <= pos)`, or None (eraPos 0).
@@ -310,7 +319,9 @@ fn read_inputs(root: &Path) -> Result<Inputs> {
     let rows: Vec<serde_json::Value> = stories.lines().filter(|l| !l.trim().is_empty())
         .map(serde_json::from_str).collect::<std::result::Result<_, _>>()?;
     let dates: Option<serde_json::Value> = if dates_path.exists() {
-        Some(serde_json::from_str(&std::fs::read_to_string(&dates_path).context("reading artifacts/chrono/source_dates.json")?)?)
+        Some(serde_json::from_str(
+            &std::fs::read_to_string(&dates_path).context("reading artifacts/chrono/source_dates.json")?
+        )?)
     } else { None };
     let inputs = GateInputs { reading_guide: sha16_file(&guide_path)?, spoiler: sha16_file(&spoiler_path)?,
                               source_dates: if dates.is_some() { Some(sha16_file(&dates_path)?) } else { None } };
@@ -322,7 +333,10 @@ fn read_inputs(root: &Path) -> Result<Inputs> {
 /// admits a source dated after its successors.
 fn latest_dates(guide: &serde_json::Value) -> HashMap<u32, i64> {
     let mut dated: Vec<(u32, Option<i64>)> = guide["items"].as_array().into_iter().flatten()
-        .filter_map(|i| Some((u32::try_from(i["position"].as_u64()?).ok()?, i["released"].as_str().and_then(parse_day))))
+        .filter_map(|i| Some((
+            u32::try_from(i["position"].as_u64()?).ok()?,
+            i["released"].as_str().and_then(parse_day)
+        )))
         .collect();
     dated.sort_by_key(|(p, _)| *p);
     let mut date_at = HashMap::new();
@@ -340,7 +354,10 @@ fn latest_dates(guide: &serde_json::Value) -> HashMap<u32, i64> {
 fn build_gate_order(guide: &serde_json::Value, rows: &[serde_json::Value], dates: Option<&serde_json::Value>,
                     inputs: Option<GateInputs>) -> GateOrderFile {
     let items: Vec<&serde_json::Value> = guide["items"].as_array().into_iter().flatten().collect();
-    let gpos: HashMap<&str, u64> = items.iter().filter_map(|i| Some((i["groupId"].as_str()?, i["position"].as_u64()?))).collect();
+    let gpos: HashMap<&str, u64> = items
+        .iter()
+        .filter_map(|i| Some((i["groupId"].as_str()?, i["position"].as_u64()?)))
+        .collect();
     let date_at = latest_dates(guide);
     let mut pos_sorted: Vec<u32> = date_at.keys().copied().collect();
     pos_sorted.sort_unstable();
@@ -478,9 +495,11 @@ mod tests {
     use serde_json::json;
 
     fn guide() -> serde_json::Value {
-        json!({"items": [{"groupId": "main_0", "position": 1, "released": "by 2020-01-22", "kind": "main", "name": "Ep 0"},
-                         {"groupId": "act1", "position": 2, "released": "not dated in the game data", "kind": "event", "name": "A1"},
-                         {"groupId": "main_1", "position": 3, "released": "about 2020-07-01", "kind": "main", "name": "Ep 1"}]})
+        json!({"items": [
+            {"groupId": "main_0", "position": 1, "released": "by 2020-01-22", "kind": "main", "name": "Ep 0"},
+            {"groupId": "act1", "position": 2, "released": "not dated in the game data", "kind": "event", "name": "A1"},
+            {"groupId": "main_1", "position": 3, "released": "about 2020-07-01", "kind": "main", "name": "Ep 1"}
+        ]})
     }
 
     fn order() -> Arc<ReleaseOrder> {

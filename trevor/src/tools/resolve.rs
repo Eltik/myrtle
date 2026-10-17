@@ -33,18 +33,21 @@ impl Tools {
         }
         // Without a leading "the" and each word's trailing "s": "Masses Travel" is The Masses' Travels (the model
         // router can write a name so).
-        let key = |x: &str| strip(x).split(' ').map(|w| if w.len() > 3 { w.trim_end_matches('s') } else { w }).collect::<Vec<_>>().join(" ");
+        let key = |x: &str| strip(x).split(' ').map(|w| if w.len() > 3 { w.trim_end_matches('s') } else { w })
+            .collect::<Vec<_>>().join(" ");
         let nk = key(&n);
         let keyed: Vec<(&Value, String)> = events.iter().map(|(g, gn)| (*g, key(gn))).collect();
         if let Some((g, _)) = keyed.iter().find(|(_, k)| *k == nk) {
             return Ok(g);
         }
         // A longer text naming one event ("the Babel rerun").
-        if let Some((g, _)) = events.iter().filter(|(_, gn)| gn.len() >= 4 && contains_words(&n, gn)).max_by_key(|(_, gn)| gn.len()) {
+        if let Some((g, _)) = events.iter().filter(|(_, gn)| gn.len() >= 4 && contains_words(&n, gn))
+            .max_by_key(|(_, gn)| gn.len()) {
             return Ok(g);
         }
         // Part of one name ("Siracusano"), when only one event holds it.
-        let part: Vec<&(&Value, String)> = events.iter().filter(|_| n.len() >= 5).filter(|(_, gn)| contains_words(gn, &n)).collect();
+        let part: Vec<&(&Value, String)> = events.iter().filter(|_| n.len() >= 5)
+            .filter(|(_, gn)| contains_words(gn, &n)).collect();
         if part.len() == 1 {
             return Ok(part[0].0);
         }
@@ -93,7 +96,9 @@ impl Tools {
         let first = |n: &str| norm(n).split(' ').next().unwrap_or_default().to_owned();
         let firsts: HashSet<String> = names.iter().map(|n| first(n)).collect();
         let mut out = Vec::new();
-        for w in q.split(|c: char| !(c.is_alphanumeric() || matches!(c, '\'' | '\u{2019}' | '\u{2018}' | '`' | '\u{b4}'))).filter(|w| !w.is_empty()) {
+        for w in q
+            .split(|c: char| !(c.is_alphanumeric() || matches!(c, '\'' | '\u{2019}' | '\u{2018}' | '`' | '\u{b4}')))
+            .filter(|w| !w.is_empty()) {
             let f = norm(w);
             if f.chars().count() < 3 || firsts.contains(&f) || f.chars().any(|c| c.is_ascii_digit()) {
                 continue;
@@ -113,7 +118,8 @@ impl Tools {
     /// Speakers with a first appearance.
     #[must_use]
     pub fn speaker_names(&self) -> Vec<&str> {
-        self.first.as_ref().and_then(Value::as_object).map(|m| m.keys().map(String::as_str).collect()).unwrap_or_default()
+        self.first.as_ref().and_then(Value::as_object).map(|m| m.keys().map(String::as_str).collect())
+            .unwrap_or_default()
     }
 
     // ---------------------------------------------------------------- listing

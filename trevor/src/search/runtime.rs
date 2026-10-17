@@ -118,7 +118,10 @@ pub struct SharedEmbedder {
 
 impl SharedEmbedder {
     fn fits(&self, a: &RuntimeArgs, onnx: &str, tokenizer_sha: &str) -> bool {
-        self.model_dir == a.model_dir && self.onnx == onnx && self.threads == a.threads && self.tokenizer_sha == tokenizer_sha
+        self.model_dir == a.model_dir
+            && self.onnx == onnx
+            && self.threads == a.threads
+            && self.tokenizer_sha == tokenizer_sha
     }
 
     fn embed(&self, q: &str) -> Result<Vec<f32>> {

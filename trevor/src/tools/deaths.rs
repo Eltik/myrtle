@@ -31,10 +31,13 @@ impl Tools {
         let mut seen = HashSet::new();
         let dies: Vec<&Value> = events.iter()
             .filter(|e| e["groupId"].as_str() == Some(gid) && e["kind"].as_str() == Some("dies"))
-            .filter(|e| !(npc_only && e["playable"].as_bool() == Some(true)) && !(ops_only && e["playable"].as_bool() != Some(true)))
+            .filter(|e| !(npc_only && e["playable"].as_bool() == Some(true))
+                && !(ops_only && e["playable"].as_bool() != Some(true)))
             .filter(|e| seen.insert(s(e, "character"))).collect();
-        let (named, generic): (Vec<&Value>, Vec<&Value>) = dies.into_iter().partition(|e| e["generic"].as_bool() != Some(true));
-        let who = if npc_only { "non-playable characters" } else if ops_only { "playable operators" } else { "characters" };
+        let (named, generic): (Vec<&Value>, Vec<&Value>) = dies.into_iter()
+            .partition(|e| e["generic"].as_bool() != Some(true));
+        let who = if npc_only { "non-playable characters" }
+            else if ops_only { "playable operators" } else { "characters" };
         let mut out = format!("Named {who} whose death {name} shows or reports ({}), each with the line that shows it. \
 Trevor finds deaths from lines that say so; a death shown only by action can be missing.\n", named.len());
         for e in &named {
@@ -45,9 +48,11 @@ Trevor finds deaths from lines that say so; a death shown only by action can be 
                 generic.iter().map(|e| s(e, "character")).collect::<Vec<_>>().join(", ")));
         }
         let dying: HashSet<String> = events.iter()
-            .filter(|e| e["groupId"].as_str() == Some(gid) && e["kind"].as_str() == Some("dies")).map(|e| s(e, "character")).collect();
+            .filter(|e| e["groupId"].as_str() == Some(gid) && e["kind"].as_str() == Some("dies"))
+            .map(|e| s(e, "character")).collect();
         let earlier: Vec<String> = events.iter()
-            .filter(|e| e["groupId"].as_str() == Some(gid) && e["kind"].as_str() == Some("dead") && !dying.contains(&s(e, "character")))
+            .filter(|e| e["groupId"].as_str() == Some(gid) && e["kind"].as_str() == Some("dead")
+                && !dying.contains(&s(e, "character")))
             .map(|e| s(e, "character")).collect::<BTreeSet<_>>().into_iter().collect();
         if !earlier.is_empty() {
             out.push_str(&format!("Mentioned as having died earlier: {}.\n", earlier.join(", ")));
@@ -67,10 +72,12 @@ Trevor finds deaths from lines that say so; a death shown only by action can be 
         for e in events.iter().filter(|e| e["playable"].as_bool() == Some(true) && e["kind"].as_str() == Some("dies")) {
             by_op.entry(s(e, "character")).or_default().push(e);
         }
-        let (conf, unconf): (Vec<_>, Vec<_>) = by_op.iter().partition(|(_, v)| v.iter().any(|e| e["corroborated"].as_bool() == Some(true)));
+        let (conf, unconf): (Vec<_>, Vec<_>) = by_op.iter()
+            .partition(|(_, v)| v.iter().any(|e| e["corroborated"].as_bool() == Some(true)));
         let how = "the script reports it in two or more stories and they speak in no story released after";
         let mut out = format!("Playable operators whose death is confirmed ({how}), \
-as of the stories in Trevor's corpus (latest: {latest}): {}. A later story can change this, and Trevor never marks anyone as alive.\n", conf.len());
+            as of the stories in Trevor's corpus (latest: {latest}): {}. \
+            A later story can change this, and Trevor never marks anyone as alive.\n", conf.len());
         for (_, v) in &conf {
             out.push_str(&death_line(v[0])); out.push('\n');
         }
@@ -78,8 +85,9 @@ as of the stories in Trevor's corpus (latest: {latest}): {}. A later story can c
             // Not listed: on the full run these were rumors (W, Ines), titles (Graf Urtica) and misreadings
             // (Rosmontis "Are they here to take my life away?").
             let not = "that the game text does not confirm (one story only, or they speak in a later story)";
-            out.push_str(&format!("The script also reports deaths for {} more operators {not}; most are \
-rumors inside the story, titles passing between people, or misreadings. Ask about one operator (\"Does W die?\") to see the lines.\n",
+            out.push_str(&format!("The script also reports deaths for {} more operators {not}; \
+                most are rumors inside the story, titles passing between people, or misreadings. \
+                Ask about one operator (\"Does W die?\") to see the lines.\n",
                 unconf.len()));
         }
         Ok(out)
@@ -97,15 +105,17 @@ rumors inside the story, titles passing between people, or misreadings. Ask abou
         let latest = self.latest();
         let mut mine: Vec<&Value> = events.iter().filter(|e| s(e, "character") == who).collect();
         mine.sort_by_key(|e| e["releaseTime"].as_i64().unwrap_or(0));
-        let mut out = format!("What the script says about {who}'s death, in release order (as of the stories in Trevor's corpus, latest: {latest}):\n");
+        let mut out = format!("What the script says about {who}'s death, in release order \
+            (as of the stories in Trevor's corpus, latest: {latest}):\n");
         for e in &mine {
             let kind = if e["kind"].as_str() == Some("dies") { "dies" } else { "mentioned as dead" };
             out.push_str(&format!("- {kind} in {}: \"{}\"\n", s(e, "storyId"), s(e, "quote")));
         }
         if mine.iter().any(|e| e["playable"].as_bool() == Some(true) && e["corroborated"].as_bool() != Some(true)) {
-            let why = "the game text does not confirm it (reported in one story only, or they speak in a story released after)";
-            out.push_str(&format!("This is a playable operator and {why}: treat these lines as unconfirmed. Stories often \
-report deaths that turn out false (W and Ines are reported dead and are alive).\n"));
+            let why = "the game text does not confirm it \
+                (reported in one story only, or they speak in a story released after)";
+            out.push_str(&format!("This is a playable operator and {why}: treat these lines as unconfirmed. \
+                Stories often report deaths that turn out false (W and Ines are reported dead and are alive).\n"));
         }
         Ok(out)
     }

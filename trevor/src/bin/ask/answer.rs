@@ -71,8 +71,8 @@ pub(crate) struct Tables {
 /// category ("Which Rhodes Island Operator (not playable unit) had visited Iris' castle of dreams?") and whose
 /// answer's first named character fails it by the game data (Sakiko Togawa is a playable operator) is asked once more
 /// with a passage saying so; when the second answer's first name fails too, the data note is appended to it.
-pub(crate) async fn answer_one(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Names>, chrono: &Chrono, q: &str, a: &Args,
-                    tables: &mut Tables) -> Result<Answer> {
+pub(crate) async fn answer_one(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Names>, chrono: &Chrono,
+                    q: &str, a: &Args, tables: &mut Tables) -> Result<Answer> {
     let first = answer_one_inner(rts, llm, names, chrono, q, a, tables).await?;
     let first = operator_list_check(rts, llm, names, chrono, q, a, tables, first).await?;
     if a.no_answer_check || a.no_route || first.passages.is_empty() || !asks_identity(q) {
@@ -85,11 +85,14 @@ pub(crate) async fn answer_one(rts: &mut Runtimes, llm: &Llm, names: &HashMap<St
         AnswerConstraint::Playable => "a playable operator".to_owned(),
         AnswerConstraint::Nation(x) => format!("an operator from {x}"),
     };
-    let note = format!("An earlier answer to this question named {name}. By the game data, {reason}, and the question asks for {wants}. Do not give {name} as the answer. Name only someone the passages show fits the question, or say that the passages do not identify one.");
+    let note = format!("An earlier answer to this question named {name}. By the game data, {reason}, \
+        and the question asks for {wants}. Do not give {name} as the answer. \
+        Name only someone the passages show fits the question, or say that the passages do not identify one.");
     let again = Args { check_note: Some(note), routed: false, ..a.clone() };
     let mut second = answer_one_inner(rts, llm, names, chrono, q, &again, tables).await?;
     if let Some((n2, r2)) = tables.tools.failing_answer_name(q, &second.answer, &c) {
-        second.answer = format!("{}\n\nTrevor's data check: {r2}, and the question asks for {wants}, so {n2} does not fit.", second.answer);
+        second.answer = format!("{}\n\nTrevor's data check: {r2}, and the question asks for {wants}, \
+            so {n2} does not fit.", second.answer);
     }
     Ok(second)
 }
@@ -100,16 +103,18 @@ pub(crate) async fn answer_one(rts: &mut Runtimes, llm: &Llm, names: &HashMap<St
 /// each such person and the operator file the cited passage
 /// belongs to; when the second answer still lists one, the data note is appended.
 #[allow(clippy::too_many_arguments)]
-async fn operator_list_check(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Names>, chrono: &Chrono, q: &str, a: &Args,
-                             tables: &mut Tables, first: Answer) -> Result<Answer> {
+async fn operator_list_check(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Names>, chrono: &Chrono, q: &str,
+                             a: &Args, tables: &mut Tables, first: Answer) -> Result<Answer> {
     if a.no_operator_list_check || a.no_route || first.passages.is_empty() || !tables.tools.asks_operators(q) {
         return Ok(first);
     }
     let reasons = |ans: &Answer, tools: &Tools| -> Vec<String> {
         tools.non_operator_items(&ans.answer).into_iter().map(|(name, cites)| {
-            let file = cites.iter().filter_map(|n| ans.passages.get(n.wrapping_sub(1))).find_map(|id| file_owner(tools, id));
+            let file = cites.iter().filter_map(|n| ans.passages.get(n.wrapping_sub(1)))
+                .find_map(|id| file_owner(tools, id));
             match file {
-                Some(o) => format!("{name} is not a playable operator; {name} is a person named in {o}'s operator file, and what that file says {name} did is {name}'s, not {o}'s"),
+                Some(o) => format!("{name} is not a playable operator; {name} is a person named in {o}'s operator \
+                    file, and what that file says {name} did is {name}'s, not {o}'s"),
                 None => format!("{name} is not a playable operator by the game data"),
             }
         }).collect()
@@ -118,7 +123,9 @@ async fn operator_list_check(rts: &mut Runtimes, llm: &Llm, names: &HashMap<Stri
     if found.is_empty() {
         return Ok(first);
     }
-    let note = format!("An earlier answer to this question listed people as operators who are not. By the game data: {}. The question asks about operators: list only playable operators, and give each act to the person the passage says did it.", found.join("; "));
+    let note = format!("An earlier answer to this question listed people as operators who are not. \
+        By the game data: {}. The question asks about operators: list only playable operators, \
+        and give each act to the person the passage says did it.", found.join("; "));
     let again = Args { check_note: Some(note), routed: false, ..a.clone() };
     let mut second = answer_one_inner(rts, llm, names, chrono, q, &again, tables).await?;
     let still = reasons(&second, &tables.tools);
@@ -131,9 +138,11 @@ async fn operator_list_check(rts: &mut Runtimes, llm: &Llm, names: &HashMap<Stri
 /// Passages before the retrieved ones: the topic summary the router chose, then (`--lore v2`) the new dossier of a
 /// character the question names. Under v1 the prompt is the one before, byte for byte. In order after `pre` (the
 /// IS-ending passages): the topic, the new dossier, the answer-check note and the game-data passage.
-fn lead_passages(a: &Args, tools: &Tools, q: &str, topic: &Option<TopicPassage>, route: &Option<Route>, mut pre: Vec<Pre>) -> Vec<Pre> {
+fn lead_passages(a: &Args, tools: &Tools, q: &str, topic: &Option<TopicPassage>, route: &Option<Route>,
+                 mut pre: Vec<Pre>) -> Vec<Pre> {
     let topic_label = |t: &TopicPassage| if tools.deep_entry(&t.topic).is_some() {
-        format!("Trevor's topic entry (generated from the story passages, operator files and records that name it; prefer the story passages): {}", t.topic)
+        format!("Trevor's topic entry (generated from the story passages, operator files and records that name \
+            it; prefer the story passages): {}", t.topic)
     } else {
         format!("Trevor's topic summary (generated; prefer the story passages): {}", t.topic)
     };
@@ -143,16 +152,18 @@ fn lead_passages(a: &Args, tools: &Tools, q: &str, topic: &Option<TopicPassage>,
         pre.push(Pre::new(format!("dossier:{}", d.topic), label, d.text).after());
     }
     if let Some(note) = &a.check_note {
-        pre.push(Pre::new("check".into(), "Trevor's check of an earlier answer against the game data".into(), note.clone()).after());
+        pre.push(Pre::new("check".into(), "Trevor's check of an earlier answer against the game data".into(),
+                          note.clone()).after());
     }
     if let Some(g) = tools.game_data(q) {
-        pre.push(Pre::new(format!("gamedata:{}", g.topic), format!("game data: {}", g.topic), g.text).after().with_rule());
+        pre.push(Pre::new(format!("gamedata:{}", g.topic), format!("game data: {}", g.topic), g.text)
+            .after().with_rule());
     }
     pre
 }
 
-pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Names>, chrono: &Chrono, q: &str, a: &Args,
-                          tables: &mut Tables) -> Result<Answer> {
+pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Names>, chrono: &Chrono,
+                          q: &str, a: &Args, tables: &mut Tables) -> Result<Answer> {
     // The relation rule is about people: not for a question naming a nation, place, race or organization topic.
     let people_only;
     let a = if a.relation_rule && tables.tools.names_group_topic(q) {
@@ -202,16 +213,18 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
                     let c = &rt4.store.chunks[r];
                     let label = match c.group_id.as_str() {
                         "archive" => format!("operator file: {}", c.story_id.trim_start_matches("archive_")),
-                        g if RECORD_KINDS.contains(&g) || g == "voice" => c.text.lines().next().unwrap_or_default().to_owned(),
+                        g if RECORD_KINDS.contains(&g) || g == "voice" =>
+                            c.text.lines().next().unwrap_or_default().to_owned(),
                         _ => story_label(names, &c.story_id),
                     };
-                    pre.insert(at, Pre::new(c.chunk_id.clone(), format!("{label}; it names {spelling}"), c.text.clone()));
+                    pre.insert(at, Pre::new(c.chunk_id.clone(), format!("{label}; it names {spelling}"),
+                                            c.text.clone()));
                     at += 1;
                 }
                 if !glossary.is_empty() {
                     let text = glossary.iter().map(|(n, t)| format!("{n}: {t}")).collect::<Vec<_>>().join("\n");
-                    pre.insert(at, Pre::new("glossary".into(), "Trevor's glossary of the terms these passages use (generated from its topic \
-summaries; prefer the passages)".into(), text));
+                    pre.insert(at, Pre::new("glossary".into(), "Trevor's glossary of the terms these passages use \
+                        (generated from its topic summaries; prefer the passages)".into(), text));
                 }
                 if !q.to_lowercase().contains(&spelling.to_lowercase()) {
                     term_search = Some(format!("{q} {spelling}"));
@@ -252,13 +265,16 @@ summaries; prefer the passages)".into(), text));
         }
     }
     // The scoped scenes go first (before a term lookup's records), and are not repeated among the retrieved passages.
-    let scoped = if !a.no_scoped_scenes && !a.no_route && kind.is_none() { scoped_scenes(rt, &tables.tools, q) } else { None };
+    let scoped = if !a.no_scoped_scenes && !a.no_route && kind.is_none() { scoped_scenes(rt, &tables.tools, q) }
+        else { None };
     if let Some((ename, who, rows)) = &scoped {
         for (i, &r) in rows.iter().enumerate() {
             let c = &rt.store.chunks[r];
             let label = story_label(names, &c.story_id);
-            pre.insert(i, Pre::new(c.chunk_id.clone(), format!("{label}; a scene of {ename} in which {} speaks or is named",
-                who.join(" or ")), c.text.clone()).in_scope());
+            pre.insert(i, Pre::new(c.chunk_id.clone(),
+                                   format!("{label}; a scene of {ename} in which {} speaks or is named",
+                                           who.join(" or ")),
+                                   c.text.clone()).in_scope());
         }
     }
     // Character-scoped scenes: no event named, one character named as the subject of a said or done act. They are added
@@ -269,7 +285,8 @@ summaries; prefer the passages)".into(), text));
             for (i, (r, text, _)) in rows.iter().enumerate() {
                 let c = &rt.store.chunks[*r];
                 let label = story_label(names, &c.story_id);
-                pre.insert(i, Pre::new(c.chunk_id.clone(), format!("{label}; {CHAR_LABEL} {who} speaks"), text.clone()).in_scope());
+                pre.insert(i, Pre::new(c.chunk_id.clone(), format!("{label}; {CHAR_LABEL} {who} speaks"), text.clone())
+                    .in_scope());
             }
         }
     }
@@ -294,8 +311,9 @@ summaries; prefer the passages)".into(), text));
         if let Some(op) = retry_op {
             let rt2 = rts.pick_art()?;
             let wide = rt2.retrieve(q, &RetrievalConfig { mode: Mode::Hybrid, k: 60, ..RetrievalConfig::default() })?;
-            let own = wide.iter().map(|h| &rt2.store.chunks[h.row]).find(|c| FALLBACK_KINDS.contains(&c.group_id.as_str())
-                && typed_owner(c.text.lines().next().unwrap_or_default()).is_some_and(|o| norm(&o) == norm(&op)))
+            let own = wide.iter().map(|h| &rt2.store.chunks[h.row])
+                .find(|c| FALLBACK_KINDS.contains(&c.group_id.as_str())
+                    && typed_owner(c.text.lines().next().unwrap_or_default()).is_some_and(|o| norm(&o) == norm(&op)))
                 .map(|c| c.group_id.clone());
             if let Some(k) = own {
                 let k: &'static str = FALLBACK_KINDS.iter().find(|x| **x == k).copied().unwrap_or("voice");
@@ -305,7 +323,8 @@ summaries; prefer the passages)".into(), text));
                 // operator's units and answer with that operator.
                 let cites_own = second.cited.iter().any(|id| rt2.store.chunks.iter().find(|c| c.chunk_id == *id)
                     .is_some_and(|c| FALLBACK_KINDS.contains(&c.group_id.as_str())
-                        && typed_owner(c.text.lines().next().unwrap_or_default()).is_some_and(|o| norm(&o) == norm(&op))));
+                        && typed_owner(c.text.lines().next().unwrap_or_default())
+                            .is_some_and(|o| norm(&o) == norm(&op))));
                 if !declines(&second.answer) && cites_own {
                     return Ok(second);
                 }
@@ -330,7 +349,8 @@ pub(crate) async fn route_checked(q: &str, a: &Args, tables: &mut Tables, llm: O
 /// The chunk ids an answer cites, in citation order, and how many citations point at no passage. "[4]", "[4, 5]" and
 /// "[4][5]" all cite; anything else in brackets is prose. Numbers 1 to `off` are the passages before the retrieved
 /// rows, then the rows, then `post`.
-fn citations(text: &str, off: usize, first: &[&Pre], rows: &[usize], post: &[&Pre], rt: &Runtime) -> (Vec<String>, usize) {
+fn citations(text: &str, off: usize, first: &[&Pre], rows: &[usize], post: &[&Pre], rt: &Runtime)
+    -> (Vec<String>, usize) {
     let mut cited = Vec::new();
     let mut invalid = 0usize;
     let mut i = 0;
@@ -339,7 +359,8 @@ fn citations(text: &str, off: usize, first: &[&Pre], rows: &[usize], post: &[&Pr
         let Some(close) = text[start..].find(']') else { break };
         // "[4]", "[4, 5]" and "[4][5]" all cite; anything else in brackets is prose.
         let inner = &text[start..start + close];
-        let nums: Vec<usize> = inner.split([',', ';', ' ']).filter(|t| !t.is_empty()).filter_map(|t| t.parse().ok()).collect();
+        let nums: Vec<usize> = inner.split([',', ';', ' ']).filter(|t| !t.is_empty())
+            .filter_map(|t| t.parse().ok()).collect();
         if !nums.is_empty() && nums.len() == inner.split([',', ';', ' ']).filter(|t| !t.is_empty()).count() {
             for n in nums {
                 if (1..=off).contains(&n) {
@@ -379,7 +400,8 @@ pub(crate) fn passage_label(names: &HashMap<String, Names>, c: &Chunk) -> String
         "archive" => format!("operator file: {}", c.story_id.trim_start_matches("archive_")),
         "profile" => format!("Trevor's character dossier (a summary written by Trevor): {}", c.story_id),
         "summary" => format!("Trevor's event summary (written by Trevor): {}", c.story_id),
-        "module" | "voice" | "is" | "enemy" | "skin" | "item" | "art" | "gametext" => c.text.lines().next().unwrap_or_default().to_owned(),
+        "module" | "voice" | "is" | "enemy" | "skin" | "item" | "art" | "gametext" =>
+            c.text.lines().next().unwrap_or_default().to_owned(),
         _ => story_label(names, &c.story_id),
     }
 }
@@ -387,8 +409,8 @@ pub(crate) fn passage_label(names: &HashMap<String, Names>, c: &Chunk) -> String
 /// One answer from the passages retrieved for `search`, answering `q`. A topic summary, when the router chose one,
 /// is passage [1] and the retrieved passages follow.
 #[allow(clippy::too_many_arguments)]
-pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<String, Names>, chrono: &Chrono, q: &str, search: &str,
-                     a: &Args, pre: &[Pre], kind: Option<&str>, form: Option<&Form>) -> Result<Answer> {
+pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<String, Names>, chrono: &Chrono, q: &str,
+                     search: &str, a: &Args, pre: &[Pre], kind: Option<&str>, form: Option<&Form>) -> Result<Answer> {
     let opinion_form = form.is_some_and(|f| f.form == "opinion");
     let (mut rows, lore) = passages(rt, search, a, kind, form)?;
     // Under a spoiler horizon (`--serve` jobs): only chunks released at or before it, and of the generated passages
@@ -434,7 +456,8 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
     if time_q {
         user.push_str(&timeline_notes(rt, chrono, &rows, off));
     }
-    let subject_lines = if time_q && !a.no_chrono_subject && asks_when(q) { chronology_for(q, chrono) } else { String::new() };
+    let subject_lines = if time_q && !a.no_chrono_subject && asks_when(q) { chronology_for(q, chrono) }
+        else { String::new() };
     let time_evidence = !a.no_time_evidence && !subject_lines.is_empty();
     if !time_evidence {
         user.push_str(&subject_lines);
@@ -473,7 +496,8 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
         system.push_str(RELATION_RULE);
     }
     if !scoped.is_empty() {
-        let tail = if pre.iter().any(|p| p.scoped && p.label.contains(CHAR_LABEL)) { CHAR_RULE_TAIL } else { SCOPED_RULE_TAIL };
+        let tail = if pre.iter().any(|p| p.scoped && p.label.contains(CHAR_LABEL)) { CHAR_RULE_TAIL }
+            else { SCOPED_RULE_TAIL };
         system.push_str(&format!("{SCOPED_RULE_HEAD}{}{tail}", scoped.len()));
     }
     if synth_q {
@@ -496,11 +520,13 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
         // The typed units lead the passages, so the source-kind rule's "say Trevor lacks that text" does not apply: it
         // made the Angelina answer open with a decline although passage [1] was her outfit. The two parts are spelled
         // out: with the lore passages merely present, Gemma answered from [1] alone.
-        Some(l) => system.push_str(&format!(" Passages [{}] to [{}] are the source text the question asks about (their label \
-names the kind); never say Trevor lacks that text. Answer in two parts. First, what that source text says, citing [{}] to [{}]. \
-Then a paragraph that begins \"Lore context:\" and explains the people, places, powers and events the source text mentions, \
-from passages [{}] to [{}] (story and operator-file passages about them), with citations; if those passages say nothing about \
-what it mentions, say so in one sentence.", 1 + off, l.units + off, 1 + off, l.units + off, l.units + 1 + off,
+        Some(l) => system.push_str(&format!(" Passages [{}] to [{}] are the source text the question asks about \
+            (their label names the kind); never say Trevor lacks that text. Answer in two parts. \
+            First, what that source text says, citing [{}] to [{}]. \
+            Then a paragraph that begins \"Lore context:\" and explains the people, places, powers and events \
+            the source text mentions, from passages [{}] to [{}] (story and operator-file passages about them), \
+            with citations; if those passages say nothing about what it mentions, say so in one sentence.",
+            1 + off, l.units + off, 1 + off, l.units + off, l.units + 1 + off,
             l.units + l.lore.max(1) + off)),
         None => {
             if !a.no_route && flags.asks_source_text {
@@ -517,8 +543,8 @@ what it mentions, say so in one sentence.", 1 + off, l.units + off, 1 + off, l.u
     let (cited, invalid) = citations(&c.content, off, &first, &rows, &post, rt);
     let mut answer = c.content.trim().to_owned();
     if !a.no_route && is_open_listing(q) {
-        answer = format!("Trevor has no complete table for this question, so this list comes only from the {} passages it \
-read and is not complete.\n\n{answer}", rows.len());
+        answer = format!("Trevor has no complete table for this question, so this list comes only from the {} \
+            passages it read and is not complete.\n\n{answer}", rows.len());
     }
     Ok(Answer {
         qid: None,
@@ -526,7 +552,9 @@ read and is not complete.\n\n{answer}", rows.len());
         answer,
         cited,
         passages: first.iter().map(|p| p.id.clone())
-            .chain(rows.iter().map(|&r| rt.store.chunks[r].chunk_id.clone())).chain(post.iter().map(|p| p.id.clone())).collect(),
+            .chain(rows.iter().map(|&r| rt.store.chunks[r].chunk_id.clone()))
+            .chain(post.iter().map(|p| p.id.clone()))
+            .collect(),
         invalid_citations: invalid,
         prompt_tokens: c.prompt_tokens,
         ms: started.elapsed().as_secs_f64() * 1000.0,

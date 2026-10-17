@@ -17,16 +17,19 @@ impl Tools {
     pub fn cross_ref(&self, table: &str) -> ToolResult {
         let name = CROSSREF_TABLES.iter().find(|t| norm(t) == norm(table))
             .ok_or_else(|| ToolError::BadArg { arg: "table", value: table.to_owned() })?;
-        let v = self.crossref.get(*name).ok_or(ToolError::Missing("artifacts/crossref/bosses_playable.json (scripts/crossref.py)"))?;
+        let v = self.crossref.get(*name)
+            .ok_or(ToolError::Missing("artifacts/crossref/bosses_playable.json (scripts/crossref.py)"))?;
         let rows = v["rows"].as_array().map(Vec::as_slice).unwrap_or_default();
         let mut by_op: BTreeMap<String, Vec<&Value>> = BTreeMap::new();
         for r in rows {
             by_op.entry(s(r, "operator")).or_default().push(r);
         }
-        let mut out = format!("Boss enemies you fight that are also playable operators, from the game data (the enemy handbook's {} boss \
-entries matched by name to the {} obtainable operators, through the codename, the operator's real name or Trevor's identity links): \
-{} operators. A match by name means the same character; a simulated or training version of an ally counts too, and a boss who \
-joins later under another name is found only when a real name or identity link connects the two, so the list may miss some.\n",
+        let mut out = format!("Boss enemies you fight that are also playable operators, from the game data \
+            (the enemy handbook's {} boss entries matched by name to the {} obtainable operators, \
+            through the codename, the operator's real name or Trevor's identity links): {} operators. \
+            A match by name means the same character; a simulated or training version of an ally counts too, \
+            and a boss who joins later under another name is found only when a real name or identity link \
+            connects the two, so the list may miss some.\n",
             v["bosses"].as_u64().unwrap_or(0), v["operators"].as_u64().unwrap_or(0), by_op.len());
         for (op, rs) in &by_op {
             let bosses = rs.iter().map(|r| format!("\"{}\" (matched by {})", s(r, "boss"),
@@ -42,7 +45,8 @@ joins later under another name is found only when a real name or identity link c
     /// # Errors
     /// Missing table, or a character with no speaking or mentioning chunk.
     pub fn appearances(&self, character: &str) -> ToolResult {
-        let v = self.appearances.as_ref().ok_or(ToolError::Missing("artifacts/appearances/appearances.json (scripts/appearances.py)"))?;
+        let v = self.appearances.as_ref()
+            .ok_or(ToolError::Missing("artifacts/appearances/appearances.json (scripts/appearances.py)"))?;
         let chars = v["characters"].as_object().ok_or(ToolError::Missing("artifacts/appearances/appearances.json"))?;
         let keys: Vec<&str> = chars.keys().map(String::as_str).collect();
         let name = self.resolve_name("character", character, &keys)?;
@@ -61,8 +65,10 @@ joins later under another name is found only when a real name or identity link c
             return Err(ToolError::NotFound { what: "appearance", name: character.to_owned() });
         }
         let scenes = |n: u64| if n == 1 { "1 scene".to_owned() } else { format!("{n} scenes") };
-        let mut out = format!("Where {name} appears in the story text Trevor has, from the scripts' speaker labels and name matches \
-(game text, not a summary; a scene is a passage of about 400 tokens):\n\nSpeaks in {} stories, in EN release order:\n", speaks.len());
+        let mut out = format!("Where {name} appears in the story text Trevor has, \
+            from the scripts' speaker labels and name matches \
+            (game text, not a summary; a scene is a passage of about 400 tokens):\n\n\
+            Speaks in {} stories, in EN release order:\n", speaks.len());
         for (_, l, n) in &speaks {
             out.push_str(&format!("- {l} ({})\n", scenes(*n)));
         }
@@ -78,8 +84,9 @@ joins later under another name is found only when a real name or identity link c
             out.push_str(&format!("\nAlso named in the operator files, voice lines, modules or outfits of: {}.\n",
                 owners.into_iter().collect::<Vec<_>>().join(", ")));
         }
-        out.push_str("\nNot counted: stories without speaker labels (Integrated Strategies, paradox simulations, which have no script \
-in the game data), and appearances under a name the identity links do not connect.");
+        out.push_str("\nNot counted: stories without speaker labels \
+            (Integrated Strategies, paradox simulations, which have no script in the game data), \
+            and appearances under a name the identity links do not connect.");
         Ok(out)
     }
 
@@ -92,7 +99,9 @@ in the game data), and appearances under a name the identity links do not connec
         }
         let attrs = self.attributes.as_ref()?;
         attrs.iter().filter_map(|a| a["charId"].as_str().map(|c| (c, a)))
-            .filter(|(c, _)| id.contains(*c) || id.split('_').next_back().is_some_and(|x| c.ends_with(&format!("_{x}")) && id.starts_with("module_")))
+            .filter(|(c, _)| id.contains(*c)
+                || id.split('_').next_back()
+                    .is_some_and(|x| c.ends_with(&format!("_{x}")) && id.starts_with("module_")))
             .max_by_key(|(c, _)| c.len()).map(|(_, a)| s(a, "name"))
     }
 
@@ -104,8 +113,10 @@ in the game data), and appearances under a name the identity links do not connec
         let n = norm(q);
         let appear = ["appear", "appears", "appeared", "appearance", "appearances", "show up", "shows up", "showed up",
             "featured", "feature", "features", "present in"];
-        let story = ["chapter", "chapters", "event", "events", "story", "stories", "episode", "episodes", "storyline", "storylines"];
-        if !appear.iter().any(|w| contains_words(&n, w)) || !story.iter().any(|w| contains_words(&n, w)) || contains_words(&n, "first") {
+        let story = ["chapter", "chapters", "event", "events", "story", "stories", "episode", "episodes", "storyline",
+            "storylines"];
+        if !appear.iter().any(|w| contains_words(&n, w)) || !story.iter().any(|w| contains_words(&n, w))
+            || contains_words(&n, "first") {
             return None;
         }
         let chars = self.appearances.as_ref()?["characters"].as_object()?;
@@ -134,7 +145,8 @@ in the game data), and appearances under a name the identity links do not connec
         let t: Vec<&str> = n.split(' ').collect();
         // An event named as a time boundary ("What happened to Mandragora after Episode 10?") is not the scope: the
         // question asks about what lies outside it.
-        let boundary = |w: Option<&&str>| w.is_some_and(|w| matches!(*w, "after" | "before" | "since" | "until" | "following"));
+        let boundary = |w: Option<&&str>| w
+            .is_some_and(|w| matches!(*w, "after" | "before" | "since" | "until" | "following"));
         for (i, w) in t.iter().enumerate() {
             if matches!(*w, "episode" | "chapter") && !boundary(i.checked_sub(1).and_then(|j| t.get(j))) {
                 if let Some(x) = t.get(i + 1).and_then(|x| x.parse::<u64>().ok()) {
@@ -150,7 +162,8 @@ in the game data), and appearances under a name the identity links do not connec
                 let gn = norm(g["name"].as_str()?);
                 let s = gn.strip_prefix("the ").unwrap_or(&gn).to_owned();
                 let at = format!(" {n} ").find(&format!(" {s} "))?;
-                let before: Vec<&str> = n[..at.min(n.len())].split(' ').filter(|w| !w.is_empty() && *w != "the").collect();
+                let before: Vec<&str> = n[..at.min(n.len())].split(' ')
+                    .filter(|w| !w.is_empty() && *w != "the").collect();
                 (s.len() >= 6 && !boundary(before.last())).then_some((g, s.len()))
             })
             .max_by_key(|(_, l)| *l).map(|(g, _)| g)
@@ -164,7 +177,8 @@ in the game data), and appearances under a name the identity links do not connec
     pub fn event_characters(&self, q: &str, gid: &str, event_name: &str) -> Vec<(String, Vec<String>)> {
         let n = norm(q);
         let en = norm(event_name);
-        let Some(chars) = self.appearances.as_ref().and_then(|v| v["characters"].as_object()) else { return Vec::new() };
+        let Some(chars) = self.appearances.as_ref().and_then(|v| v["characters"].as_object())
+        else { return Vec::new() };
         let mut out: Vec<(String, Vec<String>)> = Vec::new();
         for (name, c) in chars {
             // A race, nation, place or organization used as a speaker label ("Sarkaz", "Liberi") is not a character.
@@ -199,8 +213,9 @@ in the game data), and appearances under a name the identity links do not connec
     pub fn cross_ref_question(&self, q: &str) -> Option<&'static str> {
         let n = norm(q);
         let boss = contains_words(&n, "boss") || contains_words(&n, "bosses");
-        let join = ["playable", "join", "joins", "joined", "joining", "operator", "operators", "recruit", "recruitable", "obtain",
-            "obtainable", "ally", "allies", "our side", "your side", "rhodes island side"].iter().any(|w| contains_words(&n, w));
+        let join = ["playable", "join", "joins", "joined", "joining", "operator", "operators", "recruit", "recruitable",
+            "obtain", "obtainable", "ally", "allies", "our side", "your side", "rhodes island side"].iter()
+            .any(|w| contains_words(&n, w));
         (boss && join && self.crossref.contains_key("bosses_playable")).then_some("bosses_playable")
     }
 }

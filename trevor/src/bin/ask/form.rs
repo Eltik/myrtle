@@ -28,8 +28,8 @@ pub(crate) struct Flags {
 
 impl Flags {
     pub(crate) fn keywords(q: &str) -> Flags {
-        Flags { asks_time: is_time_question(q), asks_canon: is_canon_question(q), asks_synthesis: is_synthesis_question(q),
-                asks_source_text: is_source_question(q) }
+        Flags { asks_time: is_time_question(q), asks_canon: is_canon_question(q),
+                asks_synthesis: is_synthesis_question(q), asks_source_text: is_source_question(q) }
     }
 }
 

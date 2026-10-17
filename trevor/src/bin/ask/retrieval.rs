@@ -17,7 +17,8 @@ use crate::form::Form;
 use crate::kinds::{CHARACTER_GROUPS, LORE_KINDS, TYPED};
 
 /// Hits of `extra` and `hits` alternately, first seen wins.
-pub(crate) fn interleave(extra: Vec<trevor::search::pipeline::Hit>, hits: Vec<trevor::search::pipeline::Hit>) -> Vec<trevor::search::pipeline::Hit> {
+pub(crate) fn interleave(extra: Vec<trevor::search::pipeline::Hit>, hits: Vec<trevor::search::pipeline::Hit>)
+    -> Vec<trevor::search::pipeline::Hit> {
     let mut taken: BTreeSet<usize> = BTreeSet::new();
     let mut mixed = Vec::with_capacity(hits.len() + extra.len());
     let (mut x, mut y) = (extra.into_iter(), hits.into_iter());
@@ -73,7 +74,8 @@ pub(crate) struct Lore {
 }
 
 /// Passages for `q`, and for a typed source with its lore (see below) how many units and lore hits lead them.
-pub(crate) fn passages(rt: &mut Runtime, q: &str, a: &Args, kind: Option<&str>, form: Option<&Form>) -> Result<(Vec<usize>, Option<Lore>)> {
+pub(crate) fn passages(rt: &mut Runtime, q: &str, a: &Args, kind: Option<&str>, form: Option<&Form>)
+    -> Result<(Vec<usize>, Option<Lore>)> {
     let cfg = RetrievalConfig { mode: Mode::Hybrid, k: a.k, ..RetrievalConfig::default() };
     let mut hits = rt.retrieve(q, &cfg)?;
     let mut lore_added: Option<Lore> = None;
@@ -99,14 +101,24 @@ pub(crate) fn passages(rt: &mut Runtime, q: &str, a: &Args, kind: Option<&str>, 
         // and a dossier's title), six in all.
         let mut per_name: HashMap<String, usize> = HashMap::new();
         let named: Vec<_> = form.map(|f| f.named.clone()).unwrap_or_default().into_iter()
-            .filter(|(_, asked, _)| { let n = per_name.entry(asked.to_lowercase()).or_default(); *n += 1; *n <= 2 }).take(CANDIDATES).collect();
+            .filter(|(_, asked, _)| {
+                let n = per_name.entry(asked.to_lowercase()).or_default();
+                *n += 1;
+                *n <= 2
+            })
+            .take(CANDIDATES)
+            .collect();
         for (sid, asked, file) in named {
             let own = rt.retrieve(&format!("{file} {asked} {ev}"), &RetrievalConfig { k: 60, ..cfg })?;
-            let mine: Vec<_> = own.into_iter().filter(|h| rt.store.chunks[h.row].story_id == sid).take(CANDIDATE_PER_CHARACTER).collect();
+            let mine: Vec<_> = own.into_iter()
+                .filter(|h| rt.store.chunks[h.row].story_id == sid)
+                .take(CANDIDATE_PER_CHARACTER)
+                .collect();
             // A named character always gets its file: the first chunk when the query ranks none of it in the top 60.
             if mine.is_empty() {
                 if let Some(&row) = rt.store.story_rows(&sid).first() {
-                    cands.push(trevor::search::pipeline::Hit { row, score: 0.0, dense_rank: None, bm25_rank: None, fused_rank: None });
+                    cands.push(trevor::search::pipeline::Hit { row, score: 0.0, dense_rank: None, bm25_rank: None,
+                                                               fused_rank: None });
                 }
             }
             cands.extend(mine);
@@ -129,8 +141,12 @@ pub(crate) fn passages(rt: &mut Runtime, q: &str, a: &Args, kind: Option<&str>, 
         let mut own: Vec<trevor::search::pipeline::Hit> = Vec::new();
         for (topic, forms) in &groups {
             let found = rt.retrieve(&format!("{topic} {ev}"), &RetrievalConfig { k: 60, ..cfg })?;
-            let names = |row: usize| { let t = norm(&rt.store.chunks[row].text); forms.iter().any(|f| contains_words(&t, &norm(f))) };
-            let mine: Vec<_> = found.into_iter().filter(|h| names(h.row) && !own.iter().chain(&cands).any(|x| x.row == h.row))
+            let names = |row: usize| {
+                let t = norm(&rt.store.chunks[row].text);
+                forms.iter().any(|f| contains_words(&t, &norm(f)))
+            };
+            let mine: Vec<_> = found.into_iter()
+                .filter(|h| names(h.row) && !own.iter().chain(&cands).any(|x| x.row == h.row))
                 .take(GROUP_EVIDENCE).collect();
             own.extend(mine);
         }
@@ -162,7 +178,10 @@ pub(crate) fn passages(rt: &mut Runtime, q: &str, a: &Args, kind: Option<&str>, 
             if let Some(top) = pref.first() {
                 let text: String = rt.store.chunks[top.row].text.chars().take(600).collect();
                 let lq = rt.retrieve(&text, &RetrievalConfig { k: 40, ..cfg })?;
-                lore = lq.into_iter().filter(|h| !TYPED.contains(&rt.store.chunks[h.row].group_id.as_str())).take(4).collect();
+                lore = lq.into_iter()
+                    .filter(|h| !TYPED.contains(&rt.store.chunks[h.row].group_id.as_str()))
+                    .take(4)
+                    .collect();
             }
         }
         if lore_here && !pref.is_empty() {
@@ -183,13 +202,17 @@ pub(crate) fn passages(rt: &mut Runtime, q: &str, a: &Args, kind: Option<&str>, 
         for h in &wide {
             *count.entry(rt.store.chunks[h.row].story_id.as_str()).or_default() += 1;
         }
-        let top = count.iter().filter(|(_, n)| **n >= 3).max_by_key(|(sid, n)| (**n, std::cmp::Reverse(**sid))).map(|(s, _)| (*s).to_owned());
+        let top = count.iter()
+            .filter(|(_, n)| **n >= 3)
+            .max_by_key(|(sid, n)| (**n, std::cmp::Reverse(**sid)))
+            .map(|(s, _)| (*s).to_owned());
         if let Some(sid) = top {
             let rows = rt.store.story_rows(&sid);
             let pos = |row: usize| rows.iter().position(|&r| r == row).unwrap_or(usize::MAX);
             let lead = hits.iter().chain(wide.iter()).find(|h| rt.store.chunks[h.row].story_id == sid).cloned();
             if let Some(lead) = lead {
-                let mut add: Vec<_> = wide.iter().filter(|h| rt.store.chunks[h.row].story_id == sid && pos(h.row) < pos(lead.row))
+                let mut add: Vec<_> = wide.iter()
+                    .filter(|h| rt.store.chunks[h.row].story_id == sid && pos(h.row) < pos(lead.row))
                     .cloned().collect();
                 add.sort_by_key(|h| pos(h.row));
                 add.truncate(5);
@@ -296,7 +319,9 @@ pub(crate) fn opinion_needs_candidates(rt: &Runtime, tools: &Tools, q: &str, nam
 pub(crate) fn names_proper_word(rt: &Runtime, q: &str) -> bool {
     q.split(|c: char| !c.is_alphanumeric()).filter(|w| w.chars().count() >= 3).any(|w| {
         let mut cs = w.chars();
-        let cap: String = cs.next().map(char::to_uppercase).into_iter().flatten().chain(cs.flat_map(char::to_lowercase)).collect();
+        let cap: String = cs.next().map(char::to_uppercase).into_iter().flatten()
+            .chain(cs.flat_map(char::to_lowercase))
+            .collect();
         proper_name(rt, &cap)
     })
 }
@@ -310,7 +335,10 @@ pub(crate) fn people_named(rt: &Runtime, tools: &Tools, q: &str) -> Vec<String> 
     let np = norm(&q.replace('\u{2019}', "'").replace("'s", " "));
     let hit = |x: &str| { let k = norm(x); k.chars().count() >= 3
         && (contains_words(&n, &k) || contains_words(&np, &k)) };
-    let mut names: Vec<&str> = tools.operator_names().into_iter().chain(tools.speaker_names()).filter(|x| hit(x)).collect();
+    let mut names: Vec<&str> = tools.operator_names().into_iter()
+        .chain(tools.speaker_names())
+        .filter(|x| hit(x))
+        .collect();
     names.extend(tools.identities.iter().flatten().map(String::as_str).filter(|x| hit(x)));
     let mut keys: Vec<String> = names.into_iter().map(trevor::tools::norm).collect();
     keys.sort_by_key(|k| std::cmp::Reverse(k.len()));
@@ -323,7 +351,10 @@ pub(crate) fn people_named(rt: &Runtime, tools: &Tools, q: &str) -> Vec<String> 
             continue;
         }
         let shown = tools.operator_names().into_iter().chain(tools.speaker_names())
-            .chain(tools.identities.iter().flatten().map(String::as_str)).find(|x| norm(x) == k).unwrap_or_default().to_owned();
+            .chain(tools.identities.iter().flatten().map(String::as_str))
+            .find(|x| norm(x) == k)
+            .unwrap_or_default()
+            .to_owned();
         if proper_name(rt, &shown) || capitalized_in(q, &shown) {
             out.push(k);
         }
@@ -398,7 +429,8 @@ pub(crate) struct Runtimes {
 /// reranker loads on first use (`scenes::ensure_reranker`); the query embedder of `share` is reused when it fits
 /// (`Runtime::load_sharing`).
 /// `TREVOR_LOAD_DEBUG=1` prints the load time.
-pub(crate) fn load_runtime(a: &RuntimeArgs, dense: bool, share: Option<trevor::search::runtime::SharedEmbedder>) -> Result<Runtime> {
+pub(crate) fn load_runtime(a: &RuntimeArgs, dense: bool, share: Option<trevor::search::runtime::SharedEmbedder>)
+    -> Result<Runtime> {
     let t = std::time::Instant::now();
     let mut rt = Runtime::load_sharing(a, dense, true, false, share)?;
     rt.bm25_only = !dense;

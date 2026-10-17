@@ -44,7 +44,10 @@ fn main() -> Result<()> {
         let u: serde_json::Value = serde_json::from_str(l)?;
         let sid = u["storyId"].as_str().context("storyId")?.to_owned();
         let group = u["groupId"].as_str().context("groupId")?.to_owned();
-        let speakers: Vec<String> = u["speakers"].as_array().map(|v| v.iter().filter_map(|x| x.as_str().map(str::to_owned)).collect()).unwrap_or_default();
+        let speakers: Vec<String> = u["speakers"]
+            .as_array()
+            .map(|v| v.iter().filter_map(|x| x.as_str().map(str::to_owned)).collect())
+            .unwrap_or_default();
         let text = u["text"].as_str().unwrap_or_default();
         let mut it = text.lines();
         let title = it.next().unwrap_or_default().to_owned();

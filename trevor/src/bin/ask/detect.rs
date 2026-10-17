@@ -14,20 +14,21 @@ pub(crate) fn is_time_question(q: &str) -> bool {
 }
 
 pub(crate) fn is_canon_question(q: &str) -> bool {
-    has(q, &["canon", "official", "retcon", "mistranslat", "translation", "translated", "cn version", "en version", "localiz",
-             "developer", "the devs", "hypergryph said", "writer"])
+    has(q, &["canon", "official", "retcon", "mistranslat", "translation", "translated", "cn version", "en version",
+             "localiz", "developer", "the devs", "hypergryph said", "writer"])
 }
 
 pub(crate) fn is_opinion_question(q: &str) -> bool {
-    has(q, &["do you think", "what do you think", "who would win", "would win", "strongest", "most powerful", "stronger than",
-             "predict", "prediction", "will happen", "theory", "theories", "speculat", "your opinion", "overrated",
-             "underrated", "favorite", "favourite"])
+    has(q, &["do you think", "what do you think", "who would win", "would win", "strongest", "most powerful",
+             "stronger than", "predict", "prediction", "will happen", "theory", "theories", "speculat", "your opinion",
+             "overrated", "underrated", "favorite", "favourite"])
 }
 
 /// The P4 source kind a question names, if any.
 pub(crate) fn source_kind(q: &str) -> Option<&'static str> {
     [("module", &["module"][..]),
-     ("voice", &["voice line", "voiceline", "voice lines", "poke", "trust line", "interact line", "dorm line", "says when"][..]),
+     ("voice", &["voice line", "voiceline", "voice lines", "poke", "trust line", "interact line", "dorm line",
+                 "says when"][..]),
      ("skin", &["skin", "outfit"][..]),
      ("is", &["integrated strategies", "roguelike", " is1", " is2", " is3", " is4", " is5", " is6", "is#"][..]),
      ("enemy", &["enemy file", "enemy description", "enemy entry", "enemy handbook"][..]),
@@ -55,10 +56,11 @@ pub(crate) fn asks_identity(q: &str) -> bool {
 }
 
 /// Words that make a named character the subject of a said or done act ("Mon3tr suggested", "did Necrass say").
-pub(crate) const SAID_VERBS: [&str; 39] = ["say", "said", "says", "tell", "told", "tells", "suggest", "suggested", "suggests", "declare",
-    "declared", "declares", "joke", "joked", "jokes", "admit", "admitted", "admits", "threaten", "threatened", "threatens",
-    "propose", "proposed", "proposes", "offer", "offered", "offers", "mention", "mentioned", "mentions", "claim", "claimed",
-    "claims", "promise", "promised", "promises", "confess", "confessed", "confesses"];
+pub(crate) const SAID_VERBS: [&str; 39] = [
+    "say", "said", "says", "tell", "told", "tells", "suggest", "suggested", "suggests", "declare", "declared",
+    "declares", "joke", "joked", "jokes", "admit", "admitted", "admits", "threaten", "threatened", "threatens",
+    "propose", "proposed", "proposes", "offer", "offered", "offers", "mention", "mentioned", "mentions", "claim",
+    "claimed", "claims", "promise", "promised", "promises", "confess", "confessed", "confesses"];
 
 /// Whether the question makes the character (any of `forms`, folded) the subject of an act it asks about: a form followed,
 /// with at most one word between, by a said verb (`SAID_VERBS`), or, when the question asks in which event, story,
@@ -72,7 +74,8 @@ pub(crate) fn asks_scene(q: &str, forms: &[String]) -> bool {
     forms.iter().any(|f| {
         let fw: Vec<&str> = f.split_whitespace().collect();
         (0..words.len()).filter(|&i| !fw.is_empty() && words[i..].starts_with(&fw)).any(|i| {
-            words.iter().skip(i + fw.len()).take(2).any(|w| SAID_VERBS.contains(w) || (asks_place && w.len() > 4 && w.ends_with("ed")))
+            words.iter().skip(i + fw.len()).take(2)
+                .any(|w| SAID_VERBS.contains(w) || (asks_place && w.len() > 4 && w.ends_with("ed")))
         })
     })
 }
@@ -80,15 +83,16 @@ pub(crate) fn asks_scene(q: &str, forms: &[String]) -> bool {
 /// Whether a relation question asks whom someone admires (one person named, the other asked for).
 pub(crate) fn asks_admire(q: &str) -> bool {
     let ql = format!(" {} ", q.to_lowercase().replace(|c: char| !c.is_alphanumeric() && c != '\'', " "));
-    [" fan of ", " idolise ", " idolises ", " idolize ", " idolizes ", " idolised ", " idolized ", " admire ", " admires ",
-     " look up to ", " looks up to "].iter().any(|w| ql.contains(w))
+    [" fan of ", " idolise ", " idolises ", " idolize ", " idolizes ", " idolised ", " idolized ", " admire ",
+     " admires ", " look up to ", " looks up to "].iter().any(|w| ql.contains(w))
 }
 
 /// "What is the khagan quest?", "what are the X", "who are the Sarkaz?": a what/who is/are question about a thing of at
 /// most 4 words, no possessive (a question about one character's trait is not a definition).
 pub(crate) fn asks_term(q: &str) -> bool {
     let l = q.trim().to_lowercase().replace('’', "'");
-    let rest = ["what is ", "what are ", "what was ", "what were ", "what's ", "whats ", "who are the ", "who were the "]
+    let rest = ["what is ", "what are ", "what was ", "what were ", "what's ", "whats ",
+                "who are the ", "who were the "]
         .iter().find_map(|p| l.strip_prefix(p));
     rest.is_some_and(|r| {
         let r = r.trim_end_matches(['?', '.', '!', ' ']);
@@ -102,7 +106,8 @@ pub(crate) fn term_of(q: &str) -> Option<String> {
         return None;
     }
     let l = q.trim().to_lowercase().replace('’', "'");
-    let rest = ["what is ", "what are ", "what was ", "what were ", "what's ", "whats ", "who are the ", "who were the "]
+    let rest = ["what is ", "what are ", "what was ", "what were ", "what's ", "whats ",
+                "who are the ", "who were the "]
         .iter().find_map(|p| l.strip_prefix(p))?;
     let rest = rest.trim_end_matches(['?', '.', '!', ' ']);
     let rest = ["the ", "a ", "an "].iter().find_map(|x| rest.strip_prefix(x)).unwrap_or(rest);
@@ -111,7 +116,8 @@ pub(crate) fn term_of(q: &str) -> Option<String> {
 
 pub(crate) fn is_listing_question(q: &str) -> bool {
     has(q, &["every story", "every event", "all stories", "all the stories", "all events", "all the events",
-             "full timeline", "complete timeline", "whole timeline", "entire timeline", "every chapter", "all chapters"])
+             "full timeline", "complete timeline", "whole timeline", "entire timeline", "every chapter",
+             "all chapters"])
 }
 
 pub(crate) fn is_operator_status_question(q: &str) -> bool {
@@ -146,15 +152,16 @@ pub(crate) fn asks_origin(q: &str) -> bool {
     let ql = format!(" {} ", q.to_lowercase().replace(|c: char| !c.is_alphanumeric() && c != '\'', " "));
     let wh = [" why ", " when ", " how "].iter().any(|w| ql.contains(w));
     wh && [" start ", " started ", " starts ", " begin ", " began ", " begun ", " beginning ", " origin ", " origins ",
-           " originate ", " originated ", " founded ", " founding ", " join ", " joined ", " joins ", " become ", " became ",
-           " decide ", " decided ", " first "].iter().any(|w| ql.contains(w))
+           " originate ", " originated ", " founded ", " founding ", " join ", " joined ", " joins ", " become ",
+           " became ", " decide ", " decided ", " first "].iter().any(|w| ql.contains(w))
 }
 
 /// Whether a question asks how people are related, or whom someone admires.
 pub(crate) fn asks_relation(q: &str) -> bool {
     let ql = format!(" {} ", q.to_lowercase().replace(|c: char| !c.is_alphanumeric() && c != '\'', " "));
-    [" relationship ", " relationships ", " relation ", " related ", " relatives ", " fan of ", " idolise ", " idolises ",
-     " idolize ", " idolizes ", " idolised ", " idolized ", " admire ", " admires ", " look up to ", " looks up to "]
+    [" relationship ", " relationships ", " relation ", " related ", " relatives ", " fan of ", " idolise ",
+     " idolises ", " idolize ", " idolizes ", " idolised ", " idolized ", " admire ", " admires ", " look up to ",
+     " looks up to "]
         .iter().any(|w| ql.contains(w))
 }
 
@@ -168,5 +175,6 @@ pub(crate) fn asks_when(q: &str) -> bool {
 pub(crate) fn declines(answer: &str) -> bool {
     let first = answer.trim().split(['.', '!', '?']).next().unwrap_or_default().to_lowercase();
     ["could not find", "couldn't find", "cannot find", "can't find", "no information", "not mentioned", "not stated",
-     "does not say", "does not state", "does not mention", "do not contain", "does not contain"].iter().any(|w| first.contains(w))
+     "does not say", "does not state", "does not mention", "do not contain", "does not contain"]
+        .iter().any(|w| first.contains(w))
 }

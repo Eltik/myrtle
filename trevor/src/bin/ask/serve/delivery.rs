@@ -34,7 +34,12 @@ impl Api {
     }
 
     pub(crate) async fn post(&self, path: &str, body: &serde_json::Value, timeout: Duration) -> Posted {
-        let r = self.http.post(self.url(path)).header("x-trevor-worker-key", &self.key).timeout(timeout).json(body).send().await;
+        let r = self.http.post(self.url(path))
+            .header("x-trevor-worker-key", &self.key)
+            .timeout(timeout)
+            .json(body)
+            .send()
+            .await;
         match r {
             Ok(r) if r.status().is_success() => Posted::Ok,
             Ok(r) if r.status().is_client_error() && !matches!(r.status().as_u16(), 408 | 429) => {
@@ -67,7 +72,9 @@ pub(super) fn worker_id() -> String {
         return id;
     }
     let host = std::process::Command::new("hostname").output().ok()
-        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_owned()).filter(|h| !h.is_empty()).unwrap_or_else(|| "local".into());
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_owned())
+        .filter(|h| !h.is_empty())
+        .unwrap_or_else(|| "local".into());
     format!("trevor-{host}")
 }
 
@@ -80,11 +87,15 @@ pub(crate) async fn deliver(api: &Api, spool: &Path, body: &serde_json::Value) -
     let out = api.post_retrying("result", body).await;
     match &out {
         Posted::Ok => {}
-        Posted::Refused(s, t) => eprintln!("worker: the backend refused the result of {} (HTTP {s}): {t}", body["jobId"]),
+        Posted::Refused(s, t) =>
+            eprintln!("worker: the backend refused the result of {} (HTTP {s}): {t}", body["jobId"]),
         Posted::Failed(e) => {
-            let id: String = body["jobId"].as_str().unwrap_or("job").chars().map(|c| if c.is_ascii_alphanumeric() || c == '-' { c } else { '_' }).collect();
+            let id: String = body["jobId"].as_str().unwrap_or("job").chars()
+                .map(|c| if c.is_ascii_alphanumeric() || c == '-' { c } else { '_' })
+                .collect();
             let path = spool.join(format!("{id}.json"));
-            let written = std::fs::create_dir_all(spool).and_then(|()| std::fs::write(&path, serde_json::to_vec(body).unwrap_or_default()));
+            let written = std::fs::create_dir_all(spool)
+                .and_then(|()| std::fs::write(&path, serde_json::to_vec(body).unwrap_or_default()));
             match written {
                 Ok(()) => eprintln!("worker: posting the result of {id} failed ({e}); spooled to {}", path.display()),
                 Err(w) => eprintln!("worker: posting the result of {id} failed ({e}) and spooling it failed too ({w})"),
@@ -97,11 +108,15 @@ pub(crate) async fn deliver(api: &Api, spool: &Path, body: &serde_json::Value) -
 /// Send every spooled result once; a sent or refused one is deleted. Returns (sent, kept).
 pub(crate) async fn resend_spool(api: &Api, spool: &Path) -> (usize, usize) {
     let Ok(dir) = std::fs::read_dir(spool) else { return (0, 0) };
-    let mut files: Vec<PathBuf> = dir.filter_map(|e| e.ok().map(|e| e.path())).filter(|p| p.extension().is_some_and(|x| x == "json")).collect();
+    let mut files: Vec<PathBuf> = dir
+        .filter_map(|e| e.ok().map(|e| e.path()))
+        .filter(|p| p.extension().is_some_and(|x| x == "json"))
+        .collect();
     files.sort();
     let (mut sent, mut kept) = (0, 0);
     for f in files {
-        let Some(body) = std::fs::read(&f).ok().and_then(|b| serde_json::from_slice::<serde_json::Value>(&b).ok()) else { continue };
+        let Some(body) = std::fs::read(&f).ok()
+            .and_then(|b| serde_json::from_slice::<serde_json::Value>(&b).ok()) else { continue };
         match api.post("result", &body, Duration::from_secs(30)).await {
             Posted::Ok | Posted::Refused(..) => {
                 let _ = std::fs::remove_file(&f);

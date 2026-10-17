@@ -239,7 +239,10 @@ pub(crate) async fn cmd_finish(
         v["gen_id"] = serde_json::json!(g.id);
         v["anchors_added_by_judge"] = serde_json::json!(added);
         v["closed_book_answer"] = serde_json::json!(cb.get(&g.id));
-        v["filters"] = serde_json::json!({"word_trigram_containment": f.word_trigram_containment, "bm25_rank": f.bm25_rank});
+        v["filters"] = serde_json::json!({
+            "word_trigram_containment": f.word_trigram_containment,
+            "bm25_rank": f.bm25_rank
+        });
         items.push(v);
         if (n + 1) % 25 == 0 {
             eprintln!(
@@ -405,7 +408,10 @@ pub(crate) fn write_spotcheck(path: &Path, items: &[serde_json::Value], store: &
         .collect();
     idx.sort_by_key(|&i| fnv1a(&format!("spot{}", items[i]["qid"])));
     let mut md = String::from(
-        "# Gold set v1: optional spot-check\n\nTwenty items drawn at random. For each, mark whether the question is fair and the gold passage answers it. The share you reject estimates the automatic review's error rate; with 20 items, 0 rejections bounds it at 16% (Wilson 95%).\n",
+        "# Gold set v1: optional spot-check\n\n\
+         Twenty items drawn at random. For each, mark whether the question is fair and the gold passage answers it. \
+         The share you reject estimates the automatic review's error rate; \
+         with 20 items, 0 rejections bounds it at 16% (Wilson 95%).\n",
     );
     for &i in idx.iter().take(20) {
         let v = &items[i];

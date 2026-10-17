@@ -40,7 +40,11 @@ pub(crate) fn scoped_scenes(rt: &mut Runtime, tools: &Tools, q: &str) -> Option<
     }
     let ranked = rank_by_question(rt, q, &cands)?;
     if trevor::env::debug_on("TREVOR_SCOPED_DEBUG") {
-        eprintln!("scoped {gid}: {} candidates, {} tokens", cands.len(), cands.iter().map(|&r| rt.store.chunks[r].token_count).sum::<u32>());
+        eprintln!(
+            "scoped {gid}: {} candidates, {} tokens",
+            cands.len(),
+            cands.iter().map(|&r| rt.store.chunks[r].token_count).sum::<u32>()
+        );
         for (i, &r) in ranked.iter().enumerate() {
             eprintln!("  {i} {}", rt.store.chunks[r].chunk_id);
         }
@@ -99,7 +103,8 @@ pub(crate) fn excerpt(rt: &Runtime, r: usize, idx: &[usize]) -> (String, u32) {
         parts.push(cur.join("\n"));
     }
     let text = parts.join("\n...\n");
-    let tok = u32::try_from(u64::from(c.token_count) * text.len() as u64 / c.text.len().max(1) as u64).unwrap_or(u32::MAX);
+    let tok = u32::try_from(u64::from(c.token_count) * text.len() as u64 / c.text.len().max(1) as u64)
+        .unwrap_or(u32::MAX);
     (text, tok)
 }
 
@@ -118,7 +123,11 @@ pub(crate) fn character_scenes(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools
     }
     let people = people_named(rt, tools, q);
     let [key] = people.as_slice() else { return None };
-    let forms: Vec<String> = person_forms(tools, key).iter().map(|x| norm(x)).filter(|x| x.chars().count() >= 3).collect();
+    let forms: Vec<String> = person_forms(tools, key)
+        .iter()
+        .map(|x| norm(x))
+        .filter(|x| x.chars().count() >= 3)
+        .collect();
     if forms.is_empty() || tools.names_group_topic(key) || !asks_scene(q, &forms) {
         return None;
     }
@@ -154,7 +163,8 @@ pub(crate) fn character_scenes(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools
         let mut by_line: Vec<usize> = Vec::new();
         for (r, _) in &units { if !by_line.contains(r) { by_line.push(*r); } }
         let rrf = rank_by_question(rt, q, &cands).unwrap_or_default();
-        let pos = |v: &[usize]| v.iter().position(|&r| rt.store.chunks[r].chunk_id == target).map_or(-1, |p| p as i64 + 1);
+        let pos = |v: &[usize]| v.iter().position(|&r| rt.store.chunks[r].chunk_id == target)
+            .map_or(-1, |p| p as i64 + 1);
         eprintln!("charscope {shown}: {} scenes, {} lines, rerank {:.2} s; {target}: chunk rrf {}, reranked lines {}",
                   cands.len(), units.len(), t0.elapsed().as_secs_f64(), pos(&rrf), pos(&by_line));
     }
@@ -241,15 +251,27 @@ pub(crate) fn line_study(rt: &mut Runtime, ra: &RuntimeArgs, batch: &std::path::
         let fr = fused.get(&row).copied().unwrap_or(0.0);
         let fused_rank = fused.values().filter(|&&x| x > fr).count() + 1;
         // The pool variant: the lines of the fused top `pool` chunks, reranked (no line index).
-        let mut top: Vec<(usize, f64)> = fused.into_iter().filter(|(r, _)| !is_generated(&rt.store.chunks[*r].group_id)).collect();
+        let mut top: Vec<(usize, f64)> = fused
+            .into_iter()
+            .filter(|(r, _)| !is_generated(&rt.store.chunks[*r].group_id))
+            .collect();
         top.sort_by(|x, y| y.1.total_cmp(&x.1).then(x.0.cmp(&y.0)));
         let pool_rows: Vec<usize> = top.into_iter().take(pool).map(|(r, _)| r).collect();
         let pu: Vec<usize> = (0..n).filter(|&u| pool_rows.contains(&units[u].0)).collect();
         let t1 = std::time::Instant::now();
         let pt: Vec<&str> = pu.iter().map(|&u| texts[u].as_str()).collect();
         let ps = rt.reranker.as_ref().context("reranker")?.score(&q, &pt)?;
-        let pool_rank = pu.iter().position(|&u| u == ev).map_or_else(|| "out".to_owned(), |p| (ps.iter().filter(|&&x| x > ps[p]).count() + 1).to_string());
-        println!("{qid}\t{dense_est}\t{rr_est}\t{}\t{}\t{fused_rank}\t{pool_rank}/{}\t{:.2}", pos(&d), pos(&b), pu.len(), t1.elapsed().as_secs_f64());
+        let pool_rank = pu
+            .iter()
+            .position(|&u| u == ev)
+            .map_or_else(|| "out".to_owned(), |p| (ps.iter().filter(|&&x| x > ps[p]).count() + 1).to_string());
+        println!(
+            "{qid}\t{dense_est}\t{rr_est}\t{}\t{}\t{fused_rank}\t{pool_rank}/{}\t{:.2}",
+            pos(&d),
+            pos(&b),
+            pu.len(),
+            t1.elapsed().as_secs_f64()
+        );
     }
     Ok(())
 }
@@ -268,7 +290,10 @@ pub(crate) fn rank_by_question(rt: &mut Runtime, q: &str, cands: &[usize]) -> Op
     if rt.dense.is_some() {
         let qv = rt.embed_query(q).ok()?;
         let d = rt.dense.as_ref()?;
-        let mut by: Vec<(usize, f32)> = cands.iter().map(|&r| (r, d.row(r).iter().zip(&qv).map(|(x, y)| x * y).sum())).collect();
+        let mut by: Vec<(usize, f32)> = cands
+            .iter()
+            .map(|&r| (r, d.row(r).iter().zip(&qv).map(|(x, y)| x * y).sum()))
+            .collect();
         by.sort_by(|x, y| y.1.total_cmp(&x.1).then(x.0.cmp(&y.0)));
         for (rank, (r, _)) in by.iter().enumerate() {
             *score.entry(*r).or_default() += 1.0 / (60.0 + rank as f64 + 1.0);
@@ -296,7 +321,12 @@ pub(crate) const SCOPED_REST: u32 = 3000;
 /// Load the reranker into `rt` on first use: the scene paths rerank even when retrieval does not.
 fn ensure_reranker(rt: &mut Runtime, ra: &RuntimeArgs) -> Result<()> {
     if rt.reranker.is_none() {
-        rt.reranker = Some(trevor::search::rerank::Reranker::load(&ra.rerank_dir, &ra.rerank_onnx, ra.rerank_max_tokens, ra.threads)?);
+        rt.reranker = Some(trevor::search::rerank::Reranker::load(
+            &ra.rerank_dir,
+            &ra.rerank_onnx,
+            ra.rerank_max_tokens,
+            ra.threads
+        )?);
     }
     Ok(())
 }

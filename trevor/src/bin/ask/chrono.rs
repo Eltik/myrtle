@@ -31,7 +31,9 @@ pub(crate) fn load_chrono() -> Chrono {
         if e["is_year"].as_bool() == Some(true) && e["kind"].as_str() == Some("story") {
             let tag = if e["present"].as_bool() == Some(true) { "scene dated" } else { "stated" };
             c.lines.entry(e["source"].as_str().unwrap_or_default().to_owned()).or_default().push(format!(
-                "{} ({tag}): {}", e["year"], e["line"].as_str().unwrap_or_default().chars().take(140).collect::<String>()));
+                "{} ({tag}): {}",
+                e["year"],
+                e["line"].as_str().unwrap_or_default().chars().take(140).collect::<String>()));
         }
     }
     for l in read("artifacts/chrono/terra_history.md").lines() {
@@ -48,7 +50,8 @@ pub(crate) fn load_chrono() -> Chrono {
         c.lines.entry(d["storyId"].as_str().unwrap_or_default().to_owned()).or_default().push(format!(
             "{approx}{} (derived, counted from {} via {}): \"{}\"",
             d["year"], d["from"].as_f64().map_or(String::new(), |f| format!("{f:.0}")),
-            d["basis"].as_str().unwrap_or_default(), d["quote"].as_str().unwrap_or_default().chars().take(120).collect::<String>()));
+            d["basis"].as_str().unwrap_or_default(),
+            d["quote"].as_str().unwrap_or_default().chars().take(120).collect::<String>()));
     }
     c
 }
@@ -76,14 +79,22 @@ pub(crate) fn timeline_notes(rt: &Runtime, chrono: &Chrono, rows: &[usize], off:
         events[k].4.push(i + 1 + off);
     }
     events.sort_by(|a, b| a.0.total_cmp(&b.0).then(a.1.cmp(&b.1)).then(a.2.cmp(&b.2)));
-    let mut out = String::from("\nTIMELINE NOTES (Trevor's chronology, listed in in-world order; years are estimates unless a line states them)\n");
+    let mut out = String::from(
+        "\nTIMELINE NOTES (Trevor's chronology, listed in in-world order; \
+         years are estimates unless a line states them)\n");
     for (n, (_, chapter, _, gid, ps)) in events.iter().enumerate() {
         let g = &chrono.groups[gid];
         let bound = g["yearBound"].as_str().map_or(String::new(), |b| format!("{b} "));
-        let ep = if *chapter > 0 || gid == "main_0" { format!(", main story Episode {chapter}") } else { String::new() };
+        let ep = if *chapter > 0 || gid == "main_0" {
+            format!(", main story Episode {chapter}")
+        } else {
+            String::new()
+        };
         let list = ps.iter().map(|p| format!("[{p}]")).collect::<Vec<_>>().join(" ");
         out.push_str(&format!("{}. {}{ep}, passages {list}: storyline {bound}about {:.0} ({})\n", n + 1,
-            g["name"].as_str().unwrap_or(gid), g["storylineYear"].as_f64().unwrap_or(0.0), g["basis"].as_str().unwrap_or_default()));
+            g["name"].as_str().unwrap_or(gid),
+            g["storylineYear"].as_f64().unwrap_or(0.0),
+            g["basis"].as_str().unwrap_or_default()));
         let mut seen = BTreeSet::new();
         for &p in ps {
             let sid = &rt.store.chunks[rows[p - 1 - off]].story_id;
@@ -101,7 +112,9 @@ pub(crate) fn timeline_notes(rt: &Runtime, chrono: &Chrono, rows: &[usize], off:
 /// right before the question, since dated lines elsewhere in the prompt can still end in a decline without an estimate.
 pub(crate) fn time_evidence_block(lines: &str) -> String {
     let items: Vec<&str> = lines.lines().filter_map(|l| l.strip_prefix("- ")).collect();
-    let mut out = String::from("\nTIME EVIDENCE (dated anchors from Trevor's chronology of the whole story, oldest first; use them for the estimate)\n");
+    let mut out = String::from(
+        "\nTIME EVIDENCE (dated anchors from Trevor's chronology of the whole story, oldest first; \
+         use them for the estimate)\n");
     for (i, l) in items.iter().enumerate() {
         out.push_str(&format!("T{}. {l}\n", i + 1));
     }
@@ -109,7 +122,9 @@ pub(crate) fn time_evidence_block(lines: &str) -> String {
 }
 
 /// Question words that never name a when-question's subject.
-pub(crate) const QUESTION_WORDS: &[&str] = &["When", "What", "Which", "Who", "Why", "How", "Where", "Did", "Does", "Do", "Is", "Was", "Were", "Are", "In", "The"];
+pub(crate) const QUESTION_WORDS: &[&str] = &[
+    "When", "What", "Which", "Who", "Why", "How", "Where", "Did", "Does", "Do", "Is", "Was", "Were", "Are", "In", "The"
+];
 
 /// The dated lines of Trevor's chronology that name a when-question's subject, since the timeline notes cover only the
 /// events the passages come from ("When was Rhodes Island founded?" gets none about the founding). Subjects
@@ -117,7 +132,10 @@ pub(crate) const QUESTION_WORDS: &[&str] = &["When", "What", "Which", "Who", "Wh
 /// words, case folded. Lines that share more of the question's other words (first 4 letters) come first, then the
 /// earliest; at most 8, listed by year. Empty when no line names a subject.
 pub(crate) fn chronology_for(q: &str, chrono: &Chrono) -> String {
-    let words: Vec<&str> = q.split(|c: char| !(c.is_alphanumeric() || c == '\'' || c == '-')).filter(|w| !w.is_empty()).collect();
+    let words: Vec<&str> = q
+        .split(|c: char| !(c.is_alphanumeric() || c == '\'' || c == '-'))
+        .filter(|w| !w.is_empty())
+        .collect();
     let mut subjects: Vec<String> = Vec::new();
     let mut run: Vec<&str> = Vec::new();
     for w in words.iter().chain(std::iter::once(&"")) {
@@ -147,8 +165,10 @@ pub(crate) fn chronology_for(q: &str, chrono: &Chrono) -> String {
     hits.sort_by(|a, b| b.0.cmp(&a.0).then(a.1.total_cmp(&b.1)));
     hits.truncate(8);
     hits.sort_by(|a, b| a.1.total_cmp(&b.1));
-    let mut out = format!("\nCHRONOLOGY LINES THAT NAME {} (Trevor's dated lines from the whole story, not only the passages; a derived \
-year says how it was counted)\n", subjects.join(", ").to_uppercase());
+    let mut out = format!(
+        "\nCHRONOLOGY LINES THAT NAME {} (Trevor's dated lines from the whole story, not only the passages; \
+         a derived year says how it was counted)\n",
+        subjects.join(", ").to_uppercase());
     for (_, _, l) in hits {
         out.push_str(&format!("- {l}\n"));
     }

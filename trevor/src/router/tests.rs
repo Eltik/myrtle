@@ -18,17 +18,30 @@ fn wide_topic_line_changes_only_that_line() {
 fn dropping_reading_compare_leaves_no_trace_of_it() {
     let (s, g) = without_compare(ROUTER_SYSTEM, ROUTER_GRAMMAR);
     assert!(!s.contains("reading_compare") && !g.contains("reading_compare") && !g.contains("other ::="));
-    assert_eq!(ROUTER_SYSTEM.lines().count() - s.lines().count(), 6, "the tool line, the rule, and 2 examples of 2 lines");
+    assert_eq!(
+        ROUTER_SYSTEM.lines().count() - s.lines().count(),
+        6,
+        "the tool line, the rule, and 2 examples of 2 lines"
+    );
     assert_eq!(ROUTER_GRAMMAR.lines().count() - g.lines().count(), 2);
 }
 
 #[test]
 fn the_source_variant_changes_only_retrieval() {
     let (system, grammar) = source_variant();
-    assert!(system.contains("source names the kind of game text") && !system.contains("- retrieve {}: everything else."));
+    assert!(
+        system.contains("source names the kind of game text")
+            && !system.contains("- retrieve {}: everything else.")
+    );
     assert!(!system.contains(r#""retrieve", "args": {}}"#) && system.contains("Answer with the JSON object only."));
     assert!(grammar.contains(r#""retrieve\", \"args\": {" source "}""#), "{grammar}");
-    assert!(grammar.ends_with("source ::= \"\\\"source\\\": \\\"\" (\"story\" | \"operator_file\" | \"module\" | \"voice\" | \"skin\" | \"is\" | \"enemy\" | \"item\" | \"any\") \"\\\"\"\n"), "{grammar}");
+    assert!(
+        grammar.ends_with(
+            "source ::= \"\\\"source\\\": \\\"\" (\"story\" | \"operator_file\" | \"module\" | \
+            \"voice\" | \"skin\" | \"is\" | \"enemy\" | \"item\" | \"any\") \"\\\"\"\n"
+        ),
+        "{grammar}"
+    );
     assert!(system.len() - ROUTER_SYSTEM.len() > 500);
 }
 

@@ -9,14 +9,15 @@ use super::text::{contains_words, fuzzy_unique, norm, strip_citations};
 use super::{ToolError, Tools, TopicPassage, read_jsonl, s};
 
 /// Words of a question about a body, a race feature, an ability or an age (`Tools::game_data`).
-pub(super) const TRAIT_WORDS: &[&str] = &["wing", "wings", "horn", "horns", "halo", "halos", "ear", "ears", "tail", "tails", "fur", "furry",
-    "scales", "scale", "claws", "fangs", "antlers", "feathers", "hooves", "mane", "eyes", "pupils", "age", "aged", "old", "older",
-    "oldest", "younger", "youngest", "years", "height", "tall", "taller", "race", "species", "fly", "flying", "swim", "lifespan",
-    "immortal", "ageless", "ability", "abilities", "power", "powers", "body", "blood", "physiology", "anatomy", "biology"];
+pub(super) const TRAIT_WORDS: &[&str] = &["wing", "wings", "horn", "horns", "halo", "halos", "ear", "ears", "tail",
+    "tails", "fur", "furry", "scales", "scale", "claws", "fangs", "antlers", "feathers", "hooves", "mane", "eyes",
+    "pupils", "age", "aged", "old", "older", "oldest", "younger", "youngest", "years", "height", "tall", "taller",
+    "race", "species", "fly", "flying", "swim", "lifespan", "immortal", "ageless", "ability", "abilities", "power",
+    "powers", "body", "blood", "physiology", "anatomy", "biology"];
 
 /// Body words of a trait question for which the game-data passage lists the races described with them.
-pub(super) const BODY_WORDS: &[&str] = &["wing", "wings", "horn", "horns", "halo", "halos", "ear", "ears", "tail", "tails", "fur", "scales",
-    "claws", "fangs", "antlers", "feathers", "hooves", "mane"];
+pub(super) const BODY_WORDS: &[&str] = &["wing", "wings", "horn", "horns", "halo", "halos", "ear", "ears", "tail",
+    "tails", "fur", "scales", "claws", "fangs", "antlers", "feathers", "hooves", "mane"];
 
 /// The topic rows the tool serves: every row not marked thin.
 pub(super) fn served_topics(rows: Vec<Value>) -> Vec<Value> {
@@ -34,7 +35,8 @@ impl Tools {
         let Some(rows) = self.topics.as_ref() else { return Vec::new() };
         let mut hits: Vec<(usize, String, &Value)> = Vec::new();
         for r in rows.iter().filter(|r| matches!(s(r, "kind").as_str(), "nation" | "place" | "race" | "organization")) {
-            for f in std::iter::once(s(r, "topic")).chain(r["aliases"].as_array().into_iter().flatten().filter_map(|a| a.as_str().map(str::to_owned))) {
+            for f in std::iter::once(s(r, "topic"))
+                .chain(r["aliases"].as_array().into_iter().flatten().filter_map(|a| a.as_str().map(str::to_owned))) {
                 let x = norm(&f);
                 if x.chars().count() >= 4 && contains_words(&n, &x) {
                     hits.push((n.find(&x).unwrap_or(usize::MAX), x, r));
@@ -42,7 +44,9 @@ impl Tools {
             }
         }
         let outer: Vec<&(usize, String, &Value)> = hits.iter()
-            .filter(|(_, x, r)| !hits.iter().any(|(_, y, u)| s(u, "topic") != s(r, "topic") && y.len() > x.len() && contains_words(y, x))).collect();
+            .filter(|(_, x, r)| !hits.iter()
+                .any(|(_, y, u)| s(u, "topic") != s(r, "topic") && y.len() > x.len() && contains_words(y, x)))
+            .collect();
         let mut out: Vec<(usize, String, Vec<String>)> = Vec::new();
         for (at, _, r) in outer {
             let topic = s(r, "topic");
@@ -50,7 +54,8 @@ impl Tools {
                 o.0 = o.0.min(*at);
                 continue;
             }
-            let forms = std::iter::once(topic.clone()).chain(r["aliases"].as_array().into_iter().flatten().filter_map(|a| a.as_str().map(str::to_owned)))
+            let forms = std::iter::once(topic.clone())
+                .chain(r["aliases"].as_array().into_iter().flatten().filter_map(|a| a.as_str().map(str::to_owned)))
                 .filter(|f| f.chars().count() >= 4).collect();
             out.push((*at, topic, forms));
         }
@@ -63,9 +68,12 @@ impl Tools {
     #[must_use]
     pub fn names_group_topic(&self, q: &str) -> bool {
         let n = norm(q);
-        self.topics.iter().flatten().filter(|r| matches!(s(r, "kind").as_str(), "nation" | "place" | "race" | "organization"))
-            .flat_map(|r| std::iter::once(s(r, "topic")).chain(r["aliases"].as_array().into_iter().flatten().filter_map(|a| a.as_str().map(str::to_owned))))
-            .map(|f| norm(&f)).any(|f| f.chars().count() >= 4 && (contains_words(&n, &f) || contains_words(&n, &format!("{f}s"))))
+        self.topics.iter().flatten()
+            .filter(|r| matches!(s(r, "kind").as_str(), "nation" | "place" | "race" | "organization"))
+            .flat_map(|r| std::iter::once(s(r, "topic"))
+                .chain(r["aliases"].as_array().into_iter().flatten().filter_map(|a| a.as_str().map(str::to_owned))))
+            .map(|f| norm(&f))
+            .any(|f| f.chars().count() >= 4 && (contains_words(&n, &f) || contains_words(&n, &format!("{f}s"))))
     }
 
     /// Whether a question asks about a topic as a whole (the deep-entry gate): it names a served topic and, besides that
@@ -74,10 +82,10 @@ impl Tools {
     /// black Sankta halos adn energy wings mean something?", which ask one detail, are not.
     #[must_use]
     pub fn broad_topic_question(&self, q: &str) -> bool {
-        const STOP: &[&str] = &["what", "who", "whom", "which", "where", "when", "why", "how", "are", "is", "was", "were",
-            "the", "do", "does", "did", "about", "tell", "know", "explain", "mean", "means", "they", "them", "their", "there",
-            "this", "that", "these", "those", "and", "for", "with", "really", "exactly", "actually", "lore", "arknights",
-            "can", "you", "someone", "anyone", "please", "all", "any", "much", "more", "exist"];
+        const STOP: &[&str] = &["what", "who", "whom", "which", "where", "when", "why", "how", "are", "is", "was",
+            "were", "the", "do", "does", "did", "about", "tell", "know", "explain", "mean", "means", "they", "them",
+            "their", "there", "this", "that", "these", "those", "and", "for", "with", "really", "exactly", "actually",
+            "lore", "arknights", "can", "you", "someone", "anyone", "please", "all", "any", "much", "more", "exist"];
         let Some(rows) = self.topics.as_ref() else { return false };
         let n = norm(q);
         let mut rest = format!(" {n} ");
@@ -123,7 +131,8 @@ impl Tools {
             for r in rows.iter_mut() {
                 if let Some(o) = r.as_object_mut() {
                     // Only the fields a v1 row had: the trait audit added summaryV2, passagesV2 and their keys to old rows.
-                    o.retain(|k, _| matches!(k.as_str(), "topic" | "kind" | "aliases" | "asked" | "passages" | "summary" | "inputSha" | "promptSha"));
+                    o.retain(|k, _| matches!(k.as_str(),
+                        "topic" | "kind" | "aliases" | "asked" | "passages" | "summary" | "inputSha" | "promptSha"));
                 }
             }
         }
@@ -139,7 +148,8 @@ impl Tools {
             if v1.contains(&name) {
                 continue;
             }
-            let aka: Vec<&str> = d["names"].as_array().into_iter().flatten().filter_map(Value::as_str).filter(|x| *x != name).collect();
+            let aka: Vec<&str> = d["names"].as_array().into_iter().flatten()
+                .filter_map(Value::as_str).filter(|x| *x != name).collect();
             let head = if aka.is_empty() { format!("Character profile: {name}") }
                 else { format!("Character profile: {name} (also known as {})", aka.join(", ")) };
             let text = format!("{head}\n{}", s(&d, "dossier"));
@@ -186,7 +196,8 @@ impl Tools {
         let mut races: Vec<String> = Vec::new();
         for r in &hits {
             let mut parts = Vec::new();
-            for (k, label) in [("race", "race"), ("birthplace", "birthplace"), ("nation", "nation"), ("group", "faction"), ("heightCm", "height cm")] {
+            for (k, label) in [("race", "race"), ("birthplace", "birthplace"), ("nation", "nation"),
+                ("group", "faction"), ("heightCm", "height cm")] {
                 if let Some(v) = field(r, k) {
                     parts.push(format!("{label} {v}"));
                 }
@@ -217,7 +228,8 @@ impl Tools {
                     with.push(format!("{} (\"{x}\")", s(r, "topic")));
                 }
             }
-            text.push_str(&format!("\nRaces whose topic summaries mention {w}: {}", if with.is_empty() { "none".to_owned() } else { with.join("; ") }));
+            text.push_str(&format!("\nRaces whose topic summaries mention {w}: {}",
+                if with.is_empty() { "none".to_owned() } else { with.join("; ") }));
         }
         let names: Vec<String> = hits.iter().map(|r| s(r, "name")).collect();
         Some(TopicPassage { topic: names.join(", "), text })
@@ -243,7 +255,8 @@ impl Tools {
             .filter(|(name, _)| {
                 let n = norm(name);
                 // One-word names under 4 letters never match (Yu, Lin, Ace, May, Ji: "Deputy Minister Yu" is not Yu).
-                (n.contains(' ') || n.chars().count() >= 4) && (as_written(name) || (n.contains(' ') && contains_words(&nq, &n)))
+                (n.contains(' ') || n.chars().count() >= 4)
+                    && (as_written(name) || (n.contains(' ') && contains_words(&nq, &n)))
             })
             .max_by_key(|(name, _)| name.len())
             .map(|(name, text)| TopicPassage { topic: name.clone(), text: text.clone() })
@@ -259,14 +272,19 @@ impl Tools {
         let nf = || ToolError::NotFound { what: "topic", name: name.to_owned() };
         let n = norm(name);
         // Topic names first, then aliases: "Beast Lord" is an alias of Feranmut and the singular of Beast Lords.
-        let by_name = rows.iter().find(|r| { let t = norm(&s(r, "topic")); t == n || t == format!("{n}s") || format!("{t}s") == n });
+        let by_name = rows.iter().find(|r| {
+            let t = norm(&s(r, "topic"));
+            t == n || t == format!("{n}s") || format!("{t}s") == n
+        });
         // `names`: forms the topics from data merged into a topic (demonyms, plurals, short forms), after every alias.
         let nn = n.as_str();
         let alias_in = |k: &'static str| move |r: &&Value| r[k].as_array().into_iter().flatten()
             .filter_map(Value::as_str).any(|a| { let a = norm(a); a == nn || format!("{a}s") == nn });
         let by_alias = || rows.iter().find(alias_in("aliases")).or_else(|| rows.iter().find(alias_in("names")));
         let names: Vec<(&Value, String)> = rows.iter().map(|r| (r, norm(&s(r, "topic")))).collect();
-        let r = by_name.or_else(by_alias).or_else(|| fuzzy_unique(&n, names.iter().map(|(r, t)| (*r, t.as_str())))).ok_or_else(nf)?;
+        let r = by_name.or_else(by_alias)
+            .or_else(|| fuzzy_unique(&n, names.iter().map(|(r, t)| (*r, t.as_str()))))
+            .ok_or_else(nf)?;
         let deep = self.deep_entry(&s(r, "topic"));
         let text = deep.unwrap_or_else(|| strip_citations(&s(r, self.topic_text_key(r))));
         // A summary under 100 words is treated as no summary: the generator asking for passages instead of

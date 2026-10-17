@@ -89,7 +89,8 @@ pub struct Request<'a> {
 impl<'a> Request<'a> {
     /// Greedy decoding, as `ask` and the model router make every deterministic call: seed 1, temperature 0.
     #[must_use]
-    pub fn greedy(system: &'a str, user: &'a str, grammar: Option<&'a str>, n_predict: u32, stop: &'a [&'a str]) -> Self {
+    pub fn greedy(system: &'a str, user: &'a str, grammar: Option<&'a str>, n_predict: u32, stop: &'a [&'a str])
+        -> Self {
         Self { system, user, grammar, seed: 1, temperature: 0.0, n_predict, stop }
     }
 }
@@ -142,7 +143,8 @@ pub struct UsageSnapshot {
 impl std::ops::Sub for UsageSnapshot {
     type Output = Self;
     fn sub(self, o: Self) -> Self {
-        Self { calls: self.calls - o.calls, tokens_in: self.tokens_in - o.tokens_in, tokens_out: self.tokens_out - o.tokens_out,
+        Self { calls: self.calls - o.calls, tokens_in: self.tokens_in - o.tokens_in,
+               tokens_out: self.tokens_out - o.tokens_out,
                json_calls: self.json_calls - o.json_calls, json_retries: self.json_retries - o.json_retries,
                json_failures: self.json_failures - o.json_failures }
     }
@@ -265,8 +267,10 @@ impl Llm {
     pub fn usage(&self) -> UsageSnapshot {
         let u = &self.usage;
         UsageSnapshot { calls: u.calls.load(Ordering::Relaxed), tokens_in: u.tokens_in.load(Ordering::Relaxed),
-                        tokens_out: u.tokens_out.load(Ordering::Relaxed), json_calls: u.json_calls.load(Ordering::Relaxed),
-                        json_retries: u.json_retries.load(Ordering::Relaxed), json_failures: u.json_failures.load(Ordering::Relaxed) }
+                        tokens_out: u.tokens_out.load(Ordering::Relaxed),
+                        json_calls: u.json_calls.load(Ordering::Relaxed),
+                        json_retries: u.json_retries.load(Ordering::Relaxed),
+                        json_failures: u.json_failures.load(Ordering::Relaxed) }
     }
 
     async fn post(&self, base: &str, path: &str, body: &serde_json::Value) -> Result<serde_json::Value> {
@@ -303,7 +307,8 @@ impl Llm {
     /// `/completion` with `stream: true`: the pieces go to `sink` as they arrive; the result has the shape of the
     /// non-streaming response (`content`, `stop_type`, `timings`, `tokens_cached`). Retried like [`Llm::post`], also
     /// after a cut stream (the sink then sees a new `Start`).
-    async fn post_stream(&self, base: &str, body: &serde_json::Value, sink: &UnboundedSender<StreamEvent>) -> Result<serde_json::Value> {
+    async fn post_stream(&self, base: &str, body: &serde_json::Value, sink: &UnboundedSender<StreamEvent>)
+        -> Result<serde_json::Value> {
         let mut last = None;
         for attempt in 0..4u32 {
             if attempt > 0 {
@@ -385,7 +390,11 @@ impl Llm {
     pub async fn complete(&self, req: &Request<'_>) -> Result<Completion> {
         let _permit = self.sem.acquire().await?;
         let started = std::time::Instant::now();
-        let sink = if req.grammar.is_none() && req.stop.is_empty() { self.sink.lock().ok().and_then(|s| s.clone()) } else { None };
+        let sink = if req.grammar.is_none() && req.stop.is_empty() {
+            self.sink.lock().ok().and_then(|s| s.clone())
+        } else {
+            None
+        };
         let mut c = match &self.backend {
             Backend::LlamaCpp { base } => self.complete_llama(base, req, sink.as_ref()).await?,
             Backend::OpenAi(client) => match req.grammar {
@@ -407,7 +416,8 @@ impl Llm {
         self.usage.tokens_out.fetch_add(c.predicted_tokens, Ordering::Relaxed);
     }
 
-    async fn complete_llama(&self, base: &str, req: &Request<'_>, sink: Option<&UnboundedSender<StreamEvent>>) -> Result<Completion> {
+    async fn complete_llama(&self, base: &str, req: &Request<'_>, sink: Option<&UnboundedSender<StreamEvent>>)
+        -> Result<Completion> {
         let prompt = self.render(req.system, req.user).await?;
         let mut body = json!({
             "prompt": prompt,
@@ -457,8 +467,8 @@ impl Llm {
     async fn complete_json(&self, client: &openai::Client, req: &Request<'_>, grammar: &str) -> Result<Completion> {
         let system = format!("{}{JSON_ONLY}", req.system);
         let keys = grammar_keys(grammar);
-        let plain = Request { system: &system, user: req.user, grammar: None, seed: req.seed, temperature: req.temperature,
-                              n_predict: req.n_predict.max(64) * 2, stop: &[] };
+        let plain = Request { system: &system, user: req.user, grammar: None, seed: req.seed,
+                              temperature: req.temperature, n_predict: req.n_predict.max(64) * 2, stop: &[] };
         self.usage.json_calls.fetch_add(1, Ordering::Relaxed);
         let mut c = client.chat(&self.http, &plain, &system, req.user, self.no_cache, None).await?;
         self.count(&c);
@@ -530,7 +540,9 @@ pub fn grammar_keys(grammar: &str) -> Vec<String> {
 pub fn valid_json(text: &str, keys: &[String]) -> Option<String> {
     fn ok(v: &serde_json::Value, keys: &[String]) -> bool {
         match v {
-            serde_json::Value::Object(m) => m.iter().all(|(k, x)| (keys.is_empty() || keys.iter().any(|y| y == k)) && ok(x, keys)),
+            serde_json::Value::Object(m) => m
+                .iter()
+                .all(|(k, x)| (keys.is_empty() || keys.iter().any(|y| y == k)) && ok(x, keys)),
             serde_json::Value::Array(a) => a.iter().all(|x| ok(x, keys)),
             _ => true,
         }

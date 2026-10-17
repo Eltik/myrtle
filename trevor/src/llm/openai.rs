@@ -102,7 +102,9 @@ pub(crate) struct Client {
 fn model_missing(status: u16, body: &str) -> bool {
     let b = body.to_lowercase();
     status == 404 || (matches!(status, 400 | 422) && b.contains("model")
-        && ["not found", "no such", "does not exist", "unknown", "invalid model", "not supported"].iter().any(|w| b.contains(w)))
+        && ["not found", "no such", "does not exist", "unknown", "invalid model", "not supported"]
+            .iter()
+            .any(|w| b.contains(w)))
 }
 
 /// `finish_reason` as llama.cpp's `stop_type`.
@@ -148,7 +150,8 @@ impl Client {
         }
     }
 
-    fn body(&self, model: &str, req: &Request<'_>, system: &str, user: &str, no_cache: bool, stream: bool) -> serde_json::Value {
+    fn body(&self, model: &str, req: &Request<'_>, system: &str, user: &str, no_cache: bool, stream: bool)
+        -> serde_json::Value {
         let mut body = json!({
             "model": model,
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
@@ -204,7 +207,8 @@ impl Client {
         bail!("every model id failed: {}", errors.join("; "))
     }
 
-    async fn attempt(&self, http: &reqwest::Client, body: &serde_json::Value, sink: Option<&UnboundedSender<StreamEvent>>) -> Result<Attempt> {
+    async fn attempt(&self, http: &reqwest::Client, body: &serde_json::Value,
+                     sink: Option<&UnboundedSender<StreamEvent>>) -> Result<Attempt> {
         let mut rb = http.post(&self.cfg.url).json(body);
         if let Some(t) = &self.cfg.token {
             rb = rb.bearer_auth(t);
@@ -263,10 +267,12 @@ impl Client {
                 Err(e) => return Ok(Attempt::Retry(anyhow!("stream cut: {e}"))),
             }
         }
-        let Some(finish) = finish else { return Ok(Attempt::Retry(anyhow!("the stream ended without a finish_reason"))) };
+        let Some(finish) = finish else {
+            return Ok(Attempt::Retry(anyhow!("the stream ended without a finish_reason")))
+        };
         let (prompt, cached, out) = usage_of(&usage);
-        Ok(Attempt::Done(Completion { content, stop_type: stop_type(&finish), prompt_tokens: prompt, cached_tokens: cached,
-                                      predicted_tokens: out, ms: 0.0 }))
+        Ok(Attempt::Done(Completion { content, stop_type: stop_type(&finish), prompt_tokens: prompt,
+                                      cached_tokens: cached, predicted_tokens: out, ms: 0.0 }))
     }
 }
 
@@ -318,7 +324,8 @@ mod tests {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
     /// A one-route HTTP server: each request's model id picks a canned (status, content type, body).
-    async fn mock(routes: Vec<(&'static str, u16, &'static str, String)>) -> (String, tokio::task::JoinHandle<Vec<String>>) {
+    async fn mock(routes: Vec<(&'static str, u16, &'static str, String)>)
+        -> (String, tokio::task::JoinHandle<Vec<String>>) {
         let l = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = l.local_addr().unwrap();
         let h = tokio::spawn(async move {
@@ -332,7 +339,12 @@ mod tests {
                     buf.extend_from_slice(&tmp[..n]);
                     let text = String::from_utf8_lossy(&buf).to_string();
                     if let Some(i) = text.find("\r\n\r\n") {
-                        let len: usize = text[..i].lines().find_map(|l| l.to_lowercase().strip_prefix("content-length:").map(|v| v.trim().parse().unwrap())).unwrap_or(0);
+                        let len: usize = text[..i]
+                            .lines()
+                            .find_map(|l| l.to_lowercase()
+                                .strip_prefix("content-length:")
+                                .map(|v| v.trim().parse().unwrap()))
+                            .unwrap_or(0);
                         if buf.len() >= i + 4 + len {
                             break;
                         }
@@ -342,11 +354,15 @@ mod tests {
                 let body = &text[text.find("\r\n\r\n").unwrap() + 4..];
                 let v: serde_json::Value = serde_json::from_str(body).unwrap();
                 let model = v["model"].as_str().unwrap().to_owned();
-                let auth = text.lines().find(|l| l.to_lowercase().starts_with("authorization")).unwrap_or("").to_owned();
+                let auth = text.lines()
+                    .find(|l| l.to_lowercase().starts_with("authorization"))
+                    .unwrap_or("")
+                    .to_owned();
                 seen.push(format!("{model} {} {auth}", v["chat_template_kwargs"]));
                 let (want, status, ctype, resp) = route;
                 assert_eq!(*want, model);
-                let head = format!("HTTP/1.1 {status} X\r\nContent-Type: {ctype}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", resp.len());
+                let head = format!("HTTP/1.1 {status} X\r\nContent-Type: {ctype}\r\n\
+                                    Content-Length: {}\r\nConnection: close\r\n\r\n", resp.len());
                 s.write_all(head.as_bytes()).await.unwrap();
                 s.write_all(resp.as_bytes()).await.unwrap();
                 s.shutdown().await.unwrap();
@@ -360,11 +376,15 @@ mod tests {
     async fn failover_streaming_finish_reason_and_usage() {
         let sse = "data: {\"choices\":[{\"delta\":{\"content\":\"Tal\"},\"finish_reason\":null}]}\n\n\
                    data: {\"choices\":[{\"delta\":{\"content\":\"ulah\"},\"finish_reason\":\"length\"}]}\n\n\
-                   data: {\"choices\":[],\"usage\":{\"prompt_tokens\":12,\"completion_tokens\":2}}\n\ndata: [DONE]\n\n".to_owned();
+                   data: {\"choices\":[],\"usage\":{\"prompt_tokens\":12,\"completion_tokens\":2}}\n\n\
+                   data: [DONE]\n\n".to_owned();
         let (url, h) = mock(vec![
             ("gone", 404, "application/json", "{\"errors\":[{\"message\":\"No such model\"}]}".into()),
             ("ok", 200, "text/event-stream", sse),
-            ("ok", 200, "application/json", "{\"choices\":[{\"message\":{\"content\":\"Talulah.\"},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":3,\"prompt_tokens_details\":{\"cached_tokens\":4}}}".into()),
+            ("ok", 200, "application/json",
+             "{\"choices\":[{\"message\":{\"content\":\"Talulah.\"},\"finish_reason\":\"stop\"}],\
+              \"usage\":{\"prompt_tokens\":10,\"completion_tokens\":3,\"prompt_tokens_details\":{\"cached_tokens\":4}}}"
+                 .into()),
         ]).await;
         let cfg = OpenAiConfig { url, token: Some("tok".into()), models: vec!["gone".into(), "ok".into()],
                                  thinking: Thinking::TemplateKwargs, timeout_secs: 10, concurrency: 1 };
@@ -372,7 +392,8 @@ mod tests {
         let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
         llm.set_stream(Some(tx));
         let c = llm.complete(&Request::greedy("sys", "Who leads Reunion?", None, 8, &[])).await.unwrap();
-        assert_eq!((c.content.as_str(), c.stop_type.as_str(), c.prompt_tokens, c.predicted_tokens), ("Talulah", "limit", 12, 2));
+        assert_eq!((c.content.as_str(), c.stop_type.as_str(), c.prompt_tokens, c.predicted_tokens),
+                   ("Talulah", "limit", 12, 2));
         let mut got = Vec::new();
         while let Ok(e) = rx.try_recv() {
             got.push(e);
@@ -382,7 +403,8 @@ mod tests {
         assert_eq!(llm.preferred_model().as_deref(), Some("ok"));
         llm.set_stream(None);
         let c = llm.complete(&Request::greedy("sys", "q", None, 8, &[])).await.unwrap();
-        assert_eq!((c.content.as_str(), c.stop_type.as_str(), c.prompt_tokens, c.cached_tokens), ("Talulah.", "eos", 6, 4));
+        assert_eq!((c.content.as_str(), c.stop_type.as_str(), c.prompt_tokens, c.cached_tokens),
+                   ("Talulah.", "eos", 6, 4));
         let u = llm.usage();
         assert_eq!((u.calls, u.tokens_in, u.tokens_out), (2, 22, 5));
         let seen = h.await.unwrap();
@@ -393,12 +415,19 @@ mod tests {
     #[tokio::test]
     async fn grammar_calls_become_validated_json_prompts() {
         let (url, h) = mock(vec![
-            ("m", 200, "application/json", "{\"choices\":[{\"message\":{\"content\":\"It is a fact question.\"},\"finish_reason\":\"stop\"}]}".into()),
-            ("m", 200, "application/json", "{\"choices\":[{\"message\":{\"content\":\"```json\\n{\\\"form\\\": \\\"fact\\\"}\\n```\"},\"finish_reason\":\"stop\"}]}".into()),
-            ("m", 200, "application/json", "{\"choices\":[{\"message\":{\"content\":\"no\"},\"finish_reason\":\"stop\"}]}".into()),
-            ("m", 200, "application/json", "{\"choices\":[{\"message\":{\"content\":\"{\\\"tool\\\": 1}\"},\"finish_reason\":\"stop\"}]}".into()),
+            ("m", 200, "application/json",
+             "{\"choices\":[{\"message\":{\"content\":\"It is a fact question.\"},\
+              \"finish_reason\":\"stop\"}]}".into()),
+            ("m", 200, "application/json",
+             "{\"choices\":[{\"message\":{\"content\":\"```json\\n{\\\"form\\\": \\\"fact\\\"}\\n```\"},\
+              \"finish_reason\":\"stop\"}]}".into()),
+            ("m", 200, "application/json",
+             "{\"choices\":[{\"message\":{\"content\":\"no\"},\"finish_reason\":\"stop\"}]}".into()),
+            ("m", 200, "application/json",
+             "{\"choices\":[{\"message\":{\"content\":\"{\\\"tool\\\": 1}\"},\"finish_reason\":\"stop\"}]}".into()),
         ]).await;
-        let cfg = OpenAiConfig { url, token: None, models: vec!["m".into()], thinking: Thinking::Omit, timeout_secs: 10, concurrency: 1 };
+        let cfg = OpenAiConfig { url, token: None, models: vec!["m".into()], thinking: Thinking::Omit, timeout_secs: 10,
+                                 concurrency: 1 };
         let llm = Llm::openai(cfg).unwrap();
         let g = include_str!("../../prompts/form.gbnf");
         let c = llm.complete(&Request::greedy("sys", "Q: x", Some(g), 80, &[])).await.unwrap();

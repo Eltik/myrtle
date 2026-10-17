@@ -24,7 +24,11 @@ pub struct RouterPrompt {
 /// The router's system prompt and grammar for `o`.
 #[must_use]
 pub fn router_prompt(o: &RouterPrompt) -> (String, String) {
-    let (system, grammar) = if o.source { (source_variant().0.as_str(), source_variant().1.as_str()) } else { (ROUTER_SYSTEM, ROUTER_GRAMMAR) };
+    let (system, grammar) = if o.source {
+        (source_variant().0.as_str(), source_variant().1.as_str())
+    } else {
+        (ROUTER_SYSTEM, ROUTER_GRAMMAR)
+    };
     let mut system = system.to_owned();
     let mut grammar = grammar.to_owned();
     if !o.compare {
@@ -48,7 +52,10 @@ pub(crate) fn without_tool(system: &str, grammar: &str, tool: &str, rules: &[&st
         }
         keep.push(*l);
     }
-    let g: Vec<&str> = grammar.split('\n').filter(|l| !l.contains(tool) && !rules.iter().any(|r| l.starts_with(r))).collect();
+    let g: Vec<&str> = grammar
+        .split('\n')
+        .filter(|l| !l.contains(tool) && !rules.iter().any(|r| l.starts_with(r)))
+        .collect();
     (keep.join("\n"), g.join("\n"))
 }
 
@@ -59,8 +66,12 @@ pub(crate) fn without_compare(system: &str, grammar: &str) -> (String, String) {
 
 /// The topic tool's line as written before the topics from data, and its wider form for `ask --lore v2`,
 /// where topics also cover places, organizations, factions and events.
-pub(crate) const TOPIC_LINE: &str = "a question about what one race, nation or world concept is or is like in general (Sankta, Sarkaz, Laterano, Originium, Oripathy, Arts, Seaborn, Catastrophes, the Precursors...)";
-pub(crate) const TOPIC_LINE_WIDE: &str = "a question about what one race, nation, city or place, organization or faction, historical event or world concept is or is like in general (Sankta, Sarkaz, Laterano, Londinium, Chernobog, Reunion, Rhodes Island, Rhine Lab, Babel, Originium, Oripathy, Arts, Seaborn, Catastrophes, the Precursors...)";
+pub(crate) const TOPIC_LINE: &str = "a question about what one race, nation or world concept is or is like in general \
+    (Sankta, Sarkaz, Laterano, Originium, Oripathy, Arts, Seaborn, Catastrophes, the Precursors...)";
+pub(crate) const TOPIC_LINE_WIDE: &str = "a question about what one race, nation, city or place, \
+    organization or faction, historical event or world concept is or is like in general \
+    (Sankta, Sarkaz, Laterano, Londinium, Chernobog, Reunion, Rhodes Island, Rhine Lab, Babel, \
+    Originium, Oripathy, Arts, Seaborn, Catastrophes, the Precursors...)";
 
 /// The prompt with the wider topic line (`ask --lore v2`); without it the prompt is the one before, byte for byte.
 pub(crate) fn with_wide_topics(system: &str) -> String {

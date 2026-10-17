@@ -7,8 +7,10 @@ use super::text::episode_number;
 
 fn tools() -> Tools {
     let mut t = Tools::default();
-    for (id, name, ch) in [("act33side", "Babel", None), ("act21side", "IL Siracusano", None), ("main_7", "The Birth of Tragedy", Some(7)),
-                           ("main_14", "Absolved Will Be the Seekers", Some(14)), ("act29side", "Zwillingstürme im Herbst", None),
+    for (id, name, ch) in [("act33side", "Babel", None), ("act21side", "IL Siracusano", None),
+                           ("main_7", "The Birth of Tragedy", Some(7)),
+                           ("main_14", "Absolved Will Be the Seekers", Some(14)),
+                           ("act29side", "Zwillingstürme im Herbst", None),
                            ("act42side", "The Masses' Travels", None), ("story_x", "Babel Records", None)] {
         let mut g = json!({"groupId": id, "name": name});
         if let Some(c) = ch {
@@ -18,10 +20,12 @@ fn tools() -> Tools {
     }
     t.identities = vec![vec!["Kal'tsit".into(), "AMa-10".into(), "Louisa".into(), "Kal'tsit".into()]];
     t.attributes = Some(vec![
-        json!({"name": "Texas", "charId": "c1", "race": "Lupo", "heightCm": 161, "nation": "Lungmen", "class": "Vanguard"}),
+        json!({"name": "Texas", "charId": "c1", "race": "Lupo", "heightCm": 161, "nation": "Lungmen",
+               "class": "Vanguard"}),
         json!({"name": "Texas the Omertosa", "charId": "c2", "race": "Lupo", "heightCm": 161, "class": "Specialist"}),
         json!({"name": "Kal'tsit", "charId": "c3", "race": "Feline", "heightCm": 162, "class": "Medic"}),
-        json!({"name": "Flamebringer", "charId": "c4", "race": "Sarkaz", "heightCm": 185, "class": "Guard", "branch": "Dreadnought"}),
+        json!({"name": "Flamebringer", "charId": "c4", "race": "Sarkaz", "heightCm": 185, "class": "Guard",
+               "branch": "Dreadnought"}),
     ]);
     t
 }
@@ -79,8 +83,10 @@ fn tools_answer_and_fail_cleanly() {
     let t = tools();
     let r = t.run(&Route::new("operator_attribute", &[("operator", "texas"), ("field", "height")])).unwrap();
     assert!(r.contains("161 cm"), "{r}");
-    assert!(matches!(t.run(&Route::new("operator_attribute", &[("operator", "Texas"), ("field", "birthday")])), Err(ToolError::NoData(_))));
-    assert!(matches!(t.run(&Route::new("operator_attribute", &[("operator", "Texas"), ("field", "mood")])), Err(ToolError::BadArg { .. })));
+    assert!(matches!(t.run(&Route::new("operator_attribute", &[("operator", "Texas"), ("field", "birthday")])),
+                     Err(ToolError::NoData(_))));
+    assert!(matches!(t.run(&Route::new("operator_attribute", &[("operator", "Texas"), ("field", "mood")])),
+                     Err(ToolError::BadArg { .. })));
     let r = t.run(&Route::new("operator_filter", &[("race", "Sarkaz"), ("sort", "tallest")])).unwrap();
     assert!(r.contains("Flamebringer: 185 cm"), "{r}");
     let r = t.run(&Route::new("operator_filter", &[("class", "medics")])).unwrap();
@@ -111,17 +117,24 @@ fn question_detectors_fire_on_their_questions_only() {
     let g = t.event_in_question(q).expect("The Masses' Travels");
     assert_eq!(g["groupId"].as_str(), Some("act42side"));
     assert!(t.event_characters(q, "act42side", "The Masses' Travels").iter().any(|(n, _)| n == "Mon3tr"));
-    assert_eq!(t.event_in_question("Who does Mandragora fight in Episode 10?").and_then(|g| g["chapter"].as_u64()), Some(10));
-    assert!(t.event_in_question("What happened to Mandragora after Episode 10?").is_none(), "a time boundary is not the scope");
+    assert_eq!(t.event_in_question("Who does Mandragora fight in Episode 10?").and_then(|g| g["chapter"].as_u64()),
+               Some(10));
+    assert!(t.event_in_question("What happened to Mandragora after Episode 10?").is_none(),
+            "a time boundary is not the scope");
     assert!(t.event_in_question("Who is the best cook?").is_none());
     let a = t.appearances("Elysium").unwrap();
-    assert!(a.contains("Episode 16") && a.contains("Stultifera Navis") && a.contains("Mentioned by name without speaking"), "{a}");
-    assert_eq!(t.cross_ref_question("Which bosses later join Rhodes Island as playable operators?"), Some("bosses_playable"));
+    assert!(a.contains("Episode 16")
+            && a.contains("Stultifera Navis")
+            && a.contains("Mentioned by name without speaking"), "{a}");
+    assert_eq!(t.cross_ref_question("Which bosses later join Rhodes Island as playable operators?"),
+               Some("bosses_playable"));
     assert_eq!(t.cross_ref_question("Who is the final boss of Episode 8?"), None);
     let (run, _, endings, k) = t.is_ending_question("What happens in IS4 Ending 2 (including its endbooks)?").unwrap();
     assert_eq!((run.as_str(), k), ("rogue_3", Some(2)));
-    assert_eq!(endings.iter().map(|e| e.0).collect::<Vec<_>>(), vec![1, 2, 3, 4], "ro3_ending_c is not a numbered ending");
-    assert_eq!(t.is_ending_question("what is the second ending of Integrated Strategies 3").map(|x| (x.0, x.3)), Some(("rogue_2".into(), Some(2))));
+    assert_eq!(endings.iter().map(|e| e.0).collect::<Vec<_>>(), vec![1, 2, 3, 4],
+               "ro3_ending_c is not a numbered ending");
+    assert_eq!(t.is_ending_question("what is the second ending of Integrated Strategies 3").map(|x| (x.0, x.3)),
+               Some(("rogue_2".into(), Some(2))));
     assert!(t.is_ending_question("How does Episode 8 end?").is_none());
 }
 
@@ -131,7 +144,8 @@ fn real_tables_resolve_player_names() {
     if t.groups.is_empty() || t.attributes.is_none() || t.real_names.is_none() || t.deaths.is_none() {
         return;
     }
-    for (name, id) in [("Il Siracusano", "act21side"), ("Babel", "act33side"), ("Episode 7", "main_7"), ("chapter 14", "main_14"),
+    for (name, id) in [("Il Siracusano", "act21side"), ("Babel", "act33side"), ("Episode 7", "main_7"),
+                       ("chapter 14", "main_14"),
                        ("Zwillingsturme im Herbst", "act29side"), ("Such Is the Joy of Our Reunion", "act40side"),
                        ("Darknight Memoir", "act9d0"), ("the Masses Travels", "act42side")] {
         assert_eq!(gid(&t, name).as_deref(), Some(id), "{name}");
@@ -143,8 +157,10 @@ fn real_tables_resolve_player_names() {
     assert!(run("death_of", &[("character", "patriot")]).unwrap().contains("Patriot"));
     assert!(run("deaths_in_event", &[("event", "Babel"), ("who", "all")]).unwrap().contains("Theresa"));
     assert!(run("reading_event", &[("event", "Babel")]).unwrap().contains("Episode 13"));
-    assert!(matches!(run("recap", &[("event", "Rhodes Island"), ("ending", "false")]), Err(ToolError::NotFound { .. })));
-    assert!(matches!(run("operator_attribute", &[("operator", "Theresa"), ("field", "race")]), Err(ToolError::NotFound { .. })));
+    assert!(matches!(run("recap", &[("event", "Rhodes Island"), ("ending", "false")]),
+                     Err(ToolError::NotFound { .. })));
+    assert!(matches!(run("operator_attribute", &[("operator", "Theresa"), ("field", "race")]),
+                     Err(ToolError::NotFound { .. })));
     if t.canon.is_some() {
         let mut t = Tools::load(Path::new(env!("CARGO_MANIFEST_DIR")));
         t.opts.canon_v1 = true;
@@ -181,36 +197,49 @@ fn real_tables_resolve_player_names() {
 fn canon_labels_strength_splits_and_ties_from_the_counts() {
     let mut t = Tools::default();
     let q = |st: &str| json!({"story": st, "released": "2025-01-01", "quote": format!("line from {st}")});
-    let e = |name: &str, sts: &[&str]| json!({"name": name, "referencedBy": sts.iter().map(|x| json!({"story": x})).collect::<Vec<_>>(),
-                                               "quotes": sts.iter().map(|x| q(x)).collect::<Vec<_>>()});
+    let e = |name: &str, sts: &[&str]| json!({
+        "name": name,
+        "referencedBy": sts.iter().map(|x| json!({"story": x})).collect::<Vec<_>>(),
+        "quotes": sts.iter().map(|x| q(x)).collect::<Vec<_>>()});
     t.canon = Some(json!({"runs": [
-        {"run": "rogue_1", "runName": "Phantom & Crimson Solitaire", "endings": [e("A", &["Act or Die"]), e("B", &["Act or Die"]), e("C", &[])]},
-        {"run": "rogue_2", "runName": "Mizuki & Caerula Arbor", "endings": [e("Stella", &["module", "Episode 15"]), e("D", &[])]},
+        {"run": "rogue_1", "runName": "Phantom & Crimson Solitaire",
+         "endings": [e("A", &["Act or Die"]), e("B", &["Act or Die"]), e("C", &[])]},
+        {"run": "rogue_2", "runName": "Mizuki & Caerula Arbor",
+         "endings": [e("Stella", &["module", "Episode 15"]), e("D", &[])]},
     ]}));
     let r1 = t.canon(Some("IS2")).unwrap();
     assert!(r1.starts_with("The game never labels"), "{r1}");
-    assert!(r1.contains("No ending is favored") && r1.contains("A: one later story; Act or Die is credited to B as well"), "{r1}");
+    assert!(r1.contains("No ending is favored")
+            && r1.contains("A: one later story; Act or Die is credited to B as well"), "{r1}");
     assert!(r1.contains("C: no later story refers to it"), "{r1}");
     let r2 = t.canon(Some("mizuki")).unwrap();
-    assert!(r2.contains("Most continued: Stella (2 later stories)") && r2.contains("Stella: continued by 2 later stories"), "{r2}");
+    assert!(r2.contains("Most continued: Stella (2 later stories)")
+            && r2.contains("Stella: continued by 2 later stories"), "{r2}");
     assert!(t.canon(Some("Integrated Strategies #3")).unwrap() == r2);
     assert!(t.canon(Some("rogue_2")).unwrap() == r2, "a data id is not shifted");
     assert!(t.canon(Some("IS1")).unwrap().contains("Ceobe's Fungimist, is not in the game data"));
     assert!(t.canon(Some("Fungimist")).unwrap().starts_with("Integrated Strategies #1"));
     assert!(matches!(t.canon(Some("IS9")), Err(ToolError::NotFound { .. })));
     let all = t.canon(None).unwrap();
-    assert!(all.contains("Phantom & Crimson Solitaire (Integrated Strategies #2)") && all.contains("(Integrated Strategies #3)"), "{all}");
+    assert!(all.contains("Phantom & Crimson Solitaire (Integrated Strategies #2)")
+            && all.contains("(Integrated Strategies #3)"), "{all}");
     t.opts.is_offset = false;
-    assert!(t.canon(None).unwrap().contains("Phantom & Crimson Solitaire (Integrated Strategies #1)"), "the old numbering");
+    assert!(t.canon(None).unwrap().contains("Phantom & Crimson Solitaire (Integrated Strategies #1)"),
+            "the old numbering");
     assert!(t.canon(Some("IS1")).unwrap().contains("Phantom"));
 }
 
 #[test]
 fn topics_resolve_by_name_then_alias_and_lose_their_citations() {
-    let t = Tools { topics: Some(vec![json!({"topic": "Beast Lords", "aliases": ["Beast Lord", "Feranmut"], "summary": format!("Old [1]. Very old [2, 3].{}", " x".repeat(100))}),
-                         json!({"topic": "Feranmut", "aliases": ["Feranmut", "Sui", "Beast Lord"], "summary": format!("Sui [4].{}", " x".repeat(100))}),
-                         json!({"topic": "Pythia", "aliases": ["Pythia"], "summary": "Please provide the numbered passages [1]."}),
-                         json!({"topic": "Sami", "aliases": ["Sami"], "summary": format!("Cold [x] land [9].{}", " snow".repeat(100))})]), ..Tools::default() };
+    let t = Tools { topics: Some(vec![json!({"topic": "Beast Lords", "aliases": ["Beast Lord", "Feranmut"],
+                                             "summary": format!("Old [1]. Very old [2, 3].{}", " x".repeat(100))}),
+                         json!({"topic": "Feranmut", "aliases": ["Feranmut", "Sui", "Beast Lord"],
+                                "summary": format!("Sui [4].{}", " x".repeat(100))}),
+                         json!({"topic": "Pythia", "aliases": ["Pythia"],
+                                "summary": "Please provide the numbered passages [1]."}),
+                         json!({"topic": "Sami", "aliases": ["Sami"],
+                                "summary": format!("Cold [x] land [9].{}", " snow".repeat(100))})]),
+                    ..Tools::default() };
     assert_eq!(t.topic("beast lord").unwrap().topic, "Beast Lords");
     assert_eq!(t.topic("Sui").unwrap().topic, "Feranmut");
     assert!(t.topic("Beast Lords").unwrap().text.starts_with("Old. Very old. x"));
@@ -221,46 +250,60 @@ fn topics_resolve_by_name_then_alias_and_lose_their_citations() {
 
 #[test]
 fn deep_entries_replace_the_summary_only_when_switched_on_and_long_enough() {
-    let mut t = Tools { topics: Some(vec![json!({"topic": "Sami", "aliases": ["Sami"], "summary": format!("Cold [1].{}", " snow".repeat(100))}),
-                                     json!({"topic": "Sarkaz", "aliases": ["Sarkaz"], "summary": format!("Horned [2].{}", " x".repeat(100))})]),
+    let mut t = Tools { topics: Some(vec![json!({"topic": "Sami", "aliases": ["Sami"],
+                                                 "summary": format!("Cold [1].{}", " snow".repeat(100))}),
+                                     json!({"topic": "Sarkaz", "aliases": ["Sarkaz"],
+                                            "summary": format!("Horned [2].{}", " x".repeat(100))})]),
                         ..Tools::default() };
     t.deep_topics.insert("Sami".into(), format!("What it is\nA northern land [1, 2].{}", " ice".repeat(100)));
     t.deep_topics.insert("Sarkaz".into(), "What it is\nToo short [1].".into());
     assert!(t.topic("sami").unwrap().text.starts_with("Cold. snow"), "off: the summary, as before");
     t.topics_deep = true;
     assert!(t.topic("sami").unwrap().text.starts_with("What it is\nA northern land. ice"));
-    assert!(t.topic("Sarkaz").unwrap().text.starts_with("Horned."), "a deep entry under 100 words falls back to the summary");
+    assert!(t.topic("Sarkaz").unwrap().text.starts_with("Horned."),
+            "a deep entry under 100 words falls back to the summary");
     assert!(t.deep_entry("Sarkaz").is_none() && t.deep_entry("Sami").is_some());
     // The deep-entry gate: only a question about the topic as a whole.
     assert!(t.broad_topic_question("Who are the sarkaz?") && t.broad_topic_question("What is sami guarding?"));
     assert!(!t.broad_topic_question("Do Sarkaz, as a culture, give their horns as gifts?"));
     assert!(!t.broad_topic_question("Who is Amiya?"), "names no topic");
-    let g = Tools { topics: Some(vec![json!({"topic": "Aegir", "kind": "race", "aliases": ["Ægir"]}), json!({"topic": "Arts", "kind": "concept", "aliases": []})]),
+    let g = Tools { topics: Some(vec![json!({"topic": "Aegir", "kind": "race", "aliases": ["Ægir"]}),
+                                      json!({"topic": "Arts", "kind": "concept", "aliases": []})]),
                     ..Tools::default() };
-    assert!(g.names_group_topic("Are Petrams related to Aegirs?") && !g.names_group_topic("Is Kristen related to Friston?"));
+    assert!(g.names_group_topic("Are Petrams related to Aegirs?")
+            && !g.names_group_topic("Is Kristen related to Friston?"));
     assert!(!g.names_group_topic("Are Arts related to Originium?"), "a concept topic is not a group of people");
 }
 
 #[test]
 fn answer_check_reads_the_category_from_the_question_and_the_names_from_the_data() {
     let a = |n: &str, nation: &str, birth: &str| json!({"name": n, "nation": nation, "birthplace": birth});
-    let t = Tools { attributes: Some(vec![a("Sakiko Togawa", "", "Unknown"), a("Iris", "Victoria", "Victoria"), a("Rosmontis", "Rhodes Island", "Victoria"),
+    let t = Tools { attributes: Some(vec![a("Sakiko Togawa", "", "Unknown"), a("Iris", "Victoria", "Victoria"),
+                                          a("Rosmontis", "Rhodes Island", "Victoria"),
                                           a("Amiya", "Rhodes Island", "Rim Billiton")]),
                     real_names: Some(vec![json!({"name": "Rosmontis", "realName": "Rosa"})]),
                     topics: Some(vec![json!({"topic": "Rhodes Island", "kind": "organization", "aliases": []})]),
-                    identity_links: vec![("Mabel".into(), "Bluishsilver".into(), "former_name".into(), String::new(), String::new(), true)],
+                    identity_links: vec![("Mabel".into(), "Bluishsilver".into(), "former_name".into(),
+                                          String::new(), String::new(), true)],
                     ..Tools::default() };
     let q = "Which Rhodes Island Operator (not playable unit) had visited Iris' castle of dreams?";
     assert_eq!(t.answer_constraint(q), Some(AnswerConstraint::NonPlayable));
-    assert_eq!(t.answer_constraint("Which operator/Rhodes Island NPC comes closest to being a Psychologist?"), None, "operator or NPC");
-    assert_eq!(t.answer_constraint("Which Rhodes Island operator won the chess tournament?"), None, "an organization is no nation");
-    assert_eq!(t.answer_constraint("Which operator from Victoria plays the harp?"), Some(AnswerConstraint::Nation("Victoria".into())));
+    assert_eq!(t.answer_constraint("Which operator/Rhodes Island NPC comes closest to being a Psychologist?"), None,
+               "operator or NPC");
+    assert_eq!(t.answer_constraint("Which Rhodes Island operator won the chess tournament?"), None,
+               "an organization is no nation");
+    assert_eq!(t.answer_constraint("Which operator from Victoria plays the harp?"),
+               Some(AnswerConstraint::Nation("Victoria".into())));
     let c = AnswerConstraint::NonPlayable;
-    assert_eq!(t.failing_answer_name(q, "Sakiko Togawa visited it [3].", &c).map(|x| x.0).as_deref(), Some("Sakiko Togawa"));
-    assert_eq!(t.failing_answer_name(q, "Rosa visited it, then Mabel.", &c).map(|x| x.1).as_deref(), Some("Rosa is the playable operator Rosmontis"));
-    assert!(t.failing_answer_name(q, "Mabel, the former Bluishsilver, visited Iris.", &c).is_none(), "an NPC passes; Iris is in the question");
+    assert_eq!(t.failing_answer_name(q, "Sakiko Togawa visited it [3].", &c).map(|x| x.0).as_deref(),
+               Some("Sakiko Togawa"));
+    assert_eq!(t.failing_answer_name(q, "Rosa visited it, then Mabel.", &c).map(|x| x.1).as_deref(),
+               Some("Rosa is the playable operator Rosmontis"));
+    assert!(t.failing_answer_name(q, "Mabel, the former Bluishsilver, visited Iris.", &c).is_none(),
+            "an NPC passes; Iris is in the question");
     assert!(t.failing_answer_name(q, "The passages do not say.", &c).is_none());
-    assert!(t.failing_answer_name(q, "The passages do not identify one. They mention Rosmontis [1].", &c).is_none(), "context, not the answer");
+    assert!(t.failing_answer_name(q, "The passages do not identify one. They mention Rosmontis [1].", &c).is_none(),
+            "context, not the answer");
     let v = AnswerConstraint::Nation("Victoria".into());
     assert!(t.failing_answer_name("Which operator from Victoria?", "Rosmontis.", &v).is_none(), "birthplace Victoria");
     assert!(t.failing_answer_name("Which operator from Victoria?", "Amiya.", &v).is_some());
@@ -268,14 +311,18 @@ fn answer_check_reads_the_category_from_the_question_and_the_names_from_the_data
 
 #[test]
 fn game_data_for_trait_questions_about_named_characters_and_families() {
-    let a = |n: &str, race: &str| json!({"name": n, "race": race, "birthplace": "Kazimierz", "nation": "Kazimierz", "group": null, "heightCm": 170});
-    let t = Tools { attributes: Some(vec![a("Nearl", "Kuranta"), a("Nearl the Radiant Knight", "Kuranta"), a("Angelina", "Vulpo"), a("Mountain", "Feline")]),
-                    topics: Some(vec![json!({"topic": "Kuranta", "aliases": ["Kuranta"], "summary": format!("Horse-like [1].{}", " x".repeat(100)),
+    let a = |n: &str, race: &str| json!({"name": n, "race": race, "birthplace": "Kazimierz", "nation": "Kazimierz",
+                                         "group": null, "heightCm": 170});
+    let t = Tools { attributes: Some(vec![a("Nearl", "Kuranta"), a("Nearl the Radiant Knight", "Kuranta"),
+                                          a("Angelina", "Vulpo"), a("Mountain", "Feline")]),
+                    topics: Some(vec![json!({"topic": "Kuranta", "aliases": ["Kuranta"],
+                                             "summary": format!("Horse-like [1].{}", " x".repeat(100)),
                                              "summaryV2": format!("Equine.{}", " y".repeat(100))})]),
                     game_data: true, topics_v2_text: true, ..Tools::default() };
     let g = t.game_data("Do the Nearls have wings?").unwrap();
     assert_eq!(g.topic, "Nearl, Nearl the Radiant Knight");
-    assert!(g.text.contains("race Kuranta") && g.text.contains("Race Kuranta (Trevor's topic summary, start): Equine."));
+    assert!(g.text.contains("race Kuranta")
+            && g.text.contains("Race Kuranta (Trevor's topic summary, start): Equine."));
     assert!(g.text.contains("Races whose topic summaries mention wings: none"));
     assert_eq!(t.game_data("how old is angelina").unwrap().topic, "Angelina");
     assert!(t.game_data("What did Nearl do in Kazimierz?").is_none(), "not a trait question");
@@ -286,7 +333,8 @@ fn game_data_for_trait_questions_about_named_characters_and_families() {
 
 #[test]
 fn new_dossiers_match_by_own_name_long_folded_short_as_written() {
-    let t = Tools { new_dossiers: vec![("Rosa".into(), "r".into()), ("Innkeeper Zheng".into(), "z".into()), ("Pole-Carrier".into(), "p".into())],
+    let t = Tools { new_dossiers: vec![("Rosa".into(), "r".into()), ("Innkeeper Zheng".into(), "z".into()),
+                                       ("Pole-Carrier".into(), "p".into())],
                     ..Tools::default() };
     assert_eq!(t.new_dossier("Who is Rosa's mentor?").unwrap().topic, "Rosa");
     assert!(t.new_dossier("a rosa flower").is_none(), "a one-word name matches only as written");
@@ -305,9 +353,12 @@ fn new_dossiers_match_by_own_name_long_folded_short_as_written() {
 #[test]
 fn topics_from_data_resolve_by_merged_names_and_drop_under_v1() {
     let long = |w: &str| format!("{w}.{}", " x".repeat(100));
-    let rows = vec![json!({"topic": "Victoria", "aliases": ["Victoria"], "names": ["Victorian", "Victorians"], "summary": long("Old")}),
-                    json!({"topic": "Yan-Lungmen", "aliases": ["Yan-Lungmen", "Lungmen"], "source": "table", "summary": long("City")}),
-                    json!({"topic": "Kylin", "aliases": ["Kylin"], "source": "table", "thin": "passages: 2 of 2 name it"})];
+    let rows = vec![json!({"topic": "Victoria", "aliases": ["Victoria"], "names": ["Victorian", "Victorians"],
+                           "summary": long("Old")}),
+                    json!({"topic": "Yan-Lungmen", "aliases": ["Yan-Lungmen", "Lungmen"], "source": "table",
+                           "summary": long("City")}),
+                    json!({"topic": "Kylin", "aliases": ["Kylin"], "source": "table",
+                           "thin": "passages: 2 of 2 name it"})];
     let mut t = Tools { topics: Some(served_topics(rows)), ..Tools::default() };
     assert_eq!(t.topic("victorians").unwrap().topic, "Victoria");
     assert_eq!(t.topic("Lungmen").unwrap().topic, "Yan-Lungmen");
@@ -326,7 +377,8 @@ fn short_names_expand_only_unique_prefixes() {
     assert!(t.short_names("Is Texas a Lupo?").is_empty(), "a whole name is left alone");
     // Texas and Texas the Omertosa share a first word, so "tex" is one target, the shorter name; "flame" also
     // matches Flamebringer here, which is why the caller checks corpus frequency (flame is a common word).
-    assert_eq!(t.short_names("tex or flame"), vec![("tex".to_owned(), "Texas".to_owned()), ("flame".to_owned(), "Flamebringer".to_owned())]);
+    assert_eq!(t.short_names("tex or flame"),
+               vec![("tex".to_owned(), "Texas".to_owned()), ("flame".to_owned(), "Flamebringer".to_owned())]);
 }
 
 #[test]
@@ -338,7 +390,9 @@ fn cross_ref_lists_bosses_by_operator() {
         {"operator": "Amiya", "boss": "'Amiya'", "matchedBy": "codename"},
         {"operator": "Amiya", "boss": "'Amiya', Furnace's Finale", "matchedBy": "codename"}]}));
     let out = t.cross_ref("bosses_playable").unwrap();
-    assert!(out.contains("229 boss") && out.contains(": 2 operators") && out.contains("- Amiya: \"'Amiya'\" (matched by codename); \"'Amiya', Furnace's Finale\""));
+    assert!(out.contains("229 boss")
+            && out.contains(": 2 operators")
+            && out.contains("- Amiya: \"'Amiya'\" (matched by codename); \"'Amiya', Furnace's Finale\""));
     assert!(matches!(t.cross_ref("everything"), Err(ToolError::BadArg { .. })));
 }
 
@@ -346,7 +400,8 @@ fn cross_ref_lists_bosses_by_operator() {
 fn design_basis_answers_both_readings_and_only_design_questions() {
     let mut t = tools();
     assert_eq!(t.design_basis("what operator is based off an animal with phantom as part of its name"), None);
-    t.attributes = Some(vec![json!({"name": "Lucilla"}), json!({"name": "Phantom"}), json!({"name": "Tragodia"}), json!({"name": "Kirara"})]);
+    t.attributes = Some(vec![json!({"name": "Lucilla"}), json!({"name": "Phantom"}), json!({"name": "Tragodia"}),
+                             json!({"name": "Kirara"})]);
     let sub = |x: &str| json!({"subject": x, "category": "animal", "why": "clues.", "confidence": "medium",
                                "evidence": [{"id": "E3", "source": "operator file, Profile", "text": "a line"}]});
     t.design_basis = Some(vec![
@@ -357,12 +412,14 @@ fn design_basis_answers_both_readings_and_only_design_questions() {
     let out = t.design_basis("what operator is based off an animal with phantom as part of its name").unwrap();
     assert!(out.starts_with("Trevor's inference from the game data") && !out.contains("wiki"));
     assert!(out.contains("- Kirara: likely draws on phantom jellyfish (animal, medium confidence)"));
-    assert!(out.contains("- Phantom: likely draws on The Phantom of the Opera") && out.contains("(the alternate operator of Phantom)"));
+    assert!(out.contains("- Phantom: likely draws on The Phantom of the Opera")
+            && out.contains("(the alternate operator of Phantom)"));
     assert_eq!(out.matches("- Phantom:").count(), 1);
     assert_eq!(t.design_basis("who is phantom"), None);
     assert_eq!(t.design_basis("what is the kitchen of rhodes island based on"), None);
     // An operator with nothing inferred says so instead of guessing.
-    assert!(t.design_basis("what animal is lucilla based on").unwrap().contains("- Lucilla: the game data does not point"));
+    assert!(t.design_basis("what animal is lucilla based on").unwrap()
+        .contains("- Lucilla: the game data does not point"));
 }
 
 /// The wiki is an eval reference only: no serving code names its directory, and loading the tables never
@@ -380,8 +437,11 @@ fn serving_code_never_opens_eval_reference() {
                 stack.push(p);
             } else if p.extension().is_some_and(|x| x == "rs") {
                 let text = std::fs::read_to_string(&p).unwrap();
-                if text.contains(dir) || text.contains(concat!("wiki_", "cache")) || text.contains(concat!("design_basis", ".jsonl"))
-                    || text.contains(concat!("wiki_", "deceased")) || text.contains(concat!("wiki_", "status")) {
+                if text.contains(dir)
+                    || text.contains(concat!("wiki_", "cache"))
+                    || text.contains(concat!("design_basis", ".jsonl"))
+                    || text.contains(concat!("wiki_", "deceased"))
+                    || text.contains(concat!("wiki_", "status")) {
                     offenders.push(p.display().to_string());
                 }
             }
@@ -390,7 +450,8 @@ fn serving_code_never_opens_eval_reference() {
     assert!(offenders.is_empty(), "serving code names the wiki eval references: {offenders:?}");
     let root = std::env::temp_dir().join(format!("trevor-ref-test-{}", std::process::id()));
     std::fs::create_dir_all(root.join(dir)).unwrap();
-    std::fs::write(root.join(dir).join(concat!("design_basis", ".jsonl")), "{\"operator\": \"Lucilla\", \"basis\": [\"jelly\"]}\n").unwrap();
+    std::fs::write(root.join(dir).join(concat!("design_basis", ".jsonl")),
+                   "{\"operator\": \"Lucilla\", \"basis\": [\"jelly\"]}\n").unwrap();
     let t = Tools::load(&root);
     assert!(t.design_basis.is_none());
     std::fs::remove_dir_all(&root).unwrap();
@@ -416,8 +477,15 @@ fn whole_word_matches_skip_matches_inside_words() {
 #[test]
 fn operator_list_items() {
     let t = Tools { attributes: Some(vec![json!({"name": "Caper"}), json!({"name": "Rosmontis"})]),
-                    topics: Some(vec![json!({"topic": "Reunion Movement", "kind": "organization", "aliases": ["Reunion"]})]), ..Tools::default() };
-    let ans = "Based on the passages:\n\n*   **Aurela:** She took delight in cruelty [2]. Also [3, 4].\n*   **Caper:** chaos [18].\n1. **Rosmontis (Elite Operator)** [1]\n- **Reunion:** a group [5]\nAurela is first.";
+                    topics: Some(vec![json!({"topic": "Reunion Movement", "kind": "organization",
+                                             "aliases": ["Reunion"]})]),
+                    ..Tools::default() };
+    let ans = "Based on the passages:\n\n\
+        *   **Aurela:** She took delight in cruelty [2]. Also [3, 4].\n\
+        *   **Caper:** chaos [18].\n\
+        1. **Rosmontis (Elite Operator)** [1]\n\
+        - **Reunion:** a group [5]\n\
+        Aurela is first.";
     assert_eq!(t.non_operator_items(ans), vec![("Aurela".to_owned(), vec![2, 3, 4])]);
     assert!(t.asks_operators("Give a ranking of operators who break the most Geneva convention rules"));
     assert!(t.asks_operators("Which operator is the best cook?"));
@@ -431,11 +499,15 @@ fn operator_list_items() {
 /// person lists; the question then names both groups.
 #[test]
 fn group_identities_and_named_groups() {
-    let mut t = Tools { identities: vec![vec!["Blacksteel Worldwide".into(), "Blacksteel".into(), "Blacksteel Worldwide".into()],
+    let mut t = Tools { identities: vec![vec!["Blacksteel Worldwide".into(), "Blacksteel".into(),
+                                              "Blacksteel Worldwide".into()],
                                          vec!["Lucilla".into(), "Lucilla".into()]],
-                        topics: Some(vec![json!({"topic": "Blacksteel Worldwide", "kind": "organization", "aliases": ["Blacksteel Worldwide", "BSW"]}),
-                                          json!({"topic": "Karlan Trade CO., LTD", "kind": "organization", "aliases": ["Karlan Trade"]}),
-                                          json!({"topic": "Mount Karlan", "kind": "place", "aliases": []})]), ..Tools::default() };
+                        topics: Some(vec![json!({"topic": "Blacksteel Worldwide", "kind": "organization",
+                                                 "aliases": ["Blacksteel Worldwide", "BSW"]}),
+                                          json!({"topic": "Karlan Trade CO., LTD", "kind": "organization",
+                                                 "aliases": ["Karlan Trade"]}),
+                                          json!({"topic": "Mount Karlan", "kind": "place", "aliases": []})]),
+                        ..Tools::default() };
     let q = "Evaluate the political influence of Karlan Trade Group and Blacksteel. Who possesses more power?";
     assert_eq!(t.named_group_topics(q).len(), 1, "before: Blacksteel is a person name");
     t.fold_group_identities();
@@ -445,12 +517,17 @@ fn group_identities_and_named_groups() {
     assert!(t.named_group_topics("What is Mount Karlan?").iter().all(|g| g.0 == "Mount Karlan"));
 
     // Since identities.json no longer carries the Blacksteel link, the company-suffix rule supplies the short name.
-    let mut u = Tools { topics: Some(vec![json!({"topic": "Blacksteel Worldwide", "kind": "organization", "aliases": ["Blacksteel Worldwide", "BSW"]}),
-                                          json!({"topic": "Karlan Trade CO., LTD", "kind": "organization", "aliases": ["Karlan Trade"]}),
-                                          json!({"topic": "Ursus Student Self-government Group", "kind": "organization", "aliases": []})]), ..Tools::default() };
+    let mut u = Tools { topics: Some(vec![json!({"topic": "Blacksteel Worldwide", "kind": "organization",
+                                                 "aliases": ["Blacksteel Worldwide", "BSW"]}),
+                                          json!({"topic": "Karlan Trade CO., LTD", "kind": "organization",
+                                                 "aliases": ["Karlan Trade"]}),
+                                          json!({"topic": "Ursus Student Self-government Group", "kind": "organization",
+                                                 "aliases": []})]),
+                        ..Tools::default() };
     u.org_short_names();
     let g: Vec<String> = u.named_group_topics(q).into_iter().map(|g| g.0).collect();
     assert_eq!(g, vec!["Karlan Trade CO., LTD".to_owned(), "Blacksteel Worldwide".to_owned()]);
-    assert_eq!(u.topics.as_ref().unwrap()[1]["aliases"].as_array().unwrap().len(), 1, "Karlan Trade already has its head");
+    assert_eq!(u.topics.as_ref().unwrap()[1]["aliases"].as_array().unwrap().len(), 1,
+               "Karlan Trade already has its head");
     assert_eq!(u.topics.as_ref().unwrap()[2]["aliases"].as_array().unwrap().len(), 0, "Group is not a suffix");
 }

@@ -62,13 +62,22 @@ pub(crate) fn term_lookup(rt: &Runtime, term: &str, k: usize) -> Option<(String,
     let spelling = forms.into_iter().max_by(|x, y| x.1.cmp(&y.1).then(y.0.cmp(&x.0)))?.0;
     hits.sort_by(|x, y| x.0.cmp(&y.0).then(y.1.cmp(&x.1)).then(x.2.cmp(&y.2)));
     let mut seen = BTreeSet::new();
-    let rows = hits.into_iter().filter(|h| seen.insert(rt.store.chunks[h.2].story_id.clone())).take(k).map(|h| h.2).collect();
+    let rows = hits
+        .into_iter()
+        .filter(|h| seen.insert(rt.store.chunks[h.2].story_id.clone()))
+        .take(k)
+        .map(|h| h.2)
+        .collect();
     Some((spelling, rows))
 }
 
 /// The first `n` sentences of a summary, its section headings skipped (a deep entry starts with "What it is").
 pub(crate) fn first_sentences(text: &str, n: usize) -> String {
-    let body: Vec<&str> = text.lines().map(str::trim).filter(|l| l.ends_with(['.', '!', '?', ')', '"']) || l.len() > 60).collect();
+    let body: Vec<&str> = text
+        .lines()
+        .map(str::trim)
+        .filter(|l| l.ends_with(['.', '!', '?', ')', '"']) || l.len() > 60)
+        .collect();
     let joined = body.join(" ");
     let mut out = String::new();
     let mut count = 0;
@@ -91,18 +100,24 @@ pub(crate) fn whole_word_at(text: &str, f: &str) -> Option<usize> {
 /// mention), not the term itself, at most `k`, each as the first two sentences of its summary. With `rarity` (the
 /// default), the rarest first: fewest chunks of `rarity` naming one of the topic's forms, first mention breaking ties,
 /// so generic topics (Rhodes Island, Terra, Precursors) do not take the places.
-pub(crate) fn term_glossary(tools: &Tools, texts: &[&str], term: &str, k: usize, rarity: Option<&Runtime>) -> Vec<(String, String)> {
+pub(crate) fn term_glossary(tools: &Tools, texts: &[&str], term: &str, k: usize,
+                            rarity: Option<&Runtime>) -> Vec<(String, String)> {
     let key = compact(term);
     let Some(rows) = tools.topics.as_ref() else { return Vec::new() };
     let all = texts.join("\n");
     let mut found: Vec<(usize, usize, String)> = Vec::new();
     for r in rows {
         let name = r["topic"].as_str().unwrap_or_default();
-        let forms: Vec<&str> = std::iter::once(name).chain(r["aliases"].as_array().into_iter().flatten().filter_map(|x| x.as_str())).collect();
+        let forms: Vec<&str> = std::iter::once(name)
+            .chain(r["aliases"].as_array().into_iter().flatten().filter_map(|x| x.as_str()))
+            .collect();
         if forms.iter().any(|f| compact(f) == key) {
             continue;
         }
-        let forms: Vec<&str> = forms.into_iter().filter(|f| f.chars().next().is_some_and(char::is_uppercase) && f.chars().count() >= 4).collect();
+        let forms: Vec<&str> = forms
+            .into_iter()
+            .filter(|f| f.chars().next().is_some_and(char::is_uppercase) && f.chars().count() >= 4)
+            .collect();
         let first = forms.iter().filter_map(|f| whole_word_at(&all, f)).min();
         if let Some(i) = first {
             let df = rarity.map_or(0, |rt| rt.store.chunks.iter().filter(|c| !is_generated(&c.group_id)
