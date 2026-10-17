@@ -86,8 +86,6 @@ plan_p4_models() {
   step "topics gen";   python3 scripts/topics.py gen
   step "topics judge"; python3 scripts/topics.py judge
   step "topics deep";  python3 scripts/topic_deep.py gen --top "${DEEP_TOP:-40}"; python3 scripts/topic_deep.py judge
-  step "design infer"; python3 scripts/design_infer.py gen; python3 scripts/design_infer.py check
-  step "design tiles"; python3 scripts/art_captions.py design_tiles
   step "canon";        python3 scripts/canon_refs.py inputs | sed '$d'
 }
 # The gatePos order (ask --gate-order, no model) records the sha of its three inputs; this says whether it is current now.
@@ -145,11 +143,11 @@ step "main episode dates";  python3 scripts/reading_guide.py dates | tee -a "$LO
 step "identities, deaths";  python3 scripts/entities.py build; python3 scripts/deaths.py build
 step "operator attributes"; python3 scripts/attributes.py
 # Eval references only, off by default so an update stays offline and nothing served depends on the wiki (2026-10-04):
-# REFRESH_REFERENCE=1 refreshes the wiki answer keys under eval/reference (trivia pages for design_infer.py score,
-# the deceased list and operator statuses for deaths.py eval, the main episode dates for reading_guide.py score).
+# REFRESH_REFERENCE=1 refreshes the wiki answer keys under eval/reference (the deceased list and operator statuses for
+# deaths.py eval, the main episode dates for reading_guide.py score).
 if [[ "${REFRESH_REFERENCE:-0}" == "1" && -z "${PLAN:-}" ]]; then
   step "wiki eval references (network)"
-  python3 scripts/design_basis.py all; python3 scripts/deaths.py wiki; python3 scripts/wiki_status.py
+  python3 scripts/deaths.py wiki; python3 scripts/wiki_status.py
   python3 scripts/reading_guide.py wiki
 fi
 # Since 2026-10-02 both lores (ask --lore v1|v2) retrieve from these corpora, built from the 200 v1 dossiers and the 46
@@ -237,32 +235,6 @@ if [[ -z "${SKIP_P4_MODELS:-}" ]]; then
   fi
   if [[ "$(planned scripts/topic_deep.py judge)" != "0" ]]; then
     step "topics deep judge (Qwen)"; serve "$JUDGE" --reasoning off; python3 scripts/topic_deep.py judge | tail -1 | tee -a "$LOG/steps.log"; unserve
-  fi
-  # Design inspirations inferred from the game data (2026-10-04, ask's design_basis tool): keyed on each operator's
-  # evidence and the prompt, so only new or changed operators are redone; Gemma infers, Qwen checks the cited evidence.
-  if [[ "$(planned scripts/design_infer.py gen)" != "0" ]]; then
-    step "design infer gen (Gemma)"; serve "$GEN" --reasoning off; python3 scripts/design_infer.py gen; unserve
-  fi
-  if [[ "$(planned scripts/design_infer.py check)" != "0" ]]; then
-    step "design infer check (Qwen)"; serve "$JUDGE" --reasoning off; python3 scripts/design_infer.py check; unserve
-  fi
-  # Tiled design probe (2026-10-05): per operator's E2 art (E0 without one) the 12B vision model reads the 2x2
-  # full-resolution tiles for creatures, animals, plants and objects; rows keyed on the PNG's sha256 + prompt hash, so
-  # only new or changed art is read (about 33 s an image). TILES=0 skips it. Then the deduction evidence of
-  # ask --design-deduce is rebuilt (no model, under a second).
-  if [[ "${TILES:-1}" == "1" ]] && [[ "$(planned scripts/art_captions.py design_tiles)" != "0" ]]; then
-    step "design tiles (Gemma + mmproj)"
-    KV=8192 serve "$GEN" --reasoning off --mmproj models/llm/mmproj-gemma-4-12b-it-qat-q4_0.gguf -b 2048 -ub 2048 \
-      --image-min-tokens 1120 --image-max-tokens 1120
-    ART_THREADS=1 python3 scripts/art_captions.py design_tiles; unserve
-  fi
-  python3 scripts/design_infer.py evidence | tee -a "$LOG/steps.log"
-  # Not served (2026-10-04 evening): no version met the bar of held-out precision 0.600 against the wiki answer key
-  # (v1 checked 17/35 = 0.486), so the table is built beside the served path; DESIGN_SERVE=1 builds the served one.
-  if [[ "${DESIGN_SERVE:-0}" == "1" ]]; then
-    python3 scripts/design_infer.py build | tee -a "$LOG/steps.log"
-  else
-    DESIGN_OUT=artifacts/entities/design_infer.unserved.jsonl python3 scripts/design_infer.py build | tee -a "$LOG/steps.log"
   fi
   canon=$(python3 scripts/canon_refs.py inputs | tee -a "$LOG/steps.log" | tail -1)
   if [[ "$canon" != "none" ]]; then

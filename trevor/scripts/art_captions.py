@@ -20,11 +20,6 @@ from the game data (skin_table + character_table), never from the model.
       cross-check: macOS Vision text recognition (on-device, no model lock)
       over the same images -> artifacts/art/ocr.jsonl
   python3 scripts/art_captions.py stats
-  SERVER=... python3 scripts/art_captions.py design [--ids char_a,char_b | --split split.json --split-part dev,heldout] [--minutes M]
-      visual design reading (2026-10-04 night): per operator, what real-world animal, creature, plant or object
-      the E2 art (E0 when there is no E2 or the E2 reading is unclear) is modelled on, with the visible features,
-      the most specific species and a confidence; the race is the only context given -> artifacts/art/design.jsonl
-      (resumable, keyed on operator, art and prompt hash); read by design_infer.py with DESIGN_VISUAL=1
   python3 scripts/art_captions.py units
       one P4 unit per captioned image (kind "art") -> artifacts/art/units.jsonl, and
       artifacts/art/p4_art_units.jsonl = artifacts/sources/all_units.jsonl (P4's units) + the art units, for
@@ -135,11 +130,6 @@ def jpeg(im):
 
 def prepare(path):
     return jpeg(composite(path))
-
-
-def png_sha(path):
-    """The first 16 hex digits of the source PNG's sha256: half of a design row's key."""
-    return hashlib.sha256((ASSETS / path).read_bytes()).hexdigest()[:16]
 
 
 def vision_body(jpg, text, max_tokens, name, schema, system=None):
@@ -406,266 +396,9 @@ def units(_a):
           f"-> {OUT / 'units.jsonl'}, {OUT / 'p4_art_units.jsonl'}")
 
 
-# Visual design reading (2026-10-04 night, Ian: Trevor deduces design inspirations from the game data, its art
-# included). The captions describe what is visible but never say what the design is modelled on, and Lucilla's
-# giant phantom jelly has no tie in the game text (an umbrella with wriggling tentacles, bubbles, Ægir). This pass asks
-# the vision model one question per operator: which real-world animal, creature, plant or object the design resembles,
-# the visible features that show it, the most specific species they justify, and a confidence. The only context it is
-# given is the operator's race from the game data (never the codename, which would lead it); the E2 art is read first
-# and the E0 art too when there is no E2 or the E2 reading is low-confidence or names nothing. Rows ->
-# artifacts/art/design.jsonl, read by design_infer.py only with DESIGN_VISUAL=1.
-DESIGN_SYSTEM = """You study character illustrations from the game Arknights to say what real-world thing each character's design is modelled on. Judge only from what is visible in the image. Never name the character, the game, or an artist."""
-
-DESIGN_USER = """The game gives this character's race as "{race}" (a fictional race of the game; a race name gives at most an animal family, never the species).
-
-Many Arknights characters are people with the features of one specific real animal; others draw on a mythical creature, a plant or an object. Work in two steps and name only what you can actually see.
-1. The character's own body: ears (shape, size, color, tips), tail (length, thickness, fur, stripes, spots, rings), horns or antlers, wings or feathers, scales, fins, tentacles, shell, fur colors and markings. These features decide the animal.
-2. Everything else: creatures that accompany the character, background figures, emblems, headwear, clothing patterns, accessories, weapon. Use these to choose the exact species only when they match the character's own body features; a background creature alone does not make the character that animal.
-
-Return JSON with:
-- "body_features": the character's own animal features from step 1, each a few concrete words (color, shape, where), or an empty list.
-- "motifs": the motifs from step 2 that bear on the design, each a few concrete words, or an empty list.
-- "subject": the most specific real-world species or thing the evidence justifies, by its common English name, or "none" when nothing beyond an ordinary human shows.
-- "broader": the broader group it belongs to, or "none".
-- "kind": one of "animal", "mythical creature", "plant", "object", "none".
-- "confidence": "high" when several distinct body features agree on this exact species or thing, "medium" when they show the group but not clearly the species, "low" when it is a guess."""
-
-DESIGN_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "body_features": {"type": "array", "items": {"type": "string", "maxLength": 100}, "maxItems": 8},
-        "motifs": {"type": "array", "items": {"type": "string", "maxLength": 100}, "maxItems": 6},
-        "subject": {"type": "string", "maxLength": 80},
-        "broader": {"type": "string", "maxLength": 60},
-        "kind": {"type": "string", "enum": ["animal", "mythical creature", "plant", "object", "none"]},
-        "confidence": {"type": "string", "enum": ["high", "medium", "low"]},
-    },
-    "required": ["body_features", "motifs", "subject", "broader", "kind", "confidence"],
-}
-# v2 (pilot 2026-10-04 night, opt-in ART_DESIGN_PROMPT=v2): one list of features, companions and emblems "decide the
-# species". On the 22-operator dev pilot it named a background creature for the character (Cliffheart a wolf from the
-# wolf-like heads behind her, Specter the Unchained a whale from a skeleton); v3 above separates the body from motifs.
-DESIGN_USER_V2 = """The game gives this character's race as "{race}" (a fictional race of the game; a race name gives at most an animal family, never the species).
-
-Many Arknights characters are people with the features of one specific real animal: ears, tails, horns, antlers, wings, feathers, scales, fins, tentacles, shells, fur colors and patterns. Others draw on a mythical creature, a plant or an object, shown in the hair, headwear, clothing, accessories or weapon. Animals that accompany the character or appear in the background, in emblems, on clothing or on equipment often show the same species as the character's own ears and tail; when they agree with the character's features, they decide the species. Look closely at every such detail and name only features you can actually see, then answer which real-world animal, mythical creature, plant or object this character's design most resembles or is modelled on.
-
-Return JSON with:
-- "features": the visible features that point to it, each a few concrete words describing what you see (color, shape, where it is).
-- "subject": the most specific real-world species or thing these features justify, by its common English name, or "none" when nothing beyond an ordinary human shows.
-- "broader": the broader group it belongs to, or "none".
-- "kind": one of "animal", "mythical creature", "plant", "object", "none".
-- "confidence": "high" when several distinct features agree on this exact species or thing, "medium" when they show the group but not clearly the species, "low" when it is a guess."""
-if os.environ.get("ART_DESIGN_PROMPT") == "v2":
-    DESIGN_USER = DESIGN_USER_V2
-    DESIGN_SCHEMA = {**DESIGN_SCHEMA, "properties": {"features": {**DESIGN_SCHEMA["properties"]["body_features"], "maxItems": 10},
-                     **{k: v for k, v in DESIGN_SCHEMA["properties"].items() if k not in ("body_features", "motifs")}},
-                     "required": ["features", "subject", "broader", "kind", "confidence"]}
-# the server's --image-max-tokens changes what the model sees, so it is part of the key (ART_IMAGE_TOKENS, default 1120)
-IMAGE_TOKENS = os.environ.get("ART_IMAGE_TOKENS", "1120")
-DESIGN_HASH = hashlib.sha256((DESIGN_SYSTEM + DESIGN_USER + json.dumps(DESIGN_SCHEMA, sort_keys=True)
-                              + f"{MAX_SIDE}/{IMAGE_TOKENS}").encode()).hexdigest()[:12]
-
-
-def design_images():
-    """charId -> {"e2": (skin id, path), "e0": (skin id, path)} from skin_table (ILLUST_2 / ILLUST_0), files that exist."""
-    skins = kv(json.load(open(EXCEL / "skin_table.json"))["CharSkins"])
-    out = {}
-    for sid, v in skins.items():
-        ds = v.get("DisplaySkin") or {}
-        group, pid, cid = ds.get("SkinGroupId") or "", v.get("PortraitId"), v.get("CharId")
-        kind = {"ILLUST_2": "e2", "ILLUST_0": "e0"}.get(group)
-        if not kind or not pid or not cid or not cid.startswith("char_"):
-            continue
-        path = TEX / "chararts" / cid / f"{pid}.png"
-        if path.exists():
-            out.setdefault(cid, {})[kind] = (sid, str(path.relative_to(ASSETS)))
-    return out
-
-
-def design_unclear(row):
-    return row is None or row.get("parse_error") or row.get("confidence") == "low" or \
-        (row.get("subject") or "none").strip().lower() in ("none", "null", "")
-
-
-def design_targets(a):
-    """(operator attributes by charId, design_images(), the charIds to read: --ids, else every operator with art; --split
-    replaces them with the chosen parts of a split file)."""
-    attrs = {r["charId"]: r for r in map(json.loads, open(ROOT / "artifacts" / "entities" / "operator_attributes.jsonl"))}
-    imgs = design_images()
-    ids = [x for x in a.ids.split(",") if x] if a.ids else sorted(imgs)
-    if a.split:
-        sp = json.load(open(a.split))
-        ids = [c for part in a.split_part.split(",") for c in sp[part]]
-    return attrs, imgs, ids
-
-
-def design(a):
-    attrs, imgs, ids = design_targets(a)
-    out = Path(os.environ.get("ART_DESIGN_OUT") or OUT / "design.jsonl")
-    # Incremental: a row is keyed on the source PNG's content hash and the prompt hash, so a rerun (and update.sh)
-    # reads only new or changed art; compact rows (no raw model text).
-    rows = {r["key"]: r for r in map(json.loads, filter(str.strip, open(out)))} if out.exists() else {}
-    deadline = time.time() + a.minutes * 60 if a.minutes else None
-    n_done = n_cached = 0
-    for cid in ids:
-        if cid not in attrs or cid not in imgs:
-            print(f"skip {cid}: no attributes or no art", flush=True)
-            continue
-        first = "e2" if "e2" in imgs[cid] else "e0"
-        for art in (first, "e0") if first == "e2" else (first,):
-            if art not in imgs[cid]:
-                continue
-            sid, path = imgs[cid][art]
-            key = png_sha(path) + "-" + DESIGN_HASH
-            if art == "e0" and first == "e2":
-                if not design_unclear(rows.get(e2key)):
-                    continue
-            if art == "e2":
-                e2key = key
-            if key in rows:
-                n_cached += 1
-                continue
-            if deadline and time.time() > deadline:
-                print(f"time budget of {a.minutes} min reached after {n_done}", flush=True)
-                return
-            race = attrs[cid].get("race") or "not stated"
-            jpg, size = prepare(path)
-            body = vision_body(jpg, DESIGN_USER.format(race=race), 500, "design", DESIGN_SCHEMA, system=DESIGN_SYSTEM)
-            t0 = time.time()
-            resp = post_or_exit(body, f"{cid} {art}", cid)
-            dt = time.time() - t0
-            try:
-                j = json.loads(resp["choices"][0]["message"]["content"])
-                j = {k: j[k] for k in ("subject", "broader", "kind", "confidence", "body_features", "motifs", "features") if k in j}
-            except (json.JSONDecodeError, KeyError):
-                j = {"parse_error": True}
-            rec = {"key": key, "char_id": cid, "operator": attrs[cid]["name"], "art": art, "id": sid, **j,
-                   "seconds": round(dt, 2)}
-            common.append_jsonl(out, rec)
-            rows[key] = rec
-            n_done += 1
-            print(f"{n_done} {attrs[cid]['name']} {art} {dt:.1f}s: {j.get('subject')} / {j.get('broader')} "
-                  f"({j.get('confidence')}) {j.get('body_features')} | {j.get('motifs')}", flush=True)
-    print(f"design: {n_done} images read, {n_cached} reused from design.jsonl", flush=True)
-
-
-# Tiled design probe (2026-10-05, Ian: deduce designs from what the game shows). The whole-image reading above sees the
-# art at about 1120 image tokens, so small creatures (Lucilla's jellies, a companion in a corner) blur away; this pass
-# asks the same 12B vision model, per 2x2 full-resolution tile (tiles() above, the text pass's tiling), which creatures,
-# animals, plants or objects are depicted and their visible features, then aggregates per image: each subject with the
-# tiles it appears in, where it is (the character's body, a companion, clothing, weapon, background) and its features.
-# One image per operator: E2, else E0. Rows -> artifacts/art/design_tiles.jsonl keyed on the PNG's sha256 + this
-# prompt's hash (incl. the grid, ART_MAX_SIDE and ART_IMAGE_TOKENS), compact (no raw model text), so a rerun reads only
-# new or changed art. Read by design_infer.py evidence (the deduction evidence file of ask --design-deduce).
-TILE_USER = """This is one part (tile {n} of 4, the {pos}) of a larger illustration of one character. The game gives the character's race as "{race}" (a fictional race of the game; it gives at most an animal family).
-
-List every creature, animal, plant or object in this crop that a character design could be modelled on:
-- animal features on the character's own body: ears, tail, horns, antlers, wings, feathers, scales, fins, tentacles, shell, fur markings;
-- creatures or animals accompanying the character, or drawn on clothing, emblems or equipment;
-- objects or plants used as a motif in headwear, clothing, accessories or the weapon.
-Ignore ordinary clothing, plain backgrounds and text. For each, give the most specific real-world common English name the visible features justify (a species when they show it, otherwise the group), and only what you can actually see.
-
-Return JSON {{"subjects": [{{"name": ..., "kind": "animal" | "mythical creature" | "plant" | "object", "where": "body" | "companion" | "clothing" | "weapon" | "background", "features": [a few concrete words each: color, shape, where]}}]}}, an empty list when the crop shows nothing of the kind."""
-TILE_SCHEMA = {"type": "object", "properties": {"subjects": {"type": "array", "maxItems": 4, "items": {
-    "type": "object", "properties": {
-        "name": {"type": "string", "maxLength": 60},
-        "kind": {"type": "string", "enum": ["animal", "mythical creature", "plant", "object"]},
-        "where": {"type": "string", "enum": ["body", "companion", "clothing", "weapon", "background"]},
-        "features": {"type": "array", "items": {"type": "string", "maxLength": 80}, "maxItems": 4}},
-    "required": ["name", "kind", "where", "features"]}}}, "required": ["subjects"]}
-TILE_POS = {(0, 0): "top left", (1, 0): "top right", (0, 1): "bottom left", (1, 1): "bottom right"}
-TILE_HASH = hashlib.sha256((DESIGN_SYSTEM + TILE_USER + json.dumps(TILE_SCHEMA, sort_keys=True)
-                            + f"{MAX_SIDE}/{IMAGE_TOKENS}/2x2").encode()).hexdigest()[:12]
-
-
-def tile_aggregate(per):
-    """Per-tile subject lists -> one compact list: a subject per normalized name with its tile count, places, features."""
-    agg = {}
-    for t, subs in enumerate(per):
-        for s in subs:
-            name = " ".join((s.get("name") or "").lower().split())
-            if not name or name in ("none", "human", "person", "woman", "man", "girl", "boy"):
-                continue
-            a = agg.setdefault(name, {"name": name, "kind": s.get("kind"), "where": [], "tiles": set(), "features": []})
-            a["tiles"].add(t)
-            if s.get("where") not in a["where"]:
-                a["where"].append(s.get("where"))
-            for f in s.get("features") or []:
-                if f and f not in a["features"] and len(a["features"]) < 6:
-                    a["features"].append(f)
-    out = [{**a, "tiles": len(a["tiles"])} for a in agg.values()]
-    out.sort(key=lambda a: ("body" not in a["where"], -a["tiles"], a["name"]))
-    return out[:8]
-
-
-def design_tiles(a):
-    from concurrent.futures import ThreadPoolExecutor
-    attrs, imgs, ids = design_targets(a)
-    first = [x for x in a.first.split(",") if x]
-    ids = first + [c for c in ids if c not in first]
-    out = Path(os.environ.get("ART_TILES_OUT") or OUT / "design_tiles.jsonl")
-    rows = {r["key"]: r for r in map(json.loads, filter(str.strip, open(out)))} if out.exists() else {}
-    threads = int(os.environ.get("ART_THREADS", "2"))
-    deadline = time.time() + a.minutes * 60 if a.minutes else None
-    n_done = n_cached = 0
-
-    def ask(arg):
-        (gx, gy), jpg, race = arg
-        body = vision_body(jpg, TILE_USER.format(n=gy * 2 + gx + 1, pos=TILE_POS[(gx, gy)], race=race), 400, "tile", TILE_SCHEMA,
-                           system=DESIGN_SYSTEM)
-        for k in range(3):
-            try:
-                resp = post(SERVER + "/v1/chat/completions", body)
-                return json.loads(resp["choices"][0]["message"]["content"]).get("subjects") or []
-            except (json.JSONDecodeError, KeyError):
-                return None
-            except Exception as e:  # one failed decode 500s every in-flight request; retry
-                print(f"retry tile {gx},{gy}: {e}", flush=True)
-                time.sleep(5 * (k + 1))
-        raise SystemExit("three failed requests on one tile; stopping (is the server up?)")
-
-    if os.environ.get("PLAN"):  # update.sh: how many images would be read
-        n = 0
-        for cid in ids:
-            if cid in attrs and cid in imgs:
-                path = imgs[cid]["e2" if "e2" in imgs[cid] else "e0"][1]
-                n += (png_sha(path) + "-" + TILE_HASH) not in rows
-        print(f"design_tiles: plan {n} images of {len(ids)} operators", flush=True)
-        return
-    with ThreadPoolExecutor(threads) as pool:
-        for cid in ids:
-            if cid not in attrs or cid not in imgs:
-                print(f"skip {cid}: no attributes or no art", flush=True)
-                continue
-            art = "e2" if "e2" in imgs[cid] else "e0"
-            sid, path = imgs[cid][art]
-            key = png_sha(path) + "-" + TILE_HASH
-            if key in rows:
-                n_cached += 1
-                continue
-            if deadline and time.time() > deadline:
-                print(f"time budget of {a.minutes} min reached after {n_done}", flush=True)
-                break
-            race = attrs[cid].get("race") or "not stated"
-            t0 = time.time()
-            per = list(pool.map(ask, [(g, jpg, race) for g, jpg, _size in tiles(path, 2)]))
-            dt = time.time() - t0
-            rec = {"key": key, "char_id": cid, "operator": attrs[cid]["name"], "art": art, "id": sid,
-                   "subjects": tile_aggregate([p or [] for p in per]), "bad_tiles": sum(p is None for p in per),
-                   "seconds": round(dt, 2)}
-            common.append_jsonl(out, rec)
-            rows[key] = rec
-            n_done += 1
-            print(f"{n_done} {rec['operator']} {art} {dt:.1f}s: " + "; ".join(
-                f"{s['name']} ({s['kind']}, {'/'.join(s['where'])}, {s['tiles']} tiles)" for s in rec["subjects"]), flush=True)
-    print(f"design_tiles: {n_done} images read, {n_cached} reused from {out.name}", flush=True)
-
-
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["select", "caption", "text", "ocr", "stats", "units", "design", "design_tiles"])
-    ap.add_argument("--split", default="", help="design: a split file (artifacts/answers/wiki-ref/split.json)")
-    ap.add_argument("--split-part", default="dev", help="design: comma-separated parts of --split to read")
+    ap.add_argument("cmd", choices=["select", "caption", "text", "ocr", "stats", "units"])
     ap.add_argument("--kind", default="e2", choices=["e2", "skin", "all"])
     ap.add_argument("--n", type=int, default=0, help="seeded sample size; 0 = every image")
     ap.add_argument("--seed", type=int, default=7)
@@ -673,8 +406,7 @@ def main():
     ap.add_argument("--first", default="", help="comma-separated skin ids captioned before the sample (acceptance cases)")
     ap.add_argument("--minutes", type=float, default=0, help="stop starting new images after this many minutes")
     a = ap.parse_args()
-    {"select": select, "caption": caption, "text": text, "ocr": ocr, "stats": stats, "units": units, "design": design,
-     "design_tiles": design_tiles}[a.cmd](a)
+    {"select": select, "caption": caption, "text": text, "ocr": ocr, "stats": stats, "units": units}[a.cmd](a)
 
 
 if __name__ == "__main__":
