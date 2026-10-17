@@ -48,8 +48,8 @@
 #   PANELS_ARGS  extra panels.py flags (e.g. --no-gate-sources, a kill switch)
 #   CANARY [1]  0 = gates without the 10-question model canary;  TREVOR_LLM_URL [http://127.0.0.1:8081] the
 #              serving llama-server the canary asks through;  TREVOR_LLM_LOCK [/run/trevor/llm.lock]
-#   GATES_ASK_FLAGS ["--profile slim --retrieval $TREVOR_RETRIEVAL"] the canary's ask flags (the serving server's
-#              4,096-token context holds the slim profile only);  GATES_ARGS  extra gates.py flags (e.g. --no-recall
+#   GATES_ASK_FLAGS ["--profile mid --retrieval $TREVOR_RETRIEVAL"] the canary's ask flags (mid is what the cpu
+#              rung serves, contract v1.1 section 4, and fits the serving server's 4,096-token slot);  GATES_ARGS  extra gates.py flags (e.g. --no-recall
 #              once, to accept a lower recall as the new baseline)
 #   LOCAL_SUMMARIES [1]  E2B_GGUF [$TREVOR_DIR/models/llm/gemma-4-E2B-it-Q4_K_M.gguf]  LLAMA_SERVER [llama-server]
 #   SUMMARY_PORT [8082]  SUMMARY_CTX [16384]  SUMMARY_THREADS [2]  SUMMARY_UNTIL [07:00]  SUMMARY_MIN_AVAIL_MB [2500]
@@ -70,7 +70,7 @@ export TREVOR_BACKEND="${TREVOR_BACKEND:-http://127.0.0.1:3060}"
 EMBED="${EMBED:-1}"; EMBED_ONNX="${EMBED_ONNX:-model.onnx}"; EMBED_FULL="${EMBED_FULL:-0}"
 EMBED_DIRS="${EMBED_DIRS:-artifacts/p3b artifacts/p4x}"; PANELS_ARGS="${PANELS_ARGS:-}"
 CANARY="${CANARY:-1}"; GATES_ARGS="${GATES_ARGS:-}"
-export GATES_ASK_FLAGS="${GATES_ASK_FLAGS:---profile slim --retrieval ${TREVOR_RETRIEVAL:-bm25}}"
+export GATES_ASK_FLAGS="${GATES_ASK_FLAGS:---profile mid --retrieval ${TREVOR_RETRIEVAL:-bm25}}"
 export TREVOR_LLM_URL="${TREVOR_LLM_URL:-http://127.0.0.1:8081}"
 export TREVOR_LLM_LOCK="${TREVOR_LLM_LOCK:-/run/trevor/llm.lock}"
 LOCAL_SUMMARIES="${LOCAL_SUMMARIES:-1}"

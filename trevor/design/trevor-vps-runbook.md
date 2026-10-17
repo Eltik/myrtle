@@ -223,7 +223,7 @@ decides a reader's horizon.
 | schema | the manifest and all 1,862 panels match schema 1; storyId = file name; position = gatePos; storyOrder and eras equal gate_order.json's; panelsSha recomputes | pass, 0 errors |
 | spoiler | 0 facts past a panel's horizon: previous, soFar, firstSeen, firstNamed strictly earlier; every suggestion's gatePos and the era's position at or before the story | pass, 0 of 1,862 |
 | recall | BM25 recall@10 on gold v2 (P3b) >= the active version's value - 0.02 (no active version: this run is the baseline) | 0.636132, baseline |
-| canary | 10 fixed questions (`deploy/canary.jsonl`, 2 with a horizon before their evidence) through `ask --serve` against the serving llama-server, under the model lock: every answer non-empty, every citation at or before the question's horizonPos, the served corpusVersion = the manifest's | not run today (no model) |
+| canary | 10 fixed questions (`deploy/canary.jsonl`, 2 with a horizon before their evidence) through `ask --serve --profile mid` (the cpu rung's profile; `GATES_ASK_FLAGS` overrides) against the serving llama-server, under the model lock: every answer non-empty, every citation at or before the question's horizonPos, the served corpusVersion = the manifest's | not run today (no model) |
 
 The report (`artifacts/panels/gate_report.json`) is the version's `gateReport`; publish.py refuses a report that did
 not pass or that names another build. `CANARY=0` skips the canary (a skipped canary does not fail the report). The
