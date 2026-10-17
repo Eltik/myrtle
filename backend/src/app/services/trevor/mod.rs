@@ -875,6 +875,19 @@ pub struct PopularQuestion {
     pub answer: TrevorAnswer,
 }
 
+/// `GET /trevor/popular`: the reader's era and its popular questions.
+#[derive(Debug, Clone, Serialize, TS, ToSchema)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, rename = "TrevorPopular")]
+#[schema(as = TrevorPopular)]
+pub struct Popular {
+    /// The era the list is drawn from; null signed out and before the first
+    /// era (nothing released), when the list is empty.
+    pub spoiler_safe_up_to: Option<SpoilerSafe>,
+    /// Most askers first, then most hits.
+    pub items: Vec<PopularQuestion>,
+}
+
 /// `GET /trevor/panels/{storyId}`: the published panel JSON verbatim.
 #[derive(Debug, Clone, Serialize, TS, ToSchema)]
 #[serde(rename_all = "camelCase")]

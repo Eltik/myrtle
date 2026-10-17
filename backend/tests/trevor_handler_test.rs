@@ -328,6 +328,31 @@ async fn panels_refuse_an_overlong_story_id() {
     assert_eq!(status(r), StatusCode::BAD_REQUEST);
 }
 
+/// Signed out, `GET /trevor/popular` answers before the database: the
+/// object the stories tab reads, with no era and no questions.
+#[tokio::test]
+async fn popular_signed_out_names_no_era_and_lists_nothing() {
+    let r = call(
+        &app(&state()),
+        Request::get("/api/trevor/popular?limit=8")
+            .body(Body::empty())
+            .expect("request"),
+    )
+    .await;
+    assert_eq!(r.status(), StatusCode::OK);
+    assert_eq!(
+        r.headers()
+            .get(header::CACHE_CONTROL)
+            .and_then(|v| v.to_str().ok()),
+        Some("private, max-age=60")
+    );
+    let body = axum::body::to_bytes(r.into_body(), 1 << 20)
+        .await
+        .expect("body");
+    let v: serde_json::Value = serde_json::from_slice(&body).expect("json");
+    assert_eq!(v, json!({ "spoilerSafeUpTo": null, "items": [] }));
+}
+
 /// Every worker route, with a body that fails validation before the
 /// database: a 400 proves the request got past the key check.
 fn worker_requests(headers: &[(&str, &str)]) -> Vec<Request<Body>> {

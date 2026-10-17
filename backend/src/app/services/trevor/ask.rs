@@ -11,9 +11,9 @@ use uuid::Uuid;
 use super::{
     ASK_PER_HOUR, Admission, AdmissionInputs, AnswerSource, AskRequest, AskResponse, CfBudget, Era,
     FeedbackRequest, GuardState, Horizon, JobStatus, JobView, MAX_OPEN_PER_USER, MAX_QUEUED, Mode,
-    MyQuestion, ONLINE_SECS, PopularQuestion, QueueDepth, Rung, RungFlags, RungInputs, StoryPanels,
-    TrevorAnswer, TrevorStatus, WorkerCounts, admit_rung, bucket_horizon, cf_budget, horizon_pos,
-    parse_server, qkey, select_rung, turnstile, validate_question,
+    MyQuestion, ONLINE_SECS, Popular, PopularQuestion, QueueDepth, Rung, RungFlags, RungInputs,
+    StoryPanels, TrevorAnswer, TrevorStatus, WorkerCounts, admit_rung, bucket_horizon, cf_budget,
+    horizon_pos, parse_server, qkey, select_rung, turnstile, validate_question,
 };
 use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
@@ -690,16 +690,22 @@ pub async fn popular(
     user_id: Option<Uuid>,
     server: &str,
     limit: Option<i64>,
-) -> Result<Vec<PopularQuestion>, ApiError> {
+) -> Result<Popular, ApiError> {
     let Some(user_id) = user_id else {
-        return Ok(Vec::new());
+        return Ok(Popular {
+            spoiler_safe_up_to: None,
+            items: Vec::new(),
+        });
     };
     let limit = limit.unwrap_or(8).clamp(1, POPULAR_MAX);
     let (version, horizon) = resolve_horizon(state, user_id, server, None).await?;
     let Some(version) = version else {
-        return Ok(Vec::new());
+        return Ok(Popular {
+            spoiler_safe_up_to: horizon.spoiler_safe,
+            items: Vec::new(),
+        });
     };
-    Ok(q::popular(
+    let items = q::popular(
         &state.db,
         &version,
         server,
@@ -714,7 +720,11 @@ pub async fn popular(
         askers,
         answer: view(&row),
     })
-    .collect())
+    .collect();
+    Ok(Popular {
+        spoiler_safe_up_to: horizon.spoiler_safe,
+        items,
+    })
 }
 
 /// May this user read this job's stream? Its asker, or someone who joined

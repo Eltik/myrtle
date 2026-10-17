@@ -641,7 +641,7 @@ const server = Bun.serve({
             return json({ storyId: panel[1], server: "en", version: VERSION, panels: JSON.parse(fs.readFileSync(file, "utf8")) });
         }
         if (p === "/api/trevor/popular") {
-            if (!demo) return json({ questions: [], spoilerSafeUpTo: null });
+            if (!demo) return json({ spoilerSafeUpTo: null, items: [] });
             const h = horizonOf(null);
             const limit = Math.min(Math.max(Number(url.searchParams.get("limit") ?? 8) || 8, 1), 20);
             const seen = new Set();
@@ -655,7 +655,7 @@ const server = Bun.serve({
                 asked.push({ question: j.question, answer: v.answer, askers: 2 });
             }
             const seeded = seeds(h.eraPos, 5).filter((s) => !seen.has(normQ(s.question)));
-            return json({ questions: [...asked, ...seeded].slice(0, limit), spoilerSafeUpTo: h.spoiler });
+            return json({ spoilerSafeUpTo: h.spoiler, items: [...asked, ...seeded].slice(0, limit) });
         }
         if (p === "/api/trevor/me/jobs") {
             if (!demo) return json({ error: { code: "UNAUTHORIZED", message: "sign in" } }, 401);

@@ -2,10 +2,9 @@
  * THE STORIES TAB'S DATA (contract v1.1 section 5): the popular questions of
  * the reader's era and the reader's own past questions ("My questions").
  *
- * The bodies are read defensively here (`TrevorMyQuestion`,
- * `TrevorPopularQuestion` were still being generated when this was written,
- * and the dev preview's mock wraps its lists): a list may come bare or under
- * `questions` / `jobs` / `items`, a time as an ISO string or unix seconds, and
+ * The popular list comes as `{spoilerSafeUpTo, items}` (the generated
+ * `TrevorPopular`). My questions is read defensively: the list may come bare
+ * or under `jobs` / `items`, a time as an ISO string or unix seconds. In both,
  * anything that does not hold a question is dropped instead of breaking the
  * tab. The backend pages My questions by `before=<createdAt of the last row>`
  * and sends no cursor; the mock sends `nextBefore`. A
@@ -32,7 +31,7 @@ export interface IPopularQuestion {
 
 export interface IPopular {
     questions: IPopularQuestion[];
-    /** The era the list was drawn from, when the backend names it. */
+    /** The era the list was drawn from: null before the first era or signed out, undefined when the body is malformed. */
     spoiler: TrevorSpoilerSafe | null | undefined;
 }
 
@@ -106,17 +105,18 @@ export function timeOf(v: unknown): number | null {
 
 const STATUSES: readonly JobStatus[] = ["queued", "running", "done", "failed"];
 
+/** `GET /trevor/popular`: `{spoilerSafeUpTo, items: [{question, askers, answer}]}`. A question listed twice is kept once. */
 export function parsePopular(body: unknown): IPopular {
+    if (!isObj(body)) return { questions: [], spoiler: undefined };
     const questions: IPopularQuestion[] = [];
     const seen = new Set<string>();
-    for (const item of list(body, ["questions", "items", "popular"])) {
-        const question = isObj(item) ? str(item.question) : str(item);
-        if (!question || seen.has(question.trim().toLowerCase())) continue;
+    for (const item of Array.isArray(body.items) ? body.items : []) {
+        const question = isObj(item) ? str(item.question) : null;
+        if (!isObj(item) || !question || seen.has(question.trim().toLowerCase())) continue;
         seen.add(question.trim().toLowerCase());
-        const askers = isObj(item) ? (item.askers ?? item.users ?? item.hits) : null;
-        questions.push({ question: question.trim(), answer: isObj(item) ? answerOf(item.answer) : null, askers: typeof askers === "number" ? askers : null });
+        questions.push({ question: question.trim(), answer: answerOf(item.answer), askers: typeof item.askers === "number" ? item.askers : null });
     }
-    return { questions, spoiler: isObj(body) ? spoilerOf(body.spoilerSafeUpTo) : undefined };
+    return { questions, spoiler: spoilerOf(body.spoilerSafeUpTo) };
 }
 
 export function parseMyJobs(body: unknown, limit: number | null = null): IMyJobs {

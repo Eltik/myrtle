@@ -1998,30 +1998,40 @@ async fn step_v11_lists_and_carry(pool: &PgPool) {
         .unwrap();
     assert_eq!(page2.len(), 1);
 
-    // Popular: at least 2 distinct askers, inside the era.
+    // Popular: at least 2 distinct askers, inside the era, which the body names.
     let pop = svc_ask::popular(&s, Some(a), "en", None).await.unwrap();
     let names: Vec<(&str, i64)> = pop
+        .items
         .iter()
         .map(|p| (p.question.as_str(), p.askers))
         .collect();
     assert_eq!(names, vec![("carry me", 3), ("carry changed", 2)]);
-    assert!(
-        svc_ask::popular(&s, None, "en", None)
-            .await
-            .unwrap()
-            .is_empty()
-    );
+    let era = pop
+        .spoiler_safe_up_to
+        .expect("a reader with progress has an era");
+    let anon = svc_ask::popular(&s, None, "en", None).await.unwrap();
+    assert!(anon.spoiler_safe_up_to.is_none() && anon.items.is_empty());
     let early = new_user(pool).await;
     set_progress(pool, early, &["s2"], &[]).await;
+    let pop_early = svc_ask::popular(&s, Some(early), "en", None).await.unwrap();
     assert!(
-        svc_ask::popular(&s, Some(early), "en", None)
-            .await
-            .unwrap()
-            .is_empty(),
+        pop_early.items.is_empty(),
         "answers at era 4 are past era 1"
     );
+    assert!(
+        pop_early
+            .spoiler_safe_up_to
+            .is_some_and(|e| e.position < era.position),
+        "the early reader's era comes before the first reader's"
+    );
     let (st, body) = send_json(&app, "GET", "/api/trevor/popular?limit=1", false, None).await;
-    assert_eq!((st, body), (StatusCode::OK, json!([])));
+    assert_eq!(
+        (st, body),
+        (
+            StatusCode::OK,
+            json!({ "spoilerSafeUpTo": null, "items": [] })
+        )
+    );
 
     // Carry-over: v-carry ships chunk shas; s3#0 changed.
     let shas = json!({ "s1#0": "aaa", "s2#1": "bbb", "s3#0": "CHANGED" });

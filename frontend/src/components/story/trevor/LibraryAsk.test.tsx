@@ -105,7 +105,7 @@ describe("Ask Trevor on the stories page", () => {
     it("shows the era's popular questions and My questions, and opens each into the thread with no story horizon", async () => {
         routes["/trevor/popular"] = () =>
             Response.json({
-                questions: [
+                items: [
                     { question: "Who is Amiya?", answer: stored("Prepared."), askers: 3 },
                     { question: "Why Chernobog?", answer: null, askers: 2 },
                 ],
@@ -132,7 +132,7 @@ describe("Ask Trevor on the stories page", () => {
     });
 
     it("asks a popular question that has no stored answer, with no story horizon", async () => {
-        routes["/trevor/popular"] = () => Response.json({ questions: [{ question: "Why Chernobog?", answer: null, askers: 2 }], spoilerSafeUpTo: ERA });
+        routes["/trevor/popular"] = () => Response.json({ items: [{ question: "Why Chernobog?", answer: null, askers: 2 }], spoilerSafeUpTo: ERA });
         mount();
         await waitFor(() => expect(document.querySelectorAll("[data-trevor-popular] button").length).toBe(1));
         await act(async () => {
@@ -145,7 +145,7 @@ describe("Ask Trevor on the stories page", () => {
     it("keeps the unasked popular questions above the composer after the first question, and asks from there", async () => {
         routes["/trevor/popular"] = () =>
             Response.json({
-                questions: [
+                items: [
                     { question: "Who is Amiya?", answer: stored("Prepared."), askers: 3 },
                     { question: "Why Chernobog?", answer: null, askers: 2 },
                     { question: "What is Rhodes Island?", answer: null, askers: 1 },

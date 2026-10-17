@@ -139,7 +139,7 @@ The script treats a 409 as done, and any other failure as an `update_failed` ale
 
 **Backend clarification (2026-10-17): shapes.** Every ask that passes validation is recorded (`trevor_asks`), so a twin joiner and a cache hit appear in "My questions" too.
 - `me/jobs` answers an array, newest first, of `{jobId: uuid|null, question, status, rung, source: "live"|"passages"|null, createdAt, finishedAt, answer: TrevorAnswer|null}`. `jobId` is the deferred job of an overflowed ask, else the ask's job, and null for a cache hit (`rung: "cache"`, `status: "done"`). `limit` is 1 to 50; `before` is an RFC 3339 instant (pass the last item's `createdAt`).
-- `popular` answers an array of `{question, askers, answer: TrevorAnswer}`: per normQ, the cached answer of the latest era at or before the reader's, listed when at least 2 distinct accounts asked it (in any version, so a publish does not empty the list), most askers then hits first. `limit` is 1 to 50 (default 8); `Cache-Control: private, max-age=60`.
+- `popular` answers `{spoilerSafeUpTo, items}`. `spoilerSafeUpTo` is the era the list is drawn from, `{eraId, name, position}` as in the ask response, or null signed out and before the first era; the stories tab labels the list with it (corrected 2026-10-17: a bare array left the tab no era to show). `items` is an array of `{question, askers, answer: TrevorAnswer}`: per normQ, the cached answer of the latest era at or before the reader's, listed when at least 2 distinct accounts asked it (in any version, so a publish does not empty the list), most askers then hits first. `limit` is 1 to 50 (default 8); `Cache-Control: private, max-age=60`.
 
 ## 6. The stories page "Ask Trevor" tab
 

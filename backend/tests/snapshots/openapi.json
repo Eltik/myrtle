@@ -12495,7 +12495,7 @@
         "tags": [
           "trevor"
         ],
-        "summary": "The most-asked cached questions inside the reader's era, with their\nanswers, asked by at least two accounts. Signed out: an empty list (era 0,\nnothing released).",
+        "summary": "The reader's era and the most-asked cached questions inside it, with their\nanswers, asked by at least two accounts. Signed out: no era and an empty\nlist (era 0, nothing released).",
         "operationId": "popular",
         "parameters": [
           {
@@ -12520,14 +12520,11 @@
         ],
         "responses": {
           "200": {
-            "description": "Most askers first.",
+            "description": "The era and its questions, most askers first.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TrevorPopularQuestion"
-                  }
+                  "$ref": "#/components/schemas/TrevorPopular"
                 }
               }
             }
@@ -33253,6 +33250,33 @@
           },
           "status": {
             "$ref": "#/components/schemas/JobStatus"
+          }
+        }
+      },
+      "TrevorPopular": {
+        "type": "object",
+        "description": "`GET /trevor/popular`: the reader's era and its popular questions.",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrevorPopularQuestion"
+            },
+            "description": "Most askers first, then most hits."
+          },
+          "spoilerSafeUpTo": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TrevorSpoilerSafe",
+                "description": "The era the list is drawn from; null signed out and before the first\nera (nothing released), when the list is empty."
+              }
+            ]
           }
         }
       },

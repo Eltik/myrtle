@@ -20,8 +20,8 @@ use uuid::Uuid;
 use crate::app::cache::strong_etag;
 use crate::app::extractors::auth::{AuthUser, MaybeAuthUser};
 use crate::app::services::trevor::{
-    self as svc, AskRequest, AskResponse, FeedbackRequest, JobStatus, JobView, MyQuestion,
-    PopularQuestion, StoryPanels, TrevorStatus,
+    self as svc, AskRequest, AskResponse, FeedbackRequest, JobStatus, JobView, MyQuestion, Popular,
+    StoryPanels, TrevorStatus,
     worker::{
         self, Heartbeat, PublishOutcome, PublishVersion, ResultError, WarmList, WarmOutcome,
         WarmRequest, WorkerDelta, WorkerHello, WorkerJob, WorkerKey, WorkerResult,
@@ -355,16 +355,16 @@ pub async fn my_jobs(
     ))
 }
 
-/// The most-asked cached questions inside the reader's era, with their
-/// answers, asked by at least two accounts. Signed out: an empty list (era 0,
-/// nothing released).
+/// The reader's era and the most-asked cached questions inside it, with their
+/// answers, asked by at least two accounts. Signed out: no era and an empty
+/// list (era 0, nothing released).
 #[utoipa::path(
     get,
     path = "/trevor/popular",
     tag = "trevor",
     params(PopularQuery),
     responses(
-        (status = 200, description = "Most askers first.", body = Vec<PopularQuestion>),
+        (status = 200, description = "The era and its questions, most askers first.", body = Popular),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
         (status = 429, response = crate::app::openapi::responses::RateLimited),
         (status = 500, response = crate::app::openapi::responses::InternalError),

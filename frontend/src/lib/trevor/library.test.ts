@@ -84,16 +84,18 @@ describe("quick look with a deferred full answer (contract v1.1 1b)", () => {
 });
 
 describe("the stories tab's lists (contract v1.1 section 5)", () => {
-    it("reads popular questions bare or wrapped, dedupes, and keeps the era", () => {
-        const p = parsePopular({ questions: [{ question: " Who is Amiya? ", answer: stored("A."), askers: 4 }, { question: "who is amiya?" }, { nope: 1 }, "Why Chernobog?"], spoilerSafeUpTo: ERA });
+    it("reads the popular questions and their era from the backend's {spoilerSafeUpTo, items}, deduping", () => {
+        const p = parsePopular({ items: [{ question: " Who is Amiya? ", answer: stored("A."), askers: 4 }, { question: "who is amiya?" }, { nope: 1 }, "Why Chernobog?", { question: "Why Chernobog?", answer: null, askers: 2 }], spoilerSafeUpTo: ERA });
         expect(p.questions.map((q) => [q.question, q.answer !== null, q.askers])).toEqual([
             ["Who is Amiya?", true, 4],
-            ["Why Chernobog?", false, null],
+            ["Why Chernobog?", false, 2],
         ]);
         expect(p.spoiler).toEqual(ERA);
-        expect(parsePopular([]).spoiler).toBeUndefined();
-        expect(parsePopular({ questions: [], spoilerSafeUpTo: null }).spoiler).toBeNull();
-        expect(parsePopular("garbage").questions).toEqual([]);
+        expect(parsePopular({ items: [], spoilerSafeUpTo: null })).toEqual({ questions: [], spoiler: null });
+        // The old bare list is no longer read: it carries no era.
+        expect(parsePopular([{ question: "Who is Amiya?", answer: null, askers: 2 }])).toEqual({ questions: [], spoiler: undefined });
+        expect(parsePopular({ questions: [{ question: "Who is Amiya?" }], spoilerSafeUpTo: ERA }).questions).toEqual([]);
+        expect(parsePopular("garbage")).toEqual({ questions: [], spoiler: undefined });
     });
 
     it("reads my jobs, dropping rows with no id or question", () => {
