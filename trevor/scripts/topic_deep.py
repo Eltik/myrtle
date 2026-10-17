@@ -76,7 +76,7 @@ def call(system, user, max_tokens):
 
 
 def forms_rx(r):
-    """The topic's forms as one whole-word pattern, as scripts/topic_groups.py: case-sensitive when capitalized."""
+    """The topic's forms as one whole-word pattern (common.forms_regex): case-sensitive when capitalized."""
     return common.forms_regex({r['topic'], *r.get('aliases', []), *r.get('names', [])})
 
 
