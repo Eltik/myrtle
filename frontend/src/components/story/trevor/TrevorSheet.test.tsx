@@ -193,6 +193,48 @@ describe("the Trevor sheet, from a published panel", () => {
         expect(d.ask).not.toHaveBeenCalled();
     });
 
+    it("keeps the questions not yet asked in one row above the composer once the thread has turns", async () => {
+        const d = deps();
+        mount(d);
+        await waitFor(() => expect(sheet().querySelector("[data-trevor-suggestion]")).not.toBeNull());
+        // The empty thread has its full list and no row.
+        expect(sheet().querySelector("[data-trevor-chip-row]")).toBeNull();
+        await act(async () => {
+            fireEvent.click(chip("ask:b00734"));
+        });
+        const rowQuestions = () => [...sheet().querySelectorAll<HTMLButtonElement>("[data-trevor-chip-row] [data-trevor-chip]")].map((b) => b.textContent);
+        // 5 suggestions, 1 asked: 4 chips, the asked one gone.
+        expect(rowQuestions()).toHaveLength(4);
+        expect(rowQuestions()).not.toContain("Why did the Rude Infected's son ask Hibiscus to help him?");
+        const next = sheet().querySelector<HTMLButtonElement>("[data-trevor-chip-row] [data-trevor-chip]") as HTMLButtonElement;
+        const question = next.textContent ?? "";
+        expect(next.hasAttribute("data-trevor-prepared")).toBe(true);
+        await act(async () => {
+            fireEvent.click(next);
+        });
+        const turns = sheet().querySelectorAll<HTMLElement>('[data-trevor-turn="bank"]');
+        expect(turns).toHaveLength(2);
+        expect(turns[1]?.textContent).toContain(question);
+        expect(rowQuestions()).toHaveLength(3);
+        expect(rowQuestions()).not.toContain(question);
+        expect(d.ask).not.toHaveBeenCalled();
+    });
+
+    it("drops the row with VITE_TREVOR_CHIP_ROW=0 (the chips stay in the empty thread only)", async () => {
+        vi.stubEnv("VITE_TREVOR_CHIP_ROW", "0");
+        try {
+            mount();
+            await waitFor(() => expect(sheet().querySelector("[data-trevor-suggestion]")).not.toBeNull());
+            await act(async () => {
+                fireEvent.click(chip("ask:b00734"));
+            });
+            expect(sheet().querySelector('[data-trevor-turn="bank"]')).not.toBeNull();
+            expect(sheet().querySelector("[data-trevor-chip-row]")).toBeNull();
+        } finally {
+            vi.unstubAllEnvs();
+        }
+    });
+
     it("asks a signed-out reader to sign in in place of the composer", async () => {
         mount();
         await waitFor(() => expect(sheet().querySelector("[data-trevor-signed-out]")).not.toBeNull());

@@ -4,7 +4,7 @@
  * questions, and both lists are optional (a 404 leaves the chat working).
  */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, cleanup, fireEvent, render, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { I18nProvider } from "#/lib/i18n/context";
@@ -140,5 +140,44 @@ describe("Ask Trevor on the stories page", () => {
         });
         await waitFor(() => expect(asked).toEqual([{ question: "Why Chernobog?", horizonStory: null, turnstileToken: null }]));
         await waitFor(() => expect(document.body.textContent).toContain("Asked."));
+    });
+
+    it("keeps the unasked popular questions above the composer after the first question, and asks from there", async () => {
+        routes["/trevor/popular"] = () =>
+            Response.json({
+                questions: [
+                    { question: "Who is Amiya?", answer: stored("Prepared."), askers: 3 },
+                    { question: "Why Chernobog?", answer: null, askers: 2 },
+                    { question: "What is Rhodes Island?", answer: null, askers: 1 },
+                ],
+                spoilerSafeUpTo: ERA,
+            });
+        mount();
+        await waitFor(() => expect(document.querySelectorAll("[data-trevor-popular] button").length).toBe(3));
+        expect(document.querySelector("[data-trevor-chip-row]")).toBeNull();
+        await act(async () => {
+            fireEvent.click(document.querySelector("[data-trevor-popular] [data-trevor-prepared]") as HTMLElement);
+        });
+        const row = () => [...document.querySelectorAll("[data-trevor-chip-row] [data-trevor-chip]")].map((b) => b.textContent);
+        // The prepared one was opened: the other 2 stay, labelled as the era's popular questions.
+        expect(row()).toEqual(["Why Chernobog?", "What is Rhodes Island?"]);
+        expect(document.querySelector("[data-trevor-chip-row]")?.getAttribute("aria-label")).toBe("Asked often in your era");
+        await act(async () => {
+            fireEvent.click(document.querySelector("[data-trevor-chip-row] [data-trevor-chip]") as HTMLElement);
+        });
+        await waitFor(() => expect(asked).toEqual([{ question: "Why Chernobog?", horizonStory: null, turnstileToken: null }]));
+        expect(row()).toEqual(["What is Rhodes Island?"]);
+        // A typed question that matches a chip (case and spaces aside) hides it too.
+        const box = document.querySelector("[data-trevor-question]") as HTMLTextAreaElement;
+        await act(async () => {
+            box.value = "  what is rhodes island? ";
+            fireEvent.input(box);
+        });
+        // jsdom reports no fine pointer, so Enter is a new line there: send with the button.
+        await act(async () => {
+            fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+        });
+        await waitFor(() => expect(asked.map((x) => x.question)).toEqual(["Why Chernobog?", "what is rhodes island?"]));
+        expect(document.querySelector("[data-trevor-chip-row]")).toBeNull();
     });
 });

@@ -10,7 +10,8 @@
  *
  * The empty thread holds Trevor's greeting, the questions asked most in the
  * reader's era as chips (`GET /trevor/popular`; a chip that carries its answer
- * shows it with no request). "My questions" (`GET /trevor/me/jobs`) sits
+ * shows it with no request); after the first question the ones not yet asked
+ * stay above the composer as one scrolling row. "My questions" (`GET /trevor/me/jobs`) sits
  * beside the chat from 1024 px up and under it below that, outside the chat's
  * scroller, so it stays reachable once the thread has turns. A past question opens into the thread: answered ones
  * with their stored answer, open ones followed again until they land, and a
@@ -105,6 +106,7 @@ function SignedIn({ t, active, askDeps }: { t: TrevorT; active: boolean; askDeps
     const moreCursor = olderCursor === undefined ? (mine.data?.nextBefore ?? null) : olderCursor;
     const myQuestions = mine.data === null ? null : <MyQuestions jobs={jobs} loading={mine.isPending} failed={mine.isError} hasMore={moreCursor !== null} onMore={() => void loadOlder()} onOpen={openJob} />;
     const questions = popular.data?.questions ?? [];
+    const popularChips = questions.map((q) => ({ key: q.question, question: q.question, prepared: q.answer !== null, onPick: () => openPopular(q) }));
 
     return (
         <section aria-label={t("trevor.library.label")} className="grid gap-4 pt-4 lg:grid-cols-[minmax(0,1fr)_20rem]" data-trevor-library>
@@ -120,6 +122,7 @@ function SignedIn({ t, active, askDeps }: { t: TrevorT; active: boolean; askDeps
                     onResume={asker.resume}
                     active={active}
                     spoilerFallback={popular.data?.spoiler}
+                    moreQuestions={{ label: t("trevor.library.popular"), chips: popularChips }}
                     emptyState={
                         <div className="flex flex-col gap-5" data-trevor-library-empty>
                             <ChatMessage side="incoming" author="Trevor" avatar={<TrevorAvatar />}>

@@ -15,9 +15,12 @@
  * whole, instead of word by word. When an answer settles and focus was lost
  * (on the page body), it returns to the composer. The empty state offers the panel's suggested
  * questions as chips: one with a prepared answer adds it to the thread with no
- * request; one without asks Trevor. The stories page's tab passes its own
- * empty state (popular questions, My questions) and the era its list was drawn
- * from, and no story: the horizon is then the reader's profile alone.
+ * request; one without asks Trevor. Once the thread has turns, the same
+ * questions not yet asked stay above the composer as one scrolling row
+ * (`QuestionChipRow`). The stories page's tab passes its own empty state
+ * (popular questions, My questions), its own chips for that row, and the era
+ * its list was drawn from, and no story: the horizon is then the reader's
+ * profile alone.
  *
  * A quick look (a passages answer given at once while the full answer is
  * deferred, contract v1.1 section 1b) shows as its own reply at once, with
@@ -50,6 +53,7 @@ import type { TrevorSpoilerSafe } from "#/types/generated/TrevorSpoilerSafe";
 import type { TrevorStatus } from "#/types/generated/TrevorStatus";
 import { AnswerText } from "./AnswerText";
 import { AnswerFooter, SpoilerLabel } from "./AnswerView";
+import { chipRowEnabled, type IQuestionChip, QuestionChipRow, unaskedChips } from "./QuestionChipRow";
 import { Turnstile } from "./Turnstile";
 import type { messages } from "./trevor.messages";
 
@@ -75,9 +79,11 @@ export interface IAskChatProps {
     emptyState?: React.ReactNode;
     /** The horizon to show before any ask has reported one (`undefined`: none known). */
     spoilerFallback?: TrevorSpoilerSafe | null;
+    /** Replaces the panel's suggestions in the row above the composer once the thread has turns. */
+    moreQuestions?: { label: string; chips: IQuestionChip[] };
 }
 
-export function AskChat({ storyId, panel, signedIn, status, thread, onAsk, onPrepared, onResume, onJumpLine, active, emptyState, spoilerFallback }: IAskChatProps): React.ReactElement {
+export function AskChat({ storyId, panel, signedIn, status, thread, onAsk, onPrepared, onResume, onJumpLine, active, emptyState, spoilerFallback, moreQuestions }: IAskChatProps): React.ReactElement {
     const t: TrevorT = useT("story");
     const [draft, setDraft] = useState<ComposerValue>([]);
     const siteKey = turnstileSiteKey();
@@ -125,6 +131,19 @@ export function AskChat({ storyId, panel, signedIn, status, thread, onAsk, onPre
         else authActions.openLoginDialog();
     };
 
+    const more = moreQuestions ?? {
+        label: t("trevor.suggest.heading"),
+        chips: (panel?.suggestions?.items ?? []).map((s) => ({ key: s.id, question: s.question, prepared: Boolean(s.answer?.trim()), onPick: () => onSuggestion(s) })),
+    };
+    // A chip's answer lands at the end of the thread: follow it there, as a typed question does.
+    const rowChips = unaskedChips(more.chips, thread).map((chip) => ({
+        ...chip,
+        onPick: () => {
+            scroll.atBottomRef.current = true;
+            chip.onPick();
+        },
+    }));
+
     const text = getComposerText(draft);
     const tooLong = text.length > QUESTION_MAX;
     const blockedByCheck = siteKey !== null && token === null;
@@ -155,6 +174,7 @@ export function AskChat({ storyId, panel, signedIn, status, thread, onAsk, onPre
                         <SpoilerLabel spoiler={spoiler} />
                     </div>
                 ) : null}
+                {!empty && chipRowEnabled() ? <QuestionChipRow label={more.label} chips={rowChips} /> : null}
                 {signedIn ? (
                     <>
                         {siteKey ? <Turnstile siteKey={siteKey} onToken={setToken} resetKey={resetKey} /> : null}
