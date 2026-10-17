@@ -10,7 +10,7 @@ Repo-specific gotchas for future syncs. Read this before touching `.design-sync/
   synth-entry mode over `src/components/`.
 - `srcDir` is `src/components` (not `src`): pointing it at `src` would pull routes,
   integrations and the OG pipeline into the bundle.
-- Scope decision (2026-08-14, user): **everything** under `src/components` — ui
+- Scope decision (2026-08-14): **everything** under `src/components`: ui
   primitives, presentational feature components, router-coupled components, and
   data-coupled containers. 329 files → 697 exports → 692 component cards.
 
@@ -24,7 +24,7 @@ node .ds-sync/resync.mjs --config .design-sync/config.json --node-modules ./node
 node .design-sync/copy-assets.mjs
 ```
 
-A full `package-build.mjs` takes **75-77 min** on this machine (measured four times on
+A full `package-build.mjs` takes **75-77 min** on the development machine (measured four times on
 2026-09-13: the esbuild service compiles 704 previews serially against the 9.9 MB bundle
 at ~130% CPU and 1.6 GB; the DTS walk is the rest); the driver adds ~8 min of validate and
 whatever it captures (664 sheets took ~35 min). Plan a re-sync as build count x 77 min:
@@ -113,7 +113,7 @@ added to the bundle via `cfg.extraEntries`). It supplies router + query + toast 
 command context. The router uses `RouterContextProvider` — the only way to get
 `<Link>` working without mounting a route tree.
 
-## Preview authoring — what the waves learned
+## Preview authoring: lessons from the authoring waves
 
 ### Tailwind: an uncompiled class fails silently
 
@@ -129,7 +129,7 @@ backslash-escaped in the output: `md\:grid-cols-3`).
 
 The safelist exists mostly for **designs**, not previews: designs built in
 claude.ai/design are not run through Tailwind, they consume this stylesheet as-is.
-Widening the safelist is how you widen what the design agent can express.
+Widening the safelist is how you widen what a claude.ai/design design can express.
 
 ### Base UI behaviours that cost a fix round
 
@@ -183,7 +183,7 @@ wave. (`package-capture.mjs` does not carry the guard — only the rebuild does.
   avatars in a story; if a capture hangs, that is the first thing to check.
 - Concurrency costs more than it looks: each agent spawns its own ~1.3 GB esbuild
   service, and a 19-component `preview-rebuild` took 8–12 minutes with 3–7 agents
-  running. Six concurrent agents is about the practical ceiling on this machine.
+  running. Six concurrent agents is about the practical ceiling on the development machine.
 
 ### A real app bug this surfaced (not a sync issue)
 
@@ -209,8 +209,8 @@ The screenshot was the only signal. If a card is blank and capture is clean, ser
 | bundle won't build | `createServerFn` drags in node builtins | `stubs/tanstack-react-start.ts` |
 
 ⚠️ **A stub's existence doesn't mean it's in the bundle.** `preview-rebuild.mjs`
-does not rebuild `_ds_bundle.js` — only `package-build.mjs` does. Three separate
-agents lost time diagnosing a hook that was already stubbed. Compare `stat` times
+does not rebuild `_ds_bundle.js`; only `package-build.mjs` does, so a hook that is
+already stubbed can still look unstubbed (a recurring time sink). Compare `stat` times
 before diagnosing, or `grep -c` the stub's marker string in `ds-bundle/_ds_bundle.js`.
 
 The server-fn stub's rejection message is deliberately **product-shaped**
@@ -218,7 +218,7 @@ The server-fn stub's rejection message is deliberately **product-shaped**
 `error.message` straight into their error branch — a harness-flavoured string leaks
 into the cards.
 
-## Wave 2026-09-13 learnings (folded from six authoring agents)
+## 2026-09-13 authoring learnings
 
 ### `useBaseOptimizer()` consumers need the provider ON the bundle
 
@@ -233,7 +233,7 @@ never works (the preview bundles its own copy). Any future context head in a `.t
 needs the same treatment. NOTE `extraEntries` is in the GLOBAL key slice: adding one
 re-keys every component (see the fork section above for the carry proof).
 
-### Harness traps found this wave
+### Harness traps found in the 2026-09-13 authoring
 
 - **Store-backed prop-less components** (`WhatsNewButton`, `ReleaseNoteDialog`): the
   `@tanstack/store` singleton is unreachable from a preview (own module copy). Drive them
@@ -277,7 +277,7 @@ re-keys every component (see the fork section above for the carry proof).
   efficiencies (588). Operator ids resolved against `/api/operators/index`
   (Vulcan `char_163_hpsts`, Gitano `char_109_fmout`, Swire `char_308_swire`).
 
-### Source observations from this wave (not sync issues)
+### Source observations from the 2026-09-13 authoring (not sync issues)
 
 7. `ControlCenterTile` wraps its `TileHint` around `riic-tile-room-clip`, which is
    `pointer-events: none`, so the Control Center hint never opens on hover; `RoomTile`'s
@@ -346,8 +346,8 @@ investigate a warn **not** on this list.
   "100% rate / 0 days missed"). Live API payloads are dated 2025–26, so anything
   date-derived needs re-stamping.
 - **A wrong operator id renders a real portrait of the wrong operator** and returns
-  HTTP 200. One agent shipped 9 before a diff against `/api/operators/index` caught
-  them. The index spells `Młynar` and `Wiš'adel` with non-ASCII, and `Amiya` is
+  HTTP 200. Nine such previews once passed as done until a diff against
+  `/api/operators/index` caught them. The index spells `Młynar` and `Wiš'adel` with non-ASCII, and `Amiya` is
   three rows — look up by id, never by name.
 - **`.ds-single` sets `transform: translateZ(0)`**, which makes the story root both
   the `position: fixed` container *and* the collision boundary Base UI measures
@@ -428,7 +428,7 @@ The proof used instead of re-reading 664 sheets (repeat it for any name-only for
    compiled byte-identically in both builds (the import is resolved at runtime through
    the shim) and rendered an error cell under a carried `good`. After any rename, check
    every preview's `import { ... } from "frontend"` names against the bundle header's
-   component list (a 10-line node script; see the 2026-09-13 session) and re-grade the
+   component list (a 10-line node script) and re-grade the
    hits from fresh sheets. Validate's `[RENDER_ERRORS]` is the backstop, not the gate.
 
 `ds-bundle-ref/` is NOT covered by the `ds-bundle/` gitignore rule; delete it at close-out.
@@ -491,8 +491,8 @@ re-sync and add each new one to `tsconfig.ds.json` above the `#/*` wildcard.
   wrong-but-plausible content rather than failing. The frozen 2024-05-15 clock
   means date-derived values need re-checking whenever fixtures are refreshed.
 - **Grades are only as good as the sheets.** Any preview written but never captured
-  is a draft — three separate agents died mid-batch and left files that looked
-  finished; re-reading the sheets found blank cells, nine wrong operator portraits,
+  is a draft: an authoring agent that dies mid-batch leaves files that look
+  finished (three did in one campaign); re-reading the sheets found blank cells, nine wrong operator portraits,
   and impossible arithmetic. Never carry an ungraded preview forward as done.
 
 - **`stubs/` shadow real modules.** If `src/lib/api/*`, `#/env`, or the route
@@ -500,7 +500,7 @@ re-sync and add each new one to `tsconfig.ds.json` above the `#/*` wildcard.
   still succeeds, the affected components just misbehave. Re-check the stub exports
   against the real modules when API modules move.
 - **The fork's rename list is API.** `AdminKicker`, `HomeHero`, etc. are the names
-  the design agent codes against. Adding a component that collides with an existing
+  designs built in claude.ai/design code against. Adding a component that collides with an existing
   name can *reshuffle* which file wins a bare name — watch the build log's
   `disambiguated N:` line for unexpected changes, and diff it against this list.
 - `cfg.cssEntry` points into the gitignored `.cache/`. A fresh clone must run
@@ -512,8 +512,8 @@ re-sync and add each new one to `tsconfig.ds.json` above the `#/*` wildcard.
 
 Scope: 111 commits since the 2026-09-13 sync (story reader + library, grids, release/pull
 planner, i18n, profile customization, polymorphic tier lists). 925 cards (713 before):
-211 added, 6 removed, 707 verified-by-upload. One wave of seven Opus agents (~25 min wall
-each) authored 207 previews and repaired 24; 7 new components are floor cards (below).
+211 added, 6 removed, 707 verified-by-upload. One wave of seven concurrent authoring agents
+(~25 min wall each) authored 207 previews and repaired 24; 7 new components are floor cards (below).
 
 ### Build blockers this time (all in `tsconfig.ds.json` / `stubs/`)
 
@@ -567,9 +567,9 @@ in the global key slice (re-keys every component), so it was deferred.
 `authStore` user is null: signed-in branches (NewGridButton's create dialog, MyGrids list,
 BulkPlanDialog picks, PresetRow presets, ProgressTab overrides, Translations, ShowcaseEditor
 titles) render their signed-out state and were graded on that. A signed-in stub user would
-unlock them but silently restyle already-graded cards (header, profile); a user decision.
+unlock them but silently restyle already-graded cards (header, profile); left as an open product decision.
 
-### Authoring traps from this wave
+### Authoring traps found in the 2026-10-08 authoring
 
 - Arbitrary Tailwind values new to a preview (`h-[560px]`, `w-[520px]`, `min-h-[620px]`,
   `min-h-64`, `size-96`) are NOT compiled: `preview-rebuild` never regenerates
@@ -595,13 +595,13 @@ unlock them but silently restyle already-graded cards (header, profile); a user 
 - `/api/operators/{id}` is PascalCase; fixtures must be the `deepCamelize`d shape.
 - `prop={undefined}` falls back to a destructuring default: use an explicit loading flag.
 - `package-capture` deletes a changed preview's grade; rewrite after every recapture.
-- Agents share the session scratchpad: name helper files per batch.
+- Concurrent authoring agents share one scratchpad directory: name helper files per batch.
 - Live fixture endpoints worth reusing: `/api/story/index`, `/api/story/group/{id}/archive`,
   `/api/story/sprites[/<base>]`, `/api/story/art-gallery/{cg,scene}`, `/api/grids[/<slug>]`,
   `/api/tier-lists/<slug>`, `/api/tier-lists/catalogue/<kind>`, `/api/skins/index`,
   `/api/release/*`.
 
-### Source observations from this wave (not sync issues)
+### Source observations from the 2026-10-08 authoring (not sync issues)
 
 11. `CurtainFill` `grad: true` renders solid black (gradient over `bg-black`).
 12. `BacklogDialog` colours speakers with dark-surface hues on a light surface;

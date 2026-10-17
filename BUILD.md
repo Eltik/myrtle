@@ -3,10 +3,10 @@ The v3 of Myrtle is sorted into three sections:
 1. The backend
 2. The frontend
 3. The assets builder/extractor
-The following will be instructions on how to build and run the website (I am handwriting this for future reference).
+The following are instructions for building and running the website.
 
 ## Backend
-1. Install [Rust](https://rustup.rs/). If you have issues with Rust on Windows, just Google the error you get or use Claude/ChatGPT. I hate using Rust on Windows, which is why I code on Mac or Linux the majority of the time. If I can find a reliable way to install Rust on Windows, I'll update this message.
+1. Install [Rust](https://rustup.rs/). macOS and Linux are the primary development platforms; Rust on Windows is less well tested here, so if the install fails on Windows, search for the exact error message. This step will be updated once a reliable Windows install route is documented.
 2. Install [PostgreSQL](https://www.postgresql.org/). Use `v18` or higher for the version. On MacOS:
 ```bash
 $ brew install postgresql@18
@@ -15,7 +15,7 @@ On Windows, download the EXE installer or `winget`:
 ```bash
 $ winget install PostgreSQL.PostgreSQL.18
 ```
-2a. Optionally, install Redis. Windows hates local Redis installations, so I recommend not trying it, but for MacOS and Linux, it's recommended.
+2a. Optionally, install Redis. Local Redis installations are unreliable on Windows, so skipping it there is recommended; on MacOS and Linux, installing it is recommended.
 3. Setup the `.env` variables:
 ```
 DATABASE_URL="postgresql://postgres:password@localhost:5432" # Required

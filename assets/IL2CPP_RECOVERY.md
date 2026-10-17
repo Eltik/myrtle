@@ -16,7 +16,7 @@ fails. You must dump **decrypted** metadata from a **running** client's memory, 
 one method. See `docs/DYNCHAR_ENTRANCE_INVESTIGATION.md` §5 for why nothing else works.
 
 This runbook targets **Arknights EN** (`com.YoStarEN.Arknights`, Unity 2021.3, IL2CPP metadata
-v29) and runs entirely on an Apple-Silicon Mac.
+v29) and runs entirely on an Apple-Silicon macOS host.
 
 Two tools in this repo bracket the manual work:
 - `assets/downloader` → `client-extract` — triage a package, confirm encryption, pull the binary.
@@ -72,13 +72,13 @@ arm64 libs. No jailbreak, no FairPlay. This is the route to prefer.
 - Android Studio (includes the emulator + `adb`/`sdkmanager` under `~/Library/Android/sdk`).
 - A **rootable** AVD: create one on a **"Google APIs"** image (NOT "Google Play") — only the
   Google-APIs/AOSP images allow `adb root`. Pick **arm64-v8a**, API 33/34.
-- `frida` + `frida-tools` on the Mac: `pipx install frida-tools` (or `pip install`).
+- `frida` + `frida-tools` on the macOS host: `pipx install frida-tools` (or `pip install`).
 
 ### A1. Get the APK and triage it
 1. Download the **Arknights EN** arm64 APK/XAPK (APKPure / APKMirror — pick the arm64-v8a
    variant). This is a different channel from the game's asset CDN, so the repo downloader
    can't fetch it — grab it manually.
-2. Triage it with our tool (confirms you'll need a memory dump, and pulls the `.so` for later
+2. Triage it with the repo's `client-extract` tool (confirms you'll need a memory dump, and pulls the `.so` for later
    offset cross-referencing):
    ```
    cd assets/downloader
@@ -129,7 +129,7 @@ Two options — the Zygisk module is the most reliable against the anti-tamper:
 
 ## Path B — Jailbroken iOS device over USB (fallback)
 
-Only if your device is jailbreakable (tell me the model + iOS version and I'll confirm). This
+Only if your device is jailbreakable (check the model + iOS version against the jailbreak tool's support list). This
 uses the app already installed on the phone; a memory dump beats **both** FairPlay and the
 anti-tamper at once.
 1. Jailbreak (palera1n for checkm8 A9–A11; Dopamine for arm64e up to supported iOS 15–16.x).
@@ -145,7 +145,7 @@ FairPlay-encrypted, so it's a dead end for this — the emulator path is easier 
 
 ## Step C — Il2CppDumper → dump.cs (only if you have raw binary + decrypted metadata)
 
-If A3/B already produced `dump.cs`, skip this. Otherwise, on the Mac (Il2CppDumper is .NET;
+If A3/B already produced `dump.cs`, skip this. Otherwise, on the macOS host (Il2CppDumper is .NET;
 `dotnet` runs on Apple Silicon):
 ```
 dotnet Il2CppDumper.dll <dumped libil2cpp.so> <decrypted global-metadata.dat> ./out
@@ -163,7 +163,7 @@ cargo run -- --input /path/to/dump.cs            # ranked table
 cargo run -- --input /path/to/dump.cs --json     # machine-readable
 ```
 It ranks candidates by `Torappu`/`CharWord`/`L2D`/`DynIllust`/`Entrance`/`Camera` naming **and**
-boosts any class whose body references the rig anchors we already recovered (`Dummy002`,
+boosts any class whose body references the already-recovered rig anchors (`Dummy002`,
 `static_offset`, `start_animation_02`, `_mainCamera`, `charVoiceOffset`). The top hit is almost
 certainly the entrance-camera updater. Each row prints a ready
 `Ghidra: go to file offset 0x…` / `IDA: jump to VA 0x…`.
@@ -177,8 +177,8 @@ certainly the entrance-camera updater. Each row prints a ready
 2. Read the algorithm — expect it to compute the frame centre / ortho size from the character's
    runtime bounds/bones during the reform (there is no per-skin data; it's pure math). Grab the
    whole call chain if it delegates.
-3. Hand me the decompiled pseudocode. I'll port it into the renderer's entrance tick
-   (`SceneIllust.tsx`, where the gamedata `entranceCamCenterCurve` is replayed) to replace the
+3. Port the decompiled pseudocode into the renderer's entrance tick
+   (`SceneIllust.tsx`, where the gamedata `entranceCamCenterCurve` is replayed), replacing the
    interim heuristic with the real algorithm.
 
 ---
