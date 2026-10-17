@@ -2507,7 +2507,7 @@ Memory is the problem. The model's Metal buffers are not counted in its RSS (1.1
 **Tried.** The rung comparison found that slim loses to full mainly because the gold chunk reaches the prompt far less often (55 against 106 of 131), and that E2B scores like the 12B on the same passages. So two "middle" arms were run on E2B, both with one model call. Each takes the full pipeline's answer call with the keyword router, `--n-predict 250` and slim's switches off (no typed fallback, answer extension, answer check or operator-list check), raises k to 8 and widens the context budget. Conditions: `--no-cache-prompt`, one client, the same Qwen judge and scripts as the rung comparison (`artifacts/answers/eval3way/e-e2b-mid36`, `f-e2b-mid6k`; `run_arm3.sh` passes the flags). Run time about 1 h 26 min.
 **Result.**
 
-| E2B arm | context budget | gold correct / declined / wrong (of 131) | gold chunk in prompt | gold faithful | real responds / handles | tokens in (mean) | Neurons (mean) | Mac median per answer | server RSS |
+| E2B arm | context budget | gold correct / declined / wrong (of 131) | gold chunk in prompt | gold faithful | real responds / handles | tokens in (mean) | Neurons (mean) | median per answer (development machine) | server RSS |
 |---|---|---|---|---|---|---|---|---|---|
 | slim (rung comparison) | 2,000, k 5 | 42 / 10 / 79 | 55 | 0.898 | 44 / 37 of 43 | 1,814 | 17.6 | 1.0 s | 3,983 MB |
 | mid 3.6k | 3,600, k 8 | 57 / 4 / 70 | 82 | 0.900 | 46 / 38 | 3,463 | 32.6 | 2.0 s | 4,019 MB |
