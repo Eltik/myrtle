@@ -142,6 +142,10 @@ python3 scripts/chrono.py build;  python3 scripts/chrono.py history
 # Main episode EN release dates from the game data (2026-10-04, no network): deaths' release order and the guide read them.
 step "main episode dates";  python3 scripts/reading_guide.py dates | tee -a "$LOG/steps.log"
 step "identities, deaths";  python3 scripts/entities.py build; python3 scripts/deaths.py build
+# identities.v2.json (the answer check's identity links) from the current pairs; it was rebuilt by hand only and went
+# stale (last built 2026-10-03 before 2026-10-19). pairs.v2.jsonl itself still comes from `entities.py extract2`, run by
+# hand. IDENTITIES_V2=0 skips it.
+if [[ "${IDENTITIES_V2:-1}" != "0" ]]; then step "identities v2"; ENTITY_V2=1 python3 scripts/entities.py build; fi
 step "operator attributes"; python3 scripts/attributes.py
 # Eval references only, off by default so an update stays offline and nothing served depends on the wiki (2026-10-04):
 # REFRESH_REFERENCE=1 refreshes the wiki answer keys under eval/reference (the deceased list and operator statuses for
