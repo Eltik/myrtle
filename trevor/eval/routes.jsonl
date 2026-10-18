@@ -1,4 +1,4 @@
-{"q": "Give me every story in chronological order", "expect": "table", "contains": ["Main story (17 episodes"]}
+{"q": "Give me every story in chronological order", "expect": "table", "contains": ["Main story (18 episodes"]}
 {"q": "List all the known real names of every operator", "expect": "table", "contains": ["Tachanka: Alexsandr Senaviev"]}
 {"q": "What is Bagpipe's real name?", "expect": "table", "contains": ["Fiona Young"]}
 {"q": "What is Amiya's real name?", "expect": "retrieval"}
