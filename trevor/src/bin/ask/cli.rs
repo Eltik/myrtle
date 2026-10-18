@@ -231,6 +231,10 @@ pub(crate) struct Args {
     /// the passages ("Gap-Toothed Girl:" instead of "Gap-Toothed Girl (Idida):"; scripts/label_renames.py, 2026-10-19).
     #[arg(long)]
     pub(crate) no_label_renames: bool,
+    /// The typed fallback's second answer kept only when it cites one of the operator's own units, as before
+    /// 2026-10-19 (it is now also kept when it cites only the lead passages both asks had).
+    #[arg(long)]
+    pub(crate) fallback_own_only: bool,
     /// RELATION_RULE for this question: `!no_relation_rule`, set by `main` and per job; `answer_one_inner` clears it for
     /// a question naming a group topic, and for a relation question naming fewer than two people (not an admiration one).
     #[arg(skip)]

@@ -538,7 +538,12 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
                     .is_some_and(|c| FALLBACK_KINDS.contains(&c.group_id.as_str())
                         && typed_owner(c.text.lines().next().unwrap_or_default())
                             .is_some_and(|o| norm(&o) == norm(&op))));
-                if !declines(&second.answer) && cites_own {
+                // Or when it cites only the lead passages both asks had (scoped scenes and the like): the same evidence,
+                // read the second time. ian12 on the 12B declined with the Idida scene at [1] and the retry answered from
+                // that [1] (2026-10-19, `--fallback-own-only` keeps the own-unit rule alone).
+                let cites_lead = !a.fallback_own_only && !second.cited.is_empty()
+                    && second.cited.iter().all(|id| pre.iter().any(|p| p.id == *id));
+                if !declines(&second.answer) && (cites_own || cites_lead) {
                     return Ok(second);
                 }
             }
