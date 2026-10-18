@@ -1267,7 +1267,11 @@ Woman, Youth, Voice, Old, Young, ...) followed within 3 lines by a label that in
 label pairs; true renames among them (Gap-Toothed Girl -> Idida, Old Woman -> Myrrh, Elegant Woman -> Blaze, Gentle
 Woman -> Mercia, Boy in Patient Gown -> Popukar) and false ones where someone else introduces themselves after the
 described speaker (Soldier -> Alita, Calm Youth -> Red). A rule needs a further condition, for instance that the
-described label never speaks again in the scene after the switch.
+described label never speaks again in the scene after the switch. Tried on whole stories: it keeps 22 and drops 16, and
+it separates nothing: it drops true renames whose description label returns later in the story (Old Woman -> Myrrh,
+Elegant Woman -> Blaze, Mysterious Fortune Teller -> Kal'tsit) and keeps false ones (Calm Youth -> Red; both
+Raggedly-Dressed Boy and Raggedly-Dressed Girl -> Arturia). Refuted as the condition; scene boundaries (not stories)
+and the self-introduction being the first line of the new label are the next candidates.
 
 ## Entities and topics
 
