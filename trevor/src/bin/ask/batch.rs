@@ -9,14 +9,14 @@ use std::path::Path;
 use anyhow::{Context, Result};
 use trevor::llm::Llm;
 use trevor::search::runtime::Runtime;
-use trevor::tools::{Tools, norm};
+use trevor::tools::Tools;
 
 use crate::answer::{Answer, Tables, answer_one};
 use crate::chrono::{
     Chrono, chronology_for, load_chrono_cached, proper_name,
 };
 use crate::cli::{Args, RouterKind, deep_for};
-use crate::detect::{asks_admire, asks_identity, asks_relation, asks_scene_with, asks_when, is_opinion_question, term_of};
+use crate::detect::{asks_admire, asks_identity, asks_relation, asks_when, is_opinion_question, term_of};
 use crate::form::{Flags, question_form};
 use crate::labels::Names;
 use crate::people::{
@@ -25,7 +25,7 @@ use crate::people::{
 };
 use crate::runtimes::Runtimes;
 use crate::routing::{is_ending_route, route_question};
-use crate::scenes::{character_scenes, person_forms, scoped_excerpts, scoped_scenes, scoped_summaries};
+use crate::scenes::{character_scenes, scoped_excerpts, scoped_scenes, scoped_summaries};
 use crate::llama_server::connect_or_spawn;
 
 /// The non-blank lines of a batch file, each parsed as JSON. The file is read up front; a line that does not parse
@@ -128,11 +128,9 @@ pub(crate) fn detect_only(a: &Args, tools: &Tools, b: &Path) -> Result<()> {
             .as_ref()
             .filter(|_| t.event_in_question(q).is_none() && t.appearance_question(q).is_none())
         {
-            if let [k] = people_named(rt, t, q).as_slice() {
-                let forms: Vec<String> = person_forms(t, k).iter().map(|x| norm(x)).collect();
-                if !t.names_group_topic(k) && asks_scene_with(q, &forms, a.scene_verbs()) {
-                    f.push(format!("charscope={k}"));
-                }
+            if let Some((k, _)) = crate::scenes::scene_subject(t, &people_named(rt, t, q), q, a.scene_verbs(),
+                                                                !a.scene_subject) {
+                f.push(format!("charscope={k}"));
             }
         }
         if let Some(w) = crate::fate::alive_dead_subject(q, t).filter(|_| !a.no_death_evidence) {
@@ -188,7 +186,7 @@ pub(crate) fn scoped_only(a: &Args, rts: &mut Runtimes, tools: &Tools, b: &Path)
                      l["groupId"].as_str().unwrap_or_default(), ids.join(" "));
         }
         if let Some((who, rows)) = character_scenes(&mut rts.main, &rts.args, tools, q, crate::scenes::CHAR_TOKENS,
-                                                    a.scene_verbs()) {
+                                                    a.scene_verbs(), !a.scene_subject) {
             let ids: Vec<String> =
                 rows.iter().map(|(r, _, n)| format!("{}:{n}", rts.main.store.chunks[*r].chunk_id)).collect();
             println!("{id}\tcharacter\t{who}\t{}", ids.join(" "));

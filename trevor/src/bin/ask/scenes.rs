@@ -140,6 +140,27 @@ pub(crate) fn excerpt_window(rt: &Runtime, r: usize, idx: &[usize], window: usiz
     (text, tok)
 }
 
+/// The one named person the question makes the subject of an act: of the people it names, those a said, hint or
+/// reaction verb follows (`asks_scene_with`), exactly one; with their folded name forms of 3 characters or more.
+/// With `one_person` (the default; `--scene-subject` lifts it, unmeasured) the question must name exactly one person:
+/// "How does Mon3tr react when she wakes up after Kal'tsit dies" names two, and got no character scenes.
+pub(crate) fn scene_subject(tools: &Tools, people: &[String], q: &str, extra: &[&str], one_person: bool)
+                            -> Option<(String, Vec<String>)> {
+    let cands: Vec<&String> = if one_person {
+        match people { [k] => vec![k], _ => return None }
+    } else {
+        people.iter().collect()
+    };
+    let mut hits = cands.into_iter().filter_map(|k| {
+        let forms: Vec<String> = person_forms(tools, k).iter().map(|x| norm(x))
+            .filter(|x| x.chars().count() >= 3).collect();
+        (!forms.is_empty() && !tools.names_group_topic(k) && asks_scene_with(q, &forms, extra))
+            .then(|| (k.clone(), forms))
+    });
+    let first = hits.next()?;
+    hits.next().is_none().then_some(first)
+}
+
 /// Character-scoped scenes (the default; `--no-character-scenes`): a question that names no event, names one character
 /// (`people_named`) and makes them the subject of a said or done act (`asks_scene`) gets excerpts of the scenes where
 /// that character speaks, placed first, on top of the retrieved passages' whole budget (cutting that budget drops
@@ -150,20 +171,13 @@ pub(crate) fn excerpt_window(rt: &Runtime, r: usize, idx: &[usize], window: usiz
 /// either side, at most `CHAR_LINES_PER_SCENE` lines a scene and `CHAR_K` scenes, within `CHAR_TOKENS`.
 /// Returns (the character as the corpus writes them, excerpts best first).
 pub(crate) fn character_scenes(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools, q: &str, max_tokens: u32,
-                               extra: &[&str]) -> Option<(String, Excerpts)> {
+                               extra: &[&str], one_person: bool) -> Option<(String, Excerpts)> {
     if tools.event_in_question(q).is_some() || tools.appearance_question(q).is_some() {
         return None;
     }
     let people = people_named(rt, tools, q);
-    let [key] = people.as_slice() else { return None };
-    let forms: Vec<String> = person_forms(tools, key)
-        .iter()
-        .map(|x| norm(x))
-        .filter(|x| x.chars().count() >= 3)
-        .collect();
-    if forms.is_empty() || tools.names_group_topic(key) || !asks_scene_with(q, &forms, extra) {
-        return None;
-    }
+    let (key, forms) = scene_subject(tools, &people, q, extra, one_person)?;
+    let key = &key;
     let shown = tools.operator_names().into_iter().chain(tools.speaker_names()).find(|x| norm(x) == *key)
         .map_or_else(|| key.clone(), str::to_owned);
     let skip = |g: &str| is_generated(g) || RECORD_KINDS.contains(&g) || g == "voice";

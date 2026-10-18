@@ -67,6 +67,16 @@ pub(crate) const SAID_VERBS: [&str; 39] = [
 pub(crate) const HINT_VERBS: [&str; 12] = ["hint", "hints", "hinted", "imply", "implies", "implied", "insinuate",
     "insinuates", "insinuated", "allude", "alludes", "alluded"];
 
+/// Verbs of reacting, feeling and waking ("How does Mon3tr react when she wakes up after Kal'tsit dies": the scene
+/// is `main_15-18_end#0007`, where the voice is "???" until "My name is Mon3tr", so retrieval misses it; the
+/// character's own scenes reranked against the question could reach it). Opt-in with `--react-verbs` (2026-10-19,
+/// unmeasured: on E2B mid the scenes ranked a Return to Mist line above the waking scene).
+pub(crate) const SCENE_VERBS: [&str; 36] = ["hint", "hints", "hinted", "imply", "implies", "implied", "insinuate",
+    "insinuates", "insinuated", "allude", "alludes", "alluded",
+    "react", "reacts", "reacted", "respond", "responds", "responded", "feel", "feels", "felt", "wake", "wakes",
+    "woke", "woken", "awake", "awakes", "awoke", "awaken", "awakens", "behave", "behaves", "behaved", "cope", "copes",
+    "coped"];
+
 /// Whether the question makes the character (any of `forms`, folded) the subject of an act it asks about: a form followed,
 /// with at most one word between, by a said verb (`SAID_VERBS`, and `extra`), or, when the question asks in which event,
 /// story, chapter, episode or scene, by a said verb or a past-tense word ("During which event Mon3tr suggested ...").

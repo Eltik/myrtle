@@ -1335,6 +1335,15 @@ awoke, you just turned around and walked away after giving me a 'welcome back'".
 `main_15-16_beg#0000` fourth; `15-18_end#0007` is not in the top 10 (its text has "cocoon" and "unfamiliar voice",
 not "wake"). "How does Kal'tsit die, and how does she get revived?" retrieves neither scene: the text says
 "disappeared", not "died".
+**Tried (opt-in, not a default).** Two levers, each behind an opt-in flag: `--react-verbs` adds react, respond, feel,
+wake, behave and cope to the scene-subject verbs, and `--scene-subject` picks, among several named people, the one a
+verb follows (the question names Mon3tr and Kal'tsit, and character scenes needed exactly one). On E2B mid (two calls
+that went to the running preview server by mistake) the answer moved from the decline to "Mon3tr reacts with a
+pained howl when Kal'tsit cries because she is dying [2]" from Return to Mist (`main_11-15_beg#0005`): the
+character scenes fire, but the reranker puts the chapter 11 line above the waking scene. Not shipped as a default on
+that evidence; the defaults render prompts byte-identical to `43e30986` (stub). Next: a window that measures both
+flags on the probe sets, and a lift for the waking scene itself (its voice is "???" until "My name is Mon3tr", so a
+chunk-scoped label rename is the candidate; a story-scoped one is unsafe, "???" names several speakers per story).
 
 ## Entities and topics
 

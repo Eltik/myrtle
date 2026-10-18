@@ -443,7 +443,7 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
     if scoped.is_none() && excerpts.is_none() && gap.is_none() && !a.no_character_scenes && !a.no_route
         && kind.is_none() {
         if let Some((who, rows)) = character_scenes(rt, &a.runtime, &tables.tools, q, a.scene_tokens.unwrap_or(crate::scenes::CHAR_TOKENS),
-                                                  a.scene_verbs()) {
+                                                  a.scene_verbs(), !a.scene_subject) {
             for (i, (r, text, _)) in rows.iter().enumerate() {
                 let c = &rt.store.chunks[*r];
                 let label = story_label(names, &c.story_id);
