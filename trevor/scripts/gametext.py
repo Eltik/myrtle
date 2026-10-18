@@ -33,7 +33,8 @@ import collections, glob, json, os, re, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
 import common
 from common import GAMEDATA, ROOT, kv, story_script as script
-from sources import clean, load, words
+from common import excel_table as load
+from sources import clean, words
 
 STORY = os.path.join(GAMEDATA, 'story')
 OUT = os.path.join(ROOT, 'artifacts', 'gametext')
@@ -166,6 +167,15 @@ def add_record_intros(u):
 
 def add_event_text(u, names):
     """Activity event text: event descriptions and news."""
+    # A game update can leave activity_table.json out (2026-10-18, EN). The previous build's event-text units then
+    # carry over unchanged, so P4x keeps them; GAMETEXT_REQUIRE_TABLES=1 fails instead, as before.
+    if not os.path.exists(os.path.join(common.EXCEL, 'activity_table.json')) and os.environ.get('GAMETEXT_REQUIRE_TABLES') != '1':
+        prev = os.path.join(OUT, 'units.jsonl')
+        kept = [json.loads(l) for l in open(prev, encoding='utf-8')] if os.path.exists(prev) else []
+        kept = [r for r in kept if r['storyId'].startswith('gametext_event_') and r['storyId'] not in u.seen]
+        u.rows.extend(kept); u.seen.update(r['storyId'] for r in kept)
+        print(f'gametext: activity_table.json is missing; kept {len(kept)} event-text units from the last build', file=sys.stderr)
+        return
     act = load('activity_table.json')
     for gid, groups in (act.get('Activity') or {}).items():
         for a in groups if isinstance(groups, list) else []:

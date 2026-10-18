@@ -71,6 +71,12 @@ def kv(x):
 
 
 def stage_dates():
+    # A game update can leave a table out (2026-10-18: the EN unpack produced no activity_table.json). The episode dates
+    # then stay as the last good main_release.json, so the update carries on; a new episode stays undated until the
+    # table is back. DATES_REQUIRE_TABLES=1 fails instead, as before.
+    if not os.path.exists(os.path.join(common.EXCEL, 'activity_table.json')) and os.environ.get('DATES_REQUIRE_TABLES') != '1':
+        print('dates: activity_table.json is missing from the game data; keeping the last main_release.json', file=sys.stderr)
+        return
     """EN release dates of the main episodes from the game data alone (see the module docstring)."""
     zt = common.excel_table('zone_table.json')
     st = common.excel_table('stage_table.json')
