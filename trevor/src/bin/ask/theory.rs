@@ -3,8 +3,10 @@
 //! Fyodor asks "What of the Infected situation?", Witte speaks to him of "Talulah the Infected"), is asked once more
 //! with those lines as HINTS and THEORY_RULE: the answer says "The story does not say outright, but", gives the hints
 //! with their citations, and ends with a "Theory:" sentence labelled as Trevor's reading. The second answer is kept
-//! only when it has that "Theory:" line; otherwise the decline stays. The first prompt is unchanged, so every answer
-//! that does not decline is byte-identical with the rule off.
+//! only when its prompt carried the HINTS block (THEORY_RULE is never given without it) and it has that "Theory:"
+//! line; otherwise the decline stays. The second ask runs only when the hints are released under the spoiler horizon
+//! and its added passages fit the first ask's retrieved budget. The first prompt is unchanged, so every answer that
+//! does not decline is byte-identical with the rule off.
 
 use trevor::search::runtime::Runtime;
 use trevor::tools::{Tools, norm};
@@ -24,7 +26,7 @@ const STOP: &[&str] = &["is", "was", "are", "were", "does", "did", "do", "has", 
                         "known", "story", "stories", "lore", "canon", "arknights", "game", "true", "confirmed", "about",
                         "someone", "something", "anyone", "anything", "like", "kind", "sort", "type", "one", "become",
                         "became", "get", "got", "go", "went", "say", "said", "make", "made", "time", "now", "then", "part",
-                        "member", "side", "really"];
+                        "member", "side"];
 
 /// Whether a question asks whether (its first word is an auxiliary verb).
 pub(crate) fn asks_whether(q: &str) -> bool {
@@ -121,10 +123,13 @@ pub(crate) fn hints(texts: &[String], forms: &[String], stems: &[String]) -> Vec
     out
 }
 
-/// Words of a question about the game rather than the story ("Does Fyodor deserve a sprite?").
-const META: &[&str] = &["deserve", "sprite", "translat", "skin", "banner", "rerun", "voice actor", "artist", "nerf",
-                        "buff", "tier", "worth", "pull", "playable", "release", "upcoming", "model", "design",
-                        "based on", "inspired", "reference"];
+/// Words of a question about the game rather than the story ("Does Fyodor deserve a sprite?"), matched as whole words
+/// ("frontier", "released", "designated" and "pulled" are story words).
+const META: &[&str] = &["deserve", "deserves", "sprite", "sprites", "translate", "translated", "translation",
+                        "translations", "translator", "skin", "skins", "banner", "banners", "rerun", "reruns", "voice actor",
+                        "artist", "artists", "nerf", "nerfed", "buff", "buffed", "tier", "worth", "pull", "pulls",
+                        "playable", "release", "upcoming", "model", "models", "design", "designs", "based on",
+                        "inspired", "reference", "references"];
 
 /// The words of a whether-question after its subject, when the subject is `who` right after the first word (and an
 /// optional "the"): "Is Fyodor infected?" gives "infected"; None when `who` is not the subject or the question is about
@@ -134,7 +139,8 @@ pub(crate) fn predicate(q: &str, who: &str) -> Option<String> {
         return None;
     }
     let n = norm(q);
-    if META.iter().any(|m| n.contains(m)) {
+    let padded = format!(" {n} ");
+    if META.iter().any(|m| padded.contains(&format!(" {m} "))) {
         return None;
     }
     let rest = n.split_once(' ')?.1;
@@ -200,7 +206,8 @@ pub(crate) fn block(texts: &[String], t: &Spec) -> Option<String> {
 
 /// Lines of the character's own story scenes, outside the chunks the first ask had, that touch what the question
 /// asks: (row, line index), at most `EXTRA_SCENES`, one per chunk, in corpus order. "Is Fyodor infected?" retrieved
-/// Episode 8 and People but not Episode 17's "...*cough* *cough*!".
+/// Episode 8 and People but not Episode 17's "...*cough* *cough*!". Under a spoiler horizon only chunks released at or
+/// before it count, so a later line neither takes a slot nor decides that the second ask runs.
 pub(crate) fn extra_hints(rt: &Runtime, t: &Spec) -> Vec<(usize, usize)> {
     let mut out: Vec<(usize, usize)> = Vec::new();
     for (r, c) in rt.store.chunks.iter().enumerate() {
@@ -208,7 +215,7 @@ pub(crate) fn extra_hints(rt: &Runtime, t: &Spec) -> Vec<(usize, usize)> {
             break;
         }
         if is_generated(&c.group_id) || RECORD_KINDS.contains(&c.group_id.as_str()) || c.group_id == "voice"
-            || t.seen.contains(&c.chunk_id) {
+            || t.seen.contains(&c.chunk_id) || rt.horizon.as_ref().is_some_and(|h| !rt.allows_row(h, r)) {
             continue;
         }
         let hit = c.text.lines().position(|l| {
@@ -278,5 +285,17 @@ mod tests {
         assert_eq!(predicate("Does anyone know what crossbow Faust uses?", "Faust"), None);
         assert_eq!(predicate("Does Fyodor deserve a sprite?", "Fyodor"), None);
         assert_eq!(predicate("Is there a lore behind Ascalon's tattoo?", "Ascalon"), None);
+    }
+
+    #[test]
+    fn game_words_match_whole_words_only() {
+        for q in ["Is Fyodor from the frontier?", "Was Fyodor released?", "Is Fyodor designated a traitor?",
+                  "Was Fyodor pulled from the river?"] {
+            assert!(predicate(q, "Fyodor").is_some(), "{q}");
+        }
+        for q in ["Is Fyodor worth it?", "Does Fyodor have a skin?", "Is Fyodor's voice actor known?",
+                  "Was Fyodor translated wrong?", "Is Fyodor based on a tsar?"] {
+            assert_eq!(predicate(q, "Fyodor"), None, "{q}");
+        }
     }
 }

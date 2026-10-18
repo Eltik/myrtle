@@ -301,6 +301,24 @@ pub(super) fn kept_sentences(pieces: &[Piece<'_>], keep: &[bool]) -> String {
 }
 
 /// The chunk ids an answer's "[n]" citations name, in order, by passage number (`passages[n - 1]`).
+/// How many citations of `text` point at no passage (of `passages` passages), counted as `generate::citations` does.
+pub(crate) fn invalid_count(text: &str, passages: usize) -> usize {
+    let mut invalid = 0usize;
+    let mut i = 0;
+    while let Some(open) = text[i..].find('[') {
+        let start = i + open + 1;
+        let Some(close) = text[start..].find(']') else { break };
+        let inner = &text[start..start + close];
+        let toks: Vec<&str> = inner.split([',', ';', ' ']).filter(|t| !t.is_empty()).collect();
+        let nums: Vec<usize> = toks.iter().filter_map(|t| t.parse().ok()).collect();
+        if !nums.is_empty() && nums.len() == toks.len() {
+            invalid += nums.iter().filter(|&&n| n == 0 || n > passages).count();
+        }
+        i = start + close;
+    }
+    invalid
+}
+
 pub(crate) fn cited_ids(text: &str, passages: &[String]) -> Vec<String> {
     let mut cited: Vec<String> = Vec::new();
     let mut i = 0;
@@ -327,6 +345,12 @@ pub(crate) fn cited_ids(text: &str, passages: &[String]) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn invalid_citations_are_numbers_past_the_passages() {
+        assert_eq!(invalid_count("In the texts [3] and [12], and [0] [1, 4] [a 2].", 9), 2);
+        assert_eq!(invalid_count("No citation here.", 9), 0);
+    }
 
     fn texts() -> Vec<String> {
         vec![

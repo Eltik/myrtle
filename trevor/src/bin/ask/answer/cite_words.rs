@@ -33,7 +33,9 @@ pub(crate) fn fix(answer: &str) -> Option<String> {
             let after = &rest[ws..];
             let digits = after.chars().take_while(char::is_ascii_digit).count();
             let cites = after.starts_with('[') && after[1..].starts_with(|c: char| c.is_ascii_digit());
-            let bare = digits > 0 && !after[digits..].starts_with(|c: char| c.is_alphanumeric());
+            // A bare number is a citation unless a letter or a possessive follows it ("passage 2's speaker" stays).
+            let bare = digits > 0 && !after[digits..].starts_with(|c: char| c.is_alphanumeric() || c == '\''
+                || c == '\u{2019}');
             if (cites || bare) && answer[j..].chars().next().is_none_or(|c| !c.is_alphanumeric()) {
                 let prev = out.trim_end().rsplit(|c: char| c.is_whitespace()).next().unwrap_or_default()
                     .trim_matches(|c: char| !c.is_alphanumeric()).to_ascii_lowercase();
@@ -48,6 +50,16 @@ pub(crate) fn fix(answer: &str) -> Option<String> {
                     out.push_str(&after[..digits]);
                     out.push(']');
                     i = j + ws + digits;
+                    // "passages 3 and 4": every bare number of the list becomes a citation.
+                    if plural {
+                        while let Some((sep, n)) = list_number(&answer[i..]) {
+                            out.push_str(&answer[i..i + sep]);
+                            out.push('[');
+                            out.push_str(&answer[i + sep..i + sep + n]);
+                            out.push(']');
+                            i += sep + n;
+                        }
+                    }
                 } else {
                     i = j + ws;
                 }
@@ -60,6 +72,15 @@ pub(crate) fn fix(answer: &str) -> Option<String> {
         i += c.len_utf8();
     }
     changed.then_some(out)
+}
+
+/// The next number of a bare list ("3, 4 and 5"): (separator length, digits), for ", ", " and ", ", and ", " or ",
+/// ", or ", "-" or " to " then digits that no letter or possessive follows.
+fn list_number(s: &str) -> Option<(usize, usize)> {
+    let sep = [", and ", ", or ", " and ", " or ", ", ", " to ", "-"].iter().find(|p| s.starts_with(**p))?.len();
+    let digits = s[sep..].chars().take_while(char::is_ascii_digit).count();
+    let ok = digits > 0 && !s[sep + digits..].starts_with(|c: char| c.is_alphanumeric() || c == '\'' || c == '\u{2019}');
+    ok.then_some((sep, digits))
 }
 
 #[cfg(test)]
@@ -77,12 +98,17 @@ mod tests {
             ("Estimate: 1086, based on T1, T2, and passage [2].", "Estimate: 1086, based on T1, T2, and the text [2]."),
             ("It is not in the provided passages [2], [3].", "It is not in the provided texts [2], [3]."),
             ("As passage 4 says, she left.", "As the text [4] says, she left."),
+            ("It is in passages 3 and 4.", "It is in the texts [3] and [4]."),
+            ("See passages 1, 2, and 5 for it.", "See the texts [1], [2], and [5] for it."),
+            ("Passages 2-3 say so.", "The texts [2]-[3] say so."),
+            ("In passage 2 and 3 people.", "In the text [2] and 3 people."),
         ];
         for (a, want) in cases {
             assert_eq!(fix(a).as_deref(), Some(want), "{a}");
         }
         for a in ["The passages do not say [1].", "A passage of the story [2].", "Passageway 4 [1].",
-                  "the passage in Episode 4 [2]."] {
+                  "the passage in Episode 4 [2].", "In passage 2's last line, she leaves [2].",
+                  "In passage 2\u{2019}s last line, she leaves [2]."] {
             assert_eq!(fix(a), None, "{a}");
         }
     }

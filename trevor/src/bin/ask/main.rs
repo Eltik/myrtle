@@ -90,7 +90,7 @@ async fn main() -> Result<()> {
         return batch::form_only(&a, &tools).await;
     }
     if let Some(d) = &a.identity_scan {
-        return batch::identity_scan(&tools, d);
+        return batch::identity_scan(&a, &tools, d);
     }
     let mut tables = Tables { tools, topic: None, route: None };
     if let (Some(b), true) = (&a.batch, a.json_check) {

@@ -135,7 +135,9 @@ pub(crate) fn detect_only(a: &Args, tools: &Tools, b: &Path) -> Result<()> {
                 }
             }
         }
-        if let Some(w) = crate::fate::alive_dead_subject(q, t) { f.push(format!("death_evidence={w}")); }
+        if let Some(w) = crate::fate::alive_dead_subject(q, t).filter(|_| !a.no_death_evidence) {
+            f.push(format!("death_evidence={w}"));
+        }
         if let Some(op) = one_operator(q, t) { f.push(format!("one_operator={op}")); }
         else if let Some(op) = one_operator_wide(q, t) { f.push(format!("one_operator_wide={op}")); }
         println!("{id}\t{}", f.join(" "));
@@ -230,8 +232,11 @@ pub(crate) async fn answer_batch(a: &Args, rts: &mut Runtimes, llm: &Llm, names:
 
 /// `--identity-scan DUMP`: the identity-claim check (`answer/identity.rs`) over the answers of a `--dump-prompt` file,
 /// without a model: each answer call's passages and question are read back from its rendered prompt. Prints every
-/// answer the check would change (question, claims, the answer after) and the counts.
-pub(crate) fn identity_scan(tools: &Tools, dump: &Path) -> Result<()> {
+/// answer the check would change (question, claims, the answer after) and the counts. The referent checks and the
+/// passage-label fix are scanned and counted only while their switches are on; with all three off the output is the
+/// identity-claim scan alone.
+pub(crate) fn identity_scan(a: &Args, tools: &Tools, dump: &Path) -> Result<()> {
+    let referent_on = !a.no_referent_check || !a.no_quote_check;
     let text = std::fs::read_to_string(dump).with_context(|| format!("reading {}", dump.display()))?;
     let (mut answers, mut changed, mut referent, mut labels) = (0usize, 0usize, 0usize, 0usize);
     for line in text.lines().filter(|l| !l.trim().is_empty()) {
@@ -265,15 +270,23 @@ pub(crate) fn identity_scan(tools: &Tools, dump: &Path) -> Result<()> {
             changed += 1;
             println!("Q: {q}\nclaims: {claims:?}\nbefore: {}\nafter: {after}\n", content.trim());
         }
-        if let Some((after, found)) = crate::answer::referent::check(content.trim(), q, &texts, tools, true, true) {
+        if let Some((after, found)) = crate::answer::referent::check(content.trim(), q, &texts, tools,
+                                                                       !a.no_referent_check, !a.no_quote_check)
+            .filter(|_| referent_on) {
             referent += 1;
             println!("Q: {q}\nreferent: {found:?}\nbefore: {}\nafter: {after}\n", content.trim());
         }
-        if crate::answer::cite_words_fix(content.trim()).is_some() {
+        if !a.no_passage_label_fix && crate::answer::cite_words_fix(content.trim()).is_some() {
             labels += 1;
         }
     }
-    println!("{answers} answer calls, {changed} changed by the identity-claim check, {referent} by the referent \
-              checks, {labels} by the passage-label fix");
+    let mut tail = String::new();
+    if referent_on {
+        tail.push_str(&format!(", {referent} by the referent checks"));
+    }
+    if !a.no_passage_label_fix {
+        tail.push_str(&format!(", {labels} by the passage-label fix"));
+    }
+    println!("{answers} answer calls, {changed} changed by the identity-claim check{tail}");
     Ok(())
 }

@@ -22,9 +22,14 @@ pub(crate) const DEATH_ROWS: usize = 2;
 const DEATH_WINDOW: usize = 2;
 
 /// The character an alive-or-dead question asks about: a death or survival word, a question shape that asks whether
-/// (not who, which or how many), and exactly one named character of the deaths table as whole words (the longest name
-/// when one holds another).
+/// (not who, which or how many, and not how, why, when or where as its first word: "How did Mandragora die?" takes the
+/// death as given), and exactly one named character of the deaths table as whole words, a possessive included
+/// ("Mandragora's"; the longest name when one holds another).
 pub(crate) fn alive_dead_subject(q: &str, tools: &Tools) -> Option<String> {
+    let first_word = q.split_whitespace().next().unwrap_or_default().to_lowercase();
+    if matches!(first_word.as_str(), "how" | "why" | "when" | "where") {
+        return None;
+    }
     let ql = format!(" {} ", q.to_lowercase().replace(['?', ',', '.', '!', '"'], " "));
     let fate = has(&ql, &[" alive ", " dead ", " die ", " died ", " dies ", " death ", " killed ", " survive",
                           " deceased ", " passed away ", " still living ", " still around "]);
@@ -38,9 +43,11 @@ pub(crate) fn alive_dead_subject(q: &str, tools: &Tools) -> Option<String> {
     // A name counts as written ("Was Crownslayer's teacher killed" does not name "Teacher"), or in any case when the
     // whole question is lowercase.
     let lower = !q.chars().any(char::is_uppercase);
+    // A possessive ("Mandragora's") is the name and "s" once `norm` drops the apostrophe, as in `appear.rs`.
+    let (qn, qp) = (format!(" {} ", norm(q)), format!(" {} ", norm(&q.replace('\u{2019}', "'").replace("'s", " "))));
     let mut hits: Vec<&String> = names.iter().filter(|n| {
-        let k = norm(n);
-        k.chars().count() >= 3 && format!(" {} ", norm(q)).contains(&format!(" {k} "))
+        let k = format!(" {} ", norm(n));
+        k.chars().count() >= 5 && (qn.contains(&k) || qp.contains(&k))
             && (lower || q.match_indices(n.as_str()).any(|(i, _)| {
                 q[..i].chars().last().is_none_or(|c| !c.is_alphanumeric())
                     && q[i + n.len()..].chars().next().is_none_or(|c| !c.is_alphanumeric())
@@ -49,8 +56,10 @@ pub(crate) fn alive_dead_subject(q: &str, tools: &Tools) -> Option<String> {
     hits.sort_by_key(|n| std::cmp::Reverse(n.len()));
     let first = (*hits.first()?).clone();
     // Another name counts unless it is only part of the first one ("Talulah" in "Talulah Artorius").
-    let rest = format!(" {} ", norm(q)).replace(&format!(" {} ", norm(&first)), " ");
-    let others = hits.iter().skip(1).filter(|n| rest.contains(&format!(" {} ", norm(n)))).count();
+    let f = format!(" {} ", norm(&first));
+    let (rn, rp) = (qn.replace(&f, " "), qp.replace(&f, " "));
+    let others = hits.iter().skip(1).filter(|n| { let k = format!(" {} ", norm(n)); rn.contains(&k) || rp.contains(&k) })
+        .count();
     (others == 0).then_some(first)
 }
 
@@ -58,7 +67,9 @@ pub(crate) fn alive_dead_subject(q: &str, tools: &Tools) -> Option<String> {
 /// the latest row, in release order.
 pub(crate) fn death_rows<'a>(tools: &'a Tools, who: &str) -> Vec<&'a Value> {
     let Some(events) = tools.deaths.as_ref() else { return Vec::new() };
-    let mut mine: Vec<&Value> = events.iter().filter(|e| e["character"].as_str() == Some(who)).collect();
+    // A row without a quote has no line to show: its first line would stand in for it.
+    let mut mine: Vec<&Value> = events.iter().filter(|e| e["character"].as_str() == Some(who)
+        && e["quote"].as_str().is_some_and(|q| !q.trim().is_empty())).collect();
     mine.sort_by_key(|e| e["releaseTime"].as_i64().unwrap_or(0));
     let mut out: Vec<&Value> = Vec::new();
     if let Some(d) = mine.iter().find(|e| e["kind"].as_str() == Some("dies")) {
@@ -125,6 +136,32 @@ mod tests {
                   "Is Mandragora related to Mandra or W? Is W dead?"] {
             assert_eq!(alive_dead_subject(q, &t), None, "{q}");
         }
+    }
+
+    #[test]
+    fn possessives_count_and_how_questions_do_not() {
+        let t = tools();
+        for q in ["Is Mandragora's death confirmed?", "Was Mandragora\u{2019}s death real?"] {
+            assert_eq!(alive_dead_subject(q, &t).as_deref(), Some("Mandragora"), "{q}");
+        }
+        for q in ["How did Mandragora die?", "Why did Mandragora die?", "When did Mandragora die?",
+                  "Where did Mandragora die?"] {
+            assert_eq!(alive_dead_subject(q, &t), None, "{q}");
+        }
+    }
+
+    #[test]
+    fn a_row_without_a_quote_is_not_given() {
+        let mut t = tools();
+        if let Some(d) = t.deaths.as_mut() {
+            d.push(json!({"character": "Mandragora", "kind": "dead", "generic": false, "releaseTime": 40,
+                          "chunkId": "c#7", "quote": "  "}));
+            d.push(json!({"character": "W", "kind": "dies", "generic": false, "releaseTime": 2, "chunkId": "c#8"}));
+        }
+        let ids: Vec<&str> = death_rows(&t, "Mandragora").iter().filter_map(|e| e["chunkId"].as_str()).collect();
+        assert_eq!(ids, vec!["c#2", "c#3"]);
+        let w: Vec<&str> = death_rows(&t, "W").iter().filter_map(|e| e["chunkId"].as_str()).collect();
+        assert_eq!(w, vec!["c#5"]);
     }
 
     #[test]

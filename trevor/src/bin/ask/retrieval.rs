@@ -205,7 +205,9 @@ pub(crate) fn passages(rt: &mut Runtime, q: &str, a: &Args, kind: Option<&str>, 
         let hi = (pos + nb).min(rows.len().saturating_sub(1));
         let cluster: Vec<usize> = rows[lo..=hi].iter().copied().filter(|r| !seen.contains(r)).collect();
         let cost: u32 = cluster.iter().map(|&r| rt.store.chunks[r].token_count).sum();
-        if !chosen.is_empty() && budget + cost > a.max_context_tokens {
+        // The first hit is kept whatever its size, except in the labelled theory's second ask, whose budget
+        // is what is left after the passages it adds (`theory.rs`).
+        if (!chosen.is_empty() || a.theory.is_some()) && budget + cost > a.max_context_tokens {
             continue;
         }
         budget += cost;

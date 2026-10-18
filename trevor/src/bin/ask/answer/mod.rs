@@ -65,12 +65,18 @@ pub(crate) struct Answer {
     /// Each passage's label and text as the prompt showed it, in passage order (the identity-claim check reads them).
     #[serde(skip)]
     pub(crate) texts: Vec<String>,
+    /// The retrieved passages' token budget the answer call had (the labelled theory's retry bound, `theory.rs`).
+    #[serde(skip)]
+    pub(crate) budget: u32,
+    /// Whether the prompt carried a HINTS block (the labelled theory's second ask).
+    #[serde(skip)]
+    pub(crate) hinted: bool,
 }
 
 pub(crate) fn table_only(q: &str, text: String) -> Answer {
     Answer { qid: None, question: q.to_owned(), answer: text, cited: Vec::new(), passages: Vec::new(),
              invalid_citations: 0, prompt_tokens: 0, ms: 0.0, form: None, generated: Default::default(),
-             texts: Vec::new() }
+             texts: Vec::new(), budget: 0, hinted: false }
 }
 
 /// The table tools, and what `main` routed for the single question before the index loaded.
@@ -112,6 +118,11 @@ pub(crate) async fn answer_one(rts: &mut Runtimes, llm: &Llm, names: &HashMap<St
     if !a.no_passage_label_fix && !ans.passages.is_empty() {
         if let Some(text) = cite_words::fix(&ans.answer) {
             ans.cited = identity::cited_ids(&text, &ans.passages);
+            // A bare number that became a citation ("passage 12" of 9 passages) counts as invalid when it points at
+            // no passage.
+            let n = ans.passages.len();
+            ans.invalid_citations = (ans.invalid_citations + identity::invalid_count(&text, n))
+                .saturating_sub(identity::invalid_count(&ans.answer, n));
             ans.answer = text;
         }
     }
@@ -175,6 +186,19 @@ async fn theory_retry(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Nam
     if block.is_none() && extra.is_empty() {
         return Ok(first);
     }
+    // The second ask must fit where the first did: the pinned chunks, the extra excerpts and the HINTS block with
+    // THEORY_RULE come out of the first ask's retrieved budget, so when they exceed it the first answer stays (with them
+    // inside it, the retrieved passages get the rest and even the first hit keeps to it, `retrieval::passages`).
+    let main = &rts.main;
+    let cost = spec.pinned.iter().filter_map(|id| main.store.row(id)).map(|r| main.store.chunks[r].token_count)
+        .chain(extra.iter().map(|&(r, i)| excerpt_window(main, r, &[i], 1).1))
+        .fold(crate::theory::THEORY_TOKENS, u32::saturating_add);
+    if cost > first.budget {
+        if trevor::env::debug_on("TREVOR_THEORY_DEBUG") {
+            eprintln!("theory: {who} skipped, {cost} tokens over a budget of {}", first.budget);
+        }
+        return Ok(first);
+    }
     if trevor::env::debug_on("TREVOR_THEORY_DEBUG") {
         eprintln!("theory: {who}{} extra {:?}", block.unwrap_or_default(),
                   extra.iter().map(|&(r, i)| format!("{}:{i}", rts.main.store.chunks[r].chunk_id)).collect::<Vec<_>>());
@@ -182,7 +206,8 @@ async fn theory_retry(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Nam
     // Retrieved hits without their neighbouring chunks: a hit's neighbours would overrun the reduced budget.
     let again = Args { theory: Some(spec), routed: false, neighbors: 0, ..a.clone() };
     let second = answer_one_inner(rts, llm, names, chrono, q, &again, tables).await?;
-    Ok(if crate::theory::has_theory(&second.answer) { second } else { first })
+    // Kept only when its prompt carried the HINTS block (and so THEORY_RULE) and it has the "Theory:" line.
+    Ok(if second.hinted && crate::theory::has_theory(&second.answer) { second } else { first })
 }
 
 /// The operator list check (`--no-operator-list-check`): an answer to a question
@@ -430,15 +455,15 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
     // Deaths evidence (`--no-death-evidence`, `fate.rs`): an alive-or-dead question about one character of the deaths
     // table gets the lines its rows quote, after any scoped scenes or time-gap lines (whose rule numbers the first
     // passages), and the retrieved passages give up the tokens they take.
-    let mut death_tokens = 0u32;
+    let mut pre_tokens = 0u32;
     if !a.no_death_evidence && !a.no_route && kind.is_none() {
         if let Some(who) = crate::fate::alive_dead_subject(q, &tables.tools) {
-            let at = pre.iter().take_while(|p| p.scoped || p.gap.is_some()).count();
+            let at = after_lead(&pre);
             for (k, (id, tail, text, tok)) in crate::fate::death_evidence(rt, &tables.tools, &who).into_iter()
                 .enumerate() {
                 let sid = rt.store.row(&id).map(|r| rt.store.chunks[r].story_id.clone()).unwrap_or_default();
                 pre.insert(at + k, Pre::new(id, format!("{}; {tail}", story_label(names, &sid)), text).of_death(&who));
-                death_tokens = death_tokens.saturating_add(tok);
+                pre_tokens = pre_tokens.saturating_add(tok);
             }
         }
     }
@@ -447,15 +472,15 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
     // The first ask's passages with hint lines go first, then excerpts of the character's own lines, and the
     // retrieved passages give up the tokens they and the HINTS block take.
     if let Some(t) = a.theory.as_ref().filter(|_| kind.is_none()) {
-        death_tokens = death_tokens.saturating_add(crate::theory::THEORY_TOKENS);
+        pre_tokens = pre_tokens.saturating_add(crate::theory::THEORY_TOKENS);
         // After any scoped scenes or time-gap lines, whose rule numbers the first passages.
-        let mut at = pre.iter().take_while(|p| p.scoped || p.gap.is_some()).count();
+        let mut at = after_lead(&pre);
         for id in &t.pinned {
             let Some(r) = rt.store.row(id).filter(|_| !pre.iter().any(|p| p.id == *id)) else { continue };
             let c = &rt.store.chunks[r];
             pre.insert(at, Pre::new(c.chunk_id.clone(), passage_label(names, c), c.text.clone()).in_theory());
             at += 1;
-            death_tokens = death_tokens.saturating_add(c.token_count);
+            pre_tokens = pre_tokens.saturating_add(c.token_count);
         }
         for (r, i) in crate::theory::extra_hints(rt, t) {
             let c = &rt.store.chunks[r];
@@ -464,7 +489,7 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
                                                                 story_label(names, &c.story_id), t.who), text)
                 .in_theory());
             at += 1;
-            death_tokens = death_tokens.saturating_add(tok);
+            pre_tokens = pre_tokens.saturating_add(tok);
         }
     }
     // With scoped scenes the retrieved passages get the rest of the budget, 3,000 tokens, as with IS-ending passages.
@@ -480,8 +505,8 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
         &scoped_budget
     } else { a };
     let death_budget;
-    let a = if death_tokens > 0 {
-        death_budget = Args { max_context_tokens: a.max_context_tokens.saturating_sub(death_tokens), ..a.clone() };
+    let a = if pre_tokens > 0 {
+        death_budget = Args { max_context_tokens: a.max_context_tokens.saturating_sub(pre_tokens), ..a.clone() };
         &death_budget
     } else { a };
     let form = form.as_ref();
@@ -520,6 +545,11 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
         }
     }
     Ok(first)
+}
+
+/// Where passages added after the scoped scenes or time-gap lines go: the rule of those numbers the first passages.
+fn after_lead(pre: &[Pre]) -> usize {
+    pre.iter().take_while(|p| p.scoped || p.gap.is_some()).count()
 }
 
 /// The router, with the keyword router as the fallback when the model's JSON did not validate twice (a backend without

@@ -165,8 +165,10 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
             }
         }
     }
-    if let Some(block) = a.theory.as_ref().and_then(|t| crate::theory::block(&texts, t)) {
-        user.push_str(&block);
+    // The labelled theory's HINTS block, on the story runtime only; THEORY_RULE goes with it and never without it.
+    let hints = a.theory.as_ref().filter(|_| kind.is_none()).and_then(|t| crate::theory::block(&texts, t));
+    if let Some(block) = &hints {
+        user.push_str(block);
     }
     user.push_str(&format!("\nQUESTION: {q}"));
     if time_evidence {
@@ -235,7 +237,7 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
     if form.is_some_and(|f| f.form == "yes_no") {
         system.push_str(YES_NO_RULE);
     }
-    if a.theory.is_some() {
+    if hints.is_some() {
         system.push_str(THEORY_RULE);
     }
     match lore {
@@ -283,5 +285,7 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
         generated: pre.iter().filter(|p| !p.id.starts_with("topic:")).map(|p| (p.id.clone(), p.text.clone())).collect(),
         form: form.map(|f| f.evidence.as_ref().map_or_else(|| f.form.clone(), |e| format!("{}: {e}", f.form))),
         texts,
+        budget: a.max_context_tokens,
+        hinted: hints.is_some(),
     })
 }
