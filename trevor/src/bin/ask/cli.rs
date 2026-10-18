@@ -353,6 +353,18 @@ pub(crate) struct Args {
     /// the question, no bare "summary", and an apostrophe in the event's name ("The Masses' Travels") blocks the route.
     #[arg(long)]
     pub(crate) no_summary_route: bool,
+    /// The keyword router's recap rule without "tell me about" and "what is" requests: "Tell me about The Masses' Travels"
+    /// and "What is The Masses Travels?" go to retrieval, as before, instead of the event's recap.
+    #[arg(long)]
+    pub(crate) no_event_about: bool,
+    /// Turn off the time-gap evidence (`timegap.rs`): a question asking how much time passes between two stories it
+    /// names gets no lines of the later story stating elapsed time, and the model router routes it as before.
+    #[arg(long)]
+    pub(crate) no_time_gap: bool,
+    /// Opt-in: after the scoped scenes, Trevor's summaries of the stories they come from (`scenes.rs`,
+    /// `scoped_summaries`). Measured on E2B (mid) with no verdict changed, so not the default.
+    #[arg(long)]
+    pub(crate) scoped_summaries: bool,
     /// The note of the answer check's second ask, set only inside `answer_one`.
     #[arg(skip)]
     pub(crate) check_note: Option<String>,
@@ -540,8 +552,9 @@ pub(crate) fn apply_profile(a: &mut Args, p: Profile) {
 pub(crate) fn tool_options(a: &Args) -> trevor::tools::ToolOptions {
     use trevor::tools::ToolOptions;
     if a.router == RouterKind::Keywords {
-        ToolOptions { canon_v1: a.canon_v1, summary_route: !a.no_summary_route, ..ToolOptions::KEYWORDS }
+        ToolOptions { canon_v1: a.canon_v1, summary_route: !a.no_summary_route, event_about: !a.no_event_about,
+                      ..ToolOptions::KEYWORDS }
     } else { ToolOptions { storylines: !a.no_storylines, exact_recap: !a.recap_substring,
                            is_offset: !a.is_numbering_v1, canon_v1: a.canon_v1,
-                           summary_route: !a.no_summary_route } }
+                           summary_route: !a.no_summary_route, event_about: !a.no_event_about } }
 }

@@ -25,7 +25,7 @@ use crate::people::{
 };
 use crate::runtimes::Runtimes;
 use crate::routing::{is_ending_route, route_question};
-use crate::scenes::{character_scenes, person_forms, scoped_scenes};
+use crate::scenes::{character_scenes, person_forms, scoped_scenes, scoped_summaries};
 use crate::llama_server::connect_or_spawn;
 
 /// The non-blank lines of a batch file, each parsed as JSON. The file is read up front; a line that does not parse
@@ -97,6 +97,11 @@ pub(crate) fn detect_only(a: &Args, tools: &Tools, b: &Path) -> Result<()> {
         if Flags::keywords(q).asks_time && asks_when(q) && !chronology_for(q, load_chrono_cached()).is_empty() {
             f.push("chrono".into());
         }
+        if let Some((e, l)) = crate::timegap::time_gap_events(q, t, load_chrono_cached()) {
+            let n = store_rt.as_ref().map_or(0, |rt| crate::timegap::time_gap_lines(rt, t, e, l).len());
+            f.push(format!("timegap={}>{}:{n}", e["groupId"].as_str().unwrap_or_default(),
+                           l["groupId"].as_str().unwrap_or_default()));
+        }
         if asks_identity(q) { if let Some(c) = t.answer_constraint(q) { f.push(format!("constraint={c:?}")); } }
         if t.broad_topic_question(q) { f.push("broad_topic".into()); }
         if let Some(g) = t.event_in_question(q) {
@@ -152,13 +157,23 @@ pub(crate) async fn route_only(a: &Args, tables: &mut Tables, b: &Path) -> Resul
 }
 
 /// `--scoped-only --batch`: the scoped scenes and character scenes each question would get.
-pub(crate) fn scoped_only(rts: &mut Runtimes, tools: &Tools, b: &Path) -> Result<()> {
+pub(crate) fn scoped_only(a: &Args, rts: &mut Runtimes, tools: &Tools, b: &Path) -> Result<()> {
     for v in batch_items(b)? {
         let v = v?;
         let (id, q) = qid_question(&v);
         if let Some((e, who, rows)) = scoped_scenes(&mut rts.main, tools, q) {
             let ids: Vec<&str> = rows.iter().map(|&r| rts.main.store.chunks[r].chunk_id.as_str()).collect();
             println!("{id}\t{e}\t{}\t{}", who.join("|"), ids.join(" "));
+            if a.scoped_summaries {
+                let s: Vec<String> = scoped_summaries(&rts.main, tools, &rows).into_iter().map(|(s, _)| s).collect();
+                println!("{id}\tsummaries\t{}", s.join(" "));
+            }
+        }
+        if let Some((e, l)) = crate::timegap::time_gap_events(q, tools, crate::chrono::load_chrono_cached()) {
+            let ids: Vec<String> = crate::timegap::time_gap_lines(&rts.main, tools, e, l).into_iter()
+                .map(|(r, i)| format!("{}:{i}", rts.main.store.chunks[r].chunk_id)).collect();
+            println!("{id}\ttimegap\t{}>{}\t{}", e["groupId"].as_str().unwrap_or_default(),
+                     l["groupId"].as_str().unwrap_or_default(), ids.join(" "));
         }
         if let Some((who, rows)) = character_scenes(&mut rts.main, &rts.args, tools, q) {
             let ids: Vec<String> =

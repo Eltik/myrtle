@@ -76,18 +76,50 @@ pub(crate) fn person_forms(tools: &Tools, key: &str) -> Vec<String> {
     forms
 }
 
+/// Trevor's summaries of the stories the scoped scenes come from (opt-in, `--scoped-summaries`), in the
+/// scenes' rank order, each story once, within `SCOPED_SUMMARY_TOKENS` (a token is taken as 4 characters): (story id,
+/// summary). A scene shows a moment without its setting; "In chapter 15, when Priestess separates the Doctor, Amiya, and
+/// Kal'tsit from the elite operators, where does she take them?" got the scene where the elite operators find themselves
+/// alone (`main_15_level_main_15-15_beg#0003`, ranked 8th of 130) but not the one on the deck (57th), and the summary
+/// of their story says "encountered ... the Priestess on the deck of Rhodes Island".
+pub(crate) fn scoped_summaries(rt: &Runtime, tools: &Tools, rows: &[usize]) -> Vec<(String, String)> {
+    let mut out: Vec<(String, String)> = Vec::new();
+    let mut used = 0usize;
+    for &r in rows {
+        let sid = &rt.store.chunks[r].story_id;
+        if out.iter().any(|(s, _)| s == sid) {
+            continue;
+        }
+        let id = format!("story:{sid}");
+        let Some(text) = tools.bank.iter().find(|b| b["id"].as_str() == Some(id.as_str()))
+            .and_then(|b| b["answer"].as_str()) else { continue };
+        let cost = text.len().div_ceil(4);
+        if used + cost > SCOPED_SUMMARY_TOKENS as usize {
+            break;
+        }
+        used += cost;
+        out.push((sid.clone(), text.to_owned()));
+    }
+    out
+}
+
 /// One excerpt per scene: (row, text, estimated tokens).
 pub(crate) type Excerpts = Vec<(usize, String, u32)>;
 
 /// The lines `idx` of chunk `r` with `CHAR_WINDOW` lines either side, merged, gaps marked "...", and its token estimate
 /// (the chunk's token count scaled by the kept share of its text).
 pub(crate) fn excerpt(rt: &Runtime, r: usize, idx: &[usize]) -> (String, u32) {
+    excerpt_window(rt, r, idx, CHAR_WINDOW)
+}
+
+/// `excerpt` with `window` lines kept either side of each line of `idx`.
+pub(crate) fn excerpt_window(rt: &Runtime, r: usize, idx: &[usize], window: usize) -> (String, u32) {
     let c = &rt.store.chunks[r];
     let lines: Vec<&str> = c.text.lines().collect();
     let mut keep = vec![false; lines.len()];
     for &i in idx {
-        let hi = (i + CHAR_WINDOW).min(lines.len().saturating_sub(1));
-        keep.iter_mut().take(hi + 1).skip(i.saturating_sub(CHAR_WINDOW)).for_each(|k| *k = true);
+        let hi = (i + window).min(lines.len().saturating_sub(1));
+        keep.iter_mut().take(hi + 1).skip(i.saturating_sub(window)).for_each(|k| *k = true);
     }
     let mut parts: Vec<String> = Vec::new();
     let mut cur: Vec<&str> = Vec::new();
@@ -317,6 +349,8 @@ pub(crate) fn rank_by_question(rt: &mut Runtime, q: &str, cands: &[usize]) -> Op
 pub(crate) const SCOPED_K: usize = 16;
 pub(crate) const SCOPED_TOKENS: u32 = 6000;
 pub(crate) const SCOPED_REST: u32 = 3000;
+/// The story summaries of the scoped scenes take at most this many tokens (about 8 summaries of 200 tokens).
+pub(crate) const SCOPED_SUMMARY_TOKENS: u32 = 1600;
 
 /// Load the reranker into `rt` on first use: the scene paths rerank even when retrieval does not.
 fn ensure_reranker(rt: &mut Runtime, ra: &RuntimeArgs) -> Result<()> {

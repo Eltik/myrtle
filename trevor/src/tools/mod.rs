@@ -52,16 +52,22 @@ pub struct ToolOptions {
     /// "summary", and reads the event's name with its punctuation folded as the question's is. Off
     /// (`ask --no-summary-route`) is the rule before.
     pub summary_route: bool,
+    /// The keyword router's recap rule also takes "tell me about <event>" and "what is <event>" when nothing but the
+    /// event is asked and the event's name is not also a character, operator or served topic ("What is Babel?" asks
+    /// about the organization). Off (`ask --no-event-about`) is the rule before.
+    pub event_about: bool,
 }
 
 impl ToolOptions {
     pub const KEYWORDS: Self =
-        Self { storylines: false, exact_recap: false, is_offset: true, canon_v1: false, summary_route: true };
+        Self { storylines: false, exact_recap: false, is_offset: true, canon_v1: false, summary_route: true,
+               event_about: true };
 }
 
 impl Default for ToolOptions {
     fn default() -> Self {
-        Self { storylines: true, exact_recap: true, is_offset: true, canon_v1: false, summary_route: true }
+        Self { storylines: true, exact_recap: true, is_offset: true, canon_v1: false, summary_route: true,
+               event_about: true }
     }
 }
 pub const RETRIEVE: &str = "retrieve";

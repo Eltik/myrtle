@@ -17,8 +17,8 @@ use crate::detect::{
 };
 use crate::form::{Flags, Form};
 use crate::prompts::{
-    AGE_RULE, ART_RULE, CANON_RULE, CHAR_LABEL, CHAR_RULE_TAIL, DATE_RULE, INFER_RULE, OPINION_FORM_RULE, OPINION_RULE,
-    ORIGIN_RULE, RELATION_RULE, SCOPED_RULE_HEAD, SCOPED_RULE_TAIL, SOURCE_RULE, SYNTH_RULE, SYSTEM, TERM_RULE,
+    AGE_RULE, ART_RULE, CANON_RULE, CHAR_LABEL, CHAR_RULE_TAIL, DATE_RULE, GAP_RULE_TAIL, GAP_TAIL, INFER_RULE,
+    OPINION_FORM_RULE, OPINION_RULE, ORIGIN_RULE, RELATION_RULE, SCOPED_RULE_HEAD, SCOPED_RULE_TAIL, SOURCE_RULE, SYNTH_RULE, SYSTEM, TERM_RULE,
     TIME_EVIDENCE_TAIL, TIME_RULE, YES_NO_RULE,
 };
 use crate::labels::{Names, story_label};
@@ -108,6 +108,10 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
     if !scoped.is_empty() {
         rows.retain(|&r| !scoped.contains(&rt.store.chunks[r].chunk_id.as_str()));
     }
+    let gap: Vec<&str> = pre.iter().filter(|p| p.gap.is_some()).map(|p| p.id.as_str()).collect();
+    if !gap.is_empty() {
+        rows.retain(|&r| !gap.contains(&rt.store.chunks[r].chunk_id.as_str()));
+    }
     let (first, post): (Vec<&Pre>, Vec<&Pre>) = pre.iter().partition(|p| !p.last);
     let off = first.len();
     let flags = Flags::keywords(q);
@@ -149,9 +153,20 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
     if time_evidence {
         user.push_str(&time_evidence_block(&subject_lines));
     }
+    if !gap.is_empty() {
+        user.push_str("\nTIME GAP EVIDENCE (the lines of the passages above that state how much time has passed)\n");
+        for (i, p) in first.iter().enumerate() {
+            if let Some(line) = &p.gap {
+                user.push_str(&format!("[{}] {line}\n", i + 1));
+            }
+        }
+    }
     user.push_str(&format!("\nQUESTION: {q}"));
     if time_evidence {
         user.push_str(TIME_EVIDENCE_TAIL);
+    }
+    if !gap.is_empty() {
+        user.push_str(GAP_TAIL);
     }
     let started = std::time::Instant::now();
     let mut system = SYSTEM.to_owned();
@@ -178,6 +193,9 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
     }
     if a.relation_rule && !a.no_route && asks_relation(q) {
         system.push_str(RELATION_RULE);
+    }
+    if !gap.is_empty() {
+        system.push_str(&format!("{SCOPED_RULE_HEAD}{}{GAP_RULE_TAIL}", gap.len()));
     }
     if !scoped.is_empty() {
         let tail = if pre.iter().any(|p| p.scoped && p.label.contains(CHAR_LABEL)) { CHAR_RULE_TAIL }

@@ -230,12 +230,15 @@ pub(crate) struct Pre {
     /// A scene of the event the question names where its character speaks or is named (`scoped_scenes`): adds
     /// SCOPED_RULE, and the same chunk is not repeated among the retrieved passages.
     pub(crate) scoped: bool,
+    /// A line of time-gap evidence (`timegap.rs`), the line itself: adds the gap rule and the TIME GAP EVIDENCE block
+    /// before the question, and its chunk is not repeated among the retrieved passages.
+    pub(crate) gap: Option<String>,
 }
 
 impl Pre {
     /// A passage before the retrieved ones that adds no rule.
     pub(crate) fn new(id: String, label: String, text: String) -> Self {
-        Self { id, label, text, last: false, rule: false, scoped: false }
+        Self { id, label, text, last: false, rule: false, scoped: false, gap: None }
     }
 
     /// Placed after the retrieved passages (`last`).
@@ -253,6 +256,12 @@ impl Pre {
     /// A scoped scene (`scoped`).
     pub(crate) fn in_scope(mut self) -> Self {
         self.scoped = true;
+        self
+    }
+
+    /// Time-gap evidence (`gap`): `line` is the line that states the elapsed time.
+    pub(crate) fn in_gap(mut self, line: String) -> Self {
+        self.gap = Some(line);
         self
     }
 }

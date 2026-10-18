@@ -241,12 +241,20 @@ pub(crate) fn recap_route(q: &str, t: &Tools) -> Option<Route> {
     // not in the question as written ("The Masses Travels"), and the name's words folded as `leftover` folds the
     // question's ("Masses'" is "masses").
     let wide = t.opts.summary_route;
-    if !has(q, &words) && !(wide && has(q, &["summary"])) {
+    // `event_about`: "Tell me about The Masses Travels", "What is The Masses' Travels?" ask for the event as a whole.
+    let about = t.opts.event_about && has(q, &["tell me about", "what is ", "what's ", "what was "]);
+    let asked = has(q, &words) || (wide && has(q, &["summary"]));
+    if !asked && !about {
         return None;
     }
-    let g = named_group(q, t).or_else(|| wide.then(|| t.event_in_question(q)).flatten())?;
+    let g = named_group(q, t).or_else(|| (wide || about).then(|| t.event_in_question(q)).flatten())?;
     let id = g["groupId"].as_str()?.to_owned();
     let name = g["name"].as_str().unwrap_or(&id).to_owned();
+    // Reached by "tell me about" or "what is" alone: not when the name is also a character, an operator or a served
+    // topic ("What is Babel?" asks about the organization).
+    if !asked && event_name_is_entity(t, &name) {
+        return None;
+    }
     let mut used: Vec<String> = if wide {
         name.replace(['?', ',', '.', '!', '\'', '"'], " ").split_whitespace().map(str::to_owned).collect()
     } else { name.split_whitespace().map(str::to_owned).collect() };
@@ -257,11 +265,26 @@ pub(crate) fn recap_route(q: &str, t: &Tools) -> Option<Route> {
     if let Some(n) = g["chapter"].as_u64() {
         used.push(n.to_string());
     }
+    if about {
+        used.extend(["tell", "about"].iter().map(|w| (*w).to_owned()));
+    }
     if leftover(q, &used) > 0 {
         return None;
     }
     let ending = has(q, &["ending", "end of", "how does it end", "how did it end"]);
     Some(Route::new("recap", &[("event", &id), ("ending", if ending { "true" } else { "false" })]))
+}
+
+/// Whether an event's name is also a character of the appearance index, an operator, or a served topic or one of its
+/// aliases, compared case and punctuation folded.
+fn event_name_is_entity(t: &Tools, name: &str) -> bool {
+    let n = trevor::tools::norm(name);
+    let n = n.strip_prefix("the ").unwrap_or(&n).to_owned();
+    let same = |x: &str| { let x = trevor::tools::norm(x); x.strip_prefix("the ").unwrap_or(&x) == n };
+    t.operator_names().into_iter().any(same)
+        || t.appearances.as_ref().and_then(|v| v["characters"].as_object()).is_some_and(|c| c.keys().any(|k| same(k)))
+        || t.topics.iter().flatten().any(|r| r["topic"].as_str().is_some_and(same)
+            || r["aliases"].as_array().into_iter().flatten().filter_map(|a| a.as_str()).any(same))
 }
 
 /// Content words a question has beyond `used` and common question words. A single-subject lookup ("What race is
@@ -373,4 +396,28 @@ pub(crate) fn death_route(q: &str, t: &Tools) -> Option<Route> {
         return None;
     }
     Some(Route::new("death_of", &[("character", &who)]))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The shipped tables, when present (artifacts/ is git-ignored, so this passes vacuously without them).
+    #[test]
+    fn event_about_requests_reach_the_recap() {
+        let mut t = Tools::load(std::path::Path::new(env!("CARGO_MANIFEST_DIR")));
+        if t.bank.is_empty() || t.appearances.is_none() {
+            return;
+        }
+        t.opts = trevor::tools::ToolOptions::KEYWORDS;
+        let event = |t: &Tools, q: &str| recap_route(q, t).and_then(|r| r.args.get("event").cloned());
+        assert_eq!(event(&t, "Tell me about the Masses Travels").as_deref(), Some("act42side"));
+        assert_eq!(event(&t, "What is The Masses' Travels?").as_deref(), Some("act42side"));
+        assert_eq!(event(&t, "Give me a summary of the Masses Travels").as_deref(), Some("act42side"));
+        assert_eq!(event(&t, "Tell me about Babel"), None, "Babel is also an organization");
+        assert_eq!(event(&t, "Tell me about Exusiai in the Masses Travels"), None, "a question about one character");
+        t.opts.event_about = false;
+        assert_eq!(event(&t, "Tell me about the Masses Travels"), None);
+        assert_eq!(event(&t, "Give me a summary of the Masses Travels").as_deref(), Some("act42side"));
+    }
 }

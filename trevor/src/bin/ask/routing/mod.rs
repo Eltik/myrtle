@@ -50,6 +50,13 @@ pub(crate) async fn route_question(q: &str, a: &Args, tools: &Tools, llm: Option
         if let Some(route) = is_ending_route(q, a, tools) {
             return Ok(Routed { route, text: None, error: None, topic: None, dossier: None, game: None, ms: ms() });
         }
+        // A time-gap question goes to retrieval, which adds the time-gap evidence (`timegap.rs`); the router read
+        // "the time skip from chapter 8 to chapter 9" as a reading-order comparison.
+        if !a.no_time_gap && crate::timegap::time_gap_events(q, tools, crate::chrono::load_chrono_cached()).is_some() {
+            return Ok(Routed {
+                route: Route::retrieve(), text: None, error: None, topic: None, dossier: None, game: None, ms: ms()
+            });
+        }
         let pre = (!a.no_appearances).then(|| tools.appearance_question(q)).flatten()
             .map(|c| Route::new("appearances", &[("character", c.as_str())]))
             .or_else(|| (!a.no_cross_ref_trigger).then(|| tools.cross_ref_question(q)).flatten()

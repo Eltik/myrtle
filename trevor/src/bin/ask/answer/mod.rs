@@ -26,7 +26,8 @@ use crate::people::{
 use crate::retrieval::Pre;
 use crate::runtimes::Runtimes;
 use crate::routing::{Routed, is_ending_passages, route_question};
-use crate::scenes::{SCOPED_REST, character_scenes, scoped_scenes};
+use crate::scenes::{SCOPED_REST, character_scenes, excerpt_window, scoped_scenes, scoped_summaries};
+use crate::timegap::{GAP_WINDOW, time_gap_events, time_gap_lines};
 use crate::terms::{term_glossary, term_lookup};
 
 mod generate;
@@ -290,9 +291,28 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
             f.evidence = None;
         }
     }
+    // Time-gap evidence (`--no-time-gap`): a question asking how much time passes between two stories it names gets
+    // the later story's lines that state elapsed time since something of the earlier one, first; it then takes the
+    // place of the scoped and character scenes, whose rule numbers the first passages too.
+    let gap = if !a.no_time_gap && !a.no_route && kind.is_none() {
+        time_gap_events(q, &tables.tools, chrono).map(|(e, l)| (e, l, time_gap_lines(rt, &tables.tools, e, l)))
+            .filter(|(_, _, lines)| !lines.is_empty())
+    } else { None };
+    if let Some((e, l, lines)) = &gap {
+        let (en, ln) = (e["name"].as_str().unwrap_or_default(), l["name"].as_str().unwrap_or_default());
+        for (i, &(r, li)) in lines.iter().enumerate() {
+            let c = &rt.store.chunks[r];
+            let (text, _) = excerpt_window(rt, r, &[li], GAP_WINDOW);
+            let line = c.text.lines().nth(li).unwrap_or_default().to_owned();
+            pre.insert(i, Pre::new(c.chunk_id.clone(),
+                                   format!("{}; a line of {ln} that states time passed since something of {en}",
+                                           story_label(names, &c.story_id)), text).in_gap(line));
+        }
+    }
     // The scoped scenes go first (before a term lookup's records), and are not repeated among the retrieved passages.
-    let scoped = if !a.no_scoped_scenes && !a.no_route && kind.is_none() { scoped_scenes(rt, &tables.tools, q) }
-        else { None };
+    let scoped = if gap.is_none() && !a.no_scoped_scenes && !a.no_route && kind.is_none() {
+        scoped_scenes(rt, &tables.tools, q)
+    } else { None };
     if let Some((ename, who, rows)) = &scoped {
         for (i, &r) in rows.iter().enumerate() {
             let c = &rt.store.chunks[r];
@@ -302,11 +322,20 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
                                            who.join(" or ")),
                                    c.text.clone()).in_scope());
         }
+        // The summaries of the scenes' stories follow them (opt-in, `--scoped-summaries`): a scene shows a moment
+        // without its setting.
+        if a.scoped_summaries {
+            for (k, (sid, text)) in scoped_summaries(rt, &tables.tools, rows).into_iter().enumerate() {
+                pre.insert(rows.len() + k, Pre::new(format!("story:{sid}"),
+                    format!("Trevor's summary of the story {} (written by Trevor)",
+                            story_label(names, &sid).trim_start_matches("story: ")), text));
+            }
+        }
     }
     // Character-scoped scenes: no event named, one character named as the subject of a said or done act. They are added
     // before the retrieved passages, which keep their whole budget (the scoped scenes' 3,000-token rest would drop
     // retrieved lines other questions need).
-    if scoped.is_none() && !a.no_character_scenes && !a.no_route && kind.is_none() {
+    if scoped.is_none() && gap.is_none() && !a.no_character_scenes && !a.no_route && kind.is_none() {
         if let Some((who, rows)) = character_scenes(rt, &a.runtime, &tables.tools, q) {
             for (i, (r, text, _)) in rows.iter().enumerate() {
                 let c = &rt.store.chunks[*r];

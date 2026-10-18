@@ -25,6 +25,7 @@ mod llama_server;
 mod serve;
 mod guard;
 mod spoiler;
+mod timegap;
 
 use std::path::PathBuf;
 
@@ -137,7 +138,7 @@ async fn main() -> Result<()> {
         return line_study(&mut rts.main, &rts.args, b);
     }
     if let (Some(b), true) = (&a.batch, a.scoped_only) {
-        return batch::scoped_only(&mut rts, &tables.tools, b);
+        return batch::scoped_only(&a, &mut rts, &tables.tools, b);
     }
     let (llm, _server) = match early { Some(x) => x, None => connect_or_spawn(&a).await? };
     let names = load_names();

@@ -169,6 +169,61 @@ impl Tools {
             .max_by_key(|(_, l)| *l).map(|(g, _)| g)
     }
 
+    /// Every main episode and event a question names, in the order it names them, for the time-gap evidence ("the time
+    /// skip from chapter 8 to chapter 9", "between Episodes 8 and 9", "between Chernobog... and Roaring Flare"). Numbers
+    /// follow "episode", "chapter" or "ch" (singular or plural), and a number joined to one by "and", "to", "through",
+    /// "or" or a comma counts too; event names are matched as in `event_in_question`, without its time-boundary rule
+    /// (a gap question names its events as boundaries). Each group once.
+    #[must_use]
+    pub fn events_in_question(&self, q: &str) -> Vec<&Value> {
+        let n = norm(q);
+        let t: Vec<&str> = n.split(' ').collect();
+        let mut out: Vec<(usize, &Value)> = Vec::new();
+        let mut i = 0;
+        while i < t.len() {
+            if matches!(t[i], "episode" | "episodes" | "chapter" | "chapters" | "ch") {
+                let mut j = i + 1;
+                while let Some(x) = t.get(j).and_then(|x| x.parse::<u64>().ok()) {
+                    if let Some(g) = self.groups.values().find(|g| g["chapter"].as_u64() == Some(x)) {
+                        if !out.iter().any(|(_, o)| o["groupId"] == g["groupId"]) {
+                            out.push((j, g));
+                        }
+                    }
+                    // "8 and 9", "8 to 9", "8, 9": the joined number is a chapter too.
+                    if t.get(j + 1).is_some_and(|w| matches!(*w, "and" | "to" | "through" | "or"))
+                        && t.get(j + 2).is_some_and(|w| w.parse::<u64>().is_ok()) {
+                        j += 2;
+                    } else if t.get(j + 1).is_some_and(|w| w.parse::<u64>().is_ok()) {
+                        j += 1;
+                    } else {
+                        break;
+                    }
+                }
+            }
+            i += 1;
+        }
+        let padded = format!(" {n} ");
+        for g in self.groups.values().filter(|g| !g["groupId"].as_str().unwrap_or_default().starts_with("story_")) {
+            let Some(name) = g["name"].as_str() else { continue };
+            let gn = norm(name);
+            let s = gn.strip_prefix("the ").unwrap_or(&gn);
+            if s.len() < 6 || out.iter().any(|(_, o)| o["groupId"] == g["groupId"]) {
+                continue;
+            }
+            if let Some(at) = padded.find(&format!(" {s} ")) {
+                // A shorter name inside a longer one already found ("Near Light" in "Near Light: Part II") is not a
+                // second event.
+                let inside = out.iter().any(|(_, o)| o["name"].as_str()
+                    .is_some_and(|on| { let x = norm(on); x.len() > s.len() && x.contains(s) && padded.contains(&x) }));
+                if !inside {
+                    out.push((padded[..at].split(' ').filter(|w| !w.is_empty()).count(), g));
+                }
+            }
+        }
+        out.sort_by_key(|(at, _)| *at);
+        out.into_iter().map(|(_, g)| g).collect()
+    }
+
     /// The characters a question names who speak or are named in story group `gid` by the appearance index, as (index
     /// name, every form: the index name and its identity-link names), for the scoped scenes. A form counts when the
     /// question holds it as whole words (case and punctuation folded, 3 characters or more) and it is not a word of the

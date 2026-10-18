@@ -69,6 +69,17 @@ When a line does what the question describes in other words, it answers the ques
 do not decline because the wording differs. Begin with the answer, quote the line with its citation, \
 say in a few words how its wording relates to the question's, and name the people involved as the scene names them.";
 
+/// With the time-gap evidence first (`timegap.rs`): lines of the later story that state elapsed time.
+pub(crate) const GAP_RULE_TAIL: &str = "] are lines of the later of the two stories the question names that state \
+how much time has passed since something of the earlier one; each label names its story. The question asks how much \
+in-world time passes between the two stories: answer with the time such a line states, quote it with its citation and \
+say what it counts from (an event of the earlier story). Say that it is the time the story states, not an exact date. \
+Do not decline when such a line answers the question.";
+
+/// After the question when time-gap evidence is present.
+pub(crate) const GAP_TAIL: &str = "\nBegin your answer with the time the TIME GAP EVIDENCE states, quoted with its \
+citation, and say what it counts from.";
+
 /// The label and answer rule of the character-scoped excerpts (`character_scenes`).
 pub(crate) const CHAR_LABEL: &str = "an excerpt of a scene in which";
 pub(crate) const CHAR_RULE_TAIL: &str = "] are excerpts of the scenes in which the character the question names \

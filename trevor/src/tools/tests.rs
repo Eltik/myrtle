@@ -122,6 +122,12 @@ fn question_detectors_fire_on_their_questions_only() {
     assert!(t.event_in_question("What happened to Mandragora after Episode 10?").is_none(),
             "a time boundary is not the scope");
     assert!(t.event_in_question("Who is the best cook?").is_none());
+    // The time-gap detector's events: both chapters, in the order named, also joined by "and".
+    let ids = |q: &str| t.events_in_question(q).iter().filter_map(|g| g["groupId"].as_str().map(str::to_owned))
+        .collect::<Vec<_>>();
+    assert_eq!(ids("What is the time skip from chapter 8 to chapter 9?"), ["main_8", "main_9"]);
+    assert_eq!(ids("How many years pass between chapters 9 and 8"), ["main_9", "main_8"]);
+    assert_eq!(ids("How long after the Masses Travels is Episode 15?"), ["act42side", "main_15"]);
     let a = t.appearances("Elysium").unwrap();
     assert!(a.contains("Episode 16")
             && a.contains("Stultifera Navis")
