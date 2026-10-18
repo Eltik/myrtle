@@ -1301,7 +1301,9 @@ Bluishsilver, `ian30` Dossoles factions), 0 wrong. The last recorded tally was 1
 declined of 33 (2026-10-06); the set grew by 2 and the grader differs, so the comparison is indicative. Newly right
 include `ian16` (bosses table), `ian27` (Winterfall with Santalla, from P4 under the model router), `ian32`
 (appearance index), `ian33` (Idida, label renames). `ian12` declines on the full profile although E2B mid answers it.
-**Decision.** None (measurement). Open: `ian12` on full, the declines above.
+**Decision.** None (measurement). `ian12` on full: the first ask declined with the Idida scene at [1] and the typed
+fallback's correct retry was discarded for citing no Mon3tr unit; fixed by `43e30986` (the retry is kept when it cites
+only the lead passages both asks had), so the tally is 26 right, 5 partial, 4 declined, 0 wrong. Open: the 4 declines.
 
 ## Entities and topics
 
