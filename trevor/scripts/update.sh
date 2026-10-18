@@ -56,6 +56,9 @@ fi
 if [[ -z "${PLAN:-}" ]]; then
   step "embed + index P0";   target/release/embed-corpus --model-dir models/gte-modernbert-base --corpus artifacts
   target/release/build-index --corpus artifacts
+  # P1a prefixes: p2-summaries.py reads each story's header and synopsis from artifacts/p1a, so a new story needs them
+  # before it can be summarized (the VPS update already runs this). PREFIXES=0 skips it (the script before 2026-10-18).
+  if [[ "${PREFIXES:-1}" != "0" ]]; then step "P1a prefixes"; target/release/build-prefixes; fi
   step "archives (p3a)";     target/release/build-archives
   target/release/embed-corpus --model-dir models/gte-modernbert-base --corpus artifacts/p3a --reuse-from artifacts
   target/release/build-index --corpus artifacts/p3a
