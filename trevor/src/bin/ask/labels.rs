@@ -1,7 +1,8 @@
 //! How a passage is labelled and whose it is: the names table, story labels, and the operator a typed unit or an
 //! operator-file chunk belongs to.
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
+use std::sync::OnceLock;
 
 use serde::Deserialize;
 use trevor::tools::Tools;
@@ -11,6 +12,28 @@ use trevor::tools::Tools;
 pub(crate) struct Names {
     pub(crate) story: String,
     pub(crate) group: String,
+}
+
+/// Speaker labels a story renames by a self-introduction (`artifacts/entities/label_renames.json`,
+/// scripts/label_renames.py): story id -> description label -> name. Empty when missing.
+fn label_renames() -> &'static HashMap<String, BTreeMap<String, String>> {
+    static RENAMES: OnceLock<HashMap<String, BTreeMap<String, String>>> = OnceLock::new();
+    RENAMES.get_or_init(|| {
+        trevor::util::read_json_opt(std::path::Path::new("artifacts/entities/label_renames.json")).unwrap_or_default()
+    })
+}
+
+/// A passage of story `story_id` with each renamed speaker label given its name ("Gap-Toothed Girl:" becomes
+/// "Gap-Toothed Girl (Idida):"), so an answer asked for the name can give it (2026-10-19, `--no-label-renames`).
+pub(crate) fn with_label_names(story_id: &str, text: &str) -> String {
+    let Some(m) = label_renames().get(story_id) else { return text.to_owned() };
+    text.split('\n')
+        .map(|l| m.iter()
+            .find_map(|(label, name)| l.strip_prefix(label.as_str()).and_then(|r| r.strip_prefix(':'))
+                .map(|r| format!("{label} ({name}):{r}")))
+            .unwrap_or_else(|| l.to_owned()))
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 /// The gold-set pipeline's names table (`artifacts/goldgen/names.json`), empty when missing or unparsable.

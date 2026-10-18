@@ -6,7 +6,7 @@ use crate::batch::{batch_items, qid_question};
 use crate::chrono::{Chrono, chronology_for, time_evidence_block};
 use crate::cli::lock_path_from;
 use crate::detect::{HINT_VERBS, asks_identity, asks_origin, asks_person, asks_relation, asks_which_story, asks_scene_with, asks_term, asks_when, term_of};
-use crate::labels::{Names, story_label, typed_owner};
+use crate::labels::{Names, story_label, typed_owner, with_label_names};
 use crate::people::{one_operator, one_operator_wide};
 use crate::terms::{compact, first_sentences};
 
@@ -394,4 +394,13 @@ fn model_lock_defaults_to_the_env_then_tmpdir_then_tmp() {
     assert_eq!(lock_path_from(os(""), os("/var/tmp")), PathBuf::from("/var/tmp/trevor-llm.lock"), "empty = unset");
     assert_eq!(lock_path_from(None, None), PathBuf::from("/tmp/trevor-llm.lock"));
     assert_eq!(lock_path_from(None, os("")), PathBuf::from("/tmp/trevor-llm.lock"), "empty TMPDIR = /tmp");
+}
+
+#[test]
+fn renamed_speaker_labels_get_their_names_in_their_story_only() {
+    let text = "Gap-Toothed Girl: It's got my answer for me, confessor.\nIdida: Dadadeedeeda, I'm called Idida.";
+    let named = with_label_names("act42side_level_act42side_08_beg", text);
+    assert!(named.starts_with("Gap-Toothed Girl (Idida): It's got my answer"), "{named}");
+    assert!(named.ends_with("Idida: Dadadeedeeda, I'm called Idida."));
+    assert_eq!(with_label_names("main_1_level_main_01-01_beg", text), text, "another story keeps the label");
 }

@@ -227,6 +227,10 @@ pub(crate) struct Args {
     /// told to name it from the passage label (2026-10-19).
     #[arg(long)]
     pub(crate) no_story_name_rule: bool,
+    /// Turn off the label renames: a speaker label a story renames by a self-introduction keeps its description in
+    /// the passages ("Gap-Toothed Girl:" instead of "Gap-Toothed Girl (Idida):"; scripts/label_renames.py, 2026-10-19).
+    #[arg(long)]
+    pub(crate) no_label_renames: bool,
     /// RELATION_RULE for this question: `!no_relation_rule`, set by `main` and per job; `answer_one_inner` clears it for
     /// a question naming a group topic, and for a relation question naming fewer than two people (not an admiration one).
     #[arg(skip)]

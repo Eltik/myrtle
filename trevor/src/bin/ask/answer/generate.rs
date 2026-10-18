@@ -21,7 +21,7 @@ use crate::prompts::{
     OPINION_FORM_RULE, OPINION_RULE, ORIGIN_RULE, RELATION_RULE, STORY_NAME_RULE, SCOPED_RULE_HEAD, SCOPED_RULE_TAIL, SOURCE_RULE, SYNTH_RULE, SYSTEM, TERM_RULE, THEORY_RULE,
     TIME_EVIDENCE_TAIL, TIME_RULE, YES_NO_RULE,
 };
-use crate::labels::{Names, story_label};
+use crate::labels::{Names, story_label, with_label_names};
 use crate::retrieval::{Pre, passages};
 
 use super::Answer;
@@ -123,9 +123,14 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
     let synth_q = !a.no_route && flags.asks_synthesis;
     let mut user = String::from("PASSAGES\n");
     let mut texts: Vec<String> = Vec::with_capacity(off + rows.len() + post.len());
+    // Renamed speaker labels get their names (`labels::with_label_names`, `--no-label-renames`).
+    let named = |story_id: &str, text: &str| if a.no_label_renames { text.to_owned() }
+        else { with_label_names(story_id, text) };
+    let pre_story = |p: &Pre| p.id.split('#').next().unwrap_or_default().to_owned();
     for (i, p) in first.iter().enumerate() {
-        user.push_str(&format!("\n[{}] ({})\n{}\n", i + 1, p.label, p.text));
-        texts.push(format!("({})\n{}", p.label, p.text));
+        let text = named(&pre_story(p), &p.text);
+        user.push_str(&format!("\n[{}] ({})\n{}\n", i + 1, p.label, text));
+        texts.push(format!("({})\n{}", p.label, text));
     }
     for (i, &r) in rows.iter().enumerate() {
         let c = &rt.store.chunks[r];
@@ -138,12 +143,14 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
             Some((_, asked, file)) => format!("{label}; this is the file of {file}, whom the question calls {asked}"),
             None => label,
         };
-        user.push_str(&format!("\n[{}] ({label})\n{}\n", i + 1 + off, c.text));
-        texts.push(format!("({label})\n{}", c.text));
+        let text = named(&c.story_id, &c.text);
+        user.push_str(&format!("\n[{}] ({label})\n{}\n", i + 1 + off, text));
+        texts.push(format!("({label})\n{}", text));
     }
     for (i, p) in post.iter().enumerate() {
-        user.push_str(&format!("\n[{}] ({})\n{}\n", off + rows.len() + i + 1, p.label, p.text));
-        texts.push(format!("({})\n{}", p.label, p.text));
+        let text = named(&pre_story(p), &p.text);
+        user.push_str(&format!("\n[{}] ({})\n{}\n", off + rows.len() + i + 1, p.label, text));
+        texts.push(format!("({})\n{}", p.label, text));
     }
     if time_q {
         user.push_str(&timeline_notes(rt, chrono, &rows, off));
