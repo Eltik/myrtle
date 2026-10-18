@@ -1212,6 +1212,27 @@ Dropped sentences follow the identity check: when every sentence would go, the a
 **Decision.** Defaults pending window 2. Not fixed here: Episode 17 placement (reading guide dates), the stale story names (`artifacts/goldgen/names.json`, 2026-09-25, has no Episode 17 or People story, so their labels read "story: <id>"), and the Knight and Black Knight identity links.
 **Code.** `src/bin/ask/theory.rs`, `src/bin/ask/scenes.rs` (`scoped_excerpts`, `pick_excerpts`), `src/bin/ask/appear.rs`, `src/bin/ask/prompts.rs` (`CHAR_NAME_RULE`)
 
+### 2026-10-19: Model windows 2 and 3 (E2B mid, 17 questions)
+
+**Tried.** `scratchpad/n/window2.jsonl` (the 7 window-1 questions, 7 gold questions the name rule touches, and the 3
+questions where the theory fires) on E2B, `--profile mid --no-cache-prompt`, one client. Arm A the defaults, arm B
+every switch of the night off. Window 2 ran `50da4213`; window 3 ran `cab32936` (review fixes `c1be4fba`, the name rule
+only for who and name questions) on identities rebuilt by `5cc5a323`.
+**Result (window 2).** A better than B on 5: Mandragora (A quotes The Brigadier's "Mandragora is dead", B mixes her up
+with the Leader), Idida (A "the Gap-Toothed Girl", B "Kal'tsit"), `ian12` (A names The Masses' Travels), Talulah (A
+Episode 17), Fyodor (A a labelled theory, weak: no cough hint in it). A theory instead of a decline on `h023`, `r015`,
+`r101` (labelled, thin). A worse on 2: `g0091` (the name rule was the only prompt difference; the answer moved Count
+Vincent's line to Heidi) and `g0029` (A adds "present with her" to a question about who is absent; the same rule,
+read as noise). Wrong in both: Discord 7 (both "Nearl"; the prompt held 5 Blacknight file chunks and an Ebenholz scene
+drawn by the identity link Operator -> Ebenholz) and `ian33` (both name Exusiai and others; truth Idida).
+**Result (window 3).** B equals window 2's B on 16 of 17 (Discord 7 differs: the identities changed under both arms).
+A: `g0091` is right again (Count Vincent); Discord 7 declines ("does not mention the Black Knight in relation to the
+Near Light event") instead of naming Nearl; `ian12` lost the event name it had only through the name rule; the rest
+match window 2's A or B.
+**Decision.** Keep the defaults. Open: Discord 7 needs a Near Light passage about Degenbrecher; the appearance index
+leaves titles out by design ("King of Sarkaz" would credit Amiya with Theresa's lines), and Near Light names her only
+"the Black Knight". `ian33` still answers from the reranker's top line.
+
 ## Entities and topics
 
 Identities, names and aliases, topics and topic summaries, dossiers, canon evidence for the Integrated Strategies endings, deaths, places, organisations, operator data.
