@@ -224,8 +224,17 @@ def addressed(name, quote):
     return re.search(rf"\byou(?:r(?:\s+[\w'-]+){{1,2}})?\s+as\s+(?:(?i:the)\s+)?{re.escape(bare)}\b", quote) is not None
 
 
+def title_prefix(title, name, quote, lower):
+    """A common word (one the corpus writes in lower case 20 times or more) written only as a title before the other
+    name: "Operator Ebenholz.", "Code Name: Operator Ron". "Brandt Reiner" and "Texas the Omertosa" are kept."""
+    return (' ' not in title and lower[title.lower()] >= 20
+            and re.search(rf'\b{re.escape(title)} {re.escape(name)}\b', quote) is not None
+            and re.search(rf'\b{re.escape(title)}\b(?! {re.escape(name)})', quote) is None)
+
+
 def stage_build():
     cs = chunks()
+    lower = collections.Counter(w for c in cs for w in re.findall(r"\b[a-z][a-z'\-]+\b", c['text']))
     groupw = group_words()
     grouped = 0
     speaks = collections.Counter(p for c in cs for p in set(c['speakers']))
@@ -261,9 +270,14 @@ def stage_build():
             # to Flametail), and a name after "your ... as" belongs to the person addressed, not the speaker ("By your
             # standards as the Black Knight" had joined Degenbrecher's title to Trilby Asher). 3 of 263 links, 2026-10-19.
             # A pronoun is not a name either: "Call me Brigid." had joined I to Brigid, Mudrock, Sand Reckoner and
-            # Doc. Aak (8 links in pairs and pairs.v2). ENTITY_LINKS_V1=1 keeps them all.
-            if os.environ.get('ENTITY_LINKS_V1') != '1' and any(common_noun(n, l['quote']) or addressed(n, l['quote'])
-                                                                or n.lower() in PRONOUNS for n in (a, b)):
+            # Doc. Aak (8 links in pairs and pairs.v2). Nor is a one-word name in lower case ("call me 'director'",
+            # "not called 'traitor'", "a codename"), or a common word written as a title before the other name
+            # ("Operator Ebenholz." had joined Operator to Ebenholz, so any question saying "the operator" drew an
+            # Ebenholz scene). ENTITY_LINKS_V1=1 keeps them all.
+            if os.environ.get('ENTITY_LINKS_V1') != '1' and (
+                    any(common_noun(n, l['quote']) or addressed(n, l['quote']) or n.lower() in PRONOUNS
+                        or (' ' not in n and n[:1].islower()) for n in (a, b))
+                    or title_prefix(a, b, l['quote'], lower) or title_prefix(b, a, l['quote'], lower)):
                 unstated.append((a, b, l['quote'], r['storyId'], l['relation']))
                 continue
             parent[find(a)] = find(b)
