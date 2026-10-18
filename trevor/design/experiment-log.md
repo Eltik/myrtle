@@ -1286,6 +1286,10 @@ the Gap-Toothed Girl" and the Idida question names her too; with the switch off 
 **Decision.** Default on (`--no-label-renames`, `LABEL_RENAMES=0` for the builder; `--no-story-name-rule`). `ian33` on
 E2B remains a reading miss: the scene is in the prompt and the model answers from passage [1].
 **Code.** `scripts/label_renames.py`, `src/bin/ask/labels.rs` (`with_label_names`), `src/bin/ask/answer/generate.rs`
+**Regression (final binary 7a82a428, E2B mid, the 155 probe questions, defaults only, against window 4's A on
+cab32936).** 148 identical; the 7 that change are all ones the later commits target: `ian16`, `ian27`, `ian32`
+(keyword-router detectors), `r052` (declines; no theory on a canon question), `ian12` (event and Idida named),
+`ian33` (still the explosion line, reworded), `r119` (reworded). No unexpected change.
 
 ## Entities and topics
 
