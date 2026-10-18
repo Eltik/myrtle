@@ -1262,7 +1262,12 @@ description, so the rule does not do its job on this question; open. The excerpt
 got my answer for me, confessor." and then "Idida: Dadadeedeeda, I'm called Idida.": the evidence is in the prompt and
 the model keeps the speaker label. Fix direction (unmeasured): link a description speaker label to the name label that
 follows it with a self-introduction in the same scene ("I'm called X", "my name is X") as an identity, so the passage
-can be labelled "Gap-Toothed Girl (Idida)".
+can be labelled "Gap-Toothed Girl (Idida)". Census over P3b (no model): a speaker label with a description word (Girl, Man,
+Woman, Youth, Voice, Old, Young, ...) followed within 3 lines by a label that introduces itself by that name gives 33
+label pairs; true renames among them (Gap-Toothed Girl -> Idida, Old Woman -> Myrrh, Elegant Woman -> Blaze, Gentle
+Woman -> Mercia, Boy in Patient Gown -> Popukar) and false ones where someone else introduces themselves after the
+described speaker (Soldier -> Alita, Calm Youth -> Red). A rule needs a further condition, for instance that the
+described label never speaks again in the scene after the switch.
 
 ## Entities and topics
 
