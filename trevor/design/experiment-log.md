@@ -1273,6 +1273,20 @@ Elegant Woman -> Blaze, Mysterious Fortune Teller -> Kal'tsit) and keeps false o
 Raggedly-Dressed Boy and Raggedly-Dressed Girl -> Arturia). Refuted as the condition; scene boundaries (not stories)
 and the self-introduction being the first line of the new label are the next candidates.
 
+### 2026-10-19: Renamed speaker labels in passages (Idida)
+
+**Tried.** `scripts/label_renames.py` (11 story-scoped renames, see the window 6 entry for the census and the two
+refuted conditions) and `labels::with_label_names`: in those stories' passages "Gap-Toothed Girl:" becomes
+"Gap-Toothed Girl (Idida):". Also STORY_NAME_RULE for which-event questions (1 of 450 eval prompts: `ian12`).
+**Result.** Stub, 334 prompts of the four sets: 5 change; `--no-label-renames` reproduces 94b04249's prompts byte for
+byte. E2B mid: `ian12` complete ("Gap-Toothed Girl (Idida) offered ice cream to Mon3tr, and Mon3tr then suggested she
+could take the little girl out", The Masses' Travels), `ian33` still wrong (answers from the explosion line), `r119`
+reworded, 2 identical. 12B full: `ian33` "Mon3tr suggests that she could take out Idida, who is also referred to as
+the Gap-Toothed Girl" and the Idida question names her too; with the switch off both say "the Gap-Toothed Girl" only.
+**Decision.** Default on (`--no-label-renames`, `LABEL_RENAMES=0` for the builder; `--no-story-name-rule`). `ian33` on
+E2B remains a reading miss: the scene is in the prompt and the model answers from passage [1].
+**Code.** `scripts/label_renames.py`, `src/bin/ask/labels.rs` (`with_label_names`), `src/bin/ask/answer/generate.rs`
+
 ## Entities and topics
 
 Identities, names and aliases, topics and topic summaries, dossiers, canon evidence for the Integrated Strategies endings, deaths, places, organisations, operator data.
