@@ -26,7 +26,7 @@ use crate::people::{
 use crate::retrieval::Pre;
 use crate::runtimes::Runtimes;
 use crate::routing::{Routed, is_ending_passages, route_question};
-use crate::scenes::{SCOPED_REST, character_scenes, excerpt_window, scoped_scenes, scoped_summaries};
+use crate::scenes::{SCOPED_REST, character_scenes, excerpt_window, scoped_excerpts, scoped_scenes, scoped_summaries};
 use crate::timegap::{GAP_WINDOW, time_gap_events, time_gap_lines};
 use crate::terms::{term_glossary, term_lookup};
 
@@ -157,7 +157,7 @@ async fn theory_retry(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Nam
                       a: &Args, tables: &mut Tables, first: Answer) -> Result<Answer> {
     // An alive-or-dead question has the deaths evidence instead (`fate.rs`).
     if a.no_theory_rule || a.no_route || first.passages.is_empty() || !crate::theory::asks_whether(q)
-        || !declines(&first.answer) || crate::detect::is_death_question(q) || crate::detect::has(q, &["alive"]) {
+        || !crate::theory::declined(&first.answer) || crate::detect::is_death_question(q) || crate::detect::has(q, &["alive"]) {
         return Ok(first);
     }
     let people = people_named(&rts.main, &tables.tools, q);
@@ -166,12 +166,21 @@ async fn theory_retry(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Nam
     let who = tables.tools.operator_names().into_iter().chain(tables.tools.speaker_names())
         .find(|x| norm(x) == *key).map_or_else(|| key.clone(), str::to_owned);
     let who = who.as_str();
-    let Some(block) = crate::theory::hint_block(q, &first.answer, &first.texts, &tables.tools, who)
+    let Some(mut spec) = crate::theory::spec(q, &first.answer, &tables.tools, who, &first.passages)
     else { return Ok(first) };
-    if trevor::env::debug_on("TREVOR_THEORY_DEBUG") {
-        eprintln!("theory: {who}{block}");
+    spec.pinned = crate::theory::hinted(&first.texts, &spec).into_iter()
+        .filter_map(|n| first.passages.get(n - 1).cloned()).collect();
+    let block = crate::theory::block(&first.texts, &spec);
+    let extra = crate::theory::extra_hints(&rts.main, &spec);
+    if block.is_none() && extra.is_empty() {
+        return Ok(first);
     }
-    let again = Args { theory: Some(block), routed: false, ..a.clone() };
+    if trevor::env::debug_on("TREVOR_THEORY_DEBUG") {
+        eprintln!("theory: {who}{} extra {:?}", block.unwrap_or_default(),
+                  extra.iter().map(|&(r, i)| format!("{}:{i}", rts.main.store.chunks[r].chunk_id)).collect::<Vec<_>>());
+    }
+    // Retrieved hits without their neighbouring chunks: a hit's neighbours would overrun the reduced budget.
+    let again = Args { theory: Some(spec), routed: false, neighbors: 0, ..a.clone() };
     let second = answer_one_inner(rts, llm, names, chrono, q, &again, tables).await?;
     Ok(if crate::theory::has_theory(&second.answer) { second } else { first })
 }
@@ -367,9 +376,22 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
         }
     }
     // The scoped scenes go first (before a term lookup's records), and are not repeated among the retrieved passages.
-    let scoped = if gap.is_none() && !a.no_scoped_scenes && !a.no_route && kind.is_none() {
-        scoped_scenes(rt, &tables.tools, q, a.scene_tokens.unwrap_or(crate::scenes::SCOPED_TOKENS),
-                      (!a.no_scoped_line_rank).then_some((&a.runtime, a.scene_verbs())))
+    // Scoped excerpts (`--no-scoped-line-rank`): a wh-question about what a character of the named event said there
+    // gets excerpts of that character's best reranked lines, labelled as character scenes, instead of scoped scenes.
+    let excerpts = if gap.is_none() && !a.no_scoped_scenes && !a.no_scoped_line_rank && !a.no_route && kind.is_none() {
+        scoped_excerpts(rt, &a.runtime, &tables.tools, q, a.scene_tokens.unwrap_or(crate::scenes::CHAR_TOKENS),
+                        a.scene_verbs())
+    } else { None };
+    if let Some((_, who, rows)) = &excerpts {
+        for (i, (r, text, _)) in rows.iter().enumerate() {
+            let c = &rt.store.chunks[*r];
+            let label = story_label(names, &c.story_id);
+            pre.insert(i, Pre::new(c.chunk_id.clone(), format!("{label}; {CHAR_LABEL} {who} speaks"), text.clone())
+                .in_scope());
+        }
+    }
+    let scoped = if excerpts.is_none() && gap.is_none() && !a.no_scoped_scenes && !a.no_route && kind.is_none() {
+        scoped_scenes(rt, &tables.tools, q, a.scene_tokens.unwrap_or(crate::scenes::SCOPED_TOKENS))
     } else { None };
     if let Some((ename, who, rows)) = &scoped {
         for (i, &r) in rows.iter().enumerate() {
@@ -393,7 +415,8 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
     // Character-scoped scenes: no event named, one character named as the subject of a said or done act. They are added
     // before the retrieved passages, which keep their whole budget (the scoped scenes' 3,000-token rest would drop
     // retrieved lines other questions need).
-    if scoped.is_none() && gap.is_none() && !a.no_character_scenes && !a.no_route && kind.is_none() {
+    if scoped.is_none() && excerpts.is_none() && gap.is_none() && !a.no_character_scenes && !a.no_route
+        && kind.is_none() {
         if let Some((who, rows)) = character_scenes(rt, &a.runtime, &tables.tools, q, a.scene_tokens.unwrap_or(crate::scenes::CHAR_TOKENS),
                                                   a.scene_verbs()) {
             for (i, (r, text, _)) in rows.iter().enumerate() {
@@ -417,6 +440,31 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
                 pre.insert(at + k, Pre::new(id, format!("{}; {tail}", story_label(names, &sid)), text).of_death(&who));
                 death_tokens = death_tokens.saturating_add(tok);
             }
+        }
+    }
+    // The labelled theory's second ask (`theory.rs`): lines of the character's own scenes that bear on the question,
+    // after the retrieved passages, which give up the tokens they take.
+    // The first ask's passages with hint lines go first, then excerpts of the character's own lines, and the
+    // retrieved passages give up the tokens they and the HINTS block take.
+    if let Some(t) = a.theory.as_ref().filter(|_| kind.is_none()) {
+        death_tokens = death_tokens.saturating_add(crate::theory::THEORY_TOKENS);
+        // After any scoped scenes or time-gap lines, whose rule numbers the first passages.
+        let mut at = pre.iter().take_while(|p| p.scoped || p.gap.is_some()).count();
+        for id in &t.pinned {
+            let Some(r) = rt.store.row(id).filter(|_| !pre.iter().any(|p| p.id == *id)) else { continue };
+            let c = &rt.store.chunks[r];
+            pre.insert(at, Pre::new(c.chunk_id.clone(), passage_label(names, c), c.text.clone()).in_theory());
+            at += 1;
+            death_tokens = death_tokens.saturating_add(c.token_count);
+        }
+        for (r, i) in crate::theory::extra_hints(rt, t) {
+            let c = &rt.store.chunks[r];
+            let (text, tok) = excerpt_window(rt, r, &[i], 1);
+            pre.insert(at, Pre::new(c.chunk_id.clone(), format!("{}; a line of {} that bears on the question",
+                                                                story_label(names, &c.story_id), t.who), text)
+                .in_theory());
+            at += 1;
+            death_tokens = death_tokens.saturating_add(tok);
         }
     }
     // With scoped scenes the retrieved passages get the rest of the budget, 3,000 tokens, as with IS-ending passages.

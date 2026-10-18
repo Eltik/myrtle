@@ -9,8 +9,11 @@
 //! (chronologically)?" (E2B, mid) answered with Episode 8's "Behold, the Twilight Comes" (and R8-5 in another run),
 //! while she speaks in Episodes 13, 14 and 16 and later events.
 
+use std::path::Path;
+use std::sync::OnceLock;
+
 use serde_json::Value;
-use trevor::search::horizon::Horizon;
+use trevor::search::horizon::{Horizon, ReleaseOrder};
 use trevor::search::store::ChunkStore;
 use trevor::tools::{Route, Tools, contains_words, norm};
 
@@ -148,9 +151,24 @@ fn seen_within(store: &ChunkStore, h: &Horizon, gid: &str, forms: &[String]) -> 
     (speaks, named)
 }
 
+/// The EN release order (gatePos), loaded once when no horizon brings its own; None when the reading guide or story
+/// table is missing.
+fn release_order() -> Option<&'static ReleaseOrder> {
+    static ORDER: OnceLock<Option<ReleaseOrder>> = OnceLock::new();
+    ORDER.get_or_init(|| ReleaseOrder::load(Path::new(".")).ok()).as_ref()
+}
+
 /// The answer for `oq` from the appearance index, under horizon `h` (with `store` for a group the horizon cuts); None
-/// when the character has no placed group within it.
+/// when the character has no placed group within it. Groups are ordered by the gatePos of their first story (the EN
+/// release order, which places stories the reading guide does not list yet, such as a new episode), else by the
+/// reading guide's position when no release order loads.
 pub(crate) fn order_text(tools: &Tools, oq: &OrderQ, h: Option<&Horizon>, store: Option<&ChunkStore>) -> Option<String> {
+    let order: Option<&ReleaseOrder> = match h { Some(h) => Some(h.order()), None => release_order() };
+    order_text_with(tools, oq, h, store, order)
+}
+
+fn order_text_with(tools: &Tools, oq: &OrderQ, h: Option<&Horizon>, store: Option<&ChunkStore>,
+                   order: Option<&ReleaseOrder>) -> Option<String> {
     let v = tools.appearances.as_ref()?;
     let c = v["characters"].get(oq.who.as_str())?;
     let groups = &v["groups"];
@@ -167,8 +185,19 @@ pub(crate) fn order_text(tools: &Tools, oq: &OrderQ, h: Option<&Horizon>, store:
     let mut seen: Vec<Seen> = Vec::new();
     for g in ids {
         let gr = &groups[g.as_str()];
-        // Operator records the reading guide does not place (order 10000) have no release position.
-        let Some(release) = gr["order"].as_u64().filter(|&o| o < 10_000) else { continue };
+        // The gatePos of the group's first story; without a release order, the guide's position (operator records it
+        // does not place, order 10000, have none).
+        // A main episode the order does not place yet (Episode 17 before the reading guide lists it: its stories are
+        // hidden at every horizon) goes after every placed story, by its number, and says so.
+        let unplaced_main = g.strip_prefix("main_").and_then(|n| n.parse::<u64>().ok());
+        let (release, late) = match order {
+            Some(o) => match (o.group_span(g), unplaced_main) {
+                (Some((first, _)), _) => (u64::from(first), false),
+                (None, Some(n)) if h.is_none() => (1_000_000 + n, true),
+                _ => continue,
+            },
+            None => match gr["order"].as_u64().filter(|&x| x < 10_000) { Some(x) => (x, false), None => continue },
+        };
         let (mut speaks, mut named) = (count("speaks", g), count("mentioned", g));
         if let Some(h) = h {
             match h.order().group_span(g) {
@@ -183,7 +212,11 @@ pub(crate) fn order_text(tools: &Tools, oq: &OrderQ, h: Option<&Horizon>, store:
             }
         }
         let year = tools.groups.get(g.as_str()).and_then(|x| x["storylineYear"].as_f64());
-        seen.push(Seen { label: label(gr, g), release, year, speaks, named });
+        let mut label = label(gr, g);
+        if late {
+            label.push_str(" (newer than Trevor's release order, so placed after it)");
+        }
+        seen.push(Seen { label, release, year, speaks, named });
     }
     if seen.is_empty() {
         return None;
@@ -191,45 +224,46 @@ pub(crate) fn order_text(tools: &Tools, oq: &OrderQ, h: Option<&Horizon>, store:
     seen.sort_by_key(|s| s.release);
     let who = &oq.who;
     let within = h.map_or(String::new(), |h| {
-        h.order().era_at(h.pos).filter(|e| !e.name.is_empty()).map_or_else(|| " up to where you have read".to_owned(),
-                                             |e| format!(" up to where you have read (you are up to {})", e.name))
+        h.order().era_at(h.pos).filter(|e| !e.name.is_empty())
+            .map_or_else(|| " up to where you have read".to_owned(), |e| format!(" up to {}, where you have read", e.name))
     });
     let (word, pick): (&str, &Seen) = if oq.last { ("latest", seen.last()?) } else { ("first", seen.first()?) };
-    let mut out = String::new();
     // Groups without a year estimate are left out of the in-world order.
     let mut by_year: Vec<(&Seen, f64)> = seen.iter().filter_map(|s| s.year.map(|y| (s, y))).collect();
     by_year.sort_by(|a, b| a.1.total_cmp(&b.1).then(a.0.release.cmp(&b.0.release)));
     let in_world = if oq.last { by_year.last() } else { by_year.first() };
-    if let (true, Some(&(w, y))) = (oq.chrono, in_world) {
-        out.push_str(&format!("In Trevor's in-world order (an estimate from the years the script states; most stories \
-            state none, so stories with the same estimate follow release order), the {word} story group where {who} \
-            appears{within} is {}, placed at about {y:.0}: {}.\n\n", w.label, w.how(who)));
-        out.push_str(&format!("In EN release order (the order the stories came out), the {word} is {}: {}.\n",
-                              pick.label, pick.how(who)));
+    let mut out = if let (true, Some(&(w, y))) = (oq.chrono, in_world) {
+        let release = if std::ptr::eq(w, pick) { "It is also the {word} in EN release order.".replace("{word}", word) }
+            else { format!("In EN release order it is {} ({}).", pick.label, pick.how(who)) };
+        format!("By Trevor's in-world estimate (most stories state no year, so stories placed alike follow release \
+            order), the {word} story where {who} appears{within} is {}, at about {y:.0}: {}. {release}",
+                w.label, w.how(who))
     } else {
-        out.push_str(&format!("In EN release order (the order the stories came out), the {word} story group where \
-            {who} appears{within} is {}: {}.\n", pick.label, pick.how(who)));
-    }
+        format!("In EN release order, the {word} story where {who} appears{within} is {}: {}.", pick.label,
+                pick.how(who))
+    };
     let around: Vec<&Seen> = if oq.last { seen.iter().rev().skip(1).take(3).collect() }
         else { seen.iter().skip(1).take(3).collect() };
     if !around.is_empty() {
         let lead = if oq.last { "Before that" } else { "After that" };
-        out.push_str(&format!("{lead}: {}.\n", around.iter().map(|s| format!("{} ({})", s.label,
-            if s.speaks > 0 { "speaks" } else { "named" })).collect::<Vec<_>>().join("; ")));
+        out.push_str(&format!(" {lead}: {}.", around.iter().map(|s| format!("{} ({})", s.label,
+            if s.speaks > 0 { "speaks" } else { "named" })).collect::<Vec<_>>().join(", ")));
     }
-    out.push_str("\nFrom Trevor's appearance index (the scripts' speaker labels and name matches; a scene is a passage of \
-        about 400 tokens). Not counted: stories without speaker labels (Integrated Strategies, paradox simulations), \
-        operator records the reading guide does not place, and appearances under a name the identity links do not \
-        connect.");
+    out.push_str("\n\n(From Trevor's appearance index: the story scripts' speaker labels and name matches.)");
     Some(out)
 }
 
-/// An appearance-index group as a reader names it (`Tools::appearances`' labels).
+/// An appearance-index group as a reader names it (`Tools::appearances`' labels); a main episode the index has no
+/// name for yet ("main_17") is "Episode 17".
 fn label(g: &Value, id: &str) -> String {
     let name = g["name"].as_str().unwrap_or(id);
     let kind = g["kind"].as_str().unwrap_or_default();
-    match (kind, g["episode"].as_u64()) {
+    let episode = g["episode"].as_u64()
+        .or_else(|| id.strip_prefix("main_").and_then(|n| n.parse().ok()));
+    match (kind, episode) {
+        (_, Some(e)) if name == id => format!("Episode {e}"),
         ("main", Some(e)) => format!("Episode {e}: {name}"),
+        (k, _) if k.starts_with("operator record") && name == id => k.to_owned(),
         (k, _) if k.starts_with("operator record") => format!("{k}, '{name}'"),
         _ => name.to_owned(),
     }
@@ -288,19 +322,21 @@ mod tests {
     #[test]
     fn the_answer_follows_the_order_asked() {
         let t = tools();
-        let last = order_text(&t, &OrderQ { who: "Talulah".into(), last: true, chrono: false }, None, None).unwrap();
-        assert!(last.starts_with("In EN release order (the order the stories came out), the latest story group where \
-            Talulah appears is First of A Thousand Autumns: Talulah speaks in 1 scene.\n"), "{last}");
-        assert!(last.contains("Before that: Episode 16: Abnormal Spectrum (speaks); Episode 8: Roaring Flare (speaks); \
-            Episode 3: Stinging Shock (named)."), "{last}");
-        let chrono = order_text(&t, &OrderQ { who: "Talulah".into(), last: true, chrono: true }, None, None).unwrap();
-        assert!(chrono.contains("the latest story group where Talulah appears is Episode 16: Abnormal Spectrum, \
-            placed at about 1100: Talulah speaks in 4 scenes."), "{chrono}");
-        assert!(chrono.contains("In EN release order (the order the stories came out), the latest is First of A \
-            Thousand Autumns"), "{chrono}");
-        let first = order_text(&t, &OrderQ { who: "Talulah".into(), last: false, chrono: false }, None, None).unwrap();
-        assert!(first.contains("the first story group where Talulah appears is Episode 3: Stinging Shock: Talulah is \
+        let text = |last: bool, chrono: bool| order_text_with(&t, &OrderQ { who: "Talulah".into(), last, chrono },
+                                                              None, None, None).unwrap();
+        let last = text(true, false);
+        assert!(last.starts_with("In EN release order, the latest story where Talulah appears is First of A \
+            Thousand Autumns: Talulah speaks in 1 scene. Before that: Episode 16: Abnormal Spectrum (speaks), \
+            Episode 8: Roaring Flare (speaks), Episode 3: Stinging Shock (named).\n\n"), "{last}");
+        let chrono = text(true, true);
+        assert!(chrono.starts_with("By Trevor's in-world estimate (most stories state no year, so stories placed alike \
+            follow release order), the latest story where Talulah appears is Episode 16: Abnormal Spectrum, at about \
+            1100: Talulah speaks in 4 scenes. In EN release order it is First of A Thousand Autumns (Talulah speaks \
+            in 1 scene)."), "{chrono}");
+        let first = text(false, false);
+        assert!(first.contains("the first story where Talulah appears is Episode 3: Stinging Shock: Talulah is \
             named without speaking in 2 scenes."), "{first}");
+        assert_eq!(label(&json!({"name": "main_17", "kind": "event"}), "main_17"), "Episode 17");
         // Under a horizon at the end of Episode 16, the event after it does not count.
         let guide = json!({"items": [
             {"groupId": "main_3", "position": 1}, {"groupId": "main_8", "position": 2},
@@ -311,7 +347,7 @@ mod tests {
         let h = o.horizon_at(3).unwrap();
         let cut = order_text(&t, &OrderQ { who: "Talulah".into(), last: true, chrono: false }, Some(&h), None)
             .unwrap();
-        assert!(cut.contains("the latest story group where Talulah appears up to where you have read is Episode 16: \
+        assert!(cut.contains("the latest story where Talulah appears up to where you have read is Episode 16: \
             Abnormal Spectrum"), "{cut}");
         assert!(order_text(&t, &OrderQ { who: "Talulah".into(), last: true, chrono: false },
                            Some(&o.horizon_at(0).unwrap()), None).is_none());

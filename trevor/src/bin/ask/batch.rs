@@ -25,7 +25,7 @@ use crate::people::{
 };
 use crate::runtimes::Runtimes;
 use crate::routing::{is_ending_route, route_question};
-use crate::scenes::{character_scenes, person_forms, scoped_scenes, scoped_summaries};
+use crate::scenes::{character_scenes, person_forms, scoped_excerpts, scoped_scenes, scoped_summaries};
 use crate::llama_server::connect_or_spawn;
 
 /// The non-blank lines of a batch file, each parsed as JSON. The file is read up front; a line that does not parse
@@ -164,8 +164,14 @@ pub(crate) fn scoped_only(a: &Args, rts: &mut Runtimes, tools: &Tools, b: &Path)
     for v in batch_items(b)? {
         let v = v?;
         let (id, q) = qid_question(&v);
-        let line_rank = (!a.no_scoped_line_rank).then_some((&rts.args, a.scene_verbs()));
-        if let Some((e, who, rows)) = scoped_scenes(&mut rts.main, tools, q, crate::scenes::SCOPED_TOKENS, line_rank) {
+        let excerpts = if a.no_scoped_line_rank { None } else {
+            scoped_excerpts(&mut rts.main, &rts.args, tools, q, crate::scenes::CHAR_TOKENS, a.scene_verbs())
+        };
+        if let Some((e, who, rows)) = &excerpts {
+            let ids: Vec<String> = rows.iter().map(|(r, _, n)| format!("{}:{n}", rts.main.store.chunks[*r].chunk_id))
+                .collect();
+            println!("{id}\t{e}\texcerpts:{who}\t{}", ids.join(" "));
+        } else if let Some((e, who, rows)) = scoped_scenes(&mut rts.main, tools, q, crate::scenes::SCOPED_TOKENS) {
             let ids: Vec<&str> = rows.iter().map(|&r| rts.main.store.chunks[r].chunk_id.as_str()).collect();
             println!("{id}\t{e}\t{}\t{}", who.join("|"), ids.join(" "));
             if a.scoped_summaries {

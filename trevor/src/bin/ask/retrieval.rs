@@ -236,12 +236,15 @@ pub(crate) struct Pre {
     /// Deaths evidence (`fate.rs`), the character it is about: adds the deaths rule, and its chunk is not repeated
     /// among the retrieved passages.
     pub(crate) death: Option<String>,
+    /// A passage of the labelled theory's second ask (`theory.rs`): its chunk is not repeated among the retrieved
+    /// passages.
+    pub(crate) theory: bool,
 }
 
 impl Pre {
     /// A passage before the retrieved ones that adds no rule.
     pub(crate) fn new(id: String, label: String, text: String) -> Self {
-        Self { id, label, text, last: false, rule: false, scoped: false, gap: None, death: None }
+        Self { id, label, text, last: false, rule: false, scoped: false, gap: None, death: None, theory: false }
     }
 
     /// Placed after the retrieved passages (`last`).
@@ -265,6 +268,12 @@ impl Pre {
     /// Time-gap evidence (`gap`): `line` is the line that states the elapsed time.
     pub(crate) fn in_gap(mut self, line: String) -> Self {
         self.gap = Some(line);
+        self
+    }
+
+    /// A theory passage (`theory`).
+    pub(crate) fn in_theory(mut self) -> Self {
+        self.theory = true;
         self
     }
 

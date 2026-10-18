@@ -91,6 +91,12 @@ it answers the question: do not decline because the wording differs. Begin with 
 asks in which event or story, name it from the passage label), quote the line with its citation, \
 say in a few words how its wording relates to the question's, and name the people involved as the scene names them.";
 
+/// Added to CHAR_RULE_TAIL unless `--char-rule-v1`: the answer to "What NPC did Mon3tr hint at wanting to take out"
+/// named the speaker label "Gap-Toothed Girl" although she says "I'm called Idida" two lines later in the same excerpt.
+pub(crate) const CHAR_NAME_RULE: &str = " When the question asks who someone is or for a name, give the name the scene \
+gives that person: a speaker labelled by a description may say or be told her or his name a few lines later in the \
+same excerpt, and that name is the answer.";
+
 /// The answer rule that comes with a game-data passage (`--lore v2`): a body feature, race trait, ability or age no
 /// passage states is inferred from the character's race in the game data ("Do the Nearls have wings?": the operator
 /// files list every Nearl as Kuranta) or estimated from what the text implies, and labelled as an inference.

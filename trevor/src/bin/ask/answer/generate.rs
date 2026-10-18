@@ -17,7 +17,7 @@ use crate::detect::{
 };
 use crate::form::{Flags, Form};
 use crate::prompts::{
-    AGE_RULE, ART_RULE, CANON_RULE, CHAR_LABEL, CHAR_RULE_TAIL, DATE_RULE, DEATH_RULE_TAIL, GAP_RULE_TAIL, GAP_TAIL, INFER_RULE,
+    AGE_RULE, ART_RULE, CANON_RULE, CHAR_LABEL, CHAR_NAME_RULE, CHAR_RULE_TAIL, DATE_RULE, DEATH_RULE_TAIL, GAP_RULE_TAIL, GAP_TAIL, INFER_RULE,
     OPINION_FORM_RULE, OPINION_RULE, ORIGIN_RULE, RELATION_RULE, SCOPED_RULE_HEAD, SCOPED_RULE_TAIL, SOURCE_RULE, SYNTH_RULE, SYSTEM, TERM_RULE, THEORY_RULE,
     TIME_EVIDENCE_TAIL, TIME_RULE, YES_NO_RULE,
 };
@@ -112,7 +112,7 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
     if !gap.is_empty() {
         rows.retain(|&r| !gap.contains(&rt.store.chunks[r].chunk_id.as_str()));
     }
-    let death: Vec<&str> = pre.iter().filter(|p| p.death.is_some()).map(|p| p.id.as_str()).collect();
+    let death: Vec<&str> = pre.iter().filter(|p| p.death.is_some() || p.theory).map(|p| p.id.as_str()).collect();
     if !death.is_empty() {
         rows.retain(|&r| !death.contains(&rt.store.chunks[r].chunk_id.as_str()));
     }
@@ -165,8 +165,8 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
             }
         }
     }
-    if let Some(h) = &a.theory {
-        user.push_str(h);
+    if let Some(block) = a.theory.as_ref().and_then(|t| crate::theory::block(&texts, t)) {
+        user.push_str(&block);
     }
     user.push_str(&format!("\nQUESTION: {q}"));
     if time_evidence {
@@ -205,9 +205,12 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
         system.push_str(&format!("{SCOPED_RULE_HEAD}{}{GAP_RULE_TAIL}", gap.len()));
     }
     if !scoped.is_empty() {
-        let tail = if pre.iter().any(|p| p.scoped && p.label.contains(CHAR_LABEL)) { CHAR_RULE_TAIL }
-            else { SCOPED_RULE_TAIL };
+        let chars = pre.iter().any(|p| p.scoped && p.label.contains(CHAR_LABEL));
+        let tail = if chars { CHAR_RULE_TAIL } else { SCOPED_RULE_TAIL };
         system.push_str(&format!("{SCOPED_RULE_HEAD}{}{tail}", scoped.len()));
+        if chars && !a.char_rule_v1 {
+            system.push_str(CHAR_NAME_RULE);
+        }
     }
     // The deaths evidence's numbers, wherever it sits among the first passages.
     let death_at: Vec<usize> = first.iter().enumerate().filter(|(_, p)| p.death.is_some()).map(|(i, _)| i + 1).collect();

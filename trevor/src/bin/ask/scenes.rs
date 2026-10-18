@@ -20,13 +20,7 @@ use crate::people::people_named;
 /// links) kept when the corpus writes the name capitalized (`proper_name`); the candidates are the event's chunks whose
 /// speakers or text hold one of their forms, ranked by the question with dense and BM25 fused by reciprocal rank (k 60),
 /// and the best are kept within `SCOPED_TOKENS`, at most `SCOPED_K`. Returns (event name, the characters, rows).
-///
-/// The scoped line rank (`--no-scoped-line-rank`): when the question makes a scoped character the subject of a said act
-/// (`asks_scene`, with `line_rank`'s extra verbs), the scenes holding that character's best lines by the reranker come
-/// first, then the rest in the fused order. "what is the name of the npc that mon3tr suggests assassinating in masses
-/// travels" ranked the scene of "(I can take her out. Nobody would notice.)" outside the scenes that fit.
-pub(crate) fn scoped_scenes(rt: &mut Runtime, tools: &Tools, q: &str, max_tokens: u32,
-                            line_rank: Option<(&RuntimeArgs, &[&str])>) -> Option<(String, Vec<String>, Vec<usize>)> {
+pub(crate) fn scoped_scenes(rt: &mut Runtime, tools: &Tools, q: &str, max_tokens: u32) -> Option<(String, Vec<String>, Vec<usize>)> {
     let g = tools.event_in_question(q)?;
     let gid = g["groupId"].as_str()?.to_owned();
     let ename = g["name"].as_str().unwrap_or(&gid).to_owned();
@@ -44,19 +38,7 @@ pub(crate) fn scoped_scenes(rt: &mut Runtime, tools: &Tools, q: &str, max_tokens
     if cands.is_empty() {
         return None;
     }
-    let mut ranked = rank_by_question(rt, q, &cands)?;
-    if let Some((ra, _)) = line_rank.filter(|(_, extra)| asks_scene_with(q, &forms, extra)) {
-        if let Some(lines) = ranked_lines(rt, ra, q, &cands, &forms) {
-            let mut by_line: Vec<usize> = Vec::new();
-            for (r, _) in lines {
-                if !by_line.contains(&r) {
-                    by_line.push(r);
-                }
-            }
-            by_line.extend(ranked.into_iter().filter(|r| !by_line.contains(r)).collect::<Vec<_>>());
-            ranked = by_line;
-        }
-    }
+    let ranked = rank_by_question(rt, q, &cands)?;
     if trevor::env::debug_on("TREVOR_SCOPED_DEBUG") {
         eprintln!(
             "scoped {gid}: {} candidates, {} tokens",
@@ -202,7 +184,12 @@ pub(crate) fn character_scenes(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools
         eprintln!("charscope {shown}: {} scenes, {} lines, rerank {:.2} s; {target}: chunk rrf {}, reranked lines {}",
                   cands.len(), units.len(), t0.elapsed().as_secs_f64(), pos(&rrf), pos(&by_line));
     }
-    // Excerpts: the best lines first, each with its window, merged per scene, within `CHAR_TOKENS`.
+    Some((shown, pick_excerpts(rt, units, max_tokens)))
+}
+
+/// Excerpts of ranked lines: the best lines first, each with its window, merged per scene, at most
+/// `CHAR_LINES_PER_SCENE` lines a scene and `CHAR_K` scenes, within `max_tokens`.
+fn pick_excerpts(rt: &Runtime, units: Vec<(usize, usize)>, max_tokens: u32) -> Excerpts {
     let mut picked: Vec<(usize, Vec<usize>)> = Vec::new();
     let mut used = 0u32;
     for (r, i) in units {
@@ -220,8 +207,39 @@ pub(crate) fn character_scenes(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools
         used += grow;
         match at { Some(p) => picked[p].1 = idx, None => picked.push((r, idx)) }
     }
-    let out = picked.into_iter().map(|(r, idx)| { let (t, n) = excerpt(rt, r, &idx); (r, t, n) }).collect();
-    Some((shown, out))
+    picked.into_iter().map(|(r, idx)| { let (t, n) = excerpt(rt, r, &idx); (r, t, n) }).collect()
+}
+
+/// Scoped excerpts (`--no-scoped-line-rank`): a question that names an event and asks what a character of it said or
+/// did there, in a wh-question ("what is the name of the npc that mon3tr suggests assassinating in masses travels"),
+/// gets excerpts of that character's best lines in the event by the reranker, as the character scenes do, instead of
+/// whole scoped scenes ranked by the question. A whether-question ("Is the Black Knight mentioned in the Near Light
+/// event the operator Blacknight") keeps the scoped scenes. Returns (event name, the character as the corpus writes
+/// them, excerpts best first).
+pub(crate) fn scoped_excerpts(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools, q: &str, max_tokens: u32,
+                              extra: &[&str]) -> Option<(String, String, Excerpts)> {
+    if crate::theory::asks_whether(q) {
+        return None;
+    }
+    let g = tools.event_in_question(q)?;
+    let gid = g["groupId"].as_str()?.to_owned();
+    let ename = g["name"].as_str().unwrap_or(&gid).to_owned();
+    let chars: Vec<(String, Vec<String>)> = tools.event_characters(q, &gid, &ename).into_iter()
+        .filter(|(name, _)| proper_name(rt, name)).collect();
+    let [(name, f)] = chars.as_slice() else { return None };
+    let forms: Vec<String> = f.iter().map(|x| norm(x)).filter(|x| x.chars().count() >= 3).collect();
+    if forms.is_empty() || !asks_scene_with(q, &forms, extra) {
+        return None;
+    }
+    let cands: Vec<usize> = rt.store.chunks.iter().enumerate()
+        .filter(|(_, c)| c.group_id == gid && c.speakers.iter().any(|s| forms.contains(&norm(s))))
+        .map(|(i, _)| i).collect();
+    if cands.is_empty() {
+        return None;
+    }
+    let units = ranked_lines(rt, ra, q, &cands, &forms)?;
+    let out = pick_excerpts(rt, units, max_tokens);
+    (!out.is_empty()).then(|| (ename, name.clone(), out))
 }
 
 /// The lines of `cands` that a form of `forms` speaks, each with the line before it as context, ranked by the reranker

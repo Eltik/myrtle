@@ -6,9 +6,11 @@
 //! only when it has that "Theory:" line; otherwise the decline stays. The first prompt is unchanged, so every answer
 //! that does not decline is byte-identical with the rule off.
 
+use trevor::search::runtime::Runtime;
 use trevor::tools::{Tools, norm};
 
 use crate::detect::declines;
+use crate::kinds::{RECORD_KINDS, is_generated};
 
 /// The most hint lines given.
 pub(crate) const HINT_LINES: usize = 4;
@@ -142,11 +144,24 @@ pub(crate) fn predicate(q: &str, who: &str) -> Option<String> {
     (after.is_empty() || after.starts_with(' ')).then(|| after.trim().to_owned())
 }
 
-/// The HINTS block for a declined answer to `q` about the one character `who` (with the forms of their name), or None
-/// when the rule does not apply: the answer does not decline, the question does not ask whether `who` (its subject)
-/// is something, or no line hints.
-pub(crate) fn hint_block(q: &str, answer: &str, texts: &[String], tools: &Tools, who: &str) -> Option<String> {
-    if !declines(answer) {
+/// What the second ask needs: the character, the forms of their name, the stems of what the question asks, and the
+/// chunks the first ask already had (the extra hint scenes leave them out).
+#[derive(Clone, Debug, Default)]
+pub(crate) struct Spec {
+    pub(crate) who: String,
+    pub(crate) forms: Vec<String>,
+    pub(crate) stems: Vec<String>,
+    pub(crate) seen: Vec<String>,
+    /// The chunks of the first ask whose lines hint, kept first in the second ask so a smaller retrieval budget
+    /// cannot drop them.
+    pub(crate) pinned: Vec<String>,
+}
+
+/// The spec for a declined answer to `q` about the one character `who`, or None when the rule does not apply: the
+/// answer does not decline, the question does not ask whether `who` (its subject) is something, or its words leave no
+/// stem.
+pub(crate) fn spec(q: &str, answer: &str, tools: &Tools, who: &str, seen: &[String]) -> Option<Spec> {
+    if !declined(answer) {
         return None;
     }
     let pred = predicate(q, who)?;
@@ -154,16 +169,70 @@ pub(crate) fn hint_block(q: &str, answer: &str, texts: &[String], tools: &Tools,
     for g in tools.identities.iter().filter(|g| g.iter().any(|x| norm(x) == norm(who))) {
         forms.extend(g.iter().cloned());
     }
-    let h = hints(texts, &forms, &stems(&pred, &forms));
+    let stems = stems(&pred, &forms);
+    (!stems.is_empty()).then(|| Spec { who: who.to_owned(), forms, stems, seen: seen.to_vec(), pinned: Vec::new() })
+}
+
+/// The passage numbers (1-based) of `texts` that hold a hint line.
+pub(crate) fn hinted(texts: &[String], t: &Spec) -> Vec<usize> {
+    let mut out: Vec<usize> = hints(texts, &t.forms, &t.stems).into_iter().map(|(n, _)| n).collect();
+    out.dedup();
+    out
+}
+
+/// The tokens the HINTS block and THEORY_RULE add, taken from the retrieved passages' budget so the prompt still fits
+/// a capped profile's slot.
+pub(crate) const THEORY_TOKENS: u32 = 800;
+
+/// The HINTS block over the passages `texts` as the prompt numbers them; None when no line hints.
+pub(crate) fn block(texts: &[String], t: &Spec) -> Option<String> {
+    let h = hints(texts, &t.forms, &t.stems);
     if h.is_empty() {
         return None;
     }
-    let mut out = format!("\nHINTS (lines of the passages above that bear on the question about {who} but do not \
-        settle it)\n");
+    let mut out = format!("\nHINTS (lines of the passages above that bear on the question about {} but do not \
+        settle it)\n", t.who);
     for (n, line) in &h {
         out.push_str(&format!("[{n}] {line}\n"));
     }
     Some(out)
+}
+
+/// Lines of the character's own story scenes, outside the chunks the first ask had, that touch what the question
+/// asks: (row, line index), at most `EXTRA_SCENES`, one per chunk, in corpus order. "Is Fyodor infected?" retrieved
+/// Episode 8 and People but not Episode 17's "...*cough* *cough*!".
+pub(crate) fn extra_hints(rt: &Runtime, t: &Spec) -> Vec<(usize, usize)> {
+    let mut out: Vec<(usize, usize)> = Vec::new();
+    for (r, c) in rt.store.chunks.iter().enumerate() {
+        if out.len() >= EXTRA_SCENES {
+            break;
+        }
+        if is_generated(&c.group_id) || RECORD_KINDS.contains(&c.group_id.as_str()) || c.group_id == "voice"
+            || t.seen.contains(&c.chunk_id) {
+            continue;
+        }
+        let hit = c.text.lines().position(|l| {
+            let (who, text) = speaker_and_text(l);
+            who.is_some_and(|w| t.forms.iter().any(|f| norm(f) == norm(w))) && touches(text, &t.stems, &t.forms)
+        });
+        if let Some(i) = hit {
+            out.push((r, i));
+        }
+    }
+    out
+}
+
+/// The most extra hint scenes the second ask adds.
+pub(crate) const EXTRA_SCENES: usize = 3;
+
+/// Whether an answer declines, by `detect::declines` or by the plural and hedged forms it misses ("The provided passages
+/// do not state whether Fyodor is infected [1-7]." declined the Fyodor question on E2B and passed `declines`).
+pub(crate) fn declined(answer: &str) -> bool {
+    let first = answer.trim().split(['.', '!', '?']).next().unwrap_or_default().to_lowercase();
+    declines(answer) || ["do not state", "do not say", "do not mention", "do not indicate", "does not indicate",
+        "do not specify", "does not specify", "not explicitly", "don't say", "doesn't say", "do not explicitly",
+        "does not explicitly", "no mention", "is not mentioned", "are not mentioned", "is not stated"]
+        .iter().any(|w| first.contains(w))
 }
 
 /// Whether a second answer kept the labelled form (a "Theory:" sentence).
@@ -188,20 +257,22 @@ mod tests {
     fn a_declined_whether_question_gets_the_hint_lines() {
         let t = Tools::default();
         assert_eq!(stems("Is Fyodor infected?", &["Fyodor".to_owned()]), vec!["infect".to_owned()]);
-        let b = hint_block("Is Fyodor infected?", "I could not find it in the story text.", &texts(), &t, "Fyodor")
-            .unwrap();
+        let hb = |q: &str, a: &str, x: &[String], who: &str| spec(q, a, &t, who, &[]).and_then(|s| block(x, &s));
+        let b = hb("Is Fyodor infected?", "I could not find it in the story text.", &texts(), "Fyodor").unwrap();
         assert!(b.contains("[1] Fyodor: I hope it all proceeds"), "{b}");
         assert!(b.contains("[2] Witte: Talulah the Infected"), "{b}");
         assert!(!b.contains("Amiya"), "{b}");
         // An answer that does not decline, a question that does not ask whether, no line that hints.
-        assert!(hint_block("Is Fyodor infected?", "Yes, he is [1].", &texts(), &t, "Fyodor").is_none());
-        assert!(hint_block("Why is Fyodor infected?", "I could not find it.", &texts(), &t, "Fyodor").is_none());
-        assert!(hint_block("Is Fyodor tall?", "I could not find it.", &texts(), &t, "Fyodor").is_none());
+        assert!(hb("Is Fyodor infected?", "Yes, he is [1].", &texts(), "Fyodor").is_none());
+        assert!(hb("Why is Fyodor infected?", "I could not find it.", &texts(), "Fyodor").is_none());
+        assert!(hb("Is Fyodor tall?", "I could not find it.", &texts(), "Fyodor").is_none());
         let cough = vec!["(story: x)\nFyodor: Absurd... Ridiculous! ...*cough* *cough*!".to_owned()];
-        assert!(hint_block("Is Fyodor infected?", "I could not find it.", &cough, &t, "Fyodor").is_some());
+        assert!(hb("Is Fyodor infected?", "I could not find it.", &cough, "Fyodor").is_some());
         let deep = vec!["(story: x)\nDeacon: Deepcolor steps into the ocean.".to_owned()];
-        assert!(hint_block("Is Deepcolor part of the deep?", "I could not find it.", &deep, &t, "Deepcolor").is_none());
+        assert!(hb("Is Deepcolor part of the deep?", "I could not find it.", &deep, "Deepcolor").is_none());
         assert!(has_theory("The story does not say outright, but ... Theory: he may be."));
+        assert!(declined("The provided passages do not state whether Fyodor is infected [1-7]."));
+        assert!(!declined("Fyodor is the Emperor [1]. The text does not state his age."));
         // Not the subject, or a question about the game.
         assert_eq!(predicate("Is Fyodor infected?", "Fyodor").as_deref(), Some("infected"));
         assert_eq!(predicate("Does anyone know what crossbow Faust uses?", "Faust"), None);

@@ -377,10 +377,14 @@ pub(crate) struct Args {
     /// scenes.
     #[arg(long)]
     pub(crate) said_verbs_v1: bool,
-    /// Rank the scoped scenes by the question alone (dense and BM25 fused), as before, also when the question makes the
-    /// scoped character the subject of a said act (`scenes.rs`, the scoped line rank).
+    /// Give a wh-question about what a character of the named event said there the scoped scenes, as before, instead
+    /// of excerpts of that character's best reranked lines in the event (`scenes.rs`, `scoped_excerpts`).
     #[arg(long)]
     pub(crate) no_scoped_line_rank: bool,
+    /// The character-scene rule as before, without CHAR_NAME_RULE (give the name the scene gives the person asked about,
+    /// also when it comes a few lines after the answering line).
+    #[arg(long)]
+    pub(crate) char_rule_v1: bool,
     /// Under a spoiler horizon, answer a question naming an event that lies wholly after it with retrieval (as
     /// before) instead of the spoiler notice (`prompts.rs` SPOILER_NOTICE).
     #[arg(long)]
@@ -408,9 +412,9 @@ pub(crate) struct Args {
     /// The note of the answer check's second ask, set only inside `answer_one`.
     #[arg(skip)]
     pub(crate) check_note: Option<String>,
-    /// The HINTS block of the labelled theory's second ask (`theory.rs`), set only inside `answer_one`.
+    /// The labelled theory's second ask (`theory.rs`): its character and stems, set only inside `answer_one`.
     #[arg(skip)]
-    pub(crate) theory: Option<String>,
+    pub(crate) theory: Option<crate::theory::Spec>,
     /// Turn off the rarity order of the term-lookup glossary: the served topics the term's chunks name are ordered by
     /// first mention instead of rarest first (fewest P4x chunks naming them).
     #[arg(long)]
