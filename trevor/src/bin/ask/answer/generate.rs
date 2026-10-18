@@ -12,7 +12,7 @@ use trevor::tools::norm;
 use crate::chrono::{Chrono, chronology_for, time_evidence_block, timeline_notes};
 use crate::cli::{Args, form_on};
 use crate::detect::{
-    asks_age, asks_origin, asks_relation, asks_term, asks_when, is_open_listing,
+    asks_age, asks_origin, asks_person, asks_relation, asks_term, asks_when, is_open_listing,
     is_opinion_question,
 };
 use crate::form::{Flags, Form};
@@ -210,7 +210,7 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
         let chars = pre.iter().any(|p| p.scoped && p.label.contains(CHAR_LABEL));
         let tail = if chars { CHAR_RULE_TAIL } else { SCOPED_RULE_TAIL };
         system.push_str(&format!("{SCOPED_RULE_HEAD}{}{tail}", scoped.len()));
-        if chars && !a.char_rule_v1 {
+        if chars && !a.char_rule_v1 && asks_person(q) {
             system.push_str(CHAR_NAME_RULE);
         }
     }

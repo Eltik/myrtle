@@ -167,6 +167,13 @@ pub(crate) fn asks_origin(q: &str) -> bool {
            " became ", " decide ", " decided ", " first "].iter().any(|w| ql.contains(w))
 }
 
+/// Whether a question asks for a person or a name ("who", "whose", "name", "called", "NPC"): the questions the
+/// character-name rule is for. "What event did Count Vincent say ..." is not one (the rule misled the answer there).
+pub(crate) fn asks_person(q: &str) -> bool {
+    let ql = padded_words(q);
+    [" who ", " whom ", " whose ", " name ", " names ", " named ", " called ", " npc ", " npcs "].iter().any(|w| ql.contains(w))
+}
+
 /// Whether a question asks how people are related, or whom someone admires.
 pub(crate) fn asks_relation(q: &str) -> bool {
     let ql = padded_words(q);
