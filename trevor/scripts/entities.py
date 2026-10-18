@@ -209,6 +209,18 @@ def group_words():
     return {w for w in words if len(w) >= 3}
 
 
+def common_noun(name, quote):
+    """A one-word name the quote has only in lower case ("Knight" in "her knight title")."""
+    return (' ' not in name and re.search(rf'\b{re.escape(name)}\b', quote) is None
+            and re.search(rf'\b{re.escape(name.lower())}\b', quote) is not None)
+
+
+def addressed(name, quote):
+    """A name the quote gives the listener: "your standards as the Black Knight", "you as the Doctor"."""
+    bare = re.sub(r'^(?i:the)\s+', '', name)
+    return re.search(rf"\byou(?:r(?:\s+[\w'-]+){{1,2}})?\s+as\s+(?:(?i:the)\s+)?{re.escape(bare)}\b", quote) is not None
+
+
 def stage_build():
     cs = chunks()
     groupw = group_words()
@@ -242,6 +254,13 @@ def stage_build():
             if not (CUE.search(l['quote']) or (norm(a) in qn and norm(b) in qn)):
                 unstated.append((a, b, l['quote'], r['storyId'], l['relation']))
                 continue
+            # A one-word name the quote writes only in lower case is a common noun ("her knight title" had joined Knight
+            # to Flametail), and a name after "your ... as" belongs to the person addressed, not the speaker ("By your
+            # standards as the Black Knight" had joined Degenbrecher's title to Trilby Asher). 3 of 263 links, 2026-10-19;
+            # ENTITY_LINKS_V1=1 keeps them.
+            if os.environ.get('ENTITY_LINKS_V1') != '1' and any(common_noun(n, l['quote']) or addressed(n, l['quote']) for n in (a, b)):
+                unstated.append((a, b, l['quote'], r['storyId'], l['relation']))
+                continue
             parent[find(a)] = find(b)
             evidence[a].append({'other': b, 'relation': l['relation'], 'quote': l['quote'], 'where': r['storyId']})
             evidence[b].append({'other': a, 'relation': l['relation'], 'quote': l['quote'], 'where': r['storyId']})
@@ -250,7 +269,7 @@ def stage_build():
         groups[find(x)].add(x)
     ids = []
     for members in groups.values():
-        label = max(members, key=lambda m: (speaks.get(m, 0), len(m)))
+        label = max(sorted(members), key=lambda m: (speaks.get(m, 0), len(m)))  # sorted: a tie no longer depends on the hash seed
         ids.append({'label': label, 'speaksInChunks': speaks.get(label, 0), 'names': sorted(members),
                     'evidence': {m: evidence[m][:4] for m in sorted(members)}})
     ids.sort(key=lambda i: -i['speaksInChunks'])
