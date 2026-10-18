@@ -1320,6 +1320,19 @@ act12side 0.44; the measure is noisy ("Finally", "Nearby" count as names).
 story its share (for instance a third of the stories per paragraph, or 1 to 2 sentences per story, then a merge),
 gated on the coverage measure, and add the measure to update.sh as a check.
 
+### 2026-10-19: "How does Mon3tr react when she wakes up after Kal'tsit dies" (open)
+
+**Truth from the text.** Kal'tsit does not die in words: in `main_15-16_beg#0000` she "has disappeared ... The only
+thing left on the deck is a jacket" and Mon3tr shrinks "into a black, crystalline cocoon". Mon3tr's waking is told in
+The Masses' Travels, `act42side_st04#0003`: rebuilt with a new body, she remembers that "when I awoke, you just
+turned around and walked away after giving me a 'welcome back'", and vows "I'll bring back Kal'tsit! I'll also protect
+Amiya, and you too!", Kal'tsit's directive.
+**Measured (no model).** Hybrid retrieval on P3b ranks `act42side_st04#0003` first and `main_15-16_beg#0000` fourth;
+the E2B mid answer declined with them in reach (the preview ran the 21:53 binary). "How does Kal'tsit die, and how
+does she get revived?" retrieves neither: the question's "die" is not the text's "disappeared".
+**Next.** A premise note for death words when the deaths table has no death for the character (Kal'tsit vanished,
+not dead), plus the window that measures it.
+
 ## Entities and topics
 
 Identities, names and aliases, topics and topic summaries, dossiers, canon evidence for the Integrated Strategies endings, deaths, places, organisations, operator data.
