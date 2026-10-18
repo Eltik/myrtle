@@ -4,7 +4,7 @@
 use anyhow::{Context, Result};
 use trevor::llm::Llm;
 use trevor::router;
-use trevor::tools::{Route, ToolError, Tools, TopicPassage};
+use trevor::tools::{Route, ToolError, Tools, TopicPassage, norm};
 
 use crate::cli::{Args, RouterKind, dossier_allowed, router_prompt};
 use crate::detect::is_open_listing;
@@ -54,8 +54,10 @@ pub(crate) async fn route_question(q: &str, a: &Args, tools: &Tools, llm: Option
         }
     }
     // Detectors that read the question only, before the router: every router line added for a tool moved
-    // 20 to 34 unrelated routes, so these tools are reached without one.
-    if a.router == RouterKind::Model && !a.no_route {
+    // 20 to 34 unrelated routes, so these tools are reached without one. The keyword router gets them too since
+    // 2026-10-19 (`--keyword-detectors-v1`: model router only).
+    let detectors = a.router == RouterKind::Model || (a.router == RouterKind::Keywords && !a.keyword_detectors_v1);
+    if detectors && !a.no_route {
         let ms = || started.elapsed().as_secs_f64() * 1000.0;
         if let Some(route) = is_ending_route(q, a, tools) {
             return Ok(Routed { route, text: None, error: None, topic: None, dossier: None, game: None, ms: ms() });
@@ -67,7 +69,10 @@ pub(crate) async fn route_question(q: &str, a: &Args, tools: &Tools, llm: Option
                 route: Route::retrieve(), text: None, error: None, topic: None, dossier: None, game: None, ms: ms()
             });
         }
-        let pre = (!a.no_appearances).then(|| tools.appearance_question(q)).flatten()
+        // "Why did Priestess show up in chapter 15?" asks for a reason, not a list (`--keyword-detectors-v1` lets it
+        // through, as before 2026-10-19).
+        let reason = a.keyword_detectors_v1 || !matches!(norm(q).split(' ').next(), Some("why" | "how"));
+        let pre = (!a.no_appearances && reason).then(|| tools.appearance_question(q)).flatten()
             .map(|c| Route::new("appearances", &[("character", c.as_str())]))
             .or_else(|| (!a.no_cross_ref_trigger).then(|| tools.cross_ref_question(q)).flatten()
                 .map(|t| Route::new("cross_ref", &[("table", t)])))

@@ -282,6 +282,12 @@ pub(crate) struct Args {
     /// (scripts/gametext.py).
     #[arg(long)]
     pub(crate) no_game_text: bool,
+    /// The question-only detectors (IS ending, time gap, appearances, cross reference, design basis) for the model
+    /// router only, as before 2026-10-19: under `--router keywords` (the mid profiles, the cpu rung) they did not run,
+    /// so "What chapters does Elysium appear in?" was answered from passages there; and a why or how question about
+    /// appearing ("Why did Priestess show up in chapter 15?") went to the appearance index under the model router.
+    #[arg(long)]
+    pub(crate) keyword_detectors_v1: bool,
     /// Turn off the appearance index: "What chapters does Elysium appear in?" is answered, before
     /// the router, by the `appearances` tool (scripts/appearances.py: the story groups where a character speaks, and apart
     /// those where they are only named).
