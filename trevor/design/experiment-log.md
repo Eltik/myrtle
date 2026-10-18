@@ -27,11 +27,11 @@ Earlier history (2026-09-22 to 2026-09-28) is in [archive/project-origins.md](ar
 
 ## Topics
 
-- [Retrieval](#retrieval) (52 entries): Search (BM25, hybrid, rerank), the corpora and passage sets (P3b, P4, P4x, art units, topic and dossier passages, lore v1 and v2), passage budgets, scenes and line pools.
-- [Routing](#routing) (29 entries): The routers (model, keywords, the retired kNN and hybrid), the table tools and their arguments, route checks, question detection.
+- [Retrieval](#retrieval) (53 entries): Search (BM25, hybrid, rerank), the corpora and passage sets (P3b, P4, P4x, art units, topic and dossier passages, lore v1 and v2), passage budgets, scenes and line pools.
+- [Routing](#routing) (30 entries): The routers (model, keywords, the retired kNN and hybrid), the table tools and their arguments, route checks, question detection.
 - [Answer rules](#answer-rules) (41 entries): Answer prompts and the question form, decline, partial, retry and verdict rules, relation and opinion rules, citations and answer checks.
 - [Entities and topics](#entities-and-topics) (46 entries): Identities, names and aliases, topics and topic summaries, dossiers, canon evidence for the Integrated Strategies endings, deaths, places, organisations, operator data.
-- [Chronology](#chronology) (14 entries): Dates, the timeline, eras, gatePos and the spoiler horizon, reading order.
+- [Chronology](#chronology) (15 entries): Dates, the timeline, eras, gatePos and the spoiler horizon, reading order.
 - [Design inference (retired)](#design-inference-retired) (18 entries): `design_infer.py`, art captions read for design, visual models, `--design-deduce`. The chain was retired on 2026-10-17; these entries are its record.
 - [Embeddings](#embeddings) (3 entries): Embedder models, ONNX exports, INT8 and fp32, fine-tuning, re-embedding. The fp32 re-embed and its guard are documented in full in [trevor-reembed.md](trevor-reembed.md).
 - [Eval](#eval) (25 entries): Gold sets, judges, the real probe, the probe set, sign tests and the eval harness.
@@ -534,6 +534,19 @@ At 8.6 the gate fires on 12 of the 29 gold. A fired question gets exactly the un
 **Decision.** `hybrid` stays the default; `bm25` is for hosts without a usable query embedder. `TREVOR_RETRIEVAL=bm25` sets it for a worker.
 **Code.** `src/bin/ask/cli.rs`, `Args::retrieval`
 
+### 2026-10-18: Scoped scenes for "chapter 15 ... Priestess" and "Shu in Here A People Sows": ranking, a line rerank (refuted) and story summaries (opt-in)
+
+**Why.** Two preview questions (stories page, spoilers on, no horizon, profile mid on E2B) were declined. Truth from the game text: (a) "In chapter 15, when Priestess separates the Doctor, Amiya, and Kal'tsit from the elite operators, where does she take them?": after the rift the elite operators find themselves alone (`main_15_level_main_15-15_beg#0003`, "Where's the Doctor? ... And where are Dr. Kal'tsit and Amiya?"), and Priestess says "Let's go for a walk outside" and stands with the two of them on the deck of the Rhodes Island landship, where she clears the Catastrophe clouds from the sky (`main_15_level_main_15-15_beg#0000` and `#0001`). (b) "How did Shu come back in Here a People Sows? She died, and I believe was revived.": act31side. Shu vanishes during the demonic contamination (`act31side_level_act31side_05_end#0001`, `#0002`: "Why would she do this?"), a shred of her consciousness stays tied to the land (`08_beg#0003`), she calms the newborn consciousness in the fields (`08_end#0001`), and she returns in the last fight: "I didn't think you'd just go and disappear altogether" / "Think of it as a much-needed rest ... the scene I come back to" (`09_end#0001`). The text never says she was revived; it calls her absence a rest.
+
+**Result.** Both questions reach the scoped scenes (`--detect-only`: `scoped=main_15:Priestess?|Kal'tsit|Amiya?|Amiya`, `scoped=act31side:Shu`), so event detection is not the cause, and under `mid` the scoped scenes keep their 6,000 tokens on top of the 3,000-token rest (prompt 9,000 to 10,000 tokens).
+- (a) is a ranking miss: 130 candidate scenes (62,296 tokens); the dense and BM25 fusion ranks `15-15_beg#0003` 8th and the deck scene `#0000` 57th, outside the 11 scenes that fit.
+- (b) is not a retrieval miss on the current binary: `09_end#0001` is the 5th scoped scene. E2B (mid, `--no-cache-prompt`) answers "Shu came back because of the scene he returned to ... [5]", citing it; the preview's decline came from an older worker binary (started 07:59, the binary rebuilt 08:32).
+- A line rerank of the scoped candidates (each line with the line before it through the Ettin cross-encoder, chunk score = best line, 1,389 lines in 4.23 s and 816 in 2.07 s) moved (a)'s deck scene from 57th to 21st (still outside) and (b)'s return scene from 5th to 19th (out of the prompt). Refuted and removed.
+- Trevor's story summaries of the scoped scenes' stories, after the scenes, within 1,600 tokens (`--scoped-summaries`): the 15-15 summary says the three "encountered ... the Priestess on the deck of Rhodes Island", and enters (a)'s prompt as one of 7 summaries. E2B still declines (a) and cites another summary. For (b) the answer turns to the 05_end summary ("Shu died in the fields ... her trapped soul found peace"), a claim the script only implies. On the 2 eval questions it touches (no-model `--scoped-only` over the probe set, real probe, held-out and gold v2): `ian33` wrong in both arms ("assassinating Kal'tsit" against "Exusiai should be contacted"), `r007` a tie. No verdict changed, and the 12B was not run (37% free memory, the 12B needs about 9.2 GB).
+
+**Decision.** No default change for scoped scenes. `--scoped-summaries` is built and opt-in. Open: a ranking that reaches a scene described only by its moment ("when X happens, where ...") within a 130-scene scope; and whether the `mid` profile should cap the scoped scenes to its own 3,600-token budget (the VPS slot was sized for 3,600).
+**Code.** `src/bin/ask/scenes.rs`, `scoped_summaries`, `SCOPED_SUMMARY_TOKENS`; `src/bin/ask/cli.rs`, `Args::scoped_summaries`
+
 ## Routing
 
 The routers (model, keywords, the retired kNN and hybrid), the table tools and their arguments, route checks, question detection.
@@ -766,6 +779,14 @@ The routers (model, keywords, the retired kNN and hybrid), the table tools and t
 **Result.** 7 summary questions routed with no model: 4 moved from retrieval to the recap (the two Masses' Travels wordings above, "Can you summarise The Masses Travels for me?", "Guide Ahead summary"), 3 were recaps already. Over the 21 no-model outputs (`--detect-only` and `--route-only --router keywords` on 10 question sets, and `route-check.py`), the new binary is byte-identical to HEAD's on 21 of 21: no eval question changes route. `--no-summary-route` gives HEAD's routes on the 7 summary questions (7 of 7).
 **Decision.** On by default; `--no-summary-route` is the kill switch.
 **Code.** `src/bin/ask/routing/rules.rs`, `recap_route`; `src/tools/mod.rs`, `ToolOptions::summary_route`
+
+### 2026-10-18: "Tell me about <event>" and "What is <event>?" reach the recap under the keyword router
+
+**Why.** From the preview (mid, E2B, spoilers on): "Give me a summary of the Masses Travels" and "Tell me about the Masses Travels" were declined. The preview's worker was started at 07:59 and `target/release/ask` was rebuilt at 08:32, so it ran without the summary route of the same morning; through the current binary the summary request gets the recap and "Tell me about" went to retrieval.
+**Tried.** With `ToolOptions::event_about` the recap rule also takes "tell me about", "what is", "what's" and "what was" when nothing but the event is asked (the leftover test, "tell" and "about" counted as used), and not when the event's name is also an operator, a character of the appearance index or a served topic or alias ("Tell me about Babel" is the organization).
+**Result.** On a probe of every event name (85 names, "Tell me about X" and "What is X?", 170 questions, no model): HEAD routed 166 to retrieval, the new rule routes 162 to the recap, 6 stay with retrieval (Ato, whose name is under the detector's length; "Tell me about Babel" and "Tell me about Pinus Sylvestris", topics; both Stultifera Navis wordings, not traced), and "What is Babel?" and "What is Pinus Sylvestris?" keep their operator listing. Over `--route-only` and `--detect-only` on the probe set, real probe, held-out, gold v2, trivia, `routes.jsonl` and the 883 Reddit and 345 Discord questions, the new binary is byte-identical to HEAD: no eval question changes route. E2B mid: "Tell me about the Masses Travels" goes from a retrieval answer to the recap. `--no-event-about` gives HEAD's route.
+**Decision.** On by default; `--no-event-about` is the kill switch. Restarting the preview (`bun run dev:trevor`) is needed for it and the summary route to reach the worker.
+**Code.** `src/bin/ask/routing/rules.rs`, `recap_route`, `event_name_is_entity` (1 test); `src/tools/mod.rs`, `ToolOptions::event_about`
 
 ## Answer rules
 
@@ -1654,6 +1675,14 @@ Ruled out by measurement: the first cut's 8 x k (64) fused candidates before the
 **Result.** E2B, mid, through `ask --serve --share-server --no-cache-prompt`: at 722, act42side gets the notice with 0 citations and 0 model calls; Guide Ahead gets its recap; without a horizon, act42side gets its recap. "What is the name of the npc that mon3tr suggests assassinating in masses travels" (`ian33`) at 722 gets the notice. Kill switches at 722: `--no-spoiler-notice` sends HEAD's prompt for the Masses' Travels question (byte-identical) and returns HEAD's answer; `--no-horizon-recap` answers Guide Ahead from retrieval, as before. The event detector fires on 6 questions across the eval sets' `--detect-only` outputs, all of them real event names.
 **Decision.** Both on by default; `--no-spoiler-notice` and `--no-horizon-recap` are the kill switches. The notice's wording is the four SPOILER_* constants in `prompts.rs` (not sent to a model).
 **Code.** `src/bin/ask/spoiler.rs` (2 tests), `src/bin/ask/serve/service.rs`, `Service::answer` and `Service::passages`; `src/search/horizon/mod.rs`, `ReleaseOrder::group_span` (1 test)
+
+### 2026-10-18: Time-gap evidence for "how much time passes between <story A> and <story B>"
+
+**Why.** "What is the time skip from chapter 8 to chapter 9?" and "How many years pass between chapter 8 and chapter 9" were declined (E2B, mid). The game text answers it: Kal'tsit, in Episode 9's interlude, "There hasn't been an emergency transmission to Rhodes Island's deck for eleven months and twenty-seven days, since the end of the Chernobog incident" (`main_9_level_st_09-03#0000`), and Episode 8 ends that incident. The timeline cannot: Episodes 6 to 9 state no year (all four "at most 1098"). The whole-corpus search did not reach the line, and the second wording got timeline notes and answered "about 1099 ... not specified".
+**Tried.** `timegap.rs`: a question with an elapsed-time phrase ("time skip", "how long", "how many years", "years pass", ...) that names two episodes or events (`Tools::events_in_question`: "chapter 8 to chapter 9", "chapters 8 and 9", event names) gets the later story's line that states elapsed time (a count word within 3 words of a unit, and "since", "ago", "passed", "later", "been", ...) and names a capitalized word of the earlier story's event summary that is not in the later one's and does not speak in the later story ("Chernobog"); a line with "since", "ago", "passed" or "later" ranks first. The line goes first as a passage (with 1 line either side), again in a TIME GAP EVIDENCE block before the question, with a rule and a closing instruction to begin with the stated time. The model router sends such a question to retrieval before its call.
+**Result.** E2B mid, `--no-cache-prompt`: both wordings go from a decline to "eleven months and twenty-seven days, ... since the end of the Chernobog incident [1]", citing `main_9_level_st_09-03#0000`. With 3 lines E2B quoted the second and third ("Several months later...", Talulah's "A few months? Half a year?"), and "Amiya" (in both episodes) counted as a mark of Episode 8 until speakers of the later story were excluded, so 1 line is kept. The detector fires on 0 questions of the probe set, real probe, held-out, gold v2, trivia, `routes.jsonl` and the 1,228 Reddit and Discord questions. `--no-time-gap` reproduces HEAD's prompts and answers on the 2 questions.
+**Decision.** On by default; `--no-time-gap` is the kill switch. `--detect-only` prints `timegap=<earlier>><later>:<lines>`, `--scoped-only` the chosen line. Not measured on the 12B.
+**Code.** `src/bin/ask/timegap.rs` (1 test), `src/tools/appearances.rs`, `Tools::events_in_question`; `src/bin/ask/answer/generate.rs`, TIME GAP EVIDENCE; `src/bin/ask/prompts.rs`, `GAP_RULE_TAIL`, `GAP_TAIL`
 
 ## Design inference (retired)
 
