@@ -26,6 +26,9 @@ mod serve;
 mod guard;
 mod spoiler;
 mod timegap;
+mod fate;
+mod appear;
+mod theory;
 
 use std::path::PathBuf;
 

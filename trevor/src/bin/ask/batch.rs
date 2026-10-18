@@ -16,7 +16,7 @@ use crate::chrono::{
     Chrono, chronology_for, load_chrono_cached, proper_name,
 };
 use crate::cli::{Args, RouterKind, deep_for};
-use crate::detect::{asks_admire, asks_identity, asks_relation, asks_scene, asks_when, is_opinion_question, term_of};
+use crate::detect::{asks_admire, asks_identity, asks_relation, asks_scene_with, asks_when, is_opinion_question, term_of};
 use crate::form::{Flags, question_form};
 use crate::labels::Names;
 use crate::people::{
@@ -130,9 +130,12 @@ pub(crate) fn detect_only(a: &Args, tools: &Tools, b: &Path) -> Result<()> {
         {
             if let [k] = people_named(rt, t, q).as_slice() {
                 let forms: Vec<String> = person_forms(t, k).iter().map(|x| norm(x)).collect();
-                if !t.names_group_topic(k) && asks_scene(q, &forms) { f.push(format!("charscope={k}")); }
+                if !t.names_group_topic(k) && asks_scene_with(q, &forms, a.scene_verbs()) {
+                    f.push(format!("charscope={k}"));
+                }
             }
         }
+        if let Some(w) = crate::fate::alive_dead_subject(q, t) { f.push(format!("death_evidence={w}")); }
         if let Some(op) = one_operator(q, t) { f.push(format!("one_operator={op}")); }
         else if let Some(op) = one_operator_wide(q, t) { f.push(format!("one_operator_wide={op}")); }
         println!("{id}\t{}", f.join(" "));
@@ -161,7 +164,8 @@ pub(crate) fn scoped_only(a: &Args, rts: &mut Runtimes, tools: &Tools, b: &Path)
     for v in batch_items(b)? {
         let v = v?;
         let (id, q) = qid_question(&v);
-        if let Some((e, who, rows)) = scoped_scenes(&mut rts.main, tools, q, crate::scenes::SCOPED_TOKENS) {
+        let line_rank = (!a.no_scoped_line_rank).then_some((&rts.args, a.scene_verbs()));
+        if let Some((e, who, rows)) = scoped_scenes(&mut rts.main, tools, q, crate::scenes::SCOPED_TOKENS, line_rank) {
             let ids: Vec<&str> = rows.iter().map(|&r| rts.main.store.chunks[r].chunk_id.as_str()).collect();
             println!("{id}\t{e}\t{}\t{}", who.join("|"), ids.join(" "));
             if a.scoped_summaries {
@@ -175,7 +179,8 @@ pub(crate) fn scoped_only(a: &Args, rts: &mut Runtimes, tools: &Tools, b: &Path)
             println!("{id}\ttimegap\t{}>{}\t{}", e["groupId"].as_str().unwrap_or_default(),
                      l["groupId"].as_str().unwrap_or_default(), ids.join(" "));
         }
-        if let Some((who, rows)) = character_scenes(&mut rts.main, &rts.args, tools, q, crate::scenes::CHAR_TOKENS) {
+        if let Some((who, rows)) = character_scenes(&mut rts.main, &rts.args, tools, q, crate::scenes::CHAR_TOKENS,
+                                                    a.scene_verbs()) {
             let ids: Vec<String> =
                 rows.iter().map(|(r, _, n)| format!("{}:{n}", rts.main.store.chunks[*r].chunk_id)).collect();
             println!("{id}\tcharacter\t{who}\t{}", ids.join(" "));
@@ -222,7 +227,7 @@ pub(crate) async fn answer_batch(a: &Args, rts: &mut Runtimes, llm: &Llm, names:
 /// answer the check would change (question, claims, the answer after) and the counts.
 pub(crate) fn identity_scan(tools: &Tools, dump: &Path) -> Result<()> {
     let text = std::fs::read_to_string(dump).with_context(|| format!("reading {}", dump.display()))?;
-    let (mut answers, mut changed) = (0usize, 0usize);
+    let (mut answers, mut changed, mut referent, mut labels) = (0usize, 0usize, 0usize, 0usize);
     for line in text.lines().filter(|l| !l.trim().is_empty()) {
         let v: serde_json::Value = serde_json::from_str(line)?;
         let (Some(prompt), Some(content)) = (v["prompt"].as_str(), v["content"].as_str()) else { continue };
@@ -254,7 +259,15 @@ pub(crate) fn identity_scan(tools: &Tools, dump: &Path) -> Result<()> {
             changed += 1;
             println!("Q: {q}\nclaims: {claims:?}\nbefore: {}\nafter: {after}\n", content.trim());
         }
+        if let Some((after, found)) = crate::answer::referent::check(content.trim(), q, &texts, tools, true, true) {
+            referent += 1;
+            println!("Q: {q}\nreferent: {found:?}\nbefore: {}\nafter: {after}\n", content.trim());
+        }
+        if crate::answer::cite_words_fix(content.trim()).is_some() {
+            labels += 1;
+        }
     }
-    println!("{answers} answer calls, {changed} changed by the identity-claim check");
+    println!("{answers} answer calls, {changed} changed by the identity-claim check, {referent} by the referent \
+              checks, {labels} by the passage-label fix");
     Ok(())
 }

@@ -21,7 +21,7 @@ const CLAIMS: &[&str] = &[
 ];
 
 /// Capitalized words that start a sentence or a clause, not a name.
-const NOT_NAMES: &[&str] = &[
+pub(super) const NOT_NAMES: &[&str] = &[
     "The", "A", "An", "She", "He", "They", "It", "Her", "His", "Their", "Its", "Him", "Them", "Later", "In", "This",
     "That", "These", "Those", "However", "Also", "Both", "When", "After", "Before", "At", "On", "By", "As", "But",
     "And", "While", "During", "Then", "Here", "There", "Each", "Some", "Many", "Trevor", "I", "We", "You", "Tell",
@@ -32,7 +32,7 @@ const NOT_NAMES: &[&str] = &[
 ];
 
 /// Lowercase words that may sit inside a name ("Knight of the Snow", "Feoria La Porta").
-const NAME_JOINERS: &[&str] = &["of", "the", "de", "von", "van", "du", "di", "la", "le", "del", "da"];
+pub(super) const NAME_JOINERS: &[&str] = &["of", "the", "de", "von", "van", "du", "di", "la", "le", "del", "da"];
 
 /// Pronouns that stand for the answer's subject. "They" and "it" are left out: "they are called Originium slugs"
 /// names a kind of thing, not a person.
@@ -41,14 +41,14 @@ const PRONOUNS: &[&str] = &["she", "he"];
 const ABBREVIATIONS: &[&str] = &["Mr", "Mrs", "Ms", "Dr", "St", "Jr", "Sr", "vs", "Mt", "No"];
 
 /// One sentence of an answer and the whitespace after it.
-struct Piece<'a> {
-    text: &'a str,
-    sep: &'a str,
+pub(super) struct Piece<'a> {
+    pub(super) text: &'a str,
+    pub(super) sep: &'a str,
 }
 
 /// Split `text` into sentences: ".", "!" or "?" before whitespace or the end, with any "[n]" groups right after the
 /// mark kept on the sentence; "Ms." and the like and single capitals ("W.") do not end one.
-fn sentences(text: &str) -> Vec<Piece<'_>> {
+pub(super) fn sentences(text: &str) -> Vec<Piece<'_>> {
     let b = text.as_bytes();
     let mut out = Vec::new();
     let (mut start, mut i) = (0usize, 0usize);
@@ -89,18 +89,18 @@ fn sentences(text: &str) -> Vec<Piece<'_>> {
     out
 }
 
-fn clean(tok: &str) -> &str {
+pub(super) fn clean(tok: &str) -> &str {
     tok.trim_matches(|c: char| !c.is_alphanumeric() && c != '\'' && c != '-')
         .trim_end_matches("'s").trim_matches('\'')
 }
 
-fn is_cap(tok: &str) -> bool {
+pub(super) fn is_cap(tok: &str) -> bool {
     clean(tok).chars().next().is_some_and(char::is_uppercase)
 }
 
 /// The capitalized-name runs of `text`, in order ("In Guide Ahead, the Quiet Woman" gives "Guide Ahead" and "Quiet
 /// Woman"). A run ends at a comma, a citation or a lowercase word that does not join two capitalized ones.
-fn name_runs(text: &str) -> Vec<String> {
+pub(super) fn name_runs(text: &str) -> Vec<String> {
     let toks: Vec<&str> = text.split_whitespace().collect();
     let mut runs = Vec::new();
     let mut cur: Vec<&str> = Vec::new();
@@ -164,14 +164,14 @@ fn target_after(rest: &str) -> Option<String> {
 }
 
 /// Whether `text` holds `name` as whole words, case kept (proper names are capitalized; "silent" is not "Silence").
-fn holds(text: &str, name: &str) -> bool {
+pub(super) fn holds(text: &str, name: &str) -> bool {
     text.match_indices(name).any(|(i, _)| {
         text[..i].chars().last().is_none_or(|c| !c.is_alphanumeric())
             && text[i + name.len()..].chars().next().is_none_or(|c| !c.is_alphanumeric())
     })
 }
 
-fn same(a: &str, b: &str) -> bool {
+pub(super) fn same(a: &str, b: &str) -> bool {
     let (a, b) = (norm(a), norm(b));
     let strip = |x: &str| x.strip_prefix("the ").unwrap_or(x).to_owned();
     strip(&a) == strip(&b)
@@ -278,10 +278,15 @@ pub(crate) fn check(answer: &str, q: &str, texts: &[String], tools: &Tools) -> O
             .map(|(s, t)| format!("no passage Trevor read says that {s} and {t} are the same person")).collect();
         return Some((format!("{answer}\n\nTrevor's check: {}.", notes.join("; ")), claims));
     }
+    let keep: Vec<bool> = flags.iter().map(Option::is_none).collect();
+    Some((kept_sentences(&pieces, &keep), claims))
+}
+
+/// The sentences of `pieces` whose `keep` is true, joined as they were; a dropped paragraph end keeps its break.
+pub(super) fn kept_sentences(pieces: &[Piece<'_>], keep: &[bool]) -> String {
     let mut out = String::new();
-    for (p, f) in pieces.iter().zip(&flags) {
-        if f.is_some() {
-            // A dropped paragraph end keeps its break.
+    for (p, &k) in pieces.iter().zip(keep) {
+        if !k {
             if p.sep.contains('\n') && !out.is_empty() {
                 let trimmed = out.trim_end().len();
                 out.truncate(trimmed);
@@ -292,7 +297,7 @@ pub(crate) fn check(answer: &str, q: &str, texts: &[String], tools: &Tools) -> O
         out.push_str(p.text);
         out.push_str(p.sep);
     }
-    Some((out.trim_end().to_owned(), claims))
+    out.trim_end().to_owned()
 }
 
 /// The chunk ids an answer's "[n]" citations name, in order, by passage number (`passages[n - 1]`).

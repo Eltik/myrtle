@@ -8,7 +8,7 @@ use trevor::search::runtime::{Runtime, RuntimeArgs};
 use trevor::tools::{Tools, contains_words, norm};
 
 use crate::chrono::proper_name;
-use crate::detect::asks_scene;
+use crate::detect::asks_scene_with;
 use crate::kinds::{RECORD_KINDS, is_generated};
 use crate::people::people_named;
 
@@ -20,7 +20,13 @@ use crate::people::people_named;
 /// links) kept when the corpus writes the name capitalized (`proper_name`); the candidates are the event's chunks whose
 /// speakers or text hold one of their forms, ranked by the question with dense and BM25 fused by reciprocal rank (k 60),
 /// and the best are kept within `SCOPED_TOKENS`, at most `SCOPED_K`. Returns (event name, the characters, rows).
-pub(crate) fn scoped_scenes(rt: &mut Runtime, tools: &Tools, q: &str, max_tokens: u32) -> Option<(String, Vec<String>, Vec<usize>)> {
+///
+/// The scoped line rank (`--no-scoped-line-rank`): when the question makes a scoped character the subject of a said act
+/// (`asks_scene`, with `line_rank`'s extra verbs), the scenes holding that character's best lines by the reranker come
+/// first, then the rest in the fused order. "what is the name of the npc that mon3tr suggests assassinating in masses
+/// travels" ranked the scene of "(I can take her out. Nobody would notice.)" outside the scenes that fit.
+pub(crate) fn scoped_scenes(rt: &mut Runtime, tools: &Tools, q: &str, max_tokens: u32,
+                            line_rank: Option<(&RuntimeArgs, &[&str])>) -> Option<(String, Vec<String>, Vec<usize>)> {
     let g = tools.event_in_question(q)?;
     let gid = g["groupId"].as_str()?.to_owned();
     let ename = g["name"].as_str().unwrap_or(&gid).to_owned();
@@ -38,7 +44,19 @@ pub(crate) fn scoped_scenes(rt: &mut Runtime, tools: &Tools, q: &str, max_tokens
     if cands.is_empty() {
         return None;
     }
-    let ranked = rank_by_question(rt, q, &cands)?;
+    let mut ranked = rank_by_question(rt, q, &cands)?;
+    if let Some((ra, _)) = line_rank.filter(|(_, extra)| asks_scene_with(q, &forms, extra)) {
+        if let Some(lines) = ranked_lines(rt, ra, q, &cands, &forms) {
+            let mut by_line: Vec<usize> = Vec::new();
+            for (r, _) in lines {
+                if !by_line.contains(&r) {
+                    by_line.push(r);
+                }
+            }
+            by_line.extend(ranked.into_iter().filter(|r| !by_line.contains(r)).collect::<Vec<_>>());
+            ranked = by_line;
+        }
+    }
     if trevor::env::debug_on("TREVOR_SCOPED_DEBUG") {
         eprintln!(
             "scoped {gid}: {} candidates, {} tokens",
@@ -149,7 +167,8 @@ pub(crate) fn excerpt_window(rt: &Runtime, r: usize, idx: &[usize], window: usiz
 /// the question with each of the character's lines and the line before it. Each picked line keeps `CHAR_WINDOW` lines
 /// either side, at most `CHAR_LINES_PER_SCENE` lines a scene and `CHAR_K` scenes, within `CHAR_TOKENS`.
 /// Returns (the character as the corpus writes them, excerpts best first).
-pub(crate) fn character_scenes(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools, q: &str, max_tokens: u32) -> Option<(String, Excerpts)> {
+pub(crate) fn character_scenes(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools, q: &str, max_tokens: u32,
+                               extra: &[&str]) -> Option<(String, Excerpts)> {
     if tools.event_in_question(q).is_some() || tools.appearance_question(q).is_some() {
         return None;
     }
@@ -160,7 +179,7 @@ pub(crate) fn character_scenes(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools
         .map(|x| norm(x))
         .filter(|x| x.chars().count() >= 3)
         .collect();
-    if forms.is_empty() || tools.names_group_topic(key) || !asks_scene(q, &forms) {
+    if forms.is_empty() || tools.names_group_topic(key) || !asks_scene_with(q, &forms, extra) {
         return None;
     }
     let shown = tools.operator_names().into_iter().chain(tools.speaker_names()).find(|x| norm(x) == *key)
@@ -172,25 +191,8 @@ pub(crate) fn character_scenes(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools
     if cands.is_empty() {
         return None;
     }
-    // The units: each line the character speaks, with the line before it as context, scored by the reranker (a
-    // cross-encoder reads the question and the line together, so "take her out" can match "assassinating").
-    let speaks = |line: &str| line.split_once(':').is_some_and(|(s, _)| s.len() < 60 && forms.contains(&norm(s)));
-    let mut units: Vec<(usize, usize)> = Vec::new();
-    let mut texts: Vec<String> = Vec::new();
-    for &r in &cands {
-        let lines: Vec<&str> = rt.store.chunks[r].text.lines().collect();
-        for (i, line) in lines.iter().enumerate().filter(|(_, l)| speaks(l)) {
-            units.push((r, i));
-            texts.push(if i > 0 { format!("{}\n{line}", lines[i - 1]) } else { (*line).to_owned() });
-        }
-    }
-    ensure_reranker(rt, ra).ok()?;
     let t0 = std::time::Instant::now();
-    let refs: Vec<&str> = texts.iter().map(String::as_str).collect();
-    let sc = rt.reranker.as_ref()?.score(q, &refs).ok()?;
-    let mut ord: Vec<usize> = (0..units.len()).collect();
-    ord.sort_by(|&x, &y| sc[y].total_cmp(&sc[x]).then(units[x].cmp(&units[y])));
-    let units: Vec<(usize, usize)> = ord.into_iter().map(|o| units[o]).collect();
+    let units = ranked_lines(rt, ra, q, &cands, &forms)?;
     if let Some(target) = trevor::env::non_empty("TREVOR_SCOPED_DEBUG").filter(|v| v != "0").as_deref() {
         let mut by_line: Vec<usize> = Vec::new();
         for (r, _) in &units { if !by_line.contains(r) { by_line.push(*r); } }
@@ -220,6 +222,29 @@ pub(crate) fn character_scenes(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools
     }
     let out = picked.into_iter().map(|(r, idx)| { let (t, n) = excerpt(rt, r, &idx); (r, t, n) }).collect();
     Some((shown, out))
+}
+
+/// The lines of `cands` that a form of `forms` speaks, each with the line before it as context, ranked by the reranker
+/// (a cross-encoder reads the question and the line together, so "take her out" can match "assassinating"), best
+/// first, ties by (row, line): (row, line index).
+fn ranked_lines(rt: &mut Runtime, ra: &RuntimeArgs, q: &str, cands: &[usize], forms: &[String])
+    -> Option<Vec<(usize, usize)>> {
+    let speaks = |line: &str| line.split_once(':').is_some_and(|(s, _)| s.len() < 60 && forms.contains(&norm(s)));
+    let mut units: Vec<(usize, usize)> = Vec::new();
+    let mut texts: Vec<String> = Vec::new();
+    for &r in cands {
+        let lines: Vec<&str> = rt.store.chunks[r].text.lines().collect();
+        for (i, line) in lines.iter().enumerate().filter(|(_, l)| speaks(l)) {
+            units.push((r, i));
+            texts.push(if i > 0 { format!("{}\n{line}", lines[i - 1]) } else { (*line).to_owned() });
+        }
+    }
+    ensure_reranker(rt, ra).ok()?;
+    let refs: Vec<&str> = texts.iter().map(String::as_str).collect();
+    let sc = rt.reranker.as_ref()?.score(q, &refs).ok()?;
+    let mut ord: Vec<usize> = (0..units.len()).collect();
+    ord.sort_by(|&x, &y| sc[y].total_cmp(&sc[x]).then(units[x].cmp(&units[y])));
+    Some(ord.into_iter().map(|o| units[o]).collect())
 }
 
 /// The line study (`--line-study`, measurement only): every line of the corpus outside the generated kinds

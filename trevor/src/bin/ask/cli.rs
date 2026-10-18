@@ -340,14 +340,47 @@ pub(crate) struct Args {
     /// with a passage saying which names fail and why, and a second failure gets that note appended.
     #[arg(long)]
     pub(crate) no_answer_check: bool,
-    /// Run the identity-claim check over the answers of a `--dump-prompt` file without a model and print what it would
-    /// change (the prefilter of the A/B runs).
+    /// Run the identity-claim check, the referent checks and the passage-label fix over the answers of a `--dump-prompt`
+    /// file without a model and print what they would change (the prefilter of the A/B runs).
     #[arg(long, hide = true)]
     pub(crate) identity_scan: Option<PathBuf>,
     /// Keep every identity claim of an answer: no sentence saying two names are one person ("is referred to as",
     /// "is also known as", "is actually") is dropped when no identity link or passage joins the two names.
     #[arg(long)]
     pub(crate) no_identity_check: bool,
+    /// Keep every fate claim of an answer: no sentence saying a named character is dead or alive, died or was killed
+    /// is dropped when no passage it cites ties that fate to that character (`answer/referent.rs`).
+    #[arg(long)]
+    pub(crate) no_referent_check: bool,
+    /// Keep every attributed quote of an answer: no sentence saying a named character said a quoted line is dropped
+    /// when the passages hold that line only in another named speaker's lines (`answer/referent.rs`).
+    #[arg(long)]
+    pub(crate) no_quote_check: bool,
+    /// Turn off the deaths evidence (`fate.rs`): a question asking whether one character is alive or dead gets no
+    /// lines from Trevor's deaths table as its first passages.
+    #[arg(long)]
+    pub(crate) no_death_evidence: bool,
+    /// Turn off the first-and-last appearance route (`appear.rs`): "When was X last mentioned?" goes to the router and
+    /// retrieval as before instead of the appearance index in release (or in-world) order.
+    #[arg(long)]
+    pub(crate) no_appearance_order: bool,
+    /// Keep passage labels in answers: "in passage [4]" stays as the model wrote it instead of "in the text [4]"
+    /// (`answer/cite_words.rs`).
+    #[arg(long)]
+    pub(crate) no_passage_label_fix: bool,
+    /// Turn off the labelled theory (`theory.rs`): a declined yes/no question about one character whose passages hold
+    /// lines that bear on it is not asked again for "The story does not say outright, but ... Theory: ...".
+    #[arg(long)]
+    pub(crate) no_theory_rule: bool,
+    /// The scene-subject test's verbs as before: "hint", "imply", "insinuate" and "allude" (`detect.rs` HINT_VERBS) do
+    /// not make the named character the subject of a said act, so "What NPC did Mon3tr hint at ..." gets no character
+    /// scenes.
+    #[arg(long)]
+    pub(crate) said_verbs_v1: bool,
+    /// Rank the scoped scenes by the question alone (dense and BM25 fused), as before, also when the question makes the
+    /// scoped character the subject of a said act (`scenes.rs`, the scoped line rank).
+    #[arg(long)]
+    pub(crate) no_scoped_line_rank: bool,
     /// Under a spoiler horizon, answer a question naming an event that lies wholly after it with retrieval (as
     /// before) instead of the spoiler notice (`prompts.rs` SPOILER_NOTICE).
     #[arg(long)]
@@ -375,6 +408,9 @@ pub(crate) struct Args {
     /// The note of the answer check's second ask, set only inside `answer_one`.
     #[arg(skip)]
     pub(crate) check_note: Option<String>,
+    /// The HINTS block of the labelled theory's second ask (`theory.rs`), set only inside `answer_one`.
+    #[arg(skip)]
+    pub(crate) theory: Option<String>,
     /// Turn off the rarity order of the term-lookup glossary: the served topics the term's chunks name are ordered by
     /// first mention instead of rarest first (fewest P4x chunks naming them).
     #[arg(long)]
@@ -529,6 +565,13 @@ pub(crate) enum BackendKind {
 /// exactly the flags of the eval arms `e-e2b-mid36` and `f-e2b-mid6k` (`--router keywords --k 8 --n-predict 250
 /// --no-typed-fallback --no-answer-extend --no-answer-check --no-operator-list-check --max-context-tokens 3600|6000` on
 /// top of `--profile full`): one answer call, no router call.
+impl Args {
+    /// The extra verbs of the scene-subject test (`detect::asks_scene_with`): HINT_VERBS unless `--said-verbs-v1`.
+    pub(crate) fn scene_verbs(&self) -> &'static [&'static str] {
+        if self.said_verbs_v1 { &[] } else { &crate::detect::HINT_VERBS }
+    }
+}
+
 pub(crate) fn apply_profile(a: &mut Args, p: Profile) {
     a.profile = p;
     if matches!(p, Profile::Mid | Profile::Mid6k) {

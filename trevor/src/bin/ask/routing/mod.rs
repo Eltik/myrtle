@@ -43,6 +43,16 @@ impl Routed {
 /// Choose a table tool with the router `a.router` and run it. `llm` is needed by the model router only.
 pub(crate) async fn route_question(q: &str, a: &Args, tools: &Tools, llm: Option<&Llm>) -> Result<Routed> {
     let started = std::time::Instant::now();
+    // First and last appearances (`--no-appearance-order`, `appear.rs`), for every router: the appearance index in
+    // release (or in-world) order; retrieval cannot tell which of its passages is the last.
+    if !a.no_route && !a.no_appearance_order {
+        if let Some(oq) = crate::appear::order_question(q, tools) {
+            if let Some(text) = crate::appear::order_text(tools, &oq, None, None) {
+                return Ok(Routed { route: crate::appear::route(&oq), text: Some(text), error: None, topic: None,
+                                   dossier: None, game: None, ms: started.elapsed().as_secs_f64() * 1000.0 });
+            }
+        }
+    }
     // Detectors that read the question only, before the router: every router line added for a tool moved
     // 20 to 34 unrelated routes, so these tools are reached without one.
     if a.router == RouterKind::Model && !a.no_route {

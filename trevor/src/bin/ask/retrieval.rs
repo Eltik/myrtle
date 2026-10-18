@@ -233,12 +233,15 @@ pub(crate) struct Pre {
     /// A line of time-gap evidence (`timegap.rs`), the line itself: adds the gap rule and the TIME GAP EVIDENCE block
     /// before the question, and its chunk is not repeated among the retrieved passages.
     pub(crate) gap: Option<String>,
+    /// Deaths evidence (`fate.rs`), the character it is about: adds the deaths rule, and its chunk is not repeated
+    /// among the retrieved passages.
+    pub(crate) death: Option<String>,
 }
 
 impl Pre {
     /// A passage before the retrieved ones that adds no rule.
     pub(crate) fn new(id: String, label: String, text: String) -> Self {
-        Self { id, label, text, last: false, rule: false, scoped: false, gap: None }
+        Self { id, label, text, last: false, rule: false, scoped: false, gap: None, death: None }
     }
 
     /// Placed after the retrieved passages (`last`).
@@ -262,6 +265,12 @@ impl Pre {
     /// Time-gap evidence (`gap`): `line` is the line that states the elapsed time.
     pub(crate) fn in_gap(mut self, line: String) -> Self {
         self.gap = Some(line);
+        self
+    }
+
+    /// Deaths evidence about `who` (`death`).
+    pub(crate) fn of_death(mut self, who: &str) -> Self {
+        self.death = Some(who.to_owned());
         self
     }
 }

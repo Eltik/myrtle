@@ -49,6 +49,17 @@ pub(crate) fn recap_within(route: &Route, tools: &Tools, h: &Horizon) -> bool {
     h.order().group_span(gid).is_some_and(|(_, last)| last <= h.pos)
 }
 
+/// A table answer served under horizon `h`: the recap of an event wholly within it (unless `no_recap`), or the first or
+/// last appearance recomputed within it (`appear.rs`, reading `store` for a group the horizon cuts); None for every
+/// other table, which is built from every story.
+pub(crate) fn table_within(route: &Route, text: String, tools: &Tools, h: &Horizon, no_recap: bool,
+                           store: Option<&trevor::search::store::ChunkStore>) -> Option<String> {
+    if !no_recap && recap_within(route, tools, h) {
+        return Some(text);
+    }
+    crate::appear::from_route(route).and_then(|oq| crate::appear::order_text(tools, &oq, Some(h), store))
+}
+
 #[cfg(test)]
 mod tests {
     use std::sync::Arc;

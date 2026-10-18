@@ -32,6 +32,13 @@ use crate::terms::{term_glossary, term_lookup};
 
 mod generate;
 pub(crate) mod identity;
+pub(crate) mod referent;
+mod cite_words;
+
+/// The passage-label fix (`cite_words.rs`), for `--identity-scan`.
+pub(crate) fn cite_words_fix(answer: &str) -> Option<String> {
+    cite_words::fix(answer)
+}
 
 pub(crate) use generate::passage_label;
 use generate::answer_from;
@@ -89,6 +96,25 @@ pub(crate) async fn answer_one(rts: &mut Runtimes, llm: &Llm, names: &HashMap<St
             ans.answer = text;
         }
     }
+    // The referent checks (`--no-referent-check`, `--no-quote-check`, `referent.rs`): a fate claim whose cited
+    // passages do not tie it to its character, and a quote the passages give to another speaker.
+    if !ans.texts.is_empty() {
+        if let Some((text, found)) = referent::check(&ans.answer, q, &ans.texts, &tables.tools, !a.no_referent_check,
+                                                     !a.no_quote_check) {
+            if trevor::env::debug_on("TREVOR_IDENTITY_DEBUG") {
+                eprintln!("referent check: dropped {found:?}");
+            }
+            ans.cited = identity::cited_ids(&text, &ans.passages);
+            ans.answer = text;
+        }
+    }
+    // Passage labels out of the text (`--no-passage-label-fix`, `cite_words.rs`): "in passage [4]" is "in the text [4]".
+    if !a.no_passage_label_fix && !ans.passages.is_empty() {
+        if let Some(text) = cite_words::fix(&ans.answer) {
+            ans.cited = identity::cited_ids(&text, &ans.passages);
+            ans.answer = text;
+        }
+    }
     Ok(ans)
 }
 
@@ -99,6 +125,7 @@ pub(crate) async fn answer_one(rts: &mut Runtimes, llm: &Llm, names: &HashMap<St
 async fn answer_checked(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Names>, chrono: &Chrono,
                         q: &str, a: &Args, tables: &mut Tables) -> Result<Answer> {
     let first = answer_one_inner(rts, llm, names, chrono, q, a, tables).await?;
+    let first = theory_retry(rts, llm, names, chrono, q, a, tables, first).await?;
     let first = operator_list_check(rts, llm, names, chrono, q, a, tables, first).await?;
     if a.no_answer_check || a.no_route || first.passages.is_empty() || !asks_identity(q) {
         return Ok(first);
@@ -120,6 +147,33 @@ async fn answer_checked(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, N
             so {n2} does not fit.", second.answer);
     }
     Ok(second)
+}
+
+/// The labelled theory (`--no-theory-rule`, `theory.rs`): a declined yes/no question naming one character whose
+/// passages hold lines about that character touching what it asks is asked once more with those lines as HINTS and
+/// THEORY_RULE; the second answer is kept when it has its "Theory:" line.
+#[allow(clippy::too_many_arguments)]
+async fn theory_retry(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Names>, chrono: &Chrono, q: &str,
+                      a: &Args, tables: &mut Tables, first: Answer) -> Result<Answer> {
+    // An alive-or-dead question has the deaths evidence instead (`fate.rs`).
+    if a.no_theory_rule || a.no_route || first.passages.is_empty() || !crate::theory::asks_whether(q)
+        || !declines(&first.answer) || crate::detect::is_death_question(q) || crate::detect::has(q, &["alive"]) {
+        return Ok(first);
+    }
+    let people = people_named(&rts.main, &tables.tools, q);
+    let [key] = people.as_slice() else { return Ok(first) };
+    // The name as the tables write it ("Fyodor", not the folded key "fyodor").
+    let who = tables.tools.operator_names().into_iter().chain(tables.tools.speaker_names())
+        .find(|x| norm(x) == *key).map_or_else(|| key.clone(), str::to_owned);
+    let who = who.as_str();
+    let Some(block) = crate::theory::hint_block(q, &first.answer, &first.texts, &tables.tools, who)
+    else { return Ok(first) };
+    if trevor::env::debug_on("TREVOR_THEORY_DEBUG") {
+        eprintln!("theory: {who}{block}");
+    }
+    let again = Args { theory: Some(block), routed: false, ..a.clone() };
+    let second = answer_one_inner(rts, llm, names, chrono, q, &again, tables).await?;
+    Ok(if crate::theory::has_theory(&second.answer) { second } else { first })
 }
 
 /// The operator list check (`--no-operator-list-check`): an answer to a question
@@ -203,9 +257,12 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
         // Under a spoiler horizon a table answer (built from every story) and a topic summary are not served; the
         // question is answered from the passages the horizon lets through instead.
         if let Some(text) = r.text {
-            let table_ok = rts.horizon.as_deref().is_none_or(|h| !a.no_horizon_recap
-                && crate::spoiler::recap_within(&r.route, &tables.tools, h));
-            if table_ok {
+            let served = match rts.horizon.as_deref() {
+                None => Some(text),
+                Some(h) => crate::spoiler::table_within(&r.route, text, &tables.tools, h, a.no_horizon_recap,
+                                                        Some(&rts.main.store)),
+            };
+            if let Some(text) = served {
                 return Ok(table_only(q, text));
             }
             route = Some(Route::retrieve());
@@ -311,7 +368,8 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
     }
     // The scoped scenes go first (before a term lookup's records), and are not repeated among the retrieved passages.
     let scoped = if gap.is_none() && !a.no_scoped_scenes && !a.no_route && kind.is_none() {
-        scoped_scenes(rt, &tables.tools, q, a.scene_tokens.unwrap_or(crate::scenes::SCOPED_TOKENS))
+        scoped_scenes(rt, &tables.tools, q, a.scene_tokens.unwrap_or(crate::scenes::SCOPED_TOKENS),
+                      (!a.no_scoped_line_rank).then_some((&a.runtime, a.scene_verbs())))
     } else { None };
     if let Some((ename, who, rows)) = &scoped {
         for (i, &r) in rows.iter().enumerate() {
@@ -336,12 +394,28 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
     // before the retrieved passages, which keep their whole budget (the scoped scenes' 3,000-token rest would drop
     // retrieved lines other questions need).
     if scoped.is_none() && gap.is_none() && !a.no_character_scenes && !a.no_route && kind.is_none() {
-        if let Some((who, rows)) = character_scenes(rt, &a.runtime, &tables.tools, q, a.scene_tokens.unwrap_or(crate::scenes::CHAR_TOKENS)) {
+        if let Some((who, rows)) = character_scenes(rt, &a.runtime, &tables.tools, q, a.scene_tokens.unwrap_or(crate::scenes::CHAR_TOKENS),
+                                                  a.scene_verbs()) {
             for (i, (r, text, _)) in rows.iter().enumerate() {
                 let c = &rt.store.chunks[*r];
                 let label = story_label(names, &c.story_id);
                 pre.insert(i, Pre::new(c.chunk_id.clone(), format!("{label}; {CHAR_LABEL} {who} speaks"), text.clone())
                     .in_scope());
+            }
+        }
+    }
+    // Deaths evidence (`--no-death-evidence`, `fate.rs`): an alive-or-dead question about one character of the deaths
+    // table gets the lines its rows quote, after any scoped scenes or time-gap lines (whose rule numbers the first
+    // passages), and the retrieved passages give up the tokens they take.
+    let mut death_tokens = 0u32;
+    if !a.no_death_evidence && !a.no_route && kind.is_none() {
+        if let Some(who) = crate::fate::alive_dead_subject(q, &tables.tools) {
+            let at = pre.iter().take_while(|p| p.scoped || p.gap.is_some()).count();
+            for (k, (id, tail, text, tok)) in crate::fate::death_evidence(rt, &tables.tools, &who).into_iter()
+                .enumerate() {
+                let sid = rt.store.row(&id).map(|r| rt.store.chunks[r].story_id.clone()).unwrap_or_default();
+                pre.insert(at + k, Pre::new(id, format!("{}; {tail}", story_label(names, &sid)), text).of_death(&who));
+                death_tokens = death_tokens.saturating_add(tok);
             }
         }
     }
@@ -356,6 +430,11 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
     } else if scoped.is_some() {
         scoped_budget = Args { max_context_tokens: a.max_context_tokens.min(SCOPED_REST), ..a.clone() };
         &scoped_budget
+    } else { a };
+    let death_budget;
+    let a = if death_tokens > 0 {
+        death_budget = Args { max_context_tokens: a.max_context_tokens.saturating_sub(death_tokens), ..a.clone() };
+        &death_budget
     } else { a };
     let form = form.as_ref();
     let first = answer_from(rt, llm, names, chrono, q, term_search.as_deref().unwrap_or(q), a, &pre, kind, form).await?;

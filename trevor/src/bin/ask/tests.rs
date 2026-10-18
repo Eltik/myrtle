@@ -5,7 +5,7 @@ use trevor::tools::Tools;
 use crate::batch::{batch_items, qid_question};
 use crate::chrono::{Chrono, chronology_for, time_evidence_block};
 use crate::cli::lock_path_from;
-use crate::detect::{asks_identity, asks_origin, asks_relation, asks_scene, asks_term, asks_when, term_of};
+use crate::detect::{HINT_VERBS, asks_identity, asks_origin, asks_relation, asks_scene_with, asks_term, asks_when, term_of};
 use crate::labels::{Names, story_label, typed_owner};
 use crate::people::{one_operator, one_operator_wide};
 use crate::terms::{compact, first_sentences};
@@ -40,12 +40,15 @@ fn rule_triggers_fire_on_their_questions_only() {
     assert!(asks_identity("Which Rhodes Island Operator had visited Iris' castle of dreams?")
             && !asks_identity("Why did swire join the LGD?"));
     let mon3tr = ["mon3tr".to_owned()];
-    assert!(asks_scene("During which event Mon3tr suggested assassinating a child", &mon3tr));
-    assert!(asks_scene("What did Mon3tr say to the Doctor?", &mon3tr)
-            && asks_scene("In which story Mon3tr ambushed a Sarkaz?", &mon3tr));
-    assert!(!asks_scene("Why does Mon3tr's hat say KEE?", &mon3tr)
-            && !asks_scene("What does the captain say about Mon3tr?", &mon3tr));
-    assert!(!asks_scene("Is Mon3tr related to the Aggeloi?", &mon3tr));
+    assert!(asks_scene_with("During which event Mon3tr suggested assassinating a child", &mon3tr, &[]));
+    assert!(asks_scene_with("What did Mon3tr say to the Doctor?", &mon3tr, &[])
+            && asks_scene_with("In which story Mon3tr ambushed a Sarkaz?", &mon3tr, &[]));
+    assert!(!asks_scene_with("Why does Mon3tr's hat say KEE?", &mon3tr, &[])
+            && !asks_scene_with("What does the captain say about Mon3tr?", &mon3tr, &[]));
+    assert!(!asks_scene_with("Is Mon3tr related to the Aggeloi?", &mon3tr, &[]));
+    // The hint verbs (`--said-verbs-v1` leaves them out).
+    let idida = "What NPC did Mon3tr hint at wanting to take out with no one noticing";
+    assert!(asks_scene_with(idida, &mon3tr, &HINT_VERBS) && !asks_scene_with(idida, &mon3tr, &[]));
 }
 
 #[test]

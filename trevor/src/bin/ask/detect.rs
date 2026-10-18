@@ -62,10 +62,15 @@ pub(crate) const SAID_VERBS: [&str; 39] = [
     "propose", "proposed", "proposes", "offer", "offered", "offers", "mention", "mentioned", "mentions", "claim",
     "claimed", "claims", "promise", "promised", "promises", "confess", "confessed", "confesses"];
 
+/// Verbs of saying something indirectly ("What NPC did Mon3tr hint at wanting to take out", for the aside "(I can take
+/// her out. Nobody would notice.)"), counted with `SAID_VERBS` unless `--said-verbs-v1`.
+pub(crate) const HINT_VERBS: [&str; 12] = ["hint", "hints", "hinted", "imply", "implies", "implied", "insinuate",
+    "insinuates", "insinuated", "allude", "alludes", "alluded"];
+
 /// Whether the question makes the character (any of `forms`, folded) the subject of an act it asks about: a form followed,
-/// with at most one word between, by a said verb (`SAID_VERBS`), or, when the question asks in which event, story,
-/// chapter, episode or scene, by a said verb or a past-tense word ("During which event Mon3tr suggested ...").
-pub(crate) fn asks_scene(q: &str, forms: &[String]) -> bool {
+/// with at most one word between, by a said verb (`SAID_VERBS`, and `extra`), or, when the question asks in which event,
+/// story, chapter, episode or scene, by a said verb or a past-tense word ("During which event Mon3tr suggested ...").
+pub(crate) fn asks_scene_with(q: &str, forms: &[String], extra: &[&str]) -> bool {
     let n = norm(&q.replace('\u{2019}', "'"));
     let words: Vec<&str> = n.split_whitespace().collect();
     let l = format!(" {} ", words.join(" "));
@@ -75,7 +80,7 @@ pub(crate) fn asks_scene(q: &str, forms: &[String]) -> bool {
         let fw: Vec<&str> = f.split_whitespace().collect();
         (0..words.len()).filter(|&i| !fw.is_empty() && words[i..].starts_with(&fw)).any(|i| {
             words.iter().skip(i + fw.len()).take(2)
-                .any(|w| SAID_VERBS.contains(w) || (asks_place && w.len() > 4 && w.ends_with("ed")))
+                .any(|w| SAID_VERBS.contains(w) || extra.contains(w) || (asks_place && w.len() > 4 && w.ends_with("ed")))
         })
     })
 }

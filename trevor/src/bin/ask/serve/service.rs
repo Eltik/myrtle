@@ -163,10 +163,14 @@ impl Service {
             self.tables.tools.topics_deep = deep_for(&a, &self.tables.tools, q);
             let r = route_checked(q, &a, &mut self.tables, router_llm).await.map_err(failed)?;
             out.timings.route_ms = r.ms;
-            let table_ok = self.rts.horizon.as_deref().is_none_or(|h| !a.no_horizon_recap
-                && crate::spoiler::recap_within(&r.route, &self.tables.tools, h));
-            let route = match r.text {
-                Some(text) if table_ok => {
+            let had_text = r.text.is_some();
+            let served = r.text.and_then(|text| match self.rts.horizon.as_deref() {
+                None => Some(text),
+                Some(h) => crate::spoiler::table_within(&r.route, text, &self.tables.tools, h, a.no_horizon_recap,
+                                                        Some(&self.rts.main.store)),
+            });
+            let route = match (served, had_text) {
+                (Some(text), _) => {
                     out.answer = text;
                     out.route = Some(r.route);
                     out.table = true;
@@ -175,8 +179,8 @@ impl Service {
                 }
                 // Under a horizon a table answer is not served (but a recap of an event wholly within it); the
                 // passages answer instead.
-                Some(_) => Route::retrieve(),
-                None => {
+                (None, true) => Route::retrieve(),
+                (None, false) => {
                     self.tables.topic = if self.rts.horizon_set() { None } else { r.topic };
                     r.route
                 }

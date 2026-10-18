@@ -17,8 +17,8 @@ use crate::detect::{
 };
 use crate::form::{Flags, Form};
 use crate::prompts::{
-    AGE_RULE, ART_RULE, CANON_RULE, CHAR_LABEL, CHAR_RULE_TAIL, DATE_RULE, GAP_RULE_TAIL, GAP_TAIL, INFER_RULE,
-    OPINION_FORM_RULE, OPINION_RULE, ORIGIN_RULE, RELATION_RULE, SCOPED_RULE_HEAD, SCOPED_RULE_TAIL, SOURCE_RULE, SYNTH_RULE, SYSTEM, TERM_RULE,
+    AGE_RULE, ART_RULE, CANON_RULE, CHAR_LABEL, CHAR_RULE_TAIL, DATE_RULE, DEATH_RULE_TAIL, GAP_RULE_TAIL, GAP_TAIL, INFER_RULE,
+    OPINION_FORM_RULE, OPINION_RULE, ORIGIN_RULE, RELATION_RULE, SCOPED_RULE_HEAD, SCOPED_RULE_TAIL, SOURCE_RULE, SYNTH_RULE, SYSTEM, TERM_RULE, THEORY_RULE,
     TIME_EVIDENCE_TAIL, TIME_RULE, YES_NO_RULE,
 };
 use crate::labels::{Names, story_label};
@@ -112,6 +112,10 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
     if !gap.is_empty() {
         rows.retain(|&r| !gap.contains(&rt.store.chunks[r].chunk_id.as_str()));
     }
+    let death: Vec<&str> = pre.iter().filter(|p| p.death.is_some()).map(|p| p.id.as_str()).collect();
+    if !death.is_empty() {
+        rows.retain(|&r| !death.contains(&rt.store.chunks[r].chunk_id.as_str()));
+    }
     let (first, post): (Vec<&Pre>, Vec<&Pre>) = pre.iter().partition(|p| !p.last);
     let off = first.len();
     let flags = Flags::keywords(q);
@@ -161,6 +165,9 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
             }
         }
     }
+    if let Some(h) = &a.theory {
+        user.push_str(h);
+    }
     user.push_str(&format!("\nQUESTION: {q}"));
     if time_evidence {
         user.push_str(TIME_EVIDENCE_TAIL);
@@ -202,6 +209,13 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
             else { SCOPED_RULE_TAIL };
         system.push_str(&format!("{SCOPED_RULE_HEAD}{}{tail}", scoped.len()));
     }
+    // The deaths evidence's numbers, wherever it sits among the first passages.
+    let death_at: Vec<usize> = first.iter().enumerate().filter(|(_, p)| p.death.is_some()).map(|(i, _)| i + 1).collect();
+    if let (Some(&a), Some(&b), Some(who)) = (death_at.first(), death_at.last(),
+                                              first.iter().find_map(|p| p.death.as_deref())) {
+        let head = if a == b { format!(" Passage [{a}] is") } else { format!(" Passages [{a}] to [{b}] are") };
+        system.push_str(&format!("{head}{}", DEATH_RULE_TAIL.replace("{who}", who)));
+    }
     if synth_q {
         system.push_str(SYNTH_RULE);
     }
@@ -217,6 +231,9 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
     }
     if form.is_some_and(|f| f.form == "yes_no") {
         system.push_str(YES_NO_RULE);
+    }
+    if a.theory.is_some() {
+        system.push_str(THEORY_RULE);
     }
     match lore {
         // The typed units lead the passages, so the source-kind rule's "say Trevor lacks that text" does not apply: it

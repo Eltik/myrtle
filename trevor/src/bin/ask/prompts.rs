@@ -159,3 +159,16 @@ yet. Turn off spoiler protection to ask about it.";
 pub(crate) const SPOILER_ACT_SUMMARY: &str = "summarise it";
 pub(crate) const SPOILER_ACT: &str = "answer questions about it";
 pub(crate) const SPOILER_WHERE: &str = " (you are up to {era})";
+
+/// The deaths evidence (`fate.rs`): " Passages [a] to [b]" (or " Passage [a]") then this, with `{who}` filled in.
+pub(crate) const DEATH_RULE_TAIL: &str = " the story lines where Trevor's deaths table finds {who}'s death or a report \
+of it. Say first whether {who} is alive or dead by those lines, with their citations. A line counts for {who} only \
+when it says it of {who}: a line {who} speaks about someone else's death, or a line about another character, is not \
+about {who}.";
+
+/// The labelled theory (`theory.rs`): the second ask of a declined yes/no question whose passages hold hints.
+pub(crate) const THEORY_RULE: &str = " The passages do not state the answer to this question outright, but the lines \
+under HINTS bear on it. Answer in this form: begin with \"The story does not say outright, but\", then give what the \
+hints show, each with its citation, and end with one sentence that begins \"Theory:\" and says what the hints \
+suggest, as Trevor's reading of them, not a stated fact. If the hints do not bear on the question after all, say only \
+that the story does not say.";
