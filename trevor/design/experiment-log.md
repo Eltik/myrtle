@@ -1340,8 +1340,9 @@ wake, behave and cope to the scene-subject verbs, and `--scene-subject` picks, a
 verb follows (the question names Mon3tr and Kal'tsit, and character scenes needed exactly one). On E2B mid (two calls
 that went to the running preview server by mistake) the answer moved from the decline to "Mon3tr reacts with a
 pained howl when Kal'tsit cries because she is dying [2]" from Return to Mist (`main_11-15_beg#0005`): the
-character scenes fire, but the reranker puts the chapter 11 line above the waking scene. Not shipped as a default on
-that evidence; the defaults render prompts byte-identical to `43e30986` (stub). Next: a window that measures both
+character scenes fire, but the reranker puts the chapter 11 line above the waking scene: of Mon3tr's 208 speaking
+scenes the waking chunk is 13th by fused retrieval and 19th by reranked lines (TREVOR_SCOPED_DEBUG), outside the 6
+excerpt slots. Not shipped as a default on that evidence; the defaults render prompts byte-identical to `43e30986` (stub). Next: a window that measures both
 flags on the probe sets, and a lift for the waking scene itself (its voice is "???" until "My name is Mon3tr", so a
 chunk-scoped label rename is the candidate; a story-scoped one is unsafe, "???" names several speakers per story).
 
