@@ -46,6 +46,13 @@ pub(crate) struct Args {
     /// Passage budget in model tokens; lower-ranked hits are dropped past it.
     #[arg(long, default_value_t = 9000)]
     pub(crate) max_context_tokens: u32,
+    /// Token cap for scene passages (scoped and character scenes) inside the passage budget; set by the mid profiles.
+    #[arg(skip)]
+    pub(crate) scene_tokens: Option<u32>,
+    /// Kill switch for the mid profiles' scene cap: scene passages go on top of the passage budget again (up to 6,000
+    /// scoped or 3,000 character tokens), which can overflow a 4,096-token slot.
+    #[arg(long)]
+    pub(crate) no_mid_scene_cap: bool,
     #[arg(long, default_value_t = 400)]
     pub(crate) n_predict: u32,
     /// Turn off question routing (table tools, timeline notes for time questions, synthesis for comparisons).
@@ -528,6 +535,9 @@ pub(crate) fn apply_profile(a: &mut Args, p: Profile) {
         a.router = RouterKind::Keywords;
         a.k = 8;
         a.max_context_tokens = if p == Profile::Mid { 3600 } else { 6000 };
+        if !a.no_mid_scene_cap {
+            a.scene_tokens = Some(1800);
+        }
         a.n_predict = 250;
         a.no_typed_fallback = true;
         a.no_answer_extend = true;

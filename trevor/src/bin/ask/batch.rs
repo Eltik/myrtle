@@ -161,7 +161,7 @@ pub(crate) fn scoped_only(a: &Args, rts: &mut Runtimes, tools: &Tools, b: &Path)
     for v in batch_items(b)? {
         let v = v?;
         let (id, q) = qid_question(&v);
-        if let Some((e, who, rows)) = scoped_scenes(&mut rts.main, tools, q) {
+        if let Some((e, who, rows)) = scoped_scenes(&mut rts.main, tools, q, crate::scenes::SCOPED_TOKENS) {
             let ids: Vec<&str> = rows.iter().map(|&r| rts.main.store.chunks[r].chunk_id.as_str()).collect();
             println!("{id}\t{e}\t{}\t{}", who.join("|"), ids.join(" "));
             if a.scoped_summaries {
@@ -175,7 +175,7 @@ pub(crate) fn scoped_only(a: &Args, rts: &mut Runtimes, tools: &Tools, b: &Path)
             println!("{id}\ttimegap\t{}>{}\t{}", e["groupId"].as_str().unwrap_or_default(),
                      l["groupId"].as_str().unwrap_or_default(), ids.join(" "));
         }
-        if let Some((who, rows)) = character_scenes(&mut rts.main, &rts.args, tools, q) {
+        if let Some((who, rows)) = character_scenes(&mut rts.main, &rts.args, tools, q, crate::scenes::CHAR_TOKENS) {
             let ids: Vec<String> =
                 rows.iter().map(|(r, _, n)| format!("{}:{n}", rts.main.store.chunks[*r].chunk_id)).collect();
             println!("{id}\tcharacter\t{who}\t{}", ids.join(" "));

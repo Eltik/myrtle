@@ -20,7 +20,7 @@ use crate::people::people_named;
 /// links) kept when the corpus writes the name capitalized (`proper_name`); the candidates are the event's chunks whose
 /// speakers or text hold one of their forms, ranked by the question with dense and BM25 fused by reciprocal rank (k 60),
 /// and the best are kept within `SCOPED_TOKENS`, at most `SCOPED_K`. Returns (event name, the characters, rows).
-pub(crate) fn scoped_scenes(rt: &mut Runtime, tools: &Tools, q: &str) -> Option<(String, Vec<String>, Vec<usize>)> {
+pub(crate) fn scoped_scenes(rt: &mut Runtime, tools: &Tools, q: &str, max_tokens: u32) -> Option<(String, Vec<String>, Vec<usize>)> {
     let g = tools.event_in_question(q)?;
     let gid = g["groupId"].as_str()?.to_owned();
     let ename = g["name"].as_str().unwrap_or(&gid).to_owned();
@@ -53,7 +53,7 @@ pub(crate) fn scoped_scenes(rt: &mut Runtime, tools: &Tools, q: &str) -> Option<
     let mut used = 0u32;
     for r in ranked {
         let cost = rt.store.chunks[r].token_count;
-        if rows.len() >= SCOPED_K || (!rows.is_empty() && used + cost > SCOPED_TOKENS) {
+        if rows.len() >= SCOPED_K || (!rows.is_empty() && used + cost > max_tokens) {
             break;
         }
         used += cost;
@@ -149,7 +149,7 @@ pub(crate) fn excerpt_window(rt: &Runtime, r: usize, idx: &[usize], window: usiz
 /// the question with each of the character's lines and the line before it. Each picked line keeps `CHAR_WINDOW` lines
 /// either side, at most `CHAR_LINES_PER_SCENE` lines a scene and `CHAR_K` scenes, within `CHAR_TOKENS`.
 /// Returns (the character as the corpus writes them, excerpts best first).
-pub(crate) fn character_scenes(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools, q: &str) -> Option<(String, Excerpts)> {
+pub(crate) fn character_scenes(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools, q: &str, max_tokens: u32) -> Option<(String, Excerpts)> {
     if tools.event_in_question(q).is_some() || tools.appearance_question(q).is_some() {
         return None;
     }
@@ -212,7 +212,7 @@ pub(crate) fn character_scenes(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools
         let before = if idx.is_empty() { 0 } else { excerpt(rt, r, &idx).1 };
         idx.push(i);
         let grow = excerpt(rt, r, &idx).1.saturating_sub(before);
-        if used + grow > CHAR_TOKENS && !picked.is_empty() {
+        if used + grow > max_tokens && !picked.is_empty() {
             break;
         }
         used += grow;

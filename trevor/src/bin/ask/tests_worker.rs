@@ -163,10 +163,12 @@ fn profile_mid_is_exactly_the_eval_arm_flags() {
     let arm = ["--router", "keywords", "--k", "8", "--n-predict", "250", "--no-typed-fallback", "--no-answer-extend",
                "--no-answer-check", "--no-operator-list-check"];
     for (profile, budget) in [("mid", "3600"), ("mid6k", "6000")] {
-        let mut flags = vec!["q", "--profile", "full", "--max-context-tokens", budget];
+        // The eval arms ran without the scene cap; with `--no-mid-scene-cap` the profile is exactly those flags.
+        let mut flags = vec!["q", "--profile", "full", "--max-context-tokens", budget, "--no-mid-scene-cap"];
         flags.extend(arm);
         let mut by_flags = parse(&flags);
-        let by_profile = parse(&["q", "--profile", profile]);
+        let by_profile = parse(&["q", "--profile", profile, "--no-mid-scene-cap"]);
+        assert_eq!(parse(&["q", "--profile", profile]).scene_tokens, Some(1800), "{profile}: scenes capped by default");
         assert_eq!(by_profile.profile.name(), profile);
         by_flags.profile = by_profile.profile;
         assert_eq!(format!("{by_flags:?}"), format!("{by_profile:?}"), "{profile}");

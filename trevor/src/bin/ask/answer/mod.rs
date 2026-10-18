@@ -311,7 +311,7 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
     }
     // The scoped scenes go first (before a term lookup's records), and are not repeated among the retrieved passages.
     let scoped = if gap.is_none() && !a.no_scoped_scenes && !a.no_route && kind.is_none() {
-        scoped_scenes(rt, &tables.tools, q)
+        scoped_scenes(rt, &tables.tools, q, a.scene_tokens.unwrap_or(crate::scenes::SCOPED_TOKENS))
     } else { None };
     if let Some((ename, who, rows)) = &scoped {
         for (i, &r) in rows.iter().enumerate() {
@@ -336,7 +336,7 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
     // before the retrieved passages, which keep their whole budget (the scoped scenes' 3,000-token rest would drop
     // retrieved lines other questions need).
     if scoped.is_none() && gap.is_none() && !a.no_character_scenes && !a.no_route && kind.is_none() {
-        if let Some((who, rows)) = character_scenes(rt, &a.runtime, &tables.tools, q) {
+        if let Some((who, rows)) = character_scenes(rt, &a.runtime, &tables.tools, q, a.scene_tokens.unwrap_or(crate::scenes::CHAR_TOKENS)) {
             for (i, (r, text, _)) in rows.iter().enumerate() {
                 let c = &rt.store.chunks[*r];
                 let label = story_label(names, &c.story_id);
@@ -347,7 +347,13 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
     }
     // With scoped scenes the retrieved passages get the rest of the budget, 3,000 tokens, as with IS-ending passages.
     let scoped_budget;
-    let a = if scoped.is_some() {
+    // Under a capped profile (`scene_tokens`, mid and mid6k) scene passages of either kind share the profile's budget,
+    // so the whole prompt fits the slot the profile is served with (4,096 tokens for mid).
+    let scenes_in = pre.iter().any(|p| p.scoped);
+    let a = if let (Some(cap), true) = (a.scene_tokens, scenes_in) {
+        scoped_budget = Args { max_context_tokens: a.max_context_tokens.saturating_sub(cap), ..a.clone() };
+        &scoped_budget
+    } else if scoped.is_some() {
         scoped_budget = Args { max_context_tokens: a.max_context_tokens.min(SCOPED_REST), ..a.clone() };
         &scoped_budget
     } else { a };
