@@ -74,3 +74,6 @@
 {"q": "does reading Babel before chapter 13 spoil anything?", "expect": "table", "tool": "reading_compare", "contains": ["Babel", "Spoilers:"], "routers": ["model", "knn"]}
 {"q": "Which ending of IS1 is canon?", "expect": "table", "tool": "canon", "contains": ["Ceobe's Fungimist, is not in the game data"], "routers": ["model", "knn"]}
 {"q": "What does Angelina's Bloodline of Combat outfit say?", "expect": "retrieval", "tool": "retrieve", "routers": ["model", "knn"]}
+{"q": "Was Talulah mentioned in People A People?", "expect": "table", "contains": ["Talulah neither speaks nor is named in People"]}
+{"q": "Was Talulah mentioned in Episode 17?", "expect": "table", "contains": ["Talulah speaks in"]}
+{"q": "Were people mentioned in Talulah's story?", "expect": "retrieval"}

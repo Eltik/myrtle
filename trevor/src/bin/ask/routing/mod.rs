@@ -53,6 +53,14 @@ pub(crate) async fn route_question(q: &str, a: &Args, tools: &Tools, llm: Option
             }
         }
     }
+    // "Was Talulah mentioned in People?" (`--no-event-mention`, 2026-10-19), for every router: the appearance index
+    // answers whether a character speaks or is named in an event the question names.
+    if !a.no_route && !a.no_event_mention {
+        if let Some(text) = tools.event_mention(q) {
+            return Ok(Routed { route: Route::new("appearances", &[("question", q)]), text: Some(text), error: None,
+                               topic: None, dossier: None, game: None, ms: started.elapsed().as_secs_f64() * 1000.0 });
+        }
+    }
     // Detectors that read the question only, before the router: every router line added for a tool moved
     // 20 to 34 unrelated routes, so these tools are reached without one. The keyword router gets them too since
     // 2026-10-19 (`--keyword-detectors-v1`: model router only).

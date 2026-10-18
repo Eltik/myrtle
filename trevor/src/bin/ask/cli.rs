@@ -235,6 +235,10 @@ pub(crate) struct Args {
     /// 2026-10-19 (it is now also kept when it cites only the lead passages both asks had).
     #[arg(long)]
     pub(crate) fallback_own_only: bool,
+    /// Turn off the event-mention answer: "Was Talulah mentioned in People?" goes to retrieval again instead of the
+    /// appearance index (2026-10-19).
+    #[arg(long)]
+    pub(crate) no_event_mention: bool,
     /// RELATION_RULE for this question: `!no_relation_rule`, set by `main` and per job; `answer_one_inner` clears it for
     /// a question naming a group topic, and for a relation question naming fewer than two people (not an admiration one).
     #[arg(skip)]

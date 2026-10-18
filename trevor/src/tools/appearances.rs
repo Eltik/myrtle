@@ -135,6 +135,65 @@ impl Tools {
         best.map(str::to_owned)
     }
 
+    /// "Was Talulah mentioned in People?": a yes/no question with a mention word, one character of the appearance index
+    /// (or an identity form of one) and one story group named as written (case kept, so "people" the word is not the
+    /// event People), answered from the index: speaks in N scenes, named in N scenes, or not named (2026-10-19). Before,
+    /// retrieval answered it from Roaring Flare, another event.
+    #[must_use]
+    pub fn event_mention(&self, q: &str) -> Option<String> {
+        let n = norm(q);
+        let first = n.split(' ').next().unwrap_or_default();
+        if !matches!(first, "was" | "is" | "does" | "did" | "has" | "have" | "are" | "were") {
+            return None;
+        }
+        let mention = ["mentioned", "mention", "mentions", "named", "appear", "appears", "appeared", "show up",
+            "shows up", "showed up", "featured", "present"];
+        if !mention.iter().any(|w| contains_words(&n, w)) {
+            return None;
+        }
+        let v = self.appearances.as_ref()?;
+        let groups = v["groups"].as_object()?;
+        // "Episode 17" or "chapter 17" by number, else a group name as written.
+        let words: Vec<&str> = n.split(' ').collect();
+        let numbered = words.windows(2).find_map(|w| matches!(w[0], "episode" | "chapter" | "ep")
+            .then(|| w[1].parse::<u64>().ok()).flatten());
+        let (gid, group) = numbered
+            .and_then(|k| groups.iter().find(|(_, g)| g["episode"].as_u64() == Some(k)))
+            .or_else(|| groups.iter()
+                .filter(|(_, g)| g["name"].as_str().is_some_and(|x| x.chars().count() >= 4
+                    && regex_free_word(q, x)))
+                .max_by_key(|(_, g)| g["name"].as_str().map_or(0, str::len)))?;
+        let gname = norm(group["name"].as_str().unwrap_or_default());
+        let chars = v["characters"].as_object()?;
+        let mut best: Option<(&str, usize)> = None;
+        for (key, _) in chars {
+            let forms = std::iter::once(key.as_str()).chain(self.identities.iter()
+                .filter(|i| i.iter().any(|x| norm(x) == norm(key))).flatten().map(String::as_str));
+            for f in forms {
+                let x = norm(f);
+                if x.chars().count() < 3 || contains_words(&gname, &x) || !contains_words(&n, &x) {
+                    continue;
+                }
+                if best.is_none_or(|(_, l)| l < x.len()) {
+                    best = Some((key.as_str(), x.len()));
+                }
+            }
+        }
+        let (who, _) = best?;
+        let label = appearance_label(group, gid);
+        let scenes = |k: u64| if k == 1 { "1 scene".to_owned() } else { format!("{k} scenes") };
+        let c = &chars[who];
+        Some(if let Some(k) = c["speaks"][gid.as_str()].as_u64() {
+            format!("Yes. In the story text Trevor has, {who} speaks in {} of {label}.", scenes(k))
+        } else if let Some(k) = c["mentioned"][gid.as_str()].as_u64() {
+            format!("Yes, by name: {who} is named in {} of {label}, without speaking there.", scenes(k))
+        } else {
+            format!("Not by name: {who} neither speaks nor is named in {label} in the story text Trevor has (the \
+                     scripts' speaker labels and name matches; a reference by a title or a description is not \
+                     counted). Ask where {who} appears for the stories that do name them.")
+        })
+    }
+
     /// The main episode or event a question names, for the scoped scenes: "Episode 7" or "chapter 7"
     /// by number, else the longest event name the question holds as whole words, compared case and punctuation folded and
     /// without a leading "the", 6 characters or more ("in masses travels" is The Masses' Travels). Operator records
@@ -285,4 +344,13 @@ pub(super) fn appearance_label(g: &Value, id: &str) -> String {
         (k, _) if k.starts_with("operator record") => format!("{k}, '{name}'"),
         _ => name.to_owned(),
     }
+}
+
+/// Whether `name` appears in `q` as written (case kept), as whole words.
+fn regex_free_word(q: &str, name: &str) -> bool {
+    q.match_indices(name).any(|(i, m)| {
+        let before = q[..i].chars().next_back();
+        let after = q[i + m.len()..].chars().next();
+        !before.is_some_and(char::is_alphanumeric) && !after.is_some_and(char::is_alphanumeric)
+    })
 }
