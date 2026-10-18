@@ -1322,16 +1322,19 @@ gated on the coverage measure, and add the measure to update.sh as a check.
 
 ### 2026-10-19: "How does Mon3tr react when she wakes up after Kal'tsit dies" (open)
 
-**Truth from the text.** Kal'tsit does not die in words: in `main_15-16_beg#0000` she "has disappeared ... The only
-thing left on the deck is a jacket" and Mon3tr shrinks "into a black, crystalline cocoon". Mon3tr's waking is told in
-The Masses' Travels, `act42side_st04#0003`: rebuilt with a new body, she remembers that "when I awoke, you just
-turned around and walked away after giving me a 'welcome back'", and vows "I'll bring back Kal'tsit! I'll also protect
-Amiya, and you too!", Kal'tsit's directive.
-**Measured (no model).** Hybrid retrieval on P3b ranks `act42side_st04#0003` first and `main_15-16_beg#0000` fourth;
-the E2B mid answer declined with them in reach (the preview ran the 21:53 binary). "How does Kal'tsit die, and how
-does she get revived?" retrieves neither: the question's "die" is not the text's "disappeared".
-**Next.** A premise note for death words when the deaths table has no death for the character (Kal'tsit vanished,
-not dead), plus the window that measures it.
+**Truth from the text (corrected: the waking is in Episode 15, not The Masses' Travels).** In `main_15-16_beg#0000`
+Kal'tsit "has disappeared ... The only thing left on the deck is a jacket" and Mon3tr shrinks "into a black,
+crystalline cocoon"; Amiya carries the cocoon out of the Abyss (`15-18_end#0001`). The waking is `15-18_end#0007` to
+`#0009`: the cocoon opens, "You hear an unfamiliar voice. ???: ...Kal'tsit?", she feels rain for the first time, puts
+on Kal'tsit's clothes, calls Kal'tsit's name "in uncertainty", finds she has all of Kal'tsit's memories but cannot
+sense her, then "Mon3tr: My name is Mon3tr. You gave me this name." She asks where they are (New Rhodes Island),
+says "I faced Priestess together with Kal'tsit, my maker... Then I lost her", asks to count as an operator, and reads
+Kal'tsit's restricted log ("You are free"). The Masses' Travels (`act42side_st04#0003`) only looks back on it: "when I
+awoke, you just turned around and walked away after giving me a 'welcome back'".
+**Measured (no model).** Hybrid retrieval on P3b for the question ranks `act42side_st04#0003` first and
+`main_15-16_beg#0000` fourth; `15-18_end#0007` is not in the top 10 (its text has "cocoon" and "unfamiliar voice",
+not "wake"). "How does Kal'tsit die, and how does she get revived?" retrieves neither scene: the text says
+"disappeared", not "died".
 
 ## Entities and topics
 
