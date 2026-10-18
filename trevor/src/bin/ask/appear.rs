@@ -134,10 +134,18 @@ impl Seen {
     }
 }
 
-/// Whether a visible chunk of group `gid` in `store` names one of `forms` (as a speaker or in the text).
-fn seen_within(store: &ChunkStore, h: &Horizon, gid: &str, forms: &[String]) -> bool {
-    store.chunks.iter().filter(|c| c.group_id == gid && h.allows(&c.story_id, &c.group_id))
-        .any(|c| forms.iter().any(|f| written(&c.text, f)))
+/// The visible chunks of group `gid` in `store` where a form of `forms` speaks, and those that only name it: the
+/// counts of a group the horizon cuts, so its later stories are not counted.
+fn seen_within(store: &ChunkStore, h: &Horizon, gid: &str, forms: &[String]) -> (u64, u64) {
+    let (mut speaks, mut named) = (0u64, 0u64);
+    for c in store.chunks.iter().filter(|c| c.group_id == gid && h.allows(&c.story_id, &c.group_id)) {
+        if c.text.lines().any(|l| forms.iter().any(|f| l.strip_prefix(f.as_str()).is_some_and(|r| r.starts_with(':')))) {
+            speaks += 1;
+        } else if forms.iter().any(|f| written(&c.text, f)) {
+            named += 1;
+        }
+    }
+    (speaks, named)
 }
 
 /// The answer for `oq` from the appearance index, under horizon `h` (with `store` for a group the horizon cuts); None
@@ -161,11 +169,13 @@ pub(crate) fn order_text(tools: &Tools, oq: &OrderQ, h: Option<&Horizon>, store:
         let gr = &groups[g.as_str()];
         // Operator records the reading guide does not place (order 10000) have no release position.
         let Some(release) = gr["order"].as_u64().filter(|&o| o < 10_000) else { continue };
+        let (mut speaks, mut named) = (count("speaks", g), count("mentioned", g));
         if let Some(h) = h {
             match h.order().group_span(g) {
                 Some((_, last)) if last <= h.pos => {}
                 Some((first, _)) if first <= h.pos => {
-                    if !store.is_some_and(|s| seen_within(s, h, g, &forms)) {
+                    (speaks, named) = store.map_or((0, 0), |s| seen_within(s, h, g, &forms));
+                    if speaks + named == 0 {
                         continue;
                     }
                 }
@@ -173,7 +183,7 @@ pub(crate) fn order_text(tools: &Tools, oq: &OrderQ, h: Option<&Horizon>, store:
             }
         }
         let year = tools.groups.get(g.as_str()).and_then(|x| x["storylineYear"].as_f64());
-        seen.push(Seen { label: label(gr, g), release, year, speaks: count("speaks", g), named: count("mentioned", g) });
+        seen.push(Seen { label: label(gr, g), release, year, speaks, named });
     }
     if seen.is_empty() {
         return None;
