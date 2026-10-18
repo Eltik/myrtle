@@ -1258,7 +1258,11 @@ B "could not find it"), Talulah (Episode 17; B named a 1099 story). A worse on 1
 B "Idida, a girl associated with a dessert cart", the expected name). `r015` and `r101`: theory against an informative
 decline, a tie. Discord 7 declines in both.
 **Decision.** Keep the defaults. `ian33` on the 12B: CHAR_NAME_RULE is in A's prompt and the answer still gives the
-description, so the rule does not do its job on this question; open.
+description, so the rule does not do its job on this question; open. The excerpt [2] holds "Gap-Toothed Girl: It's
+got my answer for me, confessor." and then "Idida: Dadadeedeeda, I'm called Idida.": the evidence is in the prompt and
+the model keeps the speaker label. Fix direction (unmeasured): link a description speaker label to the name label that
+follows it with a self-introduction in the same scene ("I'm called X", "my name is X") as an identity, so the passage
+can be labelled "Gap-Toothed Girl (Idida)".
 
 ## Entities and topics
 
