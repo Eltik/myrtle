@@ -1248,6 +1248,18 @@ Lights, Stultifera Navis, Exodus, Ideal City, Long Journey, mentioned in Path of
 list), `ian27` names the four IS4 endings with Ending 2 "Winterfall" but not its content (was "could not find").
 **Decision.** Keep the defaults.
 
+### 2026-10-19: Model window 6 (Gemma 12B, full profile, 17 questions)
+
+**Tried.** `scratchpad/n/window2.jsonl` on the 12B with `--profile full --no-cache-prompt`, binary `7b435d9b`, arm A
+the defaults, arm B every switch of the night off (the same B flags as windows 2 to 4).
+**Result.** 10 of 17 identical (Mandragora is a deaths-table answer in both). A better on 3: Fyodor (a labelled theory:
+his concern for the Infected and the mines he closed; B declines), Idida ("the Gap-Toothed Girl", The Masses' Travels;
+B "could not find it"), Talulah (Episode 17; B named a 1099 story). A worse on 1: `ian33` (A "the Gap-Toothed Girl",
+B "Idida, a girl associated with a dessert cart", the expected name). `r015` and `r101`: theory against an informative
+decline, a tie. Discord 7 declines in both.
+**Decision.** Keep the defaults. `ian33` on the 12B: CHAR_NAME_RULE is in A's prompt and the answer still gives the
+description, so the rule does not do its job on this question; open.
+
 ## Entities and topics
 
 Identities, names and aliases, topics and topic summaries, dossiers, canon evidence for the Integrated Strategies endings, deaths, places, organisations, operator data.
