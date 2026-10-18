@@ -76,6 +76,8 @@ def stage_dates():
     # table is back. DATES_REQUIRE_TABLES=1 fails instead, as before.
     if not os.path.exists(os.path.join(common.EXCEL, 'activity_table.json')) and os.environ.get('DATES_REQUIRE_TABLES') != '1':
         print('dates: activity_table.json is missing from the game data; keeping the last main_release.json', file=sys.stderr)
+        if os.environ.get('DATES_KEEP_FILE') != '1':
+            stage_dates_without_activity()  # DATES_KEEP_FILE=1: keep the file as is (before 2026-10-19)
         return
     """EN release dates of the main episodes from the game data alone (see the module docstring)."""
     zt = common.excel_table('zone_table.json')
@@ -141,6 +143,45 @@ def stage_dates():
     print(f"dates: {len(eps)} episodes; exact {len(exact)}, estimated {sum(e['shown'].startswith('about') for e in eps)}, "
           f"upper bound {sum(e['shown'].startswith('by ') for e in eps)}, unknown {sum(e['global'] is None for e in eps)}; "
           f"Adverse offset median {off / 86400 if off else float('nan'):.2f} days from {len(offs)} episodes")
+
+
+def stage_dates_without_activity():
+    """Dates a new episode while activity_table is missing: the episodes main_release.json already has keep their rows
+    unchanged, and a new one gets the Adverse-stage estimate of stage_dates() (zone_table and stage_table only), with the
+    offsets measured against the kept rows' game-data dates. Without Adverse stages it stays undated, after the last one."""
+    path = os.path.join(CH, 'main_release.json')
+    eps = json.load(open(path))
+    have = {e['episode'] for e in eps}
+    st = common.excel_table('stage_table.json')
+    new = sorted({int(m.group(1)) for m in (re.match(r'main_(\d+)-\d+$', k) for k in kv(st['Stages'])) if m} - have)
+    if not new:
+        return
+    zt = common.excel_table('zone_table.json')
+    zones, stages = kv(zt['Zones']), kv(st['Stages'])
+    hard = collections.defaultdict(list)
+    for r in st['StageValidInfo']:
+        m = re.match(r'hard_(\d+)-\d+$', r['key'])
+        if m and r['value'].get('StartTs', -1) > 0:
+            hard[int(m.group(1))].append(r['value']['StartTs'])
+    ts = lambda d: datetime.datetime.strptime(d, '%Y-%m-%d').replace(tzinfo=datetime.timezone.utc).timestamp()
+    offs = [min(hard[e['episode']]) - ts(e['global']) for e in eps
+            if e['basis'].startswith('game data') and hard.get(e['episode']) and min(hard[e['episode']]) > ts(e['global'])]
+    off = statistics.median(offs) if offs else None
+    for ep in new:
+        z = next((s['ZoneId'] for k, s in stages.items() if re.match(rf'main_{ep}-\d+$', k) and s.get('ZoneId')), None)
+        title = (zones.get(z) or {}).get('ZoneNameSecond') or ''
+        if hard.get(ep) and off is not None:
+            g = day(min(hard[ep]) - off); shown = f'about {g}'
+            basis = (f'estimate: its Adverse stages opened {day(min(hard[ep]))}; on {len(offs)} dated episodes they open '
+                     f'{min(offs) / 86400:.2f} to {max(offs) / 86400:.2f} days after the episode (activity_table missing)')
+        else:
+            g = None; shown = f'not dated in the game data (after Episode {eps[-1]["episode"]})'
+            basis = 'unknown: activity_table is missing and it has no Adverse schedule; placed after the episode before it'
+        eps.append({'episode': ep, 'title': title, 'global': g, 'shown': shown, 'basis': basis,
+                    'source': 'EN game data (zone_table, stage_table; activity_table missing)'})
+    json.dump(eps, open(path, 'w'), ensure_ascii=False, indent=1)
+    print(f'dates: {len(new)} new episodes dated without activity_table: '
+          + ', '.join(f"{e['episode']} {e['shown']}" for e in eps[-len(new):]))
 
 
 def stage_score():
