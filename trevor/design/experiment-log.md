@@ -1291,6 +1291,18 @@ cab32936).** 148 identical; the 7 that change are all ones the later commits tar
 (keyword-router detectors), `r052` (declines; no theory on a canon question), `ian12` (event and Idida named),
 `ian33` (still the explosion line, reworded), `r119` (reworded). No unexpected change.
 
+### 2026-10-19: Probe set on the 12B, full profile, after the night
+
+**Tried.** `eval/ian-questions.jsonl` (35) on the 12B, `--profile full --no-cache-prompt`, final binary of the night
+(`7a82a428`), graded by hand against each item's `expected` (one grader; no judge model).
+**Result.** 25 right, 5 partial (`ian10` NPC list, `ian18` Ed, `ian19` Kristen not stated as unrelated, `ian22` adds
+"other operators", `ian35` no ranking), 5 declined (`ian6` pee/piss wording gap, `ian11`, `ian12`, `ian24`
+Bluishsilver, `ian30` Dossoles factions), 0 wrong. The last recorded tally was 14 right, 13 partial, 0 wrong, 6
+declined of 33 (2026-10-06); the set grew by 2 and the grader differs, so the comparison is indicative. Newly right
+include `ian16` (bosses table), `ian27` (Winterfall with Santalla, from P4 under the model router), `ian32`
+(appearance index), `ian33` (Idida, label renames). `ian12` declines on the full profile although E2B mid answers it.
+**Decision.** None (measurement). Open: `ian12` on full, the declines above.
+
 ## Entities and topics
 
 Identities, names and aliases, topics and topic summaries, dossiers, canon evidence for the Integrated Strategies endings, deaths, places, organisations, operator data.
