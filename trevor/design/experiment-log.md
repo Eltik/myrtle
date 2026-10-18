@@ -1233,6 +1233,21 @@ match window 2's A or B.
 leaves titles out by design ("King of Sarkaz" would credit Amiya with Theresa's lines), and Near Light names her only
 "the Black Knight". `ian33` still answers from the reranker's top line.
 
+### 2026-10-19: Model windows 4 and 5 (E2B mid, the probe sets)
+
+**Tried.** Window 4: `eval/ian-questions.jsonl` and `eval/real-probe.jsonl` (155 questions) on `cab32936`, arm A the
+defaults, arm B every switch of the night off (147 of 155 in B: the run hit a 2-hour job limit). Window 5: the 35
+probe questions and 4 real-probe theory questions, defaults only, on `7b435d9b`.
+**Result.** Window 4: 7 of 147 answers differ. 2 are the passage-label fix only (`ian32`, `r066`); 4 are theories where
+B declined (`r015`, `r020`, `r101` reasonable; `r052` "Is Specter Alter Canon?" noise, so canon words joined the
+theory's META list, `7b435d9b`); `ian33` is wrong in both. `ian32` ("What chapters does Elysium appear in?") was
+answered from 7 passages in both arms: under the keyword router the question-only detectors never ran (`728f0827`).
+Window 5 against window 4's A: exactly the 3 rerouted questions change. `ian16` gives the 12-operator bosses table
+(the probe's expected answer), `ian32` the appearance index (Episodes 7, 8 and 16, Rewinding Breeze, Preluding
+Lights, Stultifera Navis, Exodus, Ideal City, Long Journey, mentioned in Path of Life and Will You?: the expected
+list), `ian27` names the four IS4 endings with Ending 2 "Winterfall" but not its content (was "could not find").
+**Decision.** Keep the defaults.
+
 ## Entities and topics
 
 Identities, names and aliases, topics and topic summaries, dossiers, canon evidence for the Integrated Strategies endings, deaths, places, organisations, operator data.
