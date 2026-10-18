@@ -223,6 +223,10 @@ pub(crate) struct Args {
     /// earliest one the passages show) and the earlier scenes of the story its search keeps hitting, placed first.
     #[arg(long)]
     pub(crate) no_origin_chain: bool,
+    /// Turn off STORY_NAME_RULE: a question asking in which event, story, chapter or episode something happens is
+    /// told to name it from the passage label (2026-10-19).
+    #[arg(long)]
+    pub(crate) no_story_name_rule: bool,
     /// RELATION_RULE for this question: `!no_relation_rule`, set by `main` and per job; `answer_one_inner` clears it for
     /// a question naming a group topic, and for a relation question naming fewer than two people (not an admiration one).
     #[arg(skip)]

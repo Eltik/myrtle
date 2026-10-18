@@ -121,6 +121,12 @@ student [3]\"); give no estimate only when the passages hold nothing that bears 
 /// Why/how-it-began questions (the default, `--no-origin-chain`): the model is told to trace the causes back to the
 /// earliest one the passages show, not stop at the most direct ("Why did swire join the LGD?" starts from the
 /// kidnapping that opens story_swire_set_1_story_1, not her grandfather's shadow later in it).
+/// "During which event did Mon3tr suggest ...?": name the event or story from the passage label (2026-10-19,
+/// `--no-story-name-rule`).
+pub(crate) const STORY_NAME_RULE: &str = " The question asks in which event, story, chapter or episode something \
+happens: name it as the passage label gives it (the event and the story title), then say what happens there, with \
+citations.";
+
 pub(crate) const ORIGIN_RULE: &str = " The question asks why or how something began. \
 Trace the causes back to the earliest one the passages show (an event in someone's childhood, \
 an earlier decision, the first proposal of a project), then follow the chain forward to what the question asks \

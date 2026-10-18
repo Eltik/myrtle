@@ -12,13 +12,13 @@ use trevor::tools::norm;
 use crate::chrono::{Chrono, chronology_for, time_evidence_block, timeline_notes};
 use crate::cli::{Args, form_on};
 use crate::detect::{
-    asks_age, asks_origin, asks_person, asks_relation, asks_term, asks_when, is_open_listing,
+    asks_age, asks_origin, asks_person, asks_relation, asks_which_story, asks_term, asks_when, is_open_listing,
     is_opinion_question,
 };
 use crate::form::{Flags, Form};
 use crate::prompts::{
     AGE_RULE, ART_RULE, CANON_RULE, CHAR_LABEL, CHAR_NAME_RULE, CHAR_RULE_TAIL, DATE_RULE, DEATH_RULE_TAIL, GAP_RULE_TAIL, GAP_TAIL, INFER_RULE,
-    OPINION_FORM_RULE, OPINION_RULE, ORIGIN_RULE, RELATION_RULE, SCOPED_RULE_HEAD, SCOPED_RULE_TAIL, SOURCE_RULE, SYNTH_RULE, SYSTEM, TERM_RULE, THEORY_RULE,
+    OPINION_FORM_RULE, OPINION_RULE, ORIGIN_RULE, RELATION_RULE, STORY_NAME_RULE, SCOPED_RULE_HEAD, SCOPED_RULE_TAIL, SOURCE_RULE, SYNTH_RULE, SYSTEM, TERM_RULE, THEORY_RULE,
     TIME_EVIDENCE_TAIL, TIME_RULE, YES_NO_RULE,
 };
 use crate::labels::{Names, story_label};
@@ -199,6 +199,9 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
     }
     if !a.no_term_rule && !a.no_route && asks_term(q) {
         system.push_str(TERM_RULE);
+    }
+    if !a.no_story_name_rule && !a.no_route && asks_which_story(q) {
+        system.push_str(STORY_NAME_RULE);
     }
     if a.relation_rule && !a.no_route && asks_relation(q) {
         system.push_str(RELATION_RULE);

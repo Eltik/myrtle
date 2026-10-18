@@ -5,7 +5,7 @@ use trevor::tools::Tools;
 use crate::batch::{batch_items, qid_question};
 use crate::chrono::{Chrono, chronology_for, time_evidence_block};
 use crate::cli::lock_path_from;
-use crate::detect::{HINT_VERBS, asks_identity, asks_origin, asks_person, asks_relation, asks_scene_with, asks_term, asks_when, term_of};
+use crate::detect::{HINT_VERBS, asks_identity, asks_origin, asks_person, asks_relation, asks_which_story, asks_scene_with, asks_term, asks_when, term_of};
 use crate::labels::{Names, story_label, typed_owner};
 use crate::people::{one_operator, one_operator_wide};
 use crate::terms::{compact, first_sentences};
@@ -31,6 +31,9 @@ fn rule_triggers_fire_on_their_questions_only() {
             && asks_person("what is the name of the npc that mon3tr suggests assassinating")
             && asks_person("Who did Talulah say was absent?"));
     assert!(!asks_person("What event did Count Vincent say would be discussed later in the evening?"));
+    assert!(asks_which_story("During which event Mon3tr suggested assassinating a child")
+            && asks_which_story("In which chapter does Ch'en leave the LGD?"));
+    assert!(!asks_which_story("What event did Count Vincent say would be discussed later in the evening?"));
     assert!(asks_when("When was Rhodes Island founded?") && asks_when("in what year did X die")
             && !asks_when("Who founded Rhodes Island?"));
     assert_eq!(typed_owner("Operator art: Pallas, E2 (Elite 2) art").as_deref(), Some("Pallas"));

@@ -174,6 +174,15 @@ pub(crate) fn asks_person(q: &str) -> bool {
     [" who ", " whom ", " whose ", " name ", " names ", " named ", " called ", " npc ", " npcs "].iter().any(|w| ql.contains(w))
 }
 
+/// Whether a question asks in which event or story something happens ("During which event ...", "In which chapter
+/// ..."). "What event did Count Vincent say ..." is not one: it asks about an event inside the story.
+pub(crate) fn asks_which_story(q: &str) -> bool {
+    let ql = padded_words(q);
+    [" which event ", " which events ", " which story ", " which stories ", " which chapter ", " which chapters ",
+     " which episode ", " which episodes ", " what chapter ", " what episode ", " during what event "]
+        .iter().any(|w| ql.contains(w))
+}
+
 /// Whether a question asks how people are related, or whom someone admires.
 pub(crate) fn asks_relation(q: &str) -> bool {
     let ql = padded_words(q);
