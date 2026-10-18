@@ -124,12 +124,13 @@ pub(crate) fn hints(texts: &[String], forms: &[String], stems: &[String]) -> Vec
 }
 
 /// Words of a question about the game rather than the story ("Does Fyodor deserve a sprite?"), matched as whole words
-/// ("frontier", "released", "designated" and "pulled" are story words).
+/// ("frontier", "released", "designated" and "pulled" are story words). "Is Specter Alter canon?" asks about the game
+/// too: its theory said the answer "might be a specific narrative choice made by the creators" (window 4, r052).
 const META: &[&str] = &["deserve", "deserves", "sprite", "sprites", "translate", "translated", "translation",
                         "translations", "translator", "skin", "skins", "banner", "banners", "rerun", "reruns", "voice actor",
                         "artist", "artists", "nerf", "nerfed", "buff", "buffed", "tier", "worth", "pull", "pulls",
                         "playable", "release", "upcoming", "model", "models", "design", "designs", "based on",
-                        "inspired", "reference", "references"];
+                        "inspired", "reference", "references", "canon", "canonical", "noncanon"];
 
 /// The words of a whether-question after its subject, when the subject is `who` right after the first word (and an
 /// optional "the"): "Is Fyodor infected?" gives "infected"; None when `who` is not the subject or the question is about
@@ -284,6 +285,7 @@ mod tests {
         assert_eq!(predicate("Is Fyodor infected?", "Fyodor").as_deref(), Some("infected"));
         assert_eq!(predicate("Does anyone know what crossbow Faust uses?", "Faust"), None);
         assert_eq!(predicate("Does Fyodor deserve a sprite?", "Fyodor"), None);
+        assert_eq!(predicate("Is Specter Alter Canon?", "Specter"), None);
         assert_eq!(predicate("Is there a lore behind Ascalon's tattoo?", "Ascalon"), None);
     }
 
