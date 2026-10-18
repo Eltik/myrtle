@@ -209,6 +209,9 @@ def group_words():
     return {w for w in words if len(w) >= 3}
 
 
+PRONOUNS = {'i', 'me', 'my', 'you', 'he', 'him', 'she', 'her', 'they', 'them', 'we', 'us', 'it'}
+
+
 def common_noun(name, quote):
     """A one-word name the quote has only in lower case ("Knight" in "her knight title")."""
     return (' ' not in name and re.search(rf'\b{re.escape(name)}\b', quote) is None
@@ -256,9 +259,11 @@ def stage_build():
                 continue
             # A one-word name the quote writes only in lower case is a common noun ("her knight title" had joined Knight
             # to Flametail), and a name after "your ... as" belongs to the person addressed, not the speaker ("By your
-            # standards as the Black Knight" had joined Degenbrecher's title to Trilby Asher). 3 of 263 links, 2026-10-19;
-            # ENTITY_LINKS_V1=1 keeps them.
-            if os.environ.get('ENTITY_LINKS_V1') != '1' and any(common_noun(n, l['quote']) or addressed(n, l['quote']) for n in (a, b)):
+            # standards as the Black Knight" had joined Degenbrecher's title to Trilby Asher). 3 of 263 links, 2026-10-19.
+            # A pronoun is not a name either: "Call me Brigid." had joined I to Brigid, Mudrock, Sand Reckoner and
+            # Doc. Aak (8 links in pairs and pairs.v2). ENTITY_LINKS_V1=1 keeps them all.
+            if os.environ.get('ENTITY_LINKS_V1') != '1' and any(common_noun(n, l['quote']) or addressed(n, l['quote'])
+                                                                or n.lower() in PRONOUNS for n in (a, b)):
                 unstated.append((a, b, l['quote'], r['storyId'], l['relation']))
                 continue
             parent[find(a)] = find(b)
