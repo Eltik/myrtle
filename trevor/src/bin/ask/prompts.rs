@@ -168,7 +168,8 @@ pub(crate) const SPOILER_WHERE: &str = " (you are up to {era})";
 
 /// The deaths evidence (`fate.rs`): " Passages [a] to [b]" (or " Passage [a]") then this, with `{who}` filled in.
 pub(crate) const DEATH_RULE_TAIL: &str = " the story lines where Trevor's deaths table finds {who}'s death or a report \
-of it. Say first whether {who} is alive or dead by those lines, with their citations. A line counts for {who} only \
+of it. Say first whether {who} is alive or dead by those lines, then what the line says and who says it, in which \
+story (its label names it), with its citation; do not answer only \"according to the text\". A line counts for {who} only \
 when it says it of {who}: a line {who} speaks about someone else's death, or a line about another character, is not \
 about {who}.";
 
