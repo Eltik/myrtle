@@ -1305,6 +1305,21 @@ include `ian16` (bosses table), `ian27` (Winterfall with Santalla, from P4 under
 fallback's correct retry was discarded for citing no Mon3tr unit; fixed by `43e30986` (the retry is kept when it cites
 only the lead passages both asks had), so the tally is 26 right, 5 partial, 4 declined, 0 wrong. Open: the 4 declines.
 
+### 2026-10-19: Group summaries that stop after the first stories (Episode 15)
+
+**Why.** "Give a summary of chapter 15" returned three paragraphs about the opening interlude and Theresis
+(`st_15-01`, `15-01_beg`, `15-01_end`, `st_15-02`, which recaps the end of Episode 14), so it read as a summary of
+Episode 13 or 14. The P3b text and the 25 story summaries of `main_15` are right (Hierda and Raydistorter, the
+Priestess, Oracle and AMa-10, Kal'tsit vanishing in 15-16, the PRTS core in the Abyss); the 12B's group summary
+(method C, 293 words, under its 700-token limit) spent its length on the first stories.
+**Measured (no model).** Name coverage per group: the capitalized names that recur in at least a quarter (and 3) of a
+group's story summaries, and the share of them missing from the group summary (method C). Of 86 groups with 6 or
+more stories the worst are act41side 0.83, main_17 0.71 (written on 2026-10-18), act21side 0.60, main_15 0.57,
+act12side 0.44; the measure is noisy ("Finally", "Nearby" count as names).
+**Decision.** Open, needs the model: regenerate the low-coverage groups with a prompt that gives each part of the
+story its share (for instance a third of the stories per paragraph, or 1 to 2 sentences per story, then a merge),
+gated on the coverage measure, and add the measure to update.sh as a check.
+
 ## Entities and topics
 
 Identities, names and aliases, topics and topic summaries, dossiers, canon evidence for the Integrated Strategies endings, deaths, places, organisations, operator data.
