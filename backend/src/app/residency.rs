@@ -11,6 +11,11 @@
 //! Unset (the default), every server is eager and none of this runs: the boot,
 //! the request path and the jobs behave exactly as before.
 //!
+//! A load first asks the reload guard (`core::reload_guard`, `RELOAD_GUARD`):
+//! while `MemAvailable` is below the server's floor or a Trevor model holds
+//! its lock, the load does not start and the request gets the 503 +
+//! `Retry-After` a failed load gets.
+//!
 //! Loads go through the asset watcher's reload lock, so a lazy load never
 //! stacks on a hot reload or another lazy load (each build holds a second
 //! `GameData`-sized allocation until it is published), and through `cpu::run`,
@@ -269,6 +274,22 @@ fn start_load(state: &AppState, server: Server, sd: &Arc<ServerData>) {
         .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
         .is_err()
     {
+        return;
+    }
+    // The reload guard (`core::reload_guard`): a lazy load is the same second
+    // `GameData` a hot reload builds, so it waits on the same memory floor and
+    // Trevor model lock. A refusal finishes the attempt as a failure, so every
+    // waiter answers the 503 + `Retry-After` of a failed load and requests
+    // inside `RETRY_AFTER_FAILURE` answer it without asking the guard again
+    // (one log line a minute per server, not one per request).
+    if let Err(why) = crate::core::reload_guard::admit(
+        &state.http_client,
+        server,
+        crate::core::reload_guard::LoadKind::LazyLoad,
+    ) {
+        sd.residency.record(Err(format!("held back: {why}")));
+        sd.residency.loading.store(false, Ordering::Release);
+        sd.residency.done.send_modify(|n| *n += 1);
         return;
     }
     let state = state.clone();
@@ -746,6 +767,103 @@ mod tests {
             // The eager default's caches are never touched.
             assert!(state.try_server_data(Server::EN).is_some());
         }
+    }
+
+    /// The reload guard holds a lazy load and a hot reload back while the
+    /// Trevor model lock names a live process: the load answers 503, the
+    /// reload keeps the old data and is retried on its timer once the lock
+    /// goes. `RELOAD_GUARD=0` builds under a held lock, as before. Memory is
+    /// kept out of it (`RELOAD_MIN_FREE_MB=0`) so the host cannot decide the
+    /// outcome; the memory half is covered by the guard's unit tests.
+    #[allow(clippy::await_holding_lock)] // test-only serialisation
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn the_reload_guard_holds_builds_back_under_the_model_lock() {
+        use crate::core::reload_guard::{GuardConfig, TEST_CONFIG};
+        struct Reset;
+        impl Drop for Reset {
+            fn drop(&mut self) {
+                *TEST_CONFIG
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner) = None;
+            }
+        }
+        let _serial = serial();
+        let _cpu = crate::app::cpu::tests::POOL.lock().await;
+        let scratch = Scratch::new("guard");
+        scratch.write_server(Server::EN);
+        scratch.write_server(Server::JP);
+        let state = state_for(scratch.base(), &[Server::EN, Server::JP], &[Server::JP]);
+        let lock = scratch.base().join("llm.lock");
+        let lock_env = lock.to_string_lossy().into_owned();
+        let guard_env = |off: bool| {
+            let lock_env = lock_env.clone();
+            GuardConfig::parse(move |k| match k {
+                "TREVOR_LLM_LOCK" => Some(lock_env.clone()),
+                "RELOAD_MIN_FREE_MB" => Some("0".into()),
+                "RELOAD_RETRY_SECS" => Some("1".into()),
+                "RELOAD_GUARD" if off => Some("0".into()),
+                _ => None,
+            })
+        };
+        let _reset = Reset;
+        *TEST_CONFIG.lock().expect("config") = Some(guard_env(false));
+        std::fs::write(&lock, format!("{} stages window-gen\n", std::process::id())).expect("lock");
+
+        let jp = state.entry(Server::JP).expect("JP");
+        let r = ensure_loaded(&state, Server::JP, Duration::from_secs(20)).await;
+        assert!(
+            matches!(&r, Err(ApiError::ServiceUnavailableMessage(m)) if m.contains("model lock")),
+            "{r:?}"
+        );
+        assert!(
+            !jp.loaded.load(Ordering::Acquire),
+            "no lazy load under the lock"
+        );
+
+        let en = state.entry(Server::EN).expect("EN");
+        let before = en.game_data.load_full();
+        crate::core::asset_watcher::perform_reload(&state, Server::EN, Some("26-10-19-v1")).await;
+        assert!(
+            Arc::ptr_eq(&before, &en.game_data.load_full()),
+            "reload held back"
+        );
+        // A second refusal while the retry waits arms no second retry.
+        crate::core::asset_watcher::perform_reload(&state, Server::EN, None).await;
+        assert!(Arc::ptr_eq(&before, &en.game_data.load_full()));
+
+        std::fs::remove_file(&lock).expect("unlock");
+        let deadline = Instant::now() + Duration::from_secs(20);
+        while Arc::ptr_eq(&before, &en.game_data.load_full()) {
+            assert!(Instant::now() < deadline, "the deferred reload never ran");
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+        let retried = en.game_data.load_full();
+        tokio::time::sleep(Duration::from_millis(1500)).await;
+        assert!(
+            Arc::ptr_eq(&retried, &en.game_data.load_full()),
+            "one retry, not two"
+        );
+
+        // The refusal backs requests off like a failed load; past it, JP loads.
+        jp.residency.record(Ok(()));
+        ensure_loaded(&state, Server::JP, Duration::from_secs(20))
+            .await
+            .expect("admitted once the lock is gone");
+        assert!(jp.loaded.load(Ordering::Acquire));
+
+        // RELOAD_GUARD=0: a held lock changes nothing.
+        assert_eq!(unload_idle(&state, Duration::ZERO).await, vec![Server::JP]);
+        *TEST_CONFIG.lock().expect("config") = Some(guard_env(true));
+        std::fs::write(&lock, format!("{} stages window-gen\n", std::process::id())).expect("lock");
+        ensure_loaded(&state, Server::JP, Duration::from_secs(20))
+            .await
+            .expect("switch off: loads under the lock");
+        let before = en.game_data.load_full();
+        crate::core::asset_watcher::perform_reload(&state, Server::EN, None).await;
+        assert!(
+            !Arc::ptr_eq(&before, &en.game_data.load_full()),
+            "switch off: reloads under the lock"
+        );
     }
 
     /// Task 3: a sidecar patch publishes a new `GameData` that shares the live

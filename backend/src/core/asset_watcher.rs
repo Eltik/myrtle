@@ -1,5 +1,7 @@
+use std::collections::HashMap;
 use std::path::Path;
 use std::sync::atomic::Ordering;
+use std::sync::{LazyLock, Mutex};
 use std::time::{Duration, Instant};
 
 use futures_util::StreamExt;
@@ -12,6 +14,7 @@ use crate::core::gamedata::tables::DataError;
 use crate::core::gamedata::types::GameData;
 use crate::core::hypergryph::constants::Server;
 use crate::core::hypergryph::loaders::reload;
+use crate::core::reload_guard::LoadKind;
 
 const DEBOUNCE_SECS: u64 = 5;
 const MAX_BACKOFF: Duration = Duration::from_secs(30);
@@ -235,6 +238,21 @@ pub(crate) async fn perform_reload(state: &AppState, server: Server, res_version
         );
         return;
     }
+    // The reload guard (`core::reload_guard`): no second `GameData` while
+    // memory is short or a Trevor model holds the lock. A refused reload
+    // keeps the old data and is retried on a timer (`defer_reload`); one that
+    // runs takes over the version of any retry still waiting, which then
+    // finds nothing to do. `RELOAD_GUARD=0` admits every reload and nothing
+    // is ever deferred, as before.
+    if let Err(why) = crate::core::reload_guard::admit(&state.http_client, server, LoadKind::Reload)
+    {
+        drop(reload_guard);
+        defer_reload(state, server, res_version, &why);
+        return;
+    }
+    let deferred = take_deferred(server);
+    let version: Option<String> = res_version.map(str::to_owned).or(deferred.flatten());
+    let res_version = version.as_deref();
     let data_dir = sd.game_data_dir.clone();
     let assets_dir = sd.assets_dir.clone();
     let art_dir = sd.art_dir.clone();
@@ -358,6 +376,50 @@ pub(crate) async fn perform_reload(state: &AppState, server: Server, res_version
             );
         }
     }
+}
+
+/// Hot reloads the reload guard held back, by server: the update's version
+/// (the latest that carried one), waiting for the retry task.
+static DEFERRED: LazyLock<Mutex<HashMap<Server, Option<String>>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
+
+/// Take a server's deferred reload, if one is waiting: `Some(version)`.
+fn take_deferred(server: Server) -> Option<Option<String>> {
+    DEFERRED.lock().ok()?.remove(&server)
+}
+
+/// Retry a reload the guard refused, after `RELOAD_RETRY_SECS`. One retry
+/// task per server: a refusal while one waits only updates the version it
+/// will record. The task runs the whole [`perform_reload`] again, so a second
+/// refusal re-arms a fresh task, and a reload that ran meanwhile has already
+/// taken the entry (`take_deferred`) and leaves the task nothing to do.
+fn defer_reload(
+    state: &AppState,
+    server: Server,
+    res_version: Option<&str>,
+    why: &crate::core::reload_guard::Refusal,
+) {
+    let Ok(mut deferred) = DEFERRED.lock() else {
+        return;
+    };
+    if let Some(slot) = deferred.get_mut(&server) {
+        if res_version.is_some() {
+            *slot = res_version.map(str::to_owned);
+        }
+        return;
+    }
+    deferred.insert(server, res_version.map(str::to_owned));
+    drop(deferred);
+    let retry = crate::core::reload_guard::config().retry;
+    tracing::debug!(server = server.as_str(), reason = %why, retry_secs = retry.as_secs(), "reload deferred");
+    let state = state.clone();
+    tokio::spawn(async move {
+        tokio::time::sleep(retry).await;
+        let Some(version) = take_deferred(server) else {
+            return;
+        };
+        perform_reload(&state, server, version.as_deref()).await;
+    });
 }
 
 /// Publish a sidecar refresh (pool details, event shops) without rebuilding

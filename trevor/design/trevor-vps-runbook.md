@@ -284,6 +284,15 @@ worker's own reports will show. By hand: `publish.py --activate <version>` (with
   the idle time is too short for the traffic (raise it or drop the server from the list). Watch the backend's RSS
   across one unload (`ps -o rss -p <pid>`): until the per-server caches are cleared on unload (budget doc item 3), it
   falls by less than the 219 MB measured. Unset `SERVERS_LAZY` and restart the backend to go back to eager loading.
+- Game-data reloads wait for the window (2026-10-19, backend `RELOAD_GUARD`, `trevor-memory-budget.md` section 3, item 7):
+  a hot reload or lazy load does not start while `/run/trevor/llm.lock` names a live pid or `MemAvailable` is below
+  `RELOAD_MIN_FREE_MB` (EN 900, CN 1800, others 1200 MiB), so an asset update that lands inside the 12B window is served
+  from the old data until the window closes or pauses, then reloads within `RELOAD_RETRY_SECS` (300); by day it lands
+  in a gap between stage units. Each refusal logs "held back by the reload guard" in the backend's log, and one Discord
+  embed "Game-data reload waiting" posts past `RELOAD_MAX_WAIT_SECS` (6 h). Open: step 1 of the daily update takes a
+  `.version` older than `SETTLE_MIN` as proof the backend has reloaded, which a deferred reload breaks; check the
+  backend log for a refusal before trusting a corpus built inside the window. `RELOAD_GUARD=0` in `backend/.env` turns
+  the guard off.
 - `artifacts/bank/regen/history.jsonl`: every `detect` and `run`, with counts. `trevor-vps-update.sh summaries`
   logs `bank-cf.json` and `bank-local.json` in the run's log directory.
 

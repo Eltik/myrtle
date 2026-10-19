@@ -18,6 +18,7 @@ pub mod operator_ownership_job;
 pub mod refresh;
 pub mod regrade_job;
 pub mod release;
+pub mod reload_guard;
 pub mod service_account;
 pub mod sidecar;
 pub mod squad;

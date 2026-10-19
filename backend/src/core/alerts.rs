@@ -83,6 +83,42 @@ pub async fn report_service_account_refused(client: &reqwest::Client, server: &s
     .await;
 }
 
+/// A game-data build has been held back by the reload guard
+/// (`core::reload_guard`) for longer than `RELOAD_MAX_WAIT_SECS`. Posted once
+/// per wait; the build still runs on its own once memory or the model frees.
+pub async fn report_reload_waiting(
+    client: &reqwest::Client,
+    server: &str,
+    kind: &str,
+    waited: std::time::Duration,
+    reason: &str,
+) {
+    post(client, reload_waiting_embed(server, kind, waited, reason)).await;
+}
+
+/// The embed of [`report_reload_waiting`], pure so its shape is testable.
+pub fn reload_waiting_embed(
+    server: &str,
+    kind: &str,
+    waited: std::time::Duration,
+    reason: &str,
+) -> serde_json::Value {
+    let mins = waited.as_secs() / 60;
+    json!({
+        "title": format!("Game-data {kind} waiting ({server})"),
+        "description": format!(
+            "The `{server}` {kind} has been held back for {}h{:02}m: {}.\n\n\
+             It is retried every `RELOAD_RETRY_SECS` and runs as soon as memory or the model frees. \
+             Serving keeps the old data meanwhile. `RELOAD_GUARD=0` turns the guard off.",
+            mins / 60,
+            mins % 60,
+            reason.replace('`', "'")
+        ),
+        "color": 0x00E0_A81A_u32,
+        "footer": { "text": "reload guard (RELOAD_MIN_FREE_MB, TREVOR_LLM_LOCK)" },
+    })
+}
+
 /// A Trevor alert or its "recovered" follow-up (contract v1.1 section 2.2):
 /// red when it fires, green when it clears. The caller decides when (one per
 /// kind per cooldown); this only formats and posts.
