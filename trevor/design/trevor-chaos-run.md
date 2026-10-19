@@ -138,10 +138,10 @@ common.py): the publish path is the same code, and each run takes about 1 s.
 | (d) 5, 7 | an unfinished stage copy is never continued | 5: a half-copied stage reused |
 | every failure | the alert quotes the tail from tmpfs | 8: the tail read from the full disk |
 
-## Run log 2026-10-19 (partial)
+## Run log 2026-10-19
 
-Run 0, (b) 1 to 3, (c) both ways, and (a) 1 and 2, from 13:36 to 13:52 JST. Not run today: (a) 3 as written (see
-mismatch 3), (a) 4 and all of (d).
+Run 0, (b) 1 to 3, (c) both ways, and (a) 1 and 2 from 13:36 to 13:52 JST; (d) 1 to 7 from 13:58 to 14:20 (below).
+Not run: (a) 3 as written (see mismatch 3) and (a) 4.
 
 Setup. `C` was the session scratchpad (`/private/tmp/claude-501/.../scratchpad/chaos`, already a realpath, on the same
 APFS volume as the repo), not `~/trevor-chaos`. `artifacts/`, `excel/`, `story/` and `eval/` were copied with
@@ -193,8 +193,53 @@ What did not match:
    main_release.json" and "gametext: activity_table.json is missing; kept 80 event-text units from the last build",
    exit 0. (a) 3 cannot be done as written ("move it aside"); run 0 covers it.
 4. Timing: a full build takes 126 to 132 s here (EMBED=0, the stage copy about 1 s), so the 10-minute stub-tree
-   fallback for (d) is not needed; (d)'s five builds fit in about 12 minutes.
+   fallback for (d) was not needed: (d) ran on the real tree.
 
-State left for the next session: the stub stopped, `.skipped.json` removed, `activate.json` restored, `.version`
-chaos-res-a (matching active.json's builtFrom), two releases (initial and R0), the stage continued from R0. The
-scratch tree is 4.0 GB by `du` (clones count in full there; the unique blocks are fewer) and is kept for (d).
+### (d) Disk, 13:58 to 14:20
+
+The same scratch tree and rules: the stub restarted as PID 99565, every run under `nice -n 19`, and each mode
+restored right after its run. Before (d): v0 active (builtFrom chaos-res-a), `current` R0, releases.jsonl 1,
+history.jsonl 1. (d) 3 ran twice: `chmod -w home` as the coordinator asked, and `chmod -w home/state` as written.
+
+| run | command | exit | time | new posts | invariants after | as expected |
+|---|---|---|---|---|---|---|
+| (d) 1 | `DISK_MIN_FREE_GB=100000 DISK_MIN_FREE_PCT=100 bash $U daily` | 0 | 125 s | "Trevor: disk space is low" | unchanged; "already active; nothing to publish" | yes |
+| (d) 2 | `chmod -w home/releases`, `PANELS_ARGS="--version chaos-d2"` | 1 | 127 s | 7 inactive versions POSTs, "Trevor update failed: promote the stage to a release" | unchanged; `mkdir ...chaos-d2.tmp: Permission denied`, no `.tmp` left | yes |
+| (d) 3, home | `chmod -w home`, version chaos-d3 | 1 | 130 s | 7 inactive POSTs, "failed: promote the stage to a release" | `current` R0; `worker-restart` unchanged; releases.jsonl 2 (the promoted chaos-d3 release stays); the symlink flip failed with PermissionError | yes, and mismatch 5 |
+| (d) 3, state | `chmod -w home/state`, version chaos-d3b | 1 | 130 s | 7 inactive POSTs, "failed: promote the stage to a release" | `current` R0; `worker-restart` unchanged; releases.jsonl 3; log "flip_live: the restart marker could not land" | outcome yes, path no: mismatch 5 |
+| (d) 4 | `chmod a-w state/history.jsonl`, version chaos-d4 | 5 | 130 s | 8 versions POSTs (the activate included), "Trevor update failed: activate chaos-d4" | `current` MOVED to the chaos-d4 release (no flip back); active.json still v0; history.jsonl 1; `worker-restart` rewritten | yes |
+| (d) 4, again | mode restored, the same command | 0 | 130 s | 8 POSTs, "Trevor update (daily)" | active.json chaos-d4; a second chaos-d4 release; history.jsonl 2; releases.jsonl 5; three releases pruned | yes, and mismatch 6 |
+| (d) 5 | `rm stage/.complete; mkdir -p releases/20990101T000000Z-x.tmp/artifacts`, version chaos-d5 | 0 | 134 s | 8 POSTs, "Trevor update (daily)" | "removing the partial release ...x.tmp", then "copying the live release ... (no completion marker: the last copy did not finish)"; active.json chaos-d5 | yes |
+| (d) 6 | rides on every failure above | | | | `$C/tmpfs` empty after every run; one extra (b) 1 against a second stub on :3998 (PID 5640, logs full bodies) quoted the run's whole log, 8 lines, from "retention" to "update_failed" | yes |
+| (d) 7, init | 4.5 GB APFS image at `$C/vol`; a second code dir `$C/trevor2` (artifacts cloned from the chaos-d5 release); `TREVOR_DIR=$C/trevor2 TREVOR_HOME=$C/vol/home bash $U init` | 0 | under 20 s | none | 1,778 MB used of 4,407 | yes |
+| (d) 7, full | `dd` to 190 MB free, `RESET_STAGE=1 ... daily` | 1 | 2 s | "Trevor: disk space is low", "Trevor update failed: start" | rsync "No space left on device" during the stage copy | yes, plus the disk post: mismatch 7 |
+| (d) 7, freed | `rm fill`, `... daily` | 0 | 165 s | 8 POSTs, "Trevor update (daily)" | "no completion marker: the last copy did not finish"; the image's active.json v0 | yes |
+
+The image was detached at 14:19 (`mount` shows no trevorchaos). The (d) 7 home has its own state; the main tree's
+invariants did not move during (d) 7.
+
+What did not match in (d):
+
+5. (d) 3 leaves `state/worker-restart.tmp` behind when the symlink flip fails (`chmod -w home`): flip_live writes the
+   temp marker, then `os.symlink` raises before the rename. The next run, with `state/` read-only, could still open
+   that existing file for writing, so the temp write the runbook expects to fail succeeded, `current` flipped to the
+   chaos-d3b release and flipped back when the rename into `state/` failed. Same outcome (`current` R0, marker
+   unchanged), different path: `current` moved for about a millisecond. Not fixed; flip_live could remove its temp
+   file when the flip raises.
+6. KEEP_RELEASES=3 counts never-activated releases. After (d) 4's second run the kept set was the live chaos-d4
+   release, the first chaos-d4 release and chaos-d3b (promoted, never live); R0, the release of v0, the last version
+   that was live before chaos-d4, was pruned. `rollback` with no VERSION takes v0 from history.jsonl and would now
+   find no release for it ("panels only, the worker keeps its artifacts"). Not fixed.
+7. (d) 7 posted the disk embed as well as the failure: correct with 0.2 GB free, but the runbook listed only the
+   failure title. The ENOSPC run's `run.log` on the full image still held its 11 lines (32 MB were left after the
+   rsync), so this run does not prove the tmpfs tail is needed; it proves only that the alert went out.
+8. Every history.jsonl row reads `"how": "rollback"`, including run 0's and (d) 4's publishes: `daily` uploads with
+   `--no-activate` and then calls `publish.py --activate`, which records "rollback" (publish.py line 520). Cosmetic;
+   `rollback` reads only the versions.
+
+Totals for the day: 22 `daily` runs and 2 `init`s. 21 runs matched the runbook in exit code, posts and invariants.
+The first run 0 did not; its two causes are fixed (the `story/` copy above, 41c521d9). Mismatches 5 to 8 are recorded,
+not fixed. Left: the bash 5 check of 41c521d9 and a run on a real VPS.
+
+State left: both stubs stopped (99565 and 5640), all modes restored, the image detached. Main tree: chaos-d5 active,
+three releases. The scratch tree, including the 4.5 GB `disk.dmg`, is kept.
