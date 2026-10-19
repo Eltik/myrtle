@@ -23,7 +23,10 @@ them from nothing on a CPU takes weeks (design/trevor-self-contained-deploy.md, 
       renamed to DIR.old-<stamp> (kept, never deleted). A symlinked DIR (the VPS release link) is always refused:
       install into a plain directory and adopt it with `trevor-vps-update.sh init`. Packed models go to the models
       directory beside DIR, file by file; a differing existing model file is refused unless --force. The manifest is
-      written to DIR/snapshot.json, then the summary and each corpus's chunks sha are printed.
+      written to DIR/snapshot.json, then the summary and each corpus's chunks sha are printed. Install runs as root
+      under deploy/bootstrap.sh, so a member's mode is never applied as is: a file gets its mode masked with 0o755,
+      0o644 when not executable (no setuid, setgid or sticky bit, no group or world write), and a member that is not
+      a regular file or a directory (a symlink, hard link, device or fifo) fails the verification by name.
   snapshot.py check FILE
       The verification of install, writing nothing.
 
@@ -395,6 +398,30 @@ def safe_member(name):
             and parts[0] in ('artifacts', 'models') and len(parts) >= 2)
 
 
+def member_kind(info):
+    """What a tar member is, for the refusal message."""
+    for test, kind in ((info.isfile, 'regular file'), (info.isdir, 'directory'), (info.issym, 'symlink'),
+                       (info.islnk, 'hard link'), (info.ischr, 'character device'), (info.isblk, 'block device'),
+                       (info.isfifo, 'fifo')):
+        if test():
+            return kind
+    return f'member of tar type {info.type!r}'
+
+
+def is_dir_member(info):
+    """A directory member install accepts and skips: artifacts/ or models/ themselves, or a safe path under them. A
+    snapshot.py pack writes none; a tar repacked by another tool may."""
+    name = info.name.rstrip('/')
+    return info.isdir() and (name in ('artifacts', 'models') or safe_member(name))
+
+
+def file_mode(mode):
+    """The mode an installed file gets: install runs as root under bootstrap, so a member's mode is never trusted.
+    Masked with 0o755 (no setuid, setgid, sticky or group/world write), 0o644 when it is not executable, and always
+    readable and writable by its owner."""
+    return ((mode & 0o755) | 0o600) if mode & 0o111 else 0o644
+
+
 def copy_member(tar, info, sinks):
     """Stream one member's bytes into every sink (file objects); returns (size, sha256)."""
     h, n = hashlib.sha256(), 0
@@ -425,7 +452,11 @@ def verify(path):
     seen, errors = set(), []
     for info in rest(tar):
         name = info.name
-        if not info.isfile() or not safe_member(name):
+        if is_dir_member(info):
+            continue
+        if not info.isfile() and not info.isdir():
+            errors.append(f'{name}: a {member_kind(info)}; only regular files and directories are installed')
+        elif not info.isfile() or not safe_member(name):
             errors.append(f'{name}: not a regular file under artifacts/ or models/')
         elif name in seen:
             errors.append(f'{name}: appears twice')
@@ -489,7 +520,7 @@ def write_model(tar, info, dest, expect):
     if size != expect['size'] or sha != expect['sha256']:
         os.remove(tmp)
         die(f'{info.name} changed between verification and install (the snapshot file was replaced?)')
-    os.chmod(tmp, info.mode)
+    os.chmod(tmp, file_mode(info.mode))
     os.replace(tmp, dest)
     return True
 
@@ -501,6 +532,11 @@ def extract(path, manifest, tmp_dir, models_dir):
     read_manifest(tar)
     models_written = 0
     for info in rest(tar):
+        if is_dir_member(info):
+            continue
+        if not info.isfile():
+            die(f'{info.name}: a {member_kind(info)} appeared after verification (the snapshot file was replaced?); '
+                f'only regular files and directories are installed; {tmp_dir} is left')
         expect = want.get(info.name)
         if expect is None:
             die(f'{info.name} appeared after verification (the snapshot file was replaced?); {tmp_dir} is left')
@@ -515,7 +551,7 @@ def extract(path, manifest, tmp_dir, models_dir):
         if size != expect['size'] or sha != expect['sha256']:
             die(f'{info.name} changed between verification and install (the snapshot file was replaced?); '
                 f'{tmp_dir} is left for inspection')
-        os.chmod(dest, info.mode)
+        os.chmod(dest, file_mode(info.mode))
         os.utime(dest, (info.mtime, info.mtime))
     close_reader(tar, proc)
     return models_written

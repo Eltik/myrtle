@@ -3,8 +3,9 @@
 
 Every reader of a game table or a derived file that the sweep changed is pointed at a scratch tree with that input
 removed or empty, and the test asserts two things: the previous output file is byte-identical afterwards, and the
-process exits with the documented code (0 when the stage keeps its last output and logs it, 1 when a missing derived
-input raises common.MissingInput, 3 when incr.py's shrink guard refuses). The kill switches are checked too: each one
+process exits with the documented code (0 when a missing game table keeps the last output and logs it, 1 when a
+missing derived input raises common.MissingInput, 3 when incr.py's shrink guard refuses or when the seed, the bank or
+topics' units come out empty with every input present: a refused write of a computed output is suspicious). The kill switches are checked too: each one
 reproduces the old behaviour (INCR_ALLOW_SHRINK=1 drops the rows, KEEP_LAST=0 writes the empty output,
 TABLES_REQUIRED=1 fails on a missing table).
 
@@ -58,7 +59,8 @@ class Tree:
     def run(self, *args, env=None, code=None):
         """Run `python3 scripts/<args>` (or `-c` code) in the tree; (exit code, stderr)."""
         e = {k: v for k, v in os.environ.items() if k not in ('KEEP_LAST', 'INCR_ALLOW_SHRINK', 'INCR_MAX_DROP',
-                                                               'TABLES_REQUIRED', 'CORPUS', 'CHUNKS', 'PLAN')}
+                                                               'TABLES_REQUIRED', 'CORPUS', 'CHUNKS', 'PLAN',
+                                                               'DERIVED_REQUIRED', 'TREVOR_BANK_DIR', 'REANSWER')}
         e.update({'TREVOR_GAMEDATA': os.path.dirname(self.excel), 'PYTHONDONTWRITEBYTECODE': '1'}, **(env or {}))
         cmd = [sys.executable, '-c', code] if code else [sys.executable, os.path.join('scripts', args[0]), *args[1:]]
         p = subprocess.run(cmd, cwd=self.root, env=e, capture_output=True, text=True, timeout=120)
@@ -86,7 +88,7 @@ class CommonHelpers(unittest.TestCase):
     def setUp(self):
         self.d = tempfile.mkdtemp(prefix='trevor-common-')
         self.env = dict(os.environ)
-        for k in ('KEEP_LAST', 'INCR_MAX_DROP', 'TABLES_REQUIRED', 'INCR_ALLOW_SHRINK'):
+        for k in ('KEEP_LAST', 'INCR_MAX_DROP', 'TABLES_REQUIRED', 'INCR_ALLOW_SHRINK', 'DERIVED_REQUIRED'):
             os.environ.pop(k, None)
 
     def tearDown(self):
@@ -154,6 +156,27 @@ class CommonHelpers(unittest.TestCase):
         ok, _ = self.quiet(common.write_keep_last, p, {'items': [], 'note': 'x'}, 'json', count=lambda d: len(d['items']))
         self.assertFalse(ok)
         self.assertEqual(open(p, 'rb').read(), before)
+
+    def test_write_keep_last_shrink_none_refuses_only_empty(self):
+        p = self.file('out.jsonl', [{'a': i} for i in range(10)])
+        before = open(p, 'rb').read()
+        ok, err = self.quiet(common.write_keep_last, p, [], shrink=None)
+        self.assertFalse(ok)
+        self.assertIn('output empty', err)
+        self.assertEqual(open(p, 'rb').read(), before)
+        self.assertTrue(common.write_keep_last(p, [{'a': 0}], shrink=None))  # 90% dropped: written
+        self.assertEqual(common.read_jsonl(p), [{'a': 0}])
+        self.assertTrue(common.write_keep_last(p, [{'a': 0}, {'a': 1}], shrink=None))
+        os.environ['KEEP_LAST'] = '0'
+        self.assertTrue(common.write_keep_last(p, [], shrink=None))
+        self.assertEqual(open(p, 'rb').read(), b'')
+
+    def test_derived_required_0_reads_missing_as_empty(self):
+        p = os.path.join(self.d, 'absent.jsonl')
+        os.environ['DERIVED_REQUIRED'] = '0'
+        self.assertEqual(common.read_derived(p), [])
+        with self.assertRaises(common.MissingInput):  # load_derived's call sites always raised
+            common.load_derived(p)
 
     def test_keep_last_0_writes_the_empty_output(self):
         p = self.file('out.jsonl', [{'a': i} for i in range(10)])
@@ -393,10 +416,29 @@ class AnswerBank(TreeCase):
         self.assertKept('artifacts/bank/seed.jsonl', self.seed, rc, 1, err)
 
     def test_seed_empty_inputs_keep_last(self):
+        # Every input present but the seed came out empty: a refused write of a computed output exits 3 (2026-10-19).
         self.t.write('artifacts/dossiers/dossiers.jsonl', '')
         self.t.write('artifacts/p2/groups.jsonl', '')
         rc, err = self.t.run('answer_bank.py', 'seed')
-        self.assertKept('artifacts/bank/seed.jsonl', self.seed, rc, 0, err)
+        self.assertKept('artifacts/bank/seed.jsonl', self.seed, rc, 3, err)
+        self.assertIn('keeping last', err)
+
+    def test_seed_large_drop_is_written(self):
+        # No percentage rule on the seed: 10 entries down to 1 is written, exit 0, so the file cannot freeze.
+        self.t.jsonl('artifacts/bank/seed.jsonl', [{'id': f'old{i}'} for i in range(10)])
+        self.t.write('artifacts/dossiers/dossiers.jsonl', '')
+        self.t.jsonl('artifacts/p2/groups.jsonl', [{'groupId': 'g1', 'method': 'C', 'name': 'Event', 'summary': 'S.',
+                                                     'storyIds': ['s1']}])
+        rc, err = self.t.run('answer_bank.py', 'seed')
+        self.assertEqual(rc, 0, err[-2000:])
+        self.assertEqual(len(common.read_jsonl(self.t.path('artifacts/bank/seed.jsonl'))), 1)
+
+    def test_seed_keep_last_0_writes_empty(self):
+        self.t.write('artifacts/dossiers/dossiers.jsonl', '')
+        self.t.write('artifacts/p2/groups.jsonl', '')
+        rc, err = self.t.run('answer_bank.py', 'seed', env={'KEEP_LAST': '0'})
+        self.assertEqual(rc, 0, err[-2000:])
+        self.assertEqual(self.t.bytes('artifacts/bank/seed.jsonl'), b'')
 
     def merge_inputs(self):
         self.t.jsonl('artifacts/bank/questions.jsonl', [{'qid': 'b00001', 'question': 'q', 'storyId': 's1'}])
@@ -423,6 +465,39 @@ class AnswerBank(TreeCase):
         rc, err = self.t.run('answer_bank.py', 'merge')
         self.assertKept('artifacts/bank/bank.jsonl', self.bank, rc, 1, err)
 
+    def merge_tree(self, seed, answers):
+        """Every merge input present; `answers` answer the question b00000..; their evidence matches the corpus."""
+        self.t.jsonl('artifacts/bank/seed.jsonl', seed)
+        self.t.jsonl('artifacts/p3b/chunks.jsonl', [{'chunkId': 's1#0', 'storyId': 's1', 'text': 'x'}])
+        self.t.write('artifacts/p4x/chunks.jsonl', '')
+        self.t.json('artifacts/chrono/gate_order.json', {'storyOrder': ['s1']})
+        self.t.jsonl('artifacts/bank/questions.jsonl', [{'qid': f'b{i:05}', 'question': 'q', 'storyId': 's1'}
+                                                        for i in range(answers)])
+        self.t.write('artifacts/bank/evidence.jsonl', '')
+        self.t.jsonl('artifacts/bank/answers.jsonl', [{'qid': f'b{i:05}', 'answer': 'A.', 'cited': ['s1#0'],
+                                                       'passages': []} for i in range(answers)])
+
+    def test_merge_large_drop_is_written(self):
+        # A re-chunk dropped most answers: 10 bank entries down to 2 is written (exit 0), not kept and frozen.
+        self.t.jsonl('artifacts/bank/bank.jsonl', [{'id': f'old{i}'} for i in range(10)])
+        self.merge_tree([], 2)
+        rc, err = self.t.run('answer_bank.py', 'merge', env={'REANSWER': '0'})
+        self.assertEqual(rc, 0, err[-2000:])
+        self.assertEqual(len(common.read_jsonl(self.t.path('artifacts/bank/bank.jsonl'))), 2)
+        # and the next merge against it is not a "shrink" either
+        self.merge_tree([], 2)
+        rc, err = self.t.run('answer_bank.py', 'merge', env={'REANSWER': '0'})
+        self.assertEqual(rc, 0, err[-2000:])
+
+    def test_merge_empty_bank_with_inputs_exits_3(self):
+        self.merge_tree([], 0)
+        rc, err = self.t.run('answer_bank.py', 'merge', env={'REANSWER': '0'})
+        self.assertKept('artifacts/bank/bank.jsonl', self.bank, rc, 3, err)
+        self.assertIn('keeping last', err)
+        rc, err = self.t.run('answer_bank.py', 'merge', env={'REANSWER': '0', 'KEEP_LAST': '0'})
+        self.assertEqual(rc, 0, err[-2000:])
+        self.assertEqual(self.t.bytes('artifacts/bank/bank.jsonl'), b'')
+
 
 class Topics(TreeCase):
     def test_units_missing_topics(self):
@@ -431,10 +506,20 @@ class Topics(TreeCase):
         self.assertKept('artifacts/topics/units.jsonl', before, rc, 1, err)
 
     def test_units_empty_topics_keep_last(self):
+        # topics.jsonl present but nothing served: the refused write exits 3 so the update stops (2026-10-19).
         before = self.t.write('artifacts/topics/units.jsonl', OLD) and self.t.bytes('artifacts/topics/units.jsonl')
         self.t.write('artifacts/topics/topics.jsonl', '')
         rc, err = self.t.run('topics.py', 'units')
-        self.assertKept('artifacts/topics/units.jsonl', before, rc, 0, err)
+        self.assertKept('artifacts/topics/units.jsonl', before, rc, 3, err)
+
+    def test_units_large_drop_is_written(self):
+        self.t.jsonl('artifacts/topics/units.jsonl', [{'storyId': f'old{i}'} for i in range(10)])
+        self.t.jsonl('artifacts/topics/units.v1.jsonl', [{'storyId': f'old{i}'} for i in range(10)])
+        self.t.jsonl('artifacts/topics/topics.jsonl', [{'topic': 'Rhodes Island', 'summary': 'A company [1].'}])
+        rc, err = self.t.run('topics.py', 'units')
+        self.assertEqual(rc, 0, err[-2000:])
+        for name in ('units.jsonl', 'units.v1.jsonl'):
+            self.assertEqual(len(common.read_jsonl(self.t.path(f'artifacts/topics/{name}'))), 1, name)
 
     def mine_tree(self):
         self.t.jsonl('artifacts/p3b/chunks.jsonl', [{'chunkId': 'a#0', 'storyId': 'a', 'groupId': 'g', 'text': 'x: y'}])

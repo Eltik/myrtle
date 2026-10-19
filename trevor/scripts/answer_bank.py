@@ -114,8 +114,10 @@ def stage_seed():
                          'question': f"What should I know before starting {p['name']}?",
                          'aliases': [f"What happened before {p['name']}?"], 'answer': text, 'sources': p['prior'],
                          **gate(src, [], sp)})
-    if not common.write_keep_last(os.path.join(OUT, 'seed.jsonl'), rows):
-        return
+    # An empty seed with every input present is refused and stops the update (exit 3); any smaller seed is written, so a
+    # legitimate drop cannot freeze the file (common.py, "keeping the last good output"; KEEP_LAST=0: written).
+    if not common.write_keep_last(os.path.join(OUT, 'seed.jsonl'), rows, shrink=None):
+        sys.exit(3)
     c = collections.Counter(r['kind'] for r in rows)
     print(f'seed: {len(rows)} entries {dict(c)}; with unknown gate stories {sum("gateUnknown" in r for r in rows)}')
 
@@ -309,8 +311,11 @@ def stage_merge():
         re_rows, re_n = common.load_script('reanswer').bank_rows(
             OUT, sp, gate, DECLINE, lambda: evidence_shas(os.path.join(ROOT, 'artifacts')))
         rows += re_rows
-    # Kept as it was when it came out empty or lost more than INCR_MAX_DROP percent of its entries (KEEP_LAST=0: written).
-    common.write_keep_last(os.path.join(OUT, 'bank.jsonl'), rows)
+    # Kept as it was only when it came out empty, and then the merge exits 3 so update.sh stops and alerts (KEEP_LAST=0:
+    # written). A re-chunk legitimately drops many answers whose evidence changed, so no percentage rule: one would keep
+    # the old bank, let the gates publish it, and refuse every later merge against the frozen file.
+    if not common.write_keep_last(os.path.join(OUT, 'bank.jsonl'), rows, shrink=None):
+        sys.exit(3)
     c = collections.Counter(r['kind'] for r in rows)
     print(f'bank: {len(rows)} entries {dict(c)}; generated kept {kept}, dropped {dropped} (declined or uncited'
           + (', or evidence changed' if check else '') + ')' + (f'; {dict(why)}' if why else '')

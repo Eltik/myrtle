@@ -56,8 +56,10 @@ def read_jsonl(p, required=False):
 
 
 def read_derived(p):
-    """Rows of a JSONL file an earlier stage writes; MissingInput when it is absent."""
-    return read_jsonl(p, required=True)
+    """Rows of a JSONL file an earlier stage writes; MissingInput when it is absent. DERIVED_REQUIRED=0 is the kill
+    switch: [] again, as every call site's read_jsonl read it before 2026-10-19 (load_derived is not affected: its call
+    sites raised on a missing file before too)."""
+    return read_jsonl(p, required=os.environ.get('DERIVED_REQUIRED') != '0')
 
 
 def load_derived(p):
@@ -69,6 +71,18 @@ def load_derived(p):
 
 
 # ---------------------------------------------------------------- keeping the last good output (2026-10-19)
+#
+# Two different events keep an output as it was, and they end a stage differently:
+#  - a MISSING INPUT: a game table is absent (keep_last_on_missing_table) or a derived file is (read_derived raises
+#    MissingInput before anything is computed). The stage could not compute its output, so it keeps the last one, says
+#    "keeping last" and, for a missing game table, exits 0: one table left out of an asset update is expected and must
+#    not stop the update.
+#  - a REFUSED WRITE: every input was present, the output was computed, and write_keep_last refused it because it came
+#    out empty or shrank past its policy. That is not expected, so it is suspicious: write_keep_last returns False and
+#    a caller that must not publish a frozen file exits 3 (answer_bank seed and merge, topics units), as incr.py does,
+#    so update.sh (set -e) stops and alerts instead of publishing the old file night after night.
+# KEEP_LAST=0 governs only the writes. It does not restore the reads before 2026-10-19: DERIVED_REQUIRED=0 does that
+# for read_derived, TABLES_REQUIRED=1 makes a missing table fail, INCR_ALLOW_SHRINK=1 lifts incr.py's guard.
 
 def keep_last_on():
     """KEEP_LAST=0 is the kill switch: every guarded write is a plain write again, whatever it replaces."""
@@ -80,9 +94,10 @@ def max_drop():
     return float(os.environ.get('INCR_MAX_DROP', '20')) / 100
 
 
-def shrinks(old, new):
-    """Whether replacing `old` rows (or entries) with `new` loses all of them or more than max_drop() of them."""
-    return old > 0 and (new == 0 or old - new > max_drop() * old)
+def shrinks(old, new, policy='pct'):
+    """Whether replacing `old` rows (or entries) with `new` loses all of them or, under policy 'pct', more than
+    max_drop() of them. Policy None refuses only the loss of all of them."""
+    return old > 0 and (new == 0 or (policy == 'pct' and old - new > max_drop() * old))
 
 
 def _count_file(path, kind, count):
@@ -97,21 +112,27 @@ def _count_file(path, kind, count):
         return None
 
 
-def write_keep_last(path, data, kind='jsonl', count=len, ensure_ascii=None, newline=False, encoding=None, **dump_kw):
-    """Write a served or derived output atomically, unless it would replace a non-empty file with an empty one or one
-    that lost more than max_drop() of its rows: then the file is kept, "keeping last <path>" goes to stderr and the
-    result is False. `kind` 'jsonl': `data` is the rows, written as write_jsonl writes them (ensure_ascii False unless
-    given); 'json': `data` is one object, json.dump(data, **dump_kw) as write_json_atomic writes it (json.dump's own
-    ensure_ascii unless given), and `count(obj)` is its size (len by default).
+def write_keep_last(path, data, kind='jsonl', count=len, ensure_ascii=None, newline=False, encoding=None,
+                    shrink='pct', **dump_kw):
+    """Write a served or derived output atomically, unless it would replace a non-empty file with an empty one or,
+    with `shrink` 'pct' (the default), one that lost more than max_drop() of its rows: then the file is kept,
+    "keeping last <path>" goes to stderr and the result is False (a refused write, see the note above: the caller
+    decides whether to exit 3). `shrink` None refuses only the empty replacement, for an output that may lose many rows
+    legitimately (the bank, when a re-chunk changes many answers' evidence; seed.jsonl; topics' units): a percentage
+    rule would keep the old file and then refuse every later merge against it, freezing it.
+    `kind` 'jsonl': `data` is the rows, written as write_jsonl writes them (ensure_ascii False unless given); 'json':
+    `data` is one object, json.dump(data, **dump_kw) as write_json_atomic writes it (json.dump's own ensure_ascii
+    unless given), and `count(obj)` is its size (len by default).
     The bytes written are the same as the plain write's. KEEP_LAST=0 writes whatever it is given."""
     if kind == 'jsonl':
         data = list(data)
     n = len(data) if kind == 'jsonl' else count(data)
     if keep_last_on():
         old = _count_file(path, kind, count)
-        if old is not None and shrinks(old, n):
+        if old is not None and shrinks(old, n, shrink):
+            rule = 'output empty' if shrink is None else 'input empty or shrunk'
             print(f'keeping last {os.path.relpath(path, ROOT)}: {n} rows now against {old} before '
-                  f'(input empty or shrunk; KEEP_LAST=0 writes it anyway)', file=sys.stderr, flush=True)
+                  f'({rule}; KEEP_LAST=0 writes it anyway)', file=sys.stderr, flush=True)
             return False
     d = os.path.dirname(path)
     if d:

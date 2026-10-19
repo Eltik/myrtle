@@ -67,6 +67,44 @@ class Fold(unittest.TestCase):
             reanswer.collect_sql("en'; drop table x; --", 24)
 
 
+class Psql(unittest.TestCase):
+    def test_password_never_on_argv(self):
+        cases = [('postgres://postgres:s3cr%40t@127.0.0.1:5432/postgres', 's3cr@t', 'postgres://postgres@127.0.0.1:5432/postgres'),
+                 ('postgresql://u@h/db?password=s3cr3t&sslmode=require', 's3cr3t', 'postgresql://u@h/db?sslmode=require'),
+                 ("host=h user=u password='s3 cr\\'et' dbname=d", "s3 cr'et", 'host=h user=u dbname=d'),
+                 ('host=h password=s3cr3t dbname=d', 's3cr3t', 'host=h dbname=d')]
+        for conn, password, bare in cases:
+            argv, env = reanswer.psql_command(conn)
+            self.assertEqual(argv[-1], bare, conn)
+            self.assertFalse(any('s3' in x for x in argv), argv)
+            self.assertEqual(env['PGPASSWORD'], password, conn)
+
+    def test_no_password_leaves_dsn_and_env(self):
+        old = os.environ.pop('PGPASSWORD', None)
+        try:
+            for conn in ('postgres://u@h/db', 'host=h dbname=d'):
+                argv, env = reanswer.psql_command(conn)
+                self.assertEqual(argv[-1], conn)
+                self.assertNotIn('PGPASSWORD', env)
+        finally:
+            if old is not None:
+                os.environ['PGPASSWORD'] = old
+
+    def test_min_asks_default_2_and_env(self):
+        def parsed(env):
+            r = subprocess.run([sys.executable, '-c', 'import sys; sys.path.insert(0, sys.argv[1]); import reanswer; '
+                                'reanswer.collect = lambda a, ab: print(a.min_asks); '
+                                'reanswer.common.load_script = lambda n: None; reanswer.main(sys.argv[2:])',
+                                SCRIPTS, 'collect', *env.pop('args', [])],
+                               env={**{k: v for k, v in os.environ.items() if k not in ('REANSWER', 'REANSWER_MIN_ASKS')},
+                                    **env}, capture_output=True, text=True, timeout=60)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            return int(r.stdout.strip())
+        self.assertEqual(parsed({}), 2)
+        self.assertEqual(parsed({'REANSWER_MIN_ASKS': '1'}), 1)
+        self.assertEqual(parsed({'REANSWER_MIN_ASKS': '1', 'args': ['--min-asks', '3']}), 3)
+
+
 def ans(qid, text, cited, passages):
     return {'qid': qid, 'question': '?', 'answer': text, 'cited': cited, 'passages': passages}
 

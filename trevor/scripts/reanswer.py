@@ -19,7 +19,8 @@ of the story gets the better answer as a panel suggestion. Three subcommands, ru
       id is stored, because the bank travels in the corpus snapshot). FILE (artifacts/bank/reanswer/pending.jsonl)
       gets every row asked at least N times that has no answer yet, in the shape `ask --batch` and
       `answer_bank.py answer` read (qid, question, plus the fields above).
-      DSN: REANSWER_DSN, else TREVOR_DATABASE_URL, else DATABASE_URL. Read only; it writes nothing to the database.
+      DSN: REANSWER_DSN, else TREVOR_DATABASE_URL, else DATABASE_URL; its password goes to psql in PGPASSWORD, never
+      on the command line. Read only; it writes nothing to the database.
   answer [FILE] [--profile full] [--model PATH] [-- ASK_FLAGS...]
       `target/release/ask --corpus CORPUS --no-spawn --server SERVER --profile full --batch FILE --out
       artifacts/bank/reanswer/answers.jsonl`, as answer_bank.py stage_answer runs it (same CORPUS and SERVER env),
@@ -44,15 +45,17 @@ cleared every gate story, and an id it cannot date (a dossier or profile passage
 answers of artifacts/bank/answers.jsonl, 67 (7.1%) had such a passage against 10 among the cited ones alone.
 answer_bank.within_gate (a citation at or before the question's own story) needs that own story and does not apply.
 
-Open decision 4 of the design doc: whether only questions asked more than once are re-answered. The default stays
-`--min-asks 1` until it is decided; `--min-asks 2` keeps the 12B's hours for questions that recur.
+Open decision 4 of the design doc: whether only questions asked more than once are re-answered. The default is
+`--min-asks 2` (REANSWER_MIN_ASKS overrides it, the flag overrides both) since 2026-10-19: a bank row becomes a
+public panel suggestion, so one reader's wording must not become one, and it keeps the 12B's hours for questions
+that recur. `--min-asks 1` is the behaviour before.
 
 Kill switch: REANSWER=0 makes every subcommand print why and do nothing, and answer_bank.py merge leaves these rows
 out (bank.jsonl is then byte-identical to the merge before this step, as it is when no re-answer has run). Not
 wiring the step into the runner is the same.
 Env: TREVOR_BANK_DIR (artifacts/bank, answer_bank's), CORPUS, SERVER, ASK_BIN (target/release/ask).
 """
-import argparse, collections, datetime, json, os, re, subprocess, sys
+import argparse, collections, datetime, json, os, re, subprocess, sys, urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and answer_bank.py sit beside the scripts
 import common  # noqa: E402
@@ -107,9 +110,42 @@ def dsn():
     sys.exit('reanswer collect: set REANSWER_DSN (or TREVOR_DATABASE_URL, DATABASE_URL) to the backend database')
 
 
+def split_password(conn):
+    """(the DSN without its password, the password or None): a password on psql's argv is visible to every local user
+    in `ps`, so it travels in PGPASSWORD instead. Both DSN forms: a URI (postgres:// or postgresql://, the password
+    percent-decoded) and keyword=value pairs (password=... or password='...')."""
+    u = urllib.parse.urlsplit(conn)
+    if u.scheme in ('postgres', 'postgresql'):
+        password = None if u.password is None else urllib.parse.unquote(u.password)
+        q = urllib.parse.parse_qsl(u.query, keep_blank_values=True)
+        password = next((v for k, v in q if k == 'password'), password)  # ?password= wins, as in libpq
+        if password is None:
+            return conn, None
+        userinfo, _, host = u.netloc.rpartition('@')
+        user = userinfo.partition(':')[0]
+        query = urllib.parse.urlencode([(k, v) for k, v in q if k != 'password'])
+        return urllib.parse.urlunsplit(u._replace(netloc=f'{user}@{host}' if user else host, query=query)), password
+    m = re.search(r"(?:^|\s)password\s*=\s*('(?:[^'\\]|\\.)*'|\S*)", conn)
+    if not m:
+        return conn, None
+    v = m.group(1)
+    if v.startswith("'"):
+        v = re.sub(r'\\(.)', r'\1', v[1:-1])
+    return (conn[:m.start()] + conn[m.end():]).strip(), v
+
+
+def psql_command(conn):
+    """psql's argv and environment for `conn`: the password, if any, in PGPASSWORD, never on the argv."""
+    conn, password = split_password(conn)
+    env = dict(os.environ)
+    if password is not None:
+        env['PGPASSWORD'] = password
+    return ['psql', '-X', '-q', '-A', '-t', '-v', 'ON_ERROR_STOP=1', conn], env
+
+
 def fetch_asks(server, hours):
-    out = subprocess.run(['psql', '-X', '-q', '-A', '-t', '-v', 'ON_ERROR_STOP=1', dsn()],
-                         input=collect_sql(server, hours), capture_output=True, text=True, timeout=300)
+    argv, env = psql_command(dsn())
+    out = subprocess.run(argv, env=env, input=collect_sql(server, hours), capture_output=True, text=True, timeout=300)
     if out.returncode:
         sys.exit(f'reanswer collect: psql exited {out.returncode}: {out.stderr.strip()[-500:]}')
     return [json.loads(l) for l in out.stdout.splitlines() if l.strip()]
@@ -296,7 +332,8 @@ def main(argv=None):
     sub = ap.add_subparsers(dest='cmd', required=True)
     c = sub.add_parser('collect')
     c.add_argument('--since', type=int, default=24, help='hours back (24)')
-    c.add_argument('--min-asks', type=int, default=1, help='asks a question needs (1; open decision 4)')
+    c.add_argument('--min-asks', type=int, default=int(os.environ.get('REANSWER_MIN_ASKS') or 2),
+                   help='asks a question needs (REANSWER_MIN_ASKS, else 2; open decision 4)')
     c.add_argument('--out', help='the questions file (artifacts/bank/reanswer/pending.jsonl)')
     c.add_argument('--server', default='en')
     w = sub.add_parser('answer')

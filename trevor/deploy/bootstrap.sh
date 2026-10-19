@@ -3,7 +3,8 @@
 # Trevor instance with no model vendor (the cache and cpu rungs, passages as the floor;
 # design/trevor-self-contained-deploy.md). Run as root from the clone:
 #
-#   sudo trevor/deploy/bootstrap.sh --snapshot URL|FILE [--sha SHA] [options]
+#   sudo trevor/deploy/bootstrap.sh --snapshot URL --snapshot-sha256 HEX [--sha SHA] [options]
+#   sudo trevor/deploy/bootstrap.sh --snapshot FILE [--sha SHA] [options]
 #
 # Steps, in order (each checks its own done-state, so a rerun continues where the last one stopped):
 #   preflight     OS and arch, tools (missing apt packages are installed), memory and disk thresholds, the trevor user,
@@ -19,8 +20,10 @@
 #                 starts from an empty tree, and the first update then builds everything: weeks on a CPU
 #   env           /etc/trevor/trevor.env from deploy/trevor.env.example (paths, BM25 serving, a fresh TREVOR_WORKER_KEY,
 #                 the Cloudflare keys left unset), and the same TREVOR_WORKER_KEY in backend/.env
-#   database      the backend applies its migrations on startup (backend/README.md, Database), so this (re)starts the
-#                 backend under pm2 and waits until it answers and accepts the worker key
+#   database      the backend applies its migrations on startup (backend/README.md, Database), so this restarts the
+#                 backend under root's pm2 when that pm2 already runs it, and waits until it answers and accepts the worker
+#                 key. It never starts a backend itself: root's pm2 would run it as root, and which account runs the
+#                 site's pm2 is not recorded, so with no backend running it prints the commands for the operator and stops
 #   units         installs trevor-llama, trevor-worker, trevor-worker-restart.{path,service}, trevor-update.{service,timer};
 #                 daemon-reload; enables and starts llama, the worker and the update timer. Not trevor-summaries.timer:
 #                 that is the Cloudflare summaries path, unused here
@@ -33,7 +36,8 @@
 #   --sha SHA              the commit whose release bundle to install (default: the checked-out HEAD)
 #   --snapshot URL|FILE    the corpus snapshot (snapshot.py pack); a URL is downloaded to /var/lib/trevor/snapshot/
 #   --snapshot-sha256 HEX  checked against the snapshot file before install (the manifest inside only proves the
-#                          archive is whole, not that it is the one you meant)
+#                          archive is whole, not that it is the one you meant). Required with a URL (usage error, exit 2,
+#                          before anything runs); optional with a local FILE, which you vouch for yourself
 #   --no-snapshot          no snapshot: an empty artifacts tree (prints why that is weeks of CPU)
 #   --database-url URL     only when backend/.env does not exist: create it from backend/.env.example with this
 #                          DATABASE_URL and fresh JWT_SECRET, SERVICE_KEY and GAME_CREDENTIAL_KEY
@@ -100,6 +104,19 @@ for s in ${ONLY//,/ } ${SKIP//,/ }; do
   case " $STEPS " in *" $s "*) ;; *) echo "bootstrap: unknown step '$s' (steps: $STEPS)" >&2; exit 2 ;; esac
 done
 if [ -n "$SNAPSHOT" ] && [ "$NO_SNAPSHOT" = 1 ]; then echo "bootstrap: --snapshot and --no-snapshot exclude each other" >&2; exit 2; fi
+# A downloaded snapshot is installed by root, so it must be the archive the operator meant: a URL needs its digest.
+SNAPSHOT_SHA="$(printf '%s' "$SNAPSHOT_SHA" | tr 'A-F' 'a-f')"
+if [ -n "$SNAPSHOT_SHA" ] && ! printf '%s' "$SNAPSHOT_SHA" | grep -Eq '^[0-9a-f]{64}$'; then
+  echo "bootstrap: --snapshot-sha256 must be 64 hex digits (sha256sum of the snapshot file)" >&2; exit 2
+fi
+case "$SNAPSHOT" in
+  http://*|https://*)
+    if [ -z "$SNAPSHOT_SHA" ]; then
+      echo "bootstrap: --snapshot $SNAPSHOT is a URL, so --snapshot-sha256 HEX is required: root installs what it downloads, and only the digest proves it is the archive you meant (take it from sha256sum on the machine that packed it). A local file needs no digest." >&2
+      exit 2
+    fi ;;
+  *://*) echo "bootstrap: --snapshot takes an http(s) URL or a local file, not $SNAPSHOT" >&2; exit 2 ;;
+esac
 
 # ---------------------------------------------------------------- helpers
 say()  { printf '%s\n' "$*"; }
@@ -354,6 +371,7 @@ step_snapshot() {
     *) file="$SNAPSHOT"
        [ -f "$file" ] || fail "no snapshot file at $file" ;;
   esac
+  # A URL always has a digest here (checked with the arguments); a local file is checked when one is given.
   if [ -n "$SNAPSHOT_SHA" ]; then
     printf '  + sha256 %s must equal --snapshot-sha256\n' "$file"
     if [ "$DRY_RUN" = 0 ]; then
@@ -527,8 +545,16 @@ step_database() {
     # one would fight it for the port.
     fail "a backend answers on $BACKEND_URL but root's pm2 has no myrtle-backend: restart that backend yourself so it reads $BACKEND_ENV (TREVOR_WORKER_KEY), then rerun"
   else
-    run pm2 start "$ROOT/backend/ecosystem.config.cjs"
-    run pm2 save
+    # Not started from here: root's pm2 would run the backend as root, and which account runs the site's pm2 is not
+    # recorded (design/trevor-return-runbook.md says the same of the asset watcher). The operator starts it as that
+    # account; the trevor units' account (trevor) is not it, the backend reads backend/.env and the game data.
+    [ "$DRY_RUN" = 0 ] || say "    (a real run, when no backend answers and root's pm2 has no myrtle-backend:)"
+    say "    the backend is not running, and bootstrap does not start it (root's pm2 would run it as root). As the account"
+    say "    that runs the site under pm2 (not root), run:"
+    say "      sudo chown \"\$USER\": $BACKEND_ENV     # only when bootstrap created it (root-owned, mode 600)"
+    say "      cd $ROOT/backend && pm2 start ecosystem.config.cjs && pm2 save"
+    say "    then rerun $0 with the same options (done steps are skipped)"
+    fail "no backend to restart; start it as its own account (the commands above), then rerun"
   fi
   # Startup loads the game data first (tens of seconds, minutes on a cold disk), then migrates, then serves.
   wait_http "$BACKEND_URL/api/health" 900 "the backend to migrate and serve" \

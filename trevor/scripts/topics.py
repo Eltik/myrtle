@@ -806,7 +806,7 @@ def stage_units():
     byte for byte the units.jsonl before 2026-10-01, for the v1 lore's P4 (ask --lore v1)."""
     # A thin topic (new topics only, see stage_thin) is not served.
     rows = [r for r in read_derived(os.path.join(OUT, 'topics.jsonl')) if r.get('summary') and not r.get('thin')]
-    ids = collections.Counter()
+    ids = collections.Counter(); refused = []
     for name, keep in (('units.jsonl', lambda r: True), ('units.v1.jsonl', lambda r: 'source' not in r)):
         out = []
         for r in filter(keep, rows):
@@ -818,10 +818,15 @@ def stage_units():
             out.append({'storyId': sid, 'groupId': 'topic',
                         'title': f"Topic: {r['topic']} (Trevor's summary)", 'text': f"Topic: {r['topic']} (Trevor's summary)\n{text}",
                         'speakers': []})
-        # Kept as it was when it came out empty or lost more than INCR_MAX_DROP percent (KEEP_LAST=0: written).
-        common.write_keep_last(os.path.join(OUT, name), out)
+        # Kept as it was only when it came out empty (KEEP_LAST=0: written); then the stage exits 3 below, so update.sh
+        # stops and alerts. No percentage rule: a smaller set of served topics is written (common.py, "keeping the last
+        # good output").
+        if not common.write_keep_last(os.path.join(OUT, name), out, shrink=None):
+            refused.append(name)
     dup = [k for k, v in ids.items() if v > 1]
     print(f"units: {len(rows)} ({sum('source' not in r for r in rows)} v1)" + (f'; DUPLICATE story ids {dup}' if dup else ''))
+    if refused:
+        sys.exit(3)
 
 
 if __name__ == '__main__':
