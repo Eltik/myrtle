@@ -137,7 +137,7 @@ To build, in order:
 |---|---|---|
 | 1 | The two measurements of section 5 on the target box | hours |
 | 2 | Done 2026-10-19: the Release Bundle workflow (`.github/workflows/release.yml`) builds the 12 `trevor` bins with `--features embed` beside the asset unpacker and downloader it already shipped, and `scripts/fetch-release.sh --components trevor <sha>` installs them into `$TREVOR_DIR/target/release` (sha256-checked, renamed into place, `ask --help` before and after). ONNX Runtime 1.28 links statically: ort-sys's download path emits `rustc-link-lib=static=onnxruntime`, the macOS download holds only `libonnxruntime.a`, and `otool -L` on the Mac's `ask` lists no ONNX library while `nm` finds `OrtGetApiBase`; the CI job fails if `ldd` shows a dynamic one. Unverified until the workflow first runs on main. A stale hand-built unpacker deleted a game table on 2026-10-18 | 1 to 2 days |
-| 3 | Done 2026-10-19 (`scripts/snapshot.py`, see "Step 3 built" below; the fp32 vectors are 1,300 texts behind). **Corpus snapshot**: one tarball of the derived artifacts (chunks, vectors, indexes, summaries, dossiers, topics, entities, chronology, appearances, bank) with a manifest and checksums; a publisher and an installer, one command each. A fresh deploy starts from the snapshot and only ever runs incremental updates: building the tables from nothing on a CPU is weeks | 1 to 2 days |
+| 3 | Done 2026-10-19 (`scripts/snapshot.py`, see "Step 3 built" below; the fp32 corpora refreshed the same day, see "For step 4"). **Corpus snapshot**: one tarball of the derived artifacts (chunks, vectors, indexes, summaries, dossiers, topics, entities, chronology, appearances, bank) with a manifest and checksums; a publisher and an installer, one command each. A fresh deploy starts from the snapshot and only ever runs incremental updates: building the tables from nothing on a CPU is weeks | 1 to 2 days |
 | 4 | **Bootstrap**: clone, one command: release binaries, pinned models, migrations, the snapshot, the units and timers, the first nightly update. Documented in `deploy/README.md` as the only path. llama.cpp (`llama-server`) is still installed by hand (`deploy/README.md` step 2); pinning a release and its sha256 belongs here | 1 to 2 days |
 | 5 | **The paced stage runner** (`trevor-stages`): section 4's priority order, duty cycle, lock and pressure pauses, gated publish | 3 to 5 days |
 | 6 | The nightly re-answer job (yesterday's live questions on the 12B into the bank; the bank's keep rules of contract v1.1 section 3a apply) | 1 day |
@@ -191,11 +191,14 @@ p3b and p4x returns the same hits as on the source. A truncated archive and an a
 fail `check` with exit 1.
 
 For step 4: the development machine serves INT8 vectors, which no other host can query (`trevor-reembed.md` section
-6), and its fp32 copies date from 2026-10-16. Of the 26,504 distinct texts in p3b, p4x and p4-art, 1,300 have no fp32
-vector yet. The bootstrap therefore needs fp32 vectors in the serving corpora: either refresh the `-fp32` copies on the
-development machine before packing (`embed-corpus --model-file model.onnx --reuse-from` the copies, 1,300 texts) or
-embed those texts on the box. `trevor-vps-update.sh` refuses INT8 vectors under `EMBED_ONNX=model.onnx`, and its
-`EMBED_FULL=1` re-embeds every text without reuse, so it cannot use the copies as they are.
+6), so a snapshot for another host must carry the `-fp32` corpora, and they must be current. Resolved 2026-10-19:
+the refresh of `trevor-reembed.md` section 4 (copy each INT8 corpus's chunk files and BM25 index into its `-fp32`
+directory, then `embed-corpus --onnx-file model.onnx` with `--reuse-from` chained p3b, p4x, p4-art) embedded 1,063
+new texts for p3b-fp32 and 238 for p4x-fp32 in 4.7 minutes and reused the rest; the three fp32 corpora now hold the
+live chunk shas and row counts (16,752; 25,514; 23,765) under the same model and tokenizer hashes, so they stay
+interchangeable with the earlier fp32 set. The snapshot packed from that tree is 219,235,313 bytes and checks clean.
+Rule: run that refresh before every `snapshot.py pack` meant for another host; `trevor-vps-update.sh` refuses INT8
+vectors under `EMBED_ONNX=model.onnx`, and its `EMBED_FULL=1` re-embeds every text without reuse.
 
 ## 7. Fail safe, never fail silent
 
