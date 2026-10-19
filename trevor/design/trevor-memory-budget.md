@@ -143,6 +143,9 @@ is the one piece to build, about a day.
   min, after its run lock pauses the runner and frees the model lock, until the guard's inputs have admitted EN for 420
   s (the 300 s retry plus 120 s for the build); else it skips the night and the next run retries. Tested with a stub
   lock holder; unverified on the box.
+- daily waits for the backend's reload: exact since 2026-10-19, `/api/health` `gameData.loaded.en.version` must equal
+  the `.version` res (the 420 s inference stays the fallback for a backend without the field or with a null version).
+  Tested with a stub `/api/health`; unverified on the box.
 
 Fallbacks, in order, each with its quality evidence:
 - 12B at IQ3_M (bartowski, 5.56 GiB) or Q3_K_M (unsloth, 5.30 GiB): about 1.2 to 1.5 GB less resident; mean KL

@@ -296,7 +296,10 @@ worker's own reports will show. By hand: `publish.py --activate <version>` (with
   `RELOAD_EN_MIN_FREE_MB`, 900) have admitted EN for `RELOAD_RETRY_SECS` (300) plus `RELOAD_BUILD_SECS` (120) s without
   a break, because the backend reports no loaded version; still refused, it logs "backend has not loaded <res> yet",
   builds nothing, exits 0, and the second consecutive night posts one embed (`state/reload-wait.json`). Keep
-  `RELOAD_RETRY_SECS` equal to `backend/.env`'s; `BACKEND_RELOAD_WAIT_MIN=0` is the script before.
+  `RELOAD_RETRY_SECS` equal to `backend/.env`'s; `BACKEND_RELOAD_WAIT_MIN=0` is the script before. Exact since
+  2026-10-19: a backend whose `/api/health` carries `gameData.loaded.en.version` is waited on until that equals the
+  `.version` res, and the inference above runs only when the field is absent (an older backend) or null (no reload since
+  the backend's boot), with the log line "reload wait mode exact" or "reload wait mode inference" saying which.
 - `artifacts/bank/regen/history.jsonl`: every `detect` and `run`, with counts. `trevor-vps-update.sh summaries`
   logs `bank-cf.json` and `bank-local.json` in the run's log directory.
 

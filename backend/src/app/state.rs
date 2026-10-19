@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::{
-    Arc,
+    Arc, Mutex,
     atomic::{AtomicBool, Ordering},
 };
 
@@ -50,6 +50,63 @@ pub struct ServerData {
     pub loaded: AtomicBool,
     /// Lazy-load bookkeeping (see `app::residency`). Inert for an eager server.
     pub residency: crate::app::residency::Residency,
+    /// The asset version and time of the last full build published here, for
+    /// `/health`'s `gameData.loaded`.
+    pub load_record: LoadRecord,
+}
+
+/// The asset version a server's data was built from and when that build was
+/// published: `/health`'s `gameData.loaded`, which tells a client (Trevor's
+/// daily update) whether a deferred reload has landed yet.
+///
+/// The version is the asset pipeline's `update_complete` version, the value
+/// the release ledger's `spawn_record` receives. A build that names none (the
+/// boot load, a sidecar job's fallback rebuild, a lazy load with no update
+/// since the server was last resident) keeps the version it had, because it read the
+/// same extract; the boot load therefore has none. An `update_complete`
+/// dropped by the watcher's 5 s debounce is the one case where a later
+/// versionless rebuild reads newer files than the version it keeps. A sidecar
+/// patch shares the built tables and leaves the record alone.
+#[derive(Default)]
+pub struct LoadRecord(Mutex<Option<LoadStamp>>);
+
+/// One published build: see [`LoadRecord`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LoadStamp {
+    pub version: Option<String>,
+    pub at: chrono::DateTime<chrono::Utc>,
+}
+
+impl LoadRecord {
+    /// A record of a build published now.
+    #[must_use]
+    pub fn stamped(version: Option<String>) -> Self {
+        let record = Self::default();
+        record.stamp(version);
+        record
+    }
+
+    /// Record a build published now. `None` keeps the previous version.
+    pub fn stamp(&self, version: Option<String>) {
+        let mut guard = self
+            .0
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let version = version.or_else(|| guard.as_ref().and_then(|s| s.version.clone()));
+        *guard = Some(LoadStamp {
+            version,
+            at: chrono::Utc::now(),
+        });
+    }
+
+    /// The last build recorded, kept across a lazy unload.
+    #[must_use]
+    pub fn last(&self) -> Option<LoadStamp> {
+        self.0
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .clone()
+    }
 }
 
 impl ServerData {
@@ -86,6 +143,7 @@ impl ServerData {
             art_dir,
             loaded: AtomicBool::new(false),
             residency: crate::app::residency::Residency::new(lazy),
+            load_record: LoadRecord::default(),
         }
     }
 
@@ -643,6 +701,7 @@ impl PendingServer {
             art_dir: self.art_dir,
             loaded: AtomicBool::new(true),
             residency: crate::app::residency::Residency::new(false),
+            load_record: LoadRecord::stamped(None),
         })
     }
 }

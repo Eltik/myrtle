@@ -1279,6 +1279,7 @@ fn en_story_data() -> (HashMap<Server, Arc<ServerData>>, &'static str) {
         art_dir: dir.display().to_string(),
         loaded: AtomicBool::new(true),
         residency: Default::default(),
+        load_record: Default::default(),
     });
     (HashMap::from([(Server::EN, sd)]), label)
 }

@@ -279,6 +279,9 @@ pub(crate) async fn perform_reload(state: &AppState, server: Server, res_version
             let op_count = game_data.operators.len();
             state.swap_game_data(server, game_data);
             state.swap_asset_index(server, asset_index);
+            // After the swap, so `/health` never names a version the entry
+            // does not serve yet.
+            sd.load_record.stamp(version.clone());
             // Everything after the swap reads the new data and may wait on the
             // network; none of it needs the lock.
             drop(reload_guard);

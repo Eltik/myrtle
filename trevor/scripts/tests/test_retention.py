@@ -542,10 +542,11 @@ log "harness: publish_stage returned"
 
 class ReloadWait(unittest.TestCase):
     """`daily` waits for the backend's game-data reload before any fetch (backend 89f07593 defers a reload while the
-    Trevor model lock names a live pid). The backend reports no loaded version, so the script reads the guard's own
-    inputs; here the model lock names a live `sleep` (the stand-in for the stage runner's 12B) and the harness sources
-    the script up to its command dispatch, replaces the four build steps with stubs that log, and runs take_run_lock
-    then cmd_daily. RELOAD_RETRY_SECS=1 and RELOAD_BUILD_SECS=0 stand in for the backend's 300 s retry."""
+    Trevor model lock names a live pid). Exact when /api/health has gameData.loaded.en.version; without it the script
+    reads the guard's own inputs. Here the model lock names a live `sleep` (the stand-in for the stage runner's 12B), a
+    stub /api/health answers `self.health(n)` for its n-th request (by default a backend before the field), and the
+    harness sources the script up to its command dispatch, replaces the four build steps with stubs that log, and runs
+    take_run_lock then cmd_daily. RELOAD_RETRY_SECS=1 and RELOAD_BUILD_SECS=0 stand in for the backend's 300 s retry."""
 
     def setUp(self):
         self.t = Tree()
@@ -574,12 +575,28 @@ log "harness: cmd_daily returned"
 """)
         self.posts = []
         posts = self.posts
+        self.health_gets = 0
+        self.health = lambda n: {'status': 'ok', 'gameData': {'degraded': False, 'tables': {}, 'stale': {}}}
+        case = self
 
         class Hook(http.server.BaseHTTPRequestHandler):
             def do_POST(self):
                 posts.append(json.loads(self.rfile.read(int(self.headers['content-length']))))
                 self.send_response(204)
                 self.end_headers()
+
+            def do_GET(self):
+                if self.path != '/api/health':
+                    self.send_response(404)
+                    self.end_headers()
+                    return
+                case.health_gets += 1
+                body = json.dumps(case.health(case.health_gets)).encode()
+                self.send_response(200)
+                self.send_header('content-type', 'application/json')
+                self.send_header('content-length', str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
 
             def log_message(self, *a):
                 pass
@@ -593,6 +610,7 @@ log "harness: cmd_daily returned"
         self.env.update({'TREVOR_DIR': t.trevor, 'TREVOR_HOME': t.home, 'ASSETS_DIR': t.assets, 'TREVOR_NICED': '1',
                          'TMPDIR': t.root, 'HARNESS_LIB': t.p('lib.sh'), 'TREVOR_LLM_LOCK': self.lock,
                          'DISCORD_ALERT_WEBHOOK': f'http://127.0.0.1:{self.srv.server_port}/',
+                         'TREVOR_BACKEND': f'http://127.0.0.1:{self.srv.server_port}',
                          'DISK_CHECK': '0', 'STALE_CHECK': '0', 'WATCHER_MAX_AGE_DAYS': '0',
                          'RELOAD_RETRY_SECS': '1', 'RELOAD_BUILD_SECS': '0', 'BACKEND_RELOAD_POLL_SECS': '1'})
 
@@ -610,6 +628,65 @@ log "harness: cmd_daily returned"
 
     def hold(self):
         self.t.write(self.lock, f'{self.holder.pid} stages\n')
+
+    @staticmethod
+    def serving(version):
+        """An /api/health body from a backend with gameData.loaded, serving `version` for EN."""
+        return {'status': 'ok', 'gameData': {'degraded': False, 'tables': {}, 'stale': {}, 'loaded': {
+            'en': {'version': version, 'loadedAt': '2026-10-19T08:30:00.000Z', 'lazy': False},
+            'jp': {'version': None, 'loadedAt': None, 'lazy': True}}}}
+
+    def test_exact_version_proceeds_on_the_first_match(self):
+        """/api/health serves res-1 for 3 requests, then res-2: the wait passes on the 4th, with the lock held the
+        whole time (the inference would never pass), and the log names the exact mode."""
+        self.hold()
+        self.health = lambda n: self.serving('res-1' if n <= 3 else 'res-2')
+        code, out = self.daily(BACKEND_RELOAD_WAIT_MIN='1')
+        self.assertEqual(code, 0, out)
+        self.assertIn('reload wait mode exact (/api/health gameData.loaded.en.version): proceeding when it reports '
+                      'res-2', out)
+        self.assertIn('/api/health reports EN res-1', out)
+        self.assertIn('the backend serves res-2 (gameData.loaded.en.version); proceeding', out)
+        self.assertNotIn('inference', out)
+        self.assertNotIn('live pid', out)
+        self.assertEqual(self.health_gets, 4)
+        self.assertLess(out.index('the backend serves res-2'), out.index('STUB prepare_stage'))
+        self.assertIn('STUB publish_stage', out)
+        self.assertFalse(os.path.exists(self.state))
+        # PLAN=1 prints the exact check and builds.
+        code, out = self.daily(PLAN='1')
+        self.assertIn("PLAN: wait up to 20 min for the backend's EN reload of res-2 (exact: /api/health reports EN "
+                      "res-2, a match)", out)
+        self.assertIn('STUB deterministic_build 1', out)
+
+    def test_exact_version_never_matching_skips_the_night(self):
+        """/api/health keeps serving res-1 with the lock FREE (the inference would pass in 1 s): no fallback, the skip
+        line names what the backend reports, no build, exit 0."""
+        self.health = lambda n: self.serving('res-1')
+        code, out = self.daily(BACKEND_RELOAD_WAIT_MIN='0.05')
+        self.assertEqual(code, 0, out)
+        self.assertIn('backend has not loaded res-2 yet (serves an older version: /api/health reports EN res-1); '
+                      'skipping tonight, the next run retries', out)
+        self.assertNotIn('STUB', out)
+        self.assertNotIn('inference', out)
+        self.assertGreaterEqual(self.health_gets, 3)
+        self.assertEqual(json.loads(read(self.state))['nights'], 1)
+
+    def test_null_version_or_no_field_falls_back_to_the_inference(self):
+        """A backend that has not reloaded since its boot (version null) and one before the field both take the
+        guard's inputs, and the log says which: the lock frees after 3 s and the run proceeds."""
+        for body, mode in ((self.serving(None), 'reports no EN version'),
+                           (self.health(1), 'has no gameData.loaded.en.version')):
+            with self.subTest(mode=mode):
+                self.hold()
+                self.health = lambda n, body=body: body
+                threading.Timer(3, os.remove, [self.lock]).start()
+                code, out = self.daily(BACKEND_RELOAD_WAIT_MIN='1')
+                self.assertEqual(code, 0, out)
+                self.assertIn(f'reload wait mode inference (/api/health {mode}', out)
+                self.assertIn(f'the model lock names live pid {self.holder.pid} (stages)', out)
+                self.assertIn('taking res-2 as loaded (inference)', out)
+                self.assertIn('STUB publish_stage', out)
 
     def test_the_wait_ends_when_the_lock_is_freed_and_the_run_proceeds(self):
         """The lock names a live pid for about 3 polls, then the holder frees it: the wait ends and the build runs."""

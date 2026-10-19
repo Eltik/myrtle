@@ -22344,16 +22344,27 @@
       },
       "GameDataHealth": {
         "type": "object",
-        "description": "Game data problems from the most recent load, per server. Two kinds, kept apart:\n\n- `degraded` / `tables`: a table failed to DESERIALIZE and fell back to an empty\n  default, so the site serves nothing where that table's content should be.\n- `stale`: a table the unpacker SKIPPED because it verified under no schema, so\n  the file on disk is an earlier extract's. It parses and serves plausible data\n  that is missing whatever the newer patch added. Never counted in `degraded`.\n\nNeither flips the top-level `status`: both are data problems, not availability\nones, and paging an uptime monitor for a cosmetic table would train everyone to\nignore it.",
+        "description": "Game data problems from the most recent load, per server, and what each\nserver serves. Two kinds of problem, kept apart:\n\n- `degraded` / `tables`: a table failed to DESERIALIZE and fell back to an empty\n  default, so the site serves nothing where that table's content should be.\n- `stale`: a table the unpacker SKIPPED because it verified under no schema, so\n  the file on disk is an earlier extract's. It parses and serves plausible data\n  that is missing whatever the newer patch added. Never counted in `degraded`.\n\nNeither flips the top-level `status`: both are data problems, not availability\nones, and paging an uptime monitor for a cosmetic table would train everyone to\nignore it.",
         "required": [
           "degraded",
           "tables",
-          "stale"
+          "stale",
+          "loaded"
         ],
         "properties": {
           "degraded": {
             "type": "boolean",
             "description": "True when any server has a table in `tables`. Says nothing about `stale`."
+          },
+          "loaded": {
+            "type": "object",
+            "description": "`{ \"en\": { \"version\": \"26-10-03-16-06-39_0a6acf\", \"loadedAt\": ..., \"lazy\": false } }`,\nthe build every configured server serves now. Present for every\nconfigured server, loaded or not.",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/LoadedGameData"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
           },
           "stale": {
             "type": "object",
@@ -24065,6 +24076,33 @@
           "farming_stage": {
             "type": "string",
             "description": "The stage the farming estimate runs (the LMD stage, CE-6)."
+          }
+        }
+      },
+      "LoadedGameData": {
+        "type": "object",
+        "description": "The game data one server serves now: the asset version it was built from\nand when that build was published (`ServerData::load_record`).",
+        "required": [
+          "lazy"
+        ],
+        "properties": {
+          "lazy": {
+            "type": "boolean",
+            "description": "The server loads on its first request and unloads when idle\n(`SERVERS_LAZY`). A lazy server that is not resident has null\n`version` and `loadedAt`."
+          },
+          "loadedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "RFC 3339 UTC of the last full build published; null when the server\nholds no data. A sidecar patch does not move it."
+          },
+          "version": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The asset pipeline's `update_complete` version the served build was\nread under, the same string as the watcher's `.version` file. A build\nwith no version of its own keeps the previous one; null when the\nserver has never had one since boot (the boot load knows none) or\nholds no data (failed to load, or lazy and unloaded)."
           }
         }
       },

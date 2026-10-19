@@ -147,6 +147,16 @@ Around 70 unique paths under `/api`, most of which also accept a `{server}` pref
 | GET | `/stats` | No | Public stats (cached) |
 | GET | `/admin/stats` | Admin | Detailed admin dashboard |
 
+`/health`'s `gameData` carries `degraded` and `tables` (tables that fell back to an empty default), `stale` (tables the
+unpacker skipped, served from an earlier extract) and `loaded`, one entry per configured server:
+`{ "version": "26-10-03-16-06-39_0a6acf", "loadedAt": "2026-10-19T08:30:00.000Z", "lazy": false }`. `version` is the
+asset pipeline's `update_complete` version the served build was read under (the string in the watcher's `.version`),
+stamped when a reload swaps; a build with none of its own (the boot load, a sidecar job's fallback rebuild, a lazy load
+with no update since the server was last resident) keeps the previous one, so it is null after a boot until the next
+update reloads. A reload the reload guard defers leaves `version` on the old value until its retry swaps, which is what
+Trevor's `daily` waits on. `loadedAt` is that build's publish time; both are null while the server holds no data (failed
+to load, or `lazy` and not resident).
+
 ### Authentication
 
 | Method | Path | Auth | Description |

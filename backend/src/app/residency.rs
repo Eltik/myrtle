@@ -336,12 +336,15 @@ async fn load(state: &AppState, server: Server, sd: &Arc<ServerData>) -> Result<
     let (game_data, asset_index) = built;
     sd.game_data.store(Arc::new(game_data));
     sd.asset_index.store(Arc::new(asset_index));
+    // Taken under the reload lock, which is also where a reload of an
+    // unloaded server defers its version, so none is lost in between.
+    let res_version = sd.residency.take_res_version();
+    sd.load_record.stamp(res_version.clone());
     sd.loaded.store(true, Ordering::Release);
     sd.residency.touch();
     drop(guard);
     // What the boot pass records for an eager server, recorded at load, under
     // the version of any update that arrived while the server was unloaded.
-    let res_version = sd.residency.take_res_version();
     crate::core::release::ledger::spawn_record(state.clone(), server, res_version);
     Ok(())
 }
@@ -489,7 +492,7 @@ pub async fn ensure_requested_server(
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use crate::app::cache::keys::CacheKey;
     use crate::app::cache::store::CacheStore;
@@ -499,10 +502,10 @@ mod tests {
     use std::path::{Path, PathBuf};
 
     /// A scratch `ASSETS_DIR`, removed on drop.
-    struct Scratch(PathBuf);
+    pub(crate) struct Scratch(PathBuf);
 
     impl Scratch {
-        fn new(tag: &str) -> Self {
+        pub(crate) fn new(tag: &str) -> Self {
             let dir = std::env::temp_dir().join(format!(
                 "myrtle-residency-{tag}-{}-{}",
                 std::process::id(),
@@ -515,14 +518,14 @@ mod tests {
 
         /// The smallest tree the loader accepts: one empty `character_table`.
         /// Every other table falls back to its default with a warning.
-        fn write_server(&self, server: Server) {
+        pub(crate) fn write_server(&self, server: Server) {
             let excel = self.0.join(server.as_str()).join("gamedata/excel");
             std::fs::create_dir_all(&excel).expect("excel dir");
             std::fs::write(excel.join("character_table.json"), br#"{"Characters":[]}"#)
                 .expect("character_table");
         }
 
-        fn base(&self) -> &Path {
+        pub(crate) fn base(&self) -> &Path {
             &self.0
         }
     }
@@ -533,7 +536,7 @@ mod tests {
         }
     }
 
-    fn state_for(base: &Path, servers: &[Server], lazy: &[Server]) -> AppState {
+    pub(crate) fn state_for(base: &Path, servers: &[Server], lazy: &[Server]) -> AppState {
         let config = AppConfig {
             jwt_secret: "test-jwt-secret-not-used-by-this-test".into(),
             game_credential_key: CredentialKey::parse(&"11".repeat(32)).expect("key"),
@@ -565,7 +568,7 @@ mod tests {
     /// boot timeline; the startup tests time that timeline, so a load running
     /// beside them corrupts their measurement. Every test here that loads holds
     /// their lock.
-    fn serial() -> std::sync::MutexGuard<'static, ()> {
+    pub(crate) fn serial() -> std::sync::MutexGuard<'static, ()> {
         crate::core::startup::tests::SERIAL
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)

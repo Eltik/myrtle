@@ -185,6 +185,7 @@ async fn state() -> AppState {
         art_dir: dir.display().to_string(),
         loaded: std::sync::atomic::AtomicBool::new(true),
         residency: Default::default(),
+        load_record: Default::default(),
     });
     let config = AppConfig {
         jwt_secret: "test-jwt-secret-not-used-by-this-test".into(),

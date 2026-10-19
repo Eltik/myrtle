@@ -64,10 +64,12 @@
 #   BACKEND_RELOAD_WAIT_MIN [20]  minutes `daily` waits, before any fetch, for the backend to reload the new EN data:
 #              since backend 89f07593 a reload is deferred while the Trevor model lock names a live pid or MemAvailable
 #              is under the EN floor, and retried every RELOAD_RETRY_SECS, and the 19:30 UTC run falls inside the 12B
-#              window. The backend reports no loaded version, so the wait reads the guard's own inputs (the lock,
-#              /proc/meminfo) and passes once they have admitted an EN reload for RELOAD_RETRY_SECS [300] plus
-#              RELOAD_BUILD_SECS [120] without a break (RELOAD_RETRY_SECS and RELOAD_EN_MIN_FREE_MB [900] must match
-#              backend/.env); polled every BACKEND_RELOAD_POLL_SECS [30], one log line a minute. Still refused at the
+#              window. Exact when $TREVOR_BACKEND/api/health has gameData.loaded.en.version: the wait passes as soon
+#              as it equals res. Without that field (an older backend) or with a null version (no reload since the
+#              backend's boot) it reads the guard's own inputs (the lock, /proc/meminfo) and passes once they have
+#              admitted an EN reload for RELOAD_RETRY_SECS [300] plus RELOAD_BUILD_SECS [120] without a break
+#              (RELOAD_RETRY_SECS and RELOAD_EN_MIN_FREE_MB [900] must match backend/.env); the log names the mode.
+#              Polled every BACKEND_RELOAD_POLL_SECS [30], one log line a minute. Still unmatched or refused at the
 #              end: no build, exit 0, the next run retries; the second consecutive night posts one embed
 #              ($STATE/reload-wait.json). 0 = no wait (the script before 2026-10-19, for a box without the window)
 #   PRUNE [1]  0 = no prune step after a daily publish (the script before 2026-10-19). The step runs scripts/retention.py
@@ -766,12 +768,14 @@ stop_local_llm() {
 }
 
 # ---------------------------------------------------------------- the backend's deferred reload (backend 89f07593)
-# The backend serves no game-data version: /api/health's gameData carries degraded, tables and stale only (a stale
-# entry's resVersion is the skipped input's), and no reload time is exposed. So `daily` reads what the backend's
-# reload guard reads (core/reload_guard.rs `check`): the model lock, a pid first and alive by /proc/<pid> or `ps -p`,
-# then MemAvailable against the EN floor. A refused reload retries every RELOAD_RETRY_SECS, so once the guard has
-# admitted EN for RELOAD_RETRY_SECS plus RELOAD_BUILD_SECS without a break, a deferred reload has run and swapped (or
-# none was deferred). An inference, not a report: a reload whose build FAILED looks the same.
+# The backend's /api/health gameData.loaded.en.version (since 2026-10-19) names the asset version it serves for EN (the
+# update_complete version, the string in .version, stamped when a reload swaps), so `daily` compares it with res and
+# proceeds on an exact match. An older backend has no such field, and a backend that has not reloaded since its
+# boot reports null (the boot load knows no version); for those `daily` reads what the backend's reload guard reads
+# (core/reload_guard.rs `check`): the model lock, a pid first and alive by /proc/<pid> or `ps -p`, then MemAvailable
+# against the EN floor. A refused reload retries every RELOAD_RETRY_SECS, so once the guard has admitted EN for
+# RELOAD_RETRY_SECS plus RELOAD_BUILD_SECS without a break, a deferred reload has run and swapped (or none was
+# deferred). That half is an inference, not a report: a reload whose build FAILED looks the same.
 
 # guard_refusal: why the backend's guard would refuse an EN reload now, or nothing. Always exits 0 (it runs inside a
 # substitution, where bash 3.2 runs the ERR trap on a failing last command).
@@ -795,25 +799,81 @@ guard_refusal() {
   return 0
 }
 
-# wait_for_backend_reload RES: 0 once the guard has admitted EN for RELOAD_RETRY_SECS + RELOAD_BUILD_SECS without a
-# break, 1 when BACKEND_RELOAD_WAIT_MIN ran out first (RELOAD_WAIT_WHY says why). PLAN=1 prints the check, returns 0.
+# backend_en_version: what $TREVOR_BACKEND/api/health says the backend serves for EN. "exact <version>" when
+# gameData.loaded.en.version is a string; "none" when the entry is there with a null version (no reload since its
+# boot); "absent" when the field is missing (a backend before it) or nothing parseable answers. Always exits 0.
+backend_en_version() {
+  local body
+  body="$(curl -s --connect-timeout 5 -m 10 "$TREVOR_BACKEND/api/health" 2>/dev/null || true)"
+  python3 -c '
+import json, sys
+try:
+    v = json.loads(sys.argv[1])["gameData"]["loaded"]["en"]["version"]
+except (ValueError, KeyError, TypeError):
+    print("absent")
+    sys.exit()
+print(f"exact {v}" if isinstance(v, str) and v else "none")
+' "$body" 2>/dev/null || echo absent
+}
+
+# reload_wait_mode SEEN: the mode a backend_en_version answer puts the wait in, as logged.
+reload_wait_mode() {
+  case "$1" in
+    exact\ *) echo "exact (/api/health gameData.loaded.en.version)" ;;
+    none) echo "inference (/api/health reports no EN version: the backend has not reloaded since its boot)" ;;
+    *) echo "inference (/api/health has no gameData.loaded.en.version: a backend before it, or none answers)" ;;
+  esac
+  return 0
+}
+
+# wait_for_backend_reload RES: 0 once the backend serves RES (exact) or its guard has admitted EN for
+# RELOAD_RETRY_SECS + RELOAD_BUILD_SECS without a break (inference), 1 when BACKEND_RELOAD_WAIT_MIN ran out first
+# (RELOAD_WAIT_WHY says why). The mode is read on every poll (a backend restarted mid-wait changes it) and logged when
+# it changes. PLAN=1 prints the check, returns 0.
 RELOAD_WAIT_WHY=""
 wait_for_backend_reload() {
   local res="$1" need=$(( RELOAD_RETRY_SECS + RELOAD_BUILD_SECS )) limit why open_since="" now start=$SECONDS last=-1
+  local seen mode="" served
   limit="$(python3 -c 'import sys; print(int(float(sys.argv[1]) * 60))' "$BACKEND_RELOAD_WAIT_MIN")"
   if [[ -n "$PLAN" ]]; then
-    why="$(guard_refusal)"
-    echo "PLAN: wait up to $BACKEND_RELOAD_WAIT_MIN min for the backend's EN reload of $res (the reload guard ${why:+refuses now: $why}${why:-admits now}; it must admit for ${need}s without a break)"
+    seen="$(backend_en_version)"
+    if [[ "$seen" == exact\ * ]]; then
+      served="${seen#exact }"
+      if [[ "$served" == "$res" ]]; then why="a match"; else why="no match yet"; fi
+      echo "PLAN: wait up to $BACKEND_RELOAD_WAIT_MIN min for the backend's EN reload of $res (exact: /api/health reports EN $served, $why)"
+    else
+      why="$(guard_refusal)"
+      echo "PLAN: wait up to $BACKEND_RELOAD_WAIT_MIN min for the backend's EN reload of $res (the reload guard ${why:+refuses now: $why}${why:-admits now}; it must admit for ${need}s without a break; mode $(reload_wait_mode "$seen"))"
+    fi
     return 0
   fi
-  log "waiting for the backend to load $res: its reload guard must admit EN for ${need}s without a break (RELOAD_RETRY_SECS $RELOAD_RETRY_SECS + RELOAD_BUILD_SECS $RELOAD_BUILD_SECS), at most $BACKEND_RELOAD_WAIT_MIN min"
+  log "waiting for the backend to load $res, at most $BACKEND_RELOAD_WAIT_MIN min"
   while :; do
     now=$SECONDS
-    why="$(guard_refusal)"
-    if [[ -n "$why" ]]; then open_since=""; elif [[ -z "$open_since" ]]; then open_since=$now; fi
-    if [[ -n "$open_since" ]] && (( now - open_since >= need )); then
-      log "the reload guard admitted EN for $(( now - open_since ))s; taking $res as loaded"
-      return 0
+    seen="$(backend_en_version)"
+    if [[ "$(reload_wait_mode "$seen")" != "$mode" ]]; then
+      mode="$(reload_wait_mode "$seen")"
+      if [[ "$seen" == exact\ * ]]; then
+        log "reload wait mode $mode: proceeding when it reports $res"
+      else
+        log "reload wait mode $mode: the reload guard must admit EN for ${need}s without a break (RELOAD_RETRY_SECS $RELOAD_RETRY_SECS + RELOAD_BUILD_SECS $RELOAD_BUILD_SECS)"
+      fi
+    fi
+    if [[ "$seen" == exact\ * ]]; then
+      served="${seen#exact }"
+      open_since=""
+      if [[ "$served" == "$res" ]]; then
+        log "the backend serves $res (gameData.loaded.en.version); proceeding"
+        return 0
+      fi
+      why="/api/health reports EN $served"
+    else
+      why="$(guard_refusal)"
+      if [[ -n "$why" ]]; then open_since=""; elif [[ -z "$open_since" ]]; then open_since=$now; fi
+      if [[ -n "$open_since" ]] && (( now - open_since >= need )); then
+        log "the reload guard admitted EN for $(( now - open_since ))s; taking $res as loaded (inference)"
+        return 0
+      fi
     fi
     if (( now - start >= limit )); then
       RELOAD_WAIT_WHY="${why:-the reload guard admitted EN for only $(( now - open_since ))s of ${need}s}"
