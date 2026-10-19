@@ -387,6 +387,11 @@ pub(crate) struct Args {
     /// when the passages hold that line only in another named speaker's lines (`answer/referent.rs`).
     #[arg(long)]
     pub(crate) no_quote_check: bool,
+    /// Keep a report attribution the passages contradict: "A report from Mon3tr states that Kal'tsit is dead [1]"
+    /// stays when the cited deaths-evidence passage gives that line to another speaker (2026-10-20,
+    /// `answer/referent.rs`; by default the name is rewritten to the line's speaker).
+    #[arg(long)]
+    pub(crate) no_report_check: bool,
     /// Turn off the deaths evidence (`fate.rs`): a question asking whether one character is alive or dead gets no
     /// lines from Trevor's deaths table as its first passages.
     #[arg(long)]

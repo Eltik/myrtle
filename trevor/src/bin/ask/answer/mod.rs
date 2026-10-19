@@ -128,6 +128,7 @@ pub(crate) async fn answer_one(
             &tables.tools,
             !a.no_referent_check,
             !a.no_quote_check,
+            !a.no_report_check,
         ) {
             if trevor::env::debug_on("TREVOR_IDENTITY_DEBUG") {
                 eprintln!("referent check: dropped {found:?}");

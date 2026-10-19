@@ -532,6 +532,101 @@ pub(crate) struct Found {
     pub(crate) fates: Vec<String>,
     /// (said to say it, who says it) for each misattributed quote.
     pub(crate) quotes: Vec<(String, String)>,
+    /// (named as the report's source, who speaks the report line) for each rewritten report attribution.
+    pub(crate) reports: Vec<(String, String)>,
+}
+
+/// Whether a rendered passage is the deaths evidence (`fate.rs`): its label names the line as a death or a report of
+/// one, in either wording ("a line reporting that X is dead", "the line where X dies", or the `--death-label-v1` form).
+fn death_passage(text: &str) -> bool {
+    let label = text.lines().next().unwrap_or_default();
+    label.contains("a line reporting that")
+        || (label.contains("the line where ") && label.ends_with(" dies)"))
+        || label.contains("Trevor's deaths table finds")
+}
+
+/// The words that introduce a report's source: "a report from X", "reported by X", "according to X".
+const REPORT_LEADS: &[&str] = &["report", "reports", "reported", "according"];
+const REPORT_LINKS: &[&str] = &["from", "by", "to"];
+
+/// A sentence that cites a deaths-evidence passage and attributes the report to a named source X, when the passage's
+/// fate line is spoken by someone else: (X, the speaker). "A report from Mon3tr states that Kal'tsit is dead [1]" with
+/// the line "Noisy 'Mini-House': I know she's dead, obviously." gives (Mon3tr, Noisy 'Mini-House'); a sentence whose
+/// source speaks a fate line of the passage, or one citing no deaths passage, gives None (2026-10-20).
+fn misattributed_report(sentence: &str, tools: &Tools, texts: &[String]) -> Option<(String, String)> {
+    let cited: Vec<&String> = cites(sentence)
+        .into_iter()
+        .filter_map(|n| texts.get(n.checked_sub(1)?))
+        .filter(|t| death_passage(t))
+        .collect();
+    if cited.is_empty() {
+        return None;
+    }
+    let toks: Vec<&str> = sentence.split_whitespace().collect();
+    let mut source: Option<String> = None;
+    for k in 1..toks.len().saturating_sub(1) {
+        if !REPORT_LINKS.contains(&clean(toks[k]).to_lowercase().as_str())
+            || !REPORT_LEADS.contains(&clean(toks[k - 1]).to_lowercase().as_str())
+        {
+            continue;
+        }
+        let run: Vec<&str> = toks[k + 1..]
+            .iter()
+            .take(3)
+            .take_while(|w| {
+                let c = clean(w);
+                !c.is_empty() && (NAME_JOINERS.contains(&c) || c.chars().next().is_some_and(char::is_uppercase))
+            })
+            .copied()
+            .collect();
+        if !run.is_empty() {
+            let name = run.iter().map(|w| clean(w)).collect::<Vec<_>>().join(" ");
+            let name = name
+                .trim_end_matches(|c: char| !c.is_alphanumeric() && c != '\'')
+                .to_owned();
+            if !name.is_empty() {
+                source = Some(name);
+                break;
+            }
+        }
+    }
+    let source = source?;
+    let f = forms(tools, &source);
+    let mut speakers: Vec<String> = Vec::new();
+    for t in &cited {
+        for line in t.lines().skip(1) {
+            let (who, text) = speaker_and_text(line);
+            if !fate_in(text) {
+                continue;
+            }
+            // The label as the script writes it ("Noisy 'Mini-House'"), not the quote-trimmed form the match uses.
+            let raw = line.split_once(": ").map(|(h, _)| h.trim());
+            match (who, raw) {
+                (Some(w), _) if f.iter().any(|x| same(x, w)) => return None,
+                (Some(_), Some(r)) => speakers.push(r.to_owned()),
+                _ => {}
+            }
+        }
+    }
+    speakers.sort();
+    speakers.dedup();
+    (speakers.len() == 1).then(|| (source, speakers.remove(0)))
+}
+
+/// `answer` with each report attribution the passages contradict rewritten to the line's speaker (`found.reports`
+/// records each), or unchanged.
+fn rewrite_reports(answer: &str, tools: &Tools, texts: &[String], found: &mut Found) -> String {
+    let mut out = answer.to_owned();
+    for p in sentences(answer) {
+        if let Some((source, speaker)) = misattributed_report(p.text, tools, texts) {
+            let fixed = p.text.replacen(&source, &speaker, 1);
+            if fixed != p.text {
+                out = out.replacen(p.text, &fixed, 1);
+                found.reports.push((source, speaker));
+            }
+        }
+    }
+    out
 }
 
 /// The answer without its unsupported fate claims (`fate`) and misattributed quotes (`quote`), and what was found;
@@ -543,10 +638,19 @@ pub(crate) fn check(
     tools: &Tools,
     fate: bool,
     quote: bool,
+    report: bool,
 ) -> Option<(String, Found)> {
-    if !fate && !quote {
+    if !fate && !quote && !report {
         return None;
     }
+    // The report attributions first (`--no-report-check`): a rewrite, not a drop, so the sentence keeps its content.
+    let mut found = Found::default();
+    let rewritten = if report {
+        rewrite_reports(answer, tools, texts, &mut found)
+    } else {
+        answer.to_owned()
+    };
+    let answer = rewritten.as_str();
     let pieces = sentences(answer);
     let mut lead: Vec<String> = pieces
         .first()
@@ -556,7 +660,6 @@ pub(crate) fn check(
         .take(1)
         .collect();
     lead.extend(name_runs(q));
-    let mut found = Found::default();
     let keep: Vec<bool> = pieces
         .iter()
         .map(|p| {
@@ -577,7 +680,7 @@ pub(crate) fn check(
         })
         .collect();
     if keep.iter().all(|&k| k) {
-        return None;
+        return (!found.reports.is_empty()).then(|| (answer.to_owned(), found));
     }
     if keep.iter().all(|&k| !k) {
         let mut notes: Vec<String> = found
@@ -627,6 +730,7 @@ mod tests {
             &Tools::default(),
             true,
             true,
+            false,
         )
         .unwrap();
         assert_eq!(found.fates, vec!["Mandragora".to_owned()]);
@@ -652,7 +756,7 @@ mod tests {
             "Mandragora is no longer alive [1, 2].",
         ] {
             assert!(
-                check(a, "Is Mandragora alive or dead?", &stormwatch(), &t, true, true).is_none(),
+                check(a, "Is Mandragora alive or dead?", &stormwatch(), &t, true, true, false).is_none(),
                 "{a}"
             );
         }
@@ -664,6 +768,7 @@ mod tests {
             &t,
             true,
             true,
+            false,
         )
         .unwrap();
         assert_eq!(out, "Mandragora fought Manfred [3].");
@@ -685,14 +790,25 @@ mod tests {
             "Mandragora is alive [9].",
         ] {
             assert!(
-                check(a, "Is Mandragora alive or dead?", &stormwatch(), &t, true, true).is_none(),
+                check(a, "Is Mandragora alive or dead?", &stormwatch(), &t, true, true, false).is_none(),
                 "{a}"
             );
         }
         // The switches.
         let a = "Mandragora is dead [2]. Harmonie states that 'she's dead' in reference to The Leader.";
-        assert!(check(a, "Is Mandragora alive or dead?", &stormwatch(), &t, false, false).is_none());
-        let (_, f) = check(a, "q", &stormwatch(), &t, false, true).unwrap();
+        assert!(
+            check(
+                a,
+                "Is Mandragora alive or dead?",
+                &stormwatch(),
+                &t,
+                false,
+                false,
+                false
+            )
+            .is_none()
+        );
+        let (_, f) = check(a, "q", &stormwatch(), &t, false, true, false).unwrap();
         assert!(f.fates.is_empty() && f.quotes.len() == 1);
     }
 
@@ -707,5 +823,39 @@ mod tests {
         let q: Vec<&str> = quote_spans(s).into_iter().map(|(a, b)| &s[a..b]).collect();
         assert_eq!(q, vec!["she's dead", "go now"]);
         assert!(quote_spans("Mandragora's sister isn't here.").is_empty());
+    }
+    fn quiet_soul() -> Vec<String> {
+        vec![
+            "(story: Critical Phase Transition, A Quiet Soul; a line reporting that Kal'tsit is dead)\n\
+             Mon3tr: Closure? Closure stops, rummaging through a drawer.\n\
+             Noisy 'Mini-House': I know she's dead, obviously.\n\
+             Closure: I also know how to bring her back."
+                .to_owned(),
+            "(story: Dissociative Recombination, Never Doubted, Never Far)\nAmiya: Kal'tsit has disappeared."
+                .to_owned(),
+        ]
+    }
+
+    #[test]
+    fn report_attribution_is_rewritten_to_the_speaker() {
+        let t = Tools::default();
+        let a = "The text shows no scene of Kal'tsit's death. A report from Mon3tr states that Kal'tsit is dead [1]. \
+                 Closure explains how to bring her back [1].";
+        let (out, found) = check(a, "How does Kal'tsit die?", &quiet_soul(), &t, false, false, true).unwrap();
+        assert!(
+            out.contains("A report from Noisy 'Mini-House' states that Kal'tsit is dead [1]."),
+            "{out}"
+        );
+        assert!(out.contains("Closure explains how to bring her back [1]."), "{out}");
+        assert_eq!(
+            found.reports,
+            vec![("Mon3tr".to_owned(), "Noisy 'Mini-House'".to_owned())]
+        );
+        // The right speaker, a passage that is not the deaths evidence, and the switch off: unchanged.
+        let ok = "A report from Noisy 'Mini-House' states that Kal'tsit is dead [1].";
+        assert!(check(ok, "q", &quiet_soul(), &t, false, false, true).is_none());
+        let other = "A report from Mon3tr states that Kal'tsit is dead [2].";
+        assert!(check(other, "q", &quiet_soul(), &t, false, false, true).is_none());
+        assert!(check(a, "q", &quiet_soul(), &t, false, false, false).is_none());
     }
 }

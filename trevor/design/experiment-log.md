@@ -3096,3 +3096,22 @@ line, `block` is None, `extra_hints` has nothing to find, and the first answer s
 link from Seaborn to the Church of the Deep is semantic; the text never states it, so the decline is data-consistent. A
 lift would need the topics table (a topic summary that relates the Church to the Seaborn) to lend the theory rule its
 stems; unmeasured, not built.
+
+### 2026-10-20: Report attributions checked against the deaths-evidence line's speaker (`--no-report-check`)
+
+**Why.** The 12B wrote "A report found by Closure states that Kal'tsit is dead [1]" with the old passage label and "A
+report from Mon3tr states that Kal'tsit is dead [1]" with the new one (night of 19/20); the line is the Mini-House's
+("Noisy 'Mini-House': I know she's dead, obviously."), Mon3tr and Closure merely speak in the same passage. The quote
+check catches only quoted lines; a paraphrased report attribution had no check.
+**Built.** `answer/referent.rs`: a sentence that cites a deaths-evidence passage (its label reads "a line reporting that
+X is dead", "the line where X dies" or the `--death-label-v1` wording) and names a source after "report from", "report
+by", "reported by" or "according to" is checked against the speakers of that passage's fate lines (`fate_in`); when the
+passage has exactly one such speaker and it is not the named source (by `forms`), the name is REWRITTEN to that
+speaker, the sentence kept (`Found.reports` records the pair); several speakers, a narrated line or a source who does
+speak a fate line leave the sentence alone. `check` gains a `report` argument; `--no-report-check` reproduces the
+earlier output exactly (the stub renders cannot exercise it: a stub answer never attributes a report).
+**Measured.** On the night's saved answer as a fixture: "A report from Mon3tr states that Kal'tsit is dead [1]" becomes
+"A report from Noisy 'Mini-House' states that Kal'tsit is dead [1]" with the other sentences untouched; the right
+speaker, a non-deaths passage and the switch off change nothing (unit test). Exposure: deaths evidence reached 7 of 1,040
+Discord prompts and 0 of the other six sets (2026-10-20), so the check fires rarely. The model window (the 10 questions
+of the deaths-label check on the 12B) is owed on the next free model slot.

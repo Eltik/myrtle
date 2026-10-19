@@ -401,6 +401,7 @@ pub(crate) fn identity_scan(a: &Args, tools: &Tools, dump: &Path) -> Result<()> 
             tools,
             !a.no_referent_check,
             !a.no_quote_check,
+            !a.no_report_check,
         )
         .filter(|_| referent_on)
         {
