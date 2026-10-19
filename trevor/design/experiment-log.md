@@ -3079,3 +3079,16 @@ prompt and 1.75 times the time per question. The VPS E2B throughput at 6k contex
 admission budget, the cpu rung serves mid6k (`TREVOR_CPU_PROFILE=mid6k`, contract v1.1 section 4) and the serving
 unit's llama-server context rises from 4,096 to 8,192 (deploy/trevor.env.example line 49 ties the profile to that
 size; E2B's KV cache at 8k is small, the prompt processing on 3 vCPUs is the cost to measure).
+
+### 2026-10-20: ian26 "is deepcolor part of the church of the deep" declines with the hint in the prompt (open)
+
+**Measured (no model, stub render at `full`, binary 32a8192f).** No chunk of P3b or P4x names both Deepcolor and the
+Church of the Deep (0 of 16,752 and 0 of the typed units); her operator story Blue Notes ties her to the Seaborn in
+other words ("I'm not heeding the call of the many", a palette with tentacles, "The life of a Seaborn is so repressed").
+The full-profile prompt holds that passage (`story_deepcl_set_2_story_1#0005`: "Seaborn" twice, "call of the many"
+once, in 6 Blue Notes passages), and the 12B's answer of the night is a plain decline ("The passages do not mention
+whether Deepcolor is part of the Church of the Deep") with no labelled theory, although the question is a
+whether-question about one character and the theory rule (`theory.rs`, `--no-theory-rule`) exists for that case.
+**Open.** Either the rule's hint test does not count these lines (no shared noun with the question: "Seaborn" is not
+"Church of the Deep") or the second ask returned nothing; `TREVOR_THEORY_DEBUG` or a dump of the second ask on one
+model run would tell which. Not built tonight. The decline itself is data-consistent: the text never names the Church.
