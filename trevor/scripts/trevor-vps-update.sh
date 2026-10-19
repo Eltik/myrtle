@@ -449,6 +449,48 @@ Retention: \`trevor-vps-update.sh prune\` lists what the policy would delete; PR
   return 0
 }
 
+# stale_tables_check: the unpacker keeps a game table it could not decode and lists it in gamedata/.skipped.json
+# (backend core/gamedata/stale.rs); nothing alerted on it, so a format change showed only as weeks without a publish.
+# One Discord embed per table the first time it is seen stale (keyed on server, table and `since` in
+# $STATE/stale-alerted.json), a log line every run while it stays stale. STALE_CHECK=0 turns it off. Never fails.
+stale_tables_check() {
+  [[ "${STALE_CHECK:-1}" != "0" ]] || return 0
+  local out new
+  out="$(python3 - "$ASSETS_DIR" "$STATE/stale-alerted.json" <<'PY' 2>&1
+import glob, json, os, sys
+assets, seen_path = sys.argv[1], sys.argv[2]
+seen = json.load(open(seen_path)) if os.path.exists(seen_path) else {}
+stale, new = [], []
+for f in sorted(glob.glob(os.path.join(assets, 'output', '*', 'gamedata', '.skipped.json'))):
+    server = f.split(os.sep)[-3]
+    try:
+        tables = json.load(open(f)).get('tables', [])
+    except (OSError, ValueError) as e:
+        print(f'stale: cannot read {f}: {e}'); continue
+    for t in tables:
+        key = f"{server}/{t.get('table')}"
+        line = f"{key} stale since {t.get('since', '?')} (res {t.get('resVersion', '?')}, previous output kept: {t.get('previousOutput')})"
+        stale.append(line)
+        if seen.get(key) != t.get('since'):
+            new.append(line); seen[key] = t.get('since')
+for l in stale:
+    print('stale: ' + l)
+if new:
+    os.makedirs(os.path.dirname(seen_path), exist_ok=True)
+    json.dump(seen, open(seen_path, 'w'), indent=1)
+    print('NEW:' + '\n'.join(new))
+PY
+)" || true
+  printf '%s\n' "$out" | grep -v '^NEW:' | grep -v '^$' | while IFS= read -r l; do log "$l"; done || true
+  new="$(printf '%s\n' "$out" | sed -n '/^NEW:/,$p' | sed 's/^NEW://')"
+  if [[ -n "$new" ]]; then
+    post_embed "Trevor: a game table is stale" "$new
+The unpacker kept the previous table because the new one verifies under no schema. New rows of that table are not served until the schema is fixed (assets/schemas/README.md: schema-sync, generate-fbs, a release build). The nightly update keeps publishing the rest." \
+      15105570 "stale_table · $(hostname 2>/dev/null || echo vps) · trevor-vps-update.sh $CMD"
+  fi
+  return 0
+}
+
 # prune_step VERSION: after a successful publish only (never before one): retention over logs, eval runs, the spool,
 # releases and asset manifests; a dry run that lists what is over the policy unless PRUNE_APPLY=1. Exit 2 (something
 # was over the policy) is normal; an error is one update_failed alert and never fails the run (VERSION is live).
@@ -506,6 +548,7 @@ cmd_daily() {
   res_age=$(( ($(date +%s) - $(mtime "$RES_VERSION_FILE")) / 60 ))
   active_from="$(json_get "$STATE/active.json" builtFrom)"
   disk_check
+  stale_tables_check
   if [[ "$res" == "$active_from" && "$FORCE" != "1" ]]; then
     log "up to date: EN res_version $res is the active version's builtFrom"; return 0
   fi

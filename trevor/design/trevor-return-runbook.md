@@ -44,7 +44,7 @@ within months):
 
 | alert | means | first action |
 |---|---|---|
-| none, and no "published" notice for weeks | a stale game table. **Nothing posts a Discord message for it**: `.skipped.json` reaches only `/api/health` `gameData.stale`, a backend warn line and one line in the update's `run.log` (`common.py`). Silence is the symptom | section 3 |
+| "Trevor: a game table is stale" (once per table, since 2026-10-19), then no "published" notice for weeks | a stale game table: the unpacker kept the previous one. `daily` reads `.skipped.json` every run (`stale_tables_check`, `STALE_CHECK=0` off) and posts once per table and `since`; the table also shows in `/api/health` `gameData.stale`. Before 2026-10-19 silence was the only symptom | section 3 |
 | `update_failed`, step `gates` | a gate refused the build (schema, spoiler, recall more than 0.02 under the active version's, canary; runbook section 7); nothing was published, the last version serves, the next 19:30 UTC run retries | read the `run.log` the footer names; no rollback is needed, nothing changed |
 | `update_failed`, another step | build-corpus, a builder or the upload failed; the stage keeps the work. A failed activate flips back by itself (runbook section 4, step 8) | the same `run.log`; the same step on 3 or more consecutive days is section 3 |
 | `update_failed`, "only the warm-up failed" or "only the prune failed" | the new version is live | none unless it repeats |
