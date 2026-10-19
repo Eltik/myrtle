@@ -4,6 +4,7 @@
 //!
 //! - [`versions`]: corpus versions, their panels and eras, the publish.
 //! - [`answers`]: the answer cache.
+//! - [`bank`]: bank answers imported into the cache (v040), and their lookup.
 //! - [`admission`]: the counts and lock admission control reads.
 //! - [`jobs`]: the queue: insert, claim, ETAs, the stale sweep.
 //! - [`complete`]: a job's end: its answer, the Neuron ledger, failure.
@@ -13,6 +14,7 @@
 pub mod admission;
 pub mod answers;
 pub mod asks;
+pub mod bank;
 pub mod complete;
 pub mod jobs;
 pub mod versions;
@@ -21,6 +23,7 @@ pub mod workers;
 pub use admission::*;
 pub use answers::*;
 pub use asks::*;
+pub use bank::*;
 pub use complete::*;
 pub use jobs::*;
 pub use versions::*;

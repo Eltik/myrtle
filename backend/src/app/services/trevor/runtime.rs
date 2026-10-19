@@ -104,6 +104,10 @@ pub struct TrevorConfig {
     /// `TREVOR_CARRY_OVER=0` copies no cached answer to a newly activated
     /// version (contract v1.1 section 3b).
     pub carry_over: bool,
+    /// `TREVOR_BANK_IMPORT=0` ignores the bank answers a publish sends, and
+    /// the ask's cache lookup serves no imported row, as before the import
+    /// (contract v1.1 section 3a, addition 2026-10-19).
+    pub bank_import: bool,
     /// `TREVOR_ASK_LOG=0` records no `trevor_asks` row: "My questions", the
     /// popular list and the warm-up list then stay empty.
     pub ask_log: bool,
@@ -150,6 +154,7 @@ impl Default for TrevorConfig {
             mode: Mode::On,
             cpu_profile: Profile::Mid,
             carry_over: true,
+            bank_import: true,
             ask_log: true,
             alerts: true,
             spoiler_mode: true,
@@ -221,6 +226,7 @@ impl TrevorConfig {
                 }
             },
             carry_over: !switched_off("TREVOR_CARRY_OVER"),
+            bank_import: !switched_off("TREVOR_BANK_IMPORT"),
             ask_log: !switched_off("TREVOR_ASK_LOG"),
             alerts: !switched_off("TREVOR_ALERTS"),
             spoiler_mode: !switched_off("TREVOR_SPOILER_MODE"),
@@ -272,6 +278,8 @@ pub struct TrevorRuntime {
     reverdict_tried: DashMap<Uuid, ()>,
     /// Re-derivations an ask has started (tests).
     pub reverdicts: AtomicU64,
+    /// Publishes whose bank import failed (the publish itself went on).
+    pub bank_import_failures: AtomicU64,
     /// The alert state per kind (contract v1.1 section 2.2).
     pub alerter: Alerter,
     sink: RwLock<Arc<dyn AlertSink>>,
@@ -304,6 +312,7 @@ impl TrevorRuntime {
             claim_queries: AtomicU64::new(0),
             reverdict_tried: DashMap::new(),
             reverdicts: AtomicU64::new(0),
+            bank_import_failures: AtomicU64::new(0),
             alerter: Alerter::default(),
             sink: RwLock::new(sink),
             started_at: chrono::Utc::now().timestamp(),

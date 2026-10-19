@@ -4,8 +4,12 @@
 Reads a panels.py build (default artifacts/panels: manifest.json, stories/*.json, gate_report.json) and sends:
   1. the panels in chunks, each `{version, server, builtAt, manifest, gateReport, panels: {...}, activate: false}`,
      gzip-encoded (`content-encoding: gzip`), every request at most 4 MiB compressed AND 8 MiB decompressed;
-  2. one `{version, server, builtAt, manifest, gateReport, panels: {}, activate: true}`: each call overwrites the
-     version row's manifest and gate report (ON CONFLICT DO UPDATE), so the activate call resends both.
+  2. one `{version, server, builtAt, manifest, gateReport, panels: {}, activate: true, bankAnswers: [...]}`: each
+     call overwrites the version row's manifest and gate report (ON CONFLICT DO UPDATE), so the activate call resends
+     both. `bankAnswers` carries the bank's question answers (bank.jsonl rows of kind `ask`: the pre-generated ones and
+     scripts/reanswer.py's), which the backend imports into the answer cache of the version, so the next asker of the
+     same question gets the banked answer as a cache hit (contract v1.1 section 3a, addition 2026-10-19). `--no-bank`
+     (or TREVOR_PUBLISH_BANK=0) sends none, the publish before that addition.
 Each chunk is one transaction on the backend and the flip to active is one more, so a publish that dies part way
 leaves an inactive version and the site keeps the last good one. Panel bytes are sent exactly as panels.py wrote them.
 
@@ -21,7 +25,7 @@ Rollback: `publish.py --activate <older version>` resends that version's stored 
 in trevor_panels: the backend never deletes a version).
 
 Usage:
-  publish.py [--panels DIR] [--backend URL] [--dry-run OUTDIR] [--no-gzip] [--no-activate]
+  publish.py [--panels DIR] [--backend URL] [--dry-run OUTDIR] [--no-gzip] [--no-activate] [--no-bank]
   publish.py --activate VERSION [--dry-run OUTDIR]
 --no-activate sends the chunks only and stores the activate body (versions/<version>/activate.json) without
 touching active.json; `--activate VERSION` then flips it. vps-update.sh uses the pair so the worker restarts on the
@@ -44,11 +48,15 @@ BACKOFF = (1, 4, 16)
 
 
 # ---------------------------------------------------------------- packing
-def envelope(head, panels_items, activate):
+def envelope(head, panels_items, activate, bank=None):
     """The request body bytes: `head` (version, server, builtAt, manifest, gateReport as JSON fragments) then the
-    panels object built from (id, raw panel bytes) without re-serializing the panels."""
+    panels object built from (id, raw panel bytes) without re-serializing the panels, then `bankAnswers` when `bank`
+    is a list (the activate call)."""
     inner = b",".join(json.dumps(sid).encode() + b":" + body for sid, body in panels_items)
-    return (b"{" + head + b',"activate":' + (b"true" if activate else b"false") + b',"panels":{' + inner + b"}}")
+    tail = b"" if bank is None else (b',"bankAnswers":'
+                                     + json.dumps(bank, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+    return (b"{" + head + b',"activate":' + (b"true" if activate else b"false") + b',"panels":{' + inner + b"}"
+            + tail + b"}")
 
 
 def head_bytes(version, server, built_at, manifest, gate_report):
@@ -79,6 +87,160 @@ def chunk_sha_map(root, corpora):
             old = shas.setdefault(r["chunkId"], sha)
             conflicts += old != sha
     return shas, conflicts, missing
+
+
+# ---------------------------------------------------------------- bank answers
+# The bank's question answers for the backend's answer cache (contract v1.1 section 3a, addition 2026-10-19). Only
+# rows of kind `ask` go: they answer a reader's kind of question and cite chunks, so the backend can invalidate them
+# by chunk sha like any cached answer. The story, event, who and primer entries cite no chunk and stay panel content.
+BANK_REL = os.path.join("artifacts", "bank", "bank.jsonl")
+BANK_LEDGERS = (os.path.join("artifacts", "bank", "evidence.jsonl"),
+                os.path.join("artifacts", "bank", "reanswer", "evidence.jsonl"))
+GATE_ORDER_REL = os.path.join("artifacts", "chrono", "gate_order.json")
+CITE_CHARS = 600
+PROFILES = ("full", "mid", "slim")
+
+
+def trim_text(text, max_chars=CITE_CHARS):
+    """ask's citation cut (src/bin/ask/serve/service.rs trim_text with the word cut): at most max_chars characters,
+    cut at the last line break that keeps at least half of them, else at the last whitespace that does, else hard."""
+    if len(text) <= max_chars:
+        return text
+    head = text[:max_chars]
+    floor = max_chars // 2
+    keeps = lambda i: i > 0 and len(head[:i].rstrip()) >= floor
+    i = head.rfind("\n")
+    if i != -1 and keeps(i):
+        return head[:i].rstrip()
+    j = max((k for k, ch in enumerate(head) if ch.isspace()), default=-1)
+    if j != -1 and keeps(j):
+        return head[:j].rstrip()
+    return head
+
+
+def bank_gate_pos(row, story_pos, source_pos):
+    """The gatePos a reader must have reached for a bank row, as panels.py gates a bank entry (its default
+    --gate-sources): the highest position over the row's gateStories and its sources (cited chunk ids count as their
+    story). None when gateStories is empty, gateUnknown is set, or any id has no position: panels.py hides such an
+    entry at every horizon (NEVER), so the backend caches it for spoiler mode only."""
+    gs = list(row.get("gateStories") or [])
+    if not gs or row.get("gateUnknown"):
+        return None
+    ids = gs + [x for x in row.get("sources") or [] if x not in gs]
+    best = 0
+    for i in ids:
+        p = story_pos.get(i, source_pos.get(i))
+        if p is None and "#" in i:
+            base = i.rsplit("#", 1)[0]
+            p = story_pos.get(base, source_pos.get(base))
+        if not isinstance(p, int) or p < 1:
+            return None
+        best = max(best, p)
+    return best
+
+
+def read_ledgers(root):
+    """qid -> the newest evidence row over the bank's ledgers ({qid, shas, at?, profile?}); missing ledgers are empty."""
+    out = {}
+    for rel in BANK_LEDGERS:
+        path = os.path.join(root, rel)
+        if os.path.exists(path):
+            for line in open(path, encoding="utf-8"):
+                if line.strip():
+                    r = json.loads(line)
+                    out[r["qid"]] = r
+    return out
+
+
+def cited_chunks(root, corpora, ids):
+    """{chunkId: (storyId, lineStart, lineEnd, text, sha)} for `ids` over the corpora (first corpus wins), with
+    chunk_sha_map's sha rule."""
+    out, want = {}, set(ids)
+    for c in [x.strip() for x in corpora.split(",") if x.strip()]:
+        path = os.path.join(root, c, "chunks.jsonl")
+        if not os.path.exists(path):
+            continue
+        for line in open(path, encoding="utf-8"):
+            i = line.find('"chunkId":"') + 11
+            cid = line[i:line.find('"', i)]
+            if cid not in want or cid in out:
+                continue
+            r = json.loads(line)
+            sha = r.get("contentSha") or hashlib.sha256(r["text"].encode("utf-8")).hexdigest()[:16]
+            out[cid] = (r["storyId"], r.get("lineStart", 0), r.get("lineEnd", 0), r["text"], sha)
+    return out
+
+
+def bank_answers(rows, story_pos, source_pos, chunks, ledgers):
+    """(bankAnswers for the activate call, Counter of the rows left out). A row goes when it is of kind `ask`, has an
+    answer and cites at least one chunk the corpora hold, and no evidence ledger says a cited chunk changed since it
+    was made (the bank merge drops such rows too; this guards a bank older than the corpus)."""
+    import collections
+    out, why = [], collections.Counter()
+    for r in rows:
+        if r.get("kind") != "ask":
+            continue
+        cited = list(dict.fromkeys(r.get("sources") or []))
+        if not (r.get("answer") or "").strip() or not cited:
+            why["no answer or no citation"] += 1
+            continue
+        if any(c not in chunks for c in cited):
+            why["cited chunk not in the corpora"] += 1
+            continue
+        qid = r["id"].split(":", 1)[1] if ":" in r["id"] else r["id"]
+        led = ledgers.get(qid) or {}
+        if any(led.get("shas", {}).get(c) not in (None, chunks[c][4]) for c in cited):
+            why["evidence changed"] += 1
+            continue
+        passages = r.get("passages") or []
+        cites = []
+        for k, c in enumerate(cited):
+            sid, ls, le, text, sha = chunks[c]
+            cites.append({"n": passages.index(c) + 1 if c in passages else k + 1, "storyId": sid, "chunkId": c,
+                          "lineStart": ls, "lineEnd": le, "text": trim_text(text), "sha": sha})
+        a = {"question": r["question"], "aliases": list(r.get("aliases") or []), "answer": r["answer"],
+             "citations": cites, "gatePos": bank_gate_pos(r, story_pos, source_pos),
+             "source": "reanswer" if r.get("source") == "reanswer" else "bank"}
+        if led.get("profile") in PROFILES:
+            a["profile"] = led["profile"]
+        if led.get("at"):
+            a["answeredAt"] = led["at"]
+        out.append(a)
+        why["sent " + a["source"] + (" (spoiler mode only)" if a["gatePos"] is None else "")] += 1
+    return out, why
+
+
+def load_bank(a, manifest, items):
+    """bankAnswers for this build and a one-line account; ([], reason) under --no-bank or without a bank."""
+    if a.no_bank:
+        return [], "bank: off (--no-bank)"
+    path = a.bank or os.path.join(a.trevor, BANK_REL)
+    if not os.path.exists(path):
+        return [], f"bank: none at {path}"
+    rows = [json.loads(l) for l in open(path, encoding="utf-8") if l.strip()]
+    # Story positions as the backend stores them: each panel's `position`, else (activation's rule) its
+    # 1-based place in the manifest's storyOrder.
+    story_pos = {}
+    for k, (sid, body) in enumerate(items):
+        p = json.loads(body).get("position")
+        story_pos[sid] = p if isinstance(p, int) else k + 1
+    # Dated sources (operator archives and the like) only from the gate order this build was made with.
+    gpath = os.path.join(a.trevor, GATE_ORDER_REL)
+    source_pos, note = {}, ""
+    if os.path.exists(gpath) and common.sha_file(gpath) == manifest.get("gateOrderSha"):
+        source_pos = {k: v for k, v in (json.load(open(gpath, encoding="utf-8")).get("sourcePos") or {}).items()
+                      if isinstance(v, int)}
+    else:
+        note = "; gate_order.json is not this build's (gateOrderSha differs), so a source-gated answer is spoiler mode only"
+    ids = {c for r in rows if r.get("kind") == "ask" for c in r.get("sources") or []}
+    chunks = cited_chunks(a.trevor, a.chunk_sha_corpora, ids)
+    bank, why = bank_answers(rows, story_pos, source_pos, chunks, read_ledgers(a.trevor))
+    if note:
+        print(f"publish: {note.lstrip('; ')}", file=sys.stderr)
+    if a.no_chunk_shas and bank:
+        print("publish: WARNING --no-chunk-shas: the backend imports no bank answer without the version's chunk shas",
+              file=sys.stderr)
+    return bank, "bank: " + ", ".join(f"{k} {v}" for k, v in sorted(why.items()))
 
 
 def sha_bodies(head, shas, batch=CHUNK_SHA_BATCH):
@@ -174,6 +336,21 @@ def write_dry(out_dir, requests):
     return index
 
 
+def report_bank(res, sent):
+    """The backend's bank import account; a failed import is a warning: the version is live, without bank answers."""
+    b = res.get("bank")
+    if not isinstance(b, dict):
+        if sent:
+            print(f"publish: WARNING the backend reported no bank import for {sent} bank answers (an older backend?)",
+                  file=sys.stderr)
+        return
+    if b.get("failed"):
+        print(f"publish: WARNING the backend's bank import failed and was rolled back; the version is live without "
+              f"bank answers ({b})", file=sys.stderr)
+    elif sent:
+        print(f"publish: bank import {b}")
+
+
 def store_activate(state, version, activate_body):
     vdir = os.path.join(state, "versions", version)
     os.makedirs(vdir, exist_ok=True)
@@ -232,17 +409,18 @@ def publish(a):
         for body in sha_bodies(head, shas):
             reqs.append({"url": url, "headers": hdr, "activate": False, "panels": 0, "shas": True, "body": body,
                          "wire": encode(body, use_gzip), "gzip": use_gzip})
-    act_body = envelope(head, [], True)
-    reqs.append({"url": url, "headers": hdr, "activate": True, "panels": 0, "body": act_body,
+    bank, bank_note = load_bank(a, manifest, items)
+    act_body = envelope(head, [], True, bank if bank else None)
+    reqs.append({"url": url, "headers": hdr, "activate": True, "panels": 0, "bank": len(bank), "body": act_body,
                  "wire": encode(act_body, use_gzip), "gzip": use_gzip})
     for r in reqs:  # the limits hold for the activate call too
         assert len(r["wire"]) <= a.max_compressed and len(r["body"]) <= a.max_decompressed, "a request is over the limits"
     total = sum(r["panels"] for r in reqs)
     assert total == len(items), (total, len(items))
     summary = (f"{manifest['version']}: {len(items)} panels in {len(chunks)} chunks, {n_shas} chunk shas in "
-               f"{sum(1 for r in reqs if r.get('shas'))} calls + 1 activate; wire "
+               f"{sum(1 for r in reqs if r.get('shas'))} calls + 1 activate with {len(bank)} bank answers; wire "
                f"{sum(len(r['wire']) for r in reqs)} B (max {max(len(r['wire']) for r in reqs)}), decompressed "
-               f"{sum(len(r['body']) for r in reqs)} B (max {max(len(r['body']) for r in reqs)})")
+               f"{sum(len(r['body']) for r in reqs)} B (max {max(len(r['body']) for r in reqs)}); {bank_note}")
     if a.dry_run:
         write_dry(a.dry_run, reqs)
         print(f"dry run: {summary}; requests written to {a.dry_run}")
@@ -256,6 +434,8 @@ def publish(a):
         res = post(r["url"], r["wire"], r["headers"])
         if r["activate"] and res.get("active") is not True:
             raise SendError(f"activate call answered {res}")
+        if r["activate"]:
+            report_bank(res, r.get("bank", 0))
         if r.get("shas") and res.get("chunkShas") not in (None, len(json.loads(r["body"])["chunkShas"])):
             raise SendError(f"chunk sha call {i} answered chunkShas={res.get('chunkShas')}")
         if not r["activate"] and res.get("panels") not in (None, r["panels"]):
@@ -292,16 +472,62 @@ def activate_only(a):
     res = post(r["url"], r["wire"], r["headers"])
     if res.get("active") is not True:
         raise SendError(f"activate call answered {res}")
+    report_bank(res, len(d.get("bankAnswers") or []))
     record(a.state, a.activate, body, d["manifest"] or {}, "rollback")
     print(f"active = {a.activate}")
     return 0
 
 
 # ---------------------------------------------------------------- self-test
+def bank_self_test():
+    """The bank answers: the gate rule (panels.py's), the citation cut, what is left out, the activate body."""
+    assert trim_text("short") == "short"
+    assert trim_text("a" * 500 + "\n" + "b" * 200) == "a" * 500
+    assert trim_text("t\n" + "w " * 400) == ("t\n" + "w " * 400)[:600].rstrip(), "a short first line: the word cut"
+    assert len(trim_text("x" * 700)) == 600
+    pos, src = {"s1": 1, "s2": 5}, {"archive_a": 3}
+    gate = lambda **r: bank_gate_pos(r, pos, src)
+    assert gate(gateStories=["s1"], sources=["s1#0002"]) == 1
+    assert gate(gateStories=["s1"], sources=["s2#0001", "archive_a#0000"]) == 5
+    assert gate(gateStories=["s1"], sources=["archive_a#0000"]) == 3
+    assert gate(gateStories=[], sources=["s1#0000"]) is None, "no gate story: hidden everywhere in panels.py"
+    assert gate(gateStories=["s1", "undated"], sources=[]) is None, "an undatable story"
+    assert gate(gateStories=["s1"], sources=["dossier_x#0000"]) is None, "an undatable source"
+    assert gate(gateStories=["s1"], sources=[], gateUnknown=["s9"]) is None
+    chunks = {"s1#0000": ("s1", 3, 9, "Amiya: hello.", "aaa"), "s2#0001": ("s2", 1, 2, "x", "bbb")}
+    rows = [
+        {"id": "ask:b1", "kind": "ask", "question": "Q1?", "aliases": [], "answer": "A1 [2].", "sources": ["s1#0000"],
+         "passages": ["s2#0001", "s1#0000"], "gateStories": ["s1"]},
+        {"id": "ask:r1", "kind": "ask", "question": "Q2?", "aliases": ["Q2 again?"], "answer": "A2.",
+         "sources": ["s2#0001"], "passages": [], "gateStories": ["s2"], "source": "reanswer"},
+        {"id": "ask:b2", "kind": "ask", "question": "Q3?", "answer": "A3.", "sources": ["gone#0000"], "gateStories": ["s1"]},
+        {"id": "ask:b3", "kind": "ask", "question": "Q4?", "answer": "A4.", "sources": ["s1#0000"], "gateStories": ["s1"]},
+        {"id": "ask:b4", "kind": "ask", "question": "Q5?", "answer": "", "sources": ["s1#0000"], "gateStories": ["s1"]},
+        {"id": "who:X", "kind": "who", "question": "Who is X?", "answer": "X.", "sources": ["s1"], "gateStories": ["s1"]},
+    ]
+    ledgers = {"r1": {"qid": "r1", "shas": {"s2#0001": "bbb"}, "at": "2026-10-19T02:00:00Z", "profile": "full"},
+               "b3": {"qid": "b3", "shas": {"s1#0000": "old"}}}
+    out, why = bank_answers(rows, pos, src, chunks, ledgers)
+    assert [b["question"] for b in out] == ["Q1?", "Q2?"], out
+    assert out[0]["citations"] == [{"n": 2, "storyId": "s1", "chunkId": "s1#0000", "lineStart": 3, "lineEnd": 9,
+                                    "text": "Amiya: hello.", "sha": "aaa"}]
+    assert (out[0]["source"], out[0]["gatePos"], "answeredAt" in out[0]) == ("bank", 1, False)
+    assert (out[1]["source"], out[1]["gatePos"], out[1]["answeredAt"], out[1]["profile"], out[1]["aliases"]) == \
+        ("reanswer", 5, "2026-10-19T02:00:00Z", "full", ["Q2 again?"])
+    assert why == {"sent bank": 1, "sent reanswer": 1, "cited chunk not in the corpora": 1, "evidence changed": 1,
+                   "no answer or no citation": 1}, why
+    head = head_bytes("v1", "en", None, {"version": "v1"}, {"passed": True})
+    body = json.loads(envelope(head, [], True, out))
+    assert body["activate"] is True and body["panels"] == {} and body["bankAnswers"] == out
+    assert "bankAnswers" not in json.loads(envelope(head, [], True)), "--no-bank: the activate body before"
+    print("  bank: gate rule (7 cases), citation cut, 4 rows left out for 4 reasons, activate body with and without")
+
+
 def self_test():
     """Chunk limits on synthetic panels (incompressible and compressible), order and coverage, the retry schedule and
     the no-retry 4xx against a local HTTP server, and the activate body."""
     import http.server, random, threading
+    bank_self_test()
     rnd = random.Random(7)
     head = head_bytes("v1", "en", "2026-10-16T00:00:00Z", {"version": "v1", "storyOrder": []}, {"passed": True})
     # 1. Incompressible panels: the compressed limit binds (gzip cannot shrink random hex much below raw/2).
@@ -367,7 +593,7 @@ def self_test():
         assert "HTTP 400" in str(e) and len(seen) == 4 and slept == [1, 4]
     srv.shutdown()
     print("publish.py self-test: ok (limits, order, coverage, no-gzip, oversized panel, retries 1/4 s then success, "
-          "400 not retried, activate body)")
+          "400 not retried, activate body, bank answers)")
 
 
 def main():
@@ -387,6 +613,10 @@ def main():
                     help="send no chunk shas (the 2026-10-16 publish; the backend then carries no cached answer over)")
     ap.add_argument("--chunk-sha-corpora", default=os.environ.get("TREVOR_CHUNK_SHA_CORPORA", CHUNK_SHA_CORPORA),
                     help="comma-separated corpus dirs under --trevor whose chunk ids and contentShas are sent")
+    ap.add_argument("--no-bank", action="store_true", default=os.environ.get("TREVOR_PUBLISH_BANK") == "0",
+                    help="send no bank answers (the publish before 2026-10-19: bank rows reach readers as panel "
+                         "suggestions only)")
+    ap.add_argument("--bank", default=None, help="bank.jsonl to send (default <trevor>/artifacts/bank/bank.jsonl)")
     ap.add_argument("--self-test", action="store_true")
     a = ap.parse_args()
     if a.self_test:

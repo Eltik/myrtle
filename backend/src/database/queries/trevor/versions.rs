@@ -110,6 +110,49 @@ pub async fn publish_version(
     chunk_shas: &[(String, String)],
     carry_over: bool,
 ) -> Result<u64, sqlx::Error> {
+    publish_version_with_bank(
+        pool,
+        version,
+        server,
+        built_at,
+        gate_report,
+        manifest,
+        panels,
+        activate,
+        chunk_shas,
+        carry_over,
+        &[],
+    )
+    .await
+    .map(|p| p.carried)
+}
+
+/// What [`publish_version_with_bank`] did.
+#[derive(Debug, Clone)]
+pub struct Published {
+    pub carried: u64,
+    /// The bank import's counts; `Err` with the database's message when it
+    /// failed and was rolled back (the publish went on without it).
+    pub bank: Result<super::BankImported, String>,
+}
+
+/// [`publish_version`] plus the bank import of an activating call
+/// ([`super::import_bank`]), run in a savepoint before the carry-over, so a
+/// failed import rolls back alone and never fails the publish.
+#[allow(clippy::too_many_arguments)]
+pub async fn publish_version_with_bank(
+    pool: &PgPool,
+    version: &str,
+    server: &str,
+    built_at: Option<DateTime<Utc>>,
+    gate_report: Option<&Value>,
+    manifest: Option<&Value>,
+    panels: &[PanelRow],
+    activate: bool,
+    chunk_shas: &[(String, String)],
+    carry_over: bool,
+    bank: &[super::BankRow],
+) -> Result<Published, sqlx::Error> {
     let mut tx = pool.begin().await?;
     sqlx::query(
         r"
@@ -167,6 +210,20 @@ pub async fn publish_version(
         .execute(&mut *tx)
         .await?;
     }
+    let mut bank_done = Ok(super::BankImported::default());
+    if activate && !bank.is_empty() {
+        let mut sp = sqlx::Connection::begin(&mut *tx).await?;
+        match super::import_bank(&mut sp, version, server, bank).await {
+            Ok(n) => {
+                sp.commit().await?;
+                bank_done = Ok(n);
+            }
+            Err(e) => {
+                sp.rollback().await?;
+                bank_done = Err(e.to_string());
+            }
+        }
+    }
     let mut carried = 0;
     if activate && carry_over {
         carried = carry_answers(&mut tx, version, server).await?;
@@ -197,7 +254,10 @@ pub async fn publish_version(
             .await?;
     }
     tx.commit().await?;
-    Ok(carried)
+    Ok(Published {
+        carried,
+        bank: bank_done,
+    })
 }
 
 /// The cache carry-over (contract v1.1 section 3b), run while activating
@@ -205,7 +265,8 @@ pub async fn publish_version(
 /// server's active version whose every cited chunk is in `version`'s chunk
 /// sha map with the same sha, and whose era position is 0, the internal
 /// no-limit era, or a position of `version`'s eras. An answer with no
-/// `cited_shas` (a citation without a sha, or none) never moves. The copy
+/// `cited_shas` (a citation without a sha, or none) never moves, nor does an
+/// imported bank row (`origin` set; the publish imports the bank again). The copy
 /// keeps its hits and names its source in `carried_from`; an answer `version`
 /// already holds under the key wins.
 async fn carry_answers(
@@ -221,7 +282,7 @@ async fn carry_answers(
                a.question, a.answer, true, a.cited_shas, a.version, a.hits
         FROM trevor_answers a
         JOIN trevor_versions pv ON pv.version = a.version AND pv.server = a.server AND pv.active
-        WHERE a.server = $2 AND a.version <> $1 AND a.cached
+        WHERE a.server = $2 AND a.version <> $1 AND a.cached AND a.origin IS NULL
           AND a.cited_shas IS NOT NULL AND a.cited_shas <> '{}'::jsonb
           AND (a.era_pos = 0 OR a.era_pos = 2147483647 OR a.era_pos IN (
                 SELECT (e ->> 'position')::int

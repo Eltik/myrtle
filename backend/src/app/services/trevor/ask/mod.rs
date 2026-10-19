@@ -23,9 +23,9 @@ use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
 use crate::app::services::trevor::{
     ASK_PER_HOUR, Admission, AdmissionInputs, AnswerSource, AskRequest, AskResponse, Horizon,
-    JobStatus, MAX_OPEN_PER_USER, MAX_QUEUED, Mode, ONLINE_SECS, Rung, RungInputs, SpoilerMode,
-    TrevorAnswer, admit_rung, no_limit_horizon, parse_server, qkey, select_rung, turnstile,
-    validate_question,
+    JobStatus, MAX_OPEN_PER_USER, MAX_QUEUED, Mode, NO_LIMIT_ERA, ONLINE_SECS, Rung, RungInputs,
+    SpoilerMode, TrevorAnswer, admit_rung, no_limit_horizon, parse_server, qkey, select_rung,
+    turnstile, validate_question,
 };
 use crate::app::state::AppState;
 use crate::database::queries::trevor as q;
@@ -80,6 +80,28 @@ fn view(row: &q::AnswerRow) -> TrevorAnswer {
         source: AnswerSource::parse(&row.source),
         answer: row.answer.clone(),
     }
+}
+
+/// The cached answer under the ask's exact key; failing that, for a
+/// spoiler-safe ask, the bank answer of the latest era at or before the
+/// reader's (contract v1.1 section 3a, addition 2026-10-19). A spoiler-mode
+/// ask reads its own bucket only, where the bank answers sit too.
+/// `TREVOR_BANK_IMPORT=0` serves no imported row.
+async fn cache_hit(
+    state: &AppState,
+    version: &str,
+    server: &str,
+    key: &str,
+    era_pos: i32,
+) -> Result<Option<q::AnswerRow>, ApiError> {
+    let with_bank = state.trevor.config().bank_import;
+    if let Some(row) = q::hit_answer(&state.db, version, server, key, era_pos, with_bank).await? {
+        return Ok(Some(row));
+    }
+    if !with_bank || era_pos == NO_LIMIT_ERA {
+        return Ok(None);
+    }
+    Ok(q::hit_bank(&state.db, version, server, key, era_pos).await?)
 }
 
 /// The SSE route of a job, as the reader requests it.
@@ -190,7 +212,7 @@ pub async fn ask(
     };
 
     if let Some(version) = &version
-        && let Some(row) = q::hit_answer(&state.db, version, server, &key, horizon.era_pos).await?
+        && let Some(row) = cache_hit(state, version, server, &key, horizon.era_pos).await?
     {
         log_ask(state, ask_row(None, None, Some(row.id))).await;
         return Ok(AskResponse {

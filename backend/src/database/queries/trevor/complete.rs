@@ -85,7 +85,7 @@ pub async fn complete_job(
         ON CONFLICT (version, server, qkey, era_pos) WHERE cached
         DO UPDATE SET answer = EXCLUDED.answer, rung = EXCLUDED.rung, source = EXCLUDED.source,
                       gate_pos = EXCLUDED.gate_pos, cited_shas = EXCLUDED.cited_shas,
-                      carried_from = NULL, created_at = now()
+                      carried_from = NULL, origin = NULL, created_at = now()
         RETURNING id
         "
     } else {

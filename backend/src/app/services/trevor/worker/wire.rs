@@ -8,7 +8,7 @@ use serde_json::Value;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::app::services::trevor::{Guard, Profile, Rung, RungFlags, WorkerAnswer};
+use crate::app::services::trevor::{Citation, Guard, Profile, Rung, RungFlags, WorkerAnswer};
 
 /// `worker/next`: `{workerId}`. `server` (default `en`) picks the queue.
 #[derive(Debug, Clone, Deserialize, ToSchema)]
@@ -108,6 +108,84 @@ pub struct PublishVersion {
     #[serde(default)]
     #[schema(value_type = Object)]
     pub chunk_shas: BTreeMap<String, String>,
+    /// The bank's answers (contract v1.1 section 3a, addition 2026-10-19),
+    /// read on the activating call only: each is imported into the answer
+    /// cache of this version under its normalized question, so the next
+    /// asker gets it as a cache hit. Ignored under `TREVOR_BANK_IMPORT=0`.
+    #[serde(default)]
+    pub bank_answers: Vec<BankAnswer>,
+}
+
+/// Where a bank answer comes from.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "lowercase")]
+#[schema(as = TrevorBankSource)]
+pub enum BankSource {
+    /// A pre-generated question (`scripts/answer_bank.py`).
+    Bank,
+    /// A reader's live question answered again (`scripts/reanswer.py`).
+    Reanswer,
+}
+
+impl BankSource {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Bank => "bank",
+            Self::Reanswer => "reanswer",
+        }
+    }
+}
+
+/// One bank answer as the publish sends it.
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct BankAnswer {
+    /// The question as asked; the backend normalizes it into the cache key.
+    pub question: String,
+    /// Other wordings of the same question, each cached under its own key.
+    #[serde(default)]
+    pub aliases: Vec<String>,
+    pub answer: String,
+    /// The cited passages, each with its chunk sha (every one must match the
+    /// version's `chunkShas`, or the answer is not imported).
+    pub citations: Vec<Citation>,
+    /// The gatePos a reader must have reached: the highest gatePos over the
+    /// answer's gate stories and cited sources, as `scripts/panels.py` gates
+    /// a bank entry. Null when one of them is undatable: the answer is then
+    /// cached for spoiler mode only.
+    #[serde(default)]
+    pub gate_pos: Option<i32>,
+    pub source: BankSource,
+    /// The profile that made it (default `full`).
+    #[serde(default)]
+    pub profile: Option<Profile>,
+    /// When the answer was made, if the bank recorded it. An imported answer
+    /// replaces a worker's cached answer under the same key only when it is
+    /// newer than that answer; without this time it never does.
+    #[serde(default)]
+    pub answered_at: Option<DateTime<Utc>>,
+}
+
+/// What the bank import of a publish did.
+#[derive(Debug, Clone, Default, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct BankOutcome {
+    /// Bank answers the call carried.
+    pub sent: usize,
+    /// Answers refused before the database: an empty answer or question, no
+    /// citation, a citation without a sha, or a gatePos below 1.
+    pub invalid: usize,
+    /// Cache rows the valid answers make: one per wording and era bucket
+    /// (the first era at or after the gatePos, and the spoiler-mode bucket).
+    pub rows: usize,
+    /// Rows written.
+    pub imported: u64,
+    /// Rows dropped because a cited chunk's sha is not the version's.
+    pub stale: u64,
+    /// Rows left out because a worker's newer answer holds the key.
+    pub kept: u64,
+    /// The import failed and was rolled back; the publish went on.
+    pub failed: bool,
 }
 
 const fn yes() -> bool {
@@ -125,6 +203,8 @@ pub struct PublishOutcome {
     pub chunk_shas: usize,
     /// Cached answers carried over from the previous version on activation.
     pub carried: u64,
+    /// The bank import (contract v1.1 section 3a, addition 2026-10-19).
+    pub bank: BankOutcome,
 }
 
 /// `worker/popular`: one question to re-answer after a publish.

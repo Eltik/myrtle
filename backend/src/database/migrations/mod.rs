@@ -115,6 +115,7 @@ const MIGRATIONS: &[(&str, &str)] = &[
         include_str!("v038_leaderboard_hidden_level.sql"),
     ),
     ("v039_trevor", include_str!("v039_trevor.sql")),
+    ("v040_trevor_bank", include_str!("v040_trevor_bank.sql")),
 ];
 
 pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {

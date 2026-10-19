@@ -16,7 +16,10 @@
 //! heartbeat row, and the horizon of an account that holds only stage
 //! progress (its read verdict re-derived on ask, and not under
 //! `TREVOR_REVERDICT_ON_ASK=0`), and spoiler mode (its own cache bucket,
-//! twin join and popular count, and `TREVOR_SPOILER_MODE=0`).
+//! twin join and popular count, and `TREVOR_SPOILER_MODE=0`), and the bank
+//! import (bank answers sent with the activating publish served as cache
+//! hits, the era rule, the overwrite rule, a changed chunk sha, a failed
+//! import that leaves the publish standing, and `TREVOR_BANK_IMPORT=0`).
 //!
 //! Ignored by default (CI has no Postgres):
 //! `cargo test --test trevor_db_test -- --ignored --nocapture`
@@ -940,6 +943,8 @@ async fn trevor_queue_against_a_throwaway_database() {
     step_spoiler_mode(&pool).await;
     // Activates its own versions.
     step_v11_lists_and_carry(&pool).await;
+    // Activates its own versions too.
+    step_bank_import(&pool).await;
     // Last: it activates its own version.
     step_reverdict_on_ask(&pool).await;
 }
@@ -2227,5 +2232,327 @@ async fn step_v11_lists_and_carry(pool: &PgPool) {
     assert_eq!(out["carried"], 0);
     eprintln!(
         "v1.1 lists/carry: my questions 3 + paging, popular [carry me 3, carry changed 2], carried 1 of 3, warm-up list + warm {{queued 1, cached 1, joined 2}}, 404/401/409/413/503, TREVOR_CARRY_OVER=0 carried 0"
+    );
+}
+
+/// A bank answer as `scripts/publish.py` sends it, citing `cites`
+/// ((chunkId, sha)).
+fn bank_answer(
+    question: &str,
+    gate_pos: Option<i32>,
+    cites: &[(&str, &str)],
+    source: &str,
+    answered_at: Option<&str>,
+) -> Value {
+    let citations: Vec<Value> = cites
+        .iter()
+        .enumerate()
+        .map(|(i, (chunk, sha))| {
+            json!({"n": i + 1, "storyId": chunk.split('#').next().unwrap(), "chunkId": chunk,
+                   "lineStart": 1, "lineEnd": 9, "text": "Quoted line.", "sha": sha})
+        })
+        .collect();
+    json!({
+        "question": question, "aliases": [], "answer": format!("Banked: {question}."),
+        "citations": citations, "gatePos": gate_pos, "source": source, "answeredAt": answered_at
+    })
+}
+
+/// Publish `version` (panels and `shas` in a chunk, then the activating call
+/// with `bank`); returns the activating call's answer.
+async fn publish_bank(app: &Router, version: &str, shas: Value, bank: Value) -> Value {
+    let panels: serde_json::Map<String, Value> = (1..=6)
+        .map(|i| (format!("s{i}"), panel(&format!("s{i}"), Some(i))))
+        .collect();
+    let chunk =
+        json!({ "version": version, "activate": false, "panels": panels, "chunkShas": shas });
+    assert_eq!(publish(app, &chunk).await, StatusCode::OK);
+    let (st, out) = send_json(
+        app,
+        "POST",
+        "/api/trevor/versions",
+        true,
+        Some(json!({
+            "version": version, "activate": true, "gateReport": { "ok": true },
+            "manifest": { "storyOrder": story_order(), "eras": eras() },
+            "bankAnswers": bank
+        })),
+    )
+    .await;
+    assert_eq!(st, StatusCode::OK, "{out}");
+    assert_eq!(out["active"], true, "{out}");
+    out
+}
+
+fn answer_text(r: &AskResponse) -> String {
+    r.answer
+        .as_ref()
+        .and_then(|a| a.answer["answer"].as_str())
+        .unwrap_or_default()
+        .to_owned()
+}
+
+/// The bank import (contract v1.1 section 3a, addition 2026-10-19). Eras sit
+/// at gatePos 1 and 4 over stories s1..s6.
+async fn step_bank_import(pool: &PgPool) {
+    reset_queue(pool).await;
+    let (s, _) = state_with_recorder(pool, |_| {});
+    let app = app(&s);
+    beat(&s, "w1", false, true).await;
+    let prev: String = q::active_version(pool, "en").await.unwrap().unwrap();
+    let era4 = era4_user(pool).await;
+    let era1 = new_user(pool).await;
+    set_progress(pool, era1, &["s2"], &[]).await;
+    let era0 = new_user(pool).await;
+
+    // Two worker answers at era 4 in the active version, made now.
+    for question in ["bank newer live", "bank replaces live"] {
+        let r = ask_ok(&s, era4, question).await;
+        let j = claim(&s, "w1", false, true).await.unwrap();
+        assert_eq!(Some(j.id), r.job_id);
+        post_result(
+            &s,
+            &result_cites(j.id, "w1", &prev, &[("s1#0", Some("aaa"))]),
+        )
+        .await;
+    }
+
+    let tomorrow = (chrono::Utc::now() + chrono::Duration::days(1)).to_rfc3339();
+    let mut early = bank_answer("Bank early?", Some(1), &[("s1#0", "aaa")], "bank", None);
+    early["aliases"] = json!(["What is bank early", "bank   EARLY"]);
+    let bank = json!([
+        early,
+        bank_answer(
+            "bank mid",
+            Some(3),
+            &[("s2#1", "bbb")],
+            "reanswer",
+            Some(&tomorrow)
+        ),
+        bank_answer("bank late", Some(5), &[("s5#0", "eee")], "bank", None),
+        bank_answer("bank undatable", None, &[("s1#0", "aaa")], "bank", None),
+        bank_answer("bank stale", Some(1), &[("s1#0", "zzz")], "bank", None),
+        bank_answer("bank nocite", Some(1), &[], "bank", None),
+        bank_answer(
+            "bank newer live",
+            Some(3),
+            &[("s1#0", "aaa")],
+            "bank",
+            Some("2020-01-01T00:00:00Z")
+        ),
+        bank_answer(
+            "bank replaces live",
+            Some(3),
+            &[("s1#0", "aaa")],
+            "reanswer",
+            Some(&tomorrow)
+        ),
+    ]);
+    let shas = json!({ "s1#0": "aaa", "s2#1": "bbb", "s5#0": "eee" });
+    let out = publish_bank(&app, "v-bank", shas, bank.clone()).await;
+    // Rows: early 2 wordings x (era 1, spoiler) = 4 ("bank   EARLY" is the
+    // same key as "Bank early?"), mid (4, spoiler) 2, late (spoiler) 1,
+    // undatable (spoiler) 1, stale 2, newer live 2, replaces live 2.
+    assert_eq!(
+        out["bank"],
+        json!({ "sent": 8, "invalid": 1, "rows": 14, "imported": 11, "stale": 2, "kept": 1, "failed": false })
+    );
+    let hit = |r: &AskResponse| r.rung == Rung::Cache;
+
+    // A horizon that admits the answer: a cache hit, shaped like any other.
+    let r = ask_ok(&s, era1, "bank early").await;
+    assert!(hit(&r), "era 1 reads the era-1 row");
+    let a = r.answer.as_ref().unwrap();
+    assert_eq!(
+        (a.rung, a.source, a.era_pos),
+        (
+            Rung::Cpu,
+            backend::app::services::trevor::AnswerSource::Live,
+            1
+        )
+    );
+    assert_eq!(a.answer["citations"][0]["chunkId"], "s1#0");
+    assert_eq!(a.answer["citations"][0]["sha"], "aaa");
+    assert_eq!(answer_text(&r), "Banked: Bank early?.");
+    assert!(r.spoilers.is_none() && r.spoiler_safe_up_to.is_some());
+    assert!(
+        hit(&ask_ok(&s, era1, "what is bank early?").await),
+        "an alias is its own key"
+    );
+    assert!(
+        hit(&ask_ok(&s, era4, "Bank early").await),
+        "a later era reads the era-1 row"
+    );
+    assert!(hit(&ask_ok(&s, era4, "bank mid").await));
+    // A horizon below the gate: a miss. Each miss queues a job, so the era-4
+    // misses take fresh readers (a reader holds at most 3 open jobs).
+    assert!(
+        !hit(&ask_ok(&s, era1, "bank mid").await),
+        "gatePos 3 is past era 1"
+    );
+    assert!(
+        !hit(&ask_ok(&s, era0, "bank early").await),
+        "nothing read, nothing served"
+    );
+    assert!(
+        !hit(&ask_ok(&s, era4_user(pool).await, "bank late").await),
+        "gatePos 5 is past the last era"
+    );
+    // Spoiler mode reads the no-limit rows.
+    let r = ask_spoilers(&s, era0, "bank late", "all").await.unwrap();
+    assert!(hit(&r) && r.answer.as_ref().unwrap().era_pos == NO_LIMIT_ERA);
+    assert_eq!(r.spoilers, Some(SpoilerMode::All));
+    assert!(hit(&ask_spoilers(&s, era1, "bank undatable", "all")
+        .await
+        .unwrap()));
+    assert!(
+        !hit(&ask_ok(&s, era4_user(pool).await, "bank undatable").await),
+        "undatable: spoiler mode only"
+    );
+    assert!(
+        !hit(&ask_ok(&s, era4_user(pool).await, "bank stale").await),
+        "a sha the version does not hold"
+    );
+    // The overwrite rule: the worker's newer answer stays, an older one goes.
+    let r = ask_ok(&s, era4, "bank newer live").await;
+    assert!(hit(&r));
+    assert_eq!(
+        answer_text(&r),
+        "A.",
+        "the worker answer is newer than the bank's"
+    );
+    let r = ask_ok(&s, era4, "bank replaces live").await;
+    assert!(hit(&r));
+    assert_eq!(answer_text(&r), "Banked: bank replaces live.");
+    let (carried, origins): (i64, i64) = sqlx::query_as(
+        "SELECT count(*) FILTER (WHERE carried_from IS NOT NULL), count(*) FILTER (WHERE origin IS NOT NULL) \
+         FROM trevor_answers WHERE version = 'v-bank'",
+    )
+    .fetch_one(pool)
+    .await
+    .unwrap();
+    assert_eq!(
+        (carried, origins),
+        (1, 11),
+        "only the newer worker answer was carried"
+    );
+
+    // The warm-up skips what the bank covers: "bank early" at era 4 is served
+    // by the era-1 row, while "bank mid" at era 1 is past its gate.
+    let (st, list) = send_json(
+        &app,
+        "GET",
+        "/api/trevor/worker/popular?version=v-bank&limit=50",
+        true,
+        None,
+    )
+    .await;
+    assert_eq!(st, StatusCode::OK, "{list}");
+    let pairs: Vec<(String, i64)> = list["items"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|i| {
+            (
+                i["normQ"].as_str().unwrap().to_owned(),
+                i["eraPos"].as_i64().unwrap(),
+            )
+        })
+        .collect();
+    assert!(!pairs.contains(&("bank early".into(), 4)), "{pairs:?}");
+    assert!(pairs.contains(&("bank mid".into(), 1)), "{pairs:?}");
+    let (_, out) = send_json(
+        &app,
+        "POST",
+        "/api/trevor/worker/warm",
+        true,
+        Some(json!({ "version": "v-bank", "items": [{ "question": "bank early", "eraPos": 4 }] })),
+    )
+    .await;
+    assert_eq!(out, json!({ "queued": 0, "cached": 1, "joined": 0 }));
+
+    // A failed import (a NUL byte Postgres refuses) rolls back alone: the
+    // publish stands, imported rows are never carried over, and it is counted.
+    let mut bad = bank_answer("bank nul\u{0}", Some(1), &[("s1#0", "aaa")], "bank", None);
+    bad["answer"] = json!("nul");
+    let failed_before = s.trevor.bank_import_failures.load(Ordering::Relaxed);
+    let out = publish_bank(
+        &app,
+        "v-bank-fail",
+        json!({ "s1#0": "aaa", "s2#1": "bbb", "s5#0": "eee" }),
+        json!([bad, bank[1].clone()]),
+    )
+    .await;
+    assert_eq!(
+        (
+            out["bank"]["failed"].clone(),
+            out["bank"]["imported"].clone()
+        ),
+        (json!(true), json!(0)),
+        "{out}"
+    );
+    assert_eq!(
+        s.trevor.bank_import_failures.load(Ordering::Relaxed),
+        failed_before + 1
+    );
+    assert_eq!(
+        q::active_version(pool, "en").await.unwrap().as_deref(),
+        Some("v-bank-fail")
+    );
+    assert!(
+        !hit(&ask_ok(&s, era4_user(pool).await, "bank mid").await),
+        "imported rows are not carried"
+    );
+
+    // A re-publish with a changed chunk sha: every row citing it is stale.
+    let out = publish_bank(
+        &app,
+        "v-bank2",
+        json!({ "s1#0": "CHANGED", "s2#1": "bbb", "s5#0": "eee" }),
+        bank.clone(),
+    )
+    .await;
+    assert_eq!(
+        (
+            out["bank"]["imported"].clone(),
+            out["bank"]["stale"].clone()
+        ),
+        (json!(3), json!(11)),
+        "{out}"
+    );
+    assert!(!hit(&ask_ok(&s, era1, "bank early").await), "s1#0 changed");
+    assert!(hit(&ask_ok(&s, era4, "bank mid").await), "s2#1 did not");
+
+    // TREVOR_BANK_IMPORT=0: no imported row is served, and a publish imports none.
+    let (off, _) = state_with_recorder(pool, |c| c.bank_import = false);
+    let offa = crate::app(&off);
+    assert!(
+        !hit(&ask_spoilers(&off, era0, "bank late", "all").await.unwrap()),
+        "the exact key skips it"
+    );
+    assert!(
+        !hit(&ask_ok(&off, era4_user(pool).await, "bank mid").await),
+        "no fallback"
+    );
+    let out = publish_bank(
+        &offa,
+        "v-bank3",
+        json!({ "s1#0": "aaa", "s2#1": "bbb", "s5#0": "eee" }),
+        bank,
+    )
+    .await;
+    assert_eq!(
+        out["bank"],
+        json!({ "sent": 8, "invalid": 0, "rows": 0, "imported": 0, "stale": 0, "kept": 0, "failed": false })
+    );
+    let n: i64 = sqlx::query_scalar(
+        "SELECT count(*) FROM trevor_answers WHERE version = 'v-bank3' AND origin IS NOT NULL",
+    )
+    .fetch_one(pool)
+    .await
+    .unwrap();
+    assert_eq!(n, 0);
+    eprintln!(
+        "bank import: 8 sent, 1 invalid, 14 rows, 11 imported, 2 stale, 1 kept by a newer worker answer; hits at admitting horizons, misses below the gate, spoiler mode on the no-limit rows; failed import rolled back, publish stood; changed sha 11 stale; TREVOR_BANK_IMPORT=0 imported 0, served none"
     );
 }

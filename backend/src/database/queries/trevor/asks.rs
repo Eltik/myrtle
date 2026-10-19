@@ -153,8 +153,9 @@ pub async fn popular(
 
 /// The warm-up list (contract v1.1 section 3c): the questions most asked in
 /// the last `days` days, per (normQ, era), that `version` holds no cached
-/// answer for (so neither carried over nor answered since): (latest asked
-/// text, normQ, eraPos, asks).
+/// answer for (so neither carried over nor answered since, nor covered by an
+/// imported bank row at or below a spoiler-safe era, which the ask's bank
+/// fallback serves): (latest asked text, normQ, eraPos, asks).
 pub async fn warm_candidates(
     pool: &PgPool,
     version: &str,
@@ -171,7 +172,10 @@ pub async fn warm_candidates(
         WHERE k.server = $2 AND k.created_at > now() - make_interval(days => $3)
           AND NOT EXISTS (SELECT 1 FROM trevor_answers a
                           WHERE a.version = $1 AND a.server = $2 AND a.qkey = k.qkey
-                            AND a.era_pos = k.era_pos AND a.cached)
+                            AND a.cached
+                            AND (a.era_pos = k.era_pos
+                                 OR (a.origin IS NOT NULL AND a.era_pos <= k.era_pos
+                                     AND k.era_pos < 2147483647)))
         GROUP BY k.qkey, k.era_pos
         ORDER BY count(*) DESC, k.qkey, k.era_pos
         LIMIT $4

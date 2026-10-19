@@ -19065,6 +19065,121 @@
           }
         }
       },
+      "BankAnswer": {
+        "type": "object",
+        "description": "One bank answer as the publish sends it.",
+        "required": [
+          "question",
+          "answer",
+          "citations",
+          "source"
+        ],
+        "properties": {
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Other wordings of the same question, each cached under its own key."
+          },
+          "answer": {
+            "type": "string"
+          },
+          "answeredAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "When the answer was made, if the bank recorded it. An imported answer\nreplaces a worker's cached answer under the same key only when it is\nnewer than that answer; without this time it never does."
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
+            "description": "The cited passages, each with its chunk sha (every one must match the\nversion's `chunkShas`, or the answer is not imported)."
+          },
+          "gatePos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "The gatePos a reader must have reached: the highest gatePos over the\nanswer's gate stories and cited sources, as `scripts/panels.py` gates\na bank entry. Null when one of them is undatable: the answer is then\ncached for spoiler mode only."
+          },
+          "profile": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TrevorProfile",
+                "description": "The profile that made it (default `full`)."
+              }
+            ]
+          },
+          "question": {
+            "type": "string",
+            "description": "The question as asked; the backend normalizes it into the cache key."
+          },
+          "source": {
+            "$ref": "#/components/schemas/TrevorBankSource"
+          }
+        }
+      },
+      "BankOutcome": {
+        "type": "object",
+        "description": "What the bank import of a publish did.",
+        "required": [
+          "sent",
+          "invalid",
+          "rows",
+          "imported",
+          "stale",
+          "kept",
+          "failed"
+        ],
+        "properties": {
+          "failed": {
+            "type": "boolean",
+            "description": "The import failed and was rolled back; the publish went on."
+          },
+          "imported": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Rows written.",
+            "minimum": 0
+          },
+          "invalid": {
+            "type": "integer",
+            "description": "Answers refused before the database: an empty answer or question, no\ncitation, a citation without a sha, or a gatePos below 1.",
+            "minimum": 0
+          },
+          "kept": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Rows left out because a worker's newer answer holds the key.",
+            "minimum": 0
+          },
+          "rows": {
+            "type": "integer",
+            "description": "Cache rows the valid answers make: one per wording and era bucket\n(the first era at or after the gatePos, and the spoiler-mode bucket).",
+            "minimum": 0
+          },
+          "sent": {
+            "type": "integer",
+            "description": "Bank answers the call carried.",
+            "minimum": 0
+          },
+          "stale": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Rows dropped because a cited chunk's sha is not the version's.",
+            "minimum": 0
+          }
+        }
+      },
       "BannerPullStat": {
         "type": "object",
         "required": [
@@ -26871,11 +26986,16 @@
           "panels",
           "active",
           "chunkShas",
-          "carried"
+          "carried",
+          "bank"
         ],
         "properties": {
           "active": {
             "type": "boolean"
+          },
+          "bank": {
+            "$ref": "#/components/schemas/BankOutcome",
+            "description": "The bank import (contract v1.1 section 3a, addition 2026-10-19)."
           },
           "carried": {
             "type": "integer",
@@ -26921,6 +27041,13 @@
           "activate": {
             "type": "boolean",
             "description": "Make this the server's active version (default true)."
+          },
+          "bankAnswers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BankAnswer"
+            },
+            "description": "The bank's answers (contract v1.1 section 3a, addition 2026-10-19),\nread on the activating call only: each is imported into the answer\ncache of this version under its normalized question, so the next\nasker gets it as a cache hit. Ignored under `TREVOR_BANK_IMPORT=0`."
           },
           "builtAt": {
             "type": [
@@ -33184,6 +33311,14 @@
         "enum": [
           "live",
           "passages"
+        ]
+      },
+      "TrevorBankSource": {
+        "type": "string",
+        "description": "Where a bank answer comes from.",
+        "enum": [
+          "bank",
+          "reanswer"
         ]
       },
       "TrevorCfBudget": {
