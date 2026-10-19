@@ -45,8 +45,9 @@ pub(crate) struct Probe {
 }
 
 impl Probe {
-    /// `cpu` is false while the power guard is tripped (contract v1.1 section 2.1).
-    async fn rungs(&self, guard: Option<&GuardView>) -> serde_json::Value {
+    /// `cpu` is false while the power guard is tripped (contract v1.1 section 2.1). `cf` is false without
+    /// `cf_models` (no `TREVOR_CF_*` keys), whatever the canary file says.
+    pub(crate) async fn rungs(&self, guard: Option<&GuardView>) -> serde_json::Value {
         let cf = self.cf_models.as_ref()
             .is_some_and(|m| canary_passing(&self.canary, m, trevor::util::unix_now()).is_some());
         let cpu = !guard.is_some_and(GuardView::tripped)

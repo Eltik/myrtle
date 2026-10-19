@@ -17,9 +17,9 @@ export const answer = (source, text = ANSWER_TEXT, citations = CITATIONS) => ({
     version: VERSION,
     server: "en",
     eraPos: 722,
-    rung: source === "live" ? "cf" : "passages",
+    rung: source === "live" ? "cpu" : "passages",
     source,
-    answer: { answer: source === "live" ? text : "", rung: "cf", profile: "full", source, citations, corpusVersion: VERSION },
+    answer: { answer: source === "live" ? text : "", rung: "cpu", profile: "mid", source, citations, corpusVersion: VERSION },
 });
 export const queuedView = (id) => ({ jobId: id, status: "queued", rung: "cpu", position: 1, etaSecs: null, workerOnline: false, answer: null, error: null });
 
@@ -68,12 +68,12 @@ export function compose(question, storyId) {
 
 export function jobView(j, now = Date.now()) {
     if (now >= j.doneAt) {
-        if (j.fail) return { jobId: j.id, status: "failed", rung: j.rung ?? "cf", position: 0, etaSecs: null, workerOnline: true, answer: null, error: "the mock was asked to fail" };
-        return { jobId: j.id, status: "done", rung: j.rung ?? "cf", position: 0, etaSecs: null, workerOnline: true, answer: j.answer, error: null };
+        if (j.fail) return { jobId: j.id, status: "failed", rung: j.rung ?? "cpu", position: 0, etaSecs: null, workerOnline: true, answer: null, error: "the mock was asked to fail" };
+        return { jobId: j.id, status: "done", rung: j.rung ?? "cpu", position: 0, etaSecs: null, workerOnline: true, answer: j.answer, error: null };
     }
-    if (now >= j.start) return { jobId: j.id, status: "running", rung: "cf", position: 0, etaSecs: Math.ceil((j.doneAt - now) / 1000), workerOnline: true, answer: null, error: null };
+    if (now >= j.start) return { jobId: j.id, status: "running", rung: "cpu", position: 0, etaSecs: Math.ceil((j.doneAt - now) / 1000), workerOnline: true, answer: null, error: null };
     const ahead = openJobs(now).filter((o) => !o.real && o.start < j.start).length;
-    return { jobId: j.id, status: "queued", rung: "cf", position: ahead + 1, etaSecs: Math.ceil((j.doneAt - now) / 1000), workerOnline: true, answer: null, error: null };
+    return { jobId: j.id, status: "queued", rung: "cpu", position: ahead + 1, etaSecs: Math.ceil((j.doneAt - now) / 1000), workerOnline: true, answer: null, error: null };
 }
 
 /** The SSE stream of a canned job: its deltas on the job's own clock (a late stream only gets the ones still to come), then done or error. */

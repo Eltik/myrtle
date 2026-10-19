@@ -149,6 +149,37 @@ fn heartbeat_carries_the_guard_only_when_it_is_on() {
     assert_eq!(tripped["busyJobId"], "j1");
 }
 
+/// A deployment without the Cloudflare keys (`cf_models: None`) reports `cf: false` in every heartbeat, even beside a
+/// fresh passing canary file, so the backend never admits a job to the cf rung (design step 10).
+#[tokio::test]
+async fn heartbeat_reports_no_cf_rung_without_cf_models() {
+    use crate::serve::canary::CanaryFile;
+    use crate::serve::worker::Probe;
+    use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+    // A llama-server stand-in whose /health answers 200, so cpu is true.
+    let l = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let llama = format!("http://{}", l.local_addr().unwrap());
+    tokio::spawn(async move {
+        while let Ok((mut s, _)) = l.accept().await {
+            let mut buf = [0u8; 1024];
+            let _ = s.read(&mut buf).await;
+            let _ = s.write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 0\r\nConnection: close\r\n\r\n").await;
+        }
+    });
+    let canary = std::env::temp_dir().join(format!("trevor-canary-{}.json", std::process::id()));
+    let passing = CanaryFile { checked_at: trevor::util::unix_now(), models: Vec::new(),
+                               passing: Some("@cf/google/gemma-3-12b-it".into()) };
+    std::fs::write(&canary, serde_json::to_vec(&passing).unwrap()).unwrap();
+    let probe = |cf_models: Option<Vec<String>>| Probe { http: reqwest::Client::new(), llama: llama.clone(), cf_models,
+                                                         canary: canary.clone() };
+    // The control: with the keys set, the same canary makes cf true.
+    let with_keys = probe(Some(vec!["@cf/google/gemma-3-12b-it".into()])).rungs(None).await;
+    assert_eq!(with_keys, serde_json::json!({"cf": true, "cpu": true}));
+    let without = probe(None).rungs(None).await;
+    assert_eq!(without, serde_json::json!({"cf": false, "cpu": true}));
+    let _ = std::fs::remove_file(&canary);
+}
+
 /// `--profile mid` is exactly the eval arm e-e2b-mid36 (`--profile full` plus queue_mid.sh's flags), and `mid6k` the arm
 /// f-e2b-mid6k: every field of the parsed and profiled arguments is equal but the profile name.
 #[test]

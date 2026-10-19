@@ -296,6 +296,7 @@ fn test_cfg(base: &str, out: &Path, refresh: bool) -> IngestConfig {
         chunk: ChunkConfig::default(),
         tokenizer_sha: "t".into(),
         refresh,
+        max_drop_pct: Some(20),
     }
 }
 
@@ -369,6 +370,60 @@ async fn refresh_matches_a_fresh_build_and_leaves_resume_alone() {
     limited.limit = Some(1);
     assert!(run(&limited, words()).await.is_err());
     for d in [dir, resumed, fresh] {
+        let _ = std::fs::remove_dir_all(d);
+    }
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn a_shrunken_or_empty_index_writes_nothing_unless_allowed() {
+    let routes: Routes = Arc::default();
+    let base = fake_backend(Arc::clone(&routes));
+    let v1: &[(&str, &[&str])] = &[
+        ("s1", &["One."]),
+        ("s2", &["Two."]),
+        ("s3", &["Three."]),
+        ("s4", &["Four."]),
+        ("s5", &["Five."]),
+    ];
+    serve(&routes, v1);
+    let dir = scratch("shrink");
+    run(&test_cfg(&base, &dir, false), words()).await.expect("build");
+    let files = |d: &Path| {
+        ["spoiler.jsonl", "chunks.jsonl", "unresolved.jsonl", "manifest.p0.json"]
+            .map(|f| std::fs::read(d.join(f)).expect("read"))
+    };
+    let before = files(&dir);
+
+    // Two of five stories gone (40%, over the 20% default): refused in both
+    // modes, every file left byte for byte as it was.
+    serve(&routes, &v1[..3]);
+    for refresh in [true, false] {
+        let err = run(&test_cfg(&base, &dir, refresh), words()).await.expect_err("shrink");
+        assert!(err.to_string().contains("2 fewer than the previous plan's 5"), "{err}");
+        assert_eq!(files(&dir), before);
+    }
+    // An empty index is refused even with no previous plan to compare.
+    serve(&routes, &[]);
+    assert!(run(&test_cfg(&base, &dir, true), words()).await.is_err());
+    let empty = scratch("shrink-empty");
+    assert!(run(&test_cfg(&base, &empty, false), words()).await.is_err());
+    assert!(!empty.join("spoiler.jsonl").exists());
+    assert_eq!(files(&dir), before);
+
+    // One of five (exactly 20%) is within the limit.
+    serve(&routes, &v1[..4]);
+    let m = run(&test_cfg(&base, &dir, true), words()).await.expect("within limit");
+    assert_eq!(m.refresh.expect("counts").removed, 1);
+
+    // The kill switch: the old behaviour, the shrunken plan replaces the old.
+    serve(&routes, &v1[..2]);
+    let mut allow = test_cfg(&base, &dir, true);
+    allow.max_drop_pct = None;
+    let m = run(&allow, words()).await.expect("allowed");
+    assert_eq!(m.refresh.expect("counts").removed, 2);
+    let spoiler = std::fs::read_to_string(dir.join("spoiler.jsonl")).expect("read");
+    assert_eq!(spoiler.lines().count(), 2);
+    for d in [dir, empty] {
         let _ = std::fs::remove_dir_all(d);
     }
 }

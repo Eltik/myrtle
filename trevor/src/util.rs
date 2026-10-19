@@ -46,6 +46,81 @@ pub fn read_jsonl_opt<T: DeserializeOwned>(path: &Path) -> Option<Vec<T>> {
     Some(std::fs::read_to_string(path).ok()?.lines().filter_map(|l| serde_json::from_str(l).ok()).collect())
 }
 
+/// The serving artifacts that failed to load in this process, one "path: why" line each (see [`load_json_opt`]).
+static LOAD_FAILURES: std::sync::Mutex<Vec<String>> = std::sync::Mutex::new(Vec::new());
+
+/// Record a serving artifact that did not load, and log it on stderr ("load: <path>: <why>; serving without it")
+/// unless `TREVOR_LOAD_LOG=0`. The caller still falls back to `None` or empty exactly as before.
+fn note_load_failure(path: &Path, why: &str) {
+    let line = format!("{}: {why}", path.display());
+    if crate::env::on_unless_0("TREVOR_LOAD_LOG") {
+        eprintln!("load: {line}; serving without it");
+    }
+    if let Ok(mut v) = LOAD_FAILURES.lock() {
+        v.push(line);
+    }
+}
+
+/// Every serving artifact that failed to load so far in this process, as "path: why" (missing, unreadable,
+/// unparsable, or malformed lines skipped), in load order.
+#[must_use]
+pub fn load_failures() -> Vec<String> {
+    LOAD_FAILURES.lock().map(|v| v.clone()).unwrap_or_default()
+}
+
+/// A file's text for a serving loader: [`std::fs::read_to_string`], with a missing or unreadable file logged by
+/// [`note_load_failure`] and read as `None`.
+#[must_use]
+pub fn load_text_opt(path: &Path) -> Option<String> {
+    match std::fs::read_to_string(path) {
+        Ok(s) => Some(s),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            note_load_failure(path, "missing");
+            None
+        }
+        Err(e) => {
+            note_load_failure(path, &format!("unreadable: {e}"));
+            None
+        }
+    }
+}
+
+/// [`read_json_opt`] for a serving artifact: the same value, with a missing, unreadable or unparsable file logged
+/// (one line saying which) and recorded in [`load_failures`].
+#[must_use]
+pub fn load_json_opt<T: DeserializeOwned>(path: &Path) -> Option<T> {
+    match serde_json::from_str(&load_text_opt(path)?) {
+        Ok(v) => Some(v),
+        Err(e) => {
+            note_load_failure(path, &format!("unparsable: {e}"));
+            None
+        }
+    }
+}
+
+/// [`read_jsonl_opt`] for a serving artifact: the same rows, with a missing or unreadable file logged and, when a
+/// non-blank line does not parse, one line counting the lines skipped.
+#[must_use]
+pub fn load_jsonl_opt<T: DeserializeOwned>(path: &Path) -> Option<Vec<T>> {
+    let text = load_text_opt(path)?;
+    let (mut rows, mut bad, mut first) = (Vec::new(), 0usize, None);
+    for (i, l) in text.lines().enumerate() {
+        match serde_json::from_str(l) {
+            Ok(v) => rows.push(v),
+            Err(e) if !l.trim().is_empty() => {
+                bad += 1;
+                first.get_or_insert_with(|| format!("line {}: {e}", i + 1));
+            }
+            Err(_) => {}
+        }
+    }
+    if bad > 0 {
+        let n = text.lines().filter(|l| !l.trim().is_empty()).count();
+        note_load_failure(path, &format!("{bad} of {n} lines unparsable, skipped (first: {})", first.unwrap_or_default()));
+    }
+    Some(rows)
+}
+
 /// Every line of a JSONL file, strictly: the file must be readable ("reading <path>") and every line, blank
 /// ones included, must parse.
 ///
@@ -120,6 +195,34 @@ mod tests {
         write_jsonl_atomic(&p, "jsonl.tmp", [serde_json::json!({"b": 1}), serde_json::json!({"b": 2})]).unwrap();
         assert_eq!(std::fs::read_to_string(&p).unwrap(), "{\"b\":1}\n{\"b\":2}\n");
         assert!(!p.with_extension("jsonl.tmp").exists());
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    /// The serving loaders return what the silent readers return, and record a missing file, an unparsable one and
+    /// malformed lines as three different failures.
+    #[test]
+    fn serving_loaders_match_the_silent_readers_and_say_why() {
+        type V = serde_json::Value;
+        let dir = std::env::temp_dir().join(format!("trevor-load-test-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let (good, bad, rows, gone) =
+            (dir.join("good.json"), dir.join("bad.json"), dir.join("rows.jsonl"), dir.join("gone.json"));
+        std::fs::write(&good, "{\"a\": 1}").unwrap();
+        std::fs::write(&bad, "{\"a\": 1").unwrap();
+        std::fs::write(&rows, "{\"a\": 1}\n\nnot json\n{\"a\": 2}\n").unwrap();
+        for p in [&good, &bad, &gone] {
+            assert_eq!(load_json_opt::<V>(p), read_json_opt::<V>(p), "{}", p.display());
+        }
+        assert_eq!(load_jsonl_opt::<V>(&rows), read_jsonl_opt::<V>(&rows));
+        assert_eq!(load_jsonl_opt::<V>(&gone), None);
+        let mine: Vec<String> = load_failures().into_iter().filter(|l| l.starts_with(&*dir.to_string_lossy())).collect();
+        let why = |name: &str| mine.iter().filter(|l| l.contains(name)).cloned().collect::<Vec<_>>();
+        assert!(why("good.json").is_empty(), "{mine:?}");
+        assert!(why("bad.json")[0].contains(": unparsable: EOF"), "{mine:?}");
+        assert!(why("rows.jsonl")[0].ends_with("1 of 3 lines unparsable, skipped (first: line 3: expected ident at line 1 column 2)"),
+                "{mine:?}");
+        assert_eq!(why("gone.json").len(), 2, "{mine:?}");
+        assert!(why("gone.json").iter().all(|l| l.ends_with(": missing")), "{mine:?}");
         std::fs::remove_dir_all(&dir).unwrap();
     }
 }

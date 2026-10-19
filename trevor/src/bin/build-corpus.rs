@@ -133,6 +133,7 @@ async fn main() -> Result<()> {
         },
         tokenizer_sha,
         refresh: args.refresh,
+        max_drop_pct: IngestConfig::max_drop_from_env(),
     };
 
     let m = ingest::run(&cfg, count).await?;

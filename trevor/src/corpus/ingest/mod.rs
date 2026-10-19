@@ -155,6 +155,63 @@ pub struct IngestConfig {
     /// instead of skipping every story id already in `chunks.jsonl`. False is
     /// the resume behavior, unchanged.
     pub refresh: bool,
+    /// The shrink guard: the largest share of the previous plan's stories, in
+    /// percent, a new index may lose before the run stops with nothing
+    /// written. An empty index always stops it. `None` turns the guard off
+    /// (`TREVOR_INGEST_ALLOW_SHRINK=1`), as before 2026-10-19.
+    pub max_drop_pct: Option<u32>,
+}
+
+impl IngestConfig {
+    /// The shrink guard from the environment: `TREVOR_INGEST_MAX_DROP`
+    /// percent (default 20), off when `TREVOR_INGEST_ALLOW_SHRINK=1`.
+    #[must_use]
+    pub fn max_drop_from_env() -> Option<u32> {
+        if crate::env::is("TREVOR_INGEST_ALLOW_SHRINK", "1") {
+            None
+        } else {
+            Some(crate::env::parse_or("TREVOR_INGEST_MAX_DROP", 20))
+        }
+    }
+}
+
+/// The story count of the previous plan: the lines of the `spoiler.jsonl` the
+/// last run wrote, one per scripted story. `None` when there is no file yet.
+fn previous_plan_len(out: &Path) -> Result<Option<usize>> {
+    match std::fs::read(out.join("spoiler.jsonl")) {
+        Ok(b) => Ok(Some(
+            b.split(|&c| c == b'\n').filter(|l| !l.is_empty()).count(),
+        )),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(e) => Err(e).context("reading spoiler.jsonl to compare plans"),
+    }
+}
+
+/// Refuse a plan that is empty, or that lost more than `max_drop_pct` percent
+/// of the previous plan's stories: an empty or truncated backend index would
+/// otherwise rewrite `spoiler.jsonl` and, with `--refresh`, drop the missing
+/// stories from `chunks.jsonl`. `None` lets every plan through.
+fn check_shrink(previous: Option<usize>, planned: usize, max_drop_pct: Option<u32>) -> Result<()> {
+    let Some(pct) = max_drop_pct else {
+        return Ok(());
+    };
+    if planned == 0 {
+        return Err(anyhow!(
+            "the story index lists no scripted story; nothing written \
+             (TREVOR_INGEST_ALLOW_SHRINK=1 to accept it)"
+        ));
+    }
+    if let Some(prev) = previous {
+        let lost = prev.saturating_sub(planned);
+        if lost * 100 > prev * pct as usize {
+            return Err(anyhow!(
+                "the story index lists {planned} scripted stories, {lost} fewer than the \
+                 previous plan's {prev} (more than {pct}%); nothing written \
+                 (TREVOR_INGEST_MAX_DROP=<percent> or TREVOR_INGEST_ALLOW_SHRINK=1 to accept it)"
+            ));
+        }
+    }
+    Ok(())
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -249,6 +306,9 @@ pub async fn run(
 
     let index = fetcher.index().await.context("fetching the story index")?;
     let (mut jobs, unscripted) = plan(&index);
+    // Before anything is written, and on the whole plan: `--limit` truncates
+    // on purpose.
+    check_shrink(previous_plan_len(&cfg.out)?, jobs.len(), cfg.max_drop_pct)?;
     if let Some(n) = cfg.limit {
         jobs.truncate(n);
     }

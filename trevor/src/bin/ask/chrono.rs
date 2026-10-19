@@ -1,6 +1,7 @@
 //! Timeline notes: the in-world chronology lines a time question gets, and the corpus test of a proper name.
 
 use std::collections::{BTreeSet, HashMap};
+use std::path::Path;
 
 use trevor::search::runtime::Runtime;
 use trevor::tools::{contains_words, norm};
@@ -16,18 +17,16 @@ pub(crate) struct Chrono {
 
 pub(crate) fn load_chrono() -> Chrono {
     let mut c = Chrono::default();
-    if let Ok(b) = std::fs::read("artifacts/chrono/timeline_v1.json") {
-        if let Ok(v) = serde_json::from_slice::<serde_json::Value>(&b) {
-            for g in v["groups"].as_array().into_iter().flatten() {
-                if let Some(id) = g["groupId"].as_str() {
-                    c.groups.insert(id.to_owned(), g.clone());
-                }
+    if let Some(v) = trevor::util::load_json_opt::<serde_json::Value>(Path::new("artifacts/chrono/timeline_v1.json")) {
+        for g in v["groups"].as_array().into_iter().flatten() {
+            if let Some(id) = g["groupId"].as_str() {
+                c.groups.insert(id.to_owned(), g.clone());
             }
         }
     }
-    let read = |p: &str| std::fs::read_to_string(p).unwrap_or_default();
-    for l in read("artifacts/chrono/events.jsonl").lines() {
-        let Ok(e) = serde_json::from_str::<serde_json::Value>(l) else { continue };
+    // Missing, unreadable and unparsable files (and lines) are logged, one line each, and read as empty as before.
+    let rows = |p: &str| trevor::util::load_jsonl_opt::<serde_json::Value>(Path::new(p)).unwrap_or_default();
+    for e in rows("artifacts/chrono/events.jsonl") {
         if e["is_year"].as_bool() == Some(true) && e["kind"].as_str() == Some("story") {
             let tag = if e["present"].as_bool() == Some(true) { "scene dated" } else { "stated" };
             c.lines.entry(e["source"].as_str().unwrap_or_default().to_owned()).or_default().push(format!(
@@ -36,7 +35,7 @@ pub(crate) fn load_chrono() -> Chrono {
                 e["line"].as_str().unwrap_or_default().chars().take(140).collect::<String>()));
         }
     }
-    for l in read("artifacts/chrono/terra_history.md").lines() {
+    for l in trevor::util::load_text_opt(Path::new("artifacts/chrono/terra_history.md")).unwrap_or_default().lines() {
         // "- **1086**: text" or "- **ca. 600** (derived: ...): text"
         let Some(rest) = l.strip_prefix("- **") else { continue };
         let Some((year, _)) = rest.split_once("**") else { continue };
@@ -44,8 +43,7 @@ pub(crate) fn load_chrono() -> Chrono {
             c.history.push((y, rest.replacen("**", "", 1).trim().to_owned()));
         }
     }
-    for l in read("artifacts/chrono/derived.jsonl").lines() {
-        let Ok(d) = serde_json::from_str::<serde_json::Value>(l) else { continue };
+    for d in rows("artifacts/chrono/derived.jsonl") {
         let approx = if d["approximate"].as_bool() == Some(true) { "about " } else { "" };
         c.lines.entry(d["storyId"].as_str().unwrap_or_default().to_owned()).or_default().push(format!(
             "{approx}{} (derived, counted from {} via {}): \"{}\"",

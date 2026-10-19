@@ -60,7 +60,7 @@ export async function route(req) {
                 mode: "on",
             });
         }
-        return json({ online: MODE !== "offline", rungs: { cf: true, cpu: true }, activeVersion: VERSION, queueDepth: { cf: 0, cpu: 1 }, cfBudget: "ok", workers: { cf: 0, cpu: MODE === "offline" ? 0 : 1 }, guard: "ok", mode: "on" });
+        return json({ online: MODE !== "offline", rungs: { cf: false, cpu: true }, activeVersion: VERSION, queueDepth: { cf: 0, cpu: 1 }, cfBudget: "ok", workers: { cf: 0, cpu: MODE === "offline" ? 0 : 1 }, guard: "ok", mode: "on" });
     }
     const worker = p.match(/^\/api\/trevor\/worker\/(.+)$/);
     if (worker && req.method === "POST") return REAL ? workerRoute(req, worker[1] ?? "") : json({ error: { code: "SERVICE_UNAVAILABLE", message: "the preview serves canned answers" } }, 503);
@@ -102,7 +102,7 @@ export async function route(req) {
         if (MODE === "passages") return json({ jobId: null, status: "done", rung: "cache", spoilerSafeUpTo: SPOILER, answer: answer("passages"), etaSecs: null, streamUrl: null });
         if (MODE === "offline") {
             const id = `job-${asks}`;
-            return json({ jobId: id, status: "queued", rung: "cf", spoilerSafeUpTo: SPOILER, etaSecs: null, streamUrl: `/api/trevor/jobs/${id}/stream` }, 202);
+            return json({ jobId: id, status: "queued", rung: "cpu", spoilerSafeUpTo: SPOILER, etaSecs: null, streamUrl: `/api/trevor/jobs/${id}/stream` }, 202);
         }
         const body = await req.json().catch(() => ({}));
         const question = String(body.question ?? "").trim();

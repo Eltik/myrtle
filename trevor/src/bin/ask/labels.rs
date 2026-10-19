@@ -15,11 +15,11 @@ pub(crate) struct Names {
 }
 
 /// Speaker labels a story renames by a self-introduction (`artifacts/entities/label_renames.json`,
-/// scripts/label_renames.py): story id -> description label -> name. Empty when missing.
+/// scripts/label_renames.py): story id -> description label -> name. Empty (and logged) when missing or unparsable.
 fn label_renames() -> &'static HashMap<String, BTreeMap<String, String>> {
     static RENAMES: OnceLock<HashMap<String, BTreeMap<String, String>>> = OnceLock::new();
     RENAMES.get_or_init(|| {
-        trevor::util::read_json_opt(std::path::Path::new("artifacts/entities/label_renames.json")).unwrap_or_default()
+        trevor::util::load_json_opt(std::path::Path::new("artifacts/entities/label_renames.json")).unwrap_or_default()
     })
 }
 
@@ -36,9 +36,9 @@ pub(crate) fn with_label_names(story_id: &str, text: &str) -> String {
         .join("\n")
 }
 
-/// The gold-set pipeline's names table (`artifacts/goldgen/names.json`), empty when missing or unparsable.
+/// The gold-set pipeline's names table (`artifacts/goldgen/names.json`), empty (and logged) when missing or unparsable.
 pub(crate) fn load_names() -> HashMap<String, Names> {
-    std::fs::read("artifacts/goldgen/names.json").ok().and_then(|b| serde_json::from_slice(&b).ok()).unwrap_or_default()
+    trevor::util::load_json_opt(std::path::Path::new("artifacts/goldgen/names.json")).unwrap_or_default()
 }
 
 /// A story passage's label: "story: <group>, <story name>" from the names table, or "story: <id>" for a story it lacks.

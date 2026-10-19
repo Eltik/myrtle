@@ -72,7 +72,7 @@ export function accepted(j) {
     const spoiler = REAL || j.horizon.all ? j.horizon.spoiler : (j.horizon.spoiler ?? SPOILER);
     const shown = j.deferred ? JOBS.get(j.quickJob) : j;
     const v = viewOf(shown);
-    const out = { jobId: shown.id, status: v.status === "running" ? "running" : "queued", rung: shown.real ? "cpu" : "cf", spoilerSafeUpTo: spoiler, ...(j.horizon.all ? { spoilers: "all" } : {}), etaSecs: v.etaSecs, streamUrl: `/api/trevor/jobs/${shown.id}/stream` };
+    const out = { jobId: shown.id, status: v.status === "running" ? "running" : "queued", rung: "cpu", spoilerSafeUpTo: spoiler, ...(j.horizon.all ? { spoilers: "all" } : {}), etaSecs: v.etaSecs, streamUrl: `/api/trevor/jobs/${shown.id}/stream` };
     if (!j.deferred) return json(out, 202);
     const look = earlierAnswer(j);
     return json({ ...out, rung: "passages", deferredJobId: j.id, ...(look ? { quickLook: look } : {}) }, 202);
