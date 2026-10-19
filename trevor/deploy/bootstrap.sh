@@ -656,7 +656,7 @@ step_database() {
 }
 
 # ---------------------------------------------------------------- 8. units
-UNITS="trevor-llama.service trevor-worker.service trevor-worker-restart.path trevor-worker-restart.service trevor-update.service trevor-update.timer trevor-stages.service"
+UNITS="trevor-llama.service trevor-worker.service trevor-worker-restart.path trevor-worker-restart.service trevor-update.service trevor-update.timer trevor-stages.service trevor-llama-window.path trevor-llama-window.service"
 step_units() {
   begin units "systemd units and the update timer (not trevor-summaries: the Cloudflare summaries path)"
   local u changed=0 src
@@ -676,7 +676,7 @@ step_units() {
   run systemctl enable --now trevor-llama.service
   wait_http "$LLAMA_URL/health" 600 "llama-server to load E2B" \
     || fail "llama-server did not answer $LLAMA_URL/health in 10 minutes: journalctl -u trevor-llama -n 50"
-  run systemctl enable --now trevor-worker-restart.path trevor-worker.service
+  run systemctl enable --now trevor-worker-restart.path trevor-llama-window.path trevor-worker.service
   run systemctl enable --now trevor-update.timer
   run systemctl enable --now trevor-stages.service   # the paced model-stage runner (scripts/stages.py), E2B by default
   info "trevor-summaries.timer is not enabled: it spends Cloudflare's daily Neurons, which this deployment does not use"

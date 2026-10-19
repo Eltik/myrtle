@@ -834,6 +834,9 @@ class Window(unittest.TestCase):
         srv = self.servers(t)
         self.assertIn('-m models/llm/window.gguf ', srv[0])
         self.assertIn('-m models/llm/stub.gguf ', srv[-1])
+        # The window server runs at STAGES_WINDOW_KV (12288); outside the window the context is update.sh's 16384.
+        self.assertIn('--kv-unified-per-slot 12288 ', srv[0])
+        self.assertIn('--kv-unified-per-slot 16384 ', srv[-1])
         log = t.runlog()
         self.assertRegex(log, r'unit a: [\d.]+ s at duty 1; sleeping 0.00 s')
         self.assertRegex(log, r'unit a: [\d.]+ s at duty 0.5; sleeping [1-9]')

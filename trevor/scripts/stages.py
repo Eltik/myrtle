@@ -906,6 +906,11 @@ class Runner:
     def server_cmd(self, profile):
         model, slots, kv, extra = SERVERS[profile]
         kv = kv or os.environ.get('KV') or '16384'
+        # Inside the window the 12B runs at STAGES_WINDOW_KV (12288) unless KV is set: measured on the development
+        # machine, 16k context costs 0.85 GB more resident than 8k, and the window's margin on an 11 GB box is under
+        # 1 GB (design/trevor-memory-budget.md sections 2 and 4). The stages' prompts are 5,000 to 10,000 tokens.
+        if getattr(self, 'win_state', None) == 'open' and not os.environ.get('KV'):
+            kv = os.environ.get('STAGES_WINDOW_KV') or '12288'
         # The stage flags of design/trevor-memory-budget.md section 4, fixed here so STAGES_SERVER_ARGS cannot drop
         # them: one slot, no prompt cache (8 GiB by default), no context checkpoints (32 per slot by default).
         # STAGES_SERVER_LEAN=0 restores update.sh's flags exactly (the profile's slots, -cram 512).

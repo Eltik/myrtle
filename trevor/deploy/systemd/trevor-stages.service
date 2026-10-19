@@ -32,11 +32,18 @@ Environment=STAGES_EXCLUSIVE=0
 Environment=STAGES_GEN=models/llm/gemma-4-e2b-it-q4_k_m.gguf
 Environment=STAGES_JUDGE=models/llm/gemma-4-e2b-it-q4_k_m.gguf
 Environment="STAGES_SERVER_ARGS=-t 2 --poll 0 --no-repack"
+# The nightly 12B window (design/trevor-memory-budget.md section 4): the stages run only inside it, on the window
+# model, with serving stopped; by day the runner idles. STAGES_WINDOW_ONLY=0 lets E2B run stages by day as well
+# (incr.py's keys carry no model name, so a unit E2B wrote is never redone by the 12B).
+Environment=STAGES_WINDOW_ONLY=1
 EnvironmentFile=/etc/trevor/trevor.env
 ExecStart=/usr/bin/python3 /var/www/myrtle.moe/trevor/scripts/stages.py --root /var/lib/trevor/stage/trevor --state-dir /var/lib/trevor/state/stages --publish
 Restart=on-failure
 RestartSec=60
 TimeoutStopSec=120
+# A runner killed after TimeoutStopSec (SIGKILL) cannot restore serving itself: write `start` for it when the
+# marker still says `stop`; trevor-llama-window.path then starts trevor-llama.
+ExecStopPost=/bin/sh -c 'f=/var/lib/trevor/state/stages/llama-window; [ ! -L "$$f" ] && [ "$$(head -c 16 "$$f" 2>/dev/null | tr -d "[:space:]")" = stop ] && printf start > "$$f.tmp" && mv -f "$$f.tmp" "$$f" || true'
 Nice=10
 IOSchedulingClass=idle
 CPUWeight=10
