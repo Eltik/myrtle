@@ -1,7 +1,47 @@
 # Installing Trevor on the VPS
 
-Step by step, for the operator of the VPS (Ubuntu 24.04, 3 vCPU AMD Ryzen 9 7900, 11 GB). Nothing here has been run
-yet. The why behind each step, the failure table and rollback are in `../design/trevor-vps-runbook.md`.
+The why behind each step, the failure table and rollback are in `../design/trevor-vps-runbook.md`.
+
+## The one command: `bootstrap.sh`
+
+A fresh Ubuntu 24.04 x86_64 server becomes a serving Trevor instance with no model vendor (the cache and `cpu` rungs,
+passages as the floor; `../design/trevor-self-contained-deploy.md`) from the clone and one command, run as root:
+
+```bash
+git clone https://github.com/Eltik/myrtle.git /var/www/myrtle.moe && cd /var/www/myrtle.moe && git checkout <sha on main>
+sudo trevor/deploy/bootstrap.sh --dry-run --snapshot https://.../trevor-snapshot-<stamp>.tar.zst   # the plan, nothing changed
+sudo trevor/deploy/bootstrap.sh --snapshot https://.../trevor-snapshot-<stamp>.tar.zst --snapshot-sha256 <hex>
+```
+
+It runs ten steps in order, each a function that checks its own done-state, so a rerun after a failure continues where
+it stopped; it stops at the first error and names the step. `--only STEP` and `--skip STEP` (comma lists, repeatable)
+pick steps; `--dry-run` prints every command and changes nothing (the read-only checks still run).
+
+| step | does | done when |
+|---|---|---|
+| `preflight` | Ubuntu 24.04 x86_64 (other Linux warns, other arch stops); installs missing apt packages (curl, tar, zstd, python3, rsync, util-linux, openssl, git); memory: stops under 8 GB, skips the 12B under 16 GB, warns under 32 GB (design section 5); warns under 8 cores; disk: stops under 15 GB free, warns under 40 GB; the `trevor` user, `/var/lib/trevor/{state,spool,logs,snapshot}`, `/etc/trevor` (700), tmpfiles for `/run/trevor` | always runs (idempotent) |
+| `release` | `scripts/fetch-release.sh --components trevor,assets <sha>` (plus `backend` when `backend/target/release/backend` is missing). `--sha` defaults to the checked-out HEAD. The bundle exists only for commits built on main by the Release Bundle workflow (the newest 20 are kept): exit 3 stops with that message, and nothing is ever compiled on the box | `target/release/.release-installed` names the sha |
+| `llama` | llama.cpp `b11146` (`pins.env`: tag, asset, sha256), the build every CPU number in the design doc was measured with; downloaded, sha256-checked, unpacked to `/opt/llama.cpp/b11146`, `current` symlink, `/usr/local/bin/llama-server` and `llama-bench` | `.verified` in the tag dir and `llama-server --version` runs |
+| `models` | `WITH_FP32=1 WITH_E2B=1 scripts/fetch-model.sh trevor/models`, plus `WITH_LLM=1` (Gemma 4 12B and Qwen3.5 9B, 12.7 GB) at 16 GB of memory or more (`WITH_LLM=0/1` overrides); links the E2B file under the upper-case name the units use | a marker records fetch-model.sh's sha and the flags |
+| `snapshot` | `scripts/snapshot.py install <file> --into trevor/artifacts` from `--snapshot URL|FILE` (`--snapshot-sha256` checks the file first). Refuses to go on without one; `--no-snapshot` starts from an empty tree, and the first update then builds every table from nothing, which is weeks on a CPU | `artifacts/snapshot.json`, or `artifacts` is already the release link |
+| `env` | `/etc/trevor/trevor.env` from `trevor.env.example`: the paths, `TREVOR_RETRIEVAL=bm25` and `EMBED=0` (step 9 below for hybrid), a fresh `TREVOR_WORKER_KEY` (kept on reruns), `--webhook` as `DISCORD_ALERT_WEBHOOK`, every `TREVOR_CF_*` commented out (cf is not used here); the same key in `backend/.env`. Without `backend/.env` it stops, unless `--database-url` is given: then it creates one from `backend/.env.example` with fresh `JWT_SECRET`, `SERVICE_KEY` and `GAME_CREDENTIAL_KEY` | both files hold the same key |
+| `database` | the backend applies its migrations on startup (`backend/README.md`, Database; there is no separate command), so this restarts it under pm2 (`pm2 restart myrtle-backend --update-env`, or `pm2 start backend/ecosystem.config.cjs`), waits up to 15 minutes for `/api/health` and checks that the worker key is accepted | the worker key is accepted (HTTP 200 or 404 on `worker/popular`) |
+| `units` | installs `trevor-llama`, `trevor-worker`, `trevor-worker-restart.{path,service}`, `trevor-update.{service,timer}` (paths rewritten when the clone is not at `/var/www/myrtle.moe`), daemon-reload, enables and starts llama (waits for `/health`), the worker and the update timer. Not `trevor-summaries.timer`: it is the Cloudflare summaries path, unused in this deployment | unchanged unit files are left alone |
+| `first-update` | `trevor-vps-update.sh init` (adopts `trevor/artifacts` as the first release), `chown -R trevor /var/lib/trevor`, then `daily` once in the foreground with `FORCE=1` under `systemd-run` as `trevor`; the log is `/var/lib/trevor/logs/<stamp>-daily/run.log` | `state/active.json` exists |
+| `verify` | `/api/trevor/status` until a worker is online with the `cpu` rung (3 minutes; warns if `cf` shows), `ask --route-only` of one question, a one-screen summary | always runs |
+
+Prerequisites the bootstrap does not create: Postgres reachable at the backend's `DATABASE_URL`, node and pm2 for the
+backend, and the asset watcher's EN extract (`assets/ecosystem.config.cjs`; the backend needs the game data to start and
+the first update needs `assets/ArkAssets/en/.version`). Tests on a scratch tree: `DESTDIR=/tmp/x
+trevor/deploy/bootstrap.sh --only env --database-url postgresql://...` writes both env files under `/tmp/x`.
+
+Unverified until a fresh Ubuntu box runs it: the dry run and the env step were run on the development machine
+(2026-10-19), nothing else.
+
+## What bootstrap does, by hand
+
+The sections below are the same work as hand steps: read them to understand a step, or to repair one the bootstrap
+stopped at. The VPS of the original plan: Ubuntu 24.04, 3 vCPU AMD Ryzen 9 7900, 11 GB.
 
 Paths assumed below (change them in every unit and in `/etc/trevor/trevor.env` together if the box differs):
 
@@ -43,7 +83,8 @@ sudo systemd-tmpfiles --create /etc/tmpfiles.d/trevor.conf     # creates /run/tr
 
 ## 2. llama.cpp
 
-Use a pinned llama.cpp release built for Ubuntu x64 (the release archive loads the best CPU variant, AVX-512
+The bootstrap installs the release pinned in `pins.env` (b11146, `llama-b11146-bin-ubuntu-x64.tar.gz`, sha256-checked)
+into `/opt/llama.cpp/b11146` and links `/usr/local/bin/llama-server` to it. By hand: use a pinned llama.cpp release built for Ubuntu x64 (the release archive loads the best CPU variant, AVX-512
 included, at run time), or build it from source with `cmake -B build -DGGML_NATIVE=ON && cmake --build build -j 2`
 under `nice -n 19`. Either way, record the tag and the sha256 of what you installed in the runbook. The flags the
 units use (`--no-repack`, `--poll`, `--cache-ram`, `--no-webui`) need a 2026 build; the zero-cost benchmark used one
@@ -132,7 +173,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now trevor-llama.service
 curl -s http://127.0.0.1:8081/health                  # {"status":"ok"} after the model loads
 sudo systemctl enable --now trevor-worker-restart.path trevor-worker.service
-sudo systemctl enable --now trevor-update.timer trevor-summaries.timer
+sudo systemctl enable --now trevor-update.timer trevor-summaries.timer   # bootstrap leaves the summaries timer off (Cloudflare path)
 systemctl list-timers 'trevor-*'
 ```
 
