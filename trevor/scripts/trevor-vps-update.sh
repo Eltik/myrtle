@@ -19,6 +19,8 @@
 #                             point the worker back at that version's artifacts.
 #   trevor-vps-update.sh status      the active version, the live release, the backend's /api/trevor/status.
 #   trevor-vps-update.sh init        one time: move <trevor>/artifacts (copied from the Mac) into a release and symlink it.
+#   trevor-vps-update.sh prune       scripts/retention.py by hand under the run lock (a dry run unless PRUNE_APPLY=1),
+#                             then the disk check.
 #
 # Failure at any step keeps the last good version: the work happens in a staging copy ($TREVOR_HOME/stage), the
 # backend's active version flips only after every gate passed and every chunk uploaded, and the worker reads
@@ -58,6 +60,13 @@
 #   NO_PUBLISH=1  publish.py --dry-run into the log dir; no upload, no switch;  KEEP_RELEASES [3]
 #   WORKER_SETTLE [30]  seconds between the worker restart and the activate call;  SETTLE_MIN [15] minutes a new
 #              .version must be old before `daily` uses it (the backend hot-reloads after the watcher's extract)
+#   PRUNE [1]  0 = no prune step after a daily publish (the script before 2026-10-19). The step runs scripts/retention.py
+#              (logs, eval runs, the spool, releases, asset manifests; policy in its docstring and RETAIN_* variables)
+#              as a dry run that lists what it would delete; PRUNE_APPLY=1 deletes, PRUNE_APPLY_ASSETS=1 also the old
+#              asset manifests
+#   DISK_CHECK [1]  0 = no disk check; else every `daily` run (and `prune`) warns, and posts one disk_low embed, when a
+#              filesystem of TREVOR_HOME, TREVOR_DIR or ASSETS_DIR has less free space than the smaller of
+#              DISK_MIN_FREE_GB [10] GB and DISK_MIN_FREE_PCT [10] percent
 set -Eeuo pipefail
 
 CMD="${1:-daily}"
@@ -408,6 +417,7 @@ publish_stage() {
   [[ -f "$LOG/changes.txt" ]] && changes=" changes: $(cat "$LOG/changes.txt")"
   notify "published $version (builtFrom $(json_get artifacts/panels/manifest.json builtFrom)).$changes"
   warm_up "$version"
+  if [[ "$CMD" == "daily" ]]; then prune_step "$version"; fi
 }
 
 # Contract v1.1 section 3c: the backend's most-asked questions that were not carried over to $1 go back to it as
@@ -418,6 +428,39 @@ warm_up() {
   local rc=0
   python3 scripts/bank_regen.py warm --version "$1" --limit "$TREVOR_WARM_TOP" || rc=$?
   (( rc == 0 )) || alert_failed "$rc" "" "Version $1 is live; only the warm-up failed (no answers were pre-asked)."
+  return 0
+}
+
+# ---------------------------------------------------------------- retention and the disk check (scripts/retention.py)
+retention() { python3 "$TREVOR_DIR/scripts/retention.py" --trevor-dir "$TREVOR_DIR" --home "$TREVOR_HOME" --assets-dir "$ASSETS_DIR" "$@"; }
+
+# disk_check: one log line per filesystem; the "WARNING: disk low" lines also go to Discord as one embed. Never fails.
+disk_check() {
+  [[ "${DISK_CHECK:-1}" != "0" ]] || return 0
+  local out low
+  out="$(retention --only disk 2>&1)" || true
+  printf '%s\n' "$out" | grep -v '^{' || true
+  low="$(printf '%s\n' "$out" | grep 'WARNING: disk low' | sed 's/^== [0-9:]* //')" || true
+  if [[ -n "$low" ]]; then
+    post_embed "Trevor: disk space is low" "$low
+Retention: \`trevor-vps-update.sh prune\` lists what the policy would delete; PRUNE_APPLY=1 deletes it." \
+      13646394 "disk_low · $(hostname 2>/dev/null || echo vps) · trevor-vps-update.sh $CMD"
+  fi
+  return 0
+}
+
+# prune_step VERSION: after a successful publish only (never before one): retention over logs, eval runs, the spool,
+# releases and asset manifests; a dry run that lists what is over the policy unless PRUNE_APPLY=1. Exit 2 (something
+# was over the policy) is normal; an error is one update_failed alert and never fails the run (VERSION is live).
+prune_step() {
+  [[ "${PRUNE:-1}" != "0" ]] || return 0   # PRUNE=0: silent, the script before 2026-10-19
+  STEP="prune"
+  local args=(--only logs,runs,spool,releases,assets) rc=0
+  if [[ "${PRUNE_APPLY:-0}" == "1" ]]; then args+=(--apply); fi
+  if [[ "${PRUNE_APPLY_ASSETS:-0}" == "1" ]]; then args+=(--apply-assets); fi
+  log "prune: retention.py ${args[*]}"
+  retention "${args[@]}" || rc=$?
+  if (( rc == 1 )); then alert_failed 1 "" "Version ${1:-?} is live; only the prune failed (nothing else changed)."; fi
   return 0
 }
 
@@ -462,6 +505,7 @@ cmd_daily() {
   res="$(tr -d '[:space:]' < "$RES_VERSION_FILE")"
   res_age=$(( ($(date +%s) - $(mtime "$RES_VERSION_FILE")) / 60 ))
   active_from="$(json_get "$STATE/active.json" builtFrom)"
+  disk_check
   if [[ "$res" == "$active_from" && "$FORCE" != "1" ]]; then
     log "up to date: EN res_version $res is the active version's builtFrom"; return 0
   fi
@@ -563,6 +607,8 @@ cmd_status() {
   find "$RELEASES" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort -r | head -5 | sed 's/^/release: /'
 }
 
+cmd_prune() { prune_step "$(json_get "$STATE/active.json" version)"; disk_check; }
+
 cmd_init() {  # run once, as a user that may write the code directory (root); then chown TREVOR_HOME to trevor
   [[ -L "$LIVE" ]] && die "$LIVE is already a symlink"
   [[ -d "$LIVE" ]] || die "no $LIVE to adopt: copy the Mac's artifacts there first"
@@ -584,7 +630,8 @@ case "$CMD" in
     "cmd_$CMD" ;;
   rollback) take_run_lock; [[ -n "$PLAN" ]] || open_log; cmd_rollback ;;
   status) cmd_status ;;
+  prune) take_run_lock; cmd_prune ;;
   init) take_run_lock; cmd_init ;;
-  *) die "usage: $0 daily|summaries|rollback [VERSION]|status|init" ;;
+  *) die "usage: $0 daily|summaries|rollback [VERSION]|status|prune|init" ;;
 esac
 log "done ($CMD)"

@@ -266,6 +266,11 @@ worker's own reports will show. By hand: `publish.py --activate <version>` (with
 - `journalctl -u trevor-update -u trevor-summaries -u trevor-worker -u trevor-llama --since today`
 - `systemctl list-timers 'trevor-*'`; the Discord webhook posts every publish and one `update_failed` alert per
   failed run.
+- Retention (2026-10-19, `scripts/retention.py`, policy in its docstring and `trevor-self-contained-deploy.md` step 9):
+  every `daily` run logs the free space of TREVOR_HOME, the code and the assets and posts "Trevor: disk space is low"
+  below the smaller of 10 GB and 10%; after each daily publish the run log lists the logs, eval runs, spool files,
+  releases and asset manifests over the policy, deleted only with `PRUNE_APPLY=1` (manifests also `PRUNE_APPLY_ASSETS=1`);
+  `trevor-vps-update.sh prune` shows the same list by hand; `PRUNE=0`, `DISK_CHECK=0` turn them off.
 - `artifacts/bank/regen/history.jsonl`: every `detect` and `run`, with counts. `trevor-vps-update.sh summaries`
   logs `bank-cf.json` and `bank-local.json` in the run's log directory.
 
@@ -293,7 +298,7 @@ of every failure below is a slower or passage-only answer, never a charge.
 | embedding would mix runtimes | `trevor-vps-update.sh` refuses before embedding (held) | run the one-time fp32 re-embed or set EMBED=0 |
 | the E2B GGUF is missing or memory is short | local summaries are skipped; they wait for Cloudflare the next night | no |
 | the 19:30 run still holds the update lock at 23:00 | the summaries run exits at once (flock) and the summaries wait a day | no |
-| disk fills | rsync or a build fails, held; `KEEP_RELEASES` bounds the releases, logs go after 30 days | yes |
+| disk fills | rsync or a build fails, held; `KEEP_RELEASES` bounds the releases, logs go after 30 days; the daily disk check posts "Trevor: disk space is low" first, and the prune step's list in the run log says what `PRUNE_APPLY=1` would free | yes |
 
 ## 13. Decisions recorded here
 
@@ -332,5 +337,9 @@ Measured on the development machine (Apple M5 Pro, 24 GB) unless a row says othe
 - The canary has run only against a stand-in `ask`; its first real run needs a model.
 - The warm-up routes (`GET /api/trevor/worker/popular`, `POST /api/trevor/worker/warm`) are specified in contract
   v1.1 section 3c but not built in the backend yet; `bank_regen.py warm` was tested against a stand-in only.
+- Database retention is a backend follow-up, not built: nothing deletes a Trevor row today. The policy (cache rows
+  forever, ask history 90 days, finished jobs 30 days), as SQL, is in `trevor-self-contained-deploy.md` "Step 9 built":
+  `DELETE FROM trevor_asks WHERE created_at < now() - interval '90 days'`, then finished `trevor_jobs` older than 30
+  days that no kept ask names, then `cached = false` answers older than 30 days that no job, ask or feedback names.
 - Bank regeneration's speed on the VPS's one core is the contract's estimate, not a measurement; the build machine's E2B on
   Metal does a unit in 3.1 s.

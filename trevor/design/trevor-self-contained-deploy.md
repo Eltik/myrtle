@@ -143,7 +143,7 @@ To build, in order:
 | 6 | The nightly re-answer job (yesterday's live questions on the 12B into the bank; the bank's keep rules of contract v1.1 section 3a apply) | 1 day |
 | 7 | The missing-input sweep: every reader of a game table or derived file keeps its last good output and logs it; a test per reader with the input removed | done 2026-10-19 for the Python stages. `common.read_derived` raises on a missing derived input instead of reading it as empty (the root of most silent overwrites), in 15 scripts: label_renames, entities build (pairs, pairs.v2), deaths build, chrono derive/flashbacks/build, answer_bank seed and merge, topics, primers, topic_deep, reading_guide, sources, attributes, source_dates, gametext, canon_refs (`rd()` no longer turns a missing table into a full run) and incr.py. `common.write_keep_last` writes 20 outputs atomically (6 more files are now written through a rename only) and keeps the old file when the new one is empty or lost more than `INCR_MAX_DROP` percent (20) of its rows; `incr.py` exits 3 instead of dropping every row (simulated on a scratch copy: an empty corpus would have emptied all 1,930 rows of p2/stories.jsonl; now kept, exit 3); `common.excel_table` raises on a missing table and logs a stale one from `.skipped.json` once, and the six table readers keep their last output on a missing table; answer_bank merge aborts without p4x chunks or gate_order.json instead of dropping every ask entry; update.sh's full canon run copies the canon files aside and clears the resume files only after `endings` succeeds, leaving is_endings.json served. With inputs present, 20 no-model stages rewrote 24 files in a scratch tree byte-identical to the code before, except first_appearance.json, whose key order follows the string hash seed (the old code run twice differs the same way; parsed, all 4,615 entries are equal). `scripts/tests/test_missing_inputs.py`: 53 tests, all pass (41 fail on the code before); kill switches `INCR_ALLOW_SHRINK=1`, `KEEP_LAST=0`, `TABLES_REQUIRED=1`, each tested. Rust: done A, B 2026-10-19. A: `build-corpus` (resume and `--refresh`) stops before writing anything when the index plans no scripted story or loses more than `TREVOR_INGEST_MAX_DROP` percent (20) of the previous `spoiler.jsonl`'s stories (`TREVOR_INGEST_ALLOW_SHRINK=1`: as before); the fake-backend test refuses a 5-to-3 shrink with all four files byte-identical, and with the guard off the same refresh removes 2 stories. B: the 24 serving artifacts of `Tools::load`, `load_new_dossiers`, `load_chrono`, `load_names` and the label renames load through `util::load_json_opt`/`load_jsonl_opt`/`load_text_opt`, which log one line per artifact (missing, unreadable, unparsable, or N malformed lines skipped; `TREVOR_LOAD_LOG=0` silences) and list it in `util::load_failures()`; on this tree the one line is `design_infer.jsonl: missing`; `--route-only` over routes and the four eval sets is byte-identical (79, 35, 120, 40, 109 lines). Left: the failures in the heartbeat or `/status` (needs a backend field), and a shrink gate in gates.py |
 | 8 | A chaos run of the nightly update: a skipped table, an unreachable CDN, a failed gate, a full disk; each must leave the last publish serving and post one alert | 1 day |
-| 9 | Retention: update logs, `eval/runs`, the spool, `trevor_asks`, the asset download; disk alerts | half a day |
+| 9 | Retention: update logs, `eval/runs`, the spool, `trevor_asks`, the asset download; disk alerts | done 2026-10-19 (`scripts/retention.py`, see "Step 9 built" below): logs keep the newest 30 plus the current and previous release's, eval runs the newest 50 plus every gold set's newest, design/-named and gate-report-named run (the index never), the spool 14 days, releases the current, previous, stage base and newest 5, asset manifests the newest 2 per server (`--apply-assets` only); a dry run unless `--apply`, exit 0/2/1; `trevor-vps-update.sh daily` checks the disk every run (Discord when low) and prunes after a publish, listing only until `PRUNE_APPLY=1`. Left: the `trevor_asks` SQL below, a backend follow-up |
 | 10 | The `cf`-less verification of section 3: verified by reading 2026-10-19. The `cf` rung exists only while a worker heartbeat reports `cf:true`, which needs the Cloudflare keys and a passed canary (`trevor/src/bin/ask/serve/worker.rs`, `openai.rs cloudflare_from_env`); with them unset admission goes `cpu`, deferred `cpu`, passages (`backend/.../trevor/rung.rs`), `settle_rung` steps a stray `Cf` down to `Cpu`, Neurons accrue only on cf results so the budget alert never fires, and no frontend string names the rung. Done 2026-10-19: `heartbeat_reports_no_cf_rung_without_cf_models` (`cf:false` beside a fresh passing canary; the same canary with the keys gives `cf:true`), the three cf keys commented out with "leave unset" in `deploy/trevor.env.example`, and the dev preview's canned answers, jobs and status default to `cpu` with `rungs: {cf:false, cpu:true}`. Still to do: the return runbook | half a day |
 
 Two to three focused weeks. Steps 3 and 5 are the real work; the rest is wiring that the last 24 hours of operation
@@ -199,6 +199,81 @@ live chunk shas and row counts (16,752; 25,514; 23,765) under the same model and
 interchangeable with the earlier fp32 set. The snapshot packed from that tree is 219,235,313 bytes and checks clean.
 Rule: run that refresh before every `snapshot.py pack` meant for another host; `trevor-vps-update.sh` refuses INT8
 vectors under `EMBED_ONNX=model.onnx`, and its `EMBED_FULL=1` re-embeds every text without reuse.
+
+### Step 9 built (2026-10-19): `scripts/retention.py`
+
+`retention.py [--apply] [--apply-assets] [--only POLICY,...]` lists every entry over the policy below and deletes
+nothing; `--apply` prints the same list in full, then deletes it; the asset manifests also need `--apply-assets`,
+because that tree is the asset watcher's. Exit 0 = nothing over the policy, 2 = something was (listed, or deleted with
+`--apply`), 1 = an error (a bad argument or variable, a deletion that failed); the last line is a JSON summary. A
+symlinked entry is removed as a link, never followed, and every deletion is checked to lie inside its policy's root.
+
+| policy | where | keeps (the rest is listed) | knob |
+|---|---|---|---|
+| logs | `<home>/logs/<stamp>-<cmd>/`, `artifacts/update/<stamp>/` | the newest 30 by name, and the log of the run that made the current and the previous release (the same `<stamp>`); a log root inside a release is left to the release policy | `RETAIN_LOGS` |
+| runs | `eval/runs/*.json`, `<home>/state/gates/eval/runs/*.json` | the newest 50 by run time; the newest run of each gold set in `runs.jsonl` (what `eval run --baseline last` loads; deleting it breaks that command); every run whose id appears in design/ or whose label is on a design/ line that says "baseline"; every run a published version's gate report names. `runs.jsonl` is never a candidate | `RETAIN_RUNS` |
+| spool | `TREVOR_SPOOL_DIR` (else `artifacts/spool`, the worker's default) | files younger than 14 days | `RETAIN_SPOOL_DAYS` |
+| releases | `<home>/releases/<stamp>-<version>/` | the target of `<home>/current` and of `artifacts`, the previous release (`state/releases.jsonl`), the stage's base, the newest 5 | `RETAIN_RELEASES` |
+| assets | `<assets>/ArkAssets/<server>/<32 hex>.idx` | the newest 2 by mtime (the current and the previous res_version) | `--apply-assets` |
+| disk | the filesystems of `<home>`, the code and `<assets>` | a "WARNING: disk low" line when free space is below the smaller of 10 GB and 10% | `DISK_MIN_FREE_GB`, `DISK_MIN_FREE_PCT` |
+
+What the reading found, and why the policy is shaped this way:
+
+- The asset download is not versioned: the downloader writes one tree per server in place (`assets/ArkAssets/en` is
+  18 GB on the development machine, `cn` 20 GB), and `assets/run.mjs` `pruneOrphans` already deletes every bundle and
+  manifest the current hot-update list does not name at each version bump. "Keep the current and the previous
+  version" therefore applies only to the root `.idx` manifests (one per res_version, 32 MB for EN, one per server
+  here); which old bundle belongs to which version needs the hot-update list from the network, so bundles are never
+  touched. The extracted trees (`assets/output/en` 29 GB, `cn` 33 GB) belong to the watcher and the backend, outside
+  this policy.
+- `trevor-vps-update.sh` already had two deleters, both kept as they were: `open_log` deletes logs older than 30 days
+  on every run, and `prune_releases` keeps the live release and the 2 newest others (`KEEP_RELEASES` 3) after every
+  publish. Both are stricter than the defaults above, so on the VPS the release policy only catches a release left by a
+  failed activate on a box that then stops publishing, and the log policy caps the count (two log directories a day,
+  one per timer, so 30 is about 15 days).
+- No run is named by id in design/ today (0 of the 44 on the development machine), so that rule protects nothing yet;
+  the newest-per-gold-set rule protects 3 of the 44 when the count is lowered to 5.
+
+The wiring: `trevor-vps-update.sh daily` runs the disk check on every run, before its "up to date" exit, and posts each
+low filesystem to Discord through the script's own `post_embed` (`DISCORD_ALERT_WEBHOOK`, core::alerts' embed shape:
+title "Trevor: disk space is low", footer `disk_low · <host>`). After a successful publish, and never before or
+without one, it runs the prune step as a dry run that lists what it would delete in the run log; `PRUNE_APPLY=1`
+deletes, `PRUNE_APPLY_ASSETS=1` adds the manifests; exit 2 is normal, exit 1 is one `update_failed` alert and never
+fails the run. `trevor-vps-update.sh prune` runs the same by hand under the run lock. Kill switches: `PRUNE=0` and
+`DISK_CHECK=0`, each silent, so the script prints what it printed before 2026-10-19 (tested).
+
+Verified: `scripts/tests/test_retention.py`, 9 tests on scratch trees (1.2 s): each policy keeps what it must and lists
+the rest (15 of 194 entries); a dry run changes nothing; `--apply` deletes exactly the listed entries and a second run
+exits 0; the index, the live release, `hot_update_list.idx` and the bundles survive; manifests stay without
+`--apply-assets`; a symlinked entry goes as a link and its target stays; exits 0, 2 and 1; the disk warning; and
+`trevor-vps-update.sh prune` and `PLAN=1 daily` against a scratch home with a stand-in webhook (one post, none with
+`DISK_CHECK=0`). Four mutations (no current-release protection, no newest-per-gold-set protection, keeping 1 manifest,
+no disk warning) each fail 2 or 3 tests. A dry run on the development machine's own tree lists nothing (20 update
+logs, 44 runs, 4 manifests) and prints 64.1 GB free of 994.6 GB (6.4%), no warning under the smaller-threshold rule.
+
+**`trevor_asks` and the related tables: a backend follow-up, not built.** Nothing in the backend deletes a Trevor row
+today. The policy, as the SQL a daily backend task (or a by-hand `psql`) would run, dependants first:
+
+```sql
+-- Per-user ask history ("My questions"): 90 days. The warm-up and the popular list read the last 30.
+DELETE FROM trevor_asks WHERE created_at < now() - interval '90 days';
+-- Job rows: finished jobs after 30 days, unless a kept ask still points at them. Queued and running jobs never.
+DELETE FROM trevor_jobs j
+ WHERE j.status IN ('done', 'failed') AND j.finished_at < now() - interval '30 days'
+   AND NOT EXISTS (SELECT 1 FROM trevor_asks a WHERE a.job_id = j.id OR a.deferred_job_id = j.id);
+-- Answers: the cache rows (cached = true) forever. A row stored only for its job (cached = false) once nothing names it.
+DELETE FROM trevor_answers an
+ WHERE NOT an.cached AND an.created_at < now() - interval '30 days'
+   AND NOT EXISTS (SELECT 1 FROM trevor_jobs j WHERE j.answer_id = an.id)
+   AND NOT EXISTS (SELECT 1 FROM trevor_asks a WHERE a.answer_id = an.id)
+   AND NOT EXISTS (SELECT 1 FROM trevor_feedback f WHERE f.answer_id = an.id);
+```
+
+`trevor_feedback`, `trevor_neurons` and `trevor_workers` stay (small). Not in this policy and probably the largest
+growth: each published version stores its panels (21.7 MB of JSON today) and one chunk sha row per chunk in
+`trevor_versions`, `trevor_panels` and `trevor_chunk_shas`, and the summaries timer can publish nightly; keeping the
+active version and the newest 10 per server would bound it, but a rollback past them then has no panels. Unmeasured:
+the row counts on the VPS.
 
 ## 7. Fail safe, never fail silent
 
