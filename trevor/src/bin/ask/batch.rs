@@ -128,7 +128,7 @@ pub(crate) fn detect_only(a: &Args, tools: &Tools, b: &Path) -> Result<()> {
             .filter(|_| t.event_in_question(q).is_none() && t.appearance_question(q).is_none())
         {
             if let Some((k, _)) = crate::scenes::scene_subject(t, &people_named(rt, t, q), q, a.scene_verbs(),
-                                                                !a.scene_subject) {
+                                                                a.no_scene_subject) {
                 f.push(format!("charscope={k}"));
             }
         }
@@ -186,7 +186,7 @@ pub(crate) fn scoped_only(a: &Args, rts: &mut Runtimes, tools: &Tools, b: &Path)
                      l["groupId"].as_str().unwrap_or_default(), ids.join(" "));
         }
         if let Some((who, rows)) = character_scenes(&mut rts.main, &rts.args, tools, q, q, crate::scenes::CHAR_TOKENS,
-                                                    a.scene_verbs(), !a.scene_subject, a.chunk_renames()) {
+                                                    a.scene_verbs(), a.no_scene_subject, a.chunk_renames()) {
             let ids: Vec<String> =
                 rows.iter().map(|(r, _, n)| format!("{}:{n}", rts.main.store.chunks[*r].chunk_id)).collect();
             println!("{id}\tcharacter\t{who}\t{}", ids.join(" "));

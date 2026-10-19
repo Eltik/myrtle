@@ -1517,6 +1517,13 @@ chunk-scoped label rename for "???" followed by a self-introduction is the candi
 
 Identities, names and aliases, topics and topic summaries, dossiers, canon evidence for the Integrated Strategies endings, deaths, places, organisations, operator data.
 
+**Decision revised (2026-10-20, 00:40 JST).** The one changed answer in each arm was the Mon3tr question itself, and
+on the 12B the flags' answer is the better one (her reactions across stories, with the "I'll bring back Kal'tsit!"
+and "loss that cut her to the bone" lines; the default declined into Episode 17 lines), while E2B's is a different
+decline. One gain, no loss over 157 + 37 questions, so both are defaults: `--no-react-verbs` and `--no-scene-subject`
+reproduce the earlier prompts (stub, 3 sets: new binary with both switches byte-identical to 6c586114 at its defaults,
+and the new defaults byte-identical to 6c586114 with `--react-verbs --scene-subject`).
+
 ### 2026-09-29: Canon evidence for IS endings: contrastive pass
 
 **Tried.** A contrastive pass (scripts/canon_refs.py) over 223 candidate passages from later stories, asking which ending, if any, each passage names.

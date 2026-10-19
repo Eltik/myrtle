@@ -244,15 +244,16 @@ pub(crate) struct Args {
     /// appearance index (2026-10-19).
     #[arg(long)]
     pub(crate) no_event_mention: bool,
-    /// Opt-in (2026-10-19, unmeasured): the scene-subject test also counts the reaction verbs (react, respond, feel,
-    /// wake, behave, cope) beside the said and hint verbs.
+    /// Turn off the reaction verbs of the scene-subject test (react, respond, feel, wake, behave, cope beside the said
+    /// and hint verbs): opt-in on 2026-10-19, a default since 2026-10-20 (with `--scene-subject` it changed one answer of
+    /// 157 on E2B mid and one of 37 on the 12B, the Mon3tr question, for the better on the 12B).
     #[arg(long)]
-    pub(crate) react_verbs: bool,
-    /// Opt-in (2026-10-19, unmeasured): character scenes for the one named person a said, hint or reaction verb
-    /// follows when the question names several ("How does Mon3tr react ... after Kal'tsit dies"); by default the
-    /// question must name exactly one person.
+    pub(crate) no_react_verbs: bool,
+    /// Turn off the character scenes for the one named person a said, hint or reaction verb follows when the question
+    /// names several ("How does Mon3tr react ... after Kal'tsit dies"), a default since 2026-10-20 (see
+    /// `--no-react-verbs`); without them, as before, the question must name exactly one person.
     #[arg(long)]
-    pub(crate) scene_subject: bool,
+    pub(crate) no_scene_subject: bool,
     /// RELATION_RULE for this question: `!no_relation_rule`, set by `main` and per job; `answer_one_inner` clears it for
     /// a question naming a group topic, and for a relation question naming fewer than two people (not an admiration one).
     #[arg(skip)]
@@ -608,15 +609,16 @@ pub(crate) enum BackendKind {
 /// --no-typed-fallback --no-answer-extend --no-answer-check --no-operator-list-check --max-context-tokens 3600|6000` on
 /// top of `--profile full`): one answer call, no router call.
 impl Args {
-    /// The extra verbs of the scene-subject test (`detect::asks_scene_with`): HINT_VERBS unless `--said-verbs-v1`.
     /// Whether the chunk renames apply (`--no-chunk-renames`, and the broader `--no-label-renames`, turn them off).
     pub(crate) fn chunk_renames(&self) -> bool {
         !self.no_label_renames && !self.no_chunk_renames
     }
 
+    /// The extra verbs of the scene-subject test (`detect::asks_scene_with`): the reaction verbs with the hint verbs
+    /// (SCENE_VERBS), HINT_VERBS alone under `--no-react-verbs`, none under `--said-verbs-v1`.
     pub(crate) fn scene_verbs(&self) -> &'static [&'static str] {
-        if self.said_verbs_v1 { &[] } else if self.react_verbs { &crate::detect::SCENE_VERBS }
-        else { &crate::detect::HINT_VERBS }
+        if self.said_verbs_v1 { &[] } else if self.no_react_verbs { &crate::detect::HINT_VERBS }
+        else { &crate::detect::SCENE_VERBS }
     }
 }
 
