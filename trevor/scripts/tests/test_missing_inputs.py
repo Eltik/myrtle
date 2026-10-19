@@ -277,7 +277,7 @@ class LabelRenames(TreeCase):
     def test_empty_corpus_keeps_last(self):
         self.t.write('artifacts/p3b/chunks.jsonl', '')
         rc, err = self.t.run('label_renames.py')
-        self.assertKept(self.OUT, self.before, rc, 0, err)
+        self.assertKept(self.OUT, self.before, rc, 3, err)
         self.assertIn('keeping last', err)
 
     def test_keep_last_0_writes_empty(self):
@@ -308,10 +308,10 @@ class EntitiesBuild(TreeCase):
     def test_empty_pairs_keeps_last(self):
         self.t.write('artifacts/entities/pairs.jsonl', '')
         rc, err = self.t.run('entities.py', 'build')
-        self.assertKept('artifacts/entities/identities.json', self.ids, rc, 0, err)
+        self.assertKept('artifacts/entities/identities.json', self.ids, rc, 3, err)
         self.t.write('artifacts/entities/pairs.v2.jsonl', '')
         rc, err = self.t.run('entities.py', 'build', env={'ENTITY_V2': '1'})
-        self.assertKept('artifacts/entities/identities.v2.json', self.v2, rc, 0, err)
+        self.assertKept('artifacts/entities/identities.v2.json', self.v2, rc, 3, err)
 
     def test_keep_last_0_writes_empty(self):
         self.t.write('artifacts/entities/pairs.jsonl', '')
@@ -347,7 +347,7 @@ class DeathsBuild(TreeCase):
         self.t.write('artifacts/entities/death_checks.jsonl', '')
         self.t.write('artifacts/entities/death_mentions.jsonl', '')
         rc, err = self.t.run('deaths.py', 'build')
-        self.assertKept(self.OUT, self.before, rc, 0, err)
+        self.assertKept(self.OUT, self.before, rc, 3, err)
 
 
 class Chrono(TreeCase):
@@ -385,7 +385,7 @@ class Chrono(TreeCase):
         self.t.write('artifacts/chrono/events.jsonl', '')
         self.t.write('artifacts/chrono/facts.jsonl', '')
         rc, err = self.t.run('chrono.py', 'derive')
-        self.kept(rc, err, 0)
+        self.kept(rc, err, 3)
         self.assertIn('keeping last', err)
 
 
