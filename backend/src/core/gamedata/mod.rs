@@ -328,8 +328,19 @@ pub fn init_game_data_with_art(
         load_table_or_warn(data_dir, "enemy_handbook_table", &mut warnings);
     let mut building_file: BuildingDataFile =
         load_table_or_warn(data_dir, "building_data", &mut warnings);
+    // Pruned to what the three readers below use; `ROGUELIKE_VALUE_PARSE=1`
+    // parses the whole table into a `Value`, as before.
     let roguelike_file: RoguelikeTopicTableFile =
-        load_table_or_warn(data_dir, "roguelike_topic_table", &mut warnings);
+        if crate::core::gamedata::types::roguelike_prune::value_parse_switch() {
+            load_table_or_warn(data_dir, "roguelike_topic_table", &mut warnings)
+        } else {
+            crate::core::gamedata::types::roguelike_prune::load_pruned(data_dir).unwrap_or_else(
+                |e| {
+                    warnings.push(format!("roguelike_topic_table: {e}"));
+                    RoguelikeTopicTableFile::default()
+                },
+            )
+        };
     let mut activity_file: ActivityTableFile =
         load_table_or_warn(data_dir, "activity_table", &mut warnings);
     let activity_op_stages = crate::core::gamedata::types::activity::op_stages_by_activity(

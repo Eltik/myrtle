@@ -199,24 +199,49 @@ struct ModeNames {
     is_kv: HashMap<String, String>,
 }
 
+/// What the stage classifier reads off `roguelike_topic_table`.
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct RoguelikeModeNames {
+    /// IS topic id (`rogue_1`) -> season name.
+    pub is_topics: HashMap<String, String>,
+    /// Lowercased `LevelId` -> `(code, name)` for every IS node, first
+    /// occurrence kept (`Topics` walked before `Details`).
+    pub node_named: LevelNamed,
+    /// IS level id -> node id.
+    pub is_node_ids: HashMap<String, String>,
+    /// IS season -> active KV banner stem.
+    pub is_kv: HashMap<String, String>,
+}
+
+/// The classifier's IS names from the table, whole or pruned.
+pub fn roguelike_mode_names(roguelike: &RoguelikeTopicTableFile) -> RoguelikeModeNames {
+    let mut names = RoguelikeModeNames {
+        is_topics: fb_list_names(&roguelike.topics, "Name"),
+        ..RoguelikeModeNames::default()
+    };
+    // These are the only roguelike top-level subtrees with LevelId entries;
+    // Modules, Constant, and CustomizeData carry none.
+    collect_level_named(&roguelike.topics, &mut names.node_named);
+    collect_level_named(&roguelike.details, &mut names.node_named);
+    collect_is_topics(&roguelike.details, &mut names.is_node_ids, &mut names.is_kv);
+    names
+}
+
 fn load_mode_names(
     data_dir: &Path,
     roguelike: &RoguelikeTopicTableFile,
     sandbox_perm_named: Option<LevelNamed>,
 ) -> ModeNames {
-    let is_topics = fb_list_names(&roguelike.topics, "Name");
+    let RoguelikeModeNames {
+        is_topics,
+        mut node_named,
+        is_node_ids,
+        is_kv,
+    } = roguelike_mode_names(roguelike);
     let towers = read_json(data_dir, "climb_tower_table")
         .map(|t| fb_map_names(&t, "Towers", "Name"))
         .unwrap_or_default();
 
-    let mut node_named = HashMap::new();
-    let mut is_node_ids = HashMap::new();
-    let mut is_kv = HashMap::new();
-    // These are the only roguelike top-level subtrees with LevelId entries;
-    // Modules, Constant, and CustomizeData carry none.
-    collect_level_named(&roguelike.topics, &mut node_named);
-    collect_level_named(&roguelike.details, &mut node_named);
-    collect_is_topics(&roguelike.details, &mut is_node_ids, &mut is_kv);
     if let Some(t) = read_json(data_dir, "sandbox_table") {
         collect_level_named(&t, &mut node_named);
     }

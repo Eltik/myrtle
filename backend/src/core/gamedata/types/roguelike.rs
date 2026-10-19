@@ -13,7 +13,7 @@ pub struct RoguelikeGameData {
     pub entries: super::roguelike_entries::RoguelikeEntries,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RoguelikeThemeGameData {
     pub theme_id: String,
@@ -52,6 +52,10 @@ pub struct RoguelikeThemeGameData {
 /// `roguelike_topic_table.json` (`FlatBuffer` export). Top-level keys: Topics,
 /// Details, Modules, Constant, `CustomizeData`; Topics and Details are
 /// `[{key, value}]` arrays.
+///
+/// The load reads it pruned to the fields its readers use
+/// ([`super::roguelike_prune`]); `ROGUELIKE_VALUE_PARSE=1` reads the whole
+/// table into these two `Value`s, as before.
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct RoguelikeTopicTableFile {
     #[serde(alias = "Topics", alias = "topics", default)]

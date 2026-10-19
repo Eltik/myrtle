@@ -29,6 +29,7 @@ pub mod range;
 pub mod retro;
 pub mod roguelike;
 pub mod roguelike_entries;
+pub mod roguelike_prune;
 pub mod sandbox_perm_scan;
 pub mod sandbox_universe;
 pub mod serde_helpers;
