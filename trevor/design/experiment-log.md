@@ -1399,6 +1399,17 @@ with `--no-chunk-renames` against the binary before, and at defaults 0 prompts c
 them). The renames stay on as label text; whether the two opt-in flags plus the rename move m1's answer needs a model
 window (full profile, where the scene is rendered).
 
+**Model window for the chunk rename (12B full, `--scene-subject --react-verbs`, renames on against
+`--no-chunk-renames`, `--no-cache-prompt`, 00:12 JST 2026-10-20).** With the rename the waking scene is in the prompt
+as [7] ("??? (Mon3tr): ...Kal'tsit? The rain caresses her palms"); the model does not use it: the answer cites the
+Episode 17 lines [2] ("I'll bring back Kal'tsit!", the loss "that cut her to the bone"). Without the rename the
+scene is absent and the answer lists Mon3tr's reactions across stories (the "Pained wail" at the disappearance in
+15-16, the howling in Return to Mist, the Episode 17 lines), which reads better. The Kal'tsit question is byte-identical
+on both arms (the rename reaches no prompt of it). So retrieval is no longer the gap at `full` with the two flags;
+the model's choice of passage is. The rename stays (correct labels, 0 default prompts changed), the flags stay opt-in,
+the question stays open: a next step would give a "wakes up" question the scene whose text says awoke or wakes first,
+measured before any default.
+
 ### 2026-10-19: The vanished fate: "How does Kal'tsit die" when the text says she disappeared
 
 **Measured first.** The deaths table does have a Kal'tsit row, but only a report: kind "dead", `main_17-17_end#0013`,
