@@ -51,7 +51,7 @@
 #   GATES_ASK_FLAGS ["--profile mid --retrieval $TREVOR_RETRIEVAL"] the canary's ask flags (mid is what the cpu
 #              rung serves, contract v1.1 section 4, and fits the serving server's 4,096-token slot);  GATES_ARGS  extra gates.py flags (e.g. --no-recall
 #              once, to accept a lower recall as the new baseline)
-#   LOCAL_SUMMARIES [1]  E2B_GGUF [$TREVOR_DIR/models/llm/gemma-4-E2B-it-Q4_K_M.gguf]  LLAMA_SERVER [llama-server]
+#   LOCAL_SUMMARIES [1]  E2B_GGUF [$TREVOR_DIR/models/llm/gemma-4-e2b-it-q4_k_m.gguf]  LLAMA_SERVER [llama-server]
 #   SUMMARY_PORT [8082]  SUMMARY_CTX [16384]  SUMMARY_THREADS [2]  SUMMARY_UNTIL [07:00]  SUMMARY_MIN_AVAIL_MB [2500]
 #   PLAN=1      print what would run (detection and the summary plan are real, nothing is written)
 #   FORCE=1     run `daily` even when the res_version is unchanged;  SKIP_FETCH=1  no build-corpus (test)
@@ -74,7 +74,7 @@ export GATES_ASK_FLAGS="${GATES_ASK_FLAGS:---profile mid --retrieval ${TREVOR_RE
 export TREVOR_LLM_URL="${TREVOR_LLM_URL:-http://127.0.0.1:8081}"
 export TREVOR_LLM_LOCK="${TREVOR_LLM_LOCK:-/run/trevor/llm.lock}"
 LOCAL_SUMMARIES="${LOCAL_SUMMARIES:-1}"
-E2B_GGUF="${E2B_GGUF:-$TREVOR_DIR/models/llm/gemma-4-E2B-it-Q4_K_M.gguf}"
+E2B_GGUF="${E2B_GGUF:-$TREVOR_DIR/models/llm/gemma-4-e2b-it-q4_k_m.gguf}"
 LLAMA_SERVER="${LLAMA_SERVER:-llama-server}"
 SUMMARY_PORT="${SUMMARY_PORT:-8082}"; SUMMARY_CTX="${SUMMARY_CTX:-16384}"; SUMMARY_THREADS="${SUMMARY_THREADS:-2}"
 SUMMARY_UNTIL="${SUMMARY_UNTIL:-07:00}"; SUMMARY_MIN_AVAIL_MB="${SUMMARY_MIN_AVAIL_MB:-2500}"

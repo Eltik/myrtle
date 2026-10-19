@@ -66,8 +66,7 @@ LLAMA_URL=http://127.0.0.1:8081
 UNITS_PATH=/var/www/myrtle.moe    # the repo path the units are written for
 ASSETS_DIR="$ROOT/assets"
 RES_VERSION_FILE="$ASSETS_DIR/ArkAssets/en/.version"
-E2B_FETCHED=gemma-4-e2b-it-q4_k_m.gguf   # fetch-model.sh's local name
-E2B_UNIT=gemma-4-E2B-it-Q4_K_M.gguf      # the name trevor-llama.service and trevor.env.example use
+E2B_GGUF_NAME=gemma-4-e2b-it-q4_k_m.gguf  # the name fetch-model.sh writes; the units and trevor.env.example use it too
 ROUTE_QUESTION="Who is Amiya?"
 # Thresholds of design/trevor-self-contained-deploy.md section 5 (memory) and the sizes below (disk): models 4 GB
 # without the 12B, 17 GB with it; the snapshot file 0.2 GB, its tree 1.2 GB, and the live release, the stage and the
@@ -320,13 +319,11 @@ step_models() {
   else llm=0; fi
   info "WITH_LLM=$llm ($mem GB of memory; the 12B and Qwen are fetched at $MEM_LLM_GB GB or more)"
   want="$(sha256_of "$TREVOR_DIR/scripts/fetch-model.sh") fp32=1 e2b=1 llm=$llm"
-  if [ -f "$marker" ] && [ "$(cat "$marker")" = "$want" ] && [ -f "$models/llm/$E2B_FETCHED" ] && [ -L "$models/llm/$E2B_UNIT" ]; then
+  if [ -f "$marker" ] && [ "$(cat "$marker")" = "$want" ] && [ -f "$models/llm/$E2B_GGUF_NAME" ]; then
     done_already "fetch-model.sh ran with these flags ($marker)"; return 0
   fi
   need_root "writes into $models"
   run env WITH_FP32=1 WITH_E2B=1 WITH_LLM="$llm" nice -n 10 bash "$TREVOR_DIR/scripts/fetch-model.sh" "$models"
-  # fetch-model.sh names the E2B file in lower case; the units and trevor.env.example use the upper-case name.
-  run ln -sfn "$E2B_FETCHED" "$models/llm/$E2B_UNIT"
   run_sh "printf '%s\\n' '$want' > '$marker'"
 }
 
@@ -410,7 +407,7 @@ set_to = {
     'TREVOR_CANARY_FILE': f'{home}/state/cf-canary.json',
     'TREVOR_RETRIEVAL': 'bm25',
     'EMBED': '0',
-    'E2B_GGUF': f'{root}/trevor/models/llm/gemma-4-E2B-it-Q4_K_M.gguf',
+    'E2B_GGUF': f'{root}/trevor/models/llm/gemma-4-e2b-it-q4_k_m.gguf',
     'LLAMA_SERVER': '/usr/local/bin/llama-server',
 }
 out = [

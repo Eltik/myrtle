@@ -100,7 +100,7 @@ llama-server --version
 ```bash
 sudo install -d -o trevor -g trevor /var/www/myrtle.moe/trevor/models/llm
 # Gemma 4 E2B instruct, Q4_K_M GGUF (about 3 GB). Pin the repo revision and check the sha256 after download.
-sha256sum /var/www/myrtle.moe/trevor/models/llm/gemma-4-E2B-it-Q4_K_M.gguf
+sha256sum /var/www/myrtle.moe/trevor/models/llm/gemma-4-e2b-it-q4_k_m.gguf
 # gte-modernbert-base: tokenizer.json is needed by every build step; model.onnx (fp32) only when EMBED=1.
 # Copy models/gte-modernbert-base from the build machine (scripts/fetch-model.sh pins and checks it).
 ```
@@ -108,7 +108,7 @@ sha256sum /var/www/myrtle.moe/trevor/models/llm/gemma-4-E2B-it-Q4_K_M.gguf
 ## 4. Benchmark the CPU rung (one minute, read-only)
 
 ```bash
-taskset -c 2 nice -n 19 llama-bench -m /var/www/myrtle.moe/trevor/models/llm/gemma-4-E2B-it-Q4_K_M.gguf \
+taskset -c 2 nice -n 19 llama-bench -m /var/www/myrtle.moe/trevor/models/llm/gemma-4-e2b-it-q4_k_m.gguf \
   -t 1,2 -p 512 -n 128 -r 3 --no-repack 1 2>&1 | tee /tmp/e2b-bench.txt
 ```
 
