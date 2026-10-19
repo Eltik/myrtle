@@ -3055,3 +3055,22 @@ So +16% to +28% throughput for +60% latency.
 
 **Decision.** The v1.1 fields of an ask's response were read whether or not the generated type had them yet (removed in 07893abd). The backend names the deferred job `deferredJobId` beside the quick passages job; the dev preview's mock (`scripts/trevor-preview.mjs`) answers the passages inline and flags the ask's own job `deferred`. The preview serves canned, labelled answers with `TREVOR_PREVIEW_REAL=0`.
 **Code.** frontend/src/lib/trevor/askState.ts (line 88 as of c50d26e1); frontend/scripts/trevor-preview.mjs (lines 44-47, now split with canned.mjs)
+
+### 2026-10-20: E2B at mid6k against mid over the 155 probe questions (the cpu rung's profile)
+
+**Why.** The final E2B mid run of the night declined 61 of 155 (a decline phrase in the first 200 characters: "do not
+contain", "could not find", "not mention", ...); the cpu rung serves mid, and `mid6k` (6,000 context tokens instead of
+3,600, same router, k and n-predict) exists but had no measurement on this set.
+**Measured (00:52 JST, binary cb31b67a, `--no-cache-prompt`, one server).** mid6k declines 46 of 155. 23 questions
+declined at mid answer at mid6k (r008 "What's going on at the beginning of Ch 10?" gets the Lungmen air-traffic stop,
+r014 Mandragora's death by Manfred, r007 the Jesselton television voice, r034, r057, r059 substantive; ian10 only
+changes its decline phrase); 8 go the other way, of which 4 are decline-phrase noise (r067, r079, r098, r116 decline in
+both) and 4 real losses (r031 the threats list, r069 the Dossoles event notes, r076 the chapter 6 recap, r101 the
+labelled theory). 29 answers identical. Mean prompt 3,292 tokens at mid, 5,594 at mid6k; mean 1.6 s a question at mid,
+2.8 s at mid6k on the M5 Pro.
+**Decision.** A profile choice for the box, not a default change here: net 19 more answered of 155, at 1.7 times the
+prompt and 1.75 times the time per question. The VPS E2B throughput at 6k context is the missing number
+(design/trevor-memory-budget.md section 5 block 3, E2B rows, measured at a 8,192 context); if it holds under the
+admission budget, the cpu rung serves mid6k (`TREVOR_CPU_PROFILE=mid6k`, contract v1.1 section 4) and the serving
+unit's llama-server context rises from 4,096 to 8,192 (deploy/trevor.env.example line 49 ties the profile to that
+size; E2B's KV cache at 8k is small, the prompt processing on 3 vCPUs is the cost to measure).
