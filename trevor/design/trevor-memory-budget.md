@@ -115,6 +115,28 @@ is the one piece to build, about a day.
   drop them; `STAGES_SERVER_LEAN=0` restores update.sh's flags (the profile's slots, `-cram 512`), checked identical
   on 16 command lines. The spellings `--cache-ram` and `--ctx-checkpoints` are build 11146's (`llama-server --help`).
   Not set here: the `-c 12288` of the window, which is a separate change.
+- window: built (2026-10-19), tested with stubs, unverified with a model and on a box. `stages.py` asks root through a
+  marker, `$TREVOR_HOME/state/stages/llama-window` (`stop` or `start`, renamed into place); the root pair
+  `deploy/systemd/trevor-llama-window.{path,service}` watches it and runs `systemctl stop|start trevor-llama`. Before
+  the first unit that needs a model inside `STAGES_WINDOW_START` to `STAGES_WINDOW_END` (UTC, 18 to 0: 03:00 to 09:00
+  JST) the runner writes `stop`, waits at most `STAGES_WINDOW_WAIT` (300) s for `STAGES_SERVING_CHECK` (`pgrep -x
+  llama-server`) to show no server, takes the model lock, and runs GEN from `STAGES_WINDOW_GEN` (update.sh's 12B; JUDGE
+  `STAGES_WINDOW_JUDGE`, extra flags `STAGES_WINDOW_SERVER_ARGS`, where the `-c 12288` goes once measured) at
+  `STAGES_WINDOW_DUTY` (1). It writes `start` at the window's end (an interruptible stage is stopped first), when a pass
+  has nothing left, before a `--publish` rebuild (the canary asks through serving), on every pause (the 19:30 UTC
+  update's lock included, so the window pauses for it like any stage and reopens after), on duty 0, on every exit
+  including SIGTERM, and at startup when it finds `stop`; a 12B that fails to start, a memory floor tripping in a window
+  stage, or a serving server still up after the wait gives the night up (the runner then works as outside the window).
+  Canon does not start within `STAGES_CANON_GUARD` (2 h) of the window's end. `status.json` carries `window: {state,
+  since, model, end, reason, error}`; one Discord embed per window when serving is not back `STAGES_WINDOW_GRACE` (600)
+  s after `start`. Kill switch `STAGES_WINDOW=0`: no marker, no model change, no status field (default 1 with
+  `--publish`, 0 without). The order inside the window is the runner's: summaries, the re-answer, then the rest.
+  Tests: `scripts/tests/test_stages.py` class `Window`, 7 runner tests (the unit's own ExecStart line run against a
+  stub `systemctl` and a stub serving check) plus a bounds unit test; the suite is 31 tests in 294 s, most of it the
+  real tree's plan. Open: `bootstrap.sh` must install and enable the `.path` unit (until then the runner waits 300 s
+  each night, logs an error and gives the window up); `systemd-analyze verify` was not run (macOS); outside the window
+  the runner still runs E2B by day, and `incr.py`'s keys hold no model name, so a unit E2B did by day is never redone
+  by the 12B: `STAGES_WINDOW_ONLY=1` keeps the stages to the window and is the setting to use once a night is verified.
 
 Fallbacks, in order, each with its quality evidence:
 - 12B at IQ3_M (bartowski, 5.56 GiB) or Q3_K_M (unsloth, 5.30 GiB): about 1.2 to 1.5 GB less resident; mean KL

@@ -1,0 +1,12 @@
+# Applies the stage runner's marker (triggered by trevor-llama-window.path): `stop` stops trevor-llama.service,
+# `start` starts it, anything else is ignored. It re-reads the marker until it stops changing, so a `start` written
+# while a `stop` is being applied is not lost. Only those two actions on that one unit are reachable from the marker,
+# which the trevor user owns: a symlinked marker is refused and the content is never echoed.
+# `systemctl` is unqualified on purpose: scripts/tests/test_stages.py runs this ExecStart line with a stub first in
+# PATH (systemd's own PATH for system units finds /usr/bin/systemctl or /bin/systemctl).
+[Unit]
+Description=Apply the stage runner's llama-window marker to trevor-llama (triggered by trevor-llama-window.path)
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'f=/var/lib/trevor/state/stages/llama-window; last=; while :; do if [ -L "$$f" ]; then echo "llama-window: the marker is a symlink; refused"; exit 1; fi; s=$$(head -c 16 "$$f" 2>/dev/null | tr -d "[:space:]"); [ "$$s" = "$$last" ] && exit 0; case "$$s" in stop) echo "llama-window: stop"; systemctl stop trevor-llama.service ;; start) echo "llama-window: start"; systemctl start trevor-llama.service ;; *) echo "llama-window: no stop or start in the marker; ignored" ;; esac; last=$$s; done'

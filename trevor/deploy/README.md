@@ -246,3 +246,6 @@ outputs through `trevor-vps-update.sh rebuild` (`TREVOR_PUBLISH=1`). The unit ru
 `$TREVOR_HOME/state/stages/logs/<day>/`; a failing stage posts one Discord embed a day. Stop it without stopping
 serving by writing `0` to the `duty` file in the state dir, or `systemctl stop trevor-stages`. First version of
 2026-10-19: tested with stubs, not yet run with a model on a box.
+The nightly 12B window (03:00 to 09:00 JST, `STAGES_WINDOW_START`/`_END` in UTC; off with `STAGES_WINDOW=0`) stops
+serving through the root pair `trevor-llama-window.{path,service}`, which must be installed and enabled (`systemctl
+enable --now trevor-llama-window.path`); design and protocol in `design/trevor-memory-budget.md` section 4.

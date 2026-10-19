@@ -1,0 +1,14 @@
+# The nightly 12B window (design/trevor-memory-budget.md section 4): scripts/stages.py runs as the trevor user and
+# cannot stop a system unit, so it writes `stop` or `start` into /var/lib/trevor/state/stages/llama-window (a temp file
+# renamed into place) and this runs trevor-llama-window.service as root, which stops or starts trevor-llama.service.
+# The runner writes `start` at the window's end, on every exit and on any failure; without this unit installed it
+# waits STAGES_WINDOW_WAIT (300) s for the serving server to stop, gives the night up and logs an error.
+[Unit]
+Description=Stop or start the Trevor serving llama-server when the stage runner asks (nightly window)
+
+[Path]
+PathChanged=/var/lib/trevor/state/stages/llama-window
+Unit=trevor-llama-window.service
+
+[Install]
+WantedBy=multi-user.target

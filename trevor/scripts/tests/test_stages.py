@@ -5,7 +5,10 @@ No model runs here. Each runner test builds a scratch tree with a stub stage (`s
 PLAN=1 it prints "NAME: plan N to do" from a counter file; a real run writes a start marker, sleeps, takes one off
 the counter and writes a done marker) and a stub llama-server (`stub_llama.py`: answers /health on --port and records
 its argv and pid), points the runner at them with --spec and STAGES_LLAMA_SERVER, and gives it its own lock file and
-state dir. The one test on the real tree is `--plan`, which runs every stage's PLAN=1 dry run (read-only, no model) and
+state dir. The window tests (class Window) add a stand-in for trevor-llama-window.path: a thread that runs the unit's
+own ExecStart line on every marker change with a stub `systemctl` first in PATH, which records its calls and toggles
+a `serving` file that STAGES_SERVING_CHECK reads (no process is ever named llama-server). The one test on the real
+tree is `--plan`, which runs every stage's PLAN=1 dry run (read-only, no model) and
 checks that no llama-server ran before or after.
 
   python3 -m unittest scripts/tests/test_stages.py      (from trevor/; stdlib only; about 3 minutes, most of it the
@@ -109,6 +112,7 @@ class Tree:
         self.lock = self.p('llm.lock')
         self.port = free_port()
         self.proc = None
+        self.path_unit = None
 
     def p(self, *parts):
         return os.path.join(self.root, *parts)
@@ -168,6 +172,8 @@ class Tree:
         return ''.join(rd(os.path.join(logs, d, 'run.log')) for d in sorted(os.listdir(logs)))
 
     def close(self):
+        if self.path_unit:
+            self.path_unit.stop()
         if self.proc and self.proc.poll() is None:
             self.proc.terminate()
             try:
@@ -219,6 +225,88 @@ class Webhook:
     def close(self):
         self.srv.shutdown()
         self.srv.server_close()
+
+
+FAKE_SYSTEMCTL = r'''#!/bin/sh
+echo "$*" >> "$FAKE_DIR/calls"
+case "$1" in
+  stop) sleep "${FAKE_STOP_DELAY:-0}"; : > "$FAKE_DIR/serving" ;;
+  start) [ -e "$FAKE_DIR/start-fails" ] && exit 1; echo 4242 > "$FAKE_DIR/serving" ;;
+esac
+'''
+
+BAD_LLAMA = r'''#!/usr/bin/env python3
+import os, sys
+if 'models/llm/window.gguf' in sys.argv:
+    sys.exit(3)
+here = os.path.dirname(os.path.abspath(__file__))
+os.execv(sys.executable, [sys.executable, os.path.join(here, 'stub_llama.py')] + sys.argv[1:])
+'''
+
+UNIT_MARKER = '/var/lib/trevor/state/stages/llama-window'
+
+
+class PathUnit:
+    """Stands in for trevor-llama-window.path: polls the marker and, on every change, runs the ExecStart line of
+    deploy/systemd/trevor-llama-window.service (systemd's $$ unescaped, the marker path swapped for the tree's) with a
+    stub systemctl first in PATH. The serving server starts as running (`serving` holds a pid)."""
+
+    def __init__(self, tree, stop_delay=0.0):
+        unit = rd(os.path.join(TREVOR, 'deploy', 'systemd', 'trevor-llama-window.service'))
+        line = [l for l in unit.splitlines() if l.startswith('ExecStart=')]
+        m = re.fullmatch(r"ExecStart=/bin/sh -c '(.*)'", line[0] if len(line) == 1 else '')
+        assert m and UNIT_MARKER in m.group(1), line
+        self.marker = os.path.join(tree.state, 'llama-window')
+        self.script = m.group(1).replace('$$', '$').replace(UNIT_MARKER, self.marker)
+        fakebin = tree.p('fakebin')
+        os.makedirs(fakebin)
+        wr(os.path.join(fakebin, 'systemctl'), FAKE_SYSTEMCTL)
+        os.chmod(os.path.join(fakebin, 'systemctl'), 0o755)
+        wr(tree.p('serving'), '4242\n')
+        self.tree = tree
+        self.env = dict(os.environ, PATH=fakebin + os.pathsep + os.environ['PATH'], FAKE_DIR=tree.root,
+                        FAKE_STOP_DELAY=str(stop_delay))
+        self.events = []        # (time the unit finished, the marker it applied)
+        self.stopped = False
+        self.thread = threading.Thread(target=self.watch, daemon=True)
+        self.thread.start()
+        tree.path_unit = self
+
+    def watch(self):
+        last = None
+        while not self.stopped:
+            try:
+                st = os.stat(self.marker)
+                key = (st.st_ino, st.st_mtime_ns, rd(self.marker))
+            except OSError:
+                key = None
+            if key is not None and key != last:
+                last = key
+                subprocess.run(['sh', '-c', self.script], env=self.env, capture_output=True, timeout=60)
+                self.events.append((time.time(), key[2].strip()))
+            time.sleep(0.05)
+
+    def calls(self):
+        try:
+            return rd(self.tree.p('calls')).splitlines()
+        except OSError:
+            return []
+
+    def stop(self):
+        self.stopped = True
+        self.thread.join(5)
+
+
+def window_env(tree, end_in=3600.0, **kw):
+    """A window that opened a minute ago and ends in `end_in` seconds (UTC H:M:S), the window model, the stub check."""
+    now = time.time()
+    hms = lambda t: time.strftime('%H:%M:%S', time.gmtime(t))  # noqa: E731
+    return {'STAGES_WINDOW': '1', 'STAGES_WINDOW_START': hms(now - 60), 'STAGES_WINDOW_END': hms(now + end_in),
+            'STAGES_WINDOW_GEN': 'models/llm/window.gguf', 'STAGES_SERVING_CHECK': f'cat {tree.p("serving")}',
+            'STAGES_WINDOW_WAIT': '20', **kw}
+
+
+STOP, START = 'stop trevor-llama.service', 'start trevor-llama.service'
 
 
 class Units(unittest.TestCase):
@@ -299,6 +387,25 @@ class Units(unittest.TestCase):
         self.assertEqual(stages.minutes_until('19:30', t), 90)
         self.assertEqual(stages.minutes_until('17:30', t), 1410)
         self.assertEqual(stages.minutes_until('18:00', t), 0)
+
+    def test_window_bounds(self):
+        day = 1_760_000_000 - 1_760_000_000 % 86400      # a UTC midnight
+        s, e = stages.parse_tod('18'), stages.parse_tod('0')
+        self.assertEqual((s, e), (64800, 0))
+        self.assertEqual(stages.window_bounds(s, e, day + 19 * 3600), (True, day + 64800, day + 86400))
+        self.assertEqual(stages.window_bounds(s, e, day + 9 * 3600), (False, day + 64800, day + 86400))
+        self.assertEqual(stages.window_bounds(s, e, day + 86400)[0], False, 'the end is outside')
+        w = (stages.parse_tod('22:00'), stages.parse_tod('4:30'))
+        self.assertEqual(stages.window_bounds(*w, day + 2 * 3600), (True, day - 7200, day + 16200))
+        self.assertEqual(stages.window_bounds(*w, day + 23 * 3600), (True, day + 79200, day + 86400 + 16200))
+        self.assertEqual(stages.window_bounds(*w, day + 12 * 3600), (False, day + 79200, day + 86400 + 16200))
+        self.assertEqual(stages.window_bounds(3600, 7200, day + 3 * 3600), (False, day + 86400 + 3600, day + 86400 + 7200))
+        self.assertEqual(stages.window_bounds(5, 5, day), (False, None, None))
+        self.assertEqual(stages.parse_tod('24'), 0)
+        self.assertEqual(stages.parse_tod('3:04:05'), 11045)
+        for bad in ('25', '3:60', 'x', '1:2:3:4', '24:01'):
+            with self.assertRaises(ValueError, msg=bad):
+                stages.parse_tod(bad)
 
     def test_canon_guard(self):
         d = tempfile.mkdtemp(prefix='trevor-stages-guard-')
@@ -423,12 +530,18 @@ class Runner(unittest.TestCase):
         self.assertEqual(len(t.server_pids()), 2, 'one server per unit')
         self.assertFalse(any(alive(p) for p in t.server_pids()), 'every server stopped')
         srv = rd(t.p('markers', 'server')).splitlines()[0]
-        self.assertIn(f'-m models/llm/stub.gguf --host 127.0.0.1 --port {t.port} -np 2 --kv-unified-per-slot 16384 '
-                      '-fa on -cram 512 --no-webui -ngl all --reasoning off', srv)
+        self.assertIn(f'-m models/llm/stub.gguf --host 127.0.0.1 --port {t.port} -np 1 --kv-unified-per-slot 16384 '
+                      '-fa on --cache-ram 0 --ctx-checkpoints 0 --no-webui -ngl all --reasoning off', srv)
         self.assertFalse(os.path.exists(t.lock), 'the lock is released')
         st = t.status()
         self.assertEqual(st['units']['a']['left'], 0)
         self.assertEqual(st['units']['a']['done'], 2)
+        # STAGES_SERVER_LEAN=0 reproduces update.sh's server flags (the profile's slots, -cram 512).
+        t2 = self.tree([stub('a', 0.1)], {'a': 1})
+        r = t2.run('--once', '--duty', '1', STAGES_SERVER_LEAN='0')
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn(f'-m models/llm/stub.gguf --host 127.0.0.1 --port {t2.port} -np 2 --kv-unified-per-slot 16384 '
+                      '-fa on -cram 512 --no-webui -ngl all --reasoning off', rd(t2.p('markers', 'server')))
 
     def test_a_duty_zero_stops_after_the_unit(self):
         """duty 0 written while a unit runs: that unit finishes, no second starts, the runner idles; --duty 0 runs none."""
@@ -686,6 +799,168 @@ if cmd == 'answer':
         r = t.run('--once', '--publish')
         self.assertEqual(r.returncode, 2)
         self.assertIn('TREVOR_PUBLISH=1', r.stderr)
+
+
+class Window(unittest.TestCase):
+    """The nightly window (design/trevor-memory-budget.md section 4) with the stand-in path unit."""
+
+    def setUp(self):
+        self.trees = []
+
+    def tearDown(self):
+        for t in self.trees:
+            t.close()
+
+    def tree(self, spec, counters, stop_delay=0.0):
+        t = Tree(spec, counters)
+        self.trees.append(t)
+        os.makedirs(t.state)
+        return t, PathUnit(t, stop_delay)
+
+    def servers(self, t):
+        return [l for l in rd(t.p('markers', 'server')).splitlines()] if t.markers('server') else []
+
+    def test_w1_opens_waits_uses_the_window_model_and_restores_at_its_end(self):
+        """In the window: `stop`, the unit waits for the serving check to clear (the stub takes 1 s), runs on the
+        window model at the window duty (1: no sleep); the window's end stops the unit and writes `start`; the rest
+        runs outside on STAGES_GEN at --duty 0.5."""
+        t, pu = self.tree([stub('a', 1.5)], {'a': 3}, stop_delay=1.0)
+        r = t.run('--once', '--duty', '0.5', timeout=120, **window_env(t, end_in=5))
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr + t.runlog())
+        self.assertEqual(pu.calls(), [STOP, START], t.runlog())
+        self.assertEqual(rd(pu.marker), 'start\n')
+        self.assertEqual(pu.events[0][1], 'stop')
+        self.assertGreaterEqual(float(t.markers('a')[0][1]), pu.events[0][0], 'no unit before serving cleared')
+        srv = self.servers(t)
+        self.assertIn('-m models/llm/window.gguf ', srv[0])
+        self.assertIn('-m models/llm/stub.gguf ', srv[-1])
+        log = t.runlog()
+        self.assertRegex(log, r'unit a: [\d.]+ s at duty 1; sleeping 0.00 s')
+        self.assertRegex(log, r'unit a: [\d.]+ s at duty 0.5; sleeping [1-9]')
+        self.assertIn('window: closed (the window ended)', log)
+        st = t.status()
+        self.assertEqual(st['units']['a']['left'], 0)
+        self.assertIn(st['window']['state'], ('restoring', 'closed'))
+        self.assertEqual(st['window']['model'], 'models/llm/stub.gguf')
+        self.assertFalse(any(alive(p) for p in t.server_pids()))
+        self.assertFalse(os.path.exists(t.lock))
+
+    def test_w2_sigterm_mid_window_writes_start(self):
+        t, pu = self.tree([stub('a', 30.0)], {'a': 1})
+        p = t.start('--duty', '1', **window_env(t))
+        self.assertTrue(t.wait(lambda: t.markers('a'), 30), t.status())
+        self.assertEqual(pu.calls(), [STOP])
+        self.assertEqual(rd(pu.marker), 'stop\n')
+        self.assertEqual(t.status()['window']['state'], 'open')
+        self.assertEqual(t.status()['window']['model'], 'models/llm/window.gguf')
+        p.send_signal(signal.SIGTERM)
+        self.assertEqual(p.wait(60), 143)
+        self.assertEqual(rd(pu.marker), 'start\n')
+        self.assertTrue(t.wait(lambda: pu.calls() == [STOP, START], 10), pu.calls())
+        self.assertFalse(any(alive(x) for x in t.server_pids()), 'the 12B stopped before serving was asked back')
+        st = t.status()
+        self.assertEqual(st['state'], 'stopped by signal')
+        self.assertEqual(st['window']['state'], 'restoring')
+        self.assertEqual(st['window']['reason'], 'the runner stops')
+
+    def test_w3_window_model_that_fails_to_start_restores_and_records(self):
+        """The 12B exits while loading: `start`, the error in status.json, the night given up (no second `stop`); the
+        next pass runs the stage outside the window on STAGES_GEN."""
+        t, pu = self.tree([stub('a', 0.2)], {'a': 1})
+        wr(t.p('bad_llama.py'), BAD_LLAMA)
+        os.chmod(t.p('bad_llama.py'), 0o755)
+        p = t.start('--duty', '1', STAGES_LLAMA_SERVER=t.p('bad_llama.py'), **window_env(t))
+        self.assertTrue(t.wait(lambda: [x[0] for x in t.markers('a')] == ['start', 'done'], 40), t.runlog())
+        p.send_signal(signal.SIGTERM)
+        self.assertEqual(p.wait(60), 143)
+        self.assertEqual(pu.calls(), [STOP, START], t.runlog())
+        self.assertEqual(rd(pu.marker), 'start\n')
+        st = t.status()
+        self.assertIn('the window model did not start: llama-server exited (3)', st['window']['error'])
+        self.assertIn('exit server', st['lastError'])
+        srv = self.servers(t)
+        self.assertEqual(len(srv), 1, 'only the outside server answered')
+        self.assertIn('-m models/llm/stub.gguf ', srv[0])
+
+    def test_w4_kill_switch_never_writes_the_marker(self):
+        """STAGES_WINDOW=0, and the default without --publish: inside the window bounds nothing changes."""
+        for off in ('0', None):
+            t, pu = self.tree([stub('a', 0.2)], {'a': 1})
+            env = window_env(t)
+            if off is None:
+                del env['STAGES_WINDOW']
+            else:
+                env['STAGES_WINDOW'] = off
+            r = t.run('--once', '--duty', '1', **env)
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            time.sleep(0.3)
+            self.assertFalse(os.path.exists(pu.marker), off)
+            self.assertEqual(pu.calls(), [])
+            self.assertIn('-m models/llm/stub.gguf ', self.servers(t)[0])
+            self.assertNotIn('window', t.status())
+            self.assertNotIn('window', t.runlog())
+
+    def test_w5_window_pauses_for_the_nightly_update(self):
+        """The update's lock mid-window: the unit stops, `start` (its canary asks through serving), the runner waits;
+        the lock gone, `stop` again and the unit resumes on the window model; `start` at the end."""
+        t, pu = self.tree([stub('a', 3.0)], {'a': 1})
+        p = t.start('--once', '--duty', '1', **window_env(t))
+        self.assertTrue(t.wait(lambda: t.markers('a'), 30), t.runlog())
+        holder = subprocess.Popen([sys.executable, '-c', 'import fcntl, os, sys, time; f = open(sys.argv[1], "a"); '
+                                   'fcntl.flock(f, fcntl.LOCK_EX); open(sys.argv[1], "w").write(f"{os.getpid()} daily\\n"); '
+                                   'print("held", flush=True); time.sleep(120)',
+                                   t.p('update.lock'), 'trevor-vps-update.sh'], stdout=subprocess.PIPE, text=True)
+        try:
+            self.assertEqual(holder.stdout.readline().strip(), 'held')
+            self.assertTrue(t.wait(lambda: t.status().get('state') == 'paused', 20), t.status())
+            self.assertTrue(t.wait(lambda: pu.calls() == [STOP, START], 10), pu.calls())
+            self.assertEqual(t.status().get('pauseReason'), 'the nightly update holds update.lock')
+            self.assertIn(t.status()['window']['state'], ('restoring', 'closed'))
+            self.assertFalse(any(alive(x) for x in t.server_pids()))
+            holder.kill(); holder.wait()
+            self.assertEqual(p.wait(60), 0, t.runlog())
+        finally:
+            if holder.poll() is None:
+                holder.kill(); holder.wait()
+            holder.stdout.close()
+        self.assertTrue(t.wait(lambda: len(pu.calls()) == 4, 10), pu.calls())
+        self.assertEqual(pu.calls(), [STOP, START, STOP, START])
+        self.assertEqual([x[0] for x in t.markers('a')], ['start', 'start', 'done'])
+        srv = self.servers(t)
+        self.assertEqual(len(srv), 2)
+        self.assertTrue(all('-m models/llm/window.gguf ' in x for x in srv), srv)
+
+    def test_w6_serving_not_back_posts_one_embed(self):
+        """`start` written and the serving check still empty after STAGES_WINDOW_GRACE: one embed, not one a tick."""
+        hook = Webhook()
+        try:
+            t, pu = self.tree([stub('a', 0.2)], {'a': 1})
+            wr(t.p('start-fails'), '')
+            p = t.start('--duty', '1', DISCORD_ALERT_WEBHOOK=hook.url, **window_env(t, STAGES_WINDOW_GRACE='1'))
+            self.assertTrue(t.wait(lambda: hook.posts, 30), t.runlog())
+            time.sleep(2.5)
+            p.send_signal(signal.SIGTERM)
+            self.assertEqual(p.wait(60), 143)
+            self.assertEqual(len(hook.posts), 1, hook.posts)
+            e = hook.posts[0]['body']['embeds'][0]
+            self.assertEqual(e['title'], 'Trevor stages: serving not restored after the window')
+            self.assertIn('STAGES_WINDOW_GRACE', e['description'])
+            self.assertTrue(e['footer']['text'].startswith('stages_window'))
+            self.assertIn('alert', t.status()['window'])
+            self.assertEqual(pu.calls()[:2], [STOP, START])
+        finally:
+            hook.close()
+
+    def test_w7_startup_restores_a_stop_left_behind(self):
+        """A runner that finds `stop` (its predecessor died) writes `start` before anything else."""
+        t, pu = self.tree([stub('a', 0.2)], {'a': 0})
+        wr(pu.marker, 'stop\n')
+        self.assertTrue(t.wait(lambda: pu.calls() == [STOP], 10))
+        r = t.run('--once', '--duty', '1', **window_env(t))
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(rd(pu.marker), 'start\n')
+        self.assertTrue(t.wait(lambda: pu.calls() == [STOP, START], 10), pu.calls())
+        self.assertIn('a previous runner did not restore serving', t.runlog())
 
 
 class RealTreePlan(unittest.TestCase):
