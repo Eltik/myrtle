@@ -759,6 +759,25 @@ if cmd == 'answer':
             subprocess.run(args, env=t.env(**env), capture_output=True, text=True, timeout=120)
             self.assertFalse(os.path.exists(t.p('markers', 'reanswer')), env)
 
+    def test_group_d_stage_follows_coverage(self):
+        """The sectioned-summary stage comes after p2-group, tolerates the coverage script's exit 2 in its pre-plan, and
+        COVERAGE_SECTION=0 turns it off (an empty flagged list is p2-summaries.py's business: existing D rows only)."""
+        g = next(x for x in stages.GROUPS if x['id'] == 'summaries')
+        ids = [st['id'] for st in g['stages']]
+        self.assertEqual(ids, ['p2-story', 'p2-group', 'p2-group-d'])
+        d = g['stages'][2]
+        self.assertIn('--method D --coverage-below "${COVERAGE_THRESHOLD:-0.4}"', d['cmd'])
+        self.assertEqual(len(d['pre_plan']), 1)
+        self.assertTrue(d['pre_plan'][0].endswith('|| [ $? -eq 2 ]'), d['pre_plan'][0])
+        self.assertEqual(d['off_env'], ['COVERAGE_SECTION', '0'])
+        r = stages.Runner.__new__(stages.Runner)
+        with mock.patch.dict(os.environ, {'COVERAGE_SECTION': '0'}):
+            self.assertEqual(r.off_reason(d), 'COVERAGE_SECTION=0')
+        with mock.patch.dict(os.environ, {'COVERAGE_SECTION': '1'}):
+            self.assertIsNone(r.off_reason(d))
+        for st in g['stages'][:2]:
+            self.assertIsNone(st['off_env'])
+
     def test_e_dry_run_runs_nothing(self):
         t = self.tree([stub('a', 0.1), {'id': 'hook', 'kind': 'hook'}], {'a': 1})
         r = t.run('--dry-run', '--once')

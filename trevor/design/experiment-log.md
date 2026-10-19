@@ -1337,6 +1337,21 @@ and C plan 0; the 7 groups plan 7. Part prompts of the 7 groups are 1,441 to 1,9
 the bank's `event:` rows that `ask`'s recap reads) is D where present (`SUMMARY_METHOD_D=0`: C; P3b chunks and the
 bank seed byte-identical with D rows present, verified on a scratch copy). Primers, overview and chronology still
 read C and topic_deep leaves D rows out, so a D row changes no other model stage's input.
+**Result (12B, night of 2026-10-19).** The 7 flagged groups in 6 min 2 s (39 to 65 s each; part prompts 1,511 to
+1,749 tokens for main_15, 171 to 204 generated tokens a part, 962 tokens for the merge). Coverage: 5 groups above
+0.4 before, 0 after; act32side's D row reads 0.28 (Arrowhead, Commanding, Lucent, Officer, Operation: title words and
+roles, not people). main_15's D summary names Theresis's end, the Deep Dive, Kal'tsit in the Sarcophagus, Priestess on
+the deck, the new base one month later and Mon3tr inheriting Kal'tsit's memories and form; its C summary spent all
+three paragraphs on the first two stories (Theresis and Ascalon), which is what the "chapter 15 summary looks like
+chapter 13 or 14" report of the morning saw. The bank's `event:main_15` row and P3b's `summary_main_15#0000` carry D
+after the rebuild (dossiers sets, build-profiles, embed and index p3b, p4, p4x, bank seed and merge: 7 new vectors, the
+rest reused). The E2B mid regression over 155 questions against the arm rendered before the regen: 153 identical, 2
+changed (r029 gains the Sarcophagus recollection hint, r076 reworded), none lost.
+**Automated (2026-10-20).** `update.sh` sections the groups the coverage step flags (exit 2) in the same run and
+reports coverage again; the stage runner has `p2-group-d` after `p2-group` with the coverage script as its pre-plan
+(exit 2 tolerated, since that is the case the stage exists for). An empty flagged list keeps the existing D rows live
+and adds none (`group_stage` registers D units for selected groups and groups with a D row only). `COVERAGE_SECTION=0`
+reports only, as before; `COVERAGE_THRESHOLD` (0.4) is shared by both.
 
 ### 2026-10-19: "How does Mon3tr react when she wakes up after Kal'tsit dies" (open)
 

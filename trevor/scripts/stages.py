@@ -169,9 +169,10 @@ SERVERS = {
 }
 
 
-def stage(sid, cmd, server='gen2', plan='planned', pre=(), pre_plan=(), interruptible=True, skip_env=None):
+def stage(sid, cmd, server='gen2', plan='planned', pre=(), pre_plan=(), interruptible=True, skip_env=None,
+          off_env=None):
     return {'id': sid, 'cmd': cmd, 'server': server, 'plan': plan, 'pre': list(pre), 'pre_plan': list(pre_plan),
-            'interruptible': interruptible, 'skip_env': skip_env}
+            'interruptible': interruptible, 'skip_env': skip_env, 'off_env': off_env}
 
 
 DEEP = 'python3 scripts/topic_deep.py gen --top "${DEEP_TOP:-40}"'
@@ -187,7 +188,14 @@ CANON_FULL = [
 GROUPS = [
     {'id': 'summaries', 'title': 'story and group summaries', 'rebuild': ['step4'], 'stages': [
         stage('p2-story', 'python3 scripts/p2-summaries.py story'),
-        stage('p2-group', 'python3 scripts/p2-summaries.py group')]},
+        stage('p2-group', 'python3 scripts/p2-summaries.py group'),
+        # The groups whose served summary misses more than COVERAGE_THRESHOLD (0.4) of their recurring names get a
+        # sectioned method-D summary (update.sh's coverage block, 2026-10-20). The coverage script exits 2 when it flags
+        # groups, which is the case this stage is for, so the pre-plan tolerates it; a plain p2-group run keeps the D
+        # rows that exist live. COVERAGE_SECTION=0 turns the stage off.
+        stage('p2-group-d', 'python3 scripts/p2-summaries.py group --method D --coverage-below "${COVERAGE_THRESHOLD:-0.4}"',
+              pre_plan=['python3 scripts/summary_coverage.py --top 10 --threshold "${COVERAGE_THRESHOLD:-0.4}" || [ $? -eq 2 ]'],
+              off_env=['COVERAGE_SECTION', '0'])]},
     {'id': 'reanswer', 'title': "yesterday's live questions answered again at the full profile (step 6)",
      'rebuild': ['reanswer_merge'], 'off_env': ['REANSWER', '0'],
      'needs_env': ['REANSWER_DSN', 'TREVOR_DATABASE_URL', 'DATABASE_URL'], 'stages': [

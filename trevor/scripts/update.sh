@@ -73,8 +73,17 @@ run_models() {
   # report, not a gate (COVERAGE_STRICT=1 stops the update on it); COVERAGE_CHECK=0 skips it (the script before 2026-10-19).
   if [[ -z "${PLAN:-}" && "${COVERAGE_CHECK:-1}" != "0" ]]; then
     step "P2 group coverage"
-    rc=0; python3 scripts/summary_coverage.py --top 10 || rc=$?
+    rc=0; python3 scripts/summary_coverage.py --top 10 --threshold "${COVERAGE_THRESHOLD:-0.4}" || rc=$?
     if [[ $rc -ne 0 && ( $rc -ne 2 || "${COVERAGE_STRICT:-}" == "1" ) ]]; then exit "$rc"; fi
+    # The flagged groups get a sectioned (method D) summary, which P3b and the bank serve over C (2026-10-20; before,
+    # the D run was by hand). An empty flagged list keeps the existing D rows live and adds none. COVERAGE_SECTION=0
+    # reports only, as before; COVERAGE_THRESHOLD (0.4) is the share of recurring names a summary may miss.
+    if [[ $rc -eq 2 && "${COVERAGE_SECTION:-1}" != "0" ]]; then
+      step "P2 group summaries, sectioned (method D) for the flagged groups"
+      python3 scripts/p2-summaries.py group --method D --coverage-below "${COVERAGE_THRESHOLD:-0.4}"
+      step "P2 group coverage after sectioning"
+      python3 scripts/summary_coverage.py --top 10 --threshold "${COVERAGE_THRESHOLD:-0.4}" || [ $? -eq 2 ]
+    fi
   fi
   # Cue files are deterministic and extract recomputes its cue lines itself; PLAN leaves them alone.
   [[ -n "${PLAN:-}" ]] || { step "chronology cues"; python3 scripts/chrono.py cues; }
