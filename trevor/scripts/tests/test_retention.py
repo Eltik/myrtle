@@ -6,6 +6,8 @@ set with os.utime (what `touch -t` does), runs retention.py on it and checks: ea
 the rest; a dry run deletes nothing; --apply deletes exactly the listed entries; the eval index and the live symlink
 target survive; the asset manifests need --apply-assets too; the exit codes are 0, 2 and 1 as documented. The last
 test drives `trevor-vps-update.sh prune` and checks that the disk warning reaches a stand-in Discord webhook.
+Class ReloadWait drives `daily`'s wait for the backend's deferred reload (backend 89f07593) through a harness with
+stub build steps and a stand-in model lock naming a live `sleep`.
 
 The scratch trees go under $RETENTION_SCRATCH when set (else the system temporary directory); nothing outside them is
 read or written.
@@ -536,6 +538,169 @@ log "harness: publish_stage returned"
         os.remove(tmp)
         self.assertEqual(self.publish(4, 'v3')[0], 0)
         self.assertEqual(os.path.realpath(cur), os.path.realpath(self.rel(4, 'v3') + '/artifacts'))
+
+
+class ReloadWait(unittest.TestCase):
+    """`daily` waits for the backend's game-data reload before any fetch (backend 89f07593 defers a reload while the
+    Trevor model lock names a live pid). The backend reports no loaded version, so the script reads the guard's own
+    inputs; here the model lock names a live `sleep` (the stand-in for the stage runner's 12B) and the harness sources
+    the script up to its command dispatch, replaces the four build steps with stubs that log, and runs take_run_lock
+    then cmd_daily. RELOAD_RETRY_SECS=1 and RELOAD_BUILD_SECS=0 stand in for the backend's 300 s retry."""
+
+    def setUp(self):
+        self.t = Tree()
+        t = self.t
+        init = t.p('home', 'releases', f'{stamp(0)}-initial')
+        t.write(os.path.join(init, 'artifacts', 'chunks.jsonl'), 'initial\n')
+        os.symlink(os.path.join(init, 'artifacts'), t.p('home', 'current'))
+        os.makedirs(t.trevor)
+        os.symlink(SCRIPTS, t.p('trevor', 'scripts'))
+        os.symlink(t.p('home', 'current'), t.p('trevor', 'artifacts'))
+        t.write(t.p('assets', 'ArkAssets', 'en', '.version'), 'res-2\n', age_days=1)
+        t.write(t.p('home', 'state', 'active.json'), json.dumps({'version': 'v1', 'builtFrom': 'res-1'}))
+        self.lock = t.p('llm.lock')
+        self.state = t.p('home', 'state', 'reload-wait.json')
+        t.write(t.p('harness.sh'), """set -u
+sed '/^case "$CMD" in/,$d' "$1" > "$HARNESS_LIB"
+shift
+source "$HARNESS_LIB" "$@"
+prepare_stage() { log "STUB prepare_stage"; }
+deterministic_build() { log "STUB deterministic_build $*"; }
+panels_and_gates() { log "STUB panels_and_gates $*"; }
+publish_stage() { log "STUB publish_stage"; }
+take_run_lock
+cmd_daily
+log "harness: cmd_daily returned"
+""")
+        self.posts = []
+        posts = self.posts
+
+        class Hook(http.server.BaseHTTPRequestHandler):
+            def do_POST(self):
+                posts.append(json.loads(self.rfile.read(int(self.headers['content-length']))))
+                self.send_response(204)
+                self.end_headers()
+
+            def log_message(self, *a):
+                pass
+
+        self.srv = http.server.HTTPServer(('127.0.0.1', 0), Hook)
+        threading.Thread(target=self.srv.serve_forever, daemon=True).start()
+        self.holder = subprocess.Popen(['sleep', '300'])
+        self.env = {k: v for k, v in os.environ.items()
+                    if not k.startswith(('RETAIN_', 'DISK_', 'TREVOR_', 'PRUNE', 'KEEP_', 'DISCORD_', 'BACKEND_',
+                                         'RELOAD_', 'PLAN', 'FORCE', 'SKIP_FETCH'))}
+        self.env.update({'TREVOR_DIR': t.trevor, 'TREVOR_HOME': t.home, 'ASSETS_DIR': t.assets, 'TREVOR_NICED': '1',
+                         'TMPDIR': t.root, 'HARNESS_LIB': t.p('lib.sh'), 'TREVOR_LLM_LOCK': self.lock,
+                         'DISCORD_ALERT_WEBHOOK': f'http://127.0.0.1:{self.srv.server_port}/',
+                         'DISK_CHECK': '0', 'STALE_CHECK': '0', 'WATCHER_MAX_AGE_DAYS': '0',
+                         'RELOAD_RETRY_SECS': '1', 'RELOAD_BUILD_SECS': '0', 'BACKEND_RELOAD_POLL_SECS': '1'})
+
+    def tearDown(self):
+        self.holder.kill()
+        self.holder.wait()
+        self.srv.shutdown()
+        self.srv.server_close()
+        shutil.rmtree(self.t.root, ignore_errors=True)
+
+    def daily(self, script=UPDATE, **env):
+        p = subprocess.run(['bash', self.t.p('harness.sh'), script, 'daily'], capture_output=True, text=True,
+                           env={**self.env, **env}, timeout=120)
+        return p.returncode, p.stdout + p.stderr
+
+    def hold(self):
+        self.t.write(self.lock, f'{self.holder.pid} stages\n')
+
+    def test_the_wait_ends_when_the_lock_is_freed_and_the_run_proceeds(self):
+        """The lock names a live pid for about 3 polls, then the holder frees it: the wait ends and the build runs."""
+        self.hold()
+        self.t.write(self.state, json.dumps({'res': 'res-2', 'nights': 1, 'lastNight': '2026-01-01'}))
+        threading.Timer(3, os.remove, [self.lock]).start()
+        code, out = self.daily(BACKEND_RELOAD_WAIT_MIN='1')
+        self.assertEqual(code, 0, out)
+        self.assertIn('waiting for the backend to load res-2', out)
+        self.assertIn(f'the model lock names live pid {self.holder.pid} (stages)', out)
+        self.assertIn('taking res-2 as loaded', out)
+        self.assertIn('STUB deterministic_build 1', out)
+        self.assertIn('STUB publish_stage', out)
+        self.assertLess(out.index('taking res-2 as loaded'), out.index('STUB prepare_stage'))
+        self.assertFalse(os.path.exists(self.state), 'a wait that ends clears the consecutive-night count')
+        self.assertEqual(self.posts, [])
+        # A lock naming a dead pid is free, as the backend reads it (a job that died without its cleanup).
+        dead = subprocess.Popen(['true'])
+        dead.wait()
+        self.t.write(self.lock, f'{dead.pid} stages\n')
+        code, out = self.daily(BACKEND_RELOAD_WAIT_MIN='1')
+        self.assertEqual(code, 0, out)
+        self.assertNotIn('live pid', out)
+        self.assertIn('STUB publish_stage', out)
+
+    def test_never_loaded_skips_and_alerts_on_the_second_night_only(self):
+        """The lock stays held: exit 0, no build, the skip line; the embed only on the second consecutive night."""
+        self.hold()
+        skip = (f'backend has not loaded res-2 yet (serves an older version: the model lock names live pid '
+                f'{self.holder.pid} (stages)); skipping tonight, the next run retries')
+        code, out = self.daily(BACKEND_RELOAD_WAIT_MIN='0.05')
+        self.assertEqual(code, 0, out)
+        self.assertIn(skip, out)
+        self.assertNotIn('STUB', out)
+        self.assertIn('harness: cmd_daily returned', out)
+        self.assertNotIn('update_failed', out)
+        self.assertEqual(json.loads(read(self.state))['nights'], 1)
+        self.assertEqual(self.posts, [], 'the first night posts nothing')
+        code, out = self.daily(BACKEND_RELOAD_WAIT_MIN='0.05')   # the same night again: still one night
+        self.assertIn(skip, out)
+        self.assertEqual((json.loads(read(self.state))['nights'], self.posts), (1, []))
+        # Yesterday skipped too: tonight is the second consecutive night, one embed.
+        yesterday = time.strftime('%Y-%m-%d', time.gmtime(time.time() - DAY))
+        self.t.write(self.state, json.dumps({'res': 'res-2', 'nights': 1, 'lastNight': yesterday}))
+        code, out = self.daily(BACKEND_RELOAD_WAIT_MIN='0.05')
+        self.assertEqual(code, 0, out)
+        self.assertNotIn('STUB', out)
+        self.assertEqual(len(self.posts), 1, out)
+        embed = self.posts[0]['embeds'][0]
+        self.assertEqual(embed['title'], 'Trevor: the backend has not loaded the new game data')
+        self.assertIn('res_version res-2', embed['description'])
+        self.assertIn(f'live pid {self.holder.pid}', embed['description'])
+        self.assertTrue(embed['footer']['text'].startswith('reload_wait'))
+        code, out = self.daily(BACKEND_RELOAD_WAIT_MIN='0.05')   # rerun the same night: no second embed
+        self.assertEqual((json.loads(read(self.state))['nights'], len(self.posts)), (2, 1))
+        # A gap night restarts the count: no embed.
+        old = time.strftime('%Y-%m-%d', time.gmtime(time.time() - 3 * DAY))
+        self.t.write(self.state, json.dumps({'res': 'res-2', 'nights': 2, 'lastNight': old}))
+        code, out = self.daily(BACKEND_RELOAD_WAIT_MIN='0.05')
+        self.assertEqual((json.loads(read(self.state))['nights'], len(self.posts)), (1, 1))
+
+    def test_plan_prints_the_check_and_continues(self):
+        self.hold()
+        code, out = self.daily(PLAN='1')
+        self.assertEqual(code, 0, out)
+        self.assertIn(f'PLAN: wait up to 20 min for the backend\'s EN reload of res-2 (the reload guard refuses now: '
+                      f'the model lock names live pid {self.holder.pid} (stages)', out)
+        self.assertIn('STUB deterministic_build 1', out)
+        self.assertNotIn('still waiting', out)
+        self.assertFalse(os.path.exists(self.state))
+
+    def test_wait_disabled_is_the_script_before(self):
+        """BACKEND_RELOAD_WAIT_MIN=0 with the lock held: no wait, and the same lines as the script before the wait
+        (HEAD's copy when it predates the wait), timestamps aside."""
+        self.hold()
+        code, out = self.daily(BACKEND_RELOAD_WAIT_MIN='0')
+        self.assertEqual(code, 0, out)
+        self.assertNotIn('wait', out)
+        self.assertIn('STUB publish_stage', out)
+        before = self.t.p('trevor-vps-update.before.sh')
+        p = subprocess.run(['git', 'show', 'HEAD:trevor/scripts/trevor-vps-update.sh'], capture_output=True,
+                           text=True, cwd=SCRIPTS)
+        if p.returncode != 0 or 'BACKEND_RELOAD_WAIT_MIN' in p.stdout:
+            self.skipTest('no HEAD copy that predates the wait')
+        self.t.write(before, p.stdout)
+        strip = lambda o: [l.split(' ', 2)[-1] if l.startswith('== ') else l for l in o.splitlines()]
+        code0, out0 = self.daily(script=before)
+        self.assertEqual((code0, strip(out0)), (0, strip(out)))
+        # A SKIP_FETCH run reads nothing from the backend and does not wait either.
+        code, out = self.daily(SKIP_FETCH='1', BACKEND_RELOAD_WAIT_MIN='0.05')
+        self.assertEqual((code, 'wait' in out, 'STUB publish_stage' in out), (0, False, True), out)
 
 
 if __name__ == '__main__':

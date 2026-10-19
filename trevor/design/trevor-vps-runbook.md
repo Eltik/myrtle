@@ -289,10 +289,14 @@ worker's own reports will show. By hand: `publish.py --activate <version>` (with
   `RELOAD_MIN_FREE_MB` (EN 900, CN 1800, others 1200 MiB), so an asset update that lands inside the 12B window is served
   from the old data until the window closes or pauses, then reloads within `RELOAD_RETRY_SECS` (300); by day it lands
   in a gap between stage units. Each refusal logs "held back by the reload guard" in the backend's log, and one Discord
-  embed "Game-data reload waiting" posts past `RELOAD_MAX_WAIT_SECS` (6 h). Open: step 1 of the daily update takes a
-  `.version` older than `SETTLE_MIN` as proof the backend has reloaded, which a deferred reload breaks; check the
-  backend log for a refusal before trusting a corpus built inside the window. `RELOAD_GUARD=0` in `backend/.env` turns
+  embed "Game-data reload waiting" posts past `RELOAD_MAX_WAIT_SECS` (6 h). `RELOAD_GUARD=0` in `backend/.env` turns
   the guard off.
+- Daily waits for the backend's reload (2026-10-19): after its run lock and before any fetch, `daily` waits up to
+  `BACKEND_RELOAD_WAIT_MIN` (20) min until the reload guard's inputs (the model lock, `MemAvailable` against
+  `RELOAD_EN_MIN_FREE_MB`, 900) have admitted EN for `RELOAD_RETRY_SECS` (300) plus `RELOAD_BUILD_SECS` (120) s without
+  a break, because the backend reports no loaded version; still refused, it logs "backend has not loaded <res> yet",
+  builds nothing, exits 0, and the second consecutive night posts one embed (`state/reload-wait.json`). Keep
+  `RELOAD_RETRY_SECS` equal to `backend/.env`'s; `BACKEND_RELOAD_WAIT_MIN=0` is the script before.
 - `artifacts/bank/regen/history.jsonl`: every `detect` and `run`, with counts. `trevor-vps-update.sh summaries`
   logs `bank-cf.json` and `bank-local.json` in the run's log directory.
 

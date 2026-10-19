@@ -61,6 +61,15 @@
 #              the live one, the previous live one (history.jsonl), then the newest others
 #   WORKER_SETTLE [30]  seconds between the worker restart and the activate call;  SETTLE_MIN [15] minutes a new
 #              .version must be old before `daily` uses it (the backend hot-reloads after the watcher's extract)
+#   BACKEND_RELOAD_WAIT_MIN [20]  minutes `daily` waits, before any fetch, for the backend to reload the new EN data:
+#              since backend 89f07593 a reload is deferred while the Trevor model lock names a live pid or MemAvailable
+#              is under the EN floor, and retried every RELOAD_RETRY_SECS, and the 19:30 UTC run falls inside the 12B
+#              window. The backend reports no loaded version, so the wait reads the guard's own inputs (the lock,
+#              /proc/meminfo) and passes once they have admitted an EN reload for RELOAD_RETRY_SECS [300] plus
+#              RELOAD_BUILD_SECS [120] without a break (RELOAD_RETRY_SECS and RELOAD_EN_MIN_FREE_MB [900] must match
+#              backend/.env); polled every BACKEND_RELOAD_POLL_SECS [30], one log line a minute. Still refused at the
+#              end: no build, exit 0, the next run retries; the second consecutive night posts one embed
+#              ($STATE/reload-wait.json). 0 = no wait (the script before 2026-10-19, for a box without the window)
 #   PRUNE [1]  0 = no prune step after a daily publish (the script before 2026-10-19). The step runs scripts/retention.py
 #              (logs, eval runs, the spool, releases, asset manifests; policy in its docstring and RETAIN_* variables)
 #              as a dry run that lists what it would delete; PRUNE_APPLY=1 deletes, PRUNE_APPLY_ASSETS=1 also the old
@@ -98,6 +107,9 @@ LLAMA_SERVER="${LLAMA_SERVER:-llama-server}"
 SUMMARY_PORT="${SUMMARY_PORT:-8082}"; SUMMARY_CTX="${SUMMARY_CTX:-16384}"; SUMMARY_THREADS="${SUMMARY_THREADS:-2}"
 SUMMARY_UNTIL="${SUMMARY_UNTIL:-07:00}"; SUMMARY_MIN_AVAIL_MB="${SUMMARY_MIN_AVAIL_MB:-2500}"
 KEEP_RELEASES="${KEEP_RELEASES:-3}"; WORKER_SETTLE="${WORKER_SETTLE:-30}"; SETTLE_MIN="${SETTLE_MIN:-15}"
+BACKEND_RELOAD_WAIT_MIN="${BACKEND_RELOAD_WAIT_MIN:-20}"; BACKEND_RELOAD_POLL_SECS="${BACKEND_RELOAD_POLL_SECS:-30}"
+RELOAD_RETRY_SECS="${RELOAD_RETRY_SECS:-300}"; RELOAD_BUILD_SECS="${RELOAD_BUILD_SECS:-120}"
+RELOAD_EN_MIN_FREE_MB="${RELOAD_EN_MIN_FREE_MB:-900}"
 PLAN="${PLAN:-}"; FORCE="${FORCE:-0}"; SKIP_FETCH="${SKIP_FETCH:-}"; NO_PUBLISH="${NO_PUBLISH:-}"
 ALERT_WEBHOOK="${DISCORD_ALERT_WEBHOOK:-${TREVOR_DISCORD_WEBHOOK:-}}"; ALERT_LOG_LINES="${ALERT_LOG_LINES:-20}"
 export REGEN_ANSWERS="${REGEN_ANSWERS:-1}"; TREVOR_WARM_TOP="${TREVOR_WARM_TOP:-100}"
@@ -751,6 +763,101 @@ stop_local_llm() {
   release_model_lock
 }
 
+# ---------------------------------------------------------------- the backend's deferred reload (backend 89f07593)
+# The backend serves no game-data version: /api/health's gameData carries degraded, tables and stale only (a stale
+# entry's resVersion is the skipped input's), and no reload time is exposed. So `daily` reads what the backend's
+# reload guard reads (core/reload_guard.rs `check`): the model lock, a pid first and alive by /proc/<pid> or `ps -p`,
+# then MemAvailable against the EN floor. A refused reload retries every RELOAD_RETRY_SECS, so once the guard has
+# admitted EN for RELOAD_RETRY_SECS plus RELOAD_BUILD_SECS without a break, a deferred reload has run and swapped (or
+# none was deferred). An inference, not a report: a reload whose build FAILED looks the same.
+
+# guard_refusal: why the backend's guard would refuse an EN reload now, or nothing. Always exits 0 (it runs inside a
+# substitution, where bash 3.2 runs the ERR trap on a failing last command).
+guard_refusal() {
+  local line="" pid="" label="" avail=""
+  [[ ! -r "$TREVOR_LLM_LOCK" ]] || line="$(cat "$TREVOR_LLM_LOCK" 2>/dev/null || true)"
+  read -r pid label <<< "$line" || true
+  if [[ "$pid" =~ ^[0-9]+$ ]] && (( 10#$pid > 0 )); then
+    if [[ -d /proc/self ]]; then
+      if [[ -d "/proc/$pid" ]]; then echo "the model lock names live pid $pid${label:+ ($label)}"; return 0; fi
+    elif ps -p "$pid" >/dev/null 2>&1; then
+      echo "the model lock names live pid $pid${label:+ ($label)}"; return 0
+    fi
+  fi
+  if (( RELOAD_EN_MIN_FREE_MB > 0 )) && [[ -r /proc/meminfo ]]; then
+    avail="$(awk '/^MemAvailable:/ {print int($2 / 1024); exit}' /proc/meminfo 2>/dev/null || true)"
+    if [[ -n "$avail" ]] && (( avail < RELOAD_EN_MIN_FREE_MB )); then
+      echo "MemAvailable $avail MiB is under the EN floor of $RELOAD_EN_MIN_FREE_MB MiB"
+    fi
+  fi
+  return 0
+}
+
+# wait_for_backend_reload RES: 0 once the guard has admitted EN for RELOAD_RETRY_SECS + RELOAD_BUILD_SECS without a
+# break, 1 when BACKEND_RELOAD_WAIT_MIN ran out first (RELOAD_WAIT_WHY says why). PLAN=1 prints the check, returns 0.
+RELOAD_WAIT_WHY=""
+wait_for_backend_reload() {
+  local res="$1" need=$(( RELOAD_RETRY_SECS + RELOAD_BUILD_SECS )) limit why open_since="" now start=$SECONDS last=-1
+  limit="$(python3 -c 'import sys; print(int(float(sys.argv[1]) * 60))' "$BACKEND_RELOAD_WAIT_MIN")"
+  if [[ -n "$PLAN" ]]; then
+    why="$(guard_refusal)"
+    echo "PLAN: wait up to $BACKEND_RELOAD_WAIT_MIN min for the backend's EN reload of $res (the reload guard ${why:+refuses now: $why}${why:-admits now}; it must admit for ${need}s without a break)"
+    return 0
+  fi
+  log "waiting for the backend to load $res: its reload guard must admit EN for ${need}s without a break (RELOAD_RETRY_SECS $RELOAD_RETRY_SECS + RELOAD_BUILD_SECS $RELOAD_BUILD_SECS), at most $BACKEND_RELOAD_WAIT_MIN min"
+  while :; do
+    now=$SECONDS
+    why="$(guard_refusal)"
+    if [[ -n "$why" ]]; then open_since=""; elif [[ -z "$open_since" ]]; then open_since=$now; fi
+    if [[ -n "$open_since" ]] && (( now - open_since >= need )); then
+      log "the reload guard admitted EN for $(( now - open_since ))s; taking $res as loaded"
+      return 0
+    fi
+    if (( now - start >= limit )); then
+      RELOAD_WAIT_WHY="${why:-the reload guard admitted EN for only $(( now - open_since ))s of ${need}s}"
+      return 1
+    fi
+    if (( last < 0 || now - last >= 60 )); then
+      log "still waiting for the backend's reload of $res ($(( (now - start) / 60 )) of $BACKEND_RELOAD_WAIT_MIN min): ${why:-the guard has admitted EN for $(( now - open_since ))s of ${need}s}"
+      last=$now
+    fi
+    sleep "$BACKEND_RELOAD_POLL_SECS"
+  done
+}
+
+# reload_wait_skipped RES: the skip line, $STATE/reload-wait.json ({res, nights, lastNight}: consecutive UTC nights
+# that skipped; a second run the same night counts once), and one embed on the night the count reaches 2.
+reload_wait_skipped() {
+  local res="$1" second
+  log "backend has not loaded $res yet (serves an older version: $RELOAD_WAIT_WHY); skipping tonight, the next run retries"
+  second="$(python3 - "$STATE/reload-wait.json" "$res" <<'PY' 2>&1 || true
+import datetime, json, os, sys
+path, res = sys.argv[1], sys.argv[2]
+today = datetime.datetime.now(datetime.timezone.utc).date()
+try:
+    s = json.load(open(path))
+    last, n = datetime.date.fromisoformat(s['lastNight']), int(s['nights'])
+except (OSError, ValueError, KeyError, TypeError):
+    last, n = None, 0
+if last == today:
+    print('same night')
+    sys.exit()
+n = n + 1 if last == today - datetime.timedelta(days=1) else 1
+os.makedirs(os.path.dirname(path), exist_ok=True)
+tmp = f'{path}.tmp.{os.getpid()}'
+with open(tmp, 'w') as fh:
+    json.dump({'res': res, 'nights': n, 'lastNight': today.isoformat()}, fh)
+os.replace(tmp, path)
+print('SECOND' if n == 2 else f'night {n}')
+PY
+)"
+  if [[ "$second" == "SECOND" ]]; then
+    post_embed "Trevor: the backend has not loaded the new game data" "Two nights running, \`trevor-vps-update.sh daily\` waited $BACKEND_RELOAD_WAIT_MIN min for the backend to reload EN res_version $res and skipped the build: $RELOAD_WAIT_WHY. The backend defers a reload while the Trevor model lock names a live pid or memory is short (RELOAD_GUARD, core/reload_guard.rs): check what holds $TREVOR_LLM_LOCK and the backend log for \"held back by the reload guard\". Trevor's corpus lags the game until the backend reloads." \
+      15105570 "reload_wait · $(hostname 2>/dev/null || echo vps) · trevor-vps-update.sh $CMD"
+  fi
+  return 0
+}
+
 pending_summaries() {  # units with no summary row, in the current directory's tree
   python3 scripts/summaries_cf.py --plan | tail -1 | python3 -c 'import json,sys; c=json.load(sys.stdin); print(c["story"]["todo"] + c["group"]["todo"])'
 }
@@ -780,6 +887,12 @@ cmd_daily() {
   fi
   if (( res_age < SETTLE_MIN )) && [[ "$FORCE" != "1" ]]; then
     log "EN res_version $res is $res_age min old (< $SETTLE_MIN); the next run takes it"; return 0
+  fi
+  # The run lock is held (the stage runner pauses and frees the model lock), so a deferred reload can run now. No
+  # fetch (SKIP_FETCH) reads nothing from the backend and needs no wait.
+  if [[ "$BACKEND_RELOAD_WAIT_MIN" != "0" && -z "$SKIP_FETCH" ]]; then
+    if ! wait_for_backend_reload "$res"; then reload_wait_skipped "$res"; return 0; fi
+    [[ -n "$PLAN" ]] || rm -f "$STATE/reload-wait.json"
   fi
   log "EN res_version $res; active version built from ${active_from:-nothing}"
   if [[ -n "$PLAN" ]]; then WORK="$TREVOR_DIR"; else prepare_stage; fi

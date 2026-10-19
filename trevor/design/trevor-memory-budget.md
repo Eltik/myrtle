@@ -138,6 +138,11 @@ is the one piece to build, about a day.
   each night, logs an error and gives the window up); `systemd-analyze verify` was not run (macOS); outside the window
   the runner still runs E2B by day, and `incr.py`'s keys hold no model name, so a unit E2B did by day is never redone
   by the 12B: `STAGES_WINDOW_ONLY=1` keeps the stages to the window and is the setting to use once a night is verified.
+- daily waits for the backend's reload (2026-10-19): the 19:30 UTC update runs inside the window, where the backend
+  defers its game-data reload (89f07593), so `trevor-vps-update.sh daily` waits up to `BACKEND_RELOAD_WAIT_MIN` (20)
+  min, after its run lock pauses the runner and frees the model lock, until the guard's inputs have admitted EN for 420
+  s (the 300 s retry plus 120 s for the build); else it skips the night and the next run retries. Tested with a stub
+  lock holder; unverified on the box.
 
 Fallbacks, in order, each with its quality evidence:
 - 12B at IQ3_M (bartowski, 5.56 GiB) or Q3_K_M (unsloth, 5.30 GiB): about 1.2 to 1.5 GB less resident; mean KL
