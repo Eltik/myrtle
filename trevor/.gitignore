@@ -3,3 +3,7 @@
 /models
 /eval/runs/
 /eval/reference/
+debug/
+**/*.rs.bk
+*.pdb
+**/mutants.out*/
