@@ -1347,6 +1347,9 @@ chapter 13 or 14" report of the morning saw. The bank's `event:main_15` row and 
 after the rebuild (dossiers sets, build-profiles, embed and index p3b, p4, p4x, bank seed and merge: 7 new vectors, the
 rest reused). The E2B mid regression over 155 questions against the arm rendered before the regen: 153 identical, 2
 changed (r029 gains the Sarcophagus recollection hint, r076 reworded), none lost.
+"Give a summary of chapter 15" and "What happens in Episode 15?" on E2B mid (a fresh out file: an `ask --batch`
+into an existing out file resumes it, "0 to do, 2 done", and returns the old rows) both serve the D text through the
+recap route. The 12B full scorecard over the 35 probe questions: 34 identical, 1 reworded (ian33).
 **Automated (2026-10-20).** `update.sh` sections the groups the coverage step flags (exit 2) in the same run and
 reports coverage again; the stage runner has `p2-group-d` after `p2-group` with the coverage script as its pre-plan
 (exit 2 tolerated, since that is the case the stage exists for). An empty flagged list keeps the existing D rows live
@@ -1436,6 +1439,13 @@ One wart: the 12B wrote "A report stating that Kal'tsit is dead is found by Trev
 prompt; VANISH_RULE and VANISH_REPORT_TAIL no longer name the table ("no story line shows a scene in which X dies"),
 checked by the 12B scorecard of the final binary (below). The deaths rule's own wording (DEATH_RULE_TAIL) is
 unchanged: 0 of the earlier runs' answers echo it.
+**Reworded prompts checked (12B full, the four questions, 8d58e01b).** 0 of 4 answers name the table; the 35-question
+scorecard has 0 echoes too. The Kal'tsit answer now reads "A report found by Closure states that Kal'tsit is dead
+[1]", a misattribution of the Mini-House's line, with the passage label "the line where Trevor's deaths table finds a
+report that Kal'tsit is dead" (`fate.rs`, `death_evidence`, shared with the deaths rule) as the likely copy source;
+left as is, since the deaths rule's answers of 2026-10-18 never copied it. The Mon3tr answer adds "when Mon3tr wakes
+up after the loss of Kal'tsit, she is described as having a new appearance and feeling solemn" [5] (an Episode 17
+line), still not the waking scene.
 **Decision.** Default on, confirmed.
 
 ### 2026-10-19: CPU-only throughput of E2B and the 12B (step 1 of the self-contained deployment)
