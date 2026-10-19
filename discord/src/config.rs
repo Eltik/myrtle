@@ -218,9 +218,35 @@ impl Config {
     }
 }
 
+/// Messages the serenity cache keeps per channel when `DISCORD_MAX_MESSAGES` is unset or unparsable.
+pub const DEFAULT_MAX_CACHED_MESSAGES: usize = 200;
+
+/// Messages kept per channel in the serenity cache, from `DISCORD_MAX_MESSAGES`.
+///
+/// The audit log reads a deleted or reacted-to message's content from this cache
+/// (`audit.rs`), so a message older than the newest `n` in its channel is logged without
+/// its content. `1000` restores the bound before 2026-10-19; `0` caches no messages.
+/// An unset, empty or unparsable value gives [`DEFAULT_MAX_CACHED_MESSAGES`].
+#[must_use]
+pub fn max_cached_messages(value: Option<&str>) -> usize {
+    value
+        .and_then(|v| v.trim().parse().ok())
+        .unwrap_or(DEFAULT_MAX_CACHED_MESSAGES)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn max_cached_messages_reads_the_variable() {
+        assert_eq!(max_cached_messages(None), 200);
+        assert_eq!(max_cached_messages(Some("")), 200);
+        assert_eq!(max_cached_messages(Some("lots")), 200);
+        assert_eq!(max_cached_messages(Some("-5")), 200);
+        assert_eq!(max_cached_messages(Some(" 1000 ")), 1000);
+        assert_eq!(max_cached_messages(Some("0")), 0);
+    }
 
     #[test]
     fn configs_without_tts_still_parse() {

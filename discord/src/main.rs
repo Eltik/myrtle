@@ -211,7 +211,12 @@ async fn main() {
         .build();
 
     let mut cache_settings = Settings::default();
-    cache_settings.max_messages = 1000;
+    cache_settings.max_messages =
+        discord::config::max_cached_messages(env::var("DISCORD_MAX_MESSAGES").ok().as_deref());
+    tracing::info!(
+        max_messages = cache_settings.max_messages,
+        "message cache per channel"
+    );
 
     let mut client = ClientBuilder::new(token, intents)
         .framework(framework)

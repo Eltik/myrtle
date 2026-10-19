@@ -196,6 +196,7 @@ Embeds rather than Components V2: Serenity 0.12.5, the version in `Cargo.lock`, 
 | `DATABASE_URL` | No | `sqlite:database.sqlite` | SQLite path. Created if missing |
 | `DISCORD_CONFIG_PATH` | No | `./config.json` | Config file location |
 | `RUST_LOG` | No | `discord=info` | Tracing filter |
+| `DISCORD_MAX_MESSAGES` | No | `200` | Messages the cache keeps per channel. The audit log reads a deleted or reacted-to message's content from this cache, so a message older than the newest `n` in its channel is logged without its content. `1000` restores the bound before 2026-10-19; `0` caches none |
 
 ### `config.json`
 
