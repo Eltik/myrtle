@@ -168,6 +168,10 @@ jobs:
     name: Trevor
     runs-on: ubuntu-24.04
     timeout-minutes: 60
+    # Non-blocking (2026-10-19): a failed Trevor build must not hold the site's bundle. The publish job then ships
+    # a bundle without the trevor component (BUILD_INFO says `trevor=absent`), and
+    # `fetch-release.sh --components trevor` refuses such a bundle with a clear message.
+    continue-on-error: true
     # No `-D warnings`: no CI workflow builds Trevor on Linux to catch a warning
     # first, and a warning here would hold the whole bundle, site included.
     env:
@@ -338,9 +342,17 @@ jobs:
           for f in backend/target/release/backend discord/target/release/discord discord/target/release/commands assets/binaries/downloader assets/binaries/unpacker; do
             test -x "$b/$f" || { echo "::error::missing or not executable: $f"; exit 1; }
           done
-          for t in build-corpus embed-corpus embed-check build-index build-prefixes build-archives build-profiles build-units search eval goldset ask; do
-            test -x "$b/trevor/target/release/$t" || { echo "::error::missing or not executable: trevor/target/release/$t"; exit 1; }
-          done
+          # The trevor part is optional (its job is continue-on-error): present means all 12 bins, absent means a
+          # bundle without Trevor, recorded in BUILD_INFO.
+          trevor=absent
+          if [ -d "$b/trevor" ]; then
+            for t in build-corpus embed-corpus embed-check build-index build-prefixes build-archives build-profiles build-units search eval goldset ask; do
+              test -x "$b/trevor/target/release/$t" || { echo "::error::missing or not executable: trevor/target/release/$t"; exit 1; }
+            done
+            trevor=present
+          else
+            echo "::warning::the trevor part is absent (its job failed or was skipped); this bundle has no Trevor component"
+          fi
           test -f "$b/frontend/.output/server/index.mjs"
           {
             echo "sha=${SHA}"
@@ -348,6 +360,7 @@ jobs:
             echo "built_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
             echo "runner=$(. /etc/os-release && echo "$PRETTY_NAME") $(uname -m)"
             echo "glibc=$(ldd --version | head -1 | awk '{print $NF}')"
+            echo "trevor=${trevor}"
           } > "$b/BUILD_INFO"
           # Two statements, not `( ... ) && mv`: set -e ignores a failure on the left of &&.
           ( cd "$b" && find . -type f -print0 | sort -z | xargs -0 sha256sum > ../SHA256SUMS.tmp )
