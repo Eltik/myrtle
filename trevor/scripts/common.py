@@ -184,6 +184,15 @@ def append_jsonl(path, row, ensure_ascii=False):
         f.write(json.dumps(row, ensure_ascii=ensure_ascii) + '\n')
 
 
+def served_group_rows(rows):
+    """The group summary each reader serves, one row per group in the order of the method-C rows of
+    artifacts/p2/groups.jsonl: the sectioned method-D row where one exists (scripts/p2-summaries.py, 2026-10-19: C spent
+    its 300 to 400 words on the first stories of long chapters), else the C row. SUMMARY_METHOD_D=0 is the kill switch:
+    D rows are ignored and every reader gets the C rows, as before."""
+    d = {} if os.environ.get('SUMMARY_METHOD_D') == '0' else {r['groupId']: r for r in rows if r.get('method') == 'D'}
+    return [d.get(r['groupId'], r) for r in rows if r.get('method') == 'C']
+
+
 def write_json_atomic(path, obj, newline=False, encoding=None, **dump_kw):
     """json.dump(obj, **dump_kw) into `<path>.tmp` (plus a final newline when asked), then a rename over `path`, so a
     reader never sees half a file. `encoding` None is the platform default, as open() without one."""

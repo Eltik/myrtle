@@ -2,8 +2,10 @@
 //!
 //! Comparison and overview questions ("rank the Sui by power") need material no single passage
 //! holds. This writes a corpus directory whose `chunks.jsonl` is the input corpus byte for byte,
-//! followed by one row per character dossier (`scripts/dossiers.py`) and per method-C event
-//! summary (`scripts/p2-summaries.py`). Profile rows use story id `profile_<slug>` or
+//! followed by one row per character dossier (`scripts/dossiers.py`) and per event summary
+//! (`scripts/p2-summaries.py`): the sectioned method-D summary where a group has one, else method C,
+//! in the order of the C rows (`SUMMARY_METHOD_D=0`: method C only, the units before 2026-10-19,
+//! as `scripts/common.py` `served_group_rows` reads them). Profile rows use story id `profile_<slug>` or
 //! `summary_<groupId>` and never overlap a gold anchor. The input directory is never touched.
 
 use std::path::PathBuf;
@@ -74,13 +76,21 @@ fn main() -> Result<()> {
         let text = format!("{head}\n{}", d["dossier"].as_str().unwrap_or_default());
         rows.push(row(format!("profile_{}", slug(&name)), "profile", vec![name], text));
     }
-    for g in lines(&a.groups)? {
+    let groups = lines(&a.groups)?;
+    let use_d = std::env::var("SUMMARY_METHOD_D").as_deref() != Ok("0");
+    let sectioned: std::collections::HashMap<&str, &str> = groups
+        .iter()
+        .filter(|g| use_d && g["method"].as_str() == Some("D"))
+        .filter_map(|g| Some((g["groupId"].as_str()?, g["summary"].as_str()?)))
+        .collect();
+    for g in &groups {
         if g["method"].as_str() != Some("C") {
             continue;
         }
         let gid = g["groupId"].as_str().unwrap_or_default();
         let name = group_name.get(gid).cloned().unwrap_or_else(|| gid.to_owned());
-        let text = format!("Event summary: {name}\n{}", g["summary"].as_str().unwrap_or_default());
+        let summary = sectioned.get(gid).copied().unwrap_or_else(|| g["summary"].as_str().unwrap_or_default());
+        let text = format!("Event summary: {name}\n{summary}");
         rows.push(row(format!("summary_{gid}"), "summary", Vec::new(), text));
     }
     let src = std::fs::read(a.corpus.join("chunks.jsonl"))?;

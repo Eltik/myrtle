@@ -89,7 +89,10 @@ class Data:
     def __init__(self):
         # Derived inputs: a missing one raises (common.MissingInput) instead of building entries from nothing.
         self.chunks = read_derived(os.path.join(ROOT, 'artifacts', 'p4x', 'chunks.jsonl'))
-        self.p2 = {g['groupId']: g['summary'] for g in read_derived(os.path.join(ROOT, 'artifacts', 'p2', 'groups.jsonl'))}
+        # Every method's row, the last one per group winning, as before method D existed; D rows are left out so this
+        # stage's input does not change when a group gets one (2026-10-19).
+        self.p2 = {g['groupId']: g['summary'] for g in read_derived(os.path.join(ROOT, 'artifacts', 'p2', 'groups.jsonl'))
+                   if g['method'] != 'D'}
         tl = common.load_derived(os.path.join(ROOT, 'artifacts', 'chrono', 'timeline_v1.json'))
         self.gname = {g['groupId']: g.get('name') or g['groupId'] for g in tl['groups']}
         self.attrs = read_derived(os.path.join(ROOT, 'artifacts', 'entities', 'operator_attributes.jsonl'))

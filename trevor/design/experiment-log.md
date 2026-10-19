@@ -1319,6 +1319,24 @@ act12side 0.44; the measure is noisy ("Finally", "Nearby" count as names).
 **Decision.** Open, needs the model: regenerate the low-coverage groups with a prompt that gives each part of the
 story its share (for instance a third of the stories per paragraph, or 1 to 2 sentences per story, then a merge),
 gated on the coverage measure, and add the measure to update.sh as a check.
+**Built (no model yet).** `scripts/summary_coverage.py` is the measure as a script: a word counts as a name only
+when the group's story summaries use it inside a sentence at least once and it is not on a noise list (Finally,
+Nearby, Meanwhile and other openers), a possessive counts as its name; it writes `artifacts/p2/coverage.json` and
+exits 2 when a group of 6+ stories misses more than `--threshold` (0.4) of its names. On the current tree 87 groups
+have 6+ stories and 5 are above 0.4: act41side 0.75 (9 of 12), main_17 0.75 (15 of 20), act21side 0.52 (11 of 21),
+main_15 0.46 (6 of 13: Closure, Hierda, Island, PRTS, Priestess, Rhodes), act42side 0.41 (9 of 22); then act51side
+0.38, act12side 0.36, act18mini 0.33, act14side 0.30, act15side 0.30. The noise filter moves act12side from 0.44 to
+0.36 and act32side from 0.44 to 0.28 (act32side's misses are now Arrowhead, Commanding, Lucent, Officer, Operation).
+update.sh runs it after the group summaries as a report (`COVERAGE_CHECK=0` skips it, `COVERAGE_STRICT=1` stops on
+it). Method D in `p2-summaries.py group --method D` sections a group of more than 8 stories (`GROUP_PARTS_MIN`) into
+3 to 5 consecutive parts (ceil(n/7), sizes within one: main_15's 25 stories are 6, 7, 6, 6), one 100 to 130 word call
+per part (`prompts/summary.group.part.txt`), then a merge into 300 to 400 words that keeps every part
+(`prompts/summary.group.merge.txt`); rows carry `method: 'D'` and `parts`. `summary.group.txt` is unchanged, so A, B
+and C plan 0; the 7 groups plan 7. Part prompts of the 7 groups are 1,441 to 1,900 Gemma tokens (main_15: 1,531,
+1,847, 1,633, 1,609; merge 285 plus the parts). The served summary (P3b `summary_<group>` units in build-profiles,
+the bank's `event:` rows that `ask`'s recap reads) is D where present (`SUMMARY_METHOD_D=0`: C; P3b chunks and the
+bank seed byte-identical with D rows present, verified on a scratch copy). Primers, overview and chronology still
+read C and topic_deep leaves D rows out, so a D row changes no other model stage's input.
 
 ### 2026-10-19: "How does Mon3tr react when she wakes up after Kal'tsit dies" (open)
 

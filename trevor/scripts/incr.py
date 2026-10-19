@@ -60,11 +60,16 @@ class Stage:
         self.units = {}
         self.lock = threading.Lock()
 
-    def unit(self, k, model_input, upstream=False):
+    def unit(self, k, model_input, upstream=False, psha=None):
         """`upstream`: the unit reads a model output that its own stage will redo (PLAN only), so this
-        unit will be redone too once that has run."""
+        unit will be redone too once that has run. `psha`: this unit's prompt sha when it differs from the
+        stage's (p2 group method D, whose part and merge prompts are not the other methods' prompt)."""
         if k not in self.units:  # a unit id seen twice keeps its first input, as the first run did
-            self.units[k] = (input_sha(model_input), upstream)
+            self.units[k] = (input_sha(model_input), upstream, psha)
+
+    def unit_psha(self, k):
+        u = self.units.get(k)
+        return (u[2] if u else None) or self.psha
 
     def reason(self, k):
         r = self.have.get(k)
@@ -72,7 +77,7 @@ class Stage:
             return 'new'
         if IDS_ONLY:
             return None
-        if r.get('promptSha') != self.psha:
+        if r.get('promptSha') != self.unit_psha(k):
             return 'prompt changed'
         if r.get('inputSha') != self.units[k][0]:
             return 'input changed'

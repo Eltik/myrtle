@@ -68,6 +68,14 @@ fi
 run_models() {
   step "P2 story summaries";   python3 scripts/p2-summaries.py story
   step "P2 group summaries";   python3 scripts/p2-summaries.py group
+  # Name coverage of the group summaries (no model; writes artifacts/p2/coverage.json): exit 2 lists the groups that miss
+  # more than 0.4 of their recurring names, which `p2-summaries.py group --method D --coverage-below 0.4` sections. A
+  # report, not a gate (COVERAGE_STRICT=1 stops the update on it); COVERAGE_CHECK=0 skips it (the script before 2026-10-19).
+  if [[ -z "${PLAN:-}" && "${COVERAGE_CHECK:-1}" != "0" ]]; then
+    step "P2 group coverage"
+    rc=0; python3 scripts/summary_coverage.py --top 10 || rc=$?
+    if [[ $rc -ne 0 && ( $rc -ne 2 || "${COVERAGE_STRICT:-}" == "1" ) ]]; then exit "$rc"; fi
+  fi
   # Cue files are deterministic and extract recomputes its cue lines itself; PLAN leaves them alone.
   [[ -n "${PLAN:-}" ]] || { step "chronology cues"; python3 scripts/chrono.py cues; }
   step "chronology extract";   python3 scripts/chrono.py extract

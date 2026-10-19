@@ -7,7 +7,8 @@ The site shows an entry only to a reader who has cleared every gate story.
   seed       deterministic entries from existing artifacts, no model:
                who      "Who is X?" per dossier (200), gate = the dossier's stories + archive
                story    "What happens in <story>?" per P2 story summary, gate = that story
-               event    "What happens in <event>?" per method-C group summary, gate = its stories
+               event    "What happens in <event>?" per served group summary (method D where present, else C;
+                        SUMMARY_METHOD_D=0: C), gate = its stories
                primer   "What should I know before starting <event>?", only when PRIMERS=1; gate =
                         the prior groups' stories. Only sentences the `primers` stage found supported
                         by the prior summaries are kept (PRIMER_FILTER=0 keeps the whole primer): on
@@ -92,9 +93,8 @@ def stage_seed():
     for s in stories:
         rows.append({'id': f"story:{s['storyId']}", 'kind': 'story', 'question': f"What happens in {s['header']}?",
                      'aliases': [], 'answer': s['summary'], 'sources': [s['storyId']], **gate([s['storyId']], [], sp)})
-    for g in read_derived(os.path.join(ROOT, 'artifacts', 'p2', 'groups.jsonl')):
-        if g['method'] != 'C':
-            continue
+    # The served group summary: method D (sectioned) where it exists, else C; SUMMARY_METHOD_D=0 reads C alone.
+    for g in common.served_group_rows(read_derived(os.path.join(ROOT, 'artifacts', 'p2', 'groups.jsonl'))):
         name = tl.get(g['groupId'], {}).get('name', g['groupId'])
         rows.append({'id': f"event:{g['groupId']}", 'kind': 'event', 'question': f'What happens in {name}?',
                      'aliases': [f'Summarize {name}.'], 'answer': g['summary'], 'sources': g['storyIds'],

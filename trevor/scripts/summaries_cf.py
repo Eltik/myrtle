@@ -224,6 +224,8 @@ def run(a, env=os.environ):
     # Groups: only once every story of the group has a summary (p2-summaries.py's rule for methods B and C).
     if not a.no_groups:
         gst, gorder, _, groups, gfacts, stories, _targets = p2.group_stage()
+        # Method D (sectioned, several calls per group) runs on the development machine only; its rows stay live.
+        gorder = [k for k in gorder if k[1] != "D"]
         greasons = {k: gst.reason(k) for k in gorder}
         gwant = [k for k in gorder if greasons[k] == "new" or (a.scope == "stale" and greasons[k])]
         counts["group"]["todo"] = len(gwant)
