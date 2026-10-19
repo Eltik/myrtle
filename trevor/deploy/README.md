@@ -13,18 +13,19 @@ sudo trevor/deploy/bootstrap.sh --dry-run --snapshot https://.../trevor-snapshot
 sudo trevor/deploy/bootstrap.sh --snapshot https://.../trevor-snapshot-<stamp>.tar.zst --snapshot-sha256 <hex>
 ```
 
-It runs ten steps in order, each a function that checks its own done-state, so a rerun after a failure continues where
+It runs eleven steps in order, each a function that checks its own done-state, so a rerun after a failure continues where
 it stopped; it stops at the first error and names the step. `--only STEP` and `--skip STEP` (comma lists, repeatable)
 pick steps; `--dry-run` prints every command and changes nothing (the read-only checks still run).
 
 | step | does | done when |
 |---|---|---|
 | `preflight` | Ubuntu 24.04 x86_64 (other Linux warns, other arch stops); installs missing apt packages (curl, tar, zstd, python3, rsync, util-linux, openssl, git); memory: stops under 8 GB, skips the 12B under 16 GB, warns under 32 GB (design section 5); warns under 8 cores; disk: stops under 15 GB free, warns under 40 GB; the `trevor` user, `/var/lib/trevor/{state,spool,logs,snapshot}`, `/etc/trevor` (700), tmpfiles for `/run/trevor` | always runs (idempotent) |
+| `settings` | prints the Postgres and Redis memory settings (section "Memory" below) as a block to copy, with their reasons; applies nothing | always runs (prints only) |
 | `release` | `scripts/fetch-release.sh --components trevor,assets <sha>` (plus `backend` when `backend/target/release/backend` is missing). `--sha` defaults to the checked-out HEAD. The bundle exists only for commits built on main by the Release Bundle workflow (the newest 20 are kept): exit 3 stops with that message, and nothing is ever compiled on the box | `target/release/.release-installed` names the sha |
 | `llama` | llama.cpp `b11146` (`pins.env`: tag, asset, sha256), the build every CPU number in the design doc was measured with; downloaded, sha256-checked, unpacked to `/opt/llama.cpp/b11146`, `current` symlink, `/usr/local/bin/llama-server` and `llama-bench` | `.verified` in the tag dir and `llama-server --version` runs |
 | `models` | `WITH_FP32=1 WITH_E2B=1 scripts/fetch-model.sh trevor/models`, plus `WITH_LLM=1` (Gemma 4 12B and Qwen3.5 9B, 12.7 GB) at 16 GB of memory or more (`WITH_LLM=0/1` overrides); links the E2B file under the upper-case name the units use | a marker records fetch-model.sh's sha and the flags |
 | `snapshot` | `scripts/snapshot.py install <file> --into trevor/artifacts` from `--snapshot URL|FILE` (`--snapshot-sha256` checks the file first). Refuses to go on without one; `--no-snapshot` starts from an empty tree, and the first update then builds every table from nothing, which is weeks on a CPU | `artifacts/snapshot.json`, or `artifacts` is already the release link |
-| `env` | `/etc/trevor/trevor.env` from `trevor.env.example`: the paths, `TREVOR_RETRIEVAL=bm25` and `EMBED=0` (step 9 below for hybrid), a fresh `TREVOR_WORKER_KEY` (kept on reruns), `--webhook` as `DISCORD_ALERT_WEBHOOK`, every `TREVOR_CF_*` commented out (cf is not used here); the same key in `backend/.env`. Without `backend/.env` it stops, unless `--database-url` is given: then it creates one from `backend/.env.example` with fresh `JWT_SECRET`, `SERVICE_KEY` and `GAME_CREDENTIAL_KEY` | both files hold the same key |
+| `env` | `/etc/trevor/trevor.env` from `trevor.env.example`: the paths, `TREVOR_RETRIEVAL=bm25` and `EMBED=0` (step 9 below for hybrid), a fresh `TREVOR_WORKER_KEY` (kept on reruns), `--webhook` as `DISCORD_ALERT_WEBHOOK`, every `TREVOR_CF_*` commented out (cf is not used here); the same key in `backend/.env`. Without `backend/.env` it stops, unless `--database-url` is given: then it creates one from `backend/.env.example` with fresh `JWT_SECRET`, `SERVICE_KEY` and `GAME_CREDENTIAL_KEY`. `--lazy-servers jp,kr` also writes `SERVERS_LAZY=jp,kr` into `backend/.env`; without it nothing is written and the recommendation is printed | both files hold the same key (and `SERVERS_LAZY` equals `--lazy-servers` when given) |
 | `database` | the backend applies its migrations on startup (`backend/README.md`, Database; there is no separate command), so this restarts a `myrtle-backend` that pm2 already runs (`pm2 restart myrtle-backend --update-env`), waits up to 15 minutes for `/api/health` and checks that the worker key is accepted; when no backend runs under pm2 it prints the `chown` and `pm2 start` commands for the operator (the site's pm2 account is not recorded, and the backend must not run as root) and stops | the worker key is accepted (HTTP 200 or 404 on `worker/popular`) |
 | `units` | installs `trevor-llama`, `trevor-worker`, `trevor-worker-restart.{path,service}`, `trevor-update.{service,timer}`, `trevor-stages.service` (paths rewritten when the clone is not at `/var/www/myrtle.moe`), daemon-reload, enables and starts llama (waits for `/health`), the worker, the update timer and the stage runner. Not `trevor-summaries.timer`: it is the Cloudflare summaries path, unused in this deployment | unchanged unit files are left alone |
 | `first-update` | `trevor-vps-update.sh init` (adopts `trevor/artifacts` as the first release), `chown -R trevor /var/lib/trevor`, then `daily` once in the foreground with `FORCE=1` under `systemd-run` as `trevor`; the log is `/var/lib/trevor/logs/<stamp>-daily/run.log` | `state/active.json` exists |
@@ -37,6 +38,30 @@ trevor/deploy/bootstrap.sh --only env --database-url postgresql://...` writes bo
 
 Unverified until a fresh Ubuntu box runs it: the dry run and the env step were run on the development machine
 (2026-10-19), nothing else.
+
+## Memory
+
+The 11 GB box and what each process costs: `../design/trevor-memory-budget.md` (sections 3 and 4 are the plan this
+section applies). What the repo sets, each with its off value:
+
+- `trevor-llama.service`: `--no-repack` (the weights stay page-cache backed, shared with a stage server mapping the
+  same GGUF; the prompt-speed cost on x86 is unmeasured, see the unit's comment for the one measurement), `-np 1`,
+  `OOMScoreAdjust=1000`. `trevor-stages.service`: `OOMScoreAdjust=1000`. A resumable model is the OOM killer's first
+  pick, before Postgres or the backend; delete the line to restore the default of 0.
+- `trevor-worker.service`: `MemoryHigh=1792M`, `MemoryMax=2G` (hybrid retrieval peaked at 1.53 GB against the old
+  1536M cap; BM25-only stays about 0.2 GB). Old values: 1280M and 1536M.
+- Every llama-server the stage runner starts: `-np 1 --cache-ram 0 --ctx-checkpoints 0 -fa on`, fixed in
+  `scripts/stages.py`, so a `STAGES_SERVER_ARGS` without them keeps them. `STAGES_SERVER_LEAN=0` restores update.sh's
+  flags exactly.
+- The site's asset watcher runs as one pm2 app (`myrtle-ws`) by default in the repo-root `vps-update.sh` and
+  `vps-start.sh` (about 150 MB less than the four); `PM2_WS_LEGACY=1` restores the four per-region apps. Both scripts
+  are git-ignored, so the VPS copy changes only when copied by hand.
+- Set on the box by hand, never by bootstrap: the Postgres and Redis values the `settings` step prints
+  (`shared_buffers=512MB`, `work_mem=8MB`, `max_parallel_workers_per_gather=1`, `maintenance_work_mem=128MB`,
+  `max_connections=40`, `effective_cache_size=2GB`; Redis `maxmemory 256mb` after reading `INFO memory`, since every key
+  has a TTL and eviction logs users out). Read the current values first; the step prints those commands too.
+- `SERVERS_LAZY=jp,kr` in `backend/.env` (`--lazy-servers jp,kr`, about 219 MB): JP and KR load on their first request
+  and unload after 30 idle minutes. What to watch afterwards: `../design/trevor-vps-runbook.md` section 10.
 
 ## What bootstrap does, by hand
 

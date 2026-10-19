@@ -12,6 +12,9 @@
 # Kill switch: STAGES_DUTY=0 in trevor.env (or `echo 0 > /var/lib/trevor/state/stages/duty`) stops the model stages
 # after the current unit and leaves serving alone; `touch /var/lib/trevor/state/stages/pause` pauses them.
 # The 11 GB box holds E2B, not the 12B, beside serving (section 5); trevor.env overrides every variable below.
+# Every stage llama-server gets -np 1 --cache-ram 0 --ctx-checkpoints 0 -fa on from stages.py itself (the memory budget,
+# design/trevor-memory-budget.md section 4); STAGES_SERVER_ARGS below is appended after them (keep --no-repack there:
+# it shares the GGUF's pages with trevor-llama). STAGES_SERVER_LEAN=0 restores update.sh's flags exactly.
 [Unit]
 Description=Trevor paced model stages (trevor-stages)
 After=network-online.target trevor-llama.service
@@ -38,6 +41,8 @@ Nice=10
 IOSchedulingClass=idle
 CPUWeight=10
 MemoryMax=5G
+# The OOM killer's first pick with trevor-llama (design/trevor-memory-budget.md section 4): a stage resumes.
+OOMScoreAdjust=1000
 ReadWritePaths=/var/lib/trevor /run/trevor
 ProtectSystem=strict
 ProtectHome=yes

@@ -658,9 +658,15 @@ class Runner:
     def server_cmd(self, profile):
         model, slots, kv, extra = SERVERS[profile]
         kv = kv or os.environ.get('KV') or '16384'
-        return [self.llama, '-m', self.models[model], '--host', '127.0.0.1', '--port', str(self.port), '-np', str(slots),
-                '--kv-unified-per-slot', kv, '-fa', 'on', '-cram', '512', '--no-webui', '-ngl', 'all', *extra,
-                *self.server_args]
+        # The stage flags of design/trevor-memory-budget.md section 4, fixed here so STAGES_SERVER_ARGS cannot drop
+        # them: one slot, no prompt cache (8 GiB by default), no context checkpoints (32 per slot by default).
+        # STAGES_SERVER_LEAN=0 restores update.sh's flags exactly (the profile's slots, -cram 512).
+        if os.environ.get('STAGES_SERVER_LEAN', '1') == '0':
+            mem = ['-np', str(slots), '--kv-unified-per-slot', kv, '-fa', 'on', '-cram', '512']
+        else:
+            mem = ['-np', '1', '--kv-unified-per-slot', kv, '-fa', 'on', '--cache-ram', '0', '--ctx-checkpoints', '0']
+        return [self.llama, '-m', self.models[model], '--host', '127.0.0.1', '--port', str(self.port), *mem,
+                '--no-webui', '-ngl', 'all', *extra, *self.server_args]
 
     def start_server(self, profile):
         """Start llama-server for `profile` under the lock; never beside another on the port (or, exclusive, at all).

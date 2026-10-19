@@ -13,7 +13,7 @@ one measurement on the development machine); sources inline.
 |---|---|---|---|
 | backend (pm2) | `max_memory_restart 3G` (`backend/ecosystem.config.cjs:14`) | EN alone 211 MB, EN plus CN 600 MB steady; reload peaks EN 0.84 GiB, CN 1.76 GiB (memory notes 2026-09) | 0.6 to 1.4 GB |
 | frontend SSR (bun, pm2) | cap 1500M, SSR cache 48 MB (`frontend/ecosystem.config.cjs:12-28`) | 212 to 230 MB after load, peaks 580 to 613 MB (macOS) | 0.25 to 0.6 GB |
-| asset watchers | none; four pm2 processes by the legacy names (`scripts/vps-update.sh:50`) | about 50 MB each idle (`assets/ecosystem.config.cjs:49`) | 0.2 to 0.4 GB |
+| asset watchers | none; four pm2 processes by the legacy names (`vps-update.sh:50` (repo root, git-ignored)) | about 50 MB each idle (`assets/ecosystem.config.cjs:49`) | 0.2 to 0.4 GB |
 | Discord bot | cap 512M | never measured | 0.1 GB |
 | Postgres, Redis | nothing pinned in the repo | nothing | 0.4 to 0.8 GB |
 | trevor-llama (E2B, `-c 4096 -np 1`) | `MemoryMax=4G` | **measured here: 3.66 GB after load, 1.93 GB steady** | 1.9 to 3.7 GB |
@@ -43,7 +43,8 @@ Two facts from llama.cpp's code matter for every server on the box (research pas
 - On x86 with AVX2, repacking copies Q4_0 and Q4_K tensors into anonymous memory by default. Those pages cannot be
   shared between processes or evicted, only swapped. `--no-repack` keeps the weights page-cache backed, so two
   servers mapping one GGUF hold one copy, at an unmeasured cost to prompt speed. The stage launch in
-  `trevor-vps-update.sh` already passes it; the serving unit does not.
+  `trevor-vps-update.sh` already passes it; the serving unit does not. Correction (2026-10-19): it does, and has
+  since f201aa08 (`trevor-llama.service` runs `-np 1 --no-repack`); what was missing is the measurement of its cost.
 - Two server defaults eat RAM: `--cache-ram` (8192 MiB default; serving passes 512, the stages 0) and
   `--ctx-checkpoints` (32 per slot, each about the SWA cache state, about 0.5 GiB on the 12B). Stages set both to 0.
   `--kv-unified` does nothing at `-np 1`; pass `-np 1` explicitly, the default is auto.
@@ -54,7 +55,7 @@ Ranked by MB freed per day of work; file:line is where each starts.
 
 | # | change | MB freed | risk | days | starts at |
 |---|---|---|---|---|---|
-| 1 | one asset-watcher process instead of four (the one-process queue shipped in 71864a54; `PM2_WS` still defaults to the four legacy names) | about 150 | low; the legacy config stays as the kill switch | 0.25 | `scripts/vps-update.sh:50`, `scripts/vps-start.sh:37` |
+| 1 | one asset-watcher process instead of four (the one-process queue shipped in 71864a54; `PM2_WS` still defaults to the four legacy names) | about 150 | low; the legacy config stays as the kill switch | 0.25 | `vps-update.sh:50` (repo root, git-ignored), `vps-start.sh:37` |
 | 2 | `SERVERS_LAZY=jp,kr` (built, off by default) | 219 (measured, af6a07c8) | the first JP or KR request after 30 min idle waits up to 20 s or gets 503 plus Retry-After | 0 | `backend/src/app/residency.rs:1-20`, `backend/README.md:294` |
 | 3 | clear the per-server `ServerCache`s when a lazy server unloads (today only `GameData` is dropped; the 21 static-table slots and the story, music, archive, gallery and sprite caches keep their `Arc`s until the next request) | 85 to 100 per lazy server; this makes #2 real | low | 0.5 | `residency.rs:331-368`, `services/static_data.rs:57`, `services/story/cache.rs:50` |
 | 4 | static tables: keep the brotli form only, or write the identity `SharedJson` to disk so the kernel can reclaim it (about 75 MB identity plus 8 MB brotli per server) | 150 to 300 | low; gzip and identity clients pay 25 to 100 ms to decode | 0.5 to 1 | `app/cache/mod.rs:46-49` |
@@ -75,6 +76,17 @@ watcher (it breaks the backend's WebSocket contract on ports 9160 to 9163 for ab
 
 With #1 to #4 done, the site without Trevor sits at about 2.5 to 3.5 GB.
 
+- done (2026-10-19): #1. The repo-root `vps-update.sh` and `vps-start.sh` default `PM2_WS` to the one app `myrtle-ws`
+  (`assets/ecosystem.config.cjs`); `PM2_WS_LEGACY=1` restores the four legacy apps and their config. Both layouts bind
+  ports 9160 to 9163, so a deploy that finds the other layout's apps in pm2 deletes them before starting its own and
+  warns if the new one did not come up; `vps-start.sh` only reports a mismatch. Both files are git-ignored: the change
+  reaches the VPS only when they are copied there by hand. Unverified: no run on the VPS, `sh -n` only.
+- done (2026-10-19): #2 as a flag. `bootstrap.sh --lazy-servers jp,kr` writes `SERVERS_LAZY=jp,kr` into
+  `backend/.env`; without it the env step writes nothing and prints the recommendation. What to watch afterwards:
+  `trevor-vps-runbook.md` section 10.
+- done (2026-10-19): the pins. `bootstrap.sh`'s new `settings` step prints them as a block to copy, with the commands
+  that read the current values first; it applies nothing. `deploy/README.md`, "Memory".
+
 ## 4. Layer two and three: llama.cpp hygiene, then the 12B in a nightly window
 
 Hygiene, free: `--no-repack` on the serving server as well (measure its prompt-speed cost once), `--cache-ram 0` and
@@ -94,6 +106,15 @@ about 75 window-hours, so a 6-hour window covers it in about 12 nights, inside t
 flags: `-np 1 -c 12288 --cache-ram 0 --ctx-checkpoints 0 -fa on`. The runner's lock, pause and `STAGES_DAILY_AT`
 guard already exist; the window itself (stop and restore `trevor-llama`, a start and end hour, the passages notice)
 is the one piece to build, about a day.
+
+- done (2026-10-19): the hygiene. `trevor-llama.service` keeps `-np 1 --no-repack` (present since f201aa08) and gains
+  `OOMScoreAdjust=1000`, with a comment naming the one open measurement (prompt tokens/s on the VPS with and without
+  `--no-repack`); `trevor-stages.service` gains `OOMScoreAdjust=1000`; `trevor-worker.service` goes to
+  `MemoryHigh=1792M MemoryMax=2G`. Every llama-server `stages.py` starts gets `-np 1 --cache-ram 0 --ctx-checkpoints 0
+  -fa on` in the fixed part of its command (`server_cmd`), so `STAGES_SERVER_ARGS` (which keeps `--no-repack`) cannot
+  drop them; `STAGES_SERVER_LEAN=0` restores update.sh's flags (the profile's slots, `-cram 512`), checked identical
+  on 16 command lines. The spellings `--cache-ram` and `--ctx-checkpoints` are build 11146's (`llama-server --help`).
+  Not set here: the `-c 12288` of the window, which is a separate change.
 
 Fallbacks, in order, each with its quality evidence:
 - 12B at IQ3_M (bartowski, 5.56 GiB) or Q3_K_M (unsloth, 5.30 GiB): about 1.2 to 1.5 GB less resident; mean KL

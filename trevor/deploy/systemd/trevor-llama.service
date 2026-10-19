@@ -2,6 +2,13 @@
 # Flags and limits from trevor-zero-cost.md section 2.1: one thread, 4,096-token context, one slot, no weight
 # repacking (keeps RSS at about 3.1 GB), no busy-polling, a 256 MiB prompt cache. AllowedCPUs pins it to vCPU 2;
 # CPUWeight 10 and Nice 19 make it yield to the site. No CPUQuota: a quota stalls llama.cpp's threads.
+# Memory (design/trevor-memory-budget.md sections 2 and 4): --no-repack keeps the weights page-cache backed, so this
+# server and a stage server mapping the same GGUF share one copy (on x86 with AVX2 repacking copies Q4_0 and Q4_K
+# tensors into anonymous memory that can neither be shared nor evicted). Its prompt-speed cost on x86 is unmeasured;
+# the one measurement that settles it: prompt tokens/s on the VPS with and without --no-repack, one real
+# 2,000-token prompt each (the prompt eval line of the server log; llama-bench b11146 lists no repack option).
+# -np 1 stays explicit (the default is auto). OOMScoreAdjust=1000 makes this resumable server the OOM killer's first
+# pick, before Postgres or the backend.
 [Unit]
 Description=Trevor llama-server (Gemma 4 E2B, CPU rung)
 After=network.target
@@ -17,6 +24,7 @@ AllowedCPUs=2
 CPUWeight=10
 Nice=19
 MemoryMax=4G
+OOMScoreAdjust=1000
 Restart=always
 RestartSec=10
 NoNewPrivileges=yes

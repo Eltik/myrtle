@@ -19,8 +19,10 @@ Restart=always
 RestartSec=10
 Nice=10
 CPUQuota=100%
-MemoryHigh=1280M
-MemoryMax=1536M
+# Hybrid retrieval peaked at 1.53 GB on the development machine against the old 1536M cap; BM25-only stays about
+# 0.2 GB (design/trevor-memory-budget.md section 1). Old values: MemoryHigh=1280M, MemoryMax=1536M.
+MemoryHigh=1792M
+MemoryMax=2G
 NoNewPrivileges=yes
 ProtectSystem=strict
 ProtectHome=yes

@@ -9,6 +9,8 @@
 # Steps, in order (each checks its own done-state, so a rerun continues where the last one stopped):
 #   preflight     OS and arch, tools (missing apt packages are installed), memory and disk thresholds, the trevor user,
 #                 /var/lib/trevor, /etc/trevor, /run/trevor (tmpfiles)
+#   settings      PRINTS the Postgres and Redis memory settings of design/trevor-memory-budget.md section 3 as a block
+#                 to copy, with their reasons; applies nothing (the databases belong to the site, not to bootstrap)
 #   release       scripts/fetch-release.sh --components trevor,assets[,backend] SHA: the CI-built binaries. The bundle
 #                 exists only for commits built on main by the Release Bundle workflow; exit 3 (no bundle) stops here,
 #                 nothing is ever compiled on the box. backend is added when backend/target/release/backend is missing
@@ -19,7 +21,8 @@
 #   snapshot      scripts/snapshot.py install FILE --into trevor/artifacts, from --snapshot URL or path. --no-snapshot
 #                 starts from an empty tree, and the first update then builds everything: weeks on a CPU
 #   env           /etc/trevor/trevor.env from deploy/trevor.env.example (paths, BM25 serving, a fresh TREVOR_WORKER_KEY,
-#                 the Cloudflare keys left unset), and the same TREVOR_WORKER_KEY in backend/.env
+#                 the Cloudflare keys left unset), and the same TREVOR_WORKER_KEY in backend/.env; SERVERS_LAZY in
+#                 backend/.env only with --lazy-servers (otherwise it prints the recommendation and writes nothing)
 #   database      the backend applies its migrations on startup (backend/README.md, Database), so this restarts the
 #                 backend under root's pm2 when that pm2 already runs it, and waits until it answers and accepts the worker
 #                 key. It never starts a backend itself: root's pm2 would run it as root, and which account runs the
@@ -42,6 +45,10 @@
 #   --database-url URL     only when backend/.env does not exist: create it from backend/.env.example with this
 #                          DATABASE_URL and fresh JWT_SECRET, SERVICE_KEY and GAME_CREDENTIAL_KEY
 #   --webhook URL          DISCORD_ALERT_WEBHOOK for the update script's alerts (optional)
+#   --lazy-servers LIST    write SERVERS_LAZY=LIST (e.g. jp,kr) into backend/.env: those game-data servers load on their
+#                          first request and unload after 30 idle minutes, about 219 MB less resident (budget doc
+#                          section 3, item 2). Default: write nothing, print the recommendation. The backend reads it at
+#                          its next restart
 #   --only STEP[,STEP]     run only these steps (repeatable);  --skip STEP[,STEP]  skip these (repeatable)
 #   --dry-run              print every command that would run and run nothing (read-only checks still run)
 #   -h, --help             this text
@@ -78,8 +85,8 @@ ROUTE_QUESTION="Who is Amiya?"
 MEM_FAIL_GB=8; MEM_LLM_GB=16; MEM_WARN_GB=32; CORES_WARN=8
 DISK_FAIL_GB=15; DISK_WARN_GB=40
 
-STEPS="preflight release llama models snapshot env database units first-update verify"
-SHA=""; SNAPSHOT=""; SNAPSHOT_SHA=""; NO_SNAPSHOT=0; DATABASE_URL_NEW=""; WEBHOOK=""
+STEPS="preflight settings release llama models snapshot env database units first-update verify"
+SHA=""; SNAPSHOT=""; SNAPSHOT_SHA=""; NO_SNAPSHOT=0; DATABASE_URL_NEW=""; WEBHOOK=""; LAZY_SERVERS=""
 ONLY=""; SKIP=""; DRY_RUN=0
 STEP="start"; WARNINGS=()
 
@@ -92,6 +99,7 @@ while [ $# -gt 0 ]; do
     --no-snapshot) NO_SNAPSHOT=1 ;;
     --database-url) DATABASE_URL_NEW="${2:?--database-url needs a URL}"; shift ;;
     --webhook) WEBHOOK="${2:?--webhook needs a URL}"; shift ;;
+    --lazy-servers) LAZY_SERVERS="${2:?--lazy-servers needs a list such as jp,kr}"; shift ;;
     --only) ONLY="$ONLY,${2:?--only needs a step}"; shift ;;
     --skip) SKIP="$SKIP,${2:?--skip needs a step}"; shift ;;
     --dry-run) DRY_RUN=1 ;;
@@ -103,6 +111,9 @@ done
 for s in ${ONLY//,/ } ${SKIP//,/ }; do
   case " $STEPS " in *" $s "*) ;; *) echo "bootstrap: unknown step '$s' (steps: $STEPS)" >&2; exit 2 ;; esac
 done
+if [ -n "$LAZY_SERVERS" ] && ! printf '%s' "$LAZY_SERVERS" | grep -Eq '^(en|cn|jp|kr)(,(en|cn|jp|kr))*$'; then
+  echo "bootstrap: --lazy-servers takes a comma list of en, cn, jp, kr (jp,kr is the recommendation), not $LAZY_SERVERS" >&2; exit 2
+fi
 if [ -n "$SNAPSHOT" ] && [ "$NO_SNAPSHOT" = 1 ]; then echo "bootstrap: --snapshot and --no-snapshot exclude each other" >&2; exit 2; fi
 # A downloaded snapshot is installed by root, so it must be the archive the operator meant: a URL needs its digest.
 SNAPSHOT_SHA="$(printf '%s' "$SNAPSHOT_SHA" | tr 'A-F' 'a-f')"
@@ -259,6 +270,35 @@ step_preflight() {
   run systemd-tmpfiles --create /etc/tmpfiles.d/trevor.conf
 }
 
+# ---------------------------------------------------------------- 1b. settings (prints only)
+# The database pins of design/trevor-memory-budget.md section 3 that the repo sets nowhere. Printed, never applied: the
+# databases belong to the site, and a wrong max_connections or maxmemory breaks it, so the operator reads the current
+# values first and applies the block by hand.
+step_settings() {
+  begin settings "the Postgres and Redis memory settings to apply by hand (printed, nothing applied)"
+  cat <<'EOF'
+    # Read the current values first:
+    sudo -u postgres psql -c 'SHOW shared_buffers' -c 'SHOW max_connections' -c 'SELECT count(*) FROM pg_stat_activity'
+    redis-cli INFO memory | grep -E '^(used_memory_human|used_memory_peak_human|maxmemory_human|maxmemory_policy):'
+
+    # Postgres (ALTER SYSTEM writes postgresql.auto.conf; shared_buffers and max_connections need the restart):
+    sudo -u postgres psql -c "ALTER SYSTEM SET shared_buffers = '512MB'"          # not 25% of RAM: the page cache is reclaimable, shared buffers are not
+    sudo -u postgres psql -c "ALTER SYSTEM SET work_mem = '8MB'"                  # per sort or hash node of every query
+    sudo -u postgres psql -c "ALTER SYSTEM SET max_parallel_workers_per_gather = 1"  # 3 vCPU; each parallel worker is another process
+    sudo -u postgres psql -c "ALTER SYSTEM SET maintenance_work_mem = '128MB'"    # vacuum and index builds
+    sudo -u postgres psql -c "ALTER SYSTEM SET max_connections = 40"              # the backend's pool is 20 (DATABASE_MAX_CONNECTIONS); stay above the count read above
+    sudo -u postgres psql -c "ALTER SYSTEM SET effective_cache_size = '2GB'"      # a planner hint only, allocates nothing
+    sudo systemctl restart postgresql
+
+    # Redis: a ceiling against runaway growth, not a target; set it well above used_memory_peak read above. Every key
+    # has a TTL, so with any evicting policy eviction removes sessions and logs users out; under the default
+    # noeviction, writes fail at the cap instead.
+    redis-cli CONFIG SET maxmemory 256mb
+    redis-cli CONFIG REWRITE                               # persists it to redis.conf
+EOF
+  info "why each value: trevor/design/trevor-memory-budget.md section 3 (pins); nothing above was run"
+}
+
 # ---------------------------------------------------------------- 2. release
 step_release() {
   begin release "the CI-built binaries for the commit"
@@ -385,6 +425,53 @@ step_snapshot() {
 
 # ---------------------------------------------------------------- 6. env
 step_env() {
+  env_worker_key
+  env_lazy_servers
+}
+
+# env_lazy_servers: SERVERS_LAZY in backend/.env, only with --lazy-servers; otherwise the recommendation, printed.
+env_lazy_servers() {
+  local cur
+  cur="$(env_value "$BACKEND_ENV" SERVERS_LAZY)"
+  if [ -z "$LAZY_SERVERS" ]; then
+    info "SERVERS_LAZY: ${cur:-unset} in $BACKEND_ENV, left alone. Recommended on an 11 GB box: --lazy-servers jp,kr"
+    info "  (jp and kr load on their first request and unload after 30 idle minutes, about 219 MB less resident; the"
+    info "  first request after an unload waits up to 20 s or gets 503 with Retry-After; budget doc section 3, item 2)"
+    return 0
+  fi
+  if [ "$cur" = "$LAZY_SERVERS" ]; then done_already "SERVERS_LAZY=$LAZY_SERVERS in $BACKEND_ENV"; return 0; fi
+  printf '  + set SERVERS_LAZY=%s in %s (was %s); the backend reads it at its next restart\n' "$LAZY_SERVERS" "$BACKEND_ENV" "${cur:-unset}"
+  [ "$DRY_RUN" = 1 ] && return 0
+  [ -f "$BACKEND_ENV" ] || fail "no $BACKEND_ENV to write SERVERS_LAZY into"
+  LAZY="$LAZY_SERVERS" python3 - "$BACKEND_ENV" <<'PY2'
+import os, sys
+path = sys.argv[1]
+val = os.environ['LAZY']
+lines = open(path, encoding='utf-8').read().splitlines()
+st = os.stat(path)
+done = False
+for i, line in enumerate(lines):
+    s = line.strip()
+    if s.startswith('SERVERS_LAZY=') or s.startswith('export SERVERS_LAZY='):
+        lines[i] = f'SERVERS_LAZY={val}'
+        done = True
+if not done:
+    lines += ['', '# Lazy game-data servers (trevor/deploy/bootstrap.sh --lazy-servers; trevor/design/trevor-memory-budget.md).',
+              f'SERVERS_LAZY={val}']
+tmp = path + '.tmp'
+fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+with os.fdopen(fd, 'w', encoding='utf-8') as f:
+    f.write('\n'.join(lines) + '\n')
+os.chmod(tmp, st.st_mode & 0o777)
+if os.geteuid() == 0:
+    os.chown(tmp, st.st_uid, st.st_gid)
+os.replace(tmp, path)
+PY2
+  [ "$(env_value "$BACKEND_ENV" SERVERS_LAZY)" = "$LAZY_SERVERS" ] || fail "SERVERS_LAZY did not land in $BACKEND_ENV"
+  info "SERVERS_LAZY=$LAZY_SERVERS written; restart the backend (pm2 restart myrtle-backend) for it to take effect"
+}
+
+env_worker_key() {
   begin env "$ENV_FILE and the backend's TREVOR_WORKER_KEY"
   local key="" backend_key="" hook="$WEBHOOK"
   if [ -z "$DESTDIR" ]; then need_root "writes /etc/trevor and backend/.env"; fi

@@ -11,8 +11,8 @@ links there. The variables the worker and the scripts read are documented here a
 
 | unit | what | when | limits |
 |---|---|---|---|
-| `trevor-llama.service` | `llama-server`, Gemma 4 E2B Q4_K_M, `-t 1 -c 4096 -np 1 --no-repack --poll 0 --cache-ram 256`, port 8081 | always | `AllowedCPUs=2 CPUWeight=10 Nice=19 MemoryMax=4G`, no CPUQuota (it stalls llama.cpp's threads) |
-| `trevor-worker.service` | `ask --worker http://127.0.0.1:3060 --retrieval $TREVOR_RETRIEVAL --server http://127.0.0.1:8081 --no-spawn --ignore-lock` | always | `CPUQuota=100% MemoryMax=1536M Nice=10` |
+| `trevor-llama.service` | `llama-server`, Gemma 4 E2B Q4_K_M, `-t 1 -c 4096 -np 1 --no-repack --poll 0 --cache-ram 256`, port 8081 | always | `AllowedCPUs=2 CPUWeight=10 Nice=19 MemoryMax=4G OOMScoreAdjust=1000`, no CPUQuota (it stalls llama.cpp's threads) |
+| `trevor-worker.service` | `ask --worker http://127.0.0.1:3060 --retrieval $TREVOR_RETRIEVAL --server http://127.0.0.1:8081 --no-spawn --ignore-lock` | always | `CPUQuota=100% MemoryHigh=1792M MemoryMax=2G Nice=10` (2026-10-19; was 1280M and 1536M) |
 | `trevor-update.timer` / `.service` | `trevor-vps-update.sh daily`: the deterministic update | 19:30 UTC | `Nice=19`, IO idle, `CPUQuota=100% MemoryMax=2G` |
 | `trevor-summaries.timer` / `.service` | `trevor-vps-update.sh summaries`: summaries for new stories, then rebuild and publish | 23:00 UTC | `Nice=19`, IO idle, `AllowedCPUs=0-1 CPUWeight=10 MemoryMax=4G` |
 | `trevor-worker-restart.path` | restarts the worker when the live release changes | on change | |
@@ -276,6 +276,14 @@ worker's own reports will show. By hand: `publish.py --activate <version>` (with
   below the smaller of 10 GB and 10%; after each daily publish the run log lists the logs, eval runs, spool files,
   releases and asset manifests over the policy, deleted only with `PRUNE_APPLY=1` (manifests also `PRUNE_APPLY_ASSETS=1`);
   `trevor-vps-update.sh prune` shows the same list by hand; `PRUNE=0`, `DISK_CHECK=0` turn them off.
+- Lazy game-data servers (2026-10-19, `SERVERS_LAZY=jp,kr` in `backend/.env`, written by `bootstrap.sh --lazy-servers
+  jp,kr`; `trevor-memory-budget.md` section 3, item 2, about 219 MB): JP and KR load on the first request naming them
+  and unload after 30 idle minutes (`SERVERS_LAZY_IDLE_SECS`, 1800). What to watch after enabling it: the first JP or KR
+  request after an unload waits up to 20 s (`SERVERS_LAZY_WAIT_MS`, 20000) and past that gets `503` with
+  `Retry-After` while the load finishes; a few of those a day after idle stretches are expected, a steady stream means
+  the idle time is too short for the traffic (raise it or drop the server from the list). Watch the backend's RSS
+  across one unload (`ps -o rss -p <pid>`): until the per-server caches are cleared on unload (budget doc item 3), it
+  falls by less than the 219 MB measured. Unset `SERVERS_LAZY` and restart the backend to go back to eager loading.
 - `artifacts/bank/regen/history.jsonl`: every `detect` and `run`, with counts. `trevor-vps-update.sh summaries`
   logs `bank-cf.json` and `bank-local.json` in the run's log directory.
 
