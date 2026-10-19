@@ -57,7 +57,8 @@
 #   SUMMARY_PORT [8082]  SUMMARY_CTX [16384]  SUMMARY_THREADS [2]  SUMMARY_UNTIL [07:00]  SUMMARY_MIN_AVAIL_MB [2500]
 #   PLAN=1      print what would run (detection and the summary plan are real, nothing is written)
 #   FORCE=1     run `daily` even when the res_version is unchanged;  SKIP_FETCH=1  no build-corpus (test)
-#   NO_PUBLISH=1  publish.py --dry-run into the log dir; no upload, no switch;  KEEP_RELEASES [3]
+#   NO_PUBLISH=1  publish.py --dry-run into the log dir; no upload, no switch;  KEEP_RELEASES [3] releases in all:
+#              the live one, the previous live one (history.jsonl), then the newest others
 #   WORKER_SETTLE [30]  seconds between the worker restart and the activate call;  SETTLE_MIN [15] minutes a new
 #              .version must be old before `daily` uses it (the backend hot-reloads after the watcher's extract)
 #   PRUNE [1]  0 = no prune step after a daily publish (the script before 2026-10-19). The step runs scripts/retention.py
@@ -418,13 +419,19 @@ panels_and_gates() {
 # flip_live RELEASE_ARTIFACTS_DIR: atomically point $CURRENT at it and request the worker restart, as one ordered step.
 # The restart marker (trevor-worker-restart.path restarts trevor-worker on it) is written to a temp file BEFORE the
 # flip, so a full disk fails before anything moved; after the flip it lands by a rename, and if even that fails the
-# symlink goes back, so `current` never moves without the worker being told.
+# symlink goes back, so `current` never moves without the worker being told. The temp file is always a new file (any
+# old one removed first, then created exclusively): an existing worker-restart.tmp stays writable in a read-only
+# state/, and opening it let the flip go ahead and flip back (chaos run 2026-10-19, mismatch 5). A flip that raises
+# removes the temp file it wrote.
 flip_live() {
   python3 - "$1" "$CURRENT" "$STATE/worker-restart" <<'PY'
 import os, sys, time
 target, cur, marker = sys.argv[1:4]
 tmp, nxt = marker + '.tmp', cur + '.next'
-with open(tmp, 'w') as f:
+if os.path.lexists(tmp):
+    os.remove(tmp)
+fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+with os.fdopen(fd, 'w') as f:
     f.write(time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()) + '\n')
     f.flush()
     os.fsync(f.fileno())
@@ -434,7 +441,14 @@ def point(to):
         os.remove(nxt)
     os.symlink(to, nxt)
     os.replace(nxt, cur)
-point(target)
+try:
+    point(target)
+except BaseException:
+    try:
+        os.remove(tmp)
+    except OSError:
+        pass
+    raise
 try:
     os.replace(tmp, marker)
 except OSError as e:
@@ -459,16 +473,22 @@ clean_partial_releases() {
   return 0
 }
 
-prune_releases() {  # keep the live release and the KEEP_RELEASES - 1 newest others
-  local live_target keep=0 r
+# prune_releases: keep (a) the live release, (b) the previous live one (retention.py --previous-release: the release
+# of the last version history.jsonl names before the current one, the one `rollback` switches the worker to), then
+# (c) the newest others up to KEEP_RELEASES in all. A release that never went live (a failed activate or flip) only
+# fills (c): it never displaces (a) or (b) (chaos run 2026-10-19, mismatch 6: three never-live releases pruned the
+# last good one).
+prune_releases() {
+  local live_target prev keep=1 r
   live_target="$(abspath "$LIVE")"
+  prev="$(retention --previous-release 2>/dev/null || true)"
+  [[ -z "$prev" ]] || keep=2
   while IFS= read -r r; do
     [[ -n "$r" && "$r/artifacts" != "$live_target" ]] || continue
     case "$r" in *.tmp) continue ;; esac   # a partial promote: clean_partial_releases' job, not a slot
-    keep=$((keep + 1))
-    if (( keep >= KEEP_RELEASES )); then
-      case "$r" in "$RELEASES"/*) log "pruning release $r"; rm -rf -- "$r" ;; esac
-    fi
+    if [[ -n "$prev" && "$(abspath "$r")" == "$prev" ]]; then log "keeping release $r (the previous live release)"; continue; fi
+    if (( keep < KEEP_RELEASES )); then keep=$((keep + 1)); continue; fi
+    case "$r" in "$RELEASES"/*) log "pruning release $r"; rm -rf -- "$r" ;; esac
   done < <(python3 -c 'import os,sys
 d=sys.argv[1]
 rs=[os.path.join(d,x) for x in os.listdir(d) if os.path.isdir(os.path.join(d,x))] if os.path.isdir(d) else []
@@ -499,6 +519,11 @@ publish_stage() {
   version="$(json_get artifacts/panels/manifest.json version)"
   active="$(json_get "$STATE/active.json" version)"
   if [[ -n "$PLAN" ]]; then echo "PLAN: publish, promote, activate"; return 0; fi
+  # A flip that failed in an earlier run may have left the restart marker's temp file; flip_live never reuses it.
+  if [[ -e "$STATE/worker-restart.tmp" ]]; then
+    log "removing a stale $STATE/worker-restart.tmp (left by a failed flip)"
+    rm -f -- "$STATE/worker-restart.tmp" 2>/dev/null || log "WARNING: could not remove $STATE/worker-restart.tmp; the flip will fail before it moves anything"
+  fi
   [[ -n "$version" ]] || die "no version in the panels manifest"
   if [[ "$version" == "$active" ]]; then
     log "version $version is already active; nothing to publish"
@@ -535,7 +560,7 @@ publish_stage() {
   sleep "$WORKER_SETTLE"
   step "activate $version"
   local rc=0
-  python3 scripts/publish.py --activate "$version" || rc=$?
+  python3 scripts/publish.py --activate "$version" --how "$CMD" || rc=$?
   if (( rc == 5 )); then
     # The backend activated it; only publish.py's local record failed. The backend is the source of truth: no flip back.
     ACTIVATED="$version"
@@ -839,7 +864,7 @@ print(m[-1] if m else "")' "$STATE/releases.jsonl" "$target" 2>/dev/null || true
   log "rollback to $target (release ${rel:-not kept: panels only, the worker keeps its artifacts})"
   if [[ -n "$PLAN" ]]; then echo "PLAN: publish.py --activate $target; flip to $rel"; return 0; fi
   [[ -z "$rel" ]] || { flip_live "$rel/artifacts"; echo "$rel/artifacts" > "$STATE/stage-base"; sleep "$WORKER_SETTLE"; }
-  python3 "$TREVOR_DIR/scripts/publish.py" --activate "$target"
+  python3 "$TREVOR_DIR/scripts/publish.py" --activate "$target" --how rollback
   notify "rolled back to $target"
 }
 

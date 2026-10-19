@@ -243,3 +243,20 @@ not fixed. Left: the bash 5 check of 41c521d9 and a run on a real VPS.
 
 State left: both stubs stopped (99565 and 5640), all modes restored, the image detached. Main tree: chaos-d5 active,
 three releases. The scratch tree, including the 4.5 GB `disk.dmg`, is kept.
+
+Fixed after the run (the commit after 364771ea; 3 new tests in `scripts/tests/test_retention.py`, 12 pass, each new
+one failed against the code before it):
+
+- Fixed after the run, mismatch 5: publish_stage removes a stale `state/worker-restart.tmp` first (logged), and
+  flip_live removes any old temp file and creates it exclusively, so a read-only `state/` fails before the flip; a flip
+  that raises removes its temp file. Test: a leftover `.tmp` with `home` or `home/state` read-only leaves `current` on
+  the same symlink inode, no "is back on" line.
+- Fixed after the run, mismatch 6: prune_releases keeps the live release, the previous live one (`retention.py
+  --previous-release`: the release of the last version history.jsonl names before the current one, the row
+  `rollback` picks), then the newest others up to KEEP_RELEASES; retention.py's release policy uses the same previous
+  release (it took the newest releases.jsonl row, which can be a never-live release). Test: one good publish, three
+  failed activates, one good publish keep v0's release, and `rollback` switches the worker to it.
+- Fixed after the run, mismatch 8: publish.py `--how` (daily, rebuild, summaries, rollback, publish); the script
+  passes `--how "$CMD"` on a publish and `--how rollback` on a rollback; a hand-run `--activate` still records
+  "rollback". Nothing reads `how` (grep of scripts, deploy, design, src). Test: a daily publish records "daily", the
+  real `rollback` and a bare `--activate` record "rollback".

@@ -99,8 +99,8 @@ class Tree:
         self.expected.add(self.write(self.p('trevor', 'artifacts', 'spool', 'job-a.json'), '{}', age_days=20))
         self.write(self.p('trevor', 'artifacts', 'spool', 'job-b.json'), '{}', age_days=10)
         self.write(self.p('trevor', 'artifacts', 'spool', 'job-c.json'), '{}')
-        # Releases: 11; the newest 5 are 6..10; current -> r0 (a rollback), previous r1 (releases.jsonl), stage base
-        # r2; 3, 4 and 5 go.
+        # Releases: 11; the newest 5 are 6..10; current -> r0 (a rollback), previous r1 (the version history.jsonl
+        # names before r0's), stage base r2; 3, 4 and 5 go.
         names = [f'{stamp(i)}-v{i}' for i in range(11)]
         for i, n in enumerate(names):
             self.write(self.p('home', 'releases', n, 'artifacts', 'chunks.jsonl'), f'release {i}\n')
@@ -110,6 +110,8 @@ class Tree:
         order = names[2:] + [names[1], names[0]]
         self.write(self.p('home', 'state', 'releases.jsonl'),
                    ''.join(json.dumps({'version': n, 'release': self.p('home', 'releases', n)}) + '\n' for n in order))
+        self.write(self.p('home', 'state', 'history.jsonl'),
+                   ''.join(json.dumps({'version': n, 'how': 'daily'}) + '\n' for n in (names[5], names[1], names[0])))
         self.write(self.p('home', 'state', 'stage-base'), self.p('home', 'releases', names[2], 'artifacts') + '\n')
         # Asset manifests: four in en (4, 3, 2, 1 days old): the newest 2 stay. hot_update_list.idx and bundles are
         # never candidates; kr has one manifest.
@@ -135,6 +137,11 @@ class Tree:
 
     def listed(self, summary):
         return {x for s in summary['policies'].values() for x in s['listed']}
+
+
+def read(path):
+    with open(path) as f:
+        return f.read()
 
 
 class Retention(unittest.TestCase):
@@ -334,6 +341,201 @@ class Retention(unittest.TestCase):
         finally:
             srv.shutdown()
             srv.server_close()
+
+    # ------------------------------------------------------------ the publish path (chaos run 2026-10-19, 5, 6, 8)
+    def release_tree(self):
+        """home/releases/<initial> live through home/current and trevor/artifacts, the real scripts as
+        trevor/scripts, a stage whose scripts/publish.py is a stub (it logs its argv; `--activate V` fails under
+        STUB_FAIL=1, else appends {version, how} to history.jsonl and writes active.json, as publish.py's record
+        does), and a harness that sources trevor-vps-update.sh up to its command dispatch and runs publish_stage."""
+        t = self.t
+        init = t.p('home', 'releases', f'{stamp(0)}-initial')
+        t.write(os.path.join(init, 'artifacts', 'chunks.jsonl'), 'initial\n')
+        os.symlink(os.path.join(init, 'artifacts'), t.p('home', 'current'))
+        os.makedirs(t.trevor)
+        os.symlink(SCRIPTS, t.p('trevor', 'scripts'))
+        os.symlink(t.p('home', 'current'), t.p('trevor', 'artifacts'))
+        os.makedirs(t.p('home', 'state'))
+        t.write(t.p('home', 'stage', 'trevor', 'artifacts', 'chunks.jsonl'), 'stage\n')
+        t.write(t.p('home', 'stage', 'trevor', 'scripts', 'publish.py'), """import json, os, sys
+a = sys.argv[1:]
+open(os.environ['STUB_LOG'], 'a').write(json.dumps(a) + '\\n')
+if '--activate' in a:
+    if os.environ.get('STUB_FAIL') == '1':
+        sys.exit(1)
+    st = os.environ['TREVOR_STATE_DIR']
+    v, how = a[a.index('--activate') + 1], (a[a.index('--how') + 1] if '--how' in a else None)
+    open(os.path.join(st, 'history.jsonl'), 'a').write(json.dumps({'version': v, 'how': how}) + '\\n')
+    json.dump({'version': v}, open(os.path.join(st, 'active.json'), 'w'))
+""")
+        t.write(t.p('harness.sh'), """set -u
+sed '/^case "$CMD" in/,$d' "$1" > "$HARNESS_LIB"
+U="$1"; shift
+source "$HARNESS_LIB" "$@"
+STAMP="$H_STAMP"; WORK="$STAGE/trevor"
+publish_stage
+log "harness: publish_stage returned"
+""")
+        self.stub_log = t.p('stub.log')
+        self.env = {k: v for k, v in os.environ.items()
+                    if not k.startswith(('RETAIN_', 'DISK_', 'TREVOR_', 'PRUNE', 'KEEP_', 'DISCORD_', 'STUB_'))}
+        self.env.update({'TREVOR_DIR': t.trevor, 'TREVOR_HOME': t.home, 'ASSETS_DIR': t.assets, 'TREVOR_NICED': '1',
+                         'TREVOR_WORKER_KEY': 'k', 'WORKER_SETTLE': '0', 'TREVOR_WARM_TOP': '0', 'PRUNE': '0',
+                         'TMPDIR': t.root, 'STUB_LOG': self.stub_log, 'HARNESS_LIB': t.p('lib.sh')})
+        return init
+
+    def publish(self, i, version, fail=False, cmd='daily'):
+        """publish_stage of VERSION under release stamp I; the activate fails under FAIL."""
+        self.t.write(self.t.p('home', 'stage', 'trevor', 'artifacts', 'panels', 'manifest.json'),
+                     json.dumps({'version': version, 'builtFrom': f'res-{version}'}))
+        p = subprocess.run(['bash', self.t.p('harness.sh'), UPDATE, cmd], capture_output=True, text=True,
+                           env={**self.env, 'H_STAMP': stamp(i), 'STUB_FAIL': '1' if fail else '0'})
+        return p.returncode, p.stdout + p.stderr
+
+    def rel(self, i, version):
+        return self.t.p('home', 'releases', f'{stamp(i)}-{version}')
+
+    def history(self):
+        with open(self.t.p('home', 'state', 'history.jsonl')) as f:
+            return [json.loads(l) for l in f if l.strip()]
+
+    def test_never_live_releases_never_prune_the_previous_live_one(self):
+        """One good publish, three builds whose activate failed (promoted, flipped back, never live), one more good
+        publish: KEEP_RELEASES=3 keeps the live release, the previous live one (v0's) and the newest other; before
+        the fix the three never-live releases pushed v0's out and `rollback` found no release for v0."""
+        init = self.release_tree()
+        self.assertEqual(self.publish(1, 'v0')[0], 0)
+        for i, v in ((2, 'v1'), (3, 'v2'), (4, 'v3')):
+            code, out = self.publish(i, v, fail=True)
+            self.assertEqual(code, 1, out)
+            self.assertIn('activate failed; the worker is back on', out)
+        code, out = self.publish(5, 'v4')
+        self.assertEqual(code, 0, out)
+        self.assertIn('keeping release ' + self.rel(1, 'v0') + ' (the previous live release)', out)
+        self.assertEqual(os.path.realpath(self.t.p('home', 'current')), os.path.realpath(self.rel(5, 'v4') + '/artifacts'))
+        kept = sorted(os.listdir(self.t.p('home', 'releases')))
+        self.assertEqual(kept, sorted(os.path.basename(x) for x in (self.rel(1, 'v0'), self.rel(4, 'v3'), self.rel(5, 'v4'))))
+        self.assertFalse(os.path.exists(init))
+        # history.jsonl names the command: a daily publish records "daily" (it read "rollback" for every row).
+        self.assertEqual([(r['version'], r['how']) for r in self.history()], [('v0', 'daily'), ('v4', 'daily')])
+        with open(self.stub_log) as f:
+            calls = [json.loads(l) for l in f]
+        self.assertIn(['--activate', 'v4', '--how', 'daily'], calls)
+        # `rollback` (no VERSION) finds v0's release.
+        p = subprocess.run(['bash', UPDATE, 'rollback'], capture_output=True, text=True, env={**self.env, 'PLAN': '1'})
+        self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+        self.assertIn(f"rollback to v0 (release {self.rel(1, 'v0')})", p.stdout)
+        # The real rollback against a stand-in backend: the worker goes to v0's release and publish.py records
+        # "rollback".
+        posts = []
+
+        class Backend(http.server.BaseHTTPRequestHandler):
+            def do_POST(self):
+                posts.append(self.rfile.read(int(self.headers['content-length'])))
+                body = json.dumps({'version': 'v0', 'server': 'en', 'panels': 0, 'active': True}).encode()
+                self.send_response(200)
+                self.send_header('content-length', str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            def log_message(self, *a):
+                pass
+
+        srv = http.server.HTTPServer(('127.0.0.1', 0), Backend)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        try:
+            for v in ('v0', 'v4'):
+                self.t.write(self.t.p('home', 'state', 'versions', v, 'activate.json'),
+                             json.dumps({'version': v, 'activate': True, 'panels': {}, 'manifest': {'builtFrom': 'r'}}))
+            env = {**self.env, 'TREVOR_BACKEND': f'http://127.0.0.1:{srv.server_port}',
+                   'TREVOR_STATE_DIR': self.t.p('home', 'state')}
+            p = subprocess.run(['bash', UPDATE, 'rollback'], capture_output=True, text=True, env=env)
+            self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+            self.assertEqual(os.path.realpath(self.t.p('home', 'current')),
+                             os.path.realpath(self.rel(1, 'v0') + '/artifacts'))
+            self.assertEqual(self.history()[-1]['how'], 'rollback')
+            # publish.py itself: --how daily records "daily"; --activate without --how stays "rollback".
+            p = subprocess.run([sys.executable, os.path.join(SCRIPTS, 'publish.py'), '--activate', 'v4', '--how', 'daily'],
+                               capture_output=True, text=True, env=env)
+            self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+            p = subprocess.run([sys.executable, os.path.join(SCRIPTS, 'publish.py'), '--activate', 'v0'],
+                               capture_output=True, text=True, env=env)
+            self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+            self.assertEqual([(r['version'], r['how']) for r in self.history()[-3:]],
+                             [('v0', 'rollback'), ('v4', 'daily'), ('v0', 'rollback')])
+            self.assertEqual(len(posts), 3)
+        finally:
+            srv.shutdown()
+            srv.server_close()
+
+    def test_retention_previous_release_is_the_previous_live_one(self):
+        """retention.py's release policy: the previous release is v0's (the version history.jsonl names before the
+        current one), not the newest releases.jsonl row (a never-live release)."""
+        t = self.t
+        rows, names = [], []
+        for i, v in enumerate(('v0', 'v1', 'v2', 'v3', 'v4')):
+            n = f'{stamp(i + 1)}-{v}'
+            names.append(n)
+            t.write(t.p('home', 'releases', n, 'artifacts', 'chunks.jsonl'), v + '\n')
+            rows.append({'version': v, 'release': t.p('home', 'releases', n)})
+        t.write(t.p('home', 'releases', f'{stamp(0)}-initial', 'artifacts', 'chunks.jsonl'), 'initial\n')
+        os.symlink(t.p('home', 'releases', names[4], 'artifacts'), t.p('home', 'current'))
+        t.write(t.p('home', 'state', 'releases.jsonl'), ''.join(json.dumps(r) + '\n' for r in rows))
+        t.write(t.p('home', 'state', 'history.jsonl'),
+                ''.join(json.dumps({'version': v, 'how': 'daily'}) + '\n' for v in ('v0', 'v4')))
+        os.makedirs(t.trevor)
+        code, s, out = t.run('--only', 'releases', env={'RETAIN_RELEASES': '2'})
+        self.assertEqual(code, 2, out)
+        self.assertEqual(set(s['policies']['releases']['listed']),
+                         {t.p('home', 'releases', x) for x in (f'{stamp(0)}-initial', names[1], names[2])})
+        self.assertIn(f"keep  {t.p('home', 'releases', names[0])}  (the previous release)", out)
+        p = subprocess.run([sys.executable, RETENTION, '--trevor-dir', t.trevor, '--home', t.home, '--previous-release'],
+                           capture_output=True, text=True)
+        self.assertEqual((p.returncode, p.stdout.strip()), (0, os.path.realpath(t.p('home', 'releases', names[0]))))
+        # No history row before the current one: no previous release (a never-live release is never it).
+        t.write(t.p('home', 'state', 'history.jsonl'), json.dumps({'version': 'v4'}) + '\n')
+        p = subprocess.run([sys.executable, RETENTION, '--trevor-dir', t.trevor, '--home', t.home, '--previous-release'],
+                           capture_output=True, text=True)
+        self.assertEqual((p.returncode, p.stdout.strip()), (0, ''))
+
+    def test_a_stale_restart_tmp_never_flips(self):
+        """A worker-restart.tmp left by a failed flip: the next run removes it (logged), and a run that then fails
+        at the flip leaves `current` untouched (the same symlink inode: it never flipped and flipped back)."""
+        self.release_tree()
+        self.assertEqual(self.publish(1, 'v0')[0], 0)
+        cur, state = self.t.p('home', 'current'), self.t.p('home', 'state')
+        tmp, marker = os.path.join(state, 'worker-restart.tmp'), os.path.join(state, 'worker-restart')
+        before = (os.lstat(cur).st_ino, os.readlink(cur), read(marker))
+        try:
+            # 1. home read-only: the symlink flip itself fails.
+            self.t.write(tmp, 'stale\n')
+            os.chmod(self.t.home, 0o555)
+            code, out = self.publish(2, 'v1')
+            os.chmod(self.t.home, 0o755)
+            self.assertNotEqual(code, 0, out)
+            self.assertIn('removing a stale ' + tmp, out)
+            self.assertNotIn('is back on', out)
+            self.assertNotIn('harness: publish_stage returned', out)
+            self.assertEqual((os.lstat(cur).st_ino, os.readlink(cur), read(marker)), before)
+            self.assertFalse(os.path.lexists(tmp), 'the failed flip removes its temp file')
+            # 2. state read-only with a writable leftover .tmp (the chaos run's `home/state` case): before the fix the
+            # open succeeded, `current` flipped and flipped back; now the flip fails before anything moves.
+            self.t.write(tmp, 'stale\n')
+            os.chmod(state, 0o555)
+            code, out = self.publish(3, 'v2')
+            os.chmod(state, 0o755)
+            self.assertNotEqual(code, 0, out)
+            self.assertIn('could not remove ' + tmp, out)
+            self.assertNotIn('is back on', out)
+            self.assertNotIn('harness: publish_stage returned', out)
+            self.assertEqual((os.lstat(cur).st_ino, os.readlink(cur), read(marker)), before)
+        finally:
+            os.chmod(self.t.home, 0o755)
+            os.chmod(state, 0o755)
+        # The next run with room publishes normally.
+        os.remove(tmp)
+        self.assertEqual(self.publish(4, 'v3')[0], 0)
+        self.assertEqual(os.path.realpath(cur), os.path.realpath(self.rel(4, 'v3') + '/artifacts'))
 
 
 if __name__ == '__main__':

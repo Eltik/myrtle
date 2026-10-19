@@ -364,6 +364,8 @@ def store_activate(state, version, activate_body):
 
 # Exit code of a run whose backend activate succeeded but whose local record (history.jsonl, active.json) failed.
 RECORD_FAILED = 5
+# history.jsonl's "how": the command that caused the activate (trevor-vps-update.sh's $CMD, or a hand-run publish).
+HOW = ("daily", "rebuild", "summaries", "rollback", "publish")
 
 
 class RecordError(Exception):
@@ -489,7 +491,7 @@ def publish(a):
         print(f"uploaded {summary} in {time.time() - t0:.1f} s, NOT activated; `publish.py --activate "
               f"{manifest['version']}` flips it")
         return 0
-    record(a.state, manifest["version"], manifest, "publish")
+    record(a.state, manifest["version"], manifest, a.how or "publish")
     print(f"published {summary} in {time.time() - t0:.1f} s; active = {manifest['version']}")
     return 0
 
@@ -517,7 +519,9 @@ def activate_only(a):
     if res.get("active") is not True:
         raise SendError(f"activate call answered {res}")
     report_bank(res, len(d.get("bankAnswers") or []))
-    record(a.state, a.activate, d["manifest"] or {}, "rollback")  # the body is already stored: it was read from there
+    # The body is already stored: it was read from there. `how` is the command that activated (trevor-vps-update.sh
+    # passes daily, rebuild, summaries or rollback); a hand-run --activate without --how is a rollback.
+    record(a.state, a.activate, d["manifest"] or {}, a.how or "rollback")
     print(f"active = {a.activate}")
     return 0
 
@@ -681,6 +685,9 @@ def main():
     ap.add_argument("--dry-run", metavar="OUTDIR", default=None, help="write the requests to OUTDIR, send nothing")
     ap.add_argument("--activate", metavar="VERSION", default=None, help="re-activate a published version (rollback)")
     ap.add_argument("--no-activate", action="store_true", help="upload the chunks only; --activate flips later")
+    ap.add_argument("--how", choices=HOW, default=None,
+                    help="what history.jsonl records as the activate's cause (default: rollback for --activate, "
+                         "publish for a full publish); trevor-vps-update.sh passes its command")
     ap.add_argument("--no-gzip", action="store_true", help="send raw JSON (a backend without request decompression)")
     ap.add_argument("--max-compressed", type=int, default=MAX_COMPRESSED)
     ap.add_argument("--max-decompressed", type=int, default=MAX_DECOMPRESSED)

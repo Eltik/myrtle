@@ -23,10 +23,13 @@ The policy (every number is an environment variable; the defaults in brackets):
   spool     TREVOR_SPOOL_DIR (else <trevor>/artifacts/spool, the worker's default): results the worker could not
             deliver, resent when it starts; files older than RETAIN_SPOOL_DAYS [14] days go.
   releases  <home>/releases/<stamp>-<version>/: keep the current release (the target of <home>/current and of
-            <trevor>/artifacts), the previous one (state/releases.jsonl), the stage's base (state/stage-base) and
-            the newest RETAIN_RELEASES [5] by name. trevor-vps-update.sh's prune_releases (KEEP_RELEASES, 3) runs
+            <trevor>/artifacts), the previous live one (the release of the last version state/history.jsonl names
+            before the current one, as `rollback` picks it; a release that never went live is never it), the
+            stage's base (state/stage-base) and the newest RETAIN_RELEASES [5] by name. trevor-vps-update.sh's
+            prune_releases (KEEP_RELEASES, 3: the live release, the previous live one, then the newest others) runs
             first after every publish and is stricter, so this catches what it never sees (a release left by a
             failed activate is pruned by the next successful publish; one left before a box stops publishing is not).
+            --previous-release prints the previous live release (empty when there is none) and does nothing else.
   assets    <assets>/ArkAssets/<server>/<32 hex>.idx: the resource manifest of one res_version each; keep the newest
             2 by mtime (the current and the previous version). The download is one tree per server updated in place,
             and assets/run.mjs pruneOrphans already deletes the bundles and manifests the current hot-update list does
@@ -153,20 +156,38 @@ def release_of(path):
     return os.path.dirname(t) if os.path.basename(t) == 'artifacts' else t
 
 
+def read_jsonl(path):
+    try:
+        return [r for r in (json.loads(l) for l in open(path) if l.strip()) if isinstance(r, dict)]
+    except (OSError, ValueError):
+        return []
+
+
+def previous_live_release(home, current=()):
+    """The release that was live before the current one, or None. The previous version is the last version
+    state/history.jsonl names before its last row's (the rule `trevor-vps-update.sh rollback` uses); its release is
+    the newest existing state/releases.jsonl row for that version that is not a CURRENT release (rollback picks the
+    same row). A release that never went live (a failed activate, a failed flip) has no history row, so it is never
+    the previous one (chaos run 2026-10-19, mismatch 6)."""
+    hist = [r.get('version') for r in read_jsonl(os.path.join(home, 'state', 'history.jsonl')) if r.get('version')]
+    if not hist:
+        return None
+    prev = [v for v in hist if v != hist[-1]]
+    if not prev:
+        return None
+    cur = {real(c) for c in current}
+    for row in reversed(read_jsonl(os.path.join(home, 'state', 'releases.jsonl'))):
+        r = row.get('release')
+        if row.get('version') == prev[-1] and r and os.path.isdir(r) and real(r) not in cur:
+            return real(r)
+    return None
+
+
 def release_state(a):
     releases = os.path.join(a.home, 'releases')
     current = {r for r in (release_of(os.path.join(a.home, 'current')), release_of(os.path.join(a.trevor_dir, 'artifacts')))
                if r and real(os.path.dirname(r)) == real(releases)}
-    previous = None
-    try:
-        rows = [json.loads(l) for l in open(os.path.join(a.home, 'state', 'releases.jsonl')) if l.strip()]
-    except (OSError, ValueError):
-        rows = []
-    for row in reversed(rows):
-        r = row.get('release') if isinstance(row, dict) else None
-        if r and os.path.isdir(r) and real(r) not in {real(c) for c in current}:
-            previous = real(r)
-            break
+    previous = previous_live_release(a.home, current)
     base = None
     try:
         base = release_of(open(os.path.join(a.home, 'state', 'stage-base')).read().strip())
@@ -390,9 +411,14 @@ def main(argv=None):
     ap.add_argument('--home', default=os.environ.get('TREVOR_HOME') or '/var/lib/trevor')
     ap.add_argument('--assets-dir', default=os.environ.get('ASSETS_DIR'))
     ap.add_argument('--spool-dir', default=os.environ.get('TREVOR_SPOOL_DIR'))
+    ap.add_argument('--previous-release', action='store_true',
+                    help="print the previous live release (trevor-vps-update.sh's prune_releases keeps it) and exit 0")
     a = ap.parse_args(argv)
     a.trevor_dir = os.path.abspath(a.trevor_dir)
     a.home = os.path.abspath(a.home)
+    if a.previous_release:
+        print(release_state(a)[2] or '')
+        return 0
     a.assets_dir = os.path.abspath(a.assets_dir or os.path.join(a.trevor_dir, '..', 'assets'))
     a.spool_dir = os.path.abspath(a.spool_dir or os.path.join(a.trevor_dir, 'artifacts', 'spool'))
     only = [p.strip() for p in a.only.split(',') if p.strip()]
