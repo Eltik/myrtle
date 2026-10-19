@@ -1535,6 +1535,12 @@ and "loss that cut her to the bone" lines; the default declined into Episode 17 
 decline. One gain, no loss over 157 + 37 questions, so both are defaults: `--no-react-verbs` and `--no-scene-subject`
 reproduce the earlier prompts (stub, 3 sets: new binary with both switches byte-identical to 6c586114 at its defaults,
 and the new defaults byte-identical to 6c586114 with `--react-verbs --scene-subject`).
+**The Discord set (00:41 JST).** The default reaches 2 of its 345 questions (not in the three gated sets). Velliv ("Are
+Oren and Ezell now taking care of Cecilia, based on what Velliv said?"): both arms answer no with the same evidence, the
+default more tightly. Reed ("Why did Reed leave the ship, and why does Bagpipe say ... Reed won't return"): the default
+quotes Bagpipe's actual line ("Operator Reed won't be comin' back with us to Rhodes Island for the moment", "her own
+business") [1], which the switched-off arm paraphrases from a later passage, but gives a thinner reason for leaving and
+first says no such scene exists before quoting it. One better, one equal, one mixed, no clear loss; the default stays.
 
 ### 2026-09-29: Canon evidence for IS endings: contrastive pass
 
