@@ -26,7 +26,7 @@ pick steps; `--dry-run` prints every command and changes nothing (the read-only 
 | `snapshot` | `scripts/snapshot.py install <file> --into trevor/artifacts` from `--snapshot URL|FILE` (`--snapshot-sha256` checks the file first). Refuses to go on without one; `--no-snapshot` starts from an empty tree, and the first update then builds every table from nothing, which is weeks on a CPU | `artifacts/snapshot.json`, or `artifacts` is already the release link |
 | `env` | `/etc/trevor/trevor.env` from `trevor.env.example`: the paths, `TREVOR_RETRIEVAL=bm25` and `EMBED=0` (step 9 below for hybrid), a fresh `TREVOR_WORKER_KEY` (kept on reruns), `--webhook` as `DISCORD_ALERT_WEBHOOK`, every `TREVOR_CF_*` commented out (cf is not used here); the same key in `backend/.env`. Without `backend/.env` it stops, unless `--database-url` is given: then it creates one from `backend/.env.example` with fresh `JWT_SECRET`, `SERVICE_KEY` and `GAME_CREDENTIAL_KEY` | both files hold the same key |
 | `database` | the backend applies its migrations on startup (`backend/README.md`, Database; there is no separate command), so this restarts a `myrtle-backend` that pm2 already runs (`pm2 restart myrtle-backend --update-env`), waits up to 15 minutes for `/api/health` and checks that the worker key is accepted; when no backend runs under pm2 it prints the `chown` and `pm2 start` commands for the operator (the site's pm2 account is not recorded, and the backend must not run as root) and stops | the worker key is accepted (HTTP 200 or 404 on `worker/popular`) |
-| `units` | installs `trevor-llama`, `trevor-worker`, `trevor-worker-restart.{path,service}`, `trevor-update.{service,timer}` (paths rewritten when the clone is not at `/var/www/myrtle.moe`), daemon-reload, enables and starts llama (waits for `/health`), the worker and the update timer. Not `trevor-summaries.timer`: it is the Cloudflare summaries path, unused in this deployment | unchanged unit files are left alone |
+| `units` | installs `trevor-llama`, `trevor-worker`, `trevor-worker-restart.{path,service}`, `trevor-update.{service,timer}`, `trevor-stages.service` (paths rewritten when the clone is not at `/var/www/myrtle.moe`), daemon-reload, enables and starts llama (waits for `/health`), the worker, the update timer and the stage runner. Not `trevor-summaries.timer`: it is the Cloudflare summaries path, unused in this deployment | unchanged unit files are left alone |
 | `first-update` | `trevor-vps-update.sh init` (adopts `trevor/artifacts` as the first release), `chown -R trevor /var/lib/trevor`, then `daily` once in the foreground with `FORCE=1` under `systemd-run` as `trevor`; the log is `/var/lib/trevor/logs/<stamp>-daily/run.log` | `state/active.json` exists |
 | `verify` | `/api/trevor/status` until a worker is online with the `cpu` rung (3 minutes; warns if `cf` shows), `ask --route-only` of one question, a one-screen summary | always runs |
 
@@ -206,3 +206,18 @@ systemctl status trevor-llama trevor-worker --no-pager
 
 Before the first backend deploy that carries migration v039: an off-box `pg_dump` and a tested restore (plan v3,
 phase D step 4).
+
+## 11. The stage runner (`trevor-stages.service`)
+
+The model stages of `scripts/update.sh` (summaries, the nightly re-answer, bank answers, dossiers, topics, deep
+topics, canon) run on the box as a paced background service, `scripts/stages.py` (design:
+`design/trevor-self-contained-deploy.md` sections 4 and 5). It plans each stage with its own `PLAN=1` run and skips
+stages with nothing to do, takes the model lock before starting its llama-server on `STAGES_PORT` (8082) and stops
+it by PID after each stage, idles `T*(1-D)/D` after a stage of `T` seconds (`STAGES_DUTY`, 0.5), pauses on the `pause`
+file in its state dir, on memory pressure, on load and while the nightly update holds its lock, keeps clear of the
+nightly window before canon (`STAGES_CANON_GUARD`, 2 h before `STAGES_DAILY_AT`), and publishes a finished stage's
+outputs through `trevor-vps-update.sh rebuild` (`TREVOR_PUBLISH=1`). The unit runs E2B for the stages
+(`STAGES_GEN`); a box with 16 GB or more can set the 12B. Status: `$TREVOR_HOME/state/stages/status.json`; logs:
+`$TREVOR_HOME/state/stages/logs/<day>/`; a failing stage posts one Discord embed a day. Stop it without stopping
+serving by writing `0` to the `duty` file in the state dir, or `systemctl stop trevor-stages`. First version of
+2026-10-19: tested with stubs, not yet run with a model on a box.

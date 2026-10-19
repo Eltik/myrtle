@@ -24,7 +24,7 @@
 #                 backend under root's pm2 when that pm2 already runs it, and waits until it answers and accepts the worker
 #                 key. It never starts a backend itself: root's pm2 would run it as root, and which account runs the
 #                 site's pm2 is not recorded, so with no backend running it prints the commands for the operator and stops
-#   units         installs trevor-llama, trevor-worker, trevor-worker-restart.{path,service}, trevor-update.{service,timer};
+#   units         installs trevor-llama, trevor-worker, trevor-worker-restart.{path,service}, trevor-update.{service,timer}, trevor-stages;
 #                 daemon-reload; enables and starts llama, the worker and the update timer. Not trevor-summaries.timer:
 #                 that is the Cloudflare summaries path, unused here
 #   first-update  trevor-vps-update.sh init (adopts trevor/artifacts as the first release), then `daily` once in the
@@ -569,7 +569,7 @@ step_database() {
 }
 
 # ---------------------------------------------------------------- 8. units
-UNITS="trevor-llama.service trevor-worker.service trevor-worker-restart.path trevor-worker-restart.service trevor-update.service trevor-update.timer"
+UNITS="trevor-llama.service trevor-worker.service trevor-worker-restart.path trevor-worker-restart.service trevor-update.service trevor-update.timer trevor-stages.service"
 step_units() {
   begin units "systemd units and the update timer (not trevor-summaries: the Cloudflare summaries path)"
   local u changed=0 src
@@ -591,6 +591,7 @@ step_units() {
     || fail "llama-server did not answer $LLAMA_URL/health in 10 minutes: journalctl -u trevor-llama -n 50"
   run systemctl enable --now trevor-worker-restart.path trevor-worker.service
   run systemctl enable --now trevor-update.timer
+  run systemctl enable --now trevor-stages.service   # the paced model-stage runner (scripts/stages.py), E2B by default
   info "trevor-summaries.timer is not enabled: it spends Cloudflare's daily Neurons, which this deployment does not use"
 }
 
@@ -657,6 +658,7 @@ print(str(d.get("online", "?")).lower(), str(r.get("cpu", "?")).lower(), str(r.g
   say "  route     $ROUTE_QUESTION -> $(printf '%s' "${route:-(dry run)}" | head -1)"
   say "  serving   llama-server $LLAMA_URL (E2B, the cpu rung), BM25 retrieval; hybrid needs fp32 vectors (deploy/README.md, Embeddings)"
   say "  updates   trevor-update.timer, daily 19:30 UTC; logs $TREVOR_HOME/logs/<stamp>-daily/run.log"
+  say "  stages    trevor-stages.service, the paced model stages; status $TREVOR_HOME/state/stages/status.json, pause file $TREVOR_HOME/state/stages/pause"
   say "  secrets   $ENV_FILE (TREVOR_WORKER_KEY, DISCORD_ALERT_WEBHOOK); the same key in $BACKEND_ENV"
   say "  watch     journalctl -u trevor-worker -u trevor-llama -u trevor-update --since today"
   say "  read next trevor/design/trevor-vps-runbook.md (failures, rollback, monitoring); deploy/README.md"
