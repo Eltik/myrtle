@@ -215,14 +215,19 @@ open_log() {
   find "$TREVOR_HOME/logs" -mindepth 1 -maxdepth 1 -type d -mtime +30 -exec rm -rf {} + 2>/dev/null || true
 }
 
+# take_run_lock [BUSY_RC]: the flock on update.lock, or exit BUSY_RC (0: nothing to do; `rebuild` passes 4 so the stage
+# runner keeps its publish owed instead of counting it done). Opened for append, so a second run that fails the flock
+# does not truncate the holder's line; the holder then writes "<pid> <command>", which scripts/stages.py reads to see
+# a running update without taking the flock itself (a probe's brief flock made a nightly run skip).
 take_run_lock() {
   mkdir -p "$STATE"
-  exec 9>"$STATE/update.lock"
+  exec 9>>"$STATE/update.lock"
   if command -v flock >/dev/null 2>&1; then
-    flock -n 9 || { log "another update holds $STATE/update.lock; nothing to do"; exit 0; }
+    flock -n 9 || { log "another update holds $STATE/update.lock; nothing to do"; exit "${1:-0}"; }
   else
     log "WARNING: no flock(1) here; runs are not serialized (util-linux provides it on Ubuntu)"
   fi
+  echo "$$ $CMD" > "$STATE/update.lock"
 }
 
 require_live_release() {
@@ -459,7 +464,14 @@ stale_tables_check() {
   out="$(python3 - "$ASSETS_DIR" "$STATE/stale-alerted.json" <<'PY' 2>&1
 import glob, json, os, sys
 assets, seen_path = sys.argv[1], sys.argv[2]
-seen = json.load(open(seen_path)) if os.path.exists(seen_path) else {}
+# An unreadable file reads as empty (every stale table alerts once more), never as a reason to stop alerting.
+try:
+    seen = json.load(open(seen_path)) if os.path.exists(seen_path) else {}
+    if not isinstance(seen, dict):
+        raise ValueError('not an object')
+except (OSError, ValueError) as e:
+    print(f'stale: {seen_path} unreadable ({e}); starting from empty')
+    seen = {}
 stale, new = [], []
 for f in sorted(glob.glob(os.path.join(assets, 'output', '*', 'gamedata', '.skipped.json'))):
     server = f.split(os.sep)[-3]
@@ -477,7 +489,10 @@ for l in stale:
     print('stale: ' + l)
 if new:
     os.makedirs(os.path.dirname(seen_path), exist_ok=True)
-    json.dump(seen, open(seen_path, 'w'), indent=1)
+    tmp = f'{seen_path}.tmp.{os.getpid()}'
+    with open(tmp, 'w') as fh:
+        json.dump(seen, fh, indent=1)
+    os.replace(tmp, seen_path)
     print('NEW:' + '\n'.join(new))
 PY
 )" || true
@@ -541,6 +556,16 @@ pending_summaries() {  # units with no summary row, in the current directory's t
 }
 
 # ---------------------------------------------------------------- commands
+# ingested_res: the game-data version the active release was built from (active.json builtFrom), for a publish that
+# fetched nothing (summaries, rebuild). The asset watcher's .version may be newer and not yet ingested; stamping it
+# would make the next daily say "up to date" and never ingest it. Empty: a publish without a fetch cannot vouch for any
+# version (panels.py would fall back to .version), so it stops; the first daily writes builtFrom.
+ingested_res() {
+  local b; b="$(json_get "$STATE/active.json" builtFrom)"
+  [[ -n "$b" || -n "$PLAN" ]] || die "no builtFrom in $STATE/active.json: run \`$0 daily\` first (a $CMD publishes no game-data version of its own)"
+  echo "$b"
+}
+
 cmd_daily() {
   local res res_age active_from
   [[ -f "$RES_VERSION_FILE" ]] || die "no EN res_version at $RES_VERSION_FILE (the asset watcher writes it after an extract)"
@@ -564,7 +589,7 @@ cmd_daily() {
 
 cmd_summaries() {  # summaries for new stories, then the bank's pending answers; one model server for both
   local res before after written=0 n bank_before bank_after bank_done=0 cf_spent=0
-  res="$(tr -d '[:space:]' < "$RES_VERSION_FILE" 2>/dev/null || true)"
+  res="$(ingested_res)"
   if [[ -n "$PLAN" ]]; then
     cd "$TREVOR_DIR"
     python3 scripts/summaries_cf.py --plan
@@ -655,10 +680,11 @@ cmd_prune() { prune_step "$(json_get "$STATE/active.json" version)"; disk_check;
 # rebuild: the stage runner's publish (scripts/stages.py --publish, 2026-10-19): the deterministic rebuilds, panels
 # and gates over the stage tree the runner's model stages wrote into, then the same atomic publish as daily, without
 # a fetch and without the game-data version gate. PLAN=1 runs the plan over the live tree and publishes nothing.
+# Exit 4 when another update holds the run lock (the runner retries in its next pass).
 cmd_rebuild() {
-  local res; res="$(tr -d '[:space:]' < "$RES_VERSION_FILE" 2>/dev/null || true)"
+  local built; built="$(ingested_res)"
   if [[ -n "$PLAN" ]]; then WORK="$TREVOR_DIR"; else prepare_stage; fi
-  deterministic_build 0; panels_and_gates "$res"; publish_stage
+  deterministic_build 0; panels_and_gates "$built"; publish_stage
 }
 
 cmd_init() {  # run once, as a user that may write the code directory (root); then chown TREVOR_HOME to trevor
@@ -676,7 +702,7 @@ cmd_init() {  # run once, as a user that may write the code directory (root); th
 
 case "$CMD" in
   daily|summaries|rebuild)
-    take_run_lock
+    if [[ "$CMD" == "rebuild" ]]; then take_run_lock 4; else take_run_lock; fi
     [[ -n "$PLAN" ]] || open_log
     require_live_release
     "cmd_$CMD" ;;

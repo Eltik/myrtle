@@ -37,9 +37,12 @@ Pacing and pauses:
                                 current unit, then idle and re-check every STAGES_IDLE (900) s. A file `duty` in the
                                 state dir (one number) overrides it while running: `echo 0 > artifacts/stages/duty`.
   model lock                    common.llm_lock_path() (TREVOR_LLM_LOCK, else ${TMPDIR:-/tmp}/trevor-llm.lock), the
-                                file ask and trevor-vps-update.sh write: "<pid> <label>". Held by a live process that
-                                is not this one or an ancestor (ask's rule, src/bin/ask/llama_server.rs): wait, never
-                                steal; a dead holder's file is removed (trevor-vps-update.sh take_model_lock). The
+                                file ask and trevor-vps-update.sh write: "<pid> <label>". `lock_holder` reads it three
+                                ways: absent, ours (this process or an ancestor, ask's rule in
+                                src/bin/ask/llama_server.rs), or held (a live pid, or a file with no pid yet). Held:
+                                wait, never steal. A dead pid's file is removed (trevor-vps-update.sh take_model_lock);
+                                an empty or unparseable file counts as held until it is LOCK_STALE_AGE (60) s old,
+                                since the update's noclobber `echo` creates the file before it writes the pid. The
                                 runner writes "<pid> stages <stage>" only while a stage runs, and starts llama-server
                                 only under it; the server is stopped by PID after every stage and on any exit.
   never a second server         nothing may answer on the port; with STAGES_EXCLUSIVE=1 (default, update.sh's
@@ -52,11 +55,26 @@ Pacing and pauses:
   load                          Linux: the 1-minute load average above STAGES_MAX_LOAD (the CPU count), checked
                                 before a stage only (the stage's own threads raise it)
   pause file                    `pause` in the state dir (operator pause: `touch artifacts/stages/pause`)
-  the nightly update            while trevor-vps-update.sh holds STAGES_UPDATE_LOCK ($TREVOR_HOME/state/update.lock,
-                                when it exists): its canary gate waits at most an hour (gates.py --lock-wait) for
-                                the model lock, so an incremental stage gives the lock up when the update starts
+  the nightly update            while trevor-vps-update.sh runs (STAGES_UPDATE_LOCK, $TREVOR_HOME/state/update.lock,
+                                holds the pid of the run that has the flock; the probe reads it and never takes the
+                                flock, so it cannot make the nightly run's `flock -n` fail): its canary gate waits at
+                                most an hour (gates.py --lock-wait) for the model lock, so an incremental stage gives
+                                the lock up when the update starts
 A pause between stages waits (STAGES_PAUSE_POLL, 60 s); a pause that starts during an incremental stage stops that
-stage's process group and its server (the stage loses at most the unit in flight); canon is never interrupted.
+stage's process group and its server (the stage loses at most the unit in flight). Two bounds keep the canary's hour:
+the wait for another llama-server to go, under the model lock, gives up after STAGES_SERVER_WAIT (300) s or as soon as
+the update starts, releases the lock and records an error; and canon, which is never interrupted, does not START within
+STAGES_CANON_GUARD (2) hours before the daily timer (STAGES_DAILY_AT, 19:30 UTC, trevor-update.timer's OnCalendar;
+0 turns the guard off). Canon is not split at its sub-steps because a resumed full run would wipe its outputs again:
+`canon_refs.py inputs` compares with a stamp written only at the end, so it says "full" until the last step, and the
+runner's CANON_FULL deletes every output before the passes. A canon run longer than the guard still overlaps the window.
+
+Alerts and blocks (state in status.json, kept across restarts with the owed rebuilds):
+  A stage, plan or rebuild that fails STAGES_ALERT_AFTER (2) times in a row posts one Discord embed per stage per day
+  (DISCORD_ALERT_WEBHOOK, else TREVOR_DISCORD_WEBHOOK; trevor-vps-update.sh post_embed's JSON shape; a failed post is
+  logged and swallowed). A stage interrupted STAGES_MAX_INTERRUPTIONS (3) times with no progress in its plan is blocked
+  until the next day, with an embed. A rebuild that fails, or finds the nightly update running (exit 4 of
+  `trevor-vps-update.sh rebuild`), stays owed and runs again in the next pass.
 
 Models and servers (update.sh's own command lines; env names as there):
   STAGES_GEN [GEN, else models/llm/gemma-4-12b-it-qat-q4_0.gguf]   STAGES_JUDGE [JUDGE, else Qwen3.5-9B-Q4_K_M.gguf]
@@ -71,7 +89,9 @@ Models and servers (update.sh's own command lines; env names as there):
 State (STAGES_STATE_DIR, default <root>/artifacts/stages; with --publish $TREVOR_HOME/state/stages):
   status.json   the state (running, sleeping, paused, waiting-lock, idle), the stage, every stage's units left (from
                 its plan) and done (by this process), the last unit, the last error, timestamps
-  logs/<stamp>/run.log   one log per run: the runner's lines and every child's output; canon-before/ for a full canon
+  logs/<YYYYMMDD>/run.log, server.log   one directory per day (a new one at midnight, appended to by every process
+                that day): the runner's lines and every child's output; canon-before/ for a full canon. On the VPS
+                ($TREVOR_HOME/state/stages/logs) scripts/retention.py keeps the newest RETAIN_LOGS (30)
 
 After a group made progress, its outputs are rebuilt the way update.sh rebuilds them:
   groups 1, 3, 4   update.sh step 4 (chronology, dates, identities, deaths, renames, attributes, typed sources, the
@@ -82,21 +102,20 @@ After a group made progress, its outputs are rebuilt the way update.sh rebuilds 
 Publishing: `--no-publish` is the default (the development-machine mode: the rebuilt artifacts stay in place, nothing
 is gated or uploaded). `--publish` is the VPS mode and needs TREVOR_PUBLISH=1 and scripts/trevor-vps-update.sh: the
 runner then works in the update's stage tree ($TREVOR_HOME/stage/trevor, never the live release), runs the topics'
-units step itself, and in place of update.sh's local rebuild calls `trevor-vps-update.sh rebuild`, which is to rebuild
-the stage deterministically (`deterministic_build 0`), run the panels and gates.py (`panels_and_gates`), and publish
-through publish.py with the update's rollback (`publish_stage`): cmd_summaries' tail without its model part. That
-command is NOT in trevor-vps-update.sh yet (2026-10-19: the script was being edited by another change), so --publish
-refuses to start until it exists. Without --publish the runner refuses a tree whose artifacts/ is a symlink (the VPS
-live layout).
+units step itself, and in place of update.sh's local rebuild calls `trevor-vps-update.sh rebuild`, which rebuilds the
+stage deterministically (`deterministic_build 0`), runs the panels and gates.py (`panels_and_gates`, builtFrom kept at
+the active version's, since nothing was fetched), and publishes through publish.py with the update's rollback
+(`publish_stage`): cmd_summaries' tail without its model part. Without --publish the runner refuses a tree whose
+artifacts/ is a symlink (the VPS live layout).
 
 Service: deploy/systemd/trevor-stages.service (Type=simple, User=trevor, EnvironmentFile=/etc/trevor/trevor.env,
-Nice=10, Restart=on-failure); it runs the loop. TODO: a paragraph in deploy/README.md.
+Nice=10, Restart=on-failure); it runs the loop with --publish. TODO: a paragraph in deploy/README.md.
 
 Testing hooks: --root DIR (the tree to run in), --spec FILE (a JSON stage table in place of the built-in one, same
 shape as GROUPS below), --state-dir DIR. scripts/tests/test_stages.py drives the runner with a stub stage and a stub
 llama-server; no model runs in the tests.
 """
-import argparse, fcntl, json, os, re, shlex, signal, subprocess, sys, time, urllib.request
+import argparse, json, os, re, shlex, signal, socket, subprocess, sys, time, urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TREVOR = os.path.dirname(HERE)
@@ -104,6 +123,7 @@ sys.path.insert(0, HERE)
 import common  # noqa: E402  (llm_lock_path)
 
 GEN_DEFAULT = 'models/llm/gemma-4-12b-it-qat-q4_0.gguf'   # update.sh GEN
+DAILY_AT_DEFAULT = '19:30'   # trevor-update.timer OnCalendar, UTC (a test pins the two together)
 JUDGE_DEFAULT = 'models/llm/Qwen3.5-9B-Q4_K_M.gguf'        # update.sh JUDGE
 
 # Server profiles, as update.sh starts them: (model, slots, KV or None for ${KV:-16384}, extra args).
@@ -261,27 +281,82 @@ def ancestors():
     return out
 
 
-def lock_holder(path):
-    """(pid, label) of the model lock's holder when it is another live job; None when the lock is free, stale or ours.
-    A stale lock (no pid, or a dead one) is removed, as trevor-vps-update.sh take_model_lock does."""
+LOCK_STALE_AGE = 60.0   # seconds an empty or unparseable model lock counts as held (being written)
+
+
+def lock_holder(path, stale_age=LOCK_STALE_AGE):
+    """The model lock's state as (state, pid, label), state one of:
+      'absent'  no file, or a stale one this call removed (a dead pid, or no pid and older than `stale_age` s)
+      'ours'    a live pid that is this process or an ancestor (ask's foreign_lock rule)
+      'held'    a live pid of another job, or a file with no parseable pid yet that is younger than `stale_age` s
+                (trevor-vps-update.sh's noclobber `echo` creates the file before it writes the pid); pid None then
+    A file is removed only when it is still the one judged stale (same inode, mtime and text)."""
     try:
+        st = os.stat(path)
         text = slurp(path).strip()
     except OSError:
-        return None
+        return 'absent', None, ''
     pid_s, _, label = text.partition(' ')
     try:
         pid = int(pid_s)
     except ValueError:
         pid = None
-    if pid is None or not alive(pid):
-        try:
+    if pid is not None and alive(pid):
+        return ('ours' if pid in ancestors() else 'held'), pid, label
+    if pid is None and time.time() - st.st_mtime < stale_age:
+        return 'held', None, label or '(lock being written)'
+    try:
+        now = os.stat(path)
+        if (now.st_ino, now.st_mtime_ns) == (st.st_ino, st.st_mtime_ns) and slurp(path).strip() == text:
             os.remove(path)
-        except OSError:
-            pass
+    except OSError:
+        pass
+    return 'absent', None, ''
+
+
+def update_lock_holder(path):
+    """The pid of the trevor-vps-update.sh run that holds update.lock, or None. The script writes its pid into the
+    file after its flock succeeds; this reads it and never takes the flock (a probe holding it, however briefly, made
+    the nightly run's `flock -n` fail and skip the night). A dead pid, or a live one that is not the script (a pid
+    reused after a reboot), is not a holder."""
+    try:
+        pid = int(slurp(path).split()[0])
+    except (OSError, IndexError, ValueError):
         return None
-    if pid in ancestors():
+    if not alive(pid):
         return None
-    return pid, label
+    try:
+        cmd = subprocess.run(['ps', '-o', 'command=', '-p', str(pid)], capture_output=True, text=True,
+                             timeout=10).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        return pid
+    return pid if 'trevor-vps-update' in cmd else None
+
+
+def post_embed(title, desc, color, footer):
+    """One Discord embed in trevor-vps-update.sh post_embed's shape ({"embeds": [{title, description, color,
+    footer}]}) to DISCORD_ALERT_WEBHOOK (else TREVOR_DISCORD_WEBHOOK). Returns whether it was sent; never raises."""
+    url = os.environ.get('DISCORD_ALERT_WEBHOOK') or os.environ.get('TREVOR_DISCORD_WEBHOOK')
+    if not url:
+        return False
+    body = json.dumps({'embeds': [{'title': title[:250], 'description': desc[:3900], 'color': int(color),
+                                   'footer': {'text': footer[:200]}}]}).encode()
+    # Discord's edge refuses urllib's default User-Agent; curl's passes, so name the client.
+    req = urllib.request.Request(url, data=body, headers={'content-type': 'application/json',
+                                                          'user-agent': 'trevor-stages (myrtle.moe, 1)'})
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            return 200 <= r.status < 300
+    except Exception as e:
+        print(f'== discord alert failed to send (swallowed): {e}', file=sys.stderr)
+        return False
+
+
+def minutes_until(hhmm, now=None):
+    """Minutes from `now` (a UTC struct_time, default the current time) to the next HH:MM UTC, in [0, 1440)."""
+    now = now or time.gmtime()
+    h, m = (int(x) for x in hhmm.split(':'))
+    return ((h * 60 + m) - (now.tm_hour * 60 + now.tm_min)) % 1440
 
 
 class Runner:
@@ -300,17 +375,45 @@ class Runner:
         self.lock_poll = env_float('STAGES_LOCK_POLL', 10)
         self.poll = env_float('STAGES_POLL', 15)
         self.health_timeout = env_float('STAGES_HEALTH_TIMEOUT', 180)
+        self.server_wait = env_float('STAGES_SERVER_WAIT', 300)
+        self.canon_guard = env_float('STAGES_CANON_GUARD', 2)
+        self.daily_at = os.environ.get('STAGES_DAILY_AT') or DAILY_AT_DEFAULT
+        self.alert_after = max(1, int(env_float('STAGES_ALERT_AFTER', 2)))
+        self.max_interruptions = max(1, int(env_float('STAGES_MAX_INTERRUPTIONS', 3)))
         self.lock_path = common.llm_lock_path()
         self.state_dir = a.state_dir
         self.server = None       # Popen of the llama-server this runner started
+        self.server_why = ''     # why the last start_server failed
         self.child = None        # Popen of the running stage
         self.lock_held = False
         self.log = None
+        self.log_day = None
         self.run_dir = None
         self.status = {'pid': os.getpid(), 'root': self.root, 'started': self.now(), 'state': 'starting',
                        'units': {}, 'lastError': None, 'publish': bool(a.publish)}
         self.pending = []        # rebuilds owed, in order
+        self.failed_this_pass = set()
         self.errors = 0
+        self.restore()
+
+    # Kept across restarts (the service restarts on failure and on deploys): owed rebuilds, failure counts, the day
+    # each stage last alerted, interruption counts and blocks.
+    KEPT = ('failures', 'alerted', 'interruptions', 'blockedDay')
+
+    def restore(self):
+        try:
+            old = json.loads(slurp(os.path.join(self.state_dir, 'status.json')))
+        except (OSError, ValueError, TypeError):
+            old = {}
+        same = old.get('root') == self.root
+        for k in self.KEPT:
+            self.status[k] = old.get(k) if same and isinstance(old.get(k), dict) else {}
+        if same and isinstance(old.get('pendingRebuilds'), list):
+            self.pending = [n for n in old['pendingRebuilds'] if isinstance(n, str)]
+
+    @staticmethod
+    def today():
+        return time.strftime('%Y-%m-%d')
 
     # ------------------------------------------------------------ bookkeeping
     @staticmethod
@@ -318,16 +421,23 @@ class Runner:
         return time.strftime('%Y-%m-%dT%H:%M:%S%z')
 
     def open_log(self):
-        stamp = time.strftime('%Y%m%d-%H%M%S')
-        self.run_dir = os.path.join(self.state_dir, 'logs', stamp)
+        """logs/<YYYYMMDD>/run.log, reopened when the day changes (a child keeps the file it was started with)."""
+        day = time.strftime('%Y%m%d')
+        if day == self.log_day and self.log:
+            return
+        self.run_dir = os.path.join(self.state_dir, 'logs', day)
         os.makedirs(self.run_dir, exist_ok=True)
-        self.log = open(os.path.join(self.run_dir, 'run.log'), 'a', buffering=1)
+        old, self.log = self.log, open(os.path.join(self.run_dir, 'run.log'), 'a', buffering=1)
+        if old:
+            old.close()
+        self.log_day = day
         self.status['log'] = os.path.join(self.run_dir, 'run.log')
 
     def say(self, msg):
         line = f'== {time.strftime("%H:%M:%S")} {msg}'
         print(line, flush=True)
         if self.log:
+            self.open_log()
             self.log.write(line + '\n')
 
     def save(self, **kw):
@@ -345,6 +455,40 @@ class Runner:
         self.errors += 1
         self.say('ERROR: ' + msg)
         self.save(lastError=msg, lastErrorAt=self.now())
+
+    def fail(self, key, msg, error=True):
+        """A failure of stage or rebuild `key` (an error unless `error` is false: a run that made no progress); the
+        STAGES_ALERT_AFTER-th in a row posts the day's one embed for it."""
+        if error:
+            self.error(msg)
+        f = self.status['failures']
+        f[key] = f.get(key, 0) + 1
+        if f[key] >= self.alert_after:
+            self.alert(key, f'Trevor stages: {key} failed', f'`{key}` failed {f[key]} times in a row: {msg}',
+                       'stages_failed')
+        self.save()
+
+    def ok(self, key):
+        if self.status['failures'].pop(key, None) is not None:
+            self.save()
+
+    def alert(self, key, title, msg, kind):
+        """At most one embed per key per day; the day is recorded only when the post went out."""
+        day = self.today()
+        if self.status['alerted'].get(key) == day:
+            return
+        tail = ''
+        try:
+            tail = ''.join(slurp(self.status['log']).splitlines(True)[-int(env_float('ALERT_LOG_LINES', 20)):])
+        except (OSError, KeyError):
+            pass
+        tail = tail.replace('```', '` ` `')
+        desc = (f'{msg}\nThe runner keeps going; the stage is retried in the next pass (state '
+                f'{os.path.join(self.state_dir, "status.json")}).\n```\n{tail or "(no log)"}\n```')
+        if post_embed(title, desc, 13646394, f'{kind} · {socket.gethostname()} · log {self.status.get("log")}'):
+            self.status['alerted'][key] = day
+            self.say(f'alert posted: {title}')
+        self.save()
 
     def duty(self):
         try:
@@ -446,18 +590,11 @@ class Runner:
         return r
 
     def update_lock_busy(self):
-        """Whether trevor-vps-update.sh runs (its flock on update.lock). Checked on every host where the file exists:
-        its canary gate waits at most an hour for the model lock, so a stage must give the lock up while it runs."""
+        """Whether trevor-vps-update.sh runs (the pid it writes into update.lock under its flock; `update_lock_holder`
+        never takes the flock). Checked on every host where the file exists: its canary gate waits at most an hour for
+        the model lock, so a stage must give the lock up while it runs."""
         p = os.environ.get('STAGES_UPDATE_LOCK') or os.path.join(self.a.trevor_home, 'state', 'update.lock')
-        if not os.path.exists(p):
-            return False
-        with open(p, 'a') as f:
-            try:
-                fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except OSError:
-                return True
-            fcntl.flock(f, fcntl.LOCK_UN)
-        return False
+        return update_lock_holder(p) is not None
 
     def wait_unpaused(self):
         told = None
@@ -478,16 +615,16 @@ class Runner:
             try:
                 fd = os.open(self.lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
             except FileExistsError:
-                h = lock_holder(self.lock_path)
-                if h is None:
-                    if os.path.exists(self.lock_path):   # ours: an ancestor holds it for us
-                        self.lock_held = False
-                        return
+                state, pid, label = lock_holder(self.lock_path)
+                if state == 'ours':      # an ancestor holds it for us; it releases it, not this process
+                    self.lock_held = False
+                    return
+                if state == 'absent':    # gone, or stale and removed: try the exclusive create again
                     continue
                 if not told:
-                    self.say(f'the model is busy with {h[1] or "?"} (pid {h[0]}); waiting for {self.lock_path}')
+                    self.say(f'the model is busy with {label or "?"} (pid {pid}); waiting for {self.lock_path}')
                     told = True
-                self.save(state='waiting-lock', lockHolder={'pid': h[0], 'label': h[1]})
+                self.save(state='waiting-lock', lockHolder={'pid': pid, 'label': label})
                 self.tick(self.lock_poll)
                 continue
             with os.fdopen(fd, 'w') as f:
@@ -526,14 +663,25 @@ class Runner:
                 *self.server_args]
 
     def start_server(self, profile):
-        """Start llama-server for `profile` under the lock; never beside another on the port (or, exclusive, at all)."""
-        told = False
+        """Start llama-server for `profile` under the lock; never beside another on the port (or, exclusive, at all).
+        The wait for another server is bounded (STAGES_SERVER_WAIT) and ends when the nightly update starts, since the
+        lock is held meanwhile; False then, with the reason in self.server_why (the caller releases the lock)."""
+        told, self.server_why = False, ''
+        end = time.monotonic() + self.server_wait
         while self.health() or (self.exclusive and self.other_llama()):
             if not told:
                 self.say(f'another llama-server runs ({"port " + str(self.port) if self.health() else "STAGES_EXCLUSIVE=1"}); waiting')
                 told = True
+            if self.update_lock_busy():
+                self.server_why = 'the nightly update started while waiting for another llama-server to go'
+                self.say(self.server_why)
+                return False
+            if time.monotonic() >= end:
+                self.server_why = f'another llama-server still runs after {self.server_wait:g} s (STAGES_SERVER_WAIT)'
+                self.say(self.server_why)
+                return False
             self.save(state='waiting-server')
-            self.tick(self.lock_poll)
+            self.tick(min(self.lock_poll, max(0.1, end - time.monotonic())))
         cmd = self.server_cmd(profile)
         self.say('$ ' + ' '.join(shlex.quote(c) for c in cmd))
         slog = open(os.path.join(self.run_dir, 'server.log'), 'a')
@@ -546,11 +694,13 @@ class Runner:
                 self.status['serverPid'] = self.server.pid
                 return True
             if self.server.poll() is not None:
-                self.say(f'llama-server exited ({self.server.returncode}) while loading; see {slog.name}')
+                self.server_why = f'llama-server exited ({self.server.returncode}) while loading; see {slog.name}'
+                self.say(self.server_why)
                 self.server = None
                 return False
             time.sleep(1)
-        self.say(f'llama-server not healthy in {self.health_timeout:g} s')
+        self.server_why = f'llama-server not healthy in {self.health_timeout:g} s'
+        self.say(self.server_why)
         self.stop_server()
         return False
 
@@ -583,6 +733,7 @@ class Runner:
                 r = self.pause_reasons(running=True)
                 if r:
                     self.say('pausing mid-stage: ' + '; '.join(r))
+                    self.status['lastPause'] = '; '.join(r)
                     stop_group(self.child)
                     self.child = None
                     return 'interrupted'
@@ -673,22 +824,37 @@ class Runner:
             return None
 
     def publish(self):
-        """trevor-vps-update.sh rebuild: the stage rebuilt, gated, published (only with --publish)."""
+        """trevor-vps-update.sh rebuild: the stage rebuilt, gated, published (only with --publish). True, False, or
+        'busy' when the nightly update runs (seen here, or the script's exit 4: its run lock was taken)."""
         if self.update_lock_busy():
             self.say('the nightly update holds update.lock; publish owed to the next pass')
-            return False
+            return 'busy'
+        self.open_log()
         rc = subprocess.call(['bash', os.path.join(TREVOR, 'scripts', 'trevor-vps-update.sh'), 'rebuild'],
                              stdout=self.log, stderr=subprocess.STDOUT)
         self.say(f'trevor-vps-update.sh rebuild: exit {rc}')
+        if rc == 4:
+            self.say('the nightly update took the run lock first; publish owed to the next pass')
+            return 'busy'
         return rc == 0
 
     def flush(self, names):
+        """Run the owed rebuilds among `names`. One that fails or finds the update running goes back on the owed list
+        and is not tried again in this pass (run_pass's final flush skips it)."""
         for n in names:
-            if n in self.pending:
+            if n in self.pending and n not in self.failed_this_pass:
                 self.pending.remove(n)
                 self.save(state='rebuilding', stage=n)
-                if not self.rebuild(n):
-                    self.error(f'rebuild {n} failed')
+                res = self.rebuild(n)
+                if res is True:
+                    self.ok('rebuild ' + n)
+                    continue
+                self.pending.append(n)
+                self.failed_this_pass.add(n)
+                if res == 'busy':
+                    self.save()
+                else:
+                    self.fail('rebuild ' + n, f'rebuild {n} failed; owed to the next pass')
 
     # ------------------------------------------------------------ the order
     def off_reason(self, x):
@@ -709,6 +875,42 @@ class Runner:
         if self.duty() <= 0:
             raise Idle('duty 0')
 
+    def canon_guarded(self):
+        """Why canon may not start now, or None: the daily timer is less than STAGES_CANON_GUARD hours away (canon is
+        never interrupted, and the update's canary waits at most an hour for the model lock)."""
+        if self.canon_guard <= 0:
+            return None
+        try:
+            left = minutes_until(self.daily_at)
+        except ValueError:
+            return None
+        if left < self.canon_guard * 60:
+            return (f'the daily update is {left} min away (STAGES_DAILY_AT {self.daily_at} UTC, guard '
+                    f'{self.canon_guard:g} h, STAGES_CANON_GUARD)')
+        return None
+
+    def interrupted(self, sid, t, before, after):
+        """A stage stopped by a pause: progress in its plan resets the count; STAGES_MAX_INTERRUPTIONS in a row
+        without any block it until the next day, with the day's embed."""
+        if after is not None and after < before:
+            self.status['interruptions'].pop(sid, None)
+            self.say(f'{sid}: interrupted after {t:.1f} s ({before} before, {after} after); it resumes after the pause')
+            self.save()
+            return
+        k = self.status['interruptions'][sid] = self.status['interruptions'].get(sid, 0) + 1
+        if k < self.max_interruptions:
+            self.say(f'{sid}: interrupted after {t:.1f} s with no progress ({k} of {self.max_interruptions}); it '
+                     'resumes after the pause')
+            self.save()
+            return
+        self.status['interruptions'].pop(sid, None)
+        self.status['blockedDay'][sid] = self.today()
+        msg = f'{sid}: interrupted {k} times in a row with no progress; blocked until tomorrow'
+        self.say(msg)
+        self.alert(sid, f'Trevor stages: {sid} blocked', msg + f' (last pause: {self.status.get("lastPause", "?")})',
+                   'stages_blocked')
+        self.save()
+
     def sweep(self, blocked):
         """Top to bottom; returns after the first unit that ran (True), or None at the end of the order."""
         for g in self.groups:
@@ -717,11 +919,13 @@ class Runner:
             for st in g['stages']:
                 if st['id'] in blocked or not self.enabled(st):
                     continue
+                if self.status['blockedDay'].get(st['id']) == self.today():
+                    continue
                 self.check_duty()
                 self.wait_unpaused()
                 for c in st.get('pre_plan', []):
                     if self.sh(c):
-                        self.error(f'{st["id"]}: {c} failed'); blocked.add(st['id']); break
+                        self.fail(st['id'], f'{st["id"]}: {c} failed'); blocked.add(st['id']); break
                 if st['id'] in blocked:
                     break
                 self.save(state='planning', group=g['id'], stage=st['id'])
@@ -730,32 +934,43 @@ class Runner:
                 u['left'] = n
                 u['plannedAt'] = self.now()
                 if n is None:
-                    self.error(f'{st["id"]}: the plan failed ({u.get("planError", "no plan line")}); the rest of '
-                               f'{g["id"]} waits for the next pass')
+                    self.fail(st['id'], f'{st["id"]}: the plan failed ({u.get("planError", "no plan line")}); the rest '
+                              f'of {g["id"]} waits for the next pass')
                     blocked.update(s['id'] for s in g['stages'])
                     break
                 if n == 0:
                     continue
+                if st.get('kind') == 'canon' and (why := self.canon_guarded()):
+                    self.say(f'{st["id"]}: {n} to do, not started: {why}')
+                    u['guard'] = why
+                    blocked.add(st['id'])
+                    continue
+                u.pop('guard', None)
                 self.say(f'{g["id"]} / {st["id"]}: {n} to do')
                 t0 = time.monotonic()
                 rc = self.run_unit(st)
                 t = time.monotonic() - t0
-                after = self.plan(st) if rc == 0 else n
+                after = self.plan(st) if rc in (0, 'interrupted') else n
                 u['left'] = after
-                u['done'] = u.get('done', 0) + max(0, n - (after or 0)) if rc == 0 else u.get('done', 0)
+                if rc in (0, 'interrupted'):
+                    u['done'] = u.get('done', 0) + max(0, n - (after if after is not None else n))
                 last = {'stage': st['id'], 'seconds': round(t, 2), 'rc': rc, 'before': n, 'after': after,
                         'at': self.now()}
                 self.save(lastUnit=last)
                 if rc == 'interrupted':
-                    self.say(f'{st["id"]}: interrupted after {t:.1f} s; it resumes after the pause')
+                    self.interrupted(st['id'], t, n, after)
                 elif rc != 0:
-                    self.error(f'{st["id"]}: exit {rc}' + (' (shrink guard: input empty or shrunk)' if rc == 3 else ''))
+                    why = {3: ' (shrink guard: input empty or shrunk)', 'server': f' ({self.server_why})'}.get(rc, '')
+                    self.fail(st['id'], f'{st["id"]}: exit {rc}{why}')
                     blocked.update(s['id'] for s in g['stages'])
                 elif after is None or after >= n:
                     self.say(f'{st["id"]}: no progress ({n} before, {after} after); skipped until the next pass')
+                    self.fail(st['id'], f'{st["id"]}: ran without progress ({n} before, {after} after)', error=False)
                     blocked.add(st['id'])
                 else:
                     self.progress = True
+                    self.ok(st['id'])
+                    self.status['interruptions'].pop(st['id'], None)
                     for r in g.get('rebuild', []):
                         if r not in self.pending:
                             self.pending.append(r)
@@ -772,6 +987,9 @@ class Runner:
 
     def run_pass(self):
         blocked, self.progress = set(), False
+        self.failed_this_pass = set()
+        today = self.today()
+        self.status['blockedDay'] = {k: v for k, v in self.status['blockedDay'].items() if v == today}
         if not os.path.isdir(os.path.join(self.root, 'artifacts')):
             self.error(f'no artifacts in {self.root} (on the VPS the stage appears after the first daily update)')
             return False
@@ -949,7 +1167,7 @@ def main(argv=None):
             ap.error('--publish needs scripts/trevor-vps-update.sh')
         if 'cmd_rebuild' not in slurp(vps):
             ap.error('--publish needs a `rebuild` command in scripts/trevor-vps-update.sh (the deterministic build, '
-                     'gates and publish of the stage without a model); it is not there yet')
+                     'gates and publish of the stage without a model); this copy is older than 2026-10-19')
         a.root = a.root or os.path.join(a.trevor_home, 'stage', 'trevor')
         if not os.path.isdir(os.path.join(a.root, 'artifacts')):
             ap.error(f'no stage tree at {a.root}: run trevor-vps-update.sh daily once first')

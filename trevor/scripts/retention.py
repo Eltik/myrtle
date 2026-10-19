@@ -185,7 +185,8 @@ def plan_logs(a):
         if m:
             stamps[m.group(1)] = f"log of {why}"
     plans = []
-    for root in (os.path.join(a.home, 'logs'), os.path.join(a.trevor_dir, 'artifacts', 'update')):
+    for root in (os.path.join(a.home, 'logs'), os.path.join(a.trevor_dir, 'artifacts', 'update'),
+                 os.path.join(a.home, 'state', 'stages', 'logs')):
         if not os.path.isdir(root):
             continue
         plan = Plan('logs', root)

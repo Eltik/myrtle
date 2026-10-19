@@ -12,13 +12,17 @@ checks that no llama-server ran before or after.
                                                          real tree's plan)
 Scratch trees go under $TMPDIR.
 """
-import json, os, re, shutil, signal, socket, subprocess, sys, tempfile, time, unittest
+import argparse, fcntl, http.server, json, os, re, shutil, signal, socket, subprocess, sys, tempfile, threading, time, unittest
+from unittest import mock
 
 SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TREVOR = os.path.dirname(SCRIPTS)
 STAGES = os.path.join(SCRIPTS, 'stages.py')
 sys.path.insert(0, SCRIPTS)
 import stages  # noqa: E402
+
+for _k in ('DISCORD_ALERT_WEBHOOK', 'TREVOR_DISCORD_WEBHOOK'):   # no test posts to a real webhook
+    os.environ.pop(_k, None)
 
 STUB_STAGE = r'''#!/usr/bin/env python3
 import os, sys, time
@@ -112,7 +116,8 @@ class Tree:
     def env(self, **kw):
         e = dict(os.environ)
         for k in list(e):
-            if k.startswith('STAGES_') or k in ('PLAN', 'PORT', 'GEN', 'JUDGE', 'TREVOR_PUBLISH'):
+            if k.startswith('STAGES_') or k in ('PLAN', 'PORT', 'GEN', 'JUDGE', 'TREVOR_PUBLISH', 'DISCORD_ALERT_WEBHOOK',
+                                                 'TREVOR_DISCORD_WEBHOOK'):
                 del e[k]
         e.update(TREVOR_LLM_LOCK=self.lock, STAGES_LLAMA_SERVER=self.p('stub_llama.py'), STAGES_PORT=str(self.port),
                  STAGES_EXCLUSIVE='0', STAGES_MIN_FREE_PCT='0', STAGES_MIN_MEM_GIB='0', STAGES_MAX_LOAD='100000',
@@ -180,6 +185,42 @@ def stub(name, secs, server='gen2', interruptible=True):
             'pre': [], 'pre_plan': [], 'interruptible': interruptible}
 
 
+def make_runner(state_dir, **env):
+    """A Runner over an empty tree with `state_dir`, for the methods that need no child process."""
+    a = argparse.Namespace(root=state_dir, spec=None, state_dir=state_dir, publish=False, duty=1.0, no_rebuild=False,
+                           trevor_home=state_dir, once=True, plan=False, dry_run=False)
+    clean = {k: v for k, v in os.environ.items() if not k.startswith('STAGES_')}
+    with mock.patch.dict(os.environ, {**clean, **env}, clear=True):
+        return stages.Runner(a)
+
+
+class Webhook:
+    """A stub Discord webhook: records every POSTed JSON body."""
+
+    def __init__(self):
+        self.posts = []
+        hook = self
+
+        class H(http.server.BaseHTTPRequestHandler):
+            def do_POST(self):
+                body = self.rfile.read(int(self.headers['content-length']))
+                hook.posts.append({'body': json.loads(body), 'ua': self.headers.get('user-agent'),
+                                   'type': self.headers.get('content-type')})
+                self.send_response(204)
+                self.end_headers()
+
+            def log_message(self, *a):
+                pass
+
+        self.srv = http.server.HTTPServer(('127.0.0.1', 0), H)
+        self.url = f'http://127.0.0.1:{self.srv.server_address[1]}/hook'
+        threading.Thread(target=self.srv.serve_forever, daemon=True).start()
+
+    def close(self):
+        self.srv.shutdown()
+        self.srv.server_close()
+
+
 class Units(unittest.TestCase):
     def test_duty_math(self):
         self.assertEqual(stages.duty_sleep(10, 0.5), 10)
@@ -196,21 +237,132 @@ class Units(unittest.TestCase):
         d = tempfile.mkdtemp(prefix='trevor-stages-lock-')
         try:
             p = os.path.join(d, 'llm.lock')
+            self.assertEqual(stages.lock_holder(p), ('absent', None, ''))
             dead = subprocess.Popen(['true']); dead.wait()
             wr(p, f'{dead.pid} ask\n')
-            self.assertIsNone(stages.lock_holder(p))
+            self.assertEqual(stages.lock_holder(p)[0], 'absent')
             self.assertFalse(os.path.exists(p), 'a dead holder\'s lock is removed')
             wr(p, f'{os.getpid()} wrapper\n')
-            self.assertIsNone(stages.lock_holder(p), 'this process holds it: ours')
+            self.assertEqual(stages.lock_holder(p), ('ours', os.getpid(), 'wrapper'), 'this process holds it: ours')
             self.assertTrue(os.path.exists(p))
             live = subprocess.Popen(['sleep', '30'])
             try:
                 wr(p, f'{live.pid} worker\n')
-                self.assertEqual(stages.lock_holder(p), (live.pid, 'worker'))
+                self.assertEqual(stages.lock_holder(p), ('held', live.pid, 'worker'))
             finally:
                 live.kill(); live.wait()
+            # The update's noclobber echo creates the file before it writes the pid: an empty or unparseable file
+            # is held while young and never removed then; past LOCK_STALE_AGE it is stale.
+            for text in ('', 'garbage\n'):
+                wr(p, text)
+                self.assertEqual(stages.lock_holder(p)[:2], ('held', None), repr(text))
+                self.assertTrue(os.path.exists(p), 'a young lock is never removed')
+                old = time.time() - stages.LOCK_STALE_AGE - 5
+                os.utime(p, (old, old))
+                self.assertEqual(stages.lock_holder(p)[0], 'absent', repr(text))
+                self.assertFalse(os.path.exists(p))
         finally:
             shutil.rmtree(d)
+
+    def test_update_lock_holder_reads_the_pid(self):
+        """update.lock is read, never flocked: the pid of a live trevor-vps-update.sh run is a holder; a dead pid, a
+        live pid of another program (reused after a reboot) or an empty file is not."""
+        d = tempfile.mkdtemp(prefix='trevor-stages-upd-')
+        try:
+            p = os.path.join(d, 'update.lock')
+            self.assertIsNone(stages.update_lock_holder(p))
+            wr(p, '')
+            self.assertIsNone(stages.update_lock_holder(p))
+            dead = subprocess.Popen(['true']); dead.wait()
+            wr(p, f'{dead.pid} daily\n')
+            self.assertIsNone(stages.update_lock_holder(p))
+            other = subprocess.Popen(['sleep', '30'])
+            fake = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(30)', 'trevor-vps-update.sh', 'daily'])
+            try:
+                wr(p, f'{other.pid} daily\n')
+                self.assertIsNone(stages.update_lock_holder(p), 'a reused pid is not the update')
+                wr(p, f'{fake.pid} daily\n')
+                self.assertEqual(stages.update_lock_holder(p), fake.pid)
+                with open(p, 'a') as f:   # a flock probe would block this exclusive non-blocking take; reading does not
+                    fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    self.assertEqual(stages.update_lock_holder(p), fake.pid)
+            finally:
+                for x in (other, fake):
+                    x.kill(); x.wait()
+        finally:
+            shutil.rmtree(d)
+
+    def test_daily_at_matches_the_timer(self):
+        timer = rd(os.path.join(TREVOR, 'deploy', 'systemd', 'trevor-update.timer'))
+        self.assertIn(f'OnCalendar=*-*-* {stages.DAILY_AT_DEFAULT}:00 UTC', timer)
+        t = time.struct_time((2026, 10, 19, 18, 0, 0, 0, 292, 0))
+        self.assertEqual(stages.minutes_until('19:30', t), 90)
+        self.assertEqual(stages.minutes_until('17:30', t), 1410)
+        self.assertEqual(stages.minutes_until('18:00', t), 0)
+
+    def test_canon_guard(self):
+        d = tempfile.mkdtemp(prefix='trevor-stages-guard-')
+        try:
+            soon = time.strftime('%H:%M', time.gmtime(time.time() + 1800))
+            later = time.strftime('%H:%M', time.gmtime(time.time() + 3 * 3600 + 120))
+            self.assertIn('min away', make_runner(d, STAGES_DAILY_AT=soon).canon_guarded() or '')
+            self.assertIsNone(make_runner(d, STAGES_DAILY_AT=later).canon_guarded())
+            self.assertIsNone(make_runner(d, STAGES_DAILY_AT=soon, STAGES_CANON_GUARD='0').canon_guarded())
+        finally:
+            shutil.rmtree(d)
+
+    def test_flush_keeps_a_failed_rebuild_owed(self):
+        """A rebuild that fails, or meets the nightly update ('busy', exit 4 of trevor-vps-update.sh rebuild), goes
+        back on the owed list, is not retried in the same pass, and survives a restart; success clears it."""
+        d = tempfile.mkdtemp(prefix='trevor-stages-flush-')
+        try:
+            r = make_runner(d)
+            results = [False, 'busy', True]
+            calls = []
+            r.rebuild = lambda n: (calls.append(n), results.pop(0))[1]
+            r.pending = ['step4']
+            r.flush(['step4'])
+            self.assertEqual(r.pending, ['step4'])
+            self.assertEqual(r.status['failures'], {'rebuild step4': 1})
+            r.flush(list(r.pending))   # run_pass's final flush, same pass
+            self.assertEqual(calls, ['step4'], 'not retried in the pass that failed')
+            r2 = make_runner(d)        # a restart: the owed rebuild comes back from status.json
+            self.assertEqual(r2.pending, ['step4'])
+            self.assertEqual(r2.status['failures'], {'rebuild step4': 1})
+            r2.rebuild = r.rebuild
+            r2.flush(['step4'])
+            self.assertEqual(r2.pending, ['step4'], 'busy: still owed')
+            self.assertEqual(r2.status['failures'], {'rebuild step4': 1}, 'busy is not a failure')
+            r2.failed_this_pass = set()
+            r2.flush(['step4'])
+            self.assertEqual(r2.pending, [])
+            self.assertEqual(r2.status['failures'], {})
+            self.assertEqual(json.loads(rd(os.path.join(d, 'status.json')))['pendingRebuilds'], [])
+        finally:
+            shutil.rmtree(d)
+
+    def test_vps_rebuild_exits_4_on_a_busy_run_lock(self):
+        """trevor-vps-update.sh rebuild exits 4 when another update holds update.lock (the runner keeps its publish
+        owed); the holder's line is not truncated; a run that takes the lock writes "<pid> <command>" into it."""
+        if not shutil.which('flock'):
+            self.skipTest('no flock(1) here')
+        home = tempfile.mkdtemp(prefix='trevor-stages-vps-')
+        try:
+            os.makedirs(os.path.join(home, 'state'))
+            lock = os.path.join(home, 'state', 'update.lock')
+            wr(lock, '12345 daily\n')
+            env = dict(os.environ, TREVOR_HOME=home, TREVOR_NICED='1', DISCORD_ALERT_WEBHOOK='', TREVOR_DISCORD_WEBHOOK='')
+            vps = os.path.join(SCRIPTS, 'trevor-vps-update.sh')
+            with open(lock, 'a') as f:
+                fcntl.flock(f, fcntl.LOCK_EX)
+                r = subprocess.run(['bash', vps, 'rebuild'], env=env, capture_output=True, text=True, timeout=60)
+            self.assertEqual(r.returncode, 4, r.stdout + r.stderr)
+            self.assertEqual(rd(lock), '12345 daily\n')
+            r = subprocess.run(['bash', vps, 'rebuild'], env=env, capture_output=True, text=True, timeout=60)
+            self.assertEqual(r.returncode, 1, 'no live release here: require_live_release stops it')
+            self.assertRegex(rd(lock), r'^\d+ rebuild\n$')
+        finally:
+            shutil.rmtree(home)
 
     def test_commands_are_update_sh_verbatim(self):
         """Every command the runner runs is update.sh's own text, so the two cannot drift apart silently."""
@@ -347,11 +499,13 @@ class Runner(unittest.TestCase):
         self.assertEqual([x[0] for x in t.markers('a')], ['start', 'start', 'done'])
 
     def test_c_nightly_update_lock_pauses(self):
-        """While trevor-vps-update.sh holds update.lock (flock), no stage starts; the canary gate needs the model lock."""
+        """While trevor-vps-update.sh runs (its pid in update.lock, written under its flock), no stage starts; the
+        canary gate needs the model lock. The probe reads the pid: it never takes the flock."""
         t = self.tree([stub('a', 0.5)], {'a': 1})
-        holder = subprocess.Popen([sys.executable, '-c', 'import fcntl, sys, time; f = open(sys.argv[1], "a"); '
-                                   'fcntl.flock(f, fcntl.LOCK_EX); print("held", flush=True); time.sleep(120)',
-                                   t.p('update.lock')], stdout=subprocess.PIPE, text=True)
+        holder = subprocess.Popen([sys.executable, '-c', 'import fcntl, os, sys, time; f = open(sys.argv[1], "a"); '
+                                   'fcntl.flock(f, fcntl.LOCK_EX); open(sys.argv[1], "w").write(f"{os.getpid()} daily\\n"); '
+                                   'print("held", flush=True); time.sleep(120)',
+                                   t.p('update.lock'), 'trevor-vps-update.sh'], stdout=subprocess.PIPE, text=True)
         try:
             self.assertEqual(holder.stdout.readline().strip(), 'held')
             p = t.start('--once', '--duty', '1')
@@ -365,6 +519,97 @@ class Runner(unittest.TestCase):
             if holder.poll() is None:
                 holder.kill(); holder.wait()
             holder.stdout.close()
+
+    def test_b_empty_lock_waits_until_stale(self):
+        """An empty lock file (the update between its noclobber create and its pid) is held: the runner waits and
+        starts no server; once the file is older than LOCK_STALE_AGE it is stale and taken."""
+        t = self.tree([stub('a', 0.2)], {'a': 1})
+        wr(t.lock, '')
+        p = t.start('--once', '--duty', '1')
+        self.assertTrue(t.wait(lambda: t.status().get('state') == 'waiting-lock', 20), t.status())
+        time.sleep(1.5)
+        self.assertEqual(t.status()['lockHolder']['pid'], None)
+        self.assertEqual(t.server_pids(), [], 'no server while an empty young lock exists')
+        self.assertEqual(rd(t.lock), '', 'the young lock is not stolen')
+        old = time.time() - stages.LOCK_STALE_AGE - 5
+        os.utime(t.lock, (old, old))
+        self.assertEqual(p.wait(60), 0)
+        self.assertEqual([x[0] for x in t.markers('a')], ['start', 'done'])
+        self.assertFalse(os.path.exists(t.lock))
+
+    def test_e_server_wait_is_bounded(self):
+        """Another server answering on the port: the wait under the model lock ends after STAGES_SERVER_WAIT, the lock
+        is released and the stage records an error naming the reason."""
+        t = self.tree([stub('a', 0.2)], {'a': 1})
+        other = subprocess.Popen([t.p('stub_llama.py'), '--port', str(t.port)])
+        try:
+            self.assertTrue(t.wait(lambda: t.markers('server')))
+            time.sleep(0.5)
+            r = t.run('--once', '--duty', '1', STAGES_SERVER_WAIT='1.5')
+            self.assertEqual(r.returncode, 1, r.stdout)
+            self.assertEqual(t.markers('a'), [])
+            self.assertFalse(os.path.exists(t.lock), 'the lock is released')
+            self.assertIn('STAGES_SERVER_WAIT', t.status()['lastError'])
+            self.assertEqual(len(t.server_pids()), 1, 'the runner started none')
+        finally:
+            other.kill(); other.wait()
+
+    def test_f_failure_alerts_once_a_day(self):
+        """A stage that fails STAGES_ALERT_AFTER times in a row posts one embed in post_embed's shape; a restart the
+        same day posts none (the day is kept in status.json); logs go to a directory per day."""
+        hook = Webhook()
+        try:
+            t = self.tree([{'id': 'bad', 'cmd': 'python3 stub_stage.py bad 0; [ "${PLAN:-}" = 1 ] || exit 7', 'server': None,
+                            'plan': 'planned', 'pre': [], 'pre_plan': [], 'interruptible': True}], {'bad': 9})
+            for _ in range(3):
+                r = t.run('--once', '--duty', '1', DISCORD_ALERT_WEBHOOK=hook.url)
+                self.assertEqual(r.returncode, 1, r.stdout)
+            self.assertEqual(len(hook.posts), 1, hook.posts)
+            post = hook.posts[0]
+            self.assertEqual(post['type'], 'application/json')
+            self.assertNotIn('Python-urllib', post['ua'] or '')
+            e = post['body']['embeds']
+            self.assertEqual(len(e), 1)
+            self.assertEqual(sorted(e[0]), ['color', 'description', 'footer', 'title'])
+            self.assertEqual(e[0]['title'], 'Trevor stages: bad failed')
+            self.assertEqual(e[0]['color'], 13646394)
+            self.assertIn('exit 7', e[0]['description'])
+            self.assertTrue(e[0]['footer']['text'].startswith('stages_failed'))
+            st = t.status()
+            self.assertEqual(st['alerted'], {'bad': time.strftime('%Y-%m-%d')})
+            self.assertEqual(st['failures'], {'bad': 3})
+            self.assertEqual(os.listdir(os.path.join(t.state, 'logs')), [time.strftime('%Y%m%d')])
+        finally:
+            hook.close()
+
+    def test_f_interruptions_without_progress_block_the_stage(self):
+        """A stage paused mid-unit STAGES_MAX_INTERRUPTIONS times with no progress is blocked until tomorrow, with
+        one embed; the runner then goes on (here: nothing else to do, so the pass ends)."""
+        hook = Webhook()
+        try:
+            t = self.tree([stub('a', 6.0)], {'a': 1})
+            p = t.start('--once', '--duty', '1', DISCORD_ALERT_WEBHOOK=hook.url, STAGES_MAX_INTERRUPTIONS='2')
+            pause = os.path.join(t.state, 'pause')
+            self.assertTrue(t.wait(lambda: len(t.markers('a')) == 1, 30), t.markers('a'))
+            wr(pause, '')
+            self.assertTrue(t.wait(lambda: t.status().get('state') == 'paused', 20), t.status())
+            self.assertEqual(t.status()['interruptions'], {'a': 1})
+            os.remove(pause)
+            self.assertTrue(t.wait(lambda: len(t.markers('a')) == 2, 30), t.markers('a'))
+            wr(pause, '')   # the second interruption blocks the stage, so the pass ends without waiting on the pause
+            self.assertEqual(p.wait(60), 0)
+            os.remove(pause)
+            self.assertEqual([x[0] for x in t.markers('a')], ['start', 'start'], 'never ran to the end')
+            st = t.status()
+            self.assertEqual(st['blockedDay'], {'a': time.strftime('%Y-%m-%d')})
+            self.assertEqual(len(hook.posts), 1)
+            self.assertEqual(hook.posts[0]['body']['embeds'][0]['title'], 'Trevor stages: a blocked')
+            r = t.run('--once', '--duty', '1', DISCORD_ALERT_WEBHOOK=hook.url)   # same day: still blocked
+            self.assertEqual(r.returncode, 0)
+            self.assertEqual(len(t.markers('a')), 2)
+            self.assertEqual(len(hook.posts), 1)
+        finally:
+            hook.close()
 
     def test_reanswer_wiring(self):
         """Step 6 in the built-in table: collect before the plan, answer under the lock on its own server, then merge;

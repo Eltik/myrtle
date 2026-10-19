@@ -1,10 +1,14 @@
 # The paced stage runner (scripts/stages.py; design/trevor-self-contained-deploy.md section 4, step 5): the model stages
 # of update.sh in priority order, one model at a time under /run/trevor/llm.lock, at STAGES_DUTY (0.5), each stage on
 # its own llama-server on :8082 beside trevor-llama.service's (STAGES_EXCLUSIVE=0), stopped after every stage.
-# It works in the update's stage tree, never the live release. Without --publish (as here) its outputs wait in the
-# stage for the next `trevor-vps-update.sh daily` or `summaries` build to publish them; --no-rebuild leaves that build
-# to them. Once trevor-vps-update.sh has its `rebuild` command, replace the three flags with --publish and set
-# TREVOR_PUBLISH=1 in /etc/trevor/trevor.env (the runner then rebuilds, gates and publishes after each stage group).
+# It works in the update's stage tree, never the live release, and publishes with --publish: after a stage group made
+# progress it calls `trevor-vps-update.sh rebuild` (the deterministic rebuild, panels, gates and atomic publish of the
+# stage, builtFrom kept at the active version's). The nightly `daily` exits early while the game data is unchanged, so
+# without --publish the stages' outputs would wait in the stage until the next game update. A rebuild that fails or
+# meets the nightly update stays owed to the runner's next pass. TREVOR_PUBLISH=1 is set here; trevor.env may set 0,
+# and the runner then refuses to start (exit 2) until it is 1 again.
+# Failures: one Discord embed per stage per day (DISCORD_ALERT_WEBHOOK from trevor.env); a stage interrupted 3 times
+# with no progress is blocked until the next day. Logs: /var/lib/trevor/state/stages/logs/<YYYYMMDD>/ (retention.py).
 # Kill switch: STAGES_DUTY=0 in trevor.env (or `echo 0 > /var/lib/trevor/state/stages/duty`) stops the model stages
 # after the current unit and leaves serving alone; `touch /var/lib/trevor/state/stages/pause` pauses them.
 # The 11 GB box holds E2B, not the 12B, beside serving (section 5); trevor.env overrides every variable below.
@@ -19,13 +23,14 @@ User=trevor
 Group=trevor
 WorkingDirectory=/var/www/myrtle.moe/trevor
 Environment=TREVOR_LLM_LOCK=/run/trevor/llm.lock
+Environment=TREVOR_PUBLISH=1
 Environment=STAGES_PORT=8082
 Environment=STAGES_EXCLUSIVE=0
 Environment=STAGES_GEN=models/llm/gemma-4-e2b-it-q4_k_m.gguf
 Environment=STAGES_JUDGE=models/llm/gemma-4-e2b-it-q4_k_m.gguf
 Environment="STAGES_SERVER_ARGS=-t 2 --poll 0 --no-repack"
 EnvironmentFile=/etc/trevor/trevor.env
-ExecStart=/usr/bin/python3 /var/www/myrtle.moe/trevor/scripts/stages.py --root /var/lib/trevor/stage/trevor --state-dir /var/lib/trevor/state/stages --no-rebuild
+ExecStart=/usr/bin/python3 /var/www/myrtle.moe/trevor/scripts/stages.py --root /var/lib/trevor/stage/trevor --state-dir /var/lib/trevor/state/stages --publish
 Restart=on-failure
 RestartSec=60
 TimeoutStopSec=120
