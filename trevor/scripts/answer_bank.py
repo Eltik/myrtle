@@ -23,7 +23,8 @@ The site shows an entry only to a reader who has cleared every gate story.
              whose evidence row (artifacts/bank/evidence.jsonl, scripts/bank_regen.py: the sha of its
              question's chunk and of every cited chunk when it was made) no longer matches the corpus is
              dropped, and an answer bank_regen.py made is kept only when one citation sits at or before
-             its question's own story by gatePos; REGEN_ANSWERS=0 is the merge before, byte for byte
+             its question's own story by gatePos; REGEN_ANSWERS=0 is the merge before, byte for byte. Since
+             2026-10-19 it also folds in scripts/reanswer.py's re-answered live questions (REANSWER=0: not)
   judge      judge model: faithfulness of a sample of generated answers to their passages
 Output: artifacts/bank/bank.jsonl (id, kind, question, aliases, answer, sources, gateStories,
 requiredStages, gateChars). The corpus spec calls this file answers.jsonl; bank.jsonl avoids a
@@ -35,7 +36,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and 
 import common, incr
 from common import ROOT, read_derived, read_jsonl, sha16
 
-OUT = os.path.join(ROOT, 'artifacts', 'bank')
+# TREVOR_BANK_DIR: another bank directory (scripts/reanswer.py's tests merge into a scratch copy); absolute, or under ROOT.
+OUT = os.path.join(ROOT, os.environ.get('TREVOR_BANK_DIR') or os.path.join('artifacts', 'bank'))
 CORPUS = os.path.join(ROOT, os.environ.get('CORPUS', 'artifacts/p3b'))
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
 N_Q = int(os.environ.get('N_QUESTIONS', '900'))
@@ -299,12 +301,22 @@ def stage_merge():
                      'answer': a['answer'], 'sources': a['cited'], 'passages': a['passages'],
                      **gate(cited + [q['storyId']], chars, sp)})
         kept += 1
+    # The nightly re-answer (scripts/reanswer.py, step 6 of design/trevor-self-contained-deploy.md): live questions
+    # answered again at the full profile, with their own evidence ledger and a gate over every passage. None without
+    # a re-answered file or with REANSWER=0, so bank.jsonl is then byte for byte the merge before.
+    re_rows, re_n = [], {}
+    if os.environ.get('REANSWER') != '0' and os.path.exists(os.path.join(OUT, 'reanswer', 'answers.jsonl')):
+        re_rows, re_n = common.load_script('reanswer').bank_rows(
+            OUT, sp, gate, DECLINE, lambda: evidence_shas(os.path.join(ROOT, 'artifacts')))
+        rows += re_rows
     # Kept as it was when it came out empty or lost more than INCR_MAX_DROP percent of its entries (KEEP_LAST=0: written).
     common.write_keep_last(os.path.join(OUT, 'bank.jsonl'), rows)
     c = collections.Counter(r['kind'] for r in rows)
     print(f'bank: {len(rows)} entries {dict(c)}; generated kept {kept}, dropped {dropped} (declined or uncited'
-          + (', or evidence changed' if check else '') + ')' + (f'; {dict(why)}' if why else ''))
-    return {'entries': len(rows), 'kept': kept, 'dropped': dropped, **{k: v for k, v in why.items()}}
+          + (', or evidence changed' if check else '') + ')' + (f'; {dict(why)}' if why else '')
+          + (f'; reanswer {re_n}' if re_n else ''))
+    return {'entries': len(rows), 'kept': kept, 'dropped': dropped, **{k: v for k, v in why.items()},
+            **({'reanswer': re_n} if re_n else {})}
 
 
 def gate_positions(required=False):

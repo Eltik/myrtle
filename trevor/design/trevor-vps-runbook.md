@@ -154,6 +154,11 @@ does this with the same Cloudflare client and window, and then on the same E2B s
     (sha256 fb157643..., verified 2026-10-17).
 - `PLAN=1 trevor-vps-update.sh summaries` and `PLAN=1 bank_regen.py run` print the pending units, their story groups
   and the model calls they cost.
+- **The nightly re-answer** (`scripts/reanswer.py`, deploy design step 6) belongs to the stage runner's priority 2
+  group (`scripts/stages.py`, group `reanswer`, still a hook that runs nothing): `reanswer.py collect` (needs
+  `REANSWER_DSN`), `reanswer.py answer` on the runner's server (`PLAN=1` gives its count), then `reanswer.py merge`;
+  every later `answer_bank.py merge`, the daily one included, keeps the rows, so the next panels build and publish
+  carry them. `REANSWER=0` turns it off.
 
 **Measured on the development machine (Apple M5 Pro, 24 GB), 2026-10-17**, on a simulated update: a scratch tree whose "previous" corpus had 20 chunks
 re-worded. These were 10 question chunks, 5 chunks cited by other answers, and 5 chunks with neither.
