@@ -105,6 +105,23 @@ Before anything else is built, two numbers on the target cores, with serving run
 2. 12B tokens per second for generation and for prompt processing (the stages' prompts are 5,000 to 10,000 tokens),
    and the hours one game update's stages take at the chosen duty cycle.
 
+**Measured 2026-10-19 on the development machine as the proxy** (Apple M5 Pro, `-ngl 0`, 8 threads; llama.cpp build
+11146). The caveat first: with `-ngl 0` the layers run on the CPU, but Apple's Accelerate BLAS and the unified memory
+bandwidth make these numbers an upper bound for a 3 vCPU x86 slice, by roughly 2 to 4 times on generation; the VPS
+numbers must be taken on the VPS.
+
+| measurement | result |
+|---|---|
+| E2B `mid`, the 35 probe questions, one client | 1,249 s wall; model time median 38 s, mean 39 s (26 to 54 s); prompts about 3,500 tokens; about 93 answers an hour at full duty, roughly 2,200 a day per 8-thread box |
+| 12B Q4_0 `llama-bench` | prompt processing 36.4 tokens/s (pp4096), generation 17.4 tokens/s (tg128) |
+| E2B Q4_K_M `llama-bench` | prompt processing 92.7 tokens/s, generation 48.0 tokens/s |
+
+Consequences: a 7,000-token summary prompt plus 450 output tokens is about 3.7 minutes on the 12B here, so one game
+update's roughly 400 model calls is 1 to 3 days on this CPU and longer on the VPS; and the 12B does not fit the
+current VPS's 11 GB beside serving at all, so on that box the stages run on E2B (2.6 times faster, lower quality,
+unmeasured) or the box grows. Contract v1.1 section 1's "1,000 to 1,900 a day on one VPS core" for E2B `mid` is not
+supported by this measurement (93 an hour on 8 fast threads); it needs a correction note there.
+
 Everything in section 4 is an estimate until these exist; if the 12B is too slow for the box, the stages fall back
 to E2B for all but the bank re-answer, at a measured quality cost.
 

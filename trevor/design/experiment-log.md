@@ -1346,6 +1346,17 @@ excerpt slots. Not shipped as a default on that evidence; the defaults render pr
 flags on the probe sets, and a lift for the waking scene itself (its voice is "???" until "My name is Mon3tr", so a
 chunk-scoped label rename is the candidate; a story-scoped one is unsafe, "???" names several speakers per story).
 
+### 2026-10-19: CPU-only throughput of E2B and the 12B (step 1 of the self-contained deployment)
+
+**Tried.** On the development machine with `-ngl 0` and 8 threads: the 35 probe questions on E2B `mid` through a
+plain llama-server (no Metal layers), then `llama-bench -p 4096 -n 128 -r 2` on the 12B Q4_0 and E2B Q4_K_M.
+**Result.** E2B `mid`: 1,249 s for 35 questions; model time median 38 s, mean 39 s, range 26 to 54 s; 93 answers an
+hour at full duty. 12B: 36.4 tokens/s prompt, 17.4 tokens/s generation. E2B: 92.7 and 48.0. The bench reports
+`BLAS,MTL` as loaded backends: Accelerate BLAS serves the CPU path, and unified memory makes generation faster than a
+VPS slice by an estimated 2 to 4 times, so these bound the VPS from above.
+**Decision.** Recorded in `trevor-self-contained-deploy.md` section 5; the VPS numbers are taken on the VPS before
+step 5 is built. Contract v1.1's 1,000 to 1,900 answers a day on one core is flagged for correction.
+
 ## Entities and topics
 
 Identities, names and aliases, topics and topic summaries, dossiers, canon evidence for the Integrated Strategies endings, deaths, places, organisations, operator data.
