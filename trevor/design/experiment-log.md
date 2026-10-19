@@ -3089,6 +3089,10 @@ The full-profile prompt holds that passage (`story_deepcl_set_2_story_1#0005`: "
 once, in 6 Blue Notes passages), and the 12B's answer of the night is a plain decline ("The passages do not mention
 whether Deepcolor is part of the Church of the Deep") with no labelled theory, although the question is a
 whether-question about one character and the theory rule (`theory.rs`, `--no-theory-rule`) exists for that case.
-**Open.** Either the rule's hint test does not count these lines (no shared noun with the question: "Seaborn" is not
-"Church of the Deep") or the second ask returned nothing; `TREVOR_THEORY_DEBUG` or a dump of the second ask on one
-model run would tell which. Not built tonight. The decline itself is data-consistent: the text never names the Church.
+**Resolved by reading `theory.rs` (no run needed).** `predicate` gives "part of the church of the deep", `stems` drops
+"part" (STOP) and keeps "church" and "deep", and `hints` keeps only a passage line that touches one of those stems and
+is Deepcolor's, names her or answers her. The Blue Notes lines say "Seaborn" and "the call of the many": no stem, no hint
+line, `block` is None, `extra_hints` has nothing to find, and the first answer stands. The hint test is LEXICAL and the
+link from Seaborn to the Church of the Deep is semantic; the text never states it, so the decline is data-consistent. A
+lift would need the topics table (a topic summary that relates the Church to the Seaborn) to lend the theory rule its
+stems; unmeasured, not built.
