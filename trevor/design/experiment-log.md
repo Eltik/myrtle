@@ -1448,6 +1448,10 @@ on both arms (the rename reaches no prompt of it). So retrieval is no longer the
 the model's choice of passage is. The rename stays (correct labels, 0 default prompts changed), the flags stay opt-in,
 the question stays open: a next step would give a "wakes up" question the scene whose text says awoke or wakes first,
 measured before any default.
+**Reach (stub renders at defaults against `--no-chunk-renames`, 07:46 JST).** The 95 chunks reach 3 of 101 ian
+prompts, 7 of 362 real-probe prompts and 34 of 1,040 Discord prompts (3.3%): a renamed "???" label in a passage or a
+line now credited to its speaker in a character scene. The 18-chunk file reached 0 of the first two sets. Effect on
+answers unmeasured (the model is the preview's this morning); owed with the report-check window.
 
 ### 2026-10-19: The vanished fate: "How does Kal'tsit die" when the text says she disappeared
 
