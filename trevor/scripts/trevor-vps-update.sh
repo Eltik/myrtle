@@ -577,7 +577,9 @@ disk_check() {
   local out low
   out="$(retention --only disk 2>&1)" || true
   printf '%s\n' "$out" | grep -v '^{' || true
-  low="$(printf '%s\n' "$out" | grep 'WARNING: disk low' | sed 's/^== [0-9:]* //')" || true
+  # `|| true` INSIDE the substitution: bash 3.2 runs the inherited ERR trap (set -E) in the subshell when grep finds
+  # nothing, whatever the outer `|| true` says; the trap's alert and its log line then landed in $low (chaos run).
+  low="$(printf '%s\n' "$out" | grep 'WARNING: disk low' | sed 's/^== [0-9:]* //' || true)"
   if [[ -n "$low" ]]; then
     post_embed "Trevor: disk space is low" "$low
 Retention: \`trevor-vps-update.sh prune\` lists what the policy would delete; PRUNE_APPLY=1 deletes it." \

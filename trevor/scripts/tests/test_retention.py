@@ -323,6 +323,14 @@ class Retention(unittest.TestCase):
             self.assertLess(p.stdout.index('WARNING: disk low'), p.stdout.index('up to date'))
             self.assertNotIn('prune:', p.stdout)
             self.assertEqual(len(posts), 1)
+            # A disk with room posts nothing: under bash 3.2 grep's empty match ran the ERR trap inside disk_check's
+            # substitution, which posted "update failed: start" and then "disk space is low" (chaos run 2026-10-19).
+            p = subprocess.run(['bash', UPDATE, 'daily'], capture_output=True, text=True,
+                               env={**env, 'DISK_MIN_FREE_GB': '0', 'DISK_MIN_FREE_PCT': '0'})
+            self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+            self.assertIn('up to date', p.stdout)
+            self.assertNotIn('update_failed', p.stdout + p.stderr)
+            self.assertEqual(len(posts), 1)
         finally:
             srv.shutdown()
             srv.server_close()
