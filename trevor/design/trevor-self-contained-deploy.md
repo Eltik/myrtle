@@ -127,7 +127,7 @@ To build, in order:
 | 7 | The missing-input sweep: every reader of a game table or derived file keeps its last good output and logs it; a test per reader with the input removed | 1 to 2 days |
 | 8 | A chaos run of the nightly update: a skipped table, an unreachable CDN, a failed gate, a full disk; each must leave the last publish serving and post one alert | 1 day |
 | 9 | Retention: update logs, `eval/runs`, the spool, `trevor_asks`, the asset download; disk alerts | half a day |
-| 10 | The `cf`-less verification of section 3, and the return runbook: what to read after two years, in one page | half a day |
+| 10 | The `cf`-less verification of section 3: verified by reading 2026-10-19. The `cf` rung exists only while a worker heartbeat reports `cf:true`, which needs the Cloudflare keys and a passed canary (`trevor/src/bin/ask/serve/worker.rs`, `openai.rs cloudflare_from_env`); with them unset admission goes `cpu`, deferred `cpu`, passages (`backend/.../trevor/rung.rs`), `settle_rung` steps a stray `Cf` down to `Cpu`, Neurons accrue only on cf results so the budget alert never fires, and no frontend string names the rung. Still to do: a unit test pinning the heartbeat flag with `cf_models: None`, "leave unset" in `deploy/trevor.env.example`, cpu defaults in the dev preview's canned fixtures, and the return runbook | half a day |
 
 Two to three focused weeks. Steps 3 and 5 are the real work; the rest is wiring that the last 24 hours of operation
 showed to be necessary.
