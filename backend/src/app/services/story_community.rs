@@ -582,6 +582,11 @@ pub async fn compute(
 /// library is retired by a hot reload alone, the aggregate by the clock too.
 static AGGREGATE: ServerCache<StoryCommunity> = ServerCache::new();
 
+/// Drop the aggregate cached for `server`; see [`ServerCache::clear`].
+pub(crate) fn clear_cache(server: Server) -> bool {
+    AGGREGATE.clear(server)
+}
+
 /// How many times the aggregate has actually been COMPUTED in this process.
 /// Exported so a test can assert the single flight.
 #[must_use]

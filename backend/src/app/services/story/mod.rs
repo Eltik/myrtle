@@ -61,6 +61,21 @@ pub use sprites::{
 };
 pub use story_art::{ensure_story_art, get_story_art, story_art_known};
 
+/// Drop the library index, sprite, gallery and story-art caches held for
+/// `server`, returning how many held a value. A lazy server's unload calls
+/// this (`residency::unload_idle`).
+pub(crate) fn clear_caches(server: crate::core::hypergryph::constants::Server) -> usize {
+    [
+        cache::clear_cache(server),
+        sprites::clear_cache(server),
+        gallery::clear_cache(server),
+        story_art::clear_cache(server),
+    ]
+    .into_iter()
+    .filter(|held| *held)
+    .count()
+}
+
 /// A game table's string as an optional field: trimmed, and absent when it is
 /// empty. The archive and music tables write "no value" as an empty string or
 /// a single space (101 of the 208 EN `Musics` rows write a single space), so

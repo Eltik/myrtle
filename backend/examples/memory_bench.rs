@@ -12,6 +12,12 @@
 //! to the live copy (the new path) -> unload (a lazy server going idle) ->
 //! load again. RSS is read with `ps` after each step and again after a settle
 //! wait, so the decay settings show.
+//!
+//! `BENCH_TABLES_BR_ONLY=0` or `=1` instead loads once and holds the 21
+//! static-table bodies the way one server's slots do, with both forms or the
+//! brotli form alone (`STATIC_TABLES_BR_ONLY`), then times decoding the
+//! largest table, operators, back to identity. Run each value in its own
+//! process so the RSS figures do not mix.
 
 use std::alloc::{GlobalAlloc, Layout};
 use std::path::{Path, PathBuf};
@@ -20,6 +26,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
 
 use backend::app::memory::{jemalloc_opts, rss_bytes};
+use backend::app::services::static_data::encode_all_tables;
 use backend::core::gamedata::{init_game_data, load_sidecar_parts};
 
 /// jemalloc behind a counter of LIVE heap bytes and their high-water mark.
@@ -121,6 +128,11 @@ fn main() {
     let live = load("load");
     report("1 one copy resident", settle);
 
+    if let Ok(mode) = std::env::var("BENCH_TABLES_BR_ONLY") {
+        tables(&live.0, mode.trim() == "1", settle);
+        return;
+    }
+
     // Old sidecar-job path: a full rebuild held next to the live copy until
     // the swap, then the old copy dropped.
     let rebuilt = load("full reload");
@@ -153,4 +165,53 @@ fn main() {
     report("7 loaded again", settle);
     drop(live);
     report("8 unloaded again", settle);
+}
+
+/// The 21 static-table slots of one server, held with both forms or brotli
+/// alone, then the operators decode timed.
+#[allow(clippy::cast_precision_loss)] // MiB and ms to one decimal
+fn tables(gd: &backend::core::gamedata::types::GameData, br_only: bool, settle: Duration) {
+    let before = LIVE.load(Ordering::Relaxed);
+    let t = Instant::now();
+    let tables = encode_all_tables(gd, br_only).expect("tables serialize");
+    let held = LIVE.load(Ordering::Relaxed).saturating_sub(before);
+    let identity: usize = tables.iter().map(|(_, j)| j.body.len()).sum();
+    let br: usize = tables.iter().map(|(_, j)| j.br.len()).sum();
+    println!(
+        "  21 tables br_only={br_only}: {:.1} MiB more live heap (identity held {:.1} MiB, brotli {:.1} MiB), built in {:.1} s",
+        held as f64 / 1_048_576.0,
+        identity as f64 / 1_048_576.0,
+        br as f64 / 1_048_576.0,
+        t.elapsed().as_secs_f64()
+    );
+    report(&format!("9 tables held, br_only={br_only}"), settle);
+    let (_, ops) = tables
+        .iter()
+        .find(|(name, _)| *name == "operators")
+        .expect("operators");
+    let mut ms: Vec<f64> = (0..7)
+        .map(|_| {
+            // The brotli form alone, whichever arm built it.
+            let decoding = backend::app::cache::SharedJson {
+                body: axum::body::Bytes::new(),
+                br_only: true,
+                ..ops.clone()
+            };
+            let t = Instant::now();
+            let body = decoding.identity();
+            let elapsed = t.elapsed().as_secs_f64() * 1000.0;
+            assert_eq!(backend::app::cache::strong_etag(&body), ops.etag);
+            elapsed
+        })
+        .collect();
+    ms.sort_by(f64::total_cmp);
+    println!(
+        "  operators decode: {} brotli bytes -> identity, ms min {:.1} median {:.1} max {:.1} (7 runs)",
+        ops.br.len(),
+        ms[0],
+        ms[3],
+        ms[6]
+    );
+    drop(tables);
+    report("10 tables dropped", settle);
 }

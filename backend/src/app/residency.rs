@@ -328,7 +328,32 @@ async fn load(state: &AppState, server: Server, sd: &Arc<ServerData>) -> Result<
 /// Unload every lazy server idle for at least `idle`. Returns the servers
 /// unloaded. Takes the reload lock per server, so an unload never lands in the
 /// middle of a reload or a load.
+///
+/// The server's derived caches go with its game data (`LAZY_UNLOAD_CACHES`,
+/// default on): the 21 static-table slots and the story, music, archive,
+/// gallery, sprite and community caches. They are keyed on the `GameData`
+/// allocation, so after an unload they can never answer again, yet each held
+/// its `Arc` until the next request for the server. `LAZY_UNLOAD_CACHES=0`
+/// leaves them, as before.
 pub async fn unload_idle(state: &AppState, idle: Duration) -> Vec<Server> {
+    let clear = !crate::utils::env::switched_off("LAZY_UNLOAD_CACHES");
+    unload_idle_with(state, idle, clear).await
+}
+
+/// Every per-server derived cache held for `server`, dropped; returns how many
+/// held a value.
+fn clear_server_caches(server: Server) -> usize {
+    use crate::app::services::{archives, music, static_data, story, story_community};
+    static_data::clear_cache(server)
+        + story::clear_caches(server)
+        + archives::clear_cache(server)
+        + usize::from(music::clear_cache(server))
+        + usize::from(story_community::clear_cache(server))
+}
+
+/// [`unload_idle`] with the cache switch passed in, so a test sets it
+/// without the environment.
+async fn unload_idle_with(state: &AppState, idle: Duration, clear_caches: bool) -> Vec<Server> {
     let mut seen: Vec<usize> = Vec::new();
     let mut unloaded = Vec::new();
     let mut entries: Vec<(Server, Arc<ServerData>)> = state
@@ -359,9 +384,21 @@ pub async fn unload_idle(state: &AppState, idle: Duration) -> Vec<Server> {
         }
         let idle_secs = sd.residency.idle_secs();
         sd.unload();
+        let caches_cleared = if clear_caches {
+            // Every key naming this cell: Bilibili shares CN's.
+            state
+                .servers
+                .iter()
+                .filter(|(_, other)| Arc::ptr_eq(other, &sd))
+                .map(|(alias, _)| clear_server_caches(*alias))
+                .sum()
+        } else {
+            0
+        };
         tracing::info!(
             server = server.as_str(),
             idle_secs,
+            caches_cleared,
             "lazy server idle, game data unloaded"
         );
         unloaded.push(server);
@@ -652,6 +689,63 @@ mod tests {
             .expect("reload on request");
         assert!(jp.loaded.load(Ordering::Acquire));
         assert_eq!(*jp.residency.pending_res_version.lock().unwrap(), None);
+    }
+
+    /// An unload drops the server's derived caches with its game data
+    /// (`LAZY_UNLOAD_CACHES`); with the switch off they stay, as before.
+    #[allow(clippy::await_holding_lock)] // test-only serialisation
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn an_unload_drops_the_servers_caches_unless_switched_off() {
+        use crate::app::services::{static_data, story};
+        let _serial = serial();
+        let _cpu = crate::app::cpu::tests::POOL.lock().await;
+        let scratch = Scratch::new("caches");
+        scratch.write_server(Server::EN);
+        scratch.write_server(Server::JP);
+        let state = state_for(scratch.base(), &[Server::EN, Server::JP], &[Server::JP]);
+
+        for clear in [true, false] {
+            ensure_loaded(&state, Server::JP, Duration::from_secs(20))
+                .await
+                .expect("JP loads");
+            static_data::get_resource(&state, Server::JP, "operators")
+                .await
+                .expect("operators");
+            static_data::get_resource(&state, Server::JP, "skins")
+                .await
+                .expect("skins");
+            story::cached_index(&state, Server::JP)
+                .await
+                .expect("story index");
+            assert!(static_data::holds(Server::JP, "operators"));
+            assert!(static_data::holds(Server::JP, "skins"));
+            assert!(story::cache::holds(Server::JP));
+
+            assert_eq!(
+                unload_idle_with(&state, Duration::ZERO, clear).await,
+                vec![Server::JP]
+            );
+            assert!(
+                !state
+                    .entry(Server::JP)
+                    .expect("JP")
+                    .loaded
+                    .load(Ordering::Acquire)
+            );
+            assert_eq!(
+                static_data::holds(Server::JP, "operators"),
+                !clear,
+                "clear={clear}"
+            );
+            assert_eq!(
+                static_data::holds(Server::JP, "skins"),
+                !clear,
+                "clear={clear}"
+            );
+            assert_eq!(story::cache::holds(Server::JP), !clear, "clear={clear}");
+            // The eager default's caches are never touched.
+            assert!(state.try_server_data(Server::EN).is_some());
+        }
     }
 
     /// Task 3: a sidecar patch publishes a new `GameData` that shares the live

@@ -76,6 +76,37 @@ impl<T> ServerCache<T> {
         self.builds.load(Ordering::Relaxed)
     }
 
+    /// Drop the value cached for `server`, returning whether one was held.
+    ///
+    /// The slot leaves the map, so the `Arc<T>` goes now instead of at the
+    /// next request. A build in flight keeps its own handle on the old slot
+    /// and fills it for nobody; the next caller builds into a new slot.
+    pub fn clear(&self, server: Server) -> bool {
+        let Some(slots) = self.slots.get() else {
+            return false;
+        };
+        let removed = slots
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .remove(&server);
+        removed.is_some_and(|slot| slot.try_lock().map_or(true, |held| held.is_some()))
+    }
+
+    /// Whether a value is cached for `server`. A slot busy building counts
+    /// as holding one.
+    #[must_use]
+    pub fn holds(&self, server: Server) -> bool {
+        let Some(slots) = self.slots.get() else {
+            return false;
+        };
+        let slot = slots
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .get(&server)
+            .cloned();
+        slot.is_some_and(|slot| slot.try_lock().map_or(true, |held| held.is_some()))
+    }
+
     /// The cached value for `server`, building it under the slot's lock when
     /// the slot is empty, was built from a different `GameData`, or `fresh`
     /// says the value has aged out.
@@ -149,6 +180,17 @@ impl StoryTrees {
 }
 
 static INDEX: ServerCache<StoryIndexCache> = ServerCache::new();
+
+/// Drop the story index cached for `server`; see [`ServerCache::clear`].
+pub(crate) fn clear_cache(server: Server) -> bool {
+    INDEX.clear(server)
+}
+
+/// Whether the story index is cached for `server` (tests).
+#[cfg(test)]
+pub(crate) fn holds(server: Server) -> bool {
+    INDEX.holds(server)
+}
 
 /// How many times the story index has actually been BUILT in this process.
 #[must_use]

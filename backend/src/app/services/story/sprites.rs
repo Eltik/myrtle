@@ -687,6 +687,11 @@ fn name_details(
 
 static SPRITES: ServerCache<StorySpriteCache> = ServerCache::new();
 
+/// Drop the sprite cache cached for `server`; see [`ServerCache::clear`].
+pub(super) fn clear_cache(server: Server) -> bool {
+    SPRITES.clear(server)
+}
+
 /// How many times the gallery has actually been BUILT in this process.
 #[must_use]
 pub fn sprite_index_builds() -> u64 {

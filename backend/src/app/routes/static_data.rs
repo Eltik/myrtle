@@ -56,9 +56,12 @@ pub(crate) fn etag_json_response(
 /// A [`SharedJson`] with its `ETag` and [`GAMEDATA_CACHE_CONTROL`]: the
 /// stored brotli form to a client that accepts `br`, the plain body otherwise,
 /// and a 304 when `If-None-Match` names the form it would get.
+///
+/// A brotli-only value is decoded here for a plain client, on the calling
+/// thread; [`serve_shared_json`] decodes in `cpu::run` instead.
 pub(crate) fn shared_json_response(json: &SharedJson, headers: &HeaderMap) -> Response {
     if !accepts_br(headers) {
-        let mut res = etag_json_response(json.body.clone(), json.etag.clone(), headers);
+        let mut res = etag_json_response(json.identity(), json.etag.clone(), headers);
         res.headers_mut()
             .insert(header::VARY, HeaderValue::from_static("accept-encoding"));
         return res;
@@ -88,6 +91,29 @@ pub(crate) fn shared_json_response(json: &SharedJson, headers: &HeaderMap) -> Re
         json.br.clone(),
     )
         .into_response()
+}
+
+/// [`shared_json_response`] for a value that may hold only its brotli form
+/// (the static tables, `STATIC_TABLES_BR_ONLY`): a client that will get the
+/// plain body, and is not answered 304, has it decoded in `cpu::run`, off the
+/// async workers. A brotli client and a revalidation never decode.
+///
+/// # Errors
+/// `503` when the CPU pool sheds the decode.
+pub(crate) async fn serve_shared_json(
+    json: SharedJson,
+    headers: &HeaderMap,
+) -> Result<Response, ApiError> {
+    let revalidated = headers
+        .get(header::IF_NONE_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .is_some_and(|inm| inm == json.etag);
+    let json = if json.br_only && !accepts_br(headers) && !revalidated {
+        crate::app::cpu::run("static_identity", move || json.with_identity()).await?
+    } else {
+        json
+    };
+    Ok(shared_json_response(&json, headers))
 }
 
 /// Whether `Accept-Encoding` lists `br` without `q=0`.
@@ -137,7 +163,7 @@ pub async fn get_static(
     Path(resource): Path<String>,
 ) -> Result<Response, ApiError> {
     let body = get_resource(&state, state.default_server, &resource).await?;
-    Ok(shared_json_response(&body, &headers))
+    serve_shared_json(body, &headers).await
 }
 
 /// `GET /{server}/static/{resource}` - per-server game-data table.
@@ -167,7 +193,7 @@ pub async fn get_static_srv(
     Path((server, resource)): Path<(Server, String)>,
 ) -> Result<Response, ApiError> {
     let body = get_resource(&state, server, &resource).await?;
-    Ok(shared_json_response(&body, &headers))
+    serve_shared_json(body, &headers).await
 }
 
 #[cfg(test)]
@@ -184,6 +210,148 @@ mod tests {
 
     fn sample() -> SharedJson {
         SharedJson::new(br#"{"tracks":[1,2,3],"totals":{"tracks":3}}"#.repeat(50))
+    }
+
+    /// A body large enough to look like a table: about 2 MB of operator-like
+    /// rows with varied numbers, so the brotli form is not trivially small.
+    fn table_like() -> Vec<u8> {
+        let rows: Vec<String> = (0..12_000)
+            .map(|i| {
+                format!(
+                    r#""char_{i:04}":{{"name":"Op {i}","rarity":{},"atk":[{},{},{}],"tags":["a{}","b{}"]}}"#,
+                    i % 6,
+                    i * 7 % 997,
+                    i * 13 % 1009,
+                    i * 31 % 1013,
+                    i % 17,
+                    i % 23
+                )
+            })
+            .collect();
+        format!("{{{}}}", rows.join(",")).into_bytes()
+    }
+
+    /// One request through the handler and the server's compression layer:
+    /// the status, the headers as sent, and the body decoded back to identity.
+    async fn fetch(
+        json: SharedJson,
+        accept: &str,
+        inm: Option<&str>,
+    ) -> (StatusCode, HeaderMap, Vec<u8>) {
+        use tower::ServiceExt;
+        use tower_http::compression::{CompressionLayer, CompressionLevel};
+        // `route_service`, not the plain form: `openapi_snapshot_test` counts
+        // that spelling in this tree as an undocumented route.
+        let app = axum::Router::new()
+            .route_service(
+                "/t",
+                axum::routing::get(move |headers: HeaderMap| {
+                    let json = json.clone();
+                    async move { serve_shared_json(json, &headers).await }
+                }),
+            )
+            .layer(CompressionLayer::new().quality(CompressionLevel::Precise(6)));
+        let mut req = axum::http::Request::get("/t");
+        if !accept.is_empty() {
+            req = req.header(header::ACCEPT_ENCODING, accept);
+        }
+        if let Some(tag) = inm {
+            req = req.header(header::IF_NONE_MATCH, tag);
+        }
+        let res = app
+            .clone()
+            .oneshot(req.body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+        let (parts, body) = res.into_parts();
+        let raw = axum::body::to_bytes(body, usize::MAX).await.unwrap();
+        let decoded = match parts
+            .headers
+            .get(header::CONTENT_ENCODING)
+            .map(|v| v.to_str().unwrap().to_owned())
+            .as_deref()
+        {
+            None => raw.to_vec(),
+            Some("br") => {
+                let mut out = Vec::new();
+                brotli::BrotliDecompress(&mut raw.as_ref(), &mut out).unwrap();
+                out
+            }
+            Some("gzip") => {
+                // The decompression layer undoes the gzip the server layer applied.
+                let svc = tower_http::decompression::Decompression::new(app);
+                let mut again =
+                    axum::http::Request::get("/t").header(header::ACCEPT_ENCODING, accept);
+                if let Some(tag) = inm {
+                    again = again.header(header::IF_NONE_MATCH, tag);
+                }
+                let res = svc
+                    .oneshot(again.body(Body::empty()).unwrap())
+                    .await
+                    .unwrap();
+                axum::body::to_bytes(Body::new(res.into_body()), usize::MAX)
+                    .await
+                    .unwrap()
+                    .to_vec()
+            }
+            Some(other) => panic!("unexpected encoding {other}"),
+        };
+        (parts.status, parts.headers, decoded)
+    }
+
+    /// `STATIC_TABLES_BR_ONLY`: a brotli-only value serves the same bytes to
+    /// brotli, gzip and identity clients as a value holding both forms, with
+    /// the same `ETag`, `Content-Encoding` and `Vary`, and the same 304s.
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn br_only_serves_identical_bodies_and_headers_for_every_encoding() {
+        let _cpu = crate::app::cpu::tests::POOL.lock().await;
+        let body = table_like();
+        let want = crate::app::cache::strong_etag(&body);
+        let both = SharedJson::encode(body.clone(), false);
+        let br_only = SharedJson::encode(body.clone(), true);
+        assert!(br_only.body.is_empty() && br_only.br_only);
+        assert_eq!(both.etag, br_only.etag);
+        assert_eq!(both.br_etag, br_only.br_etag);
+        assert_eq!(both.br, br_only.br);
+        assert_eq!(br_only.identity(), both.body);
+
+        for accept in ["gzip, deflate, br, zstd", "gzip", "identity", ""] {
+            let (s1, h1, b1) = fetch(both.clone(), accept, None).await;
+            let (s2, h2, b2) = fetch(br_only.clone(), accept, None).await;
+            assert_eq!((s1, s2), (StatusCode::OK, StatusCode::OK), "{accept}");
+            assert_eq!(
+                crate::app::cache::strong_etag(&b1),
+                want,
+                "{accept}: old arm"
+            );
+            assert_eq!(
+                crate::app::cache::strong_etag(&b2),
+                want,
+                "{accept}: br-only arm"
+            );
+            for name in [
+                header::ETAG,
+                header::CONTENT_ENCODING,
+                header::VARY,
+                header::CACHE_CONTROL,
+                header::CONTENT_TYPE,
+            ] {
+                assert_eq!(h1.get(&name), h2.get(&name), "{accept}: {name}");
+            }
+            // Revalidation by the tag each arm sent is a 304 in both.
+            let tag = h1[header::ETAG].to_str().unwrap().to_owned();
+            let (r1, _, _) = fetch(both.clone(), accept, Some(&tag)).await;
+            let (r2, _, _) = fetch(br_only.clone(), accept, Some(&tag)).await;
+            assert_eq!(
+                (r1, r2),
+                (StatusCode::NOT_MODIFIED, StatusCode::NOT_MODIFIED),
+                "{accept}"
+            );
+        }
+        let (_, h, _) = fetch(br_only.clone(), "gzip", None).await;
+        assert_eq!(h[header::CONTENT_ENCODING], "gzip");
+        let (_, h, _) = fetch(br_only, "br", None).await;
+        assert_eq!(h[header::CONTENT_ENCODING], "br");
     }
 
     #[test]

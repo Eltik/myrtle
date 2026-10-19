@@ -158,6 +158,12 @@ pub struct ArchiveJson {
 
 static ARCHIVE_JSON: ServerCache<ArchiveJson> = ServerCache::new();
 
+/// Drop the archive and its encoded bodies cached for `server`, returning how
+/// many of the two slots held a value; see [`ServerCache::clear`].
+pub(crate) fn clear_cache(server: Server) -> usize {
+    usize::from(ARCHIVE.clear(server)) + usize::from(ARCHIVE_JSON.clear(server))
+}
+
 fn encode(value: &impl Serialize) -> Result<SharedJson, ApiError> {
     serde_json::to_vec(value)
         .map(SharedJson::new)

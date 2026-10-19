@@ -186,6 +186,11 @@ struct Cached {
 
 static GALLERY: ServerCache<Cached> = ServerCache::new();
 
+/// Drop the gallery cached for `server`; see [`ServerCache::clear`].
+pub(super) fn clear_cache(server: Server) -> bool {
+    GALLERY.clear(server)
+}
+
 /// `server`'s catalogue, built once per game data and asset tree.
 ///
 /// # Errors

@@ -298,6 +298,8 @@ the last column restores the previous behaviour exactly):
 | `UNLOADED_SERVER_503` | on | `503` for a configured but unloaded server | `0` (plain `404`) |
 | `PLACEHOLDER_EMPTY` | on | An unloaded server holds empty data and lookups fall back past it | `0` (holds the default's data) |
 | `SIDECAR_PATCH` | on | Pool-detail / event-shop jobs rebuild only `gacha` + `event_shops`, sharing the live tables | `0` (full reload) |
+| `LAZY_UNLOAD_CACHES` | on | A lazy server's idle unload also drops its derived caches (the 21 static-table slots, story index, sprites, gallery, story art, music, archives, community aggregate), which otherwise hold their `Arc`s until the next request for the server | `0` (caches kept until the next request) |
+| `STATIC_TABLES_BR_ONLY` | on | The static-table slots (`/{server}/static/{resource}`) keep only the brotli form; a client that does not accept `br` (the SSR asks for identity) gets it decoded in `cpu::run`, same bytes and `ETag`. EN: 7.3 MiB of heap held instead of 127.1 MiB (RSS +11.9 MiB instead of +75.5 MiB); operators decodes in 25 ms (`examples/memory_bench.rs`) | `0` (identity and brotli both held) |
 | `DATABASE_MAX_CONNECTIONS` | `20` | Pool ceiling | `40` |
 | `DATABASE_MIN_CONNECTIONS` | `2` | Connections kept while idle | `2` |
 | `DATABASE_IDLE_TIMEOUT_SECS` | `60` | Idle time before a connection above the minimum closes | `600` |

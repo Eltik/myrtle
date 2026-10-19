@@ -42,13 +42,21 @@ pub fn strong_etag(body: &[u8]) -> String {
 /// (6), and served as is to a client that accepts it; the layer passes a body
 /// that already names its encoding. Before, the layer re-encoded the music
 /// index on every request: 117 to 154 ms of server time for its 110,137 bytes.
+///
+/// A body built with `br_only` keeps the brotli form alone: `body` is empty
+/// and [`SharedJson::identity`] decodes `br` for a client that does not accept
+/// brotli. The static tables do this (`STATIC_TABLES_BR_ONLY`): EN's 21 tables
+/// are about 75 MB identity against 8 MB brotli.
 #[derive(Clone, Debug)]
 pub struct SharedJson {
+    /// The identity body; empty when `br_only` is set.
     pub body: axum::body::Bytes,
     pub etag: String,
     pub br: axum::body::Bytes,
     /// The brotli form's own `ETag`: a different representation of the same body.
     pub br_etag: String,
+    /// True when only the brotli form is held (`body` is empty).
+    pub br_only: bool,
 }
 
 /// Brotli quality, the same as `server.rs`'s `CompressionLayer` (see the
@@ -59,9 +67,17 @@ const BROTLI_QUALITY: u32 = 6;
 const BROTLI_LGWIN: u32 = 22;
 
 impl SharedJson {
-    /// Hashes and brotli-encodes `body`. CPU-bound: call it inside `cpu::run`.
+    /// Hashes and brotli-encodes `body`, keeping both forms. CPU-bound: call
+    /// it inside `cpu::run`.
     #[must_use]
     pub fn new(body: Vec<u8>) -> Self {
+        Self::encode(body, false)
+    }
+
+    /// [`SharedJson::new`], dropping the identity body after encoding when
+    /// `br_only` is set. The `ETag`s are the same either way.
+    #[must_use]
+    pub fn encode(body: Vec<u8>, br_only: bool) -> Self {
         let etag = strong_etag(&body);
         let mut br = Vec::with_capacity(body.len() / 8);
         {
@@ -71,11 +87,52 @@ impl SharedJson {
             let _ = std::io::Write::write_all(&mut writer, &body);
         }
         let br_etag = format!("{}-br\"", etag.trim_end_matches('"'));
+        let body = if br_only {
+            // `Bytes::from(Vec)` keeps the spare capacity; held alone, the
+            // brotli form is trimmed to its length (EN tables: 11.3 MiB of heap
+            // for 7.3 MiB of brotli before the trim).
+            br.shrink_to_fit();
+            axum::body::Bytes::new()
+        } else {
+            axum::body::Bytes::from(body)
+        };
         Self {
-            body: axum::body::Bytes::from(body),
+            body,
             etag,
             br: axum::body::Bytes::from(br),
             br_etag,
+            br_only,
+        }
+    }
+
+    /// The identity body: the held one, or `br` decoded when only the brotli
+    /// form is held. The decode is CPU-bound (operators, 23.8 MB: see
+    /// `examples/memory_bench.rs`); the request path runs it in `cpu::run`.
+    #[must_use]
+    pub fn identity(&self) -> axum::body::Bytes {
+        if !self.br_only {
+            return self.body.clone();
+        }
+        let mut out = Vec::with_capacity(self.br.len().saturating_mul(8));
+        // The input is our own encoder's output, so a failure is a bug; an
+        // empty body would then fail the client's JSON parse, not serve stale data.
+        if let Err(e) = brotli::BrotliDecompress(&mut self.br.as_ref(), &mut out) {
+            tracing::error!(error = %e, "stored brotli body failed to decode");
+            out.clear();
+        }
+        axum::body::Bytes::from(out)
+    }
+
+    /// This value with the identity body held, decoded if need be.
+    #[must_use]
+    pub fn with_identity(self) -> Self {
+        if !self.br_only {
+            return self;
+        }
+        Self {
+            body: self.identity(),
+            br_only: false,
+            ..self
         }
     }
 }

@@ -41,6 +41,11 @@ struct Cached {
 
 static MUSIC: ServerCache<Cached> = ServerCache::new();
 
+/// Drop the music index cached for `server`; see [`ServerCache::clear`].
+pub(crate) fn clear_cache(server: Server) -> bool {
+    MUSIC.clear(server)
+}
+
 /// The trees `server`'s index reads: its own first, then every other loaded
 /// server's, so a clip or a level the asked server no longer ships is found
 /// where it still is.

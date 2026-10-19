@@ -301,6 +301,11 @@ impl Cached {
 
 static STORY_ART: ServerCache<Cached> = ServerCache::new();
 
+/// Drop the story art index cached for `server`; see [`ServerCache::clear`].
+pub(super) fn clear_cache(server: Server) -> bool {
+    STORY_ART.clear(server)
+}
+
 async fn cached(state: &AppState, server: Server) -> Result<Arc<Cached>, ApiError> {
     let sd = state.require_server_data(server)?;
     let gd = sd.game_data.load_full();

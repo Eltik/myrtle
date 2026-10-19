@@ -87,13 +87,54 @@ pub async fn get_resource(
             || async move {
                 cpu::run("static_resource", move || {
                     let body = serialize_resource(&build_gd, name)?;
-                    Ok::<_, ApiError>(Arc::new(SharedJson::new(body.into_bytes())))
+                    Ok::<_, ApiError>(Arc::new(SharedJson::encode(body.into_bytes(), br_only())))
                 })
                 .await?
             },
         )
         .await?;
     Ok(SharedJson::clone(&json))
+}
+
+/// `STATIC_TABLES_BR_ONLY=0` keeps the identity body of every table resident
+/// beside its brotli form, as before; the default keeps the brotli form alone
+/// and decodes it for a plain client (`routes::static_data::serve_shared_json`).
+fn br_only() -> bool {
+    !crate::utils::env::switched_off("STATIC_TABLES_BR_ONLY")
+}
+
+/// Drop every table cached for `server`, returning how many slots held one.
+/// A lazy server's unload calls this, so the tables go with the game data.
+pub(crate) fn clear_cache(server: Server) -> usize {
+    TABLES.iter().filter(|slot| slot.clear(server)).count()
+}
+
+/// Whether table `resource` is cached for `server` (tests).
+#[cfg(test)]
+pub(crate) fn holds(server: Server, resource: &str) -> bool {
+    RESOURCES
+        .iter()
+        .position(|name| *name == resource)
+        .is_some_and(|slot| TABLES[slot].holds(server))
+}
+
+/// Every table of `data` encoded as its slot would hold it, for
+/// `examples/memory_bench.rs`: what the 21 slots of one server cost resident.
+///
+/// # Errors
+/// `500` when a table does not serialize.
+#[doc(hidden)]
+pub fn encode_all_tables(
+    data: &GameData,
+    br_only: bool,
+) -> Result<Vec<(&'static str, SharedJson)>, ApiError> {
+    RESOURCES
+        .iter()
+        .map(|name| {
+            let body = serialize_resource(data, name)?;
+            Ok((*name, SharedJson::encode(body.into_bytes(), br_only)))
+        })
+        .collect()
 }
 
 fn serialize_resource(data: &GameData, resource: &str) -> Result<String, ApiError> {
