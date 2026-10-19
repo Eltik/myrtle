@@ -176,6 +176,37 @@ anything (5.3 GiB plus KV; it runs inside the window after the 12B, one model af
    prompt and generation tokens per second on one real 7,000-token summary prompt. Repeat once with `--no-repack`.
 4. The site's resident set plus that RSS decides between the Q4 12B and IQ3_M; the tokens per second decide whether
    E4B is needed by day.
+5. The 12B rerun (2026-10-20; the first run of step 3 was contaminated by a llama-server left on :8089 from an
+   interrupted loop, so every new server exited 1 and curl measured the old one at 0.3 tok/s). Before each start:
+   `pkill -x llama-server; sleep 2; ss -ltn | grep -q ':8089 ' && echo "port busy, stop it first"`. Then for each arm
+   (`default`, `--no-repack`): start the server as in step 3 on `--port 8089`, wait for `curl -s localhost:8089/health`
+   to answer `{"status":"ok"}`, record `date` at start and at health (cold-cache load time), then POST one real summary
+   prompt: `python3 - <<'PY'` that reads a 7,000-token prompt file (`python3 scripts/p2-summaries.py group --method D
+   --groups main_15 --dump-prompts > p2-prompts.txt` on the development machine prints the part and merge prompts with
+   their token counts; cut one prompt out and copy it over) and posts
+   `{"prompt": text, "n_predict": 200, "temperature": 0, "cache_prompt": false}` to `/completion`, printing the response's
+   `timings`: `prompt_n`, `prompt_ms`, `predicted_n`, `predicted_ms`, and so prompt tokens per second
+   (`prompt_n / prompt_ms * 1000`) and generation tokens per second. Three posts, report the median. Then
+   `grep -E 'Rss|Anonymous|Shared_Clean' /proc/$(pgrep -x llama-server)/smaps_rollup` and `free -m`. Stop the server by
+   PID and `free -m` again. What decides: the 7 flagged groups took 6 min 2 s on the development machine at the 12B's
+   speed there; the window has 6 hours; a stage of 100 units at 1,500 prompt tokens and 200 generated tokens costs
+   `100 * (1500 / prompt_tps + 200 / gen_tps)` seconds, so with the two tok/s numbers the whole nightly stage list
+   (`stages.py --plan` prints the unit counts) either fits the window or does not. Record both arms' `Anonymous`: the
+   default repacks weights into anonymous memory (6.7 GB measured 2026-10-19), `--no-repack` keeps them in the page
+   cache (shareable, evictable); if `--no-repack` costs less than 25 percent of tok/s it is the better posture on 11 GB.
+   After the server stops, `free -m` shows how much page cache the load evicted: that is what the site pays the
+   morning after (Postgres 7.9 GB database, 128 MB shared_buffers); time one `curl -s -o /dev/null -w '%{time_total}'`
+   of a heavy page before and after to put a number on it.
+6. E2B for the cpu rung's profile (2026-10-20). `mid6k` needs a 12,288-token slot (contract v1.1 section 4), so the
+   serving server would run `-c 12288` instead of 4,096. Measure E2B as in step 5 but with
+   `models/llm/gemma-4-e2b-it-q4_k_m.gguf -c 12288 -np 1 --cache-ram 0 --ctx-checkpoints 0 -fa on` and a 5,600-token
+   prompt (the mean mid6k prompt measured 2026-10-20 over 155 questions; take one from a `--dump-prompt` of `ask
+   --profile mid6k` on the development machine), 250 generated tokens, three posts, median `prompt_ms` and
+   `predicted_ms`. What decides: the per-question wall time is `prompt_ms + predicted_ms`; at mid it is the same with a
+   3,300-token prompt (measure both). The contract's admission control sizes the queue by this time, so the decision is:
+   mid6k serves 15 more of 155 questions (61 -> 46 declines) if its wall time keeps the cpu rung's queue under the
+   admission ceiling at the day's peak (the backend's `TREVOR_*` capacity settings, contract v1.1 section 2); also
+   record `Rss` of the E2B server at 12,288 against 4,096 (the KV cache is small, under 0.3 GB expected; confirm).
 
 ## 6. Order of work
 
