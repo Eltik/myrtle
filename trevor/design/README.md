@@ -19,6 +19,7 @@ Interfaces and operations:
 | [trevor-vps-runbook.md](trevor-vps-runbook.md) | Installing, updating, rolling back and monitoring Trevor on the VPS, and what happens on each failure. |
 | [trevor-updates.md](trevor-updates.md) | What each pipeline stage does with a new or changed story, and the incremental updater after asset updates. |
 | [trevor-reembed.md](trevor-reembed.md) | fp32 embedding everywhere and the guarded, resumable re-embed (threads, duty cycle, thermal, memory and battery pauses, checkpoint), with measurements and the VPS command. |
+| [trevor-self-contained-deploy.md](trevor-self-contained-deploy.md) | One box, no model vendor, two years unattended (2026-10-19): cache and `cpu` serving, the nightly deterministic update, the model stages as a paced background runner on the CPU, a corpus snapshot and one-command bootstrap, the fail-safe posture and the build order. Planned, not built. |
 
 Design and specs:
 
