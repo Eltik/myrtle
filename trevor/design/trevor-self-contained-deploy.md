@@ -120,7 +120,7 @@ To build, in order:
 |---|---|---|
 | 1 | The two measurements of section 5 on the target box | hours |
 | 2 | Done 2026-10-19: the Release Bundle workflow (`.github/workflows/release.yml`) builds the 12 `trevor` bins with `--features embed` beside the asset unpacker and downloader it already shipped, and `scripts/fetch-release.sh --components trevor <sha>` installs them into `$TREVOR_DIR/target/release` (sha256-checked, renamed into place, `ask --help` before and after). ONNX Runtime 1.28 links statically: ort-sys's download path emits `rustc-link-lib=static=onnxruntime`, the macOS download holds only `libonnxruntime.a`, and `otool -L` on the Mac's `ask` lists no ONNX library while `nm` finds `OrtGetApiBase`; the CI job fails if `ldd` shows a dynamic one. Unverified until the workflow first runs on main. A stale hand-built unpacker deleted a game table on 2026-10-18 | 1 to 2 days |
-| 3 | **Corpus snapshot**: one tarball of the derived artifacts (chunks, vectors, indexes, summaries, dossiers, topics, entities, chronology, appearances, bank) with a manifest and checksums; a publisher and an installer, one command each. A fresh deploy starts from the snapshot and only ever runs incremental updates: building the tables from nothing on a CPU is weeks | 1 to 2 days |
+| 3 | Done 2026-10-19 (`scripts/snapshot.py`, see "Step 3 built" below; the fp32 vectors are 1,300 texts behind). **Corpus snapshot**: one tarball of the derived artifacts (chunks, vectors, indexes, summaries, dossiers, topics, entities, chronology, appearances, bank) with a manifest and checksums; a publisher and an installer, one command each. A fresh deploy starts from the snapshot and only ever runs incremental updates: building the tables from nothing on a CPU is weeks | 1 to 2 days |
 | 4 | **Bootstrap**: clone, one command: release binaries, pinned models, migrations, the snapshot, the units and timers, the first nightly update. Documented in `deploy/README.md` as the only path. llama.cpp (`llama-server`) is still installed by hand (`deploy/README.md` step 2); pinning a release and its sha256 belongs here | 1 to 2 days |
 | 5 | **The paced stage runner** (`trevor-stages`): section 4's priority order, duty cycle, lock and pressure pauses, gated publish | 3 to 5 days |
 | 6 | The nightly re-answer job (yesterday's live questions on the 12B into the bank; the bank's keep rules of contract v1.1 section 3a apply) | 1 day |
@@ -131,6 +131,54 @@ To build, in order:
 
 Two to three focused weeks. Steps 3 and 5 are the real work; the rest is wiring that the last 24 hours of operation
 showed to be necessary.
+
+### Step 3 built (2026-10-19): `scripts/snapshot.py`
+
+`snapshot.py pack` writes one tarball whose first member, `manifest.json`, records the schema, the creation time, the
+git commit, every file's size and sha256, each corpus's `chunks.jsonl` sha (sha16 and sha256) with whether its BM25
+index and vectors were built from that file, and the embedding model files the vectors were made with
+(`vectors.meta.json` `modelFile`, `modelSha`, `tokenizerSha`). `install` checks every member against the manifest
+before writing anything, extracts into `<dir>.tmp` and renames it into place; an existing tree is refused unless
+`--force`, which keeps the old one as `<dir>.old-<stamp>`. `check` is the verification alone.
+
+What it holds, measured on the development machine's tree: 246 files, 1,176,975,963 bytes, from 30 top-level entries.
+
+| part | bytes |
+|---|---|
+| vectors, INT8 export (P0, p3a, p3b, p4, p4x, p4-art) | 370,968,576 |
+| vectors, fp32 export (p3b-fp32, p4x-fp32, p4-art-fp32) | 197,932,032 |
+| `chunks.jsonl` of those 9 corpora | 391,836,237 |
+| BM25 indexes of those 9 corpora | 116,507,189 |
+| `vectors.meta.json` (the reuse keys) | 11,873,574 |
+| stage outputs and resume files (sources 14.7 MB, bank 11.8, art 11.3, entities 11.2, gametext 10.2, chrono 9.4, topics 4.7, p2 3.5, canon 2.5, dossiers 1.8, appearances 1.1, the rest under 1) | about 88,000,000 |
+
+Both vector kinds are f32 rows of 3,072 bytes; the name is the ONNX export that made them. The tar.zst is 215,714,764
+bytes: zstd level 3, one thread, a 2^29 window. The window is what matters, because the corpora repeat each other's
+chunks and reused vectors byte for byte: the default window gives 766 MB, 2^29 gives 216 MB (588 MB peak memory to
+write, 542 MB to read) and 2^30 gives 206 MB for twice the memory. Vectors are 148 MB of the 216. On the M5 Pro, pack
+takes 2.9 s, check 1.1 s and install 2.6 s. Without zstd on PATH it writes tar.gz: 777,605,858 bytes in 46 s.
+`--include-models` adds the embedder and the reranker (821 MB raw; 740 MB as tar.zst in all); the GGUFs are never
+packed, `scripts/fetch-model.sh` fetches them pinned.
+
+Left out: raw game data, `eval/runs`, eval outputs (`answers`, `trivia`, `goldgen-arch`, `goldgen-v2`), update logs,
+the spool, experiments (`p1a-split`, `p3b-lore`, `p4-lore`, `embedft`, `primers.v1`), the query-embedding cache
+(`router`), instance state (`publish`, `canary`), scratch files, and what the nightly update rebuilds in seconds
+(`p1a`, `panels`, `sources/all_units.jsonl`, `chunks.prev.jsonl`, `changes.json`): `build-prefixes` rewrote a
+byte-identical `p1a/chunks.jsonl` in 0.5 s, and `panels.py` built 1,931 panels from the installed tree in 16 s. A
+top-level entry the script does not know is reported and left out.
+
+Verified: `pack` into a scratch directory, `check`, `install --into` a scratch directory, then `cmp` of all 246
+manifest files against the source (0 differ) and `diff -rq` of every installed entry (20 lines, all files skipped on
+purpose: 18 empty tantivy lock files, `art/server.log`, `sources/all_units.jsonl`). A BM25 search on the installed
+p3b and p4x returns the same hits as on the source. A truncated archive and an archive with one altered member both
+fail `check` with exit 1.
+
+For step 4: the development machine serves INT8 vectors, which no other host can query (`trevor-reembed.md` section
+6), and its fp32 copies date from 2026-10-16. Of the 26,504 distinct texts in p3b, p4x and p4-art, 1,300 have no fp32
+vector yet. The bootstrap therefore needs fp32 vectors in the serving corpora: either refresh the `-fp32` copies on the
+development machine before packing (`embed-corpus --model-file model.onnx --reuse-from` the copies, 1,300 texts) or
+embed those texts on the box. `trevor-vps-update.sh` refuses INT8 vectors under `EMBED_ONNX=model.onnx`, and its
+`EMBED_FULL=1` re-embeds every text without reuse, so it cannot use the copies as they are.
 
 ## 7. Fail safe, never fail silent
 
