@@ -496,7 +496,9 @@ prune_releases() {
   prev="$(retention --previous-release 2>/dev/null || true)"
   [[ -z "$prev" ]] || keep=2
   while IFS= read -r r; do
-    [[ -n "$r" && "$r/artifacts" != "$live_target" ]] || continue
+    # Both sides resolved: an unresolved "$r/artifacts" never equalled the live target under a symlinked TREVOR_HOME,
+    # and the live release could be pruned (found by the retention tests on 2026-10-19).
+    [[ -n "$r" && "$(abspath "$r/artifacts")" != "$live_target" ]] || continue
     case "$r" in *.tmp) continue ;; esac   # a partial promote: clean_partial_releases' job, not a slot
     if [[ -n "$prev" && "$(abspath "$r")" == "$prev" ]]; then log "keeping release $r (the previous live release)"; continue; fi
     if (( keep < KEEP_RELEASES )); then keep=$((keep + 1)); continue; fi
