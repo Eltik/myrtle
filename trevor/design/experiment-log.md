@@ -819,6 +819,11 @@ The routers (model, keywords, the retired kNN and hybrid), the table tools and t
 ## Answer rules
 
 Answer prompts and the question form, decline, partial, retry and verdict rules, relation and opinion rules, citations and answer checks.
+**Closing regression at HEAD (82e92410, 01:02 to 01:20 JST, `--no-cache-prompt`).** Against the night's earlier final
+run (8d58e01b): E2B mid over the 155 probe questions 154 identical, 1 changed (r008, the part recap; declines 61 -> 60);
+12B full over the 35 probe questions 33 identical, 2 reworded with the same content (ian22, ian29). The night's eight
+behaviour changes (vanish rule and its misfire fixes, the reworded vanish and deaths wording, method D summaries, chunk
+renames, the scene-subject defaults, the part recap) cost no answer on either set.
 
 ### 2026-09-28: A file found by another name says so
 
