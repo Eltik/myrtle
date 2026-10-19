@@ -1413,6 +1413,30 @@ prompt is byte-identical. ian-questions (32 prompts), real-probe (116) and lore-
 with `--no-chunk-renames` against the binary before, and at defaults 0 prompts change (none of the 18 chunks reaches
 them). The renames stay on as label text; whether the two opt-in flags plus the rename move m1's answer needs a model
 window (full profile, where the scene is rendered).
+**More "???" rules (2026-10-20, `LABEL_RENAMES_CHUNK_RULES`).** The owner's ruling: a "???" can still lead to a
+relevant operator, so Trevor should infer it. Census of the 2,846 "???" lines (2,814 runs of consecutive "???" lines
+in P3b): 1,572 runs are an exchange (the speaker before the run speaks after it), 628 are followed by a label the story
+already has, 333 by a label speaking for the first time in the story with no "???" after it in the chunk (the reveal
+shape), 98 by a first-time label with a later "???", 183 by no label in the chunk. Read against the text (samples and
+marks in the session scratch `qqq/judgments.md`): the raw reveal candidate is right 15 of 24 decidable (62.5%); with
+five guards (the new label asks who the stranger is, a second new label within 4 lines, the "???" line ends on a
+question, the new label opens by calling a known label, a "?" in the label) 20 of 24 on a fresh sample (83%), 46 of
+52 over all readings: under the 90% bar, so it is opt-in (`reveal`, 113 more chunks). In the exchange shape the next
+speaker is the stranger's interlocutor by construction; the loose vocative after it is right 19 of 23 (83%). Three
+narrow rules clear the bar and are the new default, in order after the introduction rule (a chunk keeps the first
+rule's answer): `self` (the "???" line introduces itself and that label speaks next, "???: Hello. My name is Red."
+then "Red: ..."; all 7 read, 7 right), `called` (the line before the run mentions the next label, new to the story,
+"Kal'tsit: Mon3tr!"; all 10 read, 9 right; the miss is `main_13 st_13-03#0002`, where Kal'tsit calls Mon3tr and
+the "???" is the woman Mon3tr holds) and
+`addressed` (the next speaker opens by calling a name and that label speaks next, "???: Stay here, Lavinia."
+"Lavinia: Eirene?" "Eirene: ..."; 23 of 25 on a fresh sample, both misses a label that had spoken during the "???"
+lines, which a guard now drops; after it 48 right, 0 wrong, 1 undecidable over three samples). Every new rule also
+needs the chunk's "???" lines within 4 lines of each other (one conversation): it drops 3 chunks, among them
+`act33side_st03#0002`, whose "???" is child Amiya and, eight lines on, Oracle. Result: 95 chunks (81 names) against
+18: intro 18, self 7, called 9, addressed 61. `LABEL_RENAMES_CHUNK_RULES=intro KEEP_LAST=0` writes the 18-chunk file
+byte-identical to the one before (KEEP_LAST=0 because the shrink guard keeps the larger file and exits 3);
+`label_renames.json` is byte-identical either way. No Rust change: `labels.rs` and `speaks_as` read the same file.
+Not measured: which default prompts the 77 new chunks reach (needs a stub `ask` run) and any model effect.
 
 **Model window for the chunk rename (12B full, `--scene-subject --react-verbs`, renames on against
 `--no-chunk-renames`, `--no-cache-prompt`, 00:12 JST 2026-10-20).** With the rename the waking scene is in the prompt
