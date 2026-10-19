@@ -652,6 +652,15 @@ cmd_status() {
 
 cmd_prune() { prune_step "$(json_get "$STATE/active.json" version)"; disk_check; }
 
+# rebuild: the stage runner's publish (scripts/stages.py --publish, 2026-10-19): the deterministic rebuilds, panels
+# and gates over the stage tree the runner's model stages wrote into, then the same atomic publish as daily, without
+# a fetch and without the game-data version gate. PLAN=1 runs the plan over the live tree and publishes nothing.
+cmd_rebuild() {
+  local res; res="$(tr -d '[:space:]' < "$RES_VERSION_FILE" 2>/dev/null || true)"
+  if [[ -n "$PLAN" ]]; then WORK="$TREVOR_DIR"; else prepare_stage; fi
+  deterministic_build 0; panels_and_gates "$res"; publish_stage
+}
+
 cmd_init() {  # run once, as a user that may write the code directory (root); then chown TREVOR_HOME to trevor
   [[ -L "$LIVE" ]] && die "$LIVE is already a symlink"
   [[ -d "$LIVE" ]] || die "no $LIVE to adopt: copy the Mac's artifacts there first"
@@ -666,7 +675,7 @@ cmd_init() {  # run once, as a user that may write the code directory (root); th
 }
 
 case "$CMD" in
-  daily|summaries)
+  daily|summaries|rebuild)
     take_run_lock
     [[ -n "$PLAN" ]] || open_log
     require_live_release
@@ -675,6 +684,6 @@ case "$CMD" in
   status) cmd_status ;;
   prune) take_run_lock; cmd_prune ;;
   init) take_run_lock; cmd_init ;;
-  *) die "usage: $0 daily|summaries|rollback [VERSION]|status|prune|init" ;;
+  *) die "usage: $0 daily|summaries|rebuild|rollback [VERSION]|status|prune|init" ;;
 esac
 log "done ($CMD)"
