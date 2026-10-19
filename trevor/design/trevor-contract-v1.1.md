@@ -14,7 +14,10 @@ This adds to `trevor-contract-v1.md` and binds the same way: backend, worker, sc
 
 Model throughput at $0 is fixed:
 - **Cloudflare (`cf`):** about 77 full answers a day.
-- **`cpu`, one VPS core with E2B at the `mid` profile (section 4):** roughly 1,000 to 1,900 a day.
+- **`cpu`, one VPS core with E2B at the `mid` profile (section 4):** roughly 1,000 to 1,900 a day. *Correction
+  2026-10-19:* measured CPU-only on the development machine (`-ngl 0`, 8 threads, the 35 probe questions), E2B `mid`
+  takes 39 s of model time per answer, 93 answers an hour at full duty on 8 fast threads; a VPS core is slower, not
+  faster. Take the VPS figure on the VPS (`trevor-self-contained-deploy.md` section 5).
 - **Cache and passages:** unlimited.
 
 Concurrency is therefore made of four parts.
