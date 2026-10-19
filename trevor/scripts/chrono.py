@@ -213,7 +213,8 @@ def year_candidates():
                 out.append({'source': s, 'kind': 'story', 'line': x,
                             'context': '\n'.join(lines[max(0, i - 1):i + 2])})
     gd = os.environ.get('GAMEDATA', GAMEDATA)
-    hb = json.load(open(os.path.join(gd, 'excel', 'handbook_info_table.json')))['HandbookDict']
+    # MissingTable when the table is absent: stage_events then keeps events.jsonl (see the dispatch below).
+    hb = common.excel_table('handbook_info_table.json', os.path.join(gd, 'excel'))['HandbookDict']
     for e in hb:
         v = e['value']
         texts = [st['StoryText'] for sta in v.get('StoryTextAudio', []) for st in sta.get('Stories', [])]
@@ -662,4 +663,8 @@ def stage_derive():
 if __name__ == '__main__':
     if sys.argv[1] == 'order':
         stage_order(sys.argv[2], sys.argv[3]); sys.exit()
+    if sys.argv[1] == 'events':
+        # A missing handbook_info_table keeps the last events.jsonl, logs "keeping last" and exits 0, as the six other
+        # table readers do since step 7; TABLES_REQUIRED=1 fails instead.
+        common.keep_last_on_missing_table(stage_events, os.path.join(OUT, 'events.jsonl')); sys.exit()
     {'derive': stage_derive, 'flashbacks': stage_flashbacks, 'build': stage_build, 'history': stage_history, 'cues': stage_cues, 'extract': stage_extract, 'events': stage_events}[sys.argv[1]]()

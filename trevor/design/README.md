@@ -21,6 +21,7 @@ Interfaces and operations:
 | [trevor-reembed.md](trevor-reembed.md) | fp32 embedding everywhere and the guarded, resumable re-embed (threads, duty cycle, thermal, memory and battery pauses, checkpoint), with measurements and the VPS command. |
 | [trevor-self-contained-deploy.md](trevor-self-contained-deploy.md) | One box, no model vendor, two years unattended (2026-10-19): cache and `cpu` serving, the nightly deterministic update, the model stages as a paced background runner on the CPU, a corpus snapshot and one-command bootstrap, the fail-safe posture and the build order. Planned, not built. |
 | [trevor-return-runbook.md](trevor-return-runbook.md) | The one page to read after leaving a self-contained instance alone for months or years (2026-10-19): is it serving, the alerts in order of likelihood, the upstream format change and its repair path, rollback, what to update and what not, where everything is, the five numbers of a healthy instance. |
+| [trevor-chaos-run.md](trevor-chaos-run.md) | The step 8 chaos run (2026-10-19): a scratch layout and a stub backend on a development machine, the baseline run, then an unreachable source, a failed gate, a skipped table and a full disk, each with its exact edit, exit code, Discord title and invariants, and which publish-path gap each proves. |
 
 Design and specs:
 

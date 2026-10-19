@@ -253,12 +253,13 @@ def speakers_by_group():
 def stage_build():
     chunks = {r['chunkId']: r for r in read_jsonl(os.path.join(ROOT, 'artifacts', 'chunks.jsonl'))}
     rel = {g['groupId']: g.get('releaseTime') for g in json.load(open(os.path.join(ROOT, 'artifacts', 'chrono', 'timeline_v1.json')))['groups']}
-    resolve = resolver(); named = namer()
     use_check = os.environ.get('DEATH_CHECK') != '0'
-    # Derived inputs: a missing one raises (common.MissingInput) instead of building an empty deaths table.
+    # Derived inputs: a missing one raises (common.MissingInput) instead of building an empty deaths table. They are
+    # read before character_table (resolver, namer), so a missing derived input exits 1 even when the table is gone too.
     checks = {c['key']: c['ok'] for c in common.read_derived(os.path.join(ENT, 'death_checks.jsonl'))}
     M = [r for r in common.read_derived(os.path.join(ENT, 'death_mentions.jsonl')) if r['promptSha'] == PSHA
          and r['chunkId'] in chunks and r['textSha'] == sha16(chunks[r['chunkId']]['text'])]
+    resolve = resolver(); named = namer()
     events = {}; unnamed = collections.Counter(); dropped = collections.Counter()
     for r in sorted(M, key=lambda r: (r['storyId'], chunks[r['chunkId']]['ordinal'])):
         for m in r['mentions']:
@@ -341,5 +342,16 @@ def stage_eval():
     print(f'  events for {len(unl)} named characters the wiki does not mark deceased:', ', '.join(unl[:80]))
 
 
+# A missing character_table (an asset update can leave a table out) keeps the last check and build outputs, logs
+# "keeping last" and exits 0, as the six other table readers do since step 7; TABLES_REQUIRED=1 fails instead.
+KEEP_ON_MISSING_TABLE = {
+    'check': (os.path.join(ENT, 'death_checks.jsonl'),),
+    'build': (os.path.join(ENT, 'deaths.jsonl'), os.path.join(ENT, 'deaths_unnamed.json')),
+}
+
 if __name__ == '__main__':
-    {'wiki': stage_wiki, 'extract': stage_extract, 'check': stage_check, 'build': stage_build, 'eval': stage_eval}[sys.argv[1]]()
+    fn = {'wiki': stage_wiki, 'extract': stage_extract, 'check': stage_check, 'build': stage_build, 'eval': stage_eval}[sys.argv[1]]
+    if sys.argv[1] in KEEP_ON_MISSING_TABLE:
+        common.keep_last_on_missing_table(fn, *KEEP_ON_MISSING_TABLE[sys.argv[1]])
+    else:
+        fn()

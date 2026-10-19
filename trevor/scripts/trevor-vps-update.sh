@@ -24,9 +24,9 @@
 #
 # Failure at any step keeps the last good version: the work happens in a staging copy ($TREVOR_HOME/stage), the
 # backend's active version flips only after every gate passed and every chunk uploaded, and the worker reads
-# <trevor>/artifacts, a symlink that moves to the new release only at the end (flipped back if the activate fails).
-# A failed run leaves the stage as it is, so the next run continues from it (summaries are not lost);
-# RESET_STAGE=1 copies the live release over it first. One run at a time (flock); nice 19, ionice idle.
+# <trevor>/artifacts, a symlink that moves to the new release only at the end (flipped back only when the backend
+# refused the activate). A failed run leaves the stage as it is, so the next run continues from it (summaries are not
+# lost; a stage copy that did not finish is redone); RESET_STAGE=1 copies the live release over it first. One run at a time (flock); nice 19, ionice idle.
 #
 # Environment (defaults in brackets; the systemd units set these from /etc/trevor/trevor.env):
 #   TREVOR_DIR [this script's ../]   code: scripts, prompts, data, eval, deploy, target/release, models
@@ -67,6 +67,15 @@
 #   DISK_CHECK [1]  0 = no disk check; else every `daily` run (and `prune`) warns, and posts one disk_low embed, when a
 #              filesystem of TREVOR_HOME, TREVOR_DIR or ASSETS_DIR has less free space than the smaller of
 #              DISK_MIN_FREE_GB [10] GB and DISK_MIN_FREE_PCT [10] percent
+#   WATCHER_MAX_AGE_DAYS [21]  every `daily` run checks the age of RES_VERSION_FILE; past this many days it posts one
+#              embed per crossing ("the asset watcher has not updated in N days", keyed on the file's mtime in
+#              $STATE/watcher-alerted.json) and goes on; 0 = no check
+#   RUN_TAIL_DIR  a tmpfs directory for the in-memory copy of the last ALERT_LOG_LINES log lines the failure alert
+#              quotes (default: the first writable of $XDG_RUNTIME_DIR, /run/trevor, /dev/shm; none: run.log is read)
+#
+# Once the backend has activated a version it is the source of truth: a failure after that (publish.py exit 5, the
+# local record; or any later step) never flips the worker back, so the backend and the worker always serve the same
+# version. Only an activate the backend refused flips back.
 set -Eeuo pipefail
 
 CMD="${1:-daily}"
@@ -111,6 +120,8 @@ fi
 
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 LOG=""
+RUN_TAIL=""    # tmpfs copy of the last ALERT_LOG_LINES lines (open_log), read by alert_failed before run.log
+ACTIVATED=""   # the version the backend activated in this run: no flip back after this
 STEP="start"
 LLM_PID=""
 MODEL_LOCK_HELD=""
@@ -146,7 +157,7 @@ post_embed() {
 t, d, c, f = sys.argv[1:5]
 print(json.dumps({"embeds": [{"title": t[:250], "description": d[:3900], "color": int(c), "footer": {"text": f[:200]}}]}))' \
     "$1" "$2" "$3" "$4" \
-    | curl -sS -m 20 -H 'content-type: application/json' -d @- "$ALERT_WEBHOOK" >/dev/null 2>&1 \
+    | curl -sS --connect-timeout 10 -m 20 -H 'content-type: application/json' -d @- "$ALERT_WEBHOOK" >/dev/null 2>&1 \
     || echo "== discord alert failed to send (swallowed)" >&2
   return 0
 }
@@ -162,12 +173,20 @@ notify() {  # informational only; never fails the run
 # "last good version stays active" line (the warm-up fails after the version went live).
 ALERT_MARK="${TMPDIR:-/tmp}/trevor-update-alerted.$$"
 alert_failed() {
-  local rc="$1" msg="${2:-}" tail_lines=""
+  local rc="$1" msg="${2:-}" tail_lines="" src
   local outcome="${3:-The last good version stays active; the stage keeps the work for the next run.}"
+  if [[ -z "${3:-}" && -n "$ACTIVATED" ]]; then
+    outcome="Version $ACTIVATED is live: the backend activated it and the worker serves it (no flip back); only a later step failed."
+  fi
   [[ -e "$ALERT_MARK" ]] && return 0
   : > "$ALERT_MARK" 2>/dev/null || true
   log "update_failed: step '$STEP', exit $rc${msg:+: $msg}"
-  [[ -n "$LOG" && -f "$LOG/run.log" ]] && { sleep 0.5; tail_lines="$(tail -n "$ALERT_LOG_LINES" "$LOG/run.log" | sed 's/```/` ` `/g')"; }
+  # The tail comes from the tmpfs copy first: run.log is the file that fails first on a full disk.
+  if [[ -n "$RUN_TAIL" || -n "$LOG" ]]; then
+    sleep 0.5
+    if [[ -n "$RUN_TAIL" && -s "$RUN_TAIL" ]]; then src="$RUN_TAIL"; else src="$LOG/run.log"; fi
+    [[ -f "$src" ]] && tail_lines="$(tail -n "$ALERT_LOG_LINES" "$src" | sed 's/```/` ` `/g')"
+  fi
   post_embed "Trevor update failed: $STEP" \
     "\`trevor-vps-update.sh $CMD\` failed at step **$STEP** with exit **$rc**.${msg:+ $msg}
 $outcome
@@ -184,7 +203,7 @@ on_error() {
   exit "$rc"
 }
 trap on_error ERR
-trap 'stop_local_llm; release_model_lock; rm -f "$ALERT_MARK"' EXIT
+trap 'stop_local_llm; release_model_lock; rm -f "$ALERT_MARK"; [[ -z "$RUN_TAIL" ]] || rm -f "$RUN_TAIL"' EXIT
 trap 'exit 143' TERM INT
 
 # ---------------------------------------------------------------- the model lock (ask's convention: "<pid> <label>")
@@ -207,11 +226,43 @@ release_model_lock() {
 }
 
 # ---------------------------------------------------------------- setup
+# The last ALERT_LOG_LINES lines, kept by a small reader of the log stream and rewritten into a tmpfs file on every
+# line (a full disk fails run.log first, so the alert would quote nothing); the reader removes the file at EOF.
+RING_PY='import collections, os, sys
+path, n = sys.argv[1], int(sys.argv[2])
+ring, tmp = collections.deque(maxlen=n), sys.argv[1] + ".tmp"
+for line in sys.stdin.buffer:
+    ring.append(line)
+    try:
+        with open(tmp, "wb") as f:
+            f.writelines(ring)
+        os.replace(tmp, path)
+    except OSError:
+        pass
+for p in (path, tmp):
+    try:
+        os.remove(p)
+    except OSError:
+        pass'
+
+run_tail_path() {  # the tmpfs file for the in-memory tail, or nothing
+  local d
+  for d in "${RUN_TAIL_DIR:-}" "${XDG_RUNTIME_DIR:-}" /run/trevor /dev/shm; do
+    if [[ -n "$d" && -d "$d" && -w "$d" ]]; then echo "$d/trevor-update-tail.$$"; return 0; fi
+  done
+  return 0
+}
+
 open_log() {
   mkdir -p "$TREVOR_HOME/logs" "$STATE"
   LOG="$TREVOR_HOME/logs/$STAMP-$CMD"
   mkdir -p "$LOG"
-  exec > >(tee -a "$LOG/run.log") 2>&1
+  RUN_TAIL="$(run_tail_path)"
+  if [[ -n "$RUN_TAIL" ]]; then
+    exec > >(tee -a "$LOG/run.log" >(python3 -u -c "$RING_PY" "$RUN_TAIL" "$ALERT_LOG_LINES")) 2>&1
+  else
+    exec > >(tee -a "$LOG/run.log") 2>&1
+  fi
   find "$TREVOR_HOME/logs" -mindepth 1 -maxdepth 1 -type d -mtime +30 -exec rm -rf {} + 2>/dev/null || true
 }
 
@@ -246,10 +297,20 @@ prepare_stage() {
     rsync -a --delete "$TREVOR_DIR/$d/" "$STAGE/trevor/$d/"
   done
   for d in target models eval; do ln -sfn "$(abspath "$TREVOR_DIR/$d")" "$STAGE/trevor/$d"; done
-  if [[ ! -d "$STAGE/trevor/artifacts" || "$base" != "$live_target" || "${RESET_STAGE:-0}" == "1" ]]; then
-    log "stage: copying the live release ($live_target) into the stage"
+  # A stage is continued only when $STAGE/.complete says its copy finished: the marker goes before a copy starts and
+  # is written last, so a copy cut short (ENOSPC midway) is never reused even when stage-base names the live release.
+  local why=""
+  if [[ ! -d "$STAGE/trevor/artifacts" ]]; then why="no stage yet"
+  elif [[ "${RESET_STAGE:-0}" == "1" ]]; then why="RESET_STAGE=1"
+  elif [[ "$base" != "$live_target" ]]; then why="the live release moved"
+  elif [[ ! -f "$STAGE/.complete" ]]; then why="no completion marker: the last copy did not finish"
+  fi
+  if [[ -n "$why" ]]; then
+    log "stage: copying the live release ($live_target) into the stage ($why)"
+    rm -f "$STAGE/.complete"
     rsync -a --delete "$live_target/" "$STAGE/trevor/artifacts/"
     echo "$live_target" > "$STATE/stage-base"
+    date -u +%FT%TZ > "$STAGE/.complete"
   else
     log "stage: continuing from the stage left by the last run (base $base)"
   fi
@@ -304,7 +365,7 @@ deterministic_build() {  # in the stage; FETCH=1 refreshes the corpus from the b
   cd "$WORK"
   if [[ "$fetch" == "1" && -z "$SKIP_FETCH" ]]; then
     step "build-corpus --refresh against $TREVOR_BACKEND"
-    local code; code="$(curl -s -o /dev/null -w '%{http_code}' "$TREVOR_BACKEND/" || true)"
+    local code; code="$(curl -s --connect-timeout 10 -m 30 -o /dev/null -w '%{http_code}' "$TREVOR_BACKEND/" || true)"
     [[ "$code" != "000" ]] || die "the backend does not answer at $TREVOR_BACKEND"
     run "$BIN/build-corpus" --tokenizer "$TOK" --refresh --base "$TREVOR_BACKEND"
     [[ -n "$PLAN" ]] || python3 -c "import json; c=json.load(open('artifacts/changes.json')); print({k: len(v) if isinstance(v, list) else v for k, v in c.items()})" | tee "$LOG/changes.txt"
@@ -343,7 +404,7 @@ panels_and_gates() {
   cd "$WORK"
   step "panels"
   # Boss enemy handbook lines for "Who's here" (panels.py skips the source when the file is missing).
-  [[ "${ENEMY_INTROS:-1}" == "1" ]] && run python3 scripts/enemy_intros.py --gamedata "$TREVOR_GAMEDATA"
+  [[ "${ENEMY_INTROS:-1}" == "1" ]] && run python3 scripts/enemy_intros.py --gamedata "${TREVOR_GAMEDATA:-$ASSETS_DIR/output/en/gamedata}"
   # shellcheck disable=SC2086
   run python3 scripts/panels.py --built-from "$res" $PANELS_ARGS
   step "gates"
@@ -354,12 +415,48 @@ panels_and_gates() {
 }
 
 # ---------------------------------------------------------------- publish and switch
-flip_live() {  # flip_live RELEASE_ARTIFACTS_DIR: atomically point $CURRENT at it, then restart the worker
-  python3 -c 'import os,sys; t=sys.argv[2]+".next"
-if os.path.lexists(t): os.remove(t)
-os.symlink(sys.argv[1], t); os.replace(t, sys.argv[2])' "$1" "$CURRENT"
-  date -u +%FT%TZ > "$STATE/worker-restart"   # trevor-worker-restart.path restarts trevor-worker on this
+# flip_live RELEASE_ARTIFACTS_DIR: atomically point $CURRENT at it and request the worker restart, as one ordered step.
+# The restart marker (trevor-worker-restart.path restarts trevor-worker on it) is written to a temp file BEFORE the
+# flip, so a full disk fails before anything moved; after the flip it lands by a rename, and if even that fails the
+# symlink goes back, so `current` never moves without the worker being told.
+flip_live() {
+  python3 - "$1" "$CURRENT" "$STATE/worker-restart" <<'PY'
+import os, sys, time
+target, cur, marker = sys.argv[1:4]
+tmp, nxt = marker + '.tmp', cur + '.next'
+with open(tmp, 'w') as f:
+    f.write(time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()) + '\n')
+    f.flush()
+    os.fsync(f.fileno())
+prev = os.readlink(cur) if os.path.islink(cur) else None
+def point(to):
+    if os.path.lexists(nxt):
+        os.remove(nxt)
+    os.symlink(to, nxt)
+    os.replace(nxt, cur)
+point(target)
+try:
+    os.replace(tmp, marker)
+except OSError as e:
+    if prev is not None:
+        point(prev)
+    sys.exit(f'flip_live: the restart marker could not land ({e}); {cur} is back on {prev}')
+PY
   log "live artifacts -> $1; worker restart requested"
+}
+
+# clean_partial_releases: a promote that did not finish leaves <release>.tmp (never in releases.jsonl); removed at the
+# start of the next run so it holds no disk and no prune slot. A failed removal is logged, never fatal.
+clean_partial_releases() {
+  local d
+  [[ -d "$RELEASES" ]] || return 0
+  for d in "$RELEASES"/*.tmp; do
+    [[ -d "$d" ]] || continue
+    if [[ -n "$PLAN" ]]; then log "PLAN: would remove the partial release $d"; continue; fi
+    log "removing the partial release $d (a promote that did not finish)"
+    rm -rf -- "$d" || log "WARNING: could not remove $d"
+  done
+  return 0
 }
 
 prune_releases() {  # keep the live release and the KEEP_RELEASES - 1 newest others
@@ -367,6 +464,7 @@ prune_releases() {  # keep the live release and the KEEP_RELEASES - 1 newest oth
   live_target="$(abspath "$LIVE")"
   while IFS= read -r r; do
     [[ -n "$r" && "$r/artifacts" != "$live_target" ]] || continue
+    case "$r" in *.tmp) continue ;; esac   # a partial promote: clean_partial_releases' job, not a slot
     keep=$((keep + 1))
     if (( keep >= KEEP_RELEASES )); then
       case "$r" in "$RELEASES"/*) log "pruning release $r"; rm -rf -- "$r" ;; esac
@@ -375,6 +473,24 @@ prune_releases() {  # keep the live release and the KEEP_RELEASES - 1 newest oth
 d=sys.argv[1]
 rs=[os.path.join(d,x) for x in os.listdir(d) if os.path.isdir(os.path.join(d,x))] if os.path.isdir(d) else []
 print("\n".join(sorted(rs, key=os.path.getmtime, reverse=True)))' "$RELEASES")
+}
+
+# stamp_built_from RES: active.json's builtFrom becomes RES, its version untouched (a new res that built the same
+# content as the active version). Temp file and rename; no history row (nothing was activated).
+stamp_built_from() {
+  local res="$1" cur
+  cur="$(json_get "$STATE/active.json" builtFrom)"
+  [[ -n "$res" && "$res" != "$cur" && -f "$STATE/active.json" ]] || return 0
+  python3 - "$STATE/active.json" "$res" <<'PY'
+import json, os, sys
+p, res = sys.argv[1], sys.argv[2]
+a = json.load(open(p))
+a['builtFrom'] = res
+with open(p + '.tmp', 'w') as f:
+    json.dump(a, f, indent=1)
+os.replace(p + '.tmp', p)
+PY
+  log "active.json: builtFrom ${cur:-none} -> $res (the version is unchanged: res $res built the same content)"
 }
 
 publish_stage() {
@@ -386,6 +502,9 @@ publish_stage() {
   [[ -n "$version" ]] || die "no version in the panels manifest"
   if [[ "$version" == "$active" ]]; then
     log "version $version is already active; nothing to publish"
+    # The res this build came from built the same content: record it, or daily rebuilds every night until the
+    # content changes (the version stays as it is).
+    if [[ -z "$NO_PUBLISH" ]]; then stamp_built_from "$(json_get artifacts/panels/manifest.json builtFrom)"; fi
     return 0
   fi
   if [[ -n "$NO_PUBLISH" ]]; then
@@ -405,18 +524,31 @@ publish_stage() {
   local prev_target rel
   prev_target="$(abspath "$LIVE")"
   rel="$RELEASES/$STAMP-$version"
-  mkdir -p "$rel"
-  rsync -a --delete --link-dest="$prev_target/" "$STAGE/trevor/artifacts/" "$rel/artifacts/"
+  # Into <release>.tmp, renamed only once complete: a failed copy is never a release (clean_partial_releases).
+  rm -rf -- "$rel.tmp"
+  mkdir -p "$rel.tmp"
+  rsync -a --delete --link-dest="$prev_target/" "$STAGE/trevor/artifacts/" "$rel.tmp/artifacts/"
+  mv -- "$rel.tmp" "$rel"
   echo "{\"version\": \"$version\", \"release\": \"$rel\", \"at\": \"$STAMP\"}" >> "$STATE/releases.jsonl"
   flip_live "$rel/artifacts"
   echo "$rel/artifacts" > "$STATE/stage-base"
   sleep "$WORKER_SETTLE"
   step "activate $version"
-  if ! python3 scripts/publish.py --activate "$version"; then
+  local rc=0
+  python3 scripts/publish.py --activate "$version" || rc=$?
+  if (( rc == 5 )); then
+    # The backend activated it; only publish.py's local record failed. The backend is the source of truth: no flip back.
+    ACTIVATED="$version"
+    log "ERROR: the backend ACTIVATED $version but $STATE/history.jsonl or active.json could not be written; the worker stays on $rel/artifacts with the backend (no flip back)"
+    alert_failed 5 "The backend activated $version, then the local record failed." \
+      "Version $version IS live: the backend and the worker agree (no flip back). $STATE/active.json may still name the old version; the next run rebuilds and re-sends $version, which converges it. Free space or fix permissions under $STATE."
+    exit 5
+  elif (( rc != 0 )); then
     flip_live "$prev_target"
     echo "$prev_target" > "$STATE/stage-base"
     die "activate failed; the worker is back on $prev_target"
   fi
+  ACTIVATED="$version"
   prune_releases
   local changes=""
   [[ -f "$LOG/changes.txt" ]] && changes=" changes: $(cat "$LOG/changes.txt")"
@@ -506,6 +638,47 @@ The unpacker kept the previous table because the new one verifies under no schem
   return 0
 }
 
+# watcher_age_check: an asset watcher that stopped writing RES_VERSION_FILE looks exactly like "up to date" for ever.
+# Past WATCHER_MAX_AGE_DAYS (21; 0 = off) days one embed per crossing, keyed on the file's mtime in
+# $STATE/watcher-alerted.json (a newer .version that ages past the limit again alerts again); a log line every run.
+# Never fails, never stops the run.
+watcher_age_check() {
+  local max="${WATCHER_MAX_AGE_DAYS:-21}" out days
+  [[ "$max" != "0" && -f "$RES_VERSION_FILE" ]] || return 0
+  out="$(python3 - "$RES_VERSION_FILE" "$STATE/watcher-alerted.json" "$max" "${PLAN:-}" <<'PY' 2>&1
+import json, os, sys, time
+f, seen_path, mx, plan = sys.argv[1], sys.argv[2], float(sys.argv[3]), sys.argv[4]
+m = int(os.path.getmtime(f))
+days = int((time.time() - m) // 86400)
+if days < mx:
+    sys.exit()
+print(f'watcher: WARNING {f} has not changed in {days} days (WATCHER_MAX_AGE_DAYS {mx:g})')
+try:
+    seen = json.load(open(seen_path))
+except (OSError, ValueError):
+    seen = {}
+if isinstance(seen, dict) and seen.get('mtime') == m:
+    sys.exit()
+if not plan:
+    try:
+        tmp = f'{seen_path}.tmp.{os.getpid()}'
+        with open(tmp, 'w') as fh:
+            json.dump({'mtime': m, 'days': days, 'at': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}, fh)
+        os.replace(tmp, seen_path)
+    except OSError as e:
+        print(f'watcher: cannot write {seen_path} ({e}); the alert repeats next run')
+print(f'NEW:{days}')
+PY
+)" || true
+  printf '%s\n' "$out" | grep -v '^NEW:' | grep -v '^$' | while IFS= read -r l; do log "$l"; done || true
+  days="$(printf '%s\n' "$out" | sed -n 's/^NEW://p')"
+  if [[ -n "$days" ]]; then
+    post_embed "Trevor: the asset watcher has not updated in $days days" "$RES_VERSION_FILE was last written $days days ago (limit WATCHER_MAX_AGE_DAYS=$max). Until it changes, every nightly update says \"up to date\" and publishes nothing. Check the asset watcher's service and its log." \
+      15105570 "watcher_stale · $(hostname 2>/dev/null || echo vps) · trevor-vps-update.sh $CMD"
+  fi
+  return 0
+}
+
 # prune_step VERSION: after a successful publish only (never before one): retention over logs, eval runs, the spool,
 # releases and asset manifests; a dry run that lists what is over the policy unless PRUNE_APPLY=1. Exit 2 (something
 # was over the policy) is normal; an error is one update_failed alert and never fails the run (VERSION is live).
@@ -534,7 +707,7 @@ start_local_llm() {
   LLM_PID=$!
   local i
   for i in $(seq 1 300); do
-    curl -sf "http://127.0.0.1:$SUMMARY_PORT/health" >/dev/null 2>&1 && return 0
+    curl -sf --connect-timeout 2 -m 5 "http://127.0.0.1:$SUMMARY_PORT/health" >/dev/null 2>&1 && return 0
     kill -0 "$LLM_PID" 2>/dev/null || { log "llama-server exited while loading; see $LOG/summary-llm.log"; LLM_PID=""; release_model_lock; return 1; }
     sleep 1
   done
@@ -574,6 +747,7 @@ cmd_daily() {
   active_from="$(json_get "$STATE/active.json" builtFrom)"
   disk_check
   stale_tables_check
+  watcher_age_check
   if [[ "$res" == "$active_from" && "$FORCE" != "1" ]]; then
     log "up to date: EN res_version $res is the active version's builtFrom"; return 0
   fi
@@ -671,7 +845,7 @@ cmd_status() {
   echo "active:  $(cat "$STATE/active.json" 2>/dev/null | tr -d '\n' || echo none)"
   echo "live:    $LIVE -> $CURRENT -> $(abspath "$LIVE")"
   echo "assets:  EN res_version $(cat "$RES_VERSION_FILE" 2>/dev/null || echo '?')"
-  echo "backend: $(curl -s -m 10 "$TREVOR_BACKEND/api/trevor/status" || echo unreachable)"
+  echo "backend: $(curl -s --connect-timeout 5 -m 10 "$TREVOR_BACKEND/api/trevor/status" || echo unreachable)"
   find "$RELEASES" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort -r | head -5 | sed 's/^/release: /'
 }
 
@@ -704,6 +878,7 @@ case "$CMD" in
   daily|summaries|rebuild)
     if [[ "$CMD" == "rebuild" ]]; then take_run_lock 4; else take_run_lock; fi
     [[ -n "$PLAN" ]] || open_log
+    clean_partial_releases
     require_live_release
     "cmd_$CMD" ;;
   rollback) take_run_lock; [[ -n "$PLAN" ]] || open_log; cmd_rollback ;;

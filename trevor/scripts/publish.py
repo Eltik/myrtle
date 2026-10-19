@@ -32,6 +32,8 @@ touching active.json; `--activate VERSION` then flips it. vps-update.sh uses the
 new corpus between the two (the backend's active version and the worker's corpus then differ for seconds, not for
 the whole upload).
   publish.py --self-test
+Exit codes: 0 done; 1 nothing activated (a refused build, a failed request); 5 the backend activated the version but
+the local record (history.jsonl, active.json) failed: the backend is the source of truth, nothing is flipped back.
 Env: TREVOR_WORKER_KEY (required unless --dry-run), TREVOR_BACKEND (default http://127.0.0.1:3060),
 TREVOR_STATE_DIR.
 """
@@ -360,13 +362,53 @@ def store_activate(state, version, activate_body):
     os.replace(p + ".tmp", p)
 
 
-def record(state, version, activate_body, manifest, how):
-    store_activate(state, version, activate_body)
+# Exit code of a run whose backend activate succeeded but whose local record (history.jsonl, active.json) failed.
+RECORD_FAILED = 5
+
+
+class RecordError(Exception):
+    """The backend activated the version, then the local record failed (a full disk, a read-only state dir)."""
+
+
+def append_line(path, line):
+    """Append one line in a single write; on a failure the file is truncated back to its old size (best effort), so a
+    full disk leaves no torn last line for rollback's reader to choke on."""
+    data = line.encode("utf-8")
+    fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o644)
+    try:
+        size = os.fstat(fd).st_size
+        try:
+            if os.write(fd, data) != len(data):
+                raise OSError(f"short write to {path}")
+            os.fsync(fd)
+        except OSError:
+            try:
+                os.ftruncate(fd, size)
+            except OSError:
+                pass
+            raise
+    finally:
+        os.close(fd)
+
+
+def record(state, version, manifest, how):
+    """The local record of an activate that the backend already accepted.
+
+    THE RULE (2026-10-19): once the backend answered active=true, the backend is the source of truth. A failure here
+    must never make trevor-vps-update.sh flip the worker back to the old release (the site would serve the new version
+    from a worker on the old corpus, and the next run would see the new version as "already active" and do nothing:
+    split brain). So every failure here is a RecordError, main() exits RECORD_FAILED (5), and the script keeps the
+    backend and the symlink together, logs and alerts. The order makes a half record harmless: history.jsonl first
+    (rollback's "the version before the current one" reads its last row), then active.json through a temp file and a
+    rename. If only active.json failed, it still names the old version, so the next daily rebuilds and re-sends the
+    same version (the backend upserts it) and the record converges."""
     act = {"version": version, "builtFrom": manifest.get("builtFrom"), "corpusVersion": manifest.get("corpusVersion"),
            "activatedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
-    common.write_json_atomic(os.path.join(state, "active.json"), act, indent=1)
-    with open(os.path.join(state, "history.jsonl"), "a") as f:
-        f.write(json.dumps(dict(act, how=how)) + "\n")
+    try:
+        append_line(os.path.join(state, "history.jsonl"), json.dumps(dict(act, how=how)) + "\n")
+        common.write_json_atomic(os.path.join(state, "active.json"), act, indent=1)
+    except OSError as e:
+        raise RecordError(f"{type(e).__name__}: {e}") from e
 
 
 # ---------------------------------------------------------------- commands
@@ -428,6 +470,9 @@ def publish(a):
     if not a.key:
         sys.exit("publish: TREVOR_WORKER_KEY is not set")
     t0 = time.time()
+    # Stored before anything is sent: `--activate VERSION` needs it, and a failure here is still a plain failure (the
+    # backend has activated nothing).
+    store_activate(a.state, manifest["version"], act_body)
     if a.no_activate:
         reqs = reqs[:-1]
     for i, r in enumerate(reqs):
@@ -441,11 +486,10 @@ def publish(a):
         if not r["activate"] and res.get("panels") not in (None, r["panels"]):
             raise SendError(f"chunk {i} answered panels={res.get('panels')}, sent {r['panels']}")
     if a.no_activate:
-        store_activate(a.state, manifest["version"], act_body)
         print(f"uploaded {summary} in {time.time() - t0:.1f} s, NOT activated; `publish.py --activate "
               f"{manifest['version']}` flips it")
         return 0
-    record(a.state, manifest["version"], act_body, manifest, "publish")
+    record(a.state, manifest["version"], manifest, "publish")
     print(f"published {summary} in {time.time() - t0:.1f} s; active = {manifest['version']}")
     return 0
 
@@ -473,7 +517,7 @@ def activate_only(a):
     if res.get("active") is not True:
         raise SendError(f"activate call answered {res}")
     report_bank(res, len(d.get("bankAnswers") or []))
-    record(a.state, a.activate, body, d["manifest"] or {}, "rollback")
+    record(a.state, a.activate, d["manifest"] or {}, "rollback")  # the body is already stored: it was read from there
     print(f"active = {a.activate}")
     return 0
 
@@ -523,11 +567,42 @@ def bank_self_test():
     print("  bank: gate rule (7 cases), citation cut, 4 rows left out for 4 reasons, activate body with and without")
 
 
+def record_self_test():
+    """The local record after an activate: history.jsonl first, then active.json; each failure is a RecordError."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        m = {"builtFrom": "res-2", "corpusVersion": "c2"}
+        common.write_json_atomic(os.path.join(d, "active.json"), {"version": "v1"}, indent=1)
+        record(d, "v2", m, "publish")
+        assert json.load(open(os.path.join(d, "active.json")))["version"] == "v2"
+        assert [json.loads(l)["version"] for l in open(os.path.join(d, "history.jsonl"))] == ["v2"]
+        os.makedirs(os.path.join(d, "active.json.tmp"))  # active.json cannot be written
+        try:
+            record(d, "v3", m, "publish")
+            raise AssertionError("a failed active.json write passed")
+        except RecordError:
+            pass
+        assert json.load(open(os.path.join(d, "active.json")))["version"] == "v2"
+        assert [json.loads(l)["version"] for l in open(os.path.join(d, "history.jsonl"))] == ["v2", "v3"], \
+            "history first: rollback's 'the version before the current one' stays right"
+        os.rmdir(os.path.join(d, "active.json.tmp"))
+        os.remove(os.path.join(d, "history.jsonl"))
+        os.makedirs(os.path.join(d, "history.jsonl"))  # history.jsonl cannot be appended
+        try:
+            record(d, "v4", m, "publish")
+            raise AssertionError("a failed history append passed")
+        except RecordError:
+            pass
+        assert json.load(open(os.path.join(d, "active.json")))["version"] == "v2", "nothing after a failed history"
+    print("  record: history then active.json; a failure of either is RecordError (exit 5), nothing half written")
+
+
 def self_test():
     """Chunk limits on synthetic panels (incompressible and compressible), order and coverage, the retry schedule and
     the no-retry 4xx against a local HTTP server, and the activate body."""
     import http.server, random, threading
     bank_self_test()
+    record_self_test()
     rnd = random.Random(7)
     head = head_bytes("v1", "en", "2026-10-16T00:00:00Z", {"version": "v1", "storyOrder": []}, {"passed": True})
     # 1. Incompressible panels: the compressed limit binds (gzip cannot shrink random hex much below raw/2).
@@ -632,6 +707,10 @@ def main():
     except SendError as e:
         sys.stderr.write(f"publish: FAILED, the active version is unchanged: {e}\n")
         return 1
+    except RecordError as e:
+        sys.stderr.write(f"publish: the backend ACTIVATED the version, but the local record failed: {e}. The backend is "
+                         f"the source of truth now; do not flip back (exit {RECORD_FAILED})\n")
+        return RECORD_FAILED
 
 
 if __name__ == "__main__":

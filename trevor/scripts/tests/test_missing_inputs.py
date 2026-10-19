@@ -646,5 +646,35 @@ class ModelStageInputs(TreeCase):
         self.assertIn('roguelike_topic_table.json', err)
 
 
+
+class LateTableReaders(TreeCase):
+    """deaths.py and chrono.py read character_table and handbook_info_table without the step 7 guard until the 13:15
+    analysis of 2026-10-19: a missing table keeps the last output, exit 0; TABLES_REQUIRED=1 fails."""
+
+    def test_deaths_build_missing_character_table(self):
+        self.t.write('artifacts/chunks.jsonl', '')
+        self.t.json('artifacts/chrono/timeline_v1.json', {'groups': []})
+        self.t.json('artifacts/entities/identities.json', [])
+        self.t.write('artifacts/entities/death_checks.jsonl', '')
+        self.t.write('artifacts/entities/death_mentions.jsonl', '')
+        unnamed = self.t.write('artifacts/entities/deaths_unnamed.json', '[]') and \
+            self.t.bytes('artifacts/entities/deaths_unnamed.json')
+        TableReaders.check(self, 'deaths.py', 'artifacts/entities/deaths.jsonl', 'build')
+        self.assertEqual(self.t.bytes('artifacts/entities/deaths_unnamed.json'), unnamed)
+
+    def test_chrono_events_missing_handbook_table(self):
+        # events.jsonl is incr.Stage's file, keyed on (source, line), so the fixture row carries both.
+        self.t.write('artifacts/chunks.jsonl', '')
+        out = 'artifacts/chrono/events.jsonl'
+        before = self.t.jsonl(out, [{'source': 'archive:x', 'line': 'Date: 1097', 'is_year': True}]) and self.t.bytes(out)
+        env = {'GAMEDATA': os.path.dirname(self.t.excel)}
+        rc, err = self.t.run('chrono.py', 'events', env=env)
+        self.assertKept(out, before, rc, 0, err)
+        self.assertIn('keeping last', err)
+        rc, err = self.t.run('chrono.py', 'events', env={**env, 'TABLES_REQUIRED': '1'})
+        self.assertKept(out, before, rc, 1, err)
+        self.assertIn('MissingTable', err)
+
+
 if __name__ == '__main__':
     unittest.main()
