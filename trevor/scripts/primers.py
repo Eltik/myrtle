@@ -14,7 +14,7 @@ import collections, json, os, random, sys, time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
 import common, incr
-from common import ROOT, read_jsonl, sha16
+from common import ROOT, read_derived, read_jsonl, sha16
 
 OUT = os.path.join(ROOT, 'artifacts', 'primers')
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
@@ -44,7 +44,7 @@ def chat(system, user, max_tokens):
 
 
 def plan():
-    tl = json.load(open(os.path.join(ROOT, 'artifacts', 'chrono', 'timeline_v1.json')))
+    tl = common.load_derived(os.path.join(ROOT, 'artifacts', 'chrono', 'timeline_v1.json'))
     key = {g['groupId']: (g['storylineYear'], g.get('chapter') or 0, g['releaseTime'] or 0) for g in tl['groups']}
     rel = {g['groupId']: g['releaseTime'] for g in tl['groups']}
     chap = {g['groupId']: g.get('chapter') for g in tl['groups']}
@@ -61,8 +61,8 @@ def plan():
             return (chap.get(g) is not None and chap[g] > chap[h]) or (rel.get(g) or 0) >= main10
         return False
     name = {g['groupId']: g['name'] for g in tl['groups']}
-    summ = {g['groupId']: g['summary'] for g in read_jsonl(os.path.join(ROOT, 'artifacts', 'p2', 'groups.jsonl')) if g['method'] == 'C'}
-    stories = read_jsonl(os.path.join(ROOT, 'artifacts', 'p2', 'stories.jsonl'))
+    summ = {g['groupId']: g['summary'] for g in read_derived(os.path.join(ROOT, 'artifacts', 'p2', 'groups.jsonl')) if g['method'] == 'C'}
+    stories = read_derived(os.path.join(ROOT, 'artifacts', 'p2', 'stories.jsonl'))
     # Groups with one story have no group summary; their story summary stands in.
     for s in stories:
         summ.setdefault(s['groupId'], s['summary'])

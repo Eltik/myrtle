@@ -33,7 +33,7 @@ import collections, json, os, random, re, subprocess, sys, time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
 import common, incr
-from common import ROOT, read_jsonl, sha16
+from common import ROOT, read_derived, read_jsonl, sha16
 
 OUT = os.path.join(ROOT, 'artifacts', 'bank')
 CORPUS = os.path.join(ROOT, os.environ.get('CORPUS', 'artifacts/p3b'))
@@ -59,7 +59,7 @@ def supported(system, user):
 
 
 def spoilers():
-    return {r['storyId']: r for r in read_jsonl(os.path.join(CORPUS, 'spoiler.jsonl'))}
+    return {r['storyId']: r for r in read_derived(os.path.join(CORPUS, 'spoiler.jsonl'))}
 
 
 def gate(stories, chars, sp):
@@ -74,7 +74,7 @@ def stage_seed():
     os.makedirs(OUT, exist_ok=True)
     sp = spoilers()
     tl = {g['groupId']: g for g in json.load(open(os.path.join(ROOT, 'artifacts', 'chrono', 'timeline_v1.json')))['groups']}
-    stories = read_jsonl(os.path.join(ROOT, 'artifacts', 'p2', 'stories.jsonl'))
+    stories = read_derived(os.path.join(ROOT, 'artifacts', 'p2', 'stories.jsonl'))
     by_group = collections.defaultdict(list)
     for s in stories:
         by_group[s['groupId']].append(s['storyId'])
@@ -82,7 +82,7 @@ def stage_seed():
     # were written before the build rules dropped 72 bad links (Kal'tsit carried "Raidian" and "Serafina").
     ids = {i['label']: i['names'] for i in json.load(open(os.path.join(ROOT, 'artifacts', 'entities', 'identities.json')))}
     rows = []
-    for d in read_jsonl(os.path.join(ROOT, 'artifacts', 'dossiers', 'dossiers.jsonl')):
+    for d in read_derived(os.path.join(ROOT, 'artifacts', 'dossiers', 'dossiers.jsonl')):
         rows.append({'id': f"who:{d['name']}", 'kind': 'who', 'question': f"Who is {d['name']}?",
                      'aliases': [f'Who is {n}?' for n in ids.get(d['name'], []) if n != d['name']], 'answer': d['dossier'],
                      'sources': d['stories'] + ([f"archive_{d['charId']}"] if d['hasArchive'] else []),
@@ -90,7 +90,7 @@ def stage_seed():
     for s in stories:
         rows.append({'id': f"story:{s['storyId']}", 'kind': 'story', 'question': f"What happens in {s['header']}?",
                      'aliases': [], 'answer': s['summary'], 'sources': [s['storyId']], **gate([s['storyId']], [], sp)})
-    for g in read_jsonl(os.path.join(ROOT, 'artifacts', 'p2', 'groups.jsonl')):
+    for g in read_derived(os.path.join(ROOT, 'artifacts', 'p2', 'groups.jsonl')):
         if g['method'] != 'C':
             continue
         name = tl.get(g['groupId'], {}).get('name', g['groupId'])
@@ -98,8 +98,8 @@ def stage_seed():
                      'aliases': [f'Summarize {name}.'], 'answer': g['summary'], 'sources': g['storyIds'],
                      **gate(g['storyIds'], [], sp)})
     if os.environ.get('PRIMERS') == '1':
-        support = {r['groupId']: r['sentences'] for r in read_jsonl(os.path.join(OUT, 'primer_support.jsonl'))}
-        for p in read_jsonl(os.path.join(ROOT, 'artifacts', 'primers', 'primers.jsonl')):
+        support = {r['groupId']: r['sentences'] for r in read_derived(os.path.join(OUT, 'primer_support.jsonl'))}
+        for p in read_derived(os.path.join(ROOT, 'artifacts', 'primers', 'primers.jsonl')):
             if not p['prior']:
                 continue
             src = [s for h in p['prior'] for s in by_group.get(h, [])]
@@ -112,7 +112,8 @@ def stage_seed():
                          'question': f"What should I know before starting {p['name']}?",
                          'aliases': [f"What happened before {p['name']}?"], 'answer': text, 'sources': p['prior'],
                          **gate(src, [], sp)})
-    common.write_jsonl(os.path.join(OUT, 'seed.jsonl'), rows)
+    if not common.write_keep_last(os.path.join(OUT, 'seed.jsonl'), rows):
+        return
     c = collections.Counter(r['kind'] for r in rows)
     print(f'seed: {len(rows)} entries {dict(c)}; with unknown gate stories {sum("gateUnknown" in r for r in rows)}')
 
@@ -127,7 +128,7 @@ def stage_primers():
     _, summ, name = pm.plan()
     path = os.path.join(OUT, 'primer_support.jsonl')
     done = {r['groupId'] for r in read_jsonl(path)}
-    for p in read_jsonl(os.path.join(ROOT, 'artifacts', 'primers', 'primers.jsonl')):
+    for p in read_derived(os.path.join(ROOT, 'artifacts', 'primers', 'primers.jsonl')):
         if not p['prior'] or p['groupId'] in done:
             continue
         src = '\n'.join(f"- {name.get(h, h)}: {summ[h]}" for h in p['prior']) + f"\n- Opening blurb of {p['name']}: {p['blurb']}"
@@ -152,7 +153,7 @@ def gold_stories():
 def questions_stage(only=None):
     """`only` (a set of chunk ids, scripts/bank_regen.py): the units are exactly those chunks that are eligible, and
     every other row is kept; the sample and its pool are left alone."""
-    chunks = read_jsonl(os.path.join(CORPUS, 'chunks.jsonl'))
+    chunks = read_derived(os.path.join(CORPUS, 'chunks.jsonl'))
     gold = gold_stories()
     # Round-robin over groups so a long event does not crowd out the rest; stories in the gold set are
     # skipped whole so no bank question paraphrases an eval item.
@@ -239,13 +240,12 @@ def stage_answer():
 
 def evidence_shas(art):
     """chunk id -> sha16 of its text over the corpora a bank answer can cite: P4x, then CORPUS (P3b) over it (P3b's
-    16,050 chunks are in P4x with the same text). Missing files count as empty."""
+    16,050 chunks are in P4x with the same text). A missing file raises common.MissingInput (2026-10-19): read as empty,
+    it made every answer's evidence "vanished" and the merge dropped every ask entry."""
     out = {}
     for d in ('p4x', os.path.relpath(CORPUS, os.path.join(ROOT, 'artifacts'))):
-        p = os.path.join(art, d, 'chunks.jsonl')
-        if os.path.exists(p):
-            for r in read_jsonl(p):
-                out[r['chunkId']] = sha16(r['text'])
+        for r in read_derived(os.path.join(art, d, 'chunks.jsonl')):
+            out[r['chunkId']] = sha16(r['text'])
     return out
 
 
@@ -264,15 +264,15 @@ def within_gate(a, q, sp_pos):
 
 def stage_merge():
     sp = spoilers()
-    Q = {r['qid']: r for r in read_jsonl(os.path.join(OUT, 'questions.jsonl'))}
-    rows = read_jsonl(os.path.join(OUT, 'seed.jsonl')); kept = dropped = 0
+    Q = {r['qid']: r for r in read_derived(os.path.join(OUT, 'questions.jsonl'))}
+    rows = read_derived(os.path.join(OUT, 'seed.jsonl')); kept = dropped = 0
     # REGEN_ANSWERS=0 is the kill switch: no evidence check and no gate rule, the merge before 2026-10-17.
     check = os.environ.get('REGEN_ANSWERS') != '0'
     ledger = evidence_ledger() if check else {}
     cur = evidence_shas(os.path.join(ROOT, 'artifacts')) if check and ledger else {}
-    sp_pos = gate_positions() if check and ledger else {}
+    sp_pos = gate_positions(required=True) if check and ledger else {}
     why = collections.Counter()
-    for a in read_jsonl(os.path.join(OUT, 'answers.jsonl')):
+    for a in read_derived(os.path.join(OUT, 'answers.jsonl')):
         q = Q.get(a['qid'])
         first = re.split(r'(?<=[.!?])\s+', a['answer'].strip(), maxsplit=1)[0]
         if not q or DECLINE.search(first) or not a['cited']:
@@ -299,17 +299,22 @@ def stage_merge():
                      'answer': a['answer'], 'sources': a['cited'], 'passages': a['passages'],
                      **gate(cited + [q['storyId']], chars, sp)})
         kept += 1
-    common.write_jsonl(os.path.join(OUT, 'bank.jsonl'), rows)
+    # Kept as it was when it came out empty or lost more than INCR_MAX_DROP percent of its entries (KEEP_LAST=0: written).
+    common.write_keep_last(os.path.join(OUT, 'bank.jsonl'), rows)
     c = collections.Counter(r['kind'] for r in rows)
     print(f'bank: {len(rows)} entries {dict(c)}; generated kept {kept}, dropped {dropped} (declined or uncited'
           + (', or evidence changed' if check else '') + ')' + (f'; {dict(why)}' if why else ''))
     return {'entries': len(rows), 'kept': kept, 'dropped': dropped, **{k: v for k, v in why.items()}}
 
 
-def gate_positions():
-    """story or source id -> gatePos from artifacts/chrono/gate_order.json (storyOrder index + 1, sourcePos)."""
+def gate_positions(required=False):
+    """story or source id -> gatePos from artifacts/chrono/gate_order.json (storyOrder index + 1, sourcePos); {} when it
+    is missing, or common.MissingInput when `required` (the merge: without it every regenerated answer fails the gate
+    rule and is dropped)."""
     p = os.path.join(ROOT, 'artifacts', 'chrono', 'gate_order.json')
     if not os.path.exists(p):
+        if required:
+            common.load_derived(p)
         return {}
     g = json.load(open(p))
     pos = {s: i + 1 for i, s in enumerate(g['storyOrder'])}

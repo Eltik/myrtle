@@ -207,16 +207,27 @@ def main():
     add_event_text(u, names)
     units = u.rows
 
-    os.makedirs(OUT, exist_ok=True)
-    common.write_jsonl(os.path.join(OUT, 'units.jsonl'), units)
-    base = open(os.path.join(ROOT, 'artifacts', 'sources', 'all_units.jsonl'), encoding='utf-8').read()
-    with open(os.path.join(OUT, 'p4x_units.jsonl'), 'w') as f:
+    # Read before anything is written: a missing all_units.jsonl (update.sh concatenates it) raises common.MissingInput.
+    base_path = os.path.join(ROOT, 'artifacts', 'sources', 'all_units.jsonl')
+    if not os.path.exists(base_path):
+        common.load_derived(base_path)
+    base = open(base_path, encoding='utf-8').read()
+    # Both files are kept as they were when the units came out empty or lost more than INCR_MAX_DROP percent
+    # (KEEP_LAST=0: written); p4x_units.jsonl is written through a temporary file and a rename.
+    if not common.write_keep_last(os.path.join(OUT, 'units.jsonl'), units):
+        return
+    tmp = os.path.join(OUT, 'p4x_units.jsonl.tmp')
+    with open(tmp, 'w') as f:
         f.write(base)
         for row in units:
             f.write(json.dumps(row, ensure_ascii=False) + '\n')
+    os.replace(tmp, os.path.join(OUT, 'p4x_units.jsonl'))
     kinds = collections.Counter(row['title'].split(')')[0][len('Game text ('):] for row in units)
     print(f"gametext: {len(units)} units, {sum(words(row['text']) for row in units)} words; by kind {dict(kinds)}")
 
 
 if __name__ == '__main__':
-    main()
+    # A missing game table keeps the last units and logs it (TABLES_REQUIRED=1 fails instead), 2026-10-19; a missing
+    # activity_table alone carries the event units over (GAMETEXT_REQUIRE_TABLES=1 fails instead).
+    common.keep_last_on_missing_table(main, os.path.join(OUT, 'units.jsonl'), os.path.join(OUT, 'p4x_units.jsonl'),
+                                      required_by=('GAMETEXT_REQUIRE_TABLES',))

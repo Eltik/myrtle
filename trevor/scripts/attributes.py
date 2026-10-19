@@ -71,7 +71,9 @@ def main():
             'combatExperience': info.get('Combat Experience') or None,
         })
     rows.sort(key=lambda r: r['name'])
-    common.write_jsonl(OUT, rows)
+    # Kept as it was when it came out empty or lost more than INCR_MAX_DROP percent of its rows (KEEP_LAST=0: written).
+    if not common.write_keep_last(OUT, rows):
+        return
     cov = {k: sum(r[k] is not None for r in rows) for k in ('nation', 'group', 'team', 'gender', 'birthplace', 'race',
                                                               'heightCm', 'infected', 'birthday')}
     print(f"attributes: {len(rows)} operators; set per field {cov}; "
@@ -79,4 +81,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    # A missing game table keeps the last file and logs it (TABLES_REQUIRED=1 fails instead), 2026-10-19.
+    common.keep_last_on_missing_table(main, OUT)

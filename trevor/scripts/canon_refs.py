@@ -909,7 +909,7 @@ def stage_build():
         doc = {'note': note + (' evidenceScheme names what fills referencedBy (passage: both models agree on a passage; story-*: '
                                'one pick per later story from up to 8 of its passages); the other schemes are kept in their '
                                'own fields as weaker evidence.'), 'evidenceScheme': EVIDENCE, 'runs': out}
-    json.dump(doc, open(os.path.join(OUT, 'is_endings.json'), 'w'), ensure_ascii=False, indent=1)
+    common.write_json_atomic(os.path.join(OUT, 'is_endings.json'), doc, ensure_ascii=False, indent=1)
     for r in out:
         print(r['runName'], '|', '; '.join(f"{e['name']}: {len(e['referencedBy'])}" + (f" (+{len(e['gemmaOnly'])} Gemma only)" if AGREE else '')
                                          for e in r['endings']))
@@ -918,7 +918,12 @@ def stage_build():
 def fingerprint():
     """(endings key, other-inputs key, {chunkId: sha}) for the stamp; see `inputs` in the module doc."""
     h = lambda b: hashlib.sha256(b if isinstance(b, bytes) else b.encode()).hexdigest()[:16]
-    rd = lambda p: open(p, 'rb').read() if os.path.exists(p) else b''
+    # A missing input raises (common.MissingInput, 2026-10-19): read as b'' it changed the key and forced a full run,
+    # which moved every canon file aside, the served is_endings.json included.
+    def rd(p):
+        if not os.path.exists(p):
+            raise common.MissingInput(f'canon input {p} is missing; the canon plan is not computed')
+        return open(p, 'rb').read()
     scripts = os.path.join(GD, 'story', 'obt', 'roguelike')
     ends = [rd(os.path.join(GD, 'excel', 'roguelike_topic_table.json'))]
     for d, _, fs in sorted(os.walk(scripts)):

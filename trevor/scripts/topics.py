@@ -40,7 +40,7 @@ import collections, json, math, os, re, sys, time, unicodedata
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
 import common
-from common import G_BOOL, ROOT, read_jsonl, sha16
+from common import G_BOOL, ROOT, read_derived, read_jsonl, sha16
 
 OUT = os.path.join(ROOT, 'artifacts', 'topics')
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
@@ -121,7 +121,7 @@ _P4 = []
 def p4_search():
     """P4's chunks minus EXCLUDE and a BM25 search over them, built once per run."""
     if not _P4:
-        chunks = [c for c in read_jsonl(os.path.join(ROOT, 'artifacts', 'p4', 'chunks.jsonl')) if c['groupId'] not in EXCLUDE]
+        chunks = [c for c in read_derived(os.path.join(ROOT, 'artifacts', 'p4', 'chunks.jsonl')) if c['groupId'] not in EXCLUDE]
         _P4.extend([chunks, bm25_index([c['text'] for c in chunks])])
     return _P4[0], _P4[1]
 
@@ -138,7 +138,7 @@ def plan_rows_v1():
     """The plan's topic rows, with the old file's summary and keys carried over per topic (unless TOPIC_PLAN_FRESH)."""
     qs = [r['q'] for r in read_jsonl(os.path.join(ROOT, 'eval', 'reddit-lore-questions.all.jsonl')) + read_jsonl(
         os.path.join(ROOT, 'eval', 'discord-lore-questions.jsonl')) if r['category'] in ('H', 'R')]
-    A = read_jsonl(os.path.join(ROOT, 'artifacts', 'entities', 'operator_attributes.jsonl'))
+    A = read_derived(os.path.join(ROOT, 'artifacts', 'entities', 'operator_attributes.jsonl'))
     skip = {'Unknown', 'Undisclosed', 'Rhodes Island'}
     topics = {}
     for r in A:
@@ -185,9 +185,9 @@ def fold(x):
 
 def people_names():
     """Folded names of people: every character_table name, the operators, and every identity-link name."""
-    ct = json.load(open(os.path.join(GAMEDATA, 'character_table.json')))['Characters']
+    ct = common.excel_table('character_table.json', GAMEDATA)['Characters']
     names = {c['value'].get('Name') or '' for c in ct}
-    names |= {r['name'] for r in read_jsonl(os.path.join(ROOT, 'artifacts', 'entities', 'operator_attributes.jsonl'))}
+    names |= {r['name'] for r in read_derived(os.path.join(ROOT, 'artifacts', 'entities', 'operator_attributes.jsonl'))}
     for i in json.load(open(os.path.join(ROOT, 'artifacts', 'entities', 'identities.json'))):
         names |= {i['label'], *i['names']}
     return {fold(n) for n in names if n}
@@ -198,7 +198,7 @@ def table_candidates():
     out = []
     clean = lambda x: re.sub(r'\s*\([^)]*\)', '', x).strip()
     ok = lambda x: x and len(x) > 2 and not re.search(r'unknown|undisclosed', x, re.I) and x.isprintable() and not re.search(r'[■?#]', x)
-    for r in read_jsonl(os.path.join(ROOT, 'artifacts', 'entities', 'operator_attributes.jsonl')):
+    for r in read_derived(os.path.join(ROOT, 'artifacts', 'entities', 'operator_attributes.jsonl')):
         for x in (r['race'] or '').split('/'):
             if ok(clean(x)):
                 out.append((clean(x), 'race', 'race', []))
@@ -206,20 +206,25 @@ def table_candidates():
             out.append((r['nation'], 'nation', 'nation', []))
         if ok(clean(r['birthplace'] or '')):
             out.append((clean(r['birthplace']), 'place', 'birthplace', []))
-    for t in json.load(open(os.path.join(GAMEDATA, 'handbook_team_table.json')))['Handbook_teams']:
+    for t in common.excel_table('handbook_team_table.json', GAMEDATA)['Handbook_teams']:
         v = t['value']
         if v['PowerId'] == 'none':
             continue
         code = [v['PowerCode']] if fold(v['PowerCode']) != fold(v['PowerName']) else []
         out.append((v['PowerName'], 'nation' if v['PowerLevel'] == 0 else 'organization', f"team level {v['PowerLevel']}", code))
-    for r in json.load(open(os.path.join(GAMEDATA, 'enemy_handbook_table.json')))['RaceData']:
+    for r in common.excel_table('enemy_handbook_table.json', GAMEDATA)['RaceData']:
         out.append((r['value']['RaceName'], None, 'enemy race', []))
     return out
 
 
 def stage_mine():
-    """Candidates from the game tables and the corpus -> candidates.jsonl (deterministic, no model)."""
-    C = [c for c in read_jsonl(os.path.join(ROOT, 'artifacts', 'p3b', 'chunks.jsonl')) if c['groupId'] not in ('profile', 'summary')]
+    """Candidates from the game tables and the corpus -> candidates.jsonl (deterministic, no model). A missing game table
+    keeps the last candidates.jsonl (TABLES_REQUIRED=1 fails instead), 2026-10-19."""
+    common.keep_last_on_missing_table(mine, os.path.join(OUT, 'candidates.jsonl'))
+
+
+def mine():
+    C = [c for c in read_derived(os.path.join(ROOT, 'artifacts', 'p3b', 'chunks.jsonl')) if c['groupId'] not in ('profile', 'summary')]
     mid = collections.Counter(); groups = collections.defaultdict(set); ctx = collections.defaultdict(dict)
     lower = collections.Counter()
     for c in C:
@@ -282,8 +287,7 @@ def stage_mine():
         old = {r['term'] for r in read_jsonl(os.path.join(OUT, 'candidates.jsonl'))}
         print(f"topics mine: {len(rows)} candidates, {len({r['term'] for r in rows} - old)} new", flush=True)
         return
-    os.makedirs(OUT, exist_ok=True)
-    common.write_jsonl(os.path.join(OUT, 'candidates.jsonl'), rows)
+    common.write_keep_last(os.path.join(OUT, 'candidates.jsonl'), rows)
 
 
 CLS_SYS = ("You classify a name from the Arknights story by what it refers to, using the context lines given. Kinds: race (a "
@@ -801,19 +805,21 @@ def stage_units():
     """units.jsonl: every served topic (v1's and, by default, those from data); units.v1.jsonl: the 46 v1 topics alone,
     byte for byte the units.jsonl before 2026-10-01, for the v1 lore's P4 (ask --lore v1)."""
     # A thin topic (new topics only, see stage_thin) is not served.
-    rows = [r for r in read_jsonl(os.path.join(OUT, 'topics.jsonl')) if r.get('summary') and not r.get('thin')]
+    rows = [r for r in read_derived(os.path.join(OUT, 'topics.jsonl')) if r.get('summary') and not r.get('thin')]
     ids = collections.Counter()
     for name, keep in (('units.jsonl', lambda r: True), ('units.v1.jsonl', lambda r: 'source' not in r)):
-        with open(os.path.join(OUT, name), 'w') as f:
-            for r in filter(keep, rows):
-                # Citations point at this entry's own passage list, which a reader of the unit cannot see; drop them.
-                body = r['summaryV2'] if name == 'units.jsonl' and r.get('summaryV2') else r['summary']
-                text = common.strip_cites(body)
-                sid = 'topic_' + re.sub(r'\W+', '_', r['topic']).strip('_').lower()
-                ids[sid] += name == 'units.jsonl'
-                f.write(json.dumps({'storyId': sid, 'groupId': 'topic',
-                                    'title': f"Topic: {r['topic']} (Trevor's summary)", 'text': f"Topic: {r['topic']} (Trevor's summary)\n{text}",
-                                    'speakers': []}, ensure_ascii=False) + '\n')
+        out = []
+        for r in filter(keep, rows):
+            # Citations point at this entry's own passage list, which a reader of the unit cannot see; drop them.
+            body = r['summaryV2'] if name == 'units.jsonl' and r.get('summaryV2') else r['summary']
+            text = common.strip_cites(body)
+            sid = 'topic_' + re.sub(r'\W+', '_', r['topic']).strip('_').lower()
+            ids[sid] += name == 'units.jsonl'
+            out.append({'storyId': sid, 'groupId': 'topic',
+                        'title': f"Topic: {r['topic']} (Trevor's summary)", 'text': f"Topic: {r['topic']} (Trevor's summary)\n{text}",
+                        'speakers': []})
+        # Kept as it was when it came out empty or lost more than INCR_MAX_DROP percent (KEEP_LAST=0: written).
+        common.write_keep_last(os.path.join(OUT, name), out)
     dup = [k for k, v in ids.items() if v > 1]
     print(f"units: {len(rows)} ({sum('source' not in r for r in rows)} v1)" + (f'; DUPLICATE story ids {dup}' if dup else ''))
 

@@ -9,7 +9,7 @@ stage sends, writes and keys on is unchanged.
 Scripts import it as `import common` or `from common import ...`: run as `python3 scripts/x.py`, the scripts
 directory is on sys.path, and so it is for a script that another loads with load_script().
 """
-import collections, hashlib, importlib.util, json, math, os, re, threading, time, urllib.parse, urllib.request
+import collections, hashlib, importlib.util, json, math, os, re, sys, threading, time, urllib.parse, urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # TREVOR_GAMEDATA points at another checkout's game data (a git worktree has no assets/output of its own).
@@ -35,9 +35,112 @@ def sha16(s):
 
 # ---------------------------------------------------------------- files
 
-def read_jsonl(p):
-    """Rows of a JSONL file, or [] when it does not exist."""
-    return [json.loads(l) for l in open(p)] if os.path.exists(p) else []
+class MissingInput(FileNotFoundError):
+    """A stage input that must exist does not: a derived file an earlier stage writes, or a game table. A subclass of
+    FileNotFoundError, so a caller that caught the open() error before still catches it."""
+
+
+class MissingTable(MissingInput):
+    """A game data table is not in excel/ (an asset update can leave one out, backend core/gamedata/stale.rs)."""
+
+
+def read_jsonl(p, required=False):
+    """Rows of a JSONL file, or [] when it does not exist. `required`: raise MissingInput instead (2026-10-19): an
+    absent derived input read as [] made a stage overwrite its good output with an empty one."""
+    if os.path.exists(p):
+        return [json.loads(l) for l in open(p)]
+    if required:
+        raise MissingInput(f'missing input {os.path.relpath(p, ROOT)}: the stage that writes it has not run or failed; '
+                           'nothing was written')
+    return []
+
+
+def read_derived(p):
+    """Rows of a JSONL file an earlier stage writes; MissingInput when it is absent."""
+    return read_jsonl(p, required=True)
+
+
+def load_derived(p):
+    """A JSON file an earlier stage writes, decoded; MissingInput when it is absent."""
+    if not os.path.exists(p):
+        raise MissingInput(f'missing input {os.path.relpath(p, ROOT)}: the stage that writes it has not run or failed; '
+                           'nothing was written')
+    return json.load(open(p))
+
+
+# ---------------------------------------------------------------- keeping the last good output (2026-10-19)
+
+def keep_last_on():
+    """KEEP_LAST=0 is the kill switch: every guarded write is a plain write again, whatever it replaces."""
+    return os.environ.get('KEEP_LAST') != '0'
+
+
+def max_drop():
+    """The share of rows a rewrite may lose before it is refused: INCR_MAX_DROP percent, 20 by default."""
+    return float(os.environ.get('INCR_MAX_DROP', '20')) / 100
+
+
+def shrinks(old, new):
+    """Whether replacing `old` rows (or entries) with `new` loses all of them or more than max_drop() of them."""
+    return old > 0 and (new == 0 or old - new > max_drop() * old)
+
+
+def _count_file(path, kind, count):
+    """Rows of a JSONL file, or count(decoded JSON); None when there is no readable file to keep."""
+    try:
+        if kind == 'jsonl':
+            with open(path, 'rb') as f:
+                return sum(1 for l in f if l.strip())
+        with open(path) as f:
+            return count(json.load(f))
+    except (OSError, ValueError):
+        return None
+
+
+def write_keep_last(path, data, kind='jsonl', count=len, ensure_ascii=None, newline=False, encoding=None, **dump_kw):
+    """Write a served or derived output atomically, unless it would replace a non-empty file with an empty one or one
+    that lost more than max_drop() of its rows: then the file is kept, "keeping last <path>" goes to stderr and the
+    result is False. `kind` 'jsonl': `data` is the rows, written as write_jsonl writes them (ensure_ascii False unless
+    given); 'json': `data` is one object, json.dump(data, **dump_kw) as write_json_atomic writes it (json.dump's own
+    ensure_ascii unless given), and `count(obj)` is its size (len by default).
+    The bytes written are the same as the plain write's. KEEP_LAST=0 writes whatever it is given."""
+    if kind == 'jsonl':
+        data = list(data)
+    n = len(data) if kind == 'jsonl' else count(data)
+    if keep_last_on():
+        old = _count_file(path, kind, count)
+        if old is not None and shrinks(old, n):
+            print(f'keeping last {os.path.relpath(path, ROOT)}: {n} rows now against {old} before '
+                  f'(input empty or shrunk; KEEP_LAST=0 writes it anyway)', file=sys.stderr, flush=True)
+            return False
+    d = os.path.dirname(path)
+    if d:
+        os.makedirs(d, exist_ok=True)
+    if kind == 'jsonl':
+        tmp = path + '.tmp'
+        write_jsonl(tmp, data, ensure_ascii=bool(ensure_ascii))
+        os.replace(tmp, path)
+    else:
+        if ensure_ascii is not None:
+            dump_kw['ensure_ascii'] = ensure_ascii
+        write_json_atomic(path, data, newline=newline, encoding=encoding, **dump_kw)
+    return True
+
+
+def keep_last_on_missing_table(fn, *outputs, required_by=()):
+    """Run a stage that reads game tables. A missing table (MissingTable) leaves every output as it was and logs which
+    ones were kept, and the run goes on (exit 0), so one table left out of an asset update does not stop the update.
+    TABLES_REQUIRED=1, or any of the stage's own switches in `required_by` set to 1 (GAMETEXT_REQUIRE_TABLES,
+    DATES_REQUIRE_TABLES), raises instead, the behaviour before 2026-10-19."""
+    try:
+        return fn()
+    except MissingTable as e:
+        if any(os.environ.get(k) == '1' for k in ('TABLES_REQUIRED', *required_by)):
+            raise
+        for p in outputs:
+            print(f"keeping last {os.path.relpath(p, ROOT)}{'' if os.path.exists(p) else ' (none yet)'}: {e}",
+                  file=sys.stderr, flush=True)
+        return None
 
 
 def write_jsonl(path, rows, ensure_ascii=False):
@@ -84,9 +187,33 @@ def load_json(path):
     return json.load(open(path))
 
 
-def excel_table(name):
-    """A game data table from excel/ (TREVOR_GAMEDATA's when set), decoded."""
-    return load_json(os.path.join(EXCEL, name))
+_STALE_SAID = set()
+
+
+def stale_tables(excel=None):
+    """{table name: since} of the tables the unpacker skipped and kept from an earlier extract, from
+    `<gamedata>/.skipped.json` ({"tables": [{"table", "since", "resVersion", "previousOutput"}]}, backend
+    core/gamedata/stale.rs). {} without the file or when it cannot be read."""
+    p = os.path.join(os.path.dirname(os.path.abspath(excel or EXCEL)), '.skipped.json')
+    try:
+        return {t['table']: t.get('since') for t in json.load(open(p)).get('tables') or [] if t.get('table')}
+    except (OSError, ValueError, AttributeError, TypeError):
+        return {}
+
+
+def excel_table(name, excel=None):
+    """A game data table from excel/ (TREVOR_GAMEDATA's when set, or `excel`), decoded. A table the unpacker kept from
+    an earlier extract is logged once per run ("stale <table> kept since <date>"); a missing one raises MissingTable."""
+    path = os.path.join(excel or EXCEL, name)
+    base = name[:-5] if name.endswith('.json') else name
+    since = stale_tables(excel).get(base)
+    if not os.path.exists(path):
+        raise MissingTable(f'game table {name} is missing from {excel or EXCEL}'
+                           + (f' (skipped by the unpacker since {since})' if since else ''))
+    if since and base not in _STALE_SAID:
+        _STALE_SAID.add(base)
+        print(f'stale {base} kept since {since}', file=sys.stderr, flush=True)
+    return load_json(path)
 
 
 def kv(x):

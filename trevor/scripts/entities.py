@@ -248,7 +248,8 @@ def stage_build():
     is_name = lambda x: sum(1 for w in x.split() if w[:1].islower()) < 2
     dropped = 0; unstated = []
     v2 = os.environ.get('ENTITY_V2') == '1'
-    pair_rows = read_jsonl(os.path.join(OUT, 'pairs.jsonl')) + (read_jsonl(os.path.join(OUT, 'pairs.v2.jsonl')) if v2 else [])
+    # Both pair files are derived inputs: a missing one raises (common.MissingInput) instead of building no identities.
+    pair_rows = common.read_derived(os.path.join(OUT, 'pairs.jsonl')) + (common.read_derived(os.path.join(OUT, 'pairs.v2.jsonl')) if v2 else [])
     for r in pair_rows:
         for l in r['links']:
             a, b = l['name_a'].strip(), l['name_b'].strip()
@@ -319,11 +320,14 @@ def stage_build():
             inferred.append({'name_a': first, 'name_b': whole, 'relation': 'full_name', 'quote': line, 'where': c['storyId'],
                              'identity': linked[norm(first)]['label'],
                              'basis': 'a full name whose first word is the only identity name with that first word; not stated'})
-        json.dump({'identities': ids, 'inferred': inferred}, open(os.path.join(OUT, 'identities.v2.json'), 'w'), ensure_ascii=False, indent=1)
+        if not common.write_keep_last(os.path.join(OUT, 'identities.v2.json'), {'identities': ids, 'inferred': inferred}, 'json',
+                                      count=lambda d: len(d['identities']), ensure_ascii=False, indent=1):
+            return
         print(f"identities.v2.json: {len(ids)} identities, {len(inferred)} labelled inferences "
               f"({sum(1 for x in inferred if x['relation'] == 'full_name')} full names)")
         return
-    json.dump(ids, open(os.path.join(OUT, 'identities.json'), 'w'), ensure_ascii=False, indent=1)
+    if not common.write_keep_last(os.path.join(OUT, 'identities.json'), ids, 'json', ensure_ascii=False, indent=1):
+        return
     big = [i for i in ids if len(i['names']) > 6]
     # Many names is not an error in itself: Fiammetta went by many codenames (review, 2026-09-27).
     print(f"identities: {len(ids)} from {len(parent)} names; labelled by a speaker: {sum(i['speaksInChunks'] > 0 for i in ids)}; "

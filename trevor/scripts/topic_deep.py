@@ -31,7 +31,7 @@ import argparse, collections, os, re, sys, time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
 import common
-from common import ROOT, read_jsonl, sha16
+from common import ROOT, read_derived, read_jsonl, sha16
 
 OUT = os.path.join(ROOT, 'artifacts', 'topics')
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
@@ -81,19 +81,20 @@ def forms_rx(r):
 
 
 def served_topics():
-    rows = [r for r in read_jsonl(os.path.join(OUT, 'topics.jsonl')) if r.get('summary') and not r.get('thin')]
+    rows = [r for r in read_derived(os.path.join(OUT, 'topics.jsonl')) if r.get('summary') and not r.get('thin')]
     return sorted(rows, key=lambda r: (-r.get('asked', 0), r['topic']))
 
 
 class Data:
     def __init__(self):
-        self.chunks = read_jsonl(os.path.join(ROOT, 'artifacts', 'p4x', 'chunks.jsonl'))
-        self.p2 = {g['groupId']: g['summary'] for g in read_jsonl(os.path.join(ROOT, 'artifacts', 'p2', 'groups.jsonl'))}
-        tl = common.load_json(os.path.join(ROOT, 'artifacts', 'chrono', 'timeline_v1.json'))
+        # Derived inputs: a missing one raises (common.MissingInput) instead of building entries from nothing.
+        self.chunks = read_derived(os.path.join(ROOT, 'artifacts', 'p4x', 'chunks.jsonl'))
+        self.p2 = {g['groupId']: g['summary'] for g in read_derived(os.path.join(ROOT, 'artifacts', 'p2', 'groups.jsonl'))}
+        tl = common.load_derived(os.path.join(ROOT, 'artifacts', 'chrono', 'timeline_v1.json'))
         self.gname = {g['groupId']: g.get('name') or g['groupId'] for g in tl['groups']}
-        self.attrs = read_jsonl(os.path.join(ROOT, 'artifacts', 'entities', 'operator_attributes.jsonl'))
-        self.dossiers = read_jsonl(os.path.join(ROOT, 'artifacts', 'dossiers', 'dossiers.jsonl'))
-        self.overview = read_jsonl(os.path.join(ROOT, 'artifacts', 'overview', 'overview.jsonl'))
+        self.attrs = read_derived(os.path.join(ROOT, 'artifacts', 'entities', 'operator_attributes.jsonl'))
+        self.dossiers = read_derived(os.path.join(ROOT, 'artifacts', 'dossiers', 'dossiers.jsonl'))
+        self.overview = read_derived(os.path.join(ROOT, 'artifacts', 'overview', 'overview.jsonl'))
 
     def members(self, topic):
         t = topic.lower()

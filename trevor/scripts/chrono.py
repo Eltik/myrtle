@@ -17,7 +17,7 @@ import collections, json, os, re, sys, threading, time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
 import common, incr
-from common import GAMEDATA, ROOT, read_jsonl, sha16
+from common import GAMEDATA, ROOT, read_derived, read_jsonl, sha16
 
 OUT = os.path.join(ROOT, 'artifacts', 'chrono')
 REF = os.path.join(ROOT, 'eval', 'reference')  # wiki references (reference.json, timeline.wikitext): eval only
@@ -281,7 +281,7 @@ def backbone():
     more than 3 years under the trend (flashback-only captions), refitted until stable."""
     gof = story_groups()
     cap = collections.defaultdict(list)
-    for e in read_jsonl(os.path.join(OUT, 'events.jsonl')):
+    for e in read_derived(os.path.join(OUT, 'events.jsonl')):
         if e['is_year'] and e['present'] and e['kind'] == 'story':
             cap[gof[e['source']]].append(e['year'])
     rel = release_times()
@@ -370,7 +370,7 @@ def stage_build():
     anchor_ids = {g for _, _, g in anchors}
     names = group_names()
     gof = story_groups()
-    ev = [e for e in read_jsonl(os.path.join(OUT, 'events.jsonl')) if e['is_year']]
+    ev = [e for e in read_derived(os.path.join(OUT, 'events.jsonl')) if e['is_year']]
     dated = collections.defaultdict(list)
     for e in ev:
         if e['kind'] == 'story':
@@ -394,7 +394,7 @@ def stage_build():
         if r['setting'] != 'storyline' and r.get('year') in dy[r['groupId']]:
             cand[r['groupId']] = {'setting': r['setting'], 'year': r['year'], 'reason': r['reason']}
     fb = collections.defaultdict(lambda: {'depicts': [], 'recounts': 0})
-    for r in read_jsonl(os.path.join(OUT, 'flashbacks.jsonl')):
+    for r in read_derived(os.path.join(OUT, 'flashbacks.jsonl')):
         if r['tag'] == 'depicts':
             fb[r['groupId']]['depicts'].append({'storyId': r['storyId'], 'years': r['depictedYears'],
                                                  'evidence': r['evidence'][:1]})
@@ -413,14 +413,17 @@ def stage_build():
                 'source': e['source'], 'line': e['line'], 'derived': None} for e in ev]
     # Derived years: 'N years ago' counted from a dated scene, the event's dated anchor, or (lowest
     # confidence) the storyline estimate. On events matched to the wiki, 6 of 6 agree on the year.
-    for d in read_jsonl(os.path.join(OUT, 'derived.jsonl')):
+    for d in read_derived(os.path.join(OUT, 'derived.jsonl')):
         history.append({'year': d['year'], 'when': d['when'], 'event': d['quote'], 'sceneCaption': False,
                         'source': d['storyId'], 'line': d['quote'],
                         'derived': {'basis': d['basis'], 'from': d['from'], 'offset': d['offset'],
                                     'approximate': d.get('approximate', False)}})
     history.sort(key=lambda x: (x['year'], x['derived'] is not None, x['source']))
     out = {'version': 'chrono-v1', 'anchors': [(g, y) for _, y, g in anchors], 'groups': groups, 'history': history}
-    json.dump(out, open(os.path.join(OUT, 'timeline_v1.json'), 'w'), ensure_ascii=False, indent=1)
+    # Kept as it was when it came out with no groups or lost more than INCR_MAX_DROP percent of them (KEEP_LAST=0: written).
+    if not common.write_keep_last(os.path.join(OUT, 'timeline_v1.json'), out, 'json', count=lambda d: len(d['groups']),
+                                  ensure_ascii=False, indent=1):
+        return
     print(f"timeline_v1: {len(groups)} groups ({len(anchor_ids)} anchored), {len(history)} dated history lines")
 
 
@@ -511,10 +514,10 @@ def stage_flashbacks():
     sy = {g['groupId']: g['storylineYear'] for g in t['groups']}
     stories = load_stories()
     caps = collections.defaultdict(list); past = collections.defaultdict(list)
-    for e in read_jsonl(os.path.join(OUT, 'events.jsonl')):
+    for e in read_derived(os.path.join(OUT, 'events.jsonl')):
         if e['is_year'] and e['kind'] == 'story':
             (caps if e['present'] else past)[e['source']].append(e)
-    facts = {r['storyId']: r['facts'] for r in read_jsonl(os.path.join(OUT, 'facts.jsonl'))}
+    facts = {r['storyId']: r['facts'] for r in read_derived(os.path.join(OUT, 'facts.jsonl'))}
     rows = []
     for s_, cs in sorted(stories.items()):
         g = cs[0]['groupId']; y = sy.get(g)
@@ -529,7 +532,8 @@ def stage_flashbacks():
         rows.append({'storyId': s_, 'groupId': g, 'storylineYear': y, 'tag': tag,
                      'depictedYears': sorted({e['year'] for e in dep}),
                      'evidence': [e['line'][:160] for e in dep][:3] + [f['quote'][:160] for f in fb][:3]})
-    common.write_jsonl(os.path.join(OUT, 'flashbacks.jsonl'), rows)
+    if not common.write_keep_last(os.path.join(OUT, 'flashbacks.jsonl'), rows):
+        return
     c = collections.Counter(r['tag'] for r in rows)
     print('flashback tags:', dict(c))
     # Eval against the wiki's story-level citations (stage codes), eval only.
@@ -583,11 +587,11 @@ def stage_derive():
     grp = {g['groupId']: g for g in t['groups']}
     stories = load_stories()
     caps = collections.defaultdict(list)
-    for e in read_jsonl(os.path.join(OUT, 'events.jsonl')):
+    for e in read_derived(os.path.join(OUT, 'events.jsonl')):
         if e['is_year'] and e['present'] and e['kind'] == 'story':
             caps[e['source']].append(e)
     rows = []; skipped = collections.Counter()
-    for r in read_jsonl(os.path.join(OUT, 'facts.jsonl')):
+    for r in read_derived(os.path.join(OUT, 'facts.jsonl')):
         s_ = r['storyId']; g = r['groupId']
         lines = [norm(x) for c in stories[s_] for x in c['text'].split('\n')]
         def pos(q):
@@ -627,7 +631,8 @@ def stage_derive():
                       re.search(r"\b(almost|nearly|about|around|over|more than|some|roughly|close to)\b", f['quote'], re.I) is not None)
             rows.append({'storyId': s_, 'groupId': g, 'year': int(round(base + sign * n)), 'offset': sign * n, 'approximate': approx,
                          'from': round(base, 2), 'basis': basis, 'quote': f['quote'], 'when': f['when']})
-    common.write_jsonl(os.path.join(OUT, 'derived.jsonl'), rows)
+    if not common.write_keep_last(os.path.join(OUT, 'derived.jsonl'), rows):
+        return
     print(f'derived: {len(rows)} years', dict(collections.Counter(x["basis"] for x in rows)), 'skipped', dict(skipped))
     # Eval: coarse (the wiki has an entry that year) and precise (the wiki cites this very story under that year).
     w = open(os.path.join(REF, 'timeline.wikitext')).read()

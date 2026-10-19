@@ -19,8 +19,13 @@ import datetime
 import json
 import os
 import re
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py sits beside the scripts
+import common  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUT = os.path.join(ROOT, "artifacts/chrono/source_dates.json")
 
 
 def kv(rows):
@@ -32,7 +37,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--gamedata", default=os.path.join(ROOT, "..", "assets/output/en/gamedata/excel"))
     a = ap.parse_args()
-    load = lambda n: json.load(open(os.path.join(a.gamedata, n + ".json")))
+    # A missing table raises common.MissingTable (kept output, see __main__); a stale one is logged once.
+    load = lambda n: common.excel_table(n + ".json", a.gamedata)
 
     hb = kv(load("handbook_info_table")["HandbookDict"])
     record = {}
@@ -57,7 +63,7 @@ def main():
         t = (v.get("DisplaySkin") or {}).get("GetTime") or 0
         skin[sid.replace("@", "_")] = t if t > 0 else op_date.get(v.get("CharId"))
 
-    guide = json.load(open(os.path.join(ROOT, "artifacts/chrono/reading_guide.json")))["items"]
+    guide = common.load_derived(os.path.join(ROOT, "artifacts/chrono/reading_guide.json"))["items"]
     group_date = {}
     placed = {i["groupId"] for i in guide}
     for i in guide:
@@ -96,11 +102,14 @@ def main():
             dates[sid] = t
     out = {"note": "EN release dates (unix s, an upper bound) of P4x sources the reading guide does not place; "
                    "scripts/source_dates.py", "dates": dict(sorted(dates.items()))}
-    json.dump(out, open(os.path.join(ROOT, "artifacts/chrono/source_dates.json"), "w"), indent=0)
+    # Kept as it was when no source is dated or more than INCR_MAX_DROP percent lost their date (KEEP_LAST=0: written).
+    if not common.write_keep_last(OUT, out, "json", count=lambda d: len(d["dates"]), indent=0):
+        return
     for k in sorted({k for k, _ in kinds}):
         print(f"{k:10s} dated {kinds[(k, True)]:5d} undated {kinds[(k, False)]:5d}")
     print("sources dated", len(dates))
 
 
 if __name__ == "__main__":
-    main()
+    # A missing game table keeps the last source_dates.json and logs it (TABLES_REQUIRED=1 fails instead), 2026-10-19.
+    common.keep_last_on_missing_table(main, OUT)

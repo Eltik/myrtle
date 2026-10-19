@@ -13,12 +13,15 @@ and duplicate rows are dropped, so no reader ever sees two rows for one unit.
   KEY_IDS_ONLY=1  kill switch: skip on the unit id alone and append, exactly the behavior before
                   2026-09-28 (rows still carry inputSha; nothing is replaced or dropped)
   CHUNKS=path     read this chunks.jsonl instead of artifacts/chunks.jsonl (simulating an update)
+  INCR_MAX_DROP=N a run that would drop every row, or more than N percent (20) of a stage's rows as gone, keeps
+                  the file and exits 3 instead (2026-10-19: an empty input had rewritten whole files empty)
+  INCR_ALLOW_SHRINK=1  kill switch: drop them anyway, the behavior before 2026-10-19
   PLAN=1 python3 scripts/incr.py plan   the plan of every converted stage
 """
 import collections, json, os, sys, tempfile, threading
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
-from common import ROOT, append_jsonl, load_script, read_jsonl, sha16
+from common import ROOT, append_jsonl, load_script, read_jsonl, sha16, shrinks
 
 PLAN = os.environ.get('PLAN') == '1'
 IDS_ONLY = os.environ.get('KEY_IDS_ONLY') == '1'
@@ -111,6 +114,18 @@ class Stage:
                 for w, ks in ex.items():
                     if ks:
                         print(f'  {w}: ' + ', '.join(map(str, ks)) + (' ...' if why[w] > len(ks) else ''), flush=True)
+        # The shrink guard (2026-10-19): an empty or shrunken corpus or input made every row "gone", and the file was
+        # rewritten empty. A drop of every row, or of more than INCR_MAX_DROP percent (20) of them, is refused: the file
+        # is kept and the stage exits 3, so update.sh (set -e) stops. INCR_ALLOW_SHRINK=1 drops them, as before.
+        if (gone and os.environ.get('INCR_ALLOW_SHRINK') != '1'
+                and (not live or shrinks(len(self.have), len(self.have) - gone))):
+            msg = (f'keeping {os.path.relpath(self.path, ROOT)}: {gone} of {len(self.have)} rows would drop '
+                   f'(input empty or shrunk; INCR_ALLOW_SHRINK=1 drops them)')
+            if PLAN:
+                print(f'  {msg}', flush=True)
+                return None
+            print(msg, file=sys.stderr, flush=True)
+            sys.exit(3)
         if PLAN:
             return None
         if gone or dup:

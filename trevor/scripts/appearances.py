@@ -23,6 +23,7 @@ A name of fewer than 3 characters is never matched as a mention (speaking still 
 import collections, json, os, re, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common
 from common import ROOT
 
 OUT = os.path.join(ROOT, 'artifacts', 'appearances')
@@ -107,8 +108,8 @@ def main():
 
     groups = {g: group_row(g) for g in text_by_group}
     os.makedirs(OUT, exist_ok=True)
-    with open(os.path.join(OUT, 'appearances.json'), 'w') as f:
-        json.dump({'groups': groups, 'characters': out}, f, ensure_ascii=False, sort_keys=True)
+    common.write_json_atomic(os.path.join(OUT, 'appearances.json'), {'groups': groups, 'characters': out},
+                             ensure_ascii=False, sort_keys=True)
     print(f'{len(out)} characters, {len(groups)} story groups -> artifacts/appearances/appearances.json')
     e = out.get('Elysium')
     if e:

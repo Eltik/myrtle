@@ -255,8 +255,9 @@ def stage_build():
     rel = {g['groupId']: g.get('releaseTime') for g in json.load(open(os.path.join(ROOT, 'artifacts', 'chrono', 'timeline_v1.json')))['groups']}
     resolve = resolver(); named = namer()
     use_check = os.environ.get('DEATH_CHECK') != '0'
-    checks = {c['key']: c['ok'] for c in read_jsonl(os.path.join(ENT, 'death_checks.jsonl'))}
-    M = [r for r in read_jsonl(os.path.join(ENT, 'death_mentions.jsonl')) if r['promptSha'] == PSHA
+    # Derived inputs: a missing one raises (common.MissingInput) instead of building an empty deaths table.
+    checks = {c['key']: c['ok'] for c in common.read_derived(os.path.join(ENT, 'death_checks.jsonl'))}
+    M = [r for r in common.read_derived(os.path.join(ENT, 'death_mentions.jsonl')) if r['promptSha'] == PSHA
          and r['chunkId'] in chunks and r['textSha'] == sha16(chunks[r['chunkId']]['text'])]
     events = {}; unnamed = collections.Counter(); dropped = collections.Counter()
     for r in sorted(M, key=lambda r: (r['storyId'], chunks[r['chunkId']]['ordinal'])):
@@ -294,9 +295,11 @@ def stage_build():
         e['corroborated'] = len(groups_of[c]) >= 2 and first is not None and not later
         e['confirm'] = {'storyGroups': len(groups_of[c]), 'laterGroupsSpeaking': len(later), 'firstLaterGroup':
                         later[0] if later else None}
-    common.write_jsonl(os.path.join(ENT, 'deaths.jsonl'), events.values())
-    with open(os.path.join(ENT, 'deaths_unnamed.json'), 'w') as f:
-        json.dump([{'storyId': s, 'kind': k, 'count': n} for (s, k), n in sorted(unnamed.items())], f, indent=0)
+    # Kept as it was when the table came out empty or lost more than INCR_MAX_DROP percent of its rows (KEEP_LAST=0: written).
+    if not common.write_keep_last(os.path.join(ENT, 'deaths.jsonl'), events.values()):
+        return
+    common.write_json_atomic(os.path.join(ENT, 'deaths_unnamed.json'),
+                             [{'storyId': s, 'kind': k, 'count': n} for (s, k), n in sorted(unnamed.items())], indent=0)
     c = collections.Counter(e['kind'] for e in events.values())
     P = [e for e in events.values() if e['playable']]
     print(f"build: {len(M)} passages, {sum(len(r['mentions']) for r in M)} mentions, unnamed {sum(unnamed.values())}, "

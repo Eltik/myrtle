@@ -62,7 +62,7 @@ def stage_wiki():
         time.sleep(1)
     eps.sort(key=lambda e: e['episode'])
     os.makedirs(os.path.dirname(WIKI_REF), exist_ok=True)
-    json.dump(eps, open(WIKI_REF, 'w'), ensure_ascii=False, indent=1)
+    common.write_json_atomic(WIKI_REF, eps, ensure_ascii=False, indent=1)
     print(f"wiki: {len(eps)} episodes; dated {sum(bool(e['global']) for e in eps)} -> {WIKI_REF} (eval reference only)")
 
 
@@ -71,6 +71,12 @@ def kv(x):
 
 
 def stage_dates():
+    # Any other missing table (zone_table, stage_table) keeps the last main_release.json and logs it, 2026-10-19
+    # (TABLES_REQUIRED=1 fails instead).
+    common.keep_last_on_missing_table(dates, os.path.join(CH, 'main_release.json'), required_by=('DATES_REQUIRE_TABLES',))
+
+
+def dates():
     # A game update can leave a table out (2026-10-18: the EN unpack produced no activity_table.json). The episode dates
     # then stay as the last good main_release.json, so the update carries on; a new episode stays undated until the
     # table is back. DATES_REQUIRE_TABLES=1 fails instead, as before.
@@ -139,7 +145,8 @@ def stage_dates():
         eps.append({'episode': ep, 'title': title, 'global': g, 'shown': shown, 'basis': basis,
                     'source': 'EN game data (zone_table, activity_table, stage_table)'})
         prev = ep
-    json.dump(eps, open(os.path.join(CH, 'main_release.json'), 'w'), ensure_ascii=False, indent=1)
+    if not common.write_keep_last(os.path.join(CH, 'main_release.json'), eps, 'json', ensure_ascii=False, indent=1):
+        return
     print(f"dates: {len(eps)} episodes; exact {len(exact)}, estimated {sum(e['shown'].startswith('about') for e in eps)}, "
           f"upper bound {sum(e['shown'].startswith('by ') for e in eps)}, unknown {sum(e['global'] is None for e in eps)}; "
           f"Adverse offset median {off / 86400 if off else float('nan'):.2f} days from {len(offs)} episodes")
@@ -150,6 +157,10 @@ def stage_dates_without_activity():
     unchanged, and a new one gets the Adverse-stage estimate of stage_dates() (zone_table and stage_table only), with the
     offsets measured against the kept rows' game-data dates. Without Adverse stages it stays undated, after the last one."""
     path = os.path.join(CH, 'main_release.json')
+    if not os.path.exists(path):
+        # Nothing to keep and nothing to add to: the episodes stay undated until activity_table is back (2026-10-19).
+        print(f'dates: no {os.path.relpath(path, ROOT)} to keep; the episode dates wait for activity_table', file=sys.stderr)
+        return
     eps = json.load(open(path))
     have = {e['episode'] for e in eps}
     st = common.excel_table('stage_table.json')
@@ -179,7 +190,7 @@ def stage_dates_without_activity():
             basis = 'unknown: activity_table is missing and it has no Adverse schedule; placed after the episode before it'
         eps.append({'episode': ep, 'title': title, 'global': g, 'shown': shown, 'basis': basis,
                     'source': 'EN game data (zone_table, stage_table; activity_table missing)'})
-    json.dump(eps, open(path, 'w'), ensure_ascii=False, indent=1)
+    common.write_json_atomic(path, eps, ensure_ascii=False, indent=1)
     print(f'dates: {len(new)} new episodes dated without activity_table: '
           + ', '.join(f"{e['episode']} {e['shown']}" for e in eps[-len(new):]))
 
@@ -245,9 +256,6 @@ def stage_build():
         i['builtOnBy'] = [name[g] for g in sorted(later.get(i['groupId'], []), key=lambda g: pos.get(g, 1e9)) if g in name]
         # Weight as a prerequisite: how many later main episodes and events list it among what they build on.
         i['prereqOf'] = len(later.get(i['groupId'], []))
-    json.dump({'items': items, 'note': 'EN release order; buildsOn = primer prior context (in-world earlier, released '
-               'no later, most shared recurring speakers)'}, open(os.path.join(CH, 'reading_guide.json'), 'w'),
-              ensure_ascii=False, indent=1)
     # First appearance: the earliest-released main episode or event where a speaker has a line. Word counts per
     # group give a reading time (words of dialogue and narration in the script).
     first = {}
@@ -262,12 +270,16 @@ def stage_build():
             if cur is None or (pos[r['groupId']], r['ordinal']) < (pos[cur['groupId']], cur['ordinal']):
                 first[sp] = {'groupId': r['groupId'], 'group': name[r['groupId']], 'storyId': r['storyId'],
                              'ordinal': r['ordinal'], 'released': items[pos[r['groupId']]]['released']}
-    json.dump(first, open(os.path.join(CH, 'first_appearance.json'), 'w'), ensure_ascii=False)
     for i in items:
         i['words'] = words[i['groupId']]
-    json.dump({'items': items, 'note': 'EN release order; buildsOn = primer prior context (in-world earlier, released '
-               'no later, most shared recurring speakers); words = script words'},
-              open(os.path.join(CH, 'reading_guide.json'), 'w'), ensure_ascii=False, indent=1)
+    # One write each, at the end (the guide was written twice before 2026-10-19, once without words); each is kept as it
+    # was when it came out empty or lost more than INCR_MAX_DROP percent of its entries (KEEP_LAST=0: written).
+    guide = {'items': items, 'note': 'EN release order; buildsOn = primer prior context (in-world earlier, released '
+             'no later, most shared recurring speakers); words = script words'}
+    if not common.write_keep_last(os.path.join(CH, 'reading_guide.json'), guide, 'json', count=lambda d: len(d['items']),
+                                  ensure_ascii=False, indent=1):
+        return
+    common.write_keep_last(os.path.join(CH, 'first_appearance.json'), first, 'json', ensure_ascii=False)
     top = sorted((i for i in items if i['kind'] == 'event'), key=lambda i: -i['prereqOf'])[:8]
     print(f"guide: {len(items)} entries ({sum(i['kind'] == 'main' for i in items)} main, {sum(i['kind'] == 'event' for i in items)} events); "
           f"first appearances for {len(first)} speakers; most built-on events: "
@@ -313,9 +325,10 @@ def stage_storylines():
                 edges.append({'first': first, 'then': then, 'firstName': names.get(first, first),
                               'thenName': names.get(then, then), 'storyline': sid, 'locationId': l.get('LocationId')})
     uniq = {(e['first'], e['then']): e for e in edges}
-    json.dump({'source': 'stage_table.json Storylines (the game\'s Movements view), EN game data',
-               'storylines': lines, 'edges': list(uniq.values())},
-              open(os.path.join(CH, 'storylines.json'), 'w'), ensure_ascii=False, indent=1)
+    common.write_keep_last(os.path.join(CH, 'storylines.json'),
+                           {'source': 'stage_table.json Storylines (the game\'s Movements view), EN game data',
+                            'storylines': lines, 'edges': list(uniq.values())}, 'json',
+                           count=lambda d: len(d['storylines']), ensure_ascii=False, indent=1)
     print(f"storylines: {len(lines)}; read-before edges {len(uniq)}")
     for e in uniq.values():
         print(f"  {e['firstName']}  ->  {e['thenName']}   ({e['storyline']})")

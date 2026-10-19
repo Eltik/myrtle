@@ -14,6 +14,7 @@ which one made it. No model.
 import json, os, re, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common
 from common import ROOT, excel_table
 
 OUT = os.path.join(ROOT, 'artifacts', 'crossref')
@@ -74,8 +75,9 @@ def main():
                          'bossDescription': (e.get('Description') or '').strip()}
     out = sorted(rows.values(), key=lambda r: (r['operator'].lower(), r['boss']))
     os.makedirs(OUT, exist_ok=True)
-    json.dump({'table': 'bosses_playable', 'bosses': sum(1 for e in enemies.values() if e.get('EnemyLevel') == 'BOSS'),
-               'operators': len(ops), 'rows': out}, open(os.path.join(OUT, 'bosses_playable.json'), 'w'), ensure_ascii=False, indent=1)
+    common.write_json_atomic(os.path.join(OUT, 'bosses_playable.json'),
+                             {'table': 'bosses_playable', 'bosses': sum(1 for e in enemies.values() if e.get('EnemyLevel') == 'BOSS'),
+                              'operators': len(ops), 'rows': out}, ensure_ascii=False, indent=1)
     print(f"bosses_playable: {len(out)} rows, {len({r['charId'] for r in out})} operators, from "
           f"{sum(1 for e in enemies.values() if e.get('EnemyLevel') == 'BOSS')} boss entries and {len(ops)} operators")
     for r in out:

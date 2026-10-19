@@ -17,7 +17,8 @@ dropped hold both true and false ones (Calm Youth -> Red, Soldier -> Alita are d
 import collections, json, os, re, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
-from common import ROOT, read_jsonl
+import common
+from common import ROOT, read_derived
 
 CORPUS = os.path.join(ROOT, os.environ.get('CORPUS', 'artifacts/p3b'))
 OUT = os.path.join(ROOT, 'artifacts', 'entities', 'label_renames.json')
@@ -30,7 +31,7 @@ LABEL = re.compile(r'^([^:\n]{1,40}):\s*(.*)$')
 
 def main():
     stories = collections.defaultdict(list)
-    for c in read_jsonl(os.path.join(CORPUS, 'chunks.jsonl')):
+    for c in read_derived(os.path.join(CORPUS, 'chunks.jsonl')):
         stories[c['storyId']].append((c.get('ordinal', 0), c['text']))
     out = {}
     for sid, cs in sorted(stories.items()):
@@ -48,8 +49,9 @@ def main():
                     if not any(x == s2 for x, _ in lab[:j]):
                         out.setdefault(sid, {})[s] = s2
                     break
-    os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    json.dump(out, open(OUT, 'w'), ensure_ascii=False, indent=1, sort_keys=True)
+    # Kept as it was when the corpus gave no renames at all or lost more than INCR_MAX_DROP percent (KEEP_LAST=0: written).
+    if not common.write_keep_last(OUT, out, 'json', ensure_ascii=False, indent=1, sort_keys=True):
+        return
     pairs = sorted((lab, name) for m in out.values() for lab, name in m.items())
     print(f'label renames: {len(pairs)} in {len(out)} stories -> {os.path.relpath(OUT, ROOT)}: '
           + ', '.join(f'{a} -> {b}' for a, b in pairs))

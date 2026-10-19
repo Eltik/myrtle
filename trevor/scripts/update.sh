@@ -246,9 +246,13 @@ if [[ -z "${SKIP_P4_MODELS:-}" ]]; then
   if [[ "$canon" != "none" ]]; then
     step "canon: $canon run"
     if [[ "$canon" == "full" ]]; then
-      # Every resume file is keyed by id, so a full run starts from empty files; the old ones are kept beside.
-      mkdir -p "$LOG/canon-before"; find artifacts/canon -maxdepth 1 -name '*.json*' ! -name inputs.json -exec mv {} "$LOG/canon-before/" \;
+      # Every resume file is keyed by id, so a full run starts from empty files; the old ones are kept beside. Since
+      # 2026-10-19 they are copied aside, `endings` runs, and only then are the resume files cleared, so a failed
+      # `endings` (a missing table) leaves every file in place; the served is_endings.json stays until `build` rewrites
+      # it (before, all of them were moved aside before `endings` ran).
+      mkdir -p "$LOG/canon-before"; find artifacts/canon -maxdepth 1 -name '*.json*' ! -name inputs.json -exec cp -p {} "$LOG/canon-before/" \;
       python3 scripts/canon_refs.py endings
+      find artifacts/canon -maxdepth 1 -name '*.json*' ! -name inputs.json ! -name endings.jsonl ! -name is_endings.json -exec rm {} \;
     else
       python3 scripts/canon_refs.py prune
     fi

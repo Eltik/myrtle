@@ -156,8 +156,9 @@ def main():
         u['storyId'] = re.sub(r'[^A-Za-z0-9_#.-]', '_', u['storyId'])
         if u['storyId'] not in seen:
             seen.add(u['storyId']); out.append(u)
-    os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    common.write_jsonl(OUT, out)
+    # Kept as it was when it came out empty or lost more than INCR_MAX_DROP percent of its units (KEEP_LAST=0: written).
+    if not common.write_keep_last(OUT, out):
+        return
     c = collections.Counter(u['groupId'] for u in out)
     w = collections.Counter()
     for u in out:
@@ -166,4 +167,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    # A missing game table keeps the last units.jsonl and logs it (TABLES_REQUIRED=1 fails instead), 2026-10-19.
+    common.keep_last_on_missing_table(main, OUT)
