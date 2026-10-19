@@ -1401,6 +1401,13 @@ needs its own lift (the chunk-scoped "???" label rename noted above).
 **Code.** `src/bin/ask/fate.rs` (`vanished_subject`, `VANISH_TERMS`, 2 tests), `src/bin/ask/answer/mod.rs`,
 `src/bin/ask/answer/generate.rs`, `src/bin/ask/prompts.rs` (VANISH_RULE, VANISH_REPORT_TAIL), `src/bin/ask/scenes.rs`
 (`character_scenes` takes a ranking query), `src/bin/ask/cli.rs`.
+**Follow-up (the two misfires).** `is_death_question` now matches `DEATH_TERMS` as whole words of the folded question
+(so "deathless", "undead", "deadly", "deadline", "skilled", "studied", "studies", "bodies" and "ladies" no longer count,
+and "die," does), and `vanished_subject` declines a single name beside a possessive relation phrase (`RELATIONS`, 26
+words: "her mom's stuff ... when she passed away") unless a death word attaches to the name ("Did Delphine die?"). Stub,
+same seven sets, 1,637 prompts per arm: against a82dc075 exactly 2 prompts change (discord 85, trivia t093), both
+byte-identical to its `--no-vanish-rule` form; the other 16 are as a82dc075 rendered them; a82dc075 rerun matches its
+earlier dumps; cargo test (149) and clippy exit 0, route-check 64/64.
 
 ### 2026-10-19: CPU-only throughput of E2B and the 12B (step 1 of the self-contained deployment)
 

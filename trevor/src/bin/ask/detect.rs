@@ -158,8 +158,18 @@ pub(crate) fn is_open_listing(q: &str) -> bool {
         && has(q, &["operator", "character", "people", "names", "members", "who "])
 }
 
+/// The words that make a question death-worded (`is_death_question`), matched as whole words of the folded question.
+/// Whole words leave out the words that only contain one: "deathless" (a name, "the Deathless Black Snake"),
+/// "undead" and "deadly" (a state and an adjective, nobody's death), "deadline", "skilled" ("killed"), "studied"
+/// ("died") and "studies", "bodies" or "ladies" ("dies").
+const DEATH_TERMS: [&str; 10] = ["dead", "die", "died", "dies", "dying", "death", "deaths", "killed", "deceased",
+                                 "passed away"];
+
+/// Whether a question is worded about a death: one of `DEATH_TERMS` as whole words, so "die," in "How does Kal'tsit
+/// die, and ..." counts and "Deathless" does not.
 pub(crate) fn is_death_question(q: &str) -> bool {
-    has(q, &["dead", "died", "die ", "dies", "die?", "death", "killed", "deceased", "passed away"])
+    let n = norm(q);
+    DEATH_TERMS.iter().any(|w| contains_words(&n, w))
 }
 
 /// Whether a question asks someone's age ("how old", "age", "aged", "years old").
@@ -214,4 +224,22 @@ pub(crate) fn declines(answer: &str) -> bool {
     ["could not find", "couldn't find", "cannot find", "can't find", "no information", "not mentioned", "not stated",
      "does not say", "does not state", "does not mention", "do not contain", "does not contain"]
         .iter().any(|w| first.contains(w))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn death_words_count_as_whole_words_only() {
+        for q in ["Did Delphine die?", "How does Kal'tsit die, and how does she get revived?", "Is Mantra dead?",
+                  "Was she killed?", "Is the Deathless Black Snake dead?", "Tin Man's death", "when she passed away?"] {
+            assert!(is_death_question(q), "{q}");
+        }
+        for q in ["Didn't they already kill the Deathless Black Snake or make it move on to someone else?",
+                  "Is the Deathless Black Snake real?", "Are the undead Sarkaz deadly?", "Is Texas skilled?",
+                  "Which ladies studied there?"] {
+            assert!(!is_death_question(q), "{q}");
+        }
+    }
 }

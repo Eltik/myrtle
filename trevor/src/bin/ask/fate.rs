@@ -118,18 +118,16 @@ pub(crate) struct Vanished {
     pub(crate) reports: Option<String>,
 }
 
-/// The vanished fate: a death-worded question (`is_death_question`, or a death word before punctuation, "die,") about
-/// one character (not only as another noun's possessive, "Crownslayer's teacher"), `people` being the folded keys of
+/// The vanished fate: a death-worded question (`is_death_question`, whole words, so "die," counts) about one
+/// character (not only as another noun's possessive, "Crownslayer's teacher", nor beside a relation's death, "her
+/// mom's stuff ... when she passed away", `names_relation`), `people` being the folded keys of
 /// `people_named`, for whom the deaths table has no row that shows the death ("dies") under any of the character's
 /// names. With one person named, that person; with several, the one a death word follows or that "death of" or
 /// "killed" precedes ("after Kal'tsit dies"), unless "and", "or" or "nor" joins the name to another ("Did Kal'tsit or
 /// Amiya die?"). A character with only reports of the death ("dead" rows: Kal'tsit's "I know she's dead, obviously."
 /// in Episode 17) keeps those reports as evidence. Group topics are not characters.
 pub(crate) fn vanished_subject(q: &str, people: &[String], tools: &Tools) -> Option<Vanished> {
-    // "How does Kal'tsit die, and ..." has "die," which `is_death_question` does not count.
-    let worded = crate::detect::is_death_question(q)
-        || norm(q).split_whitespace().any(|w| DEATH_WORDS.contains(&w) || w == "killed");
-    if !worded {
+    if !crate::detect::is_death_question(q) {
         return None;
     }
     // The key itself is a form too, for a name `person_forms` finds in no table.
@@ -148,6 +146,11 @@ pub(crate) fn vanished_subject(q: &str, people: &[String], tools: &Tools) -> Opt
         [k] => {
             let forms = forms_of(k);
             if !forms.iter().any(|f| contains_words(&qn, f)) && !death_attached(&qp, &forms) {
+                return None;
+            }
+            // A relation's death ("was Delphine hesitant to get her mom's stuff back when she passed away?") is not
+            // the named character's, unless a death word attaches to the name ("Did Delphine die?").
+            if names_relation(q) && !death_attached(&qn, &forms) && !death_attached(&qp, &forms) {
                 return None;
             }
             k.clone()
@@ -181,6 +184,27 @@ pub(crate) fn vanished_subject(q: &str, people: &[String], tools: &Tools) -> Opt
         .chain(tools.identities.iter().flatten().map(String::as_str))
         .find(|x| norm(x) == key).map_or_else(|| reports.clone().unwrap_or_else(|| key.clone()), str::to_owned);
     Some(Vanished { who, reports })
+}
+
+/// The relations whose death a question can ask about beside a named character: written as a possessive phrase ("her
+/// mom", "Delphine's mother", "their parents"), they make the death another person's (`--no-vanish-rule`).
+const RELATIONS: [&str; 26] = ["mother", "mothers", "mom", "moms", "mum", "mums", "father", "fathers", "dad", "dads",
+                               "parent", "parents", "sister", "sisters", "brother", "brothers", "son", "sons",
+                               "daughter", "daughters", "family", "friend", "friends", "mentor", "teacher", "master"];
+
+/// Whether `q` holds a possessive phrase naming one of `RELATIONS`: a possessive pronoun or a name with "'s" (or a
+/// plural's "s'") right before the relation, which may itself be a possessive ("her mom's stuff").
+fn names_relation(q: &str) -> bool {
+    let ql = q.to_lowercase().replace(['\u{2019}', '\u{2018}'], "'");
+    let words: Vec<&str> = ql.split(|c: char| !c.is_alphanumeric() && c != '\'').filter(|w| !w.is_empty()).collect();
+    words.windows(2).any(|w| {
+        // "it's", "she's" and the like are "is", not a possessive.
+        let owner = matches!(w[0], "her" | "his" | "their" | "its" | "my" | "your" | "our")
+            || (w[0].ends_with("'s") && !matches!(w[0], "it's" | "he's" | "she's" | "that's" | "who's" | "what's"
+                                                        | "there's" | "here's" | "let's"))
+            || w[0].ends_with("s'");
+        owner && RELATIONS.contains(&w[1].trim_end_matches("'s").trim_end_matches('\''))
+    })
 }
 
 /// Whether one of `forms` stands in `qn` (folded words) where a death word follows it (a possessive "s" between) or
@@ -273,7 +297,8 @@ mod tests {
                    "quote": "I know she's dead, obviously."}),
             json!({"character": "Mandragora", "kind": "dies", "generic": false, "releaseTime": 20, "chunkId": "c#2",
                    "quote": "x"}),
-        ]), identities: vec![vec!["AMa-10".into(), "Kal'tsit".into()], vec!["Amiya".into()]], ..Tools::default() }
+        ]), identities: vec![vec!["AMa-10".into(), "Kal'tsit".into()], vec!["Amiya".into()], vec!["Delphine".into()]],
+                ..Tools::default() }
     }
 
     #[test]
@@ -313,6 +338,27 @@ mod tests {
         assert_eq!(vanished_subject("Did Amiya kill Mon3tr after Kal'tsit died?", &keys(&["Amiya", "Mon3tr", "Kal'tsit"]),
                                     &t), None);
         assert_eq!(vanished_subject("Which characters died in Episode 15?", &[], &t), None);
+    }
+
+    #[test]
+    fn a_relation_s_death_or_a_name_holding_death_is_not_a_vanished_fate() {
+        let t = vanish_tools();
+        let keys = |xs: &[&str]| xs.iter().map(|x| norm(x)).collect::<Vec<_>>();
+        let delphine = || Some(Vanished { who: "Delphine".into(), reports: None });
+        // Trivia t093: her mother is the one who passed away.
+        assert_eq!(vanished_subject("was delphine hesitant to get her mom's stuff back when she passed away?",
+                                    &keys(&["Delphine"]), &t), None);
+        assert_eq!(vanished_subject("Did Delphine's mother die?", &keys(&["Delphine"]), &t), None);
+        assert_eq!(vanished_subject("Was Delphine sad when her parents died?", &keys(&["Delphine"]), &t), None);
+        // A death word on the name itself still counts, a relation beside it or not; "she's" is not a possessive.
+        assert_eq!(vanished_subject("Did Delphine die?", &keys(&["Delphine"]), &t), delphine());
+        assert_eq!(vanished_subject("Did Delphine die after her mother's death?", &keys(&["Delphine"]), &t),
+                   delphine());
+        assert_eq!(vanished_subject("Is Delphine dead now that she's master of the house?", &keys(&["Delphine"]), &t),
+                   delphine());
+        // Discord 85: "Deathless" is part of a name, not a death word.
+        assert_eq!(vanished_subject("Didn't they already kill the Deathless Black Snake or make it move on to someone \
+                                     else?", &keys(&["Deathless Black Snake"]), &t), None);
     }
 
     #[test]
