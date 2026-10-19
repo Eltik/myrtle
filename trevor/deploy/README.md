@@ -79,15 +79,23 @@ so at 1 thread: 2,000 / pp + 250 / tg seconds. If one thread gives under 4 tok/s
 
 ## 5. Trevor binaries and code
 
-Build in CI (or any x86_64 Linux box), never on the VPS:
+The VPS never builds Rust. The Release Bundle workflow (`.github/workflows/release.yml`, every push to main) builds
+`cargo build --release --locked --features embed --bins` on Ubuntu 24.04 x86_64 and packs all 12 bins into the
+commit's bundle; install them with:
 
 ```bash
-cargo build --release --features embed --bins   # embed links ONNX Runtime 1.28 downloaded at build time
+cd /var/www/myrtle.moe
+bash scripts/fetch-release.sh --components trevor <full sha>   # TREVOR_DIR=... if Trevor lives elsewhere
 ```
 
-Copy to `/var/www/myrtle.moe/trevor/target/release/`: `ask eval build-corpus build-index build-archives
-build-prefixes build-profiles build-units embed-corpus`. The repo checkout supplies `scripts/ prompts/ data/ eval/
-deploy/`.
+That puts `ask build-archives build-corpus build-index build-prefixes build-profiles build-units embed-check
+embed-corpus eval goldset search` in `/var/www/myrtle.moe/trevor/target/release/` (the units' path), swapped by rename,
+sha256-checked, and runs `ask --help` on the box before and after the swap. Exit 3 means no bundle for that commit
+(it is not on main, or CI has not finished: `--wait 1500`); a bundle published before Trevor joined the workflow has
+no `trevor/` and exits 1. ONNX Runtime 1.28 is linked into the bins statically, so nothing else ships with them;
+they need the glibc and libstdc++ of Ubuntu 24.04. `trevor` is never in the default component set, so a plain
+`fetch-release.sh <sha>` for the site leaves these files alone. The repo checkout supplies `scripts/ prompts/ data/
+eval/ deploy/`.
 
 ## 6. Artifacts from the build machine
 

@@ -1,10 +1,10 @@
 name: Release Bundle
 
 # One deployable bundle per commit on main: the backend, the discord bot, the
-# asset downloader + unpacker, and the frontend `.output`, built on the same
-# Ubuntu as the VPS (24.04, x86_64, glibc 2.39) and published as the assets of
-# a prerelease tagged `build-<full sha>`. The repo is public, so the VPS pulls
-# it with plain curl and no token: `scripts/fetch-release.sh <sha>`.
+# asset downloader + unpacker, the Trevor bins, and the frontend `.output`,
+# built on the same Ubuntu as the VPS (24.04, x86_64, glibc 2.39) and published
+# as the assets of a prerelease tagged `build-<full sha>`. The repo is public,
+# so the VPS pulls it with plain curl and no token: `scripts/fetch-release.sh <sha>`.
 #
 # Nothing in the bundle is secret. The frontend's VITE_* values are public
 # URLs that end up in every browser anyway; every server-side secret stays in
@@ -164,6 +164,73 @@ jobs:
           retention-days: 3
           if-no-files-found: error
 
+  trevor:
+    name: Trevor
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    # No `-D warnings`: no CI workflow builds Trevor on Linux to catch a warning
+    # first, and a warning here would hold the whole bundle, site included.
+    env:
+      CARGO_TERM_COLOR: always
+      CARGO_INCREMENTAL: 0
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      # No workflow saves a Trevor entry yet, so this restores nothing until one
+      # does; save-if false for the same cache-cap reason as the jobs above.
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: trevor -> target
+          key: release-trevor
+          add-job-id-key: "false"
+          save-if: "false"
+
+      # `embed` downloads ONNX Runtime 1.28 (pyke's x86_64-unknown-linux-gnu
+      # dist, sha256-checked by ort-sys) and links it STATICALLY
+      # (`rustc-link-lib=static=onnxruntime`): no libonnxruntime.so ships.
+      - name: Build trevor (release)
+        working-directory: trevor
+        run: cargo build --release --locked --features embed --bins
+
+      # Every bin trevor-vps-update.sh, the units and the runbook name. The ldd
+      # check holds the static-ORT claim: a dynamic libonnxruntime, or any
+      # library the runner cannot resolve, fails the job here, not on the box.
+      - name: Smoke test
+        run: |
+          set -eu
+          r=trevor/target/release
+          for b in build-corpus embed-corpus embed-check build-index build-prefixes build-archives build-profiles build-units search eval goldset ask; do
+            test -x "$r/$b" || { echo "::error::missing trevor bin: $b"; exit 1; }
+          done
+          "$r/ask" --help >/dev/null
+          "$r/embed-corpus" --help >/dev/null
+          for b in ask embed-corpus; do
+            libs="$(ldd "$r/$b")"
+            printf '%s:\n%s\n' "$b" "$libs"
+            case "$libs" in *onnxruntime*) echo "::error::$b links ONNX Runtime dynamically; the bundle does not ship the .so"; exit 1 ;; esac
+            case "$libs" in *"not found"*) echo "::error::$b has an unresolved shared library"; exit 1 ;; esac
+          done
+
+      # Packed under trevor/target/release/, where the units and
+      # trevor-vps-update.sh run them from; fetch-release.sh installs it.
+      - name: Pack
+        run: |
+          set -eu
+          mkdir -p stage/trevor/target/release
+          for b in build-corpus embed-corpus embed-check build-index build-prefixes build-archives build-profiles build-units search eval goldset ask; do
+            cp -p "trevor/target/release/$b" stage/trevor/target/release/
+          done
+          tar -C stage -cf trevor.tar trevor
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: part-trevor
+          path: trevor.tar
+          retention-days: 3
+          if-no-files-found: error
+
   frontend:
     name: Frontend
     runs-on: ubuntu-24.04
@@ -242,7 +309,7 @@ jobs:
   # ──────────────────────────────────────────────────────────────────────────────
   publish:
     name: Publish bundle
-    needs: [backend, discord, assets, frontend]
+    needs: [backend, discord, assets, trevor, frontend]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
@@ -270,6 +337,9 @@ jobs:
           b="bundle/${name}"
           for f in backend/target/release/backend discord/target/release/discord discord/target/release/commands assets/binaries/downloader assets/binaries/unpacker; do
             test -x "$b/$f" || { echo "::error::missing or not executable: $f"; exit 1; }
+          done
+          for t in build-corpus embed-corpus embed-check build-index build-prefixes build-archives build-profiles build-units search eval goldset ask; do
+            test -x "$b/trevor/target/release/$t" || { echo "::error::missing or not executable: trevor/target/release/$t"; exit 1; }
           done
           test -f "$b/frontend/.output/server/index.mjs"
           {

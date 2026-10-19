@@ -4,6 +4,7 @@
 #   bash scripts/fetch-release.sh                    # bundle for the checked-out HEAD
 #   bash scripts/fetch-release.sh <sha>              # bundle for that commit
 #   bash scripts/fetch-release.sh --components backend,frontend [<sha>]
+#   bash scripts/fetch-release.sh --components trevor [<sha>]   # Trevor's bins only (never by default)
 #   bash scripts/fetch-release.sh --check [<sha>]    # only ask whether the bundle exists
 #   bash scripts/fetch-release.sh --wait 1500 [<sha>]  # poll up to 1500 s for CI to publish it
 #
@@ -17,6 +18,16 @@
 #   discord   discord/target/release/discord, discord/target/release/commands
 #   assets    assets/binaries/downloader, assets/binaries/unpacker
 #   frontend  frontend/.output
+#   trevor    $TREVOR_DIR/target/release/{ask, build-archives, build-corpus,
+#             build-index, build-prefixes, build-profiles, build-units,
+#             embed-check, embed-corpus, eval, goldset, search}, the path the
+#             trevor-* systemd units and trevor-vps-update.sh run them from
+# Without --components the first four are installed. trevor is opt-in: bundles
+# published before it was added do not hold it, and a rollback to one of those
+# must still work for the site. A trevor install that finds no trevor/ in the
+# bundle exits 1. ONNX Runtime is linked into the bins statically, so nothing
+# else ships with them; the bundle's `ask --help` is run on this host before
+# anything is swapped, and the installed one after.
 #
 # Exit codes, so a caller can fall back to building:
 #   0  installed (or, with --check, the bundle exists)
@@ -47,6 +58,8 @@
 #   mv frontend/.output frontend/.output.bad && mv frontend/.output.prev frontend/.output
 #
 # Env overrides:
+#   TREVOR_DIR               Trevor's code dir (default $ROOT/trevor, which on
+#                            the VPS is /var/www/myrtle.moe/trevor, as in the units)
 #   MYRTLE_RELEASE_REPO      owner/repo (default Eltik/myrtle)
 #   MYRTLE_RELEASE_BASE_URL  download base, default https://github.com/$REPO/releases/download
 #                            (the bundle is fetched from $BASE/build-<sha>/myrtle-<sha>.tar.gz)
@@ -55,9 +68,12 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 REPO="${MYRTLE_RELEASE_REPO:-Eltik/myrtle}"
 BASE_URL="${MYRTLE_RELEASE_BASE_URL:-https://github.com/$REPO/releases/download}"
-ALL_COMPONENTS="backend,discord,assets,frontend"
+TREVOR_DIR="${TREVOR_DIR:-$ROOT/trevor}"
+ALL_COMPONENTS="backend,discord,assets,frontend,trevor"
+DEFAULT_COMPONENTS="backend,discord,assets,frontend"
+TREVOR_BINS="ask build-archives build-corpus build-index build-prefixes build-profiles build-units embed-check embed-corpus eval goldset search"
 
-COMPONENTS="$ALL_COMPONENTS"
+COMPONENTS="$DEFAULT_COMPONENTS"
 CHECK_ONLY=0
 WAIT_S=0
 SHA=""
@@ -68,7 +84,7 @@ while [ $# -gt 0 ]; do
         --check) CHECK_ONLY=1 ;;
         --wait) WAIT_S="${2:?--wait needs seconds}"; shift ;;
         --wait=*) WAIT_S="${1#*=}" ;;
-        -h|--help) sed -n '2,52p' "$0"; exit 0 ;;
+        -h|--help) sed -n '2,65p' "$0"; exit 0 ;;
         -*) echo "fetch-release: unknown option $1" >&2; exit 2 ;;
         *) [ -z "$SHA" ] || { echo "fetch-release: one sha only" >&2; exit 2; }; SHA="$1" ;;
     esac
@@ -90,6 +106,8 @@ for c in ${COMPONENTS//,/ }; do
     case ",$ALL_COMPONENTS," in *",$c,"*) ;; *) echo "fetch-release: unknown component '$c' (known: $ALL_COMPONENTS)" >&2; exit 2 ;; esac
 done
 want() { case ",$COMPONENTS," in *",$1,"*) return 0 ;; *) return 1 ;; esac; }
+# Install path of a bundle path: trevor/... goes under $TREVOR_DIR, the rest under $ROOT.
+dest_of() { case "$1" in trevor/*) printf '%s/%s' "$TREVOR_DIR" "${1#trevor/}" ;; *) printf '%s/%s' "$ROOT" "$1" ;; esac; }
 
 NAME="myrtle-$SHA"
 URL="$BASE_URL/build-$SHA/$NAME.tar.gz"
@@ -211,6 +229,10 @@ BINS=()
 want backend && BINS+=("backend/target/release/backend")
 want discord && BINS+=("discord/target/release/discord" "discord/target/release/commands")
 want assets && BINS+=("assets/binaries/downloader" "assets/binaries/unpacker")
+if want trevor; then
+    [ -d "$B/trevor/target/release" ] || { echo "fetch-release: bundle ${SHA:0:12} has no trevor component (published before Trevor joined release.yml)" >&2; exit 1; }
+    for t in $TREVOR_BINS; do BINS+=("trevor/target/release/$t"); done
+fi
 for f in ${BINS[@]+"${BINS[@]}"}; do
     [ -x "$B/$f" ] || { echo "fetch-release: bundle is missing $f" >&2; exit 1; }
 done
@@ -224,7 +246,7 @@ sed 's/^/    /' "$B/BUILD_INFO"
 # error stops the run with every running build still in place.
 CHANGED=()
 for f in ${BINS[@]+"${BINS[@]}"}; do
-    dst="$ROOT/$f"
+    dst="$(dest_of "$f")"
     mkdir -p "$(dirname "$dst")"
     if [ -f "$dst" ] && cmp -s "$B/$f" "$dst"; then
         echo "    $f unchanged (mtime preserved)"
@@ -244,9 +266,17 @@ if want frontend; then
     STAGED+=("$FRONT_NEW")
     cp -R "$B/frontend/.output" "$FRONT_NEW"
 fi
+# The ask that will be live after the swap (staged, or the unchanged install)
+# must start on this host (glibc, libstdc++) before anything is renamed.
+if want trevor; then
+    ask="$(dest_of trevor/target/release/ask)"
+    [ -f "$ask.new.$$" ] && ask="$ask.new.$$"
+    "$ask" --help >/dev/null 2>&1 || { echo "fetch-release: the bundle's ask does not run on this host ($ask --help failed); nothing installed" >&2; exit 1; }
+fi
 
 for f in ${CHANGED[@]+"${CHANGED[@]}"}; do
-    mv -f "$ROOT/$f.new.$$" "$ROOT/$f"
+    dst="$(dest_of "$f")"
+    mv -f "$dst.new.$$" "$dst"
     echo "    installed $f"
 done
 if [ -n "$FRONT_NEW" ]; then
@@ -261,5 +291,17 @@ if [ -n "$FRONT_NEW" ]; then
     echo "    installed frontend/.output$note"
 fi
 
-printf 'sha=%s\ninstalled_at=%s\ncomponents=%s\n' "$SHA" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$COMPONENTS" > "$ROOT/scripts/.release-installed"
+now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+if want trevor; then
+    "$TREVOR_DIR/target/release/ask" --help >/dev/null 2>&1 || { echo "fetch-release: installed $TREVOR_DIR/target/release/ask fails --help" >&2; exit 1; }
+    echo "    trevor ask --help ok ($TREVOR_DIR/target/release)"
+    printf 'sha=%s\ninstalled_at=%s\n' "$SHA" "$now" > "$TREVOR_DIR/target/release/.release-installed"
+fi
+# The site's marker records site components only, so a trevor-only install
+# does not rewrite which bundle the site runs.
+site="${COMPONENTS//trevor/}"
+site="$(printf '%s' "$site" | tr -s ',' | sed 's/^,//; s/,$//')"
+if [ -n "$site" ]; then
+    printf 'sha=%s\ninstalled_at=%s\ncomponents=%s\n' "$SHA" "$now" "$site" > "$ROOT/scripts/.release-installed"
+fi
 echo "==> installed bundle ${SHA:0:12} ($COMPONENTS)"
