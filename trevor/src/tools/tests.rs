@@ -502,3 +502,33 @@ fn group_identities_and_named_groups() {
                "Karlan Trade already has its head");
     assert_eq!(u.topics.as_ref().unwrap()[2]["aliases"].as_array().unwrap().len(), 0, "Group is not a suffix");
 }
+
+#[test]
+fn a_part_recap_serves_the_first_or_last_story_and_skips_side_fragments() {
+    let mut t = tools();
+    let story = |id: &str, label: &str, answer: &str| json!({"id": format!("story:{id}"), "kind": "story",
+        "question": format!("What happens in The Birth of Tragedy, {label}?"), "answer": answer, "sources": [id]});
+    t.bank = vec![
+        json!({"id": "event:main_7", "kind": "event", "answer": "The whole episode.", "sources": []}),
+        story("main_7_level_st_07-01", "7-1 32:00:00 (Interlude)", "The opening."),
+        story("main_7_level_main_07-02_beg", "7-2 Mid (Before Operation)", "The middle."),
+        story("main_7_level_st_07-20", "7-20 ??:??:?? (Interlude)", "The close."),
+        story("main_7_level_spst_07-01", "EG-1 Burnt Fragment 1 (Interlude)", "A side fragment."),
+        story("main_14_level_st_14-01", "14-1 Other (Interlude)", "Another episode."),
+    ];
+    let run = |t: &Tools, part: &str| t.run(&Route::new("recap", &[("event", "Episode 7"), ("part", part)])).unwrap();
+    assert_eq!(run(&t, "beginning"), "The first story of Episode 7 The Birth of Tragedy, 7-1 32:00:00 (Interlude), \
+                                  summarized by Trevor from its script:\n\nThe opening.");
+    assert_eq!(run(&t, "end"), "The last story of Episode 7 The Birth of Tragedy, 7-20 ??:??:?? (Interlude), \
+                            summarized by Trevor from its script:\n\nThe close.");
+    let whole = t.run(&Route::new("recap", &[("event", "Episode 7"), ("ending", "false")])).unwrap();
+    assert_eq!(run(&t, "whole"), whole, "part whole is the recap as before");
+    assert!(whole.starts_with("The Birth of Tragedy, summarized by Trevor from its script (its stories in order)"));
+    assert!(matches!(t.run(&Route::new("recap", &[("event", "Episode 7"), ("part", "middle")])),
+                     Err(ToolError::BadArg { arg: "part", .. })));
+    assert!(matches!(t.run(&Route::new("recap", &[("event", "Babel"), ("part", "end")])), Err(ToolError::NoData(_))),
+            "no story summary of the group: retrieval");
+    t.bank.truncate(1);
+    t.bank.push(story("main_7_level_spst_07-01", "EG-1 Burnt Fragment 1 (Interlude)", "A side fragment."));
+    assert!(run(&t, "end").ends_with("A side fragment."), "only side fragments: they are the stories");
+}

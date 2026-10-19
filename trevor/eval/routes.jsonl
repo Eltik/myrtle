@@ -77,3 +77,6 @@
 {"q": "Was Talulah mentioned in People A People?", "expect": "table", "contains": ["Talulah neither speaks nor is named in People"]}
 {"q": "Was Talulah mentioned in Episode 17?", "expect": "table", "contains": ["Talulah speaks in"]}
 {"q": "Were people mentioned in Talulah's story?", "expect": "retrieval"}
+{"q": "What's going on at the beginning of Ch 10?", "expect": "table", "contains": ["The first story of Episode 10 Shatterpoint, 10-1 The Pursued (Interlude)"]}
+{"q": "How does Episode 8 end?", "expect": "table", "contains": ["The last story of Episode 8 Roaring Flare, END8-1 An Epilogue, or a Beginning (Interlude)"]}
+{"q": "What happens at the end of the world in Arknights?", "expect": "retrieval"}

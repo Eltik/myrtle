@@ -28,6 +28,7 @@ use serde_json::Value;
 
 use crate::util::{load_json_opt, load_jsonl_opt};
 pub use self::operators::filter_from_args;
+pub use self::reading::RecapPart;
 pub use self::text::{contains_words, norm, whole_word_matches};
 use self::topics::{served_topics};
 
@@ -428,7 +429,8 @@ impl Tools {
             "reading_time" => self.reading_time(r.arg("event")?),
             "reading_compare" => self.reading_compare(r.arg("event")?, r.arg("other")?),
             "first_appearance" => self.first_appearance(r.arg("character")?),
-            "recap" => self.recap(r.arg("event")?, r.opt("ending").is_some_and(|v| v.eq_ignore_ascii_case("true"))),
+            "recap" => self.recap(r.arg("event")?, r.opt("ending").is_some_and(|v| v.eq_ignore_ascii_case("true")),
+                                  RecapPart::parse(r.opt("part"))?),
             "timeline_all" => Ok(self.timeline_all()),
             "deaths_in_event" => {
                 let who = match r.opt("who").map(str::to_lowercase).as_deref() {

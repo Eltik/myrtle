@@ -441,6 +441,11 @@ pub(crate) struct Args {
     /// and "What is The Masses Travels?" go to retrieval, as before, instead of the event's recap.
     #[arg(long)]
     pub(crate) no_event_about: bool,
+    /// No part-aware recap (`routing/part_recap.rs`): a question naming an event and a part of it ("What's going on
+    /// at the beginning of Ch 10?", "How does Near Light conclude?") goes to the router and retrieval, as before,
+    /// instead of the summary of the event's first or last story.
+    #[arg(long)]
+    pub(crate) no_event_part_recap: bool,
     /// Turn off the time-gap evidence (`timegap.rs`): a question asking how much time passes between two stories it
     /// names gets no lines of the later story stating elapsed time, and the model router routes it as before.
     #[arg(long)]

@@ -10,6 +10,7 @@ use crate::cli::{Args, RouterKind, dossier_allowed, router_prompt};
 use crate::detect::is_open_listing;
 
 mod is_ending;
+mod part_recap;
 mod rules;
 
 pub(crate) use is_ending::{is_ending_passages, is_ending_route};
@@ -69,6 +70,15 @@ pub(crate) async fn route_question(q: &str, a: &Args, tools: &Tools, llm: Option
         let ms = || started.elapsed().as_secs_f64() * 1000.0;
         if let Some(route) = is_ending_route(q, a, tools) {
             return Ok(Routed { route, text: None, error: None, topic: None, dossier: None, game: None, ms: ms() });
+        }
+        // "What's going on at the beginning of Ch 10?" (`--no-event-part-recap`, `part_recap.rs`): the summary of the
+        // event's first or last story; a part the tables cannot serve goes on to the router as before.
+        if let Some(route) = part_recap::part_recap_route(q, a, tools) {
+            if let Ok(text) = tools.run(&route) {
+                return Ok(Routed {
+                    route, text: Some(text), error: None, topic: None, dossier: None, game: None, ms: ms()
+                });
+            }
         }
         // A time-gap question goes to retrieval, which adds the time-gap evidence (`timegap.rs`); the router read
         // "the time skip from chapter 8 to chapter 9" as a reading-order comparison.

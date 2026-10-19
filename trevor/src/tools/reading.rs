@@ -322,14 +322,19 @@ EN release order ({} entries; {dates}):\n", items.len()));
     // ---------------------------------------------------------------- Integrated Strategies endings
 
     /// The event summary (P2 method C, or the story summary of a single-story group), and for an ending the
-    /// summary of its last story. Plot recaps were 0.33 to 0.50 by retrieval.
+    /// summary of its last story. Plot recaps were 0.33 to 0.50 by retrieval. A `part` other than
+    /// [`RecapPart::Whole`] serves one story's summary instead: the group's first story or its last, in the game's
+    /// order (`ending` is then not read).
     ///
     /// # Errors
     /// An unknown event, or no summary for it.
-    pub fn recap(&self, event: &str, ending: bool) -> ToolResult {
+    pub fn recap(&self, event: &str, ending: bool, part: RecapPart) -> ToolResult {
         let g = self.resolve_event(event)?;
         let gid = g["groupId"].as_str().unwrap_or_default().to_owned();
         let name = g["name"].as_str().unwrap_or(&gid).to_owned();
+        if part != RecapPart::Whole {
+            return self.recap_part(g, &gid, &name, part);
+        }
         let event = self.bank.iter().find(|r| r["id"].as_str() == Some(&format!("event:{gid}")));
         // The keyword route's substring test let "main_1" match main_10 to main_16 story ids and "main_0" match
         // "main_01-01"; only the "ending" part and a group without an event summary read these stories.
@@ -355,6 +360,29 @@ EN release order ({} entries; {dates}):\n", items.len()));
         Ok(out)
     }
 
+    /// One story of a group: its first or its last in the bank's order (the game's), the stories read by the exact
+    /// "<group>_" prefix whatever `exact_recap` says (a part recap is new, so it has no old substring test to keep).
+    /// The game's side fragments (`_level_spst_`, the EG-N "Burnt Fragment" interludes of Episodes 8, 14, 16 and 17,
+    /// 11 stories) sort after an episode's epilogue, so they are skipped while the group has other stories: the last
+    /// story of Episode 8 is END8-1, not EG-5.
+    fn recap_part(&self, g: &Value, gid: &str, name: &str, part: RecapPart) -> ToolResult {
+        let prefix = format!("{gid}_");
+        let all: Vec<&Value> = self.bank.iter().filter(|r| s(r, "kind") == "story"
+            && r["sources"][0].as_str().is_some_and(|x| x.starts_with(&prefix))).collect();
+        let main: Vec<&Value> = all.iter().copied()
+            .filter(|r| !r["sources"][0].as_str().is_some_and(|x| x.contains("_level_spst_"))).collect();
+        let stories = if main.is_empty() { &all } else { &main };
+        let st = if part == RecapPart::Beginning { stories.first() } else { stories.last() }
+            .ok_or_else(|| ToolError::NoData(format!("no story summary of {name}")))?;
+        let label = g["chapter"].as_u64().map_or_else(|| name.to_owned(), |n| format!("Episode {n} {name}"));
+        let q = s(st, "question");
+        let story = q.trim_start_matches("What happens in ").trim_end_matches('?');
+        let story = story.strip_prefix(&format!("{name}, ")).unwrap_or(story);
+        let which = if part == RecapPart::Beginning { "first" } else { "last" };
+        Ok(format!("The {which} story of {label}, {story}, summarized by Trevor from its script:\n\n{}",
+                   s(st, "answer")))
+    }
+
     // ---------------------------------------------------------------- deaths
     // Death events (`scripts/deaths.py`): each is a death the script shows or reports, tied to its story and quoted
     // verbatim, so status follows the stories a reader has seen and a new story only adds events (Arknights is a live
@@ -363,6 +391,35 @@ EN release order ({} entries; {dates}):\n", items.len()));
     pub(super) fn latest(&self) -> String {
         self.groups.values().max_by_key(|g| g["releaseTime"].as_i64().unwrap_or(0))
             .and_then(|g| g["name"].as_str()).unwrap_or("?").to_owned()
+    }
+}
+
+/// Which part of an event a recap serves: the whole event (the event summary, as before), its first story or its last.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum RecapPart {
+    #[default]
+    Whole,
+    Beginning,
+    End,
+}
+
+impl RecapPart {
+    /// The route argument `part`: absent or "whole" is the whole event.
+    ///
+    /// # Errors
+    /// A value other than whole, beginning or end.
+    pub fn parse(v: Option<&str>) -> Result<Self, ToolError> {
+        match v.map(str::to_lowercase).as_deref() {
+            None | Some("whole") => Ok(Self::Whole),
+            Some("beginning") => Ok(Self::Beginning),
+            Some("end") => Ok(Self::End),
+            Some(x) => Err(ToolError::BadArg { arg: "part", value: x.to_owned() }),
+        }
+    }
+
+    #[must_use]
+    pub fn as_str(self) -> &'static str {
+        match self { Self::Whole => "whole", Self::Beginning => "beginning", Self::End => "end" }
     }
 }
 
