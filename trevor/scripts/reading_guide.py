@@ -279,7 +279,7 @@ def stage_build():
     if not common.write_keep_last(os.path.join(CH, 'reading_guide.json'), guide, 'json', count=lambda d: len(d['items']),
                                   ensure_ascii=False, indent=1):
         return
-    common.write_keep_last(os.path.join(CH, 'first_appearance.json'), first, 'json', ensure_ascii=False)
+    common.write_keep_last(os.path.join(CH, 'first_appearance.json'), first, 'json', ensure_ascii=False, sort_keys=True)  # sorted: the key order no longer follows the hash seed
     top = sorted((i for i in items if i['kind'] == 'event'), key=lambda i: -i['prereqOf'])[:8]
     print(f"guide: {len(items)} entries ({sum(i['kind'] == 'main' for i in items)} main, {sum(i['kind'] == 'event' for i in items)} events); "
           f"first appearances for {len(first)} speakers; most built-on events: "
