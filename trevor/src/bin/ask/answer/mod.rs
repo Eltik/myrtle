@@ -437,12 +437,22 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
             }
         }
     }
+    // The vanished fate (`--no-vanish-rule`, `fate.rs`): a death-worded question about one character whom the deaths
+    // table shows no death scene for, and that the deaths evidence below does not take, says so in its rule (with the
+    // table's later reports of the death as passages, when it has some), and its search query, never the question the
+    // model reads, gains the words a disappearance is told in; so does the ranking of any character scenes' lines.
+    let vanished = if !a.no_vanish_rule && !a.no_route && kind.is_none()
+        && crate::fate::alive_dead_subject(q, &tables.tools).is_none() {
+        crate::fate::vanished_subject(q, &people_named(rt, &tables.tools, q), &tables.tools)
+    } else { None };
+    let scene_q = if vanished.is_some() { format!("{q} {}", crate::fate::VANISH_TERMS) } else { q.to_owned() };
     // Character-scoped scenes: no event named, one character named as the subject of a said or done act. They are added
     // before the retrieved passages, which keep their whole budget (the scoped scenes' 3,000-token rest would drop
     // retrieved lines other questions need).
     if scoped.is_none() && excerpts.is_none() && gap.is_none() && !a.no_character_scenes && !a.no_route
         && kind.is_none() {
-        if let Some((who, rows)) = character_scenes(rt, &a.runtime, &tables.tools, q, a.scene_tokens.unwrap_or(crate::scenes::CHAR_TOKENS),
+        if let Some((who, rows)) = character_scenes(rt, &a.runtime, &tables.tools, q, &scene_q,
+                                                  a.scene_tokens.unwrap_or(crate::scenes::CHAR_TOKENS),
                                                   a.scene_verbs(), !a.scene_subject) {
             for (i, (r, text, _)) in rows.iter().enumerate() {
                 let c = &rt.store.chunks[*r];
@@ -466,6 +476,22 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
                 pre_tokens = pre_tokens.saturating_add(tok);
             }
         }
+    }
+    // The vanished fate's later reports of the death, after any scoped scenes or time-gap lines, and its search query
+    // (`--no-vanish-rule`, see above).
+    let mut vanish_search: Option<String> = None;
+    if let Some(v) = vanished.as_ref() {
+        if let Some(table) = v.reports.as_deref() {
+            let at = after_lead(&pre);
+            for (k, (id, tail, text, tok)) in crate::fate::death_evidence(rt, &tables.tools, table).into_iter()
+                .enumerate() {
+                let sid = rt.store.row(&id).map(|r| rt.store.chunks[r].story_id.clone()).unwrap_or_default();
+                pre.insert(at + k, Pre::new(id, format!("{}; {tail}", story_label(names, &sid)), text)
+                    .of_death(&v.who));
+                pre_tokens = pre_tokens.saturating_add(tok);
+            }
+        }
+        vanish_search = Some(format!("{} {}", term_search.as_deref().unwrap_or(q), crate::fate::VANISH_TERMS));
     }
     // The labelled theory's second ask (`theory.rs`): lines of the character's own scenes that bear on the question,
     // after the retrieved passages, which give up the tokens they take.
@@ -509,8 +535,14 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
         death_budget = Args { max_context_tokens: a.max_context_tokens.saturating_sub(pre_tokens), ..a.clone() };
         &death_budget
     } else { a };
+    let vanish_args;
+    let a = if let Some(v) = vanished {
+        vanish_args = Args { vanish: Some(v.who), ..a.clone() };
+        &vanish_args
+    } else { a };
     let form = form.as_ref();
-    let first = answer_from(rt, llm, names, chrono, q, term_search.as_deref().unwrap_or(q), a, &pre, kind, form).await?;
+    let search = vanish_search.as_deref().or(term_search.as_deref()).unwrap_or(q);
+    let first = answer_from(rt, llm, names, chrono, q, search, a, &pre, kind, form).await?;
     // The typed fallback (`--no-typed-fallback`): a declined answer to a question that names exactly one operator and was
     // not routed to a typed source tries that operator's own voice lines, module stories and (when artifacts/p4-art is
     // built) art units, without touching the router prompt. So does an answer that cites only the operator's own file

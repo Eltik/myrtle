@@ -385,6 +385,10 @@ pub(crate) struct Args {
     /// lines from Trevor's deaths table as its first passages.
     #[arg(long)]
     pub(crate) no_death_evidence: bool,
+    /// Turn off the vanished fate (`fate.rs`): a death-worded question about one character with no death scene in the
+    /// deaths table gets no rule saying so and no disappearance words in its search query.
+    #[arg(long)]
+    pub(crate) no_vanish_rule: bool,
     /// Turn off the first-and-last appearance route (`appear.rs`): "When was X last mentioned?" goes to the router and
     /// retrieval as before instead of the appearance index in release (or in-world) order.
     #[arg(long)]
@@ -434,6 +438,10 @@ pub(crate) struct Args {
     /// `scoped_summaries`). Measured on E2B (mid) with no verdict changed, so not the default.
     #[arg(long)]
     pub(crate) scoped_summaries: bool,
+    /// The vanished fate's character (`fate.rs`), set only inside `answer_one`: picks VANISH_RULE or
+    /// VANISH_REPORT_TAIL over the deaths rule.
+    #[arg(skip)]
+    pub(crate) vanish: Option<String>,
     /// The note of the answer check's second ask, set only inside `answer_one`.
     #[arg(skip)]
     pub(crate) check_note: Option<String>,

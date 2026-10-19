@@ -169,9 +169,11 @@ pub(crate) fn scene_subject(tools: &Tools, people: &[String], q: &str, extra: &[
 /// whole-corpus search nor the bi-encoder over the character's lines ranks well, so the reranker (a cross-encoder) reads
 /// the question with each of the character's lines and the line before it. Each picked line keeps `CHAR_WINDOW` lines
 /// either side, at most `CHAR_LINES_PER_SCENE` lines a scene and `CHAR_K` scenes, within `CHAR_TOKENS`.
+/// The lines are ranked against `rank_q`: the question, or with the vanished fate its search query (`fate.rs`).
 /// Returns (the character as the corpus writes them, excerpts best first).
-pub(crate) fn character_scenes(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools, q: &str, max_tokens: u32,
-                               extra: &[&str], one_person: bool) -> Option<(String, Excerpts)> {
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn character_scenes(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools, q: &str, rank_q: &str,
+                               max_tokens: u32, extra: &[&str], one_person: bool) -> Option<(String, Excerpts)> {
     if tools.event_in_question(q).is_some() || tools.appearance_question(q).is_some() {
         return None;
     }
@@ -188,7 +190,7 @@ pub(crate) fn character_scenes(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools
         return None;
     }
     let t0 = std::time::Instant::now();
-    let units = ranked_lines(rt, ra, q, &cands, &forms)?;
+    let units = ranked_lines(rt, ra, rank_q, &cands, &forms)?;
     if let Some(target) = trevor::env::non_empty("TREVOR_SCOPED_DEBUG").filter(|v| v != "0").as_deref() {
         let mut by_line: Vec<usize> = Vec::new();
         for (r, _) in &units { if !by_line.contains(r) { by_line.push(*r); } }

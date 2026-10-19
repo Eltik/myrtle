@@ -11,7 +11,7 @@
 
 use serde_json::Value;
 use trevor::search::runtime::Runtime;
-use trevor::tools::{Tools, norm};
+use trevor::tools::{Tools, contains_words, norm};
 
 use crate::detect::has;
 
@@ -101,6 +101,109 @@ pub(crate) fn death_evidence(rt: &Runtime, tools: &Tools, who: &str) -> Vec<(Str
     }).collect()
 }
 
+/// The words a disappearance is told in, added to the search query (never the question the model reads) of a
+/// vanished-fate question (`--no-vanish-rule`): Episode 15 says Kal'tsit "has disappeared", not that she died.
+pub(crate) const VANISH_TERMS: &str = "disappeared vanished lost";
+
+/// The death words that, after a name, make it the one whose death a question naming several people asks ("after
+/// Kal'tsit dies"); "killed" after a name can be the killer's act, so it counts only before one ("killed Kal'tsit").
+const DEATH_WORDS: [&str; 7] = ["die", "dies", "died", "dying", "death", "dead", "deceased"];
+
+/// A death-worded question whose character has no death scene in the deaths table (`--no-vanish-rule`).
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct Vanished {
+    /// The character as the tables write them.
+    pub(crate) who: String,
+    /// The deaths-table name of the character's later reports ("dead" rows), when there are any.
+    pub(crate) reports: Option<String>,
+}
+
+/// The vanished fate: a death-worded question (`is_death_question`, or a death word before punctuation, "die,") about
+/// one character (not only as another noun's possessive, "Crownslayer's teacher"), `people` being the folded keys of
+/// `people_named`, for whom the deaths table has no row that shows the death ("dies") under any of the character's
+/// names. With one person named, that person; with several, the one a death word follows or that "death of" or
+/// "killed" precedes ("after Kal'tsit dies"), unless "and", "or" or "nor" joins the name to another ("Did Kal'tsit or
+/// Amiya die?"). A character with only reports of the death ("dead" rows: Kal'tsit's "I know she's dead, obviously."
+/// in Episode 17) keeps those reports as evidence. Group topics are not characters.
+pub(crate) fn vanished_subject(q: &str, people: &[String], tools: &Tools) -> Option<Vanished> {
+    // "How does Kal'tsit die, and ..." has "die," which `is_death_question` does not count.
+    let worded = crate::detect::is_death_question(q)
+        || norm(q).split_whitespace().any(|w| DEATH_WORDS.contains(&w) || w == "killed");
+    if !worded {
+        return None;
+    }
+    // The key itself is a form too, for a name `person_forms` finds in no table.
+    let forms_of = |k: &str| -> Vec<String> {
+        let mut f: Vec<String> = crate::scenes::person_forms(tools, k).iter().map(|x| norm(x))
+            .filter(|x| x.chars().count() >= 3).collect();
+        if !f.iter().any(|x| x == k) {
+            f.push(k.to_owned());
+        }
+        f
+    };
+    let (qn, qp) = (norm(q), norm(&q.replace('\u{2019}', "'").replace("'s", " ")));
+    let key = match people {
+        // A name written only as the possessive of another noun is not the one whose death is asked ("Was
+        // Crownslayer's teacher killed"), unless a death word follows it ("Tin Man's death").
+        [k] => {
+            let forms = forms_of(k);
+            if !forms.iter().any(|f| contains_words(&qn, f)) && !death_attached(&qp, &forms) {
+                return None;
+            }
+            k.clone()
+        }
+        [] => return None,
+        _ => {
+            let mut hit = people.iter().filter(|k| {
+                let forms = forms_of(k);
+                death_attached(&qn, &forms) || death_attached(&qp, &forms)
+            });
+            let first = hit.next()?;
+            if hit.next().is_some() {
+                return None;
+            }
+            first.clone()
+        }
+    };
+    if tools.names_group_topic(&key) {
+        return None;
+    }
+    let forms = forms_of(&key);
+    let rows: Vec<&Value> = tools.deaths.iter().flatten().filter(|e| e["generic"].as_bool() != Some(true)
+        && e["character"].as_str().is_some_and(|c| forms.contains(&norm(c)))).collect();
+    if rows.iter().any(|e| e["kind"].as_str() == Some("dies")) {
+        return None;
+    }
+    let reports = rows.iter().filter(|e| e["quote"].as_str().is_some_and(|x| !x.trim().is_empty()))
+        .max_by_key(|e| e["releaseTime"].as_i64().unwrap_or(0))
+        .and_then(|e| e["character"].as_str()).map(str::to_owned);
+    let who = tools.operator_names().into_iter().chain(tools.speaker_names())
+        .chain(tools.identities.iter().flatten().map(String::as_str))
+        .find(|x| norm(x) == key).map_or_else(|| reports.clone().unwrap_or_else(|| key.clone()), str::to_owned);
+    Some(Vanished { who, reports })
+}
+
+/// Whether one of `forms` stands in `qn` (folded words) where a death word follows it (a possessive "s" between) or
+/// "death of", "kill" or "killed" precedes it, with no "and", "or" or "nor" right before it.
+fn death_attached(qn: &str, forms: &[String]) -> bool {
+    let words: Vec<&str> = qn.split_whitespace().collect();
+    let death = |w: Option<&&str>| w.is_some_and(|w| DEATH_WORDS.contains(w));
+    forms.iter().any(|f| {
+        let fw: Vec<&str> = f.split_whitespace().collect();
+        (0..words.len()).filter(|&i| !fw.is_empty() && words[i..].starts_with(&fw)).any(|i| {
+            let end = i + fw.len();
+            let before = i.checked_sub(1).and_then(|j| words.get(j));
+            if matches!(before, Some(&("and" | "or" | "nor"))) {
+                return false;
+            }
+            let follows = death(words.get(end)) || (words.get(end) == Some(&"s") && death(words.get(end + 1)));
+            let precedes = matches!(before, Some(&("kill" | "killed")))
+                || (before == Some(&"of") && i.checked_sub(2).and_then(|j| words.get(j)) == Some(&"death"));
+            follows || precedes
+        })
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use serde_json::json;
@@ -162,6 +265,54 @@ mod tests {
         assert_eq!(ids, vec!["c#2", "c#3"]);
         let w: Vec<&str> = death_rows(&t, "W").iter().filter_map(|e| e["chunkId"].as_str()).collect();
         assert_eq!(w, vec!["c#5"]);
+    }
+
+    fn vanish_tools() -> Tools {
+        Tools { deaths: Some(vec![
+            json!({"character": "Kal'tsit", "kind": "dead", "generic": false, "releaseTime": 50, "chunkId": "k#1",
+                   "quote": "I know she's dead, obviously."}),
+            json!({"character": "Mandragora", "kind": "dies", "generic": false, "releaseTime": 20, "chunkId": "c#2",
+                   "quote": "x"}),
+        ]), identities: vec![vec!["AMa-10".into(), "Kal'tsit".into()], vec!["Amiya".into()]], ..Tools::default() }
+    }
+
+    #[test]
+    fn a_death_question_without_a_death_scene_is_a_vanished_fate() {
+        let t = vanish_tools();
+        let keys = |xs: &[&str]| xs.iter().map(|x| norm(x)).collect::<Vec<_>>();
+        let none = Vanished { who: "Amiya".into(), reports: None };
+        assert_eq!(vanished_subject("How did Amiya die?", &keys(&["Amiya"]), &t), Some(none));
+        let kal = || Some(Vanished { who: "Kal'tsit".into(), reports: Some("Kal'tsit".into()) });
+        assert_eq!(vanished_subject("How does Kal'tsit die, and how does she get revived?", &keys(&["Kal'tsit"]), &t),
+                   kal());
+        // Of two people, the one the death word follows; an identity name finds the same rows.
+        assert_eq!(vanished_subject("How does Mon3tr react when she wakes up after Kal'tsit dies",
+                                    &keys(&["Mon3tr", "Kal'tsit"]), &t), kal());
+        assert_eq!(vanished_subject("What happened after the death of Kal'tsit, according to Mon3tr?",
+                                    &keys(&["Kal'tsit", "Mon3tr"]), &t), kal());
+        assert_eq!(vanished_subject("How did AMa-10 die?", &keys(&["AMa-10"]), &t).map(|v| v.reports),
+                   Some(Some("Kal'tsit".into())));
+    }
+
+    #[test]
+    fn a_death_scene_two_people_or_no_death_word_leave_the_question_alone() {
+        let t = vanish_tools();
+        let keys = |xs: &[&str]| xs.iter().map(|x| norm(x)).collect::<Vec<_>>();
+        // A character with a death row ("dies").
+        assert_eq!(vanished_subject("How did Mandragora die?", &keys(&["Mandragora"]), &t), None);
+        // Two characters, neither the one the death word is about alone.
+        for q in ["Did Kal'tsit or Amiya die?", "Are Amiya and Kal'tsit dead?", "Which of Amiya and Kal'tsit died?"] {
+            assert_eq!(vanished_subject(q, &keys(&["Kal'tsit", "Amiya"]), &t), None, "{q}");
+        }
+        // The name only as another's possessive.
+        assert_eq!(vanished_subject("Was Amiya's teacher killed before chapter 2?", &keys(&["Amiya"]), &t), None);
+        assert!(vanished_subject("Was Amiya's death real?", &keys(&["Amiya"]), &t).is_some());
+        // No death word, or nobody named.
+        assert_eq!(vanished_subject("Where did Kal'tsit go?", &keys(&["Kal'tsit"]), &t), None);
+        // Two deaths asked of at once ("kill Mon3tr", "Kal'tsit died").
+        assert_eq!(vanished_subject("Did Amiya kill Mon3tr after Kal'tsit died?", &keys(&["Amiya", "Mon3tr", "Kal'tsit"]),
+                                    &t), None);
+        assert_eq!(vanished_subject("Which characters died in Episode 15?", &[], &t), None);
     }
 
     #[test]

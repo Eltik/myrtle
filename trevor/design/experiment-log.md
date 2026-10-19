@@ -1364,6 +1364,44 @@ excerpt slots. Not shipped as a default on that evidence; the defaults render pr
 flags on the probe sets, and a lift for the waking scene itself (its voice is "???" until "My name is Mon3tr", so a
 chunk-scoped label rename is the candidate; a story-scoped one is unsafe, "???" names several speakers per story).
 
+### 2026-10-19: The vanished fate: "How does Kal'tsit die" when the text says she disappeared
+
+**Measured first.** The deaths table does have a Kal'tsit row, but only a report: kind "dead", `main_17-17_end#0013`,
+the Mini-House's "I know she's dead, obviously.", with Closure's "I also know how to bring her back." two lines later.
+No row shows the death (kind "dies"), and Episode 15 tells it as a disappearance (`main_15-16_beg#0000`: "Kal'tsit has
+disappeared ... The only thing left on the deck is a jacket"). The deaths evidence never fires on either question:
+both start with "How", and `is_death_question` misses "die," in "How does Kal'tsit die, and ...". The "Then I lost her"
+line is in `main_15-18_end#0008`; `#0007` is the waking.
+**Tried.** `fate.rs`, `vanished_subject` (`--no-vanish-rule`): a death-worded question about one character (with
+several named, the one a death word follows or "death of"/"killed" precedes, not joined by and/or; not a name written
+only as another noun's possessive, "Crownslayer's teacher") whom the deaths table shows no death scene for, and that the
+deaths evidence does not take. The system prompt says so (VANISH_RULE: "Trevor's deaths table records no death for X;
+the story text may describe a disappearance instead", then: say that first, then what the passages describe, with
+citations, no theory, a return or revival only where a passage says it). A character with "dead" rows gets the latest
+report as passage [1] and VANISH_REPORT_TAIL ("no scene in which X dies"). The search query, never the question the
+model reads, gains "disappeared vanished lost", and so does the reranking of any character scenes' lines. The term list
+was measured on the two questions (hybrid rank of `15-16_beg#0000` for the Kal'tsit question): no terms 66th, the
+six-term list asked for (disappeared vanished gone lost no longer there presumed dead) 65th, "disappeared vanished"
+1st, "disappeared vanished lost" 2nd, adding "gone" 9th to 20th; "lost" kept for "Then I lost her".
+**Result (no model, stub).** Passages, mid profile. Kal'tsit question: off `06-10_end#0001-3`, `st_09-04#0010-12`
+(neither Episode 15 scene); on `17-17_end#0013` (report), `act25side_st03#0019-21`, `15-16_beg#0000-1`. Mon3tr
+question: off `act42side_st04#0002-4`, `15-05_end#0002-3`, `15-16_beg#0000-1`; on the report first, then the same
+seven; with `--scene-subject --react-verbs` Mon3tr's character scenes now open with `15-16_beg#0000`, but neither
+`15-18_end#0007` nor `#0008` comes in (with the terms in the line ranking, #0007 is 29th of Mon3tr's lines, was 19th;
+#0008 38th, was 54th; 6 slots). Over 1,678 questions (ian 35, real probe 120, held-out 40, gold v2 146, discord 345,
+reddit 883, trivia 109), `--no-vanish-rule` prompts are byte-identical to the binary before (1,637 prompts), and the
+rule changes 18 prompts, all with the rule, 0 in the first four sets: discord 9, 16, 57, 68, 69, 80, 84, 85, 90, 109,
+134, 138, 258, 259, 267, 316, reddit 22, trivia t093. Two misfire: t093 (Delphine; her mother is the one who passed
+away) and discord 85 ("Deathless Black Snake", a death word inside a name); discord 267 (Eyjafjalla "half-dead") is
+off the question's point. Two first cuts were refuted on the scan: the six-term list (above) and a single name used
+only as a possessive (discord 10, "Was Crownslayer's teacher killed", took Crownslayer).
+**Decision.** Default on, pending the model window: the two questions above, discord 138 ("Does [Kal'tsit] actually
+[die in chapter 15]?") and Beagle (discord 68), on E2B mid, rule on against `--no-vanish-rule`. The waking scene still
+needs its own lift (the chunk-scoped "???" label rename noted above).
+**Code.** `src/bin/ask/fate.rs` (`vanished_subject`, `VANISH_TERMS`, 2 tests), `src/bin/ask/answer/mod.rs`,
+`src/bin/ask/answer/generate.rs`, `src/bin/ask/prompts.rs` (VANISH_RULE, VANISH_REPORT_TAIL), `src/bin/ask/scenes.rs`
+(`character_scenes` takes a ranking query), `src/bin/ask/cli.rs`.
+
 ### 2026-10-19: CPU-only throughput of E2B and the 12B (step 1 of the self-contained deployment)
 
 **Tried.** On the development machine with `-ngl 0` and 8 threads: the 35 probe questions on E2B `mid` through a

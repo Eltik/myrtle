@@ -179,6 +179,19 @@ story (its label names it), with its citation; do not answer only \"according to
 when it says it of {who}: a line {who} speaks about someone else's death, or a line about another character, is not \
 about {who}.";
 
+/// The vanished fate (`fate.rs`, `--no-vanish-rule`), when the deaths table has no row for the character at all, with
+/// `{who}` filled in.
+pub(crate) const VANISH_RULE: &str = " Trevor's deaths table records no death for {who}; the story text may describe a \
+disappearance instead. Say first that the text records no death for {who}, then what the passages do describe about \
+{who} (a disappearance, a loss, a return), with citations. Do not offer a theory, and say that {who} came back or was \
+revived only where a passage says so.";
+/// The vanished fate with later reports of the death: " Passages [a] to [b] are" (or " Passage [a] is") then this.
+pub(crate) const VANISH_REPORT_TAIL: &str = " where Trevor's deaths table finds a later report that {who} is dead; the \
+table records no scene in which {who} dies, and the story text may describe a disappearance instead. Say first that \
+the text shows no scene of {who}'s death, then what the passages do describe about {who} (a disappearance, a loss, \
+the report and who makes it, a return), with citations. Do not offer a theory, and say that {who} came back or was \
+revived only where a passage says so.";
+
 /// The labelled theory (`theory.rs`): the second ask of a declined yes/no question whose passages hold hints.
 pub(crate) const THEORY_RULE: &str = " The passages do not state the answer to this question outright, but the lines \
 under HINTS bear on it. Answer in this form: begin with \"The story does not say outright, but\", then give what the \

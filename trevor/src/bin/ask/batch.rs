@@ -184,7 +184,7 @@ pub(crate) fn scoped_only(a: &Args, rts: &mut Runtimes, tools: &Tools, b: &Path)
             println!("{id}\ttimegap\t{}>{}\t{}", e["groupId"].as_str().unwrap_or_default(),
                      l["groupId"].as_str().unwrap_or_default(), ids.join(" "));
         }
-        if let Some((who, rows)) = character_scenes(&mut rts.main, &rts.args, tools, q, crate::scenes::CHAR_TOKENS,
+        if let Some((who, rows)) = character_scenes(&mut rts.main, &rts.args, tools, q, q, crate::scenes::CHAR_TOKENS,
                                                     a.scene_verbs(), !a.scene_subject) {
             let ids: Vec<String> =
                 rows.iter().map(|(r, _, n)| format!("{}:{n}", rts.main.store.chunks[*r].chunk_id)).collect();
