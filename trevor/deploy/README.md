@@ -245,7 +245,9 @@ outputs through `trevor-vps-update.sh rebuild` (`TREVOR_PUBLISH=1`). The unit ru
 (`STAGES_GEN`); a box with 16 GB or more can set the 12B. Status: `$TREVOR_HOME/state/stages/status.json`; logs:
 `$TREVOR_HOME/state/stages/logs/<day>/`; a failing stage posts one Discord embed a day. Stop it without stopping
 serving by writing `0` to the `duty` file in the state dir, or `systemctl stop trevor-stages`. First version of
-2026-10-19: tested with stubs, not yet run with a model on a box.
+2026-10-19: tested with stubs, then run once with real models on a development machine (5 stages, 15 min, exit 0), not
+yet on a box. Its `p2-group-d` stage (2026-10-20) sections a group summary that misses more than `COVERAGE_THRESHOLD`
+(0.4) of its recurring names; `COVERAGE_SECTION=0` turns that off.
 The nightly 12B window (03:00 to 09:00 JST, `STAGES_WINDOW_START`/`_END` in UTC; off with `STAGES_WINDOW=0`) stops
 serving through the root pair `trevor-llama-window.{path,service}`, which must be installed and enabled (`systemctl
 enable --now trevor-llama-window.path`); design and protocol in `design/trevor-memory-budget.md` section 4.
