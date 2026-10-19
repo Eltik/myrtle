@@ -469,7 +469,7 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
     if !a.no_death_evidence && !a.no_route && kind.is_none() {
         if let Some(who) = crate::fate::alive_dead_subject(q, &tables.tools) {
             let at = after_lead(&pre);
-            for (k, (id, tail, text, tok)) in crate::fate::death_evidence(rt, &tables.tools, &who).into_iter()
+            for (k, (id, tail, text, tok)) in crate::fate::death_evidence(rt, &tables.tools, &who, a.death_label_v1).into_iter()
                 .enumerate() {
                 let sid = rt.store.row(&id).map(|r| rt.store.chunks[r].story_id.clone()).unwrap_or_default();
                 pre.insert(at + k, Pre::new(id, format!("{}; {tail}", story_label(names, &sid)), text).of_death(&who));
@@ -483,7 +483,7 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
     if let Some(v) = vanished.as_ref() {
         if let Some(table) = v.reports.as_deref() {
             let at = after_lead(&pre);
-            for (k, (id, tail, text, tok)) in crate::fate::death_evidence(rt, &tables.tools, table).into_iter()
+            for (k, (id, tail, text, tok)) in crate::fate::death_evidence(rt, &tables.tools, table, a.death_label_v1).into_iter()
                 .enumerate() {
                 let sid = rt.store.row(&id).map(|r| rt.store.chunks[r].story_id.clone()).unwrap_or_default();
                 pre.insert(at + k, Pre::new(id, format!("{}; {tail}", story_label(names, &sid)), text)

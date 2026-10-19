@@ -1475,6 +1475,18 @@ left as is, since the deaths rule's answers of 2026-10-18 never copied it. The M
 up after the loss of Kal'tsit, she is described as having a new appearance and feeling solemn" [5] (an Episode 17
 line), still not the waking scene.
 **Decision.** Default on, confirmed.
+**Label follow-up (2026-10-20).** The deaths evidence's passage label ("the line where Trevor's deaths table finds a
+report that X is dead") and DEATH_RULE_TAIL no longer name the table: the label reads "the line where X dies" or "a line
+reporting that X is dead", the rule "the story lines with X's death or a report of it"; `--death-label-v1` restores both.
+Exposure, stub renders of 7 sets: 7 prompts of 1,040 in the Discord set carry the label, 0 of 2,670 Reddit, 0 in ian,
+real probe, held-out, trivia and gold v2, plus the 4 vanish questions. 12B full over the 10 questions, old against new
+wording, `--no-cache-prompt`: 4 answers identical (Manfred, Allerdale, discord 138, Beagle), 6 differ by decoding, none
+worse; the Kal'tsit answer's "A report found by Closure" is gone (now "A report from Mon3tr states that Kal'tsit is dead
+[1]", Mon3tr being a speaker of that passage), the Theresa answer drops a muddled "'Amiya' (revealed to be Theresa's
+consciousness)" clause, the Alpha Test question now answers each of its parts. Gate: Discord set, old binary with the
+scene flags against the new with `--death-label-v1` byte-identical; at the new defaults exactly the 7 labelled prompts
+change. In passing, the scene-subject default of f4198c4b reaches 2 of the 345 Discord questions ("why does Bagpipe
+say", "what Velliv said"), which the three gated eval sets had not shown; both get character scenes for the speaker.
 
 ### 2026-10-19: CPU-only throughput of E2B and the 12B (step 1 of the self-contained deployment)
 
@@ -1517,7 +1529,7 @@ chunk-scoped label rename for "???" followed by a self-introduction is the candi
 
 Identities, names and aliases, topics and topic summaries, dossiers, canon evidence for the Integrated Strategies endings, deaths, places, organisations, operator data.
 
-**Decision revised (2026-10-20, 00:40 JST).** The one changed answer in each arm was the Mon3tr question itself, and
+**Decision revised (2026-10-20, 00:20 JST).** The one changed answer in each arm was the Mon3tr question itself, and
 on the 12B the flags' answer is the better one (her reactions across stories, with the "I'll bring back Kal'tsit!"
 and "loss that cut her to the bone" lines; the default declined into Episode 17 lines), while E2B's is a different
 decline. One gain, no loss over 157 + 37 questions, so both are defaults: `--no-react-verbs` and `--no-scene-subject`

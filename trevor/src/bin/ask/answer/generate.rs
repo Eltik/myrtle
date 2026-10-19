@@ -17,7 +17,7 @@ use crate::detect::{
 };
 use crate::form::{Flags, Form};
 use crate::prompts::{
-    AGE_RULE, ART_RULE, CANON_RULE, CHAR_LABEL, CHAR_NAME_RULE, CHAR_RULE_TAIL, DATE_RULE, DEATH_RULE_TAIL, GAP_RULE_TAIL, GAP_TAIL, INFER_RULE,
+    AGE_RULE, ART_RULE, CANON_RULE, CHAR_LABEL, CHAR_NAME_RULE, CHAR_RULE_TAIL, DATE_RULE, DEATH_RULE_TAIL, DEATH_RULE_TAIL_V1, GAP_RULE_TAIL, GAP_TAIL, INFER_RULE,
     OPINION_FORM_RULE, OPINION_RULE, ORIGIN_RULE, RELATION_RULE, STORY_NAME_RULE, SCOPED_RULE_HEAD, SCOPED_RULE_TAIL, SOURCE_RULE, SYNTH_RULE, SYSTEM, TERM_RULE, THEORY_RULE,
     TIME_EVIDENCE_TAIL, TIME_RULE, VANISH_REPORT_TAIL, VANISH_RULE, YES_NO_RULE,
 };
@@ -228,12 +228,14 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
     }
     // The deaths evidence's numbers, wherever it sits among the first passages.
     let vanish = a.vanish.as_deref();
+    let death_label_v1 = a.death_label_v1;
     let death_at: Vec<usize> = first.iter().enumerate().filter(|(_, p)| p.death.is_some()).map(|(i, _)| i + 1).collect();
     if let (Some(&a), Some(&b), Some(who)) = (death_at.first(), death_at.last(),
                                               first.iter().find_map(|p| p.death.as_deref())) {
         let head = if a == b { format!(" Passage [{a}] is") } else { format!(" Passages [{a}] to [{b}] are") };
         // The vanished fate's reports (`--no-vanish-rule`) say the table has no death scene; else the deaths rule.
-        let tail = if vanish.is_some() { VANISH_REPORT_TAIL } else { DEATH_RULE_TAIL };
+        let tail = if vanish.is_some() { VANISH_REPORT_TAIL } else if death_label_v1 { DEATH_RULE_TAIL_V1 }
+            else { DEATH_RULE_TAIL };
         system.push_str(&format!("{head}{}", tail.replace("{who}", who)));
     } else if let Some(who) = vanish {
         system.push_str(&VANISH_RULE.replace("{who}", who));

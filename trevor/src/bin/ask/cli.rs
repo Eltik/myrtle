@@ -391,6 +391,11 @@ pub(crate) struct Args {
     /// lines from Trevor's deaths table as its first passages.
     #[arg(long)]
     pub(crate) no_death_evidence: bool,
+    /// The deaths evidence's wording as before 2026-10-20: passage labels "the line where Trevor's deaths table finds
+    /// X's death" and a rule that names the table. The 12B copied the label into an answer ("a report found by
+    /// Closure"); the default names the line instead ("the line where X dies", "a line reporting that X is dead").
+    #[arg(long)]
+    pub(crate) death_label_v1: bool,
     /// Turn off the vanished fate (`fate.rs`): a death-worded question about one character with no death scene in the
     /// deaths table gets no rule saying so and no disappearance words in its search query.
     #[arg(long)]

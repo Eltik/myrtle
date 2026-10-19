@@ -86,8 +86,10 @@ pub(crate) fn death_rows<'a>(tools: &'a Tools, who: &str) -> Vec<&'a Value> {
 }
 
 /// One evidence passage per row: (chunk id, label tail, excerpt text, tokens), for the rows whose chunk is in `rt` and
-/// holds the quoted line.
-pub(crate) fn death_evidence(rt: &Runtime, tools: &Tools, who: &str) -> Vec<(String, String, String, u32)> {
+/// holds the quoted line. The label names the line ("the line where X dies", "a line reporting that X is dead");
+/// with `v1` (`--death-label-v1`) it reads "the line where Trevor's deaths table finds ...", which the 12B copied into
+/// an answer as "a report found by Closure" (2026-10-20).
+pub(crate) fn death_evidence(rt: &Runtime, tools: &Tools, who: &str, v1: bool) -> Vec<(String, String, String, u32)> {
     death_rows(tools, who).into_iter().filter_map(|e| {
         let id = e["chunkId"].as_str()?;
         let r = rt.store.row(id)?;
@@ -95,9 +97,12 @@ pub(crate) fn death_evidence(rt: &Runtime, tools: &Tools, who: &str) -> Vec<(Str
         let key: String = quote.chars().take(60).collect();
         let li = rt.store.chunks[r].text.lines().position(|l| l.contains(key.as_str()))?;
         let (text, tok) = crate::scenes::excerpt_window(rt, r, &[li], DEATH_WINDOW);
-        let what = if e["kind"].as_str() == Some("dies") { format!("{who}'s death") }
-            else { format!("a report that {who} is dead") };
-        Some((id.to_owned(), format!("the line where Trevor's deaths table finds {what}"), text, tok))
+        let dies = e["kind"].as_str() == Some("dies");
+        let label = if v1 {
+            let what = if dies { format!("{who}'s death") } else { format!("a report that {who} is dead") };
+            format!("the line where Trevor's deaths table finds {what}")
+        } else if dies { format!("the line where {who} dies") } else { format!("a line reporting that {who} is dead") };
+        Some((id.to_owned(), label, text, tok))
     }).collect()
 }
 
