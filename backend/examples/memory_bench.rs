@@ -18,6 +18,11 @@
 //! brotli form alone (`STATIC_TABLES_BR_ONLY`), then times decoding the
 //! largest table, operators, back to identity. Run each value in its own
 //! process so the RSS figures do not mix.
+//!
+//! `BENCH_LOAD_ONCE=1` stops after the first load, for comparing one load's
+//! RSS between the arms of a load-time switch (`SANDBOX_VALUE_PARSE`,
+//! `ACTIVITY_SKIN_REFS_ALL`): run each arm in its own process with
+//! `STEP_RSS=1` for the per-step trace, under `/usr/bin/time -l` for the peak.
 
 use std::alloc::{GlobalAlloc, Layout};
 use std::path::{Path, PathBuf};
@@ -115,7 +120,7 @@ fn main() {
     );
     let load = |label: &str| {
         let t = Instant::now();
-        let (gd, ai) = init_game_data(&excel, Path::new(&base)).expect("load EN game data");
+        let (gd, ai) = init_game_data(&excel, Path::new(&base)).expect("load game data");
         println!(
             "  {label}: {} operators in {:.2} s",
             gd.operators.len(),
@@ -128,6 +133,9 @@ fn main() {
     let live = load("load");
     report("1 one copy resident", settle);
 
+    if std::env::var("BENCH_LOAD_ONCE").is_ok_and(|v| v.trim() == "1") {
+        return;
+    }
     if let Ok(mode) = std::env::var("BENCH_TABLES_BR_ONLY") {
         tables(&live.0, mode.trim() == "1", settle);
         return;

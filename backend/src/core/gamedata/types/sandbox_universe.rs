@@ -1,6 +1,6 @@
 use serde_json::Value;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct SandboxUniverse {
     pub max_achievements: usize,
     pub max_nodes: usize,
@@ -16,6 +16,9 @@ pub struct SandboxUniverse {
 }
 
 impl SandboxUniverse {
+    /// The universe from a parsed `serde_json::Value` of the whole table: the
+    /// `SANDBOX_VALUE_PARSE=1` path, and the reference the counting pass in
+    /// [`super::sandbox_perm_scan`] is tested against.
     pub fn build(raw: &Value) -> Self {
         let Some(sandbox_data) = Self::extract_sandbox_v2(raw) else {
             eprintln!("SandboxUniverse: no SANDBOX_V2 data found");
@@ -64,6 +67,37 @@ impl SandboxUniverse {
         }
     }
 
+    /// The universe from the counting pass's tally, field for field what
+    /// [`Self::build`] derives from the same table. `found` is whether
+    /// `Detail.SANDBOX_V2[0].value` exists; `arrays` holds the length of each
+    /// array-valued field under it; `zones` is the non-tutorial `ZoneData`
+    /// count; `maps` holds each `MapData` entry's `(key, value.Nodes length)`.
+    pub(crate) fn from_tally(
+        found: bool,
+        arrays: &std::collections::HashMap<String, usize>,
+        zones: usize,
+        maps: &[(String, usize)],
+    ) -> Self {
+        if !found {
+            eprintln!("SandboxUniverse: no SANDBOX_V2 data found");
+            return Self::default();
+        }
+        let count = |key: &str| arrays.get(key).copied().unwrap_or(0);
+        Self {
+            max_achievements: count("AchievementData"),
+            max_nodes: Self::map_nodes_of(maps.iter().map(|(k, n)| (k.as_str(), *n))),
+            max_zones: zones,
+            max_tech_nodes: count("DevelopmentData"),
+            max_quests: count("ArchiveQuestData"),
+            max_stages: count("StageData"),
+            max_recipes: count("FoodData"),
+            max_music: count("ArchiveMusicUnlockData"),
+            max_base_level: count("BaseUpdate"),
+            max_blueprints: count("CraftItemData"),
+            max_rifts: count("FixedRiftData"),
+        }
+    }
+
     fn extract_sandbox_v2(raw: &Value) -> Option<&Value> {
         let sandbox_v2 = raw.get("Detail")?.get("SANDBOX_V2")?.as_array()?;
         let first = sandbox_v2.first()?;
@@ -94,19 +128,20 @@ impl SandboxUniverse {
                 .and_then(|v| v.as_array())
                 .map_or(0, std::vec::Vec::len)
         };
-        let key_of = |entry: &Value| -> String {
-            entry
-                .get("key")
-                .and_then(|v| v.as_str())
-                .unwrap_or("")
-                .to_string()
-        };
+        fn key_of(entry: &Value) -> &str {
+            entry.get("key").and_then(|v| v.as_str()).unwrap_or("")
+        }
+        Self::map_nodes_of(map_data.iter().map(|e| (key_of(e), node_count(e))))
+    }
 
+    /// [`Self::count_map_nodes`] over `(key, node count)` pairs, one per
+    /// `MapData` entry, shared by the `Value` path and the counting pass.
+    fn map_nodes_of<'k>(entries: impl Iterator<Item = (&'k str, usize)> + Clone) -> usize {
         // Primary: the persistent overworld map(s) the player explores.
-        let overworld: usize = map_data
-            .iter()
-            .filter(|e| key_of(e).contains("_main"))
-            .map(&node_count)
+        let overworld: usize = entries
+            .clone()
+            .filter(|(key, _)| key.contains("_main"))
+            .map(|(_, nodes)| nodes)
             .sum();
         if overworld > 0 {
             return overworld;
@@ -115,10 +150,10 @@ impl SandboxUniverse {
         // Fallback: one representative (largest) variant per layout group.
         let mut per_group: std::collections::HashMap<String, usize> =
             std::collections::HashMap::new();
-        for entry in map_data {
-            let group = Self::base_layout_group(&key_of(entry));
+        for (key, nodes) in entries {
+            let group = Self::base_layout_group(key);
             let slot = per_group.entry(group).or_insert(0);
-            *slot = (*slot).max(node_count(entry));
+            *slot = (*slot).max(nodes);
         }
         per_group.values().sum()
     }

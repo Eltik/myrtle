@@ -29,6 +29,7 @@ pub mod range;
 pub mod retro;
 pub mod roguelike;
 pub mod roguelike_entries;
+pub mod sandbox_perm_scan;
 pub mod sandbox_universe;
 pub mod serde_helpers;
 pub mod shop;
@@ -126,7 +127,9 @@ pub struct GameTables {
     pub stages: HashMap<String, Stage>,
     pub activities: HashMap<String, ActivityBasicInfo>,
     /// Skin ids referenced by `activity_table` (event-reward skins), see
-    /// [`activity::scan_skin_refs`].
+    /// [`activity::scan_skin_refs`]. Filled on CN only, the one server the
+    /// release mapping reads them from; `ACTIVITY_SKIN_REFS_ALL=1` fills every
+    /// server.
     pub activity_skin_refs: HashSet<String>,
     /// Activity id -> its Originite Prime stages, see [`activity::op_stages_by_activity`].
     pub activity_op_stages: HashMap<String, Vec<activity::OpStage>>,

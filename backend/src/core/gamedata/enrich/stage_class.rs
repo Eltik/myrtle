@@ -14,6 +14,7 @@ use serde_json::Value;
 use crate::core::gamedata::tables::SanitizingReader;
 use crate::core::gamedata::types::activity::ActivityBasicInfo;
 use crate::core::gamedata::types::roguelike::RoguelikeTopicTableFile;
+use crate::core::gamedata::types::sandbox_perm_scan::LevelNamed;
 use crate::core::gamedata::types::stage::{Stage, StageDifficulty};
 use crate::core::gamedata::types::zone::{Zone, ZoneType};
 
@@ -113,6 +114,17 @@ fn collect_level_named(v: &Value, out: &mut HashMap<String, (String, String)>) {
     }
 }
 
+/// The perm table's level triples through a full `serde_json::Value`, the
+/// `SANDBOX_VALUE_PARSE=1` path: the reference the counting pass in
+/// [`crate::core::gamedata::types::sandbox_perm_scan`] is tested against.
+pub fn sandbox_perm_level_named_from_value(data_dir: &Path) -> LevelNamed {
+    let mut out = LevelNamed::new();
+    if let Some(t) = read_json(data_dir, "sandbox_perm_table") {
+        collect_level_named(&t, &mut out);
+    }
+    out
+}
+
 /// Parse `crisis_v2_table.SeasonInfoDataMap` into `season number -> name`
 /// (key `crisis_v2_season_2_1` -> `2`).
 fn load_cc_seasons(data_dir: &Path) -> HashMap<u32, String> {
@@ -187,7 +199,11 @@ struct ModeNames {
     is_kv: HashMap<String, String>,
 }
 
-fn load_mode_names(data_dir: &Path, roguelike: &RoguelikeTopicTableFile) -> ModeNames {
+fn load_mode_names(
+    data_dir: &Path,
+    roguelike: &RoguelikeTopicTableFile,
+    sandbox_perm_named: Option<LevelNamed>,
+) -> ModeNames {
     let is_topics = fb_list_names(&roguelike.topics, "Name");
     let towers = read_json(data_dir, "climb_tower_table")
         .map(|t| fb_map_names(&t, "Towers", "Name"))
@@ -205,8 +221,15 @@ fn load_mode_names(data_dir: &Path, roguelike: &RoguelikeTopicTableFile) -> Mode
         collect_level_named(&t, &mut node_named);
     }
     // RA stage names that match the extracted level paths live in the perm
-    // table (keyed by the full level id under `obt/sandbox/`).
-    if let Some(t) = read_json(data_dir, "sandbox_perm_table") {
+    // table (keyed by the full level id under `obt/sandbox/`). The load's
+    // counting pass already collected them; first occurrence wins either way,
+    // so merging its map gives what walking the table here gives.
+    // `SANDBOX_VALUE_PARSE=1` passes `None` and parses the table again.
+    if let Some(perm) = sandbox_perm_named {
+        for (level_id, named) in perm {
+            node_named.entry(level_id).or_insert(named);
+        }
+    } else if let Some(t) = read_json(data_dir, "sandbox_perm_table") {
         collect_level_named(&t, &mut node_named);
     }
 
@@ -391,12 +414,15 @@ pub struct StageClassifier<'a> {
 }
 
 impl<'a> StageClassifier<'a> {
+    /// `sandbox_perm_named` is the perm table's level triples from the load's
+    /// counting pass; `None` (`SANDBOX_VALUE_PARSE=1`) parses the table here.
     pub fn new(
         data_dir: &Path,
         stages: &'a HashMap<String, Stage>,
         zones: &'a HashMap<String, Zone>,
         activities: &'a HashMap<String, ActivityBasicInfo>,
         roguelike: &RoguelikeTopicTableFile,
+        sandbox_perm_named: Option<LevelNamed>,
     ) -> Self {
         // Canonical stage per level file (a CM `#f#` reuses its base level).
         let mut stage_by_level: HashMap<String, &Stage> = HashMap::new();
@@ -426,7 +452,7 @@ impl<'a> StageClassifier<'a> {
             stages,
             zones,
             acts_by_len,
-            modes: load_mode_names(data_dir, roguelike),
+            modes: load_mode_names(data_dir, roguelike, sandbox_perm_named),
             memory_meta: load_memory_meta(data_dir),
             stage_by_level,
         }

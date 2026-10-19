@@ -250,6 +250,12 @@ fn table_step(data_dir: &Path, name: &'static str) -> startup::StepSpec {
     }
 }
 
+/// The server directory a `<server>/gamedata/excel` data dir sits in (`cn`),
+/// the layout `app::state::derive_game_data_dir` builds.
+fn server_dir(data_dir: &Path) -> Option<&str> {
+    data_dir.parent()?.parent()?.file_name()?.to_str()
+}
+
 pub fn init_game_data(
     data_dir: &Path,
     assets_dir: &Path,
@@ -324,7 +330,7 @@ pub fn init_game_data_with_art(
         load_table_or_warn(data_dir, "building_data", &mut warnings);
     let roguelike_file: RoguelikeTopicTableFile =
         load_table_or_warn(data_dir, "roguelike_topic_table", &mut warnings);
-    let activity_file: ActivityTableFile =
+    let mut activity_file: ActivityTableFile =
         load_table_or_warn(data_dir, "activity_table", &mut warnings);
     let activity_op_stages = crate::core::gamedata::types::activity::op_stages_by_activity(
         &stage_file.stages,
@@ -344,9 +350,18 @@ pub fn init_game_data_with_art(
             &activity_file.activity_items,
         );
     let event_shops = load_event_shops(assets_dir, &mut warnings);
-    let activity_skin_refs = std::fs::read_to_string(data_dir.join("activity_table.json"))
-        .map(|raw| crate::core::gamedata::types::activity::scan_skin_refs(&raw))
-        .unwrap_or_default();
+    // Only the release mapping reads these, and only off CN
+    // (`release/skins.rs`), so the other servers skip reading the 14 MB file
+    // into a string. `ACTIVITY_SKIN_REFS_ALL=1` scans every server, as before.
+    let activity_skin_refs = if crate::utils::env::switched_on("ACTIVITY_SKIN_REFS_ALL")
+        || server_dir(data_dir) == Some("cn")
+    {
+        std::fs::read_to_string(data_dir.join("activity_table.json"))
+            .map(|raw| crate::core::gamedata::types::activity::scan_skin_refs(&raw))
+            .unwrap_or_default()
+    } else {
+        std::collections::HashSet::new()
+    };
     let retro_file: RetroTableFile = load_table_or_warn(data_dir, "retro_table", &mut warnings);
     let story_review_file: crate::core::gamedata::types::story_review::StoryReviewTableFile =
         load_table_or_warn(data_dir, "story_review_table", &mut warnings);
@@ -420,10 +435,29 @@ pub fn init_game_data_with_art(
         &activity_file.live_only_stage_ids(),
     );
 
-    let sandbox_perm_raw: serde_json::Value =
-        load_table_or_warn(data_dir, "sandbox_perm_table", &mut warnings);
-    startup::step("sandbox universe");
-    let sandbox_universe = SandboxUniverse::build(&sandbox_perm_raw);
+    // The perm table feeds 11 counts and the classifier's RA node names. A
+    // `serde_json::Value` of it cost 28 to 60 MB of RSS per server and lived
+    // to the end of this function; the counting pass builds no tree and reads
+    // the file once for both. `SANDBOX_VALUE_PARSE=1` restores the `Value`,
+    // held as long as before, and the classifier's second parse.
+    let (sandbox_universe, sandbox_perm_named, _sandbox_perm_raw) =
+        if crate::core::gamedata::types::sandbox_perm_scan::value_parse_switch() {
+            let raw: serde_json::Value =
+                load_table_or_warn(data_dir, "sandbox_perm_table", &mut warnings);
+            startup::step("sandbox universe");
+            (SandboxUniverse::build(&raw), None, Some(raw))
+        } else {
+            let scan = crate::core::gamedata::types::sandbox_perm_scan::scan_sandbox_perm(data_dir)
+                .unwrap_or_else(|e| {
+                    warnings.push(format!("sandbox_perm_table: {e}"));
+                    crate::core::gamedata::types::sandbox_perm_scan::SandboxPermScan {
+                        universe: SandboxUniverse::build(&serde_json::Value::Null),
+                        level_named: std::collections::HashMap::new(),
+                    }
+                });
+            startup::step("sandbox universe");
+            (scan.universe, Some(scan.level_named), None)
+        };
 
     startup::step("skills");
     let skills = enrich_all_skills(skill_file.skills, &assets);
@@ -545,6 +579,7 @@ pub fn init_game_data_with_art(
             &zones,
             &activity_file.basic_info,
             &roguelike_file,
+            sandbox_perm_named,
         );
 
         let enemies_by_stage = build_enemy_stage_index(&levels_dir, data_dir, &classifier);
@@ -564,6 +599,10 @@ pub fn init_game_data_with_art(
         &medals.medals,
         &stages,
     );
+    // The last derive from the activity table: keep the served `basic_info`
+    // and free the rest before the chibi indexes are built.
+    let activities = std::mem::take(&mut activity_file.basic_info);
+    drop(activity_file);
 
     startup::step("chibis");
     let chibis = init_chibi_data(art_dir);
@@ -596,7 +635,7 @@ pub fn init_game_data_with_art(
             enemy_chibis,
             zones,
             stages,
-            activities: activity_file.basic_info,
+            activities,
             retro_acts: retro_file.retro_act_list,
             story_reviews: story_review_file.story_reviews,
             story_archives,
