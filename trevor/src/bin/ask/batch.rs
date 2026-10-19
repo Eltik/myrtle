@@ -164,7 +164,8 @@ pub(crate) fn scoped_only(a: &Args, rts: &mut Runtimes, tools: &Tools, b: &Path)
         let v = v?;
         let (id, q) = qid_question(&v);
         let excerpts = if a.no_scoped_line_rank { None } else {
-            scoped_excerpts(&mut rts.main, &rts.args, tools, q, crate::scenes::CHAR_TOKENS, a.scene_verbs())
+            scoped_excerpts(&mut rts.main, &rts.args, tools, q, crate::scenes::CHAR_TOKENS, a.scene_verbs(),
+                            a.chunk_renames())
         };
         if let Some((e, who, rows)) = &excerpts {
             let ids: Vec<String> = rows.iter().map(|(r, _, n)| format!("{}:{n}", rts.main.store.chunks[*r].chunk_id))
@@ -185,7 +186,7 @@ pub(crate) fn scoped_only(a: &Args, rts: &mut Runtimes, tools: &Tools, b: &Path)
                      l["groupId"].as_str().unwrap_or_default(), ids.join(" "));
         }
         if let Some((who, rows)) = character_scenes(&mut rts.main, &rts.args, tools, q, q, crate::scenes::CHAR_TOKENS,
-                                                    a.scene_verbs(), !a.scene_subject) {
+                                                    a.scene_verbs(), !a.scene_subject, a.chunk_renames()) {
             let ids: Vec<String> =
                 rows.iter().map(|(r, _, n)| format!("{}:{n}", rts.main.store.chunks[*r].chunk_id)).collect();
             println!("{id}\tcharacter\t{who}\t{}", ids.join(" "));

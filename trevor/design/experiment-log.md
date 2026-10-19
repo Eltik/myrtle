@@ -1381,6 +1381,23 @@ scenes the waking chunk is 13th by fused retrieval and 19th by reranked lines (T
 excerpt slots. Not shipped as a default on that evidence; the defaults render prompts byte-identical to `43e30986` (stub). Next: a window that measures both
 flags on the probe sets, and a lift for the waking scene itself (its voice is "???" until "My name is Mon3tr", so a
 chunk-scoped label rename is the candidate; a story-scoped one is unsafe, "???" names several speakers per story).
+**Chunk-scoped rename (2026-10-20, `--no-chunk-renames`).** `scripts/label_renames.py` has a second pass: a "???:"
+line followed within 3 lines by a label's first line of the chunk that introduces itself by that label (the story
+pass's INTRO pattern) names the chunk's "???" lines, kept only when no "???" line of the chunk comes after the
+introduction (`artifacts/entities/label_renames_chunks.json`, {chunkId: {"???": name}}). On P3b 20 chunks match, the
+guard drops 2 (`main_9 st_09-01#0002`, `act36side_04_end#0000`, whose later "???" lines are other speakers), 18 are
+kept with 18 names. All 18 read: 17 right (Mon3tr, Mephisto, Talulah naming Mephisto, Ben, Hellagur, Ceobe, ...), 1
+doubtful (`act14side_st01#0015` Kjera: two "???" lines in a row, the second answering the first with "Exactly").
+`ask` renders "??? (Mon3tr):" in passages, and `ranked_lines` (character scenes, scoped excerpts) counts the line as
+Mon3tr's, the reranker reading the renamed label; `--no-label-renames` turns it off too. m1 with `--scene-subject
+--react-verbs` (stub, no model): `#0007` goes from 29th to 7th of Mon3tr's reranked lines (503 lines become 504). At
+mid (1,800 scene tokens) it is still not rendered: its excerpt does not fit after 6 and the picker stops there, so the
+prompt has 6 character excerpts instead of 7 (Path in Sight drops out). At full (3,000) it is rendered, [7] of 9
+character excerpts (11 before), as "??? (Mon3tr): ...Kal'tsit? The rain caresses her palms". With the flags off m1's
+prompt is byte-identical. ian-questions (32 prompts), real-probe (116) and lore-heldout (40) at mid: byte-identical
+with `--no-chunk-renames` against the binary before, and at defaults 0 prompts change (none of the 18 chunks reaches
+them). The renames stay on as label text; whether the two opt-in flags plus the rename move m1's answer needs a model
+window (full profile, where the scene is rendered).
 
 ### 2026-10-19: The vanished fate: "How does Kal'tsit die" when the text says she disappeared
 

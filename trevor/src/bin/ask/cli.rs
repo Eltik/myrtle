@@ -231,6 +231,11 @@ pub(crate) struct Args {
     /// the passages ("Gap-Toothed Girl:" instead of "Gap-Toothed Girl (Idida):"; scripts/label_renames.py, 2026-10-19).
     #[arg(long)]
     pub(crate) no_label_renames: bool,
+    /// Turn off the chunk renames: a "???" label that an introduction in the same chunk names keeps "???:" in the
+    /// passages and is not counted as that speaker's line by the character scenes and scoped excerpts ("??? (Mon3tr):";
+    /// scripts/label_renames.py, 2026-10-19). `--no-label-renames` turns them off too.
+    #[arg(long)]
+    pub(crate) no_chunk_renames: bool,
     /// The typed fallback's second answer kept only when it cites one of the operator's own units, as before
     /// 2026-10-19 (it is now also kept when it cites only the lead passages both asks had).
     #[arg(long)]
@@ -604,6 +609,11 @@ pub(crate) enum BackendKind {
 /// top of `--profile full`): one answer call, no router call.
 impl Args {
     /// The extra verbs of the scene-subject test (`detect::asks_scene_with`): HINT_VERBS unless `--said-verbs-v1`.
+    /// Whether the chunk renames apply (`--no-chunk-renames`, and the broader `--no-label-renames`, turn them off).
+    pub(crate) fn chunk_renames(&self) -> bool {
+        !self.no_label_renames && !self.no_chunk_renames
+    }
+
     pub(crate) fn scene_verbs(&self) -> &'static [&'static str] {
         if self.said_verbs_v1 { &[] } else if self.react_verbs { &crate::detect::SCENE_VERBS }
         else { &crate::detect::HINT_VERBS }

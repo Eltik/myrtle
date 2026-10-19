@@ -1,7 +1,7 @@
 //! Scene-scoped passages: the scenes of a named event in which a named character speaks, and excerpts of a
 //! character's own scenes.
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use anyhow::{Context, Result};
 use trevor::search::runtime::{Runtime, RuntimeArgs};
@@ -10,6 +10,7 @@ use trevor::tools::{Tools, contains_words, norm};
 use crate::chrono::proper_name;
 use crate::detect::asks_scene_with;
 use crate::kinds::{RECORD_KINDS, is_generated};
+use crate::labels::{chunk_renames, rename_lines};
 use crate::people::people_named;
 
 /// Scenes of the event a question names where the character it names speaks or is named (the scoped scenes, the
@@ -170,10 +171,12 @@ pub(crate) fn scene_subject(tools: &Tools, people: &[String], q: &str, extra: &[
 /// the question with each of the character's lines and the line before it. Each picked line keeps `CHAR_WINDOW` lines
 /// either side, at most `CHAR_LINES_PER_SCENE` lines a scene and `CHAR_K` scenes, within `CHAR_TOKENS`.
 /// The lines are ranked against `rank_q`: the question, or with the vanished fate its search query (`fate.rs`).
+/// With `renames` (`Args::chunk_renames`) a "???" line of a chunk that names it counts as the named speaker's.
 /// Returns (the character as the corpus writes them, excerpts best first).
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn character_scenes(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools, q: &str, rank_q: &str,
-                               max_tokens: u32, extra: &[&str], one_person: bool) -> Option<(String, Excerpts)> {
+                               max_tokens: u32, extra: &[&str], one_person: bool, renames: bool)
+                               -> Option<(String, Excerpts)> {
     if tools.event_in_question(q).is_some() || tools.appearance_question(q).is_some() {
         return None;
     }
@@ -190,7 +193,7 @@ pub(crate) fn character_scenes(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools
         return None;
     }
     let t0 = std::time::Instant::now();
-    let units = ranked_lines(rt, ra, rank_q, &cands, &forms)?;
+    let units = ranked_lines(rt, ra, rank_q, &cands, &forms, renames)?;
     if let Some(target) = trevor::env::non_empty("TREVOR_SCOPED_DEBUG").filter(|v| v != "0").as_deref() {
         let mut by_line: Vec<usize> = Vec::new();
         for (r, _) in &units { if !by_line.contains(r) { by_line.push(*r); } }
@@ -231,9 +234,9 @@ fn pick_excerpts(rt: &Runtime, units: Vec<(usize, usize)>, max_tokens: u32) -> E
 /// gets excerpts of that character's best lines in the event by the reranker, as the character scenes do, instead of
 /// whole scoped scenes ranked by the question. A whether-question ("Is the Black Knight mentioned in the Near Light
 /// event the operator Blacknight") keeps the scoped scenes. Returns (event name, the character as the corpus writes
-/// them, excerpts best first).
+/// them, excerpts best first). `renames` as for `character_scenes`.
 pub(crate) fn scoped_excerpts(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools, q: &str, max_tokens: u32,
-                              extra: &[&str]) -> Option<(String, String, Excerpts)> {
+                              extra: &[&str], renames: bool) -> Option<(String, String, Excerpts)> {
     if crate::theory::asks_whether(q) {
         return None;
     }
@@ -253,24 +256,28 @@ pub(crate) fn scoped_excerpts(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools,
     if cands.is_empty() {
         return None;
     }
-    let units = ranked_lines(rt, ra, q, &cands, &forms)?;
+    let units = ranked_lines(rt, ra, q, &cands, &forms, renames)?;
     let out = pick_excerpts(rt, units, max_tokens);
     (!out.is_empty()).then(|| (ename, name.clone(), out))
 }
 
 /// The lines of `cands` that a form of `forms` speaks, each with the line before it as context, ranked by the reranker
 /// (a cross-encoder reads the question and the line together, so "take her out" can match "assassinating"), best
-/// first, ties by (row, line): (row, line index).
-fn ranked_lines(rt: &mut Runtime, ra: &RuntimeArgs, q: &str, cands: &[usize], forms: &[String])
+/// first, ties by (row, line): (row, line index). With `renames` a line whose label its chunk renames
+/// (`labels::chunk_renames`, "???" -> "Mon3tr") counts as the named speaker's, and the reranker reads the renamed
+/// label ("??? (Mon3tr): ...").
+fn ranked_lines(rt: &mut Runtime, ra: &RuntimeArgs, q: &str, cands: &[usize], forms: &[String], renames: bool)
     -> Option<Vec<(usize, usize)>> {
-    let speaks = |line: &str| line.split_once(':').is_some_and(|(s, _)| s.len() < 60 && forms.contains(&norm(s)));
     let mut units: Vec<(usize, usize)> = Vec::new();
     let mut texts: Vec<String> = Vec::new();
     for &r in cands {
-        let lines: Vec<&str> = rt.store.chunks[r].text.lines().collect();
-        for (i, line) in lines.iter().enumerate().filter(|(_, l)| speaks(l)) {
+        let c = &rt.store.chunks[r];
+        let named = if renames { chunk_renames(&c.chunk_id) } else { None };
+        let lines: Vec<&str> = c.text.lines().collect();
+        for (i, line) in lines.iter().enumerate().filter(|(_, l)| speaks_as(l, forms, named)) {
             units.push((r, i));
-            texts.push(if i > 0 { format!("{}\n{line}", lines[i - 1]) } else { (*line).to_owned() });
+            let unit = if i > 0 { format!("{}\n{line}", lines[i - 1]) } else { (*line).to_owned() };
+            texts.push(match named { Some(m) => rename_lines(&unit, &[m]), None => unit });
         }
     }
     ensure_reranker(rt, ra).ok()?;
@@ -279,6 +286,13 @@ fn ranked_lines(rt: &mut Runtime, ra: &RuntimeArgs, q: &str, cands: &[usize], fo
     let mut ord: Vec<usize> = (0..units.len()).collect();
     ord.sort_by(|&x, &y| sc[y].total_cmp(&sc[x]).then(units[x].cmp(&units[y])));
     Some(ord.into_iter().map(|o| units[o]).collect())
+}
+
+/// Whether `line` is spoken by one of `forms` (folded): its speaker label is one, or `renames` (the chunk's label
+/// renames) gives its label a name that is one ("???: ...Kal'tsit?" with "???" -> "Mon3tr").
+pub(crate) fn speaks_as(line: &str, forms: &[String], renames: Option<&BTreeMap<String, String>>) -> bool {
+    line.split_once(':').is_some_and(|(s, _)| s.len() < 60 && (forms.contains(&norm(s))
+        || renames.and_then(|m| m.get(s)).is_some_and(|n| forms.contains(&norm(n)))))
 }
 
 /// The line study (`--line-study`, measurement only): every line of the corpus outside the generated kinds

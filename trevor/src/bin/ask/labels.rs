@@ -23,12 +23,39 @@ fn label_renames() -> &'static HashMap<String, BTreeMap<String, String>> {
     })
 }
 
+/// Chunks whose "???" speaker label an introduction names (`artifacts/entities/label_renames_chunks.json`,
+/// scripts/label_renames.py, 2026-10-19): chunk id -> "???" -> name. "???" names different people within one story,
+/// so these are scoped to the chunk. Empty (and logged) when missing or unparsable.
+fn chunk_label_renames() -> &'static HashMap<String, BTreeMap<String, String>> {
+    static RENAMES: OnceLock<HashMap<String, BTreeMap<String, String>>> = OnceLock::new();
+    RENAMES.get_or_init(|| {
+        trevor::util::load_json_opt(std::path::Path::new("artifacts/entities/label_renames_chunks.json"))
+            .unwrap_or_default()
+    })
+}
+
+/// The label renames of chunk `chunk_id` ("???" -> "Mon3tr"), if it has any.
+pub(crate) fn chunk_renames(chunk_id: &str) -> Option<&'static BTreeMap<String, String>> {
+    chunk_label_renames().get(chunk_id)
+}
+
 /// A passage of story `story_id` with each renamed speaker label given its name ("Gap-Toothed Girl:" becomes
 /// "Gap-Toothed Girl (Idida):"), so an answer asked for the name can give it (2026-10-19, `--no-label-renames`).
-pub(crate) fn with_label_names(story_id: &str, text: &str) -> String {
-    let Some(m) = label_renames().get(story_id) else { return text.to_owned() };
+/// With `chunk_id` (None under `--no-chunk-renames`) the chunk's own renames apply too ("???:" becomes
+/// "??? (Mon3tr):").
+pub(crate) fn with_label_names(story_id: &str, chunk_id: Option<&str>, text: &str) -> String {
+    let maps: Vec<&BTreeMap<String, String>> = label_renames().get(story_id).into_iter()
+        .chain(chunk_id.and_then(chunk_renames)).collect();
+    rename_lines(text, &maps)
+}
+
+/// `text` with each line whose label one of `maps` renames given its name, the first map that has the label winning.
+pub(crate) fn rename_lines(text: &str, maps: &[&BTreeMap<String, String>]) -> String {
+    if maps.is_empty() {
+        return text.to_owned();
+    }
     text.split('\n')
-        .map(|l| m.iter()
+        .map(|l| maps.iter().flat_map(|m| m.iter())
             .find_map(|(label, name)| l.strip_prefix(label.as_str()).and_then(|r| r.strip_prefix(':'))
                 .map(|r| format!("{label} ({name}):{r}")))
             .unwrap_or_else(|| l.to_owned()))

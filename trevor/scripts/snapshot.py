@@ -79,7 +79,7 @@ PACK = {
     'p2': 'story and group summaries (model stage)',
     'dossiers': 'character dossiers (model stage)',
     'primers': 'primers (model stage), read by the bank seed',
-    'entities': 'identities, deaths, real names, attributes, label renames, extract resume files',
+    'entities': 'identities, deaths, real names, attributes, label renames (story, chunk), extract resume files',
     'topics': 'topics, deep topics, candidates and classifications (model stages)',
     'canon': 'IS ending canon and its resume files (model stages)',
     'chrono': 'chronology, reading guide, dates, gate order, storylines',

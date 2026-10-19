@@ -123,12 +123,14 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
     let synth_q = !a.no_route && flags.asks_synthesis;
     let mut user = String::from("PASSAGES\n");
     let mut texts: Vec<String> = Vec::with_capacity(off + rows.len() + post.len());
-    // Renamed speaker labels get their names (`labels::with_label_names`, `--no-label-renames`).
-    let named = |story_id: &str, text: &str| if a.no_label_renames { text.to_owned() }
-        else { with_label_names(story_id, text) };
+    // Renamed speaker labels get their names (`labels::with_label_names`, `--no-label-renames`), the chunk's own
+    // renames too (`--no-chunk-renames`).
+    let chunk_renames = a.chunk_renames();
+    let named = |story_id: &str, chunk_id: &str, text: &str| if a.no_label_renames { text.to_owned() }
+        else { with_label_names(story_id, chunk_renames.then_some(chunk_id), text) };
     let pre_story = |p: &Pre| p.id.split('#').next().unwrap_or_default().to_owned();
     for (i, p) in first.iter().enumerate() {
-        let text = named(&pre_story(p), &p.text);
+        let text = named(&pre_story(p), &p.id, &p.text);
         user.push_str(&format!("\n[{}] ({})\n{}\n", i + 1, p.label, text));
         texts.push(format!("({})\n{}", p.label, text));
     }
@@ -143,12 +145,12 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
             Some((_, asked, file)) => format!("{label}; this is the file of {file}, whom the question calls {asked}"),
             None => label,
         };
-        let text = named(&c.story_id, &c.text);
+        let text = named(&c.story_id, &c.chunk_id, &c.text);
         user.push_str(&format!("\n[{}] ({label})\n{}\n", i + 1 + off, text));
         texts.push(format!("({label})\n{}", text));
     }
     for (i, p) in post.iter().enumerate() {
-        let text = named(&pre_story(p), &p.text);
+        let text = named(&pre_story(p), &p.id, &p.text);
         user.push_str(&format!("\n[{}] ({})\n{}\n", off + rows.len() + i + 1, p.label, text));
         texts.push(format!("({})\n{}", p.label, text));
     }

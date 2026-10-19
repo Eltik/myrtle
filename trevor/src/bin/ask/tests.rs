@@ -6,7 +6,7 @@ use crate::batch::{batch_items, qid_question};
 use crate::chrono::{Chrono, chronology_for, time_evidence_block};
 use crate::cli::lock_path_from;
 use crate::detect::{HINT_VERBS, asks_identity, asks_origin, asks_person, asks_relation, asks_which_story, asks_scene_with, asks_term, asks_when, term_of};
-use crate::labels::{Names, story_label, typed_owner, with_label_names};
+use crate::labels::{Names, rename_lines, story_label, typed_owner, with_label_names};
 use crate::people::{one_operator, one_operator_wide};
 use crate::terms::{compact, first_sentences};
 
@@ -399,8 +399,41 @@ fn model_lock_defaults_to_the_env_then_tmpdir_then_tmp() {
 #[test]
 fn renamed_speaker_labels_get_their_names_in_their_story_only() {
     let text = "Gap-Toothed Girl: It's got my answer for me, confessor.\nIdida: Dadadeedeeda, I'm called Idida.";
-    let named = with_label_names("act42side_level_act42side_08_beg", text);
+    let named = with_label_names("act42side_level_act42side_08_beg", None, text);
     assert!(named.starts_with("Gap-Toothed Girl (Idida): It's got my answer"), "{named}");
     assert!(named.ends_with("Idida: Dadadeedeeda, I'm called Idida."));
-    assert_eq!(with_label_names("main_1_level_main_01-01_beg", text), text, "another story keeps the label");
+    assert_eq!(with_label_names("main_1_level_main_01-01_beg", None, text), text, "another story keeps the label");
+}
+
+#[test]
+fn chunk_renames_name_the_unknown_label_in_their_chunk_only() {
+    let text = "Amiya: Storing data?\n???: ...Kal'tsit? The rain caresses her palms.\n\
+                Mon3tr: My name is Mon3tr. You gave me this name.\n???s are not labels: kept";
+    let chunk = std::collections::BTreeMap::from([("???".to_owned(), "Mon3tr".to_owned())]);
+    let named = rename_lines(text, &[&chunk]);
+    assert_eq!(named, "Amiya: Storing data?\n??? (Mon3tr): ...Kal'tsit? The rain caresses her palms.\n\
+                       Mon3tr: My name is Mon3tr. You gave me this name.\n???s are not labels: kept");
+    assert_eq!(rename_lines(text, &[]), text, "no renames, the text as it was");
+    // The story's map wins over the chunk's for a label both have.
+    let story = std::collections::BTreeMap::from([("???".to_owned(), "Kal'tsit".to_owned())]);
+    assert!(rename_lines(text, &[&story, &chunk]).contains("??? (Kal'tsit): ...Kal'tsit?"));
+    // Without a chunk id (`--no-chunk-renames`), or in a chunk without renames, "???" stays.
+    let sid = "main_15_level_main_15-18_end";
+    assert_eq!(with_label_names(sid, None, text), text);
+    assert_eq!(with_label_names(sid, Some("main_15_level_main_15-18_end#0099"), text), text);
+}
+
+#[test]
+fn a_renamed_unknown_line_counts_as_the_named_speakers() {
+    use crate::scenes::speaks_as;
+    let forms = vec!["mon3tr".to_owned()];
+    let chunk = std::collections::BTreeMap::from([("???".to_owned(), "Mon3tr".to_owned())]);
+    let line = "???: ...Kal'tsit? The rain caresses her palms.";
+    assert!(!speaks_as(line, &forms, None), "without the chunk's renames the line is nobody's");
+    assert!(speaks_as(line, &forms, Some(&chunk)));
+    assert!(speaks_as("Mon3tr: My name is Mon3tr.", &forms, None));
+    assert!(speaks_as("Mon3tr: My name is Mon3tr.", &forms, Some(&chunk)));
+    assert!(!speaks_as("Amiya: Storing data?", &forms, Some(&chunk)));
+    let other = std::collections::BTreeMap::from([("???".to_owned(), "Kal'tsit".to_owned())]);
+    assert!(!speaks_as(line, &forms, Some(&other)), "renamed to someone else, not Mon3tr's");
 }
