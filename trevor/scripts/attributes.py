@@ -73,7 +73,7 @@ def main():
     rows.sort(key=lambda r: r['name'])
     # Kept as it was when it came out empty or lost more than INCR_MAX_DROP percent of its rows (KEEP_LAST=0: written).
     if not common.write_keep_last(OUT, rows):
-        return
+        sys.exit(3)  # a refused write of a computed output stops the update (a missing input keeps last and exits 0 earlier)
     cov = {k: sum(r[k] is not None for r in rows) for k in ('nation', 'group', 'team', 'gender', 'birthplace', 'race',
                                                               'heightCm', 'infected', 'birthday')}
     print(f"attributes: {len(rows)} operators; set per field {cov}; "

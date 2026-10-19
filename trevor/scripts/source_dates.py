@@ -104,7 +104,7 @@ def main():
                    "scripts/source_dates.py", "dates": dict(sorted(dates.items()))}
     # Kept as it was when no source is dated or more than INCR_MAX_DROP percent lost their date (KEEP_LAST=0: written).
     if not common.write_keep_last(OUT, out, "json", count=lambda d: len(d["dates"]), indent=0):
-        return
+        sys.exit(3)  # a refused write of a computed output stops the update (a missing input keeps last and exits 0 earlier)
     for k in sorted({k for k, _ in kinds}):
         print(f"{k:10s} dated {kinds[(k, True)]:5d} undated {kinds[(k, False)]:5d}")
     print("sources dated", len(dates))

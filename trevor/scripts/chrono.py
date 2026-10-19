@@ -423,7 +423,7 @@ def stage_build():
     # Kept as it was when it came out with no groups or lost more than INCR_MAX_DROP percent of them (KEEP_LAST=0: written).
     if not common.write_keep_last(os.path.join(OUT, 'timeline_v1.json'), out, 'json', count=lambda d: len(d['groups']),
                                   ensure_ascii=False, indent=1):
-        return
+        sys.exit(3)  # a refused write of a computed output stops the update (a missing input keeps last and exits 0 earlier)
     print(f"timeline_v1: {len(groups)} groups ({len(anchor_ids)} anchored), {len(history)} dated history lines")
 
 
@@ -533,7 +533,7 @@ def stage_flashbacks():
                      'depictedYears': sorted({e['year'] for e in dep}),
                      'evidence': [e['line'][:160] for e in dep][:3] + [f['quote'][:160] for f in fb][:3]})
     if not common.write_keep_last(os.path.join(OUT, 'flashbacks.jsonl'), rows):
-        return
+        sys.exit(3)  # a refused write of a computed output stops the update (a missing input keeps last and exits 0 earlier)
     c = collections.Counter(r['tag'] for r in rows)
     print('flashback tags:', dict(c))
     # Eval against the wiki's story-level citations (stage codes), eval only.
@@ -632,7 +632,7 @@ def stage_derive():
             rows.append({'storyId': s_, 'groupId': g, 'year': int(round(base + sign * n)), 'offset': sign * n, 'approximate': approx,
                          'from': round(base, 2), 'basis': basis, 'quote': f['quote'], 'when': f['when']})
     if not common.write_keep_last(os.path.join(OUT, 'derived.jsonl'), rows):
-        return
+        sys.exit(3)  # a refused write of a computed output stops the update (a missing input keeps last and exits 0 earlier)
     print(f'derived: {len(rows)} years', dict(collections.Counter(x["basis"] for x in rows)), 'skipped', dict(skipped))
     # Eval: coarse (the wiki has an entry that year) and precise (the wiki cites this very story under that year).
     w = open(os.path.join(REF, 'timeline.wikitext')).read()

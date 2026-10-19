@@ -146,7 +146,7 @@ def dates():
                     'source': 'EN game data (zone_table, activity_table, stage_table)'})
         prev = ep
     if not common.write_keep_last(os.path.join(CH, 'main_release.json'), eps, 'json', ensure_ascii=False, indent=1):
-        return
+        sys.exit(3)  # a refused write of a computed output stops the update (a missing input keeps last and exits 0 earlier)
     print(f"dates: {len(eps)} episodes; exact {len(exact)}, estimated {sum(e['shown'].startswith('about') for e in eps)}, "
           f"upper bound {sum(e['shown'].startswith('by ') for e in eps)}, unknown {sum(e['global'] is None for e in eps)}; "
           f"Adverse offset median {off / 86400 if off else float('nan'):.2f} days from {len(offs)} episodes")
@@ -278,7 +278,7 @@ def stage_build():
              'no later, most shared recurring speakers); words = script words'}
     if not common.write_keep_last(os.path.join(CH, 'reading_guide.json'), guide, 'json', count=lambda d: len(d['items']),
                                   ensure_ascii=False, indent=1):
-        return
+        sys.exit(3)  # a refused write of a computed output stops the update (a missing input keeps last and exits 0 earlier)
     common.write_keep_last(os.path.join(CH, 'first_appearance.json'), first, 'json', ensure_ascii=False, sort_keys=True)  # sorted: the key order no longer follows the hash seed
     top = sorted((i for i in items if i['kind'] == 'event'), key=lambda i: -i['prereqOf'])[:8]
     print(f"guide: {len(items)} entries ({sum(i['kind'] == 'main' for i in items)} main, {sum(i['kind'] == 'event' for i in items)} events); "

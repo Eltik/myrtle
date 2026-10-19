@@ -51,7 +51,7 @@ def main():
                     break
     # Kept as it was when the corpus gave no renames at all or lost more than INCR_MAX_DROP percent (KEEP_LAST=0: written).
     if not common.write_keep_last(OUT, out, 'json', ensure_ascii=False, indent=1, sort_keys=True):
-        return
+        sys.exit(3)  # a refused write of a computed output stops the update (a missing input keeps last and exits 0 earlier)
     pairs = sorted((lab, name) for m in out.values() for lab, name in m.items())
     print(f'label renames: {len(pairs)} in {len(out)} stories -> {os.path.relpath(OUT, ROOT)}: '
           + ', '.join(f'{a} -> {b}' for a, b in pairs))

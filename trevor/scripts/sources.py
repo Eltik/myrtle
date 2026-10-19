@@ -158,7 +158,7 @@ def main():
             seen.add(u['storyId']); out.append(u)
     # Kept as it was when it came out empty or lost more than INCR_MAX_DROP percent of its units (KEEP_LAST=0: written).
     if not common.write_keep_last(OUT, out):
-        return
+        sys.exit(3)  # a refused write of a computed output stops the update (a missing input keeps last and exits 0 earlier)
     c = collections.Counter(u['groupId'] for u in out)
     w = collections.Counter()
     for u in out:

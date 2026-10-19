@@ -322,12 +322,12 @@ def stage_build():
                              'basis': 'a full name whose first word is the only identity name with that first word; not stated'})
         if not common.write_keep_last(os.path.join(OUT, 'identities.v2.json'), {'identities': ids, 'inferred': inferred}, 'json',
                                       count=lambda d: len(d['identities']), ensure_ascii=False, indent=1):
-            return
+            sys.exit(3)  # a refused write of a computed output stops the update (a missing input keeps last and exits 0 earlier)
         print(f"identities.v2.json: {len(ids)} identities, {len(inferred)} labelled inferences "
               f"({sum(1 for x in inferred if x['relation'] == 'full_name')} full names)")
         return
     if not common.write_keep_last(os.path.join(OUT, 'identities.json'), ids, 'json', ensure_ascii=False, indent=1):
-        return
+        sys.exit(3)  # a refused write of a computed output stops the update (a missing input keeps last and exits 0 earlier)
     big = [i for i in ids if len(i['names']) > 6]
     # Many names is not an error in itself: Fiammetta went by many codenames (review, 2026-09-27).
     print(f"identities: {len(ids)} from {len(parent)} names; labelled by a speaker: {sum(i['speaksInChunks'] > 0 for i in ids)}; "

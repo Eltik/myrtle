@@ -297,7 +297,7 @@ def stage_build():
                         later[0] if later else None}
     # Kept as it was when the table came out empty or lost more than INCR_MAX_DROP percent of its rows (KEEP_LAST=0: written).
     if not common.write_keep_last(os.path.join(ENT, 'deaths.jsonl'), events.values()):
-        return
+        sys.exit(3)  # a refused write of a computed output stops the update (a missing input keeps last and exits 0 earlier)
     common.write_json_atomic(os.path.join(ENT, 'deaths_unnamed.json'),
                              [{'storyId': s, 'kind': k, 'count': n} for (s, k), n in sorted(unnamed.items())], indent=0)
     c = collections.Counter(e['kind'] for e in events.values())

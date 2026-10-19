@@ -215,7 +215,7 @@ def main():
     # Both files are kept as they were when the units came out empty or lost more than INCR_MAX_DROP percent
     # (KEEP_LAST=0: written); p4x_units.jsonl is written through a temporary file and a rename.
     if not common.write_keep_last(os.path.join(OUT, 'units.jsonl'), units):
-        return
+        sys.exit(3)  # a refused write of a computed output stops the update (a missing input keeps last and exits 0 earlier)
     tmp = os.path.join(OUT, 'p4x_units.jsonl.tmp')
     with open(tmp, 'w') as f:
         f.write(base)
