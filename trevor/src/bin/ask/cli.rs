@@ -307,7 +307,7 @@ pub(crate) struct Args {
     /// (scripts/gametext.py).
     #[arg(long)]
     pub(crate) no_game_text: bool,
-    /// The question-only detectors (IS ending, time gap, appearances, cross reference, design basis) for the model
+    /// The question-only detectors (IS ending, time gap, appearances, cross reference) for the model
     /// router only, as before 2026-10-19: under `--router keywords` (the mid profiles, the cpu rung) they did not run,
     /// so "What chapters does Elysium appear in?" was answered from passages there; and a why or how question about
     /// appearing ("Why did Priestess show up in chapter 15?") went to the appearance index under the model router.
@@ -322,12 +322,6 @@ pub(crate) struct Args {
     /// the `cross_ref` tool before the router, with no router line.
     #[arg(long)]
     pub(crate) no_cross_ref_trigger: bool,
-    /// Turn off the design-inspiration tool: a question with a design word ("based off an animal",
-    /// "inspired by", "motif", "design inspiration") whose content word is an inferred subject or an operator name in
-    /// artifacts/entities/design_infer.jsonl (scripts/design_infer.py: deduced from the game data, checked by a second
-    /// model) is answered, before the router, by the `design_basis` tool, both readings, labelled as Trevor's inference.
-    #[arg(long)]
-    pub(crate) no_design_basis: bool,
     /// Turn off IS-ending passages: a question naming an Integrated Strategies run and one of its
     /// endings (number, ordinal or name) or its endbooks is answered from that ending's scene and endbook stories, with
     /// the game's ending order, without the router.

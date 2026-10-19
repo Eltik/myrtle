@@ -402,34 +402,7 @@ fn cross_ref_lists_bosses_by_operator() {
     assert!(matches!(t.cross_ref("everything"), Err(ToolError::BadArg { .. })));
 }
 
-#[test]
-fn design_basis_answers_both_readings_and_only_design_questions() {
-    let mut t = tools();
-    assert_eq!(t.design_basis("what operator is based off an animal with phantom as part of its name"), None);
-    t.attributes = Some(vec![json!({"name": "Lucilla"}), json!({"name": "Phantom"}), json!({"name": "Tragodia"}),
-                             json!({"name": "Kirara"})]);
-    let sub = |x: &str| json!({"subject": x, "category": "animal", "why": "clues.", "confidence": "medium",
-                               "evidence": [{"id": "E3", "source": "operator file, Profile", "text": "a line"}]});
-    t.design_basis = Some(vec![
-        json!({"operator": "Kirara", "alters": [], "subjects": [sub("phantom jellyfish")]}),
-        json!({"operator": "Lucilla", "alters": [], "subjects": []}),
-        json!({"operator": "Phantom", "alters": ["Tragodia"], "subjects": [sub("The Phantom of the Opera")]}),
-        json!({"operator": "Tragodia", "alters": ["Phantom"], "subjects": [sub("Dionysus")]})]);
-    let out = t.design_basis("what operator is based off an animal with phantom as part of its name").unwrap();
-    assert!(out.starts_with("Trevor's inference from the game data") && !out.contains("wiki"));
-    assert!(out.contains("- Kirara: likely draws on phantom jellyfish (animal, medium confidence)"));
-    assert!(out.contains("- Phantom: likely draws on The Phantom of the Opera")
-            && out.contains("(the alternate operator of Phantom)"));
-    assert_eq!(out.matches("- Phantom:").count(), 1);
-    assert_eq!(t.design_basis("who is phantom"), None);
-    assert_eq!(t.design_basis("what is the kitchen of rhodes island based on"), None);
-    // An operator with nothing inferred says so instead of guessing.
-    assert!(t.design_basis("what animal is lucilla based on").unwrap()
-        .contains("- Lucilla: the game data does not point"));
-}
-
-/// The wiki is an eval reference only: no serving code names its directory, and loading the tables never
-/// reads it.
+/// The wiki is an eval reference only: no serving code names its directory.
 #[test]
 fn serving_code_never_opens_eval_reference() {
     let dir = concat!("eval/", "reference");
@@ -445,7 +418,6 @@ fn serving_code_never_opens_eval_reference() {
                 let text = std::fs::read_to_string(&p).unwrap();
                 if text.contains(dir)
                     || text.contains(concat!("wiki_", "cache"))
-                    || text.contains(concat!("design_basis", ".jsonl"))
                     || text.contains(concat!("wiki_", "deceased"))
                     || text.contains(concat!("wiki_", "status")) {
                     offenders.push(p.display().to_string());
@@ -454,13 +426,6 @@ fn serving_code_never_opens_eval_reference() {
         }
     }
     assert!(offenders.is_empty(), "serving code names the wiki eval references: {offenders:?}");
-    let root = std::env::temp_dir().join(format!("trevor-ref-test-{}", std::process::id()));
-    std::fs::create_dir_all(root.join(dir)).unwrap();
-    std::fs::write(root.join(dir).join(concat!("design_basis", ".jsonl")),
-                   "{\"operator\": \"Lucilla\", \"basis\": [\"jelly\"]}\n").unwrap();
-    let t = Tools::load(&root);
-    assert!(t.design_basis.is_none());
-    std::fs::remove_dir_all(&root).unwrap();
 }
 
 #[test]

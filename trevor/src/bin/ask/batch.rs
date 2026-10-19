@@ -87,7 +87,6 @@ pub(crate) fn detect_only(a: &Args, tools: &Tools, b: &Path) -> Result<()> {
         if let Some(r) = is_ending_route(q, a, t) { f.push(format!("is_ending={}", serde_json::to_string(&r.args)?)); }
         if let Some(c) = t.appearance_question(q) { f.push(format!("appearances={c}")); }
         if let Some(x) = t.cross_ref_question(q) { f.push(format!("cross_ref={x}")); }
-        if t.design_basis(q).is_some() { f.push("design_basis".into()); }
         if let Some(term) = term_of(q) { f.push(format!("term={term}")); }
         if asks_relation(q) {
             let people = store_rt.as_ref().map_or(0, |rt| people_named(rt, t, q).len());

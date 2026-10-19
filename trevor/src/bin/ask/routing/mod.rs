@@ -83,9 +83,7 @@ pub(crate) async fn route_question(q: &str, a: &Args, tools: &Tools, llm: Option
         let pre = (!a.no_appearances && reason).then(|| tools.appearance_question(q)).flatten()
             .map(|c| Route::new("appearances", &[("character", c.as_str())]))
             .or_else(|| (!a.no_cross_ref_trigger).then(|| tools.cross_ref_question(q)).flatten()
-                .map(|t| Route::new("cross_ref", &[("table", t)])))
-            .or_else(|| (!a.no_design_basis && tools.design_basis(q).is_some())
-                .then(|| Route::new("design_basis", &[("question", q)])));
+                .map(|t| Route::new("cross_ref", &[("table", t)])));
         if let Some(route) = pre {
             if let Ok(text) = tools.run(&route) {
                 return Ok(Routed {

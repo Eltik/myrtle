@@ -16,7 +16,6 @@ mod reading;
 mod canon;
 mod deaths;
 mod appearances;
-mod design;
 mod operators;
 #[cfg(test)]
 mod tests;
@@ -245,11 +244,6 @@ pub struct Tools {
     /// `{"groups": {id: {name, kind, episode, order}}, "characters": {name: {forms, speaks, mentioned, namedIn}}}`.
     /// Read by the `appearances` tool.
     pub appearances: Option<Value>,
-    /// Operator design inspirations inferred from the game data (`scripts/design_infer.py`): one row per
-    /// operator, `{operator, charId, alters, subjects: [{subject, category, why, confidence, evidence}]}`, each subject
-    /// checked by a second model against the evidence it cites. Read by the `design_basis` tool, labelled as Trevor's
-    /// inference.
-    pub design_basis: Option<Vec<Value>>,
     /// Deep topic entries (`scripts/topic_deep.py`): topic name to the judged entry's served text
     /// (a map-reduce over the story groups, operator files, game records and dossiers naming the topic).
     pub deep_topics: HashMap<String, String>,
@@ -339,7 +333,6 @@ impl Tools {
             }
         }
         t.appearances = load_json_opt::<Value>(&root.join("artifacts/appearances/appearances.json"));
-        t.design_basis = load_jsonl_opt::<Value>(&root.join("artifacts/entities/design_infer.jsonl")).filter(|v| !v.is_empty());
         for d in load_jsonl_opt::<Value>(&root.join("artifacts/topics/deep.jsonl")).unwrap_or_default() {
             if let (Some(t_), Some(text)) = (d["topic"].as_str(), d["served"].as_str()) {
                 t.deep_topics.insert(t_.to_owned(), text.to_owned());
@@ -454,10 +447,6 @@ impl Tools {
             "operator_filter" => self.operator_filter(&filter_from_args(r)?),
             "cross_ref" => self.cross_ref(r.arg("table")?),
             "appearances" => self.appearances(r.arg("character")?),
-            "design_basis" => self.design_basis(r.arg("question")?)
-                .ok_or_else(|| ToolError::NotFound {
-                    what: "design inspiration", name: r.arg("question").unwrap_or_default().to_owned()
-                }),
             // The model router can write {"run": "all"} for "any of the IS endings": treated as no run.
             "canon" => self.canon(r.opt("run")
                 .filter(|v| !matches!(norm(v).as_str(), "all" | "any" | "every" | "all runs"))),

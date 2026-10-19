@@ -2179,6 +2179,8 @@ Measured on 15 design questions (`ian11`, Lucilla, Kirara, Phantom, the jellyfis
 
 **Decision.** Removed: `scripts/design_infer.py`, `scripts/design_basis.py` (the refresher of the wiki trivia answer key it was scored against), the `design` and `design_tiles` passes of `scripts/art_captions.py`, and the design steps of `update.sh`'s step 4b (Gemma gen, Qwen check, the vision tile pass, evidence and build). The results above are the record; the last outputs stay on disk (`artifacts/entities/design_*.jsonl`, `artifacts/art/design.jsonl` and `design_tiles.jsonl`, `eval/reference/design_basis.jsonl`).
 
+2026-10-19: the Rust consumer is removed too (`src/tools/design.rs`, the `design_basis` tool, its pre-router detector and `--no-design-basis`), since `artifacts/entities/design_infer.jsonl` no longer exists and the load log printed `design_infer.jsonl: missing` on every start; `--route-only` over routes and the five eval sets is byte-identical to the build before.
+
 ## Embeddings
 
 Embedder models, ONNX exports, INT8 and fp32, fine-tuning, re-embedding. The fp32 re-embed and its guard are documented in full in [trevor-reembed.md](trevor-reembed.md).
