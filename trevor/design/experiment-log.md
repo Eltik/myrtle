@@ -1424,6 +1424,21 @@ rebuild after a stage with progress ran (build-units for P4 and P4x). These are 
 runs the same stages on 3 CPU cores (section 5 of `trevor-memory-budget.md`), so they bound the box from below.
 **Decision.** The runner is proven on this machine; the window and the VPS remain to be run for real.
 
+### 2026-10-19 night: the opt-in scene flags measured on both profiles (no gain)
+
+**Tried.** `--react-verbs --scene-subject` (opt-in since aa2cdd18) against the defaults, one client,
+`--no-cache-prompt`: E2B `mid` on the 35 probe and 120 real-probe questions plus the two Kal'tsit questions (157),
+and the 12B `full` on the 35 probe questions plus the same two (37). The binary carried the vanish rule (a82dc075)
+in both arms.
+**Result.** E2B: 156 of 157 answers identical; the one difference is "How does Mon3tr react when she wakes up after
+Kal'tsit dies", a decline in both arms worded differently. 12B: 36 of 37 identical; the same question differs, and
+both arms answer from the Episode 15 disappearance and the Episode 17 report, neither from the waking scene
+(`main_15-18_end#0007`), which the flags do not bring into the prompt (among Mon3tr's reranked lines it sits 29th
+with the flags on against 19th off; there are 6 excerpt slots). No win, no loss, on either model.
+**Decision.** The flags stay opt-in. The waking scene needs a lever of its own: its speaker is "???" until "My name
+is Mon3tr" and the text never says "wake", so neither retrieval nor the character-scene rerank reaches it; a
+chunk-scoped label rename for "???" followed by a self-introduction is the candidate, story-scoped is unsafe.
+
 ## Entities and topics
 
 Identities, names and aliases, topics and topic summaries, dossiers, canon evidence for the Integrated Strategies endings, deaths, places, organisations, operator data.
