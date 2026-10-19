@@ -181,16 +181,17 @@ about {who}.";
 
 /// The vanished fate (`fate.rs`, `--no-vanish-rule`), when the deaths table has no row for the character at all, with
 /// `{who}` filled in.
-pub(crate) const VANISH_RULE: &str = " Trevor's deaths table records no death for {who}; the story text may describe a \
+/// Neither names the deaths table: the 12B copied "found by Trevor's deaths table" into an answer (2026-10-19).
+pub(crate) const VANISH_RULE: &str = " No story line records a death for {who}; the story text may describe a \
 disappearance instead. Say first that the text records no death for {who}, then what the passages do describe about \
 {who} (a disappearance, a loss, a return), with citations. Do not offer a theory, and say that {who} came back or was \
 revived only where a passage says so.";
 /// The vanished fate with later reports of the death: " Passages [a] to [b] are" (or " Passage [a] is") then this.
-pub(crate) const VANISH_REPORT_TAIL: &str = " where Trevor's deaths table finds a later report that {who} is dead; the \
-table records no scene in which {who} dies, and the story text may describe a disappearance instead. Say first that \
-the text shows no scene of {who}'s death, then what the passages do describe about {who} (a disappearance, a loss, \
-the report and who makes it, a return), with citations. Do not offer a theory, and say that {who} came back or was \
-revived only where a passage says so.";
+pub(crate) const VANISH_REPORT_TAIL: &str = " a later report that {who} is dead; no story line shows a scene in which \
+{who} dies, and the story text may describe a disappearance instead. Say first that the text shows no scene of \
+{who}'s death, then what the passages do describe about {who} (a disappearance, a loss, the report and who makes it, \
+a return), with citations. Do not offer a theory, and say that {who} came back or was revived only where a passage \
+says so.";
 
 /// The labelled theory (`theory.rs`): the second ask of a declined yes/no question whose passages hold hints.
 pub(crate) const THEORY_RULE: &str = " The passages do not state the answer to this question outright, but the lines \

@@ -1395,8 +1395,8 @@ rule changes 18 prompts, all with the rule, 0 in the first four sets: discord 9,
 away) and discord 85 ("Deathless Black Snake", a death word inside a name); discord 267 (Eyjafjalla "half-dead") is
 off the question's point. Two first cuts were refuted on the scan: the six-term list (above) and a single name used
 only as a possessive (discord 10, "Was Crownslayer's teacher killed", took Crownslayer).
-**Decision.** Default on, pending the model window: the two questions above, discord 138 ("Does [Kal'tsit] actually
-[die in chapter 15]?") and Beagle (discord 68), on E2B mid, rule on against `--no-vanish-rule`. The waking scene still
+**Decision (stub).** Default on, pending the model window: the two questions above, discord 138 ("Does [Kal'tsit] actually
+[die in chapter 15]?") and Beagle (discord 68), rule on against `--no-vanish-rule` (result below). The waking scene still
 needs its own lift (the chunk-scoped "???" label rename noted above).
 **Code.** `src/bin/ask/fate.rs` (`vanished_subject`, `VANISH_TERMS`, 2 tests), `src/bin/ask/answer/mod.rs`,
 `src/bin/ask/answer/generate.rs`, `src/bin/ask/prompts.rs` (VANISH_RULE, VANISH_REPORT_TAIL), `src/bin/ask/scenes.rs`
@@ -1408,6 +1408,20 @@ words: "her mom's stuff ... when she passed away") unless a death word attaches 
 same seven sets, 1,637 prompts per arm: against a82dc075 exactly 2 prompts change (discord 85, trivia t093), both
 byte-identical to its `--no-vanish-rule` form; the other 16 are as a82dc075 rendered them; a82dc075 rerun matches its
 earlier dumps; cargo test (149) and clippy exit 0, route-check 64/64.
+**Model window (the four questions, rule on against `--no-vanish-rule`, frozen a82dc075 binary, `--no-cache-prompt`).**
+E2B mid: the Kal'tsit question goes from a decline to "The text shows no scene of Kal'tsit's death [1]" plus Closure's
+way of bringing her back (the Sarcophagus, her original data, the base-level code) [1]; Mon3tr still declines (the
+waking scene is not retrieved); the Beagle question goes from nonsense ("whether Beagle liked to die") to "The text
+records no death for Beagle [1]" and her record; discord 138 is the deaths route both ways (unchanged). 12B full: the
+Kal'tsit question goes from a decline (off: injured against Theresis, "back" later, "they do not state that she died")
+to the disappearance with the jacket left on the deck [5], the report, Closure's method and her return [17]; Mon3tr
+goes from a decline to the disappearance plus Mon3tr's "the Doctor needed time to accept the loss" and "since she
+awoke" lines [5], still not the waking scene itself; Beagle answered either way. 3 of 4 better on each model, 0 worse.
+One wart: the 12B wrote "A report stating that Kal'tsit is dead is found by Trevor's deaths table", copying the system
+prompt; VANISH_RULE and VANISH_REPORT_TAIL no longer name the table ("no story line shows a scene in which X dies"),
+checked by the 12B scorecard of the final binary (below). The deaths rule's own wording (DEATH_RULE_TAIL) is
+unchanged: 0 of the earlier runs' answers echo it.
+**Decision.** Default on, confirmed.
 
 ### 2026-10-19: CPU-only throughput of E2B and the 12B (step 1 of the self-contained deployment)
 
