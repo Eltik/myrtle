@@ -46,9 +46,7 @@ fn main() -> Result<()> {
             .collect();
         println!(
             "{}",
-            serde_json::to_string_pretty(
-                &serde_json::json!({"query": a.query, "ms": ms, "hits": rows})
-            )?
+            serde_json::to_string_pretty(&serde_json::json!({"query": a.query, "ms": ms, "hits": rows}))?
         );
         return Ok(());
     }
@@ -61,12 +59,7 @@ fn main() -> Result<()> {
     let rank = |r: Option<usize>| r.map_or_else(|| "-".to_owned(), |r| r.to_string());
     for (i, h) in hits.iter().enumerate() {
         let c = &rt.store.chunks[h.row];
-        let text: String = c
-            .text
-            .replace('\n', " / ")
-            .chars()
-            .take(a.snippet)
-            .collect();
+        let text: String = c.text.replace('\n', " / ").chars().take(a.snippet).collect();
         println!(
             "\n{:>2}. {:.4}  {}  lines {}-{}  [dense {} | bm25 {} | fused {}]\n    {text}",
             i + 1,

@@ -34,9 +34,18 @@ impl Routed {
     /// What a retrieval route adds before the retrieved passages, as `--route-only` shows it: " (topic passage: X)",
     /// " (dossier passage: X)", " (game data: X)", each when present.
     pub(crate) fn passage_notes(&self) -> String {
-        let topic = self.topic.as_ref().map_or(String::new(), |t| format!(" (topic passage: {})", t.topic));
-        let dossier = self.dossier.as_ref().map_or(String::new(), |d| format!(" (dossier passage: {d})"));
-        let game = self.game.as_ref().map_or(String::new(), |g| format!(" (game data: {g})"));
+        let topic = self
+            .topic
+            .as_ref()
+            .map_or(String::new(), |t| format!(" (topic passage: {})", t.topic));
+        let dossier = self
+            .dossier
+            .as_ref()
+            .map_or(String::new(), |d| format!(" (dossier passage: {d})"));
+        let game = self
+            .game
+            .as_ref()
+            .map_or(String::new(), |g| format!(" (game data: {g})"));
         format!("{topic}{dossier}{game}")
     }
 }
@@ -49,8 +58,15 @@ pub(crate) async fn route_question(q: &str, a: &Args, tools: &Tools, llm: Option
     if !a.no_route && !a.no_appearance_order {
         if let Some(oq) = crate::appear::order_question(q, tools) {
             if let Some(text) = crate::appear::order_text(tools, &oq, None, None) {
-                return Ok(Routed { route: crate::appear::route(&oq), text: Some(text), error: None, topic: None,
-                                   dossier: None, game: None, ms: started.elapsed().as_secs_f64() * 1000.0 });
+                return Ok(Routed {
+                    route: crate::appear::route(&oq),
+                    text: Some(text),
+                    error: None,
+                    topic: None,
+                    dossier: None,
+                    game: None,
+                    ms: started.elapsed().as_secs_f64() * 1000.0,
+                });
             }
         }
     }
@@ -58,8 +74,15 @@ pub(crate) async fn route_question(q: &str, a: &Args, tools: &Tools, llm: Option
     // answers whether a character speaks or is named in an event the question names.
     if !a.no_route && !a.no_event_mention {
         if let Some(text) = tools.event_mention(q) {
-            return Ok(Routed { route: Route::new("appearances", &[("question", q)]), text: Some(text), error: None,
-                               topic: None, dossier: None, game: None, ms: started.elapsed().as_secs_f64() * 1000.0 });
+            return Ok(Routed {
+                route: Route::new("appearances", &[("question", q)]),
+                text: Some(text),
+                error: None,
+                topic: None,
+                dossier: None,
+                game: None,
+                ms: started.elapsed().as_secs_f64() * 1000.0,
+            });
         }
     }
     // Detectors that read the question only, before the router: every router line added for a tool moved
@@ -69,14 +92,28 @@ pub(crate) async fn route_question(q: &str, a: &Args, tools: &Tools, llm: Option
     if detectors && !a.no_route {
         let ms = || started.elapsed().as_secs_f64() * 1000.0;
         if let Some(route) = is_ending_route(q, a, tools) {
-            return Ok(Routed { route, text: None, error: None, topic: None, dossier: None, game: None, ms: ms() });
+            return Ok(Routed {
+                route,
+                text: None,
+                error: None,
+                topic: None,
+                dossier: None,
+                game: None,
+                ms: ms(),
+            });
         }
         // "What's going on at the beginning of Ch 10?" (`--no-event-part-recap`, `part_recap.rs`): the summary of the
         // event's first or last story; a part the tables cannot serve goes on to the router as before.
         if let Some(route) = part_recap::part_recap_route(q, a, tools) {
             if let Ok(text) = tools.run(&route) {
                 return Ok(Routed {
-                    route, text: Some(text), error: None, topic: None, dossier: None, game: None, ms: ms()
+                    route,
+                    text: Some(text),
+                    error: None,
+                    topic: None,
+                    dossier: None,
+                    game: None,
+                    ms: ms(),
                 });
             }
         }
@@ -84,20 +121,38 @@ pub(crate) async fn route_question(q: &str, a: &Args, tools: &Tools, llm: Option
         // "the time skip from chapter 8 to chapter 9" as a reading-order comparison.
         if !a.no_time_gap && crate::timegap::time_gap_events(q, tools, crate::chrono::load_chrono_cached()).is_some() {
             return Ok(Routed {
-                route: Route::retrieve(), text: None, error: None, topic: None, dossier: None, game: None, ms: ms()
+                route: Route::retrieve(),
+                text: None,
+                error: None,
+                topic: None,
+                dossier: None,
+                game: None,
+                ms: ms(),
             });
         }
         // "Why did Priestess show up in chapter 15?" asks for a reason, not a list (`--keyword-detectors-v1` lets it
         // through, as before 2026-10-19).
         let reason = a.keyword_detectors_v1 || !matches!(norm(q).split(' ').next(), Some("why" | "how"));
-        let pre = (!a.no_appearances && reason).then(|| tools.appearance_question(q)).flatten()
+        let pre = (!a.no_appearances && reason)
+            .then(|| tools.appearance_question(q))
+            .flatten()
             .map(|c| Route::new("appearances", &[("character", c.as_str())]))
-            .or_else(|| (!a.no_cross_ref_trigger).then(|| tools.cross_ref_question(q)).flatten()
-                .map(|t| Route::new("cross_ref", &[("table", t)])));
+            .or_else(|| {
+                (!a.no_cross_ref_trigger)
+                    .then(|| tools.cross_ref_question(q))
+                    .flatten()
+                    .map(|t| Route::new("cross_ref", &[("table", t)]))
+            });
         if let Some(route) = pre {
             if let Ok(text) = tools.run(&route) {
                 return Ok(Routed {
-                    route, text: Some(text), error: None, topic: None, dossier: None, game: None, ms: ms()
+                    route,
+                    text: Some(text),
+                    error: None,
+                    topic: None,
+                    dossier: None,
+                    game: None,
+                    ms: ms(),
                 });
             }
         }
@@ -107,29 +162,78 @@ pub(crate) async fn route_question(q: &str, a: &Args, tools: &Tools, llm: Option
         RouterKind::Keywords => {
             let (route, text) = keyword_route(q, tools).map_or((Route::retrieve(), None), |(r, t)| (r, Some(t)));
             return Ok(Routed {
-                route, text, error: None, topic: None, dossier: None, game: None,
-                ms: started.elapsed().as_secs_f64() * 1000.0
+                route,
+                text,
+                error: None,
+                topic: None,
+                dossier: None,
+                game: None,
+                ms: started.elapsed().as_secs_f64() * 1000.0,
             });
         }
-        RouterKind::Model => router::route_model_with(
-            llm.context("the model router needs a llama-server")?, q, &router_prompt(a)).await?,
+        RouterKind::Model => {
+            router::route_model_with(
+                llm.context("the model router needs a llama-server")?,
+                q,
+                &router_prompt(a),
+            )
+            .await?
+        }
     };
     let ms = started.elapsed().as_secs_f64() * 1000.0;
-    let dossier = tools.new_dossier(q).filter(|_| dossier_allowed(q, a, Some(&route))).map(|d| d.topic);
+    let dossier = tools
+        .new_dossier(q)
+        .filter(|_| dossier_allowed(q, a, Some(&route)))
+        .map(|d| d.topic);
     let game = tools.game_data(q).map(|g| g.topic);
     if route.tool == "topic" {
         if a.no_topics {
-            return Ok(Routed { route, text: None, error: None, topic: None, dossier: None, game: None, ms });
+            return Ok(Routed {
+                route,
+                text: None,
+                error: None,
+                topic: None,
+                dossier: None,
+                game: None,
+                ms,
+            });
         }
-        let r = route.args.get("topic").map_or(Err(ToolError::MissingArg("topic")), |t| tools.topic(t));
-        let (topic, error) = match r { Ok(p) => (Some(p), None), Err(e) => (None, Some(e)) };
-        return Ok(Routed { route, text: None, error, topic, dossier, game, ms });
+        let r = route
+            .args
+            .get("topic")
+            .map_or(Err(ToolError::MissingArg("topic")), |t| tools.topic(t));
+        let (topic, error) = match r {
+            Ok(p) => (Some(p), None),
+            Err(e) => (None, Some(e)),
+        };
+        return Ok(Routed {
+            route,
+            text: None,
+            error,
+            topic,
+            dossier,
+            game,
+            ms,
+        });
     }
-    let (text, error) = if route.is_retrieve() { (None, None) } else {
-        match tools.run(&route) { Ok(t) => (Some(t), None), Err(e) => (None, Some(e)) }
+    let (text, error) = if route.is_retrieve() {
+        (None, None)
+    } else {
+        match tools.run(&route) {
+            Ok(t) => (Some(t), None),
+            Err(e) => (None, Some(e)),
+        }
     };
     let (dossier, game) = if text.is_none() { (dossier, game) } else { (None, None) };
-    Ok(Routed { route, text, error, topic: None, dossier, game, ms })
+    Ok(Routed {
+        route,
+        text,
+        error,
+        topic: None,
+        dossier,
+        game,
+        ms,
+    })
 }
 
 /// `--route-only`: the keyword router prints as before (the table text, or RETRIEVAL); the model router
@@ -142,7 +246,10 @@ pub(crate) fn print_route_only(q: &str, a: &Args, r: &Routed) -> Result<()> {
         Some(t) => println!("{t}"),
         None => {
             let guard = if is_open_listing(q) { " (listing guard)" } else { "" };
-            let why = r.error.as_ref().map_or(String::new(), |e| format!(" (tool failed: {e})"));
+            let why = r
+                .error
+                .as_ref()
+                .map_or(String::new(), |e| format!(" (tool failed: {e})"));
             println!("RETRIEVAL{guard}{why}{}", r.passage_notes());
         }
     }

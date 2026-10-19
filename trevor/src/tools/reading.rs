@@ -7,15 +7,26 @@ use super::{Edge, ToolError, ToolResult, Tools, s};
 
 impl Tools {
     pub(super) fn guide_items(&self) -> Result<&Vec<Value>, ToolError> {
-        self.guide.as_ref().and_then(|g| g["items"].as_array()).ok_or(ToolError::Missing("reading_guide.json"))
+        self.guide
+            .as_ref()
+            .and_then(|g| g["items"].as_array())
+            .ok_or(ToolError::Missing("reading_guide.json"))
     }
 
     /// The reading-guide entry of an event or episode.
     pub(super) fn guide_item(&self, event: &str) -> Result<&Value, ToolError> {
         let items = self.guide_items()?;
-        let gid = self.resolve_event(event)?["groupId"].as_str().unwrap_or_default().to_owned();
-        items.iter().find(|i| i["groupId"].as_str() == Some(gid.as_str()))
-            .ok_or_else(|| ToolError::NotFound { what: "reading-guide entry", name: event.to_owned() })
+        let gid = self.resolve_event(event)?["groupId"]
+            .as_str()
+            .unwrap_or_default()
+            .to_owned();
+        items
+            .iter()
+            .find(|i| i["groupId"].as_str() == Some(gid.as_str()))
+            .ok_or_else(|| ToolError::NotFound {
+                what: "reading-guide entry",
+                name: event.to_owned(),
+            })
     }
 
     /// Every main episode and event in Trevor's in-world order (chronology v1).
@@ -24,33 +35,54 @@ impl Tools {
         // The main story is its own spine (episode order is in-world order). Episodes 0 to 9 carry only an
         // upper bound, so sorting them among events by year would put the Chernobog arc after 1097 side
         // events; how they interleave with early events is not stated, so the two lists are kept apart.
-        let key = |g: &&Value| (g["storylineYear"].as_f64().unwrap_or(9999.0), g["chapter"].as_u64().unwrap_or(0),
-                                g["releaseTime"].as_i64().unwrap_or(0));
+        let key = |g: &&Value| {
+            (
+                g["storylineYear"].as_f64().unwrap_or(9999.0),
+                g["chapter"].as_u64().unwrap_or(0),
+                g["releaseTime"].as_i64().unwrap_or(0),
+            )
+        };
         let mut mains: Vec<&Value> = self.groups.values().filter(|g| g["chapter"].is_u64()).collect();
         mains.sort_by_key(|g| g["chapter"].as_u64().unwrap_or(0));
-        let mut events: Vec<&Value> = self.groups.values()
+        let mut events: Vec<&Value> = self
+            .groups
+            .values()
             .filter(|g| !g["chapter"].is_u64() && !g["groupId"].as_str().unwrap_or_default().starts_with("story_"))
             .collect();
         events.sort_by(|a, b| {
             let (x, y) = (key(a), key(b));
             x.0.total_cmp(&y.0).then(x.1.cmp(&y.1)).then(x.2.cmp(&y.2))
         });
-        let records = self.groups.values()
+        let records = self
+            .groups
+            .values()
             .filter(|g| g["groupId"].as_str().unwrap_or_default().starts_with("story_"))
             .count();
         let line = |g: &Value| {
             let bound = g["yearBound"].as_str().map_or(String::new(), |b| format!("{b} "));
-            let exc = g["candidateException"]["year"].as_i64()
+            let exc = g["candidateException"]["year"]
+                .as_i64()
                 .map_or(String::new(), |y| format!("; its own dated scenes suggest {y}"));
-            format!("{}: {bound}about {:.0} ({}{exc})", g["name"].as_str().unwrap_or_default(),
-                    g["storylineYear"].as_f64().unwrap_or(0.0), g["basis"].as_str().unwrap_or_default())
+            format!(
+                "{}: {bound}about {:.0} ({}{exc})",
+                g["name"].as_str().unwrap_or_default(),
+                g["storylineYear"].as_f64().unwrap_or(0.0),
+                g["basis"].as_str().unwrap_or_default()
+            )
         };
-        let mut out = format!("Trevor's in-world order. The main story is listed first as its own sequence, \
+        let mut out = format!(
+            "Trevor's in-world order. The main story is listed first as its own sequence, \
 because the script does not say how Episodes 0 to 9 interleave with the early events. Years are estimates unless \
 a basis says the script states them; {records} operator records are not listed.\n\n\
-Main story ({} episodes, in-world order = episode order):\n", mains.len());
+Main story ({} episodes, in-world order = episode order):\n",
+            mains.len()
+        );
         for g in &mains {
-            out.push_str(&format!("  Episode {}. {}\n", g["chapter"].as_u64().unwrap_or(0), line(g)));
+            out.push_str(&format!(
+                "  Episode {}. {}\n",
+                g["chapter"].as_u64().unwrap_or(0),
+                line(g)
+            ));
         }
         out.push_str(&format!("\nEvents ({}), estimated in-world order:\n", events.len()));
         for (i, g) in events.iter().enumerate() {
@@ -71,11 +103,15 @@ Main story ({} episodes, in-world order = episode order):\n", mains.len());
     /// The reading guide is missing (the keyword route needed it too).
     pub fn reading_chronological(&self) -> ToolResult {
         self.guide_items()?;
-        let why = self.community.as_ref()
-            .map_or(String::new(), |c| c["chronological"]["why"].as_str().unwrap_or_default().to_owned());
-        Ok(format!("Most players recommend reading in release order, not chronological order: {why}. \
+        let why = self.community.as_ref().map_or(String::new(), |c| {
+            c["chronological"]["why"].as_str().unwrap_or_default().to_owned()
+        });
+        Ok(format!(
+            "Most players recommend reading in release order, not chronological order: {why}. \
 If you want the in-world order anyway, Trevor's own estimate from the dates the script states follows; \
-most stories state no year, so their placement follows release order.\n\n{}", self.timeline_all()))
+most stories state no year, so their placement follows release order.\n\n{}",
+            self.timeline_all()
+        ))
     }
 
     /// Where a character first speaks.
@@ -88,10 +124,14 @@ most stories state no year, so their placement follows release order.\n\n{}", se
         let names = self.speaker_names();
         let who = self.resolve_name("speaker", character, &names)?;
         let f = &first[who];
-        Ok(format!("{who} first speaks in {} (EN release {}), story {}. \
+        Ok(format!(
+            "{who} first speaks in {} (EN release {}), story {}. \
 That is the first line Trevor finds in the release-ordered main story and events; \
 operator records and earlier mentions by name without a line are not counted.",
-            s(f, "group"), s(f, "released"), s(f, "storyId")))
+            s(f, "group"),
+            s(f, "released"),
+            s(f, "storyId")
+        ))
     }
 
     /// Reading time of one event or episode.
@@ -103,8 +143,12 @@ operator records and earlier mentions by name without a line are not counted.",
         let w = i["words"].as_u64().unwrap_or(0);
         #[allow(clippy::cast_precision_loss)]
         let hours = w as f64 / 250.0 / 60.0;
-        Ok(format!("{} has about {} words of script, roughly {hours:.1} hours at 250 words per minute, without \
-voice lines or battles.", guide_label(i), w))
+        Ok(format!(
+            "{} has about {} words of script, roughly {hours:.1} hours at 250 words per minute, without \
+voice lines or battles.",
+            guide_label(i),
+            w
+        ))
     }
 
     /// Two events or episodes against each other, for "can I read X after Y", "does X spoil Y": their EN release
@@ -117,63 +161,103 @@ voice lines or battles.", guide_label(i), w))
         let (x, y) = (self.guide_item(event)?, self.guide_item(other)?);
         let (xid, yid) = (s(x, "groupId"), s(y, "groupId"));
         if xid == yid {
-            return Err(ToolError::BadArg { arg: "other", value: other.to_owned() });
+            return Err(ToolError::BadArg {
+                arg: "other",
+                value: other.to_owned(),
+            });
         }
         let (xl, yl) = (guide_label(x), guide_label(y));
         let pos = |i: &Value| i["position"].as_u64().unwrap_or(0);
         let (first, then) = if pos(x) <= pos(y) { (x, y) } else { (y, x) };
         let (fl, tl) = (guide_label(first), guide_label(then));
-        let mut out = format!("Release order (EN, from the game data): {fl} came out on {}, {tl} on {}.",
-                              s(first, "released"), s(then, "released"));
+        let mut out = format!(
+            "Release order (EN, from the game data): {fl} came out on {}, {tl} on {}.",
+            s(first, "released"),
+            s(then, "released")
+        );
         // The game's own links, direct or through a storyline that holds both.
         let edges = self.story_edges();
-        let direct = edges.iter().find(|((a, _), (b, _))| (a == &xid && b == &yid) || (a == &yid && b == &xid));
+        let direct = edges
+            .iter()
+            .find(|((a, _), (b, _))| (a == &xid && b == &yid) || (a == &yid && b == &xid));
         let mut game_order: Option<(String, String)> = None;
         if let Some(((_, al), (_, bl))) = direct {
             out.push_str(&format!(" The game's Storylines view places {al} before {bl}."));
             game_order = Some((al.clone(), bl.clone()));
-        } else if let Some(line) = self.storylines.as_ref()
+        } else if let Some(line) = self
+            .storylines
+            .as_ref()
             .and_then(|v| v["storylines"].as_array())
-            .into_iter().flatten()
+            .into_iter()
+            .flatten()
             .find(|l| {
-            let g: Vec<&str> = l["groups"].as_array().into_iter().flatten().filter_map(Value::as_str).collect();
-            g.contains(&xid.as_str()) && g.contains(&yid.as_str())
-        }) {
-            let g: Vec<&str> = line["groups"].as_array().into_iter().flatten().filter_map(Value::as_str).collect();
+                let g: Vec<&str> = l["groups"]
+                    .as_array()
+                    .into_iter()
+                    .flatten()
+                    .filter_map(Value::as_str)
+                    .collect();
+                g.contains(&xid.as_str()) && g.contains(&yid.as_str())
+            })
+        {
+            let g: Vec<&str> = line["groups"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter_map(Value::as_str)
+                .collect();
             let (a, b) = if g.iter().position(|v| *v == xid) < g.iter().position(|v| *v == yid) {
                 (&xl, &yl)
             } else {
                 (&yl, &xl)
             };
-            out.push_str(&format!(" The game's Storylines view lists both in its \"{}\" storyline, {a} before {b}.",
-                                  s(line, "name")));
+            out.push_str(&format!(
+                " The game's Storylines view lists both in its \"{}\" storyline, {a} before {b}.",
+                s(line, "name")
+            ));
             game_order = Some((a.clone(), b.clone()));
         } else {
             out.push_str(" The game's Storylines view has no link between them.");
         }
         // Trevor's measure: what an event builds on shares the most of its recurring cast.
-        let builds = |a: &Value, b: &Value| a["buildsOn"].as_array().into_iter().flatten()
-            .any(|n| n.as_str() == Some(s(b, "name").as_str()));
+        let builds = |a: &Value, b: &Value| {
+            a["buildsOn"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .any(|n| n.as_str() == Some(s(b, "name").as_str()))
+        };
         let later_builds = builds(then, first);
         if later_builds {
             out.push_str(&format!(
-                " Trevor's reading guide: {tl} builds on {fl} (it shares the most of its recurring cast)."));
+                " Trevor's reading guide: {tl} builds on {fl} (it shares the most of its recurring cast)."
+            ));
         } else if builds(first, then) {
             out.push_str(&format!(
-                " Trevor's reading guide: {fl} builds on {tl} (it shares the most of its recurring cast)."));
+                " Trevor's reading guide: {fl} builds on {tl} (it shares the most of its recurring cast)."
+            ));
         }
         if let Some(c) = &self.community {
-            for r in c["rules"].as_array().into_iter().flatten()
-                .filter(|r| [xid.as_str(), yid.as_str()].contains(&r["groupId"].as_str().unwrap_or_default())) {
-                out.push_str(&format!(" Players (r/arknights reading-order threads, {} commenters) place {} {}.",
-                                      r["commenters"].as_u64().unwrap_or(0), s(r, "name"), s(r, "rule")));
+            for r in c["rules"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter(|r| [xid.as_str(), yid.as_str()].contains(&r["groupId"].as_str().unwrap_or_default()))
+            {
+                out.push_str(&format!(
+                    " Players (r/arknights reading-order threads, {} commenters) place {} {}.",
+                    r["commenters"].as_u64().unwrap_or(0),
+                    s(r, "name"),
+                    s(r, "rule")
+                ));
             }
         }
         // What it means: the later story can refer back to the earlier one, never the other way.
         let linked = game_order.is_some();
         let (a, b) = game_order.unwrap_or_else(|| (fl.clone(), tl.clone()));
         if game_order_agrees(&a, &fl) {
-            out.push_str(&format!("\n\nSpoilers: {b} came out after {a}{}, so it can spoil {a}; {a} cannot spoil {b}. \
+            out.push_str(&format!(
+                "\n\nSpoilers: {b} came out after {a}{}, so it can spoil {a}; {a} cannot spoil {b}. \
 Reading {a} first is the safe order, and once you have read {a} you can read {b}.",
                 if linked {
                     " and the game's Storylines view puts it after"
@@ -181,11 +265,14 @@ Reading {a} first is the safe order, and once you have read {a} you can read {b}
                     " and builds on it"
                 } else {
                     ""
-                }));
+                }
+            ));
         } else {
-            out.push_str(&format!("\n\nSpoilers: {tl} came out after {fl}, so it can spoil {fl}, \
+            out.push_str(&format!(
+                "\n\nSpoilers: {tl} came out after {fl}, so it can spoil {fl}, \
 but the game's Storylines view places {a} before {b}; \
-it treats {a} as the one to read first although it came out later."));
+it treats {a} as the one to read first although it came out later."
+            ));
         }
         Ok(out)
     }
@@ -198,42 +285,67 @@ it treats {a} as the one to read first although it came out later."));
         let items = self.guide_items()?;
         let i = self.guide_item(event)?;
         let n = usize::try_from(i["position"].as_u64().unwrap_or(1)).unwrap_or(1);
-        let prev = items[..n - 1].iter().rev().find(|x| s(x, "kind") == "main").map(guide_label);
+        let prev = items[..n - 1]
+            .iter()
+            .rev()
+            .find(|x| s(x, "kind") == "main")
+            .map(guide_label);
         let next = items[n..].iter().find(|x| s(x, "kind") == "main").map(guide_label);
-        let list = |k: &str| i[k].as_array()
-            .map(|a| a.iter().filter_map(|x| x.as_str()).collect::<Vec<_>>().join(", "))
-            .unwrap_or_default();
+        let list = |k: &str| {
+            i[k].as_array()
+                .map(|a| a.iter().filter_map(|x| x.as_str()).collect::<Vec<_>>().join(", "))
+                .unwrap_or_default()
+        };
         let mut out = format!("{} came out on EN on {}", guide_label(i), s(i, "released"));
         match (prev, next) {
             (Some(p), Some(nx)) => out.push_str(&format!(
-                ", after {p} and before {nx}. In release order, read it after {p}.")),
+                ", after {p} and before {nx}. In release order, read it after {p}."
+            )),
             (Some(p), None) => out.push_str(&format!(", after {p}, the latest main episode on EN.")),
             _ => out.push('.'),
         }
         if let Some(c) = &self.community {
             let gid = s(i, "groupId");
-            for r in c["rules"].as_array().into_iter().flatten()
-                .filter(|r| r["groupId"].as_str() == Some(gid.as_str())) {
+            for r in c["rules"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter(|r| r["groupId"].as_str() == Some(gid.as_str()))
+            {
                 out.push_str(&format!(
                     " Players recommend reading it {} ({} commenters in r/arknights reading-order threads).",
-                    s(r, "rule"), r["commenters"].as_u64().unwrap_or(0)));
+                    s(r, "rule"),
+                    r["commenters"].as_u64().unwrap_or(0)
+                ));
             }
-            if let Some(e) = c["essential"].as_array().into_iter().flatten()
-                .find(|e| e["groupId"].as_str() == Some(gid.as_str())) {
+            if let Some(e) = c["essential"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .find(|e| e["groupId"].as_str() == Some(gid.as_str()))
+            {
                 out.push_str(&format!(
                     " It is one of the side stories players call essential for the main story ({} commenters: {}).",
-                    e["commenters"].as_u64().unwrap_or(0), s(e, "why")));
+                    e["commenters"].as_u64().unwrap_or(0),
+                    s(e, "why")
+                ));
             }
         }
         let b = list("buildsOn");
         if !b.is_empty() {
-            out.push_str(&format!(" Earlier stories it builds on (sharing the most of its recurring cast): {b}."));
+            out.push_str(&format!(
+                " Earlier stories it builds on (sharing the most of its recurring cast): {b}."
+            ));
         }
         let l = list("builtOnBy");
         if !l.is_empty() {
             out.push_str(&format!(" Later stories that build on it: {l}."));
         }
-        if let Some(p) = self.bank.iter().find(|r| r["id"].as_str() == Some(&format!("primer:{}", s(i, "groupId")))) {
+        if let Some(p) = self
+            .bank
+            .iter()
+            .find(|r| r["id"].as_str() == Some(&format!("primer:{}", s(i, "groupId"))))
+        {
             out.push_str(&format!("\n\nWhat to know before starting it:\n{}", s(p, "answer")));
         }
         Ok(out)
@@ -247,59 +359,108 @@ it treats {a} as the one to read first although it came out later."));
         let items = self.guide_items()?;
         let mut key: Vec<&Value> = items.iter().filter(|i| s(i, "kind") == "event").collect();
         key.sort_by_key(|i| std::cmp::Reverse(i["prereqOf"].as_u64().unwrap_or(0)));
-        let keyl = key.iter().take(10)
+        let keyl = key
+            .iter()
+            .take(10)
             .map(|i| format!("{} ({})", s(i, "name"), i["prereqOf"].as_u64().unwrap_or(0)))
             .collect::<Vec<_>>()
             .join(", ");
-        let mut out = String::from("Trevor's reading guide. Most players recommend EN release order: \
+        let mut out = String::from(
+            "Trevor's reading guide. Most players recommend EN release order: \
 the main story in episode order with the events in between as they came out; operator records are optional side \
 stories. (Other common approaches: main story first with a few must-read side stories slotted in, or one storyline \
 at a time, which the game's Movements view has sorted by since September 2025. Chronological order is rarely \
-recommended because the prequels spoil the Doctor's amnesia.)\n");
-        let edges = if self.opts.storylines { self.story_edges() } else { Vec::new() };
+recommended because the prequels spoil the Doctor's amnesia.)\n",
+        );
+        let edges = if self.opts.storylines {
+            self.story_edges()
+        } else {
+            Vec::new()
+        };
         if !edges.is_empty() {
             out.push_str("\nThe game's own reading links (its Storylines view, from the game data):\n");
-            let rules: Vec<&Value> = self.community.as_ref()
+            let rules: Vec<&Value> = self
+                .community
+                .as_ref()
                 .and_then(|c| c["rules"].as_array())
-                .into_iter().flatten()
+                .into_iter()
+                .flatten()
                 .collect();
             for e @ (a, b) in &edges {
-                let players = rules.iter().find(|r| rule_matches_edge(r, std::slice::from_ref(e)))
-                    .map_or(String::new(), |r| format!("; players also recommend this ({} commenters)",
-                                                        r["commenters"].as_u64().unwrap_or(0)));
-                out.push_str(&format!("- The game's Storylines view places {} before {}{players}.\n", a.1, b.1));
+                let players = rules
+                    .iter()
+                    .find(|r| rule_matches_edge(r, std::slice::from_ref(e)))
+                    .map_or(String::new(), |r| {
+                        format!(
+                            "; players also recommend this ({} commenters)",
+                            r["commenters"].as_u64().unwrap_or(0)
+                        )
+                    });
+                out.push_str(&format!(
+                    "- The game's Storylines view places {} before {}{players}.\n",
+                    a.1, b.1
+                ));
             }
-            let skipped = self.storylines.as_ref()
+            let skipped = self
+                .storylines
+                .as_ref()
                 .and_then(|v| v["edges"].as_array())
-                .map_or(0, Vec::len) - edges.len();
+                .map_or(0, Vec::len)
+                - edges.len();
             if skipped > 0 {
                 out.push_str(&format!(
-                    "({skipped} more links involve a main-story section the game data names only by an id.)\n"));
+                    "({skipped} more links involve a main-story section the game data names only by an id.)\n"
+                ));
             }
         }
         if let Some(c) = &self.community {
-            out.push_str("\nSide stories players call essential for the main story \
-                (commenters in r/arknights reading-order threads):\n");
+            out.push_str(
+                "\nSide stories players call essential for the main story \
+                (commenters in r/arknights reading-order threads):\n",
+            );
             for e in c["essential"].as_array().into_iter().flatten() {
-                out.push_str(&format!("- {} ({}): {}\n",
-                                      s(e, "name"), e["commenters"].as_u64().unwrap_or(0), s(e, "why")));
+                out.push_str(&format!(
+                    "- {} ({}): {}\n",
+                    s(e, "name"),
+                    e["commenters"].as_u64().unwrap_or(0),
+                    s(e, "why")
+                ));
             }
             out.push_str("\nWhere players place them:\n");
-            for r in c["rules"].as_array().into_iter().flatten()
-                .filter(|r| r["commenters"].as_u64().unwrap_or(0) >= 5) {
-                let tag = if edges.is_empty() { String::new() } else if rule_matches_edge(r, &edges) {
+            for r in c["rules"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter(|r| r["commenters"].as_u64().unwrap_or(0) >= 5)
+            {
+                let tag = if edges.is_empty() {
+                    String::new()
+                } else if rule_matches_edge(r, &edges) {
                     "; the game's Storylines view agrees".into()
-                } else { "; player advice".into() };
-                out.push_str(&format!("- {}: {} ({}{tag})\n",
-                                      s(r, "name"), s(r, "rule"), r["commenters"].as_u64().unwrap_or(0)));
+                } else {
+                    "; player advice".into()
+                };
+                out.push_str(&format!(
+                    "- {}: {} ({}{tag})\n",
+                    s(r, "name"),
+                    s(r, "rule"),
+                    r["commenters"].as_u64().unwrap_or(0)
+                ));
             }
         }
         let dates = "dates from the game data; \"about\" marks an estimate, \"by\" a latest date";
-        out.push_str(&format!("\nTrevor's own measure, the events later stories share the most cast with: {keyl}.\n\n\
-EN release order ({} entries; {dates}):\n", items.len()));
+        out.push_str(&format!(
+            "\nTrevor's own measure, the events later stories share the most cast with: {keyl}.\n\n\
+EN release order ({} entries; {dates}):\n",
+            items.len()
+        ));
         for i in items {
-            out.push_str(&format!("{}. {} ({})\n",
-                                  i["position"].as_u64().unwrap_or(0), guide_label(i), s(i, "released")));
+            out.push_str(&format!(
+                "{}. {} ({})\n",
+                i["position"].as_u64().unwrap_or(0),
+                guide_label(i),
+                s(i, "released")
+            ));
         }
         Ok(out)
     }
@@ -313,9 +474,17 @@ EN release order ({} entries; {dates}):\n", items.len()));
             }
             (name != id && !name.is_empty()).then(|| (id.to_owned(), name.to_owned()))
         };
-        self.storylines.as_ref().and_then(|v| v["edges"].as_array()).into_iter().flatten()
-            .filter_map(|e| Some((label(&s(e, "first"), &s(e, "firstName"))?,
-                                  label(&s(e, "then"), &s(e, "thenName"))?)))
+        self.storylines
+            .as_ref()
+            .and_then(|v| v["edges"].as_array())
+            .into_iter()
+            .flatten()
+            .filter_map(|e| {
+                Some((
+                    label(&s(e, "first"), &s(e, "firstName"))?,
+                    label(&s(e, "then"), &s(e, "thenName"))?,
+                ))
+            })
             .collect()
     }
 
@@ -335,26 +504,52 @@ EN release order ({} entries; {dates}):\n", items.len()));
         if part != RecapPart::Whole {
             return self.recap_part(g, &gid, &name, part);
         }
-        let event = self.bank.iter().find(|r| r["id"].as_str() == Some(&format!("event:{gid}")));
+        let event = self
+            .bank
+            .iter()
+            .find(|r| r["id"].as_str() == Some(&format!("event:{gid}")));
         // The keyword route's substring test let "main_1" match main_10 to main_16 story ids and "main_0" match
         // "main_01-01"; only the "ending" part and a group without an event summary read these stories.
         let prefix = format!("{gid}_");
-        let stories: Vec<&Value> = self.bank.iter().filter(|r| s(r, "kind") == "story"
-            && r["sources"][0].as_str().is_some_and(|x| self.groups.contains_key(&gid)
-                && if self.opts.exact_recap { x.starts_with(&prefix) } else { x.contains(&gid) })).collect();
+        let stories: Vec<&Value> = self
+            .bank
+            .iter()
+            .filter(|r| {
+                s(r, "kind") == "story"
+                    && r["sources"][0].as_str().is_some_and(|x| {
+                        self.groups.contains_key(&gid)
+                            && if self.opts.exact_recap {
+                                x.starts_with(&prefix)
+                            } else {
+                                x.contains(&gid)
+                            }
+                    })
+            })
+            .collect();
         let mut out = String::new();
         if let Some(e) = event {
-            out.push_str(&format!("{name}, summarized by Trevor from its script (its stories in order):\n\n{}",
-                                  s(e, "answer")));
+            out.push_str(&format!(
+                "{name}, summarized by Trevor from its script (its stories in order):\n\n{}",
+                s(e, "answer")
+            ));
         } else {
-            let st = stories.first().ok_or_else(|| ToolError::NoData(format!("no summary of {name}")))?;
-            out.push_str(&format!("{name}, summarized by Trevor from its script:\n\n{}", s(st, "answer")));
+            let st = stories
+                .first()
+                .ok_or_else(|| ToolError::NoData(format!("no summary of {name}")))?;
+            out.push_str(&format!(
+                "{name}, summarized by Trevor from its script:\n\n{}",
+                s(st, "answer")
+            ));
         }
         if ending {
             if let Some(last) = stories.last() {
-                out.push_str(&format!("\n\nThe last story, {}:\n{}",
-                                      s(last, "question").trim_start_matches("What happens in ").trim_end_matches('?'),
-                                      s(last, "answer")));
+                out.push_str(&format!(
+                    "\n\nThe last story, {}:\n{}",
+                    s(last, "question")
+                        .trim_start_matches("What happens in ")
+                        .trim_end_matches('?'),
+                    s(last, "answer")
+                ));
             }
         }
         Ok(out)
@@ -367,20 +562,34 @@ EN release order ({} entries; {dates}):\n", items.len()));
     /// story of Episode 8 is END8-1, not EG-5.
     fn recap_part(&self, g: &Value, gid: &str, name: &str, part: RecapPart) -> ToolResult {
         let prefix = format!("{gid}_");
-        let all: Vec<&Value> = self.bank.iter().filter(|r| s(r, "kind") == "story"
-            && r["sources"][0].as_str().is_some_and(|x| x.starts_with(&prefix))).collect();
-        let main: Vec<&Value> = all.iter().copied()
-            .filter(|r| !r["sources"][0].as_str().is_some_and(|x| x.contains("_level_spst_"))).collect();
+        let all: Vec<&Value> = self
+            .bank
+            .iter()
+            .filter(|r| s(r, "kind") == "story" && r["sources"][0].as_str().is_some_and(|x| x.starts_with(&prefix)))
+            .collect();
+        let main: Vec<&Value> = all
+            .iter()
+            .copied()
+            .filter(|r| !r["sources"][0].as_str().is_some_and(|x| x.contains("_level_spst_")))
+            .collect();
         let stories = if main.is_empty() { &all } else { &main };
-        let st = if part == RecapPart::Beginning { stories.first() } else { stories.last() }
-            .ok_or_else(|| ToolError::NoData(format!("no story summary of {name}")))?;
-        let label = g["chapter"].as_u64().map_or_else(|| name.to_owned(), |n| format!("Episode {n} {name}"));
+        let st = if part == RecapPart::Beginning {
+            stories.first()
+        } else {
+            stories.last()
+        }
+        .ok_or_else(|| ToolError::NoData(format!("no story summary of {name}")))?;
+        let label = g["chapter"]
+            .as_u64()
+            .map_or_else(|| name.to_owned(), |n| format!("Episode {n} {name}"));
         let q = s(st, "question");
         let story = q.trim_start_matches("What happens in ").trim_end_matches('?');
         let story = story.strip_prefix(&format!("{name}, ")).unwrap_or(story);
         let which = if part == RecapPart::Beginning { "first" } else { "last" };
-        Ok(format!("The {which} story of {label}, {story}, summarized by Trevor from its script:\n\n{}",
-                   s(st, "answer")))
+        Ok(format!(
+            "The {which} story of {label}, {story}, summarized by Trevor from its script:\n\n{}",
+            s(st, "answer")
+        ))
     }
 
     // ---------------------------------------------------------------- deaths
@@ -389,8 +598,12 @@ EN release order ({} entries; {dates}):\n", items.len()));
     // service).
 
     pub(super) fn latest(&self) -> String {
-        self.groups.values().max_by_key(|g| g["releaseTime"].as_i64().unwrap_or(0))
-            .and_then(|g| g["name"].as_str()).unwrap_or("?").to_owned()
+        self.groups
+            .values()
+            .max_by_key(|g| g["releaseTime"].as_i64().unwrap_or(0))
+            .and_then(|g| g["name"].as_str())
+            .unwrap_or("?")
+            .to_owned()
     }
 }
 
@@ -413,13 +626,20 @@ impl RecapPart {
             None | Some("whole") => Ok(Self::Whole),
             Some("beginning") => Ok(Self::Beginning),
             Some("end") => Ok(Self::End),
-            Some(x) => Err(ToolError::BadArg { arg: "part", value: x.to_owned() }),
+            Some(x) => Err(ToolError::BadArg {
+                arg: "part",
+                value: x.to_owned(),
+            }),
         }
     }
 
     #[must_use]
     pub fn as_str(self) -> &'static str {
-        match self { Self::Whole => "whole", Self::Beginning => "beginning", Self::End => "end" }
+        match self {
+            Self::Whole => "whole",
+            Self::Beginning => "beginning",
+            Self::End => "end",
+        }
     }
 }
 
@@ -432,10 +652,21 @@ pub(super) fn game_order_agrees(game_first: &str, release_first: &str) -> bool {
 pub(super) fn rule_matches_edge(r: &Value, edges: &[Edge]) -> bool {
     let g = s(r, "groupId");
     let rule = s(r, "rule").to_lowercase();
-    let short = |label: &str| label.split_whitespace().take(2).collect::<Vec<_>>().join(" ").to_lowercase();
+    let short = |label: &str| {
+        label
+            .split_whitespace()
+            .take(2)
+            .collect::<Vec<_>>()
+            .join(" ")
+            .to_lowercase()
+    };
     edges.iter().any(|((a, al), (b, bl))| {
         let side = |label: &str, dir: &str| {
-            let l = if label.starts_with("Episode ") { short(label) } else { label.to_lowercase() };
+            let l = if label.starts_with("Episode ") {
+                short(label)
+            } else {
+                label.to_lowercase()
+            };
             rule.contains(&format!("{dir} {l}"))
         };
         (a == &g && side(bl, "before")) || (b == &g && side(al, "after"))
@@ -445,5 +676,7 @@ pub(super) fn rule_matches_edge(r: &Value, edges: &[Edge]) -> bool {
 pub(super) fn guide_label(i: &Value) -> String {
     if s(i, "kind") == "main" {
         format!("Episode {} {}", i["episode"].as_u64().unwrap_or(0), s(i, "name"))
-    } else { s(i, "name") }
+    } else {
+        s(i, "name")
+    }
 }

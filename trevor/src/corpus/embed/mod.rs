@@ -72,17 +72,17 @@ use crate::corpus::chunk::indexed_text;
 use crate::corpus::reuse::{self, ReusePool};
 use crate::util::sha_hex;
 
+mod checkpoint;
 mod model;
 mod pacing;
-mod checkpoint;
 #[cfg(test)]
 mod tests;
 
+use checkpoint::{Checkpoint, CkptHead};
 pub use model::{
     ALLOW_QUERY_MODEL_MISMATCH_ENV, LoadedModel, QueryEmbedder, check_query_model, load_model, resolve_query_onnx,
 };
 pub use pacing::Guard;
-use checkpoint::{Checkpoint, CkptHead};
 use pacing::Pacer;
 
 /// gte-modernbert-base's trained context. A chunk longer than this would be
@@ -220,8 +220,8 @@ pub fn run(cfg: &EmbedConfig, progress: &dyn Fn(usize, usize)) -> Result<RunResu
     if !(cfg.duty > 0.0 && cfg.duty <= 1.0) {
         bail!("duty {} is outside (0, 1]", cfg.duty);
     }
-    let manifest: P0Manifest = serde_json::from_slice(&read(&cfg.corpus, "manifest.p0.json")?)
-        .context("manifest.p0.json")?;
+    let manifest: P0Manifest =
+        serde_json::from_slice(&read(&cfg.corpus, "manifest.p0.json")?).context("manifest.p0.json")?;
 
     let tokenizer_sha = sha_hex(&read(&cfg.model_dir, "tokenizer.json")?);
     if tokenizer_sha != manifest.tokenizer_sha {
@@ -306,12 +306,19 @@ pub fn run(cfg: &EmbedConfig, progress: &dyn Fn(usize, usize)) -> Result<RunResu
     let mut pacer = Pacer {
         guard: cfg.guard.as_ref(),
         duty: cfg.duty,
-        deadline: cfg.max_minutes.map(|m| started + Duration::from_secs_f64(m.max(0.0) * 60.0)),
+        deadline: cfg
+            .max_minutes
+            .map(|m| started + Duration::from_secs_f64(m.max(0.0) * 60.0)),
         next_probe: Instant::now(),
-        stats: RunStats { total, ..RunStats::default() },
+        stats: RunStats {
+            total,
+            ..RunStats::default()
+        },
     };
     for (i, c) in lines.iter().enumerate() {
-        let stored = pool.get(&keys[i]).map(|b| (b, true))
+        let stored = pool
+            .get(&keys[i])
+            .map(|b| (b, true))
             .or_else(|| resumable.get(&keys[i]).map(|b| (b.as_slice(), false)));
         let v = if let Some((bytes, from_pool)) = stored {
             if from_pool {
@@ -336,7 +343,11 @@ pub fn run(cfg: &EmbedConfig, progress: &dyn Fn(usize, usize)) -> Result<RunResu
                 eprintln!("stopped at {i}/{total}: {why}; rerun the same command to resume");
                 pacer.stats.done = i;
                 pacer.stats.stopped = Some(why);
-                return Ok(RunResult { meta: None, sources: pool.sources, stats: pacer.stats });
+                return Ok(RunResult {
+                    meta: None,
+                    sources: pool.sources,
+                    stats: pacer.stats,
+                });
             }
             embedded += 1;
             let t = Instant::now();
@@ -407,5 +418,9 @@ pub fn run(cfg: &EmbedConfig, progress: &dyn Fn(usize, usize)) -> Result<RunResu
         k.finish()?;
     }
     pacer.stats.done = total;
-    Ok(RunResult { meta: Some(meta), sources: pool.sources, stats: pacer.stats })
+    Ok(RunResult {
+        meta: Some(meta),
+        sources: pool.sources,
+        stats: pacer.stats,
+    })
 }

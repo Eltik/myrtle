@@ -11,14 +11,14 @@
 //! finish        judge server + indexes        -> eval/goldset_v1.jsonl, .meta.json, .spotcheck.md
 //! ```
 
+mod calibrate;
 mod files;
+mod filter;
+mod finish;
+mod generate;
+mod judge;
 mod prompt;
 mod sampling;
-mod generate;
-mod filter;
-mod judge;
-mod calibrate;
-mod finish;
 
 use std::path::PathBuf;
 
@@ -128,11 +128,7 @@ async fn main() -> Result<()> {
             seed,
         } => cmd_sample(&work, &corpus, &base, scale, seed).await,
         Cmd::Probe { server, corpus } => cmd_probe(&work, &server, &corpus).await,
-        Cmd::Generate {
-            server,
-            corpus,
-            knobs,
-        } => cmd_generate(&work, &server, &corpus, &knobs).await,
+        Cmd::Generate { server, corpus, knobs } => cmd_generate(&work, &server, &corpus, &knobs).await,
         Cmd::Filter {
             runtime,
             evidence_min_prefix,

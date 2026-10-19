@@ -106,8 +106,7 @@ pub fn load(path: &Path) -> Result<GoldSet> {
             continue;
         }
         items.push(
-            serde_json::from_str::<GoldItem>(&line)
-                .with_context(|| format!("{} line {}", path.display(), i + 1))?,
+            serde_json::from_str::<GoldItem>(&line).with_context(|| format!("{} line {}", path.display(), i + 1))?,
         );
     }
     Ok(GoldSet { items, sha })
@@ -143,9 +142,7 @@ pub fn validate(set: &GoldSet, store: &ChunkStore) -> Result<()> {
             problems.push(format!("{}: empty question", it.qid));
         }
         match (it.stratum == Stratum::Unanswerable, it.anchors.is_empty()) {
-            (true, false) => {
-                problems.push(format!("{}: unanswerable items take no anchors", it.qid))
-            }
+            (true, false) => problems.push(format!("{}: unanswerable items take no anchors", it.qid)),
             (false, true) => problems.push(format!("{}: no anchors", it.qid)),
             _ => {}
         }
@@ -166,10 +163,7 @@ pub fn validate(set: &GoldSet, store: &ChunkStore) -> Result<()> {
             if store.row(src).is_none() {
                 // Not fatal to scoring (anchors are authoritative), but it
                 // means the item was written against a different chunking.
-                problems.push(format!(
-                    "{}: source_chunk_id {src} is not in the store",
-                    it.qid
-                ));
+                problems.push(format!("{}: source_chunk_id {src} is not in the store", it.qid));
             }
         }
     }
@@ -238,19 +232,13 @@ mod tests {
     #[test]
     fn overlap_is_inclusive_and_can_span_chunks() {
         let s = store();
-        assert_eq!(
-            resolve(&item(vec![(10, 12)], Stratum::SingleFact), &s),
-            [0, 1].into()
-        );
+        assert_eq!(resolve(&item(vec![(10, 12)], Stratum::SingleFact), &s), [0, 1].into());
         assert_eq!(
             resolve(&item(vec![(11, 11)], Stratum::SingleFact), &s),
             BTreeSet::new(),
             "gap line"
         );
-        assert_eq!(
-            resolve(&item(vec![(25, 25)], Stratum::SingleFact), &s),
-            [2].into()
-        );
+        assert_eq!(resolve(&item(vec![(25, 25)], Stratum::SingleFact), &s), [2].into());
     }
 
     #[test]
@@ -265,11 +253,7 @@ mod tests {
             sha: String::new(),
         };
         let err = validate(&set, &s).expect_err("invalid").to_string();
-        assert!(
-            err.contains("no anchors")
-                && err.contains("take no anchors")
-                && err.contains("overlap no chunk")
-        );
+        assert!(err.contains("no anchors") && err.contains("take no anchors") && err.contains("overlap no chunk"));
         assert!(err.contains("duplicate qid"));
     }
 }

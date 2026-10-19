@@ -2,10 +2,7 @@
 
 use std::collections::BTreeSet;
 
-
-use crate::corpus::chunk::{
-    Chunk, PROSE_ARG_KINDS, PROSE_KINDS, StoryCommand,
-};
+use crate::corpus::chunk::{Chunk, PROSE_ARG_KINDS, PROSE_KINDS, StoryCommand};
 
 /// Prose words of a script by the backend's own rule
 /// (`parser::word_count`, parser.rs:427).

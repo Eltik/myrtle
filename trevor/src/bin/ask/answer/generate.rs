@@ -12,16 +12,17 @@ use trevor::tools::norm;
 use crate::chrono::{Chrono, chronology_for, time_evidence_block, timeline_notes};
 use crate::cli::{Args, form_on};
 use crate::detect::{
-    asks_age, asks_origin, asks_person, asks_relation, asks_which_story, asks_term, asks_when, is_open_listing,
+    asks_age, asks_origin, asks_person, asks_relation, asks_term, asks_when, asks_which_story, is_open_listing,
     is_opinion_question,
 };
 use crate::form::{Flags, Form};
-use crate::prompts::{
-    AGE_RULE, ART_RULE, CANON_RULE, CHAR_LABEL, CHAR_NAME_RULE, CHAR_RULE_TAIL, DATE_RULE, DEATH_RULE_TAIL, DEATH_RULE_TAIL_V1, GAP_RULE_TAIL, GAP_TAIL, INFER_RULE,
-    OPINION_FORM_RULE, OPINION_RULE, ORIGIN_RULE, RELATION_RULE, STORY_NAME_RULE, SCOPED_RULE_HEAD, SCOPED_RULE_TAIL, SOURCE_RULE, SYNTH_RULE, SYSTEM, TERM_RULE, THEORY_RULE,
-    TIME_EVIDENCE_TAIL, TIME_RULE, VANISH_REPORT_TAIL, VANISH_RULE, YES_NO_RULE,
-};
 use crate::labels::{Names, story_label, with_label_names};
+use crate::prompts::{
+    AGE_RULE, ART_RULE, CANON_RULE, CHAR_LABEL, CHAR_NAME_RULE, CHAR_RULE_TAIL, DATE_RULE, DEATH_RULE_TAIL,
+    DEATH_RULE_TAIL_V1, GAP_RULE_TAIL, GAP_TAIL, INFER_RULE, OPINION_FORM_RULE, OPINION_RULE, ORIGIN_RULE,
+    RELATION_RULE, SCOPED_RULE_HEAD, SCOPED_RULE_TAIL, SOURCE_RULE, STORY_NAME_RULE, SYNTH_RULE, SYSTEM, TERM_RULE,
+    THEORY_RULE, TIME_EVIDENCE_TAIL, TIME_RULE, VANISH_REPORT_TAIL, VANISH_RULE, YES_NO_RULE,
+};
 use crate::retrieval::{Pre, passages};
 
 use super::Answer;
@@ -29,8 +30,14 @@ use super::Answer;
 /// The chunk ids an answer cites, in citation order, and how many citations point at no passage. "[4]", "[4, 5]" and
 /// "[4][5]" all cite; anything else in brackets is prose. Numbers 1 to `off` are the passages before the retrieved
 /// rows, then the rows, then `post`.
-fn citations(text: &str, off: usize, first: &[&Pre], rows: &[usize], post: &[&Pre], rt: &Runtime)
-    -> (Vec<String>, usize) {
+fn citations(
+    text: &str,
+    off: usize,
+    first: &[&Pre],
+    rows: &[usize],
+    post: &[&Pre],
+    rt: &Runtime,
+) -> (Vec<String>, usize) {
     let mut cited = Vec::new();
     let mut invalid = 0usize;
     let mut i = 0;
@@ -39,8 +46,11 @@ fn citations(text: &str, off: usize, first: &[&Pre], rows: &[usize], post: &[&Pr
         let Some(close) = text[start..].find(']') else { break };
         // "[4]", "[4, 5]" and "[4][5]" all cite; anything else in brackets is prose.
         let inner = &text[start..start + close];
-        let nums: Vec<usize> = inner.split([',', ';', ' ']).filter(|t| !t.is_empty())
-            .filter_map(|t| t.parse().ok()).collect();
+        let nums: Vec<usize> = inner
+            .split([',', ';', ' '])
+            .filter(|t| !t.is_empty())
+            .filter_map(|t| t.parse().ok())
+            .collect();
         if !nums.is_empty() && nums.len() == inner.split([',', ';', ' ']).filter(|t| !t.is_empty()).count() {
             for n in nums {
                 if (1..=off).contains(&n) {
@@ -78,10 +88,14 @@ fn citations(text: &str, off: usize, first: &[&Pre], rows: &[usize], post: &[&Pr
 pub(crate) fn passage_label(names: &HashMap<String, Names>, c: &Chunk) -> String {
     match c.group_id.as_str() {
         "archive" => format!("operator file: {}", c.story_id.trim_start_matches("archive_")),
-        "profile" => format!("Trevor's character dossier (a summary written by Trevor): {}", c.story_id),
+        "profile" => format!(
+            "Trevor's character dossier (a summary written by Trevor): {}",
+            c.story_id
+        ),
         "summary" => format!("Trevor's event summary (written by Trevor): {}", c.story_id),
-        "module" | "voice" | "is" | "enemy" | "skin" | "item" | "art" | "gametext" =>
-            c.text.lines().next().unwrap_or_default().to_owned(),
+        "module" | "voice" | "is" | "enemy" | "skin" | "item" | "art" | "gametext" => {
+            c.text.lines().next().unwrap_or_default().to_owned()
+        }
         _ => story_label(names, &c.story_id),
     }
 }
@@ -89,8 +103,18 @@ pub(crate) fn passage_label(names: &HashMap<String, Names>, c: &Chunk) -> String
 /// One answer from the passages retrieved for `search`, answering `q`. A topic summary, when the router chose one,
 /// is passage [1] and the retrieved passages follow.
 #[allow(clippy::too_many_arguments)]
-pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<String, Names>, chrono: &Chrono, q: &str,
-                     search: &str, a: &Args, pre: &[Pre], kind: Option<&str>, form: Option<&Form>) -> Result<Answer> {
+pub(crate) async fn answer_from(
+    rt: &mut Runtime,
+    llm: &Llm,
+    names: &HashMap<String, Names>,
+    chrono: &Chrono,
+    q: &str,
+    search: &str,
+    a: &Args,
+    pre: &[Pre],
+    kind: Option<&str>,
+    form: Option<&Form>,
+) -> Result<Answer> {
     let opinion_form = form.is_some_and(|f| f.form == "opinion");
     let (mut rows, lore) = passages(rt, search, a, kind, form)?;
     // Under a spoiler horizon (`--serve` jobs): only chunks released at or before it, and of the generated passages
@@ -99,7 +123,11 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
     let pre = match rt.horizon.clone() {
         Some(h) => {
             rows.retain(|&r| rt.allows_row(&h, r));
-            kept = pre.iter().filter(|p| rt.store.row(&p.id).is_some_and(|r| rt.allows_row(&h, r))).cloned().collect();
+            kept = pre
+                .iter()
+                .filter(|p| rt.store.row(&p.id).is_some_and(|r| rt.allows_row(&h, r)))
+                .cloned()
+                .collect();
             &kept[..]
         }
         None => pre,
@@ -112,7 +140,11 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
     if !gap.is_empty() {
         rows.retain(|&r| !gap.contains(&rt.store.chunks[r].chunk_id.as_str()));
     }
-    let death: Vec<&str> = pre.iter().filter(|p| p.death.is_some() || p.theory).map(|p| p.id.as_str()).collect();
+    let death: Vec<&str> = pre
+        .iter()
+        .filter(|p| p.death.is_some() || p.theory)
+        .map(|p| p.id.as_str())
+        .collect();
     if !death.is_empty() {
         rows.retain(|&r| !death.contains(&rt.store.chunks[r].chunk_id.as_str()));
     }
@@ -126,8 +158,13 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
     // Renamed speaker labels get their names (`labels::with_label_names`, `--no-label-renames`), the chunk's own
     // renames too (`--no-chunk-renames`).
     let chunk_renames = a.chunk_renames();
-    let named = |story_id: &str, chunk_id: &str, text: &str| if a.no_label_renames { text.to_owned() }
-        else { with_label_names(story_id, chunk_renames.then_some(chunk_id), text) };
+    let named = |story_id: &str, chunk_id: &str, text: &str| {
+        if a.no_label_renames {
+            text.to_owned()
+        } else {
+            with_label_names(story_id, chunk_renames.then_some(chunk_id), text)
+        }
+    };
     let pre_story = |p: &Pre| p.id.split('#').next().unwrap_or_default().to_owned();
     for (i, p) in first.iter().enumerate() {
         let text = named(&pre_story(p), &p.id, &p.text);
@@ -140,8 +177,11 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
         // A file found through another name of its character says so: otherwise, with "Margaret vs Degenbrecher" and
         // Nearl the Radiant Knight's file among the passages, the answer can say it found nothing about "a character
         // named Margaret".
-        let label = match form.and_then(|f| f.named.iter().find(|(sid, asked, file)| *sid == c.story_id
-            && norm(asked) != norm(file))) {
+        let label = match form.and_then(|f| {
+            f.named
+                .iter()
+                .find(|(sid, asked, file)| *sid == c.story_id && norm(asked) != norm(file))
+        }) {
             Some((_, asked, file)) => format!("{label}; this is the file of {file}, whom the question calls {asked}"),
             None => label,
         };
@@ -157,8 +197,11 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
     if time_q {
         user.push_str(&timeline_notes(rt, chrono, &rows, off));
     }
-    let subject_lines = if time_q && !a.no_chrono_subject && asks_when(q) { chronology_for(q, chrono) }
-        else { String::new() };
+    let subject_lines = if time_q && !a.no_chrono_subject && asks_when(q) {
+        chronology_for(q, chrono)
+    } else {
+        String::new()
+    };
     let time_evidence = !a.no_time_evidence && !subject_lines.is_empty();
     if !time_evidence {
         user.push_str(&subject_lines);
@@ -175,7 +218,11 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
         }
     }
     // The labelled theory's HINTS block, on the story runtime only; THEORY_RULE goes with it and never without it.
-    let hints = a.theory.as_ref().filter(|_| kind.is_none()).and_then(|t| crate::theory::block(&texts, t));
+    let hints = a
+        .theory
+        .as_ref()
+        .filter(|_| kind.is_none())
+        .and_then(|t| crate::theory::block(&texts, t));
     if let Some(block) = &hints {
         user.push_str(block);
     }
@@ -229,13 +276,30 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
     // The deaths evidence's numbers, wherever it sits among the first passages.
     let vanish = a.vanish.as_deref();
     let death_label_v1 = a.death_label_v1;
-    let death_at: Vec<usize> = first.iter().enumerate().filter(|(_, p)| p.death.is_some()).map(|(i, _)| i + 1).collect();
-    if let (Some(&a), Some(&b), Some(who)) = (death_at.first(), death_at.last(),
-                                              first.iter().find_map(|p| p.death.as_deref())) {
-        let head = if a == b { format!(" Passage [{a}] is") } else { format!(" Passages [{a}] to [{b}] are") };
+    let death_at: Vec<usize> = first
+        .iter()
+        .enumerate()
+        .filter(|(_, p)| p.death.is_some())
+        .map(|(i, _)| i + 1)
+        .collect();
+    if let (Some(&a), Some(&b), Some(who)) = (
+        death_at.first(),
+        death_at.last(),
+        first.iter().find_map(|p| p.death.as_deref()),
+    ) {
+        let head = if a == b {
+            format!(" Passage [{a}] is")
+        } else {
+            format!(" Passages [{a}] to [{b}] are")
+        };
         // The vanished fate's reports (`--no-vanish-rule`) say the table has no death scene; else the deaths rule.
-        let tail = if vanish.is_some() { VANISH_REPORT_TAIL } else if death_label_v1 { DEATH_RULE_TAIL_V1 }
-            else { DEATH_RULE_TAIL };
+        let tail = if vanish.is_some() {
+            VANISH_REPORT_TAIL
+        } else if death_label_v1 {
+            DEATH_RULE_TAIL_V1
+        } else {
+            DEATH_RULE_TAIL
+        };
         system.push_str(&format!("{head}{}", tail.replace("{who}", who)));
     } else if let Some(who) = vanish {
         system.push_str(&VANISH_RULE.replace("{who}", who));
@@ -263,46 +327,69 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
         // The typed units lead the passages, so the source-kind rule's "say Trevor lacks that text" does not apply: it
         // made the Angelina answer open with a decline although passage [1] was her outfit. The two parts are spelled
         // out: with the lore passages merely present, Gemma answered from [1] alone.
-        Some(l) => system.push_str(&format!(" Passages [{}] to [{}] are the source text the question asks about \
+        Some(l) => system.push_str(&format!(
+            " Passages [{}] to [{}] are the source text the question asks about \
             (their label names the kind); never say Trevor lacks that text. Answer in two parts. \
             First, what that source text says, citing [{}] to [{}]. \
             Then a paragraph that begins \"Lore context:\" and explains the people, places, powers and events \
             the source text mentions, from passages [{}] to [{}] (story and operator-file passages about them), \
             with citations; if those passages say nothing about what it mentions, say so in one sentence.",
-            1 + off, l.units + off, 1 + off, l.units + off, l.units + 1 + off,
-            l.units + l.lore.max(1) + off)),
+            1 + off,
+            l.units + off,
+            1 + off,
+            l.units + off,
+            l.units + 1 + off,
+            l.units + l.lore.max(1) + off
+        )),
         None => {
             if !a.no_route && flags.asks_source_text {
                 system.push_str(SOURCE_RULE);
             }
         }
     }
-    let mut c = llm.complete(&Request::greedy(&system, &user, None, a.n_predict, &[])).await?;
+    let mut c = llm
+        .complete(&Request::greedy(&system, &user, None, a.n_predict, &[]))
+        .await?;
     // An answer cut off at the limit is asked again with twice the limit (`--no-answer-extend`): greedy decoding of the
     // same prompt repeats the cut answer and goes on.
     if !a.no_answer_extend && c.stop_type == "limit" {
-        c = llm.complete(&Request::greedy(&system, &user, None, a.n_predict * 2, &[])).await?;
+        c = llm
+            .complete(&Request::greedy(&system, &user, None, a.n_predict * 2, &[]))
+            .await?;
     }
     let (cited, invalid) = citations(&c.content, off, &first, &rows, &post, rt);
     let mut answer = c.content.trim().to_owned();
     if !a.no_route && is_open_listing(q) {
-        answer = format!("Trevor has no complete table for this question, so this list comes only from the {} \
-            passages it read and is not complete.\n\n{answer}", rows.len());
+        answer = format!(
+            "Trevor has no complete table for this question, so this list comes only from the {} \
+            passages it read and is not complete.\n\n{answer}",
+            rows.len()
+        );
     }
     Ok(Answer {
         qid: None,
         question: q.to_owned(),
         answer,
         cited,
-        passages: first.iter().map(|p| p.id.clone())
+        passages: first
+            .iter()
+            .map(|p| p.id.clone())
             .chain(rows.iter().map(|&r| rt.store.chunks[r].chunk_id.clone()))
             .chain(post.iter().map(|p| p.id.clone()))
             .collect(),
         invalid_citations: invalid,
         prompt_tokens: c.prompt_tokens,
         ms: started.elapsed().as_secs_f64() * 1000.0,
-        generated: pre.iter().filter(|p| !p.id.starts_with("topic:")).map(|p| (p.id.clone(), p.text.clone())).collect(),
-        form: form.map(|f| f.evidence.as_ref().map_or_else(|| f.form.clone(), |e| format!("{}: {e}", f.form))),
+        generated: pre
+            .iter()
+            .filter(|p| !p.id.starts_with("topic:"))
+            .map(|p| (p.id.clone(), p.text.clone()))
+            .collect(),
+        form: form.map(|f| {
+            f.evidence
+                .as_ref()
+                .map_or_else(|| f.form.clone(), |e| format!("{}: {e}", f.form))
+        }),
         texts,
         budget: a.max_context_tokens,
         hinted: hints.is_some(),

@@ -15,8 +15,10 @@ use crate::kinds::{CHARACTER_GROUPS, LORE_KINDS, TYPED};
 use crate::labels::unit_owner;
 
 /// Hits of `extra` and `hits` alternately, first seen wins.
-pub(crate) fn interleave(extra: Vec<trevor::search::pipeline::Hit>, hits: Vec<trevor::search::pipeline::Hit>)
-    -> Vec<trevor::search::pipeline::Hit> {
+pub(crate) fn interleave(
+    extra: Vec<trevor::search::pipeline::Hit>,
+    hits: Vec<trevor::search::pipeline::Hit>,
+) -> Vec<trevor::search::pipeline::Hit> {
     let mut taken: BTreeSet<usize> = BTreeSet::new();
     let mut mixed = Vec::with_capacity(hits.len() + extra.len());
     let (mut x, mut y) = (extra.into_iter(), hits.into_iter());
@@ -44,12 +46,23 @@ pub(crate) struct Lore {
 }
 
 /// Passages for `q`, and for a typed source with its lore (see below) how many units and lore hits lead them.
-pub(crate) fn passages(rt: &mut Runtime, q: &str, a: &Args, kind: Option<&str>, form: Option<&Form>)
-    -> Result<(Vec<usize>, Option<Lore>)> {
-    let cfg = RetrievalConfig { mode: Mode::Hybrid, k: a.k, ..RetrievalConfig::default() };
+pub(crate) fn passages(
+    rt: &mut Runtime,
+    q: &str,
+    a: &Args,
+    kind: Option<&str>,
+    form: Option<&Form>,
+) -> Result<(Vec<usize>, Option<Lore>)> {
+    let cfg = RetrievalConfig {
+        mode: Mode::Hybrid,
+        k: a.k,
+        ..RetrievalConfig::default()
+    };
     let mut hits = rt.retrieve(q, &cfg)?;
     let mut lore_added: Option<Lore> = None;
-    let evidence = form.and_then(|f| f.evidence.as_deref()).filter(|e| !e.trim().is_empty());
+    let evidence = form
+        .and_then(|f| f.evidence.as_deref())
+        .filter(|e| !e.trim().is_empty());
     // A yes/no question interleaves the hits of its evidence query with its own: the evidence query names the facts
     // to check ("Harold wife daughter children married") and ranks the lines that hold them far higher than the
     // question's own wording does.
@@ -70,7 +83,10 @@ pub(crate) fn passages(rt: &mut Runtime, q: &str, a: &Args, kind: Option<&str>, 
         // At most two files per name the question uses ("Margaret" is Nearl's and Nearl the Radiant Knight's real name
         // and a dossier's title), six in all.
         let mut per_name: HashMap<String, usize> = HashMap::new();
-        let named: Vec<_> = form.map(|f| f.named.clone()).unwrap_or_default().into_iter()
+        let named: Vec<_> = form
+            .map(|f| f.named.clone())
+            .unwrap_or_default()
+            .into_iter()
             .filter(|(_, asked, _)| {
                 let n = per_name.entry(asked.to_lowercase()).or_default();
                 *n += 1;
@@ -80,15 +96,21 @@ pub(crate) fn passages(rt: &mut Runtime, q: &str, a: &Args, kind: Option<&str>, 
             .collect();
         for (sid, asked, file) in named {
             let own = rt.retrieve(&format!("{file} {asked} {ev}"), &RetrievalConfig { k: 60, ..cfg })?;
-            let mine: Vec<_> = own.into_iter()
+            let mine: Vec<_> = own
+                .into_iter()
                 .filter(|h| rt.store.chunks[h.row].story_id == sid)
                 .take(CANDIDATE_PER_CHARACTER)
                 .collect();
             // A named character always gets its file: the first chunk when the query ranks none of it in the top 60.
             if mine.is_empty() {
                 if let Some(&row) = rt.store.story_rows(&sid).first() {
-                    cands.push(trevor::search::pipeline::Hit { row, score: 0.0, dense_rank: None, bm25_rank: None,
-                                                               fused_rank: None });
+                    cands.push(trevor::search::pipeline::Hit {
+                        row,
+                        score: 0.0,
+                        dense_rank: None,
+                        bm25_rank: None,
+                        fused_rank: None,
+                    });
                 }
             }
             cands.extend(mine);
@@ -96,14 +118,18 @@ pub(crate) fn passages(rt: &mut Runtime, q: &str, a: &Args, kind: Option<&str>, 
         }
         let room = CANDIDATES.saturating_sub(cands.len());
         let wide = rt.retrieve(ev, &RetrievalConfig { k: 60, ..cfg })?;
-        cands.extend(wide.into_iter().filter(|h| {
-            let c = &rt.store.chunks[h.row];
-            CHARACTER_GROUPS.contains(&c.group_id.as_str()) && {
-                let n = per.entry(c.story_id.clone()).or_default();
-                *n += 1;
-                *n <= CANDIDATE_PER_CHARACTER
-            }
-        }).take(room));
+        cands.extend(
+            wide.into_iter()
+                .filter(|h| {
+                    let c = &rt.store.chunks[h.row];
+                    CHARACTER_GROUPS.contains(&c.group_id.as_str()) && {
+                        let n = per.entry(c.story_id.clone()).or_default();
+                        *n += 1;
+                        *n <= CANDIDATE_PER_CHARACTER
+                    }
+                })
+                .take(room),
+        );
         // Each group an opinion question compares gets its own chunks first: with only the question's and the evidence
         // query's hits, one group can fill every passage ("Karlan Trade Group and Blacksteel" retrieves Karlan Trade and
         // Silverash) and the answer then says the other is not mentioned.
@@ -115,22 +141,30 @@ pub(crate) fn passages(rt: &mut Runtime, q: &str, a: &Args, kind: Option<&str>, 
                 let t = norm(&rt.store.chunks[row].text);
                 forms.iter().any(|f| contains_words(&t, &norm(f)))
             };
-            let mine: Vec<_> = found.into_iter()
+            let mine: Vec<_> = found
+                .into_iter()
                 .filter(|h| names(h.row) && !own.iter().chain(&cands).any(|x| x.row == h.row))
-                .take(GROUP_EVIDENCE).collect();
+                .take(GROUP_EVIDENCE)
+                .collect();
             own.extend(mine);
         }
         let cands: Vec<_> = own.into_iter().chain(cands).collect();
         bare = cands.iter().map(|h| h.row).collect();
-        hits = cands.into_iter().chain(hits.into_iter().filter(|h| !bare.contains(&h.row))).collect();
+        hits = cands
+            .into_iter()
+            .chain(hits.into_iter().filter(|h| !bare.contains(&h.row)))
+            .collect();
     }
     // A question about one kind of source (P4 units: module, voice, is, enemy, skin, item) gets the best 3 chunks of
     // that kind first from a wider candidate list, so story passages cannot crowd them out.
     if let Some(kind) = kind {
         let wide = rt.retrieve(q, &RetrievalConfig { k: 60, ..cfg })?;
         let lore_here = lore_on(a) && LORE_KINDS.contains(&kind);
-        let mut pref: Vec<_> = wide.into_iter().filter(|h| rt.store.chunks[h.row].group_id == kind)
-            .take(if lore_here { 12 } else { 3 }).collect();
+        let mut pref: Vec<_> = wide
+            .into_iter()
+            .filter(|h| rt.store.chunks[h.row].group_id == kind)
+            .take(if lore_here { 12 } else { 3 })
+            .collect();
         // With lore on, units of another operator do not follow the best unit ("What does Angelina's Bloodline of
         // Combat outfit say?" would otherwise also take Swire's Bloodline of Combat outfit).
         if lore_here {
@@ -148,18 +182,25 @@ pub(crate) fn passages(rt: &mut Runtime, q: &str, a: &Args, kind: Option<&str>, 
             if let Some(top) = pref.first() {
                 let text: String = rt.store.chunks[top.row].text.chars().take(600).collect();
                 let lq = rt.retrieve(&text, &RetrievalConfig { k: 40, ..cfg })?;
-                lore = lq.into_iter()
+                lore = lq
+                    .into_iter()
                     .filter(|h| !TYPED.contains(&rt.store.chunks[h.row].group_id.as_str()))
                     .take(4)
                     .collect();
             }
         }
         if lore_here && !pref.is_empty() {
-            lore_added = Some(Lore { units: pref.len(), lore: lore.len() });
+            lore_added = Some(Lore {
+                units: pref.len(),
+                lore: lore.len(),
+            });
         }
         let mut taken: BTreeSet<usize> = BTreeSet::new();
         let head: Vec<_> = pref.into_iter().chain(lore).filter(|h| taken.insert(h.row)).collect();
-        hits = head.into_iter().chain(hits.into_iter().filter(|h| !taken.contains(&h.row))).collect();
+        hits = head
+            .into_iter()
+            .chain(hits.into_iter().filter(|h| !taken.contains(&h.row)))
+            .collect();
     }
     // The origin chain (`--no-origin-chain` turns it off): a why/how-it-began question also gets the earlier scenes of the story its search keeps hitting.
     // The earliest cause often ranks too low for the passage budget to keep it ("Why did swire join the LGD?": the
@@ -172,23 +213,33 @@ pub(crate) fn passages(rt: &mut Runtime, q: &str, a: &Args, kind: Option<&str>, 
         for h in &wide {
             *count.entry(rt.store.chunks[h.row].story_id.as_str()).or_default() += 1;
         }
-        let top = count.iter()
+        let top = count
+            .iter()
             .filter(|(_, n)| **n >= 3)
             .max_by_key(|(sid, n)| (**n, std::cmp::Reverse(**sid)))
             .map(|(s, _)| (*s).to_owned());
         if let Some(sid) = top {
             let rows = rt.store.story_rows(&sid);
             let pos = |row: usize| rows.iter().position(|&r| r == row).unwrap_or(usize::MAX);
-            let lead = hits.iter().chain(wide.iter()).find(|h| rt.store.chunks[h.row].story_id == sid).cloned();
+            let lead = hits
+                .iter()
+                .chain(wide.iter())
+                .find(|h| rt.store.chunks[h.row].story_id == sid)
+                .cloned();
             if let Some(lead) = lead {
-                let mut add: Vec<_> = wide.iter()
+                let mut add: Vec<_> = wide
+                    .iter()
                     .filter(|h| rt.store.chunks[h.row].story_id == sid && pos(h.row) < pos(lead.row))
-                    .cloned().collect();
+                    .cloned()
+                    .collect();
                 add.sort_by_key(|h| pos(h.row));
                 add.truncate(5);
                 bare.extend(add.iter().map(|h| h.row));
                 let first: Vec<_> = add.into_iter().chain(std::iter::once(lead)).collect();
-                let rest: Vec<_> = hits.into_iter().filter(|h| !first.iter().any(|x| x.row == h.row)).collect();
+                let rest: Vec<_> = hits
+                    .into_iter()
+                    .filter(|h| !first.iter().any(|x| x.row == h.row))
+                    .collect();
                 hits = first.into_iter().chain(rest).collect();
             }
         }
@@ -246,7 +297,17 @@ pub(crate) struct Pre {
 impl Pre {
     /// A passage before the retrieved ones that adds no rule.
     pub(crate) fn new(id: String, label: String, text: String) -> Self {
-        Self { id, label, text, last: false, rule: false, scoped: false, gap: None, death: None, theory: false }
+        Self {
+            id,
+            label,
+            text,
+            last: false,
+            rule: false,
+            scoped: false,
+            gap: None,
+            death: None,
+            theory: false,
+        }
     }
 
     /// Placed after the retrieved passages (`last`).

@@ -9,73 +9,290 @@ pub(crate) fn has(q: &str, words: &[&str]) -> bool {
 }
 
 pub(crate) fn is_time_question(q: &str) -> bool {
-    has(q, &["chronolog", "what year", "which year", " year", "when did", "when was", "when is", "how long ago",
-             "before or after", "in order", "order the", "timeline", "date"])
+    has(
+        q,
+        &[
+            "chronolog",
+            "what year",
+            "which year",
+            " year",
+            "when did",
+            "when was",
+            "when is",
+            "how long ago",
+            "before or after",
+            "in order",
+            "order the",
+            "timeline",
+            "date",
+        ],
+    )
 }
 
 pub(crate) fn is_canon_question(q: &str) -> bool {
-    has(q, &["canon", "official", "retcon", "mistranslat", "translation", "translated", "cn version", "en version",
-             "localiz", "developer", "the devs", "hypergryph said", "writer"])
+    has(
+        q,
+        &[
+            "canon",
+            "official",
+            "retcon",
+            "mistranslat",
+            "translation",
+            "translated",
+            "cn version",
+            "en version",
+            "localiz",
+            "developer",
+            "the devs",
+            "hypergryph said",
+            "writer",
+        ],
+    )
 }
 
 pub(crate) fn is_opinion_question(q: &str) -> bool {
-    has(q, &["do you think", "what do you think", "who would win", "would win", "strongest", "most powerful",
-             "stronger than", "predict", "prediction", "will happen", "theory", "theories", "speculat", "your opinion",
-             "overrated", "underrated", "favorite", "favourite"])
+    has(
+        q,
+        &[
+            "do you think",
+            "what do you think",
+            "who would win",
+            "would win",
+            "strongest",
+            "most powerful",
+            "stronger than",
+            "predict",
+            "prediction",
+            "will happen",
+            "theory",
+            "theories",
+            "speculat",
+            "your opinion",
+            "overrated",
+            "underrated",
+            "favorite",
+            "favourite",
+        ],
+    )
 }
 
 /// The P4 source kind a question names, if any.
 pub(crate) fn source_kind(q: &str) -> Option<&'static str> {
-    [("module", &["module"][..]),
-     ("voice", &["voice line", "voiceline", "voice lines", "poke", "trust line", "interact line", "dorm line",
-                 "says when"][..]),
-     ("skin", &["skin", "outfit"][..]),
-     ("is", &["integrated strategies", "roguelike", " is1", " is2", " is3", " is4", " is5", " is6", "is#"][..]),
-     ("enemy", &["enemy file", "enemy description", "enemy entry", "enemy handbook"][..]),
-     ("item", &["item description", "item text", "flavor text", "flavour text"][..])]
-        .into_iter().find(|(_, ws)| has(&format!(" {q}"), ws)).map(|(k, _)| k)
+    [
+        ("module", &["module"][..]),
+        (
+            "voice",
+            &[
+                "voice line",
+                "voiceline",
+                "voice lines",
+                "poke",
+                "trust line",
+                "interact line",
+                "dorm line",
+                "says when",
+            ][..],
+        ),
+        ("skin", &["skin", "outfit"][..]),
+        (
+            "is",
+            &[
+                "integrated strategies",
+                "roguelike",
+                " is1",
+                " is2",
+                " is3",
+                " is4",
+                " is5",
+                " is6",
+                "is#",
+            ][..],
+        ),
+        (
+            "enemy",
+            &["enemy file", "enemy description", "enemy entry", "enemy handbook"][..],
+        ),
+        (
+            "item",
+            &["item description", "item text", "flavor text", "flavour text"][..],
+        ),
+    ]
+    .into_iter()
+    .find(|(_, ws)| has(&format!(" {q}"), ws))
+    .map(|(k, _)| k)
 }
 
 pub(crate) fn is_source_question(q: &str) -> bool {
-    has(q, &["module", "voice line", "voiceline", "voice lines", "skin", "outfit", "integrated strategies", "roguelike",
-             " is1", " is2", " is3", " is4", " is5", " is6", "is#", "enemy file", "enemy description", "enemy entry",
-             "operator record", "trust line", "interact line", "poke", "dorm line", "furniture"])
+    has(
+        q,
+        &[
+            "module",
+            "voice line",
+            "voiceline",
+            "voice lines",
+            "skin",
+            "outfit",
+            "integrated strategies",
+            "roguelike",
+            " is1",
+            " is2",
+            " is3",
+            " is4",
+            " is5",
+            " is6",
+            "is#",
+            "enemy file",
+            "enemy description",
+            "enemy entry",
+            "operator record",
+            "trust line",
+            "interact line",
+            "poke",
+            "dorm line",
+            "furniture",
+        ],
+    )
 }
 
 pub(crate) fn is_synthesis_question(q: &str) -> bool {
-    has(q, &["rank", "strongest", "most powerful", "weakest", "compare", "comparison", "stronger", "overview",
-             "in general", "summari"])
+    has(
+        q,
+        &[
+            "rank",
+            "strongest",
+            "most powerful",
+            "weakest",
+            "compare",
+            "comparison",
+            "stronger",
+            "overview",
+            "in general",
+            "summari",
+        ],
+    )
 }
 
 /// A question asking who someone is or which person did something, or naming a real name, codename or identity: the
 /// questions the answer category check reads.
 pub(crate) fn asks_identity(q: &str) -> bool {
     let n = norm(q);
-    ["who", "whom", "whose", "which", "real name", "codename", "identity", "same person", "known as"].iter()
-        .any(|w| contains_words(&n, w))
+    [
+        "who",
+        "whom",
+        "whose",
+        "which",
+        "real name",
+        "codename",
+        "identity",
+        "same person",
+        "known as",
+    ]
+    .iter()
+    .any(|w| contains_words(&n, w))
 }
 
 /// Words that make a named character the subject of a said or done act ("Mon3tr suggested", "did Necrass say").
 pub(crate) const SAID_VERBS: [&str; 39] = [
-    "say", "said", "says", "tell", "told", "tells", "suggest", "suggested", "suggests", "declare", "declared",
-    "declares", "joke", "joked", "jokes", "admit", "admitted", "admits", "threaten", "threatened", "threatens",
-    "propose", "proposed", "proposes", "offer", "offered", "offers", "mention", "mentioned", "mentions", "claim",
-    "claimed", "claims", "promise", "promised", "promises", "confess", "confessed", "confesses"];
+    "say",
+    "said",
+    "says",
+    "tell",
+    "told",
+    "tells",
+    "suggest",
+    "suggested",
+    "suggests",
+    "declare",
+    "declared",
+    "declares",
+    "joke",
+    "joked",
+    "jokes",
+    "admit",
+    "admitted",
+    "admits",
+    "threaten",
+    "threatened",
+    "threatens",
+    "propose",
+    "proposed",
+    "proposes",
+    "offer",
+    "offered",
+    "offers",
+    "mention",
+    "mentioned",
+    "mentions",
+    "claim",
+    "claimed",
+    "claims",
+    "promise",
+    "promised",
+    "promises",
+    "confess",
+    "confessed",
+    "confesses",
+];
 
 /// Verbs of saying something indirectly ("What NPC did Mon3tr hint at wanting to take out", for the aside "(I can take
 /// her out. Nobody would notice.)"), counted with `SAID_VERBS` unless `--said-verbs-v1`.
-pub(crate) const HINT_VERBS: [&str; 12] = ["hint", "hints", "hinted", "imply", "implies", "implied", "insinuate",
-    "insinuates", "insinuated", "allude", "alludes", "alluded"];
+pub(crate) const HINT_VERBS: [&str; 12] = [
+    "hint",
+    "hints",
+    "hinted",
+    "imply",
+    "implies",
+    "implied",
+    "insinuate",
+    "insinuates",
+    "insinuated",
+    "allude",
+    "alludes",
+    "alluded",
+];
 
 /// Verbs of reacting, feeling and waking ("How does Mon3tr react when she wakes up after Kal'tsit dies": the scene
 /// is `main_15-18_end#0007`, where the voice is "???" until "My name is Mon3tr", so retrieval misses it; the
 /// character's own scenes reranked against the question could reach it). Opt-in with `--react-verbs` (2026-10-19,
 /// unmeasured: on E2B mid the scenes ranked a Return to Mist line above the waking scene).
-pub(crate) const SCENE_VERBS: [&str; 36] = ["hint", "hints", "hinted", "imply", "implies", "implied", "insinuate",
-    "insinuates", "insinuated", "allude", "alludes", "alluded",
-    "react", "reacts", "reacted", "respond", "responds", "responded", "feel", "feels", "felt", "wake", "wakes",
-    "woke", "woken", "awake", "awakes", "awoke", "awaken", "awakens", "behave", "behaves", "behaved", "cope", "copes",
-    "coped"];
+pub(crate) const SCENE_VERBS: [&str; 36] = [
+    "hint",
+    "hints",
+    "hinted",
+    "imply",
+    "implies",
+    "implied",
+    "insinuate",
+    "insinuates",
+    "insinuated",
+    "allude",
+    "alludes",
+    "alluded",
+    "react",
+    "reacts",
+    "reacted",
+    "respond",
+    "responds",
+    "responded",
+    "feel",
+    "feels",
+    "felt",
+    "wake",
+    "wakes",
+    "woke",
+    "woken",
+    "awake",
+    "awakes",
+    "awoke",
+    "awaken",
+    "awakens",
+    "behave",
+    "behaves",
+    "behaved",
+    "cope",
+    "copes",
+    "coped",
+];
 
 /// Whether the question makes the character (any of `forms`, folded) the subject of an act it asks about: a form followed,
 /// with at most one word between, by a said verb (`SAID_VERBS`, and `extra`), or, when the question asks in which event,
@@ -85,36 +302,67 @@ pub(crate) fn asks_scene_with(q: &str, forms: &[String], extra: &[&str]) -> bool
     let words: Vec<&str> = n.split_whitespace().collect();
     let l = format!(" {} ", words.join(" "));
     let place = ["event", "story", "chapter", "episode", "scene", "stage"];
-    let asks_place = ["which", "what"].iter().any(|w| place.iter().any(|p| l.contains(&format!(" {w} {p} "))));
+    let asks_place = ["which", "what"]
+        .iter()
+        .any(|w| place.iter().any(|p| l.contains(&format!(" {w} {p} "))));
     forms.iter().any(|f| {
         let fw: Vec<&str> = f.split_whitespace().collect();
-        (0..words.len()).filter(|&i| !fw.is_empty() && words[i..].starts_with(&fw)).any(|i| {
-            words.iter().skip(i + fw.len()).take(2)
-                .any(|w| SAID_VERBS.contains(w) || extra.contains(w) || (asks_place && w.len() > 4 && w.ends_with("ed")))
-        })
+        (0..words.len())
+            .filter(|&i| !fw.is_empty() && words[i..].starts_with(&fw))
+            .any(|i| {
+                words.iter().skip(i + fw.len()).take(2).any(|w| {
+                    SAID_VERBS.contains(w) || extra.contains(w) || (asks_place && w.len() > 4 && w.ends_with("ed"))
+                })
+            })
     })
 }
 
 /// `q` lowercased, every character but letters, digits and apostrophes turned into a space, with a space at each end:
 /// the form the word lists below are matched in (" how old " is in it only as whole words).
 fn padded_words(q: &str) -> String {
-    format!(" {} ", q.to_lowercase().replace(|c: char| !c.is_alphanumeric() && c != '\'', " "))
+    format!(
+        " {} ",
+        q.to_lowercase()
+            .replace(|c: char| !c.is_alphanumeric() && c != '\'', " ")
+    )
 }
 
 /// Whether a relation question asks whom someone admires (one person named, the other asked for).
 pub(crate) fn asks_admire(q: &str) -> bool {
     let ql = padded_words(q);
-    [" fan of ", " idolise ", " idolises ", " idolize ", " idolizes ", " idolised ", " idolized ", " admire ",
-     " admires ", " look up to ", " looks up to "].iter().any(|w| ql.contains(w))
+    [
+        " fan of ",
+        " idolise ",
+        " idolises ",
+        " idolize ",
+        " idolizes ",
+        " idolised ",
+        " idolized ",
+        " admire ",
+        " admires ",
+        " look up to ",
+        " looks up to ",
+    ]
+    .iter()
+    .any(|w| ql.contains(w))
 }
 
 /// "What is the khagan quest?", "what are the X", "who are the Sarkaz?": a what/who is/are question about a thing of at
 /// most 4 words, no possessive (a question about one character's trait is not a definition).
 pub(crate) fn asks_term(q: &str) -> bool {
     let l = q.trim().to_lowercase().replace('’', "'");
-    let rest = ["what is ", "what are ", "what was ", "what were ", "what's ", "whats ",
-                "who are the ", "who were the "]
-        .iter().find_map(|p| l.strip_prefix(p));
+    let rest = [
+        "what is ",
+        "what are ",
+        "what was ",
+        "what were ",
+        "what's ",
+        "whats ",
+        "who are the ",
+        "who were the ",
+    ]
+    .iter()
+    .find_map(|p| l.strip_prefix(p));
     rest.is_some_and(|r| {
         let r = r.trim_end_matches(['?', '.', '!', ' ']);
         !r.contains("'s") && !r.contains('?') && r.split_whitespace().count() <= 4
@@ -127,18 +375,44 @@ pub(crate) fn term_of(q: &str) -> Option<String> {
         return None;
     }
     let l = q.trim().to_lowercase().replace('’', "'");
-    let rest = ["what is ", "what are ", "what was ", "what were ", "what's ", "whats ",
-                "who are the ", "who were the "]
-        .iter().find_map(|p| l.strip_prefix(p))?;
+    let rest = [
+        "what is ",
+        "what are ",
+        "what was ",
+        "what were ",
+        "what's ",
+        "whats ",
+        "who are the ",
+        "who were the ",
+    ]
+    .iter()
+    .find_map(|p| l.strip_prefix(p))?;
     let rest = rest.trim_end_matches(['?', '.', '!', ' ']);
-    let rest = ["the ", "a ", "an "].iter().find_map(|x| rest.strip_prefix(x)).unwrap_or(rest);
+    let rest = ["the ", "a ", "an "]
+        .iter()
+        .find_map(|x| rest.strip_prefix(x))
+        .unwrap_or(rest);
     Some(rest.trim().to_owned()).filter(|t| !t.is_empty())
 }
 
 pub(crate) fn is_listing_question(q: &str) -> bool {
-    has(q, &["every story", "every event", "all stories", "all the stories", "all events", "all the events",
-             "full timeline", "complete timeline", "whole timeline", "entire timeline", "every chapter",
-             "all chapters"])
+    has(
+        q,
+        &[
+            "every story",
+            "every event",
+            "all stories",
+            "all the stories",
+            "all events",
+            "all the events",
+            "full timeline",
+            "complete timeline",
+            "whole timeline",
+            "entire timeline",
+            "every chapter",
+            "all chapters",
+        ],
+    )
 }
 
 pub(crate) fn is_operator_status_question(q: &str) -> bool {
@@ -153,17 +427,41 @@ pub(crate) fn is_operator_status_question(q: &str) -> bool {
 /// "List all X of every operator" with no table behind it: retrieval sees a sample, and a few names from a few
 /// passages would be presented as the whole answer.
 pub(crate) fn is_open_listing(q: &str) -> bool {
-    has(q, &["list all", "list every", "list the", "all the ", "every ", "all known", "complete list", "full list",
-             "name all", "all of the", "which operators", "which characters"])
-        && has(q, &["operator", "character", "people", "names", "members", "who "])
+    has(
+        q,
+        &[
+            "list all",
+            "list every",
+            "list the",
+            "all the ",
+            "every ",
+            "all known",
+            "complete list",
+            "full list",
+            "name all",
+            "all of the",
+            "which operators",
+            "which characters",
+        ],
+    ) && has(q, &["operator", "character", "people", "names", "members", "who "])
 }
 
 /// The words that make a question death-worded (`is_death_question`), matched as whole words of the folded question.
 /// Whole words leave out the words that only contain one: "deathless" (a name, "the Deathless Black Snake"),
 /// "undead" and "deadly" (a state and an adjective, nobody's death), "deadline", "skilled" ("killed"), "studied"
 /// ("died") and "studies", "bodies" or "ladies" ("dies").
-const DEATH_TERMS: [&str; 10] = ["dead", "die", "died", "dies", "dying", "death", "deaths", "killed", "deceased",
-                                 "passed away"];
+const DEATH_TERMS: [&str; 10] = [
+    "dead",
+    "die",
+    "died",
+    "dies",
+    "dying",
+    "death",
+    "deaths",
+    "killed",
+    "deceased",
+    "passed away",
+];
 
 /// Whether a question is worded about a death: one of `DEATH_TERMS` as whole words, so "die," in "How does Kal'tsit
 /// die, and ..." counts and "Deathless" does not.
@@ -175,55 +473,131 @@ pub(crate) fn is_death_question(q: &str) -> bool {
 /// Whether a question asks someone's age ("how old", "age", "aged", "years old").
 pub(crate) fn asks_age(q: &str) -> bool {
     let ql = padded_words(q);
-    [" how old ", " age ", " aged ", " years old ", " ages "].iter().any(|w| ql.contains(w))
+    [" how old ", " age ", " aged ", " years old ", " ages "]
+        .iter()
+        .any(|w| ql.contains(w))
 }
 
 /// Whether a question asks why, when or how something began (a why/when/how word and a beginning word).
 pub(crate) fn asks_origin(q: &str) -> bool {
     let ql = padded_words(q);
     let wh = [" why ", " when ", " how "].iter().any(|w| ql.contains(w));
-    wh && [" start ", " started ", " starts ", " begin ", " began ", " begun ", " beginning ", " origin ", " origins ",
-           " originate ", " originated ", " founded ", " founding ", " join ", " joined ", " joins ", " become ",
-           " became ", " decide ", " decided ", " first "].iter().any(|w| ql.contains(w))
+    wh && [
+        " start ",
+        " started ",
+        " starts ",
+        " begin ",
+        " began ",
+        " begun ",
+        " beginning ",
+        " origin ",
+        " origins ",
+        " originate ",
+        " originated ",
+        " founded ",
+        " founding ",
+        " join ",
+        " joined ",
+        " joins ",
+        " become ",
+        " became ",
+        " decide ",
+        " decided ",
+        " first ",
+    ]
+    .iter()
+    .any(|w| ql.contains(w))
 }
 
 /// Whether a question asks for a person or a name ("who", "whose", "name", "called", "NPC"): the questions the
 /// character-name rule is for. "What event did Count Vincent say ..." is not one (the rule misled the answer there).
 pub(crate) fn asks_person(q: &str) -> bool {
     let ql = padded_words(q);
-    [" who ", " whom ", " whose ", " name ", " names ", " named ", " called ", " npc ", " npcs "].iter().any(|w| ql.contains(w))
+    [
+        " who ", " whom ", " whose ", " name ", " names ", " named ", " called ", " npc ", " npcs ",
+    ]
+    .iter()
+    .any(|w| ql.contains(w))
 }
 
 /// Whether a question asks in which event or story something happens ("During which event ...", "In which chapter
 /// ..."). "What event did Count Vincent say ..." is not one: it asks about an event inside the story.
 pub(crate) fn asks_which_story(q: &str) -> bool {
     let ql = padded_words(q);
-    [" which event ", " which events ", " which story ", " which stories ", " which chapter ", " which chapters ",
-     " which episode ", " which episodes ", " what chapter ", " what episode ", " during what event "]
-        .iter().any(|w| ql.contains(w))
+    [
+        " which event ",
+        " which events ",
+        " which story ",
+        " which stories ",
+        " which chapter ",
+        " which chapters ",
+        " which episode ",
+        " which episodes ",
+        " what chapter ",
+        " what episode ",
+        " during what event ",
+    ]
+    .iter()
+    .any(|w| ql.contains(w))
 }
 
 /// Whether a question asks how people are related, or whom someone admires.
 pub(crate) fn asks_relation(q: &str) -> bool {
     let ql = padded_words(q);
-    [" relationship ", " relationships ", " relation ", " related ", " relatives ", " fan of ", " idolise ",
-     " idolises ", " idolize ", " idolizes ", " idolised ", " idolized ", " admire ", " admires ", " look up to ",
-     " looks up to "]
-        .iter().any(|w| ql.contains(w))
+    [
+        " relationship ",
+        " relationships ",
+        " relation ",
+        " related ",
+        " relatives ",
+        " fan of ",
+        " idolise ",
+        " idolises ",
+        " idolize ",
+        " idolizes ",
+        " idolised ",
+        " idolized ",
+        " admire ",
+        " admires ",
+        " look up to ",
+        " looks up to ",
+    ]
+    .iter()
+    .any(|w| ql.contains(w))
 }
 
 /// Whether a question asks when something happened ("when", "what year", "which year", "how long ago").
 pub(crate) fn asks_when(q: &str) -> bool {
     let ql = padded_words(q);
-    [" when ", " what year ", " which year ", " how long ago "].iter().any(|w| ql.contains(w))
+    [" when ", " what year ", " which year ", " how long ago "]
+        .iter()
+        .any(|w| ql.contains(w))
 }
 
 /// A decline opens the answer ("I could not find it in the story text"), the rule `answer-eval.py` uses.
 pub(crate) fn declines(answer: &str) -> bool {
-    let first = answer.trim().split(['.', '!', '?']).next().unwrap_or_default().to_lowercase();
-    ["could not find", "couldn't find", "cannot find", "can't find", "no information", "not mentioned", "not stated",
-     "does not say", "does not state", "does not mention", "do not contain", "does not contain"]
-        .iter().any(|w| first.contains(w))
+    let first = answer
+        .trim()
+        .split(['.', '!', '?'])
+        .next()
+        .unwrap_or_default()
+        .to_lowercase();
+    [
+        "could not find",
+        "couldn't find",
+        "cannot find",
+        "can't find",
+        "no information",
+        "not mentioned",
+        "not stated",
+        "does not say",
+        "does not state",
+        "does not mention",
+        "do not contain",
+        "does not contain",
+    ]
+    .iter()
+    .any(|w| first.contains(w))
 }
 
 #[cfg(test)]
@@ -232,13 +606,24 @@ mod tests {
 
     #[test]
     fn death_words_count_as_whole_words_only() {
-        for q in ["Did Delphine die?", "How does Kal'tsit die, and how does she get revived?", "Is Mantra dead?",
-                  "Was she killed?", "Is the Deathless Black Snake dead?", "Tin Man's death", "when she passed away?"] {
+        for q in [
+            "Did Delphine die?",
+            "How does Kal'tsit die, and how does she get revived?",
+            "Is Mantra dead?",
+            "Was she killed?",
+            "Is the Deathless Black Snake dead?",
+            "Tin Man's death",
+            "when she passed away?",
+        ] {
             assert!(is_death_question(q), "{q}");
         }
-        for q in ["Didn't they already kill the Deathless Black Snake or make it move on to someone else?",
-                  "Is the Deathless Black Snake real?", "Are the undead Sarkaz deadly?", "Is Texas skilled?",
-                  "Which ladies studied there?"] {
+        for q in [
+            "Didn't they already kill the Deathless Black Snake or make it move on to someone else?",
+            "Is the Deathless Black Snake real?",
+            "Are the undead Sarkaz deadly?",
+            "Is Texas skilled?",
+            "Which ladies studied there?",
+        ] {
             assert!(!is_death_question(q), "{q}");
         }
     }

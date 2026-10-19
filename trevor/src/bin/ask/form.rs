@@ -28,8 +28,12 @@ pub(crate) struct Flags {
 
 impl Flags {
     pub(crate) fn keywords(q: &str) -> Flags {
-        Flags { asks_time: is_time_question(q), asks_canon: is_canon_question(q),
-                asks_synthesis: is_synthesis_question(q), asks_source_text: is_source_question(q) }
+        Flags {
+            asks_time: is_time_question(q),
+            asks_canon: is_canon_question(q),
+            asks_synthesis: is_synthesis_question(q),
+            asks_source_text: is_source_question(q),
+        }
     }
 }
 
@@ -57,7 +61,15 @@ pub(crate) struct Form {
 /// that does not parse is a fact question, which leaves the answer as before.
 pub(crate) async fn question_form(llm: &Llm, q: &str, v1: bool) -> Result<Form> {
     let ask = |system: &'static str| async move {
-        let c = llm.complete(&Request::greedy(system, &format!("Q: {q}"), Some(FORM_GRAMMAR), 80, &[])).await?;
+        let c = llm
+            .complete(&Request::greedy(
+                system,
+                &format!("Q: {q}"),
+                Some(FORM_GRAMMAR),
+                80,
+                &[],
+            ))
+            .await?;
         anyhow::Ok(serde_json::from_str::<Form>(c.content.trim()).unwrap_or_default())
     };
     let first = ask(FORM_SYSTEM).await?;
@@ -65,5 +77,9 @@ pub(crate) async fn question_form(llm: &Llm, q: &str, v1: bool) -> Result<Form> 
         return Ok(first);
     }
     let second = ask(FORM_SYSTEM_V2).await?;
-    Ok(if second.form == "opinion" || second.form.is_empty() { first } else { second })
+    Ok(if second.form == "opinion" || second.form.is_empty() {
+        first
+    } else {
+        second
+    })
 }

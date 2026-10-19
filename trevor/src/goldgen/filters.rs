@@ -90,11 +90,7 @@ pub fn trigram_jaccard(a: &str, b: &str) -> f64 {
             })
             .collect();
         let joined = cleaned.split_whitespace().collect::<Vec<_>>().join(" ");
-        joined
-            .as_bytes()
-            .windows(3)
-            .map(|w| [w[0], w[1], w[2]])
-            .collect()
+        joined.as_bytes().windows(3).map(|w| [w[0], w[1], w[2]]).collect()
     }
     let (x, y) = (grams(a), grams(b));
     let union = x.union(&y).count();
@@ -142,10 +138,7 @@ pub fn deictic(question: &str) -> Option<&'static str> {
             "he" | "she" | "him" | "her" | "his" | "hers" | "they" | "them" | "their"
         )
     });
-    let named = words
-        .iter()
-        .skip(1)
-        .any(|w| bare(w).starts_with(char::is_uppercase));
+    let named = words.iter().skip(1).any(|w| bare(w).starts_with(char::is_uppercase));
     if pronoun && !named {
         return Some("pronoun without a named antecedent");
     }
@@ -221,10 +214,7 @@ mod tests {
             deictic("What happens in this scene after the fight?"),
             Some("this scene")
         );
-        assert_eq!(
-            deictic("Why does Ch'en leave the Lungmen Guard Department?"),
-            None
-        );
+        assert_eq!(deictic("Why does Ch'en leave the Lungmen Guard Department?"), None);
         assert_eq!(deictic("Who is there when Amiya arrives?"), None);
     }
 }

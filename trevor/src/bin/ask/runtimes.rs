@@ -5,7 +5,6 @@ use std::path::PathBuf;
 use anyhow::Result;
 use trevor::search::runtime::{Runtime, RuntimeArgs};
 
-
 /// The loaded corpus, and P4 loaded on first need when `--corpus` was left at its default (a batch can mix both).
 pub(crate) struct Runtimes {
     pub(crate) main: Runtime,
@@ -26,13 +25,20 @@ pub(crate) struct Runtimes {
 /// reranker loads on first use (`scenes::ensure_reranker`); the query embedder of `share` is reused when it fits
 /// (`Runtime::load_sharing`).
 /// `TREVOR_LOAD_DEBUG=1` prints the load time.
-pub(crate) fn load_runtime(a: &RuntimeArgs, dense: bool, share: Option<trevor::search::runtime::SharedEmbedder>)
-    -> Result<Runtime> {
+pub(crate) fn load_runtime(
+    a: &RuntimeArgs,
+    dense: bool,
+    share: Option<trevor::search::runtime::SharedEmbedder>,
+) -> Result<Runtime> {
     let t = std::time::Instant::now();
     let mut rt = Runtime::load_sharing(a, dense, true, false, share)?;
     rt.bm25_only = !dense;
     if trevor::env::debug_on("TREVOR_LOAD_DEBUG") {
-        eprintln!("loaded {} in {:.2} s (dense {dense})", a.corpus.display(), t.elapsed().as_secs_f64());
+        eprintln!(
+            "loaded {} in {:.2} s (dense {dense})",
+            a.corpus.display(),
+            t.elapsed().as_secs_f64()
+        );
     }
     Ok(rt)
 }
@@ -61,7 +67,10 @@ impl Runtimes {
 
     /// Set the horizon on every loaded corpus (and on the ones `pick` loads later).
     pub(crate) fn set_horizon(&mut self, h: Option<std::sync::Arc<trevor::search::horizon::Horizon>>) {
-        for rt in std::iter::once(&mut self.main).chain(self.p4.as_mut()).chain(self.art.as_mut()) {
+        for rt in std::iter::once(&mut self.main)
+            .chain(self.p4.as_mut())
+            .chain(self.art.as_mut())
+        {
             rt.horizon.clone_from(&h);
         }
         self.horizon = h;

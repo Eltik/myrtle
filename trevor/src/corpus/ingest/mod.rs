@@ -32,25 +32,23 @@ use anyhow::{Context, Result, anyhow};
 use futures::StreamExt as _;
 use serde::{Deserialize, Serialize};
 
+use crate::corpus::chunk::{Chunk, ChunkConfig, StoryCommand, chunk_story};
 use crate::util::sha_hex;
-use crate::corpus::chunk::{
-    Chunk, ChunkConfig, StoryCommand, chunk_story,
-};
 
-mod jobs;
-mod resume;
-mod refresh;
-mod verify;
 mod fetch;
+mod jobs;
+mod refresh;
+mod resume;
 #[cfg(test)]
 mod tests;
+mod verify;
 
 pub use fetch::{Fetched, Fetcher};
 pub use jobs::{Job, Source, SpoilerRow, plan};
 pub use refresh::{ChangeCounts, ChangeReport, OldCorpus, Refresh};
 pub use resume::{Recovery, recover};
-pub use verify::reconstructs;
 use verify::prose_words;
+pub use verify::reconstructs;
 
 // ---------------------------------------------------------------------------
 // Wire types. Only the fields this crate reads are modelled: modelling fields
@@ -179,9 +177,7 @@ impl IngestConfig {
 /// last run wrote, one per scripted story. `None` when there is no file yet.
 fn previous_plan_len(out: &Path) -> Result<Option<usize>> {
     match std::fs::read(out.join("spoiler.jsonl")) {
-        Ok(b) => Ok(Some(
-            b.split(|&c| c == b'\n').filter(|l| !l.is_empty()).count(),
-        )),
+        Ok(b) => Ok(Some(b.split(|&c| c == b'\n').filter(|l| !l.is_empty()).count())),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
         Err(e) => Err(e).context("reading spoiler.jsonl to compare plans"),
     }
@@ -275,9 +271,7 @@ pub struct Manifest {
 impl Manifest {
     #[must_use]
     pub fn clean(&self) -> bool {
-        self.lossless_failures.is_empty()
-            && self.word_count_mismatches.is_empty()
-            && self.stories_failed == 0
+        self.lossless_failures.is_empty() && self.word_count_mismatches.is_empty() && self.stories_failed == 0
     }
 }
 
@@ -292,10 +286,7 @@ fn write_jsonl<T: Serialize>(path: &Path, rows: impl IntoIterator<Item = T>) -> 
 /// Anything that stops the run as a whole: an unreachable index, an
 /// unwritable output directory, a corrupt existing `chunks.jsonl`.
 /// Per-story failures do not stop the run; they are recorded.
-pub async fn run(
-    cfg: &IngestConfig,
-    count_tokens: Arc<dyn Fn(&str) -> u32 + Send + Sync>,
-) -> Result<Manifest> {
+pub async fn run(cfg: &IngestConfig, count_tokens: Arc<dyn Fn(&str) -> u32 + Send + Sync>) -> Result<Manifest> {
     if cfg.refresh && cfg.limit.is_some() {
         // A refresh drops every old story the plan does not list, so a
         // truncated plan would delete the rest of the corpus.
@@ -357,11 +348,7 @@ pub async fn run(
     } else {
         recover(&chunks_path)?
     };
-    let todo: Vec<Job> = jobs
-        .iter()
-        .filter(|j| !done.contains(&j.entry.id))
-        .cloned()
-        .collect();
+    let todo: Vec<Job> = jobs.iter().filter(|j| !done.contains(&j.entry.id)).cloned().collect();
 
     let mut file = if cfg.refresh {
         std::fs::File::create(&refresh_tmp)?
@@ -390,9 +377,7 @@ pub async fn run(
             // Tokenizing is CPU work; keep it off the async workers.
             let gid2 = gid.clone();
             let done = tokio::task::spawn_blocking(move || {
-                let chunks = chunk_story(&script.id, &gid2, &script.commands, &chunk_cfg, &|s| {
-                    count(s)
-                });
+                let chunks = chunk_story(&script.id, &gid2, &script.commands, &chunk_cfg, &|s| count(s));
                 Outcome {
                     lossless: reconstructs(&script.commands, &chunks),
                     words: prose_words(&script.commands).len(),
@@ -519,9 +504,6 @@ pub async fn run(
         chunk_config: (&cfg.chunk).into(),
         refresh: changes,
     };
-    std::fs::write(
-        cfg.out.join("manifest.p0.json"),
-        serde_json::to_vec_pretty(&manifest)?,
-    )?;
+    std::fs::write(cfg.out.join("manifest.p0.json"), serde_json::to_vec_pretty(&manifest)?)?;
     Ok(manifest)
 }

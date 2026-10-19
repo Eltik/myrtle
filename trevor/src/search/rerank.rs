@@ -45,9 +45,7 @@ struct Head {
 }
 
 fn tensor(st: &SafeTensors<'_>, name: &str, shape: &[usize]) -> Result<Vec<f32>> {
-    let t = st
-        .tensor(name)
-        .with_context(|| format!("safetensors has no {name}"))?;
+    let t = st.tensor(name).with_context(|| format!("safetensors has no {name}"))?;
     if t.dtype() != safetensors::Dtype::F32 {
         bail!("{name} is {:?}, expected F32", t.dtype());
     }
@@ -62,9 +60,7 @@ fn tensor(st: &SafeTensors<'_>, name: &str, shape: &[usize]) -> Result<Vec<f32>>
 
 impl Head {
     fn load(dir: &Path, hidden: usize) -> Result<Self> {
-        let read = |p: &str| {
-            std::fs::read(dir.join(p)).with_context(|| format!("reading {}", dir.join(p).display()))
-        };
+        let read = |p: &str| std::fs::read(dir.join(p)).with_context(|| format!("reading {}", dir.join(p).display()));
         let (d1, d2, d3) = (
             read("2_Dense/model.safetensors")?,
             read("3_LayerNorm/model.safetensors")?,
@@ -92,11 +88,7 @@ impl Head {
         let mut a: Vec<f64> = (0..h)
             .map(|o| {
                 let row = &self.w1[o * h..(o + 1) * h];
-                let z: f64 = row
-                    .iter()
-                    .zip(cls)
-                    .map(|(w, x)| f64::from(*w) * f64::from(*x))
-                    .sum();
+                let z: f64 = row.iter().zip(cls).map(|(w, x)| f64::from(*w) * f64::from(*x)).sum();
                 gelu(z)
             })
             .collect();
@@ -128,8 +120,7 @@ fn erf(x: f64) -> f64 {
     let x = x.abs();
     let t = 1.0 / (1.0 + 0.327_591_1 * x);
     let y = 1.0
-        - (((((1.061_405_429 * t - 1.453_152_027) * t) + 1.421_413_741) * t - 0.284_496_736) * t
-            + 0.254_829_592)
+        - (((((1.061_405_429 * t - 1.453_152_027) * t) + 1.421_413_741) * t - 0.284_496_736) * t + 0.254_829_592)
             * t
             * (-x * x).exp();
     sign * y
@@ -151,20 +142,15 @@ impl Reranker {
     /// # Errors
     /// Missing files, head tensors of the wrong shape, or a backbone whose
     /// output is not `last_hidden_state`.
-    pub fn load(
-        dir: &Path,
-        onnx_file: &str,
-        max_tokens: usize,
-        intra_threads: Option<usize>,
-    ) -> Result<Self> {
+    pub fn load(dir: &Path, onnx_file: &str, max_tokens: usize, intra_threads: Option<usize>) -> Result<Self> {
         if !(MAX_QUERY_TOKENS + 8..=RERANK_MAX_TOKENS).contains(&max_tokens) {
             bail!(
                 "rerank max tokens must be in {}..={RERANK_MAX_TOKENS}",
                 MAX_QUERY_TOKENS + 8
             );
         }
-        let onnx = std::fs::read(dir.join(onnx_file))
-            .with_context(|| format!("reading {}", dir.join(onnx_file).display()))?;
+        let onnx =
+            std::fs::read(dir.join(onnx_file)).with_context(|| format!("reading {}", dir.join(onnx_file).display()))?;
         let model_sha = crate::util::sha_hex(&onnx);
         let mut builder = Session::builder().map_err(|e| anyhow!("{e}"))?;
         if let Some(n) = intra_threads {
@@ -173,19 +159,11 @@ impl Reranker {
         let session = builder
             .commit_from_memory(&onnx)
             .map_err(|e| anyhow!("loading the reranker: {e}"))?;
-        let inputs: Vec<&str> = session
-            .inputs()
-            .iter()
-            .map(ort::value::Outlet::name)
-            .collect();
+        let inputs: Vec<&str> = session.inputs().iter().map(ort::value::Outlet::name).collect();
         if inputs != ["input_ids", "attention_mask"] {
             bail!("reranker inputs are {inputs:?}, expected [input_ids, attention_mask]");
         }
-        let outputs: Vec<&str> = session
-            .outputs()
-            .iter()
-            .map(ort::value::Outlet::name)
-            .collect();
+        let outputs: Vec<&str> = session.outputs().iter().map(ort::value::Outlet::name).collect();
         if outputs != ["last_hidden_state"] {
             bail!(
                 "reranker outputs are {outputs:?}; this loader applies the head itself and \
@@ -193,8 +171,7 @@ impl Reranker {
             );
         }
 
-        let mut tokenizer =
-            Tokenizer::from_file(dir.join("tokenizer.json")).map_err(|e| anyhow!("{e}"))?;
+        let mut tokenizer = Tokenizer::from_file(dir.join("tokenizer.json")).map_err(|e| anyhow!("{e}"))?;
         tokenizer.with_padding(None);
         tokenizer
             .with_truncation(Some(TruncationParams {
@@ -205,9 +182,8 @@ impl Reranker {
             }))
             .map_err(|e| anyhow!("{e}"))?;
 
-        let config: serde_json::Value = serde_json::from_slice(
-            &std::fs::read(dir.join("config.json")).context("reading config.json")?,
-        )?;
+        let config: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(dir.join("config.json")).context("reading config.json")?)?;
         let hidden = config["hidden_size"]
             .as_u64()
             .context("config.json has no hidden_size")?;
@@ -226,24 +202,14 @@ impl Reranker {
     /// # Errors
     /// An over-long query, a tokenizer failure, or an inference failure.
     pub fn score(&self, query: &str, passages: &[&str]) -> Result<Vec<f32>> {
-        let q_len = self
-            .tokenizer
-            .encode(query, false)
-            .map_err(|e| anyhow!("{e}"))?
-            .len();
+        let q_len = self.tokenizer.encode(query, false).map_err(|e| anyhow!("{e}"))?.len();
         if q_len > MAX_QUERY_TOKENS {
             bail!("query is {q_len} tokens; the reranker accepts at most {MAX_QUERY_TOKENS}");
         }
-        let mut session = self
-            .session
-            .lock()
-            .map_err(|_| anyhow!("reranker session poisoned"))?;
+        let mut session = self.session.lock().map_err(|_| anyhow!("reranker session poisoned"))?;
         let mut out = Vec::with_capacity(passages.len());
         for p in passages {
-            let enc = self
-                .tokenizer
-                .encode((query, *p), true)
-                .map_err(|e| anyhow!("{e}"))?;
+            let enc = self.tokenizer.encode((query, *p), true).map_err(|e| anyhow!("{e}"))?;
             let ids: Vec<i64> = enc.get_ids().iter().map(|&i| i64::from(i)).collect();
             let n = ids.len();
             let mask = vec![1i64; n];
@@ -280,11 +246,7 @@ mod tests {
             (2.0, 0.995_322_265),
             (-1.0, -0.842_700_792_9),
         ] {
-            assert!(
-                (erf(x) - want).abs() < 2e-7,
-                "erf({x}) = {} want {want}",
-                erf(x)
-            );
+            assert!((erf(x) - want).abs() < 2e-7, "erf({x}) = {} want {want}", erf(x));
         }
     }
 

@@ -39,7 +39,10 @@ pub(crate) fn foreign_lock(path: &std::path::Path) -> Option<(u32, String)> {
         if p == pid {
             return None;
         }
-        let out = std::process::Command::new("ps").args(["-o", "ppid=", "-p", &p.to_string()]).output().ok()?;
+        let out = std::process::Command::new("ps")
+            .args(["-o", "ppid=", "-p", &p.to_string()])
+            .output()
+            .ok()?;
         match String::from_utf8_lossy(&out.stdout).trim().parse::<u32>() {
             Ok(pp) if pp > 1 && pp != p => p = pp,
             _ => break,
@@ -50,8 +53,11 @@ pub(crate) fn foreign_lock(path: &std::path::Path) -> Option<(u32, String)> {
 
 /// Whether process `pid` exists (`ps -p`, which also sees another user's process); true when `ps` cannot run.
 fn alive(pid: u32) -> bool {
-    std::process::Command::new("ps").args(["-p", &pid.to_string()]).stdout(std::process::Stdio::null())
-        .status().map_or(true, |s| s.success())
+    std::process::Command::new("ps")
+        .args(["-p", &pid.to_string()])
+        .stdout(std::process::Stdio::null())
+        .status()
+        .map_or(true, |s| s.success())
 }
 
 /// Wait while another job holds the model lock (or fail with `--no-wait`).
@@ -62,10 +68,16 @@ pub(crate) async fn wait_for_lock(a: &Args) -> Result<()> {
     let mut told = false;
     while let Some((pid, label)) = foreign_lock(&a.lock) {
         if a.no_wait {
-            anyhow::bail!("the model is busy with {label} (pid {pid}, lock {}); --no-wait was given", a.lock.display());
+            anyhow::bail!(
+                "the model is busy with {label} (pid {pid}, lock {}); --no-wait was given",
+                a.lock.display()
+            );
         }
         if !told {
-            eprintln!("the model is busy with {label} (pid {pid}); waiting for {} to go", a.lock.display());
+            eprintln!(
+                "the model is busy with {label} (pid {pid}); waiting for {} to go",
+                a.lock.display()
+            );
             told = true;
         }
         tokio::time::sleep(std::time::Duration::from_secs(10)).await;
@@ -82,27 +94,43 @@ pub(crate) async fn connect_or_spawn(a: &Args) -> Result<(Llm, Option<Spawned>)>
             return Ok((llm, None));
         }
         let (local, guard) = connect_or_spawn_plain(a).await?;
-        return Ok((openai_llm(a, OpenAiConfig::local(&a.server, vec![local.model.clone()]))?, guard));
+        return Ok((
+            openai_llm(a, OpenAiConfig::local(&a.server, vec![local.model.clone()]))?,
+            guard,
+        ));
     }
     connect_local(a).await
 }
 
 /// The Cloudflare backend when TREVOR_CF_MODELS and TREVOR_CF_ACCOUNT_ID (or TREVOR_CF_BASE_URL) are set.
 pub(crate) fn cloudflare(a: &Args) -> Result<Option<Llm>> {
-    OpenAiConfig::cloudflare_from_env().map(|c| openai_llm(a, c)).transpose()
+    OpenAiConfig::cloudflare_from_env()
+        .map(|c| openai_llm(a, c))
+        .transpose()
 }
 
 pub(crate) fn openai_llm(a: &Args, cfg: OpenAiConfig) -> Result<Llm> {
     let llm = Llm::openai(cfg)?;
-    Ok(if a.no_cache_prompt { llm.without_prompt_cache() } else { llm })
+    Ok(if a.no_cache_prompt {
+        llm.without_prompt_cache()
+    } else {
+        llm
+    })
 }
 
 /// Connect to the server at `a.server`, or start one on its port with the answer model and wait
 /// until it is healthy (the model loads in about 15 s). Waits first while another job holds the model lock.
 pub(crate) async fn connect_local(a: &Args) -> Result<(Llm, Option<Spawned>)> {
     let (llm, guard) = connect_or_spawn_plain(a).await?;
-    let llm = if a.no_cache_prompt { llm.without_prompt_cache() } else { llm };
-    let llm = match &a.dump_prompt { Some(p) => llm.with_dump(p)?, None => llm };
+    let llm = if a.no_cache_prompt {
+        llm.without_prompt_cache()
+    } else {
+        llm
+    };
+    let llm = match &a.dump_prompt {
+        Some(p) => llm.with_dump(p)?,
+        None => llm,
+    };
     Ok((llm, guard))
 }
 
@@ -114,17 +142,51 @@ pub(crate) async fn connect_or_spawn_plain(a: &Args) -> Result<(Llm, Option<Spaw
         return Ok((llm, None));
     }
     if a.share_server {
-        return Err(anyhow::anyhow!("no llama-server at {} (--share-server never starts one)", a.server));
+        return Err(anyhow::anyhow!(
+            "no llama-server at {} (--share-server never starts one)",
+            a.server
+        ));
     }
     if a.no_spawn {
-        return Err(anyhow::anyhow!("no llama-server at {} (and --no-spawn was given)", a.server));
+        return Err(anyhow::anyhow!(
+            "no llama-server at {} (and --no-spawn was given)",
+            a.server
+        ));
     }
-    let port = a.server.rsplit(':').next().unwrap_or("8081").trim_end_matches('/').to_owned();
-    eprintln!("no llama-server at {}; starting {} (about 15 s)...", a.server, a.model.display());
+    let port = a
+        .server
+        .rsplit(':')
+        .next()
+        .unwrap_or("8081")
+        .trim_end_matches('/')
+        .to_owned();
+    eprintln!(
+        "no llama-server at {}; starting {} (about 15 s)...",
+        a.server,
+        a.model.display()
+    );
     let child = std::process::Command::new("llama-server")
-        .args(["-m"]).arg(&a.model)
-        .args(["--host", "127.0.0.1", "--port", &port, "-np", "1", "--kv-unified-per-slot", "16384", "-fa", "on",
-               "-cram", "512", "--no-webui", "--reasoning", "off", "-ngl", "all"])
+        .args(["-m"])
+        .arg(&a.model)
+        .args([
+            "--host",
+            "127.0.0.1",
+            "--port",
+            &port,
+            "-np",
+            "1",
+            "--kv-unified-per-slot",
+            "16384",
+            "-fa",
+            "on",
+            "-cram",
+            "512",
+            "--no-webui",
+            "--reasoning",
+            "off",
+            "-ngl",
+            "all",
+        ])
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
         .spawn()

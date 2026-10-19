@@ -64,8 +64,8 @@ use crate::answer::Tables;
 use crate::chrono::Chrono;
 use crate::cli::{Args, Profile};
 use crate::labels::Names;
-use crate::runtimes::Runtimes;
 use crate::llama_server::Spawned;
+use crate::runtimes::Runtimes;
 
 pub(crate) mod canary;
 pub(crate) mod checks;
@@ -78,15 +78,34 @@ pub(crate) use canary::run_canary;
 pub(crate) use checks::{horizon_check, json_check};
 pub(crate) use http::run;
 
-
 /// The only server with a corpus today; CN is a second corpus version stream later (section 10).
 const SERVER: &str = "en";
 
 /// Request flags that would change what the service loaded; a job may not give them.
-const LOAD_FLAGS: &[&str] = &["--corpus", "--lore", "--router", "--serve", "--worker", "--port", "--batch", "--out",
-                              "--server", "--model", "--no-game-text", "--model-dir", "--query-onnx",
-                              "--allow-query-model-mismatch", "--retrieval", "--backend", "--canary", "--gate-order",
-                              "--horizon-check", "--json-check", "--no-stream", "--identity-scan"];
+const LOAD_FLAGS: &[&str] = &[
+    "--corpus",
+    "--lore",
+    "--router",
+    "--serve",
+    "--worker",
+    "--port",
+    "--batch",
+    "--out",
+    "--server",
+    "--model",
+    "--no-game-text",
+    "--model-dir",
+    "--query-onnx",
+    "--allow-query-model-mismatch",
+    "--retrieval",
+    "--backend",
+    "--canary",
+    "--gate-order",
+    "--horizon-check",
+    "--json-check",
+    "--no-stream",
+    "--identity-scan",
+];
 
 /// One question: `POST /v1/ask` body, or a worker job's fields.
 #[derive(Debug, Clone, Deserialize)]

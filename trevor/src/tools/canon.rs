@@ -15,7 +15,11 @@ impl Tools {
     /// # Errors
     /// Missing table or a run that does not resolve.
     pub fn canon(&self, run: Option<&str>) -> ToolResult {
-        let runs = self.canon.as_ref().and_then(|v| v["runs"].as_array()).ok_or(ToolError::Missing("is_endings.json"))?;
+        let runs = self
+            .canon
+            .as_ref()
+            .and_then(|v| v["runs"].as_array())
+            .ok_or(ToolError::Missing("is_endings.json"))?;
         if self.opts.is_offset && run.is_some_and(is_fungimist) {
             return Ok(FUNGIMIST.to_owned());
         }
@@ -34,9 +38,11 @@ impl Tools {
             }
             return Ok(out);
         }
-        let mut out = String::from("The game never labels an Integrated Strategies ending as canon. \
+        let mut out = String::from(
+            "The game never labels an Integrated Strategies ending as canon. \
             What follows is inferred from later stories that continue from or refer to an ending, \
-            with one quote each.\n");
+            with one quote each.\n",
+        );
         for r in chosen {
             out.push('\n');
             out.push_str(&canon_run(r, offset));
@@ -48,13 +54,20 @@ impl Tools {
     /// id), a run name ("Mizuki & Caerula Arbor") or a unique part of one ("Mizuki"), within the same misspelling
     /// budget as names.
     pub(super) fn resolve_run<'a>(&self, r: &str, runs: &'a [Value]) -> Result<&'a Value, ToolError> {
-        let nf = || ToolError::NotFound { what: "Integrated Strategies run", name: r.to_owned() };
+        let nf = || ToolError::NotFound {
+            what: "Integrated Strategies run",
+            name: r.to_owned(),
+        };
         let n = norm(r);
         let digits: String = n.chars().filter(char::is_ascii_digit).collect();
-        let numbered = n.split(' ')
-            .all(|w| matches!(w, "is" | "integrated" | "strategies" | "strategy" | "rogue" | "roguelike")
-                || w.chars().all(|c| c.is_ascii_digit())
-                || w.strip_prefix("is").is_some_and(|x| x.chars().all(|c| c.is_ascii_digit())));
+        let numbered = n.split(' ').all(|w| {
+            matches!(
+                w,
+                "is" | "integrated" | "strategies" | "strategy" | "rogue" | "roguelike"
+            ) || w.chars().all(|c| c.is_ascii_digit())
+                || w.strip_prefix("is")
+                    .is_some_and(|x| x.chars().all(|c| c.is_ascii_digit()))
+        });
         if numbered && !digits.is_empty() {
             let id = match digits.parse::<usize>() {
                 Ok(d) if self.opts.is_offset && !n.contains("rogue") => format!("rogue_{}", d.saturating_sub(1)),
@@ -66,7 +79,8 @@ impl Tools {
         if let Some((x, _)) = names.iter().find(|(_, rn)| *rn == n) {
             return Ok(x);
         }
-        let part: Vec<&(&Value, String)> = names.iter()
+        let part: Vec<&(&Value, String)> = names
+            .iter()
             .filter(|(_, rn)| n.len() >= 3 && (contains_words(rn, &n) || contains_words(&n, rn)))
             .collect();
         if part.len() == 1 {
@@ -85,7 +99,10 @@ impl Tools {
     #[must_use]
     pub fn is_ending_question(&self, q: &str) -> Option<IsEnding> {
         let n = norm(q);
-        if !["ending", "endings", "endbook", "endbooks"].iter().any(|w| contains_words(&n, w)) {
+        if !["ending", "endings", "endbook", "endbooks"]
+            .iter()
+            .any(|w| contains_words(&n, w))
+        {
             return None;
         }
         let runs = self.canon.as_ref()?["runs"].as_array()?;
@@ -93,14 +110,19 @@ impl Tools {
         let words: Vec<&str> = n.split(' ').collect();
         let mut run: Option<&Value> = None;
         for (i, w) in words.iter().enumerate() {
-            let num = w.strip_prefix("is")
+            let num = w
+                .strip_prefix("is")
                 .filter(|x| !x.is_empty() && x.chars().all(|c| c.is_ascii_digit()))
                 .map(str::to_owned)
-                .or_else(|| (matches!(*w, "is" | "strategies") && i + 1 < words.len())
-                    .then(|| words[i + 1].trim_start_matches('#').to_owned())
-                    .filter(|x| !x.is_empty()
-                        && x.chars().all(|c| c.is_ascii_digit())
-                        && (*w == "strategies" || words[..i].iter().all(|p| *p != "what"))));
+                .or_else(|| {
+                    (matches!(*w, "is" | "strategies") && i + 1 < words.len())
+                        .then(|| words[i + 1].trim_start_matches('#').to_owned())
+                        .filter(|x| {
+                            !x.is_empty()
+                                && x.chars().all(|c| c.is_ascii_digit())
+                                && (*w == "strategies" || words[..i].iter().all(|p| *p != "what"))
+                        })
+                });
             if let Some(d) = num.and_then(|d| d.parse::<usize>().ok()) {
                 let id = format!("rogue_{}", d.saturating_sub(offset));
                 run = runs.iter().find(|r| s(r, "run") == id);
@@ -109,24 +131,41 @@ impl Tools {
                 }
             }
         }
-        let run = run.or_else(|| runs.iter().find(|r| {
-            let rn = norm(&s(r, "runName"));
-            rn.len() >= 5 && contains_words(&n, &rn)
-        }))?;
-        let mut endings: Vec<(usize, String)> = run["endings"].as_array().into_iter().flatten().filter_map(|e| {
-            let k = s(e, "endingId").rsplit('_').next()?.parse::<usize>().ok()?;
-            Some((k, s(e, "name")))
-        }).collect();
+        let run = run.or_else(|| {
+            runs.iter().find(|r| {
+                let rn = norm(&s(r, "runName"));
+                rn.len() >= 5 && contains_words(&n, &rn)
+            })
+        })?;
+        let mut endings: Vec<(usize, String)> = run["endings"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(|e| {
+                let k = s(e, "endingId").rsplit('_').next()?.parse::<usize>().ok()?;
+                Some((k, s(e, "name")))
+            })
+            .collect();
         endings.sort();
         let ords = ["first", "second", "third", "fourth", "fifth", "sixth"];
-        let asked = endings.iter().find(|(k, name)| {
-            let x = norm(name);
-            (x.len() >= 4 && contains_words(&n, &x))
-                || [format!("ending {k}"), format!("ending #{k}"), format!("ending no {k}"),
-                    format!("{} ending", ords.get(k - 1).copied().unwrap_or("-")),
-                    format!("e{k}"), format!("end {k}"), format!("ending{k}")]
-                    .iter().any(|p| contains_words(&n, &norm(p)))
-        }).map(|(k, _)| *k);
+        let asked = endings
+            .iter()
+            .find(|(k, name)| {
+                let x = norm(name);
+                (x.len() >= 4 && contains_words(&n, &x))
+                    || [
+                        format!("ending {k}"),
+                        format!("ending #{k}"),
+                        format!("ending no {k}"),
+                        format!("{} ending", ords.get(k - 1).copied().unwrap_or("-")),
+                        format!("e{k}"),
+                        format!("end {k}"),
+                        format!("ending{k}"),
+                    ]
+                    .iter()
+                    .any(|p| contains_words(&n, &norm(p)))
+            })
+            .map(|(k, _)| *k);
         Some((s(run, "run"), s(run, "runName"), endings, asked))
     }
 }
@@ -145,14 +184,20 @@ pub(super) fn is_fungimist(r: &str) -> bool {
         return true;
     }
     let digits: String = n.chars().filter(char::is_ascii_digit).collect();
-    digits == "1" && !n.contains("rogue")
-        && n.split(' ')
-            .all(|w| matches!(w, "is" | "integrated" | "strategies" | "strategy" | "roguelike" | "1" | "is1"))
+    digits == "1"
+        && !n.contains("rogue")
+        && n.split(' ').all(|w| {
+            matches!(
+                w,
+                "is" | "integrated" | "strategies" | "strategy" | "roguelike" | "1" | "is1"
+            )
+        })
 }
 
 /// A run's heading with the game's number: "Mizuki & Caerula Arbor (Integrated Strategies #3)".
 pub(super) fn run_heading(r: &Value, offset: usize) -> String {
-    let no = s(r, "run").strip_prefix("rogue_")
+    let no = s(r, "run")
+        .strip_prefix("rogue_")
         .and_then(|d| d.parse::<usize>().ok())
         .map_or_else(|| s(r, "run"), |d| (d + offset).to_string());
     format!("{} (Integrated Strategies #{no}):\n", s(r, "runName"))
@@ -178,7 +223,10 @@ pub(super) fn reader_reasoning(text: &str, names: &HashMap<String, String>) -> S
         let mut count = 0;
         loop {
             let tail = &after[j..];
-            let sep = [", and ", " and ", ", ", " "].iter().find(|p| tail.starts_with(**p)).map_or(0, |p| p.len());
+            let sep = [", and ", " and ", ", ", " "]
+                .iter()
+                .find(|p| tail.starts_with(**p))
+                .map_or(0, |p| p.len());
             let t2 = &tail[sep..];
             let digits = t2.chars().take_while(char::is_ascii_digit).count();
             if digits > 0 && (count == 0 || sep > 0) {
@@ -217,10 +265,13 @@ pub(super) fn reader_reasoning(text: &str, names: &HashMap<String, String>) -> S
     let clean = strip_citations(&out);
     // A sentence still about passage numbers ("while 3 and 4 describe local events") or about passages it set aside
     // ("Passages [3] and [8] were discounted", which reads as if every story were) is prompt bookkeeping; drop it.
-    let sentences: Vec<&str> = clean.split_inclusive(". ").filter(|x| {
-        let l = x.to_lowercase();
-        !l.contains("passage") && !l.contains("discount")
-    }).collect();
+    let sentences: Vec<&str> = clean
+        .split_inclusive(". ")
+        .filter(|x| {
+            let l = x.to_lowercase();
+            !l.contains("passage") && !l.contains("discount")
+        })
+        .collect();
     sentences.iter().take(3).copied().collect::<String>().trim().to_owned()
 }
 
@@ -229,18 +280,30 @@ pub(super) fn reader_reasoning(text: &str, names: &HashMap<String, String>) -> S
 /// other story linked to an ending. Hand grades (`grade`, `gradeNote`) are evaluation data and never printed.
 pub(super) fn canon_verdict(r: &Value, offset: usize) -> String {
     let v = &r["verdict"];
-    let names: HashMap<String, String> = r["endings"].as_array().into_iter().flatten()
-        .map(|e| (s(e, "endingId"), s(e, "name"))).filter(|(i, _)| !i.is_empty()).collect();
+    let names: HashMap<String, String> = r["endings"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .map(|e| (s(e, "endingId"), s(e, "name")))
+        .filter(|(i, _)| !i.is_empty())
+        .collect();
     let name_of = |id: &str| names.get(id).cloned().unwrap_or_else(|| id.to_owned());
     let mut out = run_heading(r, offset);
     let id = s(v, "endingId");
     let conf = s(v, "confidence");
     match id.as_str() {
         "none" => out.push_str("No ending is treated as canon by any story.\n"),
-        "undetermined" | "" => out.push_str(
-            "Undetermined: the stories Trevor has do not settle which ending is canon.\n"),
-        _ => out.push_str(&format!("Treated as canon: {} ({conf} confidence).\n",
-                                   if s(v, "name").is_empty() { name_of(&id) } else { s(v, "name") })),
+        "undetermined" | "" => {
+            out.push_str("Undetermined: the stories Trevor has do not settle which ending is canon.\n")
+        }
+        _ => out.push_str(&format!(
+            "Treated as canon: {} ({conf} confidence).\n",
+            if s(v, "name").is_empty() {
+                name_of(&id)
+            } else {
+                s(v, "name")
+            }
+        )),
     }
     let why = reader_reasoning(&s(v, "reasoning"), &names);
     if !why.is_empty() {
@@ -268,13 +331,24 @@ pub(super) fn canon_verdict(r: &Value, offset: usize) -> String {
     // printed once, under its own heading, and counts for neither ending's story lines.
     let mut endings_of: HashMap<(String, String), BTreeSet<String>> = HashMap::new();
     for e in &evidence {
-        endings_of.entry((s(e, "story"), s(e, "quote"))).or_default().insert(s(e, "endingId"));
+        endings_of
+            .entry((s(e, "story"), s(e, "quote")))
+            .or_default()
+            .insert(s(e, "endingId"));
     }
-    let shared = |e: &Value| endings_of.get(&(s(e, "story"), s(e, "quote"))).is_some_and(|x| x.len() > 1);
+    let shared = |e: &Value| {
+        endings_of
+            .get(&(s(e, "story"), s(e, "quote")))
+            .is_some_and(|x| x.len() > 1)
+    };
     // One line per (ending, story): the longest quote, cut at 200 characters, and how many other passages it has.
     let story_line = |items: &[&Value]| -> String {
         let quotes: BTreeSet<String> = items.iter().map(|e| s(e, "quote")).collect();
-        let best = quotes.iter().max_by_key(|q| q.chars().count()).cloned().unwrap_or_default();
+        let best = quotes
+            .iter()
+            .max_by_key(|q| q.chars().count())
+            .cloned()
+            .unwrap_or_default();
         let best = if best.chars().count() > 200 {
             format!("{}...", best.chars().take(200).collect::<String>().trim_end())
         } else {
@@ -290,19 +364,26 @@ pub(super) fn canon_verdict(r: &Value, offset: usize) -> String {
         format!("\"{best}\"{more}")
     };
     let group = |ending: &str, story: &str| -> Vec<&Value> {
-        evidence.iter().copied()
+        evidence
+            .iter()
+            .copied()
             .filter(|e| s(e, "endingId") == ending && s(e, "story") == story && !shared(e))
             .collect()
     };
     let mut done: HashSet<(String, String)> = HashSet::new();
-    let cites: Vec<String> = v["cites"].as_array().into_iter().flatten()
+    let cites: Vec<String> = v["cites"]
+        .as_array()
+        .into_iter()
+        .flatten()
         .filter_map(|c| c.as_str().map(str::to_owned))
         .collect();
     if !cites.is_empty() {
         out.push_str("Stories that treat it as canon:\n");
         for c in &cites {
             let items = group(&id, c);
-            let when = items.first().map(|e| date(e))
+            let when = items
+                .first()
+                .map(|e| date(e))
                 .or_else(|| evidence.iter().find(|e| s(e, "story") == *c).map(|e| date(e)));
             let when = when.map_or(String::new(), |d| format!(" ({d})"));
             if items.is_empty() {
@@ -341,14 +422,22 @@ pub(super) fn canon_verdict(r: &Value, offset: usize) -> String {
     let mut seen: HashSet<(String, String)> = HashSet::new();
     for e in evidence.iter().filter(|e| shared(e)) {
         if seen.insert((s(e, "story"), s(e, "quote"))) {
-            let names: Vec<String> = endings_of[&(s(e, "story"), s(e, "quote"))].iter().map(|x| name_of(x)).collect();
+            let names: Vec<String> = endings_of[&(s(e, "story"), s(e, "quote"))]
+                .iter()
+                .map(|x| name_of(x))
+                .collect();
             several.push((e, names.join(", ")));
         }
     }
     if !several.is_empty() {
         out.push_str("Linked to several endings:\n");
         for (e, names) in &several {
-            out.push_str(&format!("  - {} ({}), {names}: {}\n", s(e, "story"), date(e), story_line(&[*e])));
+            out.push_str(&format!(
+                "  - {} ({}), {names}: {}\n",
+                s(e, "story"),
+                date(e),
+                story_line(&[*e])
+            ));
         }
     }
     out
@@ -358,7 +447,13 @@ pub(super) fn canon_verdict(r: &Value, offset: usize) -> String {
 pub(super) fn canon_run(r: &Value, offset: usize) -> String {
     let endings: Vec<&Value> = r["endings"].as_array().map(|a| a.iter().collect()).unwrap_or_default();
     let stories = |e: &Value| -> BTreeSet<String> {
-        e["referencedBy"].as_array().into_iter().flatten().map(|x| s(x, "story")).filter(|x| !x.is_empty()).collect()
+        e["referencedBy"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .map(|x| s(x, "story"))
+            .filter(|x| !x.is_empty())
+            .collect()
     };
     // A story credited to several endings of this run splits its evidence between them.
     let mut credited: HashMap<String, Vec<String>> = HashMap::new();
@@ -370,13 +465,18 @@ pub(super) fn canon_run(r: &Value, offset: usize) -> String {
     let counts: Vec<(String, usize)> = endings.iter().map(|e| (s(e, "name"), stories(e).len())).collect();
     let max = counts.iter().map(|c| c.1).max().unwrap_or(0);
     let leaders: Vec<&(String, usize)> = counts.iter().filter(|c| c.1 == max).collect();
-    let no = s(r, "run").strip_prefix("rogue_")
+    let no = s(r, "run")
+        .strip_prefix("rogue_")
         .and_then(|d| d.parse::<usize>().ok())
         .map_or_else(|| s(r, "run"), |d| (d + offset).to_string());
     let mut out = format!("{} (Integrated Strategies #{no}):\n", s(r, "runName"));
     if max > 0 && leaders.len() == 1 {
-        out.push_str(&format!("Most continued: {} ({} later {}).\n",
-                              leaders[0].0, max, if max == 1 { "story" } else { "stories" }));
+        out.push_str(&format!(
+            "Most continued: {} ({} later {}).\n",
+            leaders[0].0,
+            max,
+            if max == 1 { "story" } else { "stories" }
+        ));
     } else if max > 0 {
         out.push_str("No ending is favored: the most-referenced endings are tied.\n");
     } else {
@@ -390,17 +490,37 @@ pub(super) fn canon_run(r: &Value, offset: usize) -> String {
             k => format!("continued by {k} later stories"),
         };
         out.push_str(&format!("- {}: {strength}", s(e, "name")));
-        let split: Vec<String> = st.iter().filter_map(|x| credited.get(x).filter(|v| v.len() > 1)
-            .map(|v| format!("{x} is credited to {} as well, so its evidence is split between them",
-                             v.iter().filter(|n| **n != s(e, "name")).cloned().collect::<Vec<_>>().join(" and "))))
+        let split: Vec<String> = st
+            .iter()
+            .filter_map(|x| {
+                credited.get(x).filter(|v| v.len() > 1).map(|v| {
+                    format!(
+                        "{x} is credited to {} as well, so its evidence is split between them",
+                        v.iter()
+                            .filter(|n| **n != s(e, "name"))
+                            .cloned()
+                            .collect::<Vec<_>>()
+                            .join(" and ")
+                    )
+                })
+            })
             .collect();
         if !split.is_empty() {
             out.push_str(&format!("; {}", split.join("; ")));
         }
         out.push('\n');
         for st_name in &st {
-            if let Some(q) = e["quotes"].as_array().into_iter().flatten().find(|q| s(q, "story") == *st_name) {
-                out.push_str(&format!("  - {st_name} ({}): \"{}\"\n", s(q, "released"), s(q, "quote")));
+            if let Some(q) = e["quotes"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .find(|q| s(q, "story") == *st_name)
+            {
+                out.push_str(&format!(
+                    "  - {st_name} ({}): \"{}\"\n",
+                    s(q, "released"),
+                    s(q, "quote")
+                ));
             }
         }
     }

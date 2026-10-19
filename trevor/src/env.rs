@@ -69,7 +69,16 @@ mod tests {
         for on in ["1", "true", "TRUE", "True"] {
             assert!(switch_on(Some(on)), "{on}");
         }
-        for off in [None, Some(""), Some("0"), Some("false"), Some("no"), Some("yes"), Some(" 1"), Some("2")] {
+        for off in [
+            None,
+            Some(""),
+            Some("0"),
+            Some("false"),
+            Some("no"),
+            Some("yes"),
+            Some(" 1"),
+            Some("2"),
+        ] {
             assert!(!switch_on(off), "{off:?}");
         }
     }

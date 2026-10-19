@@ -8,17 +8,17 @@
 //! through the tables and the identity links. A failed resolution is a [`ToolError`], which the
 //! caller treats as "answer by retrieval"; a tool never answers for a name it did not resolve.
 
-mod text;
-mod resolve;
-mod topics;
 mod answer_check;
-mod reading;
+mod appearances;
 mod canon;
 mod deaths;
-mod appearances;
 mod operators;
+mod reading;
+mod resolve;
 #[cfg(test)]
 mod tests;
+mod text;
+mod topics;
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::Path;
@@ -26,11 +26,11 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::util::{load_json_opt, load_jsonl_opt};
 pub use self::operators::filter_from_args;
 pub use self::reading::RecapPart;
 pub use self::text::{contains_words, norm, whole_word_matches};
-use self::topics::{served_topics};
+use self::topics::served_topics;
+use crate::util::{load_json_opt, load_jsonl_opt};
 
 /// Behaviors added after the keyword router, each with its off value. `ask --router keywords` runs with
 /// [`ToolOptions::KEYWORDS`], so its output stays byte-identical to the binary before them.
@@ -59,15 +59,26 @@ pub struct ToolOptions {
 }
 
 impl ToolOptions {
-    pub const KEYWORDS: Self =
-        Self { storylines: false, exact_recap: false, is_offset: true, canon_v1: false, summary_route: true,
-               event_about: true };
+    pub const KEYWORDS: Self = Self {
+        storylines: false,
+        exact_recap: false,
+        is_offset: true,
+        canon_v1: false,
+        summary_route: true,
+        event_about: true,
+    };
 }
 
 impl Default for ToolOptions {
     fn default() -> Self {
-        Self { storylines: true, exact_recap: true, is_offset: true, canon_v1: false, summary_route: true,
-               event_about: true }
+        Self {
+            storylines: true,
+            exact_recap: true,
+            is_offset: true,
+            canon_v1: false,
+            summary_route: true,
+            event_about: true,
+        }
     }
 }
 pub const RETRIEVE: &str = "retrieve";
@@ -83,7 +94,10 @@ pub struct Route {
 impl Route {
     #[must_use]
     pub fn new(tool: &str, args: &[(&str, &str)]) -> Self {
-        Self { tool: tool.to_owned(), args: args.iter().map(|(k, v)| ((*k).to_owned(), (*v).to_owned())).collect() }
+        Self {
+            tool: tool.to_owned(),
+            args: args.iter().map(|(k, v)| ((*k).to_owned(), (*v).to_owned())).collect(),
+        }
     }
 
     #[must_use]
@@ -97,11 +111,19 @@ impl Route {
     }
 
     fn arg(&self, k: &'static str) -> Result<&str, ToolError> {
-        self.args.get(k).map(String::as_str).filter(|v| !v.trim().is_empty()).ok_or(ToolError::MissingArg(k))
+        self.args
+            .get(k)
+            .map(String::as_str)
+            .filter(|v| !v.trim().is_empty())
+            .ok_or(ToolError::MissingArg(k))
     }
 
     fn opt(&self, k: &str) -> Option<&str> {
-        self.args.get(k).map(String::as_str).map(str::trim).filter(|v| !v.is_empty() && !v.eq_ignore_ascii_case("none"))
+        self.args
+            .get(k)
+            .map(String::as_str)
+            .map(str::trim)
+            .filter(|v| !v.is_empty() && !v.eq_ignore_ascii_case("none"))
     }
 }
 
@@ -148,9 +170,18 @@ pub enum Field {
 }
 
 impl Field {
-    pub const NAMES: &[&str] =
-        &["race", "birthplace", "birthday", "height", "infection", "class", "branch", "rarity", "gender",
-            "affiliation"];
+    pub const NAMES: &[&str] = &[
+        "race",
+        "birthplace",
+        "birthday",
+        "height",
+        "infection",
+        "class",
+        "branch",
+        "rarity",
+        "gender",
+        "affiliation",
+    ];
 
     /// # Errors
     /// A name outside [`Field::NAMES`].
@@ -166,7 +197,12 @@ impl Field {
             "rarity" | "stars" => Self::Rarity,
             "gender" => Self::Gender,
             "affiliation" | "nation" | "faction" => Self::Affiliation,
-            _ => return Err(ToolError::BadArg { arg: "field", value: s.to_owned() }),
+            _ => {
+                return Err(ToolError::BadArg {
+                    arg: "field",
+                    value: s.to_owned(),
+                });
+            }
         })
     }
 
@@ -203,8 +239,16 @@ pub struct Filter {
     pub tallest: Option<bool>,
 }
 
-pub const CLASSES: [&str; 8] =
-    ["Vanguard", "Guard", "Defender", "Sniper", "Caster", "Medic", "Supporter", "Specialist"];
+pub const CLASSES: [&str; 8] = [
+    "Vanguard",
+    "Guard",
+    "Defender",
+    "Sniper",
+    "Caster",
+    "Medic",
+    "Supporter",
+    "Specialist",
+];
 const PLACE_KEYS: [&str; 4] = ["nation", "group", "team", "birthplace"];
 
 /// The tables, loaded once.
@@ -313,7 +357,13 @@ impl Tools {
         if let Some(v) = load_json_opt::<Value>(&root.join("artifacts/entities/identities.json")) {
             for i in v.as_array().into_iter().flatten() {
                 let mut names = vec![s(i, "label")];
-                names.extend(i["names"].as_array().into_iter().flatten().filter_map(|n| n.as_str().map(str::to_owned)));
+                names.extend(
+                    i["names"]
+                        .as_array()
+                        .into_iter()
+                        .flatten()
+                        .filter_map(|n| n.as_str().map(str::to_owned)),
+                );
                 t.identities.push(names);
             }
         }
@@ -343,14 +393,26 @@ impl Tools {
             for i in v["identities"].as_array().into_iter().flatten() {
                 for (name, ev) in i["evidence"].as_object().into_iter().flatten() {
                     for e in ev.as_array().into_iter().flatten() {
-                        t.identity_links.push((name.clone(), s(e, "other"), s(e, "relation"), s(e, "quote"),
-                            s(e, "where"), true));
+                        t.identity_links.push((
+                            name.clone(),
+                            s(e, "other"),
+                            s(e, "relation"),
+                            s(e, "quote"),
+                            s(e, "where"),
+                            true,
+                        ));
                     }
                 }
             }
             for e in v["inferred"].as_array().into_iter().flatten() {
-                t.identity_links.push((s(e, "name_a"), s(e, "name_b"), s(e, "relation"), s(e, "quote"),
-                    s(e, "where"), false));
+                t.identity_links.push((
+                    s(e, "name_a"),
+                    s(e, "name_b"),
+                    s(e, "relation"),
+                    s(e, "quote"),
+                    s(e, "where"),
+                    false,
+                ));
             }
         }
         t
@@ -364,15 +426,23 @@ impl Tools {
         let Some(rows) = self.topics.as_mut() else { return };
         let forms = |r: &Value| -> Vec<String> {
             std::iter::once(s(r, "topic"))
-                .chain(r["aliases"].as_array().into_iter().flatten().filter_map(|a| a.as_str().map(str::to_owned)))
-                .map(|f| norm(&f)).collect()
+                .chain(
+                    r["aliases"]
+                        .as_array()
+                        .into_iter()
+                        .flatten()
+                        .filter_map(|a| a.as_str().map(str::to_owned)),
+                )
+                .map(|f| norm(&f))
+                .collect()
         };
         self.identities.retain(|group| {
-            let Some(label) = group.first().map(|l| norm(l)) else { return true };
-            let Some(r) = rows.iter_mut()
-                .find(|r| matches!(s(r, "kind").as_str(), "organization" | "nation" | "place")
-                    && forms(r).contains(&label))
-            else {
+            let Some(label) = group.first().map(|l| norm(l)) else {
+                return true;
+            };
+            let Some(r) = rows.iter_mut().find(|r| {
+                matches!(s(r, "kind").as_str(), "organization" | "nation" | "place") && forms(r).contains(&label)
+            }) else {
                 return true;
             };
             let have = forms(r);
@@ -391,16 +461,39 @@ impl Tools {
     /// source, the identity link `fold_group_identities` would read, which `entities.py build` drops as naming a group.
     /// `TREVOR_ORG_SHORT_NAMES=0` leaves the topics as written.
     pub(crate) fn org_short_names(&mut self) {
-        const SUFFIX: &[&str] = &["worldwide", "company", "co", "ltd", "inc", "corporation", "corp", "llc", "holdings",
-            "enterprises", "industries"];
+        const SUFFIX: &[&str] = &[
+            "worldwide",
+            "company",
+            "co",
+            "ltd",
+            "inc",
+            "corporation",
+            "corp",
+            "llc",
+            "holdings",
+            "enterprises",
+            "industries",
+        ];
         let Some(rows) = self.topics.as_mut() else { return };
-        let forms: BTreeSet<String> = rows.iter().flat_map(|r| std::iter::once(s(r, "topic"))
-            .chain(r["aliases"].as_array().into_iter().flatten().filter_map(|a| a.as_str().map(str::to_owned))))
-            .map(|f| norm(&f)).collect();
+        let forms: BTreeSet<String> = rows
+            .iter()
+            .flat_map(|r| {
+                std::iter::once(s(r, "topic")).chain(
+                    r["aliases"]
+                        .as_array()
+                        .into_iter()
+                        .flatten()
+                        .filter_map(|a| a.as_str().map(str::to_owned)),
+                )
+            })
+            .map(|f| norm(&f))
+            .collect();
         for r in rows.iter_mut().filter(|r| s(r, "kind") == "organization") {
             let topic = s(r, "topic");
-            let words: Vec<&str> = topic.split(|c: char| !(c.is_alphanumeric() || c == '\'' || c == '-'))
-                .filter(|w| !w.is_empty()).collect();
+            let words: Vec<&str> = topic
+                .split(|c: char| !(c.is_alphanumeric() || c == '\'' || c == '-'))
+                .filter(|w| !w.is_empty())
+                .collect();
             let mut end = words.len();
             while end > 0 && SUFFIX.contains(&words[end - 1].to_lowercase().as_str()) {
                 end -= 1;
@@ -429,15 +522,23 @@ impl Tools {
             "reading_time" => self.reading_time(r.arg("event")?),
             "reading_compare" => self.reading_compare(r.arg("event")?, r.arg("other")?),
             "first_appearance" => self.first_appearance(r.arg("character")?),
-            "recap" => self.recap(r.arg("event")?, r.opt("ending").is_some_and(|v| v.eq_ignore_ascii_case("true")),
-                                  RecapPart::parse(r.opt("part"))?),
+            "recap" => self.recap(
+                r.arg("event")?,
+                r.opt("ending").is_some_and(|v| v.eq_ignore_ascii_case("true")),
+                RecapPart::parse(r.opt("part"))?,
+            ),
             "timeline_all" => Ok(self.timeline_all()),
             "deaths_in_event" => {
                 let who = match r.opt("who").map(str::to_lowercase).as_deref() {
                     None | Some("all") => Who::All,
                     Some("npc" | "npcs" | "non-playable") => Who::Npc,
                     Some("operators" | "operator" | "playable") => Who::Operators,
-                    Some(v) => return Err(ToolError::BadArg { arg: "who", value: v.to_owned() }),
+                    Some(v) => {
+                        return Err(ToolError::BadArg {
+                            arg: "who",
+                            value: v.to_owned(),
+                        });
+                    }
                 };
                 self.deaths_in_event(r.arg("event")?, who)
             }
@@ -450,10 +551,14 @@ impl Tools {
             "cross_ref" => self.cross_ref(r.arg("table")?),
             "appearances" => self.appearances(r.arg("character")?),
             // The model router can write {"run": "all"} for "any of the IS endings": treated as no run.
-            "canon" => self.canon(r.opt("run")
-                .filter(|v| !matches!(norm(v).as_str(), "all" | "any" | "every" | "all runs"))),
+            "canon" => self.canon(
+                r.opt("run")
+                    .filter(|v| !matches!(norm(v).as_str(), "all" | "any" | "every" | "all runs")),
+            ),
             // Not an answer: `ask` adds the summary to retrieval (see `topic`); here it only reports the resolution.
-            "topic" => self.topic(r.arg("topic")?).map(|p| format!("Topic passage for retrieval: {}", p.topic)),
+            "topic" => self
+                .topic(r.arg("topic")?)
+                .map(|p| format!("Topic passage for retrieval: {}", p.topic)),
             t => Err(ToolError::UnknownTool(t.to_owned())),
         }
     }

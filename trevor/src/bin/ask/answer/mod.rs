@@ -11,37 +11,34 @@ use trevor::tools::{AnswerConstraint, Route, Tools, TopicPassage, norm};
 
 use crate::chrono::Chrono;
 use crate::cli::{Args, RouterKind, deep_for, dossier_allowed, form_on, retrieval_plan};
-use crate::detect::{
-    asks_admire, asks_identity, asks_relation, declines,
-    is_opinion_question, term_of,
-};
+use crate::detect::{asks_admire, asks_identity, asks_relation, declines, is_opinion_question, term_of};
 use crate::form::{Form, question_form};
-use crate::prompts::CHAR_LABEL;
 use crate::kinds::{FALLBACK_KINDS, RECORD_KINDS};
 use crate::labels::{Names, file_owner, story_label, typed_owner};
 use crate::people::{
     expand_names, named_characters, names_proper_word, one_operator, one_operator_wide, opinion_needs_candidates,
     people_named,
 };
+use crate::prompts::CHAR_LABEL;
 use crate::retrieval::Pre;
-use crate::runtimes::Runtimes;
 use crate::routing::{Routed, is_ending_passages, route_question};
+use crate::runtimes::Runtimes;
 use crate::scenes::{SCOPED_REST, character_scenes, excerpt_window, scoped_excerpts, scoped_scenes, scoped_summaries};
-use crate::timegap::{GAP_WINDOW, time_gap_events, time_gap_lines};
 use crate::terms::{term_glossary, term_lookup};
+use crate::timegap::{GAP_WINDOW, time_gap_events, time_gap_lines};
 
+mod cite_words;
 mod generate;
 pub(crate) mod identity;
 pub(crate) mod referent;
-mod cite_words;
 
 /// The passage-label fix (`cite_words.rs`), for `--identity-scan`.
 pub(crate) fn cite_words_fix(answer: &str) -> Option<String> {
     cite_words::fix(answer)
 }
 
-pub(crate) use generate::passage_label;
 use generate::answer_from;
+pub(crate) use generate::passage_label;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -74,9 +71,21 @@ pub(crate) struct Answer {
 }
 
 pub(crate) fn table_only(q: &str, text: String) -> Answer {
-    Answer { qid: None, question: q.to_owned(), answer: text, cited: Vec::new(), passages: Vec::new(),
-             invalid_citations: 0, prompt_tokens: 0, ms: 0.0, form: None, generated: Default::default(),
-             texts: Vec::new(), budget: 0, hinted: false }
+    Answer {
+        qid: None,
+        question: q.to_owned(),
+        answer: text,
+        cited: Vec::new(),
+        passages: Vec::new(),
+        invalid_citations: 0,
+        prompt_tokens: 0,
+        ms: 0.0,
+        form: None,
+        generated: Default::default(),
+        texts: Vec::new(),
+        budget: 0,
+        hinted: false,
+    }
 }
 
 /// The table tools, and what `main` routed for the single question before the index loaded.
@@ -90,8 +99,15 @@ pub(crate) struct Tables {
 
 /// One answer with its checks, then the identity-claim check (`--no-identity-check`, `identity.rs`): a sentence
 /// saying that two different names are one person stays only when an identity link or a passage joins them.
-pub(crate) async fn answer_one(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Names>, chrono: &Chrono,
-                    q: &str, a: &Args, tables: &mut Tables) -> Result<Answer> {
+pub(crate) async fn answer_one(
+    rts: &mut Runtimes,
+    llm: &Llm,
+    names: &HashMap<String, Names>,
+    chrono: &Chrono,
+    q: &str,
+    a: &Args,
+    tables: &mut Tables,
+) -> Result<Answer> {
     let mut ans = answer_checked(rts, llm, names, chrono, q, a, tables).await?;
     if !a.no_identity_check && !ans.texts.is_empty() {
         if let Some((text, claims)) = identity::check(&ans.answer, q, &ans.texts, &tables.tools) {
@@ -105,8 +121,14 @@ pub(crate) async fn answer_one(rts: &mut Runtimes, llm: &Llm, names: &HashMap<St
     // The referent checks (`--no-referent-check`, `--no-quote-check`, `referent.rs`): a fate claim whose cited
     // passages do not tie it to its character, and a quote the passages give to another speaker.
     if !ans.texts.is_empty() {
-        if let Some((text, found)) = referent::check(&ans.answer, q, &ans.texts, &tables.tools, !a.no_referent_check,
-                                                     !a.no_quote_check) {
+        if let Some((text, found)) = referent::check(
+            &ans.answer,
+            q,
+            &ans.texts,
+            &tables.tools,
+            !a.no_referent_check,
+            !a.no_quote_check,
+        ) {
             if trevor::env::debug_on("TREVOR_IDENTITY_DEBUG") {
                 eprintln!("referent check: dropped {found:?}");
             }
@@ -133,29 +155,49 @@ pub(crate) async fn answer_one(rts: &mut Runtimes, llm: &Llm, names: &HashMap<St
 /// category ("Which Rhodes Island Operator (not playable unit) had visited Iris' castle of dreams?") and whose
 /// answer's first named character fails it by the game data (Sakiko Togawa is a playable operator) is asked once more
 /// with a passage saying so; when the second answer's first name fails too, the data note is appended to it.
-async fn answer_checked(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Names>, chrono: &Chrono,
-                        q: &str, a: &Args, tables: &mut Tables) -> Result<Answer> {
+async fn answer_checked(
+    rts: &mut Runtimes,
+    llm: &Llm,
+    names: &HashMap<String, Names>,
+    chrono: &Chrono,
+    q: &str,
+    a: &Args,
+    tables: &mut Tables,
+) -> Result<Answer> {
     let first = answer_one_inner(rts, llm, names, chrono, q, a, tables).await?;
     let first = theory_retry(rts, llm, names, chrono, q, a, tables, first).await?;
     let first = operator_list_check(rts, llm, names, chrono, q, a, tables, first).await?;
     if a.no_answer_check || a.no_route || first.passages.is_empty() || !asks_identity(q) {
         return Ok(first);
     }
-    let Some(c) = tables.tools.answer_constraint(q) else { return Ok(first) };
-    let Some((name, reason)) = tables.tools.failing_answer_name(q, &first.answer, &c) else { return Ok(first) };
+    let Some(c) = tables.tools.answer_constraint(q) else {
+        return Ok(first);
+    };
+    let Some((name, reason)) = tables.tools.failing_answer_name(q, &first.answer, &c) else {
+        return Ok(first);
+    };
     let wants = match &c {
         AnswerConstraint::NonPlayable => "someone who is not a playable operator".to_owned(),
         AnswerConstraint::Playable => "a playable operator".to_owned(),
         AnswerConstraint::Nation(x) => format!("an operator from {x}"),
     };
-    let note = format!("An earlier answer to this question named {name}. By the game data, {reason}, \
+    let note = format!(
+        "An earlier answer to this question named {name}. By the game data, {reason}, \
         and the question asks for {wants}. Do not give {name} as the answer. \
-        Name only someone the passages show fits the question, or say that the passages do not identify one.");
-    let again = Args { check_note: Some(note), routed: false, ..a.clone() };
+        Name only someone the passages show fits the question, or say that the passages do not identify one."
+    );
+    let again = Args {
+        check_note: Some(note),
+        routed: false,
+        ..a.clone()
+    };
     let mut second = answer_one_inner(rts, llm, names, chrono, q, &again, tables).await?;
     if let Some((n2, r2)) = tables.tools.failing_answer_name(q, &second.answer, &c) {
-        second.answer = format!("{}\n\nTrevor's data check: {r2}, and the question asks for {wants}, \
-            so {n2} does not fit.", second.answer);
+        second.answer = format!(
+            "{}\n\nTrevor's data check: {r2}, and the question asks for {wants}, \
+            so {n2} does not fit.",
+            second.answer
+        );
     }
     Ok(second)
 }
@@ -164,23 +206,45 @@ async fn answer_checked(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, N
 /// passages hold lines about that character touching what it asks is asked once more with those lines as HINTS and
 /// THEORY_RULE; the second answer is kept when it has its "Theory:" line.
 #[allow(clippy::too_many_arguments)]
-async fn theory_retry(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Names>, chrono: &Chrono, q: &str,
-                      a: &Args, tables: &mut Tables, first: Answer) -> Result<Answer> {
+async fn theory_retry(
+    rts: &mut Runtimes,
+    llm: &Llm,
+    names: &HashMap<String, Names>,
+    chrono: &Chrono,
+    q: &str,
+    a: &Args,
+    tables: &mut Tables,
+    first: Answer,
+) -> Result<Answer> {
     // An alive-or-dead question has the deaths evidence instead (`fate.rs`).
-    if a.no_theory_rule || a.no_route || first.passages.is_empty() || !crate::theory::asks_whether(q)
-        || !crate::theory::declined(&first.answer) || crate::detect::is_death_question(q) || crate::detect::has(q, &["alive"]) {
+    if a.no_theory_rule
+        || a.no_route
+        || first.passages.is_empty()
+        || !crate::theory::asks_whether(q)
+        || !crate::theory::declined(&first.answer)
+        || crate::detect::is_death_question(q)
+        || crate::detect::has(q, &["alive"])
+    {
         return Ok(first);
     }
     let people = people_named(&rts.main, &tables.tools, q);
     let [key] = people.as_slice() else { return Ok(first) };
     // The name as the tables write it ("Fyodor", not the folded key "fyodor").
-    let who = tables.tools.operator_names().into_iter().chain(tables.tools.speaker_names())
-        .find(|x| norm(x) == *key).map_or_else(|| key.clone(), str::to_owned);
+    let who = tables
+        .tools
+        .operator_names()
+        .into_iter()
+        .chain(tables.tools.speaker_names())
+        .find(|x| norm(x) == *key)
+        .map_or_else(|| key.clone(), str::to_owned);
     let who = who.as_str();
-    let Some(mut spec) = crate::theory::spec(q, &first.answer, &tables.tools, who, &first.passages)
-    else { return Ok(first) };
-    spec.pinned = crate::theory::hinted(&first.texts, &spec).into_iter()
-        .filter_map(|n| first.passages.get(n - 1).cloned()).collect();
+    let Some(mut spec) = crate::theory::spec(q, &first.answer, &tables.tools, who, &first.passages) else {
+        return Ok(first);
+    };
+    spec.pinned = crate::theory::hinted(&first.texts, &spec)
+        .into_iter()
+        .filter_map(|n| first.passages.get(n - 1).cloned())
+        .collect();
     let block = crate::theory::block(&first.texts, &spec);
     let extra = crate::theory::extra_hints(&rts.main, &spec);
     if block.is_none() && extra.is_empty() {
@@ -190,7 +254,11 @@ async fn theory_retry(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Nam
     // THEORY_RULE come out of the first ask's retrieved budget, so when they exceed it the first answer stays (with them
     // inside it, the retrieved passages get the rest and even the first hit keeps to it, `retrieval::passages`).
     let main = &rts.main;
-    let cost = spec.pinned.iter().filter_map(|id| main.store.row(id)).map(|r| main.store.chunks[r].token_count)
+    let cost = spec
+        .pinned
+        .iter()
+        .filter_map(|id| main.store.row(id))
+        .map(|r| main.store.chunks[r].token_count)
         .chain(extra.iter().map(|&(r, i)| excerpt_window(main, r, &[i], 1).1))
         .fold(crate::theory::THEORY_TOKENS, u32::saturating_add);
     if cost > first.budget {
@@ -200,14 +268,29 @@ async fn theory_retry(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Nam
         return Ok(first);
     }
     if trevor::env::debug_on("TREVOR_THEORY_DEBUG") {
-        eprintln!("theory: {who}{} extra {:?}", block.unwrap_or_default(),
-                  extra.iter().map(|&(r, i)| format!("{}:{i}", rts.main.store.chunks[r].chunk_id)).collect::<Vec<_>>());
+        eprintln!(
+            "theory: {who}{} extra {:?}",
+            block.unwrap_or_default(),
+            extra
+                .iter()
+                .map(|&(r, i)| format!("{}:{i}", rts.main.store.chunks[r].chunk_id))
+                .collect::<Vec<_>>()
+        );
     }
     // Retrieved hits without their neighbouring chunks: a hit's neighbours would overrun the reduced budget.
-    let again = Args { theory: Some(spec), routed: false, neighbors: 0, ..a.clone() };
+    let again = Args {
+        theory: Some(spec),
+        routed: false,
+        neighbors: 0,
+        ..a.clone()
+    };
     let second = answer_one_inner(rts, llm, names, chrono, q, &again, tables).await?;
     // Kept only when its prompt carried the HINTS block (and so THEORY_RULE) and it has the "Theory:" line.
-    Ok(if second.hinted && crate::theory::has_theory(&second.answer) { second } else { first })
+    Ok(if second.hinted && crate::theory::has_theory(&second.answer) {
+        second
+    } else {
+        first
+    })
 }
 
 /// The operator list check (`--no-operator-list-check`): an answer to a question
@@ -216,30 +299,53 @@ async fn theory_retry(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Nam
 /// each such person and the operator file the cited passage
 /// belongs to; when the second answer still lists one, the data note is appended.
 #[allow(clippy::too_many_arguments)]
-async fn operator_list_check(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Names>, chrono: &Chrono, q: &str,
-                             a: &Args, tables: &mut Tables, first: Answer) -> Result<Answer> {
+async fn operator_list_check(
+    rts: &mut Runtimes,
+    llm: &Llm,
+    names: &HashMap<String, Names>,
+    chrono: &Chrono,
+    q: &str,
+    a: &Args,
+    tables: &mut Tables,
+    first: Answer,
+) -> Result<Answer> {
     if a.no_operator_list_check || a.no_route || first.passages.is_empty() || !tables.tools.asks_operators(q) {
         return Ok(first);
     }
     let reasons = |ans: &Answer, tools: &Tools| -> Vec<String> {
-        tools.non_operator_items(&ans.answer).into_iter().map(|(name, cites)| {
-            let file = cites.iter().filter_map(|n| ans.passages.get(n.wrapping_sub(1)))
-                .find_map(|id| file_owner(tools, id));
-            match file {
-                Some(o) => format!("{name} is not a playable operator; {name} is a person named in {o}'s operator \
-                    file, and what that file says {name} did is {name}'s, not {o}'s"),
-                None => format!("{name} is not a playable operator by the game data"),
-            }
-        }).collect()
+        tools
+            .non_operator_items(&ans.answer)
+            .into_iter()
+            .map(|(name, cites)| {
+                let file = cites
+                    .iter()
+                    .filter_map(|n| ans.passages.get(n.wrapping_sub(1)))
+                    .find_map(|id| file_owner(tools, id));
+                match file {
+                    Some(o) => format!(
+                        "{name} is not a playable operator; {name} is a person named in {o}'s operator \
+                    file, and what that file says {name} did is {name}'s, not {o}'s"
+                    ),
+                    None => format!("{name} is not a playable operator by the game data"),
+                }
+            })
+            .collect()
     };
     let found = reasons(&first, &tables.tools);
     if found.is_empty() {
         return Ok(first);
     }
-    let note = format!("An earlier answer to this question listed people as operators who are not. \
+    let note = format!(
+        "An earlier answer to this question listed people as operators who are not. \
         By the game data: {}. The question asks about operators: list only playable operators, \
-        and give each act to the person the passage says did it.", found.join("; "));
-    let again = Args { check_note: Some(note), routed: false, ..a.clone() };
+        and give each act to the person the passage says did it.",
+        found.join("; ")
+    );
+    let again = Args {
+        check_note: Some(note),
+        routed: false,
+        ..a.clone()
+    };
     let mut second = answer_one_inner(rts, llm, names, chrono, q, &again, tables).await?;
     let still = reasons(&second, &tables.tools);
     if !still.is_empty() {
@@ -251,38 +357,84 @@ async fn operator_list_check(rts: &mut Runtimes, llm: &Llm, names: &HashMap<Stri
 /// Passages before the retrieved ones: the topic summary the router chose, then (`--lore v2`) the new dossier of a
 /// character the question names. Under v1 the prompt is the one before, byte for byte. In order after `pre` (the
 /// IS-ending passages): the topic, the new dossier, the answer-check note and the game-data passage.
-fn lead_passages(a: &Args, tools: &Tools, q: &str, topic: &Option<TopicPassage>, route: &Option<Route>,
-                 mut pre: Vec<Pre>) -> Vec<Pre> {
-    let topic_label = |t: &TopicPassage| if tools.deep_entry(&t.topic).is_some() {
-        format!("Trevor's topic entry (generated from the story passages, operator files and records that name \
-            it; prefer the story passages): {}", t.topic)
-    } else {
-        format!("Trevor's topic summary (generated; prefer the story passages): {}", t.topic)
+fn lead_passages(
+    a: &Args,
+    tools: &Tools,
+    q: &str,
+    topic: &Option<TopicPassage>,
+    route: &Option<Route>,
+    mut pre: Vec<Pre>,
+) -> Vec<Pre> {
+    let topic_label = |t: &TopicPassage| {
+        if tools.deep_entry(&t.topic).is_some() {
+            format!(
+                "Trevor's topic entry (generated from the story passages, operator files and records that name \
+            it; prefer the story passages): {}",
+                t.topic
+            )
+        } else {
+            format!(
+                "Trevor's topic summary (generated; prefer the story passages): {}",
+                t.topic
+            )
+        }
     };
-    pre.extend(topic.iter().map(|t| Pre::new(format!("topic:{}", t.topic), topic_label(t), t.text.clone())));
+    pre.extend(
+        topic
+            .iter()
+            .map(|t| Pre::new(format!("topic:{}", t.topic), topic_label(t), t.text.clone())),
+    );
     if let Some(d) = tools.new_dossier(q).filter(|_| dossier_allowed(q, a, route.as_ref())) {
-        let label = format!("Trevor's character dossier (generated; prefer the story passages): {}", d.topic);
+        let label = format!(
+            "Trevor's character dossier (generated; prefer the story passages): {}",
+            d.topic
+        );
         pre.push(Pre::new(format!("dossier:{}", d.topic), label, d.text).after());
     }
     if let Some(note) = &a.check_note {
-        pre.push(Pre::new("check".into(), "Trevor's check of an earlier answer against the game data".into(),
-                          note.clone()).after());
+        pre.push(
+            Pre::new(
+                "check".into(),
+                "Trevor's check of an earlier answer against the game data".into(),
+                note.clone(),
+            )
+            .after(),
+        );
     }
     if let Some(g) = tools.game_data(q) {
-        pre.push(Pre::new(format!("gamedata:{}", g.topic), format!("game data: {}", g.topic), g.text)
-            .after().with_rule());
+        pre.push(
+            Pre::new(
+                format!("gamedata:{}", g.topic),
+                format!("game data: {}", g.topic),
+                g.text,
+            )
+            .after()
+            .with_rule(),
+        );
     }
     pre
 }
 
-pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &HashMap<String, Names>, chrono: &Chrono,
-                          q: &str, a: &Args, tables: &mut Tables) -> Result<Answer> {
+pub(crate) async fn answer_one_inner(
+    rts: &mut Runtimes,
+    llm: &Llm,
+    names: &HashMap<String, Names>,
+    chrono: &Chrono,
+    q: &str,
+    a: &Args,
+    tables: &mut Tables,
+) -> Result<Answer> {
     // The relation rule is about people: not for a question naming a nation, place, race or organization topic.
     let people_only;
     let a = if a.relation_rule && tables.tools.names_group_topic(q) {
-        people_only = Args { relation_rule: false, ..a.clone() };
+        people_only = Args {
+            relation_rule: false,
+            ..a.clone()
+        };
         &people_only
-    } else { a };
+    } else {
+        a
+    };
     let mut topic = if a.routed { tables.topic.take() } else { None };
     let mut route = if a.routed { tables.route.take() } else { None };
     if !a.no_route && !a.routed {
@@ -293,8 +445,14 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
         if let Some(text) = r.text {
             let served = match rts.horizon.as_deref() {
                 None => Some(text),
-                Some(h) => crate::spoiler::table_within(&r.route, text, &tables.tools, h, a.no_horizon_recap,
-                                                        Some(&rts.main.store)),
+                Some(h) => crate::spoiler::table_within(
+                    &r.route,
+                    text,
+                    &tables.tools,
+                    h,
+                    a.no_horizon_recap,
+                    Some(&rts.main.store),
+                ),
             };
             if let Some(text) = served {
                 return Ok(table_only(q, text));
@@ -313,8 +471,13 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
         route = Some(Route::retrieve());
     }
     let short;
-    let a = if ending_pre.is_empty() { a } else {
-        short = Args { max_context_tokens: 3000, ..a.clone() };
+    let a = if ending_pre.is_empty() {
+        a
+    } else {
+        short = Args {
+            max_context_tokens: 3000,
+            ..a.clone()
+        };
         &short
     };
     let mut pre = lead_passages(a, &tables.tools, q, &topic, &route, ending_pre);
@@ -325,24 +488,49 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
             let rt4 = rts.pick(Some(true))?;
             if let Some((spelling, rows)) = term_lookup(rt4, &term, 2) {
                 let texts: Vec<&str> = rows.iter().map(|&r| rt4.store.chunks[r].text.as_str()).collect();
-                let glossary = term_glossary(&tables.tools, &texts, &term, 3, (!a.no_glossary_rarity).then_some(&*rt4));
+                let glossary = term_glossary(
+                    &tables.tools,
+                    &texts,
+                    &term,
+                    3,
+                    (!a.no_glossary_rarity).then_some(&*rt4),
+                );
                 let mut at = 0;
                 for &r in &rows {
                     let c = &rt4.store.chunks[r];
                     let label = match c.group_id.as_str() {
                         "archive" => format!("operator file: {}", c.story_id.trim_start_matches("archive_")),
-                        g if RECORD_KINDS.contains(&g) || g == "voice" =>
-                            c.text.lines().next().unwrap_or_default().to_owned(),
+                        g if RECORD_KINDS.contains(&g) || g == "voice" => {
+                            c.text.lines().next().unwrap_or_default().to_owned()
+                        }
                         _ => story_label(names, &c.story_id),
                     };
-                    pre.insert(at, Pre::new(c.chunk_id.clone(), format!("{label}; it names {spelling}"),
-                                            c.text.clone()));
+                    pre.insert(
+                        at,
+                        Pre::new(
+                            c.chunk_id.clone(),
+                            format!("{label}; it names {spelling}"),
+                            c.text.clone(),
+                        ),
+                    );
                     at += 1;
                 }
                 if !glossary.is_empty() {
-                    let text = glossary.iter().map(|(n, t)| format!("{n}: {t}")).collect::<Vec<_>>().join("\n");
-                    pre.insert(at, Pre::new("glossary".into(), "Trevor's glossary of the terms these passages use \
-                        (generated from its topic summaries; prefer the passages)".into(), text));
+                    let text = glossary
+                        .iter()
+                        .map(|(n, t)| format!("{n}: {t}"))
+                        .collect::<Vec<_>>()
+                        .join("\n");
+                    pre.insert(
+                        at,
+                        Pre::new(
+                            "glossary".into(),
+                            "Trevor's glossary of the terms these passages use \
+                        (generated from its topic summaries; prefer the passages)"
+                                .into(),
+                            text,
+                        ),
+                    );
                 }
                 if !q.to_lowercase().contains(&spelling.to_lowercase()) {
                     term_search = Some(format!("{q} {spelling}"));
@@ -351,22 +539,39 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
         }
     }
     let (p4, kind) = retrieval_plan(q, a, route.as_ref());
-    let rt = if kind == Some("art") { rts.pick_art()? } else { rts.pick(p4)? };
+    let rt = if kind == Some("art") {
+        rts.pick_art()?
+    } else {
+        rts.pick(p4)?
+    };
     let two_people;
     let a = if a.relation_rule && asks_relation(q) && !asks_admire(q) && people_named(rt, &tables.tools, q).len() < 2 {
-        two_people = Args { relation_rule: false, ..a.clone() };
+        two_people = Args {
+            relation_rule: false,
+            ..a.clone()
+        };
         &two_people
-    } else { a };
-    let expanded = if a.router == RouterKind::Keywords || a.no_name_expansion || a.no_route { q.to_owned() }
-        else { expand_names(rt, &tables.tools, q) };
+    } else {
+        a
+    };
+    let expanded = if a.router == RouterKind::Keywords || a.no_name_expansion || a.no_route {
+        q.to_owned()
+    } else {
+        expand_names(rt, &tables.tools, q)
+    };
     let q = expanded.as_str();
     let mut form = if form_on(a) {
         // A backend without grammars (OpenAI-compatible) whose JSON did not validate twice: the fact form.
         Some(match question_form(llm, q, a.form_v1).await {
-            Err(e) if is_json_invalid(&e) => Form { form: "fact".into(), ..Form::default() },
+            Err(e) if is_json_invalid(&e) => Form {
+                form: "fact".into(),
+                ..Form::default()
+            },
             r => r?,
         })
-    } else { None };
+    } else {
+        None
+    };
     if let Some(f) = form.as_mut().filter(|f| f.form == "opinion") {
         f.named = named_characters(rt, &tables.tools, q);
         if !a.no_group_evidence {
@@ -376,7 +581,10 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
             }
         }
     }
-    if let Some(f) = form.as_mut().filter(|f| f.form == "opinion" && !a.no_opinion_gate && is_opinion_question(q)) {
+    if let Some(f) = form
+        .as_mut()
+        .filter(|f| f.form == "opinion" && !a.no_opinion_gate && is_opinion_question(q))
+    {
         if !opinion_needs_candidates(rt, &tables.tools, q, !f.named.is_empty()) && !names_proper_word(rt, q) {
             f.gated = true;
             f.evidence = None;
@@ -386,54 +594,108 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
     // the later story's lines that state elapsed time since something of the earlier one, first; it then takes the
     // place of the scoped and character scenes, whose rule numbers the first passages too.
     let gap = if !a.no_time_gap && !a.no_route && kind.is_none() {
-        time_gap_events(q, &tables.tools, chrono).map(|(e, l)| (e, l, time_gap_lines(rt, &tables.tools, e, l)))
+        time_gap_events(q, &tables.tools, chrono)
+            .map(|(e, l)| (e, l, time_gap_lines(rt, &tables.tools, e, l)))
             .filter(|(_, _, lines)| !lines.is_empty())
-    } else { None };
+    } else {
+        None
+    };
     if let Some((e, l, lines)) = &gap {
-        let (en, ln) = (e["name"].as_str().unwrap_or_default(), l["name"].as_str().unwrap_or_default());
+        let (en, ln) = (
+            e["name"].as_str().unwrap_or_default(),
+            l["name"].as_str().unwrap_or_default(),
+        );
         for (i, &(r, li)) in lines.iter().enumerate() {
             let c = &rt.store.chunks[r];
             let (text, _) = excerpt_window(rt, r, &[li], GAP_WINDOW);
             let line = c.text.lines().nth(li).unwrap_or_default().to_owned();
-            pre.insert(i, Pre::new(c.chunk_id.clone(),
-                                   format!("{}; a line of {ln} that states time passed since something of {en}",
-                                           story_label(names, &c.story_id)), text).in_gap(line));
+            pre.insert(
+                i,
+                Pre::new(
+                    c.chunk_id.clone(),
+                    format!(
+                        "{}; a line of {ln} that states time passed since something of {en}",
+                        story_label(names, &c.story_id)
+                    ),
+                    text,
+                )
+                .in_gap(line),
+            );
         }
     }
     // The scoped scenes go first (before a term lookup's records), and are not repeated among the retrieved passages.
     // Scoped excerpts (`--no-scoped-line-rank`): a wh-question about what a character of the named event said there
     // gets excerpts of that character's best reranked lines, labelled as character scenes, instead of scoped scenes.
     let excerpts = if gap.is_none() && !a.no_scoped_scenes && !a.no_scoped_line_rank && !a.no_route && kind.is_none() {
-        scoped_excerpts(rt, &a.runtime, &tables.tools, q, a.scene_tokens.unwrap_or(crate::scenes::CHAR_TOKENS),
-                        a.scene_verbs(), a.chunk_renames())
-    } else { None };
+        scoped_excerpts(
+            rt,
+            &a.runtime,
+            &tables.tools,
+            q,
+            a.scene_tokens.unwrap_or(crate::scenes::CHAR_TOKENS),
+            a.scene_verbs(),
+            a.chunk_renames(),
+        )
+    } else {
+        None
+    };
     if let Some((_, who, rows)) = &excerpts {
         for (i, (r, text, _)) in rows.iter().enumerate() {
             let c = &rt.store.chunks[*r];
             let label = story_label(names, &c.story_id);
-            pre.insert(i, Pre::new(c.chunk_id.clone(), format!("{label}; {CHAR_LABEL} {who} speaks"), text.clone())
-                .in_scope());
+            pre.insert(
+                i,
+                Pre::new(
+                    c.chunk_id.clone(),
+                    format!("{label}; {CHAR_LABEL} {who} speaks"),
+                    text.clone(),
+                )
+                .in_scope(),
+            );
         }
     }
     let scoped = if excerpts.is_none() && gap.is_none() && !a.no_scoped_scenes && !a.no_route && kind.is_none() {
-        scoped_scenes(rt, &tables.tools, q, a.scene_tokens.unwrap_or(crate::scenes::SCOPED_TOKENS))
-    } else { None };
+        scoped_scenes(
+            rt,
+            &tables.tools,
+            q,
+            a.scene_tokens.unwrap_or(crate::scenes::SCOPED_TOKENS),
+        )
+    } else {
+        None
+    };
     if let Some((ename, who, rows)) = &scoped {
         for (i, &r) in rows.iter().enumerate() {
             let c = &rt.store.chunks[r];
             let label = story_label(names, &c.story_id);
-            pre.insert(i, Pre::new(c.chunk_id.clone(),
-                                   format!("{label}; a scene of {ename} in which {} speaks or is named",
-                                           who.join(" or ")),
-                                   c.text.clone()).in_scope());
+            pre.insert(
+                i,
+                Pre::new(
+                    c.chunk_id.clone(),
+                    format!(
+                        "{label}; a scene of {ename} in which {} speaks or is named",
+                        who.join(" or ")
+                    ),
+                    c.text.clone(),
+                )
+                .in_scope(),
+            );
         }
         // The summaries of the scenes' stories follow them (opt-in, `--scoped-summaries`): a scene shows a moment
         // without its setting.
         if a.scoped_summaries {
             for (k, (sid, text)) in scoped_summaries(rt, &tables.tools, rows).into_iter().enumerate() {
-                pre.insert(rows.len() + k, Pre::new(format!("story:{sid}"),
-                    format!("Trevor's summary of the story {} (written by Trevor)",
-                            story_label(names, &sid).trim_start_matches("story: ")), text));
+                pre.insert(
+                    rows.len() + k,
+                    Pre::new(
+                        format!("story:{sid}"),
+                        format!(
+                            "Trevor's summary of the story {} (written by Trevor)",
+                            story_label(names, &sid).trim_start_matches("story: ")
+                        ),
+                        text,
+                    ),
+                );
             }
         }
     }
@@ -441,24 +703,53 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
     // table shows no death scene for, and that the deaths evidence below does not take, says so in its rule (with the
     // table's later reports of the death as passages, when it has some), and its search query, never the question the
     // model reads, gains the words a disappearance is told in; so does the ranking of any character scenes' lines.
-    let vanished = if !a.no_vanish_rule && !a.no_route && kind.is_none()
-        && crate::fate::alive_dead_subject(q, &tables.tools).is_none() {
+    let vanished = if !a.no_vanish_rule
+        && !a.no_route
+        && kind.is_none()
+        && crate::fate::alive_dead_subject(q, &tables.tools).is_none()
+    {
         crate::fate::vanished_subject(q, &people_named(rt, &tables.tools, q), &tables.tools)
-    } else { None };
-    let scene_q = if vanished.is_some() { format!("{q} {}", crate::fate::VANISH_TERMS) } else { q.to_owned() };
+    } else {
+        None
+    };
+    let scene_q = if vanished.is_some() {
+        format!("{q} {}", crate::fate::VANISH_TERMS)
+    } else {
+        q.to_owned()
+    };
     // Character-scoped scenes: no event named, one character named as the subject of a said or done act. They are added
     // before the retrieved passages, which keep their whole budget (the scoped scenes' 3,000-token rest would drop
     // retrieved lines other questions need).
-    if scoped.is_none() && excerpts.is_none() && gap.is_none() && !a.no_character_scenes && !a.no_route
-        && kind.is_none() {
-        if let Some((who, rows)) = character_scenes(rt, &a.runtime, &tables.tools, q, &scene_q,
-                                                  a.scene_tokens.unwrap_or(crate::scenes::CHAR_TOKENS),
-                                                  a.scene_verbs(), a.no_scene_subject, a.chunk_renames()) {
+    if scoped.is_none()
+        && excerpts.is_none()
+        && gap.is_none()
+        && !a.no_character_scenes
+        && !a.no_route
+        && kind.is_none()
+    {
+        if let Some((who, rows)) = character_scenes(
+            rt,
+            &a.runtime,
+            &tables.tools,
+            q,
+            &scene_q,
+            a.scene_tokens.unwrap_or(crate::scenes::CHAR_TOKENS),
+            a.scene_verbs(),
+            a.no_scene_subject,
+            a.chunk_renames(),
+        ) {
             for (i, (r, text, _)) in rows.iter().enumerate() {
                 let c = &rt.store.chunks[*r];
                 let label = story_label(names, &c.story_id);
-                pre.insert(i, Pre::new(c.chunk_id.clone(), format!("{label}; {CHAR_LABEL} {who} speaks"), text.clone())
-                    .in_scope());
+                pre.insert(
+                    i,
+                    Pre::new(
+                        c.chunk_id.clone(),
+                        format!("{label}; {CHAR_LABEL} {who} speaks"),
+                        text.clone(),
+                    )
+                    .in_scope(),
+                );
             }
         }
     }
@@ -469,10 +760,19 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
     if !a.no_death_evidence && !a.no_route && kind.is_none() {
         if let Some(who) = crate::fate::alive_dead_subject(q, &tables.tools) {
             let at = after_lead(&pre);
-            for (k, (id, tail, text, tok)) in crate::fate::death_evidence(rt, &tables.tools, &who, a.death_label_v1).into_iter()
-                .enumerate() {
-                let sid = rt.store.row(&id).map(|r| rt.store.chunks[r].story_id.clone()).unwrap_or_default();
-                pre.insert(at + k, Pre::new(id, format!("{}; {tail}", story_label(names, &sid)), text).of_death(&who));
+            for (k, (id, tail, text, tok)) in crate::fate::death_evidence(rt, &tables.tools, &who, a.death_label_v1)
+                .into_iter()
+                .enumerate()
+            {
+                let sid = rt
+                    .store
+                    .row(&id)
+                    .map(|r| rt.store.chunks[r].story_id.clone())
+                    .unwrap_or_default();
+                pre.insert(
+                    at + k,
+                    Pre::new(id, format!("{}; {tail}", story_label(names, &sid)), text).of_death(&who),
+                );
                 pre_tokens = pre_tokens.saturating_add(tok);
             }
         }
@@ -483,15 +783,27 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
     if let Some(v) = vanished.as_ref() {
         if let Some(table) = v.reports.as_deref() {
             let at = after_lead(&pre);
-            for (k, (id, tail, text, tok)) in crate::fate::death_evidence(rt, &tables.tools, table, a.death_label_v1).into_iter()
-                .enumerate() {
-                let sid = rt.store.row(&id).map(|r| rt.store.chunks[r].story_id.clone()).unwrap_or_default();
-                pre.insert(at + k, Pre::new(id, format!("{}; {tail}", story_label(names, &sid)), text)
-                    .of_death(&v.who));
+            for (k, (id, tail, text, tok)) in crate::fate::death_evidence(rt, &tables.tools, table, a.death_label_v1)
+                .into_iter()
+                .enumerate()
+            {
+                let sid = rt
+                    .store
+                    .row(&id)
+                    .map(|r| rt.store.chunks[r].story_id.clone())
+                    .unwrap_or_default();
+                pre.insert(
+                    at + k,
+                    Pre::new(id, format!("{}; {tail}", story_label(names, &sid)), text).of_death(&v.who),
+                );
                 pre_tokens = pre_tokens.saturating_add(tok);
             }
         }
-        vanish_search = Some(format!("{} {}", term_search.as_deref().unwrap_or(q), crate::fate::VANISH_TERMS));
+        vanish_search = Some(format!(
+            "{} {}",
+            term_search.as_deref().unwrap_or(q),
+            crate::fate::VANISH_TERMS
+        ));
     }
     // The labelled theory's second ask (`theory.rs`): lines of the character's own scenes that bear on the question,
     // after the retrieved passages, which give up the tokens they take.
@@ -502,18 +814,33 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
         // After any scoped scenes or time-gap lines, whose rule numbers the first passages.
         let mut at = after_lead(&pre);
         for id in &t.pinned {
-            let Some(r) = rt.store.row(id).filter(|_| !pre.iter().any(|p| p.id == *id)) else { continue };
+            let Some(r) = rt.store.row(id).filter(|_| !pre.iter().any(|p| p.id == *id)) else {
+                continue;
+            };
             let c = &rt.store.chunks[r];
-            pre.insert(at, Pre::new(c.chunk_id.clone(), passage_label(names, c), c.text.clone()).in_theory());
+            pre.insert(
+                at,
+                Pre::new(c.chunk_id.clone(), passage_label(names, c), c.text.clone()).in_theory(),
+            );
             at += 1;
             pre_tokens = pre_tokens.saturating_add(c.token_count);
         }
         for (r, i) in crate::theory::extra_hints(rt, t) {
             let c = &rt.store.chunks[r];
             let (text, tok) = excerpt_window(rt, r, &[i], 1);
-            pre.insert(at, Pre::new(c.chunk_id.clone(), format!("{}; a line of {} that bears on the question",
-                                                                story_label(names, &c.story_id), t.who), text)
-                .in_theory());
+            pre.insert(
+                at,
+                Pre::new(
+                    c.chunk_id.clone(),
+                    format!(
+                        "{}; a line of {} that bears on the question",
+                        story_label(names, &c.story_id),
+                        t.who
+                    ),
+                    text,
+                )
+                .in_theory(),
+            );
             at += 1;
             pre_tokens = pre_tokens.saturating_add(tok);
         }
@@ -524,22 +851,40 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
     // so the whole prompt fits the slot the profile is served with (4,096 tokens for mid).
     let scenes_in = pre.iter().any(|p| p.scoped);
     let a = if let (Some(cap), true) = (a.scene_tokens, scenes_in) {
-        scoped_budget = Args { max_context_tokens: a.max_context_tokens.saturating_sub(cap), ..a.clone() };
+        scoped_budget = Args {
+            max_context_tokens: a.max_context_tokens.saturating_sub(cap),
+            ..a.clone()
+        };
         &scoped_budget
     } else if scoped.is_some() {
-        scoped_budget = Args { max_context_tokens: a.max_context_tokens.min(SCOPED_REST), ..a.clone() };
+        scoped_budget = Args {
+            max_context_tokens: a.max_context_tokens.min(SCOPED_REST),
+            ..a.clone()
+        };
         &scoped_budget
-    } else { a };
+    } else {
+        a
+    };
     let death_budget;
     let a = if pre_tokens > 0 {
-        death_budget = Args { max_context_tokens: a.max_context_tokens.saturating_sub(pre_tokens), ..a.clone() };
+        death_budget = Args {
+            max_context_tokens: a.max_context_tokens.saturating_sub(pre_tokens),
+            ..a.clone()
+        };
         &death_budget
-    } else { a };
+    } else {
+        a
+    };
     let vanish_args;
     let a = if let Some(v) = vanished {
-        vanish_args = Args { vanish: Some(v.who), ..a.clone() };
+        vanish_args = Args {
+            vanish: Some(v.who),
+            ..a.clone()
+        };
         &vanish_args
-    } else { a };
+    } else {
+        a
+    };
     let form = form.as_ref();
     let search = vanish_search.as_deref().or(term_search.as_deref()).unwrap_or(q);
     let first = answer_from(rt, llm, names, chrono, q, search, a, &pre, kind, form).await?;
@@ -548,17 +893,35 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
     // built) art units, without touching the router prompt. So does an answer that cites only the operator's own file
     // (`--no-own-file-fallback`): "who helped Mutsumi care for the plants?" cited her file, which says only that others
     // admire her; the robots are in her module story.
-    let own_file_only = |op: &str| !a.no_own_file_fallback && !first.cited.is_empty() && first.cited.iter()
-        .all(|id| file_owner(&tables.tools, id).is_some_and(|o| norm(&o) == norm(op)));
-    let retry_op = one_operator(q, &tables.tools).filter(|_| declines(&first.answer))
+    let own_file_only = |op: &str| {
+        !a.no_own_file_fallback
+            && !first.cited.is_empty()
+            && first
+                .cited
+                .iter()
+                .all(|id| file_owner(&tables.tools, id).is_some_and(|o| norm(&o) == norm(op)))
+    };
+    let retry_op = one_operator(q, &tables.tools)
+        .filter(|_| declines(&first.answer))
         .or_else(|| one_operator_wide(q, &tables.tools).filter(|op| own_file_only(op)));
     if !a.no_typed_fallback && !a.no_route && kind.is_none() && retry_op.is_some() {
         if let Some(op) = retry_op {
             let rt2 = rts.pick_art()?;
-            let wide = rt2.retrieve(q, &RetrievalConfig { mode: Mode::Hybrid, k: 60, ..RetrievalConfig::default() })?;
-            let own = wide.iter().map(|h| &rt2.store.chunks[h.row])
-                .find(|c| FALLBACK_KINDS.contains(&c.group_id.as_str())
-                    && typed_owner(c.text.lines().next().unwrap_or_default()).is_some_and(|o| norm(&o) == norm(&op)))
+            let wide = rt2.retrieve(
+                q,
+                &RetrievalConfig {
+                    mode: Mode::Hybrid,
+                    k: 60,
+                    ..RetrievalConfig::default()
+                },
+            )?;
+            let own = wide
+                .iter()
+                .map(|h| &rt2.store.chunks[h.row])
+                .find(|c| {
+                    FALLBACK_KINDS.contains(&c.group_id.as_str())
+                        && typed_owner(c.text.lines().next().unwrap_or_default()).is_some_and(|o| norm(&o) == norm(&op))
+                })
                 .map(|c| c.group_id.clone());
             if let Some(k) = own {
                 let k: &'static str = FALLBACK_KINDS.iter().find(|x| **x == k).copied().unwrap_or("voice");
@@ -566,14 +929,18 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
                 // Kept only when it cites a unit of the operator itself: a question that names an operator only in
                 // passing ("what operator is based off an animal with phantom as part of its name") can get another
                 // operator's units and answer with that operator.
-                let cites_own = second.cited.iter().any(|id| rt2.store.chunks.iter().find(|c| c.chunk_id == *id)
-                    .is_some_and(|c| FALLBACK_KINDS.contains(&c.group_id.as_str())
-                        && typed_owner(c.text.lines().next().unwrap_or_default())
-                            .is_some_and(|o| norm(&o) == norm(&op))));
+                let cites_own = second.cited.iter().any(|id| {
+                    rt2.store.chunks.iter().find(|c| c.chunk_id == *id).is_some_and(|c| {
+                        FALLBACK_KINDS.contains(&c.group_id.as_str())
+                            && typed_owner(c.text.lines().next().unwrap_or_default())
+                                .is_some_and(|o| norm(&o) == norm(&op))
+                    })
+                });
                 // Or when it cites only the lead passages both asks had (scoped scenes and the like): the same evidence,
                 // read the second time. ian12 on the 12B declined with the Idida scene at [1] and the retry answered from
                 // that [1] (2026-10-19, `--fallback-own-only` keeps the own-unit rule alone).
-                let cites_lead = !a.fallback_own_only && !second.cited.is_empty()
+                let cites_lead = !a.fallback_own_only
+                    && !second.cited.is_empty()
                     && second.cited.iter().all(|id| pre.iter().any(|p| p.id == *id));
                 if !declines(&second.answer) && (cites_own || cites_lead) {
                     return Ok(second);
@@ -594,7 +961,10 @@ fn after_lead(pre: &[Pre]) -> usize {
 pub(crate) async fn route_checked(q: &str, a: &Args, tables: &mut Tables, llm: Option<&Llm>) -> Result<Routed> {
     match route_question(q, a, &tables.tools, llm).await {
         Err(e) if is_json_invalid(&e) => {
-            let kw = Args { router: RouterKind::Keywords, ..a.clone() };
+            let kw = Args {
+                router: RouterKind::Keywords,
+                ..a.clone()
+            };
             route_question(q, &kw, &tables.tools, llm).await
         }
         r => r,

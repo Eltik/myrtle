@@ -18,32 +18,148 @@ use crate::kinds::{RECORD_KINDS, is_generated};
 pub(crate) const HINT_LINES: usize = 4;
 
 /// Words of a question that say nothing about what it asks.
-const STOP: &[&str] = &["is", "was", "are", "were", "does", "did", "do", "has", "have", "had", "can", "could", "will",
-                        "would", "should", "the", "a", "an", "of", "in", "on", "at", "to", "for", "from", "with", "by",
-                        "and", "or", "but", "not", "no", "yes", "ever", "really", "actually", "still", "also", "be",
-                        "been", "being", "he", "she", "they", "it", "his", "her", "their", "its", "him", "them", "any",
-                        "some", "that", "this", "there", "what", "who", "which", "when", "where", "why", "how", "know",
-                        "known", "story", "stories", "lore", "canon", "arknights", "game", "true", "confirmed", "about",
-                        "someone", "something", "anyone", "anything", "like", "kind", "sort", "type", "one", "become",
-                        "became", "get", "got", "go", "went", "say", "said", "make", "made", "time", "now", "then", "part",
-                        "member", "side"];
+const STOP: &[&str] = &[
+    "is",
+    "was",
+    "are",
+    "were",
+    "does",
+    "did",
+    "do",
+    "has",
+    "have",
+    "had",
+    "can",
+    "could",
+    "will",
+    "would",
+    "should",
+    "the",
+    "a",
+    "an",
+    "of",
+    "in",
+    "on",
+    "at",
+    "to",
+    "for",
+    "from",
+    "with",
+    "by",
+    "and",
+    "or",
+    "but",
+    "not",
+    "no",
+    "yes",
+    "ever",
+    "really",
+    "actually",
+    "still",
+    "also",
+    "be",
+    "been",
+    "being",
+    "he",
+    "she",
+    "they",
+    "it",
+    "his",
+    "her",
+    "their",
+    "its",
+    "him",
+    "them",
+    "any",
+    "some",
+    "that",
+    "this",
+    "there",
+    "what",
+    "who",
+    "which",
+    "when",
+    "where",
+    "why",
+    "how",
+    "know",
+    "known",
+    "story",
+    "stories",
+    "lore",
+    "canon",
+    "arknights",
+    "game",
+    "true",
+    "confirmed",
+    "about",
+    "someone",
+    "something",
+    "anyone",
+    "anything",
+    "like",
+    "kind",
+    "sort",
+    "type",
+    "one",
+    "become",
+    "became",
+    "get",
+    "got",
+    "go",
+    "went",
+    "say",
+    "said",
+    "make",
+    "made",
+    "time",
+    "now",
+    "then",
+    "part",
+    "member",
+    "side",
+];
 
 /// Whether a question asks whether (its first word is an auxiliary verb).
 pub(crate) fn asks_whether(q: &str) -> bool {
     let first = q.split_whitespace().next().unwrap_or_default().to_lowercase();
-    matches!(first.as_str(), "is" | "was" | "are" | "were" | "does" | "did" | "do" | "has" | "have" | "had" | "can"
-        | "could" | "will" | "would" | "should" | "isn't" | "wasn't" | "doesn't" | "didn't")
+    matches!(
+        first.as_str(),
+        "is" | "was"
+            | "are"
+            | "were"
+            | "does"
+            | "did"
+            | "do"
+            | "has"
+            | "have"
+            | "had"
+            | "can"
+            | "could"
+            | "will"
+            | "would"
+            | "should"
+            | "isn't"
+            | "wasn't"
+            | "doesn't"
+            | "didn't"
+    )
 }
 
 /// The stems of the question's content words: lowercase, not a stop word, not a word of the character's names, with
 /// "ed", "ing", "es" or "s" cut while 4 letters or more remain ("infected" is "infect").
 pub(crate) fn stems(q: &str, forms: &[String]) -> Vec<String> {
-    let name_words: Vec<String> = forms.iter().flat_map(|f| norm(f).split(' ').map(str::to_owned).collect::<Vec<_>>())
+    let name_words: Vec<String> = forms
+        .iter()
+        .flat_map(|f| norm(f).split(' ').map(str::to_owned).collect::<Vec<_>>())
         .collect();
     let mut out: Vec<String> = Vec::new();
     for w in norm(q).split(' ') {
-        if w.chars().count() < 4 || STOP.contains(&w) || name_words.iter().any(|n| n == w)
-            || w.chars().all(|c| c.is_ascii_digit()) {
+        if w.chars().count() < 4
+            || STOP.contains(&w)
+            || name_words.iter().any(|n| n == w)
+            || w.chars().all(|c| c.is_ascii_digit())
+        {
             continue;
         }
         let mut s = w.to_owned();
@@ -64,14 +180,19 @@ pub(crate) fn stems(q: &str, forms: &[String]) -> Vec<String> {
 
 fn speaker_and_text(line: &str) -> (Option<&str>, &str) {
     match line.find(": ") {
-        Some(i) if i <= 40 && !line[..i].contains(['.', '!', '?', ',']) => (Some(line[..i].trim_matches('\'')), &line[i + 2..]),
+        Some(i) if i <= 40 && !line[..i].contains(['.', '!', '?', ',']) => {
+            (Some(line[..i].trim_matches('\'')), &line[i + 2..])
+        }
         _ => (None, line),
     }
 }
 
 fn names(text: &str, forms: &[String]) -> bool {
     let t = norm(text);
-    forms.iter().any(|f| { let k = norm(f); !k.is_empty() && format!(" {t} ").contains(&format!(" {k} ")) })
+    forms.iter().any(|f| {
+        let k = norm(f);
+        !k.is_empty() && format!(" {t} ").contains(&format!(" {k} "))
+    })
 }
 
 /// Whether `text` has a word starting with a stem, the character's own names left out ("Deepcolor" is not "deep").
@@ -80,13 +201,20 @@ fn names(text: &str, forms: &[String]) -> bool {
 const RELATED: &[(&str, &[&str])] = &[("infect", &["oripath", "originium", "cough", "crystal"])];
 
 fn touches(text: &str, stems: &[String], forms: &[String]) -> bool {
-    let own: Vec<String> = forms.iter().flat_map(|f| norm(f).split(' ').map(str::to_owned).collect::<Vec<_>>())
+    let own: Vec<String> = forms
+        .iter()
+        .flat_map(|f| norm(f).split(' ').map(str::to_owned).collect::<Vec<_>>())
         .collect();
     // A possessive is the name and "s" once `norm` drops the apostrophe ("Deepcolor's" is "deepcolors").
-    let related: Vec<&str> = RELATED.iter().filter(|(k, _)| stems.iter().any(|s| s == k))
-        .flat_map(|(_, ws)| ws.iter().copied()).collect();
-    norm(text).split(' ').any(|w| !own.iter().any(|o| w.starts_with(o.as_str()))
-        && (stems.iter().any(|s| w.starts_with(s.as_str())) || related.iter().any(|r| w.starts_with(r))))
+    let related: Vec<&str> = RELATED
+        .iter()
+        .filter(|(k, _)| stems.iter().any(|s| s == k))
+        .flat_map(|(_, ws)| ws.iter().copied())
+        .collect();
+    norm(text).split(' ').any(|w| {
+        !own.iter().any(|o| w.starts_with(o.as_str()))
+            && (stems.iter().any(|s| w.starts_with(s.as_str())) || related.iter().any(|r| w.starts_with(r)))
+    })
 }
 
 /// The hint lines of the passages `texts` (each "(label)" then its lines): (passage number, line), a line that touches
@@ -110,7 +238,9 @@ pub(crate) fn hints(texts: &[String], forms: &[String], stems: &[String]) -> Vec
                 let line = lines[j].trim();
                 let line: String = if line.chars().count() > 300 {
                     format!("{}...", line.chars().take(300).collect::<String>())
-                } else { line.to_owned() };
+                } else {
+                    line.to_owned()
+                };
                 if !out.iter().any(|(_, l)| *l == line) {
                     out.push((n + 1, line));
                 }
@@ -126,11 +256,48 @@ pub(crate) fn hints(texts: &[String], forms: &[String], stems: &[String]) -> Vec
 /// Words of a question about the game rather than the story ("Does Fyodor deserve a sprite?"), matched as whole words
 /// ("frontier", "released", "designated" and "pulled" are story words). "Is Specter Alter canon?" asks about the game
 /// too: its theory said the answer "might be a specific narrative choice made by the creators" (window 4, r052).
-const META: &[&str] = &["deserve", "deserves", "sprite", "sprites", "translate", "translated", "translation",
-                        "translations", "translator", "skin", "skins", "banner", "banners", "rerun", "reruns", "voice actor",
-                        "artist", "artists", "nerf", "nerfed", "buff", "buffed", "tier", "worth", "pull", "pulls",
-                        "playable", "release", "upcoming", "model", "models", "design", "designs", "based on",
-                        "inspired", "reference", "references", "canon", "canonical", "noncanon"];
+const META: &[&str] = &[
+    "deserve",
+    "deserves",
+    "sprite",
+    "sprites",
+    "translate",
+    "translated",
+    "translation",
+    "translations",
+    "translator",
+    "skin",
+    "skins",
+    "banner",
+    "banners",
+    "rerun",
+    "reruns",
+    "voice actor",
+    "artist",
+    "artists",
+    "nerf",
+    "nerfed",
+    "buff",
+    "buffed",
+    "tier",
+    "worth",
+    "pull",
+    "pulls",
+    "playable",
+    "release",
+    "upcoming",
+    "model",
+    "models",
+    "design",
+    "designs",
+    "based on",
+    "inspired",
+    "reference",
+    "references",
+    "canon",
+    "canonical",
+    "noncanon",
+];
 
 /// The words of a whether-question after its subject, when the subject is `who` right after the first word (and an
 /// optional "the"): "Is Fyodor infected?" gives "infected"; None when `who` is not the subject or the question is about
@@ -173,11 +340,21 @@ pub(crate) fn spec(q: &str, answer: &str, tools: &Tools, who: &str, seen: &[Stri
     }
     let pred = predicate(q, who)?;
     let mut forms = vec![who.to_owned()];
-    for g in tools.identities.iter().filter(|g| g.iter().any(|x| norm(x) == norm(who))) {
+    for g in tools
+        .identities
+        .iter()
+        .filter(|g| g.iter().any(|x| norm(x) == norm(who)))
+    {
         forms.extend(g.iter().cloned());
     }
     let stems = stems(&pred, &forms);
-    (!stems.is_empty()).then(|| Spec { who: who.to_owned(), forms, stems, seen: seen.to_vec(), pinned: Vec::new() })
+    (!stems.is_empty()).then(|| Spec {
+        who: who.to_owned(),
+        forms,
+        stems,
+        seen: seen.to_vec(),
+        pinned: Vec::new(),
+    })
 }
 
 /// The passage numbers (1-based) of `texts` that hold a hint line.
@@ -197,8 +374,11 @@ pub(crate) fn block(texts: &[String], t: &Spec) -> Option<String> {
     if h.is_empty() {
         return None;
     }
-    let mut out = format!("\nHINTS (lines of the passages above that bear on the question about {} but do not \
-        settle it)\n", t.who);
+    let mut out = format!(
+        "\nHINTS (lines of the passages above that bear on the question about {} but do not \
+        settle it)\n",
+        t.who
+    );
     for (n, line) in &h {
         out.push_str(&format!("[{n}] {line}\n"));
     }
@@ -215,8 +395,12 @@ pub(crate) fn extra_hints(rt: &Runtime, t: &Spec) -> Vec<(usize, usize)> {
         if out.len() >= EXTRA_SCENES {
             break;
         }
-        if is_generated(&c.group_id) || RECORD_KINDS.contains(&c.group_id.as_str()) || c.group_id == "voice"
-            || t.seen.contains(&c.chunk_id) || rt.horizon.as_ref().is_some_and(|h| !rt.allows_row(h, r)) {
+        if is_generated(&c.group_id)
+            || RECORD_KINDS.contains(&c.group_id.as_str())
+            || c.group_id == "voice"
+            || t.seen.contains(&c.chunk_id)
+            || rt.horizon.as_ref().is_some_and(|h| !rt.allows_row(h, r))
+        {
             continue;
         }
         let hit = c.text.lines().position(|l| {
@@ -236,11 +420,33 @@ pub(crate) const EXTRA_SCENES: usize = 3;
 /// Whether an answer declines, by `detect::declines` or by the plural and hedged forms it misses ("The provided passages
 /// do not state whether Fyodor is infected [1-7]." declined the Fyodor question on E2B and passed `declines`).
 pub(crate) fn declined(answer: &str) -> bool {
-    let first = answer.trim().split(['.', '!', '?']).next().unwrap_or_default().to_lowercase();
-    declines(answer) || ["do not state", "do not say", "do not mention", "do not indicate", "does not indicate",
-        "do not specify", "does not specify", "not explicitly", "don't say", "doesn't say", "do not explicitly",
-        "does not explicitly", "no mention", "is not mentioned", "are not mentioned", "is not stated"]
-        .iter().any(|w| first.contains(w))
+    let first = answer
+        .trim()
+        .split(['.', '!', '?'])
+        .next()
+        .unwrap_or_default()
+        .to_lowercase();
+    declines(answer)
+        || [
+            "do not state",
+            "do not say",
+            "do not mention",
+            "do not indicate",
+            "does not indicate",
+            "do not specify",
+            "does not specify",
+            "not explicitly",
+            "don't say",
+            "doesn't say",
+            "do not explicitly",
+            "does not explicitly",
+            "no mention",
+            "is not mentioned",
+            "are not mentioned",
+            "is not stated",
+        ]
+        .iter()
+        .any(|w| first.contains(w))
 }
 
 /// Whether a second answer kept the labelled form (a "Theory:" sentence).
@@ -255,18 +461,29 @@ mod tests {
     fn texts() -> Vec<String> {
         vec![
             "(story: Roaring Flare, x)\nFyodor: I hope it all proceeds as you've said. What of the Infected \
-             situation? Any developments?\nIslam Witte: Your Majesty is overhasty.".to_owned(),
+             situation? Any developments?\nIslam Witte: Your Majesty is overhasty."
+                .to_owned(),
             "(story: Stultifera Navis, y)\nWitte: Talulah the Infected... Should you break the curse, Fyodor.\n\
-             Amiya: The infected suffer.".to_owned(),
+             Amiya: The infected suffer."
+                .to_owned(),
         ]
     }
 
     #[test]
     fn a_declined_whether_question_gets_the_hint_lines() {
         let t = Tools::default();
-        assert_eq!(stems("Is Fyodor infected?", &["Fyodor".to_owned()]), vec!["infect".to_owned()]);
+        assert_eq!(
+            stems("Is Fyodor infected?", &["Fyodor".to_owned()]),
+            vec!["infect".to_owned()]
+        );
         let hb = |q: &str, a: &str, x: &[String], who: &str| spec(q, a, &t, who, &[]).and_then(|s| block(x, &s));
-        let b = hb("Is Fyodor infected?", "I could not find it in the story text.", &texts(), "Fyodor").unwrap();
+        let b = hb(
+            "Is Fyodor infected?",
+            "I could not find it in the story text.",
+            &texts(),
+            "Fyodor",
+        )
+        .unwrap();
         assert!(b.contains("[1] Fyodor: I hope it all proceeds"), "{b}");
         assert!(b.contains("[2] Witte: Talulah the Infected"), "{b}");
         assert!(!b.contains("Amiya"), "{b}");
@@ -277,9 +494,21 @@ mod tests {
         let cough = vec!["(story: x)\nFyodor: Absurd... Ridiculous! ...*cough* *cough*!".to_owned()];
         assert!(hb("Is Fyodor infected?", "I could not find it.", &cough, "Fyodor").is_some());
         let deep = vec!["(story: x)\nDeacon: Deepcolor steps into the ocean.".to_owned()];
-        assert!(hb("Is Deepcolor part of the deep?", "I could not find it.", &deep, "Deepcolor").is_none());
-        assert!(has_theory("The story does not say outright, but ... Theory: he may be."));
-        assert!(declined("The provided passages do not state whether Fyodor is infected [1-7]."));
+        assert!(
+            hb(
+                "Is Deepcolor part of the deep?",
+                "I could not find it.",
+                &deep,
+                "Deepcolor"
+            )
+            .is_none()
+        );
+        assert!(has_theory(
+            "The story does not say outright, but ... Theory: he may be."
+        ));
+        assert!(declined(
+            "The provided passages do not state whether Fyodor is infected [1-7]."
+        ));
         assert!(!declined("Fyodor is the Emperor [1]. The text does not state his age."));
         // Not the subject, or a question about the game.
         assert_eq!(predicate("Is Fyodor infected?", "Fyodor").as_deref(), Some("infected"));
@@ -291,12 +520,21 @@ mod tests {
 
     #[test]
     fn game_words_match_whole_words_only() {
-        for q in ["Is Fyodor from the frontier?", "Was Fyodor released?", "Is Fyodor designated a traitor?",
-                  "Was Fyodor pulled from the river?"] {
+        for q in [
+            "Is Fyodor from the frontier?",
+            "Was Fyodor released?",
+            "Is Fyodor designated a traitor?",
+            "Was Fyodor pulled from the river?",
+        ] {
             assert!(predicate(q, "Fyodor").is_some(), "{q}");
         }
-        for q in ["Is Fyodor worth it?", "Does Fyodor have a skin?", "Is Fyodor's voice actor known?",
-                  "Was Fyodor translated wrong?", "Is Fyodor based on a tsar?"] {
+        for q in [
+            "Is Fyodor worth it?",
+            "Does Fyodor have a skin?",
+            "Is Fyodor's voice actor known?",
+            "Was Fyodor translated wrong?",
+            "Is Fyodor based on a tsar?",
+        ] {
             assert_eq!(predicate(q, "Fyodor"), None, "{q}");
         }
     }

@@ -30,12 +30,48 @@ pub(crate) struct OrderQ {
 
 const LAST: &[&str] = &["last", "latest", "most recent", "most recently", "final", "newest"];
 const FIRST: &[&str] = &["first", "earliest"];
-const SEEN: &[&str] = &["mentioned", "mention", "mentions", "named", "referenced", "brought up", "seen", "appear",
-                        "appears", "appeared", "appearance", "show up", "shows up", "showed up", "featured", "speak",
-                        "speaks", "spoke", "spoken", "talked about", "saw", "see"];
-const MENTION: &[&str] = &["mentioned", "mention", "mentions", "named", "referenced", "brought up", "talked about"];
-const CHRONO: &[&str] = &["chronologically", "chronological", "in world", "in universe", "in lore", "timeline",
-                          "in story time"];
+const SEEN: &[&str] = &[
+    "mentioned",
+    "mention",
+    "mentions",
+    "named",
+    "referenced",
+    "brought up",
+    "seen",
+    "appear",
+    "appears",
+    "appeared",
+    "appearance",
+    "show up",
+    "shows up",
+    "showed up",
+    "featured",
+    "speak",
+    "speaks",
+    "spoke",
+    "spoken",
+    "talked about",
+    "saw",
+    "see",
+];
+const MENTION: &[&str] = &[
+    "mentioned",
+    "mention",
+    "mentions",
+    "named",
+    "referenced",
+    "brought up",
+    "talked about",
+];
+const CHRONO: &[&str] = &[
+    "chronologically",
+    "chronological",
+    "in world",
+    "in universe",
+    "in lore",
+    "timeline",
+    "in story time",
+];
 
 /// The question's first-or-last appearance ask: a last word with an appearance word, or a first word with a mention
 /// word or a chronology word ("first appear" alone stays with the `first_appearance` tool), one character of the
@@ -47,7 +83,11 @@ pub(crate) fn order_question(q: &str, tools: &Tools) -> Option<OrderQ> {
     // A first or last word within 4 words of an appearance word ("last mentioned", "the last time ... was seen").
     let toks: Vec<&str> = n.split(' ').collect();
     let seen = positions(&toks, SEEN);
-    let near = |ws: &[&str]| positions(&toks, ws).iter().any(|&i| seen.iter().any(|&j| i.abs_diff(j) <= 4));
+    let near = |ws: &[&str]| {
+        positions(&toks, ws)
+            .iter()
+            .any(|&i| seen.iter().any(|&j| i.abs_diff(j) <= 4))
+    };
     let chrono = any(CHRONO);
     let last = near(LAST);
     let first = near(FIRST) && (any(MENTION) || chrono);
@@ -60,10 +100,17 @@ pub(crate) fn order_question(q: &str, tools: &Tools) -> Option<OrderQ> {
     let np = norm(&q.replace('\u{2019}', "'").replace("'s", " "));
     let skip: Vec<&str> = LAST.iter().chain(FIRST).chain(SEEN).chain(CHRONO).copied().collect();
     let mut best: Option<&str> = None;
-    for name in chars.keys().map(String::as_str).chain(tools.identities.iter().flatten().map(String::as_str)) {
+    for name in chars
+        .keys()
+        .map(String::as_str)
+        .chain(tools.identities.iter().flatten().map(String::as_str))
+    {
         let x = norm(name);
-        if x.chars().count() < 3 || skip.contains(&x.as_str()) || !(contains_words(&n, &x) || contains_words(&np, &x))
-            || !(lower || written(q, name)) {
+        if x.chars().count() < 3
+            || skip.contains(&x.as_str())
+            || !(contains_words(&n, &x) || contains_words(&np, &x))
+            || !(lower || written(q, name))
+        {
             continue;
         }
         if best.is_none_or(|b| norm(b).len() < x.len()) {
@@ -76,16 +123,22 @@ pub(crate) fn order_question(q: &str, tools: &Tools) -> Option<OrderQ> {
 
 /// The word positions in `toks` where a phrase of `ws` starts.
 fn positions(toks: &[&str], ws: &[&str]) -> Vec<usize> {
-    ws.iter().flat_map(|w| {
-        let p: Vec<&str> = w.split(' ').collect();
-        (0..toks.len()).filter(|&i| toks.get(i..i + p.len()) == Some(&p[..])).collect::<Vec<_>>()
-    }).collect()
+    ws.iter()
+        .flat_map(|w| {
+            let p: Vec<&str> = w.split(' ').collect();
+            (0..toks.len())
+                .filter(|&i| toks.get(i..i + p.len()) == Some(&p[..]))
+                .collect::<Vec<_>>()
+        })
+        .collect()
 }
 
 /// Whether `q` holds `name` as written, as whole words.
 fn written(q: &str, name: &str) -> bool {
-    q.match_indices(name).any(|(i, _)| q[..i].chars().last().is_none_or(|c| !c.is_alphanumeric())
-        && q[i + name.len()..].chars().next().is_none_or(|c| !c.is_alphanumeric()))
+    q.match_indices(name).any(|(i, _)| {
+        q[..i].chars().last().is_none_or(|c| !c.is_alphanumeric())
+            && q[i + name.len()..].chars().next().is_none_or(|c| !c.is_alphanumeric())
+    })
 }
 
 /// The appearance index's name for `name`: itself, or the member of its identity group with the most scenes.
@@ -94,17 +147,32 @@ fn index_name(tools: &Tools, name: &str) -> Option<String> {
     if chars.contains_key(name) {
         return Some(name.to_owned());
     }
-    let scenes = |c: &Value| ["speaks", "mentioned"].iter()
-        .flat_map(|k| c[*k].as_object().into_iter().flatten().filter_map(|(_, v)| v.as_u64())).sum::<u64>();
-    tools.identities.iter().filter(|g| g.iter().any(|x| norm(x) == norm(name))).flatten()
+    let scenes = |c: &Value| {
+        ["speaks", "mentioned"]
+            .iter()
+            .flat_map(|k| c[*k].as_object().into_iter().flatten().filter_map(|(_, v)| v.as_u64()))
+            .sum::<u64>()
+    };
+    tools
+        .identities
+        .iter()
+        .filter(|g| g.iter().any(|x| norm(x) == norm(name)))
+        .flatten()
         .filter(|x| chars.contains_key(x.as_str()))
-        .max_by_key(|x| scenes(&chars[x.as_str()])).cloned()
+        .max_by_key(|x| scenes(&chars[x.as_str()]))
+        .cloned()
 }
 
 /// The route for `oq`: tool "appearance_order" with its arguments.
 pub(crate) fn route(oq: &OrderQ) -> Route {
-    Route::new("appearance_order", &[("character", oq.who.as_str()), ("which", if oq.last { "last" } else { "first" }),
-                                     ("order", if oq.chrono { "chrono" } else { "release" })])
+    Route::new(
+        "appearance_order",
+        &[
+            ("character", oq.who.as_str()),
+            ("which", if oq.last { "last" } else { "first" }),
+            ("order", if oq.chrono { "chrono" } else { "release" }),
+        ],
+    )
 }
 
 /// The ask a route of tool "appearance_order" carries.
@@ -128,7 +196,13 @@ struct Seen {
 
 impl Seen {
     fn how(&self, who: &str) -> String {
-        let scenes = |n: u64| if n == 1 { "1 scene".to_owned() } else { format!("{n} scenes") };
+        let scenes = |n: u64| {
+            if n == 1 {
+                "1 scene".to_owned()
+            } else {
+                format!("{n} scenes")
+            }
+        };
         if self.speaks > 0 {
             format!("{who} speaks in {}", scenes(self.speaks))
         } else {
@@ -141,8 +215,16 @@ impl Seen {
 /// counts of a group the horizon cuts, so its later stories are not counted.
 fn seen_within(store: &ChunkStore, h: &Horizon, gid: &str, forms: &[String]) -> (u64, u64) {
     let (mut speaks, mut named) = (0u64, 0u64);
-    for c in store.chunks.iter().filter(|c| c.group_id == gid && h.allows(&c.story_id, &c.group_id)) {
-        if c.text.lines().any(|l| forms.iter().any(|f| l.strip_prefix(f.as_str()).is_some_and(|r| r.starts_with(':')))) {
+    for c in store
+        .chunks
+        .iter()
+        .filter(|c| c.group_id == gid && h.allows(&c.story_id, &c.group_id))
+    {
+        if c.text.lines().any(|l| {
+            forms
+                .iter()
+                .any(|f| l.strip_prefix(f.as_str()).is_some_and(|r| r.starts_with(':')))
+        }) {
             speaks += 1;
         } else if forms.iter().any(|f| written(&c.text, f)) {
             named += 1;
@@ -162,24 +244,47 @@ fn release_order() -> Option<&'static ReleaseOrder> {
 /// when the character has no placed group within it. Groups are ordered by the gatePos of their first story (the EN
 /// release order, which places stories the reading guide does not list yet, such as a new episode), else by the
 /// reading guide's position when no release order loads.
-pub(crate) fn order_text(tools: &Tools, oq: &OrderQ, h: Option<&Horizon>, store: Option<&ChunkStore>) -> Option<String> {
-    let order: Option<&ReleaseOrder> = match h { Some(h) => Some(h.order()), None => release_order() };
+pub(crate) fn order_text(
+    tools: &Tools,
+    oq: &OrderQ,
+    h: Option<&Horizon>,
+    store: Option<&ChunkStore>,
+) -> Option<String> {
+    let order: Option<&ReleaseOrder> = match h {
+        Some(h) => Some(h.order()),
+        None => release_order(),
+    };
     order_text_with(tools, oq, h, store, order)
 }
 
-fn order_text_with(tools: &Tools, oq: &OrderQ, h: Option<&Horizon>, store: Option<&ChunkStore>,
-                   order: Option<&ReleaseOrder>) -> Option<String> {
+fn order_text_with(
+    tools: &Tools,
+    oq: &OrderQ,
+    h: Option<&Horizon>,
+    store: Option<&ChunkStore>,
+    order: Option<&ReleaseOrder>,
+) -> Option<String> {
     let v = tools.appearances.as_ref()?;
     let c = v["characters"].get(oq.who.as_str())?;
     let groups = &v["groups"];
-    let mut forms: Vec<String> = c["forms"].as_array().into_iter().flatten().filter_map(Value::as_str)
-        .map(str::to_owned).collect();
+    let mut forms: Vec<String> = c["forms"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(Value::as_str)
+        .map(str::to_owned)
+        .collect();
     if !forms.contains(&oq.who) {
         forms.push(oq.who.clone());
     }
     let count = |k: &str, g: &str| c[k].get(g).and_then(Value::as_u64).unwrap_or(0);
-    let mut ids: Vec<&String> = c["speaks"].as_object().into_iter().flatten().map(|(g, _)| g)
-        .chain(c["mentioned"].as_object().into_iter().flatten().map(|(g, _)| g)).collect();
+    let mut ids: Vec<&String> = c["speaks"]
+        .as_object()
+        .into_iter()
+        .flatten()
+        .map(|(g, _)| g)
+        .chain(c["mentioned"].as_object().into_iter().flatten().map(|(g, _)| g))
+        .collect();
     ids.sort();
     ids.dedup();
     let mut seen: Vec<Seen> = Vec::new();
@@ -196,7 +301,10 @@ fn order_text_with(tools: &Tools, oq: &OrderQ, h: Option<&Horizon>, store: Optio
                 (None, Some(n)) if h.is_none() => (1_000_000 + n, true),
                 _ => continue,
             },
-            None => match gr["order"].as_u64().filter(|&x| x < 10_000) { Some(x) => (x, false), None => continue },
+            None => match gr["order"].as_u64().filter(|&x| x < 10_000) {
+                Some(x) => (x, false),
+                None => continue,
+            },
         };
         let (mut speaks, mut named) = (count("speaks", g), count("mentioned", g));
         if let Some(h) = h {
@@ -216,7 +324,13 @@ fn order_text_with(tools: &Tools, oq: &OrderQ, h: Option<&Horizon>, store: Optio
         if late {
             label.push_str(" (newer than Trevor's release order, so placed after it)");
         }
-        seen.push(Seen { label, release, year, speaks, named });
+        seen.push(Seen {
+            label,
+            release,
+            year,
+            speaks,
+            named,
+        });
     }
     if seen.is_empty() {
         return None;
@@ -224,30 +338,54 @@ fn order_text_with(tools: &Tools, oq: &OrderQ, h: Option<&Horizon>, store: Optio
     seen.sort_by_key(|s| s.release);
     let who = &oq.who;
     let within = h.map_or(String::new(), |h| {
-        h.order().era_at(h.pos).filter(|e| !e.name.is_empty())
-            .map_or_else(|| " up to where you have read".to_owned(), |e| format!(" up to {}, where you have read", e.name))
+        h.order().era_at(h.pos).filter(|e| !e.name.is_empty()).map_or_else(
+            || " up to where you have read".to_owned(),
+            |e| format!(" up to {}, where you have read", e.name),
+        )
     });
-    let (word, pick): (&str, &Seen) = if oq.last { ("latest", seen.last()?) } else { ("first", seen.first()?) };
+    let (word, pick): (&str, &Seen) = if oq.last {
+        ("latest", seen.last()?)
+    } else {
+        ("first", seen.first()?)
+    };
     // Groups without a year estimate are left out of the in-world order.
     let mut by_year: Vec<(&Seen, f64)> = seen.iter().filter_map(|s| s.year.map(|y| (s, y))).collect();
     by_year.sort_by(|a, b| a.1.total_cmp(&b.1).then(a.0.release.cmp(&b.0.release)));
     let in_world = if oq.last { by_year.last() } else { by_year.first() };
     let mut out = if let (true, Some(&(w, y))) = (oq.chrono, in_world) {
-        let release = if std::ptr::eq(w, pick) { "It is also the {word} in EN release order.".replace("{word}", word) }
-            else { format!("In EN release order it is {} ({}).", pick.label, pick.how(who)) };
-        format!("By Trevor's in-world estimate (most stories state no year, so stories placed alike follow release \
+        let release = if std::ptr::eq(w, pick) {
+            "It is also the {word} in EN release order.".replace("{word}", word)
+        } else {
+            format!("In EN release order it is {} ({}).", pick.label, pick.how(who))
+        };
+        format!(
+            "By Trevor's in-world estimate (most stories state no year, so stories placed alike follow release \
             order), the {word} story where {who} appears{within} is {}, at about {y:.0}: {}. {release}",
-                w.label, w.how(who))
+            w.label,
+            w.how(who)
+        )
     } else {
-        format!("In EN release order, the {word} story where {who} appears{within} is {}: {}.", pick.label,
-                pick.how(who))
+        format!(
+            "In EN release order, the {word} story where {who} appears{within} is {}: {}.",
+            pick.label,
+            pick.how(who)
+        )
     };
-    let around: Vec<&Seen> = if oq.last { seen.iter().rev().skip(1).take(3).collect() }
-        else { seen.iter().skip(1).take(3).collect() };
+    let around: Vec<&Seen> = if oq.last {
+        seen.iter().rev().skip(1).take(3).collect()
+    } else {
+        seen.iter().skip(1).take(3).collect()
+    };
     if !around.is_empty() {
         let lead = if oq.last { "Before that" } else { "After that" };
-        out.push_str(&format!(" {lead}: {}.", around.iter().map(|s| format!("{} ({})", s.label,
-            if s.speaks > 0 { "speaks" } else { "named" })).collect::<Vec<_>>().join(", ")));
+        out.push_str(&format!(
+            " {lead}: {}.",
+            around
+                .iter()
+                .map(|s| format!("{} ({})", s.label, if s.speaks > 0 { "speaks" } else { "named" }))
+                .collect::<Vec<_>>()
+                .join(", ")
+        ));
     }
     out.push_str("\n\n(From Trevor's appearance index: the story scripts' speaker labels and name matches.)");
     Some(out)
@@ -258,7 +396,8 @@ fn order_text_with(tools: &Tools, oq: &OrderQ, h: Option<&Horizon>, store: Optio
 fn label(g: &Value, id: &str) -> String {
     let name = g["name"].as_str().unwrap_or(id);
     let kind = g["kind"].as_str().unwrap_or_default();
-    let episode = g["episode"].as_u64()
+    let episode = g["episode"]
+        .as_u64()
         .or_else(|| id.strip_prefix("main_").and_then(|n| n.parse().ok()));
     match (kind, episode) {
         (_, Some(e)) if name == id => format!("Episode {e}"),
@@ -276,26 +415,38 @@ mod tests {
     use super::*;
 
     fn tools() -> Tools {
-        let mut t = Tools { appearances: Some(json!({
-            "characters": {
-                "Talulah": {"forms": ["Talulah"], "speaks": {"main_8": 91, "main_16": 4, "act49side": 1},
-                            "mentioned": {"main_3": 2, "story_x_set_1": 1}},
-                "Last": {"forms": ["Last"], "speaks": {"main_8": 1}, "mentioned": {}},
-            },
-            "groups": {
-                "main_3": {"order": 3, "kind": "main", "episode": 3, "name": "Stinging Shock"},
-                "main_8": {"order": 20, "kind": "main", "episode": 8, "name": "Roaring Flare"},
-                "main_16": {"order": 79, "kind": "main", "episode": 16, "name": "Abnormal Spectrum"},
-                "act49side": {"order": 83, "kind": "event", "name": "First of A Thousand Autumns"},
-                "story_x_set_1": {"order": 10000, "kind": "operator record of X", "name": "Fate"},
-            }
-        })), ..Tools::default() };
-        t.groups.insert("main_16".into(), json!({"groupId": "main_16", "name": "Abnormal Spectrum", "chapter": 16,
-                                                 "storylineYear": 1100.5}));
-        t.groups.insert("act49side".into(), json!({"groupId": "act49side", "name": "First of A Thousand Autumns",
-                                                   "storylineYear": 1100.0}));
-        t.groups.insert("main_8".into(), json!({"groupId": "main_8", "name": "Roaring Flare", "chapter": 8,
-                                                "storylineYear": 1098.5}));
+        let mut t = Tools {
+            appearances: Some(json!({
+                "characters": {
+                    "Talulah": {"forms": ["Talulah"], "speaks": {"main_8": 91, "main_16": 4, "act49side": 1},
+                                "mentioned": {"main_3": 2, "story_x_set_1": 1}},
+                    "Last": {"forms": ["Last"], "speaks": {"main_8": 1}, "mentioned": {}},
+                },
+                "groups": {
+                    "main_3": {"order": 3, "kind": "main", "episode": 3, "name": "Stinging Shock"},
+                    "main_8": {"order": 20, "kind": "main", "episode": 8, "name": "Roaring Flare"},
+                    "main_16": {"order": 79, "kind": "main", "episode": 16, "name": "Abnormal Spectrum"},
+                    "act49side": {"order": 83, "kind": "event", "name": "First of A Thousand Autumns"},
+                    "story_x_set_1": {"order": 10000, "kind": "operator record of X", "name": "Fate"},
+                }
+            })),
+            ..Tools::default()
+        };
+        t.groups.insert(
+            "main_16".into(),
+            json!({"groupId": "main_16", "name": "Abnormal Spectrum", "chapter": 16,
+                                                 "storylineYear": 1100.5}),
+        );
+        t.groups.insert(
+            "act49side".into(),
+            json!({"groupId": "act49side", "name": "First of A Thousand Autumns",
+                                                   "storylineYear": 1100.0}),
+        );
+        t.groups.insert(
+            "main_8".into(),
+            json!({"groupId": "main_8", "name": "Roaring Flare", "chapter": 8,
+                                                "storylineYear": 1098.5}),
+        );
         t
     }
 
@@ -303,18 +454,48 @@ mod tests {
     fn last_and_first_questions() {
         let t = tools();
         let q = |s: &str| order_question(s, &t);
-        assert_eq!(q("When was Talulah last mentioned (chronologically)?"),
-                   Some(OrderQ { who: "Talulah".into(), last: true, chrono: true }));
-        assert_eq!(q("What is Talulah's latest appearance?"),
-                   Some(OrderQ { who: "Talulah".into(), last: true, chrono: false }));
-        assert_eq!(q("When was the last time we saw Talulah?"),
-                   Some(OrderQ { who: "Talulah".into(), last: true, chrono: false }));
-        assert_eq!(q("when was talulah first mentioned"),
-                   Some(OrderQ { who: "Talulah".into(), last: false, chrono: false }));
+        assert_eq!(
+            q("When was Talulah last mentioned (chronologically)?"),
+            Some(OrderQ {
+                who: "Talulah".into(),
+                last: true,
+                chrono: true
+            })
+        );
+        assert_eq!(
+            q("What is Talulah's latest appearance?"),
+            Some(OrderQ {
+                who: "Talulah".into(),
+                last: true,
+                chrono: false
+            })
+        );
+        assert_eq!(
+            q("When was the last time we saw Talulah?"),
+            Some(OrderQ {
+                who: "Talulah".into(),
+                last: true,
+                chrono: false
+            })
+        );
+        assert_eq!(
+            q("when was talulah first mentioned"),
+            Some(OrderQ {
+                who: "Talulah".into(),
+                last: false,
+                chrono: false
+            })
+        );
         // "first appear" stays with the first_appearance tool; no appearance word; an event named.
-        for s in ["When does Talulah first appear?", "Is Talulah the last Kaltsit?", "Who is Talulah?",
-                  "What recent event did Talulah mention?", "Talulah was last in Ursus, as Ch'en said she mentioned",
-                  "When was Talulah last mentioned in Roaring Flare?", "Talulah first and last appearance"] {
+        for s in [
+            "When does Talulah first appear?",
+            "Is Talulah the last Kaltsit?",
+            "Who is Talulah?",
+            "What recent event did Talulah mention?",
+            "Talulah was last in Ursus, as Ch'en said she mentioned",
+            "When was Talulah last mentioned in Roaring Flare?",
+            "Talulah first and last appearance",
+        ] {
             assert_eq!(q(s), None, "{s}");
         }
     }
@@ -322,36 +503,103 @@ mod tests {
     #[test]
     fn the_answer_follows_the_order_asked() {
         let t = tools();
-        let text = |last: bool, chrono: bool| order_text_with(&t, &OrderQ { who: "Talulah".into(), last, chrono },
-                                                              None, None, None).unwrap();
+        let text = |last: bool, chrono: bool| {
+            order_text_with(
+                &t,
+                &OrderQ {
+                    who: "Talulah".into(),
+                    last,
+                    chrono,
+                },
+                None,
+                None,
+                None,
+            )
+            .unwrap()
+        };
         let last = text(true, false);
-        assert!(last.starts_with("In EN release order, the latest story where Talulah appears is First of A \
+        assert!(
+            last.starts_with(
+                "In EN release order, the latest story where Talulah appears is First of A \
             Thousand Autumns: Talulah speaks in 1 scene. Before that: Episode 16: Abnormal Spectrum (speaks), \
-            Episode 8: Roaring Flare (speaks), Episode 3: Stinging Shock (named).\n\n"), "{last}");
+            Episode 8: Roaring Flare (speaks), Episode 3: Stinging Shock (named).\n\n"
+            ),
+            "{last}"
+        );
         let chrono = text(true, true);
-        assert!(chrono.starts_with("By Trevor's in-world estimate (most stories state no year, so stories placed alike \
+        assert!(
+            chrono.starts_with(
+                "By Trevor's in-world estimate (most stories state no year, so stories placed alike \
             follow release order), the latest story where Talulah appears is Episode 16: Abnormal Spectrum, at about \
             1100: Talulah speaks in 4 scenes. In EN release order it is First of A Thousand Autumns (Talulah speaks \
-            in 1 scene)."), "{chrono}");
+            in 1 scene)."
+            ),
+            "{chrono}"
+        );
         let first = text(false, false);
-        assert!(first.contains("the first story where Talulah appears is Episode 3: Stinging Shock: Talulah is \
-            named without speaking in 2 scenes."), "{first}");
-        assert_eq!(label(&json!({"name": "main_17", "kind": "event"}), "main_17"), "Episode 17");
+        assert!(
+            first.contains(
+                "the first story where Talulah appears is Episode 3: Stinging Shock: Talulah is \
+            named without speaking in 2 scenes."
+            ),
+            "{first}"
+        );
+        assert_eq!(
+            label(&json!({"name": "main_17", "kind": "event"}), "main_17"),
+            "Episode 17"
+        );
         // Under a horizon at the end of Episode 16, the event after it does not count.
         let guide = json!({"items": [
             {"groupId": "main_3", "position": 1}, {"groupId": "main_8", "position": 2},
             {"groupId": "main_16", "position": 3}, {"groupId": "act49side", "position": 4}]});
-        let stories: Vec<Value> = ["main_3", "main_8", "main_16", "act49side"].iter()
-            .map(|g| json!({"storyId": format!("{g}_a"), "groupId": g, "storySort": 1})).collect();
+        let stories: Vec<Value> = ["main_3", "main_8", "main_16", "act49side"]
+            .iter()
+            .map(|g| json!({"storyId": format!("{g}_a"), "groupId": g, "storySort": 1}))
+            .collect();
         let o = std::sync::Arc::new(trevor::search::horizon::ReleaseOrder::from_parts(&guide, &stories));
         let h = o.horizon_at(3).unwrap();
-        let cut = order_text(&t, &OrderQ { who: "Talulah".into(), last: true, chrono: false }, Some(&h), None)
-            .unwrap();
-        assert!(cut.contains("the latest story where Talulah appears up to where you have read is Episode 16: \
-            Abnormal Spectrum"), "{cut}");
-        assert!(order_text(&t, &OrderQ { who: "Talulah".into(), last: true, chrono: false },
-                           Some(&o.horizon_at(0).unwrap()), None).is_none());
-        assert_eq!(from_route(&route(&OrderQ { who: "Talulah".into(), last: false, chrono: true })),
-                   Some(OrderQ { who: "Talulah".into(), last: false, chrono: true }));
+        let cut = order_text(
+            &t,
+            &OrderQ {
+                who: "Talulah".into(),
+                last: true,
+                chrono: false,
+            },
+            Some(&h),
+            None,
+        )
+        .unwrap();
+        assert!(
+            cut.contains(
+                "the latest story where Talulah appears up to where you have read is Episode 16: \
+            Abnormal Spectrum"
+            ),
+            "{cut}"
+        );
+        assert!(
+            order_text(
+                &t,
+                &OrderQ {
+                    who: "Talulah".into(),
+                    last: true,
+                    chrono: false
+                },
+                Some(&o.horizon_at(0).unwrap()),
+                None
+            )
+            .is_none()
+        );
+        assert_eq!(
+            from_route(&route(&OrderQ {
+                who: "Talulah".into(),
+                last: false,
+                chrono: true
+            })),
+            Some(OrderQ {
+                who: "Talulah".into(),
+                last: false,
+                chrono: true
+            })
+        );
     }
 }

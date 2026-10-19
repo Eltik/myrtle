@@ -40,7 +40,10 @@ fn main() -> Result<()> {
     let count = |s: &str| derived::token_count(&tok, s);
     let mut rows = Vec::new();
     let mut split_lines = 0usize;
-    for l in std::fs::read_to_string(&a.units).with_context(|| format!("reading {}", a.units.display()))?.lines() {
+    for l in std::fs::read_to_string(&a.units)
+        .with_context(|| format!("reading {}", a.units.display()))?
+        .lines()
+    {
         let u: serde_json::Value = serde_json::from_str(l)?;
         let sid = u["storyId"].as_str().context("storyId")?.to_owned();
         let group = u["groupId"].as_str().context("groupId")?.to_owned();
@@ -87,8 +90,15 @@ fn main() -> Result<()> {
         }
         for (i, t) in chunks.into_iter().enumerate() {
             let n = count(&t);
-            rows.push(derived::generated_chunk(format!("{sid}#{i:04}"), sid.clone(), group.clone(), u32::try_from(i)?,
-                                               speakers.clone(), t, n));
+            rows.push(derived::generated_chunk(
+                format!("{sid}#{i:04}"),
+                sid.clone(),
+                group.clone(),
+                u32::try_from(i)?,
+                speakers.clone(),
+                t,
+                n,
+            ));
         }
     }
     let src = std::fs::read(a.corpus.join("chunks.jsonl"))?;

@@ -166,11 +166,7 @@ fn main() -> Result<()> {
             let store = ChunkStore::load(&corpus.join("chunks.jsonl"))?;
             let set = goldset::load(&g)?;
             goldset::validate(&set, &store)?;
-            let gold_chunks: usize = set
-                .items
-                .iter()
-                .map(|i| goldset::resolve(i, &store).len())
-                .sum();
+            let gold_chunks: usize = set.items.iter().map(|i| goldset::resolve(i, &store).len()).sum();
             println!(
                 "{} items valid ({} gold chunks in total, sha {:.16})",
                 set.items.len(),
@@ -200,26 +196,18 @@ fn main() -> Result<()> {
             let set = goldset::load(&g)?;
             goldset::validate(&set, &rt.store)?;
             let started = std::time::Instant::now();
-            let mut retrieve = |q: &str| -> Result<Vec<usize>> {
-                Ok(rt.retrieve(q, &cfg)?.into_iter().map(|h| h.row).collect())
-            };
+            let mut retrieve =
+                |q: &str| -> Result<Vec<usize>> { Ok(rt.retrieve(q, &cfg)?.into_iter().map(|h| h.row).collect()) };
             // The retrieval closure holds the runtime mutably, so scoring
             // resolves anchors against a second copy of the store, checked to
             // be the same bytes.
             let store = ChunkStore::load(&runtime.corpus.join("chunks.jsonl"))?;
-            let outcomes = run::score(
-                &set,
-                &store,
-                Selection { include_unreviewed },
-                &mut retrieve,
-            )?;
+            let outcomes = run::score(&set, &store, Selection { include_unreviewed }, &mut retrieve)?;
             if store.chunks_sha != rt.store.chunks_sha {
                 bail!("chunks.jsonl changed during the run");
             }
             if outcomes.is_empty() {
-                bail!(
-                    "no items scored: are any reviewed as accepted? (--include-unreviewed to score the rest)"
-                );
+                bail!("no items scored: are any reviewed as accepted? (--include-unreviewed to score the rest)");
             }
             let run_at = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)?
@@ -243,20 +231,12 @@ fn main() -> Result<()> {
             }
             let path = run::save(&out, &record, &outcomes)?;
             print_record(&record);
-            eprintln!(
-                "  {:.1}s, saved {}",
-                started.elapsed().as_secs_f64(),
-                path.display()
-            );
+            eprintln!("  {:.1}s, saved {}", started.elapsed().as_secs_f64(), path.display());
             if gate {
                 if !record.absolute_floor_pass {
                     bail!("gate: absolute floor broken");
                 }
-                if record
-                    .vs_baseline
-                    .as_ref()
-                    .is_some_and(|c| c.verdict == Verdict::Fail)
-                {
+                if record.vs_baseline.as_ref().is_some_and(|c| c.verdict == Verdict::Fail) {
                     bail!("gate: recall@10 regressed against the baseline");
                 }
             }
@@ -281,8 +261,7 @@ fn main() -> Result<()> {
             bm25_only,
             update,
         } => {
-            let text = std::fs::read_to_string(&queries)
-                .with_context(|| format!("reading {}", queries.display()))?;
+            let text = std::fs::read_to_string(&queries).with_context(|| format!("reading {}", queries.display()))?;
             let qs: Vec<&str> = text
                 .lines()
                 .map(str::trim)
@@ -301,15 +280,9 @@ fn main() -> Result<()> {
                 BTreeMap::new(),
             )];
             if !bm25_only {
-                let q = BTreeMap::from([(
-                    "queryModel".to_owned(),
-                    fp.query_model_sha.clone().unwrap_or_default(),
-                )]);
+                let q = BTreeMap::from([("queryModel".to_owned(), fp.query_model_sha.clone().unwrap_or_default())]);
                 let mut qr = q.clone();
-                qr.insert(
-                    "reranker".to_owned(),
-                    fp.reranker_sha.clone().unwrap_or_default(),
-                );
+                qr.insert("reranker".to_owned(), fp.reranker_sha.clone().unwrap_or_default());
                 qr.insert(
                     "rerankMaxTokens".to_owned(),
                     fp.rerank_max_tokens.unwrap_or(0).to_string(),
@@ -375,10 +348,10 @@ fn main() -> Result<()> {
                 );
                 return Ok(());
             }
-            let expected: Golden =
-                serde_json::from_slice(&std::fs::read(&file).with_context(|| {
-                    format!("reading {}; record it with --update", file.display())
-                })?)?;
+            let expected: Golden = serde_json::from_slice(
+                &std::fs::read(&file)
+                    .with_context(|| format!("reading {}; record it with --update", file.display()))?,
+            )?;
             let (diffs, skipped) = golden::diff(&expected, &actual);
             for s in &skipped {
                 println!("skipped  {s}");

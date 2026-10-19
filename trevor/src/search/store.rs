@@ -33,8 +33,7 @@ impl ChunkStore {
         for (i, line) in bytes.lines().enumerate() {
             let line = line?;
             chunks.push(
-                serde_json::from_str::<Chunk>(&line)
-                    .with_context(|| format!("{} line {}", path.display(), i + 1))?,
+                serde_json::from_str::<Chunk>(&line).with_context(|| format!("{} line {}", path.display(), i + 1))?,
             );
         }
         Self::from_chunks(chunks, chunks_sha)

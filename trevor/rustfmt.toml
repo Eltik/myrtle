@@ -1,0 +1,2 @@
+# The crate is written at 120 columns (rustfmt default 100); CLAUDE.md requires `cargo fmt --check` to pass.
+max_width = 120

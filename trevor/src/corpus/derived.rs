@@ -29,14 +29,22 @@ pub fn ensure_distinct_out(out: &Path, corpus: &Path) -> Result<()> {
 /// chunks; `u32::MAX` when the text does not encode.
 #[must_use]
 pub fn token_count(tok: &Tokenizer, s: &str) -> u32 {
-    tok.encode(s, true).map_or(u32::MAX, |e| u32::try_from(e.get_ids().len()).unwrap_or(u32::MAX))
+    tok.encode(s, true)
+        .map_or(u32::MAX, |e| u32::try_from(e.get_ids().len()).unwrap_or(u32::MAX))
 }
 
 /// A generated chunk (one not cut from a story script): no scene, line range, sprites or background, and
 /// `content_sha` from its text.
 #[must_use]
-pub fn generated_chunk(chunk_id: String, story_id: String, group_id: String, ordinal: u32, speakers: Vec<String>,
-                       text: String, token_count: u32) -> Chunk {
+pub fn generated_chunk(
+    chunk_id: String,
+    story_id: String,
+    group_id: String,
+    ordinal: u32,
+    speakers: Vec<String>,
+    text: String,
+    token_count: u32,
+) -> Chunk {
     Chunk {
         chunk_id,
         story_id,

@@ -113,9 +113,15 @@ impl Packer<'_> {
             scene_ordinal: cur[0].0,
             line_start: cur[0].0,
             line_end: cur[cur.len() - 1].0,
-            ..derived::generated_chunk(format!("archive_{}#{:04}", self.char_id, self.ordinal),
-                                       format!("archive_{}", self.char_id), "archive".to_owned(), self.ordinal,
-                                       vec![self.name.clone()], text, n)
+            ..derived::generated_chunk(
+                format!("archive_{}#{:04}", self.char_id, self.ordinal),
+                format!("archive_{}", self.char_id),
+                "archive".to_owned(),
+                self.ordinal,
+                vec![self.name.clone()],
+                text,
+                n,
+            )
         });
         self.ordinal += 1;
         cur.clear();
@@ -168,7 +174,11 @@ fn main() -> Result<()> {
                 units.push((i, whole));
             } else {
                 for (j, line) in body.lines().filter(|l| !l.trim().is_empty()).enumerate() {
-                    let t = if j == 0 { format!("{title}: {line}") } else { format!("{title} (cont.): {line}") };
+                    let t = if j == 0 {
+                        format!("{title}: {line}")
+                    } else {
+                        format!("{title} (cont.): {line}")
+                    };
                     if count(&t) > a.max_tokens {
                         oversize += 1;
                     }
@@ -180,7 +190,13 @@ fn main() -> Result<()> {
             continue;
         }
         ops += 1;
-        let mut p = Packer { count: &count, name, char_id: v.char_id.clone(), ordinal: 0, rows: Vec::new() };
+        let mut p = Packer {
+            count: &count,
+            name,
+            char_id: v.char_id.clone(),
+            ordinal: 0,
+            rows: Vec::new(),
+        };
         let mut cur: Vec<(u32, String)> = Vec::new();
         for u in units {
             cur.push(u);

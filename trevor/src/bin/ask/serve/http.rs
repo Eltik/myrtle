@@ -10,8 +10,8 @@ use crate::answer::Tables;
 use crate::chrono::Chrono;
 use crate::cli::Args;
 
-use super::{AskRequest, Need, Service};
 use super::worker::pull;
+use super::{AskRequest, Need, Service};
 
 /// `--serve` or `--worker`: load once, then serve until SIGINT or SIGTERM (the llama-server this process started, if
 /// any, stops with it).
@@ -27,9 +27,14 @@ pub(crate) async fn run(a: Args, corpus_default: bool, tables: Tables, chrono: C
 }
 
 async fn listen(svc: &mut Service, port: u16) -> Result<()> {
-    let listener = TcpListener::bind(("127.0.0.1", port)).await.with_context(|| format!("binding 127.0.0.1:{port}"))?;
-    eprintln!("serve: http://127.0.0.1:{port} ({}, model {})", svc.corpus_version,
-              svc.llm.as_ref().map_or("none", |l| l.model.as_str()));
+    let listener = TcpListener::bind(("127.0.0.1", port))
+        .await
+        .with_context(|| format!("binding 127.0.0.1:{port}"))?;
+    eprintln!(
+        "serve: http://127.0.0.1:{port} ({}, model {})",
+        svc.corpus_version,
+        svc.llm.as_ref().map_or("none", |l| l.model.as_str())
+    );
     let mut term = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())?;
     loop {
         let mut s = tokio::select! {
@@ -47,8 +52,9 @@ async fn listen(svc: &mut Service, port: u16) -> Result<()> {
 
 /// One request: read it, answer it, close.
 async fn handle(svc: &mut Service, s: &mut TcpStream) -> Result<()> {
-    let (method, path, body) =
-        tokio::time::timeout(Duration::from_secs(10), read_request(s)).await.context("request timed out")??;
+    let (method, path, body) = tokio::time::timeout(Duration::from_secs(10), read_request(s))
+        .await
+        .context("request timed out")??;
     let (code, json) = match (method.as_str(), path.as_str()) {
         ("GET", "/health") => (200, svc.health()),
         ("POST", "/v1/ask") => match serde_json::from_slice::<AskRequest>(&body) {
@@ -61,10 +67,18 @@ async fn handle(svc: &mut Service, s: &mut TcpStream) -> Result<()> {
         _ => (404, serde_json::json!({"error": "not found"})),
     };
     let body = serde_json::to_vec(&json)?;
-    let reason = match code { 200 => "OK", 400 => "Bad Request", 404 => "Not Found", 503 => "Service Unavailable",
-                              _ => "Internal Server Error" };
-    let head = format!("HTTP/1.1 {code} {reason}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\
-                        Connection: close\r\n\r\n", body.len());
+    let reason = match code {
+        200 => "OK",
+        400 => "Bad Request",
+        404 => "Not Found",
+        503 => "Service Unavailable",
+        _ => "Internal Server Error",
+    };
+    let head = format!(
+        "HTTP/1.1 {code} {reason}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\
+                        Connection: close\r\n\r\n",
+        body.len()
+    );
     s.write_all(head.as_bytes()).await?;
     s.write_all(&body).await?;
     s.shutdown().await?;
@@ -92,9 +106,15 @@ pub(crate) async fn read_request(s: &mut (impl AsyncReadExt + Unpin)) -> Result<
     let head = String::from_utf8_lossy(&buf[..end]).into_owned();
     let mut lines = head.lines();
     let mut first = lines.next().unwrap_or_default().split_whitespace();
-    let (method, path) = (first.next().unwrap_or_default().to_owned(), first.next().unwrap_or_default().to_owned());
-    let len = lines.filter_map(|l| l.split_once(':')).find(|(k, _)| k.trim().eq_ignore_ascii_case("content-length"))
-        .map_or(Ok(0), |(_, v)| v.trim().parse::<usize>()).context("bad Content-Length")?;
+    let (method, path) = (
+        first.next().unwrap_or_default().to_owned(),
+        first.next().unwrap_or_default().to_owned(),
+    );
+    let len = lines
+        .filter_map(|l| l.split_once(':'))
+        .find(|(k, _)| k.trim().eq_ignore_ascii_case("content-length"))
+        .map_or(Ok(0), |(_, v)| v.trim().parse::<usize>())
+        .context("bad Content-Length")?;
     if len > MAX {
         bail!("body too large");
     }

@@ -6,8 +6,8 @@ use std::path::Path;
 use anyhow::{Result, bail};
 use trevor::eval::goldset::{Anchor, ClosedBook, GoldItem, Review, Stratum};
 use trevor::goldgen::filters::fnv1a;
+use trevor::goldgen::{self as gg, ClosedBookAnswer, Filtered, Generated, Judged, sha16};
 use trevor::llm::Llm;
-use trevor::goldgen::{ClosedBookAnswer, Filtered, Generated, Judged, self as gg, sha16};
 use trevor::search::pipeline::{Mode, RetrievalConfig};
 use trevor::search::runtime::{Runtime, RuntimeArgs};
 use trevor::search::store::ChunkStore;
@@ -76,11 +76,10 @@ pub(crate) async fn cmd_finish(
         .into_iter()
         .map(|j| (j.id.clone(), j))
         .collect();
-    let cb: HashMap<String, String> =
-        read_jsonl::<ClosedBookAnswer>(&work.join("closed_book.jsonl"))?
-            .into_iter()
-            .map(|c| (c.id, c.answer))
-            .collect();
+    let cb: HashMap<String, String> = read_jsonl::<ClosedBookAnswer>(&work.join("closed_book.jsonl"))?
+        .into_iter()
+        .map(|c| (c.id, c.answer))
+        .collect();
     let generator = gens.first().map(|g| g.model.clone()).unwrap_or_default();
     if judge.model == generator {
         bail!("finish needs the judge model, not the generator ({generator})");
@@ -107,12 +106,7 @@ pub(crate) async fn cmd_finish(
     funnel.insert("4 passed every judge check".into(), candidates.len());
     candidates.sort_by_key(|g| fnv1a(&g.id));
 
-    let cb_correct = |g: &Generated| {
-        judged
-            .get(&g.id)
-            .and_then(|j| j.closed_book_correct)
-            .unwrap_or(false)
-    };
+    let cb_correct = |g: &Generated| judged.get(&g.id).and_then(|j| j.closed_book_correct).unwrap_or(false);
     #[allow(clippy::cast_precision_loss)]
     let rate = |xs: &[&Generated]| {
         if xs.is_empty() {
@@ -126,11 +120,7 @@ pub(crate) async fn cmd_finish(
     let pick = |prefer_unknown: bool| -> Vec<&Generated> {
         let mut sel = Vec::new();
         for (s, quota) in QUOTAS {
-            let mut pool: Vec<&Generated> = candidates
-                .iter()
-                .copied()
-                .filter(|g| g.stratum == s)
-                .collect();
+            let mut pool: Vec<&Generated> = candidates.iter().copied().filter(|g| g.stratum == s).collect();
             if prefer_unknown {
                 pool.sort_by_key(|g| (cb_correct(g), fnv1a(&g.id)));
             }
@@ -161,11 +151,7 @@ pub(crate) async fn cmd_finish(
     let started = std::time::Instant::now();
     for (n, g) in selected.iter().enumerate() {
         let q = g.question.clone().unwrap_or_default();
-        let gold: BTreeSet<usize> = g
-            .chunk_ids
-            .iter()
-            .filter_map(|id| rt.store.row(id))
-            .collect();
+        let gold: BTreeSet<usize> = g.chunk_ids.iter().filter_map(|id| rt.store.row(id)).collect();
         let mut pooled: BTreeSet<usize> = BTreeSet::new();
         for c in &cfgs {
             pooled.extend(
@@ -273,11 +259,7 @@ pub(crate) async fn cmd_finish(
         let checks = futures::future::join_all(pooled.iter().map(|&row| {
             let judge = judge.clone();
             let prompt = passage_prompt(&rt.store.chunks[row].text, q);
-            async move {
-                judge
-                    .verdict(gg::JUDGE_ANSWERABLE, &prompt, gg::GRAMMAR_VERDICT)
-                    .await
-            }
+            async move { judge.verdict(gg::JUDGE_ANSWERABLE, &prompt, gg::GRAMMAR_VERDICT).await }
         }))
         .await;
         let mut answered = false;
@@ -321,10 +303,7 @@ pub(crate) async fn cmd_finish(
             shortfall.insert(s.name().to_owned(), q - have);
         }
     }
-    let single_sel: Vec<&&Generated> = selected
-        .iter()
-        .filter(|g| g.stratum != Stratum::MultiHop)
-        .collect();
+    let single_sel: Vec<&&Generated> = selected.iter().filter(|g| g.stratum != Stratum::MultiHop).collect();
     #[allow(clippy::cast_precision_loss)]
     let rank1 = if single_sel.is_empty() {
         0.0
@@ -374,10 +353,7 @@ pub(crate) async fn cmd_finish(
         review: "automatic: deterministic filters plus binary judge verdicts; no human review",
     };
     write_jsonl(&out.with_extension("jsonl"), &items)?;
-    std::fs::write(
-        out.with_extension("meta.json"),
-        serde_json::to_vec_pretty(&meta)?,
-    )?;
+    std::fs::write(out.with_extension("meta.json"), serde_json::to_vec_pretty(&meta)?)?;
     write_spotcheck(&out.with_extension("spotcheck.md"), &items, &rt.store)?;
     println!("{}", serde_json::to_string_pretty(&meta)?);
     Ok(())
@@ -422,11 +398,7 @@ pub(crate) fn write_spotcheck(path: &Path, items: &[serde_json::Value], store: &
             v["question"].as_str().unwrap_or(""),
             v["evidence"]
                 .as_array()
-                .map(|a| a
-                    .iter()
-                    .filter_map(|x| x.as_str())
-                    .collect::<Vec<_>>()
-                    .join(" / "))
+                .map(|a| a.iter().filter_map(|x| x.as_str()).collect::<Vec<_>>().join(" / "))
                 .unwrap_or_default()
         ));
         if let Some(src) = v["source_chunk_id"].as_str().and_then(|id| store.row(id)) {

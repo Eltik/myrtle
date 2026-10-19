@@ -15,13 +15,15 @@ use trevor::tools::Route;
 
 use crate::answer::{Tables, answer_one, passage_label, route_checked};
 use crate::chrono::Chrono;
-use crate::cli::{Args, Profile, RetrievalKind, RouterKind, apply_profile, deep_for, p4_dir, retrieval_plan,
-                 router_source, tool_options};
+use crate::cli::{
+    Args, Profile, RetrievalKind, RouterKind, apply_profile, deep_for, p4_dir, retrieval_plan, router_source,
+    tool_options,
+};
 use crate::detect::source_kind;
 use crate::kinds::is_generated;
 use crate::labels::load_names;
-use crate::runtimes::{Runtimes, load_runtime};
 use crate::llama_server::{cloudflare, connect_local, connect_or_spawn};
+use crate::runtimes::{Runtimes, load_runtime};
 
 use super::{
     AskRequest, AskResult, Citation, Job, JobError, LOAD_FLAGS, Need, PASSAGES_HEAD, PASSAGES_NONE, SERVER, Service,
@@ -32,8 +34,13 @@ impl Service {
     /// Load everything once: the indexes of the main corpus (P3b by default; BM25 only with `--retrieval bm25`), the
     /// models `need` asks for (a llama-server is connected or started under the model lock and stopped when the service
     /// ends), the Cloudflare model list when configured, and the release order.
-    pub(super) async fn load(a: Args, corpus_default: bool, tables: Tables, chrono: Chrono, need: Need)
-        -> Result<Self> {
+    pub(super) async fn load(
+        a: Args,
+        corpus_default: bool,
+        tables: Tables,
+        chrono: Chrono,
+        need: Need,
+    ) -> Result<Self> {
         let dense = a.retrieval == RetrievalKind::Hybrid;
         let main = load_runtime(&a.runtime, dense, None)?;
         let mut parts = vec![(a.runtime.corpus.display().to_string(), main.store.chunks_sha.clone())];
@@ -42,8 +49,16 @@ impl Service {
             parts.push((dir.to_owned(), sha));
         }
         let corpus_version = corpus_version(&parts);
-        let rts = Runtimes { main, p4: None, art: None, p4_dir: p4_dir(&a), switch: corpus_default && router_source(&a),
-                             args: a.runtime.clone(), horizon: None, dense };
+        let rts = Runtimes {
+            main,
+            p4: None,
+            art: None,
+            p4_dir: p4_dir(&a),
+            switch: corpus_default && router_source(&a),
+            args: a.runtime.clone(),
+            horizon: None,
+            dense,
+        };
         let (llm, server) = match need {
             Need::Model => {
                 let (l, s) = connect_or_spawn(&a).await?;
@@ -52,7 +67,10 @@ impl Service {
             Need::Local => match connect_local(&a).await {
                 Ok((l, s)) => (Some(l), s),
                 Err(e) => {
-                    eprintln!("worker: no local model ({e:#}); the cpu rung is off until {} answers", a.server);
+                    eprintln!(
+                        "worker: no local model ({e:#}); the cpu rung is off until {} answers",
+                        a.server
+                    );
                     (None, None)
                 }
             },
@@ -60,11 +78,30 @@ impl Service {
         };
         let cf = cloudflare(&a)?;
         let order = Arc::new(ReleaseOrder::load(std::path::Path::new("."))?);
-        eprintln!("horizon: {} stories on the gatePos scale, {} unplaced sources dated, {} eras",
-                  order.gate().story_order.len(), order.dated_sources(), order.gate().eras.len());
-        Ok(Self { argv: std::env::args().collect(), corpus_default, deep0: tables.tools.topics_deep,
-                  opts0: tables.tools.opts, main_corpus: a.runtime.corpus.clone(), tables, rts, llm, cf,
-                  names: load_names(), chrono, order, corpus_version, a, server, guard_stopped: false })
+        eprintln!(
+            "horizon: {} stories on the gatePos scale, {} unplaced sources dated, {} eras",
+            order.gate().story_order.len(),
+            order.dated_sources(),
+            order.gate().eras.len()
+        );
+        Ok(Self {
+            argv: std::env::args().collect(),
+            corpus_default,
+            deep0: tables.tools.topics_deep,
+            opts0: tables.tools.opts,
+            main_corpus: a.runtime.corpus.clone(),
+            tables,
+            rts,
+            llm,
+            cf,
+            names: load_names(),
+            chrono,
+            order,
+            corpus_version,
+            a,
+            server,
+            guard_stopped: false,
+        })
     }
 
     /// The job's arguments: the service's own, or (with job flags or another profile) the command line again plus the
@@ -93,19 +130,31 @@ impl Service {
 
     /// The job's horizon: its gatePos, its story or group id, or the lower of the two.
     fn horizon_for(&self, req: &AskRequest) -> Result<Option<Arc<Horizon>>, JobError> {
-        let by_id = req.horizon.as_deref().map(|h| self.order.horizon(h)).transpose().map_err(bad)?;
-        let by_pos = req.horizon_pos.map(|p| self.order.horizon_at(p)).transpose().map_err(bad)?;
+        let by_id = req
+            .horizon
+            .as_deref()
+            .map(|h| self.order.horizon(h))
+            .transpose()
+            .map_err(bad)?;
+        let by_pos = req
+            .horizon_pos
+            .map(|p| self.order.horizon_at(p))
+            .transpose()
+            .map_err(bad)?;
         Ok(match (by_id, by_pos) {
             (Some(a), Some(b)) => Some(if b.pos < a.pos { b } else { a }),
             (a, b) => a.or(b),
-        }.map(Arc::new))
+        }
+        .map(Arc::new))
     }
 
     fn profile_of(req: &AskRequest) -> Result<Option<Profile>, JobError> {
         req.profile
             .as_deref()
-            .map(|p| Profile::parse(p)
-                .ok_or_else(|| bad(format!("profile {p:?} is not one of {}", Profile::NAMES.join(", ")))))
+            .map(|p| {
+                Profile::parse(p)
+                    .ok_or_else(|| bad(format!("profile {p:?} is not one of {}", Profile::NAMES.join(", "))))
+            })
             .transpose()
     }
 
@@ -122,18 +171,33 @@ impl Service {
         }
         let a = self.args_for(&req.flags, Self::profile_of(&req)?)?;
         let horizon = self.horizon_for(&req)?;
-        let llm = llm.or_else(|| self.llm.clone()).ok_or((503, "no model is connected".to_owned()))?;
+        let llm = llm
+            .or_else(|| self.llm.clone())
+            .ok_or((503, "no model is connected".to_owned()))?;
         let before = llm.usage();
         self.tables.tools.opts = tool_options(&a);
         let profile = a.profile;
         let res = self.answer(&q, &req, a, horizon, &llm, t0).await;
         self.tables.tools.opts = self.opts0;
         let (result, generated) = res?;
-        Ok(Job { result, generated, usage: llm.usage() - before, profile, source: "live" })
+        Ok(Job {
+            result,
+            generated,
+            usage: llm.usage() - before,
+            profile,
+            source: "live",
+        })
     }
 
-    async fn answer(&mut self, q: &str, req: &AskRequest, mut a: Args, horizon: Option<Arc<Horizon>>, llm: &Llm,
-                    t0: Instant) -> Result<(AskResult, BTreeMap<String, String>), JobError> {
+    async fn answer(
+        &mut self,
+        q: &str,
+        req: &AskRequest,
+        mut a: Args,
+        horizon: Option<Arc<Horizon>>,
+        llm: &Llm,
+        t0: Instant,
+    ) -> Result<(AskResult, BTreeMap<String, String>), JobError> {
         if horizon.is_some() {
             // Built from every story: the chronology of the subject.
             a.no_chrono_subject = true;
@@ -143,16 +207,35 @@ impl Service {
         self.tables.topic = None;
         self.tables.route = None;
         self.tables.tools.topics_deep = self.deep0;
-        let mut out = AskResult { answer: String::new(), citations: Vec::new(), passages: Vec::new(), route: None,
-                                  table: false, flags: req.flags.clone(), form: None, horizon: horizon_id,
-                                  server: SERVER.to_owned(),
-                                  corpus_version: self.corpus_version.clone(), invalid_citations: 0, prompt_tokens: 0,
-                                  timings: Timings { route_ms: 0.0, answer_ms: 0.0, total_ms: 0.0 } };
+        let mut out = AskResult {
+            answer: String::new(),
+            citations: Vec::new(),
+            passages: Vec::new(),
+            route: None,
+            table: false,
+            flags: req.flags.clone(),
+            form: None,
+            horizon: horizon_id,
+            server: SERVER.to_owned(),
+            corpus_version: self.corpus_version.clone(),
+            invalid_citations: 0,
+            prompt_tokens: 0,
+            timings: Timings {
+                route_ms: 0.0,
+                answer_ms: 0.0,
+                total_ms: 0.0,
+            },
+        };
         // As the one-shot `ask "question"` does in `main`: P4 for a source question when the router names no source,
         // then route, then P4 when the route's source asks for it.
         // An event wholly after the horizon: the spoiler notice, nothing retrieved.
-        if let Some(text) = self.rts.horizon.as_deref().filter(|_| !a.no_spoiler_notice)
-            .and_then(|h| crate::spoiler::notice(q, &self.tables.tools, h)) {
+        if let Some(text) = self
+            .rts
+            .horizon
+            .as_deref()
+            .filter(|_| !a.no_spoiler_notice)
+            .and_then(|h| crate::spoiler::notice(q, &self.tables.tools, h))
+        {
             out.answer = text;
             out.timings.total_ms = t0.elapsed().as_secs_f64() * 1000.0;
             return Ok((out, BTreeMap::new()));
@@ -161,13 +244,21 @@ impl Service {
         if !a.no_route {
             let router_llm = (a.router == RouterKind::Model).then_some(llm);
             self.tables.tools.topics_deep = deep_for(&a, &self.tables.tools, q);
-            let r = route_checked(q, &a, &mut self.tables, router_llm).await.map_err(failed)?;
+            let r = route_checked(q, &a, &mut self.tables, router_llm)
+                .await
+                .map_err(failed)?;
             out.timings.route_ms = r.ms;
             let had_text = r.text.is_some();
             let served = r.text.and_then(|text| match self.rts.horizon.as_deref() {
                 None => Some(text),
-                Some(h) => crate::spoiler::table_within(&r.route, text, &self.tables.tools, h, a.no_horizon_recap,
-                                                        Some(&self.rts.main.store)),
+                Some(h) => crate::spoiler::table_within(
+                    &r.route,
+                    text,
+                    &self.tables.tools,
+                    h,
+                    a.no_horizon_recap,
+                    Some(&self.rts.main.store),
+                ),
             });
             let route = match (served, had_text) {
                 (Some(text), _) => {
@@ -194,7 +285,16 @@ impl Service {
         let mut once = a.clone();
         once.routed = true;
         let swapped = if use_p4 { self.swap_p4().map_err(failed)? } else { false };
-        let res = answer_one(&mut self.rts, llm, &self.names, &self.chrono, q, &once, &mut self.tables).await;
+        let res = answer_one(
+            &mut self.rts,
+            llm,
+            &self.names,
+            &self.chrono,
+            q,
+            &once,
+            &mut self.tables,
+        )
+        .await;
         if swapped {
             self.swap_back();
         }
@@ -221,42 +321,104 @@ impl Service {
         let horizon = self.horizon_for(req)?;
         let horizon_id = horizon.as_ref().map(|h| h.id.clone());
         self.rts.set_horizon(horizon);
-        if let Some(text) = self.rts.horizon.as_deref().filter(|_| !self.a.no_spoiler_notice)
-            .and_then(|h| crate::spoiler::notice(&q, &self.tables.tools, h)) {
+        if let Some(text) = self
+            .rts
+            .horizon
+            .as_deref()
+            .filter(|_| !self.a.no_spoiler_notice)
+            .and_then(|h| crate::spoiler::notice(&q, &self.tables.tools, h))
+        {
             let ms = t0.elapsed().as_secs_f64() * 1000.0;
-            let result = AskResult { answer: text, citations: Vec::new(), passages: Vec::new(), route: None,
-                                     table: false, flags: req.flags.clone(), form: None, horizon: horizon_id,
-                                     server: SERVER.to_owned(), corpus_version: self.corpus_version.clone(),
-                                     invalid_citations: 0, prompt_tokens: 0,
-                                     timings: Timings { route_ms: 0.0, answer_ms: ms, total_ms: ms } };
-            return Ok(Job { result, generated: BTreeMap::new(), usage: UsageSnapshot::default(), profile,
-                            source: "passages" });
+            let result = AskResult {
+                answer: text,
+                citations: Vec::new(),
+                passages: Vec::new(),
+                route: None,
+                table: false,
+                flags: req.flags.clone(),
+                form: None,
+                horizon: horizon_id,
+                server: SERVER.to_owned(),
+                corpus_version: self.corpus_version.clone(),
+                invalid_citations: 0,
+                prompt_tokens: 0,
+                timings: Timings {
+                    route_ms: 0.0,
+                    answer_ms: ms,
+                    total_ms: ms,
+                },
+            };
+            return Ok(Job {
+                result,
+                generated: BTreeMap::new(),
+                usage: UsageSnapshot::default(),
+                profile,
+                source: "passages",
+            });
         }
         let n = self.a.passages_n.max(1);
         let rt = self.rts.pick(None).map_err(failed)?;
         let hits = rt
-            .retrieve(&q, &RetrievalConfig { mode: Mode::Hybrid, k: n * 4, ..RetrievalConfig::default() })
+            .retrieve(
+                &q,
+                &RetrievalConfig {
+                    mode: Mode::Hybrid,
+                    k: n * 4,
+                    ..RetrievalConfig::default()
+                },
+            )
             .map_err(failed)?;
-        let rows: Vec<usize> = hits.iter().map(|h| h.row).filter(|&r| !is_generated(&rt.store.chunks[r].group_id))
-            .take(n).collect();
-        let labelled: Vec<(String, String)> = rows.iter().map(|&r| {
-            let c = &rt.store.chunks[r];
-            (c.chunk_id.clone(), passage_label(&self.names, c))
-        }).collect();
-        let answer = if labelled.is_empty() { PASSAGES_NONE.to_owned() } else {
-            let lines: Vec<String> = labelled.iter().enumerate()
+        let rows: Vec<usize> = hits
+            .iter()
+            .map(|h| h.row)
+            .filter(|&r| !is_generated(&rt.store.chunks[r].group_id))
+            .take(n)
+            .collect();
+        let labelled: Vec<(String, String)> = rows
+            .iter()
+            .map(|&r| {
+                let c = &rt.store.chunks[r];
+                (c.chunk_id.clone(), passage_label(&self.names, c))
+            })
+            .collect();
+        let answer = if labelled.is_empty() {
+            PASSAGES_NONE.to_owned()
+        } else {
+            let lines: Vec<String> = labelled
+                .iter()
+                .enumerate()
                 .map(|(i, (_, l))| format!("[{}] {l}", i + 1))
                 .collect();
             format!("{PASSAGES_HEAD}\n\n{}", lines.join("\n"))
         };
         let ids: Vec<String> = labelled.into_iter().map(|(id, _)| id).collect();
         let ms = t0.elapsed().as_secs_f64() * 1000.0;
-        let result = AskResult { answer, citations: ids.iter().map(|id| self.citation(id)).collect(), passages: ids,
-                                 route: None, table: false, flags: req.flags.clone(), form: None, horizon: horizon_id,
-                                 server: SERVER.to_owned(),
-                                 corpus_version: self.corpus_version.clone(), invalid_citations: 0, prompt_tokens: 0,
-                                 timings: Timings { route_ms: 0.0, answer_ms: ms, total_ms: ms } };
-        Ok(Job { result, generated: BTreeMap::new(), usage: UsageSnapshot::default(), profile, source: "passages" })
+        let result = AskResult {
+            answer,
+            citations: ids.iter().map(|id| self.citation(id)).collect(),
+            passages: ids,
+            route: None,
+            table: false,
+            flags: req.flags.clone(),
+            form: None,
+            horizon: horizon_id,
+            server: SERVER.to_owned(),
+            corpus_version: self.corpus_version.clone(),
+            invalid_citations: 0,
+            prompt_tokens: 0,
+            timings: Timings {
+                route_ms: 0.0,
+                answer_ms: ms,
+                total_ms: ms,
+            },
+        };
+        Ok(Job {
+            result,
+            generated: BTreeMap::new(),
+            usage: UsageSnapshot::default(),
+            profile,
+            source: "passages",
+        })
     }
 
     /// Make P4 the main corpus for this job, as the one-shot `ask` loads it as its only corpus: loaded on first use
@@ -288,18 +450,29 @@ impl Service {
     }
 
     fn runtimes(&self) -> impl Iterator<Item = &Runtime> {
-        std::iter::once(&self.rts.main).chain(self.rts.p4.as_ref()).chain(self.rts.art.as_ref())
+        std::iter::once(&self.rts.main)
+            .chain(self.rts.p4.as_ref())
+            .chain(self.rts.art.as_ref())
     }
 
     /// A cited passage's story and line span, from whichever loaded corpus holds it.
     fn citation(&self, id: &str) -> Citation {
         for rt in self.runtimes() {
             if let Some(c) = rt.store.row(id).map(|r| &rt.store.chunks[r]) {
-                return Citation { story_id: Some(c.story_id.clone()), chunk_id: id.to_owned(),
-                                  line_start: Some(c.line_start), line_end: Some(c.line_end) };
+                return Citation {
+                    story_id: Some(c.story_id.clone()),
+                    chunk_id: id.to_owned(),
+                    line_start: Some(c.line_start),
+                    line_end: Some(c.line_end),
+                };
             }
         }
-        Citation { story_id: None, chunk_id: id.to_owned(), line_start: None, line_end: None }
+        Citation {
+            story_id: None,
+            chunk_id: id.to_owned(),
+            line_start: None,
+            line_end: None,
+        }
     }
 
     /// A passage's text: the chunk's, a generated passage's, or a topic summary's.
@@ -312,7 +485,10 @@ impl Service {
         if let Some(t) = generated.get(id) {
             return t.clone();
         }
-        id.strip_prefix("topic:").and_then(|t| self.tables.tools.topic(t).ok()).map(|t| t.text).unwrap_or_default()
+        id.strip_prefix("topic:")
+            .and_then(|t| self.tables.tools.topic(t).ok())
+            .map(|t| t.text)
+            .unwrap_or_default()
     }
 
     /// The cited passage's text hash for the cache carry-over (contract v1.1 section 3b): the chunk's own `contentSha`
@@ -333,13 +509,17 @@ impl Service {
     /// The contract's `result` of an answered job.
     pub(super) fn worker_result(&self, job: &Job, rung: &str) -> serde_json::Value {
         let r = &job.result;
-        let citations: Vec<serde_json::Value> = r.citations.iter().map(|c| {
-            let n = r.passages.iter().position(|p| *p == c.chunk_id).map_or(0, |i| i + 1);
-            let text = self.passage_text(&c.chunk_id, &job.generated);
-            serde_json::json!({"n": n, "storyId": c.story_id, "chunkId": c.chunk_id, "lineStart": c.line_start,
+        let citations: Vec<serde_json::Value> = r
+            .citations
+            .iter()
+            .map(|c| {
+                let n = r.passages.iter().position(|p| *p == c.chunk_id).map_or(0, |i| i + 1);
+                let text = self.passage_text(&c.chunk_id, &job.generated);
+                serde_json::json!({"n": n, "storyId": c.story_id, "chunkId": c.chunk_id, "lineStart": c.line_start,
                                "lineEnd": c.line_end, "sha": self.passage_sha(&c.chunk_id, &text),
                                "text": trim_at_line(&text, CITE_CHARS)})
-        }).collect();
+            })
+            .collect();
         serde_json::json!({"answer": r.answer, "rung": rung, "profile": job.profile.name(), "source": job.source,
                            "citations": citations, "route": r.route, "form": r.form, "corpusVersion": r.corpus_version,
                            "tokensIn": job.usage.tokens_in, "tokensOut": job.usage.tokens_out, "timings": r.timings})

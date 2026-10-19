@@ -7,7 +7,6 @@ use std::sync::OnceLock;
 use serde::Deserialize;
 use trevor::tools::Tools;
 
-
 #[derive(Deserialize)]
 pub(crate) struct Names {
     pub(crate) story: String,
@@ -44,8 +43,11 @@ pub(crate) fn chunk_renames(chunk_id: &str) -> Option<&'static BTreeMap<String, 
 /// With `chunk_id` (None under `--no-chunk-renames`) the chunk's own renames apply too ("???:" becomes
 /// "??? (Mon3tr):").
 pub(crate) fn with_label_names(story_id: &str, chunk_id: Option<&str>, text: &str) -> String {
-    let maps: Vec<&BTreeMap<String, String>> = label_renames().get(story_id).into_iter()
-        .chain(chunk_id.and_then(chunk_renames)).collect();
+    let maps: Vec<&BTreeMap<String, String>> = label_renames()
+        .get(story_id)
+        .into_iter()
+        .chain(chunk_id.and_then(chunk_renames))
+        .collect();
     rename_lines(text, &maps)
 }
 
@@ -55,10 +57,16 @@ pub(crate) fn rename_lines(text: &str, maps: &[&BTreeMap<String, String>]) -> St
         return text.to_owned();
     }
     text.split('\n')
-        .map(|l| maps.iter().flat_map(|m| m.iter())
-            .find_map(|(label, name)| l.strip_prefix(label.as_str()).and_then(|r| r.strip_prefix(':'))
-                .map(|r| format!("{label} ({name}):{r}")))
-            .unwrap_or_else(|| l.to_owned()))
+        .map(|l| {
+            maps.iter()
+                .flat_map(|m| m.iter())
+                .find_map(|(label, name)| {
+                    l.strip_prefix(label.as_str())
+                        .and_then(|r| r.strip_prefix(':'))
+                        .map(|r| format!("{label} ({name}):{r}"))
+                })
+                .unwrap_or_else(|| l.to_owned())
+        })
         .collect::<Vec<_>>()
         .join("\n")
 }
@@ -70,7 +78,10 @@ pub(crate) fn load_names() -> HashMap<String, Names> {
 
 /// A story passage's label: "story: <group>, <story name>" from the names table, or "story: <id>" for a story it lacks.
 pub(crate) fn story_label(names: &HashMap<String, Names>, story_id: &str) -> String {
-    names.get(story_id).map_or_else(|| format!("story: {story_id}"), |n| format!("story: {}, {}", n.group, n.story))
+    names.get(story_id).map_or_else(
+        || format!("story: {story_id}"),
+        |n| format!("story: {}, {}", n.group, n.story),
+    )
 }
 
 /// The operator a typed unit belongs to, from its heading line: "Outfit: Newsgirl (Amiya)", "Voice lines: Texas",
@@ -87,7 +98,9 @@ pub(crate) fn unit_owner(heading: &str) -> Option<String> {
 
 /// The operator a cited operator-file chunk belongs to ("archive_char_338_iris#0001" -> Iris).
 pub(crate) fn file_owner(tools: &Tools, id: &str) -> Option<String> {
-    id.starts_with("archive_").then(|| tools.source_owner(id.split('#').next().unwrap_or(id))).flatten()
+    id.starts_with("archive_")
+        .then(|| tools.source_owner(id.split('#').next().unwrap_or(id)))
+        .flatten()
 }
 
 /// The operator a typed unit belongs to, from its first line ("Voice lines: X", "Module story: ... (X's module, ...)",

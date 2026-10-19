@@ -6,8 +6,8 @@ use std::path::Path;
 
 use anyhow::{Result, bail};
 use futures::StreamExt as _;
+use trevor::goldgen::{self as gg, ClosedBookAnswer, Filtered, Generated, Judged};
 use trevor::llm::{Llm, Request};
-use trevor::goldgen::{ClosedBookAnswer, Filtered, Generated, Judged, self as gg};
 use trevor::search::store::ChunkStore;
 
 use crate::files::{append, generated_by_id, read_jsonl};
@@ -74,20 +74,16 @@ pub(crate) async fn cmd_judge(work: &Path, server: &str, corpus: &Path) -> Resul
     let llm = Llm::connect(server).await?;
     let store = ChunkStore::load(&corpus.join("chunks.jsonl"))?;
     let gens = generated_by_id(work)?;
-    let cb: HashMap<String, String> =
-        read_jsonl::<ClosedBookAnswer>(&work.join("closed_book.jsonl"))?
-            .into_iter()
-            .map(|c| (c.id, c.answer))
-            .collect();
+    let cb: HashMap<String, String> = read_jsonl::<ClosedBookAnswer>(&work.join("closed_book.jsonl"))?
+        .into_iter()
+        .map(|c| (c.id, c.answer))
+        .collect();
     let passing: Vec<Filtered> = read_jsonl::<Filtered>(&work.join("filtered.jsonl"))?
         .into_iter()
         .filter(|f| f.pass)
         .collect();
     let out = work.join("judged.jsonl");
-    let done: BTreeSet<String> = read_jsonl::<Judged>(&out)?
-        .into_iter()
-        .map(|j| j.id)
-        .collect();
+    let done: BTreeSet<String> = read_jsonl::<Judged>(&out)?.into_iter().map(|j| j.id).collect();
     let todo: Vec<(&Generated, Vec<String>)> = passing
         .iter()
         .filter(|f| !done.contains(&f.id))
@@ -107,21 +103,41 @@ pub(crate) async fn cmd_judge(work: &Path, server: &str, corpus: &Path) -> Resul
         let llm = llm.clone();
         async move {
             let q = g.question.clone().unwrap_or_default();
-            let text = |i: usize| store.row(&g.chunk_ids[i]).map(|r| store.chunks[r].text.clone()).unwrap_or_default();
-            let mut j = Judged { id: g.id.clone(), model: llm.model.clone(), ..Judged::default() };
-            j.self_contained =
-                llm.verdict(gg::JUDGE_SELF_CONTAINED, &format!("QUESTION: {q}"), gg::GRAMMAR_VERDICT).await?;
+            let text = |i: usize| {
+                store
+                    .row(&g.chunk_ids[i])
+                    .map(|r| store.chunks[r].text.clone())
+                    .unwrap_or_default()
+            };
+            let mut j = Judged {
+                id: g.id.clone(),
+                model: llm.model.clone(),
+                ..Judged::default()
+            };
+            j.self_contained = llm
+                .verdict(gg::JUDGE_SELF_CONTAINED, &format!("QUESTION: {q}"), gg::GRAMMAR_VERDICT)
+                .await?;
             if g.chunk_ids.len() == 2 {
                 let (a, b) = (text(0), text(1));
-                j.answerable = llm.verdict(gg::JUDGE_ANSWERABLE, &passage_prompt(&format!("{a}\n\n{b}"), &q),
-                                           gg::GRAMMAR_VERDICT).await?;
-                j.a_alone =
-                    Some(llm.verdict(gg::JUDGE_ANSWERABLE, &passage_prompt(&a, &q), gg::GRAMMAR_VERDICT).await?);
-                j.b_alone =
-                    Some(llm.verdict(gg::JUDGE_ANSWERABLE, &passage_prompt(&b, &q), gg::GRAMMAR_VERDICT).await?);
+                j.answerable = llm
+                    .verdict(
+                        gg::JUDGE_ANSWERABLE,
+                        &passage_prompt(&format!("{a}\n\n{b}"), &q),
+                        gg::GRAMMAR_VERDICT,
+                    )
+                    .await?;
+                j.a_alone = Some(
+                    llm.verdict(gg::JUDGE_ANSWERABLE, &passage_prompt(&a, &q), gg::GRAMMAR_VERDICT)
+                        .await?,
+                );
+                j.b_alone = Some(
+                    llm.verdict(gg::JUDGE_ANSWERABLE, &passage_prompt(&b, &q), gg::GRAMMAR_VERDICT)
+                        .await?,
+                );
             } else {
-                j.answerable =
-                    llm.verdict(gg::JUDGE_ANSWERABLE, &passage_prompt(&text(0), &q), gg::GRAMMAR_VERDICT).await?;
+                j.answerable = llm
+                    .verdict(gg::JUDGE_ANSWERABLE, &passage_prompt(&text(0), &q), gg::GRAMMAR_VERDICT)
+                    .await?;
             }
             if let Some(ans) = cb.get(&g.id) {
                 j.closed_book_correct = Some(if ans.to_lowercase().contains("don't know") || ans.is_empty() {
@@ -129,8 +145,10 @@ pub(crate) async fn cmd_judge(work: &Path, server: &str, corpus: &Path) -> Resul
                 } else {
                     llm.verdict(
                         gg::JUDGE_CLOSED_BOOK,
-                        &format!("QUESTION: {q}\n\nREFERENCE EVIDENCE:\n{}\n\nCANDIDATE ANSWER: {ans}",
-                                 evidence.join("\n")),
+                        &format!(
+                            "QUESTION: {q}\n\nREFERENCE EVIDENCE:\n{}\n\nCANDIDATE ANSWER: {ans}",
+                            evidence.join("\n")
+                        ),
                         gg::GRAMMAR_VERDICT,
                     )
                     .await?
@@ -151,9 +169,6 @@ pub(crate) async fn cmd_judge(work: &Path, server: &str, corpus: &Path) -> Resul
             );
         }
     }
-    eprintln!(
-        "judge: {n} judged in {:.0}s",
-        started.elapsed().as_secs_f64()
-    );
+    eprintln!("judge: {n} judged in {:.0}s", started.elapsed().as_secs_f64());
     Ok(())
 }

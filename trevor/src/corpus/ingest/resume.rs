@@ -6,7 +6,6 @@ use std::path::Path;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
-
 #[derive(Debug, Default, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Recovery {
@@ -54,8 +53,8 @@ pub fn recover(path: &Path) -> Result<(HashSet<String>, Recovery)> {
     let mut offsets: Vec<(usize, String)> = Vec::new();
     let mut pos = 0usize;
     for line in body.split_inclusive(|&b| b == b'\n') {
-        let row: StoryIdOnly = serde_json::from_slice(line)
-            .with_context(|| format!("unparseable complete line at byte {pos}"))?;
+        let row: StoryIdOnly =
+            serde_json::from_slice(line).with_context(|| format!("unparseable complete line at byte {pos}"))?;
         offsets.push((pos, row.story_id));
         pos += line.len();
     }

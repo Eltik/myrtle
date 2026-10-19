@@ -80,12 +80,7 @@ pub struct Indexes<'a> {
 /// # Errors
 /// A stage the config asks for whose index or model is missing, or a stage
 /// failure.
-pub fn retrieve(
-    query: &str,
-    cfg: &RetrievalConfig,
-    ix: &Indexes<'_>,
-    m: &mut Models<'_>,
-) -> Result<Vec<Hit>> {
+pub fn retrieve(query: &str, cfg: &RetrievalConfig, ix: &Indexes<'_>, m: &mut Models<'_>) -> Result<Vec<Hit>> {
     let dense = if matches!(cfg.mode, Mode::Dense | Mode::Hybrid) {
         let Some(d) = ix.dense else {
             bail!("mode {:?} needs the dense index", cfg.mode)
@@ -103,8 +98,7 @@ pub fn retrieve(
     } else {
         Vec::new()
     };
-    let rank_in =
-        |list: &[(usize, f32)], row: usize| list.iter().position(|h| h.0 == row).map(|p| p + 1);
+    let rank_in = |list: &[(usize, f32)], row: usize| list.iter().position(|h| h.0 == row).map(|p| p + 1);
 
     let first: Vec<(usize, f32)> = match cfg.mode {
         Mode::Dense => dense.clone(),
@@ -137,21 +131,14 @@ pub fn retrieve(
             bail!("rerank_top is {} but no reranker is loaded", cfg.rerank_top)
         };
         let n = cfg.rerank_top.min(hits.len());
-        let texts: Vec<&str> = hits[..n]
-            .iter()
-            .map(|h| ix.store.chunks[h.row].text.as_str())
-            .collect();
+        let texts: Vec<&str> = hits[..n].iter().map(|h| ix.store.chunks[h.row].text.as_str()).collect();
         let scores = rerank(query, &texts)?;
         for (h, s) in hits[..n].iter_mut().zip(scores) {
             h.score = s;
         }
         // Reranked head, then the unreranked tail in fused order. Ties keep
         // the fused order, so the sort is stable by construction.
-        hits[..n].sort_by(|a, b| {
-            b.score
-                .total_cmp(&a.score)
-                .then(a.fused_rank.cmp(&b.fused_rank))
-        });
+        hits[..n].sort_by(|a, b| b.score.total_cmp(&a.score).then(a.fused_rank.cmp(&b.fused_rank)));
     }
     hits.truncate(cfg.k);
     Ok(hits)
@@ -179,11 +166,8 @@ mod tests {
             content_sha: String::new(),
             prefix: None,
         };
-        ChunkStore::from_chunks(
-            vec![c("s#0", "alpha"), c("s#1", "beta"), c("s#2", "gamma")],
-            "x".into(),
-        )
-        .expect("store")
+        ChunkStore::from_chunks(vec![c("s#0", "alpha"), c("s#1", "beta"), c("s#2", "gamma")], "x".into())
+            .expect("store")
     }
 
     #[test]
@@ -217,10 +201,7 @@ mod tests {
 
         // A reranker that prefers "beta" flips the head.
         let fake = |_: &str, docs: &[&str]| -> Result<Vec<f32>> {
-            Ok(docs
-                .iter()
-                .map(|d| if *d == "beta" { 9.0 } else { 1.0 })
-                .collect())
+            Ok(docs.iter().map(|d| if *d == "beta" { 9.0 } else { 1.0 }).collect())
         };
         let cfg_r = RetrievalConfig {
             rerank_top: 2,

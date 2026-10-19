@@ -510,8 +510,11 @@ pub(crate) fn lore_on(a: &Args) -> bool {
 
 /// The parts of the model router's prompt that `a` turns on.
 pub(crate) fn router_prompt(a: &Args) -> router::RouterPrompt {
-    router::RouterPrompt { source: router_source(a), compare: !a.no_reading_compare,
-                           wide_topics: a.lore == LoreSet::V2 }
+    router::RouterPrompt {
+        source: router_source(a),
+        compare: !a.no_reading_compare,
+        wide_topics: a.lore == LoreSet::V2,
+    }
 }
 
 /// Whether the model router names the source of a retrieval route (default; `--no-router-source` turns it off).
@@ -539,7 +542,12 @@ pub(crate) fn retrieval_plan(q: &str, a: &Args, route: Option<&Route>) -> (Optio
         None | Some("story") => (Some(false), None),
         Some("any") => (Some(true), None),
         Some("operator_file") => (Some(true), Some("archive")),
-        Some(k) => (Some(true), ["module", "voice", "skin", "is", "enemy", "item"].into_iter().find(|x| *x == k)),
+        Some(k) => (
+            Some(true),
+            ["module", "voice", "skin", "is", "enemy", "item"]
+                .into_iter()
+                .find(|x| *x == k),
+        ),
     }
 }
 
@@ -627,8 +635,13 @@ impl Args {
     /// The extra verbs of the scene-subject test (`detect::asks_scene_with`): the reaction verbs with the hint verbs
     /// (SCENE_VERBS), HINT_VERBS alone under `--no-react-verbs`, none under `--said-verbs-v1`.
     pub(crate) fn scene_verbs(&self) -> &'static [&'static str] {
-        if self.said_verbs_v1 { &[] } else if self.no_react_verbs { &crate::detect::HINT_VERBS }
-        else { &crate::detect::SCENE_VERBS }
+        if self.said_verbs_v1 {
+            &[]
+        } else if self.no_react_verbs {
+            &crate::detect::HINT_VERBS
+        } else {
+            &crate::detect::SCENE_VERBS
+        }
     }
 }
 
@@ -665,9 +678,20 @@ pub(crate) fn apply_profile(a: &mut Args, p: Profile) {
 pub(crate) fn tool_options(a: &Args) -> trevor::tools::ToolOptions {
     use trevor::tools::ToolOptions;
     if a.router == RouterKind::Keywords {
-        ToolOptions { canon_v1: a.canon_v1, summary_route: !a.no_summary_route, event_about: !a.no_event_about,
-                      ..ToolOptions::KEYWORDS }
-    } else { ToolOptions { storylines: !a.no_storylines, exact_recap: !a.recap_substring,
-                           is_offset: !a.is_numbering_v1, canon_v1: a.canon_v1,
-                           summary_route: !a.no_summary_route, event_about: !a.no_event_about } }
+        ToolOptions {
+            canon_v1: a.canon_v1,
+            summary_route: !a.no_summary_route,
+            event_about: !a.no_event_about,
+            ..ToolOptions::KEYWORDS
+        }
+    } else {
+        ToolOptions {
+            storylines: !a.no_storylines,
+            exact_recap: !a.recap_substring,
+            is_offset: !a.is_numbering_v1,
+            canon_v1: a.canon_v1,
+            summary_route: !a.no_summary_route,
+            event_about: !a.no_event_about,
+        }
+    }
 }

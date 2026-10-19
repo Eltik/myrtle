@@ -35,8 +35,8 @@ impl OldCorpus {
         };
         let mut pos = 0usize;
         for line in bytes[..keep_to].split_inclusive(|&b| b == b'\n') {
-            let row: StoryIdOnly = serde_json::from_slice(line)
-                .with_context(|| format!("unparseable complete line at byte {pos}"))?;
+            let row: StoryIdOnly =
+                serde_json::from_slice(line).with_context(|| format!("unparseable complete line at byte {pos}"))?;
             pos += line.len();
             old.lines += 1;
             match old.by_story.get_mut(&row.story_id) {

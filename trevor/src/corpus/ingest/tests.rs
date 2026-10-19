@@ -45,11 +45,7 @@ fn index(groups: Vec<StoryGroup>, records: Vec<OperatorRecordGroup>) -> StoryInd
 fn plan_is_stable_under_shuffled_input() {
     let a = index(
         vec![
-            group(
-                "g2",
-                20,
-                vec![entry("b", "g2", 2, true), entry("a", "g2", 1, true)],
-            ),
+            group("g2", 20, vec![entry("b", "g2", 2, true), entry("a", "g2", 1, true)]),
             group("g1", 10, vec![entry("c", "g1", 1, true)]),
         ],
         vec![],
@@ -57,21 +53,11 @@ fn plan_is_stable_under_shuffled_input() {
     let b = index(
         vec![
             group("g1", 10, vec![entry("c", "g1", 1, true)]),
-            group(
-                "g2",
-                20,
-                vec![entry("a", "g2", 1, true), entry("b", "g2", 2, true)],
-            ),
+            group("g2", 20, vec![entry("a", "g2", 1, true), entry("b", "g2", 2, true)]),
         ],
         vec![],
     );
-    let ids = |i: &StoryIndex| {
-        plan(i)
-            .0
-            .into_iter()
-            .map(|j| j.entry.id)
-            .collect::<Vec<_>>()
-    };
+    let ids = |i: &StoryIndex| plan(i).0.into_iter().map(|j| j.entry.id).collect::<Vec<_>>();
     assert_eq!(ids(&a), vec!["c", "a", "b"]);
     assert_eq!(ids(&a), ids(&b));
 }
@@ -82,10 +68,7 @@ fn records_dedupe_against_groups_and_unscripted_are_set_aside() {
         vec![group(
             "record",
             0,
-            vec![
-                entry("r1", "record", 1, true),
-                entry("x", "record", 2, false),
-            ],
+            vec![entry("r1", "record", 1, true), entry("x", "record", 2, false)],
         )],
         vec![OperatorRecordGroup {
             char_id: "char_002_amiya".into(),
@@ -120,10 +103,7 @@ fn recover_cuts_a_torn_line_and_drops_the_last_story() {
     );
     let p = tmpfile("torn", body.as_bytes());
     let (done, rec) = recover(&p).expect("recover");
-    assert_eq!(
-        rec.torn_bytes_discarded,
-        "{\"storyId\":\"s3\",\"x\"".len() as u64
-    );
+    assert_eq!(rec.torn_bytes_discarded, "{\"storyId\":\"s3\",\"x\"".len() as u64);
     assert_eq!(rec.dropped_last_story.as_deref(), Some("s3"));
     assert_eq!(rec.lines_dropped, 1);
     let mut d: Vec<_> = done.into_iter().collect();
@@ -166,12 +146,7 @@ fn refresh_classifies_every_story_and_keeps_plan_order() {
     let mut r = Refresh::new(&old);
     let mut out = Vec::new();
     // Plan order puts the new story first; the file follows the plan.
-    let (new, a, b, empty) = (
-        lines("new", 2, "x"),
-        lines("a", 2, "x"),
-        lines("b", 2, "y"),
-        Vec::new(),
-    );
+    let (new, a, b, empty) = (lines("new", 2, "x"), lines("a", 2, "x"), lines("b", 2, "y"), Vec::new());
     out.extend_from_slice(r.story("new", Some(&new)));
     out.extend_from_slice(r.story("a", Some(&a)));
     out.extend_from_slice(r.story("b", Some(&b)));
@@ -277,8 +252,10 @@ fn serve(routes: &Routes, stories: &[(&str, &[&str])]) {
         let commands: Vec<serde_json::Value> = said
             .iter()
             .enumerate()
-            .map(|(i, t)| serde_json::json!({"kind": "name", "args": {"name": "Amiya"},
-                "text": t, "line": i + 1}))
+            .map(|(i, t)| {
+                serde_json::json!({"kind": "name", "args": {"name": "Amiya"},
+                "text": t, "line": i + 1})
+            })
             .collect();
         let words: usize = said.iter().map(|t| t.split_whitespace().count()).sum();
         let script = serde_json::json!({"id": id, "commands": commands, "wordCount": words});
@@ -351,8 +328,7 @@ async fn refresh_matches_a_fresh_build_and_leaves_resume_alone() {
     let c = m.refresh.expect("counts");
     assert_eq!((c.unchanged, c.added, c.changed, c.removed), (1, 1, 1, 1));
     let report: serde_json::Value =
-        serde_json::from_slice(&std::fs::read(dir.join("changes.json")).expect("changes"))
-            .expect("json");
+        serde_json::from_slice(&std::fs::read(dir.join("changes.json")).expect("changes")).expect("json");
     assert_eq!(report["changed"], serde_json::json!(["s2"]));
     assert_eq!(report["added"], serde_json::json!(["s4"]));
     assert_eq!(report["removed"], serde_json::json!(["s3"]));
@@ -431,10 +407,7 @@ async fn a_shrunken_or_empty_index_writes_nothing_unless_allowed() {
 fn cmd(kind: &str, args: &[(&str, &str)], text: Option<&str>, line: u32) -> StoryCommand {
     StoryCommand {
         kind: kind.into(),
-        args: args
-            .iter()
-            .map(|(k, v)| ((*k).into(), (*v).into()))
-            .collect(),
+        args: args.iter().map(|(k, v)| ((*k).into(), (*v).into())).collect(),
         text: text.map(Into::into),
         line,
     }

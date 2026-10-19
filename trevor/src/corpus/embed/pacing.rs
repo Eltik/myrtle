@@ -4,9 +4,9 @@ use std::time::{Duration, Instant};
 
 use anyhow::Result;
 
-use crate::host::{cpu_some_avg10, mem_available_gib, online_cpus, probe, therm_warning};
 use super::RunStats;
 use super::checkpoint::Checkpoint;
+use crate::host::{cpu_some_avg10, mem_available_gib, online_cpus, probe, therm_warning};
 
 /// Pauses a long embedding run while the machine is under pressure. Every
 /// probe reads only what the OS already publishes (no sudo, no
@@ -47,7 +47,10 @@ impl Guard {
     pub fn reasons(&self) -> Vec<String> {
         let mut why = Vec::new();
         if cfg!(target_os = "macos") {
-            if let Some(t) = probe("/usr/bin/pmset", &["-g", "therm"]).as_deref().and_then(therm_warning) {
+            if let Some(t) = probe("/usr/bin/pmset", &["-g", "therm"])
+                .as_deref()
+                .and_then(therm_warning)
+            {
                 why.push(format!("pmset therm: {t}"));
             }
             if let Some(level) = probe("/usr/sbin/sysctl", &["-n", "kern.memorystatus_vm_pressure_level"])
@@ -75,8 +78,8 @@ impl Guard {
             }
             if self.check_load {
                 let n = read("/proc/stat").as_deref().map_or(0, online_cpus);
-                let load = read("/proc/loadavg")
-                    .and_then(|s| s.split_whitespace().next().and_then(|x| x.parse::<f64>().ok()));
+                let load =
+                    read("/proc/loadavg").and_then(|s| s.split_whitespace().next().and_then(|x| x.parse::<f64>().ok()));
                 #[allow(clippy::cast_precision_loss)]
                 if let Some(l) = load
                     && n > 0
@@ -103,8 +106,12 @@ pub(super) struct Pacer<'a> {
 impl Pacer<'_> {
     /// Before an embedding call: Err(reason) when the run must stop now, after
     /// syncing the checkpoint; otherwise waits out any pause and returns.
-    pub(super) fn before(&mut self, ckpt: &mut Option<Checkpoint>, done: usize, total: usize)
-        -> Result<std::result::Result<(), String>> {
+    pub(super) fn before(
+        &mut self,
+        ckpt: &mut Option<Checkpoint>,
+        done: usize,
+        total: usize,
+    ) -> Result<std::result::Result<(), String>> {
         let over = |d: Option<Instant>| d.is_some_and(|d| Instant::now() >= d);
         if over(self.deadline) {
             return Ok(Err("max-minutes reached".to_owned()));

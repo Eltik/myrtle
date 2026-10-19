@@ -20,10 +20,8 @@ fn scores_match_sentence_transformers() {
     };
     let pairs: Vec<serde_json::Value> =
         serde_json::from_slice(&std::fs::read(pairs).expect("pairs")).expect("pairs json");
-    let want: Vec<f32> =
-        serde_json::from_slice(&std::fs::read(reference).expect("ref")).expect("ref json");
-    let rr =
-        Reranker::load(dir.as_ref(), "onnx/model.onnx", RERANK_MAX_TOKENS, None).expect("load");
+    let want: Vec<f32> = serde_json::from_slice(&std::fs::read(reference).expect("ref")).expect("ref json");
+    let rr = Reranker::load(dir.as_ref(), "onnx/model.onnx", RERANK_MAX_TOKENS, None).expect("load");
     let mut worst = 0f32;
     for (p, w) in pairs.iter().zip(&want) {
         let got = rr
@@ -31,9 +29,6 @@ fn scores_match_sentence_transformers() {
             .expect("score")[0];
         worst = worst.max((got - w).abs());
     }
-    eprintln!(
-        "{} pairs, max |rust - sentence-transformers| = {worst:.2e}",
-        want.len()
-    );
+    eprintln!("{} pairs, max |rust - sentence-transformers| = {worst:.2e}", want.len());
     assert!(worst < 1e-3, "max abs diff {worst}");
 }

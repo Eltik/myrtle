@@ -60,11 +60,7 @@ pub fn paired_t(deltas: &[f64]) -> PairedT {
         let p = if m == 0.0 { 1.0 } else { 0.0 };
         return PairedT {
             mean: m,
-            t: if m == 0.0 {
-                0.0
-            } else {
-                f64::INFINITY.copysign(m)
-            },
+            t: if m == 0.0 { 0.0 } else { f64::INFINITY.copysign(m) },
             df: n - 1,
             p,
         };
@@ -262,21 +258,9 @@ mod tests {
     #[test]
     fn student_t_matches_scipy() {
         // scipy: 2 * stats.t.sf(t, df)
-        assert!(close(
-            student_t_two_sided(2.0, 10),
-            0.073_388_034_770_740_37,
-            1e-10
-        ));
-        assert!(close(
-            student_t_two_sided(0.5, 3),
-            0.651_447_964_848_151,
-            1e-10
-        ));
-        assert!(close(
-            student_t_two_sided(3.3, 149),
-            0.001_209_730_904_156_325_1,
-            1e-10
-        ));
+        assert!(close(student_t_two_sided(2.0, 10), 0.073_388_034_770_740_37, 1e-10));
+        assert!(close(student_t_two_sided(0.5, 3), 0.651_447_964_848_151, 1e-10));
+        assert!(close(student_t_two_sided(3.3, 149), 0.001_209_730_904_156_325_1, 1e-10));
     }
 
     #[test]
@@ -293,19 +277,13 @@ mod tests {
         assert!(close(mcnemar_exact(1, 9), 0.021_484_375, 1e-12));
         assert!(close(mcnemar_exact(3, 3), 1.0, 1e-12));
         assert!(close(mcnemar_exact(0, 5), 0.0625, 1e-12));
-        assert!(close(
-            mcnemar_exact(20, 40),
-            0.013_489_293_731_191_86,
-            1e-10
-        ));
+        assert!(close(mcnemar_exact(20, 40), 0.013_489_293_731_191_86, 1e-10));
     }
 
     #[test]
     fn wilson_matches_the_closed_form() {
         let (lo, hi) = wilson(35, 50, Z95);
-        assert!(
-            close(lo, 0.562_496_495_355_466, 1e-10) && close(hi, 0.808_964_464_991_190_6, 1e-10)
-        );
+        assert!(close(lo, 0.562_496_495_355_466, 1e-10) && close(hi, 0.808_964_464_991_190_6, 1e-10));
         // The spec's "0 leaks in 50 probes is at most 7.1%".
         assert!(close(wilson(0, 50, Z95).1, 0.071_347_599_133_358_72, 1e-10));
         assert!(close(wilson(0, 150, Z95).1, 0.024_970_244_368_076_6, 1e-10));
@@ -315,11 +293,7 @@ mod tests {
     fn bootstrap_is_seeded_and_brackets_the_mean() {
         let d = [0.1, -0.05, 0.2, 0.0, 0.15, 0.05, -0.1, 0.3];
         let a = paired_bootstrap_ci(&d, 10_000, 7);
-        assert_eq!(
-            a,
-            paired_bootstrap_ci(&d, 10_000, 7),
-            "same seed, same interval"
-        );
+        assert_eq!(a, paired_bootstrap_ci(&d, 10_000, 7), "same seed, same interval");
         assert!(a.0 < mean(&d) && mean(&d) < a.1);
         let flat = paired_bootstrap_ci(&[0.0; 20], 1_000, 1);
         assert_eq!(flat, (0.0, 0.0));

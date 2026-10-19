@@ -15,7 +15,6 @@
 
 use std::collections::BTreeMap;
 
-
 /// The kinds whose prose sits in `text`, mirroring
 /// `backend::core::story::parser::PROSE_KINDS` (parser.rs:63).
 pub const PROSE_KINDS: &[&str] = &["name", "text", "multiline", "narration"];
@@ -159,13 +158,7 @@ fn prose_of(c: &StoryCommand) -> Option<&str> {
 /// 491), and `gridbg`, `largebg` and `verticalbg` with `imagegroup` ONLY (86,
 /// 60 and 17 uses, never `image`). Reading `image` alone would treat every
 /// strip background as a fade.
-const BACKGROUND_KINDS: &[&str] = &[
-    "background",
-    "backgroundtween",
-    "largebg",
-    "gridbg",
-    "verticalbg",
-];
+const BACKGROUND_KINDS: &[&str] = &["background", "backgroundtween", "largebg", "gridbg", "verticalbg"];
 
 /// The outcome of testing one command for a hard scene boundary.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -194,9 +187,7 @@ fn hard_boundary(c: &StoryCommand, current_bg: Option<&str>) -> Boundary {
     if BACKGROUND_KINDS.contains(&kind) {
         let plate = c.args.get("image").or_else(|| c.args.get("imagegroup"));
         return match plate {
-            Some(p) if !p.is_empty() && Some(p.as_str()) != current_bg => {
-                Boundary::OpensWith(Some(p.clone()))
-            }
+            Some(p) if !p.is_empty() && Some(p.as_str()) != current_bg => Boundary::OpensWith(Some(p.clone())),
             _ => Boundary::None,
         };
     }
@@ -271,11 +262,7 @@ fn turns_of(commands: &[StoryCommand]) -> (Vec<Turn>, Vec<(u32, Option<String>)>
         }
         match c.kind.as_str() {
             "charslot" => {
-                let slot = c
-                    .args
-                    .get("slot")
-                    .cloned()
-                    .unwrap_or_else(|| "m".to_owned());
+                let slot = c.args.get("slot").cloned().unwrap_or_else(|| "m".to_owned());
                 match c.args.get("name") {
                     Some(n) if !n.is_empty() => {
                         slots.insert(slot, n.clone());
@@ -343,8 +330,7 @@ fn turns_of(commands: &[StoryCommand]) -> (Vec<Turn>, Vec<(u32, Option<String>)>
                 scene,
                 after_soft: pending_soft,
                 on_screen: {
-                    let mut set: std::collections::BTreeSet<String> =
-                        chars.iter().cloned().collect();
+                    let mut set: std::collections::BTreeSet<String> = chars.iter().cloned().collect();
                     set.extend(slots.values().cloned());
                     set.extend(cutin.iter().cloned());
                     set.into_iter().collect()
@@ -442,11 +428,7 @@ pub fn chunk_story(
         debug_assert!(end > start);
 
         let slice = &turns[start..end];
-        let text = slice
-            .iter()
-            .map(Turn::render)
-            .collect::<Vec<_>>()
-            .join("\n");
+        let text = slice.iter().map(Turn::render).collect::<Vec<_>>().join("\n");
         let line_start = slice.first().expect("non-empty slice").line_start;
         let line_end = slice.last().expect("non-empty slice").line_end;
         let scene_ordinal = slice.first().expect("non-empty slice").scene;
@@ -490,9 +472,7 @@ pub fn chunk_story(
 
         // Advance, honouring overlap. Overlap must not stall: always move at
         // least one turn forward.
-        let step = (end - start)
-            .saturating_sub(cfg.overlap_turns as usize)
-            .max(1);
+        let step = (end - start).saturating_sub(cfg.overlap_turns as usize).max(1);
         start += step;
     }
 

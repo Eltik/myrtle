@@ -35,8 +35,8 @@ use tokio::sync::mpsc::UnboundedSender;
 
 pub use json::{JsonInvalid, grammar_keys, is_json_invalid, valid_json};
 pub use openai::{OpenAiConfig, Thinking};
-pub use usage::UsageSnapshot;
 use usage::Usage;
+pub use usage::UsageSnapshot;
 
 #[derive(Clone)]
 pub struct Llm {
@@ -94,16 +94,38 @@ pub struct Request<'a> {
 impl<'a> Request<'a> {
     /// Greedy decoding, as `ask` and the model router make every deterministic call: seed 1, temperature 0.
     #[must_use]
-    pub fn greedy(system: &'a str, user: &'a str, grammar: Option<&'a str>, n_predict: u32, stop: &'a [&'a str])
-        -> Self {
-        Self { system, user, grammar, seed: 1, temperature: 0.0, n_predict, stop }
+    pub fn greedy(
+        system: &'a str,
+        user: &'a str,
+        grammar: Option<&'a str>,
+        n_predict: u32,
+        stop: &'a [&'a str],
+    ) -> Self {
+        Self {
+            system,
+            user,
+            grammar,
+            seed: 1,
+            temperature: 0.0,
+            n_predict,
+            stop,
+        }
     }
 }
 
 impl Llm {
     fn with_backend(http: reqwest::Client, backend: Backend, model: String, slots: usize) -> Self {
-        Self { http, backend, sem: Arc::new(Semaphore::new(slots)), model, slots, dump: None, no_cache: false,
-               usage: Arc::default(), sink: Arc::default() }
+        Self {
+            http,
+            backend,
+            sem: Arc::new(Semaphore::new(slots)),
+            model,
+            slots,
+            dump: None,
+            no_cache: false,
+            usage: Arc::default(),
+            sink: Arc::default(),
+        }
     }
 
     /// An OpenAI-compatible chat endpoint (no request is made here).
@@ -114,9 +136,16 @@ impl Llm {
         if cfg.models.is_empty() {
             bail!("the OpenAI-compatible backend needs at least one model id");
         }
-        let http = reqwest::Client::builder().timeout(Duration::from_secs(cfg.timeout_secs)).build()?;
+        let http = reqwest::Client::builder()
+            .timeout(Duration::from_secs(cfg.timeout_secs))
+            .build()?;
         let (model, slots) = (cfg.models[0].clone(), cfg.concurrency.max(1));
-        Ok(Self::with_backend(http, Backend::OpenAi(Arc::new(openai::Client::new(cfg))), model, slots))
+        Ok(Self::with_backend(
+            http,
+            Backend::OpenAi(Arc::new(openai::Client::new(cfg))),
+            model,
+            slots,
+        ))
     }
 
     /// The model ids of the OpenAI-compatible backend, in failover order (empty for llama.cpp).
@@ -160,7 +189,10 @@ impl Llm {
     /// # Errors
     /// The file cannot be opened.
     pub fn with_dump(mut self, path: &std::path::Path) -> Result<Self> {
-        let f = std::fs::OpenOptions::new().create(true).append(true).open(path)
+        let f = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(path)
             .with_context(|| format!("opening {}", path.display()))?;
         self.dump = Some(Arc::new(Mutex::new(f)));
         Ok(self)
@@ -186,11 +218,14 @@ impl Llm {
     #[must_use]
     pub fn usage(&self) -> UsageSnapshot {
         let u = &self.usage;
-        UsageSnapshot { calls: u.calls.load(Ordering::Relaxed), tokens_in: u.tokens_in.load(Ordering::Relaxed),
-                        tokens_out: u.tokens_out.load(Ordering::Relaxed),
-                        json_calls: u.json_calls.load(Ordering::Relaxed),
-                        json_retries: u.json_retries.load(Ordering::Relaxed),
-                        json_failures: u.json_failures.load(Ordering::Relaxed) }
+        UsageSnapshot {
+            calls: u.calls.load(Ordering::Relaxed),
+            tokens_in: u.tokens_in.load(Ordering::Relaxed),
+            tokens_out: u.tokens_out.load(Ordering::Relaxed),
+            json_calls: u.json_calls.load(Ordering::Relaxed),
+            json_retries: u.json_retries.load(Ordering::Relaxed),
+            json_failures: u.json_failures.load(Ordering::Relaxed),
+        }
     }
 
     /// # Errors
@@ -208,7 +243,9 @@ impl Llm {
             Backend::OpenAi(client) => match req.grammar {
                 Some(g) => self.complete_json(client, req, g).await?,
                 None => {
-                    let c = client.chat(&self.http, req, req.system, req.user, self.no_cache, sink.as_ref()).await?;
+                    let c = client
+                        .chat(&self.http, req, req.system, req.user, self.no_cache, sink.as_ref())
+                        .await?;
                     self.count(&c);
                     c
                 }
@@ -220,7 +257,9 @@ impl Llm {
 
     fn count(&self, c: &Completion) {
         self.usage.calls.fetch_add(1, Ordering::Relaxed);
-        self.usage.tokens_in.fetch_add(c.prompt_tokens + c.cached_tokens, Ordering::Relaxed);
+        self.usage
+            .tokens_in
+            .fetch_add(c.prompt_tokens + c.cached_tokens, Ordering::Relaxed);
         self.usage.tokens_out.fetch_add(c.predicted_tokens, Ordering::Relaxed);
     }
 
@@ -263,11 +302,19 @@ mod tests {
         assert!(rk.contains(&"tool".to_owned()) && rk.contains(&"args".to_owned()) && rk.contains(&"event".to_owned()));
         assert!(!rk.contains(&"reading_guide".to_owned()));
         let fk = grammar_keys(&form.replace("evidence", "x"));
-        assert_eq!(valid_json("```json\n{\"form\": \"fact\"}\n```", &fk).as_deref(), Some("{\"form\": \"fact\"}"));
+        assert_eq!(
+            valid_json("```json\n{\"form\": \"fact\"}\n```", &fk).as_deref(),
+            Some("{\"form\": \"fact\"}")
+        );
         assert_eq!(valid_json("{\"form\": \"yes_no\", \"other\": 1}", &fk), None);
         assert_eq!(valid_json("fact", &fk), None);
-        assert_eq!(valid_json("{\"tool\": \"retrieve\", \"args\": {\"event\": \"x\"}}", &rk).as_deref(),
-                   Some("{\"tool\": \"retrieve\", \"args\": {\"event\": \"x\"}}"));
-        assert_eq!(valid_json("{\"tool\": \"retrieve\", \"args\": {\"nope\": 1}}", &rk), None);
+        assert_eq!(
+            valid_json("{\"tool\": \"retrieve\", \"args\": {\"event\": \"x\"}}", &rk).as_deref(),
+            Some("{\"tool\": \"retrieve\", \"args\": {\"event\": \"x\"}}")
+        );
+        assert_eq!(
+            valid_json("{\"tool\": \"retrieve\", \"args\": {\"nope\": 1}}", &rk),
+            None
+        );
     }
 }

@@ -1,7 +1,6 @@
 //! The answer model's system prompt and the rules appended to it per question. Every string here is
 //! sent to the model byte for byte; editing one changes answers.
 
-
 pub(crate) const SYSTEM: &str = "You answer questions about the Arknights story using only the numbered passages \
 given. Cite the passages you use as [n] after each sentence that relies on them. \
 If the passages do not contain the answer, say that you could not find it in the story text, \

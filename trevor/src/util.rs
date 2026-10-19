@@ -43,7 +43,13 @@ pub fn read_json_opt<T: DeserializeOwned>(path: &Path) -> Option<T> {
 /// cannot be read.
 #[must_use]
 pub fn read_jsonl_opt<T: DeserializeOwned>(path: &Path) -> Option<Vec<T>> {
-    Some(std::fs::read_to_string(path).ok()?.lines().filter_map(|l| serde_json::from_str(l).ok()).collect())
+    Some(
+        std::fs::read_to_string(path)
+            .ok()?
+            .lines()
+            .filter_map(|l| serde_json::from_str(l).ok())
+            .collect(),
+    )
 }
 
 /// The serving artifacts that failed to load in this process, one "path: why" line each (see [`load_json_opt`]).
@@ -116,7 +122,13 @@ pub fn load_jsonl_opt<T: DeserializeOwned>(path: &Path) -> Option<Vec<T>> {
     }
     if bad > 0 {
         let n = text.lines().filter(|l| !l.trim().is_empty()).count();
-        note_load_failure(path, &format!("{bad} of {n} lines unparsable, skipped (first: {})", first.unwrap_or_default()));
+        note_load_failure(
+            path,
+            &format!(
+                "{bad} of {n} lines unparsable, skipped (first: {})",
+                first.unwrap_or_default()
+            ),
+        );
     }
     Some(rows)
 }
@@ -156,7 +168,9 @@ pub fn write_jsonl_atomic<T: Serialize>(path: &Path, tmp_ext: &str, rows: impl I
 /// Seconds since the Unix epoch, or 0 when the clock reads before it.
 #[must_use]
 pub fn unix_now() -> u64 {
-    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_secs())
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |d| d.as_secs())
 }
 
 #[cfg(test)]
@@ -165,10 +179,17 @@ mod tests {
 
     #[test]
     fn hashes_match_the_rules_they_replaced() {
-        assert_eq!(sha_hex(b"abc"), "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+        assert_eq!(
+            sha_hex(b"abc"),
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        );
         assert_eq!(sha16("abc"), "ba7816bf8f01cfea");
         // The old byte-by-byte `content_sha` fold.
-        let fold = Sha256::digest("Ch'en".as_bytes()).iter().take(8).map(|b| format!("{b:02x}")).collect::<String>();
+        let fold = Sha256::digest("Ch'en".as_bytes())
+            .iter()
+            .take(8)
+            .map(|b| format!("{b:02x}"))
+            .collect::<String>();
         assert_eq!(sha16("Ch'en"), fold);
     }
 
@@ -192,7 +213,12 @@ mod tests {
         assert!(read_jsonl_opt::<serde_json::Value>(&dir.join("missing.jsonl")).is_none());
         let e = read_jsonl_strict::<serde_json::Value>(&dir.join("missing.jsonl")).unwrap_err();
         assert!(e.to_string().starts_with("reading "));
-        write_jsonl_atomic(&p, "jsonl.tmp", [serde_json::json!({"b": 1}), serde_json::json!({"b": 2})]).unwrap();
+        write_jsonl_atomic(
+            &p,
+            "jsonl.tmp",
+            [serde_json::json!({"b": 1}), serde_json::json!({"b": 2})],
+        )
+        .unwrap();
         assert_eq!(std::fs::read_to_string(&p).unwrap(), "{\"b\":1}\n{\"b\":2}\n");
         assert!(!p.with_extension("jsonl.tmp").exists());
         std::fs::remove_dir_all(&dir).unwrap();
@@ -205,8 +231,12 @@ mod tests {
         type V = serde_json::Value;
         let dir = std::env::temp_dir().join(format!("trevor-load-test-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
-        let (good, bad, rows, gone) =
-            (dir.join("good.json"), dir.join("bad.json"), dir.join("rows.jsonl"), dir.join("gone.json"));
+        let (good, bad, rows, gone) = (
+            dir.join("good.json"),
+            dir.join("bad.json"),
+            dir.join("rows.jsonl"),
+            dir.join("gone.json"),
+        );
         std::fs::write(&good, "{\"a\": 1}").unwrap();
         std::fs::write(&bad, "{\"a\": 1").unwrap();
         std::fs::write(&rows, "{\"a\": 1}\n\nnot json\n{\"a\": 2}\n").unwrap();
@@ -215,12 +245,18 @@ mod tests {
         }
         assert_eq!(load_jsonl_opt::<V>(&rows), read_jsonl_opt::<V>(&rows));
         assert_eq!(load_jsonl_opt::<V>(&gone), None);
-        let mine: Vec<String> = load_failures().into_iter().filter(|l| l.starts_with(&*dir.to_string_lossy())).collect();
+        let mine: Vec<String> = load_failures()
+            .into_iter()
+            .filter(|l| l.starts_with(&*dir.to_string_lossy()))
+            .collect();
         let why = |name: &str| mine.iter().filter(|l| l.contains(name)).cloned().collect::<Vec<_>>();
         assert!(why("good.json").is_empty(), "{mine:?}");
         assert!(why("bad.json")[0].contains(": unparsable: EOF"), "{mine:?}");
-        assert!(why("rows.jsonl")[0].ends_with("1 of 3 lines unparsable, skipped (first: line 3: expected ident at line 1 column 2)"),
-                "{mine:?}");
+        assert!(
+            why("rows.jsonl")[0]
+                .ends_with("1 of 3 lines unparsable, skipped (first: line 3: expected ident at line 1 column 2)"),
+            "{mine:?}"
+        );
         assert_eq!(why("gone.json").len(), 2, "{mine:?}");
         assert!(why("gone.json").iter().all(|l| l.ends_with(": missing")), "{mine:?}");
         std::fs::remove_dir_all(&dir).unwrap();

@@ -159,9 +159,15 @@ impl ReleaseOrder {
         let gate = match file {
             Some(f) if f.schema == 1 && f.inputs.as_ref() == Some(&inputs) => f,
             other => {
-                let why = if other.is_some() { "is stale (its inputs changed)" } else { "is missing" };
-                eprintln!("horizon: {GATE_ORDER_PATH} {why}; \
-                           using the order rebuilt from its inputs (run `ask --gate-order`)");
+                let why = if other.is_some() {
+                    "is stale (its inputs changed)"
+                } else {
+                    "is missing"
+                };
+                eprintln!(
+                    "horizon: {GATE_ORDER_PATH} {why}; \
+                           using the order rebuilt from its inputs (run `ask --gate-order`)"
+                );
                 build_gate_order(&guide, &rows, dates.as_ref(), Some(inputs))
             }
         };
@@ -201,13 +207,21 @@ impl ReleaseOrder {
 
     /// Date the unplaced sources from `{storyId: unix seconds}` (the old rule's dates).
     pub fn set_source_dates(&mut self, dates: &serde_json::Value) {
-        self.source_date = dates.as_object().into_iter().flatten()
-            .filter_map(|(k, v)| Some((k.clone(), v.as_i64()?))).collect();
+        self.source_date = dates
+            .as_object()
+            .into_iter()
+            .flatten()
+            .filter_map(|(k, v)| Some((k.clone(), v.as_i64()?)))
+            .collect();
     }
 
     fn set_gate(&mut self, gate: GateOrderFile) {
-        self.gate_pos = gate.story_order.iter().enumerate()
-            .map(|(i, s)| (s.clone(), u32::try_from(i + 1).unwrap_or(u32::MAX))).collect();
+        self.gate_pos = gate
+            .story_order
+            .iter()
+            .enumerate()
+            .map(|(i, s)| (s.clone(), u32::try_from(i + 1).unwrap_or(u32::MAX)))
+            .collect();
         self.never = gate.never.iter().cloned().collect();
         self.dated = gate.dated.iter().cloned().collect();
         self.group_last.clear();
@@ -236,16 +250,33 @@ impl ReleaseOrder {
     /// (`{"storyId", "groupId", "storySort"}`), with the gatePos order built from them (no source dates).
     #[must_use]
     pub fn from_parts(guide: &serde_json::Value, stories: &[serde_json::Value]) -> Self {
-        let group_pos = guide["items"].as_array().into_iter().flatten()
-            .filter_map(|i| Some((i["groupId"].as_str()?.to_owned(), u32::try_from(i["position"].as_u64()?).ok()?)))
+        let group_pos = guide["items"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(|i| {
+                Some((
+                    i["groupId"].as_str()?.to_owned(),
+                    u32::try_from(i["position"].as_u64()?).ok()?,
+                ))
+            })
             .collect();
-        let story = stories.iter()
-            .filter_map(|s| Some((
-                s["storyId"].as_str()?.to_owned(),
-                (s["groupId"].as_str()?.to_owned(), s["storySort"].as_i64()?)
-            )))
+        let story = stories
+            .iter()
+            .filter_map(|s| {
+                Some((
+                    s["storyId"].as_str()?.to_owned(),
+                    (s["groupId"].as_str()?.to_owned(), s["storySort"].as_i64()?),
+                ))
+            })
             .collect();
-        let mut order = Self { group_pos, story, date_at: latest_dates(guide), use_dates: true, ..Self::default() };
+        let mut order = Self {
+            group_pos,
+            story,
+            date_at: latest_dates(guide),
+            use_dates: true,
+            ..Self::default()
+        };
         order.set_gate(build_gate_order(guide, stories, None, None));
         order
     }
@@ -253,7 +284,11 @@ impl ReleaseOrder {
     /// The gatePos of a story id, or of a group id (its last story: the whole group).
     #[must_use]
     pub fn gate_pos_of(&self, id: &str) -> Option<u32> {
-        self.gate_pos.get(id).copied().filter(|_| !self.never.contains(id)).or_else(|| self.group_last.get(id).copied())
+        self.gate_pos
+            .get(id)
+            .copied()
+            .filter(|_| !self.never.contains(id))
+            .or_else(|| self.group_last.get(id).copied())
     }
 
     /// The horizon at a story id or a group id the reading guide places: its gatePos (`TREVOR_HORIZON_GATE=0`: the old
@@ -269,8 +304,15 @@ impl ReleaseOrder {
         if self.legacy {
             return self.legacy_horizon(id);
         }
-        let pos = self.gate_pos_of(id).with_context(|| format!("horizon {id:?} has no gatePos"))?;
-        Ok(Horizon { id: id.to_owned(), pos, legacy: None, order: Arc::clone(self) })
+        let pos = self
+            .gate_pos_of(id)
+            .with_context(|| format!("horizon {id:?} has no gatePos"))?;
+        Ok(Horizon {
+            id: id.to_owned(),
+            pos,
+            legacy: None,
+            order: Arc::clone(self),
+        })
     }
 
     /// The horizon at gatePos `pos` (contract section 1: a job's `horizonPos`). 0 hides every story.
@@ -279,11 +321,19 @@ impl ReleaseOrder {
     /// Only under `TREVOR_HORIZON_GATE=0`, when the story at `pos` is not placed by the reading guide.
     pub fn horizon_at(self: &Arc<Self>, pos: u32) -> Result<Horizon> {
         if self.legacy {
-            let sid = pos.checked_sub(1).and_then(|i| self.gate.story_order.get(i as usize)).cloned()
+            let sid = pos
+                .checked_sub(1)
+                .and_then(|i| self.gate.story_order.get(i as usize))
+                .cloned()
                 .with_context(|| format!("horizonPos {pos} names no story"))?;
             return self.legacy_horizon(&sid);
         }
-        Ok(Horizon { id: format!("gate:{pos}"), pos, legacy: None, order: Arc::clone(self) })
+        Ok(Horizon {
+            id: format!("gate:{pos}"),
+            pos,
+            legacy: None,
+            order: Arc::clone(self),
+        })
     }
 
     /// The old story-id horizon of a story or group id: group position, then storySort with ties visible.
@@ -295,31 +345,45 @@ impl ReleaseOrder {
             Some((g, s)) => (g.as_str(), Some(*s)),
             None => (id, None),
         };
-        let pos = *self.group_pos.get(group)
+        let pos = *self
+            .group_pos
+            .get(group)
             .with_context(|| format!("horizon {id:?} is not a story or group in the EN release order"))?;
-        let legacy = Legacy { pos, sort, date: self.date_at.get(&pos).copied() };
+        let legacy = Legacy {
+            pos,
+            sort,
+            date: self.date_at.get(&pos).copied(),
+        };
         Ok(Horizon {
             id: id.to_owned(),
             pos: self.gate_pos_of(id).unwrap_or(0),
             legacy: Some(legacy),
-            order: Arc::clone(self)
+            order: Arc::clone(self),
         })
     }
 
     /// The era a reader at gatePos `pos` has completed: `max(era.position <= pos)`, or None (eraPos 0).
     #[must_use]
     pub fn era_at(&self, pos: u32) -> Option<&Era> {
-        self.gate.eras.iter().filter(|e| e.position <= pos).max_by_key(|e| e.position)
+        self.gate
+            .eras
+            .iter()
+            .filter(|e| e.position <= pos)
+            .max_by_key(|e| e.position)
     }
 
     /// The gatePos of a group's first and last placed story (stories hidden at every horizon left out), or None when
     /// it has none.
     #[must_use]
     pub fn group_span(&self, group_id: &str) -> Option<(u32, u32)> {
-        let pos = self.story.iter()
+        let pos = self
+            .story
+            .iter()
             .filter(|(sid, (g, _))| g == group_id && !self.never.contains(*sid))
             .filter_map(|(sid, _)| self.gate_pos.get(sid).copied());
-        pos.fold(None, |acc, p| Some(acc.map_or((p, p), |(a, b): (u32, u32)| (a.min(p), b.max(p)))))
+        pos.fold(None, |acc, p| {
+            Some(acc.map_or((p, p), |(a, b): (u32, u32)| (a.min(p), b.max(p))))
+        })
     }
 }
 /// The old rule's horizon: guide position, the horizon story's storySort (None for a whole group) and date.

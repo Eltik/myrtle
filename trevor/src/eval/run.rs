@@ -128,17 +128,13 @@ pub fn score(
         }
         let gold = resolve(it, store);
         let started = std::time::Instant::now();
-        let ranked =
-            retrieve(&it.question).with_context(|| format!("{}: {}", it.qid, it.question))?;
+        let ranked = retrieve(&it.question).with_context(|| format!("{}: {}", it.qid, it.question))?;
         let ms = started.elapsed().as_secs_f64() * 1000.0;
         out.push(QueryOutcome {
             qid: it.qid.clone(),
             stratum: it.stratum,
             question: it.question.clone(),
-            gold: gold
-                .iter()
-                .map(|&r| store.chunks[r].chunk_id.clone())
-                .collect(),
+            gold: gold.iter().map(|&r| store.chunks[r].chunk_id.clone()).collect(),
             retrieved: ranked
                 .iter()
                 .take(20)
@@ -156,12 +152,7 @@ pub fn score(
 }
 
 fn mean_of(outcomes: &[&QueryOutcome], metric: &str) -> f64 {
-    super::stats::mean(
-        &outcomes
-            .iter()
-            .map(|o| o.metrics[metric])
-            .collect::<Vec<_>>(),
-    )
+    super::stats::mean(&outcomes.iter().map(|o| o.metrics[metric]).collect::<Vec<_>>())
 }
 
 fn pct(sorted: &[f64], q: f64) -> f64 {
@@ -194,10 +185,7 @@ pub fn summarize(info: RunInfo, set: &GoldSet, outcomes: &[QueryOutcome]) -> Run
         .map(|m| ((*m).to_owned(), mean_of(&all, m)))
         .collect();
     #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-    let hits10 = outcomes
-        .iter()
-        .filter(|o| o.metrics["hit@10"] > 0.5)
-        .count();
+    let hits10 = outcomes.iter().filter(|o| o.metrics["hit@10"] > 0.5).count();
     let recall10: Vec<f64> = outcomes.iter().map(|o| o.metrics[PRIMARY]).collect();
     let mut per_stratum: BTreeMap<String, StratumSummary> = BTreeMap::new();
     let mut by: BTreeMap<Stratum, Vec<&QueryOutcome>> = BTreeMap::new();
@@ -228,16 +216,8 @@ pub fn summarize(info: RunInfo, set: &GoldSet, outcomes: &[QueryOutcome]) -> Run
         goldset_sha: set.sha.clone(),
         n_items: set.items.len(),
         n_scored: outcomes.len(),
-        n_unanswerable: set
-            .items
-            .iter()
-            .filter(|i| i.stratum == Stratum::Unanswerable)
-            .count(),
-        n_not_accepted: set
-            .items
-            .iter()
-            .filter(|i| i.review != Review::Accepted)
-            .count(),
+        n_unanswerable: set.items.iter().filter(|i| i.stratum == Stratum::Unanswerable).count(),
+        n_not_accepted: set.items.iter().filter(|i| i.review != Review::Accepted).count(),
         config: info.config,
         fingerprint: info.fingerprint,
         metrics,
@@ -262,13 +242,8 @@ fn mean_ci(xs: &[f64]) -> (f64, f64) {
 ///
 /// # Errors
 /// The two runs did not score the same questions.
-pub fn compare(
-    baseline_id: &str,
-    baseline: &[QueryOutcome],
-    current: &[QueryOutcome],
-) -> Result<Comparison> {
-    let base: BTreeMap<&str, &QueryOutcome> =
-        baseline.iter().map(|o| (o.qid.as_str(), o)).collect();
+pub fn compare(baseline_id: &str, baseline: &[QueryOutcome], current: &[QueryOutcome]) -> Result<Comparison> {
+    let base: BTreeMap<&str, &QueryOutcome> = baseline.iter().map(|o| (o.qid.as_str(), o)).collect();
     let cur: BTreeMap<&str, &QueryOutcome> = current.iter().map(|o| (o.qid.as_str(), o)).collect();
     if base.keys().ne(cur.keys()) {
         let only_b: Vec<_> = base.keys().filter(|k| !cur.contains_key(*k)).collect();
@@ -348,8 +323,7 @@ pub fn save(dir: &Path, record: &RunRecord, outcomes: &[QueryOutcome]) -> Result
 /// No such run, or no earlier run on this gold set.
 pub fn load(dir: &Path, id: &str, goldset_sha: &str) -> Result<(RunRecord, Vec<QueryOutcome>)> {
     let id = if id == "last" {
-        let f = std::fs::File::open(dir.join("runs.jsonl"))
-            .context("no runs.jsonl yet, so there is no last run")?;
+        let f = std::fs::File::open(dir.join("runs.jsonl")).context("no runs.jsonl yet, so there is no last run")?;
         let mut last = None;
         for line in std::io::BufReader::new(f).lines() {
             let r: RunRecord = serde_json::from_str(&line?)?;
@@ -362,9 +336,8 @@ pub fn load(dir: &Path, id: &str, goldset_sha: &str) -> Result<(RunRecord, Vec<Q
         id.to_owned()
     };
     let path = dir.join("runs").join(format!("{id}.json"));
-    let s: StoredRun = serde_json::from_slice(
-        &std::fs::read(&path).with_context(|| format!("reading {}", path.display()))?,
-    )?;
+    let s: StoredRun =
+        serde_json::from_slice(&std::fs::read(&path).with_context(|| format!("reading {}", path.display()))?)?;
     if s.record.goldset_sha != goldset_sha {
         bail!(
             "run {id} used a different gold set ({:.16}); runs are only comparable on the same set",
@@ -414,19 +387,13 @@ mod tests {
         let base2: Vec<_> = (0..40)
             .map(|i| o(&format!("q{i}"), if i == 1 { 0.0 } else { 1.0 }, 1.0))
             .collect();
-        assert_eq!(
-            compare("b", &base2, &mixed).expect("same").verdict,
-            Verdict::Pass
-        );
+        assert_eq!(compare("b", &base2, &mixed).expect("same").verdict, Verdict::Pass);
 
         // One question lost only: negative mean, CI reaches 0 -> warn, not fail.
         let one: Vec<_> = (0..40)
             .map(|i| o(&format!("q{i}"), if i == 0 { 0.0 } else { 1.0 }, 1.0))
             .collect();
-        assert_eq!(
-            compare("b", &base, &one).expect("same").verdict,
-            Verdict::Warn
-        );
+        assert_eq!(compare("b", &base, &one).expect("same").verdict, Verdict::Warn);
     }
 
     #[test]

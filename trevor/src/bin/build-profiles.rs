@@ -33,7 +33,15 @@ struct Args {
 }
 
 fn slug(s: &str) -> String {
-    s.chars().map(|c| if c.is_alphanumeric() { c.to_ascii_lowercase() } else { '_' }).collect()
+    s.chars()
+        .map(|c| {
+            if c.is_alphanumeric() {
+                c.to_ascii_lowercase()
+            } else {
+                '_'
+            }
+        })
+        .collect()
 }
 
 fn lines(p: &PathBuf) -> Result<Vec<serde_json::Value>> {
@@ -54,7 +62,9 @@ fn main() -> Result<()> {
     let mut group_name = std::collections::HashMap::new();
     for s in lines(&a.stories)? {
         if let (Some(g), Some(h)) = (s["groupId"].as_str(), s["header"].as_str()) {
-            group_name.entry(g.to_owned()).or_insert_with(|| h.split(',').next().unwrap_or(h).trim().to_owned());
+            group_name
+                .entry(g.to_owned())
+                .or_insert_with(|| h.split(',').next().unwrap_or(h).trim().to_owned());
         }
     }
     let row = |id: String, group: &str, speakers: Vec<String>, text: String| {
@@ -89,7 +99,10 @@ fn main() -> Result<()> {
         }
         let gid = g["groupId"].as_str().unwrap_or_default();
         let name = group_name.get(gid).cloned().unwrap_or_else(|| gid.to_owned());
-        let summary = sectioned.get(gid).copied().unwrap_or_else(|| g["summary"].as_str().unwrap_or_default());
+        let summary = sectioned
+            .get(gid)
+            .copied()
+            .unwrap_or_else(|| g["summary"].as_str().unwrap_or_default());
         let text = format!("Event summary: {name}\n{summary}");
         rows.push(row(format!("summary_{gid}"), "summary", Vec::new(), text));
     }

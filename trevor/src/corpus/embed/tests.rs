@@ -1,5 +1,5 @@
-use super::*;
 use super::checkpoint::parse_checkpoint;
+use super::*;
 
 fn record(key: &str, v: &[f32]) -> Vec<u8> {
     let mut b = key.as_bytes().to_vec();
@@ -26,9 +26,18 @@ fn checkpoint_keeps_the_valid_prefix() {
     let z = [a.clone(), vec![0u8; 28]].concat();
     assert_eq!(parse_checkpoint(&z).1, a.len());
     // So do a non-unit row, a non-hex key and a changed dim.
-    assert_eq!(parse_checkpoint(&[a.clone(), record("1111111111111111", &[0.5, 0.5])].concat()).1, a.len());
-    assert_eq!(parse_checkpoint(&[a.clone(), record("XYZ1111111111111", &[1.0, 0.0])].concat()).1, a.len());
-    assert_eq!(parse_checkpoint(&[a.clone(), record("1111111111111111", &[1.0, 0.0, 0.0])].concat()).1, a.len());
+    assert_eq!(
+        parse_checkpoint(&[a.clone(), record("1111111111111111", &[0.5, 0.5])].concat()).1,
+        a.len()
+    );
+    assert_eq!(
+        parse_checkpoint(&[a.clone(), record("XYZ1111111111111", &[1.0, 0.0])].concat()).1,
+        a.len()
+    );
+    assert_eq!(
+        parse_checkpoint(&[a.clone(), record("1111111111111111", &[1.0, 0.0, 0.0])].concat()).1,
+        a.len()
+    );
 }
 
 #[test]

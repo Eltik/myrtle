@@ -20,20 +20,14 @@ pub(crate) fn read_jsonl<T: DeserializeOwned>(path: &Path) -> Result<Vec<T>> {
         if line.trim().is_empty() {
             continue;
         }
-        out.push(
-            serde_json::from_str(&line)
-                .with_context(|| format!("{} line {}", path.display(), i + 1))?,
-        );
+        out.push(serde_json::from_str(&line).with_context(|| format!("{} line {}", path.display(), i + 1))?);
     }
     Ok(out)
 }
 
 /// Append `rows` to `path`, one JSON line each (the resumable stages).
 pub(crate) fn append<T: Serialize>(path: &Path, rows: &[T]) -> Result<()> {
-    let mut f = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(path)?;
+    let mut f = std::fs::OpenOptions::new().create(true).append(true).open(path)?;
     for r in rows {
         writeln!(f, "{}", serde_json::to_string(r)?)?;
     }
@@ -47,5 +41,8 @@ pub(crate) fn write_jsonl<T: Serialize>(path: &Path, rows: &[T]) -> Result<()> {
 
 /// `generated.jsonl` of the work directory by generation id.
 pub(crate) fn generated_by_id(work: &Path) -> Result<HashMap<String, Generated>> {
-    Ok(read_jsonl::<Generated>(&work.join("generated.jsonl"))?.into_iter().map(|g| (g.id.clone(), g)).collect())
+    Ok(read_jsonl::<Generated>(&work.join("generated.jsonl"))?
+        .into_iter()
+        .map(|g| (g.id.clone(), g))
+        .collect())
 }

@@ -89,7 +89,11 @@ fn main() -> Result<()> {
         "embed-corpus: {} on {}, threads {}, guard {}, duty {}, checkpoint every {}{}",
         a.onnx_file,
         a.corpus.display(),
-        if a.threads == 0 { "ort-default".to_owned() } else { a.threads.to_string() },
+        if a.threads == 0 {
+            "ort-default".to_owned()
+        } else {
+            a.threads.to_string()
+        },
         if guard.is_some() { "on" } else { "off" },
         a.duty,
         a.checkpoint_every,

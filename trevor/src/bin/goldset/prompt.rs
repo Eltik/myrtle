@@ -9,7 +9,6 @@ use trevor::eval::goldset::Stratum;
 use trevor::goldgen::sample::SampleItem;
 use trevor::search::store::ChunkStore;
 
-
 #[derive(serde::Serialize, serde::Deserialize, Default, Clone)]
 pub(crate) struct Names {
     pub(crate) story: String,
@@ -30,15 +29,9 @@ pub(crate) fn label(names: &HashMap<String, Names>, story_id: &str) -> String {
     }
 }
 
-pub(crate) fn user_prompt(
-    item: &SampleItem,
-    store: &ChunkStore,
-    names: &HashMap<String, Names>,
-) -> Result<String> {
+pub(crate) fn user_prompt(item: &SampleItem, store: &ChunkStore, names: &HashMap<String, Names>) -> Result<String> {
     let chunk = |id: &str| -> Result<&trevor::corpus::chunk::Chunk> {
-        Ok(&store.chunks[store
-            .row(id)
-            .with_context(|| format!("{id} not in chunks.jsonl"))?])
+        Ok(&store.chunks[store.row(id).with_context(|| format!("{id} not in chunks.jsonl"))?])
     };
     if item.stratum == Stratum::MultiHop {
         let (a, b) = (chunk(&item.chunk_ids[0])?, chunk(&item.chunk_ids[1])?);

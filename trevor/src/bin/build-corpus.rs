@@ -75,10 +75,7 @@ fn calibrate(tok: &Tokenizer) -> Result<(u32, u32)> {
     let pairs = [
         ("Amiya: Doctor, are you awake?", "Kal'tsit: Leave him be."),
         ("W: Heh.", "???: ..."),
-        (
-            "The rain has not stopped for three days.",
-            "Ch'en: Move out.",
-        ),
+        ("The rain has not stopped for three days.", "Ch'en: Move out."),
         ("Rhodes Island Operator: Copy that.", "Ifrit-Nian: Fine!"),
     ];
     let mut joins = Vec::new();
@@ -102,8 +99,7 @@ async fn main() -> Result<()> {
     unsafe { std::env::set_var("TOKENIZERS_PARALLELISM", "false") };
 
     let args = Args::parse();
-    let bytes = std::fs::read(&args.tokenizer)
-        .with_context(|| format!("reading {}", args.tokenizer.display()))?;
+    let bytes = std::fs::read(&args.tokenizer).with_context(|| format!("reading {}", args.tokenizer.display()))?;
     let tokenizer_sha = trevor::util::sha_hex(&bytes);
     let tok = Tokenizer::from_bytes(&bytes).map_err(|e| anyhow::anyhow!("{e}"))?;
     let (overhead, joiner) = calibrate(&tok)?;
@@ -139,31 +135,17 @@ async fn main() -> Result<()> {
     let m = ingest::run(&cfg, count).await?;
     eprintln!(
         "api: {} stories, {} with script | planned {} scripted, {} unscripted",
-        m.totals_from_api.stories,
-        m.totals_from_api.with_script,
-        m.scripted_stories,
-        m.unscripted_stories
+        m.totals_from_api.stories, m.totals_from_api.with_script, m.scripted_stories, m.unscripted_stories
     );
     eprintln!(
         "fetched {} | skipped as done {} | failed {} | chunks this run {} | chunks in file {}",
-        m.stories_fetched,
-        m.stories_skipped_as_done,
-        m.stories_failed,
-        m.chunks_written_this_run,
-        m.chunks_in_file
+        m.stories_fetched, m.stories_skipped_as_done, m.stories_failed, m.chunks_written_this_run, m.chunks_in_file
     );
     if let Some(c) = &m.refresh {
         eprintln!(
             "refresh: added {} | changed {} | removed {} | unchanged {} | failed {} | \
              chunks {} -> {} ({} added or changed)",
-            c.added,
-            c.changed,
-            c.removed,
-            c.unchanged,
-            c.failed,
-            c.old_chunks,
-            c.new_chunks,
-            c.chunks_added_or_changed
+            c.added, c.changed, c.removed, c.unchanged, c.failed, c.old_chunks, c.new_chunks, c.chunks_added_or_changed
         );
     }
     if let Some(s) = &m.recovery.dropped_last_story {

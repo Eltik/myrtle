@@ -46,29 +46,19 @@ fn eligible(store: &ChunkStore, row: usize) -> bool {
 }
 
 /// Rows grouped by (category, position third).
-fn cells(
-    store: &ChunkStore,
-    category_of: &HashMap<String, String>,
-) -> BTreeMap<(String, u8), Vec<usize>> {
+fn cells(store: &ChunkStore, category_of: &HashMap<String, String>) -> BTreeMap<(String, u8), Vec<usize>> {
     let mut out: BTreeMap<(String, u8), Vec<usize>> = BTreeMap::new();
     let stories: BTreeSet<&str> = store.chunks.iter().map(|c| c.story_id.as_str()).collect();
     for s in stories {
         let rows = store.story_rows(s);
         let n = rows.len();
-        let cat = category_of
-            .get(s)
-            .cloned()
-            .unwrap_or_else(|| "unknown".to_owned());
+        let cat = category_of.get(s).cloned().unwrap_or_else(|| "unknown".to_owned());
         for (i, &row) in rows.iter().enumerate() {
             if !eligible(store, row) {
                 continue;
             }
             #[allow(clippy::cast_possible_truncation)]
-            let third = if n <= 1 {
-                1
-            } else {
-                ((i * 3) / n).min(2) as u8
-            };
+            let third = if n <= 1 { 1 } else { ((i * 3) / n).min(2) as u8 };
             out.entry((cat.clone(), third)).or_default().push(row);
         }
     }
@@ -108,9 +98,7 @@ pub fn single(
         .collect();
     let mut per_story: HashMap<&str, usize> = HashMap::new();
     for &r in &used {
-        *per_story
-            .entry(store.chunks[r].story_id.as_str())
-            .or_default() += 1;
+        *per_story.entry(store.chunks[r].story_id.as_str()).or_default() += 1;
     }
     let mut out = Vec::new();
     for &(stratum, n) in counts {
@@ -251,19 +239,12 @@ pub fn is_character_name(name: &str, operators: &BTreeSet<String>) -> bool {
     if operators.contains(n) {
         return true;
     }
-    if n.is_empty()
-        || n.contains('?')
-        || n.contains('…')
-        || n.starts_with(|c: char| !c.is_uppercase())
-    {
+    if n.is_empty() || n.contains('?') || n.contains('…') || n.starts_with(|c: char| !c.is_uppercase()) {
         return false;
     }
     let words: Vec<String> = n
         .split_whitespace()
-        .map(|w| {
-            w.trim_matches(|c: char| !c.is_alphanumeric())
-                .to_lowercase()
-        })
+        .map(|w| w.trim_matches(|c: char| !c.is_alphanumeric()).to_lowercase())
         .collect();
     let first = words.first().map_or("", String::as_str);
     let last = words.last().map_or("", String::as_str);
@@ -326,10 +307,7 @@ pub fn multi_hop(
         let (a, b) = (r1s[rng.below(r1s.len())], r2s[rng.below(r2s.len())]);
         // Different groups, not just different stories: two chapters of one
         // event share a synopsis, so a question over them is barely two-hop.
-        if used.contains(&a)
-            || used.contains(&b)
-            || store.chunks[a].group_id == store.chunks[b].group_id
-        {
+        if used.contains(&a) || used.contains(&b) || store.chunks[a].group_id == store.chunks[b].group_id {
             continue;
         }
         used.insert(a);
@@ -340,10 +318,7 @@ pub fn multi_hop(
             seed: super::filters::fnv1a(&id),
             id,
             stratum: Stratum::MultiHop,
-            chunk_ids: vec![
-                store.chunks[a].chunk_id.clone(),
-                store.chunks[b].chunk_id.clone(),
-            ],
+            chunk_ids: vec![store.chunks[a].chunk_id.clone(), store.chunks[b].chunk_id.clone()],
             entity: Some(e.to_owned()),
         });
     }
@@ -371,14 +346,7 @@ mod tests {
         ] {
             assert!(!is_character_name(n, &ops), "{n}");
         }
-        for n in [
-            "Kal'tsit",
-            "Wei Yenwu",
-            "Ch'en",
-            "W",
-            "Uncle Tung",
-            "Shining",
-        ] {
+        for n in ["Kal'tsit", "Wei Yenwu", "Ch'en", "W", "Uncle Tung", "Shining"] {
             assert!(is_character_name(n, &ops), "{n}");
         }
     }

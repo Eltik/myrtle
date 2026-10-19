@@ -15,9 +15,7 @@ impl Llm {
     /// # Errors
     /// The server is unreachable or `/props` lacks the fields used here.
     pub async fn connect(base: &str) -> Result<Self> {
-        let http = reqwest::Client::builder()
-            .timeout(Duration::from_secs(600))
-            .build()?;
+        let http = reqwest::Client::builder().timeout(Duration::from_secs(600)).build()?;
         let props: serde_json::Value = http
             .get(format!("{base}/props"))
             .send()
@@ -26,9 +24,7 @@ impl Llm {
             .error_for_status()?
             .json()
             .await?;
-        let path = props["model_path"]
-            .as_str()
-            .context("/props has no model_path")?;
+        let path = props["model_path"].as_str().context("/props has no model_path")?;
         let model = std::path::Path::new(path)
             .file_name()
             .and_then(|f| f.to_str())
@@ -37,7 +33,14 @@ impl Llm {
         let slots = usize::try_from(props["total_slots"].as_u64().unwrap_or(1))
             .unwrap_or(1)
             .max(1);
-        Ok(Self::with_backend(http, Backend::LlamaCpp { base: base.trim_end_matches('/').to_owned() }, model, slots))
+        Ok(Self::with_backend(
+            http,
+            Backend::LlamaCpp {
+                base: base.trim_end_matches('/').to_owned(),
+            },
+            model,
+            slots,
+        ))
     }
 
     async fn post(&self, base: &str, path: &str, body: &serde_json::Value) -> Result<serde_json::Value> {
@@ -46,13 +49,7 @@ impl Llm {
             if attempt > 0 {
                 tokio::time::sleep(Duration::from_millis(500 << attempt)).await;
             }
-            match self
-                .http
-                .post(format!("{base}{path}"))
-                .json(body)
-                .send()
-                .await
-            {
+            match self.http.post(format!("{base}{path}")).json(body).send().await {
                 Ok(r) if r.status().is_server_error() => {
                     last = Some(anyhow!(
                         "{path}: HTTP {}: {}",
@@ -74,8 +71,12 @@ impl Llm {
     /// `/completion` with `stream: true`: the pieces go to `sink` as they arrive; the result has the shape of the
     /// non-streaming response (`content`, `stop_type`, `timings`, `tokens_cached`). Retried like [`Llm::post`], also
     /// after a cut stream (the sink then sees a new `Start`).
-    async fn post_stream(&self, base: &str, body: &serde_json::Value, sink: &UnboundedSender<StreamEvent>)
-        -> Result<serde_json::Value> {
+    async fn post_stream(
+        &self,
+        base: &str,
+        body: &serde_json::Value,
+        sink: &UnboundedSender<StreamEvent>,
+    ) -> Result<serde_json::Value> {
         let mut last = None;
         for attempt in 0..4u32 {
             if attempt > 0 {
@@ -83,10 +84,17 @@ impl Llm {
             }
             let r = match self.http.post(format!("{base}/completion")).json(body).send().await {
                 Ok(r) => r,
-                Err(e) => { last = Some(anyhow!("/completion: {e}")); continue; }
+                Err(e) => {
+                    last = Some(anyhow!("/completion: {e}"));
+                    continue;
+                }
             };
             if r.status().is_server_error() {
-                last = Some(anyhow!("/completion: HTTP {}: {}", r.status(), r.text().await.unwrap_or_default()));
+                last = Some(anyhow!(
+                    "/completion: HTTP {}: {}",
+                    r.status(),
+                    r.text().await.unwrap_or_default()
+                ));
                 continue;
             }
             if !r.status().is_success() {
@@ -99,7 +107,9 @@ impl Llm {
             let end = loop {
                 match lines.next_data().await {
                     Ok(Some(data)) => {
-                        let Ok(v) = serde_json::from_str::<serde_json::Value>(&data) else { continue };
+                        let Ok(v) = serde_json::from_str::<serde_json::Value>(&data) else {
+                            continue;
+                        };
                         if v.get("error").is_some() {
                             break Err(anyhow!("/completion stream error: {}", v["error"]));
                         }
@@ -152,8 +162,12 @@ impl Llm {
             .to_owned())
     }
 
-    pub(super) async fn complete_llama(&self, base: &str, req: &Request<'_>, sink: Option<&UnboundedSender<StreamEvent>>)
-        -> Result<Completion> {
+    pub(super) async fn complete_llama(
+        &self,
+        base: &str,
+        req: &Request<'_>,
+        sink: Option<&UnboundedSender<StreamEvent>>,
+    ) -> Result<Completion> {
         let prompt = self.render(req.system, req.user).await?;
         let mut body = json!({
             "prompt": prompt,

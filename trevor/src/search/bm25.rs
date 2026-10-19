@@ -121,10 +121,7 @@ impl Bm25 {
             })
             .collect();
         let searcher = self.reader.searcher();
-        let top = searcher.search(
-            &BooleanQuery::new(clauses),
-            &TopDocs::with_limit(k).order_by_score(),
-        )?;
+        let top = searcher.search(&BooleanQuery::new(clauses), &TopDocs::with_limit(k).order_by_score())?;
         let mut out = Vec::with_capacity(top.len());
         for (score, addr) in top {
             let d: TantivyDocument = searcher.doc(addr)?;
@@ -193,14 +190,8 @@ mod tests {
         let s = store("x");
         build(&s, &dir).expect("build");
         let bm = Bm25::open(&dir, &s).expect("open");
-        let hits = bm
-            .search("What did Kal'tsit's say?", 3, &s)
-            .expect("search");
-        assert_eq!(
-            hits.first().map(|h| h.0),
-            Some(0),
-            "curly corpus, straight query"
-        );
+        let hits = bm.search("What did Kal'tsit's say?", 3, &s).expect("search");
+        assert_eq!(hits.first().map(|h| h.0), Some(0), "curly corpus, straight query");
         let hits = bm.search("ch'en lungmen", 3, &s).expect("search");
         assert_eq!(hits.first().map(|h| h.0), Some(1));
         let _ = std::fs::remove_dir_all(&dir);

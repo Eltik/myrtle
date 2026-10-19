@@ -5,9 +5,9 @@ use std::path::Path;
 
 use anyhow::{Context, Result};
 use trevor::eval::goldset::Stratum;
-use trevor::llm::{Llm, Request};
 use trevor::goldgen::sample::{self, SampleItem};
 use trevor::goldgen::{self as gg};
+use trevor::llm::{Llm, Request};
 use trevor::search::store::ChunkStore;
 
 use crate::files::{append, read_jsonl};
@@ -41,11 +41,7 @@ pub(crate) async fn cmd_sample(work: &Path, corpus: &Path, base: &str, scale: f6
             Ok((n, ops)) => {
                 std::fs::write(&names_path, serde_json::to_vec(&n)?)?;
                 std::fs::write(work.join("operators.json"), serde_json::to_vec(&ops)?)?;
-                eprintln!(
-                    "names: {} stories, {} operators from {base}",
-                    n.len(),
-                    ops.len()
-                );
+                eprintln!("names: {} stories, {} operators from {base}", n.len(), ops.len());
             }
             Err(e) => eprintln!("names: backend unavailable ({e}); prompts will use story ids"),
         }
@@ -54,19 +50,10 @@ pub(crate) async fn cmd_sample(work: &Path, corpus: &Path, base: &str, scale: f6
     let existing: Vec<SampleItem> = read_jsonl(&path)?;
     let round = existing
         .iter()
-        .filter_map(|s| {
-            s.id.strip_prefix('r')?
-                .split('-')
-                .next()?
-                .parse::<u32>()
-                .ok()
-        })
+        .filter_map(|s| s.id.strip_prefix('r')?.split('-').next()?.parse::<u32>().ok())
         .max()
         .map_or(1, |r| r + 1);
-    let exclude: BTreeSet<String> = existing
-        .iter()
-        .flat_map(|s| s.chunk_ids.iter().cloned())
-        .collect();
+    let exclude: BTreeSet<String> = existing.iter().flat_map(|s| s.chunk_ids.iter().cloned()).collect();
     #[allow(
         clippy::cast_possible_truncation,
         clippy::cast_sign_loss,

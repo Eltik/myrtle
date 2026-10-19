@@ -7,7 +7,6 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
-
 const CKPT_FILE: &str = "vectors.ckpt";
 const CKPT_HEAD: &str = "vectors.ckpt.json";
 const KEY_LEN: usize = 16;
@@ -45,7 +44,9 @@ pub(super) fn parse_checkpoint(bytes: &[u8]) -> (HashMap<String, Vec<u8>>, usize
             break;
         }
         let start = at + KEY_LEN + 4;
-        let Some(row) = bytes.get(start..start + d * 4) else { break };
+        let Some(row) = bytes.get(start..start + d * 4) else {
+            break;
+        };
         let norm = row
             .chunks_exact(4)
             .map(|b| f32::from_le_bytes([b[0], b[1], b[2], b[3]]))

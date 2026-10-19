@@ -34,9 +34,13 @@ pub struct UsageSnapshot {
 impl std::ops::Sub for UsageSnapshot {
     type Output = Self;
     fn sub(self, o: Self) -> Self {
-        Self { calls: self.calls - o.calls, tokens_in: self.tokens_in - o.tokens_in,
-               tokens_out: self.tokens_out - o.tokens_out,
-               json_calls: self.json_calls - o.json_calls, json_retries: self.json_retries - o.json_retries,
-               json_failures: self.json_failures - o.json_failures }
+        Self {
+            calls: self.calls - o.calls,
+            tokens_in: self.tokens_in - o.tokens_in,
+            tokens_out: self.tokens_out - o.tokens_out,
+            json_calls: self.json_calls - o.json_calls,
+            json_retries: self.json_retries - o.json_retries,
+            json_failures: self.json_failures - o.json_failures,
+        }
     }
 }

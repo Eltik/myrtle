@@ -88,7 +88,11 @@ mod imp {
     }
 
     fn pct(sorted: &[f32], q: f64) -> f32 {
-        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_precision_loss)]
+        #[allow(
+            clippy::cast_possible_truncation,
+            clippy::cast_sign_loss,
+            clippy::cast_precision_loss
+        )]
         let i = ((sorted.len() - 1) as f64 * q).round() as usize;
         sorted[i]
     }
@@ -112,7 +116,11 @@ mod imp {
         }
         let bin = std::fs::read(a.corpus.join("vectors.bin")).context("reading vectors.bin")?;
         if bin.len() != meta.count * meta.dim * 4 {
-            bail!("vectors.bin is {} bytes, expected {}", bin.len(), meta.count * meta.dim * 4);
+            bail!(
+                "vectors.bin is {} bytes, expected {}",
+                bin.len(),
+                meta.count * meta.dim * 4
+            );
         }
 
         let rows: Vec<usize> = if let Some(ids) = &a.ids {
@@ -120,7 +128,10 @@ mod imp {
                 .map(str::trim)
                 .filter(|s| !s.is_empty())
                 .map(|id| {
-                    meta.chunk_ids.iter().position(|x| x == id).with_context(|| format!("no chunk {id}"))
+                    meta.chunk_ids
+                        .iter()
+                        .position(|x| x == id)
+                        .with_context(|| format!("no chunk {id}"))
                 })
                 .collect::<Result<_>>()?
         } else {
@@ -142,7 +153,11 @@ mod imp {
 
         let m = load_model(&a.model_dir, &a.onnx_file, (a.threads > 0).then_some(a.threads))?;
         if m.tokenizer_sha != meta.tokenizer_sha {
-            bail!("tokenizer {:.16} differs from the vectors' {:.16}", m.tokenizer_sha, meta.tokenizer_sha);
+            bail!(
+                "tokenizer {:.16} differs from the vectors' {:.16}",
+                m.tokenizer_sha,
+                meta.tokenizer_sha
+            );
         }
         let same_model = m.model_sha == meta.model_sha;
         eprintln!(

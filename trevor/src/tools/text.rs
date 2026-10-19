@@ -1,7 +1,6 @@
 //! Name and text matching shared by every tool: folding, whole-word tests, episode numbers and the fuzzy
 //! match of a misspelled name.
 
-
 /// Drop "[3]", "[2, 3, 5]" citations and the space before them.
 pub(super) fn strip_citations(t: &str) -> String {
     let mut out = String::with_capacity(t.len());
@@ -9,7 +8,12 @@ pub(super) fn strip_citations(t: &str) -> String {
     while let Some(i) = rest.find('[') {
         let close = rest[i..].find(']').map(|j| i + j);
         match close {
-            Some(j) if j > i + 1 && rest[i + 1..j].chars().all(|c| c.is_ascii_digit() || c == ',' || c == ' ') => {
+            Some(j)
+                if j > i + 1
+                    && rest[i + 1..j]
+                        .chars()
+                        .all(|c| c.is_ascii_digit() || c == ',' || c == ' ') =>
+            {
                 out.push_str(rest[..i].trim_end_matches(' '));
                 rest = &rest[j + 1..];
             }
@@ -50,11 +54,13 @@ pub fn norm(x: &str) -> String {
 /// Byte offsets of the occurrences of `f` in `text` as a whole word: case-sensitive, with no alphanumeric character
 /// right before or after it.
 pub fn whole_word_matches<'a>(text: &'a str, f: &'a str) -> impl Iterator<Item = usize> + 'a {
-    text.match_indices(f).filter(move |(i, _)| {
-        let before = text[..*i].chars().next_back();
-        let after = text[i + f.len()..].chars().next();
-        !before.is_some_and(char::is_alphanumeric) && !after.is_some_and(char::is_alphanumeric)
-    }).map(|(i, _)| i)
+    text.match_indices(f)
+        .filter(move |(i, _)| {
+            let before = text[..*i].chars().next_back();
+            let after = text[i + f.len()..].chars().next();
+            !before.is_some_and(char::is_alphanumeric) && !after.is_some_and(char::is_alphanumeric)
+        })
+        .map(|(i, _)| i)
 }
 
 /// `hay` contains `needle` as whole words (both already normalized).
@@ -71,7 +77,8 @@ pub(super) fn contained_value<'a>(text: &str, vals: &[&'a str]) -> Option<&'a st
             let vn = norm(v);
             vn.len() >= 3 && (contains_words(&n, &vn) || contains_words(&n, &format!("{vn}s")))
         })
-        .max_by_key(|v| v.len()).copied()
+        .max_by_key(|v| v.len())
+        .copied()
 }
 
 /// "episode 7", "chapter 14", "ep 7", "ep07", "ch14", "main 7" or a bare "7" in a normalized name.
@@ -101,7 +108,13 @@ pub(super) fn episode_number(n: &str) -> Option<u64> {
 /// Budget: 0 under 5 characters (Ines is not Inez), 1 under 9, 2 from 9.
 pub(super) fn fuzzy_unique<'a, T: Copy>(n: &str, cands: impl Iterator<Item = (T, &'a str)>) -> Option<T> {
     let len = n.chars().count();
-    let budget = if len < 5 { 0 } else if len < 9 { 1 } else { 2 };
+    let budget = if len < 5 {
+        0
+    } else if len < 9 {
+        1
+    } else {
+        2
+    };
     if budget == 0 {
         return None;
     }
@@ -118,7 +131,10 @@ pub(super) fn fuzzy_unique<'a, T: Copy>(n: &str, cands: impl Iterator<Item = (T,
         match best {
             Some((bd, _)) if d > bd => {}
             Some((bd, _)) if d == bd => tie = true,
-            _ => { best = Some((d, c)); tie = false; }
+            _ => {
+                best = Some((d, c));
+                tie = false;
+            }
         }
     }
     if tie { None } else { best.map(|(_, c)| c) }

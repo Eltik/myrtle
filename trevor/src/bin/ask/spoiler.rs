@@ -15,8 +15,21 @@ use crate::prompts::{SPOILER_ACT, SPOILER_ACT_SUMMARY, SPOILER_NOTICE, SPOILER_W
 
 /// A summary request: "summary", "summarise", "recap", "what happens in" and the like.
 pub(crate) fn asks_summary(q: &str) -> bool {
-    has(q, &["summary", "summarize", "summarise", "recap", "what happens in", "what happened in", "plot of",
-             "rundown of", "tl dr", "tldr"])
+    has(
+        q,
+        &[
+            "summary",
+            "summarize",
+            "summarise",
+            "recap",
+            "what happens in",
+            "what happened in",
+            "plot of",
+            "rundown of",
+            "tl dr",
+            "tldr",
+        ],
+    )
 }
 
 /// The spoiler notice for `q` at horizon `h`, when the question names an event whose first story lies after it.
@@ -28,9 +41,22 @@ pub(crate) fn notice(q: &str, tools: &Tools, h: &Horizon) -> Option<String> {
         return None;
     }
     let name = g["name"].as_str().unwrap_or(gid);
-    let at = h.order().era_at(h.pos).map(|e| SPOILER_WHERE.replace("{era}", &e.name)).unwrap_or_default();
-    let act = if asks_summary(q) { SPOILER_ACT_SUMMARY } else { SPOILER_ACT };
-    Some(SPOILER_NOTICE.replace("{event}", name).replace("{where}", &at).replace("{act}", act))
+    let at = h
+        .order()
+        .era_at(h.pos)
+        .map(|e| SPOILER_WHERE.replace("{era}", &e.name))
+        .unwrap_or_default();
+    let act = if asks_summary(q) {
+        SPOILER_ACT_SUMMARY
+    } else {
+        SPOILER_ACT
+    };
+    Some(
+        SPOILER_NOTICE
+            .replace("{event}", name)
+            .replace("{where}", &at)
+            .replace("{act}", act),
+    )
 }
 
 /// Whether `route` is a recap of an event whose every story lies at or before `h`.
@@ -38,12 +64,20 @@ pub(crate) fn recap_within(route: &Route, tools: &Tools, h: &Horizon) -> bool {
     if route.tool != "recap" {
         return false;
     }
-    let Some(g) = route.args.get("event").and_then(|e| tools.resolve_event(e).ok()) else { return false };
+    let Some(g) = route.args.get("event").and_then(|e| tools.resolve_event(e).ok()) else {
+        return false;
+    };
     let Some(gid) = g["groupId"].as_str() else { return false };
     // The keyword router's recap reads the ending's stories by a substring test on story ids ("main_1" also takes
     // main_10 to main_16): an ending recap of such a group is not served under a horizon.
     let ending = route.args.get("ending").is_some_and(|v| v.eq_ignore_ascii_case("true"));
-    if ending && tools.groups.values().filter_map(|x| x["groupId"].as_str()).any(|x| x != gid && x.contains(gid)) {
+    if ending
+        && tools
+            .groups
+            .values()
+            .filter_map(|x| x["groupId"].as_str())
+            .any(|x| x != gid && x.contains(gid))
+    {
         return false;
     }
     h.order().group_span(gid).is_some_and(|(_, last)| last <= h.pos)
@@ -52,8 +86,14 @@ pub(crate) fn recap_within(route: &Route, tools: &Tools, h: &Horizon) -> bool {
 /// A table answer served under horizon `h`: the recap of an event wholly within it (unless `no_recap`), or the first or
 /// last appearance recomputed within it (`appear.rs`, reading `store` for a group the horizon cuts); None for every
 /// other table, which is built from every story.
-pub(crate) fn table_within(route: &Route, text: String, tools: &Tools, h: &Horizon, no_recap: bool,
-                           store: Option<&trevor::search::store::ChunkStore>) -> Option<String> {
+pub(crate) fn table_within(
+    route: &Route,
+    text: String,
+    tools: &Tools,
+    h: &Horizon,
+    no_recap: bool,
+    store: Option<&trevor::search::store::ChunkStore>,
+) -> Option<String> {
     if !no_recap && recap_within(route, tools, h) {
         return Some(text);
     }
@@ -94,9 +134,17 @@ mod tests {
         let (t, o) = setup();
         let h = o.horizon_at(3).unwrap();
         let n = notice("Give me a summary of The Masses Travels", &t, &h).unwrap();
-        assert!(n.starts_with("The Masses' Travels comes after where you have read"), "{n}");
-        assert!(n.contains("(you are up to Ep 0), so Trevor won't summarise it yet. \
-                            Turn off spoiler protection to ask about it."), "{n}");
+        assert!(
+            n.starts_with("The Masses' Travels comes after where you have read"),
+            "{n}"
+        );
+        assert!(
+            n.contains(
+                "(you are up to Ep 0), so Trevor won't summarise it yet. \
+                            Turn off spoiler protection to ask about it."
+            ),
+            "{n}"
+        );
         let n = notice("Who does Mon3tr suggest assassinating in masses travels?", &t, &h).unwrap();
         assert!(n.contains("won't answer questions about it yet"), "{n}");
         // Within the horizon, or partly read: no notice.
@@ -113,6 +161,10 @@ mod tests {
         assert!(recap_within(&r("act16side"), &t, &o.horizon_at(3).unwrap()));
         assert!(!recap_within(&r("act16side"), &t, &o.horizon_at(2).unwrap()));
         assert!(!recap_within(&r("act42side"), &t, &o.horizon_at(3).unwrap()));
-        assert!(!recap_within(&Route::new("timeline_all", &[]), &t, &o.horizon_at(4).unwrap()));
+        assert!(!recap_within(
+            &Route::new("timeline_all", &[]),
+            &t,
+            &o.horizon_at(4).unwrap()
+        ));
     }
 }

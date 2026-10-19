@@ -32,8 +32,7 @@
 use tantivy::TantivyError;
 use tantivy::schema::{IndexRecordOption, STORED, STRING, Schema, TextFieldIndexing, TextOptions};
 use tantivy::tokenizer::{
-    LowerCaser, RegexTokenizer, RemoveLongFilter, TextAnalyzer, Token, TokenFilter, TokenStream,
-    Tokenizer,
+    LowerCaser, RegexTokenizer, RemoveLongFilter, TextAnalyzer, Token, TokenFilter, TokenStream, Tokenizer,
 };
 
 pub const LORE_TOKENIZER: &str = "lore";
@@ -129,10 +128,7 @@ pub fn lore_schema() -> LoreSchema {
         .set_index_option(IndexRecordOption::WithFreqsAndPositions);
     // Deliberately not stored: the text lives beside the vectors. Measured on
     // 14k docs, storing the body costs 8.46 MB against 2.78 MB unstored.
-    let body = sb.add_text_field(
-        "body",
-        TextOptions::default().set_indexing_options(indexing),
-    );
+    let body = sb.add_text_field("body", TextOptions::default().set_indexing_options(indexing));
     LoreSchema {
         schema: sb.build(),
         chunk_id,
@@ -161,9 +157,7 @@ pub fn open_index(path: &std::path::Path) -> Result<tantivy::Index, TantivyError
         std::fs::create_dir_all(path).map_err(|e| TantivyError::IoError(std::sync::Arc::new(e)))?;
         tantivy::Index::create_in_dir(path, schema)?
     };
-    index
-        .tokenizers()
-        .register(LORE_TOKENIZER, lore_analyzer()?);
+    index.tokenizers().register(LORE_TOKENIZER, lore_analyzer()?);
     Ok(index)
 }
 
@@ -174,9 +168,10 @@ pub fn open_index(path: &std::path::Path) -> Result<tantivy::Index, TantivyError
 /// Returns `InvalidArgument` when the analyzer is not registered on `index`,
 /// which can only happen if something bypassed [`open_index`].
 pub fn analyze(index: &tantivy::Index, text: &str) -> Result<Vec<String>, TantivyError> {
-    let mut analyzer = index.tokenizers().get(LORE_TOKENIZER).ok_or_else(|| {
-        TantivyError::InvalidArgument(format!("{LORE_TOKENIZER} tokenizer is not registered"))
-    })?;
+    let mut analyzer = index
+        .tokenizers()
+        .get(LORE_TOKENIZER)
+        .ok_or_else(|| TantivyError::InvalidArgument(format!("{LORE_TOKENIZER} tokenizer is not registered")))?;
     let mut stream = analyzer.token_stream(text);
     let mut out = Vec::new();
     while stream.advance() {
@@ -257,14 +252,8 @@ mod tests {
 
     #[test]
     fn possessives_match_the_bare_name() {
-        assert_eq!(
-            toks("Amiya's cat"),
-            vec!["amiya".to_owned(), "cat".to_owned()]
-        );
-        assert_eq!(
-            toks("Amiya’s cat"),
-            vec!["amiya".to_owned(), "cat".to_owned()]
-        );
+        assert_eq!(toks("Amiya's cat"), vec!["amiya".to_owned(), "cat".to_owned()]);
+        assert_eq!(toks("Amiya’s cat"), vec!["amiya".to_owned(), "cat".to_owned()]);
     }
 
     #[test]
@@ -278,10 +267,7 @@ mod tests {
     fn schema_indexes_positions() {
         let s = lore_schema();
         let entry = s.schema.get_field_entry(s.body);
-        let opts = entry
-            .field_type()
-            .get_index_record_option()
-            .expect("body is indexed");
+        let opts = entry.field_type().get_index_record_option().expect("body is indexed");
         assert_eq!(opts, IndexRecordOption::WithFreqsAndPositions);
     }
 

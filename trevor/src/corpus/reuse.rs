@@ -116,29 +116,21 @@ impl ReusePool {
     /// The first directory added wins on a duplicate key; identical keys
     /// carry identical vectors anyway, by the one-text-per-call rule.
     pub fn add_dir(&mut self, dir: &Path, model_sha: &str, tokenizer_sha: &str) {
-        let outcome = self
-            .load(dir, model_sha, tokenizer_sha)
-            .map_err(|e| format!("{e:#}"));
+        let outcome = self.load(dir, model_sha, tokenizer_sha).map_err(|e| format!("{e:#}"));
         self.sources.push(SourceReport {
             dir: dir.to_path_buf(),
             outcome,
         });
     }
 
-    fn load(
-        &mut self,
-        dir: &Path,
-        model_sha: &str,
-        tokenizer_sha: &str,
-    ) -> Result<(usize, &'static str)> {
+    fn load(&mut self, dir: &Path, model_sha: &str, tokenizer_sha: &str) -> Result<(usize, &'static str)> {
         let meta_path = dir.join("vectors.meta.json");
         let meta_bytes = match std::fs::read(&meta_path) {
             Ok(b) => b,
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => bail!("no vectors.meta.json"),
             Err(e) => return Err(e).context("reading vectors.meta.json"),
         };
-        let meta: PriorMeta =
-            serde_json::from_slice(&meta_bytes).context("parsing vectors.meta.json")?;
+        let meta: PriorMeta = serde_json::from_slice(&meta_bytes).context("parsing vectors.meta.json")?;
         if meta.model_sha != model_sha {
             bail!("model sha {:.16} differs from this run's", meta.model_sha);
         }
@@ -212,8 +204,7 @@ fn bootstrap_keys(dir: &Path, meta: &PriorMeta) -> Result<Vec<String>> {
         }
         let mut keys = Vec::with_capacity(meta.count);
         for (i, line) in bytes.lines().enumerate() {
-            let row: KeyLine = serde_json::from_str(&line?)
-                .with_context(|| format!("{name} line {}", i + 1))?;
+            let row: KeyLine = serde_json::from_str(&line?).with_context(|| format!("{name} line {}", i + 1))?;
             if meta.chunk_ids.get(i) != Some(&row.chunk_id) {
                 bail!("{name} row {i} is {}, the meta says otherwise", row.chunk_id);
             }
@@ -275,11 +266,7 @@ mod tests {
             "chunkIds": rows.iter().map(|r| r.0).collect::<Vec<_>>(),
         });
         if with_keys {
-            meta["contentShas"] = rows
-                .iter()
-                .map(|(_, t, p)| embed_key(*p, t))
-                .collect::<Vec<_>>()
-                .into();
+            meta["contentShas"] = rows.iter().map(|(_, t, p)| embed_key(*p, t)).collect::<Vec<_>>().into();
         }
         std::fs::write(dir.join("vectors.meta.json"), meta.to_string()).expect("meta");
     }

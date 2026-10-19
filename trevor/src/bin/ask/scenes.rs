@@ -21,21 +21,42 @@ use crate::people::people_named;
 /// links) kept when the corpus writes the name capitalized (`proper_name`); the candidates are the event's chunks whose
 /// speakers or text hold one of their forms, ranked by the question with dense and BM25 fused by reciprocal rank (k 60),
 /// and the best are kept within `SCOPED_TOKENS`, at most `SCOPED_K`. Returns (event name, the characters, rows).
-pub(crate) fn scoped_scenes(rt: &mut Runtime, tools: &Tools, q: &str, max_tokens: u32) -> Option<(String, Vec<String>, Vec<usize>)> {
+pub(crate) fn scoped_scenes(
+    rt: &mut Runtime,
+    tools: &Tools,
+    q: &str,
+    max_tokens: u32,
+) -> Option<(String, Vec<String>, Vec<usize>)> {
     let g = tools.event_in_question(q)?;
     let gid = g["groupId"].as_str()?.to_owned();
     let ename = g["name"].as_str().unwrap_or(&gid).to_owned();
-    let chars: Vec<(String, Vec<String>)> = tools.event_characters(q, &gid, &ename).into_iter()
-        .filter(|(name, _)| proper_name(rt, name)).collect();
+    let chars: Vec<(String, Vec<String>)> = tools
+        .event_characters(q, &gid, &ename)
+        .into_iter()
+        .filter(|(name, _)| proper_name(rt, name))
+        .collect();
     if chars.is_empty() {
         return None;
     }
-    let forms: Vec<String> = chars.iter().flat_map(|(_, f)| f.iter().map(|x| norm(x)))
-        .filter(|x| x.chars().count() >= 3).collect();
-    let cands: Vec<usize> = rt.store.chunks.iter().enumerate().filter(|(_, c)| c.group_id == gid).filter(|(_, c)| {
-        c.speakers.iter().any(|s| forms.contains(&norm(s)))
-            || { let t = norm(&c.text); forms.iter().any(|f| contains_words(&t, f)) }
-    }).map(|(i, _)| i).collect();
+    let forms: Vec<String> = chars
+        .iter()
+        .flat_map(|(_, f)| f.iter().map(|x| norm(x)))
+        .filter(|x| x.chars().count() >= 3)
+        .collect();
+    let cands: Vec<usize> = rt
+        .store
+        .chunks
+        .iter()
+        .enumerate()
+        .filter(|(_, c)| c.group_id == gid)
+        .filter(|(_, c)| {
+            c.speakers.iter().any(|s| forms.contains(&norm(s))) || {
+                let t = norm(&c.text);
+                forms.iter().any(|f| contains_words(&t, f))
+            }
+        })
+        .map(|(i, _)| i)
+        .collect();
     if cands.is_empty() {
         return None;
     }
@@ -66,9 +87,14 @@ pub(crate) fn scoped_scenes(rt: &mut Runtime, tools: &Tools, q: &str, max_tokens
 /// Every form of the character a `people_named` key names: the operator, speaker or identity-link name it folds from,
 /// and the names its identity links give the same person.
 pub(crate) fn person_forms(tools: &Tools, key: &str) -> Vec<String> {
-    let mut forms: Vec<String> = tools.operator_names().into_iter().chain(tools.speaker_names())
+    let mut forms: Vec<String> = tools
+        .operator_names()
+        .into_iter()
+        .chain(tools.speaker_names())
         .chain(tools.identities.iter().flatten().map(String::as_str))
-        .filter(|x| norm(x) == key).map(str::to_owned).collect();
+        .filter(|x| norm(x) == key)
+        .map(str::to_owned)
+        .collect();
     for ident in tools.identities.iter().filter(|i| i.iter().any(|x| norm(x) == key)) {
         forms.extend(ident.iter().cloned());
     }
@@ -92,8 +118,14 @@ pub(crate) fn scoped_summaries(rt: &Runtime, tools: &Tools, rows: &[usize]) -> V
             continue;
         }
         let id = format!("story:{sid}");
-        let Some(text) = tools.bank.iter().find(|b| b["id"].as_str() == Some(id.as_str()))
-            .and_then(|b| b["answer"].as_str()) else { continue };
+        let Some(text) = tools
+            .bank
+            .iter()
+            .find(|b| b["id"].as_str() == Some(id.as_str()))
+            .and_then(|b| b["answer"].as_str())
+        else {
+            continue;
+        };
         let cost = text.len().div_ceil(4);
         if used + cost > SCOPED_SUMMARY_TOKENS as usize {
             break;
@@ -120,7 +152,10 @@ pub(crate) fn excerpt_window(rt: &Runtime, r: usize, idx: &[usize], window: usiz
     let mut keep = vec![false; lines.len()];
     for &i in idx {
         let hi = (i + window).min(lines.len().saturating_sub(1));
-        keep.iter_mut().take(hi + 1).skip(i.saturating_sub(window)).for_each(|k| *k = true);
+        keep.iter_mut()
+            .take(hi + 1)
+            .skip(i.saturating_sub(window))
+            .for_each(|k| *k = true);
     }
     let mut parts: Vec<String> = Vec::new();
     let mut cur: Vec<&str> = Vec::new();
@@ -136,8 +171,8 @@ pub(crate) fn excerpt_window(rt: &Runtime, r: usize, idx: &[usize], window: usiz
         parts.push(cur.join("\n"));
     }
     let text = parts.join("\n...\n");
-    let tok = u32::try_from(u64::from(c.token_count) * text.len() as u64 / c.text.len().max(1) as u64)
-        .unwrap_or(u32::MAX);
+    let tok =
+        u32::try_from(u64::from(c.token_count) * text.len() as u64 / c.text.len().max(1) as u64).unwrap_or(u32::MAX);
     (text, tok)
 }
 
@@ -145,16 +180,27 @@ pub(crate) fn excerpt_window(rt: &Runtime, r: usize, idx: &[usize], window: usiz
 /// reaction verb follows (`asks_scene_with`), exactly one; with their folded name forms of 3 characters or more.
 /// With `one_person` (the default; `--scene-subject` lifts it, unmeasured) the question must name exactly one person:
 /// "How does Mon3tr react when she wakes up after Kal'tsit dies" names two, and got no character scenes.
-pub(crate) fn scene_subject(tools: &Tools, people: &[String], q: &str, extra: &[&str], one_person: bool)
-                            -> Option<(String, Vec<String>)> {
+pub(crate) fn scene_subject(
+    tools: &Tools,
+    people: &[String],
+    q: &str,
+    extra: &[&str],
+    one_person: bool,
+) -> Option<(String, Vec<String>)> {
     let cands: Vec<&String> = if one_person {
-        match people { [k] => vec![k], _ => return None }
+        match people {
+            [k] => vec![k],
+            _ => return None,
+        }
     } else {
         people.iter().collect()
     };
     let mut hits = cands.into_iter().filter_map(|k| {
-        let forms: Vec<String> = person_forms(tools, k).iter().map(|x| norm(x))
-            .filter(|x| x.chars().count() >= 3).collect();
+        let forms: Vec<String> = person_forms(tools, k)
+            .iter()
+            .map(|x| norm(x))
+            .filter(|x| x.chars().count() >= 3)
+            .collect();
         (!forms.is_empty() && !tools.names_group_topic(k) && asks_scene_with(q, &forms, extra))
             .then(|| (k.clone(), forms))
     });
@@ -174,34 +220,67 @@ pub(crate) fn scene_subject(tools: &Tools, people: &[String], q: &str, extra: &[
 /// With `renames` (`Args::chunk_renames`) a "???" line of a chunk that names it counts as the named speaker's.
 /// Returns (the character as the corpus writes them, excerpts best first).
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn character_scenes(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools, q: &str, rank_q: &str,
-                               max_tokens: u32, extra: &[&str], one_person: bool, renames: bool)
-                               -> Option<(String, Excerpts)> {
+pub(crate) fn character_scenes(
+    rt: &mut Runtime,
+    ra: &RuntimeArgs,
+    tools: &Tools,
+    q: &str,
+    rank_q: &str,
+    max_tokens: u32,
+    extra: &[&str],
+    one_person: bool,
+    renames: bool,
+) -> Option<(String, Excerpts)> {
     if tools.event_in_question(q).is_some() || tools.appearance_question(q).is_some() {
         return None;
     }
     let people = people_named(rt, tools, q);
     let (key, forms) = scene_subject(tools, &people, q, extra, one_person)?;
     let key = &key;
-    let shown = tools.operator_names().into_iter().chain(tools.speaker_names()).find(|x| norm(x) == *key)
+    let shown = tools
+        .operator_names()
+        .into_iter()
+        .chain(tools.speaker_names())
+        .find(|x| norm(x) == *key)
         .map_or_else(|| key.clone(), str::to_owned);
     let skip = |g: &str| is_generated(g) || RECORD_KINDS.contains(&g) || g == "voice";
-    let cands: Vec<usize> = rt.store.chunks.iter().enumerate()
+    let cands: Vec<usize> = rt
+        .store
+        .chunks
+        .iter()
+        .enumerate()
         .filter(|(_, c)| !skip(&c.group_id) && c.speakers.iter().any(|s| forms.contains(&norm(s))))
-        .map(|(i, _)| i).collect();
+        .map(|(i, _)| i)
+        .collect();
     if cands.is_empty() {
         return None;
     }
     let t0 = std::time::Instant::now();
     let units = ranked_lines(rt, ra, rank_q, &cands, &forms, renames)?;
-    if let Some(target) = trevor::env::non_empty("TREVOR_SCOPED_DEBUG").filter(|v| v != "0").as_deref() {
+    if let Some(target) = trevor::env::non_empty("TREVOR_SCOPED_DEBUG")
+        .filter(|v| v != "0")
+        .as_deref()
+    {
         let mut by_line: Vec<usize> = Vec::new();
-        for (r, _) in &units { if !by_line.contains(r) { by_line.push(*r); } }
+        for (r, _) in &units {
+            if !by_line.contains(r) {
+                by_line.push(*r);
+            }
+        }
         let rrf = rank_by_question(rt, q, &cands).unwrap_or_default();
-        let pos = |v: &[usize]| v.iter().position(|&r| rt.store.chunks[r].chunk_id == target)
-            .map_or(-1, |p| p as i64 + 1);
-        eprintln!("charscope {shown}: {} scenes, {} lines, rerank {:.2} s; {target}: chunk rrf {}, reranked lines {}",
-                  cands.len(), units.len(), t0.elapsed().as_secs_f64(), pos(&rrf), pos(&by_line));
+        let pos = |v: &[usize]| {
+            v.iter()
+                .position(|&r| rt.store.chunks[r].chunk_id == target)
+                .map_or(-1, |p| p as i64 + 1)
+        };
+        eprintln!(
+            "charscope {shown}: {} scenes, {} lines, rerank {:.2} s; {target}: chunk rrf {}, reranked lines {}",
+            cands.len(),
+            units.len(),
+            t0.elapsed().as_secs_f64(),
+            pos(&rrf),
+            pos(&by_line)
+        );
     }
     Some((shown, pick_excerpts(rt, units, max_tokens)))
 }
@@ -224,9 +303,18 @@ fn pick_excerpts(rt: &Runtime, units: Vec<(usize, usize)>, max_tokens: u32) -> E
             break;
         }
         used += grow;
-        match at { Some(p) => picked[p].1 = idx, None => picked.push((r, idx)) }
+        match at {
+            Some(p) => picked[p].1 = idx,
+            None => picked.push((r, idx)),
+        }
     }
-    picked.into_iter().map(|(r, idx)| { let (t, n) = excerpt(rt, r, &idx); (r, t, n) }).collect()
+    picked
+        .into_iter()
+        .map(|(r, idx)| {
+            let (t, n) = excerpt(rt, r, &idx);
+            (r, t, n)
+        })
+        .collect()
 }
 
 /// Scoped excerpts (`--no-scoped-line-rank`): a question that names an event and asks what a character of it said or
@@ -235,24 +323,39 @@ fn pick_excerpts(rt: &Runtime, units: Vec<(usize, usize)>, max_tokens: u32) -> E
 /// whole scoped scenes ranked by the question. A whether-question ("Is the Black Knight mentioned in the Near Light
 /// event the operator Blacknight") keeps the scoped scenes. Returns (event name, the character as the corpus writes
 /// them, excerpts best first). `renames` as for `character_scenes`.
-pub(crate) fn scoped_excerpts(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools, q: &str, max_tokens: u32,
-                              extra: &[&str], renames: bool) -> Option<(String, String, Excerpts)> {
+pub(crate) fn scoped_excerpts(
+    rt: &mut Runtime,
+    ra: &RuntimeArgs,
+    tools: &Tools,
+    q: &str,
+    max_tokens: u32,
+    extra: &[&str],
+    renames: bool,
+) -> Option<(String, String, Excerpts)> {
     if crate::theory::asks_whether(q) {
         return None;
     }
     let g = tools.event_in_question(q)?;
     let gid = g["groupId"].as_str()?.to_owned();
     let ename = g["name"].as_str().unwrap_or(&gid).to_owned();
-    let chars: Vec<(String, Vec<String>)> = tools.event_characters(q, &gid, &ename).into_iter()
-        .filter(|(name, _)| proper_name(rt, name)).collect();
+    let chars: Vec<(String, Vec<String>)> = tools
+        .event_characters(q, &gid, &ename)
+        .into_iter()
+        .filter(|(name, _)| proper_name(rt, name))
+        .collect();
     let [(name, f)] = chars.as_slice() else { return None };
     let forms: Vec<String> = f.iter().map(|x| norm(x)).filter(|x| x.chars().count() >= 3).collect();
     if forms.is_empty() || !asks_scene_with(q, &forms, extra) {
         return None;
     }
-    let cands: Vec<usize> = rt.store.chunks.iter().enumerate()
+    let cands: Vec<usize> = rt
+        .store
+        .chunks
+        .iter()
+        .enumerate()
         .filter(|(_, c)| c.group_id == gid && c.speakers.iter().any(|s| forms.contains(&norm(s))))
-        .map(|(i, _)| i).collect();
+        .map(|(i, _)| i)
+        .collect();
     if cands.is_empty() {
         return None;
     }
@@ -266,8 +369,14 @@ pub(crate) fn scoped_excerpts(rt: &mut Runtime, ra: &RuntimeArgs, tools: &Tools,
 /// first, ties by (row, line): (row, line index). With `renames` a line whose label its chunk renames
 /// (`labels::chunk_renames`, "???" -> "Mon3tr") counts as the named speaker's, and the reranker reads the renamed
 /// label ("??? (Mon3tr): ...").
-fn ranked_lines(rt: &mut Runtime, ra: &RuntimeArgs, q: &str, cands: &[usize], forms: &[String], renames: bool)
-    -> Option<Vec<(usize, usize)>> {
+fn ranked_lines(
+    rt: &mut Runtime,
+    ra: &RuntimeArgs,
+    q: &str,
+    cands: &[usize],
+    forms: &[String],
+    renames: bool,
+) -> Option<Vec<(usize, usize)>> {
     let mut units: Vec<(usize, usize)> = Vec::new();
     let mut texts: Vec<String> = Vec::new();
     for &r in cands {
@@ -276,8 +385,15 @@ fn ranked_lines(rt: &mut Runtime, ra: &RuntimeArgs, q: &str, cands: &[usize], fo
         let lines: Vec<&str> = c.text.lines().collect();
         for (i, line) in lines.iter().enumerate().filter(|(_, l)| speaks_as(l, forms, named)) {
             units.push((r, i));
-            let unit = if i > 0 { format!("{}\n{line}", lines[i - 1]) } else { (*line).to_owned() };
-            texts.push(match named { Some(m) => rename_lines(&unit, &[m]), None => unit });
+            let unit = if i > 0 {
+                format!("{}\n{line}", lines[i - 1])
+            } else {
+                (*line).to_owned()
+            };
+            texts.push(match named {
+                Some(m) => rename_lines(&unit, &[m]),
+                None => unit,
+            });
         }
     }
     ensure_reranker(rt, ra).ok()?;
@@ -291,8 +407,10 @@ fn ranked_lines(rt: &mut Runtime, ra: &RuntimeArgs, q: &str, cands: &[usize], fo
 /// Whether `line` is spoken by one of `forms` (folded): its speaker label is one, or `renames` (the chunk's label
 /// renames) gives its label a name that is one ("???: ...Kal'tsit?" with "???" -> "Mon3tr").
 pub(crate) fn speaks_as(line: &str, forms: &[String], renames: Option<&BTreeMap<String, String>>) -> bool {
-    line.split_once(':').is_some_and(|(s, _)| s.len() < 60 && (forms.contains(&norm(s))
-        || renames.and_then(|m| m.get(s)).is_some_and(|n| forms.contains(&norm(n)))))
+    line.split_once(':').is_some_and(|(s, _)| {
+        s.len() < 60
+            && (forms.contains(&norm(s)) || renames.and_then(|m| m.get(s)).is_some_and(|n| forms.contains(&norm(n))))
+    })
 }
 
 /// The line study (`--line-study`, measurement only): every line of the corpus outside the generated kinds
@@ -305,11 +423,21 @@ pub(crate) fn line_study(rt: &mut Runtime, ra: &RuntimeArgs, batch: &std::path::
     let pool: usize = trevor::env::parse_or("TREVOR_LINE_POOL", 100);
     let mut units: Vec<(usize, usize)> = Vec::new();
     let mut texts: Vec<String> = Vec::new();
-    for (r, c) in rt.store.chunks.iter().enumerate().filter(|(_, c)| !is_generated(&c.group_id)) {
+    for (r, c) in rt
+        .store
+        .chunks
+        .iter()
+        .enumerate()
+        .filter(|(_, c)| !is_generated(&c.group_id))
+    {
         let lines: Vec<&str> = c.text.lines().collect();
         for (i, line) in lines.iter().enumerate().filter(|(_, l)| !l.trim().is_empty()) {
             units.push((r, i));
-            texts.push(if i > 0 { format!("{}\n{line}", lines[i - 1]) } else { (*line).to_owned() });
+            texts.push(if i > 0 {
+                format!("{}\n{line}", lines[i - 1])
+            } else {
+                (*line).to_owned()
+            });
         }
     }
     let n = units.len();
@@ -319,19 +447,30 @@ pub(crate) fn line_study(rt: &mut Runtime, ra: &RuntimeArgs, batch: &std::path::
     for &u in &sample {
         sv.push(rt.embed_query(&texts[u])?);
     }
-    eprintln!("line study: {n} units, {} sampled, embedded in {:.1} s ({:.1} units/s)", sample.len(),
-              t0.elapsed().as_secs_f64(), sample.len() as f64 / t0.elapsed().as_secs_f64());
+    eprintln!(
+        "line study: {n} units, {} sampled, embedded in {:.1} s ({:.1} units/s)",
+        sample.len(),
+        t0.elapsed().as_secs_f64(),
+        sample.len() as f64 / t0.elapsed().as_secs_f64()
+    );
     ensure_reranker(rt, ra)?;
     let rr_sample: Vec<usize> = (0..n).step_by(rr_stride).collect();
-    let fold = |x: &str| norm(&x.replace(['\u{2019}', '\u{2018}'], "'").replace(['\u{201c}', '\u{201d}'], "\""));
+    let fold = |x: &str| {
+        norm(
+            &x.replace(['\u{2019}', '\u{2018}'], "'")
+                .replace(['\u{201c}', '\u{201d}'], "\""),
+        )
+    };
     println!("qid\tline_dense_est\tline_rerank_est\tchunk_dense\tchunk_bm25\tchunk_fused\tunits={n}");
     for l in std::fs::read_to_string(batch)?.lines().filter(|l| !l.trim().is_empty()) {
         let v: serde_json::Value = serde_json::from_str(l)?;
         let s = |k: &str| v[k].as_str().unwrap_or_default().to_owned();
         let (qid, q, chunk, quote) = (s("qid"), s("question"), s("chunk"), fold(&s("quote")));
         let key: String = quote.chars().take(40).collect();
-        let Some(ev) = units.iter().position(|&(r, i)| rt.store.chunks[r].chunk_id == chunk
-            && fold(rt.store.chunks[r].text.lines().nth(i).unwrap_or_default()).contains(&key)) else {
+        let Some(ev) = units.iter().position(|&(r, i)| {
+            rt.store.chunks[r].chunk_id == chunk
+                && fold(rt.store.chunks[r].text.lines().nth(i).unwrap_or_default()).contains(&key)
+        }) else {
             println!("{qid}\tnot-found");
             continue;
         };
@@ -345,7 +484,11 @@ pub(crate) fn line_study(rt: &mut Runtime, ra: &RuntimeArgs, batch: &std::path::
         let rr_est = sc[1..].iter().filter(|&&x| x > sc[0]).count() * rr_stride + 1;
         let row = units[ev].0;
         let d = rt.dense.as_ref().context("dense")?.search(&qv, rt.store.len())?;
-        let b = rt.bm25.as_ref().context("bm25")?.search(&q, rt.store.len(), &rt.store)?;
+        let b = rt
+            .bm25
+            .as_ref()
+            .context("bm25")?
+            .search(&q, rt.store.len(), &rt.store)?;
         let pos = |h: &[(usize, f32)]| h.iter().position(|&(r, _)| r == row).map_or(0, |p| p + 1);
         let mut fused: HashMap<usize, f64> = HashMap::new();
         for h in [&d, &b] {
@@ -366,10 +509,10 @@ pub(crate) fn line_study(rt: &mut Runtime, ra: &RuntimeArgs, batch: &std::path::
         let t1 = std::time::Instant::now();
         let pt: Vec<&str> = pu.iter().map(|&u| texts[u].as_str()).collect();
         let ps = rt.reranker.as_ref().context("reranker")?.score(&q, &pt)?;
-        let pool_rank = pu
-            .iter()
-            .position(|&u| u == ev)
-            .map_or_else(|| "out".to_owned(), |p| (ps.iter().filter(|&&x| x > ps[p]).count() + 1).to_string());
+        let pool_rank = pu.iter().position(|&u| u == ev).map_or_else(
+            || "out".to_owned(),
+            |p| (ps.iter().filter(|&&x| x > ps[p]).count() + 1).to_string(),
+        );
         println!(
             "{qid}\t{dense_est}\t{rr_est}\t{}\t{}\t{fused_rank}\t{pool_rank}/{}\t{:.2}",
             pos(&d),
@@ -432,7 +575,7 @@ fn ensure_reranker(rt: &mut Runtime, ra: &RuntimeArgs) -> Result<()> {
             &ra.rerank_dir,
             &ra.rerank_onnx,
             ra.rerank_max_tokens,
-            ra.threads
+            ra.threads,
         )?);
     }
     Ok(())

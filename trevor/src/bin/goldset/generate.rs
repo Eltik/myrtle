@@ -6,9 +6,9 @@ use std::path::Path;
 use anyhow::Result;
 use futures::StreamExt as _;
 use trevor::eval::goldset::Stratum;
-use trevor::llm::{Llm, Request};
 use trevor::goldgen::sample::SampleItem;
-use trevor::goldgen::{Generated, self as gg, sha16};
+use trevor::goldgen::{self as gg, Generated, sha16};
+use trevor::llm::{Llm, Request};
 use trevor::search::store::ChunkStore;
 
 use crate::files::{append, read_jsonl};
@@ -39,10 +39,7 @@ pub(crate) async fn cmd_generate(work: &Path, server: &str, corpus: &Path, knobs
     let names = load_names(work);
     let items: Vec<SampleItem> = read_jsonl(&work.join("sample.jsonl"))?;
     let out = work.join("generated.jsonl");
-    let done: BTreeSet<String> = read_jsonl::<Generated>(&out)?
-        .into_iter()
-        .map(|g| g.id)
-        .collect();
+    let done: BTreeSet<String> = read_jsonl::<Generated>(&out)?.into_iter().map(|g| g.id).collect();
     let todo: Vec<&SampleItem> = items.iter().filter(|i| !done.contains(&i.id)).collect();
     eprintln!(
         "generate: {} to do, {} done, model {} ({} slots)",
@@ -76,8 +73,7 @@ pub(crate) async fn cmd_generate(work: &Path, server: &str, corpus: &Path, knobs
                 })
                 .await?;
             let parsed: Result<serde_json::Value, _> = serde_json::from_str(c.content.trim());
-            let (mut question, mut answerable, mut evidence, mut parse_error) =
-                (None, false, Vec::new(), None);
+            let (mut question, mut answerable, mut evidence, mut parse_error) = (None, false, Vec::new(), None);
             match parsed {
                 Ok(v) => {
                     question = v["question"].as_str().map(str::to_owned);
@@ -130,9 +126,6 @@ pub(crate) async fn cmd_generate(work: &Path, server: &str, corpus: &Path, knobs
             );
         }
     }
-    eprintln!(
-        "generate: {n} new in {:.0}s",
-        started.elapsed().as_secs_f64()
-    );
+    eprintln!("generate: {n} new in {:.0}s", started.elapsed().as_secs_f64());
     Ok(())
 }

@@ -15,44 +15,66 @@ impl Tools {
     /// # Errors
     /// [`ToolError::NotFound`] when nothing or more than one group matches.
     pub fn resolve_event(&self, name: &str) -> Result<&Value, ToolError> {
-        let nf = || ToolError::NotFound { what: "event", name: name.to_owned() };
+        let nf = || ToolError::NotFound {
+            what: "event",
+            name: name.to_owned(),
+        };
         if let Some(g) = self.groups.get(name.trim()) {
             return Ok(g);
         }
         let n = norm(name);
         if let Some(ch) = episode_number(&n) {
-            return self.groups.values().find(|g| g["chapter"].as_u64() == Some(ch)).ok_or_else(nf);
+            return self
+                .groups
+                .values()
+                .find(|g| g["chapter"].as_u64() == Some(ch))
+                .ok_or_else(nf);
         }
         // Operator records (story_*) are not events a player names.
-        let events: Vec<(&Value, String)> = self.groups.values()
+        let events: Vec<(&Value, String)> = self
+            .groups
+            .values()
             .filter(|g| !g["groupId"].as_str().unwrap_or_default().starts_with("story_"))
-            .filter_map(|g| g["name"].as_str().map(|x| (g, norm(x)))).collect();
+            .filter_map(|g| g["name"].as_str().map(|x| (g, norm(x))))
+            .collect();
         let strip = |x: &str| x.strip_prefix("the ").unwrap_or(x).to_owned();
         if let Some((g, _)) = events.iter().find(|(_, gn)| *gn == n || strip(gn) == strip(&n)) {
             return Ok(g);
         }
         // Without a leading "the" and each word's trailing "s": "Masses Travel" is The Masses' Travels (the model
         // router can write a name so).
-        let key = |x: &str| strip(x).split(' ').map(|w| if w.len() > 3 { w.trim_end_matches('s') } else { w })
-            .collect::<Vec<_>>().join(" ");
+        let key = |x: &str| {
+            strip(x)
+                .split(' ')
+                .map(|w| if w.len() > 3 { w.trim_end_matches('s') } else { w })
+                .collect::<Vec<_>>()
+                .join(" ")
+        };
         let nk = key(&n);
         let keyed: Vec<(&Value, String)> = events.iter().map(|(g, gn)| (*g, key(gn))).collect();
         if let Some((g, _)) = keyed.iter().find(|(_, k)| *k == nk) {
             return Ok(g);
         }
         // A longer text naming one event ("the Babel rerun").
-        if let Some((g, _)) = events.iter().filter(|(_, gn)| gn.len() >= 4 && contains_words(&n, gn))
-            .max_by_key(|(_, gn)| gn.len()) {
+        if let Some((g, _)) = events
+            .iter()
+            .filter(|(_, gn)| gn.len() >= 4 && contains_words(&n, gn))
+            .max_by_key(|(_, gn)| gn.len())
+        {
             return Ok(g);
         }
         // Part of one name ("Siracusano"), when only one event holds it.
-        let part: Vec<&(&Value, String)> = events.iter().filter(|_| n.len() >= 5)
-            .filter(|(_, gn)| contains_words(gn, &n)).collect();
+        let part: Vec<&(&Value, String)> = events
+            .iter()
+            .filter(|_| n.len() >= 5)
+            .filter(|(_, gn)| contains_words(gn, &n))
+            .collect();
         if part.len() == 1 {
             return Ok(part[0].0);
         }
         fuzzy_unique(&n, events.iter().map(|(g, gn)| (*g, gn.as_str())))
-            .or_else(|| fuzzy_unique(&nk, keyed.iter().map(|(g, k)| (*g, k.as_str())))).ok_or_else(nf)
+            .or_else(|| fuzzy_unique(&nk, keyed.iter().map(|(g, k)| (*g, k.as_str()))))
+            .ok_or_else(nf)
     }
 
     /// A name among `cands`: exact, then case and punctuation folded, then through an identity link (Louisa is
@@ -76,14 +98,21 @@ impl Tools {
             }
         }
         let normed: Vec<(&'a str, String)> = cands.iter().map(|c| (*c, norm(c))).collect();
-        fuzzy_unique(&n, normed.iter().map(|(c, cn)| (*c, cn.as_str())))
-            .ok_or_else(|| ToolError::NotFound { what, name: name.to_owned() })
+        fuzzy_unique(&n, normed.iter().map(|(c, cn)| (*c, cn.as_str()))).ok_or_else(|| ToolError::NotFound {
+            what,
+            name: name.to_owned(),
+        })
     }
 
     /// Operator codenames of the attribute table.
     #[must_use]
     pub fn operator_names(&self) -> Vec<&str> {
-        self.attributes.iter().flatten().filter_map(|r| r["name"].as_str()).filter(|n| !n.is_empty()).collect()
+        self.attributes
+            .iter()
+            .flatten()
+            .filter_map(|r| r["name"].as_str())
+            .filter(|n| !n.is_empty())
+            .collect()
     }
 
     /// Short names in a question that are the start of exactly one operator or identity-link name ("kal" for
@@ -98,12 +127,17 @@ impl Tools {
         let mut out = Vec::new();
         for w in q
             .split(|c: char| !(c.is_alphanumeric() || matches!(c, '\'' | '\u{2019}' | '\u{2018}' | '`' | '\u{b4}')))
-            .filter(|w| !w.is_empty()) {
+            .filter(|w| !w.is_empty())
+        {
             let f = norm(w);
             if f.chars().count() < 3 || firsts.contains(&f) || f.chars().any(|c| c.is_ascii_digit()) {
                 continue;
             }
-            let hits: BTreeSet<&str> = names.iter().filter(|n| first(n).starts_with(&f)).map(String::as_str).collect();
+            let hits: BTreeSet<&str> = names
+                .iter()
+                .filter(|n| first(n).starts_with(&f))
+                .map(String::as_str)
+                .collect();
             // One target, or several spellings of one person (an identity's names all start alike, as Kal'tsit's do).
             let targets: BTreeSet<String> = hits.iter().map(|n| first(n)).collect();
             if targets.len() == 1 {
@@ -118,7 +152,10 @@ impl Tools {
     /// Speakers with a first appearance.
     #[must_use]
     pub fn speaker_names(&self) -> Vec<&str> {
-        self.first.as_ref().and_then(Value::as_object).map(|m| m.keys().map(String::as_str).collect())
+        self.first
+            .as_ref()
+            .and_then(Value::as_object)
+            .map(|m| m.keys().map(String::as_str).collect())
             .unwrap_or_default()
     }
 

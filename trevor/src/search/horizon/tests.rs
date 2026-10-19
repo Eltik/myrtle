@@ -1,6 +1,6 @@
+use super::build::{build_gate_order, parse_day};
 use super::*;
 use serde_json::json;
-use super::build::{build_gate_order, parse_day};
 
 fn guide() -> serde_json::Value {
     json!({"items": [
@@ -44,9 +44,11 @@ fn story_horizon_keeps_earlier_groups_and_earlier_stories_of_its_own() {
 fn dated_sources_follow_the_horizon_date() {
     assert_eq!(parse_day("by 2020-01-22"), Some(1_579_651_200));
     assert_eq!(parse_day("not dated"), None);
-    let rows = [json!({"storyId": "m0_a", "groupId": "main_0", "storySort": 1}),
-                json!({"storyId": "a1_a", "groupId": "act1", "storySort": 1}),
-                json!({"storyId": "m1_a", "groupId": "main_1", "storySort": 1})];
+    let rows = [
+        json!({"storyId": "m0_a", "groupId": "main_0", "storySort": 1}),
+        json!({"storyId": "a1_a", "groupId": "act1", "storySort": 1}),
+        json!({"storyId": "m1_a", "groupId": "main_1", "storySort": 1}),
+    ];
     let mut o = ReleaseOrder::from_parts(&guide(), &rows);
     let dates = json!({"dates": {"archive_char_002_amiya": 1_579_651_200, "voice_char_1": 1_579_651_201}});
     o.set_source_dates(&dates["dates"]);
@@ -57,7 +59,12 @@ fn dated_sources_follow_the_horizon_date() {
     assert_eq!(o.gate().source_pos.get("voice_char_1"), Some(&3));
     for (h, amiya, voice) in [("main_0", true, false), ("act1", true, false), ("main_1", true, true)] {
         for hz in [o.horizon(h).unwrap(), o.legacy_horizon(h).unwrap()] {
-            assert_eq!(hz.allows("archive_char_002_amiya", "archive"), amiya, "{h} {:?}", hz.legacy);
+            assert_eq!(
+                hz.allows("archive_char_002_amiya", "archive"),
+                amiya,
+                "{h} {:?}",
+                hz.legacy
+            );
             assert_eq!(hz.allows("voice_char_1", "voice"), voice, "{h}");
             // Undated sources stay hidden at any horizon.
             assert!(!hz.allows("enemy_enemy_1007_slime", "enemy"));

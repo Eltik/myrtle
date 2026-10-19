@@ -10,10 +10,7 @@ fn _unused() {}
 fn cmd(kind: &str, args: &[(&str, &str)], text: Option<&str>, line: u32) -> StoryCommand {
     StoryCommand {
         kind: kind.to_owned(),
-        args: args
-            .iter()
-            .map(|(k, v)| ((*k).to_owned(), (*v).to_owned()))
-            .collect(),
+        args: args.iter().map(|(k, v)| ((*k).to_owned(), (*v).to_owned())).collect(),
         text: text.map(str::to_owned),
         line,
     }
@@ -37,12 +34,7 @@ fn background_without_image_is_not_a_scene_break() {
         cmd("background", &[("image", "bg_a")], None, 1),
         say("Amiya", "one two three", 2),
         // a fade: fadetime only, no image
-        cmd(
-            "background",
-            &[("fadetime", "1"), ("block", "false")],
-            None,
-            3,
-        ),
+        cmd("background", &[("fadetime", "1"), ("block", "false")], None, 3),
         say("Amiya", "four five six", 4),
     ];
     let (turns, _) = turns_of(&cmds);
@@ -122,12 +114,7 @@ fn concatenation_is_lossless_and_unduplicated() {
     let mut cmds = Vec::new();
     for i in 0..40u32 {
         if i % 7 == 0 {
-            cmds.push(cmd(
-                "background",
-                &[("image", &format!("bg_{i}"))],
-                None,
-                i * 2,
-            ));
+            cmds.push(cmd("background", &[("image", &format!("bg_{i}"))], None, i * 2));
         }
         cmds.push(say(
             if i % 2 == 0 { "Amiya" } else { "Kal'tsit" },
@@ -140,10 +127,7 @@ fn concatenation_is_lossless_and_unduplicated() {
 
     let (turns, _) = turns_of(&cmds);
     let expected: Vec<String> = turns.iter().map(Turn::render).collect();
-    let got: Vec<String> = out
-        .iter()
-        .flat_map(|c| c.text.split('\n').map(str::to_owned))
-        .collect();
+    let got: Vec<String> = out.iter().flat_map(|c| c.text.split('\n').map(str::to_owned)).collect();
     assert_eq!(got, expected, "no loss and no duplication at overlap 0");
 
     for w in out.windows(2) {
@@ -194,12 +178,7 @@ fn prose_arg_kinds_are_read_from_args() {
 fn metadata_is_populated() {
     let cmds = vec![
         cmd("background", &[("image", "bg_rhodes")], None, 1),
-        cmd(
-            "charslot",
-            &[("slot", "l"), ("name", "avg_npc_032")],
-            None,
-            2,
-        ),
+        cmd("charslot", &[("slot", "l"), ("name", "avg_npc_032")], None, 2),
         say("Amiya", "one two three four", 3),
     ];
     let out = chunk_story("s", "g", &cmds, &ChunkConfig::default(), &words);
@@ -215,20 +194,10 @@ fn strip_backgrounds_named_by_imagegroup_open_scenes() {
     let cmds = vec![
         cmd("background", &[("image", "bg_a")], None, 1),
         say("Amiya", "one two", 2),
-        cmd(
-            "gridbg",
-            &[("imagegroup", "bg_beach_1/bg_beach_2")],
-            None,
-            3,
-        ),
+        cmd("gridbg", &[("imagegroup", "bg_beach_1/bg_beach_2")], None, 3),
         say("W", "three four", 4),
         // same strip again: not a new scene
-        cmd(
-            "largebg",
-            &[("imagegroup", "bg_beach_1/bg_beach_2")],
-            None,
-            5,
-        ),
+        cmd("largebg", &[("imagegroup", "bg_beach_1/bg_beach_2")], None, 5),
         say("W", "five six", 6),
     ];
     let (turns, scene_bg) = turns_of(&cmds);
@@ -251,10 +220,7 @@ fn a_cg_is_an_overlay_not_a_scene_change() {
         say("Kal'tsit", "after the cg", 6),
     ];
     let (turns, _) = turns_of(&cmds);
-    assert!(
-        turns.iter().all(|t| t.scene == 1),
-        "a CG must not open a scene"
-    );
+    assert!(turns.iter().all(|t| t.scene == 1), "a CG must not open a scene");
     let out = chunk_story("s", "g", &cmds, &ChunkConfig::default(), &words);
     assert_eq!(out.len(), 1);
     assert_eq!(

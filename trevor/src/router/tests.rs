@@ -30,8 +30,7 @@ fn dropping_reading_compare_leaves_no_trace_of_it() {
 fn the_source_variant_changes_only_retrieval() {
     let (system, grammar) = source_variant();
     assert!(
-        system.contains("source names the kind of game text")
-            && !system.contains("- retrieve {}: everything else.")
+        system.contains("source names the kind of game text") && !system.contains("- retrieve {}: everything else.")
     );
     assert!(!system.contains(r#""retrieve", "args": {}}"#) && system.contains("Answer with the JSON object only."));
     assert!(grammar.contains(r#""retrieve\", \"args\": {" source "}""#), "{grammar}");
@@ -50,11 +49,27 @@ fn the_source_variant_changes_only_retrieval() {
 /// nothing must leave these hashes as they are.
 #[test]
 fn router_prompt_bytes_are_pinned() {
-    let default = RouterPrompt { source: true, compare: true, wide_topics: true };
+    let default = RouterPrompt {
+        source: true,
+        compare: true,
+        wide_topics: true,
+    };
     let cases = [
         ("default", default),
-        ("no_router_source", RouterPrompt { source: false, ..default }),
-        ("lore_v1", RouterPrompt { wide_topics: false, ..default }),
+        (
+            "no_router_source",
+            RouterPrompt {
+                source: false,
+                ..default
+            },
+        ),
+        (
+            "lore_v1",
+            RouterPrompt {
+                wide_topics: false,
+                ..default
+            },
+        ),
         ("all_off", RouterPrompt::default()),
     ];
     let got: Vec<(&str, String)> = cases
@@ -71,6 +86,10 @@ fn router_prompt_bytes_are_pinned() {
         ("all_off", "8277433626664b44"),
     ];
     for ((name, sha), (wname, wsha)) in got.iter().zip(want) {
-        assert_eq!((*name, sha.as_str()), (wname, wsha), "router prompt bytes changed: {got:?}");
+        assert_eq!(
+            (*name, sha.as_str()),
+            (wname, wsha),
+            "router prompt bytes changed: {got:?}"
+        );
     }
 }

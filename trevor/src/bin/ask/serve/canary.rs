@@ -12,8 +12,8 @@ use crate::chrono::Chrono;
 use crate::cli::Args;
 use crate::llama_server::openai_llm;
 
-use super::{AskRequest, Need, Service};
 use super::service::trim_at_line;
+use super::{AskRequest, Need, Service};
 
 /// The canary result (`ask --canary`).
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -48,10 +48,16 @@ const CANARY: [(&str, &[&str]); 10] = [
     ("What is the name of the creature that protects Kal'tsit?", &["mon3tr"]),
     ("Which city's Guard Department does Ch'en work for?", &["lungmen"]),
     ("What disease do the Infected suffer from?", &["oripathy"]),
-    ("What is the name of the Ursus city Reunion attacks at the start of the story?", &["chernobog"]),
+    (
+        "What is the name of the Ursus city Reunion attacks at the start of the story?",
+        &["chernobog"],
+    ),
     ("What material causes Oripathy?", &["originium"]),
     ("Who is the boss of Penguin Logistics?", &["emperor"]),
-    ("What is the name of the company the Doctor works with?", &["rhodes island"]),
+    (
+        "What is the name of the company the Doctor works with?",
+        &["rhodes island"],
+    ),
     ("Who was the leader of Babel?", &["theresa"]),
     ("What race is Amiya?", &["cautus", "chimera"]),
 ];
@@ -61,7 +67,6 @@ const CANARY_PASS: usize = 8;
 pub(super) fn canary_path() -> PathBuf {
     PathBuf::from(trevor::env::non_empty("TREVOR_CANARY_FILE").unwrap_or_else(|| "artifacts/canary/cf.json".into()))
 }
-
 
 /// The model id the last canary passed, when it is in `models` and the canary is at most `TREVOR_CANARY_MAX_AGE_DAYS`
 /// (8) days old.
@@ -80,14 +85,32 @@ pub(crate) async fn run_canary(a: Args, corpus_default: bool, tables: Tables, ch
     let mut svc = Service::load(a, corpus_default, tables, chrono, Need::Nothing).await?;
     let gate = svc.order.gate();
     let last = u32::try_from(gate.story_order.len() - gate.never.len()).unwrap_or(u32::MAX);
-    let mut out = CanaryFile { checked_at: trevor::util::unix_now(), ..CanaryFile::default() };
+    let mut out = CanaryFile {
+        checked_at: trevor::util::unix_now(),
+        ..CanaryFile::default()
+    };
     for id in &base.models {
-        let llm = openai_llm(&svc.a, OpenAiConfig { models: vec![id.clone()], ..base.clone() })?;
+        let llm = openai_llm(
+            &svc.a,
+            OpenAiConfig {
+                models: vec![id.clone()],
+                ..base.clone()
+            },
+        )?;
         let t = Instant::now();
-        let mut m = CanaryModel { id: id.clone(), ..CanaryModel::default() };
+        let mut m = CanaryModel {
+            id: id.clone(),
+            ..CanaryModel::default()
+        };
         for (q, expect) in CANARY {
-            let req = AskRequest { question: q.into(), horizon: None, horizon_pos: Some(last), server: None,
-                                   flags: Vec::new(), profile: Some("full".into()) };
+            let req = AskRequest {
+                question: q.into(),
+                horizon: None,
+                horizon_pos: Some(last),
+                server: None,
+                flags: Vec::new(),
+                profile: Some("full".into()),
+            };
             match svc.ask(req, Some(llm.clone())).await {
                 Ok(job) => {
                     let ans = job.result.answer.to_lowercase();
@@ -108,9 +131,16 @@ pub(crate) async fn run_canary(a: Args, corpus_default: bool, tables: Tables, ch
             (u.json_calls, u.json_failures, u.tokens_in, u.tokens_out);
         m.secs = t.elapsed().as_secs_f64();
         m.passed = m.errors.is_empty() && m.hits >= CANARY_PASS;
-        eprintln!("canary {id}: {} of {} hits, {} errors, {} of {} JSON calls failed, {:.0} s: {}",
-                  m.hits, CANARY.len(), m.errors.len(), m.json_failures, m.json_calls, m.secs,
-                  if m.passed { "PASS" } else { "fail" });
+        eprintln!(
+            "canary {id}: {} of {} hits, {} errors, {} of {} JSON calls failed, {:.0} s: {}",
+            m.hits,
+            CANARY.len(),
+            m.errors.len(),
+            m.json_failures,
+            m.json_calls,
+            m.secs,
+            if m.passed { "PASS" } else { "fail" }
+        );
         let passed = m.passed;
         out.models.push(m);
         if passed {

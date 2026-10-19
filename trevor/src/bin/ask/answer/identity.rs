@@ -12,23 +12,144 @@ use trevor::tools::{Tools, norm};
 
 /// Phrases that assert an identity whatever precedes them.
 const CLAIMS: &[&str] = &[
-    "referred to as", "known as", "nicknamed", "revealed to be", "revealed as", "identified as",
-    "the same person as", "the same character as", "the same individual as", "another name for", "an alias of",
-    "an alias for", "a pseudonym of", "a pseudonym for", "goes by the name of", "goes by the name", "goes by",
-    "also called", "also named", "is actually", "was actually", "is in fact", "was in fact", "is secretly",
-    "was secretly", "is really", "was really", "is called", "was called", "are called", "were called", "be called",
-    "been called", "is named", "was named",
+    "referred to as",
+    "known as",
+    "nicknamed",
+    "revealed to be",
+    "revealed as",
+    "identified as",
+    "the same person as",
+    "the same character as",
+    "the same individual as",
+    "another name for",
+    "an alias of",
+    "an alias for",
+    "a pseudonym of",
+    "a pseudonym for",
+    "goes by the name of",
+    "goes by the name",
+    "goes by",
+    "also called",
+    "also named",
+    "is actually",
+    "was actually",
+    "is in fact",
+    "was in fact",
+    "is secretly",
+    "was secretly",
+    "is really",
+    "was really",
+    "is called",
+    "was called",
+    "are called",
+    "were called",
+    "be called",
+    "been called",
+    "is named",
+    "was named",
 ];
 
 /// Capitalized words that start a sentence or a clause, not a name.
 pub(super) const NOT_NAMES: &[&str] = &[
-    "The", "A", "An", "She", "He", "They", "It", "Her", "His", "Their", "Its", "Him", "Them", "Later", "In", "This",
-    "That", "These", "Those", "However", "Also", "Both", "When", "After", "Before", "At", "On", "By", "As", "But",
-    "And", "While", "During", "Then", "Here", "There", "Each", "Some", "Many", "Trevor", "I", "We", "You", "Tell",
-    "What", "Who", "Whom", "Which", "Where", "Why", "How", "Is", "Are", "Was", "Were", "Do", "Does", "Did", "Can",
-    "Could", "Give", "Explain", "Describe", "Summarize", "Summarise", "List", "Name", "More", "About", "Me", "Please",
-    "Yes", "No", "Not", "One", "Another", "According", "Passage", "Passages", "Ms", "Mr", "Mrs", "Dr", "Regarding",
-    "Based", "Overall", "Like", "Unlike", "Although", "Though", "Because", "Since", "If", "So", "Yet", "For", "From", "With", "To",
+    "The",
+    "A",
+    "An",
+    "She",
+    "He",
+    "They",
+    "It",
+    "Her",
+    "His",
+    "Their",
+    "Its",
+    "Him",
+    "Them",
+    "Later",
+    "In",
+    "This",
+    "That",
+    "These",
+    "Those",
+    "However",
+    "Also",
+    "Both",
+    "When",
+    "After",
+    "Before",
+    "At",
+    "On",
+    "By",
+    "As",
+    "But",
+    "And",
+    "While",
+    "During",
+    "Then",
+    "Here",
+    "There",
+    "Each",
+    "Some",
+    "Many",
+    "Trevor",
+    "I",
+    "We",
+    "You",
+    "Tell",
+    "What",
+    "Who",
+    "Whom",
+    "Which",
+    "Where",
+    "Why",
+    "How",
+    "Is",
+    "Are",
+    "Was",
+    "Were",
+    "Do",
+    "Does",
+    "Did",
+    "Can",
+    "Could",
+    "Give",
+    "Explain",
+    "Describe",
+    "Summarize",
+    "Summarise",
+    "List",
+    "Name",
+    "More",
+    "About",
+    "Me",
+    "Please",
+    "Yes",
+    "No",
+    "Not",
+    "One",
+    "Another",
+    "According",
+    "Passage",
+    "Passages",
+    "Ms",
+    "Mr",
+    "Mrs",
+    "Dr",
+    "Regarding",
+    "Based",
+    "Overall",
+    "Like",
+    "Unlike",
+    "Although",
+    "Though",
+    "Because",
+    "Since",
+    "If",
+    "So",
+    "Yet",
+    "For",
+    "From",
+    "With",
+    "To",
 ];
 
 /// Lowercase words that may sit inside a name ("Knight of the Snow", "Feoria La Porta").
@@ -55,9 +176,13 @@ pub(super) fn sentences(text: &str) -> Vec<Piece<'_>> {
     while i < b.len() {
         let c = b[i];
         if matches!(c, b'.' | b'!' | b'?') && (i + 1 == b.len() || b[i + 1].is_ascii_whitespace()) {
-            let word = text[start..i].rsplit(|ch: char| ch.is_whitespace()).next().unwrap_or_default();
-            let abbrev = c == b'.' && (ABBREVIATIONS.contains(&word)
-                || (word.len() == 1 && word.chars().all(|ch| ch.is_ascii_uppercase())));
+            let word = text[start..i]
+                .rsplit(|ch: char| ch.is_whitespace())
+                .next()
+                .unwrap_or_default();
+            let abbrev = c == b'.'
+                && (ABBREVIATIONS.contains(&word)
+                    || (word.len() == 1 && word.chars().all(|ch| ch.is_ascii_uppercase())));
             if !abbrev {
                 let mut end = i + 1;
                 // Citations after the mark: "... frame. [1]".
@@ -66,15 +191,22 @@ pub(super) fn sentences(text: &str) -> Vec<Piece<'_>> {
                     let ws = rest.len() - rest.trim_start_matches(' ').len();
                     let r = &rest[ws..];
                     match r.strip_prefix('[').and_then(|x| x.find(']').map(|j| &x[..j])) {
-                        Some(inner) if !inner.is_empty()
-                            && inner.chars().all(|ch| ch.is_ascii_digit() || matches!(ch, ',' | ' ' | ';')) => {
+                        Some(inner)
+                            if !inner.is_empty()
+                                && inner
+                                    .chars()
+                                    .all(|ch| ch.is_ascii_digit() || matches!(ch, ',' | ' ' | ';')) =>
+                        {
                             end += ws + inner.len() + 2;
                         }
                         _ => break,
                     }
                 }
                 let sep_end = end + (text[end..].len() - text[end..].trim_start().len());
-                out.push(Piece { text: &text[start..end], sep: &text[end..sep_end] });
+                out.push(Piece {
+                    text: &text[start..end],
+                    sep: &text[end..sep_end],
+                });
                 start = sep_end;
                 i = sep_end;
                 continue;
@@ -84,14 +216,18 @@ pub(super) fn sentences(text: &str) -> Vec<Piece<'_>> {
     }
     if start < text.len() {
         let t = text[start..].trim_end();
-        out.push(Piece { text: t, sep: &text[start + t.len()..] });
+        out.push(Piece {
+            text: t,
+            sep: &text[start + t.len()..],
+        });
     }
     out
 }
 
 pub(super) fn clean(tok: &str) -> &str {
     tok.trim_matches(|c: char| !c.is_alphanumeric() && c != '\'' && c != '-')
-        .trim_end_matches("'s").trim_matches('\'')
+        .trim_end_matches("'s")
+        .trim_matches('\'')
 }
 
 pub(super) fn is_cap(tok: &str) -> bool {
@@ -151,8 +287,13 @@ fn target_after(rest: &str) -> Option<String> {
             break;
         }
         // "is actually Lemuen's sister" relates two people; it does not name one.
-        if tok.trim_end_matches([',', ';', ':', '.', '!', '?', ')']).ends_with("'s")
-            || tok.trim_end_matches([',', ';', ':', '.', '!', '?', ')']).ends_with("\u{2019}s") {
+        if tok
+            .trim_end_matches([',', ';', ':', '.', '!', '?', ')'])
+            .ends_with("'s")
+            || tok
+                .trim_end_matches([',', ';', ':', '.', '!', '?', ')'])
+                .ends_with("\u{2019}s")
+        {
             return None;
         }
         name.push(w);
@@ -167,7 +308,10 @@ fn target_after(rest: &str) -> Option<String> {
 pub(super) fn holds(text: &str, name: &str) -> bool {
     text.match_indices(name).any(|(i, _)| {
         text[..i].chars().last().is_none_or(|c| !c.is_alphanumeric())
-            && text[i + name.len()..].chars().next().is_none_or(|c| !c.is_alphanumeric())
+            && text[i + name.len()..]
+                .chars()
+                .next()
+                .is_none_or(|c| !c.is_alphanumeric())
     })
 }
 
@@ -179,9 +323,14 @@ pub(super) fn same(a: &str, b: &str) -> bool {
 
 /// An identity link or a passage joins `subject` and `target`.
 fn linked(tools: &Tools, texts: &[String], subject: &str, target: &str) -> bool {
-    let group = tools.identities.iter().any(|g| g.iter().any(|n| same(n, subject)) && g.iter().any(|n| same(n, target)));
-    let link = tools.identity_links.iter().any(|(a, b, ..)| (same(a, subject) && same(b, target))
-        || (same(a, target) && same(b, subject)));
+    let group = tools
+        .identities
+        .iter()
+        .any(|g| g.iter().any(|n| same(n, subject)) && g.iter().any(|n| same(n, target)));
+    let link = tools
+        .identity_links
+        .iter()
+        .any(|(a, b, ..)| (same(a, subject) && same(b, target)) || (same(a, target) && same(b, subject)));
     group || link || texts.iter().any(|t| holds(t, subject) && holds(t, target))
 }
 
@@ -193,9 +342,31 @@ enum Subject {
 }
 
 /// Words that may sit between a claim's subject and its phrase ("Silence, also known as", "she is now called").
-const BETWEEN: &[&str] = &["is", "was", "are", "were", "be", "been", "being", "also", "later", "actually", "often",
-                           "sometimes", "now", "formerly", "previously", "then", "in", "fact", "once", "herself",
-                           "himself", "themselves", "itself"];
+const BETWEEN: &[&str] = &[
+    "is",
+    "was",
+    "are",
+    "were",
+    "be",
+    "been",
+    "being",
+    "also",
+    "later",
+    "actually",
+    "often",
+    "sometimes",
+    "now",
+    "formerly",
+    "previously",
+    "then",
+    "in",
+    "fact",
+    "once",
+    "herself",
+    "himself",
+    "themselves",
+    "itself",
+];
 
 /// The subject of a claim whose phrase follows `pre`: the name run or pronoun right before it, with only `BETWEEN`
 /// words and commas in between. Anything else ("a former host who was known as") is not a claim about a name.
@@ -238,12 +409,18 @@ fn subject_before(pre: &str) -> Subject {
 /// subject (the first name of its first sentence), standing in for a pronoun subject ("Later, she is referred to as").
 fn unsupported(sentence: &str, lead: &[String], tools: &Tools, texts: &[String]) -> Option<(String, String)> {
     let lower = sentence.to_ascii_lowercase();
-    let mut hits: Vec<(usize, &str)> = CLAIMS.iter().filter_map(|p| {
-        lower.match_indices(p).find(|(i, _)| {
-            lower[..*i].chars().last().is_none_or(|c| !c.is_alphanumeric())
-                && lower[i + p.len()..].starts_with(' ')
-        }).map(|(i, _)| (i, *p))
-    }).collect();
+    let mut hits: Vec<(usize, &str)> = CLAIMS
+        .iter()
+        .filter_map(|p| {
+            lower
+                .match_indices(p)
+                .find(|(i, _)| {
+                    lower[..*i].chars().last().is_none_or(|c| !c.is_alphanumeric())
+                        && lower[i + p.len()..].starts_with(' ')
+                })
+                .map(|(i, _)| (i, *p))
+        })
+        .collect();
     hits.sort_by_key(|&(i, p)| (i, std::cmp::Reverse(p.len())));
     let &(at, phrase) = hits.first()?;
     let target = target_after(&sentence[at + phrase.len()..])?;
@@ -252,8 +429,10 @@ fn unsupported(sentence: &str, lead: &[String], tools: &Tools, texts: &[String])
         Subject::Pronoun => lead.to_vec(),
         Subject::Other => return None,
     };
-    let subjects: Vec<String> = subjects.into_iter().filter(|s| !same(s, &target)
-        && !norm(s).contains(&norm(&target)) && !norm(&target).contains(&norm(s))).collect();
+    let subjects: Vec<String> = subjects
+        .into_iter()
+        .filter(|s| !same(s, &target) && !norm(s).contains(&norm(&target)) && !norm(&target).contains(&norm(s)))
+        .collect();
     if subjects.is_empty() || subjects.iter().any(|s| linked(tools, texts, s, &target)) {
         return None;
     }
@@ -264,18 +443,27 @@ fn unsupported(sentence: &str, lead: &[String], tools: &Tools, texts: &[String])
 /// there is none. When every sentence would go, the answer stays and a check note naming the claim is appended.
 pub(crate) fn check(answer: &str, q: &str, texts: &[String], tools: &Tools) -> Option<(String, Vec<(String, String)>)> {
     let pieces = sentences(answer);
-    let mut lead: Vec<String> = pieces.first().map(|p| name_runs(p.text)).unwrap_or_default().into_iter().take(1)
+    let mut lead: Vec<String> = pieces
+        .first()
+        .map(|p| name_runs(p.text))
+        .unwrap_or_default()
+        .into_iter()
+        .take(1)
         .collect();
     lead.extend(name_runs(q));
-    let flags: Vec<Option<(String, String)>> = pieces.iter().map(|p| unsupported(p.text, &lead, tools, texts))
+    let flags: Vec<Option<(String, String)>> = pieces
+        .iter()
+        .map(|p| unsupported(p.text, &lead, tools, texts))
         .collect();
     let claims: Vec<(String, String)> = flags.iter().flatten().cloned().collect();
     if claims.is_empty() {
         return None;
     }
     if flags.iter().all(Option::is_some) {
-        let notes: Vec<String> = claims.iter()
-            .map(|(s, t)| format!("no passage Trevor read says that {s} and {t} are the same person")).collect();
+        let notes: Vec<String> = claims
+            .iter()
+            .map(|(s, t)| format!("no passage Trevor read says that {s} and {t} are the same person"))
+            .collect();
         return Some((format!("{answer}\n\nTrevor's check: {}.", notes.join("; ")), claims));
     }
     let keep: Vec<bool> = flags.iter().map(Option::is_none).collect();
@@ -371,7 +559,10 @@ mod tests {
         assert_eq!(claims, vec![("Quiet Woman".to_owned(), "Silence".to_owned())]);
         assert!(out.ends_with("through a window frame [1]."), "{out}");
         assert!(!out.contains("Silence"));
-        assert_eq!(cited_ids(&out, &["a".into(), "b".into(), "c".into()]), vec!["a".to_owned()]);
+        assert_eq!(
+            cited_ids(&out, &["a".into(), "b".into(), "c".into()]),
+            vec!["a".to_owned()]
+        );
     }
 
     #[test]
@@ -382,27 +573,43 @@ mod tests {
         assert_eq!(r.map(|x| x.1), Some(vec![("Mayer".to_owned(), "Kal'tsit".to_owned())]));
         let mut t = Tools::default();
         t.identities.push(vec!["Quiet Woman".into(), "Silence".into()]);
-        assert!(check("Later, she is referred to as Silence [2]. She reads [1].", "Who is the Quiet Woman?",
-                      &texts(), &t).is_none());
+        assert!(
+            check(
+                "Later, she is referred to as Silence [2]. She reads [1].",
+                "Who is the Quiet Woman?",
+                &texts(),
+                &t
+            )
+            .is_none()
+        );
     }
 
     #[test]
     fn non_claims_do_not_fire() {
         let t = Tools::default();
-        for a in ["She is actually a Sankta [1].", "A girl named Cecelia lives there [1].",
-                  "The city is known as the holy city [1].", "He called her a fool [1].",
-                  "Ms. Silence meets Muelsyse [2]. Silence is known as Silence [2].",
-                  "The Quiet Woman is actually Lemuen's sister [1].",
-                  "Vanilla says that they are called \"Originium slugs\" [2].",
-                  "Regarding Midnight, the story describes him as a host who was known as the \"Devil\" [2]."] {
+        for a in [
+            "She is actually a Sankta [1].",
+            "A girl named Cecelia lives there [1].",
+            "The city is known as the holy city [1].",
+            "He called her a fool [1].",
+            "Ms. Silence meets Muelsyse [2]. Silence is known as Silence [2].",
+            "The Quiet Woman is actually Lemuen's sister [1].",
+            "Vanilla says that they are called \"Originium slugs\" [2].",
+            "Regarding Midnight, the story describes him as a host who was known as the \"Devil\" [2].",
+        ] {
             assert!(check(a, "Who is she?", &texts(), &t).is_none(), "{a}");
         }
     }
 
     #[test]
     fn a_lone_claim_keeps_the_answer_and_gets_a_note() {
-        let (out, _) = check("The Quiet Woman is actually Silence [2].", "Who is the Quiet Woman?", &texts(),
-                             &Tools::default()).unwrap();
+        let (out, _) = check(
+            "The Quiet Woman is actually Silence [2].",
+            "Who is the Quiet Woman?",
+            &texts(),
+            &Tools::default(),
+        )
+        .unwrap();
         assert!(out.starts_with("The Quiet Woman is actually Silence [2]."));
         assert!(out.contains("Trevor's check: no passage Trevor read says that Quiet Woman and Silence"));
     }
@@ -411,6 +618,9 @@ mod tests {
     fn sentences_keep_paragraph_breaks_and_citations() {
         let p = sentences("One [1].\n\nTwo. [2] Three Ms. X here.");
         let got: Vec<(&str, &str)> = p.iter().map(|x| (x.text, x.sep)).collect();
-        assert_eq!(got, vec![("One [1].", "\n\n"), ("Two. [2]", " "), ("Three Ms. X here.", "")]);
+        assert_eq!(
+            got,
+            vec![("One [1].", "\n\n"), ("Two. [2]", " "), ("Three Ms. X here.", "")]
+        );
     }
 }

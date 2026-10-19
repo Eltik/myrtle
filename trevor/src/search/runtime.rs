@@ -125,7 +125,10 @@ impl SharedEmbedder {
     }
 
     fn embed(&self, q: &str) -> Result<Vec<f32>> {
-        self.inner.lock().map_err(|_| anyhow::anyhow!("query embedder lock poisoned"))?.embed(q)
+        self.inner
+            .lock()
+            .map_err(|_| anyhow::anyhow!("query embedder lock poisoned"))?
+            .embed(q)
     }
 }
 
@@ -138,12 +141,7 @@ impl Runtime {
     ///
     /// # Errors
     /// Any missing or stale artifact.
-    pub fn load(
-        a: &RuntimeArgs,
-        needs_dense: bool,
-        needs_bm25: bool,
-        needs_rerank: bool,
-    ) -> Result<Self> {
+    pub fn load(a: &RuntimeArgs, needs_dense: bool, needs_bm25: bool, needs_rerank: bool) -> Result<Self> {
         Self::load_sharing(a, needs_dense, needs_bm25, needs_rerank, None)
     }
 
@@ -162,8 +160,9 @@ impl Runtime {
         let (dense, embedder) = if needs_dense {
             let d = DenseIndex::load(&a.corpus, &store)?;
             let onnx = resolve_query_onnx(&a.query_onnx, &d.meta.model_file).to_owned();
-            let share = share.filter(|s| crate::env::on_unless_0("TREVOR_SHARE_EMBEDDER")
-                && s.fits(a, &onnx, &d.meta.tokenizer_sha));
+            let share = share.filter(|s| {
+                crate::env::on_unless_0("TREVOR_SHARE_EMBEDDER") && s.fits(a, &onnx, &d.meta.tokenizer_sha)
+            });
             let e = match share {
                 Some(s) => s,
                 None => SharedEmbedder {
@@ -180,7 +179,10 @@ impl Runtime {
                 },
             };
             {
-                let q = e.inner.lock().map_err(|_| anyhow::anyhow!("query embedder lock poisoned"))?;
+                let q = e
+                    .inner
+                    .lock()
+                    .map_err(|_| anyhow::anyhow!("query embedder lock poisoned"))?;
                 check_query_model(&d.meta.model_file, &d.meta.model_sha, &q, a.allow_query_model_mismatch)?;
             }
             (Some(d), Some(e))
@@ -222,13 +224,19 @@ impl Runtime {
     /// # Errors
     /// See [`retrieve`].
     pub fn retrieve(&mut self, query: &str, cfg: &RetrievalConfig) -> Result<Vec<Hit>> {
-        let Some(h) = self.horizon.clone() else { return self.retrieve_all(query, cfg) };
+        let Some(h) = self.horizon.clone() else {
+            return self.retrieve_all(query, cfg);
+        };
         // Under a horizon: a fused list of at least HORIZON_DEPTH candidates per retriever, the hidden chunks dropped,
         // then the first `k`. A depth of 8 x k alone can leave a question whose top candidates are nearly all later
         // stories with one or two passages; dense and BM25 score every chunk anyway, so the depth is cheap.
         // A reranked config reranks before the drop (opt-in paths only; `ask --rerank-add`).
         let depth = cfg.candidates.max(cfg.k * 8).max(HORIZON_DEPTH);
-        let wide = RetrievalConfig { candidates: depth, k: depth, ..cfg.clone() };
+        let wide = RetrievalConfig {
+            candidates: depth,
+            k: depth,
+            ..cfg.clone()
+        };
         let mut hits = self.retrieve_all(query, &wide)?;
         hits.retain(|x| self.allows_row(&h, x.row));
         hits.truncate(cfg.k);
@@ -238,15 +246,23 @@ impl Runtime {
     /// Whether row `row` is visible under horizon `h`.
     #[must_use]
     pub fn allows_row(&self, h: &Horizon, row: usize) -> bool {
-        self.store.chunks.get(row).is_some_and(|c| h.allows(&c.story_id, &c.group_id))
+        self.store
+            .chunks
+            .get(row)
+            .is_some_and(|c| h.allows(&c.story_id, &c.group_id))
     }
 
     fn retrieve_all(&mut self, query: &str, cfg: &RetrievalConfig) -> Result<Vec<Hit>> {
         let bm25_cfg;
         let cfg = if self.bm25_only && self.dense.is_none() && cfg.mode != Mode::Bm25 {
-            bm25_cfg = RetrievalConfig { mode: Mode::Bm25, ..cfg.clone() };
+            bm25_cfg = RetrievalConfig {
+                mode: Mode::Bm25,
+                ..cfg.clone()
+            };
             &bm25_cfg
-        } else { cfg };
+        } else {
+            cfg
+        };
         let ix = Indexes {
             store: &self.store,
             dense: self.dense.as_ref(),
@@ -291,8 +307,14 @@ impl Runtime {
             chunk_count: self.store.len(),
             doc_model_sha: self.dense.as_ref().map(|d| d.meta.model_sha.clone()),
             tokenizer_sha: self.dense.as_ref().map(|d| d.meta.tokenizer_sha.clone()),
-            query_model_file: self.embedder.as_ref().and_then(|e| e.inner.lock().ok().map(|e| e.onnx_file.clone())),
-            query_model_sha: self.embedder.as_ref().and_then(|e| e.inner.lock().ok().map(|e| e.model_sha.clone())),
+            query_model_file: self
+                .embedder
+                .as_ref()
+                .and_then(|e| e.inner.lock().ok().map(|e| e.onnx_file.clone())),
+            query_model_sha: self
+                .embedder
+                .as_ref()
+                .and_then(|e| e.inner.lock().ok().map(|e| e.model_sha.clone())),
             reranker_sha: self.reranker.as_ref().map(|r| r.model_sha.clone()),
             rerank_max_tokens: self.reranker.as_ref().map(|r| r.max_tokens),
             bm25_pattern: super::tokenizer::LORE_PATTERN,

@@ -9,7 +9,10 @@ use crate::kinds::{RECORD_KINDS, is_generated};
 
 /// Lowercase letters and digits only: "Khagan quest" and "Khaganquest" are both "khaganquest".
 pub(crate) fn compact(x: &str) -> String {
-    x.chars().filter(|c| c.is_alphanumeric()).flat_map(char::to_lowercase).collect()
+    x.chars()
+        .filter(|c| c.is_alphanumeric())
+        .flat_map(char::to_lowercase)
+        .collect()
 }
 
 /// Term lookup (`--term-lookup`): the corpus's spelling of a term and the chunks naming it most.
@@ -33,11 +36,16 @@ pub(crate) fn term_lookup(rt: &Runtime, term: &str, k: usize) -> Option<(String,
             for (i, ch) in c.text.char_indices() {
                 match (ch.is_alphanumeric(), start) {
                     (true, None) => start = Some(i),
-                    (false, Some(s0)) => { v.push((s0, i)); start = None; }
+                    (false, Some(s0)) => {
+                        v.push((s0, i));
+                        start = None;
+                    }
                     _ => {}
                 }
             }
-            if let Some(s0) = start { v.push((s0, c.text.len())); }
+            if let Some(s0) = start {
+                v.push((s0, c.text.len()));
+            }
             v
         };
         let mut n = 0;
@@ -100,10 +108,17 @@ pub(crate) fn whole_word_at(text: &str, f: &str) -> Option<usize> {
 /// mention), not the term itself, at most `k`, each as the first two sentences of its summary. With `rarity` (the
 /// default), the rarest first: fewest chunks of `rarity` naming one of the topic's forms, first mention breaking ties,
 /// so generic topics (Rhodes Island, Terra, Precursors) do not take the places.
-pub(crate) fn term_glossary(tools: &Tools, texts: &[&str], term: &str, k: usize,
-                            rarity: Option<&Runtime>) -> Vec<(String, String)> {
+pub(crate) fn term_glossary(
+    tools: &Tools,
+    texts: &[&str],
+    term: &str,
+    k: usize,
+    rarity: Option<&Runtime>,
+) -> Vec<(String, String)> {
     let key = compact(term);
-    let Some(rows) = tools.topics.as_ref() else { return Vec::new() };
+    let Some(rows) = tools.topics.as_ref() else {
+        return Vec::new();
+    };
     let all = texts.join("\n");
     let mut found: Vec<(usize, usize, String)> = Vec::new();
     for r in rows {
@@ -120,12 +135,21 @@ pub(crate) fn term_glossary(tools: &Tools, texts: &[&str], term: &str, k: usize,
             .collect();
         let first = forms.iter().filter_map(|f| whole_word_at(&all, f)).min();
         if let Some(i) = first {
-            let df = rarity.map_or(0, |rt| rt.store.chunks.iter().filter(|c| !is_generated(&c.group_id)
-                && forms.iter().any(|f| whole_word_at(&c.text, f).is_some())).count());
+            let df = rarity.map_or(0, |rt| {
+                rt.store
+                    .chunks
+                    .iter()
+                    .filter(|c| !is_generated(&c.group_id) && forms.iter().any(|f| whole_word_at(&c.text, f).is_some()))
+                    .count()
+            });
             found.push((df, i, name.to_owned()));
         }
     }
     found.sort();
-    found.into_iter().filter_map(|(_, _, name)| tools.topic(&name).ok().map(|t| (t.topic, first_sentences(&t.text, 2))))
-        .filter(|(_, x)| !x.is_empty()).take(k).collect()
+    found
+        .into_iter()
+        .filter_map(|(_, _, name)| tools.topic(&name).ok().map(|t| (t.topic, first_sentences(&t.text, 2))))
+        .filter(|(_, x)| !x.is_empty())
+        .take(k)
+        .collect()
 }

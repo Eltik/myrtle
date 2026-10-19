@@ -15,25 +15,44 @@ impl Tools {
     /// # Errors
     /// An unknown table, or a table that has not been built.
     pub fn cross_ref(&self, table: &str) -> ToolResult {
-        let name = CROSSREF_TABLES.iter().find(|t| norm(t) == norm(table))
-            .ok_or_else(|| ToolError::BadArg { arg: "table", value: table.to_owned() })?;
-        let v = self.crossref.get(*name)
-            .ok_or(ToolError::Missing("artifacts/crossref/bosses_playable.json (scripts/crossref.py)"))?;
+        let name = CROSSREF_TABLES
+            .iter()
+            .find(|t| norm(t) == norm(table))
+            .ok_or_else(|| ToolError::BadArg {
+                arg: "table",
+                value: table.to_owned(),
+            })?;
+        let v = self.crossref.get(*name).ok_or(ToolError::Missing(
+            "artifacts/crossref/bosses_playable.json (scripts/crossref.py)",
+        ))?;
         let rows = v["rows"].as_array().map(Vec::as_slice).unwrap_or_default();
         let mut by_op: BTreeMap<String, Vec<&Value>> = BTreeMap::new();
         for r in rows {
             by_op.entry(s(r, "operator")).or_default().push(r);
         }
-        let mut out = format!("Boss enemies you fight that are also playable operators, from the game data \
+        let mut out = format!(
+            "Boss enemies you fight that are also playable operators, from the game data \
             (the enemy handbook's {} boss entries matched by name to the {} obtainable operators, \
             through the codename, the operator's real name or Trevor's identity links): {} operators. \
             A match by name means the same character; a simulated or training version of an ally counts too, \
             and a boss who joins later under another name is found only when a real name or identity link \
             connects the two, so the list may miss some.\n",
-            v["bosses"].as_u64().unwrap_or(0), v["operators"].as_u64().unwrap_or(0), by_op.len());
+            v["bosses"].as_u64().unwrap_or(0),
+            v["operators"].as_u64().unwrap_or(0),
+            by_op.len()
+        );
         for (op, rs) in &by_op {
-            let bosses = rs.iter().map(|r| format!("\"{}\" (matched by {})", s(r, "boss"),
-                s(r, "matchedBy").split(" (").next().unwrap_or_default())).collect::<Vec<_>>().join("; ");
+            let bosses = rs
+                .iter()
+                .map(|r| {
+                    format!(
+                        "\"{}\" (matched by {})",
+                        s(r, "boss"),
+                        s(r, "matchedBy").split(" (").next().unwrap_or_default()
+                    )
+                })
+                .collect::<Vec<_>>()
+                .join("; ");
             out.push_str(&format!("- {op}: {bosses}\n"));
         }
         Ok(out)
@@ -45,48 +64,85 @@ impl Tools {
     /// # Errors
     /// Missing table, or a character with no speaking or mentioning chunk.
     pub fn appearances(&self, character: &str) -> ToolResult {
-        let v = self.appearances.as_ref()
-            .ok_or(ToolError::Missing("artifacts/appearances/appearances.json (scripts/appearances.py)"))?;
-        let chars = v["characters"].as_object().ok_or(ToolError::Missing("artifacts/appearances/appearances.json"))?;
+        let v = self.appearances.as_ref().ok_or(ToolError::Missing(
+            "artifacts/appearances/appearances.json (scripts/appearances.py)",
+        ))?;
+        let chars = v["characters"]
+            .as_object()
+            .ok_or(ToolError::Missing("artifacts/appearances/appearances.json"))?;
         let keys: Vec<&str> = chars.keys().map(String::as_str).collect();
         let name = self.resolve_name("character", character, &keys)?;
         let c = &chars[name];
         let groups = &v["groups"];
         let list = |k: &str| -> Vec<(u64, String, u64)> {
-            let mut rows: Vec<(u64, String, u64)> = c[k].as_object().into_iter().flatten().map(|(g, n)| {
-                let gr = &groups[g.as_str()];
-                (gr["order"].as_u64().unwrap_or(10_000), appearance_label(gr, g), n.as_u64().unwrap_or(0))
-            }).collect();
+            let mut rows: Vec<(u64, String, u64)> = c[k]
+                .as_object()
+                .into_iter()
+                .flatten()
+                .map(|(g, n)| {
+                    let gr = &groups[g.as_str()];
+                    (
+                        gr["order"].as_u64().unwrap_or(10_000),
+                        appearance_label(gr, g),
+                        n.as_u64().unwrap_or(0),
+                    )
+                })
+                .collect();
             rows.sort();
             rows
         };
         let (speaks, mentioned) = (list("speaks"), list("mentioned"));
         if speaks.is_empty() && mentioned.is_empty() {
-            return Err(ToolError::NotFound { what: "appearance", name: character.to_owned() });
+            return Err(ToolError::NotFound {
+                what: "appearance",
+                name: character.to_owned(),
+            });
         }
-        let scenes = |n: u64| if n == 1 { "1 scene".to_owned() } else { format!("{n} scenes") };
-        let mut out = format!("Where {name} appears in the story text Trevor has, \
+        let scenes = |n: u64| {
+            if n == 1 {
+                "1 scene".to_owned()
+            } else {
+                format!("{n} scenes")
+            }
+        };
+        let mut out = format!(
+            "Where {name} appears in the story text Trevor has, \
             from the scripts' speaker labels and name matches \
             (game text, not a summary; a scene is a passage of about 400 tokens):\n\n\
-            Speaks in {} stories, in EN release order:\n", speaks.len());
+            Speaks in {} stories, in EN release order:\n",
+            speaks.len()
+        );
         for (_, l, n) in &speaks {
             out.push_str(&format!("- {l} ({})\n", scenes(*n)));
         }
         if !mentioned.is_empty() {
-            out.push_str(&format!("\nMentioned by name without speaking in {}:\n", mentioned.len()));
+            out.push_str(&format!(
+                "\nMentioned by name without speaking in {}:\n",
+                mentioned.len()
+            ));
             for (_, l, n) in &mentioned {
                 out.push_str(&format!("- {l} ({})\n", scenes(*n)));
             }
         }
-        let owners: BTreeSet<String> = c["namedIn"].as_array().into_iter().flatten().filter_map(Value::as_str)
-            .filter_map(|id| self.source_owner(id)).filter(|o| norm(o) != norm(name)).collect();
+        let owners: BTreeSet<String> = c["namedIn"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(Value::as_str)
+            .filter_map(|id| self.source_owner(id))
+            .filter(|o| norm(o) != norm(name))
+            .collect();
         if !owners.is_empty() {
-            out.push_str(&format!("\nAlso named in the operator files, voice lines, modules or outfits of: {}.\n",
-                owners.into_iter().collect::<Vec<_>>().join(", ")));
+            out.push_str(&format!(
+                "\nAlso named in the operator files, voice lines, modules or outfits of: {}.\n",
+                owners.into_iter().collect::<Vec<_>>().join(", ")
+            ));
         }
-        out.push_str("\nNot counted: stories without speaker labels \
+        out.push_str(
+            "\nNot counted: stories without speaker labels \
             (Integrated Strategies, paradox simulations, which have no script in the game data), \
-            and appearances under a name the identity links do not connect.");
+            and appearances under a name the identity links do not connect.",
+        );
         Ok(out)
     }
 
@@ -98,11 +154,18 @@ impl Tools {
             return Some(p.to_owned());
         }
         let attrs = self.attributes.as_ref()?;
-        attrs.iter().filter_map(|a| a["charId"].as_str().map(|c| (c, a)))
-            .filter(|(c, _)| id.contains(*c)
-                || id.split('_').next_back()
-                    .is_some_and(|x| c.ends_with(&format!("_{x}")) && id.starts_with("module_")))
-            .max_by_key(|(c, _)| c.len()).map(|(_, a)| s(a, "name"))
+        attrs
+            .iter()
+            .filter_map(|a| a["charId"].as_str().map(|c| (c, a)))
+            .filter(|(c, _)| {
+                id.contains(*c)
+                    || id
+                        .split('_')
+                        .next_back()
+                        .is_some_and(|x| c.ends_with(&format!("_{x}")) && id.starts_with("module_"))
+            })
+            .max_by_key(|(c, _)| c.len())
+            .map(|(_, a)| s(a, "name"))
     }
 
     /// The character of a question that asks where someone appears ("What chapters does Elysium appear in?", "which
@@ -111,18 +174,45 @@ impl Tools {
     #[must_use]
     pub fn appearance_question(&self, q: &str) -> Option<String> {
         let n = norm(q);
-        let appear = ["appear", "appears", "appeared", "appearance", "appearances", "show up", "shows up", "showed up",
-            "featured", "feature", "features", "present in"];
-        let story = ["chapter", "chapters", "event", "events", "story", "stories", "episode", "episodes", "storyline",
-            "storylines"];
-        if !appear.iter().any(|w| contains_words(&n, w)) || !story.iter().any(|w| contains_words(&n, w))
-            || contains_words(&n, "first") {
+        let appear = [
+            "appear",
+            "appears",
+            "appeared",
+            "appearance",
+            "appearances",
+            "show up",
+            "shows up",
+            "showed up",
+            "featured",
+            "feature",
+            "features",
+            "present in",
+        ];
+        let story = [
+            "chapter",
+            "chapters",
+            "event",
+            "events",
+            "story",
+            "stories",
+            "episode",
+            "episodes",
+            "storyline",
+            "storylines",
+        ];
+        if !appear.iter().any(|w| contains_words(&n, w))
+            || !story.iter().any(|w| contains_words(&n, w))
+            || contains_words(&n, "first")
+        {
             return None;
         }
         let chars = self.appearances.as_ref()?["characters"].as_object()?;
         let skip: BTreeSet<&str> = appear.iter().chain(story.iter()).copied().collect();
         let mut best: Option<&str> = None;
-        let names = chars.keys().map(String::as_str).chain(self.identities.iter().flatten().map(String::as_str));
+        let names = chars
+            .keys()
+            .map(String::as_str)
+            .chain(self.identities.iter().flatten().map(String::as_str));
         for name in names {
             let x = norm(name);
             if x.chars().count() < 3 || skip.contains(x.as_str()) || !contains_words(&n, &x) {
@@ -146,8 +236,20 @@ impl Tools {
         if !matches!(first, "was" | "is" | "does" | "did" | "has" | "have" | "are" | "were") {
             return None;
         }
-        let mention = ["mentioned", "mention", "mentions", "named", "appear", "appears", "appeared", "show up",
-            "shows up", "showed up", "featured", "present"];
+        let mention = [
+            "mentioned",
+            "mention",
+            "mentions",
+            "named",
+            "appear",
+            "appears",
+            "appeared",
+            "show up",
+            "shows up",
+            "showed up",
+            "featured",
+            "present",
+        ];
         if !mention.iter().any(|w| contains_words(&n, w)) {
             return None;
         }
@@ -155,20 +257,34 @@ impl Tools {
         let groups = v["groups"].as_object()?;
         // "Episode 17" or "chapter 17" by number, else a group name as written.
         let words: Vec<&str> = n.split(' ').collect();
-        let numbered = words.windows(2).find_map(|w| matches!(w[0], "episode" | "chapter" | "ep")
-            .then(|| w[1].parse::<u64>().ok()).flatten());
+        let numbered = words.windows(2).find_map(|w| {
+            matches!(w[0], "episode" | "chapter" | "ep")
+                .then(|| w[1].parse::<u64>().ok())
+                .flatten()
+        });
         let (gid, group) = numbered
             .and_then(|k| groups.iter().find(|(_, g)| g["episode"].as_u64() == Some(k)))
-            .or_else(|| groups.iter()
-                .filter(|(_, g)| g["name"].as_str().is_some_and(|x| x.chars().count() >= 4
-                    && regex_free_word(q, x)))
-                .max_by_key(|(_, g)| g["name"].as_str().map_or(0, str::len)))?;
+            .or_else(|| {
+                groups
+                    .iter()
+                    .filter(|(_, g)| {
+                        g["name"]
+                            .as_str()
+                            .is_some_and(|x| x.chars().count() >= 4 && regex_free_word(q, x))
+                    })
+                    .max_by_key(|(_, g)| g["name"].as_str().map_or(0, str::len))
+            })?;
         let gname = norm(group["name"].as_str().unwrap_or_default());
         let chars = v["characters"].as_object()?;
         let mut best: Option<(&str, usize)> = None;
         for (key, _) in chars {
-            let forms = std::iter::once(key.as_str()).chain(self.identities.iter()
-                .filter(|i| i.iter().any(|x| norm(x) == norm(key))).flatten().map(String::as_str));
+            let forms = std::iter::once(key.as_str()).chain(
+                self.identities
+                    .iter()
+                    .filter(|i| i.iter().any(|x| norm(x) == norm(key)))
+                    .flatten()
+                    .map(String::as_str),
+            );
             for f in forms {
                 let x = norm(f);
                 if x.chars().count() < 3 || contains_words(&gname, &x) || !contains_words(&n, &x) {
@@ -181,16 +297,30 @@ impl Tools {
         }
         let (who, _) = best?;
         let label = appearance_label(group, gid);
-        let scenes = |k: u64| if k == 1 { "1 scene".to_owned() } else { format!("{k} scenes") };
+        let scenes = |k: u64| {
+            if k == 1 {
+                "1 scene".to_owned()
+            } else {
+                format!("{k} scenes")
+            }
+        };
         let c = &chars[who];
         Some(if let Some(k) = c["speaks"][gid.as_str()].as_u64() {
-            format!("Yes. In the story text Trevor has, {who} speaks in {} of {label}.", scenes(k))
+            format!(
+                "Yes. In the story text Trevor has, {who} speaks in {} of {label}.",
+                scenes(k)
+            )
         } else if let Some(k) = c["mentioned"][gid.as_str()].as_u64() {
-            format!("Yes, by name: {who} is named in {} of {label}, without speaking there.", scenes(k))
+            format!(
+                "Yes, by name: {who} is named in {} of {label}, without speaking there.",
+                scenes(k)
+            )
         } else {
-            format!("Not by name: {who} neither speaks nor is named in {label} in the story text Trevor has (the \
+            format!(
+                "Not by name: {who} neither speaks nor is named in {label} in the story text Trevor has (the \
                      scripts' speaker labels and name matches; a reference by a title or a description is not \
-                     counted). Ask where {who} appears for the stories that do name them.")
+                     counted). Ask where {who} appears for the stories that do name them."
+            )
         })
     }
 
@@ -204,8 +334,8 @@ impl Tools {
         let t: Vec<&str> = n.split(' ').collect();
         // An event named as a time boundary ("What happened to Mandragora after Episode 10?") is not the scope: the
         // question asks about what lies outside it.
-        let boundary = |w: Option<&&str>| w
-            .is_some_and(|w| matches!(*w, "after" | "before" | "since" | "until" | "following"));
+        let boundary =
+            |w: Option<&&str>| w.is_some_and(|w| matches!(*w, "after" | "before" | "since" | "until" | "following"));
         for (i, w) in t.iter().enumerate() {
             if matches!(*w, "episode" | "chapter") && !boundary(i.checked_sub(1).and_then(|j| t.get(j))) {
                 if let Some(x) = t.get(i + 1).and_then(|x| x.parse::<u64>().ok()) {
@@ -215,17 +345,21 @@ impl Tools {
                 }
             }
         }
-        self.groups.values()
+        self.groups
+            .values()
             .filter(|g| !g["groupId"].as_str().unwrap_or_default().starts_with("story_"))
             .filter_map(|g| {
                 let gn = norm(g["name"].as_str()?);
                 let s = gn.strip_prefix("the ").unwrap_or(&gn).to_owned();
                 let at = format!(" {n} ").find(&format!(" {s} "))?;
-                let before: Vec<&str> = n[..at.min(n.len())].split(' ')
-                    .filter(|w| !w.is_empty() && *w != "the").collect();
+                let before: Vec<&str> = n[..at.min(n.len())]
+                    .split(' ')
+                    .filter(|w| !w.is_empty() && *w != "the")
+                    .collect();
                 (s.len() >= 6 && !boundary(before.last())).then_some((g, s.len()))
             })
-            .max_by_key(|(_, l)| *l).map(|(g, _)| g)
+            .max_by_key(|(_, l)| *l)
+            .map(|(g, _)| g)
     }
 
     /// Every main episode and event a question names, in the order it names them, for the time-gap evidence ("the time
@@ -249,8 +383,10 @@ impl Tools {
                         }
                     }
                     // "8 and 9", "8 to 9", "8, 9": the joined number is a chapter too.
-                    if t.get(j + 1).is_some_and(|w| matches!(*w, "and" | "to" | "through" | "or"))
-                        && t.get(j + 2).is_some_and(|w| w.parse::<u64>().is_ok()) {
+                    if t.get(j + 1)
+                        .is_some_and(|w| matches!(*w, "and" | "to" | "through" | "or"))
+                        && t.get(j + 2).is_some_and(|w| w.parse::<u64>().is_ok())
+                    {
                         j += 2;
                     } else if t.get(j + 1).is_some_and(|w| w.parse::<u64>().is_ok()) {
                         j += 1;
@@ -262,7 +398,11 @@ impl Tools {
             i += 1;
         }
         let padded = format!(" {n} ");
-        for g in self.groups.values().filter(|g| !g["groupId"].as_str().unwrap_or_default().starts_with("story_")) {
+        for g in self
+            .groups
+            .values()
+            .filter(|g| !g["groupId"].as_str().unwrap_or_default().starts_with("story_"))
+        {
             let Some(name) = g["name"].as_str() else { continue };
             let gn = norm(name);
             let s = gn.strip_prefix("the ").unwrap_or(&gn);
@@ -272,8 +412,12 @@ impl Tools {
             if let Some(at) = padded.find(&format!(" {s} ")) {
                 // A shorter name inside a longer one already found ("Near Light" in "Near Light: Part II") is not a
                 // second event.
-                let inside = out.iter().any(|(_, o)| o["name"].as_str()
-                    .is_some_and(|on| { let x = norm(on); x.len() > s.len() && x.contains(s) && padded.contains(&x) }));
+                let inside = out.iter().any(|(_, o)| {
+                    o["name"].as_str().is_some_and(|on| {
+                        let x = norm(on);
+                        x.len() > s.len() && x.contains(s) && padded.contains(&x)
+                    })
+                });
                 if !inside {
                     out.push((padded[..at].split(' ').filter(|w| !w.is_empty()).count(), g));
                 }
@@ -291,8 +435,9 @@ impl Tools {
     pub fn event_characters(&self, q: &str, gid: &str, event_name: &str) -> Vec<(String, Vec<String>)> {
         let n = norm(q);
         let en = norm(event_name);
-        let Some(chars) = self.appearances.as_ref().and_then(|v| v["characters"].as_object())
-        else { return Vec::new() };
+        let Some(chars) = self.appearances.as_ref().and_then(|v| v["characters"].as_object()) else {
+            return Vec::new();
+        };
         let mut out: Vec<(String, Vec<String>)> = Vec::new();
         for (name, c) in chars {
             // A race, nation, place or organization used as a speaker label ("Sarkaz", "Liberi") is not a character.
@@ -327,9 +472,26 @@ impl Tools {
     pub fn cross_ref_question(&self, q: &str) -> Option<&'static str> {
         let n = norm(q);
         let boss = contains_words(&n, "boss") || contains_words(&n, "bosses");
-        let join = ["playable", "join", "joins", "joined", "joining", "operator", "operators", "recruit", "recruitable",
-            "obtain", "obtainable", "ally", "allies", "our side", "your side", "rhodes island side"].iter()
-            .any(|w| contains_words(&n, w));
+        let join = [
+            "playable",
+            "join",
+            "joins",
+            "joined",
+            "joining",
+            "operator",
+            "operators",
+            "recruit",
+            "recruitable",
+            "obtain",
+            "obtainable",
+            "ally",
+            "allies",
+            "our side",
+            "your side",
+            "rhodes island side",
+        ]
+        .iter()
+        .any(|w| contains_words(&n, w));
         (boss && join && self.crossref.contains_key("bosses_playable")).then_some("bosses_playable")
     }
 }

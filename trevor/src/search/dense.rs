@@ -38,8 +38,7 @@ impl DenseIndex {
     /// Missing files, a size mismatch, or stale vectors.
     pub fn load(dir: &Path, store: &ChunkStore) -> Result<Self> {
         let meta: VectorsMeta = serde_json::from_slice(
-            &std::fs::read(dir.join("vectors.meta.json"))
-                .context("reading vectors.meta.json; run embed-corpus")?,
+            &std::fs::read(dir.join("vectors.meta.json")).context("reading vectors.meta.json; run embed-corpus")?,
         )?;
         if meta.chunks_sha != store.chunks_sha {
             bail!(
@@ -49,16 +48,10 @@ impl DenseIndex {
             );
         }
         if !meta.normalized {
-            bail!(
-                "vectors.meta.json says the vectors are not normalized; dot product is not cosine"
-            );
+            bail!("vectors.meta.json says the vectors are not normalized; dot product is not cosine");
         }
         if meta.count != store.len() || meta.chunk_ids.len() != store.len() {
-            bail!(
-                "vectors hold {} rows, chunks.jsonl {}",
-                meta.count,
-                store.len()
-            );
+            bail!("vectors hold {} rows, chunks.jsonl {}", meta.count, store.len());
         }
         if let Some((row, id)) = meta
             .chunk_ids

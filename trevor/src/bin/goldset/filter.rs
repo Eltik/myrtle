@@ -75,15 +75,8 @@ pub(crate) fn cmd_filter(work: &Path, runtime: &RuntimeArgs, min_prefix: Option<
         let mut bm25_rank = None;
         if !q.is_empty() {
             let hits = rt.retrieve(&q, &bm25_cfg)?;
-            let gold: BTreeSet<usize> = g
-                .chunk_ids
-                .iter()
-                .filter_map(|id| rt.store.row(id))
-                .collect();
-            bm25_rank = hits
-                .iter()
-                .position(|h| gold.contains(&h.row))
-                .map(|p| p + 1);
+            let gold: BTreeSet<usize> = g.chunk_ids.iter().filter_map(|id| rt.store.row(id)).collect();
+            bm25_rank = hits.iter().position(|h| gold.contains(&h.row)).map(|p| p + 1);
             if g.stratum != Stratum::MultiHop && bm25_rank == Some(1) {
                 reasons.push("BM25 ranks the source first".into());
             }
@@ -121,15 +114,10 @@ pub(crate) fn cmd_filter(work: &Path, runtime: &RuntimeArgs, min_prefix: Option<
         }
     }
     let pass = out.iter().filter(|f| f.pass).count();
-    println!(
-        "filter: {pass} of {} pass; first failing reason: {why:?}",
-        out.len()
-    );
+    println!("filter: {pass} of {} pass; first failing reason: {why:?}", out.len());
     let single: Vec<&Filtered> = out
         .iter()
-        .filter(|f| {
-            !f.id.contains("multi_hop") && gens.iter().any(|g| g.id == f.id && g.question.is_some())
-        })
+        .filter(|f| !f.id.contains("multi_hop") && gens.iter().any(|g| g.id == f.id && g.question.is_some()))
         .collect();
     let rank1 = single.iter().filter(|f| f.bm25_rank == Some(1)).count();
     println!(

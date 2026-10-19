@@ -5,9 +5,9 @@ use std::path::Path;
 
 use anyhow::{Context, Result};
 use trevor::goldgen::filters::fnv1a;
-use trevor::llm::Llm;
 use trevor::goldgen::sample;
-use trevor::goldgen::{Filtered, Generated, self as gg};
+use trevor::goldgen::{self as gg, Filtered, Generated};
+use trevor::llm::Llm;
 use trevor::search::store::ChunkStore;
 
 use crate::files::{generated_by_id, read_jsonl};
@@ -61,11 +61,7 @@ pub(crate) async fn cmd_calibrate(work: &Path, server: &str, corpus: &Path, n: u
         .filter(|f| f.pass && !f.id.contains("multi_hop"))
         .collect();
     passing.sort_by_key(|f| fnv1a(&format!("cal{}", f.id)));
-    let items: Vec<&Generated> = passing
-        .iter()
-        .take(n)
-        .filter_map(|f| gens.get(&f.id))
-        .collect();
+    let items: Vec<&Generated> = passing.iter().take(n).filter_map(|f| gens.get(&f.id)).collect();
     let (mut fp, mut src_true) = (0, 0);
     for g in &items {
         let q = g.question.clone().unwrap_or_default();
@@ -76,9 +72,7 @@ pub(crate) async fn cmd_calibrate(work: &Path, server: &str, corpus: &Path, n: u
         let mut rng = sample::Rng(fnv1a(&g.id));
         let other = loop {
             let r = rng.below(store.len());
-            if store.chunks[r].group_id != src_group
-                && store.chunks[r].token_count >= sample::MIN_TOKENS
-            {
+            if store.chunks[r].group_id != src_group && store.chunks[r].token_count >= sample::MIN_TOKENS {
                 break r;
             }
         };
@@ -106,11 +100,7 @@ pub(crate) async fn cmd_calibrate(work: &Path, server: &str, corpus: &Path, n: u
     let mut bad_passed = 0;
     for q in BAD_QUESTIONS {
         if llm
-            .verdict(
-                gg::JUDGE_SELF_CONTAINED,
-                &format!("QUESTION: {q}"),
-                gg::GRAMMAR_VERDICT,
-            )
+            .verdict(gg::JUDGE_SELF_CONTAINED, &format!("QUESTION: {q}"), gg::GRAMMAR_VERDICT)
             .await?
         {
             bad_passed += 1;
@@ -119,11 +109,7 @@ pub(crate) async fn cmd_calibrate(work: &Path, server: &str, corpus: &Path, n: u
     let mut good_failed = 0;
     for q in GOOD_QUESTIONS {
         if !llm
-            .verdict(
-                gg::JUDGE_SELF_CONTAINED,
-                &format!("QUESTION: {q}"),
-                gg::GRAMMAR_VERDICT,
-            )
+            .verdict(gg::JUDGE_SELF_CONTAINED, &format!("QUESTION: {q}"), gg::GRAMMAR_VERDICT)
             .await?
         {
             good_failed += 1;
@@ -133,20 +119,13 @@ pub(crate) async fn cmd_calibrate(work: &Path, server: &str, corpus: &Path, n: u
         judge: llm.model.clone(),
         random_passage_trials: items.len(),
         random_passage_false_positives: fp,
-        random_passage_fp_wilson95: trevor::eval::stats::wilson(
-            fp,
-            items.len(),
-            trevor::eval::stats::Z95,
-        ),
+        random_passage_fp_wilson95: trevor::eval::stats::wilson(fp, items.len(), trevor::eval::stats::Z95),
         source_passage_trials: items.len(),
         source_passage_true: src_true,
         bad_questions_passed: bad_passed,
         good_questions_failed: good_failed,
     };
-    std::fs::write(
-        work.join("calibration.json"),
-        serde_json::to_vec_pretty(&cal)?,
-    )?;
+    std::fs::write(work.join("calibration.json"), serde_json::to_vec_pretty(&cal)?)?;
     println!("{}", serde_json::to_string_pretty(&cal)?);
     Ok(())
 }

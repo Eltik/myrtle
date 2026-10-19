@@ -82,10 +82,7 @@ pub fn evidence_grammar(base: &str, max: Option<usize>, one_line: bool) -> anyho
     if max.is_none() && !one_line {
         return Ok(base.to_owned());
     }
-    anyhow::ensure!(
-        base.contains(ESTRING_V1),
-        "grammar has no v1 evidence rule to rewrite"
-    );
+    anyhow::ensure!(base.contains(ESTRING_V1), "grammar has no v1 evidence rule to rewrite");
     let cap = max.unwrap_or(300);
     anyhow::ensure!(cap >= 10, "--evidence-max must be at least 10");
     let class = if one_line { "echar" } else { "qchar" };
@@ -123,9 +120,7 @@ impl Filtered {
     /// filter cut any quote, else the generator's quotes unchanged.
     #[must_use]
     pub fn evidence(&self, g: &Generated) -> Vec<String> {
-        self.grounded_evidence
-            .clone()
-            .unwrap_or_else(|| g.evidence.clone())
+        self.grounded_evidence.clone().unwrap_or_else(|| g.evidence.clone())
     }
 }
 

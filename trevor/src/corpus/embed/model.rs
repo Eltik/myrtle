@@ -4,12 +4,11 @@ use std::path::Path;
 
 use anyhow::{Result, anyhow, bail};
 use fastembed::{
-    InitOptionsUserDefined, Pooling, QuantizationMode, TextEmbedding, TokenizerFiles,
-    UserDefinedEmbeddingModel,
+    InitOptionsUserDefined, Pooling, QuantizationMode, TextEmbedding, TokenizerFiles, UserDefinedEmbeddingModel,
 };
 
-use crate::util::sha_hex;
 use super::{MODEL_MAX_TOKENS, read};
+use crate::util::sha_hex;
 
 /// A loaded embedder and the hashes that identify it.
 pub struct LoadedModel {
@@ -23,11 +22,7 @@ pub struct LoadedModel {
 ///
 /// # Errors
 /// Missing files or an ONNX Runtime load failure.
-pub fn load_model(
-    model_dir: &Path,
-    onnx_file: &str,
-    intra_threads: Option<usize>,
-) -> Result<LoadedModel> {
+pub fn load_model(model_dir: &Path, onnx_file: &str, intra_threads: Option<usize>) -> Result<LoadedModel> {
     let tokenizer_file = read(model_dir, "tokenizer.json")?;
     let tokenizer_sha = sha_hex(&tokenizer_file);
     let onnx = read(model_dir, onnx_file)?;
@@ -47,8 +42,8 @@ pub fn load_model(
     if let Some(n) = intra_threads {
         opts = opts.with_intra_threads(n);
     }
-    let embedding = TextEmbedding::try_new_from_user_defined(model, opts)
-        .map_err(|e| anyhow!("loading the embedder: {e}"))?;
+    let embedding =
+        TextEmbedding::try_new_from_user_defined(model, opts).map_err(|e| anyhow!("loading the embedder: {e}"))?;
     Ok(LoadedModel {
         embedding,
         model_sha,
@@ -111,7 +106,11 @@ pub const ALLOW_QUERY_MODEL_MISMATCH_ENV: &str = "TREVOR_ALLOW_QUERY_MODEL_MISMA
 /// when `requested` is `auto`.
 #[must_use]
 pub fn resolve_query_onnx<'a>(requested: &'a str, vectors_model_file: &'a str) -> &'a str {
-    if requested == "auto" { vectors_model_file } else { requested }
+    if requested == "auto" {
+        vectors_model_file
+    } else {
+        requested
+    }
 }
 
 /// Refuse a query embedder whose model sha differs from the one the corpus

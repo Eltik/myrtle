@@ -20,57 +20,237 @@ use super::identity::{NAME_JOINERS, NOT_NAMES, clean, holds, is_cap, kept_senten
 
 /// Words that state a fate in an answer sentence (whole words, lowercase). "passed away" and "lost her/his/their life"
 /// are matched as phrases.
-const FATE: &[&str] = &["dead", "alive", "died", "dies", "killed", "executed", "murdered", "perished", "perishes",
-                        "survived", "survives", "deceased", "slain"];
+const FATE: &[&str] = &[
+    "dead", "alive", "died", "dies", "killed", "executed", "murdered", "perished", "perishes", "survived", "survives",
+    "deceased", "slain",
+];
 
 /// Words that may sit between a fate claim's subject and its fate word ("Mandragora is eventually killed", "she is no
 /// longer alive", "Mandragora was confirmed dead").
-const BETWEEN: &[&str] = &["is", "was", "are", "were", "has", "had", "have", "been", "be", "being", "will", "would",
-                           "did", "does", "not", "no", "never", "longer", "still", "eventually", "ultimately", "finally",
-                           "later", "already", "apparently", "presumably", "likely", "also", "reportedly", "tragically",
-                           "confirmed", "seemingly", "indeed", "actually", "certainly", "probably", "definitely",
-                           "now", "then", "both"];
+const BETWEEN: &[&str] = &[
+    "is",
+    "was",
+    "are",
+    "were",
+    "has",
+    "had",
+    "have",
+    "been",
+    "be",
+    "being",
+    "will",
+    "would",
+    "did",
+    "does",
+    "not",
+    "no",
+    "never",
+    "longer",
+    "still",
+    "eventually",
+    "ultimately",
+    "finally",
+    "later",
+    "already",
+    "apparently",
+    "presumably",
+    "likely",
+    "also",
+    "reportedly",
+    "tragically",
+    "confirmed",
+    "seemingly",
+    "indeed",
+    "actually",
+    "certainly",
+    "probably",
+    "definitely",
+    "now",
+    "then",
+    "both",
+];
 
 /// Stems of the words that show a death or survival in a passage line.
-const FATE_STEMS: &[&str] = &["dead", "death", "die", "died", "dies", "dying", "kill", "alive", "live", "living",
-                              "survive", "surviving", "execut", "perish", "murder", "corpse", "grave", "funeral",
-                              "buried", "bury", "slain", "passed away", "lost her life", "lost his life", "fallen"];
+const FATE_STEMS: &[&str] = &[
+    "dead",
+    "death",
+    "die",
+    "died",
+    "dies",
+    "dying",
+    "kill",
+    "alive",
+    "live",
+    "living",
+    "survive",
+    "surviving",
+    "execut",
+    "perish",
+    "murder",
+    "corpse",
+    "grave",
+    "funeral",
+    "buried",
+    "bury",
+    "slain",
+    "passed away",
+    "lost her life",
+    "lost his life",
+    "fallen",
+];
 
 /// Prepositions: a name right after one is not a sentence's subject.
-const PREPOSITIONS: &[&str] = &["in", "of", "from", "at", "to", "with", "by", "for", "on", "about", "during", "after",
-                                "before", "near", "inside", "within", "against", "toward", "towards", "like"];
+const PREPOSITIONS: &[&str] = &[
+    "in", "of", "from", "at", "to", "with", "by", "for", "on", "about", "during", "after", "before", "near", "inside",
+    "within", "against", "toward", "towards", "like",
+];
 
 /// First-person phrases of a character's own line about their own fate ("Mandragora: I just couldn't hold on! ...
 /// Dead." is about a traitor, so a first-person word beside a death word is not enough).
-const FIRST_PERSON: &[&str] = &["i'm dying", "i am dying", "i'll die", "i will die", "i'm going to die", "i'm dead",
-                                "i am dead", "kill me", "my death", "i died", "i won't live", "i'm alive", "i am alive",
-                                "i'm still alive", "i survived", "i'm not dead", "i didn't die", "my life is",
-                                "my last breath", "i'm done for"];
+const FIRST_PERSON: &[&str] = &[
+    "i'm dying",
+    "i am dying",
+    "i'll die",
+    "i will die",
+    "i'm going to die",
+    "i'm dead",
+    "i am dead",
+    "kill me",
+    "my death",
+    "i died",
+    "i won't live",
+    "i'm alive",
+    "i am alive",
+    "i'm still alive",
+    "i survived",
+    "i'm not dead",
+    "i didn't die",
+    "my life is",
+    "my last breath",
+    "i'm done for",
+];
 
 /// Speech verbs of an attributed quote ("Harmonie states that '...'").
-const SAYS: &[&str] = &["say", "says", "said", "state", "states", "stated", "tell", "tells", "told", "remark",
-                        "remarks", "remarked", "note", "notes", "noted", "exclaim", "exclaims", "exclaimed", "reply",
-                        "replies", "replied", "mention", "mentions", "mentioned", "declare", "declares", "declared",
-                        "claim", "claims", "claimed", "admit", "admits", "admitted", "ask", "asks", "asked", "shout",
-                        "shouts", "shouted", "explain", "explains", "explained", "comment", "comments", "commented",
-                        "add", "adds", "added", "respond", "responds", "responded", "yell", "yells", "yelled",
-                        "whisper", "whispers", "whispered", "muse", "muses", "mused", "insist", "insists", "insisted",
-                        "warn", "warns", "warned", "recall", "recalls", "recalled", "reveal", "reveals", "revealed",
-                        "write", "writes", "wrote", "cry", "cries", "cried", "scream", "screams", "screamed"];
+const SAYS: &[&str] = &[
+    "say",
+    "says",
+    "said",
+    "state",
+    "states",
+    "stated",
+    "tell",
+    "tells",
+    "told",
+    "remark",
+    "remarks",
+    "remarked",
+    "note",
+    "notes",
+    "noted",
+    "exclaim",
+    "exclaims",
+    "exclaimed",
+    "reply",
+    "replies",
+    "replied",
+    "mention",
+    "mentions",
+    "mentioned",
+    "declare",
+    "declares",
+    "declared",
+    "claim",
+    "claims",
+    "claimed",
+    "admit",
+    "admits",
+    "admitted",
+    "ask",
+    "asks",
+    "asked",
+    "shout",
+    "shouts",
+    "shouted",
+    "explain",
+    "explains",
+    "explained",
+    "comment",
+    "comments",
+    "commented",
+    "add",
+    "adds",
+    "added",
+    "respond",
+    "responds",
+    "responded",
+    "yell",
+    "yells",
+    "yelled",
+    "whisper",
+    "whispers",
+    "whispered",
+    "muse",
+    "muses",
+    "mused",
+    "insist",
+    "insists",
+    "insisted",
+    "warn",
+    "warns",
+    "warned",
+    "recall",
+    "recalls",
+    "recalled",
+    "reveal",
+    "reveals",
+    "revealed",
+    "write",
+    "writes",
+    "wrote",
+    "cry",
+    "cries",
+    "cried",
+    "scream",
+    "screams",
+    "screamed",
+];
 
 /// Words that may sit between a quote's speaker and the speech verb ("Harmonie later states").
-const SAYS_BETWEEN: &[&str] = &["also", "later", "then", "explicitly", "clearly", "even", "directly", "simply", "once",
-                                "openly", "bluntly", "calmly", "coldly", "angrily", "quietly", "finally", "herself",
-                                "himself", "further", "again", "reportedly"];
+const SAYS_BETWEEN: &[&str] = &[
+    "also",
+    "later",
+    "then",
+    "explicitly",
+    "clearly",
+    "even",
+    "directly",
+    "simply",
+    "once",
+    "openly",
+    "bluntly",
+    "calmly",
+    "coldly",
+    "angrily",
+    "quietly",
+    "finally",
+    "herself",
+    "himself",
+    "further",
+    "again",
+    "reportedly",
+];
 
 /// A passage line split into its speaker label (a short "Name:" prefix of capitalized words) and its text.
 fn speaker_and_text(line: &str) -> (Option<&str>, &str) {
     if let Some(i) = line.find(": ") {
         let head = &line[..i];
-        let ok = !head.is_empty() && head.len() <= 40 && !head.contains(['.', '!', '?', ','])
+        let ok = !head.is_empty()
+            && head.len() <= 40
+            && !head.contains(['.', '!', '?', ','])
             && head.split_whitespace().count() <= 5
-            && head.split_whitespace().all(|w| NAME_JOINERS.contains(&w)
-                || w.chars().find(|c| c.is_alphanumeric()).is_some_and(char::is_uppercase));
+            && head.split_whitespace().all(|w| {
+                NAME_JOINERS.contains(&w) || w.chars().find(|c| c.is_alphanumeric()).is_some_and(char::is_uppercase)
+            });
         if ok {
             return (Some(head.trim_matches(|c: char| c == '\'' || c == '"')), &line[i + 2..]);
         }
@@ -89,7 +269,13 @@ fn lower_words(text: &str) -> Vec<String> {
 fn fate_in(text: &str) -> bool {
     let low = text.to_lowercase().replace('\u{2019}', "'");
     let words = lower_words(&low);
-    FATE_STEMS.iter().any(|s| if s.contains(' ') { low.contains(s) } else { words.iter().any(|w| w.starts_with(s)) })
+    FATE_STEMS.iter().any(|s| {
+        if s.contains(' ') {
+            low.contains(s)
+        } else {
+            words.iter().any(|w| w.starts_with(s))
+        }
+    })
 }
 
 /// The forms of a character's name a passage may use: the name, the names an identity link joins to it, and the
@@ -164,9 +350,9 @@ fn quote_spans(s: &str) -> Vec<(usize, usize)> {
             _ => None,
         };
         if let Some(cl) = close {
-            let end = (i + 1..b.len()).find(|&k| b[k].1 == cl
-                && (cl == '"' || cl == '\u{201d}'
-                    || b.get(k + 1).is_none_or(|n| !n.1.is_alphanumeric())));
+            let end = (i + 1..b.len()).find(|&k| {
+                b[k].1 == cl && (cl == '"' || cl == '\u{201d}' || b.get(k + 1).is_none_or(|n| !n.1.is_alphanumeric()))
+            });
             if let Some(k) = end {
                 out.push((at + c.len_utf8(), b[k].0));
                 i = k + 1;
@@ -192,8 +378,10 @@ fn subject_at(toks: &[&str], mut end: usize, between: &[&str], lead: &[String]) 
         return lead.to_vec();
     }
     // An article right before the fate word ("A deceased Operator") or a name ending a clause is not a subject.
-    if !is_cap(toks[end - 1]) || NOT_NAMES.contains(&clean(toks[end - 1]))
-        || toks[end - 1].ends_with([',', ';', ':', '.', '!', '?', ')']) {
+    if !is_cap(toks[end - 1])
+        || NOT_NAMES.contains(&clean(toks[end - 1]))
+        || toks[end - 1].ends_with([',', ';', ':', '.', '!', '?', ')'])
+    {
         return Vec::new();
     }
     let mut start = end - 1;
@@ -224,8 +412,13 @@ fn cites(sentence: &str) -> Vec<usize> {
     let mut i = 0;
     while let Some(open) = sentence[i..].find('[') {
         let start = i + open + 1;
-        let Some(close) = sentence[start..].find(']') else { break };
-        let toks: Vec<&str> = sentence[start..start + close].split([',', ';', ' ']).filter(|t| !t.is_empty()).collect();
+        let Some(close) = sentence[start..].find(']') else {
+            break;
+        };
+        let toks: Vec<&str> = sentence[start..start + close]
+            .split([',', ';', ' '])
+            .filter(|t| !t.is_empty())
+            .collect();
         let nums: Vec<usize> = toks.iter().filter_map(|t| t.parse().ok()).collect();
         if !nums.is_empty() && nums.len() == toks.len() {
             out.extend(nums);
@@ -277,7 +470,10 @@ fn unsupported_fate(sentence: &str, lead: &[String], tools: &Tools, texts: &[Str
 }
 
 fn norm_quote(s: &str) -> String {
-    let s = s.replace(['\u{2019}', '\u{2018}'], "'").replace(['\u{201c}', '\u{201d}'], "\"").to_lowercase();
+    let s = s
+        .replace(['\u{2019}', '\u{2018}'], "'")
+        .replace(['\u{201c}', '\u{201d}'], "\"")
+        .to_lowercase();
     let s = s.trim_matches(|c: char| !c.is_alphanumeric());
     s.split_whitespace().collect::<Vec<_>>().join(" ")
 }
@@ -291,11 +487,17 @@ fn misattributed_quote(sentence: &str, tools: &Tools, texts: &[String]) -> Optio
             continue;
         }
         // The speech verb within the 6 words before the quote, and the name right before it.
-        let before: Vec<&str> = sentence[..a].trim_end_matches(['"', '\'', '\u{201c}', '\u{2018}'])
-            .split_whitespace().collect();
+        let before: Vec<&str> = sentence[..a]
+            .trim_end_matches(['"', '\'', '\u{201c}', '\u{2018}'])
+            .split_whitespace()
+            .collect();
         let from = before.len().saturating_sub(6);
-        let Some(v) = (from..before.len()).rev().find(|&k| SAYS.contains(&clean(before[k]).to_lowercase().as_str()))
-        else { continue };
+        let Some(v) = (from..before.len())
+            .rev()
+            .find(|&k| SAYS.contains(&clean(before[k]).to_lowercase().as_str()))
+        else {
+            continue;
+        };
         let said_by = subject_at(&before, v, SAYS_BETWEEN, &[]);
         let Some(said_by) = said_by.first() else { continue };
         let f = forms(tools, said_by);
@@ -334,31 +536,61 @@ pub(crate) struct Found {
 
 /// The answer without its unsupported fate claims (`fate`) and misattributed quotes (`quote`), and what was found;
 /// None when nothing was. When every sentence would go, the answer stays and a check note is appended.
-pub(crate) fn check(answer: &str, q: &str, texts: &[String], tools: &Tools, fate: bool, quote: bool)
-    -> Option<(String, Found)> {
+pub(crate) fn check(
+    answer: &str,
+    q: &str,
+    texts: &[String],
+    tools: &Tools,
+    fate: bool,
+    quote: bool,
+) -> Option<(String, Found)> {
     if !fate && !quote {
         return None;
     }
     let pieces = sentences(answer);
-    let mut lead: Vec<String> = pieces.first().map(|p| name_runs(p.text)).unwrap_or_default().into_iter().take(1)
+    let mut lead: Vec<String> = pieces
+        .first()
+        .map(|p| name_runs(p.text))
+        .unwrap_or_default()
+        .into_iter()
+        .take(1)
         .collect();
     lead.extend(name_runs(q));
     let mut found = Found::default();
-    let keep: Vec<bool> = pieces.iter().map(|p| {
-        let f = if fate { unsupported_fate(p.text, &lead, tools, texts) } else { None };
-        let m = if quote { misattributed_quote(p.text, tools, texts) } else { None };
-        let ok = f.is_none() && m.is_none();
-        found.fates.extend(f);
-        found.quotes.extend(m);
-        ok
-    }).collect();
+    let keep: Vec<bool> = pieces
+        .iter()
+        .map(|p| {
+            let f = if fate {
+                unsupported_fate(p.text, &lead, tools, texts)
+            } else {
+                None
+            };
+            let m = if quote {
+                misattributed_quote(p.text, tools, texts)
+            } else {
+                None
+            };
+            let ok = f.is_none() && m.is_none();
+            found.fates.extend(f);
+            found.quotes.extend(m);
+            ok
+        })
+        .collect();
     if keep.iter().all(|&k| k) {
         return None;
     }
     if keep.iter().all(|&k| !k) {
-        let mut notes: Vec<String> = found.fates.iter()
-            .map(|x| format!("the passage cited for what happened to {x} does not say it of {x}")).collect();
-        notes.extend(found.quotes.iter().map(|(s, w)| format!("in the passages that line is said by {w}, not {s}")));
+        let mut notes: Vec<String> = found
+            .fates
+            .iter()
+            .map(|x| format!("the passage cited for what happened to {x} does not say it of {x}"))
+            .collect();
+        notes.extend(
+            found
+                .quotes
+                .iter()
+                .map(|(s, w)| format!("in the passages that line is said by {w}, not {s}")),
+        );
         return Some((format!("{answer}\n\nTrevor's check: {}.", notes.join("; ")), found));
     }
     Some((kept_sentences(&pieces, &keep), found))
@@ -372,52 +604,90 @@ mod tests {
         vec![
             "(story: What the Firelight Casts, Unlucky Reunion; the line where Trevor's deaths table finds a report \
              that Mandragora is dead)\n'The Brigadier': Mandragora is dead. I can stop investigating your whim.\n\
-             Harmonie: Oh, you mean that dear, pitiful Loughshinny.".to_owned(),
+             Harmonie: Oh, you mean that dear, pitiful Loughshinny."
+                .to_owned(),
             "(story: Stormwatch, Verse in the Ashes)\n'The Leader': — For... Dublinn! I've said these words.\n\
              Mandragora: Hah, she's dead. That's decent enough. Give the order, the traitor's been executed.\n\
              Mandragora: I just couldn't hold on! All because of this shameless traitor. Dead. Dust to dust.\n\
-             Dublinn Soldier: Yes, sir.\nHarmonie: Jealous, now?".to_owned(),
+             Dublinn Soldier: Yes, sir.\nHarmonie: Jealous, now?"
+                .to_owned(),
             "(story: Shatterpoint, Crossroads)\nManfred: You won't live much longer either, Mandragora.\n\
-             Mandragora: ......".to_owned(),
+             Mandragora: ......"
+                .to_owned(),
         ]
     }
 
     #[test]
     fn the_mandragora_answer_loses_both_sentences_and_gets_a_note() {
         let a = "Mandragora is dead [2]. Harmonie states that 'she's dead' in reference to The Leader.";
-        let (out, found) = check(a, "Is Mandragora alive or dead?", &stormwatch(), &Tools::default(), true, true)
-            .unwrap();
+        let (out, found) = check(
+            a,
+            "Is Mandragora alive or dead?",
+            &stormwatch(),
+            &Tools::default(),
+            true,
+            true,
+        )
+        .unwrap();
         assert_eq!(found.fates, vec!["Mandragora".to_owned()]);
         assert_eq!(found.quotes, vec![("Harmonie".to_owned(), "Mandragora".to_owned())]);
         assert!(out.starts_with(a), "{out}");
-        assert!(out.contains("Trevor's check: the passage cited for what happened to Mandragora does not say it of \
-                              Mandragora; in the passages that line is said by Mandragora, not Harmonie."), "{out}");
+        assert!(
+            out.contains(
+                "Trevor's check: the passage cited for what happened to Mandragora does not say it of \
+                              Mandragora; in the passages that line is said by Mandragora, not Harmonie."
+            ),
+            "{out}"
+        );
     }
 
     #[test]
     fn a_fate_its_passage_ties_to_the_character_stays() {
         let t = Tools::default();
         // The deaths evidence's label, a line naming her beside a death word, and the pronoun standing for her.
-        for a in ["Mandragora is dead [1].", "Mandragora is dead [3].", "She is dead [1]. She fought Manfred [3].",
-                  "Mandragora is no longer alive [1, 2]."] {
-            assert!(check(a, "Is Mandragora alive or dead?", &stormwatch(), &t, true, true).is_none(), "{a}");
+        for a in [
+            "Mandragora is dead [1].",
+            "Mandragora is dead [3].",
+            "She is dead [1]. She fought Manfred [3].",
+            "Mandragora is no longer alive [1, 2].",
+        ] {
+            assert!(
+                check(a, "Is Mandragora alive or dead?", &stormwatch(), &t, true, true).is_none(),
+                "{a}"
+            );
         }
         // One unsupported sentence of two is dropped.
-        let (out, _) = check("Mandragora fought Manfred [3]. Mandragora was executed [2].", "What happened to Mandragora?",
-                             &stormwatch(), &t, true, true).unwrap();
+        let (out, _) = check(
+            "Mandragora fought Manfred [3]. Mandragora was executed [2].",
+            "What happened to Mandragora?",
+            &stormwatch(),
+            &t,
+            true,
+            true,
+        )
+        .unwrap();
         assert_eq!(out, "Mandragora fought Manfred [3].");
     }
 
     #[test]
     fn non_claims_do_not_fire() {
         let t = Tools::default();
-        for a in ["The traitor is dead [2].", "Mandragora says the traitor is dead [2].",
-                  "*   **Mandragora (Spy):** A deceased officer [2].", "The traitor in Stormwatch died [2].",
-                  "The officer in Harmonie says \"hah, she's dead\" [2].",
-                  "Mandragora says, \"Hah, she's dead\" [2].", "Many soldiers died in the fire [2].",
-                  "Mandragora is dead.", "Harmonie says \"jealous, now\" [2].",
-                  "Mandragora is alive [9]."] {
-            assert!(check(a, "Is Mandragora alive or dead?", &stormwatch(), &t, true, true).is_none(), "{a}");
+        for a in [
+            "The traitor is dead [2].",
+            "Mandragora says the traitor is dead [2].",
+            "*   **Mandragora (Spy):** A deceased officer [2].",
+            "The traitor in Stormwatch died [2].",
+            "The officer in Harmonie says \"hah, she's dead\" [2].",
+            "Mandragora says, \"Hah, she's dead\" [2].",
+            "Many soldiers died in the fire [2].",
+            "Mandragora is dead.",
+            "Harmonie says \"jealous, now\" [2].",
+            "Mandragora is alive [9].",
+        ] {
+            assert!(
+                check(a, "Is Mandragora alive or dead?", &stormwatch(), &t, true, true).is_none(),
+                "{a}"
+            );
         }
         // The switches.
         let a = "Mandragora is dead [2]. Harmonie states that 'she's dead' in reference to The Leader.";
@@ -428,7 +698,10 @@ mod tests {
 
     #[test]
     fn speaker_labels_and_quotes() {
-        assert_eq!(speaker_and_text("'The Leader': For Dublinn!"), (Some("The Leader"), "For Dublinn!"));
+        assert_eq!(
+            speaker_and_text("'The Leader': For Dublinn!"),
+            (Some("The Leader"), "For Dublinn!")
+        );
         assert_eq!(speaker_and_text("She says: no."), (None, "She says: no."));
         let s = "Harmonie states that 'she's dead' here, and \u{201c}go now\u{201d} too.";
         let q: Vec<&str> = quote_spans(s).into_iter().map(|(a, b)| &s[a..b]).collect();

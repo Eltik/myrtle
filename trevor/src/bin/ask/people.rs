@@ -18,10 +18,11 @@ pub(crate) fn named_characters(rt: &Runtime, tools: &Tools, q: &str) -> Vec<(Str
     let ql = q.to_lowercase();
     let whole = |n: &str| {
         let n = n.to_lowercase();
-        n.chars().count() >= 3 && ql.match_indices(&n).any(|(i, _)| {
-            ql[..i].chars().last().is_none_or(|c| !c.is_alphanumeric())
-                && ql[i + n.len()..].chars().next().is_none_or(|c| !c.is_alphanumeric())
-        })
+        n.chars().count() >= 3
+            && ql.match_indices(&n).any(|(i, _)| {
+                ql[..i].chars().last().is_none_or(|c| !c.is_alphanumeric())
+                    && ql[i + n.len()..].chars().next().is_none_or(|c| !c.is_alphanumeric())
+            })
     };
     let mut real: HashMap<String, Vec<String>> = HashMap::new();
     for r in tools.real_names.iter().flatten() {
@@ -40,12 +41,18 @@ pub(crate) fn named_characters(rt: &Runtime, tools: &Tools, q: &str) -> Vec<(Str
             continue;
         }
         let head = c.text.lines().next().unwrap_or_default();
-        let own: Vec<String> = if let Some(n) = head.strip_prefix("Operator archive: ") { vec![n.trim().to_owned()] }
-            else if let Some(r) = head.strip_prefix("Character profile: ") {
-                let (main, aka) = r.split_once(" (also known as ").unwrap_or((r, ""));
-                std::iter::once(main.trim()).chain(aka.trim_end_matches(')').split(", ").map(str::trim))
-                    .filter(|x| !x.is_empty()).map(str::to_owned).collect()
-            } else { Vec::new() };
+        let own: Vec<String> = if let Some(n) = head.strip_prefix("Operator archive: ") {
+            vec![n.trim().to_owned()]
+        } else if let Some(r) = head.strip_prefix("Character profile: ") {
+            let (main, aka) = r.split_once(" (also known as ").unwrap_or((r, ""));
+            std::iter::once(main.trim())
+                .chain(aka.trim_end_matches(')').split(", ").map(str::trim))
+                .filter(|x| !x.is_empty())
+                .map(str::to_owned)
+                .collect()
+        } else {
+            Vec::new()
+        };
         let Some(file) = own.first().cloned() else { continue };
         let mut names = own.clone();
         for n in &own {
@@ -71,20 +78,28 @@ pub(crate) fn named_characters(rt: &Runtime, tools: &Tools, q: &str) -> Vec<(Str
 /// the asker's favourites.
 pub(crate) fn opinion_needs_candidates(rt: &Runtime, tools: &Tools, q: &str, named: bool) -> bool {
     let n = norm(q);
-    named || tools.names_group_topic(q) || ["who", "which", "whom", "whose"].iter().any(|w| contains_words(&n, w))
+    named
+        || tools.names_group_topic(q)
+        || ["who", "which", "whom", "whose"].iter().any(|w| contains_words(&n, w))
         || !people_named(rt, tools, q).is_empty()
 }
 
 /// Whether a word of the question (3 letters or more), capitalized, is a proper name by the corpus (`proper_name`): "How
 /// big do you think Fort barron is?" names Barron (13 capitalized, 0 lowercase), a place no topic or character list holds.
 pub(crate) fn names_proper_word(rt: &Runtime, q: &str) -> bool {
-    q.split(|c: char| !c.is_alphanumeric()).filter(|w| w.chars().count() >= 3).any(|w| {
-        let mut cs = w.chars();
-        let cap: String = cs.next().map(char::to_uppercase).into_iter().flatten()
-            .chain(cs.flat_map(char::to_lowercase))
-            .collect();
-        proper_name(rt, &cap)
-    })
+    q.split(|c: char| !c.is_alphanumeric())
+        .filter(|w| w.chars().count() >= 3)
+        .any(|w| {
+            let mut cs = w.chars();
+            let cap: String = cs
+                .next()
+                .map(char::to_uppercase)
+                .into_iter()
+                .flatten()
+                .chain(cs.flat_map(char::to_lowercase))
+                .collect();
+            proper_name(rt, &cap)
+        })
 }
 
 /// The characters a question names: operator names, story speakers and identity-link names it holds as whole words (case
@@ -94,9 +109,13 @@ pub(crate) fn names_proper_word(rt: &Runtime, q: &str) -> bool {
 pub(crate) fn people_named(rt: &Runtime, tools: &Tools, q: &str) -> Vec<String> {
     let n = norm(q);
     let np = norm(&q.replace('\u{2019}', "'").replace("'s", " "));
-    let hit = |x: &str| { let k = norm(x); k.chars().count() >= 3
-        && (contains_words(&n, &k) || contains_words(&np, &k)) };
-    let mut names: Vec<&str> = tools.operator_names().into_iter()
+    let hit = |x: &str| {
+        let k = norm(x);
+        k.chars().count() >= 3 && (contains_words(&n, &k) || contains_words(&np, &k))
+    };
+    let mut names: Vec<&str> = tools
+        .operator_names()
+        .into_iter()
         .chain(tools.speaker_names())
         .filter(|x| hit(x))
         .collect();
@@ -106,12 +125,19 @@ pub(crate) fn people_named(rt: &Runtime, tools: &Tools, q: &str) -> Vec<String> 
     keys.dedup();
     let mut out: Vec<String> = Vec::new();
     for k in keys {
-        let linked = |a: &str, b: &str| tools.identities.iter().any(|i| i.iter().any(|x| norm(x) == a)
-            && i.iter().any(|x| norm(x) == b));
+        let linked = |a: &str, b: &str| {
+            tools
+                .identities
+                .iter()
+                .any(|i| i.iter().any(|x| norm(x) == a) && i.iter().any(|x| norm(x) == b))
+        };
         if out.iter().any(|o| contains_words(o, &k) || linked(o, &k)) {
             continue;
         }
-        let shown = tools.operator_names().into_iter().chain(tools.speaker_names())
+        let shown = tools
+            .operator_names()
+            .into_iter()
+            .chain(tools.speaker_names())
             .chain(tools.identities.iter().flatten().map(String::as_str))
             .find(|x| norm(x) == k)
             .unwrap_or_default()
@@ -131,9 +157,11 @@ pub(crate) fn capitalized_in(q: &str, name: &str) -> bool {
     if first.is_empty() || !first.chars().next().is_some_and(char::is_uppercase) {
         return false;
     }
-    q.match_indices(first).any(|(i, _)| i > 0
-        && !q[..i].chars().next_back().is_some_and(char::is_alphanumeric)
-        && !q[i + first.len()..].chars().next().is_some_and(char::is_alphanumeric))
+    q.match_indices(first).any(|(i, _)| {
+        i > 0
+            && !q[..i].chars().next_back().is_some_and(char::is_alphanumeric)
+            && !q[i + first.len()..].chars().next().is_some_and(char::is_alphanumeric)
+    })
 }
 
 /// Chunks whose text holds `w` as a whole word, case folded (apostrophes count as letters, so "kal" is not in
@@ -141,10 +169,15 @@ pub(crate) fn capitalized_in(q: &str, name: &str) -> bool {
 pub(crate) fn word_chunks(rt: &Runtime, w: &str) -> usize {
     let w = w.to_lowercase();
     let edge = |c: Option<char>| c.is_none_or(|c| !(c.is_alphanumeric() || c == '\''));
-    rt.store.chunks.iter().filter(|c| {
-        let t = c.text.to_lowercase();
-        t.match_indices(&w).any(|(i, _)| edge(t[..i].chars().last()) && edge(t[i + w.len()..].chars().next()))
-    }).count()
+    rt.store
+        .chunks
+        .iter()
+        .filter(|c| {
+            let t = c.text.to_lowercase();
+            t.match_indices(&w)
+                .any(|(i, _)| edge(t[..i].chars().last()) && edge(t[i + w.len()..].chars().next()))
+        })
+        .count()
 }
 
 /// The question with the full name after each short name it uses ("What did bibeak design for kal" gets
@@ -169,8 +202,14 @@ pub(crate) fn expand_names(rt: &Runtime, tools: &Tools, q: &str) -> String {
 /// kept when one name holds another); None for none or several.
 pub(crate) fn one_operator(q: &str, tools: &Tools) -> Option<String> {
     let nq = norm(q);
-    let mut found: Vec<&str> = tools.operator_names().into_iter()
-        .filter(|n| { let x = norm(n); x.chars().count() >= 3 && contains_words(&nq, &x) }).collect();
+    let mut found: Vec<&str> = tools
+        .operator_names()
+        .into_iter()
+        .filter(|n| {
+            let x = norm(n);
+            x.chars().count() >= 3 && contains_words(&nq, &x)
+        })
+        .collect();
     found.sort_by_key(|n| std::cmp::Reverse(n.len()));
     let mut keep: Vec<&str> = Vec::new();
     for n in found {
@@ -189,14 +228,23 @@ pub(crate) fn one_operator_wide(q: &str, tools: &Tools) -> Option<String> {
     }
     let nq = norm(q);
     let names = tools.operator_names();
-    let firsts: Vec<(String, &str)> = names.iter().filter_map(|n| {
-        let x = norm(n);
-        let first = x.split(' ').next()?.to_owned();
-        (x.contains(' ') && first.chars().count() >= 4).then_some((first, *n))
-    }).collect();
-    let mut hit: Vec<&str> = firsts.iter().filter(|(f, _)| contains_words(&nq, f)
-        && firsts.iter().filter(|(g, _)| g == f).count() == 1 && !names.iter().any(|n| norm(n) == *f))
-        .map(|(_, n)| *n).collect();
+    let firsts: Vec<(String, &str)> = names
+        .iter()
+        .filter_map(|n| {
+            let x = norm(n);
+            let first = x.split(' ').next()?.to_owned();
+            (x.contains(' ') && first.chars().count() >= 4).then_some((first, *n))
+        })
+        .collect();
+    let mut hit: Vec<&str> = firsts
+        .iter()
+        .filter(|(f, _)| {
+            contains_words(&nq, f)
+                && firsts.iter().filter(|(g, _)| g == f).count() == 1
+                && !names.iter().any(|n| norm(n) == *f)
+        })
+        .map(|(_, n)| *n)
+        .collect();
     hit.dedup();
     (hit.len() == 1).then(|| hit[0].to_owned())
 }

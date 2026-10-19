@@ -6,29 +6,29 @@
 //! they do not hold the answer. Needs a llama-server (`--server`). `--batch <goldset.jsonl>`
 //! answers every item of a gold set into `--out` (resumable), for the answer eval.
 
-mod cli;
-mod prompts;
-mod form;
-mod detect;
+mod answer;
+mod appear;
+mod batch;
 mod chrono;
-mod scenes;
-mod terms;
+mod cli;
+mod detect;
+mod fate;
+mod form;
+mod guard;
 mod kinds;
 mod labels;
-mod people;
-mod retrieval;
-mod runtimes;
-mod routing;
-mod answer;
-mod batch;
 mod llama_server;
+mod people;
+mod prompts;
+mod retrieval;
+mod routing;
+mod runtimes;
+mod scenes;
 mod serve;
-mod guard;
 mod spoiler;
-mod timegap;
-mod fate;
-mod appear;
+mod terms;
 mod theory;
+mod timegap;
 
 use std::path::PathBuf;
 
@@ -38,14 +38,16 @@ use trevor::tools::Tools;
 
 use crate::answer::{Tables, answer_one};
 use crate::chrono::load_chrono;
-use crate::cli::{Args, LoreSet, P3B_DIR, RetrievalKind, RouterKind, apply_profile, deep_for, p4_dir, retrieval_plan,
-                 router_source, tool_options};
+use crate::cli::{
+    Args, LoreSet, P3B_DIR, RetrievalKind, RouterKind, apply_profile, deep_for, p4_dir, retrieval_plan, router_source,
+    tool_options,
+};
 use crate::detect::source_kind;
 use crate::labels::load_names;
-use crate::runtimes::{Runtimes, load_runtime};
-use crate::routing::{print_route_only, route_question};
-use crate::scenes::line_study;
 use crate::llama_server::{Spawned, connect_or_spawn};
+use crate::routing::{print_route_only, route_question};
+use crate::runtimes::{Runtimes, load_runtime};
+use crate::scenes::line_study;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -57,16 +59,23 @@ async fn main() -> Result<()> {
     // RELATION_RULE is the default (`--no-relation-rule`); `answer_one_inner` narrows it per question.
     a.relation_rule = !a.no_relation_rule;
     if m.value_source("retrieval") == Some(clap::parser::ValueSource::DefaultValue)
-        && trevor::env::is("TREVOR_RETRIEVAL", "bm25") {
+        && trevor::env::is("TREVOR_RETRIEVAL", "bm25")
+    {
         a.retrieval = RetrievalKind::Bm25;
     }
     let profile = a.profile;
     apply_profile(&mut a, profile);
     if a.gate_order {
         let f = trevor::search::horizon::ReleaseOrder::write_file(std::path::Path::new("."))?;
-        println!("{}: {} stories ({} never visible, {} placed by date), {} dated sources, {} eras",
-                 trevor::search::horizon::GATE_ORDER_PATH, f.story_order.len(), f.never.len(), f.dated.len(),
-                 f.source_pos.len(), f.eras.len());
+        println!(
+            "{}: {} stories ({} never visible, {} placed by date), {} dated sources, {} eras",
+            trevor::search::horizon::GATE_ORDER_PATH,
+            f.story_order.len(),
+            f.never.len(),
+            f.dated.len(),
+            f.source_pos.len(),
+            f.eras.len()
+        );
         return Ok(());
     }
     if let (Some(b), true) = (&a.batch, a.horizon_check) {
@@ -76,8 +85,8 @@ async fn main() -> Result<()> {
         // P4 (P3b plus the module stories, voice lines, IS, enemies, outfits and items) only for a question that names
         // one of those sources (`source_kind`); with the model router naming the source, the corpus follows its route
         // instead (set after routing).
-        let source_q = !router_source(&a) && a.batch.is_none()
-            && a.question.as_deref().is_some_and(|q| source_kind(q).is_some());
+        let source_q =
+            !router_source(&a) && a.batch.is_none() && a.question.as_deref().is_some_and(|q| source_kind(q).is_some());
         let (p3b, p4) = (P3B_DIR, p4_dir(&a));
         a.runtime.corpus = PathBuf::from(if source_q { p4 } else { p3b });
     }
@@ -92,7 +101,11 @@ async fn main() -> Result<()> {
     if let Some(d) = &a.identity_scan {
         return batch::identity_scan(&a, &tools, d);
     }
-    let mut tables = Tables { tools, topic: None, route: None };
+    let mut tables = Tables {
+        tools,
+        topic: None,
+        route: None,
+    };
     if let (Some(b), true) = (&a.batch, a.json_check) {
         return serve::json_check(&a, &mut tables, b).await;
     }
@@ -112,7 +125,11 @@ async fn main() -> Result<()> {
         return batch::route_only(&a, &mut tables, b).await;
     }
     if let (None, Some(q), false) = (&a.batch, &a.question, a.no_route) {
-        let llm = if a.router == RouterKind::Model { Some(connect_or_spawn(&a).await?) } else { None };
+        let llm = if a.router == RouterKind::Model {
+            Some(connect_or_spawn(&a).await?)
+        } else {
+            None
+        };
         tables.tools.topics_deep = deep_for(&a, &tables.tools, q);
         let r = route_question(q, &a, &tables.tools, llm.as_ref().map(|x| &x.0)).await?;
         if a.route_only {
@@ -134,16 +151,26 @@ async fn main() -> Result<()> {
     }
     // Loaded after the table routes, which need no index (a table answer no longer waits on the ONNX load).
     let dense = a.retrieval == RetrievalKind::Hybrid;
-    let mut rts = Runtimes { main: load_runtime(&a.runtime, dense, None)?, p4: None, art: None, p4_dir: p4_dir(&a),
-                             switch: corpus_default && router_source(&a), args: a.runtime.clone(), horizon: None,
-                             dense };
+    let mut rts = Runtimes {
+        main: load_runtime(&a.runtime, dense, None)?,
+        p4: None,
+        art: None,
+        p4_dir: p4_dir(&a),
+        switch: corpus_default && router_source(&a),
+        args: a.runtime.clone(),
+        horizon: None,
+        dense,
+    };
     if let (Some(b), true) = (&a.batch, a.line_study) {
         return line_study(&mut rts.main, &rts.args, b);
     }
     if let (Some(b), true) = (&a.batch, a.scoped_only) {
         return batch::scoped_only(&a, &mut rts, &tables.tools, b);
     }
-    let (llm, _server) = match early { Some(x) => x, None => connect_or_spawn(&a).await? };
+    let (llm, _server) = match early {
+        Some(x) => x,
+        None => connect_or_spawn(&a).await?,
+    };
     let names = load_names();
     if let Some(b) = &a.batch {
         return batch::answer_batch(&a, &mut rts, &llm, &names, &chrono, &mut tables, b).await;

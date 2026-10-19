@@ -81,7 +81,17 @@ pub(crate) fn with_wide_topics(system: &str) -> String {
 
 /// The source kinds a retrieval route may name (`route_model_with(.., true)`): each maps to one kind of P4 unit, or
 /// "story" (P3b, no preference) and "any" (P4, no preference).
-pub const SOURCES: &[&str] = &["story", "operator_file", "module", "voice", "skin", "is", "enemy", "item", "any"];
+pub const SOURCES: &[&str] = &[
+    "story",
+    "operator_file",
+    "module",
+    "voice",
+    "skin",
+    "is",
+    "enemy",
+    "item",
+    "any",
+];
 
 /// The router prompt and grammar with a required `source` on retrieval routes, built from the plain ones so that
 /// `source: false` sends exactly the plain prompt and grammar.
@@ -90,12 +100,25 @@ pub(crate) fn source_variant() -> &'static (String, String) {
     V.get_or_init(|| {
         let line = include_str!("../../prompts/router.source.txt").trim_end();
         let examples = include_str!("../../prompts/router.source.examples.txt");
-        let system = ROUTER_SYSTEM.replace("- retrieve {}: everything else.", line)
-            .replace(r#"{"tool": "retrieve", "args": {}}"#, r#"{"tool": "retrieve", "args": {"source": "story"}}"#)
-            .replace("\nAnswer with the JSON object only.", &format!("{examples}\nAnswer with the JSON object only."));
-        let kinds = SOURCES.iter().map(|k| format!("\"{k}\"")).collect::<Vec<_>>().join(" | ");
-        let grammar = ROUTER_GRAMMAR.replace(r#""retrieve\", \"args\": {}""#, r#""retrieve\", \"args\": {" source "}""#)
-            + &format!("source ::= \"\\\"source\\\": \\\"\" ({kinds}) \"\\\"\"\n");
+        let system = ROUTER_SYSTEM
+            .replace("- retrieve {}: everything else.", line)
+            .replace(
+                r#"{"tool": "retrieve", "args": {}}"#,
+                r#"{"tool": "retrieve", "args": {"source": "story"}}"#,
+            )
+            .replace(
+                "\nAnswer with the JSON object only.",
+                &format!("{examples}\nAnswer with the JSON object only."),
+            );
+        let kinds = SOURCES
+            .iter()
+            .map(|k| format!("\"{k}\""))
+            .collect::<Vec<_>>()
+            .join(" | ");
+        let grammar = ROUTER_GRAMMAR.replace(
+            r#""retrieve\", \"args\": {}""#,
+            r#""retrieve\", \"args\": {" source "}""#,
+        ) + &format!("source ::= \"\\\"source\\\": \\\"\" ({kinds}) \"\\\"\"\n");
         (system, grammar)
     })
 }
@@ -110,6 +133,8 @@ pub async fn route_model_with(llm: &Llm, q: &str, o: &RouterPrompt) -> Result<Ro
     let (system, grammar) = router_prompt(o);
     // n_predict 160: the longest legal output (operator_filter with 8 fields of 60 characters) is about 700 tokens; real
     // outputs are 15 to 50.
-    let c = llm.complete(&Request::greedy(&system, &format!("Q: {q}"), Some(&grammar), 160, &[])).await?;
+    let c = llm
+        .complete(&Request::greedy(&system, &format!("Q: {q}"), Some(&grammar), 160, &[]))
+        .await?;
     Ok(serde_json::from_str::<Route>(c.content.trim()).unwrap_or_else(|_| Route::retrieve()))
 }

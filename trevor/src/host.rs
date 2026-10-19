@@ -16,7 +16,9 @@
 #[must_use]
 pub fn probe(prog: &str, args: &[&str]) -> Option<String> {
     let out = std::process::Command::new(prog).args(args).output().ok()?;
-    out.status.success().then(|| String::from_utf8_lossy(&out.stdout).into_owned())
+    out.status
+        .success()
+        .then(|| String::from_utf8_lossy(&out.stdout).into_owned())
 }
 
 /// A recorded warning in `pmset -g therm` output, or None. Apple Silicon
@@ -56,14 +58,18 @@ pub fn mem_available_gib(meminfo: &str) -> Option<f64> {
 #[must_use]
 pub fn cpu_some_avg10(psi: &str) -> Option<f64> {
     let line = psi.lines().find(|l| l.starts_with("some "))?;
-    line.split_whitespace().find_map(|f| f.strip_prefix("avg10=")?.parse().ok())
+    line.split_whitespace()
+        .find_map(|f| f.strip_prefix("avg10=")?.parse().ok())
 }
 
 /// The online CPUs counted in /proc/stat (`cpu0`, `cpu1`, ...).
 #[must_use]
 pub fn online_cpus(stat: &str) -> usize {
     stat.lines()
-        .filter(|l| l.strip_prefix("cpu").is_some_and(|r| r.starts_with(|c: char| c.is_ascii_digit())))
+        .filter(|l| {
+            l.strip_prefix("cpu")
+                .is_some_and(|r| r.starts_with(|c: char| c.is_ascii_digit()))
+        })
         .count()
 }
 
@@ -72,19 +78,33 @@ pub fn online_cpus(stat: &str) -> usize {
 /// The stdout of `cmd args` when it exits 0 (stderr discarded), else None.
 #[must_use]
 pub fn run_cmd(cmd: &str, args: &[&str]) -> Option<String> {
-    let out = std::process::Command::new(cmd).args(args).stderr(std::process::Stdio::null()).output().ok()?;
-    out.status.success().then(|| String::from_utf8_lossy(&out.stdout).into_owned())
+    let out = std::process::Command::new(cmd)
+        .args(args)
+        .stderr(std::process::Stdio::null())
+        .output()
+        .ok()?;
+    out.status
+        .success()
+        .then(|| String::from_utf8_lossy(&out.stdout).into_owned())
 }
 
 /// `some avg10=` of a /proc/pressure file.
 pub fn parse_psi_some_avg10(text: &str) -> Option<f64> {
     let line = text.lines().find(|l| l.starts_with("some "))?;
-    line.split_whitespace().find_map(|f| f.strip_prefix("avg10="))?.parse().ok()
+    line.split_whitespace()
+        .find_map(|f| f.strip_prefix("avg10="))?
+        .parse()
+        .ok()
 }
 
 /// A `Name:   123 kB` field of /proc/meminfo or /proc/<pid>/status, in kB.
 pub fn parse_kb_field(text: &str, field: &str) -> Option<f64> {
-    text.lines().find_map(|l| l.strip_prefix(field))?.split_whitespace().next()?.parse().ok()
+    text.lines()
+        .find_map(|l| l.strip_prefix(field))?
+        .split_whitespace()
+        .next()?
+        .parse()
+        .ok()
 }
 
 /// (steal, total) jiffies of the aggregate `cpu` line of /proc/stat.
@@ -108,17 +128,26 @@ pub fn steal_pct(prev: (u64, u64), now: (u64, u64)) -> Option<f64> {
 /// line above 0, or another line naming a warning; the "Note: No ... has been recorded" lines, the "CPU Power notify"
 /// header and the other `key = value` lines (CPU_Available_CPUs) are not.
 pub fn pmset_warning(text: &str) -> bool {
-    text.lines().map(str::trim).filter(|l| !l.is_empty() && !l.starts_with("Note:")).any(|l| {
-        let num = l.trim_end_matches('.').rsplit([' ', '=', '\t']).next().and_then(|n| n.trim().parse::<i64>().ok());
-        let low = l.to_lowercase();
-        if let Some((key, _)) = l.split_once('=') {
-            return key.trim().ends_with("_Limit") && num.is_some_and(|n| n < 100);
-        }
-        if low.contains("level") && let Some(n) = num {
-            return n > 0;
-        }
-        low.contains("warning")
-    })
+    text.lines()
+        .map(str::trim)
+        .filter(|l| !l.is_empty() && !l.starts_with("Note:"))
+        .any(|l| {
+            let num = l
+                .trim_end_matches('.')
+                .rsplit([' ', '=', '\t'])
+                .next()
+                .and_then(|n| n.trim().parse::<i64>().ok());
+            let low = l.to_lowercase();
+            if let Some((key, _)) = l.split_once('=') {
+                return key.trim().ends_with("_Limit") && num.is_some_and(|n| n < 100);
+            }
+            if low.contains("level")
+                && let Some(n) = num
+            {
+                return n > 0;
+            }
+            low.contains("warning")
+        })
 }
 
 #[cfg(test)]
@@ -149,7 +178,10 @@ mod tests {
         assert_eq!(parse_psi_some_avg10(psi), Some(12.34));
         let meminfo = "MemTotal:        8000000 kB\nMemFree:          100000 kB\nMemAvailable:     819200 kB\n";
         assert_eq!(parse_kb_field(meminfo, "MemAvailable:"), Some(819_200.0));
-        assert_eq!(parse_kb_field("Name:\tllama-server\nVmRSS:\t 4718592 kB\n", "VmRSS:"), Some(4_718_592.0));
+        assert_eq!(
+            parse_kb_field("Name:\tllama-server\nVmRSS:\t 4718592 kB\n", "VmRSS:"),
+            Some(4_718_592.0)
+        );
         let a = parse_stat_steal("cpu  100 0 50 800 10 0 0 40 0 0\ncpu0 1 2 3\n").unwrap();
         let b = parse_stat_steal("cpu  150 0 70 860 10 0 0 60 0 0\n").unwrap();
         assert_eq!((a, b), ((40, 1000), (60, 1150)));
@@ -161,9 +193,13 @@ mod tests {
                      Note: No CPU power status has been recorded\n";
         assert!(!pmset_warning(quiet));
         assert!(pmset_warning("Thermal warning level set to 1."));
-        assert!(!pmset_warning("CPU Power notify\n\tCPU_Scheduler_Limit \t= 100\n\t\
-                                CPU_Available_CPUs \t= 15\n\tCPU_Speed_Limit \t= 100"),
-                "limits of 100 are no throttling, but CPU_Available_CPUs = 15 is not a limit");
+        assert!(
+            !pmset_warning(
+                "CPU Power notify\n\tCPU_Scheduler_Limit \t= 100\n\t\
+                                CPU_Available_CPUs \t= 15\n\tCPU_Speed_Limit \t= 100"
+            ),
+            "limits of 100 are no throttling, but CPU_Available_CPUs = 15 is not a limit"
+        );
         assert!(pmset_warning("CPU_Speed_Limit \t= 70"));
         assert!(!pmset_warning("Thermal warning level set to 0."));
     }
