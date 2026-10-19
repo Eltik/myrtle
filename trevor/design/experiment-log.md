@@ -1375,6 +1375,17 @@ VPS slice by an estimated 2 to 4 times, so these bound the VPS from above.
 **Decision.** Recorded in `trevor-self-contained-deploy.md` section 5; the VPS numbers are taken on the VPS before
 step 5 is built. Contract v1.1's 1,000 to 1,900 answers a day on one core is flagged for correction.
 
+### 2026-10-19: The stage runner's first run with real models
+
+**Tried.** `scripts/stages.py --once --duty 1` on the development machine over the live tree, with a scratch state
+dir, after the day's update had left 4 units to do plus whatever the topic stages found.
+**Result.** Five stages ran, each with its own server start and stop: real names 24.8 s (1 unit), dossiers 58.1 s
+(3), topic classify 5.4 s, deep topics 171.2 s (2 units, the 12B), the deep judge 99.7 s (2, Qwen). Every plan
+after that was 0, the pass ended, state `stopped`, exit 0, no llama-server left, 15 minutes wall. The deterministic
+rebuild after a stage with progress ran (build-units for P4 and P4x). These are GPU timings on an M5 Pro; the VPS
+runs the same stages on 3 CPU cores (section 5 of `trevor-memory-budget.md`), so they bound the box from below.
+**Decision.** The runner is proven on this machine; the window and the VPS remain to be run for real.
+
 ## Entities and topics
 
 Identities, names and aliases, topics and topic summaries, dossiers, canon evidence for the Integrated Strategies endings, deaths, places, organisations, operator data.
