@@ -208,6 +208,18 @@ anything (5.3 GiB plus KV; it runs inside the window after the 12B, one model af
    admission ceiling at the day's peak (the backend's `TREVOR_*` capacity settings, contract v1.1 section 2); also
    record `Rss` of the E2B server at 12,288 against 4,096 (the KV cache is small, under 0.3 GB expected; confirm).
 
+**Block 5 measured (2026-10-20, 00:40 JST VPS time, 3 vCPU Ryzen 9 7900, site up, E2B stopped).** Default (repacked):
+health 24 s warm; prompt 20.3, 21.7, 21.6 tok/s on the 1,856-token prompt and 20.2 on the 6,653-token one; generation
+4.75, 4.71, 3.22 tok/s; `Rss` 8,018 MB, `Anonymous` 6,906 MB, `Shared_Clean` 5 MB; `free -m` loaded: used 8,598,
+available 2,355; after stop: used 1,814, buff/cache 2,475 (before 2,891: the load evicted about 420 MB of page cache).
+`--no-repack`: health 10 s; prompt 14.2, 14.1, 15.5; generation 3.38, 2.76, 3.42; `Rss` 7,766 MB, `Anonymous` 952 MB,
+buff/cache 8,211 MB (the weights, page-cache backed) and they stay there after stop (buff/cache 8,211, used 1,853), so the
+database's cached pages are the ones evicted for the morning. Decision: the window runs the DEFAULT (repack):
+`--no-repack` costs 34% of prompt and 28% of generation speed and leaves 7 GB of weights in the page cache. A unit of
+1,500 prompt plus 200 generated tokens costs 1500/21.6 + 200/4.71 = 112 s, so the 6-hour window holds about 190 units,
+and a game update's roughly 400 model calls take 2 to 3 nights. Not measured: the site's latency while the 12B ran; the
+two generation outliers (3.22, 2.76) point at CPU contention during those posts.
+
 ## 6. Order of work
 
 1. The VPS measurement (section 5), one hour, no code.

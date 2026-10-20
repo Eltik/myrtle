@@ -3115,6 +3115,21 @@ passage order or an answer rule, not a bigger budget alone. The chapter 6 questi
 at mid6k; `--route-only` sends it to retrieval at mid, mid6k and full alike (09:35 JST), so it is not a route
 difference; the empty mid render is unexplained.
 
+### 2026-10-20: The 12B on the VPS, block 5: 21.6 prompt and 4.71 generation tok/s, repack over `--no-repack`
+
+**Measured (VPS, 3 vCPU Ryzen 9 7900, 11 GB, site up, E2B stopped, `-t 3 -np 1 -c 12288 --cache-ram 0
+--ctx-checkpoints 0 -fa on`, every post `cache_prompt: false`).** Default: prompt 21.6 tok/s median (20.3, 21.7, 21.6
+on a real 1,856-token method D part prompt; 20.2 on a 6,653-token one), generation 4.71 median (4.75, 4.71, 3.22), health
+24 s; `Anonymous` 6,906 MB, `Rss` 8,018 MB; the box at 8,598 MB used and 2,355 available with the site up; after stop
+used 1,814 and the site's page cache down 420 MB (2,891 -> 2,471). `--no-repack`: prompt 14.2 (14.2, 14.1, 15.5),
+generation 3.38 (3.38, 2.76, 3.42), health 10 s; `Anonymous` 952 MB with 7 GB of weights in the page cache (buff/cache
+8,211) that stay after stop.
+**Decision.** The nightly window runs the default. `--no-repack` loses 34% prompt and 28% generation speed, above the 25%
+line the measurement plan set, and its page-cache posture evicts the database's pages instead of its own at stop. The
+window fits: 112 s a unit (1,500 prompt plus 200 generated tokens), about 190 units in 6 hours, 2 to 3 nights for a game
+update's roughly 400 calls, against the 3 to 6 days estimated before measuring. Open: the site's latency during the
+window (not in the script), and the two slow generation posts.
+
 ### 2026-10-20: ian26 "is deepcolor part of the church of the deep" declines with the hint in the prompt (open)
 
 **Measured (no model, stub render at `full`, binary 32a8192f).** No chunk of P3b or P4x names both Deepcolor and the
