@@ -107,6 +107,10 @@ written.
 Decision (2026-10-16): summaries are the only model stage of the update. `summaries_cf.py` writes p2-summaries.py's rows
 (same prompts, inputs, max tokens and incremental keys) for every story and group that has NO summary row
 (`--scope stale` would also redo changed ones).
+Since 2026-10-19 the self-contained deployment (`trevor-self-contained-deploy.md` sections 4 and 5) runs every model
+stage instead through the paced runner `trevor-stages` (`scripts/stages.py`), summaries included, with the sectioned
+method-D summaries for low-coverage groups (`p2-group-d`, 2026-10-20) after the plain group summaries; this section is
+the Cloudflare-assisted variant for a box with `TREVOR_CF_*` keys.
 
 1. **Cloudflare** inside `TREVOR_CF_WINDOW` (23:00 to 23:55 UTC), the last hour before the 00:00 UTC Neuron reset,
    so it spends what the day's readers left. Each response's usage is priced with the contract's rule

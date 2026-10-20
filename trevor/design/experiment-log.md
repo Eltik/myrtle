@@ -3112,8 +3112,8 @@ mid passages are still in the 13 at mid6k; the Dossoles event notes: all 6 of 6 
 non-infected": all 3 of 3 are in the 8. The evidence the mid answer used is in the mid6k prompt too, so these three
 losses are the model's choice under more passages (dilution), not retrieval, and a larger budget needs a stronger
 passage order or an answer rule, not a bigger budget alone. The chapter 6 question renders with 0 passages at mid and 3
-at mid6k, which means its route differs between the profiles; unexplained, one `--route-only` run per profile would
-tell.
+at mid6k; `--route-only` sends it to retrieval at mid, mid6k and full alike (09:35 JST), so it is not a route
+difference; the empty mid render is unexplained.
 
 ### 2026-10-20: ian26 "is deepcolor part of the church of the deep" declines with the hint in the prompt (open)
 
