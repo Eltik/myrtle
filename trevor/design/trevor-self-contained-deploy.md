@@ -71,14 +71,17 @@ today), the nightly re-answer of the previous day's live questions on the 12B (n
 **Nightly, deterministic, minutes to an hour.** `trevor-vps-update.sh daily` as it is, minus its model-stage calls:
 fetch, extract, `build-corpus --refresh`, `embed-corpus` for changed chunks (paced; `trevor-reembed.md`), indexes,
 prefixes, archives, chronology, dates, identities (v1 and v2), deaths, attributes, typed sources, reading guide,
-source dates, gate order, label renames, appearances, bank seed and merge, gates, publish, warm-up. Every reader of a
+source dates, gate order, label renames (story-scoped and, since 2026-10-19, chunk-scoped for "???" speakers),
+appearances, bank seed and merge, gates, publish, warm-up. Every reader of a
 game table survives a missing or stale table the way `reading_guide.py dates` and `gametext.py` do since 2026-10-18
 (keep the last good output, say so in the log), because a skipped table is the most common upstream failure
 (`assets/output/*/gamedata/.skipped.json`, backend `core/gamedata/stale.rs`).
 
 **Continuously, paced: the model stages.** In priority order, each unit resumable and recorded by `incr.py`:
 
-1. story summaries for new or changed stories (`p2-summaries.py story`, then `group`);
+1. story summaries for new or changed stories (`p2-summaries.py story`, then `group`, then since 2026-10-20
+   `group --method D --coverage-below` for the groups whose summary misses more than 0.4 of their recurring names,
+   `COVERAGE_SECTION=0` off);
 2. the nightly re-answer: the previous day's live questions through the 12B at the `full` profile into the bank;
 3. bank answers for new pre-generated questions (`answer_bank.py answer`);
 4. dossiers, real names, primers, entity and death cues and extracts;

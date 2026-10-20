@@ -3107,6 +3107,13 @@ prompt and 1.75 times the time per question. The VPS E2B throughput at 6k contex
 admission budget, the cpu rung serves mid6k (`TREVOR_CPU_PROFILE=mid6k`, contract v1.1 section 4) and the serving
 unit's llama-server context rises from 4,096 to 8,192 (deploy/trevor.env.example line 49 ties the profile to that
 size; E2B's KV cache at 8k is small, the prompt processing on 3 vCPUs is the cost to measure).
+**The 4 real losses, by their prompts (stub renders at `mid` and `mid6k`, 09:29 JST).** Terra's threats: 6 of the 8
+mid passages are still in the 13 at mid6k; the Dossoles event notes: all 6 of 6 are in the 11; "Is the Doctor
+non-infected": all 3 of 3 are in the 8. The evidence the mid answer used is in the mid6k prompt too, so these three
+losses are the model's choice under more passages (dilution), not retrieval, and a larger budget needs a stronger
+passage order or an answer rule, not a bigger budget alone. The chapter 6 question renders with 0 passages at mid and 3
+at mid6k, which means its route differs between the profiles; unexplained, one `--route-only` run per profile would
+tell.
 
 ### 2026-10-20: ian26 "is deepcolor part of the church of the deep" declines with the hint in the prompt (open)
 
@@ -3124,6 +3131,20 @@ line, `block` is None, `extra_hints` has nothing to find, and the first answer s
 link from Seaborn to the Church of the Deep is semantic; the text never states it, so the decline is data-consistent. A
 lift would need the topics table (a topic summary that relates the Church to the Seaborn) to lend the theory rule its
 stems; unmeasured, not built.
+**Gate trace (2026-10-20, 09:30 JST, no model).** `TREVOR_THEORY_DEBUG=1` now names the gate that stops the rule, and a
+stub whose answer declines ("The provided passages do not contain information about this [1].") lets the real binary
+trace a set. The 25 distinct declined whether-questions of the night's two final runs, at `full`: 12 name NO character
+(meta or world questions: canon, playlists, a novel, the Columbian government, Petrams and Aegirs), 3 name several
+(Magallan and Emperor; Sankta and Sarkaz; Whisperain, Kal'tsit, Saint Carmen), 4 have no spec (Fyodor's sprite and
+Specter Alter's canon hit META; "Is there a lore behind Ascalon's tattoo" and "Do we know how Amiya got infected" have a
+subject other than the character), 1 is a death question (Theresa) and takes the deaths evidence, 4 fail the lexical
+hint test (Matsukiri marriage fraud, Andoain married, Ulpianus talkative, Deepcolor and the Church), and 1 passes every
+gate: "Has Harold married twice? Does he have children?", whose second ask the 12B and E2B both answered without a
+"Theory:" line last night. At `mid` the same, with Harold too failing the hint test (5). So the rule's reach on these
+declines is 1 question, and the lexical test costs 4; a topic-assisted stem would at most lift those 4, each needing a
+topic that relates the question's word to the passage's (Seaborn to the Church, wife to marriage). Not built: the count
+does not justify a new behaviour; the Harold case is the one to look at with a model (why the second ask gave no
+theory).
 
 ### 2026-10-20: Report attributions checked against the deaths-evidence line's speaker (`--no-report-check`)
 

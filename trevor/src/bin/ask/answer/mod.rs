@@ -217,7 +217,14 @@ async fn theory_retry(
     tables: &mut Tables,
     first: Answer,
 ) -> Result<Answer> {
-    // An alive-or-dead question has the deaths evidence instead (`fate.rs`).
+    // An alive-or-dead question has the deaths evidence instead (`fate.rs`). TREVOR_THEORY_DEBUG names the gate that
+    // stops the rule (2026-10-20), so a stub whose answer declines traces a question set with no model.
+    let debug = trevor::env::debug_on("TREVOR_THEORY_DEBUG");
+    let stop = |why: &str| {
+        if debug {
+            eprintln!("theory: {q}: {why}");
+        }
+    };
     if a.no_theory_rule
         || a.no_route
         || first.passages.is_empty()
@@ -226,10 +233,14 @@ async fn theory_retry(
         || crate::detect::is_death_question(q)
         || crate::detect::has(q, &["alive"])
     {
+        stop("not a declined whether-question with passages (or a death question, or the rule is off)");
         return Ok(first);
     }
     let people = people_named(&rts.main, &tables.tools, q);
-    let [key] = people.as_slice() else { return Ok(first) };
+    let [key] = people.as_slice() else {
+        stop(&format!("{} people named ({})", people.len(), people.join(", ")));
+        return Ok(first);
+    };
     // The name as the tables write it ("Fyodor", not the folded key "fyodor").
     let who = tables
         .tools
@@ -240,6 +251,9 @@ async fn theory_retry(
         .map_or_else(|| key.clone(), str::to_owned);
     let who = who.as_str();
     let Some(mut spec) = crate::theory::spec(q, &first.answer, &tables.tools, who, &first.passages) else {
+        stop(&format!(
+            "no spec for {who}: the question's subject is not {who}, a META word, or no stem"
+        ));
         return Ok(first);
     };
     spec.pinned = crate::theory::hinted(&first.texts, &spec)
@@ -249,6 +263,7 @@ async fn theory_retry(
     let block = crate::theory::block(&first.texts, &spec);
     let extra = crate::theory::extra_hints(&rts.main, &spec);
     if block.is_none() && extra.is_empty() {
+        stop(&format!("no hint line for {who} (stems {})", spec.stems.join(" ")));
         return Ok(first);
     }
     // The second ask must fit where the first did: the pinned chunks, the extra excerpts and the HINTS block with
