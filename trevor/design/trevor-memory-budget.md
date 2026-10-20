@@ -220,6 +220,14 @@ database's cached pages are the ones evicted for the morning. Decision: the wind
 and a game update's roughly 400 model calls take 2 to 3 nights. Not measured: the site's latency while the 12B ran; the
 two generation outliers (3.22, 2.76) point at CPU contention during those posts.
 
+**Block 6 measured (2026-10-20, 02:00 JST VPS time, E2B `-t 3 -np 1 --cache-ram 0 --ctx-checkpoints 0 -fa on`).**
+`-c 4096` with a 3,632-token answer prompt: prompt 97.7, 96.8, 87.4 tok/s, generation 19.66, 19.56, 17.49; `Rss` 4,406 MB,
+`Anonymous` 1,371 MB; health 3 s. `-c 12288` with a 6,293-token prompt: prompt 87.0, 86.0, 91.3, generation 18.57,
+19.57, 18.56; `Rss` 4,464 MB, `Anonymous` 1,429 MB. Per question at the real profile sizes (mean prompt 3,292 tokens at
+mid, 5,594 at mid6k, 250 generated): mid 3292/96.8 + 250/19.6 = 47 s, mid6k 5594/87.0 + 250/19.6 = 77 s; prompt
+processing is 73 to 83 percent of it. mid6k buys 15 more answered questions of 155 (61 -> 46 declines, 4 real losses)
+for 30 s more a question and 58 MB; the owner decides against the cpu rung's admission ceiling (contract v1.1 section 2).
+
 ## 6. Order of work
 
 1. The VPS measurement (section 5), one hour, no code.

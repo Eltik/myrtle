@@ -3107,6 +3107,10 @@ prompt and 1.75 times the time per question. The VPS E2B throughput at 6k contex
 admission budget, the cpu rung serves mid6k (`TREVOR_CPU_PROFILE=mid6k`, contract v1.1 section 4) and the serving
 unit's llama-server context rises from 4,096 to 8,192 (deploy/trevor.env.example line 49 ties the profile to that
 size; E2B's KV cache at 8k is small, the prompt processing on 3 vCPUs is the cost to measure).
+**VPS numbers (block 6, 2026-10-20).** E2B on the 3 vCPUs: prompt 96.8 tok/s at a 4,096 context, 87.0 at 12,288;
+generation 19.6 at both; the 12,288 slot costs 58 MB (`Anonymous` 1,371 -> 1,429 MB). At the profiles' mean prompt sizes
+a mid question takes about 47 s and a mid6k one about 77 s, prompt processing being 73 to 83 percent; so mid6k's 15
+extra answers of 155 cost 30 s a question. The decision is the owner's against the admission ceiling.
 **The 4 real losses, by their prompts (stub renders at `mid` and `mid6k`, 09:29 JST).** Terra's threats: 6 of the 8
 mid passages are still in the 13 at mid6k; the Dossoles event notes: all 6 of 6 are in the 11; "Is the Doctor
 non-infected": all 3 of 3 are in the 8. The evidence the mid answer used is in the mid6k prompt too, so these three
