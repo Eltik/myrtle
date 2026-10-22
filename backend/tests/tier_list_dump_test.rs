@@ -53,6 +53,8 @@ fn state(db: sqlx::PgPool) -> AppState {
         default_server: Server::EN,
         asset_ws_urls: HashMap::new(),
         role_recheck: true,
+        storage: None,
+        asset_delivery: myrtle_storage::DeliveryMode::Local,
     };
     AppState::new(
         db,

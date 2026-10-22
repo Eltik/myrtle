@@ -19,6 +19,13 @@
 // running at a time under the scheduler. A manual force_update still bypasses the
 // phase, so two triggered by hand at once can still overlap.
 // Raise them on a box with more cores and faster storage.
+//
+// Object storage sync (assets/README.md "Object Storage Sync") runs after every
+// extract with no entry here: it reads the bucket settings from ../backend/.env
+// then the repo-root .env (first file wins, as in the backend) and is skipped
+// while neither sets S3_TYPE.
+// Two optional env vars, set per app when needed: WS_S3_SYNC "0" turns the
+// stage off for that region, and WS_S3_ENV_FILE points it at another env file.
 module.exports = {
     apps: [
         {

@@ -16,8 +16,11 @@ ENV NODE_ENV=production
 
 ARG VITE_BACKEND_URL=https://api.myrtle.moe
 ARG VITE_SITE_URL=https://myrtle.moe
+# Empty = raw-tree assets come from the backend; see .env.example.
+ARG VITE_ASSET_BASE_URL=
 ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
 ENV VITE_SITE_URL=$VITE_SITE_URL
+ENV VITE_ASSET_BASE_URL=$VITE_ASSET_BASE_URL
 
 RUN bun run build
 

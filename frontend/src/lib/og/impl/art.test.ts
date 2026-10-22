@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchToDataURI, inlineArt, ogEntityIconURL, satoriImageType } from "./art";
+
+const mockEnv = vi.hoisted(() => ({
+    BACKEND_URL: undefined as string | undefined,
+    VITE_BACKEND_URL: undefined as string | undefined,
+    VITE_ASSET_BASE_URL: undefined as string | undefined,
+}));
+vi.mock("#/env", () => ({ env: mockEnv }));
+
+import { fetchToDataURI, inlineArt, ogEntityIconURL, satoriImageType, serverSideURL } from "./art";
 
 describe("satoriImageType", () => {
     it("accepts the four types satori decodes, ignoring parameters and case", () => {
@@ -28,6 +36,44 @@ describe("ogEntityIconURL", () => {
     it("leaves PNG routes alone", () => {
         expect(ogEntityIconURL("/avatar/char_002_amiya", "https://b")).toBe("https://b/api/avatar/char_002_amiya");
         expect(ogEntityIconURL("/assets/textures/x.png", "https://b")).toBe("https://b/api/assets/textures/x.png");
+    });
+});
+
+describe("ogEntityIconURL with the object store on", () => {
+    afterEach(() => {
+        mockEnv.VITE_ASSET_BASE_URL = undefined;
+    });
+
+    it("sends a raw-tree icon to the store and leaves indexed routes on the backend", () => {
+        mockEnv.VITE_ASSET_BASE_URL = "https://cdn.example/assets";
+        expect(ogEntityIconURL("/assets/textures/arts/ui/%5Buc%5Dx/y z.png", "https://b")).toBe("https://cdn.example/assets/en/textures/arts/ui/%5Buc%5Dx/y%20z.png");
+        expect(ogEntityIconURL("/assets/textures/x.png", "https://b", "cn")).toBe("https://cdn.example/assets/cn/textures/x.png");
+        expect(ogEntityIconURL("/assets/textures/x.png", "https://b", "jp")).toBe("https://b/api/jp/assets/textures/x.png");
+        expect(ogEntityIconURL("/avatar/char_002_amiya", "https://b")).toBe("https://b/api/avatar/char_002_amiya");
+        expect(ogEntityIconURL("/story-sprite-thumb/avg_npc_253", "https://b")).toBe("https://b/api/story-sprite-thumb/avg_npc_253?format=png");
+    });
+});
+
+describe("serverSideURL", () => {
+    afterEach(() => {
+        mockEnv.BACKEND_URL = undefined;
+        mockEnv.VITE_BACKEND_URL = undefined;
+        mockEnv.VITE_ASSET_BASE_URL = undefined;
+    });
+
+    it("swaps the public backend origin for the local one", () => {
+        mockEnv.BACKEND_URL = "http://localhost:3060";
+        mockEnv.VITE_BACKEND_URL = "https://api.example";
+        expect(serverSideURL("https://api.example/api/assets/textures/x.png")).toBe("http://localhost:3060/api/assets/textures/x.png");
+        expect(serverSideURL("https://elsewhere.example/x.png")).toBe("https://elsewhere.example/x.png");
+    });
+
+    it("leaves an object store URL untouched, even one that shares the backend's prefix", () => {
+        mockEnv.BACKEND_URL = "http://localhost:3060";
+        mockEnv.VITE_BACKEND_URL = "https://api.example";
+        mockEnv.VITE_ASSET_BASE_URL = "https://api.example/store";
+        expect(serverSideURL("https://api.example/store/en/textures/x.png")).toBe("https://api.example/store/en/textures/x.png");
+        expect(serverSideURL("https://api.example/api/avatar/char_002_amiya")).toBe("http://localhost:3060/api/avatar/char_002_amiya");
     });
 });
 

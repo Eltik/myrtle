@@ -1804,6 +1804,8 @@ fn test_state_on(dir: &Path, database_url: &str) -> backend::app::state::AppStat
         default_server: Server::EN,
         asset_ws_urls: HashMap::new(),
         role_recheck: true,
+        storage: None,
+        asset_delivery: myrtle_storage::DeliveryMode::Local,
     };
     AppState::new(
         sqlx::postgres::PgPoolOptions::new()

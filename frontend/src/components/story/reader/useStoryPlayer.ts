@@ -151,8 +151,8 @@ export function useStoryPlayer({ script, storyId, nickname, audio, initialHalt, 
     );
 
     // Engine urls are assets-root-relative (`/audio/audio/sound_beta_2/...`);
-    // `asset()` is what puts them on the backend under `/api/assets`. Without it
-    // every cue 404s against the dev server's own origin.
+    // `asset()` is what puts them on the backend under `/api/assets` (or on the
+    // object store). Without it every cue 404s against the dev server's own origin.
     const playMusicEffect = useCallback(
         (e: { intro?: string; loop?: string; volume: number; crossfade: number }) => {
             // The story's own music pauses the site's music player rather than sounding over it.

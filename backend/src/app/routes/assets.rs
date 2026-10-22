@@ -10,6 +10,8 @@ use reqwest::StatusCode;
 use tokio::io::{AsyncReadExt, AsyncSeekExt};
 use tokio_util::io::ReaderStream;
 
+use myrtle_storage::{DeliveryMode, GetOptions, ObjectStore, StorageConfig, StorageError, key};
+
 use crate::app::{error::ApiError, state::AppState};
 use crate::core::gamedata::assets::{AssetIndex, AssetKind};
 use crate::core::hypergryph::constants::Server;
@@ -121,7 +123,7 @@ where
         let Some(rel) = resolve(&sd.asset_index.load()) else {
             continue;
         };
-        match serve_file(&sd.art_dir, &rel, headers).await {
+        match deliver_file(state, &sd.art_dir, &rel, headers).await {
             Ok(resp) => return Ok(resp),
             Err(e) => last = e,
         }
@@ -1059,7 +1061,7 @@ async fn generic_impl(
         let Some(sd) = state.try_server_data(srv) else {
             continue;
         };
-        match serve_file(&sd.assets_dir, asset_path, headers).await {
+        match deliver_file(state, &sd.assets_dir, asset_path, headers).await {
             Ok(resp) => return Ok(resp),
             Err(e) => last = e,
         }
@@ -1071,6 +1073,10 @@ async fn generic_impl(
 ///
 /// The path must lie under `textures`, `spine`, `audio`, `video` or `portraits`;
 /// anything else, traversal included, is a 404. Other extensions are a 403.
+///
+/// With object storage configured (`S3_TYPE`) and `ASSET_DELIVERY=redirect`,
+/// a file under the `S3_ROOTS` answers `302 Found` to its public URL in the
+/// bucket instead of the bytes.
 #[utoipa::path(
     get,
     path = "/assets/{*path}",
@@ -1083,6 +1089,7 @@ async fn generic_impl(
     responses(
         (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
         (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+        (status = 302, description = "Delivery is `redirect`: `Location` is the object's public URL in the bucket, with `Cache-Control: public, max-age=3600` and no body."),
         (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
         (status = 404, response = crate::app::openapi::responses::NotFound),
@@ -1102,6 +1109,10 @@ pub async fn generic(
 ///
 /// The path must lie under `textures`, `spine`, `audio`, `video` or `portraits`;
 /// anything else, traversal included, is a 404. Other extensions are a 403.
+///
+/// With object storage configured (`S3_TYPE`) and `ASSET_DELIVERY=redirect`,
+/// a file under the `S3_ROOTS` answers `302 Found` to its public URL in the
+/// bucket instead of the bytes.
 #[utoipa::path(
     get,
     path = "/{server}/assets/{*path}",
@@ -1115,6 +1126,7 @@ pub async fn generic(
     responses(
         (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
         (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+        (status = 302, description = "Delivery is `redirect`: `Location` is the object's public URL in the bucket, with `Cache-Control: public, max-age=3600` and no body."),
         (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
         (status = 404, response = crate::app::openapi::responses::NotFound),
@@ -1156,6 +1168,172 @@ fn validate_asset_path(base_dir: &Path, requested: &str) -> Result<PathBuf, ApiE
     }
 
     Ok(full)
+}
+
+/// Where a request for a mirrored asset is answered from, when not from disk.
+#[derive(Debug, PartialEq, Eq)]
+enum StoreTarget {
+    /// `302 Found` to this public URL.
+    Redirect(String),
+    /// Stream this object key from the store.
+    Proxy(String),
+}
+
+/// The store answer for `rel` under `base_dir`, or `None` for disk.
+///
+/// `None` when storage is disabled, delivery is `local`, `rel` fails the
+/// lexical path rules, or `rel` is not under `S3_ROOTS`. The key's server
+/// segment is `base_dir`'s last component, the directory the file was synced
+/// from: a fallback that lands on `cn/` redirects to the `cn/` key, and an
+/// art tree borrowed from the default server (`art_dir_for`) to that server's.
+fn store_target(
+    storage: Option<&StorageConfig>,
+    mode: DeliveryMode,
+    base_dir: &str,
+    rel: &str,
+) -> Option<StoreTarget> {
+    let storage = storage?;
+    if mode == DeliveryMode::Local {
+        return None;
+    }
+    let rel = key::normalize_rel(rel)?;
+    if !key::is_under_roots(&rel, &storage.roots) {
+        return None;
+    }
+    let server = Path::new(base_dir).file_name()?.to_str()?;
+    let object = key::object_key(&storage.prefix, server, &rel);
+    match mode {
+        DeliveryMode::Redirect => Some(StoreTarget::Redirect(key::public_url(
+            storage.public_url.as_deref()?,
+            &object,
+        ))),
+        DeliveryMode::Proxy => Some(StoreTarget::Proxy(object)),
+        DeliveryMode::Local => None,
+    }
+}
+
+/// [`serve_file`], or the object store when `rel` is mirrored there.
+///
+/// Every asset route answers through this. With `S3_TYPE` unset it is a
+/// direct call to [`serve_file`].
+pub(crate) async fn deliver_file(
+    state: &AppState,
+    base_dir: &str,
+    rel: &str,
+    request_headers: &HeaderMap,
+) -> Result<Response, ApiError> {
+    deliver_with(
+        state.config.storage.as_ref(),
+        state.config.asset_delivery,
+        state.object_store.as_deref(),
+        base_dir,
+        rel,
+        request_headers,
+    )
+    .await
+}
+
+async fn deliver_with(
+    storage: Option<&StorageConfig>,
+    mode: DeliveryMode,
+    store: Option<&dyn ObjectStore>,
+    base_dir: &str,
+    rel: &str,
+    request_headers: &HeaderMap,
+) -> Result<Response, ApiError> {
+    let (Some(target), Some(store)) = (store_target(storage, mode, base_dir, rel), store) else {
+        return serve_file(base_dir, rel, request_headers).await;
+    };
+    // The bucket mirrors this tree, so the local file is the existence
+    // oracle: a 404 here moves the caller on to the next server exactly as
+    // `serve_file` would, and no request is spent on the store.
+    let full_path = validate_asset_path(Path::new(base_dir), rel)?;
+    let local_len = match tokio::fs::metadata(&full_path).await {
+        Ok(m) if m.is_file() => m.len(),
+        _ => return Err(ApiError::NotFound),
+    };
+    match target {
+        // An hour, not the week the bytes get: the object keeps its own long
+        // cache, and a week-cached redirect would keep browsers on the bucket
+        // for a week after storage is switched off.
+        StoreTarget::Redirect(url) => Ok((
+            StatusCode::FOUND,
+            [
+                (header::LOCATION, url),
+                (header::CACHE_CONTROL, "public, max-age=3600".into()),
+            ],
+        )
+            .into_response()),
+        StoreTarget::Proxy(object) => match proxy_object(store, &object, request_headers).await {
+            Ok(resp) => Ok(resp),
+            // The file is on disk, so disk can still answer: a store outage
+            // or an object the sync has not reached yet costs bandwidth, not
+            // a broken asset. Except for an empty file: it may be an evicted
+            // stub (`S3_EVICT_LOCAL`) whose bytes live only in the store, and
+            // serving it would answer 200 with an empty body.
+            Err(e) if local_len == 0 => {
+                tracing::warn!(key = %object, error = %e, "object store failed for an empty local file (an evicted stub?), not serving it");
+                Err(match e {
+                    StorageError::NotFound(_) => ApiError::NotFound,
+                    _ => ApiError::ServiceUnavailable,
+                })
+            }
+            Err(e) => {
+                tracing::warn!(key = %object, error = %e, "object store failed, serving from disk");
+                serve_file(base_dir, rel, request_headers).await
+            }
+        },
+    }
+}
+
+/// Streams `key` from the store with the caller's `Range` and
+/// `If-None-Match`, answering with the store's status and validators.
+async fn proxy_object(
+    store: &dyn ObjectStore,
+    key: &str,
+    request_headers: &HeaderMap,
+) -> Result<Response, StorageError> {
+    let header_str = |name: header::HeaderName| {
+        request_headers
+            .get(name)
+            .and_then(|v| v.to_str().ok())
+            .map(ToOwned::to_owned)
+    };
+    let got = store
+        .get(
+            key,
+            GetOptions {
+                range: header_str(header::RANGE),
+                if_none_match: header_str(header::IF_NONE_MATCH),
+            },
+        )
+        .await?;
+    let status = StatusCode::from_u16(got.status)
+        .map_err(|e| StorageError::Request(format!("store status {}: {e}", got.status)))?;
+    let mut builder = axum::http::Response::builder()
+        .status(status)
+        .header(header::ACCEPT_RANGES, "bytes")
+        .header(header::CACHE_CONTROL, "public, max-age=604800");
+    if let Some(v) = got.etag {
+        builder = builder.header(header::ETAG, v);
+    }
+    if let Some(v) = got.content_type {
+        builder = builder.header(header::CONTENT_TYPE, v);
+    }
+    if let Some(v) = got.content_length {
+        builder = builder.header(header::CONTENT_LENGTH, v);
+    }
+    if let Some(v) = got.content_range {
+        builder = builder.header(header::CONTENT_RANGE, v);
+    }
+    let body = if matches!(got.status, 304 | 416) {
+        axum::body::Body::empty()
+    } else {
+        axum::body::Body::from_stream(got.body)
+    };
+    builder
+        .body(body)
+        .map_err(|e| StorageError::Request(e.to_string()))
 }
 
 pub(crate) async fn serve_file(
@@ -1366,6 +1544,341 @@ mod tests {
         assert!(!parse_allow_all_dirs(Some("true")));
         assert!(parse_allow_all_dirs(Some("1")));
         assert!(parse_allow_all_dirs(Some(" 1 ")));
+    }
+
+    fn storage(public: Option<&str>) -> StorageConfig {
+        let vars: Vec<(&str, &str)> = [
+            ("S3_TYPE", "local"),
+            ("S3_LOCAL_DIR", "/nonexistent-bucket"),
+            ("S3_PREFIX", "assets"),
+        ]
+        .into_iter()
+        .chain(public.map(|p| ("S3_PUBLIC_URL", p)))
+        .collect();
+        StorageConfig::from_lookup(&|k| {
+            vars.iter()
+                .find(|(name, _)| *name == k)
+                .map(|(_, v)| (*v).to_owned())
+        })
+        .expect("valid storage config")
+        .expect("storage enabled")
+    }
+
+    #[test]
+    fn storage_disabled_never_targets_the_store() {
+        for mode in [
+            DeliveryMode::Local,
+            DeliveryMode::Redirect,
+            DeliveryMode::Proxy,
+        ] {
+            assert_eq!(
+                store_target(None, mode, "../assets/output/en", "spine/x/[scene].json"),
+                None
+            );
+        }
+        let cfg = storage(Some("https://cdn.example"));
+        assert_eq!(
+            store_target(
+                Some(&cfg),
+                DeliveryMode::Local,
+                "../assets/output/en",
+                "spine/x/a.json"
+            ),
+            None
+        );
+    }
+
+    #[test]
+    fn redirect_location_is_the_encoded_public_url() {
+        let cfg = storage(Some("https://cdn.example"));
+        assert_eq!(
+            store_target(
+                Some(&cfg),
+                DeliveryMode::Redirect,
+                "../assets/output/en",
+                "spine/DynIllust/x/[scene].json"
+            ),
+            Some(StoreTarget::Redirect(
+                "https://cdn.example/assets/en/spine/DynIllust/x/%5Bscene%5D.json".into()
+            ))
+        );
+        // The CN fallback tree redirects to the CN key.
+        assert_eq!(
+            store_target(
+                Some(&cfg),
+                DeliveryMode::Redirect,
+                "/srv/output/cn/",
+                "/textures/a b.png"
+            ),
+            Some(StoreTarget::Redirect(
+                "https://cdn.example/assets/cn/textures/a%20b.png".into()
+            ))
+        );
+    }
+
+    #[test]
+    fn only_rels_under_the_roots_target_the_store() {
+        let cfg = storage(None);
+        assert_eq!(
+            store_target(Some(&cfg), DeliveryMode::Proxy, "out/en", "./audio/x.ogg"),
+            Some(StoreTarget::Proxy("assets/en/audio/x.ogg".into()))
+        );
+        for rel in [
+            "gamedata/excel/a.json",
+            "derived/story/x.webp",
+            "textures/../gamedata/a.json",
+            "textures",
+        ] {
+            assert_eq!(
+                store_target(Some(&cfg), DeliveryMode::Proxy, "out/en", rel),
+                None,
+                "{rel}"
+            );
+        }
+    }
+
+    struct Tree {
+        _dir: tempfile::TempDir,
+        base: String,
+    }
+
+    fn tree() -> Tree {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let en = dir.path().join("en");
+        std::fs::create_dir_all(en.join("textures")).expect("mkdir");
+        std::fs::write(en.join("textures/a.png"), b"0123456789").expect("write");
+        Tree {
+            base: en.display().to_string(),
+            _dir: dir,
+        }
+    }
+
+    async fn parts(resp: Response) -> (StatusCode, HeaderMap, Vec<u8>) {
+        let (head, body) = resp.into_parts();
+        let bytes = axum::body::to_bytes(body, usize::MAX).await.expect("body");
+        (head.status, head.headers, bytes.to_vec())
+    }
+
+    fn with_header(name: header::HeaderName, value: &str) -> HeaderMap {
+        let mut h = HeaderMap::new();
+        h.insert(name, value.parse().expect("header value"));
+        h
+    }
+
+    #[tokio::test]
+    async fn disabled_delivery_is_serve_file_byte_for_byte() {
+        let t = tree();
+        for headers in [HeaderMap::new(), with_header(header::RANGE, "bytes=2-4")] {
+            let direct = parts(
+                serve_file(&t.base, "textures/a.png", &headers)
+                    .await
+                    .expect("serve"),
+            )
+            .await;
+            let delivered = parts(
+                deliver_with(
+                    None,
+                    DeliveryMode::Local,
+                    None,
+                    &t.base,
+                    "textures/a.png",
+                    &headers,
+                )
+                .await
+                .expect("deliver"),
+            )
+            .await;
+            assert_eq!(direct, delivered);
+        }
+        assert!(matches!(
+            deliver_with(
+                None,
+                DeliveryMode::Local,
+                None,
+                &t.base,
+                "textures/missing.png",
+                &HeaderMap::new()
+            )
+            .await,
+            Err(ApiError::NotFound)
+        ));
+    }
+
+    #[tokio::test]
+    async fn redirect_answers_302_only_for_files_on_disk() {
+        let t = tree();
+        let cfg = storage(Some("https://cdn.example"));
+        let store = myrtle_storage::providers::local::LocalStore::new("/nonexistent-bucket".into());
+        let (status, headers, body) = parts(
+            deliver_with(
+                Some(&cfg),
+                DeliveryMode::Redirect,
+                Some(&store),
+                &t.base,
+                "textures/a.png",
+                &HeaderMap::new(),
+            )
+            .await
+            .expect("redirect"),
+        )
+        .await;
+        assert_eq!(status, StatusCode::FOUND);
+        assert_eq!(
+            headers[header::LOCATION],
+            "https://cdn.example/assets/en/textures/a.png"
+        );
+        assert_eq!(headers[header::CACHE_CONTROL], "public, max-age=3600");
+        assert!(body.is_empty());
+        assert!(matches!(
+            deliver_with(
+                Some(&cfg),
+                DeliveryMode::Redirect,
+                Some(&store),
+                &t.base,
+                "textures/b.png",
+                &HeaderMap::new()
+            )
+            .await,
+            Err(ApiError::NotFound)
+        ));
+        assert!(matches!(
+            deliver_with(
+                Some(&cfg),
+                DeliveryMode::Redirect,
+                Some(&store),
+                &t.base,
+                "textures/a.exe",
+                &HeaderMap::new()
+            )
+            .await,
+            Err(ApiError::Forbidden)
+        ));
+    }
+
+    #[tokio::test]
+    async fn proxy_streams_the_object_and_falls_back_to_disk() {
+        use myrtle_storage::{PutBody, PutObject};
+        let t = tree();
+        let bucket = tempfile::tempdir().expect("tempdir");
+        let store = myrtle_storage::providers::local::LocalStore::new(bucket.path().to_path_buf());
+        store
+            .put(
+                "assets/en/textures/a.png",
+                PutObject {
+                    body: PutBody::Bytes(bytes_of(b"0123456789")),
+                    content_type: "image/png".into(),
+                    cache_control: None,
+                    content_md5: None,
+                },
+            )
+            .await
+            .expect("put");
+        let cfg = storage(None);
+        let deliver = |headers: HeaderMap, rel: &'static str| {
+            let (cfg, store, base) = (&cfg, &store, t.base.clone());
+            async move {
+                parts(
+                    deliver_with(
+                        Some(cfg),
+                        DeliveryMode::Proxy,
+                        Some(store),
+                        &base,
+                        rel,
+                        &headers,
+                    )
+                    .await
+                    .expect("proxy"),
+                )
+                .await
+            }
+        };
+
+        let (status, headers, body) = deliver(HeaderMap::new(), "textures/a.png").await;
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(body, b"0123456789");
+        assert_eq!(
+            headers[header::ETAG],
+            "\"781e5e245d69b566979b86e28d23f2c7\""
+        );
+        assert_eq!(headers[header::CONTENT_TYPE], "image/png");
+        assert_eq!(headers[header::CONTENT_LENGTH], "10");
+        assert_eq!(headers[header::ACCEPT_RANGES], "bytes");
+        assert_eq!(headers[header::CACHE_CONTROL], "public, max-age=604800");
+
+        let (status, headers, body) =
+            deliver(with_header(header::RANGE, "bytes=2-4"), "textures/a.png").await;
+        assert_eq!(status, StatusCode::PARTIAL_CONTENT);
+        assert_eq!(headers[header::CONTENT_RANGE], "bytes 2-4/10");
+        assert_eq!(body, b"234");
+
+        let (status, _, body) = deliver(
+            with_header(
+                header::IF_NONE_MATCH,
+                "\"781e5e245d69b566979b86e28d23f2c7\"",
+            ),
+            "textures/a.png",
+        )
+        .await;
+        assert_eq!(status, StatusCode::NOT_MODIFIED);
+        assert!(body.is_empty());
+
+        // On disk but not yet synced: disk answers, with its own validator.
+        std::fs::write(Path::new(&t.base).join("textures/new.png"), b"fresh").expect("write");
+        let (status, headers, body) = deliver(HeaderMap::new(), "textures/new.png").await;
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(body, b"fresh");
+        assert!(
+            headers[header::ETAG]
+                .to_str()
+                .expect("etag")
+                .starts_with("\"5-")
+        );
+    }
+
+    #[tokio::test]
+    async fn proxy_never_serves_an_empty_stub_when_the_store_fails() {
+        use myrtle_storage::{PutBody, PutObject};
+        let t = tree();
+        // An evicted stub: on disk with 0 bytes, its bytes in the store.
+        std::fs::write(Path::new(&t.base).join("textures/a.png"), b"").expect("truncate");
+        let bucket = tempfile::tempdir().expect("tempdir");
+        let store = myrtle_storage::providers::local::LocalStore::new(bucket.path().to_path_buf());
+        let cfg = storage(None);
+        let no_headers = HeaderMap::new();
+        let deliver = || {
+            deliver_with(
+                Some(&cfg),
+                DeliveryMode::Proxy,
+                Some(&store),
+                &t.base,
+                "textures/a.png",
+                &no_headers,
+            )
+        };
+
+        // The object is gone: 404, not a 200 with an empty body.
+        assert!(matches!(deliver().await, Err(ApiError::NotFound)));
+
+        // With the object present the stub is invisible.
+        store
+            .put(
+                "assets/en/textures/a.png",
+                PutObject {
+                    body: PutBody::Bytes(bytes_of(b"0123456789")),
+                    content_type: "image/png".into(),
+                    cache_control: None,
+                    content_md5: None,
+                },
+            )
+            .await
+            .expect("put");
+        let (status, _, body) = parts(deliver().await.expect("proxy")).await;
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(body, b"0123456789");
+    }
+
+    fn bytes_of(b: &'static [u8]) -> axum::body::Bytes {
+        axum::body::Bytes::from_static(b)
     }
 
     #[test]

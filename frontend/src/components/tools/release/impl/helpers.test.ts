@@ -1,4 +1,8 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+const mockEnv = vi.hoisted(() => ({ VITE_BACKEND_URL: undefined as string | undefined, VITE_ASSET_BASE_URL: undefined as string | undefined }));
+vi.mock("#/env", () => ({ env: mockEnv }));
+
 import { assetUrl, daysFromToday, formatDate, formatDateRange, formatDays, formatPercent, fromUnix, humanizeTag, relativeDays, weekdayNames } from "./helpers";
 
 /** Unix seconds at local noon, so a local-date rendering never straddles midnight. */
@@ -80,6 +84,17 @@ describe("fromUnix and assetUrl", () => {
         expect(assetUrl("")).toBeNull();
         expect(assetUrl("/upk/arts/a b#1.png")?.endsWith("/api/upk/arts/a%20b%231.png")).toBe(true);
         expect(assetUrl("upk/x.png")?.endsWith("/api/upk/x.png")).toBe(true);
+    });
+
+    it("sends a raw-tree path to the object store when one is configured", () => {
+        mockEnv.VITE_ASSET_BASE_URL = "https://cdn.example/assets";
+        try {
+            expect(assetUrl("/cn/assets/textures/skinpack/char_x/char_x_a b#1b.png")).toBe("https://cdn.example/assets/cn/textures/skinpack/char_x/char_x_a%20b%231b.png");
+            expect(assetUrl("/jp/assets/textures/x.png")).toBe("/api/jp/assets/textures/x.png");
+            expect(assetUrl("/skin-portrait/char_x")).toBe("/api/skin-portrait/char_x");
+        } finally {
+            mockEnv.VITE_ASSET_BASE_URL = undefined;
+        }
     });
 });
 

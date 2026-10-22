@@ -726,6 +726,246 @@ See [WebSocket Protocol Reference](#websocket-protocol-reference) for event form
 
 ---
 
+## Object Storage Sync
+
+When the backend serves assets from an S3-compatible bucket (Cloudflare R2, AWS S3, MinIO
+and friends; the `S3_*` block in [`backend/.env.example`](../backend/.env.example)), the
+bucket has to hold what `output/<server>/` holds. `binaries/asset-sync`, a binary of
+`backend/crates/storage`, does that, and the watcher runs it on its own.
+
+**What is synced.** The browser-served roots of one region: `textures`, `spine`, `audio`,
+`video`, `portraits` (`S3_ROOTS` overrides the list). `gamedata`, `derived`, `text` and
+anything else the backend reads for data stay local only. Keys are
+`[S3_PREFIX/]<server>/<path under output/<server>/>`.
+
+**When.** In `run.mjs ws`, after every successful extract and its orphan sweep, before
+the `update_complete` broadcast. While it runs the watcher reports `state: "syncing"`, its
+one-line summary is broadcast as a `status` message, and `update_complete` carries
+`synced` and `syncSummary`.
+
+**Retry.** A failed sync never costs a re-download or re-extract. The extract is recorded
+as usual (`.version`, `.last_extract`, extract backoff cleared), an `error` with the
+summary is broadcast, and `update_complete` is HELD, because the backend must reload only
+against a bucket that matches the tree. The failure is persisted as
+`ArkAssets/<server>/.sync-pending`:
+
+```json
+{"region": "en", "version": "1.27.6_09_01_10_20", "exported": 2847, "attempts": 1,
+ "lastCode": 2, "lastSummary": "asset-sync exited with code 2 (...)", "at": "2026-10-22T04:31:35.992Z"}
+```
+
+At the top of every tick, before the version check and regardless of the extract backoff,
+and before a `force_update`, the watcher retries the sync alone (no download, no extract).
+Success deletes the marker and sends the held `update_complete` for that version
+(`downloaded: 0`, `synced: true`). Failure bumps `attempts`, broadcasts `error`, and the
+tick carries on to the version check, so a newer version still gets a full update whose
+own sync replaces the pending one. The retry has no backoff of its own: one attempt per
+tick. With `WS_S3_SYNC=0` the marker is left alone and not retried. Watchers survive
+restarts with the marker on disk, so a pm2 restart retries on the first tick.
+
+**Seeding.** The first sync uploads everything, so run it by hand per region before
+turning on redirect delivery, rather than inside a watcher cycle:
+
+```bash
+cd assets
+node run.mjs sync --server en --dry-run   # report the diff, change nothing
+node run.mjs sync --server en             # EN: about 28 GB / 178k files across the five roots
+node run.mjs sync --server cn             # then each other region that has art
+```
+
+Later runs hash only files whose size matches the remote object and upload only what
+changed, so a re-run after an interruption resumes where it stopped. The same command is
+the manual repair: a successful (non `--dry-run`) run rewrites
+`ArkAssets/<server>/.sync-pending` (`--savedir` if the watcher uses another one) with
+`synced: true` and its `syncSummary`, and leaves it in place. On its next tick the watcher
+sees a synced marker, skips the sync stage, sends the held `update_complete` for that
+version with the recorded summary, and only then removes the marker, so the backend
+reloads as it would have after a clean update. `--dry-run` leaves the marker untouched.
+
+The Docker watchers (`asset-watcher-en`/`-cn` in `docker-compose.yml`) ship neither the
+binary nor the repo's `.env` files, so for them the stage is always the logged skip.
+
+**Configuration.**
+
+| Variable | Meaning |
+|----------|---------|
+| `WS_S3_SYNC` | `0` skips the stage in `run.mjs ws`. Anything else, or unset, runs it. `run.mjs sync` ignores it. |
+| `WS_S3_ENV_FILE` | Env file handed to `asset-sync --env-file`, replacing the default list. Default: `../backend/.env` then the repo-root `../.env`, each passed only if it exists (`--env-file ../backend/.env --env-file ../.env`), the same order the backend loads them in; with neither, the binary reads `assets/.env`. `--env-file` on `run.mjs sync` or `restore` overrides it. |
+
+Every file is read the way dotenv 0.15 reads it, which is how the backend and the binary
+read it: the first file that sets a variable wins (a variable already in the process
+environment beats all of them), a ` #comment` after a value is dropped even after a
+quoted one (`S3_TYPE="off" # later` is `off`), and an unquoted value with whitespace in
+it is a malformed line. Parsing of that file STOPS at the first malformed line, for all
+three readers, so `run.mjs` logs one warning naming the file and line number.
+
+Storage is "configured" when the winning `S3_TYPE` is non-empty and not `off`.
+Without the binary, a configured box fails the stage (the bucket would silently fall
+behind) and an unconfigured one logs `asset-sync: skipped (binary not installed, S3_TYPE
+unset)`. With the binary and no `S3_TYPE`, the binary itself reports `storage disabled`
+and exits 0. Under Node, a `--env-file` path that does not exist is rejected by Node
+itself (`node: <path>: not found`, exit 9) before `run.mjs` runs; under Bun, or through
+`WS_S3_ENV_FILE`, the same mistake exits 1.
+
+**Exit codes** (`run.mjs sync` exits with the binary's code):
+
+| Code | Meaning |
+|------|---------|
+| 0 | Synced, or storage disabled |
+| 1 | Configuration or usage error (missing env file, bad `S3_*` value, binary missing while `S3_TYPE` is set) |
+| 2 | One or more objects failed to upload or delete after retries, or another `asset-sync` holds the server's lock (see [stubs](#freeing-local-disk-stubs)) |
+| 3 | Delete refused: the local tree holds under 90 % of the remote object count. A truncated extract must not empty the bucket; `node run.mjs sync --server <r> --allow-shrink` overrides it by hand, after checking the tree (see below) |
+
+**Delete refusals (exit 3).** The refusal comes after every upload has landed, so the
+bucket is a superset of the tree and a backend reload is safe. The watcher therefore
+writes the stamps, broadcasts `error` with the summary, sends `update_complete` with
+`synced: "uploads-only"` and the summary, and writes `.sync-pending` with
+`needsAllowShrink: true`. That marker is NOT retried automatically: each tick logs one
+line asking for `node run.mjs sync --server <r> --allow-shrink`, because only a human can
+tell a shrunken release from a truncated tree. That manual run removes the marker on
+success directly (the `update_complete` was already sent). A later full update whose own
+sync succeeds also clears it.
+
+**Deletes mirror the orphan sweep.** Uploads run first, then every remote key under a
+synced root with no local file is deleted, so what the sweep removed locally leaves the
+bucket on the same run. A root missing locally is logged and its remote keys are left
+alone. `WS_KEEP_ORPHANS=1` therefore also keeps those objects in the bucket.
+
+**Manifest.** `output/<server>/.asset-sync.json` (version 2) records the `bucket` and
+`prefix` it was written against, and `{size, md5, etag, evicted}` for every key a sync left
+unchanged or uploaded. Multipart objects (above
+`S3_MULTIPART_THRESHOLD_BYTES`, default 256 MiB) have an ETag that is not an MD5, so the
+manifest is what tells an unchanged large file from a changed one. It is also the only
+record of which 0-byte files are [stubs](#freeing-local-disk-stubs): while no stubs exist,
+deleting it costs one re-upload of the multipart files, nothing else; with stubs on disk,
+run `restore` before deleting it, or the next sync uploads every stub as an empty object
+over the real one.
+
+**CORS.** The frontend fetches spine, atlas and audio files cross-origin from the bucket's
+public URL, so the bucket needs a CORS rule once:
+
+```bash
+binaries/asset-sync cors --allow-origin https://myrtle.moe --env-file ../.env
+```
+
+The binary is built with `cargo build --release -p myrtle-storage --bin asset-sync` in
+`backend/` and installed to `assets/binaries/asset-sync`; `vps-update.sh` does both.
+
+### Freeing local disk (stubs)
+
+With `S3_EVICT_LOCAL=1`, a sync frees the bytes of every file the bucket is confirmed to
+hold (unchanged, or uploaded on this run). The file is truncated in place to 0 bytes,
+same path, its original mtime kept, and its manifest record gets `evicted: true`. That 0-byte file is a
+**stub**. It is never deleted, because the names are load-bearing:
+
+- The backend builds its asset, chibi, stage, story and music indexes from the file
+  names under the served roots at startup and on `update_complete`, and in redirect and
+  proxy delivery a local file existing is what decides that a request goes to the bucket.
+- `run.mjs` re-extracts when the file count drops under 98 % of the last extract.
+- The unpacker skips the expensive re-encodes (video, music AAC, the content-addressed
+  `tex/` pool) when an output exists and is newer than its source. A stub keeps the
+  mtime its extract gave it, so it passes that check, and the skip path touches it, so
+  the orphan sweep keeps it.
+- The orphan sweep decides which top-level roots an extract wrote by mtime. Truncation
+  therefore keeps the original mtime: a stub stamped "now" would look freshly written and
+  skew that decision.
+
+On the next sync a stub whose record says `evicted` and whose object is in the bucket
+counts as unchanged: no hashing, no upload. A stub whose object is gone from the bucket
+fails the sync with `evicted stub but the object is gone from the store; re-extract to
+recover`, because the bytes are then lost on both sides. A truncate that fails is logged
+and counted (`evict_failed`) and does not change the exit code: the bytes are still in
+both places. With eviction on, the summary line gains `evicted=N (B bytes freed)`; with
+it off, the line is unchanged.
+
+**What is never evicted.** Files the backend or the unpacker read for their BYTES, not
+just their names. Prefixes under `output/<server>/`:
+
+| Prefix | Read by |
+|--------|---------|
+| `textures/avg/` | story reader: `hub.json`, `sprites.json`, PNG headers, thumbnails, gallery variants |
+| `textures/spritepack/cutin_char_` | story art variants |
+| `textures/spritepack/ui_home_act_banner_gacha_` | release art, copied into `derived/release-art` |
+| `textures/spritepack/ui_zone_home_theme_` | release art |
+| `textures/arts/ui/stage/[uc]homeentry/` | release art |
+| `textures/[[<server>]]/arts/ui/homebanners/` | release art: the gacha home banner the archive copies as bytes |
+| `audio/m4a_sources.json` | the unpacker's music step |
+
+`S3_EVICT_KEEP` adds prefixes to that list; it cannot remove one. Measured on EN
+2026-10-22: the served roots hold 28,929,636 KiB, the keep list 5,041,584 KiB, so about
+22.8 GiB is evictable.
+
+**Disk peak.** Eviction lowers the steady state between extracts, not the peak. Every
+extract rewrites the tree at full size (all but the skipped re-encodes above), and only
+the sync after it turns the files back into stubs, so the box still needs room for a full
+tree during an extract.
+
+**Configuration** (in the same env files the sync reads):
+
+| Variable | Meaning |
+|----------|---------|
+| `S3_EVICT_LOCAL` | `1`, `true`, `yes` or `on` enables eviction. Unset or anything else: off, and sync never truncates a file. |
+| `S3_EVICT_KEEP` | Comma list of extra rel-path prefixes to keep, added to the built-in list. Leading `/` trimmed; backslashes rejected. |
+
+The binary's `sync` also takes `--evict` / `--no-evict`, which win over the env.
+
+**Delivery guard.** Eviction refuses to run (exit 1) when the same env resolves to local
+delivery (`S3_TYPE` unset or `off`, or `ASSET_DELIVERY=local`), because the backend would
+then serve the 0-byte stubs. `asset-sync sync --force-evict` overrides it. With local
+delivery and stubs on disk, the backend logs one warning per server at startup.
+
+**Bucket and prefix are pinned.** With stubs on disk, a sync whose `S3_BUCKET` or
+`S3_PREFIX` differs from the one recorded in the manifest is refused. Run `restore` under
+the OLD settings first; otherwise every stub would be uploaded as an empty object under
+the new location.
+
+**One asset-sync per server.** `sync` and `restore` take a non-blocking lock,
+`output/<server>/.asset-sync.lock` (`verify` and `ls` do not). A second one on the same
+server fails at once with an error naming the lock: `sync` exits 2, `restore` exits 1. So
+a manual `node run.mjs sync` or `node run.mjs restore` cannot corrupt a watcher-driven
+sync; if the watcher's sync hits the lock instead, it fails like any other sync, writes
+`.sync-pending`, and its retry tries again on the next tick.
+
+**Do not evict during an extract.** The watcher runs its sync only after its own extract,
+but a manual evicting `sync` while an extract is running on the same server can truncate a
+file the unpacker just rewrote. The truncation re-checks size and mtime first, which
+narrows the window but does not close it. Run manual evicting syncs between extracts.
+
+**Rolling back the binary.** An `asset-sync` older than eviction has no idea what a stub
+is: it sees a 0-byte file whose size differs from the object and uploads it as an empty
+object over the real one. Run `restore` with the current binary before installing an
+older one.
+
+**Turning it off.** Unsetting `S3_EVICT_LOCAL` stops new stubs. Existing ones stay until a
+restore brings them back; an extract rewrites most of them, but not the outputs it skips
+(video, music, the `tex/` pool). Before turning storage off
+(or switching to `ASSET_DELIVERY=local`), restore first:
+
+```bash
+cd assets
+node run.mjs restore --server en --dry-run              # count stubs and bytes, change nothing
+node run.mjs restore --server en                        # download every stub back, clear its flag
+node run.mjs restore --server en --only textures/arts/  # only rel paths under a prefix (repeatable)
+```
+
+`restore` reads the same env files as `sync` (`--env-file`, `WS_S3_ENV_FILE`, then the
+default list), works with `S3_EVICT_LOCAL` unset, verifies size (and MD5 when the ETag is
+not multipart) before replacing a stub, and saves the manifest at the end, so a re-run
+after an interruption finds only the remaining stubs. It restores only a path that exists
+as a 0-byte file. A flagged path that is missing is counted as `missing` and left alone:
+the orphan sweep removed it, so restoring it would resurrect an orphan, and the next
+sync's delete step removes its object. A file that gained bytes between selection and the
+rename (an extract rewrote it) is counted as `skipped` and not overwritten. It ends with
+`asset-sync: restore server=en restored=N (B bytes) failed=N elapsed=S.s`, plus
+` missing=N skipped=N` when either is above 0, and exits 0, or 1 on a config error, a held
+lock, or any stub not restored.
+
+**Known gap.** A standalone `unpacker cardfields` or `backfill-*` run, outside a full
+extract, sees a stub as absent: it finds 0 bytes where it expects data. Restore the paths
+it reads (`--only`) before such a run. Not fixed, only documented.
+
+---
+
 ## WebSocket Protocol Reference
 
 The WebSocket server broadcasts asset pipeline status and accepts client commands.
@@ -739,7 +979,7 @@ Sent on connection and when state changes.
 ```json
 {
   "type": "status",
-  "state": "idle|checking|downloading|unpacking",
+  "state": "idle|checking|downloading|unpacking|syncing|backing_off",
   "version": {
     "current": "1.27.5_08_15_11_51"
   }
@@ -801,7 +1041,9 @@ Per-bundle progress during extraction.
 
 #### `update_complete`
 
-Full download + extract cycle finished.
+Full download + extract (+ object storage sync) cycle finished. `synced` is true only
+when the [sync stage](#object-storage-sync) ran against a configured bucket;
+`syncSummary` is its summary line, or null when the stage is off.
 
 ```json
 {
@@ -809,7 +1051,9 @@ Full download + extract cycle finished.
   "version": "1.27.6_09_01_10_20",
   "downloaded": 145,
   "failed": 5,
-  "exported": 2847
+  "exported": 2847,
+  "synced": true,
+  "syncSummary": "asset-sync: server=en scanned=178000 unchanged=176500 uploaded=1500 (812345678 bytes) deleted=12 failed=0 elapsed=95.2s"
 }
 ```
 
@@ -1285,6 +1529,7 @@ Docker, `ecosystem.config.cjs` runs the same watchers under PM2 as `myrtle-ws-en
 | Variable | Applies to | Description |
 |----------|-----------|-------------|
 | `WS_SERVER` · `WS_SAVEDIR` · `WS_OUTPUT` · `WS_THREADS` · `WS_PROFILE` · `WS_PORT` · `WS_INTERVAL` | `run.mjs ws` | Non-interactive WebSocket-mode configuration |
+| `WS_S3_SYNC` · `WS_S3_ENV_FILE` | `run.mjs ws`, `run.mjs sync`, `run.mjs restore` (`WS_S3_ENV_FILE` only) | Object storage sync stage; see [Object Storage Sync](#object-storage-sync) |
 | `DYNCHAR_CARDFIELDS` | unpacker | Override the path to `cardfields.json` |
 | `DYNCHAR_NO_CARDFIELDS` | unpacker | Skip the card-field merge pass |
 | `DYNCHAR_TEX_POOL` | unpacker | Content-addressed texture dedup pool. On by default; `=0` reverts to per-call PNGs |

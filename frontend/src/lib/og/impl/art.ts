@@ -10,7 +10,9 @@
  * rather than embedding bytes it would draw as nothing.
  */
 
+import { env } from "#/env";
 import { entityIconURL } from "#/lib/api/tier-entities";
+import { isAssetStoreURL } from "#/lib/assets";
 
 /** Content types satori decodes from a data URI. */
 const SATORI_IMAGE_TYPES: ReadonlySet<string> = new Set(["image/png", "image/jpeg", "image/gif", "image/svg+xml"]);
@@ -35,6 +37,19 @@ export function ogEntityIconURL(icon: string, base: string, server?: string): st
     const url = entityIconURL(icon, base, server);
     if (!WEBP_ICON_ROUTES.some((route) => icon.startsWith(route))) return url;
     return `${url}${url.includes("?") ? "&" : "?"}format=png`;
+}
+
+/** The backend origin the renderer fetches from: `BACKEND_URL` (a local hop in production), else the public one. No trailing slash. */
+export function backendBaseURL(): string {
+    return (env.BACKEND_URL ?? env.VITE_BACKEND_URL ?? "").replace(/\/$/, "");
+}
+
+/** `url` with the browser-facing backend origin swapped for the server's own (`BACKEND_URL`, a local hop in production). The profile helpers build URLs for the browser. An object store URL is fetched as it is. */
+export function serverSideURL(url: string): string {
+    if (isAssetStoreURL(url)) return url;
+    const publicBase = (env.VITE_BACKEND_URL ?? "").replace(/\/$/, "");
+    const base = backendBaseURL();
+    return publicBase && base && url.startsWith(publicBase) ? `${base}${url.slice(publicBase.length)}` : url;
 }
 
 /** `url`'s bytes as a data URI, or `undefined` when the fetch fails or the response is not a type satori decodes. */

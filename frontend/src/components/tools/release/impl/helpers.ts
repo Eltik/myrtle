@@ -1,5 +1,7 @@
 import { env } from "#/env";
 import { useHydrated } from "#/hooks/use-hydrated";
+import { isGamedataServer } from "#/lib/api/gamedata";
+import { assetStoreURL } from "#/lib/assets";
 import { DEFAULT_LOCALE, formatMessage, sourceMessage } from "#/lib/i18n";
 import { fullMessageKey, type TypedT } from "#/lib/i18n/messages";
 import type { LagModel } from "#/types/generated/LagModel";
@@ -104,8 +106,14 @@ export function humanizeTag(raw: string): string {
     return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+/** A release asset path naming a raw-tree file: `/{server}/assets/{rel}`. */
+const RAW_TREE_PATH = /^\/([a-z]+)\/assets(\/.+)$/;
+
 export function assetUrl(path: string | null): string | null {
     if (!path) return null;
+    const raw = RAW_TREE_PATH.exec(path);
+    const store = raw?.[1] && raw[2] && isGamedataServer(raw[1]) ? assetStoreURL(raw[2], raw[1]) : null;
+    if (store) return store;
     const encoded = path.split("/").map(encodeURIComponent).join("/");
     return `${env.VITE_BACKEND_URL ?? ""}/api${encoded.startsWith("/") ? "" : "/"}${encoded}`;
 }

@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 import { backgroundSources, DEFAULT_FOCUS_Y, objectPosition, zoomOf } from "#/components/user/profile/impl/background";
-import { env } from "#/env";
 import { DEFAULT_GAMEDATA_SERVER, gamedataPath } from "#/lib/api/gamedata";
 import { cachedOperatorsList, deepCamelize } from "#/lib/api/operators";
 import { loadRecruitmentData } from "#/lib/api/recruitment";
 import { stagePreviewAssetPaths } from "#/lib/api/stages";
 import type { IRosterEntry } from "#/lib/api/user";
+import { assetStoreURL } from "#/lib/assets";
 import { backendFetch } from "#/lib/fetch";
 import { metaSourceForLocale } from "#/lib/meta";
 import { DEFAULT_AVATAR_ID, formatNumber, groupLabel, nationLabel, rarityToNumber, teamLabel, toAvatarStem } from "#/lib/utils";
@@ -21,7 +21,7 @@ import type { IOperatorIndexEntry, IOperatorListItem } from "#/types/operators";
 import type { IStage, IZone } from "#/types/stages";
 import type { IUserProfile } from "#/types/user";
 import { buildArchiveOgData, clampExcerpt, firstProseRecord, type IArchiveOgData } from "./archive";
-import { fetchToDataURI, inlineArt, ogEntityIconURL } from "./art";
+import { backendBaseURL, fetchToDataURI, inlineArt, ogEntityIconURL, serverSideURL } from "./art";
 import { buildEnemyOgData, type IEnemyOgData } from "./enemy";
 import { buildGridImageData, type IGridImageData, parseGridOgId } from "./grid";
 import { type IOgHasher, type OgData, type OgKind, ogHashers } from "./hashers";
@@ -81,15 +81,14 @@ function defineOgHandler<TData>(hasher: IOgHasher<TData>, def: IOgHandlerDef<TDa
     };
 }
 
-function backendBaseURL(): string {
-    return (env.BACKEND_URL ?? env.VITE_BACKEND_URL ?? "").replace(/\/$/, "");
-}
-
 /** Servers other than the default serve their assets behind a `/{server}`
  *  prefix. Mirrors `components/operators/detail/impl/assets.ts`. */
 type AssetServer = "en" | "cn";
 
+/** A raw-tree asset for the renderer to fetch: the object store when one is configured, else the backend's own origin. */
 function assetURL(path: string, server?: AssetServer): string {
+    const store = assetStoreURL(path, server);
+    if (store) return store;
     const base = backendBaseURL();
     if (!base) return "";
     const prefix = server && server !== "en" ? `${server}/` : "";
@@ -156,13 +155,6 @@ const operatorHandler = /* @__PURE__ */ defineOgHandler<IOperatorOgData>(ogHashe
     },
     template: (data) => OperatorTemplate(data),
 });
-
-/** `url` with the browser-facing backend origin swapped for the server's own (`BACKEND_URL`, a local hop in production). The profile helpers build URLs for the browser. */
-function serverSideURL(url: string): string {
-    const publicBase = (env.VITE_BACKEND_URL ?? "").replace(/\/$/, "");
-    const base = backendBaseURL();
-    return publicBase && base && url.startsWith(publicBase) ? `${base}${url.slice(publicBase.length)}` : url;
-}
 
 /** The first of `urls` that inlines, tried in order: each is a fallback for the one before. */
 async function firstDataURI(urls: readonly string[]): Promise<string | undefined> {

@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
-import { env } from "#/env";
+import { assetURL } from "#/lib/assets";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, rarityToNumber } from "#/lib/utils";
@@ -33,7 +33,7 @@ export function OperatorCardGrid({ operator, statMetric }: IOperatorCardGridProp
                             <CampIcon groupId={logoId} className="opacity-5 transition-opacity group-hover:opacity-10" size={360} />
                         </div>
                         <div className="absolute inset-0 origin-center transition-transform group-hover:scale-105">
-                            <img alt={t("card.portraitAlt", { name: operator.name })} className="h-full w-full rounded-lg object-contain" decoding="async" loading="lazy" src={`${env.VITE_BACKEND_URL}/api/assets${operator.portrait}`} />
+                            <img alt={t("card.portraitAlt", { name: operator.name })} className="h-full w-full rounded-lg object-contain" decoding="async" loading="lazy" src={operator.portrait ? assetURL(operator.portrait) : undefined} />
                         </div>
                         <div className="absolute inset-x-0 bottom-0 z-10">
                             <div className="relative">

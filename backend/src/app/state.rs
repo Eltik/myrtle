@@ -6,6 +6,7 @@ use std::sync::{
 };
 
 use arc_swap::ArcSwap;
+use myrtle_storage::{DeliveryMode, ObjectStore, StorageConfig};
 use reqwest::Client;
 use sqlx::PgPool;
 
@@ -58,6 +59,9 @@ pub struct AppStateInner {
     pub config: Arc<AppConfig>,
     pub http_client: Client,
     pub service_accounts: ServiceAccounts,
+    /// The asset delivery tier, built once from [`AppConfig::storage`].
+    /// `None` when `S3_TYPE` is unset: every asset is served from disk.
+    pub object_store: Option<Arc<dyn ObjectStore>>,
     /// Detached cache builds in flight (see `cache::cached_json_detached`).
     pub inflight: Inflight,
     /// Set when a roster sync changes rows the operator ownership aggregate is
@@ -76,6 +80,12 @@ impl AppState {
         client: Client,
         service_accounts: ServiceAccounts,
     ) -> Self {
+        // Construction does no I/O; a bad endpoint or credential surfaces on
+        // the first request, which falls back to disk in proxy mode.
+        let object_store = config.storage.as_ref().map(|storage| {
+            myrtle_storage::open_store(storage)
+                .unwrap_or_else(|e| panic!("object store not constructible: {e}"))
+        });
         Self {
             inner: Arc::new(AppStateInner {
                 db,
@@ -85,6 +95,7 @@ impl AppState {
                 config: Arc::new(config),
                 http_client: client,
                 service_accounts,
+                object_store,
                 inflight: Inflight::default(),
                 ownership_dirty: AtomicBool::new(false),
             }),
@@ -220,6 +231,12 @@ pub struct AppConfig {
     /// Role gates re-read the caller's stored role (`RoleCheckedUser`). On
     /// unless `DISABLE_ROLE_RECHECK` is set, which restores claim-only gates.
     pub role_recheck: bool,
+    /// The `S3_*` object store the served asset roots are mirrored into.
+    /// `None` when `S3_TYPE` is unset, empty or `off`: the kill switch.
+    pub storage: Option<StorageConfig>,
+    /// How a request for a mirrored asset is answered (`ASSET_DELIVERY`).
+    /// Always [`DeliveryMode::Local`] when `storage` is `None`.
+    pub asset_delivery: DeliveryMode,
 }
 
 impl AppConfig {
@@ -230,6 +247,12 @@ impl AppConfig {
             .filter(|v| !v.is_empty())
             .unwrap_or_else(|| vec![Server::EN]);
         let default_server = servers.first().copied().unwrap_or(Server::EN);
+        // A typo here must stop the boot: silently serving from disk would
+        // hide that the store is not in use, and a redirect with no public
+        // base would send browsers nowhere.
+        let storage = StorageConfig::from_env().unwrap_or_else(|e| panic!("{e}"));
+        let asset_delivery =
+            DeliveryMode::from_env(storage.as_ref()).unwrap_or_else(|e| panic!("{e}"));
 
         Self {
             jwt_secret: require_secret("JWT_SECRET", 32),
@@ -253,6 +276,8 @@ impl AppConfig {
             asset_ws_urls: parse_asset_ws_urls(default_server),
             role_recheck: !std::env::var("DISABLE_ROLE_RECHECK")
                 .is_ok_and(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "yes")),
+            storage,
+            asset_delivery,
         }
     }
 }

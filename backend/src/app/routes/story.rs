@@ -10,7 +10,7 @@ use axum::{
     response::Response,
 };
 
-use crate::app::routes::assets::serve_file;
+use crate::app::routes::assets::deliver_file;
 use crate::app::services::story::{
     GallerySize, StoryArchive, StoryArtGallery, StoryArtKind, StoryGallery, StoryIllustrations,
     StoryIndex, StorySpriteDetail, StorySpriteIndex, ensure_picture, ensure_story_art, get_gallery,
@@ -437,7 +437,7 @@ pub async fn sprite_variant_thumb(
     Path((base, variant)): Path<(String, String)>,
 ) -> Result<Response, ApiError> {
     let (dir, rel) = get_variant_thumb(&state, state.default_server, &base, &variant).await?;
-    serve_file(&dir, &rel, &headers).await
+    deliver_file(&state, &dir, &rel, &headers).await
 }
 
 /// `GET /{server}/story/sprites/{base}/thumb/{variant}` - the same from
@@ -469,7 +469,7 @@ pub async fn sprite_variant_thumb_srv(
     Path((server, base, variant)): Path<(Server, String, String)>,
 ) -> Result<Response, ApiError> {
     let (dir, rel) = get_variant_thumb(&state, server, &base, &variant).await?;
-    serve_file(&dir, &rel, &headers).await
+    deliver_file(&state, &dir, &rel, &headers).await
 }
 
 /// Every Archives gallery picture on the default server, grouped by the
@@ -547,7 +547,7 @@ pub async fn gallery_picture(
     Path((id, size)): Path<(String, GallerySize)>,
 ) -> Result<Response, ApiError> {
     let (dir, rel) = ensure_picture(&state, state.default_server, &id, size).await?;
-    serve_file(&dir, &rel, &headers).await
+    deliver_file(&state, &dir, &rel, &headers).await
 }
 
 /// `GET /{server}/story/gallery/{id}/{size}` - the same from `{server}`,
@@ -579,7 +579,7 @@ pub async fn gallery_picture_srv(
     Path((server, id, size)): Path<(Server, String, GallerySize)>,
 ) -> Result<Response, ApiError> {
     let (dir, rel) = ensure_picture(&state, server, &id, size).await?;
-    serve_file(&dir, &rel, &headers).await
+    deliver_file(&state, &dir, &rel, &headers).await
 }
 
 /// Every story CG (`cg`) or scene plate (`scene`) on the default server wide
@@ -665,7 +665,7 @@ pub async fn art_picture(
     Path((kind, id, size)): Path<(StoryArtKind, String, GallerySize)>,
 ) -> Result<Response, ApiError> {
     let (dir, rel) = ensure_story_art(&state, state.default_server, kind, &id, size).await?;
-    serve_file(&dir, &rel, &headers).await
+    deliver_file(&state, &dir, &rel, &headers).await
 }
 
 /// `GET /{server}/story/art-gallery/{kind}/{id}/{size}` - the same from
@@ -698,5 +698,5 @@ pub async fn art_picture_srv(
     Path((server, kind, id, size)): Path<(Server, StoryArtKind, String, GallerySize)>,
 ) -> Result<Response, ApiError> {
     let (dir, rel) = ensure_story_art(&state, server, kind, &id, size).await?;
-    serve_file(&dir, &rel, &headers).await
+    deliver_file(&state, &dir, &rel, &headers).await
 }

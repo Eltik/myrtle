@@ -9,9 +9,9 @@ import { FilterChip } from "#/components/ui/filter-chip";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
-import { env } from "#/env";
 import { enemiesListQueryOptions, enemyCommunityAverageQueryOptions, type IEnemy, type IEnemyLevel } from "#/lib/api/enemies";
 import type { IEncounteredEnemies } from "#/lib/api/user";
+import { assetURL } from "#/lib/assets";
 import { type TypedRichT, useFormatters, useGamedataServer, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { compactForSearch } from "#/lib/search/fuzzy";
@@ -305,7 +305,7 @@ const EnemyHandbookCard = memo(function EnemyHandbookCard({ enemy, seen }: IEnem
     const [imgError, setImgError] = useState(false);
     const tok = LEVEL_TOKENS[enemy.enemyLevel];
     const hasPortrait = !!enemy.portrait && !imgError;
-    const portraitSrc = hasPortrait ? `${env.VITE_BACKEND_URL ?? ""}/api/assets${enemy.portrait}` : undefined;
+    const portraitSrc = hasPortrait && enemy.portrait ? assetURL(enemy.portrait) : undefined;
 
     return (
         <div

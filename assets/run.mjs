@@ -7,12 +7,13 @@ import {
 	mkdirSync,
 	readdirSync,
 	readFileSync,
+	renameSync,
 	statSync,
 	unlinkSync,
 	writeFileSync,
 } from "node:fs";
 import { readdir, stat } from "node:fs/promises";
-import { dirname, join, sep } from "node:path";
+import { dirname, join, resolve as resolvePath, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import boxen from "boxen";
@@ -31,6 +32,10 @@ const exe = isWindows ? ".exe" : "";
 const BINARIES_DIR = join(__dirname, "binaries");
 const DOWNLOADER_BIN = join(BINARIES_DIR, `downloader${exe}`);
 const UNPACKER_BIN = join(BINARIES_DIR, `unpacker${exe}`);
+// Built from backend/crates/storage (`cargo build --release -p myrtle-storage
+// --bin asset-sync` in backend/) and installed here by vps-update.sh. Optional:
+// absent, the sync stage is skipped unless S3_TYPE says storage is configured.
+const ASSET_SYNC_BIN = join(BINARIES_DIR, `asset-sync${exe}`);
 const DOWNLOADER_BUILD = join(
 	__dirname,
 	"downloader",
@@ -371,6 +376,66 @@ function touchExtractStamp(savedir, exported, onDisk) {
 		onDisk: onDisk ?? null,
 	};
 	writeFileSync(join(savedir, ".last_extract"), JSON.stringify(payload), "utf-8");
+}
+
+/**
+ * `.sync-pending` marks an extract that finished while its object storage sync
+ * did not. The extract is recorded (`.version`, `.last_extract`) so a sync
+ * failure never costs a re-download and re-extract; this marker is what makes
+ * the watcher retry the sync alone on its next tick, and what holds back the
+ * `update_complete` (the backend reloads only against a bucket that matches).
+ *
+ * Shape: `{ region, version, exported, attempts, lastCode, lastSummary, at }`,
+ * plus `synced: true` and `syncSummary` once `node run.mjs sync` has repaired the
+ * bucket by hand: the watcher then owes only the held `update_complete`, which
+ * it sends on its next tick before removing the marker. `needsAllowShrink: true`
+ * records a delete-safety refusal (asset-sync exit 3): every upload landed and
+ * the bucket is a superset of the tree, so `update_complete` was already sent;
+ * only a human can approve the deletes, so the watcher does not retry it.
+ * An unreadable marker still counts as pending, with its fields nulled, because
+ * the safe reading of a garbled marker is "the bucket may be behind".
+ *
+ * @param {string} savedir
+ * @returns {{ region: string|null, version: string|null, exported: number|null, attempts: number, lastCode: number|null, lastSummary: string|null, at: string|null, synced: boolean, syncSummary: string|null, needsAllowShrink: boolean } | null}
+ */
+function readSyncPending(savedir) {
+	const file = join(savedir, ".sync-pending");
+	if (!existsSync(file)) return null;
+	let raw = {};
+	try {
+		raw = JSON.parse(readFileSync(file, "utf-8")) ?? {};
+	} catch {}
+	const str = (v) => (typeof v === "string" ? v : null);
+	const num = (v) => (Number.isFinite(v) ? v : null);
+	return {
+		region: str(raw.region),
+		version: str(raw.version),
+		exported: num(raw.exported),
+		attempts: num(raw.attempts) ?? 0,
+		lastCode: num(raw.lastCode),
+		lastSummary: str(raw.lastSummary),
+		at: str(raw.at),
+		synced: raw.synced === true,
+		syncSummary: str(raw.syncSummary),
+		needsAllowShrink: raw.needsAllowShrink === true,
+	};
+}
+
+/** @param {string} savedir @param {object} marker */
+function writeSyncPending(savedir, marker) {
+	mkdirSync(savedir, { recursive: true });
+	const file = join(savedir, ".sync-pending");
+	const tmp = `${file}.tmp`;
+	writeFileSync(tmp, JSON.stringify({ ...marker, at: new Date().toISOString() }), "utf-8");
+	renameSync(tmp, file);
+}
+
+/** @param {string} savedir @returns {boolean} whether a marker was removed */
+function clearSyncPending(savedir) {
+	const file = join(savedir, ".sync-pending");
+	if (!existsSync(file)) return false;
+	unlinkSync(file);
+	return true;
 }
 
 /**
@@ -927,6 +992,305 @@ async function runUnpack(opts) {
 	return { ...stats, onDisk: await countFiles(opts.outputDir) };
 }
 
+// ─── Object storage sync ────────────────────────────────────────────────────
+// `binaries/asset-sync` mirrors the browser-served roots of one region's output
+// tree (S3_ROOTS, default textures,spine,audio,video,portraits) into the bucket
+// that the repo-root .env (or backend/.env) describes. The contract it implements lives in
+// backend/crates/storage/README.md; this side only decides whether to run it and
+// what its exit means.
+
+/**
+ * Exit codes of `asset-sync sync`, as the storage crate defines them. Anything
+ * else non-zero (or a signal) is reported with its raw code.
+ */
+const ASSET_SYNC_EXIT = {
+	1: "config or usage error",
+	2: "one or more objects failed to upload or delete, or another asset-sync holds the server lock",
+	3: "delete refused: the local tree is under 90% of the remote (--allow-shrink overrides)",
+};
+
+/**
+ * Exit codes of `asset-sync restore`. It has no separate code for a failed
+ * object: anything that did not come back makes it exit 1.
+ */
+const ASSET_RESTORE_EXIT = {
+	1: "config or usage error, server lock held, or one or more stubs not restored",
+};
+
+/** `file:line` pairs already warned about, so a bad line warns once, not every tick. */
+const warnedEnvLines = new Set();
+
+/**
+ * A minimal dotenv reader, shaped after the dotenv 0.15 parser the backend and
+ * asset-sync use, because what matters is that all three read the same values:
+ *
+ * - blank lines and `#` lines are skipped; an optional `export ` prefix is allowed;
+ * - a value may be single- or double-quoted; whitespace and a ` #comment` after
+ *   the closing quote are dropped (`S3_TYPE="off" # later` reads `off`);
+ * - an unquoted value loses a trailing ` #comment`, and must then hold no
+ *   whitespace;
+ * - anything else (no `=`, a bad key, an unclosed quote, junk after a quote, an
+ *   unquoted value with whitespace in it) is MALFORMED, and parsing stops there
+ *   with one warning naming the file and line: dotenv 0.15 stops at the same line,
+ *   so nothing after it reaches the backend or asset-sync either.
+ *
+ * Enough to answer "is S3_TYPE set", which is all it is used for.
+ *
+ * @param {string} file
+ * @returns {Record<string, string>} the variables before the first malformed line
+ */
+function readEnvFile(file) {
+	const out = {};
+	const lines = readFileSync(file, "utf-8").split(/\r?\n/);
+	for (let i = 0; i < lines.length; i++) {
+		let line = lines[i].trim();
+		if (!line || line.startsWith("#")) continue;
+		if (line.startsWith("export ")) line = line.slice(7).trim();
+		const eq = line.indexOf("=");
+		const key = eq > 0 ? line.slice(0, eq).trim() : "";
+		let value = eq > 0 ? line.slice(eq + 1).trim() : "";
+		let ok = /^[A-Za-z_][A-Za-z0-9_.]*$/.test(key);
+		if (ok) {
+			const q = value[0];
+			if (q === '"' || q === "'") {
+				// First closing quote not escaped by a backslash.
+				let close = -1;
+				for (let j = 1; j < value.length; j++) {
+					if (value[j] === "\\" && q === '"') {
+						j++;
+						continue;
+					}
+					if (value[j] === q) {
+						close = j;
+						break;
+					}
+				}
+				const rest = close === -1 ? "x" : value.slice(close + 1);
+				ok = close !== -1 && /^\s*(#.*)?$/.test(rest);
+				if (ok) value = value.slice(1, close);
+			} else {
+				value = value.startsWith("#") ? "" : value.replace(/\s+#.*$/, "");
+				ok = !/\s/.test(value);
+			}
+		}
+		if (!ok) {
+			const where = `${file}:${i + 1}`;
+			if (!warnedEnvLines.has(where)) {
+				warnedEnvLines.add(where);
+				console.log(
+					chalk.yellow(
+						`[${new Date().toLocaleTimeString()}] ${where}: malformed line; dotenv stops reading this file here, so nothing below it is set (for the backend and asset-sync too)`,
+					),
+				);
+			}
+			break;
+		}
+		out[key] = value;
+	}
+	return out;
+}
+
+/**
+ * The env files the sync stage hands to the binary, in load order, and whether
+ * they were named explicitly. The binary takes `--env-file` repeatedly and, like
+ * dotenv, lets the FIRST file that sets a variable win.
+ *
+ * An explicit file (`--env-file`, WS_S3_ENV_FILE) replaces the list, and one that
+ * does not exist is a configuration error, as it is for the binary. Otherwise the
+ * list is the backend's own order, `../backend/.env` then `../.env` (repo root),
+ * each only if it exists, so the watcher and the backend resolve the same S3_*
+ * values. With neither, the binary falls back to `.env` in its own cwd (this
+ * directory).
+ *
+ * @param {string} [explicit]
+ * @returns {{ files: string[], explicit: boolean }}
+ */
+function resolveSyncEnvFiles(explicit) {
+	const named = explicit ?? process.env.WS_S3_ENV_FILE;
+	if (named !== undefined && named !== "") {
+		return { files: [resolvePath(named)], explicit: true };
+	}
+	const candidates = [join(__dirname, "..", "backend", ".env"), join(__dirname, "..", ".env")];
+	return { files: candidates.filter((f) => existsSync(f)), explicit: false };
+}
+
+/**
+ * Whether storage is configured for the binary: a non-empty S3_TYPE other than
+ * `off`, resolved the way dotenv resolves it. A variable already in this
+ * process's environment (which the child inherits) beats every file; then the
+ * first file, in load order, that defines the key wins, even with an empty value.
+ * With no files, the `.env` the binary would default to stands in.
+ *
+ * @param {string[]} envFiles
+ * @returns {string | null} the S3_TYPE value, or null when storage is disabled
+ */
+function configuredStorageType(envFiles) {
+	const files = envFiles.length
+		? envFiles
+		: [join(__dirname, ".env")].filter((f) => existsSync(f));
+	let value = process.env.S3_TYPE;
+	for (const file of files) {
+		if (value !== undefined) break;
+		if (!existsSync(file)) continue;
+		const vars = readEnvFile(file);
+		if (Object.hasOwn(vars, "S3_TYPE")) value = vars.S3_TYPE;
+	}
+	value = (value ?? "").trim();
+	return value === "" || value.toLowerCase() === "off" ? null : value;
+}
+
+/**
+ * Run `asset-sync sync` for one region and report how it went. Never rejects:
+ * every outcome, including a missing binary, comes back as a result so the
+ * caller decides what a failure costs.
+ *
+ * `skipped` is true when nothing was synced and that is not an error: the binary
+ * is absent and S3_TYPE is unset, or the binary reported storage disabled.
+ *
+ * @param {object} opts
+ * @param {string} opts.outputRoot the output root holding `<region>/` (e.g. ./output)
+ * @param {string} opts.region server key, e.g. "en"
+ * @param {string} [opts.envFile] explicit env file; see resolveSyncEnvFiles
+ * @param {boolean} [opts.dryRun] pass --dry-run (report the diff, change nothing)
+ * @param {boolean} [opts.allowShrink] pass --allow-shrink; manual use only, never from `ws`
+ * @param {(line: string) => void} [opts.log] receives every output line, and the skip line
+ * @param {(msg: object) => void} [opts.broadcast] receives one `status` with the summary
+ * @returns {Promise<{ ok: boolean, code: number | null, summary: string, skipped: boolean }>}
+ */
+function runAssetSync({ dryRun = false, allowShrink = false, ...opts }) {
+	const flags = [];
+	if (dryRun) flags.push("--dry-run");
+	if (allowShrink) flags.push("--allow-shrink");
+	return runAssetSyncBinary({ ...opts, subcommand: "sync", flags, exitMeanings: ASSET_SYNC_EXIT });
+}
+
+/**
+ * Run `asset-sync restore` for one region: download every evicted stub's
+ * object back over its 0-byte file and clear its manifest flag. The way back
+ * before turning storage off. Same result shape and env handling as
+ * runAssetSync.
+ *
+ * @param {object} opts
+ * @param {string} opts.outputRoot the output root holding `<region>/`
+ * @param {string} opts.region server key, e.g. "en"
+ * @param {string} [opts.envFile] explicit env file; see resolveSyncEnvFiles
+ * @param {boolean} [opts.dryRun] pass --dry-run (count stubs and bytes, change nothing)
+ * @param {string[]} [opts.only] rel-path prefixes, each passed as `--only`
+ * @param {(line: string) => void} [opts.log] receives every output line, and the skip line
+ * @returns {Promise<{ ok: boolean, code: number | null, summary: string, skipped: boolean }>}
+ */
+function runAssetRestore({ dryRun = false, only = [], ...opts }) {
+	const flags = [];
+	if (dryRun) flags.push("--dry-run");
+	for (const prefix of only) flags.push("--only", prefix);
+	return runAssetSyncBinary({ ...opts, subcommand: "restore", flags, exitMeanings: ASSET_RESTORE_EXIT });
+}
+
+/**
+ * Spawn `binaries/asset-sync <subcommand> --root <abs> --server <region>
+ * --env-file ... <flags>` and collect its summary: the last line starting with
+ * `asset-sync:`, which both `sync` and `restore` print exactly once.
+ *
+ * @param {object} opts
+ * @param {"sync" | "restore"} opts.subcommand
+ * @param {string[]} opts.flags appended after the env files
+ * @param {Record<number, string>} opts.exitMeanings exit code -> description
+ * @param {string} opts.outputRoot
+ * @param {string} opts.region
+ * @param {string} [opts.envFile]
+ * @param {(line: string) => void} [opts.log]
+ * @param {(msg: object) => void} [opts.broadcast]
+ * @returns {Promise<{ ok: boolean, code: number | null, summary: string, skipped: boolean }>}
+ */
+function runAssetSyncBinary({ subcommand, flags, exitMeanings, outputRoot, region, envFile, log, broadcast }) {
+	const say = (line) => log?.(line);
+	const env = resolveSyncEnvFiles(envFile);
+	// Failures are not logged here: the caller reports them, `ws` through its
+	// "Update failed" line and `sync` through its exit message.
+	const fail = (code, summary) =>
+		Promise.resolve({ ok: false, code, summary, skipped: false });
+
+	if (env.explicit && !existsSync(env.files[0])) {
+		return fail(1, `asset-sync: env file not found: ${env.files[0]}`);
+	}
+	const storageType = configuredStorageType(env.files);
+	if (!existsSync(ASSET_SYNC_BIN)) {
+		if (storageType) {
+			return fail(
+				1,
+				`asset-sync: binary missing at ${ASSET_SYNC_BIN} but S3_TYPE=${storageType} is set${env.files.length ? ` (env files: ${env.files.join(", ")})` : ""}; build it with \`cargo build --release -p myrtle-storage --bin asset-sync\` in backend/ and copy it there`,
+			);
+		}
+		const summary = "asset-sync: skipped (binary not installed, S3_TYPE unset)";
+		say(summary);
+		return Promise.resolve({ ok: true, code: 0, summary, skipped: true });
+	}
+
+	const args = [subcommand, "--root", resolvePath(outputRoot), "--server", region];
+	for (const file of env.files) args.push("--env-file", file);
+	args.push(...flags);
+
+	return new Promise((resolve) => {
+		const child = spawn(ASSET_SYNC_BIN, args, {
+			cwd: __dirname,
+			stdio: ["ignore", "pipe", "pipe"],
+		});
+
+		activeChildren.add(child);
+		child.on("close", () => activeChildren.delete(child));
+
+		// The binary logs progress every 1000 files and ends with ONE summary
+		// line. Lines are forwarded as they complete; the last ten are kept for an
+		// error message when the summary never arrives (a crash or a signal).
+		let summary = null;
+		const tail = [];
+		const partial = { stdout: "", stderr: "" };
+		const takeLine = (raw) => {
+			const line = raw.replace(ANSI_RE, "").replace(/\r/g, "").trim();
+			if (!line) return;
+			say(line);
+			if (line.startsWith("asset-sync:")) summary = line;
+			tail.push(line);
+			if (tail.length > 10) tail.shift();
+		};
+		const onData = (stream) => (chunk) => {
+			partial[stream] += chunk.toString();
+			const lines = partial[stream].split("\n");
+			partial[stream] = lines.pop() ?? "";
+			for (const line of lines) takeLine(line);
+		};
+		child.stdout.on("data", onData("stdout"));
+		child.stderr.on("data", onData("stderr"));
+
+		child.on("close", (code, signal) => {
+			takeLine(partial.stdout);
+			takeLine(partial.stderr);
+			if (code === 0) {
+				const text = summary ?? "asset-sync: finished (no summary line printed)";
+				const skipped = /storage disabled/.test(text);
+				broadcast?.({ type: "status", state: "syncing", message: text });
+				resolve({ ok: true, code: 0, summary: text, skipped });
+				return;
+			}
+			const how =
+				code === null
+					? `killed by signal ${signal}`
+					: `exited with code ${code}${exitMeanings[code] ? ` (${exitMeanings[code]})` : ""}`;
+			const detail = summary ?? tail.join("\n");
+			resolve({
+				ok: false,
+				code,
+				summary: `asset-sync ${how}${detail ? `\n${detail}` : ""}`,
+				skipped: false,
+			});
+		});
+
+		child.on("error", (err) => {
+			resolve({ ok: false, code: null, summary: `asset-sync failed to start: ${err.message}`, skipped: false });
+		});
+	});
+}
+
 // ─── Option 1: Setup ───────────────────────────────────────────────────────
 
 async function runSetup() {
@@ -1436,6 +1800,13 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 		),
 	};
 
+	// WS_S3_SYNC=0 turns the object storage stage off for this watcher.
+	// WS_S3_ENV_FILE names the env file it reads (default: ../backend/.env then
+	// ../.env, each if it exists, first file wins as in the backend);
+	// runAssetSync resolves them on every run, so an edit takes effect without a
+	// restart.
+	const syncEnabled = process.env.WS_S3_SYNC !== "0";
+
 	const config = nonInteractive
 		? defaults
 		: await inquirer.prompt([
@@ -1695,6 +2066,145 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 	// watcher at the 6 hour cap because a human tried to help, with nothing in the
 	// logs connecting the two. A manual SUCCESS still clears the backoff, because
 	// what the counter counts is failed extracts and that extract did not fail.
+	/** Run the sync stage for this region, with the `syncing` state around it. */
+	async function syncStage() {
+		currentState = "syncing";
+		broadcast(statusMessage());
+		console.log(chalk.blue(`[${new Date().toLocaleTimeString()}] Syncing to object storage...`));
+		return runAssetSync({
+			outputRoot: dirname(config.outputDir),
+			region: config.serverKey,
+			log: (line) =>
+				console.log(chalk.dim(`[${new Date().toLocaleTimeString()}] ${line}`)),
+			broadcast,
+		});
+	}
+
+	/**
+	 * Persist a failed sync as `.sync-pending` (attempts + 1) and report it. The
+	 * extract backoff is NOT touched: it counts failed extracts, and the retry
+	 * of a pending sync is one cheap attempt per tick with no backoff of its own.
+	 */
+	function recordSyncFailure(base, result, { downloaded = 0, failed = 0 } = {}) {
+		const attempts = (base.attempts ?? 0) + 1;
+		// Exit 3 is the delete-safety refusal. It comes AFTER every upload landed,
+		// so the bucket holds the whole tree plus the objects it refused to
+		// delete: a reload is safe now, and the deletes wait for a human.
+		const shrink = result.code === 3;
+		const { synced: _s, syncSummary: _ss, needsAllowShrink: _n, ...rest } = base;
+		try {
+			writeSyncPending(config.savedir, {
+				...rest,
+				attempts,
+				lastCode: result.code,
+				lastSummary: result.summary,
+				...(shrink ? { needsAllowShrink: true } : {}),
+			});
+		} catch (err) {
+			console.log(chalk.red(`[${new Date().toLocaleTimeString()}] Could not write .sync-pending: ${err.message}`));
+		}
+		if (!shrink) {
+			// First line only: the binary's own summary line was streamed above.
+			console.log(chalk.red(`[${new Date().toLocaleTimeString()}] Object storage sync failed (attempt ${attempts}): ${result.summary.split("\n")[0]}`));
+		}
+		if (shrink) {
+			const fix = `node run.mjs sync --server ${config.serverKey} --allow-shrink`;
+			broadcast({
+				type: "error",
+				message: `Object storage sync uploaded everything but refused to delete (the tree is under 90% of the bucket); run \`${fix}\` after checking the tree: ${result.summary}`,
+				consecutiveFailures,
+				nextAttemptAt,
+			});
+			console.log(chalk.yellow(`[${new Date().toLocaleTimeString()}] Uploads complete, deletes refused; sending update_complete (synced: uploads-only). Approve the deletes with: ${fix}`));
+			broadcast({
+				type: "update_complete",
+				version: base.version ?? currentVersion ?? null,
+				downloaded,
+				failed,
+				exported: base.exported ?? 0,
+				synced: "uploads-only",
+				syncSummary: result.summary,
+			});
+			return;
+		}
+		broadcast({
+			type: "error",
+			message: `Object storage sync failed (attempt ${attempts}, retried next tick): ${result.summary}`,
+			consecutiveFailures,
+			nextAttemptAt,
+		});
+	}
+
+	/**
+	 * Retry a pending sync on its own: no download, no extract. Runs at the top
+	 * of every tick and before a force_update. Success removes the marker and
+	 * sends the `update_complete` that the failed sync held back; failure keeps
+	 * the marker with attempts + 1 and lets the caller carry on, so a newer
+	 * version still gets its full update (whose own sync replaces this one).
+	 */
+	async function retryPendingSync() {
+		const pending = readSyncPending(config.savedir);
+		if (!pending) return;
+		if (!syncEnabled) {
+			console.log(chalk.yellow(`[${new Date().toLocaleTimeString()}] .sync-pending present but WS_S3_SYNC=0; not retrying`));
+			return;
+		}
+		if (pending.needsAllowShrink) {
+			console.log(chalk.yellow(`[${new Date().toLocaleTimeString()}] Object storage deletes for v${pending.version ?? "(unknown)"} were refused (shrink rule); not retried automatically. Check the tree, then run: node run.mjs sync --server ${config.serverKey} --allow-shrink`));
+			return;
+		}
+		updating = true;
+		try {
+			if (pending.synced) {
+				// `node run.mjs sync` already brought the bucket level with the tree;
+				// all that is owed is the update_complete the failed sync held back.
+				const version = pending.version ?? currentVersion ?? null;
+				console.log(chalk.green(`[${new Date().toLocaleTimeString()}] Pending sync was completed by hand for v${version}; sending the held update_complete`));
+				broadcast({
+					type: "update_complete",
+					version,
+					downloaded: 0,
+					failed: 0,
+					exported: pending.exported ?? 0,
+					synced: true,
+					syncSummary: pending.syncSummary,
+				});
+				clearSyncPending(config.savedir);
+				broadcast(statusMessage());
+				return;
+			}
+			console.log(chalk.yellow(`[${new Date().toLocaleTimeString()}] Retrying pending object storage sync for v${pending.version ?? "(unknown)"} (${pending.attempts} failed attempt(s) so far)`));
+			const result = await syncStage();
+			currentState = "idle";
+			if (!result.ok) {
+				recordSyncFailure(pending, result);
+				broadcast(statusMessage());
+				return;
+			}
+			clearSyncPending(config.savedir);
+			const version = pending.version ?? currentVersion ?? null;
+			console.log(chalk.green(`[${new Date().toLocaleTimeString()}] Pending sync complete: v${version}; sending the held update_complete`));
+			broadcast({
+				type: "update_complete",
+				version,
+				// Nothing was downloaded on this tick; the counts belong to the
+				// update that extracted the tree.
+				downloaded: 0,
+				failed: 0,
+				exported: pending.exported ?? 0,
+				synced: !result.skipped,
+				syncSummary: result.summary,
+			});
+			broadcast(statusMessage());
+		} catch (err) {
+			currentState = "idle";
+			console.log(chalk.red(`[${new Date().toLocaleTimeString()}] Pending sync retry failed: ${err.message}`));
+			broadcast(statusMessage());
+		} finally {
+			updating = false;
+		}
+	}
+
 	async function performUpdate(knownVer, { manual = false } = {}) {
 		if (updating) return;
 		updating = true;
@@ -1775,6 +2285,14 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 					broadcast({ type: "status", state: "unpacking", message }),
 			});
 
+			// Object storage sync. It runs AFTER the sweep, so the bucket loses
+			// exactly what the local tree lost. A failure here does NOT fail the
+			// update: the extract is recorded below like any other, and a
+			// `.sync-pending` marker takes the place of `update_complete`, so the
+			// next tick retries the sync alone instead of re-downloading and
+			// re-extracting hours of work. WS_S3_SYNC=0 skips the stage.
+			const syncResult = syncEnabled ? await syncStage() : null;
+
 			// The extract SUCCEEDED at this point, and everything below is recording
 			// that. None of it may fall into the catch: doing so discards hours of
 			// completed work, leaves every trigger true, and re-runs the whole cycle on
@@ -1812,6 +2330,34 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 			}
 
 			currentState = "idle";
+			if (syncResult && !syncResult.ok) {
+				// Held back: the backend must not reload against a bucket that lags
+				// the tree. The retry in checkAndUpdate sends it once the sync lands.
+				const prior = readSyncPending(config.savedir);
+				recordSyncFailure(
+					{
+						region: config.serverKey,
+						version: currentVersion ?? null,
+						exported: upStats.exported,
+						// A pending sync for an OLDER version is superseded by this one.
+						attempts: prior && prior.version === (currentVersion ?? null) ? prior.attempts : 0,
+					},
+					syncResult,
+					{ downloaded: dlStats.downloaded, failed: dlStats.failed },
+				);
+				console.log(
+					chalk.yellow(
+						`[${new Date().toLocaleTimeString()}] Extract recorded (v${currentVersion}, ${upStats.exported} exported, ${upStats.onDisk} on disk)${syncResult.code === 3 ? "" : "; update_complete held until the object storage sync succeeds"}`,
+					),
+				);
+				broadcast(statusMessage());
+				return;
+			}
+			// This run's own sync covered the whole tree, so any older pending sync
+			// is done with it.
+			if (syncResult && clearSyncPending(config.savedir)) {
+				console.log(chalk.dim(`[${new Date().toLocaleTimeString()}] Cleared .sync-pending (superseded by this update's sync)`));
+			}
 			console.log(chalk.green(`[${new Date().toLocaleTimeString()}] Update complete: v${currentVersion}, ${dlStats.downloaded} downloaded, ${upStats.exported} exported, ${upStats.onDisk} on disk`));
 			broadcast({
 				type: "update_complete",
@@ -1819,6 +2365,10 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 				downloaded: dlStats.downloaded,
 				failed: dlStats.failed,
 				exported: upStats.exported,
+				// Additive: the backend and the Discord bot read the fields above
+				// and ignore the rest.
+				synced: !!syncResult && !syncResult.skipped,
+				syncSummary: syncResult?.summary ?? null,
 			});
 			broadcast(statusMessage());
 		} catch (err) {
@@ -1855,6 +2405,11 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 
 	// Check for updates and trigger download if needed
 	async function checkAndUpdate() {
+		if (updating) return;
+
+		// Before the backoff guard: the extract backoff counts failed extracts,
+		// and a pending sync is neither one nor expensive enough to wait on it.
+		await retryPendingSync();
 		if (updating) return;
 
 		if (Date.now() < nextAttemptAt) {
@@ -1940,7 +2495,10 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 					} else {
 						// Deliberately not gated on `nextAttemptAt`: this is the hatch
 						// out of a long backoff, and a person is asking for it.
-						performUpdate(undefined, { manual: true });
+						void (async () => {
+							await retryPendingSync();
+							await performUpdate(undefined, { manual: true });
+						})();
 					}
 					break;
 
@@ -1975,6 +2533,7 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 				`${chalk.bold("Output:")}   ${config.outputDir}`,
 				`${chalk.bold("Threads:")}  ${config.threads}`,
 				`${chalk.bold("Interval:")} ${config.intervalMin} minutes`,
+				`${chalk.bold("S3 sync:")}  ${syncEnabled ? (existsSync(ASSET_SYNC_BIN) ? "after every extract" : "binary not installed") : "off (WS_S3_SYNC=0)"}`,
 				"",
 				chalk.dim("Press Ctrl+C to stop"),
 			].join("\n"),
@@ -2084,9 +2643,37 @@ process.on("SIGINT", () => shutdown(true));
 // ─── Main Menu ──────────────────────────────────────────────────────────────
 
 // ─── CLI argv parsing (non-interactive entry) ──────────────────────────────
-// Usage: node run.mjs ws [--server en] [--savedir ./ArkAssets] [--output ./output]
-//        [--keep-orphans] [--dry-orphans]   (the post-extract sweep, see runUnpack)
-//                        [--threads N] [--port 9160] [--interval 30]
+const USAGE = `Usage:
+  node run.mjs                 interactive menu
+  node run.mjs setup           build the downloader and unpacker
+  node run.mjs update          check for updates and update once
+  node run.mjs ws [--server en] [--savedir ./ArkAssets] [--output ./output]
+                  [--threads N] [--port 9160] [--interval 30] [--start-delay 0]
+                  [--profile full] [--keep-orphans] [--dry-orphans]
+                               watch the CDN, re-extract and sync on every new version;
+                               a failed sync is retried alone on the next tick
+  node run.mjs sync --server en [--output ./output] [--savedir ./ArkAssets]
+                    [--env-file <file>] [--dry-run] [--allow-shrink]
+                               mirror output/<server>/ into object storage once (the
+                               first seed, or a manual repair); on success marks the
+                               watcher's ArkAssets/<server>/.sync-pending synced, so its
+                               next tick sends the held update_complete; exits with
+                               asset-sync's code: 0 ok, 1 config/usage, 2 objects
+                               failed, 3 delete refused (uploads done; re-run with
+                               --allow-shrink after checking the tree, which also
+                               removes the marker). Env files: --env-file or
+                               WS_S3_ENV_FILE, else ../backend/.env then ../.env
+                               (each if present; the first file setting a var wins)
+  node run.mjs restore --server en [--output ./output] [--env-file <file>]
+                       [--only <prefix>]... [--dry-run]
+                               download every evicted stub (a 0-byte file that
+                               S3_EVICT_LOCAL left behind) back from object storage
+                               and clear its manifest flag; run it before turning
+                               storage off. --only limits it to rel paths under a
+                               prefix (repeatable). Same env files as sync; exits
+                               with asset-sync's code: 0 ok, 1 config/usage or any
+                               stub not restored
+  node run.mjs help            this text`;
 const argv = process.argv.slice(2);
 const cliAction = argv[0] && !argv[0].startsWith("--") ? argv[0] : null;
 const cliArgs = {};
@@ -2103,6 +2690,140 @@ for (let i = cliAction ? 1 : 0; i < argv.length; i++) {
 	}
 }
 
+// `--only` repeats, which cliArgs (last value wins) cannot hold, so it is
+// collected here. A missing value is recorded as `true` and rejected by restore.
+const cliOnly = [];
+for (let i = cliAction ? 1 : 0; i < argv.length; i++) {
+	if (argv[i] !== "--only") continue;
+	const next = argv[i + 1];
+	if (next !== undefined && !next.startsWith("--")) {
+		cliOnly.push(next);
+		i++;
+	} else {
+		cliOnly.push(true);
+	}
+}
+
+/**
+ * The region and output root `sync` and `restore` act on, or the exit code
+ * when the arguments are unusable (already reported).
+ *
+ * @param {Record<string, string | true>} args
+ * @returns {{ region: string, outputRoot: string } | { code: number }}
+ */
+function storageCommandTarget(args) {
+	const region = typeof args.server === "string" ? args.server : (process.env.WS_SERVER ?? "en");
+	if (!SERVERS[region]) {
+		console.log(chalk.red(`Unknown server: ${region}. Valid: ${Object.keys(SERVERS).join(", ")}`));
+		return { code: 1 };
+	}
+	if (args["env-file"] === true || args.output === true) {
+		console.log(chalk.red("--env-file and --output need a value"));
+		console.log(USAGE);
+		return { code: 1 };
+	}
+	return { region, outputRoot: args.output ?? process.env.WS_OUTPUT ?? "./output" };
+}
+
+/**
+ * Run one asset-sync subcommand with the binary's lines echoed dim, then print
+ * whatever part of the result summary the binary did not already print.
+ *
+ * @param {(log: (line: string) => void) => ReturnType<typeof runAssetSyncBinary>} run
+ */
+async function runEchoed(run) {
+	const printed = new Set();
+	const result = await run((line) => {
+		printed.add(line);
+		console.log(chalk.dim(line));
+	});
+	// Lines the binary already printed are not repeated.
+	const fresh = result.summary.split("\n").filter((line) => !printed.has(line));
+	if (fresh.length) console.log((result.ok ? chalk.green : chalk.red)(fresh.join("\n")));
+	return result;
+}
+
+/**
+ * `node run.mjs sync`: the sync stage of `ws`, standalone. WS_S3_SYNC is not
+ * consulted, since running this command is the request. Returns the exit code.
+ *
+ * @param {Record<string, string | true>} args
+ * @returns {Promise<number>}
+ */
+async function runSyncCommand(args) {
+	const target = storageCommandTarget(args);
+	if ("code" in target) return target.code;
+	const { region, outputRoot } = target;
+	const savedir = join(
+		typeof args.savedir === "string" ? args.savedir : (process.env.WS_SAVEDIR ?? "./ArkAssets"),
+		region,
+	);
+	const result = await runEchoed((log) =>
+		runAssetSync({
+			outputRoot,
+			region,
+			envFile: args["env-file"],
+			dryRun: !!args["dry-run"],
+			allowShrink: !!args["allow-shrink"],
+			log,
+		}),
+	);
+	// A successful real sync settles a sync the watcher left pending. The marker
+	// is kept, marked synced, rather than deleted: the watcher still owes the
+	// backend the update_complete the failed sync held back, and sends it (then
+	// removes the marker) on its next tick without syncing again.
+	const pending = result.ok && !args["dry-run"] ? readSyncPending(savedir) : null;
+	if (pending?.needsAllowShrink) {
+		// The watcher already sent update_complete (synced: uploads-only) when
+		// the deletes were refused; with them done there is nothing left to owe.
+		clearSyncPending(savedir);
+		console.log(chalk.green(`Removed ${join(savedir, ".sync-pending")} (deletes done; update_complete was already sent)`));
+	} else if (pending) {
+		const { synced: _s, syncSummary: _ss, needsAllowShrink: _n, ...rest } = pending;
+		writeSyncPending(savedir, { ...rest, synced: true, syncSummary: result.summary });
+		console.log(
+			chalk.green(
+				`Marked ${join(savedir, ".sync-pending")} synced; the watcher sends the held update_complete on its next tick`,
+			),
+		);
+	}
+	return result.code ?? 1;
+}
+
+/**
+ * `node run.mjs restore`: bring evicted stubs back from object storage. It
+ * touches no watcher marker; the backend keeps serving the same paths either
+ * way. Returns the exit code.
+ *
+ * @param {Record<string, string | true>} args
+ * @param {(string | true)[]} only the `--only` values, in order
+ * @returns {Promise<number>}
+ */
+async function runRestoreCommand(args, only) {
+	const target = storageCommandTarget(args);
+	if ("code" in target) return target.code;
+	if (only.includes(true)) {
+		console.log(chalk.red("--only needs a value"));
+		console.log(USAGE);
+		return 1;
+	}
+	const result = await runEchoed((log) =>
+		runAssetRestore({
+			...target,
+			envFile: args["env-file"],
+			dryRun: !!args["dry-run"],
+			only,
+			log,
+		}),
+	);
+	return result.code ?? 1;
+}
+
+if (argv[0] === "--help" || argv[0] === "-h") {
+	console.log(USAGE);
+	process.exit(0);
+}
+
 if (cliAction) {
 	const platformLabel = isMac ? "macOS" : isWindows ? "Windows" : "Linux";
 	console.log(chalk.dim(`Platform: ${platformLabel} (${process.arch})`));
@@ -2116,9 +2837,18 @@ if (cliAction) {
 		case "ws":
 			await runWebSocketServer({ nonInteractive: true, cliArgs });
 			break;
+		case "sync":
+			process.exit(await runSyncCommand(cliArgs));
+			break;
+		case "restore":
+			process.exit(await runRestoreCommand(cliArgs, cliOnly));
+			break;
+		case "help":
+			console.log(USAGE);
+			break;
 		default:
 			console.log(chalk.red(`Unknown command: ${cliAction}`));
-			console.log("Valid commands: setup, update, ws");
+			console.log(USAGE);
 			process.exit(1);
 	}
 } else {

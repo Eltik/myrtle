@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
-import { env } from "#/env";
+import { assetURL } from "#/lib/assets";
 import { backendFetch } from "#/lib/fetch";
 import type { StageIndexEntry } from "#/types/generated/StageIndexEntry";
 import type { IActivity, IRetroAct, IStage, IZone, StageClearsMap } from "#/types/stages";
@@ -68,7 +68,7 @@ function stageFamily(stageId: string): string {
 
 /**
  * Build all candidate map-preview asset paths for a stage, relative to the
- * backend `/api/assets` root. Stage preview assets live under
+ * server's asset tree (what `assetURL` takes). Stage preview assets live under
  * `textures/arts/ui/stage_mappreview_h2_{family}{variant}_0/{stageId}.png` where
  * `variant` is one of "", "_a", "_b", "_1", "_2", … and is not derivable from
  * the stage data, so we emit a small product of candidates and let the consumer
@@ -98,10 +98,9 @@ export function stagePreviewAssetPaths(stage: IStage): string[] {
     return paths;
 }
 
-/** Absolute `/api/assets/...` candidate URLs for a stage's map preview. */
+/** Absolute candidate URLs for a stage's map preview, from `assetURL`. */
 export function stagePreviewURLs(stage: IStage): string[] {
-    const base = env.VITE_BACKEND_URL ?? "";
-    return stagePreviewAssetPaths(stage).map((path) => `${base}/api/assets${path}`);
+    return stagePreviewAssetPaths(stage).map((path) => assetURL(path));
 }
 
 export const getStagesFn = createServerFn({ method: "GET" })
@@ -129,12 +128,6 @@ export function stagesQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
  * Generated from `backend/src/core/gamedata/types/stage_index.rs`.
  */
 export type IStageIndexEntry = StageIndexEntry;
-
-/** Absolute URL for a backend asset-relative path (e.g. a stage preview). */
-export function assetURL(path: string): string {
-    const base = env.VITE_BACKEND_URL ?? "";
-    return `${base}/api/assets/${path.replace(/^\/+/, "")}`;
-}
 
 export const getStageIndexFn = createServerFn({ method: "GET" })
     .inputValidator((server: string | undefined) => server)

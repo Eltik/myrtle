@@ -197,6 +197,8 @@ async fn state() -> AppState {
         default_server: Server::EN,
         asset_ws_urls: HashMap::new(),
         role_recheck: true,
+        storage: None,
+        asset_delivery: myrtle_storage::DeliveryMode::Local,
     };
     let db = backend::database::init(DATABASE_URL)
         .await

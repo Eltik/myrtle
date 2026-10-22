@@ -1,13 +1,13 @@
 import { env } from "#/env";
 import type { GamedataServer } from "#/lib/api/gamedata";
+import { assetURL } from "#/lib/assets";
 import type { IEnrichedSkill, IModule } from "#/types/operators";
 
 type AssetServer = GamedataServer | undefined;
 
 export function asset(path: string | null | undefined, server?: AssetServer): string {
     if (!path) return "";
-    const prefix = server && server !== "en" ? `${server}/` : "";
-    return `${env.VITE_BACKEND_URL}/api/${prefix}assets${path}`;
+    return assetURL(path, server);
 }
 
 export function operatorHero(operatorId: string, skin: string | null, portrait: string | null, server?: AssetServer): string {
@@ -86,8 +86,7 @@ export function itemIcon(id: string, iconId: string | null | undefined, image: s
 }
 
 export function audioURL(relativeURL: string, server?: AssetServer): string {
-    const prefix = server && server !== "en" ? `${server}/` : "";
-    return `${env.VITE_BACKEND_URL}/api/${prefix}assets/audio${relativeURL}`;
+    return assetURL(`/audio${relativeURL}`, server);
 }
 
 export function skillIconURL(skill: IEnrichedSkill, server?: AssetServer): string {

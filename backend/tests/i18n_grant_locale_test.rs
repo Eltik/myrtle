@@ -40,6 +40,8 @@ fn app(db: PgPool) -> Router {
         // The claim alone admits the caller, so the test needs no stored
         // super-admin; the locale check is what is under test.
         role_recheck: false,
+        storage: None,
+        asset_delivery: myrtle_storage::DeliveryMode::Local,
     };
     let state = AppState::new(
         db,

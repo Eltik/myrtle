@@ -1,6 +1,6 @@
 import * as PIXI from "pixi.js";
 import type { Spine } from "pixi-spine";
-import { env } from "#/env";
+import { assetURL, encodeAssetPath } from "#/lib/assets";
 import { type DecodedImage, decodedSize, loadDecoded, uploadSource } from "#/lib/utils";
 import { CHIBI_OFFSET_X, CHIBI_OFFSET_Y, CHIBI_SCALE, DYNAMIC_FIT_MARGIN, EXPORT_HEIGHT, EXPORT_PADDING, EXPORT_WIDTH, MAX_EXPORT_DIM } from "./constants";
 import { patchSpine38NoScaleUnderFlattenedParent } from "./noScaleFix";
@@ -36,24 +36,6 @@ function loadSpineModules() {
 // Capturing groups: 1=page name, 2=width, 3=height.
 const ATLAS_PAGE_RE = /^(.+\.png)\r?\n\s*size:\s*(\d+)\s*,\s*(\d+)/gm;
 
-function encodeAssetPath(path: string): string {
-    if (!path) return "";
-    if (/^[A-Za-z0-9\-_.!~*'()/%]*$/.test(path)) return path;
-
-    let result = "";
-    let segmentStart = 0;
-    for (let i = 0; i <= path.length; i++) {
-        if (i === path.length || path[i] === "/") {
-            const segment = path.slice(segmentStart, i);
-            // Preserve already-encoded segments (containing %), encode otherwise.
-            result += segment.includes("%") ? segment : encodeURIComponent(segment);
-            if (i < path.length) result += "/";
-            segmentStart = i + 1;
-        }
-    }
-    return result;
-}
-
 /** `root` (DEV ONLY) redirects the fetch at an ALTERNATE export root instead of the backend,
  *  so an exporter A/B can be scored without writing the deployed asset tree. It is served by
  *  the `myrtle:alt-asset-root` vite plugin under the SAME relative path shape the backend
@@ -61,8 +43,7 @@ function encodeAssetPath(path: string): string {
  *  the URL unchanged. */
 export function chibiAssetURL(path: string, server?: "en" | "cn", root?: string): string {
     if (root && import.meta.env.DEV) return `${root}${encodeAssetPath(path)}`;
-    const prefix = server && server !== "en" ? `${server}/` : "";
-    return `${env.VITE_BACKEND_URL}/api/${prefix}assets${encodeAssetPath(path)}`;
+    return assetURL(encodeAssetPath(path), server);
 }
 
 /** Atlas pages are MINIFIED heavily (a dynchar page is 2280x2280 drawn into a viewport a

@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { env } from "#/env";
+import { assetURL } from "#/lib/assets";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { APPLY_WAY_LABEL_KEY, ENEMY_LEVEL_LABEL_KEY, LIST_GRID_COLS } from "../constants";
@@ -23,7 +23,7 @@ export function EnemyCardList({ enemy, statMax }: IEnemyCardListProps) {
     const [imgError, setImgError] = useState(false);
     const tok = LEVEL_TOKENS[enemy.enemyLevel];
     const hasPortrait = !!enemy.portrait && !imgError;
-    const portraitSrc = hasPortrait ? `${env.VITE_BACKEND_URL ?? ""}/api/assets${enemy.portrait}` : undefined;
+    const portraitSrc = hasPortrait && enemy.portrait ? assetURL(enemy.portrait) : undefined;
     const dmgLabel = enemy.damageType.length ? enemy.damageType.map((dt) => (DAMAGE_TOKENS[dt] ? tConst(DAMAGE_TOKENS[dt].labelKey) : dt)).join(" · ") : "-";
     const tierMaxHp = statMax[enemy.enemyLevel].hp;
     const hpPct = tierMaxHp > 0 ? Math.min(100, (enemy.flatStats.maxHp / tierMaxHp) * 100) : 0;

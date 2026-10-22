@@ -106,7 +106,20 @@ fn spawn_shutdown_watchdog() {
 // `lib.rs`, which does not cover this binary's crate root.
 #[allow(clippy::too_many_lines)]
 async fn async_main() {
-    dotenv().ok();
+    // `backend/.env` first, then the repo root `.env`, which holds settings
+    // shared with the asset pipeline (the `S3_*` storage block). dotenv never
+    // overrides a variable that is already set, so the real environment
+    // beats `backend/.env`, which beats the root file. The root file is read
+    // by exact path: `from_filename` would search every ancestor directory.
+    // Results are logged once tracing is up, which may itself read RUST_LOG
+    // from these files.
+    let env_files = [
+        ("backend/.env", dotenv()),
+        (
+            "../.env",
+            dotenv::from_path(std::path::Path::new("../.env")).map(|()| std::path::PathBuf::new()),
+        ),
+    ];
 
     // The writer clears the boot progress bars before a line lands, so startup
     // logging and the bars can share a terminal.
@@ -117,10 +130,29 @@ async fn async_main() {
         )
         .with_writer(startup::log_writer())
         .init();
+    // dotenv stops at the first line it cannot parse (an unquoted value with
+    // a space, say), silently dropping every key after it. A missing file is
+    // normal; anything else is worth a warning.
+    for (name, result) in &env_files {
+        match result {
+            Ok(_) => {}
+            Err(dotenv::Error::Io(e)) if e.kind() == std::io::ErrorKind::NotFound => {}
+            Err(e) => warn!(file = name, error = %e, "env file not fully loaded"),
+        }
+    }
 
     // Game data (per-server). ASSETS_DIR is a base dir; each server loads from
     // `{base}/{server}` (+ `/gamedata/excel`). SERVERS selects which to load.
     let config = AppConfig::from_env();
+    info!(
+        "{}",
+        myrtle_storage::delivery_log_line(config.asset_delivery, config.storage.as_ref())
+    );
+    warn_evicted_stubs(
+        Path::new(&config.assets_base_dir),
+        config.asset_delivery,
+        config.storage.as_ref(),
+    );
 
     // Costed from the previous boot's timings (see `core::startup`).
     let boot = startup::Boot::start(boot_plan(&config));
@@ -285,6 +317,49 @@ async fn async_main() {
     boot.finish();
 
     server::run(state).await.expect("server error");
+}
+
+/// An evicted stub (`S3_EVICT_LOCAL`) that the store does not deliver is
+/// served as an empty file from disk. One warning per server directory under
+/// `base`: with delivery local, for any stub; otherwise for stubs outside
+/// `S3_ROOTS` (or under another prefix).
+fn warn_evicted_stubs(
+    base: &Path,
+    mode: myrtle_storage::DeliveryMode,
+    storage: Option<&myrtle_storage::StorageConfig>,
+) {
+    let Ok(entries) = std::fs::read_dir(base) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let Ok(server) = entry.file_name().into_string() else {
+            continue;
+        };
+        let manifest = entry.path().join(myrtle_storage::sync::MANIFEST_NAME);
+        if !manifest.is_file() {
+            continue;
+        }
+        let manifest = myrtle_storage::Manifest::load(&manifest);
+        match storage {
+            Some(storage) if mode != myrtle_storage::DeliveryMode::Local => {
+                let key_prefix = myrtle_storage::key::server_prefix(&storage.prefix, &server);
+                let outside = manifest.evicted_outside_roots(&key_prefix, &storage.roots);
+                if outside > 0 {
+                    warn!(
+                        "{outside} evicted asset stubs under {server} lie outside S3_ROOTS (or S3_PREFIX); stubs outside S3_ROOTS would be served empty from disk; run: asset-sync restore --server {server}"
+                    );
+                }
+            }
+            _ => {
+                let evicted = manifest.evicted_count();
+                if evicted > 0 {
+                    warn!(
+                        "{evicted} evicted asset stubs under {server} but delivery is local; run: asset-sync restore --server {server}"
+                    );
+                }
+            }
+        }
+    }
 }
 
 /// The boot, phase by phase, costed from the previous boot's timings.

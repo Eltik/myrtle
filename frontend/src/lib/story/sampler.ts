@@ -15,8 +15,8 @@
  * runs, so eight cards over one cover decode it once.
  *
  * It never REJECTS. A failure resolves to the fallback, including a tainted
- * canvas: `/api/assets` is same-site today, but a deployment that moved it to
- * another origin would otherwise throw a SecurityError on `getImageData` for
+ * canvas: `/api/assets` is same-site, but the object store (`VITE_ASSET_BASE_URL`)
+ * is another origin, and one without CORS for the site would otherwise throw a SecurityError on `getImageData` for
  * every card on the page at once, and the right answer there is a grey ticket.
  */
 

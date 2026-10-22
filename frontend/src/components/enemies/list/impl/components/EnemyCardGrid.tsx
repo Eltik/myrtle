@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { env } from "#/env";
+import { assetURL } from "#/lib/assets";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
@@ -21,7 +21,7 @@ export function EnemyCardGrid({ enemy, statMax }: IEnemyCardGridProps) {
     const [imgError, setImgError] = useState(false);
     const tok = LEVEL_TOKENS[enemy.enemyLevel];
     const hasPortrait = !!enemy.portrait && !imgError;
-    const portraitSrc = hasPortrait ? `${env.VITE_BACKEND_URL ?? ""}/api/assets${enemy.portrait}` : undefined;
+    const portraitSrc = hasPortrait && enemy.portrait ? assetURL(enemy.portrait) : undefined;
     const tierMax = statMax[enemy.enemyLevel];
 
     return (

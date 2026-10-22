@@ -1,7 +1,7 @@
 import type React from "react";
 import { useMemo, useState } from "react";
-import { env } from "#/env";
 import type { IEnemyAttributes, IEnemyLevelStats, IEnemySkill } from "#/lib/api/enemies";
+import { assetURL } from "#/lib/assets";
 import { emphasizeTagsHtml } from "#/lib/gamedata/richtext";
 import { type IFormatters, type TypedRichT, useFormatters, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -21,7 +21,7 @@ export function EnemyHero({ enemy }: { enemy: IEnemyView }) {
     const [imgError, setImgError] = useState(false);
     const tok = LEVEL_TOKENS[enemy.enemyLevel];
     const hasPortrait = !!enemy.portrait && !imgError;
-    const portraitSrc = hasPortrait ? `${env.VITE_BACKEND_URL ?? ""}/api/assets${enemy.portrait}` : undefined;
+    const portraitSrc = hasPortrait && enemy.portrait ? assetURL(enemy.portrait) : undefined;
     const meta = [enemy.enemyIndex, enemy.race, enemy.applyWay ? tConst(APPLY_WAY_LABEL_KEY[enemy.applyWay]) : null].filter(Boolean).join(" · ");
 
     return (

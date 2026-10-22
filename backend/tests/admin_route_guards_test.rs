@@ -537,6 +537,8 @@ fn state() -> AppState {
         default_server: Server::EN,
         asset_ws_urls: HashMap::new(),
         role_recheck: false,
+        storage: None,
+        asset_delivery: myrtle_storage::DeliveryMode::Local,
     };
     AppState::new(
         db,

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { assetURL } from "#/lib/api/stages";
+import { assetURL } from "#/lib/assets";
 
 /**
  * Renders a backend-resolved art path (stage map preview or event banner). The

@@ -1818,7 +1818,7 @@
           "assets"
         ],
         "summary": "Any asset by its path under the server's assets directory.",
-        "description": "The path must lie under `textures`, `spine`, `audio`, `video` or `portraits`;\nanything else, traversal included, is a 404. Other extensions are a 403.",
+        "description": "The path must lie under `textures`, `spine`, `audio`, `video` or `portraits`;\nanything else, traversal included, is a 404. Other extensions are a 403.\n\nWith object storage configured (`S3_TYPE`) and `ASSET_DELIVERY=redirect`,\na file under the `S3_ROOTS` answers `302 Found` to its public URL in the\nbucket instead of the bytes.",
         "operationId": "generic",
         "parameters": [
           {
@@ -1861,6 +1861,9 @@
           },
           "206": {
             "description": "Partial content, when the request carried a satisfiable `Range`."
+          },
+          "302": {
+            "description": "Delivery is `redirect`: `Location` is the object's public URL in the bucket, with `Cache-Control: public, max-age=3600` and no body."
           },
           "304": {
             "description": "The caller's `If-None-Match` matched; no body is sent."
@@ -12793,7 +12796,7 @@
           "assets"
         ],
         "summary": "Any asset by its path under the server's assets directory.",
-        "description": "The path must lie under `textures`, `spine`, `audio`, `video` or `portraits`;\nanything else, traversal included, is a 404. Other extensions are a 403.",
+        "description": "The path must lie under `textures`, `spine`, `audio`, `video` or `portraits`;\nanything else, traversal included, is a 404. Other extensions are a 403.\n\nWith object storage configured (`S3_TYPE`) and `ASSET_DELIVERY=redirect`,\na file under the `S3_ROOTS` answers `302 Found` to its public URL in the\nbucket instead of the bytes.",
         "operationId": "generic_srv",
         "parameters": [
           {
@@ -12845,6 +12848,9 @@
           },
           "206": {
             "description": "Partial content, when the request carried a satisfiable `Range`."
+          },
+          "302": {
+            "description": "Delivery is `redirect`: `Location` is the object's public URL in the bucket, with `Cache-Control: public, max-age=3600` and no body."
           },
           "304": {
             "description": "The caller's `If-None-Match` matched; no body is sent."

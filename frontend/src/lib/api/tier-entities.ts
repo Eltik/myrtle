@@ -11,6 +11,8 @@
 // owner). How a kind presents (names, detail line, pool) is `KIND_DEFINITIONS`
 // in `components/tier-lists/kinds.tsx`. TypeScript refuses a kind missing from
 // any of the three.
+
+import { assetStoreURL } from "#/lib/assets";
 import type { EntityKind } from "#/types/generated/EntityKind";
 import type { EntitySummary } from "#/types/generated/EntitySummary";
 import type { FacetValue } from "#/types/generated/FacetValue";
@@ -395,6 +397,9 @@ export function toTierEntity(kind: TierEntityKind, id: string, summary: EntitySu
 
 /** An entity's icon as a URL, from its server-neutral API path. `base` is the backend origin (empty for same-origin); the default server is served unprefixed. */
 export function entityIconURL(icon: string, base: string, server?: string): string {
+    // A raw-tree icon (`/assets/...`) goes to the object store when one is configured.
+    const store = icon.startsWith("/assets/") ? assetStoreURL(icon.slice("/assets".length), server || DEFAULT_GAMEDATA_SERVER) : null;
+    if (store) return store;
     const prefix = server && server !== DEFAULT_GAMEDATA_SERVER ? `/api/${server}` : "/api";
     return `${base}${prefix}${icon}`;
 }

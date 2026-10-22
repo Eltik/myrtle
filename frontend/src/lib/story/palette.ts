@@ -5,7 +5,8 @@
  * site palette: it SAMPLES the artwork, so every chapter gets its own tape
  * stripe, badge and gradient. We do the same from our own cover art, which is
  * either the game's Archives picture or the first background of the chapter's
- * first script, served from `/api/assets` on the same site as the page.
+ * first script, served from `/api/assets` on the same site as the page, or from
+ * the object store when `VITE_ASSET_BASE_URL` is set.
  *
  * WHAT THIS FILE OWNS is the RULES: the quantiser, the legibility band, the
  * saturation floor, the separation test and the triad. All of it is pure and
@@ -485,7 +486,7 @@ export function cachedSpritePalette(url: string): ISpritePalette | undefined {
 /**
  * Sample one character body. Resolves to {@link FALLBACK_SPRITE} rather than
  * rejecting on any failure, for the same reason {@link samplePalette} does: a
- * deployment that moved `/api/assets` to another origin must grey the plates
+ * deployment that serves assets from an origin without CORS for the site must grey the plates
  * out, not throw on every line.
  */
 export function spritePalette(url: string): Promise<ISpritePalette> {

@@ -202,6 +202,13 @@ fn archive_one(assets_dir: &Path, rel: &str, kind: &str, id: &str, stats: &mut A
         return;
     }
     let source = assets_dir.join(rel.trim_start_matches('/'));
+    // A 0-byte source is an evicted stub (`S3_EVICT_LOCAL`) or a broken
+    // extract; copying it would blank the archive, which outlives the source.
+    if std::fs::metadata(&source).is_ok_and(|m| m.len() == 0) {
+        stats.failed += 1;
+        tracing::debug!(source = %source.display(), "release art source is empty, not archived");
+        return;
+    }
     if target.exists() && same_bytes(&source, &target) {
         stats.present += 1;
         return;
@@ -342,6 +349,16 @@ mod tests {
             std::fs::read(root.join("derived/release-art/event/act54side.png")).unwrap(),
             b"png2"
         );
+
+        // An evicted (0-byte) source never blanks the archive.
+        std::fs::write(entry.join("act54side.png"), b"").unwrap();
+        let stubbed = archive(root, &gd, &idx);
+        assert_eq!((stubbed.copied, stubbed.present, stubbed.failed), (0, 1, 1));
+        assert_eq!(
+            std::fs::read(root.join("derived/release-art/event/act54side.png")).unwrap(),
+            b"png2"
+        );
+        std::fs::write(entry.join("act54side.png"), b"png2").unwrap();
 
         let theme = root.join("textures/spritepack/ui_zone_home_theme_act54side");
         std::fs::create_dir_all(&theme).unwrap();

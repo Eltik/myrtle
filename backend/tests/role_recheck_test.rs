@@ -53,6 +53,8 @@ fn app(db: PgPool, role_recheck: bool) -> Router {
         default_server: Server::EN,
         asset_ws_urls: HashMap::new(),
         role_recheck,
+        storage: None,
+        asset_delivery: myrtle_storage::DeliveryMode::Local,
     };
     let state = AppState::new(
         db,
