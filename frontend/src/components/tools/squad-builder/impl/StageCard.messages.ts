@@ -27,6 +27,10 @@ export const messages = {
         text: "Couldn't load this stage.",
         description: "Shown in the stage card when the stage could not be loaded.",
     },
+    "squad.stage.noLevel": {
+        text: "No map data for this stage, so its deploy limit, DP and enemies are unknown.",
+        description: "Shown in the stage card when the picked stage has no level file. DP is deployment points.",
+    },
     "squad.stage.normal": {
         text: "Normal",
         description: "Toggle option for the normal version of a stage.",

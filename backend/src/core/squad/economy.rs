@@ -101,11 +101,25 @@ fn talent_start_bonus(f: &TextFacts, board: &Board) -> bool {
     talent_gains_dp(f, board) && f.talent.as_ref().is_some_and(|t| t.in_squad)
 }
 
-/// The DP a skill earns per activation, when it earns any. A key `cost` (or a
-/// namespaced `...[cost].cost`) > 0 marks a DP skill; a skill that drips DP
-/// (`interval` present) states its total in `value` or `fake_cost`, the tick
-/// in `cost` (Myrtle S1: `cost` 1 every `interval` 0.57 s, `value` 14).
-pub fn skill_dp(board: &Board) -> Option<f64> {
+/// The DP a skill earns per activation, when it earns any. With an English
+/// reading, the amount is the sum of the blackboard keys the text prints as
+/// DP gained (`TextFacts::dp_gain`): `{cost}` for a one-off gain, `{value}`
+/// or `{trig_cnt}` for a drip whose tick is `cost`, none for a DP Cost cut
+/// (SilverAsh the Reignfrost S2 `cost` 11) or a spend (Hadiya S2). Without
+/// one, a key `cost` (or a namespaced `...[cost].cost`) > 0 marks a DP skill
+/// and a drip (`interval` present) states its total in `value` or
+/// `fake_cost` (Myrtle S1: `cost` 1 every `interval` 0.57 s, `value` 14).
+pub fn skill_dp(board: &Board, facts: Option<&TextFacts>) -> Option<f64> {
+    if let Some(f) = facts {
+        let total: f64 = f
+            .dp_gain
+            .iter()
+            .filter_map(|k| board.iter().find(|(bk, _)| bk.eq_ignore_ascii_case(k)))
+            .map(|(_, v)| *v)
+            .filter(|v| *v > 0.0)
+            .sum();
+        return (total > 0.0).then_some(total);
+    }
     let tick = board
         .iter()
         .find(|(k, v)| (k == "cost" || k.ends_with("[cost].cost")) && *v > 0.0)
@@ -406,7 +420,7 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
             notes.push(note(EconomyNoteKind::Drain, s, "", Some(c / interval)));
         }
         if let Some(sk) = &s.skill
-            && let Some(amount) = skill_dp(&sk.board)
+            && let Some(amount) = skill_dp(&sk.board, ctx.facts(&sk.key))
         {
             let sp = &sk.level.sp_data;
             let bonus = sp_bonus.get(&s.seat).copied().unwrap_or(0.0);

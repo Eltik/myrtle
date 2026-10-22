@@ -13,6 +13,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { STAGE_GROUP_LABEL_KEY, STAGE_GROUP_TONE, STAGE_GROUPS, type StageGroupKey } from "#/lib/registry/stage-groups";
 import { searchAndRank } from "#/lib/search/fuzzy";
 import { cn } from "#/lib/utils";
+import { pickerStages } from "../stage";
 import type { messages } from "./StagePicker.messages";
 
 type PickerT = TypedT<typeof messages>;
@@ -39,8 +40,8 @@ export function StagePicker({ open, onOpenChange, onPick }: IStagePickerProps): 
     const [zone, setZone] = React.useState<string>("all");
     const [query, setQuery] = React.useState("");
 
-    // Challenge-mode variants are reached from the stage card's Normal / Challenge toggle.
-    const stages = React.useMemo(() => (index ?? []).filter((s) => !s.stageId.endsWith("#f#")), [index]);
+    // One card per plannable stage, in chapter order; `pickerStages` says what it drops and why.
+    const stages = React.useMemo(() => pickerStages(index ?? []), [index]);
     // The backend sends a preview only when the file exists, and Normal / Hard /
     // Challenge variants of a map ship one file under the main stage id, so a
     // stage without its own borrows the first alias the index has a file for.
@@ -123,7 +124,7 @@ export function StagePicker({ open, onOpenChange, onPick }: IStagePickerProps): 
                         ) : shown.length === 0 ? (
                             <p className="py-8 text-center text-[13px] text-muted-foreground">{t("squad.stagePicker.empty")}</p>
                         ) : (
-                            <StageGrid stages={shown} previews={previews} onPick={onPick} />
+                            <StageGrid stages={shown} previews={previews} hardLabel={t("squad.stagePicker.hard")} onPick={onPick} />
                         )}
                     </div>
                 </DialogPanel>
@@ -132,7 +133,7 @@ export function StagePicker({ open, onOpenChange, onPick }: IStagePickerProps): 
     );
 }
 
-function StageGrid({ stages, previews, onPick }: { stages: IStageIndexEntry[]; previews: Map<string, string>; onPick: (id: string) => void }): React.ReactElement {
+function StageGrid({ stages, previews, hardLabel, onPick }: { stages: IStageIndexEntry[]; previews: Map<string, string>; hardLabel: string; onPick: (id: string) => void }): React.ReactElement {
     const cols = useMediaQuery("sm") ? COLS_WIDE : COLS_NARROW;
     const rows = React.useMemo(() => {
         const out: IStageIndexEntry[][] = [];
@@ -171,7 +172,7 @@ function StageGrid({ stages, previews, onPick }: { stages: IStageIndexEntry[]; p
                 <ul key={vi.key} data-index={vi.index} ref={virtualizer.measureElement} className={cn("absolute top-0 left-0 grid w-full gap-2 pb-2", cols === COLS_WIDE ? "grid-cols-3" : "grid-cols-2")} style={{ transform: `translateY(${vi.start - scrollMargin}px)` }}>
                     {rows[vi.index]?.map((s) => (
                         <li key={s.stageId}>
-                            <StageTile stage={s} preview={previews.get(s.stageId) ?? null} onPick={onPick} />
+                            <StageTile stage={s} preview={previews.get(s.stageId) ?? null} hardLabel={hardLabel} onPick={onPick} />
                         </li>
                     ))}
                 </ul>
@@ -180,7 +181,7 @@ function StageGrid({ stages, previews, onPick }: { stages: IStageIndexEntry[]; p
     );
 }
 
-const StageTile = React.memo(function StageTile({ stage, preview, onPick }: { stage: IStageIndexEntry; preview: string | null; onPick: (id: string) => void }): React.ReactElement {
+const StageTile = React.memo(function StageTile({ stage, preview, hardLabel, onPick }: { stage: IStageIndexEntry; preview: string | null; hardLabel: string; onPick: (id: string) => void }): React.ReactElement {
     const tone = STAGE_GROUP_TONE[stage.group as StageGroupKey] ?? "var(--muted-foreground)";
     return (
         <button
@@ -198,6 +199,8 @@ const StageTile = React.memo(function StageTile({ stage, preview, onPick }: { st
                 <span className="absolute top-1.5 left-1.5 rounded-md border bg-background/85 px-1.5 py-0.5 font-bold font-mono text-[12px]" style={{ borderColor: `color-mix(in oklch, ${tone} 55%, var(--border))` }}>
                     {stage.code}
                 </span>
+                {/* Adverse and six-star variants share their Standard stage's code, so the card says which one it is. */}
+                {stage.isHard && <span className="absolute top-1.5 right-1.5 rounded-md border border-destructive/50 bg-background/85 px-1.5 py-0.5 font-medium text-[11px] text-destructive">{hardLabel}</span>}
             </span>
             <span className="block px-2 py-1.5">
                 <span className="line-clamp-2 font-medium text-[12.5px] leading-tight">{stage.name ?? stage.code}</span>

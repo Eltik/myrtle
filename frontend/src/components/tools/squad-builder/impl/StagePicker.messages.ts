@@ -31,6 +31,10 @@ export const messages = {
         text: "No stages match.",
         description: "Shown when the search and filters leave no stage.",
     },
+    "squad.stagePicker.hard": {
+        text: "Hard",
+        description: "Tag on a stage card for a harder variant (Adverse Environment, six-star, Hard chapter) that shares its code with the standard stage.",
+    },
     "squad.stagePicker.loading": {
         text: "Loading stages...",
         description: "Shown while the stage list loads.",

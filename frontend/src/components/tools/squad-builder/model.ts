@@ -77,6 +77,8 @@ export interface IRosterBuild {
     current_equip: string | null;
     masteries: IRosterMastery[];
     modules: IRosterModule[];
+    /** The form of a multi-form operator the player has set in game (`char_1037_amiya3`); null for every single-form operator. */
+    current_tmpl: string | null;
 }
 
 /** Narrow a `RosterEntry` to the fields a build needs; tolerant of a malformed jsonb column. */
@@ -92,7 +94,43 @@ export function rosterBuildOf(entry: RosterEntry): IRosterBuild {
         current_equip: entry.current_equip,
         masteries,
         modules,
+        current_tmpl: entry.current_tmpl,
     };
+}
+
+/**
+ * The roster by operator id, with every form of a multi-form operator the player has.
+ *
+ * The sync writes one row per form the game lists under the character's `tmpl` (Amiya:
+ * `char_002_amiya`, `char_1001_amiya2`, `char_1037_amiya3`), each with its own skills and
+ * modules, and every row names the form in use as `current_tmpl`. Rows written before that
+ * expansion carry only the base id while `current_tmpl` still names the form (local census
+ * 2026-10-23: 56 base rows name `char_1037_amiya3` and 25 name `char_1001_amiya2` with no row
+ * for it). Such a form is added here with the build that carries over: promotion, level,
+ * potential and skill rank, which agree between the base and the form rows in every one of
+ * the 1,698 Guard and 1,431 Medic pairs measured. Masteries, modules, default skill and
+ * current module belong to one form's own skills and modules, so the added form starts with
+ * none.
+ *
+ * A base row with no `current_tmpl` and no form rows adds nothing: the game lists only the
+ * forms a player has unlocked, and 793 of 2,630 synced Amiyas have none.
+ */
+export function rosterBuildsOf(entries: readonly RosterEntry[]): Map<string, IRosterBuild> {
+    const out = new Map<string, IRosterBuild>();
+    for (const entry of entries) out.set(entry.operator_id, rosterBuildOf(entry));
+    for (const entry of entries) {
+        const form = entry.current_tmpl;
+        if (!form || out.has(form)) continue;
+        const from = out.get(entry.operator_id);
+        if (!from) continue;
+        out.set(form, { ...from, default_skill: null, current_equip: null, masteries: [], modules: [] });
+    }
+    return out;
+}
+
+/** Whether this is the form the player set in game, for an operator with more than one. */
+export function isCurrentForm(charId: string, build: IRosterBuild | undefined): boolean {
+    return build?.current_tmpl === charId;
 }
 
 /** The roster's unlocked module ranks for an operator, by module id; its INITIAL module (the default badge) left out. */

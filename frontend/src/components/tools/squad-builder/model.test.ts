@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import type { RosterEntry } from "#/types/generated/RosterEntry";
 import type { IOperatorIndexEntry } from "#/types/operators";
-import { clampBuild, decodeDpsImport, decodeShare, emptyDraft, encodeDpsImport, encodeShare, fullBuild, levelCap, maxMastery, maxSkillLevel, memberFromRoster, moduleTypeLabel, parseShareSearch, resolveSeat, rosterModuleRanks, SUPPORT_SEAT, seatAt } from "./model";
+import { clampBuild, decodeDpsImport, decodeShare, emptyDraft, encodeDpsImport, encodeShare, fullBuild, isCurrentForm, levelCap, maxMastery, maxSkillLevel, memberFromRoster, moduleTypeLabel, parseShareSearch, resolveSeat, rosterBuildsOf, rosterModuleRanks, SUPPORT_SEAT, seatAt } from "./model";
 
 const u = (phase: number, level = 1) => ({ phase, level });
 /** Archetto's rules as `character_table` has them: ranks 2-4 at E0, 5-7 at E1, three masteries per skill at E2. */
@@ -72,6 +73,7 @@ describe("roster resolution", () => {
         skill_level: 7,
         default_skill: 2,
         current_equip: "uniequip_002_x",
+        current_tmpl: null,
         masteries: [
             { index: 0, mastery: 0 },
             { index: 2, mastery: 3 },
@@ -184,5 +186,57 @@ describe("seat helpers", () => {
         expect(moduleTypeLabel({ typeName1: "MAR", typeName2: "X" })).toBe("MAR-X");
         expect(moduleTypeLabel({ typeName1: "ORIGINAL", typeName2: null })).toBe("ORIGINAL");
         expect(moduleTypeLabel({ typeName1: "", typeName2: "Y" } as never)).toBe("Y");
+    });
+});
+
+/** A roster row as `/roster` serves it; the fields `rosterBuildsOf` does not read are filler. */
+function row(operator_id: string, over: Partial<RosterEntry> = {}): RosterEntry {
+    return { user_id: "u", operator_id, elite: 2, level: 60, exp: 0, potential: 5, skill_level: 7, favor_point: 0, skin_id: null, default_skill: 0, voice_lan: null, current_equip: null, current_tmpl: null, obtained_at: null, masteries: [], modules: [], ...over };
+}
+
+describe("rosterBuildsOf", () => {
+    it("keeps a single-form operator as its own row", () => {
+        const roster = rosterBuildsOf([row("char_103_angel", { default_skill: 2 })]);
+        expect([...roster.keys()]).toEqual(["char_103_angel"]);
+        expect(roster.get("char_103_angel")?.default_skill).toBe(2);
+        expect(isCurrentForm("char_103_angel", roster.get("char_103_angel"))).toBe(false);
+    });
+
+    it("keeps every form row the sync wrote, each with its own skills, and marks the one in use", () => {
+        const tmpl = "char_1037_amiya3";
+        const roster = rosterBuildsOf([row("char_002_amiya", { current_tmpl: tmpl, default_skill: 2, masteries: [{ index: 2, mastery: 3 }] }), row("char_1001_amiya2", { current_tmpl: tmpl, default_skill: 1 }), row(tmpl, { current_tmpl: tmpl, default_skill: 0, masteries: [{ index: 0, mastery: 2 }] })]);
+        expect(roster.size).toBe(3);
+        expect(roster.get(tmpl)?.masteries).toEqual([{ index: 0, mastery: 2 }]);
+        expect(roster.get("char_002_amiya")?.masteries).toEqual([{ index: 2, mastery: 3 }]);
+        expect(["char_002_amiya", "char_1001_amiya2", tmpl].filter((id) => isCurrentForm(id, roster.get(id)))).toEqual([tmpl]);
+    });
+
+    it("adds the form an old base-only row names, carrying promotion, level, potential and skill rank only", () => {
+        const roster = rosterBuildsOf([row("char_002_amiya", { elite: 2, level: 70, potential: 3, skill_level: 7, default_skill: 2, current_equip: "uniequip_002_amiya", current_tmpl: "char_1037_amiya3", masteries: [{ index: 2, mastery: 3 }], modules: [{ id: "uniequip_002_amiya", level: 3, locked: false }] })]);
+        const medic = roster.get("char_1037_amiya3");
+        expect(medic).toEqual({ elite: 2, level: 70, potential: 3, skill_level: 7, default_skill: null, current_equip: null, masteries: [], modules: [], current_tmpl: "char_1037_amiya3" });
+        expect(isCurrentForm("char_1037_amiya3", medic)).toBe(true);
+        expect(isCurrentForm("char_002_amiya", roster.get("char_002_amiya"))).toBe(false);
+        // The base keeps its own build untouched.
+        expect(roster.get("char_002_amiya")?.default_skill).toBe(2);
+    });
+
+    it("never overwrites a form's own row with a carried build", () => {
+        const roster = rosterBuildsOf([row("char_1037_amiya3", { current_tmpl: "char_1037_amiya3", level: 40 }), row("char_002_amiya", { current_tmpl: "char_1037_amiya3", level: 70 })]);
+        expect(roster.get("char_1037_amiya3")?.level).toBe(40);
+    });
+
+    it("adds nothing for a base with no form in use", () => {
+        expect([...rosterBuildsOf([row("char_002_amiya")]).keys()]).toEqual(["char_002_amiya"]);
+    });
+
+    it("seats an added form at the carried build with no mastery", () => {
+        const roster = rosterBuildsOf([row("char_002_amiya", { current_tmpl: "char_1037_amiya3", masteries: [{ index: 0, mastery: 3 }] })]);
+        const member = memberFromRoster("char_1037_amiya3", roster.get("char_1037_amiya3"), sixStar);
+        expect(member).toEqual({ char_id: "char_1037_amiya3", skill_index: 0, module_id: null, build: null });
+        const resolved = resolveSeat(member, sixStar, roster.get("char_1037_amiya3"), false);
+        expect(resolved.source).toBe("roster");
+        expect(resolved.build.phase).toBe(2);
+        expect(resolved.build.mastery).toBe(0);
     });
 });

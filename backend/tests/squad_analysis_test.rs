@@ -1238,3 +1238,62 @@ fn talent_scale_reads_the_printed_number() {
             .all(|a| a.starts_with("char_290_vigna") || a.starts_with("char_411_tomimi"))
     );
 }
+
+/// The DP a skill seat earns, from its economy sources.
+fn skill_dp_of(data: &GameData, id: &str, si: i32) -> Option<f64> {
+    let a = analyze(data, &req(vec![m(id, 2, 90, 5, si, 7, 3, None, 1)]));
+    a.economy
+        .sources
+        .iter()
+        .find(|s| s.char_id == id && s.source.kind == SourceKind::Skill)
+        .map(|s| s.amount)
+}
+
+#[test]
+fn skill_dp_is_what_the_text_prints_as_gained() {
+    let data = common::load_game_data();
+    // SilverAsh the Reignfrost S2 `cost` 11 is "-{cost} DP Cost" for the
+    // Operator nearest the Eye: a cut, not DP gained.
+    assert_eq!(skill_dp_of(data, "char_1045_svash2", 1), None);
+    // S1 "Immediately gains {cost} DP": 10.
+    assert_eq!(skill_dp_of(data, "char_1045_svash2", 0), Some(10.0));
+    // Hadiya S2 "Consumes 10 DP": a spend.
+    assert_eq!(skill_dp_of(data, "char_394_hadiya", 1), None);
+    // Flametail S3 "{value}" 8, not the `cost` 1 tick.
+    assert_eq!(skill_dp_of(data, "char_420_flamtl", 2), Some(8.0));
+    // Blacknight S2: `once.cost` 3 + `period.trig_cnt` 8.
+    assert_eq!(skill_dp_of(data, "char_198_blackd", 1), Some(11.0));
+    // Chilchuck S1 "{ground}-{floor} DP randomly": the low end, 4.
+    assert_eq!(skill_dp_of(data, "char_4144_chilc", 0), Some(4.0));
+}
+
+#[test]
+fn tin_man_heals_allies_around_the_point() {
+    let data = common::load_game_data();
+    let a = analyze(
+        data,
+        &req(vec![m("char_4151_tinman", 2, 90, 5, 1, 7, 3, None, 1)]),
+    );
+    // S2 'Big Larry' `hp_recovery_per_sec_ratio` 0.25, "allied units around the point".
+    for key in [CoverageRowKey::HealSingle, CoverageRowKey::HealArea] {
+        assert!(cov(&a, key, "char_4151_tinman").is_some(), "{key:?}");
+    }
+}
+
+#[test]
+fn titi_reaches_minos_and_sargon() {
+    let data = common::load_game_data();
+    // "Deployed [Minos] and [Sargon] Operators gain Vigor".
+    let a = analyze(
+        data,
+        &req(vec![
+            m("char_4056_titi", 2, 60, 0, 0, 7, 0, None, 1),
+            m("char_485_pallas", 2, 60, 0, 0, 7, 0, None, 1),
+            m("char_127_estell", 2, 60, 0, 0, 7, 0, None, 1),
+        ]),
+    );
+    let item = syn(&a, "char_4056_titi", "Courage's Reward").expect("Titi's talent");
+    // Seats: Pallas (Minos) 1, Estelle (Sargon) 2.
+    assert!(item.to.contains(&1), "{:?}", item.to);
+    assert!(item.to.contains(&2), "{:?}", item.to);
+}

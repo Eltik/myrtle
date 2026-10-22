@@ -5,9 +5,10 @@
  */
 
 import { tallyEnemies } from "#/components/stages/detail/impl/helpers";
+import { naturalCompare, preferEntry } from "#/components/stages/list/impl/derive";
 import type { IEnemy } from "#/lib/api/enemies";
 import type { IEnemyDbRef } from "#/lib/api/level";
-import type { IStageDetail } from "#/lib/api/stages";
+import type { IStageDetail, IStageIndexEntry } from "#/lib/api/stages";
 import type { CoverageRowKey } from "#/types/generated/CoverageRowKey";
 import type { ThreatThresholds } from "#/types/generated/ThreatThresholds";
 import { MULTI_LIFE_ABOVE } from "./constants";
@@ -119,4 +120,30 @@ export function deriveStageContext(stageId: string, detail: IStageDetail, thresh
 /** The normal stage of a challenge stage, from `stage_table` `HardStagedId` inverted (`SquadRules.normal_of`); a normal stage is its own. */
 export function normalStageId(stageId: string, normalOf: Readonly<Record<string, string | undefined>> | undefined): string {
     return normalOf?.[stageId] ?? stageId;
+}
+
+/**
+ * The stages the picker offers, one card per stage a squad can be planned
+ * against, ordered by chapter or event and then by code.
+ *
+ * - Challenge-mode `#f#` variants are left out: the stage card's Normal /
+ *   Challenge toggle reaches them.
+ * - Variants that share a zone, a code and a hard flag collapse to one card
+ *   through the Stage List's own `preferEntry` (viewable, then NORMAL). That
+ *   folds a retired "Story mode" `easy_*` stage into its Standard twin, while an
+ *   Adverse `tough_*` or a six-star `#s` stage keeps its own card, since the
+ *   toggle does not reach those.
+ * - A stage with no level file (`canView` false) is hidden. Its detail has no
+ *   level data, so no deploy limit, DP or enemies, and the Stage List already
+ *   renders such a stage as an inert card without a link.
+ */
+export function pickerStages(index: readonly IStageIndexEntry[]): IStageIndexEntry[] {
+    const byKey = new Map<string, IStageIndexEntry>();
+    for (const s of index) {
+        if (s.stageId.endsWith("#f#")) continue;
+        const key = `${s.zoneId}\u0000${s.code || s.stageId}\u0000${s.isHard ? 1 : 0}`;
+        const seen = byKey.get(key);
+        byKey.set(key, seen ? preferEntry(seen, s) : s);
+    }
+    return [...byKey.values()].filter((s) => s.canView).sort((a, b) => a.zoneOrder - b.zoneOrder || a.zoneId.localeCompare(b.zoneId) || naturalCompare(a.code, b.code) || Number(a.isHard) - Number(b.isHard) || a.stageId.localeCompare(b.stageId));
 }

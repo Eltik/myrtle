@@ -382,9 +382,36 @@ pub fn parse_target(raw: &str, vocab: &Vocab) -> Option<Target> {
         if let Some(id) = vocab.tag_ids.get(&name.to_lowercase()) {
             return Some(Target::new(K::Tag, Some(id.to_string()), name));
         }
-        let powers = vocab.powers(&name);
-        if let Some(first) = powers.first() {
-            let mut t = Target::new(K::Faction, Some(first.clone()), name);
+        let mut powers = vocab.powers(&name);
+        if let Some(first) = powers.first().cloned() {
+            // Brackets joined by "and"/"or"/"," name one target: Titi's
+            // "Deployed [Minos] and [Sargon] Operators" reaches both.
+            let mut label = name;
+            let mut end = whole.end();
+            for next in BRACKET_RE.captures_iter(&p[end..]) {
+                let at = next.get(0).expect("group 0");
+                let between = p[end..end + at.start()].trim().to_lowercase();
+                if !matches!(
+                    between.as_str(),
+                    "and" | "or" | "," | ", and" | ", or" | "/" | "&"
+                ) {
+                    break;
+                }
+                let more = vocab.powers(next[1].trim());
+                if more.is_empty() {
+                    break;
+                }
+                for m in more {
+                    if !powers.contains(&m) {
+                        powers.push(m);
+                    }
+                }
+                let sep = p[end..end + at.start()].trim();
+                let gap = if sep.starts_with(',') { "" } else { " " };
+                label = format!("{label}{gap}{sep} {}", next[1].trim());
+                end += at.end();
+            }
+            let mut t = Target::new(K::Faction, Some(first), label);
             t.powers = powers;
             return Some(t);
         }

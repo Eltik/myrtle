@@ -85,7 +85,8 @@ function naturalKey(s: string): (string | number)[] {
     return out;
 }
 
-function naturalCompare(a: string, b: string): number {
+/** Compare two stage codes with their digit runs as numbers, so `1-10` sorts after `1-9`. */
+export function naturalCompare(a: string, b: string): number {
     const ka = naturalKey(a);
     const kb = naturalKey(b);
     const n = Math.min(ka.length, kb.length);
@@ -103,7 +104,8 @@ function naturalCompare(a: string, b: string): number {
 function variantRank(e: IStageIndexEntry): number {
     return (e.canView ? 0 : 2) + (e.difficulty === "NORMAL" ? 0 : 1);
 }
-function preferEntry(a: IStageIndexEntry, b: IStageIndexEntry): IStageIndexEntry {
+/** The better of two index entries for one card: the viewable, then the NORMAL, variant; `a` on a tie. */
+export function preferEntry(a: IStageIndexEntry, b: IStageIndexEntry): IStageIndexEntry {
     return variantRank(b) < variantRank(a) ? b : a;
 }
 

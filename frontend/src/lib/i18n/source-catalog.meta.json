@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-15T12:02:21.159Z",
+    "generatedAt": "2026-10-22T21:55:00.640Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -46949,6 +46949,20 @@
             "placeholders": []
         },
         {
+            "key": "tools.squad.picker.allBranches",
+            "namespace": "tools",
+            "source_text": "All branches",
+            "description": "Branch filter option that shows every branch of the chosen class.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.squad.picker.branch",
+            "namespace": "tools",
+            "source_text": "Branch",
+            "description": "Accessible name of the branch (sub-class, e.g. 'Centurion') filter, shown once a class is chosen in the operator picker.",
+            "placeholders": []
+        },
+        {
             "key": "tools.squad.picker.class",
             "namespace": "tools",
             "source_text": "Class",
@@ -46956,10 +46970,33 @@
             "placeholders": []
         },
         {
+            "key": "tools.squad.picker.clearFilters",
+            "namespace": "tools",
+            "source_text": "Clear filters",
+            "description": "Button under 'No operators match.' that resets the search and every filter in the picker.",
+            "placeholders": []
+        },
+        {
             "key": "tools.squad.picker.close",
             "namespace": "tools",
             "source_text": "Close",
             "description": "Button that closes the operator picker.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.squad.picker.cost",
+            "namespace": "tools",
+            "source_text": "{cost} DP",
+            "description": "Deployment cost on an operator tile, e.g. '20 DP'. DP is the in-battle deployment points currency.",
+            "placeholders": [
+                "cost"
+            ]
+        },
+        {
+            "key": "tools.squad.picker.costTitle",
+            "namespace": "tools",
+            "source_text": "Deployment cost at the highest promotion, before potential",
+            "description": "Tooltip of the DP cost on an operator tile, saying which cost the number is.",
             "placeholders": []
         },
         {
@@ -46972,6 +47009,22 @@
             ]
         },
         {
+            "key": "tools.squad.picker.currentForm",
+            "namespace": "tools",
+            "source_text": "In use",
+            "description": "Badge on the form of an operator with several forms (e.g. Amiya as a Caster, Guard or Medic) that the player has set in game.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.squad.picker.elite",
+            "namespace": "tools",
+            "source_text": "Elite {phase}",
+            "description": "Accessible name of the promotion icon on an owned operator's tile. {phase} is 0 to 2.",
+            "placeholders": [
+                "phase"
+            ]
+        },
+        {
             "key": "tools.squad.picker.empty",
             "namespace": "tools",
             "source_text": "No operators match.",
@@ -46979,10 +47032,31 @@
             "placeholders": []
         },
         {
+            "key": "tools.squad.picker.hint.close",
+            "namespace": "tools",
+            "source_text": "close",
+            "description": "Keyboard hint after the 'Esc' key: Escape closes the picker.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.squad.picker.hint.move",
+            "namespace": "tools",
+            "source_text": "move",
+            "description": "Keyboard hint after the arrow-key glyphs: the arrow keys move between operator tiles.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.squad.picker.hint.pick",
+            "namespace": "tools",
+            "source_text": "add",
+            "description": "Keyboard hint after the 'Enter' key: Enter adds the focused operator.",
+            "placeholders": []
+        },
+        {
             "key": "tools.squad.picker.level",
             "namespace": "tools",
             "source_text": "Lv {level}",
-            "description": "Roster level under an owned operator's tile, e.g. 'Lv 90'.",
+            "description": "Roster level on an owned operator's tile, e.g. 'Lv 90'.",
             "placeholders": [
                 "level"
             ]
@@ -46995,6 +47069,42 @@
             "placeholders": []
         },
         {
+            "key": "tools.squad.picker.mastery",
+            "namespace": "tools",
+            "source_text": "Mastery {mastery}",
+            "description": "Accessible name of the mastery icon next to the skill label on an owned operator's tile. {mastery} is 1 to 3.",
+            "placeholders": [
+                "mastery"
+            ]
+        },
+        {
+            "key": "tools.squad.picker.module",
+            "namespace": "tools",
+            "source_text": "{type} {rank}",
+            "description": "The module an owned operator has equipped, as its type tag and rank, e.g. 'MAR-X 3'. {type} is game text.",
+            "placeholders": [
+                "rank",
+                "type"
+            ]
+        },
+        {
+            "key": "tools.squad.picker.moduleTitle",
+            "namespace": "tools",
+            "source_text": "Module {type}, rank {rank}",
+            "description": "Tooltip of the module label on an owned operator's tile.",
+            "placeholders": [
+                "rank",
+                "type"
+            ]
+        },
+        {
+            "key": "tools.squad.picker.notOwned",
+            "namespace": "tools",
+            "source_text": "Not owned",
+            "description": "On an operator tile when the signed-in player does not have that operator.",
+            "placeholders": []
+        },
+        {
             "key": "tools.squad.picker.owned",
             "namespace": "tools",
             "source_text": "Owned only",
@@ -47004,10 +47114,20 @@
         {
             "key": "tools.squad.picker.pick",
             "namespace": "tools",
-            "source_text": "Add {name}",
-            "description": "Accessible name of an operator tile in the picker. {name} is the operator's name (game text).",
+            "source_text": "Add {name}, {branch}",
+            "description": "Accessible name of an operator tile in the picker. {name} is the operator's name and {branch} the branch, e.g. 'Add Amiya, Incantation Medic' (both game text).",
             "placeholders": [
+                "branch",
                 "name"
+            ]
+        },
+        {
+            "key": "tools.squad.picker.potential",
+            "namespace": "tools",
+            "source_text": "Potential {rank}",
+            "description": "Accessible name of the potential icon on an owned operator's tile. {rank} is 1 to 6.",
+            "placeholders": [
+                "rank"
             ]
         },
         {
@@ -47038,6 +47158,60 @@
             "namespace": "tools",
             "source_text": "Support",
             "description": "Badge on an operator tile that is already the support.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.squad.picker.skill",
+            "namespace": "tools",
+            "source_text": "S{skill}",
+            "description": "Short label of the skill the player has selected for an owned operator, e.g. 'S3' for skill 3.",
+            "placeholders": [
+                "skill"
+            ]
+        },
+        {
+            "key": "tools.squad.picker.skillTitle",
+            "namespace": "tools",
+            "source_text": "Skill {skill}, rank {level}",
+            "description": "Tooltip of the skill label on an owned operator's tile. {skill} is 1 to 3, {level} is the skill rank 1 to 7.",
+            "placeholders": [
+                "level",
+                "skill"
+            ]
+        },
+        {
+            "key": "tools.squad.picker.sort",
+            "namespace": "tools",
+            "source_text": "Sort",
+            "description": "Accessible name of the sort menu in the operator picker.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.squad.picker.sort.cost",
+            "namespace": "tools",
+            "source_text": "DP cost",
+            "description": "Sort option: cheapest deployment cost (DP) first.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.squad.picker.sort.level",
+            "namespace": "tools",
+            "source_text": "Level",
+            "description": "Sort option: highest promotion and level in the player's roster first.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.squad.picker.sort.name",
+            "namespace": "tools",
+            "source_text": "Name",
+            "description": "Sort option: alphabetical by operator name.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.squad.picker.sort.rarity",
+            "namespace": "tools",
+            "source_text": "Rarity",
+            "description": "Sort option: highest rarity first, then by name.",
             "placeholders": []
         },
         {
@@ -47543,6 +47717,13 @@
             "placeholders": []
         },
         {
+            "key": "tools.squad.stage.noLevel",
+            "namespace": "tools",
+            "source_text": "No map data for this stage, so its deploy limit, DP and enemies are unknown.",
+            "description": "Shown in the stage card when the picked stage has no level file. DP is deployment points.",
+            "placeholders": []
+        },
+        {
             "key": "tools.squad.stage.noThreats",
             "namespace": "tools",
             "source_text": "Nothing that needs a special answer.",
@@ -47690,6 +47871,13 @@
             "namespace": "tools",
             "source_text": "Mode",
             "description": "Accessible name of the select that picks a game mode (Main Story, Events, ...).",
+            "placeholders": []
+        },
+        {
+            "key": "tools.squad.stagePicker.hard",
+            "namespace": "tools",
+            "source_text": "Hard",
+            "description": "Tag on a stage card for a harder variant (Adverse Environment, six-star, Hard chapter) that shares its code with the standard stage.",
             "placeholders": []
         },
         {

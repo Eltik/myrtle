@@ -136,58 +136,65 @@ export function StageCard({ stageId, detail, context, isLoading, challengeId, no
                 </div>
             </div>
 
-            <dl className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-6">
-                {facts.map((f) => (
-                    <div key={f.label} className="rounded-lg border border-border bg-background/40 px-2.5 py-1.5">
-                        <dt className="truncate text-[11px] text-muted-foreground">{f.label}</dt>
-                        <dd className="font-mono font-semibold text-[14px] tabular-nums">{f.value}</dd>
-                    </div>
-                ))}
-            </dl>
-
-            <div className="mt-3">
-                <h4 className="mb-1.5 font-medium text-[12px] text-muted-foreground">{t("squad.stage.threats")}</h4>
-                {context.threats.length === 0 ? (
-                    <p className="text-[12.5px] text-muted-foreground">{t("squad.stage.noThreats")}</p>
-                ) : (
-                    <ul className="flex flex-wrap gap-1.5">
-                        {context.threats.map((th) => (
-                            <li key={th.key}>
-                                <Tooltip>
-                                    <TooltipTrigger
-                                        render={(p) => (
-                                            <button {...p} type="button" className="inline-flex cursor-default items-center rounded-md border border-border bg-background/40 px-2 py-1 font-medium text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                                                {t("squad.stage.threatCount", { label: threatLabel(th.key, t), count: th.count })}
-                                            </button>
-                                        )}
-                                    />
-                                    <TooltipPopup className="max-w-72">{list.format(th.enemies.map((e) => e.name))}</TooltipPopup>
-                                </Tooltip>
-                            </li>
+            {/* Without a level file every fact below would read as "none" and the enemy count as 0, which looks like a stage that failed to load. */}
+            {!context.hasLevel ? (
+                <p className="mt-3 rounded-lg border border-border border-dashed bg-background/40 px-3 py-2 text-[12.5px] text-muted-foreground">{t("squad.stage.noLevel")}</p>
+            ) : (
+                <>
+                    <dl className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-6">
+                        {facts.map((f) => (
+                            <div key={f.label} className="rounded-lg border border-border bg-background/40 px-2.5 py-1.5">
+                                <dt className="truncate text-[11px] text-muted-foreground">{f.label}</dt>
+                                <dd className="font-mono font-semibold text-[14px] tabular-nums">{f.value}</dd>
+                            </div>
                         ))}
-                    </ul>
-                )}
-            </div>
+                    </dl>
 
-            {tally.length > 0 && (
-                <div className="mt-3">
-                    <Button variant="ghost" size="xs" onClick={() => setShowEnemies((v) => !v)} aria-expanded={showEnemies}>
-                        {showEnemies ? t("squad.stage.hideEnemies") : t("squad.stage.showEnemies")}
-                    </Button>
-                    {showEnemies && (
-                        <ul className="mt-2 grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2">
-                            {tally.map((row) => (
-                                <li key={row.id} className="flex items-center gap-2 rounded-lg border border-border bg-background/40 p-1.5">
-                                    <span className={cn("size-9 shrink-0 overflow-hidden rounded-md border bg-muted", row.enemy?.enemyLevel === "BOSS" ? "border-destructive/60" : row.enemy?.enemyLevel === "ELITE" ? "border-warning/60" : "border-border")}>
-                                        <img alt="" src={enemyIconURL(row.id, server)} className="size-full object-contain" loading="lazy" />
-                                    </span>
-                                    <span className="min-w-0 flex-1 truncate text-[12px]">{row.enemy?.name ?? row.id}</span>
-                                    <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{t("squad.stage.enemyCount", { count: row.count })}</span>
-                                </li>
-                            ))}
-                        </ul>
+                    <div className="mt-3">
+                        <h4 className="mb-1.5 font-medium text-[12px] text-muted-foreground">{t("squad.stage.threats")}</h4>
+                        {context.threats.length === 0 ? (
+                            <p className="text-[12.5px] text-muted-foreground">{t("squad.stage.noThreats")}</p>
+                        ) : (
+                            <ul className="flex flex-wrap gap-1.5">
+                                {context.threats.map((th) => (
+                                    <li key={th.key}>
+                                        <Tooltip>
+                                            <TooltipTrigger
+                                                render={(p) => (
+                                                    <button {...p} type="button" className="inline-flex cursor-default items-center rounded-md border border-border bg-background/40 px-2 py-1 font-medium text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                                                        {t("squad.stage.threatCount", { label: threatLabel(th.key, t), count: th.count })}
+                                                    </button>
+                                                )}
+                                            />
+                                            <TooltipPopup className="max-w-72">{list.format(th.enemies.map((e) => e.name))}</TooltipPopup>
+                                        </Tooltip>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+
+                    {tally.length > 0 && (
+                        <div className="mt-3">
+                            <Button variant="ghost" size="xs" onClick={() => setShowEnemies((v) => !v)} aria-expanded={showEnemies}>
+                                {showEnemies ? t("squad.stage.hideEnemies") : t("squad.stage.showEnemies")}
+                            </Button>
+                            {showEnemies && (
+                                <ul className="mt-2 grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2">
+                                    {tally.map((row) => (
+                                        <li key={row.id} className="flex items-center gap-2 rounded-lg border border-border bg-background/40 p-1.5">
+                                            <span className={cn("size-9 shrink-0 overflow-hidden rounded-md border bg-muted", row.enemy?.enemyLevel === "BOSS" ? "border-destructive/60" : row.enemy?.enemyLevel === "ELITE" ? "border-warning/60" : "border-border")}>
+                                                <img alt="" src={enemyIconURL(row.id, server)} className="size-full object-contain" loading="lazy" />
+                                            </span>
+                                            <span className="min-w-0 flex-1 truncate text-[12px]">{row.enemy?.name ?? row.id}</span>
+                                            <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{t("squad.stage.enemyCount", { count: row.count })}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
                     )}
-                </div>
+                </>
             )}
         </section>
     );

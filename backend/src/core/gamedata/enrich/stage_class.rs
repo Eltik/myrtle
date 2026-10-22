@@ -14,7 +14,7 @@ use serde_json::Value;
 use crate::core::gamedata::tables::SanitizingReader;
 use crate::core::gamedata::types::activity::ActivityBasicInfo;
 use crate::core::gamedata::types::roguelike::RoguelikeTopicTableFile;
-use crate::core::gamedata::types::stage::{Stage, StageDifficulty};
+use crate::core::gamedata::types::stage::{Stage, StageDifficulty, StageType};
 use crate::core::gamedata::types::zone::{Zone, ZoneType};
 
 /// Display info for one stage or level file.
@@ -525,6 +525,26 @@ impl<'a> StageClassifier<'a> {
         let zone_type = self.zones.get(&stage.zone_id).map(|z| &z.zone_type);
         let category = zone_category(zone_type);
 
+        // Some events filed their stages under a story chapter's zone: the
+        // retired mini-events act4d0 (SW-EV), act6d5 (AF) and act7d5 (SA) put
+        // all 38 of their ACTIVITY stages in MAINLINE zones `main_1..main_6`.
+        // The stage type wins over the zone, so they group under their event
+        // rather than under the chapter whose map hosted them.
+        if stage.stage_type == StageType::Activity
+            && category == "stages"
+            && let Some(act) = activity_for_stage_id(&self.acts_by_len, &stage.stage_id)
+        {
+            return StageInfo {
+                code: stage.code.clone(),
+                zone_id: act.id.clone(),
+                zone_name: Some(act.name.clone()),
+                stage_name: stage.name.clone(),
+                category: "events",
+                group: "events",
+                is_hard: is_hard_stage(stage),
+            };
+        }
+
         // Events group by their parent activity so an event's normal and EX/sub
         // stages live under one entry instead of their separate in-event zone
         // names.
@@ -691,9 +711,29 @@ impl<'a> StageClassifier<'a> {
     }
 }
 
+/// The named activity a stage id belongs to: the longest activity id that
+/// prefixes it at a segment boundary (`act4d0_01` -> `act4d0`, never `act4`).
+/// `acts_by_len` is longest-first, so the first hit is the most specific.
+fn activity_for_stage_id<'a>(
+    acts_by_len: &[&'a ActivityBasicInfo],
+    stage_id: &str,
+) -> Option<&'a ActivityBasicInfo> {
+    acts_by_len
+        .iter()
+        .find(|a| {
+            !a.id.is_empty()
+                && !a.name.is_empty()
+                && stage_id
+                    .strip_prefix(a.id.as_str())
+                    .is_some_and(|rest| rest.is_empty() || rest.starts_with(['_', '#']))
+        })
+        .copied()
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{is_hard_path, is_topic_key, node_code};
+    use super::{activity_for_stage_id, is_hard_path, is_topic_key, node_code};
+    use crate::core::gamedata::types::activity::ActivityBasicInfo;
 
     #[test]
     fn hard_paths_are_spotted_case_insensitively() {
@@ -735,5 +775,39 @@ mod tests {
         assert_eq!(node_code("crisis_v2_01-02"), "v2_01-02");
         assert_eq!(node_code("plain"), "plain");
         assert_eq!(node_code("trailing_"), "");
+    }
+
+    fn act(id: &str, name: &str) -> ActivityBasicInfo {
+        ActivityBasicInfo {
+            id: id.to_owned(),
+            name: name.to_owned(),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn a_stage_id_resolves_to_its_activity_at_a_segment_boundary() {
+        let (long, short, unnamed) = (
+            act("act4d0", "Operational Intelligence"),
+            act("act4", "Short"),
+            act("act6d5", ""),
+        );
+        let acts = [&long, &short, &unnamed];
+        assert_eq!(
+            activity_for_stage_id(&acts, "act4d0_01").map(|a| a.id.as_str()),
+            Some("act4d0")
+        );
+        assert_eq!(
+            activity_for_stage_id(&acts, "act4d0_01#f#").map(|a| a.id.as_str()),
+            Some("act4d0")
+        );
+        assert_eq!(
+            activity_for_stage_id(&acts, "act4_02").map(|a| a.id.as_str()),
+            Some("act4")
+        );
+        // `act4` must not claim `act40side_01`, and a nameless activity groups nothing.
+        assert!(activity_for_stage_id(&acts, "act40side_01").is_none());
+        assert!(activity_for_stage_id(&acts, "act6d5_01").is_none());
+        assert!(activity_for_stage_id(&acts, "main_01-07").is_none());
     }
 }

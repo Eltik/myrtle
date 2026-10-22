@@ -101,6 +101,8 @@ pub struct TextFacts {
     pub ally_word: bool,
     /// A heal-many phrase ("all allies", "allies within", ...).
     pub heal_area_words: bool,
+    /// The blackboard keys the text names as DP gained (`dp_gain_keys`).
+    pub dp_gain: Vec<String>,
     /// Talent texts only.
     pub talent: Option<TalentText>,
 }
@@ -123,6 +125,7 @@ impl TextFacts {
             out.names_enemy |= p.names_enemy;
             out.ally_word |= p.ally_word;
             out.heal_area_words |= p.heal_area_words;
+            out.dp_gain.extend(p.dp_gain.iter().cloned());
         }
         out
     }
@@ -257,6 +260,68 @@ fn counters_invisible(text: &str) -> bool {
     })
 }
 
+/// A blackboard placeholder in a description template: `{cost}`, `{+cost}`,
+/// `{svash2_s_3[start_cost].cost}`, `{atk:0%}`.
+static PLACEHOLDER: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(|| {
+    regex::Regex::new(r"\{\+?([^{}:]+)(?::[^{}]*)?\}").expect("placeholder regex")
+});
+
+/// The keys of every placeholder the template prints as DP gained: right
+/// before "DP" or "Deployment Point", not a DP Cost change ("-{cost}</> DP
+/// Cost", SilverAsh the Reignfrost S2) and not a spend ("Consumes"). Of a
+/// range ("{ground}-{floor} DP randomly", Chilchuck S1) the low end, the DP
+/// sure to come. 52 EN skills carry a positive `cost`; the keys name the
+/// amount where `cost` is only the drip tick (`{value}`, `{trig_cnt}`), add
+/// a drip to a one-off gain (Blacknight S2 `once.cost` 3 + `trig_cnt` 8) and
+/// are absent where `cost` is spent (Hadiya S2 prints a literal "10").
+/// Left out: caps, conditional bonuses and remarks (below).
+fn dp_gain_keys(raw: &str) -> Vec<String> {
+    let mut keys = Vec::new();
+    let mut prev: Option<(usize, String)> = None;
+    for c in PLACEHOLDER.captures_iter(raw) {
+        let whole = c.get(0).expect("group 0");
+        let key = c[1].trim().to_string();
+        let lower_bound = prev
+            .as_ref()
+            .filter(|(end, _)| plain(&raw[*end..whole.start()]).trim() == "-")
+            .map(|(_, k)| k.clone());
+        prev = Some((whole.end(), key.clone()));
+        if lower_bound.is_none() && raw[..whole.start()].ends_with('-') {
+            continue;
+        }
+        let after = raw[whole.end()..]
+            .trim_start_matches("</>")
+            .trim_start()
+            .to_lowercase();
+        let Some(dp) = after
+            .strip_prefix("dp")
+            .or_else(|| after.strip_prefix("deployment point"))
+        else {
+            continue;
+        };
+        if dp.trim_start().starts_with("cost") {
+            continue;
+        }
+        let before = raw[..whole.start()].to_lowercase();
+        let lead = &before[before.char_indices().rev().nth(39).map_or(0, |(i, _)| i)..];
+        // A spend, a cap ("up to {cost_add_max} DP", Closure S1) or a bonus
+        // on a condition ("an additional {x} DP if", Vigil S2).
+        if any_of(lead, &["consum", "spend", "costs", "up to", "additional"]) {
+            continue;
+        }
+        // A remark (`<@ba.rem>`) describes later activations, not this one
+        // ("From second activation and on: generates {x} DP", `buildr` S2).
+        if before
+            .rfind("<@ba.rem>")
+            .is_some_and(|i| !before[i..].contains("</>"))
+        {
+            continue;
+        }
+        keys.push(lower_bound.unwrap_or(key));
+    }
+    keys
+}
+
 /// Read one piece of text. `talent` adds the talent rules.
 fn read(raw: &str, vocab: &Vocab, talent: bool) -> TextFacts {
     let lower = lower_plain(raw);
@@ -306,8 +371,11 @@ fn read(raw: &str, vocab: &Vocab, talent: bool) -> TextFacts {
                 "allies within",
                 "all friendly",
                 "allied units within",
+                "allied units around",
+                "allies around",
             ],
         ),
+        dp_gain: dp_gain_keys(raw),
         talent,
     }
 }

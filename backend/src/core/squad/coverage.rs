@@ -273,13 +273,24 @@ fn seat_hits(ctx: &Ctx<'_>, s: &Seat<'_>, economy: &Economy) -> Vec<(CoverageRow
         let f = ctx.facts(&sk.key);
         let says = |g: fn(&TextFacts) -> bool| f.is_some_and(g);
         let mut add = |row: R| hits.push((row, r.clone()));
-        if skill_dp(b).is_some() {
+        if skill_dp(b, f).is_some() {
             add(R::DpGen);
         }
         if block_bonus_reaches(b, base_block) {
             add(R::Block3);
         }
-        let heal = board_any_gt(b, &["heal_scale", "attack@heal_scale"], 0.0);
+        // `hp_recovery_per_sec_ratio` is an ATK-scaled heal over time (Tin Man
+        // S2 heals allied units around the point); the ally word keeps a
+        // self-regen out, as for `heal_scale`.
+        let heal = board_any_gt(
+            b,
+            &[
+                "heal_scale",
+                "attack@heal_scale",
+                "hp_recovery_per_sec_ratio",
+            ],
+            0.0,
+        );
         if heal && says(|g| g.ally_word) {
             add(R::HealSingle);
         }

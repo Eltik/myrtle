@@ -32,7 +32,7 @@ import { SlotChooser } from "./impl/SlotChooser";
 import { SquadToolbar } from "./impl/SquadToolbar";
 import { StageCard } from "./impl/StageCard";
 import { StagePicker } from "./impl/StagePicker";
-import { advancedModules, decodeShare, emptyDraft, encodeDpsImport, filledSeats, type IRosterBuild, type IShareSearch, type ISquadDraft, memberFromRoster, normalizeMembers, resolveSeat, rosterBuildOf, SQUAD_SIZE, SUPPORT_SEAT, seatAt, toAnalyzeRequest } from "./model";
+import { advancedModules, decodeShare, emptyDraft, encodeDpsImport, filledSeats, type IRosterBuild, type IShareSearch, type ISquadDraft, memberFromRoster, normalizeMembers, resolveSeat, rosterBuildsOf, SQUAD_SIZE, SUPPORT_SEAT, seatAt, toAnalyzeRequest } from "./model";
 import { COMPACT_KEY, DRAFT_KEY, readHydration, START_DP_KEY, safeWrite } from "./persist";
 import type { messages } from "./SquadBuilder.messages";
 import { deriveStageContext, normalStageId } from "./stage";
@@ -94,7 +94,7 @@ export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): Re
     const { data: operatorList } = useQuery(operatorsIndexQueryOptions(server));
     const operators = React.useMemo(() => new Map((operatorList ?? []).map((o) => [o.id, o])), [operatorList]);
     const { data: rosterRows } = useQuery({ ...userRosterQueryOptions(uid ?? ""), enabled: uid !== null });
-    const roster = React.useMemo(() => new Map((rosterRows ?? []).map((r) => [r.operator_id, rosterBuildOf(r as unknown as RosterEntry)])), [rosterRows]);
+    const roster = React.useMemo(() => rosterBuildsOf((rosterRows ?? []) as unknown as RosterEntry[]), [rosterRows]);
     const { data: squads, isLoading: squadsLoading } = useQuery(squadsQueryOptions(uid));
     const saved = squads?.saved ?? [];
 

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { IEnemy } from "#/lib/api/enemies";
-import type { IStageDetail } from "#/lib/api/stages";
+import type { IStageDetail, IStageIndexEntry } from "#/lib/api/stages";
 import type { ThreatThresholds } from "#/types/generated/ThreatThresholds";
-import { deriveStageContext, normalStageId } from "./stage";
+import { deriveStageContext, normalStageId, pickerStages } from "./stage";
 
 /** `GET /squads/rules` on EN: `LevelInfoList` grade A RES and DEF, grade S move speed. */
 const GRADES: ThreatThresholds = { high_res: 50, high_def: 1000, fast_move_speed: 1.5, res_grade: "A", def_grade: "A", move_speed_grade: "S" };
@@ -114,5 +114,26 @@ describe("deriveStageContext", () => {
         const normalOf = { "main_01-07#f#": "main_01-07" };
         expect(normalStageId("main_01-07#f#", normalOf)).toBe("main_01-07");
         expect(normalStageId("main_01-07", normalOf)).toBe("main_01-07");
+    });
+});
+
+function entry(stageId: string, code: string, zoneId: string, zoneOrder: number, extra: Partial<IStageIndexEntry> = {}): IStageIndexEntry {
+    return { stageId, levelId: null, code, name: null, zoneId, zoneName: null, zoneOrder, group: "story", category: "stages", apCost: 6, boss: false, isHard: false, difficulty: "NORMAL", canView: true, preview: null, banner: null, ...extra };
+}
+
+describe("pickerStages", () => {
+    it("folds a Story-mode twin into its viewable Standard stage and hides stages with no level file", () => {
+        const out = pickerStages([entry("easy_11-01", "11-1", "main_11", 11, { canView: false }), entry("main_11-01", "11-1", "main_11", 11), entry("act4d0_01", "SW-EV-1", "main_1", 1, { canView: false })]);
+        expect(out.map((s) => s.stageId)).toEqual(["main_11-01"]);
+    });
+
+    it("keeps Adverse and six-star variants as their own cards and drops challenge-mode ids", () => {
+        const out = pickerStages([entry("tough_11-01", "11-1", "main_11", 11, { isHard: true }), entry("main_11-01", "11-1", "main_11", 11), entry("main_11-01#f#", "11-1", "main_11", 11, { difficulty: "FOUR_STAR", isHard: true })]);
+        expect(out.map((s) => s.stageId)).toEqual(["main_11-01", "tough_11-01"]);
+    });
+
+    it("orders by zone, then code with numbers compared as numbers", () => {
+        const out = pickerStages([entry("main_02-10", "2-10", "main_2", 2), entry("main_01-07", "1-7", "main_1", 1), entry("main_02-09", "2-9", "main_2", 2)]);
+        expect(out.map((s) => s.code)).toEqual(["1-7", "2-9", "2-10"]);
     });
 });
