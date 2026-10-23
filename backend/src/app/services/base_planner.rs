@@ -16,7 +16,7 @@ use ts_rs::TS;
 use crate::app::cpu;
 use crate::app::error::ApiError;
 use crate::app::services::improvements::{
-    BaseAssignmentDto, ShiftRoomDto, ShiftRotationDto, base_assignment_to_dto,
+    AssignedOperator, BaseAssignmentDto, ShiftRoomDto, ShiftRotationDto, base_assignment_to_dto,
     shift_rotation_to_dto,
 };
 use crate::app::state::AppState;
@@ -26,7 +26,9 @@ use crate::core::grade::base::assignment::{
 };
 use crate::core::grade::base::context::BaseContext;
 use crate::core::grade::base::pools::{AcceptedEconomy, optimal_with_bundles, search_economy};
-use crate::core::grade::base::rotation_value::{StaffingValue, presets_value, rotation_value};
+use crate::core::grade::base::rotation_value::{
+    CyclePlan, StaffingValue, plan_cycle, presets_value, rotation_value,
+};
 use crate::core::grade::base::scope::settle_scoped_proposal;
 use crate::core::grade::base::shift_rotation::{SHIFT_COUNT, recommend_shift_rotation};
 use crate::core::grade::base::sustain_sim::game_morale_drain;
@@ -465,6 +467,41 @@ pub struct RotationResponse {
     /// The recommended rotation against the player's saved presets, both valued
     /// the way the grade values a base (each shift stationed and scored, averaged).
     pub comparison: RotationComparisonDto,
+    /// A hand-swapped two-stationing cycle beside the rotation: the first
+    /// stationing until a room runs dry, the second until the first has
+    /// recovered. The game's Rotate cannot run it. `None` when it cannot be
+    /// planned (no second crew).
+    pub cycle: Option<CycleDto>,
+}
+
+/// The proposed hand-swapped cycle, see [`RotationResponse::cycle`].
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+#[derive(Debug, Clone, Serialize)]
+pub struct CycleDto {
+    pub legs: Vec<CycleLegDto>,
+    /// Daily figures, leg-weighted.
+    pub value: RotationValueDto,
+    /// Whether it out-values the recommended rotation.
+    pub beats_rotation: bool,
+}
+
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+#[derive(Debug, Clone, Serialize)]
+pub struct CycleLegDto {
+    /// Hours this leg works per cycle.
+    pub hours: f64,
+    pub rooms: Vec<CycleRoomDto>,
+}
+
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+#[derive(Debug, Clone, Serialize)]
+pub struct CycleRoomDto {
+    pub slot_id: String,
+    pub room_type: String,
+    pub operators: Vec<AssignedOperator>,
 }
 
 /// Rotation against rotation. The Optimize proposal is the PEAK single staffing;
@@ -486,6 +523,11 @@ pub struct RotationComparisonDto {
     pub matching_cells: usize,
     /// Production room-shift cells in the recommended rotation.
     pub production_cells: usize,
+    /// With two saved presets, the hours each works per cycle when the player
+    /// swaps by morale (the first until a room runs dry, the second until the
+    /// first has recovered); the preset figures weight each leg by it. Empty
+    /// when the presets are read as equal shifts.
+    pub preset_legs_hours: Vec<f64>,
 }
 
 /// Daily figures of a rotation, averaged over its shifts.
@@ -1270,9 +1312,15 @@ pub async fn optimize(
 /// plan of the same draft seconds apart, and it is the planner's heaviest
 /// step (about five seconds for a 400-operator roster in release). Keyed on
 /// everything the search reads; sized for a handful of players' drafts.
-static PLAN_CACHE: std::sync::LazyLock<
-    dashmap::DashMap<String, (std::time::Instant, std::sync::Arc<AcceptedEconomy>)>,
-> = std::sync::LazyLock::new(dashmap::DashMap::new);
+/// A TTL cache keyed by plan key, see [`cached_in`].
+type TtlCache<T> = dashmap::DashMap<String, (std::time::Instant, std::sync::Arc<T>)>;
+
+static PLAN_CACHE: std::sync::LazyLock<TtlCache<AcceptedEconomy>> =
+    std::sync::LazyLock::new(dashmap::DashMap::new);
+/// The hand-swapped cycle costs a second peak search, so it is cached beside
+/// the plan under the same key.
+static CYCLE_CACHE: std::sync::LazyLock<TtlCache<Option<CyclePlan>>> =
+    std::sync::LazyLock::new(dashmap::DashMap::new);
 const PLAN_CACHE_TTL: std::time::Duration = std::time::Duration::from_mins(10);
 const PLAN_CACHE_CAP: usize = 64;
 
@@ -1322,28 +1370,38 @@ fn cached_plan(
     key: String,
     compute: impl FnOnce() -> AcceptedEconomy,
 ) -> std::sync::Arc<AcceptedEconomy> {
-    if let Some(hit) = PLAN_CACHE.get(&key)
+    cached_in(&PLAN_CACHE, key, compute)
+}
+
+/// Fresh-or-computed entry of a TTL cache capped at `PLAN_CACHE_CAP`: expired
+/// entries go first, then the oldest.
+fn cached_in<T>(
+    cache: &TtlCache<T>,
+    key: String,
+    compute: impl FnOnce() -> T,
+) -> std::sync::Arc<T> {
+    if let Some(hit) = cache.get(&key)
         && hit.0.elapsed() < PLAN_CACHE_TTL
     {
         return std::sync::Arc::clone(&hit.1);
     }
-    let plan = std::sync::Arc::new(compute());
-    if PLAN_CACHE.len() >= PLAN_CACHE_CAP {
-        PLAN_CACHE.retain(|_, (at, _)| at.elapsed() < PLAN_CACHE_TTL);
-        if PLAN_CACHE.len() >= PLAN_CACHE_CAP
-            && let Some(oldest) = PLAN_CACHE
+    let value = std::sync::Arc::new(compute());
+    if cache.len() >= PLAN_CACHE_CAP {
+        cache.retain(|_, (at, _)| at.elapsed() < PLAN_CACHE_TTL);
+        if cache.len() >= PLAN_CACHE_CAP
+            && let Some(oldest) = cache
                 .iter()
                 .min_by_key(|e| e.value().0)
                 .map(|e| e.key().clone())
         {
-            PLAN_CACHE.remove(&oldest);
+            cache.remove(&oldest);
         }
     }
-    PLAN_CACHE.insert(
+    cache.insert(
         key,
-        (std::time::Instant::now(), std::sync::Arc::clone(&plan)),
+        (std::time::Instant::now(), std::sync::Arc::clone(&value)),
     );
-    plan
+    value
 }
 
 /// Rooms the optimizer has no model for: it never staffs Training or Workshop and
@@ -1418,10 +1476,11 @@ pub async fn rotation(
         req.ignore_promotion,
         &facts,
     );
-    let (ctx, building, candidates, plan, recommended, presets) =
+    let (ctx, building, candidates, plan, recommended, presets, cycle) =
         cpu::offload("base_rotation", move || {
             // The rotation plans with the economy the bundle trials accepted
             // (registry and pins), exactly as the Score tab's rotation does.
+            let cycle_key = format!("cycle|{plan_key}");
             let accepted = cached_plan(plan_key, || {
                 optimal_with_bundles(
                     &candidates,
@@ -1459,9 +1518,55 @@ pub async fn rotation(
                 &ctx.registry,
                 &ctx.morale_drains,
             );
-            (ctx, building, candidates, plan, recommended, presets)
+            // The hand-swapped cycle: a second peak search over whoever the
+            // peak plan does not work, cached beside the plan.
+            let cycle = cached_in(&CYCLE_CACHE, cycle_key, || {
+                plan_cycle(
+                    &accepted.optimal,
+                    &candidates,
+                    &building,
+                    &gd.building,
+                    &ctx.registry,
+                    &accepted.registry,
+                    &ctx.morale_drains,
+                    &accepted.pins,
+                )
+            });
+            (ctx, building, candidates, plan, recommended, presets, cycle)
         })
         .await?;
+    let cycle = cycle.as_ref().as_ref().map(|c| CycleDto {
+        legs: c
+            .legs
+            .iter()
+            .zip(&c.legs_hours)
+            .map(|(rooms, &hours)| CycleLegDto {
+                hours,
+                rooms: rooms
+                    .iter()
+                    .map(|(slot_id, ops)| CycleRoomDto {
+                        slot_id: slot_id.clone(),
+                        room_type: building
+                            .rooms
+                            .iter()
+                            .find(|r| &r.slot_id == slot_id)
+                            .map(|r| r.room_type.clone())
+                            .unwrap_or_default(),
+                        operators: ops
+                            .iter()
+                            .map(|id| {
+                                crate::app::services::improvements::assigned_operator(
+                                    id, &game_data,
+                                )
+                            })
+                            .collect(),
+                    })
+                    .collect(),
+            })
+            .collect(),
+        value: c.value.into(),
+        beats_rotation: c.value.total_value > recommended.total_value,
+    });
 
     let rotation = shift_rotation_to_dto(
         &plan,
@@ -1488,10 +1593,12 @@ pub async fn rotation(
         shift_count: SHIFT_COUNT,
         comparison: RotationComparisonDto {
             recommended: recommended.into(),
-            presets: presets.map(Into::into),
+            presets: presets.as_ref().map(|p| p.value.into()),
+            preset_legs_hours: presets.map(|p| p.legs_hours).unwrap_or_default(),
             matching_cells,
             production_cells,
         },
+        cycle,
     })
 }
 

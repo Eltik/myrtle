@@ -43,6 +43,8 @@ use super::{
         room_presence_relevant, room_search_score, rotation_cc_plan,
     },
     buff_registry::BuffResolutionStrategy,
+    clause::TENURE_HOURS,
+    sustain_sim::SHIFT_HOURS,
     team_select::{PlannedGroup, Tiling, plan_production_groups, tiled_objective},
     types::{OperatorBaseProfile, UserBuilding},
     util::{is_production_room, max_stationed_at_level},
@@ -595,8 +597,16 @@ fn rotation_core_tiled(
             Tiling::Blocks,
         );
     }
-    let facility_counts =
+    let mut facility_counts =
         effective_facility_counts(building, operators, registry, building_data, seats);
+    // How long a crew stays seated before the next rotate: time ramps (Aroma)
+    // restart with every crew change, so they read this tenure.
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    let tenure_hours = match tiling {
+        Tiling::Shifts => SHIFT_HOURS as usize,
+        Tiling::Blocks => (2.0 * SHIFT_HOURS) as usize,
+    };
+    facility_counts.insert(TENURE_HOURS.to_string(), tenure_hours);
     let parked = super::assignment::parked_tokens(seats, operators, registry);
     let total_dorm_levels = building.total_dorm_levels();
     let production_rooms: Vec<&UserRoom> = building
@@ -1632,8 +1642,9 @@ fn rotation_core_tiled(
                     .map(move |op| (op.clone(), r.room_type.clone()))
             })
             .collect();
-        let shift_counts =
+        let mut shift_counts =
             effective_facility_counts(building, operators, registry, building_data, &shift_seats);
+        shift_counts.insert(TENURE_HOURS.to_string(), tenure_hours);
         if shift_counts != facility_counts {
             for r in &mut rooms {
                 if r.efficiency.is_none()

@@ -27,11 +27,11 @@ const TRADING_GOLD_SOLD_PER_DAY_BASE: f64 = 20.0;
 /// Drones regenerated per day at 100% recovery: 86400 s / `LaborRecoverTime`
 /// (360 s, `building_data.json`).
 const DRONES_PER_DAY_BASE: f64 = 240.0;
-/// One drone buys `ManufactReduceTimeUnit` (180 s) of factory progress per
-/// `ManufactLaborCostUnit` (1); 180 s of gold is 180/4320 of a bar
-/// (`ManufactFormulas["4"].cost_point`) at 500 LMD. Assumes drones go to
-/// production, the standard endgame use.
-const LMD_PER_DRONE: f64 = GOLD_BAR_LMD * 180.0 / 4320.0;
+/// The share of a room-day one drone buys: `ManufactReduceTimeUnit` (180 s,
+/// `TradingReduceTimeUnit` is the same) per `ManufactLaborCostUnit` (1) over a
+/// day. A drone takes 180 s off the running item's clock, so it yields at the
+/// room's own rate: 480 drones are one day of that room.
+const DRONE_ROOM_DAYS: f64 = 180.0 / 86400.0;
 
 /// `F_EXP` EXP/day at 100% productivity, by factory level.
 const fn factory_exp_per_day_base(level: i32) -> f64 {
@@ -125,9 +125,35 @@ pub struct BaseFlows {
     pub posts: Vec<(f64, f64)>,
     /// EXP/day produced by `F_EXP` factories.
     pub exp: f64,
-    /// Summed drone-recovery % from Power Plant operators. Plants' innate recovery
-    /// is layout-constant, so only operator buffs move the objective.
+    /// Summed drone-recovery % from Power Plant operators.
     pub drone_recovery_pct: f64,
+    /// Productivity multiplier of the strongest `F_GOLD` line, where gold-bound
+    /// drones go.
+    pub best_gold_mult: f64,
+    /// EXP/day of the strongest `F_EXP` line, where the other drones go.
+    pub best_exp_rate: f64,
+}
+
+/// The day's drones and what they are worth spent on production. The 153
+/// report (2026-10-23): one gold line made 43.8 bars against a post selling
+/// 60, and the player's 394 drones/day on that line were the 16 bars between
+/// our 21.9k LMD and their 31k. Drones fill the gold the posts could still
+/// sell first, where that pays more per drone than EXP, and go to the best EXP
+/// line otherwise.
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
+pub struct DroneFlow {
+    /// Drones regenerated per day: the base rate plus the plants' recovery skills.
+    pub per_day: f64,
+    /// Drones spent on the gold line.
+    pub to_gold: f64,
+    /// Drones spent on the EXP line.
+    pub to_exp: f64,
+    /// Gold bars/day the gold-bound drones add.
+    pub gold_bars: f64,
+    /// EXP/day the EXP-bound drones add.
+    pub exp: f64,
+    /// LMD/day the gold-bound drones add (sold where the extra bars land).
+    pub lmd: f64,
 }
 
 impl BaseFlows {
@@ -167,9 +193,12 @@ impl BaseFlows {
             ("MANUFACTURE", Some("F_GOLD")) => {
                 self.gold_factories += 1;
                 self.gold_produced += FACTORY_GOLD_PER_DAY_BASE * mult;
+                self.best_gold_mult = self.best_gold_mult.max(mult);
             }
             ("MANUFACTURE", Some("F_EXP")) => {
-                self.exp += factory_exp_per_day_base(level) * mult;
+                let rate = factory_exp_per_day_base(level) * mult;
+                self.exp += rate;
+                self.best_exp_rate = self.best_exp_rate.max(rate);
             }
             ("POWER", _) => {
                 self.drone_recovery_pct += speed_pct;
@@ -184,13 +213,18 @@ impl BaseFlows {
     /// capacity (Proviso's bonus bars on a starved base) never dilutes a premium
     /// post's take.
     pub fn realized_lmd(&self) -> f64 {
+        self.realized_lmd_with(self.gold_produced)
+    }
+
+    /// `realized_lmd` with `gold` bars/day of factory supply.
+    fn realized_lmd_with(&self, gold: f64) -> f64 {
         if self.gold_sell_capacity <= 0.0 {
             return 0.0;
         }
         let mut supply = if self.gold_factories == 0 {
             f64::INFINITY
         } else {
-            self.gold_produced
+            gold
         };
         let mut posts = self.posts.clone();
         posts.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
@@ -206,10 +240,84 @@ impl BaseFlows {
         lmd
     }
 
+    /// Where the day's drones go. Gold first when the posts can sell more than
+    /// the factories make and a drone there pays more than on EXP; the rest on
+    /// the best EXP line. Beyond the posts' slack a gold drone sells nothing, so
+    /// it is never counted. A base with neither line spends them on nothing we
+    /// price.
+    pub fn drones(&self) -> DroneFlow {
+        let per_day = DRONES_PER_DAY_BASE * productivity_mult(self.drone_recovery_pct);
+        let bars_per_drone = DRONE_ROOM_DAYS * FACTORY_GOLD_PER_DAY_BASE * self.best_gold_mult;
+        let exp_per_drone = DRONE_ROOM_DAYS * self.best_exp_rate;
+        let slack = if self.gold_factories > 0 {
+            (self.gold_sell_capacity - self.gold_produced).max(0.0)
+        } else {
+            0.0
+        };
+        let gold_fill = if bars_per_drone > 0.0 {
+            (slack / bars_per_drone).min(per_day)
+        } else {
+            0.0
+        };
+        let gold_lmd = |drones: f64| {
+            self.realized_lmd_with(self.gold_produced + drones * bars_per_drone)
+                - self.realized_lmd()
+        };
+        let gold_per_drone = if gold_fill > 0.0 {
+            gold_lmd(gold_fill) / gold_fill
+        } else {
+            0.0
+        };
+        let to_gold = if gold_per_drone >= exp_per_drone * EXP_TO_LMD {
+            gold_fill
+        } else {
+            0.0
+        };
+        let to_exp = if exp_per_drone > 0.0 {
+            per_day - to_gold
+        } else {
+            0.0
+        };
+        DroneFlow {
+            per_day,
+            to_gold,
+            to_exp,
+            gold_bars: to_gold * bars_per_drone,
+            exp: to_exp * exp_per_drone,
+            lmd: gold_lmd(to_gold),
+        }
+    }
+
+    /// LMD/day with the drones' gold sold.
+    pub fn lmd_per_day(&self) -> f64 {
+        self.realized_lmd() + self.drones().lmd
+    }
+
+    /// EXP/day with the drones' records.
+    pub fn exp_per_day(&self) -> f64 {
+        self.exp + self.drones().exp
+    }
+
+    /// The search objective: the natural flows plus the plants' BONUS drones at
+    /// the gold rate. The full routing (`drones`) stays out of it on purpose:
+    /// a base's 240 base drones fill any post slack "for free", which would
+    /// teach the search to leave posts under-supplied and flipped the Proviso
+    /// and gold-starved goldens built from player reports (2026-10-23). Only
+    /// what crews change, the plants' recovery, moves the objective.
     pub fn total_value(&self) -> f64 {
         self.realized_lmd()
             + self.exp * EXP_TO_LMD
-            + self.drone_recovery_pct / 100.0 * DRONES_PER_DAY_BASE * LMD_PER_DRONE
+            + self.drone_recovery_pct / 100.0
+                * DRONES_PER_DAY_BASE
+                * DRONE_ROOM_DAYS
+                * FACTORY_GOLD_PER_DAY_BASE
+                * GOLD_BAR_LMD
+    }
+
+    /// What the player banks: LMD and EXP with the day's drones spent, for the
+    /// figures shown, never for ranking.
+    pub fn value_with_drones(&self) -> f64 {
+        self.lmd_per_day() + self.exp_per_day() * EXP_TO_LMD
     }
 }
 
@@ -401,5 +509,77 @@ mod tests {
         tequila.add_room("MANUFACTURE", Some("F_GOLD"), 3, 120.0, 0.0, 0.0, 0, None);
         tequila.add_room("TRADING", None, 1, 200.0, 0.0, 24.0, 0, None);
         assert!((tequila.realized_lmd() - 44.0 * 1.24 * GOLD_BAR_LMD).abs() < 1e-6);
+    }
+
+    #[test]
+    fn drones_fill_the_gold_the_posts_could_still_sell_then_go_to_exp() {
+        // The 153 report (2026-10-23): one L3 gold line at 115.8% (+3 innate), a
+        // Proviso post that can sell more than it makes, four EXP lines, plants
+        // at +23.5 +20 +20. 240 x 1.635 = 392 drones/day; the gold slack takes
+        // what it can at the line's own rate (1/24 bar per drone x 2.188) and the
+        // LMD figure lands near the player's 31k.
+        let mut f = BaseFlows::default();
+        f.add_room("TRADING", None, 3, 119.0, 0.0, 55.17, 3, None);
+        f.add_room("MANUFACTURE", Some("F_GOLD"), 3, 115.8, 0.0, 0.0, 3, None);
+        for eff in [132.0, 132.0, 112.0, 103.0] {
+            f.add_room("MANUFACTURE", Some("F_EXP"), 3, eff, 0.0, 0.0, 3, None);
+        }
+        for pct in [23.5, 20.0, 20.0] {
+            f.add_room("POWER", None, 3, pct, 0.0, 0.0, 1, None);
+        }
+        let d = f.drones();
+        assert!((d.per_day - 392.4).abs() < 0.1, "{d:?}");
+        let slack = f.gold_sell_capacity - f.gold_produced;
+        assert!(slack > 0.0 && d.to_gold > 0.0 && d.to_exp > 0.0, "{d:?}");
+        assert!(
+            (d.gold_bars - d.to_gold * 2.188 / 24.0).abs() < 1e-6,
+            "{d:?}"
+        );
+        assert!(
+            d.gold_bars <= slack + 1e-6,
+            "drones never exceed what the posts sell: {d:?}"
+        );
+        assert!((f.lmd_per_day() - (f.realized_lmd() + d.lmd)).abs() < 1e-6);
+        assert!(
+            (d.gold_bars - slack).abs() < 1e-6,
+            "the slack is filled: {d:?}"
+        );
+        assert!(
+            f.lmd_per_day() > 35_000.0 && f.lmd_per_day() < 36_000.0,
+            "{}",
+            f.lmd_per_day()
+        );
+        assert!(f.exp_per_day() > f.exp);
+    }
+
+    #[test]
+    fn drones_go_to_exp_when_the_posts_are_already_saturated() {
+        // Two gold lines feeding one post: no slack, so every drone makes records.
+        let mut f = BaseFlows::default();
+        f.add_room("TRADING", None, 3, 50.0, 0.0, 0.0, 3, None);
+        f.add_room("MANUFACTURE", Some("F_GOLD"), 3, 100.0, 0.0, 0.0, 3, None);
+        f.add_room("MANUFACTURE", Some("F_GOLD"), 3, 100.0, 0.0, 0.0, 3, None);
+        f.add_room("MANUFACTURE", Some("F_EXP"), 3, 100.0, 0.0, 0.0, 3, None);
+        let d = f.drones();
+        assert!(d.to_gold == 0.0 && (d.to_exp - 240.0).abs() < 1e-9, "{d:?}");
+        assert!(
+            (d.exp - 240.0 * 180.0 / 86400.0 * 8000.0 * 2.03).abs() < 1e-6,
+            "{d:?}"
+        );
+        assert!((f.lmd_per_day() - f.realized_lmd()).abs() < 1e-9);
+    }
+
+    #[test]
+    fn drones_are_worth_nothing_without_a_line_to_spend_them_on() {
+        let mut f = BaseFlows::default();
+        f.add_room("POWER", None, 3, 20.0, 0.0, 0.0, 1, None);
+        let d = f.drones();
+        assert!(
+            (d.per_day - 288.0).abs() < 1e-9 && d.lmd == 0.0 && d.exp == 0.0,
+            "{d:?}"
+        );
+        assert_eq!(f.value_with_drones(), 0.0);
+        // The objective still prices the plant's +20% as bonus drones at the gold rate.
+        assert!((f.total_value() - 0.2 * 240.0 * 180.0 / 86400.0 * 20.0 * 500.0).abs() < 1e-6);
     }
 }

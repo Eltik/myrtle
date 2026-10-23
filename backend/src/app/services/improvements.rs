@@ -387,6 +387,13 @@ pub struct BaseAssignmentDto {
     pub yield_exp_per_day: f64,
     /// LMD-equivalent of everything combined (LMD + EXP at 1:1).
     pub yield_total_value: f64,
+    /// Drones regenerated per day: 240 at the base rate plus the plants'
+    /// recovery skills. Spent on the best gold line up to what the posts can
+    /// sell beyond the factories' supply, else on the best EXP line; the LMD and
+    /// EXP figures above include what they add, split out here.
+    pub drones_per_day: f64,
+    pub drone_lmd_per_day: f64,
+    pub drone_exp_per_day: f64,
 }
 
 #[derive(TS, utoipa::ToSchema)]
@@ -2350,6 +2357,7 @@ pub(crate) fn base_assignment_to_dto(
     }
 
     let bench_ids: std::collections::HashSet<&str> = asn.bench.iter().map(String::as_str).collect();
+    let drones = flows.drones();
     BaseAssignmentDto {
         rooms: asn
             .rooms
@@ -2359,9 +2367,12 @@ pub(crate) fn base_assignment_to_dto(
             })
             .collect(),
         total_production_efficiency: asn.total_production_efficiency,
-        yield_lmd_per_day: flows.realized_lmd(),
-        yield_exp_per_day: flows.exp,
-        yield_total_value: flows.total_value(),
+        yield_lmd_per_day: flows.lmd_per_day(),
+        yield_exp_per_day: flows.exp_per_day(),
+        yield_total_value: flows.value_with_drones(),
+        drones_per_day: drones.per_day,
+        drone_lmd_per_day: drones.lmd,
+        drone_exp_per_day: drones.exp,
     }
 }
 

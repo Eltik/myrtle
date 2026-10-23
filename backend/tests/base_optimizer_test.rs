@@ -2959,7 +2959,8 @@ fn presets_set_to_the_recommended_rotation_read_as_its_value() {
     }
     assert_eq!(usable_preset_shifts(&building).len(), SHIFT_COUNT);
     let presets = presets_value(&roster, &building, &gd.building, &registry, &drains)
-        .expect("three usable presets");
+        .expect("three usable presets")
+        .value;
     // Every room is stationed identically shift by shift on both sides, so the
     // two valuations agree exactly.
     assert!(
@@ -5253,13 +5254,17 @@ fn aroma_ramp_rate_parses_in_the_trailing_form() {
     let gd = load_game_data();
     let (registry, _) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
     match registry.get("manu_prod_spd_addition[100]") {
-        Some(BuffResolutionStrategy::MoraleDecayEfficiency {
-            time_averaged_value,
+        Some(BuffResolutionStrategy::TimeRamp {
+            first_hour,
+            per_hour,
+            cap,
         }) => {
-            assert!(
-                (time_averaged_value - (100.0 + 280.0) / 24.0).abs() < 1e-6,
-                "24h mean: {time_averaged_value}"
-            );
+            // +2% after the first hour, +2% more each hour, to +20%: 12.5 over a
+            // 12h shift, 16.25 over 24h, in whole-hour steps (riic.autos agrees).
+            assert_eq!((*first_hour, *per_hour, *cap), (2.0, 2.0, 20.0));
+            use backend::core::grade::base::clause::ramp_average;
+            assert!((ramp_average(*first_hour, *per_hour, *cap, 12.0) - 12.5).abs() < 1e-9);
+            assert!((ramp_average(*first_hour, *per_hour, *cap, 24.0) - 16.25).abs() < 1e-9);
         }
         other => panic!("Aroma's ramp: {other:?}"),
     }
@@ -6286,6 +6291,250 @@ fn drone_capacity_skill_scales_with_the_bases_actual_capacity() {
         (eff - 23.5).abs() < 0.1,
         "3x L3 plants = 235 drones -> +23.5% (not the +25% cap), got {eff}"
     );
+}
+
+#[test]
+fn a_time_ramp_is_worth_its_average_over_the_crews_tenure() {
+    // Aroma's "Routine Cleaning" (+2%/h up to +20%) restarts with every crew
+    // change (2026-10-23, riic.autos parity): a 12h shift averages 12.5, a 24h
+    // stay 16.25, and the live base (no tenure given) reads 24h. Her Clean
+    // Breeze +25% on Precious Metal is flat either way.
+    use backend::core::grade::base::assignment::{
+        compute_current_assignment, compute_current_assignment_over,
+    };
+    const AROMA: &str = "char_446_aroma";
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let mut factory = room("mf0", "MANUFACTURE", 3);
+    factory.current_formula = Some("F_GOLD".into());
+    factory.current_operators = vec![AROMA.into()];
+    let building = UserBuilding {
+        rooms: vec![factory],
+        drone_capacity: None,
+    };
+    let roster = vec![profile(gd, AROMA)];
+    let eff = |asn: &backend::core::grade::base::types::BaseAssignment| {
+        asn.rooms
+            .iter()
+            .find(|r| r.slot_id == "mf0")
+            .expect("the factory is scored")
+            .total_efficiency
+    };
+    let live = eff(&compute_current_assignment(
+        &roster,
+        &building,
+        &gd.building,
+        &registry,
+        &drains,
+        None,
+    ));
+    let day = eff(&compute_current_assignment_over(
+        &roster,
+        &building,
+        &gd.building,
+        &registry,
+        &drains,
+        None,
+        24.0,
+    ));
+    let shift = eff(&compute_current_assignment_over(
+        &roster,
+        &building,
+        &gd.building,
+        &registry,
+        &drains,
+        None,
+        12.0,
+    ));
+    assert!(
+        (live - day).abs() < 1e-9,
+        "the live base reads a 24h tenure: {live} vs {day}"
+    );
+    assert!((day - 41.25).abs() < 1e-9, "25 + 16.25 over 24h, got {day}");
+    assert!(
+        (shift - 37.5).abs() < 1e-9,
+        "25 + 12.5 over a 12h shift, got {shift}"
+    );
+}
+
+#[test]
+fn two_presets_are_valued_as_the_morale_bound_cycle_they_run() {
+    // uid 93881052 (2026-10-23): "all operators remain working until one
+    // facility hits zero morale, then rotate the whole base", 34h then 8-19h.
+    // Two presets: the first works until its first worker runs dry, the second
+    // until the first set (resting in the dorm) is back to full, and the figures
+    // weight each preset by its hours instead of reading two equal shifts.
+    use backend::core::grade::base::assignment::compute_current_assignment_over;
+    use backend::core::grade::base::dorms::dorm_list;
+    use backend::core::grade::base::rotation_value::{preset_cycle, presets_value};
+    use backend::core::grade::base::sustain_sim::{MORALE_MAX, game_morale_drain};
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let a = ["char_237_gravel", "char_4106_bryota"];
+    let b = ["char_400_weedy", "char_385_finlpp"];
+    let mut factory = room("mf0", "MANUFACTURE", 3);
+    factory.current_formula = Some("F_GOLD".into());
+    factory.current_operators = a.iter().map(|s| (*s).to_string()).collect();
+    factory.preset_shifts = vec![
+        a.iter().map(|s| (*s).to_string()).collect(),
+        b.iter().map(|s| (*s).to_string()).collect(),
+    ];
+    // The dorm holds whoever is off: the first set while the second works.
+    let mut dorm = room("d0", "DORMITORY", 5);
+    dorm.current_operators = a.iter().chain(&b).map(|s| (*s).to_string()).collect();
+    let building = UserBuilding {
+        rooms: vec![factory, dorm],
+        drone_capacity: None,
+    };
+    let roster: Vec<OperatorBaseProfile> = a.iter().chain(&b).map(|id| profile(gd, id)).collect();
+    let legs = preset_cycle(&[0, 1], &roster, &building, &gd.building, &drains)
+        .expect("two usable presets make a cycle");
+    let drain = |ids: &[&str]| {
+        ids.iter()
+            .map(|id| game_morale_drain(roster.iter().find(|o| o.char_id == *id).unwrap(), &drains))
+            .fold(0.0, f64::max)
+    };
+    let recovery = dorm_list(&building, &gd.building)[0].recovery_per_hour;
+    let t_a = MORALE_MAX / drain(&a);
+    let t_b = (drain(&a) * t_a / recovery).min(MORALE_MAX / drain(&b));
+    assert!(
+        (legs[0] - t_a).abs() < 1e-6 && (legs[1] - t_b).abs() < 1e-6,
+        "legs {legs:?} vs {t_a} / {t_b}"
+    );
+    assert!(
+        legs[0] > legs[1],
+        "the first set works longer than the second recovers: {legs:?}"
+    );
+
+    let v = presets_value(&roster, &building, &gd.building, &registry, &drains).expect("valued");
+    assert_eq!(v.legs_hours, legs);
+    let leg_value = |i: usize, h: f64| {
+        compute_current_assignment_over(
+            &roster,
+            &building,
+            &gd.building,
+            &registry,
+            &drains,
+            Some(i),
+            h,
+        )
+        .total_production_efficiency
+    };
+    let expect =
+        (leg_value(0, legs[0]) * legs[0] + leg_value(1, legs[1]) * legs[1]) / (legs[0] + legs[1]);
+    assert!(
+        (v.value.production_efficiency - expect).abs() < 1e-6,
+        "{} vs {expect}",
+        v.value.production_efficiency
+    );
+}
+
+#[test]
+fn the_optimizer_proposes_a_hand_swapped_cycle_beside_the_rotation() {
+    // uid 93881052 (2026-10-23) out-earned our 3 x 12h rotation by 7% with a
+    // hand-swapped A/B cycle. The planner now proposes one: the peak plan works
+    // until a room runs dry, the best plan of everyone else until the first has
+    // recovered, dorms holding the off leg. Valued exactly as a saved pair of
+    // presets would be.
+    use backend::core::grade::base::pools::optimal_with_bundles;
+    use backend::core::grade::base::rotation_value::plan_cycle;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    // A fifth L5 dorm: the peak plan works 23 operators and every one of them
+    // needs a bed while the second leg runs (a 4-dorm base has 20 and gets no
+    // cycle proposal).
+    let mut building = generic_base();
+    building.rooms.push(room("d4", "DORMITORY", 5));
+    let roster = full_roster(gd);
+    let accepted = optimal_with_bundles(
+        &roster,
+        &building,
+        &gd.building,
+        &registry,
+        &registry,
+        &drains,
+        &[],
+    );
+    assert!(
+        plan_cycle(
+            &accepted.optimal,
+            &roster,
+            &generic_base(),
+            &gd.building,
+            &registry,
+            &accepted.registry,
+            &drains,
+            &accepted.pins,
+        )
+        .is_none(),
+        "20 beds cannot rest 23 workers: no cycle"
+    );
+    let cycle = plan_cycle(
+        &accepted.optimal,
+        &roster,
+        &building,
+        &gd.building,
+        &registry,
+        &accepted.registry,
+        &drains,
+        &accepted.pins,
+    )
+    .expect("a deep roster staffs a second leg");
+    assert_eq!(cycle.legs.len(), 2);
+    assert!(
+        cycle.legs_hours.iter().all(|h| *h > 0.0),
+        "{:?}",
+        cycle.legs_hours
+    );
+    // The second leg works nobody the first leg works, and every production
+    // room is staffed in both legs.
+    let workers = |leg: &[(String, Vec<String>)]| -> std::collections::HashSet<String> {
+        leg.iter()
+            .filter(|(slot, _)| {
+                building
+                    .rooms
+                    .iter()
+                    .any(|r| &r.slot_id == slot && r.room_type != "DORMITORY")
+            })
+            .flat_map(|(_, ops)| ops.iter().cloned())
+            .collect()
+    };
+    let (a, b) = (workers(&cycle.legs[0]), workers(&cycle.legs[1]));
+    assert!(
+        a.is_disjoint(&b),
+        "the legs share workers: {:?}",
+        a.intersection(&b).collect::<Vec<_>>()
+    );
+    for room in building
+        .rooms
+        .iter()
+        .filter(|r| matches!(r.room_type.as_str(), "TRADING" | "MANUFACTURE"))
+    {
+        for leg in &cycle.legs {
+            let crew = &leg
+                .iter()
+                .find(|(s, _)| *s == room.slot_id)
+                .expect("room listed")
+                .1;
+            assert!(!crew.is_empty(), "{} is dark in a leg", room.slot_id);
+        }
+    }
+    // The first leg's workers rest in the dorms during the second leg.
+    let resting: std::collections::HashSet<String> = cycle.legs[1]
+        .iter()
+        .filter(|(slot, _)| {
+            building
+                .rooms
+                .iter()
+                .any(|r| &r.slot_id == slot && r.room_type == "DORMITORY")
+        })
+        .flat_map(|(_, ops)| ops.iter().cloned())
+        .collect();
+    assert!(
+        !resting.is_empty() && resting.is_subset(&a),
+        "dorms hold the first leg's workers"
+    );
+    assert!(cycle.value.total_value > 0.0);
 }
 
 #[test]
@@ -10388,8 +10637,8 @@ fn signed_capacity_reproduces_the_games_vermeil_teams() {
     );
     let vsp = team(&["char_190_clour", "char_336_folivo", "char_485_pallas"]);
     assert!(
-        vsp > vpw && (vsp - (56.0 + 25.0 + 23.958_333_333_333_332)).abs() < 1e-6,
-        "Vermeil/Scene/Pallas ~105 (ramp averaged), got {vsp}"
+        vsp > vpw && (vsp - (56.0 + 25.0 + 23.75)).abs() < 1e-6,
+        "Vermeil/Scene/Pallas ~105 (Scene's ramp 23.75 over 24h in whole hours), got {vsp}"
     );
 }
 

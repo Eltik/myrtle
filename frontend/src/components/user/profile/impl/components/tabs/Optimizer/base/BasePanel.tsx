@@ -50,6 +50,11 @@ export function BasePanel({ board }: { board: IBoard }) {
                         <Headline hint={t("profile.base.headline.efficiency.hint")} label={t("profile.base.headline.efficiency")} value={totals ? `${Math.round(totals.total_production_efficiency)}%` : "-"} />
                         <Headline label={t("profile.base.headline.lmd")} value={totals ? f.number(Math.round(totals.yield_lmd_per_day)) : "-"} />
                         <Headline label={t("profile.base.headline.exp")} value={totals ? f.number(Math.round(totals.yield_exp_per_day)) : "-"} />
+                        <Headline
+                            hint={totals ? t("profile.base.headline.drones.hint", { lmd: f.number(Math.round(totals.drone_lmd_per_day)), exp: f.number(Math.round(totals.drone_exp_per_day)) }) : undefined}
+                            label={t("profile.base.headline.drones")}
+                            value={totals ? f.number(Math.round(totals.drones_per_day)) : "-"}
+                        />
                         <Headline hint={power ? t("profile.base.headline.power.hint", { generated: power.generated, consumed: power.consumed }) : undefined} label={t("profile.base.headline.power")} value={power ? `${power.net > 0 ? "+" : ""}${power.net}` : "-"} />
                     </div>
 

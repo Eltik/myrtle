@@ -9,7 +9,7 @@ use crate::core::{
         dorms::{building_hosts_manager, manager_can_sustain, manager_swap_rate},
         ledger::op_power_rank_value,
         pools::{POOL_PREFIX, settle_current_pools},
-        sustain_sim::{game_morale_drain, sustains_24h_block},
+        sustain_sim::{game_morale_drain, sustains_24h_block, sustains_hours},
         team_select::PlannedGroup,
         types::{
             BaseAssignment, OperatorBaseProfile, RoomAssignment, RoomRotation, RotationAssignment,
@@ -2051,6 +2051,30 @@ pub fn compute_current_assignment(
     )
 }
 
+/// [`compute_current_assignment`] for a stationing that lasts `hours` before the
+/// crews change (a rotation's shift, a preset cycle's leg): time ramps read it
+/// (`clause::TENURE_HOURS`) instead of the live base's 24h.
+pub fn compute_current_assignment_over(
+    operators: &[OperatorBaseProfile],
+    building: &UserBuilding,
+    building_data: &BuildingDataFile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    morale_drains: &HashMap<String, f64>,
+    shift: Option<usize>,
+    hours: f64,
+) -> BaseAssignment {
+    compute_live_assignment_over(
+        operators,
+        building,
+        building_data,
+        registry,
+        morale_drains,
+        shift,
+        &HashMap::new(),
+        Some(hours),
+    )
+}
+
 /// [`compute_current_assignment`] with each seated operator's REAL morale
 /// (the bars as the game last wrote them, `sustain_sim::synced_live_morale`),
 /// so morale-conditional pool grants settle as the synced base showed them.
@@ -2063,6 +2087,31 @@ pub fn compute_live_assignment(
     morale_drains: &HashMap<String, f64>,
     shift: Option<usize>,
     live_morale: &HashMap<String, f64>,
+) -> BaseAssignment {
+    compute_live_assignment_over(
+        operators,
+        building,
+        building_data,
+        registry,
+        morale_drains,
+        shift,
+        live_morale,
+        None,
+    )
+}
+
+/// [`compute_live_assignment`] with the crews' tenure in `hours` (`None` = the
+/// live base's 24h), see [`compute_current_assignment_over`].
+#[allow(clippy::too_many_arguments)]
+fn compute_live_assignment_over(
+    operators: &[OperatorBaseProfile],
+    building: &UserBuilding,
+    building_data: &BuildingDataFile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    morale_drains: &HashMap<String, f64>,
+    shift: Option<usize>,
+    live_morale: &HashMap<String, f64>,
+    hours: Option<f64>,
 ) -> BaseAssignment {
     let inert: HashSet<String> = live_morale
         .iter()
@@ -2077,6 +2126,13 @@ pub fn compute_live_assignment(
         &stationed_seats(building, shift),
         &inert,
     );
+    if let Some(hours) = hours {
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        facility_counts.insert(
+            super::clause::TENURE_HOURS.to_string(),
+            hours.round().max(1.0) as usize,
+        );
+    }
     // The live base has REAL seats, so assignment-fed pools (Senshi's Monster
     // Meals) settle exactly and ride the synthetic channel into the scorer.
     let settled = settle_current_pools(building, operators, registry, building_data, live_morale);
@@ -4706,7 +4762,7 @@ fn assign_trading_rooms_by_yield(
                 cap_aware,
                 CANDIDATE_LIMIT,
                 false,
-                false,
+                0,
             )
             .into_iter()
             .filter(|c| c.score > 0.0)
@@ -5275,7 +5331,7 @@ fn best_team_for_room(
         cap_aware,
         CANDIDATE_LIMIT,
         false,
-        false,
+        0,
     )
     .into_iter()
     .find(|c| c.score > 0.0)
@@ -5298,7 +5354,7 @@ pub(crate) fn candidate_pool<'a>(
     building_data: &BuildingDataFile,
     morale_drains: &HashMap<String, f64>,
     include_automation: bool,
-    require_24h_sustain: bool,
+    sustain_hours: u32,
 ) -> Vec<&'a OperatorBaseProfile> {
     operators
         .iter()
@@ -5312,7 +5368,9 @@ pub(crate) fn candidate_pool<'a>(
             })
         })
         .filter(|op| include_automation || !has_automation_buff(op, registry))
-        .filter(|op| !require_24h_sustain || sustains_24h_block(op, morale_drains))
+        .filter(|op| {
+            sustain_hours == 0 || sustains_hours(op, morale_drains, f64::from(sustain_hours))
+        })
         .collect()
 }
 
@@ -5343,9 +5401,10 @@ pub(crate) fn enumerate_candidate_teams(
     cap_aware: bool,
     pool_limit: usize,
     include_automation: bool,
-    // Rotation teams work 24h blocks, so their pool excludes operators whose
-    // drain outpaces the morale bar; single-snapshot (peak) callers pass false.
-    require_24h_sustain: bool,
+    // Hours a rotation crew must last on one bar (24 for a block, 12 for a
+    // shift): the pool excludes operators whose drain outpaces it. 0 = no
+    // filter, for single-snapshot (peak) callers.
+    sustain_hours: u32,
 ) -> Vec<CandidateTeam> {
     if max_slots <= 0 {
         return Vec::new();
@@ -5362,7 +5421,7 @@ pub(crate) fn enumerate_candidate_teams(
         building_data,
         morale_drains,
         include_automation,
-        require_24h_sustain,
+        sustain_hours,
     );
 
     if candidates.is_empty() {

@@ -205,6 +205,11 @@ const SHIFT_FILL_AVERAGE: f64 = 0.5;
 pub enum ClauseKind {
     /// Flat bonus to the owner's own room. Resolves against nothing.
     SelfValue,
+    /// Climbs by `per_hour` from `first_hour` each full hour to the clause's
+    /// `value` (the cap), restarting with every crew change: worth its average
+    /// over the crew's tenure, read from the scoring context's
+    /// [`TENURE_HOURS`] (24 when absent).
+    TimeRamp { first_hour: f64, per_hour: f64 },
     /// Fans out once per room of `target_room` (Control-Center globals). An
     /// optional `gate` conditions each target room on its own occupants.
     RoomTypeGlobal {
@@ -275,6 +280,27 @@ pub enum ClauseKind {
     /// Order-VALUE shape (Proviso, Tequila, Tailoring), priced with the room's
     /// other shapes by `order_mix::value_pct`. `value` is unused.
     OrderMix(OrderEffect),
+}
+
+/// Synthetic `facility_counts` key: hours a crew stays seated before the next
+/// rotate (12 under `Tiling::Shifts`, 24 under `Blocks`, a preset cycle's own
+/// leg for the presets side). Time ramps read it; absent means 24.
+pub const TENURE_HOURS: &str = "TENURE_HOURS";
+
+/// Average of a ramp that reads `first_hour` in hour 1 and `per_hour` more each
+/// hour after, capped, over a tenure of `hours` (whole hours, at least one).
+/// Aroma (2, 2, 20): 12.5 over 12h, 16.25 over 24h. Scene (15, 2, 25): 23.75
+/// over 24h. Both match riic.autos's evaluator.
+pub fn ramp_average(first_hour: f64, per_hour: f64, cap: f64, hours: f64) -> f64 {
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    let n = hours.round().max(1.0) as usize;
+    #[allow(clippy::cast_precision_loss)]
+    let total: f64 = (1..=n)
+        .map(|k| (first_hour + per_hour * (k as f64 - 1.0)).min(cap))
+        .sum();
+    #[allow(clippy::cast_precision_loss)]
+    let avg = total / n as f64;
+    avg
 }
 
 /// One resolved bonus clause.
@@ -1118,6 +1144,25 @@ pub fn clauses_from_strategy(
             ));
         }
 
+        S::TimeRamp {
+            first_hour,
+            per_hour,
+            cap,
+        } => {
+            // Averaged at scoring time over the crew's tenure; `value` is the cap
+            // so the ranking bound stays an upper bound.
+            out.push(Clause::base(
+                buff_id,
+                buff,
+                speed(),
+                ClauseKind::TimeRamp {
+                    first_hour: *first_hour,
+                    per_hour: *per_hour,
+                },
+                *cap,
+            ));
+        }
+
         // Pool output on the drain channel, never a fake flat skill.
         S::PoolPayoff { pct } => {
             out.push(Clause::base(
@@ -1664,5 +1709,18 @@ mod tests {
             &BuffResolutionStrategy::DirectEfficiency { value: 30.0 },
         );
         assert_eq!(set[0].output_targets, vec!["F_GOLD".to_string()]);
+    }
+
+    #[test]
+    fn a_time_ramp_averages_over_the_tenure_in_whole_hours() {
+        // Aroma: "+2% per hour, up to +20%"; Scene: "+15% in the first hour and
+        // thereafter +2% per hour, up to +25%". riic.autos measures the same.
+        assert!((ramp_average(2.0, 2.0, 20.0, 12.0) - 12.5).abs() < 1e-9);
+        assert!((ramp_average(2.0, 2.0, 20.0, 24.0) - 16.25).abs() < 1e-9);
+        assert!((ramp_average(2.0, 2.0, 20.0, 1.0) - 2.0).abs() < 1e-9);
+        assert!((ramp_average(15.0, 2.0, 25.0, 24.0) - 23.75).abs() < 1e-9);
+        // Never above the cap, never below the first hour.
+        assert!((ramp_average(2.0, 2.0, 20.0, 1000.0) - 20.0).abs() < 0.1);
+        assert!((ramp_average(2.0, 2.0, 20.0, 0.0) - 2.0).abs() < 1e-9);
     }
 }

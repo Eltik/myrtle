@@ -10,8 +10,18 @@ use crate::core::gamedata::types::building::BuildingDataFile;
 use super::assignment::CcCondition;
 use super::buff_registry::{BuffResolutionStrategy, OrderEffect};
 use super::clause::{
-    Clause, ClauseKind, CondScope, Metric, Subject, SuppressExempt, clauses_from_strategy,
+    Clause, ClauseKind, CondScope, Metric, Subject, SuppressExempt, TENURE_HOURS,
+    clauses_from_strategy, ramp_average,
 };
+
+/// The crew's tenure the scoring context carries (`clause::TENURE_HOURS`), 24
+/// when the caller set none (the live base, the single-staffing search).
+fn tenure_hours(facility_counts: &HashMap<String, usize>) -> f64 {
+    #[allow(clippy::cast_precision_loss)]
+    facility_counts
+        .get(TENURE_HOURS)
+        .map_or(24.0, |h| *h as f64)
+}
 use super::types::OperatorBaseProfile;
 use super::util::buff_family;
 
@@ -412,6 +422,18 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
                         metric: clause.metric.clone(),
                         amount: amount * factor,
                         source: Source::RoomCountScaled,
+                    });
+                }
+                ClauseKind::TimeRamp {
+                    first_hour,
+                    per_hour,
+                } => {
+                    let hours = tenure_hours(ev.facility_counts);
+                    entries.push(Entry {
+                        entity: i,
+                        metric: clause.metric.clone(),
+                        amount: ramp_average(*first_hour, *per_hour, clause.value, hours) * factor,
+                        source: Source::Direct,
                     });
                 }
                 // +value per `step` settled points, floored. Points from the
@@ -909,6 +931,11 @@ pub fn op_optimistic_bound(
                 let scaled = v * facility_counts.get(room).copied().unwrap_or(0) as f64;
                 c.cap.map_or(scaled, |cap| scaled.min(cap))
             }
+            // The tenure is known here too, so the bound is the exact value.
+            ClauseKind::TimeRamp {
+                first_hour,
+                per_hour,
+            } => ramp_average(*first_hour, *per_hour, v, tenure_hours(facility_counts)),
             ClauseKind::ScalingLevelSum { .. } => {
                 let scaled = v * f64::from(total_dorm_levels);
                 c.cap.map_or(scaled, |cap| scaled.min(cap))

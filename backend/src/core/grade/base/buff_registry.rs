@@ -866,6 +866,18 @@ pub enum BuffResolutionStrategy {
     /// Time-averaged over a full 24h shift.
     MoraleDecayEfficiency { time_averaged_value: f64 },
 
+    /// A ramp that climbs by `per_hour` from `first_hour` each full hour the
+    /// operator stays, to `cap` (Aroma's "+2% per hour, up to +20%"; Scene's
+    /// "+15% in the first hour and thereafter +2% per hour, up to +25%"). It
+    /// restarts whenever the crew changes, so its worth is the average over the
+    /// crew's tenure, which the scorer reads at scoring time
+    /// (`clause::TENURE_HOURS`): 12.5% for Aroma on a 12h shift, 16.25% over 24h.
+    TimeRamp {
+        first_hour: f64,
+        per_hour: f64,
+        cap: f64,
+    },
+
     /// From the LAYOUT: "+N <Resource> per level per building, max CAP"
     /// (Minimalist's Engineering Robots). Needs no assignment.
     PoolGenerateBuildingLevels {
@@ -1738,16 +1750,14 @@ pub fn build_registry(
                     // Not parse_first_pct: the first % is the [030] tier's 20% base.
                     let per_hr = parse_per_hour_pct(&buff.description).unwrap_or(1.0);
                     let cap = parse_last_pct(&buff.description).unwrap_or(25.0);
-                    let ramp_hours = if per_hr > 0.0 {
-                        (cap - base) / per_hr
-                    } else {
-                        24.0
-                    };
-                    let ramp_duration = ramp_hours.min(24.0);
-                    let plateau_duration = (24.0 - ramp_duration).max(0.0);
-                    let avg = ((base + cap) / 2.0 * ramp_duration + cap * plateau_duration) / 24.0;
-                    BuffResolutionStrategy::MoraleDecayEfficiency {
-                        time_averaged_value: avg,
+                    // "+15% in the first hour and thereafter +2%" starts at 15; a
+                    // bare "+2% per hour" starts at 2 after the first hour. Both
+                    // step once per full hour (riic.autos reads the same).
+                    let first_hour = if base > 0.0 { base } else { per_hr };
+                    BuffResolutionStrategy::TimeRamp {
+                        first_hour,
+                        per_hour: per_hr,
+                        cap,
                     }
                 }
                 // "efficiency +25% and order limit -6". BEFORE the generic

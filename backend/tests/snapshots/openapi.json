@@ -18156,9 +18156,25 @@
           "total_production_efficiency",
           "yield_lmd_per_day",
           "yield_exp_per_day",
-          "yield_total_value"
+          "yield_total_value",
+          "drones_per_day",
+          "drone_lmd_per_day",
+          "drone_exp_per_day"
         ],
         "properties": {
+          "drone_exp_per_day": {
+            "type": "number",
+            "format": "double"
+          },
+          "drone_lmd_per_day": {
+            "type": "number",
+            "format": "double"
+          },
+          "drones_per_day": {
+            "type": "number",
+            "format": "double",
+            "description": "Drones regenerated per day: 240 at the base rate plus the plants'\nrecovery skills. Spent on the best gold line up to what the posts can\nsell beyond the factories' supply, else on the best EXP line; the LMD and\nEXP figures above include what they add, split out here."
+          },
           "rooms": {
             "type": "array",
             "items": {

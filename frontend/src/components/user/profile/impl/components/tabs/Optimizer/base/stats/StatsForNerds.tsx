@@ -64,6 +64,7 @@ export function StatsForNerds() {
     const diffs = (api.proposal?.room_diffs ?? []).filter((d) => d.before.join() !== d.after.join());
     const rotation = api.rotation?.rotation;
     const comparison = api.rotation?.comparison;
+    const cycle = api.rotation?.cycle;
     const timeline = rotation?.sustainability?.timeline ?? [];
 
     const depleting = sustain.filter((entry) => entry.lasts_hours !== null);
@@ -128,7 +129,41 @@ export function StatsForNerds() {
                             <Row label={t("profile.base.nerds.shiftsMatching")}>
                                 {comparison.matching_cells} / {comparison.production_cells}
                             </Row>
+                            {comparison.preset_legs_hours.length > 0 && <Row label={t("profile.base.nerds.presetLegs")}>{comparison.preset_legs_hours.map((h) => t("profile.base.nerds.hours", { hours: Math.round(h) })).join(" / ")}</Row>}
                             {comparison.matching_cells === comparison.production_cells && comparison.production_cells > 0 && <p className="text-[11px] text-emerald-400">{t("profile.base.nerds.presetsMatch")}</p>}
+                        </Section>
+                    )}
+
+                    {cycle && (
+                        <Section title={t("profile.base.nerds.cycle")}>
+                            <p className="text-[11px] text-muted-foreground">{t("profile.base.nerds.cycle.note")}</p>
+                            <Row label={t("profile.base.nerds.cycleLegs")}>{cycle.legs.map((l) => t("profile.base.nerds.hours", { hours: Math.round(l.hours) })).join(" / ")}</Row>
+                            {comparison && (
+                                <>
+                                    <Row label={t("profile.base.nerds.productionEfficiency")}>
+                                        {Math.round(comparison.recommended.production_efficiency)}% &rarr; {Math.round(cycle.value.production_efficiency)}% <Delta from={comparison.recommended.production_efficiency} suffix="%" to={cycle.value.production_efficiency} />
+                                    </Row>
+                                    <Row label={t("profile.base.headline.lmd")}>
+                                        {num(comparison.recommended.lmd_per_day, f)} &rarr; {num(cycle.value.lmd_per_day, f)} <Delta from={comparison.recommended.lmd_per_day} to={cycle.value.lmd_per_day} />
+                                    </Row>
+                                    <Row label={t("profile.base.headline.exp")}>
+                                        {num(comparison.recommended.exp_per_day, f)} &rarr; {num(cycle.value.exp_per_day, f)} <Delta from={comparison.recommended.exp_per_day} to={cycle.value.exp_per_day} />
+                                    </Row>
+                                    <Row label={t("profile.base.nerds.totalValue")}>
+                                        {num(comparison.recommended.total_value, f)} &rarr; {num(cycle.value.total_value, f)} <Delta from={comparison.recommended.total_value} to={cycle.value.total_value} />
+                                    </Row>
+                                </>
+                            )}
+                            {cycle.legs[0]?.rooms
+                                .filter((r) => r.room_type === "TRADING" || r.room_type === "MANUFACTURE" || r.room_type === "POWER" || r.room_type === "CONTROL")
+                                .map((r, i) => (
+                                    <div className="flex items-baseline gap-3 py-1 text-[11.5px]" key={r.slot_id}>
+                                        <span className="w-24 shrink-0 truncate">{roomLabel(r.room_type, api.catalog)}</span>
+                                        <span className="min-w-0 flex-1 truncate text-muted-foreground">
+                                            {r.operators.map((o) => o.name).join(", ") || "-"} &rarr; {cycle.legs[1]?.rooms[i]?.operators.map((o) => o.name).join(", ") || "-"}
+                                        </span>
+                                    </div>
+                                ))}
                         </Section>
                     )}
 

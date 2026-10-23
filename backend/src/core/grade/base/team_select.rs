@@ -23,7 +23,7 @@ use super::assignment::{
 };
 use super::buff_registry::BuffResolutionStrategy;
 use super::shift_rotation::SHIFT_COUNT;
-use super::sustain_sim::sustains_24h_block;
+use super::sustain_sim::{SHIFT_HOURS, sustains_24h_block};
 use super::types::{OperatorBaseProfile, RoomAssignment, UserRoom};
 use super::util::max_stationed_at_level;
 
@@ -168,9 +168,19 @@ struct MemoKey {
     capacity: i32,
     pool: usize,
     include_automation: bool,
-    require_24h: bool,
+    sustain_hours: u32,
     cc: Vec<String>,
     candidates: Vec<String>,
+}
+
+/// Hours a production crew must last on one bar under `tiling`: a 24h block
+/// or a single 12h shift.
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+fn tenure_hours(tiling: Tiling) -> u32 {
+    match tiling {
+        Tiling::Shifts => SHIFT_HOURS as u32,
+        Tiling::Blocks => (2.0 * SHIFT_HOURS) as u32,
+    }
 }
 
 /// Memo for `enumerate_candidate_teams` over one core-planner run.
@@ -197,7 +207,7 @@ impl EnumerationMemo {
         capacity: i32,
         pool: usize,
         include_automation: bool,
-        require_24h: bool,
+        sustain_hours: u32,
         cc_conditions: &[CcCondition],
     ) -> MemoKey {
         MemoKey {
@@ -207,7 +217,7 @@ impl EnumerationMemo {
             capacity,
             pool,
             include_automation,
-            require_24h,
+            sustain_hours,
             cc: cc_conditions.iter().map(CcCondition::fingerprint).collect(),
             candidates: candidate_pool(
                 room_type,
@@ -218,7 +228,7 @@ impl EnumerationMemo {
                 building_data,
                 morale_drains,
                 include_automation,
-                require_24h,
+                sustain_hours,
             )
             .iter()
             .map(|op| op.char_id.clone())
@@ -547,8 +557,7 @@ fn select_balanced_teams(
                 capacity as i32,
                 pool,
                 spec.room_type == "MANUFACTURE",
-                // A 24h block needs a bar that lasts it; a single 12h shift does not.
-                tiling == Tiling::Blocks,
+                tenure_hours(tiling),
                 cc_conditions,
             );
             let mut teams = memo.get_or_enumerate(key, || {
@@ -570,10 +579,9 @@ fn select_balanced_teams(
                     // Factories can run automation teams (Weedy + facility-count scalers like
                     // Purestream).
                     spec.room_type == "MANUFACTURE",
-                    // 24h blocks: heavy drainers can't finish one. A 12h shift
-                    // they can, so under `Shifts` they stay in the pool (the memo
-                    // key above already carried the tiling; the flag did not).
-                    tiling == Tiling::Blocks,
+                    // A crew must last the tenure its tiling seats it for: a
+                    // 24h block at the baseline drain, a 12h shift at twice it.
+                    tenure_hours(tiling),
                 )
             });
             teams = packing_shortlist(teams, CANDIDATES_PER_GROUP, teams_needed);
@@ -1050,8 +1058,8 @@ fn select_balanced_teams(
 
 /// Seat anyone still free in a team the beam left empty.
 ///
-/// Rotation pools exclude operators whose drain outpaces the bar
-/// (`require_24h_sustain`). On a wide base that pool runs dry and the third team
+/// Rotation pools exclude operators whose drain outpaces the bar over the
+/// tiling's tenure (`sustain_hours`). On a wide base that pool runs dry and the third team
 /// of a two-post group comes back empty, leaving a room dark two shifts of three.
 /// A dark room is a total loss; a heavy drainer produces at full rate until the
 /// bar empties and recovers in a dorm. So relax the 24h rule instead of resting
@@ -1133,7 +1141,7 @@ fn backfill_empty_teams(
                 capacity,
                 BASE_POOL,
                 g.room_type == "MANUFACTURE",
-                false,
+                0,
                 cc_conditions,
             );
             let relaxed = memo.get_or_enumerate(key, || {
@@ -1154,7 +1162,7 @@ fn backfill_empty_teams(
                     BASE_POOL,
                     g.room_type == "MANUFACTURE",
                     // Consider the operators the strict rotation pool threw away.
-                    false,
+                    0,
                 )
             });
             let Some(team) = relaxed.into_iter().find(|t| !t.ops.is_empty()) else {

@@ -412,7 +412,7 @@ fn current_base_lmd_per_day(
             r.order_limit,
         );
     }
-    Some(flows.realized_lmd())
+    Some(flows.lmd_per_day())
 }
 
 /// `(runs per day, LMD per day)` from spending a day's natural sanity on

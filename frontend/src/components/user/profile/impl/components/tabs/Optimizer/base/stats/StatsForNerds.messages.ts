@@ -107,6 +107,22 @@ export const messages = {
         text: "Shift cells matching the plan",
         description: "Row label: how many production room-shift cells of the player's presets already match the recommendation, out of all of them.",
     },
+    "profile.base.nerds.presetLegs": {
+        text: "Your preset cycle",
+        description: "Row label: with two saved presets, how many hours each works per cycle when the player swaps by morale (first until a room runs dry, second until the first has recovered).",
+    },
+    "profile.base.nerds.cycle": {
+        text: "Hand-swapped cycle",
+        description: "Section heading: a two-stationing schedule the optimizer proposes beside the rotation, where the player swaps every room by hand when one runs dry. Rendered uppercase by CSS.",
+    },
+    "profile.base.nerds.cycle.note": {
+        text: "Work the first crews until a room runs dry, then the second until the first have recovered. The game's Rotate cannot run this; swap by hand. Figures compare with the recommended rotation.",
+        description: "Note under the hand-swapped cycle section.",
+    },
+    "profile.base.nerds.cycleLegs": {
+        text: "Cycle",
+        description: "Row label: the hours each of the two legs works per cycle, e.g. '34h / 19h'.",
+    },
     "profile.base.nerds.presetsMatch": {
         text: "Your presets match the recommended rotation.",
         description: "Shown when every production cell of the player's presets matches the recommendation.",

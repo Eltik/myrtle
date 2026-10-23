@@ -19,6 +19,14 @@ export const messages = {
         text: "EXP / day",
         description: "Headline figure: experience produced per day. 'EXP' is the game's own abbreviation.",
     },
+    "profile.base.headline.drones": {
+        text: "Drones / day",
+        description: "Headline figure: drones the base regenerates per day (240 at the base rate plus the Power Plants' recovery skills).",
+    },
+    "profile.base.headline.drones.hint": {
+        text: "+{lmd} LMD · +{exp} EXP",
+        description: "Sub-line under the drones figure: what spending the day's drones on production adds, already included in the LMD and EXP headlines. Keep the middle dot.",
+    },
     "profile.base.headline.power": {
         text: "Power",
         description: "Headline figure: the base's net electricity. Rendered uppercase by CSS.",

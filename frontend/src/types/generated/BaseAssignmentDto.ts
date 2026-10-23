@@ -15,4 +15,13 @@ export type BaseAssignmentDto = {
      * LMD-equivalent of everything combined (LMD + EXP at 1:1).
      */
     yield_total_value: number;
+    /**
+     * Drones regenerated per day: 240 at the base rate plus the plants'
+     * recovery skills. Spent on the best gold line up to what the posts can
+     * sell beyond the factories' supply, else on the best EXP line; the LMD and
+     * EXP figures above include what they add, split out here.
+     */
+    drones_per_day: number;
+    drone_lmd_per_day: number;
+    drone_exp_per_day: number;
 };

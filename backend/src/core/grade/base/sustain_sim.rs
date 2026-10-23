@@ -17,12 +17,14 @@ use super::clause::{ClauseKind, Metric, clauses_from_strategy};
 use super::shift_rotation::ShiftRotation;
 use super::types::{OperatorBaseProfile, UserBuilding};
 
-pub(crate) const MORALE_MAX: f64 = 24.0;
+pub const MORALE_MAX: f64 = 24.0;
 /// Baseline drain while working: one point per hour (8,640,000 ap over 24h).
 const GAME_BASE_MORALE_DRAIN: f64 = 1.0;
 /// Skills slow drain but never stop it (the planner's floor).
 const MIN_MORALE_DRAIN: f64 = 0.05;
-const SHIFT_HOURS: f64 = 12.0;
+/// Hours between two rotates: a shift. Shared by the rotation (crew tenure)
+/// and the presets valuation.
+pub const SHIFT_HOURS: f64 = 12.0;
 /// A week: enough cycles for slow leaks to surface.
 pub const SIM_HORIZON_HOURS: f64 = 168.0;
 
@@ -95,7 +97,19 @@ pub fn game_morale_drain(op: &OperatorBaseProfile, morale_drains: &HashMap<Strin
 /// shortfall is the simulator's report, not a seating rule. Keeps heavy drainers
 /// out of 24h seats (production, Squad 1) but eligible for single-shift Squad 2.
 pub fn sustains_24h_block(op: &OperatorBaseProfile, morale_drains: &HashMap<String, f64>) -> bool {
-    game_morale_drain(op, morale_drains) <= GAME_BASE_MORALE_DRAIN + 1e-9
+    sustains_hours(op, morale_drains, 2.0 * SHIFT_HOURS)
+}
+
+/// Whether a full bar lasts `hours` of work at the operator's drain: 24h at the
+/// 1.0/h baseline, a 12h shift up to 2.0/h. The rotation's pools filter on the
+/// tenure their tiling seats (a 12h-shift crew that cannot finish a shift read
+/// as fine once the 24h flag was dropped for `Shifts`, 2026-10-23).
+pub fn sustains_hours(
+    op: &OperatorBaseProfile,
+    morale_drains: &HashMap<String, f64>,
+    hours: f64,
+) -> bool {
+    game_morale_drain(op, morale_drains) * hours <= MORALE_MAX + 1e-9
 }
 
 /// Which shifts an operator works and where, from the rotation's cells.

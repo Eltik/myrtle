@@ -27,4 +27,11 @@ export type RotationComparisonDto = {
      * Production room-shift cells in the recommended rotation.
      */
     production_cells: number;
+    /**
+     * With two saved presets, the hours each works per cycle when the player
+     * swaps by morale (the first until a room runs dry, the second until the
+     * first has recovered); the preset figures weight each leg by it. Empty
+     * when the presets are read as equal shifts.
+     */
+    preset_legs_hours: Array<number>;
 };
