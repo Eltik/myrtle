@@ -1,10 +1,10 @@
 //! Mirrors the served roots of one server's local tree into the store.
 //!
 //! The diff is content-hashed: every extract rewrites every file, so mtimes
-//! say nothing. A remote object of the same size whose ETag equals the local
-//! MD5 is unchanged. A multipart ETag (it contains `-`) is not an MD5, so
+//! say nothing. A remote object of the same size whose `ETag` equals the local
+//! MD5 is unchanged. A multipart `ETag` (it contains `-`) is not an MD5, so
 //! those objects are compared through the manifest at
-//! `<root>/<server>/.asset-sync.json`, which records the MD5 and ETag of what
+//! `<root>/<server>/.asset-sync.json`, which records the MD5 and `ETag` of what
 //! was uploaded. Uploads finish before any delete starts, so a reader
 //! following a fresh reference never finds a gap.
 //!
@@ -342,13 +342,15 @@ impl Manifest {
     /// `sync` and `restore` use [`Manifest::read`].
     #[must_use]
     pub fn load(path: &Path) -> Self {
-        match std::fs::read(path) {
-            Ok(raw) => serde_json::from_slice(&raw).unwrap_or_else(|e| {
-                warn!(path = %path.display(), error = %e, "manifest unreadable, starting empty");
-                Self::default()
-            }),
-            Err(_) => Self::default(),
-        }
+        std::fs::read(path).map_or_else(
+            |_| Self::default(),
+            |raw| {
+                serde_json::from_slice(&raw).unwrap_or_else(|e| {
+                    warn!(path = %path.display(), error = %e, "manifest unreadable, starting empty");
+                    Self::default()
+                })
+            },
+        )
     }
 
     /// Writes through a temp file, fsync and rename, so a crash leaves the
@@ -424,7 +426,7 @@ struct Walked {
     files: Vec<LocalFile>,
     skipped: usize,
     missing_roots: Vec<String>,
-    walked_roots: Vec<String>,
+    roots: Vec<String>,
 }
 
 fn is_skipped_name(name: &str) -> bool {
@@ -448,7 +450,7 @@ fn walk_local(server_dir: &Path, roots: &[String]) -> Result<Walked, String> {
         files: Vec::new(),
         skipped: 0,
         missing_roots: Vec::new(),
-        walked_roots: Vec::new(),
+        roots: Vec::new(),
     };
     for root in roots {
         let dir = server_dir.join(root);
@@ -457,7 +459,7 @@ fn walk_local(server_dir: &Path, roots: &[String]) -> Result<Walked, String> {
             walked.missing_roots.push(root.clone());
             continue;
         }
-        walked.walked_roots.push(root.clone());
+        walked.roots.push(root.clone());
         let entries = walkdir::WalkDir::new(&dir)
             .follow_links(false)
             .into_iter()
@@ -860,7 +862,7 @@ pub async fn run_sync(
     };
     // Records under a root this run did not walk (a narrower `--roots`, a
     // root missing locally) stay as they were: their stubs still need them.
-    let walked_roots: HashSet<&str> = walked.walked_roots.iter().map(String::as_str).collect();
+    let walked_roots: HashSet<&str> = walked.roots.iter().map(String::as_str).collect();
     let in_walked_root = |rel: &str| {
         rel.split_once('/')
             .is_some_and(|(first, _)| walked_roots.contains(first))
@@ -974,14 +976,10 @@ pub async fn run_sync(
         } else if opts.dry_run {
             report.deleted = doomed.len();
         } else {
-            let batches: Vec<Vec<String>> = doomed
-                .chunks(DELETE_BATCH)
-                .map(<[String]>::to_vec)
-                .collect();
             let mut deleted = futures::stream::iter(
-                batches
-                    .into_iter()
-                    .map(|batch| delete_with_retry(store, batch, opts.retry_base)),
+                doomed
+                    .chunks(DELETE_BATCH)
+                    .map(|batch| delete_with_retry(store, batch.to_vec(), opts.retry_base)),
             )
             .buffer_unordered(opts.concurrency.max(1));
             while let Some(results) = deleted.next().await {

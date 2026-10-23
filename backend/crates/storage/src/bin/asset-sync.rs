@@ -237,6 +237,7 @@ fn delivery_guard(config: &StorageConfig) -> Result<(), String> {
     }
 }
 
+#[allow(clippy::too_many_lines)]
 async fn run(cli: Cli) -> u8 {
     if let Err(e) = load_env(cli.command.env_files()) {
         eprintln!("asset-sync: {e}");

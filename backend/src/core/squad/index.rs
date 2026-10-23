@@ -268,7 +268,7 @@ static PLACEHOLDER: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new
 
 /// The keys of every placeholder the template prints as DP gained: right
 /// before "DP" or "Deployment Point", not a DP Cost change ("-{cost}</> DP
-/// Cost", SilverAsh the Reignfrost S2) and not a spend ("Consumes"). Of a
+/// Cost", `SilverAsh` the Reignfrost S2) and not a spend ("Consumes"). Of a
 /// range ("{ground}-{floor} DP randomly", Chilchuck S1) the low end, the DP
 /// sure to come. 52 EN skills carry a positive `cost`; the keys name the
 /// amount where `cost` is only the drip tick (`{value}`, `{trig_cnt}`), add

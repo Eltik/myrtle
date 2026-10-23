@@ -41,7 +41,7 @@ pub struct RestoreOptions {
 
 impl RestoreOptions {
     #[must_use]
-    pub fn new(
+    pub const fn new(
         root: PathBuf,
         server: String,
         bucket: String,

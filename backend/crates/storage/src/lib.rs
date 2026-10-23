@@ -43,11 +43,11 @@ pub fn open_store(config: &StorageConfig) -> Result<Arc<dyn ObjectStore>, Storag
 #[must_use]
 pub fn delivery_log_line(mode: DeliveryMode, storage: Option<&StorageConfig>) -> String {
     let none = || "none".to_owned();
-    match storage {
-        None => format!(
+    storage.map_or_else(
+        || format!(
             "asset delivery: {mode} (S3_TYPE=off, bucket=none, prefix=none, public=none, roots=none)"
         ),
-        Some(c) => format!(
+        |c| format!(
             "asset delivery: {mode} (S3_TYPE={}, bucket={}, prefix={}, public={}, roots={})",
             c.kind,
             if c.bucket.is_empty() {
@@ -63,5 +63,5 @@ pub fn delivery_log_line(mode: DeliveryMode, storage: Option<&StorageConfig>) ->
             c.public_url.clone().unwrap_or_else(none),
             c.roots.join(","),
         ),
-    }
+    )
 }

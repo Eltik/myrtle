@@ -20,7 +20,9 @@ pub const URI_COMPONENT: &AsciiSet = &NON_ALPHANUMERIC
     .remove(b')');
 
 /// `rel` as the key's tail: leading slashes and `.` segments dropped, joined
-/// with `/`. `None` for anything the backend's `validate_asset_path` rejects
+/// with `/`.
+///
+/// `None` for anything the backend's `validate_asset_path` rejects
 /// (`..`, NUL) and for an empty path. A backslash is kept as a literal
 /// character, as on the Unix filesystem the tree lives on.
 #[must_use]

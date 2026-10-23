@@ -1273,7 +1273,7 @@ pub async fn optimize(
 static PLAN_CACHE: std::sync::LazyLock<
     dashmap::DashMap<String, (std::time::Instant, std::sync::Arc<AcceptedEconomy>)>,
 > = std::sync::LazyLock::new(dashmap::DashMap::new);
-const PLAN_CACHE_TTL: std::time::Duration = std::time::Duration::from_secs(10 * 60);
+const PLAN_CACHE_TTL: std::time::Duration = std::time::Duration::from_mins(10);
 const PLAN_CACHE_CAP: usize = 64;
 
 fn plan_cache_key(

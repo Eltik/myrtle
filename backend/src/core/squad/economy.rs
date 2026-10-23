@@ -105,7 +105,7 @@ fn talent_start_bonus(f: &TextFacts, board: &Board) -> bool {
 /// reading, the amount is the sum of the blackboard keys the text prints as
 /// DP gained (`TextFacts::dp_gain`): `{cost}` for a one-off gain, `{value}`
 /// or `{trig_cnt}` for a drip whose tick is `cost`, none for a DP Cost cut
-/// (SilverAsh the Reignfrost S2 `cost` 11) or a spend (Hadiya S2). Without
+/// (`SilverAsh` the Reignfrost S2 `cost` 11) or a spend (Hadiya S2). Without
 /// one, a key `cost` (or a namespaced `...[cost].cost`) > 0 marks a DP skill
 /// and a drip (`interval` present) states its total in `value` or
 /// `fake_cost` (Myrtle S1: `cost` 1 every `interval` 0.57 s, `value` 14).

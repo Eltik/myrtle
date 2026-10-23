@@ -1,9 +1,9 @@
 //! A directory standing in for the bucket (`S3_TYPE=local`).
 //!
-//! Objects live at `<root>/<key>`. The ETag is the MD5 of the file, as S3
+//! Objects live at `<root>/<key>`. The `ETag` is the MD5 of the file, as S3
 //! reports for a single-part upload. A sidecar under `<root>/.meta/<key>.json`
-//! keeps the `Content-Type`, `Cache-Control` and ETag an upload set, so a
-//! multipart upload keeps its multipart-shaped ETag and tests can read back
+//! keeps the `Content-Type`, `Cache-Control` and `ETag` an upload set, so a
+//! multipart upload keeps its multipart-shaped `ETag` and tests can read back
 //! what the sync engine sent. A missing sidecar falls back to the guessed type
 //! and the computed MD5.
 
@@ -109,7 +109,7 @@ fn etag_matches(if_none_match: &str, quoted: &str) -> bool {
 
 impl LocalStore {
     #[must_use]
-    pub fn new(root: PathBuf) -> Self {
+    pub const fn new(root: PathBuf) -> Self {
         Self { root }
     }
 

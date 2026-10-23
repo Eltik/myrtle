@@ -117,8 +117,10 @@ pub fn parse_keep(raw: &str) -> Result<Vec<String>, ConfigError> {
 }
 
 /// Truncates the file at `path` to 0 bytes in place and puts its mtime back
-/// to what it was (truncation would otherwise stamp it with now; see the
-/// module doc for why that matters). The file is opened for writing with
+/// to what it was.
+///
+/// Truncation would otherwise stamp it with now; see the module doc for why
+/// that matters. The file is opened for writing with
 /// truncation, never removed or recreated, so its inode and any open handle
 /// stay valid. Blocking: call it from `spawn_blocking`.
 ///

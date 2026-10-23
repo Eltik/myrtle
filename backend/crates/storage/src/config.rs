@@ -40,7 +40,7 @@ pub enum StorageKind {
     Cloudflare,
     /// Amazon S3 (`aws`).
     Aws,
-    /// Any other S3-compatible server: MinIO, Backblaze, Garage (`s3`).
+    /// Any other S3-compatible server: `MinIO`, Backblaze, Garage (`s3`).
     S3,
     /// A plain directory standing in for the bucket (`local`, alias `fs`).
     Local,
@@ -140,7 +140,7 @@ fn require(
     name: &'static str,
     kind: StorageKind,
 ) -> Result<String, ConfigError> {
-    get(lookup, name).ok_or(ConfigError::Missing {
+    get(lookup, name).ok_or_else(|| ConfigError::Missing {
         var: name,
         kind: kind.to_string(),
     })
@@ -201,9 +201,9 @@ fn parse_positive<T: FromStr + PartialEq + Default>(
     name: &'static str,
     default: T,
 ) -> Result<T, ConfigError> {
-    match get(lookup, name) {
-        None => Ok(default),
-        Some(v) => match v.parse::<T>() {
+    get(lookup, name).map_or_else(
+        || Ok(default),
+        |v| match v.parse::<T>() {
             Ok(n) if n != T::default() => Ok(n),
             _ => Err(ConfigError::Invalid {
                 var: name,
@@ -211,7 +211,7 @@ fn parse_positive<T: FromStr + PartialEq + Default>(
                 reason: "expected a positive integer",
             }),
         },
-    }
+    )
 }
 
 fn parse_bool(
@@ -219,18 +219,15 @@ fn parse_bool(
     name: &'static str,
     default: bool,
 ) -> Result<bool, ConfigError> {
-    match get(lookup, name) {
-        None => Ok(default),
-        Some(v) => match v.to_ascii_lowercase().as_str() {
-            "1" | "true" | "yes" => Ok(true),
-            "0" | "false" | "no" => Ok(false),
-            _ => Err(ConfigError::Invalid {
-                var: name,
-                value: v,
-                reason: "expected 1 or 0",
-            }),
-        },
-    }
+    get(lookup, name).map_or(Ok(default), |v| match v.to_ascii_lowercase().as_str() {
+        "1" | "true" | "yes" => Ok(true),
+        "0" | "false" | "no" => Ok(false),
+        _ => Err(ConfigError::Invalid {
+            var: name,
+            value: v,
+            reason: "expected 1 or 0",
+        }),
+    })
 }
 
 /// `scheme://host[:port]` of an endpoint URL, dropping any path and
@@ -239,14 +236,14 @@ fn parse_bool(
 #[must_use]
 pub fn normalize_endpoint(raw: &str) -> String {
     let raw = raw.trim();
-    match raw.find("://") {
-        Some(i) => {
+    raw.find("://").map_or_else(
+        || raw.split('/').next().unwrap_or(raw).to_owned(),
+        |i| {
             let rest = &raw[i + 3..];
             let host = rest.split(['/', '?', '#']).next().unwrap_or(rest);
             format!("{}{host}", &raw[..i + 3])
-        }
-        None => raw.split('/').next().unwrap_or(raw).to_owned(),
-    }
+        },
+    )
 }
 
 /// Splits a comma list, trimming entries and dropping empty ones.
@@ -277,6 +274,7 @@ impl StorageConfig {
     /// # Errors
     /// An unknown `S3_TYPE`, a variable the kind requires that is missing,
     /// or a value that does not parse. Each error names the variable.
+    #[allow(clippy::too_many_lines)]
     pub fn from_lookup(
         lookup: &dyn Fn(&str) -> Option<String>,
     ) -> Result<Option<Self>, ConfigError> {
@@ -303,13 +301,14 @@ impl StorageConfig {
         };
 
         let endpoint = match kind {
-            StorageKind::Cloudflare => match explicit_endpoint {
-                Some(e) => Some(e),
-                None => {
+            StorageKind::Cloudflare => {
+                if let Some(e) = explicit_endpoint {
+                    Some(e)
+                } else {
                     let account = account_id.clone().ok_or_else(|| missing(&ACCOUNT_ID))?;
                     Some(format!("https://{account}.r2.cloudflarestorage.com"))
                 }
-            },
+            }
             StorageKind::S3 => Some(explicit_endpoint.ok_or_else(|| missing(&ENDPOINT))?),
             StorageKind::Aws | StorageKind::Local => explicit_endpoint,
         };
@@ -471,10 +470,12 @@ impl DeliveryMode {
                 }
             }),
         };
-        let mode = explicit.unwrap_or(if storage.public_url.is_some() {
-            Self::Redirect
-        } else {
-            Self::Proxy
+        let mode = explicit.unwrap_or_else(|| {
+            if storage.public_url.is_some() {
+                Self::Redirect
+            } else {
+                Self::Proxy
+            }
         });
         if mode == Self::Redirect && storage.public_url.is_none() {
             return Err(ConfigError::RedirectWithoutPublicUrl);

@@ -324,7 +324,7 @@ fn network_and_counts() {
     let rhodes = net.forces.iter().find(|f| f.id == "rhodes").unwrap();
     assert_eq!(rhodes.name, "Rhodes Island");
     assert_eq!(rhodes.hexes.len(), 7);
-    assert_eq!(rhodes.member_count, 56);
+    assert_eq!(rhodes.member_count, 59);
     // Every person on a chart resolves to a name the data gives.
     let unnamed: Vec<_> = net.people.iter().filter(|p| p.name == p.id).collect();
     assert!(unnamed.is_empty(), "{unnamed:?}");

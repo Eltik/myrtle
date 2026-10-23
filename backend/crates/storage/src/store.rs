@@ -27,8 +27,8 @@ pub enum StorageError {
 pub struct ObjectMeta {
     pub key: String,
     pub size: u64,
-    /// The ETag without its quotes. A `-` in it marks a multipart upload,
-    /// whose ETag is not the MD5 of the content.
+    /// The `ETag` without its quotes. A `-` in it marks a multipart upload,
+    /// whose `ETag` is not the MD5 of the content.
     pub etag: Option<String>,
     pub content_type: Option<String>,
 }
@@ -44,7 +44,7 @@ pub struct GetOptions {
 /// [`StorageError::NotFound`] instead. 304 and 416 carry an empty body.
 pub struct GetResult {
     pub status: u16,
-    /// The ETag with its quotes, as it goes on the wire.
+    /// The `ETag` with its quotes, as it goes on the wire.
     pub etag: Option<String>,
     pub content_type: Option<String>,
     pub content_length: Option<u64>,
@@ -93,11 +93,11 @@ pub trait ObjectStore: Send + Sync {
 
     async fn get(&self, key: &str, opts: GetOptions) -> Result<GetResult, StorageError>;
 
-    /// Single-request upload. Returns the stored ETag without quotes.
+    /// Single-request upload. Returns the stored `ETag` without quotes.
     async fn put(&self, key: &str, object: PutObject) -> Result<String, StorageError>;
 
     /// Multipart upload of the file at `path` in `part_size` pieces, aborted
-    /// on failure so no orphaned parts are billed. Returns the stored ETag
+    /// on failure so no orphaned parts are billed. Returns the stored `ETag`
     /// without quotes.
     async fn put_multipart_file(
         &self,
@@ -136,7 +136,7 @@ pub fn content_type_for(path: &str) -> String {
     }
 }
 
-/// Strips the surrounding quotes (and a weak `W/` marker) from an ETag.
+/// Strips the surrounding quotes (and a weak `W/` marker) from an `ETag`.
 #[must_use]
 pub fn unquote_etag(etag: &str) -> String {
     etag.trim()
