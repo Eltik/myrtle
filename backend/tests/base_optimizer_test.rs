@@ -43,7 +43,10 @@ fn generic_base() -> UserBuilding {
     rooms.extend((0..2).map(|i| room(&format!("tp{i}"), "TRADING", 3)));
     rooms.extend((0..4).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
     rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
-    UserBuilding { rooms }
+    UserBuilding {
+        drone_capacity: None,
+        rooms,
+    }
 }
 
 /// Every operator with base skills, at E2-max: a deep, user-independent roster
@@ -176,6 +179,7 @@ fn trading_post(level: i32) -> UserBuilding {
 
 fn single_room(room_type: &str, level: i32) -> UserBuilding {
     UserBuilding {
+        drone_capacity: None,
         rooms: vec![UserRoom {
             slot_id: "slot_1".into(),
             room_type: room_type.into(),
@@ -293,6 +297,7 @@ fn control_center_is_surfaced_in_the_assignment() {
     let gd = load_game_data();
 
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![
             UserRoom {
                 slot_id: "slot_cc".into(),
@@ -595,6 +600,7 @@ fn weedy_is_not_padded_into_a_normal_factory() {
     // where gold specialists don't apply). The generic +30% pair are the normal
     // team; Texas has no factory skill and is the natural filler.
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("mf", "MANUFACTURE", 3), room("pp", "POWER", 3)],
     };
     let roster = vec![
@@ -629,6 +635,7 @@ fn metalwork_specialists_take_gold_freeing_generics_for_exp() {
 
     // Two factories (one Gold to feed the trading post, one EXP) + a trading post.
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![
             room("mf0", "MANUFACTURE", 3),
             room("mf1", "MANUFACTURE", 3),
@@ -1036,6 +1043,7 @@ fn control_center_same_type_buffs_do_not_stack() {
     // The global buff a CC team grants, read off an empty trading post.
     let trading_global = |cc: &[&str]| -> f64 {
         let building = UserBuilding {
+            drone_capacity: None,
             rooms: vec![
                 UserRoom {
                     slot_id: "cc".into(),
@@ -1085,6 +1093,7 @@ fn control_center_clauseless_buffs_stack() {
 
     let manu_global = |cc: &[&str]| -> f64 {
         let building = UserBuilding {
+            drone_capacity: None,
             rooms: vec![
                 UserRoom {
                     slot_id: "cc".into(),
@@ -1240,6 +1249,7 @@ fn viviana_knight_buff_reaches_pinus_knights_like_wild_mane() {
 
     let factory_eff = |cc: &[&str], factory: &[&str]| -> f64 {
         let building = UserBuilding {
+            drone_capacity: None,
             rooms: vec![
                 UserRoom {
                     slot_id: "cc".into(),
@@ -1310,6 +1320,7 @@ fn faction_gated_cc_bonus_does_not_inflate_a_nonmatching_post() {
     .collect();
 
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![
             UserRoom {
                 slot_id: "cc".into(),
@@ -1383,7 +1394,10 @@ fn weedy_is_treated_as_power_scaling_automation() {
         }
         let asn = compute_optimal_assignment(
             &weedy,
-            &UserBuilding { rooms },
+            &UserBuilding {
+                drone_capacity: None,
+                rooms,
+            },
             &gd.building,
             &registry,
             &drains,
@@ -1411,7 +1425,10 @@ fn gold_exp_split_is_yield_based() {
     let mut rooms = vec![room("cc", "CONTROL", 5), room("tp", "TRADING", 3)];
     rooms.extend((0..4).map(|i| room(&format!("f{i}"), "MANUFACTURE", 3)));
     rooms.extend((0..3).map(|i| room(&format!("p{i}"), "POWER", 3)));
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
 
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
@@ -1444,6 +1461,7 @@ fn current_preset_shifts_are_distinct() {
     let profiles = full_roster(gd);
     // A trading post with two distinct planned shifts.
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![UserRoom {
             slot_id: "tp".into(),
             room_type: "TRADING".into(),
@@ -1535,6 +1553,7 @@ fn low_morale_drain_teams_sustain_better_longevity_axis() {
     let sustain_fraction = |op: &str| -> f64 {
         let roster = vec![profile(gd, op)];
         let building = UserBuilding {
+            drone_capacity: None,
             rooms: vec![UserRoom {
                 slot_id: "mf".into(),
                 room_type: "MANUFACTURE".into(),
@@ -1583,6 +1602,7 @@ fn current_assignment_reflects_live_base() {
     // A base where the player has stationed a deliberately mediocre crew (plain
     // flat traders / factory ops), so the optimizer has room to improve.
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![
             room("cc", "CONTROL", 5),
             UserRoom {
@@ -1859,6 +1879,7 @@ fn conditional_cc_buff_is_not_credited_when_its_gate_cannot_be_met() {
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
 
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("cc", "CONTROL", 5), room("tp", "TRADING", 3)],
     };
     let roster = vec![
@@ -1897,6 +1918,7 @@ fn degenbrecher_is_not_used_in_a_trading_post_without_cap_synergy() {
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
 
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("tp", "TRADING", 3)],
     };
     let roster = vec![
@@ -1933,6 +1955,7 @@ fn cross_formula_reallocation_frees_a_generic_for_exp() {
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
 
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![
             room("g", "MANUFACTURE", 3),
             room("e", "MANUFACTURE", 3),
@@ -1967,6 +1990,7 @@ fn texas_is_not_a_standalone_rotation_backup_without_lappland() {
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("tp", "TRADING", 3), room("d0", "DORMITORY", 3)],
     };
     // Three strong traders staff the post; Texas (no Lappland) and one ordinary
@@ -2004,6 +2028,7 @@ fn low_level_dorms_reduce_sustained_output() {
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
     let layout = |dorm_lv: i32| UserBuilding {
+        drone_capacity: None,
         rooms: vec![
             room("tp", "TRADING", 3),
             room("mf", "MANUFACTURE", 3),
@@ -2035,6 +2060,7 @@ fn a_locked_synergy_crew_is_relieved_by_the_next_shift_like_any_other() {
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![
             room("tp", "TRADING", 3),
             room("mf", "MANUFACTURE", 3),
@@ -2103,7 +2129,10 @@ fn an_idle_gold_factory_bounds_its_posts_instead_of_selling_from_stock() {
             mf.current_operators = crew.iter().map(|s| (*s).to_string()).collect();
             rooms.push(mf);
         }
-        let building = UserBuilding { rooms };
+        let building = UserBuilding {
+            drone_capacity: None,
+            rooms,
+        };
         let asn =
             compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
         sustained_assignment_value(&asn, &roster, &building, &gd.building, &registry, &drains)
@@ -2144,7 +2173,10 @@ fn bubbles_tiers_take_priority_over_vermeils_recycling() {
         let mut mf = room("mf", "MANUFACTURE", 3);
         mf.current_formula = Some("F_EXP".into());
         mf.current_operators = crew.iter().map(|s| (*s).to_string()).collect();
-        let building = UserBuilding { rooms: vec![mf] };
+        let building = UserBuilding {
+            drone_capacity: None,
+            rooms: vec![mf],
+        };
         let roster: Vec<_> = crew.iter().map(|id| profile(gd, id)).collect();
         let asn = backend::core::grade::base::assignment::compute_current_assignment(
             &roster,
@@ -2219,6 +2251,7 @@ fn a_scoped_proposal_leaves_every_other_room_as_drafted_and_never_worsens_the_ro
         r
     };
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![
             crewed("cc", "CONTROL", 5, &["char_002_amiya"], None),
             crewed("tp0", "TRADING", 3, &[TEXAS, LAPPLAND, EXUSIAI], None),
@@ -2324,6 +2357,7 @@ fn gravel_counts_as_a_knight_for_vivianas_glimmer() {
         mf.current_formula = Some("F_GOLD".into());
         mf.current_operators = vec![GRAVEL.into()];
         let building = UserBuilding {
+            drone_capacity: None,
             rooms: vec![control, mf],
         };
         let roster: Vec<_> = cc
@@ -2372,6 +2406,7 @@ fn hoshigumas_camaraderie_fires_beside_another_lgd_operator() {
         mf.current_formula = Some("F_GOLD".into());
         mf.current_operators = vec![GRAVEL.into()];
         let building = UserBuilding {
+            drone_capacity: None,
             rooms: vec![control, mf],
         };
         let roster: Vec<_> = cc
@@ -2445,6 +2480,7 @@ fn bellones_rider_fires_with_vigil_resting_in_a_dormitory() {
             _ => {}
         }
         let building = UserBuilding {
+            drone_capacity: None,
             rooms: vec![post, mf, dorm],
         };
         let roster = vec![profile(gd, BELLONE), profile(gd, VIGIL)];
@@ -2533,6 +2569,7 @@ fn a_robot_token_is_parked_dead_when_its_gate_and_an_exclusion_gate_both_pay() {
         r
     };
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![
             room("cc", "CONTROL", 5),
             room("tp0", "TRADING", 3),
@@ -2685,6 +2722,7 @@ fn a_dominant_value_shape_does_not_hide_the_proviso_free_level_three_crew() {
         r
     };
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![
             room("cc", "CONTROL", 5),
             room("tp3", "TRADING", 3),
@@ -2782,7 +2820,10 @@ fn wangs_expedience_counts_effective_power_plants_for_influence() {
             }
             rooms.push(mf);
         }
-        let building = UserBuilding { rooms };
+        let building = UserBuilding {
+            drone_capacity: None,
+            rooms,
+        };
         let roster: Vec<_> = [WANG, EUNECTES, LANCET, GRAVEL, LIVE_PLANT_OP, TEXAS]
             .iter()
             .map(|id| profile(gd, id))
@@ -2952,6 +2993,7 @@ fn a_small_roster_falls_back_to_the_24h_blocks() {
     .map(|id| profile(gd, id))
     .collect();
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![
             room("tp0", "TRADING", 3),
             room("tp1", "TRADING", 3),
@@ -2993,6 +3035,7 @@ fn dead_conditional_cc_operator_is_dropped_after_assignment() {
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("cc", "CONTROL", 5), room("tp", "TRADING", 3)],
     };
     let roster = vec![
@@ -3033,6 +3076,7 @@ fn morale_operator_takes_a_spare_cc_seat_and_lifts_sustain() {
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
     let layout = UserBuilding {
+        drone_capacity: None,
         rooms: vec![
             room("cc", "CONTROL", 5),
             room("tp", "TRADING", 3),
@@ -3092,7 +3136,10 @@ fn insufficient_dorm_capacity_throttles_sustained_output() {
         let mut rooms = vec![room("tp0", "TRADING", 3), room("tp1", "TRADING", 3)];
         rooms.extend((0..4).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
         rooms.extend((0..dorms).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
-        UserBuilding { rooms }
+        UserBuilding {
+            drone_capacity: None,
+            rooms,
+        }
     };
     let roster = full_roster(gd);
     let cramped =
@@ -3193,6 +3240,7 @@ fn set_count_tracks_real_rest_demand_not_seat_count() {
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("mf", "MANUFACTURE", 3), room("d0", "DORMITORY", 3)],
     };
     let sets_for = |ids: &[&str]| {
@@ -3243,7 +3291,10 @@ fn weedy_is_not_suggested_as_a_rotation_backup() {
         .collect();
     rooms.push(room("p0", "POWER", 3));
     rooms.push(room("d0", "DORMITORY", 3));
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let roster: Vec<_> = [
         "char_242_otter",
         "char_4141_marcil",
@@ -3398,6 +3449,7 @@ fn proviso_is_not_staffed_in_a_shamare_post() {
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![
             room("t0", "TRADING", 3),
             room("t1", "TRADING", 3),
@@ -3445,7 +3497,10 @@ fn shift_rotation_forms_three_overlapping_shifts() {
     rooms.extend((0..4).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
     rooms.extend((0..3).map(|i| room(&format!("p{i}"), "POWER", 3)));
     rooms.extend((0..2).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let rot = recommend_shift_rotation(
         &full_roster(gd),
         &building,
@@ -3644,6 +3699,7 @@ fn facility_count_enabler_counts_only_from_her_seat() {
     let gd = load_game_data();
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("f", "MANUFACTURE", 3), room("p0", "POWER", 3)],
     };
     let roster = vec![
@@ -3683,6 +3739,7 @@ fn vermeil_converts_her_own_capacity() {
     // real productivity bonus (~+16% at +2%/cap), not score a flat 0 (the self-exclusion bug).
     let gd = load_game_data();
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("mf", "MANUFACTURE", 3)],
     };
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
@@ -3713,7 +3770,10 @@ fn optimal_with_empty_pins_is_identical_to_the_plain_optimum() {
     rooms.extend((0..4).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
     rooms.extend((0..3).map(|i| room(&format!("pp{i}"), "POWER", 3)));
     rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let roster: Vec<_> = [
         "char_002_amiya",
         "char_003_kalts",
@@ -3772,7 +3832,10 @@ fn bd_base_243() -> UserBuilding {
     rooms.extend((0..4).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
     rooms.extend((0..3).map(|i| room(&format!("pp{i}"), "POWER", 3)));
     rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
-    UserBuilding { rooms }
+    UserBuilding {
+        drone_capacity: None,
+        rooms,
+    }
 }
 
 /// Owns at least one Control Center buff.
@@ -4082,6 +4145,7 @@ fn enforcer_loses_to_chen_in_reception_because_he_burns_out() {
     let gd = load_game_data();
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("rc", "MEETING", 3)],
     };
     let roster: Vec<_> = [ENFORCER, CHEN, FEATER]
@@ -4129,7 +4193,10 @@ fn factory_formula_assignment_respects_the_players_current_layout() {
     rooms.push(fac("mf2", "F_GOLD"));
     rooms.push(fac("mf3", "F_GOLD"));
     rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
 
     let asn = compute_optimal_assignment(
         &full_roster(gd),
@@ -4170,6 +4237,7 @@ fn preset_24_7_operator_with_fiammetta_is_kept_every_shift_and_flagged() {
     // The player runs Proviso in BOTH saved presets of the trading post (a deliberate 24/7 hold)
     // and owns Fiammetta to sustain her.
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![UserRoom {
             slot_id: "tp".into(),
             room_type: "TRADING".into(),
@@ -4244,6 +4312,7 @@ fn without_a_manager_the_24_7_preset_operator_still_rests_the_middle_shift() {
     const QUARTZ: &str = "char_4063_quartz";
     // Same 24/7 preset, but NO morale-swap manager owned -> she is not held 24/7.
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![UserRoom {
             slot_id: "tp".into(),
             room_type: "TRADING".into(),
@@ -4307,7 +4376,10 @@ fn rest_shift_does_not_keep_a_main_team_operator_working() {
     use backend::core::grade::base::shift_rotation::{Shift, ShiftRoom, ShiftRotation};
     let gd = load_game_data();
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
-    let building = UserBuilding { rooms: vec![] };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms: vec![],
+    };
     let profiles: Vec<OperatorBaseProfile> = vec![];
     let exp = |slot: &str, rec: &[&str], cur: &[&str]| ShiftRoom {
         slot_id: slot.into(),
@@ -4413,7 +4485,10 @@ fn power_plant_is_equivalent_when_drone_recovery_matches() {
     let gd = load_game_data();
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
     let profiles: Vec<_> = [PUDDING, INDIGO].iter().map(|id| profile(gd, id)).collect();
-    let building = UserBuilding { rooms: vec![] };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms: vec![],
+    };
     let rotation = ShiftRotation {
         parked: Vec::new(),
         shifts: vec![Shift {
@@ -4468,6 +4543,7 @@ fn base_wide_bonus_applies_only_when_the_partner_works_a_work_area() {
             .sum()
     };
     let with_work_area = UserBuilding {
+        drone_capacity: None,
         rooms: vec![
             room("tp", "TRADING", 3),
             room("rr", "MEETING", 3),
@@ -4475,6 +4551,7 @@ fn base_wide_bonus_applies_only_when_the_partner_works_a_work_area() {
         ],
     };
     let without_work_area = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("tp", "TRADING", 3), room("d0", "DORMITORY", 5)],
     };
     let with = trading_eff(&with_work_area);
@@ -4502,6 +4579,7 @@ fn quartz_value_reflects_distinct_recipe_types_not_factory_count() {
         ..Default::default()
     };
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![
             room("tp", "TRADING", 3),
             fac("m0", "F_GOLD"),
@@ -4540,7 +4618,10 @@ fn synergy_pairs_stay_co_teamed_and_all_three_teams_are_staffed() {
     let mut rooms = vec![room("cc", "CONTROL", 5), room("d0", "DORMITORY", 5)];
     rooms.extend((0..2).map(|i| room(&format!("tp{i}"), "TRADING", 3)));
     rooms.extend((0..2).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let roster: Vec<_> = [
         TEXAS,
         LAPPLAND,
@@ -4598,6 +4679,7 @@ fn owning_fiammetta_proactively_sustains_the_best_trading_operator() {
     let gd = load_game_data();
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("tp", "TRADING", 3), room("d0", "DORMITORY", 5)],
     };
     // Six trading BODIES besides the manager: the rotation reserves Fiammetta into
@@ -4650,6 +4732,7 @@ fn gold_starved_post_sustains_tequila_and_rotates_shamare_and_bibeak() {
     let gd = load_game_data();
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![
             room("tp", "TRADING", 3),
             room("mf", "MANUFACTURE", 3),
@@ -4759,7 +4842,10 @@ fn sui_worldly_plight_is_one_shared_pool_read_whole_by_every_consumer() {
     for (i, id) in fillers.iter().enumerate() {
         rooms[3 + i / 5].current_operators.push(id.clone());
     }
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let eff = |live: HashMap<String, f64>| {
         let asn = compute_live_assignment(
             &roster,
@@ -4817,7 +4903,10 @@ fn room_counts_include_the_holder_mizuki_and_morgan() {
     rooms[0].current_operators = vec![VANILLA.into(), JESSICA.into(), MIZUKI.into()];
     rooms[0].current_formula = Some("F_EXP".into());
     rooms[1].current_operators = vec![MORGAN.into(), SIEGE.into()];
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let roster: Vec<_> = [MIZUKI, VANILLA, JESSICA, MORGAN, SIEGE]
         .iter()
         .map(|id| profile(gd, id))
@@ -4858,7 +4947,10 @@ fn astgenne_backpack_is_storage_capacity_not_productivity() {
     let mut rooms = vec![room("mf", "MANUFACTURE", 3)];
     rooms[0].current_operators = vec![ASTGENNE.into(), DOROTHY.into(), SILENCE2.into()];
     rooms[0].current_formula = Some("F_GOLD".into());
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let roster: Vec<_> = [ASTGENNE, DOROTHY, SILENCE2]
         .iter()
         .map(|id| profile(gd, id))
@@ -4905,7 +4997,10 @@ fn flametail_buffs_pinus_operators_by_product() {
         rooms[0].current_operators = vec![FLAMETAIL.into()];
         rooms[1].current_operators = knights.iter().map(|s| (*s).to_string()).collect();
         rooms[1].current_formula = Some(formula.into());
-        let building = UserBuilding { rooms };
+        let building = UserBuilding {
+            drone_capacity: None,
+            rooms,
+        };
         let mut ids = vec![FLAMETAIL];
         ids.extend(knights);
         let roster: Vec<_> = ids.iter().map(|id| profile(gd, id)).collect();
@@ -4971,7 +5066,10 @@ fn eunectes_plant_count_needs_her_seat_and_lancet_in_a_plant() {
                 .current_operators
                 .push(id.into());
         }
-        let building = UserBuilding { rooms };
+        let building = UserBuilding {
+            drone_capacity: None,
+            rooms,
+        };
         let asn =
             compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
         asn.rooms
@@ -5011,7 +5109,10 @@ fn nasti_counts_every_rhine_lab_operator_in_the_base_including_herself() {
     let mut rooms = vec![room("mf", "MANUFACTURE", 3)];
     rooms[0].current_operators = vec![NASTI.into(), DOROTHY.into(), SILENCE2.into()];
     rooms[0].current_formula = Some("F_GOLD".into());
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let roster: Vec<_> = [NASTI, DOROTHY, SILENCE2]
         .iter()
         .map(|id| profile(gd, id))
@@ -5053,7 +5154,10 @@ fn justice_knight_in_a_plant_boosts_wild_manes_factory() {
             .unwrap()
             .current_operators
             .push(JUSTICE_KNIGHT.into());
-        let building = UserBuilding { rooms };
+        let building = UserBuilding {
+            drone_capacity: None,
+            rooms,
+        };
         let asn =
             compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
         asn.rooms
@@ -5087,7 +5191,10 @@ fn bubble_pays_per_capacity_point_by_tier() {
     let mut rooms = vec![room("mf", "MANUFACTURE", 3)];
     rooms[0].current_operators = vec![BUBBLE.into(), CEOBE.into(), BENA.into()];
     rooms[0].current_formula = Some("F_EXP".into());
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let roster: Vec<_> = [BUBBLE, CEOBE, BENA]
         .iter()
         .map(|id| profile(gd, id))
@@ -5114,7 +5221,10 @@ fn vigil_reads_the_reception_room_level() {
         if let Some(lv) = reception {
             rooms.push(room("rr", "MEETING", lv));
         }
-        let building = UserBuilding { rooms };
+        let building = UserBuilding {
+            drone_capacity: None,
+            rooms,
+        };
         let asn =
             compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
         asn.rooms
@@ -5171,7 +5281,10 @@ fn snegurochka_room_grant_survives_the_automation_wipe() {
         rooms.extend((0..3).map(|i| room(&format!("pp{i}"), "POWER", 3)));
         rooms[0].current_operators = crew.iter().map(|s| (*s).to_string()).collect();
         rooms[0].current_formula = Some("F_EXP".into());
-        let building = UserBuilding { rooms };
+        let building = UserBuilding {
+            drone_capacity: None,
+            rooms,
+        };
         let asn =
             compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
         asn.rooms
@@ -5212,7 +5325,10 @@ fn dead_lancet_unlocks_both_plant_counts() {
     rooms[1].current_formula = Some("F_EXP".into());
     rooms[2].current_operators = vec![GREYY.into()];
     rooms[3].current_operators = vec![LANCET.into()];
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let weedy = |lancet_morale: f64| {
         let live = HashMap::from([(LANCET.to_string(), lancet_morale)]);
         compute_live_assignment(
@@ -5273,7 +5389,10 @@ fn shamare_bibeak_tequila_form_the_post_on_a_deep_roster() {
     let roster: Vec<_> = ids.iter().map(|id| profile(gd, id)).collect();
     let mut rooms = vec![room("tp", "TRADING", 3), room("mf", "MANUFACTURE", 3)];
     rooms.extend((0..2).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
     let tp = asn
         .rooms
@@ -5315,7 +5434,10 @@ fn pozemka_counts_gold_lines_and_resting_durins() {
         if park {
             rooms[3].current_operators = durins.iter().map(|s| (*s).to_string()).collect();
         }
-        let building = UserBuilding { rooms };
+        let building = UserBuilding {
+            drone_capacity: None,
+            rooms,
+        };
         let asn =
             compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
         asn.rooms
@@ -5350,6 +5472,7 @@ fn base_count_bundle_pins_durins_into_the_dormitories() {
     ];
     let roster: Vec<_> = ids.iter().map(|id| profile(gd, id)).collect();
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("tp", "TRADING", 3), room("d0", "DORMITORY", 5)],
     };
     let bundles = candidate_bundles(&roster, &building, &gd.building, &registry);
@@ -5381,7 +5504,10 @@ fn mantra_keeps_her_flat_base_not_a_per_operator_count() {
     rooms[0].current_operators = vec![MANTRA.into()];
     rooms[1].current_operators = vec![EXUSIAI.into()];
     rooms[1].current_formula = Some("F_EXP".into());
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let roster: Vec<_> = [MANTRA, EXUSIAI].iter().map(|id| profile(gd, id)).collect();
     let asn =
         compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
@@ -5428,7 +5554,10 @@ fn virtuosa_feeds_ebenholz_from_her_own_dormitory() {
         if with_virtuosa {
             rooms[1].current_operators.push(VIRTUOSA.into());
         }
-        let building = UserBuilding { rooms };
+        let building = UserBuilding {
+            drone_capacity: None,
+            rooms,
+        };
         let asn =
             compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
         asn.rooms
@@ -5460,7 +5589,10 @@ fn kazemaru_solo_gate_fires_beside_a_dead_roommate() {
     let roster: Vec<_> = [KAZEMARU, BODY].iter().map(|id| profile(gd, id)).collect();
     let mut rooms = vec![room("rr", "MEETING", 3)];
     rooms[0].current_operators = vec![KAZEMARU.into(), BODY.into()];
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let clue = |body_morale: f64| {
         let live = HashMap::from([(BODY.to_string(), body_morale)]);
         compute_live_assignment(
@@ -5529,7 +5661,10 @@ fn iris_and_czerny_feed_perception_per_own_dormitory_level() {
         rooms[0].current_operators = vec![ROSMONTIS.into()];
         rooms[0].current_formula = Some("F_EXP".into());
         rooms[1].current_operators = vec![IRIS.into(), CZERNY.into()];
-        let building = UserBuilding { rooms };
+        let building = UserBuilding {
+            drone_capacity: None,
+            rooms,
+        };
         compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None)
             .rooms
             .iter()
@@ -5562,7 +5697,10 @@ fn whisperain_fragments_follow_the_office_level() {
         rooms[0].current_operators = vec![ROSMONTIS.into()];
         rooms[0].current_formula = Some("F_EXP".into());
         rooms[1].current_operators = vec![WHISPERAIN.into()];
-        let building = UserBuilding { rooms };
+        let building = UserBuilding {
+            drone_capacity: None,
+            rooms,
+        };
         compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None)
             .rooms
             .iter()
@@ -5614,7 +5752,10 @@ fn reception_row_carries_ambience_innate_and_dead_seat_rules() {
     let clue = |crew: &[&str], live: HashMap<String, f64>| {
         let mut rooms = vec![room("rr", "MEETING", 3)];
         rooms[0].current_operators = crew.iter().map(|s| (*s).to_string()).collect();
-        let building = UserBuilding { rooms };
+        let building = UserBuilding {
+            drone_capacity: None,
+            rooms,
+        };
         compute_live_assignment(
             &roster,
             &building,
@@ -5662,6 +5803,7 @@ fn pinned_support_seats_report_their_own_figure() {
         .map(|id| profile(gd, id))
         .collect();
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("mf", "MANUFACTURE", 3), room("hr", "HIRE", 3)],
     };
     let pins = vec![(WHISPERAIN.to_string(), "HIRE".to_string())];
@@ -5712,7 +5854,10 @@ fn morgan_siege_proviso_with_delphine_read_ninety_five() {
     let mut rooms = vec![room("cc", "CONTROL", 5), room("tp", "TRADING", 2)];
     rooms[0].current_operators = vec![DELPHINE.into()];
     rooms[1].current_operators = vec![MORGAN.into(), SIEGE.into(), PROVISO.into()];
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let asn =
         compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
     let tp = asn
@@ -5827,7 +5972,10 @@ fn kjerag_posts_read_the_games_six_measured_figures() {
         if gnosis {
             rooms[1].current_operators = vec![GNOSIS.into()];
         }
-        let building = UserBuilding { rooms };
+        let building = UserBuilding {
+            drone_capacity: None,
+            rooms,
+        };
         let asn =
             compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
         let tp = asn.rooms.iter().find(|r| r.slot_id == "tp").unwrap();
@@ -5879,6 +6027,7 @@ fn mixed_level_posts_price_each_post_at_its_own_level() {
     let roster = vec![profile(gd, PROVISO)];
     let seated_in = |slot: &str| {
         let mut building = UserBuilding {
+            drone_capacity: None,
             rooms: vec![room("tp3", "TRADING", 3), room("tp2", "TRADING", 2)],
         };
         for r in &mut building.rooms {
@@ -5890,6 +6039,7 @@ fn mixed_level_posts_price_each_post_at_its_own_level() {
     };
     let alone_at = |level: i32| {
         let mut building = UserBuilding {
+            drone_capacity: None,
             rooms: vec![room("tp", "TRADING", level)],
         };
         building.rooms[0].current_operators = vec![PROVISO.to_string()];
@@ -5979,7 +6129,10 @@ fn viviana_synergy_flips_the_cc_to_a_block_aligned_with_her_knights() {
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
     let mut rooms = vec![room("cc", "CONTROL", 5), room("d0", "DORMITORY", 5)];
     rooms.extend((0..2).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let roster: Vec<_> = [
         VIVIANA,
         WILD_MANE,
@@ -6045,7 +6198,10 @@ fn leniency_marks_a_close_team_equivalent_and_surfaces_the_gap() {
     const QUARTZ: &str = "char_4063_quartz"; // +30% (+recipe types, 0 here)
     let gd = load_game_data();
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
-    let building = UserBuilding { rooms: vec![] };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms: vec![],
+    };
     let profiles: Vec<_> = [EXUSIAI, NBLADE, FRNCAT, QUARTZ, "char_211_adnach"]
         .iter()
         .map(|id| profile(gd, id))
@@ -6105,15 +6261,19 @@ fn leniency_marks_a_close_team_equivalent_and_surfaces_the_gap() {
 #[test]
 fn drone_capacity_skill_scales_with_the_bases_actual_capacity() {
     // Greyy the Lightningbearer's "+1% Drone recovery rate for every 10 max Drone capacity
-    // (Max +25%)" reads the base's REAL drone capacity: 100 base + 45 per L3 Power Plant.
-    // On a full 243 (3x L3 plants = 235 drones) that's +23.5%, under the +25% cap, not AT it.
+    // (Max +25%)" reads the base's REAL drone capacity. A fixture names no floorplan
+    // slot, so it reads as the fully built floorplan: 235 drones (`InitMaxLabor` plus
+    // every slot's `ProvideLabor`), +23.5%, under the +25% cap, not AT it.
     use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
     const GREYY_ALTER: &str = "char_1027_greyy2";
     let gd = load_game_data();
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
     let mut rooms = vec![room("d0", "DORMITORY", 5)];
     rooms.extend((0..3).map(|i| room(&format!("p{i}"), "POWER", 3)));
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let roster = vec![profile(gd, GREYY_ALTER)];
     let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &[]);
     let cell = rot.shifts[0]
@@ -6125,6 +6285,36 @@ fn drone_capacity_skill_scales_with_the_bases_actual_capacity() {
     assert!(
         (eff - 23.5).abs() < 0.1,
         "3x L3 plants = 235 drones -> +23.5% (not the +25% cap), got {eff}"
+    );
+}
+
+#[test]
+fn a_synced_drone_capacity_overrides_the_floorplan_rule() {
+    // The capacity used to be 100 plus a per-Power-Plant table, which read a base at
+    // 235 drones as 190 (+19%, report 2026-10-23). The synced `status.labor.maxValue`
+    // is the figure the game shows; when the base carries it, the skill reads it.
+    use backend::core::grade::base::assignment::drone_capacity;
+    let gd = load_game_data();
+    let mut building = UserBuilding {
+        rooms: vec![room("p0", "POWER", 3)],
+        drone_capacity: None,
+    };
+    assert_eq!(
+        drone_capacity(&building, &gd.building),
+        235,
+        "fixture = full floorplan"
+    );
+    building.drone_capacity = Some(190);
+    assert_eq!(drone_capacity(&building, &gd.building), 190);
+    // A base that names real slots reads the slots it has built.
+    let real = UserBuilding {
+        rooms: vec![room("slot_34", "CONTROL", 5), room("slot_7", "POWER", 3)],
+        drone_capacity: None,
+    };
+    let built = drone_capacity(&real, &gd.building);
+    assert!(
+        built > 0 && built < 235,
+        "two built slots read between 0 and 235, got {built}"
     );
 }
 
@@ -6774,6 +6964,7 @@ fn delphine_needs_glasgow_traders_to_earn_her_cc_seat() {
         .expect("some operator owns Delphine's skill");
 
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![
             room("cc", "CONTROL", 5),
             room("tp", "TRADING", 3),
@@ -6914,6 +7105,7 @@ fn rotation_squad2_evicts_conditional_cc_ops_no_team_satisfies() {
     // in no plannable team, so Delphine may hold a seat in NO shift's Control
     // Center, squad 2's leftover fill included.
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("cc", "CONTROL", 5), room("d0", "DORMITORY", 2)],
     };
     let roster: Vec<OperatorBaseProfile> = [
@@ -7012,6 +7204,7 @@ fn fiammetta_swap_rate_bounds_who_she_can_sustain() {
     // A base with no dormitory cannot host her at all: no pin, no sustain.
     use backend::core::grade::base::dorms::morale_manager_pin;
     let no_dorms = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("cc", "CONTROL", 5), room("tp", "TRADING", 3)],
     };
     assert!(
@@ -7114,6 +7307,7 @@ fn dorm_levels_and_staffed_boosters_shape_recovery() {
         bench: Vec::new(),
     };
     let building_with = |dorm_level: i32| UserBuilding {
+        drone_capacity: None,
         rooms: vec![
             room("tp", "TRADING", 3),
             room("d0", "DORMITORY", dorm_level),
@@ -7181,7 +7375,10 @@ fn rotation_emits_dorm_cells_with_resters_and_staff() {
     rooms.push(room("d_hi", "DORMITORY", 5));
     rooms.push(room("d_lo1", "DORMITORY", 1));
     rooms.push(room("d_lo2", "DORMITORY", 1));
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &[]);
 
     let mut saw_rester = false;
@@ -7272,6 +7469,7 @@ fn cc_base_wide_recovery_stretches_swap_clocks() {
         .expect("some operator owns a base-wide CC recovery aura");
 
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![
             room("cc", "CONTROL", 5),
             room("tp", "TRADING", 3),
@@ -7315,6 +7513,7 @@ fn aura_immunity_and_formula_drain_shape_the_sim() {
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
     let targeted = targeted_morale_effects(&gd.building.buffs, &name_to_char);
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("mf", "MANUFACTURE", 3), room("d0", "DORMITORY", 2)],
     };
     // A 36h unbroken factory stretch: depletion hour = 24 / effective drain.
@@ -7397,6 +7596,7 @@ fn targeted_morale_effects_follow_co_seating() {
     let targeted = targeted_morale_effects(&gd.building.buffs, &name_to_char);
 
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("cc", "CONTROL", 5), room("d0", "DORMITORY", 2)],
     };
     // A 36h unbroken CC stretch, so depletion hour = 24 / effective drain.
@@ -7492,6 +7692,7 @@ fn cc_recovery_auras_offset_cc_workers_drain_only() {
         .expect("some operator owns the CC recovery aura");
 
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![
             room("cc", "CONTROL", 5),
             room("tp", "TRADING", 3),
@@ -7666,6 +7867,7 @@ fn lasts_hours_reads_the_room_drain_aura() {
         .expect("some operator owns the trading drain aura");
 
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("tp", "TRADING", 3), room("d0", "DORMITORY", 2)],
     };
     let hours_of = |ids: &[&str]| -> f64 {
@@ -7896,6 +8098,7 @@ fn alanna_bundle_pins_robots_into_power_seats() {
     // One L3 plant = one seat: the bundle must cap its pins there even with
     // two robots in the roster.
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("p0", "POWER", 3), room("mf0", "MANUFACTURE", 3)],
     };
     let bundles = candidate_bundles(&ops, &building, &gd.building, &registry);
@@ -7918,6 +8121,7 @@ fn alanna_bundle_pins_robots_into_power_seats() {
 
     // No power plant built -> no robot bundle to offer.
     let no_power = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("mf0", "MANUFACTURE", 3)],
     };
     assert!(
@@ -7975,6 +8179,7 @@ fn trading_order_cap_scales_with_post_level() {
     let roster = vec![profile(gd, DEGENBRECHER)];
     let post_at = |level: i32| {
         let mut building = UserBuilding {
+            drone_capacity: None,
             rooms: vec![room("tp0", "TRADING", level)],
         };
         building.rooms[0].current_operators = vec![DEGENBRECHER.to_string()];
@@ -8037,6 +8242,7 @@ fn automation_wipe_is_room_gated() {
         .map(|id| profile(gd, id))
         .collect();
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("tp0", "TRADING", 3)],
     };
     let with_weedy = team_value(
@@ -8092,7 +8298,10 @@ fn shift_rotation_supports_252_layout() {
     rooms.extend((0..5).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
     rooms.extend((0..2).map(|i| room(&format!("p{i}"), "POWER", 3)));
     rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let rot = recommend_shift_rotation(
         &full_roster(gd),
         &building,
@@ -8211,7 +8420,10 @@ fn recommended_rotation_survives_its_own_morale_sim() {
         rooms.extend((0..factories).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
         rooms.extend((0..(7 - factories)).map(|i| room(&format!("p{i}"), "POWER", 3)));
         rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
-        let building = UserBuilding { rooms };
+        let building = UserBuilding {
+            drone_capacity: None,
+            rooms,
+        };
         let roster = full_roster(gd);
         let rot =
             recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &[]);
@@ -8274,7 +8486,10 @@ fn morale_sim_flags_underbuilt_dorms() {
     rooms.extend((0..4).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
     rooms.extend((0..3).map(|i| room(&format!("p{i}"), "POWER", 3)));
     rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 1)));
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let roster = full_roster(gd);
     let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &[]);
     let report = simulate_rotation(
@@ -8348,7 +8563,10 @@ fn minimalist_engineering_robots_settle_from_the_layout() {
     let ops = vec![profile(gd, MINIMALIST)];
     let team = vec![MINIMALIST.to_string()];
     let value_with = |rooms: Vec<UserRoom>| {
-        let building = UserBuilding { rooms };
+        let building = UserBuilding {
+            drone_capacity: None,
+            rooms,
+        };
         team_value(
             &team,
             "MANUFACTURE",
@@ -8427,6 +8645,7 @@ fn senshi_monster_meals_settle_against_live_seats() {
         let mut tp = room("tp0", "TRADING", 3);
         tp.current_operators = vec![CHILCHUCK.to_string()];
         UserBuilding {
+            drone_capacity: None,
             rooms: vec![room("cc", "CONTROL", 5), dorm, mf, tp],
         }
     };
@@ -8494,6 +8713,7 @@ fn dorm_fed_pools_and_conversion_chains_settle() {
         let mut tp = room("tp0", "TRADING", 3);
         tp.current_operators = vec![MR_NOTHING.to_string()];
         UserBuilding {
+            drone_capacity: None,
             rooms: vec![room("cc", "CONTROL", 5), dorm, mf, tp],
         }
     };
@@ -8577,6 +8797,7 @@ fn sui_worldly_plight_flows_from_the_control_center() {
         mf.current_formula = Some("F_GOLD".to_string());
         mf.current_operators = vec![SHU.to_string()];
         UserBuilding {
+            drone_capacity: None,
             rooms: vec![cc, mf, room("d0", "DORMITORY", 5)],
         }
     };
@@ -8627,6 +8848,7 @@ fn alanna_counts_robots_in_power_plants() {
         mf.current_formula = Some("F_GOLD".to_string());
         mf.current_operators = vec![ALANNA.to_string()];
         UserBuilding {
+            drone_capacity: None,
             rooms: vec![room("cc", "CONTROL", 5), pp, mf],
         }
     };
@@ -8678,6 +8900,7 @@ fn optimal_search_seats_the_monster_meal_economy() {
     let mut mf = room("mf0", "MANUFACTURE", 3);
     mf.current_formula = Some("F_GOLD".to_string());
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("cc", "CONTROL", 5), mf, room("d0", "DORMITORY", 5)],
     };
 
@@ -8772,7 +8995,10 @@ fn sui_bundle_prices_the_cc_economy_as_a_package() {
 
     let bundles = candidate_bundles(
         &ops,
-        &UserBuilding { rooms: Vec::new() },
+        &UserBuilding {
+            drone_capacity: None,
+            rooms: Vec::new(),
+        },
         &gd.building,
         &registry,
     );
@@ -8857,7 +9083,10 @@ fn reference_parity_252() {
         rooms.push(mf);
     }
     rooms.extend((8..=9).map(|i| room(&format!("production_{i}"), "POWER", 3)));
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
 
     // Full service wiring: native economies + bundles via the oracle.
     let mut optimal_registry = registry.clone();
@@ -8957,6 +9186,7 @@ fn morale_auras_change_the_sustainability_arithmetic() {
     let roster: Vec<OperatorBaseProfile> = ids.iter().map(|id| profile(gd, id)).collect();
 
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("tp", "TRADING", 3), room("d0", "DORMITORY", 2)],
     };
     // A hand-built 3-shift rotation: the trio works shifts 1+2 (a 24h block)
@@ -9051,7 +9281,10 @@ fn shift_rotation_never_rests_a_production_room_with_candidates_to_spare() {
     rooms.extend((0..5).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
     rooms.extend((0..3).map(|i| room(&format!("p{i}"), "POWER", 3)));
     rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
 
     let rot = recommend_shift_rotation(
         &full_roster(gd),
@@ -9354,6 +9587,7 @@ fn skill_ledger_reports_marginals_and_dispositions() {
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
     let mut building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("cc", "CONTROL", 5), room("tp", "TRADING", 3)],
     };
     building.rooms[0].current_operators = vec!["char_4132_ascln".into()];
@@ -9472,6 +9706,7 @@ fn sim_facility_totals_count_dark_shifts_as_idle() {
         bench: Vec::new(),
     };
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("tp", "TRADING", 3), room("d0", "DORMITORY", 5)],
     };
     let profiles = vec![profile(gd, BODY)];
@@ -9558,6 +9793,7 @@ fn dorm_comfort_adds_recovery() {
     use backend::core::grade::base::dorms::dorm_list;
     let gd = load_game_data();
     let mut building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("d0", "DORMITORY", 5), room("d1", "DORMITORY", 5)],
     };
     building.rooms[0].comfort = 5000;
@@ -9667,6 +9903,7 @@ fn ledger_attributes_nonstacking_families_to_one_winner() {
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
     let mut building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![room("cc", "CONTROL", 5), room("tp", "TRADING", 3)],
     };
     building.rooms[0].current_operators = vec!["char_4132_ascln".into(), "char_308_swire".into()];
@@ -9768,6 +10005,7 @@ fn wisadel_conspirator_named_char_grants() {
     // holds the CC, and only that post.
     let build = |cc_crew: Vec<String>| {
         let mut building = UserBuilding {
+            drone_capacity: None,
             rooms: vec![
                 room("cc", "CONTROL", 5),
                 room("tp1", "TRADING", 3),
@@ -9869,6 +10107,7 @@ fn order_value_follows_the_posts_level() {
     const TEQUILA: &str = "char_486_takila";
     let order_value = |crew: &[&str], level: i32| -> f64 {
         let mut building = UserBuilding {
+            drone_capacity: None,
             rooms: vec![room("tp", "TRADING", level)],
         };
         building.rooms[0].current_operators = crew.iter().map(|s| (*s).to_string()).collect();
@@ -9948,7 +10187,10 @@ fn wang_branches_on_layout_counts_and_is_covered_by_amiya_and_kaltsit() {
         rooms.extend((0..posts).map(|i| room(&format!("tp{i}"), "TRADING", 3)));
         rooms.extend((0..factories).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
         rooms.extend((0..plants).map(|i| room(&format!("p{i}"), "POWER", 3)));
-        let mut building = UserBuilding { rooms };
+        let mut building = UserBuilding {
+            drone_capacity: None,
+            rooms,
+        };
         building.rooms[0].current_operators = cc.iter().map(|s| (*s).to_string()).collect();
         // One body in the first post and factory so both rooms score.
         building.rooms[1].current_operators = vec!["char_103_angel".into()];
@@ -10037,6 +10279,7 @@ fn pudding_overclock_needs_two_robots_in_power_plants() {
     );
     let build = |plants: &[&str]| {
         let mut building = UserBuilding {
+            drone_capacity: None,
             rooms: vec![
                 room("cc", "CONTROL", 5),
                 room("mf", "MANUFACTURE", 3),
@@ -10124,6 +10367,7 @@ fn signed_capacity_reproduces_the_games_vermeil_teams() {
     );
     let team = |crew: &[&str]| -> f64 {
         let mut building = UserBuilding {
+            drone_capacity: None,
             rooms: vec![room("mf", "MANUFACTURE", 3)],
         };
         building.rooms[0].current_operators = crew.iter().map(|s| (*s).to_string()).collect();
@@ -10191,6 +10435,7 @@ fn dorothy_counts_rhine_tech_skills_including_her_own() {
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
     let line = |crew: &[&str]| -> f64 {
         let mut building = UserBuilding {
+            drone_capacity: None,
             rooms: vec![room("mf", "MANUFACTURE", 3)],
         };
         building.rooms[0].current_operators = crew.iter().map(|s| (*s).to_string()).collect();
@@ -10232,7 +10477,10 @@ fn shared_dorm_pool_prices_own_origins_and_bundles_the_cofeeder() {
     const MANIFEST: &str = "manu_prod_spd_bd[010]";
     let mut rooms = vec![room("mf", "MANUFACTURE", 3), room("tp", "TRADING", 3)];
     rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     // Deep roster: the projected dorm occupancy fills all 20 beds.
     let mut ids: Vec<&str> = vec![ROSMONTIS, EBENHOLZ];
     ids.extend(
@@ -10297,7 +10545,10 @@ fn dusk_feeds_rosmontis_pool_through_a_control_center_pin() {
     const MANIFEST: &str = "manu_prod_spd_bd[010]";
     let mut rooms = vec![room("mf", "MANUFACTURE", 3), room("cc", "CONTROL", 5)];
     rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let mut ids: Vec<&str> = vec![ROSMONTIS, DUSK];
     ids.extend(
         gd.building
@@ -10374,7 +10625,10 @@ fn live_settlement_reads_dusks_grant_off_her_real_morale() {
     for (i, id) in ids[2..].iter().enumerate() {
         rooms[2 + i / 5].current_operators.push((*id).to_string());
     }
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let factory = |live: HashMap<String, f64>| {
         compute_live_assignment(
             &roster,
@@ -10465,6 +10719,7 @@ fn umiri_stacks_with_amiya_and_labels_per_room() {
     const UMIRI_BUFF: &str = "control_tra_limit&spd2[000]";
     let build = |tp_crew: Vec<String>| {
         let mut building = UserBuilding {
+            drone_capacity: None,
             rooms: vec![room("cc", "CONTROL", 5), room("tp", "TRADING", 3)],
         };
         building.rooms[0].current_operators = vec!["char_002_amiya".into(), UMIRI.into()];
@@ -10591,7 +10846,10 @@ fn a_gold_starved_post_prefers_the_squad_paid_per_bar() {
             r.current_formula = Some("F_GOLD".into());
             r
         }));
-        let building = UserBuilding { rooms };
+        let building = UserBuilding {
+            drone_capacity: None,
+            rooms,
+        };
         let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
         asn.rooms
             .into_iter()
@@ -10608,6 +10866,7 @@ fn a_gold_starved_post_prefers_the_squad_paid_per_bar() {
     // bonus bar Proviso draws is supplied, and her squad earns more.
     let rich = {
         let building = UserBuilding {
+            drone_capacity: None,
             rooms: vec![room("tp", "TRADING", 3)],
         };
         let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
@@ -10662,7 +10921,10 @@ fn accepted_bundles_never_overfill_the_control_center() {
     let mut rooms = vec![room("cc", "CONTROL", 5), room("tp", "TRADING", 3)];
     rooms.extend((0..3).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
     rooms.extend((0..2).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let economy = backend::core::grade::base::pools::search_economy(
         &roster,
         &building,
@@ -10794,7 +11056,10 @@ fn two_posts_on_one_gold_supply_are_crewed_together() {
         r.current_formula = Some("F_GOLD".into());
         rooms.push(r);
     }
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
     let posts: Vec<&_> = asn
         .rooms
@@ -10883,7 +11148,10 @@ fn a_rested_facility_enabler_is_not_counted_in_that_shift() {
     rooms[0].current_formula = Some("F_GOLD".into());
     rooms.extend((0..3).map(|i| room(&format!("pp{i}"), "POWER", 3)));
     rooms.extend((0..2).map(|i| room(&format!("d{i}"), "DORMITORY", 3)));
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &[]);
     // Every production cell is priced against ITS shift's seats: the cell's
     // figure equals the live scoring of the same stationing (Greyy's fourth
@@ -10984,7 +11252,10 @@ fn a_worldly_plight_team_seats_mulberry_in_the_office() {
         r
     }));
     rooms.extend((0..2).map(|i| room(&format!("d{i}"), "DORMITORY", 3)));
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let economy = backend::core::grade::base::pools::search_economy(
         &roster,
         &building,
@@ -11221,6 +11492,7 @@ fn a_frozen_room_keeps_its_crew_and_recipe_while_the_scoped_room_is_planned() {
     let mut open = room("mf_open", "MANUFACTURE", 3);
     open.current_formula = Some("F_EXP".into());
     let building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![frozen, open, room("tp", "TRADING", 3)],
     };
     let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
@@ -11474,6 +11746,7 @@ fn a_gated_cc_grant_line_says_how_many_it_reaches() {
         mf.current_formula = Some("F_GOLD".into());
         mf.current_operators = factory_crew.iter().map(|s| (*s).to_string()).collect();
         let building = UserBuilding {
+            drone_capacity: None,
             rooms: vec![cc, mf],
         };
         let asn =
@@ -11642,7 +11915,10 @@ fn weedy_takes_a_facility_scaled_partner_over_a_second_nullifier() {
     rooms.push(room("tp1", "TRADING", 2));
     rooms.push(room("pp0", "POWER", 3));
     rooms.push(room("pp1", "POWER", 3));
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
     let weedy_room = asn
         .rooms
@@ -11803,7 +12079,10 @@ fn the_rotation_sells_proviso_at_the_lower_post_and_shamare_at_the_higher() {
         rooms.push(r);
     }
     rooms.extend((0..2).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &[]);
     let posts: Vec<(usize, String, Vec<String>)> = rot
         .shifts
@@ -11846,6 +12125,7 @@ fn a_permuted_proposal_is_aligned_to_the_players_slots() {
     let crew_b = vec!["b1".to_string(), "b2".to_string()];
     let crew_c = vec!["c1".to_string()];
     let mut building = UserBuilding {
+        drone_capacity: None,
         rooms: vec![
             room("mf0", "MANUFACTURE", 3),
             room("mf1", "MANUFACTURE", 3),
@@ -11935,7 +12215,10 @@ fn a_knight_trio_is_assembled_with_viviana_in_the_control_center() {
     mf.current_formula = Some("F_GOLD".into());
     rooms.push(mf);
     rooms.extend((0..2).map(|i| room(&format!("d{i}"), "DORMITORY", 3)));
-    let building = UserBuilding { rooms };
+    let building = UserBuilding {
+        drone_capacity: None,
+        rooms,
+    };
     let economy = backend::core::grade::base::pools::search_economy(
         &roster,
         &building,
@@ -12009,6 +12292,7 @@ fn a_base_that_runs_no_gold_keeps_its_exp_factory() {
         let mut mf = room("mf", "MANUFACTURE", 1);
         mf.current_formula = recipe.map(str::to_string);
         let building = UserBuilding {
+            drone_capacity: None,
             rooms: vec![room("tp", "TRADING", 1), mf],
         };
         let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);

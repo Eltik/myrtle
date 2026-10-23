@@ -846,7 +846,7 @@ pub async fn evaluate(
     // Current morale PROJECTED to now: each synced bar has a timestamp and seat, so
     // drain/recovery since the sync is applied first. "Lasts X h" means from now.
     let mut drones_json: Option<serde_json::Value> = None;
-    let (live_morale, morale_synced_hours_ago, synced_bars) =
+    let (live_morale, morale_synced_hours_ago, synced_bars, synced_drone_capacity) =
         match find_by_uid(&state.db, uid).await {
             Ok(Some(user)) => match get_building(&state.db, user.id).await.ok().flatten() {
                 Some(json) => {
@@ -872,11 +872,11 @@ pub async fn evaluate(
                     // Pool counters read the bars as the game last wrote them,
                     // the state the synced base displayed.
                     let synced = crate::core::grade::base::sustain_sim::synced_live_morale(&json);
-                    (projected, age, synced)
+                    (projected, age, synced, real_building.drone_capacity)
                 }
-                None => (HashMap::new(), None, HashMap::new()),
+                None => (HashMap::new(), None, HashMap::new(), None),
             },
-            _ => (HashMap::new(), None, HashMap::new()),
+            _ => (HashMap::new(), None, HashMap::new(), None),
         };
     let building = UserBuilding {
         rooms: req
@@ -884,6 +884,7 @@ pub async fn evaluate(
             .into_iter()
             .map(DraftRoom::into_user_room)
             .collect(),
+        drone_capacity: synced_drone_capacity,
     };
 
     // Scored as stationed. CPU-bound, so on the blocking pool (`cpu::offload`);
@@ -1161,6 +1162,9 @@ pub async fn optimize(
     // every other room, flipped a factory's recipe and left the frozen crews
     // unseated (31010962, 2026-09-20).
     let in_scope: HashSet<&str> = req.scope.iter().map(String::as_str).collect();
+    let synced_drone_capacity = synced_building(state, uid)
+        .await?
+        .and_then(|b| b.drone_capacity);
     let building = UserBuilding {
         rooms: req
             .layout
@@ -1175,6 +1179,7 @@ pub async fn optimize(
                 room
             })
             .collect(),
+        drone_capacity: synced_drone_capacity,
     };
     let mut pins = build_pins(&req.layout, &req.scope, &req.locked);
     let candidates = ctx.profiles_excluding(&req.excluded);
@@ -1372,11 +1377,13 @@ pub async fn rotation(
             .cloned()
             .map(DraftRoom::into_user_room)
             .collect(),
+        drone_capacity: None,
     };
     // The draft carries no presets. The player's saved shifts come from the synced
     // base, so the shift views can diff against them and the rotation aligns its
     // phases to them, as the Score tab's rotation does.
     if let Some(real) = synced_building(state, uid).await? {
+        building.drone_capacity = real.drone_capacity;
         for room in &mut building.rooms {
             if let Some(saved) = real
                 .rooms

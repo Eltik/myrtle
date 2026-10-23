@@ -642,7 +642,10 @@ mod tests {
                     .iter()
                     .map(|(id, count)| ((*id).to_owned(), *count))
                     .collect(),
-                building: UserBuilding { rooms: Vec::new() },
+                building: UserBuilding {
+                    drone_capacity: None,
+                    rooms: Vec::new(),
+                },
                 clears: HashMap::new(),
             }
         }

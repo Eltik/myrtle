@@ -439,6 +439,44 @@ fn trading_uncoupled_lmd(groups: &[PlannedGroup], global_bonuses: &HashMap<Strin
         .sum()
 }
 
+/// The candidates the beam packs from: the best `head` teams by score plus
+/// `rounds` greedy disjoint packings of the whole list, each round skipping
+/// the teams earlier rounds packed.
+///
+/// The score head alone is variations on the same few stars (on a full roster
+/// the top 400 EXP crews all share Wild Mane, Ashlock, Bubble or the like), so
+/// once the first teams take those operators the later slots find no disjoint
+/// candidate and the room is backfilled. Vermeil/Pallas/Scene (105) ranked
+/// 404th behind them, sat idle in every shift, and the third EXP crew read
+/// 100 (2026-10-23 report). Each round walks the whole list best-first and
+/// keeps every team disjoint from the round's earlier picks, so for every
+/// depth the group fills there is a disjoint team built from what the better
+/// teams leave; one round per team the group needs bounds the extra at
+/// `rounds × pool / seats`.
+fn packing_shortlist(teams: Vec<CandidateTeam>, head: usize, rounds: usize) -> Vec<CandidateTeam> {
+    if teams.len() <= head {
+        return teams;
+    }
+    let mut kept: Vec<bool> = (0..teams.len()).map(|i| i < head).collect();
+    let mut packed = vec![false; teams.len()];
+    for _ in 0..rounds {
+        let mut used: HashSet<&str> = HashSet::new();
+        for (i, team) in teams.iter().enumerate() {
+            if packed[i] || team.ops.iter().any(|op| used.contains(op.as_str())) {
+                continue;
+            }
+            used.extend(team.ops.iter().map(String::as_str));
+            packed[i] = true;
+            kept[i] = true;
+        }
+    }
+    teams
+        .into_iter()
+        .zip(kept)
+        .filter_map(|(team, keep)| keep.then_some(team))
+        .collect()
+}
+
 /// Beam-search disjoint teams maximizing `Σ score × cells_worked`, then polish
 /// with local moves. Teams come back in ordinal order (strongest on the widest
 /// block).
@@ -532,11 +570,13 @@ fn select_balanced_teams(
                     // Factories can run automation teams (Weedy + facility-count scalers like
                     // Purestream).
                     spec.room_type == "MANUFACTURE",
-                    // 24h blocks: heavy drainers can't finish one.
-                    true,
+                    // 24h blocks: heavy drainers can't finish one. A 12h shift
+                    // they can, so under `Shifts` they stay in the pool (the memo
+                    // key above already carried the tiling; the flag did not).
+                    tiling == Tiling::Blocks,
                 )
             });
-            teams.truncate(CANDIDATES_PER_GROUP);
+            teams = packing_shortlist(teams, CANDIDATES_PER_GROUP, teams_needed);
             if let Some(pinned) = group_kept
                 && spec.room_type == "TRADING"
             {
@@ -1339,7 +1379,44 @@ fn pad_teams(
 
 #[cfg(test)]
 mod tests {
-    use super::{SHIFT_COUNT, Tiling, teams_for_rooms, tile_group};
+    use super::{SHIFT_COUNT, Tiling, packing_shortlist, teams_for_rooms, tile_group};
+    use crate::core::grade::base::assignment::CandidateTeam;
+
+    fn team(ops: &[&str], score: f64) -> CandidateTeam {
+        CandidateTeam {
+            ops: ops.iter().map(|o| (*o).to_string()).collect(),
+            speed: score,
+            value: score,
+            gold: 0.0,
+            order_limit: None,
+            score,
+        }
+    }
+
+    #[test]
+    fn the_shortlist_keeps_a_disjoint_team_past_the_score_head() {
+        // The head is permutations of the same stars; the first team disjoint from
+        // them sits past it. A score-only cut would lose it and leave the second
+        // room backfilled; the packing round keeps it, in score order.
+        let teams = vec![
+            team(&["a", "b"], 10.0),
+            team(&["a", "c"], 9.0),
+            team(&["b", "c"], 8.0),
+            team(&["d", "e"], 7.0),
+            team(&["a", "d"], 6.0),
+        ];
+        let kept: Vec<Vec<String>> = packing_shortlist(teams, 2, 1)
+            .into_iter()
+            .map(|t| t.ops)
+            .collect();
+        assert_eq!(kept, vec![vec!["a", "b"], vec!["a", "c"], vec!["d", "e"]]);
+    }
+
+    #[test]
+    fn the_shortlist_is_the_whole_list_when_it_fits_the_head() {
+        let teams = vec![team(&["a"], 2.0), team(&["b"], 1.0)];
+        assert_eq!(packing_shortlist(teams, 5, 3).len(), 2);
+    }
 
     #[test]
     fn tiling_invariants_hold_for_small_groups() {

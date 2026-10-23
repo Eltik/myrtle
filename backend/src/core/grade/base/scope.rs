@@ -74,6 +74,7 @@ pub fn settle_scoped_proposal(
                     room
                 })
                 .collect(),
+            drone_capacity: building.drone_capacity,
         };
         let scored = compute_current_assignment(
             operators,

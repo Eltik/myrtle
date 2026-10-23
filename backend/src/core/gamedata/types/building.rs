@@ -75,6 +75,11 @@ pub struct BuildingDataFile {
     #[serde(deserialize_with = "deserialize_fb_map_or_default", default)]
     pub layouts: HashMap<String, LayoutDef>,
 
+    /// Max Drone (Labor) capacity before any slot is built; each built slot adds
+    /// its [`LayoutSlotDef::provide_labor`].
+    #[serde(default)]
+    pub init_max_labor: i32,
+
     /// The furniture catalogue: names and icons for the furniture that event
     /// shops sell.
     #[serde(default)]
@@ -133,6 +138,10 @@ pub struct LayoutSlotDef {
     /// Extent in half-tiles. Every room is 2 rows tall; an elevator is 1 col
     /// wide where everything else is even.
     pub size: RoomSize,
+    /// Max Drone capacity this slot adds once built (corridors and elevators
+    /// included; the 51 slots sum to 235).
+    #[serde(default)]
+    pub provide_labor: i32,
 }
 
 /// One floor of the base.

@@ -186,7 +186,10 @@ pub async fn list_plans(
     let user_building = building_queries::get_building(&state.db, user_id)
         .await?
         .map_or_else(
-            || UserBuilding { rooms: Vec::new() },
+            || UserBuilding {
+                drone_capacity: None,
+                rooms: Vec::new(),
+            },
             |json| UserBuilding::from_json(&json),
         );
     let clears = stages_queries::get_user_stage_clears(&state.db, user_id)

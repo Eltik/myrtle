@@ -2543,20 +2543,11 @@ pub(crate) fn effective_facility_counts_with_inert(
         .count();
     counts.insert(GOLD_LINES.to_string(), gold_lines);
     // The base's max Drone capacity, read by capacity-scaled drone skills (Greyy the
-    // Lightningbearer: "+1% per 10 max Drone capacity"): 100 base plus each Power Plant's
-    // per-level grant. Client-side constants absent from the extracted tables (a full 3x L3
-    // base holds 235 drones, the figure the skill tooltips confirm).
-    let drone_capacity: usize = BASE_DRONE_CAPACITY
-        + building
-            .rooms
-            .iter()
-            .filter(|r| r.room_type == "POWER")
-            .map(|r| {
-                let level = (r.level.max(1) as usize).min(POWER_PLANT_DRONE_CAPACITY.len());
-                POWER_PLANT_DRONE_CAPACITY[level - 1]
-            })
-            .sum::<usize>();
-    counts.insert(DRONE_CAPACITY.to_string(), drone_capacity);
+    // Lightningbearer: "+1% per 10 max Drone capacity").
+    counts.insert(
+        DRONE_CAPACITY.to_string(),
+        drone_capacity(building, building_data),
+    );
     // The base's Reception Room level (Vigil's "+5% per Reception Room level").
     if let Some(lv) = building
         .rooms
@@ -2588,11 +2579,38 @@ pub(crate) fn effective_facility_counts_with_inert(
     counts
 }
 
-/// Max Drone (Labor) capacity with no Power Plants. Client-side constant, not in the
-/// extracted gamedata tables.
-const BASE_DRONE_CAPACITY: usize = 100;
-/// Per-level max-Drone grant of a Power Plant (L1/L2/L3). Client-side constants.
-const POWER_PLANT_DRONE_CAPACITY: [usize; 3] = [20, 30, 45];
+/// The base's max Drone (Labor) capacity. The synced figure when the base carries one
+/// (`status.labor.maxValue`), else the floorplan rule from `building_data`: `InitMaxLabor`
+/// plus every built slot's `ProvideLabor` (corridors and elevators count; the full
+/// floorplan reaches 235). Power Plants add nothing: a 2026-10 report read +19% on a base
+/// at 235 because this used to be 100 plus a per-plant table. A layout whose slot ids are
+/// not the floorplan's (fixtures) reads as fully built.
+pub fn drone_capacity(building: &UserBuilding, building_data: &BuildingDataFile) -> usize {
+    if let Some(cap) = building.drone_capacity {
+        return usize::try_from(cap).unwrap_or(0);
+    }
+    let Some(layout) = building_data.layouts.values().next() else {
+        return 0;
+    };
+    let built: i32 = building
+        .rooms
+        .iter()
+        .filter_map(|r| layout.slots.get(&r.slot_id))
+        .map(|s| s.provide_labor)
+        .sum();
+    let total = if built > 0
+        || building
+            .rooms
+            .iter()
+            .any(|r| layout.slots.contains_key(&r.slot_id))
+    {
+        building_data.init_max_labor + built
+    } else {
+        building_data.init_max_labor + layout.slots.values().map(|s| s.provide_labor).sum::<i32>()
+    };
+    usize::try_from(total).unwrap_or(0)
+}
+
 /// Synthetic `facility_counts` key holding the base's max Drone capacity.
 const DRONE_CAPACITY: &str = "DRONE_CAPACITY";
 

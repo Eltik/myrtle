@@ -296,6 +296,7 @@ mod tests {
         data.rooms
             .insert("DORMITORY".into(), room_def("DORMITORY", 5));
         let building = UserBuilding {
+            drone_capacity: None,
             rooms: vec![
                 room("slot_a", "MANUFACTURE", 1),
                 room("slot_b", "DORMITORY", 2),

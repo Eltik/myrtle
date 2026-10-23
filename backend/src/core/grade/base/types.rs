@@ -7,6 +7,11 @@ use crate::{core::gamedata::types::building::BuildingChar, database::models::ros
 pub struct UserBuilding {
     /// One entry per built slot (`roomSlots` with state > 0 and level > 0).
     pub rooms: Vec<UserRoom>,
+    /// The synced max Drone capacity (`status.labor.maxValue`), read by
+    /// capacity-scaled drone skills. `None` on a draft or fixture: the
+    /// floorplan rule in `building_data` stands in (see
+    /// `assignment::drone_capacity`).
+    pub drone_capacity: Option<i32>,
 }
 
 #[derive(Clone, Default)]
@@ -206,7 +211,16 @@ impl UserBuilding {
                 }
             }
         }
-        Self { rooms }
+        let drone_capacity = data
+            .get("status")
+            .and_then(|s| s.get("labor"))
+            .and_then(|l| l.get("maxValue"))
+            .and_then(serde_json::Value::as_i64)
+            .and_then(|v| i32::try_from(v).ok());
+        Self {
+            rooms,
+            drone_capacity,
+        }
     }
 
     /// Sum of dorm levels, for &dorm&lv scaling.

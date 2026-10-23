@@ -136,7 +136,7 @@ export function RoomPopover({ tile }: { tile: ITile }) {
                 {tile.seats > 0 && <Stat label={t("profile.base.room.staffed")} value={`${tile.operators.length}/${tile.seats}`} />}
                 {power !== 0 && <Stat label={power > 0 ? t("profile.base.room.generates") : t("profile.base.room.draws")} value={t("profile.base.room.power", { kw: Math.abs(power) })} />}
                 {formula && <Stat label={t("profile.base.room.producing")} value={formula.label} />}
-                {efficiency != null && <Stat label={efficiencyLabel} value={`${efficiencyLabelKey === undefined ? "" : "+"}${Math.round(efficiency)}%`} />}
+                {efficiency != null && <Stat label={efficiencyLabel} value={`${efficiencyLabelKey === undefined ? "" : "+"}${efficiencyLabelKey === undefined ? Math.round(efficiency) : Math.round(efficiency * 10) / 10}%`} />}
                 {scored && isProduction(tile.facility ?? "") && scored.yield_lmd_per_day > 0 && <Stat label={t("profile.base.room.lmd")} value={f.number(Math.round(scored.yield_lmd_per_day))} />}
             </dl>
 
