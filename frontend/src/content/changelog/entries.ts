@@ -47,6 +47,20 @@ export interface IReleaseNote {
 
 const ENTRIES: IReleaseNote[] = [
     {
+        id: "2026-10-23",
+        date: "2026-10-23",
+        titleKey: "note.2026-10-23.title",
+        announce: true,
+        leadKey: "note.2026-10-23.lead",
+        items: [
+            { kind: "improved", textKey: "note.2026-10-23.item.1" },
+            { kind: "fixed", textKey: "note.2026-10-23.item.2" },
+            { kind: "fixed", textKey: "note.2026-10-23.item.3" },
+        ],
+        href: "/tools/squad-builder",
+        hrefLabelKey: "note.2026-10-23.hrefLabel",
+    },
+    {
         id: "2026-10-15",
         date: "2026-10-15",
         titleKey: "note.2026-10-15.title",

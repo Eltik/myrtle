@@ -10,6 +10,30 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-10-23.title": {
+        text: "Improved: A better operator picker in the Squad Builder",
+        description: "Title of the 2026-10-23 release note. 'Squad Builder' is a page name and must match its translation.",
+    },
+    "note.2026-10-23.lead": {
+        text: "The Squad Builder's operator picker can now **filter by branch and sort by rarity, name, DP cost or level**, and shows each operator's promotion, potential, skill ranks and modules at a glance.",
+        description: "Lead paragraph of the 2026-10-23 release note, rendered as Markdown. 'Squad Builder' is a page name and must match its translation; DP is deployment points.",
+    },
+    "note.2026-10-23.hrefLabel": {
+        text: "Open the Squad Builder",
+        description: "Label of the 2026-10-23 release note's call to action, which opens the Squad Builder.",
+    },
+    "note.2026-10-23.item.1": {
+        text: "The stage picker marks harder variants such as Adverse Environment, and says when a stage has no map data.",
+        description: "Bullet in the 2026-10-23 release note, filed under 'Improved'. Adverse Environment is a game stage mode and must match its in-game translation.",
+    },
+    "note.2026-10-23.item.2": {
+        text: "Stages from three older mini-events are grouped under their event instead of a story chapter.",
+        description: "Bullet in the 2026-10-23 release note, filed under 'Fixed'.",
+    },
+    "note.2026-10-23.item.3": {
+        text: "The base optimizer reads your base's real drone cap, so Greyy the Lightningbearer's bonus is right on bases above 100 drones, and it no longer leaves strong operators such as Vermeil out of later shifts.",
+        description: "Bullet in the 2026-10-23 release note, filed under 'Fixed'. Greyy the Lightningbearer and Vermeil are operators and keep the game's names; drones are a base resource.",
+    },
     "note.2026-10-15.title": {
         text: "New: See the pity behind every 6★",
         description: "Title of the 2026-10-15 release note. 'Pity' is the guaranteed-6★ counter; 6★ is the top operator rarity.",

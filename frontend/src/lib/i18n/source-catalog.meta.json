@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-22T21:55:00.640Z",
+    "generatedAt": "2026-10-23T11:02:47.351Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -7976,6 +7976,48 @@
             "namespace": "changelog",
             "source_text": "New: See the pity behind every 6★",
             "description": "Title of the 2026-10-15 release note. 'Pity' is the guaranteed-6★ counter; 6★ is the top operator rarity.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-23.hrefLabel",
+            "namespace": "changelog",
+            "source_text": "Open the Squad Builder",
+            "description": "Label of the 2026-10-23 release note's call to action, which opens the Squad Builder.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-23.item.1",
+            "namespace": "changelog",
+            "source_text": "The stage picker marks harder variants such as Adverse Environment, and says when a stage has no map data.",
+            "description": "Bullet in the 2026-10-23 release note, filed under 'Improved'. Adverse Environment is a game stage mode and must match its in-game translation.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-23.item.2",
+            "namespace": "changelog",
+            "source_text": "Stages from three older mini-events are grouped under their event instead of a story chapter.",
+            "description": "Bullet in the 2026-10-23 release note, filed under 'Fixed'.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-23.item.3",
+            "namespace": "changelog",
+            "source_text": "The base optimizer reads your base's real drone cap, so Greyy the Lightningbearer's bonus is right on bases above 100 drones, and it no longer leaves strong operators such as Vermeil out of later shifts.",
+            "description": "Bullet in the 2026-10-23 release note, filed under 'Fixed'. Greyy the Lightningbearer and Vermeil are operators and keep the game's names; drones are a base resource.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-23.lead",
+            "namespace": "changelog",
+            "source_text": "The Squad Builder's operator picker can now **filter by branch and sort by rarity, name, DP cost or level**, and shows each operator's promotion, potential, skill ranks and modules at a glance.",
+            "description": "Lead paragraph of the 2026-10-23 release note, rendered as Markdown. 'Squad Builder' is a page name and must match its translation; DP is deployment points.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-23.title",
+            "namespace": "changelog",
+            "source_text": "Improved: A better operator picker in the Squad Builder",
+            "description": "Title of the 2026-10-23 release note. 'Squad Builder' is a page name and must match its translation.",
             "placeholders": []
         },
         {
