@@ -14,6 +14,7 @@ import { CommandProvider } from "#/lib/command-context";
 import type { IBootstrap } from "#/lib/i18n";
 import { DEFAULT_LOCALE, directionForLocale, I18nProvider } from "#/lib/i18n";
 import { getI18nBootstrapFn } from "#/lib/i18n/server";
+import { SOURCE_CATALOG_URL } from "#/lib/i18n/source";
 import { legacyRedirect } from "#/lib/legacy-routes";
 import { metaT } from "#/lib/meta";
 import { memoBootstrap, memoSession, seedRootContext } from "#/lib/root-context";
@@ -73,7 +74,8 @@ export const Route = createRootRouteWithContext<IMyRouterContext>()({
         });
         return {
             meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }, ...meta],
-            links: [{ rel: "stylesheet", href: appCss }, ...links],
+            // The source catalog downloads beside the entry rather than after it; `crossOrigin` makes the preload match the `fetch()` in `lib/i18n/source.ts`.
+            links: [{ rel: "stylesheet", href: appCss }, ...(SOURCE_CATALOG_URL ? [{ rel: "preload", href: SOURCE_CATALOG_URL, as: "fetch", crossOrigin: "anonymous" as const }] : []), ...links],
         };
     },
     component: RootComponent,

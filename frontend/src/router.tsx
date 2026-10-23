@@ -2,6 +2,7 @@ import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { NotFound } from "#/components/NotFound";
 import { DEFAULT_LOCALE, parseLocaleFromPath } from "#/lib/i18n/locale";
+import { loadSourceCatalog } from "#/lib/i18n/source";
 import { getContext } from "./integrations/tanstack-query/root-provider";
 import { routeTree } from "./routeTree.gen";
 
@@ -61,6 +62,10 @@ function createAppRouter() {
         defaultPreload: "intent",
         defaultPreloadStaleTime: 0,
         defaultNotFoundComponent: NotFound,
+        // Client only, awaited before the first render: the production client
+        // fetches the English source catalog rather than bundling it, and the
+        // hydrated text has to match the server's. See `lib/i18n/source.ts`.
+        hydrate: () => loadSourceCatalog(),
     });
 
     // The integration clears the server QueryClient itself once the response is done (its SSR
