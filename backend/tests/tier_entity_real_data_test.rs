@@ -182,7 +182,7 @@ fn hidden_enemies_resolve_but_are_not_offered() {
         .filter(|(_, e)| e.hide_in_handbook)
         .map(|(id, _)| id.as_str())
         .collect();
-    assert_eq!(hidden.len(), 49);
+    assert_eq!(hidden.len(), 51);
     let offered: HashSet<String> = catalogue(gd, &assets, EntityKind::Enemy)
         .into_iter()
         .map(|s| s.id)
@@ -450,10 +450,10 @@ fn main_story_is_one_entry_per_episode_in_order() {
         "main story {}: {no_icon} without icon, by act {by_act:?}",
         episodes.len()
     );
-    // EN 2026-10-05: Episodes 00 to 16, `main_15` and `main_16` numbered off
+    // EN 2026-10-20: Episodes 00 to 17, `main_15` to `main_17` numbered off
     // their `act*mainss` zones.
-    assert_eq!(episodes.len(), 17);
-    let expected: Vec<String> = (0..17).map(|n| n.to_string()).collect();
+    assert_eq!(episodes.len(), 18);
+    let expected: Vec<String> = (0..18).map(|n| n.to_string()).collect();
     assert_eq!(
         numbers,
         expected

@@ -1230,7 +1230,7 @@ fn talent_scale_reads_the_printed_number() {
         }
     }
     eprintln!("talent scale: {read} of {seen} read, against the magnitude guess: {against:?}");
-    assert_eq!((seen, read), (365, 359));
+    assert_eq!((seen, read), (373, 367));
     assert_eq!(against.len(), 4, "{against:?}");
     assert!(
         against
