@@ -1850,6 +1850,22 @@ pub fn build_registry(
                         base_pct: base,
                         cap_pct: parse_last_pct(&buff.description).map(|c| (c - base).max(0.0)),
                     }
+                }
+                // Viy's Artisan: "+10% for every level of each Training Room level, up
+                // to 30%". The ceiling is on the scaled part (no base).
+                else if prefix.contains("&lv")
+                    && buff
+                        .description
+                        .contains("for every level of each Training Room")
+                {
+                    BuffResolutionStrategy::FacilityCountScaling {
+                        target_room: super::assignment::TRAINING_LEVEL.to_string(),
+                        per_unit_pct: parse_first_pct(&buff.description).unwrap_or(0.0),
+                        per_level: false,
+                        nullifies_others: false,
+                        base_pct: f64::from(buff.efficiency),
+                        cap_pct: parse_last_pct(&buff.description),
+                    }
                 } else if buff.efficiency > 0 {
                     BuffResolutionStrategy::DirectEfficiency {
                         value: f64::from(buff.efficiency),
@@ -2397,6 +2413,9 @@ fn parse_room_presence_gated_global(desc: &str) -> Option<BuffResolutionStrategy
 /// production arms: named = exactly `manu_formula_spd_P[000]` (Gummy, Trading
 /// Post) and `power_rec_spd_P[000]/[001]` (Kal'tsit in CC, Logos as Trainer);
 /// faction = exactly `power_rec_spd_ext&faction[000]` (Laterano, Power Plant).
+/// The group may also be a glossary TAG (`<$cc.tag.op>`: GALLUS²'s "if another
+/// Operation Platform is assigned to a Power Plant"), whose members
+/// [`glossary_tags`] folds into the operators' faction tags.
 fn parse_room_presence_gate(
     desc: &str,
     base_efficiency: f64,
@@ -2410,7 +2429,7 @@ fn parse_room_presence_gate(
     });
     static RE_GATE_FACTION: LazyLock<Regex> = LazyLock::new(|| {
         Regex::new(
-            r"[Ii]f another <\$cc\.g\.([a-z0-9]+)><@cc\.kw>[^<]+</></> Operator is assigned to (?:a|an|the) (Factory|Trading Post|Control Center|Power Plant|Training Room)",
+            r"[Ii]f another <\$cc\.(?:g|tag)\.([a-z0-9]+)><@cc\.kw>[^<]+</></> (?:Operator )?is assigned to (?:a|an|the) (Factory|Trading Post|Control Center|Power Plant|Training Room)",
         )
         .unwrap()
     });

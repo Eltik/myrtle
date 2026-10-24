@@ -5246,6 +5246,45 @@ fn vigil_reads_the_reception_room_level() {
     assert!((eff(None) - 25.0).abs() < 1e-9, "no room: {}", eff(None));
 }
 
+/// Viy's Artisan reads the base's Training Room level: +10 per level, capped at
+/// 30, so a level-3 room gives 30, level 1 gives 10, none gives 0.
+#[test]
+fn viy_reads_the_training_room_level() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    const VIY: &str = "char_4226_veen";
+    let roster: Vec<_> = [VIY].iter().map(|id| profile(gd, id)).collect();
+    let eff = |training: Option<i32>| {
+        let mut rooms = vec![room("f", "MANUFACTURE", 3)];
+        rooms[0].current_operators = vec![VIY.into()];
+        if let Some(lv) = training {
+            rooms.push(room("tr", "TRAINING", lv));
+        }
+        let building = UserBuilding {
+            drone_capacity: None,
+            rooms,
+        };
+        let asn =
+            compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        asn.rooms
+            .iter()
+            .find(|r| r.slot_id == "f")
+            .map_or(0.0, |r| r.total_efficiency)
+    };
+    assert!(
+        (eff(Some(3)) - 30.0).abs() < 1e-9,
+        "level 3: {}",
+        eff(Some(3))
+    );
+    assert!(
+        (eff(Some(1)) - 10.0).abs() < 1e-9,
+        "level 1: {}",
+        eff(Some(1))
+    );
+    assert!(eff(None).abs() < 1e-9, "no room: {}", eff(None));
+}
+
 /// Aroma's "productivity per hour +2%, up to +20%" states its rate AFTER the
 /// words "per hour": the ramp is 2 per hour (cap at 10 h), averaged over
 /// the 24 h block = 15.8, not the half-rate 11.7.
@@ -7042,6 +7081,8 @@ fn unresolved_buffs_are_zero_and_inventoried() {
         "power_rec_spd_P[000]",           // Kal'tsit in the Control Center
         "power_rec_spd_P[001]",           // Logos as the Trainer
         "power_rec_spd_ext&faction[000]", // another Laterano op in a Power Plant
+        "power_rec_spd_ext&tag[000]",     // GALLUS²: another Operation Platform in a Power Plant
+        "manu_prod_spd_train&lv[000]",    // Viy: per Training Room level
         // Drain-only buffs: their sole effect (the morale drain) IS captured,
         // so the Unresolved marker would be label pessimism.
         "power_rec_spd&cost[000]",
@@ -7090,6 +7131,7 @@ fn room_presence_gates_resolve_against_the_deployment() {
         ("power_rec_spd_P[000]", "CONTROL", 5.0),
         ("power_rec_spd_P[001]", "TRAINING", 5.0),
         ("power_rec_spd_ext&faction[000]", "POWER", 5.0),
+        ("power_rec_spd_ext&tag[000]", "POWER", 5.0),
     ];
     for (id, want_room, want_bonus) in expect {
         match registry.get(id) {
@@ -7158,6 +7200,35 @@ fn room_presence_gates_resolve_against_the_deployment() {
         resolved_two.get(gate_id),
         Some(&BuffResolutionStrategy::DirectEfficiency { value: 5.0 }),
         "two Laterano operators in Power Plants unlock the bonus"
+    );
+
+    // Tag gate: GALLUS²'s "another Operation Platform in a Power Plant" reads the
+    // glossary tag (`cc.tag.op`), so Lancet-2 beside her in the plants unlocks it.
+    let gallus = profile(gd, "char_4227_gallus");
+    let lancet = profile(gd, "char_285_medic2");
+    assert!(
+        gallus.faction_tags.iter().any(|t| t == "op")
+            && lancet.faction_tags.iter().any(|t| t == "op"),
+        "both robots carry the glossary tag"
+    );
+    let robots = [gallus, lancet];
+    let gate_id = "power_rec_spd_ext&tag[000]";
+    let alone: HashMap<String, String> =
+        [("char_4227_gallus".to_string(), "POWER".to_string())].into();
+    let pair: HashMap<String, String> = [
+        ("char_4227_gallus".to_string(), "POWER".to_string()),
+        ("char_285_medic2".to_string(), "POWER".to_string()),
+    ]
+    .into();
+    assert_eq!(
+        resolve_room_presence(&registry, &alone, &robots).get(gate_id),
+        Some(&BuffResolutionStrategy::DirectEfficiency { value: 0.0 }),
+        "GALLUS² alone must not unlock 'another Operation Platform'"
+    );
+    assert_eq!(
+        resolve_room_presence(&registry, &pair, &robots).get(gate_id),
+        Some(&BuffResolutionStrategy::DirectEfficiency { value: 5.0 }),
+        "a second Operation Platform in a Power Plant unlocks the bonus"
     );
 }
 

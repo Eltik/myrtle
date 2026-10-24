@@ -2614,6 +2614,16 @@ pub(crate) fn effective_facility_counts_with_inert(
     {
         counts.insert(MEETING_LEVEL.to_string(), lv);
     }
+    // The summed Training Room level (Viy's "+10% for every level of each Training Room").
+    let training_level: usize = building
+        .rooms
+        .iter()
+        .filter(|r| r.room_type == "TRAINING")
+        .map(|r| r.level.max(0) as usize)
+        .sum();
+    if training_level > 0 {
+        counts.insert(TRAINING_LEVEL.to_string(), training_level);
+    }
     // Lowest trading-post level, for the level-scaled base order limit (6/8/10).
     let trading_min_level = building
         .rooms
@@ -2682,6 +2692,9 @@ pub(crate) const TRADING_MIN_LEVEL: &str = "TRADING_MIN_LEVEL";
 /// Synthetic facility-count key: the base's Reception Room level (max), for
 /// "+X% per Reception Room level" trading skills (Vigil).
 pub const MEETING_LEVEL: &str = "MEETING_LEVEL";
+/// Synthetic facility-count key: the summed level of the base's Training Rooms, for
+/// "+X% for every level of each Training Room" factory skills (Viy).
+pub const TRAINING_LEVEL: &str = "TRAINING_LEVEL";
 /// Synthetic facility-count key: factories producing Pure Gold (Pozëmka's
 /// "+5% per Pure Gold Production Line").
 pub const GOLD_LINES: &str = "GOLD_LINES";
