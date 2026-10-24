@@ -1,5 +1,10 @@
 {
-  "client": null,
+  "client": {
+    "version": "2.7.81",
+    "generated_at": "2026-10-24T21:04:14Z",
+    "game_assembly_sha256": "583b04ff4d1b1a4b35eaf09d77d936408c25447c9e345ef0463d814b6a123fc5",
+    "metadata_sha256": "d3fede171f92740a6f5dc053c58c7013d3c962db764ad1f05cbe977c074fcd1f"
+  },
   "type_changes": [],
   "flatc": "25.12.19",
   "servers": {
@@ -19,7 +24,7 @@
   "tables": {
     "activity_table": {
       "cn": {
-        "source": "history/activity_table/2026-10-09_2.7.81.fbs",
+        "source": "client@2.7.81",
         "sha256": "5f9092761c6887fa3f56d1dd20d6e71b3b2245fe2ac621712c94bcff9cffb4e7",
         "verified": {
           "cn": true
@@ -37,7 +42,7 @@
     },
     "arkvent_table": {
       "cn": {
-        "source": "history/arkvent_table/2026-09-04_2.7.71.fbs",
+        "source": "client@2.7.81",
         "sha256": "6a5591293cf4cce2ed8a24bd58132daa245896974e3378cd2399c43c8e764a82",
         "verified": {
           "cn": true
@@ -47,7 +52,7 @@
     },
     "audio_data": {
       "cn": {
-        "source": "history/audio_data/2025-08-02_2.6.21.fbs",
+        "source": "client@2.7.81",
         "sha256": "cfaabd38e2c462543ca7e454f045917c4cbe4da205662d8182edff8d7c999cbd",
         "verified": {
           "cn": true
@@ -64,7 +69,7 @@
     },
     "bake_muzzle_data": {
       "cn": {
-        "source": "history/bake_muzzle_data/2026-05-01_2.7.31.fbs",
+        "source": "client@2.7.81",
         "sha256": "4c12c818ed9f86588d170c9947bf5e2385d925e965192098963c817f8c3b3e55",
         "verified": {},
         "note": "absent from the cn bundles"
@@ -73,7 +78,7 @@
     },
     "battle_equip_table": {
       "cn": {
-        "source": "history/battle_equip_table/2026-02-10_2.7.01.fbs",
+        "source": "client@2.7.81",
         "sha256": "4ec6f472014619452f7ea9c63af1e95980a522ac6df706748074aeb2a4db4b2d",
         "verified": {
           "cn": true
@@ -90,7 +95,7 @@
     },
     "buff_table": {
       "cn": {
-        "source": "history/buff_table/2026-10-09_2.7.81.fbs",
+        "source": "client@2.7.81",
         "sha256": "5d4eb640fd65aac050a5a6bf2716ddc9626d35681f761fd5b440c2b95c9808a8",
         "verified": {
           "cn": true
@@ -108,7 +113,7 @@
     },
     "building_data": {
       "cn": {
-        "source": "history/building_data/2026-10-09_2.7.81.fbs",
+        "source": "client@2.7.81",
         "sha256": "90a65421a947ab1cf3b82dc476c08c80fba5b3c054dbfd744bcfa644330f9fb6",
         "verified": {
           "cn": true
@@ -126,7 +131,7 @@
     },
     "building_local_data": {
       "cn": {
-        "source": "history/building_local_data/2025-01-22T152151_2.4.41.fbs",
+        "source": "client@2.7.81",
         "sha256": "07b45a75c98d538dc654a449fd3b144763630be3e40e0e5e3ec9ac7f45570a2e",
         "verified": {
           "cn": true
@@ -143,7 +148,7 @@
     },
     "campaign_table": {
       "cn": {
-        "source": "history/campaign_table/2026-09-04_2.7.71.fbs",
+        "source": "client@2.7.81",
         "sha256": "e1bb3bf59c0e91ff9e130d2fa4d33634026baa6955c3d7ac30b05e6ecfe46392",
         "verified": {
           "cn": true
@@ -160,7 +165,7 @@
     },
     "chapter_table": {
       "cn": {
-        "source": "history/chapter_table/2023-05-06_aba87e6.fbs",
+        "source": "client@2.7.81",
         "sha256": "119b8b624516b24e35f3109a7a94ea452cc4717923065b46c78ba3d0887529f2",
         "verified": {
           "cn": true
@@ -177,7 +182,7 @@
     },
     "char_master_table": {
       "cn": {
-        "source": "history/char_master_table/2025-07-08_2.6.01.fbs",
+        "source": "client@2.7.81",
         "sha256": "e4cd2e1e8a0511c43f91f5aeb5315f019b97b1210aed79d88cb126d59c44be5c",
         "verified": {
           "cn": true
@@ -194,7 +199,7 @@
     },
     "char_meta_table": {
       "cn": {
-        "source": "history/char_meta_table/2026-09-04_2.7.71.fbs",
+        "source": "client@2.7.81",
         "sha256": "ea987be9f6ec780af650403582dd669b6edd8071db460378a52763592e6356c8",
         "verified": {
           "cn": true
@@ -211,7 +216,7 @@
     },
     "char_patch_table": {
       "cn": {
-        "source": "history/char_patch_table/2026-10-09_2.7.81.fbs",
+        "source": "client@2.7.81",
         "sha256": "3a5eb51deb51d5042a0214fd0e5ea30d25891a8be72b0d63aae98dcc6238b282",
         "verified": {
           "cn": true
@@ -228,7 +233,7 @@
     },
     "character_table": {
       "cn": {
-        "source": "history/character_table/2026-10-09_2.7.81.fbs",
+        "source": "client@2.7.81",
         "sha256": "10b0d15c07839c00e11c2ae7cf76678521ad0209d2c2ecd9e3a0fb4df06ccb9d",
         "verified": {
           "cn": true
@@ -245,7 +250,7 @@
     },
     "charm_table": {
       "cn": {
-        "source": "history/charm_table/2026-01-09_2.6.91.fbs",
+        "source": "client@2.7.81",
         "sha256": "8098f062a01f89ffdcf30251fcfe35620fc92965e05a87700885ebad51d81006",
         "verified": {
           "cn": true
@@ -262,7 +267,7 @@
     },
     "charword_table": {
       "cn": {
-        "source": "history/charword_table/2025-08-02_2.6.21.fbs",
+        "source": "client@2.7.81",
         "sha256": "50e51601bd3285afde3ab4b38d0c8d19957fc0fa515a47b3526e4321a556bb8a",
         "verified": {
           "cn": true
@@ -279,7 +284,7 @@
     },
     "checkin_table": {
       "cn": {
-        "source": "history/checkin_table/2026-09-04_2.7.71.fbs",
+        "source": "client@2.7.81",
         "sha256": "8bf1a139d596e256959317bdedf539770c666ca091c23b5b11907aab696e4e8f",
         "verified": {
           "cn": true
@@ -296,7 +301,7 @@
     },
     "climb_tower_table": {
       "cn": {
-        "source": "history/climb_tower_table/2026-09-04_2.7.71.fbs",
+        "source": "client@2.7.81",
         "sha256": "cab016eb14b2971844aed6eb538c94200f82626871d0aeafc403d24aaebb2027",
         "verified": {
           "cn": true
@@ -313,7 +318,7 @@
     },
     "clue_data": {
       "cn": {
-        "source": "history/clue_data/2025-04-07_2.5.04.fbs",
+        "source": "client@2.7.81",
         "sha256": "0d697430791ae7e96d419452bf31323484dc413c387c0c81d55ec9d8b0302303",
         "verified": {
           "cn": true
@@ -330,7 +335,7 @@
     },
     "cooperate_battle_table": {
       "cn": {
-        "source": "history/cooperate_battle_table/2026-06-01_2.7.41.fbs",
+        "source": "client@2.7.81",
         "sha256": "637b406e767e731442e62e2bc20f43d287acf333ad2ab60f3259eae9f448ef80",
         "verified": {
           "cn": true
@@ -347,7 +352,7 @@
     },
     "crisis_table": {
       "cn": {
-        "source": "history/crisis_table/2026-09-04_2.7.71.fbs",
+        "source": "client@2.7.81",
         "sha256": "a7520cd880aed28c87f2ed824a169b8a20ab8f088e345ac6f1835f9fa9290a99",
         "verified": {
           "cn": true
@@ -364,7 +369,7 @@
     },
     "crisis_v2_table": {
       "cn": {
-        "source": "history/crisis_v2_table/2026-09-04_2.7.71.fbs",
+        "source": "client@2.7.81",
         "sha256": "2dfcfc8be24d33554660cb63725504a27fa18bc144cd18626f0424b82b0682ae",
         "verified": {
           "cn": true
@@ -381,7 +386,7 @@
     },
     "display_meta_table": {
       "cn": {
-        "source": "history/display_meta_table/2026-10-09_2.7.81.fbs",
+        "source": "client@2.7.81",
         "sha256": "99c29b91e252658c2bc5ae8212b6c8355f8847883778fff6765eeabf008a0a97",
         "verified": {
           "cn": true
@@ -399,7 +404,7 @@
     },
     "enemy_database": {
       "cn": {
-        "source": "history/enemy_database/2026-08-01_2.7.61.fbs",
+        "source": "client@2.7.81",
         "sha256": "7b6222d043a97a3a95d97e48d4b3dc10fe3f82a9962e9f6e98cd978388afb2b7",
         "verified": {
           "cn": true
@@ -416,7 +421,7 @@
     },
     "enemy_handbook_table": {
       "cn": {
-        "source": "history/enemy_handbook_table/2023-10-08_2.1.01.fbs",
+        "source": "client@2.7.81",
         "sha256": "5cf4ab26ed168d7e182e678329f22839b59ea34183be1c8bde5de17505579a02",
         "verified": {
           "cn": true
@@ -433,7 +438,7 @@
     },
     "ep_breakbuff_table": {
       "cn": {
-        "source": "history/ep_breakbuff_table/2026-04-07_2.7.21.fbs",
+        "source": "client@2.7.81",
         "sha256": "da53b9b0bc779e886146bc14f504fc0aefc9ca760c727bb5e803b7eecd296788",
         "verified": {
           "cn": true
@@ -450,7 +455,7 @@
     },
     "extra_battlelog_table": {
       "cn": {
-        "source": "history/extra_battlelog_table/2023-07-06_2.0.40.fbs",
+        "source": "client@2.7.81",
         "sha256": "28ce06283c39da902306a292c253a0805b964f147873dab77635129802aeca05",
         "verified": {
           "cn": true
@@ -467,7 +472,7 @@
     },
     "favor_table": {
       "cn": {
-        "source": "history/favor_table/2023-07-06_2.0.40.fbs",
+        "source": "client@2.7.81",
         "sha256": "11c37cc291717295c096d374429b67e02706222ce831b27be72ed5c2df9c84dc",
         "verified": {
           "cn": true
@@ -484,7 +489,7 @@
     },
     "gacha_table": {
       "cn": {
-        "source": "history/gacha_table/2026-09-04_2.7.71.fbs",
+        "source": "client@2.7.81",
         "sha256": "551577dd2b63b058fa139167f9cedfb0dad2a3fa1991b93320ac40ac74c99762",
         "verified": {
           "cn": true
@@ -501,7 +506,7 @@
     },
     "gamedata_const": {
       "cn": {
-        "source": "history/gamedata_const/2026-10-09_2.7.81.fbs",
+        "source": "client@2.7.81",
         "sha256": "dc08e73a8016558eea564b6bf6895273948d298c17208f2120cb1c37f5c45e71",
         "verified": {
           "cn": true
@@ -518,7 +523,7 @@
     },
     "handbook_info_table": {
       "cn": {
-        "source": "history/handbook_info_table/2026-09-04_2.7.71.fbs",
+        "source": "client@2.7.81",
         "sha256": "ba7cc10ba27a0b90f9bd32f5ab93e0ab2da45a69e370637de42686b32b515dc0",
         "verified": {
           "cn": true
@@ -535,7 +540,7 @@
     },
     "handbook_team_table": {
       "cn": {
-        "source": "history/handbook_team_table/2025-04-07_2.5.04.fbs",
+        "source": "client@2.7.81",
         "sha256": "91169ca3a36e7448b6c42ff92e98cc726e7fef055fc031abb6c60ba277c24395",
         "verified": {
           "cn": true
@@ -552,7 +557,7 @@
     },
     "hotupdate_meta_table": {
       "cn": {
-        "source": "history/hotupdate_meta_table/2024-11-01_2.4.01.fbs",
+        "source": "client@2.7.81",
         "sha256": "e5c890e394f902648a695af91859b32d9f8b12d62fdbe2121d82a18196d43a3d",
         "verified": {
           "cn": true
@@ -569,7 +574,7 @@
     },
     "init_text": {
       "cn": {
-        "source": "history/init_text/2025-04-07_2.5.04.fbs",
+        "source": "client@2.7.81",
         "sha256": "877b08aadfdf59998beef89c28df1516503734cc4c05d690dba9dd6dabdcaaf4",
         "verified": {
           "cn": true
@@ -586,7 +591,7 @@
     },
     "item_table": {
       "cn": {
-        "source": "history/item_table/2026-10-09_2.7.81.fbs",
+        "source": "client@2.7.81",
         "sha256": "49b3bd0c0cb45851ac4e47bfe50b4b60a9fd4e0f7aad01ccea9fe561b89963f9",
         "verified": {
           "cn": true
@@ -604,7 +609,7 @@
     },
     "legion_mode_buff_table": {
       "cn": {
-        "source": "history/legion_mode_buff_table/2025-04-07_2.5.04.fbs",
+        "source": "client@2.7.81",
         "sha256": "0dbf85a2675453933d0bd3fdc1b32a08448be255f0688887e0b13793a694668e",
         "verified": {
           "cn": true
@@ -621,7 +626,7 @@
     },
     "level_script_table": {
       "cn": {
-        "source": "history/level_script_table/2025-08-02_2.6.21.fbs",
+        "source": "client@2.7.81",
         "sha256": "49066f2c188c8aae5680e4059d4809102efe3f96bd7c6fe9d4903a5b24505b3b",
         "verified": {
           "cn": true
@@ -638,7 +643,7 @@
     },
     "main_text": {
       "cn": {
-        "source": "history/main_text/2025-04-07_2.5.04.fbs",
+        "source": "client@2.7.81",
         "sha256": "877b08aadfdf59998beef89c28df1516503734cc4c05d690dba9dd6dabdcaaf4",
         "verified": {
           "cn": true
@@ -655,7 +660,7 @@
     },
     "medal_table": {
       "cn": {
-        "source": "history/medal_table/2026-09-04_2.7.71.fbs",
+        "source": "client@2.7.81",
         "sha256": "1d7c00b45cd926d1106eaad41181852b6c5bd432d156086dbefd5907bfa090b2",
         "verified": {
           "cn": true
@@ -672,7 +677,7 @@
     },
     "meta_ui_table": {
       "cn": {
-        "source": "history/meta_ui_table/2025-04-07_2.5.04.fbs",
+        "source": "client@2.7.81",
         "sha256": "c6a31b58666d7d202b9244f053d99b8b336419658d67ce4442471415f7935ec8",
         "verified": {
           "cn": true
@@ -689,7 +694,7 @@
     },
     "mission_table": {
       "cn": {
-        "source": "history/mission_table/2026-09-04_2.7.71.fbs",
+        "source": "client@2.7.81",
         "sha256": "637ebd09a22b1608b7df6ba529b8417a653f0bac935a34d3a7e949c61a711612",
         "verified": {
           "cn": true
@@ -706,7 +711,7 @@
     },
     "open_server_table": {
       "cn": {
-        "source": "history/open_server_table/2026-09-04_2.7.71.fbs",
+        "source": "client@2.7.81",
         "sha256": "93c81ff2c75e1db507e6799dc37b0521b04c3f0f6241babf25fa2e9379f78875",
         "verified": {
           "cn": true
@@ -723,7 +728,7 @@
     },
     "prts___levels": {
       "cn": {
-        "source": "history/prts___levels/2026-09-04_2.7.71.fbs",
+        "source": "client@2.7.81",
         "sha256": "419a98132be730536653a00d5321a2e31709fc6ec9e4f24b2b5c9c3fe10ac6b2",
         "verified": {
           "cn": true
@@ -740,7 +745,7 @@
     },
     "replicate_table": {
       "cn": {
-        "source": "history/replicate_table/2026-09-04_2.7.71.fbs",
+        "source": "client@2.7.81",
         "sha256": "cf3dd8b709a1f7a8ad98d31ea4b3bbb2b25dfcabb8cd4e8112b11181b6f15ce9",
         "verified": {
           "cn": true
@@ -757,7 +762,7 @@
     },
     "resource_manifest": {
       "cn": {
-        "source": "history/resource_manifest/2025-04-14_ab97499.fbs",
+        "source": "client@2.7.81",
         "sha256": "27d53c28a4c834268311180b2059922c529384a11423596461329d1bad502118",
         "verified": {},
         "note": "absent from the cn bundles"
@@ -766,7 +771,7 @@
     },
     "retro_table": {
       "cn": {
-        "source": "history/retro_table/2026-10-09_2.7.81.fbs",
+        "source": "client@2.7.81",
         "sha256": "917561df846e26ef1ad2aef383a86586a6a7391a2dfb4e89b7f37774ec4498ae",
         "verified": {
           "cn": true
@@ -784,7 +789,7 @@
     },
     "roguelike_topic_table": {
       "cn": {
-        "source": "history/roguelike_topic_table/2026-10-09_2.7.81.fbs",
+        "source": "client@2.7.81",
         "sha256": "afa1931beddf41d38c721bc7a59355fd2c0f759f81129f135f4b6984c2a7dc49",
         "verified": {
           "cn": true
@@ -802,7 +807,7 @@
     },
     "sandbox_perm_table": {
       "cn": {
-        "source": "history/sandbox_perm_table/2026-09-04_2.7.71.fbs",
+        "source": "client@2.7.81",
         "sha256": "90cc03c56c8edafa6958710baf2dfbed0035eb53a727ee96c7862c86568da406",
         "verified": {
           "cn": true
@@ -828,7 +833,7 @@
     },
     "shop_client_table": {
       "cn": {
-        "source": "history/shop_client_table/2026-05-01_2.7.31.fbs",
+        "source": "client@2.7.81",
         "sha256": "4c7d0d44ff31bb4ddc19722b7ca3e42ce885227f18f80c03cff7a469c387e07b",
         "verified": {
           "cn": true
@@ -845,7 +850,7 @@
     },
     "skill_table": {
       "cn": {
-        "source": "history/skill_table/2026-09-04_2.7.71.fbs",
+        "source": "client@2.7.81",
         "sha256": "78b997239ca2e434c2f784f5f90b5e78f2aa634e6adfe99b58b90d1d6031cc5d",
         "verified": {
           "cn": true
@@ -862,7 +867,7 @@
     },
     "skin_table": {
       "cn": {
-        "source": "history/skin_table/2026-04-07_2.7.21.fbs",
+        "source": "client@2.7.81",
         "sha256": "eb64d90a722004bca8b9143eb576b861a67c69fa0800d931ef41d2ae002de64e",
         "verified": {
           "cn": true
@@ -879,7 +884,7 @@
     },
     "special_operator_table": {
       "cn": {
-        "source": "history/special_operator_table/2026-09-04_2.7.71.fbs",
+        "source": "client@2.7.81",
         "sha256": "e150b7e79403be37582d92a8e5c8de38fd9560f5e73409c074fe33563f97e43d",
         "verified": {
           "cn": true
@@ -896,7 +901,7 @@
     },
     "stage_table": {
       "cn": {
-        "source": "history/stage_table/2026-09-04_2.7.71.fbs",
+        "source": "client@2.7.81",
         "sha256": "0682603cb056d4f02550c69218aaf24ad85239f855e6bd5653b17239942dca46",
         "verified": {
           "cn": true
@@ -914,7 +919,7 @@
     },
     "story_review_meta_table": {
       "cn": {
-        "source": "history/story_review_meta_table/2026-09-04_2.7.71.fbs",
+        "source": "client@2.7.81",
         "sha256": "437553ebc55cedb94a6aa226f73f0cd20cc0226c888ee153ce3a3616352cd781",
         "verified": {
           "cn": true
@@ -931,7 +936,7 @@
     },
     "story_review_table": {
       "cn": {
-        "source": "history/story_review_table/2026-09-04_2.7.71.fbs",
+        "source": "client@2.7.81",
         "sha256": "270ca28f55a3ce7c4f5b39316cf68d168fa6feffbe9b34a6a582d739f026100c",
         "verified": {
           "cn": true
@@ -948,7 +953,7 @@
     },
     "story_table": {
       "cn": {
-        "source": "history/story_table/2026-09-04_2.7.71.fbs",
+        "source": "client@2.7.81",
         "sha256": "74644d00c4b95055872acaafefc149abb7e4bfdc6f325fcedc06dc817a59296e",
         "verified": {
           "cn": true
@@ -965,7 +970,7 @@
     },
     "tip_table": {
       "cn": {
-        "source": "history/tip_table/2024-11-01_2.4.01.fbs",
+        "source": "client@2.7.81",
         "sha256": "f8b3b7c730b9fb55e31f61eef5614a0c223a917f5b36f3160e55fcf13b1c6a23",
         "verified": {
           "cn": true
@@ -982,7 +987,7 @@
     },
     "token_table": {
       "cn": {
-        "source": "history/token_table/2026-10-09_2.7.81.fbs",
+        "source": "client@2.7.81",
         "sha256": "10b0d15c07839c00e11c2ae7cf76678521ad0209d2c2ecd9e3a0fb4df06ccb9d",
         "verified": {
           "cn": true
@@ -999,7 +1004,7 @@
     },
     "uniequip_table": {
       "cn": {
-        "source": "history/uniequip_table/2026-09-04_2.7.71.fbs",
+        "source": "client@2.7.81",
         "sha256": "6963bdd3ce1e13ddc3a80c3d3615b66ab203161557cfad7fef5ac2fac85b35e1",
         "verified": {
           "cn": true
@@ -1016,7 +1021,7 @@
     },
     "zone_table": {
       "cn": {
-        "source": "history/zone_table/2026-09-04_2.7.71.fbs",
+        "source": "client@2.7.81",
         "sha256": "6c4874c89ac70442dd4ffb2a4a223158b5c6862d9f2401efb093bc8d68848176",
         "verified": {
           "cn": true
