@@ -204,7 +204,8 @@ fn seat_hits(ctx: &Ctx<'_>, s: &Seat<'_>, economy: &Economy) -> Vec<(CoverageRow
     if bb(tb, "cost").is_some_and(|c| c > 0.0) && bb(tb, "interval").is_none() {
         tr(R::DpGen);
     }
-    if heal_single_board(&s.branch_board) || HEAL_SINGLE_CURATED.contains(&sub) {
+    let trait_heals = heal_single_board(&s.branch_board) || HEAL_SINGLE_CURATED.contains(&sub);
+    if trait_heals {
         tr(R::HealSingle);
     }
     if heal_area_board(&s.branch_board, &s.op.profession) || HEAL_AREA_CURATED.contains(&sub) {
@@ -294,7 +295,24 @@ fn seat_hits(ctx: &Ctx<'_>, s: &Seat<'_>, economy: &Economy) -> Vec<(CoverageRow
         if heal && says(|g| g.ally_word) {
             add(R::HealSingle);
         }
-        if heal && says(|g| g.heal_area_words) {
+        // Several allies: the text says so, or the board raises the heal
+        // target count. Haruka S2 adds `attack@max_target_heal_add` (Makoto
+        // S3 sets `attack@max_target_heal`); Ceylon S2
+        // and Shu S2 raise `attack@max_target` on a trait whose attacks heal;
+        // Lumen S2 and Nightmare S1 carry a heal key beside a `max_target`.
+        // An Incantation Medic's (trait `scale`) attacks hit enemies, so her
+        // `max_target` counts enemies (Titi S3, Reed the Flame Shadow S3).
+        let attacks_heal = trait_heals && bb(&s.branch_board, "scale").is_none();
+        let heal_targets = board_any_gt(
+            b,
+            &["attack@max_target", "max_target", "chain.max_target"],
+            1.0,
+        );
+        if (heal && says(|g| g.heal_area_words))
+            || b.iter()
+                .any(|(k, v)| k.contains("max_target_heal") && *v > 0.0)
+            || ((heal || attacks_heal) && heal_targets)
+        {
             add(R::HealArea);
         }
         if board_heals_elemental(b) {

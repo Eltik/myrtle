@@ -1281,6 +1281,21 @@ fn tin_man_heals_allies_around_the_point() {
 }
 
 #[test]
+fn heal_target_count_skills_heal_an_area() {
+    let data = common::load_game_data();
+    // Haruka S2 `attack@max_target_heal_add` 1; Ceylon S2 `attack@max_target`
+    // 2 on a Medic trait. Neither text says "all allies".
+    for id in ["char_4202_haruka", CEYLON] {
+        let a = analyze(data, &req(vec![m(id, 2, 90, 5, 1, 7, 3, None, 1)]));
+        assert_eq!(
+            cov(&a, CoverageRowKey::HealArea, id).map(|o| o.why.kind),
+            Some(SourceKind::Skill),
+            "{id}"
+        );
+    }
+}
+
+#[test]
 fn titi_reaches_minos_and_sargon() {
     let data = common::load_game_data();
     // "Deployed [Minos] and [Sargon] Operators gain Vigor".
