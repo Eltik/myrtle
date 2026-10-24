@@ -13,6 +13,28 @@ interface IShiftCrews {
     marks?: BoardMarks;
 }
 
+/** Same operators, order aside. */
+export function sameCrew(a: readonly string[], b: readonly string[]): boolean {
+    if (a.length !== b.length) return false;
+    const want = new Set(a);
+    return b.every((id) => want.has(id));
+}
+
+/**
+ * Whose figures a tile's popover may show. The board displays the draft (no shift
+ * tab), the rotation's cell (a shift tab with a plan), or the player's own preset
+ * crew (a shift tab before a plan exists, see `crewsForShift`). The ledger and
+ * efficiency must describe that same crew: a preset crew has no scored cell of its
+ * own, so it reads the draft's figures only when it IS the draft crew, else nothing.
+ * Reading the rotation's cell for a crew it did not score showed Amiya's Control
+ * Center bonus over a player's Trading Post crew whose Control Center held no Amiya.
+ */
+export function crewSource(viewShift: number | null, hasPlan: boolean, tileIds: readonly string[], scoredIds: readonly string[] | undefined): "draft" | "plan" | "preset" {
+    if (viewShift === null) return "draft";
+    if (hasPlan) return "plan";
+    return scoredIds !== undefined && sameCrew(tileIds, scoredIds) ? "draft" : "preset";
+}
+
 export function crewsForShift(api: IOptimizerAPI, presetBySlot: Map<string, string[][]>): IShiftCrews {
     const shift = api.viewShift;
     if (shift === null) return { rooms: api.boardRooms };

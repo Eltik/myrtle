@@ -156,6 +156,10 @@ export const messages = {
         text: "From the Control Center",
         description: "Heading over the bonuses the Control Center's crew casts into this room. 'Control Center' is the game's own room name. Rendered uppercase by CSS.",
     },
+    "profile.base.room.presetUnscored": {
+        text: "Your preset crews are not scored per skill. Optimize to see a plan's breakdown.",
+        description: "Shown in a room's popover when a shift tab displays the player's own preset crew before any plan exists, so no per-skill figures apply to it.",
+    },
     "profile.base.room.scoreFailed": {
         text: "This layout could not be scored.",
         description: "Shown in place of a room's efficiency when the scoring request failed.",

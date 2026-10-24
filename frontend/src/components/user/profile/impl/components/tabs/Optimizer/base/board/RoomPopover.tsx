@@ -9,6 +9,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { messages as panelMessages } from "../BasePanel.messages";
 import { useBaseOptimizer } from "../base-context";
+import { crewSource } from "../shift-crews";
 import { BaseSkill } from "./BaseSkill";
 import type { messages } from "./RoomPopover.messages";
 import { TileTooltip } from "./tile/components/TileTooltip";
@@ -91,10 +92,18 @@ export function RoomPopover({ tile }: { tile: ITile }) {
     const room = api.boardRooms.find((r) => r.slot_id === tile.slotId);
     const scored = api.evaluation?.assignment.rooms.find((r) => r.slot_id === tile.slotId);
 
+    // Which crew the board shows in this tile (see `crewSource`): the rotation's
+    // cell is read only when the board shows the plan's crews.
+    const source = crewSource(
+        api.viewShift,
+        api.proposal !== null && api.rotation !== null,
+        tile.operators.map((op) => op.id),
+        scored?.operators.map((op) => op.operator_id),
+    );
     // Spare-seat picks for the crew currently displayed: the shift's rotation cell
-    // when a shift tab is active, else the optimized proposal. These operators were
+    // when the board shows the plan, else the optimized proposal. These operators were
     // parked for zero opportunity cost: their skills are not why they're seated.
-    const shiftRoom = api.viewShift != null ? api.shiftRoom(tile.slotId) : undefined;
+    const shiftRoom = source === "plan" ? api.shiftRoom(tile.slotId) : undefined;
     const proposalRoom = api.proposal?.proposal.rooms.find((r) => r.slot_id === tile.slotId);
     const benched = new Set((shiftRoom ? shiftRoom.recommended : (proposalRoom?.operators ?? [])).filter((o) => o.bench).map((o) => o.operator_id));
     // The rotation's 24/7 pick: held at full morale by a morale-swap manager
@@ -105,15 +114,15 @@ export function RoomPopover({ tile }: { tile: ITile }) {
     const parked = new Set((api.rotation?.rotation.parked ?? []).map((o) => o.operator_id));
 
     // The per-skill breakdown for whatever crew is displayed: the shift cell's
-    // own ledger when a shift tab is active, else the evaluated draft's.
-    const ledger = api.viewShift == null ? (scored?.ledger ?? []) : (shiftRoom?.ledger ?? []);
+    // own ledger when the board shows the plan, the evaluated draft's when it shows
+    // the draft crew, and nothing for a preset crew nobody scored.
+    const ledger = source === "draft" ? (scored?.ledger ?? []) : (shiftRoom?.ledger ?? []);
     const lineFor = (opId: string, buffId: string) => ledger.find((l) => l.operator_id === opId && l.buff_id === buffId && !l.from_control_center);
     const ccLines = ledger.filter((l) => l.from_control_center);
 
-    // The header's efficiency must describe the SAME crew the ledger does: the
-    // shift cell's own figure when a shift tab is active, else the evaluated
-    // draft's. (Mixing them showed the draft's 45% over a shift crew's +95%.)
-    const efficiency = api.viewShift == null ? scored?.total_efficiency : shiftRoom?.efficiency;
+    // The header's efficiency must describe the SAME crew the ledger does.
+    // (Mixing them showed the draft's 45% over a shift crew's +95%.)
+    const efficiency = source === "draft" ? scored?.total_efficiency : shiftRoom?.efficiency;
 
     const producesOwnOutput = scored !== undefined;
     const efficiencyLabelKey = EFFICIENCY_LABEL[room?.room_type ?? ""];
@@ -207,6 +216,7 @@ export function RoomPopover({ tile }: { tile: ITile }) {
             {!producesOwnOutput && tile.seats > 0 && (
                 <p className="border-border border-t pt-2 text-[11px] text-muted-foreground">{api.evaluationError ? t("profile.base.room.scoreFailed") : api.evaluating ? t("profile.base.room.scoring") : unstaffed ? t("profile.base.room.emptyRoom") : t("profile.base.room.nonProducing")}</p>
             )}
+            {source === "preset" && tile.seats > 0 && tile.operators.length > 0 && <p className="border-border border-t pt-2 text-[11px] text-muted-foreground">{t("profile.base.room.presetUnscored")}</p>}
             {room && ["TRADING", "MANUFACTURE", "POWER", "CONTROL", "MEETING", "HIRE", "DORMITORY"].includes(room.room_type) && (
                 <Button className="w-full" disabled={api.optimizing} onClick={() => api.runOptimize([tile.slotId])} size="sm" variant="outline">
                     <Sparkles />

@@ -6925,6 +6925,7 @@
     "user.profile.base.room.parked": "Parked",
     "user.profile.base.room.parked.tooltip": "Kept at zero morale on purpose: a Control Center skill still counts them as assigned here, while a plant-count skill that excludes working robots no longer sees them, so both bonuses apply. Never rotate or rest them; their own skill is forfeited.",
     "user.profile.base.room.power": "{kw} kW",
+    "user.profile.base.room.presetUnscored": "Your preset crews are not scored per skill. Optimize to see a plan's breakdown.",
     "user.profile.base.room.producing": "Producing",
     "user.profile.base.room.replaced": "replaced",
     "user.profile.base.room.scoreFailed": "This layout could not be scored.",
