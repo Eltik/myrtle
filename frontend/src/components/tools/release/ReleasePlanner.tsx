@@ -3,13 +3,16 @@ import * as React from "react";
 import { PageHeader } from "#/components/ui/page-header";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
+import { useAuth } from "#/hooks/use-auth";
 import { useTheme } from "#/hooks/use-theme";
+import { isSuperAdmin } from "#/lib/api/admin";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { AutoTranslateProvider } from "./impl/autoTranslate";
 import { BannersTab } from "./impl/components/BannersTab";
 import { CalendarTab } from "./impl/components/CalendarTab";
 import { EventsTab } from "./impl/components/EventsTab";
+import { OverridesManager } from "./impl/components/overrides/OverridesListSheet";
 import { PlannerTab } from "./impl/components/PlannerTab";
 import { PullsPlannerTab } from "./impl/components/PullsPlannerTab";
 import { SkinPopupProvider } from "./impl/components/SkinPopup";
@@ -24,6 +27,7 @@ export function ReleasePlanner(): React.ReactElement {
     const today = React.useMemo(() => new Date(), []);
     const [view, setView] = React.useState<ReleaseView>("planner");
     const { latinNames } = useTheme();
+    const { user } = useAuth();
 
     /**
      * A tab mounts on its first visit and then STAYS mounted, hidden, so going back to it
@@ -53,7 +57,7 @@ export function ReleasePlanner(): React.ReactElement {
 
     return (
         <div className="page-shell [--page-max:1200px]" translate="no">
-            <PageHeader breadcrumbLabel="breadcrumb" breadcrumb={[t("release.breadcrumb.tools"), t("release.title")]} title={t("release.title")} />
+            <PageHeader breadcrumbLabel="breadcrumb" breadcrumb={[t("release.breadcrumb.tools"), t("release.title")]} title={t("release.title")} actions={isSuperAdmin(user?.role) ? <OverridesManager /> : undefined} />
 
             <AutoTranslateProvider value={latinNames}>
                 <SkinPopupProvider>

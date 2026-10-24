@@ -14,9 +14,13 @@ import type { RuleIndependence } from "#/types/generated/RuleIndependence";
 import { useAutoTranslate } from "../autoTranslate";
 import { formatDate, isPast, sortKey } from "../helpers";
 import { useReleaseTagLabel } from "../labels";
+import { overrideKey } from "../overrides";
 import { cnDay } from "../schedule";
+import { useReleaseOverrides } from "../useReleaseOverrides";
 import type { messages } from "./BannersTab.messages";
 import { ModelSummary } from "./ModelSummary";
+import { BadgeWithOverride, OverrideButton } from "./overrides/OverrideButton";
+import { type IOverrideTarget, OverrideSheet } from "./overrides/OverrideSheet";
 import { ResolutionBadge } from "./ResolutionBadge";
 import { buildOperatorLookup, CnName, ListRow, type OperatorLookup, OpRefList, ReleaseEmpty, ReleaseError, ReleaseLoading, RowImage, resolveName, Tag, ToggleField, useArt } from "./shared";
 
@@ -55,6 +59,8 @@ export function BannersTab({ today }: IBannersTabProps): React.ReactElement {
     const events = useQuery(releaseEventsQueryOptions());
     const index = useQuery(operatorsIndexQueryOptions(useGamedataServer()));
     const [showPast, setShowPast] = React.useState(false);
+    const { canEdit, overrides } = useReleaseOverrides();
+    const [overrideTarget, setOverrideTarget] = React.useState<IOverrideTarget | null>(null);
 
     const lookup = React.useMemo(() => buildOperatorLookup(index.data), [index.data]);
     const eventNames = React.useMemo(() => {
@@ -92,10 +98,22 @@ export function BannersTab({ today }: IBannersTabProps): React.ReactElement {
             ) : (
                 <Card className="px-4 sm:px-5">
                     {rows.map((b) => (
-                        <BannerRow key={b.cnPoolId} banner={b} lookup={lookup} charNames={charNames} eventNames={eventNames} eventsByDay={eventsByDay} eventTied={!independent.has(b.ruleType)} today={today} />
+                        <BannerRow
+                            key={b.cnPoolId}
+                            banner={b}
+                            lookup={lookup}
+                            charNames={charNames}
+                            eventNames={eventNames}
+                            eventsByDay={eventsByDay}
+                            eventTied={!independent.has(b.ruleType)}
+                            today={today}
+                            overridden={canEdit ? overrides.has(overrideKey("pool", b.cnPoolId)) : null}
+                            onOverride={(name) => setOverrideTarget({ mode: "row", kind: "pool", cnId: b.cnPoolId, name, resolution: b.resolution })}
+                        />
                     ))}
                 </Card>
             )}
+            {canEdit && <OverrideSheet target={overrideTarget} onClose={() => setOverrideTarget(null)} />}
         </div>
     );
 }
@@ -120,7 +138,20 @@ function FaceAvatar({ id, onEn, tight }: { id: string; onEn: boolean; tight: boo
     return <img src={getAvatarById(id, onEn ? undefined : "cn")} alt="" loading="lazy" onError={() => setFailed(true)} className={cn("h-full rounded-sm object-cover", tight ? "min-w-0 flex-1" : "aspect-square flex-none")} />;
 }
 
-function BannerRow({ banner, lookup, charNames, eventNames, eventsByDay, eventTied, today }: { banner: ReleaseBanner; lookup: OperatorLookup; charNames: CharNames; eventNames: EventNames; eventsByDay: Map<string, string>; eventTied: boolean; today: Date }): React.ReactElement {
+interface IBannerRowProps {
+    banner: ReleaseBanner;
+    lookup: OperatorLookup;
+    charNames: CharNames;
+    eventNames: EventNames;
+    eventsByDay: Map<string, string>;
+    eventTied: boolean;
+    today: Date;
+    /** Null for a reader who cannot edit overrides: the row then renders no pencil at all. */
+    overridden: boolean | null;
+    onOverride: (name: string) => void;
+}
+
+function BannerRow({ banner, lookup, charNames, eventNames, eventsByDay, eventTied, today, overridden, onOverride }: IBannerRowProps): React.ReactElement {
     const t: BannersT = useT("tools");
     const rt: BannersRichT = useRichT("tools");
     const locale = useLocale();
@@ -147,8 +178,9 @@ function BannerRow({ banner, lookup, charNames, eventNames, eventsByDay, eventTi
     ).filter((r) => r[1].length > 0);
     const faces = art.src ? [] : [...banner.enFeatured6, ...banner.featured6, ...banner.overrideFeatured, ...banner.debutChars].filter((id, i, all) => all.indexOf(id) === i).slice(0, 3);
     const visual = art.src ? <RowImage src={art.src} alt={alt} title={artIsEvent && eventArtName ? t("release.banners.eventArt", { event: eventArtName }) : undefined} onError={art.onError} wide /> : faces.length > 0 ? <FaceStrip ids={faces} lookup={lookup} alt={alt} t={t} /> : null;
+    const badge = <ResolutionBadge resolution={banner.resolution} today={today} returning={banner.returning} />;
     return (
-        <ListRow visual={visual} wide badge={<ResolutionBadge resolution={banner.resolution} today={today} returning={banner.returning} />}>
+        <ListRow visual={visual} wide badge={overridden === null ? badge : <BadgeWithOverride badge={badge} button={<OverrideButton name={alt} exists={overridden} onClick={() => onOverride(alt)} />} />}>
             <CnName cn={banner.nameCn} auto={banner.nameEnAuto} primaryClassName="font-sans font-semibold text-[13.5px] text-foreground">
                 <Tag>{tagLabel(banner.ruleType)}</Tag>
                 <span className="font-mono text-[11.5px] text-muted-foreground tabular-nums">

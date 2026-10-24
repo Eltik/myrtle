@@ -152,7 +152,7 @@ pub async fn put_override(
     operation_id = "release_delete_override",
     tag = "release",
     params(
-        ("kind" = String, Path, description = "Override kind: `event`, `banner` or `skin`."),
+        ("kind" = String, Path, description = "Override kind: `activity`, `pool`, `skin` or `review`."),
         ("cn_id" = String, Path, description = "The CN-side id the override applies to.")
     ),
     security(("bearer_auth" = []), ("service_key" = [])),

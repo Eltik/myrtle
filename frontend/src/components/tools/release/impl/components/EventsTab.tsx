@@ -10,9 +10,13 @@ import { useAutoTranslate } from "../autoTranslate";
 import { formatDateRange, isPast, sortKey } from "../helpers";
 import type { messages as helperMessages } from "../helpers.messages";
 import { useReleaseTagLabel } from "../labels";
+import { overrideKey } from "../overrides";
+import { useReleaseOverrides } from "../useReleaseOverrides";
 import { EventShop } from "./EventShop";
 import type { messages } from "./EventsTab.messages";
 import { ModelSummary } from "./ModelSummary";
+import { BadgeWithOverride, OverrideButton } from "./overrides/OverrideButton";
+import { type IOverrideTarget, OverrideSheet } from "./overrides/OverrideSheet";
 import { ResolutionBadge } from "./ResolutionBadge";
 import { FarmStages } from "./ScheduleShared";
 import { CnName, ListRow, ReleaseEmpty, ReleaseError, ReleaseLoading, RowImage, resolveName, Tag, ToggleField, useArt } from "./shared";
@@ -30,6 +34,8 @@ export function EventsTab({ today }: IEventsTabProps): React.ReactElement {
     const lag = useQuery(releaseLagQueryOptions());
     const [showPast, setShowPast] = React.useState(false);
     const [stageOnly, setStageOnly] = React.useState(true);
+    const { canEdit, overrides } = useReleaseOverrides();
+    const [overrideTarget, setOverrideTarget] = React.useState<IOverrideTarget | null>(null);
 
     const model = events.data?.model ?? null;
     const all: ReleaseEvent[] = events.data?.events ?? [];
@@ -58,22 +64,33 @@ export function EventsTab({ today }: IEventsTabProps): React.ReactElement {
             ) : (
                 <Card className="px-4 sm:px-5">
                     {rows.map((e) => (
-                        <EventRow key={e.cnId} event={e} today={today} t={t} />
+                        <EventRow key={e.cnId} event={e} today={today} t={t} overridden={canEdit ? overrides.has(overrideKey("activity", e.cnId)) : null} onOverride={(name) => setOverrideTarget({ mode: "row", kind: "activity", cnId: e.cnId, name, resolution: e.resolution })} />
                     ))}
                 </Card>
             )}
+            {canEdit && <OverrideSheet target={overrideTarget} onClose={() => setOverrideTarget(null)} />}
         </div>
     );
 }
 
-function EventRow({ event, today, t }: { event: ReleaseEvent; today: Date; t: EventsT }): React.ReactElement {
+interface IEventRowProps {
+    event: ReleaseEvent;
+    today: Date;
+    t: EventsT;
+    /** Null for a reader who cannot edit overrides: the row then renders no pencil at all. */
+    overridden: boolean | null;
+    onOverride: (name: string) => void;
+}
+
+function EventRow({ event, today, t, overridden, onOverride }: IEventRowProps): React.ReactElement {
     const locale = useLocale();
     const tagLabel = useReleaseTagLabel();
     const autoOn = useAutoTranslate();
     const art = useArt(event.imagePath);
     const alt = resolveName(event.nameCn, event.nameEn, event.nameEnAuto, autoOn).text;
+    const badge = <ResolutionBadge resolution={event.resolution} today={today} />;
     return (
-        <ListRow visual={art.src && <RowImage src={art.src} alt={alt} onError={art.onError} />} badge={<ResolutionBadge resolution={event.resolution} today={today} />}>
+        <ListRow visual={art.src && <RowImage src={art.src} alt={alt} onError={art.onError} />} badge={overridden === null ? badge : <BadgeWithOverride badge={badge} button={<OverrideButton name={alt} exists={overridden} onClick={() => onOverride(alt)} />} />}>
             <CnName cn={event.nameCn} en={event.nameEn} auto={event.nameEnAuto} primaryClassName={cn("font-sans text-[13.5px]", event.hasStage ? "font-semibold text-foreground" : "font-medium text-muted-foreground")}>
                 <Tag>{tagLabel(event.activityType)}</Tag>
             </CnName>

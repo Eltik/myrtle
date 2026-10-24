@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-23T14:59:45.361Z",
+    "generatedAt": "2026-10-23T23:54:43.931Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -42384,8 +42384,8 @@
         {
             "key": "tools.release.model.median",
             "namespace": "tools",
-            "source_text": "Lag model: median {days} over the last {count} EN releases (p25 {p25}, p75 {p75})",
-            "description": "The model summary. {days} is the median, highlighted and labelled by release.model.days, and may move wherever the sentence needs it. 'p25' and 'p75' are the 25th and 75th percentiles, kept as statistical shorthand. No closing full stop: the backtest clause and the stop follow.",
+            "source_text": "Lag model: recency-weighted median {days} over the last {count} EN releases (p25 {p25}, p75 {p75})",
+            "description": "The model summary. {days} is the median, with newer releases counting more than older ones, highlighted and labelled by release.model.days, and may move wherever the sentence needs it. 'p25' and 'p75' are the 25th and 75th percentiles, kept as statistical shorthand. No closing full stop: the backtest clause and the stop follow.",
             "placeholders": [
                 "count",
                 "days",
@@ -42444,6 +42444,518 @@
             "namespace": "tools",
             "source_text": "usual",
             "description": "Drop rate: the item drops more often than not. Lowercase; it sits under the item name.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.button.add",
+            "namespace": "tools",
+            "source_text": "Override release date for {name}",
+            "description": "Accessible name of the admin pencil button beside a row's date. {name} is the event or banner name.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "tools.release.override.button.addTitle",
+            "namespace": "tools",
+            "source_text": "Override release date",
+            "description": "Tooltip on the admin pencil button beside a row's date.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.button.edit",
+            "namespace": "tools",
+            "source_text": "Edit override for {name}",
+            "description": "Accessible name of the same button when the row already carries a hand-set date. {name} is the event or banner name.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "tools.release.override.button.editTitle",
+            "namespace": "tools",
+            "source_text": "Edit override",
+            "description": "Tooltip on the same button when the row already carries a hand-set date.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.cancel",
+            "namespace": "tools",
+            "source_text": "Cancel",
+            "description": "Button closing the override sheet or the remove confirmation without saving.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.current.confirmed",
+            "namespace": "tools",
+            "source_text": "Confirmed by EN gamedata for {date}.",
+            "description": "The English game data already carries this row. {date} is that date or date range, formatted. 'EN' is the English game server.",
+            "placeholders": [
+                "date"
+            ]
+        },
+        {
+            "key": "tools.release.override.current.confirmedNote",
+            "namespace": "tools",
+            "source_text": "EN gamedata already confirms this date; an override is ignored while the sighting exists.",
+            "description": "Warning under the confirmed line: a date found in the English game data always wins over a hand-set one, so saving here changes nothing the reader sees.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.current.estimated",
+            "namespace": "tools",
+            "source_text": "Currently estimated for {date} ({lo} to {hi}).",
+            "description": "What the planner shows for this row today. {date} is the estimated EN date; {lo} and {hi} bound the window it could fall in. All three are formatted dates.",
+            "placeholders": [
+                "date",
+                "hi",
+                "lo"
+            ]
+        },
+        {
+            "key": "tools.release.override.current.none",
+            "namespace": "tools",
+            "source_text": "No EN date is shown for this row yet.",
+            "description": "The row has no estimate and no announced date today. 'EN' is the English game server.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.current.override",
+            "namespace": "tools",
+            "source_text": "Currently announced for {date}, per {source}.",
+            "description": "The row already shows a hand-set date. {date} is that date or date range, formatted; {source} is where it came from, e.g. 'manual' or 'the EN stream'.",
+            "placeholders": [
+                "date",
+                "source"
+            ]
+        },
+        {
+            "key": "tools.release.override.err.cnIdRequired",
+            "namespace": "tools",
+            "source_text": "Enter the CN id.",
+            "description": "Validation error: the CN id field is empty.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.err.endBeforeStart",
+            "namespace": "tools",
+            "source_text": "The end must come after the start.",
+            "description": "Validation error: the EN end is at or before the EN start.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.err.endInvalid",
+            "namespace": "tools",
+            "source_text": "Enter a full date and time, or leave it empty.",
+            "description": "Validation error: the EN end is not a complete, real date and time.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.err.startInvalid",
+            "namespace": "tools",
+            "source_text": "Enter a full date and time.",
+            "description": "Validation error: the EN start is not a complete, real date and time.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.err.startRequired",
+            "namespace": "tools",
+            "source_text": "Enter the EN start.",
+            "description": "Validation error: the EN start date is empty.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.field.cnId",
+            "namespace": "tools",
+            "source_text": "CN id",
+            "description": "Label of the field holding the Chinese server's id for the item. 'CN' is the Chinese game server.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.field.cnIdHint.activity",
+            "namespace": "tools",
+            "source_text": "The activity id, e.g. act42sre.",
+            "description": "Hint under the CN id field for an event override. 'act42sre' is a literal id example; keep it as-is.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.field.cnIdHint.pool",
+            "namespace": "tools",
+            "source_text": "The gacha pool id.",
+            "description": "Hint under the CN id field for a banner override.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.field.cnIdHint.review",
+            "namespace": "tools",
+            "source_text": "When the CN edition started, in unix seconds.",
+            "description": "Hint under the CN id field for a Fashion Review override: the id is the Chinese edition's start time as a unix timestamp. 'CN' is the Chinese game server.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.field.cnIdHint.skin",
+            "namespace": "tools",
+            "source_text": "The skin id.",
+            "description": "Hint under the CN id field for an outfit override.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.field.enEnd",
+            "namespace": "tools",
+            "source_text": "EN end (UTC, optional)",
+            "description": "Label of the date-and-time field for when the item closes on the English server, in UTC. It may be left empty.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.field.enEndHint",
+            "namespace": "tools",
+            "source_text": "Leave empty if the close date is not announced.",
+            "description": "Hint under the EN end field.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.field.enId",
+            "namespace": "tools",
+            "source_text": "EN id (optional)",
+            "description": "Label of the field for the English server's own id for the item, when it differs or is known.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.field.enIdHint",
+            "namespace": "tools",
+            "source_text": "The id EN uses, if known.",
+            "description": "Hint under the EN id field. 'EN' is the English game server.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.field.enName",
+            "namespace": "tools",
+            "source_text": "EN name (optional)",
+            "description": "Label of the field for the item's announced English name.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.field.enNameHint",
+            "namespace": "tools",
+            "source_text": "The announced English name, if any.",
+            "description": "Hint under the EN name field.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.field.enStart",
+            "namespace": "tools",
+            "source_text": "EN start (UTC)",
+            "description": "Label of the date-and-time field for when the item opens on the English server, entered in UTC. 'EN' is the English game server.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.field.enStartHint",
+            "namespace": "tools",
+            "source_text": "When it opens on EN, in UTC.",
+            "description": "Hint under the EN start field.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.field.kind",
+            "namespace": "tools",
+            "source_text": "Kind",
+            "description": "Label of the select choosing what the override moves: an event, a banner, an outfit or a Fashion Review.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.field.note",
+            "namespace": "tools",
+            "source_text": "Note (optional)",
+            "description": "Label of a free-text note kept with the override and shown in the date's tooltip.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.field.source",
+            "namespace": "tools",
+            "source_text": "Source (optional)",
+            "description": "Label of the field naming where the hand-set date comes from.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.field.sourceHint",
+            "namespace": "tools",
+            "source_text": "Where the date comes from, e.g. an EN announcement.",
+            "description": "Hint under the Source field. Left empty, the source is saved as 'manual'.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.kind.activity",
+            "namespace": "tools",
+            "source_text": "Event",
+            "description": "Kind of a release-date override that moves a story event. Shown in the admin override editor and list.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.kind.pool",
+            "namespace": "tools",
+            "source_text": "Banner",
+            "description": "Kind of a release-date override that moves a gacha banner.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.kind.review",
+            "namespace": "tools",
+            "source_text": "Fashion Review",
+            "description": "Kind of a release-date override that moves a Fashion Review, the game's recurring outfit rerun sale. Keep the game's own name for it.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.kind.skin",
+            "namespace": "tools",
+            "source_text": "Outfit",
+            "description": "Kind of a release-date override that moves one outfit (character skin) sale.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.remove",
+            "namespace": "tools",
+            "source_text": "Remove override",
+            "description": "Destructive button dropping the hand-set date from the row.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.remove.body",
+            "namespace": "tools",
+            "source_text": "The row goes back to its estimate / gamedata date.",
+            "description": "Body of the remove confirmation: without the hand-set date the row shows the projected date, or the date in the English game data if there is one.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.remove.title",
+            "namespace": "tools",
+            "source_text": "Remove this override?",
+            "description": "Title of the confirmation before an override is removed.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.replacesExisting",
+            "namespace": "tools",
+            "source_text": "An override already exists for this item. Saving replaces it.",
+            "description": "Hint in the 'new override' form when the kind and CN id typed match a row that already has a hand-set date.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.reviewItem",
+            "namespace": "tools",
+            "source_text": "Fashion Review, CN {date}",
+            "description": "Names a Fashion Review by the date its Chinese edition started. {date} is an already formatted date. 'CN' is the Chinese game server and stays as-is.",
+            "placeholders": [
+                "date"
+            ]
+        },
+        {
+            "key": "tools.release.override.save",
+            "namespace": "tools",
+            "source_text": "Save",
+            "description": "Submit button of the override sheet.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.subtitle",
+            "namespace": "tools",
+            "source_text": "{name} · {kind}",
+            "description": "Subtitle under the sheet title: the item's name, then its kind (e.g. 'Event'). The CN id follows it in a code font.",
+            "placeholders": [
+                "kind",
+                "name"
+            ]
+        },
+        {
+            "key": "tools.release.override.title.add",
+            "namespace": "tools",
+            "source_text": "Override release date",
+            "description": "Title of the admin side sheet that sets an announced EN date for an event or banner by hand.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.title.edit",
+            "namespace": "tools",
+            "source_text": "Edit override",
+            "description": "Title of the same side sheet when the row already carries a hand-set date.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.toast.removeFailed",
+            "namespace": "tools",
+            "source_text": "Couldn't remove the override",
+            "description": "Toast title when removing an override fails; the reason follows in the body.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.toast.removed",
+            "namespace": "tools",
+            "source_text": "Override removed",
+            "description": "Toast title after an override is removed.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.toast.removedDesc",
+            "namespace": "tools",
+            "source_text": "{name} is back on its estimate / gamedata date.",
+            "description": "Toast body after removing. {name} is the item's name or id.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "tools.release.override.toast.saveFailed",
+            "namespace": "tools",
+            "source_text": "Couldn't save the override",
+            "description": "Toast title when saving an override fails; the reason follows in the body.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.toast.saved",
+            "namespace": "tools",
+            "source_text": "Override saved",
+            "description": "Toast title after an override is saved.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.override.toast.savedDesc",
+            "namespace": "tools",
+            "source_text": "{name} now opens on EN {date}.",
+            "description": "Toast body after saving. {name} is the item's name or id; {date} is the saved EN date, formatted.",
+            "placeholders": [
+                "date",
+                "name"
+            ]
+        },
+        {
+            "key": "tools.release.overrides.add",
+            "namespace": "tools",
+            "source_text": "Add override",
+            "description": "Button opening an empty override form where the editor picks the kind and CN id.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.overrides.col.actions",
+            "namespace": "tools",
+            "source_text": "Actions",
+            "description": "Visually hidden column header over each row's edit and remove buttons.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.overrides.col.end",
+            "namespace": "tools",
+            "source_text": "EN end",
+            "description": "Column header: the hand-set English server end date.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.overrides.col.item",
+            "namespace": "tools",
+            "source_text": "Item",
+            "description": "Column header: the event or banner the override moves.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.overrides.col.kind",
+            "namespace": "tools",
+            "source_text": "Kind",
+            "description": "Column header: event, banner, outfit or Fashion Review.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.overrides.col.note",
+            "namespace": "tools",
+            "source_text": "Note",
+            "description": "Column header: the free-text note kept with the override.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.overrides.col.source",
+            "namespace": "tools",
+            "source_text": "Source",
+            "description": "Column header: where the date comes from.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.overrides.col.start",
+            "namespace": "tools",
+            "source_text": "EN start",
+            "description": "Column header: the hand-set English server start date. 'EN' is the English game server.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.overrides.col.updated",
+            "namespace": "tools",
+            "source_text": "Updated",
+            "description": "Column header: when the override was last saved.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.overrides.description",
+            "namespace": "tools",
+            "source_text": "Hand-set EN dates. A date in the EN gamedata still wins over any of these.",
+            "description": "Subtitle of the override list. 'EN' is the English game server; 'gamedata' is the game's own data files.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.overrides.edit",
+            "namespace": "tools",
+            "source_text": "Edit override for {name}",
+            "description": "Accessible name of a row's edit button. {name} is the item's name or id.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "tools.release.overrides.empty.description",
+            "namespace": "tools",
+            "source_text": "Every row shows its estimate or its EN gamedata date. Add one when EN announces a date early.",
+            "description": "Empty-state body. 'EN' is the English game server.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.overrides.empty.title",
+            "namespace": "tools",
+            "source_text": "No overrides",
+            "description": "Empty-state title when no hand-set dates are stored.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.overrides.none",
+            "namespace": "tools",
+            "source_text": "None",
+            "description": "Placeholder in the EN start or EN end column when that date was not set.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.overrides.open",
+            "namespace": "tools",
+            "source_text": "Overrides",
+            "description": "Admin button in the Release Planner header opening the list of hand-set release dates. A count badge follows it.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.overrides.openLabel",
+            "namespace": "tools",
+            "source_text": "Overrides ({count})",
+            "description": "Accessible name of the same button, with the number of stored overrides. {count} is a number.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.release.overrides.remove",
+            "namespace": "tools",
+            "source_text": "Remove override for {name}",
+            "description": "Accessible name of a row's remove button. {name} is the item's name or id.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "tools.release.overrides.title",
+            "namespace": "tools",
+            "source_text": "Release date overrides",
+            "description": "Title of the admin sheet listing every hand-set EN release date.",
             "placeholders": []
         },
         {

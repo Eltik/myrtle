@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import type * as React from "react";
+import * as React from "react";
 import { itemIcon } from "#/components/operators/detail/impl/assets";
 import { Card } from "#/components/ui/card";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
@@ -13,8 +13,12 @@ import { useAutoTranslate } from "../autoTranslate";
 import { formatDateRange } from "../helpers";
 import type { messages as helperMessages } from "../helpers.messages";
 import { useReleaseTagLabel } from "../labels";
+import { overrideKey, scheduleOverrideTarget } from "../overrides";
 import { type IScheduleItem, KIND_LABEL_KEYS, type ScheduleKind } from "../schedule";
 import type { messages as scheduleMessages } from "../schedule.messages";
+import { useReleaseOverrides } from "../useReleaseOverrides";
+import { BadgeWithOverride, OverrideButton } from "./overrides/OverrideButton";
+import { type IOverrideTarget, OverrideSheet } from "./overrides/OverrideSheet";
 import { ResolutionBadge } from "./ResolutionBadge";
 import type { messages } from "./ScheduleShared.messages";
 import { SkinTileView } from "./SkinPopup";
@@ -170,6 +174,12 @@ export function ScheduleDetail({ item, lookup, today, onClose }: IScheduleDetail
     const isSkin = item.kind === "skin" || item.kind === "rerun" || item.kind === "review";
     const cnLabel = item.kind === "rerun" ? t("release.detail.cnRelisted") : t("release.detail.cn");
     const showArt = art.src !== null && !isSkin;
+    const { canEdit, overrides } = useReleaseOverrides();
+    const [overrideTarget, setOverrideTarget] = React.useState<IOverrideTarget | null>(null);
+    // Events, banners and Fashion Reviews map to one override row each; a skin group or rerun
+    // stands for several skins, so it gets no pencil.
+    const target = canEdit ? scheduleOverrideTarget(item.key) : null;
+    const badge = <ResolutionBadge resolution={item.resolution} today={today} caption={item.anchor ? <AnchorCaption anchor={item.anchor} /> : undefined} />;
     return (
         <Card className="relative gap-0 overflow-hidden p-3 pl-4 sm:p-4 sm:pl-5">
             <span aria-hidden="true" className={cn("absolute inset-y-0 left-0 w-1", style.dot)} />
@@ -206,7 +216,7 @@ export function ScheduleDetail({ item, lookup, today, onClose }: IScheduleDetail
                         </div>
                     )}
                 </div>
-                <ResolutionBadge resolution={item.resolution} today={today} caption={item.anchor ? <AnchorCaption anchor={item.anchor} /> : undefined} />
+                {target ? <BadgeWithOverride badge={badge} button={<OverrideButton name={name} exists={overrides.has(overrideKey(target.kind, target.cnId))} onClick={() => setOverrideTarget({ mode: "row", ...target, name, resolution: item.resolution })} />} /> : badge}
             </div>
             {isSkin && item.skins && item.skins.length > 0 && (
                 <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
@@ -215,6 +225,7 @@ export function ScheduleDetail({ item, lookup, today, onClose }: IScheduleDetail
                     ))}
                 </div>
             )}
+            {canEdit && <OverrideSheet target={overrideTarget} onClose={() => setOverrideTarget(null)} />}
         </Card>
     );
 }

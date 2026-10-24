@@ -8593,7 +8593,7 @@
           {
             "name": "kind",
             "in": "path",
-            "description": "Override kind: `event`, `banner` or `skin`.",
+            "description": "Override kind: `activity`, `pool`, `skin` or `review`.",
             "required": true,
             "schema": {
               "type": "string"

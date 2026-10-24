@@ -16,8 +16,9 @@ export const messages = {
         description: "A number of days, e.g. '182 d'. 'd' abbreviates days.",
     },
     "release.model.median": {
-        text: "Lag model: median {days} over the last {count} EN releases (p25 {p25}, p75 {p75})",
-        description: "The model summary. {days} is the median, highlighted and labelled by release.model.days, and may move wherever the sentence needs it. 'p25' and 'p75' are the 25th and 75th percentiles, kept as statistical shorthand. No closing full stop: the backtest clause and the stop follow.",
+        text: "Lag model: recency-weighted median {days} over the last {count} EN releases (p25 {p25}, p75 {p75})",
+        description:
+            "The model summary. {days} is the median, with newer releases counting more than older ones, highlighted and labelled by release.model.days, and may move wherever the sentence needs it. 'p25' and 'p75' are the 25th and 75th percentiles, kept as statistical shorthand. No closing full stop: the backtest clause and the stop follow.",
     },
     "release.model.backtest": {
         text: ", backtest median abs error {days} over {count}, band hit rate {rate}",
