@@ -115,14 +115,27 @@ pub enum CacheKey<'a> {
         uid: &'a str,
         version: i64,
     },
-    /// One memoised simulation. `kind` separates dps from hps, which share a
-    /// request type but not a result type.
+    /// One memoised simulation (or batch, or supporter table). `kind`
+    /// separates dps from hps, which share a request type but not a result
+    /// type. `data` is the game-data identity
+    /// (`dps::data_cache::game_data_identity`), so a reload cannot serve a
+    /// result computed on the previous data even before the watcher's prefix
+    /// invalidation lands, and a restart onto other data cannot read old ones.
     DpsCalculate {
         kind: &'a str,
+        data: &'a str,
         body_hash: u64,
     },
     DpsList {
         kind: &'a str,
+        data: &'a str,
+    },
+    /// The full all-operator ranking for one shared context, before filters.
+    /// Keyed like `DpsCalculate`; the long TTL is safe because the game-data
+    /// identity is in the key.
+    DpsRank {
+        data: &'a str,
+        context_hash: u64,
     },
     /// A rendered UI message catalog. The content hash is in the key, so a body is
     /// never stale and the long TTL is safe; `invalidate_by_prefix("i18n:")` on
@@ -243,10 +256,15 @@ impl CacheKey<'_> {
             CacheKey::UserImprovements { uid, version } => {
                 format!("improvements:{uid}:{version}")
             }
-            CacheKey::DpsCalculate { kind, body_hash } => {
-                format!("dps:calc:{kind}:{body_hash}")
+            CacheKey::DpsCalculate {
+                kind,
+                data,
+                body_hash,
+            } => format!("dps:calc:{kind}:{data}:{body_hash}"),
+            CacheKey::DpsList { kind, data } => format!("dps:list:{kind}:{data}"),
+            CacheKey::DpsRank { data, context_hash } => {
+                format!("dps:rank:{data}:{context_hash}")
             }
-            CacheKey::DpsList { kind } => format!("dps:list:{kind}"),
             CacheKey::I18nCatalog {
                 locale,
                 namespace,
@@ -294,6 +312,7 @@ impl CacheKey<'_> {
             // invalidates it, and `asset_watcher` clears the `dps:` prefix on one.
             CacheKey::DpsCalculate { .. } => Duration::from_hours(1),
             CacheKey::DpsList { .. } => Duration::from_hours(1),
+            CacheKey::DpsRank { .. } => Duration::from_hours(24),
             CacheKey::I18nCatalog { .. } => Duration::from_hours(24), // content-addressed; cannot go stale
             CacheKey::I18nManifest => Duration::from_secs(30),
         }

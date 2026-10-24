@@ -67,6 +67,9 @@ fn test_hps_engine_vs_python_expected() {
     let mut failed = 0u64;
     let mut skipped = 0u64;
     let mut failures: Vec<String> = Vec::new();
+    // `HPS_DUMP=<path>` writes every computed case as `key\tskill\tbase\tavg` at
+    // full f64 precision, sorted, for bit-identity checks with `cmp`.
+    let mut dump: Vec<String> = Vec::new();
 
     for (char_id, formula) in &formulas {
         let Some(operator) = game_data.operators.get(char_id) else {
@@ -93,7 +96,15 @@ fn test_hps_engine_vs_python_expected() {
                     ..Default::default()
                 };
 
-                let Some(result) = engine::calculate_hps(operator, params) else {
+                let result = engine::calculate_hps(operator, params);
+                dump.push(match &result {
+                    Some(r) => format!(
+                        "{key}\t{:?}\t{:?}\t{:?}",
+                        r.skill_hps, r.base_hps, r.avg_hps
+                    ),
+                    None => format!("{key}\tNone"),
+                });
+                let Some(result) = result else {
                     skipped += 1;
                     continue;
                 };
@@ -124,6 +135,12 @@ fn test_hps_engine_vs_python_expected() {
                 }
             }
         }
+    }
+
+    if let Ok(path) = std::env::var("HPS_DUMP") {
+        dump.sort();
+        std::fs::write(&path, dump.join("\n") + "\n").expect("write HPS_DUMP");
+        println!("  wrote {} cases to {path}", dump.len());
     }
 
     println!("\n============================================================");

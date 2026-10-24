@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-24T13:20:52.556Z",
+    "generatedAt": "2026-10-24T15:29:58.909Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -36754,10 +36754,1547 @@
             "placeholders": []
         },
         {
+            "key": "tools.calc.chart.marker.break",
+            "namespace": "tools",
+            "source_text": "floor from {x}",
+            "description": "Curve marker detail: the axis value from which the operator's damage stops falling because every hit has reached the 5% minimum. {x} is a formatted axis value such as 'DEF 1,240', or the 'not in range' text. Lowercase on purpose; it follows the operator name.",
+            "placeholders": [
+                "x"
+            ]
+        },
+        {
+            "key": "tools.calc.chart.marker.breakKey",
+            "namespace": "tools",
+            "source_text": "Floor reached: damage stops falling",
+            "description": "Legend entry under the chart explaining the filled diamond marker: from here on every hit deals the 5% minimum, so more DEF or RES no longer lowers the value.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.chart.marker.half",
+            "namespace": "tools",
+            "source_text": "half at {x}",
+            "description": "Curve marker detail: the axis value where the curve falls to half of its value at the start of the sweep. {x} is a formatted axis value such as 'DEF 860', or the 'not in range' text. Lowercase on purpose.",
+            "placeholders": [
+                "x"
+            ]
+        },
+        {
+            "key": "tools.calc.chart.marker.halfKey",
+            "namespace": "tools",
+            "source_text": "Half of the value at the sweep start",
+            "description": "Legend entry under the chart explaining the hollow ring marker: where the curve falls to half of its value at the left edge of the chart.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.chart.marker.notInRange",
+            "namespace": "tools",
+            "source_text": "not in range",
+            "description": "Stands in for the axis value in a curve-marker detail when the curve never reaches that point inside the swept range.",
+            "placeholders": []
+        },
+        {
             "key": "tools.calc.chart.snapshot",
             "namespace": "tools",
             "source_text": "snapshot",
             "description": "Tiny label on the dashed vertical line marking the X value the result panel reports. Lowercase on purpose.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.20Stacks",
+            "namespace": "tools",
+            "source_text": "20 stacks",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: '20Stacks'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.2plusRangedTilesNearby",
+            "namespace": "tools",
+            "source_text": "2+ ranged tiles nearby",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: '2'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.3InRange",
+            "namespace": "tools",
+            "source_text": "3 in range",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: '3inRange'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.3Kills",
+            "namespace": "tools",
+            "source_text": "3 kills",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: '3kills'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.3ShieldsBroken",
+            "namespace": "tools",
+            "source_text": "3 shields broken",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: '3shieldsBroken'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.3plusEnemiesNearby",
+            "namespace": "tools",
+            "source_text": "3+ enemies nearby",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: '3'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.4Hits",
+            "namespace": "tools",
+            "source_text": "4 hits",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: '4hits'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.5ModuleStacks",
+            "namespace": "tools",
+            "source_text": "5 module stacks",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: '5modStacks'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.abyssalHunterInRange",
+            "namespace": "tools",
+            "source_text": "Abyssal Hunter in range",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'AHinRange'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.adjacentAllies",
+            "namespace": "tools",
+            "source_text": "Adjacent allies",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'adjacentAllies'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.adjacentAlly",
+            "namespace": "tools",
+            "source_text": "Adjacent ally",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'adjacentAlly'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.aerialTarget",
+            "namespace": "tools",
+            "source_text": "Aerial target",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'aerial', 'aerialTarget'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.after10S",
+            "namespace": "tools",
+            "source_text": "After 10 s",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'after10s'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.after3BigHits",
+            "namespace": "tools",
+            "source_text": "After 3 big hits",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'after3BigHits'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.after5S",
+            "namespace": "tools",
+            "source_text": "After 5 s",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'after5sec'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.afterADodge",
+            "namespace": "tools",
+            "source_text": "After a dodge",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'afterDodge'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.afterRevive",
+            "namespace": "tools",
+            "source_text": "After revive",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'afterRevive'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.afterStealing",
+            "namespace": "tools",
+            "source_text": "After stealing",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'afterSteal'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.afterTheTalentSHits",
+            "namespace": "tools",
+            "source_text": "After the talent's hits",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'After' (char_4117_ray), 'after'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.afterTheTalentSKills",
+            "namespace": "tools",
+            "source_text": "After the talent's kills",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'After' (char_333_sidero)). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.afterTheTalentTrigger",
+            "namespace": "tools",
+            "source_text": "After the talent trigger",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'After'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.allyInRange",
+            "namespace": "tools",
+            "source_text": "Ally in range",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'AllyInRange'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.alone",
+            "namespace": "tools",
+            "source_text": "Alone",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'alone'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.aspdBuffWithSkill",
+            "namespace": "tools",
+            "source_text": "ASPD buff with skill",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'Apsd'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.atMaxRange",
+            "namespace": "tools",
+            "source_text": "At max range",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'atMaxRange'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.atRange",
+            "namespace": "tools",
+            "source_text": "At range",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'atRange'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.averageBurn",
+            "namespace": "tools",
+            "source_text": "Average Burn",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'avgBurn'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.averageNecrosis",
+            "namespace": "tools",
+            "source_text": "Average Necrosis",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'avgNecrosis'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.averageNervousImpairment",
+            "namespace": "tools",
+            "source_text": "Average Nervous Impairment",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'avgNerv'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.beforeTheKill",
+            "namespace": "tools",
+            "source_text": "Before the kill",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'preKill'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.beforeTheTalentSTimeLimit",
+            "namespace": "tools",
+            "source_text": "Before the talent's time limit",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'f' (char_4193_lemuen)). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.blocked",
+            "namespace": "tools",
+            "source_text": "Blocked",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'blocked'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.blockedTarget",
+            "namespace": "tools",
+            "source_text": "Blocked target",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'blockedTarget'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.blocking",
+            "namespace": "tools",
+            "source_text": "Blocking",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'blocking'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.blocking2Plus",
+            "namespace": "tools",
+            "source_text": "Blocking 2+",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'blocking2'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.bottlesHitTwice",
+            "namespace": "tools",
+            "source_text": "Bottles hit twice",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: '2HitBottles'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.catOnly",
+            "namespace": "tools",
+            "source_text": "Cat only",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'onlyCat'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.centralHit",
+            "namespace": "tools",
+            "source_text": "Central hit",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'central'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.charged",
+            "namespace": "tools",
+            "source_text": "Charged",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'charged'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.conditionMet",
+            "namespace": "tools",
+            "source_text": "Condition met",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'f'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.damageTaken",
+            "namespace": "tools",
+            "source_text": "Damage taken",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'dmgTaken'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.directlyInFront",
+            "namespace": "tools",
+            "source_text": "Directly in front",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'DirectFront', 'directFront'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.distant",
+            "namespace": "tools",
+            "source_text": "Distant",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'distant'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.enemyClose",
+            "namespace": "tools",
+            "source_text": "Enemy close",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'EnemyClose'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.fever",
+            "namespace": "tools",
+            "source_text": "Fever",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'Fever', 'f' (char_4182_oblvns), 'fever'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.firstActivation",
+            "namespace": "tools",
+            "source_text": "First activation",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: '1stActivation', 'firstActivation'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.fourthActivation",
+            "namespace": "tools",
+            "source_text": "Fourth activation",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: '4thActivation'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.fullSquad",
+            "namespace": "tools",
+            "source_text": "Full squad",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'FullSquad'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.gotHit",
+            "namespace": "tools",
+            "source_text": "Got hit",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'gotHit'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.groundEnemies",
+            "namespace": "tools",
+            "source_text": "Ground enemies",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'groundEnemies'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.groundEnemy",
+            "namespace": "tools",
+            "source_text": "Ground enemy",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'GroundEnemy'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.groundTargets",
+            "namespace": "tools",
+            "source_text": "Ground targets",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'GroundTargets'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.groundUnit",
+            "namespace": "tools",
+            "source_text": "Ground unit",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'groundUnit'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.halfStacks",
+            "namespace": "tools",
+            "source_text": "Half stacks",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'halfStacks'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.halfVigor",
+            "namespace": "tools",
+            "source_text": "Half Vigor",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'half'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.healingMelee",
+            "namespace": "tools",
+            "source_text": "Healing melee",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'healingMelee'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.healsRatherThanAttacks",
+            "namespace": "tools",
+            "source_text": "Heals rather than attacks",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'heals'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.highGroundTarget",
+            "namespace": "tools",
+            "source_text": "High-ground target",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'highGroundTarget'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.highHPTarget",
+            "namespace": "tools",
+            "source_text": "High-HP target",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'f' (char_4056_titi)). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.iceOnly",
+            "namespace": "tools",
+            "source_text": "Ice only",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'iceOnly'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.idealCase",
+            "namespace": "tools",
+            "source_text": "Ideal case",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'idealCase'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.idealTalentUsage",
+            "namespace": "tools",
+            "source_text": "Ideal talent usage",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'idealTalentUsage'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.inIS3",
+            "namespace": "tools",
+            "source_text": "In IS3",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'in'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.inIntegratedStrategies",
+            "namespace": "tools",
+            "source_text": "In Integrated Strategies",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'inIS'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.initialHit",
+            "namespace": "tools",
+            "source_text": "Initial hit",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'initialHit'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.killingHitsOnly",
+            "namespace": "tools",
+            "source_text": "Killing hits only",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'KillingHitsOnly'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.lastStand",
+            "namespace": "tools",
+            "source_text": "Last stand",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'lastStand'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.liftoffSelfBuff",
+            "namespace": "tools",
+            "source_text": "Liftoff self-buff",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'liftoffSelfBuff'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.lowHP",
+            "namespace": "tools",
+            "source_text": "Low HP",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'lowHP', 'lowHp'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.lowHPTarget",
+            "namespace": "tools",
+            "source_text": "Low-HP target",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'f' (char_4071_peper), 'lowHpTarget'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.lowTalentBonus",
+            "namespace": "tools",
+            "source_text": "Low talent bonus",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'LowTalent'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.manyTargets",
+            "namespace": "tools",
+            "source_text": "Many targets",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'manyTargets'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.maxFirstTalent",
+            "namespace": "tools",
+            "source_text": "Max first talent",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'maxTalent1'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.maxModuleBonus",
+            "namespace": "tools",
+            "source_text": "Max module bonus",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'maxModuleBonus'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.maxModuleStacks",
+            "namespace": "tools",
+            "source_text": "Max module stacks",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'maxModStacks'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.maxNotes",
+            "namespace": "tools",
+            "source_text": "Max notes",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'maxNotes'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.maxRange",
+            "namespace": "tools",
+            "source_text": "Max range",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'maxRange'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.maxSecondTalent",
+            "namespace": "tools",
+            "source_text": "Max second talent",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'maxTalent2'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.maxSkillDamage",
+            "namespace": "tools",
+            "source_text": "Max skill damage",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'maxSkillDmg'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.maxStacks",
+            "namespace": "tools",
+            "source_text": "Max stacks",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'maxStacks'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.maxSteal",
+            "namespace": "tools",
+            "source_text": "Max steal",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'maxSteal'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.maxTenacity",
+            "namespace": "tools",
+            "source_text": "Max Tenacity",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'maxTenacity'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.melee",
+            "namespace": "tools",
+            "source_text": "Melee",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'meelee', 'melee'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.mineDebuff",
+            "namespace": "tools",
+            "source_text": "Mine debuff",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'MineDebuff'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.mineInRange",
+            "namespace": "tools",
+            "source_text": "Mine in range",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'MineInRange'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.minimumASPDBonus",
+            "namespace": "tools",
+            "source_text": "Minimum ASPD bonus",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'minAspd'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.minimumDEFShred",
+            "namespace": "tools",
+            "source_text": "Minimum DEF shred",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'minDefshred'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.minimumDroneDamage",
+            "namespace": "tools",
+            "source_text": "Minimum drone damage",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'minDroneDmg'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.minimumNotes",
+            "namespace": "tools",
+            "source_text": "Minimum notes",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'minNotes'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.minimumRESShred",
+            "namespace": "tools",
+            "source_text": "Minimum RES shred",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'minResshred'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.minimumTraitBonus",
+            "namespace": "tools",
+            "source_text": "Minimum trait bonus",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'minTrait'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.moduleRevive",
+            "namespace": "tools",
+            "source_text": "Module revive",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'ModRevive'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.multipleTargets",
+            "namespace": "tools",
+            "source_text": "Multiple targets",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'f' (char_1023_ghost2), 'f' (char_248_mgllan)). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.nextToCannon",
+            "namespace": "tools",
+            "source_text": "Next to cannon",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'nextToCannon'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.noBurn",
+            "namespace": "tools",
+            "source_text": "No Burn",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'no' (char_1040_blaze2), 'no' (char_4081_warmy)). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.noClones",
+            "namespace": "tools",
+            "source_text": "No clones",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'no' (char_249_mlyss)). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.noCoinStacks",
+            "namespace": "tools",
+            "source_text": "No coin stacks",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'noCoinStacks'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.noConstruct",
+            "namespace": "tools",
+            "source_text": "No construct",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'noConstruct'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.noCrits",
+            "namespace": "tools",
+            "source_text": "No crits",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'noCrits'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.noDP",
+            "namespace": "tools",
+            "source_text": "No DP",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'noDP'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.noDamageTaken",
+            "namespace": "tools",
+            "source_text": "No damage taken",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'noDmgTaken'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.noDragons",
+            "namespace": "tools",
+            "source_text": "No dragons",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'noDragons'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.noDrones",
+            "namespace": "tools",
+            "source_text": "No drones",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'noDrones'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.noEnemies",
+            "namespace": "tools",
+            "source_text": "No enemies",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'noEnemies'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.noGroundTiles",
+            "namespace": "tools",
+            "source_text": "No ground tiles",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'noGroundTiles'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.noMana",
+            "namespace": "tools",
+            "source_text": "No mana",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'noMana'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.noMines",
+            "namespace": "tools",
+            "source_text": "No mines",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'noMines'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.noModuleBonus",
+            "namespace": "tools",
+            "source_text": "No module bonus",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'noModBonus'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.noModuleStacks",
+            "namespace": "tools",
+            "source_text": "No module stacks",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'noModStacks'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.noNecrosis",
+            "namespace": "tools",
+            "source_text": "No Necrosis",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'noNecrosis'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.noRangedTiles",
+            "namespace": "tools",
+            "source_text": "No ranged tiles",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'NoRangedTiles'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.noSecondMedic",
+            "namespace": "tools",
+            "source_text": "No second Medic",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'No'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.noSecondTalentStacks",
+            "namespace": "tools",
+            "source_text": "No second-talent stacks",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'noTalent2Stacks'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.noSkillCrits",
+            "namespace": "tools",
+            "source_text": "No skill crits",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'NoSkillCrit'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.noStacks",
+            "namespace": "tools",
+            "source_text": "No stacks",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'noStacks'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.noSummon",
+            "namespace": "tools",
+            "source_text": "No summon",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'noSummon'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.noSummons",
+            "namespace": "tools",
+            "source_text": "No summons",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'noSummons'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.noTalentBuffs",
+            "namespace": "tools",
+            "source_text": "No talent buffs",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'noTalentBuffs'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.noTalentStacks",
+            "namespace": "tools",
+            "source_text": "No talent stacks",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'noTalentStacks'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.notBlocking",
+            "namespace": "tools",
+            "source_text": "Not blocking",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'NotBlocking'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.notCharged",
+            "namespace": "tools",
+            "source_text": "Not charged",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'NotCharged'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.notInHealRange",
+            "namespace": "tools",
+            "source_text": "Not in heal range",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'NotInHealRange'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.oneDragon",
+            "namespace": "tools",
+            "source_text": "One dragon",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: '1Dragon'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.oneDrone",
+            "namespace": "tools",
+            "source_text": "One drone",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: '1Drone'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.oneMinePerSkillCycle",
+            "namespace": "tools",
+            "source_text": "One mine per skill cycle",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: '1MinePerSPcost'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.oneStack",
+            "namespace": "tools",
+            "source_text": "One stack",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: '1Stack'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.oneSummon",
+            "namespace": "tools",
+            "source_text": "One summon",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: '1Summon'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.oneWolf",
+            "namespace": "tools",
+            "source_text": "One wolf",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: '1wolf'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.onethirdOfHitsVsFrozen",
+            "namespace": "tools",
+            "source_text": "1/3 of hits vs. frozen",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: '1'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.openingSeconds",
+            "namespace": "tools",
+            "source_text": "Opening seconds",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'first', 'first' (char_187_ccheal), 'first' (char_286_cast3)). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.openingSecondsVsDrones",
+            "namespace": "tools",
+            "source_text": "Opening seconds vs. drones",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'first' (char_4000_jnight)). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.organ",
+            "namespace": "tools",
+            "source_text": "Organ",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'Organ'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.outOfAmmo",
+            "namespace": "tools",
+            "source_text": "Out of ammo",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'outOfAmmo'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.overcharged",
+            "namespace": "tools",
+            "source_text": "Overcharged",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'overcharged'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.overdrive",
+            "namespace": "tools",
+            "source_text": "Overdrive",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'overdrive'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.overlappingHits",
+            "namespace": "tools",
+            "source_text": "Overlapping hits",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'overlap', 'overlapp'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.rangedAttack",
+            "namespace": "tools",
+            "source_text": "Ranged attack",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'rangedAtk'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.s3SelfBuff",
+            "namespace": "tools",
+            "source_text": "S3 self-buff",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'selfbuffS3'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.sandwiched",
+            "namespace": "tools",
+            "source_text": "Sandwiched",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'Sandwiched'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.secondActivation",
+            "namespace": "tools",
+            "source_text": "Second activation",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: '2ndActivation'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.selfAppliedSleep",
+            "namespace": "tools",
+            "source_text": "Self-applied Sleep",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'selfAppliedSleep'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.selfBuff",
+            "namespace": "tools",
+            "source_text": "Self-buff",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'selfBuff'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.selfStun",
+            "namespace": "tools",
+            "source_text": "Self-stun",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'selfstun'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.singleTargetOnly",
+            "namespace": "tools",
+            "source_text": "Single target only",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'singleTargetOnly'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.skillSucceeds",
+            "namespace": "tools",
+            "source_text": "Skill succeeds",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'SkillSuccess'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.talentActive",
+            "namespace": "tools",
+            "source_text": "Talent active",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'TalentUp'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.talentInactive",
+            "namespace": "tools",
+            "source_text": "Talent inactive",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'talentInactive'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.talentOnOneShotPerMagazine",
+            "namespace": "tools",
+            "source_text": "Talent on one shot per magazine",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'TalentOn1'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.talentSEnemyTypeBonus",
+            "namespace": "tools",
+            "source_text": "Talent's enemy-type bonus",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'withRacism'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.talentStacks",
+            "namespace": "tools",
+            "source_text": "Talent stacks",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'f' (char_1026_gvial2), 'f' (char_2015_dusk), 'f' (char_4146_nymph)). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.talentSummons",
+            "namespace": "tools",
+            "source_text": "Talent summons",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'f' (char_4164_tecno)). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.tripleHit",
+            "namespace": "tools",
+            "source_text": "Triple hit",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'tripleHit'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.turretOnly",
+            "namespace": "tools",
+            "source_text": "Turret only",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'TurretOnly'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.typewriterAttacksSeparately",
+            "namespace": "tools",
+            "source_text": "Typewriter attacks separately",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'TW'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.unitOnly",
+            "namespace": "tools",
+            "source_text": "Unit only",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'unitOnly'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.versusTheHPThreshold",
+            "namespace": "tools",
+            "source_text": "Versus the HP threshold",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vs'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vs2PlusEnemies",
+            "namespace": "tools",
+            "source_text": "vs. 2+ enemies",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vs2'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsAerial",
+            "namespace": "tools",
+            "source_text": "vs. aerial",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsAerial'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsBindAndSlow",
+            "namespace": "tools",
+            "source_text": "vs. Bind and Slow",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsBindAndSlow'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsBindOrSlow",
+            "namespace": "tools",
+            "source_text": "vs. Bind or Slow",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsBindOrSlow'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsBlocked",
+            "namespace": "tools",
+            "source_text": "vs. blocked",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsBlocked'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsBoss",
+            "namespace": "tools",
+            "source_text": "vs. boss",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsBoss'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsBurn",
+            "namespace": "tools",
+            "source_text": "vs. Burn",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsBurn'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsDrones",
+            "namespace": "tools",
+            "source_text": "vs. drones",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsDrones'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsElite",
+            "namespace": "tools",
+            "source_text": "vs. elite",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsElite'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsFallout",
+            "namespace": "tools",
+            "source_text": "vs. Fallout",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsFallout'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsFrighten",
+            "namespace": "tools",
+            "source_text": "vs. Frighten",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsFrighten'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsFrozen",
+            "namespace": "tools",
+            "source_text": "vs. frozen",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsFrozen'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsHeavy",
+            "namespace": "tools",
+            "source_text": "vs. heavy",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsHeavy'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsHighHP",
+            "namespace": "tools",
+            "source_text": "vs. high HP",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsHighHp'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsHigherHP",
+            "namespace": "tools",
+            "source_text": "vs. higher HP",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsHigherHP'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsInfected",
+            "namespace": "tools",
+            "source_text": "vs. Infected",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsInfected'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsInvisible",
+            "namespace": "tools",
+            "source_text": "vs. invisible",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsInvis'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsLevitateImmune",
+            "namespace": "tools",
+            "source_text": "vs. Levitate-immune",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsLevitateImmune'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsLight",
+            "namespace": "tools",
+            "source_text": "vs. light",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsLight'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsLowHP",
+            "namespace": "tools",
+            "source_text": "vs. low HP",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsLowHp'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsMachine",
+            "namespace": "tools",
+            "source_text": "vs. machine",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsMachine'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsMarked",
+            "namespace": "tools",
+            "source_text": "vs. marked",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsMarked'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsMoving",
+            "namespace": "tools",
+            "source_text": "vs. moving",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsMoving'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsNegativeStatus",
+            "namespace": "tools",
+            "source_text": "vs. negative status",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsNegStat'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsNonSarkaz",
+            "namespace": "tools",
+            "source_text": "vs. non-Sarkaz",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsNonSarkaz'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsParalysed",
+            "namespace": "tools",
+            "source_text": "vs. paralysed",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsPara'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsRanged",
+            "namespace": "tools",
+            "source_text": "vs. ranged",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsRanged'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsSeaborn",
+            "namespace": "tools",
+            "source_text": "vs. Seaborn",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsSeaborn'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsSelfAppliedStun",
+            "namespace": "tools",
+            "source_text": "vs. self-applied Stun",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsSelfAppliedStun'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsSleep",
+            "namespace": "tools",
+            "source_text": "vs. Sleep",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsSleep'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsSlow",
+            "namespace": "tools",
+            "source_text": "vs. Slow",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsSlow'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsSlowWithSelfAppliedBind",
+            "namespace": "tools",
+            "source_text": "vs. Slow with self-applied Bind",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsSlow' (char_4082_qiubai)). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsStun",
+            "namespace": "tools",
+            "source_text": "vs. Stun",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsStun'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsStunOrBind",
+            "namespace": "tools",
+            "source_text": "vs. Stun or Bind",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsStun' (char_4088_hodrer)). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsStunned",
+            "namespace": "tools",
+            "source_text": "vs. stunned",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vsStunned'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsTargetAbove50HP",
+            "namespace": "tools",
+            "source_text": "vs. target above 50% HP",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vs' (char_4196_reckpr)). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.vsTargetBelow1HP",
+            "namespace": "tools",
+            "source_text": "vs. target below 1% HP",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'vs' (char_145_prove)). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.waterMap",
+            "namespace": "tools",
+            "source_text": "Water map",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'watermap'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.weightlessTarget",
+            "namespace": "tools",
+            "source_text": "Weightless target",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'weightlessTarget'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.whileBlocking",
+            "namespace": "tools",
+            "source_text": "While blocking",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'WhileBlocking'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.withAverageNecrosis",
+            "namespace": "tools",
+            "source_text": "With average Necrosis",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'withAvgNecrosis'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.withBonus",
+            "namespace": "tools",
+            "source_text": "With bonus",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'withBonus'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.withClone",
+            "namespace": "tools",
+            "source_text": "With clone",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'with' (char_250_phatom)). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.withPet",
+            "namespace": "tools",
+            "source_text": "With pet",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'with' (char_4117_ray)). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.withPillarDEFShred",
+            "namespace": "tools",
+            "source_text": "With pillar DEF shred",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'withPillarDefshred'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.withSPBoost",
+            "namespace": "tools",
+            "source_text": "With SP boost",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'withSPboost'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.withTheBonus",
+            "namespace": "tools",
+            "source_text": "With the bonus",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'with'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.withoutASecondSniper",
+            "namespace": "tools",
+            "source_text": "Without a second Sniper",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'w' (char_340_shwaz)). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.withoutCinder",
+            "namespace": "tools",
+            "source_text": "Without Cinder",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'w' (char_1020_reed2)). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.withoutDEFIgnore",
+            "namespace": "tools",
+            "source_text": "Without DEF ignore",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'w' (char_103_angel)). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.withoutDoll",
+            "namespace": "tools",
+            "source_text": "Without doll",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'w' (char_4016_kazema)). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.withoutFirstTalent",
+            "namespace": "tools",
+            "source_text": "Without first talent",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'w' (char_4026_vulpis), 'w' (char_4082_qiubai)). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.withoutSecondTalent",
+            "namespace": "tools",
+            "source_text": "Without second talent",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'w' (char_017_huang), 'w' (char_4011_lessng)). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.withoutTalent",
+            "namespace": "tools",
+            "source_text": "Without talent",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'w' (char_252_bibeak), 'w' (char_4040_rockr), 'w' (char_430_fartth)). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.withoutTheBonus",
+            "namespace": "tools",
+            "source_text": "Without the bonus",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'w'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.withoutTheEffect",
+            "namespace": "tools",
+            "source_text": "Without the effect",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'no'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.withoutTrait",
+            "namespace": "tools",
+            "source_text": "Without trait",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'w' (char_485_pallas)). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.withoutVigor",
+            "namespace": "tools",
+            "source_text": "Without Vigor",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'w' (char_300_phenxi)). Short; shown beside a toggle.",
             "placeholders": []
         },
         {
@@ -36817,34 +38354,6 @@
             "placeholders": []
         },
         {
-            "key": "tools.calc.instance.buff.aspd",
-            "namespace": "tools",
-            "source_text": "ASPD",
-            "description": "Input label for an attack-speed buff. The game's own abbreviation; normally unchanged.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.calc.instance.buff.atkPct",
-            "namespace": "tools",
-            "source_text": "ATK %",
-            "description": "Input label for a percentage attack buff. 'ATK' is the game's own abbreviation and normally stays as-is.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.calc.instance.buff.flatAtk",
-            "namespace": "tools",
-            "source_text": "Flat ATK",
-            "description": "Input label for an attack buff given as a fixed number rather than a percentage.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.calc.instance.buff.fragile",
-            "namespace": "tools",
-            "source_text": "Fragile %",
-            "description": "Input label for a damage-amplification debuff on the enemy. 'Fragile' is the community's name for that effect.",
-            "placeholders": []
-        },
-        {
             "key": "tools.calc.instance.buildSummary",
             "namespace": "tools",
             "source_text": "{skill} · {rank} · {module}",
@@ -36886,9 +38395,18 @@
         {
             "key": "tools.calc.instance.externalBuffs",
             "namespace": "tools",
-            "source_text": "External buffs",
-            "description": "Toggle heading for the section holding buffs applied by OTHER operators rather than this one.",
+            "source_text": "This card's own buffs",
+            "description": "Toggle heading for the section holding buffs that apply to THIS operator only, on top of the page's team buffs.",
             "placeholders": []
+        },
+        {
+            "key": "tools.calc.instance.externalBuffs.count",
+            "namespace": "tools",
+            "source_text": "{count, plural, one {# set} other {# set}}",
+            "description": "Small badge beside the card's own-buffs heading: how many buff fields are set away from their default.",
+            "placeholders": [
+                "count"
+            ]
         },
         {
             "key": "tools.calc.instance.hideCurve",
@@ -37169,6 +38687,43 @@
             ]
         },
         {
+            "key": "tools.calc.share.copied",
+            "namespace": "tools",
+            "source_text": "Link copied",
+            "description": "Toast after the calculator's setup link was copied to the clipboard.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.share.copyFailed",
+            "namespace": "tools",
+            "source_text": "Couldn't copy the link",
+            "description": "Toast when the browser refused clipboard access for the calculator's setup link.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.share.copyLink",
+            "namespace": "tools",
+            "source_text": "Copy link",
+            "description": "Tooltip and accessible name of the icon button beside the PNG download that copies a link reproducing the whole calculator setup (cards, enemy or buffs, chart controls).",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.share.invalid",
+            "namespace": "tools",
+            "source_text": "This link's setup couldn't be read, so your saved setup is shown instead",
+            "description": "Warning toast when a shared calculator link is damaged or comes from an incompatible version of the page.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.share.skipped",
+            "namespace": "tools",
+            "source_text": "{count, plural, one {# card from the link was skipped: its operator isn't available} other {# cards from the link were skipped: their operators aren't available}}",
+            "description": "Warning toast after opening a shared calculator link when some of its operator cards could not be restored (operator no longer supported, or the entry was damaged).",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
             "key": "tools.calc.skillRank.level",
             "namespace": "tools",
             "source_text": "Lv {rank}",
@@ -37261,6 +38816,27 @@
             "placeholders": []
         },
         {
+            "key": "tools.dps.category.burst",
+            "namespace": "tools",
+            "source_text": "Burst",
+            "description": "Skill shape: a timed or ammo window that recharges.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.category.instant",
+            "namespace": "tools",
+            "source_text": "Instant",
+            "description": "Skill shape: a single activation with no duration.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.category.sustained",
+            "namespace": "tools",
+            "source_text": "Sustained",
+            "description": "Skill shape: its damage is steady (no skill, passive, or permanent skill).",
+            "placeholders": []
+        },
+        {
             "key": "tools.dps.clearAll",
             "namespace": "tools",
             "source_text": "Clear all",
@@ -37305,6 +38881,90 @@
             "placeholders": []
         },
         {
+            "key": "tools.dps.detail.approxSplit",
+            "namespace": "tools",
+            "source_text": "Typed Fragile approximated",
+            "description": "Caveat badge: physical- or arts-only damage-taken buffs were applied approximately for this operator.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.detail.approxSplit.hint",
+            "namespace": "tools",
+            "source_text": "This operator's damage reacts to both DEF and RES (or to neither), so only the generic damage-taken group and the one matching its attack type were applied.",
+            "description": "Tooltip of the 'Typed Fragile approximated' caveat.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.detail.clamped",
+            "namespace": "tools",
+            "source_text": "Secondary share clamped",
+            "description": "Caveat badge: the computed damage on secondary targets came out negative and was set to 0.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.detail.clamped.hint",
+            "namespace": "tools",
+            "source_text": "Hitting more targets lowered this operator's total, so the secondary share came out negative and is shown as 0. Main plus others no longer equals the multi-target total.",
+            "description": "Tooltip of the 'Secondary share clamped' caveat.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.detail.cycle",
+            "namespace": "tools",
+            "source_text": "Cycle {seconds}s",
+            "description": "Seconds per full skill cycle: skill duration plus recharge. Compact.",
+            "placeholders": [
+                "seconds"
+            ]
+        },
+        {
+            "key": "tools.dps.detail.normalAttack",
+            "namespace": "tools",
+            "source_text": "Plain attack off-skill",
+            "description": "Caveat badge: between skills, a generic basic attack was used because this operator's own formula has no basic-attack path.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.detail.normalAttack.hint",
+            "namespace": "tools",
+            "source_text": "This operator's formula cannot compute its attack without the skill, so the time between skills uses a generic basic attack.",
+            "description": "Tooltip of the 'Plain attack off-skill' caveat.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.detail.spNotModelled",
+            "namespace": "tools",
+            "source_text": "SP on hit not modelled",
+            "description": "Caveat badge: this skill charges SP when the operator is hit, which the cycle model does not simulate; the classic average is shown.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.detail.spNotModelled.hint",
+            "namespace": "tools",
+            "source_text": "This skill charges when the operator takes hits. The SP-aware model cannot time that, so average DPS falls back to the classic one and no timings are shown.",
+            "description": "Tooltip of the 'SP on hit not modelled' caveat.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.detail.split",
+            "namespace": "tools",
+            "source_text": "Main {primary} · others {secondary}",
+            "description": "How the damage splits between the main target and the secondary targets, in the chosen metric.",
+            "placeholders": [
+                "primary",
+                "secondary"
+            ]
+        },
+        {
+            "key": "tools.dps.detail.startup",
+            "namespace": "tools",
+            "source_text": "First cast {seconds}s",
+            "description": "Seconds from deployment until the skill can first be used. Compact.",
+            "placeholders": [
+                "seconds"
+            ]
+        },
+        {
             "key": "tools.dps.download",
             "namespace": "tools",
             "source_text": "Download chart as PNG",
@@ -37328,6 +38988,41 @@
             "placeholders": []
         },
         {
+            "key": "tools.dps.enemy.cycle",
+            "namespace": "tools",
+            "source_text": "Skill cycle model",
+            "description": "Label of the selector for how average DPS over a skill cycle is computed.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.enemy.cycle.desc.legacy",
+            "namespace": "tools",
+            "source_text": "Average DPS uses a plain basic attack between skills and charges every skill by time.",
+            "description": "One-line explanation of the classic cycle model.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.enemy.cycle.desc.v2",
+            "namespace": "tools",
+            "source_text": "Average DPS uses the operator's own attack between skills and charges SP by the skill's type (per second or per hit); it also reports start-up and cycle times.",
+            "description": "One-line explanation of the SP-aware cycle model.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.enemy.cycle.legacy",
+            "namespace": "tools",
+            "source_text": "Classic",
+            "description": "Cycle model option: the original average, a plain basic attack between skills.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.enemy.cycle.v2",
+            "namespace": "tools",
+            "source_text": "SP-aware",
+            "description": "Cycle model option: the operator's own attack between skills and SP charged by the skill's SP type.",
+            "placeholders": []
+        },
+        {
             "key": "tools.dps.enemy.desc",
             "namespace": "tools",
             "source_text": "DEF and RES set the KPI snapshot, and the axis you're not sweeping is held at this value.",
@@ -37342,45 +39037,45 @@
             "placeholders": []
         },
         {
-            "key": "tools.dps.enemy.shred",
+            "key": "tools.dps.enemy.secondary",
             "namespace": "tools",
-            "source_text": "Shred",
-            "description": "Toggle heading for the section holding defense- and resistance-reduction values. 'Shred' is community jargon for lowering an enemy's DEF or RES.",
+            "source_text": "Secondary targets",
+            "description": "Switch label: add more enemies beside the main one, with their own DEF and RES. The result splits damage between the main target and the rest.",
             "placeholders": []
         },
         {
-            "key": "tools.dps.enemy.shred.defFlat",
+            "key": "tools.dps.enemy.secondary.count",
             "namespace": "tools",
-            "source_text": "DEF flat",
-            "description": "Input label for defense reduction expressed as a fixed number.",
+            "source_text": "How many",
+            "description": "Input label: the number of secondary enemies.",
             "placeholders": []
         },
         {
-            "key": "tools.dps.enemy.shred.defPct",
+            "key": "tools.dps.enemy.secondary.def",
             "namespace": "tools",
-            "source_text": "DEF % shred",
-            "description": "Input label for defense reduction expressed as a percentage.",
+            "source_text": "Their DEF",
+            "description": "Input label: the secondary enemies' defense. 'DEF' is the game's abbreviation.",
             "placeholders": []
         },
         {
-            "key": "tools.dps.enemy.shred.on",
+            "key": "tools.dps.enemy.secondary.desc",
             "namespace": "tools",
-            "source_text": "on",
-            "description": "Tiny badge beside the 'Shred' heading when at least one shred value is non-zero. Lowercase; it sits in a very small pill.",
+            "source_text": "Other enemies hit alongside the main one. Results split into main and secondary damage.",
+            "description": "One-line explanation under the secondary-targets switch.",
             "placeholders": []
         },
         {
-            "key": "tools.dps.enemy.shred.resFlat",
+            "key": "tools.dps.enemy.secondary.res",
             "namespace": "tools",
-            "source_text": "RES flat",
-            "description": "Input label for arts-resistance reduction expressed as a fixed number.",
+            "source_text": "Their RES",
+            "description": "Input label: the secondary enemies' arts resistance. 'RES' is the game's abbreviation.",
             "placeholders": []
         },
         {
-            "key": "tools.dps.enemy.shred.resPct",
+            "key": "tools.dps.enemy.secondary.targetsNote",
             "namespace": "tools",
-            "source_text": "RES % shred",
-            "description": "Input label for arts-resistance reduction expressed as a percentage.",
+            "source_text": "With secondary targets on, the main target is one enemy and the count above sets the rest.",
+            "description": "Note shown when secondary targets replace the plain target count.",
             "placeholders": []
         },
         {
@@ -37395,13 +39090,6 @@
             "namespace": "tools",
             "source_text": "Snapshot RES (%)",
             "description": "Input label for the arts-resistance value the result panel is computed at.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.dps.enemy.spBoost",
-            "namespace": "tools",
-            "source_text": "Bonus SP/s",
-            "description": "Input label for extra skill points per second from outside sources. 'SP' is the game's skill-point resource.",
             "placeholders": []
         },
         {
@@ -37579,6 +39267,174 @@
             "placeholders": []
         },
         {
+            "key": "tools.dps.helper.aspd.note",
+            "namespace": "tools",
+            "source_text": "Attack speed points. They add together.",
+            "description": "Helper explanation for attack speed buffs.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.helper.aspd.wording",
+            "namespace": "tools",
+            "source_text": "“ASPD +30”",
+            "description": "Example of game text for an attack speed bonus.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.helper.atkFlat.note",
+            "namespace": "tools",
+            "source_text": "A flat bonus that percentage buffs then scale, like a module's base stat.",
+            "description": "Helper explanation for flat attack added before percentages.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.helper.atkFlat.wording",
+            "namespace": "tools",
+            "source_text": "“ATK +60” (a fixed number)",
+            "description": "Example of game text for a fixed attack bonus that percentages then scale.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.helper.atkMultiplier.note",
+            "namespace": "tools",
+            "source_text": "Rare. Scales the finished ATK, Inspiration included.",
+            "description": "Helper explanation for the final attack multiplier.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.helper.atkMultiplier.wording",
+            "namespace": "tools",
+            "source_text": "“ATK multiplied by 1.2” after everything else",
+            "description": "Example of game text for a final attack multiplier.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.helper.atkPercent.note",
+            "namespace": "tools",
+            "source_text": "Most skill and talent ATK buffs. Several of them add together.",
+            "description": "Helper explanation for percentage attack buffs.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.helper.atkPercent.wording",
+            "namespace": "tools",
+            "source_text": "“ATK +40%”",
+            "description": "Example of game text the helper explains. Keep the number; use the game's own wording for an attack percentage bonus in your language.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.helper.def.note",
+            "namespace": "tools",
+            "source_text": "DEF down, percent or flat. The same goes for RES.",
+            "description": "Helper explanation for defense and resistance reduction.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.helper.def.wording",
+            "namespace": "tools",
+            "source_text": "“DEF -25%” or “DEF -150”",
+            "description": "Example of game text for an enemy defense reduction, as a percentage or a number.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.helper.fragile.note",
+            "namespace": "tools",
+            "source_text": "Fragile. Only the strongest counts; physical-only and arts-only versions are separate and multiply with it.",
+            "description": "Helper explanation for Fragile and typed fragility.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.helper.fragile.wording",
+            "namespace": "tools",
+            "source_text": "“takes 30% more damage”",
+            "description": "Example of game text for a damage-taken increase on an enemy.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.helper.ignore.note",
+            "namespace": "tools",
+            "source_text": "Ignore DEF. Applied after every DEF down.",
+            "description": "Helper explanation for defense ignore.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.helper.ignore.wording",
+            "namespace": "tools",
+            "source_text": "“attacks ignore 40% of the target's DEF”",
+            "description": "Example of game text for ignoring part of a target's defense.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.helper.inspire.note",
+            "namespace": "tools",
+            "source_text": "Inspiration. Added after percentages, and only the strongest one counts.",
+            "description": "Helper explanation for Inspiration buffs.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.helper.inspire.wording",
+            "namespace": "tools",
+            "source_text": "“gains ATK equal to 30% of this unit's ATK”",
+            "description": "Example of game text for an Inspiration buff. Use the game's own wording in your language.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.helper.intro",
+            "namespace": "tools",
+            "source_text": "Find the phrase in the skill or talent text, then type its number into the field it names.",
+            "description": "Intro line of the buff guide popover.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.helper.open",
+            "namespace": "tools",
+            "source_text": "Which buff is this?",
+            "description": "Link that opens a guide matching game skill wording to the right input field.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.helper.reduction.note",
+            "namespace": "tools",
+            "source_text": "The enemy's own resistance to all damage. Each source multiplies.",
+            "description": "Helper explanation for enemy damage reduction.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.helper.reduction.wording",
+            "namespace": "tools",
+            "source_text": "“the boss takes 50% less damage”",
+            "description": "Example of game text for an enemy's own damage reduction.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.helper.sp.note",
+            "namespace": "tools",
+            "source_text": "SP per second. An aura from another operator that does not stack goes in SP aura.",
+            "description": "Helper explanation for SP recovery versus SP aura.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.helper.sp.wording",
+            "namespace": "tools",
+            "source_text": "“recovers 0.3 SP per second”",
+            "description": "Example of game text for an SP regeneration effect.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.helper.steal.note",
+            "namespace": "tools",
+            "source_text": "DEF steal. Like DEF down, but only the strongest steal counts.",
+            "description": "Helper explanation for defense steal.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.helper.steal.wording",
+            "namespace": "tools",
+            "source_text": "“steals 70 DEF”",
+            "description": "Example of game text for an effect that takes defense from an enemy.",
+            "placeholders": []
+        },
+        {
             "key": "tools.dps.import.added",
             "namespace": "tools",
             "source_text": "{count, plural, one {Added # operator from your squad} other {Added # operators from your squad}}",
@@ -37601,6 +39457,13 @@
             "namespace": "tools",
             "source_text": "Compare operator output across enemy DEF or RES sweeps. Add multiple instances of the same operator to compare masteries, modules, and conditional setups side-by-side.",
             "description": "Blurb under the page heading. 'Mastery' and 'module' are the game's own progression systems.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.markers.toggle",
+            "namespace": "tools",
+            "source_text": "Curve markers: where damage hits its floor and where it halves",
+            "description": "Tooltip and accessible name of the toggle beside the chart controls that shows or hides markers on each curve: a diamond where the operator's damage stops falling (every hit at the 5% minimum) and a ring where it falls to half of its value at the start of the sweep.",
             "placeholders": []
         },
         {
@@ -37779,6 +39642,586 @@
             "placeholders": []
         },
         {
+            "key": "tools.dps.rank.add",
+            "namespace": "tools",
+            "source_text": "Add {name} to the comparison",
+            "description": "Accessible name and tooltip of the + button that adds a ranked row as a calculator card.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "tools.dps.rank.added",
+            "namespace": "tools",
+            "source_text": "Added {name} to the comparison",
+            "description": "Toast after a ranked row became a calculator card.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "tools.dps.rank.arts",
+            "namespace": "tools",
+            "source_text": "Arts",
+            "description": "Damage type filter: arts attackers. 'Arts' is the game's magic damage type.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.basicAttack",
+            "namespace": "tools",
+            "source_text": "Basic attack",
+            "description": "Skill column value for a row computed with no skill.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.class",
+            "namespace": "tools",
+            "source_text": "Class",
+            "description": "Label of the ranking's class filter chips.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.clearFilters",
+            "namespace": "tools",
+            "source_text": "Clear filters",
+            "description": "Button that removes every class, rarity and damage-type filter and the search.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.col.category",
+            "namespace": "tools",
+            "source_text": "Shape",
+            "description": "Column heading: skill shape (sustained, burst, instant). Very narrow.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.col.cycle",
+            "namespace": "tools",
+            "source_text": "Cycle",
+            "description": "Column heading: seconds per full skill cycle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.col.duration",
+            "namespace": "tools",
+            "source_text": "Duration",
+            "description": "Column heading: how long the skill lasts, in seconds.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.col.module",
+            "namespace": "tools",
+            "source_text": "Module",
+            "description": "Column heading of the ranking table.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.col.operator",
+            "namespace": "tools",
+            "source_text": "Operator",
+            "description": "Column heading of the ranking table.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.col.rank",
+            "namespace": "tools",
+            "source_text": "#",
+            "description": "Column heading: position in the ranking. A single symbol.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.col.ratio",
+            "namespace": "tools",
+            "source_text": "vs #1",
+            "description": "Column heading: this row's sorted metric as a share of the top row's. Very narrow.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.col.retention",
+            "namespace": "tools",
+            "source_text": "Ref. retention",
+            "description": "Column heading: the roster score, how much of its damage an operator keeps across the game's real enemies. 'Ref.' marks that it is computed at a fixed reference setup, not this page's.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.col.retention.hint",
+            "namespace": "tools",
+            "source_text": "Share of its no-armor damage this operator keeps across real enemies, weighted by how often each appears in stages. Computed at the reference setup, not the one on this page.",
+            "description": "Tooltip on the retention column heading.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.col.skill",
+            "namespace": "tools",
+            "source_text": "Skill",
+            "description": "Column heading of the ranking table.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.col.split",
+            "namespace": "tools",
+            "source_text": "Main / others",
+            "description": "Column heading: the sorted metric split between the main target and the secondary targets.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.col.startup",
+            "namespace": "tools",
+            "source_text": "First cast",
+            "description": "Column heading: seconds until the skill can first be used.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.count",
+            "namespace": "tools",
+            "source_text": "{shown} of {total} rows",
+            "description": "How many ranked rows pass the filters, out of all computed rows.",
+            "placeholders": [
+                "shown",
+                "total"
+            ]
+        },
+        {
+            "key": "tools.dps.rank.damageType",
+            "namespace": "tools",
+            "source_text": "Damage",
+            "description": "Label of the ranking's damage-type filter chips.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.desc",
+            "namespace": "tools",
+            "source_text": "Each skill and module of every supported operator against the enemy and team buffs on the left.",
+            "description": "Subtitle of the ranking view.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.empty",
+            "namespace": "tools",
+            "source_text": "No row matches these filters.",
+            "description": "Empty state of the ranking table.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.failed",
+            "namespace": "tools",
+            "source_text": "The ranking could not be computed: {error}",
+            "description": "Shown when the ranking request failed. {error} is the server's message.",
+            "placeholders": [
+                "error"
+            ]
+        },
+        {
+            "key": "tools.dps.rank.full",
+            "namespace": "tools",
+            "source_text": "The comparison holds at most {count} cards",
+            "description": "Toast when a ranked row cannot be added because the comparison is full.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.dps.rank.inComparison",
+            "namespace": "tools",
+            "source_text": "Already in the comparison",
+            "description": "Tooltip on the check mark of a ranked row that matches a card in the comparison.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.loading",
+            "namespace": "tools",
+            "source_text": "Ranking every operator…",
+            "description": "Shown while the ranking is computed.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.noModule",
+            "namespace": "tools",
+            "source_text": "None",
+            "description": "Module column value for a row computed without a module.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.physical",
+            "namespace": "tools",
+            "source_text": "Physical",
+            "description": "Damage type filter: physical attackers.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.preset",
+            "namespace": "tools",
+            "source_text": "Investment",
+            "description": "Label of the selector for the investment every ranked operator is computed at.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.preset.default",
+            "namespace": "tools",
+            "source_text": "Calculator default",
+            "description": "Investment option: the calculator's own default for each operator.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.preset.hint",
+            "namespace": "tools",
+            "source_text": "Max: highest promotion and level, trust 100, highest skill rank, module level 3.",
+            "description": "Tooltip explaining what the 'Max' investment presets set.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.preset.p1Max",
+            "namespace": "tools",
+            "source_text": "Max, P1",
+            "description": "Investment option: highest promotion and level, max trust, highest skill rank, module level 3, potential 1.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.preset.p6Max",
+            "namespace": "tools",
+            "source_text": "Max, P6",
+            "description": "Investment option: as 'Max, P1' but at potential 6.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.rarity",
+            "namespace": "tools",
+            "source_text": "Rarity",
+            "description": "Label of the ranking's star-rarity filter chips.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.rarityValue",
+            "namespace": "tools",
+            "source_text": "{stars}★",
+            "description": "One rarity filter chip, e.g. '6★'. Keep the star sign.",
+            "placeholders": [
+                "stars"
+            ]
+        },
+        {
+            "key": "tools.dps.rank.retentionPending",
+            "namespace": "tools",
+            "source_text": "Retention scores are still being computed; the column appears when they are ready.",
+            "description": "Note while the server has not finished the roster scores.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.search",
+            "namespace": "tools",
+            "source_text": "Search operators, skills, modules",
+            "description": "Placeholder of the ranking's search box.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.skipped",
+            "namespace": "tools",
+            "source_text": "{count, plural, one {# combination} other {# combinations}} skipped (missing game data)",
+            "description": "Footnote: skill/module combinations the engine could not compute.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.dps.rank.sort",
+            "namespace": "tools",
+            "source_text": "Sort by",
+            "description": "Label of the ranking's sort selector.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.timingsHint",
+            "namespace": "tools",
+            "source_text": "Start-up and cycle times need the SP-aware cycle model (enemy panel).",
+            "description": "Note shown when the timing columns are empty because the classic cycle model is selected.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.rank.title",
+            "namespace": "tools",
+            "source_text": "Every operator, one setup",
+            "description": "Heading of the ranking view: all operators ranked under the same enemy and buffs.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.stacking.applied",
+            "namespace": "tools",
+            "source_text": "Applied: {value}",
+            "description": "What finally reaches the calculation for one buff, after combining its sources.",
+            "placeholders": [
+                "value"
+            ]
+        },
+        {
+            "key": "tools.dps.stacking.ignored",
+            "namespace": "tools",
+            "source_text": "Ignored: only the highest applies",
+            "description": "Tooltip on a buff source that does not count because a stronger source of the same kind exists.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.stacking.outOfScope",
+            "namespace": "tools",
+            "source_text": "{classes} only: skipped for other classes",
+            "description": "Note on a supporter whose effect reaches only some classes; cards of other classes do not get it.",
+            "placeholders": [
+                "classes"
+            ]
+        },
+        {
+            "key": "tools.dps.stacking.title",
+            "namespace": "tools",
+            "source_text": "How the supporters combine",
+            "description": "Heading of the list that shows, per buff, which sources apply and which are ignored.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.stacking.typed",
+            "namespace": "tools",
+            "source_text": "Typed in",
+            "description": "Name of a buff source that the user typed into a field, as opposed to a supporter preset.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.supporter.target.allAllies",
+            "namespace": "tools",
+            "source_text": "All allies",
+            "description": "Who a supporter's effect reaches: every friendly operator.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.supporter.target.alliesInRange",
+            "namespace": "tools",
+            "source_text": "Allies in range",
+            "description": "Who a supporter's effect reaches: friendly operators inside the supporter's attack range.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.supporter.target.enemies",
+            "namespace": "tools",
+            "source_text": "Enemies",
+            "description": "Who a supporter's effect reaches: enemies (a debuff).",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.supporter.target.oneAlly",
+            "namespace": "tools",
+            "source_text": "One ally",
+            "description": "Who a supporter's effect reaches: a single friendly operator.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.supporters.add",
+            "namespace": "tools",
+            "source_text": "Supporters",
+            "description": "Button that opens the supporter preset picker.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.supporters.blocked",
+            "namespace": "tools",
+            "source_text": "Results are paused: the supporter values could not be loaded ({error}). Switch the supporters off or try again.",
+            "description": "Shown when switched-on supporters' values failed to load; the calculator does not compute without them. {error} is the server's message.",
+            "placeholders": [
+                "error"
+            ]
+        },
+        {
+            "key": "tools.dps.supporters.desc",
+            "namespace": "tools",
+            "source_text": "Switch a supporter on to add its buff. Values are read from game data at the investment you set here.",
+            "description": "Dialog subtitle of the supporter picker.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.supporters.duration",
+            "namespace": "tools",
+            "source_text": "{seconds}s",
+            "description": "How long a supporter's effect lasts, in seconds. Keep it compact.",
+            "placeholders": [
+                "seconds"
+            ]
+        },
+        {
+            "key": "tools.dps.supporters.durationHint",
+            "namespace": "tools",
+            "source_text": "The buff is applied for the whole calculation; in game it lasts {seconds}s.",
+            "description": "Tooltip on a supporter's duration: the calculator treats the buff as always on.",
+            "placeholders": [
+                "seconds"
+            ]
+        },
+        {
+            "key": "tools.dps.supporters.failed",
+            "namespace": "tools",
+            "source_text": "Supporters could not be loaded: {error}",
+            "description": "Shown when the supporter list request failed. {error} is the server's message.",
+            "placeholders": [
+                "error"
+            ]
+        },
+        {
+            "key": "tools.dps.supporters.inspireFrom",
+            "namespace": "tools",
+            "source_text": "from {atk} ATK",
+            "description": "Shown beside an Inspiration value: the supporter ATK it was computed from.",
+            "placeholders": [
+                "atk"
+            ]
+        },
+        {
+            "key": "tools.dps.supporters.loading",
+            "namespace": "tools",
+            "source_text": "Loading supporters…",
+            "description": "Shown while the supporter list loads.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.supporters.moduleLevel",
+            "namespace": "tools",
+            "source_text": "Module",
+            "description": "Label of the supporters' module level selector.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.supporters.moduleNone",
+            "namespace": "tools",
+            "source_text": "No module",
+            "description": "Option of the supporters' module selector: modules ignored.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.supporters.none",
+            "namespace": "tools",
+            "source_text": "No supporter matches that search.",
+            "description": "Empty state of the supporter picker's filtered list.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.supporters.potential",
+            "namespace": "tools",
+            "source_text": "Potential",
+            "description": "Label of the supporters' potential selector.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.supporters.potentialValue",
+            "namespace": "tools",
+            "source_text": "Potential {rank}",
+            "description": "One option of the supporters' potential selector.",
+            "placeholders": [
+                "rank"
+            ]
+        },
+        {
+            "key": "tools.dps.supporters.promotion",
+            "namespace": "tools",
+            "source_text": "Promotion",
+            "description": "Label of the supporters' Elite promotion selector.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.supporters.rankNote",
+            "namespace": "tools",
+            "source_text": "The ranking applies every supporter to every row, including class-limited ones.",
+            "description": "Note in the ranking view: class limits on supporters are not applied per row there.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.supporters.remove",
+            "namespace": "tools",
+            "source_text": "Switch off {name}",
+            "description": "Accessible name of the small × on an active supporter chip.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "tools.dps.supporters.search",
+            "namespace": "tools",
+            "source_text": "Search supporters",
+            "description": "Placeholder of the supporter picker's search box.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.supporters.skill",
+            "namespace": "tools",
+            "source_text": "Skill {index}",
+            "description": "Which part of a supporter the buff comes from: one of its skills, by number.",
+            "placeholders": [
+                "index"
+            ]
+        },
+        {
+            "key": "tools.dps.supporters.skillLevel",
+            "namespace": "tools",
+            "source_text": "Skill rank",
+            "description": "Label of the supporters' skill level / mastery selector.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.supporters.talent",
+            "namespace": "tools",
+            "source_text": "Talent {index}",
+            "description": "Which part of a supporter the buff comes from: one of its talents, by number.",
+            "placeholders": [
+                "index"
+            ]
+        },
+        {
+            "key": "tools.dps.supporters.title",
+            "namespace": "tools",
+            "source_text": "Supporter presets",
+            "description": "Dialog heading: a list of operators whose buffs or debuffs can be switched on.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.supporters.toggle",
+            "namespace": "tools",
+            "source_text": "Use {name}",
+            "description": "Accessible name of a supporter's on/off switch.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "tools.dps.supporters.unresolved",
+            "namespace": "tools",
+            "source_text": "{count, plural, one {# preset is} other {# presets are}} missing from this game data and hidden.",
+            "description": "Footnote: some supporter presets could not be read from the loaded game data.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.dps.supporters.waiting",
+            "namespace": "tools",
+            "source_text": "Waiting for supporter values…",
+            "description": "Shown while results wait for the switched-on supporters' values to load.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.team.clear",
+            "namespace": "tools",
+            "source_text": "Clear",
+            "description": "Button that resets every team buff and switches every supporter off.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.team.desc",
+            "namespace": "tools",
+            "source_text": "Buffs from teammates and debuffs on the enemy. Every card gets them, and the ranking uses them too.",
+            "description": "Card subtitle explaining what the team buffs panel applies to.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.team.title",
+            "namespace": "tools",
+            "source_text": "Team buffs",
+            "description": "Card heading: buffs from teammates and debuffs on the enemy, applied to every operator on the page.",
+            "placeholders": []
+        },
+        {
             "key": "tools.dps.title",
             "namespace": "tools",
             "source_text": "DPS Calculator",
@@ -37801,6 +40244,218 @@
             "description": "Chart tooltip header when sweeping arts resistance. 'RES' is the game's abbreviation.",
             "placeholders": [
                 "value"
+            ]
+        },
+        {
+            "key": "tools.dps.view.compare",
+            "namespace": "tools",
+            "source_text": "Compare",
+            "description": "Tab: chart and compare the operators you picked.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.view.label",
+            "namespace": "tools",
+            "source_text": "View",
+            "description": "Accessible name of the tab strip that switches between comparing chosen operators and ranking all of them.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.view.rank",
+            "namespace": "tools",
+            "source_text": "Rank all operators",
+            "description": "Tab: every supported operator ranked under the same enemy and buffs.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zone.artsFragile",
+            "namespace": "tools",
+            "source_text": "Arts damage taken +%",
+            "description": "Debuff input: the enemy takes this much more arts damage; only the strongest one counts. 'Arts' is the game's magic damage type.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zone.aspd",
+            "namespace": "tools",
+            "source_text": "ASPD +",
+            "description": "Buff input: attack speed bonus in points. 'ASPD' is the game's abbreviation.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zone.atkFlat",
+            "namespace": "tools",
+            "source_text": "Base ATK +",
+            "description": "Buff input: a fixed attack bonus added BEFORE percentage bonuses, so those percentages also scale it.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zone.atkMultiplier",
+            "namespace": "tools",
+            "source_text": "Final ATK ×",
+            "description": "Buff input: a multiplier applied to attack after every other bonus. The × sign stays.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zone.atkPercent",
+            "namespace": "tools",
+            "source_text": "ATK +%",
+            "description": "Buff input: percentage attack bonus that adds up with other percentage bonuses. 'ATK' is the game's abbreviation.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zone.damageReduction",
+            "namespace": "tools",
+            "source_text": "Enemy damage reduction %",
+            "description": "Input: the enemy's own reduction of all damage it takes (common on bosses).",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zone.defFlat",
+            "namespace": "tools",
+            "source_text": "DEF down",
+            "description": "Debuff input: enemy defense lowered by a fixed number.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zone.defIgnoreFlat",
+            "namespace": "tools",
+            "source_text": "Ignore DEF",
+            "description": "Input: the attacker ignores this many points of enemy defense.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zone.defIgnorePercent",
+            "namespace": "tools",
+            "source_text": "Ignore DEF %",
+            "description": "Input: the attacker ignores this percentage of enemy defense.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zone.defPercent",
+            "namespace": "tools",
+            "source_text": "DEF down %",
+            "description": "Debuff input: enemy defense lowered by a percentage. 'DEF' is the game's abbreviation.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zone.defSteal",
+            "namespace": "tools",
+            "source_text": "DEF steal",
+            "description": "Debuff input: defense taken from the enemy by an effect that does not stack with itself; only the strongest counts.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zone.fragile",
+            "namespace": "tools",
+            "source_text": "Damage taken +%",
+            "description": "Debuff input: the enemy takes this much more damage of every type. The community calls it 'Fragile'; only the strongest one counts.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zone.inspire",
+            "namespace": "tools",
+            "source_text": "Inspiration",
+            "description": "Buff input: flat attack granted after percentages, usually a share of another operator's ATK. 'Inspiration' is the game's own name for this buff type.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zone.physicalFragile",
+            "namespace": "tools",
+            "source_text": "Physical damage taken +%",
+            "description": "Debuff input: the enemy takes this much more physical damage; only the strongest one counts.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zone.resFlat",
+            "namespace": "tools",
+            "source_text": "RES down",
+            "description": "Debuff input: enemy arts resistance lowered by a fixed number of points.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zone.resIgnoreFlat",
+            "namespace": "tools",
+            "source_text": "Ignore RES",
+            "description": "Input: the attacker ignores this many points of enemy arts resistance.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zone.resIgnorePercent",
+            "namespace": "tools",
+            "source_text": "Ignore RES %",
+            "description": "Input: the attacker ignores this percentage of enemy arts resistance.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zone.resPercent",
+            "namespace": "tools",
+            "source_text": "RES down %",
+            "description": "Debuff input: enemy arts resistance lowered by a percentage. 'RES' is the game's abbreviation.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zone.resSteal",
+            "namespace": "tools",
+            "source_text": "RES steal",
+            "description": "Debuff input: arts resistance taken from the enemy by an effect that does not stack with itself; only the strongest counts.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zone.spAura",
+            "namespace": "tools",
+            "source_text": "SP aura per second",
+            "description": "Buff input: an SP-per-second aura from another operator; only the strongest aura counts.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zone.spRecovery",
+            "namespace": "tools",
+            "source_text": "SP per second +",
+            "description": "Buff input: extra skill points recovered per second, adding up with other such bonuses. 'SP' is the game's abbreviation.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zone.stacking.additive",
+            "namespace": "tools",
+            "source_text": "adds up",
+            "description": "How sources of one buff combine: every source is summed.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zone.stacking.max",
+            "namespace": "tools",
+            "source_text": "highest only",
+            "description": "How sources of one buff combine: only the largest source applies, the rest are ignored.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zone.stacking.multiply",
+            "namespace": "tools",
+            "source_text": "multiplies",
+            "description": "How sources of one buff combine: each source multiplies the result.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zones.less",
+            "namespace": "tools",
+            "source_text": "Fewer buffs",
+            "description": "Toggle that hides the less common buff fields again.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zones.more",
+            "namespace": "tools",
+            "source_text": "More buffs",
+            "description": "Toggle that reveals the less common buff fields.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.dps.zones.moreSet",
+            "namespace": "tools",
+            "source_text": "{count, plural, one {# set} other {# set}}",
+            "description": "Badge on the 'More buffs' toggle: how many of the hidden fields have a value.",
+            "placeholders": [
+                "count"
             ]
         },
         {

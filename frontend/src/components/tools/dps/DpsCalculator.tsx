@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Calculator, ChevronsDownUp, ChevronsUpDown, Download, HelpCircle, RefreshCw } from "lucide-react";
+import { Calculator, ChevronsDownUp, ChevronsUpDown, Diamond, Download, HelpCircle, RefreshCw } from "lucide-react";
 import * as React from "react";
 import { AxisControls } from "#/components/tools/shared/AxisControls";
 import { CalcChart } from "#/components/tools/shared/CalcChart";
@@ -8,6 +8,7 @@ import { exportSvgAsPng } from "#/components/tools/shared/exportChart";
 import { InstanceCard } from "#/components/tools/shared/InstanceCard";
 import { KpiPanel } from "#/components/tools/shared/KpiPanel";
 import { OperatorPicker } from "#/components/tools/shared/OperatorPicker";
+import { CopyLinkButton, useShareUrlSync } from "#/components/tools/shared/ShareLink";
 import { moduleShortLabel } from "#/components/tools/shared/useOperatorDetail";
 import type { messages as detailMessages } from "#/components/tools/shared/useOperatorDetail.messages";
 import { AlertDialog, AlertDialogClose, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogPopup, AlertDialogTitle, AlertDialogTrigger } from "#/components/ui/alert-dialog";
@@ -15,6 +16,8 @@ import { Button } from "#/components/ui/button";
 import { Card, CardHeader, CardPanel, CardTitle } from "#/components/ui/card";
 import { PageHeader } from "#/components/ui/page-header";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
+import { Tabs, TabsList, TabsTab } from "#/components/ui/tabs";
+import { Toggle } from "#/components/ui/toggle";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { dpsOperatorsQueryOptions } from "#/lib/api/dps";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
@@ -22,13 +25,21 @@ import { type TypedRichT, useGamedataServer, useLocale, useRichT, useT } from "#
 import type { TypedT } from "#/lib/i18n/messages";
 import type { messages } from "./DpsCalculator.messages";
 import { EnemyPanel } from "./impl/components/EnemyPanel";
+import { RankingView } from "./impl/components/RankingView";
+import { ResultDetail } from "./impl/components/ResultDetail";
+import { ZoneFields } from "./impl/components/ZoneFields";
+import { TeamBuffsPanel } from "./impl/components/ZonePanel";
 import { METRIC_COLUMNS, X_AXIS_INPUT, X_AXIS_LABEL_KEYS, X_AXIS_SHORT_KEYS, Y_METRIC_LABEL_KEYS } from "./impl/constants";
 import type { messages as dpsConstantsMessages } from "./impl/constants.messages";
-import type { XAxisKind, YMetric } from "./impl/types";
+import { encodeDpsShare } from "./impl/share";
+import { INITIAL_STATE } from "./impl/state";
+import type { DpsView, XAxisKind, YMetric } from "./impl/types";
 import { useDpsCurves } from "./impl/useDpsCurves";
 import { useDpsImport } from "./impl/useDpsImport";
 import { useDpsResults } from "./impl/useDpsResults";
 import { useDpsState } from "./impl/useDpsState";
+import { useTeamBuffs } from "./impl/useTeamBuffs";
+import { countSetZones, EMPTY_ZONES } from "./impl/zones";
 
 /** The page's own chrome, the axis/metric labels from `constants.ts`, and the build-summary labels
  * `useOperatorDetail.ts` derives. */
@@ -37,19 +48,37 @@ type DpsRichT = TypedRichT<typeof messages>;
 
 const AXIS_ORDER: readonly XAxisKind[] = ["defense", "res"];
 
-export function DpsCalculator({ importParam, onImportConsumed }: { importParam?: string; onImportConsumed?: () => void }): React.ReactElement {
+/** What the untouched page encodes to; a state matching it clears `?s=`. */
+const DEFAULT_SHARE = encodeDpsShare(INITIAL_STATE);
+
+interface IDpsCalculatorProps {
+    /** The Squad Builder's hand-off (`?import=`), read once. */
+    importParam?: string;
+    onImportConsumed?: () => void;
+    /** The `?s=` share link present at mount; it outranks the stored setup. */
+    shareParam?: string;
+    /** Replaces `?s=` (undefined removes it) as the setup changes. */
+    onShareParamChange?: (param: string | undefined) => void;
+}
+
+export function DpsCalculator({ importParam, onImportConsumed, shareParam, onShareParamChange }: IDpsCalculatorProps): React.ReactElement {
     const t: DpsT = useT("tools");
     const rt: DpsRichT = useRichT("tools");
     const locale = useLocale();
-    const { state, dispatch, hydrationToken } = useDpsState();
+    const { state, dispatch, hydrationToken } = useDpsState(shareParam);
     useDpsImport(importParam, hydrationToken, dispatch, onImportConsumed);
+    useShareUrlSync(state, hydrationToken, encodeDpsShare, DEFAULT_SHARE, shareParam, onShareParamChange);
+    const encodeCurrent = React.useCallback(() => encodeDpsShare(state), [state]);
 
     const axes = React.useMemo(() => AXIS_ORDER.map((a) => ({ value: a, label: t(X_AXIS_LABEL_KEYS[a]), short: t(X_AXIS_SHORT_KEYS[a]) })), [t]);
     const metrics = React.useMemo(() => (Object.keys(Y_METRIC_LABEL_KEYS) as YMetric[]).map((k) => ({ value: k, label: t(Y_METRIC_LABEL_KEYS[k]) })), [t]);
     const columns = React.useMemo(() => METRIC_COLUMNS.map((c) => ({ key: c.key, label: t(c.labelKey) })), [t]);
 
-    const snapshots = useDpsResults(state.instances, state.enemy);
-    const curves = useDpsCurves(state, state.enemy);
+    const teamCtx = useTeamBuffs(state.team);
+    const snapshots = useDpsResults(state.instances, state.enemy, state.team, teamCtx);
+    const curves = useDpsCurves(state, teamCtx);
+    const isRank = state.view === "rank";
+    const renderDetail = React.useCallback((uid: string) => <ResultDetail data={snapshots.find((s) => s.uid === uid)?.data} metric={state.yMetric} />, [snapshots, state.yMetric]);
 
     const hasInstances = state.instances.length > 0;
     const allCollapsed = hasInstances && state.instances.every((i) => i.collapsed);
@@ -199,110 +228,154 @@ export function DpsCalculator({ importParam, onImportConsumed }: { importParam?:
                 }
             />
 
-            <div className="mt-6 grid grid-cols-1 items-start gap-4 xl:grid-cols-[420px_1fr]">
-                <aside className="flex min-w-0 flex-col gap-4 xl:col-start-1 xl:row-start-1">
-                    <Card>
-                        <CardHeader className="flex grid-rows-1 flex-row items-center justify-between gap-2">
-                            <CardTitle className="min-w-0 flex-1 truncate text-[15px]">
-                                {t("dps.operators")}
-                                {hasInstances && (
-                                    <span className="ml-1.5 font-medium font-mono text-[11px] text-muted-foreground">{visibleCount === state.instances.length ? t("dps.operators.count", { count: state.instances.length }) : t("dps.operators.countVisible", { visible: visibleCount, total: state.instances.length })}</span>
-                                )}
-                            </CardTitle>
-                            {state.instances.length > 1 && (
-                                <Tooltip>
-                                    <TooltipTrigger
-                                        render={(p) => (
-                                            <Button {...p} aria-label={allCollapsed ? t("dps.expandAll.aria") : t("dps.collapseAll.aria")} variant="ghost" size="icon-sm" className="shrink-0" onClick={onToggleCollapseAll}>
-                                                {allCollapsed ? <ChevronsUpDown /> : <ChevronsDownUp />}
-                                            </Button>
-                                        )}
-                                    />
-                                    <TooltipPopup>{allCollapsed ? t("dps.expandAll") : t("dps.collapseAll")}</TooltipPopup>
-                                </Tooltip>
-                            )}
-                        </CardHeader>
-                        <CardPanel className="pt-0">
-                            <DpsOperatorPicker existingCount={state.instances.length} onAdd={(op) => dispatch({ type: "ADD_INSTANCE", op })} />
-                        </CardPanel>
-                    </Card>
+            <Tabs value={state.view} onValueChange={(view) => dispatch({ type: "SET_VIEW", view: view as DpsView })} className="mt-5">
+                <TabsList aria-label={t("dps.view.label")}>
+                    <TabsTab value="compare">{t("dps.view.compare")}</TabsTab>
+                    <TabsTab value="rank">{t("dps.view.rank")}</TabsTab>
+                </TabsList>
+            </Tabs>
 
-                    <EnemyPanel hydrationToken={hydrationToken} enemy={state.enemy} onChangeEnemy={(patch) => dispatch({ type: "SET_ENEMY", patch })} onChangeShred={(patch) => dispatch({ type: "SET_SHRED", patch })} />
+            <div className="mt-4 grid grid-cols-1 items-start gap-4 xl:grid-cols-[420px_1fr]">
+                <aside className="flex min-w-0 flex-col gap-4 xl:col-start-1 xl:row-start-1">
+                    {!isRank && (
+                        <Card>
+                            <CardHeader className="flex grid-rows-1 flex-row items-center justify-between gap-2">
+                                <CardTitle className="min-w-0 flex-1 truncate text-[15px]">
+                                    {t("dps.operators")}
+                                    {hasInstances && (
+                                        <span className="ml-1.5 font-medium font-mono text-[11px] text-muted-foreground">
+                                            {visibleCount === state.instances.length ? t("dps.operators.count", { count: state.instances.length }) : t("dps.operators.countVisible", { visible: visibleCount, total: state.instances.length })}
+                                        </span>
+                                    )}
+                                </CardTitle>
+                                {state.instances.length > 1 && (
+                                    <Tooltip>
+                                        <TooltipTrigger
+                                            render={(p) => (
+                                                <Button {...p} aria-label={allCollapsed ? t("dps.expandAll.aria") : t("dps.collapseAll.aria")} variant="ghost" size="icon-sm" className="shrink-0" onClick={onToggleCollapseAll}>
+                                                    {allCollapsed ? <ChevronsUpDown /> : <ChevronsDownUp />}
+                                                </Button>
+                                            )}
+                                        />
+                                        <TooltipPopup>{allCollapsed ? t("dps.expandAll") : t("dps.collapseAll")}</TooltipPopup>
+                                    </Tooltip>
+                                )}
+                            </CardHeader>
+                            <CardPanel className="pt-0">
+                                <DpsOperatorPicker existingCount={state.instances.length} onAdd={(op) => dispatch({ type: "ADD_INSTANCE", op })} />
+                            </CardPanel>
+                        </Card>
+                    )}
+
+                    <EnemyPanel hydrationToken={hydrationToken} enemy={state.enemy} onChangeEnemy={(patch) => dispatch({ type: "SET_ENEMY", patch })} onChangeSecondary={(patch) => dispatch({ type: "SET_SECONDARY", patch })} />
+
+                    <TeamBuffsPanel
+                        team={state.team}
+                        ctx={teamCtx}
+                        hydrationToken={hydrationToken}
+                        onChangeZones={(patch) => dispatch({ type: "SET_TEAM_ZONES", patch })}
+                        onToggleSupporter={(id, on) => dispatch({ type: "TOGGLE_SUPPORTER", id, on })}
+                        onInvestment={(patch) => dispatch({ type: "SET_INVESTMENT", patch })}
+                        onClear={() => dispatch({ type: "RESET_TEAM_ZONES" })}
+                    />
                 </aside>
 
-                <main className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-20 xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto xl:pr-1">
-                    <Card>
-                        <CardHeader className="pb-3">
-                            <AxisControls
-                                axes={axes}
-                                xAxis={state.xAxis}
-                                onChangeAxis={(axis) => dispatch({ type: "SET_AXIS", axis: axis as XAxisKind })}
-                                metrics={metrics}
-                                yMetric={state.yMetric}
-                                onChangeMetric={(metric) => dispatch({ type: "SET_METRIC", metric: metric as YMetric })}
-                                sweep={state.sweep[state.xAxis]}
-                                axisInput={X_AXIS_INPUT[state.xAxis]}
-                                pointCount={pointCount}
-                                hydrationToken={hydrationToken}
-                                onChangeSweep={(patch) => dispatch({ type: "SET_SWEEP", axis: state.xAxis, patch })}
-                                rangeAction={
-                                    hasInstances ? (
-                                        <Tooltip>
-                                            <TooltipTrigger
-                                                render={(p) => (
-                                                    <Button {...p} aria-label={t("dps.download")} variant="outline" size="icon-sm" loading={isExporting} onClick={onExportChart} className="mb-1">
-                                                        <Download />
-                                                    </Button>
-                                                )}
-                                            />
-                                            <TooltipPopup>{t("dps.download")}</TooltipPopup>
-                                        </Tooltip>
-                                    ) : undefined
-                                }
-                            />
-                        </CardHeader>
-                        <CardPanel className="pt-0">
-                            <CalcChart
-                                instances={state.instances}
-                                rows={curves.rows}
-                                xLabel={t(X_AXIS_LABEL_KEYS[state.xAxis])}
-                                yLabel={t(Y_METRIC_LABEL_KEYS[state.yMetric])}
-                                allowDecimals
-                                formatTooltipX={(x) => (state.xAxis === "defense" ? t("dps.tooltip.def", { value: formatLargeNumber(x, locale) }) : t("dps.tooltip.res", { value: x.toFixed(1) }))}
-                                snapshotX={snapshotX}
-                                isLoading={curves.isPending}
-                                onLegendClick={(uid) => dispatch({ type: "TOGGLE_VISIBILITY", uid })}
-                                containerRef={chartContainerRef}
-                                emptyIcon={<Calculator />}
-                                emptyTitle={t("dps.empty.title")}
-                                emptyDescription={rt("dps.empty.desc", { axis: <span className="font-medium text-foreground">{t(X_AXIS_LABEL_KEYS[state.xAxis])}</span> })}
-                            />
-                        </CardPanel>
-                    </Card>
+                {isRank ? (
+                    <main className="flex min-w-0 flex-col gap-4 xl:col-start-2 xl:row-span-2 xl:row-start-1">
+                        <RankingView state={state} dispatch={dispatch} ctx={teamCtx} />
+                    </main>
+                ) : (
+                    <main className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-20 xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto xl:pr-1">
+                        <Card>
+                            <CardHeader className="pb-3">
+                                <AxisControls
+                                    axes={axes}
+                                    xAxis={state.xAxis}
+                                    onChangeAxis={(axis) => dispatch({ type: "SET_AXIS", axis: axis as XAxisKind })}
+                                    metrics={metrics}
+                                    yMetric={state.yMetric}
+                                    onChangeMetric={(metric) => dispatch({ type: "SET_METRIC", metric: metric as YMetric })}
+                                    sweep={state.sweep[state.xAxis]}
+                                    axisInput={X_AXIS_INPUT[state.xAxis]}
+                                    pointCount={pointCount}
+                                    hydrationToken={hydrationToken}
+                                    onChangeSweep={(patch) => dispatch({ type: "SET_SWEEP", axis: state.xAxis, patch })}
+                                    rangeAction={
+                                        hasInstances ? (
+                                            <div className="flex items-end gap-2">
+                                                <Tooltip>
+                                                    <TooltipTrigger
+                                                        render={(p) => (
+                                                            <Toggle {...p} aria-label={t("dps.markers.toggle")} variant="outline" size="sm" pressed={state.markers} onPressedChange={(markers) => dispatch({ type: "SET_MARKERS", markers })} className="mb-1">
+                                                                <Diamond />
+                                                            </Toggle>
+                                                        )}
+                                                    />
+                                                    <TooltipPopup>{t("dps.markers.toggle")}</TooltipPopup>
+                                                </Tooltip>
+                                                <CopyLinkButton to="/tools/dps" encode={encodeCurrent} />
+                                                <Tooltip>
+                                                    <TooltipTrigger
+                                                        render={(p) => (
+                                                            <Button {...p} aria-label={t("dps.download")} variant="outline" size="icon-sm" loading={isExporting} onClick={onExportChart} className="mb-1">
+                                                                <Download />
+                                                            </Button>
+                                                        )}
+                                                    />
+                                                    <TooltipPopup>{t("dps.download")}</TooltipPopup>
+                                                </Tooltip>
+                                            </div>
+                                        ) : undefined
+                                    }
+                                />
+                            </CardHeader>
+                            <CardPanel className="pt-0">
+                                <CalcChart
+                                    instances={state.instances}
+                                    rows={curves.rows}
+                                    xLabel={t(X_AXIS_LABEL_KEYS[state.xAxis])}
+                                    yLabel={t(Y_METRIC_LABEL_KEYS[state.yMetric])}
+                                    allowDecimals
+                                    formatTooltipX={(x) => (state.xAxis === "defense" ? t("dps.tooltip.def", { value: formatLargeNumber(x, locale) }) : t("dps.tooltip.res", { value: x.toFixed(1) }))}
+                                    snapshotX={snapshotX}
+                                    isLoading={curves.isPending}
+                                    showMarkers={state.markers}
+                                    onLegendClick={(uid) => dispatch({ type: "TOGGLE_VISIBILITY", uid })}
+                                    containerRef={chartContainerRef}
+                                    emptyIcon={<Calculator />}
+                                    emptyTitle={t("dps.empty.title")}
+                                    emptyDescription={rt("dps.empty.desc", { axis: <span className="font-medium text-foreground">{t(X_AXIS_LABEL_KEYS[state.xAxis])}</span> })}
+                                />
+                            </CardPanel>
+                        </Card>
 
-                    <KpiPanel instances={state.instances} snapshots={snapshots} leaderKey={state.yMetric} leaderLabel={t(Y_METRIC_LABEL_KEYS[state.yMetric])} columns={columns} />
-                </main>
+                        <KpiPanel instances={state.instances} snapshots={snapshots} leaderKey={state.yMetric} leaderLabel={t(Y_METRIC_LABEL_KEYS[state.yMetric])} columns={columns} renderDetail={renderDetail} />
+                    </main>
+                )}
 
-                <section aria-label={t("dps.configured")} className="flex min-w-0 flex-col gap-4 xl:col-start-1 xl:row-start-2">
-                    {state.instances.map((inst, idx) => (
-                        <InstanceCard
-                            key={inst.uid}
-                            inst={inst}
-                            index={idx}
-                            isFirst={idx === 0}
-                            isLast={idx === state.instances.length - 1}
-                            onUpdate={(patch) => dispatch({ type: "UPDATE_CONFIG", uid: inst.uid, patch })}
-                            onUpdateBuffs={(patch) => dispatch({ type: "UPDATE_BUFFS", uid: inst.uid, patch })}
-                            onToggleConditional={(key, value) => dispatch({ type: "TOGGLE_CONDITIONAL", uid: inst.uid, key, value })}
-                            onToggleVisibility={() => dispatch({ type: "TOGGLE_VISIBILITY", uid: inst.uid })}
-                            onToggleCollapsed={() => dispatch({ type: "TOGGLE_COLLAPSED", uid: inst.uid })}
-                            onMoveUp={() => dispatch({ type: "REORDER_INSTANCE", uid: inst.uid, direction: "up" })}
-                            onMoveDown={() => dispatch({ type: "REORDER_INSTANCE", uid: inst.uid, direction: "down" })}
-                            onDuplicate={() => dispatch({ type: "DUPLICATE_INSTANCE", uid: inst.uid })}
-                            onRemove={() => dispatch({ type: "REMOVE_INSTANCE", uid: inst.uid })}
-                        />
-                    ))}
-                </section>
+                {!isRank && (
+                    <section aria-label={t("dps.configured")} className="flex min-w-0 flex-col gap-4 xl:col-start-1 xl:row-start-2">
+                        {state.instances.map((inst, idx) => (
+                            <InstanceCard
+                                key={inst.uid}
+                                inst={inst}
+                                index={idx}
+                                isFirst={idx === 0}
+                                isLast={idx === state.instances.length - 1}
+                                onUpdate={(patch) => dispatch({ type: "UPDATE_CONFIG", uid: inst.uid, patch })}
+                                buffsSection={<ZoneFields compact zones={inst.config.zones ?? EMPTY_ZONES} onChange={(patch) => dispatch({ type: "SET_CARD_ZONES", uid: inst.uid, patch })} resetKey={hydrationToken} />}
+                                buffsSetCount={countSetZones(inst.config.zones)}
+                                onToggleConditional={(key, value) => dispatch({ type: "TOGGLE_CONDITIONAL", uid: inst.uid, key, value })}
+                                onToggleVisibility={() => dispatch({ type: "TOGGLE_VISIBILITY", uid: inst.uid })}
+                                onToggleCollapsed={() => dispatch({ type: "TOGGLE_COLLAPSED", uid: inst.uid })}
+                                onMoveUp={() => dispatch({ type: "REORDER_INSTANCE", uid: inst.uid, direction: "up" })}
+                                onMoveDown={() => dispatch({ type: "REORDER_INSTANCE", uid: inst.uid, direction: "down" })}
+                                onDuplicate={() => dispatch({ type: "DUPLICATE_INSTANCE", uid: inst.uid })}
+                                onRemove={() => dispatch({ type: "REMOVE_INSTANCE", uid: inst.uid })}
+                            />
+                        ))}
+                    </section>
+                )}
             </div>
         </div>
     );

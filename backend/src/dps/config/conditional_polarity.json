@@ -1,0 +1,829 @@
+{
+ "dps": {
+  "char_003_kalts": {
+   "talent|NotInHealRange": true
+  },
+  "char_017_huang": {
+   "module|vsBlocked": false,
+   "talent2|w": true
+  },
+  "char_1001_amiya2": {
+   "module|NotBlocking": false,
+   "skill|3kills": false
+  },
+  "char_1011_lava2": {
+   "skill|overlap": false
+  },
+  "char_1012_skadi2": {
+   "module|noModBonus": true,
+   "talent2|AllyInRange": false
+  },
+  "char_1013_chen2": {
+   "trait|maxRange": true
+  },
+  "char_1015_aglna2": {
+   "talent2|liftoffSelfBuff": false,
+   "talent|weightlessTarget": false
+  },
+  "char_1019_siege2": {
+   "module|NotBlocking": false,
+   "module|blocking": false,
+   "talent2|vsFrighten": false
+  },
+  "char_1020_reed2": {
+   "skill|Sandwiched": false,
+   "talent|w": true
+  },
+  "char_1021_kroos2": {
+   "module|aerial": false,
+   "skill|4hits": false
+  },
+  "char_1023_ghost2": {
+   "skill|vsHigherHP": false,
+   "trait|f": true
+  },
+  "char_1026_gvial2": {
+   "module|vsBlocked": false,
+   "talent|f": false
+  },
+  "char_1028_texas2": {
+   "module|adjacentAlly": true,
+   "talent2|preKill": false
+  },
+  "char_1029_yato2": {
+   "talent2|after10s": true
+  },
+  "char_1032_excu2": {
+   "module|vs2": false
+  },
+  "char_1033_swire2": {
+   "skill|2HitBottles": false,
+   "skill|heals": true,
+   "talent|maxModStacks": false,
+   "talent|noStacks": true
+  },
+  "char_1035_wisdel": {
+   "skill|overdrive": false
+  },
+  "char_1037_amiya3": {
+   "skill|maxStacks": false,
+   "skill|noStacks": true
+  },
+  "char_1038_whitw2": {
+   "talent|noTalentBuffs": true,
+   "trait|minDroneDmg": true
+  },
+  "char_1039_thorn2": {
+   "trait|unitOnly": true
+  },
+  "char_103_angel": {
+   "module|aerialTarget": false,
+   "module|groundEnemies": false,
+   "talent|w": true
+  },
+  "char_1040_blaze2": {
+   "skill|avgBurn": false,
+   "skill|vsBurn": false,
+   "trait|no": true
+  },
+  "char_1042_phatm2": {
+   "module|vsElite": false,
+   "skill|onlyCat": true,
+   "trait|vsBoss": true
+  },
+  "char_1043_leizi2": {
+   "skill|maxStacks": false,
+   "skill|tripleHit": false,
+   "trait|minTrait": true
+  },
+  "char_1044_hsgma2": {
+   "skill|lastStand": false,
+   "talent|maxTenacity": false
+  },
+  "char_1046_sbell2": {
+   "module|manyTargets": false,
+   "skill|iceOnly": true
+  },
+  "char_106_franka": {
+   "module|vsBlocked": false
+  },
+  "char_112_siege": {
+   "module|blocking": false
+  },
+  "char_113_cqbw": {
+   "module|vsBlocked": false,
+   "talent2|vsStun": false,
+   "talent|noDmgTaken": false
+  },
+  "char_126_shotst": {
+   "talent|vsAerial": false
+  },
+  "char_129_bluep": {
+   "module|GroundTargets": false
+  },
+  "char_130_doberm": {
+   "trait|blocking": true
+  },
+  "char_131_flameb": {
+   "module|afterRevive": false
+  },
+  "char_133_mm": {
+   "module|vsAerial": false
+  },
+  "char_134_ifrit": {
+   "module|maxRange": false
+  },
+  "char_135_halo": {
+   "talent|maxStacks": false
+  },
+  "char_136_hsguma": {
+   "module|afterDodge": false
+  },
+  "char_137_brownb": {
+   "talent|maxStacks": false
+  },
+  "char_140_whitew": {
+   "trait|rangedAtk": true
+  },
+  "char_143_ghost": {
+   "module|vsBlocked": false
+  },
+  "char_144_red": {
+   "module|alone": false
+  },
+  "char_145_prove": {
+   "skill|vs": false,
+   "talent|directFront": false
+  },
+  "char_149_scave": {
+   "module|blocking": false,
+   "talent|adjacentAlly": true
+  },
+  "char_1502_crosly": {
+   "module|alone": false,
+   "skill|singleTargetOnly": true,
+   "talent2|dmgTaken": true
+  },
+  "char_154_morgan": {
+   "module|vsBlocked": false,
+   "talent|lowHp": false
+  },
+  "char_157_dagda": {
+   "talent|maxStacks": false
+  },
+  "char_159_peacok": {
+   "module|vsBlocked": false,
+   "skill|SkillSuccess": false,
+   "skill|selfstun": true
+  },
+  "char_172_svrash": {
+   "talent|vsElite": false,
+   "trait|rangedAtk": true
+  },
+  "char_180_amgoat": {
+   "module|vsElite": false,
+   "skill|minResshred": true,
+   "talent|minAspd": true
+  },
+  "char_185_frncat": {
+   "module|NotBlocking": false
+  },
+  "char_188_helage": {
+   "talent|lowHP": false
+  },
+  "char_190_clour": {
+   "module|vsAerial": false
+  },
+  "char_193_frostl": {
+   "trait|rangedAtk": true
+  },
+  "char_194_leto": {
+   "trait|rangedAtk": true
+  },
+  "char_197_poca": {
+   "module|maxRange": false,
+   "talent2|noTalentStacks": true,
+   "talent|vsLight": true
+  },
+  "char_2012_typhon": {
+   "module|maxRange": false,
+   "module|vsHeavy": false,
+   "talent2|noCrits": true
+  },
+  "char_2013_cerber": {
+   "module|vsElite": false,
+   "talent2|adjacentAlly": true,
+   "talent|maxTalent1": false
+  },
+  "char_2014_nian": {
+   "module|3shieldsBroken": false
+  },
+  "char_2015_dusk": {
+   "skill|vsLowHp": false,
+   "talent|f": false
+  },
+  "char_2023_ling": {
+   "talent2|noTalent2Stacks": true,
+   "talent|1Dragon": true,
+   "trait|noDragons": true
+  },
+  "char_2024_chyue": {
+   "talent|NoSkillCrit": true
+  },
+  "char_2026_yu": {
+   "trait|vsBoss": true
+  },
+  "char_204_platnm": {
+   "module|aerial": false
+  },
+  "char_206_gnosis": {
+   "module|vsElite": false,
+   "skill|vsFrozen": false
+  },
+  "char_214_kafka": {
+   "module|alone": false
+  },
+  "char_218_cuttle": {
+   "module|atMaxRange": false
+  },
+  "char_222_bpipe": {
+   "module|lowHpTarget": false
+  },
+  "char_230_savage": {
+   "module|vsBlocked": false,
+   "talent|2": false
+  },
+  "char_235_jesica": {
+   "module|groundEnemies": false
+  },
+  "char_245_cello": {
+   "skill|selfBuff": false,
+   "trait|vsBoss": true
+  },
+  "char_248_mgllan": {
+   "talent|1Drone": true,
+   "trait|f": false,
+   "trait|noDrones": true
+  },
+  "char_249_mlyss": {
+   "talent2|maxSteal": false,
+   "talent|no": true,
+   "trait|blocked": false
+  },
+  "char_250_phatom": {
+   "module|adjacentAllies": true,
+   "talent|initialHit": true,
+   "talent|with": false
+  },
+  "char_252_bibeak": {
+   "talent|w": true
+  },
+  "char_265_sophia": {
+   "trait|blocking": true
+  },
+  "char_271_spikes": {
+   "talent|vsDrones": false,
+   "trait|rangedAtk": true
+  },
+  "char_272_strong": {
+   "talent|vsInfected": false
+  },
+  "char_274_astesi": {
+   "module|blocking": false,
+   "talent|maxStacks": false
+  },
+  "char_283_midn": {
+   "trait|rangedAtk": true
+  },
+  "char_286_cast3": {
+   "talent|first": false
+  },
+  "char_289_gyuki": {
+   "module|afterRevive": false
+  },
+  "char_290_vigna": {
+   "module|vsLowHp": false
+  },
+  "char_293_thorns": {
+   "skill|firstActivation": true,
+   "talent|vsRanged": false,
+   "trait|rangedAtk": true
+  },
+  "char_294_ayer": {
+   "trait|rangedAtk": true
+  },
+  "char_297_hamoni": {
+   "talent|vsBlocked": false
+  },
+  "char_300_phenxi": {
+   "module|blockedTarget": false,
+   "skill|central": false,
+   "talent2|half": true,
+   "talent|w": true
+  },
+  "char_311_mudrok": {
+   "module|alone": false,
+   "talent2|vsNonSarkaz": false
+  },
+  "char_322_lmlee": {
+   "module|5modStacks": false
+  },
+  "char_328_cammou": {
+   "trait|minDroneDmg": true
+  },
+  "char_332_archet": {
+   "module|GroundEnemy": false,
+   "module|aerialTarget": false
+  },
+  "char_333_sidero": {
+   "module|blocking": false,
+   "talent|After": false
+  },
+  "char_336_folivo": {
+   "talent|1Drone": true,
+   "trait|noDrones": true
+  },
+  "char_337_utage": {
+   "talent|lowHP": false
+  },
+  "char_340_shwaz": {
+   "module|directFront": false,
+   "talent2|w": true,
+   "talent|minDefshred": true
+  },
+  "char_346_aosta": {
+   "talent|blockedTarget": true,
+   "trait|distant": true
+  },
+  "char_347_jaksel": {
+   "talent|afterDodge": false
+  },
+  "char_350_surtr": {
+   "module|NotBlocking": false,
+   "skill|KillingHitsOnly": false
+  },
+  "char_356_broca": {
+   "module|vsBlocked": false,
+   "talent|blocking2": false
+  },
+  "char_362_saga": {
+   "module|blocking": false,
+   "talent|vsLowHp": false
+  },
+  "char_363_toddi": {
+   "module|vsHeavy": false,
+   "talent|withRacism": false
+  },
+  "char_365_aprl": {
+   "module|groundEnemies": false
+  },
+  "char_366_acdrop": {
+   "talent|directFront": false
+  },
+  "char_367_swllow": {
+   "module|GroundTargets": false
+  },
+  "char_377_gdglow": {
+   "trait|minDroneDmg": true
+  },
+  "char_391_rosmon": {
+   "skill|withPillarDefshred": false
+  },
+  "char_394_hadiya": {
+   "skill|noDP": true,
+   "talent|maxStacks": false
+  },
+  "char_4000_jnight": {
+   "talent|first": false
+  },
+  "char_4009_irene": {
+   "talent2|vsSeaborn": false,
+   "talent|vsHeavy": false,
+   "talent|vsLevitateImmune": true
+  },
+  "char_400_weedy": {
+   "talent|nextToCannon": false
+  },
+  "char_4010_etlchi": {
+   "module|vs2": false,
+   "skill|overlapp": false
+  },
+  "char_4011_lessng": {
+   "module|afterRevive": false,
+   "talent2|w": true,
+   "talent|vsBlocked": true
+  },
+  "char_4013_kjera": {
+   "talent|noGroundTiles": true,
+   "trait|minDroneDmg": true
+  },
+  "char_4016_kazema": {
+   "skill|w": true
+  },
+  "char_4026_vulpis": {
+   "module|blocking": false,
+   "talent|w": true
+  },
+  "char_4027_heyak": {
+   "module|vsElite": false,
+   "skill|maxRange": false,
+   "talent2|vsLowHp": false,
+   "talent|vsAerial": false
+  },
+  "char_4039_horn": {
+   "module|blockedTarget": false,
+   "module|rangedAtk": false,
+   "skill|overdrive": false,
+   "talent2|afterRevive": false
+  },
+  "char_4040_rockr": {
+   "skill|overdrive": false,
+   "talent|w": true,
+   "trait|minDroneDmg": true
+  },
+  "char_4043_erato": {
+   "module|vsHeavy": false,
+   "talent|selfAppliedSleep": true,
+   "talent|vsSleep": false
+  },
+  "char_4046_ebnhlz": {
+   "module|vsBoss": true,
+   "talent2|withAvgNecrosis": false
+  },
+  "char_4048_doroth": {
+   "talent2|maxTalent2": false,
+   "talent|1MinePerSPcost": true,
+   "trait|noMines": true
+  },
+  "char_4054_malist": {
+   "trait|minDroneDmg": true
+  },
+  "char_4055_bgsnow": {
+   "module|DirectFront": false,
+   "talent2|TW": true
+  },
+  "char_4056_titi": {
+   "skill|vsSleep": false,
+   "talent2|f": false,
+   "talent|vsMoving": false
+  },
+  "char_4058_pepe": {
+   "module|3inRange": false,
+   "skill|maxStacks": false
+  },
+  "char_405_absin": {
+   "talent|lowHpTarget": false
+  },
+  "char_4062_totter": {
+   "module|vsHeavy": false,
+   "talent|vsInvis": false
+  },
+  "char_4064_mlynar": {
+   "talent|3": false
+  },
+  "char_4065_judge": {
+   "module|alone": false
+  },
+  "char_4066_highmo": {
+   "talent|in": false
+  },
+  "char_4067_lolxh": {
+   "trait|rangedAtk": true
+  },
+  "char_4072_ironmn": {
+   "skill|TurretOnly": true
+  },
+  "char_4077_palico": {
+   "talent|after3BigHits": true
+  },
+  "char_4080_lin": {
+   "module|manyTargets": false
+  },
+  "char_4081_warmy": {
+   "skill|avgBurn": false,
+   "skill|vsBurn": false,
+   "trait|no": true
+  },
+  "char_4082_qiubai": {
+   "skill|maxStacks": false,
+   "talent|vsBindAndSlow": false,
+   "talent|vsBindOrSlow": false,
+   "talent|vsSlow": true,
+   "talent|w": true,
+   "trait|rangedAtk": true
+  },
+  "char_4087_ines": {
+   "skill|maxSteal": false
+  },
+  "char_4088_hodrer": {
+   "module|vsBlocked": false,
+   "skill|vsSelfAppliedStun": false,
+   "talent|vsStun": false
+  },
+  "char_4098_vvana": {
+   "module|blocking": false,
+   "skill|1stActivation": true,
+   "skill|afterSteal": false,
+   "talent|vsElite": false
+  },
+  "char_4100_caper": {
+   "trait|maxRange": true
+  },
+  "char_4104_coldst": {
+   "talent|TalentOn1": false,
+   "trait|outOfAmmo": true
+  },
+  "char_4106_bryota": {
+   "trait|blocking": true
+  },
+  "char_4117_ray": {
+   "talent2|After": false,
+   "talent|with": false,
+   "trait|outOfAmmo": true
+  },
+  "char_4121_zuole": {
+   "talent|lowHp": false
+  },
+  "char_4123_ela": {
+   "talent2|MineDebuff": false
+  },
+  "char_4125_rdoc": {
+   "trait|blocking": true
+  },
+  "char_4131_odda": {
+   "module|3inRange": false,
+   "talent|after": false
+  },
+  "char_4132_ascln": {
+   "talent2|NoRangedTiles": true,
+   "talent|1Stack": true
+  },
+  "char_4133_logos": {
+   "skill|after5sec": false,
+   "talent|vsBoss": false,
+   "talent|withAvgNecrosis": false
+  },
+  "char_4134_cetsyr": {
+   "module|noModBonus": true
+  },
+  "char_4137_udflow": {
+   "talent|vsSeaborn": false
+  },
+  "char_4138_narant": {
+   "talent|maxSteal": false,
+   "trait|maxRange": true
+  },
+  "char_4140_lasher": {
+   "talent2|1Drone": true,
+   "talent|vsMachine": false,
+   "trait|noDrones": true
+  },
+  "char_4141_marcil": {
+   "skill|2ndActivation": false,
+   "talent2|FullSquad": false,
+   "talent|noMana": true
+  },
+  "char_4142_laios": {
+   "module|ModRevive": false,
+   "talent|TalentUp": false
+  },
+  "char_4146_nymph": {
+   "talent2|f": false,
+   "trait|vsFallout": false
+  },
+  "char_4155_talr": {
+   "talent|blocking": true
+  },
+  "char_415_flint": {
+   "talent|blocking": true
+  },
+  "char_4164_tecno": {
+   "talent|f": false,
+   "trait|noSummons": true
+  },
+  "char_416_zumama": {
+   "module|WhileBlocking": false
+  },
+  "char_4182_oblvns": {
+   "module|vs2": false,
+   "skill|Organ": false,
+   "skill|f": true,
+   "skill|maxSkillDmg": false,
+   "talent2|fever": false,
+   "talent|maxNotes": false,
+   "talent|minNotes": true,
+   "trait|rangedAtk": true
+  },
+  "char_4185_amoris": {
+   "module|3inRange": false
+  },
+  "char_4186_tmoris": {
+   "skill|Fever": false,
+   "talent|vsSlow": false
+  },
+  "char_4187_graceb": {
+   "skill|vsFallout": false
+  },
+  "char_4193_lemuen": {
+   "talent2|f": true,
+   "talent|vsMarked": false
+  },
+  "char_4194_rmixer": {
+   "skill|idealCase": false,
+   "talent|noStacks": true
+  },
+  "char_4195_radian": {
+   "talent|1Drone": true,
+   "trait|noDrones": true
+  },
+  "char_4198_christ": {
+   "module|vsPara": false,
+   "skill|avgNerv": false,
+   "trait|vsFallout": false
+  },
+  "char_4208_wintim": {
+   "talent|gotHit": true
+  },
+  "char_420_flamtl": {
+   "module|blocking": false
+  },
+  "char_421_crow": {
+   "skill|lowHpTarget": false,
+   "talent|maxStacks": false
+  },
+  "char_422_aurora": {
+   "skill|1": false
+  },
+  "char_423_blemsh": {
+   "talent2|vsSleep": false
+  },
+  "char_426_billro": {
+   "module|manyTargets": false,
+   "skill|charged": false
+  },
+  "char_427_vigil": {
+   "skill|1wolf": true,
+   "trait|vsBlocked": false
+  },
+  "char_430_fartth": {
+   "module|maxModuleBonus": false,
+   "talent|w": true
+  },
+  "char_431_ashlok": {
+   "module|blockedTarget": false,
+   "talent|LowTalent": true
+  },
+  "char_437_mizuki": {
+   "module|inIS": false,
+   "talent2|vsLowHp": false
+  },
+  "char_440_pinecn": {
+   "skill|4thActivation": false,
+   "talent|withSPboost": false,
+   "trait|maxRange": true
+  },
+  "char_445_wscoot": {
+   "trait|halfStacks": true
+  },
+  "char_450_necras": {
+   "module|vsBlocked": false,
+   "talent2|vsLowHp": false,
+   "trait|1Summon": true,
+   "trait|noSummon": true
+  },
+  "char_455_nothin": {
+   "skill|Apsd": false,
+   "talent|idealTalentUsage": true
+  },
+  "char_456_ash": {
+   "skill|vsStunned": false
+  },
+  "char_457_blitz": {
+   "talent|vsStun": false
+  },
+  "char_458_rfrost": {
+   "skill|MineInRange": false,
+   "talent|1MinePerSPcost": true,
+   "trait|noMines": true
+  },
+  "char_472_pasngr": {
+   "talent2|EnemyClose": true,
+   "talent|vsHighHp": false
+  },
+  "char_474_glady": {
+   "talent2|vsHeavy": true
+  },
+  "char_485_pallas": {
+   "skill|selfbuffS3": false,
+   "trait|w": true
+  },
+  "char_486_takila": {
+   "skill|NotCharged": true,
+   "trait|20Stacks": true
+  },
+  "char_493_firwhl": {
+   "module|vsBlocked": false,
+   "talent|meelee": true
+  },
+  "char_497_ctable": {
+   "talent|melee": false
+  },
+  "char_498_inside": {
+   "module|vsAerial": false
+  },
+  "char_499_kaitou": {
+   "talent|avgNecrosis": null,
+   "talent|vsFallout": false,
+   "trait|noNecrosis": true
+  },
+  "char_503_rang": {
+   "talent|vsAerial": false
+  },
+  "unknown_guide": {
+   "module|vsBlocked": false,
+   "skill|overcharged": false,
+   "trait|withBonus": false
+  },
+  "unknown_newblueprint": {
+   "module|vsBlocked": false,
+   "skill|overcharged": false,
+   "trait|withBonus": false
+  }
+ },
+ "hps": {
+  "char_1012_skadi2": {
+   "module|noModBonus": true,
+   "talent|AHinRange": false
+  },
+  "char_101_sora": {
+   "module|noModBonus": true
+  },
+  "char_1033_swire2": {
+   "module|noModStacks": true,
+   "talent|noCoinStacks": true
+  },
+  "char_1037_amiya3": {
+   "skill|noStacks": true
+  },
+  "char_108_silent": {
+   "module|healingMelee": false
+  },
+  "char_187_ccheal": {
+   "module|groundUnit": false,
+   "skill|lowHp": false,
+   "talent|first": false
+  },
+  "char_2025_shu": {
+   "skill|noEnemies": true,
+   "talent2|maxTalent2": false
+  },
+  "char_202_demkni": {
+   "talent|noStacks": true
+  },
+  "char_226_hmau": {
+   "talent|highGroundTarget": false
+  },
+  "char_345_folnic": {
+   "module|groundUnit": false
+  },
+  "char_348_ceylon": {
+   "talent|watermap": false,
+   "trait|atRange": true
+  },
+  "char_385_finlpp": {
+   "trait|atRange": true
+  },
+  "char_4042_lumen": {
+   "trait|atRange": true
+  },
+  "char_4045_heidi": {
+   "module|noModBonus": true
+  },
+  "char_4071_peper": {
+   "talent|f": false
+  },
+  "char_4134_cetsyr": {
+   "module|noModBonus": true
+  },
+  "char_4173_nowell": {
+   "talent|vsNegStat": false,
+   "trait|atRange": true
+  },
+  "char_4179_monstr": {
+   "talent|noConstruct": true
+  },
+  "char_4196_reckpr": {
+   "module|vs": true,
+   "talent|talentInactive": true
+  },
+  "char_4202_haruka": {
+   "skill|1stActivation": true
+  },
+  "char_436_whispr": {
+   "trait|atRange": true
+  },
+  "char_473_mberry": {
+   "talent|No": true
+  }
+ }
+}

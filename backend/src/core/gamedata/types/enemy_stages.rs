@@ -33,6 +33,21 @@ pub struct EnemyStageRef {
     /// the enemy is declared for the stage but not directly spawned
     /// (summoned, conditional, or a relative-spawn parent).
     pub count: u32,
+    /// The database level and stat overrides the level file declares for this
+    /// enemy. `None` for a boss declaration with no level file. Server side
+    /// only (the DPS retention score reads it); never serialized.
+    #[serde(skip)]
+    #[ts(skip)]
+    pub battle: Option<StageEnemyBattle>,
+}
+
+/// How one stage fields one enemy: the `enemy_database.json` level it uses
+/// and the DEF / RES its `OverwrittenData` sets, when it sets them.
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
+pub struct StageEnemyBattle {
+    pub level: i32,
+    pub def: Option<f64>,
+    pub res: Option<f64>,
 }
 
 /// `enemy_id -> appearances`. Built by [`build_enemy_stage_index`].
@@ -126,6 +141,7 @@ mod tests {
             stage_name: None,
             is_hard: false,
             count,
+            battle: None,
         }
     }
 
@@ -164,6 +180,7 @@ mod tests {
                         stage_name: info.stage_name.clone(),
                         is_hard: info.is_hard,
                         count,
+                        battle: None,
                     }
                 })
                 .collect();

@@ -175,6 +175,22 @@ export const messages = {
         text: "{count, plural, one {# squadmate is not in the DPS calculator yet} other {# squadmates are not in the DPS calculator yet}}",
         description: "Toast when some operators sent over from the Squad Builder are not supported by the damage engine, so they were left out.",
     },
+    "dps.markers.toggle": {
+        text: "Curve markers: where damage hits its floor and where it halves",
+        description: "Tooltip and accessible name of the toggle beside the chart controls that shows or hides markers on each curve: a diamond where the operator's damage stops falling (every hit at the 5% minimum) and a ring where it falls to half of its value at the start of the sweep.",
+    },
+    "dps.view.label": {
+        text: "View",
+        description: "Accessible name of the tab strip that switches between comparing chosen operators and ranking all of them.",
+    },
+    "dps.view.compare": {
+        text: "Compare",
+        description: "Tab: chart and compare the operators you picked.",
+    },
+    "dps.view.rank": {
+        text: "Rank all operators",
+        description: "Tab: every supported operator ranked under the same enemy and buffs.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

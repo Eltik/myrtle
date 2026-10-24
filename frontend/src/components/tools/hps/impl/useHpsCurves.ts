@@ -1,8 +1,10 @@
 import { useQueries } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { chunk, flattenChunks } from "#/components/tools/shared/batch";
 import { buildSweepPoints } from "#/components/tools/shared/constants";
 import type { ICurvePoint, ISweepRange } from "#/components/tools/shared/types";
-import { hpsCalculateQueryOptions } from "#/lib/api/hps";
+import { hpsBatchQueryOptions } from "#/lib/api/hps";
+import type { HpsBatchItem } from "#/types/generated/HpsBatchItem";
 import { type IAxisOverride, instanceToRequest } from "./state";
 import type { HpsXAxis, HpsYMetric, IHpsBuffConfig, IHpsState } from "./types";
 
@@ -29,6 +31,11 @@ function axisOverride(axis: HpsXAxis, x: number): IAxisOverride {
     }
 }
 
+/**
+ * Every (card, point) as one request, sent through `POST /hps/batch` in runs of 64. The HPS
+ * batch has no sweep (the axes are buffs and targets, not enemy stats), so an 8-card,
+ * 41-point chart is 328 requests in 6 calls instead of 328 calls.
+ */
 export function useHpsCurves(state: IHpsState, buffs: IHpsBuffConfig): IUseHpsCurvesResult {
     const range: ISweepRange = state.sweep[state.xAxis];
     const isInteger = state.xAxis === "targets";
@@ -36,33 +43,38 @@ export function useHpsCurves(state: IHpsState, buffs: IHpsBuffConfig): IUseHpsCu
 
     const visibleInstances = useMemo(() => state.instances.filter((i) => i.visible), [state.instances]);
 
-    const { plans, queryConfigs } = useMemo(() => {
+    const { plans, chunks } = useMemo(() => {
         const plans: ICurvePlan[] = [];
-        const queryConfigs = visibleInstances.flatMap((inst) =>
+        const requests = visibleInstances.flatMap((inst) =>
             points.map((x, idx) => {
                 plans.push({ instUid: inst.uid, pointIdx: idx });
-                return hpsCalculateQueryOptions(instanceToRequest(inst, buffs, axisOverride(state.xAxis, x)));
+                return instanceToRequest(inst, buffs, axisOverride(state.xAxis, x));
             }),
         );
-        return { plans, queryConfigs };
+        return { plans, chunks: chunk(requests) };
     }, [visibleInstances, points, buffs, state.xAxis]);
 
-    const queries = useQueries({ queries: queryConfigs });
+    const queries = useQueries({ queries: chunks.map((requests) => hpsBatchQueryOptions({ requests })) });
 
     return useMemo(() => {
+        const slots = flattenChunks(
+            chunks.map((c) => c.length),
+            queries,
+            (item: HpsBatchItem) => item.result,
+        );
         const rows: ICurvePoint[] = points.map((x) => ({ x }));
         let isPending = false;
         for (let i = 0; i < plans.length; i++) {
             const plan = plans[i];
-            const q = queries[i];
+            const slot = slots[i];
             const row = rows[plan.pointIdx];
             if (!row) continue;
-            if (q?.isPending) isPending = true;
-            const data = q?.data;
+            if (slot?.isPending) isPending = true;
+            const data = slot?.data;
             row[plan.instUid] = data ? selectMetric(data, state.yMetric) : null;
         }
         return { points, rows, isPending };
-    }, [plans, queries, points, state.yMetric]);
+    }, [plans, chunks, queries, points, state.yMetric]);
 }
 
 function selectMetric(d: { skill_hps: number; base_hps: number; avg_hps: number }, metric: HpsYMetric): number {

@@ -2,6 +2,7 @@ pub mod archives;
 pub mod auth;
 pub mod base_planner;
 pub mod dps;
+pub mod dps_retention;
 pub mod gacha;
 pub mod game_session;
 pub mod grid;

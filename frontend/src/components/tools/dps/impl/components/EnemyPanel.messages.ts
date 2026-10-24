@@ -27,33 +27,49 @@ export const messages = {
         text: "Targets hit (AoE)",
         description: "Input label for how many enemies an attack hits at once. 'AoE' is area of effect, the usual abbreviation.",
     },
-    "dps.enemy.spBoost": {
-        text: "Bonus SP/s",
-        description: "Input label for extra skill points per second from outside sources. 'SP' is the game's skill-point resource.",
+    "dps.enemy.secondary": {
+        text: "Secondary targets",
+        description: "Switch label: add more enemies beside the main one, with their own DEF and RES. The result splits damage between the main target and the rest.",
     },
-    "dps.enemy.shred": {
-        text: "Shred",
-        description: "Toggle heading for the section holding defense- and resistance-reduction values. 'Shred' is community jargon for lowering an enemy's DEF or RES.",
+    "dps.enemy.secondary.desc": {
+        text: "Other enemies hit alongside the main one. Results split into main and secondary damage.",
+        description: "One-line explanation under the secondary-targets switch.",
     },
-    "dps.enemy.shred.on": {
-        text: "on",
-        description: "Tiny badge beside the 'Shred' heading when at least one shred value is non-zero. Lowercase; it sits in a very small pill.",
+    "dps.enemy.secondary.def": {
+        text: "Their DEF",
+        description: "Input label: the secondary enemies' defense. 'DEF' is the game's abbreviation.",
     },
-    "dps.enemy.shred.defPct": {
-        text: "DEF % shred",
-        description: "Input label for defense reduction expressed as a percentage.",
+    "dps.enemy.secondary.res": {
+        text: "Their RES",
+        description: "Input label: the secondary enemies' arts resistance. 'RES' is the game's abbreviation.",
     },
-    "dps.enemy.shred.defFlat": {
-        text: "DEF flat",
-        description: "Input label for defense reduction expressed as a fixed number.",
+    "dps.enemy.secondary.count": {
+        text: "How many",
+        description: "Input label: the number of secondary enemies.",
     },
-    "dps.enemy.shred.resPct": {
-        text: "RES % shred",
-        description: "Input label for arts-resistance reduction expressed as a percentage.",
+    "dps.enemy.secondary.targetsNote": {
+        text: "With secondary targets on, the main target is one enemy and the count above sets the rest.",
+        description: "Note shown when secondary targets replace the plain target count.",
     },
-    "dps.enemy.shred.resFlat": {
-        text: "RES flat",
-        description: "Input label for arts-resistance reduction expressed as a fixed number.",
+    "dps.enemy.cycle": {
+        text: "Skill cycle model",
+        description: "Label of the selector for how average DPS over a skill cycle is computed.",
+    },
+    "dps.enemy.cycle.legacy": {
+        text: "Classic",
+        description: "Cycle model option: the original average, a plain basic attack between skills.",
+    },
+    "dps.enemy.cycle.v2": {
+        text: "SP-aware",
+        description: "Cycle model option: the operator's own attack between skills and SP charged by the skill's SP type.",
+    },
+    "dps.enemy.cycle.desc.legacy": {
+        text: "Average DPS uses a plain basic attack between skills and charges every skill by time.",
+        description: "One-line explanation of the classic cycle model.",
+    },
+    "dps.enemy.cycle.desc.v2": {
+        text: "Average DPS uses the operator's own attack between skills and charges SP by the skill's type (per second or per hit); it also reports start-up and cycle times.",
+        description: "One-line explanation of the SP-aware cycle model.",
     },
 } satisfies MessageMap;
 

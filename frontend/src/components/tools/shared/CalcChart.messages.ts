@@ -23,6 +23,26 @@ export const messages = {
         text: "snapshot",
         description: "Tiny label on the dashed vertical line marking the X value the result panel reports. Lowercase on purpose.",
     },
+    "calc.chart.marker.break": {
+        text: "floor from {x}",
+        description: "Curve marker detail: the axis value from which the operator's damage stops falling because every hit has reached the 5% minimum. {x} is a formatted axis value such as 'DEF 1,240', or the 'not in range' text. Lowercase on purpose; it follows the operator name.",
+    },
+    "calc.chart.marker.half": {
+        text: "half at {x}",
+        description: "Curve marker detail: the axis value where the curve falls to half of its value at the start of the sweep. {x} is a formatted axis value such as 'DEF 860', or the 'not in range' text. Lowercase on purpose.",
+    },
+    "calc.chart.marker.notInRange": {
+        text: "not in range",
+        description: "Stands in for the axis value in a curve-marker detail when the curve never reaches that point inside the swept range.",
+    },
+    "calc.chart.marker.breakKey": {
+        text: "Floor reached: damage stops falling",
+        description: "Legend entry under the chart explaining the filled diamond marker: from here on every hit deals the 5% minimum, so more DEF or RES no longer lowers the value.",
+    },
+    "calc.chart.marker.halfKey": {
+        text: "Half of the value at the sweep start",
+        description: "Legend entry under the chart explaining the hollow ring marker: where the curve falls to half of its value at the left edge of the chart.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

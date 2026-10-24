@@ -107,24 +107,12 @@ export const messages = {
         description: "Label over the switches for an operator's conditional damage bonuses (trait, talent, skill and module riders that only apply in some situations).",
     },
     "calc.instance.externalBuffs": {
-        text: "External buffs",
-        description: "Toggle heading for the section holding buffs applied by OTHER operators rather than this one.",
+        text: "This card's own buffs",
+        description: "Toggle heading for the section holding buffs that apply to THIS operator only, on top of the page's team buffs.",
     },
-    "calc.instance.buff.atkPct": {
-        text: "ATK %",
-        description: "Input label for a percentage attack buff. 'ATK' is the game's own abbreviation and normally stays as-is.",
-    },
-    "calc.instance.buff.flatAtk": {
-        text: "Flat ATK",
-        description: "Input label for an attack buff given as a fixed number rather than a percentage.",
-    },
-    "calc.instance.buff.aspd": {
-        text: "ASPD",
-        description: "Input label for an attack-speed buff. The game's own abbreviation; normally unchanged.",
-    },
-    "calc.instance.buff.fragile": {
-        text: "Fragile %",
-        description: "Input label for a damage-amplification debuff on the enemy. 'Fragile' is the community's name for that effect.",
+    "calc.instance.externalBuffs.count": {
+        text: "{count, plural, one {# set} other {# set}}",
+        description: "Small badge beside the card's own-buffs heading: how many buff fields are set away from their default.",
     },
 } satisfies MessageMap;
 

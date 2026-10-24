@@ -50,7 +50,9 @@ export interface IAxisOverride {
 export function instanceToRequest(inst: IHpsInstance, buffs: IHpsBuffConfig, override?: IAxisOverride): IHpsCalculateRequest {
     const cfg = inst.config;
     const atk = override?.atkPercent !== undefined ? override.atkPercent / 100 : (buffs.buffs.atk ?? 0);
-    const aspd = override?.aspd ?? buffs.buffs.aspd ?? 0;
+    // `buffs.aspd` and `buffs.flatAtk` are i32 on the backend: a swept 3.25 fails to deserialize
+    // and blanks the whole 64-request batch it rides in, so both go out as whole numbers.
+    const aspd = Math.round(override?.aspd ?? buffs.buffs.aspd ?? 0);
     const targets = override?.targets ?? buffs.targets;
     return {
         operatorId: inst.op.id,
@@ -64,7 +66,7 @@ export function instanceToRequest(inst: IHpsInstance, buffs: IHpsBuffConfig, ove
         moduleLevel: cfg.moduleIndex > 0 ? cfg.moduleLevel : undefined,
         targets: Math.max(1, Math.round(targets)),
         spBoost: buffs.spBoost,
-        buffs: stripEmptyNumbers({ atk, flatAtk: buffs.buffs.flatAtk, aspd, fragile: buffs.buffs.fragile }),
+        buffs: stripEmptyNumbers({ atk, flatAtk: buffs.buffs.flatAtk === undefined ? undefined : Math.round(buffs.buffs.flatAtk), aspd, fragile: buffs.buffs.fragile }),
         conditionals: cfg.conditionals,
         allCond: cfg.allCond,
     };

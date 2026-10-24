@@ -1,5 +1,9 @@
+import { useQuery } from "@tanstack/react-query";
 import { migrateInstance } from "#/components/tools/shared/instance";
+import { useShareHydration } from "#/components/tools/shared/ShareLink";
 import { usePersistedReducer } from "#/components/tools/shared/usePersistedReducer";
+import { hpsOperatorsQueryOptions } from "#/lib/api/hps";
+import { decodeHpsShare, resolveHpsShare } from "./share";
 import { hpsReducer, INITIAL_STATE } from "./state";
 import type { HpsXAxis, HpsYMetric, IHpsState } from "./types";
 
@@ -8,8 +12,11 @@ const STORAGE_KEY = "hps-calculator-state-v1";
 const VALID_X_AXES: ReadonlySet<HpsXAxis> = new Set<HpsXAxis>(["targets", "atk", "aspd"]);
 const VALID_Y_METRICS: ReadonlySet<HpsYMetric> = new Set<HpsYMetric>(["skill_hps", "base_hps", "avg_hps"]);
 
-export function useHpsState() {
-    return usePersistedReducer<IHpsState, Parameters<typeof hpsReducer>[1]>(STORAGE_KEY, hpsReducer, INITIAL_STATE, mergeWithDefaults, (state) => ({ type: "HYDRATE", state }));
+/** `shareParam` is the `?s=` link read at mount; it outranks the stored state. */
+export function useHpsState(shareParam?: string) {
+    const { data: operators, isError } = useQuery(hpsOperatorsQueryOptions());
+    const external = useShareHydration(shareParam, decodeHpsShare, resolveHpsShare, operators, isError);
+    return usePersistedReducer<IHpsState, Parameters<typeof hpsReducer>[1]>(STORAGE_KEY, hpsReducer, INITIAL_STATE, mergeWithDefaults, (state) => ({ type: "HYDRATE", state }), external);
 }
 
 function mergeWithDefaults(value: unknown): IHpsState | null {

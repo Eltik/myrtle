@@ -2821,6 +2821,53 @@
         }
       }
     },
+    "/api/dps/batch": {
+      "post": {
+        "tags": [
+          "dps"
+        ],
+        "summary": "Many DPS calculations in one request, optionally swept across a DEF or RES\nrange.",
+        "description": "Each entry of `requests` is a `/dps/calculate` body, validated the same way.\nWithout `sweep`, `results[i].result` is what `/dps/calculate` returns for\n`requests[i]`, bit for bit. With `sweep`, `results[i].points` holds one\n`{x, ...result}` per swept value, `x` replacing the primary `defense` or\n`res`. A request that cannot be computed gets `error` and does not fail the\nothers. The whole batch is ONE job on the CPU pool, and the response is\nmemoised like a single calculation.",
+        "operationId": "batch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "One entry per request, in request order.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "description": "The CPU admission queue is full. Retry shortly."
+          }
+        }
+      }
+    },
     "/api/dps/calculate": {
       "post": {
         "tags": [
@@ -2907,6 +2954,153 @@
           },
           "503": {
             "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/dps/rank": {
+      "post": {
+        "tags": [
+          "dps"
+        ],
+        "summary": "Every operator, skill and module the simulator supports, ranked under one\nshared context (enemy, buffs, zones, targets, cycle model, investment\npreset).",
+        "description": "The full ranking is computed once per context and game-data load, on the\nCPU pool, and cached; `filters`, `sortBy` and `limit` are applied to the\ncached rows and never cost a recomputation.",
+        "operationId": "rank",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RankRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Rows sorted descending by `sortBy`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RankResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "description": "The CPU admission queue is full. Retry shortly."
+          }
+        }
+      }
+    },
+    "/api/dps/retention": {
+      "get": {
+        "tags": [
+          "dps"
+        ],
+        "summary": "The roster retention score of every ranked (operator, skill, module), with\nthe enemy set it runs over.",
+        "description": "`retention = sum_p w_p * dps(DEF_p, RES_p) / (sum_p w_p * dps(0, 0))` over\nthe distinct (DEF, RES) pairs of every (enemy, stage) appearance, `w_p` the\nappearances at that pair, `dps` the row's `skillDps` at the REFERENCE\ncontext (p1Max, no buffs, single target, legacy cycle). Computed once per\ngame-data load in the background: while it runs, `status` is `pending` and\n`rows` is empty.",
+        "operationId": "retention",
+        "responses": {
+          "200": {
+            "description": "Per-row scores and the enemy roster, or `status: pending` with no rows while the table is computed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/dps/supporters": {
+      "get": {
+        "tags": [
+          "dps"
+        ],
+        "summary": "Supporter presets: a curated table of supporter skills and talents, each\nmapped onto the buff zones `/dps/calculate` takes, with every value read\nfrom game data at the requested investment.",
+        "operationId": "supporters",
+        "parameters": [
+          {
+            "name": "promotion",
+            "in": "query",
+            "description": "0-2, default 2, clamped to each operator's highest.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "skillLevel",
+            "in": "query",
+            "description": "1-10 (8-10 = M1-M3), default 10, clamped to the promotion's highest.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "potential",
+            "in": "query",
+            "description": "1-6, default 1.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "moduleLevel",
+            "in": "query",
+            "description": "0 (no module, the default) to 3: the level of the module each entry names, for talents a module upgrades.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resolved entries, and the table entries the loaded data cannot resolve.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportersResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         }
       }
@@ -4598,6 +4792,52 @@
           },
           "503": {
             "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/hps/batch": {
+      "post": {
+        "tags": [
+          "dps"
+        ],
+        "summary": "Many HPS calculations in one request. `sweep` is rejected: healing does not\nread DEF or RES.",
+        "operationId": "batch_hps",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "One entry per request, in request order.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HpsBatchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "description": "The CPU admission queue is full. Retry shortly."
           }
         }
       }
@@ -18236,6 +18476,78 @@
           }
         }
       },
+      "BatchItem": {
+        "type": "object",
+        "description": "One request's outcome. Exactly one of the three fields is present: `result`\nwithout a sweep, `points` with one, `error` when this request failed (an\nunknown operator, a configuration the engine cannot compute). One failed\nrequest does not fail the batch.",
+        "properties": {
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "points": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SweepPoint"
+            }
+          },
+          "result": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DpsResult"
+              }
+            ]
+          }
+        }
+      },
+      "BatchRequest": {
+        "type": "object",
+        "required": [
+          "requests"
+        ],
+        "properties": {
+          "requests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CalculateRequest"
+            },
+            "description": "1 to 64 calculations, each the body `/dps/calculate` takes."
+          },
+          "sweep": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Sweep",
+                "description": "DPS only: evaluate every request across a DEF or RES range."
+              }
+            ]
+          }
+        }
+      },
+      "BatchResponse": {
+        "type": "object",
+        "required": [
+          "results"
+        ],
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BatchItem"
+            },
+            "description": "Same order as `requests`."
+          }
+        }
+      },
       "BattleSkin": {
         "type": "object",
         "properties": {
@@ -18392,6 +18704,140 @@
           }
         }
       },
+      "BuffZones": {
+        "type": "object",
+        "properties": {
+          "artsFragile": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "description": "Zone F, arts damage taken, MAX across sources. Multiplies with the\ngeneric group.",
+            "default": []
+          },
+          "aspd": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "ASPD, additive into `attack_speed` (same slot as `buffs.aspd`).",
+            "default": null
+          },
+          "atkFlat": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Zone A, flat ATK before percentages, additive: added to the operator's\nbase ATK, so zone B and the formula's own ATK% scale it.",
+            "default": null
+          },
+          "atkMultiplier": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "description": "Zone D, final ATK multiplier, every source multiplies. Resolved as\n`atk *= D; buff_atk_flat *= D` (drone and clone ATK too, the way the\nformulas already pass external buffs to summons).\n\nTRADE: exact for formulas shaped `(atk * (1 + b) + c) * scale`. Wrong\nfor the three functions that add their own flat ATK, which D then\nmisses: `ines` (+ stolen ATK after %), `narantuya` (+ stolen ATK after\n%) and `twelve_f` (+12 before %). Counted 2026-10-24.",
+            "default": []
+          },
+          "atkPercent": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Zone B, ATK %, additive into `buff_atk` (same slot as `buffs.atk`).",
+            "default": null
+          },
+          "damageReduction": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "description": "Zone G, enemy damage reduction, every source multiplies `(1 - x)`.",
+            "default": []
+          },
+          "def": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StatReduction",
+                "description": "Enemy DEF reduction and ignore."
+              }
+            ],
+            "default": {
+              "flat": null,
+              "ignoreFlat": null,
+              "ignorePercent": null,
+              "percent": null,
+              "steal": []
+            }
+          },
+          "fragile": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "description": "Zone F, generic damage taken (Fragile), MAX across sources. A legacy\n`buffs.fragile`, when set, is one more source.",
+            "default": []
+          },
+          "inspire": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "description": "Zone C, Inspire (flat ATK after percentages), MAX across sources, into\n`buff_atk_flat`. A legacy `buffs.flatAtk`, when set, is one more source.",
+            "default": []
+          },
+          "physicalFragile": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "description": "Zone F, physical damage taken, MAX across sources. Multiplies with the\ngeneric group.",
+            "default": []
+          },
+          "res": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StatReduction",
+                "description": "Enemy RES reduction and ignore. The result is capped at 100."
+              }
+            ],
+            "default": {
+              "flat": null,
+              "ignoreFlat": null,
+              "ignorePercent": null,
+              "percent": null,
+              "steal": []
+            }
+          },
+          "spAura": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "description": "SP aura per second, MAX across sources, added to `sp_boost` after\n`sp_recovery`.",
+            "default": []
+          },
+          "spRecovery": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "SP recovery per second, additive into `sp_boost` (same slot as `spBoost`).",
+            "default": null
+          }
+        }
+      },
       "BuildChoice": {
         "type": "object",
         "description": "One option in a community default distribution, with the count that put it\nthere. Ordered most-picked first by the query.",
@@ -18460,6 +18906,13 @@
               }
             ]
           },
+          "cloneOperatorId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The operator a Muelsyse clone copies (`char_...`), built at the same\ninvestment. Absent: Ela, the reference's default (`default_clone`)."
+          },
           "conditionals": {
             "oneOf": [
               {
@@ -18470,12 +18923,30 @@
               }
             ]
           },
+          "cycleModel": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RequestCycleModel",
+                "description": "`\"v2\"`: off-skill DPS from the operator's own formula, SP time by SP\ntype, and `category` / `startupTime` / `cycleTime` in the response.\nAbsent or `\"legacy\"`: the original average."
+              }
+            ]
+          },
           "defense": {
             "type": [
               "number",
               "null"
             ],
             "format": "double"
+          },
+          "frameTiming": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Frame-rounded attack intervals. NOT built (docs/dps-refactor.md,\nResults): `true` is rejected, `false` is the only behaviour."
           },
           "level": {
             "type": [
@@ -18529,6 +19000,17 @@
             ],
             "format": "double"
           },
+          "secondary": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RequestSecondary",
+                "description": "Secondary targets: the response splits into `primary` and `secondary`.\nExclusive with `targets` above 1."
+              }
+            ]
+          },
           "shred": {
             "oneOf": [
               {
@@ -18574,6 +19056,17 @@
               "null"
             ],
             "format": "int32"
+          },
+          "zones": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BuffZones",
+                "description": "Buff zones with stacking rules. Legacy `buffs`, `shred` and `spBoost`\nstill apply and join their zone (see `dps::zones`)."
+              }
+            ]
           }
         }
       },
@@ -19250,6 +19743,13 @@
           "squad"
         ]
       },
+      "DamageKind": {
+        "type": "string",
+        "enum": [
+          "physical",
+          "arts"
+        ]
+      },
       "DatabaseHealth": {
         "type": "object",
         "required": [
@@ -19702,8 +20202,9 @@
           }
         }
       },
-      "DpsResult": {
+      "DpsMetrics": {
         "type": "object",
+        "description": "The three damage numbers for one share of the targets. Same snake_case names\nas the top level of [`DpsResult`], so one client type reads both.",
         "required": [
           "skill_dps",
           "total_damage",
@@ -19717,6 +20218,114 @@
           "skill_dps": {
             "type": "number",
             "format": "double"
+          },
+          "total_damage": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "DpsResult": {
+        "type": "object",
+        "description": "One operator configuration's damage.\n\nThe three snake_case fields are the original response and keep their names\nand meaning. Every field after them is optional, camelCase, and present\nonly when the request asked for the behaviour that produces it.",
+        "required": [
+          "skill_dps",
+          "total_damage",
+          "average_dps"
+        ],
+        "properties": {
+          "approximateTypeSplit": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "`true` when a physical or arts fragility zone was requested and the\nformula's damage responds to both DEF and RES (or to neither), so only\nthe generic group and the operator's `is_physical` group were applied.\nPresent only when a typed fragility zone was requested."
+          },
+          "average_dps": {
+            "type": "number",
+            "format": "double"
+          },
+          "category": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SkillCategory",
+                "description": "Skill shape. Present under `cycleModel: \"v2\"`."
+              }
+            ]
+          },
+          "cycleTime": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Seconds per skill cycle (duration + charge). Under `cycleModel: \"v2\"`,\nfor a modelled SP type and a skill that cycles."
+          },
+          "offSkillSource": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/OffSkillSource",
+                "description": "Where `average_dps` took the off-skill DPS from. Under `cycleModel: \"v2\"`\nfor a skill that cycles."
+              }
+            ]
+          },
+          "primary": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DpsMetrics",
+                "description": "The primary enemy's share. Present when the request set `secondary`."
+              }
+            ]
+          },
+          "secondary": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DpsMetrics",
+                "description": "The secondary enemies' share, `f(1 + count) - f(1)` against the\nsecondary enemy. Present when the request set `secondary`; the three\ntop-level fields are then `primary + secondary`."
+              }
+            ]
+          },
+          "secondaryClamped": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "`true` when `f(1 + count) - f(1)` came out negative on a metric and the\nsecondary share was clamped to 0 there. Present only when it fired."
+          },
+          "skill_dps": {
+            "type": "number",
+            "format": "double"
+          },
+          "spRecovery": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SpRecovery",
+                "description": "The skill's SP type as the cycle saw it. Under `cycleModel: \"v2\"`."
+              }
+            ]
+          },
+          "startupTime": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Seconds from deployment to the first activation: `(cost - initial SP)`\nat the skill's SP rate. Under `cycleModel: \"v2\"`, for a skill whose SP\ntype the engine models."
           },
           "total_damage": {
             "type": "number",
@@ -22040,6 +22649,41 @@
           }
         }
       },
+      "HpsBatchItem": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "result": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/HpsResult"
+              }
+            ]
+          }
+        }
+      },
+      "HpsBatchResponse": {
+        "type": "object",
+        "required": [
+          "results"
+        ],
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HpsBatchItem"
+            }
+          }
+        }
+      },
       "HpsResult": {
         "type": "object",
         "required": [
@@ -24059,6 +24703,14 @@
           "other"
         ]
       },
+      "OffSkillSource": {
+        "type": "string",
+        "description": "`formula`: the operator's own function at skill 0. `normalAttack`: the\ngeneric `atk / interval` attack, used when the function has no skill-0 path.",
+        "enum": [
+          "formula",
+          "normalAttack"
+        ]
+      },
       "OpStage": {
         "type": "object",
         "description": "One stage that awards Originite Prime on first clear.",
@@ -25850,6 +26502,400 @@
           }
         }
       },
+      "RankFilters": {
+        "type": "object",
+        "properties": {
+          "damageTypes": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DamageKind"
+            },
+            "description": "The operator's attack type (`is_physical` in game data).",
+            "default": null
+          },
+          "professions": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Game profession codes: `WARRIOR`, `SNIPER`, `CASTER`, `PIONEER`,\n`TANK`, `MEDIC`, `SUPPORT`, `SPECIAL`. Empty or absent = every class.",
+            "default": null
+          },
+          "rarities": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": "Star counts, 1 to 6.",
+            "default": null
+          }
+        }
+      },
+      "RankMetric": {
+        "type": "string",
+        "enum": [
+          "skillDps",
+          "totalDamage",
+          "averageDps"
+        ]
+      },
+      "RankPreset": {
+        "type": "string",
+        "description": "The investment every ranked row is computed at.",
+        "enum": [
+          "default",
+          "p1Max",
+          "p6Max"
+        ]
+      },
+      "RankRequest": {
+        "type": "object",
+        "description": "The shared context every ranked row is computed under. Every field has the\nmeaning it has on `CalculateRequest`; `operatorId`, the investment fields,\n`skillIndex` and `moduleIndex` are set per row.",
+        "properties": {
+          "allCond": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "buffs": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RequestBuffs"
+              }
+            ]
+          },
+          "cycleModel": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RequestCycleModel"
+              }
+            ]
+          },
+          "defense": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "filters": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RankFilters",
+                "description": "Applied after the ranking is computed (and cached); they never change\na row."
+              }
+            ]
+          },
+          "limit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Rows returned after filtering and sorting, at most 5000. Absent: all.",
+            "minimum": 0
+          },
+          "preset": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RankPreset",
+                "description": "Absent: `p1Max`."
+              }
+            ]
+          },
+          "res": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "secondary": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RequestSecondary"
+              }
+            ]
+          },
+          "shred": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RequestShred"
+              }
+            ]
+          },
+          "sortBy": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RankMetric",
+                "description": "Absent: `skillDps`. Descending."
+              }
+            ]
+          },
+          "spBoost": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "float"
+          },
+          "targets": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "zones": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BuffZones"
+              }
+            ]
+          }
+        }
+      },
+      "RankResponse": {
+        "type": "object",
+        "required": [
+          "rows",
+          "matched",
+          "computed",
+          "skipped",
+          "preset",
+          "sortBy",
+          "data",
+          "retentionStatus"
+        ],
+        "properties": {
+          "computed": {
+            "type": "integer",
+            "description": "Rows the context computed, before filters.",
+            "minimum": 0
+          },
+          "data": {
+            "type": "string",
+            "description": "The game-data identity the rows were computed on."
+          },
+          "matched": {
+            "type": "integer",
+            "description": "Rows that passed the filters, before `limit`.",
+            "minimum": 0
+          },
+          "preset": {
+            "$ref": "#/components/schemas/RankPreset"
+          },
+          "retentionStatus": {
+            "$ref": "#/components/schemas/RetentionStatus",
+            "description": "Whether the rows' `retention` is filled yet."
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RankRow"
+            }
+          },
+          "skipped": {
+            "type": "integer",
+            "description": "Combinations the engine could not compute (missing skill or module data).",
+            "minimum": 0
+          },
+          "sortBy": {
+            "$ref": "#/components/schemas/RankMetric"
+          }
+        }
+      },
+      "RankRow": {
+        "type": "object",
+        "description": "One (operator, skill, module) of the ranking.",
+        "required": [
+          "operatorId",
+          "name",
+          "rarity",
+          "profession",
+          "subProfessionId",
+          "damageType",
+          "skillIndex",
+          "moduleIndex",
+          "skillDps",
+          "totalDamage",
+          "averageDps"
+        ],
+        "properties": {
+          "averageDps": {
+            "type": "number",
+            "format": "double"
+          },
+          "category": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SkillCategory",
+                "description": "Under `cycleModel: \"v2\"`."
+              }
+            ]
+          },
+          "cycleTime": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "damageType": {
+            "$ref": "#/components/schemas/DamageKind"
+          },
+          "duration": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Seconds the skill lasts as the formula ran it; absent for a skill with\nno duration (instant, permanent, basic attack)."
+          },
+          "moduleId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "moduleIndex": {
+            "type": "integer",
+            "format": "int32",
+            "description": "0 = no module, else the formula's module number (`moduleIndex`)."
+          },
+          "moduleName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "operatorId": {
+            "type": "string"
+          },
+          "primary": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DpsMetrics"
+              }
+            ]
+          },
+          "profession": {
+            "type": "string",
+            "description": "Game profession code (`SNIPER`, ...)."
+          },
+          "rarity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "retention": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Share of this row's damage that survives the real enemy roster, at the\nREFERENCE context (p1Max, no buffs, single target, legacy cycle), never\nat this request's: see `GET /dps/retention`. `null` until the table is\ncomputed (`retentionStatus`), or when the row has no damage at DEF 0\nRES 0."
+          },
+          "secondary": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DpsMetrics"
+              }
+            ]
+          },
+          "skillDps": {
+            "type": "number",
+            "format": "double"
+          },
+          "skillId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "skillIndex": {
+            "type": "integer",
+            "format": "int32",
+            "description": "0 = basic attack, 1-3 = S1-S3 (the request's `skillIndex`)."
+          },
+          "skillName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "spRecovery": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SpRecovery"
+              }
+            ]
+          },
+          "startupTime": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "subProfessionId": {
+            "type": "string"
+          },
+          "totalDamage": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "Readiness": {
         "type": "object",
         "required": [
@@ -26472,6 +27518,36 @@
           }
         }
       },
+      "RequestCycleModel": {
+        "type": "string",
+        "enum": [
+          "legacy",
+          "v2"
+        ]
+      },
+      "RequestSecondary": {
+        "type": "object",
+        "required": [
+          "def",
+          "res",
+          "count"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Secondary enemies, 1 to 49."
+          },
+          "def": {
+            "type": "number",
+            "format": "double"
+          },
+          "res": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "RequestShred": {
         "type": "object",
         "properties": {
@@ -26795,6 +27871,196 @@
               }
             }
           }
+        ]
+      },
+      "RetentionExclusion": {
+        "type": "object",
+        "description": "Enemies the roster leaves out, by reason.",
+        "required": [
+          "reason",
+          "enemies",
+          "appearances"
+        ],
+        "properties": {
+          "appearances": {
+            "type": "integer",
+            "description": "Stage appearances those enemies had.",
+            "minimum": 0
+          },
+          "enemies": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "RetentionResponse": {
+        "type": "object",
+        "description": "`GET /dps/retention`.",
+        "required": [
+          "status",
+          "data",
+          "reference",
+          "rows"
+        ],
+        "properties": {
+          "computeMs": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Wall time of the computation, milliseconds; `null` until ready."
+          },
+          "data": {
+            "type": "string",
+            "description": "The game-data identity (a hash of the operator table; the enemy\ntables are not in it, the in-process table is keyed by the load)."
+          },
+          "reference": {
+            "type": "string",
+            "description": "The context every `dps` value is computed at."
+          },
+          "roster": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RetentionRoster",
+                "description": "`null` until `status` is `ready`."
+              }
+            ]
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RetentionRow"
+            },
+            "description": "Every ranked (operator, skill, module) of the reference context, in\noperator, skill, module order. Empty until ready."
+          },
+          "status": {
+            "$ref": "#/components/schemas/RetentionStatus"
+          }
+        }
+      },
+      "RetentionRoster": {
+        "type": "object",
+        "description": "The enemy set the score runs over.",
+        "required": [
+          "enemies",
+          "appearances",
+          "distinctPairs",
+          "totalSpawns",
+          "nonzeroLevel",
+          "overridden",
+          "noLevelFile",
+          "levelFallback",
+          "excluded"
+        ],
+        "properties": {
+          "appearances": {
+            "type": "integer",
+            "description": "(enemy, stage) appearances: the total weight.",
+            "minimum": 0
+          },
+          "distinctPairs": {
+            "type": "integer",
+            "description": "Distinct (DEF, RES) pairs the appearances collapse into.",
+            "minimum": 0
+          },
+          "enemies": {
+            "type": "integer",
+            "description": "Distinct enemies with at least one stage appearance and stats.",
+            "minimum": 0
+          },
+          "excluded": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RetentionExclusion"
+            }
+          },
+          "levelFallback": {
+            "type": "integer",
+            "description": "Appearances whose stage names a level the database lacks, taken at\nlevel 0.",
+            "minimum": 0
+          },
+          "noLevelFile": {
+            "type": "integer",
+            "description": "Appearances with no level file (boss declarations), taken at level 0.",
+            "minimum": 0
+          },
+          "nonzeroLevel": {
+            "type": "integer",
+            "description": "Appearances at a database level other than 0.",
+            "minimum": 0
+          },
+          "overridden": {
+            "type": "integer",
+            "description": "Appearances whose stage overrides DEF or RES.",
+            "minimum": 0
+          },
+          "totalSpawns": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Sum of the alternative weight (spawn counts).",
+            "minimum": 0
+          }
+        }
+      },
+      "RetentionRow": {
+        "type": "object",
+        "description": "One row's score.",
+        "required": [
+          "operatorId",
+          "skillIndex",
+          "moduleIndex",
+          "baseDps"
+        ],
+        "properties": {
+          "baseDps": {
+            "type": "number",
+            "format": "double",
+            "description": "`skillDps` at DEF 0 RES 0, the denominator's per-enemy value."
+          },
+          "moduleIndex": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "operatorId": {
+            "type": "string"
+          },
+          "retention": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Weighted by stage appearances. `null` when `baseDps` is 0 or a pair\nfailed to compute."
+          },
+          "retentionBySpawns": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "The same, weighted by spawn counts instead (the alternative weight)."
+          },
+          "skillIndex": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "RetentionStatus": {
+        "type": "string",
+        "description": "Where a load's table is.",
+        "enum": [
+          "pending",
+          "ready",
+          "failed",
+          "unavailable"
         ]
       },
       "ReviewOutfit": {
@@ -27950,6 +29216,15 @@
           }
         }
       },
+      "SkillCategory": {
+        "type": "string",
+        "description": "`sustained`: the skill's DPS is the DPS (no skill, passive, or permanent).\n`burst`: a timed or ammo window that recharges. `instant`: a zero-duration\nactivation; the formulas for these already average the hit over its charge.",
+        "enum": [
+          "sustained",
+          "burst",
+          "instant"
+        ]
+      },
       "SkillLineDto": {
         "type": "object",
         "description": "One line of a room's per-skill breakdown (the deep dive's \"how this is\ncalculated\"). Values are MARGINALS in this exact crew - what the room's\nnumber loses if this one skill is removed - so pair riders, non-stacking\nrules and faction gates are already folded in.",
@@ -28512,6 +29787,16 @@
           }
         }
       },
+      "SpRecovery": {
+        "type": "string",
+        "description": "The skill's SP type from game data. `defensive` (SP on taking a hit) and\n`none` (passive) are NOT modelled: their `average_dps` is the legacy one.",
+        "enum": [
+          "auto",
+          "offensive",
+          "defensive",
+          "none"
+        ]
+      },
       "SpecialSkinInfo": {
         "type": "object",
         "required": [
@@ -28853,6 +30138,14 @@
           }
         }
       },
+      "Stacking": {
+        "type": "string",
+        "description": "How sources inside one zone combine, from `dps::zones`.",
+        "enum": [
+          "additive",
+          "max"
+        ]
+      },
       "StageClearDto": {
         "type": "object",
         "required": [
@@ -28925,6 +30218,57 @@
           "timestamp": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "StatReduction": {
+        "type": "object",
+        "description": "Reduction of one enemy stat, applied in the order\n`((v - flat - max(steal)) * (1 - percent) - ignoreFlat) * (1 - ignorePercent)`,\neach step floored at 0.",
+        "properties": {
+          "flat": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Flat reduction, additive. Legacy `shred.defFlat` / `shred.resFlat` add here.",
+            "default": null
+          },
+          "ignoreFlat": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Flat ignore (attacker side), additive.",
+            "default": null
+          },
+          "ignorePercent": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Percentage ignore (attacker side) as a fraction.",
+            "default": null
+          },
+          "percent": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Percentage reduction as a fraction, additive. Legacy `shred.def` /\n`shred.res` (whole percent) add here.",
+            "default": null
+          },
+          "steal": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "description": "Steal: a flat reduction whose sources do not stack, MAX across sources.",
+            "default": []
           }
         }
       },
@@ -30537,6 +31881,187 @@
           }
         }
       },
+      "SupporterEntry": {
+        "type": "object",
+        "required": [
+          "id",
+          "charId",
+          "name",
+          "sourceKind",
+          "sourceIndex",
+          "sourceName",
+          "contributions",
+          "scope",
+          "investment"
+        ],
+        "properties": {
+          "charId": {
+            "type": "string"
+          },
+          "contributions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ZoneContribution"
+            }
+          },
+          "duration": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Seconds, when the effect has a duration."
+          },
+          "id": {
+            "type": "string"
+          },
+          "investment": {
+            "$ref": "#/components/schemas/SupporterInvestment",
+            "description": "The investment after clamping to what the operator has."
+          },
+          "moduleId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The module whose talent override was applied, when one was."
+          },
+          "name": {
+            "type": "string",
+            "description": "The operator's name in the loaded game data."
+          },
+          "scope": {
+            "$ref": "#/components/schemas/SupporterScope"
+          },
+          "sourceIndex": {
+            "type": "integer",
+            "format": "int32",
+            "description": "1-based skill or talent number."
+          },
+          "sourceKind": {
+            "type": "string",
+            "description": "`skill` or `talent`."
+          },
+          "sourceName": {
+            "type": "string",
+            "description": "The skill or talent name in the loaded game data."
+          },
+          "supporterAtk": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "The ATK an Inspiration ratio multiplies. Present for Inspiration only."
+          }
+        }
+      },
+      "SupporterInvestment": {
+        "type": "object",
+        "description": "The investment every supporter is resolved at. Level is always the\npromotion's max level and trust is always max.",
+        "required": [
+          "promotion",
+          "skillLevel",
+          "potential",
+          "moduleLevel"
+        ],
+        "properties": {
+          "moduleLevel": {
+            "type": "integer",
+            "format": "int32",
+            "description": "0 = no module, 1-3."
+          },
+          "potential": {
+            "type": "integer",
+            "format": "int32",
+            "description": "1-6."
+          },
+          "promotion": {
+            "type": "integer",
+            "format": "int32",
+            "description": "0-2, clamped to the operator's highest promotion."
+          },
+          "skillLevel": {
+            "type": "integer",
+            "format": "int32",
+            "description": "1-10 (8-10 = M1-M3), clamped to the promotion's highest rank."
+          }
+        }
+      },
+      "SupporterScope": {
+        "type": "object",
+        "required": [
+          "target",
+          "professions"
+        ],
+        "properties": {
+          "condition": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "professions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Game profession codes (`SUPPORT`, `CASTER`, ...); empty = every class."
+          },
+          "target": {
+            "$ref": "#/components/schemas/SupporterTarget"
+          }
+        }
+      },
+      "SupporterTarget": {
+        "type": "string",
+        "description": "Who receives the effect.",
+        "enum": [
+          "allAllies",
+          "alliesInRange",
+          "oneAlly",
+          "enemies"
+        ]
+      },
+      "SupporterZone": {
+        "type": "string",
+        "description": "Where a contribution lands. Names follow the request's `zones` fields.",
+        "enum": [
+          "atkPercent",
+          "inspire",
+          "aspd",
+          "spRecovery",
+          "spAura",
+          "fragile",
+          "artsFragile",
+          "defPercent",
+          "defFlat",
+          "resPercent",
+          "resFlat"
+        ]
+      },
+      "SupportersResponse": {
+        "type": "object",
+        "required": [
+          "entries",
+          "unresolved"
+        ],
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupporterEntry"
+            }
+          },
+          "unresolved": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnresolvedSupporter"
+            },
+            "description": "Table entries the loaded game data cannot resolve at this investment."
+          }
+        }
+      },
       "SustainEntryDto": {
         "type": "object",
         "description": "One operator's endurance in the room the draft puts them in. Drain is the\ngame's own per-hour figure (including the operator's own morale-cost riders),\nnot a per-room approximation.",
@@ -30629,6 +32154,62 @@
             "description": "\"`holds_up`\" - nobody runs dry; \"depletes\" - someone's morale hits zero mid-shift."
           }
         }
+      },
+      "Sweep": {
+        "type": "object",
+        "description": "`steps` evenly spaced values from `min` to `max` inclusive, each replacing\nthe primary DEF or RES of every request.",
+        "required": [
+          "axis",
+          "min",
+          "max",
+          "steps"
+        ],
+        "properties": {
+          "axis": {
+            "$ref": "#/components/schemas/SweepAxis"
+          },
+          "max": {
+            "type": "number",
+            "format": "double"
+          },
+          "min": {
+            "type": "number",
+            "format": "double"
+          },
+          "steps": {
+            "type": "integer",
+            "format": "int32",
+            "description": "1 to 101. One step is `min` alone.",
+            "minimum": 0
+          }
+        }
+      },
+      "SweepAxis": {
+        "type": "string",
+        "enum": [
+          "def",
+          "res"
+        ]
+      },
+      "SweepPoint": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DpsResult"
+          },
+          {
+            "type": "object",
+            "required": [
+              "x"
+            ],
+            "properties": {
+              "x": {
+                "type": "number",
+                "format": "double"
+              }
+            }
+          }
+        ],
+        "description": "One point of a sweep: the swept value and the result there."
       },
       "SyncRequest": {
         "type": "object",
@@ -31598,6 +33179,16 @@
           }
         }
       },
+      "Transform": {
+        "type": "string",
+        "description": "Blackboard value -> zone value.",
+        "enum": [
+          "value",
+          "negate",
+          "minusOne",
+          "timesAtk"
+        ]
+      },
       "TranslationAuditActor": {
         "type": "object",
         "required": [
@@ -31964,6 +33555,21 @@
           "AWAKE",
           "UNKNOWN"
         ]
+      },
+      "UnresolvedSupporter": {
+        "type": "object",
+        "required": [
+          "id",
+          "reason"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
       },
       "UpdateDescriptionRequest": {
         "type": "object",
@@ -33200,6 +34806,42 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "ZoneContribution": {
+        "type": "object",
+        "required": [
+          "zone",
+          "stacking",
+          "key",
+          "transform",
+          "raw",
+          "value"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The blackboard key the value is read from."
+          },
+          "raw": {
+            "type": "number",
+            "format": "double",
+            "description": "The blackboard value at the resolved investment."
+          },
+          "stacking": {
+            "$ref": "#/components/schemas/Stacking"
+          },
+          "transform": {
+            "$ref": "#/components/schemas/Transform"
+          },
+          "value": {
+            "type": "number",
+            "format": "double",
+            "description": "What goes into the zone (fractions for percentages, flat for flat)."
+          },
+          "zone": {
+            "$ref": "#/components/schemas/SupporterZone"
           }
         }
       }

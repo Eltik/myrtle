@@ -4,6 +4,7 @@
 // request types are deserialize-only on the backend, so no binding is exported.
 import type { ConditionalInfo } from "#/types/generated/ConditionalInfo";
 import type { OperatorListEntry } from "#/types/generated/OperatorListEntry";
+import type { IZoneConfig } from "../dps/impl/zones";
 
 /** One conditional toggle exposed by an operator (trait/talent/skill/module). */
 export type IConditionalInfo = ConditionalInfo;
@@ -68,8 +69,13 @@ export interface IBuildConfig {
     skillRank: number;
     moduleIndex: number;
     moduleLevel: number;
-    /** Per-instance external buffs (DPS). Unused by HPS, which buffs globally. */
+    /**
+     * Legacy per-instance external buffs. DPS migrates them into `zones` on load (the Squad
+     * Builder hand-off still produces them); HPS buffs globally and leaves them empty.
+     */
     buffs: ICalcBuffs;
+    /** DPS only: this card's own buff zones, on top of the page's team buffs. Absent = none. */
+    zones?: IZoneConfig;
     conditionals: ICalcConditionals;
     allCond: boolean;
 }
@@ -109,5 +115,5 @@ export interface IMetricColumn {
     key: string;
     label: string;
     /** Optional per-row hint (e.g. explaining a 0 value). */
-    hint?: (data: Record<string, number>) => string | undefined;
+    hint?: (data: Readonly<Record<string, unknown>>) => string | undefined;
 }

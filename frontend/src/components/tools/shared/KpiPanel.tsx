@@ -18,7 +18,8 @@ type KpiT = TypedT<typeof messages & typeof skillMessages & typeof detailMessage
 
 export interface IInstanceSnapshot {
     uid: string;
-    data: Record<string, number> | undefined;
+    /** The result object; columns read its numeric fields by key. */
+    data: Readonly<Record<string, unknown>> | undefined;
     isPending: boolean;
     error: Error | null;
 }
@@ -32,14 +33,16 @@ interface IKpiPanelProps {
     leaderLabel: string;
     /** The three result columns to render per operator. */
     columns: IMetricColumn[];
+    /** Extra per-card content under the numbers (DPS: skill timings, target split, caveats). */
+    renderDetail?: (uid: string) => React.ReactNode;
 }
 
-export function KpiPanel({ instances, snapshots, leaderKey, leaderLabel, columns }: IKpiPanelProps): React.ReactElement | null {
+export function KpiPanel({ instances, snapshots, leaderKey, leaderLabel, columns, renderDetail }: IKpiPanelProps): React.ReactElement | null {
     const t: KpiT = useT("tools");
     if (instances.length === 0) return null;
 
     const leaderUid = pickLeader(snapshots, leaderKey);
-    const leaderValue = leaderUid ? snapshots.find((s) => s.uid === leaderUid)?.data?.[leaderKey] : undefined;
+    const leaderValue = leaderUid ? num(snapshots.find((s) => s.uid === leaderUid)?.data, leaderKey) : undefined;
 
     return (
         <div className="space-y-2" aria-live="polite">
@@ -53,7 +56,7 @@ export function KpiPanel({ instances, snapshots, leaderKey, leaderLabel, columns
             <div className="space-y-2">
                 {instances.map((inst, idx) => {
                     const snap = snapshots.find((s) => s.uid === inst.uid);
-                    return <KpiRow key={inst.uid} inst={inst} snap={snap} index={idx} isLeader={inst.uid === leaderUid} leaderValue={leaderValue} leaderKey={leaderKey} columns={columns} sameOpCount={instances.filter((i) => i.op.id === inst.op.id).length} />;
+                    return <KpiRow key={inst.uid} inst={inst} snap={snap} index={idx} isLeader={inst.uid === leaderUid} leaderValue={leaderValue} leaderKey={leaderKey} columns={columns} sameOpCount={instances.filter((i) => i.op.id === inst.op.id).length} extra={renderDetail?.(inst.uid)} />;
                 })}
             </div>
         </div>
@@ -69,9 +72,10 @@ interface IKpiRowProps {
     leaderKey: string;
     columns: IMetricColumn[];
     sameOpCount: number;
+    extra?: React.ReactNode;
 }
 
-function KpiRow({ inst, snap, index, isLeader, leaderValue, leaderKey, columns, sameOpCount }: IKpiRowProps): React.ReactElement {
+function KpiRow({ inst, snap, index, isLeader, leaderValue, leaderKey, columns, sameOpCount, extra }: IKpiRowProps): React.ReactElement {
     const t: KpiT = useT("tools");
     const locale = useLocale();
     const data = snap?.data;
@@ -79,50 +83,53 @@ function KpiRow({ inst, snap, index, isLeader, leaderValue, leaderKey, columns, 
     const detail = useOperatorDetail(inst.op);
     const skillSummary = detail.skillName(inst.config.skillIndex);
     const moduleSummary = inst.config.moduleIndex > 0 ? detail.moduleName(inst.config.moduleIndex) : t("calc.detail.noModuleLower");
-    const value = data?.[leaderKey];
+    const value = num(data, leaderKey);
     const relative = !isLeader && typeof leaderValue === "number" && leaderValue > 0 && typeof value === "number" ? (value / leaderValue - 1) * 100 : null;
     return (
-        <div className={`flex flex-col gap-2 rounded-lg border border-border bg-card px-3 py-2.5 transition-opacity sm:flex-row sm:items-center sm:gap-3 ${dim ? "opacity-50" : ""}`}>
-            <div className="flex min-w-0 items-center gap-3">
-                <span aria-hidden="true" className="relative inline-flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted font-semibold text-[10px]" style={{ boxShadow: `inset 0 0 0 2px ${inst.color}` }}>
-                    <OperatorAvatar charId={inst.op.id} name={inst.op.name} />
-                </span>
-                <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                        <span className="truncate font-semibold text-[13px]">
-                            {inst.op.name}
-                            {sameOpCount > 1 && <span className="ml-1 font-mono text-[10px] text-muted-foreground">#{index + 1}</span>}
-                        </span>
-                        {snap?.error ? (
-                            <Tooltip>
-                                <TooltipTrigger render={(p) => <AlertTriangle {...p} aria-label={t("calc.kpi.failed")} className="size-3.5 cursor-help text-destructive" />} />
-                                <TooltipPopup className="max-w-64">{snap.error.message || t("calc.kpi.failed")}</TooltipPopup>
-                            </Tooltip>
-                        ) : isLeader ? (
-                            <Tooltip>
-                                <TooltipTrigger render={<span className="inline-flex items-center gap-0.5 rounded bg-primary/12 px-1.5 py-0.5 font-medium text-[10px] text-primary" />}>
-                                    <Crown className="size-3" />
-                                    {t("calc.kpi.top")}
-                                </TooltipTrigger>
-                                <TooltipPopup>{t("calc.kpi.leader")}</TooltipPopup>
-                            </Tooltip>
-                        ) : (
-                            relative !== null && (
-                                <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-                                    {relative >= 0 ? "+" : ""}
-                                    {relative.toFixed(1)}%
-                                </span>
-                            )
-                        )}
+        <div className={`rounded-lg border border-border bg-card px-3 py-2.5 transition-opacity ${dim ? "opacity-50" : ""}`}>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                    <span aria-hidden="true" className="relative inline-flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted font-semibold text-[10px]" style={{ boxShadow: `inset 0 0 0 2px ${inst.color}` }}>
+                        <OperatorAvatar charId={inst.op.id} name={inst.op.name} />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                            <span className="truncate font-semibold text-[13px]">
+                                {inst.op.name}
+                                {sameOpCount > 1 && <span className="ml-1 font-mono text-[10px] text-muted-foreground">#{index + 1}</span>}
+                            </span>
+                            {snap?.error ? (
+                                <Tooltip>
+                                    <TooltipTrigger render={(p) => <AlertTriangle {...p} aria-label={t("calc.kpi.failed")} className="size-3.5 cursor-help text-destructive" />} />
+                                    <TooltipPopup className="max-w-64">{snap.error.message || t("calc.kpi.failed")}</TooltipPopup>
+                                </Tooltip>
+                            ) : isLeader ? (
+                                <Tooltip>
+                                    <TooltipTrigger render={<span className="inline-flex items-center gap-0.5 rounded bg-primary/12 px-1.5 py-0.5 font-medium text-[10px] text-primary" />}>
+                                        <Crown className="size-3" />
+                                        {t("calc.kpi.top")}
+                                    </TooltipTrigger>
+                                    <TooltipPopup>{t("calc.kpi.leader")}</TooltipPopup>
+                                </Tooltip>
+                            ) : (
+                                relative !== null && (
+                                    <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+                                        {relative >= 0 ? "+" : ""}
+                                        {relative.toFixed(1)}%
+                                    </span>
+                                )
+                            )}
+                        </div>
+                        <div className="mt-0.5 truncate text-[10.5px] text-muted-foreground">{t("calc.kpi.buildSummary", { skill: skillSummary, rank: skillRankShort(inst.config.skillRank, t), module: moduleSummary })}</div>
                     </div>
-                    <div className="mt-0.5 truncate text-[10.5px] text-muted-foreground">{t("calc.kpi.buildSummary", { skill: skillSummary, rank: skillRankShort(inst.config.skillRank, t), module: moduleSummary })}</div>
+                </div>
+                <div className="grid grid-cols-3 gap-x-3 sm:gap-x-4 sm:text-right">
+                    {columns.map((col) => (
+                        <Stat key={col.key} label={col.label} value={num(data, col.key)} highlight={col.key === leaderKey && isLeader} loading={!!snap?.isPending} hint={data ? col.hint?.(data) : undefined} locale={locale} moreInfoLabel={t("calc.kpi.moreInfo", { label: col.label })} />
+                    ))}
                 </div>
             </div>
-            <div className="grid grid-cols-3 gap-x-3 sm:gap-x-4 sm:text-right">
-                {columns.map((col) => (
-                    <Stat key={col.key} label={col.label} value={data?.[col.key]} highlight={col.key === leaderKey && isLeader} loading={!!snap?.isPending} hint={data ? col.hint?.(data) : undefined} locale={locale} moreInfoLabel={t("calc.kpi.moreInfo", { label: col.label })} />
-                ))}
-            </div>
+            {extra}
         </div>
     );
 }
@@ -156,10 +163,16 @@ function Stat({ label, value, highlight, loading, hint, locale, moreInfoLabel }:
     );
 }
 
+/** A numeric field of a result, else undefined. */
+function num(data: Readonly<Record<string, unknown>> | undefined, key: string): number | undefined {
+    const v = data?.[key];
+    return typeof v === "number" ? v : undefined;
+}
+
 function pickLeader(snapshots: IInstanceSnapshot[], key: string): string | null {
     let best: { uid: string; v: number } | null = null;
     for (const s of snapshots) {
-        const v = s.data?.[key];
+        const v = num(s.data, key);
         if (typeof v !== "number") continue;
         if (!best || v > best.v) best = { uid: s.uid, v };
     }

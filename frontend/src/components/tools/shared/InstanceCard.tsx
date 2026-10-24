@@ -4,7 +4,6 @@ import { Button } from "#/components/ui/button";
 import { Card, CardHeader, CardPanel } from "#/components/ui/card";
 import { Collapsible, CollapsibleContent } from "#/components/ui/collapsible";
 import { Label } from "#/components/ui/label";
-import { NumberField, NumberFieldDecrement, NumberFieldGroup, NumberFieldIncrement, NumberFieldInput } from "#/components/ui/number-field";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Slider } from "#/components/ui/slider";
 import { Switch } from "#/components/ui/switch";
@@ -12,17 +11,19 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import { conditionalFlagFor, conditionalLabel, conditionalSwitchOn } from "./conditionals";
+import type { messages as conditionalMessages } from "./conditionals.messages";
 import type { messages } from "./InstanceCard.messages";
 import { eliteIcon, moduleIconURL, potentialIcon, skillIconURL, specializedIcon } from "./icons";
 import { conditionalKey } from "./instance";
 import { clampRankToElite, isMasteryRank, maxSkillRankForElite, rankLockReason, skillRankLabel } from "./skill";
 import type { messages as skillMessages } from "./skill.messages";
-import type { IBuildConfig, ICalcBuffs, ICalcConditionals, IInstance } from "./types";
+import type { IBuildConfig, ICalcConditionals, IInstance } from "./types";
 import { useOperatorDetail } from "./useOperatorDetail";
 import type { messages as detailMessages } from "./useOperatorDetail.messages";
 
 /** Own chrome plus the labels `skill.ts` derives. */
-type CardT = TypedT<typeof messages & typeof skillMessages & typeof detailMessages>;
+type CardT = TypedT<typeof messages & typeof skillMessages & typeof detailMessages & typeof conditionalMessages>;
 
 interface IInstanceCardProps {
     inst: IInstance;
@@ -37,14 +38,16 @@ interface IInstanceCardProps {
     onMoveDown: () => void;
     onDuplicate: () => void;
     onRemove: () => void;
-    /** When provided, renders the External buffs section (per-instance buffs, DPS). */
-    onUpdateBuffs?: (patch: Partial<ICalcBuffs>) => void;
+    /** When provided, renders a collapsible section for this card's own buffs (DPS: its zone editor). */
+    buffsSection?: React.ReactNode;
+    /** Fields set in that section, shown on its heading while collapsed. */
+    buffsSetCount?: number;
 }
 
 const SKILL_LEVELS = [1, 2, 3, 4, 5, 6, 7] as const;
 const MASTERY_RANKS = [8, 9, 10] as const;
 
-export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleConditional, onToggleVisibility, onToggleCollapsed, onMoveUp, onMoveDown, onDuplicate, onRemove, onUpdateBuffs }: IInstanceCardProps): React.ReactElement {
+export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleConditional, onToggleVisibility, onToggleCollapsed, onMoveUp, onMoveDown, onDuplicate, onRemove, buffsSection, buffsSetCount = 0 }: IInstanceCardProps): React.ReactElement {
     const t: CardT = useT("tools");
     const { op, config, color, visible, collapsed } = inst;
     const [buffsOpen, setBuffsOpen] = React.useState(false);
@@ -291,11 +294,14 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                                 {op.conditionals.map((cond) => {
                                     const key = conditionalKey(cond);
                                     if (!key) return null;
-                                    const checked = Boolean(config.conditionals[key]);
+                                    // The label describes the switch ON; an inverted conditional's label holds while the flag is off.
+                                    const checked = conditionalSwitchOn(cond, config.conditionals[key]);
                                     return (
                                         <div key={`${cond.conditionalType}-${cond.name}`} className="flex items-center justify-between gap-2 rounded-md border border-border bg-muted/30 px-2 py-1.5">
                                             <div className="min-w-0 flex-1">
-                                                <div className="truncate font-medium text-[12px] leading-tight">{cond.name}</div>
+                                                <div className="truncate font-medium text-[12px] leading-tight" title={cond.name}>
+                                                    {conditionalLabel(t, op.id, cond)}
+                                                </div>
                                                 <div className="mt-0.5 flex flex-wrap items-center gap-1">
                                                     <ScopeTag>{cond.conditionalType}</ScopeTag>
                                                     {cond.skills.map((s) => (
@@ -306,7 +312,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                                                     ))}
                                                 </div>
                                             </div>
-                                            <Switch checked={checked} onCheckedChange={(v) => onToggleConditional(key, v)} />
+                                            <Switch checked={checked} onCheckedChange={(v) => onToggleConditional(key, conditionalFlagFor(cond, v))} />
                                         </div>
                                     );
                                 })}
@@ -314,19 +320,17 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                         </div>
                     )}
 
-                    {onUpdateBuffs && (
+                    {buffsSection && (
                         <Collapsible open={buffsOpen} onOpenChange={setBuffsOpen}>
                             <button type="button" className="flex w-full cursor-pointer items-center justify-between rounded py-1 text-left font-medium text-[11px] text-muted-foreground hover:text-foreground" onClick={() => setBuffsOpen((v) => !v)}>
-                                {t("calc.instance.externalBuffs")}
+                                <span className="flex items-center gap-1.5">
+                                    {t("calc.instance.externalBuffs")}
+                                    {buffsSetCount > 0 && <span className="rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[9.5px] text-primary">{t("calc.instance.externalBuffs.count", { count: buffsSetCount })}</span>}
+                                </span>
                                 {buffsOpen ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
                             </button>
                             <CollapsibleContent>
-                                <div className="grid grid-cols-2 gap-2 pt-1.5">
-                                    <NumField label={t("calc.instance.buff.atkPct")} value={Math.round((config.buffs.atk ?? 0) * 100)} min={0} max={500} step={5} onChange={(v) => onUpdateBuffs({ atk: v / 100 })} />
-                                    <NumField label={t("calc.instance.buff.flatAtk")} value={config.buffs.flatAtk ?? 0} min={0} max={2000} step={10} onChange={(v) => onUpdateBuffs({ flatAtk: v })} />
-                                    <NumField label={t("calc.instance.buff.aspd")} value={config.buffs.aspd ?? 0} min={0} max={200} step={5} onChange={(v) => onUpdateBuffs({ aspd: v })} />
-                                    <NumField label={t("calc.instance.buff.fragile")} value={Math.round((config.buffs.fragile ?? 0) * 100)} min={0} max={300} step={5} onChange={(v) => onUpdateBuffs({ fragile: v / 100 })} />
-                                </div>
+                                <div className="pt-1.5">{buffsSection}</div>
                             </CollapsibleContent>
                         </Collapsible>
                     )}
@@ -424,26 +428,4 @@ function IconButton({ label, onClick, children }: { label: string; onClick: () =
 
 function ScopeTag({ children }: { children: React.ReactNode }): React.ReactElement {
     return <span className="rounded bg-background px-1 py-0.5 font-mono text-[9.5px] text-muted-foreground">{children}</span>;
-}
-
-interface INumFieldProps {
-    label: string;
-    value: number;
-    min?: number;
-    max?: number;
-    step?: number;
-    onChange: (value: number) => void;
-}
-
-function NumField({ label, value, min, max, step = 1, onChange }: INumFieldProps): React.ReactElement {
-    return (
-        <NumberField defaultValue={value} min={min} max={max} step={step} onValueChange={(v) => onChange(v ?? 0)} size="sm" className="gap-1">
-            <Label className="block font-medium text-[11px] text-muted-foreground leading-none">{label}</Label>
-            <NumberFieldGroup>
-                <NumberFieldDecrement />
-                <NumberFieldInput />
-                <NumberFieldIncrement />
-            </NumberFieldGroup>
-        </NumberField>
-    );
 }

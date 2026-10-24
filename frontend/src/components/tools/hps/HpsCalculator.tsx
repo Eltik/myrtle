@@ -8,6 +8,7 @@ import { exportSvgAsPng } from "#/components/tools/shared/exportChart";
 import { InstanceCard } from "#/components/tools/shared/InstanceCard";
 import { KpiPanel } from "#/components/tools/shared/KpiPanel";
 import { OperatorPicker } from "#/components/tools/shared/OperatorPicker";
+import { CopyLinkButton, useShareUrlSync } from "#/components/tools/shared/ShareLink";
 import { moduleShortLabel } from "#/components/tools/shared/useOperatorDetail";
 import type { messages as detailMessages } from "#/components/tools/shared/useOperatorDetail.messages";
 import { AlertDialog, AlertDialogClose, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogPopup, AlertDialogTitle, AlertDialogTrigger } from "#/components/ui/alert-dialog";
@@ -24,6 +25,8 @@ import type { messages } from "./HpsCalculator.messages";
 import { BuffsPanel } from "./impl/components/BuffsPanel";
 import { METRIC_COLUMNS, X_AXIS_INPUT, X_AXIS_LABEL_KEYS, X_AXIS_SHORT_KEYS, Y_METRIC_HINT_KEYS, Y_METRIC_LABEL_KEYS } from "./impl/constants";
 import type { messages as hpsConstantsMessages } from "./impl/constants.messages";
+import { encodeHpsShare } from "./impl/share";
+import { INITIAL_STATE } from "./impl/state";
 import type { HpsXAxis, HpsYMetric } from "./impl/types";
 import { useHpsCurves } from "./impl/useHpsCurves";
 import { useHpsResults } from "./impl/useHpsResults";
@@ -33,11 +36,23 @@ import { useHpsState } from "./impl/useHpsState";
 type HpsT = TypedT<typeof messages & typeof hpsConstantsMessages & typeof detailMessages>;
 type HpsRichT = TypedRichT<typeof messages>;
 
-export function HpsCalculator(): React.ReactElement {
+/** What the untouched page encodes to; a state matching it clears `?s=`. */
+const DEFAULT_SHARE = encodeHpsShare(INITIAL_STATE);
+
+interface IHpsCalculatorProps {
+    /** The `?s=` share link present at mount; it outranks the stored setup. */
+    shareParam?: string;
+    /** Replaces `?s=` (undefined removes it) as the setup changes. */
+    onShareParamChange?: (param: string | undefined) => void;
+}
+
+export function HpsCalculator({ shareParam, onShareParamChange }: IHpsCalculatorProps = {}): React.ReactElement {
     const t: HpsT = useT("tools");
     const rt: HpsRichT = useRichT("tools");
     const locale = useLocale();
-    const { state, dispatch, hydrationToken } = useHpsState();
+    const { state, dispatch, hydrationToken } = useHpsState(shareParam);
+    useShareUrlSync(state, hydrationToken, encodeHpsShare, DEFAULT_SHARE, shareParam, onShareParamChange);
+    const encodeCurrent = React.useCallback(() => encodeHpsShare(state), [state]);
 
     const axes = React.useMemo(() => (Object.keys(X_AXIS_LABEL_KEYS) as HpsXAxis[]).map((k) => ({ value: k, label: t(X_AXIS_LABEL_KEYS[k]), short: t(X_AXIS_SHORT_KEYS[k]) })), [t]);
     const metrics = React.useMemo(() => (Object.keys(Y_METRIC_LABEL_KEYS) as HpsYMetric[]).map((k) => ({ value: k, label: t(Y_METRIC_LABEL_KEYS[k]) })), [t]);
@@ -46,7 +61,7 @@ export function HpsCalculator(): React.ReactElement {
             METRIC_COLUMNS.map((c) => ({
                 key: c.key,
                 label: t(c.labelKey),
-                hint: c.key === "base_hps" ? (d: Record<string, number>) => (d.base_hps === 0 ? t("hps.baseHps.burstHint") : undefined) : undefined,
+                hint: c.key === "base_hps" ? (d: Readonly<Record<string, unknown>>) => (d.base_hps === 0 ? t("hps.baseHps.burstHint") : undefined) : undefined,
             })),
         [t],
     );
@@ -252,16 +267,19 @@ export function HpsCalculator(): React.ReactElement {
                                 onChangeSweep={(patch) => dispatch({ type: "SET_SWEEP", axis: state.xAxis, patch })}
                                 rangeAction={
                                     hasInstances ? (
-                                        <Tooltip>
-                                            <TooltipTrigger
-                                                render={(p) => (
-                                                    <Button {...p} aria-label={t("hps.download")} variant="outline" size="icon-sm" loading={isExporting} onClick={onExportChart} className="mb-1">
-                                                        <Download />
-                                                    </Button>
-                                                )}
-                                            />
-                                            <TooltipPopup>{t("hps.download")}</TooltipPopup>
-                                        </Tooltip>
+                                        <div className="flex items-end gap-2">
+                                            <CopyLinkButton to="/tools/hps" encode={encodeCurrent} />
+                                            <Tooltip>
+                                                <TooltipTrigger
+                                                    render={(p) => (
+                                                        <Button {...p} aria-label={t("hps.download")} variant="outline" size="icon-sm" loading={isExporting} onClick={onExportChart} className="mb-1">
+                                                            <Download />
+                                                        </Button>
+                                                    )}
+                                                />
+                                                <TooltipPopup>{t("hps.download")}</TooltipPopup>
+                                            </Tooltip>
+                                        </div>
                                     ) : undefined
                                 }
                             />

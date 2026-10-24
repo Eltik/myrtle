@@ -12,12 +12,17 @@ import { seo } from "#/lib/seo";
 export interface IDpsSearch {
     /** The Squad Builder's hand-off (`encodeDpsImport`); read once and dropped. */
     import?: string;
+    /** The whole setup as a share link (`encodeDpsShare`); rewritten as the page changes. */
+    s?: string;
 }
 
 export const Route = createFileRoute("/tools/dps")({
     component: RouteComponent,
     errorComponent: DpsErrorComponent,
-    validateSearch: (search: Record<string, unknown>): IDpsSearch => (typeof search.import === "string" && search.import.length > 0 ? { import: search.import } : {}),
+    validateSearch: (search: Record<string, unknown>): IDpsSearch => ({
+        ...(typeof search.import === "string" && search.import.length > 0 ? { import: search.import } : {}),
+        ...(typeof search.s === "string" && search.s.length > 0 ? { s: search.s } : {}),
+    }),
     // Per-operator detail (skill names, module icons) is fetched when an operator
     // is picked, by `useOperatorDetail`; nothing operator-wide is needed to render.
     loader: ({ context: { queryClient } }) => queryClient.prefetchQuery(dpsOperatorsQueryOptions()),
@@ -41,8 +46,10 @@ function RouteComponent() {
     const search = Route.useSearch();
     const navigate = useNavigate();
     // Dropped with a replace once the page has read it, so a reload does not add the cards again.
-    const onImportConsumed = React.useCallback(() => void navigate({ to: "/tools/dps", search: {}, replace: true }), [navigate]);
-    return <DpsCalculator importParam={search.import} onImportConsumed={onImportConsumed} />;
+    const onImportConsumed = React.useCallback(() => void navigate({ to: "/tools/dps", search: (prev) => ({ s: prev.s }), replace: true, resetScroll: false }), [navigate]);
+    // Replace, not push: the link follows every edit, and Back should leave the page, not undo a slider.
+    const onShareParamChange = React.useCallback((s: string | undefined) => void navigate({ to: "/tools/dps", search: (prev) => ({ import: prev.import, s }), replace: true, resetScroll: false }), [navigate]);
+    return <DpsCalculator importParam={search.import} onImportConsumed={onImportConsumed} shareParam={search.s} onShareParamChange={onShareParamChange} />;
 }
 
 function DpsErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {

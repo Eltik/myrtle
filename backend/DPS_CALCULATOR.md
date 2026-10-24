@@ -1,5 +1,9 @@
 # DPS Calculator Setup
 
+The engine model (buff zones, primary/secondary targets, cycle v2, batch/rank/supporters
+endpoints, retention score) and every measured result are in
+[`docs/dps-refactor.md`](../docs/dps-refactor.md). Read it before changing `src/dps/`.
+
 ## Prerequisites
 
 - Game data unpacked at `../assets/output/` (or set `GAME_DATA_DIR` and `ASSETS_DIR` in `.env`)

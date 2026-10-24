@@ -2,6 +2,9 @@ import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import type { ICalcRequestBase, IConditionalInfo, IOperatorListEntry } from "#/components/tools/shared/types";
 import { backendFetch } from "#/lib/fetch";
+import type { BatchRequest } from "#/types/generated/BatchRequest";
+import type { HpsBatchResponse } from "#/types/generated/HpsBatchResponse";
+import { stableStringify } from "./dps";
 
 // Operator/conditional/buff types come from `components/tools/shared/types`,
 // re-exported here under HPS names.
@@ -55,19 +58,33 @@ export const calculateHpsFn = createServerFn({ method: "POST" })
         return (await res.json()) as IHpsCalculateResponse;
     });
 
-function stableStringify(value: unknown): string {
-    if (value === null || typeof value !== "object") return JSON.stringify(value) ?? "null";
-    if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
-    const obj = value as Record<string, unknown>;
-    const keys = Object.keys(obj).sort();
-    return `{${keys.map((k) => `${JSON.stringify(k)}:${stableStringify(obj[k])}`).join(",")}}`;
-}
-
 export function hpsCalculateQueryOptions(req: IHpsCalculateRequest) {
     return queryOptions({
         queryKey: ["hps", "calculate", req.operatorId, stableStringify(req)],
         queryFn: () => calculateHpsFn({ data: req }),
         enabled: Boolean(req.operatorId),
+        staleTime: 5 * 60 * 1000,
+        gcTime: 30 * 60 * 1000,
+    });
+}
+
+/** `POST /hps/batch`: at most 64 requests per call, no sweep (healing reads no DEF or RES). */
+export const batchHpsFn = createServerFn({ method: "POST" })
+    .inputValidator((data: BatchRequest) => data)
+    .handler(async ({ data }) => {
+        const res = await backendFetch("/hps/batch", { method: "POST", body: JSON.stringify(data) });
+        if (!res.ok) {
+            const text = await res.text().catch(() => "");
+            throw new Error(text || `Failed to calculate HPS: ${res.status}`);
+        }
+        return (await res.json()) as HpsBatchResponse;
+    });
+
+export function hpsBatchQueryOptions(body: BatchRequest) {
+    return queryOptions({
+        queryKey: ["hps", "batch", stableStringify(body)],
+        queryFn: () => batchHpsFn({ data: body }),
+        enabled: body.requests.length > 0,
         staleTime: 5 * 60 * 1000,
         gcTime: 30 * 60 * 1000,
     });

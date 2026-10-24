@@ -1,8 +1,10 @@
 use std::fmt::Write as _;
+use std::sync::Arc;
 
 use crate::core::gamedata::types::{enemy::Enemy, operator::OperatorModule};
 
 use super::operator_data::OperatorData;
+use super::zones::BuffZones;
 
 const MAX_LEVELS: [[i32; 6]; 3] = [
     [30, 30, 40, 45, 50, 50],
@@ -14,7 +16,8 @@ const MAX_PROMOTIONS: [i32; 6] = [0, 0, 1, 2, 2, 2];
 const MAX_SKILL_LEVELS: [i32; 3] = [4, 7, 10];
 
 pub struct OperatorUnit {
-    pub data: OperatorData,
+    /// Shared: built once per operator and game-data load (`dps::data_cache`).
+    pub data: Arc<OperatorData>,
     pub params: OperatorParams,
 
     pub default_skill_index: i32,
@@ -108,7 +111,7 @@ pub struct OperatorUnit {
 impl OperatorUnit {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        operator_data: OperatorData,
+        operator_data: Arc<OperatorData>,
         params: OperatorParams,
         default_skill_index: i32,
         default_potential: i32,
@@ -293,8 +296,12 @@ impl OperatorUnit {
                     module_index = param_module_index;
                     module_sequential = (pos + 1) as i32;
 
+                    // damage_formulas.py `Operator.__init__`:
+                    //   module_lvl = params.module_lvl if params.module_lvl in [1,2,3] else 3
+                    // Until 2026-10-24 this read `> 1`, so a request for module
+                    // level 1 silently computed level 3.
                     let param_module_level = params.module_level.unwrap_or(-1);
-                    operator_module_level = if param_module_level <= 3 && param_module_level > 1 {
+                    operator_module_level = if (1..=3).contains(&param_module_level) {
                         param_module_level
                     } else {
                         3
@@ -850,6 +857,38 @@ pub struct OperatorParams {
     pub shred: Option<OperatorShred>,
 
     pub normal_dps: Option<f64>,
+
+    /// Buff zones (`dps::zones`). `None` is the legacy path, bit-identical to
+    /// the engine before zones existed.
+    pub zones: Option<BuffZones>,
+    /// Secondary targets. `None` runs `f(targets, primary)` as before.
+    pub secondary: Option<SecondaryTarget>,
+    /// How `average_dps` cycles the skill. Default `Legacy`.
+    pub cycle_model: CycleModel,
+    /// The operator a Muelsyse clone copies. `None` leaves every `clone_*`
+    /// field at 0, the behaviour before the field existed.
+    pub clone_operator: Option<Arc<OperatorData>>,
+}
+
+/// Enemies hit besides the primary one, for the primary / secondary split.
+#[derive(Debug, Clone, Copy)]
+pub struct SecondaryTarget {
+    pub defense: f64,
+    pub res: f64,
+    /// Secondary enemies, at least 1.
+    pub count: i32,
+}
+
+/// Cycle model for `average_dps` (docs/dps-refactor.md, phase 1 item 3).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum CycleModel {
+    /// The engine's original average: off-skill DPS from `normal_attack`,
+    /// SP time `cost / (1 + sp_boost)` for every SP type.
+    #[default]
+    Legacy,
+    /// Off-skill DPS from the operator's own formula at skill 0 where it has a
+    /// skill-0 path, SP time by the skill's SP type.
+    V2,
 }
 
 impl Default for OperatorParams {
@@ -879,6 +918,10 @@ impl Default for OperatorParams {
             def: None,
             shred: None,
             normal_dps: Some(0.0),
+            zones: None,
+            secondary: None,
+            cycle_model: CycleModel::Legacy,
+            clone_operator: None,
         }
     }
 }

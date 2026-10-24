@@ -13,7 +13,10 @@ use std::path::{Path, PathBuf};
 use serde::Deserialize;
 
 use super::stage_class::{StageClassifier, StageInfo};
-use crate::core::gamedata::types::enemy_stages::{EnemyStageIndex, EnemyStageRef};
+use crate::core::gamedata::types::enemy::MaybeValue;
+use crate::core::gamedata::types::enemy_stages::{
+    EnemyStageIndex, EnemyStageRef, StageEnemyBattle,
+};
 use crate::core::startup;
 
 #[derive(Deserialize)]
@@ -29,6 +32,30 @@ struct LevelFile {
 #[serde(rename_all = "PascalCase")]
 struct DbRef {
     id: String,
+    /// Index into the enemy's `enemy_database.json` levels: the stage fields
+    /// this level, not level 0 (1,235 of 18,177 EN refs use 1 or 2).
+    #[serde(default)]
+    level: i32,
+    #[serde(default)]
+    overwritten_data: Option<Overwritten>,
+}
+
+/// The per-stage stat overrides a `EnemyDbRefs` entry may carry. Only the two
+/// stats the damage engine reads are kept.
+#[derive(Deserialize)]
+#[serde(rename_all = "PascalCase")]
+struct Overwritten {
+    #[serde(default)]
+    attributes: Option<OverwrittenAttributes>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "PascalCase")]
+struct OverwrittenAttributes {
+    #[serde(default)]
+    def: Option<MaybeValue<f64>>,
+    #[serde(default)]
+    magic_resistance: Option<MaybeValue<f64>>,
 }
 
 #[derive(Deserialize)]
@@ -56,15 +83,33 @@ struct Action {
     count: i64,
 }
 
-/// Parse one level file into `enemy_id -> spawn count`. `EnemyDbRefs` seeds a
-/// count of 0 (declared but maybe summon-only); `SPAWN` actions add their count.
-fn tally_level(path: &Path) -> Option<HashMap<String, u32>> {
+/// Parse one level file into `enemy_id -> spawn count`, plus the database
+/// level and DEF / RES overrides each `EnemyDbRefs` entry declares. `EnemyDbRefs`
+/// seeds a count of 0 (declared but maybe summon-only); `SPAWN` actions add
+/// their count. An id is declared at most once per file (0 repeats in EN).
+type LevelTally = (HashMap<String, u32>, HashMap<String, StageEnemyBattle>);
+
+fn tally_level(path: &Path) -> Option<LevelTally> {
     let bytes = std::fs::read(path).ok()?;
     let level: LevelFile = serde_json::from_slice(&bytes).ok()?;
 
     let mut counts: HashMap<String, u32> = HashMap::new();
+    let mut battle: HashMap<String, StageEnemyBattle> = HashMap::new();
     for r in &level.enemy_db_refs {
         counts.entry(r.id.clone()).or_insert(0);
+        let attrs = r
+            .overwritten_data
+            .as_ref()
+            .and_then(|o| o.attributes.as_ref());
+        let pick = |v: Option<&MaybeValue<f64>>| v.and_then(|m| m.get().copied());
+        battle.insert(
+            r.id.clone(),
+            StageEnemyBattle {
+                level: r.level,
+                def: pick(attrs.and_then(|a| a.def.as_ref())),
+                res: pick(attrs.and_then(|a| a.magic_resistance.as_ref())),
+            },
+        );
     }
     for wave in &level.waves {
         for frag in &wave.fragments {
@@ -83,7 +128,7 @@ fn tally_level(path: &Path) -> Option<HashMap<String, u32>> {
             }
         }
     }
-    Some(counts)
+    Some((counts, battle))
 }
 
 /// Recursively collect every `*.json` level file, skipping the `enemydata/`
@@ -125,6 +170,7 @@ fn push_ref(
     stage_id: String,
     info: &StageInfo,
     count: u32,
+    battle: Option<StageEnemyBattle>,
 ) {
     index.entry(enemy_id).or_default().push(EnemyStageRef {
         stage_id,
@@ -136,6 +182,7 @@ fn push_ref(
         stage_name: info.stage_name.clone(),
         is_hard: info.is_hard,
         count,
+        battle,
     });
 }
 
@@ -159,13 +206,22 @@ pub fn build_enemy_stage_index(
         let Some(rel) = relative_level_id(levels_dir, path) else {
             continue;
         };
-        let Some(counts) = tally_level(path) else {
+        let Some((counts, mut battle)) = tally_level(path) else {
             continue;
         };
         let info = classifier.classify_level(&rel);
         let stage_id = rel.rsplit('/').next().unwrap_or(&rel).to_owned();
         for (enemy_id, count) in counts {
-            push_ref(&mut index, enemy_id, stage_id.clone(), &info, count);
+            // A SPAWN key with no `EnemyDbRefs` entry (0 in EN) is level 0.
+            let b = battle.remove(&enemy_id).unwrap_or_default();
+            push_ref(
+                &mut index,
+                enemy_id,
+                stage_id.clone(),
+                &info,
+                count,
+                Some(b),
+            );
         }
     }
 
@@ -181,7 +237,7 @@ pub fn build_enemy_stage_index(
         }
         // No level file, so key the row by zone+code.
         let stage_id = format!("{}/{}", info.zone_id, info.code);
-        push_ref(&mut index, enemy_id, stage_id, &info, 0);
+        push_ref(&mut index, enemy_id, stage_id, &info, 0, None);
     }
 
     for refs in index.values_mut() {

@@ -10,7 +10,9 @@
 
 use backend::core::gamedata;
 use backend::dps::engine;
-use backend::dps::operator_unit::{EnemyStats, OperatorBuffs, OperatorParams, OperatorShred};
+use backend::dps::operator_unit::{
+    CycleModel, EnemyStats, OperatorBuffs, OperatorParams, OperatorShred,
+};
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -185,6 +187,16 @@ fn test_engine_vs_python_expected() {
     let mut known_defects = vec![0u64; KNOWN_ENGINE_DEFECTS.len()];
 
     let mut type_tested: HashMap<String, u64> = HashMap::new();
+    // `DPS_DUMP=<path>` writes every computed case as `key\tskill\ttotal\taverage`
+    // at full f64 precision, sorted, for bit-identity checks with `cmp`.
+    let mut dump: Vec<String> = Vec::new();
+    // `DPS_CYCLE_MODEL=v2` runs the grid under cycle model v2, to price it
+    // against a legacy dump. `skill_dps` does not depend on it, so the parity
+    // assertions below hold either way.
+    let cycle_model = match std::env::var("DPS_CYCLE_MODEL").as_deref() {
+        Ok("v2") => CycleModel::V2,
+        _ => CycleModel::Legacy,
+    };
     let mut type_passed: HashMap<String, u64> = HashMap::new();
 
     for (char_id, formula) in &formulas {
@@ -281,12 +293,21 @@ fn test_engine_vs_python_expected() {
                                     ..Default::default()
                                 },
                                 shred,
+                                cycle_model,
                                 ..Default::default()
                             };
 
                             let enemy = EnemyStats { defense: def, res };
 
-                            if let Some(result) = engine::calculate_dps(operator, params, &enemy) {
+                            let result = engine::calculate_dps(operator, params, &enemy);
+                            dump.push(match &result {
+                                Some(r) => format!(
+                                    "{key}\t{:?}\t{:?}\t{:?}",
+                                    r.skill_dps, r.total_damage, r.average_dps
+                                ),
+                                None => format!("{key}\tNone"),
+                            });
+                            if let Some(result) = result {
                                 // Rust 0 against a real Python figure is missing skill data (CN-only
                                 // operators), not a divergence.
                                 if result.skill_dps.abs() < 0.01 && expected_dps.abs() > 1.0 {
@@ -328,6 +349,12 @@ fn test_engine_vs_python_expected() {
                 }
             }
         }
+    }
+
+    if let Ok(path) = std::env::var("DPS_DUMP") {
+        dump.sort();
+        std::fs::write(&path, dump.join("\n") + "\n").expect("write DPS_DUMP");
+        println!("  wrote {} cases to {path}", dump.len());
     }
 
     println!("\n============================================================");

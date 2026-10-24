@@ -8,6 +8,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import type { messages } from "../DpsCalculator.messages";
 import { importSeatToConfig } from "./importSeats";
 import type { DpsAction } from "./types";
+import { legacyBuffsToZones } from "./zones";
 
 /**
  * Read `?import=` once: wait for the stored state to hydrate (a later HYDRATE
@@ -32,7 +33,10 @@ export function useDpsImport(importParam: string | undefined, hydrationToken: nu
                 skipped++;
                 continue;
             }
-            dispatch({ type: "ADD_INSTANCE", op, config: importSeatToConfig(seat, op) });
+            // The seat's buffs arrive in the legacy shape; the card holds them as its own zones.
+            const config = importSeatToConfig(seat, op);
+            const zones = legacyBuffsToZones(config.buffs);
+            dispatch({ type: "ADD_INSTANCE", op, config: { ...config, buffs: {}, ...(zones ? { zones } : {}) } });
             added++;
         }
         if (added > 0) toastManager.add({ id: `dps-import-${Date.now()}`, title: t("dps.import.added", { count: added }), type: "success" });
