@@ -434,7 +434,11 @@ fn reviews(p: &Planner, names: &Names<'_>, skipped: &SkippedTags) -> Vec<ReviewW
 }
 
 pub async fn get_skins(state: &AppState) -> Result<SkinsResponse, ApiError> {
-    let key = cache_key("release:skins", estimate::window_from_env());
+    let key = cache_key(
+        "release:skins",
+        estimate::window_from_env(),
+        estimate::half_life_from_env(),
+    );
     if let Some(c) = state.cache.get::<SkinsResponse>(&key).await {
         return Ok(c);
     }

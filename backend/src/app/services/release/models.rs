@@ -12,12 +12,12 @@ pub struct Models {
 }
 
 impl Models {
-    pub fn build(cn: &GameData, en: &GameData, window: usize) -> Self {
+    pub fn build(cn: &GameData, en: &GameData, window: usize, half_life: f64) -> Self {
         let all = estimate::activity_pairs(cn, en);
         let types = estimate::yearly_types(&all);
         let (general_pairs, yearly_pairs) = estimate::split_yearly(&all, &types);
         Self {
-            general: estimate::build_lag_model(&general_pairs, window),
+            general: estimate::build_lag_model(&general_pairs, window, half_life),
             yearly: YearlyModel {
                 types,
                 model: estimate::build_yearly_model(&yearly_pairs),

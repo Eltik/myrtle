@@ -133,31 +133,39 @@ fn census_reproduces_on_the_live_extract() {
     );
     assert!(yearly_types.iter().any(|t| t == "APRIL_FOOL"));
     assert!((360.0..370.0).contains(&yearly.median_days));
-    let model = estimate::build_lag_model(&pairs, 10);
-    let backtest = estimate::backtest(&pairs, 10, 1_704_067_200);
-    println!(
-        "lag model n={} median={:.1} p25={:.1} p75={:.1}",
-        model.n, model.median_days, model.p25_days, model.p75_days
-    );
-    println!(
-        "backtest n={} median_abs_err={:.1} p75={:.1} p90={:.1} max={:.1} band_hit={:.3}",
-        backtest.n,
-        backtest.median_abs_err_days,
-        backtest.p75_abs_err_days,
-        backtest.p90_abs_err_days,
-        backtest.max_abs_err_days,
-        backtest.band_hit_rate
-    );
+    let hl = estimate::DEFAULT_HALF_LIFE;
+    for (label, h) in [
+        ("half-life 0 (kill switch)", 0.0),
+        ("default half-life", hl),
+    ] {
+        let m = estimate::build_lag_model(&pairs, 10, h);
+        let b = estimate::backtest(&pairs, 10, h, 1_704_067_200);
+        println!(
+            "{label}: lag model n={} median={:.2} p25={:.2} p75={:.2}; backtest n={} median_abs_err={:.2} p75={:.2} p90={:.2} max={:.2} band_hit={:.3}",
+            m.n,
+            m.median_days,
+            m.p25_days,
+            m.p75_days,
+            b.n,
+            b.median_abs_err_days,
+            b.p75_abs_err_days,
+            b.p90_abs_err_days,
+            b.max_abs_err_days,
+            b.band_hit_rate
+        );
+    }
+    let model = estimate::build_lag_model(&pairs, 10, hl);
+    let backtest = estimate::backtest(&pairs, 10, hl, 1_704_067_200);
     assert!(pairs.len() >= 130, "stage pairs = {}", pairs.len());
     assert!(all_pairs.len() > pairs.len());
     assert!(backtest.median_abs_err_days < 8.0);
 
-    let aligned = align::align_pools(&cn, &en, &pairs, 10);
+    let aligned = align::align_pools(&cn, &en, &pairs, 10, hl);
     println!(
         "content tolerance days = {:.1}",
-        align::tolerance_days(&pairs, 10)
+        align::tolerance_days(&pairs, 10, hl)
     );
-    let all = estimate::backtest(&pairs, 10, 0);
+    let all = estimate::backtest(&pairs, 10, hl, 0);
     println!(
         "all-history backtest n={} median={:.1} p75={:.1} p90={:.1} max={:.1}",
         all.n,
@@ -300,9 +308,14 @@ fn census_reproduces_on_the_live_extract() {
             st.year, st.observed, st.eligible, st.dev_p25_days, st.dev_median_days, st.dev_p75_days
         );
     }
-    assert!(stats[0].eligible >= 150 && stats[0].observed * 100 / stats[0].eligible >= 50);
-    assert!(stats[1].eligible >= 100 && stats[1].observed * 100 / stats[1].eligible >= 40);
-    assert_eq!(en_batches.len(), 7);
+    // Sold-only membership and pool-gated review windows (30332746) leave 122
+    // and 89 eligible groups on the 2026-10-19 extract; with
+    // RELEASE_KEEP_UNSOLD_SKINS=1 and RELEASE_REVIEWS_ALL_GROUPS=1 it is the
+    // old 168 and 124.
+    assert!(stats[0].eligible >= 110 && stats[0].observed * 100 / stats[0].eligible >= 65);
+    assert!(stats[1].eligible >= 80 && stats[1].observed * 100 / stats[1].eligible >= 50);
+    // EN 2026-10-14 added Multi-theme Outfit/VIII and reran /II.
+    assert_eq!(en_batches.len(), 9);
     assert_eq!(cn_batches.len(), 12);
     let (cn_groups, _) = skins::group_histories(&cn, &skins::batch_families(&cn, &en));
     let lookback = (model.median_days * 86_400.0) as i64 + 60 * 86_400;
@@ -419,9 +432,10 @@ fn census_reproduces_on_the_live_extract() {
         en_reviews.len(),
         "every EN review pairs with a CN one"
     );
+    // EN's 2026-10-19 extract lists the 2026-04-23 edition, leaving 2026-07-24.
     assert!(
-        cn_reviews.len() - confirmed >= 2,
-        "the newest CN reviews are unmatched on EN"
+        cn_reviews.len() - confirmed >= 1,
+        "the newest CN review is unmatched on EN"
     );
 
     for (label, gd) in [("cn", &cn), ("en", &en)] {
@@ -474,7 +488,7 @@ fn census_reproduces_on_the_live_extract() {
         seen_since_2025,
         stale
     );
-    assert_eq!(reviews, 18);
+    assert_eq!(reviews, 19);
 
     let memory = TranslationMemory::build(&cn, &en, &aligned);
     let cn_only_acts: Vec<_> = cn
@@ -704,29 +718,20 @@ fn census_reproduces_on_the_live_extract() {
     );
 }
 
-/// The CN edition of 2026-04-23T20:00Z, the first one the EN extract has no
-/// listing for (the announced one); its override key is this start.
+/// The CN edition of 2026-04-23T20:00Z, the one these tests announce; its
+/// override key is this start.
 const ANNOUNCED_CN_REVIEW: i64 = 1_776_974_400;
 
-/// EN's shop table with its newest real Fashion Review listing cloned onto
-/// new dates, as the next extract would carry the announced edition.
-fn en_listings_with_review(start: i64, end: i64) -> Option<ShopTableFile> {
-    let path = root("en").join("gamedata/excel/shop_client_table.json");
-    let mut v: serde_json::Value = serde_json::from_slice(&std::fs::read(path).ok()?).ok()?;
-    let list = v.get_mut("RecommendList")?.as_array_mut()?;
-    let mut review = list
-        .iter()
-        .filter(|r| {
-            r["TagName"]
-                .as_str()
-                .is_some_and(backend::core::gamedata::types::shop::is_review_name)
-        })
-        .max_by_key(|r| r["StartDatetime"].as_i64())?
-        .clone();
-    review["StartDatetime"] = start.into();
-    review["EndDatetime"] = end.into();
-    list.push(review);
-    serde_json::from_value(v).ok()
+/// EN's listing of that edition, 2026-10-14T12:00Z to 2026-11-11T10:59:59Z,
+/// first carried by the 2026-10-19 extract.
+const EN_ANNOUNCED_REVIEW: (i64, i64) = (1_791_979_200, 1_794_394_799);
+
+/// EN as it stood before it listed the announced edition: every Fashion
+/// Review listing from that one on dropped.
+fn en_before_announced_review(en: &mut GameData) {
+    use backend::core::gamedata::types::shop::ListingKind;
+    en.skin_listings
+        .retain(|l| l.kind != ListingKind::Review || l.start_time < EN_ANNOUNCED_REVIEW.0);
 }
 
 #[test]
@@ -741,12 +746,18 @@ fn announced_review_override_yields_to_the_listing() {
     let pairs = estimate::activity_pairs(&cn, &en);
     let yearly_types = estimate::yearly_types(&pairs);
     let (pairs, _) = estimate::split_yearly(&pairs, &yearly_types);
-    let model = estimate::build_lag_model(&pairs, 10);
+    let model = estimate::build_lag_model(&pairs, 10, estimate::DEFAULT_HALF_LIFE);
     let cn_windows = skins::review_windows(&cn);
     let at = cn_windows
         .iter()
         .position(|&(s, _)| s == ANNOUNCED_CN_REVIEW)
         .expect("the 2026-04-23 CN edition is in the extract");
+    let listed_en = skins::review_windows(&en);
+    assert!(
+        listed_en.contains(&EN_ANNOUNCED_REVIEW),
+        "the EN extract lists the announced edition"
+    );
+    en_before_announced_review(&mut en);
     let status = |r: &[Resolution]| {
         r.iter()
             .map(|x| match x {
@@ -758,7 +769,8 @@ fn announced_review_override_yields_to_the_listing() {
             .collect::<String>()
     };
 
-    // 2026-09-24T15:00Z .. 2026-10-21T14:59:59Z, a 27-day run like EN's last ones.
+    // The announcement as made: 2026-09-24T15:00Z .. 2026-10-21T14:59:59Z, a
+    // 27-day run like EN's last ones. EN ran it three weeks later.
     let (en_start, en_end) = (1_790_262_000, 1_792_594_799);
     let row = OverrideRow {
         kind: ledger::KIND_REVIEW.into(),
@@ -811,22 +823,21 @@ fn announced_review_override_yields_to_the_listing() {
     }
 
     // The next extract carries the listing; nobody touches the override.
-    let shop = en_listings_with_review(en_start, en_end).expect("EN shop table");
-    en.skin_listings = shop.into_skin_listings();
     let landed = resolve_reviews(
         &cn_windows,
-        &skins::review_windows(&en),
+        &listed_en,
         &idx,
         &model,
         &std::collections::HashSet::new(),
     );
     eprintln!("listing lands: {}", status(&landed));
+    let (listed_start, listed_end) = EN_ANNOUNCED_REVIEW;
     assert_eq!(
         landed[at],
         Resolution::Confirmed {
-            en_id: format!("review:{en_start}"),
-            en_start,
-            en_end,
+            en_id: format!("review:{listed_start}"),
+            en_start: listed_start,
+            en_end: listed_end,
         }
     );
     assert_eq!(
@@ -840,16 +851,18 @@ fn announced_review_override_yields_to_the_listing() {
 /// (it ran the edition as blind boxes, 2026-09-16 to 2026-09-30); its
 /// 2026-09-23 client carries `tag_1028`, which opened on CN 2026-04-25 and
 /// on EN 151 d later. The 2026 concert pack `tag_1027` opened on both
-/// servers within a day and must not count.
+/// servers within a day and must not count. EN's 2026-10-19 extract then
+/// listed the edition after all, so the test runs on EN without that listing.
 #[test]
 fn skipped_review_turns_unlisted_once_en_ships_past_its_tag() {
     use backend::core::gamedata::types::shop::tag_number;
     use backend::core::release::{override_index, resolve_reviews, skipped::SkippedTags};
 
-    let (Some(cn), Some(en)) = (load("cn"), load("en")) else {
+    let (Some(cn), Some(mut en)) = (load("cn"), load("en")) else {
         eprintln!("skipping: no extract");
         return;
     };
+    en_before_announced_review(&mut en);
     let cn_tags: Vec<(u32, i64)> = cn
         .recommend_tags
         .iter()
@@ -875,7 +888,7 @@ fn skipped_review_turns_unlisted_once_en_ships_past_its_tag() {
     let pairs = estimate::activity_pairs(&cn, &en);
     let yearly_types = estimate::yearly_types(&pairs);
     let (pairs, _) = estimate::split_yearly(&pairs, &yearly_types);
-    let model = estimate::build_lag_model(&pairs, 10);
+    let model = estimate::build_lag_model(&pairs, 10, estimate::DEFAULT_HALF_LIFE);
     let cn_windows = skins::review_windows(&cn);
     let en_windows = skins::review_windows(&en);
     let at = cn_windows

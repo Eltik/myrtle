@@ -33,11 +33,14 @@ use models::Models;
 
 const CACHE_PREFIX: &str = "static:cn:release:";
 
-const fn cache_key(resource: &'static str, window: usize) -> CacheKey<'static> {
+/// The half-life folds into the hash so a changed `RELEASE_LAG_HALF_LIFE` never
+/// serves the other model's cache; at `0` (the kill switch) its bits are zero
+/// and the key is the old `window` key exactly.
+const fn cache_key(resource: &'static str, window: usize, half_life: f64) -> CacheKey<'static> {
     CacheKey::StaticData {
         resource,
         server: "cn",
-        fields_hash: window as u64,
+        fields_hash: window as u64 ^ half_life.to_bits().rotate_left(1),
         page: 0,
     }
 }
@@ -50,6 +53,7 @@ struct Planner {
     models: Models,
     rows: Vec<q::OverrideRow>,
     window: usize,
+    half_life: f64,
     now: i64,
 }
 
@@ -57,13 +61,15 @@ impl Planner {
     async fn load(state: &AppState) -> Result<Self, ApiError> {
         let ctx = Ctx::load(state)?;
         let window = estimate::window_from_env();
-        let models = Models::build(&ctx.cn, &ctx.en, window);
+        let half_life = estimate::half_life_from_env();
+        let models = Models::build(&ctx.cn, &ctx.en, window, half_life);
         let rows = q::list_overrides(&state.db).await?;
         Ok(Self {
             ctx,
             models,
             rows,
             window,
+            half_life,
             now: Utc::now().timestamp(),
         })
     }

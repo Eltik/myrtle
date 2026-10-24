@@ -18,13 +18,17 @@ const BACKTEST_SINCE: i64 = 1_704_067_200;
 const MINI_EVENT_TYPE: &str = "MINISTORY";
 
 pub async fn get_lag(state: &AppState) -> Result<LagResponse, ApiError> {
-    let key = cache_key("release:lag", estimate::window_from_env());
+    let key = cache_key(
+        "release:lag",
+        estimate::window_from_env(),
+        estimate::half_life_from_env(),
+    );
     if let Some(c) = state.cache.get::<LagResponse>(&key).await {
         return Ok(c);
     }
     let p = Planner::load(state).await?;
     let out = LagResponse {
-        backtest: estimate::backtest(&p.models.pairs, p.window, BACKTEST_SINCE),
+        backtest: estimate::backtest(&p.models.pairs, p.window, p.half_life, BACKTEST_SINCE),
         model: p.models.general,
         yearly: p.models.yearly,
     };
@@ -134,7 +138,11 @@ fn shop_item(p: &Planner, item_type: &str, item_id: &str) -> ShopItem {
 }
 
 pub async fn get_events(state: &AppState) -> Result<EventsResponse, ApiError> {
-    let key = cache_key("release:events", estimate::window_from_env());
+    let key = cache_key(
+        "release:events",
+        estimate::window_from_env(),
+        estimate::half_life_from_env(),
+    );
     if let Some(c) = state.cache.get::<EventsResponse>(&key).await {
         return Ok(c);
     }

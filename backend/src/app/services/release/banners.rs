@@ -32,14 +32,18 @@ async fn debut_links(state: &AppState, p: &Planner) -> HashMap<String, Vec<Strin
 }
 
 pub async fn get_banners(state: &AppState) -> Result<BannersResponse, ApiError> {
-    let key = cache_key("release:banners", estimate::window_from_env());
+    let key = cache_key(
+        "release:banners",
+        estimate::window_from_env(),
+        estimate::half_life_from_env(),
+    );
     if let Some(c) = state.cache.get::<BannersResponse>(&key).await {
         return Ok(c);
     }
     let p = Planner::load(state).await?;
     let mut debut = debut_links(state, &p).await;
     let (cn, en) = (&*p.ctx.cn, &*p.ctx.en);
-    let aligned = align::align_pools(cn, en, &p.models.pairs, p.window);
+    let aligned = align::align_pools(cn, en, &p.models.pairs, p.window, p.half_life);
     let rule_independence = align::rule_independence(cn, en);
     let independent: HashSet<&str> = rule_independence
         .iter()

@@ -16,6 +16,41 @@ pub fn window_from_env() -> usize {
     }
 }
 
+/// Recency half-life of the lag window, in EN releases: the newest pair weighs
+/// 1, the one `h` releases older 0.5. Measured 2026-10-24 by walk-forward over
+/// the 66 CN-2024+ stage events (the three wiki-announced November pairs
+/// included): MAE 7.84 -> 7.22 d at release, 9.58 -> 9.14 d averaged over
+/// 0..165 d forecast horizons. Both measures bottom out at 3 on an integer
+/// sweep of 1..5 (7.33 / 7.26 / 7.22 / 7.26 / 7.36 and 9.44 / 9.22 / 9.14 /
+/// 9.24 / 9.32); `docs/release/CN_EN_RELEASE_MAPPING.md` section 5k has the
+/// whole sweep and what it ruled out.
+pub const DEFAULT_HALF_LIFE: f64 = 3.0;
+
+/// `RELEASE_LAG_HALF_LIFE`. A MISSING variable is the default. `0`, or any
+/// value at or below zero, is the kill switch: every pair weighs the same and
+/// the model is the unweighted trailing median, bit for bit. A value that does
+/// not parse to a finite number falls back to the default, as
+/// `RELEASE_LAG_WINDOW` does.
+pub fn half_life_from_env() -> f64 {
+    match std::env::var("RELEASE_LAG_HALF_LIFE") {
+        Ok(v) => parse_half_life(&v),
+        Err(_) => DEFAULT_HALF_LIFE,
+    }
+}
+
+fn parse_half_life(v: &str) -> f64 {
+    match v.trim().parse::<f64>() {
+        Ok(h) if h.is_finite() => {
+            if h > 0.0 {
+                h
+            } else {
+                0.0
+            }
+        }
+        _ => DEFAULT_HALF_LIFE,
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ActivityPair {
     pub cn_id: String,
@@ -65,8 +100,10 @@ pub fn split_yearly(
     (general, yearly)
 }
 
+/// Unweighted on purpose: the yearly pairs (four April Fools on the live
+/// extract, sd 0.4 d) were never part of the recency sweep.
 pub fn build_yearly_model(yearly_pairs: &[ActivityPair]) -> LagModel {
-    build_lag_model(yearly_pairs, yearly_pairs.len().max(1))
+    build_lag_model(yearly_pairs, yearly_pairs.len().max(1), 0.0)
 }
 
 pub fn activity_pairs(cn: &GameData, en: &GameData) -> Vec<ActivityPair> {
@@ -104,11 +141,50 @@ pub fn percentile(sorted: &[f64], p: f64) -> f64 {
     }
 }
 
+/// `percentile` over `(value, weight)` samples sorted by value. Each sample
+/// sits at the midpoint of its weight mass; `p` runs from the first midpoint to
+/// the last and interpolates linearly between neighbours, so equal weights give
+/// the same quartiles as `percentile` (to rounding; the kill switch does not
+/// rely on that and takes `percentile` itself).
+pub fn weighted_percentile(sorted: &[(f64, f64)], p: f64) -> f64 {
+    match sorted.len() {
+        0 => 0.0,
+        1 => sorted[0].0,
+        n => {
+            let mut mid = Vec::with_capacity(n);
+            let mut acc = 0.0;
+            for &(_, w) in sorted {
+                mid.push(acc + w / 2.0);
+                acc += w;
+            }
+            let x = mid[0] + p * (mid[n - 1] - mid[0]);
+            let hi = mid.partition_point(|&m| m <= x).clamp(1, n - 1);
+            let lo = hi - 1;
+            let span = mid[hi] - mid[lo];
+            let frac = if span > 0.0 {
+                (x - mid[lo]) / span
+            } else {
+                0.0
+            };
+            sorted[lo].0 + (sorted[hi].0 - sorted[lo].0) * frac
+        }
+    }
+}
+
+/// Weight of each of `n` pairs in EN order, the newest last at 1.
+fn recency_weights(n: usize, half_life: f64) -> Vec<f64> {
+    (0..n)
+        .map(|i| 0.5_f64.powf((n - 1 - i) as f64 / half_life))
+        .collect()
+}
+
 fn lag_days(p: &ActivityPair) -> f64 {
     (p.en_start - p.cn_start) as f64 / SECS_PER_DAY
 }
 
-pub fn build_lag_model(pairs: &[ActivityPair], window: usize) -> LagModel {
+/// The last `window` pairs by EN start; median / p25 / p75 of their lags,
+/// weighted by recency when `half_life > 0` and unweighted at `0`.
+pub fn build_lag_model(pairs: &[ActivityPair], window: usize, half_life: f64) -> LagModel {
     if window == 0 || pairs.is_empty() {
         return LagModel {
             window,
@@ -121,14 +197,33 @@ pub fn build_lag_model(pairs: &[ActivityPair], window: usize) -> LagModel {
     }
     let start = pairs.len().saturating_sub(window);
     let tail = &pairs[start..];
-    let mut lags: Vec<f64> = tail.iter().map(lag_days).collect();
-    lags.sort_by(|a, b| a.partial_cmp(b).expect("finite lag"));
+    let (median_days, p25_days, p75_days) = if half_life > 0.0 {
+        let mut lags: Vec<(f64, f64)> = tail
+            .iter()
+            .map(lag_days)
+            .zip(recency_weights(tail.len(), half_life))
+            .collect();
+        lags.sort_by(|a, b| a.0.partial_cmp(&b.0).expect("finite lag"));
+        (
+            weighted_percentile(&lags, 0.5),
+            weighted_percentile(&lags, 0.25),
+            weighted_percentile(&lags, 0.75),
+        )
+    } else {
+        let mut lags: Vec<f64> = tail.iter().map(lag_days).collect();
+        lags.sort_by(|a, b| a.partial_cmp(b).expect("finite lag"));
+        (
+            percentile(&lags, 0.5),
+            percentile(&lags, 0.25),
+            percentile(&lags, 0.75),
+        )
+    };
     LagModel {
         window,
         n: tail.len(),
-        median_days: percentile(&lags, 0.5),
-        p25_days: percentile(&lags, 0.25),
-        p75_days: percentile(&lags, 0.75),
+        median_days,
+        p25_days,
+        p75_days,
         samples: tail
             .iter()
             .map(|p| LagSample {
@@ -157,7 +252,7 @@ pub fn estimate(model: &LagModel, cn_start: i64) -> Resolution {
     }
 }
 
-pub fn backtest(pairs: &[ActivityPair], window: usize, since: i64) -> Backtest {
+pub fn backtest(pairs: &[ActivityPair], window: usize, half_life: f64, since: i64) -> Backtest {
     let mut abs_errs: Vec<f64> = Vec::new();
     let mut in_band = 0usize;
     if window > 0 {
@@ -173,7 +268,7 @@ pub fn backtest(pairs: &[ActivityPair], window: usize, since: i64) -> Backtest {
             if prior.len() < 3 {
                 continue;
             }
-            let model = build_lag_model(&prior, window);
+            let model = build_lag_model(&prior, window, half_life);
             if let Resolution::Estimated { en_start, lo, hi } = estimate(&model, target.cn_start) {
                 abs_errs.push((en_start - target.en_start).abs() as f64 / SECS_PER_DAY);
                 if target.en_start >= lo && target.en_start <= hi {
@@ -352,7 +447,7 @@ mod tests {
         let pairs: Vec<ActivityPair> = (0..6)
             .map(|i| pair(&format!("a{i}"), i * 30, 100 + i * 10))
             .collect();
-        let m = build_lag_model(&pairs, 3);
+        let m = build_lag_model(&pairs, 3, 0.0);
         assert_eq!(m.n, 3);
         assert_eq!(m.median_days, 140.0);
         assert_eq!(m.p25_days, 135.0);
@@ -369,7 +464,7 @@ mod tests {
     #[test]
     fn window_zero_is_the_kill_switch() {
         let pairs = vec![pair("a", 0, 100)];
-        let m = build_lag_model(&pairs, 0);
+        let m = build_lag_model(&pairs, 0, DEFAULT_HALF_LIFE);
         assert_eq!(m.n, 0);
         assert_eq!(estimate(&m, 5 * 86_400), Resolution::Unmodelled);
     }
@@ -381,7 +476,7 @@ mod tests {
             .enumerate()
             .map(|(i, l)| pair(&format!("a{i}"), i as i64 * 30, *l))
             .collect();
-        let m = build_lag_model(&pairs, 10);
+        let m = build_lag_model(&pairs, 10, 0.0);
         assert_eq!(
             estimate(&m, 1_000 * 86_400),
             Resolution::Estimated {
@@ -397,11 +492,69 @@ mod tests {
         let pairs: Vec<ActivityPair> = (0..8)
             .map(|i| pair(&format!("a{i}"), i * 30, 160))
             .collect();
-        let b = backtest(&pairs, 5, 0);
+        let b = backtest(&pairs, 5, 0.0, 0);
         assert_eq!(b.n, 5);
         assert_eq!(b.median_abs_err_days, 0.0);
         assert_eq!(b.band_hit_rate, 1.0);
-        let b2 = backtest(&pairs, 5, 6 * 30 * 86_400);
+        let b2 = backtest(&pairs, 5, 0.0, 6 * 30 * 86_400);
         assert_eq!(b2.n, 2);
+    }
+
+    #[test]
+    fn half_life_parses_missing_and_bad_values_to_the_default_and_zero_to_off() {
+        assert_eq!(parse_half_life("2.5"), 2.5);
+        assert_eq!(parse_half_life(" 3 "), 3.0);
+        assert_eq!(parse_half_life("0"), 0.0);
+        assert_eq!(parse_half_life("-1"), 0.0);
+        assert_eq!(parse_half_life("-0"), 0.0);
+        assert_eq!(parse_half_life(""), DEFAULT_HALF_LIFE);
+        assert_eq!(parse_half_life("off"), DEFAULT_HALF_LIFE);
+        assert_eq!(parse_half_life("inf"), DEFAULT_HALF_LIFE);
+        assert_eq!(parse_half_life("NaN"), DEFAULT_HALF_LIFE);
+    }
+
+    #[test]
+    fn equal_weights_reproduce_percentile() {
+        let mut v: Vec<f64> = vec![160.0, 151.06, 166.54, 153.12, 162.67, 159.29, 156.54];
+        v.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        for n in 1..=v.len() {
+            let s = &v[..n];
+            let w: Vec<(f64, f64)> = s.iter().map(|&x| (x, 1.0)).collect();
+            for p in [0.0, 0.25, 0.5, 0.75, 1.0] {
+                assert!((weighted_percentile(&w, p) - percentile(s, p)).abs() < 1e-9);
+            }
+        }
+        assert_eq!(weighted_percentile(&[], 0.5), 0.0);
+    }
+
+    #[test]
+    fn half_life_zero_is_the_unweighted_trailing_median() {
+        let pairs: Vec<ActivityPair> = (0..6)
+            .map(|i| pair(&format!("a{i}"), i * 30, 100 + i * 10))
+            .collect();
+        let off = build_lag_model(&pairs, 6, 0.0);
+        assert_eq!(off.median_days, 125.0);
+        assert_eq!(off.p25_days, 112.5);
+        assert_eq!(off.p75_days, 137.5);
+        let on = build_lag_model(&pairs, 6, 1.0);
+        assert!(on.median_days > off.median_days, "recent lags weigh more");
+        assert!(on.p25_days > off.p25_days && on.p75_days > off.p75_days);
+        assert_eq!(on.samples, off.samples, "the window itself does not move");
+        let flat = build_lag_model(&pairs, 6, 1e12);
+        assert!((flat.median_days - off.median_days).abs() < 1e-6);
+    }
+
+    #[test]
+    fn backtest_takes_the_half_life() {
+        let lags = [150, 150, 150, 170, 170, 170, 170, 170];
+        let pairs: Vec<ActivityPair> = lags
+            .iter()
+            .enumerate()
+            .map(|(i, l)| pair(&format!("a{i}"), i as i64 * 30, *l))
+            .collect();
+        let off = backtest(&pairs, 8, 0.0, 0);
+        let on = backtest(&pairs, 8, 1.0, 0);
+        assert_eq!(off.n, on.n);
+        assert!(on.median_abs_err_days < off.median_abs_err_days);
     }
 }

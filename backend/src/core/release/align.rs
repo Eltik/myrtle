@@ -122,18 +122,18 @@ fn featured_set(p: &GachaPoolClient) -> BTreeSet<&str> {
 
 const MIN_TOLERANCE_DAYS: f64 = 30.0;
 
-pub fn tolerance_days(pairs: &[ActivityPair], window: usize) -> f64 {
-    backtest(pairs, window, 0)
+pub fn tolerance_days(pairs: &[ActivityPair], window: usize, half_life: f64) -> f64 {
+    backtest(pairs, window, half_life, 0)
         .p90_abs_err_days
         .max(MIN_TOLERANCE_DAYS)
 }
 
-fn model_at(pairs: &[ActivityPair], window: usize, en_time: i64) -> Option<f64> {
+fn model_at(pairs: &[ActivityPair], window: usize, half_life: f64, en_time: i64) -> Option<f64> {
     let idx = pairs.partition_point(|p| p.en_start < en_time);
     if idx == 0 || window == 0 {
         return None;
     }
-    Some(build_lag_model(&pairs[..idx], window).median_days)
+    Some(build_lag_model(&pairs[..idx], window, half_life).median_days)
 }
 
 pub fn align_pools(
@@ -141,8 +141,9 @@ pub fn align_pools(
     en: &GameData,
     pairs: &[ActivityPair],
     window: usize,
+    half_life: f64,
 ) -> HashMap<String, PoolPair> {
-    let tolerance = tolerance_days(pairs, window);
+    let tolerance = tolerance_days(pairs, window, half_life);
     let mut cn_pools: Vec<&GachaPoolClient> = cn.gacha.gacha_pool_client.iter().collect();
     let mut en_pools: Vec<&GachaPoolClient> = en.gacha.gacha_pool_client.iter().collect();
     cn_pools.sort_by_key(|p| (p.open_time, p.gacha_pool_id.clone()));
@@ -178,7 +179,7 @@ pub fn align_pools(
                 return false;
             }
             let lag = (e.open_time - p.open_time) as f64 / 86_400.0;
-            model_at(pairs, window, e.open_time)
+            model_at(pairs, window, half_life, e.open_time)
                 .is_none_or(|median| (lag - median).abs() <= tolerance)
         }) {
             used_en.insert(e.gacha_pool_id.as_str());
@@ -301,7 +302,7 @@ mod tests {
             ],
             vec![],
         );
-        let m = align_pools(&cn, &en, &[], 10);
+        let m = align_pools(&cn, &en, &[], 10, 0.0);
         assert_eq!(m["LIMITED_1"].en_pool_id, "LIMITED_EN_1");
         assert_eq!(m["LIMITED_2"].en_pool_id, "LIMITED_EN_2");
         assert!(m.values().all(|p| p.method == AlignMethod::Content));
@@ -324,7 +325,7 @@ mod tests {
             ],
             vec![act("act1side", 260 * D)],
         );
-        let m = align_pools(&cn, &en, &[], 10);
+        let m = align_pools(&cn, &en, &[], 10, 0.0);
         assert_eq!(m["SINGLE_1"].en_pool_id, "SINGLE_EN_1");
         assert_eq!(m["SINGLE_1"].method, AlignMethod::Anchor);
         assert_eq!(m["SINGLE_2"].en_pool_id, "SINGLE_EN_2");
@@ -343,7 +344,7 @@ mod tests {
                 en_start: (i * 30 + 160) * D,
             })
             .collect();
-        assert_eq!(tolerance_days(&history, 10), 30.0);
+        assert_eq!(tolerance_days(&history, 10, 0.0), 30.0);
         let cn = game(
             vec![pool("CLASSIC_1", "CLASSIC", 200 * D, &["char_a", "char_b"])],
             vec![],
@@ -355,7 +356,7 @@ mod tests {
             ],
             vec![],
         );
-        let m = align_pools(&cn, &en, &history, 10);
+        let m = align_pools(&cn, &en, &history, 10, 0.0);
         assert_eq!(m["CLASSIC_1"].en_pool_id, "CLASSIC_EN_2");
         assert_eq!(m["CLASSIC_1"].method, AlignMethod::Content);
     }
@@ -407,7 +408,7 @@ mod tests {
         let en = game(en_pools, en_acts);
         let ind = independent_rules(&cn, &en);
         assert!(ind.contains("DOUBLE") && !ind.contains("SINGLE"));
-        let m = align_pools(&cn, &en, &[], 10);
+        let m = align_pools(&cn, &en, &[], 10, 0.0);
         assert!(m.keys().all(|k| k.starts_with("SINGLE_")));
         assert_eq!(m.len(), 12);
     }
