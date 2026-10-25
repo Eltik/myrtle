@@ -88,13 +88,20 @@ function CommunityPullsLine({ stat }: { stat: IBannerPullStat | undefined }) {
     if (!stat || stat.pullCount === 0) {
         return <div className="font-mono text-[10.5px] text-muted-foreground/70 uppercase tracking-[0.12em]">{t("community.runs.noPulls")}</div>;
     }
+    // One decimal is enough to tell banners apart; `f.number` would print up to three.
+    const average = stat.userCount > 0 ? Math.round((stat.pullCount / stat.userCount) * 10) / 10 : null;
     return (
         <div className="flex items-baseline gap-2 leading-none">
             <span className="font-sans font-semibold text-[18px] text-foreground tabular-nums tracking-[-0.02em]">{f.number(stat.pullCount)}</span>
             <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.14em]">{t("community.runs.communityPulls")}</span>
-            <span className="ml-auto font-mono text-[10px] text-muted-foreground tabular-nums" title={t("community.runs.contributors", { count: f.number(stat.userCount) })}>
-                {t("community.runs.people", { count: f.compact(stat.userCount) })}
-            </span>
+            <div className="ml-auto flex flex-col items-end gap-1 font-mono text-[10px] text-muted-foreground tabular-nums">
+                <span title={t("community.runs.contributors", { count: f.number(stat.userCount) })}>{t("community.runs.people", { count: f.compact(stat.userCount) })}</span>
+                {average !== null ? (
+                    <span className="text-muted-foreground/70" title={t("community.runs.averagePullsTitle")}>
+                        {t("community.runs.averagePulls", { count: f.number(average) })}
+                    </span>
+                ) : null}
+            </div>
         </div>
     );
 }

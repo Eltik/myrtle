@@ -66,11 +66,14 @@ fn is_rankable(info: &ActivityBasicInfo) -> bool {
         && !is_filler(&info.activity_type)
 }
 
-/// The event's art: its banner by activity id, else the Archives cover its
-/// story group names. Grani's `1stact` files its cover as `act1d0`, so the
-/// activity-id lookup alone misses it.
+/// The event's art: `/event-image` when it has a banner, Story Collection art
+/// to make one from (see `services::event_banner`) or a cover by activity id;
+/// else the Archives cover its story group names. Grani's `1stact` files its
+/// cover as `act1d0`, so the activity-id lookup alone misses it.
 fn icon(gd: &GameData, assets: &AssetIndex, id: &str) -> Option<String> {
-    if assets.event_banner_path(id).is_some() {
+    if assets.event_banner_path(id).is_some()
+        || crate::app::services::event_banner::sources(gd, assets, id).is_some()
+    {
         return Some(format!("/event-image/{id}"));
     }
     let pic = gd.story_reviews.get(id)?.story_entry_pic_id.as_deref()?;

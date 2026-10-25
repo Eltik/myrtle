@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-25T11:24:53.122Z",
+    "generatedAt": "2026-10-25T12:13:32.103Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -10920,6 +10920,22 @@
             "namespace": "gacha",
             "source_text": "moments ago",
             "description": "How long ago the community figures were recomputed, for anything under a minute. Lowercase; it follows the word 'updated'.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.community.runs.averagePulls",
+            "namespace": "gacha",
+            "source_text": "{count} avg",
+            "description": "Average pulls per contributing player on a banner card, shown under the player count, e.g. '11.8 avg'. The card is narrow.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "gacha.community.runs.averagePullsTitle",
+            "namespace": "gacha",
+            "source_text": "Average pulls per contributing player",
+            "description": "Tooltip on a banner card's average-pulls figure. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": []
         },
         {

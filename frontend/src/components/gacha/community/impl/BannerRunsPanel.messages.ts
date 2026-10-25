@@ -39,6 +39,14 @@ export const messages = {
         text: "{count} ppl",
         description: "Compact player count on a banner card, e.g. '1.2k ppl'. 'ppl' abbreviates people; the space is a non-breaking one and the card is narrow.",
     },
+    "community.runs.averagePulls": {
+        text: "{count} avg",
+        description: "Average pulls per contributing player on a banner card, shown under the player count, e.g. '11.8 avg'. The card is narrow.",
+    },
+    "community.runs.averagePullsTitle": {
+        text: "Average pulls per contributing player",
+        description: "Tooltip on a banner card's average-pulls figure. 'Player' is the site's term; the game itself says 'Doctor'.",
+    },
     "community.runs.moreOperators": {
         text: "{count} more",
         description: "Tooltip on the '+3' chip that stands in for featured operators the card has no room to show.",

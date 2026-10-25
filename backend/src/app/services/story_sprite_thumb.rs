@@ -139,7 +139,7 @@ pub fn render(
     encode(&out, format)
 }
 
-fn premultiply(img: &mut RgbaImage) {
+pub(crate) fn premultiply(img: &mut RgbaImage) {
     for p in img.pixels_mut() {
         let a = u16::from(p[3]);
         for c in 0..3 {
@@ -148,7 +148,7 @@ fn premultiply(img: &mut RgbaImage) {
     }
 }
 
-fn unpremultiply(img: &mut RgbaImage) {
+pub(crate) fn unpremultiply(img: &mut RgbaImage) {
     for p in img.pixels_mut() {
         let a = u16::from(p[3]);
         if a == 0 {
@@ -228,7 +228,7 @@ pub async fn ensure(
 
 /// Write `bytes` to `target` through `tmp_name` in the same directory, so the
 /// rename is atomic. `tmp_name` is cut to `[A-Za-z0-9._]`.
-fn write_atomically(target: &Path, tmp_name: &str, bytes: &[u8]) -> anyhow::Result<()> {
+pub(crate) fn write_atomically(target: &Path, tmp_name: &str, bytes: &[u8]) -> anyhow::Result<()> {
     let dir = target
         .parent()
         .ok_or_else(|| anyhow::anyhow!("thumbnail path has no parent"))?;

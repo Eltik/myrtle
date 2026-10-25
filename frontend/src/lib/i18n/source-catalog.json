@@ -1480,6 +1480,8 @@
     "gacha.community.relative.hours": "{count}h ago",
     "gacha.community.relative.minutes": "{count}m ago",
     "gacha.community.relative.moments": "moments ago",
+    "gacha.community.runs.averagePulls": "{count} avg",
+    "gacha.community.runs.averagePullsTitle": "Average pulls per contributing player",
     "gacha.community.runs.communityPulls": "community pulls",
     "gacha.community.runs.contributors": "{count} contributing players",
     "gacha.community.runs.dateRange": "{open} → {close}",

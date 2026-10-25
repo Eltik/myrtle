@@ -283,9 +283,52 @@ pub struct StorylineStorySet {
     /// read here so a consumer can find it without a second table pass.
     #[serde(default)]
     pub title_image_id: Option<String>,
+    /// `SsData`: an `SS` (side story) set's background and rerun.
+    #[serde(default)]
+    pub ss_data: Option<StorySetEventData>,
+    /// `CollectData`: a `COLLECT` (story collection) set's background.
+    #[serde(default)]
+    pub collect_data: Option<StorySetEventData>,
+}
+
+/// The part of `SsData` / `CollectData` the event art reads. MAINLINE sets
+/// carry neither.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct StorySetEventData {
+    /// The event's full-width key visual (`storybg_break_the_ice`, 1660x936),
+    /// in `spritepack/mixstory_retro_bkg_sprites_{0..5}`: the backdrop the
+    /// Story Collection draws behind a selected set. It fades to black on the
+    /// right, where the screen lays the title.
+    #[serde(default)]
+    pub background_id: Option<String>,
+    /// The rerun's activity id (`act14sre`). `SS` sets only.
+    #[serde(default)]
+    pub reopen_activity_id: Option<String>,
 }
 
 impl StorylineStorySet {
+    /// The set's key visual id, from whichever event block it carries.
+    #[must_use]
+    pub fn background_id(&self) -> Option<&str> {
+        self.ss_data
+            .as_ref()
+            .or(self.collect_data.as_ref())
+            .and_then(|d| d.background_id.as_deref())
+            .filter(|b| !b.is_empty())
+    }
+
+    /// Whether `act_id` is this set's event or its rerun.
+    #[must_use]
+    pub fn covers_activity(&self, act_id: &str) -> bool {
+        self.relevant_activity_id.as_deref() == Some(act_id)
+            || self
+                .ss_data
+                .as_ref()
+                .and_then(|d| d.reopen_activity_id.as_deref())
+                == Some(act_id)
+    }
+
     /// The `story_review_table` group this set points at, by the rule above.
     #[must_use]
     pub fn group_id(&self) -> Option<&str> {

@@ -765,6 +765,7 @@ mod tests {
             ("story_community_batch", Paid::Cached),
             ("story_gallery_variant", Paid::Cached),
             ("story_sprite_thumb", Paid::Cached),
+            ("event_banner", Paid::Cached),
             ("story_sprite_variant_thumb", Paid::Cached),
             ("dps_retention", Paid::Background),
             ("regrade", Paid::Background),

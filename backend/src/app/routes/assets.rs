@@ -774,6 +774,10 @@ macro_rules! indexed_asset_routes {
             .await
         }
 
+        indexed_asset_routes!(@handlers $impl_name, $plain, $srv, $path, $srv_path, $id, $what);
+    };
+    // The two handlers over an `$impl_name` written by hand.
+    (@handlers $impl_name:ident, $plain:ident, $srv:ident, $path:literal, $srv_path:literal, $id:literal, $what:literal) => {
         #[doc = $what]
         #[utoipa::path(
             get,
@@ -841,11 +845,48 @@ indexed_asset_routes!(
     "pool_id",
     " Gacha banner art, by gacha pool id."
 );
+/// An event's art, best first: its home-entry banner (live or archived), a
+/// banner made from its Story Collection art, its Archives cover.
+async fn event_image_impl(
+    state: &AppState,
+    server: Server,
+    act_id: &str,
+    headers: &HeaderMap,
+) -> Result<Response, ApiError> {
+    use crate::app::services::event_banner;
+    if let Ok(resp) = serve_resolved(state, server, headers, |idx| {
+        idx.path(AssetKind::EventBanner, act_id)
+            .map(std::borrow::ToOwned::to_owned)
+    })
+    .await
+    {
+        return Ok(resp);
+    }
+    for srv in state.asset_servers(server) {
+        let Some(sd) = state.try_server_data(srv) else {
+            continue;
+        };
+        let found = event_banner::sources(&sd.game_data.load(), &sd.asset_index.load(), act_id);
+        let Some((background, title)) = found else {
+            continue;
+        };
+        // Made under `derived/`, which the store does not mirror: served from disk.
+        if let Ok(rel) = event_banner::ensure(&sd.art_dir, act_id, &background, &title).await {
+            return serve_file(&sd.art_dir, &rel, headers).await;
+        }
+    }
+    serve_resolved(state, server, headers, |idx| {
+        idx.event_banner_path(act_id)
+            .map(std::borrow::ToOwned::to_owned)
+    })
+    .await
+}
+
 indexed_asset_routes!(
+    @handlers
     event_image_impl,
     event_image,
     event_image_srv,
-    event_banner_path,
     "/event-image/{act_id}",
     "/{server}/event-image/{act_id}",
     "act_id",
