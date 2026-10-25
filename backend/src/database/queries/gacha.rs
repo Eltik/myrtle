@@ -4,17 +4,58 @@ use uuid::Uuid;
 use crate::database::models::gacha::{GachaRecord, GachaStats};
 use crate::database::models::user::UserSettings;
 
+/// What [`insert_batch`] did with a batch.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[must_use]
+pub enum BatchOutcome {
+    /// The rows were written.
+    Stored,
+    /// The account's `user_settings.store_gacha` is off: nothing was written.
+    StorageOff,
+}
+
+/// Whether `user_settings.store_gacha` lets pulls be stored for `user_id`.
+///
+/// A missing settings row reads as ON, explicitly: the column defaults to
+/// `true` and `get_or_create_settings` creates the row with that default, so
+/// an account that never opened Settings stores pulls exactly as before.
+pub async fn store_gacha_enabled<'e, E>(executor: E, user_id: Uuid) -> Result<bool, sqlx::Error>
+where
+    E: sqlx::PgExecutor<'e>,
+{
+    let stored: Option<bool> =
+        sqlx::query_scalar("SELECT store_gacha FROM user_settings WHERE user_id = $1 FOR SHARE")
+            .bind(user_id)
+            .fetch_optional(executor)
+            .await?;
+    // None is the missing row, not a false switch.
+    Ok(stored.unwrap_or(true))
+}
+
+/// The one write path into `gacha_records`, so the opt-out is enforced HERE
+/// rather than by each caller: before this, `store_gacha` ("Store gacha
+/// history", Settings > Privacy) was never read on the way in, and an
+/// opted-out account had every synced pull stored.
+///
+/// The switch is read in the same transaction as the write, under `FOR SHARE`,
+/// so a toggle that lands while a fetch is paging through Yostar either commits
+/// first (and this stores nothing) or waits for this batch to commit.
 pub async fn insert_batch(
     pool: &PgPool,
     user_id: Uuid,
     records: &serde_json::Value,
-) -> Result<(), sqlx::Error> {
+) -> Result<BatchOutcome, sqlx::Error> {
+    let mut tx = pool.begin().await?;
+    if !store_gacha_enabled(&mut *tx, user_id).await? {
+        return Ok(BatchOutcome::StorageOff);
+    }
     sqlx::query("CALL sp_insert_gacha_batch($1, $2)")
         .bind(user_id)
         .bind(records)
-        .execute(pool)
+        .execute(&mut *tx)
         .await?;
-    Ok(())
+    tx.commit().await?;
+    Ok(BatchOutcome::Stored)
 }
 
 /// All history queries order ties on `batch_index ASC, id ASC`: a multi-pull

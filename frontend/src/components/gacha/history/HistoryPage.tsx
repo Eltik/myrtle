@@ -16,6 +16,7 @@ import { BannerHistory } from "./impl/BannerHistory";
 import { HistoryKpiStrip } from "./impl/HistoryKpiStrip";
 import styles from "./impl/HistoryPage.module.css";
 import { PityPanel } from "./impl/PityPanel";
+import { gachaStorageOff } from "./impl/storage-gate";
 import { TopOperators } from "./impl/TopOperators";
 
 function UnauthenticatedState() {
@@ -59,6 +60,9 @@ export function HistoryPage() {
     const t: TypedT<typeof messages> = useT("gacha");
     const { isAuthenticated, user } = useAuth();
     const queryClient = useQueryClient();
+    // With storing off the backend refuses the refresh (409) before calling
+    // Yostar, so the button is disabled and says why instead of failing.
+    const storageOff = gachaStorageOff(user);
 
     const recordsQuery = useQuery(myGachaStoredRecordsQueryOptions(isAuthenticated));
     const server = useGamedataServer();
@@ -113,15 +117,26 @@ export function HistoryPage() {
             <section className="mx-auto flex w-full max-w-330 flex-col gap-6 px-8 pt-7 pb-15 max-[760px]:px-4 max-[760px]:pt-5 max-[760px]:pb-10">
                 <PageHeader>
                     {isAuthenticated ? (
-                        <button
-                            type="button"
-                            onClick={() => refreshMutation.mutate()}
-                            disabled={refreshMutation.isPending}
-                            className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg bg-primary px-4 font-medium font-sans text-primary-foreground text-sm shadow-[0_1px_2px_oklch(0_0_0/0.25)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                            <RefreshCw className={`h-4 w-4 ${refreshMutation.isPending ? "animate-spin" : ""}`} aria-hidden />
-                            {refreshMutation.isPending ? t("history.refreshing") : t("history.refresh")}
-                        </button>
+                        <div className="flex flex-col items-start gap-1.5 sm:items-end">
+                            <button
+                                type="button"
+                                onClick={() => refreshMutation.mutate()}
+                                disabled={refreshMutation.isPending || storageOff}
+                                aria-describedby={storageOff ? "gacha-storage-off" : undefined}
+                                className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg bg-primary px-4 font-medium font-sans text-primary-foreground text-sm shadow-[0_1px_2px_oklch(0_0_0/0.25)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                <RefreshCw className={`h-4 w-4 ${refreshMutation.isPending ? "animate-spin" : ""}`} aria-hidden />
+                                {refreshMutation.isPending ? t("history.refreshing") : t("history.refresh")}
+                            </button>
+                            {storageOff ? (
+                                <p id="gacha-storage-off" className="m-0 max-w-[40ch] font-sans text-muted-foreground text-xs sm:text-right">
+                                    {t("history.refresh.storageOff")}{" "}
+                                    <Link to="/settings" className="text-foreground underline underline-offset-2 hover:text-primary">
+                                        {t("history.refresh.storageOffAction")}
+                                    </Link>
+                                </p>
+                            ) : null}
+                        </div>
                     ) : null}
                 </PageHeader>
 

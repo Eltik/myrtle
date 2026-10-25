@@ -51,6 +51,14 @@ export const messages = {
         text: "Try signing in again.",
         description: "Toast body suggesting a fix when the refresh failed and the server sent no message of its own.",
     },
+    "history.refresh.storageOff": {
+        text: "“Store gacha history” is off, so new pulls aren’t synced. Pulls already saved stay here.",
+        description: "Note beside the disabled refresh button when the player turned off storing their pulls. “Store gacha history” is the exact label of that switch on the settings page (privacy.gacha.title); keep it quoted.",
+    },
+    "history.refresh.storageOffAction": {
+        text: "Change in settings",
+        description: "Link after history.refresh.storageOff to the settings page, where the “Store gacha history” switch lives.",
+    },
     "history.error.load": {
         text: "Couldn’t load pull records.",
         description: "Bold lead-in of the error banner on the pull-history page; the server's own message follows it on the same line.",

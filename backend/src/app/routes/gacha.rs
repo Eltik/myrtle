@@ -47,7 +47,9 @@ pub struct HistoryParams {
 /// Pull the caller's newest gacha records from the game servers and store them.
 ///
 /// Needs stored game credentials, so a player who has disconnected must log in
-/// again first.
+/// again first. A player who turned off "Store gacha history" (Settings >
+/// Privacy, `store_gacha`) gets a 409 and the game servers are not called;
+/// pulls stored before the switch was turned off are kept.
 #[utoipa::path(
     post,
     path = "/gacha/fetch",
@@ -57,6 +59,7 @@ pub struct HistoryParams {
         (status = 200, description = "What the sync found and stored.", body = crate::app::services::gacha::FetchResult),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
         (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 409, description = "Gacha history storage is turned off for this account (`store_gacha`), so nothing was fetched or stored.", body = crate::app::error::ErrorBody),
         (status = 429, response = crate::app::openapi::responses::RateLimited),
         (status = 500, response = crate::app::openapi::responses::InternalError),
         (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)

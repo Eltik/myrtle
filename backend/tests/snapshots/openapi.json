@@ -3488,7 +3488,7 @@
           "gacha"
         ],
         "summary": "Pull the caller's newest gacha records from the game servers and store them.",
-        "description": "Needs stored game credentials, so a player who has disconnected must log in\nagain first.",
+        "description": "Needs stored game credentials, so a player who has disconnected must log in\nagain first. A player who turned off \"Store gacha history\" (Settings >\nPrivacy, `store_gacha`) gets a 409 and the game servers are not called;\npulls stored before the switch was turned off are kept.",
         "operationId": "fetch",
         "responses": {
           "200": {
@@ -3506,6 +3506,16 @@
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "description": "Gacha history storage is turned off for this account (`store_gacha`), so nothing was fetched or stored.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"

@@ -27,6 +27,7 @@ import type { PullRates } from "#/types/generated/PullRates";
 import type { PullTimingData } from "#/types/generated/PullTimingData";
 import type { RarityRate } from "#/types/generated/RarityRate";
 import type { WeightUpChar } from "#/types/generated/WeightUpChar";
+import { parseError } from "./_shared";
 import { DEFAULT_GAMEDATA_SERVER, type GamedataServer, gamedataKey, gamedataPath, isGamedataServer, resolveGamedataServer } from "./gamedata";
 
 export type IBanner = GachaPoolClient;
@@ -490,14 +491,18 @@ export const fetchGachaRecordsFn = createServerFn({ method: "POST" })
             bearerToken,
             body: "{}",
         });
-        if (!res.ok) throw new Error(`Failed to fetch gacha records: ${res.status}`);
+        if (!res.ok) throw await parseError(res);
         return (await res.json()) as IGachaFetchResult;
     });
 
 /**
  * Cookie-driven variant. Triggers `/gacha/fetch` (POST) which pulls the latest
  * pulls from Yostar and persists any new ones. Requires a live portal session
- * cached server-side from a recent login.
+ * cached server-side from a recent login, and the account's `store_gacha`
+ * switch on: with it off the backend answers 409 without calling Yostar.
+ *
+ * Throws `parseError`'s `APIError`, whose message is the backend's own
+ * `error.message` (the raw JSON envelope used to reach the toast verbatim).
  */
 export const fetchMyGachaRecordsFn = createServerFn({ method: "POST" }).handler(async () => {
     const token = getCookie("site_token");
@@ -507,9 +512,6 @@ export const fetchMyGachaRecordsFn = createServerFn({ method: "POST" }).handler(
         bearerToken: token,
         body: "{}",
     });
-    if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        throw new Error(text || `Failed to refresh gacha records: ${res.status}`);
-    }
+    if (!res.ok) throw await parseError(res);
     return (await res.json()) as IGachaFetchResult;
 });

@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-24T15:29:58.909Z",
+    "generatedAt": "2026-10-25T03:19:20.151Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -11916,6 +11916,20 @@
             "namespace": "gacha",
             "source_text": "Up to date",
             "description": "Toast title after the pull records were re-fetched successfully.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.history.refresh.storageOff",
+            "namespace": "gacha",
+            "source_text": "“Store gacha history” is off, so new pulls aren’t synced. Pulls already saved stay here.",
+            "description": "Note beside the disabled refresh button when the player turned off storing their pulls. “Store gacha history” is the exact label of that switch on the settings page (privacy.gacha.title); keep it quoted.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.history.refresh.storageOffAction",
+            "namespace": "gacha",
+            "source_text": "Change in settings",
+            "description": "Link after history.refresh.storageOff to the settings page, where the “Store gacha history” switch lives.",
             "placeholders": []
         },
         {

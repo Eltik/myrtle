@@ -1607,6 +1607,8 @@
     "gacha.history.refresh.errTitle": "Couldn't refresh",
     "gacha.history.refresh.okBody": "Synced {count} records from Yostar.",
     "gacha.history.refresh.okTitle": "Up to date",
+    "gacha.history.refresh.storageOff": "“Store gacha history” is off, so new pulls aren’t synced. Pulls already saved stay here.",
+    "gacha.history.refresh.storageOffAction": "Change in settings",
     "gacha.history.refreshing": "Refreshing…",
     "gacha.history.signIn.action": "Sign in",
     "gacha.history.signIn.body": "Your pull history, pity counters, and operator statistics are only available after linking your Yostar account.",

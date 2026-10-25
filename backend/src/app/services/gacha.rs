@@ -5,6 +5,7 @@ use crate::core::gamedata::types::GameData;
 use crate::core::hypergryph::yostar::AccountPortalSession;
 use crate::database::models::gacha::{GachaRecord, GachaStats};
 use crate::database::queries::gacha;
+use crate::database::queries::gacha::BatchOutcome;
 use crate::database::queries::gacha::get_all_for_user;
 use crate::database::queries::gacha::get_by_char_for_user;
 use crate::database::queries::gacha::get_history_filtered;
@@ -119,11 +120,22 @@ pub struct GlobalGachaStats {
 const GACHA_API_URL: &str = "https://account.yo-star.com/api/game/gachas";
 const PAGE_SIZE: i64 = 50;
 
+/// The 409 message when `store_gacha` is off. The frontend shows it verbatim
+/// in its error toast, so it names the switch and where it lives.
+pub const STORAGE_OFF_MESSAGE: &str = "Gacha history storage is turned off. Turn on \"Store gacha history\" in Settings > Privacy to sync your pulls.";
+
 pub async fn fetch_and_store(
     state: &AppState,
     user_id: Uuid,
     uid: &str,
 ) -> Result<FetchResult, ApiError> {
+    // A fetch exists only to store, so an opted-out account is refused before
+    // Yostar is called at all. `insert_batch` checks again at write time, which
+    // is what holds if the switch flips while the pages are being read.
+    if !gacha::store_gacha_enabled(&state.db, user_id).await? {
+        return Err(ApiError::Conflict(STORAGE_OFF_MESSAGE.into()));
+    }
+
     let portal_json: Option<String> = state.cache.get(&CacheKey::PortalSession { uid }).await;
 
     let portal_json = portal_json.ok_or(ApiError::BadRequest(
@@ -213,7 +225,10 @@ pub async fn fetch_and_store(
     let records_value =
         serde_json::to_value(&records_json).map_err(|e| ApiError::Internal(e.into()))?;
 
-    insert_batch(&state.db, user_id, &records_value).await?;
+    match insert_batch(&state.db, user_id, &records_value).await? {
+        BatchOutcome::Stored => {}
+        BatchOutcome::StorageOff => return Err(ApiError::Conflict(STORAGE_OFF_MESSAGE.into())),
+    }
 
     Ok(FetchResult {
         total_fetched,
