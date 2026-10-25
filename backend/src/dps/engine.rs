@@ -9,7 +9,6 @@ use crate::dps::zones::{
     BuffZones, DamageType, ResolvedReduction, max_source, post_multiplier, product, resolve_enemy,
 };
 
-use super::custom::apply_init;
 use super::custom::dispatch;
 use super::custom::dispatch_hps;
 use super::formulas::apply_shreds;
@@ -61,9 +60,24 @@ pub fn polarity_counts() -> (usize, usize, usize) {
     counts
 }
 
+/// The hand layer's metadata (`custom/hand/formulas.json`), one table per engine.
+#[derive(Deserialize)]
+struct HandFormulas {
+    dps: HashMap<String, OperatorFormula>,
+    hps: HashMap<String, OperatorFormula>,
+}
+
+fn load_hand_formulas() -> HandFormulas {
+    serde_json::from_str(super::custom::hand::FORMULAS_JSON)
+        .expect("Invalid custom/hand/formulas.json")
+}
+
+/// The DPS table: the generated `operator_formulas.json` with the hand layer's
+/// entries merged over it (a hand entry replaces a generated one with the same id).
 pub fn load_formulas() -> HashMap<String, OperatorFormula> {
     let mut formulas: HashMap<String, OperatorFormula> =
         serde_json::from_str(FORMULAS_JSON).expect("Invalid operator_formulas.json");
+    formulas.extend(load_hand_formulas().dps);
     for formula in formulas.values_mut() {
         normalize_default_skill(formula);
     }
@@ -96,8 +110,13 @@ fn normalize_default_skill(formula: &mut OperatorFormula) {
 /// does with no skill active.
 static BASIC_ATTACK: LazyLock<SkillFormula> = LazyLock::new(SkillFormula::default);
 
+/// The HPS table: the generated `heal_formulas.json` with the hand layer's entries
+/// merged over it, like [`load_formulas`].
 pub fn load_heal_formulas() -> HashMap<String, OperatorFormula> {
-    serde_json::from_str(HEAL_FORMULAS_JSON).expect("Invalid heal_formulas.json")
+    let mut formulas: HashMap<String, OperatorFormula> =
+        serde_json::from_str(HEAL_FORMULAS_JSON).expect("Invalid heal_formulas.json");
+    formulas.extend(load_hand_formulas().hps);
+    formulas
 }
 
 /// One operator configuration's damage.
@@ -776,8 +795,6 @@ pub fn calculate_dps_detailed(
         apply_clone(&mut unit, clone);
     }
 
-    apply_init(&mut unit);
-
     let skill_key = unit.skill_index.to_string();
     let skill_formula = match formula.skills.get(&skill_key) {
         Some(skill_formula) => skill_formula,
@@ -789,6 +806,13 @@ pub fn calculate_dps_detailed(
         None => EnemyResolution::Legacy(unit.shreds.clone()),
         Some(z) => apply_zones(&mut unit, z),
     };
+    // One duration source: when the operator's `__init__` sets the skill duration,
+    // the formula, total damage, average and cycle v2 all use it. After the zones,
+    // because the reference computes it from the buffed unit (JessicaAlter S3 reads
+    // attack speed).
+    if let Some(duration) = super::custom::skill_duration_override(&unit) {
+        unit.skill_duration = duration;
+    }
 
     // buff_fragile is 0 during skill_dps in the Python reference: the operator never
     // sees external fragile, it is multiplied on after the call.
@@ -897,20 +921,11 @@ pub fn calculate_hps_with(data: Arc<OperatorData>, params: OperatorParams) -> Op
     if unit.module_unavailable {
         return None;
     }
-
-    apply_init_fixups(&mut unit, &op_id);
+    if let Some(duration) = super::custom::skill_duration_override_hps(&unit) {
+        unit.skill_duration = duration;
+    }
 
     dispatch_hps(&unit)
-}
-
-/// Per-operator init side effects that the transpiler can't derive from the
-/// skill formula alone (e.g. values set in the operator's Python `__init__`).
-fn apply_init_fixups(unit: &mut OperatorUnit, op_id: &str) {
-    // Warfarin S1 heals for a fraction of the target's max HP; default it the
-    // way the reference does when no explicit target HP is supplied.
-    if op_id == "char_171_bldsk" && unit.skill_index == 1 {
-        unit.target_hp = (1000.0 * (f64::from(unit.elite) + 1.0)).max(100.0);
-    }
 }
 
 #[cfg(test)]
@@ -930,10 +945,47 @@ mod tests {
 
     #[test]
     fn bundled_formula_tables_parse() {
-        assert_eq!(load_formulas().len(), 260);
+        assert_eq!(load_formulas().len(), 261);
         assert_eq!(load_heal_formulas().len(), 61);
-        assert_eq!(supported_operators().len(), 260);
+        assert_eq!(supported_operators().len(), 261);
         assert_eq!(supported_healers().len(), 61);
+    }
+
+    /// Every hand-layer function has a metadata entry and vice versa, and the
+    /// merged tables carry every hand id. A function with no metadata would never
+    /// be reached (the engine looks the operator up in the table first); metadata
+    /// with no function would list an operator that computes 0.
+    #[test]
+    fn hand_registry_matches_hand_metadata() {
+        use super::super::custom::hand;
+        let meta = load_hand_formulas();
+        let check = |fns: Vec<&str>,
+                     table: &HashMap<String, OperatorFormula>,
+                     merged: &HashMap<String, OperatorFormula>| {
+            let mut fns = fns;
+            fns.sort_unstable();
+            let mut ids: Vec<&str> = table.keys().map(String::as_str).collect();
+            ids.sort_unstable();
+            assert_eq!(fns, ids, "hand registry vs custom/hand/formulas.json");
+            for id in ids {
+                assert!(
+                    merged.contains_key(id),
+                    "{id} missing from the merged table"
+                );
+            }
+        };
+        check(
+            hand::DPS.iter().map(|(id, _)| *id).collect(),
+            &meta.dps,
+            &load_formulas(),
+        );
+        check(
+            hand::HPS.iter().map(|(id, _)| *id).collect(),
+            &meta.hps,
+            &load_heal_formulas(),
+        );
+        assert!(hand::dps("char_1015_aglna2").is_some());
+        assert!(hand::dps("char_002_amiya").is_none());
     }
 
     #[test]

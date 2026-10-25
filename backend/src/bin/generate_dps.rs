@@ -1,11 +1,17 @@
 //! All-in-one DPS/HPS generator for the Arknights damage calculator.
 //!
 //! Reads Python source from `ArknightsDpsCompare` and generates:
-//! - `src/dps/config/operator_formulas.json`  - DPS operator metadata
-//! - `src/dps/custom/generated.rs` + `mod.rs` - transpiled Rust DPS functions
-//! - `src/dps/config/heal_formulas.json`      - HPS operator metadata
-//! - `src/dps/custom_hps/generated.rs` + `mod.rs` - transpiled Rust HPS functions
-//! - `tests/fixtures/expected_dps.json`       - Python-computed reference DPS values
+//! - `src/dps/config/operator_formulas.json`          - DPS operator metadata
+//! - `src/dps/custom/generated.rs` + `dispatch.rs`    - transpiled Rust DPS functions
+//! - `src/dps/config/heal_formulas.json`              - HPS operator metadata
+//! - `src/dps/custom/generated_hps.rs` + `dispatch_hps.rs` - transpiled Rust HPS functions
+//! - `tests/fixtures/expected_dps.json` / `expected_hps.json` - Python reference values
+//!
+//! It NEVER writes under `src/dps/custom/hand/` (hand-written formulas, consulted
+//! before the generated dispatch): every output path goes through `guard_output`,
+//! which panics on one. After a transpile it prints the ids that are in both
+//! layers, so a hand formula that upstream now covers gets reviewed. The JSON
+//! tables are written with sorted keys, so a regeneration diffs by content only.
 //!
 //! Usage:
 //!   cargo run --bin generate-dps                          # Run all DPS steps (default)
@@ -39,7 +45,7 @@
 use backend::app::state::{default_bin_server_from_env, derive_game_data_dir};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::fs;
 use std::io::{BufWriter, Write};
 use std::process::{Command, Stdio};
@@ -54,7 +60,7 @@ struct OperatorFormula {
     default_skill: i32,
     default_potential: i32,
     default_module: i32,
-    skills: HashMap<String, SkillFormula>,
+    skills: BTreeMap<String, SkillFormula>,
     conditionals: Vec<Conditional>,
 }
 
@@ -226,21 +232,198 @@ fn normalize_heal_variables(py_body: &str) -> String {
     s = s.replace("skillhps", "skill_hps");
     s = s.replace("avghps", "avg_hps");
     s = s.replace("skilldown_hps", "base_hps");
-
-    // When a body rebinds a local `atk_interval` but still reads the original
-    // `self.atk_interval`, rename the local so the two don't collapse onto the
-    // single hoisted variable. Skipped when `self.atk_interval` is itself
-    // reassigned (a genuine instance rebind we want to keep).
-    let has_local_assign = s
-        .lines()
-        .any(|l| l.trim_start().starts_with("atk_interval ="));
-    let has_self_assign = s.contains("self.atk_interval =");
-    if has_local_assign && !has_self_assign {
-        s = s.replace("atk_interval", "_atk_interval_w");
-        s = s.replace("self._atk_interval_w", "self.atk_interval");
-    }
-
     s
+}
+
+/// A Python local that shares its name with the Rust local an instance field
+/// becomes: `self.atk_interval` always transpiles to the local `atk_interval`, and
+/// a hoisted `__init__` field (`self.drone_atk`, ...) to its shadow local. When the
+/// body ALSO assigns a plain local of that name and reads `self.<field>`, the two
+/// collapse onto one Rust variable and every `self.<field>` read sees the local.
+#[derive(Debug, Clone)]
+struct LocalSelfCollision {
+    class_name: String,
+    name: String,
+    /// The body also assigns `self.<name>`: an instance rebind, left as one
+    /// variable (Python reads the rebound value through `self` too).
+    self_assigned: bool,
+}
+
+/// Python field -> the Rust local its `self.` reads become, for the names that can
+/// collide. `atk_interval` always; shadows only when `__init__` hoists them.
+fn collision_candidates(init: &InitState) -> Vec<(String, String)> {
+    let mut out = vec![("atk_interval".to_string(), "atk_interval".to_string())];
+    for (py, rust, _) in INIT_STATE_FIELDS {
+        if init.modified_fields.contains(*rust) && !rust.ends_with("_damage") {
+            out.push(((*py).to_string(), (*rust).to_string()));
+        }
+    }
+    out
+}
+
+fn find_local_self_collisions(
+    class_name: &str,
+    body: &str,
+    candidates: &[(String, String)],
+) -> Vec<LocalSelfCollision> {
+    let mut out = Vec::new();
+    for (py, rust) in candidates {
+        let local_write = Regex::new(&format!(
+            r"(?m)(?:^|[:\s])(?:{rust})\s*(?:\[[^\]]*\])?\s*[-+*/]?=[^=]"
+        ))
+        .unwrap();
+        let has_local = body
+            .lines()
+            .any(|l| local_write.is_match(&l.replace(&format!("self.{rust}"), "")));
+        let reads_self = body.contains(&format!("self.{py}"));
+        if has_local && reads_self {
+            let self_write = Regex::new(&format!(r"self\.{py}\s*[-+*/]?=[^=]")).unwrap();
+            out.push(LocalSelfCollision {
+                class_name: class_name.to_string(),
+                name: (*rust).clone(),
+                self_assigned: self_write.is_match(body),
+            });
+        }
+    }
+    out
+}
+
+/// Renames every colliding local `N` to `_N_w` (word-bounded, never after a `.`),
+/// so `self.N` keeps reading the instance value.
+fn split_local_self_collisions(body: &str, collisions: &[LocalSelfCollision]) -> String {
+    let mut s = body.to_string();
+    for c in collisions.iter().filter(|c| !c.self_assigned) {
+        s = rename_word(&s, &c.name, &format!("_{}_w", c.name));
+    }
+    s
+}
+
+/// Declared corrections to the Python reference (`custom/hand/reference_corrections.json`):
+/// class-scoped textual replacements applied to the upstream source before it is
+/// parsed, transpiled AND run for the expected fixtures, so the engine and the
+/// fixture agree on the corrected value and the parity test reads the same file to
+/// report the divergence. One source of truth.
+const REFERENCE_CORRECTIONS_JSON: &str = "src/dps/custom/hand/reference_corrections.json";
+
+#[derive(Deserialize)]
+struct ReferenceCorrection {
+    file: String,
+    class: String,
+    replace: Vec<(String, String)>,
+}
+
+#[derive(Deserialize)]
+struct ReferenceCorrections {
+    corrections: Vec<ReferenceCorrection>,
+}
+
+fn load_reference_corrections() -> Vec<ReferenceCorrection> {
+    let Ok(text) = fs::read_to_string(REFERENCE_CORRECTIONS_JSON) else {
+        return Vec::new();
+    };
+    serde_json::from_str::<ReferenceCorrections>(&text)
+        .expect("Invalid reference_corrections.json")
+        .corrections
+}
+
+/// The class's source span: `class Name(` up to the next top-level `class `.
+fn class_span(src: &str, class: &str) -> Option<(usize, usize)> {
+    let start = src.find(&format!("class {class}("))?;
+    let end = src[start + 1..]
+        .find("\nclass ")
+        .map_or(src.len(), |i| start + 1 + i);
+    Some((start, end))
+}
+
+/// Applies every correction declared for `file` (`damagecalc/...py`). Panics when
+/// a class or a replaced text is gone or ambiguous: upstream changed that code,
+/// and the correction must be reviewed, not silently dropped.
+fn apply_reference_corrections(file: &str, src: &str) -> String {
+    let mut out = src.to_string();
+    for c in load_reference_corrections()
+        .iter()
+        .filter(|c| c.file == file)
+    {
+        let (start, end) = class_span(&out, &c.class)
+            .unwrap_or_else(|| panic!("reference correction: class {} not in {file}", c.class));
+        let mut body = out[start..end].to_string();
+        for (old, new) in &c.replace {
+            assert_eq!(
+                body.matches(old.as_str()).count(),
+                1,
+                "reference correction for {}: `{old}` must occur exactly once; upstream \
+                 changed this code, review the correction",
+                c.class
+            );
+            body = body.replacen(old.as_str(), new, 1);
+        }
+        out = format!("{}{body}{}", &out[..start], &out[end..]);
+    }
+    out
+}
+
+/// Python that loads the corrected upstream modules before the script imports
+/// them, so `--expected` runs the same corrected reference the transpiler read.
+fn python_reference_corrections(repo_path: &str) -> String {
+    let corrections = load_reference_corrections();
+    let mut files: Vec<&str> = corrections.iter().map(|c| c.file.as_str()).collect();
+    files.sort_unstable();
+    files.dedup();
+    let mut out = String::new();
+    for file in files {
+        let original = fs::read_to_string(format!("{repo_path}/{file}"))
+            .unwrap_or_else(|e| panic!("read {repo_path}/{file}: {e}"));
+        let patched = apply_reference_corrections(file, &original);
+        let module = file.trim_end_matches(".py").replace('/', ".");
+        let tmp = std::env::temp_dir().join(format!("myrtle_corrected_{}", file.replace('/', "_")));
+        fs::write(&tmp, patched).expect("write corrected reference source");
+        let tmp = tmp.display();
+        out.push_str(&format!(
+            "import types as _types, damagecalc as _pkg\n_m = _types.ModuleType({module:?})\n_m.__file__ = {file:?}\nsys.modules[{module:?}] = _m\nexec(compile(open({tmp:?}, encoding='utf8').read(), {file:?}, 'exec'), _m.__dict__)\n",
+            tmp = tmp.to_string()
+        ));
+    }
+    out
+}
+
+/// The hand-written formula layer. The generator must never write into it.
+const HAND_DIR: &str = "src/dps/custom/hand/";
+/// The hand layer's metadata, read (never written) to report overlaps.
+const HAND_FORMULAS_JSON: &str = "src/dps/custom/hand/formulas.json";
+
+/// Panics if `path` is inside the hand layer.
+fn guard_output(path: &str) {
+    let normalized = path.trim_start_matches("./");
+    assert!(
+        !normalized.starts_with(HAND_DIR),
+        "generate-dps refuses to write {path}: {HAND_DIR} is hand-written"
+    );
+}
+
+/// Prints every transpiled id that the hand layer also defines. The hand formula
+/// wins at runtime, so upstream coverage of a hand operator is otherwise silent.
+fn report_hand_overlap(mode: Mode, dispatch_arms: &[(String, String)]) {
+    let Ok(text) = fs::read_to_string(HAND_FORMULAS_JSON) else {
+        eprintln!("  NOTE: {HAND_FORMULAS_JSON} not found; hand overlap not checked");
+        return;
+    };
+    let tables: HashMap<String, HashMap<String, serde_json::Value>> =
+        serde_json::from_str(&text).expect("Invalid hand formulas.json");
+    let section = match mode {
+        Mode::Damage => "dps",
+        Mode::Healing => "hps",
+    };
+    let Some(hand) = tables.get(section) else {
+        return;
+    };
+    for (char_id, fn_name) in dispatch_arms {
+        if hand.contains_key(char_id) {
+            println!(
+                "  HAND OVERRIDE: {char_id} ({fn_name}) is in custom/hand/ and wins over the \
+                 transpiled formula; review whether upstream now covers it"
+            );
+        }
+    }
 }
 
 fn main() {
@@ -259,6 +442,11 @@ fn main() {
             .cloned()
             .unwrap_or_else(|| "external/ArknightsDpsCompare".to_string())
     };
+
+    if args.contains(&"--audit".to_string()) {
+        print_formula_audit(&repo_path);
+        return;
+    }
 
     let run_formulas = args.contains(&"--formulas".to_string());
     let run_transpile = args.contains(&"--transpile".to_string());
@@ -279,6 +467,7 @@ fn main() {
     if run_all_dps || any_dps_flag {
         let py_src = fs::read_to_string(format!("{repo_path}/{}", Mode::Damage.py_source_rel()))
             .expect("Failed to read damage_formulas.py");
+        let py_src = apply_reference_corrections(Mode::Damage.py_source_rel(), &py_src);
 
         if run_all_dps || run_formulas {
             generate_formulas_json(Mode::Damage, &repo_path, &py_src);
@@ -301,6 +490,7 @@ fn main() {
     if any_hps_flag {
         let py_src = fs::read_to_string(format!("{repo_path}/{}", Mode::Healing.py_source_rel()))
             .expect("Failed to read healing_formulas.py");
+        let py_src = apply_reference_corrections(Mode::Healing.py_source_rel(), &py_src);
 
         let run_full_healing = run_healing;
         if run_full_healing || run_healing_formulas {
@@ -334,7 +524,11 @@ fn generate_formulas_json(mode: Mode, repo_path: &str, py_src: &str) {
     let operators = parse_operators(mode, py_src, &id_dict);
     println!("Parsed {} operators", operators.len());
 
-    let json = serde_json::to_string_pretty(&operators).unwrap();
+    // Sorted keys: a HashMap's order changes every run and buried each
+    // regeneration's real change under thousands of reordered lines.
+    let sorted: BTreeMap<&String, &OperatorFormula> = operators.iter().collect();
+    let json = serde_json::to_string_pretty(&sorted).unwrap();
+    guard_output(out_path);
     // Best-effort: the file may not exist on the first HPS run.
     let _ = fs::remove_file(out_path);
     if let Some(parent) = std::path::Path::new(out_path).parent() {
@@ -411,7 +605,7 @@ fn parse_operators(
                 default_skill: def_skill,
                 default_potential: def_pot,
                 default_module: def_mod,
-                skills: skill_formulas,
+                skills: skill_formulas.into_iter().collect(),
                 conditionals,
             },
         );
@@ -628,11 +822,13 @@ fn generate_expected_dps(repo_path: &str, formulas: &HashMap<String, OperatorFor
         skipped_modules
     );
 
+    let corrections = python_reference_corrections(repo_path);
     let py_script = format!(
         r#"#!/usr/bin/env python3
 import sys, json, os
 os.chdir("{repo_path}")
 sys.path.insert(0, ".")
+{corrections}
 from damagecalc.damage_formulas import *
 from damagecalc.utils import PlotParameters
 from collections import defaultdict
@@ -703,12 +899,16 @@ json.dump(results, sys.stdout)
 
     println!("Received {} DPS values from Python", results.len());
 
+    guard_output("tests/fixtures/expected_dps.json");
     let output_path = std::path::Path::new("tests/fixtures/expected_dps.json");
     if let Some(parent) = output_path.parent() {
         fs::create_dir_all(parent).unwrap();
     }
-    let json = serde_json::to_string_pretty(&results).unwrap();
-    fs::remove_file(output_path).unwrap();
+    // Sorted keys: a regeneration diffs by content only.
+    let sorted: BTreeMap<&String, _> = results.iter().collect();
+    let json = serde_json::to_string_pretty(&sorted).unwrap();
+    // Absent on a first run in a fresh checkout.
+    let _ = fs::remove_file(output_path);
 
     let file = fs::File::create(output_path).unwrap();
     let mut writer = BufWriter::new(file);
@@ -801,6 +1001,7 @@ fn generate_expected_hps(repo_path: &str, formulas: &HashMap<String, OperatorFor
 
     // Python script: trace skill_hps() and read the (skill_hps, base_hps, avg_hps)
     // triple from its locals at return.
+    let corrections = python_reference_corrections(repo_path);
     let py_script = format!(
         r#"#!/usr/bin/env python3
 import sys, json, os, io, contextlib
@@ -809,6 +1010,7 @@ sys.path.insert(0, ".")
 # Silence stray prints from upstream code so only the final JSON reaches stdout.
 _real_stdout = sys.stdout
 sys.stdout = io.StringIO()
+{corrections}
 from damagecalc.healing_formulas import *
 from damagecalc.utils import PlotParameters
 
@@ -929,11 +1131,14 @@ json.dump(results, sys.stdout)
 
     println!("Received {} HPS triples from Python", results.len());
 
+    guard_output(out_path);
     let output_path = std::path::Path::new(out_path);
     if let Some(parent) = output_path.parent() {
         fs::create_dir_all(parent).unwrap();
     }
-    let json = serde_json::to_string_pretty(&results).unwrap();
+    // Sorted keys: a regeneration diffs by content only.
+    let sorted: BTreeMap<&String, _> = results.iter().collect();
+    let json = serde_json::to_string_pretty(&sorted).unwrap();
     let _ = fs::remove_file(output_path);
     let file = fs::File::create(output_path).unwrap();
     let mut writer = BufWriter::new(file);
@@ -1008,6 +1213,7 @@ fn transpile_all(mode: Mode, py_src: &str, formulas: &HashMap<String, OperatorFo
     generated.push_str(use_stmt);
 
     let mut dispatch_arms: Vec<(String, String)> = Vec::new();
+    let mut duration_arms: Vec<(String, String)> = Vec::new();
     let mut success = 0;
     let mut failed = 0;
 
@@ -1039,10 +1245,40 @@ fn transpile_all(mode: Mode, py_src: &str, formulas: &HashMap<String, OperatorFo
             method_body = normalize_heal_variables(&method_body);
         }
 
-        let init_body = extract_init_method(class_body);
-        let init_mutations = extract_and_transpile_init_mutations(&init_body);
+        // `__init__` state runs first: prepend it, guards and all, to the body so the
+        // one transpiler handles both.
+        let init_state = analyze_init_state(class_name, class_body, &method_body);
+        let collisions = find_local_self_collisions(
+            class_name,
+            &method_body,
+            &collision_candidates(&init_state),
+        );
+        for c in collisions.iter().filter(|c| c.self_assigned) {
+            eprintln!(
+                "  LOCAL/SELF NAME NOT SPLIT: {class_name}.{} (body rebinds self.{} too)",
+                c.name, c.name
+            );
+        }
+        method_body = split_local_self_collisions(&method_body, &collisions);
+        for f in &init_state.findings {
+            if let InitStateKind::Unhandled(why) = &f.kind {
+                eprintln!(
+                    "  INIT STATE NOT REPRODUCED: {class_name}.{} ({why}): {}",
+                    f.field, f.line
+                );
+            }
+        }
+        for field in &init_state.free_fields {
+            method_body = Regex::new(&format!(r"self\.{field}\b"))
+                .unwrap()
+                .replace_all(&method_body, format!("{FREE_FIELD_PREFIX}{field}").as_str())
+                .to_string();
+        }
+        if !init_state.prelude.is_empty() {
+            method_body = format!("{}\n{method_body}", init_state.prelude.join("\n"));
+        }
         let rust_fn_name = to_snake_case(class_name);
-        let rust_body = transpile_skill_dps(&method_body, &init_mutations, shape);
+        let rust_body = transpile_skill_dps(&method_body, &init_state, shape);
 
         let fn_start_pos = generated.len();
         generated.push_str(&format!(
@@ -1074,13 +1310,37 @@ fn transpile_all(mode: Mode, py_src: &str, formulas: &HashMap<String, OperatorFo
             eprintln!("  FALLBACK: {class_name} - syntax check failed");
         }
 
+        // `__init__` sets the skill duration: emit it as its own function so the
+        // engine's total damage, average and cycle use the same duration.
+        let sets_duration = init_state
+            .findings
+            .iter()
+            .any(|f| f.field == "skill_duration" && f.kind == InitStateKind::Hoisted);
+        if sets_duration && !has_bad_syntax {
+            let body = format!("{}\nreturn skill_duration", init_state.prelude.join("\n"));
+            let rust = transpile_skill_dps(&body, &init_state, OutputShape::F64Dps);
+            generated.push_str(&format!(
+                "/// {class_name} - the skill duration its `__init__` sets\npub fn {rust_fn_name}_skill_duration(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {{\n{rust}}}\n\n"
+            ));
+            duration_arms.push((
+                char_id.to_string(),
+                format!("{rust_fn_name}_skill_duration"),
+            ));
+        }
+
         dispatch_arms.push((char_id.to_string(), rust_fn_name));
         success += 1;
     }
 
     println!("Transpiled: {success}, Failed: {failed}");
 
+    report_hand_overlap(mode, &dispatch_arms);
+    if generated.contains("py_comb(") {
+        generated.push_str(PY_COMB_FN);
+    }
+
     let generated_path = mode.generated_rs_path();
+    guard_output(generated_path);
     if let Some(parent) = std::path::Path::new(generated_path).parent() {
         fs::create_dir_all(parent).ok();
     }
@@ -1089,8 +1349,13 @@ fn transpile_all(mode: Mode, py_src: &str, formulas: &HashMap<String, OperatorFo
         .unwrap_or_else(|e| panic!("Failed to write {generated_path}: {e}"));
     println!("Written to {generated_path}");
 
-    let mod_rs = build_dispatch_mod(shape, mode.generated_mod_name(), &dispatch_arms);
+    let mut mod_rs = build_dispatch_mod(shape, mode.generated_mod_name(), &dispatch_arms);
+    mod_rs.push_str(&build_duration_dispatch(
+        mode.generated_mod_name(),
+        &duration_arms,
+    ));
     let dispatch_path = mode.dispatch_rs_path();
+    guard_output(dispatch_path);
     let _ = fs::remove_file(dispatch_path);
     fs::write(dispatch_path, &mod_rs)
         .unwrap_or_else(|e| panic!("Failed to write {dispatch_path}: {e}"));
@@ -1098,6 +1363,35 @@ fn transpile_all(mode: Mode, py_src: &str, formulas: &HashMap<String, OperatorFo
         "Written to {dispatch_path} ({} dispatch arms)",
         dispatch_arms.len()
     );
+}
+
+/// `dispatch_skill_duration`: the duration a class's `__init__` sets, for the
+/// operators whose `__init__` sets one; `None` for every other operator.
+fn build_duration_dispatch(generated_mod: &str, arms: &[(String, String)]) -> String {
+    let mut out = String::new();
+    out.push_str(
+        "\n/// The skill duration the operator's Python `__init__` sets, when it sets one.\n",
+    );
+    out.push_str(
+        "/// The engine uses it for the formula, total damage, average and cycle alike.\n",
+    );
+    out.push_str("pub fn dispatch_skill_duration(unit: &OperatorUnit) -> Option<f64> {\n");
+    if arms.is_empty() {
+        out.push_str("    let _ = unit;\n    None\n}\n");
+        return out;
+    }
+    out.push_str(
+        "    let enemy = EnemyStats {\n        defense: 0.0,\n        res: 0.0,\n    };\n",
+    );
+    out.push_str("    let op_id = unit.data.data.id.as_deref().unwrap_or(\"\");\n");
+    out.push_str("    match op_id {\n");
+    for (char_id, fn_name) in arms {
+        out.push_str(&format!(
+            "        \"{char_id}\" => {generated_mod}::{fn_name}(unit, &enemy),\n"
+        ));
+    }
+    out.push_str("        _ => None,\n    }\n}\n");
+    out
 }
 
 fn build_dispatch_mod(
@@ -1322,7 +1616,7 @@ static RE: LazyLock<TranspileRegexes> = LazyLock::new(|| {
         inner_ternary: Regex::new(r"^(.+?)\s+if\s+(.+?)\s+else\s+(.+)$").unwrap(),
         inline_if_op_re: Regex::new(r"^if\s+(.+?):\s*(\w+)\s*(\+=|-=|\*=)\s*(.+)$").unwrap(),
         inline_elif_re: Regex::new(r"^elif\s+(.+?):\s*(.+)$").unwrap(),
-        for_range_re: Regex::new(r"^for\s+(\w+)\s+in\s+range\((.+)\):?$").unwrap(),
+        for_range_re: Regex::new(r"^for\s+(\w+)\s+in\s+range\s*\((.+)\)\s*:?$").unwrap(),
         if_in_re: Regex::new(r"^if\s+self\.skill\s+in\s*\[([^\]]+)\]:?$").unwrap(),
         inline_else_re: Regex::new(r"^else:\s+(.+)$").unwrap(),
 
@@ -1357,263 +1651,654 @@ static RE: LazyLock<TranspileRegexes> = LazyLock::new(|| {
     }
 });
 
-struct InitMutations {
-    shadow_decls: Vec<String>, // e.g. "let mut drone_atk: f64 = unit.drone_atk;"
-    mutations: Vec<String>,    // e.g. "if skill == 1 { drone_atk += 45.0; }"
-    modified_fields: std::collections::HashSet<String>, // e.g. {"drone_atk", "trait_damage"}
+/// `__init__` instance state the generated function must reproduce: Python field,
+/// the Rust shadow local it becomes, and that local's declaration.
+const INIT_STATE_FIELDS: &[(&str, &str, &str)] = &[
+    (
+        "drone_atk",
+        "drone_atk",
+        "let mut drone_atk: f64 = unit.drone_atk;",
+    ),
+    ("atk", "atk", "let mut atk: f64 = unit.atk;"),
+    (
+        "attack_speed",
+        "attack_speed",
+        "let mut attack_speed: f64 = unit.attack_speed;",
+    ),
+    ("ammo", "ammo", "let mut ammo: f64 = unit.ammo;"),
+    (
+        "skill_duration",
+        "skill_duration",
+        "let mut skill_duration: f64 = unit.skill_duration;",
+    ),
+    (
+        "target_hp",
+        "target_hp",
+        "let mut target_hp: f64 = unit.target_hp;",
+    ),
+    ("shadows", "shadows", "let mut shadows: f64 = unit.shadows;"),
+    (
+        "trait_dmg",
+        "trait_damage",
+        "let mut trait_damage: bool = unit.trait_damage;",
+    ),
+    (
+        "talent_dmg",
+        "talent_damage",
+        "let mut talent_damage: bool = unit.talent_damage;",
+    ),
+    (
+        "talent2_dmg",
+        "talent2_damage",
+        "let mut talent2_damage: bool = unit.talent2_damage;",
+    ),
+    (
+        "skill_dmg",
+        "skill_damage",
+        "let mut skill_damage: bool = unit.skill_damage;",
+    ),
+    (
+        "module_dmg",
+        "module_damage",
+        "let mut module_damage: bool = unit.module_damage;",
+    ),
+];
+
+/// Instance fields an `__init__` writes that the generated code deliberately does
+/// not reproduce, with the reason. Everything else the formula reads must be
+/// hoisted, or `init_state_audit` reports it.
+const INIT_STATE_ELSEWHERE: &[(&str, &str, &str)] = &[
+    (
+        "Amiya",
+        "skill",
+        "forces skill 3 when pp.skill is -1 (the bot's 'best skill'); the engine always \
+         passes an explicit skill",
+    ),
+    (
+        "Amiya",
+        "params",
+        "S3 multiplier by mastery from pp.mastery; the engine reads the same value from \
+         skill_parameters at the requested skill level",
+    ),
+    (
+        "Stainless",
+        "params",
+        "S3 multiplier by mastery from pp.mastery; the engine reads skill_parameters",
+    ),
+    (
+        "Stainless",
+        "params2",
+        "S3 multiplier by mastery from pp.mastery; the engine reads skill_parameters",
+    ),
+    (
+        "Nian",
+        "atk",
+        "the reference adds module 1's ATK by hand because its own data reader drops it \
+         ('module lvl 1 does not come with an atk increase, breaking the automatic \
+         system'); the engine reads module ATK from game data, so hoisting it would count \
+         it twice (measured: hoisted, s1 m1 DEF 0 740.360 -> 795.693 against the \
+         reference's 740.360)",
+    ),
+    (
+        "Necrass",
+        "no_kill",
+        "keyword switch nokill / kill (try_kwargs, False without kwargs); the body maps \
+         self.no_kill to !skill_damage, so the skill conditional is that switch and its \
+         default (on) is the reference's False",
+    ),
+    (
+        "AmiyaMedic",
+        "res",
+        "copies pp.res for a formula the transpiler cannot carry (HEAL_FALLBACKS stub)",
+    ),
+    (
+        "ReedAlter",
+        "res",
+        "copies pp.res for a formula the transpiler cannot carry (HEAL_FALLBACKS stub)",
+    ),
+    (
+        "Pozemka",
+        "pot",
+        "copies pp.pot; the formula's self.pot maps to unit.potential directly",
+    ),
+];
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum InitStateKind {
+    /// Reproduced in the generated function, guards included.
+    Hoisted,
+    /// Inside `try:` / `except`: a default for a keyword argument (hits, shreds,
+    /// target HP), which the engine supplies from request parameters.
+    KwargsDefault,
+    /// Written but never read by the transpiled method.
+    NotRead,
+    /// Deliberately not reproduced; the reason is in `INIT_STATE_ELSEWHERE`.
+    Elsewhere(&'static str),
+    /// Read by the formula and NOT reproduced: a wrong number. The string says why.
+    Unhandled(String),
 }
 
-fn extract_and_transpile_init_mutations(init_body: &str) -> InitMutations {
-    let mut mutations = Vec::new();
+#[derive(Debug, Clone)]
+struct InitStateFinding {
+    class_name: String,
+    field: String,
+    line: String,
+    kind: InitStateKind,
+}
+
+/// One Python statement with the statements nested under it. An inline compound
+/// statement (`if c: stmt`) is split into a header node with one child.
+#[derive(Debug, Clone)]
+struct PyNode {
+    text: String,
+    children: Vec<Self>,
+}
+
+static SELF_ASSIGN_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^self\.(\w+)\s*([-+*/]?=)\s*([^=\s].*)$").unwrap());
+static LOCAL_ASSIGN_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^([A-Za-z_]\w*)\s*(?:\[[^\]]*\])?\s*[-+*/]?=[^=]").unwrap());
+static IDENT_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?:\b|^)([A-Za-z_]\w*)\b").unwrap());
+
+const COMPOUND_KEYWORDS: &[&str] = &["if ", "elif ", "else", "try", "except", "for ", "while "];
+
+/// Splits `if c: stmt` into `("if c:", Some("stmt"))`; `("if c:", None)` for a block
+/// header; `None` for a plain statement. The header colon is the first one outside
+/// brackets and strings.
+fn split_compound(text: &str) -> Option<(String, Option<String>)> {
+    if !COMPOUND_KEYWORDS.iter().any(|k| text.starts_with(k)) {
+        return None;
+    }
+    let (mut depth, mut quote) = (0i32, None::<char>);
+    for (i, c) in text.char_indices() {
+        match (quote, c) {
+            (Some(q), _) if c == q => quote = None,
+            (Some(_), _) => {}
+            (None, '"' | '\'') => quote = Some(c),
+            (None, '(' | '[' | '{') => depth += 1,
+            (None, ')' | ']' | '}') => depth -= 1,
+            (None, ':') if depth == 0 => {
+                let head = format!("{}:", text[..i].trim_end());
+                let rest = text[i + 1..].split('#').next().unwrap_or("").trim();
+                return Some((head, (!rest.is_empty()).then(|| rest.to_string())));
+            }
+            _ => {}
+        }
+    }
+    None
+}
+
+/// Parses tab-indented Python (top level = 0 tabs) into statement trees.
+fn parse_py_block(src: &str) -> Vec<PyNode> {
+    let mut items: Vec<(usize, String)> = Vec::new();
+    for line in src.lines() {
+        let code = line.split('#').next().unwrap_or("");
+        if code.trim().is_empty() {
+            continue;
+        }
+        let indent = line.chars().take_while(|&c| c == '\t').count();
+        items.push((indent, code.trim().to_string()));
+    }
+    fn build(items: &[(usize, String)], pos: &mut usize, indent: usize) -> Vec<PyNode> {
+        let mut out = Vec::new();
+        while *pos < items.len() && items[*pos].0 >= indent {
+            let (ind, text) = items[*pos].clone();
+            *pos += 1;
+            let mut node = match split_compound(&text) {
+                Some((head, Some(inline))) => PyNode {
+                    text: head,
+                    children: vec![PyNode {
+                        text: inline,
+                        children: Vec::new(),
+                    }],
+                },
+                Some((head, None)) => PyNode {
+                    text: head,
+                    children: Vec::new(),
+                },
+                None => PyNode {
+                    text,
+                    children: Vec::new(),
+                },
+            };
+            if *pos < items.len() && items[*pos].0 > ind {
+                let child_indent = items[*pos].0;
+                node.children.extend(build(items, pos, child_indent));
+            }
+            out.push(node);
+        }
+        out
+    }
+    let mut pos = 0;
+    build(&items, &mut pos, 0)
+}
+
+/// What `analyze_init_state` hands the transpiler: Python prelude lines (tab
+/// indented, top level 0) holding every hoisted statement under its full guard
+/// chain, and the shadow declarations the prelude writes to.
+struct InitState {
+    prelude: Vec<String>,
+    shadow_decls: Vec<String>,
+    modified_fields: std::collections::HashSet<String>,
+    /// Hoisted instance fields with no `OperatorUnit` counterpart; the body's
+    /// `self.F` reads are rewritten to the `st_F` local.
+    free_fields: Vec<String>,
+    findings: Vec<InitStateFinding>,
+}
+
+fn init_state_field(py_field: &str) -> Option<(&'static str, &'static str)> {
+    INIT_STATE_FIELDS
+        .iter()
+        .find(|(py, _, _)| *py == py_field)
+        .map(|(_, rust, decl)| (*rust, *decl))
+}
+
+/// The statements after `super().__init__(...)`.
+fn init_statements(class_body: &str) -> Vec<PyNode> {
+    // `pp.pot` is the potential the instance was built with: `self.pot` everywhere.
+    let init = extract_method(class_body, "__init__").replace("pp.pot", "self.pot");
+    let nodes = parse_py_block(&init);
+    let start = nodes
+        .iter()
+        .position(|n| n.text.contains("super().__init__"))
+        .map_or(0, |i| i + 1);
+    nodes[start..].to_vec()
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+struct Ctx {
+    /// Inside `try:`: the value comes from a keyword argument the engine never passes.
+    in_try: bool,
+}
+
+/// Fields whose `__init__` default the engine replaces with a request value:
+/// `shreds` from the request's shred, `cloned_op` from the clone operator
+/// (`unit.clone_*`).
+const REQUEST_SUPPLIED: &[&str] = &["shreds", "cloned_op"];
+
+static CTOR_ARG_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\b(pp|kwargs)\b").unwrap());
+
+/// Prefix for `__init__` locals and for instance fields with no `OperatorUnit`
+/// counterpart, so neither can collide with a name in the transpiled body.
+const INIT_LOCAL_PREFIX: &str = "init_";
+const FREE_FIELD_PREFIX: &str = "st_";
+
+struct InitWalk<'a> {
+    class_name: &'a str,
+    method_body: &'a str,
+    /// `__init__` locals the kept statements need (transitively), by name.
+    needed_locals: std::collections::BTreeSet<String>,
+    /// local name -> identifiers its assignments read (first pass).
+    local_deps: std::collections::BTreeMap<String, std::collections::BTreeSet<String>>,
+    /// Identifiers read by kept statements and their guards (first pass).
+    wanted: std::collections::BTreeSet<String>,
+    /// Instance fields with no `OperatorUnit` shadow that are hoisted, and whether
+    /// they hold a bool.
+    free_fields: std::collections::BTreeMap<String, bool>,
+    findings: Vec<InitStateFinding>,
+}
+
+fn idents(text: &str) -> std::collections::BTreeSet<String> {
+    IDENT_RE
+        .captures_iter(text)
+        .filter(|c| {
+            let m = c.get(1).unwrap();
+            !text[..m.start()].ends_with('.')
+        })
+        .map(|c| c[1].to_string())
+        .collect()
+}
+
+fn rename_word(text: &str, from: &str, to: &str) -> String {
+    Regex::new(&format!(r"(^|[^.\w]){from}\b"))
+        .unwrap()
+        .replace_all(text, |c: &regex::Captures| format!("{}{to}", &c[1]))
+        .to_string()
+}
+
+impl InitWalk<'_> {
+    /// Returns the kept copy of `nodes`: hoisted statements, the `__init__` locals
+    /// they read, and the headers above them. An if / elif / else chain is kept
+    /// whole when any branch is kept, with `pass` in the branches that keep nothing.
+    fn walk(&mut self, nodes: &[PyNode], guards: &[String], ctx: Ctx) -> Vec<PyNode> {
+        let mut out: Vec<PyNode> = Vec::new();
+        let mut i = 0;
+        while i < nodes.len() {
+            let node = &nodes[i];
+            if node.text.starts_with("if ") {
+                let mut j = i + 1;
+                while j < nodes.len()
+                    && (nodes[j].text.starts_with("elif ") || nodes[j].text == "else:")
+                {
+                    j += 1;
+                }
+                let mut branches = Vec::new();
+                let mut any = false;
+                for branch in &nodes[i..j] {
+                    let mut g = guards.to_vec();
+                    g.push(branch.text.clone());
+                    let kept = self.walk(&branch.children, &g, ctx);
+                    any |= !kept.is_empty();
+                    let children = if kept.is_empty() {
+                        vec![PyNode {
+                            text: "pass".into(),
+                            children: Vec::new(),
+                        }]
+                    } else {
+                        kept
+                    };
+                    branches.push(PyNode {
+                        text: branch.text.clone(),
+                        children,
+                    });
+                }
+                if any {
+                    out.extend(branches);
+                }
+                i = j;
+                continue;
+            }
+            if node.text == "try:" {
+                self.walk(&node.children, guards, Ctx { in_try: true });
+                i += 1;
+                continue;
+            }
+            if node.text.starts_with("except") {
+                // The engine passes no keyword arguments, so the reference always
+                // takes this branch: its writes are the effective state.
+                out.extend(self.walk(&node.children, guards, Ctx { in_try: false }));
+                i += 1;
+                continue;
+            }
+            if node.text.starts_with("for ") || node.text.starts_with("while ") {
+                let mut g = guards.to_vec();
+                g.push(node.text.clone());
+                let kept = self.walk(&node.children, &g, ctx);
+                if !kept.is_empty() {
+                    out.push(PyNode {
+                        text: node.text.clone(),
+                        children: kept,
+                    });
+                }
+                i += 1;
+                continue;
+            }
+            if let Some(kept) = self.statement(node, guards, ctx) {
+                out.push(kept);
+            }
+            i += 1;
+        }
+        out
+    }
+
+    fn note_wanted(&mut self, guards: &[String], value: &str) {
+        for g in guards {
+            self.wanted.extend(idents(g));
+        }
+        self.wanted.extend(idents(value));
+    }
+
+    fn statement(&mut self, node: &PyNode, guards: &[String], ctx: Ctx) -> Option<PyNode> {
+        let text = node.text.as_str();
+        let Some(cap) = SELF_ASSIGN_RE.captures(text) else {
+            let local = LOCAL_ASSIGN_RE.captures(text)?;
+            let name = local[1].to_string();
+            let rhs = text.split_once('=').map_or("", |(_, r)| r);
+            let mut deps = idents(rhs);
+            for g in guards {
+                deps.extend(idents(g));
+            }
+            // A subscripted write (`a[j] += x`) reads the index too.
+            deps.extend(idents(text.split_once('=').map_or("", |(l, _)| l)));
+            self.local_deps
+                .entry(name.clone())
+                .or_default()
+                .extend(deps);
+            if !self.needed_locals.contains(&name) {
+                return None;
+            }
+            self.note_wanted(guards, rhs);
+            return Some(PyNode {
+                text: text.to_string(),
+                children: Vec::new(),
+            });
+        };
+        let field = cap[1].to_string();
+        if field == "name" || field == "base_name" {
+            return None;
+        }
+        let read_by_formula = Regex::new(&format!(r"self\.{field}\b"))
+            .unwrap()
+            .is_match(self.method_body);
+        let mut finding = InitStateFinding {
+            class_name: self.class_name.to_string(),
+            field: field.clone(),
+            line: text.to_string(),
+            kind: InitStateKind::Hoisted,
+        };
+        let value = cap[3].to_string();
+        let mut keep = None;
+        let elsewhere = INIT_STATE_ELSEWHERE
+            .iter()
+            .find(|(c, f, _)| *c == self.class_name && *f == field);
+        if ctx.in_try || REQUEST_SUPPLIED.contains(&field.as_str()) {
+            finding.kind = InitStateKind::KwargsDefault;
+        } else if let Some((_, _, why)) = elsewhere {
+            finding.kind = InitStateKind::Elsewhere(why);
+        } else if init_state_field(&field).is_none() && !read_by_formula {
+            finding.kind = InitStateKind::NotRead;
+        } else if CTOR_ARG_RE.is_match(&value) {
+            finding.kind = InitStateKind::Unhandled("reads a constructor argument".into());
+        } else if guards.iter().any(|g| CTOR_ARG_RE.is_match(g)) {
+            finding.kind = InitStateKind::Unhandled("guarded by a constructor argument".into());
+        } else if guards.iter().any(|g| g.starts_with("while ")) {
+            finding.kind = InitStateKind::Unhandled("inside a while loop".into());
+        } else {
+            let target = if let Some((rust, _)) = init_state_field(&field) {
+                rust.to_string()
+            } else {
+                let is_bool = matches!(value.trim(), "True" | "False");
+                *self.free_fields.entry(field.clone()).or_insert(false) |= is_bool;
+                format!("{FREE_FIELD_PREFIX}{field}")
+            };
+            self.note_wanted(guards, &value);
+            keep = Some(PyNode {
+                text: format!("{target} {} {value}", &cap[2]),
+                children: Vec::new(),
+            });
+        }
+        self.findings.push(finding);
+        keep
+    }
+}
+
+fn emit_py(nodes: &[PyNode], depth: usize, out: &mut Vec<String>) {
+    for n in nodes {
+        out.push(format!("{}{}", "\t".repeat(depth), n.text));
+        emit_py(&n.children, depth + 1, out);
+    }
+}
+
+/// Reads a class's `__init__`, keeps every statement that writes instance state
+/// the formula needs (with its full guard chain and the `__init__` locals it
+/// reads), and reports every state write it could not keep.
+fn analyze_init_state(class_name: &str, class_body: &str, method_body: &str) -> InitState {
+    let nodes = init_statements(class_body);
+    let new_walk = |needed| InitWalk {
+        class_name,
+        method_body,
+        needed_locals: needed,
+        local_deps: std::collections::BTreeMap::new(),
+        wanted: std::collections::BTreeSet::new(),
+        free_fields: std::collections::BTreeMap::new(),
+        findings: Vec::new(),
+    };
+    // Pass 1 finds which locals the kept statements read; pass 2 keeps them too.
+    let mut first = new_walk(std::collections::BTreeSet::new());
+    first.walk(&nodes, &[], Ctx::default());
+    let mut needed: std::collections::BTreeSet<String> = first
+        .wanted
+        .iter()
+        .filter(|w| first.local_deps.contains_key(*w))
+        .cloned()
+        .collect();
+    loop {
+        let more: Vec<String> = needed
+            .iter()
+            .flat_map(|n| first.local_deps.get(n).into_iter().flatten())
+            .filter(|d| first.local_deps.contains_key(*d) && !needed.contains(*d))
+            .cloned()
+            .collect();
+        if more.is_empty() {
+            break;
+        }
+        needed.extend(more);
+    }
+    let mut walk = new_walk(needed.clone());
+    let kept = walk.walk(&nodes, &[], Ctx::default());
+    let mut prelude = Vec::new();
+    emit_py(&kept, 0, &mut prelude);
+    for local in &needed {
+        let to = format!("{INIT_LOCAL_PREFIX}{local}");
+        for line in &mut prelude {
+            *line = rename_word(line, local, &to);
+        }
+    }
+
     let mut modified_fields = std::collections::HashSet::new();
-
-    let field_map: &[(&str, &str, &str)] = &[
-        // (python_field, rust_field, type)
-        ("drone_atk", "drone_atk", "f64"),
-        ("attack_speed", "attack_speed", "f64"),
-        ("trait_dmg", "trait_damage", "bool"),
-        ("talent_dmg", "talent_damage", "bool"),
-        ("talent2_dmg", "talent2_damage", "bool"),
-        ("skill_dmg", "skill_damage", "bool"),
-        ("module_dmg", "module_damage", "bool"),
-        ("ammo", "ammo", "f64"),
-        ("skill_duration", "skill_duration", "f64"),
-    ];
-
-    let mut after_super = false;
-    for line in init_body.lines() {
-        let trimmed = line.trim();
-        if trimmed.contains("super().__init__") {
-            after_super = true;
-            continue;
-        }
-        if !after_super || trimmed.is_empty() || trimmed.starts_with('#') {
-            continue;
-        }
-        if trimmed.contains("self.name") {
-            continue;
-        }
-
-        for &(py_field, rust_field, _field_type) in field_map {
-            let mut rust_line = None;
-
-            if let Some(rest) = trimmed.strip_prefix(&format!("self.{py_field} =")) {
-                let expr = transpile_init_expr(rest.trim_start());
-                rust_line = Some(format!("    {rust_field} = {expr};"));
-            } else if let Some(rest) = trimmed.strip_prefix(&format!("self.{py_field} +=")) {
-                let expr = transpile_init_expr(rest.trim_start());
-                rust_line = Some(format!("    {rust_field} += {expr};"));
-            } else if let Some(rest) = trimmed.strip_prefix(&format!("self.{py_field} -=")) {
-                let expr = transpile_init_expr(rest.trim_start());
-                rust_line = Some(format!("    {rust_field} -= {expr};"));
-            } else if trimmed.starts_with("if ")
-                && trimmed.contains(&format!(": self.{py_field}"))
-                && let Some((cond_part, stmt_part)) =
-                    trimmed.strip_prefix("if ").and_then(|s| s.split_once(':'))
-            {
-                let cond = transpile_init_expr(cond_part.trim());
-                let stmt = stmt_part.trim();
-                if let Some(rest) = stmt.strip_prefix(&format!("self.{py_field} =")) {
-                    let expr = transpile_init_expr(rest.trim_start());
-                    rust_line = Some(format!("    if {cond} {{ {rust_field} = {expr}; }}"));
-                } else if let Some(rest) = stmt.strip_prefix(&format!("self.{py_field} +=")) {
-                    let expr = transpile_init_expr(rest.trim_start());
-                    rust_line = Some(format!("    if {cond} {{ {rust_field} += {expr}; }}"));
-                } else if let Some(rest) = stmt.strip_prefix(&format!("self.{py_field} -=")) {
-                    let expr = transpile_init_expr(rest.trim_start());
-                    rust_line = Some(format!("    if {cond} {{ {rust_field} -= {expr}; }}"));
-                }
-            }
-
-            if let Some(rl) = rust_line {
-                // untranspilable: compound bool conditions reference several shadow vars,
-                // the rest are shapes the mini-transpiler cannot carry
-                let valid = !rl.contains("self.")
-                    && !rl.contains("module_index_")
-                    && !rl.contains("drone_atk_interval")
-                    && !rl.contains("aspd")
-                    && !rl.contains(".get(")
-                    && !rl.contains("pp.")
-                    && !rl.contains("&& module_damage")
-                    && !rl.contains("&& talent_damage")
-                    && !rl.contains("&& skill_damage")
-                    && !rl.contains("&& trait_damage")
-                    && !rl.contains("(unit.module_level as f64)")
-                    && !rl.contains("module_level > ")
-                    && !rl.contains("4.0 + 4.0")
-                    && !rl.contains("attack_speed -=")
-                    && (!rl.trim().starts_with("ammo = 1;") || rl.contains("if "));
-                if valid {
-                    let fixed = coerce_arithmetic_literals(&rl);
-                    modified_fields.insert(rust_field.to_string());
-                    mutations.push(format!("    {}", fixed.trim()));
-                }
-                break;
-            }
-        }
-
-        // Handle self.atk separately (substring of other fields)
-        if !trimmed.contains("drone_atk") && !trimmed.contains("attack") {
-            if let Some(rest) = trimmed.strip_prefix("self.atk +=") {
-                let expr = transpile_init_expr(rest.trim_start());
-                let line = format!("    atk += {expr};");
-                let coerced = coerce_arithmetic_literals(&line);
-                modified_fields.insert("atk".to_string());
-                mutations.push(format!("    {}", coerced.trim()));
-            } else if trimmed.starts_with("if ")
-                && trimmed.contains(": self.atk +=")
-                && !trimmed.contains("drone")
-                && !trimmed.contains("module_lvl")  // Skip nested module_level conditions (lost outer guard)
-                && let Some((cond_part, stmt_part)) =
-                    trimmed.strip_prefix("if ").and_then(|s| s.split_once(':'))
-                && let Some(rest) = stmt_part.trim().strip_prefix("self.atk +=")
-            {
-                let cond = transpile_init_expr(cond_part.trim());
-                let expr = transpile_init_expr(rest.trim_start());
-                let line = format!("    if {cond} {{ atk += {expr}; }}");
-                let coerced = coerce_arithmetic_literals(&line);
-                modified_fields.insert("atk".to_string());
-                mutations.push(format!("    {}", coerced.trim()));
-            }
-        }
-    }
-
-    // Any init mutation shadows ALL bool fields: mutation conditions cross-reference
-    // each other ("if skill_damage && module_damage: talent_damage = false").
     let mut shadow_decls = Vec::new();
-    let has_any_mutation = !mutations.is_empty();
-
-    let numeric_fields: &[(&str, &str)] = &[
-        ("drone_atk", "let mut drone_atk: f64 = unit.drone_atk;"),
-        ("atk", "let mut atk: f64 = unit.atk;"),
-        (
-            "attack_speed",
-            "let mut attack_speed: f64 = unit.attack_speed;",
-        ),
-        ("ammo", "let mut ammo: f64 = unit.ammo;"),
-        (
-            "skill_duration",
-            "let mut skill_duration: f64 = unit.skill_duration;",
-        ),
-        ("target_hp", "let mut target_hp: f64 = unit.target_hp;"),
-    ];
-    let bool_fields: &[(&str, &str)] = &[
-        (
-            "trait_damage",
-            "let mut trait_damage: bool = unit.trait_damage;",
-        ),
-        (
-            "talent_damage",
-            "let mut talent_damage: bool = unit.talent_damage;",
-        ),
-        (
-            "talent2_damage",
-            "let mut talent2_damage: bool = unit.talent2_damage;",
-        ),
-        (
-            "skill_damage",
-            "let mut skill_damage: bool = unit.skill_damage;",
-        ),
-        (
-            "module_damage",
-            "let mut module_damage: bool = unit.module_damage;",
-        ),
-    ];
-
-    for &(field, decl) in numeric_fields {
-        if modified_fields.contains(field) {
+    let hoisted: std::collections::BTreeSet<&str> = walk
+        .findings
+        .iter()
+        .filter(|f| f.kind == InitStateKind::Hoisted)
+        .map(|f| f.field.as_str())
+        .collect();
+    let any = !hoisted.is_empty();
+    for (py, rust, decl) in INIT_STATE_FIELDS {
+        let is_flag = decl.contains(": bool");
+        // Any hoisted write shadows every flag: guards cross-reference them.
+        if hoisted.contains(py) || (any && is_flag) {
+            modified_fields.insert((*rust).to_string());
             shadow_decls.push(format!("    {decl}"));
         }
     }
-    if has_any_mutation {
-        for &(_field, decl) in bool_fields {
-            shadow_decls.push(format!("    {decl}"));
-        }
-        for &(field, _) in bool_fields {
-            modified_fields.insert(field.to_string());
-        }
+    let mut free_fields = Vec::new();
+    for (field, is_bool) in &walk.free_fields {
+        let name = format!("{FREE_FIELD_PREFIX}{field}");
+        let decl = if *is_bool {
+            format!("    let mut {name}: bool = false;")
+        } else {
+            format!("    let mut {name}: f64 = 0.0;")
+        };
+        shadow_decls.push(decl);
+        modified_fields.insert(name);
+        free_fields.push(field.clone());
     }
-
-    InitMutations {
+    InitState {
+        prelude,
         shadow_decls,
-        mutations,
         modified_fields,
+        free_fields,
+        findings: walk.findings,
     }
 }
 
-fn transpile_init_expr(py_expr: &str) -> String {
-    let mut s = py_expr.to_string();
-    // Field mappings; order matters, longer/specific prefixes first
-    s = s.replace("self.skill_params", "unit.skill_parameters");
-    s = s.replace("self.module_lvl", "(unit.module_level as f64)");
-    s = s.replace("self.module_dmg", "module_damage");
-    s = s.replace("self.module", "unit.module_index");
-    s = s.replace("self.elite", "unit.elite");
-    s = s.replace("self.trait_dmg", "trait_damage");
-    s = s.replace("self.talent2_dmg", "talent2_damage");
-    s = s.replace("self.talent_dmg", "talent_damage");
-    s = s.replace("self.skill_dmg", "skill_damage");
-    s = s.replace("self.atk_interval", "unit.attack_interval as f64");
-    s = s.replace("self.attack_speed", "unit.attack_speed");
-    s = s.replace("self.ammo", "unit.ammo");
-    s = s.replace("self.target_hp", "unit.target_hp");
-    s = s.replace("self.skill", "skillf");
-    s = s.replace("pp.pot", "unit.potential");
-    s = s.replace("True", "true");
-    s = s.replace("False", "false");
-    s = s.replace(" and ", " && ");
-    s = s.replace(" or ", " || ");
-    s = s.replace("not ", "!");
-    // Python `in [N,M]` -> manual expansion (no regex)
-    if s.contains(" in [")
-        && let Some(start) = s.find(" in [")
-    {
-        let var_start = s[..start]
-            .rfind(|c: char| !c.is_alphanumeric() && c != '_' && c != '.')
-            .map_or(0, |i| i + 1);
-        let var = &s[var_start..start];
-        if let Some(end) = s[start..].find(']') {
-            let items_str = &s[start + 5..start + end];
-            let items: Vec<String> = items_str
-                .split(',')
-                .map(|i| format!("{var} == {}", i.trim()))
-                .collect();
-            s = format!(
-                "{}({}){}",
-                &s[..var_start],
-                items.join(" || "),
-                &s[start + end + 1..]
-            );
+/// One class of a formula file: name, class source, transpiled method source.
+fn formula_classes(mode: Mode, py_src: &str) -> Vec<(String, String, String)> {
+    let class_re = Regex::new(&format!(
+        r"class\s+(\w+)\s*\(\s*{}\s*\)\s*:",
+        mode.class_base_alt()
+    ))
+    .unwrap();
+    let starts: Vec<(usize, String)> = class_re
+        .captures_iter(py_src)
+        .map(|c| (c.get(0).unwrap().start(), c[1].to_string()))
+        .collect();
+    let mut out = Vec::new();
+    for (i, (start, name)) in starts.iter().enumerate() {
+        let end = starts.get(i + 1).map_or(py_src.len(), |(p, _)| *p);
+        let body = py_src[*start..end].to_string();
+        let mut method = mode
+            .method_names()
+            .iter()
+            .map(|m| extract_method(&body, m))
+            .find(|b| !b.trim().is_empty())
+            .unwrap_or_default();
+        if mode == Mode::Healing {
+            method = normalize_heal_variables(&method);
         }
+        out.push((name.clone(), body, method));
     }
-    // Add .0 to integers ONLY in augmented assignments (+=, -=, =) for f64 contexts
-    // Do NOT convert comparison values (== N should stay as integer for i32 fields)
-    for n in [
-        "100", "60", "50", "45", "40", "35", "25", "20", "15", "12", "10", "6", "4", "3", "2", "1",
-    ] {
-        let patterns = [
-            (format!("+= {n};"), format!("+= {n}.0;")),
-            (format!("-= {n};"), format!("-= {n}.0;")),
-            (format!("+ {n}.0 *"), format!("+ {n}.0 *")), // already has .0
-        ];
-        for (from, to) in &patterns {
-            s = s.replace(from.as_str(), to.as_str());
-        }
-    }
-    s
+    out
 }
 
-fn transpile_skill_dps(
-    py_body: &str,
-    init_mutations: &InitMutations,
-    shape: OutputShape,
-) -> String {
+/// Both detectors over one formula file: every `__init__` state write, classified,
+/// and every local / `self.` name collision.
+fn formula_audit(mode: Mode, py_src: &str) -> (Vec<InitStateFinding>, Vec<LocalSelfCollision>) {
+    let mut findings = Vec::new();
+    let mut collisions = Vec::new();
+    for (name, body, method) in formula_classes(mode, py_src) {
+        let init = analyze_init_state(&name, &body, &method);
+        collisions.extend(find_local_self_collisions(
+            &name,
+            &method,
+            &collision_candidates(&init),
+        ));
+        findings.extend(init.findings);
+    }
+    (findings, collisions)
+}
+
+/// `--audit`: prints both detectors' full output for the DPS and HPS files.
+fn print_formula_audit(repo_path: &str) {
+    for mode in [Mode::Damage, Mode::Healing] {
+        let path = format!("{repo_path}/{}", mode.py_source_rel());
+        let src = fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {path}: {e}"));
+        // Panics when a declared reference correction no longer applies.
+        let src = apply_reference_corrections(mode.py_source_rel(), &src);
+        let (findings, collisions) = formula_audit(mode, &src);
+        println!(
+            "=== {} __init__ state writes: {} ===",
+            mode.human_label(),
+            findings.len()
+        );
+        for f in &findings {
+            let kind = match &f.kind {
+                InitStateKind::Hoisted => "HOISTED".to_string(),
+                InitStateKind::KwargsDefault => "KWARGS DEFAULT".to_string(),
+                InitStateKind::NotRead => "NOT READ BY FORMULA".to_string(),
+                InitStateKind::Elsewhere(why) => format!("NOT HOISTED, ON PURPOSE: {why}"),
+                InitStateKind::Unhandled(why) => format!("UNHANDLED: {why}"),
+            };
+            println!("  {}.{}  [{kind}]  {}", f.class_name, f.field, f.line);
+        }
+        println!(
+            "=== {} local / self name collisions: {} ===",
+            mode.human_label(),
+            collisions.len()
+        );
+        for c in &collisions {
+            let state = if c.self_assigned {
+                "NOT SPLIT (body rebinds self too)"
+            } else {
+                "split"
+            };
+            println!("  {}.{}  [{state}]", c.class_name, c.name);
+        }
+    }
+}
+
+fn transpile_skill_dps(py_body: &str, init_mutations: &InitState, shape: OutputShape) -> String {
     let mut lines: Vec<String> = Vec::new();
 
     // Pass 1: Collect all assigned variable names for hoisting
     let mut all_vars: Vec<String> = Vec::new();
     let mut vec_vars: std::collections::HashSet<String> = std::collections::HashSet::new();
-    let builtin_vars = ["dps", "skill", "defense", "res", "self", "atk_interval"];
+    let mut builtin_vars: Vec<&str> =
+        vec!["dps", "skill", "defense", "res", "self", "atk_interval"];
+    // `__init__` shadows are declared from the unit, never re-hoisted at 0.
+    builtin_vars.extend(init_mutations.modified_fields.iter().map(String::as_str));
 
     // Force-hoist the canonical output vars so the final `Some(HpsResult { … })`
     // always references declared locals, even if a healer sets only some of them.
@@ -1678,9 +2363,6 @@ fn transpile_skill_dps(
     // __init__ shadow declarations and mutations (BEFORE hoisted vars)
     for decl in &init_mutations.shadow_decls {
         lines.push(decl.clone());
-    }
-    for mutation in &init_mutations.mutations {
-        lines.push(mutation.clone());
     }
 
     for var in &all_vars {
@@ -1908,6 +2590,7 @@ fn transpile_skill_dps(
                 processed_body = processed_body.replace("unit.skill_duration", "skill_duration");
             }
             "target_hp" => processed_body = processed_body.replace("unit.target_hp", "target_hp"),
+            "shadows" => processed_body = processed_body.replace("unit.shadows", "shadows"),
             _ => {}
         }
     }
@@ -2035,6 +2718,9 @@ fn transpile_line(py: &str, declared: &mut std::collections::HashSet<String>) ->
     // `self.name` is display-only; drop any line touching it, including inline
     // `if COND: self.name += ...` / `else: self.name += ...` forms.
     let trimmed_py = py.trim_start();
+    if trimmed_py == "pass" {
+        return String::new();
+    }
     if trimmed_py.starts_with("self.name")
         || trimmed_py.starts_with("print(")
         || py.contains(": self.name +=")
@@ -2166,9 +2852,23 @@ fn transpile_line(py: &str, declared: &mut std::collections::HashSet<String>) ->
 
     if let Some(cap) = RE.for_range_re.captures(&line) {
         let var = &cap[1];
-        let n = transpile_expressions(&cap[2], declared);
         declared.insert(var.to_string());
-        return format!("for _{var} in 0..(({n}) as i32) {{ let {var} = _{var} as f64;");
+        // range(n) or range(start, stop); Python requires ints, the f64 locals
+        // carrying them are whole numbers.
+        let args = split_top_level_commas(&cap[2]);
+        let (start, stop) = match args.as_slice() {
+            [stop] => ("0".to_string(), stop.clone()),
+            [start, stop] => (start.clone(), stop.clone()),
+            _ => panic!("range with a step is not supported: {line}"),
+        };
+        let stop = transpile_expressions(&stop, declared);
+        if start == "0" {
+            return format!("for _{var} in 0..(({stop}) as i32) {{ let {var} = _{var} as f64;");
+        }
+        let start = transpile_expressions(&start, declared);
+        return format!(
+            "for _{var} in (({start}) as i32)..(({stop}) as i32) {{ let {var} = _{var} as f64;"
+        );
     }
 
     if let Some(cap) = RE.if_in_re.captures(&line) {
@@ -2231,6 +2931,61 @@ fn transpile_line(py: &str, declared: &mut std::collections::HashSet<String>) ->
     line
 }
 
+/// Splits a call's argument list at commas outside brackets.
+fn split_top_level_commas(args: &str) -> Vec<String> {
+    let (mut out, mut cur, mut depth) = (Vec::new(), String::new(), 0i32);
+    for c in args.chars() {
+        match c {
+            '(' | '[' => depth += 1,
+            ')' | ']' => depth -= 1,
+            ',' if depth == 0 => {
+                out.push(cur.trim().to_string());
+                cur.clear();
+                continue;
+            }
+            _ => {}
+        }
+        cur.push(c);
+    }
+    out.push(cur.trim().to_string());
+    out
+}
+
+/// Rewrites every call `name(ARG)` (not a method `.name(`) with balanced
+/// parentheses through `f(ARG)`.
+fn rewrite_call(s: &str, name: &str, f: impl Fn(&str) -> String) -> String {
+    let re = Regex::new(&format!(r"(^|[^.\w]){name}\(")).unwrap();
+    let mut out = s.to_string();
+    while let Some(m) = re.find(&out) {
+        let open = m.end() - 1;
+        let mut depth = 0;
+        let mut close = None;
+        for (i, c) in out[open..].char_indices() {
+            match c {
+                '(' => depth += 1,
+                ')' => {
+                    depth -= 1;
+                    if depth == 0 {
+                        close = Some(open + i);
+                        break;
+                    }
+                }
+                _ => {}
+            }
+        }
+        let Some(close) = close else { break };
+        let prefix_len = m.as_str().len() - name.len() - 1;
+        let start = m.start() + prefix_len;
+        let replaced = f(&out[open + 1..close]);
+        out = format!("{}{replaced}{}", &out[..start], &out[close + 1..]);
+    }
+    out
+}
+
+/// Python `math.comb` for the whole, non-negative f64 arguments formulas pass.
+/// Integer arithmetic, so the result is exact like Python's.
+const PY_COMB_FN: &str = "\n/// Python `math.comb(n, k)` for whole, non-negative arguments (exact).\nfn py_comb(n: f64, k: f64) -> f64 {\n    let (n, k) = (n as u128, k as u128);\n    if k > n {\n        return 0.0;\n    }\n    (0..k).fold(1u128, |acc, i| acc * (n - i) / (i + 1)) as f64\n}\n";
+
 fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<String>) -> String {
     let mut s = line.to_string();
 
@@ -2255,6 +3010,11 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
         .pow_ss
         .replace_all(&s, "($1 as f64).powf($2 as f64)")
         .to_string();
+
+    // math.comb(n, k) -> py_comb (emitted into the generated file when used);
+    // sum(xs) over a list local -> an f64 sum in the same left-to-right order.
+    s = s.replace("math.comb(", "py_comb(");
+    s = rewrite_call(&s, "sum", |arg| format!("({arg}).iter().sum::<f64>()"));
 
     // X in [A,B,C] -> (X == A || X == B || X == C)
     s = RE
@@ -2795,4 +3555,75 @@ fn to_snake_case(name: &str) -> String {
         result = format!("op_{result}");
     }
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn no_output_path_is_in_the_hand_layer() {
+        for mode in [Mode::Damage, Mode::Healing] {
+            for path in [
+                mode.formulas_json_path(),
+                mode.generated_rs_path(),
+                mode.dispatch_rs_path(),
+                mode.expected_json_path(),
+            ] {
+                guard_output(path);
+            }
+        }
+    }
+
+    /// The regression gate for an upstream pull: every `__init__` state write the
+    /// formula reads is reproduced (or listed in `INIT_STATE_ELSEWHERE` with a
+    /// reason), and every local / `self.` name collision is split. A new upstream
+    /// class that breaks either fails here, not as a silent wrong number.
+    #[test]
+    fn upstream_formulas_have_no_unhandled_init_state_or_name_collision() {
+        let repo = "external/ArknightsDpsCompare";
+        let mut unhandled = Vec::new();
+        let mut elsewhere_used = std::collections::BTreeSet::new();
+        for mode in [Mode::Damage, Mode::Healing] {
+            let path = format!("{repo}/{}", mode.py_source_rel());
+            let src = fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {path}: {e}"));
+            // Panics when a declared reference correction no longer applies.
+            let src = apply_reference_corrections(mode.py_source_rel(), &src);
+            let (findings, collisions) = formula_audit(mode, &src);
+            for f in &findings {
+                match &f.kind {
+                    InitStateKind::Unhandled(why) => {
+                        unhandled.push(format!("{}.{} ({why}): {}", f.class_name, f.field, f.line));
+                    }
+                    InitStateKind::Elsewhere(_) => {
+                        elsewhere_used.insert((f.class_name.clone(), f.field.clone()));
+                    }
+                    _ => {}
+                }
+            }
+            for c in collisions.iter().filter(|c| c.self_assigned) {
+                unhandled.push(format!(
+                    "{}: local {} collides with self.{} and the body rebinds self.{} too",
+                    c.class_name, c.name, c.name, c.name
+                ));
+            }
+        }
+        assert!(
+            unhandled.is_empty(),
+            "generate-dps would emit wrong numbers for:\n{}",
+            unhandled.join("\n")
+        );
+        for (class, field, _) in INIT_STATE_ELSEWHERE {
+            assert!(
+                elsewhere_used.contains(&((*class).to_string(), (*field).to_string())),
+                "INIT_STATE_ELSEWHERE {class}.{field} matches nothing upstream: delete it"
+            );
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "hand-written")]
+    fn guard_refuses_the_hand_layer() {
+        guard_output("./src/dps/custom/hand/angelina_alter.rs");
+    }
 }

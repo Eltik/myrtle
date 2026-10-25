@@ -99,8 +99,8 @@ pub struct OperatorUnit {
 
     pub shadows: f64,
 
-    /// Target HP for healing formulas. 0 except Warfarin S1, which
-    /// `engine::apply_init_fixups` defaults the way the reference does.
+    /// Target HP for healing formulas. Always 0 here: a formula that needs it
+    /// (Warfarin S1) sets its own default from the reference's `__init__`.
     pub target_hp: f64,
 
     /// A specific module was requested but can't be resolved from the current

@@ -18,8 +18,10 @@ finds, for every conditional in `operator_formulas.json` and
            reads the flag both ways; `HAND` below settles some by reading
 
 It writes `src/dps/config/conditional_polarity.json` and never touches the
-generated formula files: a full `generate-dps` run drops the hand-written
-Angelina alter (`char_1015_aglna2`), so polarity lives in its own file.
+generated formula files, which a `generate-dps` run rewrites. Hand-layer
+operators (`src/dps/custom/hand/formulas.json`) are merged over the generated
+tables the way `engine::load_formulas` merges them; they have no Python class,
+so their polarity comes from `HAND` below.
 
 Run from `backend/`:  python3 scripts/dps_conditional_polarity.py [--check]
 `--check` exits 1 when the checked-in file differs from a fresh derivation.
@@ -36,6 +38,7 @@ ROOT = Path(__file__).resolve().parent.parent
 REF = ROOT / "external/ArknightsDpsCompare/damagecalc"
 CONFIG = ROOT / "src/dps/config"
 OUT = CONFIG / "conditional_polarity.json"
+HAND_FORMULAS = ROOT / "src/dps/custom/hand/formulas.json"
 
 # Section name -> (formula table, Python source). An operator can sit in both
 # tables (Skadi the Corrupting Heart), so each table has its own section.
@@ -58,8 +61,8 @@ LABEL = re.compile(r"""self\.name\s*\+=\s*[f"]?\s*"?\s*(\w+)""")
 # Settled by reading the Python, for conditionals the line scan cannot decide.
 # Key: "<operator id>|<type>|<name>" -> inverted (DPS table entries). Each entry carries why.
 HAND: dict[str, bool] = {
-    # Angelina the Mellow Wish is hand-written in `generated.rs` (no Python
-    # class). `angelina_alter`: talent_damage true takes the mass <= 3 scale,
+    # Angelina the Mellow Wish is in the hand layer (`custom/hand/
+    # angelina_alter.rs`, no Python class): talent_damage true takes the mass <= 3 scale,
     # the Weightless target; talent2_damage true adds the Liftoff ATK buff.
     # Both labels describe the flag ON.
     "char_1015_aglna2|talent|weightlessTarget": False,
@@ -121,6 +124,7 @@ def derive() -> tuple[dict, dict]:
     for section, formulas_file, py in SOURCES:
         out[section] = {}
         formulas = json.loads((CONFIG / formulas_file).read_text())
+        formulas.update(json.loads(HAND_FORMULAS.read_text())[section])
         bodies = class_bodies(py.read_text())
         for op_id in sorted(formulas):
             f = formulas[op_id]

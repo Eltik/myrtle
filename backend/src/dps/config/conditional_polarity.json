@@ -247,7 +247,7 @@
    "module|atMaxRange": false
   },
   "char_222_bpipe": {
-   "module|lowHpTarget": false
+   "trait|lowHpTarget": false
   },
   "char_230_savage": {
    "module|vsBlocked": false,
@@ -278,6 +278,10 @@
   "char_252_bibeak": {
    "talent|w": true
   },
+  "char_261_sddrag": {
+   "talent|talentASPD": false,
+   "trait|vsLowHp": false
+  },
   "char_265_sophia": {
    "trait|blocking": true
   },
@@ -302,7 +306,7 @@
    "module|afterRevive": false
   },
   "char_290_vigna": {
-   "module|vsLowHp": false
+   "trait|vsLowHp": false
   },
   "char_293_thorns": {
    "skill|firstActivation": true,

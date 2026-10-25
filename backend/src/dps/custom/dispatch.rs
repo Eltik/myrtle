@@ -18,7 +18,6 @@ pub fn dispatch(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
         "char_1037_amiya3" => generated::amiya_medic(unit, enemy),
         "char_218_cuttle" => generated::andreana(unit, enemy),
         "char_291_aglina" => generated::angelina(unit, enemy),
-        "char_1015_aglna2" => generated::angelina_alter(unit, enemy),
         "char_346_aosta" => generated::aosta(unit, enemy),
         "char_365_aprl" => generated::april(unit, enemy),
         "char_332_archet" => generated::archetto(unit, enemy),
@@ -197,6 +196,7 @@ pub fn dispatch(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
         "char_4195_radian" => generated::raidian(unit, enemy),
         "char_503_rang" => generated::rangers(unit, enemy),
         "char_4117_ray" => generated::ray(unit, enemy),
+        "char_261_sddrag" => generated::reed(unit, enemy),
         "char_1020_reed2" => generated::reed_alter(unit, enemy),
         "char_4040_rockr" => generated::rockrock(unit, enemy),
         "char_197_poca" => generated::rosa(unit, enemy),
@@ -269,6 +269,25 @@ pub fn dispatch(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
         "char_4185_amoris" => generated::yutenji_nyamu(unit, enemy),
         "char_4121_zuole" => generated::zuo_le(unit, enemy),
         "char_009_12fce" => generated::twelve_f(unit, enemy),
+        _ => None,
+    }
+}
+
+/// The skill duration the operator's Python `__init__` sets, when it sets one.
+/// The engine uses it for the formula, total damage, average and cycle alike.
+pub fn dispatch_skill_duration(unit: &OperatorUnit) -> Option<f64> {
+    let enemy = EnemyStats {
+        defense: 0.0,
+        res: 0.0,
+    };
+    let op_id = unit.data.data.id.as_deref().unwrap_or("");
+    match op_id {
+        "char_497_ctable" => generated::cantabile_skill_duration(unit, &enemy),
+        "char_1034_jesca2" => generated::jessica_alter_skill_duration(unit, &enemy),
+        "char_214_kafka" => generated::kafka_skill_duration(unit, &enemy),
+        "char_263_skadi" => generated::skadi_skill_duration(unit, &enemy),
+        "char_459_tachak" => generated::tachanka_skill_duration(unit, &enemy),
+        "char_4098_vvana" => generated::viviana_skill_duration(unit, &enemy),
         _ => None,
     }
 }

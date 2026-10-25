@@ -483,7 +483,7 @@ fn supporters_resolve_from_game_data() {
 fn conditional_polarity_table() {
     let (on, inverted, unresolved) = engine::polarity_counts();
     println!("polarity: on {on}, inverted {inverted}, unresolved {unresolved}");
-    assert_eq!(on + inverted + unresolved, 389);
+    assert_eq!(on + inverted + unresolved, 391);
     assert!(engine::conditional_inverted(
         "dps",
         "char_293_thorns",

@@ -60,53 +60,38 @@ fn make_test_key(
 const TOLERANCE_PERCENT: f64 = 0.15;
 const TOLERANCE_ABSOLUTE: f64 = 1.0;
 
-/// A case set where the Python reference is wrong and the fixture, generated
-/// from it, is wrong with it. Regenerating `expected_dps.json` reproduces the
-/// bug, so instead the reference value is CORRECTED here by a factor derived
-/// from the game data, and the Rust is held to that. Every entry must match at
-/// least one case, so an entry outlives its bug only until the next regen.
-struct ReferenceBug {
-    class_name: &'static str,
-    skill: i32,
-    /// What the reference computes, what the data says, and where.
-    note: &'static str,
-    /// Multiplier that turns the reference's number into the right one.
-    correction: fn(&gamedata::types::operator::Operator) -> f64,
+/// Declared corrections to the Python reference, read from the same file
+/// `generate-dps` applies them from (`src/dps/custom/hand/reference_corrections.json`):
+/// the generator patches the upstream class before transpiling AND before running it
+/// for `expected_dps.json`, so the fixture already holds the corrected value and the
+/// cases compare normally. This list only reports them, and fails when an entry
+/// matches no fixture case. Replaces the old per-test `REFERENCE_BUGS` factor table:
+/// one source of truth, not two lists.
+#[derive(serde::Deserialize)]
+struct ReferenceCorrection {
+    file: String,
+    class: String,
+    #[serde(default)]
+    skills: Vec<i32>,
+    reason: String,
 }
 
-const REFERENCE_BUGS: &[ReferenceBug] = &[ReferenceBug {
-    class_name: "Vulcan",
-    skill: 2,
-    // damage_formulas.py `Vulcan.skill_dps` assigns a local
-    // `atk_interval = 2 if self.skill == 2` and then divides by
-    // `self.atk_interval`, the 1.6 s base, so the local is dead. The game data
-    // gives skchr_hpsts_2 `base_attack_time: +0.4` on the 1.6 s base: the skill
-    // attacks every 2.0 s, which is what the transpiled Rust divides by (it
-    // folds the attribute and the local into one variable). Surfaced by the
-    // first CI run of this suite, 2026-09-14: 156 cases, Rust = 0.80 x Python.
-    note: "reference divides by the 1.6 s base interval; S2 adds base_attack_time +0.4",
-    correction: |op| {
-        let base = op
-            .phases
-            .last()
-            .and_then(|p| p.attributes_key_frames.last())
-            .map(|kf| kf.data.base_attack_time)
-            .expect("Vulcan has phase keyframes");
-        let delta = op
-            .skills
-            .get(1)
-            .and_then(|s| s.static_data.as_ref())
-            .and_then(|s| s.levels.last())
-            .and_then(|l| {
-                l.blackboard
-                    .iter()
-                    .find(|b| b.key == "base_attack_time")
-                    .map(|b| b.value)
-            })
-            .expect("Vulcan S2 carries base_attack_time");
-        base / (base + delta)
-    },
-}];
+#[derive(serde::Deserialize)]
+struct ReferenceCorrections {
+    corrections: Vec<ReferenceCorrection>,
+}
+
+fn load_reference_corrections() -> Vec<ReferenceCorrection> {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("src/dps/custom/hand/reference_corrections.json");
+    let text = std::fs::read_to_string(&path).expect("read reference_corrections.json");
+    serde_json::from_str::<ReferenceCorrections>(&text)
+        .expect("reference_corrections.json")
+        .corrections
+        .into_iter()
+        .filter(|c| c.file == "damagecalc/damage_formulas.py")
+        .collect()
+}
 
 /// A case set the ENGINE is known to get wrong: the reference is right and the
 /// Rust is not. Cases here are still computed and compared, but a mismatch is
@@ -118,29 +103,70 @@ struct KnownEngineDefect {
     class_name: &'static str,
     /// `None` covers every skill.
     skill: Option<i32>,
+    /// `None` covers every module.
+    module: Option<i32>,
     note: &'static str,
 }
 
-// Empty since the Wiš'adel shadow fix (custom/init.rs). The 2026-09-14 entry
-// read: "Walter, all skills, shadow damage missing: OperatorUnit::shadows is
-// never populated": 92 of 192 cases diverged by exactly n*drone_atk/4.25.
+// Empty since 2026-10-25. Deleted entries, each removed by a generator fix:
+// - Wiš'adel (2026-09-14), "shadow damage missing": `__init__` state, now transpiled.
+// - Tecno S2 module 2 (2026-10-25), "drone_atk +100 at module level 2-3 missing":
+//   the `__init__` hoister dropped every line containing `module_level > ` and lost
+//   the outer guard of nested blocks; it is now a structured walker
+//   (`analyze_init_state`). S2 m2 DEF 0 2026.663 -> 2426.663 (Python 2426.663).
+// - Ebenholz S1 module 3 (2026-10-25), "S1 necrosis term divides by the S1
+//   interval": local `atk_interval` collapsed onto `self.atk_interval`, now split.
+//   S1 m3 DEF 0 4497.203 -> 3903.284; the reference's 3410.931 is still 14.43% away
+//   at worst because of its req_module bug (module 3 keeps the base talent2), under
+//   the 15% bar.
 const KNOWN_ENGINE_DEFECTS: &[KnownEngineDefect] = &[];
 
-fn known_engine_defect(class_name: &str, skill: i32) -> Option<usize> {
-    KNOWN_ENGINE_DEFECTS
-        .iter()
-        .position(|d| d.class_name == class_name && d.skill.is_none_or(|s| s == skill))
-}
+/// A case set where the Python reference is wrong in a way no factor corrects:
+/// the Rust follows the game data and the mismatch is counted, not failed.
+/// Each entry must match at least one mismatch, like `KNOWN_ENGINE_DEFECTS`.
+///
+/// `Database/JsonReader.py` ~387-399 tags every talent candidate of `uniequip_004`
+/// (the third module) `req_module = 3`, and `damage_formulas.py`:213 / :245 map
+/// anything but 1 to `available_modules[1]`, module 2. So the third module's
+/// talent upgrade lands on module 2, and module 3 keeps the base talent. EN
+/// `battle_equip_table` matches the CN pkl for these operators; patching the
+/// right talent into a live reference object reproduces the Rust to ~1e-6.
+const KNOWN_REFERENCE_DEFECTS: &[KnownEngineDefect] = &[
+    KnownEngineDefect {
+        class_name: "Gnosis",
+        skill: None,
+        module: Some(2),
+        // Y (umd-y) changes talent2 only; the reference gives m2 alpha's L3
+        // talent1 [1.3, 2.0, 0.05, 1.8]. s1 m2 1014.216 (Rust) vs 1265.120.
+        note: "module 2 gets module 3's talent1 (req_module 3 -> available_modules[1])",
+    },
+    KnownEngineDefect {
+        class_name: "Hoolheyak",
+        skill: None,
+        module: Some(2),
+        // m2 gets alpha's talent1 [1.45, 5.0]; s1 m2 1092.791 (Rust) vs 1320.456.
+        note: "module 2 gets module 3's talent1 (req_module 3 -> available_modules[1])",
+    },
+    KnownEngineDefect {
+        class_name: "Hoolheyak",
+        skill: None,
+        module: Some(3),
+        // m3 keeps the base talent1 [1.2, 3.0]; s1 m3 1011.707 (Rust) vs 837.274.
+        note: "module 3 keeps the base talent1 (its upgrade went to module 2)",
+    },
+];
 
-fn reference_correction(
-    operator: &gamedata::types::operator::Operator,
+fn known_divergence(
+    list: &[KnownEngineDefect],
     class_name: &str,
     skill: i32,
-) -> Option<(usize, f64)> {
-    REFERENCE_BUGS
-        .iter()
-        .position(|b| b.class_name == class_name && b.skill == skill)
-        .map(|i| (i, (REFERENCE_BUGS[i].correction)(operator)))
+    module: i32,
+) -> Option<usize> {
+    list.iter().position(|d| {
+        d.class_name == class_name
+            && d.skill.is_none_or(|s| s == skill)
+            && d.module.is_none_or(|m| m == module)
+    })
 }
 
 fn compare_dps(rust_dps: f64, python_dps: f64) -> bool {
@@ -183,8 +209,10 @@ fn test_engine_vs_python_expected() {
     let mut failed = 0u64;
     let mut skipped = 0u64;
     let mut failures: Vec<String> = Vec::new();
-    let mut corrected = vec![0u64; REFERENCE_BUGS.len()];
+    let corrections = load_reference_corrections();
+    let mut corrected = vec![0u64; corrections.len()];
     let mut known_defects = vec![0u64; KNOWN_ENGINE_DEFECTS.len()];
+    let mut reference_defects = vec![0u64; KNOWN_REFERENCE_DEFECTS.len()];
 
     let mut type_tested: HashMap<String, u64> = HashMap::new();
     // `DPS_DUMP=<path>` writes every computed case as `key\tskill\ttotal\taverage`
@@ -257,14 +285,12 @@ fn test_engine_vs_python_expected() {
                             let Some(&expected_dps) = expected.get(&key) else {
                                 continue;
                             };
-                            let expected_dps =
-                                match reference_correction(operator, &formula.class_name, skill) {
-                                    Some((i, factor)) => {
-                                        corrected[i] += 1;
-                                        expected_dps * factor
-                                    }
-                                    None => expected_dps,
-                                };
+                            if let Some(i) = corrections.iter().position(|c| {
+                                c.class == formula.class_name
+                                    && (c.skills.is_empty() || c.skills.contains(&skill))
+                            }) {
+                                corrected[i] += 1;
+                            }
 
                             let shred = if def_mult != 1.0
                                 || def_flat != 0.0
@@ -321,10 +347,20 @@ fn test_engine_vs_python_expected() {
                                 if compare_dps(result.skill_dps, expected_dps) {
                                     passed += 1;
                                     *type_passed.entry(formula_type.to_owned()).or_default() += 1;
-                                } else if let Some(i) =
-                                    known_engine_defect(&formula.class_name, skill)
-                                {
+                                } else if let Some(i) = known_divergence(
+                                    KNOWN_ENGINE_DEFECTS,
+                                    &formula.class_name,
+                                    skill,
+                                    module,
+                                ) {
                                     known_defects[i] += 1;
+                                } else if let Some(i) = known_divergence(
+                                    KNOWN_REFERENCE_DEFECTS,
+                                    &formula.class_name,
+                                    skill,
+                                    module,
+                                ) {
+                                    reference_defects[i] += 1;
                                 } else {
                                     failed += 1;
                                     if failures.len() < 30 {
@@ -365,19 +401,35 @@ fn test_engine_vs_python_expected() {
     println!("  Passed:  {passed}");
     println!("  Failed:  {failed}");
     println!("  Skipped: {skipped}");
-    for (bug, n) in REFERENCE_BUGS.iter().zip(&corrected) {
+    for (c, n) in corrections.iter().zip(&corrected) {
         println!(
-            "  Reference corrected: {} S{}: {n} cases ({})",
-            bug.class_name, bug.skill, bug.note
+            "  Reference corrected (custom/hand/reference_corrections.json): {} S{:?}: {n} \
+             cases ({})",
+            c.class, c.skills, c.reason
         );
     }
+    let scope = |d: &KnownEngineDefect| {
+        format!(
+            "{} {}",
+            d.skill
+                .map_or_else(|| "all skills".to_owned(), |s| format!("S{s}")),
+            d.module
+                .map_or_else(|| "all modules".to_owned(), |m| format!("module {m}"))
+        )
+    };
     for (defect, n) in KNOWN_ENGINE_DEFECTS.iter().zip(&known_defects) {
         println!(
             "  KNOWN ENGINE DEFECT: {} {}: {n} cases diverge ({})",
             defect.class_name,
-            defect
-                .skill
-                .map_or_else(|| "all skills".to_owned(), |s| format!("S{s}")),
+            scope(defect),
+            defect.note
+        );
+    }
+    for (defect, n) in KNOWN_REFERENCE_DEFECTS.iter().zip(&reference_defects) {
+        println!(
+            "  KNOWN REFERENCE DEFECT: {} {}: {n} cases diverge ({})",
+            defect.class_name,
+            scope(defect),
             defect.note
         );
     }
@@ -419,13 +471,20 @@ fn test_engine_vs_python_expected() {
             defect.class_name
         );
     }
-    for (bug, n) in REFERENCE_BUGS.iter().zip(&corrected) {
+    for (defect, n) in KNOWN_REFERENCE_DEFECTS.iter().zip(&reference_defects) {
         assert!(
             *n > 0,
-            "REFERENCE_BUGS entry {} S{} matched no case: the fixture no longer carries \
-             it, delete the entry",
-            bug.class_name,
-            bug.skill
+            "KNOWN_REFERENCE_DEFECTS entry {} no longer diverges: the reference is fixed, \
+             delete the entry",
+            defect.class_name
+        );
+    }
+    for (c, n) in corrections.iter().zip(&corrected) {
+        assert!(
+            *n > 0,
+            "reference correction {} S{:?} matched no fixture case: delete the entry",
+            c.class,
+            c.skills
         );
     }
 

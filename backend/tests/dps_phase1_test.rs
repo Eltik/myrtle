@@ -615,7 +615,10 @@ fn cycle_v2_per_sp_type() {
 
             let u = unit(id, s);
             let cost = f64::from(u.skill_cost);
-            let duration = u.skill_duration;
+            // The engine's one duration source: an `__init__` override if the
+            // class sets one (Viviana S3 25 s), else the game data.
+            let duration =
+                backend::dps::custom::skill_duration_override(&u).unwrap_or(u.skill_duration);
             let sp = r.sp_recovery.unwrap();
             let category = r.category.unwrap();
             *seen.entry(format!("{sp:?}/{category:?}")).or_default() += 1;
@@ -673,7 +676,7 @@ fn cycle_v2_per_sp_type() {
     }
 }
 
-/// How many of the 260 functions have a real skill-0 path, by the probe the
+/// How many of the 261 functions (260 generated + 1 hand) have a real skill-0 path, by the probe the
 /// v2 cycle uses (`engine::skill_zero_dps`), over every skill that cycles.
 #[test]
 fn census_skill_zero_support() {
@@ -720,10 +723,10 @@ fn census_skill_zero_support() {
          {none} normal_attack on every cycling skill, {never} with no cycling skill"
     );
     println!("normal_attack fallback: {fallback_ids:?}");
-    assert_eq!(all_formula + mixed + none + never, 260);
+    assert_eq!(all_formula + mixed + none + never, 261);
 
     // The same probe on every available skill, cycling or not, called
-    // directly: the census of the 260 functions themselves.
+    // directly: the census of the 261 functions themselves.
     let ela = unit("char_4123_ela", 3);
     let (mut every, mut some, mut no) = (0, 0, 0);
     let mut no_ids = Vec::new();
@@ -746,7 +749,6 @@ fn census_skill_zero_support() {
                 u.clone_is_ranged = ela.is_ranged;
                 u.clone_is_physical = ela.is_physical;
             }
-            backend::dps::custom::apply_init(&mut u);
             let Some(sf) = f.skills.get(&u.skill_index.to_string()) else {
                 continue;
             };
@@ -775,7 +777,7 @@ fn census_skill_zero_support() {
         "skill-0 probe on every skill: {every} pass on all skills, {some} on some, {no} on none"
     );
     println!("skill-0 probe fails everywhere: {no_ids:?}");
-    assert_eq!(every + some + no, 260);
+    assert_eq!(every + some + no, 261);
 }
 
 #[test]

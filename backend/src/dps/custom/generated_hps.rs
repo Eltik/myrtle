@@ -27,10 +27,10 @@ pub fn amiya_medic(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult>
 /// Ansel - auto-transpiled from Python
 pub fn ansel(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -43,7 +43,7 @@ pub fn ansel(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     final_atk_skill = unit.atk
         * (1.0 + unit.buff_atk + unit.skill_parameters.get(0).copied().unwrap_or(0.0))
         + unit.buff_atk_flat;
-    targets = if unit.elite == 0 || f64::from(unit.targets) == 1.0 {
+    targets = if unit.elite == 0 || unit.targets as f64 == 1.0 {
         1.0
     } else {
         1.0 + unit.talent1_parameters.get(0).copied().unwrap_or(0.0)
@@ -54,8 +54,8 @@ pub fn ansel(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         * targets
         * (1.0 + unit.buff_fragile);
     avg_hps = (skill_hps * unit.skill_duration
-        + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-        / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+        + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+        / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
 
     Some(HpsResult {
         skill_hps,
@@ -67,10 +67,10 @@ pub fn ansel(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Bassline - auto-transpiled from Python
 pub fn bassline(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -81,7 +81,7 @@ pub fn bassline(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 
     final_atk = unit.atk * (1.0 + unit.buff_atk) + unit.buff_atk_flat;
     if skill == 1 {
-        sp_cost = f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)) + 1.2;
+        sp_cost = unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64) + 1.2;
         skill_hps = final_atk
             * unit.skill_parameters.get(0).copied().unwrap_or(0.0)
             * (1.0 + unit.buff_fragile);
@@ -95,7 +95,7 @@ pub fn bassline(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         skill_hps =
             final_atk_skill / atk_interval * unit.attack_speed / 100.0 * (1.0 + unit.buff_fragile);
         avg_hps = skill_hps * unit.skill_duration
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
 
     Some(HpsResult {
@@ -108,11 +108,17 @@ pub fn bassline(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Blemishine - auto-transpiled from Python
 pub fn blemishine(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
+    let mut trait_damage: bool = unit.trait_damage;
+    let mut talent_damage: bool = unit.talent_damage;
+    let mut talent2_damage: bool = unit.talent2_damage;
+    let mut skill_damage: bool = unit.skill_damage;
+    let mut module_damage: bool = unit.module_damage;
+    let mut st_hits: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
     let mut avg_hps: f64 = 0.0;
@@ -123,30 +129,34 @@ pub fn blemishine(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> 
     let mut skill_recovery: f64 = 0.0;
     let mut final_atk_skill: f64 = 0.0;
 
-    heal_scale = if unit.module_index == 1 && unit.module_damage {
+    st_hits = 0.0;
+    if skill == 1 {
+        st_hits = 0.0;
+    }
+    heal_scale = if unit.module_index == 1 && module_damage {
         1.15
     } else {
         1.0
     };
     if skill == 1 {
         skill_scale = unit.skill_parameters.get(1).copied().unwrap_or(0.0);
-        sp_cost = f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)) + 1.2;
+        sp_cost = unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64) + 1.2;
         final_atk = unit.atk * (1.0 + unit.buff_atk) + unit.buff_atk_flat;
         skill_hps = final_atk * heal_scale * skill_scale * (1.0 + unit.buff_fragile);
         avg_hps = skill_hps / sp_cost;
     }
     skill_recovery = 1.0 / atk_interval * unit.attack_speed / 100.0;
-    if unit.ammo > 0.0 {
-        skill_recovery += unit.ammo;
+    if st_hits > 0.0 {
+        skill_recovery += st_hits;
     }
     if skill == 2 {
         final_atk_skill = unit.atk
             * (1.0 + unit.buff_atk + unit.skill_parameters.get(0).copied().unwrap_or(0.0))
             + unit.buff_atk_flat;
         skill_scale = unit.skill_parameters.get(1).copied().unwrap_or(0.0);
-        skill_hps = final_atk_skill * skill_scale * f64::from(unit.targets).min(13.0_f64);
-        avg_hps = (skill_hps * unit.skill_duration + f64::from(unit.skill_cost) / skill_recovery)
-            / (unit.skill_duration + f64::from(unit.skill_cost) / skill_recovery);
+        skill_hps = final_atk_skill * skill_scale * (unit.targets as f64).min(13.0_f64);
+        avg_hps = (skill_hps * unit.skill_duration + unit.skill_cost as f64 / skill_recovery)
+            / (unit.skill_duration + unit.skill_cost as f64 / skill_recovery);
     }
     if skill == 3 {
         final_atk_skill = unit.atk
@@ -156,8 +166,8 @@ pub fn blemishine(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> 
         skill_hps = heal_scale * skill_scale * final_atk_skill / atk_interval * unit.attack_speed
             / 100.0
             * (1.0 + unit.buff_fragile);
-        avg_hps = (skill_hps * unit.skill_duration + f64::from(unit.skill_cost) / skill_recovery)
-            / (unit.skill_duration + f64::from(unit.skill_cost) / skill_recovery);
+        avg_hps = (skill_hps * unit.skill_duration + unit.skill_cost as f64 / skill_recovery)
+            / (unit.skill_duration + unit.skill_cost as f64 / skill_recovery);
     }
 
     Some(HpsResult {
@@ -170,10 +180,10 @@ pub fn blemishine(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> 
 /// Breeze - auto-transpiled from Python
 pub fn breeze(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -186,19 +196,19 @@ pub fn breeze(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         * (1.0 + unit.buff_atk + unit.skill_parameters.get(0).copied().unwrap_or(0.0))
         + unit.buff_atk_flat;
     base_hps = final_atk / atk_interval * unit.attack_speed / 100.0
-        * f64::from(unit.targets).min(3.0_f64)
+        * (unit.targets as f64).min(3.0_f64)
         * (1.0 + unit.buff_fragile);
     skill_hps =
         final_atk_skill / atk_interval * unit.attack_speed / 100.0 * (1.0 + unit.buff_fragile);
-    if skill == 1 && f64::from(unit.targets) > 1.0 {
-        skill_hps *= (2.0_f64).min(f64::from(unit.targets));
+    if skill == 1 && unit.targets as f64 > 1.0 {
+        skill_hps *= (2.0_f64).min(unit.targets as f64);
     }
-    if skill == 2 && f64::from(unit.targets) > 1.0 {
-        skill_hps *= 1.0 + 0.5 * (f64::from(unit.targets) - 1.0);
+    if skill == 2 && unit.targets as f64 > 1.0 {
+        skill_hps *= 1.0 + 0.5 * (unit.targets as f64 - 1.0);
     }
     avg_hps = (skill_hps * unit.skill_duration
-        + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-        / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+        + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+        / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
 
     Some(HpsResult {
         skill_hps,
@@ -210,10 +220,10 @@ pub fn breeze(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Ceylon - auto-transpiled from Python
 pub fn ceylon(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -246,7 +256,7 @@ pub fn ceylon(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         skill_factor = unit.skill_parameters.get(0).copied().unwrap_or(0.0);
         skill_heal = final_atk * skill_factor * (1.0 + unit.buff_fragile);
         base_heal = range_heal * final_atk * (1.0 + unit.buff_fragile);
-        sp_cost = f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)) + 1.2;
+        sp_cost = unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64) + 1.2;
         atkcycle = atk_interval / (unit.attack_speed / 100.0);
         atks_per_skillactivation = sp_cost / atkcycle;
         avg_heal = skill_heal;
@@ -271,10 +281,10 @@ pub fn ceylon(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
             + unit.buff_atk_flat;
         skill_hps = final_atk_skill * range_heal / atk_interval * unit.attack_speed / 100.0
             * (1.0 + unit.buff_fragile)
-            * f64::from(unit.targets).min(2.0_f64);
+            * (unit.targets as f64).min(2.0_f64);
         avg_hps = (skill_hps * unit.skill_duration
-            + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
 
     Some(HpsResult {
@@ -287,10 +297,10 @@ pub fn ceylon(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Chestnut - auto-transpiled from Python
 pub fn chestnut(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -308,8 +318,8 @@ pub fn chestnut(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     skill_hps =
         final_atk / atk_interval * (unit.attack_speed + aspd) / 100.0 * (1.0 + unit.buff_fragile);
     avg_hps = (skill_hps * unit.skill_duration
-        + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-        / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+        + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+        / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
 
     Some(HpsResult {
         skill_hps,
@@ -321,10 +331,10 @@ pub fn chestnut(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// CivilightEterna - auto-transpiled from Python
 pub fn civilight_eterna(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -351,10 +361,10 @@ pub fn civilight_eterna(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsRe
         unit.talent1_parameters.get(5).copied().unwrap_or(0.0) * 6.0 / 8.0 + 1.0 * 2.0 / 8.0;
     base_hps = final_atk
         * 0.1
-        * f64::from(unit.targets).min(targets)
+        * (unit.targets as f64).min(targets)
         * trait_factor
-        * (1.0_f64).min(4.0 / f64::from(unit.targets));
-    base_no_balls = final_atk * 0.1 * f64::from(unit.targets).min(targets);
+        * (1.0_f64).min(4.0 / unit.targets as f64);
+    base_no_balls = final_atk * 0.1 * (unit.targets as f64).min(targets);
     dust_heal_scale = if unit.module_index == 1 && unit.module_level > 1 {
         unit.talent1_parameters.get(6).copied().unwrap_or(0.0)
     } else {
@@ -362,38 +372,38 @@ pub fn civilight_eterna(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsRe
     };
     dust_heal = dust_heal_scale * final_atk / 12.0 * 3.0 / 2.0
         * (1.0 + unit.buff_fragile)
-        * f64::from(unit.targets).min(4.0_f64);
+        * (unit.targets as f64).min(4.0_f64);
     base_hps += dust_heal;
     if skill == 1 {
         new_trait = unit.skill_parameters.get(0).copied().unwrap_or(0.0);
         skill_hps = final_atk
             * new_trait
-            * f64::from(unit.targets).min(targets)
+            * (unit.targets as f64).min(targets)
             * trait_factor
-            * (1.0_f64).min(8.0 / f64::from(unit.targets));
-        dust_heal *= f64::from(unit.targets).min(8.0_f64) / f64::from(unit.targets).min(4.0_f64);
+            * (1.0_f64).min(8.0 / unit.targets as f64);
+        dust_heal *= (unit.targets as f64).min(8.0_f64) / (unit.targets as f64).min(4.0_f64);
         skill_hps += dust_heal;
-        skill_no_balls = final_atk * new_trait * f64::from(unit.targets).min(targets);
+        skill_no_balls = final_atk * new_trait * (unit.targets as f64).min(targets);
     }
     if skill == 2 {
-        skill_hps = final_atk * 0.1 * f64::from(unit.targets).min(targets);
+        skill_hps = final_atk * 0.1 * (unit.targets as f64).min(targets);
         avg_hps = (skill_hps * unit.skill_duration
-            + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
     if skill == 3 {
         targets += 8.0;
         new_trait = unit.skill_parameters.get(0).copied().unwrap_or(0.0);
-        skill_hps = final_atk * new_trait * f64::from(unit.targets).min(targets) * trait_factor;
-        dust_heal *= f64::from(unit.targets).min(targets) / f64::from(unit.targets).min(4.0_f64);
+        skill_hps = final_atk * new_trait * (unit.targets as f64).min(targets) * trait_factor;
+        dust_heal *= (unit.targets as f64).min(targets) / (unit.targets as f64).min(4.0_f64);
         skill_hps += dust_heal;
-        skill_no_balls = final_atk * new_trait * f64::from(unit.targets).min(targets);
+        skill_no_balls = final_atk * new_trait * (unit.targets as f64).min(targets);
         avg_hps = (skill_hps * unit.skill_duration
-            + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
         avg_no_balls = (skill_no_balls * unit.skill_duration
-            + base_no_balls * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            + base_no_balls * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
 
     Some(HpsResult {
@@ -406,10 +416,10 @@ pub fn civilight_eterna(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsRe
 /// Doc - auto-transpiled from Python
 pub fn doc(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -424,7 +434,7 @@ pub fn doc(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     };
     final_atk = unit.atk * (1.0 + unit.buff_atk) + unit.buff_atk_flat;
     skill_hps = final_atk * heal_scale * (1.0 + unit.buff_fragile);
-    avg_hps = skill_hps / f64::from(unit.skill_cost) * (1.0 + f64::from(unit.sp_boost));
+    avg_hps = skill_hps / unit.skill_cost as f64 * (1.0 + unit.sp_boost as f64);
 
     Some(HpsResult {
         skill_hps,
@@ -436,10 +446,10 @@ pub fn doc(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Eyjaberry - auto-transpiled from Python
 pub fn eyjaberry(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -464,16 +474,16 @@ pub fn eyjaberry(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         skill_hps = (final_atk_skill / atk_interval * unit.attack_speed / 100.0
             + final_atk_skill * talent_scale)
             * (1.0 + unit.buff_fragile)
-            * f64::from(unit.targets).min(2.0_f64);
+            * (unit.targets as f64).min(2.0_f64);
     }
     if skill == 3 {
         skill_scale = unit.skill_parameters.get(0).copied().unwrap_or(0.0);
         skill_hps = (5.0 * skill_scale * final_atk / atk_interval * unit.attack_speed / 100.0
-            + final_atk * talent_scale * f64::from(unit.targets).min(5.0_f64))
+            + final_atk * talent_scale * (unit.targets as f64).min(5.0_f64))
             * (1.0 + unit.buff_fragile);
         avg_hps = (skill_hps * unit.skill_duration
-            + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
 
     Some(HpsResult {
@@ -486,10 +496,10 @@ pub fn eyjaberry(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Folinic - auto-transpiled from Python
 pub fn folinic(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -519,11 +529,11 @@ pub fn folinic(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
             * unit.attack_speed
             / 100.0
             * (1.0 + unit.buff_fragile)
-            * f64::from(unit.targets).min(9.0_f64);
+            * (unit.targets as f64).min(9.0_f64);
     }
     avg_hps = (skill_hps * unit.skill_duration
-        + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-        / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+        + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+        / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
 
     Some(HpsResult {
         skill_hps,
@@ -535,10 +545,10 @@ pub fn folinic(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Gavial - auto-transpiled from Python
 pub fn gavial(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -570,14 +580,14 @@ pub fn gavial(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     base_hps = heal_factor * final_atk / atk_interval * unit.attack_speed / 100.0
         * (1.0 + unit.buff_fragile);
     targets = if skill == 2 {
-        f64::from(unit.targets).min(12.0_f64)
+        (unit.targets as f64).min(12.0_f64)
     } else {
         1.0
     };
     skill_hps = heal_factor * skill_factor * final_atk * (1.0 + unit.buff_fragile) * targets;
     avg_hps = base_hps
         + skill_hps * skill_duration
-            / (f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)) + 1.2);
+            / (unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64) + 1.2);
 
     Some(HpsResult {
         skill_hps,
@@ -589,10 +599,10 @@ pub fn gavial(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Gummy - auto-transpiled from Python
 pub fn gummy(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -609,7 +619,7 @@ pub fn gummy(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     };
     final_atk = unit.atk * (1.0 + unit.buff_atk) + unit.buff_atk_flat;
     if skill == 1 {
-        sp_cost = f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)) + 1.2;
+        sp_cost = unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64) + 1.2;
         skill_hps = final_atk
             * heal_scale
             * unit.skill_parameters.get(0).copied().unwrap_or(0.0)
@@ -623,8 +633,7 @@ pub fn gummy(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
             + unit.buff_atk_flat;
         skill_hps = final_atk_skill * heal_scale / atk_interval * unit.attack_speed / 100.0
             * (1.0 + unit.buff_fragile);
-        avg_hps = skill_hps * 20.0
-            / (30.0 + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+        avg_hps = skill_hps * 20.0 / (30.0 + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
 
     Some(HpsResult {
@@ -637,10 +646,10 @@ pub fn gummy(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Harold - auto-transpiled from Python
 pub fn harold(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -666,8 +675,8 @@ pub fn harold(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     skill_hps = final_atk_skill / atk_interval * (unit.attack_speed + aspd) / 100.0
         * (1.0 + unit.buff_fragile);
     avg_hps = (skill_hps * unit.skill_duration
-        + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-        / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+        + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+        / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
 
     Some(HpsResult {
         skill_hps,
@@ -679,10 +688,10 @@ pub fn harold(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Haruka - auto-transpiled from Python
 pub fn haruka(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -700,20 +709,20 @@ pub fn haruka(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     final_atk = unit.atk * (1.0 + unit.buff_atk) + unit.buff_atk_flat;
     base_bubble = 0.25 * final_atk / atk_interval * unit.attack_speed / 100.0
         * (1.0 + unit.buff_fragile)
-        * (targets).min(f64::from(unit.targets));
+        * (targets).min(unit.targets as f64);
     if skill == 1 {
         aspd = unit.skill_parameters.get(0).copied().unwrap_or(0.0);
         skill_hps = heal_factor * final_atk / atk_interval * (unit.attack_speed + aspd) / 100.0
             * (1.0 + unit.buff_fragile)
-            * (targets).min(f64::from(unit.targets));
+            * (targets).min(unit.targets as f64);
         avg_hps = (skill_hps * unit.skill_duration)
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
         skill_bubble = 0.25 * final_atk / atk_interval * (unit.attack_speed + aspd) / 100.0
             * (1.0 + unit.buff_fragile)
-            * (targets).min(f64::from(unit.targets));
+            * (targets).min(unit.targets as f64);
         avg_bubble = (skill_bubble * unit.skill_duration
-            + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)) * base_bubble)
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64) * base_bubble)
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
     if skill == 2 {
         if unit.skill_damage {
@@ -724,10 +733,10 @@ pub fn haruka(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         targets += unit.skill_parameters.get(2).copied().unwrap_or(0.0);
         skill_hps = heal_factor * final_atk / atk_interval * unit.attack_speed / 100.0
             * (1.0 + unit.buff_fragile)
-            * (targets).min(f64::from(unit.targets));
+            * (targets).min(unit.targets as f64);
         skill_bubble = 0.25 * final_atk / atk_interval * unit.attack_speed / 100.0
             * (1.0 + unit.buff_fragile)
-            * (targets).min(f64::from(unit.targets));
+            * (targets).min(unit.targets as f64);
     }
     if skill == 3 {
         final_atk = unit.atk
@@ -738,18 +747,18 @@ pub fn haruka(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
             * unit.attack_speed
             / 100.0
             * (1.0 + unit.buff_fragile)
-            * (targets).min(f64::from(unit.targets));
+            * (targets).min(unit.targets as f64);
         skill_bubble = 0.25 * final_atk
             / (atk_interval + unit.skill_parameters.get(0).copied().unwrap_or(0.0))
             * unit.attack_speed
             / 100.0
             * (1.0 + unit.buff_fragile)
-            * (targets).min(f64::from(unit.targets));
+            * (targets).min(unit.targets as f64);
         avg_hps = (skill_hps * unit.skill_duration)
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
         avg_bubble = (skill_bubble * unit.skill_duration
-            + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)) * base_bubble)
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64) * base_bubble)
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
 
     Some(HpsResult {
@@ -762,10 +771,10 @@ pub fn haruka(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Heidi - auto-transpiled from Python
 pub fn heidi(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -784,15 +793,15 @@ pub fn heidi(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         atkbuff += unit.talent1_parameters.get(0).copied().unwrap_or(0.0);
     }
     final_atk = unit.atk * (1.0 + unit.buff_atk + atkbuff) + unit.buff_atk_flat;
-    base_hps = final_atk * 0.1 * f64::from(unit.targets).min(targets);
-
+    base_hps = final_atk * 0.1 * (unit.targets as f64).min(targets);
+    if skill == 1 {}
     if skill == 2 {
         skill_hps = final_atk
             * unit.skill_parameters.get(3).copied().unwrap_or(0.0)
-            * f64::from(unit.targets).min(targets);
+            * (unit.targets as f64).min(targets);
         avg_hps = (skill_hps * unit.skill_duration
-            + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
 
     Some(HpsResult {
@@ -805,10 +814,10 @@ pub fn heidi(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Hibiscus - auto-transpiled from Python
 pub fn hibiscus(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -826,8 +835,8 @@ pub fn hibiscus(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     skill_hps =
         final_atk_skill / atk_interval * unit.attack_speed / 100.0 * (1.0 + unit.buff_fragile);
     avg_hps = (skill_hps * unit.skill_duration
-        + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-        / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+        + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+        / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
 
     Some(HpsResult {
         skill_hps,
@@ -839,10 +848,10 @@ pub fn hibiscus(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Honeyberry - auto-transpiled from Python
 pub fn honeyberry(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -859,9 +868,9 @@ pub fn honeyberry(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> 
     final_atk = unit.atk * (1.0 + unit.buff_atk) + unit.buff_atk_flat;
     base_hps = final_atk / atk_interval * unit.attack_speed / 100.0 * (1.0 + unit.buff_fragile);
     if skill == 1 {
-        skill_heal = final_atk * (1.0 + unit.buff_fragile) * f64::from(unit.targets).min(2.0_f64);
+        skill_heal = final_atk * (1.0 + unit.buff_fragile) * (unit.targets as f64).min(2.0_f64);
         base_heal = final_atk * (1.0 + unit.buff_fragile);
-        sp_cost = f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)) + 1.2;
+        sp_cost = unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64) + 1.2;
         atkcycle = atk_interval / (unit.attack_speed / 100.0);
         atks_per_skillactivation = sp_cost / atkcycle;
         avg_heal = skill_heal;
@@ -878,10 +887,10 @@ pub fn honeyberry(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> 
             + unit.buff_atk_flat;
         skill_hps = final_atk_skill / atk_interval * unit.attack_speed / 100.0
             * (1.0 + unit.buff_fragile)
-            * f64::from(unit.targets).min(unit.skill_parameters.get(1).copied().unwrap_or(0.0));
+            * (unit.targets as f64).min(unit.skill_parameters.get(1).copied().unwrap_or(0.0));
         avg_hps = (skill_hps * unit.skill_duration
-            + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
 
     Some(HpsResult {
@@ -894,11 +903,17 @@ pub fn honeyberry(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> 
 /// Hung - auto-transpiled from Python
 pub fn hung(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
+    let mut trait_damage: bool = unit.trait_damage;
+    let mut talent_damage: bool = unit.talent_damage;
+    let mut talent2_damage: bool = unit.talent2_damage;
+    let mut skill_damage: bool = unit.skill_damage;
+    let mut module_damage: bool = unit.module_damage;
+    let mut st_hits: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
     let mut avg_hps: f64 = 0.0;
@@ -906,7 +921,8 @@ pub fn hung(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let mut final_atk: f64 = 0.0;
     let mut final_atk_skill: f64 = 0.0;
 
-    heal_scale = if unit.talent_damage {
+    st_hits = 0.0;
+    heal_scale = if talent_damage {
         unit.talent1_parameters.get(0).copied().unwrap_or(0.0)
     } else {
         1.0
@@ -917,8 +933,8 @@ pub fn hung(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
             * heal_scale
             * unit.skill_parameters.get(0).copied().unwrap_or(0.0)
             * (1.0 + unit.buff_fragile);
-        avg_hps = if unit.ammo > 0.0 {
-            skill_hps / (f64::from(unit.skill_cost) / unit.ammo)
+        avg_hps = if st_hits > 0.0 {
+            skill_hps / (unit.skill_cost as f64 / st_hits)
         } else {
             0.0
         };
@@ -930,9 +946,9 @@ pub fn hung(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
             + unit.buff_atk_flat;
         skill_hps = final_atk_skill * heal_scale / atk_interval * unit.attack_speed / 100.0
             * (1.0 + unit.buff_fragile);
-        avg_hps = if unit.ammo > 0.0 {
+        avg_hps = if st_hits > 0.0 {
             skill_hps * unit.skill_duration
-                / (unit.skill_duration + f64::from(unit.skill_cost) / unit.ammo)
+                / (unit.skill_duration + unit.skill_cost as f64 / st_hits)
         } else {
             0.0
         };
@@ -948,10 +964,10 @@ pub fn hung(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Kaltsit - auto-transpiled from Python
 pub fn kaltsit(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -970,7 +986,7 @@ pub fn kaltsit(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     final_atk = unit.atk * (1.0 + unit.buff_atk) + unit.buff_atk_flat;
     base_hps = heal_factor * final_atk / atk_interval * (unit.attack_speed) / 100.0
         * (1.0 + unit.buff_fragile)
-        * f64::from(unit.targets).min(targets);
+        * (unit.targets as f64).min(targets);
     aspd = if skill == 2 {
         unit.skill_parameters.get(0).copied().unwrap_or(0.0)
     } else {
@@ -978,10 +994,10 @@ pub fn kaltsit(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     };
     skill_hps = heal_factor * final_atk / atk_interval * (unit.attack_speed + aspd) / 100.0
         * (1.0 + unit.buff_fragile)
-        * f64::from(unit.targets).min(targets);
+        * (unit.targets as f64).min(targets);
     avg_hps = (skill_hps * unit.skill_duration
-        + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-        / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+        + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+        / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
 
     Some(HpsResult {
         skill_hps,
@@ -993,10 +1009,10 @@ pub fn kaltsit(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Lancet2 - auto-transpiled from Python
 pub fn lancet2(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -1016,10 +1032,10 @@ pub fn lancet2(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Lumen - auto-transpiled from Python
 pub fn lumen(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -1049,8 +1065,8 @@ pub fn lumen(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         skill_hps = final_atk
             * skill_scale
             * (1.0 + unit.buff_fragile)
-            * f64::from(unit.targets).min(9.0_f64);
-        sp_cost = f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)) + 1.2;
+            * (unit.targets as f64).min(9.0_f64);
+        sp_cost = unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64) + 1.2;
         atkcycle = atk_interval / (unit.attack_speed / 100.0);
         atks_per_skillactivation = (sp_cost / atkcycle).trunc() + 1.0;
         avg_hps = base_hps + skill_hps * heal_duration / (atks_per_skillactivation * atkcycle);
@@ -1059,9 +1075,8 @@ pub fn lumen(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         skill_hps = final_atk
             * unit.skill_parameters.get(0).copied().unwrap_or(0.0)
             * (1.0 + unit.buff_fragile)
-            * f64::from(unit.targets).min(unit.skill_parameters.get(1).copied().unwrap_or(0.0));
-        avg_hps =
-            base_hps + skill_hps / f64::from(unit.skill_cost) * (1.0 + f64::from(unit.sp_boost));
+            * (unit.targets as f64).min(unit.skill_parameters.get(1).copied().unwrap_or(0.0));
+        avg_hps = base_hps + skill_hps / unit.skill_cost as f64 * (1.0 + unit.sp_boost as f64);
     }
     if skill == 3 {
         aspd = unit.skill_parameters.get(0).copied().unwrap_or(0.0);
@@ -1082,10 +1097,10 @@ pub fn lumen(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Mon3tr - auto-transpiled from Python
 pub fn mon3tr(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -1100,7 +1115,7 @@ pub fn mon3tr(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let mut skill_down_duration: f64 = 0.0;
     let mut _atk_interval_w: f64 = 0.0;
 
-    targets = f64::from(unit.targets).min(4.0_f64);
+    targets = (unit.targets as f64).min(4.0_f64);
     atkbuff = if unit.talent_damage && (skill != 2 || unit.skill_damage) {
         unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
     } else {
@@ -1151,11 +1166,11 @@ pub fn mon3tr(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         if unit.module_index == 1 && unit.module_level == 3 {
             target_scaling_skill = vec![0.0, 1.0, 2.0, 2.85, 2.85 + (0.85 as f64).powf(2.0 as f64)];
         }
-        heals = (final_atk * target_scaling[(targets) as usize] * f64::from(unit.skill_cost)
+        heals = (final_atk * target_scaling[(targets) as usize] * unit.skill_cost as f64
             + final_atk
                 * unit.skill_parameters.get(0).copied().unwrap_or(0.0)
                 * target_scaling_skill[(targets) as usize])
-            / (f64::from(unit.skill_cost) + 1.0);
+            / (unit.skill_cost as f64 + 1.0);
         avg_hps =
             heals / atk_interval * (unit.attack_speed + aspd) / 100.0 * (1.0 + unit.buff_fragile);
         return Some(HpsResult {
@@ -1168,7 +1183,7 @@ pub fn mon3tr(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         * (1.0 + unit.buff_fragile)
         * target_scaling[(targets) as usize];
     skill_down_duration =
-        atk_interval / (unit.attack_speed + aspd) * 100.0 * f64::from(unit.skill_cost);
+        atk_interval / (unit.attack_speed + aspd) * 100.0 * unit.skill_cost as f64;
     if skill == 2 {
         aspd *= unit.skill_parameters.get(0).copied().unwrap_or(0.0);
         skill_hps = final_atk / atk_interval * (unit.attack_speed + aspd) / 100.0
@@ -1211,10 +1226,10 @@ pub fn mon3tr(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Mulberry - auto-transpiled from Python
 pub fn mulberry(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -1241,7 +1256,7 @@ pub fn mulberry(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         skill_factor = unit.skill_parameters.get(0).copied().unwrap_or(0.0);
         skill_heal = final_atk * skill_factor * (1.0 + unit.buff_fragile);
         base_heal = final_atk * (1.0 + unit.buff_fragile);
-        sp_cost = f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)) + 1.2;
+        sp_cost = unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64) + 1.2;
         atkcycle = atk_interval / (unit.attack_speed / 100.0);
         atks_per_skillactivation = sp_cost / atkcycle;
         avg_heal = skill_heal;
@@ -1262,8 +1277,8 @@ pub fn mulberry(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         skill_hps =
             final_atk / _atk_interval_w * unit.attack_speed / 100.0 * (1.0 + unit.buff_fragile);
         avg_hps = (skill_hps * unit.skill_duration
-            + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
 
     Some(HpsResult {
@@ -1276,10 +1291,10 @@ pub fn mulberry(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Myrrh - auto-transpiled from Python
 pub fn myrrh(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -1309,9 +1324,9 @@ pub fn myrrh(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
             * final_atk
             * skill_factor
             * (1.0 + unit.buff_fragile)
-            * f64::from(unit.targets).min(2.0_f64);
+            * (unit.targets as f64).min(2.0_f64);
         base_heal = heal_scale * final_atk * (1.0 + unit.buff_fragile);
-        sp_cost = f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)) + 1.2;
+        sp_cost = unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64) + 1.2;
         atkcycle = atk_interval / (unit.attack_speed / 100.0);
         atks_per_skillactivation = sp_cost / atkcycle;
         avg_heal = skill_heal;
@@ -1333,11 +1348,12 @@ pub fn myrrh(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
             + unit.buff_atk_flat;
         skill_hps = heal_scale * final_atk_skill / atk_interval * unit.attack_speed / 100.0
             * (1.0 + unit.buff_fragile)
-            * f64::from(unit.targets).min(2.0_f64);
+            * (unit.targets as f64).min(2.0_f64);
         avg_hps = (skill_hps * unit.skill_duration
-            + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
+    if unit.elite > 0 {}
 
     Some(HpsResult {
         skill_hps,
@@ -1349,10 +1365,10 @@ pub fn myrrh(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Myrtle - auto-transpiled from Python
 pub fn myrtle(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -1380,7 +1396,7 @@ pub fn myrtle(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         * unit.skill_parameters.get(0).copied().unwrap_or(0.0)
         * (1.0 + unit.buff_fragile);
     avg_hps = skill_hps * unit.skill_duration
-        / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+        / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
 
     Some(HpsResult {
         skill_hps,
@@ -1392,19 +1408,16 @@ pub fn myrtle(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Nearl - auto-transpiled from Python
 pub fn nearl(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut trait_damage: bool = unit.trait_damage;
     let mut talent_damage: bool = unit.talent_damage;
     let mut talent2_damage: bool = unit.talent2_damage;
     let mut skill_damage: bool = unit.skill_damage;
     let mut module_damage: bool = unit.module_damage;
-    if skill == 1 {
-        module_damage = true;
-    }
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
     let mut avg_hps: f64 = 0.0;
@@ -1414,6 +1427,9 @@ pub fn nearl(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let mut sp_cost: f64 = 0.0;
     let mut final_atk_skill: f64 = 0.0;
 
+    if skill == 1 {
+        module_damage = true;
+    }
     heal_scale = if unit.module_index == 1 && module_damage {
         1.15
     } else {
@@ -1430,7 +1446,7 @@ pub fn nearl(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         }
     }
     if skill == 1 {
-        sp_cost = f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)) + 1.2;
+        sp_cost = unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64) + 1.2;
         skill_hps = final_atk
             * heal_scale
             * talent_scale
@@ -1447,7 +1463,7 @@ pub fn nearl(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
             / 100.0
             * (1.0 + unit.buff_fragile);
         avg_hps = skill_hps * unit.skill_duration
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
 
     Some(HpsResult {
@@ -1460,10 +1476,10 @@ pub fn nearl(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Nightingale - auto-transpiled from Python
 pub fn nightingale(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -1481,7 +1497,7 @@ pub fn nightingale(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult>
     let mut avg_heal: f64 = 0.0;
 
     heal_factor = if unit.module_index == 1 && unit.module_level > 1 {
-        0.99 + 0.02 * f64::from(unit.module_level)
+        0.99 + 0.02 * (unit.module_level as f64)
     } else {
         1.0
     };
@@ -1489,25 +1505,25 @@ pub fn nightingale(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult>
     final_atk = unit.atk * (1.0 + unit.buff_atk) + unit.buff_atk_flat;
     base_hps = heal_factor * final_atk / atk_interval * unit.attack_speed / 100.0
         * (1.0 + unit.buff_fragile)
-        * f64::from(unit.targets).min(targets);
+        * (unit.targets as f64).min(targets);
     if skill == 1 {
         atkbuff = unit.skill_parameters.get(0).copied().unwrap_or(0.0);
         final_atk_skill = unit.atk * (1.0 + unit.buff_atk + atkbuff) + unit.buff_atk_flat;
         skill_hps = heal_factor * final_atk_skill / atk_interval * (unit.attack_speed) / 100.0
             * (1.0 + unit.buff_fragile)
-            * f64::from(unit.targets).min(targets);
+            * (unit.targets as f64).min(targets);
         avg_hps = (skill_hps * unit.skill_duration
-            + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
     if skill == 2 {
         base_heal = heal_factor
             * final_atk
             * (1.0 + unit.buff_fragile)
-            * f64::from(unit.targets).min(targets);
+            * (unit.targets as f64).min(targets);
         skill_heal = final_atk * unit.skill_parameters.get(0).copied().unwrap_or(0.0)
-            + base_heal * f64::from(unit.targets).min(targets);
-        sp_cost = f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)) + 1.2;
+            + base_heal * (unit.targets as f64).min(targets);
+        sp_cost = unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64) + 1.2;
         atkcycle = atk_interval / ((unit.attack_speed) / 100.0);
         atks_per_skillactivation = sp_cost / atkcycle;
         avg_heal = skill_heal;
@@ -1532,10 +1548,10 @@ pub fn nightingale(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult>
         final_atk_skill = unit.atk * (1.0 + unit.buff_atk + atkbuff) + unit.buff_atk_flat;
         skill_hps = heal_factor * final_atk_skill / atk_interval * (unit.attack_speed) / 100.0
             * (1.0 + unit.buff_fragile)
-            * f64::from(unit.targets).min(targets);
+            * (unit.targets as f64).min(targets);
         avg_hps = (skill_hps * unit.skill_duration
-            + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
 
     Some(HpsResult {
@@ -1548,10 +1564,10 @@ pub fn nightingale(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult>
 /// Nightmare - auto-transpiled from Python
 pub fn nightmare(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -1569,16 +1585,16 @@ pub fn nightmare(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     if skill == 1 {
         heal_scale = unit.skill_parameters.get(0).copied().unwrap_or(0.0);
         sp_boost = if unit.module_index == 2 && unit.module_damage {
-            f64::from(unit.sp_boost) + 1.0 / atk_interval * unit.attack_speed / 100.0
+            unit.sp_boost as f64 + 1.0 / atk_interval * unit.attack_speed / 100.0
         } else {
-            f64::from(unit.sp_boost)
+            unit.sp_boost as f64
         };
         final_atk = unit.atk * (1.0 + unit.buff_atk) + unit.buff_atk_flat;
         skill_hps = heal_scale * final_atk / atk_interval * (unit.attack_speed + aspd) / 100.0
             * (1.0 + unit.buff_fragile)
-            * f64::from(unit.targets).min(unit.skill_parameters.get(1).copied().unwrap_or(0.0));
+            * (unit.targets as f64).min(unit.skill_parameters.get(1).copied().unwrap_or(0.0));
         avg_hps = (skill_hps * unit.skill_duration)
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + sp_boost));
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + sp_boost));
     }
 
     Some(HpsResult {
@@ -1591,10 +1607,10 @@ pub fn nightmare(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// NineColoredDeer - auto-transpiled from Python
 pub fn nine_colored_deer(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -1618,7 +1634,7 @@ pub fn nine_colored_deer(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsR
             * (1.0 + unit.buff_fragile);
     }
     avg_hps = (skill_hps * unit.skill_duration)
-        / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+        / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
 
     Some(HpsResult {
         skill_hps,
@@ -1630,10 +1646,10 @@ pub fn nine_colored_deer(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsR
 /// Nowell - auto-transpiled from Python
 pub fn nowell(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -1668,9 +1684,9 @@ pub fn nowell(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
             * (1.0 + unit.buff_fragile)
             * ranged_heal
             * heal_scale;
-        avg_hps = (base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost))
+        avg_hps = (base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64)
             + skill_hps * unit.skill_duration)
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
     if skill == 2 {
         skill_scale = unit.skill_parameters.get(3).copied().unwrap_or(0.0);
@@ -1678,10 +1694,10 @@ pub fn nowell(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
             * heal_scale
             * final_atk
             * (1.0 + unit.buff_fragile)
-            * f64::from(unit.targets).min(unit.skill_parameters.get(0).copied().unwrap_or(0.0))
+            * (unit.targets as f64).min(unit.skill_parameters.get(0).copied().unwrap_or(0.0))
             + base_hps;
-        skill_uptime = (1.0_f64)
-            .min(12.0 / (f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)) + 1.2));
+        skill_uptime =
+            (1.0_f64).min(12.0 / (unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64) + 1.2));
         avg_hps = skill_hps * skill_uptime + base_hps * (1.0 - skill_uptime);
     }
 
@@ -1695,10 +1711,10 @@ pub fn nowell(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Paprika - auto-transpiled from Python
 pub fn paprika(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -1711,7 +1727,7 @@ pub fn paprika(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let mut final_atk_skill: f64 = 0.0;
     let mut bonus_heal: f64 = 0.0;
 
-    targets = f64::from(unit.targets).min(4.0_f64);
+    targets = (unit.targets as f64).min(4.0_f64);
     target_scaling = vec![
         0.0,
         1.0,
@@ -1766,7 +1782,7 @@ pub fn paprika(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         * target_scaling[(targets) as usize];
     if unit.talent_damage {
         base_hps += bonus_heal / atk_interval * unit.attack_speed / 100.0
-            * f64::from(unit.targets).min(3.0_f64)
+            * (unit.targets as f64).min(3.0_f64)
             * (1.0 + unit.buff_fragile);
     }
     if skill == 1 {
@@ -1776,7 +1792,7 @@ pub fn paprika(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         if unit.talent_damage {
             skill_hps += bonus_heal / atk_interval * (unit.attack_speed + aspd) / 100.0
                 * (1.0 + unit.buff_fragile)
-                * f64::from(unit.targets).min(3.0_f64);
+                * (unit.targets as f64).min(3.0_f64);
         }
     } else {
         skill_hps = final_atk_skill / atk_interval * unit.attack_speed / 100.0
@@ -1785,12 +1801,12 @@ pub fn paprika(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         if unit.talent_damage {
             skill_hps += bonus_heal / atk_interval * unit.attack_speed / 100.0
                 * (1.0 + unit.buff_fragile)
-                * f64::from(unit.targets).min(4.0_f64);
+                * (unit.targets as f64).min(4.0_f64);
         }
     }
     avg_hps = (skill_hps * unit.skill_duration
-        + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-        / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+        + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+        / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
 
     Some(HpsResult {
         skill_hps,
@@ -1802,10 +1818,10 @@ pub fn paprika(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Papyrus - auto-transpiled from Python
 pub fn papyrus(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -1825,7 +1841,7 @@ pub fn papyrus(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let mut avg_hps_shield: f64 = 0.0;
     let mut _atk_interval_w: f64 = 0.0;
 
-    targets = f64::from(unit.targets).min(4.0_f64);
+    targets = (unit.targets as f64).min(4.0_f64);
     target_scaling = vec![
         0.0,
         1.0,
@@ -1868,7 +1884,7 @@ pub fn papyrus(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         * target_scaling[(targets) as usize];
     base_hps_shield = base_hps
         + shield_scale * final_atk / atk_interval * unit.attack_speed / 100.0
-            * f64::from(unit.targets).min(3.0_f64);
+            * (unit.targets as f64).min(3.0_f64);
     if skill == 1 {
         shield_scale *= unit.skill_parameters.get(1).copied().unwrap_or(0.0);
         skill_scale = unit.skill_parameters.get(0).copied().unwrap_or(0.0);
@@ -1878,8 +1894,8 @@ pub fn papyrus(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         skill_hps_shield = skill_hps
             + shield_scale * final_atk / atk_interval * unit.attack_speed / 100.0
                 * (1.0 + unit.buff_fragile)
-                * f64::from(unit.targets).min(3.0_f64);
-        sp_cost = f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)) + 1.2;
+                * (unit.targets as f64).min(3.0_f64);
+        sp_cost = unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64) + 1.2;
         atkcycle = atk_interval / unit.attack_speed * 100.0;
         atks_per_skillactivation = sp_cost / atkcycle;
         avg_hps = skill_hps;
@@ -1905,11 +1921,11 @@ pub fn papyrus(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
                 * (1.0 + unit.buff_fragile)
                 * targets;
         avg_hps = (skill_hps * unit.skill_duration
-            + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
         avg_hps_shield = (skill_hps_shield * unit.skill_duration
-            + base_hps_shield * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            + base_hps_shield * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
 
     Some(HpsResult {
@@ -1922,10 +1938,10 @@ pub fn papyrus(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Perfumer - auto-transpiled from Python
 pub fn perfumer(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -1950,31 +1966,31 @@ pub fn perfumer(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         0.0
     };
     base_hps = final_atk / atk_interval * unit.attack_speed / 100.0
-        * f64::from(unit.targets).min(targets)
+        * (unit.targets as f64).min(targets)
         * (1.0 + unit.buff_fragile);
     skill_hps = final_atk_skill / atk_interval * (unit.attack_speed + aspd) / 100.0
-        * f64::from(unit.targets).min(targets)
+        * (unit.targets as f64).min(targets)
         * (1.0 + unit.buff_fragile);
     avg_hps = (skill_hps * unit.skill_duration
-        + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-        / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+        + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+        / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     heal_factor = unit.talent1_parameters.get(0).copied().unwrap_or(0.0);
     if unit.module_index == 2 && unit.module_level > 1 {
-        heal_factor += 0.005 * f64::from(unit.module_level);
+        heal_factor += 0.005 * (unit.module_level as f64);
     }
     aura_heal = if unit.elite > 0 {
-        final_atk * heal_factor * f64::from(unit.targets)
+        final_atk * heal_factor * unit.targets as f64
     } else {
         0.0
     };
     aura_heal_skill = if unit.elite > 0 {
-        final_atk_skill * heal_factor * f64::from(unit.targets)
+        final_atk_skill * heal_factor * unit.targets as f64
     } else {
         0.0
     };
     aura_heal_avg = (aura_heal_skill * unit.skill_duration
-        + aura_heal * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-        / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+        + aura_heal * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+        / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
 
     Some(HpsResult {
         skill_hps,
@@ -1986,10 +2002,10 @@ pub fn perfumer(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Podenco - auto-transpiled from Python
 pub fn podenco(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -2010,7 +2026,7 @@ pub fn podenco(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         skill_hps = final_atk / atk_interval * (unit.attack_speed + aspd) / 100.0
             * (1.0 + unit.buff_fragile);
         avg_hps = (skill_hps * unit.skill_duration)
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
 
     Some(HpsResult {
@@ -2023,10 +2039,10 @@ pub fn podenco(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Ptilopsis - auto-transpiled from Python
 pub fn ptilopsis(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -2042,11 +2058,11 @@ pub fn ptilopsis(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     } else {
         0.0
     };
-    sp_boost = f64::from(unit.sp_boost).max(sp_boost);
+    sp_boost = (unit.sp_boost as f64).max(sp_boost);
     final_atk = unit.atk * (1.0 + unit.buff_atk) + unit.buff_atk_flat;
     base_hps = final_atk / atk_interval * unit.attack_speed / 100.0
         * (1.0 + unit.buff_fragile)
-        * f64::from(unit.targets).min(3.0_f64);
+        * (unit.targets as f64).min(3.0_f64);
     atkbuff = if skill == 1 {
         unit.skill_parameters.get(0).copied().unwrap_or(0.0)
     } else {
@@ -2059,11 +2075,11 @@ pub fn ptilopsis(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     };
     final_atk_skill = unit.atk * (1.0 + unit.buff_atk + atkbuff) + unit.buff_atk_flat;
     skill_hps = final_atk_skill / _atk_interval_w * unit.attack_speed / 100.0
-        * f64::from(unit.targets).min(3.0_f64)
+        * (unit.targets as f64).min(3.0_f64)
         * (1.0 + unit.buff_fragile);
     avg_hps = (skill_hps * unit.skill_duration
-        + base_hps * f64::from(unit.skill_cost) / (1.0 + sp_boost))
-        / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + sp_boost));
+        + base_hps * unit.skill_cost as f64 / (1.0 + sp_boost))
+        / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + sp_boost));
 
     Some(HpsResult {
         skill_hps,
@@ -2075,10 +2091,10 @@ pub fn ptilopsis(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Purestream - auto-transpiled from Python
 pub fn purestream(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -2115,9 +2131,8 @@ pub fn purestream(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> 
             * skill_scale
             * heal_scale
             * (1.0 + unit.buff_fragile)
-            * f64::from(unit.targets).min(max_targets);
-        avg_hps =
-            base_hps + skill_hps / f64::from(unit.skill_cost) * (1.0 + f64::from(unit.sp_boost));
+            * (unit.targets as f64).min(max_targets);
+        avg_hps = base_hps + skill_hps / unit.skill_cost as f64 * (1.0 + unit.sp_boost as f64);
     }
     if skill == 2 {
         _atk_interval_w = atk_interval * 0.12;
@@ -2125,9 +2140,9 @@ pub fn purestream(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> 
             * unit.attack_speed
             / 100.0
             * (1.0 + unit.buff_fragile);
-        avg_hps = (base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost))
+        avg_hps = (base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64)
             + skill_hps * unit.skill_duration)
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
 
     Some(HpsResult {
@@ -2140,10 +2155,10 @@ pub fn purestream(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> 
 /// Quercus - auto-transpiled from Python
 pub fn quercus(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -2166,7 +2181,7 @@ pub fn quercus(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         skill_hps = heal_factor * final_atk / atk_interval * (unit.attack_speed + aspd) / 100.0
             * (1.0 + unit.buff_fragile);
         avg_hps = (skill_hps * unit.skill_duration)
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
 
     Some(HpsResult {
@@ -2179,10 +2194,10 @@ pub fn quercus(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// RecordKeeper - auto-transpiled from Python
 pub fn record_keeper(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -2223,9 +2238,9 @@ pub fn record_keeper(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResul
             * skill_factor
             * (1.0 + unit.buff_fragile)
             * module_heal
-            * f64::from(unit.targets).min(2.0_f64);
+            * (unit.targets as f64).min(2.0_f64);
         base_heal = module_heal * final_atk * (1.0 + unit.buff_fragile);
-        sp_cost = (f64::from(unit.skill_cost) - restore) / (1.0 + f64::from(unit.sp_boost)) + 1.2;
+        sp_cost = (unit.skill_cost as f64 - restore) / (1.0 + unit.sp_boost as f64) + 1.2;
         atkcycle = atk_interval / ((unit.attack_speed + aspd) / 100.0);
         atks_per_skillactivation = sp_cost / atkcycle;
         avg_heal = skill_heal;
@@ -2248,7 +2263,7 @@ pub fn record_keeper(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResul
         skill_hps = final_atk_skill * module_heal / atk_interval * (unit.attack_speed + aspd)
             / 100.0
             * (1.0 + unit.buff_fragile)
-            * f64::from(unit.targets).min(2.0_f64);
+            * (unit.targets as f64).min(2.0_f64);
         if !unit.talent_damage {
             skill_hps = final_atk_skill * module_heal / atk_interval
                 * (unit.attack_speed
@@ -2257,11 +2272,11 @@ pub fn record_keeper(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResul
                         / 25.0))
                 / 100.0
                 * (1.0 + unit.buff_fragile)
-                * f64::from(unit.targets).min(2.0_f64);
+                * (unit.targets as f64).min(2.0_f64);
         }
         avg_hps = (skill_hps * unit.skill_duration
-            + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
 
     Some(HpsResult {
@@ -2279,10 +2294,10 @@ pub fn reed_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> 
 /// RoseSalt - auto-transpiled from Python
 pub fn rose_salt(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -2307,7 +2322,7 @@ pub fn rose_salt(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         normal_heal = final_atk * (1.0 + unit.buff_fragile) * healing_bonus;
         skill_heal = skill_scale * final_atk * (1.0 + unit.buff_fragile) * healing_bonus;
         avg_heal = skill_heal;
-        sp_cost = f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)) + 1.2;
+        sp_cost = unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64) + 1.2;
         atkcycle = atk_interval / (unit.attack_speed / 100.0);
         atks_per_skillactivation = sp_cost / atkcycle;
         if atks_per_skillactivation > 1.0 {
@@ -2320,25 +2335,25 @@ pub fn rose_salt(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
             }
         }
         base_hps = normal_heal / atk_interval * unit.attack_speed / 100.0
-            * f64::from(unit.targets).min(3.0_f64);
+            * (unit.targets as f64).min(3.0_f64);
         skill_hps = skill_heal / atk_interval * unit.attack_speed / 100.0
-            * f64::from(unit.targets).min(3.0_f64);
+            * (unit.targets as f64).min(3.0_f64);
         avg_hps = avg_heal / atk_interval * unit.attack_speed / 100.0
-            * f64::from(unit.targets).min(3.0_f64);
+            * (unit.targets as f64).min(3.0_f64);
     }
     if skill == 2 {
         _atk_interval_w = atk_interval + unit.skill_parameters.get(2).copied().unwrap_or(0.0);
         base_hps = final_atk / atk_interval * unit.attack_speed / 100.0
-            * f64::from(unit.targets).min(3.0_f64)
+            * (unit.targets as f64).min(3.0_f64)
             * (1.0 + unit.buff_fragile)
             * healing_bonus;
         skill_hps = final_atk / _atk_interval_w * unit.attack_speed / 100.0
-            * f64::from(unit.targets).min(3.0_f64)
+            * (unit.targets as f64).min(3.0_f64)
             * (1.0 + unit.buff_fragile)
             * healing_bonus;
         avg_hps = (skill_hps * unit.skill_duration
-            + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
 
     Some(HpsResult {
@@ -2351,10 +2366,10 @@ pub fn rose_salt(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Saileach - auto-transpiled from Python
 pub fn saileach(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -2371,7 +2386,7 @@ pub fn saileach(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     final_atk = unit.atk * (1.0 + unit.buff_atk) + unit.buff_atk_flat;
     skill_hps = final_atk * unit.skill_parameters.get(1).copied().unwrap_or(0.0);
     avg_hps = skill_hps * unit.skill_duration
-        / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+        / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
 
     Some(HpsResult {
         skill_hps,
@@ -2383,19 +2398,16 @@ pub fn saileach(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Saria - auto-transpiled from Python
 pub fn saria(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut trait_damage: bool = unit.trait_damage;
     let mut talent_damage: bool = unit.talent_damage;
     let mut talent2_damage: bool = unit.talent2_damage;
     let mut skill_damage: bool = unit.skill_damage;
     let mut module_damage: bool = unit.module_damage;
-    if skill == 1 {
-        module_damage = true;
-    }
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
     let mut avg_hps: f64 = 0.0;
@@ -2404,6 +2416,9 @@ pub fn saria(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let mut final_atk: f64 = 0.0;
     let mut sp_cost: f64 = 0.0;
 
+    if skill == 1 {
+        module_damage = true;
+    }
     heal_scale = if unit.module_index == 1 && module_damage {
         1.15
     } else {
@@ -2416,7 +2431,7 @@ pub fn saria(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     };
     final_atk = unit.atk * (1.0 + unit.buff_atk + atkbuff) + unit.buff_atk_flat;
     if skill == 1 {
-        sp_cost = f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)) + 1.2;
+        sp_cost = unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64) + 1.2;
         skill_hps = final_atk
             * heal_scale
             * unit.skill_parameters.get(0).copied().unwrap_or(0.0)
@@ -2424,12 +2439,12 @@ pub fn saria(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         avg_hps = skill_hps / sp_cost;
     }
     if skill == 2 {
-        sp_cost = f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)) + 1.2;
+        sp_cost = unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64) + 1.2;
         skill_hps = final_atk
             * heal_scale
             * unit.skill_parameters.get(0).copied().unwrap_or(0.0)
             * (1.0 + unit.buff_fragile)
-            * f64::from(unit.targets).min(21.0_f64);
+            * (unit.targets as f64).min(21.0_f64);
         avg_hps = skill_hps / sp_cost;
     }
     if skill == 3 {
@@ -2437,9 +2452,9 @@ pub fn saria(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
             * heal_scale
             * unit.skill_parameters.get(0).copied().unwrap_or(0.0)
             * (1.0 + unit.buff_fragile)
-            * f64::from(unit.targets).min(25.0_f64);
+            * (unit.targets as f64).min(25.0_f64);
         avg_hps = skill_hps * unit.skill_duration
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
 
     Some(HpsResult {
@@ -2452,10 +2467,10 @@ pub fn saria(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Senshi - auto-transpiled from Python
 pub fn senshi(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -2469,7 +2484,7 @@ pub fn senshi(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     skill_scale = unit.skill_parameters.get(0).copied().unwrap_or(0.0);
     final_atk = unit.atk * (1.0 + unit.buff_atk) + unit.buff_atk_flat;
     if skill == 1 {
-        sp_cost = f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)) + 3.0;
+        sp_cost = unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64) + 3.0;
         skill_hps = final_atk * skill_scale * (1.0 + unit.buff_fragile);
         avg_hps = skill_hps / sp_cost;
     }
@@ -2478,13 +2493,13 @@ pub fn senshi(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         skill_hps = final_atk
             * skill_scale
             * (1.0 + unit.buff_fragile)
-            * f64::from(unit.targets).min(9.0_f64);
+            * (unit.targets as f64).min(9.0_f64);
         extra_heal = final_atk
             * skill_scale_2
             * (1.0 + unit.buff_fragile)
-            * f64::from(unit.targets).min(9.0_f64);
+            * (unit.targets as f64).min(9.0_f64);
         avg_hps = (extra_heal + skill_hps * 10.0)
-            / (10.0 + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            / (10.0 + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
 
     Some(HpsResult {
@@ -2497,10 +2512,10 @@ pub fn senshi(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Shining - auto-transpiled from Python
 pub fn shining(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -2526,7 +2541,7 @@ pub fn shining(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     aspd = unit.talent2_parameters.get(0).copied().unwrap_or(0.0);
     atkbuff = 0.0;
     if skill == 2 && unit.module_index == 1 && unit.module_level > 1 {
-        atkbuff += 0.05 + 0.1 * f64::from(unit.module_level);
+        atkbuff += 0.05 + 0.1 * (unit.module_level as f64);
     }
     final_atk = unit.atk * (1.0 + unit.buff_atk + atkbuff) + unit.buff_atk_flat;
     base_hps = heal_factor * final_atk / atk_interval * (unit.attack_speed + aspd) / 100.0
@@ -2539,13 +2554,13 @@ pub fn shining(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
             / 100.0
             * (1.0 + unit.buff_fragile);
         avg_hps = (skill_hps * unit.skill_duration
-            + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
     if skill == 2 {
         base_heal = heal_factor * final_atk * (1.0 + unit.buff_fragile);
         skill_heal = final_atk * unit.skill_parameters.get(1).copied().unwrap_or(0.0) + base_heal;
-        sp_cost = f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)) + 1.2;
+        sp_cost = unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64) + 1.2;
         atkcycle = atk_interval / ((unit.attack_speed + aspd) / 100.0);
         atks_per_skillactivation = sp_cost / atkcycle;
         avg_heal = skill_heal;
@@ -2567,17 +2582,17 @@ pub fn shining(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     }
     if skill == 3 {
         atkbuff += unit.skill_parameters.get(1).copied().unwrap_or(0.0);
-        sp_boost = f64::from(unit.sp_boost);
+        sp_boost = unit.sp_boost as f64;
         if unit.module_index == 1 && unit.module_level > 1 {
-            sp_boost += 0.15 + 0.15 * f64::from(unit.module_level);
+            sp_boost += 0.15 + 0.15 * (unit.module_level as f64);
         }
         final_atk_skill = unit.atk * (1.0 + unit.buff_atk + atkbuff) + unit.buff_atk_flat;
         skill_hps = heal_factor * final_atk_skill / atk_interval * (unit.attack_speed + aspd)
             / 100.0
             * (1.0 + unit.buff_fragile);
         avg_hps = (skill_hps * unit.skill_duration
-            + base_hps * f64::from(unit.skill_cost) / (1.0 + sp_boost))
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + sp_boost));
+            + base_hps * unit.skill_cost as f64 / (1.0 + sp_boost))
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + sp_boost));
     }
 
     Some(HpsResult {
@@ -2590,19 +2605,16 @@ pub fn shining(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Shu - auto-transpiled from Python
 pub fn shu(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut trait_damage: bool = unit.trait_damage;
     let mut talent_damage: bool = unit.talent_damage;
     let mut talent2_damage: bool = unit.talent2_damage;
     let mut skill_damage: bool = unit.skill_damage;
     let mut module_damage: bool = unit.module_damage;
-    if skill == 1 {
-        module_damage = true;
-    }
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
     let mut avg_hps: f64 = 0.0;
@@ -2617,10 +2629,13 @@ pub fn shu(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let mut grassheal_skill: f64 = 0.0;
     let mut final_atk_skill: f64 = 0.0;
 
+    if skill == 1 {
+        module_damage = true;
+    }
     grassheal = if unit.elite < 1 {
         0.0
     } else {
-        unit.talent1_parameters.get(0).copied().unwrap_or(0.0) * f64::from(unit.targets)
+        unit.talent1_parameters.get(0).copied().unwrap_or(0.0) * unit.targets as f64
     };
     heal_scale = if unit.module_index == 1 && module_damage {
         1.15
@@ -2638,13 +2653,13 @@ pub fn shu(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         0.0
     };
     sp_boost = if unit.elite == 2 && talent2_damage {
-        f64::from(unit.sp_boost) + 0.25
+        unit.sp_boost as f64 + 0.25
     } else {
-        f64::from(unit.sp_boost)
+        unit.sp_boost as f64
     };
     if skill == 1 {
         skill_scale = unit.skill_parameters.get(0).copied().unwrap_or(0.0);
-        sp_cost = f64::from(unit.skill_cost);
+        sp_cost = unit.skill_cost as f64;
         sp_cost = sp_cost / (1.0 + sp_boost) + 1.2;
         final_atk = unit.atk * (1.0 + unit.buff_atk + atkbuff) + unit.buff_atk_flat;
         skill_hps = final_atk * heal_scale * skill_scale * (1.0 + unit.buff_fragile);
@@ -2662,11 +2677,11 @@ pub fn shu(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         skill_hps = heal_scale * final_atk_skill / atk_interval * (unit.attack_speed + aspd)
             / 100.0
             * (1.0 + unit.buff_fragile)
-            * f64::from(unit.targets).min(2.0_f64)
+            * (unit.targets as f64).min(2.0_f64)
             + grassheal_skill;
         avg_hps = (skill_hps * unit.skill_duration
-            + grassheal * f64::from(unit.skill_cost) / (1.0 + sp_boost))
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + sp_boost));
+            + grassheal * unit.skill_cost as f64 / (1.0 + sp_boost))
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + sp_boost));
     }
     if skill == 3 {
         atkbuff += unit.skill_parameters.get(0).copied().unwrap_or(0.0);
@@ -2679,7 +2694,7 @@ pub fn shu(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
             / 100.0
             * (1.0 + unit.buff_fragile);
         avg_hps = skill_hps * unit.skill_duration
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + sp_boost));
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + sp_boost));
     }
 
     Some(HpsResult {
@@ -2692,10 +2707,10 @@ pub fn shu(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Silence - auto-transpiled from Python
 pub fn silence(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -2726,13 +2741,13 @@ pub fn silence(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
             / 100.0
             * (1.0 + unit.buff_fragile);
         avg_hps = (skill_hps * unit.skill_duration
-            + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
     if skill == 2 {
-        skill_hps = unit.drone_atk * f64::from(unit.targets).min(8.0_f64) * 2.0;
-        avg_hps = skill_hps
-            * (1.0_f64).min(10.0 / f64::from(unit.skill_cost) * (1.0 + f64::from(unit.sp_boost)));
+        skill_hps = unit.drone_atk * (unit.targets as f64).min(8.0_f64) * 2.0;
+        avg_hps =
+            skill_hps * (1.0_f64).min(10.0 / unit.skill_cost as f64 * (1.0 + unit.sp_boost as f64));
         skill_hps += base_hps;
         avg_hps += base_hps;
     }
@@ -2747,10 +2762,10 @@ pub fn silence(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// SilenceAlter - auto-transpiled from Python
 pub fn silence_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -2770,7 +2785,7 @@ pub fn silence_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResul
             + unit.buff_atk_flat;
         skill_hps = heal_factor * final_atk / atk_interval * unit.attack_speed / 100.0
             * (1.0 + unit.buff_fragile)
-            * f64::from(unit.targets).min(targets);
+            * (unit.targets as f64).min(targets);
     }
     if skill == 2 {
         final_atk = unit.atk * (1.0 + unit.buff_atk) + unit.buff_atk_flat;
@@ -2778,20 +2793,20 @@ pub fn silence_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResul
             * (unit.attack_speed + unit.skill_parameters.get(0).copied().unwrap_or(0.0))
             / 100.0
             * (1.0 + unit.buff_fragile)
-            * f64::from(unit.targets).min(targets);
+            * (unit.targets as f64).min(targets);
     }
     avg_hps = (skill_hps * unit.skill_duration)
-        / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+        / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     if unit.elite == 2 {
         aura_heal_skill = final_atk
             * unit.talent2_parameters.get(1).copied().unwrap_or(0.0)
-            * f64::from(unit.targets).min(16.0_f64);
+            * (unit.targets as f64).min(16.0_f64);
         aura_heal_base = (unit.atk * (1.0 + unit.buff_atk) + unit.buff_atk_flat)
             * unit.talent2_parameters.get(1).copied().unwrap_or(0.0)
-            * f64::from(unit.targets).min(16.0_f64);
+            * (unit.targets as f64).min(16.0_f64);
         aura_heal_avg = (aura_heal_skill * unit.skill_duration
-            + aura_heal_base * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            + aura_heal_base * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
 
     Some(HpsResult {
@@ -2804,10 +2819,10 @@ pub fn silence_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResul
 /// Skalter - auto-transpiled from Python
 pub fn skalter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -2829,19 +2844,19 @@ pub fn skalter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         atkbuff = unit.talent2_parameters.get(1).copied().unwrap_or(0.0);
     }
     final_atk = unit.atk * (1.0 + unit.buff_atk + atkbuff) + unit.buff_atk_flat;
-    base_hps = final_atk * 0.1 * f64::from(unit.targets).min(targets);
+    base_hps = final_atk * 0.1 * (unit.targets as f64).min(targets);
     if skill == 1 {
         skill_hps = final_atk
             * unit.skill_parameters.get(1).copied().unwrap_or(0.0)
-            * f64::from(unit.targets).min(targets);
+            * (unit.targets as f64).min(targets);
         avg_hps = (skill_hps * unit.skill_duration
-            + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
     if skill == 2 {
         skill_hps = final_atk
             * unit.skill_parameters.get(2).copied().unwrap_or(0.0)
-            * f64::from(unit.targets).min(targets);
+            * (unit.targets as f64).min(targets);
     }
 
     Some(HpsResult {
@@ -2854,10 +2869,10 @@ pub fn skalter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Sora - auto-transpiled from Python
 pub fn sora(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -2877,34 +2892,34 @@ pub fn sora(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         0.0
     };
     final_atk = unit.atk * (1.0 + unit.buff_atk + atkbuff) + unit.buff_atk_flat;
-    base_hps = final_atk * 0.1 * f64::from(unit.targets).min(targets);
+    base_hps = final_atk * 0.1 * (unit.targets as f64).min(targets);
     if skill == 1 {
         skill_hps = final_atk
             * unit.skill_parameters.get(0).copied().unwrap_or(0.0)
-            * f64::from(unit.targets).min(targets);
+            * (unit.targets as f64).min(targets);
         skill_cost = if unit.elite == 0 {
-            f64::from(unit.skill_cost)
+            unit.skill_cost as f64
         } else {
-            f64::from(unit.skill_cost)
+            unit.skill_cost as f64
                 * ((1.0 - unit.talent1_parameters.get(0).copied().unwrap_or(0.0))
                     + unit.talent1_parameters.get(0).copied().unwrap_or(0.0)
                         * unit.talent1_parameters.get(1).copied().unwrap_or(0.0))
         };
         avg_avg_hps = (skill_hps * unit.skill_duration
-            + base_hps * skill_cost / (1.0 + f64::from(unit.sp_boost)))
-            / (unit.skill_duration + skill_cost / (1.0 + f64::from(unit.sp_boost)));
+            + base_hps * skill_cost / (1.0 + unit.sp_boost as f64))
+            / (unit.skill_duration + skill_cost / (1.0 + unit.sp_boost as f64));
         max_avg_hps = (skill_hps * unit.skill_duration
             + base_hps
-                * f64::from(unit.skill_cost)
+                * unit.skill_cost as f64
                 * (1.0 - unit.talent1_parameters.get(1).copied().unwrap_or(0.0))
-                / (1.0 + f64::from(unit.sp_boost)))
+                / (1.0 + unit.sp_boost as f64))
             / (unit.skill_duration
-                + f64::from(unit.skill_cost)
+                + unit.skill_cost as f64
                     * (1.0 - unit.talent1_parameters.get(1).copied().unwrap_or(0.0))
-                    / (1.0 + f64::from(unit.sp_boost)));
+                    / (1.0 + unit.sp_boost as f64));
         min_avg_hps = (skill_hps * unit.skill_duration
-            + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
 
     Some(HpsResult {
@@ -2917,10 +2932,10 @@ pub fn sora(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Spot - auto-transpiled from Python
 pub fn spot(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -2934,7 +2949,7 @@ pub fn spot(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     skill_hps =
         final_atk_skill / atk_interval * unit.attack_speed / 100.0 * (1.0 + unit.buff_fragile);
     avg_hps = skill_hps * unit.skill_duration
-        / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+        / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
 
     Some(HpsResult {
         skill_hps,
@@ -2946,10 +2961,10 @@ pub fn spot(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Sussurro - auto-transpiled from Python
 pub fn sussurro(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -2991,8 +3006,8 @@ pub fn sussurro(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
             * (1.0 + unit.buff_fragile);
     }
     avg_hps = (skill_hps * unit.skill_duration
-        + base_hps * f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)))
-        / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+        + base_hps * unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64))
+        / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
 
     Some(HpsResult {
         skill_hps,
@@ -3004,10 +3019,10 @@ pub fn sussurro(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// SwireAlter - auto-transpiled from Python
 pub fn swire_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -3039,10 +3054,10 @@ pub fn swire_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult>
 /// ThornsAlter - auto-transpiled from Python
 pub fn thorns_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -3085,11 +3100,11 @@ pub fn thorns_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult
     } else {
         unit.skill_parameters.get(8).copied().unwrap_or(0.0)
     };
-    sp_cost = f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)) + 1.2;
+    sp_cost = unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64) + 1.2;
     if skill == 1 {
         sp_cost += sp_cost % (atk_interval / (unit.attack_speed + aspd) * 100.0);
     }
-    skill_hps = final_atk * heal_scale * f64::from(unit.targets).min(9.0_f64);
+    skill_hps = final_atk * heal_scale * (unit.targets as f64).min(9.0_f64);
     avg_hps = skill_hps * (duration + extra_duration) / sp_cost;
 
     Some(HpsResult {
@@ -3102,10 +3117,10 @@ pub fn thorns_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult
 /// Tsukinogi - auto-transpiled from Python
 pub fn tsukinogi(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -3121,10 +3136,10 @@ pub fn tsukinogi(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     }
     if skill == 2 {
         final_atk = unit.atk * (1.0 + unit.buff_atk) + unit.buff_atk_flat;
-        skill_hps = unit.skill_parameters[2] * final_atk * f64::from(unit.targets).min(16.0_f64);
+        skill_hps = unit.skill_parameters[2] * final_atk * (unit.targets as f64).min(16.0_f64);
     }
     avg_hps = (skill_hps * unit.skill_duration)
-        / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+        / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
 
     Some(HpsResult {
         skill_hps,
@@ -3136,19 +3151,16 @@ pub fn tsukinogi(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Tuye - auto-transpiled from Python
 pub fn tuye(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut trait_damage: bool = unit.trait_damage;
     let mut talent_damage: bool = unit.talent_damage;
     let mut talent2_damage: bool = unit.talent2_damage;
     let mut skill_damage: bool = unit.skill_damage;
     let mut module_damage: bool = unit.module_damage;
-    if skill == 2 {
-        module_damage = true;
-    }
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
     let mut avg_hps: f64 = 0.0;
@@ -3160,6 +3172,9 @@ pub fn tuye(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let mut avg_hps_ideal: f64 = 0.0;
     let mut final_atk_skill: f64 = 0.0;
 
+    if skill == 2 {
+        module_damage = true;
+    }
     heal_scale = if unit.module_index == 2 && module_damage {
         1.15
     } else {
@@ -3171,8 +3186,7 @@ pub fn tuye(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     if skill == 1 {
         skill_scale = unit.skill_parameters.get(0).copied().unwrap_or(0.0);
         skill_hps = final_atk * (heal_scale * (1.0 + unit.buff_fragile) + skill_scale);
-        avg_hps =
-            base_hps + skill_hps / f64::from(unit.skill_cost) * (1.0 + f64::from(unit.sp_boost));
+        avg_hps = base_hps + skill_hps / unit.skill_cost as f64 * (1.0 + unit.sp_boost as f64);
         if unit.elite > 0 {
             base_hps_ideal = final_atk * unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
                 / 4.0
@@ -3183,7 +3197,7 @@ pub fn tuye(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
                     * (1.0 + unit.buff_fragile)
                     + skill_scale);
             avg_hps_ideal = base_hps_ideal
-                + skill_hps_ideal / f64::from(unit.skill_cost) * (1.0 + f64::from(unit.sp_boost));
+                + skill_hps_ideal / unit.skill_cost as f64 * (1.0 + unit.sp_boost as f64);
         }
     }
     if skill == 2 {
@@ -3215,10 +3229,10 @@ pub fn tuye(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// UOfficial - auto-transpiled from Python
 pub fn u_official(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -3226,7 +3240,7 @@ pub fn u_official(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> 
     let mut final_atk: f64 = 0.0;
 
     final_atk = unit.atk * (1.0 + unit.buff_atk) + unit.buff_atk_flat;
-    base_hps = final_atk * 0.1 * f64::from(unit.targets).min(9.0_f64);
+    base_hps = final_atk * 0.1 * (unit.targets as f64).min(9.0_f64);
 
     Some(HpsResult {
         skill_hps,
@@ -3238,10 +3252,10 @@ pub fn u_official(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> 
 /// Wanqing - auto-transpiled from Python
 pub fn wanqing(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -3259,9 +3273,9 @@ pub fn wanqing(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     skill_hps = final_atk
         * unit.skill_parameters.get(1).copied().unwrap_or(0.0)
         * (1.0 + unit.buff_fragile)
-        * f64::from(unit.targets).min(9.0_f64);
+        * (unit.targets as f64).min(9.0_f64);
     avg_hps = skill_hps * unit.skill_duration
-        / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+        / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
 
     Some(HpsResult {
         skill_hps,
@@ -3273,11 +3287,17 @@ pub fn wanqing(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Warfarin - auto-transpiled from Python
 pub fn warfarin(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
+    let mut target_hp: f64 = unit.target_hp;
+    let mut trait_damage: bool = unit.trait_damage;
+    let mut talent_damage: bool = unit.talent_damage;
+    let mut talent2_damage: bool = unit.talent2_damage;
+    let mut skill_damage: bool = unit.skill_damage;
+    let mut module_damage: bool = unit.module_damage;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
     let mut avg_hps: f64 = 0.0;
@@ -3288,7 +3308,10 @@ pub fn warfarin(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let mut avg_heal: f64 = 0.0;
     let mut final_atk_skill: f64 = 0.0;
 
-    heal_scale = if unit.module_index == 1 && unit.module_damage {
+    if skill == 1 {
+        target_hp = 1000.0 * ((unit.elite as f64) + 1.0);
+    }
+    heal_scale = if unit.module_index == 1 && module_damage {
         1.15
     } else {
         1.0
@@ -3299,12 +3322,12 @@ pub fn warfarin(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     if skill == 1 {
         base_heal = heal_scale * final_atk * (1.0 + unit.buff_fragile);
         skill_heal = unit.skill_parameters.get(0).copied().unwrap_or(0.0)
-            * unit.target_hp
+            * target_hp
             * heal_scale
             * (1.0 + unit.buff_fragile)
             + base_heal;
-        avg_heal = (base_heal * f64::from(unit.skill_cost) + skill_heal)
-            / (f64::from(unit.skill_cost) + 1.0);
+        avg_heal =
+            (base_heal * unit.skill_cost as f64 + skill_heal) / (unit.skill_cost as f64 + 1.0);
         skill_hps = skill_heal / atk_interval * unit.attack_speed / 100.0;
         avg_hps = avg_heal / atk_interval * unit.attack_speed / 100.0;
     }
@@ -3315,9 +3338,9 @@ pub fn warfarin(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
         skill_hps = heal_scale * final_atk_skill / atk_interval * unit.attack_speed / 100.0
             * (1.0 + unit.buff_fragile);
         avg_hps = (skill_hps * 15.0
-            + base_hps * (f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)) - 15.0))
-            / (f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
-        if (f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost))) <= 15.0 {
+            + base_hps * (unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64) - 15.0))
+            / (unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
+        if (unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64)) <= 15.0 {
             avg_hps = skill_hps;
         }
     }
@@ -3332,10 +3355,10 @@ pub fn warfarin(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
 /// Whisperain - auto-transpiled from Python
 pub fn whisperain(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -3364,8 +3387,8 @@ pub fn whisperain(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> 
         base_heal = range_heal * final_atk * (1.0 + unit.buff_fragile);
         skill_heal = final_atk * unit.skill_parameters.get(0).copied().unwrap_or(0.0) * range_heal
             + passive_heal * unit.skill_parameters.get(1).copied().unwrap_or(0.0);
-        avg_heal = (base_heal * f64::from(unit.skill_cost) + skill_heal)
-            / (f64::from(unit.skill_cost) + 1.0);
+        avg_heal =
+            (base_heal * unit.skill_cost as f64 + skill_heal) / (unit.skill_cost as f64 + 1.0);
         avg_hps = avg_heal / atk_interval * unit.attack_speed / 100.0;
         if unit.module_index == 1 {}
     }
@@ -3389,10 +3412,10 @@ pub fn whisperain(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> 
 /// Xingzhu - auto-transpiled from Python
 pub fn xingzhu(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
     let skill = unit.skill_index;
-    let skillf = f64::from(unit.skill_index);
+    let skillf = unit.skill_index as f64;
     let mut defense = enemy.defense;
     let mut res = enemy.res;
-    let mut atk_interval: f64 = f64::from(unit.attack_interval);
+    let mut atk_interval: f64 = unit.attack_interval as f64;
     let mut dps: f64 = 0.0;
     let mut skill_hps: f64 = 0.0;
     let mut base_hps: f64 = 0.0;
@@ -3410,21 +3433,21 @@ pub fn xingzhu(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<HpsResult> {
             * unit.skill_parameters.get(0).copied().unwrap_or(0.0)
             * heal_factor
             * (1.0 + unit.buff_fragile)
-            * f64::from(unit.targets).min(max_targets);
-        avg_hps = skill_hps / f64::from(unit.skill_cost) * (1.0 + f64::from(unit.sp_boost));
+            * (unit.targets as f64).min(max_targets);
+        avg_hps = skill_hps / unit.skill_cost as f64 * (1.0 + unit.sp_boost as f64);
     }
     if skill == 2 {
         aspd = unit.skill_parameters.get(0).copied().unwrap_or(0.0);
         final_atk = unit.atk * (1.0 + unit.buff_atk) + unit.buff_atk_flat;
-        skill_hps = heal_factor * final_atk * f64::from(unit.targets).min(2.0_f64) / atk_interval
+        skill_hps = heal_factor * final_atk * (unit.targets as f64).min(2.0_f64) / atk_interval
             * (unit.attack_speed + aspd)
             / 100.0
             * (1.0 + unit.buff_fragile);
         skill_hps += final_atk
             * unit.skill_parameters.get(3).copied().unwrap_or(0.0)
-            * f64::from(unit.targets).min(2.0_f64);
+            * (unit.targets as f64).min(2.0_f64);
         avg_hps = (skill_hps * unit.skill_duration)
-            / (unit.skill_duration + f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost)));
+            / (unit.skill_duration + unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64));
     }
 
     Some(HpsResult {

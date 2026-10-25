@@ -82,3 +82,10 @@ pub fn dispatch(unit: &OperatorUnit) -> Option<HpsResult> {
         _ => None,
     }
 }
+
+/// The skill duration the operator's Python `__init__` sets, when it sets one.
+/// The engine uses it for the formula, total damage, average and cycle alike.
+pub fn dispatch_skill_duration(unit: &OperatorUnit) -> Option<f64> {
+    let _ = unit;
+    None
+}
