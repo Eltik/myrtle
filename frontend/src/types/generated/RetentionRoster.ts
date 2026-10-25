@@ -20,7 +20,7 @@ export type RetentionRoster = {
     /**
      * Sum of the alternative weight (spawn counts).
      */
-    totalSpawns: bigint;
+    totalSpawns: number;
     /**
      * Appearances at a database level other than 0.
      */

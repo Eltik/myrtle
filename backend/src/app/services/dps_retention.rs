@@ -71,6 +71,7 @@ pub struct RetentionRoster {
     /// Distinct (DEF, RES) pairs the appearances collapse into.
     pub distinct_pairs: usize,
     /// Sum of the alternative weight (spawn counts).
+    #[ts(type = "number")]
     pub total_spawns: u64,
     /// Appearances at a database level other than 0.
     pub nonzero_level: usize,
