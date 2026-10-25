@@ -2,14 +2,15 @@ import { useMemo, useRef, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
-import type { ClientGachaGroup, IBanner, IClientGachaRecords, IGachaItem } from "#/lib/api/gacha";
+import type { IBanner, IClientGachaRecords, IGachaItem } from "#/lib/api/gacha";
 import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { rarityGradient, rarityStarColor } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
-import { BANNER_GROUP_LABEL_KEYS, type GachaMessageKey } from "../../constants";
+import { BANNER_GROUP_LABEL_KEYS } from "../../constants";
 import type { messages as gachaConstantsMessages } from "../../constants.messages";
 import type { messages } from "./BannerHistory.messages";
+import { DEFAULT_HISTORY_TAB, HISTORY_TABS, type HistoryTab, isTabShown, recordsForTab, totalForTab } from "./historyTabs";
 
 /** Own chrome plus the shared banner-bucket labels. */
 type BannerHistoryT = TypedT<typeof messages & typeof gachaConstantsMessages>;
@@ -24,14 +25,6 @@ interface IBannerHistoryProps {
 function resolveBannerName(item: IGachaItem, bannersById: Map<string, IBanner>): string {
     return bannersById.get(item.poolId)?.gachaPoolName || item.poolName || item.poolId;
 }
-
-const TABS: { key: ClientGachaGroup; labelKey: GachaMessageKey }[] = [
-    { key: "limited", labelKey: BANNER_GROUP_LABEL_KEYS.limited },
-    { key: "linkage", labelKey: BANNER_GROUP_LABEL_KEYS.linkage },
-    { key: "regular", labelKey: BANNER_GROUP_LABEL_KEYS.regular },
-    { key: "special", labelKey: BANNER_GROUP_LABEL_KEYS.special },
-    { key: "boot", labelKey: BANNER_GROUP_LABEL_KEYS.boot },
-];
 
 const RARITY_FILTERS = [6, 5, 4, 3] as const;
 
@@ -52,7 +45,24 @@ function fmtDateTime(ts: number, f: IFormatters): string {
     });
 }
 
-function PullTable({ items, operatorsById, bannersById, total, emptyMessage, onClearFilter }: { items: IGachaItem[]; operatorsById: Map<string, IOperatorIndexEntry>; bannersById: Map<string, IBanner>; total: number; emptyMessage?: string; onClearFilter?: () => void }) {
+function PullTable({
+    items,
+    operatorsById,
+    bannersById,
+    total,
+    emptyMessage,
+    onClearFilter,
+    bannerInline = false,
+}: {
+    items: IGachaItem[];
+    operatorsById: Map<string, IOperatorIndexEntry>;
+    bannersById: Map<string, IBanner>;
+    total: number;
+    emptyMessage?: string;
+    onClearFilter?: () => void;
+    /** Repeat the banner under the name below `sm`, where the Banner column is hidden. Set on "All", whose rows mix groups. */
+    bannerInline?: boolean;
+}) {
     const t: BannerHistoryT = useT("gacha");
     const f = useFormatters();
     const [page, setPage] = useState(0);
@@ -112,6 +122,7 @@ function PullTable({ items, operatorsById, bannersById, total, emptyMessage, onC
                                                     <span style={{ color: rarityStarColor(star) }} className="tracking-wider">
                                                         {"★".repeat(star)}
                                                     </span>
+                                                    {bannerInline ? <span className="truncate font-sans sm:hidden">{resolveBannerName(item, bannersById)}</span> : null}
                                                 </div>
                                             </div>
                                         </div>
@@ -160,10 +171,10 @@ function PullTable({ items, operatorsById, bannersById, total, emptyMessage, onC
 export function BannerHistory({ records, operatorsById, bannersById, isLoading }: IBannerHistoryProps) {
     const t: BannerHistoryT = useT("gacha");
     const f = useFormatters();
-    const [activeTab, setActiveTab] = useState<ClientGachaGroup>("limited");
+    const [activeTab, setActiveTab] = useState<HistoryTab>(DEFAULT_HISTORY_TAB);
     const [activeRarities, setActiveRarities] = useState<Set<number>>(() => new Set(RARITY_FILTERS));
 
-    const activeRecords = useMemo(() => (records ? records[activeTab].records : EMPTY_RECORDS), [records, activeTab]);
+    const activeRecords = useMemo(() => (records ? recordsForTab(records, activeTab) : EMPTY_RECORDS), [records, activeTab]);
 
     /**
      * Pull counts per tab per rarity, one pass over the whole history
@@ -171,15 +182,22 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
      * rarity toggle or a tab switch never re-walks it.
      */
     const countsByTabRarity = useMemo(() => {
-        const byTab = new Map<ClientGachaGroup, Map<number, number>>();
-        for (const tab of TABS) {
+        const byTab = new Map<HistoryTab, Map<number, number>>();
+        const all = new Map<number, number>();
+        for (const tab of HISTORY_TABS) {
+            if (tab === "all") continue;
             const counts = new Map<number, number>();
-            for (const item of records?.[tab.key].records ?? EMPTY_RECORDS) {
+            for (const item of records?.[tab].records ?? EMPTY_RECORDS) {
                 const star = Number(item.star);
                 counts.set(star, (counts.get(star) ?? 0) + 1);
+                all.set(star, (all.get(star) ?? 0) + 1);
             }
-            byTab.set(tab.key, counts);
+            byTab.set(tab, counts);
         }
+        // Every count on this panel is a plain tally, so "All" is the sum of the
+        // groups. Pity is the one per-group figure on the page, and it lives in
+        // `PityPanel`, outside these tabs.
+        byTab.set("all", all);
         return byTab;
     }, [records]);
 
@@ -189,12 +207,12 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
      * the table above is 5 tabs x 4 rarities regardless of history size.
      */
     const filteredTabCounts = useMemo(() => {
-        const totals = new Map<ClientGachaGroup, number>();
-        for (const tab of TABS) {
-            const counts = countsByTabRarity.get(tab.key);
+        const totals = new Map<HistoryTab, number>();
+        for (const tab of HISTORY_TABS) {
+            const counts = countsByTabRarity.get(tab);
             let total = 0;
             for (const rarity of activeRarities) total += counts?.get(rarity) ?? 0;
-            totals.set(tab.key, total);
+            totals.set(tab, total);
         }
         return totals;
     }, [countsByTabRarity, activeRarities]);
@@ -206,12 +224,12 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
     const filteredRecords = useMemo(() => activeRecords.filter((item) => activeRarities.has(Number(item.star))), [activeRecords, activeRarities]);
 
     const isFiltered = activeRarities.size !== RARITY_FILTERS.length;
-    const activeTabLabelKey = TABS.find((tab) => tab.key === activeTab)?.labelKey;
-    const activeTabLabel = activeTabLabelKey ? t(activeTabLabelKey) : "";
+    const tabLabel = (tab: HistoryTab): string => (tab === "all" ? t("history.banners.tab.all") : t(BANNER_GROUP_LABEL_KEYS[tab]));
+    const activeTabLabel = tabLabel(activeTab);
     // Both sides of "x of y" come off work already done: the filtered figure from
     // the counts table, the unfiltered one straight off the bucket. No new walk.
     const visibleCount = filteredTabCounts.get(activeTab) ?? 0;
-    const activeTabTotal = records?.[activeTab].total ?? 0;
+    const activeTabTotal = records ? totalForTab(records, activeTab) : 0;
 
     // The bare star list, which both the filter summary and the empty state
     // need: the summary adds "only" to it when just one rarity is on.
@@ -286,21 +304,26 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
             </header>
 
             {/* Screen-reader copy of what the chips show. Always mounted so the live region exists before its text changes. */}
-            <output className="sr-only">{isFiltered ? t("history.banners.status.filtered", { rarities: rarityFilterLabel, shown: f.number(visibleCount), total: f.number(activeTabTotal), tab: activeTabLabel }) : t("history.banners.status.all")}</output>
+            <output className="sr-only">
+                {!isFiltered
+                    ? t("history.banners.status.all")
+                    : activeTab === "all"
+                      ? t("history.banners.status.filteredAll", { rarities: rarityFilterLabel, shown: f.number(visibleCount), total: f.number(activeTabTotal) })
+                      : t("history.banners.status.filtered", { rarities: rarityFilterLabel, shown: f.number(visibleCount), total: f.number(activeTabTotal), tab: activeTabLabel })}
+            </output>
 
             <div className="-mx-1 flex gap-0.5 overflow-x-auto overflow-y-hidden border-border border-b px-1 [scrollbar-width:none] sm:gap-1 [&::-webkit-scrollbar]:hidden">
-                {/* Starter Headhunting is a one-time pool most accounts never pulled on; its tab shows only when it holds pulls. */}
-                {TABS.filter((tab) => tab.key !== "boot" || (records?.boot.total ?? 0) > 0).map((tab) => {
-                    const count = filteredTabCounts.get(tab.key) ?? 0;
-                    const isActive = activeTab === tab.key;
+                {HISTORY_TABS.filter((tab) => isTabShown(records, tab)).map((tab) => {
+                    const count = filteredTabCounts.get(tab) ?? 0;
+                    const isActive = activeTab === tab;
                     return (
                         <button
-                            key={tab.key}
+                            key={tab}
                             type="button"
-                            onClick={() => setActiveTab(tab.key)}
+                            onClick={() => setActiveTab(tab)}
                             className={`relative flex shrink-0 cursor-pointer items-center gap-1 whitespace-nowrap border-none bg-none px-2 py-2 font-medium font-sans text-[12px] transition-colors sm:gap-1.5 sm:px-3 sm:text-[13px] ${isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
                         >
-                            {t(tab.labelKey)}
+                            {tabLabel(tab)}
                             <span className={`inline-flex h-4.5 min-w-5 shrink-0 items-center justify-center rounded-full px-1 font-mono text-[10px] tabular-nums ${isActive ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>{f.number(count)}</span>
                             {isActive ? <span className="absolute right-2 -bottom-px left-2 h-0.5 rounded-full bg-primary sm:right-3 sm:left-3" /> : null}
                         </button>
@@ -345,8 +368,9 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
                 operatorsById={operatorsById}
                 bannersById={bannersById}
                 total={filteredRecords.length}
-                emptyMessage={activeRarities.size === 0 ? t("history.banners.emptyNoRarity") : isFiltered ? t("history.banners.emptyFiltered", { rarities: rarityStarList, tab: activeTabLabel }) : t("history.banners.empty")}
+                emptyMessage={activeRarities.size === 0 ? t("history.banners.emptyNoRarity") : isFiltered ? (activeTab === "all" ? t("history.banners.emptyFilteredAll", { rarities: rarityStarList }) : t("history.banners.emptyFiltered", { rarities: rarityStarList, tab: activeTabLabel })) : t("history.banners.empty")}
                 onClearFilter={isFiltered ? clearRarityFilter : undefined}
+                bannerInline={activeTab === "all"}
             />
         </section>
     );

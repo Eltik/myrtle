@@ -23,6 +23,14 @@ export const messages = {
         text: "No {rarities} pulls in {tab}. Other rarities are hidden by the filter.",
         description: "Empty state when the rarity filter leaves the selected banner bucket with nothing. {rarities} is a list of star counts like '6★ 5★'; {tab} is the bucket's name.",
     },
+    "history.banners.emptyFilteredAll": {
+        text: "No {rarities} pulls on any banner. Other rarities are hidden by the filter.",
+        description: "Empty state on the All tab when the rarity filter leaves nothing. {rarities} is a list of star counts like '6★ 5★'.",
+    },
+    "history.banners.tab.all": {
+        text: "All",
+        description: "Tab that lists the player's pulls from every banner type together, newest first. Sits beside the Limited, Collab, Standard and Kernel tabs; keep it short.",
+    },
     "history.banners.showAllRarities": {
         text: "Show all rarities",
         description: "Button inside the empty state that switches every rarity chip back on.",
@@ -70,6 +78,10 @@ export const messages = {
     "history.banners.status.filtered": {
         text: "Filtered to {rarities}. Showing {shown} of {total} {tab} pulls.",
         description: "Screen-reader-only summary of the active filter. {rarities} describes the rarity chips; {tab} is the banner bucket's name.",
+    },
+    "history.banners.status.filteredAll": {
+        text: "Filtered to {rarities}. Showing {shown} of {total} pulls across every banner.",
+        description: "Screen-reader-only summary of the active filter on the All tab. {rarities} describes the rarity chips.",
     },
     "history.banners.status.all": {
         text: "Showing all rarities.",

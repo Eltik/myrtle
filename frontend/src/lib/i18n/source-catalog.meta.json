@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-25T03:22:33.445Z",
+    "generatedAt": "2026-10-25T03:22:39.574Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -11225,6 +11225,15 @@
             ]
         },
         {
+            "key": "gacha.history.banners.emptyFilteredAll",
+            "namespace": "gacha",
+            "source_text": "No {rarities} pulls on any banner. Other rarities are hidden by the filter.",
+            "description": "Empty state on the All tab when the rarity filter leaves nothing. {rarities} is a list of star counts like '6★ 5★'.",
+            "placeholders": [
+                "rarities"
+            ]
+        },
+        {
             "key": "gacha.history.banners.emptyNoRarity",
             "namespace": "gacha",
             "source_text": "Select at least one rarity to display pulls.",
@@ -11321,6 +11330,24 @@
                 "tab",
                 "total"
             ]
+        },
+        {
+            "key": "gacha.history.banners.status.filteredAll",
+            "namespace": "gacha",
+            "source_text": "Filtered to {rarities}. Showing {shown} of {total} pulls across every banner.",
+            "description": "Screen-reader-only summary of the active filter on the All tab. {rarities} describes the rarity chips.",
+            "placeholders": [
+                "rarities",
+                "shown",
+                "total"
+            ]
+        },
+        {
+            "key": "gacha.history.banners.tab.all",
+            "namespace": "gacha",
+            "source_text": "All",
+            "description": "Tab that lists the player's pulls from every banner type together, newest first. Sits beside the Limited, Collab, Standard and Kernel tabs; keep it short.",
+            "placeholders": []
         },
         {
             "key": "gacha.history.banners.title",
