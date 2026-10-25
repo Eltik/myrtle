@@ -273,10 +273,12 @@ every older file under it, stubs and keep-list files included.
   removable): `textures/avg/`, `textures/spritepack/cutin_char_`,
   `textures/spritepack/ui_home_act_banner_gacha_`,
   `textures/spritepack/ui_zone_home_theme_`,
-  `textures/arts/ui/stage/[uc]homeentry/`, `audio/m4a_sources.json`, and
+  `textures/arts/ui/stage/[uc]homeentry/`, `textures/spritepack/mixstory_`
+  (the generated event banners' key visuals and titles),
+  `audio/m4a_sources.json`, and
   any `textures/[[<tag>]]/arts/ui/homebanners/` (the `home_banner_gacha_hub`
   gacha banners; only `[[en]]` exists today). Each is read for its bytes by
-  the backend (story sprites, release art) or the unpacker.
+  the backend (story sprites, release art, event banners) or the unpacker.
   `core/release/art.rs` also refuses to archive a 0-byte source, so a stub
   never blanks `derived/release-art`. `S3_EVICT_KEEP` adds prefixes.
 * The manifest is written with every candidate marked evicted BEFORE any

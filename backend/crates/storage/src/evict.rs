@@ -38,6 +38,9 @@ pub const BUILTIN_KEEP: &[&str] = &[
     "textures/spritepack/ui_home_act_banner_gacha_",
     "textures/spritepack/ui_zone_home_theme_",
     "textures/arts/ui/stage/[uc]homeentry/",
+    // `event_banner.rs` composes the generated event banners from the Story
+    // Collection key visuals and titles.
+    "textures/spritepack/mixstory_",
     // The unpacker reads it (`music_m4a.rs`).
     "audio/m4a_sources.json",
 ];
@@ -191,6 +194,7 @@ mod tests {
             "textures/spritepack/ui_home_act_banner_gacha_1.png",
             "textures/spritepack/ui_zone_home_theme_2.png",
             "textures/arts/ui/stage/[uc]homeentry/a.png",
+            "textures/spritepack/mixstory_kv_0/kv_act17side.png",
             "audio/m4a_sources.json",
             "textures/[[en]]/arts/ui/homebanners/a.png",
             "textures/[[cn]]/arts/ui/homebanners/sub/b.png",

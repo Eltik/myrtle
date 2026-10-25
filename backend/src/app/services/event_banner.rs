@@ -143,6 +143,12 @@ pub fn cache_rel_path(act_id: &str) -> String {
     format!("{CACHE_DIR}/{VERSION}/{act_id}.jpg")
 }
 
+/// A present, empty file: what `S3_EVICT_LOCAL` leaves in place of an
+/// uploaded one.
+fn is_stub(path: &Path) -> bool {
+    std::fs::metadata(path).is_ok_and(|m| m.len() == 0)
+}
+
 fn modified(path: &Path) -> Option<SystemTime> {
     std::fs::metadata(path).and_then(|m| m.modified()).ok()
 }
@@ -151,8 +157,11 @@ fn modified(path: &Path) -> Option<SystemTime> {
 /// returns the path to serve, relative to `art_dir`. The sources are served
 /// paths under `art_dir` (from [`sources`]).
 ///
-/// An empty source (an evicted stub, `S3_EVICT_LOCAL`) fails to decode and
-/// answers `NotFound`, so the caller falls back to the Archives cover.
+/// An empty source (an evicted stub, `S3_EVICT_LOCAL`) answers `NotFound`
+/// without a render, so the caller falls back to the Archives cover. The
+/// sources are on the eviction keep list, so a stub here means a tree evicted
+/// before they were; `asset-sync restore --only textures/spritepack/mixstory_`
+/// brings them back.
 pub async fn ensure(
     art_dir: &str,
     act_id: &str,
@@ -174,6 +183,10 @@ pub async fn ensure(
     };
     if fresh(&target) {
         return Ok(rel);
+    }
+    if is_stub(&background) || is_stub(&title) {
+        tracing::debug!(act_id, "event banner source is an evicted stub");
+        return Err(ApiError::NotFound);
     }
 
     let _permit = RENDERS
@@ -265,6 +278,17 @@ mod tests {
         assert!(render(&[], &[]).is_err());
     }
 
+    #[tokio::test]
+    async fn an_evicted_stub_answers_not_found_without_rendering() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(dir.path().join("bg.png"), b"").unwrap();
+        std::fs::write(dir.path().join("title.png"), b"").unwrap();
+        let art = dir.path().to_str().unwrap();
+        let res = ensure(art, "act17side", "/bg.png", "/title.png").await;
+        assert!(matches!(res, Err(ApiError::NotFound)));
+        assert!(!dir.path().join(cache_rel_path("act17side")).exists());
+    }
+
     /// Every story event's banner from the real EN extract: each one resolves
     /// and renders. Writes the JPEGs to `EVENT_BANNER_OUT` when set.
     #[test]
@@ -289,6 +313,9 @@ mod tests {
             rendered += 1;
         }
         println!("rendered {rendered} event banners");
-        assert!(rendered > 90, "only {rendered} events found Story Collection art");
+        assert!(
+            rendered > 90,
+            "only {rendered} events found Story Collection art"
+        );
     }
 }
