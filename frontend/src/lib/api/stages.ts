@@ -129,6 +129,34 @@ export function stagesQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
  */
 export type IStageIndexEntry = StageIndexEntry;
 
+/** How a harder variant differs from the Standard stage it shares a code with. */
+export type StageVariantKind = "cm" | "adverse";
+
+/**
+ * The kind of a harder variant, or null for a Standard stage. CM is the
+ * star-difficulty copy (`#f#`, and `#s` from episode 15) on the same map;
+ * Adverse is the separate `tough_` stage with its own level file.
+ */
+export function stageVariantKind(e: Pick<IStageIndexEntry, "difficulty" | "isHard">): StageVariantKind | null {
+    if (e.difficulty === "FOUR_STAR" || e.difficulty === "SIX_STAR") return "cm";
+    return e.isHard ? "adverse" : null;
+}
+
+/**
+ * The viewable stages that share `stageId`'s zone and code (Standard, Adverse,
+ * CM), Standard first, or an empty list when it has none to switch to.
+ */
+export function stageVariantsOf(index: IStageIndexEntry[], stageId: string): { stageId: string; kind: StageVariantKind | null }[] {
+    const self = index.find((e) => e.stageId === stageId);
+    if (!self?.code) return [];
+    const rank = (k: StageVariantKind | null) => (k === null ? 0 : k === "adverse" ? 1 : 2);
+    const out = index
+        .filter((e) => e.zoneId === self.zoneId && e.code === self.code && e.canView)
+        .map((e) => ({ stageId: e.stageId, kind: stageVariantKind(e) }))
+        .sort((a, b) => rank(a.kind) - rank(b.kind));
+    return out.length > 1 ? out : [];
+}
+
 export const getStageIndexFn = createServerFn({ method: "GET" })
     .inputValidator((server: string | undefined) => server)
     .handler(async ({ data: server }) => {

@@ -1,10 +1,12 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { IEnemy } from "#/lib/api/enemies";
 import type { ILevel } from "#/lib/api/level";
 import type { IMaterialItem } from "#/lib/api/materials";
-import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
+import { stageIndexQueryOptions, stageVariantsOf } from "#/lib/api/stages";
+import { type TypedRichT, useGamedataServer, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { SparseRecord } from "#/lib/records";
 import type { IStage, IZone } from "#/types/stages";
@@ -30,6 +32,9 @@ export function StageDetail({ stage, zone, level, enemyData, materials }: { stag
     const tally = useMemo(() => tallyEnemies(level, enemyData), [level, enemyData]);
     const dropGroups = useMemo(() => (stage ? groupDrops(stage, materials) : []), [stage, materials]);
     const [mapSettings, setMapSettings] = useState(DEFAULT_MAP_SETTINGS);
+    // The index is cached from the Stage List; a cold load fills the switcher in once it lands.
+    const { data: index } = useQuery(stageIndexQueryOptions(useGamedataServer()));
+    const variants = useMemo(() => (index ? stageVariantsOf(index, stageId) : []), [index, stageId]);
 
     const mapRef = useRef<IMapViewHandle>(null);
     const moveMultiplier = level?.options?.moveMultiplier ?? 1;
@@ -64,7 +69,7 @@ export function StageDetail({ stage, zone, level, enemyData, materials }: { stag
             </nav>
 
             <div className="flex flex-col gap-7">
-                <StageHeader stage={stage} zone={zone ?? undefined} />
+                <StageHeader stage={stage} zone={zone ?? undefined} variants={variants} />
                 <OverviewSection level={level} />
             </div>
 

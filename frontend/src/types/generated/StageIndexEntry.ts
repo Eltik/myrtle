@@ -52,6 +52,12 @@ export type StageIndexEntry = {
      */
     boss: boolean;
     /**
+     * Originite Prime granted on the first three-star clear (`diamondOnceDrop`),
+     * `0` for stages that grant none and for procedural nodes. Each CM / Adverse
+     * variant is its own entry and carries its own.
+     */
+    originitePrime: number;
+    /**
      * Hard / Adverse / Challenge-Mode variant.
      */
     isHard: boolean;

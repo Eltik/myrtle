@@ -42,6 +42,10 @@ pub struct StageIndexEntry {
     pub ap_cost: i32,
     /// Marked as a boss stage in the stage table.
     pub boss: bool,
+    /// Originite Prime granted on the first three-star clear (`diamondOnceDrop`),
+    /// `0` for stages that grant none and for procedural nodes. Each CM / Adverse
+    /// variant is its own entry and carries its own.
+    pub originite_prime: i32,
     /// Hard / Adverse / Challenge-Mode variant.
     pub is_hard: bool,
     /// `NORMAL` / `FOUR_STAR` / `SIX_STAR` (used by the UI to dedupe CM variants

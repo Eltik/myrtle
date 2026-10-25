@@ -76,8 +76,12 @@ export const messages = {
         description: "Accessible name of the zone thumbnail, which opens the enlarged-banner detail dialog. {title} is the zone/event name from the game data.",
     },
     "list.zone.ops": {
-        text: "{count, plural, one {{count} op} other {{count} ops}}",
-        description: "How many operations a zone row holds. 'op' is short for 'operation'; the row is narrow, so keep it short.",
+        text: "{count, plural, one {{count} stage} other {{count} stages}}",
+        description: "How many stages a zone row holds; CM and Adverse versions share their Standard stage's count. The row is narrow, so keep it short. Do not abbreviate to 'op': players read 'OP' as Originite Prime.",
+    },
+    "list.zone.originitePrime": {
+        text: "{count} OP",
+        description: "Originite Prime a zone's first clears grant, CM and Adverse included, after a '·' separator. 'OP' is the players' own abbreviation for Originite Prime, the game's premium currency; use the abbreviation players of your server use.",
     },
     "list.zone.boss": {
         text: "{count} boss",
@@ -97,7 +101,19 @@ export const messages = {
     },
     "list.card.cm": {
         text: "CM",
-        description: "Marker on a stage card meaning a Challenge Mode version of the operation also exists. Two characters at most.",
+        description: "Link on a stage card to the Challenge Mode version of the operation. Two characters at most.",
+    },
+    "list.card.adverse": {
+        text: "Adverse",
+        description: "Link on a stage card to the Adverse (harder Standard) version of a main story operation. Very tight space.",
+    },
+    "list.card.cm.label": {
+        text: "{title}, Challenge Mode",
+        description: "Accessible name of the CM link on a stage card. {title} is the stage name from the game data.",
+    },
+    "list.card.adverse.label": {
+        text: "{title}, Adverse",
+        description: "Accessible name of the Adverse link on a stage card. {title} is the stage name from the game data.",
     },
     "list.hero.operations": {
         text: "{count, plural, one {operation} other {operations}}",

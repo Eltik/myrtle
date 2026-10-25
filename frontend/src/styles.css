@@ -407,10 +407,15 @@ pre code {
 .msv-row:hover {
     background: color-mix(in oklch, var(--muted) 32%, transparent) !important;
 }
-.msv-stage:hover {
+.msv-stage:hover,
+.msv-card:hover > .msv-stage {
     transform: translateY(-3px);
     border-color: var(--rowtone) !important;
     box-shadow: 0 12px 26px rgba(0, 0, 0, 0.4);
+}
+/* A card's CM / Adverse links sit beside its link, so they lift with it. */
+.msv-card:hover > .msv-stage ~ .msv-variants {
+    transform: translateY(-3px);
 }
 .msv-pill:hover {
     color: var(--foreground) !important;

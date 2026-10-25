@@ -118,7 +118,7 @@ describe("deriveStageContext", () => {
 });
 
 function entry(stageId: string, code: string, zoneId: string, zoneOrder: number, extra: Partial<IStageIndexEntry> = {}): IStageIndexEntry {
-    return { stageId, levelId: null, code, name: null, zoneId, zoneName: null, zoneOrder, group: "story", category: "stages", apCost: 6, boss: false, isHard: false, difficulty: "NORMAL", canView: true, preview: null, banner: null, ...extra };
+    return { stageId, levelId: null, code, name: null, zoneId, zoneName: null, zoneOrder, group: "story", category: "stages", apCost: 6, boss: false, originitePrime: 0, isHard: false, difficulty: "NORMAL", canView: true, preview: null, banner: null, ...extra };
 }
 
 describe("pickerStages", () => {

@@ -328,6 +328,7 @@ function EventHeaderRow({ row, onToggle, onDetails }: { row: Extract<FlatRow, { 
 
                 <span className="pointer-events-none relative z-1 hidden whitespace-nowrap font-mono text-[10.5px] text-muted-foreground sm:inline">
                     {t("list.zone.ops", { count: event.stageCount })}
+                    {event.originitePrime > 0 ? ` · ${t("list.zone.originitePrime", { count: event.originitePrime })}` : ""}
                     {event.bossCount > 0 ? ` · ${t("list.zone.boss", { count: event.bossCount })}` : ""}
                 </span>
                 <span
@@ -390,7 +391,6 @@ function StageCardInner({ card, tone, group }: { card: IStageCardVM; tone: strin
                 <span className="line-clamp-2 min-h-8 font-sans font-semibold text-[12.5px] text-foreground leading-tight">{card.title}</span>
                 <div className="flex items-center justify-between gap-1.5">
                     <span className="font-mono text-[9.5px] text-muted-foreground">{card.apCost > 0 ? t("list.card.sanity", { cost: card.apCost }) : t("list.card.free")}</span>
-                    {card.hasChallenge && <span className="font-mono text-[9.5px] text-muted-foreground/80">{t("list.card.cm")}</span>}
                 </div>
             </div>
         </>
@@ -399,18 +399,51 @@ function StageCardInner({ card, tone, group }: { card: IStageCardVM; tone: strin
 
 function StageCard({ card, tone, group }: { card: IStageCardVM; tone: string; group: StageGroupKey }) {
     const cardStyle = { ["--rowtone" as string]: tone };
+    // Variant links sit over the card's footer as siblings of the card link, never inside it.
+    const variants = card.variants.length > 0 && <StageVariantLinks card={card} />;
 
     if (!card.canView) {
         return (
-            <div className="flex w-full flex-col overflow-hidden rounded-lg border border-border bg-card/55 text-left" style={{ ...cardStyle, cursor: "default" }}>
-                <StageCardInner card={card} tone={tone} group={group} />
+            <div className="relative">
+                <div className="flex w-full flex-col overflow-hidden rounded-lg border border-border bg-card/55 text-left" style={{ ...cardStyle, cursor: "default" }}>
+                    <StageCardInner card={card} tone={tone} group={group} />
+                </div>
+                {variants}
             </div>
         );
     }
     return (
-        <Link to="/stages/$stageId" params={{ stageId: card.stageId }} className="msv-stage flex w-full flex-col overflow-hidden rounded-lg border border-border bg-card/55 text-left transition-[transform,border-color,box-shadow] duration-150" style={cardStyle}>
-            <StageCardInner card={card} tone={tone} group={group} />
-        </Link>
+        <div className="msv-card relative">
+            <Link to="/stages/$stageId" params={{ stageId: card.stageId }} className="msv-stage flex w-full flex-col overflow-hidden rounded-lg border border-border bg-card/55 text-left transition-[transform,border-color,box-shadow] duration-150" style={cardStyle}>
+                <StageCardInner card={card} tone={tone} group={group} />
+            </Link>
+            {variants}
+        </div>
+    );
+}
+
+function StageVariantLinks({ card }: { card: IStageCardVM }) {
+    const t: TypedT<typeof messages> = useT("stages");
+    return (
+        <div className="msv-variants absolute right-2 bottom-2 z-2 flex items-center gap-1 transition-transform duration-150">
+            {card.variants.map((v) => {
+                const text = v.kind === "cm" ? t("list.card.cm") : t("list.card.adverse");
+                const label = v.kind === "cm" ? t("list.card.cm.label", { title: card.title }) : t("list.card.adverse.label", { title: card.title });
+                const chip = "inline-flex h-4.5 items-center rounded-[5px] border border-border px-1.5 font-mono font-semibold text-[9px] leading-none";
+                if (!v.canView) {
+                    return (
+                        <span key={v.stageId} className={cn(chip, "text-muted-foreground/60")} title={label}>
+                            {text}
+                        </span>
+                    );
+                }
+                return (
+                    <Link key={v.stageId} to="/stages/$stageId" params={{ stageId: v.stageId }} aria-label={label} className={cn(chip, "bg-card text-muted-foreground transition-colors hover:border-(--rowtone) hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60")}>
+                        {text}
+                    </Link>
+                );
+            })}
+        </div>
     );
 }
 

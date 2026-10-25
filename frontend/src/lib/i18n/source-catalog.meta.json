@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-25T03:22:39.574Z",
+    "generatedAt": "2026-10-25T10:35:52.505Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -25571,6 +25571,34 @@
             "placeholders": []
         },
         {
+            "key": "stages.header.variant.adverse",
+            "namespace": "stages",
+            "source_text": "Adverse",
+            "description": "Switcher option for the Adverse version of a main story operation, a separate harder stage. Use the game's own term.",
+            "placeholders": []
+        },
+        {
+            "key": "stages.header.variant.cm",
+            "namespace": "stages",
+            "source_text": "Challenge Mode",
+            "description": "Switcher option for the Challenge Mode version of an operation: the same map with an extra condition. Use the game's own term.",
+            "placeholders": []
+        },
+        {
+            "key": "stages.header.variant.standard",
+            "namespace": "stages",
+            "source_text": "Standard",
+            "description": "Switcher option for the regular version of an operation. Use the game's own term.",
+            "placeholders": []
+        },
+        {
+            "key": "stages.header.variants",
+            "namespace": "stages",
+            "source_text": "Stage versions",
+            "description": "Accessible name of the switcher between a stage's Standard, Adverse and Challenge Mode versions.",
+            "placeholders": []
+        },
+        {
             "key": "stages.legend.end",
             "namespace": "stages",
             "source_text": "End",
@@ -25641,6 +25669,22 @@
             "placeholders": []
         },
         {
+            "key": "stages.list.card.adverse",
+            "namespace": "stages",
+            "source_text": "Adverse",
+            "description": "Link on a stage card to the Adverse (harder Standard) version of a main story operation. Very tight space.",
+            "placeholders": []
+        },
+        {
+            "key": "stages.list.card.adverse.label",
+            "namespace": "stages",
+            "source_text": "{title}, Adverse",
+            "description": "Accessible name of the Adverse link on a stage card. {title} is the stage name from the game data.",
+            "placeholders": [
+                "title"
+            ]
+        },
+        {
             "key": "stages.list.card.boss",
             "namespace": "stages",
             "source_text": "Boss",
@@ -25651,8 +25695,17 @@
             "key": "stages.list.card.cm",
             "namespace": "stages",
             "source_text": "CM",
-            "description": "Marker on a stage card meaning a Challenge Mode version of the operation also exists. Two characters at most.",
+            "description": "Link on a stage card to the Challenge Mode version of the operation. Two characters at most.",
             "placeholders": []
+        },
+        {
+            "key": "stages.list.card.cm.label",
+            "namespace": "stages",
+            "source_text": "{title}, Challenge Mode",
+            "description": "Accessible name of the CM link on a stage card. {title} is the stage name from the game data.",
+            "placeholders": [
+                "title"
+            ]
         },
         {
             "key": "stages.list.card.free",
@@ -25828,8 +25881,17 @@
         {
             "key": "stages.list.zone.ops",
             "namespace": "stages",
-            "source_text": "{count, plural, one {{count} op} other {{count} ops}}",
-            "description": "How many operations a zone row holds. 'op' is short for 'operation'; the row is narrow, so keep it short.",
+            "source_text": "{count, plural, one {{count} stage} other {{count} stages}}",
+            "description": "How many stages a zone row holds; CM and Adverse versions share their Standard stage's count. The row is narrow, so keep it short. Do not abbreviate to 'op': players read 'OP' as Originite Prime.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "stages.list.zone.originitePrime",
+            "namespace": "stages",
+            "source_text": "{count} OP",
+            "description": "Originite Prime a zone's first clears grant, CM and Adverse included, after a '·' separator. 'OP' is the players' own abbreviation for Originite Prime, the game's premium currency; use the abbreviation players of your server use.",
             "placeholders": [
                 "count"
             ]

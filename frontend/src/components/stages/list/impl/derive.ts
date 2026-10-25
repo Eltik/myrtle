@@ -1,6 +1,13 @@
-import type { IStageIndexEntry } from "#/lib/api/stages";
+import { type IStageIndexEntry, type StageVariantKind, stageVariantKind } from "#/lib/api/stages";
 import { STAGE_GROUP_LABEL, STAGE_GROUP_TONE, type StageGroupKey, stageGroupOrder } from "#/lib/registry/stage-groups";
 import type { StageDifficulty } from "#/types/stages";
+
+/** A harder variant folded into a stage card. */
+export interface IStageVariantVM {
+    stageId: string;
+    kind: StageVariantKind;
+    canView: boolean;
+}
 
 /** A single stage card in an event row (deduped across difficulty variants). */
 export interface IStageCardVM {
@@ -10,8 +17,8 @@ export interface IStageCardVM {
     title: string;
     apCost: number;
     boss: boolean;
-    /** A Challenge / CM / harder variant of the same code also exists. */
-    hasChallenge: boolean;
+    /** CM / Adverse variants that share this card's code, CM first. */
+    variants: IStageVariantVM[];
     /** Detail / map viewer can render this stage (links only when true). */
     canView: boolean;
     difficulty: StageDifficulty;
@@ -31,6 +38,8 @@ export interface IEventVM {
     statusLabel: string;
     bossCount: number;
     stageCount: number;
+    /** Originite Prime from first clears of every stage in the zone, CM and Adverse included. */
+    originitePrime: number;
     /** Sort key within a group. */
     order: number;
     tone: string;
@@ -127,8 +136,9 @@ interface IZoneAccum {
     order: number;
     group: StageGroupKey;
     banner: string | null;
-    /** code (badge or title) -> best entry, preferring NORMAL difficulty. */
-    byCode: Map<string, { entry: IStageIndexEntry; hasChallenge: boolean }>;
+    /** code (badge or title) -> every entry with that code. */
+    byCode: Map<string, IStageIndexEntry[]>;
+    originitePrime: number;
 }
 
 /**
@@ -143,27 +153,32 @@ export function buildStageTree(entries: IStageIndexEntry[]): IStageTree {
         const group = asGroupKey(e.group);
         let zone = zones.get(e.zoneId);
         if (!zone) {
-            zone = { zoneName: e.zoneName || humanizeZoneId(e.zoneId), order: e.zoneOrder, group, banner: e.banner ?? null, byCode: new Map() };
+            zone = { zoneName: e.zoneName || humanizeZoneId(e.zoneId), order: e.zoneOrder, group, banner: e.banner ?? null, byCode: new Map(), originitePrime: 0 };
             zones.set(e.zoneId, zone);
         } else if (!zone.banner && e.banner) {
             zone.banner = e.banner;
         }
-        // Some chapters carry a retired "Story mode" (easy_*) stage with the
-        // Standard one's code but no level file, so prefer the viewable, then
-        // NORMAL, variant and the card links to a playable stage.
+        zone.originitePrime += e.originitePrime;
         const key = e.code || e.stageId;
         const existing = zone.byCode.get(key);
-        if (!existing) {
-            zone.byCode.set(key, { entry: e, hasChallenge: false });
-        } else {
-            zone.byCode.set(key, { entry: preferEntry(existing.entry, e), hasChallenge: true });
-        }
+        if (existing) existing.push(e);
+        else zone.byCode.set(key, [e]);
     }
 
     const eventsByGroup = new Map<StageGroupKey, IEventVM[]>();
     for (const [zoneId, zone] of zones) {
         const cards: IStageCardVM[] = [];
-        for (const { entry, hasChallenge } of zone.byCode.values()) {
+        for (const siblings of zone.byCode.values()) {
+            // Some chapters carry a retired "Story mode" (easy_*) stage with the
+            // Standard one's code but no level file, so prefer the viewable, then
+            // NORMAL, variant and the card links to a playable stage.
+            const entry = siblings.reduce(preferEntry);
+            const variants: IStageVariantVM[] = [];
+            for (const v of siblings) {
+                const kind = v === entry ? null : stageVariantKind(v);
+                if (kind) variants.push({ stageId: v.stageId, kind, canView: v.canView });
+            }
+            variants.sort((a, b) => (a.kind === b.kind ? 0 : a.kind === "cm" ? -1 : 1));
             const { badge, title } = labelParts(entry.code, entry.name);
             cards.push({
                 stageId: entry.stageId,
@@ -171,7 +186,7 @@ export function buildStageTree(entries: IStageIndexEntry[]): IStageTree {
                 title,
                 apCost: entry.apCost,
                 boss: entry.boss,
-                hasChallenge,
+                variants,
                 canView: entry.canView,
                 difficulty: entry.difficulty,
                 preview: entry.preview ?? null,
@@ -198,6 +213,7 @@ export function buildStageTree(entries: IStageIndexEntry[]): IStageTree {
             statusLabel: STAGE_GROUP_LABEL[zone.group],
             bossCount,
             stageCount: cards.length,
+            originitePrime: zone.originitePrime,
             order: zone.order,
             tone: STAGE_GROUP_TONE[zone.group],
             group: zone.group,
