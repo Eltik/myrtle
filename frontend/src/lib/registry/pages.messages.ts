@@ -70,11 +70,11 @@ export const messages = {
     },
     "page.playersSearch.label": {
         text: "Search Players",
-        description: "Palette entry for the player search. The site says 'player' throughout; Arknights itself calls them Doctors, so a region may prefer the game's term.",
+        description: "Palette entry for the player search. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
     "page.playersSearch.desc": {
         text: "Find player profiles by nickname or UID",
-        description: "Blurb under the Search Doctors palette entry. UID is the in-game account number.",
+        description: "Blurb under the Search Players palette entry. UID is the in-game account number.",
     },
     "page.playersLeaderboard.label": {
         text: "Leaderboard",
@@ -89,7 +89,7 @@ export const messages = {
         description: "Palette entry for community-wide pull statistics. 'Gacha' is the random-draw system and stays as-is.",
     },
     "page.gachaCommunity.desc": {
-        text: "Pull rates, top operators, and timing across opted-in doctors",
+        text: "Pull rates, top operators, and timing across opted-in players",
         description: "Blurb under the Gacha Community palette entry. A 'pull' is one random draw.",
     },
     "page.gachaHistory.label": {

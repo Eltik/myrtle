@@ -14,7 +14,7 @@ import shared from "./shared.module.css";
 /** How many release notes the home page lists. */
 const NOTE_LIMIT = 4;
 
-/** One beat behind Top Doctors, which sits beside this panel. */
+/** One beat behind Top Players, which sits beside this panel. */
 const PANEL_REVEAL_DELAY_MS = 80;
 
 export default function LatestUpdates() {

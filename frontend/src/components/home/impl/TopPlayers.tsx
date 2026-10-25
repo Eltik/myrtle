@@ -10,18 +10,18 @@ import { DEFAULT_AVATAR_ID } from "#/lib/utils";
 import styles from "./Digest.module.css";
 import { useReveal } from "./motion";
 import shared from "./shared.module.css";
-import type { messages } from "./TopDoctors.messages";
+import type { messages } from "./TopPlayers.messages";
 
 /** The home page's leaderboard slice. Exported for the route loader, so SSR and the client share one cache entry. */
-export const TOP_DOCTORS_QUERY = { sort: "total_score", limit: 5 } as const;
+export const TOP_PLAYERS_QUERY = { sort: "total_score", limit: 5 } as const;
 
 /** Widened to `string` like the header's nav links: the route's search params all have defaults, so no search is passed. */
 const LEADERBOARD_HREF: string = "/user/leaderboard";
 
-export default function TopDoctors() {
+export default function TopPlayers() {
     const t: TypedT<typeof messages> = useT("home");
     const reveal = useReveal<HTMLDivElement>();
-    const { data, isPending, isError } = useQuery(leaderboardQueryOptions(TOP_DOCTORS_QUERY));
+    const { data, isPending, isError } = useQuery(leaderboardQueryOptions(TOP_PLAYERS_QUERY));
     const entries = data?.entries ?? [];
 
     return (

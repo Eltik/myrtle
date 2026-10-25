@@ -25,7 +25,7 @@ The web client for [myrtle.moe](https://myrtle.moe) - an Arknights companion pla
 - **Randomizer** - roll a random squad to break out of the meta.
 - **Birthdays** - an operator birthday calendar.
 - **Tier Lists** - browse official and community tier lists, or build and publish your own with the drag-and-drop editor.
-- **Doctor Profiles** - log in to sync your roster and inventory, then view profiles, search players, and climb the score-based leaderboard.
+- **Player Profiles** - log in to sync your roster and inventory, then view profiles, search players, and climb the score-based leaderboard.
 - **Gacha Tracking** - synced pull history with rarity splits and pity counters, plus community-wide pull statistics.
 - **Changelog** - rendered live from the project's GitHub commit history.
 - **Admin Panel** - user and permission management, health monitoring, audit logs, operator notes, and official tier-list curation.

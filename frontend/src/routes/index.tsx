@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import Home from "#/components/home/Home";
-import { TOP_DOCTORS_QUERY } from "#/components/home/impl/TopDoctors";
+import { TOP_PLAYERS_QUERY } from "#/components/home/impl/TopPlayers";
 import { liveFeedQueryOptions } from "#/lib/api/live";
 import { leaderboardQueryOptions } from "#/lib/api/user";
 import { isSignInPrompt, SIGN_IN_PROMPT } from "#/lib/auth/search";
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/")({
     },
     // `prefetchQuery` never throws: a backend hiccup leaves a section in its own
     // error state instead of failing the whole home page.
-    loader: ({ context: { queryClient, i18n } }) => Promise.all([queryClient.prefetchQuery(liveFeedQueryOptions(i18n.gamedataServer)), queryClient.prefetchQuery(leaderboardQueryOptions(TOP_DOCTORS_QUERY))]),
+    loader: ({ context: { queryClient, i18n } }) => Promise.all([queryClient.prefetchQuery(liveFeedQueryOptions(i18n.gamedataServer)), queryClient.prefetchQuery(leaderboardQueryOptions(TOP_PLAYERS_QUERY))]),
     head: ({ match }) => {
         const t = metaT(match.context.i18n);
         const { meta, links } = seo({

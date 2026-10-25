@@ -5,7 +5,7 @@ import HappeningNow from "./impl/HappeningNow";
 import Hero from "./impl/Hero";
 import LatestUpdates from "./impl/LatestUpdates";
 import shared from "./impl/shared.module.css";
-import TopDoctors from "./impl/TopDoctors";
+import TopPlayers from "./impl/TopPlayers";
 
 /** The section the hero's scroll cue lands on. */
 const LIVE_SECTION_ID = "happening-now";
@@ -20,7 +20,7 @@ export default function Home() {
             <MaintenanceBanner className={`${shared.container} mb-4`} />
             <HappeningNow id={LIVE_SECTION_ID} />
             <section className={`${shared.container} ${styles.section}`}>
-                <TopDoctors />
+                <TopPlayers />
                 <LatestUpdates />
             </section>
         </main>

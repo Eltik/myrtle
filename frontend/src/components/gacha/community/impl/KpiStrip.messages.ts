@@ -32,7 +32,7 @@ export const messages = {
         description: "Label over the community's total pull count. Rendered uppercase.",
     },
     "community.kpi.totalPulls.meta": {
-        text: "{count} contributing doctors",
+        text: "{count} contributing players",
         description: "Under the total pull count: how many players shared their records. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
 } satisfies MessageMap;

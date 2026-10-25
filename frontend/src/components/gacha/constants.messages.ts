@@ -45,12 +45,12 @@ export const messages = {
         description: "Banner status pill: the banner has closed.",
     },
     "banner.status.returning": {
-        text: "Returning Doctors only",
-        description: "Banner status pill: the banner is offered only to players coming back after a long absence, each on their own schedule, so it has no shared run window. 'Doctor' is how the game addresses the player.",
+        text: "Returning players only",
+        description: "Banner status pill: the banner is offered only to players coming back after a long absence, each on their own schedule, so it has no shared run window. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
     "banner.window.returning": {
-        text: "No fixed dates, opens for each Doctor on their return",
-        description: "Shown in place of a banner's date range when the game times it per player. 'Doctor' is how the game addresses the player.",
+        text: "No fixed dates, opens for each player on their return",
+        description: "Shown in place of a banner's date range when the game times it per player. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
     "banner.rule.normal": {
         text: "Standard headhunting",

@@ -24,8 +24,8 @@ export const messages = {
         description: "Headline tile label: how many players have linked their game account. Rendered uppercase.",
     },
     "page.kpi.rosters.meta": {
-        text: "Yostar-linked doctors",
-        description: "Sub-line under the roster count. 'Yostar' is the game publisher's account system and 'Doctor' is the game's word for the player; both stay as-is.",
+        text: "Yostar-linked players",
+        description: "Sub-line under the roster count. 'Yostar' is the game publisher's account system and stays as-is. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
     "page.error.load": {
         text: "Couldn’t load site stats.",

@@ -64,8 +64,8 @@ export const messages = {
         description: "Catalog tile label: player collections synced with the site. Rendered uppercase.",
     },
     "catalog.rosters.meta": {
-        text: "Yostar-linked doctors",
-        description: "Sub-line under the roster count. 'Yostar' is the game publisher's account system and 'Doctor' is the game's word for the player; both stay as-is.",
+        text: "Yostar-linked players",
+        description: "Sub-line under the roster count. 'Yostar' is the game publisher's account system and stays as-is. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
 } satisfies MessageMap;
 

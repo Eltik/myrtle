@@ -77,7 +77,7 @@ export function Leaderboard() {
         byItem && data.currentItem ? (
             <StandingCard item={data.currentItem} me={{ uid: user.uid, server: user.server, nickname: user.nickname, avatar_id: user.avatar_id }} standing={data.itemStanding} isLoading={data.itemStandingLoading} />
         ) : (
-            <YouCard standing={data.scoreStanding} rankedDoctors={data.population} />
+            <YouCard standing={data.scoreStanding} rankedPlayers={data.population} />
         )
     ) : null;
 
@@ -91,7 +91,7 @@ export function Leaderboard() {
                 </nav>
             </div>
 
-            <Hero item={data.currentItem} rankedDoctors={data.population} topValue={data.topValue} updatedAt={data.updatedAt} isLoading={data.heroLoading} />
+            <Hero item={data.currentItem} rankedPlayers={data.population} topValue={data.topValue} updatedAt={data.updatedAt} isLoading={data.heroLoading} />
 
             {/*
               One column below lg, two above. The "You" card is placed first in

@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-25T03:19:20.151Z",
+    "generatedAt": "2026-10-25T03:22:21.320Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -7701,8 +7701,8 @@
         {
             "key": "changelog.note.2026-10-11.item.3",
             "namespace": "changelog",
-            "source_text": "The banner for returning Doctors is no longer shown as an active banner, and the release planner marks it as for returning Doctors only.",
-            "description": "Bullet in the 2026-10-11 release note, filed under 'Fixed'. 'Doctors' is the game's name for players.",
+            "source_text": "The banner for returning players is no longer shown as an active banner, and the release planner marks it as for returning players only.",
+            "description": "Bullet in the 2026-10-11 release note, filed under 'Fixed'. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": []
         },
         {
@@ -7722,8 +7722,8 @@
         {
             "key": "changelog.note.2026-10-11.lead",
             "namespace": "changelog",
-            "source_text": "The homepage now opens on **what's happening now**: the current events and banners from your selected game server, ending soonest first, next to the top Doctors and the latest site updates.",
-            "description": "Lead paragraph of the 2026-10-11 release note, rendered as Markdown. 'Doctors' is the game's name for players; a 'banner' is a headhunting (gacha) pool.",
+            "source_text": "The homepage now opens on **what's happening now**: the current events and banners from your selected game server, ending soonest first, next to the top players and the latest site updates.",
+            "description": "Lead paragraph of the 2026-10-11 release note, rendered as Markdown. 'Top players' names the home page's top-five panel; the game itself says 'Doctor'. A 'banner' is a headhunting (gacha) pool.",
             "placeholders": []
         },
         {
@@ -7827,8 +7827,8 @@
         {
             "key": "changelog.note.2026-10-13-2.item.3",
             "namespace": "changelog",
-            "source_text": "The Stats page has Field notes: how many enemies are immune to each status, the most owned and rarest 6★ operators, and how many enemies the average Doctor has met.",
-            "description": "Bullet in the second 2026-10-13 release note, filed under 'New'. 'Stats' and 'Field notes' are UI labels and must match their translations; 'Doctor' is the game's name for a player.",
+            "source_text": "The Stats page has Field notes: how many enemies are immune to each status, the most owned and rarest 6★ operators, and how many enemies the average player has met.",
+            "description": "Bullet in the second 2026-10-13 release note, filed under 'New'. 'Stats' and 'Field notes' are UI labels and must match their translations; 'player' is the site's term (the game itself says 'Doctor').",
             "placeholders": []
         },
         {
@@ -10507,8 +10507,8 @@
         {
             "key": "gacha.banner.status.returning",
             "namespace": "gacha",
-            "source_text": "Returning Doctors only",
-            "description": "Banner status pill: the banner is offered only to players coming back after a long absence, each on their own schedule, so it has no shared run window. 'Doctor' is how the game addresses the player.",
+            "source_text": "Returning players only",
+            "description": "Banner status pill: the banner is offered only to players coming back after a long absence, each on their own schedule, so it has no shared run window. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": []
         },
         {
@@ -10521,8 +10521,8 @@
         {
             "key": "gacha.banner.window.returning",
             "namespace": "gacha",
-            "source_text": "No fixed dates, opens for each Doctor on their return",
-            "description": "Shown in place of a banner's date range when the game times it per player. 'Doctor' is how the game addresses the player.",
+            "source_text": "No fixed dates, opens for each player on their return",
+            "description": "Shown in place of a banner's date range when the game times it per player. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": []
         },
         {
@@ -10598,16 +10598,16 @@
         {
             "key": "gacha.community.header.blurb",
             "namespace": "gacha",
-            "source_text": "Aggregated across {doctors} who opted into anonymous sharing. Rates are observational, not official.",
-            "description": "Sentence under the community gacha heading. {doctors} is the bold count of contributing players, labelled by community.header.blurbUsers, and may move wherever the sentence needs it.",
+            "source_text": "Aggregated across {players} who opted into anonymous sharing. Rates are observational, not official.",
+            "description": "Sentence under the community gacha heading. {players} is the bold count of contributing players, labelled by community.header.blurbUsers, and may move wherever the sentence needs it.",
             "placeholders": [
-                "doctors"
+                "players"
             ]
         },
         {
             "key": "gacha.community.header.blurbUsers",
             "namespace": "gacha",
-            "source_text": "{count} doctors",
+            "source_text": "{count} players",
             "description": "The bold count in the sentence under the community gacha heading. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": [
                 "count"
@@ -10704,7 +10704,7 @@
         {
             "key": "gacha.community.kpi.totalPulls.meta",
             "namespace": "gacha",
-            "source_text": "{count} contributing doctors",
+            "source_text": "{count} contributing players",
             "description": "Under the total pull count: how many players shared their records. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": [
                 "count"
@@ -10932,7 +10932,7 @@
         {
             "key": "gacha.community.runs.contributors",
             "namespace": "gacha",
-            "source_text": "{count} contributing doctors",
+            "source_text": "{count} contributing players",
             "description": "Tooltip on a banner card's player count. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": [
                 "count"
@@ -11010,8 +11010,8 @@
         {
             "key": "gacha.community.runs.metric.popularity",
             "namespace": "gacha",
-            "source_text": "contributing doctors",
-            "description": "Names the metric a card was ranked by, inside the rank tooltip: 'Ranked #3 by contributing doctors'. 'Player' is the site's term; the game itself says 'Doctor'.",
+            "source_text": "contributing players",
+            "description": "Names the metric a card was ranked by, inside the rank tooltip: 'Ranked #3 by contributing players'. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": []
         },
         {
@@ -15959,8 +15959,8 @@
         {
             "key": "home.leaders.title",
             "namespace": "home",
-            "source_text": "Top Doctors",
-            "description": "Heading of the home page's top-five player panel. 'Doctor' is what the game calls the player; use the game's own term.",
+            "source_text": "Top Players",
+            "description": "Heading of the home page's top-five player panel. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": []
         },
         {
@@ -17785,7 +17785,7 @@
         {
             "key": "meta.gachaCommunity.description",
             "namespace": "meta",
-            "source_text": "Community-wide gacha statistics - pull rates, most-pulled operators, and pull timing across opted-in doctors.",
+            "source_text": "Community-wide gacha statistics - pull rates, most-pulled operators, and pull timing across opted-in players.",
             "description": "Meta description of community-wide gacha statistics.",
             "placeholders": []
         },
@@ -19132,7 +19132,7 @@
         {
             "key": "nav.header.gacha.community.desc",
             "namespace": "nav",
-            "source_text": "Pull rates, top operators, and timing across opted-in doctors",
+            "source_text": "Pull rates, top operators, and timing across opted-in players",
             "description": "Blurb under the Community entry in the Gacha menu. A 'pull' is one random draw; 'player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": []
         },
@@ -19418,7 +19418,7 @@
         {
             "key": "nav.page.gachaCommunity.desc",
             "namespace": "nav",
-            "source_text": "Pull rates, top operators, and timing across opted-in doctors",
+            "source_text": "Pull rates, top operators, and timing across opted-in players",
             "description": "Blurb under the Gacha Community palette entry. A 'pull' is one random draw.",
             "placeholders": []
         },
@@ -19503,14 +19503,14 @@
             "key": "nav.page.playersSearch.desc",
             "namespace": "nav",
             "source_text": "Find player profiles by nickname or UID",
-            "description": "Blurb under the Search Doctors palette entry. UID is the in-game account number.",
+            "description": "Blurb under the Search Players palette entry. UID is the in-game account number.",
             "placeholders": []
         },
         {
             "key": "nav.page.playersSearch.label",
             "namespace": "nav",
             "source_text": "Search Players",
-            "description": "Palette entry for the player search. The site says 'player' throughout; Arknights itself calls them Doctors, so a region may prefer the game's term.",
+            "description": "Palette entry for the player search. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": []
         },
         {
@@ -26483,8 +26483,8 @@
         {
             "key": "stats.catalog.rosters.meta",
             "namespace": "stats",
-            "source_text": "Yostar-linked doctors",
-            "description": "Sub-line under the roster count. 'Yostar' is the game publisher's account system and 'Doctor' is the game's word for the player; both stay as-is.",
+            "source_text": "Yostar-linked players",
+            "description": "Sub-line under the roster count. 'Yostar' is the game publisher's account system and stays as-is. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": []
         },
         {
@@ -26607,8 +26607,8 @@
         {
             "key": "stats.fieldNotes.mostOwned.sentence",
             "namespace": "stats",
-            "source_text": "of synced doctors own {name}",
-            "description": "Sentence that follows a big percentage, e.g. '76% / of synced doctors own Gladiia'. {name} is the operator's name. 'Doctor' is the game's word for the player.",
+            "source_text": "of synced players own {name}",
+            "description": "Sentence that follows a big percentage, e.g. '76% / of synced players own Gladiia'. {name} is the operator's name. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": [
                 "name"
             ]
@@ -26630,7 +26630,7 @@
         {
             "key": "stats.fieldNotes.progress.meta",
             "namespace": "stats",
-            "source_text": "across {count} doctors",
+            "source_text": "across {count} players",
             "description": "Meta line: how many players the average is taken over. {count} is an already-formatted number.",
             "placeholders": [
                 "count"
@@ -26639,8 +26639,8 @@
         {
             "key": "stats.fieldNotes.progress.sentence",
             "namespace": "stats",
-            "source_text": "The average doctor has met {met} of {total} enemies",
-            "description": "Sentence under a percentage. {met} and {total} are already-formatted numbers; {total} is always large, so the label is always plural. 'Doctor' is the game's word for the player.",
+            "source_text": "The average player has met {met} of {total} enemies",
+            "description": "Sentence under a percentage. {met} and {total} are already-formatted numbers; {total} is always large, so the label is always plural. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": [
                 "met",
                 "total"
@@ -26656,8 +26656,8 @@
         {
             "key": "stats.fieldNotes.rarest.sentence",
             "namespace": "stats",
-            "source_text": "of synced doctors own {name}, the rarest 6★",
-            "description": "Sentence that follows a big percentage, e.g. '7.1% / of synced doctors own Bellone, the rarest 6★'. Keep the star symbol. {name} is the operator's name. 'Doctor' is the game's word for the player.",
+            "source_text": "of synced players own {name}, the rarest 6★",
+            "description": "Sentence that follows a big percentage, e.g. '7.1% / of synced players own Bellone, the rarest 6★'. Keep the star symbol. {name} is the operator's name. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": [
                 "name"
             ]
@@ -26884,8 +26884,8 @@
         {
             "key": "stats.page.kpi.rosters.meta",
             "namespace": "stats",
-            "source_text": "Yostar-linked doctors",
-            "description": "Sub-line under the roster count. 'Yostar' is the game publisher's account system and 'Doctor' is the game's word for the player; both stay as-is.",
+            "source_text": "Yostar-linked players",
+            "description": "Sub-line under the roster count. 'Yostar' is the game publisher's account system and stays as-is. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": []
         },
         {
@@ -44328,15 +44328,15 @@
         {
             "key": "tools.release.badge.returning",
             "namespace": "tools",
-            "source_text": "Returning Doctors only",
-            "description": "Shown in place of a date for the Returning Headhunting banner, which the game offers only to players coming back after a long absence. 'Doctor' is how the game addresses the player.",
+            "source_text": "Returning players only",
+            "description": "Shown in place of a date for the Returning Headhunting banner, which the game offers only to players coming back after a long absence. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": []
         },
         {
             "key": "tools.release.badge.returning.title",
             "namespace": "tools",
-            "source_text": "Offered only to Doctors returning after a long absence. Each one gets their own window, so there is no calendar date.",
-            "description": "Tooltip on 'Returning Doctors only'. 'Doctor' is how the game addresses the player.",
+            "source_text": "Offered only to players returning after a long absence. Each one gets their own window, so there is no calendar date.",
+            "description": "Tooltip on 'Returning players only'. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": []
         },
         {
@@ -51804,7 +51804,7 @@
             "key": "user.leaderboard.showing",
             "namespace": "user",
             "source_text": "Showing {start}-{end} of {count, number} {count, plural, one {player} other {players}}",
-            "description": "Range summary in the table footer. {start} and {end} are the first and last row numbers on this page, {count} the number of Doctors matching the filters.",
+            "description": "Range summary in the table footer. {start} and {end} are the first and last row numbers on this page, {count} the number of players matching the filters.",
             "placeholders": [
                 "count",
                 "end",
@@ -59657,8 +59657,8 @@
         {
             "key": "user.search.count.unit",
             "namespace": "user",
-            "source_text": "{count, plural, one {doctor} other {doctors}}",
-            "description": "Unit after the result count, which is rendered in bold just before it: '1,234 doctors'. The number itself is not part of this string.",
+            "source_text": "{count, plural, one {player} other {players}}",
+            "description": "Unit after the result count, which is rendered in bold just before it: '1,234 players'. The number itself is not part of this string.",
             "placeholders": [
                 "count"
             ]
@@ -59689,7 +59689,7 @@
         {
             "key": "user.search.empty.noResults.title",
             "namespace": "user",
-            "source_text": "No doctors found",
+            "source_text": "No players found",
             "description": "Empty-state title when a search matches no public profile.",
             "placeholders": []
         },
@@ -59710,7 +59710,7 @@
         {
             "key": "user.search.input.label",
             "namespace": "user",
-            "source_text": "Search doctors",
+            "source_text": "Search players",
             "description": "Accessible name of the search box, which shows only a magnifier icon.",
             "placeholders": []
         },

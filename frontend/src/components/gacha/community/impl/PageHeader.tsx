@@ -27,7 +27,7 @@ export function PageHeader({ data, isLoading }: IPageHeaderProps) {
                 breadcrumb={[t("community.breadcrumb.gacha"), t("community.breadcrumb.current")]}
                 title={rt("community.header.title", { emphasis: <em className="text-primary not-italic">{t("community.header.titleEmphasis")}</em> })}
                 description={rt("community.header.blurb", {
-                    doctors: <strong className="font-semibold text-foreground">{isLoading || totalUsers == null ? "-" : t("community.header.blurbUsers", { count: f.number(totalUsers) })}</strong>,
+                    players: <strong className="font-semibold text-foreground">{isLoading || totalUsers == null ? "-" : t("community.header.blurbUsers", { count: f.number(totalUsers) })}</strong>,
                 })}
             />
             <div className="flex flex-wrap gap-2">

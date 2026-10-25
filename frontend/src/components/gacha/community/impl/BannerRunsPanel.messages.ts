@@ -32,7 +32,7 @@ export const messages = {
         description: "Unit after the pull count on a banner card. Rendered uppercase.",
     },
     "community.runs.contributors": {
-        text: "{count} contributing doctors",
+        text: "{count} contributing players",
         description: "Tooltip on a banner card's player count. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
     "community.runs.people": {
@@ -88,8 +88,8 @@ export const messages = {
         description: "Names the metric a card was ranked by, inside the rank tooltip: 'Ranked #3 by community pulls'.",
     },
     "community.runs.metric.popularity": {
-        text: "contributing doctors",
-        description: "Names the metric a card was ranked by, inside the rank tooltip: 'Ranked #3 by contributing doctors'. 'Player' is the site's term; the game itself says 'Doctor'.",
+        text: "contributing players",
+        description: "Names the metric a card was ranked by, inside the rank tooltip: 'Ranked #3 by contributing players'. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
     "community.runs.rankTitle": {
         text: "Ranked #{rank} by {metric}",

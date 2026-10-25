@@ -14,10 +14,10 @@ import type { messages } from "./YouCard.messages";
 
 interface IYouCardProps {
     standing: IPlayerStanding | null;
-    rankedDoctors: number | null;
+    rankedPlayers: number | null;
 }
 
-export function YouCard({ standing, rankedDoctors }: IYouCardProps) {
+export function YouCard({ standing, rankedPlayers }: IYouCardProps) {
     /** 'Δ Rank' is declared once, on the sibling movers card. */
     const t: TypedT<typeof messages & typeof moversMessages> = useT("user");
     const f = useFormatters();
@@ -28,7 +28,7 @@ export function YouCard({ standing, rankedDoctors }: IYouCardProps) {
     const initials = nickname.slice(0, 2).toUpperCase();
     const avatarSrc = getAvatarById(player.avatar_id ?? DEFAULT_AVATAR_ID);
     const rank = player.rank_global ?? null;
-    const percentileFromRank = rank != null && rankedDoctors && rankedDoctors > 0 ? (rank / rankedDoctors) * 100 : null;
+    const percentileFromRank = rank != null && rankedPlayers && rankedPlayers > 0 ? (rank / rankedPlayers) * 100 : null;
     const percentile = percentileFromRank ?? standing.percentile * 100;
     const delta = standing.rank_delta;
     const grade = player.grade ?? "-";

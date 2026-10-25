@@ -32,7 +32,7 @@ export const messages = {
         description: "Label of the link shown under the search box when the typed text looks like a player UID (a plain number). The UID itself is shown beneath it.",
     },
     "search.input.label": {
-        text: "Search doctors",
+        text: "Search players",
         description: "Accessible name of the search box, which shows only a magnifier icon.",
     },
     "search.clearSearch": {
@@ -56,11 +56,11 @@ export const messages = {
         description: "Status line over the results when the search box is empty and profiles are ranked by something other than score. {sort} is the rank-by option's name as the toolbar shows it, e.g. 'Masteries (M3)', 'Guard operators'.",
     },
     "search.count.unit": {
-        text: "{count, plural, one {doctor} other {doctors}}",
-        description: "Unit after the result count, which is rendered in bold just before it: '1,234 doctors'. The number itself is not part of this string.",
+        text: "{count, plural, one {player} other {players}}",
+        description: "Unit after the result count, which is rendered in bold just before it: '1,234 players'. The number itself is not part of this string.",
     },
     "search.empty.noResults.title": {
-        text: "No doctors found",
+        text: "No players found",
         description: "Empty-state title when a search matches no public profile.",
     },
     "search.empty.noResults.desc": {

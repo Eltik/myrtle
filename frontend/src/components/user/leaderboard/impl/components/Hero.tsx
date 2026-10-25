@@ -11,7 +11,7 @@ import type { messages } from "./Hero.messages";
 interface IHeroProps {
     /** Set while the table is ranked by an item; the pill and stats follow it. */
     item: ICatalogItem | null;
-    rankedDoctors: number | null;
+    rankedPlayers: number | null;
     /** Top score (0..1) for a score ranking, top quantity for an item ranking. */
     topValue: number | null;
     updatedAt: string | null;
@@ -32,7 +32,7 @@ function formatRelative(iso: string | null, t: TypedT<typeof messages>): string 
     return t("leaderboard.hero.updated.days", { count: days });
 }
 
-export function Hero({ item, rankedDoctors, topValue, updatedAt, isLoading }: IHeroProps) {
+export function Hero({ item, rankedPlayers, topValue, updatedAt, isLoading }: IHeroProps) {
     const t: TypedT<typeof messages> = useT("user");
     const rt: TypedRichT<typeof messages> = useRichT("user");
     const f = useFormatters();
@@ -72,7 +72,7 @@ export function Hero({ item, rankedDoctors, topValue, updatedAt, isLoading }: IH
                 </div>
 
                 <div className="grid grid-cols-3 items-center gap-3 self-center sm:flex sm:gap-5">
-                    <HeroStat label={item ? t("leaderboard.hero.stat.holders") : t("leaderboard.hero.stat.ranked")} value={rankedDoctors == null ? "-" : f.compact(rankedDoctors)} title={rankedDoctors == null ? undefined : f.number(rankedDoctors)} loading={isLoading} />
+                    <HeroStat label={item ? t("leaderboard.hero.stat.holders") : t("leaderboard.hero.stat.ranked")} value={rankedPlayers == null ? "-" : f.compact(rankedPlayers)} title={rankedPlayers == null ? undefined : f.number(rankedPlayers)} loading={isLoading} />
                     <span aria-hidden className="hidden h-10 w-px bg-border sm:block" />
                     <HeroStat label={item ? t("leaderboard.hero.stat.topHolding") : t("leaderboard.hero.stat.topScore")} value={topValue == null ? "-" : f.compact(topValue)} title={item && topValue != null ? f.number(topValue) : undefined} loading={isLoading} />
                     <span aria-hidden className="hidden h-10 w-px bg-border sm:block" />

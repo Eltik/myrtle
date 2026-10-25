@@ -101,7 +101,7 @@ export const messages = {
         description: "Gacha menu entry for community-wide pull statistics.",
     },
     "header.gacha.community.desc": {
-        text: "Pull rates, top operators, and timing across opted-in doctors",
+        text: "Pull rates, top operators, and timing across opted-in players",
         description: "Blurb under the Community entry in the Gacha menu. A 'pull' is one random draw; 'player' is the site's term; the game itself says 'Doctor'.",
     },
     "header.gacha.history.label": {

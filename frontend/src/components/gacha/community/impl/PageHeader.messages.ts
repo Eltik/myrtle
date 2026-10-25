@@ -24,12 +24,12 @@ export const messages = {
         description: "The accent-coloured word substituted into community.header.title as {emphasis}. 'Pulling' is the community term for spending on headhunting.",
     },
     "community.header.blurbUsers": {
-        text: "{count} doctors",
+        text: "{count} players",
         description: "The bold count in the sentence under the community gacha heading. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
     "community.header.blurb": {
-        text: "Aggregated across {doctors} who opted into anonymous sharing. Rates are observational, not official.",
-        description: "Sentence under the community gacha heading. {doctors} is the bold count of contributing players, labelled by community.header.blurbUsers, and may move wherever the sentence needs it.",
+        text: "Aggregated across {players} who opted into anonymous sharing. Rates are observational, not official.",
+        description: "Sentence under the community gacha heading. {players} is the bold count of contributing players, labelled by community.header.blurbUsers, and may move wherever the sentence needs it.",
     },
     "community.header.updated": {
         text: "updated {when}",

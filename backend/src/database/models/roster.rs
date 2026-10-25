@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use ts_rs::TS;
 
-/// One entry in a Doctor's published support roster (slot 0..2).
+/// One entry in a player's published support roster (slot 0..2).
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]

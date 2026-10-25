@@ -315,7 +315,7 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
                             <>
                                 <Field>
                                     <FieldLabel>{t("authDialog.email")}</FieldLabel>
-                                    <Input placeholder="doctor@rhodes.island" type="email" value={email} onChange={(e) => authActions.setLoginEmail(e.target.value)} disabled={isOTPSent || sendOTP.isPending} />
+                                    <Input placeholder="player@rhodes.island" type="email" value={email} onChange={(e) => authActions.setLoginEmail(e.target.value)} disabled={isOTPSent || sendOTP.isPending} />
                                 </Field>
                                 {isOTPSent ? (
                                     <Field>

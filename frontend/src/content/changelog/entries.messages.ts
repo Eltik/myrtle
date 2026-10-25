@@ -95,8 +95,8 @@ export const messages = {
         description: "Bullet in the second 2026-10-13 release note, filed under 'New'. Stun, silence, sleep and freeze are the game's status effects and must match their in-game translations.",
     },
     "note.2026-10-13-2.item.3": {
-        text: "The Stats page has Field notes: how many enemies are immune to each status, the most owned and rarest 6★ operators, and how many enemies the average Doctor has met.",
-        description: "Bullet in the second 2026-10-13 release note, filed under 'New'. 'Stats' and 'Field notes' are UI labels and must match their translations; 'Doctor' is the game's name for a player.",
+        text: "The Stats page has Field notes: how many enemies are immune to each status, the most owned and rarest 6★ operators, and how many enemies the average player has met.",
+        description: "Bullet in the second 2026-10-13 release note, filed under 'New'. 'Stats' and 'Field notes' are UI labels and must match their translations; 'player' is the site's term (the game itself says 'Doctor').",
     },
     "note.2026-10-13-2.item.4": {
         text: "On phones, language and theme moved into the menu, so the top bar has room to breathe.",
@@ -179,8 +179,8 @@ export const messages = {
         description: "Title of the 2026-10-11 release note.",
     },
     "note.2026-10-11.lead": {
-        text: "The homepage now opens on **what's happening now**: the current events and banners from your selected game server, ending soonest first, next to the top Doctors and the latest site updates.",
-        description: "Lead paragraph of the 2026-10-11 release note, rendered as Markdown. 'Doctors' is the game's name for players; a 'banner' is a headhunting (gacha) pool.",
+        text: "The homepage now opens on **what's happening now**: the current events and banners from your selected game server, ending soonest first, next to the top players and the latest site updates.",
+        description: "Lead paragraph of the 2026-10-11 release note, rendered as Markdown. 'Top players' names the home page's top-five panel; the game itself says 'Doctor'. A 'banner' is a headhunting (gacha) pool.",
     },
     "note.2026-10-11.item.1": {
         text: "The pull planner takes your Standard and Kernel pity separately, and its odds now count the free limited operator at 300 rolls and the three picks of an Orienteering banner. Saved plans carry over unchanged.",
@@ -191,8 +191,8 @@ export const messages = {
         description: "Bullet in the 2026-10-11 release note, filed under 'Fixed'. Standard, Kernel, Orienteering, Limited, Collab and Starter Headhunting are banner types and keep the game's names.",
     },
     "note.2026-10-11.item.3": {
-        text: "The banner for returning Doctors is no longer shown as an active banner, and the release planner marks it as for returning Doctors only.",
-        description: "Bullet in the 2026-10-11 release note, filed under 'Fixed'. 'Doctors' is the game's name for players.",
+        text: "The banner for returning players is no longer shown as an active banner, and the release planner marks it as for returning players only.",
+        description: "Bullet in the 2026-10-11 release note, filed under 'Fixed'. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
     "note.2026-10-11.item.4": {
         text: "Voice lines for Passenger, Ling, Chongyue and Lappland the Decadenza no longer switch between their base and outfit voice sets.",

@@ -209,7 +209,7 @@ export const messages = {
         description: "Document title of community-wide gacha statistics. The separator is a middle dot.",
     },
     "gachaCommunity.description": {
-        text: "Community-wide gacha statistics - pull rates, most-pulled operators, and pull timing across opted-in doctors.",
+        text: "Community-wide gacha statistics - pull rates, most-pulled operators, and pull timing across opted-in players.",
         description: "Meta description of community-wide gacha statistics.",
     },
     "gachaHistory.title": {

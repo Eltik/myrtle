@@ -4,8 +4,8 @@ export const namespace = "home";
 
 export const messages = {
     "leaders.title": {
-        text: "Top Doctors",
-        description: "Heading of the home page's top-five player panel. 'Doctor' is what the game calls the player; use the game's own term.",
+        text: "Top Players",
+        description: "Heading of the home page's top-five player panel. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
     "leaders.seeAll": {
         text: "Full leaderboard →",

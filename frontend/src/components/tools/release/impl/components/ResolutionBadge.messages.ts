@@ -60,12 +60,12 @@ export const messages = {
         description: "The window an estimated date could fall in. Both halves are already formatted dates.",
     },
     "release.badge.returning": {
-        text: "Returning Doctors only",
-        description: "Shown in place of a date for the Returning Headhunting banner, which the game offers only to players coming back after a long absence. 'Doctor' is how the game addresses the player.",
+        text: "Returning players only",
+        description: "Shown in place of a date for the Returning Headhunting banner, which the game offers only to players coming back after a long absence. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
     "release.badge.returning.title": {
-        text: "Offered only to Doctors returning after a long absence. Each one gets their own window, so there is no calendar date.",
-        description: "Tooltip on 'Returning Doctors only'. 'Doctor' is how the game addresses the player.",
+        text: "Offered only to players returning after a long absence. Each one gets their own window, so there is no calendar date.",
+        description: "Tooltip on 'Returning players only'. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
 } satisfies MessageMap;
 

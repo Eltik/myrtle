@@ -31818,7 +31818,7 @@
       },
       "SupportUnit": {
         "type": "object",
-        "description": "One entry in a Doctor's published support roster (slot 0..2).",
+        "description": "One entry in a player's published support roster (slot 0..2).",
         "required": [
           "slot",
           "operator_id",

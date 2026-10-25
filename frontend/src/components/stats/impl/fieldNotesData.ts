@@ -167,7 +167,7 @@ function pickByOwners(operators: readonly IFieldNoteOperator[], ownership: IOwne
 }
 
 /**
- * The 6★ the most doctors own; ties go to the lower id. Restricted to 6★ because across all
+ * The 6★ the most players own; ties go to the lower id. Restricted to 6★ because across all
  * rarities the answer is a gifted starter: Amiya, Noir Corne, Rangers and Yato each sit at
  * 2580 of 2580 (2026-10-13), which says nothing.
  */
@@ -179,7 +179,7 @@ export function mostOwnedSixStar(operators: readonly IFieldNoteOperator[], owner
     );
 }
 
-/** The 6★ the fewest doctors own (a missing id is 0 owners); ties go to the lower id. */
+/** The 6★ the fewest players own (a missing id is 0 owners); ties go to the lower id. */
 export function rarestSixStar(operators: readonly IFieldNoteOperator[], ownership: IOwnershipLike): IOwnedOperator | null {
     return pickByOwners(
         operators.filter((op) => op.rarity === 6),
