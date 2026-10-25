@@ -21,14 +21,14 @@
 //!
 //! ASSUMPTIONS and simplifications:
 //! - S2 DPS: every attack targets an enemy; all `targets` enemies stand around it
-//!   (AoE, uncapped). True damage, so DEF and RES do not apply.
+//!   (`AoE`, uncapped). True damage, so DEF and RES do not apply.
 //! - S2 duration: the game data has none (ammo, `Duration` -1). One ammo per attack, so
 //!   `skill_duration` reports the 10 ammo at the S2 attack interval (10 x 2.85 s at
 //!   ASPD 100), for DPS and HPS alike: `total_damage` is S2 DPS x that duration, and
 //!   the cycle averages cycle over it.
 //! - S2 HPS: every attack heals `targets` allies around the target (uncapped) by
 //!   `heal_scale` x ATK, and replaces her normal heal. UPPER BOUND: `targets` stands
-//!   for the healed-ally count too; PRTS (https://prts.wiki/w/凯尔希·思衡托) gives the
+//!   for the healed-ally count too; PRTS (<https://prts.wiki/w/凯尔希·思衡托>) gives the
 //!   heal a 1.5-tile radius around the enemy the unit targets (first the one she
 //!   blocks), so in practice it reaches the allies blocking it, usually fewer than the
 //!   enemies hit. The cycle average uses the skill

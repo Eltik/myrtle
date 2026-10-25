@@ -26,7 +26,7 @@
 //!   attack she reaches 5 stacks in about 4 s and the 10 s duration refreshes on hit.
 //!   Stacks multiply the target's DEF as `defense * (1 - stacks * 0.07)`, the way the
 //!   generated formulas apply a self-inflicted percentage shred. PRTS
-//!   (https://prts.wiki/w/贝洛内) confirms it: a final multiplier of the text value x
+//!   (<https://prts.wiki/w/贝洛内>) confirms it: a final multiplier of the text value x
 //!   current stacks, applied before the hit's damage, each hit refreshing the 10 s.
 //! - Talent 1 damage bonus: `vsLowHp` ON is the maximum bonus (target below 20% HP),
 //!   OFF is a full-HP target (no bonus). The linear ramp in between is not modelled.

@@ -892,6 +892,8 @@ fn supporter_atk(data: &OperatorData, inv: SupporterInvestment, module_id: Optio
     } else {
         0.0
     };
+    // Module levels are small integers stored as f64, so exact equality is intended.
+    #[allow(clippy::float_cmp)]
     let module = module_id.map_or(0.0, |id| {
         data.atk_module
             .iter()

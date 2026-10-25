@@ -25,7 +25,7 @@
 //! ASSUMPTIONS:
 //! - Weakness damage takes whichever of Physical (ATK - DEF) and Arts (ATK x (1 -
 //!   RES)) deals more. This is the game's rule, not an upper bound: PRTS
-//!   (https://prts.wiki/w/赤刃明霄陈 talent notes, and 术语释义 弱点伤害) says each hit
+//!   (<https://prts.wiki/w/赤刃明霄陈> talent notes, and 术语释义 弱点伤害) says each hit
 //!   computes a theoretical Physical and Arts damage from ATK, the ATK multiplier,
 //!   DEF / RES and their penetration only, and takes the higher type (a tie keeps the
 //!   original Arts); damage multipliers then apply to the chosen type. The engine's
@@ -36,7 +36,7 @@
 //!   Arts damage and are not attacks, stay Arts. Below E1 the talent is locked: Arts.
 //! - S2: the 10 slashes all hit one target that survives them (no retarget, no extra
 //!   slashes); the slash sequence takes no time, and the 6 s skill duration is the
-//!   ATK +300% window. skill_dps = slashes / 6 s + buffed attack DPS, so total_damage is
+//!   ATK +300% window. `skill_dps` = slashes / 6 s + buffed attack DPS, so `total_damage` is
 //!   the slashes plus 6 s of buffed attacks.
 //! - S3: the sword wave deals its floor, 580% ATK (the 6%-of-current-HP part is not
 //!   modelled), to every target once per activation, spread over the 20 s duration.

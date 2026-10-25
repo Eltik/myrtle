@@ -479,7 +479,7 @@ fn build_params(req: CalculateRequest) -> OperatorParams {
 
 /// The operator a clone copies when the request names none.
 ///
-/// damage_formulas.py `Muelsyse.__init__` falls back to `Ela(pp)` when no
+/// `damage_formulas.py` `Muelsyse.__init__` falls back to `Ela(pp)` when no
 /// previous operator is given, and every Muelsyse case in the reference
 /// fixture is computed that way. Without a clone the transpiled formula
 /// divides by a zero clone interval: before 2026-10-24 every Muelsyse request
@@ -756,8 +756,8 @@ pub fn batch_in(gd: &Arc<GameData>, body: BatchRequest) -> BatchResponse {
     let results = body
         .requests
         .into_iter()
-        .map(|req| match (&body.sweep, &xs) {
-            (Some(sweep), Some(xs)) => {
+        .map(|req| {
+            if let (Some(sweep), Some(xs)) = (&body.sweep, &xs) {
                 let mut points = Vec::with_capacity(xs.len());
                 for &x in xs {
                     let mut r = req.clone();
@@ -779,8 +779,7 @@ pub fn batch_in(gd: &Arc<GameData>, body: BatchRequest) -> BatchResponse {
                     points: Some(points),
                     ..Default::default()
                 }
-            }
-            _ => {
+            } else {
                 let label = req.clone();
                 match calculate_in(gd, req) {
                     Ok(result) => BatchItem {
@@ -835,7 +834,7 @@ pub enum RankPreset {
     /// max skill rank, trust 100, the formula's default potential, module
     /// level 3 for a module row.
     Default,
-    /// The ArkDPS / UOEP convention: E2 (or the rarity's highest) at max
+    /// The `ArkDPS` / UOEP convention: E2 (or the rarity's highest) at max
     /// level, trust 100, M3 (or max rank), module level 3, potential 1.
     #[default]
     P1Max,

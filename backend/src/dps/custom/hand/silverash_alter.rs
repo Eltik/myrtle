@@ -1,4 +1,4 @@
-//! SilverAsh the Reignfrost (`char_1045_svash2`), Vanguard / Tactician-Counsellor
+//! `SilverAsh` the Reignfrost (`char_1045_svash2`), Vanguard / Tactician-Counsellor
 //! (`counsellor`), base attack time 1.2 s, Physical, blocks 2. Hand-written:
 //! `ArknightsDpsCompare` has no class for him. Written from the EN game data
 //! (`character_table`, `skill_table`), checked 2026-10-25. He has no module.
@@ -29,7 +29,7 @@
 //! - S3: every enemy in the line is hit, so the damage scales with the target count
 //!   (no `max_target` key; arknights.wiki.gg: a 3-tile projectile, 0.8 hitbox).
 //!   `weak[limit]` 2 is read as the Fragile's 2 s duration (arknights.wiki.gg and PRTS
-//!   https://prts.wiki/w/凛御银灰 give the S3 Fragile 2 s, not stacking), not a target
+//!   <https://prts.wiki/w/凛御银灰> give the S3 Fragile 2 s, not stacking), not a target
 //!   or stack cap: at 1.2 s per attack the Fragile stays up on every enemy in the line.
 //!   That reading is inferred; if it were a 2-target cap, `withFragile` ON overstates
 //!   the 3rd and later targets by x1.3.

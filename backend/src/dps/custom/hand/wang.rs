@@ -2,8 +2,8 @@
 //! Physical attacks. Hand-written: `ArknightsDpsCompare` has no class for him. Written
 //! from the EN game data (`character_table`, `skill_table`, `battle_equip_table`, the
 //! stone token `token_10064_wang_stone1` and its skills `sktok_wang_1..3`), checked
-//! 2026-10-25; mechanics from PRTS (https://prts.wiki/w/望, https://prts.wiki/w/棋子)
-//! and arknights.wiki.gg (https://arknights.wiki.gg/wiki/Wang/Overview).
+//! 2026-10-25; mechanics from PRTS (<https://prts.wiki/w/望>, <https://prts.wiki/w/棋子>)
+//! and arknights.wiki.gg (<https://arknights.wiki.gg/wiki/Wang/Overview>).
 //!
 //! His damage comes from weiqi stones (traps). Talent 1 (Mold Stones) places them;
 //! the stone's damage is the passive of the equipped skill. With no skill (S0) a stone

@@ -592,6 +592,10 @@ export const messages = {
         text: "Talent active",
         description: "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'TalentUp'). Short; shown beside a toggle.",
     },
+    "calc.cond.talentAttackSpeed": {
+        text: "Talent attack speed bonus",
+        description: "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'talentASPD'). Short; shown beside a toggle.",
+    },
     "calc.cond.talentInactive": {
         text: "Talent inactive",
         description: "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'talentInactive'). Short; shown beside a toggle.",

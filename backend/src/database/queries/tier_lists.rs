@@ -647,7 +647,7 @@ impl<'a> Viewer<'a> {
     /// The viewer a request identifies, account first; `None` when it carries
     /// neither, which is a view that cannot be deduplicated and is not recorded.
     #[must_use]
-    pub fn from_parts(user_id: Option<Uuid>, session_hash: Option<&'a str>) -> Option<Self> {
+    pub const fn from_parts(user_id: Option<Uuid>, session_hash: Option<&'a str>) -> Option<Self> {
         match (user_id, session_hash) {
             (Some(id), _) => Some(Self::Account(id)),
             (None, Some(hash)) => Some(Self::Session(hash)),

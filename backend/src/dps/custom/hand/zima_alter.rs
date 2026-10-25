@@ -39,16 +39,16 @@
 //!   `average_dps` to `skill_dps`.
 //! - S3 returns the TOTAL damage of the five blows (Degenbrecher's and Ch'en's S3
 //!   convention, "totalDMG"): the skill has no duration, so the engine reports that
-//!   total as skill_dps, total_damage and average_dps alike. Blow k (k = 0..4) has
+//!   total as `skill_dps`, `total_damage` and `average_dps` alike. Blow k (k = 0..4) has
 //!   ATK +(100% + 30% * k): the +30% is read as granted after each blow, so the first
 //!   blow has none of it. A third-party test supports this reading: blows of 5533 /
 //!   6538 / 7542 / 8547 / 9551 on a 2100 DEF target fit 240% ATK at ATK x(2.28 +
 //!   0.30 k), i.e. +100% + 28% (talent 2) + 30% per EARLIER blow (Zhihu
-//!   https://zhuanlan.zhihu.com/p/2025549626309133730, seen through a search summary).
+//!   <https://zhuanlan.zhihu.com/p/2025549626309133730>, seen through a search summary).
 //!   The alternative, each blow's +30% applying to that blow (ATK +(130% + 30% * k)),
 //!   gives +10.4% total at DEF 0 with the default talent 2 (sum of ATK factors 15.9
 //!   against 14.4).
-//! - S3 splash: PRTS (https://prts.wiki/w/怒潮凛冬) says each blow is a splash centred
+//! - S3 splash: PRTS (<https://prts.wiki/w/怒潮凛冬>) says each blow is a splash centred
 //!   one tile ahead with a 1.5 radius and normally no main target; whether the other
 //!   enemies take the full 240% or the trait's 50% is not stated anywhere found. The
 //!   formula keeps the trait model (the target full, the others 50% x talent 1).

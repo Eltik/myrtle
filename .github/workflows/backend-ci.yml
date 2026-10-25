@@ -97,6 +97,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          # generate_dps tests read the upstream formulas in external/ArknightsDpsCompare.
+          submodules: true
 
       - uses: dtolnay/rust-toolchain@stable
 

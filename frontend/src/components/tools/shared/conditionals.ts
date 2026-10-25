@@ -158,6 +158,7 @@ export const CONDITIONAL_NAME_KEYS: Readonly<Record<string, ConditionalLabelKey>
     selfbuffS3: "calc.cond.s3SelfBuff",
     selfstun: "calc.cond.selfStun",
     singleTargetOnly: "calc.cond.singleTargetOnly",
+    talentASPD: "calc.cond.talentAttackSpeed",
     talentInactive: "calc.cond.talentInactive",
     tripleHit: "calc.cond.tripleHit",
     unitOnly: "calc.cond.unitOnly",

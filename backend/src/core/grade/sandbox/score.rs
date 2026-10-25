@@ -245,7 +245,7 @@ fn blob_shape(blob: &Value) -> String {
     format!("{{{}}}", parts.join(", "))
 }
 
-fn json_kind(v: &Value) -> &'static str {
+const fn json_kind(v: &Value) -> &'static str {
     match v {
         Value::Null => "null",
         Value::Bool(_) => "bool",

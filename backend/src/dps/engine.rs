@@ -121,7 +121,7 @@ pub fn load_heal_formulas() -> HashMap<String, OperatorFormula> {
 
 /// One operator configuration's damage.
 ///
-/// The three snake_case fields are the original response and keep their names
+/// The three `snake_case` fields are the original response and keep their names
 /// and meaning. Every field after them is optional, camelCase, and present
 /// only when the request asked for the behaviour that produces it.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema, TS)]
@@ -198,7 +198,7 @@ pub struct DpsResult {
     pub secondary_clamped: Option<bool>,
 }
 
-/// The three damage numbers for one share of the targets. Same snake_case names
+/// The three damage numbers for one share of the targets. Same `snake_case` names
 /// as the top level of [`DpsResult`], so one client type reads both.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Serialize, Deserialize, ToSchema, TS)]
 #[ts(export)]
@@ -218,7 +218,7 @@ impl DpsMetrics {
     }
 
     /// Each metric floored at 0.
-    fn clamped(self) -> Self {
+    const fn clamped(self) -> Self {
         Self {
             skill_dps: self.skill_dps.max(0.0),
             total_damage: self.total_damage.max(0.0),
@@ -399,7 +399,7 @@ fn formula_defaults(op_id: &str) -> (i32, i32, i32, Vec<i32>, Vec<i32>) {
 }
 
 /// The investment half of `params`, for building the operator a Muelsyse
-/// clone copies. damage_formulas.py `Muelsyse.__init__` builds it as
+/// clone copies. `damage_formulas.py` `Muelsyse.__init__` builds it as
 /// `Ela(pp)`: the same parameter object, so the same promotion, level,
 /// potential, trust, skill and module choices.
 fn investment_params(p: &OperatorParams, module_index: Option<i32>) -> OperatorParams {
@@ -423,7 +423,7 @@ fn investment_params(p: &OperatorParams, module_index: Option<i32>) -> OperatorP
 
 /// Fills the `clone_*` fields from the copied operator, built at the same
 /// investment. A module the copied operator cannot resolve falls back to the
-/// copied operator's DEFAULT module, as damage_formulas.py `Operator.__init__`
+/// copied operator's DEFAULT module, as `damage_formulas.py` `Operator.__init__`
 /// does (`module = default_mod`, kept when `params.module` is not available).
 /// Until the phase 1 review this fell back to no module, so every Muelsyse
 /// request with module 2 built an Ela without her module (docs/dps-refactor.md,
@@ -517,13 +517,14 @@ fn apply_zones(unit: &mut OperatorUnit, zones: &BuffZones) -> EnemyResolution {
 
 /// Which typed fragility group the formula's damage belongs to, from how it
 /// responds to DEF and to RES, plus whether that was an approximation.
-fn damage_type(unit: &mut OperatorUnit, formula: &SkillFormula) -> (DamageType, bool) {
+fn damage_type(unit: &OperatorUnit, formula: &SkillFormula) -> (DamageType, bool) {
     let at = |unit: &OperatorUnit, defense, res| {
         calculate_skill_dps(unit, formula, &EnemyStats { defense, res })
     };
     let base = at(unit, 0.0, 0.0);
-    let by_def = at(unit, 2000.0, 0.0) != base;
-    let by_res = at(unit, 0.0, 90.0) != base;
+    // Any change at all counts as a response, so the compare is exact.
+    #[allow(clippy::float_cmp)]
+    let (by_def, by_res) = (at(unit, 2000.0, 0.0) != base, at(unit, 0.0, 90.0) != base);
     let fallback = if unit.is_physical {
         DamageType::Physical
     } else {
@@ -828,7 +829,7 @@ pub fn calculate_dps_detailed(
             let typed = if z.physical_fragile.is_empty() && z.arts_fragile.is_empty() {
                 None
             } else {
-                let (kind, approximate) = damage_type(&mut unit, skill_formula);
+                let (kind, approximate) = damage_type(&unit, skill_formula);
                 approximate_type_split = Some(approximate);
                 Some(kind)
             };

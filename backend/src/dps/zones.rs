@@ -155,6 +155,7 @@ impl ResolvedReduction {
     /// `((v - flat) * ratio - ignoreFlat) * ignoreRatio`, each step floored at 0.
     /// The first two steps are `apply_shreds` verbatim, so a reduction with no
     /// ignore reproduces it bit for bit.
+    #[allow(clippy::float_cmp)] // 0.0 / 1.0 are the exact "no ignore" sentinels
     pub fn apply(&self, value: f64) -> f64 {
         let reduced = (value - self.flat).max(0.0) * self.ratio;
         if self.ignore_flat == 0.0 && self.ignore_ratio == 1.0 {

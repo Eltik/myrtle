@@ -140,7 +140,7 @@ pub fn enemy_roster(gd: &GameData) -> (RetentionRoster, Vec<RosterPair>) {
             if battle.def.is_some() || battle.res.is_some() {
                 roster.overridden += 1;
             }
-            let def = battle.def.unwrap_or(f64::from(at.attributes.def));
+            let def = battle.def.unwrap_or_else(|| f64::from(at.attributes.def));
             let res = battle.res.unwrap_or(at.attributes.magic_resistance);
             // DEF and RES are never negative in game data; `+ 0.0` folds -0.0
             // into 0.0 so the two share a key.
@@ -332,7 +332,7 @@ pub fn table_or_start(gd: &Arc<GameData>) -> (RetentionStatus, Option<Arc<Retent
                 Slot::Unavailable(t) => (RetentionStatus::Unavailable, Some(Arc::clone(t))),
             };
         }
-        s.push((owner.clone(), Slot::Pending));
+        s.push((owner, Slot::Pending));
     }
     let gd = Arc::clone(gd);
     tokio::spawn(async move {

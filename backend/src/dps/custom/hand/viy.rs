@@ -8,14 +8,14 @@
 //! - Talent 1 "Before the Sword's Swing", `talent1_parameters`: `[0]` `atk` (E2 0.10,
 //!   P5 0.12), `[1]` `attack_speed` (E2 15). It has no promotion gate: its first
 //!   candidate unlocks at `PHASE_0` (ATK +2%, ASPD +5, EN and CN `character_table`; PRTS
-//!   lists 精英0 and 精英2 rows, https://prts.wiki/w/维伊), so the formula reads it at
+//!   lists 精英0 and 精英2 rows, <https://prts.wiki/w/维伊>), so the formula reads it at
 //!   every elite. 3 stored charges merge into 1 Transposed
 //!   Energy (TE); ATK +`[0]` while she holds TE, ASPD +`[1]` while she does not.
 //! - Talent 2 "Arts of War" (E2), `talent2_parameters`: `[0]` `attack@duration` 5,
 //!   `[1]` `attack@value` 90, `[2]` `attack@max_stack_cnt` 3. A stored-charge attack
-//!   puts a 90 Arts/s DoT on the target for 5 s (TE inflicts 3 stacks), and she does
+//!   puts a 90 Arts/s `DoT` on the target for 5 s (TE inflicts 3 stacks), and she does
 //!   not attack a target under it. Module MSC-Y (`uniequip_002_veen`) stage 2 / 3
-//!   overrides it to 100 / 120 per s and 4 stacks (TALENT_DATA_ONLY, talent index 1).
+//!   overrides it to 100 / 120 per s and 4 stacks (`TALENT_DATA_ONLY`, talent index 1).
 //! - Module MSC-Y: ATK +85 / +112 / +120 (attribute blackboard, applied by the engine)
 //!   and "ASPD +30 when there are stored attacks" (hidden TALENT part `10_root`,
 //!   `attack_speed` 30, no name, so `OperatorData` does not file it under a talent; read
@@ -34,30 +34,30 @@
 //!   note: with no valid target, each attack check stores one charge, at the attack
 //!   interval; the next real attack releases everything). Throughput is one charge per
 //!   attack interval. OFF: plain attacks on a target she can always hit
-//!   (no stored charges: no TE, no DoT, no S3 bounce, no module ASPD).
+//!   (no stored charges: no TE, no `DoT`, no S3 bounce, no module ASPD).
 //! - talent `transposedEnergy` (ON, only with `storedCharges`): charges are released as
-//!   Transposed Energy: ATK +talent `[0]`, no talent ASPD, 3 DoT stacks per release.
+//!   Transposed Energy: ATK +talent `[0]`, no talent ASPD, 3 `DoT` stacks per release.
 //!   OFF: the talent ASPD +`[1]` applies and each release is a single charge (1 stack).
-//! - talent2 `artsOfWarDot` (ON, E2 and `storedCharges`): the Arts of War DoT.
+//! - talent2 `artsOfWarDot` (ON, E2 and `storedCharges`): the Arts of War `DoT`.
 //! - skill `maxStacks` (ON, S2): 9 stacks (ATK +135%, ASPD +72) for the whole window,
 //!   the upstream `maxStacks` convention. OFF: no stacks.
 //!
 //! ASSUMPTIONS and simplifications:
 //! - A Transposed Energy is the damage of 3 stored charges (it counts 3 ammo, 3 S2
-//!   stacks, 3 DoT stacks and 3 bounces); every stored charge hits at
+//!   stacks, 3 `DoT` stacks and 3 bounces); every stored charge hits at
 //!   `base_atk_scale` (100% ATK), the same as a normal attack.
 //! - Charge storage is lossless: every stored charge is released, and the 9-charge cap
 //!   is never reached (at her fastest, S3 with the module and the talent ASPD, ASPD
-//!   325 and a 3.0 s base interval, 5.4 attacks fit in a 5 s DoT window).
-//! - The DoT is on the primary target with 100% uptime (it is reapplied by the release
+//!   325 and a 3.0 s base interval, 5.4 attacks fit in a 5 s `DoT` window).
+//! - The `DoT` is on the primary target with 100% uptime (it is reapplied by the release
 //!   that its own expiry allows). A release carries the charges stored during the
 //!   previous 5 s lockout, `duration / effective interval` (interval / ASPD, taken as
 //!   continuous), so stacks = min(cap, charges per release, that count). At S0 (3.0 s,
 //!   ASPD 100) only 1.67 charges fit; S1 to S3 store 3 or more.
 //! - NOT modelled: PRTS notes that during S3 a released charge deals no damage of its
-//!   own and only adds its bounce (https://prts.wiki/w/维伊, S3 notes); the formula
+//!   own and only adds its bounce (<https://prts.wiki/w/维伊>, S3 notes); the formula
 //!   keeps charge + bounce. The CN talent 2 text ("攻击和储存的能量") may also apply
-//!   the DoT on normal attacks; the formula follows the EN text (stored charges only).
+//!   the `DoT` on normal attacks; the formula follows the EN text (stored charges only).
 //! - S3: each stored charge bounces once for `bounce_atk_scale`; with one enemy the
 //!   bounce returns to it ("prioritizing different targets"), so the total does not
 //!   depend on the target count. The 0.4 s bounce delay is ignored.
@@ -71,7 +71,7 @@
 use super::super::super::operator_unit::{EnemyStats, OperatorUnit};
 use super::util::module_talent_value;
 
-/// Trait `merge_cnt`: stored charges per Transposed Energy, also its DoT stacks.
+/// Trait `merge_cnt`: stored charges per Transposed Energy, also its `DoT` stacks.
 const MERGE_CNT: f64 = 3.0;
 
 /// ASPD from talent 1 (when she holds no Transposed Energy) and module MSC-Y (when

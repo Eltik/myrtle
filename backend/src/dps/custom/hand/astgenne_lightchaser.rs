@@ -35,7 +35,7 @@
 //!   `buff_fragile` applies, then the engine's own `1 + buff_fragile` is divided back
 //!   out (the generated Suzuran convention).
 //! - S1 (CN text "攻击可在敌人间重复跳跃，最多跳跃3次"): with 2 or more targets an attack
-//!   lands 1 + 3 hits, each at full damage. PRTS (https://prts.wiki/w/溯光星源): jump
+//!   lands 1 + 3 hits, each at full damage. PRTS (<https://prts.wiki/w/溯光星源>): jump
 //!   radius 1.7, a jump prefers a target not yet chosen, then the nearest one, so with
 //!   2 enemies the chain goes A-B-A-B. No source names a decay and the blackboard has no
 //!   decay key. UPPER BOUND: every jump is assumed to find an enemy within 1.7 tiles.

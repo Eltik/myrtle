@@ -26,7 +26,7 @@
 //! Conditionals:
 //! - trait `vsBlocked` (ON): the target is blocked by her Reinforcements (ATK x1.5).
 //!   UPPER BOUND on S2 and S3 with more than one target: ON applies x1.5 to EVERY
-//!   target. PRTS (https://prts.wiki/w/可露希尔) says S3 attacks any enemy in her, the
+//!   target. PRTS (<https://prts.wiki/w/可露希尔>) says S3 attacks any enemy in her, the
 //!   Tactical Point's and her Reinforcements' ranges, not only blocked ones, and the
 //!   trait's x1.5 is per enemy (blocked by a summon or a marked ally); her Command
 //!   Center blocks 2.
@@ -94,6 +94,7 @@ pub fn dps(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
 
 /// Mean target count over `attacks` attacks (continuous) when attack k hits
 /// 1 + min(`max_trigger`, floor(k / `per_trigger`)) targets, capped at `enemies`.
+#[allow(clippy::while_float)] // `step` only takes whole values, so the loop bound is exact
 fn s3_average_targets(attacks: f64, enemies: f64, per_trigger: f64, max_trigger: f64) -> f64 {
     if attacks <= 0.0 || per_trigger <= 0.0 {
         return enemies.min(1.0 + max_trigger).max(1.0);

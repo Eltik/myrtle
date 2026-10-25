@@ -20,9 +20,9 @@
 //! ASSUMPTIONS and simplifications:
 //! - S1 hits `min(targets, 2)`: every target is assumed blocked by her (Block 2 from
 //!   `character_table` `BlockCnt`; the device's +1 Block goes to the operator in front).
-//!   PRTS (https://prts.wiki/w/娜斯提): device effects are an aura on the units in the
+//!   PRTS (<https://prts.wiki/w/娜斯提>): device effects are an aura on the units in the
 //!   device's range, so she could block 3 inside her own device's range; not modelled.
-//!   The device has 0 ATK (https://prts.wiki/w/质检专员).
+//!   The device has 0 ATK (<https://prts.wiki/w/质检专员>).
 //! - S2 deals no damage for its duration (0).
 //! - Devices are not modelled (they deal no damage), nor is the talent 2 SP gain,
 //!   which depends on a ranged enemy having appeared.

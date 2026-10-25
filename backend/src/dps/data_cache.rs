@@ -50,15 +50,14 @@ pub fn operator_data(game_data: &Arc<GameData>, operator_id: &str) -> Option<Arc
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
     cache.retain(|g| g.owner.strong_count() > 0);
-    let generation = match cache.iter().position(|g| g.owner.ptr_eq(&owner)) {
-        Some(i) => &mut cache[i],
-        None => {
-            cache.push(Generation {
-                owner,
-                operators: HashMap::new(),
-            });
-            cache.last_mut().expect("just pushed")
-        }
+    let generation = if let Some(i) = cache.iter().position(|g| g.owner.ptr_eq(&owner)) {
+        &mut cache[i]
+    } else {
+        cache.push(Generation {
+            owner,
+            operators: HashMap::new(),
+        });
+        cache.last_mut().expect("just pushed")
     };
     Some(Arc::clone(
         generation
@@ -85,8 +84,7 @@ pub fn game_data_identity(game_data: &Arc<GameData>) -> Arc<str> {
     let value = serde_json::to_value(&game_data.operators).unwrap_or_default();
     let bytes = serde_json::to_vec(&value).unwrap_or_default();
     let digest = Sha256::digest(&bytes);
-    let hex: String = digest[..8].iter().map(|b| format!("{b:02x}")).collect();
-    let id: Arc<str> = Arc::from(hex);
+    let id: Arc<str> = Arc::from(hex::encode(&digest[..8]));
 
     let mut ids = IDENTITIES
         .lock()

@@ -36,9 +36,9 @@
 //!   stacks are each spent on an interrupted attack and kept with chance `prob`, so a
 //!   burst yields 3 / (1 - `prob`) interrupts on average, each dealing talent 1's
 //!   `atk_scale` x ATK Elemental damage. OFF: the target never attacks (no interrupts).
-//!   Sources: PRTS https://prts.wiki/w/真言 (the talent triggers when Paralysis
+//!   Sources: PRTS <https://prts.wiki/w/真言> (the talent triggers when Paralysis
 //!   interrupts an attack, not when the stack is gained; a burst's "3 stacks" are three
-//!   1-stack gains), arknights.wiki.gg/wiki/Elemental_damage (Elemental damage ignores
+//!   1-stack gains), <https://arknights.wiki.gg/wiki/Elemental_damage> (Elemental damage ignores
 //!   DEF and RES).
 //!
 //! ASSUMPTIONS and simplifications:
