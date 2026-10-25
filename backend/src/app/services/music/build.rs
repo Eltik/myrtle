@@ -731,6 +731,10 @@ struct SandboxMusic {
 struct SandboxDetail {
     #[serde(rename = "SANDBOX_V2", default)]
     sandbox_v2: Vec<SandboxKeyed>,
+    /// `sandbox_2` "Relaunch Anchor" on CN (1 run), empty on EN until the
+    /// 2026-10-28 update. Its bank names sit in `GameConst`, not `BasicConst`.
+    #[serde(rename = "SANDBOX_V3", default)]
+    sandbox_v3: Vec<SandboxKeyed>,
 }
 
 #[derive(Deserialize, Default)]
@@ -748,6 +752,11 @@ struct SandboxRun {
     /// suffix under `battle.ON_GAME_READY.`.
     #[serde(default)]
     basic_const: HashMap<String, serde_json::Value>,
+    /// A V3 run's constants: `BuildModeBgmHome` (`sandbox_2_homebuildmode` on
+    /// CN) is its one bank name. V2 runs carry a `GameConst` too, which is not
+    /// read for them, so V2 placement does not move.
+    #[serde(default)]
+    game_const: HashMap<String, serde_json::Value>,
     /// The run's archive jukebox, as `Musics` row ids.
     #[serde(default)]
     archive_music_unlock_data: KeyedOrMap<SandboxMusic>,
@@ -1423,12 +1432,20 @@ fn place_sandbox_runs(
     rows: &MusicRows<'_>,
     detail: &SandboxDetail,
 ) {
-    for run in &detail.sandbox_v2 {
+    let v2 = detail
+        .sandbox_v2
+        .iter()
+        .map(|run| (run, &run.value.basic_const));
+    let v3 = detail
+        .sandbox_v3
+        .iter()
+        .map(|run| (run, &run.value.game_const));
+    for (run, run_consts) in v2.chain(v3) {
         let name = names.sandbox(&run.key);
         for music in run.value.archive_music_unlock_data.values() {
             origins.claim(rows.track(reg, &music.music_id).as_ref(), name.clone());
         }
-        let mut consts: Vec<_> = run.value.basic_const.iter().collect();
+        let mut consts: Vec<_> = run_consts.iter().collect();
         consts.sort_by(|a, b| a.0.cmp(b.0));
         for (field, value) in consts {
             let Some(bgm) = value.as_str().and_then(trimmed) else {

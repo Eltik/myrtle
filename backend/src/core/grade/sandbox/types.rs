@@ -1,5 +1,9 @@
 #[derive(Debug, Clone, Default)]
 pub struct SandboxGradeDetail {
+    /// The topic graded (`sandbox_1`, `sandbox_2`), `None` with no progress.
+    /// Internal: `SandboxImprovements` does not carry it yet, since adding it
+    /// there regenerates the TS bindings and the openapi snapshot.
+    pub topic_id: Option<String>,
     pub total: f64,
     pub achievements: f64,
     pub exploration: f64,

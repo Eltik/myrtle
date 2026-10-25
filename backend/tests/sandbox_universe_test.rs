@@ -48,3 +48,22 @@ fn sandbox_quest_count_reflects_archive_quests() {
         universe.max_quests
     );
 }
+
+/// Every topic `BasicInfo` lists is read under its own `TopicTemplate`. An
+/// unread template shows up as a topic with 0 achievements and 0 nodes, which
+/// is how `sandbox_2` ("Relaunch Anchor", `SANDBOX_V3`) looked before V3 had a
+/// reader. On CN (2 topics) and EN (1 topic until 2026-10-28) alike.
+#[test]
+fn every_listed_sandbox_topic_has_a_reader() {
+    let universe = load_universe();
+    assert!(!universe.topics.is_empty(), "BasicInfo lists no topic");
+    for t in &universe.topics {
+        assert!(
+            t.counts.max_achievements > 0 && t.counts.max_nodes > 0,
+            "topic {} ({}) read as empty: {:?}",
+            t.topic_id,
+            t.template.key(),
+            t.counts
+        );
+    }
+}
