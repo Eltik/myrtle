@@ -16,7 +16,7 @@ use crate::app::validation::{
     LIST_DESCRIPTION_MAX, LIST_NAME_MAX, validate_length, validate_opt_length,
 };
 use crate::core::auth::permissions::Permission;
-use crate::database::models::tier_list::{EntityKind, TierList};
+use crate::database::models::tier_list::{EntityKind, TierList, TierListType};
 use crate::database::queries::tier_lists::delete_list;
 use crate::database::queries::tier_lists::find_all_active;
 use crate::database::queries::tier_lists::find_by_user;
@@ -109,7 +109,10 @@ pub async fn list_details(
 pub struct CreateRequest {
     pub name: String,
     pub description: Option<String>,
-    pub list_type: String,
+    /// `official` (tier-list staff only) or `community` (counts toward the
+    /// 10-list cap for everyone else). Any other value is refused before the
+    /// handler runs.
+    pub list_type: TierListType,
 }
 
 /// Create a tier list. The caller becomes its owner.
@@ -144,7 +147,7 @@ pub async fn create(
         auth.role,
         &body.name,
         body.description.as_deref(),
-        &body.list_type,
+        body.list_type,
     )
     .await?;
     Ok(Json(list))

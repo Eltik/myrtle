@@ -20,6 +20,7 @@ import type { TierDetail } from "#/types/generated/TierDetail";
 import type { TierList } from "#/types/generated/TierList";
 import type { TierListDetail } from "#/types/generated/TierListDetail";
 import type { TierListFlair } from "#/types/generated/TierListFlair";
+import type { TierListType } from "#/types/generated/TierListType";
 import type { TierListVersion } from "#/types/generated/TierListVersion";
 import type { TierPlacement } from "#/types/generated/TierPlacement";
 import type { OperatorProfession } from "#/types/operators";
@@ -223,7 +224,9 @@ async function fetchTierListDetails(limit: number, server?: string): Promise<IBa
     return (await detailsRes.json()) as IBackendTierListDetail[];
 }
 
-export type TierListType = "official" | "community";
+// The backend's closed `TierListType` enum (backend/src/database/models/tier_list.rs),
+// so a variant added there reaches every `listType` here at compile time.
+export type { TierListType };
 
 export interface ITierListBrowseItem extends ITierList {
     listType: TierListType;

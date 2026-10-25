@@ -6,6 +6,7 @@
 //! `--community` is the "remove official" action. Reads `DATABASE_URL` from the env or `.env`.
 
 use anyhow::{Context, Result, bail};
+use backend::database::models::tier_list::TierListType;
 use backend::database::queries;
 use dotenv::dotenv;
 use sqlx::postgres::PgPoolOptions;
@@ -14,24 +15,21 @@ use std::{
     time::Duration,
 };
 
-const OFFICIAL: &str = "official";
-const COMMUNITY: &str = "community";
-
 struct Args {
     slug: String,
-    target: &'static str,
+    target: TierListType,
     yes: bool,
 }
 
 fn parse_args() -> Result<Args> {
     let mut slug: Option<String> = None;
-    let mut target: Option<&'static str> = None;
+    let mut target: Option<TierListType> = None;
     let mut yes = false;
 
     for arg in std::env::args().skip(1) {
         match arg.as_str() {
-            "--official" => target = Some(OFFICIAL),
-            "--community" | "--unofficial" | "--remove" => target = Some(COMMUNITY),
+            "--official" => target = Some(TierListType::Official),
+            "--community" | "--unofficial" | "--remove" => target = Some(TierListType::Community),
             "-y" | "--yes" => yes = true,
             "-h" | "--help" => {
                 print_usage();
@@ -98,10 +96,13 @@ async fn main() -> Result<()> {
 
     println!("Tier list: {} ({})", list.name, list.slug);
     println!("  current list_type: {}", list.list_type);
-    println!("  target  list_type: {}", args.target);
+    println!("  target  list_type: {}", args.target.as_str());
 
-    if list.list_type == args.target {
-        println!("\nAlready set to '{}'. Nothing to do.", args.target);
+    if list.list_type == args.target.as_str() {
+        println!(
+            "\nAlready set to '{}'. Nothing to do.",
+            args.target.as_str()
+        );
         return Ok(());
     }
 
@@ -121,10 +122,9 @@ async fn main() -> Result<()> {
         .context("update list_type")?
         .context("tier list disappeared mid-update")?;
 
-    let verb = if args.target == OFFICIAL {
-        "now official"
-    } else {
-        "no longer official"
+    let verb = match args.target {
+        TierListType::Official => "now official",
+        TierListType::Community => "no longer official",
     };
     println!(
         "\nDone. '{}' is {} (list_type = {}).",

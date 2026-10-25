@@ -19671,7 +19671,8 @@
             ]
           },
           "list_type": {
-            "type": "string"
+            "$ref": "#/components/schemas/TierListType",
+            "description": "`official` (tier-list staff only) or `community` (counts toward the\n10-list cap for everyone else). Any other value is refused before the\nhandler runs."
           },
           "name": {
             "type": "string"
@@ -33076,6 +33077,14 @@
             "format": "int32"
           }
         }
+      },
+      "TierListType": {
+        "type": "string",
+        "description": "Whether a tier list is the site's own (`official`) or a player's\n(`community`).",
+        "enum": [
+          "official",
+          "community"
+        ]
       },
       "TierListVersion": {
         "type": "object",

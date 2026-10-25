@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use crate::database::models::tier_list::{
     EntityRef, GrantedTierList, Tier, TierList, TierListFlair, TierListGrant, TierListPermission,
-    TierListStats, TierListVersion, TierPlacement, TierPlacementRow,
+    TierListStats, TierListType, TierListVersion, TierPlacement, TierPlacementRow,
 };
 
 pub async fn find_by_slug(pool: &PgPool, slug: &str) -> Result<Option<TierList>, sqlx::Error> {
@@ -15,9 +15,9 @@ pub async fn find_by_slug(pool: &PgPool, slug: &str) -> Result<Option<TierList>,
 
 pub async fn find_all_active(
     pool: &PgPool,
-    list_type: Option<&str>,
+    list_type: Option<TierListType>,
 ) -> Result<Vec<TierList>, sqlx::Error> {
-    if let Some(lt) = list_type {
+    if let Some(lt) = list_type.map(TierListType::as_str) {
         sqlx::query_as::<_, TierList>(
             "SELECT * FROM tier_lists WHERE is_active = true AND is_listed = true AND list_type = $1 ORDER BY updated_at DESC"
         )
@@ -58,18 +58,18 @@ pub async fn set_visibility(
     Ok(())
 }
 
-/// Set a tier list's `list_type` (`"official"` or `"community"`). Returns the
-/// updated row, or `None` if no list has that id.
+/// Set a tier list's `list_type`. Returns the updated row, or `None` if no
+/// list has that id.
 pub async fn set_list_type(
     pool: &PgPool,
     tier_list_id: Uuid,
-    list_type: &str,
+    list_type: TierListType,
 ) -> Result<Option<TierList>, sqlx::Error> {
     sqlx::query_as::<_, TierList>(
         "UPDATE tier_lists SET list_type = $2, updated_at = NOW() WHERE id = $1 RETURNING *",
     )
     .bind(tier_list_id)
-    .bind(list_type)
+    .bind(list_type.as_str())
     .fetch_optional(pool)
     .await
 }
@@ -79,7 +79,7 @@ pub async fn create(
     name: &str,
     slug: &str,
     description: Option<&str>,
-    list_type: &str,
+    list_type: TierListType,
     created_by: Uuid,
 ) -> Result<TierList, sqlx::Error> {
     sqlx::query_as::<_, TierList>(
@@ -88,7 +88,7 @@ pub async fn create(
     .bind(name)
     .bind(slug)
     .bind(description)
-    .bind(list_type)
+    .bind(list_type.as_str())
     .bind(created_by)
     .fetch_one(pool)
     .await

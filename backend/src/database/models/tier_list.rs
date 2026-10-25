@@ -5,6 +5,41 @@ use sqlx::types::{
 };
 use ts_rs::TS;
 
+// The variants are the allow-list for every write of `tier_lists.list_type`:
+// an unknown value fails to parse at the route and never reaches the database.
+// Before this type the column took any string, and since the per-user cap
+// matched only "community" and the staff gate only "official", a third value
+// ("x", "Community") skipped both.
+//
+// Rows still READ `list_type` as a `String` (`TierList::list_type`): the column
+// has no CHECK, and a row written before this type may hold another value,
+// which must not fail the whole list.
+/// Whether a tier list is the site's own (`official`) or a player's
+/// (`community`).
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum TierListType {
+    /// Curated by tier-list staff and presented as the site's own. Only staff
+    /// may create one, and staff are exempt from the per-user cap.
+    Official,
+    /// A player's own list, counted toward their cap.
+    Community,
+}
+
+impl TierListType {
+    pub const ALL: &'static [Self] = &[Self::Official, Self::Community];
+
+    /// The stored spelling, the same string serde reads and writes.
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Official => "official",
+            Self::Community => "community",
+        }
+    }
+}
+
 /// What a tier list placement ranks. The id space of each kind is its own, so a
 /// placement is keyed by (kind, id), and the variants are the allow-list: an
 /// unknown kind fails to parse at the route and never reaches the database.
@@ -346,6 +381,22 @@ pub struct GrantedTierList {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn tier_list_type_parses_only_its_two_spellings() {
+        for t in TierListType::ALL {
+            let json = format!("\"{}\"", t.as_str());
+            assert_eq!(serde_json::from_str::<TierListType>(&json).unwrap(), *t);
+            assert_eq!(serde_json::to_string(t).unwrap(), json);
+        }
+        // The values that used to skip both the cap and the staff gate.
+        for bad in ["\"x\"", "\"Community\"", "\"OFFICIAL\"", "\"\"", "null"] {
+            assert!(
+                serde_json::from_str::<TierListType>(bad).is_err(),
+                "{bad} parsed"
+            );
+        }
+    }
 
     fn row(kind: &str) -> TierPlacementRow {
         TierPlacementRow {

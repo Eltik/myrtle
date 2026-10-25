@@ -7,7 +7,7 @@ use crate::core::gamedata::assets::AssetIndex;
 use crate::core::gamedata::types::GameData;
 use crate::core::hypergryph::constants::Server;
 use crate::database::models::tier_list::{
-    EntityKind, Tier, TierList, TierListFlair, TierListStats, TierPlacement,
+    EntityKind, Tier, TierList, TierListFlair, TierListStats, TierListType, TierPlacement,
 };
 use crate::database::queries::tier_lists as queries;
 use crate::database::queries::tier_lists::count_by_user;
@@ -443,19 +443,22 @@ pub async fn create(
     role: GlobalRole,
     name: &str,
     description: Option<&str>,
-    list_type: &str,
+    list_type: TierListType,
 ) -> Result<TierList, ApiError> {
-    if list_type == "community" && !role.is_any_admin_role() {
-        let count = count_by_user(&state.db, user_id).await?;
-        if count >= MAX_LISTS_PER_USER {
-            return Err(ApiError::Conflict(format!(
-                "maximum {MAX_LISTS_PER_USER} tier lists per user"
-            )));
+    // Exhaustive on purpose: a new list type cannot compile until it says
+    // whether it is staff-only and whether it counts toward the cap.
+    if !role.is_any_admin_role() {
+        match list_type {
+            TierListType::Official => return Err(ApiError::Forbidden),
+            TierListType::Community => {
+                let count = count_by_user(&state.db, user_id).await?;
+                if count >= MAX_LISTS_PER_USER {
+                    return Err(ApiError::Conflict(format!(
+                        "maximum {MAX_LISTS_PER_USER} tier lists per user"
+                    )));
+                }
+            }
         }
-    }
-
-    if list_type == "official" && !role.is_any_admin_role() {
-        return Err(ApiError::Forbidden);
     }
 
     let slug = generate_slug(name);
