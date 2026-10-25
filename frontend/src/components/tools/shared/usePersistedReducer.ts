@@ -26,10 +26,18 @@ const NO_EXTERNAL: ExternalHydration<never> = { status: "none" };
  * action used to restore saved state on mount. Hydration runs in an effect to
  * avoid SSR mismatches; until then the initial state renders. An `external`
  * source, when present, is used instead of the stored value.
+ *
+ * An external state is shown, not saved: storage keeps the visitor's own setup
+ * until the state first differs from what the link loaded (any edit), and from
+ * then on every change is saved as before. Opening a friend's link used to
+ * replace the saved setup on the first render, with no action from the visitor.
  */
 export function usePersistedReducer<S, A extends { type: string }>(storageKey: string, reducer: (state: S, action: A) => S, initialState: S, merge: (raw: unknown) => S | null, hydrateAction: (state: S) => A, external: ExternalHydration<S> = NO_EXTERNAL): IPersistedReducerHandle<S, A> {
     const [state, dispatch] = useReducer(reducer, initialState);
     const hydratedRef = useRef(false);
+    // The external state as serialized, while the shown state still equals it;
+    // null once the visitor has changed something, or when storage hydrated.
+    const unsavedExternalRef = useRef<string | null>(null);
     const [hydrationToken, setHydrationToken] = useState(0);
 
     // Hydrate once, as soon as the external source (if any) has settled;
@@ -38,8 +46,10 @@ export function usePersistedReducer<S, A extends { type: string }>(storageKey: s
     useEffect(() => {
         if (typeof window === "undefined" || hydratedRef.current || external.status === "pending") return;
         const fromExternal = external.status === "ready" ? external.state : null;
-        if (fromExternal) dispatch(hydrateAction(fromExternal));
-        else {
+        if (fromExternal) {
+            unsavedExternalRef.current = JSON.stringify(fromExternal);
+            dispatch(hydrateAction(fromExternal));
+        } else {
             const raw = window.localStorage.getItem(storageKey);
             if (raw != null) {
                 try {
@@ -55,13 +65,23 @@ export function usePersistedReducer<S, A extends { type: string }>(storageKey: s
     }, [external]);
 
     useEffect(() => {
-        if (typeof window === "undefined" || !hydratedRef.current) return;
+        // The token, not `hydratedRef`: on the commit that hydrates, this effect
+        // still sees the initial state, and writing it would replace the saved
+        // setup before the hydrated state renders.
+        if (typeof window === "undefined" || hydrationToken === 0) return;
+        const serialized = JSON.stringify(state);
+        // Compared by content, not identity: a refreshed operator list swaps
+        // in equal objects without the visitor doing anything.
+        if (unsavedExternalRef.current !== null) {
+            if (serialized === unsavedExternalRef.current) return;
+            unsavedExternalRef.current = null;
+        }
         try {
-            window.localStorage.setItem(storageKey, JSON.stringify(state));
+            window.localStorage.setItem(storageKey, serialized);
         } catch {
             // Quota or a blocked store: the state just isn't saved this time.
         }
-    }, [storageKey, state]);
+    }, [storageKey, state, hydrationToken]);
 
     return { state, dispatch, hydrationToken };
 }
