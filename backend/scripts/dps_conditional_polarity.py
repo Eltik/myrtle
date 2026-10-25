@@ -61,12 +61,54 @@ LABEL = re.compile(r"""self\.name\s*\+=\s*[f"]?\s*"?\s*(\w+)""")
 # Settled by reading the Python, for conditionals the line scan cannot decide.
 # Key: "<operator id>|<type>|<name>" -> inverted (DPS table entries). Each entry carries why.
 HAND: dict[str, bool] = {
+    # Bellone (`custom/hand/bellone.rs`): talent_damage true takes talent 1's max
+    # damage bonus (target below 20% HP); module_damage true adds the FGT-Y trait ASPD
+    # while she is above 50% HP. Both labels describe the flag ON.
+    "char_4037_demetr|talent|vsLowHp": False,
+    "char_4037_demetr|module|above50Hp": False,
+    # Zima the Raging Tide (`custom/hand/zima_alter.rs`): skill_damage true is S2's
+    # second activation onward; module_damage true the HAM-X x1.15 (Odda's `3inRange`).
+    # Both labels describe the flag ON.
+    "char_1051_headb2|skill|2ndActivation": False,
+    "char_1051_headb2|module|3inRange": False,
+    # Ch'en the Dawnstreak (`custom/hand/chen_dawnstreak.rs`): module_damage true adds
+    # the AFT-X trait ASPD when not blocking. ON label.
+    "char_1050_chen3|module|NotBlocking": False,
+    # Wang (`custom/hand/wang.rs`): talent2_damage true puts every stone in a chain at
+    # max talent 2 stacks (Dorothy's `maxTalent2`). ON label.
+    "char_2027_wang|talent2|maxTalent2": False,
+    # Viy (`custom/hand/viy.rs`): trait_damage true fires every attack as a stored
+    # charge, talent_damage true releases them as Transposed Energy, talent2_damage true
+    # adds the Arts of War DoT, skill_damage true takes 9 S2 stacks. All describe ON.
+    "char_4226_veen|trait|storedCharges": False,
+    "char_4226_veen|talent|transposedEnergy": False,
+    "char_4226_veen|talent2|artsOfWarDot": False,
+    "char_4226_veen|skill|maxStacks": False,
+    # Mantra (`custom/hand/mantra.rs`): skill_damage true averages the Nervous
+    # Impairment cycle (ON label); trait_damage true is the 1000 gauge, so `vsBoss`
+    # labels the flag OFF (as Tragodia's `vsBoss`).
+    "char_4204_mantra|skill|avgNerv": False,
+    "char_4204_mantra|trait|vsBoss": True,
+    # Mantra: talent_damage true adds talent 1's Elemental damage per Paralysis
+    # interrupt from her own bursts' stacks (the target attacks). ON label.
+    "char_4204_mantra|talent|targetAttacks": False,
+    # SilverAsh the Reignfrost (`custom/hand/silverash_alter.rs`): skill_damage true
+    # applies his own S3 Fragile. ON label.
+    "char_1045_svash2|skill|withFragile": False,
+    # Closure (`custom/hand/closure.rs`): trait_damage true is the x1.5 against enemies
+    # her Reinforcements block. ON label.
+    "char_4228_closur|trait|vsBlocked": False,
     # Angelina the Mellow Wish is in the hand layer (`custom/hand/
     # angelina_alter.rs`, no Python class): talent_damage true takes the mass <= 3 scale,
     # the Weightless target; talent2_damage true adds the Liftoff ATK buff.
     # Both labels describe the flag ON.
     "char_1015_aglna2|talent|weightlessTarget": False,
     "char_1015_aglna2|talent2|liftoffSelfBuff": False,
+    # Astgenne the Lightchaser (`custom/hand/astgenne_lightchaser.rs`): talent_damage
+    # true takes talent 1 at full Slow stacks, talent2_damage true the 7 s Fragile.
+    # Both labels describe the flag ON.
+    "char_1047_halo2|talent|maxSlowStacks": False,
+    "char_1047_halo2|talent2|fragileAfter7s": False,
 }
 # Left unresolved on purpose: Diamante (`char_499_kaitou`) talent
 # `avgNecrosis` labels BOTH states, " avgNecrosis(vsBoss)" under

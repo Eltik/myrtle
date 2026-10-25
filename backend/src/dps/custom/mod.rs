@@ -28,13 +28,15 @@ pub fn dispatch(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     }
 }
 
-/// The skill duration the operator's Python `__init__` sets (Kafka S2, Skadi S2, ...),
-/// generated per class by `generate-dps`. `None` when the class sets none, or when
-/// the hand layer owns the operator (a hand formula reads the game-data duration).
+/// The skill duration the formula, total damage, average and cycle v2 share, when it
+/// is not the game data's. For an operator the hand layer owns, the hand layer's
+/// `skill_duration` (`hand::SKILL_DURATION`, consulted INSTEAD of the generated table;
+/// `None` keeps the game-data duration). Otherwise the one the operator's Python
+/// `__init__` sets (Kafka S2, Skadi S2, ...), generated per class by `generate-dps`.
 pub fn skill_duration_override(unit: &OperatorUnit) -> Option<f64> {
     let op_id = unit.data.data.id.as_deref().unwrap_or("");
     if hand::dps(op_id).is_some() {
-        return None;
+        return hand::skill_duration(op_id).and_then(|duration| duration(unit));
     }
     dispatch::dispatch_skill_duration(unit)
 }
@@ -43,7 +45,7 @@ pub fn skill_duration_override(unit: &OperatorUnit) -> Option<f64> {
 pub fn skill_duration_override_hps(unit: &OperatorUnit) -> Option<f64> {
     let op_id = unit.data.data.id.as_deref().unwrap_or("");
     if hand::hps(op_id).is_some() {
-        return None;
+        return hand::skill_duration(op_id).and_then(|duration| duration(unit));
     }
     dispatch_hps::dispatch_skill_duration(unit)
 }

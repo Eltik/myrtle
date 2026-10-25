@@ -483,7 +483,42 @@ fn supporters_resolve_from_game_data() {
 fn conditional_polarity_table() {
     let (on, inverted, unresolved) = engine::polarity_counts();
     println!("polarity: on {on}, inverted {inverted}, unresolved {unresolved}");
-    assert_eq!(on + inverted + unresolved, 391);
+    // The table has one entry per conditional of the merged DPS and HPS tables (hand
+    // layer included), and nothing else: `(table, operator, "type|name")` sets agree.
+    let mut from_tables = std::collections::BTreeSet::new();
+    for (table, formulas) in [
+        ("dps", engine::supported_operators()),
+        ("hps", engine::supported_healers()),
+    ] {
+        for (id, f) in formulas {
+            for c in &f.conditionals {
+                from_tables.insert((
+                    table.to_string(),
+                    id.clone(),
+                    format!("{}|{}", c.cond_type, c.name),
+                ));
+            }
+        }
+    }
+    let polarity: std::collections::HashMap<
+        String,
+        std::collections::HashMap<String, std::collections::HashMap<String, Option<bool>>>,
+    > = serde_json::from_str(include_str!("../src/dps/config/conditional_polarity.json"))
+        .expect("conditional_polarity.json parses");
+    let from_polarity: std::collections::BTreeSet<(String, String, String)> = polarity
+        .iter()
+        .flat_map(|(table, ops)| {
+            ops.iter().flat_map(move |(id, keys)| {
+                keys.keys()
+                    .map(move |k| (table.clone(), id.clone(), k.clone()))
+            })
+        })
+        .collect();
+    assert_eq!(
+        from_polarity, from_tables,
+        "conditional_polarity.json is stale: rerun scripts/dps_conditional_polarity.py"
+    );
+    assert_eq!(on + inverted + unresolved, from_tables.len());
     assert!(engine::conditional_inverted(
         "dps",
         "char_293_thorns",

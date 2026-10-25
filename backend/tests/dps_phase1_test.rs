@@ -676,8 +676,9 @@ fn cycle_v2_per_sp_type() {
     }
 }
 
-/// How many of the 261 functions (260 generated + 1 hand) have a real skill-0 path, by the probe the
-/// v2 cycle uses (`engine::skill_zero_dps`), over every skill that cycles.
+/// How many of the DPS functions (generated and hand, every id in
+/// `engine::supported_operators`) have a real skill-0 path, by the probe the v2 cycle
+/// uses (`engine::skill_zero_dps`), over every skill that cycles.
 #[test]
 fn census_skill_zero_support() {
     let mut all_formula = 0;
@@ -723,10 +724,14 @@ fn census_skill_zero_support() {
          {none} normal_attack on every cycling skill, {never} with no cycling skill"
     );
     println!("normal_attack fallback: {fallback_ids:?}");
-    assert_eq!(all_formula + mixed + none + never, 261);
+    // Every operator in the table falls in exactly one bucket.
+    assert_eq!(
+        all_formula + mixed + none + never,
+        engine::supported_operators().len()
+    );
 
     // The same probe on every available skill, cycling or not, called
-    // directly: the census of the 261 functions themselves.
+    // directly: the census of the functions themselves.
     let ela = unit("char_4123_ela", 3);
     let (mut every, mut some, mut no) = (0, 0, 0);
     let mut no_ids = Vec::new();
@@ -777,7 +782,7 @@ fn census_skill_zero_support() {
         "skill-0 probe on every skill: {every} pass on all skills, {some} on some, {no} on none"
     );
     println!("skill-0 probe fails everywhere: {no_ids:?}");
-    assert_eq!(every + some + no, 261);
+    assert_eq!(every + some + no, engine::supported_operators().len());
 }
 
 #[test]

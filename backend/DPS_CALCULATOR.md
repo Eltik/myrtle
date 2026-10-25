@@ -39,7 +39,9 @@ generator transpiles each class's `__init__` state into its function (see below)
   S2, Viviana S3, ...), the generator also emits `<fn>_skill_duration` and a
   `dispatch_skill_duration` arm. The engine applies it to `unit.skill_duration` before
   the formula runs, so the formula, `total_damage`, `average_dps` and cycle v2 share one
-  duration. Hand-layer operators use the game-data duration.
+  duration. A hand-layer operator uses the game-data duration unless its file exports
+  a `skill_duration` registered in `hand::SKILL_DURATION` (see "Add an operator by
+  hand"); the engine applies that one through the same path.
 - Loops and helpers: `for x in range(n)` / `range(a, b)` (nested), `math.comb` (exact,
   emitted as `py_comb` when used), `sum(list)`.
 
@@ -104,7 +106,7 @@ them on the shared keys when the fixture grew.
 ```bash
 cargo test -j 3 --test dps_engine_test -- --nocapture   # Python parity, 15% bar
 cargo test -j 3 --test hps_engine_test -- --nocapture
-cargo test -j 3 --test dps_hand_test -- --ignored        # hand-layer snapshots (CN data)
+cargo test -j 3 --test dps_hand_test -- --include-ignored  # hand-layer snapshots (EN + CN data)
 ```
 
 ## Add an operator by hand
@@ -112,31 +114,120 @@ cargo test -j 3 --test dps_hand_test -- --ignored        # hand-layer snapshots 
 Use this when upstream has no class for the operator yet, or its transpiled formula is
 wrong and the fix cannot go into the transpiler.
 
-1. Create `src/dps/custom/hand/<operator>.rs` with `pub fn dps(unit: &OperatorUnit, enemy:
-   &EnemyStats) -> Option<f64>` (and / or `pub fn hps(...) -> Option<HpsResult>`). Read
-   the same `OperatorUnit` fields a generated function reads: `atk`, `buff_atk`,
-   `buff_atk_flat`, `attack_speed`, `attack_interval`, `targets`, `skill_index`,
-   `skill_parameters` (raw blackboard order), `talent1_parameters`, the `*_damage`
-   conditionals. Apply external buffs the way generated functions do
-   (`atk * (1 + skill_buff + unit.buff_atk) + unit.buff_atk_flat`); the engine applies
-   fragile, zones, secondary targets and the cycle model around the call. Document the
-   blackboard indices you read at the top of the file.
-2. Register it in `hand/mod.rs`: `mod <operator>;` and a row in `DPS` / `HPS`.
-3. Add its metadata to `hand/formulas.json` (`dps` / `hps` section, same shape as an
+### The formula file
+
+Create `src/dps/custom/hand/<operator>.rs` with `pub fn dps(unit: &OperatorUnit, enemy:
+&EnemyStats) -> Option<f64>` (and / or `pub fn hps(...) -> Option<HpsResult>`). Read the
+same `OperatorUnit` fields a generated function reads: `atk`, `buff_atk`, `buff_atk_flat`,
+`attack_speed`, `attack_interval`, `targets`, `skill_index`, `skill_parameters` (raw
+blackboard order), `talent1_parameters`, `talent2_parameters`, the `*_damage`
+conditionals. Apply external buffs the way generated functions do (`atk * (1 +
+skill_buff + unit.buff_atk) + unit.buff_atk_flat`); the engine applies fragile, zones,
+secondary targets and the cycle model around the call. The file's header comment names
+the game-data key behind every blackboard index and constant it reads, and lists the
+modelling assumptions.
+
+Read numbers from game data, not from the description text. Two shared helpers in
+`hand/util.rs` cover the module blackboards `OperatorUnit` does not unpack:
+
+- `module_trait_value(unit, key)`: a key from the equipped module's trait override
+  (`OverrideTraitDataBundle`) at its current level (Bellone's and Ch'en's trait ASPD,
+  Zima's `atk_scale_e`, Mantra's `damage_scale`).
+- `module_talent_value(unit, prefab_key, key)`: a key from one of the module's talent
+  parts (`AddOrOverrideTalentDataBundle`), picked by `PrefabKey` at the unit's
+  potential. `OperatorData` files talent parts under talent 1 or 2 by index or name, so
+  an unnamed hidden part (`TalentIndex` -1, no `Name`) never reaches
+  `talent1_parameters`; this reads it from the unit's module data (Viy's `10_root`
+  ASPD). A named hidden part that `OperatorData` does file is in
+  `unit.data.talent1_module_extra` / `talent2_module_extra` (Astgenne's).
+
+A helper two hand files need goes into `util.rs`, not into a second private copy, and
+must not change a result bit for the files that move onto it.
+
+### The skill duration
+
+The engine reads `unit.skill_duration` (game data, seconds; -1 for an unlimited or an
+ammo skill) for `total_damage`, the cycle averages and the formula itself. When the
+real duration is not the game data's, export it:
+
+```rust
+/// `None` keeps the game-data duration.
+pub fn skill_duration(unit: &OperatorUnit) -> Option<f64>
+```
+
+and add a row to `hand::SKILL_DURATION`. For an operator the hand layer owns (DPS
+engine: in `DPS`; HPS engine: in `HPS`) the engine calls it INSTEAD of the generated
+`dispatch_skill_duration`, after the zones and before the formula, so the formula,
+`total_damage`, `average_dps` and cycle v2 share the value (and an HPS formula reads
+the same `unit.skill_duration`). One function serves both engines. Current users:
+
+- Zima the Raging Tide S2 from the second activation: unlimited
+  (`util::UNLIMITED_DURATION`, -1; the engine then reports `total_damage` and
+  `average_dps` equal to `skill_dps`).
+- Viy S3 with stored charges: 27 ammo, one charge per attack interval.
+- Kal'tsit Esperanta S2: 10 ammo, one per attack.
+- Wang S3: 20 ammo, 3 per manual stone placement, one placement per stone redeploy
+  time (2 s at E2).
+
+A skill whose formula returns the skill's TOTAL damage ("totalDMG", Degenbrecher's
+convention: Zima S3, an instant skill) has no duration and needs no entry.
+
+### Registry and metadata
+
+1. Register it in `hand/mod.rs`: `mod <operator>;` (rustfmt keeps the list sorted) and a
+   row in `DPS` / `HPS` (and `SKILL_DURATION`).
+2. Add its metadata to `hand/formulas.json` (`dps` / `hps` section, same shape as an
    `operator_formulas.json` entry: `available_skills`, `available_modules`,
    `default_skill`, `conditionals`, `skills`). `engine::tests::hand_registry_matches_hand_metadata`
-   fails if the registry and the metadata disagree.
-4. If it has conditionals, give each a polarity in `HAND` in
-   `scripts/dps_conditional_polarity.py` and rerun the script.
-5. Test it. There is no Python reference, so the parity suite cannot see it. Add a
-   snapshot test to `tests/dps_hand_test.rs`: pin the engine's exact output for a few
-   cases (`assert_eq!` on the full `f64`), AND derive the same cases by hand from the
-   game's own text (skill and talent descriptions, base stats) and assert they agree to
-   1e-6 relative. Write the derivation and the text it came from in the test comment, with
-   the date checked, so a reviewer can redo it. The Angelina the Mellow Wish test is the
-   template.
-6. Run `cargo test -j 3 --test dps_formula_audit_test -- --ignored --nocapture`: the
-   operator should leave the missing list.
+   fails if the registry and the metadata disagree, or a `SKILL_DURATION` row names an
+   operator the hand layer does not own. `engine::tests::bundled_formula_tables_parse`
+   fails if a hand id also has a generated formula, until the overlap is reviewed (delete
+   the hand file, or list the id in `REVIEWED_HAND_OVERRIDES`). No test pins the table
+   sizes: they follow from the generated tables and the hand registry.
+3. Conditionals: a hand operator has no Python `__init__` to derive a polarity from.
+   Give each DPS conditional an entry in `HAND` in `scripts/dps_conditional_polarity.py`,
+   `"<id>|<type>|<name>": <inverted>` (`False`: the label describes the flag ON; `True`:
+   it describes the flag OFF, as Mantra's `vsBoss`), with a comment saying what the flag
+   does in the hand file. `HAND` is read for the `dps` section only; an HPS conditional
+   stays unresolved. Rerun `python3 scripts/dps_conditional_polarity.py`, then `--check`.
+   `dps_phase2_test::conditional_polarity_table` fails while
+   `config/conditional_polarity.json` and the merged tables disagree.
+
+### Tests
+
+There is no Python reference, so the parity suite cannot see a hand operator.
+`tests/dps_hand_test.rs` holds its snapshot:
+
+- Layout: the shared helpers sit at the top (`en()` loads EN game data, `params(skill,
+  module, targets)`, `with(conditionals, params)`, `dps(...)` returning `(skill_dps,
+  total_damage, average_dps)`, `hps(...)` returning `(skill_hps, base_hps, avg_hps)`,
+  `assert_hand_check`). Each batch of operators gets one `mod` named after the id
+  suffixes (`mod demetr_headb2_chen3_wang`), importing what it uses from `super`, with
+  one `#[ignore = "needs EN game data"]` test `<operator>_snapshot`. Add a helper to the
+  top, not to a module.
+- Pin the engine's exact output for a few cases (`assert_eq!` on the full `f64` triple),
+  AND derive the same cases by hand from the game's own text (skill and talent
+  descriptions, base stats) and assert they agree to 1e-6 relative with
+  `assert_hand_check`. Write the derivation and the text it came from in the test's doc
+  comment, with the date checked, so a reviewer can redo it. Cover the duration too when
+  the file exports one (`total_damage` = skill DPS x the derived duration).
+
+### Checklist
+
+- [ ] `hand/<operator>.rs`: `dps` / `hps`, header comment with every game-data key read
+      and every assumption; module blackboards through `util.rs`.
+- [ ] `skill_duration` + `SKILL_DURATION` row, if the real duration is not the game
+      data's.
+- [ ] `hand/mod.rs` rows, `hand/formulas.json` entry.
+- [ ] Polarity: `HAND` entries, then `python3 scripts/dps_conditional_polarity.py &&
+      python3 scripts/dps_conditional_polarity.py --check`.
+- [ ] Snapshot test in `tests/dps_hand_test.rs`; `cargo test -j 3 --test dps_hand_test
+      -- --include-ignored`.
+- [ ] `cargo test -j 3 --lib dps::engine::tests`, `cargo test -j 3 --test
+      dps_phase1_test`, `--test dps_phase2_test`.
+- [ ] `cargo test -j 3 --test dps_formula_audit_test -- --ignored --nocapture`: the
+      operator leaves the missing list.
+- [ ] `cargo clippy -j 3 --all-targets` and `cargo fmt --check`.
 
 ## Missing-formula audit
 

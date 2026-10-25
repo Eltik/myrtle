@@ -100,9 +100,23 @@
    "skill|lastStand": false,
    "talent|maxTenacity": false
   },
+  "char_1045_svash2": {
+   "skill|withFragile": false
+  },
   "char_1046_sbell2": {
    "module|manyTargets": false,
    "skill|iceOnly": true
+  },
+  "char_1047_halo2": {
+   "talent2|fragileAfter7s": false,
+   "talent|maxSlowStacks": false
+  },
+  "char_1050_chen3": {
+   "module|NotBlocking": false
+  },
+  "char_1051_headb2": {
+   "module|3inRange": false,
+   "skill|2ndActivation": false
   },
   "char_106_franka": {
    "module|vsBlocked": false
@@ -232,6 +246,9 @@
   },
   "char_2026_yu": {
    "trait|vsBoss": true
+  },
+  "char_2027_wang": {
+   "talent2|maxTalent2": false
   },
   "char_204_platnm": {
    "module|aerial": false
@@ -433,6 +450,10 @@
    "skill|maxRange": false,
    "talent2|vsLowHp": false,
    "talent|vsAerial": false
+  },
+  "char_4037_demetr": {
+   "module|above50Hp": false,
+   "talent|vsLowHp": false
   },
   "char_4039_horn": {
    "module|blockedTarget": false,
@@ -645,6 +666,11 @@
    "skill|avgNerv": false,
    "trait|vsFallout": false
   },
+  "char_4204_mantra": {
+   "skill|avgNerv": false,
+   "talent|targetAttacks": false,
+   "trait|vsBoss": true
+  },
   "char_4208_wintim": {
    "talent|gotHit": true
   },
@@ -654,6 +680,15 @@
   "char_421_crow": {
    "skill|lowHpTarget": false,
    "talent|maxStacks": false
+  },
+  "char_4226_veen": {
+   "skill|maxStacks": false,
+   "talent2|artsOfWarDot": false,
+   "talent|transposedEnergy": false,
+   "trait|storedCharges": false
+  },
+  "char_4228_closur": {
+   "trait|vsBlocked": false
   },
   "char_422_aurora": {
    "skill|1": false

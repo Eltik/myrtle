@@ -806,8 +806,9 @@ pub fn calculate_dps_detailed(
         None => EnemyResolution::Legacy(unit.shreds.clone()),
         Some(z) => apply_zones(&mut unit, z),
     };
-    // One duration source: when the operator's `__init__` sets the skill duration,
-    // the formula, total damage, average and cycle v2 all use it. After the zones,
+    // One duration source: when the operator's `__init__` sets the skill duration (or,
+    // for a hand operator, its `hand::SKILL_DURATION` function returns one), the
+    // formula, total damage, average and cycle v2 all use it. After the zones,
     // because the reference computes it from the buffed unit (JessicaAlter S3 reads
     // attack speed).
     if let Some(duration) = super::custom::skill_duration_override(&unit) {
@@ -943,12 +944,93 @@ mod tests {
         gaps
     }
 
+    /// Hand ids that are ALSO in a generated table: the hand formula shadows the
+    /// transpiled one (`generate-dps` prints `HAND OVERRIDE` for each). An id lands here
+    /// only after a review decided to keep the hand formula over upstream's.
+    const REVIEWED_HAND_OVERRIDES: &[&str] = &[];
+
+    /// Operator ids of the arms of the generated `pub fn dispatch(` in a dispatch file.
+    fn dispatch_arm_ids(source: &str) -> Vec<String> {
+        let body = source
+            .split("pub fn dispatch(")
+            .nth(1)
+            .and_then(|rest| rest.split("\n}\n").next())
+            .expect("no `pub fn dispatch(` in the generated dispatch file");
+        let mut ids: Vec<String> = body
+            .lines()
+            .filter_map(|line| line.trim().strip_prefix('"')?.split_once("\" =>"))
+            .map(|(id, _)| id.to_string())
+            .collect();
+        ids.sort();
+        ids
+    }
+
+    /// The merged tables are the generated tables plus the hand layer, with every
+    /// overlap reviewed; the generated tables list exactly the operators the generated
+    /// dispatch has a function for. No count is pinned: adding a hand operator or
+    /// regenerating changes the sizes, not this test.
     #[test]
     fn bundled_formula_tables_parse() {
-        assert_eq!(load_formulas().len(), 261);
-        assert_eq!(load_heal_formulas().len(), 61);
-        assert_eq!(supported_operators().len(), 261);
-        assert_eq!(supported_healers().len(), 61);
+        let hand = load_hand_formulas();
+        let check = |name: &str,
+                     generated_json: &str,
+                     dispatch_source: &str,
+                     hand_table: &HashMap<String, OperatorFormula>,
+                     merged: &HashMap<String, OperatorFormula>| {
+            let generated: HashMap<String, OperatorFormula> =
+                serde_json::from_str(generated_json).expect("generated table parses");
+            let mut generated_ids: Vec<String> = generated.keys().cloned().collect();
+            generated_ids.sort();
+            assert_eq!(
+                generated_ids,
+                dispatch_arm_ids(dispatch_source),
+                "{name}: generated table vs generated dispatch arms"
+            );
+            let mut overlap: Vec<&str> = hand_table
+                .keys()
+                .filter(|id| generated.contains_key(*id))
+                .map(String::as_str)
+                .collect();
+            overlap.sort_unstable();
+            let reviewed: Vec<&str> = REVIEWED_HAND_OVERRIDES
+                .iter()
+                .copied()
+                .filter(|id| hand_table.contains_key(*id))
+                .collect();
+            assert_eq!(
+                overlap, reviewed,
+                "{name}: hand ids that shadow a generated formula; delete the hand file \
+                 or list the id in REVIEWED_HAND_OVERRIDES"
+            );
+            assert_eq!(
+                merged.len(),
+                generated.len() + hand_table.len() - overlap.len(),
+                "{name}: merged = generated + hand - overlap"
+            );
+            println!(
+                "{name}: {} generated + {} hand - {} overlap = {}",
+                generated.len(),
+                hand_table.len(),
+                overlap.len(),
+                merged.len()
+            );
+        };
+        check(
+            "dps",
+            FORMULAS_JSON,
+            include_str!("custom/dispatch.rs"),
+            &hand.dps,
+            &load_formulas(),
+        );
+        check(
+            "hps",
+            HEAL_FORMULAS_JSON,
+            include_str!("custom/dispatch_hps.rs"),
+            &hand.hps,
+            &load_heal_formulas(),
+        );
+        assert_eq!(supported_operators().len(), load_formulas().len());
+        assert_eq!(supported_healers().len(), load_heal_formulas().len());
     }
 
     /// Every hand-layer function has a metadata entry and vice versa, and the
@@ -986,6 +1068,23 @@ mod tests {
         );
         assert!(hand::dps("char_1015_aglna2").is_some());
         assert!(hand::dps("char_002_amiya").is_none());
+
+        // A duration function is only reached for an operator the hand layer owns.
+        for (id, _) in hand::SKILL_DURATION {
+            assert!(
+                hand::dps(id).is_some() || hand::hps(id).is_some(),
+                "{id}: in hand::SKILL_DURATION but in neither hand::DPS nor hand::HPS"
+            );
+        }
+        let mut duration_ids: Vec<&str> = hand::SKILL_DURATION.iter().map(|(id, _)| *id).collect();
+        let listed = duration_ids.len();
+        duration_ids.sort_unstable();
+        duration_ids.dedup();
+        assert_eq!(
+            duration_ids.len(),
+            listed,
+            "duplicate hand::SKILL_DURATION row"
+        );
     }
 
     #[test]
