@@ -1,4 +1,37 @@
+use std::sync::LazyLock;
 use std::time::Duration;
+
+use crate::dps::ENGINE_VERSION;
+
+/// TTL of a rank entry whose context is off the page's grid. One hour, the
+/// calculate keys' TTL. A miss recomputes 1,343 rows (25.377 ms in commit
+/// 089b4ebc's debug run, 116.213 ms in a contended debug run) and an entry is
+/// 512,650 bytes of JSON on EN data, so a shorter life costs little and bounds
+/// what a caller can leave behind to one hour of misses.
+///
+/// `DPS_RANK_OFF_GRID_TTL_SECS` overrides it; `86400` restores the old 24 h for
+/// every rank entry EXACTLY. Unset means the default; a value that is not a
+/// whole number of seconds above 0 is ignored with a warning.
+static RANK_OFF_GRID_TTL: LazyLock<Duration> =
+    LazyLock::new(|| off_grid_ttl(std::env::var("DPS_RANK_OFF_GRID_TTL_SECS").ok().as_deref()));
+
+const RANK_OFF_GRID_TTL_DEFAULT: Duration = Duration::from_hours(1);
+
+fn off_grid_ttl(raw: Option<&str>) -> Duration {
+    let Some(raw) = raw else {
+        return RANK_OFF_GRID_TTL_DEFAULT;
+    };
+    match raw.trim().parse::<u64>() {
+        Ok(secs) if secs > 0 => Duration::from_secs(secs),
+        _ => {
+            tracing::warn!(
+                value = raw,
+                "DPS_RANK_OFF_GRID_TTL_SECS is not a whole number of seconds above 0; using 3600"
+            );
+            RANK_OFF_GRID_TTL_DEFAULT
+        }
+    }
+}
 
 pub enum CacheKey<'a> {
     User {
@@ -131,11 +164,15 @@ pub enum CacheKey<'a> {
         data: &'a str,
     },
     /// The full all-operator ranking for one shared context, before filters.
-    /// Keyed like `DpsCalculate`; the long TTL is safe because the game-data
-    /// identity is in the key.
+    /// Keyed like `DpsCalculate`, engine version included. `on_page_grid`
+    /// (`RankRequest::on_page_grid`) picks the TTL: a context the rank page
+    /// reaches with its own controls keeps 24 h, any other expires like a
+    /// calculation, so a stream of distinct DEF/RES floats cannot pile up day-long
+    /// entries.
     DpsRank {
         data: &'a str,
         context_hash: u64,
+        on_page_grid: bool,
     },
     /// A rendered UI message catalog. The content hash is in the key, so a body is
     /// never stale and the long TTL is safe; `invalidate_by_prefix("i18n:")` on
@@ -260,11 +297,13 @@ impl CacheKey<'_> {
                 kind,
                 data,
                 body_hash,
-            } => format!("dps:calc:{kind}:{data}:{body_hash}"),
-            CacheKey::DpsList { kind, data } => format!("dps:list:{kind}:{data}"),
-            CacheKey::DpsRank { data, context_hash } => {
-                format!("dps:rank:{data}:{context_hash}")
-            }
+            } => format!("dps:calc:{kind}:{ENGINE_VERSION}:{data}:{body_hash}"),
+            CacheKey::DpsList { kind, data } => format!("dps:list:{kind}:{ENGINE_VERSION}:{data}"),
+            // `on_page_grid` sets the TTL only: the context hash already tells
+            // the two kinds of context apart.
+            CacheKey::DpsRank {
+                data, context_hash, ..
+            } => format!("dps:rank:{ENGINE_VERSION}:{data}:{context_hash}"),
             CacheKey::I18nCatalog {
                 locale,
                 namespace,
@@ -274,7 +313,7 @@ impl CacheKey<'_> {
         }
     }
 
-    pub const fn ttl(&self) -> Duration {
+    pub fn ttl(&self) -> Duration {
         match self {
             CacheKey::User { .. } => Duration::from_mins(10),
             CacheKey::Stats => Duration::from_mins(5),
@@ -312,9 +351,71 @@ impl CacheKey<'_> {
             // invalidates it, and `asset_watcher` clears the `dps:` prefix on one.
             CacheKey::DpsCalculate { .. } => Duration::from_hours(1),
             CacheKey::DpsList { .. } => Duration::from_hours(1),
-            CacheKey::DpsRank { .. } => Duration::from_hours(24),
+            CacheKey::DpsRank { on_page_grid, .. } => {
+                if *on_page_grid {
+                    Duration::from_hours(24)
+                } else {
+                    *RANK_OFF_GRID_TTL
+                }
+            }
             CacheKey::I18nCatalog { .. } => Duration::from_hours(24), // content-addressed; cannot go stale
             CacheKey::I18nManifest => Duration::from_secs(30),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{CacheKey, Duration, ENGINE_VERSION, off_grid_ttl};
+
+    fn rank(on_page_grid: bool) -> CacheKey<'static> {
+        CacheKey::DpsRank {
+            data: "0123456789abcdef",
+            context_hash: 42,
+            on_page_grid,
+        }
+    }
+
+    #[test]
+    fn every_dps_key_carries_the_engine_version() {
+        let calc = CacheKey::DpsCalculate {
+            kind: "dps3",
+            data: "d",
+            body_hash: 7,
+        };
+        let list = CacheKey::DpsList {
+            kind: "dps",
+            data: "d",
+        };
+        assert_eq!(
+            rank(true).to_key_string(),
+            format!("dps:rank:{ENGINE_VERSION}:0123456789abcdef:42")
+        );
+        assert_eq!(
+            calc.to_key_string(),
+            format!("dps:calc:dps3:{ENGINE_VERSION}:d:7")
+        );
+        assert_eq!(
+            list.to_key_string(),
+            format!("dps:list:dps:{ENGINE_VERSION}:d")
+        );
+        // The grid flag picks the TTL, not the key.
+        assert_eq!(rank(true).to_key_string(), rank(false).to_key_string());
+    }
+
+    #[test]
+    fn only_a_page_grid_context_keeps_a_day() {
+        assert_eq!(rank(true).ttl(), Duration::from_hours(24));
+        assert_eq!(rank(false).ttl(), Duration::from_hours(1));
+    }
+
+    #[test]
+    fn the_off_grid_ttl_switch_reads_missing_and_bad_values_as_the_default() {
+        assert_eq!(off_grid_ttl(None), Duration::from_hours(1));
+        assert_eq!(off_grid_ttl(Some("86400")), Duration::from_hours(24));
+        assert_eq!(off_grid_ttl(Some(" 600 ")), Duration::from_secs(600));
+        for bad in ["", "0", "-5", "1h", "3.5"] {
+            assert_eq!(off_grid_ttl(Some(bad)), Duration::from_hours(1), "{bad:?}");
         }
     }
 }

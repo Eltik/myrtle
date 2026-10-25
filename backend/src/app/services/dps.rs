@@ -947,6 +947,31 @@ impl RankRequest {
         hasher.finish()
     }
 
+    /// True for a context the rank page reaches with its own controls alone:
+    /// DEF on the enemy field's 100 step up to its 5,000 ceiling, RES on its 5
+    /// step up to 100, one target, any preset and cycle model, and nothing else
+    /// set. That is at most 52 x 22 x 2 x 3 x 3 = 20,592 contexts (DEF and RES
+    /// absent or on their step, targets absent or 1, the three presets, cycle
+    /// model absent / legacy / v2) per engine and data version, so they may
+    /// keep a day-long cache entry
+    /// (`CacheKey::DpsRank`). Any other context, any float DEF among them, is
+    /// cached like a calculation. Rows are computed from the request exactly as
+    /// sent either way.
+    pub fn on_page_grid(&self) -> bool {
+        let on_step = |v: Option<f64>, step: f64, max: f64| {
+            v.is_none_or(|v| (0.0..=max).contains(&v) && (v / step).fract() == 0.0)
+        };
+        on_step(self.defense, 100.0, 5_000.0)
+            && on_step(self.res, 5.0, 100.0)
+            && self.targets.is_none_or(|t| t == 1)
+            && self.buffs.is_none()
+            && self.shred.is_none()
+            && self.sp_boost.is_none()
+            && self.all_cond.is_none()
+            && self.zones.is_none()
+            && self.secondary.is_none()
+    }
+
     /// The calculation for one row.
     pub fn row_request(&self, operator_id: &str, skill: i32, module: i32) -> CalculateRequest {
         let preset = self.preset.unwrap_or_default();
@@ -1250,5 +1275,88 @@ pub fn supporters_in(gd: &Arc<GameData>, inv: SupporterInvestment) -> Supporters
     SupportersResponse {
         entries,
         unresolved,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{RankPreset, RankRequest, RequestCycleModel, RequestSecondary};
+    use crate::dps::zones::BuffZones;
+
+    #[test]
+    fn the_rank_pages_own_contexts_are_on_the_grid() {
+        let base = RankRequest::default();
+        assert!(base.on_page_grid(), "nothing set");
+        for (defense, res) in [
+            (0.0, 0.0),
+            (1_000.0, 0.0),
+            (1_800.0, 20.0),
+            (2_500.0, 30.0),
+            (5_000.0, 100.0),
+        ] {
+            let req = RankRequest {
+                defense: Some(defense),
+                res: Some(res),
+                targets: Some(1),
+                preset: Some(RankPreset::P6Max),
+                cycle_model: Some(RequestCycleModel::V2),
+                ..base.clone()
+            };
+            assert!(req.on_page_grid(), "DEF {defense} RES {res}");
+        }
+    }
+
+    #[test]
+    fn any_other_context_is_off_the_grid() {
+        let base = RankRequest::default();
+        let off = [
+            RankRequest {
+                defense: Some(350.0),
+                ..base.clone()
+            },
+            RankRequest {
+                defense: Some(300.001),
+                ..base.clone()
+            },
+            RankRequest {
+                defense: Some(5_100.0),
+                ..base.clone()
+            },
+            RankRequest {
+                res: Some(33.0),
+                ..base.clone()
+            },
+            RankRequest {
+                res: Some(105.0),
+                ..base.clone()
+            },
+            RankRequest {
+                targets: Some(3),
+                ..base.clone()
+            },
+            RankRequest {
+                sp_boost: Some(0.5),
+                ..base.clone()
+            },
+            RankRequest {
+                all_cond: Some(true),
+                ..base.clone()
+            },
+            RankRequest {
+                zones: Some(BuffZones::default()),
+                ..base.clone()
+            },
+            RankRequest {
+                secondary: Some(RequestSecondary {
+                    def: 0.0,
+                    res: 0.0,
+                    count: 1,
+                }),
+                ..base.clone()
+            },
+        ];
+        for req in off {
+            assert!(!req.on_page_grid(), "{req:?}");
+        }
     }
 }

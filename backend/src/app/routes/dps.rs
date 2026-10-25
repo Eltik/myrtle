@@ -290,6 +290,7 @@ pub async fn rank(
     let key = CacheKey::DpsRank {
         data: &data,
         context_hash: body.context_hash(),
+        on_page_grid: body.on_page_grid(),
     };
     let computed = if let Some(hit) = state.cache.get::<services::dps::RankComputed>(&key).await {
         hit
