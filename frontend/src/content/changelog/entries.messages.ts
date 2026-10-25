@@ -10,6 +10,58 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-10-25.title": {
+        text: "New: The DPS calculator covers every 6★",
+        description: "Title of the 2026-10-25 release note. DPS is the damage calculator tool; 6★ is the top operator rarity.",
+    },
+    "note.2026-10-25.lead": {
+        text: "**Eleven 6★ operators the DPS calculator could not compute now have numbers**, including Closure, SilverAsh the Reignfrost, Wang and Ch'en the Dawnstreak. Muelsyse works again, module level 1 is no longer read as level 3, and operators such as Tecno and Ebenholz read their skills correctly.",
+        description: "Lead paragraph of the 2026-10-25 release note, rendered as Markdown. The named characters are operators and keep the game's names.",
+    },
+    "note.2026-10-25.hrefLabel": {
+        text: "Open the DPS calculator",
+        description: "Label of the 2026-10-25 release note's call to action, which opens the DPS calculator.",
+    },
+    "note.2026-10-25.item.1": {
+        text: "Pull history has an All tab that lists every banner's pulls together, newest first.",
+        description: "Bullet in the 2026-10-25 release note, filed under 'New'. 'All' is a tab label and must match its translation.",
+    },
+    "note.2026-10-25.item.2": {
+        text: "The operator list can filter by module type: X, Y, Δ, α and β.",
+        description: "Bullet in the 2026-10-25 release note, filed under 'New'. X, Y, Δ, α and β are the game's module type letters and stay as written.",
+    },
+    "note.2026-10-25.item.3": {
+        text: "Stage zones show the Originite Prime their first clears give, and Challenge Mode and Adverse Environment stages are one click away.",
+        description: "Bullet in the 2026-10-25 release note, filed under 'New'. Originite Prime is a game currency; Challenge Mode and Adverse Environment are stage modes; all must match their in-game translations.",
+    },
+    "note.2026-10-25.item.4": {
+        text: "Tier lists can rank home-screen backgrounds.",
+        description: "Bullet in the 2026-10-25 release note, filed under 'New'. Home-screen backgrounds are the game's lobby backgrounds.",
+    },
+    "note.2026-10-25.item.5": {
+        text: "The base optimizer counts your daily drones in its LMD and EXP, shows drones per day, and now prices Viy's and GALLUS²'s base skills.",
+        description: "Bullet in the 2026-10-25 release note, filed under 'Improved'. LMD and EXP are game resources; Viy and GALLUS² are operators and keep the game's names.",
+    },
+    "note.2026-10-25.item.6": {
+        text: "With Store gacha history turned off in Settings, your pulls are no longer saved.",
+        description: "Bullet in the 2026-10-25 release note, filed under 'Fixed'. 'Store gacha history' and 'Settings' are UI labels and must match their translations.",
+    },
+    "note.2026-10-25.item.7": {
+        text: "Players who have not been graded yet no longer rank first on the leaderboard.",
+        description: "Bullet in the 2026-10-25 release note, filed under 'Fixed'.",
+    },
+    "note.2026-10-25.item.8": {
+        text: "Opening a DPS or HPS share link no longer replaces your own saved setup.",
+        description: "Bullet in the 2026-10-25 release note, filed under 'Fixed'. DPS and HPS are the damage and healing calculator tools.",
+    },
+    "note.2026-10-25.item.9": {
+        text: "The Score tab explains the Expeditioner's Jǫklumarkar ending that a regular run cannot reach.",
+        description: "Bullet in the 2026-10-25 release note, filed under 'Fixed'. 'Score' is a profile tab name and must match its translation; Expeditioner's Jǫklumarkar is an Integrated Strategies theme and keeps the game's name.",
+    },
+    "note.2026-10-25.item.10": {
+        text: "Shu's animated outfit art no longer shows a white square over the water.",
+        description: "Bullet in the 2026-10-25 release note, filed under 'Fixed'. Shu is an operator and keeps the game's name.",
+    },
     "note.2026-10-23.title": {
         text: "Improved: A better operator picker in the Squad Builder",
         description: "Title of the 2026-10-23 release note. 'Squad Builder' is a page name and must match its translation.",

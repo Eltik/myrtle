@@ -47,6 +47,27 @@ export interface IReleaseNote {
 
 const ENTRIES: IReleaseNote[] = [
     {
+        id: "2026-10-25",
+        date: "2026-10-25",
+        titleKey: "note.2026-10-25.title",
+        announce: true,
+        leadKey: "note.2026-10-25.lead",
+        items: [
+            { kind: "new", textKey: "note.2026-10-25.item.1" },
+            { kind: "new", textKey: "note.2026-10-25.item.2" },
+            { kind: "new", textKey: "note.2026-10-25.item.3" },
+            { kind: "new", textKey: "note.2026-10-25.item.4" },
+            { kind: "improved", textKey: "note.2026-10-25.item.5" },
+            { kind: "fixed", textKey: "note.2026-10-25.item.6" },
+            { kind: "fixed", textKey: "note.2026-10-25.item.7" },
+            { kind: "fixed", textKey: "note.2026-10-25.item.8" },
+            { kind: "fixed", textKey: "note.2026-10-25.item.9" },
+            { kind: "fixed", textKey: "note.2026-10-25.item.10" },
+        ],
+        href: "/tools/dps",
+        hrefLabelKey: "note.2026-10-25.hrefLabel",
+    },
+    {
         id: "2026-10-23",
         date: "2026-10-23",
         titleKey: "note.2026-10-23.title",
