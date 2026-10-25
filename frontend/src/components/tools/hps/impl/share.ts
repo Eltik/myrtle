@@ -1,5 +1,7 @@
+import { clampField } from "#/components/tools/shared/calculateBounds";
 import { decodeInstances, decodeSweep, encodeInstance, type ISharedInstance, isFiniteNumber, packShare, pickIndex, resolveSharedInstances, unpackShare } from "#/components/tools/shared/shareCodec";
 import type { IOperatorListEntry } from "#/components/tools/shared/types";
+import { X_AXIS_INPUT } from "./constants";
 import { INITIAL_STATE } from "./state";
 import type { HpsXAxis, HpsYMetric, IHpsBuffConfig, IHpsState } from "./types";
 
@@ -44,9 +46,9 @@ export function decodeHpsShare(text: string): IHpsShare | null {
         xAxis: pickIndex(X_AXES, b.x) ?? INITIAL_STATE.xAxis,
         yMetric: pickIndex(Y_METRICS, b.y) ?? INITIAL_STATE.yMetric,
         sweep: {
-            targets: decodeSweep(sweeps[0]) ?? { ...INITIAL_STATE.sweep.targets },
-            atk: decodeSweep(sweeps[1]) ?? { ...INITIAL_STATE.sweep.atk },
-            aspd: decodeSweep(sweeps[2]) ?? { ...INITIAL_STATE.sweep.aspd },
+            targets: decodeSweep(sweeps[0], X_AXIS_INPUT.targets.maxBound) ?? { ...INITIAL_STATE.sweep.targets },
+            atk: decodeSweep(sweeps[1], X_AXIS_INPUT.atk.maxBound) ?? { ...INITIAL_STATE.sweep.atk },
+            aspd: decodeSweep(sweeps[2], X_AXIS_INPUT.aspd.maxBound) ?? { ...INITIAL_STATE.sweep.aspd },
         },
     };
 }
@@ -57,6 +59,7 @@ export function resolveHpsShare(share: IHpsShare, operators: readonly IOperatorL
     return { state: { ...rest, instances }, missing };
 }
 
+/** The team buff block, each number clamped to what the backend validates (`CALCULATE_BOUNDS`). */
 function decodeBuffs(raw: unknown): IHpsBuffConfig | null {
     if (!Array.isArray(raw) || raw.length !== 6) return null;
     const [atk, flatAtk, aspd, fragile, targets, spBoost] = raw as unknown[];
@@ -64,6 +67,6 @@ function decodeBuffs(raw: unknown): IHpsBuffConfig | null {
     if (!isFiniteNumber(targets) || !isFiniteNumber(spBoost)) return null;
     const values = { atk, flatAtk, aspd, fragile } as Record<string, number | null>;
     const buffs: IHpsBuffConfig["buffs"] = {};
-    for (const [k, v] of Object.entries(values)) if (v !== null) buffs[k as keyof typeof buffs] = v;
-    return { buffs, targets: Math.max(1, Math.round(targets)), spBoost };
+    for (const [k, v] of Object.entries(values)) if (v !== null) buffs[k as keyof typeof buffs] = clampField(`buffs.${k as keyof typeof buffs}`, v);
+    return { buffs, targets: clampField("targets", Math.round(targets)), spBoost: clampField("spBoost", spBoost) };
 }

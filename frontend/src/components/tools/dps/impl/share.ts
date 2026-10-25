@@ -1,6 +1,8 @@
+import { clampField } from "#/components/tools/shared/calculateBounds";
 import { decodeInstances, decodeSweep, encodeInstance, type ISharedInstance, isFiniteNumber, packShare, pickIndex, resolveSharedInstances, unpackShare } from "#/components/tools/shared/shareCodec";
 import type { IBuildConfig, IOperatorListEntry } from "#/components/tools/shared/types";
 import type { RankPreset } from "#/types/generated/RankPreset";
+import { X_AXIS_INPUT } from "./constants";
 import { normaliseRankSettings } from "./rank";
 import { DEFAULT_ENEMY, DEFAULT_RANK, DEFAULT_TEAM, INITIAL_STATE } from "./state";
 import type { DpsView, IDpsState, IEnemyConfig, IRankSettings, ISecondaryConfig, ITeamBuffs, RankSortKey, XAxisKind, YMetric } from "./types";
@@ -65,8 +67,8 @@ export function decodeDpsShare(text: string): IDpsShare | null {
         xAxis: pickIndex(X_AXES, b.x) ?? INITIAL_STATE.xAxis,
         yMetric: pickIndex(Y_METRICS, b.y) ?? INITIAL_STATE.yMetric,
         sweep: {
-            defense: decodeSweep(sweeps[0]) ?? { ...INITIAL_STATE.sweep.defense },
-            res: decodeSweep(sweeps[1]) ?? { ...INITIAL_STATE.sweep.res },
+            defense: decodeSweep(sweeps[0], X_AXIS_INPUT.defense.maxBound) ?? { ...INITIAL_STATE.sweep.defense },
+            res: decodeSweep(sweeps[1], X_AXIS_INPUT.res.maxBound) ?? { ...INITIAL_STATE.sweep.res },
         },
         markers: b.m === undefined ? INITIAL_STATE.markers : b.m === 1,
         view: pickIndex(VIEWS, b.v) ?? INITIAL_STATE.view,
@@ -96,9 +98,10 @@ function decodeHead(b: Record<string, unknown>): { enemy: IEnemyConfig; team: IT
     if (!zones) return null;
     return {
         enemy: {
-            defense: Math.max(0, defense),
-            res: Math.min(100, Math.max(0, res)),
-            targets: Math.max(1, Math.round(targets)),
+            defense: clampField("defense", defense),
+            // The RES control stops at 100, inside the backend's 1,000.
+            res: clampField("res", res, 0, 100),
+            targets: clampField("targets", Math.round(targets)),
             secondary: decodeSecondary(b.q),
             cycleModel: b.c === 1 ? "v2" : "legacy",
         },
@@ -113,7 +116,7 @@ function decodeHead(b: Record<string, unknown>): { enemy: IEnemyConfig; team: IT
 function decodeSecondary(raw: unknown): ISecondaryConfig {
     if (!Array.isArray(raw) || raw.length !== 4 || !raw.every(isFiniteNumber)) return { ...DEFAULT_ENEMY.secondary };
     const [on, def, res, count] = raw as number[];
-    return { enabled: on === 1, def: Math.max(0, def), res: Math.min(100, Math.max(0, res)), count: Math.min(49, Math.max(1, Math.round(count))) };
+    return { enabled: on === 1, def: clampField("secondary.def", def), res: clampField("secondary.res", res, 0, 100), count: clampField("secondary.count", Math.round(count)) };
 }
 
 function decodeInvestment(raw: unknown): ITeamBuffs["investment"] {

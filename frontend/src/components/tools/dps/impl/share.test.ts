@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { outOfBounds } from "#/components/tools/shared/calculateBounds";
 import { CHART_PALETTE } from "#/components/tools/shared/constants";
 import { packShare } from "#/components/tools/shared/shareCodec";
 import type { IOperatorListEntry } from "#/components/tools/shared/types";
 import { decodeDpsShare, encodeDpsShare, resolveDpsShare } from "./share";
-import { INITIAL_STATE } from "./state";
+import { INITIAL_STATE, instanceToRequest } from "./state";
 import type { IDpsState } from "./types";
 import { EMPTY_ZONES } from "./zones";
 
@@ -116,5 +117,31 @@ describe("DPS share link", () => {
         expect(decoded?.sweep).toEqual(INITIAL_STATE.sweep);
         expect(decoded?.view).toBe(INITIAL_STATE.view);
         expect(decoded?.rank).toEqual({ ...INITIAL_STATE.rank });
+    });
+
+    it("clamps a hand-edited link to what the backend accepts, so no card request is a 400", () => {
+        const text = packShare("dps", {
+            i: [
+                // moduleIndex 9, and zone values far past `validate_zones` (`buildRequestZones` clamps those).
+                ["char_a", 0, 1, 2, 90, 1, 100, 2, 10, 9, 3, [1e6, null, null, null], 0, 0, 1],
+                ["char_b", 1, 1, 2, 90, 1, 100, 2, 10, 1, 3, [null, null, null, null], 0, 0, 1, [1e6, 1e9, -1e6]],
+            ],
+            e: [1e9, 5000, 500],
+            q: [1, 1e9, 1e9, 99],
+            z: [1e6, 1e9, 1e6, 1e6, 1e6],
+            s: [
+                [0, 1e7, 41],
+                [0, 1e4, 11],
+            ],
+        });
+        const decoded = decodeDpsShare(text);
+        expect(decoded).not.toBeNull();
+        if (!decoded) return;
+        const { state } = resolveDpsShare(decoded, OPS);
+        expect(state.enemy).toMatchObject({ defense: 100_000, res: 100, targets: 50, secondary: { def: 100_000, res: 100, count: 49 } });
+        expect(state.sweep).toEqual({ defense: { min: 0, max: 5000, steps: 41 }, res: { min: 0, max: 100, steps: 11 } });
+        for (const enemy of [state.enemy, { ...state.enemy, secondary: { ...state.enemy.secondary, enabled: false } }]) {
+            for (const inst of state.instances) expect(outOfBounds(instanceToRequest(inst, enemy, state.team, []))).toEqual([]);
+        }
     });
 });

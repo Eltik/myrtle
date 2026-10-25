@@ -1,5 +1,6 @@
 import { deflateSync, inflateSync, strFromU8, strToU8 } from "fflate";
 import { decodeZones, encodeZones } from "../dps/impl/zones";
+import { clampField } from "./calculateBounds";
 import { CHART_PALETTE } from "./constants";
 import { createInstance, pickAvailableColor } from "./instance";
 import { MAX_SKILL_RANK } from "./skill";
@@ -83,7 +84,10 @@ export function encodeInstance(inst: IInstance): unknown[] {
     return tuple;
 }
 
-/** Null when the tuple is malformed; numbers are clamped to the ranges the controls allow. */
+/**
+ * Null when the tuple is malformed. Numbers are clamped to the ranges the controls allow,
+ * and never past what the backend validates (`CALCULATE_BOUNDS`).
+ */
 export function decodeInstance(raw: unknown): ISharedInstance | null {
     if (!Array.isArray(raw) || (raw.length !== 15 && raw.length !== 16)) return null;
     const [opId, paletteIndex, visible, promotion, level, potential, trust, skillIndex, skillRank, moduleIndex, moduleLevel, buffs, condSet, condOn, allCond, rawZones] = raw as unknown[];
@@ -105,18 +109,19 @@ export function decodeInstance(raw: unknown): ISharedInstance | null {
     });
 
     const config: IBuildConfig = {
-        potential: clamp(potential, 1, 6),
-        trust: clamp(trust, 0, 100),
-        skillIndex: clamp(skillIndex, 0, 3),
+        potential: clampField("potential", potential),
+        trust: clampField("trust", trust, 0, 100),
+        skillIndex: clampField("skillIndex", skillIndex),
         skillRank: clamp(skillRank, 1, MAX_SKILL_RANK),
-        moduleIndex: clamp(moduleIndex, 0, 9),
-        moduleLevel: clamp(moduleLevel, 1, 3),
+        // The card sends its index as is, and the backend accepts -1..5.
+        moduleIndex: clampField("moduleIndex", moduleIndex, 0),
+        moduleLevel: clampField("moduleLevel", moduleLevel, 1),
         buffs: decodedBuffs,
         conditionals,
         allCond: allCond === 1,
     };
-    if (promotion !== null) config.promotion = clamp(promotion, 0, 2);
-    if (level !== null) config.level = clamp(level, 1, 90);
+    if (promotion !== null) config.promotion = clampField("promotion", promotion);
+    if (level !== null) config.level = clampField("level", level);
     if (zones) config.zones = zones;
 
     const color = CHART_PALETTE[paletteIndex];
@@ -159,10 +164,15 @@ export function resolveSharedInstances(shared: readonly ISharedInstance[], opera
     return { instances, missing };
 }
 
-/** `[min, max, steps]`, validated; null when malformed. */
-export function decodeSweep(raw: unknown): { min: number; max: number; steps: number } | null {
+/**
+ * `[min, max, steps]`, validated; null when malformed. `maxBound` is the axis control's
+ * ceiling (`X_AXIS_INPUT`), inside the backend's bound for the swept field: a larger
+ * `max` is cut to it, and a range left empty by the cut is malformed.
+ */
+export function decodeSweep(raw: unknown, maxBound: number): { min: number; max: number; steps: number } | null {
     if (!Array.isArray(raw) || raw.length !== 3 || !raw.every(isFiniteNumber)) return null;
-    const [min, max, steps] = raw as number[];
+    const [min, rawMax, steps] = raw as number[];
+    const max = Math.min(rawMax, maxBound);
     if (min < 0 || max <= min || !Number.isInteger(steps) || steps < 2 || steps > 101) return null;
     return { min, max, steps };
 }
