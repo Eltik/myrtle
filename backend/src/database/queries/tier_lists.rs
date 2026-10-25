@@ -629,13 +629,44 @@ pub async fn ensure_stats_row(pool: &PgPool, tier_list_id: Uuid) -> Result<(), s
     Ok(())
 }
 
-/// Record a view. Dedupe window is 30 minutes. Returns true if counter was bumped.
+/// Who a counted view belongs to: the dedupe key of `record_view`.
+///
+/// There is no "nobody" variant on purpose. A view with neither an account nor
+/// a session id has nothing to dedupe on, so before this type every such call
+/// inserted a row and counted as unique; now the route cannot reach the
+/// database without one (`Viewer::from_parts`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Viewer<'a> {
+    /// A signed-in account. Its session id, if any, is ignored.
+    Account(Uuid),
+    /// An anonymous reader, keyed by the HMAC of their session id.
+    Session(&'a str),
+}
+
+impl<'a> Viewer<'a> {
+    /// The viewer a request identifies, account first; `None` when it carries
+    /// neither, which is a view that cannot be deduplicated and is not recorded.
+    #[must_use]
+    pub fn from_parts(user_id: Option<Uuid>, session_hash: Option<&'a str>) -> Option<Self> {
+        match (user_id, session_hash) {
+            (Some(id), _) => Some(Self::Account(id)),
+            (None, Some(hash)) => Some(Self::Session(hash)),
+            (None, None) => None,
+        }
+    }
+}
+
+/// Record a view. Dedupe window is 30 minutes per viewer. Returns true if the
+/// counter was bumped.
 pub async fn record_view(
     pool: &PgPool,
     tier_list_id: Uuid,
-    user_id: Option<Uuid>,
-    session_hash: Option<&str>,
+    viewer: Viewer<'_>,
 ) -> Result<bool, sqlx::Error> {
+    let (user_id, session_hash) = match viewer {
+        Viewer::Account(id) => (Some(id), None),
+        Viewer::Session(hash) => (None, Some(hash)),
+    };
     let inserted: Option<i64> = sqlx::query_scalar(
         "INSERT INTO tier_list_view_events (tier_list_id, user_id, session_hash)
          SELECT $1, $2, $3
@@ -883,4 +914,32 @@ pub async fn get_flair_by_id(pool: &PgPool, id: i16) -> Result<Option<TierListFl
         .bind(id)
         .fetch_optional(pool)
         .await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Viewer;
+    use uuid::Uuid;
+
+    #[test]
+    fn a_view_with_no_account_and_no_session_has_no_viewer() {
+        assert_eq!(Viewer::from_parts(None, None), None);
+    }
+
+    #[test]
+    fn an_account_wins_over_a_session() {
+        let id = Uuid::from_u128(7);
+        assert_eq!(
+            Viewer::from_parts(Some(id), Some("h")),
+            Some(Viewer::Account(id))
+        );
+        assert_eq!(
+            Viewer::from_parts(Some(id), None),
+            Some(Viewer::Account(id))
+        );
+        assert_eq!(
+            Viewer::from_parts(None, Some("h")),
+            Some(Viewer::Session("h"))
+        );
+    }
 }

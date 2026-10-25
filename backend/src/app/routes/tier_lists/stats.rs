@@ -110,7 +110,9 @@ fn check_view_rate(ip: &str) -> bool {
 #[derive(serde::Serialize, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct ViewRecorded {
-    /// False when the same user or session already counted for this list.
+    /// False when the same user or session already counted for this list, or
+    /// when the call carried neither an account nor a session id (`X-Session-Id`
+    /// header or `mtl_sid` cookie), which is not recorded at all.
     pub unique: bool,
 }
 
@@ -132,7 +134,9 @@ pub struct VisibilityState {
 
 /// Count one view of a tier list.
 ///
-/// Deduplicated server-side, so a client may call it on every page load.
+/// Deduplicated server-side, so a client may call it on every page load. A
+/// call with neither a bearer token nor a session id (`X-Session-Id` header or
+/// `mtl_sid` cookie) is not counted and answers `unique: false`.
 #[utoipa::path(
     post,
     path = "/tier-lists/{slug}/view",
@@ -173,9 +177,19 @@ pub async fn record_view(
         extract_session_id(&headers).map(|sid| hash_session_id(&state.config.jwt_secret, &sid))
     };
 
+    // Neither an account nor a session id: nothing to dedupe on, so before this
+    // every such call inserted an event row and counted as a unique view. The
+    // site's own SSR call always sends `X-Session-Id`
+    // (frontend/src/lib/api/tier-lists.ts `recordTierListViewFn`), so only a
+    // scripted caller lands here. A script that invents a fresh id per call
+    // still counts: this closes the zero-effort path, not the determined one.
+    let Some(viewer) = queries::Viewer::from_parts(user_id, session_hash.as_deref()) else {
+        return Ok(Json(ViewRecorded { unique: false }));
+    };
+
     // No invalidate_detail: views are high-frequency, and a briefly stale count
     // beats churning the cache on every page load.
-    let unique = queries::record_view(&state.db, list.id, user_id, session_hash.as_deref()).await?;
+    let unique = queries::record_view(&state.db, list.id, viewer).await?;
     Ok(Json(ViewRecorded { unique }))
 }
 

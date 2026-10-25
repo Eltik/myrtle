@@ -12243,7 +12243,7 @@
           "tier-lists"
         ],
         "summary": "Count one view of a tier list.",
-        "description": "Deduplicated server-side, so a client may call it on every page load.",
+        "description": "Deduplicated server-side, so a client may call it on every page load. A\ncall with neither a bearer token nor a session id (`X-Session-Id` header or\n`mtl_sid` cookie) is not counted and answers `unique: false`.",
         "operationId": "record_view",
         "parameters": [
           {
@@ -34348,7 +34348,7 @@
         "properties": {
           "unique": {
             "type": "boolean",
-            "description": "False when the same user or session already counted for this list."
+            "description": "False when the same user or session already counted for this list, or\nwhen the call carried neither an account nor a session id (`X-Session-Id`\nheader or `mtl_sid` cookie), which is not recorded at all."
           }
         }
       },
