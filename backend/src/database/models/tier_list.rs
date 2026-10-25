@@ -84,6 +84,17 @@ pub enum EntityKind {
     /// A home-screen background, a `display_meta_table.HomeBackgroundData`
     /// `BgId` (`bg_rhodes_day`).
     Background,
+    /// A story CG, by the lowercase asset key its scripts name (`avg_1_1`):
+    /// a picture `GET /story/art-gallery/cg` lists, the id a `story_cg`
+    /// profile background stores.
+    StoryCg,
+    /// A story scene plate, the same from `GET /story/art-gallery/scene`
+    /// (`bg_corridor`), the id a `story_scene` profile background stores.
+    StoryScene,
+    /// An Archives gallery picture, by its `ActArchiveResData.Pics` key
+    /// (`act13side_pic_0`, `pic_rogue_1_KV1`): a picture `GET /story/gallery`
+    /// lists, the id an `archive_pic` profile background stores.
+    ArchivePic,
 }
 
 impl EntityKind {
@@ -102,6 +113,9 @@ impl EntityKind {
         Self::StorySprite,
         Self::MainStory,
         Self::Background,
+        Self::StoryCg,
+        Self::StoryScene,
+        Self::ArchivePic,
     ];
 
     pub const fn as_str(self) -> &'static str {
@@ -120,6 +134,9 @@ impl EntityKind {
             Self::StorySprite => "story_sprite",
             Self::MainStory => "main_story",
             Self::Background => "background",
+            Self::StoryCg => "story_cg",
+            Self::StoryScene => "story_scene",
+            Self::ArchivePic => "archive_pic",
         }
     }
 }

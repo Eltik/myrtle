@@ -5,10 +5,13 @@ use uuid::Uuid;
 
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::RoleCheckedUser;
+use crate::app::services::tier_entity::StoryCatalogues;
 use crate::app::services::tier_list::find_and_authorize;
 use crate::app::services::tier_list::invalidate_detail;
 use crate::app::services::tier_list::load_detail;
-use crate::app::services::tier_list::{read_snapshot, resolve_snapshot, snapshot_of};
+use crate::app::services::tier_list::{
+    read_snapshot, resolve_snapshot, snapshot_kinds, snapshot_of,
+};
 use crate::app::state::AppState;
 use crate::core::auth::permissions::Permission;
 use crate::database::models::tier_list::TierListVersion;
@@ -48,10 +51,20 @@ pub async fn list(
     let server = query.or_default(&state);
     let gd = state.game_data(server);
     let assets = state.asset_index(server);
-    for v in &mut versions {
-        match read_snapshot(&v.snapshot) {
+    let snapshots: Vec<_> = versions
+        .iter()
+        .map(|v| read_snapshot(&v.snapshot))
+        .collect();
+    let kinds: Vec<_> = snapshots
+        .iter()
+        .flatten()
+        .flat_map(|tiers| snapshot_kinds(tiers))
+        .collect();
+    let story = StoryCatalogues::gather(&state, server, &kinds).await;
+    for (v, snapshot) in versions.iter_mut().zip(snapshots) {
+        match snapshot {
             Ok(tiers) => {
-                v.snapshot = serde_json::to_value(resolve_snapshot(tiers, &gd, &assets))
+                v.snapshot = serde_json::to_value(resolve_snapshot(tiers, &gd, &assets, &story))
                     .map_err(|e| ApiError::Internal(e.into()))?;
             }
             // Served as stored rather than failing the whole history; the

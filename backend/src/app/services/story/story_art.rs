@@ -73,11 +73,16 @@ pub const MAX_ASPECT: f64 = 1.9;
 /// transparency and blockers (`blocker_movi` 0.021, `ac6_2` 0.036, the
 /// `avg_ep*` cards 0.044 to 0.172), and the scene tree's is `bg_black` and
 /// `bg_white` at 0.022 with nothing else below 0.315. 0.2 removes those and
-/// no painting seen; it keeps five cards above it (`cc_start` 0.223,
-/// `avg_ep10` 0.259, `avg_ep08` 0.304, `ac5_title1` 0.36, `avg_ep14` 0.399)
-/// because `cg_firework`, a real sparse painting, is 0.396, so no floor
-/// separates the two. `STORY_ART_MIN_BPP=0` turns it off, restoring the
-/// dimension filter alone.
+/// no painting seen; it keeps cards just above it (on 2026-10-06 `cc_start`
+/// 0.223, `avg_ep10` 0.259, `avg_ep08` 0.304, `ac5_title1` 0.36, `avg_ep14`
+/// 0.399) because `cg_firework`, a real sparse painting, is 0.396, so no
+/// floor separates the two. The figure moves with a re-export, which changes
+/// PNG size for the same art: by 2026-10-26 `avg_ep10`, `avg_ep08` and
+/// `ac5_title1` had fallen under 0.2 and were cut, and so had overlays that
+/// are not paintings (`50_i14_2` a VFX orb on black, `cgitem_41_i12_1` a
+/// camera HUD on transparency, `avg_ac13_3` a spotlight cone). Read a census
+/// diff by looking at what moved before trusting the count.
+/// `STORY_ART_MIN_BPP=0` turns it off, restoring the dimension filter alone.
 pub const MIN_BYTES_PER_PX: f64 = 0.2;
 
 /// [`MIN_BYTES_PER_PX`], or the `STORY_ART_MIN_BPP` override when it parses
@@ -280,14 +285,16 @@ pub fn build_story_art(
     out
 }
 
-/// Both catalogues plus the asset index they resolved against.
+/// Both catalogues plus the asset index they resolved against. Each
+/// catalogue is shared, so a reader that only looks ([`story_art_shared`])
+/// takes no copy.
 struct Cached {
-    galleries: [(StoryArtGallery, StoryArtCensus); 2],
+    galleries: [(Arc<StoryArtGallery>, StoryArtCensus); 2],
     assets: Weak<AssetIndex>,
 }
 
 impl Cached {
-    const fn gallery(&self, kind: StoryArtKind) -> &StoryArtGallery {
+    fn gallery(&self, kind: StoryArtKind) -> &StoryArtGallery {
         &self.galleries[slot(kind)].0
     }
 
@@ -321,7 +328,8 @@ async fn cached(state: &AppState, server: Server) -> Result<Arc<Cached>, ApiErro
                             &assets,
                             &trees.art_dir,
                             min_bytes_per_px(),
-                        ),
+                        )
+                        .map(|(gallery, census)| (Arc::new(gallery), census)),
                         assets: Arc::downgrade(&trees.live),
                     })
                 })
@@ -341,6 +349,21 @@ pub async fn get_story_art(
     kind: StoryArtKind,
 ) -> Result<StoryArtGallery, ApiError> {
     Ok(cached(state, server).await?.gallery(kind).clone())
+}
+
+/// [`get_story_art`] without the copy: the cached catalogue itself, for a
+/// caller that only reads it (the tier list story kinds).
+///
+/// # Errors
+/// As [`get_story_art`].
+pub async fn story_art_shared(
+    state: &AppState,
+    server: Server,
+    kind: StoryArtKind,
+) -> Result<Arc<StoryArtGallery>, ApiError> {
+    Ok(Arc::clone(
+        &cached(state, server).await?.galleries[slot(kind)].0,
+    ))
 }
 
 /// `server`'s census of `kind`, for the real-data test.

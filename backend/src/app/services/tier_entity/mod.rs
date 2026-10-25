@@ -14,6 +14,19 @@
 //! Icons are checked against the server's [`AssetIndex`]: an entity whose art
 //! the extract does not hold has `icon: None`, and the client draws its own
 //! placeholder rather than a broken image.
+//!
+//! Three kinds are not read off the game data: story CGs, story scenes and
+//! Archives gallery pictures, the profile header's picture sources. Their
+//! catalogues are built per server on the CPU pool and cached by the story
+//! service, which is async, while every reading here is sync. So each entry
+//! point also takes a [`StoryCatalogues`], a per-request snapshot the caller
+//! gathers first with [`StoryCatalogues::gather`] for the kinds it will
+//! read; a caller whose kinds are all game-data kinds passes
+//! [`StoryCatalogues::NONE`] and pays nothing. Those three kinds dispatch to a
+//! [`story_pictures::StorySource`] instead of a [`KindSource`], so the other
+//! kinds' readings are untouched. A catalogue that failed to build reads as
+//! empty: its ids do not resolve (the tile is a placeholder) and do not
+//! validate, and the request does not fail.
 
 mod background;
 mod class;
@@ -26,6 +39,7 @@ mod module;
 mod operator;
 mod skill;
 mod skin;
+mod story_pictures;
 mod story_sprite;
 mod stronghold_bond;
 
@@ -39,6 +53,8 @@ use crate::core::gamedata::assets::AssetIndex;
 use crate::core::gamedata::types::GameData;
 use crate::core::gamedata::types::operator::Operator;
 use crate::database::models::tier_list::EntityKind;
+
+pub use story_pictures::StoryCatalogues;
 
 /// One facet value: a single tag, or several (an enemy's several levels, an
 /// event's several factions).
@@ -87,7 +103,12 @@ pub struct EntitySummary {
     /// main story episodes `episode` (`0` to `16` on EN), `act` (the
     /// `chapter_table` index) and `act_name`; home backgrounds `bg_type`
     /// (`base` or `dynamic`), `obtain` (the server's own wording) and, when it
-    /// has one, `start_time` (unix seconds).
+    /// has one, `start_time` (unix seconds). Story CGs and scenes carry their
+    /// library group's `group` (name), `group_id` and `category` (`main`,
+    /// `side`, `vignette`, `is`, `reclamation`, `sideContent`, `record`);
+    /// Archives pictures their archive's `group` (the event's or theme's
+    /// name), `group_id` (`act13side`, `rogue_1`) and `picture_type`
+    /// (`IMAGE`, `ENDING_IMAGE`, `ROGUE_IMAGE`, raw from the table).
     pub facets: BTreeMap<String, FacetValue>,
 }
 
@@ -101,56 +122,81 @@ struct KindSource {
     catalogue: fn(&GameData, &AssetIndex) -> Vec<EntitySummary>,
 }
 
-const fn source(kind: EntityKind) -> &'static KindSource {
+/// Where a kind is read from: the game data and asset index, or the story
+/// picture snapshot.
+enum Source {
+    Data(&'static KindSource),
+    Story(&'static story_pictures::StorySource),
+}
+
+const fn source(kind: EntityKind) -> Source {
     match kind {
-        EntityKind::Operator => &operator::SOURCE,
-        EntityKind::Class => &class::CLASS,
-        EntityKind::Subclass => &class::SUBCLASS,
-        EntityKind::Enemy => &enemy::SOURCE,
-        EntityKind::Event => &event::SOURCE,
-        EntityKind::Faction => &faction::SOURCE,
-        EntityKind::StrongholdBond => &stronghold_bond::SOURCE,
-        EntityKind::Skin => &skin::SOURCE,
-        EntityKind::Module => &module::SOURCE,
-        EntityKind::Skill => &skill::SOURCE,
-        EntityKind::IntegratedStrategies => &integrated_strategies::SOURCE,
-        EntityKind::StorySprite => &story_sprite::SOURCE,
-        EntityKind::MainStory => &main_story::SOURCE,
-        EntityKind::Background => &background::SOURCE,
+        EntityKind::Operator => Source::Data(&operator::SOURCE),
+        EntityKind::Class => Source::Data(&class::CLASS),
+        EntityKind::Subclass => Source::Data(&class::SUBCLASS),
+        EntityKind::Enemy => Source::Data(&enemy::SOURCE),
+        EntityKind::Event => Source::Data(&event::SOURCE),
+        EntityKind::Faction => Source::Data(&faction::SOURCE),
+        EntityKind::StrongholdBond => Source::Data(&stronghold_bond::SOURCE),
+        EntityKind::Skin => Source::Data(&skin::SOURCE),
+        EntityKind::Module => Source::Data(&module::SOURCE),
+        EntityKind::Skill => Source::Data(&skill::SOURCE),
+        EntityKind::IntegratedStrategies => Source::Data(&integrated_strategies::SOURCE),
+        EntityKind::StorySprite => Source::Data(&story_sprite::SOURCE),
+        EntityKind::MainStory => Source::Data(&main_story::SOURCE),
+        EntityKind::Background => Source::Data(&background::SOURCE),
+        EntityKind::StoryCg => Source::Story(&story_pictures::STORY_CG),
+        EntityKind::StoryScene => Source::Story(&story_pictures::STORY_SCENE),
+        EntityKind::ArchivePic => Source::Story(&story_pictures::ARCHIVE_PIC),
     }
 }
 
 /// `(kind, id)` in `gd`, or `None` when the served data has no such entity.
-/// Icons are read off `assets`, the same server's index.
+/// Icons are read off `assets`, the same server's index; the story picture
+/// kinds are read off `story`, the same server's snapshot.
 pub fn resolve(
     gd: &GameData,
     assets: &AssetIndex,
+    story: &StoryCatalogues,
     kind: EntityKind,
     id: &str,
 ) -> Option<EntitySummary> {
-    (source(kind).resolve)(gd, assets, id)
+    match source(kind) {
+        Source::Data(s) => (s.resolve)(gd, assets, id),
+        Source::Story(s) => (s.resolve)(story, id),
+    }
 }
 
 /// Whether one server knows `(kind, id)`: [`resolve`] without building the
 /// summary. Every kind is read off `gd` except story sprites, which live in
-/// the asset extract and are read off `assets`.
-pub fn known(gd: &GameData, assets: &AssetIndex, kind: EntityKind, id: &str) -> bool {
-    (source(kind).known)(gd, assets, id)
+/// the asset extract and are read off `assets`, and the story picture kinds,
+/// read off `story`.
+pub fn known(
+    gd: &GameData,
+    assets: &AssetIndex,
+    story: &StoryCatalogues,
+    kind: EntityKind,
+    id: &str,
+) -> bool {
+    match source(kind) {
+        Source::Data(s) => (s.known)(gd, assets, id),
+        Source::Story(s) => (s.known)(story, id),
+    }
 }
 
-/// `Ok` when any of `servers` (each server's game data and asset index)
-/// knows `(kind, id)`, else a `400` naming both.
+/// `Ok` when any of `servers` (each server's game data, asset index and
+/// story picture snapshot) knows `(kind, id)`, else a `400` naming both.
 ///
 /// # Errors
 /// `ApiError::BadRequest` when no game data knows the entity.
 pub fn validate<'a>(
-    servers: impl IntoIterator<Item = (&'a GameData, &'a AssetIndex)>,
+    servers: impl IntoIterator<Item = (&'a GameData, &'a AssetIndex, &'a StoryCatalogues)>,
     kind: EntityKind,
     id: &str,
 ) -> Result<(), ApiError> {
     if servers
         .into_iter()
-        .any(|(gd, assets)| known(gd, assets, kind, id))
+        .any(|(gd, assets, story)| known(gd, assets, story, kind, id))
     {
         Ok(())
     } else {
@@ -165,8 +211,16 @@ pub fn validate<'a>(
 /// them. Narrower than [`resolve`]: an operator the game marks unobtainable,
 /// an enemy the handbook hides, or an activity that is a login bonus still
 /// resolves on a list that already holds it, but is not offered.
-pub fn catalogue(gd: &GameData, assets: &AssetIndex, kind: EntityKind) -> Vec<EntitySummary> {
-    (source(kind).catalogue)(gd, assets)
+pub fn catalogue(
+    gd: &GameData,
+    assets: &AssetIndex,
+    story: &StoryCatalogues,
+    kind: EntityKind,
+) -> Vec<EntitySummary> {
+    match source(kind) {
+        Source::Data(s) => (s.catalogue)(gd, assets),
+        Source::Story(s) => (s.catalogue)(story),
+    }
 }
 
 /// A summary's facets, built a tag at a time.
@@ -272,8 +326,26 @@ mod tests {
     fn an_unknown_id_does_not_resolve() {
         let gd = gd_with("char_002_amiya", "Amiya", true);
         let assets = AssetIndex::default();
-        assert!(resolve(&gd, &assets, EntityKind::Operator, "char_002_amiya").is_some());
-        assert!(resolve(&gd, &assets, EntityKind::Operator, "char_999_nobody").is_none());
+        assert!(
+            resolve(
+                &gd,
+                &assets,
+                &StoryCatalogues::NONE,
+                EntityKind::Operator,
+                "char_002_amiya"
+            )
+            .is_some()
+        );
+        assert!(
+            resolve(
+                &gd,
+                &assets,
+                &StoryCatalogues::NONE,
+                EntityKind::Operator,
+                "char_999_nobody"
+            )
+            .is_none()
+        );
     }
 
     #[test]
@@ -281,7 +353,8 @@ mod tests {
         let en = gd_with("char_002_amiya", "Amiya", true);
         let cn = gd_with("char_4999_cnonly", "Someone", true);
         let none = AssetIndex::default();
-        let servers = [(&en, &none), (&cn, &none)];
+        let story = StoryCatalogues::NONE;
+        let servers = [(&en, &none, &story), (&cn, &none, &story)];
         assert!(validate(servers, EntityKind::Operator, "char_002_amiya").is_ok());
         // Known on CN only: still accepted, a CN-locale editor offers it.
         assert!(validate(servers, EntityKind::Operator, "char_4999_cnonly").is_ok());
@@ -297,8 +370,17 @@ mod tests {
     fn an_unobtainable_operator_resolves_but_is_not_offered() {
         let gd = gd_with("char_1001_amiya2", "Amiya", false);
         let assets = AssetIndex::default();
-        assert!(resolve(&gd, &assets, EntityKind::Operator, "char_1001_amiya2").is_some());
-        assert!(catalogue(&gd, &assets, EntityKind::Operator).is_empty());
+        assert!(
+            resolve(
+                &gd,
+                &assets,
+                &StoryCatalogues::NONE,
+                EntityKind::Operator,
+                "char_1001_amiya2"
+            )
+            .is_some()
+        );
+        assert!(catalogue(&gd, &assets, &StoryCatalogues::NONE, EntityKind::Operator).is_empty());
     }
 
     #[test]
@@ -307,6 +389,7 @@ mod tests {
         let s = resolve(
             &gd,
             &AssetIndex::default(),
+            &StoryCatalogues::NONE,
             EntityKind::Operator,
             "char_002_amiya",
         )

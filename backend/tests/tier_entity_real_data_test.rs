@@ -6,16 +6,20 @@
 //! against the newest `game-data` artifact, not the extract they were measured
 //! on. Also proves every offered entity resolves and validates, and prints how
 //! many have no art, which the client draws as a placeholder. CI's artifact
-//! carries no textures, so story sprites are only counted where the sprite tree
-//! is on disk.
+//! carries no textures, so story sprites, CGs and scenes are only counted
+//! where their tree is on disk. The story picture kinds read a
+//! [`StoryCatalogues`] built here the way the story service builds it.
 
 mod common;
 
 use std::collections::{BTreeMap, HashSet};
 use std::path::Path;
+use std::sync::{Arc, LazyLock};
 
 use backend::app::error::ApiError;
-use backend::app::services::tier_entity::{FacetValue, catalogue, known, resolve, validate};
+use backend::app::services::tier_entity::{
+    FacetValue, StoryCatalogues, catalogue, known, resolve, validate,
+};
 use backend::core::gamedata::assets::AssetIndex;
 use backend::database::models::tier_list::EntityKind;
 
@@ -43,6 +47,40 @@ fn story_art_present() -> bool {
     en_dir().join("textures/spritepack").is_dir()
 }
 
+/// The story CG and scene trees, which CI's artifact does not carry.
+fn story_pictures_present() -> bool {
+    en_dir().join("textures/avg/imgs").is_dir() && en_dir().join("textures/avg/bg").is_dir()
+}
+
+/// EN's story picture catalogues, built once per test binary: the story
+/// index, then the CG and scene catalogues and the Archives gallery off it,
+/// the builders the story service caches per server.
+fn story() -> &'static StoryCatalogues {
+    static STORY: LazyLock<StoryCatalogues> = LazyLock::new(|| {
+        use backend::app::services::story::{build_index, gallery, story_art};
+        use backend::core::story::assets::StoryAssetIndex;
+        let gd = common::load_game_data();
+        let dir = en_dir();
+        let live = Arc::new(AssetIndex::build(&dir));
+        let index = build_index(gd, &live, &dir, &dir);
+        let story_assets = StoryAssetIndex::for_dirs(&dir, &dir, &live);
+        let [(cg, cg_census), (scene, scene_census)] =
+            story_art::build_story_art(&index, &story_assets, &dir, story_art::min_bytes_per_px());
+        for (kind, c) in [("story_cg", &cg_census), ("story_scene", &scene_census)] {
+            println!(
+                "{kind} census: distinct {} passed {} narrow {} aspect {} sparse {} unresolved {}",
+                c.distinct, c.passed, c.narrow, c.aspect, c.sparse, c.unresolved
+            );
+        }
+        StoryCatalogues {
+            cg: Some(Arc::new(cg)),
+            scene: Some(Arc::new(scene)),
+            archive: Some(Arc::new(gallery::build_gallery(gd, &story_assets))),
+        }
+    });
+    &STORY
+}
+
 fn facet<'a>(facets: &'a BTreeMap<String, FacetValue>, name: &str) -> Option<&'a str> {
     match facets.get(name)? {
         FacetValue::One(s) => Some(s),
@@ -55,7 +93,14 @@ fn every_kind_catalogue_reaches_the_measured_counts() {
     let gd = common::load_game_data();
     let assets = en_assets();
 
-    let floors: [(EntityKind, usize); 13] = [
+    let story = story();
+    // The story pictures on EN 2026-10-25. The profile picker measured 1,230
+    // CGs and 898 scenes on 2026-10-06 (`story_art.rs`); since then the CG
+    // tree names 1,337 files (was 1,335) and 29 fall under the bytes-per-px
+    // floor (was 25: `avg_ep08`, `avg_ep10` and `ac5_title1`, above it then,
+    // are under it now), so the CG count FELL by 2. That floor reads PNG
+    // bytes, which a re-export can move without the art changing.
+    let floors: [(EntityKind, usize); 16] = [
         (EntityKind::Class, 8),
         (EntityKind::Subclass, 71),
         (EntityKind::Enemy, 1541),
@@ -69,16 +114,19 @@ fn every_kind_catalogue_reaches_the_measured_counts() {
         (EntityKind::StorySprite, 1443),
         (EntityKind::MainStory, 17),
         (EntityKind::Background, 28),
+        (EntityKind::StoryCg, 1228),
+        (EntityKind::StoryScene, 900),
+        (EntityKind::ArchivePic, 324),
     ];
     let mut failures = Vec::new();
     for kind in EntityKind::ALL.iter().copied() {
-        let cat = catalogue(gd, &assets, kind);
+        let cat = catalogue(gd, &assets, story, kind);
         let ids: HashSet<&str> = cat.iter().map(|s| s.id.as_str()).collect();
         assert_eq!(ids.len(), cat.len(), "{} ids repeat", kind.as_str());
         let mut no_icon = Vec::new();
         for s in &cat {
             assert_eq!(s.kind, kind);
-            let again = resolve(gd, &assets, kind, &s.id).unwrap_or_else(|| {
+            let again = resolve(gd, &assets, story, kind, &s.id).unwrap_or_else(|| {
                 panic!(
                     "{} `{}` is offered but does not resolve",
                     kind.as_str(),
@@ -86,7 +134,7 @@ fn every_kind_catalogue_reaches_the_measured_counts() {
                 )
             });
             assert_eq!(&again, s, "catalogue and resolve disagree on {}", s.id);
-            assert!(known(gd, &assets, kind, &s.id));
+            assert!(known(gd, &assets, story, kind, &s.id));
             assert!(
                 !s.name.is_empty(),
                 "{} `{}` has no name",
@@ -107,6 +155,10 @@ fn every_kind_catalogue_reaches_the_measured_counts() {
         if kind == EntityKind::StorySprite && !story_sprites_present() {
             continue;
         }
+        if matches!(kind, EntityKind::StoryCg | EntityKind::StoryScene) && !story_pictures_present()
+        {
+            continue;
+        }
         if let Some((_, floor)) = floors.iter().find(|(k, _)| *k == kind)
             && cat.len() < *floor
         {
@@ -124,7 +176,7 @@ fn every_kind_catalogue_reaches_the_measured_counts() {
 fn the_event_pool_by_display_type() {
     let gd = common::load_game_data();
     let assets = en_assets();
-    let events = catalogue(gd, &assets, EntityKind::Event);
+    let events = catalogue(gd, &assets, &StoryCatalogues::NONE, EntityKind::Event);
     let mut by_display: BTreeMap<&str, (usize, usize)> = BTreeMap::new();
     for e in &events {
         let entry = by_display
@@ -184,15 +236,21 @@ fn hidden_enemies_resolve_but_are_not_offered() {
         .map(|(id, _)| id.as_str())
         .collect();
     assert_eq!(hidden.len(), 51);
-    let offered: HashSet<String> = catalogue(gd, &assets, EntityKind::Enemy)
-        .into_iter()
-        .map(|s| s.id)
-        .collect();
+    let offered: HashSet<String> =
+        catalogue(gd, &assets, &StoryCatalogues::NONE, EntityKind::Enemy)
+            .into_iter()
+            .map(|s| s.id)
+            .collect();
     for id in hidden {
         assert!(!offered.contains(id), "{id} is hidden but offered");
-        assert!(resolve(gd, &assets, EntityKind::Enemy, id).is_some());
+        assert!(resolve(gd, &assets, &StoryCatalogues::NONE, EntityKind::Enemy, id).is_some());
         assert!(
-            validate([(gd, &assets)], EntityKind::Enemy, id).is_ok(),
+            validate(
+                [(gd, &assets, &StoryCatalogues::NONE)],
+                EntityKind::Enemy,
+                id
+            )
+            .is_ok(),
             "{id} must validate"
         );
     }
@@ -203,7 +261,11 @@ fn an_unknown_id_is_a_bad_request_for_every_kind() {
     let gd = common::load_game_data();
     let assets = en_assets();
     for kind in EntityKind::ALL.iter().copied() {
-        match validate([(gd, &assets)], kind, "no_such_entity_9999") {
+        match validate(
+            [(gd, &assets, &StoryCatalogues::NONE)],
+            kind,
+            "no_such_entity_9999",
+        ) {
             Err(ApiError::BadRequest(msg)) => {
                 assert!(
                     msg.contains(kind.as_str()) && msg.contains("no_such_entity_9999"),
@@ -214,18 +276,51 @@ fn an_unknown_id_is_a_bad_request_for_every_kind() {
         }
     }
     // Ids that exist in the table but are not entities of the kind.
-    assert!(validate([(gd, &assets)], EntityKind::Faction, "none").is_err());
-    assert!(validate([(gd, &assets)], EntityKind::Subclass, "notchar1").is_err());
-    assert!(validate([(gd, &assets)], EntityKind::Class, "TOKEN").is_err());
+    assert!(
+        validate(
+            [(gd, &assets, &StoryCatalogues::NONE)],
+            EntityKind::Faction,
+            "none"
+        )
+        .is_err()
+    );
+    assert!(
+        validate(
+            [(gd, &assets, &StoryCatalogues::NONE)],
+            EntityKind::Subclass,
+            "notchar1"
+        )
+        .is_err()
+    );
+    assert!(
+        validate(
+            [(gd, &assets, &StoryCatalogues::NONE)],
+            EntityKind::Class,
+            "TOKEN"
+        )
+        .is_err()
+    );
     // Kinds do not share an id space: an operator id is not an enemy.
-    assert!(validate([(gd, &assets)], EntityKind::Enemy, "char_002_amiya").is_err());
+    assert!(
+        validate(
+            [(gd, &assets, &StoryCatalogues::NONE)],
+            EntityKind::Enemy,
+            "char_002_amiya"
+        )
+        .is_err()
+    );
 }
 
 #[test]
 fn the_integrated_strategies_pool_by_theme_and_type() {
     let gd = common::load_game_data();
     let assets = en_assets();
-    let entries = catalogue(gd, &assets, EntityKind::IntegratedStrategies);
+    let entries = catalogue(
+        gd,
+        &assets,
+        &StoryCatalogues::NONE,
+        EntityKind::IntegratedStrategies,
+    );
     let mut by: BTreeMap<(String, String), (usize, usize)> = BTreeMap::new();
     for e in &entries {
         let key = (
@@ -284,10 +379,19 @@ fn the_integrated_strategies_pool_by_theme_and_type() {
 fn default_skins_and_original_modules_are_not_offered() {
     let gd = common::load_game_data();
     let assets = en_assets();
-    let skins = catalogue(gd, &assets, EntityKind::Skin);
+    let skins = catalogue(gd, &assets, &StoryCatalogues::NONE, EntityKind::Skin);
     assert!(skins.iter().all(|s| s.id.contains('@')));
     // The default art still resolves when a list already holds it.
-    assert!(resolve(gd, &assets, EntityKind::Skin, "char_002_amiya#1").is_some());
+    assert!(
+        resolve(
+            gd,
+            &assets,
+            &StoryCatalogues::NONE,
+            EntityKind::Skin,
+            "char_002_amiya#1"
+        )
+        .is_some()
+    );
     let no_brand = skins
         .iter()
         .filter(|s| !s.facets.contains_key("brand"))
@@ -298,7 +402,7 @@ fn default_skins_and_original_modules_are_not_offered() {
         gd.skins.char_skins.len()
     );
 
-    let modules = catalogue(gd, &assets, EntityKind::Module);
+    let modules = catalogue(gd, &assets, &StoryCatalogues::NONE, EntityKind::Module);
     let originals = gd
         .modules
         .equip_dict
@@ -310,7 +414,14 @@ fn default_skins_and_original_modules_are_not_offered() {
         modules.len(),
         gd.modules.equip_dict.len()
     );
-    assert!(validate([(gd, &assets)], EntityKind::Module, "uniequip_001_amiya").is_err());
+    assert!(
+        validate(
+            [(gd, &assets, &StoryCatalogues::NONE)],
+            EntityKind::Module,
+            "uniequip_001_amiya"
+        )
+        .is_err()
+    );
     let mut by_type: BTreeMap<&str, usize> = BTreeMap::new();
     for m in &modules {
         *by_type
@@ -333,7 +444,7 @@ fn story_sprites_are_one_per_character_and_mostly_named() {
     let started = std::time::Instant::now();
     let assets = en_assets();
     println!("asset index built in {} ms", started.elapsed().as_millis());
-    let sprites = catalogue(gd, &assets, EntityKind::StorySprite);
+    let sprites = catalogue(gd, &assets, &StoryCatalogues::NONE, EntityKind::StorySprite);
     let operators = sprites
         .iter()
         .filter(|s| facet(&s.facets, "source") == Some("operator"))
@@ -352,11 +463,32 @@ fn story_sprites_are_one_per_character_and_mostly_named() {
         "story sprites {}: {operators} operators, {named} named, {with_face} with a face position, {shared} names shared by more than one",
         sprites.len()
     );
-    let kalts = resolve(gd, &assets, EntityKind::StorySprite, "char_003_kalts").expect("Kal'tsit");
+    let kalts = resolve(
+        gd,
+        &assets,
+        &StoryCatalogues::NONE,
+        EntityKind::StorySprite,
+        "char_003_kalts",
+    )
+    .expect("Kal'tsit");
     assert_eq!(kalts.name, "Kal'tsit");
-    assert!(validate([(gd, &assets)], EntityKind::StorySprite, "char_003_kalts").is_ok());
+    assert!(
+        validate(
+            [(gd, &assets, &StoryCatalogues::NONE)],
+            EntityKind::StorySprite,
+            "char_003_kalts"
+        )
+        .is_ok()
+    );
     // Sprites are checked against the extract: a folder-shaped id it lacks is refused.
-    assert!(validate([(gd, &assets)], EntityKind::StorySprite, "avg_npc_999999").is_err());
+    assert!(
+        validate(
+            [(gd, &assets, &StoryCatalogues::NONE)],
+            EntityKind::StorySprite,
+            "avg_npc_999999"
+        )
+        .is_err()
+    );
     assert_eq!(facet(&kalts.facets, "source"), Some("operator"));
     // The tile art is the head-and-shoulders thumbnail, not the whole plate.
     assert_eq!(
@@ -391,7 +523,7 @@ fn story_sprites_are_one_per_character_and_mostly_named() {
 fn skills_are_one_per_operator_slot() {
     let gd = common::load_game_data();
     let assets = en_assets();
-    let skills = catalogue(gd, &assets, EntityKind::Skill);
+    let skills = catalogue(gd, &assets, &StoryCatalogues::NONE, EntityKind::Skill);
     let mut by_slot: BTreeMap<&str, usize> = BTreeMap::new();
     let mut by_sp: BTreeMap<&str, usize> = BTreeMap::new();
     for s in &skills {
@@ -413,6 +545,7 @@ fn skills_are_one_per_operator_slot() {
         resolve(
             gd,
             &assets,
+            &StoryCatalogues::NONE,
             EntityKind::Skill,
             "char_002_amiya:skchr_amiya_2"
         )
@@ -422,20 +555,27 @@ fn skills_are_one_per_operator_slot() {
     // A real skill id under the wrong operator is not an entry.
     assert!(
         validate(
-            [(gd, &assets)],
+            [(gd, &assets, &StoryCatalogues::NONE)],
             EntityKind::Skill,
             "char_003_kalts:skchr_amiya_2"
         )
         .is_err()
     );
-    assert!(validate([(gd, &assets)], EntityKind::Skill, "skchr_amiya_2").is_err());
+    assert!(
+        validate(
+            [(gd, &assets, &StoryCatalogues::NONE)],
+            EntityKind::Skill,
+            "skchr_amiya_2"
+        )
+        .is_err()
+    );
 }
 
 #[test]
 fn main_story_is_one_entry_per_episode_in_order() {
     let gd = common::load_game_data();
     let assets = en_assets();
-    let episodes = catalogue(gd, &assets, EntityKind::MainStory);
+    let episodes = catalogue(gd, &assets, &StoryCatalogues::NONE, EntityKind::MainStory);
     let numbers: Vec<Option<&str>> = episodes
         .iter()
         .map(|e| facet(&e.facets, "episode"))
@@ -469,10 +609,24 @@ fn main_story_is_one_entry_per_episode_in_order() {
     // Four acts, the `chapter_table` ones, every episode in one.
     assert_eq!(by_act.len(), 4, "{by_act:?}");
     assert!(!by_act.contains_key("?"));
-    let ep15 = resolve(gd, &assets, EntityKind::MainStory, "main_15").expect("main_15");
+    let ep15 = resolve(
+        gd,
+        &assets,
+        &StoryCatalogues::NONE,
+        EntityKind::MainStory,
+        "main_15",
+    )
+    .expect("main_15");
     assert_eq!(facet(&ep15.facets, "act"), Some("3"));
     // A side story is not a main story episode.
-    assert!(validate([(gd, &assets)], EntityKind::MainStory, "act17side").is_err());
+    assert!(
+        validate(
+            [(gd, &assets, &StoryCatalogues::NONE)],
+            EntityKind::MainStory,
+            "act17side"
+        )
+        .is_err()
+    );
 }
 
 /// Home backgrounds on EN 2026-10-20: 28 in the lobby's order, 2 of them
@@ -482,7 +636,7 @@ fn main_story_is_one_entry_per_episode_in_order() {
 fn backgrounds_are_the_lobby_list_in_order() {
     let gd = common::load_game_data();
     let assets = en_assets();
-    let bgs = catalogue(gd, &assets, EntityKind::Background);
+    let bgs = catalogue(gd, &assets, &StoryCatalogues::NONE, EntityKind::Background);
     let no_icon: Vec<&str> = bgs
         .iter()
         .filter(|b| b.icon.is_none())
@@ -504,11 +658,24 @@ fn backgrounds_are_the_lobby_list_in_order() {
     if story_art_present() {
         assert!(no_icon.len() <= 1, "{no_icon:?}");
     }
-    let volcano =
-        resolve(gd, &assets, EntityKind::Background, "bg_volcano_1").expect("bg_volcano_1");
+    let volcano = resolve(
+        gd,
+        &assets,
+        &StoryCatalogues::NONE,
+        EntityKind::Background,
+        "bg_volcano_1",
+    )
+    .expect("bg_volcano_1");
     assert_eq!(facet(&volcano.facets, "bg_type"), Some("dynamic"));
     // A theme is not a background.
-    assert!(validate([(gd, &assets)], EntityKind::Background, "tm_rhodes_day").is_err());
+    assert!(
+        validate(
+            [(gd, &assets, &StoryCatalogues::NONE)],
+            EntityKind::Background,
+            "tm_rhodes_day"
+        )
+        .is_err()
+    );
 }
 
 /// The operator pool's race, nation and faction facets: the values the
@@ -518,10 +685,95 @@ fn backgrounds_are_the_lobby_list_in_order() {
 /// 12 and Rhodes Island 86, group Rhine Lab 12. No operator has both a group
 /// and a team (77 and 54), so the picker's one Faction value per operator
 /// loses nothing. Floors, as above: game updates only add operators.
+/// The story picture kinds take the ids a profile background stores, and
+/// read nothing off a server whose snapshot lacks them.
+#[test]
+fn story_pictures_take_the_profile_background_ids() {
+    let gd = common::load_game_data();
+    let assets = en_assets();
+    let story = story();
+    let pic = resolve(
+        gd,
+        &assets,
+        story,
+        EntityKind::ArchivePic,
+        "act13side_pic_0",
+    )
+    .expect("act13side_pic_0");
+    assert_eq!(facet(&pic.facets, "group_id"), Some("act13side"));
+    assert_eq!(facet(&pic.facets, "picture_type"), Some("IMAGE"));
+    let groups: HashSet<String> = catalogue(gd, &assets, story, EntityKind::ArchivePic)
+        .iter()
+        .filter_map(|s| facet(&s.facets, "group_id").map(str::to_owned))
+        .collect();
+    println!("archive_pic groups: {groups:?}");
+    if story_art_present() {
+        assert_eq!(
+            pic.icon.as_deref(),
+            Some("/story/gallery/act13side_pic_0/thumb")
+        );
+    }
+    assert!(
+        validate(
+            [(gd, &assets, story)],
+            EntityKind::ArchivePic,
+            "act13side_pic_0"
+        )
+        .is_ok()
+    );
+    // The same id on a server whose snapshot holds no gallery.
+    assert!(
+        validate(
+            [(gd, &assets, &StoryCatalogues::NONE)],
+            EntityKind::ArchivePic,
+            "act13side_pic_0"
+        )
+        .is_err()
+    );
+    // Kinds do not share an id space: a gallery picture is not a story CG.
+    assert!(
+        validate(
+            [(gd, &assets, story)],
+            EntityKind::StoryCg,
+            "act13side_pic_0"
+        )
+        .is_err()
+    );
+    if !story_pictures_present() {
+        return;
+    }
+    for kind in [EntityKind::StoryCg, EntityKind::StoryScene] {
+        let cat = catalogue(gd, &assets, story, kind);
+        let first = cat.first().expect("a picture");
+        let art = if kind == EntityKind::StoryCg {
+            "cg"
+        } else {
+            "scene"
+        };
+        assert_eq!(
+            first.icon.as_deref(),
+            Some(format!("/story/art-gallery/{art}/{}/thumb", first.id).as_str())
+        );
+        assert!(first.facets.contains_key("group"));
+        assert!(first.facets.contains_key("category"));
+        println!(
+            "{}: first `{}` in `{}`",
+            kind.as_str(),
+            first.id,
+            first.name
+        );
+    }
+}
+
 #[test]
 fn operators_carry_race_nation_and_faction_facets() {
     let gd = common::load_game_data();
-    let cat = catalogue(gd, &en_assets(), EntityKind::Operator);
+    let cat = catalogue(
+        gd,
+        &en_assets(),
+        &StoryCatalogues::NONE,
+        EntityKind::Operator,
+    );
     let count = |pred: &dyn Fn(&BTreeMap<String, FacetValue>) -> bool| {
         cat.iter().filter(|s| pred(&s.facets)).count()
     };
@@ -583,7 +835,7 @@ fn dump_every_catalogue() {
     let gd = common::load_game_data();
     let assets = en_assets();
     for kind in EntityKind::ALL.iter().copied() {
-        let cat = catalogue(gd, &assets, kind);
+        let cat = catalogue(gd, &assets, &StoryCatalogues::NONE, kind);
         let json = serde_json::to_string_pretty(&cat).expect("json");
         std::fs::write(dir.join(format!("{}.json", kind.as_str())), json).expect("write");
     }

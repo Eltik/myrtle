@@ -18,8 +18,8 @@ use ts_rs::TS;
 use uuid::Uuid;
 
 use crate::app::error::ApiError;
-use crate::app::services::tier_entity::{self, EntitySummary, FacetValue};
-use crate::app::services::tier_list::{generate_slug, validate_entity};
+use crate::app::services::tier_entity::{self, EntitySummary, FacetValue, StoryCatalogues};
+use crate::app::services::tier_list::{generate_slug, loaded_sources};
 use crate::app::state::AppState;
 use crate::app::validation::{validate_length, validate_opt_length};
 use crate::core::auth::permissions::GlobalRole;
@@ -198,7 +198,8 @@ pub async fn get(
     viewer: Viewer,
 ) -> Result<Grid, ApiError> {
     let row = load(state, slug).await?;
-    Ok(to_grid(row, viewer, &Resolver::new(state, server)))
+    let resolver = Resolver::new(state, server, &picked_kinds(std::slice::from_ref(&row))).await;
+    Ok(to_grid(row, viewer, &resolver))
 }
 
 /// One page of listed grids, `q` matching anywhere in the title.
@@ -223,7 +224,7 @@ pub async fn list(
     )
     .await?;
     Ok(GridListResponse {
-        items: summaries(state, rows, server),
+        items: summaries(state, rows, server).await,
         total,
         page,
         per_page,
@@ -237,7 +238,7 @@ pub async fn mine(
     server: Server,
 ) -> Result<Vec<GridSummary>, ApiError> {
     let rows = queries::find_by_user(&state.db, user_id).await?;
-    Ok(summaries(state, rows, server))
+    Ok(summaries(state, rows, server).await)
 }
 
 pub async fn create(
@@ -248,7 +249,7 @@ pub async fn create(
     server: Server,
 ) -> Result<Grid, ApiError> {
     let doc = checked(input)?;
-    validate_entities(state, &doc.cells, &[])?;
+    validate_entities(state, &doc.cells, &[]).await?;
     let slug = insert_capped(state, &doc, user_id, None).await?;
     get(state, &slug, server, Some((user_id, role))).await
 }
@@ -267,7 +268,7 @@ pub async fn update(
     let row = load_editable(state, slug, user_id, role).await?;
     let doc = checked(input)?;
     check_locked_kinds(&row, &doc.entity_kinds)?;
-    validate_entities(state, &doc.cells, &row.cells.0)?;
+    validate_entities(state, &doc.cells, &row.cells.0).await?;
     queries::update(&state.db, row.id, &doc).await?;
     get(state, slug, server, Some((user_id, role))).await
 }
@@ -479,18 +480,40 @@ fn checked_cell(
 }
 
 /// Every pick some loaded server knows, except those `kept` already holds.
-fn validate_entities(
+async fn validate_entities(
     state: &AppState,
     cells: &[StoredCell],
     kept: &[StoredCell],
 ) -> Result<(), ApiError> {
     let held: Vec<_> = kept.iter().filter_map(StoredCell::entity).collect();
-    for (kind, id) in cells.iter().filter_map(StoredCell::entity) {
-        if !held.contains(&(kind, id)) {
-            validate_entity(state, kind, id)?;
-        }
+    let fresh: Vec<_> = cells
+        .iter()
+        .filter_map(StoredCell::entity)
+        .filter(|pick| !held.contains(pick))
+        .collect();
+    if fresh.is_empty() {
+        return Ok(());
+    }
+    let kinds: Vec<EntityKind> = fresh.iter().map(|(kind, _)| *kind).collect();
+    let loaded = loaded_sources(state, &kinds).await;
+    for (kind, id) in fresh {
+        tier_entity::validate(
+            loaded
+                .iter()
+                .map(|(gd, assets, story)| (gd.as_ref(), assets.as_ref(), story)),
+            kind,
+            id,
+        )?;
     }
     Ok(())
+}
+
+/// Every kind `rows` pick, for [`Resolver::new`].
+fn picked_kinds(rows: &[GridRow]) -> Vec<EntityKind> {
+    rows.iter()
+        .flat_map(|row| row.cells.0.iter().filter_map(StoredCell::entity))
+        .map(|(kind, _)| kind)
+        .collect()
 }
 
 /// What a fork starts from: the source's labels and allowed kinds, no picks,
@@ -597,18 +620,32 @@ fn to_cell(cell: StoredCell, resolver: &Resolver) -> GridCell {
     }
 }
 
+/// One server [`Resolver`] reads: `None` marks the reader's own.
+type ResolverSource = (
+    Option<Server>,
+    Arc<GameData>,
+    Arc<AssetIndex>,
+    StoryCatalogues,
+);
+
 /// Game data to resolve picks against: the reader's server first, then every
 /// other loaded server in [`fallback_order`].
 pub(crate) struct Resolver {
-    /// `None` marks the reader's own server.
-    sources: Vec<(Option<Server>, Arc<GameData>, Arc<AssetIndex>)>,
+    sources: Vec<ResolverSource>,
 }
 
 impl Resolver {
-    pub(crate) fn new(state: &AppState, server: Server) -> Self {
+    /// The sources for a reader on `server`, with the story picture
+    /// catalogues `kinds` read gathered from each.
+    pub(crate) async fn new(state: &AppState, server: Server, kinds: &[EntityKind]) -> Self {
         let own = state.server_data(server);
         let mut tried = vec![Arc::clone(&own)];
-        let mut sources = vec![(None, own.game_data.load_full(), own.asset_index.load_full())];
+        let mut sources = vec![(
+            None,
+            own.game_data.load_full(),
+            own.asset_index.load_full(),
+            StoryCatalogues::gather(state, server, kinds).await,
+        )];
         for other in fallback_order(server, &state.config.servers) {
             // Bilibili shares CN's cell; a server already tried adds nothing.
             let Some(data) = state
@@ -626,6 +663,7 @@ impl Resolver {
                 Some(other),
                 data.game_data.load_full(),
                 data.asset_index.load_full(),
+                StoryCatalogues::gather(state, other, kinds).await,
             ));
         }
         Self { sources }
@@ -638,8 +676,8 @@ impl Resolver {
         kind: EntityKind,
         id: &str,
     ) -> Option<(EntitySummary, Option<Server>)> {
-        first_resolved(self.sources.iter(), |(server, gd, assets)| {
-            tier_entity::resolve(gd, assets, kind, id)
+        first_resolved(self.sources.iter(), |(server, gd, assets, story)| {
+            tier_entity::resolve(gd, assets, story, kind, id)
                 .map(|e| (romanize_cn_operator(e, *server), *server))
         })
     }
@@ -720,8 +758,8 @@ fn preview_of(
 }
 
 /// Card summaries of `rows`, previews resolved against `server` first.
-fn summaries(state: &AppState, rows: Vec<GridRow>, server: Server) -> Vec<GridSummary> {
-    let resolver = Resolver::new(state, server);
+async fn summaries(state: &AppState, rows: Vec<GridRow>, server: Server) -> Vec<GridSummary> {
+    let resolver = Resolver::new(state, server, &picked_kinds(&rows)).await;
     rows.into_iter()
         .map(|row| to_summary(row, &resolver))
         .collect()

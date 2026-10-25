@@ -180,7 +180,7 @@ pub fn build_gallery(gd: &GameData, story_assets: &StoryAssetIndex) -> StoryGall
 /// The catalogue plus the asset index it resolved against, so an asset hot
 /// reload rebuilds it as a game-data reload does.
 struct Cached {
-    gallery: StoryGallery,
+    gallery: Arc<StoryGallery>,
     assets: Weak<AssetIndex>,
 }
 
@@ -191,6 +191,18 @@ static GALLERY: ServerCache<Cached> = ServerCache::new();
 /// # Errors
 /// `404` for a server that is not loaded, `503` when the CPU pool sheds.
 pub async fn get_gallery(state: &AppState, server: Server) -> Result<StoryGallery, ApiError> {
+    Ok(StoryGallery::clone(&*gallery_shared(state, server).await?))
+}
+
+/// [`get_gallery`] without the copy: the cached catalogue itself, for a
+/// caller that only reads it (the tier list `archive_pic` kind).
+///
+/// # Errors
+/// As [`get_gallery`].
+pub async fn gallery_shared(
+    state: &AppState,
+    server: Server,
+) -> Result<Arc<StoryGallery>, ApiError> {
     let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
     let gd = sd.game_data.load_full();
     let trees = StoryTrees::of(&sd);
@@ -205,7 +217,7 @@ pub async fn get_gallery(state: &AppState, server: Server) -> Result<StoryGaller
                 cpu::run("story_gallery", move || {
                     let story_assets = trees.story_assets();
                     Arc::new(Cached {
-                        gallery: build_gallery(&build_gd, &story_assets),
+                        gallery: Arc::new(build_gallery(&build_gd, &story_assets)),
                         assets: Arc::downgrade(&trees.live),
                     })
                 })
@@ -213,7 +225,7 @@ pub async fn get_gallery(state: &AppState, server: Server) -> Result<StoryGaller
             },
         )
         .await?;
-    Ok(cached.gallery.clone())
+    Ok(Arc::clone(&cached.gallery))
 }
 
 /// Scale `png` to `width` (height by its aspect) as RGB on black, JPEG.
@@ -267,7 +279,7 @@ pub async fn ensure_picture(
     size: GallerySize,
 ) -> Result<(String, String), ApiError> {
     for srv in with_default_fallback(state, server) {
-        let Ok(gallery) = get_gallery(state, srv).await else {
+        let Ok(gallery) = gallery_shared(state, srv).await else {
             continue;
         };
         let Some(url) = gallery

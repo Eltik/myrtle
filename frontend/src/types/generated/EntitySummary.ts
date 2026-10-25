@@ -42,7 +42,12 @@ export type EntitySummary = {
      * main story episodes `episode` (`0` to `16` on EN), `act` (the
      * `chapter_table` index) and `act_name`; home backgrounds `bg_type`
      * (`base` or `dynamic`), `obtain` (the server's own wording) and, when it
-     * has one, `start_time` (unix seconds).
+     * has one, `start_time` (unix seconds). Story CGs and scenes carry their
+     * library group's `group` (name), `group_id` and `category` (`main`,
+     * `side`, `vignette`, `is`, `reclamation`, `sideContent`, `record`);
+     * Archives pictures their archive's `group` (the event's or theme's
+     * name), `group_id` (`act13side`, `rogue_1`) and `picture_type`
+     * (`IMAGE`, `ENDING_IMAGE`, `ROGUE_IMAGE`, raw from the table).
      */
     facets: { [key in string]?: FacetValue };
 };

@@ -38,6 +38,8 @@ const relic = entity({ kind: "integrated_strategies", id: "rogue_1_relic_a01", n
 const moduleArt = entity({ kind: "module", id: "uniequip_002_hsguma", name: "Stick and Sack", icon: "/assets/textures/spritepack/ui_equip_big_img_hub_0/uniequip_002_hsguma.png", facets: { char_id: "char_136_hsguma", operator: "Hoshiguma", module_type: "X", type_code: "PRO" } });
 const moduleBadge = entity({ kind: "module", id: "uniequip_002_x", name: "Badge only", icon: "/assets/textures/spritepack/ui_equip_type_direction_hub_h2_0/pro-x.png", facets: { char_id: "char_x", module_type: "X" } });
 const sprite = entity({ kind: "story_sprite", id: "avg_npc_005", name: "Old Man", icon: "/story-sprite-thumb/avg_npc_005", facets: { source: "npc" } });
+const storyCg = entity({ kind: "story_cg", id: "avg_1_1", name: "Evil Time Part 1", icon: "/story/art-gallery/cg/avg_1_1/thumb", facets: { group: "Evil Time Part 1", group_id: "main_0", category: "main" } });
+const archivePic = entity({ kind: "archive_pic", id: "pic_rogue_1_34", name: "Curtain Fall", icon: "/story/gallery/pic_rogue_1_34/thumb", facets: { group: "Phantom & Crimson Solitaire", group_id: "rogue_1", picture_type: "ENDING_IMAGE" } });
 
 function wrap(children: ReactNode) {
     return (
@@ -77,6 +79,11 @@ describe("toTierEntity", () => {
         expect(entity({ kind: "main_story", id: "main_99", name: "Unnumbered", icon: null, facets: {} })).toMatchObject({ episode: null, act: null, actName: null });
         expect(entity({ kind: "background", id: "bg_volcano_1", name: "Springbay", icon: null, facets: { bg_type: "dynamic", obtain: "Purchase Pack" } })).toMatchObject({ bgType: "dynamic", obtain: "Purchase Pack" });
         expect(entity({ kind: "background", id: "bg_rhodes_day", name: "Vision", icon: null, facets: {} })).toMatchObject({ bgType: "base", obtain: null });
+        expect(storyCg).toMatchObject({ kind: "story_cg", groupId: "main_0", groupName: "Evil Time Part 1", category: "main" });
+        expect(entity({ kind: "story_scene", id: "bg_corridor", name: "Some Story", icon: null, facets: { group: "Some Story", group_id: "act9d0", category: "sideContent" } })).toMatchObject({ kind: "story_scene", groupId: "act9d0", category: "sideContent" });
+        // A category this build does not know reads as none, not as a wrong one.
+        expect(entity({ kind: "story_scene", id: "bg_x", name: "X", icon: null, facets: { group_id: "x", category: "newCategory" } })).toMatchObject({ category: null, groupName: null });
+        expect(archivePic).toMatchObject({ kind: "archive_pic", groupId: "rogue_1", groupName: "Phantom & Crimson Solitaire", pictureType: "ENDING_IMAGE" });
     });
 
     it("numbers Integrated Strategies themes the way the game does, one past the table", () => {
@@ -85,8 +92,8 @@ describe("toTierEntity", () => {
         expect(integratedStrategiesNumber("nonsense")).toBeNull();
     });
 
-    it("only an event is wide", () => {
-        expect(entityShape(event)).toBe("wide");
+    it("only an event, a background and the story and Archives pictures are wide", () => {
+        expect([event, storyCg, archivePic].map(entityShape)).toEqual(["wide", "wide", "wide"]);
         expect([faction, enemy, bond, operator].map(entityShape)).toEqual(["square", "square", "square", "square"]);
     });
 });
@@ -147,6 +154,16 @@ describe("EntityAvatar", () => {
             </I18nProvider>,
         );
         expect(container.querySelector("img")?.getAttribute("src")).toBe(`${BASE}/api/cn/enemy-icon/enemy_1007_slime`);
+    });
+
+    it("reads a story picture's thumb off its server-neutral route, never the asset store", () => {
+        const { container } = render(
+            <I18nProvider locale="en" available={[{ code: "en", nativeName: "English" }]} messages={{}} gamedataServer="cn">
+                <EntityAvatar entity={storyCg} />
+            </I18nProvider>,
+        );
+        expect(container.querySelector("img")?.getAttribute("src")).toBe(`${BASE}/api/cn/story/art-gallery/cg/avg_1_1/thumb`);
+        expect([storyCg, archivePic].map(entityArtFit)).toEqual(["cover", "cover"]);
     });
 
     it("fills the tile with a picture and insets only icon-style art, per the kind registry", () => {
@@ -272,6 +289,22 @@ describe("KindPool", () => {
         expect(screen.getByRole("button", { name: "IS2" })).toBeTruthy();
         expect(screen.getByRole("button", { name: "IS3" })).toBeTruthy();
         expect(screen.getByRole("button", { name: "Collectible" })).toBeTruthy();
+    });
+
+    it("files story CGs by category and story, and Archives pictures by archive and type", () => {
+        const cgs: ITierEntity[] = [storyCg, entity({ kind: "story_cg", id: "avg_act9d0_1", name: "Who Is Real", icon: null, facets: { group: "Who Is Real", group_id: "act9d0", category: "side" } })];
+        const { container, unmount } = render(wrap(<KindPool kind="story_cg" entities={cgs} status="success" placedKeys={new Set()} onUnplace={() => {}} onPickerActivate={() => {}} />));
+        expect(screen.getByText("Story CG pool")).toBeTruthy();
+        expect(container.querySelectorAll("[data-kind='story_cg'][data-shape='wide']").length).toBe(2);
+        fireEvent.click(screen.getByRole("button", { name: /expand/i }));
+        expect(screen.getByRole("button", { name: "Main Story" })).toBeTruthy();
+        expect(screen.getByRole("button", { name: "Side Story" })).toBeTruthy();
+        expect(screen.queryByRole("button", { name: "Vignette" })).toBeNull();
+        unmount();
+        render(wrap(<KindPool kind="archive_pic" entities={[archivePic]} status="success" placedKeys={new Set()} onUnplace={() => {}} onPickerActivate={() => {}} />));
+        fireEvent.click(screen.getByRole("button", { name: /expand/i }));
+        expect(screen.getByRole("button", { name: "Ending" })).toBeTruthy();
+        expect(screen.getByRole("button", { name: "Illustration" })).toBeTruthy();
     });
 
     it("shows a loading state, not an empty one, while a catalogue loads", () => {

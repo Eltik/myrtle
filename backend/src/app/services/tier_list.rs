@@ -1,7 +1,7 @@
 use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
-use crate::app::services::tier_entity::{self, EntitySummary};
-use crate::app::state::AppState;
+use crate::app::services::tier_entity::{self, EntitySummary, StoryCatalogues};
+use crate::app::state::{AppState, ServerData};
 use crate::core::auth::permissions::{GlobalRole, Permission};
 use crate::core::gamedata::assets::AssetIndex;
 use crate::core::gamedata::types::GameData;
@@ -26,6 +26,7 @@ use crate::database::queries::tier_lists::update;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
+use std::sync::Arc;
 use ts_rs::TS;
 use uuid::Uuid;
 
@@ -112,11 +113,20 @@ pub fn snapshot_of(tiers: &[TierDetail]) -> Vec<TierSnapshot> {
         .collect()
 }
 
-/// A snapshot in the live detail's shape, resolved against `gd` and `assets`.
+/// Every kind `snapshot` places, for [`StoryCatalogues::gather`].
+pub fn snapshot_kinds(snapshot: &[TierSnapshot]) -> impl Iterator<Item = EntityKind> + '_ {
+    snapshot
+        .iter()
+        .flat_map(|t| t.placements.iter().map(|p| p.entity_kind))
+}
+
+/// A snapshot in the live detail's shape, resolved against `gd`, `assets`
+/// and `story`.
 pub fn resolve_snapshot(
     snapshot: Vec<TierSnapshot>,
     gd: &GameData,
     assets: &AssetIndex,
+    story: &StoryCatalogues,
 ) -> Vec<TierDetail> {
     snapshot
         .into_iter()
@@ -125,7 +135,7 @@ pub fn resolve_snapshot(
             placements: t
                 .placements
                 .into_iter()
-                .map(|p| resolve_placement(p, gd, assets))
+                .map(|p| resolve_placement(p, gd, assets, story))
                 .collect(),
         })
         .collect()
@@ -135,47 +145,86 @@ fn resolve_entity(
     placement: &TierPlacement,
     gd: &GameData,
     assets: &AssetIndex,
+    story: &StoryCatalogues,
 ) -> Option<EntitySummary> {
-    tier_entity::resolve(gd, assets, placement.entity_kind, &placement.entity_id)
+    tier_entity::resolve(
+        gd,
+        assets,
+        story,
+        placement.entity_kind,
+        &placement.entity_id,
+    )
 }
 
 fn resolve_placement(
     placement: TierPlacement,
     gd: &GameData,
     assets: &AssetIndex,
+    story: &StoryCatalogues,
 ) -> PlacementDetail {
-    let entity = resolve_entity(&placement, gd, assets);
+    let entity = resolve_entity(&placement, gd, assets, story);
     PlacementDetail { placement, entity }
 }
 
-/// Fill every placement's `entity` from `gd`, icons from `assets`.
-fn resolve_detail(detail: &mut TierListDetail, gd: &GameData, assets: &AssetIndex) {
+/// Fill every placement's `entity` from `gd`, icons from `assets`, story
+/// pictures from `story`.
+fn resolve_detail(
+    detail: &mut TierListDetail,
+    gd: &GameData,
+    assets: &AssetIndex,
+    story: &StoryCatalogues,
+) {
     for tier in &mut detail.tiers {
         for p in &mut tier.placements {
-            p.entity = resolve_entity(&p.placement, gd, assets);
+            p.entity = resolve_entity(&p.placement, gd, assets, story);
         }
     }
 }
 
+/// One loaded server's data, as [`loaded_sources`] gathers it.
+pub type LoadedSource = (Arc<GameData>, Arc<AssetIndex>, StoryCatalogues);
+
+/// Every loaded server's game data and asset index, with the story picture
+/// catalogues `kinds` read: what [`validate_entity`] and the showcase's
+/// read-side check run over.
+pub async fn loaded_sources(state: &AppState, kinds: &[EntityKind]) -> Vec<LoadedSource> {
+    // Bilibili shares CN's cell: one read of it is enough.
+    let mut seen: Vec<&Arc<ServerData>> = Vec::new();
+    let mut loaded = Vec::new();
+    for (server, sd) in &state.servers {
+        if sd.loaded.load(std::sync::atomic::Ordering::Acquire)
+            && !seen.iter().any(|s| Arc::ptr_eq(s, sd))
+        {
+            seen.push(sd);
+            loaded.push((
+                *server,
+                sd.game_data.load_full(),
+                sd.asset_index.load_full(),
+            ));
+        }
+    }
+    let mut out = Vec::with_capacity(loaded.len());
+    for (server, gd, assets) in loaded {
+        let story = StoryCatalogues::gather(state, server, kinds).await;
+        out.push((gd, assets, story));
+    }
+    out
+}
+
 /// Reject a `(kind, id)` that no loaded server's game data (or, for a story
-/// sprite, asset extract) knows.
+/// sprite, asset extract; for a story picture, story art catalogue) knows.
 ///
 /// Any server, not only the default: a CN-locale editor places operators EN has
 /// not released, and the list must accept what that editor's pool offers.
 ///
 /// # Errors
 /// `400` naming the kind and id.
-pub fn validate_entity(state: &AppState, kind: EntityKind, id: &str) -> Result<(), ApiError> {
-    let loaded: Vec<_> = state
-        .servers
-        .values()
-        .filter(|sd| sd.loaded.load(std::sync::atomic::Ordering::Acquire))
-        .map(|sd| (sd.game_data.load_full(), sd.asset_index.load_full()))
-        .collect();
+pub async fn validate_entity(state: &AppState, kind: EntityKind, id: &str) -> Result<(), ApiError> {
+    let loaded = loaded_sources(state, &[kind]).await;
     tier_entity::validate(
         loaded
             .iter()
-            .map(|(gd, assets)| (gd.as_ref(), assets.as_ref())),
+            .map(|(gd, assets, story)| (gd.as_ref(), assets.as_ref(), story)),
         kind,
         id,
     )
@@ -188,7 +237,7 @@ fn assemble_details(
     stats: Vec<TierListStats>,
     flairs: Vec<TierListFlair>,
     authors: Vec<TierListAuthor>,
-    (gd, assets): (&GameData, &AssetIndex),
+    (gd, assets, story): (&GameData, &AssetIndex, &StoryCatalogues),
 ) -> Vec<TierListDetail> {
     let mut tiers_by_list: HashMap<Uuid, Vec<Tier>> = HashMap::new();
     for tier in tiers {
@@ -227,7 +276,7 @@ fn assemble_details(
                         .remove(&tier.id)
                         .unwrap_or_default()
                         .into_iter()
-                        .map(|p| resolve_placement(p, gd, assets))
+                        .map(|p| resolve_placement(p, gd, assets, story))
                         .collect();
                     TierDetail { tier, placements }
                 })
@@ -300,10 +349,17 @@ pub async fn get_by_slug(
     server: Server,
 ) -> Result<TierListDetail, ApiError> {
     let mut detail = load_detail(state, slug).await?;
+    let kinds: Vec<_> = detail
+        .tiers
+        .iter()
+        .flat_map(|t| t.placements.iter().map(|p| p.placement.entity_kind))
+        .collect();
+    let story = StoryCatalogues::gather(state, server, &kinds).await;
     resolve_detail(
         &mut detail,
         &state.game_data(server),
         &state.asset_index(server),
+        &story,
     );
     Ok(detail)
 }
@@ -421,6 +477,8 @@ pub async fn list_details(
         tokio::try_join!(tiers_fut, stats_fut, flairs_fut, authors_fut)?;
     let tier_ids: Vec<Uuid> = tiers.iter().map(|tier| tier.id).collect();
     let placements = get_placements_for_tiers(&state.db, &tier_ids).await?;
+    let kinds: Vec<_> = placements.iter().map(|p| p.entity_kind).collect();
+    let story = StoryCatalogues::gather(state, server, &kinds).await;
 
     Ok(assemble_details(
         lists,
@@ -429,7 +487,7 @@ pub async fn list_details(
         stats,
         flairs,
         authors,
-        (&state.game_data(server), &state.asset_index(server)),
+        (&state.game_data(server), &state.asset_index(server), &story),
     ))
 }
 

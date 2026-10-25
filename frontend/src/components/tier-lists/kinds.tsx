@@ -5,6 +5,7 @@ import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { formatProfession, professionLabel, RARITY_HEX_MUTED } from "#/lib/utils";
 import type { FacetValue } from "#/types/generated/FacetValue";
+import type { StoryCategory } from "#/types/generated/StoryCategory";
 import type { OperatorProfession } from "#/types/operators";
 import type { messages } from "./kinds.messages";
 import { factionOptions, nationOptions, operatorFaction, raceOptions } from "./operatorFacets";
@@ -94,6 +95,8 @@ const RARITY_OPTIONS = [6, 5, 4, 3, 2, 1] as const;
 const SKILL_SLOTS = [1, 2, 3];
 const MODULE_LETTERS = ["X", "Y", "D", "A", "B"];
 const EVENT_TYPES = ["SIDESTORY", "MINISTORY", "BRANCHLINE", "NONE"];
+/** The library categories in the Stories tab's order. */
+const STORY_CATEGORY_ORDER: readonly StoryCategory[] = ["main", "side", "vignette", "is", "reclamation", "sideContent", "record"];
 /** The Integrated Strategies item types in the order the type filter lists them; a type the data adds later follows these. */
 const IS_ITEM_ORDER = ["theme", "band", "relic", "active_tool", "explore_tool", "capsule", "totem", "fragment", "wrath", "copper"];
 
@@ -210,6 +213,68 @@ function facetList(value: FacetValue | undefined): string[] {
 
 function backgroundTypeLabel(t: KindT, bgType: ITierEntityOf<"background">["bgType"]): string {
     return bgType === "dynamic" ? t("entity.bgType.dynamic") : t("entity.bgType.base");
+}
+
+/** A library category's name; a category this build does not know reads as Other. */
+function storyCategoryLabel(t: KindT, category: StoryCategory | null): string {
+    switch (category) {
+        case "main":
+            return t("entity.storyCategory.main");
+        case "side":
+            return t("entity.storyCategory.side");
+        case "vignette":
+            return t("entity.storyCategory.vignette");
+        case "is":
+            return t("entity.storyCategory.is");
+        case "reclamation":
+            return t("entity.storyCategory.reclamation");
+        case "record":
+            return t("entity.storyCategory.record");
+        default:
+            return t("entity.storyCategory.sideContent");
+    }
+}
+
+/** An Archives picture is an ending (`ENDING_IMAGE`) or an illustration (`IMAGE`, `ROGUE_IMAGE`). */
+function archiveTypeOf(e: ITierEntityOf<"archive_pic">): "ending" | "illustration" {
+    return e.pictureType === "ENDING_IMAGE" ? "ending" : "illustration";
+}
+
+function archiveTypeLabel(t: KindT, type: "ending" | "illustration"): string {
+    return type === "ending" ? t("entity.archiveType.ending") : t("entity.archiveType.illustration");
+}
+
+/** The stories (or archives) `catalogue` files pictures under, in its own order, each named once. */
+function groupOptions(catalogue: readonly (ITierEntityOf<"story_cg"> | ITierEntityOf<"story_scene"> | ITierEntityOf<"archive_pic">)[]): IFacetOption[] {
+    const groups = new Map<string, string>();
+    for (const e of catalogue) if (e.groupId && !groups.has(e.groupId)) groups.set(e.groupId, e.groupName ?? e.groupId);
+    return [...groups].map(([value, label]) => ({ value, label }));
+}
+
+/** The story category filter of a story CG or scene pool: the categories `catalogue` has, in the Stories tab's order. */
+function storyCategoryFacet<K extends TierEntityKind>(t: KindT, inCatalogue: readonly (StoryCategory | null)[], read: (entity: ITierEntityOf<K>) => string | null): IKindFacet<K> {
+    const held = new Set(inCatalogue);
+    return {
+        id: "category",
+        label: t("edit.pool.category"),
+        groupLabel: t("edit.pool.category.group"),
+        variant: "text",
+        options: STORY_CATEGORY_ORDER.filter((c) => held.has(c)).map((c) => ({ value: c, label: storyCategoryLabel(t, c) })),
+        valueOf: read,
+    };
+}
+
+/** The story filter of a story CG or scene pool: a dropdown of the stories `catalogue` files pictures under. */
+function storyFacet<K extends TierEntityKind>(t: KindT, options: IFacetOption[], read: (entity: ITierEntityOf<K>) => string | null): IKindFacet<K> {
+    return {
+        id: "story",
+        label: t("edit.pool.story"),
+        groupLabel: t("edit.pool.story.group"),
+        variant: "menu",
+        placeholder: t("edit.pool.story.placeholder"),
+        options,
+        valueOf: read,
+    };
 }
 
 function spriteSourceLabel(t: KindT, source: ITierEntityOf<"story_sprite">["source"]): string {
@@ -588,6 +653,76 @@ export const KIND_DEFINITIONS: { [K in TierEntityKind]: IKindDefinition<K> } = {
                 },
             ],
             searchTexts: (e) => [e.name, e.obtain],
+        }),
+    },
+    story_cg: {
+        plural: (t) => t("entity.kinds.story_cg"),
+        singular: (t) => t("entity.kind.story_cg"),
+        description: (t) => t("edit.kinds.desc.story_cg"),
+        shape: "wide",
+        detail: (e, t) => [storyCategoryLabel(t, e.category)],
+        pool: (t, catalogue) => ({
+            ...poolLabels(t, t("edit.pool.kicker.story_cg"), t("edit.pool.search.story_cg"), t("edit.pool.grid.story_cg")),
+            facets: [
+                storyCategoryFacet(
+                    t,
+                    catalogue.map((e) => e.category),
+                    (e) => e.category,
+                ),
+                storyFacet(t, groupOptions(catalogue), (e) => e.groupId || null),
+            ],
+            // A CG has no title: its story's name, or the asset key the scripts name it by.
+            searchTexts: (e) => [e.name, e.id],
+        }),
+    },
+    story_scene: {
+        plural: (t) => t("entity.kinds.story_scene"),
+        singular: (t) => t("entity.kind.story_scene"),
+        description: (t) => t("edit.kinds.desc.story_scene"),
+        shape: "wide",
+        detail: (e, t) => [storyCategoryLabel(t, e.category)],
+        pool: (t, catalogue) => ({
+            ...poolLabels(t, t("edit.pool.kicker.story_scene"), t("edit.pool.search.story_scene"), t("edit.pool.grid.story_scene")),
+            facets: [
+                storyCategoryFacet(
+                    t,
+                    catalogue.map((e) => e.category),
+                    (e) => e.category,
+                ),
+                storyFacet(t, groupOptions(catalogue), (e) => e.groupId || null),
+            ],
+            // A scene has no title: its story's name, or the asset key the scripts name it by (`bg_corridor`).
+            searchTexts: (e) => [e.name, e.id],
+        }),
+    },
+    archive_pic: {
+        plural: (t) => t("entity.kinds.archive_pic"),
+        singular: (t) => t("entity.kind.archive_pic"),
+        description: (t) => t("edit.kinds.desc.archive_pic"),
+        shape: "wide",
+        detail: (e, t) => [...present(e.groupName), archiveTypeLabel(t, archiveTypeOf(e))],
+        pool: (t, catalogue) => ({
+            ...poolLabels(t, t("edit.pool.kicker.archive_pic"), t("edit.pool.search.archive_pic"), t("edit.pool.grid.archive_pic")),
+            facets: [
+                {
+                    id: "archive",
+                    label: t("edit.pool.archive"),
+                    groupLabel: t("edit.pool.archive.group"),
+                    variant: "menu",
+                    placeholder: t("edit.pool.archive.placeholder"),
+                    options: groupOptions(catalogue),
+                    valueOf: (e) => e.groupId || null,
+                },
+                {
+                    id: "type",
+                    label: t("edit.pool.type"),
+                    groupLabel: t("edit.pool.type.group"),
+                    variant: "text",
+                    options: (["illustration", "ending"] as const).map((v) => ({ value: v, label: archiveTypeLabel(t, v) })),
+                    valueOf: archiveTypeOf,
+                },
+            ],
+            searchTexts: (e) => [e.name, e.groupName],
         }),
     },
 };

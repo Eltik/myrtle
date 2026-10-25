@@ -68,7 +68,7 @@ pub async fn add(
     )?;
     let user_id: Uuid = auth.user_uuid()?;
     let list = find_and_authorize(&state, &slug, user_id, auth.role, Permission::Edit).await?;
-    validate_entity(&state, body.entity_kind, &body.entity_id)?;
+    validate_entity(&state, body.entity_kind, &body.entity_id).await?;
     let entity = EntityRef {
         kind: body.entity_kind,
         id: &body.entity_id,

@@ -15,7 +15,9 @@ mod common;
 
 use std::path::{Path, PathBuf};
 
-use backend::app::services::tier_entity::{FacetValue, catalogue, resolve, validate};
+use backend::app::services::tier_entity::{
+    FacetValue, StoryCatalogues, catalogue, resolve, validate,
+};
 use backend::core::gamedata::assets::AssetIndex;
 use backend::database::models::tier_list::EntityKind;
 
@@ -35,13 +37,19 @@ fn en_story_cast_has_every_bare_avg_npc_character() {
     }
     let gd = common::load_game_data();
     let assets = AssetIndex::build(&server_dir("en"));
-    let cast = catalogue(gd, &assets, EntityKind::StorySprite);
+    let cast = catalogue(gd, &assets, &StoryCatalogues::NONE, EntityKind::StorySprite);
     println!("EN story sprites {}", cast.len());
     assert!(cast.len() >= 1633, "{} story sprites", cast.len());
 
     let sprite = |id: &str| {
-        resolve(gd, &assets, EntityKind::StorySprite, id)
-            .unwrap_or_else(|| panic!("story sprite `{id}` does not resolve"))
+        resolve(
+            gd,
+            &assets,
+            &StoryCatalogues::NONE,
+            EntityKind::StorySprite,
+            id,
+        )
+        .unwrap_or_else(|| panic!("story sprite `{id}` does not resolve"))
     };
     let maria = sprite("avg_npc_061");
     assert_eq!(maria.name, "Maria");
@@ -68,7 +76,14 @@ fn en_story_cast_has_every_bare_avg_npc_character() {
             }
         }
     }
-    assert!(validate([(gd, &assets)], EntityKind::StorySprite, "avg_npc_061").is_ok());
+    assert!(
+        validate(
+            [(gd, &assets, &StoryCatalogues::NONE)],
+            EntityKind::StorySprite,
+            "avg_npc_061"
+        )
+        .is_ok()
+    );
     assert!(cast.iter().any(|s| s.id == "avg_npc_061"));
 
     // The ids saved before the fix still resolve, to the same art.

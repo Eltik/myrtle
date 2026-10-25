@@ -44,7 +44,7 @@ export const messages = {
     },
     "edit.pool.type": {
         text: "Type",
-        description: "Label of the type filter (event category, Stronghold bond type, or home-screen background type) in the pool dialog. Rendered uppercase.",
+        description: "Label of the type filter (event category, Stronghold bond type, home-screen background type, or Archives picture type) in the pool dialog. Rendered uppercase.",
     },
     "edit.pool.type.group": {
         text: "Filter by type",
@@ -671,6 +671,151 @@ export const messages = {
     "edit.pool.obtain.placeholder": {
         text: "Any source",
         description: "Prompt inside the background pool's obtain-source dropdown while no source is chosen.",
+    },
+
+    // Shared by the story CG and story scene kinds.
+    "entity.storyCategory.main": {
+        text: "Main Story",
+        description: "Story category of a story CG or scene: it comes from a main story chapter. Used as a pool filter and in hover cards.",
+    },
+    "entity.storyCategory.side": {
+        text: "Side Story",
+        description: "Story category of a story CG or scene: it comes from a side story event. Used as a pool filter and in hover cards.",
+    },
+    "entity.storyCategory.vignette": {
+        text: "Vignette",
+        description: "Story category of a story CG or scene: it comes from a vignette, the game's small seasonal event stories. Used as a pool filter and in hover cards.",
+    },
+    "entity.storyCategory.is": {
+        text: "Integrated Strategies",
+        description: "Story category of a story CG or scene: it comes from an Integrated Strategies story. Game mode name, keep the official translation. Used as a pool filter and in hover cards.",
+    },
+    "entity.storyCategory.reclamation": {
+        text: "Reclamation Algorithm",
+        description: "Story category of a story CG or scene: it comes from a Reclamation Algorithm story. Game mode name, keep the official translation. Used as a pool filter and in hover cards.",
+    },
+    "entity.storyCategory.sideContent": {
+        text: "Other Story",
+        description: "Story category of a story CG or scene: it comes from story content outside the other categories. Used as a pool filter and in hover cards.",
+    },
+    "entity.storyCategory.record": {
+        text: "Operator Record",
+        description: "Story category of a story CG or scene: it comes from an operator's record story. Used as a pool filter and in hover cards.",
+    },
+    "edit.pool.category": {
+        text: "Category",
+        description: "Label of the story category filter (Main Story, Side Story, Vignette...) in the story CG and story scene pools. Rendered uppercase.",
+    },
+    "edit.pool.category.group": {
+        text: "Filter by story category",
+        description: "Accessible name of the row of story category filter buttons.",
+    },
+    "edit.pool.story": {
+        text: "Story",
+        description: "Label of the story CG and story scene pools' filter by the story a picture comes from, a searchable dropdown of story names. Rendered uppercase.",
+    },
+    "edit.pool.story.group": {
+        text: "Filter by story",
+        description: "Accessible name of the story dropdown in the story CG and story scene pools.",
+    },
+    "edit.pool.story.placeholder": {
+        text: "Any story",
+        description: "Prompt inside the story dropdown of the story CG and story scene pools while no story is chosen.",
+    },
+
+    "entity.kinds.story_cg": {
+        text: "Story CGs",
+        description: "Name of a kind of thing a tier list can rank: the full-screen illustrations (CGs) shown during story scenes. Used on pool tabs and in the kinds settings.",
+    },
+    "entity.kind.story_cg": {
+        text: "Story CG",
+        description: "Singular kind label shown small above a story CG's name (the name of the story it comes from) in its hover card.",
+    },
+    "edit.kinds.desc.story_cg": {
+        text: "Illustrations shown during story scenes",
+        description: "One-line explanation under 'Story CGs' in the kinds dialog.",
+    },
+    "edit.pool.kicker.story_cg": {
+        text: "Story CG pool",
+        description: "Small uppercase label above the pool of story CGs that can be dragged onto a tier; also the title of the larger pool dialog.",
+    },
+    "edit.pool.search.story_cg": {
+        text: "Search story CGs",
+        description: "Accessible name of the pool's search box while it lists story CGs.",
+    },
+    "edit.pool.grid.story_cg": {
+        text: "Available story CGs",
+        description: "Accessible name of the grid of story CG tiles in the pool.",
+    },
+
+    "entity.kinds.story_scene": {
+        text: "Story scenes",
+        description: "Name of a kind of thing a tier list can rank: the background plates (locations) story scenes are set against. Used on pool tabs and in the kinds settings.",
+    },
+    "entity.kind.story_scene": {
+        text: "Story scene",
+        description: "Singular kind label shown small above a story scene's name (the name of the story it comes from) in its hover card.",
+    },
+    "edit.kinds.desc.story_scene": {
+        text: "The locations story scenes are set against",
+        description: "One-line explanation under 'Story scenes' in the kinds dialog.",
+    },
+    "edit.pool.kicker.story_scene": {
+        text: "Story scene pool",
+        description: "Small uppercase label above the pool of story scenes that can be dragged onto a tier; also the title of the larger pool dialog.",
+    },
+    "edit.pool.search.story_scene": {
+        text: "Search story scenes",
+        description: "Accessible name of the pool's search box while it lists story scenes.",
+    },
+    "edit.pool.grid.story_scene": {
+        text: "Available story scenes",
+        description: "Accessible name of the grid of story scene tiles in the pool.",
+    },
+
+    "entity.kinds.archive_pic": {
+        text: "Archive pictures",
+        description: "Name of a kind of thing a tier list can rank: the pictures in the game's Archives gallery, from events and Integrated Strategies. Used on pool tabs and in the kinds settings.",
+    },
+    "entity.kind.archive_pic": {
+        text: "Archive picture",
+        description: "Singular kind label shown small above an Archives gallery picture's name in its hover card.",
+    },
+    "edit.kinds.desc.archive_pic": {
+        text: "Archives gallery art from events and Integrated Strategies",
+        description: "One-line explanation under 'Archive pictures' in the kinds dialog. Integrated Strategies is a game mode name, keep the official translation.",
+    },
+    "edit.pool.kicker.archive_pic": {
+        text: "Archive picture pool",
+        description: "Small uppercase label above the pool of Archives gallery pictures that can be dragged onto a tier; also the title of the larger pool dialog.",
+    },
+    "edit.pool.search.archive_pic": {
+        text: "Search archive pictures",
+        description: "Accessible name of the pool's search box while it lists Archives gallery pictures.",
+    },
+    "edit.pool.grid.archive_pic": {
+        text: "Available archive pictures",
+        description: "Accessible name of the grid of Archives gallery picture tiles in the pool.",
+    },
+    "entity.archiveType.illustration": {
+        text: "Illustration",
+        description: "Archives gallery picture type: an illustration from an event or an Integrated Strategies run. Used as a pool filter and in hover cards.",
+    },
+    "entity.archiveType.ending": {
+        text: "Ending",
+        description: "Archives gallery picture type: the illustration of an Integrated Strategies ending. Used as a pool filter and in hover cards.",
+    },
+    "edit.pool.archive": {
+        text: "Archive",
+        description: "Label of the Archives gallery pool's filter by the archive a picture is filed under (an event or an Integrated Strategies theme), a dropdown of their names. Rendered uppercase.",
+    },
+    "edit.pool.archive.group": {
+        text: "Filter by archive",
+        description: "Accessible name of the archive dropdown in the Archives gallery pool.",
+    },
+    "edit.pool.archive.placeholder": {
+        text: "Any archive",
+        description: "Prompt inside the Archives gallery pool's archive dropdown while no archive is chosen.",
     },
 } satisfies MessageMap;
 

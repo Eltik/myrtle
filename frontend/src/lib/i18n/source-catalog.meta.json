@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-25T12:33:48.813Z",
+    "generatedAt": "2026-10-25T13:57:20.122Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -33607,6 +33607,13 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.edit.kinds.desc.archive_pic",
+            "namespace": "tierLists",
+            "source_text": "Archives gallery art from events and Integrated Strategies",
+            "description": "One-line explanation under 'Archive pictures' in the kinds dialog. Integrated Strategies is a game mode name, keep the official translation.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.edit.kinds.desc.background",
             "namespace": "tierLists",
             "source_text": "Home screen backgrounds, standard and dynamic",
@@ -33681,6 +33688,20 @@
             "namespace": "tierLists",
             "source_text": "Outfits from the store and event rewards",
             "description": "One-line explanation under 'Skins' in the kinds dialog. Default and Elite 2 art are not offered.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.kinds.desc.story_cg",
+            "namespace": "tierLists",
+            "source_text": "Illustrations shown during story scenes",
+            "description": "One-line explanation under 'Story CGs' in the kinds dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.kinds.desc.story_scene",
+            "namespace": "tierLists",
+            "source_text": "The locations story scenes are set against",
+            "description": "One-line explanation under 'Story scenes' in the kinds dialog.",
             "placeholders": []
         },
         {
@@ -33863,6 +33884,27 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.edit.pool.archive",
+            "namespace": "tierLists",
+            "source_text": "Archive",
+            "description": "Label of the Archives gallery pool's filter by the archive a picture is filed under (an event or an Integrated Strategies theme), a dropdown of their names. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.archive.group",
+            "namespace": "tierLists",
+            "source_text": "Filter by archive",
+            "description": "Accessible name of the archive dropdown in the Archives gallery pool.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.archive.placeholder",
+            "namespace": "tierLists",
+            "source_text": "Any archive",
+            "description": "Prompt inside the Archives gallery pool's archive dropdown while no archive is chosen.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.edit.pool.brand",
             "namespace": "tierLists",
             "source_text": "Brand",
@@ -33874,6 +33916,20 @@
             "namespace": "tierLists",
             "source_text": "Filter by brand",
             "description": "Accessible name of the row of outfit-brand filter buttons.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.category",
+            "namespace": "tierLists",
+            "source_text": "Category",
+            "description": "Label of the story category filter (Main Story, Side Story, Vignette...) in the story CG and story scene pools. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.category.group",
+            "namespace": "tierLists",
+            "source_text": "Filter by story category",
+            "description": "Accessible name of the row of story category filter buttons.",
             "placeholders": []
         },
         {
@@ -34027,6 +34083,13 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.edit.pool.grid.archive_pic",
+            "namespace": "tierLists",
+            "source_text": "Available archive pictures",
+            "description": "Accessible name of the grid of Archives gallery picture tiles in the pool.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.edit.pool.grid.background",
             "namespace": "tierLists",
             "source_text": "Available backgrounds",
@@ -34097,6 +34160,20 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.edit.pool.grid.story_cg",
+            "namespace": "tierLists",
+            "source_text": "Available story CGs",
+            "description": "Accessible name of the grid of story CG tiles in the pool.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.grid.story_scene",
+            "namespace": "tierLists",
+            "source_text": "Available story scenes",
+            "description": "Accessible name of the grid of story scene tiles in the pool.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.edit.pool.grid.story_sprite",
             "namespace": "tierLists",
             "source_text": "Available story characters",
@@ -34150,6 +34227,13 @@
             "namespace": "tierLists",
             "source_text": "Operator pool",
             "description": "Small uppercase label above the list of operators that can be dragged onto a tier.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.kicker.archive_pic",
+            "namespace": "tierLists",
+            "source_text": "Archive picture pool",
+            "description": "Small uppercase label above the pool of Archives gallery pictures that can be dragged onto a tier; also the title of the larger pool dialog.",
             "placeholders": []
         },
         {
@@ -34220,6 +34304,20 @@
             "namespace": "tierLists",
             "source_text": "Skin pool",
             "description": "Small uppercase label above the pool of operator outfits that can be dragged onto a tier; also the title of the larger pool dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.kicker.story_cg",
+            "namespace": "tierLists",
+            "source_text": "Story CG pool",
+            "description": "Small uppercase label above the pool of story CGs that can be dragged onto a tier; also the title of the larger pool dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.kicker.story_scene",
+            "namespace": "tierLists",
+            "source_text": "Story scene pool",
+            "description": "Small uppercase label above the pool of story scenes that can be dragged onto a tier; also the title of the larger pool dialog.",
             "placeholders": []
         },
         {
@@ -34433,6 +34531,13 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.edit.pool.search.archive_pic",
+            "namespace": "tierLists",
+            "source_text": "Search archive pictures",
+            "description": "Accessible name of the pool's search box while it lists Archives gallery pictures.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.edit.pool.search.background",
             "namespace": "tierLists",
             "source_text": "Search backgrounds",
@@ -34514,6 +34619,20 @@
             "namespace": "tierLists",
             "source_text": "Search skins",
             "description": "Accessible name of the pool's search box while it lists operator outfits. It matches the outfit, the operator and the brand.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.search.story_cg",
+            "namespace": "tierLists",
+            "source_text": "Search story CGs",
+            "description": "Accessible name of the pool's search box while it lists story CGs.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.search.story_scene",
+            "namespace": "tierLists",
+            "source_text": "Search story scenes",
+            "description": "Accessible name of the pool's search box while it lists story scenes.",
             "placeholders": []
         },
         {
@@ -34608,6 +34727,27 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.edit.pool.story",
+            "namespace": "tierLists",
+            "source_text": "Story",
+            "description": "Label of the story CG and story scene pools' filter by the story a picture comes from, a searchable dropdown of story names. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.story.group",
+            "namespace": "tierLists",
+            "source_text": "Filter by story",
+            "description": "Accessible name of the story dropdown in the story CG and story scene pools.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.story.placeholder",
+            "namespace": "tierLists",
+            "source_text": "Any story",
+            "description": "Prompt inside the story dropdown of the story CG and story scene pools while no story is chosen.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.edit.pool.tabs",
             "namespace": "tierLists",
             "source_text": "What this pool lists",
@@ -34632,7 +34772,7 @@
             "key": "tierLists.edit.pool.type",
             "namespace": "tierLists",
             "source_text": "Type",
-            "description": "Label of the type filter (event category, Stronghold bond type, or home-screen background type) in the pool dialog. Rendered uppercase.",
+            "description": "Label of the type filter (event category, Stronghold bond type, home-screen background type, or Archives picture type) in the pool dialog. Rendered uppercase.",
             "placeholders": []
         },
         {
@@ -35247,6 +35387,20 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.entity.archiveType.ending",
+            "namespace": "tierLists",
+            "source_text": "Ending",
+            "description": "Archives gallery picture type: the illustration of an Integrated Strategies ending. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.archiveType.illustration",
+            "namespace": "tierLists",
+            "source_text": "Illustration",
+            "description": "Archives gallery picture type: an illustration from an event or an Integrated Strategies run. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.entity.bgType.base",
             "namespace": "tierLists",
             "source_text": "Standard",
@@ -35431,6 +35585,13 @@
             ]
         },
         {
+            "key": "tierLists.entity.kind.archive_pic",
+            "namespace": "tierLists",
+            "source_text": "Archive picture",
+            "description": "Singular kind label shown small above an Archives gallery picture's name in its hover card.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.entity.kind.background",
             "namespace": "tierLists",
             "source_text": "Background",
@@ -35508,6 +35669,20 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.entity.kind.story_cg",
+            "namespace": "tierLists",
+            "source_text": "Story CG",
+            "description": "Singular kind label shown small above a story CG's name (the name of the story it comes from) in its hover card.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kind.story_scene",
+            "namespace": "tierLists",
+            "source_text": "Story scene",
+            "description": "Singular kind label shown small above a story scene's name (the name of the story it comes from) in its hover card.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.entity.kind.story_sprite",
             "namespace": "tierLists",
             "source_text": "Story character",
@@ -35526,6 +35701,13 @@
             "namespace": "tierLists",
             "source_text": "Subclass",
             "description": "Singular kind label shown small above a subclass's name in its hover card.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kinds.archive_pic",
+            "namespace": "tierLists",
+            "source_text": "Archive pictures",
+            "description": "Name of a kind of thing a tier list can rank: the pictures in the game's Archives gallery, from events and Integrated Strategies. Used on pool tabs and in the kinds settings.",
             "placeholders": []
         },
         {
@@ -35606,6 +35788,20 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.entity.kinds.story_cg",
+            "namespace": "tierLists",
+            "source_text": "Story CGs",
+            "description": "Name of a kind of thing a tier list can rank: the full-screen illustrations (CGs) shown during story scenes. Used on pool tabs and in the kinds settings.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kinds.story_scene",
+            "namespace": "tierLists",
+            "source_text": "Story scenes",
+            "description": "Name of a kind of thing a tier list can rank: the background plates (locations) story scenes are set against. Used on pool tabs and in the kinds settings.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.entity.kinds.story_sprite",
             "namespace": "tierLists",
             "source_text": "Story characters",
@@ -35663,6 +35859,55 @@
             "namespace": "tierLists",
             "source_text": "Operator",
             "description": "Story character source: the sprite belongs to a playable operator. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.storyCategory.is",
+            "namespace": "tierLists",
+            "source_text": "Integrated Strategies",
+            "description": "Story category of a story CG or scene: it comes from an Integrated Strategies story. Game mode name, keep the official translation. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.storyCategory.main",
+            "namespace": "tierLists",
+            "source_text": "Main Story",
+            "description": "Story category of a story CG or scene: it comes from a main story chapter. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.storyCategory.reclamation",
+            "namespace": "tierLists",
+            "source_text": "Reclamation Algorithm",
+            "description": "Story category of a story CG or scene: it comes from a Reclamation Algorithm story. Game mode name, keep the official translation. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.storyCategory.record",
+            "namespace": "tierLists",
+            "source_text": "Operator Record",
+            "description": "Story category of a story CG or scene: it comes from an operator's record story. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.storyCategory.side",
+            "namespace": "tierLists",
+            "source_text": "Side Story",
+            "description": "Story category of a story CG or scene: it comes from a side story event. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.storyCategory.sideContent",
+            "namespace": "tierLists",
+            "source_text": "Other Story",
+            "description": "Story category of a story CG or scene: it comes from story content outside the other categories. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.storyCategory.vignette",
+            "namespace": "tierLists",
+            "source_text": "Vignette",
+            "description": "Story category of a story CG or scene: it comes from a vignette, the game's small seasonal event stories. Used as a pool filter and in hover cards.",
             "placeholders": []
         },
         {

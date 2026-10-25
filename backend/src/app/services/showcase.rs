@@ -24,7 +24,7 @@ use crate::app::services::grid::Resolver;
 use crate::app::services::story::gallery;
 use crate::app::services::story::{StoryArtKind, story_art};
 use crate::app::services::tier_entity::{self, EntitySummary};
-use crate::app::services::tier_list::validate_entity;
+use crate::app::services::tier_list::{LoadedSource, loaded_sources, validate_entity};
 use crate::app::state::{AppState, ServerData};
 use crate::core::hypergryph::constants::Server;
 use crate::database::models::profile_layout::{
@@ -202,7 +202,9 @@ pub async fn validate(
             } => {
                 let context = format!("showcase block {n}");
                 for id in ids {
-                    validate_entity(state, *entity_kind, id).map_err(|e| prefixed(&context, e))?;
+                    validate_entity(state, *entity_kind, id)
+                        .await
+                        .map_err(|e| prefixed(&context, e))?;
                 }
             }
             _ if existing.has(block) => {}
@@ -258,7 +260,9 @@ pub async fn validate_background(
         )));
     }
     if let Some(kind) = background.kind.entity_kind() {
-        validate_entity(state, kind, &background.id).map_err(|e| prefixed("background", e))?;
+        validate_entity(state, kind, &background.id)
+            .await
+            .map_err(|e| prefixed("background", e))?;
         if background.elite == Some(2) && !has_elite_2(state, &background.id) {
             return Err(ApiError::BadRequest(format!(
                 "background: `{}` has no elite 2 art",
@@ -288,10 +292,12 @@ pub async fn validate_background(
 async fn background_known(state: &AppState, background: &ProfileBackground) -> bool {
     let id = background.id.as_str();
     match background.kind {
-        ProfileBackgroundKind::Skin | ProfileBackgroundKind::Operator => background
-            .kind
-            .entity_kind()
-            .is_some_and(|kind| entity_known(state, kind, id)),
+        ProfileBackgroundKind::Skin | ProfileBackgroundKind::Operator => {
+            let Some(kind) = background.kind.entity_kind() else {
+                return false;
+            };
+            entity_known(&loaded_sources(state, &[kind]).await, kind, id)
+        }
         ProfileBackgroundKind::ArchivePic => {
             any_loaded(state, |sd| gallery::known(&sd.game_data.load(), id))
         }
@@ -325,12 +331,23 @@ fn any_loaded(state: &AppState, pred: impl Fn(&ServerData) -> bool) -> bool {
         .any(|sd| pred(sd))
 }
 
-/// Whether any loaded server's game data knows `(kind, id)`, the read-side
-/// twin of [`validate_entity`].
-fn entity_known(state: &AppState, kind: EntityKind, id: &str) -> bool {
-    any_loaded(state, |sd| {
-        tier_entity::known(&sd.game_data.load(), &sd.asset_index.load(), kind, id)
-    })
+/// Whether any of `loaded` ([`loaded_sources`]) knows `(kind, id)`, the
+/// read-side twin of [`validate_entity`].
+fn entity_known(loaded: &[LoadedSource], kind: EntityKind, id: &str) -> bool {
+    loaded
+        .iter()
+        .any(|(gd, assets, story)| tier_entity::known(gd, assets, story, kind, id))
+}
+
+/// The entity kinds `blocks`' favourites hold.
+fn favourite_kinds(blocks: &[ShowcaseBlock]) -> Vec<EntityKind> {
+    blocks
+        .iter()
+        .filter_map(|block| match block {
+            ShowcaseBlock::Favourites { entity_kind, .. } => Some(*entity_kind),
+            _ => None,
+        })
+        .collect()
 }
 
 /// A visitor's layout with every block whose referent is gone taken out, and
@@ -358,12 +375,13 @@ pub async fn prune_for_visitor(
         return Ok(());
     }
     let existing = Existing::load(state, owner, &showcase.blocks).await?;
+    let loaded = loaded_sources(state, &favourite_kinds(&showcase.blocks)).await;
     showcase.blocks.retain_mut(|block| match block {
         ShowcaseBlock::Favourites {
             entity_kind, ids, ..
         } => {
             let kind = *entity_kind;
-            ids.retain(|id| entity_known(state, kind, id));
+            ids.retain(|id| entity_known(&loaded, kind, id));
             !ids.is_empty()
         }
         other => existing.has(other),
@@ -393,7 +411,7 @@ pub async fn view(
         return Ok(ShowcaseView { blocks: Vec::new() });
     }
     let existing = Existing::load(state, owner, blocks).await?;
-    let resolver = Resolver::new(state, server);
+    let resolver = Resolver::new(state, server, &favourite_kinds(blocks)).await;
     let mut out = Vec::with_capacity(blocks.len());
     for block in blocks {
         let view = match block {

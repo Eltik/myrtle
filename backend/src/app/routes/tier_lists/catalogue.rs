@@ -4,11 +4,12 @@ use axum::http::header;
 
 use crate::app::error::ApiError;
 use crate::app::routes::static_data::GAMEDATA_CACHE_CONTROL;
-use crate::app::services::tier_entity::{EntitySummary, catalogue};
+use crate::app::services::tier_entity::{EntitySummary, StoryCatalogues, catalogue};
 use crate::app::state::AppState;
 use crate::database::models::tier_list::EntityKind;
 
-/// The catalogue changes only on a game-data reload, like every game-data body.
+/// The catalogue changes only on a game-data reload (an asset reload too, for
+/// the story picture kinds), like every game-data body.
 const CACHE_CONTROL: &str = GAMEDATA_CACHE_CONTROL;
 
 /// Everything of one kind a tier list editor may place, in pool order.
@@ -43,8 +44,9 @@ pub async fn get(
     let server = query.or_default(&state);
     let gd = state.game_data(server);
     let assets = state.asset_index(server);
+    let story = StoryCatalogues::gather(&state, server, &[kind]).await;
     Ok((
         [(header::CACHE_CONTROL, CACHE_CONTROL)],
-        Json(catalogue(&gd, &assets, kind)),
+        Json(catalogue(&gd, &assets, &story, kind)),
     ))
 }

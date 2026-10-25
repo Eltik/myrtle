@@ -16,6 +16,7 @@ import { assetStoreURL } from "#/lib/assets";
 import type { EntityKind } from "#/types/generated/EntityKind";
 import type { EntitySummary } from "#/types/generated/EntitySummary";
 import type { FacetValue } from "#/types/generated/FacetValue";
+import type { StoryCategory } from "#/types/generated/StoryCategory";
 import type { OperatorPosition, OperatorProfession, OperatorRarity } from "#/types/operators";
 import { DEFAULT_GAMEDATA_SERVER } from "./gamedata";
 
@@ -175,6 +176,26 @@ interface IKindFields {
         /** How it is obtained, in the server's own words (`Purchase Pack`). */
         obtain: string | null;
     };
+    /** A story CG, an illustration a story's script shows. Its art is a 16:9 thumb on a wide tile; it has no title, so its name is its story's. */
+    story_cg: IStoryPictureFields;
+    /** A story scene plate, the background a story's script sets a scene against. Shaped as a story CG. */
+    story_scene: IStoryPictureFields;
+    /** An Archives gallery picture, from an event's archive or an Integrated Strategies theme's. Its art is a 16:9 thumb on a wide tile. */
+    archive_pic: {
+        /** The archive it is filed under (`act13side`, `rogue_1`), and its name. */
+        groupId: string;
+        groupName: string | null;
+        /** `IMAGE`, `ENDING_IMAGE` or `ROGUE_IMAGE`, raw from the table. */
+        pictureType: string | null;
+    };
+}
+
+/** A story CG's or scene's fields: the library group (story) it is filed under, the first whose script draws it. */
+interface IStoryPictureFields {
+    groupId: string;
+    groupName: string | null;
+    /** The library category of that story; `null` for a value this build does not know. */
+    category: StoryCategory | null;
 }
 
 type EntityOfKind<K extends TierEntityKind> = ITierEntityBase & { kind: K; resolved: true } & IKindFields[K];
@@ -220,7 +241,7 @@ export type ArtFit = "cover" | "object" | "glyph";
 type FacetReader = (name: string) => string | null;
 
 interface IKindModel<K extends TierEntityKind> {
-    /** How the kind's art sits in its tile. Every kind's art is square on EN 2026-10-01 except an event's banner and a background's preview strip, which have their own wide tile. */
+    /** How the kind's art sits in its tile. Every kind's art is square on EN 2026-10-01 except an event's banner, a background's preview strip and the story and Archives pictures, which have their own wide tile. */
     artFit: ArtFit;
     /** A fit read off the entity itself, for a kind whose art comes in more than one style. */
     entityArtFit?: (entity: ITierEntityOf<K>) => ArtFit;
@@ -235,6 +256,14 @@ function optionalNumber(value: string | null): number | null {
     if (value === null || value === "") return null;
     const n = Number(value);
     return Number.isFinite(n) ? n : null;
+}
+
+/** The library categories, as `StoryCategory` spells them. */
+const STORY_CATEGORIES: readonly StoryCategory[] = ["main", "side", "vignette", "is", "reclamation", "sideContent", "record"];
+
+function storyPictureFields(facet: FacetReader): IStoryPictureFields {
+    const category = facet("category");
+    return { groupId: facet("group_id") ?? "", groupName: facet("group") || null, category: STORY_CATEGORIES.find((c) => c === category) ?? null };
 }
 
 /** A module whose own art the extract lacks falls back to its type badge (72 x 52), which is an object, not a picture. */
@@ -350,6 +379,18 @@ const KIND_MODELS: { [K in TierEntityKind]: IKindModel<K> } = {
     background: {
         artFit: "cover",
         fields: (facet) => ({ bgType: facet("bg_type") === "dynamic" ? "dynamic" : "base", obtain: facet("obtain") || null }),
+    },
+    story_cg: {
+        artFit: "cover",
+        fields: storyPictureFields,
+    },
+    story_scene: {
+        artFit: "cover",
+        fields: storyPictureFields,
+    },
+    archive_pic: {
+        artFit: "cover",
+        fields: (facet) => ({ groupId: facet("group_id") ?? "", groupName: facet("group") || null, pictureType: facet("picture_type") || null }),
     },
 };
 
