@@ -74,6 +74,8 @@ export interface ISharedFilters {
     birthPlaces: string[];
     artists: string[];
     voiceActors: string[];
+    /** Module type letters (`typeName2`: X, Y, D, A, B); an operator matches when it has a module of any selected type. */
+    modules: string[];
 }
 
 export interface IFilterState extends ISharedFilters {
@@ -120,6 +122,8 @@ export interface IFilterSubject {
     placeOfBirth: string;
     artists: string[];
     voiceActors: string[];
+    /** Only `typeName2` is read, by the module-type filter. */
+    modules: readonly { typeName2?: string | null }[];
     /** The server's own names for the ids above; absent in an old cached response. */
     professionName?: string | null;
     subProfessionName?: string | null;
@@ -143,6 +147,7 @@ export interface IUseOperatorFiltersReturn {
     setBirthPlaces: (v: string[]) => void;
     setArtists: (v: string[]) => void;
     setVoiceActors: (v: string[]) => void;
+    setModules: (v: string[]) => void;
     setHasNotes: (v: HasNotesFilter) => void;
     setAvailability: (v: AvailabilityFilter) => void;
     setSortBy: (v: SortOption) => void;

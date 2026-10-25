@@ -10,6 +10,19 @@ export const CLASSES = ["WARRIOR", "SNIPER", "TANK", "MEDIC", "SUPPORT", "CASTER
 export const GENDERS = ["Male", "Female", "Conviction"] as const;
 export type Gender = (typeof GENDERS)[number];
 
+/** Module types by `typeName2`, in release order, with the glyph players call them by: the data spells delta, alpha and beta as D, A and B. */
+export const MODULE_TYPES = [
+    { value: "X", label: "X" },
+    { value: "Y", label: "Y" },
+    { value: "D", label: "Δ" },
+    { value: "A", label: "α" },
+    { value: "B", label: "β" },
+] as const;
+
+export function moduleTypeGlyph(typeName2: string): string {
+    return MODULE_TYPES.find((m) => m.value === typeName2)?.label ?? typeName2;
+}
+
 /** A key in `constants.messages.ts`; resolved by whichever component renders it. */
 export type ListMessageKey = keyof typeof listConstantsMessages & string;
 
@@ -87,6 +100,7 @@ export const CHIP_CONFIG: { key: ArrayFilterKey; prefix: string; label: (v: stri
     { key: "birthPlaces", prefix: "birth", label: (v) => v },
     { key: "artists", prefix: "artist", label: (v) => v },
     { key: "voiceActors", prefix: "va", label: (v) => v },
+    { key: "modules", prefix: "mod", label: (v) => `${moduleTypeGlyph(v)} module` },
 ];
 
 export const RARITY_BLUR_COLORS: Record<number, string> = {

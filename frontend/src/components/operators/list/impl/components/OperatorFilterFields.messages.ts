@@ -15,6 +15,10 @@ export const messages = {
         text: "Rarity",
         description: "Field label over the row of star-rating buttons.",
     },
+    "filters.module": {
+        text: "Module",
+        description: "Field label over the module-type buttons (X, Y, Δ, α, β). The letters are game vocabulary and are not translated; an operator matches when it has a module of any selected type.",
+    },
     "filters.archetype": {
         text: "Archetype",
         description: "Field label for the subclass filter. The archetype names themselves are game vocabulary and are not in this catalog.",

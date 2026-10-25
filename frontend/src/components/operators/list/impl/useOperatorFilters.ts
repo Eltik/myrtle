@@ -18,6 +18,7 @@ const initialState: IFilterState = {
     birthPlaces: [],
     artists: [],
     voiceActors: [],
+    modules: [],
     hasNotes: "any",
     availability: "global",
     sortBy: "rarity",
@@ -25,7 +26,10 @@ const initialState: IFilterState = {
 };
 
 export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersReturn {
-    const [filters, setFilters] = useLocalStorageState<IFilterState>("operators:filters", initialState);
+    // Stored filters predate later keys (modules), so the parse merges over the initial state to fill them.
+    const [filters, setFilters] = useLocalStorageState<IFilterState>("operators:filters", initialState, {
+        parse: (raw) => ({ ...initialState, ...(JSON.parse(raw) as Partial<IFilterState>) }),
+    });
 
     const set = useCallback(<K extends keyof IFilterState>(key: K, value: IFilterState[K]) => setFilters((prev) => ({ ...prev, [key]: value })), [setFilters]);
 
@@ -56,10 +60,11 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
                     birthPlaces: filters.birthPlaces,
                     artists: filters.artists,
                     voiceActors: filters.voiceActors,
+                    modules: filters.modules,
                     hasNotes: filters.hasNotes,
                 }),
             ),
-        [data, filters.searchQuery, filters.classes, filters.subclasses, filters.rarities, filters.genders, filters.nations, filters.factions, filters.races, filters.birthPlaces, filters.artists, filters.voiceActors, filters.hasNotes],
+        [data, filters.searchQuery, filters.classes, filters.subclasses, filters.rarities, filters.genders, filters.nations, filters.factions, filters.races, filters.birthPlaces, filters.artists, filters.voiceActors, filters.modules, filters.hasNotes],
     );
 
     const filteredOperators = useMemo(() => {
@@ -122,6 +127,7 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
             setBirthPlaces: (v: string[]) => set("birthPlaces", v),
             setArtists: (v: string[]) => set("artists", v),
             setVoiceActors: (v: string[]) => set("voiceActors", v),
+            setModules: (v: string[]) => set("modules", v),
             setHasNotes: (v: IFilterState["hasNotes"]) => set("hasNotes", v),
             setAvailability: (v: IFilterState["availability"]) => set("availability", v),
             setSortBy: (v: IFilterState["sortBy"]) => setFilters((prev) => ({ ...prev, sortBy: v, sortOrder: v === "name" || v === "class" ? "asc" : "desc" })),

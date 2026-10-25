@@ -19,6 +19,7 @@ interface IOperatorFiltersProps {
     selectedBirthPlaces: string[];
     selectedArtists: string[];
     selectedVoiceActors: string[];
+    selectedModules: string[];
     selectedHasNotes: HasNotesFilter;
     selectedAvailability: AvailabilityFilter;
     options: IFilterOptions;
@@ -32,6 +33,7 @@ interface IOperatorFiltersProps {
     onBirthPlacesChange: (v: string[]) => void;
     onArtistsChange: (v: string[]) => void;
     onVoiceActorsChange: (v: string[]) => void;
+    onModulesChange: (v: string[]) => void;
     onHasNotesChange: (v: HasNotesFilter) => void;
     onAvailabilityChange: (v: AvailabilityFilter) => void;
     onClearAll: () => void;
@@ -59,6 +61,7 @@ function FiltersContent(props: Omit<IOperatorFiltersProps, "collapsed" | "onTogg
         birthPlaces: props.onBirthPlacesChange,
         artists: props.onArtistsChange,
         voiceActors: props.onVoiceActorsChange,
+        modules: props.onModulesChange,
     };
     return (
         <OperatorFilterFields
@@ -73,6 +76,7 @@ function FiltersContent(props: Omit<IOperatorFiltersProps, "collapsed" | "onTogg
                 birthPlaces: props.selectedBirthPlaces,
                 artists: props.selectedArtists,
                 voiceActors: props.selectedVoiceActors,
+                modules: props.selectedModules,
             }}
             options={props.options}
             onChange={(key, value) => (setters[key] as (v: ISharedFilters[typeof key]) => void)(value)}

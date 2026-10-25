@@ -16,6 +16,7 @@ export const EMPTY_SHARED_FILTERS: ISharedFilters = {
     birthPlaces: [],
     artists: [],
     voiceActors: [],
+    modules: [],
 };
 
 export function buildFilterOptions(subjects: readonly IFilterSubject[]): IFilterOptions {
@@ -72,6 +73,7 @@ export function toFilterSets(filters: ISharedFilters): FilterSets {
         birthPlaces: new Set(filters.birthPlaces),
         artists: new Set(filters.artists),
         voiceActors: new Set(filters.voiceActors),
+        modules: new Set(filters.modules),
     };
 }
 
@@ -93,11 +95,12 @@ export function matchesSharedFilters(subject: IFilterSubject, sets: FilterSets):
     if (sets.birthPlaces.size && (!subject.placeOfBirth || !sets.birthPlaces.has(subject.placeOfBirth))) return false;
     if (sets.artists.size && !subject.artists.some((a) => sets.artists.has(a))) return false;
     if (sets.voiceActors.size && !subject.voiceActors.some((v) => sets.voiceActors.has(v))) return false;
+    if (sets.modules.size && !subject.modules.some((m) => m.typeName2 && sets.modules.has(m.typeName2))) return false;
     return true;
 }
 
 export function countSharedFilters(filters: ISharedFilters): number {
-    return filters.classes.length + filters.subclasses.length + filters.rarities.length + filters.genders.length + filters.nations.length + filters.factions.length + filters.races.length + filters.birthPlaces.length + filters.artists.length + filters.voiceActors.length;
+    return filters.classes.length + filters.subclasses.length + filters.rarities.length + filters.genders.length + filters.nations.length + filters.factions.length + filters.races.length + filters.birthPlaces.length + filters.artists.length + filters.voiceActors.length + filters.modules.length;
 }
 
 export function buildSharedChips(filters: ISharedFilters, removeFrom: (key: ArrayFilterKey, value: string) => void, labels?: IFilterLabels): IActiveChip[] {

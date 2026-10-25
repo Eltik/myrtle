@@ -2901,6 +2901,7 @@
     "operators.filters.faction": "Faction",
     "operators.filters.faction.placeholder": "Select faction",
     "operators.filters.gender": "Gender",
+    "operators.filters.module": "Module",
     "operators.filters.nation": "Nation",
     "operators.filters.nation.placeholder": "Select nation",
     "operators.filters.notes": "Notes",

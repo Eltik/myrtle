@@ -89,6 +89,7 @@ export function OperatorsList() {
         setBirthPlaces,
         setArtists,
         setVoiceActors,
+        setModules,
         setHasNotes,
         setAvailability,
         setSortBy,
@@ -248,6 +249,7 @@ export function OperatorsList() {
                     selectedBirthPlaces={filters.birthPlaces}
                     selectedArtists={filters.artists}
                     selectedVoiceActors={filters.voiceActors}
+                    selectedModules={filters.modules}
                     selectedHasNotes={filters.hasNotes}
                     selectedAvailability={filters.availability}
                     options={filterOptions}
@@ -261,6 +263,7 @@ export function OperatorsList() {
                     onBirthPlacesChange={setBirthPlaces}
                     onArtistsChange={setArtists}
                     onVoiceActorsChange={setVoiceActors}
+                    onModulesChange={setModules}
                     onHasNotesChange={setHasNotes}
                     onAvailabilityChange={(v) => {
                         setAvailability(v);

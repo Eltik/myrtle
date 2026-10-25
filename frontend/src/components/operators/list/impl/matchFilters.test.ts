@@ -14,6 +14,7 @@ const NONE: OperatorFilterInput = {
     birthPlaces: [],
     artists: [],
     voiceActors: [],
+    modules: [],
     hasNotes: "any",
 };
 
@@ -33,6 +34,7 @@ function op(id: string, fields: Partial<IOperatorView>): IOperatorView {
         placeOfBirth: "",
         artists: [],
         voiceActors: [],
+        modules: [],
         hasNotes: false,
         ownership: null,
         ...fields,
@@ -64,6 +66,16 @@ describe("operatorFilterPredicate", () => {
 
     it("matches a faction by team id as well as group id", () => {
         expect(ids({ factions: ["rainbow"] })).toEqual(["feline_one"]);
+    });
+
+    it("matches an operator holding a module of ANY selected type, never by its ORIGINAL module", () => {
+        const mod = (typeName2: string | null) => ({ uniEquipId: `m_${typeName2}`, typeName1: typeName2 ? "MAR" : "ORIGINAL", typeName2, type: typeName2 ? "ADVANCED" : "INITIAL", rankCount: 3 }) as IOperatorView["modules"][number];
+        const ops = [op("x_only", { modules: [mod(null), mod("X")] }), op("x_and_y", { modules: [mod(null), mod("X"), mod("Y")] }), op("delta", { modules: [mod(null), mod("D")] }), op("none", { modules: [mod(null)] })];
+        const pick = (modules: string[]) => ops.filter(operatorFilterPredicate({ ...NONE, modules })).map((o) => o.id);
+        expect(pick(["Y"])).toEqual(["x_and_y"]);
+        expect(pick(["X"])).toEqual(["x_only", "x_and_y"]);
+        expect(pick(["Y", "D"])).toEqual(["x_and_y", "delta"]);
+        expect(pick(["B"])).toEqual([]);
     });
 
     it("still applies search, class, rarity and nation", () => {

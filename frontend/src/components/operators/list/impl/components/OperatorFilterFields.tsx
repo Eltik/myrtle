@@ -4,7 +4,7 @@ import { useOperatorFactLabel } from "#/components/operators/OperatorFacts";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, formatNationId, nationLabel, professionLabel, rarityToNumber, subProfessionLabel, subProfessionToProfession } from "#/lib/utils";
-import { GENDERS, PROFESSION_ORDER, RARITIES } from "../constants";
+import { GENDERS, MODULE_TYPES, PROFESSION_ORDER, RARITIES } from "../constants";
 import type { ArrayFilterKey, IFilterOptions, ISharedFilters } from "../types";
 import { ClassPicker, toggle } from "./ClassPicker";
 import { FilterDropdown } from "./FilterDropdown";
@@ -71,6 +71,20 @@ export function OperatorFilterFields({
                             return (
                                 <button key={r} type="button" data-rarity={rarityToNumber(r)} className={cn(styles.rarityBtn, on && styles.on)} onClick={() => onChange("rarities", toggle(filters.rarities, r))} aria-pressed={on}>
                                     {rarityToNumber(r)}★
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                <div className={styles.field}>
+                    <div className={styles.fieldLabel}>{t("filters.module")}</div>
+                    <div className={styles.tagRow}>
+                        {MODULE_TYPES.map((m) => {
+                            const on = filters.modules.includes(m.value);
+                            return (
+                                <button key={m.value} type="button" className={cn(styles.tg, on && styles.on)} onClick={() => onChange("modules", toggle(filters.modules, m.value))} aria-pressed={on}>
+                                    {m.label}
                                 </button>
                             );
                         })}
