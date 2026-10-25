@@ -168,6 +168,13 @@ interface IKindFields {
     story_sprite: {
         source: "operator" | "npc";
     };
+    /** A home-screen background. Its art is the lobby's preview strip, about 3:1, on a wide tile. */
+    background: {
+        /** `dynamic` for one that changes with the time of day. */
+        bgType: "base" | "dynamic";
+        /** How it is obtained, in the server's own words (`Purchase Pack`). */
+        obtain: string | null;
+    };
 }
 
 type EntityOfKind<K extends TierEntityKind> = ITierEntityBase & { kind: K; resolved: true } & IKindFields[K];
@@ -213,7 +220,7 @@ export type ArtFit = "cover" | "object" | "glyph";
 type FacetReader = (name: string) => string | null;
 
 interface IKindModel<K extends TierEntityKind> {
-    /** How the kind's art sits in its tile. Every kind's art is square on EN 2026-10-01 except an event's banner, which has its own wide tile. */
+    /** How the kind's art sits in its tile. Every kind's art is square on EN 2026-10-01 except an event's banner and a background's preview strip, which have their own wide tile. */
     artFit: ArtFit;
     /** A fit read off the entity itself, for a kind whose art comes in more than one style. */
     entityArtFit?: (entity: ITierEntityOf<K>) => ArtFit;
@@ -339,6 +346,10 @@ const KIND_MODELS: { [K in TierEntityKind]: IKindModel<K> } = {
     story_sprite: {
         artFit: "cover",
         fields: (facet) => ({ source: facet("source") === "operator" ? "operator" : "npc" }),
+    },
+    background: {
+        artFit: "cover",
+        fields: (facet) => ({ bgType: facet("bg_type") === "dynamic" ? "dynamic" : "base", obtain: facet("obtain") || null }),
     },
 };
 

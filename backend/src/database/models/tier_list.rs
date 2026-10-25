@@ -81,6 +81,9 @@ pub enum EntityKind {
     /// A main story episode, a `story_review_table` group with `EntryType:
     /// MAINLINE` (`main_0` to `main_16` on EN).
     MainStory,
+    /// A home-screen background, a `display_meta_table.HomeBackgroundData`
+    /// `BgId` (`bg_rhodes_day`).
+    Background,
 }
 
 impl EntityKind {
@@ -98,6 +101,7 @@ impl EntityKind {
         Self::IntegratedStrategies,
         Self::StorySprite,
         Self::MainStory,
+        Self::Background,
     ];
 
     pub const fn as_str(self) -> &'static str {
@@ -115,6 +119,7 @@ impl EntityKind {
             Self::IntegratedStrategies => "integrated_strategies",
             Self::StorySprite => "story_sprite",
             Self::MainStory => "main_story",
+            Self::Background => "background",
         }
     }
 }

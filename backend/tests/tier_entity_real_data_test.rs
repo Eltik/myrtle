@@ -55,7 +55,7 @@ fn every_kind_catalogue_reaches_the_measured_counts() {
     let gd = common::load_game_data();
     let assets = en_assets();
 
-    let floors: [(EntityKind, usize); 12] = [
+    let floors: [(EntityKind, usize); 13] = [
         (EntityKind::Class, 8),
         (EntityKind::Subclass, 71),
         (EntityKind::Enemy, 1541),
@@ -68,6 +68,7 @@ fn every_kind_catalogue_reaches_the_measured_counts() {
         (EntityKind::IntegratedStrategies, 1681),
         (EntityKind::StorySprite, 1443),
         (EntityKind::MainStory, 17),
+        (EntityKind::Background, 28),
     ];
     let mut failures = Vec::new();
     for kind in EntityKind::ALL.iter().copied() {
@@ -472,6 +473,42 @@ fn main_story_is_one_entry_per_episode_in_order() {
     assert_eq!(facet(&ep15.facets, "act"), Some("3"));
     // A side story is not a main story episode.
     assert!(validate([(gd, &assets)], EntityKind::MainStory, "act17side").is_err());
+}
+
+/// Home backgrounds on EN 2026-10-20: 28 in the lobby's order, 2 of them
+/// dynamic (time of day), and every one but `bg_elitelounge_1` (the 1,500-day
+/// sign-in reward, which the preview pack does not carry) with a preview strip.
+#[test]
+fn backgrounds_are_the_lobby_list_in_order() {
+    let gd = common::load_game_data();
+    let assets = en_assets();
+    let bgs = catalogue(gd, &assets, EntityKind::Background);
+    let no_icon: Vec<&str> = bgs
+        .iter()
+        .filter(|b| b.icon.is_none())
+        .map(|b| b.id.as_str())
+        .collect();
+    let dynamic = bgs
+        .iter()
+        .filter(|b| facet(&b.facets, "bg_type") == Some("dynamic"))
+        .count();
+    println!(
+        "backgrounds {}: {dynamic} dynamic, without icon {no_icon:?}",
+        bgs.len()
+    );
+    assert!(bgs.len() >= 28, "{}", bgs.len());
+    assert_eq!(bgs[0].id, "bg_rhodes_day");
+    assert_eq!(bgs[0].name, "Vision");
+    assert_eq!(facet(&bgs[0].facets, "obtain"), Some("Default"));
+    assert!(dynamic >= 2);
+    if story_art_present() {
+        assert!(no_icon.len() <= 1, "{no_icon:?}");
+    }
+    let volcano =
+        resolve(gd, &assets, EntityKind::Background, "bg_volcano_1").expect("bg_volcano_1");
+    assert_eq!(facet(&volcano.facets, "bg_type"), Some("dynamic"));
+    // A theme is not a background.
+    assert!(validate([(gd, &assets)], EntityKind::Background, "tm_rhodes_day").is_err());
 }
 
 /// The operator pool's race, nation and faction facets: the values the

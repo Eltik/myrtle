@@ -152,6 +152,7 @@ const BOOT_TABLES: &[&str] = &[
     "gamedata_const",
     "mission_table",
     "handbook_team_table",
+    "display_meta_table",
 ];
 
 /// The steps [`AssetIndex::build`] reports, in order.
@@ -319,6 +320,8 @@ pub fn init_game_data_with_art(
     let missions = crate::core::gamedata::types::mission::MissionData::from_table(mission_file);
     let team_file: crate::core::gamedata::types::handbook_team::HandbookTeamTableFile =
         load_table_or_warn(data_dir, "handbook_team_table", &mut warnings);
+    let display_meta_file: crate::core::gamedata::types::home_background::DisplayMetaTableFile =
+        load_table_or_warn(data_dir, "display_meta_table", &mut warnings);
     let autochess_bonds =
         crate::core::gamedata::types::autochess::load_autochess_bonds(data_dir, &mut warnings);
     // Layout-counted base resources (Wang's Influence/Territory) are defined
@@ -582,6 +585,7 @@ pub fn init_game_data_with_art(
         consts,
         missions,
         factions: team_file.teams,
+        home_backgrounds: display_meta_file.into_home_backgrounds(),
         profession_names,
         autochess_bonds,
         squad: crate::core::squad::index::SquadIndex::default(),

@@ -44,7 +44,7 @@ export const messages = {
     },
     "edit.pool.type": {
         text: "Type",
-        description: "Label of the type filter (event category, or Stronghold bond type) in the pool dialog. Rendered uppercase.",
+        description: "Label of the type filter (event category, Stronghold bond type, or home-screen background type) in the pool dialog. Rendered uppercase.",
     },
     "edit.pool.type.group": {
         text: "Filter by type",
@@ -626,6 +626,51 @@ export const messages = {
     "edit.pool.source.group": {
         text: "Filter by source",
         description: "Accessible name of the row of story-character source filter buttons.",
+    },
+
+    "entity.kinds.background": {
+        text: "Backgrounds",
+        description: "Name of a kind of thing a tier list can rank: the home-screen backgrounds a player picks in the game's lobby. Used on pool tabs and in the kinds settings.",
+    },
+    "entity.kind.background": {
+        text: "Background",
+        description: "Singular kind label shown small above a home-screen background's name in its hover card.",
+    },
+    "edit.kinds.desc.background": {
+        text: "Home screen backgrounds, standard and dynamic",
+        description: "One-line explanation under 'Backgrounds' in the kinds dialog.",
+    },
+    "edit.pool.kicker.background": {
+        text: "Background pool",
+        description: "Small uppercase label above the pool of home-screen backgrounds that can be dragged onto a tier; also the title of the larger pool dialog.",
+    },
+    "edit.pool.search.background": {
+        text: "Search backgrounds",
+        description: "Accessible name of the pool's search box while it lists home-screen backgrounds.",
+    },
+    "edit.pool.grid.background": {
+        text: "Available backgrounds",
+        description: "Accessible name of the grid of home-screen background tiles in the pool.",
+    },
+    "entity.bgType.base": {
+        text: "Standard",
+        description: "Home-screen background type, as the game's Background menu files it: a fixed scene. Used as a pool filter and in hover cards.",
+    },
+    "entity.bgType.dynamic": {
+        text: "Dynamic",
+        description: "Home-screen background type, as the game's Background menu files it: a scene that changes with the time of day. Used as a pool filter and in hover cards.",
+    },
+    "edit.pool.obtain": {
+        text: "Obtained from",
+        description: "Label of the background pool's filter by how a background is obtained (Purchase Pack, Event Reward), a dropdown whose options are the game's own wording. Rendered uppercase.",
+    },
+    "edit.pool.obtain.group": {
+        text: "Filter by how it is obtained",
+        description: "Accessible name of the background pool's obtain-source dropdown.",
+    },
+    "edit.pool.obtain.placeholder": {
+        text: "Any source",
+        description: "Prompt inside the background pool's obtain-source dropdown while no source is chosen.",
     },
 } satisfies MessageMap;
 

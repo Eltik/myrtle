@@ -16,6 +16,7 @@ pub mod gacha;
 pub mod gacha_detail;
 pub mod handbook;
 pub mod handbook_team;
+pub mod home_background;
 pub mod level;
 pub mod material;
 pub mod medal;
@@ -157,6 +158,9 @@ pub struct GameData {
     pub profession_names: HashMap<String, String>,
     /// `handbook_team_table`: nations, groups and teams, keyed by power id.
     pub factions: HashMap<String, handbook_team::HandbookTeam>,
+    /// `display_meta_table`'s home-screen backgrounds, in the lobby's order,
+    /// see [`home_background`].
+    pub home_backgrounds: Vec<home_background::HomeBackground>,
     /// Stronghold Protocol bonds, keyed by bond id, see [`autochess`].
     pub autochess_bonds: HashMap<String, autochess::AutoChessBond>,
     /// The Squad Builder's load-time tables (text rule readings, tag ids,

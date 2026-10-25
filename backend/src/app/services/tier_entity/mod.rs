@@ -15,6 +15,7 @@
 //! the extract does not hold has `icon: None`, and the client draws its own
 //! placeholder rather than a broken image.
 
+mod background;
 mod class;
 mod enemy;
 mod event;
@@ -84,7 +85,9 @@ pub struct EntitySummary {
     /// story sprites `source` (`operator` or `npc`), for an operator `char_id`,
     /// and, when the hub places the face, `face` (`x,y` fractions of the plate);
     /// main story episodes `episode` (`0` to `16` on EN), `act` (the
-    /// `chapter_table` index) and `act_name`.
+    /// `chapter_table` index) and `act_name`; home backgrounds `bg_type`
+    /// (`base` or `dynamic`), `obtain` (the server's own wording) and, when it
+    /// has one, `start_time` (unix seconds).
     pub facets: BTreeMap<String, FacetValue>,
 }
 
@@ -113,6 +116,7 @@ const fn source(kind: EntityKind) -> &'static KindSource {
         EntityKind::IntegratedStrategies => &integrated_strategies::SOURCE,
         EntityKind::StorySprite => &story_sprite::SOURCE,
         EntityKind::MainStory => &main_story::SOURCE,
+        EntityKind::Background => &background::SOURCE,
     }
 }
 

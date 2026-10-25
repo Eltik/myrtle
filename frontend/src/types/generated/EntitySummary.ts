@@ -40,7 +40,9 @@ export type EntitySummary = {
      * story sprites `source` (`operator` or `npc`), for an operator `char_id`,
      * and, when the hub places the face, `face` (`x,y` fractions of the plate);
      * main story episodes `episode` (`0` to `16` on EN), `act` (the
-     * `chapter_table` index) and `act_name`.
+     * `chapter_table` index) and `act_name`; home backgrounds `bg_type`
+     * (`base` or `dynamic`), `obtain` (the server's own wording) and, when it
+     * has one, `start_time` (unix seconds).
      */
     facets: { [key in string]?: FacetValue };
 };

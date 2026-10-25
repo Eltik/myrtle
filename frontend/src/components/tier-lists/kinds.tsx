@@ -208,6 +208,10 @@ function facetList(value: FacetValue | undefined): string[] {
     return typeof value === "string" ? [value] : value;
 }
 
+function backgroundTypeLabel(t: KindT, bgType: ITierEntityOf<"background">["bgType"]): string {
+    return bgType === "dynamic" ? t("entity.bgType.dynamic") : t("entity.bgType.base");
+}
+
 function spriteSourceLabel(t: KindT, source: ITierEntityOf<"story_sprite">["source"]): string {
     return source === "operator" ? t("entity.spriteSource.operator") : t("entity.spriteSource.npc");
 }
@@ -553,6 +557,37 @@ export const KIND_DEFINITIONS: { [K in TierEntityKind]: IKindDefinition<K> } = {
             ],
             // The other names the scripts speak a character under: avg_npc_061 is "Maria" and also "Blemishine".
             searchTexts: (e) => [e.name, e.id, ...facetList(e.facets.aliases)],
+        }),
+    },
+    background: {
+        plural: (t) => t("entity.kinds.background"),
+        singular: (t) => t("entity.kind.background"),
+        description: (t) => t("edit.kinds.desc.background"),
+        shape: "wide",
+        detail: (e, t) => present(backgroundTypeLabel(t, e.bgType), e.obtain),
+        pool: (t, catalogue) => ({
+            ...poolLabels(t, t("edit.pool.kicker.background"), t("edit.pool.search.background"), t("edit.pool.grid.background")),
+            facets: [
+                {
+                    id: "type",
+                    label: t("edit.pool.type"),
+                    groupLabel: t("edit.pool.type.group"),
+                    variant: "text",
+                    options: (["base", "dynamic"] as const).map((v) => ({ value: v, label: backgroundTypeLabel(t, v) })),
+                    valueOf: (e) => e.bgType,
+                },
+                {
+                    id: "obtain",
+                    label: t("edit.pool.obtain"),
+                    groupLabel: t("edit.pool.obtain.group"),
+                    variant: "menu",
+                    placeholder: t("edit.pool.obtain.placeholder"),
+                    // The server's own wording, so the options are whatever the data says.
+                    options: distinct(catalogue, (e) => e.obtain).map((v) => ({ value: v, label: v })),
+                    valueOf: (e) => e.obtain,
+                },
+            ],
+            searchTexts: (e) => [e.name, e.obtain],
         }),
     },
 };

@@ -76,6 +76,10 @@ pub enum AssetKind {
     /// `textures/spritepack/ui_equip_type_direction_hub_*/{type_icon}.png`:
     /// the module type badges (`sum-x`), keyed by the `typeIcon` stem.
     ModuleType,
+    /// `textures/spritepack/ui_homebackground_preview_h1_N/{bg_id}.png`: the
+    /// lobby Background menu's 344 x 116 preview strip, one per home
+    /// background (27 of 28 on EN), keyed by the `BgId` stem.
+    HomeBackground,
 }
 
 const ALL_KINDS: &[AssetKind] = &[
@@ -104,6 +108,7 @@ const ALL_KINDS: &[AssetKind] = &[
     AssetKind::RoguelikeItem,
     AssetKind::RoguelikeTheme,
     AssetKind::ModuleType,
+    AssetKind::HomeBackground,
 ];
 
 #[derive(Debug, Clone, Default)]
@@ -511,6 +516,8 @@ fn classify_dir(dir_name: &str) -> Option<AssetKind> {
         Some(AssetKind::RoguelikeTheme)
     } else if dir_name.starts_with("ui_equip_type_direction_hub_") {
         Some(AssetKind::ModuleType)
+    } else if dir_name.starts_with("ui_homebackground_preview_") {
+        Some(AssetKind::HomeBackground)
     } else {
         None
     }

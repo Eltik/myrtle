@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-25T11:03:29.266Z",
+    "generatedAt": "2026-10-25T11:24:53.122Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -33500,6 +33500,13 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.edit.kinds.desc.background",
+            "namespace": "tierLists",
+            "source_text": "Home screen backgrounds, standard and dynamic",
+            "description": "One-line explanation under 'Backgrounds' in the kinds dialog.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.edit.kinds.desc.class",
             "namespace": "tierLists",
             "source_text": "The eight classes, Vanguard to Specialist",
@@ -33913,6 +33920,13 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.edit.pool.grid.background",
+            "namespace": "tierLists",
+            "source_text": "Available backgrounds",
+            "description": "Accessible name of the grid of home-screen background tiles in the pool.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.edit.pool.grid.class",
             "namespace": "tierLists",
             "source_text": "Available classes",
@@ -34029,6 +34043,13 @@
             "namespace": "tierLists",
             "source_text": "Operator pool",
             "description": "Small uppercase label above the list of operators that can be dragged onto a tier.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.kicker.background",
+            "namespace": "tierLists",
+            "source_text": "Background pool",
+            "description": "Small uppercase label above the pool of home-screen backgrounds that can be dragged onto a tier; also the title of the larger pool dialog.",
             "placeholders": []
         },
         {
@@ -34203,6 +34224,27 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.edit.pool.obtain",
+            "namespace": "tierLists",
+            "source_text": "Obtained from",
+            "description": "Label of the background pool's filter by how a background is obtained (Purchase Pack, Event Reward), a dropdown whose options are the game's own wording. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.obtain.group",
+            "namespace": "tierLists",
+            "source_text": "Filter by how it is obtained",
+            "description": "Accessible name of the background pool's obtain-source dropdown.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.obtain.placeholder",
+            "namespace": "tierLists",
+            "source_text": "Any source",
+            "description": "Prompt inside the background pool's obtain-source dropdown while no source is chosen.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.edit.pool.placed",
             "namespace": "tierLists",
             "source_text": "Placed",
@@ -34281,6 +34323,13 @@
             "namespace": "tierLists",
             "source_text": "Try again",
             "description": "Button that reloads a pool list that failed to load.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.search.background",
+            "namespace": "tierLists",
+            "source_text": "Search backgrounds",
+            "description": "Accessible name of the pool's search box while it lists home-screen backgrounds.",
             "placeholders": []
         },
         {
@@ -34476,7 +34525,7 @@
             "key": "tierLists.edit.pool.type",
             "namespace": "tierLists",
             "source_text": "Type",
-            "description": "Label of the type filter (event category, or Stronghold bond type) in the pool dialog. Rendered uppercase.",
+            "description": "Label of the type filter (event category, Stronghold bond type, or home-screen background type) in the pool dialog. Rendered uppercase.",
             "placeholders": []
         },
         {
@@ -35091,6 +35140,20 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.entity.bgType.base",
+            "namespace": "tierLists",
+            "source_text": "Standard",
+            "description": "Home-screen background type, as the game's Background menu files it: a fixed scene. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.bgType.dynamic",
+            "namespace": "tierLists",
+            "source_text": "Dynamic",
+            "description": "Home-screen background type, as the game's Background menu files it: a scene that changes with the time of day. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.entity.bondType.regular",
             "namespace": "tierLists",
             "source_text": "Trait bond",
@@ -35261,6 +35324,13 @@
             ]
         },
         {
+            "key": "tierLists.entity.kind.background",
+            "namespace": "tierLists",
+            "source_text": "Background",
+            "description": "Singular kind label shown small above a home-screen background's name in its hover card.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.entity.kind.class",
             "namespace": "tierLists",
             "source_text": "Class",
@@ -35349,6 +35419,13 @@
             "namespace": "tierLists",
             "source_text": "Subclass",
             "description": "Singular kind label shown small above a subclass's name in its hover card.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kinds.background",
+            "namespace": "tierLists",
+            "source_text": "Backgrounds",
+            "description": "Name of a kind of thing a tier list can rank: the home-screen backgrounds a player picks in the game's lobby. Used on pool tabs and in the kinds settings.",
             "placeholders": []
         },
         {
