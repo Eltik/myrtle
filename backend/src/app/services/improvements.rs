@@ -133,6 +133,26 @@ pub struct RoguelikeThemeImprovement {
     pub collectibles: RoguelikeCollectibles,
     pub bp: ProgressPair,
     pub challenges: ProgressPair,
+    /// Endings counted in `endings.max` that a regular run does not reach,
+    /// for the note beside the count. Omitted when there are none (4 of 5 EN
+    /// themes), so those themes serialize exactly as before.
+    #[ts(optional)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub special_endings: Option<Vec<RoguelikeSpecialEnding>>,
+}
+
+/// An ending the game data lists outside the regular runs; see
+/// `core::gamedata::types::roguelike::SpecialEnding`.
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+#[derive(Debug, Clone, Serialize)]
+pub struct RoguelikeSpecialEnding {
+    pub id: String,
+    pub name: String,
+    /// The mode it belongs to, e.g. "Deep Investigation".
+    #[ts(optional)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mode_name: Option<String>,
 }
 
 #[derive(TS, utoipa::ToSchema)]
@@ -1016,11 +1036,32 @@ async fn build_roguelike_improvements(
                 current: challenges_completed,
                 max: theme.max_challenges as usize,
             },
+            special_endings: special_endings_of(theme),
         });
     }
 
     themes.sort_by(|a, b| a.theme_id.cmp(&b.theme_id));
     Ok(themes)
+}
+
+/// `None` for a theme with no special ending, so the field is omitted.
+fn special_endings_of(
+    theme: &crate::core::gamedata::types::roguelike::RoguelikeThemeGameData,
+) -> Option<Vec<RoguelikeSpecialEnding>> {
+    if theme.special_endings.is_empty() {
+        return None;
+    }
+    Some(
+        theme
+            .special_endings
+            .iter()
+            .map(|e| RoguelikeSpecialEnding {
+                id: e.id.clone(),
+                name: e.name.clone(),
+                mode_name: e.mode_name.clone(),
+            })
+            .collect(),
+    )
 }
 
 async fn build_sandbox_improvements(

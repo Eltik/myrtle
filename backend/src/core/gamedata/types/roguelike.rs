@@ -47,6 +47,27 @@ pub struct RoguelikeThemeGameData {
     /// Max endbook CG items
     pub max_endbook_items: i32,
     pub max_buffs: i32,
+    /// Endings `Endings` lists outside the regular runs. `max_endings` still
+    /// counts them (it is the array length, which grading divides by), so a
+    /// theme with one reads one higher than the in-game tally of regular
+    /// endings. Empty for every theme but `rogue_3` on EN (2026-10-25); see
+    /// [`special_endings`].
+    pub special_endings: Vec<SpecialEnding>,
+}
+
+/// An ending the game data lists that a regular run does not reach.
+///
+/// Carried so the UI can explain a count instead of the backend hiding one:
+/// `rogue_3` (Expeditioner's Jǫklumarkar) lists 5 endings, 4 regular plus
+/// `ro3_ending_c` "The Fleetest of Light", and players count 4 in game.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SpecialEnding {
+    pub id: String,
+    pub name: String,
+    /// The theme's challenge mode name, e.g. "Deep Investigation"; `None`
+    /// when the theme lists no `CHALLENGE` difficulty.
+    pub mode_name: Option<String>,
 }
 
 /// `roguelike_topic_table.json` (`FlatBuffer` export). Top-level keys: Topics,
@@ -83,6 +104,7 @@ impl RoguelikeGameData {
                 .unwrap_or_else(|| theme_id.clone());
 
             let max_endings = get_kv_array_len(detail, &["Endings", "endings"]);
+            let special_endings = special_endings(detail);
             let max_challenges = get_kv_array_len(detail, &["Challenges", "challenges"]);
             let max_bp_levels = get_array_len(detail, &["Milestones", "milestones"]);
             let max_monthly_squads = get_kv_array_len(detail, &["MonthSquad", "monthSquad"]);
@@ -123,6 +145,7 @@ impl RoguelikeGameData {
                     relic_ids,
                     capsule_ids,
                     band_ids,
+                    special_endings,
                 },
             );
         }
@@ -213,6 +236,53 @@ fn count_in_buckets(ids: &[String], buckets: &[Option<&serde_json::Value>]) -> u
             })
         })
         .count()
+}
+
+/// Endings whose `Priority` sits outside the 0..n-1 ranking regular endings share.
+///
+/// Measured on the EN table (2026-10-25): the 23 regular endings of all five
+/// themes carry `Priority` 0..n-1 in display order, and the one extra ending,
+/// `ro3_ending_c`, carries 99 with n = 5. It is also the only ending with one
+/// untiered icon (Level 0) where the rest of `rogue_3` carry four (Levels
+/// 0/4/10/12). A rule on the icon count would misfire on `rogue_1`/`rogue_2`,
+/// whose regular endings carry one icon each, so the rank is the signal.
+///
+/// Nothing in the table names the mode an ending belongs to. The mode name is
+/// the theme's `CHALLENGE` difficulty ("Deep Investigation" on `rogue_3`): a
+/// HYPOTHESIS resting on the `_c` id suffix, the untiered icon (that mode has
+/// no difficulty grades) and what players report, not on a field.
+fn special_endings(detail: &serde_json::Value) -> Vec<SpecialEnding> {
+    let endings = detail
+        .get("Endings")
+        .or_else(|| detail.get("endings"))
+        .map(kv_to_map)
+        .unwrap_or_default();
+    let count = endings.len() as i64;
+    let mode_name = get_array(detail, &["Difficulties", "difficulties"])
+        .iter()
+        .find(|d| {
+            get_str(d, &["ModeDifficulty", "modeDifficulty", "mode"]).as_deref()
+                == Some("CHALLENGE")
+        })
+        .and_then(|d| get_str(d, &["Name", "name"]));
+
+    let mut special: Vec<SpecialEnding> = endings
+        .iter()
+        .filter(|(_, e)| {
+            // A missing rank is read as regular: no rank, no evidence.
+            e.get("Priority")
+                .or_else(|| e.get("priority"))
+                .and_then(serde_json::Value::as_i64)
+                .is_some_and(|p| p >= count)
+        })
+        .map(|(id, e)| SpecialEnding {
+            id: id.clone(),
+            name: get_str(e, &["Name", "name"]).unwrap_or_else(|| id.clone()),
+            mode_name: mode_name.clone(),
+        })
+        .collect();
+    special.sort_by(|a, b| a.id.cmp(&b.id));
+    special
 }
 
 /// Ids of `Items` entries typed `BAND`.
@@ -362,4 +432,122 @@ fn get_array(val: &serde_json::Value, keys: &[&str]) -> Vec<serde_json::Value> {
         .and_then(|v| v.as_array())
         .cloned()
         .unwrap_or_default()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    fn detail(endings: serde_json::Value) -> serde_json::Value {
+        json!({
+            "Endings": endings,
+            "Difficulties": [
+                { "Name": "Regular", "ModeDifficulty": "NORMAL" },
+                { "Name": "Deep Investigation", "ModeDifficulty": "CHALLENGE" },
+            ],
+        })
+    }
+
+    fn ending(id: &str, name: &str, priority: i64) -> serde_json::Value {
+        json!({ "key": id, "value": { "Id": id, "Name": name, "Priority": priority } })
+    }
+
+    #[test]
+    fn an_ending_ranked_past_the_list_is_special() {
+        let d = detail(json!([
+            ending("e1", "One", 0),
+            ending("e2", "Two", 1),
+            ending("e_c", "Extra", 99),
+            ending("e3", "Three", 2),
+        ]));
+        assert_eq!(
+            special_endings(&d),
+            vec![SpecialEnding {
+                id: "e_c".into(),
+                name: "Extra".into(),
+                mode_name: Some("Deep Investigation".into()),
+            }]
+        );
+    }
+
+    #[test]
+    fn a_contiguous_ranking_has_no_special_ending() {
+        let d = detail(json!([
+            ending("e1", "One", 0),
+            ending("e2", "Two", 1),
+            ending("e3", "Three", 2)
+        ]));
+        assert!(special_endings(&d).is_empty());
+    }
+
+    #[test]
+    fn a_missing_rank_reads_as_regular_and_cn_dicts_parse() {
+        // CN-gamedata shape: camelCase keys and `{id: ending}` dicts, no difficulties.
+        let d = json!({ "endings": {
+            "e1": { "name": "One", "priority": 0 },
+            "e2": { "name": "Two" },
+            "e3": { "name": "Extra", "priority": 7 },
+        }});
+        assert_eq!(
+            special_endings(&d),
+            vec![SpecialEnding {
+                id: "e3".into(),
+                name: "Extra".into(),
+                mode_name: None
+            }]
+        );
+    }
+
+    /// The EN table: `GAME_DATA_DIR`, else `../assets/output/en/gamedata/excel`.
+    fn load_en() -> Option<RoguelikeGameData> {
+        let dir = std::env::var("GAME_DATA_DIR").map_or_else(
+            |_| {
+                std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                    .join("../assets/output/en/gamedata/excel")
+            },
+            std::path::PathBuf::from,
+        );
+        if !dir.join("roguelike_topic_table.json").exists() {
+            return None;
+        }
+        let file: RoguelikeTopicTableFile =
+            crate::core::gamedata::tables::load_table(&dir, "roguelike_topic_table").ok()?;
+        Some(RoguelikeGameData::from_table(&file))
+    }
+
+    #[test]
+    fn en_lists_one_special_ending_on_rogue_3_and_keeps_every_count() {
+        let Some(data) = load_en() else {
+            eprintln!("skipping: EN roguelike_topic_table.json not present");
+            return;
+        };
+        let rogue_3 = &data.themes["rogue_3"];
+        assert_eq!(
+            rogue_3.special_endings,
+            vec![SpecialEnding {
+                id: "ro3_ending_c".into(),
+                name: "The Fleetest of Light".into(),
+                mode_name: Some("Deep Investigation".into()),
+            }]
+        );
+        // The count is the array length either way: 4 regular + 1 special.
+        assert_eq!(rogue_3.max_endings, 5);
+        // `rogue_4`/`rogue_5` list five REGULAR endings each (Priority 0..4),
+        // so they get no note.
+        for (theme_id, max) in [
+            ("rogue_1", 4),
+            ("rogue_2", 4),
+            ("rogue_4", 5),
+            ("rogue_5", 5),
+        ] {
+            let theme = &data.themes[theme_id];
+            assert!(
+                theme.special_endings.is_empty(),
+                "{theme_id}: {:?}",
+                theme.special_endings
+            );
+            assert_eq!(theme.max_endings, max, "{theme_id}");
+        }
+    }
 }

@@ -11,6 +11,22 @@ export const messages = {
         text: "Endings",
         description: "Progress label: how many of a roguelike theme's run endings have been reached.",
     },
+    "score.improvements.roguelike.endings.special.label": {
+        text: "About the endings count",
+        description: "Accessible name of the small (i) button beside a roguelike theme's endings count, which opens a note explaining an ending the count includes.",
+    },
+    "score.improvements.roguelike.endings.special.item": {
+        text: "{name} comes from {mode}.",
+        description: "Note beside the endings count. {name} is an ending's in-game name, e.g. 'The Fleetest of Light'; {mode} is a game mode's in-game name, e.g. 'Deep Investigation'. Both come from game data and stay as the game writes them.",
+    },
+    "score.improvements.roguelike.endings.special.itemNoMode": {
+        text: "{name} is not reached in a regular run.",
+        description: "Note beside the endings count, used when the game data names no mode for the ending. {name} is an ending's in-game name.",
+    },
+    "score.improvements.roguelike.endings.special.count": {
+        text: "The game data lists {special, plural, one {it} other {them}} as {special, plural, one {an ending} other {endings}}, so this counts {total}: {regular} from regular runs plus {special}.",
+        description: "Follows the ending note(s) beside the endings count. {total} is the count shown, {regular} the endings a regular run can reach, {special} the extra ones named before this sentence.",
+    },
     "score.improvements.roguelike.bp": {
         text: "BP levels",
         description: "Progress label for a roguelike theme's battle-pass levels. 'BP' is the in-game abbreviation.",

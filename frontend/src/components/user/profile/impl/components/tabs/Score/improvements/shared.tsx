@@ -101,15 +101,18 @@ export function CollapsibleSection({ title, count, accent, defaultOpen = false, 
 /**
  * "X / Y" progress chip with a thin bar underneath.
  */
-export function ProgressLine({ label, current, max, accent }: { label: string; current: number; max: number; accent: string }) {
+export function ProgressLine({ label, current, max, accent, hint }: { label: string; current: number; max: number; accent: string; hint?: ReactNode }) {
     const f = useFormatters();
     const pct = max > 0 ? Math.min(100, (current / max) * 100) : 0;
     return (
         <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
                 <span className="text-[11px] text-muted-foreground">{label}</span>
-                <span className={cn(TEXT_BADGE, "text-foreground/85")}>
-                    {f.number(current)} <span className="text-muted-foreground">/ {f.number(max)}</span>
+                <span className="flex items-center gap-1">
+                    <span className={cn(TEXT_BADGE, "text-foreground/85")}>
+                        {f.number(current)} <span className="text-muted-foreground">/ {f.number(max)}</span>
+                    </span>
+                    {hint}
                 </span>
             </div>
             <div className="h-1 w-full overflow-hidden rounded-full bg-muted/40">
