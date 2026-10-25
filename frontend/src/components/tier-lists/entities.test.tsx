@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { env } from "#/env";
 import { entityArtFit, entityOwner, type ITierEntity, integratedStrategiesNumber, toTierEntity } from "#/lib/api/tier-entities";
+import { assetStoreURL } from "#/lib/assets";
 import { I18nProvider } from "#/lib/i18n/context";
 import type { EntitySummary } from "#/types/generated/EntitySummary";
 import { EntityTile } from "./detail/EntityTile";
@@ -103,7 +104,9 @@ describe("EntityAvatar", () => {
     it("draws a glyph kind inset and theme-inverted, from its API path", () => {
         const { container } = render(wrap(<EntityAvatar entity={faction} />));
         const img = container.querySelector("img");
-        expect(img?.getAttribute("src")).toBe(`${BASE}/api/assets/textures/spritepack/ui_camp_logo_0/logo_rhodes.png`);
+        // A raw-tree icon goes to the object store when this deployment has one (`VITE_ASSET_BASE_URL`), else through the API.
+        const path = "/textures/spritepack/ui_camp_logo_0/logo_rhodes.png";
+        expect(img?.getAttribute("src")).toBe(assetStoreURL(path) ?? `${BASE}/api/assets${path}`);
         expect(img?.className).toContain("object-contain");
         expect(img?.className).toContain("icon-theme-aware");
     });
