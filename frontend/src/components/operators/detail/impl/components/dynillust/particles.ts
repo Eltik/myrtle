@@ -52,6 +52,12 @@ export interface IParticleSystemData {
      *  an UNTEXTURED material, which Unity draws in its own colour (see the mesh-render
      *  handling in {@link loadParticles}). */
     tex: number | null;
+    /** Untextured systems only: the texture slots the material's shader DECLARES and the
+     *  subset it BINDS, from the exporter's `m_TexEnvs` census. Tells a colour program whose
+     *  main sampler is merely unbound (Virtuosa's `quad_p` declares `_MainTex`) from a
+     *  distortion-only program (Shu "nlc#1" `wave_distub_*` declares `_DisturTex` and
+     *  `_MaskTex`, no `_MainTex`), see `isDistortionOnlyMaterial`. Absent in older exports. */
+    matTexSlots?: { declared: string[]; bound: string[] } | null;
     /** Mesh-render-mode geometry (ice crystals, ribbons): flat mesh-LOCAL triangle
      *  geometry the exporter emits for `renderMode:"mesh"` systems. Each particle
      *  instances it, scaled by the particle's size. Absent for billboard/stretch. */
@@ -2472,6 +2478,28 @@ function combineAdditiveGains(pile: number, temper: boolean): number {
 /** DIAGNOSTIC (`?umgain=<f>`): override the UNTEXTURED-mesh gain (default 2 - the `col += col`
  *  half-neutral convention). Sweeping it tests whether that ×2 still holds on the current
  *  baseline; it was calibrated on one that scored 35.x. */
+/** DISTORTION-ONLY MATERIALS (2026-10-25, Shu "nlc#1"). An untextured mesh is drawn as its
+ *  material colour at x2 (below), a rule measured on Virtuosa's white diamond rings, whose
+ *  material declares a `_MainTex` it leaves unbound. Shu's two `wave_distub_*` water meshes
+ *  reach the same branch with a material that declares NO main sampler at all, only a
+ *  `_DisturTex` and a `_MaskTex`: a distortion program, which warps the backdrop behind it
+ *  and emits no colour of its own. Drawn white they are a blown 586 px square over the
+ *  water (face zone 28.05 at t=8 and 39.30 at t=12 against a 0.18 floor with them off).
+ *  This renderer has no displacement pass (priced out, register), so the faithful draw is
+ *  nothing. The rule reads the exporter's slot census and nothing else: no `_MainTex`
+ *  declared, and a declared slot of the disturb family (`_DisturTex` / `_DisturbTex`, the
+ *  two spellings the Torappu shaders use). Of the 30 untextured meshes in the local corpus
+ *  it selects exactly Shu's two; Virtuosa, Nian, Logos and Cetsyr all declare `_MainTex`.
+ *  `?untexdistort=0` reverts to the white draw. */
+function untexDistortOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("untexdistort") !== "0";
+}
+function isDistortionOnlyMaterial(slots: IParticleSystemData["matTexSlots"]): boolean {
+    if (!slots) return false;
+    return !slots.declared.includes("_MainTex") && slots.declared.some((n) => /Distur/.test(n));
+}
+
 function untexMeshGain(): number {
     if (typeof window === "undefined") return 2;
     const v = parseFloat(new URLSearchParams(window.location.search).get("umgain") ?? "");
@@ -4822,6 +4850,11 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
         // else: the remaining texture-less systems are billboards, which have no geometry
         // to draw, or Ram-shader meshes the branch above already consumes.
         if (sys.tex == null) {
+            if (sys.renderMode === "mesh" && sys.mesh && sys.mesh.idx.length >= 3 && untexDistortOn() && isDistortionOnlyMaterial(sys.matTexSlots)) {
+                // A distortion-only program (see `isDistortionOnlyMaterial`): no colour to draw.
+                drop(sysIndex, sys, "untextured-mesh-distortion");
+                continue;
+            }
             if (sys.renderMode === "mesh" && sys.mesh && sys.mesh.idx.length >= 3) {
                 // ×2 COLOUR: a material with no `_MainTex` samples Unity's built-in white,
                 // so the draw is purely the material colour - and these Torappu compositors

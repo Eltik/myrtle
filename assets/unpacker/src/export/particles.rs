@@ -67,6 +67,14 @@ pub struct ParticleData {
     /// Consumed by the scene exporter's frozen-burst heuristic (a baked copy of a burst
     /// reads the same rect; a different rect of a shared atlas is different artwork).
     pub tex_st: [f64; 4],
+    /// The renderer's first material's texture slots when it binds NO `_MainTex`: every slot
+    /// the shader DECLARES (`m_TexEnvs` keys) and the subset that is BOUND (path id != 0).
+    /// Emitted as `matTexSlots` on untextured systems only, so the viewer can tell a colour
+    /// program with an unbound main sampler (Virtuosa's `quad_p`: declares `_MainTex`, draws
+    /// its material colour) from a distortion-only program (Shu "nlc#1" `wave_distub_*`:
+    /// declares `_DisturTex` and `_MaskTex` and no `_MainTex` at all, warps the backdrop and
+    /// draws no colour of its own). `None` when the system has a main texture or no material.
+    pub mat_tex_slots: Option<MaterialTexSlots>,
     /// Trail material texture (renderer's 2nd material), deduped into the same
     /// `[particles]/<i>.png` set; index written to `trail.tex`.
     pub trail_tex_val: Option<Value>,
@@ -976,6 +984,11 @@ pub(crate) fn collect_dynchar_particles(
         // Resolve the first material's _MainTex (+ optional _AlphaTex), blend, tiling.
         let (tex_val, alpha_val, tex_pid, blend, main_st, tint, ab_tint) =
             resolve_renderer_texture(all_objects, renderer);
+        let mat_tex_slots = if tex_pid.is_none() {
+            material_tex_slots(all_objects, renderer)
+        } else {
+            None
+        };
         // DIAGNOSTIC (`DYNCHAR_PSMAT`): the system's side of the material join, by the main
         // texture's path id (the material line prints the same id as `mainpid=`).
         if std::env::var("DYNCHAR_PSMAT").is_ok() {
@@ -2699,6 +2712,7 @@ pub(crate) fn collect_dynchar_particles(
             alpha_val,
             tex_pid,
             tex_st: main_st,
+            mat_tex_slots,
             trail_tex_val,
             trail_alpha_val,
             trail_tex_pid,
@@ -3075,6 +3089,47 @@ fn particle_color_curve(
         false,
         additive,
     )
+}
+
+/// Declared and bound texture slots of a material (see [`ParticleData::mat_tex_slots`]).
+#[derive(Clone, Debug)]
+pub struct MaterialTexSlots {
+    pub declared: Vec<String>,
+    pub bound: Vec<String>,
+}
+
+/// The renderer's first loaded material's texture slots, for a system that resolved no
+/// main texture. Reads `m_SavedProperties.m_TexEnvs`: every key is a slot the shader
+/// declares; a slot whose `m_Texture` path id is non-zero is bound. `None` when the
+/// renderer has no material, or the material is in another bundle.
+fn material_tex_slots(
+    all_objects: &HashMap<i64, (i32, Value)>,
+    renderer: Option<&Value>,
+) -> Option<MaterialTexSlots> {
+    let materials = renderer?.get("m_Materials")?.as_array()?;
+    let tex_envs = materials.iter().find_map(|mat_ref| {
+        let mat_pid = get_path_id(mat_ref).filter(|&p| p != 0)?;
+        let (21, mat) = all_objects.get(&mat_pid)? else {
+            return None;
+        };
+        mat.get("m_SavedProperties")?
+            .get("m_TexEnvs")?
+            .as_object()
+            .cloned()
+    })?;
+    let mut declared: Vec<String> = tex_envs.keys().cloned().collect();
+    declared.sort();
+    let mut bound: Vec<String> = tex_envs
+        .iter()
+        .filter(|(_, t)| {
+            t.get("m_Texture")
+                .and_then(get_path_id)
+                .is_some_and(|p| p != 0)
+        })
+        .map(|(k, _)| k.clone())
+        .collect();
+    bound.sort();
+    Some(MaterialTexSlots { declared, bound })
 }
 
 /// Resolve the renderer's first usable material (the particle's own texture)
@@ -3694,6 +3749,12 @@ pub fn export_particles(
             Some(idx) => json!(idx),
             None => Value::Null,
         };
+        // Untextured systems carry their material's slot census (see `mat_tex_slots`).
+        if tex_idx.is_none()
+            && let Some(slots) = &p.mat_tex_slots
+        {
+            sys["matTexSlots"] = json!({ "declared": slots.declared, "bound": slots.bound });
+        }
         // Fill trail.tex when the system has a trail with a distinct material.
         if sys.get("trail").is_some_and(serde_json::Value::is_object) {
             let trail_idx = resolve_tex(p.trail_tex_pid, &p.trail_tex_val, &p.trail_alpha_val);
