@@ -1115,6 +1115,20 @@ mod tests {
         assert!(sql.contains(&ProfileTabId::Score.visible_sql("us.profile_layout")));
     }
 
+    #[test]
+    fn the_leaderboard_view_ranks_ungraded_players_last() {
+        // v041 replaces the whole view, so v038's mask and v034's gate must
+        // ride along, and both rank windows put a NULL score last.
+        let sql = include_str!("../migrations/v041_leaderboard_unscored_last.sql");
+        assert!(sql.contains(&format!(
+            "{} AS level",
+            ProfileHeaderField::Level.shown_sql("u.id", "u.level")
+        )));
+        assert!(sql.contains(&ProfileTabId::Score.visible_sql("us.profile_layout")));
+        assert_eq!(sql.matches("total_score DESC NULLS LAST").count(), 2);
+        assert!(!sql.contains("total_score DESC)"));
+    }
+
     fn kinds(layout: &ProfileLayout) -> Vec<&'static str> {
         layout
             .showcase_blocks()

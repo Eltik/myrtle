@@ -114,6 +114,10 @@ const MIGRATIONS: &[(&str, &str)] = &[
         "v038_leaderboard_hidden_level",
         include_str!("v038_leaderboard_hidden_level.sql"),
     ),
+    (
+        "v041_leaderboard_unscored_last",
+        include_str!("v041_leaderboard_unscored_last.sql"),
+    ),
 ];
 
 pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {
@@ -149,4 +153,71 @@ pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::MIGRATIONS;
+
+    /// The body of the last migration that (re)defines `view`: the definition
+    /// a fresh or fully migrated database runs.
+    fn live_definition(view: &str) -> (&'static str, &'static str) {
+        let needle = format!("VIEW {view} AS");
+        MIGRATIONS
+            .iter()
+            .rev()
+            .find(|(_, sql)| sql.contains(&needle))
+            .copied()
+            .unwrap_or_else(|| panic!("no migration defines {view}"))
+    }
+
+    /// Every `OVER (...)` window in `sql`, parentheses balanced.
+    fn windows(sql: &str) -> Vec<&str> {
+        let mut out = Vec::new();
+        let mut rest = sql;
+        while let Some(at) = rest.find("OVER (") {
+            let body = &rest[at + "OVER (".len()..];
+            let mut depth = 1usize;
+            let end = body
+                .char_indices()
+                .find(|&(_, c)| {
+                    match c {
+                        '(' => depth += 1,
+                        ')' => depth -= 1,
+                        _ => {}
+                    }
+                    depth == 0
+                })
+                .map(|(i, _)| i)
+                .expect("balanced window");
+            out.push(&body[..end]);
+            rest = &body[end..];
+        }
+        out
+    }
+
+    /// `v_leaderboard` LEFT JOINs `user_scores`, so an ungraded player ranks on
+    /// a NULL score, and a bare `DESC` sorts NULL first: v038 gave every
+    /// ungraded player rank 1. This reads whichever migration defines the view
+    /// LAST, so a future redefinition that drops `NULLS LAST` fails here, not
+    /// on the live board.
+    #[test]
+    fn the_live_leaderboard_view_ranks_null_scores_last() {
+        let (name, sql) = live_definition("v_leaderboard");
+        let windows = windows(sql);
+        assert_eq!(windows.len(), 2, "{name}: rank_global and rank_server");
+        for w in windows {
+            assert!(
+                w.contains("DESC NULLS LAST"),
+                "{name}: window `{w}` sorts NULL first"
+            );
+        }
+    }
+
+    #[test]
+    fn v038_alone_would_rank_null_scores_first() {
+        // The check above, against the definition v041 replaced: it must catch it.
+        let sql = include_str!("v038_leaderboard_hidden_level.sql");
+        assert!(windows(sql).iter().all(|w| !w.contains("NULLS LAST")));
+    }
 }
