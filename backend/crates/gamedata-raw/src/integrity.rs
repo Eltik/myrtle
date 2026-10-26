@@ -1,12 +1,14 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SkippedTable {
     /// File stem, eg. `activity_table`
     pub table: String,
     /// RFC 3339 UTC of first extract that skipped table
     pub since: String,
     /// Resource version
+    #[serde(default)]
     pub res_version: Option<String>,
 }
 
@@ -16,7 +18,17 @@ pub struct IntegrityReport {
     pub warnings: Vec<String>,
 }
 
+impl IntegrityReport {
+    pub fn is_clean(&self) -> bool {
+        self.skipped.is_empty() && self.warnings.is_empty()
+    }
+}
+
 pub fn check(raw: &crate::RawGameData) -> IntegrityReport {
-    let _ = raw;
-    todo!()
+    // TODO: populated-table checks (operators, items, skills, voice lines) once
+    // the table groups have fields; they push into `warnings`.
+    IntegrityReport {
+        skipped: raw.skipped.clone(),
+        warnings: Vec::new(),
+    }
 }
