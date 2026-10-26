@@ -20,3 +20,8 @@ assets/il2cpp-work/
 scratchpad/
 backend/sync-dumps/
 backend-old
+
+
+# Added by cargo
+
+/target

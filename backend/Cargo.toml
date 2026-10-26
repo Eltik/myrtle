@@ -1,6 +1,197 @@
-[package]
-name = "backend"
+[workspace]
+resolver = "3"
+members = ["crates/gamedata-raw",
+    "crates/types",
+    "xtask",
+]
+# default-members = ["crates/api", "crates/worker", "crates/cli"]
+
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.91"
+publish = false
+license = "UNLICENSED"
+repository = "https://github.com/Eltik/myrtle"
 
-[dependencies]
+[workspace.dependencies]
+# internal
+myrtle-types = { path = "crates/types" }
+myrtle-gamedata-raw = { path = "crates/gamedata-raw" }
+myrtle-storage = { path = "crates/storage" }
+myrtle-gamedata = { path = "crates/gamedata" }
+myrtle-snapshot = { path = "crates/snapshot" }
+myrtle-engine-dps = { path = "crates/engine-dps" }
+myrtle-dps-formulas = { path = "crates/dps-formulas" }
+myrtle-engine-grade = { path = "crates/engine-grade" }
+myrtle-engine-base = { path = "crates/engine-base" }
+myrtle-engine-squad = { path = "crates/engine-squad" }
+myrtle-engine-story = { path = "crates/engine-story" }
+myrtle-engine-archives = { path = "crates/engine-archives" }
+myrtle-engine-release = { path = "crates/engine-release" }
+myrtle-engine-planner = { path = "crates/engine-planner" }
+myrtle-engine-music = { path = "crates/engine-music" }
+myrtle-hypergryph = { path = "crates/hypergryph" }
+myrtle-db = { path = "crates/db" }
+myrtle-jobs = { path = "crates/jobs" }
+myrtle-app = { path = "crates/app" }
+myrtle-testkit = { path = "crates/testkit" }
+
+# external
+anyhow = "1.0.104"
+arc-swap = "1.9.2"
+async-trait = "0.1.92"
+axum = "0.8.9"
+base64 = "0.22.1"
+bytes = "1.12.1"
+chrono = { version = "0.4.45", default-features = false, features = ["std", "clock", "serde"] }
+clap = { version = "4.6.7", features = ["derive"] }
+dashmap = "6.2.1"
+futures-util = "0.3.34"
+hex = "0.4.3"
+hmac = "0.12.1"
+jsonwebtoken = { version = "10.4.0", features = ["rust_crypto"] }
+rand = "0.10.3"
+rayon = "1.12.0"
+redis = { version = "1.7.1", features = ["tokio-comp", "connection-manager"] }
+regex = "1.13.1"
+reqwest = { version = "0.13.5", features = ["json"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = { version = "1.0.151", features = ["float_roundtrip"] }
+sha2 = "0.10.9"
+sqlx = { version = "0.8.6", default-features = false, features = ["postgres", "runtime-tokio", "uuid", "chrono", "json", "migrate", "macros"] }
+subtle = "2.6.1"
+tempfile = "3.27.0"
+thiserror = "2.0.21"
+tikv-jemallocator = "0.6.1"
+tokio = { version = "1.53.2", features = ["rt-multi-thread", "macros", "sync", "signal", "time"] }
+tokio-util = "0.7.20"
+tower = { version = "0.5.3", features = ["util"] }
+tower-http = { version = "0.6.11", features = ["cors", "compression-gzip", "compression-br", "trace"] }
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+utoipa = { version = "5.5.0", features = ["axum_extras", "chrono", "uuid"] }
+utoipa-axum = "0.2.0"
+utoipa-scalar = { version = "0.3.0", features = ["axum"] }
+uuid = { version = "1.27.0", features = ["serde", "v4"] }
+validator = { version = "0.20.0", features = ["derive"] }
+walkdir = "2.5.0"
+toml = "0.8.19"
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+unused_must_use = "deny"
+rust_2018_idioms = { level = "warn", priority = -1 }
+unreachable_pub = "allow"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+unwrap_used = "warn"
+dbg_macro = "warn"
+undocumented_unsafe_blocks = "warn"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+too_long_first_doc_paragraph = "allow"
+doc_link_with_quotes = "allow"
+must_use_candidate = "allow"
+implicit_hasher = "allow"
+ref_option = "allow"
+cast_possible_truncation = "allow"
+cast_precision_loss = "allow"
+cast_sign_loss = "allow"
+cast_possible_wrap = "allow"
+option_if_let_else = "allow"
+match_same_arms = "allow"
+assigning_clones = "allow"
+bool_to_int_with_if = "allow"
+trait_duplication_in_bounds = "allow"
+items_after_statements = "allow"
+useless_let_if_seq = "allow"
+needless_pass_by_value = "allow"
+future_not_send = "allow"
+unchecked_time_subtraction = "allow"
+manual_midpoint = "allow"
+similar_names = "allow"
+struct_field_names = "allow"
+struct_excessive_bools = "allow"
+too_many_lines = "allow"
+suboptimal_flops = "allow"
+imprecise_flops = "allow"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
+
+[[workspace.metadata.layers]]
+level = 0
+name = "types"
+crates = ["myrtle-types"]
+
+[[workspace.metadata.layers]]
+level = 1
+name = "raw data, object store"
+crates = ["myrtle-gamedata-raw", "myrtle-storage"]
+
+[[workspace.metadata.layers]]
+level = 2
+name = "game model"
+crates = ["myrtle-gamedata"]
+
+[[workspace.metadata.layers]]
+level = 3
+name = "snapshot, engines, upstream"
+crates = [
+    "myrtle-snapshot",
+    "myrtle-engine-dps",
+    "myrtle-dps-formulas",
+    "myrtle-engine-grade",
+    "myrtle-engine-base",
+    "myrtle-engine-squad",
+    "myrtle-engine-story",
+    "myrtle-engine-archives",
+    "myrtle-engine-release",
+    "myrtle-engine-planner",
+    "myrtle-engine-music",
+    "myrtle-hypergryph",
+]
+
+[[workspace.metadata.layers]]
+level = 4
+name = "persistence, queue"
+crates = ["myrtle-db", "myrtle-jobs"]
+
+[[workspace.metadata.layers]]
+level = 5
+name = "use cases"
+crates = ["myrtle-app"]
+
+[[workspace.metadata.layers]]
+level = 6
+name = "binaries"
+crates = ["myrtle-api", "myrtle-worker", "myrtle-cli"]
+
+[workspace.metadata.layer-rules]
+tools = ["myrtle-testkit", "myrtle-dps-transpile", "myrtle-parity", "xtask"]
+dev-only = ["myrtle-testkit"]
+pure = [
+    "myrtle-types",
+    "myrtle-gamedata-raw",
+    "myrtle-gamedata",
+    "myrtle-engine-*",
+    "myrtle-dps-formulas",
+]
+pure-forbidden = [
+    "myrtle-hypergryph",
+    "myrtle-snapshot",
+    "myrtle-storage",
+    "sqlx",
+    "tokio",
+    "reqwest",
+    "axum",
+    "redis",
+    "hyper",
+    "aws-sdk-s3",
+]

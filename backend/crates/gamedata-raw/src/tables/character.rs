@@ -1,0 +1,168 @@
+//! Operators and everything hung off one: `character_table`, `skill_table`,
+//! `uniequip_table` + `battle_equip_table`, `range_table`, `favor_table`,
+//! `skin_table`, `charword_table`, `handbook_info_table`, `handbook_team_table`.
+//!
+//! Moves in: `backend/src/core/gamedata/types/{range.rs (25), trust.rs (55),
+//! skin.rs (250)}`. `operator.rs`, `skill.rs`, `module.rs`, `voice.rs`,
+//! `handbook.rs` and `handbook_team.rs` went to modules of their own names
+//! (lift-2), as files.csv maps them.
+
+#[derive(Debug, Default)]
+pub struct CharacterTables {}
+
+// ---- Lifted for engine-release (lift pilot, Oct 25 2026). Copied from backend/src/core/gamedata/types/skin.rs:8-121,138-182 (SpecialSkinInfo, SkinData and the table file left),
+// ts-rs dropped, utoipa behind the `schema` feature.
+use serde::{Deserialize, Serialize};
+
+use super::item::SkinChannel;
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+pub struct TokenSkinMapEntry {
+    #[serde(alias = "TokenId")]
+    pub token_id: String,
+    #[serde(alias = "TokenSkinId")]
+    pub token_skin_id: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+pub struct BattleSkin {
+    #[serde(alias = "OverwritePrefab", default)]
+    pub overwrite_prefab: bool,
+    #[serde(alias = "SkinOrPrefabId", default)]
+    pub skin_or_prefab_id: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+pub struct DisplaySkin {
+    #[serde(alias = "SkinName")]
+    pub skin_name: Option<String>,
+    #[serde(alias = "ColorList", default)]
+    pub color_list: Vec<String>,
+    #[serde(alias = "TitleList", default)]
+    pub title_list: Vec<String>,
+    #[serde(alias = "ModelName", default)]
+    pub model_name: String,
+    #[serde(alias = "DrawerList", default)]
+    pub drawer_list: Vec<String>,
+    #[serde(alias = "DesignerList")]
+    pub designer_list: Option<Vec<String>>,
+    #[serde(alias = "SkinGroupId", default)]
+    pub skin_group_id: String,
+    #[serde(alias = "SkinGroupName", default)]
+    pub skin_group_name: String,
+    #[serde(alias = "SkinGroupSortIndex", default)]
+    pub skin_group_sort_index: i32,
+    #[serde(alias = "Content", default)]
+    pub content: String,
+    #[serde(alias = "Dialog")]
+    pub dialog: Option<String>,
+    #[serde(alias = "Usage")]
+    pub usage: Option<String>,
+    #[serde(alias = "Description")]
+    pub description: Option<String>,
+    #[serde(alias = "ObtainApproach")]
+    pub obtain_approach: Option<String>,
+    #[serde(alias = "SortId")]
+    pub sort_id: i32,
+    #[serde(alias = "DisplayTagId")]
+    pub display_tag_id: Option<String>,
+    #[serde(alias = "GetTime")]
+    pub get_time: i64,
+    #[serde(alias = "OnYear")]
+    pub on_year: i32,
+    #[serde(alias = "OnPeriod")]
+    pub on_period: i32,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+pub struct BrandGroup {
+    #[serde(alias = "SkinGroupId")]
+    pub skin_group_id: String,
+    #[serde(alias = "PublishTime")]
+    pub publish_time: i64,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+pub struct BrandKvImg {
+    #[serde(alias = "KvImgId")]
+    pub kv_img_id: String,
+    #[serde(alias = "LinkedSkinGroupId")]
+    pub linked_skin_group_id: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+pub struct Brand {
+    #[serde(alias = "BrandId")]
+    pub brand_id: String,
+    #[serde(alias = "GroupList")]
+    pub group_list: Vec<BrandGroup>,
+    #[serde(alias = "KvImgIdList")]
+    pub kv_img_id_list: Vec<BrandKvImg>,
+    #[serde(alias = "BrandName")]
+    pub brand_name: String,
+    #[serde(alias = "BrandCapitalName")]
+    pub brand_capital_name: String,
+    #[serde(alias = "Description")]
+    pub description: String,
+    #[serde(alias = "PublishTime")]
+    pub publish_time: i64,
+    #[serde(alias = "SortId")]
+    pub sort_id: i32,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+pub struct Skin {
+    #[serde(alias = "SkinId", default)]
+    pub skin_id: String,
+    #[serde(alias = "CharId", default)]
+    pub char_id: String,
+    #[serde(alias = "TokenSkinMap")]
+    pub token_skin_map: Option<Vec<TokenSkinMapEntry>>,
+    #[serde(alias = "IllustId", default)]
+    pub illust_id: String,
+    #[serde(alias = "DynIllustId")]
+    pub dyn_illust_id: Option<String>,
+    #[serde(alias = "AvatarId", default)]
+    pub avatar_id: String,
+    #[serde(alias = "PortraitId", default)]
+    pub portrait_id: String,
+    #[serde(alias = "DynPortraitId")]
+    pub dyn_portrait_id: Option<String>,
+    #[serde(alias = "DynEntranceId")]
+    pub dyn_entrance_id: Option<String>,
+    #[serde(alias = "BuildingId")]
+    pub building_id: Option<String>,
+    #[serde(alias = "BattleSkin", default)]
+    pub battle_skin: BattleSkin,
+    #[serde(alias = "IsBuySkin", default)]
+    pub is_buy_skin: bool,
+    #[serde(alias = "TmplId")]
+    pub tmpl_id: Option<String>,
+    #[serde(alias = "VoiceId")]
+    pub voice_id: Option<String>,
+    #[serde(alias = "SpDynIllustId")]
+    pub sp_dyn_illust_id: Option<String>,
+    #[serde(alias = "VoiceType", default)]
+    pub voice_type: String,
+    #[serde(alias = "DisplaySkin", default)]
+    pub display_skin: DisplaySkin,
+    /// `displaySkin.displayTagId` as a category, so a client can group skins
+    /// without matching the server's wording. Set when the table loads, and on
+    /// KR and JP from a reference server by skin id.
+    #[serde(skip_deserializing)]
+    pub obtain_channel: SkinChannel,
+}
