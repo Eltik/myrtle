@@ -1,11 +1,3 @@
-//! One module per table family. Each holds the serde structs exactly as the
-//! excel JSON is shaped; no derived fields.
-//!
-//! Not moved here: `backend/src/core/gamedata/types/chibi.rs` (chibi data comes
-//! from the asset listing, see `gamedata::enrich::chibi`) and the derived
-//! `stage_index.rs`, `stage_universe.rs`, `stage_evidence.rs` (see
-//! `gamedata::index::stage`).
-
 pub mod activity;
 pub mod audio;
 pub mod autochess;

@@ -1,9 +1,6 @@
-//! `handbook` table types.
-// ---- Lifted for engine-archives (lift-2, Oct 25 2026). Moved in whole from
-// backend/src/core/gamedata/types/handbook.rs (463 lines), ts-rs dropped, utoipa
-// behind the `schema` feature.
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 use super::material::ItemType;
 use crate::serde_helpers::{deserialize_fb_map, deserialize_fb_map_or_default};
@@ -16,7 +13,7 @@ pub enum OperatorGender {
     Female,
     Male,
     #[serde(rename = "Male]")]
-    MaleBugged, // Arene is bugged and has ] at the end
+    MaleBugged,
     Conviction,
 }
 
@@ -114,7 +111,7 @@ pub enum OperatorRace {
     Aslan,
     Elf,
     #[serde(rename = "Sa■&K?uSxw?")]
-    Corrupted, // Special corrupted text for certain operators
+    Corrupted,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

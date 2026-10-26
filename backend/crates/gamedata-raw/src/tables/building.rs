@@ -1,16 +1,5 @@
-//! The base (RIIC): `building_data`.
-//!
-//! Moves in: `backend/src/core/gamedata/types/building.rs` (505). The buff text
-//! parsing that `engine-base` needs starts from these structs; see
-//! `gamedata::index::base_terms`.
-
 #[derive(Debug, Default)]
 pub struct BuildingTables {}
-
-// ---- Lifted for engine-planner (lift-2, Oct 25 2026). Moved in whole from
-// backend/src/core/gamedata/types/building.rs (505 lines), ts-rs dropped, utoipa
-// behind the `schema` feature. Its module doc line follows as a plain comment:
-// Building (RIIC) data from `building_data.json`: facilities, operator base skills, buffs, production mechanics.
 
 use std::collections::HashMap;
 
@@ -152,8 +141,8 @@ pub struct StoreyDef {
     pub type_: String,
     /// Control-centre level that unlocks this floor
     pub unlock_control_level: i32,
-    /// Rows from the bottom of the base in half-tiles.
-    /// B4 is 0; 1F is 8.
+    /// Rows from the bottom of the base in half-tiles
+    /// B4 is 0; 1F is 8
     pub y_offset: i32,
 }
 
@@ -167,7 +156,7 @@ pub struct Buff {
     pub buff_category: String,
     pub room_type: String,
     /// Static efficiency bonus (percentage points). `0` for conditional buffs
-    /// whose value depends on context (facility counts, teammates, tags, etc.).
+    /// whose value depends on context (facility counts, teammates, tags, etc.)
     pub efficiency: i32,
     #[serde(default)]
     pub skill_icon: String,

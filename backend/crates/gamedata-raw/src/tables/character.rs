@@ -1,17 +1,6 @@
-//! Operators and everything hung off one: `character_table`, `skill_table`,
-//! `uniequip_table` + `battle_equip_table`, `range_table`, `favor_table`,
-//! `skin_table`, `charword_table`, `handbook_info_table`, `handbook_team_table`.
-//!
-//! Moves in: `backend/src/core/gamedata/types/{range.rs (25), trust.rs (55),
-//! skin.rs (250)}`. `operator.rs`, `skill.rs`, `module.rs`, `voice.rs`,
-//! `handbook.rs` and `handbook_team.rs` went to modules of their own names
-//! (lift-2), as files.csv maps them.
-
 #[derive(Debug, Default)]
 pub struct CharacterTables {}
 
-// ---- Lifted for engine-release (lift pilot, Oct 25 2026). Copied from backend/src/core/gamedata/types/skin.rs:8-121,138-182 (SpecialSkinInfo, SkinData and the table file left),
-// ts-rs dropped, utoipa behind the `schema` feature.
 use serde::{Deserialize, Serialize};
 
 use super::item::SkinChannel;
@@ -160,9 +149,7 @@ pub struct Skin {
     pub voice_type: String,
     #[serde(alias = "DisplaySkin", default)]
     pub display_skin: DisplaySkin,
-    /// `displaySkin.displayTagId` as a category, so a client can group skins
-    /// without matching the server's wording. Set when the table loads, and on
-    /// KR and JP from a reference server by skin id.
+    /// `displaySkin.displayTagId` as a category
     #[serde(skip_deserializing)]
     pub obtain_channel: SkinChannel,
 }

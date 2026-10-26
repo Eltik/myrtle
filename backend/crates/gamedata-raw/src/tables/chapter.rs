@@ -1,14 +1,6 @@
-//! `chapter_table` types: the main story's chapter names (`Hour of An
-//! Awakening`, ...) and the zone range each spans. Chapter 3's range is
-//! `act2mainss_zone1..act3mainss_zone1`, not `main_15..main_16`, so the
-//! zone -> chapter link is read off `zone_table.MainlineAdditionInfo`
-//! (`ChapterId` per zone) first and the numeric range is the fallback.
-// ---- Lifted for engine-grade (lift-3, Oct 25 2026). Moved in whole from
-// backend/src/core/gamedata/types/chapter.rs (55 lines), ts-rs dropped, utoipa
-// behind the `schema` feature.
+use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 use crate::serde_helpers::deserialize_fb_map_or_default;
 
@@ -40,11 +32,8 @@ pub struct ChapterTableFile {
     pub chapters: HashMap<String, Chapter>,
 }
 
-/// `zone_table.MainlineAdditionInfo[zone]`: the chapter a main zone belongs
-/// to, and when the zone opened. `ZoneOpenTime` is a real unix time for
-/// `main_10` through `main_14` on EN and `-1` for the twelve older zones,
-/// which is the only release date the main story carries: every mainline
-/// `story_review_table` row writes `StartTime: -1`.
+/// `zone_table.MainlineAdditionInfo[zone]`, chapter a main zone belongs to
+/// and when it opened (`ZoneOpenTime` unix time, `-1` for older zones)
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct MainlineAdditionInfo {
     #[serde(alias = "ZoneId", default)]

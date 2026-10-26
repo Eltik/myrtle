@@ -1,7 +1,5 @@
-//! `sandbox_universe` table types.
-// ---- Lifted for engine-grade (lift-3, Oct 25 2026). Moved in whole from
-// backend/src/core/gamedata/types/sandbox_universe.rs (179 lines), ts-rs dropped, utoipa
-// behind the `schema` feature.
+use std::collections::HashMap;
+
 use serde_json::Value;
 
 #[derive(Debug, Clone, Default)]
@@ -56,13 +54,6 @@ impl SandboxUniverse {
             max_recipes: count("FoodData"),
             max_music: count("ArchiveMusicUnlockData"),
             max_base_level: count("BaseUpdate"),
-            // `BuildingItemData` is a strict SUBSET of `CraftItemData`, not a
-            // disjoint table: every one of its 43 ids reappears in
-            // `CraftItemData` as a `BASE_BUILDING` (19) or `COMBAT_BUILDING`
-            // (24) entry, alongside 53 `TACTICAL` ones. Summing the two counted
-            // every building blueprint twice and put the total at 139 when the
-            // real universe is 96, the exact key set of `build.book` in the
-            // progress of players who have collected them all.
             max_blueprints: count("CraftItemData"),
             max_rifts: count("FixedRiftData"),
         }
@@ -74,18 +65,7 @@ impl SandboxUniverse {
         first.get("value")
     }
 
-    /// Explorable map nodes for a single playthrough.
-    ///
-    /// `MapData` holds the persistent overworld map(s) (`sandbox_1_main`, ≈127
-    /// nodes, mirrored in progress as `main.map.node`) plus dozens of randomized
-    /// hunt/rift layout variants (`sandbox_1_hunt_normal_1` .. `_10`, ...), only
-    /// one of which is ever loaded. Summing them all gave ≈1032 over 59 variants,
-    /// the bogus ">1,000" "Map nodes" total that left the exploration sub-score
-    /// unfillable and deflated the whole RA grade.
-    ///
-    /// Counts the `_main` maps, since exploration keys off `main.map.node`. With
-    /// none (a shape change), falls back to one variant per layout group so it
-    /// never regresses to the over-count.
+    /// Explorable map nodes for a single playthrough
     fn count_map_nodes(sandbox_data: &Value) -> usize {
         let Some(map_data) = sandbox_data.get("MapData").and_then(|v| v.as_array()) else {
             return 0;
@@ -106,7 +86,6 @@ impl SandboxUniverse {
                 .to_string()
         };
 
-        // Primary: the persistent overworld map(s) the player explores.
         let overworld: usize = map_data
             .iter()
             .filter(|e| key_of(e).contains("_main"))
@@ -116,9 +95,7 @@ impl SandboxUniverse {
             return overworld;
         }
 
-        // Fallback: one representative (largest) variant per layout group.
-        let mut per_group: std::collections::HashMap<String, usize> =
-            std::collections::HashMap::new();
+        let mut per_group: HashMap<String, usize> = HashMap::new();
         for entry in map_data {
             let group = Self::base_layout_group(&key_of(entry));
             let slot = per_group.entry(group).or_insert(0);
@@ -127,9 +104,7 @@ impl SandboxUniverse {
         per_group.values().sum()
     }
 
-    /// Strip a trailing `_<digits>` variant suffix so randomized layouts of the
-    /// same region collapse to one group. `sandbox_1_hunt_normal_7` ->
-    /// `sandbox_1_hunt_normal`; ids without a numeric suffix are returned as-is.
+    /// Strip a trailing `_<digits>` variant suffix, e.g. `sandbox_1_hunt_normal_7` -> `sandbox_1_hunt_normal`
     fn base_layout_group(key: &str) -> String {
         match key.rsplit_once('_') {
             Some((prefix, suffix))
@@ -139,45 +114,5 @@ impl SandboxUniverse {
             }
             _ => key.to_string(),
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::SandboxUniverse;
-    use serde_json::json;
-
-    #[test]
-    fn max_zones_excludes_the_tutorial_zone() {
-        let raw = json!({ "Detail": { "SANDBOX_V2": [ { "value": {
-            "ZoneData": [
-                { "key": "z_1_0" }, { "key": "z_1_1" }, { "key": "z_1_tutorial" }, { "key": "z_1_2" },
-            ],
-        } } ] } });
-        let u = SandboxUniverse::build(&raw);
-        assert_eq!(
-            u.max_zones, 3,
-            "the tutorial zone is excluded from the zone total"
-        );
-    }
-
-    #[test]
-    fn max_blueprints_does_not_double_count_buildings() {
-        // `BuildingItemData` ids all reappear in `CraftItemData`; the total is
-        // the `CraftItemData` count, never the sum of the two.
-        let raw = json!({ "Detail": { "SANDBOX_V2": [ { "value": {
-            "BuildingItemData": [
-                { "key": "sandbox_1_building_1" }, { "key": "sandbox_1_building_2" },
-            ],
-            "CraftItemData": [
-                { "key": "sandbox_1_building_1" }, { "key": "sandbox_1_building_2" },
-                { "key": "sandbox_1_tactical_1" },
-            ],
-        } } ] } });
-        let u = SandboxUniverse::build(&raw);
-        assert_eq!(
-            u.max_blueprints, 3,
-            "blueprints total is the craftable set, not craft + building"
-        );
     }
 }

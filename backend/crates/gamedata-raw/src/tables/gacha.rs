@@ -1,20 +1,9 @@
-//! Banners: `gacha_table` and the pool details the gacha-detail job fetches
-//! (`derived/` file, `GACHA_DETAIL_DIR`).
-//!
-//! Moves in: `backend/src/core/gamedata/types/{gacha.rs (314),
-//! gacha_detail.rs (227)}`. `pool_detail_path` (`gacha_detail.rs:58`) becomes a
-//! `TableSource` concern.
-
 #[derive(Debug, Default)]
 pub struct GachaTables {}
 
-// ---- Lifted for engine-squad (lift-2, Oct 25 2026). Moved in whole from
-// backend/src/core/gamedata/types/gacha.rs (314 lines), replacing the pilot's copy of its
-// lines 8-102 (`GachaPoolClient`); ts-rs dropped, utoipa behind the `schema` feature.
-// `RarityRate` and `WeightUpChar` (gacha_detail.rs, copied by the pilot) follow below,
-// so the old `use super::gacha_detail::{..}` line is dropped.
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 use crate::serde_helpers::deserialize_fb_map;
 
@@ -61,50 +50,32 @@ pub struct GachaPoolClient {
     #[serde(alias = "GuaranteeName")]
     pub guarantee_name: Option<String>,
 
-    // Decoded from `LimitParam.Base64` / `DynMeta.Base64` during enrichment:
-    // base64-wrapped BSON whose shape varies by `gacha_rule_type` (LIMITED has
-    // `limitedCharId`; CLASSIC_DOUBLE main/sub 6★ + rare5CharList; FESCLASSIC /
-    // SPECIAL nest `rarityPickCharDict` with TIER_5/TIER_6; ATTAIN variants have
-    // `attainRare6CharList`). Empty when the banner has none this way (NORMAL /
-    // SINGLE pools carry only art, LINKAGE pools use a separate LinkageRuleId).
     #[serde(default, skip_deserializing)]
     pub featured6: Vec<String>,
     #[serde(default, skip_deserializing)]
     pub featured5: Vec<String>,
 
-    /// Rate-boosted operators, merged in from the pool-detail sidecar.
-    ///
-    /// Kept separate from `featured6` on purpose: a weight-up operator keeps the
-    /// band's base rate and merely takes a larger share of it, which is a
-    /// different promise to the player than a rate-up.
+    /// Rate-boosted operators, from the pool-detail sidecar
     #[serde(default, skip_deserializing)]
     pub weight_up: Vec<WeightUpChar>,
-    /// Headline per-rarity rates for this banner.
+    /// Headline per-rarity rates
     #[serde(default, skip_deserializing)]
     pub avail_rates: Vec<RarityRate>,
-    /// Selectable 6* candidates on player-pick banners. Empty elsewhere.
+    /// Selectable 6* candidates on player-pick banners
     #[serde(default, skip_deserializing)]
     pub pickup6: Vec<String>,
-    /// Provenance of the featured lists: `"static"` when only the BSON blobs
-    /// were available, `"static+api"` once pool detail has been merged in.
+    /// Featured list source: `"static"` (BSON blobs only) or `"static+api"` (pool detail merged)
     #[serde(default, skip_deserializing)]
     pub featured_source: String,
-    /// Shown only to returning players: a pool some `open_server_table`
-    /// `PlayerReturn` tier grants (see `open_server`). Its `gacha_table` window
-    /// is years long because the game times it per player, so it is never
-    /// "running now for everyone" and its `end_time` is not a real end date.
+    /// Returning-player pool; `end_time` is not a real end date
     #[serde(default, skip_deserializing)]
     pub returning: bool,
-    /// The 6★ rate-up share each featured operator takes, as a 0..1 fraction of
-    /// the 6★ band: the sidecar's `upCharInfo.perCharList[rarityRank=5].percent`,
-    /// which is already per operator (LIMITED reads 0.35 with `count: 2`). `None`
-    /// without a sidecar entry or a 6★ rate-up in it. Internal: the release
-    /// planner reads it, the static banner endpoint does not ship it.
+    /// Per-operator 6★ rate-up share as a 0..1 fraction of the 6★ band
+    /// (`upCharInfo.perCharList[rarityRank=5].percent`), `None` without a 6★ rate-up
     #[serde(skip)]
     pub declared_share6: Option<f64>,
-    /// Rolls per cycle of a REPEATING collab handover, from `LinkageParam`'s
-    /// `loopTarget6Count` (the `LINKAGE_LOOP6_NEW5` rule). `None` on once-only
-    /// collabs, which carry `guaranteeTarget6Count` instead, and on everything else.
+    /// Rolls per cycle of a repeating collab handover (`LinkageParam.loopTarget6Count`),
+    /// `None` otherwise
     #[serde(skip)]
     pub linkage_loop_at: Option<u32>,
 }
@@ -157,13 +128,7 @@ pub struct RecruitPool {
     pub recruit_time_table: Vec<RecruitTimeEntry>,
 }
 
-/// The gacha tag id of each class, keyed by profession code. Every client
-/// ships the 8 class names as recruitment tags under these fixed ids, in the
-/// same order (checked on en, cn, kr and jp on 2026-10-06: 1 is Guard,
-/// 近卫干员, 가드 and 前衛タイプ), so a class reads in the server's own wording
-/// with no translation table and a server added later needs no code. The
-/// frontend recruitment tool keeps the same numbering as `PROFESSION_TAG_ID`
-/// in `components/tools/recruitment/impl/constants.ts`.
+/// Gacha tag id of each class, keyed by profession code
 pub const PROFESSION_TAG_IDS: [(&str, i32); 8] = [
     ("WARRIOR", 1),
     ("SNIPER", 2),
@@ -175,22 +140,13 @@ pub const PROFESSION_TAG_IDS: [(&str, i32); 8] = [
     ("PIONEER", 8),
 ];
 
-/// The gacha tag ids of the two positions and the two handbook genders, so a
-/// position or gender reads in the server's own `TagName` (EN Melee/Ranged/
-/// Male/Female, CN 近战位/远程位/男性干员/女性干员, JP 近距離/遠距離/男性/女性,
-/// KR 근거리/원거리/남성/여성, checked 2026-10-11). Named because no table
-/// links them: `TagGroup` equals `TagId` on all 31 EN tags, so no group field
-/// sets them apart, and neither `character_table` `Position` nor the
-/// handbook gender carries a tag id. The frontend recruitment tool names the
-/// same ids (`MELEE_TAG_ID`, `HIDDEN_TAG_IDS`).
+/// Gacha tag ids of the two positions and the two handbook genders
 pub const MELEE_TAG_ID: i32 = 9;
 pub const RANGED_TAG_ID: i32 = 10;
 pub const MALE_TAG_ID: i32 = 1012;
 pub const FEMALE_TAG_ID: i32 = 1013;
 
-/// Profession code -> the server's own class name, read off its gacha tags
-/// verbatim (CN's 干员 and JP's タイプ suffixes are the game's wording, kept).
-/// A tag id the list lacks, or an empty name, leaves that class out.
+/// Profession code -> server's class name from its gacha tags
 pub fn profession_names(tags: &[GachaTag]) -> HashMap<String, String> {
     PROFESSION_TAG_IDS
         .iter()
@@ -311,9 +267,6 @@ impl GachaTableFile {
     }
 }
 
-// ---- Lifted for engine-release (lift pilot, Oct 25 2026). Copied from backend/src/core/gamedata/types/gacha_detail.rs:137-149,199-209,
-// ts-rs dropped, utoipa behind the `schema` feature.
-
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
@@ -326,13 +279,13 @@ pub struct WeightUpChar {
     pub weight: i64,
 }
 
-/// Per-rarity headline rate for a banner, flattened for the API.
+/// Per-rarity headline rate for a banner
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
 pub struct RarityRate {
     pub rarity_rank: i32,
     pub total_percent: f64,
-    /// How many operators sit in this rarity band on this banner.
+    /// Operator count in this rarity band
     pub pool_size: usize,
 }

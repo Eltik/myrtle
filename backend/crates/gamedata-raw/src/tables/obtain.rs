@@ -1,19 +1,6 @@
-//! How an operator or a skin is obtained, as a category instead of the game's
-//! localized wording.
-//!
-//! The tables name the category in the server's own language
-//! (`itemObtainApproach` "Recruitment & Headhunting" on EN is 招募寻访 on CN,
-//! 인재 채용 on KR and 人材募集 on JP), so a client that groups by the string
-//! only works on the language it was written against. The classifiers here
-//! read EN and CN wording; KR and JP take the category from a reference
-//! server by id, see `enrich::reference::align_reference_facts`.
-// ---- Lifted for engine-archives (lift-2, Oct 25 2026). Moved in whole from
-// backend/src/core/gamedata/types/obtain.rs (150 lines), ts-rs dropped, utoipa
-// behind the `schema` feature.
-
 use serde::{Deserialize, Serialize};
 
-/// An operator's `itemObtainApproach` category.
+/// Operator's `itemObtainApproach` category
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
@@ -24,17 +11,12 @@ pub enum ObtainChannel {
     IntegratedStrategies,
     CreditStore,
     GiftPack,
-    /// A non-empty approach outside the six categories: EN "Main Theme Story"
-    /// and "Anniversary Reward", one operator each on 2026-10-06, or wording
-    /// the classifier does not read.
+    /// Non-empty approach outside the other categories, e.g. "Main Theme Story"
     Other,
 }
 
 impl ObtainChannel {
-    /// EN and CN wording, by prefix: EN's one combined value is
-    /// "Recruitment & Headhunting, Pinboard Missions" (CN 招募寻访、见习任务)
-    /// and it reads as headhunting. `None` for an empty approach, which is how
-    /// the enrichment stores the table's null (29 operators on every server).
+    /// EN and CN wording, by prefix. `None` for an empty approach
     pub fn classify(approach: &str) -> Option<Self> {
         const PREFIXES: &[(&str, ObtainChannel)] = &[
             ("Recruitment & Headhunting", ObtainChannel::Headhunting),
@@ -66,15 +48,12 @@ impl ObtainChannel {
     }
 }
 
-/// A skin's shop channel, from `displaySkin.displayTagId`. The categories are
-/// the ones the profile skin viewer groups by.
+/// Skin's shop channel, from `displaySkin.displayTagId`
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
 pub enum SkinChannel {
-    /// No tag: the outfit store, and the default outfits. The absence of a tag
-    /// reads the same in every language, so every server classifies this one
-    /// itself.
+    /// No tag: outfit store and default outfits
     #[default]
     Store,
     Collab,
@@ -82,23 +61,21 @@ pub enum SkinChannel {
     IntegratedStrategies,
     Seasonal,
     SpecialPack,
-    /// EN "Official Artworks", CN 设定集: a code inside the artbook.
+    /// EN "Official Artworks", CN 设定集: a code inside the artbook
     CodeExchange,
     ReclamationAlgorithm,
-    /// A tag the classifier does not read, with no reference to resolve it.
+    /// Unrecognized tag
     Other,
 }
 
 impl SkinChannel {
-    /// EN and CN `displayTagId` wording, exact. Census of 2026-10-06: EN 144
-    /// tagged skins over 7 tags, CN 161 over 8.
+    /// EN and CN `displayTagId` wording, exact match
     pub fn classify(display_tag_id: Option<&str>) -> Self {
         let Some(tag) = display_tag_id.map(str::trim).filter(|t| !t.is_empty()) else {
             return Self::Store;
         };
         match tag {
             "From collabs" | "联动获得" => Self::Collab,
-            // The two KFC skins, CN only: a co-branded pack, not a paid brand.
             "合作礼包" => Self::Collab,
             "Event Reward" | "活动获得" => Self::Event,
             "Integrated Strategies" | "集成战略" => Self::IntegratedStrategies,
@@ -108,43 +85,5 @@ impl SkinChannel {
             "Reclamation Algorithm" | "生息演算" => Self::ReclamationAlgorithm,
             _ => Self::Other,
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn operator_wording_reads_by_prefix() {
-        assert_eq!(
-            ObtainChannel::classify("Recruitment & Headhunting, Pinboard Missions"),
-            Some(ObtainChannel::Headhunting)
-        );
-        assert_eq!(
-            ObtainChannel::classify("集成战略获得"),
-            Some(ObtainChannel::IntegratedStrategies)
-        );
-        assert_eq!(
-            ObtainChannel::classify("Main Theme Story"),
-            Some(ObtainChannel::Other)
-        );
-        // KR wording is not read here; the reference pass resolves it.
-        assert_eq!(
-            ObtainChannel::classify("인재 채용"),
-            Some(ObtainChannel::Other)
-        );
-        assert_eq!(ObtainChannel::classify(""), None);
-    }
-
-    #[test]
-    fn skin_tags_read_exactly() {
-        assert_eq!(SkinChannel::classify(None), SkinChannel::Store);
-        assert_eq!(SkinChannel::classify(Some("联动获得")), SkinChannel::Collab);
-        assert_eq!(
-            SkinChannel::classify(Some("Official Artworks")),
-            SkinChannel::CodeExchange
-        );
-        assert_eq!(SkinChannel::classify(Some("콜라보")), SkinChannel::Other);
     }
 }

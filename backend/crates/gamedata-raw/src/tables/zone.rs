@@ -1,10 +1,6 @@
-//! `zone_table` types: chapters and regions.
-// ---- Lifted for engine-grade (lift-3, Oct 25 2026). Moved in whole from
-// backend/src/core/gamedata/types/zone.rs (91 lines), ts-rs dropped, utoipa
-// behind the `schema` feature.
+use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 use crate::serde_helpers::{deserialize_fb_map, deserialize_fb_map_or_default};
 
@@ -83,8 +79,7 @@ pub struct ZoneData {
 pub struct ZoneTableFile {
     #[serde(deserialize_with = "deserialize_fb_map")]
     pub zones: HashMap<String, Zone>,
-    /// Main zone -> chapter link, read by the story reader.
+    /// Main zone -> chapter link
     #[serde(deserialize_with = "deserialize_fb_map_or_default", default)]
     pub mainline_addition_info: HashMap<String, super::chapter::MainlineAdditionInfo>,
-    // Other fields (WeeklyAdditionInfo, ZoneRecordRewardData, ...) aren't read.
 }

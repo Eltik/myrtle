@@ -1,9 +1,6 @@
-//! `module` table types.
-// ---- Lifted for engine-archives (lift-2, Oct 25 2026). Moved in whole from
-// backend/src/core/gamedata/types/module.rs (414 lines), ts-rs dropped, utoipa
-// behind the `schema` feature.
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 use super::material::ItemType;
 use crate::serde_helpers::deserialize_null_default;
@@ -17,9 +14,7 @@ pub enum ModuleType {
     #[default]
     Initial,
     Advanced,
-    /// Catch-all so an unrecognised value degrades to one variant instead of
-    /// failing the record, which fails the whole table. HG ships new values on
-    /// CN first; see `ItemClass` for the outage this prevents.
+    /// Catch-all for unknown values
     #[serde(other)]
     Unknown,
 }

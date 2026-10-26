@@ -1,7 +1,3 @@
-//! `consts` table types.
-// ---- Lifted for engine-planner (lift-2, Oct 25 2026). Moved in whole from
-// backend/src/core/gamedata/types/consts.rs (55 lines), ts-rs dropped, utoipa
-// behind the `schema` feature.
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -10,19 +6,16 @@ pub struct GameDataConst {
     pub character_exp_map: Vec<ExpMapEntry>,
     pub character_upgrade_cost_map: Vec<UpgradeCostMapEntry>,
     pub evolve_gold_cost: Vec<EvolveGoldCostEntry>,
-    /// The game's term glossary (`cc.bd_*` pool resources etc.): the text
-    /// behind a `<$cc.bd_wang_1>` reference, e.g. "For every Trading Post and
-    /// Power Plant, Influence +1", the only place a layout-counted resource is
-    /// defined.
+    /// Term glossary (`cc.bd_*` pool resources etc.), text behind a
+    /// `<$cc.bd_wang_1>` reference
     #[serde(default)]
     pub term_description_dict: Vec<TermDescriptionEntry>,
-    /// Minutes per point of natural sanity regeneration (`PlayerApRegenSpeed`,
-    /// 6): 1440 / 6 = 240 sanity a day. 0 when the table lacks it.
+    /// Minutes per point of natural sanity regeneration, 0 if absent
     #[serde(default)]
     pub player_ap_regen_speed: i64,
 }
 
-/// One `TermDescriptionDict` row: `{"key": "cc.bd_wang_1", "value": {...}}`.
+/// `TermDescriptionDict` row, e.g. `{"key": "cc.bd_wang_1", "value": {...}}`
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct TermDescriptionEntry {
     #[serde(rename = "key")]

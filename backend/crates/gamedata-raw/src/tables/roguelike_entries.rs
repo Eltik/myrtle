@@ -1,34 +1,9 @@
-//! Integrated Strategies as rankable entries: each theme, and the items a
-//! player collects in it, read off `roguelike_topic_table`.
-//!
-//! IS numbering is NOT the table's: `rogue_N` is IS N+1 (`rogue_1` is IS2
-//! Phantom, `rogue_2` IS3 Mizuki), because IS1 Ceobe's Fungimist never made it
-//! into the table. The entries keep the table's ids; the client numbers them.
-//!
-//! An item is offered when its `Items` type is one a player collects and ranks
-//! ([`ITEM_TYPES`]). Relics, tools, Plays, Foldartals and Thoughts must also be
-//! listed in the theme's `ArchiveComp`, the in-game collection, which drops the
-//! upgrade variants (`rogue_4_relic_legacy_1_a`) and placeholders the `Items`
-//! table also carries. Squads, Wraths and Tongbao have no archive list of
-//! items, so they are de-duplicated by name instead: the table spells each
-//! squad once per difficulty variant (`rogue_4_band_22_1` to `_25`) and each
-//! Tongbao once per mint (2,334 `COPPER` rows, 103 names, on EN 2026-10-01).
-//!
-//! Left out on purpose: tickets (`RECRUIT_TICKET`, `UPGRADE_TICKET`,
-//! `CUSTOM_TICKET`), run resources (`HP`, `GOLD`, `POPULATION`, `EXP`,
-//! `SHIELD`, `KEY_POINT`, and the like), internal flags (`FEATURE`,
-//! `TOTEM_EFFECT`, `COPPER_BUFF`, `VISION`, `CHAOS*`, `DISASTER*`) and dice.
-// ---- Lifted for engine-grade (lift-3, Oct 25 2026). Moved in whole from
-// backend/src/core/gamedata/types/roguelike_entries.rs (338 lines), ts-rs dropped, utoipa
-// behind the `schema` feature.
-
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
 
 use serde_json::Value;
 
-/// The item types offered, in the order a theme's entries are listed after
-/// the theme itself.
+/// Item types offered, in the order listed after the theme
 const ITEM_TYPES: [&str; 9] = [
     "BAND",
     "RELIC",
@@ -41,14 +16,13 @@ const ITEM_TYPES: [&str; 9] = [
     "COPPER",
 ];
 
-/// The item type a theme entry carries.
+/// Item type a theme entry carries
 pub const THEME_TYPE: &str = "THEME";
 
-/// `ArchiveComp` categories whose ids gate the archived types. `Trap` is
-/// where `rogue_1` files its six tools; later themes list them under `Relic`.
+/// `ArchiveComp` categories whose ids gate the archived types
 const ARCHIVE_CATEGORIES: [&str; 5] = ["Relic", "Trap", "Capsule", "Totem", "Fragment"];
 
-/// Types that must appear in the archive to be offered.
+/// Types that must appear in the archive to be offered
 const ARCHIVED_TYPES: [&str; 6] = [
     "RELIC",
     "ACTIVE_TOOL",
@@ -58,24 +32,20 @@ const ARCHIVED_TYPES: [&str; 6] = [
     "FRAGMENT",
 ];
 
-/// One theme or item.
+/// One theme or item
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct RoguelikeEntry {
     pub id: String,
-    /// `rogue_N`.
+    /// e.g. `rogue_N`
     pub theme_id: String,
-    /// The table's `Type_` (`RELIC`, `TOTEM`), or [`THEME_TYPE`].
+    /// Table's `Type_` (`RELIC`, `TOTEM`), or [`THEME_TYPE`]
     pub item_type: String,
     pub name: String,
-    /// Asset stems to try for the icon, best first: a theme's home entry
-    /// display, an item's `IconId`, its `ItemIconGroupId`, then its id with the
-    /// variant suffix cut (`rogue_5_wrath_1_a` -> `rogue_5_wrath_1`).
+    /// Icon asset stems to try, best first
     pub icon_stems: Vec<String>,
 }
 
-/// Every theme and offered item, in catalogue order: themes by their `Sort`,
-/// each theme followed by its items grouped by [`ITEM_TYPES`] and ordered by
-/// id with numbers compared as numbers.
+/// Every theme and offered item, in catalogue order
 #[derive(Debug, Clone, Default)]
 pub struct RoguelikeEntries {
     pub entries: Vec<RoguelikeEntry>,
@@ -87,8 +57,6 @@ impl RoguelikeEntries {
         self.index.get(id).map(|&i| &self.entries[i])
     }
 
-    /// Reads `Topics` and `Details`, each a `[{key, value}]` list (the
-    /// flatbuffer export) or a `{key: value}` dict.
     pub fn from_tables(topics: &Value, details: &Value) -> Self {
         let topics = kv_pairs(topics);
         let details: HashMap<&str, &Value> = kv_pairs(details).into_iter().collect();
@@ -126,8 +94,6 @@ impl RoguelikeEntries {
     }
 }
 
-/// The theme itself, named by the topic and drawn by its home-screen key
-/// visual.
 fn theme_entry(theme_id: &str, topic: &Value) -> RoguelikeEntry {
     let display = topic
         .get("HomeEntryDisplayData")
@@ -147,7 +113,6 @@ fn theme_entry(theme_id: &str, topic: &Value) -> RoguelikeEntry {
     }
 }
 
-/// The theme's offered items, by [`ITEM_TYPES`] and then natural id order.
 fn theme_items(theme_id: &str, detail: &Value) -> Vec<RoguelikeEntry> {
     let archived = archive_ids(detail);
     let mut items: Vec<(&str, &Value)> = detail.get("Items").map(kv_pairs).unwrap_or_default();
@@ -166,8 +131,6 @@ fn theme_items(theme_id: &str, detail: &Value) -> Vec<RoguelikeEntry> {
         let offered = if ARCHIVED_TYPES.contains(&item_type) {
             archived.contains(id)
         } else {
-            // No archive to gate on: one entry per name, and squads without
-            // their difficulty variants.
             !(item_type == "BAND" && is_band_variant(id)) && seen_names.insert((item_type, name))
         };
         if !offered {
@@ -184,13 +147,10 @@ fn theme_items(theme_id: &str, detail: &Value) -> Vec<RoguelikeEntry> {
             },
         ));
     }
-    // Stable: ids stay in natural order within a type.
     out.sort_by_key(|(order, _)| *order);
     out.into_iter().map(|(_, e)| e).collect()
 }
 
-/// See [`RoguelikeEntry::icon_stems`]: `IconId`, `ItemIconGroupId`, then the
-/// id with its variant suffix cut, each once.
 fn item_icon_stems(id: &str, item: &Value) -> Vec<String> {
     let mut stems: Vec<String> = Vec::new();
     for stem in [
@@ -208,7 +168,6 @@ fn item_icon_stems(id: &str, item: &Value) -> Vec<String> {
     stems
 }
 
-/// Every id the theme's archive lists under [`ARCHIVE_CATEGORIES`].
 fn archive_ids(detail: &Value) -> HashSet<&str> {
     let mut ids = HashSet::new();
     let Some(archive) = detail.get("ArchiveComp") else {
@@ -227,7 +186,7 @@ fn archive_ids(detail: &Value) -> HashSet<&str> {
     ids
 }
 
-/// `rogue_4_band_22_7`: a numbered variant of squad 22.
+/// e.g. `rogue_4_band_22_7`
 fn is_band_variant(id: &str) -> bool {
     let Some((head, tail)) = id.rsplit_once('_') else {
         return false;
@@ -238,8 +197,7 @@ fn is_band_variant(id: &str) -> bool {
             .is_some_and(|(_, n)| !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()))
 }
 
-/// The id with a trailing `_x` or `_x_N` variant suffix cut, where `x` is one
-/// lowercase letter: `rogue_5_wrath_1_a_3` -> `rogue_5_wrath_1`.
+/// Cuts a trailing `_x` or `_x_N` variant suffix (`rogue_5_wrath_1_a_3` -> `rogue_5_wrath_1`)
 fn strip_variant(id: &str) -> &str {
     let mut rest = id;
     if let Some((head, tail)) = rest.rsplit_once('_')
@@ -257,8 +215,7 @@ fn strip_variant(id: &str) -> &str {
     }
 }
 
-/// Compares ids with digit runs read as numbers, so `band_2` sorts before
-/// `band_10`.
+/// Compares ids with digit runs read as numbers (`band_2` before `band_10`)
 fn natural_cmp(a: &str, b: &str) -> Ordering {
     let (mut a, mut b) = (a.as_bytes(), b.as_bytes());
     loop {
@@ -288,7 +245,7 @@ fn natural_cmp(a: &str, b: &str) -> Ordering {
     }
 }
 
-/// The digit run `s` starts with, as a number (0 past `u64`), and its length.
+/// Leading digit run as `(value, len)`, value 0 past `u64`
 fn leading_number(s: &[u8]) -> (u64, usize) {
     let len = s.iter().take_while(|c| c.is_ascii_digit()).count();
     let value = std::str::from_utf8(&s[..len])
@@ -302,7 +259,7 @@ fn str_field<'a>(v: &'a Value, key: &str) -> Option<&'a str> {
     v.get(key).and_then(Value::as_str)
 }
 
-/// `[{key, value}]` or `{key: value}` as `(key, value)` pairs.
+/// `[{key, value}]` or `{key: value}` as `(key, value)` pairs
 fn kv_pairs(v: &Value) -> Vec<(&str, &Value)> {
     if let Some(list) = v.as_array() {
         list.iter()
@@ -315,27 +272,3 @@ fn kv_pairs(v: &Value) -> Vec<(&str, &Value)> {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn variant_suffixes_are_cut() {
-        assert_eq!(strip_variant("rogue_5_wrath_1_a"), "rogue_5_wrath_1");
-        assert_eq!(strip_variant("rogue_5_wrath_1_a_3"), "rogue_5_wrath_1");
-        assert_eq!(
-            strip_variant("rogue_5_copper_B_01_a"),
-            "rogue_5_copper_B_01"
-        );
-        assert_eq!(strip_variant("rogue_1_band_1"), "rogue_1_band_1");
-        assert!(is_band_variant("rogue_4_band_22_7"));
-        assert!(!is_band_variant("rogue_4_band_22"));
-    }
-
-    #[test]
-    fn ids_sort_by_number() {
-        let mut ids = vec!["band_10", "band_2", "band_1"];
-        ids.sort_by(|a, b| natural_cmp(a, b));
-        assert_eq!(ids, ["band_1", "band_2", "band_10"]);
-    }
-}

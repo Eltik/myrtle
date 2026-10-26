@@ -1,18 +1,11 @@
-//! Stages, zones and maps: `stage_table`, `zone_table`, `chapter_table`,
-//! `campaign_table`, `climb_tower_table`, `retro_table`, and `levels/**` map
-//! files.
-//!
-//! Moves in: `backend/src/core/gamedata/types/{stage.rs (348), zone.rs (91),
-//! chapter.rs (55), level.rs (793), campaign.rs (146), climb_tower.rs (56),
-//! retro.rs (40)}`. The derived stage types (`stage_index.rs`,
-//! `stage_universe.rs`, `stage_evidence.rs`) go to `gamedata::index::stage`.
-
 #[derive(Debug, Default)]
 pub struct StageTables {}
 
-// ---- Lifted for engine-release (lift pilot, Oct 25 2026). Copied from backend/src/core/gamedata/types/retro.rs:9-31 (RetroTableFile left),
-// ts-rs dropped, utoipa behind the `schema` feature.
+use std::collections::HashMap;
+
 use serde::{Deserialize, Deserializer, Serialize};
+
+use crate::serde_helpers::{FbKeyValue, deserialize_fb_map};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -36,13 +29,6 @@ pub struct RetroAct {
     #[serde(alias = "LinkedActId", default)]
     pub linked_act_id: Vec<String>,
 }
-
-// ---- Lifted for engine-squad (lift-2, Oct 25 2026). Moved in whole from
-// backend/src/core/gamedata/types/stage.rs (348 lines), ts-rs dropped, utoipa
-// behind the `schema` feature.
-use std::collections::HashMap;
-
-use crate::serde_helpers::{FbKeyValue, deserialize_fb_map};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -100,25 +86,23 @@ pub struct UnlockCondition {
     pub complete_state: String,
 }
 
-/// A single item the stage can drop, with its drop category and occurrence band.
-///
-/// `drop_type` (ONCE / NORMAL / SPECIAL / ADDITIONAL / COMPLETE / `CONDITION_DROP`),
-/// `occ_percent` (ALWAYS / ALMOST / USUAL / OFTEN / SOMETIMES / RARELY) and
-/// `item_type` (MATERIAL / CHAR / `CARD_EXP` / DIAMOND / …) are kept as raw strings
-/// for forward-compatibility with new game-data values.
+/// Single item stage can drop, with drop category and occurrence band
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 #[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
 pub struct DisplayDetailReward {
+    /// e.g. `ONCE`, `NORMAL`, `SPECIAL`, `ADDITIONAL`, `COMPLETE`, `CONDITION_DROP`
     #[serde(alias = "DropType")]
     pub drop_type: String,
 
     #[serde(alias = "Id")]
     pub id: String,
 
+    /// e.g. `ALWAYS`, `ALMOST`, `USUAL`, `OFTEN`, `SOMETIMES`, `RARELY`
     #[serde(alias = "OccPercent")]
     pub occ_percent: String,
 
+    /// e.g. `MATERIAL`, `CHAR`, `CARD_EXP`, `DIAMOND`, etc.
     #[serde(alias = "Type_", alias = "Type")]
     pub item_type: String,
 }
@@ -222,8 +206,7 @@ pub struct StageData {
     pub stages: HashMap<String, Stage>,
 }
 
-/// `StorylineLocation.MainlineSplitData`: the arc header the game draws
-/// between two runs of mainline chapters (`HOUR OF AN AWAKENING`).
+/// Arc header between two runs of mainline chapters (e.g. `HOUR OF AN AWAKENING`)
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct MainlineSplitData {
@@ -233,9 +216,8 @@ pub struct MainlineSplitData {
     pub icon_id: Option<String>,
 }
 
-/// One stop on a storyline's rail. `STORY_SET` and `BEFORE` point at a
-/// [`StorylineStorySet`]; `MAINLINE_SPLIT` carries an arc name and nothing
-/// else.
+/// One stop on a storyline. `STORY_SET` and `BEFORE` point at a
+/// [`StorylineStorySet`], `MAINLINE_SPLIT` carries only an arc name
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct StorylineLocation {
@@ -250,8 +232,7 @@ pub struct StorylineLocation {
     pub sort_id: i32,
 }
 
-/// `stage_table.Storylines`: the game's own themed shelves over the Archives,
-/// `mainLine` plus 13 `ssLine_*` on EN.
+/// Themed story shelves, e.g. `mainLine`, `ssLine_*`
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Storyline {
@@ -260,14 +241,10 @@ pub struct Storyline {
     pub storyline_name: String,
     #[serde(default)]
     pub storyline_type: String,
-    /// The small glyph the client draws on the shelf header
-    /// (`storyline_abbr_Rl`), in `spritepack/mixstory_abbr_sprites_h2_0`. The
-    /// `mainLine` shelf is the one row that ships without one.
+    /// Shelf header glyph (e.g. `storyline_abbr_Rl`), in `spritepack/mixstory_abbr_sprites_h2_0`
     #[serde(default)]
     pub storyline_icon_id: Option<String>,
-    /// The shelf's full logotype (`storyline_Ms`), in
-    /// `spritepack/mixstory_logo_sprites_0`. All 14 EN rows carry one, so it
-    /// is what `mainLine` falls back to.
+    /// Shelf logotype (e.g. `storyline_Ms`), in `spritepack/mixstory_logo_sprites_0`
     #[serde(default)]
     pub storyline_logo_id: Option<String>,
     #[serde(default)]
@@ -276,24 +253,20 @@ pub struct Storyline {
     pub locations: Vec<StorylineLocation>,
 }
 
-/// `StorylineStorySet.MainlineData`: a mainline set names the ZONE it covers,
-/// which is also the `story_review_table` group id.
+/// Zone a mainline set covers, also the `story_review_table` group id
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct MainlineSetData {
     #[serde(default)]
     pub zone_id: Option<String>,
-    /// The chapter's own small glyph (`deco_evil_time_part1`), in
-    /// `spritepack/mixstory_deco_sprites_h2_0`. MAINLINE sets only: an `SS` or
-    /// `COLLECT` set carries no deco.
+    /// Chapter glyph (e.g. `deco_evil_time_part1`), in `spritepack/mixstory_deco_sprites_h2_0`.
+    /// `MAINLINE` sets only
     #[serde(default)]
     pub deco_image_id: Option<String>,
 }
 
-/// `stage_table.StorylineStorySets`: the join between a storyline's locations
-/// and the Archives. A `MAINLINE` set joins on `MainlineData.ZoneId`, an `SS`
-/// or `COLLECT` set on `RelevantActivityId`; both are `story_review_table`
-/// group ids.
+/// Join between storyline locations and `story_review_table` groups.
+/// `MAINLINE` joins on `MainlineData.ZoneId`, `SS`/`COLLECT` on `RelevantActivityId`
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct StorylineStorySet {
@@ -304,20 +277,15 @@ pub struct StorylineStorySet {
     pub relevant_activity_id: Option<String>,
     #[serde(default)]
     pub mainline_data: Option<MainlineSetData>,
-    /// The set's KEY VISUAL (`kv_evil_time_part1`), in
-    /// `spritepack/mixstory_kv_sprites_{0,1,2}`: the card art the Story
-    /// Collection draws for a chapter or an event. All 81 EN sets carry one.
+    /// Key visual (e.g. `kv_evil_time_part1`), in `spritepack/mixstory_kv_sprites_{0,1,2}`
     #[serde(default)]
     pub kv_image_id: Option<String>,
-    /// The set's title logotype (`title_evil_time_part1`), in
-    /// `spritepack/mixstory_title_sprites_0`. All 81 EN sets carry one; it is
-    /// read here so a consumer can find it without a second table pass.
+    /// Title logotype (e.g. `title_evil_time_part1`), in `spritepack/mixstory_title_sprites_0`
     #[serde(default)]
     pub title_image_id: Option<String>,
 }
 
 impl StorylineStorySet {
-    /// The `story_review_table` group this set points at, by the rule above.
     #[must_use]
     pub fn group_id(&self) -> Option<&str> {
         if let Some(zone) = self
@@ -334,9 +302,7 @@ impl StorylineStorySet {
     }
 }
 
-/// `FlatBuffer` writes an ORDERED list as `[{key, value}]` too. Storyline
-/// locations are read as a list, because their order carries the arc splits
-/// that a map would drop.
+/// Ordered `FlatBuffer` `[{key, value}]` list, values only
 fn deserialize_fb_list<'de, D, V>(deserializer: D) -> Result<Vec<V>, D::Error>
 where
     D: Deserializer<'de>,
@@ -352,19 +318,16 @@ pub struct StageTableFile {
     #[serde(deserialize_with = "deserialize_fb_map")]
     pub stages: HashMap<String, Stage>,
 
-    /// The Archives' themed shelves, in the table's own order.
+    /// In table order
     #[serde(default, deserialize_with = "deserialize_fb_list")]
     pub storylines: Vec<Storyline>,
 
-    /// Keyed by `StorySetId`, which is what a location's
-    /// `RelevantStorySetId` names.
+    /// Keyed by `StorySetId`
     #[serde(default, deserialize_with = "deserialize_fb_map_story_sets")]
     pub storyline_story_sets: HashMap<String, StorylineStorySet>,
-    // Other fields (TileInfo, MapThemes, ...) aren't read.
 }
 
-/// `StorylineStorySets` keyed by `StorySetId` rather than by the outer `key`,
-/// which is the same string but is not guaranteed to be.
+/// `StorylineStorySets` keyed by `StorySetId` instead of outer `key`
 fn deserialize_fb_map_story_sets<'de, D>(
     deserializer: D,
 ) -> Result<HashMap<String, StorylineStorySet>, D::Error>

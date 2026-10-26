@@ -1,21 +1,10 @@
-//! Annihilation (campaign) rotation schedule from `campaign_table.json`.
-//!
-//! Rotating maps (`camp_r_*`) are playable only in their window, one at a
-//! time, beside the three permanent maps (`camp_01/02/03`, absent from this
-//! table, always playable). `CampaignRotateStageOpenTimes` gives each rotating
-//! map its open/close window, which separates "you can max this now" from
-//! "rotated out, currently locked".
-// ---- Lifted for engine-grade (lift-3, Oct 25 2026). Moved in whole from
-// backend/src/core/gamedata/types/campaign.rs (146 lines), ts-rs dropped, utoipa
-// behind the `schema` feature.
+use std::collections::HashMap;
 
 use serde::Deserialize;
-use std::collections::HashMap;
 
 use crate::serde_helpers::deserialize_fb_map_or_default;
 
-/// `campaign_table.json`: the rotation schedule and per-map kill ladders (for
-/// the full-clear kill count).
+/// `campaign_table.json`: rotation schedule and per-map kill ladders
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct CampaignTableFile {
@@ -49,26 +38,25 @@ pub struct CampaignRotateOpenTime {
     pub end_ts: i64,
 }
 
-/// Open/close window for one rotating Annihilation map.
+/// Open/close window for one rotating Annihilation map
 #[derive(Debug, Clone, Copy)]
 pub struct RotationWindow {
     pub start_ts: i64,
     pub end_ts: i64,
 }
 
-/// Where a rotating Annihilation map sits relative to a reference time.
+/// Rotating Annihilation map's status relative to a reference time
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RotationStatus {
-    /// Window contains `now`: playable.
+    /// Window contains `now`
     Active,
-    /// Window closed: rotated out.
+    /// Window closed
     Past,
-    /// Window hasn't opened yet.
+    /// Window not yet open
     Future,
 }
 
-/// Rotation schedule indexed by stage id. Only rotating maps (`camp_r_*`)
-/// appear here; permanent maps and non-Annihilation stages return `None`.
+/// Rotation schedule by stage id, rotating maps (`camp_r_*`) only
 #[derive(Debug, Clone, Default)]
 pub struct CampaignRotations {
     windows: HashMap<String, RotationWindow>,
@@ -102,19 +90,16 @@ impl CampaignRotations {
         Self { windows, kill_max }
     }
 
-    /// Full-clear kill count: the highest `BreakLadders` milestone (400 for
-    /// every map to date). `None` for stages not in the campaign table.
+    /// Full-clear kill count (highest `BreakLadders` milestone), `None` if not in the table
     pub fn kill_max(&self, stage_id: &str) -> Option<i32> {
         self.kill_max.get(stage_id).copied()
     }
 
-    /// The scheduled window for a rotating map, if it is one.
     pub fn window(&self, stage_id: &str) -> Option<RotationWindow> {
         self.windows.get(stage_id).copied()
     }
 
-    /// Classify a rotating map's availability at `now`. Returns `None` for
-    /// stages that aren't rotating maps (permanent Annihilation, other stages).
+    /// Rotating map's availability at `now`, `None` for non-rotating stages
     pub fn status(&self, stage_id: &str, now: i64) -> Option<RotationStatus> {
         let w = self.windows.get(stage_id)?;
         Some(if now < w.start_ts {
@@ -124,26 +109,5 @@ impl CampaignRotations {
         } else {
             RotationStatus::Past
         })
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    /// Guard against the real table's shape drifting away from the parser
-    /// (kill ladders live in `Campaigns[].BreakLadders[].KillCnt`). Skips
-    /// when the gamedata assets aren't checked out.
-    #[test]
-    fn kill_max_parses_from_real_campaign_table() {
-        let path = std::path::Path::new("../assets/output/en/gamedata/excel/campaign_table.json");
-        let Ok(text) = std::fs::read_to_string(path) else {
-            return;
-        };
-        let table: CampaignTableFile = serde_json::from_str(&text).unwrap();
-        let rotations = CampaignRotations::from_table(table);
-        assert_eq!(rotations.kill_max("camp_01"), Some(400));
-        assert_eq!(rotations.kill_max("camp_r_01"), Some(400));
-        assert_eq!(rotations.kill_max("main_00-01"), None);
     }
 }

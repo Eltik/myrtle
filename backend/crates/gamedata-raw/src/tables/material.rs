@@ -1,9 +1,6 @@
-//! `material` table types.
-// ---- Lifted for engine-archives (lift-2, Oct 25 2026). Moved in whole from
-// backend/src/core/gamedata/types/material.rs (420 lines), ts-rs dropped, utoipa
-// behind the `schema` feature.
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 use crate::serde_helpers::deserialize_fb_map;
 
@@ -49,11 +46,7 @@ pub enum ItemClass {
     Normal,
     #[serde(rename = "NONE")]
     None,
-    /// Catch-all for classify types this enum does not name yet. CN ships
-    /// `MEMENTO` on six story souvenir items; without it those fail their
-    /// `Item`, which fails the whole `item_table`, which `load_table_or_warn`
-    /// swallows into an empty `Materials`, so every item loses its name and
-    /// icon id. `ItemType` already does this.
+    /// Catch-all for unknown classify types (e.g. `MEMENTO`)
     #[serde(rename = "UNKNOWN", other)]
     #[default]
     Unknown,
@@ -146,8 +139,7 @@ pub enum ItemOccPer {
     Always,
     Sometimes,
     Often,
-    /// Catch-all: HG ships new values on CN first, and one unknown value fails
-    /// the whole table (see `ItemClass`).
+    /// Catch-all for unknown values
     #[serde(other)]
     Unknown,
 }
@@ -160,8 +152,7 @@ pub enum BuildingRoomType {
     #[default]
     Workshop,
     Manufacture,
-    /// Catch-all: HG ships new values on CN first, and one unknown value fails
-    /// the whole table (see `ItemClass`).
+    /// Catch-all for unknown values
     #[serde(other)]
     Unknown,
 }
@@ -174,8 +165,7 @@ pub enum VoucherItemType {
     #[default]
     OptionalVoucherPick,
     MaterialIssueVoucher,
-    /// Catch-all: HG ships new values on CN first, and one unknown value fails
-    /// the whole table (see `ItemClass`).
+    /// Catch-all for unknown values
     #[serde(other)]
     Unknown,
 }
@@ -188,8 +178,7 @@ pub enum VoucherDisplayType {
     #[default]
     None,
     Divide,
-    /// Catch-all: HG ships new values on CN first, and one unknown value fails
-    /// the whole table (see `ItemClass`).
+    /// Catch-all for unknown values
     #[serde(other)]
     Unknown,
 }
@@ -233,7 +222,7 @@ pub struct UniqueItem {
     #[serde(alias = "Count")]
     pub count: i32,
     #[serde(rename = "type", alias = "Type_")]
-    pub item_type: String, // Almost always just "FURN"
+    pub item_type: String,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -387,7 +376,7 @@ pub struct ItemTableFile {
     #[serde(deserialize_with = "deserialize_fb_map", default)]
     pub exp_items: HashMap<String, ExpItem>,
     #[serde(default)]
-    pub potential_items: Vec<serde_json::Value>, // Nested, integer keys
+    pub potential_items: Vec<serde_json::Value>,
     #[serde(deserialize_with = "deserialize_fb_map", default)]
     pub ap_supply_out_of_date_dict: HashMap<String, ApSupply>,
     #[serde(deserialize_with = "deserialize_fb_map", default)]

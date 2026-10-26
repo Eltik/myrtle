@@ -1,26 +1,14 @@
-//! Integrated Strategies: `roguelike_topic_table` and its per-theme entries.
-//!
-//! Moves in: `backend/src/core/gamedata/types/{roguelike.rs (365),
-//! roguelike_entries.rs (338)}`.
-
 #[derive(Debug, Default)]
 pub struct RoguelikeTables {}
 
-// ---- Lifted for engine-grade (lift-3, Oct 25 2026). Moved in whole from
-// backend/src/core/gamedata/types/roguelike.rs (365 lines), ts-rs dropped, utoipa
-// behind the `schema` feature.
-// Integrated Strategies game data. The `FlatBuffer` export uses `PascalCase`
-// keys and `[{key, value}]` arrays for dicts, so it is read as
-// `serde_json::Value` and picked apart by hand.
+use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 #[derive(Debug, Clone, Default)]
 pub struct RoguelikeGameData {
     pub themes: HashMap<String, RoguelikeThemeGameData>,
-    /// Themes and their collectible items as tier list entries, see
-    /// [`super::roguelike_entries`].
+    /// Themes and their collectible items as tier list entries
     pub entries: super::roguelike_entries::RoguelikeEntries,
 }
 
@@ -31,38 +19,29 @@ pub struct RoguelikeThemeGameData {
     pub theme_name: String,
     pub max_endings: i32,
     pub max_relics: i32,
-    /// Only `rogue_1` has capsules.
+    /// Only `rogue_1` has capsules
     pub max_capsules: i32,
     pub max_bands: i32,
-    /// Archive relic ids (`ArchiveComp.Relic.Relic`). NOT the key set of
-    /// `collect.relic`: the archive lists tool items (`*_active_tool_N`,
-    /// `*_explore_tool_N`) the client stores in other buckets, and
-    /// `collect.relic` holds upgrade variants (`*_relic_legacy_N_a/_b/_c`) the
-    /// archive omits. Count by iterating this list, never bucket keys (see
-    /// [`RoguelikeThemeGameData::count_collected`]).
+    /// Archive relic ids (`ArchiveComp.Relic.Relic`), not the key set of `collect.relic`
     pub relic_ids: Vec<String>,
     /// Archive capsule ids (`ArchiveComp.Capsule.Capsule`)
     pub capsule_ids: Vec<String>,
-    /// Band item ids: `Items` entries typed `BAND`. `BandRef` is the band
-    /// upgrade-ref table, not the band list (empty for `rogue_1`/`rogue_3`, and
-    /// only `band_11..22` for `rogue_2`), so it is the wrong denominator.
+    /// Band item ids: `Items` entries typed `BAND`
     pub band_ids: Vec<String>,
     pub max_challenges: i32,
     pub max_monthly_squads: i32,
     pub max_difficulty_grade: i32,
     /// Total BP levels (milestones)
     pub max_bp_levels: i32,
-    /// Total across the theme-specific archive categories (totem, chaos,
-    /// disaster, fragment, wrath, copper, ...).
+    /// Total across theme-specific archive categories (totem, chaos,
+    /// disaster, fragment, wrath, copper, etc.)
     pub max_theme_collectibles: i32,
     /// Max endbook CG items
     pub max_endbook_items: i32,
     pub max_buffs: i32,
 }
 
-/// `roguelike_topic_table.json` (`FlatBuffer` export). Top-level keys: Topics,
-/// Details, Modules, Constant, `CustomizeData`; Topics and Details are
-/// `[{key, value}]` arrays.
+/// `roguelike_topic_table.json`
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct RoguelikeTopicTableFile {
     #[serde(alias = "Topics", alias = "topics", default)]
@@ -72,9 +51,6 @@ pub struct RoguelikeTopicTableFile {
 }
 
 impl RoguelikeGameData {
-    /// Reads either format:
-    /// - `FlatBuffer` export: `PascalCase`, `[{key, value}]` arrays
-    /// - CN-gamedata: camelCase, `{key: value}` dicts
     pub fn from_table(table: &RoguelikeTopicTableFile) -> Self {
         let mut data = Self {
             entries: super::roguelike_entries::RoguelikeEntries::from_tables(
@@ -165,7 +141,7 @@ impl RoguelikeGameData {
     }
 }
 
-/// Collected counts for one theme, measured against the archive id lists.
+/// Collected counts for one theme
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct CollectedCounts {
     pub relics: usize,
@@ -174,21 +150,7 @@ pub struct CollectedCounts {
 }
 
 impl RoguelikeThemeGameData {
-    /// Count how many archive relics/capsules/bands a player's theme progress
-    /// has unlocked (`state >= 1`).
-    ///
-    /// Each count iterates the archive id list and looks the id up, so an id
-    /// that lives outside the bucket named after it is still found and an id
-    /// in the bucket that the archive does not list is never counted. Measured
-    /// on 2,630 real accounts (2026-09-17), counting `collect.relic` keys
-    /// instead gave 256/262 as the ceiling on `rogue_2` (the six active tools
-    /// are in `collect.activeTool`) and 333/294 on `rogue_5` (45 `_a/_b/_c`
-    /// upgrade variants), which the old `.min(max)` cap then hid as "complete"
-    /// for 1,441 accounts.
-    ///
-    /// Relic ids are read from `collect.relic`, then `collect.activeTool`, then
-    /// `challenge.collect.exploreTool` (`rogue_3` only). Every bucket has the
-    /// same `{id: {state, progress}}` shape.
+    /// Archive relics/capsules/bands a player's theme progress has unlocked (`state >= 1`)
     pub fn count_collected(&self, progress: &serde_json::Value) -> CollectedCounts {
         let collect = progress.get("collect");
         let relic_buckets = [
@@ -210,7 +172,7 @@ impl RoguelikeThemeGameData {
     }
 }
 
-/// Number of `ids` whose entry in any of `buckets` has `state >= 1`.
+/// Number of `ids` whose entry in any of `buckets` has `state >= 1`
 fn count_in_buckets(ids: &[String], buckets: &[Option<&serde_json::Value>]) -> usize {
     ids.iter()
         .filter(|id| {
@@ -226,10 +188,6 @@ fn count_in_buckets(ids: &[String], buckets: &[Option<&serde_json::Value>]) -> u
         .count()
 }
 
-/// Ids of `Items` entries typed `BAND`.
-///
-/// `FlatBuffer` export: `Items: [{key, value: {Type_: "BAND", ...}}]` (the
-/// exporter renames `type` to `Type_`). CN-gamedata: `items: {id: {type: "BAND"}}`.
 fn band_item_ids(detail: &serde_json::Value) -> Vec<String> {
     let items = detail
         .get("Items")
@@ -245,12 +203,7 @@ fn band_item_ids(detail: &serde_json::Value) -> Vec<String> {
     ids
 }
 
-/// Extracts collectible ids and max counts from `ArchiveComp`.
-///
-/// `FlatBuffer` format: `{ "Relic": { "Relic": [{key, value}, ...] }, ... }`
-/// CN-gamedata format: `{ "relic": { "relic": { id: ... } }, ... }`
-///
-/// Returns `(relic_ids, capsule_ids, max_theme_collectibles, max_endbook_items, max_buffs)`.
+/// Returns `(relic_ids, capsule_ids, max_theme_collectibles, max_endbook_items, max_buffs)`
 fn parse_archive_comp(detail: &serde_json::Value) -> (Vec<String>, Vec<String>, i32, i32, i32) {
     let Some(archive) = detail
         .get("ArchiveComp")
@@ -259,7 +212,6 @@ fn parse_archive_comp(detail: &serde_json::Value) -> (Vec<String>, Vec<String>, 
         return (Vec::new(), Vec::new(), 0, 0, 0);
     };
 
-    // Ids of every inner entry of a category, e.g. `Relic.Relic[*].key`.
     let ids_inner = |category_variants: &[&str]| -> Vec<String> {
         let Some(cat_val) = category_variants.iter().find_map(|c| archive.get(*c)) else {
             return Vec::new();
@@ -280,7 +232,6 @@ fn parse_archive_comp(detail: &serde_json::Value) -> (Vec<String>, Vec<String>, 
         let Some(cat_val) = cat else { return 0 };
 
         if let Some(obj) = cat_val.as_object() {
-            // Each inner key maps to either a dict (CN) or a [{key,value}] array (FBS)
             obj.values()
                 .map(|v| {
                     if let Some(arr) = v.as_array() {
@@ -324,7 +275,7 @@ fn parse_archive_comp(detail: &serde_json::Value) -> (Vec<String>, Vec<String>, 
     )
 }
 
-/// Convert a `[{key, value}]` array or `{key: value}` dict to a `HashMap`.
+/// `[{key, value}]` array or `{key: value}` dict to a `HashMap`
 fn kv_to_map(val: &serde_json::Value) -> HashMap<String, serde_json::Value> {
     let mut map = HashMap::new();
     if let Some(arr) = val.as_array() {
@@ -350,7 +301,7 @@ fn get_str(val: &serde_json::Value, keys: &[&str]) -> Option<String> {
         .map(std::string::ToString::to_string)
 }
 
-/// Count elements in a `[{key, value}]` array or `{key: value}` dict.
+/// Count elements in a `[{key, value}]` array or `{key: value}` dict
 fn get_kv_array_len(val: &serde_json::Value, keys: &[&str]) -> i32 {
     let field = keys.iter().find_map(|k| val.get(*k));
     match field {

@@ -1,16 +1,9 @@
-//! `enemy_handbook_table` and enemy database levels.
-//!
-//! Moves in: `backend/src/core/gamedata/types/enemy.rs` (359) and the raw half of
-//! `backend/src/core/gamedata/types/enemy_stages.rs` (176).
-
 #[derive(Debug, Default)]
 pub struct EnemyTables {}
 
-// ---- Lifted for engine-squad (lift-2, Oct 25 2026). Moved in whole from
-// backend/src/core/gamedata/types/enemy.rs (359 lines), ts-rs dropped, utoipa
-// behind the `schema` feature.
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 use crate::serde_helpers::deserialize_fb_map;
 

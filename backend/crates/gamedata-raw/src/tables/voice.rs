@@ -1,9 +1,6 @@
-//! `voice` table types.
-// ---- Lifted for engine-archives (lift-2, Oct 25 2026). Moved in whole from
-// backend/src/core/gamedata/types/voice.rs (362 lines), ts-rs dropped, utoipa
-// behind the `schema` feature.
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 use crate::serde_helpers::deserialize_fb_map;
 
@@ -46,9 +43,7 @@ pub enum PlaceType {
     BuildingTouching,
     BuildingFavorBubble,
     LoadingPanel,
-    /// Catch-all so an unrecognised value degrades to one variant instead of
-    /// failing the record, which fails the whole table. HG ships new values on
-    /// CN first; see `ItemClass` for the outage this prevents.
+    /// Catch-all for unknown values
     #[serde(other)]
     Unknown,
 }
@@ -70,9 +65,7 @@ pub enum LangType {
     Ger,
     Fre,
     Spa,
-    /// Catch-all so an unrecognised value degrades to one variant instead of
-    /// failing the record, which fails the whole table. HG ships new values on
-    /// CN first; see `ItemClass` for the outage this prevents.
+    /// Catch-all for unknown values
     #[serde(other)]
     Unknown,
 }
@@ -85,9 +78,7 @@ pub enum VoiceType {
     Enum,
     #[serde(rename = "ONLY_TEXT")]
     OnlyText,
-    /// Catch-all so an unrecognised value degrades to one variant instead of
-    /// failing the record, which fails the whole table. HG ships new values on
-    /// CN first; see `ItemClass` for the outage this prevents.
+    /// Catch-all for unknown values
     #[serde(rename = "UNKNOWN", other)]
     Unknown,
 }
@@ -101,9 +92,7 @@ pub enum UnlockType {
     Direct,
     Favor,
     Awake,
-    /// Catch-all so an unrecognised value degrades to one variant instead of
-    /// failing the record, which fails the whole table. HG ships new values on
-    /// CN first; see `ItemClass` for the outage this prevents.
+    /// Catch-all for unknown values
     #[serde(other)]
     Unknown,
 }

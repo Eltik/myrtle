@@ -1,9 +1,6 @@
-//! `operator` table types.
-// ---- Lifted for engine-archives (lift-2, Oct 25 2026). Moved in whole from
-// backend/src/core/gamedata/types/operator.rs (852 lines), ts-rs dropped, utoipa
-// behind the `schema` feature.
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 use super::audio::OperatorAudio;
 use super::handbook::{HandbookItem, OperatorProfile};
@@ -25,9 +22,7 @@ pub enum OperatorPosition {
     Melee,
     All,
     None,
-    /// Catch-all so an unrecognised value degrades to one variant instead of
-    /// failing the record, which fails the whole table. HG ships new values on
-    /// CN first; see `ItemClass` for the outage this prevents.
+    /// Catch-all for unknown values
     #[serde(other)]
     Unknown,
 }
@@ -99,9 +94,7 @@ pub enum OperatorProfession {
     Token,
     #[serde(rename = "TRAP")]
     Trap,
-    /// Catch-all so an unrecognised value degrades to one variant instead of
-    /// failing the record, which fails the whole table. HG ships new values on
-    /// CN first; see `ItemClass` for the outage this prevents.
+    /// Catch-all for unknown values
     #[serde(rename = "UNKNOWN", other)]
     Unknown,
 }
@@ -259,8 +252,7 @@ pub struct LevelUpCostCond {
 #[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
 pub struct SpData {
     pub sp_type: String,
-    /// Always empty in the game data. The element type is therefore unknown,
-    /// so the schema says "array of anything" rather than inventing one.
+    /// Always empty in game data
     #[cfg_attr(feature = "schema", schema(value_type = Vec<serde_json::Value>))]
     pub level_up_cost: Vec<()>,
     pub max_charge_time: i32,
@@ -385,9 +377,7 @@ pub struct CharacterTable {
     pub characters: HashMap<String, RawOperator>,
 }
 
-/// `char_patch_table.json`: Amiya's branch forms (Guard `char_1001_amiya2`,
-/// Medic `char_1037_amiya3`) live here, not in `character_table`, with an
-/// `Infos` map grouping the base id and its template ids.
+/// `char_patch_table.json`, Amiya's branch forms (e.g. `char_1001_amiya2`)
 #[derive(Debug, Clone, Deserialize, Default)]
 #[serde(rename_all = "PascalCase")]
 pub struct CharPatchTable {
@@ -494,16 +484,14 @@ pub struct EnrichedSkill {
     pub override_prefab_key: Option<String>,
     pub override_token_key: Option<String>,
     pub level_up_cost_cond: Vec<LevelUpCostCond>,
-    /// `Skills[i].UnlockCond`: the promotion and level the skill unlocks at.
+    /// Promotion and level the skill unlocks at
     #[serde(default)]
     pub unlock_cond: Option<UnlockCondition>,
     #[serde(rename = "static")]
     pub static_data: Option<SkillStatic>,
 }
 
-/// One power/faction affiliation (the `MainPower`/`SubPower` shape). Used by
-/// both the `PascalCase` raw character table and the camelCase enriched
-/// operators file, so every field aliases both casings.
+/// Power/faction affiliation (`MainPower`/`SubPower`), aliases both casings
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
@@ -516,19 +504,14 @@ pub struct PowerAffiliation {
     pub team_id: Option<String>,
 }
 
-/// A faction the operator belongs to that the game never puts on their card:
-/// a `SubPower` id that is not one of the `MainPower` ids. Texas the Omertosa
-/// carries `siracusa` here, W carries `rhodes`. On the EN tree of 2026-10-11,
-/// 78 `character_table` operators have at least one (80 with Amiya's two
-/// patch forms).
+/// `SubPower` id that is not a `MainPower` id, e.g. Texas the Omertosa's `siracusa`
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
 pub struct HiddenFaction {
-    /// `handbook_team_table` power id, also the `logo_{id}` camp logo name.
+    /// `handbook_team_table` power id, also the `logo_{id}` camp logo name
     pub id: String,
-    /// The table's name for it in the server's own language, `None` when the
-    /// table does not name the id.
+    /// Name in the server's language, `None` if the table does not name it
     pub name: Option<String>,
 }
 
@@ -547,25 +530,21 @@ pub struct Operator {
     pub nation_id: String,
     pub group_id: Option<String>,
     pub team_id: Option<String>,
-    /// Primary affiliation (mirrors the top-level nation/group ids).
+    /// Primary affiliation
     #[serde(default)]
     pub main_power: Option<PowerAffiliation>,
-    /// Secondary affiliations. RIIC faction tags count these: Texas is nation
-    /// `lungmen` but `SubPower` `siracusa`, and Umiri's "all Siracusa
-    /// Operators" buff reaches her in-game.
+    /// Secondary affiliations
     #[serde(default)]
     pub sub_power: Option<Vec<PowerAffiliation>>,
-    /// `handbook_team_table` names of `nation_id`, `group_id` and `team_id`
-    /// in the server's own language. `None` for an empty id, the `none`
-    /// sentinel, or an id the server's table does not name.
+    /// `handbook_team_table` names of `nation_id`, `group_id` and `team_id`,
+    /// `None` for an empty, `none` or unnamed id
     #[serde(default)]
     pub nation_name: Option<String>,
     #[serde(default)]
     pub group_name: Option<String>,
     #[serde(default)]
     pub team_name: Option<String>,
-    /// `sub_power` minus the `main_power` ids, in table order, named. The site
-    /// shows these only behind the reader's spoiler setting.
+    /// `sub_power` minus the `main_power` ids, in table order
     #[serde(default)]
     pub hidden_factions: Vec<HiddenFaction>,
     pub display_number: String,
@@ -575,8 +554,7 @@ pub struct Operator {
     pub item_usage: String,
     pub item_desc: String,
     pub item_obtain_approach: String,
-    /// `item_obtain_approach` as a category. `None` when the approach is
-    /// empty. See `types::obtain`.
+    /// `item_obtain_approach` as a category, `None` if empty
     #[serde(default)]
     pub obtain_channel: Option<ObtainChannel>,
     pub is_not_obtainable: bool,
@@ -584,14 +562,11 @@ pub struct Operator {
     pub max_potential_level: i32,
     pub rarity: OperatorRarity,
     pub profession: OperatorProfession,
-    /// The server's own name for `profession`, from its gacha class tags
-    /// (see `gacha::PROFESSION_TAG_IDS`). `None` for a token, a trap, or a
-    /// tag list without the class.
+    /// Server's name for `profession`, `None` for a token, a trap, or a tag list without the class
     #[serde(default)]
     pub profession_name: Option<String>,
     pub sub_profession_id: String,
-    /// `uniequip_table` `subProfDict` name of `sub_profession_id` in the
-    /// server's own language, `None` when the table has no such id.
+    /// Server's name for `sub_profession_id`, `None` if unknown
     #[serde(default)]
     pub sub_profession_name: Option<String>,
     #[serde(rename = "trait")]
@@ -610,65 +585,34 @@ pub struct Operator {
     pub profile: Option<OperatorProfile>,
     pub artists: Vec<String>,
     pub base_skills: Vec<OperatorBaseSkill>,
-    /// Battle sound effects + in-battle voice barks linked to this operator,
-    /// resolved from `audio_data.json` to playable `/audio/sound_beta_2/...`
-    /// URLs. Empty for operators with no battle audio (and for drones).
+    /// Battle sound effects and in-battle voice lines
     #[serde(default)]
     pub audio: Vec<OperatorAudio>,
     /// Headshot: /upk/arts/charportraits/{pack}/{id}_{1|2}.png
     pub portrait: Option<String>,
-    /// Full illustration: /upk/chararts/{id}/{id}_{1|2}.png. `None` if absent
-    /// (portrait is the fallback).
+    /// Full illustration: /upk/chararts/{id}/{id}_{1|2}.png, `None` if absent
     pub skin: Option<String>,
-    /// Every template id of an operator with alternate forms (only Amiya so
-    /// far), set on each form in the group; each id is its own entry in
-    /// `GameData.operators`. `None` for everyone else. `tmpl_default` names
-    /// the base id.
+    /// Every template id of an operator with alternate forms, `None` for everyone else
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tmpl_ids: Option<Vec<String>>,
-    /// Canonical base id for a template group (e.g. `char_002_amiya` for all
-    /// three Amiya forms). `None` when `tmpl_ids` is `None`.
+    /// Base id for a template group (e.g. `char_002_amiya`), `None` when `tmpl_ids` is `None`
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tmpl_default: Option<String>,
 }
 
-/// Collab `team_id`s: operators from a third-party IP, obtainable only (rarely)
-/// in a collab rerun, never from standard headhunting. Owning one is the only
-/// way to (re)earn its medals, so collab status is the one "not reliably
-/// obtainable" signal.
-///
-/// Curated because the gamedata has no reliable collab flag: `character_table`
-/// has no such field, `handbook_team_table.IsLimited` is `false` for every
-/// team (collabs too), `gacha_table` `LINKAGE` pools don't map cleanly to char
-/// ids, and "no Terra `nation_id`" false-positives factions like `followers`.
-/// Add new collab teams here.
-///
-/// Not keyed off `item_obtain_approach` on purpose: event / welfare operators
-/// (Vigil, Mint, Lava the Purgatory, ...) say "Event Reward" yet stay
-/// obtainable, so it over-excludes.
+/// Collab `team_id`s
 const COLLAB_TEAMS: &[&str] = &["rainbow", "mujica", "laios"];
 
-/// Collab `DisplayNumber` prefixes for collabs that lack a dedicated team. The
-/// Monster Hunter collab (`MH01..`) is split across a shared in-game team
-/// (`action4`, alongside the obtainable base ops) and a team-less Palico, so the
-/// only signal common to all three is the `MH` display number. Base `action4`
-/// ops use `A##`, so this doesn't catch them. Other collabs (Rainbow Six `RS`,
-/// Ave Mujica `AM`, Delicious in Dungeon `DD`) are already covered by team.
+/// Collab `DisplayNumber` prefixes for collabs without a dedicated team
 const COLLAB_DISPLAY_PREFIXES: &[&str] = &["MH"];
 
-/// Collab operators that have neither a collab `team_id` nor a distinguishing
-/// `DisplayNumber` prefix, so they must be named directly. "The Legend of Luo
-/// Xiaohei" (`char_4067_lolxh`) is the earliest collab, predating the team-id
-/// convention: `TeamId`/`GroupId` are null and its `DisplayNumber` (`R161`)
-/// shares the `R` prefix with ordinary Rhodes operators, so neither of the
-/// signals above can catch it. Its single operator gates the Luo Xiaohei medals.
+/// Collab operators with neither a collab `team_id` nor a `DisplayNumber` prefix
 const COLLAB_CHAR_IDS: &[&str] = &["char_4067_lolxh"];
 
 impl Operator {
-    /// Collab (third-party IP) operator. Medal locks and scoring call this;
-    /// don't re-derive it.
+    /// Collab (third-party IP) operator
     pub fn is_collab(&self) -> bool {
         if self
             .team_id
@@ -767,15 +711,12 @@ pub struct OperatorBaseSkill {
     pub efficiency: i32,
     pub targets: Vec<String>,
     /// Sprite stem under `textures/spritepack/building_ui_buff_skills_h1_0/`
-    /// (e.g. `bskill_ctrl_p_spd`). Empty if the source data omits an icon.
+    /// (e.g. `bskill_ctrl_p_spd`), empty if absent
     pub skill_icon: String,
     /// Elite phase required to unlock (0, 1, or 2)
     pub unlock_elite: i32,
     pub unlock_level: i32,
-    /// Slot index in the operator's kit (`BuffChar` order). Tiers of one slot
-    /// replace each other on promotion: only the highest unlocked tier is live,
-    /// as `OperatorBaseProfile::build` picks it. Group by this to tell a
-    /// superseded tier from a second skill.
+    /// Slot index in the operator's kit, tiers of one slot replace each other on promotion
     #[serde(default)]
     pub slot: usize,
 }
@@ -806,7 +747,7 @@ pub struct Drone {
     pub is_sp_char: bool,
     pub max_potential_level: i32,
     pub rarity: OperatorRarity,
-    pub profession: String, // Always "TOKEN" for drones
+    pub profession: String,
     pub sub_profession_id: String,
     #[serde(rename = "trait")]
     pub trait_data: Option<Trait>,
@@ -815,7 +756,7 @@ pub struct Drone {
     pub display_token_dict: Option<HashMap<String, bool>>,
     pub talents: Vec<Talent>,
     pub potential_ranks: Vec<PotentialRank>,
-    pub favor_key_frames: Option<()>, // Always null for drones
+    pub favor_key_frames: Option<()>,
     pub all_skill_lvlup: Vec<AllSkillLevelUp>,
     pub modules: Vec<OperatorModule>,
 }

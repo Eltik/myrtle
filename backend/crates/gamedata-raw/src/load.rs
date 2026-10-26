@@ -66,7 +66,7 @@ pub struct RawGameData {
     pub autochess: tables::autochess::AutochessTables,
     /// Asset paths from [`TableSource::list_assets`]
     pub asset_paths: Vec<String>,
-    /// Tables unpacker kept from earlier extract (`.skipped.json`).
+    /// Tables unpacker kept from earlier extract (`.skipped.json`)
     pub skipped: Vec<crate::integrity::SkippedTable>,
 }
 

@@ -1,9 +1,6 @@
-//! `skill` table types.
-// ---- Lifted for engine-archives (lift-2, Oct 25 2026). Moved in whole from
-// backend/src/core/gamedata/types/skill.rs (97 lines), ts-rs dropped, utoipa
-// behind the `schema` feature.
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 use crate::serde_helpers::deserialize_fb_map;
 
@@ -26,7 +23,7 @@ pub struct SkillSpData {
     #[serde(alias = "SpType", default)]
     pub sp_type: String,
     #[serde(alias = "LevelUpCost")]
-    pub level_up_cost: Option<()>, // Always null in source
+    pub level_up_cost: Option<()>,
     #[serde(alias = "MaxChargeTime", default)]
     pub max_charge_time: i32,
     #[serde(alias = "SpCost", default)]

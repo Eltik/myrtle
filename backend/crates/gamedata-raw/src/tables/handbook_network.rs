@@ -1,22 +1,3 @@
-//! The game's own Archives network: `handbook_force_map_table` (the
-//! territories map, one hex cluster per force) and `handbookpos_table` (one
-//! chart per group, every member a hex cell). Both ship under
-//! `gamedata/art/` as `*.json.json`, camelCase, and no other code reads them.
-//!
-//! Coordinates are the game's, Unity style with y up. Territory hexes are
-//! flat-topped with circumradius 50 (neighbours 86.6 apart), chart cells
-//! circumradius 100 (neighbours 173.2 apart). A connection's `direction`
-//! names a neighbour: 1 is straight up, then clockwise in 60 degree steps, so
-//! direction d points at `150 - 60 d` degrees (measured on Rhodes Island's
-//! seven-hex cluster: d 1 -> (0, 86.6), d 2 -> (75, 43.3), d 0 -> (-75, 43.3)).
-//!
-//! Lifted by lift-2 (Oct 25 2026) for engine-archives: the serde structs of
-//! backend/src/core/archives/network.rs:20-185, moved down because they are
-//! table shapes (files.csv row `core/archives/network.rs`: "`std::fs::read` of
-//! `handbook_force_map_table` at L197 -> gamedata-raw table"). The file read
-//! (`load_network`, `read_table`, network.rs:187-201) is the caller's; this
-//! module parses bytes the caller hands it.
-
 use std::collections::HashMap;
 
 use serde::Deserialize;
@@ -64,8 +45,6 @@ pub struct RawForce {
     pub force_index: i32,
     #[serde(default, deserialize_with = "deserialize_null_default")]
     pub color: String,
-    /// `null` on 32 of EN's 41 forces. Every `deserialize_null_default`
-    /// string here reads a `null` as empty.
     #[serde(default, deserialize_with = "deserialize_null_default")]
     pub card_color: String,
     #[serde(default)]
@@ -116,6 +95,7 @@ pub struct RawGroup {
 #[serde(rename_all = "camelCase")]
 pub struct RawConnection {
     pub char_id: Option<String>,
+    /// Neighbour direction: 1 = straight up, then clockwise in 60 degree steps
     pub direction: u8,
     pub force_id: Option<String>,
 }
@@ -180,7 +160,7 @@ pub struct RawLine {
     pub line_type: i32,
 }
 
-/// Both tables, read together: one without the other draws nothing.
+/// `handbook_force_map_table` + `handbookpos_table`
 #[derive(Debug, Clone, Default)]
 pub struct RawNetwork {
     pub force_map: ForceMapTable,
@@ -188,10 +168,7 @@ pub struct RawNetwork {
 }
 
 impl RawNetwork {
-    /// Parse both tables (`handbook_force_map_table.json.json`,
-    /// `handbookpos_table.json.json`) from bytes. Replaces the parse half of
-    /// `read_table` (network.rs:196-201); on failure the error names the table
-    /// so the caller can log the same "{name} did not parse" warning.
+    /// Parse both tables from bytes; the error names the failing table
     pub fn from_slices(
         force_map: &[u8],
         positions: &[u8],
