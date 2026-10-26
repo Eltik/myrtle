@@ -1,9 +1,6 @@
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "schema")]
-use utoipa::ToSchema;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct FieldError {
     pub field: String,
     pub message: String,
@@ -31,7 +28,6 @@ impl PageRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct Page<T> {
     pub items: Vec<T>,
     pub total: u64,
@@ -40,7 +36,6 @@ pub struct Page<T> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum Role {
     User,
@@ -51,7 +46,6 @@ pub enum Role {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum ProfileTab {
     Showcase,

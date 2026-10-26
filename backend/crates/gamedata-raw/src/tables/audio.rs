@@ -1,13 +1,16 @@
-#[derive(Debug, Default)]
-pub struct AudioTables {}
-
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "schema")]
-use utoipa::ToSchema;
 
-use super::voice::LangType;
+use super::voice::{LangType, VoicesTableFile};
+
+#[derive(Debug, Default)]
+pub struct AudioTables {
+    /// `audio_data`
+    pub audio: RawAudioData,
+    /// `charword_table`
+    pub voices: VoicesTableFile,
+}
 
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct RawAudioData {
@@ -162,7 +165,6 @@ pub struct RawSound {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum AudioCategory {
     /// `ON_UNIT_BORN` - deployment / spawn sound
     Deploy,
@@ -179,7 +181,6 @@ pub enum AudioCategory {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct AudioSound {
     /// Original logical asset path from `audio_data.json`
     pub asset: String,
@@ -189,7 +190,6 @@ pub struct AudioSound {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct OperatorAudio {
     /// e.g. `battle.ON_UNIT_BORN.char_101_sora`
     pub bank_name: String,
@@ -213,7 +213,6 @@ pub struct OperatorAudio {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum EnemyAudioCategory {
     /// `ON_UNIT_BORN` or `ON_BOSS_ENTER`.
     Spawn,
@@ -232,7 +231,6 @@ pub enum EnemyAudioCategory {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct EnemyAudio {
     /// e.g. `battle.ON_ABILITY_HIT.enemy_1007_slime.combat`
     pub bank_name: String,

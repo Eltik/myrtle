@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "schema")]
-use utoipa::ToSchema;
 
 use super::audio::OperatorAudio;
 use super::handbook::{HandbookItem, OperatorProfile};
@@ -17,7 +15,6 @@ use crate::serde_helpers::{
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
 #[derive(Default)]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum OperatorPosition {
     Ranged,
     #[default]
@@ -30,7 +27,6 @@ pub enum OperatorPosition {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum OperatorPhase {
     #[serde(rename = "PHASE_0")]
     #[default]
@@ -42,7 +38,6 @@ pub enum OperatorPhase {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum OperatorRarity {
     #[serde(rename = "TIER_6")]
     SixStar,
@@ -73,7 +68,6 @@ impl OperatorRarity {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Default)]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum OperatorProfession {
     #[serde(rename = "MEDIC")]
     Medic,
@@ -121,7 +115,6 @@ impl OperatorProfession {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct UnlockCondition {
     pub phase: OperatorPhase,
     pub level: i32,
@@ -129,7 +122,6 @@ pub struct UnlockCondition {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct Blackboard {
     #[serde(alias = "key")]
     pub key: String,
@@ -141,7 +133,6 @@ pub struct Blackboard {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct TraitCandidate {
     pub unlock_condition: UnlockCondition,
     pub required_potential_rank: i32,
@@ -153,14 +144,12 @@ pub struct TraitCandidate {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct Trait {
     pub candidates: Vec<TraitCandidate>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct AttributeData {
     pub max_hp: i32,
     pub atk: i32,
@@ -189,7 +178,6 @@ pub struct AttributeData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct AttributeKeyFrame {
     pub level: i32,
     pub data: AttributeData,
@@ -197,7 +185,6 @@ pub struct AttributeKeyFrame {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct EvolveCost {
     pub id: String,
     pub count: i32,
@@ -211,7 +198,6 @@ pub struct EvolveCost {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct Phase {
     pub character_prefab_key: String,
     #[serde(default)]
@@ -227,7 +213,6 @@ pub struct Phase {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct LevelUpCostItem {
     pub id: String,
     pub count: i32,
@@ -241,7 +226,6 @@ pub struct LevelUpCostItem {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct LevelUpCostCond {
     pub unlock_cond: UnlockCondition,
     pub lvl_up_time: i32,
@@ -251,11 +235,9 @@ pub struct LevelUpCostCond {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct SpData {
     pub sp_type: String,
     /// Always empty in game data
-    #[cfg_attr(feature = "schema", schema(value_type = Vec<Value>))]
     pub level_up_cost: Vec<()>,
     pub max_charge_time: i32,
     pub sp_cost: i32,
@@ -265,7 +247,6 @@ pub struct SpData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct SkillStatic {
     pub levels: Vec<SkillLevel>,
     pub skill_id: String,
@@ -276,7 +257,6 @@ pub struct SkillStatic {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct OperatorSkillRef {
     #[serde(default)]
     pub skill_id: Option<String>,
@@ -292,7 +272,6 @@ pub struct OperatorSkillRef {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct TalentCandidate {
     pub unlock_condition: UnlockCondition,
     #[serde(default)]
@@ -315,7 +294,6 @@ pub struct TalentCandidate {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct Talent {
     #[serde(default)]
     pub candidates: Vec<TalentCandidate>,
@@ -323,7 +301,6 @@ pub struct Talent {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct AttributeModifier {
     pub attribute_type: String,
     pub formula_item: String,
@@ -335,7 +312,6 @@ pub struct AttributeModifier {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct PotentialBuffAttributes {
     pub abnormal_flags: Option<()>,
     pub abnormal_immunes: Option<()>,
@@ -347,14 +323,12 @@ pub struct PotentialBuffAttributes {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct PotentialBuff {
     pub attributes: PotentialBuffAttributes,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct PotentialRank {
     #[serde(rename = "Type_")]
     pub potential_type: String,
@@ -365,14 +339,13 @@ pub struct PotentialRank {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct AllSkillLevelUp {
     pub unlock_cond: UnlockCondition,
     #[serde(default)]
     pub lvl_up_cost: Vec<LevelUpCostItem>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct CharacterTable {
     #[serde(deserialize_with = "deserialize_fb_map")]
@@ -471,7 +444,6 @@ pub struct RawOperator {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct OperatorModule {
     #[serde(flatten)]
     pub module: Module,
@@ -480,7 +452,6 @@ pub struct OperatorModule {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct EnrichedSkill {
     pub skill_id: String,
     pub override_prefab_key: Option<String>,
@@ -496,7 +467,6 @@ pub struct EnrichedSkill {
 /// Power/faction affiliation (`MainPower`/`SubPower`), aliases both casings
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct PowerAffiliation {
     #[serde(default, alias = "NationId")]
     pub nation_id: Option<String>,
@@ -509,7 +479,6 @@ pub struct PowerAffiliation {
 /// `SubPower` id that is not a `MainPower` id, e.g. Texas the Omertosa's `siracusa`
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct HiddenFaction {
     /// `handbook_team_table` power id, also the `logo_{id}` camp logo name
     pub id: String,
@@ -519,7 +488,6 @@ pub struct HiddenFaction {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct Operator {
     pub id: Option<String>,
     pub name: String,
@@ -640,7 +608,6 @@ impl Operator {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum Elite {
     E0,
     E1,
@@ -649,7 +616,6 @@ pub enum Elite {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct EliteCostItem {
     pub quantity: i32,
     pub material: Item,
@@ -657,7 +623,6 @@ pub struct EliteCostItem {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct LevelCost {
     pub level: i32,
     pub elite_cost: Vec<EliteCostItem>,
@@ -667,7 +632,6 @@ pub struct LevelCost {
 pub type LevelUpCost = Vec<LevelCost>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum MasteryLevel {
     M1,
     M2,
@@ -676,7 +640,6 @@ pub enum MasteryLevel {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct SkillCostItem {
     pub quantity: i32,
     pub material: Item,
@@ -684,7 +647,6 @@ pub struct SkillCostItem {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct SkillCost {
     pub unlock_condition: UnlockCondition,
     pub lvl_up_time: i32,
@@ -694,7 +656,6 @@ pub struct SkillCost {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct SkillLevelCost {
     pub skill_id: String,
     pub cost: Vec<SkillCost>,
@@ -704,7 +665,6 @@ pub type SkillLevelUpCost = Vec<SkillLevelCost>;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct OperatorBaseSkill {
     pub buff_id: String,
     pub buff_name: String,
@@ -725,7 +685,6 @@ pub struct OperatorBaseSkill {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct Drone {
     pub id: Option<String>,
     pub name: String,

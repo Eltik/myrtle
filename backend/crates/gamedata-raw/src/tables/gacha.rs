@@ -1,18 +1,20 @@
-#[derive(Debug, Default)]
-pub struct GachaTables {}
-
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-#[cfg(feature = "schema")]
-use utoipa::ToSchema;
 
-use crate::serde_helpers::deserialize_fb_map;
+use crate::serde_helpers::{deserialize_fb_map, deserialize_fb_map_or_default};
+
+#[derive(Debug, Default)]
+pub struct GachaTables {
+    /// `gacha_table`
+    pub gacha: GachaTableFile,
+    /// `open_server_table`
+    pub open_server: OpenServerTableFile,
+}
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct GachaPoolClient {
     #[serde(alias = "GachaPoolId")]
     pub gacha_pool_id: String,
@@ -85,7 +87,6 @@ pub struct GachaPoolClient {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct NewbeeGachaPoolClient {
     #[serde(alias = "GachaPoolId")]
     pub gacha_pool_id: String,
@@ -105,7 +106,6 @@ pub struct NewbeeGachaPoolClient {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct GachaTag {
     #[serde(alias = "TagId")]
     pub tag_id: i32,
@@ -117,7 +117,6 @@ pub struct GachaTag {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct RecruitTimeEntry {
     #[serde(alias = "RecruitPrice")]
     pub recruit_price: i32,
@@ -125,7 +124,6 @@ pub struct RecruitTimeEntry {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct RecruitPool {
     #[serde(alias = "RecruitTimeTable")]
     pub recruit_time_table: Vec<RecruitTimeEntry>,
@@ -162,7 +160,6 @@ pub fn profession_names(tags: &[GachaTag]) -> HashMap<String, String> {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct RecruitRarityEntry {
     #[serde(alias = "RarityStart")]
     pub rarity_start: i32,
@@ -172,7 +169,6 @@ pub struct RecruitRarityEntry {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct GachaData {
     pub gacha_pool_client: Vec<GachaPoolClient>,
     pub newbee_gacha_pool_client: Vec<NewbeeGachaPoolClient>,
@@ -197,7 +193,6 @@ pub struct GachaData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct FesGachaPoolRelateEntry {
     #[serde(alias = "RarityRank5ItemId")]
     pub rarity_rank5_item_id: String,
@@ -272,7 +267,6 @@ impl GachaTableFile {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct WeightUpChar {
     #[serde(default)]
     pub char_id: String,
@@ -285,10 +279,46 @@ pub struct WeightUpChar {
 /// Per-rarity headline rate for a banner
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct RarityRate {
     pub rarity_rank: i32,
     pub total_percent: f64,
     /// Operator count in this rarity band
     pub pool_size: usize,
+}
+
+/// `open_server_table`, returning-player gacha pools only
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct OpenServerTableFile {
+    #[serde(default)]
+    pub player_return: PlayerReturn,
+}
+
+/// Returning-player program, one group per return tier (`return_30_g_1`)
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct PlayerReturn {
+    #[serde(default, deserialize_with = "deserialize_fb_map_or_default")]
+    pub group_data_map: HashMap<String, ReturnGroup>,
+}
+
+/// Return tier, only its gacha pool
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct ReturnGroup {
+    #[serde(default)]
+    pub gacha_pool_id: Option<String>,
+}
+
+impl OpenServerTableFile {
+    /// Every gacha pool some return tier grants
+    pub fn returning_pool_ids(&self) -> HashSet<String> {
+        self.player_return
+            .group_data_map
+            .values()
+            .filter_map(|g| g.gacha_pool_id.as_deref())
+            .filter(|id| !id.is_empty())
+            .map(str::to_owned)
+            .collect()
+    }
 }

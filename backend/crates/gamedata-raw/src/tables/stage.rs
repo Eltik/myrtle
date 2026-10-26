@@ -1,17 +1,30 @@
-#[derive(Debug, Default)]
-pub struct StageTables {}
-
 use std::collections::HashMap;
 
 use serde::{Deserialize, Deserializer, Serialize};
-#[cfg(feature = "schema")]
-use utoipa::ToSchema;
 
-use crate::serde_helpers::{FbKeyValue, deserialize_fb_map};
+use super::campaign::CampaignTableFile;
+use super::chapter::ChapterTableFile;
+use super::zone::ZoneTableFile;
+use crate::serde_helpers::{FbKeyValue, deserialize_fb_map, deserialize_fb_map_or_default};
+
+#[derive(Debug, Default)]
+pub struct StageTables {
+    /// `stage_table`
+    pub stages: StageTableFile,
+    /// `zone_table`
+    pub zones: ZoneTableFile,
+    /// `campaign_table`
+    pub campaigns: CampaignTableFile,
+    /// `chapter_table`
+    pub chapters: ChapterTableFile,
+    /// `retro_table`
+    pub retro: RetroTableFile,
+    /// `climb_tower_table`
+    pub climb_tower: ClimbTowerTableFile,
+}
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct RetroAct {
     #[serde(alias = "RetroId")]
     pub retro_id: String,
@@ -34,7 +47,6 @@ pub struct RetroAct {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum StageType {
     #[default]
     Main,
@@ -51,7 +63,6 @@ pub enum StageType {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum StageDifficulty {
     #[default]
     Normal,
@@ -63,7 +74,6 @@ pub enum StageDifficulty {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum AppearanceStyle {
     #[default]
     MainNormal,
@@ -79,7 +89,6 @@ pub enum AppearanceStyle {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct UnlockCondition {
     #[serde(alias = "StageId")]
     pub stage_id: String,
@@ -91,7 +100,6 @@ pub struct UnlockCondition {
 /// Single item stage can drop, with drop category and occurrence band
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct DisplayDetailReward {
     /// e.g. `ONCE`, `NORMAL`, `SPECIAL`, `ADDITIONAL`, `COMPLETE`, `CONDITION_DROP`
     #[serde(alias = "DropType")]
@@ -111,7 +119,6 @@ pub struct DisplayDetailReward {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct StageDropInfo {
     #[serde(alias = "DisplayDetailRewards", default)]
     pub display_detail_rewards: Vec<DisplayDetailReward>,
@@ -119,7 +126,6 @@ pub struct StageDropInfo {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct Stage {
     #[serde(alias = "StageId")]
     pub stage_id: String,
@@ -203,7 +209,6 @@ pub struct Stage {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct StageData {
     pub stages: HashMap<String, Stage>,
 }
@@ -341,4 +346,54 @@ where
         .into_iter()
         .map(|kv| (kv.value.story_set_id.clone(), kv.value))
         .collect())
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct RetroTableFile {
+    #[serde(deserialize_with = "deserialize_fb_map_or_default", default)]
+    pub retro_act_list: HashMap<String, RetroAct>,
+}
+
+/// `climb_tower_table` (Stationary Security Service), season schedule only
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct ClimbTowerTableFile {
+    #[serde(default)]
+    pub season_infos: Vec<ClimbTowerSeasonEntry>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ClimbTowerSeasonEntry {
+    pub value: ClimbTowerSeason,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct ClimbTowerSeason {
+    pub start_ts: i64,
+    pub end_ts: i64,
+    /// Towers introduced this season
+    #[serde(default)]
+    pub towers: Vec<String>,
+    /// Towers brought back from earlier seasons
+    #[serde(default)]
+    pub replicated_towers: Vec<String>,
+}
+
+impl ClimbTowerTableFile {
+    /// `tower_id` -> `[(season_start, season_end)]` across every season it appears in
+    pub fn tower_windows(&self) -> HashMap<String, Vec<(i64, i64)>> {
+        let mut windows: HashMap<String, Vec<(i64, i64)>> = HashMap::new();
+        for entry in &self.season_infos {
+            let season = &entry.value;
+            for tower_id in season.towers.iter().chain(season.replicated_towers.iter()) {
+                windows
+                    .entry(tower_id.clone())
+                    .or_default()
+                    .push((season.start_ts, season.end_ts));
+            }
+        }
+        windows
+    }
 }

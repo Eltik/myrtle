@@ -1,12 +1,15 @@
-#[derive(Debug, Default)]
-pub struct RoguelikeTables {}
-
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use super::roguelike_entries::RoguelikeEntries;
+
+#[derive(Debug, Default)]
+pub struct RoguelikeTables {
+    /// `roguelike_topic_table`
+    pub topics: RoguelikeTopicTableFile,
+}
 
 #[derive(Debug, Clone, Default)]
 pub struct RoguelikeGameData {

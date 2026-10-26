@@ -1,10 +1,7 @@
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "schema")]
-use utoipa::ToSchema;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct FavorFrameData {
     #[serde(alias = "FavorPoint")]
     pub favor_point: i32,
@@ -16,7 +13,6 @@ pub struct FavorFrameData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct FavorFrame {
     #[serde(alias = "Level")]
     pub level: i32,
@@ -26,7 +22,6 @@ pub struct FavorFrame {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct Favor {
     #[serde(alias = "MaxFavor")]
     pub max_favor: i32,

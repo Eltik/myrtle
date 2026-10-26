@@ -26,11 +26,23 @@ impl IntegrityReport {
     }
 }
 
+/// Load warnings, plus one for each core table that parsed but has no rows
 pub fn check(raw: &RawGameData) -> IntegrityReport {
-    // TODO: populated-table checks (operators, items, skills, voice lines) once
-    // the table groups have fields; they push into `warnings`.
+    let populated = [
+        ("character_table", raw.character.characters.characters.len()),
+        ("item_table", raw.item.items.items.len()),
+        ("skill_table", raw.character.skills.skills.len()),
+        ("charword_table", raw.audio.voices.char_words.len()),
+    ];
+    let mut warnings = raw.warnings.clone();
+    for (table, rows) in populated {
+        let prefix = format!("table {table}:");
+        if rows == 0 && !warnings.iter().any(|w| w.starts_with(&prefix)) {
+            warnings.push(format!("table {table}: parsed with no rows"));
+        }
+    }
     IntegrityReport {
         skipped: raw.skipped.clone(),
-        warnings: Vec::new(),
+        warnings,
     }
 }

@@ -1,11 +1,8 @@
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "schema")]
-use utoipa::ToSchema;
 
 /// Operator's `itemObtainApproach` category
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum ObtainChannel {
     Headhunting,
     Event,
@@ -53,7 +50,6 @@ impl ObtainChannel {
 /// Skin's shop channel, from `displaySkin.displayTagId`
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum SkinChannel {
     /// No tag: outfit store and default outfits
     #[default]

@@ -2,8 +2,6 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-#[cfg(feature = "schema")]
-use utoipa::ToSchema;
 
 use super::material::ItemType;
 use crate::serde_helpers::deserialize_null_default;
@@ -12,7 +10,6 @@ use crate::serde_helpers::{deserialize_fb_map, deserialize_fb_map_option};
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
 #[derive(Default)]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum ModuleType {
     #[default]
     Initial,
@@ -25,7 +22,6 @@ pub enum ModuleType {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[derive(Default)]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum ModuleTarget {
     #[default]
     Trait,
@@ -40,7 +36,6 @@ pub enum ModuleTarget {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct RawModuleItemCost {
     #[serde(alias = "Id")]
     pub id: String,
@@ -52,7 +47,6 @@ pub struct RawModuleItemCost {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct ModuleItemCost {
     #[serde(alias = "Id")]
     pub id: String,
@@ -68,7 +62,6 @@ pub struct ModuleItemCost {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct SubProfession {
     #[serde(alias = "SubProfessionId")]
     pub sub_profession_id: String,
@@ -80,7 +73,6 @@ pub struct SubProfession {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct EquipTrackItem {
     #[serde(alias = "CharId")]
     pub char_id: String,
@@ -90,7 +82,6 @@ pub struct EquipTrackItem {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct EquipTrack {
     #[serde(alias = "Timestamp")]
     pub timestamp: i64,
@@ -100,7 +91,6 @@ pub struct EquipTrack {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct Mission {
     #[serde(alias = "Template")]
     pub template: String,
@@ -120,7 +110,6 @@ pub struct Mission {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct ModuleBlackboard {
     #[serde(alias = "Key", alias = "key", default)]
     pub key: String,
@@ -135,7 +124,6 @@ pub struct ModuleBlackboard {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct ModuleUnlockCondition {
     #[serde(alias = "Phase", default)]
     pub phase: String,
@@ -145,7 +133,6 @@ pub struct ModuleUnlockCondition {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct AddModuleCandidates {
     #[serde(alias = "DisplayRangeId", default)]
     pub display_range_id: bool,
@@ -175,7 +162,6 @@ pub struct AddModuleCandidates {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct ModuleCandidates {
     #[serde(alias = "AdditionalDescription", default)]
     pub additional_description: String,
@@ -195,7 +181,6 @@ pub struct ModuleCandidates {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct AddOrOverrideTalentDataBundle {
     #[serde(alias = "Candidates")]
     pub candidates: Option<Vec<AddModuleCandidates>>,
@@ -203,7 +188,6 @@ pub struct AddOrOverrideTalentDataBundle {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct OverrideTraitDataBundle {
     #[serde(alias = "Candidates")]
     pub candidates: Option<Vec<ModuleCandidates>>,
@@ -211,7 +195,6 @@ pub struct OverrideTraitDataBundle {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct ModulePart {
     #[serde(alias = "ResKey")]
     pub res_key: Option<String>,
@@ -227,7 +210,6 @@ pub struct ModulePart {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct ModulePhase {
     #[serde(alias = "EquipLevel")]
     pub equip_level: i32,
@@ -241,7 +223,6 @@ pub struct ModulePhase {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct ModuleData {
     #[serde(alias = "Phases")]
     pub phases: Vec<ModulePhase>,
@@ -249,7 +230,6 @@ pub struct ModuleData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct RawModule {
     #[serde(alias = "UniEquipId")]
     pub uni_equip_id: String,
@@ -299,7 +279,6 @@ pub struct RawModule {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct Module {
     pub id: Option<String>,
     pub uni_equip_id: String,
@@ -328,7 +307,6 @@ pub struct Module {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct Modules {
     pub equip_dict: HashMap<String, Module>,
     pub mission_list: HashMap<String, Mission>,
@@ -341,7 +319,6 @@ pub struct Modules {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct RawModules {
     pub equip_dict: HashMap<String, RawModule>,
     pub mission_list: HashMap<String, Mission>,

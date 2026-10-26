@@ -70,9 +70,6 @@ tower = { version = "0.5.3", features = ["util"] }
 tower-http = { version = "0.6.11", features = ["cors", "compression-gzip", "compression-br", "trace"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
-utoipa = { version = "5.5.0", features = ["axum_extras", "chrono", "uuid"] }
-utoipa-axum = "0.2.0"
-utoipa-scalar = { version = "0.3.0", features = ["axum"] }
 uuid = { version = "1.27.0", features = ["serde", "v4"] }
 validator = { version = "0.20.0", features = ["derive"] }
 walkdir = "2.5.0"

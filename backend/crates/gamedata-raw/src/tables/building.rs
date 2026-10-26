@@ -1,12 +1,15 @@
-#[derive(Debug, Default)]
-pub struct BuildingTables {}
-
 use std::collections::HashMap;
 
 use serde::Deserialize;
 use serde_json::Value;
 
 use crate::serde_helpers::{deserialize_fb_map, deserialize_fb_map_or_default};
+
+#[derive(Debug, Default)]
+pub struct BuildingTables {
+    /// `building_data`
+    pub building: BuildingDataFile,
+}
 
 /// `building_data.json`
 #[derive(Debug, Clone, Default, Deserialize)]

@@ -2,13 +2,10 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-#[cfg(feature = "schema")]
-use utoipa::ToSchema;
 
 use crate::serde_helpers::deserialize_fb_map;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum ItemRarity {
     #[serde(rename = "TIER_1")]
     #[default]
@@ -39,7 +36,6 @@ impl ItemRarity {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum ItemClass {
     #[serde(rename = "MATERIAL")]
     Material,
@@ -58,7 +54,6 @@ pub enum ItemClass {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[derive(Default)]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum ItemType {
     Gold,
     CardExp,
@@ -134,7 +129,6 @@ pub enum ItemType {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
 #[derive(Default)]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum ItemOccPer {
     #[default]
     Usual,
@@ -150,7 +144,6 @@ pub enum ItemOccPer {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
 #[derive(Default)]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum BuildingRoomType {
     #[default]
     Workshop,
@@ -163,7 +156,6 @@ pub enum BuildingRoomType {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[derive(Default)]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum VoucherItemType {
     #[default]
     OptionalVoucherPick,
@@ -176,7 +168,6 @@ pub enum VoucherItemType {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
 #[derive(Default)]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum VoucherDisplayType {
     #[default]
     None,
@@ -188,7 +179,6 @@ pub enum VoucherDisplayType {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct StageDrop {
     #[serde(alias = "StageId")]
     pub stage_id: String,
@@ -198,7 +188,6 @@ pub struct StageDrop {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct BuildingProduct {
     #[serde(alias = "RoomType")]
     pub room_type: BuildingRoomType,
@@ -208,7 +197,6 @@ pub struct BuildingProduct {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct VoucherRelate {
     #[serde(alias = "VoucherId")]
     pub voucher_id: String,
@@ -218,7 +206,6 @@ pub struct VoucherRelate {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct UniqueItem {
     #[serde(alias = "Id")]
     pub id: String,
@@ -230,7 +217,6 @@ pub struct UniqueItem {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct UniCollectionInfo {
     #[serde(alias = "UniCollectionItemId")]
     pub uni_collection_item_id: String,
@@ -240,7 +226,6 @@ pub struct UniCollectionInfo {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct ItemPackContent {
     #[serde(alias = "Id")]
     pub id: String,
@@ -252,7 +237,6 @@ pub struct ItemPackContent {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct ItemPackInfo {
     #[serde(alias = "PackId")]
     pub pack_id: String,
@@ -262,7 +246,6 @@ pub struct ItemPackInfo {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct FullPotentialCharacter {
     #[serde(alias = "ItemId")]
     pub item_id: String,
@@ -272,7 +255,6 @@ pub struct FullPotentialCharacter {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct ActivityPotentialCharacter {
     #[serde(alias = "CharId")]
     pub char_id: String,
@@ -280,7 +262,6 @@ pub struct ActivityPotentialCharacter {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct FavorCharacter {
     #[serde(alias = "ItemId")]
     pub item_id: String,
@@ -292,7 +273,6 @@ pub struct FavorCharacter {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct ExpItem {
     #[serde(alias = "Id")]
     pub id: String,
@@ -302,7 +282,6 @@ pub struct ExpItem {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct ApSupply {
     #[serde(alias = "Id")]
     pub id: String,
@@ -314,7 +293,6 @@ pub struct ApSupply {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct CharVoucherItem {
     #[serde(alias = "Id")]
     pub id: String,
@@ -324,7 +302,6 @@ pub struct CharVoucherItem {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct Item {
     #[serde(alias = "ItemId", default)]
     pub item_id: String,
@@ -362,7 +339,6 @@ pub struct Item {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct Materials {
     pub items: HashMap<String, Item>,
     pub exp_items: HashMap<String, ExpItem>,

@@ -1,6 +1,3 @@
-#[derive(Debug, Default)]
-pub struct MedalTables {}
-
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
@@ -8,6 +5,12 @@ use serde_json::Value;
 
 use super::activity::ActivityBasicInfo;
 use super::operator::Operator;
+
+#[derive(Debug, Default)]
+pub struct MedalTables {
+    /// `medal_table`
+    pub medals: MedalTableFile,
+}
 
 /// Medal `Template`s whose first `UnlockParam` is a `char_*` id
 const OPERATOR_GATED_TEMPLATES: &[&str] = &[

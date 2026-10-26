@@ -3,9 +3,10 @@
 //! `FlatBuffer` outputs dictionaries as arrays of key-value pairs:
 //! `[{ "key": "id", "value": {...} }]`
 
-use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
 use std::hash::Hash;
+
+use serde::{Deserialize, Deserializer, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FbKeyValue<K, V> {

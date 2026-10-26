@@ -1,9 +1,6 @@
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "schema")]
-use utoipa::ToSchema;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 #[serde(rename_all = "lowercase")]
 pub enum Server {
     EN,

@@ -1,15 +1,48 @@
-#[derive(Debug, Default)]
-pub struct CharacterTables {}
+use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "schema")]
-use utoipa::ToSchema;
+use serde_json::Value;
 
+use super::consts::GameDataConst;
+use super::handbook::HandbookTableFile;
+use super::handbook_team::HandbookTeamTableFile;
 use super::item::SkinChannel;
+use super::module::{BattleEquipTableFile, UniequipTableFile};
+use super::operator::{CharPatchTable, CharacterTable};
+use super::range::Ranges;
+use super::skill::SkillTableFile;
+use super::trust::Favor;
+use crate::serde_helpers::deserialize_fb_map;
+
+/// Operator, skill, module and handbook tables
+#[derive(Debug, Default)]
+pub struct CharacterTables {
+    /// `character_table`, the one required table
+    pub characters: CharacterTable,
+    /// `char_patch_table`
+    pub patch: CharPatchTable,
+    /// `skill_table`
+    pub skills: SkillTableFile,
+    /// `uniequip_table`
+    pub uniequip: UniequipTableFile,
+    /// `battle_equip_table`
+    pub battle_equip: BattleEquipTableFile,
+    /// `handbook_info_table`
+    pub handbook: HandbookTableFile,
+    /// `handbook_team_table`
+    pub handbook_team: HandbookTeamTableFile,
+    /// `favor_table`
+    pub favor: Favor,
+    /// `gamedata_const`
+    pub consts: GameDataConst,
+    /// `skin_table`
+    pub skins: SkinTableFile,
+    /// `range_table`
+    pub ranges: Ranges,
+}
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct TokenSkinMapEntry {
     #[serde(alias = "TokenId")]
     pub token_id: String,
@@ -19,7 +52,6 @@ pub struct TokenSkinMapEntry {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct BattleSkin {
     #[serde(alias = "OverwritePrefab", default)]
     pub overwrite_prefab: bool,
@@ -29,7 +61,6 @@ pub struct BattleSkin {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct DisplaySkin {
     #[serde(alias = "SkinName")]
     pub skin_name: Option<String>,
@@ -73,7 +104,6 @@ pub struct DisplaySkin {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct BrandGroup {
     #[serde(alias = "SkinGroupId")]
     pub skin_group_id: String,
@@ -83,7 +113,6 @@ pub struct BrandGroup {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct BrandKvImg {
     #[serde(alias = "KvImgId")]
     pub kv_img_id: String,
@@ -93,7 +122,6 @@ pub struct BrandKvImg {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct Brand {
     #[serde(alias = "BrandId")]
     pub brand_id: String,
@@ -115,7 +143,6 @@ pub struct Brand {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct Skin {
     #[serde(alias = "SkinId", default)]
     pub skin_id: String,
@@ -154,4 +181,30 @@ pub struct Skin {
     /// `displaySkin.displayTagId` as a category
     #[serde(skip_deserializing)]
     pub obtain_channel: SkinChannel,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SpecialSkinInfo {
+    #[serde(alias = "SkinId")]
+    pub skin_id: String,
+    #[serde(alias = "StartTime")]
+    pub start_time: i64,
+    #[serde(alias = "EndTime")]
+    pub end_time: i64,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct SkinTableFile {
+    #[serde(deserialize_with = "deserialize_fb_map")]
+    pub char_skins: HashMap<String, Skin>,
+    #[serde(deserialize_with = "deserialize_fb_map", default)]
+    pub buildin_evolve_map: HashMap<String, Value>,
+    #[serde(deserialize_with = "deserialize_fb_map", default)]
+    pub buildin_patch_map: HashMap<String, Value>,
+    #[serde(deserialize_with = "deserialize_fb_map", default)]
+    pub brand_list: HashMap<String, Brand>,
+    #[serde(default)]
+    pub special_skin_info_list: Vec<SpecialSkinInfo>,
 }
