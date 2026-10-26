@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "schema")]
+use utoipa::ToSchema;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 #[serde(rename_all = "lowercase")]
 pub enum Server {
     EN,
@@ -69,7 +71,7 @@ impl Server {
     pub const fn data_server(self) -> Self {
         match self {
             Self::Bilibili => Self::CN,
-            other => other
+            other => other,
         }
     }
 }

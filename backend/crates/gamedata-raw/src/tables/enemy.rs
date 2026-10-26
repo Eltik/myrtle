@@ -4,13 +4,16 @@ pub struct EnemyTables {}
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
+#[cfg(feature = "schema")]
+use utoipa::ToSchema;
 
 use crate::serde_helpers::deserialize_fb_map;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
 #[derive(Default)]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum EnemyLevel {
     #[default]
     Normal,
@@ -21,7 +24,7 @@ pub enum EnemyLevel {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[derive(Default)]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum DamageType {
     #[default]
     Physic,
@@ -32,7 +35,7 @@ pub enum DamageType {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum EnemyApplyWay {
     #[default]
     Melee,
@@ -44,7 +47,7 @@ pub enum EnemyApplyWay {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum EnemyMotion {
     #[default]
     Walk,
@@ -55,7 +58,7 @@ pub enum EnemyMotion {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct StatRange {
     #[serde(alias = "Min")]
     pub min: f64,
@@ -65,7 +68,7 @@ pub struct StatRange {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct EnemyInfoList {
     #[serde(alias = "ClassLevel")]
     pub class_level: String,
@@ -89,7 +92,7 @@ pub struct EnemyInfoList {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct RaceData {
     #[serde(alias = "Id")]
     pub id: String,
@@ -101,7 +104,7 @@ pub struct RaceData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct AbilityInfo {
     #[serde(alias = "Text")]
     pub text: String,
@@ -160,7 +163,7 @@ pub struct RawEnemyAttributes {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct SkillBlackboardEntry {
     #[serde(default)]
     pub key: String,
@@ -221,7 +224,7 @@ pub struct EnemyDatabaseFile {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct EnemyAttributes {
     pub max_hp: i32,
     pub atk: i32,
@@ -245,7 +248,7 @@ pub struct EnemyAttributes {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct EnemySkill {
     pub prefab_key: String,
     pub priority: i32,
@@ -257,7 +260,7 @@ pub struct EnemySkill {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct EnemyLevelStats {
     pub level: i32,
     pub attributes: EnemyAttributes,
@@ -270,14 +273,14 @@ pub struct EnemyLevelStats {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct EnemyStats {
     pub levels: Vec<EnemyLevelStats>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct Enemy {
     #[serde(alias = "EnemyId")]
     pub enemy_id: String,
@@ -300,7 +303,7 @@ pub struct Enemy {
     #[serde(alias = "IsInvalidKilled")]
     pub is_invalid_killed: bool,
     #[serde(alias = "OverrideKillCntInfos")]
-    pub override_kill_cnt_infos: Option<serde_json::Value>,
+    pub override_kill_cnt_infos: Option<Value>,
     #[serde(alias = "HideInHandbook")]
     pub hide_in_handbook: bool,
     #[serde(alias = "HideInStage")]
@@ -321,7 +324,7 @@ pub struct Enemy {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct EnemyHandbook {
     pub level_info_list: Vec<EnemyInfoList>,
     pub enemy_data: HashMap<String, Enemy>,

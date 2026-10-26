@@ -2,10 +2,12 @@
 pub struct ActivityTables {}
 
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "schema")]
+use utoipa::ToSchema;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct ActivityBasicInfo {
     #[serde(alias = "Id")]
     pub id: String,

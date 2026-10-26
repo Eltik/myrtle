@@ -4,6 +4,8 @@ pub struct AudioTables {}
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "schema")]
+use utoipa::ToSchema;
 
 use super::voice::LangType;
 
@@ -61,8 +63,7 @@ impl MusicBanks {
     #[must_use]
     pub fn from_raw(raw: &RawAudioData) -> Self {
         let mut by_id = HashMap::new();
-        let mut by_bank: std::collections::HashMap<String, Vec<RawMusic>> =
-            std::collections::HashMap::new();
+        let mut by_bank: HashMap<String, Vec<RawMusic>> = HashMap::new();
         for m in &raw.musics {
             by_id.insert(m.id.clone(), m.clone());
             by_bank.entry(m.bank.clone()).or_default().push(m.clone());
@@ -161,7 +162,7 @@ pub struct RawSound {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum AudioCategory {
     /// `ON_UNIT_BORN` - deployment / spawn sound
     Deploy,
@@ -178,7 +179,7 @@ pub enum AudioCategory {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct AudioSound {
     /// Original logical asset path from `audio_data.json`
     pub asset: String,
@@ -188,7 +189,7 @@ pub struct AudioSound {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct OperatorAudio {
     /// e.g. `battle.ON_UNIT_BORN.char_101_sora`
     pub bank_name: String,
@@ -212,7 +213,7 @@ pub struct OperatorAudio {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum EnemyAudioCategory {
     /// `ON_UNIT_BORN` or `ON_BOSS_ENTER`.
     Spawn,
@@ -231,7 +232,7 @@ pub enum EnemyAudioCategory {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct EnemyAudio {
     /// e.g. `battle.ON_ABILITY_HIT.enemy_1007_slime.combat`
     pub bank_name: String,

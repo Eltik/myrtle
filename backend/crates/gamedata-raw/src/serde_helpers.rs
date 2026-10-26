@@ -5,6 +5,7 @@
 
 use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
+use std::hash::Hash;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FbKeyValue<K, V> {
@@ -17,7 +18,7 @@ pub struct FbKeyValue<K, V> {
 pub fn deserialize_fb_map<'de, D, K, V>(deserializer: D) -> Result<HashMap<K, V>, D::Error>
 where
     D: Deserializer<'de>,
-    K: Deserialize<'de> + std::hash::Hash + Eq,
+    K: Deserialize<'de> + Hash + Eq,
     V: Deserialize<'de>,
 {
     let items: Vec<FbKeyValue<K, V>> = Vec::deserialize(deserializer)?;
@@ -30,7 +31,7 @@ pub fn deserialize_fb_map_or_default<'de, D, K, V>(
 ) -> Result<HashMap<K, V>, D::Error>
 where
     D: Deserializer<'de>,
-    K: Deserialize<'de> + std::hash::Hash + Eq,
+    K: Deserialize<'de> + Hash + Eq,
     V: Deserialize<'de>,
 {
     let items: Option<Vec<FbKeyValue<K, V>>> = Option::deserialize(deserializer)?;
@@ -44,8 +45,8 @@ pub fn deserialize_fb_nested_map<'de, D, K1, K2, V>(
 ) -> Result<HashMap<K1, HashMap<K2, V>>, D::Error>
 where
     D: Deserializer<'de>,
-    K1: Deserialize<'de> + std::hash::Hash + Eq,
-    K2: Deserialize<'de> + std::hash::Hash + Eq,
+    K1: Deserialize<'de> + Hash + Eq,
+    K2: Deserialize<'de> + Hash + Eq,
     V: Deserialize<'de>,
 {
     let items: Vec<FbKeyValue<K1, Vec<FbKeyValue<K2, V>>>> = Vec::deserialize(deserializer)?;
@@ -77,7 +78,7 @@ pub fn deserialize_fb_map_option<'de, D, K, V>(
 ) -> Result<Option<HashMap<K, V>>, D::Error>
 where
     D: Deserializer<'de>,
-    K: Deserialize<'de> + std::hash::Hash + Eq,
+    K: Deserialize<'de> + Hash + Eq,
     V: Deserialize<'de>,
 {
     let items: Option<Vec<FbKeyValue<K, V>>> = Option::deserialize(deserializer)?;

@@ -1,12 +1,14 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "schema")]
+use utoipa::ToSchema;
 
 use super::material::ItemType;
 use crate::serde_helpers::{deserialize_fb_map, deserialize_fb_map_or_default};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum OperatorGender {
     #[default]
     Unknown,
@@ -18,7 +20,7 @@ pub enum OperatorGender {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum OperatorBirthPlace {
     #[default]
     Unknown,
@@ -63,7 +65,7 @@ pub enum OperatorBirthPlace {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum OperatorRace {
     Undisclosed,
     Zalak,
@@ -116,7 +118,7 @@ pub enum OperatorRace {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct BasicInfo {
     #[serde(alias = "CodeName")]
     pub code_name: String,
@@ -138,7 +140,7 @@ pub struct BasicInfo {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct PhysicalExam {
     #[serde(alias = "PhysicalStrength")]
     pub physical_strength: String,
@@ -156,7 +158,7 @@ pub struct PhysicalExam {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct OperatorProfile {
     #[serde(alias = "BasicInfo")]
     pub basic_info: BasicInfo,
@@ -166,7 +168,7 @@ pub struct OperatorProfile {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct HandbookRewardItem {
     #[serde(alias = "Id")]
     pub id: String,
@@ -178,7 +180,7 @@ pub struct HandbookRewardItem {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct TeamMission {
     #[serde(alias = "Id")]
     pub id: String,
@@ -196,7 +198,7 @@ pub struct TeamMission {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct HandbookDisplayCondition {
     #[serde(alias = "CharId")]
     pub char_id: String,
@@ -208,7 +210,7 @@ pub struct HandbookDisplayCondition {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct HandbookStageTime {
     #[serde(alias = "Timestamp")]
     pub timestamp: i64,
@@ -218,7 +220,7 @@ pub struct HandbookStageTime {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct HandbookStory {
     #[serde(alias = "StoryText")]
     pub story_text: String,
@@ -234,7 +236,7 @@ pub struct HandbookStory {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct HandbookStoryTextAudio {
     #[serde(alias = "Stories")]
     pub stories: Vec<HandbookStory>,
@@ -246,7 +248,7 @@ pub struct HandbookStoryTextAudio {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct HandbookUnlockParam {
     #[serde(alias = "UnlockType")]
     pub unlock_type: String,
@@ -260,7 +262,7 @@ pub struct HandbookUnlockParam {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct HandbookAvgEntry {
     #[serde(alias = "StoryId")]
     pub story_id: String,
@@ -280,7 +282,7 @@ pub struct HandbookAvgEntry {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct HandbookAvgList {
     #[serde(alias = "StorySetId")]
     pub story_set_id: String,
@@ -302,7 +304,7 @@ pub struct HandbookAvgList {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct HandbookItem {
     #[serde(rename = "charID", alias = "CharID")]
     pub char_id: String,
@@ -318,7 +320,7 @@ pub struct HandbookItem {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct NPCUnlockInfo {
     #[serde(alias = "UnLockType")]
     pub un_lock_type: String,
@@ -330,7 +332,7 @@ pub struct NPCUnlockInfo {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct HandbookNPCItem {
     #[serde(alias = "NpcId")]
     pub npc_id: String,
@@ -368,7 +370,7 @@ pub struct HandbookNPCItem {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct HandbookStageData {
     #[serde(alias = "CharId", default)]
     pub char_id: String,
@@ -402,7 +404,7 @@ pub struct HandbookStageData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct Handbook {
     pub handbook_dict: HashMap<String, HandbookItem>,
     pub npc_dict: HashMap<String, HandbookNPCItem>,

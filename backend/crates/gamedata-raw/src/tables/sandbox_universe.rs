@@ -28,7 +28,7 @@ impl SandboxUniverse {
             sandbox_data
                 .get(key)
                 .and_then(|v| v.as_array())
-                .map_or(0, std::vec::Vec::len)
+                .map_or(0, Vec::len)
         };
 
         let zone_count = sandbox_data
@@ -38,7 +38,7 @@ impl SandboxUniverse {
                 arr.iter()
                     .filter(|e| {
                         e.get("key")
-                            .and_then(serde_json::Value::as_str)
+                            .and_then(Value::as_str)
                             .is_none_or(|k| !k.contains("tutorial"))
                     })
                     .count()
@@ -76,7 +76,7 @@ impl SandboxUniverse {
                 .get("value")
                 .and_then(|v| v.get("Nodes"))
                 .and_then(|v| v.as_array())
-                .map_or(0, std::vec::Vec::len)
+                .map_or(0, Vec::len)
         };
         let key_of = |entry: &Value| -> String {
             entry

@@ -4,6 +4,7 @@ pub struct MedalTables {}
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 use super::activity::ActivityBasicInfo;
 use super::operator::Operator;
@@ -57,7 +58,7 @@ pub struct MedalDefinition {
     #[serde(default)]
     pub expire_times: Vec<ExpireTime>,
     #[serde(default)]
-    pub medal_reward_group: serde_json::Value,
+    pub medal_reward_group: Value,
     #[serde(default)]
     pub is_hidden: bool,
     /// Base medal of an upgrade variant (e.g. `medal_*_035`), empty if standalone

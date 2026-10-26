@@ -1,11 +1,13 @@
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "schema")]
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 macro_rules! uuid_id {
     ($(#[$meta:meta])* $name:ident) => {
         $(#[$meta])*
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
-        #[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+        #[cfg_attr(feature = "schema", derive(ToSchema))]
         #[serde(transparent)]
         pub struct $name(pub Uuid);
     };
@@ -15,7 +17,7 @@ macro_rules! string_id {
     ($(#[$meta:meta])* $name:ident) => {
         $(#[$meta])*
         #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
-        #[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+        #[cfg_attr(feature = "schema", derive(ToSchema))]
         #[serde(transparent)]
         pub struct $name(pub Box<str>);
 
@@ -58,7 +60,7 @@ uuid_id!(
 
 /// `jobs.id`
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 #[serde(transparent)]
 pub struct JobId(pub i64);
 

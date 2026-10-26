@@ -1,9 +1,12 @@
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
+#[cfg(feature = "schema")]
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::ids::ItemId;
 
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 #[derive(Debug, Clone, Serialize)]
 pub struct SupportUnit {
     pub slot: i16,
@@ -24,7 +27,7 @@ pub struct Inventory {
     pub items: Vec<(ItemId, i64)>,
 }
 
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RosterEntry {
     pub user_id: Uuid,
@@ -41,6 +44,6 @@ pub struct RosterEntry {
     pub current_equip: Option<String>,
     pub current_tmpl: Option<String>,
     pub obtained_at: Option<i64>,
-    pub masteries: serde_json::Value,
-    pub modules: serde_json::Value,
+    pub masteries: Value,
+    pub modules: Value,
 }

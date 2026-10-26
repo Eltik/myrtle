@@ -4,6 +4,10 @@ pub struct StoryTables {}
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
+use serde_json::Error;
+use serde_json::Value;
+use serde_json::from_slice;
+
 /// `gamedata/story/story_variables.json.json`, `$name` -> value table scripts
 /// reference (e.g. `[PlayMusic(intro="$escape_intro", key="$escape_loop")]`).
 /// Values are audio paths, avatar ids or numbers, all kept as strings
@@ -18,13 +22,13 @@ impl StoryVariables {
         server_assets_dir.join("gamedata/story/story_variables.json.json")
     }
 
-    pub fn parse(raw: &[u8]) -> Result<Self, serde_json::Error> {
-        let parsed: HashMap<String, serde_json::Value> = serde_json::from_slice(raw)?;
+    pub fn parse(raw: &[u8]) -> Result<Self, Error> {
+        let parsed: HashMap<String, Value> = from_slice(raw)?;
         let map = parsed
             .into_iter()
             .map(|(k, v)| {
                 let s = match v {
-                    serde_json::Value::String(s) => s,
+                    Value::String(s) => s,
                     other => other.to_string(),
                 };
                 (k, s)

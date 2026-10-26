@@ -1,12 +1,14 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "schema")]
+use utoipa::ToSchema;
 
 use crate::serde_helpers::deserialize_fb_map_or_default;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct Chapter {
     #[serde(alias = "ChapterId", default)]
     pub chapter_id: String,

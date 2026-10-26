@@ -4,6 +4,7 @@ pub struct BuildingTables {}
 use std::collections::HashMap;
 
 use serde::Deserialize;
+use serde_json::Value;
 
 use crate::serde_helpers::{deserialize_fb_map, deserialize_fb_map_or_default};
 
@@ -332,7 +333,7 @@ pub struct ManufactFormula {
     #[serde(default)]
     pub require_rooms: Vec<FormulaRoomReq>,
     #[serde(default)]
-    pub require_stages: Vec<serde_json::Value>,
+    pub require_stages: Vec<Value>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

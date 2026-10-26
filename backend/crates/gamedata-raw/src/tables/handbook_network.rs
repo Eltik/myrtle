@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
 use serde::Deserialize;
+use serde_json::Error;
+use serde_json::from_slice;
 
 use crate::serde_helpers::deserialize_null_default;
 
@@ -169,14 +171,10 @@ pub struct RawNetwork {
 
 impl RawNetwork {
     /// Parse both tables from bytes; the error names the failing table
-    pub fn from_slices(
-        force_map: &[u8],
-        positions: &[u8],
-    ) -> Result<Self, (&'static str, serde_json::Error)> {
+    pub fn from_slices(force_map: &[u8], positions: &[u8]) -> Result<Self, (&'static str, Error)> {
         Ok(Self {
-            force_map: serde_json::from_slice(force_map)
-                .map_err(|e| ("handbook_force_map_table", e))?,
-            positions: serde_json::from_slice(positions).map_err(|e| ("handbookpos_table", e))?,
+            force_map: from_slice(force_map).map_err(|e| ("handbook_force_map_table", e))?,
+            positions: from_slice(positions).map_err(|e| ("handbookpos_table", e))?,
         })
     }
 }

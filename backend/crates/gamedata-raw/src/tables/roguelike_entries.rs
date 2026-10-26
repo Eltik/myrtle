@@ -1,5 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
+use std::iter::once;
+use std::str::from_utf8;
 
 use serde_json::Value;
 
@@ -108,7 +110,7 @@ fn theme_entry(theme_id: &str, topic: &Value) -> RoguelikeEntry {
         name: str_field(topic, "Name").unwrap_or(theme_id).to_owned(),
         icon_stems: display
             .into_iter()
-            .chain(std::iter::once(format!("{theme_id}_entry_display_1")))
+            .chain(once(format!("{theme_id}_entry_display_1")))
             .collect(),
     }
 }
@@ -248,7 +250,7 @@ fn natural_cmp(a: &str, b: &str) -> Ordering {
 /// Leading digit run as `(value, len)`, value 0 past `u64`
 fn leading_number(s: &[u8]) -> (u64, usize) {
     let len = s.iter().take_while(|c| c.is_ascii_digit()).count();
-    let value = std::str::from_utf8(&s[..len])
+    let value = from_utf8(&s[..len])
         .ok()
         .and_then(|d| d.parse().ok())
         .unwrap_or(0);
@@ -271,4 +273,3 @@ fn kv_pairs(v: &Value) -> Vec<(&str, &Value)> {
         Vec::new()
     }
 }
-

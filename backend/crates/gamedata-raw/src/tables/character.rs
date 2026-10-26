@@ -2,12 +2,14 @@
 pub struct CharacterTables {}
 
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "schema")]
+use utoipa::ToSchema;
 
 use super::item::SkinChannel;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct TokenSkinMapEntry {
     #[serde(alias = "TokenId")]
     pub token_id: String,
@@ -17,7 +19,7 @@ pub struct TokenSkinMapEntry {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct BattleSkin {
     #[serde(alias = "OverwritePrefab", default)]
     pub overwrite_prefab: bool,
@@ -27,7 +29,7 @@ pub struct BattleSkin {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct DisplaySkin {
     #[serde(alias = "SkinName")]
     pub skin_name: Option<String>,
@@ -71,7 +73,7 @@ pub struct DisplaySkin {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct BrandGroup {
     #[serde(alias = "SkinGroupId")]
     pub skin_group_id: String,
@@ -81,7 +83,7 @@ pub struct BrandGroup {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct BrandKvImg {
     #[serde(alias = "KvImgId")]
     pub kv_img_id: String,
@@ -91,7 +93,7 @@ pub struct BrandKvImg {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct Brand {
     #[serde(alias = "BrandId")]
     pub brand_id: String,
@@ -113,7 +115,7 @@ pub struct Brand {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct Skin {
     #[serde(alias = "SkinId", default)]
     pub skin_id: String,

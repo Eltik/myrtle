@@ -1,12 +1,15 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "schema")]
+use utoipa::ToSchema;
 
+use super::chapter::MainlineAdditionInfo;
 use crate::serde_helpers::{deserialize_fb_map, deserialize_fb_map_or_default};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum ZoneType {
     #[default]
     Mainline,
@@ -28,7 +31,7 @@ pub enum ZoneType {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct Zone {
     #[serde(alias = "ZoneID")]
     pub zone_id: String,
@@ -69,7 +72,7 @@ pub struct Zone {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct ZoneData {
     pub zones: HashMap<String, Zone>,
 }
@@ -81,5 +84,5 @@ pub struct ZoneTableFile {
     pub zones: HashMap<String, Zone>,
     /// Main zone -> chapter link
     #[serde(deserialize_with = "deserialize_fb_map_or_default", default)]
-    pub mainline_addition_info: HashMap<String, super::chapter::MainlineAdditionInfo>,
+    pub mainline_addition_info: HashMap<String, MainlineAdditionInfo>,
 }

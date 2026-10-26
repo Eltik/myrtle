@@ -2,11 +2,13 @@
 pub struct ItemTables {}
 
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "schema")]
+use utoipa::ToSchema;
 
 pub use super::obtain::SkinChannel;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct SkinWindow {
     pub skin_id: String,
@@ -15,7 +17,7 @@ pub struct SkinWindow {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum ListingKind {
     Group {
@@ -27,7 +29,7 @@ pub enum ListingKind {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct SkinListing {
     pub start_time: i64,

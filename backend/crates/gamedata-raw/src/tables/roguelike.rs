@@ -4,12 +4,15 @@ pub struct RoguelikeTables {}
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
+use super::roguelike_entries::RoguelikeEntries;
 
 #[derive(Debug, Clone, Default)]
 pub struct RoguelikeGameData {
     pub themes: HashMap<String, RoguelikeThemeGameData>,
     /// Themes and their collectible items as tier list entries
-    pub entries: super::roguelike_entries::RoguelikeEntries,
+    pub entries: RoguelikeEntries,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -45,18 +48,15 @@ pub struct RoguelikeThemeGameData {
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct RoguelikeTopicTableFile {
     #[serde(alias = "Topics", alias = "topics", default)]
-    pub topics: serde_json::Value,
+    pub topics: Value,
     #[serde(alias = "Details", alias = "details", default)]
-    pub details: serde_json::Value,
+    pub details: Value,
 }
 
 impl RoguelikeGameData {
     pub fn from_table(table: &RoguelikeTopicTableFile) -> Self {
         let mut data = Self {
-            entries: super::roguelike_entries::RoguelikeEntries::from_tables(
-                &table.topics,
-                &table.details,
-            ),
+            entries: RoguelikeEntries::from_tables(&table.topics, &table.details),
             ..Self::default()
         };
 
@@ -81,7 +81,7 @@ impl RoguelikeGameData {
                 .filter_map(|d| {
                     d.get("Grade")
                         .or_else(|| d.get("grade"))
-                        .and_then(serde_json::Value::as_i64)
+                        .and_then(Value::as_i64)
                 })
                 .max()
                 .unwrap_or(0) as i32;
@@ -151,7 +151,7 @@ pub struct CollectedCounts {
 
 impl RoguelikeThemeGameData {
     /// Archive relics/capsules/bands a player's theme progress has unlocked (`state >= 1`)
-    pub fn count_collected(&self, progress: &serde_json::Value) -> CollectedCounts {
+    pub fn count_collected(&self, progress: &Value) -> CollectedCounts {
         let collect = progress.get("collect");
         let relic_buckets = [
             collect.and_then(|c| c.get("relic")),
@@ -173,14 +173,14 @@ impl RoguelikeThemeGameData {
 }
 
 /// Number of `ids` whose entry in any of `buckets` has `state >= 1`
-fn count_in_buckets(ids: &[String], buckets: &[Option<&serde_json::Value>]) -> usize {
+fn count_in_buckets(ids: &[String], buckets: &[Option<&Value>]) -> usize {
     ids.iter()
         .filter(|id| {
             buckets.iter().flatten().any(|bucket| {
                 bucket
                     .get(id.as_str())
                     .and_then(|e| e.get("state"))
-                    .and_then(serde_json::Value::as_i64)
+                    .and_then(Value::as_i64)
                     .unwrap_or(0)
                     >= 1
             })
@@ -188,7 +188,7 @@ fn count_in_buckets(ids: &[String], buckets: &[Option<&serde_json::Value>]) -> u
         .count()
 }
 
-fn band_item_ids(detail: &serde_json::Value) -> Vec<String> {
+fn band_item_ids(detail: &Value) -> Vec<String> {
     let items = detail
         .get("Items")
         .or_else(|| detail.get("items"))
@@ -204,7 +204,7 @@ fn band_item_ids(detail: &serde_json::Value) -> Vec<String> {
 }
 
 /// Returns `(relic_ids, capsule_ids, max_theme_collectibles, max_endbook_items, max_buffs)`
-fn parse_archive_comp(detail: &serde_json::Value) -> (Vec<String>, Vec<String>, i32, i32, i32) {
+fn parse_archive_comp(detail: &Value) -> (Vec<String>, Vec<String>, i32, i32, i32) {
     let Some(archive) = detail
         .get("ArchiveComp")
         .or_else(|| detail.get("archiveComp"))
@@ -276,7 +276,7 @@ fn parse_archive_comp(detail: &serde_json::Value) -> (Vec<String>, Vec<String>, 
 }
 
 /// `[{key, value}]` array or `{key: value}` dict to a `HashMap`
-fn kv_to_map(val: &serde_json::Value) -> HashMap<String, serde_json::Value> {
+fn kv_to_map(val: &Value) -> HashMap<String, Value> {
     let mut map = HashMap::new();
     if let Some(arr) = val.as_array() {
         for item in arr {
@@ -294,15 +294,15 @@ fn kv_to_map(val: &serde_json::Value) -> HashMap<String, serde_json::Value> {
     map
 }
 
-fn get_str(val: &serde_json::Value, keys: &[&str]) -> Option<String> {
+fn get_str(val: &Value, keys: &[&str]) -> Option<String> {
     keys.iter()
         .find_map(|k| val.get(*k))
         .and_then(|v| v.as_str())
-        .map(std::string::ToString::to_string)
+        .map(ToString::to_string)
 }
 
 /// Count elements in a `[{key, value}]` array or `{key: value}` dict
-fn get_kv_array_len(val: &serde_json::Value, keys: &[&str]) -> i32 {
+fn get_kv_array_len(val: &Value, keys: &[&str]) -> i32 {
     let field = keys.iter().find_map(|k| val.get(*k));
     match field {
         Some(v) if v.is_array() => v.as_array().map_or(0, |a| a.len() as i32),
@@ -311,14 +311,14 @@ fn get_kv_array_len(val: &serde_json::Value, keys: &[&str]) -> i32 {
     }
 }
 
-fn get_array_len(val: &serde_json::Value, keys: &[&str]) -> i32 {
+fn get_array_len(val: &Value, keys: &[&str]) -> i32 {
     keys.iter()
         .find_map(|k| val.get(*k))
         .and_then(|v| v.as_array())
         .map_or(0, |a| a.len() as i32)
 }
 
-fn get_array(val: &serde_json::Value, keys: &[&str]) -> Vec<serde_json::Value> {
+fn get_array(val: &Value, keys: &[&str]) -> Vec<Value> {
     keys.iter()
         .find_map(|k| val.get(*k))
         .and_then(|v| v.as_array())

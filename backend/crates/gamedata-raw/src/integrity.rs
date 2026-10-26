@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::RawGameData;
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SkippedTable {
@@ -19,12 +21,12 @@ pub struct IntegrityReport {
 }
 
 impl IntegrityReport {
-    pub fn is_clean(&self) -> bool {
+    pub const fn is_clean(&self) -> bool {
         self.skipped.is_empty() && self.warnings.is_empty()
     }
 }
 
-pub fn check(raw: &crate::RawGameData) -> IntegrityReport {
+pub fn check(raw: &RawGameData) -> IntegrityReport {
     // TODO: populated-table checks (operators, items, skills, voice lines) once
     // the table groups have fields; they push into `warnings`.
     IntegrityReport {

@@ -4,12 +4,14 @@ pub struct StageTables {}
 use std::collections::HashMap;
 
 use serde::{Deserialize, Deserializer, Serialize};
+#[cfg(feature = "schema")]
+use utoipa::ToSchema;
 
 use crate::serde_helpers::{FbKeyValue, deserialize_fb_map};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct RetroAct {
     #[serde(alias = "RetroId")]
     pub retro_id: String,
@@ -32,7 +34,7 @@ pub struct RetroAct {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum StageType {
     #[default]
     Main,
@@ -49,7 +51,7 @@ pub enum StageType {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum StageDifficulty {
     #[default]
     Normal,
@@ -61,7 +63,7 @@ pub enum StageDifficulty {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum AppearanceStyle {
     #[default]
     MainNormal,
@@ -77,7 +79,7 @@ pub enum AppearanceStyle {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct UnlockCondition {
     #[serde(alias = "StageId")]
     pub stage_id: String,
@@ -89,7 +91,7 @@ pub struct UnlockCondition {
 /// Single item stage can drop, with drop category and occurrence band
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct DisplayDetailReward {
     /// e.g. `ONCE`, `NORMAL`, `SPECIAL`, `ADDITIONAL`, `COMPLETE`, `CONDITION_DROP`
     #[serde(alias = "DropType")]
@@ -109,7 +111,7 @@ pub struct DisplayDetailReward {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct StageDropInfo {
     #[serde(alias = "DisplayDetailRewards", default)]
     pub display_detail_rewards: Vec<DisplayDetailReward>,
@@ -117,7 +119,7 @@ pub struct StageDropInfo {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct Stage {
     #[serde(alias = "StageId")]
     pub stage_id: String,
@@ -201,7 +203,7 @@ pub struct Stage {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct StageData {
     pub stages: HashMap<String, Stage>,
 }

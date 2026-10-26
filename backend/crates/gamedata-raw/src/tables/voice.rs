@@ -1,13 +1,15 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "schema")]
+use utoipa::ToSchema;
 
 use crate::serde_helpers::deserialize_fb_map;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[derive(Default)]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum PlaceType {
     #[default]
     HomePlace,
@@ -51,7 +53,7 @@ pub enum PlaceType {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[derive(Default)]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum LangType {
     #[default]
     CnMandarin,
@@ -71,7 +73,7 @@ pub enum LangType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum VoiceType {
     #[serde(rename = "ENUM")]
     #[default]
@@ -86,7 +88,7 @@ pub enum VoiceType {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
 #[derive(Default)]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub enum UnlockType {
     #[default]
     Direct,
@@ -99,7 +101,7 @@ pub enum UnlockType {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct UnlockParam {
     #[serde(alias = "ValueStr")]
     pub value_str: Option<String>,
@@ -109,7 +111,7 @@ pub struct UnlockParam {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct VoiceData {
     pub voice_url: Option<String>,
     pub language: Option<LangType>,
@@ -118,7 +120,7 @@ pub struct VoiceData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct CharExtraWord {
     #[serde(alias = "WordKey")]
     pub word_key: String,
@@ -132,7 +134,7 @@ pub struct CharExtraWord {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct VoiceLangTypeInfo {
     pub name: String,
     pub group_type: String,
@@ -140,7 +142,7 @@ pub struct VoiceLangTypeInfo {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct VoiceLangGroupType {
     pub name: String,
     pub members: Vec<LangType>,
@@ -148,7 +150,7 @@ pub struct VoiceLangGroupType {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct StartTimeWithType {
     pub timestamp: i64,
     pub char_set: Vec<String>,
@@ -156,7 +158,7 @@ pub struct StartTimeWithType {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct FesTimeInterval {
     pub start_ts: i64,
     pub end_ts: i64,
@@ -164,7 +166,7 @@ pub struct FesTimeInterval {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct FesTimeData {
     pub time_type: String,
     pub interval: FesTimeInterval,
@@ -172,7 +174,7 @@ pub struct FesTimeData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct FesVoiceData {
     pub show_type: PlaceType,
     pub time_data: Vec<FesTimeData>,
@@ -180,7 +182,7 @@ pub struct FesVoiceData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct FesVoiceWeight {
     pub show_type: PlaceType,
     pub weight: i32,
@@ -188,7 +190,7 @@ pub struct FesVoiceWeight {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct ExtraVoiceConfigData {
     pub voice_id: String,
     pub valid_voice_lang: Vec<LangType>,
@@ -196,7 +198,7 @@ pub struct ExtraVoiceConfigData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct VoiceLangDictEntry {
     #[serde(alias = "Wordkey")]
     pub wordkey: String,
@@ -210,7 +212,7 @@ pub struct VoiceLangDictEntry {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct VoiceLang {
     #[serde(alias = "Wordkeys")]
     pub wordkeys: Vec<String>,
@@ -222,7 +224,7 @@ pub struct VoiceLang {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct RawVoice {
     #[serde(alias = "CharWordId")]
     pub char_word_id: String,
@@ -254,7 +256,7 @@ pub struct RawVoice {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct Voice {
     pub char_word_id: String,
     pub word_key: String,
@@ -276,7 +278,7 @@ pub struct Voice {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct Voices {
     pub char_words: HashMap<String, Voice>,
     pub char_extra_words: HashMap<String, CharExtraWord>,
@@ -297,7 +299,7 @@ pub struct Voices {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct RawVoices {
     pub char_words: HashMap<String, RawVoice>,
     pub char_extra_words: HashMap<String, CharExtraWord>,
@@ -318,7 +320,7 @@ pub struct RawVoices {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schema", derive(ToSchema))]
 pub struct VoicesTableFile {
     #[serde(deserialize_with = "deserialize_fb_map")]
     pub char_words: HashMap<String, RawVoice>,

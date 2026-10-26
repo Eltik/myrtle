@@ -1,16 +1,24 @@
+use std::io::Error;
 use std::path::PathBuf;
 
 use myrtle_types::Server;
+use thiserror::Error;
 
-use crate::tables;
+use crate::integrity::SkippedTable;
+use crate::tables::{
+    activity::ActivityTables, audio::AudioTables, autochess::AutochessTables,
+    building::BuildingTables, character::CharacterTables, enemy::EnemyTables, gacha::GachaTables,
+    item::ItemTables, medal::MedalTables, roguelike::RoguelikeTables, sandbox::SandboxTables,
+    stage::StageTables, story::StoryTables,
+};
 
 /// Where table bytes come from
 pub trait TableSource {
     /// Bytes of `excel/{name}.json`, `None` when absent
-    fn read_table(&self, name: &str) -> Result<Option<Vec<u8>>, std::io::Error>;
+    fn read_table(&self, name: &str) -> Result<Option<Vec<u8>>, Error>;
 
     /// Relative paths of file under asset root
-    fn list_assets(&self) -> Result<Vec<String>, std::io::Error>;
+    fn list_assets(&self) -> Result<Vec<String>, Error>;
 }
 
 /// A local extract directory, `{ASSETS_DIR}/{server}`.
@@ -20,23 +28,23 @@ pub struct DirSource {
 }
 
 impl TableSource for DirSource {
-    fn read_table(&self, name: &str) -> Result<Option<Vec<u8>>, std::io::Error> {
+    fn read_table(&self, name: &str) -> Result<Option<Vec<u8>>, Error> {
         let _ = name;
         todo!()
     }
 
-    fn list_assets(&self) -> Result<Vec<String>, std::io::Error> {
+    fn list_assets(&self) -> Result<Vec<String>, Error> {
         todo!()
     }
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, Error)]
 pub enum LoadError {
     #[error("table {table}: read failed: {source}")]
     Io {
         table: String,
         #[source]
-        source: std::io::Error,
+        source: Error,
     },
     #[error("table {table}: parse failed at {path}: {message}")]
     Parse {
@@ -51,23 +59,23 @@ pub enum LoadError {
 #[derive(Debug, Default)]
 pub struct RawGameData {
     pub server: Option<Server>,
-    pub character: tables::character::CharacterTables,
-    pub item: tables::item::ItemTables,
-    pub stage: tables::stage::StageTables,
-    pub activity: tables::activity::ActivityTables,
-    pub gacha: tables::gacha::GachaTables,
-    pub building: tables::building::BuildingTables,
-    pub medal: tables::medal::MedalTables,
-    pub roguelike: tables::roguelike::RoguelikeTables,
-    pub sandbox: tables::sandbox::SandboxTables,
-    pub enemy: tables::enemy::EnemyTables,
-    pub story: tables::story::StoryTables,
-    pub audio: tables::audio::AudioTables,
-    pub autochess: tables::autochess::AutochessTables,
+    pub character: CharacterTables,
+    pub item: ItemTables,
+    pub stage: StageTables,
+    pub activity: ActivityTables,
+    pub gacha: GachaTables,
+    pub building: BuildingTables,
+    pub medal: MedalTables,
+    pub roguelike: RoguelikeTables,
+    pub sandbox: SandboxTables,
+    pub enemy: EnemyTables,
+    pub story: StoryTables,
+    pub audio: AudioTables,
+    pub autochess: AutochessTables,
     /// Asset paths from [`TableSource::list_assets`]
     pub asset_paths: Vec<String>,
     /// Tables unpacker kept from earlier extract (`.skipped.json`)
-    pub skipped: Vec<crate::integrity::SkippedTable>,
+    pub skipped: Vec<SkippedTable>,
 }
 
 /// Load every table for `server`
