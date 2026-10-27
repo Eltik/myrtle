@@ -1,6 +1,7 @@
 [workspace]
 resolver = "3"
 members = ["crates/gamedata-raw",
+    "crates/storage",
     "crates/types",
     "xtask",
 ]
@@ -190,5 +191,5 @@ pure-forbidden = [
     "axum",
     "redis",
     "hyper",
-    "aws-sdk-s3",
+    "rusty-s3",
 ]

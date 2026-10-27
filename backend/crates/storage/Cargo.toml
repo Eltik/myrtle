@@ -1,0 +1,44 @@
+[package]
+name = "myrtle-storage"
+description = "Cloudflare R2 object storage"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "asset-sync"
+path = "src/bin/asset-sync.rs"
+
+[dependencies]
+anyhow = "1.0.102"
+async-trait = "0.1.92"
+base64 = "0.22"
+bytes = "1.12.1"
+clap = { version = "4.6.7", features = ["derive"] }
+dotenv = "0.15.0"
+futures = "0.3.34"
+hex = "0.4"
+jiff = "0.2"
+md-5 = "0.10.6"
+mime_guess = "2.0.5"
+percent-encoding = "2.3.2"
+reqwest = { version = "0.13.5", default-features = false, features = ["rustls-no-provider", "stream"] }
+rustls = { version = "0.23.46", default-features = false, features = ["ring", "std", "tls12"] }
+rustls-platform-verifier = "0.7.1"
+rusty-s3 = "0.10.2"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+thiserror = "2.0.18"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "fs", "io-util", "sync", "time"] }
+tokio-util = { version = "0.7.18", features = ["io"] }
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+walkdir = "2.5.0"
+
+[dev-dependencies]
+tempfile = "3.27.0"
