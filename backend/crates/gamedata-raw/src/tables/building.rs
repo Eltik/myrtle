@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::serde_helpers::{deserialize_fb_map, deserialize_fb_map_or_default};
@@ -12,7 +12,7 @@ pub struct BuildingTables {
 }
 
 /// `building_data.json`
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct BuildingDataFile {
     /// All facility buff/skill definitions
@@ -87,14 +87,14 @@ pub struct BuildingDataFile {
     pub custom_data: BuildingCustomData,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct BuildingCustomData {
     #[serde(deserialize_with = "deserialize_fb_map_or_default", default)]
     pub furnitures: HashMap<String, Furniture>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Furniture {
     pub id: String,
@@ -107,7 +107,7 @@ pub struct Furniture {
 }
 
 /// Base geometry
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct LayoutDef {
     pub id: String,
@@ -118,7 +118,7 @@ pub struct LayoutDef {
 }
 
 /// Single cell
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct LayoutSlotDef {
     pub id: String,
@@ -136,7 +136,7 @@ pub struct LayoutSlotDef {
 }
 
 /// One floor of base
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct StoreyDef {
     pub id: String,
@@ -150,7 +150,7 @@ pub struct StoreyDef {
     pub y_offset: i32,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Buff {
     pub buff_id: String,
@@ -179,7 +179,7 @@ pub struct Buff {
     pub text_color: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct BuildingChar {
     pub char_id: String,
@@ -189,14 +189,14 @@ pub struct BuildingChar {
     pub buff_char: Vec<BuffCharSlot>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct BuffCharSlot {
     pub buff_data: Vec<BuffDataEntry>,
 }
 
 /// A buff granted by an operator at a specific elite/level
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct BuffDataEntry {
     pub buff_id: String,
@@ -204,7 +204,7 @@ pub struct BuffDataEntry {
 }
 
 /// The elite + level required to unlock a base skill
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct BuffUnlockCondition {
     pub phase: String,
@@ -223,7 +223,7 @@ impl BuffUnlockCondition {
 }
 
 /// A facility type definition (e.g. CONTROL, MANUFACTURE, TRADING)
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct RoomDef {
     pub id: String,
@@ -240,14 +240,14 @@ pub struct RoomDef {
     pub phases: Vec<RoomPhase>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct RoomSize {
     pub col: i32,
     pub row: i32,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct RoomPhase {
     pub unlock_cond_id: String,
@@ -261,7 +261,7 @@ pub struct RoomPhase {
     pub build_cost: BuildCost,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct BuildCost {
     pub labor: i32,
@@ -270,7 +270,7 @@ pub struct BuildCost {
     pub items: Vec<BuildCostItem>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct BuildCostItem {
     pub id: String,
@@ -279,7 +279,7 @@ pub struct BuildCostItem {
     pub count: i32,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct RoomUnlockCond {
     pub id: String,
@@ -288,7 +288,7 @@ pub struct RoomUnlockCond {
     pub number: HashMap<i32, RoomUnlockReq>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct RoomUnlockReq {
     #[serde(rename = "Type_")]
@@ -297,7 +297,7 @@ pub struct RoomUnlockReq {
     pub level: i32,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct ManufactData {
     /// Base speed buff unit (~0.01 = 1%)
@@ -306,7 +306,7 @@ pub struct ManufactData {
 }
 
 /// Factory stats at a given level
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct ManufactPhase {
     /// Max items in output queue
@@ -316,7 +316,7 @@ pub struct ManufactPhase {
 }
 
 /// A factory recipe definition
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct ManufactFormula {
     pub formula_id: String,
@@ -339,7 +339,7 @@ pub struct ManufactFormula {
     pub require_stages: Vec<Value>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct FormulaCost {
     pub id: String,
@@ -348,7 +348,7 @@ pub struct FormulaCost {
     pub count: i32,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct FormulaRoomReq {
     pub room_id: String,
@@ -356,7 +356,7 @@ pub struct FormulaRoomReq {
     pub room_level: i32,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct TradingData {
     /// Base speed buff unit (~0.01 = 1%)
@@ -365,7 +365,7 @@ pub struct TradingData {
 }
 
 /// Trading post stats at a given level
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct TradingPhase {
     /// Max pending orders
@@ -376,21 +376,21 @@ pub struct TradingPhase {
     pub order_speed: f64,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct ControlData {
     /// Base morale cost reduction for control center operators
     pub basic_cost_buff: i32,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct DormData {
     pub phases: Vec<DormPhase>,
 }
 
 /// Dormitory stats at a given level
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct DormPhase {
     /// Maximum comfort value (furniture limit)
@@ -399,14 +399,14 @@ pub struct DormPhase {
     pub manpower_recover: i32,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct PowerData {
     /// Base drone recovery speed buff unit
     pub basic_speed_buff: f64,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct HireData {
     pub basic_speed_buff: f64,
@@ -414,7 +414,7 @@ pub struct HireData {
 }
 
 /// Office stats at a given level
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct HirePhase {
     pub refresh_times: i32,
@@ -422,7 +422,7 @@ pub struct HirePhase {
     pub economize_rate: f64,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct MeetingData {
     pub basic_speed_buff: f64,
@@ -430,7 +430,7 @@ pub struct MeetingData {
 }
 
 /// Reception room stats at a given level
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct MeetingPhase {
     pub gathering_speed: i32,
@@ -438,7 +438,7 @@ pub struct MeetingPhase {
     pub friend_slot_inc: i32,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct TrainingData {
     pub basic_speed_buff: f64,
@@ -446,28 +446,28 @@ pub struct TrainingData {
 }
 
 /// Training room stats at a given level
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct TrainingPhase {
     /// Max specialization level trainable at this room level
     pub spec_skill_lvl_limit: i32,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct WorkshopData {
     pub phases: Vec<WorkshopPhase>,
 }
 
 /// Workshop stats at a given level
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct WorkshopPhase {
     /// Labor efficiency multiplier
     pub manpower_factor: f64,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct WorkshopFormula {
     pub formula_id: String,
@@ -488,7 +488,7 @@ pub struct WorkshopFormula {
     pub require_stages: Vec<WorkshopFormulaUnlockStage>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct WorkshopFormulaUnlockStage {
     pub stage_id: String,

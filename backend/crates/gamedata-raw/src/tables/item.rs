@@ -46,7 +46,7 @@ pub struct SkinListing {
 }
 
 /// Recommend-panel entry of any kind (outfits, packs, furniture)
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct RecommendTag {
     pub tag_id: String,
     pub start_time: i64,

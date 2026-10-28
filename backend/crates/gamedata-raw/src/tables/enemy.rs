@@ -9,8 +9,8 @@ use crate::serde_helpers::deserialize_fb_map;
 pub struct EnemyTables {
     /// `enemy_handbook_table`
     pub handbook: EnemyHandbookTableFile,
-    /// `levels/enemydata/enemy_database.json`
-    pub database: EnemyDatabaseFile,
+    /// `levels/enemydata/enemy_database.json`, `None` if missing or unparsable
+    pub database: Option<EnemyDatabaseFile>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

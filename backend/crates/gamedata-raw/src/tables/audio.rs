@@ -27,7 +27,7 @@ pub struct RawAudioData {
     pub bank_alias: Vec<RawBankAlias>,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct RawMusic {
     pub id: String,
@@ -36,7 +36,7 @@ pub struct RawMusic {
     pub bank: String,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct RawBgmBank {
     #[serde(rename = "Name", default)]
     pub name: String,
@@ -54,7 +54,7 @@ pub struct RawBankAlias {
     pub value: String,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize)]
 pub struct MusicBanks {
     by_id: HashMap<String, RawMusic>,
     by_bank: HashMap<String, Vec<RawMusic>>,

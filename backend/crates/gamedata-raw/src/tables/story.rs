@@ -14,6 +14,25 @@ pub struct StoryTables {
     pub review: StoryReviewTableFile,
     /// `story_review_meta_table`
     pub review_meta: StoryReviewMetaTableFile,
+    /// `gamedata/story/**/*.txt`, the scripts that read as UTF-8
+    pub scripts: Vec<String>,
+    /// `textures/avg/characters/`, the story sprite sets
+    pub sprites: StorySpriteFiles,
+}
+
+/// `textures/avg/characters/`
+pub const AVG_CHARACTERS: &str = "textures/avg/characters/";
+
+/// Bytes a PNG header needs to give the image size
+pub const PNG_HEAD_LEN: usize = 24;
+
+/// What the story sprite index reads off the sprite sets beside their paths
+#[derive(Debug, Default)]
+pub struct StorySpriteFiles {
+    /// Folder -> its `hub.json`, the ones that parse
+    pub hubs: HashMap<String, Value>,
+    /// `textures/avg/characters/{folder}/{stem}.png` -> its first [`PNG_HEAD_LEN`] bytes
+    pub png_heads: HashMap<String, Vec<u8>>,
 }
 
 /// `gamedata/story/story_variables.json.json`, `$name` -> value table scripts
@@ -155,7 +174,7 @@ pub struct StoryReviewTableFile {
 }
 
 /// `story_review_meta_table`, per-act layout (`ActArchiveData`) and content by id (`ActArchiveResData`)
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct StoryReviewMetaTableFile {
     #[serde(alias = "ActArchiveData", default)]
     pub act_archive_data: ActArchiveData,
@@ -163,7 +182,7 @@ pub struct StoryReviewMetaTableFile {
     pub act_archive_res_data: ActArchiveResData,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ActArchiveData {
     #[serde(
         alias = "Components",
@@ -174,7 +193,7 @@ pub struct ActArchiveData {
 }
 
 /// Act's archive slots, all optional
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ActArchiveComponent {
     #[serde(alias = "Avg", default)]
     pub avg: Option<ArchiveSlot>,
@@ -195,7 +214,7 @@ pub struct ActArchiveComponent {
 }
 
 /// Slot items under the slot's plural key (`Avgs`, `Musics`, `News`, `Pics`, `Stories`)
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ArchiveSlot {
     #[serde(
         alias = "Avgs",
@@ -209,7 +228,7 @@ pub struct ArchiveSlot {
 }
 
 /// Slot entry: content id and sort order, spelled per slot (`PicId`/`PicSortId`)
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ArchiveSlotItem {
     #[serde(
         alias = "AvgId",
@@ -233,7 +252,7 @@ pub struct ArchiveSlotItem {
     pub sort_id: i32,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ArchiveLogChapter {
     #[serde(alias = "ChapterIcon", default)]
     pub chapter_icon: String,
@@ -248,7 +267,7 @@ pub struct ArchiveLogChapter {
     pub unlock_des: String,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ActArchiveResData {
     #[serde(
         alias = "Logs",
@@ -288,7 +307,7 @@ pub struct ActArchiveResData {
     pub audios: HashMap<String, RawArchiveAudio>,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct RawArchiveLog {
     #[serde(alias = "LogId", default)]
     pub log_id: String,
@@ -296,7 +315,7 @@ pub struct RawArchiveLog {
     pub log_desc: String,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct RawArchiveLandmark {
     #[serde(alias = "LandmarkId", default)]
     pub landmark_id: String,
@@ -311,7 +330,7 @@ pub struct RawArchiveLandmark {
     pub landmark_pic: String,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct RawArchiveNews {
     #[serde(alias = "Id", default)]
     pub id: String,
@@ -329,7 +348,7 @@ pub struct RawArchiveNews {
     pub news_lines: Vec<RawArchiveNewsLine>,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct RawArchiveNewsFormat {
     #[serde(alias = "TypeId", default)]
     pub type_id: String,
@@ -344,7 +363,7 @@ pub struct RawArchiveNewsFormat {
     pub type_main_sealing: String,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct RawArchiveNewsLine {
     /// Prose on a `TextContent` line, an image stem on an `ImageContent` one
     #[serde(alias = "Content", default)]
@@ -353,7 +372,7 @@ pub struct RawArchiveNewsLine {
     pub line_type: String,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct RawArchiveStory {
     #[serde(alias = "Id", default)]
     pub id: String,
@@ -370,7 +389,7 @@ pub struct RawArchiveStory {
     pub title_pic: String,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct RawArchivePic {
     #[serde(alias = "Id", default)]
     pub id: String,
@@ -386,7 +405,7 @@ pub struct RawArchivePic {
     pub type_: String,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct RawArchiveAudio {
     #[serde(alias = "Id", default)]
     pub id: String,

@@ -63,7 +63,7 @@ pub struct RewardItem {
 }
 
 /// Scheduled mission rewards
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize)]
 pub struct MissionData {
     pub daily_periods: Vec<DailyPeriod>,
     pub daily_rewards: HashMap<String, PeriodicalReward>,

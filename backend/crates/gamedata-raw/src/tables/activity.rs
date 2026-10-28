@@ -3,7 +3,9 @@ use std::collections::{HashMap, HashSet};
 use std::str::from_utf8;
 
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
+use super::event_shop::EventShopData;
 use super::material::Item;
 use super::mission::MissionTableFile;
 use super::stage::{Stage, StageDifficulty};
@@ -17,8 +19,14 @@ pub struct ActivityTables {
     pub mission_archives: MissionArchiveTableFile,
     /// Skin ids `activity_table` mentions anywhere, see [`scan_skin_refs`]
     pub skin_refs: HashSet<String>,
+    /// `(enemy_id, stage_id)` boss declarations in `activity_table`, see [`scan_boss_stages`]
+    pub boss_stages: Vec<(String, String)>,
     /// `mission_table`
     pub missions: MissionTableFile,
+    /// `derived/farm-stages.json`
+    pub farm_archive: FarmArchive,
+    /// `derived/event-shops.json`, shops keyed by activity id
+    pub event_shops: HashMap<String, EventShopData>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -238,7 +246,7 @@ fn stages_in_order(stages: &HashMap<String, Stage>) -> Vec<&Stage> {
 }
 
 /// Lend each `actNNside` / `actNNsre` list to its twin when the twin has none
-fn share_between_twins<T: Clone>(map: &mut HashMap<String, Vec<T>>) {
+pub fn share_between_twins<T: Clone>(map: &mut HashMap<String, Vec<T>>) {
     let borrowed: Vec<(String, Vec<T>)> = map
         .iter()
         .filter(|(_, list)| !list.is_empty())
@@ -271,6 +279,18 @@ pub struct FarmStage {
     pub code: String,
     pub ap_cost: i32,
     pub drops: Vec<FarmDrop>,
+}
+
+/// Farming stages kept from earlier loads, path under the server root
+pub const FARM_ARCHIVE: &str = "derived/farm-stages.json";
+
+/// `derived/farm-stages.json`, unreadable kept apart from absent so it is never overwritten
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub enum FarmArchive {
+    #[default]
+    Absent,
+    Loaded(HashMap<String, Vec<FarmStage>>),
+    Unreadable,
 }
 
 pub const FARM_STAGES: usize = 3;
@@ -341,7 +361,7 @@ pub struct MissionArchiveTableFile {
     pub mission_archives: HashMap<String, MissionArchive>,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct MissionArchive {
     #[serde(alias = "TopicId", default)]
     pub topic_id: String,
@@ -356,7 +376,7 @@ pub struct MissionArchive {
     pub hidden_clips: Vec<MissionArchiveClip>,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct MissionArchiveNode {
     #[serde(alias = "NodeId", default)]
     pub node_id: String,
@@ -368,7 +388,7 @@ pub struct MissionArchiveNode {
     pub clips: Vec<MissionArchiveClip>,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct MissionArchiveClip {
     #[serde(alias = "CharId", default)]
     pub char_id: String,
@@ -395,6 +415,42 @@ pub fn scan_skin_refs(raw: &[u8]) -> HashSet<String> {
         }
     }
     refs
+}
+
+/// `(enemy_id, stage_id)` for every `BossData.EnemyId` declared inside a
+/// `FlatBuffer` map entry (`{key: <stage_id>, value: {... BossData: {EnemyId}}}`)
+/// anywhere in `raw`; some bosses are never in a level file. Empty when `raw`
+/// does not parse.
+pub fn scan_boss_stages(raw: &[u8]) -> Vec<(String, String)> {
+    let mut out = Vec::new();
+    if let Ok(table) = serde_json::from_slice::<Value>(raw) {
+        collect_boss_stages(&table, &mut out);
+    }
+    out
+}
+
+fn collect_boss_stages(v: &Value, out: &mut Vec<(String, String)>) {
+    match v {
+        Value::Array(arr) => {
+            for item in arr {
+                if let (Some(k), Some(eid)) = (
+                    item.get("key").and_then(Value::as_str),
+                    item.pointer("/value/BossData/EnemyId")
+                        .and_then(Value::as_str),
+                ) && eid.starts_with("enemy_")
+                {
+                    out.push((eid.to_owned(), k.to_owned()));
+                }
+                collect_boss_stages(item, out);
+            }
+        }
+        Value::Object(map) => {
+            for val in map.values() {
+                collect_boss_stages(val, out);
+            }
+        }
+        _ => {}
+    }
 }
 
 /// Length of the skin id at the start of `s`, if one is there

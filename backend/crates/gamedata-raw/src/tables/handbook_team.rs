@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::serde_helpers::deserialize_fb_map_or_default;
 
@@ -15,7 +15,7 @@ pub struct HandbookTeamTableFile {
     pub teams: HashMap<String, HandbookTeam>,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct HandbookTeam {
     #[serde(alias = "PowerId", alias = "powerId", default)]
     pub power_id: String,

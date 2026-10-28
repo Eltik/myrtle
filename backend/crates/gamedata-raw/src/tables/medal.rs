@@ -25,7 +25,7 @@ const OPERATOR_GATED_TEMPLATES: &[&str] = &[
 const ORIGIN_CHAIN_MAX_DEPTH: usize = 4;
 
 /// Medal gated on a collab operator
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct OperatorLock {
     pub operator_id: String,
     pub operator_name: String,
@@ -108,7 +108,7 @@ pub struct MedalGroup {
     pub shared_expire_times: Vec<ExpireTime>,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize)]
 pub struct MedalData {
     pub medals: HashMap<String, MedalDefinition>,
     pub groups: HashMap<String, MedalGroup>,
@@ -129,7 +129,7 @@ pub struct MedalData {
 }
 
 /// Event medal's earnable window
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize)]
 pub struct EventWindow {
     pub start: i64,
     /// Reward-claimable-until timestamp, `0` if no close

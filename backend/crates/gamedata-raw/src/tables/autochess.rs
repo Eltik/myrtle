@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::serde_helpers::deserialize_fb_map_or_default;
 
@@ -28,7 +28,7 @@ pub struct AutoChessData {
     pub bond_info_dict: HashMap<String, AutoChessBond>,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct AutoChessBond {
     #[serde(alias = "BondId", alias = "bondId", default)]
     pub bond_id: String,

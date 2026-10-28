@@ -4,6 +4,7 @@ use serde::{Deserialize, Deserializer, Serialize};
 
 use super::campaign::CampaignTableFile;
 use super::chapter::ChapterTableFile;
+use super::crisis::CrisisV2TableFile;
 use super::zone::ZoneTableFile;
 use crate::serde_helpers::{FbKeyValue, deserialize_fb_map, deserialize_fb_map_or_default};
 
@@ -21,6 +22,8 @@ pub struct StageTables {
     pub retro: RetroTableFile,
     /// `climb_tower_table`
     pub climb_tower: ClimbTowerTableFile,
+    /// `crisis_v2_table`
+    pub crisis_v2: CrisisV2TableFile,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -214,7 +217,7 @@ pub struct StageData {
 }
 
 /// Arc header between two runs of mainline chapters (e.g. `HOUR OF AN AWAKENING`)
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct MainlineSplitData {
     #[serde(default)]
@@ -225,7 +228,7 @@ pub struct MainlineSplitData {
 
 /// One stop on a storyline. `STORY_SET` and `BEFORE` point at a
 /// [`StorylineStorySet`], `MAINLINE_SPLIT` carries only an arc name
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct StorylineLocation {
     pub location_id: String,
@@ -240,7 +243,7 @@ pub struct StorylineLocation {
 }
 
 /// Themed story shelves, e.g. `mainLine`, `ssLine_*`
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Storyline {
     pub storyline_id: String,
@@ -261,7 +264,7 @@ pub struct Storyline {
 }
 
 /// Zone a mainline set covers, also the `story_review_table` group id
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct MainlineSetData {
     #[serde(default)]
@@ -274,7 +277,7 @@ pub struct MainlineSetData {
 
 /// Join between storyline locations and `story_review_table` groups.
 /// `MAINLINE` joins on `MainlineData.ZoneId`, `SS`/`COLLECT` on `RelevantActivityId`
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct StorylineStorySet {
     pub story_set_id: String,
@@ -355,12 +358,21 @@ pub struct RetroTableFile {
     pub retro_act_list: HashMap<String, RetroAct>,
 }
 
-/// `climb_tower_table` (Stationary Security Service), season schedule only
+/// `climb_tower_table` (Stationary Security Service), season schedule and tower names
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct ClimbTowerTableFile {
     #[serde(default)]
     pub season_infos: Vec<ClimbTowerSeasonEntry>,
+    #[serde(deserialize_with = "deserialize_fb_map_or_default", default)]
+    pub towers: HashMap<String, ClimbTower>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct ClimbTower {
+    #[serde(default)]
+    pub name: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

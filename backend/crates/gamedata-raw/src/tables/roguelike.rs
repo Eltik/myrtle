@@ -11,7 +11,7 @@ pub struct RoguelikeTables {
     pub topics: RoguelikeTopicTableFile,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize)]
 pub struct RoguelikeGameData {
     pub themes: HashMap<String, RoguelikeThemeGameData>,
     /// Themes and their collectible items as tier list entries

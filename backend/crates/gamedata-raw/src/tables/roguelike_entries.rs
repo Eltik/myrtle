@@ -3,6 +3,7 @@ use std::collections::{HashMap, HashSet};
 use std::iter::once;
 use std::str::from_utf8;
 
+use serde::Serialize;
 use serde_json::Value;
 
 /// Item types offered, in the order listed after the theme
@@ -35,7 +36,7 @@ const ARCHIVED_TYPES: [&str; 6] = [
 ];
 
 /// One theme or item
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
 pub struct RoguelikeEntry {
     pub id: String,
     /// e.g. `rogue_N`
@@ -48,7 +49,7 @@ pub struct RoguelikeEntry {
 }
 
 /// Every theme and offered item, in catalogue order
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize)]
 pub struct RoguelikeEntries {
     pub entries: Vec<RoguelikeEntry>,
     index: HashMap<String, usize>,

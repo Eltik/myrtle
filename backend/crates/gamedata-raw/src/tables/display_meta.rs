@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct DisplayMetaTableFile {
@@ -13,7 +13,7 @@ pub struct HomeBackgroundData {
 }
 
 /// One lobby home-screen background
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct HomeBackground {
     #[serde(alias = "BgId", alias = "bgId", default)]
     pub bg_id: String,

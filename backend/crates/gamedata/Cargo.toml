@@ -1,0 +1,21 @@
+[package]
+name = "myrtle-gamedata"
+description = "GameModel, normalised, enriched and indexed; compile(raw) -> model"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+myrtle-types.workspace = true
+myrtle-gamedata-raw.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+regex.workspace = true
+thiserror.workspace = true
+base64.workspace = true
+bson.workspace = true
+
+[lints]
+workspace = true

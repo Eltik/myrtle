@@ -3,6 +3,7 @@ use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use super::gacha_detail::PoolDetailFile;
 use crate::serde_helpers::{deserialize_fb_map, deserialize_fb_map_or_default};
 
 #[derive(Debug, Default)]
@@ -11,6 +12,8 @@ pub struct GachaTables {
     pub gacha: GachaTableFile,
     /// `open_server_table`
     pub open_server: OpenServerTableFile,
+    /// `derived/gacha_pool_details.json`
+    pub pool_details: Option<PoolDetailFile>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

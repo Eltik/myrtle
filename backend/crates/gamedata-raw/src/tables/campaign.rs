@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::serde_helpers::deserialize_fb_map_or_default;
 
@@ -39,7 +39,7 @@ pub struct CampaignRotateOpenTime {
 }
 
 /// Open/close window for one rotating Annihilation map
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize)]
 pub struct RotationWindow {
     pub start_ts: i64,
     pub end_ts: i64,
@@ -57,7 +57,7 @@ pub enum RotationStatus {
 }
 
 /// Rotation schedule by stage id, rotating maps (`camp_r_*`) only
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize)]
 pub struct CampaignRotations {
     windows: HashMap<String, RotationWindow>,
     kill_max: HashMap<String, i32>,
