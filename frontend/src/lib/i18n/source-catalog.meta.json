@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-28T02:40:59.834Z",
+    "generatedAt": "2026-10-28T03:02:51.968Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -8563,6 +8563,83 @@
             "namespace": "changelog",
             "source_text": "New: The DPS calculator covers every 6★",
             "description": "Title of the 2026-10-25 release note. DPS is the damage calculator tool; 6★ is the top operator rarity.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-28.hrefLabel",
+            "namespace": "changelog",
+            "source_text": "Open your pull history",
+            "description": "Link label on the 2026-10-28 release note, pointing to the pull history page.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-28.item.1",
+            "namespace": "changelog",
+            "source_text": "The operator chibi viewer can flip, zoom, pan, show a grid and change its background, plays animations in a chain or on a loop at any speed, and saves PNG, WebM or GIF.",
+            "description": "Release note item. A chibi is the small animated in-game sprite of an operator.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-28.item.2",
+            "namespace": "changelog",
+            "source_text": "Tier lists can rank story CGs, story scenes and Archives pictures.",
+            "description": "Release note item. Story CGs are illustrations shown during the story; Archives is the in-game art gallery.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-28.item.3",
+            "namespace": "changelog",
+            "source_text": "The squad builder and randomizer can filter operators by source: gachaless, welfare or recruitment.",
+            "description": "Release note item. Gachaless, welfare and recruitment are ways an operator is obtained without the gacha.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-28.item.4",
+            "namespace": "changelog",
+            "source_text": "Tier list browsing can filter by author.",
+            "description": "Release note item.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-28.item.5",
+            "namespace": "changelog",
+            "source_text": "The tier list editor can save as you go, with auto-save off by default, and offers to restore unsaved changes after a crash.",
+            "description": "Release note item.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-28.item.6",
+            "namespace": "changelog",
+            "source_text": "Roster cards show the date you got each operator.",
+            "description": "Release note item.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-28.item.7",
+            "namespace": "changelog",
+            "source_text": "The header menu folds away when it runs out of room in any language.",
+            "description": "Release note item.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-28.item.8",
+            "namespace": "changelog",
+            "source_text": "The squad builder reads Closure's talent, redeployment times and faction synergies correctly, so Gravel, Mlynar and Nearl the Radiant Knight now count as a team.",
+            "description": "Release note item. The named characters are operators and keep the game's names.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-28.lead",
+            "namespace": "changelog",
+            "source_text": "**You can now make your pull history public and share a link to it.** Public pulls appear in a new Pulls tab on your profile, and a Lookback tab shows how your roster has grown from one event to the next.",
+            "description": "Lead paragraph of the 2026-10-28 release note, rendered as Markdown. Pulls are gacha pulls; Lookback is the name of a profile tab.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-28.title",
+            "namespace": "changelog",
+            "source_text": "New: Share your pull history and look back on your roster",
+            "description": "Title of the 2026-10-28 release note.",
             "placeholders": []
         },
         {

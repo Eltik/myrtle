@@ -47,6 +47,25 @@ export interface IReleaseNote {
 
 const ENTRIES: IReleaseNote[] = [
     {
+        id: "2026-10-28",
+        date: "2026-10-28",
+        titleKey: "note.2026-10-28.title",
+        announce: true,
+        leadKey: "note.2026-10-28.lead",
+        items: [
+            { kind: "new", textKey: "note.2026-10-28.item.1" },
+            { kind: "new", textKey: "note.2026-10-28.item.2" },
+            { kind: "new", textKey: "note.2026-10-28.item.3" },
+            { kind: "new", textKey: "note.2026-10-28.item.4" },
+            { kind: "improved", textKey: "note.2026-10-28.item.5" },
+            { kind: "improved", textKey: "note.2026-10-28.item.6" },
+            { kind: "improved", textKey: "note.2026-10-28.item.7" },
+            { kind: "fixed", textKey: "note.2026-10-28.item.8" },
+        ],
+        href: "/gacha/history",
+        hrefLabelKey: "note.2026-10-28.hrefLabel",
+    },
+    {
         id: "2026-10-25",
         date: "2026-10-25",
         titleKey: "note.2026-10-25.title",
