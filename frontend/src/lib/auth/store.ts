@@ -131,6 +131,8 @@ export const authActions = {
             if (user === null && s.clientAuthoritative) return { ...s, clientAuthoritative: false };
             return { ...s, user, status: "ready", clientAuthoritative: false };
         }),
+    /** Merge a saved change into the signed-in session, so readers of the store see it before the next route load. */
+    patchUser: (patch: Partial<ISession>) => authStore.setState((s) => (s.user ? { ...s, user: { ...s.user, ...patch } } : s)),
     setLoading: () => authStore.setState((s) => ({ ...s, status: "loading" })),
     clear: () => authStore.setState((s) => ({ ...s, user: null, status: "ready", login: { ...initialLogin, saveCredentials: s.login.saveCredentials }, dialogOpen: false, postLoginRedirect: null, clientAuthoritative: false })),
 

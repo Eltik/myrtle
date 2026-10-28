@@ -9,6 +9,7 @@ import { Switch } from "#/components/ui/switch";
 import { toastManager } from "#/components/ui/toast";
 import { useInvalidateProfile } from "#/hooks/use-resync-roster";
 import { updateUserSettingsFn } from "#/lib/api/auth";
+import { authActions } from "#/lib/auth/store";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { IUserProfile } from "#/types/user";
@@ -34,6 +35,8 @@ function usePublicHistoryMutation() {
     return useMutation({
         mutationFn: (on: boolean) => updateUserSettingsFn({ data: { public_gacha: on } }),
         onSuccess: (_, on) => {
+            // The switch reads the session in the auth store, which a query invalidation does not refresh.
+            authActions.patchUser({ public_gacha: on });
             void invalidateProfile();
             toastManager.add({ id: `gacha-public-${Date.now()}`, title: on ? t("history.public.savedOn") : t("history.public.savedOff"), type: "success" });
         },
